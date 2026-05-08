@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PaperOrder",
+  "type": "object",
+  "required": ["id", "signal_id", "symbol", "side", "qty", "status", "paper"],
+  "properties": {
+    "id": {"type": "string"},
+    "signal_id": {"type": "string"},
+    "symbol": {"type": "string"},
+    "side": {"enum": ["buy", "sell"]},
+    "qty": {"type": "number"},
+    "status": {"type": "string"},
+    "paper": {"const": true}
+  }
+}

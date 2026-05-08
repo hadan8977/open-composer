@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReviewCard",
+  "type": "object",
+  "required": ["signal_id", "verdict", "confidence", "evidence", "risks", "invalidation", "action_suggestion"],
+  "properties": {
+    "signal_id": {"type": "string"},
+    "verdict": {"enum": ["consider", "avoid", "wait"]},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "evidence": {"type": "array", "items": {"type": "string"}},
+    "risks": {"type": "array", "items": {"type": "string"}},
+    "invalidation": {"type": "array", "items": {"type": "string"}},
+    "action_suggestion": {"type": "string"}
+  }
+}

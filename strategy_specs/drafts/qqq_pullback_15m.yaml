@@ -1,0 +1,46 @@
+name: qqq_pullback_15m
+description: QQQ pullback strategy with short sample-data windows for MVP verification.
+timeframe: 15m
+universe: [QQQ]
+lifecycle: draft
+
+entry:
+  all:
+    - "close > ema(close, 5)"
+    - "rsi(close, 3) < 75"
+    - "volume > sma(volume, 3)"
+
+exit:
+  any:
+    - "rsi(close, 3) > 82"
+    - "close < ema(close, 5)"
+
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 0.2
+  stop_loss_pct: 1.2
+  take_profit_pct: 2.0
+
+execution:
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: sample
+  symbol: QQQ
+  path: data/sample/qqq_15m.csv
+
+data_assumptions:
+  source: sample
+  adjusted: true
+  timezone: America/New_York
+
+llm_review:
+  enabled: false
+
+notes:
+  intent: Buy short-window pullbacks during a positive sample trend and exit on recovery or trend damage.
+  open_questions:
+    - Replace short sample windows with production windows after real-data validation.

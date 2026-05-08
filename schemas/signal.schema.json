@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Signal",
+  "type": "object",
+  "required": ["id", "strategy_name", "symbol", "timeframe", "timestamp", "action", "side", "price"],
+  "properties": {
+    "id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "strategy_name": {"type": "string"},
+    "symbol": {"type": "string"},
+    "timeframe": {"type": "string"},
+    "timestamp": {"type": "string"},
+    "action": {"enum": ["entry", "exit"]},
+    "side": {"enum": ["buy", "sell"]},
+    "price": {"type": "number"}
+  }
+}

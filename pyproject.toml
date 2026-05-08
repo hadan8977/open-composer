@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "open-composer"
+version = "0.1.0"
+description = "Repo-native AI strategy workbench for LLM-assisted quantitative trading research."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "alpaca-py>=0.28.0",
+  "numpy>=1.26",
+  "openai>=1.90.0",
+  "pandas>=2.2",
+  "pydantic>=2.7",
+  "python-dotenv>=1.0",
+  "pyyaml>=6.0",
+  "rich>=13.7",
+  "typer>=0.12",
+]
+
+[project.scripts]
+oc = "open_composer.cli:app"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.2",
+  "ruff>=0.6",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["open_composer"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

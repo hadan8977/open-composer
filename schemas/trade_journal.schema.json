@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TradeJournalEntry",
+  "type": "object",
+  "required": ["id", "signal_id", "action", "created_at"],
+  "properties": {
+    "id": {"type": "string"},
+    "signal_id": {"type": "string"},
+    "action": {"enum": ["traded", "skipped", "watched"]},
+    "notes": {"type": "string"},
+    "outcome": {"type": "string"},
+    "created_at": {"type": "string"}
+  }
+}

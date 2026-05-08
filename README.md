@@ -6,7 +6,44 @@ Open Composer 是一个面向个人交易学习者的对话式 AI 策略工作�
 
 ## 当前状态
 
-这个仓库目前处于产品定义和实现交接阶段。下一步是在新会话中按照 `OPEN-COMPOSER-BUILD-HANDOFF.md` 生成可运行项目骨架、CLI、样例策略、样例数据和测试。
+这个仓库已经包含增强版 MVP 的可运行骨架：
+
+- `StrategySpec` YAML schema/model；
+- sample OHLCV 数据；
+- `oc` CLI；
+- spec validation；
+- deterministic signal/backtest/scanner engine；
+- TradingView Pine v6 export；
+- Markdown reports、JSONL signal logs、journal；
+- OpenAI structured review card adapter；
+- Alpaca data 和 Alpaca Paper adapter；
+- pytest/ruff 验证。
+
+实盘真钱交易仍然保持手动决策。MVP 只允许 Alpaca Paper 模拟盘自动下单，并要求 active `paper_auto` 策略、paper 环境变量和显式 `--allow-paper-orders`。
+
+## Quick Start
+
+```bash
+uv run oc doctor
+uv run oc spec validate strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc backtest strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc scan strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc compile pine strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run pytest
+```
+
+可选环境变量见 `.env.example`：
+
+- `OPENAI_API_KEY` + `OPENAI_MODEL` 用于 `oc review-signal <signal-id>`；
+- `ALPACA_API_KEY_ID`、`ALPACA_API_SECRET_KEY`、`ALPACA_PAPER=true`、`ALPACA_DATA_FEED=iex` 用于 Alpaca 数据和模拟盘。
+
+Alpaca Paper 下单示例：
+
+```bash
+uv run oc paper submit <signal-id> --allow-paper-orders
+```
+
+该命令只接受 `strategy_specs/active/` 中 lifecycle 为 `active`、`execution.mode=paper_auto`、`broker=alpaca_paper` 的策略。
 
 ## 阅读顺序
 

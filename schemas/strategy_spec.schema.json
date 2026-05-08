@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StrategySpec",
+  "type": "object",
+  "required": ["name", "description", "timeframe", "universe", "lifecycle", "entry", "exit", "risk", "execution"],
+  "properties": {
+    "name": {"type": "string"},
+    "description": {"type": "string"},
+    "timeframe": {"enum": ["15m", "1h", "daily", "weekly"]},
+    "universe": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "lifecycle": {"enum": ["draft", "approved", "active", "retired"]},
+    "entry": {"$ref": "#/$defs/ruleBlock"},
+    "exit": {"$ref": "#/$defs/ruleBlock"},
+    "risk": {"type": "object"},
+    "execution": {"type": "object"},
+    "data": {"type": "object"},
+    "data_assumptions": {"type": "object"},
+    "llm_review": {"type": "object"},
+    "notes": {"type": "object"}
+  },
+  "$defs": {
+    "ruleBlock": {
+      "type": "object",
+      "properties": {
+        "all": {"type": "array", "items": {"type": "string"}},
+        "any": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

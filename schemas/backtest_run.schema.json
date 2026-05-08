@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BacktestRun",
+  "type": "object",
+  "required": ["run_id", "strategy_name", "symbol", "timeframe", "bars", "signals", "trades", "start_equity", "end_equity", "total_return_pct"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "strategy_name": {"type": "string"},
+    "symbol": {"type": "string"},
+    "timeframe": {"type": "string"},
+    "bars": {"type": "integer"},
+    "signals": {"type": "integer"},
+    "trades": {"type": "integer"},
+    "start_equity": {"type": "number"},
+    "end_equity": {"type": "number"},
+    "total_return_pct": {"type": "number"},
+    "assumptions": {"type": "array", "items": {"type": "string"}},
+    "report_path": {"type": ["string", "null"]},
+    "signal_log_path": {"type": ["string", "null"]}
+  }
+}
