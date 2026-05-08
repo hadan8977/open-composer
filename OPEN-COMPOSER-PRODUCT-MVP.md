@@ -101,7 +101,7 @@ MVP 不是大型 Web App。
 
 ## 7. 技术框架摘要
 
-Open Composer 需要一个轻量量化后端，但不应该 Qlib-first。
+Open Composer 需要量化运行能力，但第一版不应该 Qlib-first，也不应该 Lumibot-first。
 
 推荐 MVP 架构是：
 
@@ -109,21 +109,24 @@ Open Composer 需要一个轻量量化后端，但不应该 Qlib-first。
 Codex / Claude Code
   -> AGENTS.md + repo skills
   -> strategy spec
-  -> Python quant backend
-  -> backtest engine
-  -> scan engine
+  -> Python backtest / scanner
+  -> Pine Script export
+  -> signal parity report
   -> LLM review service
   -> SQLite + Parquet/CSV + Markdown audit trail
-  -> optional MCP / Alpaca / OpenBB / Qlib adapters
+  -> optional Alpaca / Lumibot / vectorbt / Qlib adapters
 ```
 
 核心技术决策：
 
-- 先做内部轻量 strategy/spec/runner 层；
-- 第一版用简单内部 engine 或 `backtesting.py` 做可读回测；
+- Open Composer 自己做产品层、策略 spec、Codex workflow、审计和报告；
+- 第一版主线是 StrategySpec -> Python backtest/scanner -> Pine export；
+- Python 和 Pine 的信号一致性是第一版关键验证；
+- TradingView/Pine 是第一版手动交易提醒出口，但不是策略真源；
+- Alpaca 是后续真实行情和 paper account adapter；
+- Lumibot 用于后续 Alpaca paper execution，不作为第一版核心；
 - vectorbt 用于后续参数扫描和批量研究；
 - Qlib 作为后续 ML/factor research adapter，不作为第一版底座；
-- Alpaca 是行情和 paper account adapter，不是策略托管平台；
 - MCP 是 Codex 工具接入层，不是安全边界；
 - OpenAI API 或兼容 LLM 只负责结构化 review 和事件提取。
 
@@ -225,17 +228,16 @@ MVP 不提交 live order。
 4. Strategy spec schema
    - 校验所有 draft 和 active 策略。
 
-5. Python quant backend
-   - 数据加载；
-   - 指标计算；
-   - 策略执行；
-   - 回测；
-   - 扫描。
+5. Python backtest / scanner
+   - 将 `StrategySpec` 编译成 Python 回测和扫描代码；
+   - 支持 sample data；
+   - 支持 15m、1h、daily；
+   - 输出 signal log 和 backtest report。
 
-6. Backtest runner
-   - 先支持 sample data；
-   - 支持 daily、1h、15m；
-   - 输出 metrics 和报告。
+6. Pine export
+   - 将 `StrategySpec` 导出成 Pine Script；
+   - 支持 TradingView 图表观察和 alert；
+   - 与 Python 信号做一致性检查。
 
 7. Scan runner
    - 支持 watchlist；
@@ -259,12 +261,12 @@ MVP 不提交 live order。
 
 ### 9.2 应该有
 
-- Alpaca market data adapter；
-- Alpaca paper account reader；
 - OpenBB MCP example config；
 - 通知输出；
-- TradingView / Pine export；
-- weekly review command。
+- weekly review command；
+- Alpaca market data adapter；
+- Alpaca paper account reader；
+- Lumibot paper execution adapter。
 
 ### 9.3 MVP 不做
 
@@ -272,6 +274,7 @@ MVP 不提交 live order。
 - full web dashboard；
 - broker write access through MCP；
 - Qlib-first implementation；
+- Lumibot-first implementation；
 - 多用户账号；
 - 组织权限；
 - sub-minute trading；
@@ -327,43 +330,53 @@ MVP 完成的标准：
 - 建 CLI skeleton；
 - 建 doctor command。
 
-### Phase 1: Quant Core
+### Phase 1: Composer-lite Core
 
-- 实现 data model；
-- 实现 indicator engine；
-- 实现 simple backtest engine；
-- 实现 scan engine；
-- 实现第一批 sample strategies。
+- 定义 StrategySpec；
+- 实现 `spec_to_python.py`；
+- 实现 `spec_to_pine.py`；
+- 用 sample data 回测；
+- 输出 backtest report；
+- 输出 Python/Pine signal parity report；
+- 加 journal。
 
-### Phase 2: Codex Workflow
+### Phase 2: Codex Workflow Hardening
 
 - 写 repo-scoped skills；
 - 固化 strategy lifecycle；
 - 增加测试、回测、报告要求；
 - 增加 strategy generation workflow。
 
-### Phase 3: LLM Review
+### Phase 3: Real Data And Scanner
+
+- 加 Alpaca / Polygon data adapter；
+- 加 VPS scanner；
+- 加 notification；
+- 继续保持 manual signal mode。
+
+### Phase 4: LLM Review
 
 - 增加 review card schema；
 - 接 OpenAI structured output；
 - 增加 event feature schema；
 - 增加 cached event context。
 
-### Phase 4: Data And Broker Adapters
+### Phase 5: Alpaca Paper / Lumibot
 
-- 加 Alpaca data adapter；
 - 加 Alpaca paper account reader；
-- 加 OpenBB MCP config；
-- broker write operations 继续关闭。
+- 加 Lumibot paper execution adapter；
+- 加 dry-run order proposal；
+- 加 approval-gated paper order；
+- broker write operations 默认关闭。
 
-### Phase 5: Manual Trading Loop
+### Phase 6: Research Extensions
 
-- 加 journal；
-- 加 notifications；
-- 加 weekly review；
-- 可选加 TradingView / Pine export。
+- 加 vectorbt parameter sweep；
+- 加 Qlib factor/ML research；
+- 加 OpenBB MCP research；
+- 可选加 TradingView webhook。
 
-### Phase 6: Thin UI
+### Phase 7: Thin UI
 
 只有在闭环跑通后再做：
 

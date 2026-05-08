@@ -2,83 +2,162 @@
 
 Date: 2026-05-08
 
-## 1. 目的
+## 1. 最终技术结论
 
-这份文档回答 Open Composer 到底要如何实现。
+Open Composer 不应该 Qlib-first，也不应该 Lumibot-first。
 
-它补充产品 MVP 文档没有展开的部分：
-
-- Codex 具体怎么用；
-- Skill 放在哪里，负责什么；
-- MCP 怎么接；
-- 量化后端用什么；
-- 回测怎么跑；
-- Alpaca 怎么接；
-- Qlib 是否必须；
-- LLM API 在哪里调用；
-- 系统是在本地跑、VPS 跑，还是上传到某个平台跑。
-
-## 2. 深层意图
-
-这个项目真正要解决的问题不是“选哪个库”，而是：
-
-> 如何让一个非专业用户通过对话驱动 Codex，持续生成、测试、扫描、审查和复盘策略，同时避免做成脆弱的自动交易机器人？
-
-因此需要分层：
+最合适的技术路线是：
 
 ```text
-Codex workbench layer
-  -> 产品规则和 skills
-  -> 量化后端
-  -> 数据 adapters
-  -> 回测和扫描 runners
-  -> LLM review service
-  -> 审计存储
-  -> 可选 broker / paper adapters
+StrategySpec-first
+  -> Codex repo skills
+  -> Python backtest / scanner
+  -> Pine Script export
+  -> signal card + journal
+  -> optional LLM review
+  -> later Alpaca data / VPS scanner
+  -> later Lumibot + Alpaca paper execution
+  -> later vectorbt / Qlib / LEAN adapters
 ```
 
-## 3. 总体架构
+原因很直接：
+
+- 你当前最核心的产品目标是 **对话式策略生成 + 5m/15m/1h 信号提醒 + 手动交易复盘**。
+- 这不是 Qlib 最擅长的 ML/factor research 场景。
+- 也不是 Lumibot 最擅长的 backtest-to-paper/live execution 场景。
+- 更接近 Composer + Capitalise.ai + TradingView 的组合：自然语言生成策略、验证策略、生成提醒、人工决策。
+
+所以第一版应该以 **策略结构和信号一致性** 为核心，而不是以 broker runtime 为核心。
+
+## 2. 为什么不是 Lumibot-first
+
+之前“Lumibot + Alpaca paper”这个建议是合理的，但它适用于另一个目标：
 
 ```text
-User
-  -> Codex / Claude Code
-    -> AGENTS.md + repo skills
-    -> strategy spec
-    -> Python strategy code
-    -> tests and backtests
-
-Runtime CLI
-  -> data adapter
-  -> indicator engine
-  -> backtest engine
-  -> scan engine
-  -> risk engine
-  -> LLM review service
-  -> journal and reports
-
-External adapters
-  -> Alpaca market data / paper account
-  -> OpenBB data tools
-  -> optional Financial Datasets / SEC / news
-  -> optional TradingView export
-  -> optional Qlib research adapter
+生成策略 -> 回测 -> dry-run -> Alpaca paper 下单
 ```
 
-核心原则：
+如果第一版就要做 paper execution，Lumibot 确实比纯自研脚本更合适，因为它提供 backtesting、broker 接入和从回测到 live/paper 的迁移路径。
+
+但你后来把目标收敛成：
 
 ```text
-Codex 构建和改进系统。
-Runner 执行确定性流程。
-LLM 只在候选信号后审查上下文。
-用户决定是否交易。
+AI 对话式策略生成
+  + 5m/15m/1h 信号提醒
+  + 手动交易
+  + LLM/事件审查
+  + 复盘
 ```
 
-## 4. 推荐目录结构
+在这个目标下，Lumibot-first 会带来几个问题：
+
+- 它会把第一版重心拉向 broker runtime；
+- 会过早处理 order、broker、paper/live parity；
+- 对 TradingView/Pine 这种手动交易提醒体验帮助有限；
+- 对“策略 DSL / spec / 信号一致性 / 复盘”这些产品核心不是最短路径。
+
+因此 Lumibot 应该作为 **Phase 3 paper execution adapter**，而不是 Phase 1 的产品地基。
+
+## 3. 技术路线对比
+
+| 路线 | 适合什么 | 不适合什么 | 在 Open Composer 中的位置 |
+|---|---|---|---|
+| StrategySpec-first | Composer-like 策略结构、版本、审计、导出 | 不能单独运行，必须配 runner/compiler | 产品核心 |
+| Python backtesting.py / simple scanner | 快速验证规则型策略、生成信号、Codex 易修改 | 大规模参数扫描、成熟 broker runtime | Phase 1 主执行层 |
+| TradingView / Pine export | 手动交易提醒、图表观察、bar-close signal | 不是策略真源，版本和 alert 管理有限 | Phase 1/2 必做导出层 |
+| vectorbt | 大量参数扫描、快速批量研究 | paper/live runtime、事件驱动执行 | Phase 4 research adapter |
+| Lumibot + Alpaca | paper execution、broker runtime、从 backtest 到 paper/live | 第一版手动信号产品会显得重 | Phase 3 execution adapter |
+| Qlib | ML 因子、横截面 alpha、模型训练 | 5m/15m 手动信号、Composer-like UX | Phase 5 research backend |
+| LEAN / QuantConnect | 成熟事件驱动引擎、多资产、复杂执行 | 个人 MVP 过重 | 后期成熟部署选项 |
+| Alpaca-only scripts | 快速接 paper/data | 容易变散，缺少统一 spec 和回测一致性 | 只做 adapter |
+| MCP tools | 给 Codex 查数据、查账户、查文档 | 不应作为安全边界或 runtime 核心 | 辅助工具层 |
+
+## 4. 参考产品给出的方向
+
+### 4.1 Composer
+
+Composer 的关键不是“用哪个后端”，而是：
+
+```text
+自然语言 -> 策略结构 -> 插入编辑器 -> 回测
+```
+
+Open Composer 应该学习这个结构化策略体验，而不是直接模仿它的券商闭环。
+
+### 4.2 Capitalise.ai
+
+Capitalise.ai 的 Smart Notifications 说明了一个很重要的方向：
+
+```text
+自然语言条件 -> 市场/新闻/技术条件监控 -> 只提醒，不交易
+```
+
+这和你的第一版目标非常接近。
+
+### 4.3 TradingView
+
+TradingView 适合承担手动交易场景里的提醒和图表层。
+
+但 TradingView strategy alert 的一个关键限制是：创建 alert 后，TradingView 服务器运行的是当时策略的一个副本，图表里的后续改动不会自动影响 alert。因此 Open Composer 不能把 TradingView 当策略真源。
+
+正确做法是：
+
+```text
+StrategySpec 是真源
+  -> Python 回测/扫描
+  -> Pine export
+  -> 对比 Python 和 Pine 信号一致性
+  -> TradingView 只作为提醒/图表出口
+```
+
+## 5. 最终架构
+
+```text
+User conversation
+  -> Codex
+    -> AGENTS.md
+    -> repo skills
+    -> StrategySpec YAML
+    -> Python strategy/backtest code
+    -> Pine Script export
+    -> signal parity check
+    -> reports
+
+Runtime
+  -> local/VPS scanner
+  -> market data adapter
+  -> deterministic signal
+  -> optional LLM review sidecar
+  -> notification
+  -> manual trade
+  -> journal
+  -> weekly Codex review
+
+Optional adapters
+  -> Alpaca data / paper account
+  -> Lumibot paper execution
+  -> vectorbt research
+  -> Qlib ML/factor research
+  -> LEAN mature deployment
+```
+
+关键原则：
+
+1. `StrategySpec` 是策略真源。
+2. Codex 先生成 spec，再生成代码。
+3. Python backtest/scanner 和 Pine export 必须能对齐信号。
+4. TradingView 可以提醒，但不能成为唯一策略来源。
+5. Alpaca 提供数据和 paper account，不托管策略。
+6. Lumibot 只在需要 paper execution 时前移。
+7. Qlib 只在需要 ML/factor research 时引入。
+
+## 6. 推荐目录结构
 
 ```text
 open-composer/
   README.md
   AGENTS.md
+  CLAUDE.md
   pyproject.toml
   Makefile
   .env.example
@@ -86,21 +165,16 @@ open-composer/
   .agents/
     skills/
       strategy-designer/SKILL.md
-      backtest-reviewer/SKILL.md
-      signal-reviewer/SKILL.md
+      python-backtest-writer/SKILL.md
+      pine-exporter/SKILL.md
+      signal-parity-reviewer/SKILL.md
       risk-reviewer/SKILL.md
       weekly-reviewer/SKILL.md
+      alpaca-paper-operator/SKILL.md
 
   .codex/
     config.example.toml
     hooks.example.json
-
-  schemas/
-    strategy_spec.schema.json
-    signal.schema.json
-    review_card.schema.json
-    event_feature.schema.json
-    trade_journal.schema.json
 
   strategy_specs/
     drafts/
@@ -108,23 +182,51 @@ open-composer/
     active/
     retired/
 
+  schemas/
+    strategy_spec.schema.json
+    signal.schema.json
+    review_card.schema.json
+    trade_journal.schema.json
+    event_feature.schema.json
+
   open_composer/
     cli.py
     config.py
     models/
-    data/
-    indicators/
-    strategies/
-    backtest/
-    scan/
-    risk/
-    review/
-    journal/
+    compiler/
+      spec_to_python.py
+      spec_to_pine.py
+      spec_to_lumibot.py
+    engines/
+      backtesting_py_engine.py
+      scanner_engine.py
+      vectorbt_engine.py
+      lumibot_engine.py
+      qlib_engine.py
     adapters/
-      alpaca/
-      openbb/
-      qlib/
-      tradingview/
+      data/
+        sample.py
+        alpaca.py
+        polygon.py
+        openbb.py
+      broker/
+        alpaca_paper.py
+      notify/
+        console.py
+        telegram.py
+    review/
+      llm_review.py
+      event_features.py
+    risk/
+    journal/
+    reports/
+
+  strategies_python/
+    generated/
+    custom/
+
+  strategies_pine/
+    generated/
 
   data/
     sample/
@@ -132,456 +234,341 @@ open-composer/
 
   reports/
     backtests/
+    parity/
     scans/
     reviews/
     weekly/
 
+  signal_logs/
   journal/
-    trades/
-    decisions/
-
   tests/
-    fixtures/
 ```
 
-## 5. 哪些可以直接做，哪些依赖外部接入
+## 7. 核心产物：StrategySpec
 
-### 5.1 不需要外部 key 就能做
+`StrategySpec` 是 Open Composer 的核心资产。
 
-- 项目结构；
-- `AGENTS.md`；
-- repo skills；
-- strategy spec schema；
-- sample data；
-- data loader；
-- indicator engine；
-- backtest runner；
-- sample data scan runner；
-- Markdown / JSON reports；
-- SQLite audit store；
-- journal；
-- 基于本地 reports 的 weekly review。
+示例：
 
-这些足够验证产品核心闭环。
+```yaml
+name: qqq_pullback_15m
+timeframe: 15m
+universe: [QQQ, SPY]
 
-### 5.2 需要 OpenAI key 或兼容 LLM provider
+entry:
+  all:
+    - "close > ema(close, 200)"
+    - "rsi(close, 14) < 35"
+    - "volume > sma(volume, 20)"
 
-- structured review card；
-- 文本事件提取；
-- 新闻/财报/SEC 摘要；
-- 自动 weekly natural-language analysis。
+exit:
+  any:
+    - "rsi(close, 14) > 55"
+    - "close < ema(close, 50)"
 
-Codex 本身是策略工程入口，runtime LLM review 是另一个独立层。
+risk:
+  max_trades_per_day: 3
+  stop_loss_pct: 1.2
+  take_profit_pct: 2.0
 
-### 5.3 需要 Alpaca
-
-- 美股/ETF 行情；
-- paper account reader；
-- paper positions / orders 展示；
-- 可选 paper order adapter。
-
-Alpaca 不是 MVP 的必需项。sample data MVP 可以先不接 Alpaca。
-
-### 5.4 需要 MCP 配置
-
-- Codex 通过 OpenBB 做金融数据查询；
-- Codex 通过 Alpaca MCP 检查 paper account；
-- Codex 通过其他 MCP 做研究。
-
-MCP 不应该成为 core scanner 的硬依赖。scanner 应该调用稳定的 provider adapter。
-
-### 5.5 后续才需要的 adapter
-
-- Qlib factor research adapter；
-- vectorbt parameter sweep adapter；
-- QuantConnect / LEAN export；
-- TradingView / Pine export；
-- automated paper execution。
-
-这个分阶段设计能避免一开始就陷入大型框架集成。
-
-## 6. Codex 层
-
-### 6.1 AGENTS.md
-
-`AGENTS.md` 是 Codex 的项目级规则文件。
-
-它应该定义：
-
-- 产品目标；
-- 策略生命周期；
-- 禁止动作；
-- 必须运行的验证；
-- 报告要求；
-- 数据假设；
-- no live trading policy；
-- active strategy 修改规则；
-- secrets 处理规则。
-
-OpenAI Codex 文档说明，`AGENTS.md` 用于给 Codex 提供项目指导，并按范围合并指导规则。这适合作为 Open Composer 的第一层约束。
-
-### 6.2 Repo Skills
-
-Open Composer 应该在仓库里提供 skills：
-
-```text
-.agents/skills/
+execution:
+  mode: manual_signal
+  signal_on: bar_close
 ```
 
-每个 skill 是一个工作流说明和可选脚本/参考资料。
+Codex 的主要任务：
 
-MVP skills：
+1. 根据对话生成 spec。
+2. 根据 spec 生成 Python 回测/扫描代码。
+3. 根据 spec 生成 Pine Script。
+4. 对比 Python 和 Pine 的信号是否一致。
+5. 生成回测报告和适用频率判断。
+6. 将策略推进到 approved 或 active，但必须经用户确认。
 
-1. `strategy-designer`
-   - 将自然语言变成 strategy spec；
-   - 只在必要时追问；
-   - 只能写 draft，不直接写 active。
+## 8. 第一版必须做什么
 
-2. `backtest-reviewer`
-   - 审查回测假设；
-   - 检查 lookahead risk；
-   - 检查样本量和指标。
+### 8.1 Spec + Schema
 
-3. `signal-reviewer`
-   - 审查候选信号；
-   - 确保 review card schema 被使用。
+必须先做：
 
-4. `risk-reviewer`
-   - 检查 exposure、stop、invalidation、news risk、event conflict。
+- strategy spec；
+- schema validation；
+- lifecycle：draft -> approved -> active -> retired。
 
-5. `weekly-reviewer`
-   - 读取 journal 和 reports；
-   - 输出策略和行为改进建议。
+这是产品核心。
 
-注意：Skill 是工作流约束，不是硬安全边界。硬约束来自 schema、runner、测试、权限隔离和人工确认。
+### 8.2 Python Backtest / Scanner
 
-### 6.3 Codex Hooks
+第一版用 `backtesting.py` 或轻量 scanner。
 
-hooks 可以做辅助防线：
+目标不是做最完美的机构级回测，而是：
 
-- 阻止 live order 命令；
-- 修改 active strategy 时提醒；
-- 策略变更后提示运行 tests/backtest；
-- 阻止提交 secrets。
+- 能跑 sample data；
+- 能验证策略逻辑；
+- 能输出交易和信号；
+- 能让 Codex 低成本修改；
+- 能和 Pine export 做信号一致性检查。
 
-hooks 不能当成唯一安全边界。
+### 8.3 Pine Export
 
-## 7. MCP 层
-
-MCP 是给 Codex 接工具和数据的方式，不是产品 runtime 的核心。
-
-MVP 用法：
-
-- OpenBB MCP 用于金融数据探索；
-- Alpaca MCP 只读检查 paper account；
-- docs/search MCP 用于研究。
-
-边界：
-
-```text
-MCP 可以帮助 Codex 查数据和理解上下文。
-MCP 不应该默认执行交易。
-```
-
-Codex 支持 MCP，并可通过项目配置示例提供安全默认值。
-
-### 7.1 OpenBB MCP
-
-OpenBB MCP 适合：
-
-- 查询行情和基本面；
-- 查询宏观或经济数据；
-- 做研究探索；
-- 辅助 Codex 理解金融上下文。
-
-但 runtime scanner 不应该依赖 MCP。scanner 应该用 provider adapter。
-
-### 7.2 Alpaca MCP
-
-Alpaca MCP 很有用，也有风险，因为它可能涉及：
-
-- market data；
-- account / positions；
-- orders；
-- portfolio。
-
-MVP 规则：
-
-- 只使用 paper key；
-- 默认只读；
-- 禁用 order create / replace / cancel；
-- 确定性 runner 用 Alpaca SDK/data adapter；
-- MCP 只用于 Codex-side research 和 account inspection。
-
-## 8. 量化后端
-
-Open Composer 需要一个量化后端，但第一版应当小而清晰。
-
-它至少包括：
-
-- data loading；
-- bar normalization；
-- indicator calculation；
-- strategy evaluation；
-- backtest execution；
-- scan execution；
-- risk checks；
-- report generation。
-
-建议接口：
-
-```text
-DataProvider
-IndicatorEngine
-StrategyRunner
-BacktestEngine
-ScanEngine
-RiskEngine
-ReportWriter
-```
-
-这样可以避免被某一个框架锁死。
-
-## 9. 回测框架选择
-
-### 9.1 MVP 默认选择
-
-第一版用简单内部 engine 或 `backtesting.py`。
+Pine export 应该进入第一版。
 
 原因：
 
-- 容易读；
-- 容易让 Codex 修改；
-- 足够支持规则型策略；
-- 比 Qlib 轻；
-- 更适合 15m / 1h 的 manual signal 策略。
+- 你最终是手动交易；
+- TradingView 是最自然的观察和提醒入口；
+- 5m/15m 策略用 TradingView 看图和 alert 很方便；
+- Pine export 能让策略从代码世界进入交易者日常界面。
 
-### 9.2 vectorbt adapter
+但要明确：
 
-后续加 vectorbt，用于：
+- Pine 不是策略真源；
+- alert 不是审计真源；
+- StrategySpec 和本地 reports 才是真源。
 
-- 批量参数扫描；
-- 快速向量化研究；
-- 多策略对比。
+### 8.4 Signal Parity
 
-它适合研究加速，但不是第一条闭环的必要条件。
+必须做 Python/Pine 信号一致性检查。
 
-### 9.3 Qlib adapter
-
-Qlib 不应作为 MVP 底座。
-
-Qlib 更适合：
-
-- 因子研究；
-- ML 模型；
-- daily / multi-day prediction；
-- 更正式的数据和模型 pipeline；
-- 后续更专业的量化研究。
-
-推荐关系：
+否则会出现：
 
 ```text
-Open Composer StrategySpec
-  -> internal runner
-  -> optional Qlib adapter later
+Python 回测看起来有效
+TradingView 实盘提醒却不一致
 ```
 
-这样既保留 Qlib 的能力，又不让第一版复杂度失控。
+第一版至少要输出：
 
-## 10. 数据层
+- Python signal timestamps；
+- Pine-equivalent signal timestamps；
+- mismatch report。
 
-MVP 数据层要简单、可审计。
+### 8.5 Journal + Weekly Review
 
-推荐：
+手动交易产品必须有 journal。
 
-- sample data 用于无 key 启动；
-- Parquet/CSV 保存 OHLCV bars；
-- SQLite 保存 metadata 和审计状态；
-- provider adapters 接真实数据。
+每个信号要记录：
 
-数据来源分层：
+- 是否交易；
+- 是否跳过；
+- 跳过原因；
+- 交易结果；
+- 情绪和环境；
+- 后续复盘。
 
-1. Sample provider
-   - 无 API key；
-   - 用于 onboarding、测试和 demo。
+## 9. 第二版再做什么
 
-2. Alpaca provider
-   - 美股/ETF 行情；
-   - paper account context；
-   - 适合 manual trading workflow。
+### 9.1 Real Data / VPS Scanner
 
-3. OpenBB provider
-   - 研究数据；
-   - 宏观、基本面、新闻等。
+当 sample data 和 Pine export 跑通后，再接：
 
-4. Event/news provider
-   - Alpaca news、OpenBB、RSS、Financial Datasets、SEC 等；
-   - 统一转成 `EventFeature`。
+- Alpaca data；
+- Polygon data；
+- OpenBB data；
+- VPS scheduler；
+- notification。
 
-## 11. Alpaca 集成
+如果电脑关机，本地 scanner 就停止。稳定 5m/15m 扫描需要 VPS。
 
-Alpaca 不是策略运行平台。
+### 9.2 LLM Review
 
-策略 runner 运行在：
-
-- 用户电脑；
-- VPS；
-- 或其他定时环境。
-
-Alpaca 提供：
-
-- market data；
-- paper account；
-- paper order API；
-- account / positions 状态；
-- 模拟交易 dashboard。
-
-MVP 阶段：
+LLM review 只在候选信号后运行：
 
 ```text
-Phase 1: 不需要 Alpaca，sample data 先跑通
-Phase 2: Alpaca data adapter
-Phase 3: Alpaca paper account reader
-Phase 4: optional paper order adapter，默认关闭
+deterministic signal
+  -> fetch event context
+  -> structured review card
+  -> user manual decision
 ```
 
-如果要做 5m/15m 扫描，电脑或 VPS 必须持续运行。Alpaca 不会替你托管 Python 策略。
+LLM 不做全市场扫描，不做每根 bar 交易决策。
 
-## 12. LLM Runtime 层
+### 9.3 Alpaca Paper Record
 
-runtime LLM 和 Codex 分开。
+Alpaca paper 可以先做记录和 dry-run，不一定下单。
 
-Codex 负责工程任务：
-
-- 写策略；
-- 写测试；
-- 跑回测；
-- 改代码；
-- 写报告；
-- 做周复盘。
-
-直接 LLM API 负责运行期结构化任务：
-
-- event extraction；
-- headline summary；
-- SEC filing summary；
-- candidate signal review；
-- risk card generation。
-
-LLM 输出必须使用结构化 schema，例如 `ReviewCard` 和 `EventFeature`。
-
-LLM 不负责：
-
-- position sizing；
-- 下单；
-- 覆盖风控；
-- 全市场连续扫描。
-
-## 13. CLI 命令
-
-建议 CLI：
+推荐顺序：
 
 ```text
-oc init
-oc doctor
-oc spec validate <path>
-oc strategy new <name>
-oc backtest <strategy>
-oc scan <strategy>
-oc review-signal <signal-id>
-oc journal add <signal-id>
-oc weekly-review
-oc data fetch --provider alpaca --symbols QQQ,SPY --timeframe 15m
+paper account reader
+  -> dry-run proposed order
+  -> approval file
+  -> optional paper order
 ```
 
-Codex 可以调用这些命令完成策略开发，用户也可以直接调用。
+## 10. Lumibot 的正确位置
 
-## 14. 运行和部署
+Lumibot 是重要的，但不是第一版主轴。
 
-MVP 运行方式：
+应该在以下条件成立时引入：
 
-- 本地电脑用于早期测试；
-- cron / APScheduler 用于定时扫描；
-- VPS 用于稳定 5m/15m 扫描；
-- GitHub Actions 只适合低频 review，不适合精确日内扫描。
+- 用户真的想把策略从 signal-only 推到 paper execution；
+- 需要 backtest 和 broker-connected runtime 更一致；
+- 需要 Alpaca paper order；
+- 策略已经通过 Python/Pine/manual review 验证。
 
-注意：
+引入方式：
 
-- 如果电脑关机，本地 scanner 会停止；
-- 如果想稳定 15m 扫描，建议 VPS；
-- manual trading 场景下，通知质量比极低延迟更重要。
+```text
+StrategySpec
+  -> spec_to_lumibot.py
+  -> Lumibot strategy
+  -> Alpaca paper broker
+  -> dry-run first
+  -> optional paper order
+```
 
-## 15. 安全模型
+这保留了之前 Lumibot + Alpaca 的价值，但不会让它过早主导产品结构。
 
-安全要分层：
+## 11. Qlib 的正确位置
 
-1. 默认没有 live trading key。
-2. broker write adapter 默认关闭。
-3. MCP order tools 默认禁用。
-4. 策略生命周期：draft -> approved -> active -> retired。
-5. active strategy 修改必须明确确认。
-6. LLM 输出必须 schema 校验。
-7. runner 执行风险规则。
-8. journal 记录所有决策。
+Qlib 不适合第一版。
 
-不要只靠 prompt 保证安全。
+它适合：
 
-## 16. MVP 构建顺序
+- ML 因子研究；
+- 横截面 alpha；
+- 日频/多日预测；
+- 模型训练；
+- 更系统化的 research pipeline。
 
-### Step 1: Skeleton
+当 Open Composer 进入“从策略规则扩展到因子挖掘”阶段，再接 Qlib。
 
-- Python package；
-- CLI；
-- config；
-- sample data；
-- schemas；
-- `AGENTS.md`；
-- repo skills。
+## 12. LEAN 的正确位置
 
-### Step 2: Quant Core
+LEAN / QuantConnect 是成熟但重的路线。
 
-- data loader；
-- indicator engine；
-- simple strategy runner；
-- backtest；
-- report writer。
+适合：
 
-### Step 3: Codex Workflow
+- 复杂事件驱动；
+- 多资产；
+- 期权；
+- 更严肃的 live deployment；
+- 更成熟的 broker/data 生态。
 
-- `strategy-designer` skill；
-- `backtest-reviewer` skill；
-- required validation commands；
-- generated strategy tests。
+不适合个人 MVP 起步。
 
-### Step 4: Scanner
+## 13. MCP 的正确位置
 
-- active strategy registry；
-- bar-close scan；
-- signal output；
-- local notification。
+MCP 是 Codex 的外部工具层，不是 runtime 核心。
 
-### Step 5: LLM Review
+可以用：
 
-- review card schema；
-- OpenAI structured output；
-- event feature cache。
+- OpenBB MCP 查数据；
+- Alpaca MCP 查看 paper account；
+- docs/search MCP 做研究。
 
-### Step 6: Adapters
+不要用：
 
-- Alpaca data provider；
+- MCP 直接下单；
+- MCP 作为安全边界；
+- MCP 作为 scanner 运行时依赖。
+
+## 14. 阶段路线
+
+### Phase 0: 文档和骨架
+
+- `AGENTS.md`
+- `.agents/skills`
+- `StrategySpec` schema
+- sample data
+- CLI skeleton
+- reports/journal directories
+
+### Phase 1: Composer-lite 核心
+
+- 自然语言 -> StrategySpec；
+- StrategySpec -> Python backtest；
+- StrategySpec -> Pine Script；
+- Python/Pine signal parity report；
+- 回测报告；
+- journal。
+
+这阶段不需要 Alpaca、不需要 Qlib、不需要 Lumibot。
+
+### Phase 2: 真实信号系统
+
+- Alpaca/Polygon data adapter；
+- VPS scanner；
+- notification；
+- LLM review card；
+- event/news context。
+
+### Phase 3: Alpaca Paper / Lumibot
+
+- Lumibot adapter；
 - Alpaca paper account reader；
-- OpenBB MCP config；
-- optional Qlib adapter later。
+- dry-run order proposal；
+- approval-gated paper order。
 
-## 17. 参考来源
+### Phase 4: Research 扩展
 
-- OpenAI Codex skills: https://developers.openai.com/codex/skills
+- vectorbt parameter sweep；
+- Qlib factor/ML research；
+- OpenBB research MCP；
+- stronger statistical validation。
+
+### Phase 5: 成熟部署
+
+- optional LEAN export；
+- thin UI；
+- multi-strategy portfolio view；
+- better data retention and monitoring。
+
+## 15. 最终技术选择
+
+第一版写成：
+
+```text
+Product Core:
+  StrategySpec + Codex Skills + CLI + reports + journal
+
+First Execution Layer:
+  Python backtesting/scanner + Pine export
+
+Manual Trading Surface:
+  TradingView alerts + local/VPS notification
+
+AI Layer:
+  Codex for strategy engineering
+  LLM API for structured signal/event review
+
+Data:
+  sample data first
+  Alpaca/Polygon/OpenBB later
+
+Paper Execution:
+  Lumibot + Alpaca later
+
+Advanced Research:
+  vectorbt first
+  Qlib later
+  LEAN much later
+```
+
+这条路线最符合当前产品：
+
+- 像 Composer 一样有结构化策略；
+- 像 Capitalise.ai 一样可以提醒而不交易；
+- 像 TradingView 一样适合手动看图；
+- 用 Codex 生成和维护代码；
+- 保留 Lumibot/Alpaca paper 路径；
+- 保留 Qlib/LEAN 高级路径。
+
+## 16. 参考来源
+
+- Composer Create with AI: https://help.composer.trade/article/108-create-with-ai
+- Capitalise.ai Smart Notifications: https://support.capitalise.ai/en/articles/3339296-smart-notifications
+- TradingView Strategy Alerts: https://www.tradingview.com/support/solutions/43000481368-strategy-alerts/
+- OpenAI Codex AGENTS.md: https://developers.openai.com/codex/guides/agents-md
+- OpenAI Codex Skills: https://developers.openai.com/codex/skills
 - OpenAI Codex MCP: https://developers.openai.com/codex/mcp
-- OpenAI Codex hooks: https://developers.openai.com/codex/hooks
+- OpenAI Codex Hooks: https://developers.openai.com/codex/hooks
 - OpenAI Structured Outputs: https://developers.openai.com/api/docs/guides/structured-outputs
-- Alpaca paper trading: https://docs.alpaca.markets/docs/paper-trading
-- Alpaca MCP server: https://docs.alpaca.markets/docs/alpaca-mcp-server
-- OpenBB MCP: https://docs.openbb.co/odp/python/extensions/interface/openbb-mcp
-- Microsoft Qlib: https://github.com/microsoft/qlib
-- backtesting.py: https://kernc.github.io/backtesting.py/
+- Lumibot Backtesting: https://lumibot.lumiwealth.com/backtesting.how_to_backtest.html
+- Lumibot Alpaca broker: https://lumibot.lumiwealth.com/brokers.alpaca.html
+- Alpaca Paper Trading: https://docs.alpaca.markets/docs/paper-trading
 - vectorbt: https://vectorbt.dev/
+- backtesting.py: https://kernc.github.io/backtesting.py/
+- Microsoft Qlib: https://github.com/microsoft/qlib
+- QuantConnect LEAN: https://www.quantconnect.com/docs/v2/writing-algorithms/key-concepts/algorithm-engine

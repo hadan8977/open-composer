@@ -52,10 +52,13 @@ Open Composer 的出发点不是再做一个 dashboard，也不是做一个自�
 
 这也是最能发挥 Codex 优势的方式。
 
-技术上，MVP 应该采用“轻量内部量化后端 + adapters”的方式：
+技术上，MVP 应该采用“StrategySpec-first + Python/Pine 手动信号优先 + adapters”的方式：
 
-- 内部后端负责 spec、数据加载、指标、回测、扫描、风控、报告；
-- Alpaca 是数据和 paper account adapter，不是策略托管平台；
+- Open Composer 负责 spec、Codex workflow、审计、报告、review 和 journal；
+- Python backtest/scanner 作为第一版信号验证层；
+- Pine export 作为第一版手动交易提醒和图表层；
+- Alpaca 是后续真实行情和 paper account adapter，不是策略托管平台；
+- Lumibot 是后续 paper execution adapter，不是第一版底座；
 - OpenBB / MCP 是研究工具层；
 - Qlib 是后续 ML/factor research adapter，不是第一版底座；
 - LLM API 是结构化 review/event extraction 服务；
@@ -187,7 +190,7 @@ LLM = 结构化审查和事件分析
 
 ## 8. 技术底座选择
 
-MVP 的技术底座应当是内部轻量量化后端，而不是直接绑定一个大型量化框架。
+MVP 的技术底座应当是 Open Composer 自己的产品层，加上 Python backtest/scanner 和 Pine export 作为第一版执行与提醒层。
 
 推荐选择：
 
@@ -197,15 +200,18 @@ MVP 的技术底座应当是内部轻量量化后端，而不是直接绑定一�
 - Pydantic / JSON Schema 作为结构约束；
 - SQLite 保存状态和审计；
 - Parquet/CSV 保存行情缓存；
-- backtesting.py 或简单内部 engine 作为第一回测实现；
-- Alpaca adapter 提供美股行情和 paper account；
+- backtesting.py 或轻量 Python scanner 作为第一版回测/信号实现；
+- Pine export 作为第一版 TradingView 提醒出口；
+- Alpaca adapter 后续提供美股行情和 paper account；
+- Lumibot adapter 延后，用于 Alpaca paper execution；
 - OpenBB MCP 提供研究工具；
 - Qlib adapter 延后，用于更正式的 ML/factor research。
 
 这个选择能避免两种极端：
 
 - 只靠 Codex prompt，缺少可执行底座；
-- 一开始上 Qlib/大型后端，导致复杂度超过产品验证需要。
+- 自己重写大量 backtest/paper/live runtime；
+- 一开始上 Qlib/大型研究平台，导致复杂度超过产品验证需要。
 
 ## 9. 频率判断
 
