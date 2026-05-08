@@ -35,7 +35,11 @@ from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
 from open_composer.journal.writer import add_journal_entry
 from open_composer.models.strategy_spec import load_strategy_spec
-from open_composer.research import draft_strategy_from_idea, optimize_strategy
+from open_composer.research import (
+    draft_strategy_from_idea,
+    optimize_strategy,
+    optimize_strategy_universe,
+)
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
 from open_composer.storage import find_signal
@@ -297,6 +301,39 @@ def strategy_optimize(
         f"signals={result.best_artifacts.run.signals}"
     )
     console.print(f"report: {result.report_path}")
+
+
+@strategy_app.command("optimize-universe")
+def strategy_optimize_universe(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    min_return_pct: float = typer.Option(1.0, "--min-return-pct"),
+    min_signals: int = typer.Option(1, "--min-signals"),
+    max_trades: int = typer.Option(45, "--max-trades"),
+    refresh_data: bool = typer.Option(True, "--refresh-data/--use-cache"),
+) -> None:
+    """Optimize one strategy family across a symbol universe."""
+    if data_source != "alpaca":
+        raise typer.BadParameter("--data-source currently supports alpaca")
+    result = optimize_strategy_universe(
+        spec,
+        project_root(),
+        symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+        data_source="alpaca",
+        min_return_pct=min_return_pct,
+        min_signals=min_signals,
+        max_trades=max_trades,
+        refresh_data=refresh_data,
+    )
+    console.print(f"[green]universe optimized[/green] report: {result.report_path}")
+    for selection in result.selections:
+        console.print(
+            f"{selection.symbol} {selection.spec.name} "
+            f"return={selection.artifacts.run.total_return_pct:.2f}% "
+            f"signals={selection.artifacts.run.signals} "
+            f"trades={selection.artifacts.run.trades} score={selection.score:.2f}"
+        )
 
 
 @strategy_app.command("list")
