@@ -1,4 +1,4 @@
-# Codex Signal Desk MVP
+# Open Composer MVP
 
 Date: 2026-05-08
 
@@ -209,7 +209,7 @@ Runner 不允许自动 live trading。paper trading 也必须单独开关。
 建议新开一个干净项目，不在 EvoQ 当前后端里继续堆：
 
 ```text
-codex-signal-desk/
+open-composer/
   AGENTS.md
   CLAUDE.md
   README.md
@@ -686,7 +686,7 @@ data_snapshots(id, source, universe, timeframe, start_at, end_at, checksum)
 
 ### Phase 0: 产品骨架
 
-- 新建 `codex-signal-desk` 仓库。
+- 新建 `open-composer` 仓库。
 - 写 `AGENTS.md`、`CLAUDE.md`、README。
 - 建 `pyproject.toml`、Makefile、ruff/pytest。
 - 建 schemas。
@@ -786,9 +786,9 @@ UI 不实现策略逻辑，只调用 runner 和读取 SQLite。
 但实现上不同：
 
 - Composer 是封闭产品和券商体验。
-- Codex Signal Desk 是个人可审计代码仓库。
+- Open Composer 是个人可审计代码仓库。
 - Composer 更偏低频组合/条件编排。
-- Codex Signal Desk 可以支持 15m/1h/manual signal，并把 LLM 事件分析作为上下文层。
+- Open Composer 可以支持 15m/1h/manual signal，并把 LLM 事件分析作为上下文层。
 - Composer 替用户封装策略结构；这里让 Codex 生成可测试代码和可读 spec。
 
 ## 18. Sources
