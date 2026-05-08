@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Any
 
 from open_composer.config import (
-    alpaca_api_base_url,
     alpaca_api_key_id,
     alpaca_api_secret_key,
     alpaca_paper_enabled,
+    alpaca_sdk_base_url,
 )
 from open_composer.models.paper import PaperOrderRecord
 from open_composer.models.signal import Signal
@@ -93,7 +93,7 @@ def _trading_client() -> Any:
         api_key=alpaca_api_key_id(),
         secret_key=alpaca_api_secret_key(),
         paper=True,
-        url_override=alpaca_api_base_url(),
+        url_override=alpaca_sdk_base_url(),
     )
 
 

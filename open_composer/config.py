@@ -104,5 +104,12 @@ def alpaca_api_base_url() -> str:
     return os.getenv("ALPACA_API_BASE_URL", "https://paper-api.alpaca.markets/v2")
 
 
+def alpaca_sdk_base_url() -> str:
+    base_url = alpaca_api_base_url().rstrip("/")
+    if base_url.endswith("/v2"):
+        return base_url[: -len("/v2")]
+    return base_url
+
+
 def data_feed() -> str:
     return os.getenv("ALPACA_DATA_FEED", "iex")

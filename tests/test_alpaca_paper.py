@@ -95,4 +95,4 @@ def test_trading_client_uses_configured_paper_base_url(monkeypatch) -> None:
     assert captured["api_key"] == "key"
     assert captured["secret_key"] == "secret"
     assert captured["paper"] is True
-    assert captured["url_override"] == "https://paper-api.alpaca.markets/v2"
+    assert captured["url_override"] == "https://paper-api.alpaca.markets"
