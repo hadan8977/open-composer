@@ -40,6 +40,7 @@ from open_composer.research import (
     draft_strategy_from_idea,
     optimize_option_overlays,
     optimize_strategy,
+    optimize_strategy_horizons,
     optimize_strategy_universe,
 )
 from open_composer.review.llm import review_signal_with_status
@@ -336,6 +337,39 @@ def strategy_optimize_universe(
             f"{selection.symbol} {selection.spec.name} "
             f"return={selection.artifacts.run.total_return_pct:.2f}% "
             f"signals={selection.artifacts.run.signals} "
+            f"trades={selection.artifacts.run.trades} score={selection.score:.2f}"
+        )
+
+
+@strategy_app.command("optimize-horizons")
+def strategy_optimize_horizons(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    min_return_pct: float = typer.Option(1.0, "--min-return-pct"),
+    min_trades: int = typer.Option(1, "--min-trades"),
+    max_preferred_trades: int = typer.Option(18, "--max-preferred-trades"),
+    refresh_data: bool = typer.Option(True, "--refresh-data/--use-cache"),
+) -> None:
+    """Compare 5m scan speed, 15m lower-turnover, and 1h trend-hold variants."""
+    if data_source != "alpaca":
+        raise typer.BadParameter("--data-source currently supports alpaca")
+    result = optimize_strategy_horizons(
+        spec,
+        project_root(),
+        symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+        data_source="alpaca",
+        min_return_pct=min_return_pct,
+        min_trades=min_trades,
+        max_preferred_trades=max_preferred_trades,
+        refresh_data=refresh_data,
+    )
+    console.print(f"[green]horizons optimized[/green] report: {result.report_path}")
+    for selection in result.selections:
+        console.print(
+            f"{selection.symbol} {selection.spec.name} "
+            f"profile={selection.profile} timeframe={selection.spec.timeframe} "
+            f"return={selection.artifacts.run.total_return_pct:.2f}% "
             f"trades={selection.artifacts.run.trades} score={selection.score:.2f}"
         )
 

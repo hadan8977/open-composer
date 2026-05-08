@@ -35,6 +35,7 @@ uv run oc events fetch --source sec --symbols QQQ
 uv run oc macro fetch --source fred
 uv run oc compile pine strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc strategy list
+uv run oc strategy optimize-horizons strategy_specs/drafts/memory_storage_momentum_15m.yaml --symbols MU,SNDK,WDC,STX
 uv run oc options optimize strategy_specs/drafts/memory_storage_momentum_15m_mu_alpaca_optimized_opening_continuation.yaml
 uv run pytest
 ```

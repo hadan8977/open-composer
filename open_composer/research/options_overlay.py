@@ -66,7 +66,7 @@ def optimize_option_overlays(
         _write_overlay_report(base, winner)
     selected.sort(key=lambda item: item.score, reverse=True)
     report_path = base / "reports" / "research" / "memory_storage_options_overlay_optimization.md"
-    _write_summary_report(report_path, selected, all_artifacts)
+    _write_summary_report(report_path, selected, all_artifacts, min_trades, max_premium_weight)
     return OptionOverlayOptimizationResult(report_path, selected_paths, selected)
 
 
@@ -354,6 +354,8 @@ def _write_summary_report(
     path: Path,
     selected: list[OptionOverlayArtifacts],
     all_artifacts: list[OptionOverlayArtifacts],
+    min_trades: int,
+    max_premium_weight: float,
 ) -> Path:
     ensure_dir(path.parent)
     lines = [
@@ -364,6 +366,8 @@ def _write_summary_report(
         "- Pricing: Black-Scholes approximation with spread haircut, not historical option quotes.",
         "- Execution: no option orders are submitted by this command.",
         "- Selection: best overlays are research candidates, not activation recommendations.",
+        f"- Minimum executable trades threshold: {min_trades}",
+        f"- Max premium weight: {max_premium_weight:.2f}",
         "",
         "## Selected",
         "",

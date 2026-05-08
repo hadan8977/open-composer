@@ -87,6 +87,24 @@ Conclusion: the first direct conversion from 15m stock momentum entries into 30D
 
 The next useful optimization is not "use more premium." A 10% premium budget test was materially worse. The next iteration should first reduce signal churn: require stronger trend persistence, minimum expected holding time, wider exits, and real option-chain liquidity filters before considering paper option orders.
 
+## Horizon Research Pass
+
+I also compared scan frequency versus hold duration on the same memory/storage universe:
+
+- 5m candidates produced more signals and trades, but the scoring collapsed because churn exploded.
+- 15m lower-turnover and 1h trend-hold candidates dominated the selected set.
+- Best equity result in this pass was `MU` on `1h` with `7.64%` return and only `6` closed trades.
+- `SNDK` on `15m` and `STX` on `1h` also stayed positive.
+- 5m fast-scan variants were not the right direction for this product if the goal is eventual options execution.
+
+Follow-on option overlay with a minimum executable-trades threshold of `3` did not rescue the thesis:
+
+- `SNDK` was the top robust option candidate, but still returned `-2.53%`.
+- `MU`, `WDC`, and `STX` all remained negative under the same assumptions.
+- The earlier one-trade positive `WDC` long-call result does not look robust enough to drive product decisions.
+
+Practical conclusion: the strategy should move toward lower-frequency, stronger trend confirmation, and longer expected holding periods. That is more aligned with future Alpaca Paper options use than simply scanning faster.
+
 ## Required Product Work
 
 Add models:

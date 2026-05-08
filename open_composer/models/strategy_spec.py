@@ -85,7 +85,7 @@ class StrategySpec(BaseModel):
 
     name: str
     description: str
-    timeframe: Literal["15m", "1h", "daily", "weekly"]
+    timeframe: Literal["5m", "15m", "1h", "daily", "weekly"]
     universe: list[str] = Field(min_length=1)
     lifecycle: Literal["draft", "approved", "active", "retired"]
     entry: RuleBlock
