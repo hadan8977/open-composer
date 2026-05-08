@@ -36,7 +36,15 @@ from open_composer.journal.writer import add_journal_entry
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research import draft_strategy_from_idea, optimize_strategy
 from open_composer.review.llm import review_signal_with_status
+from open_composer.runner.paper import PaperRunnerError, run_paper_loop
 from open_composer.storage import find_signal
+from open_composer.strategy_lifecycle import (
+    activate_strategy,
+    approve_strategy,
+    disable_strategy,
+    list_strategies,
+    resolve_strategy_path,
+)
 
 app = typer.Typer(no_args_is_help=True)
 spec_app = typer.Typer(no_args_is_help=True)
@@ -49,6 +57,7 @@ events_app = typer.Typer(no_args_is_help=True)
 macro_app = typer.Typer(no_args_is_help=True)
 context_app = typer.Typer(no_args_is_help=True)
 strategy_app = typer.Typer(no_args_is_help=True)
+run_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -61,6 +70,7 @@ app.add_typer(events_app, name="events")
 app.add_typer(macro_app, name="macro")
 app.add_typer(context_app, name="context")
 app.add_typer(strategy_app, name="strategy")
+app.add_typer(run_app, name="run")
 
 
 @app.callback()
@@ -283,6 +293,102 @@ def strategy_optimize(
     console.print(f"report: {result.report_path}")
 
 
+@strategy_app.command("list")
+def strategy_list() -> None:
+    """List StrategySpecs by lifecycle."""
+    table = Table(title="Open Composer Strategies")
+    table.add_column("Name")
+    table.add_column("Lifecycle")
+    table.add_column("Execution")
+    table.add_column("Broker")
+    table.add_column("Data")
+    table.add_column("Path")
+    for item in list_strategies(project_root()):
+        table.add_row(
+            item.name,
+            item.lifecycle,
+            item.execution_mode,
+            item.broker,
+            item.data_source,
+            str(item.path),
+        )
+    console.print(table)
+
+
+@strategy_app.command("approve")
+def strategy_approve(spec: str) -> None:
+    """Promote a StrategySpec to approved/manual mode."""
+    root = project_root()
+    path = approve_strategy(resolve_strategy_path(spec, root), root)
+    console.print(f"[green]approved[/green] {path}")
+
+
+@strategy_app.command("activate")
+def strategy_activate(
+    spec: str,
+    paper_auto: bool = typer.Option(False, "--paper-auto"),
+    allow_paper_auto: bool = typer.Option(False, "--allow-paper-auto"),
+    data_source: str = typer.Option("keep", "--data-source"),
+) -> None:
+    """Activate a StrategySpec for manual signals or Alpaca Paper automation."""
+    if data_source not in {"keep", "sample", "alpaca"}:
+        raise typer.BadParameter("--data-source must be keep, sample, or alpaca")
+    root = project_root()
+    path = activate_strategy(
+        resolve_strategy_path(spec, root),
+        root,
+        paper_auto=paper_auto,
+        allow_paper_auto=allow_paper_auto,
+        data_source=data_source,  # type: ignore[arg-type]
+    )
+    mode = "paper_auto" if paper_auto else "manual_signal"
+    console.print(f"[green]active[/green] {path} mode={mode}")
+
+
+@strategy_app.command("disable")
+def strategy_disable(strategy: str) -> None:
+    """Disable an active strategy and move it to retired/manual mode."""
+    try:
+        path = disable_strategy(strategy, project_root())
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[yellow]disabled[/yellow] retired={path}")
+
+
+@run_app.command("paper")
+def run_paper(
+    strategy: str,
+    max_cycles: int = typer.Option(1, "--max-cycles"),
+    interval_seconds: float = typer.Option(60.0, "--interval-seconds"),
+    allow_paper_orders: bool = typer.Option(False, "--allow-paper-orders"),
+    with_review: bool = typer.Option(True, "--with-review/--no-review"),
+    require_review_consider: bool = typer.Option(False, "--require-review-consider"),
+) -> None:
+    """Run an active strategy against scanner/review/Alpaca Paper controls."""
+    try:
+        cycles = run_paper_loop(
+            strategy,
+            root=project_root(),
+            allow_paper_orders=allow_paper_orders,
+            with_review=with_review,
+            require_review_consider=require_review_consider,
+            interval_seconds=interval_seconds,
+            max_cycles=max_cycles,
+        )
+    except (FileNotFoundError, PaperRunnerError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    for cycle in cycles:
+        console.print(
+            f"[green]paper cycle[/green] {cycle.run_id} "
+            f"signals={len(cycle.signals)} report=reports/runs/{cycle.run_id}.md"
+        )
+        for item in cycle.signals:
+            console.print(
+                f"{item.signal_id} {item.action} {item.symbol} @ {item.price:.2f} "
+                f"decision={item.decision} review={item.review_verdict or item.review_status}"
+            )
+
+
 @paper_app.command("submit")
 def paper_submit(
     signal_id: str,
@@ -335,6 +441,7 @@ def _ensure_runtime_dirs(root: Path) -> None:
         "reports/reviews",
         "reports/weekly",
         "reports/paper",
+        "reports/runs",
         "reports/capabilities",
         "reports/context",
         "reports/research",

@@ -31,6 +31,7 @@ def sample_workspace(tmp_path: Path, repo_root: Path) -> Path:
         "reports/scans",
         "reports/reviews",
         "reports/paper",
+        "reports/runs",
         "reports/research",
         "signal_logs",
         "journal",

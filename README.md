@@ -33,6 +33,7 @@ uv run oc capability test
 uv run oc events fetch --source sec --symbols QQQ
 uv run oc macro fetch --source fred
 uv run oc compile pine strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy list
 uv run pytest
 ```
 
@@ -46,10 +47,19 @@ uv run pytest
 Alpaca Paper 下单示例：
 
 ```bash
+uv run oc strategy approve strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy activate qqq_pullback_15m --paper-auto --allow-paper-auto
+uv run oc run paper qqq_pullback_15m --max-cycles 1 --no-review
 uv run oc paper submit <signal-id> --allow-paper-orders
+uv run oc run paper qqq_pullback_15m --max-cycles 0 --interval-seconds 60 --allow-paper-orders
+uv run oc strategy disable qqq_pullback_15m
 ```
 
 该命令只接受 `strategy_specs/active/` 中 lifecycle 为 `active`、`execution.mode=paper_auto`、`broker=alpaca_paper` 的策略。
+
+默认推荐先用 `oc run paper ... --no-review` 或带 review 但不加 `--allow-paper-orders`
+做扫描和人工确认；只有当策略已 active、处于 `paper_auto`、Alpaca Paper key 存在，并且命令显式传入
+`--allow-paper-orders` 时，runner 才会提交模拟盘订单。真钱 live broker 写入仍不在 MVP 范围内。
 
 ## 阅读顺序
 
