@@ -20,7 +20,15 @@ from open_composer.adapters.data import fetch_ohlcv
 from open_composer.adapters.events import fetch_capability_events
 from open_composer.capabilities import evaluate_capabilities, load_registry
 from open_composer.compiler.spec_to_pine import compile_pine
-from open_composer.config import data_feed, ensure_dir, optional_env_status, project_root
+from open_composer.config import (
+    data_feed,
+    default_openai_model,
+    ensure_dir,
+    openai_base_url,
+    openai_base_url_source,
+    optional_env_status,
+    project_root,
+)
 from open_composer.context import build_signal_context
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
@@ -83,10 +91,10 @@ def doctor() -> None:
     )
     table.add_row(
         "OPENAI_BASE_URL",
-        optional_env_status("OPENAI_BASE_URL"),
-        "optional OpenAI-compatible gateway",
+        openai_base_url_source(),
+        openai_base_url() or "optional OpenAI-compatible gateway",
     )
-    table.add_row("OPENAI_MODEL", os.getenv("OPENAI_MODEL", "gpt-5.5"), "default review model")
+    table.add_row("OPENAI_MODEL", default_openai_model(), "default review model")
     table.add_row(
         "ALPACA_API_KEY_ID", optional_env_status("ALPACA_API_KEY_ID"), "optional for Alpaca"
     )

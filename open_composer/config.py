@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import tomllib
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 
 def project_root() -> Path:
@@ -26,8 +28,64 @@ def optional_env_status(name: str) -> str:
     return "set" if os.getenv(name) else "missing"
 
 
+def codex_config_path() -> Path:
+    return Path(os.getenv("CODEX_HOME", "~/.codex")).expanduser() / "config.toml"
+
+
+def codex_model_provider_config() -> dict[str, Any]:
+    path = codex_config_path()
+    if not path.exists():
+        return {}
+    try:
+        config = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return {}
+    provider_name = config.get("model_provider")
+    providers = config.get("model_providers", {})
+    provider = providers.get(provider_name, {}) if provider_name else {}
+    if not isinstance(provider, dict):
+        provider = {}
+    result = dict(provider)
+    if config.get("model"):
+        result["model"] = config["model"]
+    if provider_name:
+        result["provider_name"] = provider_name
+    return result
+
+
 def default_openai_model() -> str:
-    return os.getenv("OPENAI_MODEL", "gpt-5.5")
+    return os.getenv("OPENAI_MODEL") or str(codex_model_provider_config().get("model") or "gpt-5.5")
+
+
+def openai_api_key_env_name() -> str:
+    return str(codex_model_provider_config().get("env_key") or "OPENAI_API_KEY")
+
+
+def openai_api_key() -> str | None:
+    return os.getenv("OPENAI_API_KEY") or os.getenv(openai_api_key_env_name())
+
+
+def openai_base_url() -> str | None:
+    return os.getenv("OPENAI_BASE_URL") or _codex_responses_base_url()
+
+
+def openai_base_url_source() -> str:
+    if os.getenv("OPENAI_BASE_URL"):
+        return "env"
+    if _codex_responses_base_url():
+        return "codex"
+    return "missing"
+
+
+def _codex_responses_base_url() -> str | None:
+    provider = codex_model_provider_config()
+    base_url = provider.get("base_url")
+    if not base_url:
+        return None
+    wire_api = provider.get("wire_api")
+    if wire_api and wire_api != "responses":
+        return None
+    return str(base_url)
 
 
 def alpaca_paper_enabled() -> bool:

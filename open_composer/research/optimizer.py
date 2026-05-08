@@ -94,6 +94,55 @@ def _candidate_specs(spec: StrategySpec) -> list[StrategySpec]:
             "exit": {"any": ["close < ema(close, 5)", "rsi(close, 3) > 94"]},
             "risk": {"stop_loss_pct": 1.2, "take_profit_pct": 2.6},
         },
+        {
+            "suffix": "optimized_opening_continuation",
+            "entry": {
+                "all": [
+                    "close > ema(close, 5)",
+                    "rsi(close, 6) > 50",
+                    "volume > sma(volume, 5)",
+                ]
+            },
+            "exit": {"any": ["close < ema(close, 13)", "rsi(close, 6) > 96"]},
+            "risk": {
+                "max_trades_per_day": 2,
+                "stop_loss_pct": 1.5,
+                "take_profit_pct": 6.0,
+            },
+        },
+        {
+            "suffix": "optimized_trend_hold",
+            "entry": {
+                "all": [
+                    "close > ema(close, 8)",
+                    "ema(close, 5) > ema(close, 13)",
+                    "rsi(close, 6) > 52",
+                    "volume > sma(volume, 5)",
+                ]
+            },
+            "exit": {"any": ["close < ema(close, 13)", "rsi(close, 6) > 98"]},
+            "risk": {
+                "max_trades_per_day": 1,
+                "stop_loss_pct": 1.8,
+                "take_profit_pct": 8.0,
+            },
+        },
+        {
+            "suffix": "optimized_fast_reentry",
+            "entry": {
+                "all": [
+                    "close > ema(close, 3)",
+                    "rsi(close, 3) > 52",
+                    "volume > sma(volume, 3)",
+                ]
+            },
+            "exit": {"any": ["close < ema(close, 3)", "rsi(close, 3) > 88"]},
+            "risk": {
+                "max_trades_per_day": 4,
+                "stop_loss_pct": 1.0,
+                "take_profit_pct": 2.5,
+            },
+        },
     ]
     output: list[StrategySpec] = []
     for variant in variants:
@@ -141,6 +190,7 @@ def _write_optimization_report(
         f"- Minimum return target: {min_return_pct:.2f}%",
         f"- Minimum signal target: {min_signals}",
         "- Objective: choose the highest-scoring candidate without using future bars.",
+        "- Return metric: period account-level return, not annualized.",
         "",
         "## Candidates",
         "",

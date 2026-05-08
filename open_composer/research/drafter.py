@@ -1,13 +1,18 @@
 from __future__ import annotations
 
-import os
 import re
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-from open_composer.config import default_openai_model, ensure_dir, project_root
+from open_composer.config import (
+    default_openai_model,
+    ensure_dir,
+    openai_api_key,
+    openai_base_url,
+    project_root,
+)
 from open_composer.models.strategy_spec import StrategySpec
 
 
@@ -28,7 +33,7 @@ def draft_strategy_from_idea(
 
 
 def _has_openai_config(client: Any | None) -> bool:
-    return client is not None or bool(os.getenv("OPENAI_API_KEY"))
+    return client is not None or bool(openai_api_key())
 
 
 def _draft_with_llm(idea: str, client: Any | None = None) -> StrategySpec | None:
@@ -64,8 +69,7 @@ def _draft_with_llm(idea: str, client: Any | None = None) -> StrategySpec | None
 def _openai_client() -> Any:
     from openai import OpenAI
 
-    base_url = os.getenv("OPENAI_BASE_URL")
-    return OpenAI(base_url=base_url) if base_url else OpenAI()
+    return OpenAI(api_key=openai_api_key(), base_url=openai_base_url())
 
 
 def _deterministic_draft(idea: str) -> StrategySpec:

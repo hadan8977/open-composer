@@ -93,6 +93,12 @@ def test_chinese_memory_storage_prompt_optimizes_and_scans(sample_workspace: Pat
     assert result.best_artifacts.run.signals >= 1
     assert result.report_path.exists()
 
+    aggressive_result = optimize_strategy(
+        spec_path, sample_workspace, min_return_pct=3.0, min_signals=1
+    )
+    assert aggressive_result.best_spec.name.endswith("optimized_opening_continuation")
+    assert aggressive_result.best_artifacts.run.total_return_pct >= 3.0
+
     fetch_capability_events("sec", sample_workspace, ["MU"], offline=True)
     fetch_capability_events("alpha_vantage", sample_workspace, ["MU"], offline=True)
     fetch_capability_events("gdelt", sample_workspace, ["MU"], offline=True)

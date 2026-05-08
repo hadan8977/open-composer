@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
-from open_composer.config import default_openai_model, ensure_dir
+from open_composer.config import default_openai_model, ensure_dir, openai_api_key, openai_base_url
 from open_composer.models.event import SignalContext
 from open_composer.models.review_card import ReviewCard
 from open_composer.models.signal import Signal
@@ -51,7 +50,7 @@ def review_signal_with_status(
     context: SignalContext | None = None,
 ) -> ReviewResult:
     selected_model = model or spec.llm_review.model or default_openai_model()
-    if client is None and not os.getenv("OPENAI_API_KEY"):
+    if client is None and not openai_api_key():
         return ReviewResult(None, "missing_api_key", "OPENAI_API_KEY is not set")
     client = client or _openai_client()
     if context is None:
@@ -100,8 +99,7 @@ def _classify_review_error(exc: Exception) -> tuple[ReviewStatus, str]:
 def _openai_client() -> Any:
     from openai import OpenAI
 
-    base_url = os.getenv("OPENAI_BASE_URL")
-    return OpenAI(base_url=base_url) if base_url else OpenAI()
+    return OpenAI(api_key=openai_api_key(), base_url=openai_base_url())
 
 
 def _call_structured_review(client: Any, model: str, prompt: str) -> ReviewCard | None:

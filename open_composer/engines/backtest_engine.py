@@ -138,6 +138,9 @@ def backtest_frame(
         assumptions=[
             "Signals are confirmed on bar close.",
             "Backtest fills use next bar open.",
+            "Total return is period account-level return, not annualized.",
+            "Position size uses max_position_weight; it is not all-in unless configured.",
+            "Open positions are marked to the final close and not counted as closed trades.",
             "MVP examples are long-only and do not model commissions or slippage.",
         ],
     )
