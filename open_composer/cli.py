@@ -223,9 +223,13 @@ def backtest(spec: Path) -> None:
 
 
 @app.command()
-def scan(spec: Path, with_context: bool = typer.Option(False, "--with-context")) -> None:
+def scan(
+    spec: Path,
+    with_context: bool = typer.Option(False, "--with-context"),
+    refresh_data: bool = typer.Option(False, "--refresh-data"),
+) -> None:
     """Scan the latest bar for a StrategySpec."""
-    signals = run_scan(spec)
+    signals = run_scan(spec, refresh_data=refresh_data)
     console.print(f"[green]scan complete[/green] signals={len(signals)}")
     for signal in signals:
         console.print(f"{signal.id} {signal.action} {signal.symbol} @ {signal.price:.2f}")

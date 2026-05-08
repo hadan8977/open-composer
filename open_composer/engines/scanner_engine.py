@@ -11,10 +11,14 @@ from open_composer.reports.writer import write_scan_report
 from open_composer.storage import append_jsonl
 
 
-def run_scan(spec_path: Path, root: Path | None = None) -> list[Signal]:
+def run_scan(
+    spec_path: Path,
+    root: Path | None = None,
+    refresh_data: bool = False,
+) -> list[Signal]:
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
-    frame = load_ohlcv_for_spec(spec, base)
+    frame = load_ohlcv_for_spec(spec, base, refresh=refresh_data)
     entry_mask, exit_mask = signal_masks(spec, frame)
     current_run_id = run_id(f"scan-{spec.name}")
     latest = frame.iloc[-1]

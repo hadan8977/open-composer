@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 
 from open_composer.adapters.data.sample import normalize_ohlcv
-from open_composer.config import ensure_dir
+from open_composer.config import alpaca_api_key_id, alpaca_api_secret_key, ensure_dir
 
 
 class AlpacaDataError(RuntimeError):
@@ -21,9 +21,10 @@ def fetch_alpaca_bars(
     start: datetime | None,
     end: datetime | None,
     feed: str,
+    use_cache: bool = True,
 ) -> pd.DataFrame:
     cache_path = root / "data" / "cache" / f"{symbol.lower()}_{timeframe}_{feed}.csv"
-    if cache_path.exists() and start is None and end is None:
+    if use_cache and cache_path.exists() and start is None and end is None:
         return normalize_ohlcv(pd.read_csv(cache_path))
 
     try:
@@ -39,7 +40,10 @@ def fetch_alpaca_bars(
         end=end or datetime.now(UTC),
         feed=feed,
     )
-    client = StockHistoricalDataClient()
+    client = StockHistoricalDataClient(
+        api_key=alpaca_api_key_id(),
+        secret_key=alpaca_api_secret_key(),
+    )
     response = client.get_stock_bars(request)
     frame = _bars_to_frame(response, symbol.upper())
     ensure_dir(cache_path.parent)

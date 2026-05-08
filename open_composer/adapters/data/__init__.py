@@ -11,7 +11,7 @@ from open_composer.config import data_feed
 from open_composer.models.strategy_spec import StrategySpec
 
 
-def load_ohlcv_for_spec(spec: StrategySpec, root: Path) -> pd.DataFrame:
+def load_ohlcv_for_spec(spec: StrategySpec, root: Path, refresh: bool = False) -> pd.DataFrame:
     if spec.data.source == "sample":
         return load_sample_ohlcv(root, spec)
     if spec.data.source == "alpaca":
@@ -22,6 +22,7 @@ def load_ohlcv_for_spec(spec: StrategySpec, root: Path) -> pd.DataFrame:
             start=None,
             end=None,
             feed=spec.data.feed or data_feed(),
+            use_cache=not refresh,
         )
     raise ValueError(f"unsupported data source: {spec.data.source}")
 
@@ -33,6 +34,7 @@ def fetch_ohlcv(
     start: datetime | None,
     end: datetime | None,
     feed: str | None = None,
+    use_cache: bool = True,
 ) -> pd.DataFrame:
     return fetch_alpaca_bars(
         root=root,
@@ -41,4 +43,5 @@ def fetch_ohlcv(
         start=start,
         end=end,
         feed=feed or data_feed(),
+        use_cache=use_cache,
     )

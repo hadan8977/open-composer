@@ -43,7 +43,7 @@ def run_paper_cycle(
             "Live real-money broker writes are out of scope.",
         ],
     )
-    signals = run_scan(spec_path, root=base)
+    signals = run_scan(spec_path, root=base, refresh_data=spec.data.source == "alpaca")
     if not signals:
         cycle.notes.append("No latest-bar signal.")
         cycle.finished_at = datetime.now(UTC)
