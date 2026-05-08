@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SignalContext",
+  "type": "object",
+  "required": ["signal_id", "symbol", "generated_at", "events", "macro", "news"],
+  "properties": {
+    "signal_id": {"type": "string"},
+    "symbol": {"type": "string"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "events": {"type": "array", "items": {"$ref": "event_record.schema.json"}},
+    "macro": {"type": "array", "items": {"$ref": "event_record.schema.json"}},
+    "news": {"type": "array", "items": {"$ref": "event_record.schema.json"}},
+    "notes": {"type": "array", "items": {"type": "string"}}
+  }
+}

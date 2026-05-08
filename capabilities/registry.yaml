@@ -1,0 +1,89 @@
+version: 1
+capabilities:
+  - id: market.sample_ohlcv
+    kind: market
+    status: approved
+    provider: local
+    use_for: [backtest, scan, fixture]
+    reliability: high
+    default_mode: offline
+    fixture: data/sample/qqq_15m.csv
+    min_score: 0.95
+    caveats:
+      - sample data is deterministic and not representative of live market coverage
+
+  - id: market.alpaca_bars
+    kind: market
+    status: approved
+    provider: alpaca
+    use_for: [ohlcv, scan, backtest, paper_context]
+    reliability: medium
+    default_mode: live_with_cache
+    fixture: data/fixtures/capabilities/alpaca_qqq_15m.csv
+    env: [ALPACA_API_KEY_ID, ALPACA_API_SECRET_KEY, ALPACA_DATA_FEED]
+    min_score: 0.85
+    caveats:
+      - free IEX feed is not consolidated full-market SIP data
+
+  - id: market.memory_storage_sample
+    kind: market
+    status: approved
+    provider: local
+    use_for: [scenario_test, intraday_backtest, optimization]
+    reliability: high
+    default_mode: offline
+    fixture: data/sample/mu_15m.csv
+    min_score: 0.95
+    caveats:
+      - deterministic scenario fixture for product verification, not live market evidence
+
+  - id: events.sec_filings
+    kind: event
+    status: approved
+    provider: sec
+    use_for: [company_events, risk_filter, weekly_review]
+    reliability: high
+    default_mode: live_with_cache
+    fixture: data/fixtures/capabilities/sec_filings.jsonl
+    env: [SEC_USER_AGENT]
+    min_score: 0.9
+    caveats:
+      - filings are official but not equivalent to broad news coverage
+
+  - id: macro.fred_series
+    kind: macro
+    status: approved
+    provider: fred
+    use_for: [macro_filter, weekly_review]
+    reliability: high
+    default_mode: live_with_cache
+    fixture: data/fixtures/capabilities/fred_macro.jsonl
+    env: [FRED_API_KEY]
+    min_score: 0.9
+    caveats:
+      - macro series are structured releases, not real-time breaking news
+
+  - id: news.alpha_vantage
+    kind: news
+    status: trial
+    provider: alpha_vantage
+    use_for: [watchlist_news, sentiment, signal_review]
+    reliability: unknown
+    default_mode: live_with_cache
+    fixture: data/fixtures/capabilities/alpha_vantage_news.jsonl
+    env: [ALPHA_VANTAGE_API_KEY]
+    min_score: 0.75
+    caveats:
+      - free tier coverage and limits must be measured against the user's watchlist
+
+  - id: news.gdelt
+    kind: news
+    status: trial
+    provider: gdelt
+    use_for: [broad_event_detection, macro_event_monitoring]
+    reliability: noisy
+    default_mode: live_with_cache
+    fixture: data/fixtures/capabilities/gdelt_news.jsonl
+    min_score: 0.7
+    caveats:
+      - broad coverage creates noise; use strict filters and dedupe

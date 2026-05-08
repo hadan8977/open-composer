@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EventRecord",
+  "type": "object",
+  "required": ["id", "source", "symbol", "published_at", "fetched_at", "event_type", "title", "summary", "dedupe_key"],
+  "properties": {
+    "id": {"type": "string"},
+    "source": {"type": "string"},
+    "symbol": {"type": "string"},
+    "published_at": {"type": "string", "format": "date-time"},
+    "fetched_at": {"type": "string", "format": "date-time"},
+    "event_type": {"type": "string"},
+    "title": {"type": "string"},
+    "summary": {"type": "string"},
+    "url": {"type": "string"},
+    "sentiment": {"enum": ["positive", "neutral", "negative", "unknown"]},
+    "relevance_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "dedupe_key": {"type": "string"},
+    "raw": {"type": "object"}
+  }
+}

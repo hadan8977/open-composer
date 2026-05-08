@@ -11,6 +11,8 @@
 - Generate a report for every backtest.
 - Log every signal before review or paper order submission.
 - Link journal entries and paper orders to signal IDs.
+- Choose data, event, macro, and news sources through `capabilities/registry.yaml`.
+- Run capability evaluation before adding a new required strategy capability.
 
 ## Safety
 - Real-money broker write access is out of scope for this MVP.

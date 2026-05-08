@@ -1,0 +1,55 @@
+name: memory_storage_momentum_15m
+description: Intraday MU momentum strategy for the memory/storage AI data-center theme.
+timeframe: 15m
+universe:
+- MU
+- WDC
+- STX
+lifecycle: draft
+entry:
+  all:
+  - close > ema(close, 8)
+  - ema(close, 5) > ema(close, 13)
+  - rsi(close, 6) > 55
+  - volume > sma(volume, 8)
+  any: []
+exit:
+  all: []
+  any:
+  - close < ema(close, 8)
+  - rsi(close, 6) > 88
+risk:
+  max_trades_per_day: 2
+  max_position_weight: 0.2
+  stop_loss_pct: 1.1
+  take_profit_pct: 3.2
+execution:
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: sample
+  symbol: MU
+  path: data/sample/mu_15m.csv
+  feed: null
+data_assumptions:
+  source: sample
+  adjusted: true
+  timezone: America/New_York
+llm_review:
+  enabled: true
+  model: gpt-5.5
+notes:
+  intent: Trade intraday continuation in memory/storage names when MU leads on price,
+    volume, and AI data-center context. Real trading remains manual.
+  open_questions:
+  - Confirm live Alpaca IEX coverage versus paid SIP before production use.
+  - Measure whether MU, WDC, or STX provides the cleanest intraday proxy.
+  - Keep news/event context as a filter and review input, not a sole entry rule.
+required_capabilities:
+- market.memory_storage_sample
+- events.sec_filings
+- macro.fred_series
+- news.alpha_vantage
+- news.gdelt

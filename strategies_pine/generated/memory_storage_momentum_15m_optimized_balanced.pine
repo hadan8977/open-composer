@@ -1,0 +1,13 @@
+//@version=6
+indicator("Memory Storage Momentum 15M Optimized Balanced", overlay=true)
+
+entryCondition = barstate.isconfirmed and (((close > ta.ema(close, 8)) and (ta.ema(close, 5) > ta.ema(close, 13)) and (ta.rsi(close, 6) > 55) and (volume > ta.sma(volume, 8))))
+exitCondition = barstate.isconfirmed and (((close < ta.ema(close, 8)) or (ta.rsi(close, 6) > 92)))
+
+plotshape(entryCondition, title="Entry", style=shape.triangleup, location=location.belowbar, color=color.new(color.green, 0), size=size.tiny)
+plotshape(exitCondition, title="Exit", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+alertcondition(entryCondition, title="memory_storage_momentum_15m_optimized_balanced entry", message="memory_storage_momentum_15m_optimized_balanced entry {ticker} {interval} close={close}")
+alertcondition(exitCondition, title="memory_storage_momentum_15m_optimized_balanced exit", message="memory_storage_momentum_15m_optimized_balanced exit {ticker} {interval} close={close}")
+
+// Assumptions: bar-close signals; Python backtests fill on next bar open.

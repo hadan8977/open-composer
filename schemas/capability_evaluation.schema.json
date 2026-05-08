@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CapabilityEvaluation",
+  "type": "object",
+  "required": ["capability_id", "status", "records", "score", "passed", "issues"],
+  "properties": {
+    "capability_id": {"type": "string"},
+    "status": {"type": "string"},
+    "records": {"type": "integer"},
+    "score": {"type": "number", "minimum": 0, "maximum": 1},
+    "passed": {"type": "boolean"},
+    "issues": {"type": "array", "items": {"type": "string"}},
+    "evaluated_at": {"type": "string", "format": "date-time"}
+  }
+}

@@ -17,13 +17,17 @@ from open_composer.adapters.broker.alpaca_paper import (
     sync_paper_orders,
 )
 from open_composer.adapters.data import fetch_ohlcv
+from open_composer.adapters.events import fetch_capability_events
+from open_composer.capabilities import evaluate_capabilities, load_registry
 from open_composer.compiler.spec_to_pine import compile_pine
 from open_composer.config import data_feed, ensure_dir, optional_env_status, project_root
+from open_composer.context import build_signal_context
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
 from open_composer.journal.writer import add_journal_entry
 from open_composer.models.strategy_spec import load_strategy_spec
-from open_composer.review.llm import review_signal_with_llm
+from open_composer.research import draft_strategy_from_idea, optimize_strategy
+from open_composer.review.llm import review_signal_with_status
 from open_composer.storage import find_signal
 
 app = typer.Typer(no_args_is_help=True)
@@ -32,6 +36,11 @@ data_app = typer.Typer(no_args_is_help=True)
 compile_app = typer.Typer(no_args_is_help=True)
 paper_app = typer.Typer(no_args_is_help=True)
 journal_app = typer.Typer(no_args_is_help=True)
+capability_app = typer.Typer(no_args_is_help=True)
+events_app = typer.Typer(no_args_is_help=True)
+macro_app = typer.Typer(no_args_is_help=True)
+context_app = typer.Typer(no_args_is_help=True)
+strategy_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -39,6 +48,11 @@ app.add_typer(data_app, name="data")
 app.add_typer(compile_app, name="compile")
 app.add_typer(paper_app, name="paper")
 app.add_typer(journal_app, name="journal")
+app.add_typer(capability_app, name="capability")
+app.add_typer(events_app, name="events")
+app.add_typer(macro_app, name="macro")
+app.add_typer(context_app, name="context")
+app.add_typer(strategy_app, name="strategy")
 
 
 @app.callback()
@@ -63,7 +77,14 @@ def doctor() -> None:
     sample_path = root / "data" / "sample" / "qqq_15m.csv"
     table.add_row("Sample data", "ok" if sample_path.exists() else "missing", str(sample_path))
     table.add_row(
-        "OPENAI_API_KEY", optional_env_status("OPENAI_API_KEY"), "optional for review cards"
+        "OPENAI_API_KEY",
+        optional_env_status("OPENAI_API_KEY"),
+        "optional for review cards; presence only",
+    )
+    table.add_row(
+        "OPENAI_BASE_URL",
+        optional_env_status("OPENAI_BASE_URL"),
+        "optional OpenAI-compatible gateway",
     )
     table.add_row("OPENAI_MODEL", os.getenv("OPENAI_MODEL", "gpt-5.5"), "default review model")
     table.add_row(
@@ -76,7 +97,47 @@ def doctor() -> None:
     )
     table.add_row("ALPACA_PAPER", os.getenv("ALPACA_PAPER", "true"), "must remain true for orders")
     table.add_row("ALPACA_DATA_FEED", data_feed(), "default feed")
+    table.add_row(
+        "ALPHA_VANTAGE_API_KEY", optional_env_status("ALPHA_VANTAGE_API_KEY"), "optional news"
+    )
+    table.add_row("FRED_API_KEY", optional_env_status("FRED_API_KEY"), "optional macro")
     console.print(table)
+
+
+@capability_app.command("list")
+def capability_list() -> None:
+    """List registered strategy/data capabilities."""
+    registry = load_registry(project_root())
+    table = Table(title="Open Composer Capabilities")
+    table.add_column("ID")
+    table.add_column("Kind")
+    table.add_column("Status")
+    table.add_column("Reliability")
+    table.add_column("Provider")
+    for capability in registry.capabilities:
+        table.add_row(
+            capability.id,
+            capability.kind,
+            capability.status,
+            capability.reliability,
+            capability.provider,
+        )
+    console.print(table)
+
+
+@capability_app.command("test")
+def capability_test() -> None:
+    """Evaluate capability fixtures for coverage, validity, and dedupe hygiene."""
+    evaluations = evaluate_capabilities(project_root())
+    failed = [evaluation for evaluation in evaluations if not evaluation.passed]
+    for evaluation in evaluations:
+        color = "green" if evaluation.passed else "red"
+        console.print(
+            f"[{color}]{evaluation.capability_id}[/{color}] "
+            f"score={evaluation.score:.2f} records={evaluation.records}"
+        )
+    if failed:
+        raise typer.Exit(code=1)
 
 
 @spec_app.command("validate")
@@ -107,6 +168,28 @@ def data_fetch(
     console.print(f"[green]fetched[/green] {len(frame)} bars for {symbol.upper()} {timeframe}")
 
 
+@events_app.command("fetch")
+def events_fetch(
+    source: str = typer.Option("sec", "--source"),
+    symbols: str = typer.Option("QQQ", "--symbols"),
+    offline: bool = typer.Option(True, "--offline/--live"),
+) -> None:
+    """Fetch or replay event/news records into raw event logs."""
+    selected_symbols = [symbol.strip().upper() for symbol in symbols.split(",") if symbol.strip()]
+    events = fetch_capability_events(source, project_root(), selected_symbols, offline=offline)
+    console.print(f"[green]events fetched[/green] source={source} records={len(events)}")
+
+
+@macro_app.command("fetch")
+def macro_fetch(
+    source: str = typer.Option("fred", "--source"),
+    offline: bool = typer.Option(True, "--offline/--live"),
+) -> None:
+    """Fetch or replay macro records into raw macro logs."""
+    events = fetch_capability_events(source, project_root(), None, offline=offline)
+    console.print(f"[green]macro fetched[/green] source={source} records={len(events)}")
+
+
 @app.command()
 def backtest(spec: Path) -> None:
     """Run a deterministic backtest from a StrategySpec."""
@@ -120,12 +203,18 @@ def backtest(spec: Path) -> None:
 
 
 @app.command()
-def scan(spec: Path) -> None:
+def scan(spec: Path, with_context: bool = typer.Option(False, "--with-context")) -> None:
     """Scan the latest bar for a StrategySpec."""
     signals = run_scan(spec)
     console.print(f"[green]scan complete[/green] signals={len(signals)}")
     for signal in signals:
         console.print(f"{signal.id} {signal.action} {signal.symbol} @ {signal.price:.2f}")
+        if with_context:
+            context = build_signal_context(signal.id, project_root())
+            console.print(
+                f"context: events={len(context.events)} macro={len(context.macro)} "
+                f"news={len(context.news)}"
+            )
 
 
 @compile_app.command("pine")
@@ -142,11 +231,48 @@ def review_signal(signal_id: str) -> None:
     signal = find_signal(signal_id, root)
     spec_path = _find_strategy_spec(signal.strategy_name, root)
     spec = load_strategy_spec(spec_path)
-    review = review_signal_with_llm(signal, spec, root)
-    if review is None:
-        console.print("[yellow]review skipped[/yellow] OPENAI_API_KEY missing or model refused")
+    result = review_signal_with_status(signal, spec, root)
+    if result.review is None:
+        console.print(f"[yellow]review skipped[/yellow] {result.message}")
         return
     console.print(f"[green]review written[/green] reports/reviews/{signal.id}.json")
+
+
+@context_app.command("build")
+def context_build(signal_id: str) -> None:
+    """Build a deterministic event/macro/news context packet for a signal."""
+    context = build_signal_context(signal_id, project_root())
+    console.print(
+        f"[green]context written[/green] reports/context/{signal_id}.json "
+        f"events={len(context.events)} macro={len(context.macro)} news={len(context.news)}"
+    )
+
+
+@strategy_app.command("draft")
+def strategy_draft(
+    idea: str = typer.Option(..., "--idea"),
+    use_llm: bool = typer.Option(False, "--use-llm"),
+) -> None:
+    """Draft a StrategySpec from a natural-language idea using registered capabilities."""
+    path = draft_strategy_from_idea(idea, project_root(), use_llm=use_llm)
+    spec = load_strategy_spec(path)
+    console.print(f"[green]draft written[/green] {path} ({spec.name})")
+
+
+@strategy_app.command("optimize")
+def strategy_optimize(
+    spec: Path,
+    min_return_pct: float = typer.Option(1.0, "--min-return-pct"),
+    min_signals: int = typer.Option(1, "--min-signals"),
+) -> None:
+    """Generate candidate rule variants and select the best deterministic backtest result."""
+    result = optimize_strategy(spec, project_root(), min_return_pct, min_signals)
+    console.print(
+        f"[green]optimized[/green] {result.best_spec_path} "
+        f"return={result.best_artifacts.run.total_return_pct:.2f}% "
+        f"signals={result.best_artifacts.run.signals}"
+    )
+    console.print(f"report: {result.report_path}")
 
 
 @paper_app.command("submit")
@@ -201,6 +327,12 @@ def _ensure_runtime_dirs(root: Path) -> None:
         "reports/reviews",
         "reports/weekly",
         "reports/paper",
+        "reports/capabilities",
+        "reports/context",
+        "reports/research",
+        "data/raw/events",
+        "data/raw/macro",
+        "event_logs",
         "signal_logs",
         "journal",
         "strategies_pine/generated",

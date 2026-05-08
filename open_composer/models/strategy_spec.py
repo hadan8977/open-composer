@@ -96,6 +96,7 @@ class StrategySpec(BaseModel):
     data_assumptions: DataAssumptions = Field(default_factory=DataAssumptions)
     llm_review: LLMReviewConfig = Field(default_factory=LLMReviewConfig)
     notes: NotesConfig = Field(default_factory=NotesConfig)
+    required_capabilities: list[str] = Field(default_factory=list)
 
     @field_validator("name")
     @classmethod

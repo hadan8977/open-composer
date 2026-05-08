@@ -7,7 +7,7 @@ from open_composer.engines.backtest_engine import run_backtest
 from open_composer.journal.writer import add_journal_entry
 from open_composer.models.review_card import ReviewCard
 from open_composer.models.strategy_spec import load_strategy_spec
-from open_composer.review.llm import review_signal_with_llm
+from open_composer.review.llm import review_signal_with_llm, review_signal_with_status
 
 
 class MockResponses:
@@ -56,6 +56,29 @@ def test_llm_review_skips_without_key(sample_workspace: Path, monkeypatch) -> No
     artifacts = run_backtest(spec_path, root=sample_workspace)
     spec = load_strategy_spec(spec_path)
     assert review_signal_with_llm(artifacts.signals[0], spec, sample_workspace) is None
+
+
+def test_llm_review_reports_auth_failure(sample_workspace: Path, monkeypatch) -> None:
+    class AuthenticationError(Exception):
+        status_code = 401
+
+    class MockResponses:
+        def parse(self, **kwargs: object) -> None:
+            raise AuthenticationError("Incorrect API key provided: redacted-secret")
+
+    monkeypatch.setenv("OPENAI_API_KEY", "redacted-secret")
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    artifacts = run_backtest(spec_path, root=sample_workspace)
+    spec = load_strategy_spec(spec_path)
+    client = SimpleNamespace(responses=MockResponses())
+
+    result = review_signal_with_status(
+        artifacts.signals[0], spec, sample_workspace, client=client, model="mock"
+    )
+
+    assert result.review is None
+    assert result.status == "auth_failed"
+    assert "redacted-secret" not in result.message
 
 
 def test_journal_entry_links_signal(sample_workspace: Path) -> None:
