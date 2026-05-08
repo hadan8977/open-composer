@@ -2,332 +2,408 @@
 
 Date: 2026-05-08
 
-## 1. 产品定义
+## 1. Product Statement
 
-Open Composer 是一个**面向个人使用的、对话式的策略工作台**。
+Open Composer 是一个个人使用的对话式 AI 策略工作台。
 
-它不是一个传统 dashboard，也不是一个自动交易机器人。它的核心是：
+MVP 将自然语言交易想法转成结构化 `StrategySpec`、Python 回测/扫描、TradingView Pine Script、信号日志、报告、LLM 审查卡和手动交易 journal。用户通过这些资产研究策略、观察信号、手动决策、记录结果并持续复盘。
 
-- 你用自然语言描述交易想法；
-- Codex 帮你把想法变成策略 spec、代码、测试和回测；
-- 系统把行情和事件转成候选信号；
-- LLM 只在需要时做结构化审查；
-- 你自己决定是否下单，系统负责记录和复盘。
+## 2. Target User
 
-## 2. 产品目标
+MVP 服务一个个人用户：
 
-MVP 的目标不是追求复杂度，而是建立一个可持续、可审计、可迭代的个人交易工作流。
+- 交易或学习美股、ETF；
+- 希望先手动执行交易；
+- 希望 Codex 生成和维护策略资产；
+- 希望 LLM 分析事件、新闻、财报和候选信号；
+- 希望用报告和 journal 建立可复盘的学习闭环；
+- 使用 15m、1h、daily、weekly 工作流，并谨慎使用 5m。
 
-具体目标：
+## 3. Product Problem
 
-1. 让用户可以用自然语言创建或修改策略。
-2. 让策略可以被代码化、测试化和回测化。
-3. 让系统能在 15m / 1h / daily 等周期上扫描候选信号。
-4. 让事件和文本信息可以进入策略判断。
-5. 让用户以 manual trading 方式完成最终执行。
-6. 让每次决策都可追溯、可复盘、可改进。
+用户有交易想法，也能和 AI 对话，但缺少稳定流程把想法转成可测试、可提醒、可复盘的策略资产。
 
-## 3. 目标用户
+核心问题：
 
-第一版只面向单个用户：
+- 策略想法停留在自然语言，难以验证和复用；
+- 代码生成结果缺少统一 schema、生命周期和测试；
+- TradingView 信号和 Python 回测容易语义漂移；
+- 新闻、财报、宏观等文本信息难以稳定进入策略流程；
+- 手动交易决策缺少结构化日志和周复盘；
+- 直接自动交易会放大模型、代码和用户经验的风险。
 
-- 有基本交易兴趣；
-- 不是专业量化团队；
-- 想借助 Codex 提高策略生成、整理和复盘效率；
-- 希望保持手动交易或低风险 paper 流程；
-- 不想被大型 Web 系统和复杂配置拖住。
+## 4. MVP Objective
 
-## 4. MVP 的产品假设
-
-如果我们把“策略生成”做成一个对话式流程，并用确定性 runner 保证执行和审计，那么：
-
-- 用户不需要懂完整的工程实现；
-- Codex 可以承担大部分策略工程工作；
-- 事件和文本可以通过 LLM 变成可用特征；
-- 人工只保留最终交易权和少量关键确认。
-
-这会比“先做完整 dashboard，再让人点来点去”更快形成可用闭环。
-
-## 5. 产品形式
-
-### 5.1 第一阶段的形式
-
-MVP 不是大 App。
-
-它采用以下组合：
-
-- 仓库即产品；
-- 文档即说明；
-- CLI / TUI 即操作入口；
-- JSON / YAML spec 即策略描述；
-- SQLite + 文件即状态与审计；
-- skills / MCP 即 Codex 的能力扩展；
-- 薄 UI 以后再补。
-
-### 5.2 为什么是这种形式
-
-- 比单纯项目文件夹更强，因为有清晰的工作流和硬约束；
-- 比只做 skills + MCP 更完整，因为有产品状态和运行闭环；
-- 比先做完整 Web App 更轻，因为把不确定性放在策略流程而不是 UI 上；
-- 最适合 Codex，因为 Codex 最强的是仓库内持续生成、修改、验证和复盘。
-
-## 6. 核心用户流程
-
-### 6.1 创建策略
-
-用户输入：
+MVP 验证这条闭环：
 
 ```text
-帮我做一个 15m QQQ pullback 策略，趋势过滤用 200 EMA，回撤后 RSI 修复进场，最多持仓 2 小时。
+Idea
+  -> StrategySpec
+  -> Python backtest/scanner
+  -> Pine Script export
+  -> signal parity report
+  -> signal log
+  -> optional LLM review card
+  -> manual trade journal
+  -> weekly Codex review
 ```
 
-系统行为：
+## 5. Value Proposition
 
-1. Codex 生成策略草案 spec。
-2. Codex 生成代码、测试和回测脚本。
-3. 系统验证 spec 和测试。
-4. 系统运行回测。
-5. 系统输出策略报告。
-6. 用户决定是否进入 approved。
+Open Composer 给用户一套可重复的策略工作流：
 
-### 6.2 激活扫描
+- 用 Codex 更快创建策略资产；
+- 用 `StrategySpec` 固化策略结构；
+- 用 Python 回测验证历史行为；
+- 用 Pine Script 支持 TradingView 图表提醒；
+- 用 signal parity report 管理 Python/Pine 差异；
+- 用 LLM review card 提升候选信号审查质量；
+- 用 journal 和周复盘提升纪律性、风控和学习效率。
 
-用户确认策略可用后：
+## 6. MVP Technical Architecture
 
-1. 将策略加入 active 列表。
-2. 定时 runner 在对应周期扫描 watchlist。
-3. 若出现候选信号，生成 signal card。
-4. LLM 在候选信号上做文本/事件审查。
-5. 输出 review card。
-6. 用户决定是否手动交易。
-
-### 6.3 交易记录
-
-用户交易后：
-
-- 记录是否执行；
-- 记录入场、出场和理由；
-- 记录是否因事件、风险或直觉而跳过；
-- 关联 signal、strategy version 和 review card。
-
-### 6.4 周期复盘
-
-每周或每月：
-
-- Codex 读取报表和 journal；
-- 找出有效信号和误判信号；
-- 找出用户偏差和策略偏差；
-- 给出下一轮优化建议；
-- 只生成 draft，不直接改 active 策略。
-
-## 7. MVP 功能范围
-
-### 7.1 必须有
-
-1. **策略 spec**
-   - 所有策略先写成结构化 spec。
-   - 包含 universe、timeframe、entry、exit、risk、data assumptions。
-
-2. **Codex 策略生成**
-   - 支持自然语言生成策略草案。
-   - 支持修改现有策略。
-   - 支持生成测试和报告。
-
-3. **回测**
-   - 支持 daily、1h、15m。
-   - 输出收益、回撤、胜率、交易数、样本区间和假设。
-
-4. **扫描**
-   - 支持 watchlist。
-   - 支持 bar close。
-   - 支持候选信号输出。
-
-5. **事件审查**
-   - 只在候选信号出现后调用 LLM。
-   - 输出结构化 review card。
-
-6. **journal**
-   - 记录手动交易、跳过原因和复盘注记。
-
-7. **weekly review**
-   - Codex 自动汇总本周信号和交易记录。
-   - 输出改进提案。
-
-8. **配置和检查**
-   - 能检查 key、数据源和运行状态；
-   - 能明确告诉用户哪些能力可用、哪些降级。
-
-### 7.2 可延后
-
-- 全功能 Web dashboard；
-- 自动 live trading；
-- 重型多 agent 协作；
-- Qlib 深度绑定；
-- 完整 broker 托管；
-- 高级组织权限；
-- 实时秒级决策。
-
-## 8. 产品对象
-
-### 8.1 关键对象
-
-- `StrategySpec`
-- `StrategyVersion`
-- `Signal`
-- `ReviewCard`
-- `EventFeature`
-- `TradeJournalEntry`
-- `BacktestReport`
-- `WeeklyReview`
-
-### 8.2 这些对象的关系
+### 6.1 System Layers
 
 ```text
-StrategySpec -> StrategyVersion -> BacktestReport
-StrategyVersion -> Signal -> ReviewCard -> TradeJournalEntry
-EventFeature -> Signal / ReviewCard
-TradeJournalEntry + BacktestReport -> WeeklyReview
+Codex workspace
+  AGENTS.md
+  repo skills
+  StrategySpec files
+  generated Python/Pine artifacts
+
+Deterministic runner
+  spec validation
+  indicators
+  signal engine
+  backtest engine
+  scanner
+  report writer
+  journal writer
+
+Optional intelligence services
+  LLM review cards
+  MCP research/data tools
+
+External user tools
+  TradingView Pine alerts
+  future data providers
+  future paper tracking
 ```
 
-## 9. 交互原则
+### 6.2 Codex Layer
 
-1. 用户主要说自然语言，不需要手动穿透每一层模块。
-2. Codex 负责把自然语言变成可执行资产。
-3. 系统优先输出结构化结果，再输出解释。
-4. 任何会影响交易决策的内容都必须可追溯。
-5. 任何默认动作都应偏保守。
-6. 任何自动执行都默认关闭。
+Codex 负责生成、修改和验证仓库资产：
 
-## 10. 约束和边界
+- 读取 `AGENTS.md` 获取全局产品规则；
+- 通过 `.agents/skills/*/SKILL.md` 执行专门任务；
+- 生成 `StrategySpec`、Python、Pine、测试、报告和复盘；
+- 运行 CLI 和测试，修复失败结果；
+- 在周复盘中提出策略改进草案。
 
-### 10.1 绝不作为 MVP 默认能力的内容
-
-- 不给模型 live broker 写权限；
-- 不做全市场高频扫描；
-- 不做 1m / tick 级决策；
-- 不做“LLM 说了算”的自动买卖；
-- 不做没有审计的黑盒策略；
-- 不做默认打开的自动下单；
-- 不把复杂 UI 当成第一优先级。
-
-### 10.2 必须长期保留的边界
-
-- 策略 spec 必须版本化；
-- 回测必须可复现；
-- 事件审查必须带证据；
-- journal 必须能追溯；
-- active 策略必须经过确认；
-- 风险规则必须先于执行。
-
-## 11. 推荐的技术组织方式
-
-### 11.1 Codex 的位置
-
-Codex 是策略工程师和复盘工程师，不是执行引擎。
-
-它最适合做：
-
-- 生成策略草案；
-- 生成和修改代码；
-- 跑测试；
-- 跑回测；
-- 生成报告；
-- 周期复盘；
-- 改进策略结构。
-
-### 11.2 skills 的位置
-
-skills 用来把重复工作流程固化成任务单元，例如：
+第一批 repo skills：
 
 - `strategy-designer`
-- `backtest-reviewer`
-- `event-analyst`
+- `python-backtest-writer`
+- `pine-exporter`
+- `signal-parity-reviewer`
 - `risk-reviewer`
 - `weekly-reviewer`
 
-### 11.3 MCP 的位置
+### 6.3 StrategySpec Layer
 
-MCP 用来接数据和工具，例如：
+`StrategySpec` 是策略真源。
 
-- 行情；
-- 财报；
-- 新闻；
-- SEC 文档；
-- paper 账户信息；
-- 研究查询工具。
+它描述：
 
-默认只读，先不接写权限。
+- `name`
+- `timeframe`
+- `universe`
+- `entry`
+- `exit`
+- `risk`
+- `execution`
+- `data_assumptions`
+- `notes`
+- `lifecycle`
 
-### 11.4 Runner 的位置
+Python 和 Pine 都从同一份 spec 生成或对齐。
 
-runner 负责真正的确定性执行：
+### 6.4 Runner Layer
 
-- 拉数据；
-- 算指标；
-- 扫信号；
-- 触发 review；
-- 写审计记录；
-- 输出报告。
+Runner 是本地确定性执行骨架。
 
-## 12. 成功标准
+MVP 使用轻量 Python 实现：
 
-MVP 成功的最低标准是：
+- Python 3.11+；
+- `typer` CLI；
+- `pydantic` 或 `jsonschema` 做 schema validation；
+- `pandas` / `numpy` 做 OHLCV、指标和信号计算；
+- `PyYAML` 读取策略；
+- `pytest` 和 `ruff` 做验证。
 
-1. 用户能在较短时间内创建第一条策略。
-2. 不依赖复杂配置就能跑 sample strategy。
-3. 能输出可读回测报告。
-4. 能对 15m / 1h 信号进行扫描。
-5. 能生成 review card。
-6. 能记录手动交易和跳过原因。
-7. 能做周复盘并提出改进建议。
+Runner 提供：
 
-## 13. 第一版不追求的事
+- `oc doctor`
+- `oc spec validate`
+- `oc backtest`
+- `oc scan`
+- `oc compile pine`
+- `oc journal add`
 
-第一版不追求：
+### 6.5 Pine Layer
 
-- 复杂 UI；
-- 多人协作；
-- 自动赚钱神话；
-- 所有市场都覆盖；
-- 所有策略都通吃；
-- 所有决策都自动化。
+Pine export 负责 TradingView 侧观察和提醒：
 
-第一版只追求一个事实：
+- 生成 Pine Script；
+- 生成 `alertcondition`；
+- 使用 bar-close 语义；
+- 输出 repaint、lookahead、fill assumption 说明；
+- 与 Python signal log 做 parity 对照。
 
-> 用户可以用自然语言持续生成、优化、验证、审查和复盘策略，并在 manual trading 场景里形成稳定闭环。
+### 6.6 LLM API Layer
 
-## 14. 分阶段路线
+LLM API 负责轻量结构化智能任务：
 
-### Phase 0
+- 新闻和事件摘要；
+- 财报和公告结构化；
+- 候选信号审查；
+- 风险解释；
+- 反方观点；
+- invalidation 条件；
+- 手动动作建议。
 
-- 确定产品语言和目录结构；
-- 建立 spec 和 report 规范；
-- 建立 sample strategy。
+输出采用 JSON schema 或 Markdown 模板，保存到 `reports/reviews/`。
 
-### Phase 1
+### 6.7 MCP Layer
 
-- 完成策略生成、回测、扫描、journal；
-- 完成一条最短闭环。
+MCP 负责给 Codex 连接外部上下文和工具：
 
-### Phase 2
+- OpenAI Docs MCP；
+- 金融数据/新闻 MCP；
+- GitHub MCP；
+- 浏览器/TradingView 辅助工具；
+- 后续 Alpaca/OpenBB/Polygon 工具。
 
-- 加入事件审查和 review card；
-- 加入 weekly review。
+MVP 的本地样例路径使用 sample data 保持可运行。MCP 在真实数据、研究扩展和平台集成阶段发挥作用。
 
-### Phase 3
+### 6.8 Data And Adapter Roadmap
 
-- 增加 MCP 数据源；
-- 增加 paper tracking；
-- 增加薄 UI。
+数据和执行能力按阶段接入：
 
-### Phase 4
+| 阶段 | 能力 | 工具 |
+|---|---|---|
+| MVP | sample OHLCV、本地扫描、Pine export | pandas, local CSV |
+| Data Adapter | 美股历史/实时数据 | Alpaca, Polygon, OpenBB |
+| Research Adapter | 参数扫描、组合研究 | vectorbt |
+| Paper Tracking | paper account 状态和订单记录 | Alpaca |
+| Paper Execution | approval-gated paper execution | Lumibot + Alpaca |
+| ML Research | 因子、横截面 alpha、模型训练 | Qlib |
+| Mature Engine | 复杂事件驱动和部署 | LEAN |
 
-- 再考虑更强的策略库、更完整的市场覆盖和更细的工作流。
+## 7. MVP Scope
 
-## 15. 与现有产品的差异
+### 7.1 Core Features
 
-- 比 Composer 更个人化、更开放、更适合 Codex 驱动的工程工作流；
-- 比 TradingView 更偏策略生成和复盘，而不是只看图表；
-- 比 Capitalise.ai 更适合复杂事件和策略工程；
-- 比 QuantConnect 更轻，适合第一版个人工作台；
-- 比 EvoQ 原方案更贴近你的真实使用方式。
+1. **StrategySpec**
+   - YAML 策略定义。
+   - 覆盖 universe、timeframe、entry、exit、risk、execution、data assumptions 和 lifecycle。
+
+2. **Spec Validation**
+   - JSON Schema 或 Pydantic validation。
+   - 生命周期状态：draft、approved、active、retired。
+
+3. **Codex Strategy Workflow**
+   - Repo skills 指导 Codex 创建和修改策略资产。
+   - Codex 写 spec、Python、Pine、测试、报告和复盘。
+
+4. **Python Backtest / Scanner**
+   - 从 sample data 开始。
+   - 支持 15m、1h、daily 样例。
+   - 产出 signal logs 和 backtest reports。
+
+5. **Pine Script Export**
+   - 生成 TradingView-ready Pine Script。
+   - 生成手动交易 alert 条件。
+
+6. **Signal Parity**
+   - 对照 Python signal log 和 Pine 语义。
+   - 记录时间、bar close、fill assumption 和 repaint 风险。
+
+7. **Reports**
+   - 每次 backtest 生成 Markdown report。
+   - 包含假设、指标、信号数量、风险和下一步。
+
+8. **Journal**
+   - 记录手动交易、跳过信号、入场/出场备注和结果。
+
+9. **LLM Review Card**
+   - 对候选信号生成结构化审查。
+   - 覆盖 catalyst、risk、invalidation、evidence 和 action suggestion。
+
+10. **Doctor Command**
+    - 检查本地环境、依赖、sample data 和可选 API key。
+
+### 7.2 Later Features
+
+这些能力在 MVP 闭环可运行后接入：
+
+- Alpaca / Polygon / OpenBB 真实数据；
+- VPS scanner 和通知；
+- TradingView webhook ingestion；
+- Alpaca paper account tracking；
+- Lumibot paper execution adapter；
+- vectorbt parameter sweeps；
+- Qlib factor/ML research adapter；
+- reports/signals thin UI。
+
+## 8. Product Objects
+
+| Object | Purpose |
+|---|---|
+| `StrategySpec` | 策略真源 |
+| `StrategyVersion` | spec 的版本化实现 |
+| `BacktestRun` | 历史测试结果 |
+| `Signal` | scanner 产生的候选市场事件 |
+| `ReviewCard` | LLM 生成的结构化上下文审查 |
+| `TradeJournalEntry` | 用户决策和结果记录 |
+| `WeeklyReview` | 周期改进总结 |
+
+## 9. Key User Journeys
+
+### 9.1 Create Strategy
+
+```text
+User describes a strategy idea.
+Codex writes a draft StrategySpec.
+System validates the spec.
+Codex generates Python and Pine artifacts.
+System runs backtest.
+Report explains behavior and risks.
+```
+
+### 9.2 Promote Strategy
+
+```text
+User reviews report.
+Spec and code pass validation.
+Strategy moves from draft to approved.
+User explicitly activates it for scanning.
+```
+
+### 9.3 Scan And Review Signal
+
+```text
+Runner scans active strategy.
+Signal is logged.
+LLM review card is generated when enabled.
+User receives signal and context.
+User trades manually or skips.
+```
+
+### 9.4 Journal And Improve
+
+```text
+User records action and outcome.
+Codex reads reports and journal.
+Weekly review proposes improvements.
+New ideas become draft strategy changes.
+```
+
+## 10. Acceptance Criteria
+
+MVP 完成条件：
+
+1. Fresh clone 可以运行 `oc doctor`。
+2. 样例 `StrategySpec` 通过 schema validation。
+3. Codex 可以根据自然语言 prompt 生成 draft spec。
+4. 系统可以从 spec 生成或对齐 Python 策略逻辑。
+5. 系统可以从同一份 spec 生成 Pine Script。
+6. 样例 backtest 生成 Markdown report。
+7. scanner 生成 signal log。
+8. journal entry 可以关联到 signal。
+9. weekly review 可以总结 reports 和 journal。
+10. 配置 API key 后，LLM review 输出 schema-valid review card。
+
+## 11. Implementation Phases
+
+### Phase 0: Repository Skeleton
+
+- README；
+- AGENTS.md；
+- `.agents/skills`；
+- `pyproject.toml`；
+- CLI skeleton；
+- schemas；
+- sample data；
+- reports and journal folders。
+
+### Phase 1: Strategy Loop
+
+- StrategySpec schema；
+- sample strategy；
+- spec validation；
+- Python indicator functions；
+- Python backtest/scanner；
+- Pine export；
+- backtest report；
+- signal log；
+- journal entry。
+
+### Phase 2: Codex Workflow
+
+- strategy-designer skill；
+- python-backtest-writer skill；
+- pine-exporter skill；
+- signal-parity-reviewer skill；
+- weekly-reviewer skill；
+- AGENTS.md lifecycle and verification rules。
+
+### Phase 3: Review And Notifications
+
+- review card schema；
+- LLM review service；
+- local notification；
+- weekly review command。
+
+### Phase 4: Data And Deployment
+
+- Alpaca/Polygon/OpenBB data adapters；
+- VPS scanner；
+- TradingView webhook log ingestion。
+
+### Phase 5: Execution And Research Adapters
+
+- Alpaca paper tracking；
+- Lumibot paper execution adapter；
+- vectorbt parameter research；
+- Qlib factor/ML research adapter。
+
+## 12. Operating Principles
+
+- `StrategySpec` is the source of truth.
+- Python and Pine artifacts come from the same spec.
+- Signals are logged before review.
+- LLM review is structured and evidence-based.
+- Journal entries preserve user decisions.
+- Active strategy changes use lifecycle controls.
+- Broker write access is introduced through a later approval-gated adapter.
+- Every feature has a CLI path before a UI path.
+
+## 13. Documentation Standard
+
+本文档采用以下标准：
+
+- 先定义产品、用户和问题；
+- 再定义技术架构、范围和流程；
+- 用验收条件约束 MVP 完成状态；
+- 把背景研究放在 Context Summary；
+- 把具体实现步骤放在 Build Handoff；
+- 保持文档可被新会话独立读取。
+
+## 14. Sources
+
+- Atlassian PRD guidance: https://www.atlassian.com/agile/product-management/requirements
+- Diátaxis documentation framework: https://diataxis.fr/
+- OpenAI Codex AGENTS.md: https://developers.openai.com/codex/guides/agents-md
+- OpenAI Codex Skills: https://developers.openai.com/codex/skills
+- OpenAI Codex MCP: https://developers.openai.com/codex/mcp

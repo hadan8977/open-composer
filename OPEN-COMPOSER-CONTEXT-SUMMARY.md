@@ -2,230 +2,221 @@
 
 Date: 2026-05-08
 
-## 1. 背景
+## 1. Executive Conclusion
 
-Open Composer 的出发点不是再做一个 dashboard，也不是做一个自动下单机器人。
-
-用户真正想要的是一种个人可用的、对话式的策略工作台：
-
-- 用自然语言和 Codex 讨论策略；
-- 让 Codex 在受约束的仓库里生成代码、测试、回测和报告；
-- 用确定性扫描器和事件分析模块把市场信息变成信号；
-- 保持手动交易或严格受控的 paper 流程；
-- 持续复盘、修正和沉淀策略经验。
-
-这个方向的核心变化是：
-
-1. 重点从“展示型产品”转为“可审计的策略工作台”。
-2. 重点从“让人手动操作系统”转为“让 Codex 代替大部分工程和策略整理工作”。
-3. 重点从“全自动交易”转为“信号生成 + 人工决策 + 复盘闭环”。
-
-## 2. 最终结论
-
-研究和讨论之后，最合适的形态不是单独的 App，也不是只靠一个项目文件夹，更不是单靠 skills 或 MCP。
-
-最合适的是一个 **repo-native 的混合式工作台**：
-
-- 仓库本身就是产品；
-- Codex 负责策略工程、测试、回测、改写和复盘；
-- skills 负责封装工作流；
-- MCP 负责接外部工具和数据；
-- schema、runner、测试和权限负责硬约束；
-- LLM 只在候选信号和文本分析上发挥作用；
-- 人始终保留最终交易决定权。
-
-这也是最能发挥 Codex 优势的方式。
-
-## 3. 调研结论
-
-### 3.1 更接近目标的产品
-
-**Composer**
-
-- 最接近“自然语言生成策略”的体验。
-- 优点是策略编排和回测路径清晰。
-- 局限是更偏低频、组合编排和封闭产品体验。
-- 不适合作为 15m/1h 的个人事件+技术混合工作台直接照搬。
-
-**Capitalise.ai**
-
-- 更像自然语言交易/提醒语法。
-- 更适合“先提醒、后决定”的 manual trading 场景。
-- 但它是闭源且能力边界固定。
-
-**TrendSpider**
-
-- 更强在技术分析、策略测试和提醒。
-- 适合主动交易和多周期观察。
-- 但不是完整的 LLM 策略工程系统。
-
-**LevelFields**
-
-- 强在事件驱动分析。
-- 适合把大量文本、财报、事件映射成可交易信号。
-- 但它是事件层，不是完整的策略工程台。
-
-**TradingView**
-
-- 适合提醒、图表、Webhook 和 chart side 触发。
-- 适合作为信号出口，不适合作为策略真源。
-
-**QuantConnect / LEAN**
-
-- 是成熟量化平台。
-- 更适合后期成熟策略和更正式的研究流程。
-- 对个人早期原型来说太重。
-
-**OpenBB / Financial Datasets / Alpaca**
-
-- 更像数据与工具层，不是完整产品。
-- 适合被集成进个人策略工作台。
-
-### 3.2 论文和研究的共同结论
-
-从相关论文和行业讨论看，LLM 最有价值的地方不是“自己直接交易”，而是：
-
-- 把非结构化文本转成结构化特征；
-- 做事件分类和摘要；
-- 做策略改写和研究辅助；
-- 对候选信号做上下文审查；
-- 帮人复盘和发现策略失效模式。
-
-比较稳定的结论是：
-
-- 纯 LLM 直接做交易，不稳定；
-- 纯量化系统直接忽略事件，也不完整；
-- 更好的方式是“LLM 转信号，量化负责执行逻辑”；
-- 在较低频或 manual trading 场景下，LLM 适合做审查、解释和编排建议；
-- 在高频或秒级场景下，LLM 不合适。
-
-## 4. 产品边界
-
-### 4.1 要做什么
-
-Open Composer 要做的是：
-
-- 把自然语言变成策略草案；
-- 把草案变成可测试、可回测的策略代码；
-- 把市场、新闻、财报、宏观信息转成结构化事件；
-- 在候选信号出现后生成 review card；
-- 帮用户做 manual trading 的决策辅助；
-- 记录交易和复盘；
-- 让 Codex 持续改进策略。
-
-### 4.2 不做什么
-
-以下内容不应作为 MVP 的默认目标：
-
-- 不做自动 live trading；
-- 不做 1m / tick 级高频策略；
-- 不做 LLM 全市场持续扫描；
-- 不做把 broker 写权限直接交给模型；
-- 不做重 dashboard-first 架构；
-- 不做默认多 agent 辩论式系统；
-- 不做 Qlib-first 的重型研究框架绑定；
-- 不做把所有判断都交给 LLM；
-- 不做默认全自动执行和持仓管理。
-
-## 5. 角色分工
-
-| 层级 | 角色 | 主要职责 | 不负责 |
-|---|---|---|---|
-| Codex | 策略工程师 | 生成/修改策略、测试、回测、报告、复盘 | 直接下单、实时扫描全市场 |
-| LLM API | 文本/事件分析器 | 新闻摘要、事件提取、review card | 写策略代码、自动下单 |
-| MCP | 工具层 | 接数据源、接研究工具、接 paper 账户信息 | 作为治理层 |
-| Runner | 确定性执行层 | 扫描、回测、生成信号、写审计记录 | 做主观判断 |
-| Human | 最终决策者 | 是否交易、是否接受策略、是否激活 | 替代不了 |
-
-## 6. 推荐架构
-
-推荐结构是：
+Open Composer 的产品方向是：
 
 ```text
-项目仓库 = 产品本体
-AGENTS.md / CLAUDE.md = Codex 工作约束
-skills = 可复用工作流
-schemas = 硬格式约束
-runners = 确定性执行
-SQLite + files = 状态与审计
-MCP = 外部工具层
-LLM = 结构化审查和事件分析
+个人使用的对话式 AI 策略工作台。
 ```
 
-这个结构的优点是：
+它把自然语言交易想法转成可验证、可提醒、可复盘的策略资产。第一版围绕美股/ETF、手动交易、15m/1h/daily/weekly 频率、Codex 仓库工作流和 TradingView 图表提醒展开。
 
-- 足够轻；
-- 足够可控；
-- 足够可审计；
-- 足够适合个人使用；
-- 足够能发挥 Codex 的工程能力。
+核心判断：
 
-## 7. 频率判断
+- `StrategySpec` 是策略真源。
+- Codex 是策略工程师，负责编写 spec、代码、Pine、报告、测试和复盘。
+- Python runner 是确定性执行骨架，负责回测、扫描、日志和报告。
+- Pine Script 是手动交易提醒层，负责图表侧观察和 alert 条件。
+- LLM API 是事件分析和候选信号审查层，负责结构化文本、风险解释和反方观点。
+- MCP 是外部工具和数据连接层，给 Codex 提供文档、市场数据、研究材料和平台操作能力。
+- 用户保留最终交易决定，系统保留完整信号和决策记录。
 
-### 适合 LLM 深度参与
+## 2. Background
 
-- 日频；
-- 周频；
-- 1 小时；
-- 15 分钟的候选信号审查；
-- 事件驱动、财报驱动、宏观驱动场景。
+项目方向来自一次产品重估。
 
-### 可以支持但要强约束
+原始系统偏 dashboard、模块配置和运行时治理，实际目标更接近一个个人可用的 Composer-like 工作台：用户通过自然语言持续生成策略、验证策略、观察信号、记录决策、复盘改进。
 
-- 5 分钟；
-- 只做 bar close；
-- 先 deterministic 过滤，再 LLM 审查；
-- 只处理 watchlist，而不是全市场。
+Open Composer 的使命：
 
-### 不建议
+```text
+把交易想法变成结构化策略资产，并围绕策略资产建立测试、提醒、审查和学习闭环。
+```
 
-- 1 分钟；
-- tick 级；
-- 需要极低延迟的自动决策。
+## 3. Target User
 
-## 8. 技术和产品原则
+目标用户是个人交易学习者：
 
-- 策略必须先变成 spec；
-- spec 必须可校验；
-- 代码必须可测试；
-- 回测必须可复现；
-- 信号必须可追溯；
-- review 必须结构化；
-- 交易必须可手动确认；
-- 复盘必须可沉淀；
-- 所有 LLM 输出必须附带证据、时间戳和版本信息。
+- 关注美股、ETF 和事件驱动机会；
+- 具备基础交易知识和学习意愿；
+- 希望用 Codex 生成和维护策略代码；
+- 希望用 LLM 处理新闻、财报、宏观和市场上下文；
+- 倾向先手动交易，用人工确认降低自动化风险；
+- 关注 15m、1h、daily、weekly，谨慎探索 5m；
+- 需要报告、日志和复盘来提升纪律性和学习效率。
 
-## 9. 为什么最终选这个方向
+## 4. Market And Tool Research
 
-因为它最符合下面四个要求：
+### 4.1 Composer
 
-1. 适合个人独用。
-2. 能最大化发挥 Codex 的代码和工程能力。
-3. 能保留自然语言交互。
-4. 能把风险控制在可审计、可复现、可人工兜底的范围内。
+Composer 提供自然语言创建策略、结构化策略编辑和回测体验。它证明了“对话生成策略 + 结构化策略表示 + 回测”的产品路径。
 
-## 10. 后续扩展方向
+Open Composer 的对应设计：
 
-后续如果需要，可以再加：
+- 用 `StrategySpec` 承载结构化策略。
+- 用 Codex 生成策略资产。
+- 用 Python runner 和 Pine export 形成可验证、可观察的执行材料。
 
-- 轻量 UI；
-- TradingView webhook；
-- Alpaca paper tracking；
-- Qlib adapter；
-- 更完整的 event pipeline；
-- 更成熟的策略库和回测库。
+### 4.2 Capitalise.ai
 
-## 11. 参考来源
+Capitalise.ai 的 Smart Notifications 支持自然语言条件、技术指标和宏观新闻事件提醒。它证明了“条件策略 + 提醒 + 人工动作”适合交易学习者和手动交易者。
 
-- OpenAI Codex CLI
-- OpenAI AGENTS.md
-- OpenAI Codex skills
-- OpenAI Codex MCP
-- OpenAI Codex hooks
-- OpenAI Structured Outputs
-- MCP tools specification
-- OpenBB MCP docs
-- Alpaca MCP server docs
-- Alpaca paper trading docs
-- Alpaca real-time news docs
-- 已完成的 LLM + Quant research notes
+Open Composer 的对应设计：
+
+- 第一版采用 `manual_signal` 执行模式。
+- 每个信号进入 `signal_logs/`。
+- LLM review card 为信号补充上下文和风险解释。
+
+### 4.3 TradingView
+
+TradingView 提供 Pine Script、图表、alerts 和 webhook。它是手动交易者熟悉的观察与提醒环境。
+
+Open Composer 的对应设计：
+
+- 从 `StrategySpec` 导出 Pine Script。
+- Pine 使用 bar-close alert 语义。
+- Python/Pine 之间生成 parity 报告，跟踪信号差异。
+
+### 4.4 Codex, AGENTS.md, Skills, MCP
+
+OpenAI 官方文档给出的 Codex 扩展方式包括：
+
+- `AGENTS.md`：项目级长期指令和约束；
+- Skills：可复用的任务工作流，按需加载 `SKILL.md`；
+- MCP：连接第三方工具、文档、浏览器、数据服务和平台 API。
+
+Open Composer 的对应设计：
+
+- `AGENTS.md` 固化项目边界、验证要求和安全规则。
+- `.agents/skills/*/SKILL.md` 固化策略设计、回测编写、Pine 导出、风险审查、周复盘等任务。
+- `.codex/config.example.toml` 给出可选 MCP 配置示例。
+- 核心 MVP 用本地 sample data 保持可运行；外部 MCP 在后续适配器阶段扩展。
+
+### 4.5 Alpaca, Lumibot, vectorbt, Qlib, LEAN
+
+这些工具在路线中承担不同层级：
+
+| 工具 | 推荐位置 | 作用 |
+|---|---|---|
+| Alpaca | 后续数据和 paper tracking adapter | paper account、订单记录、市场数据 |
+| Lumibot | 后续 paper execution adapter | 策略生命周期和 Alpaca 执行封装 |
+| vectorbt | 后续 research adapter | 快速参数扫描和组合研究 |
+| Qlib | 高级 research adapter | ML 因子研究、横截面 alpha、模型训练 |
+| LEAN | 成熟部署 adapter | 事件驱动引擎、复杂订单、长期工程化部署 |
+
+第一版采用轻量 Python signal/backtest/scanner engine 作为产品内核。它让 `StrategySpec`、Pine export、signal log 和 journal 先形成闭环，再逐步接入外部引擎。
+
+## 5. LLM + Quant Research View
+
+LLM 与量化交易结合的主流价值集中在：
+
+- 自然语言策略生成；
+- 金融文本和事件抽取；
+- 候选信号上下文审查；
+- 策略日志和交易复盘；
+- 人机协作式 alpha/策略研究；
+- 用代码代理生成、测试和维护策略资产。
+
+Open Composer 的系统模式：
+
+```text
+Codex 生成策略资产
+Python 确定性验证和扫描
+LLM 结构化文本/事件并审查候选信号
+用户记录最终决策和交易结果
+Codex 周期性复盘并提出策略改进草案
+```
+
+## 6. Product Architecture
+
+```text
+Natural-language idea
+  -> Codex strategy-designer skill
+  -> StrategySpec YAML
+  -> spec validation
+  -> Python signal/backtest/scanner engine
+  -> Pine Script export
+  -> signal parity report
+  -> signal log
+  -> optional LLM review card
+  -> manual trade journal
+  -> weekly Codex review
+```
+
+## 7. StrategySpec
+
+`StrategySpec` 是策略真源。
+
+它表达：
+
+- 标的池；
+- 时间周期；
+- 入场规则；
+- 出场规则；
+- 风控规则；
+- 数据假设；
+- 执行模式；
+- 信号确认方式；
+- 生命周期状态；
+- 人类可读的策略意图和假设。
+
+## 8. Codex And LLM Division
+
+| 场景 | 使用 Codex | 使用 LLM API |
+|---|---|---|
+| 生成或修改策略 spec | 是 | 可辅助生成草稿 |
+| 编写 Python / Pine / 测试 | 是 | 辅助解释 |
+| 运行回测并修复失败 | 是 | 辅助总结 |
+| 快速审查一个候选信号 | 可用 | 是 |
+| 结构化新闻/财报/宏观内容 | 可用 | 是 |
+| 周复盘和改进草案 | 是 | 可提供总结输入 |
+| 外部平台和数据连接 | 通过 MCP/脚本 | 通过 API 输出结构化结果 |
+
+Codex 适合重型文件工作、代码生成、测试和长期策略资产维护。LLM API 适合轻量、快速、结构化的事件理解和候选信号审查。
+
+## 9. Frequency View
+
+| 频率 | 产品定位 |
+|---|---|
+| weekly | 策略复盘、组合观察、宏观和事件总结 |
+| daily | 策略研究、事件跟踪、低频信号 |
+| 1h | 技术信号 + LLM 上下文审查 |
+| 15m | 第一版主动信号重点频率 |
+| 5m | 小 watchlist、bar-close、强过滤场景 |
+| 1m / tick | 后续研究议题 |
+
+## 10. Documentation Design Basis
+
+这组文档按以下原则组织：
+
+- README 是入口和当前状态说明。
+- Product MVP 是产品定义、用户、范围、架构、流程和验收。
+- Build Handoff 是新 Codex 会话的实现指令。
+- Context Summary 是背景研究、产品判断和来源解释。
+
+调研依据：
+
+- PRD 应定义产品目的、功能、行为、用户需求和成功标准。
+- MVP 文档应给出足够上下文，同时保持可更新和可执行。
+- 技术文档应区分教程、操作指南、参考和解释。
+- Codex 项目应通过 `AGENTS.md` 固化长期规则，通过 Skills 固化可复用任务，通过 MCP 连接外部工具和上下文。
+
+## 11. Sources
+
+- Atlassian PRD guidance: https://www.atlassian.com/agile/product-management/requirements
+- Diátaxis documentation framework: https://diataxis.fr/
+- OpenAI Codex AGENTS.md: https://developers.openai.com/codex/guides/agents-md
+- OpenAI Codex Skills: https://developers.openai.com/codex/skills
+- OpenAI Codex MCP: https://developers.openai.com/codex/mcp
+- OpenAI Skills catalog: https://github.com/openai/skills
+- Composer Create with AI: https://help.composer.trade/article/108-create-with-ai
+- Composer product site: https://www.composer.trade/
+- Capitalise.ai Smart Notifications: https://support.capitalise.ai/en/articles/3339296-smart-notifications
+- TradingView Strategy Alerts: https://www.tradingview.com/support/solutions/43000481368-strategy-alerts/
+- TradingView Webhook Alerts: https://www.tradingview.com/support/solutions/43000529348-how-to-configure-webhook-alerts/
+- Alpaca Paper Trading: https://docs.alpaca.markets/docs/trading/paper-trading/
+- Lumibot Backtesting: https://lumibot.lumiwealth.com/backtesting.html
+- vectorbt: https://vectorbt.dev/
+- Microsoft Qlib: https://github.com/microsoft/qlib
+- Qlib paper: https://arxiv.org/abs/2009.11189
