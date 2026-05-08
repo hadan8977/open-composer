@@ -61,6 +61,32 @@ Start with two overlays, both triggered by the existing underlying equity signal
 
 Do not implement naked short options, cash-secured puts, covered calls, calendars, straddles, or iron condors in the first pass.
 
+## Implemented Research Pass
+
+The product now has a paper/research-only options overlay optimizer:
+
+```bash
+uv run oc options optimize \
+  strategy_specs/drafts/memory_storage_momentum_15m_mu_alpaca_optimized_opening_continuation.yaml \
+  strategy_specs/drafts/memory_storage_momentum_15m_sndk_alpaca_optimized_trend_hold.yaml \
+  strategy_specs/drafts/memory_storage_momentum_15m_wdc_alpaca_optimized_volume.yaml \
+  strategy_specs/drafts/memory_storage_momentum_15m_stx_alpaca_optimized_opening_continuation.yaml \
+  --max-premium-weight 0.03
+```
+
+It creates `OptionOverlaySpec` files in `strategy_specs/options/`, runs long-call and debit-call-spread candidates, and writes reports under `reports/options/` plus the summary at `reports/research/memory_storage_options_overlay_optimization.md`.
+
+Latest result using the same approximate 30-calendar-day Alpaca IEX 15m window:
+
+- `MU`: best option overlay `long_call_otm_liquid_30d`, return `0.02%`, 6 option trades, versus `7.83%` underlying equity strategy return.
+- `SNDK`: best option overlay `debit_spread_otm_30d`, return `-2.16%`, 2 option trades, versus `4.43%` underlying equity strategy return.
+- `WDC`: best option overlay `long_call_atm_30d`, return `-3.21%`, 14 option trades, versus `2.13%` underlying equity strategy return.
+- `STX`: best option overlay `long_call_atm_30d`, return `0.00%`, no executable option trades, versus `1.68%` underlying equity strategy return.
+
+Conclusion: the first direct conversion from 15m stock momentum entries into 30D call/spread overlays did not improve the strategy. Under the current assumptions, options amplify transaction cost, theta, and churn more than they amplify the edge. These outputs should remain research artifacts, not active paper strategies.
+
+The next useful optimization is not "use more premium." A 10% premium budget test was materially worse. The next iteration should first reduce signal churn: require stronger trend persistence, minimum expected holding time, wider exits, and real option-chain liquidity filters before considering paper option orders.
+
 ## Required Product Work
 
 Add models:

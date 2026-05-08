@@ -33,6 +33,7 @@ def sample_workspace(tmp_path: Path, repo_root: Path) -> Path:
         "reports/paper",
         "reports/runs",
         "reports/research",
+        "reports/options",
         "signal_logs",
         "journal",
         "strategies_pine/generated",

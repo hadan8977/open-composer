@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OptionOverlaySpec",
+  "type": "object",
+  "required": [
+    "name",
+    "underlying_strategy",
+    "symbol",
+    "overlay_type",
+    "dte",
+    "long_moneyness_pct",
+    "implied_volatility",
+    "spread_pct",
+    "max_premium_weight"
+  ],
+  "properties": {
+    "name": {"type": "string"},
+    "underlying_strategy": {"type": "string"},
+    "symbol": {"type": "string"},
+    "overlay_type": {"enum": ["long_call", "debit_call_spread"]},
+    "dte": {"type": "integer", "minimum": 1},
+    "long_moneyness_pct": {"type": "number"},
+    "short_moneyness_pct": {"type": ["number", "null"]},
+    "implied_volatility": {"type": "number", "exclusiveMinimum": 0},
+    "risk_free_rate": {"type": "number"},
+    "spread_pct": {"type": "number", "minimum": 0},
+    "max_premium_weight": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+    "contract_multiplier": {"type": "integer"},
+    "pricing_model": {"enum": ["black_scholes_approx"]},
+    "notes": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

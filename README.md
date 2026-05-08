@@ -18,6 +18,7 @@ Open Composer 是一个面向个人交易学习者的对话式 AI 策略工作�
 - OpenAI structured review card adapter；
 - Alpaca data 和 Alpaca Paper adapter；
 - capability registry、event/news/macro context builder；
+- paper-only 期权 overlay 研究回测与优化；
 - pytest/ruff 验证。
 
 实盘真钱交易仍然保持手动决策。MVP 只允许 Alpaca Paper 模拟盘自动下单，并要求 active `paper_auto` 策略、paper 环境变量和显式 `--allow-paper-orders`。
@@ -34,6 +35,7 @@ uv run oc events fetch --source sec --symbols QQQ
 uv run oc macro fetch --source fred
 uv run oc compile pine strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc strategy list
+uv run oc options optimize strategy_specs/drafts/memory_storage_momentum_15m_mu_alpaca_optimized_opening_continuation.yaml
 uv run pytest
 ```
 
@@ -60,6 +62,19 @@ uv run oc strategy disable qqq_pullback_15m
 默认推荐先用 `oc run paper ... --no-review` 或带 review 但不加 `--allow-paper-orders`
 做扫描和人工确认；只有当策略已 active、处于 `paper_auto`、Alpaca Paper key 存在，并且命令显式传入
 `--allow-paper-orders` 时，runner 才会提交模拟盘订单。真钱 live broker 写入仍不在 MVP 范围内。
+
+期权研究示例：
+
+```bash
+uv run oc options optimize \
+  strategy_specs/drafts/memory_storage_momentum_15m_mu_alpaca_optimized_opening_continuation.yaml \
+  strategy_specs/drafts/memory_storage_momentum_15m_sndk_alpaca_optimized_trend_hold.yaml \
+  strategy_specs/drafts/memory_storage_momentum_15m_wdc_alpaca_optimized_volume.yaml \
+  strategy_specs/drafts/memory_storage_momentum_15m_stx_alpaca_optimized_opening_continuation.yaml \
+  --max-premium-weight 0.03
+```
+
+当前期权能力是 research-only：用正股策略的 entry/exit 作为 underlying timing，模拟 long call 和 debit call spread overlay，输出 `strategy_specs/options/` 和 `reports/options/`。它不会提交期权订单，也不会把 Black-Scholes 近似回测误标成真实历史期权报价回测。
 
 ## 阅读顺序
 

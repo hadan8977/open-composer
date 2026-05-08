@@ -2,6 +2,7 @@ from open_composer.models.backtest import BacktestRun, Trade
 from open_composer.models.capability import Capability, CapabilityEvaluation, CapabilityRegistry
 from open_composer.models.event import EventRecord, SignalContext
 from open_composer.models.journal import TradeJournalEntry
+from open_composer.models.options import OptionBacktestRun, OptionBacktestTrade, OptionOverlaySpec
 from open_composer.models.paper import PaperOrderRecord
 from open_composer.models.review_card import ReviewCard
 from open_composer.models.runner import PaperRunCycle, PaperRunSignalResult
@@ -14,6 +15,9 @@ __all__ = [
     "CapabilityEvaluation",
     "CapabilityRegistry",
     "EventRecord",
+    "OptionBacktestRun",
+    "OptionBacktestTrade",
+    "OptionOverlaySpec",
     "PaperOrderRecord",
     "PaperRunCycle",
     "PaperRunSignalResult",

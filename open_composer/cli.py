@@ -5,6 +5,7 @@ import os
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Annotated
 
 import typer
 from dotenv import load_dotenv
@@ -37,6 +38,7 @@ from open_composer.journal.writer import add_journal_entry
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research import (
     draft_strategy_from_idea,
+    optimize_option_overlays,
     optimize_strategy,
     optimize_strategy_universe,
 )
@@ -63,6 +65,7 @@ macro_app = typer.Typer(no_args_is_help=True)
 context_app = typer.Typer(no_args_is_help=True)
 strategy_app = typer.Typer(no_args_is_help=True)
 run_app = typer.Typer(no_args_is_help=True)
+options_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -76,6 +79,7 @@ app.add_typer(macro_app, name="macro")
 app.add_typer(context_app, name="context")
 app.add_typer(strategy_app, name="strategy")
 app.add_typer(run_app, name="run")
+app.add_typer(options_app, name="options")
 
 
 @app.callback()
@@ -432,6 +436,28 @@ def run_paper(
             )
 
 
+@options_app.command("optimize")
+def options_optimize(
+    specs: Annotated[list[Path], typer.Argument(...)],
+    max_premium_weight: float = typer.Option(0.03, "--max-premium-weight"),
+    min_trades: int = typer.Option(1, "--min-trades"),
+) -> None:
+    """Optimize paper-only option overlays for one or more equity StrategySpecs."""
+    result = optimize_option_overlays(
+        specs,
+        project_root(),
+        max_premium_weight=max_premium_weight,
+        min_trades=min_trades,
+    )
+    console.print(f"[green]options optimized[/green] report: {result.report_path}")
+    for item in result.artifacts:
+        console.print(
+            f"{item.run.symbol} {item.spec.name} "
+            f"return={item.run.total_return_pct:.2f}% "
+            f"trades={item.run.trades} score={item.score:.2f}"
+        )
+
+
 @paper_app.command("submit")
 def paper_submit(
     signal_id: str,
@@ -488,6 +514,7 @@ def _ensure_runtime_dirs(root: Path) -> None:
         "reports/capabilities",
         "reports/context",
         "reports/research",
+        "reports/options",
         "data/raw/events",
         "data/raw/macro",
         "event_logs",
