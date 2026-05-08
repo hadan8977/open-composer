@@ -92,5 +92,17 @@ def alpaca_paper_enabled() -> bool:
     return os.getenv("ALPACA_PAPER", "true").strip().lower() == "true"
 
 
+def alpaca_api_key_id() -> str | None:
+    return os.getenv("ALPACA_API_KEY_ID")
+
+
+def alpaca_api_secret_key() -> str | None:
+    return os.getenv("ALPACA_API_SECRET_KEY")
+
+
+def alpaca_api_base_url() -> str:
+    return os.getenv("ALPACA_API_BASE_URL", "https://paper-api.alpaca.markets/v2")
+
+
 def data_feed() -> str:
     return os.getenv("ALPACA_DATA_FEED", "iex")

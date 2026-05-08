@@ -76,3 +76,23 @@ def test_paper_sync_writes_mock_orders(sample_workspace: Path) -> None:
 
     path = alpaca_paper.sync_paper_orders(sample_workspace, client=MockClient())
     assert path.exists()
+
+
+def test_trading_client_uses_configured_paper_base_url(monkeypatch) -> None:
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_API_BASE_URL", "https://paper-api.alpaca.markets/v2")
+
+    captured = {}
+
+    class MockTradingClient:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr("alpaca.trading.client.TradingClient", MockTradingClient)
+    alpaca_paper._trading_client()
+
+    assert captured["api_key"] == "key"
+    assert captured["secret_key"] == "secret"
+    assert captured["paper"] is True
+    assert captured["url_override"] == "https://paper-api.alpaca.markets/v2"

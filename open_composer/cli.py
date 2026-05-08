@@ -21,6 +21,7 @@ from open_composer.adapters.events import fetch_capability_events
 from open_composer.capabilities import evaluate_capabilities, load_registry
 from open_composer.compiler.spec_to_pine import compile_pine
 from open_composer.config import (
+    alpaca_api_base_url,
     data_feed,
     default_openai_model,
     ensure_dir,
@@ -114,6 +115,7 @@ def doctor() -> None:
         "optional for Alpaca",
     )
     table.add_row("ALPACA_PAPER", os.getenv("ALPACA_PAPER", "true"), "must remain true for orders")
+    table.add_row("ALPACA_API_BASE_URL", alpaca_api_base_url(), "paper trading endpoint")
     table.add_row("ALPACA_DATA_FEED", data_feed(), "default feed")
     table.add_row(
         "ALPHA_VANTAGE_API_KEY", optional_env_status("ALPHA_VANTAGE_API_KEY"), "optional news"

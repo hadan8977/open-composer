@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import math
-import os
 from pathlib import Path
 from typing import Any
 
-from open_composer.config import alpaca_paper_enabled
+from open_composer.config import (
+    alpaca_api_base_url,
+    alpaca_api_key_id,
+    alpaca_api_secret_key,
+    alpaca_paper_enabled,
+)
 from open_composer.models.paper import PaperOrderRecord
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec
@@ -76,7 +80,7 @@ def _validate_paper_allowed(spec: StrategySpec) -> None:
         )
     if not alpaca_paper_enabled():
         raise PaperOrderError("ALPACA_PAPER must be true; live broker writes are out of scope")
-    if not os.getenv("ALPACA_API_KEY_ID") or not os.getenv("ALPACA_API_SECRET_KEY"):
+    if not alpaca_api_key_id() or not alpaca_api_secret_key():
         raise PaperOrderError("Alpaca paper credentials are missing")
 
 
@@ -86,9 +90,10 @@ def _trading_client() -> Any:
     except ImportError as exc:
         raise PaperOrderError("alpaca-py is required for Alpaca Paper orders") from exc
     return TradingClient(
-        api_key=os.environ["ALPACA_API_KEY_ID"],
-        secret_key=os.environ["ALPACA_API_SECRET_KEY"],
+        api_key=alpaca_api_key_id(),
+        secret_key=alpaca_api_secret_key(),
         paper=True,
+        url_override=alpaca_api_base_url(),
     )
 
 

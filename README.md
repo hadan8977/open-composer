@@ -41,7 +41,7 @@ uv run pytest
 
 - `OPENAI_API_KEY` + `OPENAI_MODEL` 用于 `oc review-signal <signal-id>`；
 - `OPENAI_BASE_URL` 可沿用当前 OpenAI 兼容网关配置；未设置时会尝试读取本机 Codex `~/.codex/config.toml` 的 responses provider；
-- `ALPACA_API_KEY_ID`、`ALPACA_API_SECRET_KEY`、`ALPACA_PAPER=true`、`ALPACA_DATA_FEED=iex` 用于 Alpaca 数据和模拟盘。
+- `ALPACA_API_KEY_ID`、`ALPACA_API_SECRET_KEY`、`ALPACA_PAPER=true`、`ALPACA_API_BASE_URL=https://paper-api.alpaca.markets/v2`、`ALPACA_DATA_FEED=iex` 用于 Alpaca 数据和模拟盘。
 - `ALPHA_VANTAGE_API_KEY`、`FRED_API_KEY` 用于后续 live 新闻/宏观适配器；MVP 测试默认使用离线 fixture。
 
 Alpaca Paper 下单示例：
