@@ -1,0 +1,347 @@
+/* ============================================================
+   Open Composer — Design System v3
+   Composer-faithful: sharp rectangles, hairline-first, halftone
+   as a real visual language, mix-blend overprint, tight rhythm.
+   ============================================================ */
+
+:root {
+  /* — Surfaces — */
+  --paper:        #FAFCFF;
+  --paper-2:      #F4F8FC;
+  --paper-3:      #FFFFFF;
+  --paper-4:      #FFFFFF;
+  --surface:      #FFFFFF;
+  --surface-2:    #FAFCFF;
+  --ink-on-paper: #0A0A0A;
+
+  /* — Ink — */
+  --ink:          #0A0A0A;
+  --ink-strong:   #000000;
+  --ink-muted:    #596473;
+  --ink-subtle:   #8B96A5;
+  --ink-faint:    rgba(10,10,10,.05);
+  --hairline:     rgba(18,24,38,.08);
+  --hairline-2:   rgba(18,24,38,.12);
+
+  /* — Brand palette (composer-tuned, more saturated) — */
+  --c-green:        #1FB85A;
+  --c-green-deep:   #0F9A52;
+  --c-green-ink:    #042513;
+  --c-pink:         #FF2D7A;
+  --c-pink-deep:    #DC1F62;
+  --c-pink-ink:     #2C0414;
+  --c-cyan:         #1AC8E8;
+  --c-cyan-ink:     #032730;
+  --c-orange:       #F8A93B;
+  --c-orange-deep:  #E48512;
+  --c-orange-ink:   #2A1A05;
+  --c-purple:       #8B5CF6;
+  --c-purple-ink:   #1B0E3D;
+  --c-red:          #EF4444;
+  --c-yellow:       #F4D35E;
+  --c-blue:         #2563EB;
+
+  /* — Radius (sharp; composer is mostly 2-6px, never round) — */
+  --r-xs: 2px;
+  --r-sm: 3px;
+  --r-md: 4px;
+  --r-lg: 6px;
+  --r-xl: 8px;       /* default card */
+  --r-2xl: 10px;     /* hero / large surface */
+  --r-pill: 9999px;
+
+  /* — Elevation — composer uses hairline + a faint contact shadow.
+       No "puffy" drop shadows; everything sits on the page. — */
+  --e1: 0 0 0 1px rgba(18,24,38,.05), 0 1px 0 rgba(18,24,38,.03);
+  --e2: 0 0 0 1px rgba(18,24,38,.06), 0 1px 0 rgba(18,24,38,.04), 0 2px 4px -2px rgba(18,24,38,.05);
+  --e3: 0 0 0 1px rgba(18,24,38,.06), 0 1px 0 rgba(18,24,38,.05), 0 8px 16px -8px rgba(18,24,38,.10);
+  --e-pop: 0 0 0 1px rgba(18,24,38,.06), 0 12px 28px -12px rgba(18,24,38,.20);
+
+  /* — Type — */
+  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-sans:    "Inter", "Inter Tight", ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* — Global — */
+html, body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11", "cv02";
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+
+/* ============================================================
+   Typography utilities — composer hierarchy.
+   ============================================================ */
+
+.t-display-3xl { font-family: var(--font-display); font-size: 96px; line-height: 0.88; font-weight: 800; letter-spacing: -0.05em; }
+.t-display-2xl { font-family: var(--font-display); font-size: 64px; line-height: 0.92; font-weight: 800; letter-spacing: -0.045em; }
+.t-display-xl  { font-family: var(--font-display); font-size: 38px; line-height: 1.0;  font-weight: 800; letter-spacing: -0.035em; }
+.t-display-lg  { font-family: var(--font-display); font-size: 26px; line-height: 1.08; font-weight: 700; letter-spacing: -0.028em; }
+.t-display-md  { font-family: var(--font-display); font-size: 20px; line-height: 1.18; font-weight: 700; letter-spacing: -0.022em; }
+.t-title-md    { font-family: var(--font-display); font-size: 15px; line-height: 1.32; font-weight: 600; letter-spacing: -0.012em; }
+.t-title-sm    { font-family: var(--font-display); font-size: 13px; line-height: 1.35; font-weight: 600; letter-spacing: -0.008em; }
+.t-body-md     { font-family: var(--font-sans);    font-size: 13px; line-height: 1.5;  font-weight: 400; letter-spacing: -0.005em; }
+.t-body-sm     { font-family: var(--font-sans);    font-size: 12px; line-height: 1.45; font-weight: 400; letter-spacing: 0; }
+.t-caption     { font-family: var(--font-sans);    font-size: 10px; line-height: 1.3;  font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.t-micro       { font-family: var(--font-sans);    font-size: 9.5px; line-height: 1.3; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.t-mono        { font-family: var(--font-mono);    font-size: 11px; line-height: 1.4; font-weight: 500; letter-spacing: 0; }
+.t-num         { font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   Surfaces & ink helpers
+   ============================================================ */
+
+.bg-paper    { background-color: var(--paper); }
+.bg-paper-2  { background-color: var(--paper-2); }
+.bg-paper-3  { background-color: var(--paper-3); }
+.bg-paper-4  { background-color: var(--paper-4); }
+.bg-surface  { background-color: var(--surface); }
+.bg-surface-2{ background-color: var(--surface-2); }
+
+.ink         { color: var(--ink); }
+.ink-strong  { color: var(--ink-strong); }
+.ink-muted   { color: var(--ink-muted); }
+.ink-subtle  { color: var(--ink-subtle); }
+
+.hairline-b  { border-bottom: 1px solid var(--hairline); }
+.hairline-t  { border-top: 1px solid var(--hairline); }
+.hairline-r  { border-right: 1px solid var(--hairline); }
+.hairline-l  { border-left: 1px solid var(--hairline); }
+
+.shadow-e1 { box-shadow: var(--e1); }
+.shadow-e2 { box-shadow: var(--e2); }
+.shadow-e3 { box-shadow: var(--e3); }
+.shadow-pop { box-shadow: var(--e-pop); }
+
+/* ============================================================
+   Cards — hairline + faint contact shadow only.
+   ============================================================ */
+
+.dscard {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  box-shadow: var(--e2);
+}
+.dscard-flat {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e1);
+}
+.dscard-paper {
+  background: var(--paper-3);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e1);
+}
+.dscard-dark {
+  background: #0B0B0C;
+  color: #F2F2F0;
+  border-radius: var(--r-xl);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.04),
+    0 1px 0 rgba(0,0,0,.5),
+    0 12px 24px -12px rgba(0,0,0,.4);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ============================================================
+   Color tiles (composer signature) — solid fills, sharp corners
+   bold black ink on top, optional halftone overprint.
+   ============================================================ */
+
+.block-green  { background-color: var(--c-green);  color: var(--c-green-ink); }
+.block-pink   { background-color: var(--c-pink);   color: var(--c-pink-ink); }
+.block-cyan   { background-color: var(--c-cyan);   color: var(--c-cyan-ink); }
+.block-orange { background-color: var(--c-orange); color: var(--c-orange-ink); }
+.block-purple { background-color: var(--c-purple); color: #fff; }
+.block-yellow { background-color: var(--c-yellow); color: var(--c-orange-ink); }
+.block-black  { background-color: #0A0A0A;         color: #fff; }
+.block-paper  { background-color: var(--paper-3);  color: var(--ink); }
+.block-red    { background-color: var(--c-red);    color: #fff; }
+
+/* ============================================================
+   Halftone — composer's marketing-block overprint texture.
+   Used both on hero tiles and on KPI blocks for atmosphere.
+   ============================================================ */
+
+.halftone {
+  background-image: radial-gradient(rgba(10,10,10,.18) 1.4px, transparent 1.6px);
+  background-size: 8px 8px;
+}
+.halftone-dense {
+  background-image: radial-gradient(rgba(10,10,10,.22) 1.6px, transparent 1.8px);
+  background-size: 6px 6px;
+}
+
+/* On a coloured tile: overlay a subtle halftone for that risograph feel */
+.tile-halftone {
+  position: relative;
+}
+.tile-halftone::after {
+  content: "";
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(0,0,0,.18) 1.4px, transparent 1.7px);
+  background-size: 7px 7px;
+  border-radius: inherit;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.85;
+}
+
+/* ============================================================
+   Mix-blend & gradient — composer signature visual layering.
+   ============================================================ */
+
+.blend-multiply { mix-blend-mode: multiply; }
+.blend-darken   { mix-blend-mode: darken; }
+
+.grad-green-cyan {
+  background: linear-gradient(110deg, #0F9A52 0%, #1FB85A 35%, #1AC8E8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.grad-pink-orange {
+  background: linear-gradient(110deg, #FF2D7A 0%, #FF6A4A 60%, #F8A93B 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.grad-ink-cyan   { background: linear-gradient(120deg, #0A0A0A 30%, #1AC8E8 110%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.grad-ink-green  { background: linear-gradient(120deg, #0A0A0A 30%, #1FB85A 110%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.grad-ink-pink   { background: linear-gradient(120deg, #0A0A0A 30%, #FF2D7A 110%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.grad-ink-orange { background: linear-gradient(120deg, #0A0A0A 30%, #F8A93B 110%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.grad-ink-purple { background: linear-gradient(120deg, #0A0A0A 30%, #8B5CF6 110%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+
+/* ============================================================
+   Pill controls — composer button: sharper, more confident.
+   ============================================================ */
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-sans);
+  font-size: 12px; font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, color .12s ease;
+  cursor: pointer;
+  border: 0;
+  white-space: nowrap;
+  height: 30px;
+}
+.pill-primary {
+  background: #0A0A0A; color: #fff;
+  box-shadow: 0 0 0 1px #0A0A0A, 0 1px 0 rgba(0,0,0,.3);
+}
+.pill-primary:hover { background: #1F1F1F; }
+.pill-secondary {
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 0 0 1px var(--hairline-2), 0 1px 0 rgba(10,10,10,.02);
+}
+.pill-secondary:hover { background: var(--surface-2); }
+.pill-ghost {
+  background: transparent; color: var(--ink-muted);
+}
+.pill-ghost:hover { background: rgba(10,10,10,.05); color: var(--ink); }
+
+/* Tag — composer rectangular tag: sharp corners, bold black on saturated colour */
+.tag {
+  display: inline-flex; align-items: center;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: var(--r-xs);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+.tag-pill { border-radius: var(--r-pill); padding: 0 9px; height: 20px; }
+
+/* Input */
+input.ds-input, label.ds-input {
+  background: var(--surface);
+  border-radius: var(--r-pill);
+  font-size: 12.5px;
+  outline: none;
+  border: 0;
+  box-shadow: 0 0 0 1px var(--hairline-2);
+  color: var(--ink);
+  transition: box-shadow .12s ease, background .12s ease;
+}
+input.ds-input::placeholder { color: var(--ink-subtle); }
+input.ds-input:focus, label.ds-input:focus-within {
+  box-shadow: 0 0 0 1.5px var(--ink);
+  background: #fff;
+}
+
+::selection { background: var(--c-green); color: var(--c-green-ink); }
+
+.divider-soft > * + * { border-top: 1px solid var(--hairline); }
+
+@keyframes hero-text-flow {
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+
+.hero-headline {
+  background-size: 220% 220%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: hero-text-flow 9s ease-in-out infinite;
+}
+.hero-headline-green  { background-image: linear-gradient(110deg, #0A0A0A 0%, #0F9A52 35%, #1FB85A 60%, #0A0A0A 100%); }
+.hero-headline-cyan   { background-image: linear-gradient(110deg, #0A0A0A 0%, #1AC8E8 40%, #8B5CF6 70%, #0A0A0A 100%); }
+.hero-headline-pink   { background-image: linear-gradient(110deg, #0A0A0A 0%, #FF2D7A 40%, #F8A93B 70%, #0A0A0A 100%); }
+.hero-headline-orange { background-image: linear-gradient(110deg, #0A0A0A 0%, #F8A93B 40%, #FF2D7A 70%, #0A0A0A 100%); }
+.hero-headline-purple { background-image: linear-gradient(110deg, #0A0A0A 0%, #8B5CF6 40%, #1AC8E8 70%, #0A0A0A 100%); }
+.hero-headline-ink    { background-image: linear-gradient(110deg, #0A0A0A 0%, #1FB85A 45%, #1AC8E8 65%, #0A0A0A 100%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-headline { animation: none !important; }
+}
+
+/* ============================================================
+   Hero entrance — staggered fade-up + a single drifting tile.
+   Restrained on purpose; data UI is allergic to motion.
+   ============================================================ */
+
+/* Tile slide animations — a few tiles per layout slide horizontally in
+   and out of the frame on a long, restrained loop. Uses translate3d so
+   GPU-accelerated. Each variant is keyed differently in length and
+   direction to create rhythm. */
+/* Animated headline gradients — color flows across the headline.
+   Each theme has its own palette mix; background-size is 220% so the
+   shift is visible. Restrained 9s cycle. */
+/* ============================================================
+   Composer "stripe" — horizontal split line with brand dot
+   used to lead sections (instead of a heavy header).
+   ============================================================ */
+
+.stripe-rule {
+  display: flex; align-items: center; gap: 10px;
+  height: 1px;
+}
+.stripe-rule::before, .stripe-rule::after {
+  content: ""; flex: 1; height: 1px; background: var(--hairline);
+}
+
+/* Used inline to mark section openers */
+.tick-square {
+  width: 8px; height: 8px; display: inline-block; flex: 0 0 8px;
+  border-radius: var(--r-xs);
+}
