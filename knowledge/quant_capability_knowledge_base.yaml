@@ -1,0 +1,242 @@
+version: 1
+updated: "2026-05-09"
+purpose: >
+  Working knowledge base for expanding Open Composer from an MVP OHLCV signal
+  workbench into a broader quant and LLM-assisted strategy platform. The entries
+  are concise research notes, not vendor endorsements or trading advice.
+
+sources:
+  - id: tradingview_pine_strategies
+    kind: official_docs
+    url: "https://www.tradingview.com/pine-script-docs/concepts/strategies/"
+    key_points:
+      - Pine strategies use `strategy()` and `strategy.*` commands to simulate orders.
+      - Strategy Tester results are hypothetical and depend on broker emulator assumptions.
+      - Non-standard chart types can produce unrealistic strategy results.
+      - Bar Magnifier can improve intrabar fill simulation but is plan/data limited.
+  - id: tradingview_pine_limits
+    kind: official_docs
+    url: "https://www.tradingview.com/pine-script-docs/writing/limitations/"
+    key_points:
+      - Pine scripts have limits on plots, drawings, request calls, intrabars, tokens, and orders.
+      - "`request.*()` calls are capped by plan tier, which limits large cross-asset strategies."
+      - Standard backtests trim after 9000 orders unless using Deep Backtesting.
+  - id: alpaca_trading_api
+    kind: official_docs
+    url: "https://docs.alpaca.markets/docs/trading-api"
+    key_points:
+      - Alpaca Trading API supports stocks, crypto, paper trading, order placement, and positions.
+      - Paper trading is a real-time simulation environment for testing code.
+      - Alpaca is an execution and data provider, not a strategy research engine.
+  - id: quantconnect_lean
+    kind: official_docs
+    url: "https://www.quantconnect.com/docs/v2/writing-algorithms/key-concepts/algorithm-engine"
+    key_points:
+      - LEAN is an open-source engine for research, backtesting, and live trading.
+      - It models data as a stream in backtests to reduce look-ahead bias.
+      - Its architecture separates securities, portfolio, transactions, scheduling, and reality models.
+  - id: quantconnect_bootcamp
+    kind: course_docs
+    url: "https://www.quantconnect.com/announcements/15528/get-started-with-quantconnect-s-boot-camp/"
+    key_points:
+      - A complete quant learning path covers indicators, universes, automation, data flow, and framework design.
+      - Strategy examples include tactical allocation, opening range breakout, pairs trading, value stocks, and sentiment.
+  - id: nautilus_trader
+    kind: official_docs
+    url: "https://nautilustrader.io/docs/latest/concepts/overview/"
+    key_points:
+      - Event-driven design supports backtest, sandbox, and live/paper deployment use cases.
+      - Production-grade systems need data and execution adapters plus reproducible catalogs.
+  - id: backtrader_indicators
+    kind: official_docs
+    url: "https://backtrader.readthedocs.io/en/latest/user-guide/indicators/indicators.html"
+    key_points:
+      - Mature engines expose many indicators, indicator-on-indicator composition, and crossover primitives.
+      - Strategy logic needs access to lagged values and multi-line indicator outputs.
+  - id: vectorbt_features
+    kind: official_docs
+    url: "https://vectorbt.dev/getting-started/features/"
+    key_points:
+      - Vectorized research excels at large parameter sweeps and multi-dimensional arrays.
+      - Indicator factories and TA-Lib/pandas-ta parsers support broad factor experimentation.
+      - Vectorized research is complementary to, not a replacement for, event-driven execution simulation.
+  - id: talib
+    kind: official_docs
+    url: "https://ta-lib.org/"
+    key_points:
+      - TA-Lib provides a broad technical indicator library including ADX, MACD, RSI, Stochastic, and Bollinger Bands.
+      - Indicator libraries are the practical path to broad technical-factor coverage.
+  - id: pandas_ta_classic
+    kind: official_docs
+    url: "https://xgboosted.github.io/pandas-ta-classic/indicators.html"
+    key_points:
+      - pandas-ta-classic exposes a large catalog of technical indicators and candlestick patterns.
+      - Dynamic discovery is useful for keeping factor catalogs current.
+  - id: qlib
+    kind: open_source_project
+    url: "https://github.com/microsoft/qlib"
+    key_points:
+      - AI-oriented quant platforms need data processing, model training, backtesting, risk modeling, portfolio optimization, and order execution.
+      - ML strategies require a pipeline, not just a larger expression language.
+  - id: pybroker
+    kind: open_source_project
+    url: "https://www.pybroker.com/en/latest/index.html"
+    key_points:
+      - Practical ML trading frameworks combine multi-instrument execution, model training, walk-forward analysis, bootstrapping, and caching.
+      - Walk-forward analysis is a core acceptance gate for ML-driven strategies.
+  - id: quantrocket_moonshot
+    kind: product_docs
+    url: "https://www.quantrocket.com/docs/"
+    key_points:
+      - Vectorized backtesting is well-suited for cross-sectional and factor-model strategies at regular rebalancing intervals.
+      - Multi-strategy backtests and allocation control are first-class requirements for portfolio workflows.
+  - id: composer_trade
+    kind: closed_source_product
+    url: "https://www.composer.trade/"
+    key_points:
+      - Consumer-facing strategy builders expose conditionals, filters, weights, community strategies, backtests, and execution.
+      - The product pattern validates StrategySpec-like visual/structured strategy graphs, but execution claims still require independent audit.
+  - id: ml4t
+    kind: course_book_repo
+    url: "https://stefan-jansen.github.io/machine-learning-for-trading/"
+    key_points:
+      - ML trading workflows require data sourcing, feature engineering, model optimization, strategy design, and backtesting.
+      - Alternative text data, SEC filings, earnings calls, news, and deep learning all need explicit data pipelines.
+  - id: finrl_x
+    kind: paper
+    url: "https://arxiv.org/abs/2603.21330"
+    key_points:
+      - AI-native trading infrastructure should compose stock selection, portfolio allocation, timing, and risk overlays.
+      - Rule-based and AI-driven components should not change downstream execution semantics.
+  - id: quantcode_bench
+    kind: paper
+    url: "https://arxiv.org/abs/2604.15151"
+    key_points:
+      - LLM strategy generation must be evaluated for syntax, successful backtest execution, actual trades, and semantic alignment.
+      - The hard failures are often financial semantics and API usage, not only code syntax.
+  - id: hummingbot_dashboard
+    kind: official_docs
+    url: "https://hummingbot.org/dashboard/"
+    key_points:
+      - Dashboard is an open-source GUI for configuring, backtesting, deploying, and monitoring multiple bot instances.
+      - The product separates controller configuration, backtesting, deployment, and active-instance monitoring.
+      - Version-like config tags and live metrics are first-class operational concepts.
+  - id: hummingbot_instances
+    kind: official_docs
+    url: "https://hummingbot.org/dashboard/instances/"
+    key_points:
+      - The instances page focuses on active controllers, metrics, logs, and graceful stop/restart flows.
+      - Operational control belongs in a dedicated monitoring screen with audit-friendly actions.
+  - id: freqtrade_frequi
+    kind: official_docs
+    url: "https://docs.freqtrade.io/en/stable/freq-ui/"
+    key_points:
+      - freqUI exposes backtesting and result visualization.
+      - Strategy versioning in Freqtrade is user-managed and should be backed by git.
+      - A dashboard can surface strategy status, backtest results, and management actions without hiding the underlying code.
+  - id: freqtrade_versioning
+    kind: official_docs
+    url: "https://docs.freqtrade.io/en/2026.2/strategy-advanced/"
+    key_points:
+      - Freqtrade allows a strategy to declare its own version string.
+      - The docs explicitly warn that the platform does not preserve historical versions for you.
+      - External version control is required for rollback and audit.
+  - id: openalgo_strategy_management
+    kind: official_docs
+    url: "https://docs.openalgo.in/strategy-management"
+    key_points:
+      - Strategy management can be webhook-driven and multi-symbol aware.
+      - A dashboard can hold strategy activation, hours, direction, and symbol mappings in one place.
+      - Order queues, rate limiting, and webhook processing belong in the control plane, not the strategy authoring page.
+  - id: openalgo_flow
+    kind: official_docs
+    url: "https://docs.openalgo.in/new-features/flow-visual-strategy-builder"
+    key_points:
+      - A node-based visual builder is a useful pattern for strategy composition and orchestration.
+      - Trigger, condition, and action nodes map well to strategy groups and scan pipelines.
+      - Execution history and debug views are essential for operational trust.
+  - id: composer_symphony
+    kind: closed_source_product
+    url: "https://www.composer.trade/"
+    key_points:
+      - A structured strategy editor can combine specified weights, dynamic weights, filters, and conditional statements.
+      - Strategy backtest previews and browsable strategy catalogs help users compare variants and versions.
+  - id: quantrocket_moonshot_ui
+    kind: product_docs
+    url: "https://www.quantrocket.com/docs/"
+    key_points:
+      - Vectorized research workflows support multi-strategy backtests and parameter scans.
+      - A dashboard for strategy work should expose backtest artifacts, tearsheets, and multi-strategy operations.
+
+capability_principles:
+  - id: source_of_truth
+    statement: StrategySpec remains the source of truth, but it must evolve from simple entry/exit strings into a typed strategy graph.
+  - id: compatibility_not_universality
+    statement: TradingView export is a compatibility target for a deterministic subset, not the master runtime for all strategies.
+  - id: research_execution_split
+    statement: Use vectorized engines for research sweeps and event-driven engines for execution parity.
+  - id: data_before_models
+    statement: Advanced factors are only valid when data is point-in-time, timestamped, replayable, and linked to capability records.
+  - id: llm_as_structured_signal
+    statement: LLM output may support research, labels, summaries, and reviews; if it affects trades it must become replayable structured data.
+  - id: paper_first
+    statement: Alpaca Paper remains the only automated order target until review, reconciliation, and kill-switch controls mature.
+  - id: dashboard_first_class
+    statement: Dashboard is a control plane and observability surface, not a marketing page or a second source of truth.
+  - id: version_is_immutable
+    statement: Every strategy edit should produce an immutable version record with parentage, hash, timestamp, and author/model metadata.
+  - id: operational_gates
+    statement: Write actions in the dashboard must obey the same lifecycle and paper-auto gates as CLI commands.
+  - id: llm_views_are_replayable
+    statement: LLM-assisted pages must show prompt versions, model versions, source packets, and replayable artifacts.
+
+strategy_families:
+  - id: single_asset_technical
+    examples: [trend_following, pullback, breakout, mean_reversion]
+    current_support: partial
+    required_next: [indicator_catalog, lagged_values, crossover, stops, slippage]
+    pine_export: usually_possible
+  - id: cross_sectional_factor
+    examples: [momentum_rank, value_rank, quality_rank, low_volatility, sector_rotation]
+    current_support: weak
+    required_next: [universe_snapshots, factor_store, ranking, portfolio_targets, rebalance_schedule]
+    pine_export: generally_not_sufficient
+  - id: pairs_stat_arb
+    examples: [cointegration_pair, zscore_spread, hedge_ratio]
+    current_support: unsupported
+    required_next: [multi_symbol_data, spread_features, hedge_weights, borrow_and_short_model]
+    pine_export: limited_subset_only
+  - id: event_news_macro
+    examples: [earnings_filter, sec_filing_context, macro_release_regime, news_sentiment]
+    current_support: advisory_context_only
+    required_next: [point_in_time_events, structured_labels, replayable_context, leakage_tests]
+    pine_export: usually_not_supported
+  - id: ml_alpha
+    examples: [return_prediction, classification_signal, feature_ranker]
+    current_support: unsupported
+    required_next: [dataset_builder, train_test_split, walk_forward, model_registry, prediction_store]
+    pine_export: prediction_series_only
+  - id: llm_quant
+    examples: [llm_review_gate, sentiment_feature, event_extraction]
+    current_support: advisory_review
+    required_next: [prompt_versioning, model_versioning, structured_outputs, replay_cache, guardrails]
+    pine_export: no
+  - id: options_overlay
+    examples: [long_call_overlay, debit_spread_overlay]
+    current_support: research_only_approximation
+    required_next: [options_chain_history, greeks, assignment_model, liquidity_model]
+    pine_export: no
+
+dashboard_patterns:
+  - id: library_view
+    purpose: Browse all strategies, versions, tags, risk labels, and compatibility flags.
+  - id: detail_view
+    purpose: Show strategy spec, version diff, backtest summaries, signals, orders, and artifacts.
+  - id: ops_view
+    purpose: Monitor active paper/live instances, positions, open orders, PnL, and incidents.
+  - id: context_view
+    purpose: Surface events, news, macro packets, and LLM reviews that influenced a signal or group decision.
+  - id: group_view
+    purpose: Manage strategy groups, regime selectors, and capital allocation rules across child strategies.
+  - id: audit_view
+    purpose: Record every enable, disable, promote, deploy, and review action with timestamps and actor identity.

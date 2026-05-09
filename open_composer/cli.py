@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import sys
 from datetime import UTC, datetime
@@ -20,7 +21,7 @@ from open_composer.adapters.broker.alpaca_paper import (
 from open_composer.adapters.data import fetch_ohlcv
 from open_composer.adapters.events import fetch_capability_events
 from open_composer.capabilities import evaluate_capabilities, load_registry
-from open_composer.compiler.spec_to_pine import compile_pine
+from open_composer.compiler.spec_to_pine import compile_pine, compile_pine_strategy
 from open_composer.config import (
     alpaca_api_base_url,
     data_feed,
@@ -46,6 +47,10 @@ from open_composer.research import (
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
 from open_composer.storage import find_signal
+from open_composer.strategy_capabilities import (
+    StrategyCapabilityReport,
+    assess_strategy_capabilities,
+)
 from open_composer.strategy_lifecycle import (
     activate_strategy,
     approve_strategy,
@@ -176,6 +181,53 @@ def spec_validate(path: Path) -> None:
     console.print(f"[green]valid[/green] {path} ({spec.name})")
 
 
+@spec_app.command("capabilities")
+def spec_capabilities(
+    path: Path,
+    json_output: bool = typer.Option(False, "--json", help="Print machine-readable JSON."),
+) -> None:
+    """Assess StrategySpec compatibility across backtest, Pine, Alpaca, and LLM workflows."""
+    report = assess_strategy_capabilities(path)
+    if json_output:
+        print(
+            json.dumps(
+                _strategy_capability_payload(report),
+                indent=2,
+            )
+        )
+        return
+
+    table = Table(title=f"Strategy Capabilities: {report.strategy_name}")
+    table.add_column("Capability")
+    table.add_column("Status")
+    table.add_column("Reasons")
+    for finding in report.findings:
+        table.add_row(finding.capability, finding.status, "\n".join(finding.reasons))
+    console.print(table)
+    console.print(
+        "expressions: "
+        f"names={','.join(report.expression_names) or 'none'} "
+        f"functions={','.join(report.expression_functions) or 'none'}"
+    )
+
+
+def _strategy_capability_payload(report: StrategyCapabilityReport) -> dict[str, object]:
+    return {
+        "strategy_name": report.strategy_name,
+        "lifecycle": report.lifecycle,
+        "expression_functions": report.expression_functions,
+        "expression_names": report.expression_names,
+        "findings": [
+            {
+                "capability": finding.capability,
+                "status": finding.status,
+                "reasons": finding.reasons,
+            }
+            for finding in report.findings
+        ],
+    }
+
+
 @data_app.command("fetch")
 def data_fetch(
     symbol: str = typer.Option("QQQ", "--symbol"),
@@ -255,6 +307,13 @@ def compile_pine_command(spec: Path) -> None:
     """Compile a StrategySpec to TradingView Pine Script."""
     path = compile_pine(spec)
     console.print(f"[green]pine generated[/green] {path}")
+
+
+@compile_app.command("pine-strategy")
+def compile_pine_strategy_command(spec: Path) -> None:
+    """Compile a StrategySpec to a TradingView Strategy Tester Pine Script."""
+    path = compile_pine_strategy(spec)
+    console.print(f"[green]pine strategy generated[/green] {path}")
 
 
 @app.command("review-signal")

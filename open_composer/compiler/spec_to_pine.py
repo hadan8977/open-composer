@@ -19,6 +19,17 @@ def compile_pine(spec_path: Path, root: Path | None = None) -> Path:
     return pine_path
 
 
+def compile_pine_strategy(spec_path: Path, root: Path | None = None) -> Path:
+    base = root or project_root()
+    spec = load_strategy_spec(spec_path)
+    pine_path = base / "strategies_pine" / "generated" / f"{spec.name}.strategy.pine"
+    ensure_dir(pine_path.parent)
+    pine_path.write_text(render_pine_strategy(spec), encoding="utf-8")
+    parity_path = base / "reports" / "parity" / f"{spec.name}-strategy-checklist.md"
+    write_parity_report(parity_path, spec, pine_path)
+    return pine_path
+
+
 def render_pine(spec: StrategySpec) -> str:
     entry_expr = _rule_block_to_pine(spec.entry.all, spec.entry.any)
     exit_expr = _rule_block_to_pine(spec.exit.all, spec.exit.any)
@@ -42,6 +53,60 @@ def render_pine(spec: StrategySpec) -> str:
             f'message="{spec.name} exit {{ticker}} {{interval}} close={{close}}")',
             "",
             "// Assumptions: bar-close signals; Python backtests fill on next bar open.",
+        ]
+    )
+
+
+def render_pine_strategy(spec: StrategySpec) -> str:
+    entry_expr = _rule_block_to_pine(spec.entry.all, spec.entry.any)
+    exit_expr = _rule_block_to_pine(spec.exit.all, spec.exit.any)
+    title = f"{spec.name.replace('_', ' ').title()} Strategy"
+    position_pct = spec.risk.max_position_weight * 100
+    stop_expr = (
+        f"close <= strategy.position_avg_price * {1 - spec.risk.stop_loss_pct / 100:.10g}"
+        if spec.risk.stop_loss_pct is not None
+        else "false"
+    )
+    take_expr = (
+        f"close >= strategy.position_avg_price * {1 + spec.risk.take_profit_pct / 100:.10g}"
+        if spec.risk.take_profit_pct is not None
+        else "false"
+    )
+    return "\n".join(
+        [
+            "//@version=6",
+            f'strategy("{title}", overlay=true, initial_capital=100000, pyramiding=0, '
+            "default_qty_type=strategy.percent_of_equity, "
+            f"default_qty_value={position_pct:.10g}, "
+            "commission_type=strategy.commission.percent, commission_value=0)",
+            "",
+            f"entrySignal = barstate.isconfirmed and ({entry_expr})",
+            f"exitSignal = barstate.isconfirmed and ({exit_expr})",
+            "",
+            'newDay = ta.change(time("D")) != 0',
+            "var int tradesToday = 0",
+            "if newDay",
+            "    tradesToday := 0",
+            "",
+            "canEnter = strategy.position_size == 0 and "
+            f"tradesToday < {spec.risk.max_trades_per_day}",
+            "if entrySignal and canEnter",
+            f'    strategy.entry("Long", strategy.long, alert_message="{spec.name} entry")',
+            "    tradesToday += 1",
+            "",
+            f"riskExit = strategy.position_size > 0 and (({stop_expr}) or ({take_expr}))",
+            "if strategy.position_size > 0 and (exitSignal or riskExit)",
+            f'    strategy.close("Long", alert_message="{spec.name} exit")',
+            "",
+            'plotshape(entrySignal and canEnter, title="Entry", style=shape.triangleup, '
+            "location=location.belowbar, color=color.new(color.green, 0), size=size.tiny)",
+            'plotshape(strategy.position_size > 0 and (exitSignal or riskExit), title="Exit", '
+            "style=shape.triangledown, location=location.abovebar, "
+            "color=color.new(color.red, 0), size=size.tiny)",
+            "",
+            "// Assumptions: bar-close signals; strategy market orders fill on the next bar open.",
+            "// Risk exits mirror the Python backtest: close-confirmed stop/take, "
+            "then next-bar fill.",
         ]
     )
 

@@ -1,0 +1,25 @@
+//@version=6
+strategy("Qqq Pullback 15M Strategy", overlay=true, initial_capital=100000, pyramiding=0, default_qty_type=strategy.percent_of_equity, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0)
+
+entrySignal = barstate.isconfirmed and (((close > ta.ema(close, 5)) and (ta.rsi(close, 3) < 75) and (volume > ta.sma(volume, 3))))
+exitSignal = barstate.isconfirmed and (((ta.rsi(close, 3) > 82) or (close < ta.ema(close, 5))))
+
+newDay = ta.change(time("D")) != 0
+var int tradesToday = 0
+if newDay
+    tradesToday := 0
+
+canEnter = strategy.position_size == 0 and tradesToday < 3
+if entrySignal and canEnter
+    strategy.entry("Long", strategy.long, alert_message="qqq_pullback_15m entry")
+    tradesToday += 1
+
+riskExit = strategy.position_size > 0 and ((close <= strategy.position_avg_price * 0.988) or (close >= strategy.position_avg_price * 1.02))
+if strategy.position_size > 0 and (exitSignal or riskExit)
+    strategy.close("Long", alert_message="qqq_pullback_15m exit")
+
+plotshape(entrySignal and canEnter, title="Entry", style=shape.triangleup, location=location.belowbar, color=color.new(color.green, 0), size=size.tiny)
+plotshape(strategy.position_size > 0 and (exitSignal or riskExit), title="Exit", style=shape.triangledown, location=location.abovebar, color=color.new(color.red, 0), size=size.tiny)
+
+// Assumptions: bar-close signals; strategy market orders fill on the next bar open.
+// Risk exits mirror the Python backtest: close-confirmed stop/take, then next-bar fill.

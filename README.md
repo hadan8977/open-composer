@@ -28,17 +28,23 @@ Open Composer 是一个面向个人交易学习者的对话式 AI 策略工作�
 ```bash
 uv run oc doctor
 uv run oc spec validate strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc backtest strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc scan strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc capability test
 uv run oc events fetch --source sec --symbols QQQ
 uv run oc macro fetch --source fred
 uv run oc compile pine strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc compile pine-strategy strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc strategy list
 uv run oc strategy optimize-horizons strategy_specs/drafts/memory_storage_momentum_15m.yaml --symbols MU,SNDK,WDC,STX
 uv run oc options optimize strategy_specs/drafts/memory_storage_momentum_15m_mu_alpaca_optimized_opening_continuation.yaml
 uv run pytest
 ```
+
+TradingView 导出分两种：`oc compile pine` 生成 indicator 脚本，用于看图和 alerts；
+`oc compile pine-strategy` 生成 strategy 脚本，用于粘贴到 TradingView Pine Editor 后查看
+Strategy Tester 回测。
 
 可选环境变量见 `.env.example`：
 
@@ -87,6 +93,12 @@ uv run oc options optimize \
 
 3. [OPEN-COMPOSER-CONTEXT-SUMMARY.md](OPEN-COMPOSER-CONTEXT-SUMMARY.md)
    - 背景研究总结。说明产品方向、市场参考、工具选型、LLM/Codex 分工和文档设计依据。
+
+4. [docs/quant-capability-expansion-plan.zh.md](docs/quant-capability-expansion-plan.zh.md)
+   - 中文版能力补全与 Dashboard 总体计划。覆盖策略能力、版本管理、Dashboard、LLM 工作区、策略组和执行路线。
+
+5. [docs/quant-capability-expansion-review.zh.md](docs/quant-capability-expansion-review.zh.md)
+   - 中文版严格审查文档。用产品、量化、执行、架构、LLM、UX、审计等视角审查计划并给出最终裁定。
 
 ## 实现路线
 
