@@ -4,6 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from open_composer.models.execution_backend import ExecutionBackend
+
 
 class Trade(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -13,6 +15,9 @@ class Trade(BaseModel):
     entry_price: float
     exit_price: float | None = None
     shares: float
+    entry_fee: float = 0.0
+    exit_fee: float = 0.0
+    gross_pnl: float = 0.0
     pnl: float = 0.0
     return_pct: float = 0.0
 
@@ -22,6 +27,11 @@ class BacktestRun(BaseModel):
 
     run_id: str
     strategy_name: str
+    strategy_id: str | None = None
+    version_id: str | None = None
+    spec_hash: str | None = None
+    strategy_backend: ExecutionBackend = "python_reference"
+    execution_backend: ExecutionBackend = "python_reference"
     symbol: str
     timeframe: str
     bars: int
@@ -30,6 +40,10 @@ class BacktestRun(BaseModel):
     start_equity: float
     end_equity: float
     total_return_pct: float
+    annualized_return_pct: float | None = None
+    sharpe_ratio: float | None = None
+    total_fees: float = 0.0
+    backend_plan_path: str | None = None
     assumptions: list[str] = Field(default_factory=list)
     report_path: str | None = None
     signal_log_path: str | None = None

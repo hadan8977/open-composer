@@ -6,14 +6,17 @@ from pathlib import Path
 from typing import Any
 
 from open_composer.adapters.broker.alpaca_paper import PaperOrderError, submit_paper_order
+from open_composer.adapters.execution import build_nautilus_paper_plan, write_nautilus_paper_plan
 from open_composer.config import ensure_dir, project_root, run_id
 from open_composer.context import build_signal_context
 from open_composer.engines.scanner_engine import run_scan
 from open_composer.models.runner import PaperRunCycle, PaperRunSignalResult
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.paper_controls import load_paper_kill_switch
 from open_composer.review.llm import review_signal_with_status
 from open_composer.storage import append_jsonl
 from open_composer.strategy_lifecycle import resolve_strategy_path
+from open_composer.strategy_versions import register_strategy_version
 
 
 class PaperRunnerError(RuntimeError):
@@ -32,10 +35,16 @@ def run_paper_cycle(
     spec_path = resolve_strategy_path(spec_ref, base)
     spec = load_strategy_spec(spec_path)
     _validate_runtime_spec(spec)
+    version = register_strategy_version(spec_path, base, created_by="paper_runner")
 
     cycle = PaperRunCycle(
         run_id=run_id(f"paper-{spec.name}"),
         strategy_name=spec.name,
+        strategy_id=spec.name,
+        version_id=version.version_id,
+        spec_hash=version.content_hash,
+        strategy_backend=spec.execution.backend,
+        execution_backend="python_reference",
         spec_path=str(spec_path),
         notes=[
             "Runner uses deterministic latest-bar scan.",
@@ -43,7 +52,25 @@ def run_paper_cycle(
             "Live real-money broker writes are out of scope.",
         ],
     )
-    signals = run_scan(spec_path, root=base, refresh_data=spec.data.source == "alpaca")
+    if spec.execution.backend == "nautilus_trader":
+        plan_path = base / "reports" / "runs" / "nautilus_paper" / f"{cycle.run_id}.json"
+        plan = build_nautilus_paper_plan(
+            spec_path,
+            base,
+            run_id_value=cycle.run_id,
+            version_id=version.version_id,
+            spec_hash=version.content_hash,
+        )
+        write_nautilus_paper_plan(plan_path, plan)
+        cycle.backend_plan_path = str(plan_path)
+        cycle.notes.append(
+            "Nautilus paper runtime is planned; this cycle remains on the audited scan/order gate."
+        )
+    signals = run_scan(
+        spec_path,
+        root=base,
+        refresh_data=spec.data.source in {"alpaca", "longbridge"},
+    )
     if not signals:
         cycle.notes.append("No latest-bar signal.")
         cycle.finished_at = datetime.now(UTC)
@@ -151,6 +178,19 @@ def _decide_signal(
             review_verdict=review_verdict,
             message="pass --allow-paper-orders or use oc paper submit after manual approval",
         )
+    kill_switch = load_paper_kill_switch(root)
+    if kill_switch.enabled:
+        return PaperRunSignalResult(
+            signal_id=signal_id,
+            action=action,  # type: ignore[arg-type]
+            symbol=symbol,
+            price=price,
+            decision="blocked_by_kill_switch",
+            review_status=review_status,
+            review_verdict=review_verdict,
+            message="paper kill switch is enabled"
+            + (f": {kill_switch.reason}" if kill_switch.reason else ""),
+        )
     if require_review_consider and review_verdict != "consider":
         return PaperRunSignalResult(
             signal_id=signal_id,
@@ -201,6 +241,12 @@ def _write_cycle_markdown(path: Path, cycle: PaperRunCycle) -> Path:
         f"# Paper Runner Cycle: {cycle.strategy_name}",
         "",
         f"- Run ID: `{cycle.run_id}`",
+        f"- Strategy ID: `{cycle.strategy_id or cycle.strategy_name}`",
+        f"- Version ID: `{cycle.version_id or 'unregistered'}`",
+        f"- Spec hash: `{cycle.spec_hash or 'unregistered'}`",
+        f"- Strategy backend: `{cycle.strategy_backend}`",
+        f"- Execution backend: `{cycle.execution_backend}`",
+        f"- Backend plan: `{cycle.backend_plan_path or 'n/a'}`",
         f"- Started: {cycle.started_at.isoformat()}",
         f"- Finished: {cycle.finished_at.isoformat() if cycle.finished_at else 'open'}",
         f"- Spec: `{cycle.spec_path}`",

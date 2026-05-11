@@ -60,6 +60,10 @@ The important local gates are:
 - `uv run oc backtest <spec>` before promotion
 - `uv run oc dashboard html` after new artifacts land
 
+Generated reports, signal logs, cache files, strategy versions, and paper state
+are local runtime outputs. They are intentionally ignored by git; checked-in
+files are limited to source code, docs, fixtures, and a small example set.
+
 ## Data
 
 Open Composer records provenance in manifests and reports. When live data is
@@ -106,18 +110,15 @@ uv run oc strategy disable qqq_pullback_15m
 
 Real-money broker writes are out of scope for this MVP.
 
-## Validated Benchmarks
+## Example Benchmark
 
-- `memory_storage_momentum_15m_wdc_alpaca_1h_trend_hold_optimized_volume_plus`
-  - Alpaca cache, 170 bars
-  - annualized return `16.15%`
-  - Sharpe `2.16`
-- `mu_breakout_volume_15m_alpaca_optimized_volume_plus`
-  - Alpaca live-fetch cache, 13,512 bars
-  - annualized return `3.76%`
-  - Sharpe `1.19`
+- `mu_breakout_volume_15m_optimized_volume_plus`
+  - sample data, 52 bars
+  - annualized return `1089.90%`
+  - Sharpe `45.78`
+  - research-only, not production evidence
 
-Sample-backed high-return candidates are documented in [docs/review-optimization-completion-audit.zh.md](docs/review-optimization-completion-audit.zh.md).
+The current research audit is documented in [docs/review-optimization-completion-audit.zh.md](docs/review-optimization-completion-audit.zh.md).
 
 ## Project Docs
 

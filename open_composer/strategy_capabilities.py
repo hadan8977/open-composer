@@ -7,7 +7,9 @@ from typing import Literal
 
 import yaml
 
+from open_composer.adapters.execution.nautilus_trader import build_nautilus_trader_plan
 from open_composer.expressions import ExpressionError, validate_expression
+from open_composer.models.execution_backend import ExecutionBackendPlan
 from open_composer.models.strategy_spec import StrategySpec
 
 CapabilityStatus = Literal["supported", "partial", "blocked", "unsupported"]
@@ -27,6 +29,7 @@ class StrategyCapabilityReport:
     findings: list[CapabilityFinding]
     expression_functions: list[str]
     expression_names: list[str]
+    backend_plan: ExecutionBackendPlan
 
     def finding(self, capability: str) -> CapabilityFinding:
         for item in self.findings:
@@ -42,6 +45,7 @@ def assess_strategy_capabilities(spec_path: Path | str) -> StrategyCapabilityRep
     findings = [
         _python_mvp_backtest(spec, expression_errors),
         _tradingview_pine_strategy(spec, expression_errors),
+        _nautilus_trader_backend(spec_path),
         _alpaca_paper_execution(spec, expression_errors),
         _llm_quant_workflow(spec),
     ]
@@ -51,6 +55,7 @@ def assess_strategy_capabilities(spec_path: Path | str) -> StrategyCapabilityRep
         findings=findings,
         expression_functions=sorted(expression_inventory.functions),
         expression_names=sorted(expression_inventory.names),
+        backend_plan=build_nautilus_trader_plan(spec_path),
     )
 
 
@@ -68,20 +73,26 @@ def _python_mvp_backtest(spec: StrategySpec, expression_errors: list[str]) -> Ca
     reasons: list[str] = []
     if expression_errors:
         return CapabilityFinding("python_mvp_backtest", "unsupported", expression_errors)
-    if spec.data.source not in {"sample", "alpaca"}:
+    if spec.data.source not in {"sample", "alpaca", "longbridge"}:
         return CapabilityFinding(
             "python_mvp_backtest",
             "unsupported",
             [f"unsupported data source: {spec.data.source}"],
         )
     non_market = _non_market_required_capabilities(spec)
-    if spec.llm_review.enabled or non_market:
+    llm_feature_factors = _llm_feature_factors(spec)
+    if spec.llm_review.enabled or non_market or llm_feature_factors:
         reasons.append(
             "deterministic entry/exit rules can be backtested, but LLM/event/news/macro "
             "context is not replayed as trade logic"
         )
         if non_market:
             reasons.append(f"context capabilities are advisory only: {', '.join(non_market)}")
+        if llm_feature_factors:
+            reasons.append(
+                "LLM feature factors are replayed from saved packets, not generated during "
+                f"backtest: {', '.join(llm_feature_factors)}"
+            )
         return CapabilityFinding("python_mvp_backtest", "partial", reasons)
     return CapabilityFinding("python_mvp_backtest", "supported", ["v1 OHLCV rules are supported"])
 
@@ -98,6 +109,12 @@ def _tradingview_pine_strategy(
     if non_market:
         reasons.append(
             "event/news/macro capabilities are not exported to Pine: " + ", ".join(non_market)
+        )
+    llm_feature_factors = _llm_feature_factors(spec)
+    if llm_feature_factors:
+        reasons.append(
+            "LLM feature factors are not representable in Pine Strategy Tester: "
+            + ", ".join(llm_feature_factors)
         )
     if len(spec.universe) > 1:
         reasons.append(
@@ -123,8 +140,10 @@ def _alpaca_paper_execution(spec: StrategySpec, expression_errors: list[str]) ->
         reasons.append("execution.mode must be paper_auto")
     if spec.execution.broker != "alpaca_paper":
         reasons.append("execution.broker must be alpaca_paper")
-    if spec.data.source != "alpaca":
-        reasons.append("live paper runs should use data.source=alpaca, not offline fixtures")
+    if spec.data.source not in {"alpaca", "longbridge"}:
+        reasons.append(
+            "live paper runs should use data.source=alpaca or longbridge, not offline fixtures"
+        )
     if reasons:
         return CapabilityFinding("alpaca_paper_execution", "blocked", reasons)
     if spec.llm_review.enabled:
@@ -140,12 +159,42 @@ def _alpaca_paper_execution(spec: StrategySpec, expression_errors: list[str]) ->
     )
 
 
+def _nautilus_trader_backend(spec_path: Path | str) -> CapabilityFinding:
+    plan = build_nautilus_trader_plan(spec_path)
+    status_map = {
+        "supported": "supported",
+        "partial": "partial",
+        "blocked": "blocked",
+        "unavailable": "blocked",
+    }
+    reasons = [f"{reason}" for reason in plan.reasons]
+    if plan.selected_backend == "python_reference" and plan.status == "supported":
+        reasons.append("selected backend remains python_reference until the backend is enabled")
+        return CapabilityFinding("nautilus_trader_backend", "partial", reasons)
+    return CapabilityFinding(
+        "nautilus_trader_backend",
+        status_map.get(plan.status, "blocked"),
+        reasons or ["backend plan did not produce any reasons"],
+    )
+
+
 def _llm_quant_workflow(spec: StrategySpec) -> CapabilityFinding:
-    if not spec.llm_review.enabled:
+    llm_feature_factors = _llm_feature_factors(spec)
+    if not spec.llm_review.enabled and not llm_feature_factors:
         return CapabilityFinding(
             "llm_quant_workflow",
             "blocked",
             ["llm_review.enabled is false; this is a deterministic quant-only spec"],
+        )
+    if llm_feature_factors:
+        return CapabilityFinding(
+            "llm_quant_workflow",
+            "partial",
+            [
+                "LLM feature factors can be replayed from saved structured packets",
+                "LLM feature generation is not yet an automated live pipeline",
+                "factors: " + ", ".join(llm_feature_factors),
+            ],
         )
     return CapabilityFinding(
         "llm_quant_workflow",
@@ -161,7 +210,7 @@ def _expression_errors(spec: StrategySpec) -> list[str]:
     errors: list[str] = []
     for expression in spec.all_expressions():
         try:
-            validate_expression(expression)
+            validate_expression(expression, spec.factors)
         except ExpressionError as exc:
             errors.append(f"{expression}: {exc}")
     return errors
@@ -173,6 +222,10 @@ def _non_market_required_capabilities(spec: StrategySpec) -> list[str]:
         for capability in spec.required_capabilities
         if not capability.startswith("market.")
     )
+
+
+def _llm_feature_factors(spec: StrategySpec) -> list[str]:
+    return sorted(name for name, factor in spec.factors.items() if factor.source == "llm_feature")
 
 
 @dataclass(frozen=True)
@@ -187,19 +240,32 @@ def _inventory_expressions(spec: StrategySpec) -> _ExpressionInventory:
     functions: set[str] = set()
     unsupported_nodes: set[str] = set()
     for expression in spec.all_expressions():
-        try:
-            parsed = ast.parse(expression, mode="eval")
-        except SyntaxError:
-            continue
-        for node in ast.walk(parsed):
-            if isinstance(node, ast.Name):
-                names.add(node.id)
-            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-                functions.add(node.func.id)
-            elif isinstance(node, ast.Subscript):
-                unsupported_nodes.add("Subscript")
+        _record_expression_inventory(expression, names, functions, unsupported_nodes)
+    for factor in spec.factors.values():
+        if factor.expression:
+            _record_expression_inventory(factor.expression, names, functions, unsupported_nodes)
+    factor_names = set(spec.factors)
     return _ExpressionInventory(
-        names=names - functions,
+        names=(names - functions) | factor_names,
         functions=functions,
         unsupported_nodes=unsupported_nodes,
     )
+
+
+def _record_expression_inventory(
+    expression: str,
+    names: set[str],
+    functions: set[str],
+    unsupported_nodes: set[str],
+) -> None:
+    try:
+        parsed = ast.parse(expression, mode="eval")
+    except SyntaxError:
+        return
+    for node in ast.walk(parsed):
+        if isinstance(node, ast.Name):
+            names.add(node.id)
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            functions.add(node.func.id)
+        elif isinstance(node, ast.Subscript):
+            unsupported_nodes.add("Subscript")

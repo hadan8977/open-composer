@@ -36,9 +36,10 @@ def optimize_strategy_horizons(
     spec_path: Path,
     root: Path | None = None,
     symbols: list[str] | None = None,
-    data_source: Literal["alpaca"] = "alpaca",
+    data_source: Literal["alpaca", "longbridge"] = "alpaca",
     feed: str | None = None,
     min_return_pct: float = 1.0,
+    min_sharpe: float = 0.0,
     min_trades: int = 1,
     max_preferred_trades: int = 18,
     refresh_data: bool = True,
@@ -62,6 +63,7 @@ def optimize_strategy_horizons(
                 timeframe=candidate.timeframe,
                 start=None,
                 end=None,
+                source=data_source,
                 feed=candidate.data.feed or selected_feed,
                 use_cache=not refresh_data,
             )
@@ -73,6 +75,7 @@ def optimize_strategy_horizons(
             score = _score_horizon_candidate(
                 artifacts,
                 min_return_pct=min_return_pct,
+                min_sharpe=min_sharpe,
                 min_trades=min_trades,
                 max_preferred_trades=max_preferred_trades,
             )
@@ -103,6 +106,7 @@ def optimize_strategy_horizons(
         selected,
         candidates,
         min_return_pct=min_return_pct,
+        min_sharpe=min_sharpe,
         min_trades=min_trades,
         max_preferred_trades=max_preferred_trades,
     )
@@ -113,7 +117,7 @@ def _horizon_candidate_specs(
     source: StrategySpec,
     symbol: str,
     universe: list[str],
-    data_source: Literal["alpaca"],
+    data_source: Literal["alpaca", "longbridge"],
     feed: str,
 ) -> list[StrategySpec]:
     variants = [
@@ -203,6 +207,30 @@ def _horizon_candidate_specs(
             "thesis": "Pushes the strategy toward fewer, longer intraday/swing-style holds.",
         },
         {
+            "suffix": "15m_breakout_momentum",
+            "profile": "lower_turnover_hold",
+            "timeframe": "15m",
+            "entry": {
+                "all": [
+                    "close > highest(close, 20)",
+                    "macd_hist(close, 12, 26, 9) > 0",
+                    "roc(close, 10) > 0",
+                    "volume > sma(volume, 10)",
+                ],
+                "any": [],
+            },
+            "exit": {
+                "all": [],
+                "any": ["close < ema(close, 8)", "macd_hist(close, 12, 26, 9) < 0"],
+            },
+            "risk": {
+                "max_trades_per_day": 1,
+                "stop_loss_pct": 1.5,
+                "take_profit_pct": 5.0,
+            },
+            "thesis": "Tests a cleaner breakout/momentum profile on the main 15m horizon.",
+        },
+        {
             "suffix": "1h_trend_hold",
             "profile": "lower_frequency_trend",
             "timeframe": "1h",
@@ -223,6 +251,30 @@ def _horizon_candidate_specs(
                 "take_profit_pct": 12.0,
             },
             "thesis": "Tests whether options-friendly trend duration matters more than scan speed.",
+        },
+        {
+            "suffix": "1h_breakout_momentum",
+            "profile": "lower_frequency_trend",
+            "timeframe": "1h",
+            "entry": {
+                "all": [
+                    "close > ema(close, 21)",
+                    "macd_hist(close, 12, 26, 9) > 0",
+                    "rsi(close, 14) > 55",
+                    "volume > sma(volume, 8)",
+                ],
+                "any": [],
+            },
+            "exit": {
+                "all": [],
+                "any": ["close < ema(close, 21)", "macd_hist(close, 12, 26, 9) < 0"],
+            },
+            "risk": {
+                "max_trades_per_day": 1,
+                "stop_loss_pct": 3.0,
+                "take_profit_pct": 12.0,
+            },
+            "thesis": "Adds a higher-quality momentum breakout variant on the 1h horizon.",
         },
     ]
     output: list[StrategySpec] = []
@@ -246,7 +298,13 @@ def _horizon_candidate_specs(
             "timezone": "America/New_York",
         }
         raw["required_capabilities"] = [
-            "market.alpaca_bars" if item.startswith("market.") else item
+            (
+                "market.longbridge_bars"
+                if data_source == "longbridge" and item.startswith("market.")
+                else "market.alpaca_bars"
+                if item.startswith("market.")
+                else item
+            )
             for item in raw.get("required_capabilities", [])
         ]
         raw["notes"] = {
@@ -265,17 +323,25 @@ def _horizon_candidate_specs(
 def _score_horizon_candidate(
     artifacts: BacktestArtifacts,
     min_return_pct: float,
+    min_sharpe: float,
     min_trades: int,
     max_preferred_trades: int,
 ) -> float:
     run = artifacts.run
-    score = run.total_return_pct
-    if run.total_return_pct < min_return_pct:
+    annualized_return = (
+        run.annualized_return_pct if run.annualized_return_pct is not None else run.total_return_pct
+    )
+    sharpe_bonus = max(run.sharpe_ratio or 0.0, 0.0) * 5.0
+    score = annualized_return or 0.0
+    if (annualized_return or 0.0) < min_return_pct:
+        score -= 5.0
+    if (run.sharpe_ratio or 0.0) < min_sharpe:
         score -= 5.0
     if run.trades < min_trades:
         score -= 5.0
-    if run.total_return_pct < 0:
+    if (annualized_return or 0.0) < 0:
         score -= 5.0
+    score += sharpe_bonus
     score += min(run.trades, max_preferred_trades) * 0.03
     score -= run.signals * 0.015
     score -= max(0, run.trades - max_preferred_trades) * 0.35
@@ -303,6 +369,7 @@ def _write_horizon_report(
     selected: list[HorizonSelection],
     candidates: list[HorizonSelection],
     min_return_pct: float,
+    min_sharpe: float,
     min_trades: int,
     max_preferred_trades: int,
 ) -> Path:
@@ -313,6 +380,7 @@ def _write_horizon_report(
         "- Experiment: compare higher scan frequency against lower turnover and longer holds.",
         f"- Symbols: {', '.join(item.symbol for item in selected)}",
         f"- Minimum return target: {min_return_pct:.2f}%",
+        f"- Minimum Sharpe target: {min_sharpe:.2f}",
         f"- Minimum closed trades: {min_trades}",
         f"- Max preferred closed trades: {max_preferred_trades}",
         "- Return metric: period account-level return, not annualized.",
@@ -334,6 +402,12 @@ def _write_horizon_report(
                 f"- Bars: {item.bars}",
                 f"- Window: {item.start_time} -> {item.end_time}",
                 f"- Return: {run.total_return_pct:.2f}%",
+                f"- Annualized return: {run.annualized_return_pct:.2f}%"
+                if run.annualized_return_pct is not None
+                else "- Annualized return: n/a",
+                f"- Sharpe ratio: {run.sharpe_ratio:.2f}"
+                if run.sharpe_ratio is not None
+                else "- Sharpe ratio: n/a",
                 f"- Signals: {run.signals}",
                 f"- Closed trades: {run.trades}",
                 f"- Max trades/day: {item.spec.risk.max_trades_per_day}",
@@ -345,9 +419,12 @@ def _write_horizon_report(
     lines.extend(["## All Candidates", ""])
     for item in candidates:
         run = item.artifacts.run
+        annualized = _format_optional_pct(run.annualized_return_pct)
+        sharpe = _format_optional_ratio(run.sharpe_ratio)
         lines.append(
             f"- `{item.spec.name}` {item.symbol} profile={item.profile} "
             f"timeframe={item.spec.timeframe} return={run.total_return_pct:.2f}% "
+            f"annualized={annualized} sharpe={sharpe} "
             f"signals={run.signals} trades={run.trades} bars={item.bars} score={item.score:.2f}"
         )
     lines.extend(
@@ -365,3 +442,11 @@ def _write_horizon_report(
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
+
+
+def _format_optional_pct(value: float | None) -> str:
+    return "" if value is None else f"{value:.2f}%"
+
+
+def _format_optional_ratio(value: float | None) -> str:
+    return "" if value is None else f"{value:.2f}"

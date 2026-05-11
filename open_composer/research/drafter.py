@@ -14,6 +14,7 @@ from open_composer.config import (
     project_root,
 )
 from open_composer.models.strategy_spec import StrategySpec
+from open_composer.strategy_versions import register_strategy_version
 
 
 def draft_strategy_from_idea(
@@ -23,12 +24,22 @@ def draft_strategy_from_idea(
     client: Any | None = None,
 ) -> Path:
     base = root or project_root()
+    used_llm = False
     spec = _draft_with_llm(idea, client) if use_llm and _has_openai_config(client) else None
+    if spec is not None:
+        used_llm = True
     if spec is None:
         spec = _deterministic_draft(idea)
     path = base / "strategy_specs" / "drafts" / f"{spec.name}.yaml"
     ensure_dir(path.parent)
     path.write_text(yaml.safe_dump(spec.model_dump(mode="json"), sort_keys=False), encoding="utf-8")
+    register_strategy_version(
+        path,
+        base,
+        created_by="strategy_draft_llm" if used_llm else "strategy_draft_deterministic",
+        model_ref=default_openai_model() if used_llm else None,
+        prompt_session_id=_prompt_session_id(idea),
+    )
     return path
 
 
@@ -43,8 +54,9 @@ def _draft_with_llm(idea: str, client: Any | None = None) -> StrategySpec | None
             "role": "system",
             "content": (
                 "Generate an Open Composer StrategySpec. Keep real trading manual_signal. "
-                "Use registered capabilities only: market.alpaca_bars, events.sec_filings, "
-                "macro.fred_series, news.alpha_vantage, news.gdelt. Use conservative risk."
+                "Use registered capabilities only: market.alpaca_bars, market.longbridge_bars, "
+                "events.sec_filings, macro.fred_series, news.alpha_vantage, news.gdelt. "
+                "Use conservative risk."
             ),
         },
         {"role": "user", "content": idea},
@@ -75,6 +87,8 @@ def _openai_client() -> Any:
 def _deterministic_draft(idea: str) -> StrategySpec:
     if _is_memory_storage_idea(idea):
         return _memory_storage_draft(idea)
+    if _is_breakout_idea(idea):
+        return _breakout_draft(idea)
     symbol = _extract_symbol(idea)
     timeframe = "15m" if "15m" in idea.lower() or "15 m" in idea.lower() else "1h"
     slug = f"{symbol.lower()}_pullback_context_{timeframe}".replace("-", "_")
@@ -129,8 +143,93 @@ def _deterministic_draft(idea: str) -> StrategySpec:
                     "company event, macro, and news context before manual or paper action."
                 ),
                 "open_questions": [
-                    "Evaluate Alpaca IEX versus paid SIP before relying on intraday fills.",
+                    (
+                        "Evaluate Longbridge Nasdaq Basic versus Alpaca IEX before relying on "
+                        "intraday fills."
+                    ),
                     "Measure Alpha Vantage and GDELT coverage against the active watchlist.",
+                ],
+            },
+        }
+    )
+
+
+def _breakout_draft(idea: str) -> StrategySpec:
+    symbol = _extract_symbol(idea)
+    timeframe = "15m" if _mentions_intraday(idea) else "1h"
+    slug = f"{symbol.lower()}_breakout_volume_{timeframe}".replace("-", "_")
+    return StrategySpec.model_validate(
+        {
+            "name": slug,
+            "description": (
+                f"{symbol} breakout strategy using lagged highs, volume confirmation, "
+                "and volatility filters."
+            ),
+            "timeframe": timeframe,
+            "universe": [symbol],
+            "lifecycle": "draft",
+            "factors": {
+                "breakout_level": {
+                    "source": "expression",
+                    "expression": "lag(highest(close, 6), 1)",
+                    "description": "Prior rolling high shifted by one bar.",
+                },
+                "volatility_range": {
+                    "source": "expression",
+                    "expression": "atr(5)",
+                    "description": "Five-bar average true range.",
+                },
+                "bear_cross": {
+                    "source": "expression",
+                    "expression": "crossunder(ema(close, 3), ema(close, 8))",
+                    "description": "Short EMA crossing below slow EMA.",
+                },
+            },
+            "entry": {
+                "all": [
+                    "close > breakout_level",
+                    "volume > sma(volume, 5)",
+                    "volatility_range > 0.45",
+                ]
+            },
+            "exit": {
+                "any": [
+                    "close < ema(close, 5)",
+                    "bear_cross",
+                ]
+            },
+            "risk": {
+                "max_trades_per_day": 2,
+                "max_position_weight": 0.12,
+                "stop_loss_pct": 1.0,
+                "take_profit_pct": 2.4,
+            },
+            "execution": {
+                "mode": "manual_signal",
+                "signal_on": "bar_close",
+                "fill_assumption": "next_bar_open",
+                "broker": "none",
+            },
+            "data": {
+                "source": "sample",
+                "symbol": symbol,
+                "path": f"data/sample/{symbol.lower()}_15m.csv",
+            },
+            "data_assumptions": {
+                "source": "sample",
+                "adjusted": True,
+                "timezone": "America/New_York",
+            },
+            "llm_review": {"enabled": False, "model": None},
+            "required_capabilities": ["market.sample_ohlcv"],
+            "notes": {
+                "intent": (
+                    "Trade deterministic price breakouts only after a prior-window high is "
+                    "exceeded with volume and minimum realized range."
+                ),
+                "open_questions": [
+                    "Add commission and slippage sensitivity before paper automation.",
+                    "Validate breakout lookback length with out-of-sample data.",
                 ],
             },
         }
@@ -213,6 +312,19 @@ def _is_memory_storage_idea(idea: str) -> bool:
     return any(keyword in normalized for keyword in keywords)
 
 
+def _is_breakout_idea(idea: str) -> bool:
+    normalized = idea.lower()
+    keywords = [
+        "breakout",
+        "volume expansion",
+        "new high",
+        "突破",
+        "放量",
+        "创新高",
+    ]
+    return any(keyword in normalized for keyword in keywords)
+
+
 def _mentions_intraday(idea: str) -> bool:
     normalized = idea.lower()
     return any(token in normalized for token in ["15m", "15 m", "intraday", "日内", "盘中"])
@@ -223,3 +335,10 @@ def _extract_symbol(idea: str) -> str:
         if token not in {"SEC", "LLM", "API"}:
             return token
     return "QQQ"
+
+
+def _prompt_session_id(idea: str) -> str:
+    import hashlib
+
+    digest = hashlib.sha256(idea.encode("utf-8")).hexdigest()[:16]
+    return f"idea_{digest}"

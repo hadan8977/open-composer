@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from open_composer.models.execution_backend import ExecutionBackend
+
 
 class Signal(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -13,6 +15,11 @@ class Signal(BaseModel):
     id: str
     run_id: str
     strategy_name: str
+    strategy_id: str | None = None
+    version_id: str | None = None
+    spec_hash: str | None = None
+    strategy_backend: ExecutionBackend = "python_reference"
+    execution_backend: ExecutionBackend = "python_reference"
     symbol: str
     timeframe: str
     timestamp: datetime

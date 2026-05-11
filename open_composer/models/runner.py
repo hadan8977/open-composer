@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from open_composer.models.execution_backend import ExecutionBackend
+
 
 class PaperRunSignalResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -18,6 +20,7 @@ class PaperRunSignalResult(BaseModel):
         "paper_order_submitted",
         "paper_orders_not_allowed",
         "blocked_by_review",
+        "blocked_by_kill_switch",
         "order_error",
     ]
     review_status: str = "not_requested"
@@ -31,6 +34,12 @@ class PaperRunCycle(BaseModel):
 
     run_id: str
     strategy_name: str
+    strategy_id: str | None = None
+    version_id: str | None = None
+    spec_hash: str | None = None
+    strategy_backend: ExecutionBackend = "python_reference"
+    execution_backend: ExecutionBackend = "python_reference"
+    backend_plan_path: str | None = None
     spec_path: str
     started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     finished_at: datetime | None = None

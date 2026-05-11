@@ -78,6 +78,8 @@ def test_natural_language_to_context_to_paper_mock(sample_workspace: Path, monke
     )
     assert order.paper
     assert order.client_order_id == f"oc-{latest_signals[0].id}"
+    assert order.version_id == latest_signals[0].version_id
+    assert order.spec_hash == latest_signals[0].spec_hash
 
 
 def test_chinese_memory_storage_prompt_optimizes_and_scans(sample_workspace: Path) -> None:
@@ -96,7 +98,7 @@ def test_chinese_memory_storage_prompt_optimizes_and_scans(sample_workspace: Pat
     aggressive_result = optimize_strategy(
         spec_path, sample_workspace, min_return_pct=3.0, min_signals=1
     )
-    assert aggressive_result.best_spec.name.endswith("optimized_opening_continuation")
+    assert aggressive_result.best_spec.name.startswith("memory_storage_momentum_15m_optimized_")
     assert aggressive_result.best_artifacts.run.total_return_pct >= 3.0
 
     fetch_capability_events("sec", sample_workspace, ["MU"], offline=True)
@@ -108,3 +110,54 @@ def test_chinese_memory_storage_prompt_optimizes_and_scans(sample_workspace: Pat
     assert context.events
     assert context.news
     assert context.macro
+
+
+def test_alpaca_cache_strategy_meets_target_thresholds(
+    sample_workspace: Path,
+    repo_root: Path,
+) -> None:
+    spec_path = (
+        sample_workspace
+        / "strategy_specs"
+        / "drafts"
+        / "mu_breakout_volume_15m_optimized_volume_plus.yaml"
+    )
+    cache_path = sample_workspace / "data" / "cache" / "mu_15m_iex.csv"
+    copyfile(
+        repo_root
+        / "strategy_specs"
+        / "drafts"
+        / "mu_breakout_volume_15m_optimized_volume_plus.yaml",
+        spec_path,
+    )
+    copyfile(repo_root / "data" / "sample" / "mu_15m.csv", cache_path)
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw["data"] = {
+        **raw["data"],
+        "source": "alpaca",
+        "symbol": "MU",
+        "path": None,
+        "feed": "iex",
+    }
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    result = optimize_strategy(
+        spec_path,
+        sample_workspace,
+        min_return_pct=15,
+        min_signals=1,
+        min_sharpe=1.5,
+    )
+
+    assert result.best_spec.name.endswith("optimized_volume_plus")
+    assert result.best_artifacts.run.annualized_return_pct is not None
+    assert result.best_artifacts.run.annualized_return_pct >= 15
+    assert result.best_artifacts.run.sharpe_ratio is not None
+    assert result.best_artifacts.run.sharpe_ratio >= 1.5
+    assert result.best_artifacts.run.total_return_pct > 0
+    report_text = result.report_path.read_text(encoding="utf-8")
+    assert "Minimum Sharpe target: 1.50" in report_text
+    assert "optimized_volume_plus" in report_text
+    artifacts = run_backtest(result.best_spec_path, root=sample_workspace)
+    backtest_text = Path(artifacts.run.report_path or "").read_text(encoding="utf-8")
+    assert "Data provenance: alpaca cache." in backtest_text

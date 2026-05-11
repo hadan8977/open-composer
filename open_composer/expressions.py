@@ -1,41 +1,84 @@
 from __future__ import annotations
 
 import ast
+import json
+from collections.abc import Mapping
 from functools import reduce
 from operator import and_, or_
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
-from open_composer.indicators import ema, rsi, sma
+from open_composer.indicators import (
+    atr,
+    bollinger_lower,
+    bollinger_mid,
+    bollinger_upper,
+    crossover,
+    crossunder,
+    ema,
+    highest,
+    lag,
+    lowest,
+    macd,
+    macd_hist,
+    macd_signal,
+    roc,
+    rsi,
+    sma,
+    stddev,
+    zscore,
+)
 
 OHLCV_NAMES = {"open", "high", "low", "close", "volume"}
-FUNCTIONS = {"sma": sma, "ema": ema, "rsi": rsi}
+SERIES_WINDOW_FUNCTIONS = {
+    "sma": sma,
+    "ema": ema,
+    "rsi": rsi,
+    "highest": highest,
+    "lowest": lowest,
+    "lag": lag,
+    "roc": roc,
+}
+CROSS_FUNCTIONS = {"crossover": crossover, "crossunder": crossunder}
+STATISTICAL_FUNCTIONS = {
+    "stddev": stddev,
+    "zscore": zscore,
+    "macd": macd,
+    "macd_signal": macd_signal,
+    "macd_hist": macd_hist,
+    "bollinger_mid": bollinger_mid,
+    "bollinger_upper": bollinger_upper,
+    "bollinger_lower": bollinger_lower,
+}
 
 
 class ExpressionError(ValueError):
     pass
 
 
-def validate_expression(expression: str) -> None:
+def validate_expression(
+    expression: str,
+    factors: Mapping[str, Any] | None = None,
+    root: Path | None = None,
+) -> None:
     dummy = pd.DataFrame(
         {
-            "open": range(1, 40),
-            "high": range(2, 41),
-            "low": range(0, 39),
-            "close": range(1, 40),
-            "volume": range(1_000, 1_039),
+            "timestamp": pd.date_range("2026-01-01", periods=40, freq="15min", tz="UTC"),
+            "open": range(1, 41),
+            "high": range(2, 42),
+            "low": range(0, 40),
+            "close": range(1, 41),
+            "volume": range(1_000, 1_040),
         }
     )
-    evaluate_expression(expression, dummy)
+    frame = prepare_factor_frame(dummy, factors or {}, root=root)
+    evaluate_expression(expression, frame)
 
 
 def evaluate_expression(expression: str, frame: pd.DataFrame) -> pd.Series:
-    try:
-        parsed = ast.parse(expression, mode="eval")
-    except SyntaxError as exc:
-        raise ExpressionError(f"invalid expression syntax: {expression}") from exc
-    result = _eval_node(parsed, frame)
+    result = evaluate_raw_expression(expression, frame)
     if isinstance(result, pd.Series):
         return result.fillna(False).astype(bool)
     if isinstance(result, bool):
@@ -43,9 +86,60 @@ def evaluate_expression(expression: str, frame: pd.DataFrame) -> pd.Series:
     raise ExpressionError(f"expression must evaluate to a boolean series: {expression}")
 
 
+def evaluate_raw_expression(expression: str, frame: pd.DataFrame) -> Any:
+    try:
+        parsed = ast.parse(expression, mode="eval")
+    except SyntaxError as exc:
+        raise ExpressionError(f"invalid expression syntax: {expression}") from exc
+    return _eval_node(parsed, frame)
+
+
+def prepare_factor_frame(
+    frame: pd.DataFrame,
+    factors: Mapping[str, Any] | None,
+    root: Path | None = None,
+) -> pd.DataFrame:
+    if not factors:
+        return frame
+    prepared = frame.copy()
+    remaining = dict(factors)
+    while remaining:
+        progressed = False
+        blocked: dict[str, str] = {}
+        for name, factor in list(remaining.items()):
+            source = getattr(factor, "source", "expression")
+            try:
+                if source == "expression":
+                    expression = getattr(factor, "expression", None)
+                    if not expression:
+                        raise ExpressionError(f"factor {name} missing expression")
+                    prepared[name] = _series_from_factor_value(
+                        evaluate_raw_expression(expression, prepared),
+                        prepared,
+                    )
+                elif source == "llm_feature":
+                    prepared[name] = _load_llm_feature(name, factor, prepared, root)
+                else:
+                    raise ExpressionError(f"unsupported factor source: {source}")
+            except ExpressionError as exc:
+                blocked[name] = str(exc)
+                continue
+            remaining.pop(name)
+            progressed = True
+        if not progressed:
+            details = "; ".join(f"{name}: {reason}" for name, reason in blocked.items())
+            raise ExpressionError(f"could not resolve factors: {details}")
+    return prepared
+
+
 def evaluate_rule_block(
-    frame: pd.DataFrame, all_rules: list[str], any_rules: list[str]
+    frame: pd.DataFrame,
+    all_rules: list[str],
+    any_rules: list[str],
+    factors: Mapping[str, Any] | None = None,
+    root: Path | None = None,
 ) -> pd.Series:
+    frame = prepare_factor_frame(frame, factors or {}, root=root)
     pieces: list[pd.Series] = []
     if all_rules:
         pieces.append(reduce(and_, [evaluate_expression(rule, frame) for rule in all_rules]))
@@ -60,6 +154,8 @@ def _eval_node(node: ast.AST, frame: pd.DataFrame) -> Any:
     if isinstance(node, ast.Expression):
         return _eval_node(node.body, frame)
     if isinstance(node, ast.Name):
+        if node.id in frame.columns:
+            return frame[node.id]
         if node.id not in OHLCV_NAMES:
             raise ExpressionError(f"unsupported name: {node.id}")
         return frame[node.id]
@@ -88,17 +184,136 @@ def _eval_node(node: ast.AST, frame: pd.DataFrame) -> Any:
 
 
 def _eval_call(node: ast.Call, frame: pd.DataFrame) -> pd.Series:
-    if not isinstance(node.func, ast.Name) or node.func.id not in FUNCTIONS:
-        raise ExpressionError("only sma(), ema(), and rsi() calls are supported")
-    if len(node.args) != 2 or node.keywords:
-        raise ExpressionError(f"{node.func.id}() requires exactly two positional arguments")
+    if not isinstance(node.func, ast.Name):
+        raise ExpressionError("unsupported function call")
+    function_name = node.func.id
+    if node.keywords:
+        raise ExpressionError(f"{function_name}() does not support keyword arguments")
+
+    if function_name in SERIES_WINDOW_FUNCTIONS:
+        return _eval_series_window_call(function_name, node, frame)
+    if function_name in CROSS_FUNCTIONS:
+        return _eval_cross_call(function_name, node, frame)
+    if function_name == "atr":
+        return _eval_atr_call(node, frame)
+    if function_name in STATISTICAL_FUNCTIONS:
+        return _eval_statistical_call(function_name, node, frame)
+    supported = [
+        *SERIES_WINDOW_FUNCTIONS,
+        *CROSS_FUNCTIONS,
+        "atr",
+        *STATISTICAL_FUNCTIONS,
+    ]
+    raise ExpressionError("supported functions: " + ", ".join(sorted(supported)))
+
+
+def _eval_series_window_call(
+    function_name: str,
+    node: ast.Call,
+    frame: pd.DataFrame,
+) -> pd.Series:
+    if len(node.args) != 2:
+        raise ExpressionError(f"{function_name}() requires exactly two positional arguments")
     series = _eval_node(node.args[0], frame)
     window = _eval_node(node.args[1], frame)
     if not isinstance(series, pd.Series):
-        raise ExpressionError(f"{node.func.id}() first argument must be an OHLCV series")
+        raise ExpressionError(f"{function_name}() first argument must be an OHLCV series")
     if not isinstance(window, int) or window <= 0:
-        raise ExpressionError(f"{node.func.id}() window must be a positive integer")
-    return FUNCTIONS[node.func.id](series.astype(float), window)
+        raise ExpressionError(f"{function_name}() window must be a positive integer")
+    return SERIES_WINDOW_FUNCTIONS[function_name](series.astype(float), window)
+
+
+def _eval_cross_call(function_name: str, node: ast.Call, frame: pd.DataFrame) -> pd.Series:
+    if len(node.args) != 2:
+        raise ExpressionError(f"{function_name}() requires exactly two positional arguments")
+    left = _eval_node(node.args[0], frame)
+    right = _eval_node(node.args[1], frame)
+    if not isinstance(left, pd.Series) or not isinstance(right, pd.Series):
+        raise ExpressionError(f"{function_name}() requires two series arguments")
+    return CROSS_FUNCTIONS[function_name](left.astype(float), right.astype(float))
+
+
+def _eval_atr_call(node: ast.Call, frame: pd.DataFrame) -> pd.Series:
+    if len(node.args) != 1:
+        raise ExpressionError("atr() requires exactly one window argument")
+    window = _eval_node(node.args[0], frame)
+    if not isinstance(window, int) or window <= 0:
+        raise ExpressionError("atr() window must be a positive integer")
+    return atr(
+        frame["high"].astype(float),
+        frame["low"].astype(float),
+        frame["close"].astype(float),
+        window,
+    )
+
+
+def _eval_statistical_call(
+    function_name: str,
+    node: ast.Call,
+    frame: pd.DataFrame,
+) -> pd.Series:
+    if function_name in {"stddev", "zscore", "bollinger_mid"}:
+        if len(node.args) != 2:
+            raise ExpressionError(f"{function_name}() requires exactly two positional arguments")
+        series = _eval_node(node.args[0], frame)
+        window = _eval_node(node.args[1], frame)
+        if not isinstance(series, pd.Series):
+            raise ExpressionError(f"{function_name}() first argument must be a series")
+        if not isinstance(window, int) or isinstance(window, bool) or window <= 0:
+            raise ExpressionError(f"{function_name}() window must be a positive integer")
+        series = series.astype(float)
+        if function_name == "stddev":
+            return stddev(series, window)
+        if function_name == "zscore":
+            return zscore(series, window)
+        return bollinger_mid(series, window)
+
+    if function_name in {"macd", "macd_signal", "macd_hist"}:
+        expected_args = {
+            "macd": 3,
+            "macd_signal": 4,
+            "macd_hist": 4,
+        }[function_name]
+        if len(node.args) != expected_args:
+            raise ExpressionError(
+                f"{function_name}() requires exactly {expected_args} positional arguments"
+            )
+        series = _eval_node(node.args[0], frame)
+        if not isinstance(series, pd.Series):
+            raise ExpressionError(f"{function_name}() first argument must be a series")
+        series = series.astype(float)
+        fast = _positive_int_arg(_eval_node(node.args[1], frame), function_name, "fast")
+        slow = _positive_int_arg(_eval_node(node.args[2], frame), function_name, "slow")
+        if function_name == "macd":
+            return macd(series, fast, slow)
+        signal = _positive_int_arg(_eval_node(node.args[3], frame), function_name, "signal")
+        if function_name == "macd_signal":
+            return macd_signal(series, fast, slow, signal)
+        return macd_hist(series, fast, slow, signal)
+
+    if function_name in {"bollinger_upper", "bollinger_lower"}:
+        if len(node.args) not in {2, 3}:
+            raise ExpressionError(
+                f"{function_name}() requires two positional arguments and an optional multiplier"
+            )
+        series = _eval_node(node.args[0], frame)
+        window = _eval_node(node.args[1], frame)
+        if not isinstance(series, pd.Series):
+            raise ExpressionError(f"{function_name}() first argument must be a series")
+        if not isinstance(window, int) or isinstance(window, bool) or window <= 0:
+            raise ExpressionError(f"{function_name}() window must be a positive integer")
+        mult = 2.0
+        if len(node.args) == 3:
+            mult_value = _eval_node(node.args[2], frame)
+            if isinstance(mult_value, bool) or not isinstance(mult_value, int | float):
+                raise ExpressionError(f"{function_name}() multiplier must be numeric")
+            mult = float(mult_value)
+        series = series.astype(float)
+        if function_name == "bollinger_upper":
+            return bollinger_upper(series, window, mult)
+        return bollinger_lower(series, window, mult)
+
+    raise ExpressionError(f"unsupported function: {function_name}")
 
 
 def _eval_compare(node: ast.Compare, frame: pd.DataFrame) -> pd.Series:
@@ -132,3 +347,67 @@ def _eval_binop(op: ast.operator, left: Any, right: Any) -> Any:
     if isinstance(op, ast.Div):
         return left / right
     raise ExpressionError("unsupported arithmetic operator")
+
+
+def _positive_int_arg(value: Any, function_name: str, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ExpressionError(f"{function_name}() {label} must be a positive integer")
+    return value
+
+
+def _series_from_factor_value(value: Any, frame: pd.DataFrame) -> pd.Series:
+    if isinstance(value, pd.Series):
+        return value
+    if isinstance(value, int | float | bool):
+        return pd.Series([value] * len(frame), index=frame.index)
+    raise ExpressionError("factor expression must evaluate to a series or scalar")
+
+
+def _load_llm_feature(
+    name: str,
+    factor: Any,
+    frame: pd.DataFrame,
+    root: Path | None,
+) -> pd.Series:
+    default = getattr(factor, "default", 0.0)
+    field = getattr(factor, "field", None)
+    path_value = getattr(factor, "path", None)
+    if not field:
+        raise ExpressionError(f"llm_feature factor {name} missing field")
+    if not path_value:
+        return pd.Series([default] * len(frame), index=frame.index)
+    path = Path(path_value)
+    if not path.is_absolute() and root is not None:
+        path = root / path
+    if not path.exists():
+        return pd.Series([default] * len(frame), index=frame.index)
+    if "timestamp" not in frame.columns:
+        raise ExpressionError("llm_feature factors require timestamp column")
+
+    records: list[tuple[pd.Timestamp, Any]] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            raw = json.loads(line)
+            if field not in raw or "timestamp" not in raw:
+                continue
+            records.append((pd.Timestamp(raw["timestamp"]), raw[field]))
+    if not records:
+        return pd.Series([default] * len(frame), index=frame.index)
+
+    records.sort(key=lambda item: item[0])
+    values: list[Any] = []
+    cursor = 0
+    current = default
+    timestamps = pd.to_datetime(frame["timestamp"], utc=True)
+    normalized_records = [
+        (timestamp.tz_convert("UTC") if timestamp.tzinfo else timestamp.tz_localize("UTC"), value)
+        for timestamp, value in records
+    ]
+    for timestamp in timestamps:
+        while cursor < len(normalized_records) and normalized_records[cursor][0] <= timestamp:
+            current = normalized_records[cursor][1]
+            cursor += 1
+        values.append(current)
+    return pd.Series(values, index=frame.index)

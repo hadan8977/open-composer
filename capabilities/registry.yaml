@@ -25,6 +25,20 @@ capabilities:
     caveats:
       - free IEX feed is not consolidated full-market SIP data
 
+  - id: market.longbridge_bars
+    kind: market
+    status: trial
+    provider: longbridge
+    use_for: [ohlcv, scan, backtest, paper_context]
+    reliability: medium
+    default_mode: live_with_cache
+    fixture: data/fixtures/capabilities/longbridge_qqq_15m.csv
+    env: [LONGBRIDGE_APP_KEY, LONGBRIDGE_APP_SECRET]
+    min_score: 0.85
+    caveats:
+      - free US market data is based on Nasdaq Basic, not consolidated SIP data
+      - minute history range and quote card permissions must be verified against the account
+
   - id: market.memory_storage_sample
     kind: market
     status: approved

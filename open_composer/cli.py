@@ -16,10 +16,13 @@ from rich.table import Table
 from open_composer.adapters.broker.alpaca_paper import (
     PaperOrderError,
     submit_paper_order,
+    sync_paper_account,
     sync_paper_orders,
 )
 from open_composer.adapters.data import fetch_ohlcv
+from open_composer.adapters.data.comparison import compare_ohlcv_sources
 from open_composer.adapters.events import fetch_capability_events
+from open_composer.adapters.execution import build_nautilus_trader_plan, write_nautilus_trader_plan
 from open_composer.capabilities import evaluate_capabilities, load_registry
 from open_composer.compiler.spec_to_pine import compile_pine, compile_pine_strategy
 from open_composer.config import (
@@ -33,10 +36,26 @@ from open_composer.config import (
     project_root,
 )
 from open_composer.context import build_signal_context
+from open_composer.dashboard import (
+    build_dashboard_catalog,
+    write_dashboard_catalog,
+    write_dashboard_html,
+    write_dashboard_review_markdown,
+)
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
 from open_composer.journal.writer import add_journal_entry
 from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.paper_controls import (
+    build_paper_alerts,
+    build_paper_status,
+    clear_paper_kill_switch,
+    enable_paper_kill_switch,
+    reconcile_paper_state,
+    refresh_paper_monitor,
+    run_paper_monitor_loop,
+    write_paper_status,
+)
 from open_composer.research import (
     draft_strategy_from_idea,
     optimize_option_overlays,
@@ -58,6 +77,12 @@ from open_composer.strategy_lifecycle import (
     list_strategies,
     resolve_strategy_path,
 )
+from open_composer.strategy_versions import (
+    diff_strategy_versions,
+    load_strategy_versions,
+    register_strategy_version,
+    rollback_strategy_version,
+)
 
 app = typer.Typer(no_args_is_help=True)
 spec_app = typer.Typer(no_args_is_help=True)
@@ -72,6 +97,7 @@ context_app = typer.Typer(no_args_is_help=True)
 strategy_app = typer.Typer(no_args_is_help=True)
 run_app = typer.Typer(no_args_is_help=True)
 options_app = typer.Typer(no_args_is_help=True)
+dashboard_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -86,6 +112,7 @@ app.add_typer(context_app, name="context")
 app.add_typer(strategy_app, name="strategy")
 app.add_typer(run_app, name="run")
 app.add_typer(options_app, name="options")
+app.add_typer(dashboard_app, name="dashboard")
 
 
 @app.callback()
@@ -135,7 +162,81 @@ def doctor() -> None:
         "ALPHA_VANTAGE_API_KEY", optional_env_status("ALPHA_VANTAGE_API_KEY"), "optional news"
     )
     table.add_row("FRED_API_KEY", optional_env_status("FRED_API_KEY"), "optional macro")
+    table.add_row(
+        "LONGBRIDGE_APP_KEY", optional_env_status("LONGBRIDGE_APP_KEY"), "optional for Longbridge"
+    )
+    table.add_row(
+        "LONGBRIDGE_APP_SECRET",
+        optional_env_status("LONGBRIDGE_APP_SECRET"),
+        "optional for Longbridge",
+    )
     console.print(table)
+
+
+@dashboard_app.command("catalog")
+def dashboard_catalog_command(
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Path for the JSON dashboard catalog."),
+    ] = None,
+    markdown: Annotated[
+        Path | None,
+        typer.Option("--markdown", help="Path for the Markdown dashboard summary."),
+    ] = None,
+) -> None:
+    """Build a rebuildable read model for strategies, runs, signals, reviews, and audits."""
+    root = project_root()
+    output_path = output or root / "reports" / "dashboard" / "catalog.json"
+    markdown_path = markdown or root / "reports" / "dashboard" / "catalog.md"
+    catalog = build_dashboard_catalog(root)
+    artifacts = write_dashboard_catalog(catalog, root, output_path, markdown_path)
+    table = Table(title="Dashboard Catalog")
+    table.add_column("Metric")
+    table.add_column("Value")
+    table.add_row("Strategies", str(catalog.summary.strategy_count))
+    table.add_row("Versions", str(catalog.summary.version_count))
+    table.add_row("Runs", str(catalog.summary.run_count))
+    table.add_row("Signals", str(catalog.summary.signal_count))
+    table.add_row("Reviews", str(catalog.summary.review_count))
+    table.add_row("Contexts", str(catalog.summary.context_count))
+    table.add_row("Journal entries", str(catalog.summary.journal_count))
+    table.add_row("Paper orders", str(catalog.summary.order_count))
+    table.add_row("Audit events", str(catalog.summary.audit_count))
+    table.add_row("Data comparisons", str(catalog.summary.data_comparison_count))
+    table.add_row("Read model", str(artifacts.catalog_path))
+    table.add_row("Summary markdown", str(artifacts.markdown_path))
+    console.print(table)
+
+
+@dashboard_app.command("review-plan")
+def dashboard_review_plan_command(
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Path for the Dashboard D0 review document."),
+    ] = None,
+) -> None:
+    """Write a strict D0 review of the current Dashboard plan against repo artifacts."""
+    root = project_root()
+    output_path = output or root / "docs" / "dashboard-d0-review.zh.md"
+    catalog = build_dashboard_catalog(root)
+    path = write_dashboard_review_markdown(catalog, output_path, root)
+    console.print(f"[green]dashboard review written[/green] {path}")
+
+
+@dashboard_app.command("html")
+def dashboard_html_command(
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Path for the read-only static Dashboard HTML."),
+    ] = None,
+) -> None:
+    """Build a read-only static Dashboard page from the dashboard catalog."""
+    root = project_root()
+    output_path = output or root / "reports" / "dashboard" / "index.html"
+    catalog = build_dashboard_catalog(root)
+    write_dashboard_catalog(catalog, root)
+    path = write_dashboard_html(catalog, root, output_path)
+    console.print(f"[green]dashboard html written[/green] {path}")
 
 
 @capability_app.command("list")
@@ -204,11 +305,59 @@ def spec_capabilities(
     for finding in report.findings:
         table.add_row(finding.capability, finding.status, "\n".join(finding.reasons))
     console.print(table)
+    backend = report.backend_plan
+    backend_table = Table(title=f"NautilusTrader Backend Plan: {report.strategy_name}")
+    backend_table.add_column("Field")
+    backend_table.add_column("Value")
+    backend_table.add_row("Target backend", backend.target_backend)
+    backend_table.add_row("Selected backend", backend.selected_backend)
+    backend_table.add_row("Status", backend.status)
+    backend_table.add_row("Supported", "yes" if backend.supported else "no")
+    backend_table.add_row("Installed", "yes" if backend.nautilus_installed else "no")
+    backend_table.add_row("Reasons", "\n".join(backend.reasons))
+    console.print(backend_table)
     console.print(
         "expressions: "
         f"names={','.join(report.expression_names) or 'none'} "
         f"functions={','.join(report.expression_functions) or 'none'}"
     )
+
+
+@spec_app.command("backend-plan")
+def spec_backend_plan(
+    path: Path,
+    json_output: bool = typer.Option(False, "--json", help="Print machine-readable JSON."),
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Optional JSON output path."),
+    ] = None,
+) -> None:
+    """Build the NautilusTrader compatibility plan for a StrategySpec."""
+    plan = build_nautilus_trader_plan(path, project_root())
+    if output is not None:
+        write_nautilus_trader_plan(output, plan)
+        console.print(f"[green]backend plan written[/green] {output}")
+    if json_output:
+        print(json.dumps(plan.model_dump(mode="json"), indent=2))
+        return
+    table = Table(title=f"NautilusTrader Backend Plan: {plan.strategy_name}")
+    table.add_column("Field")
+    table.add_column("Value")
+    table.add_row("Selected backend", plan.selected_backend)
+    table.add_row("Target backend", plan.target_backend)
+    table.add_row("Status", plan.status)
+    table.add_row("Supported", "yes" if plan.supported else "no")
+    table.add_row("Installed", "yes" if plan.nautilus_installed else "no")
+    table.add_row("Execution mode", plan.execution_mode)
+    table.add_row("Broker", plan.broker)
+    table.add_row("Data source", plan.data_source)
+    table.add_row("Symbol", plan.symbol)
+    table.add_row("Timeframe", plan.timeframe)
+    table.add_row("Factors", ", ".join(plan.factor_names) or "none")
+    table.add_row("LLM feature factors", ", ".join(plan.llm_feature_factor_names) or "none")
+    table.add_row("Required capabilities", ", ".join(plan.required_capabilities) or "none")
+    table.add_row("Reasons", "\n".join(plan.reasons))
+    console.print(table)
 
 
 def _strategy_capability_payload(report: StrategyCapabilityReport) -> dict[str, object]:
@@ -217,6 +366,7 @@ def _strategy_capability_payload(report: StrategyCapabilityReport) -> dict[str, 
         "lifecycle": report.lifecycle,
         "expression_functions": report.expression_functions,
         "expression_names": report.expression_names,
+        "backend_plan": report.backend_plan.model_dump(mode="json"),
         "findings": [
             {
                 "capability": finding.capability,
@@ -232,11 +382,12 @@ def _strategy_capability_payload(report: StrategyCapabilityReport) -> dict[str, 
 def data_fetch(
     symbol: str = typer.Option("QQQ", "--symbol"),
     timeframe: str = typer.Option("15m", "--timeframe"),
+    source: str = typer.Option("alpaca", "--source"),
     start: str | None = typer.Option(None, "--start"),
     end: str | None = typer.Option(None, "--end"),
     feed: str | None = typer.Option(None, "--feed"),
 ) -> None:
-    """Fetch Alpaca historical bars into data/cache."""
+    """Fetch OHLCV bars into data/cache."""
     root = project_root()
     frame = fetch_ohlcv(
         root=root,
@@ -244,9 +395,40 @@ def data_fetch(
         timeframe=timeframe,
         start=_parse_datetime(start),
         end=_parse_datetime(end),
+        source=source,
         feed=feed,
     )
-    console.print(f"[green]fetched[/green] {len(frame)} bars for {symbol.upper()} {timeframe}")
+    console.print(
+        f"[green]fetched[/green] {len(frame)} bars for {symbol.upper()} {timeframe} source={source}"
+    )
+
+
+@data_app.command("compare")
+def data_compare(
+    symbol: str = typer.Option("QQQ", "--symbol"),
+    timeframe: str = typer.Option("15m", "--timeframe"),
+    left: str = typer.Option("alpaca", "--left"),
+    right: str = typer.Option("longbridge", "--right"),
+    left_feed: str | None = typer.Option(None, "--left-feed"),
+    right_feed: str | None = typer.Option(None, "--right-feed"),
+) -> None:
+    """Compare two OHLCV sources and write a diff report."""
+    root = project_root()
+    comparison = compare_ohlcv_sources(
+        root=root,
+        symbol=symbol.upper(),
+        timeframe=timeframe,
+        left_source=left,
+        right_source=right,
+        left_feed=left_feed,
+        right_feed=right_feed,
+    )
+    console.print(
+        "[green]comparison written[/green] "
+        f"{comparison.report_markdown_path} close_diff={comparison.max_abs_close_diff:.6f} "
+        f"close_diff_bps={comparison.max_abs_close_diff_bps:.2f} "
+        f"matched={comparison.matched_rows} coverage={comparison.matched_coverage_pct:.2f}%"
+    )
 
 
 @events_app.command("fetch")
@@ -356,9 +538,10 @@ def strategy_optimize(
     spec: Path,
     min_return_pct: float = typer.Option(1.0, "--min-return-pct"),
     min_signals: int = typer.Option(1, "--min-signals"),
+    min_sharpe: float = typer.Option(0.0, "--min-sharpe"),
 ) -> None:
     """Generate candidate rule variants and select the best deterministic backtest result."""
-    result = optimize_strategy(spec, project_root(), min_return_pct, min_signals)
+    result = optimize_strategy(spec, project_root(), min_return_pct, min_signals, min_sharpe)
     console.print(
         f"[green]optimized[/green] {result.best_spec_path} "
         f"return={result.best_artifacts.run.total_return_pct:.2f}% "
@@ -378,13 +561,13 @@ def strategy_optimize_universe(
     refresh_data: bool = typer.Option(True, "--refresh-data/--use-cache"),
 ) -> None:
     """Optimize one strategy family across a symbol universe."""
-    if data_source != "alpaca":
-        raise typer.BadParameter("--data-source currently supports alpaca")
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     result = optimize_strategy_universe(
         spec,
         project_root(),
         symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
-        data_source="alpaca",
+        data_source=data_source,  # type: ignore[arg-type]
         min_return_pct=min_return_pct,
         min_signals=min_signals,
         max_trades=max_trades,
@@ -406,19 +589,21 @@ def strategy_optimize_horizons(
     symbols: str = typer.Option(..., "--symbols"),
     data_source: str = typer.Option("alpaca", "--data-source"),
     min_return_pct: float = typer.Option(1.0, "--min-return-pct"),
+    min_sharpe: float = typer.Option(0.0, "--min-sharpe"),
     min_trades: int = typer.Option(1, "--min-trades"),
     max_preferred_trades: int = typer.Option(18, "--max-preferred-trades"),
     refresh_data: bool = typer.Option(True, "--refresh-data/--use-cache"),
 ) -> None:
     """Compare 5m scan speed, 15m lower-turnover, and 1h trend-hold variants."""
-    if data_source != "alpaca":
-        raise typer.BadParameter("--data-source currently supports alpaca")
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     result = optimize_strategy_horizons(
         spec,
         project_root(),
         symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
-        data_source="alpaca",
+        data_source=data_source,  # type: ignore[arg-type]
         min_return_pct=min_return_pct,
+        min_sharpe=min_sharpe,
         min_trades=min_trades,
         max_preferred_trades=max_preferred_trades,
         refresh_data=refresh_data,
@@ -455,6 +640,83 @@ def strategy_list() -> None:
     console.print(table)
 
 
+@strategy_app.command("versions")
+def strategy_versions_command(
+    strategy: Annotated[
+        str | None,
+        typer.Option("--strategy", help="Filter versions by strategy name."),
+    ] = None,
+) -> None:
+    """List immutable StrategySpec versions registered from drafts, runs, and lifecycle moves."""
+    versions = load_strategy_versions(project_root(), strategy)
+    table = Table(title="Open Composer Strategy Versions")
+    table.add_column("Strategy")
+    table.add_column("Version")
+    table.add_column("Lifecycle")
+    table.add_column("Symbol")
+    table.add_column("Timeframe")
+    table.add_column("Execution")
+    table.add_column("Created")
+    table.add_column("Snapshot")
+    for version in versions:
+        table.add_row(
+            version.strategy_name,
+            version.version_id,
+            version.lifecycle,
+            version.symbol,
+            version.timeframe,
+            version.execution_mode,
+            version.created_at.isoformat(),
+            version.snapshot_path,
+        )
+    console.print(table)
+
+
+@strategy_app.command("register-version")
+def strategy_register_version(spec: str) -> None:
+    """Register the current StrategySpec file as an immutable version snapshot."""
+    root = project_root()
+    version = register_strategy_version(
+        resolve_strategy_path(spec, root),
+        root,
+        created_by="strategy_register_version",
+    )
+    console.print(f"[green]version registered[/green] {version.strategy_name} {version.version_id}")
+
+
+@strategy_app.command("diff-versions")
+def strategy_diff_versions(
+    strategy: str,
+    left_version: str,
+    right_version: str,
+) -> None:
+    """Print a unified diff between two immutable StrategySpec versions."""
+    try:
+        diff = diff_strategy_versions(project_root(), strategy, left_version, right_version)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if not diff.changed:
+        console.print("[green]no changes[/green]")
+        return
+    console.print("\n".join(diff.diff_lines))
+
+
+@strategy_app.command("rollback-version")
+def strategy_rollback_version(
+    strategy: str,
+    version: str,
+) -> None:
+    """Restore a registered version into drafts/manual mode for review."""
+    try:
+        result = rollback_strategy_version(project_root(), strategy, version)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]rollback draft written[/green] {result.path} "
+        f"version={result.version.version_id} parent={version}"
+    )
+
+
 @strategy_app.command("approve")
 def strategy_approve(spec: str) -> None:
     """Promote a StrategySpec to approved/manual mode."""
@@ -471,8 +733,8 @@ def strategy_activate(
     data_source: str = typer.Option("keep", "--data-source"),
 ) -> None:
     """Activate a StrategySpec for manual signals or Alpaca Paper automation."""
-    if data_source not in {"keep", "sample", "alpaca"}:
-        raise typer.BadParameter("--data-source must be keep, sample, or alpaca")
+    if data_source not in {"keep", "sample", "alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source must be keep, sample, alpaca, or longbridge")
     root = project_root()
     path = activate_strategy(
         resolve_strategy_path(spec, root),
@@ -581,6 +843,101 @@ def paper_sync() -> None:
     console.print(f"[green]paper sync written[/green] {path}")
 
 
+@paper_app.command("sync-account")
+def paper_sync_account() -> None:
+    """Sync Alpaca Paper account and positions to reports/paper."""
+    try:
+        account_path, positions_path = sync_paper_account(project_root())
+    except PaperOrderError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]paper account sync written[/green] account={account_path} "
+        f"positions={positions_path}"
+    )
+
+
+@paper_app.command("status")
+def paper_status() -> None:
+    """Write and print a local paper status snapshot."""
+    snapshot = build_paper_status(project_root())
+    path = write_paper_status(project_root())
+    console.print(f"[green]paper status written[/green] {path}")
+    console.print(
+        f"kill_switch={'on' if snapshot.kill_switch.enabled else 'off'} "
+        f"open_orders={snapshot.open_order_count} "
+        f"positions={snapshot.position_count} "
+        f"active_paper_auto={len(snapshot.active_paper_auto_strategies)}"
+    )
+
+
+@paper_app.command("reconcile")
+def paper_reconcile() -> None:
+    """Check local paper orders against account and positions snapshots."""
+    report = reconcile_paper_state(project_root())
+    write_paper_status(project_root())
+    console.print(
+        f"[green]paper reconciliation written[/green] {report.report_markdown_path} "
+        f"status={report.status} issues={report.issue_count}"
+    )
+
+
+@paper_app.command("alerts")
+def paper_alerts() -> None:
+    """Build local paper monitoring alerts from status and reconciliation artifacts."""
+    report = build_paper_alerts(project_root())
+    write_paper_status(project_root())
+    console.print(
+        f"[green]paper alerts written[/green] {report.report_markdown_path} "
+        f"status={report.status} alerts={report.alert_count}"
+    )
+
+
+@paper_app.command("monitor")
+def paper_monitor() -> None:
+    """Refresh local paper reconciliation, alerts, and status artifacts."""
+    report = refresh_paper_monitor(project_root())
+    console.print(
+        f"[green]paper monitor refreshed[/green] {report.report_markdown_path} "
+        f"status={report.status} alerts={report.alert_count}"
+    )
+
+
+@paper_app.command("monitor-loop")
+def paper_monitor_loop(
+    interval_seconds: float = typer.Option(60.0, "--interval-seconds"),
+    max_cycles: int = typer.Option(1, "--max-cycles"),
+) -> None:
+    """Run repeated local paper monitor refresh cycles."""
+    reports = run_paper_monitor_loop(
+        project_root(),
+        interval_seconds=interval_seconds,
+        max_cycles=max_cycles,
+    )
+    latest = reports[-1] if reports else None
+    console.print(
+        "[green]paper monitor loop complete[/green] "
+        f"cycles={len(reports)} "
+        f"status={latest.status if latest else 'n/a'}"
+    )
+
+
+@paper_app.command("kill-switch")
+def paper_kill_switch(
+    enable: bool = typer.Option(False, "--enable/--disable"),
+    reason: str = typer.Option("", "--reason"),
+) -> None:
+    """Enable or clear the paper kill switch."""
+    if enable:
+        state = enable_paper_kill_switch(project_root(), reason=reason, updated_by="cli")
+    else:
+        state = clear_paper_kill_switch(project_root(), reason=reason, updated_by="cli")
+    path = write_paper_status(project_root())
+    console.print(
+        f"[green]paper kill switch[/green] {'enabled' if state.enabled else 'cleared'} "
+        f"status={path}"
+    )
+
+
 @journal_app.command("add")
 def journal_add(
     signal_id: str = typer.Option(..., "--signal"),
@@ -608,12 +965,14 @@ def _ensure_runtime_dirs(root: Path) -> None:
         "reports/context",
         "reports/research",
         "reports/options",
+        "reports/dashboard",
         "data/raw/events",
         "data/raw/macro",
         "event_logs",
         "signal_logs",
         "journal",
         "strategies_pine/generated",
+        "strategy_versions",
     ]:
         ensure_dir(root / relative)
 

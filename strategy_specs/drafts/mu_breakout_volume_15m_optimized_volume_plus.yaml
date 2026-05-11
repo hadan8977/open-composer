@@ -1,0 +1,75 @@
+name: mu_breakout_volume_15m_optimized_volume_plus
+description: 'MU breakout strategy using lagged highs, volume confirmation, and volatility
+  filters. Optimized candidate: optimized_volume_plus.'
+timeframe: 15m
+universe:
+- MU
+lifecycle: draft
+entry:
+  all:
+  - close > ema(close, 5)
+  - rsi(close, 4) > 56
+  - volume > sma(volume, 5)
+  any: []
+exit:
+  all: []
+  any:
+  - close < ema(close, 8)
+  - rsi(close, 4) > 94
+risk:
+  max_trades_per_day: 2
+  max_position_weight: 0.12
+  stop_loss_pct: 1.0
+  take_profit_pct: 4.0
+costs:
+  commission_pct: 0.0
+  slippage_bps: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: sample
+  symbol: MU
+  path: data/sample/mu_15m.csv
+  feed: null
+data_assumptions:
+  source: sample
+  adjusted: true
+  timezone: America/New_York
+factors:
+  breakout_level:
+    source: expression
+    expression: lag(highest(close, 6), 1)
+    path: null
+    field: null
+    default: 0.0
+    description: Prior rolling high shifted by one bar.
+  volatility_range:
+    source: expression
+    expression: atr(5)
+    path: null
+    field: null
+    default: 0.0
+    description: Five-bar average true range.
+  bear_cross:
+    source: expression
+    expression: crossunder(ema(close, 3), ema(close, 8))
+    path: null
+    field: null
+    default: 0.0
+    description: Short EMA crossing below slow EMA.
+llm_review:
+  enabled: false
+  model: null
+notes:
+  intent: Trade deterministic price breakouts only after a prior-window high is exceeded
+    with volume and minimum realized range.
+  open_questions:
+  - Add commission and slippage sensitivity before paper automation.
+  - Validate breakout lookback length with out-of-sample data.
+  optimization_candidate: optimized_volume_plus
+required_capabilities:
+- market.sample_ohlcv

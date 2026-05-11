@@ -46,7 +46,7 @@ The core product asset is a structured strategy definition. That definition can 
 - Python for research, backtesting, scanning, reports, and journal links;
 - Pine for TradingView chart observation and alerts;
 - LLM review cards for structured event and risk review;
-- later Lumibot adapter for paper execution;
+- later NautilusTrader adapter for paper/sandbox/live execution;
 - later vectorbt and Qlib adapters for advanced research.
 
 This route gives the first version a small, testable local loop and gives later versions clean extension points.
@@ -108,7 +108,7 @@ LLM review card
   -> VPS scanner
   -> TradingView webhook logs
   -> Alpaca paper tracking
-  -> Lumibot paper execution adapter
+  -> NautilusTrader execution backend and paper/sandbox adapter
   -> vectorbt parameter research
   -> Qlib ML/factor research adapter
 ```
@@ -143,7 +143,6 @@ Create this structure:
 open-composer/
   README.md
   AGENTS.md
-  CLAUDE.md
   pyproject.toml
   Makefile
   .env.example
@@ -152,6 +151,7 @@ open-composer/
     skills/
       strategy-designer/SKILL.md
       python-backtest-writer/SKILL.md
+      nautilus-trader-adapter/SKILL.md
       pine-exporter/SKILL.md
       signal-parity-reviewer/SKILL.md
       risk-reviewer/SKILL.md
@@ -364,7 +364,20 @@ The skill should:
 - check lookahead bias;
 - run relevant tests.
 
-### 11.3 pine-exporter
+### 11.3 nautilus-trader-adapter
+
+Input: `StrategySpec`.
+Output: NautilusTrader strategy/backtest adapter or scaffold.
+
+The skill should:
+
+- validate backend compatibility before mapping rules;
+- keep Python reference and NautilusTrader semantics aligned for the supported subset;
+- replay `llm_feature` or other custom data as timestamped packets;
+- preserve `version_id`, `spec_hash`, and paper gates;
+- run backend-specific tests plus `uv run pytest`.
+
+### 11.4 pine-exporter
 
 Input: `StrategySpec`.
 Output: Pine Script.
@@ -376,7 +389,7 @@ The skill should:
 - document repaint and bar-close assumptions;
 - produce a parity checklist.
 
-### 11.4 signal-parity-reviewer
+### 11.5 signal-parity-reviewer
 
 Input: Python signal log, Pine export, webhook logs when available.
 Output: parity report.
@@ -388,7 +401,7 @@ The skill should:
 - flag Pine-specific behavior risks;
 - write `reports/parity/<strategy>-<run-id>.md`.
 
-### 11.5 risk-reviewer
+### 11.6 risk-reviewer
 
 Input: strategy, backtest report, signal.
 Output: risk review.
@@ -401,7 +414,7 @@ The skill should:
 - summarize invalidation rules;
 - write a structured review card.
 
-### 11.6 weekly-reviewer
+### 11.7 weekly-reviewer
 
 Input: reports, signal logs, journal.
 Output: weekly review.
@@ -491,7 +504,7 @@ Use this sequence after the MVP works:
 3. LLM review card.
 4. TradingView webhook log ingestion.
 5. Alpaca paper account tracking.
-6. Lumibot paper execution adapter.
+6. NautilusTrader execution backend and paper/sandbox adapter.
 7. vectorbt parameter research.
 8. Qlib factor/ML research adapter.
 9. LEAN mature deployment export.
@@ -504,7 +517,7 @@ Use these rules when updating docs:
 - Keep background separate from implementation instructions.
 - Put implementation steps in this handoff.
 - Put product scope in the MVP document.
-- Put research context in the context summary.
+- Keep research notes in the README and the active plan documents.
 - Prefer direct definitions over corrective language.
 - Keep every requirement testable.
 - Update README when the local quick start changes.
@@ -514,7 +527,7 @@ Use these rules when updating docs:
 Use this prompt in a fresh Codex session:
 
 ```text
-Read README.md, OPEN-COMPOSER-BUILD-HANDOFF.md, OPEN-COMPOSER-PRODUCT-MVP.md, and OPEN-COMPOSER-CONTEXT-SUMMARY.md.
+Read README.md, OPEN-COMPOSER-BUILD-HANDOFF.md, OPEN-COMPOSER-PRODUCT-MVP.md, and AGENTS.md.
 
 Then implement the first build slice from OPEN-COMPOSER-BUILD-HANDOFF.md:
 StrategySpec schema, sample strategy, sample OHLCV data, CLI, validation, indicators, minimal backtest/scanner, Pine export, report writer, signal log, journal entry, AGENTS.md, repo skills, and tests.
@@ -536,7 +549,7 @@ Keep the first version file/CLI-first and sample-data runnable. Run ruff and pyt
 - TradingView Strategy Alerts: https://www.tradingview.com/support/solutions/43000481368-strategy-alerts/
 - TradingView Webhook Alerts: https://www.tradingview.com/support/solutions/43000529348-how-to-configure-webhook-alerts/
 - Alpaca Paper Trading: https://docs.alpaca.markets/docs/trading/paper-trading/
-- Lumibot Backtesting: https://lumibot.lumiwealth.com/backtesting.html
+- NautilusTrader overview: https://nautilustrader.io/docs/latest/concepts/overview/
 - vectorbt: https://vectorbt.dev/
 - Microsoft Qlib: https://github.com/microsoft/qlib
 - Qlib paper: https://arxiv.org/abs/2009.11189

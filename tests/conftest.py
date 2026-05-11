@@ -24,6 +24,7 @@ def sample_workspace(tmp_path: Path, repo_root: Path) -> Path:
         "data/raw/events",
         "data/raw/macro",
         "event_logs",
+        "feature_logs",
         "reports/backtests",
         "reports/capabilities",
         "reports/context",
@@ -37,6 +38,7 @@ def sample_workspace(tmp_path: Path, repo_root: Path) -> Path:
         "signal_logs",
         "journal",
         "strategies_pine/generated",
+        "strategy_versions",
     ]:
         (tmp_path / relative).mkdir(parents=True, exist_ok=True)
     copyfile(

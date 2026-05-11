@@ -19,7 +19,8 @@ sources:
     url: "https://www.tradingview.com/pine-script-docs/writing/limitations/"
     key_points:
       - Pine scripts have limits on plots, drawings, request calls, intrabars, tokens, and orders.
-      - "`request.*()` calls are capped by plan tier, which limits large cross-asset strategies."
+      - '`request.*()` calls are capped by plan tier, which limits large cross-asset strategies.'
+      - Tuple size, drawing counts, historical lower-timeframe access, and order count ceilings also constrain complex systems.
       - Standard backtests trim after 9000 orders unless using Deep Backtesting.
   - id: alpaca_trading_api
     kind: official_docs
@@ -28,6 +29,34 @@ sources:
       - Alpaca Trading API supports stocks, crypto, paper trading, order placement, and positions.
       - Paper trading is a real-time simulation environment for testing code.
       - Alpaca is an execution and data provider, not a strategy research engine.
+  - id: alpaca_market_data
+    kind: official_docs
+    url: "https://docs.alpaca.markets/docs/about-market-data-api"
+    key_points:
+      - Alpaca market data can use IEX or SIP feeds depending on plan and request settings.
+      - The free IEX path is useful for low-cost scans and paper context but is not consolidated full-market data.
+      - Open Composer reports must record feed, timeframe, request window, and cache version for every Alpaca-backed run.
+  - id: longbridge_openapi_pricing
+    kind: official_docs
+    url: "https://open.longbridge.com/pricing"
+    key_points:
+      - Longbridge OpenAPI exposes US, Hong Kong, and China market-data permissions with free and paid quote cards.
+      - Free US coverage is based on Nasdaq Basic rather than consolidated SIP-level full-market data.
+      - Paid quote cards are needed for broader US LV1, extended sessions, depth, or specialized market-data coverage.
+  - id: longbridge_history_candlestick
+    kind: official_docs
+    url: "https://open.longbridge.com/docs/quote/pull/history-candlestick"
+    key_points:
+      - Longbridge historical candlestick APIs support minute and higher timeframe bars for supported markets.
+      - For US stocks, minute history and daily history have different available start dates and must be stored in provenance.
+      - The adapter must record period, adjustment setting, request range, provider permission, and cache version.
+  - id: ibkr_market_data
+    kind: official_docs
+    url: "https://www.interactivebrokers.com/en/pricing/market-data-pricing.php"
+    key_points:
+      - IBKR is strong for professional execution, but API real-time market data typically depends on market-data subscriptions.
+      - Delayed or bundled account data is not enough to assume free high-quality research coverage for every asset.
+      - IBKR should be treated as a later professional broker adapter, not the first low-cost default data source.
   - id: quantconnect_lean
     kind: official_docs
     url: "https://www.quantconnect.com/docs/v2/writing-algorithms/key-concepts/algorithm-engine"
@@ -45,8 +74,10 @@ sources:
     kind: official_docs
     url: "https://nautilustrader.io/docs/latest/concepts/overview/"
     key_points:
-      - Event-driven design supports backtest, sandbox, and live/paper deployment use cases.
-      - Production-grade systems need data and execution adapters plus reproducible catalogs.
+      - Event-driven design supports backtest, sandbox, and live/paper deployment with the same strategy code path.
+      - Strategies, indicators, order management, and portfolio logic belong in one execution core with explicit adapters.
+      - Custom data can be replayed and subscribed to as structured inputs, which fits point-in-time factors and LLM feature packets.
+      - Production-grade systems still need separate data, execution, and audit adapters plus reproducible catalogs.
   - id: backtrader_indicators
     kind: official_docs
     url: "https://backtrader.readthedocs.io/en/latest/user-guide/indicators/indicators.html"
@@ -175,8 +206,12 @@ capability_principles:
     statement: TradingView export is a compatibility target for a deterministic subset, not the master runtime for all strategies.
   - id: research_execution_split
     statement: Use vectorized engines for research sweeps and event-driven engines for execution parity.
+  - id: execution_backend_choice
+    statement: Use NautilusTrader as the first event-driven execution backend; keep the in-repo Python engine as a deterministic reference and smoke test, not the final execution core.
   - id: data_before_models
     statement: Advanced factors are only valid when data is point-in-time, timestamped, replayable, and linked to capability records.
+  - id: low_cost_dual_data_source
+    statement: Use Longbridge plus Alpaca as the first low-cost US-stock data route; Longbridge is the trial primary market-data candidate, while Alpaca remains the implemented market-data and paper-trading path.
   - id: llm_as_structured_signal
     statement: LLM output may support research, labels, summaries, and reviews; if it affects trades it must become replayable structured data.
   - id: paper_first
@@ -240,3 +275,11 @@ dashboard_patterns:
     purpose: Manage strategy groups, regime selectors, and capital allocation rules across child strategies.
   - id: audit_view
     purpose: Record every enable, disable, promote, deploy, and review action with timestamps and actor identity.
+  - id: read_model
+    purpose: Build a rebuildable index for strategies, versions, runs, signals, orders, reviews, and audits.
+  - id: command_model
+    purpose: Invoke existing CLI or service functions with confirmation, gating, and audit records.
+  - id: provenance_view
+    purpose: Show source artifact, timestamp, and freshness for every displayed metric or status tile.
+  - id: llm_trace_view
+    purpose: Show prompt version, model version, input packet, output schema, and replay assets for every LLM-assisted action.

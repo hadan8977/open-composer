@@ -30,9 +30,17 @@ class RiskConfig(BaseModel):
     take_profit_pct: float | None = Field(default=None, gt=0)
 
 
+class CostConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    commission_pct: float = Field(default=0.0, ge=0)
+    slippage_bps: float = Field(default=0.0, ge=0)
+
+
 class ExecutionConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    backend: Literal["python_reference", "nautilus_trader"] = "python_reference"
     mode: Literal["manual_signal", "paper_auto"] = "manual_signal"
     signal_on: Literal["bar_close"] = "bar_close"
     fill_assumption: Literal["next_bar_open"] = "next_bar_open"
@@ -52,7 +60,7 @@ class ExecutionConfig(BaseModel):
 class DataConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    source: Literal["sample", "alpaca"] = "sample"
+    source: Literal["sample", "alpaca", "longbridge"] = "sample"
     symbol: str | None = None
     path: str | None = None
     feed: str | None = None
@@ -73,6 +81,27 @@ class LLMReviewConfig(BaseModel):
     model: str | None = None
 
 
+class FactorConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source: Literal["expression", "llm_feature"] = "expression"
+    expression: str | None = None
+    path: str | None = None
+    field: str | None = None
+    default: float | bool = 0.0
+    description: str = ""
+
+    @model_validator(mode="after")
+    def require_factor_source_fields(self) -> FactorConfig:
+        if self.source == "expression" and not self.expression:
+            msg = "expression factors require expression"
+            raise ValueError(msg)
+        if self.source == "llm_feature" and not self.field:
+            msg = "llm_feature factors require field"
+            raise ValueError(msg)
+        return self
+
+
 class NotesConfig(BaseModel):
     model_config = ConfigDict(extra="allow")
 
@@ -91,9 +120,11 @@ class StrategySpec(BaseModel):
     entry: RuleBlock
     exit: RuleBlock
     risk: RiskConfig
+    costs: CostConfig = Field(default_factory=CostConfig)
     execution: ExecutionConfig
     data: DataConfig = Field(default_factory=DataConfig)
     data_assumptions: DataAssumptions = Field(default_factory=DataAssumptions)
+    factors: dict[str, FactorConfig] = Field(default_factory=dict)
     llm_review: LLMReviewConfig = Field(default_factory=LLMReviewConfig)
     notes: NotesConfig = Field(default_factory=NotesConfig)
     required_capabilities: list[str] = Field(default_factory=list)
@@ -110,6 +141,19 @@ class StrategySpec(BaseModel):
     @classmethod
     def normalize_universe(cls, value: list[str]) -> list[str]:
         return [symbol.upper().strip() for symbol in value]
+
+    @field_validator("factors")
+    @classmethod
+    def validate_factor_names(cls, value: dict[str, FactorConfig]) -> dict[str, FactorConfig]:
+        reserved = {"open", "high", "low", "close", "volume"}
+        for name in value:
+            if not name.isidentifier():
+                msg = f"factor name must be a valid identifier: {name}"
+                raise ValueError(msg)
+            if name in reserved:
+                msg = f"factor name is reserved: {name}"
+                raise ValueError(msg)
+        return value
 
     @property
     def primary_symbol(self) -> str:
@@ -130,6 +174,7 @@ def load_strategy_spec(path: Path | str) -> StrategySpec:
 
     from open_composer.expressions import validate_expression
 
+    root = spec_path.parents[2] if len(spec_path.parents) >= 3 else spec_path.parent
     for expression in spec.all_expressions():
-        validate_expression(expression)
+        validate_expression(expression, spec.factors, root=root)
     return spec

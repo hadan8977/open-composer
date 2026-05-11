@@ -13,12 +13,14 @@
 - Link journal entries and paper orders to signal IDs.
 - Choose data, event, macro, and news sources through `capabilities/registry.yaml`.
 - Run capability evaluation before adding a new required strategy capability.
+- Prefer NautilusTrader for event-driven execution parity; keep the in-repo Python engine as the deterministic reference and smoke test.
 
 ## Safety
 - Real-money broker write access is out of scope for this MVP.
 - Alpaca Paper orders require explicit command confirmation and active `paper_auto` specs.
 - LLM review is advisory and must be structured.
 - MCP tools are research and context tools.
+- Do not build a parallel full execution engine when a NautilusTrader adapter is the intended path.
 
 ## Implementation
 - Keep the first product surface as CLI plus files.

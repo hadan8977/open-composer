@@ -10,10 +10,15 @@ from open_composer.config import (
     alpaca_paper_enabled,
     alpaca_sdk_base_url,
 )
-from open_composer.models.paper import PaperOrderRecord
+from open_composer.models.paper import (
+    PaperAccountSnapshot,
+    PaperOrderRecord,
+    PaperPositionRecord,
+)
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec
-from open_composer.storage import append_jsonl
+from open_composer.paper_controls import load_paper_kill_switch
+from open_composer.storage import append_jsonl, write_json
 
 
 class PaperOrderError(RuntimeError):
@@ -28,6 +33,12 @@ def submit_paper_order(
     qty: float | None = None,
 ) -> PaperOrderRecord:
     _validate_paper_allowed(spec)
+    kill_switch = load_paper_kill_switch(root)
+    if kill_switch.enabled:
+        raise PaperOrderError(
+            "paper kill switch is enabled"
+            + (f": {kill_switch.reason}" if kill_switch.reason else "")
+        )
     existing_order = _existing_order(root, signal.id)
     if existing_order:
         return existing_order
@@ -41,6 +52,11 @@ def submit_paper_order(
         signal_id=signal.id,
         client_order_id=client_order_id,
         strategy_name=signal.strategy_name,
+        strategy_id=signal.strategy_id or spec.name,
+        version_id=signal.version_id,
+        spec_hash=signal.spec_hash,
+        strategy_backend=signal.strategy_backend,
+        execution_backend=signal.execution_backend,
         symbol=signal.symbol,
         side=signal.side,
         qty=float(order_qty),
@@ -69,6 +85,41 @@ def sync_paper_orders(root: Path, client: Any | None = None) -> Path:
     path = root / "reports" / "paper" / "sync.jsonl"
     append_jsonl(path, rows)
     return path
+
+
+def sync_paper_account(root: Path, client: Any | None = None) -> tuple[Path, Path]:
+    client = client or _trading_client()
+    account = client.get_account()
+    positions = _client_positions(client)
+    account_snapshot = PaperAccountSnapshot(
+        equity=_optional_float(getattr(account, "equity", None)),
+        cash=_optional_float(getattr(account, "cash", None)),
+        buying_power=_optional_float(getattr(account, "buying_power", None)),
+        portfolio_value=_optional_float(getattr(account, "portfolio_value", None)),
+        status=str(getattr(account, "status", "")),
+        paper=True,
+    )
+    position_records = [
+        PaperPositionRecord(
+            symbol=str(getattr(position, "symbol", "")),
+            qty=_optional_float(getattr(position, "qty", None)) or 0.0,
+            market_value=_optional_float(getattr(position, "market_value", None)),
+            cost_basis=_optional_float(getattr(position, "cost_basis", None)),
+            unrealized_pl=_optional_float(getattr(position, "unrealized_pl", None)),
+            unrealized_plpc=_optional_float(getattr(position, "unrealized_plpc", None)),
+            current_price=_optional_float(getattr(position, "current_price", None)),
+            side=str(getattr(position, "side", "")),
+            paper=True,
+        )
+        for position in positions
+    ]
+    account_path = root / "reports" / "paper" / "account.json"
+    positions_path = root / "reports" / "paper" / "positions.json"
+    write_json(account_path, account_snapshot)
+    write_json(
+        positions_path, {"positions": [item.model_dump(mode="json") for item in position_records]}
+    )
+    return account_path, positions_path
 
 
 def _validate_paper_allowed(spec: StrategySpec) -> None:
@@ -123,6 +174,23 @@ def _submit_market_order(client: Any, signal: Signal, qty: float, client_order_i
         client_order_id=client_order_id,
     )
     return client.submit_order(request)
+
+
+def _client_positions(client: Any) -> list[Any]:
+    if hasattr(client, "get_all_positions"):
+        return list(client.get_all_positions())
+    if hasattr(client, "get_positions"):
+        return list(client.get_positions())
+    return []
+
+
+def _optional_float(value: Any) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _existing_order(root: Path, signal_id: str) -> PaperOrderRecord | None:

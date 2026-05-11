@@ -1,0 +1,487 @@
+from __future__ import annotations
+
+import json
+import time
+from collections import Counter
+from datetime import UTC, datetime
+from pathlib import Path
+
+from open_composer.config import ensure_dir, project_root
+from open_composer.models.paper import (
+    PaperAccountSnapshot,
+    PaperAlert,
+    PaperAlertReport,
+    PaperKillSwitch,
+    PaperMonitorReport,
+    PaperPositionRecord,
+    PaperReconciliationIssue,
+    PaperReconciliationReport,
+    PaperStatusSnapshot,
+)
+from open_composer.storage import append_jsonl, write_json
+from open_composer.strategy_lifecycle import list_strategies
+
+OPEN_ORDER_STATUSES = {
+    "accepted",
+    "new",
+    "partially_filled",
+    "pending_cancel",
+    "pending_new",
+    "submitted",
+}
+
+
+def load_paper_kill_switch(root: Path | None = None) -> PaperKillSwitch:
+    path = _kill_switch_path(root or project_root())
+    if not path.exists():
+        return PaperKillSwitch()
+    return PaperKillSwitch.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def set_paper_kill_switch(
+    root: Path | None = None,
+    *,
+    enabled: bool,
+    reason: str = "",
+    updated_by: str = "system",
+) -> PaperKillSwitch:
+    base = root or project_root()
+    state = PaperKillSwitch(
+        enabled=enabled,
+        reason=reason.strip(),
+        updated_by=updated_by,
+        updated_at=datetime.now(UTC),
+    )
+    path = _kill_switch_path(base)
+    ensure_dir(path.parent)
+    write_json(path, state)
+    append_jsonl(base / "reports" / "paper" / "kill_switch_events.jsonl", [state])
+    return state
+
+
+def enable_paper_kill_switch(
+    root: Path | None = None,
+    *,
+    reason: str,
+    updated_by: str = "system",
+) -> PaperKillSwitch:
+    return set_paper_kill_switch(
+        root,
+        enabled=True,
+        reason=reason,
+        updated_by=updated_by,
+    )
+
+
+def clear_paper_kill_switch(
+    root: Path | None = None,
+    *,
+    reason: str = "",
+    updated_by: str = "system",
+) -> PaperKillSwitch:
+    return set_paper_kill_switch(
+        root,
+        enabled=False,
+        reason=reason,
+        updated_by=updated_by,
+    )
+
+
+def paper_orders_blocked(root: Path | None = None) -> bool:
+    return load_paper_kill_switch(root).enabled
+
+
+def build_paper_status(root: Path | None = None) -> PaperStatusSnapshot:
+    base = root or project_root()
+    kill_switch = load_paper_kill_switch(base)
+    active_paper_auto = [
+        item.name
+        for item in list_strategies(base)
+        if item.lifecycle == "active"
+        and item.execution_mode == "paper_auto"
+        and item.broker == "alpaca_paper"
+    ]
+    order_rows = _paper_order_rows(base)
+    status_counts = Counter(str(row.get("status", "unknown")) or "unknown" for row in order_rows)
+    open_order_count = sum(
+        count for status, count in status_counts.items() if status.lower() in OPEN_ORDER_STATUSES
+    )
+    timestamps = [
+        _parse_datetime(str(row["submitted_at"])) for row in order_rows if row.get("submitted_at")
+    ]
+    account = _paper_account(base)
+    positions = _paper_positions(base)
+    reconciliation = _paper_reconciliation(base)
+    alerts = _paper_alert_report(base)
+    notes = ["Paper status is rebuilt from local strategy specs and paper order artifacts."]
+    if kill_switch.enabled:
+        notes.append("Paper kill switch is enabled; automated paper submissions are blocked.")
+    if not active_paper_auto:
+        notes.append("No active paper_auto strategies were found.")
+    if account is None:
+        notes.append("No paper account snapshot was found under reports/paper/account.json.")
+    return PaperStatusSnapshot(
+        kill_switch=kill_switch,
+        active_paper_auto_strategies=sorted(active_paper_auto),
+        order_status_counts=dict(sorted(status_counts.items())),
+        open_order_count=open_order_count,
+        account_equity=account.equity if account else None,
+        account_cash=account.cash if account else None,
+        account_buying_power=account.buying_power if account else None,
+        account_portfolio_value=account.portfolio_value if account else None,
+        position_count=len(positions),
+        total_position_market_value=sum(item.market_value or 0.0 for item in positions),
+        total_unrealized_pl=sum(item.unrealized_pl or 0.0 for item in positions),
+        reconciliation_status=reconciliation.status if reconciliation else "unknown",
+        reconciliation_issue_count=reconciliation.issue_count if reconciliation else 0,
+        reconciliation_report_path=reconciliation.report_markdown_path if reconciliation else None,
+        alert_status=alerts.status if alerts else "unknown",
+        alert_count=alerts.alert_count if alerts else 0,
+        alert_report_path=alerts.report_markdown_path if alerts else None,
+        last_order_at=max(timestamps) if timestamps else None,
+        notes=notes,
+    )
+
+
+def write_paper_status(
+    root: Path | None = None,
+    output_path: Path | None = None,
+) -> Path:
+    base = root or project_root()
+    path = output_path or (base / "reports" / "paper" / "status.json")
+    ensure_dir(path.parent)
+    write_json(path, build_paper_status(base))
+    return path
+
+
+def reconcile_paper_state(root: Path | None = None) -> PaperReconciliationReport:
+    base = root or project_root()
+    orders = _paper_order_rows(base)
+    positions = _paper_positions(base)
+    account = _paper_account(base)
+    position_symbols = {item.symbol.upper() for item in positions if item.qty != 0}
+    order_symbols = {str(row.get("symbol", "")).upper() for row in orders if row.get("symbol")}
+    issues: list[PaperReconciliationIssue] = []
+    if account is None:
+        issues.append(
+            PaperReconciliationIssue(
+                severity="warning",
+                code="missing_account_snapshot",
+                message="reports/paper/account.json is missing; run oc paper sync-account.",
+            )
+        )
+    if not positions and order_symbols:
+        issues.append(
+            PaperReconciliationIssue(
+                severity="warning",
+                code="missing_positions_snapshot",
+                message="No positions snapshot found while local paper orders exist.",
+            )
+        )
+    for symbol in sorted(position_symbols - order_symbols):
+        issues.append(
+            PaperReconciliationIssue(
+                severity="warning",
+                code="position_without_local_order",
+                symbol=symbol,
+                message=f"Position {symbol} has no matching local paper order record.",
+            )
+        )
+    for row in orders:
+        status = str(row.get("status", "")).lower()
+        symbol = str(row.get("symbol", "")).upper() or None
+        side = str(row.get("side", "")).lower()
+        if status in OPEN_ORDER_STATUSES:
+            issues.append(
+                PaperReconciliationIssue(
+                    severity="info",
+                    code="open_order",
+                    symbol=symbol,
+                    message=f"Order {row.get('id', '')} is still open with status={status}.",
+                )
+            )
+        if status == "filled" and side == "buy" and symbol and symbol not in position_symbols:
+            issues.append(
+                PaperReconciliationIssue(
+                    severity="warning",
+                    code="filled_buy_without_position",
+                    symbol=symbol,
+                    message=f"Filled buy order for {symbol} has no matching position snapshot.",
+                )
+            )
+    severity_order = {"info": 1, "warning": 2, "error": 3}
+    max_severity = max((severity_order[item.severity] for item in issues), default=0)
+    status = "error" if max_severity >= 3 else "warning" if max_severity >= 2 else "ok"
+    report = PaperReconciliationReport(
+        status=status,
+        order_count=len(orders),
+        position_count=len(positions),
+        open_order_count=sum(
+            1 for row in orders if str(row.get("status", "")).lower() in OPEN_ORDER_STATUSES
+        ),
+        filled_order_count=sum(
+            1 for row in orders if str(row.get("status", "")).lower() == "filled"
+        ),
+        issue_count=len(issues),
+        issues=issues,
+    )
+    json_path = base / "reports" / "paper" / "reconciliation.json"
+    md_path = base / "reports" / "paper" / "reconciliation.md"
+    report.report_json_path = str(json_path)
+    report.report_markdown_path = str(md_path)
+    write_json(json_path, report)
+    _write_reconciliation_markdown(md_path, report)
+    return report
+
+
+def build_paper_alerts(root: Path | None = None) -> PaperAlertReport:
+    base = root or project_root()
+    status = build_paper_status(base)
+    alerts: list[PaperAlert] = []
+    if status.kill_switch.enabled:
+        alerts.append(
+            PaperAlert(
+                severity="warning",
+                code="paper_kill_switch_enabled",
+                message="Paper kill switch is enabled; automated submissions are blocked.",
+                source_path=str(base / "reports" / "paper" / "kill_switch.json"),
+            )
+        )
+    if status.reconciliation_status in {"warning", "error"}:
+        alerts.append(
+            PaperAlert(
+                severity=status.reconciliation_status,  # type: ignore[arg-type]
+                code="paper_reconciliation_issues",
+                message=f"Paper reconciliation has {status.reconciliation_issue_count} issue(s).",
+                source_path=status.reconciliation_report_path,
+            )
+        )
+    if status.open_order_count:
+        alerts.append(
+            PaperAlert(
+                severity="info",
+                code="paper_open_orders",
+                message=f"{status.open_order_count} paper order(s) are still open.",
+                source_path=str(base / "reports" / "paper"),
+            )
+        )
+    if status.account_equity is None:
+        alerts.append(
+            PaperAlert(
+                severity="warning",
+                code="missing_paper_account_snapshot",
+                message="No paper account snapshot is available; run oc paper sync-account.",
+                source_path=str(base / "reports" / "paper" / "account.json"),
+            )
+        )
+    if status.total_unrealized_pl < 0:
+        alerts.append(
+            PaperAlert(
+                severity="warning",
+                code="paper_unrealized_loss",
+                message=f"Paper positions show unrealized PnL {status.total_unrealized_pl:.2f}.",
+                source_path=str(base / "reports" / "paper" / "positions.json"),
+            )
+        )
+    report = PaperAlertReport(
+        status=_alert_status(alerts),
+        alert_count=len(alerts),
+        alerts=alerts,
+    )
+    json_path = base / "reports" / "paper" / "alerts.json"
+    md_path = base / "reports" / "paper" / "alerts.md"
+    report.report_json_path = str(json_path)
+    report.report_markdown_path = str(md_path)
+    write_json(json_path, report)
+    _write_alerts_markdown(md_path, report)
+    return report
+
+
+def refresh_paper_monitor(root: Path | None = None) -> PaperMonitorReport:
+    base = root or project_root()
+    reconciliation = reconcile_paper_state(base)
+    alerts = build_paper_alerts(base)
+    status_path = write_paper_status(base)
+    status = (
+        "error" if alerts.status == "error" else "warning" if alerts.status == "warning" else "ok"
+    )
+    report = PaperMonitorReport(
+        status=status,
+        reconciliation_status=reconciliation.status,
+        reconciliation_issue_count=reconciliation.issue_count,
+        alert_status=alerts.status,
+        alert_count=alerts.alert_count,
+        status_path=str(status_path),
+        reconciliation_report_path=reconciliation.report_markdown_path,
+        alert_report_path=alerts.report_markdown_path,
+    )
+    json_path = base / "reports" / "paper" / "monitor.json"
+    md_path = base / "reports" / "paper" / "monitor.md"
+    report.report_json_path = str(json_path)
+    report.report_markdown_path = str(md_path)
+    write_json(json_path, report)
+    _write_monitor_markdown(md_path, report)
+    return report
+
+
+def run_paper_monitor_loop(
+    root: Path | None = None,
+    *,
+    interval_seconds: float = 60.0,
+    max_cycles: int = 1,
+) -> list[PaperMonitorReport]:
+    base = root or project_root()
+    reports: list[PaperMonitorReport] = []
+    index = 0
+    while max_cycles == 0 or index < max_cycles:
+        report = refresh_paper_monitor(base)
+        reports.append(report)
+        append_jsonl(base / "reports" / "paper" / "monitor_cycles.jsonl", [report])
+        index += 1
+        if max_cycles != 0 and index >= max_cycles:
+            break
+        time.sleep(interval_seconds)
+    return reports
+
+
+def _paper_order_rows(root: Path) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    paper_root = root / "reports" / "paper"
+    for path in sorted(paper_root.glob("*.jsonl")):
+        if path.name == "kill_switch_events.jsonl":
+            continue
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                raw = json.loads(line)
+                if isinstance(raw, dict) and "status" in raw:
+                    rows.append(raw)
+    return rows
+
+
+def _paper_account(root: Path) -> PaperAccountSnapshot | None:
+    path = root / "reports" / "paper" / "account.json"
+    if not path.exists():
+        return None
+    return PaperAccountSnapshot.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def _paper_positions(root: Path) -> list[PaperPositionRecord]:
+    path = root / "reports" / "paper" / "positions.json"
+    if not path.exists():
+        return []
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    rows = raw.get("positions", []) if isinstance(raw, dict) else []
+    return [PaperPositionRecord.model_validate(row) for row in rows]
+
+
+def _paper_reconciliation(root: Path) -> PaperReconciliationReport | None:
+    path = root / "reports" / "paper" / "reconciliation.json"
+    if not path.exists():
+        return None
+    return PaperReconciliationReport.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def _paper_alert_report(root: Path) -> PaperAlertReport | None:
+    path = root / "reports" / "paper" / "alerts.json"
+    if not path.exists():
+        return None
+    return PaperAlertReport.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def _alert_status(alerts: list[PaperAlert]) -> str:
+    if any(item.severity == "error" for item in alerts):
+        return "error"
+    if any(item.severity == "warning" for item in alerts):
+        return "warning"
+    return "ok"
+
+
+def _write_reconciliation_markdown(path: Path, report: PaperReconciliationReport) -> Path:
+    ensure_dir(path.parent)
+    lines = [
+        "# Paper Reconciliation",
+        "",
+        f"- Generated at: `{report.generated_at.isoformat()}`",
+        f"- Status: `{report.status}`",
+        f"- Orders: `{report.order_count}`",
+        f"- Positions: `{report.position_count}`",
+        f"- Open orders: `{report.open_order_count}`",
+        f"- Filled orders: `{report.filled_order_count}`",
+        f"- Issues: `{report.issue_count}`",
+        "",
+        "## Issues",
+        "",
+    ]
+    if report.issues:
+        lines.extend(
+            (
+                f"- `{item.severity}` `{item.code}`"
+                + (f" `{item.symbol}`" if item.symbol else "")
+                + f": {item.message}"
+            )
+            for item in report.issues
+        )
+    else:
+        lines.append("- No reconciliation issues found.")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def _write_alerts_markdown(path: Path, report: PaperAlertReport) -> Path:
+    ensure_dir(path.parent)
+    lines = [
+        "# Paper Alerts",
+        "",
+        f"- Generated at: `{report.generated_at.isoformat()}`",
+        f"- Status: `{report.status}`",
+        f"- Alerts: `{report.alert_count}`",
+        "",
+        "## Alerts",
+        "",
+    ]
+    if report.alerts:
+        lines.extend(
+            (
+                f"- `{item.severity}` `{item.code}`: {item.message}"
+                + (f" Source: `{item.source_path}`" if item.source_path else "")
+            )
+            for item in report.alerts
+        )
+    else:
+        lines.append("- No paper alerts.")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def _write_monitor_markdown(path: Path, report: PaperMonitorReport) -> Path:
+    ensure_dir(path.parent)
+    lines = [
+        "# Paper Monitor Refresh",
+        "",
+        f"- Generated at: `{report.generated_at.isoformat()}`",
+        f"- Status: `{report.status}`",
+        f"- Reconciliation: `{report.reconciliation_status}` "
+        f"issues=`{report.reconciliation_issue_count}`",
+        f"- Alerts: `{report.alert_status}` alerts=`{report.alert_count}`",
+        f"- Status snapshot: `{report.status_path}`",
+        f"- Reconciliation report: `{report.reconciliation_report_path or 'n/a'}`",
+        f"- Alert report: `{report.alert_report_path or 'n/a'}`",
+    ]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def _kill_switch_path(root: Path) -> Path:
+    return root / "reports" / "paper" / "kill_switch.json"
+
+
+def _parse_datetime(value: str) -> datetime:
+    text = value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    parsed = datetime.fromisoformat(text)
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed

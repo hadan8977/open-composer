@@ -22,7 +22,7 @@ def test_unsupported_expression_rejected(tmp_path: Path, repo_root: Path) -> Non
             encoding="utf-8"
         )
     )
-    raw["entry"]["all"][0] = "macd(close, 12) > 0"
+    raw["entry"]["all"][0] = "supertrend(close, 10) > 0"
     path = tmp_path / "bad.yaml"
     path.write_text(yaml.safe_dump(raw), encoding="utf-8")
     with pytest.raises(ExpressionError):

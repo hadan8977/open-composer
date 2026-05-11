@@ -196,9 +196,9 @@ MVP 的本地样例路径使用 sample data 保持可运行。MCP 在真实数�
 | Data Adapter | 美股历史/实时数据 | Alpaca, Polygon, OpenBB |
 | Research Adapter | 参数扫描、组合研究 | vectorbt |
 | Paper Tracking | paper account 状态和订单记录 | Alpaca |
-| Paper Execution | approval-gated paper execution | Lumibot + Alpaca |
+| Paper Execution | approval-gated paper execution | NautilusTrader + Alpaca |
 | ML Research | 因子、横截面 alpha、模型训练 | Qlib |
-| Mature Engine | 复杂事件驱动和部署 | LEAN |
+| Mature Engine | 复杂事件驱动和部署 | NautilusTrader |
 
 ## 7. MVP Scope
 
@@ -251,7 +251,7 @@ MVP 的本地样例路径使用 sample data 保持可运行。MCP 在真实数�
 - VPS scanner 和通知；
 - TradingView webhook ingestion；
 - Alpaca paper account tracking；
-- Lumibot paper execution adapter；
+- NautilusTrader paper execution adapter；
 - vectorbt parameter sweeps；
 - Qlib factor/ML research adapter；
 - reports/signals thin UI。
@@ -374,7 +374,7 @@ MVP 完成条件：
 ### Phase 5: Execution And Research Adapters
 
 - Alpaca paper tracking；
-- Lumibot paper execution adapter；
+- NautilusTrader paper execution adapter；
 - vectorbt parameter research；
 - Qlib factor/ML research adapter。
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 from open_composer.compiler.spec_to_pine import compile_pine, compile_pine_strategy
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
@@ -17,6 +19,31 @@ def test_backtest_writes_report_and_signal_log(sample_workspace: Path) -> None:
     assert Path(artifacts.run.report_path).exists()
     assert Path(artifacts.run.signal_log_path).exists()
     assert artifacts.run.assumptions[0] == "Signals are confirmed on bar close."
+    assert artifacts.run.annualized_return_pct is not None
+    assert artifacts.run.sharpe_ratio is not None
+    report_text = Path(artifacts.run.report_path).read_text(encoding="utf-8")
+    assert "- Annualized return:" in report_text
+    assert "- Sharpe ratio:" in report_text
+
+
+def test_backtest_models_commission_and_slippage(sample_workspace: Path) -> None:
+    source_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    no_cost = run_backtest(source_path, root=sample_workspace)
+    raw = yaml.safe_load(source_path.read_text(encoding="utf-8"))
+    raw["name"] = "qqq_pullback_15m_costed"
+    raw["costs"] = {"commission_pct": 0.1, "slippage_bps": 5}
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m_costed.yaml"
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    costed = run_backtest(spec_path, root=sample_workspace)
+
+    assert costed.run.total_fees > 0
+    assert costed.run.end_equity < no_cost.run.end_equity
+    assert any("Commission is 0.1% per fill." in item for item in costed.run.assumptions)
+    assert any("Slippage is 5 bps per fill." in item for item in costed.run.assumptions)
+    assert all(trade.entry_fee >= 0 and trade.exit_fee >= 0 for trade in costed.trades)
+    assert costed.run.report_path is not None
+    assert "- Total fees:" in Path(costed.run.report_path).read_text(encoding="utf-8")
 
 
 def test_scan_writes_latest_signal_log(sample_workspace: Path) -> None:

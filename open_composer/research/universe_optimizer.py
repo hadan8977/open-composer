@@ -33,7 +33,7 @@ def optimize_strategy_universe(
     spec_path: Path,
     root: Path | None = None,
     symbols: list[str] | None = None,
-    data_source: Literal["alpaca"] = "alpaca",
+    data_source: Literal["alpaca", "longbridge"] = "alpaca",
     feed: str | None = None,
     min_return_pct: float = 1.0,
     min_signals: int = 1,
@@ -55,6 +55,7 @@ def optimize_strategy_universe(
             timeframe=candidate_base.timeframe,
             start=None,
             end=None,
+            source=data_source,
             feed=candidate_base.data.feed or data_feed(),
             use_cache=not refresh_data,
         )
@@ -96,7 +97,7 @@ def _symbol_spec(
     source: StrategySpec,
     symbol: str,
     universe: list[str],
-    data_source: Literal["alpaca"],
+    data_source: Literal["alpaca", "longbridge"],
     feed: str,
 ) -> StrategySpec:
     raw = source.model_dump(mode="json")
@@ -112,13 +113,19 @@ def _symbol_spec(
         "timezone": "America/New_York",
     }
     raw["required_capabilities"] = [
-        "market.alpaca_bars" if item.startswith("market.") else item
+        (
+            "market.longbridge_bars"
+            if data_source == "longbridge" and item.startswith("market.")
+            else "market.alpaca_bars"
+            if item.startswith("market.")
+            else item
+        )
         for item in raw.get("required_capabilities", [])
     ]
     raw["notes"] = {
         **raw.get("notes", {}),
         "universe_optimization": (
-            "Selected from per-symbol Alpaca 15m candidates with turnover-aware scoring."
+            f"Selected from per-symbol {data_source} 15m candidates with turnover-aware scoring."
         ),
     }
     return StrategySpec.model_validate(raw)

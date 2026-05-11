@@ -8,6 +8,7 @@ import yaml
 
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.strategy_versions import register_strategy_version
 
 Lifecycle = Literal["draft", "approved", "active", "retired"]
 
@@ -43,6 +44,7 @@ def list_strategies(root: Path | None = None) -> list[StrategyListing]:
 
 def approve_strategy(spec_path: Path, root: Path | None = None) -> Path:
     spec = load_strategy_spec(spec_path)
+    parent = register_strategy_version(spec_path, root, created_by="approve_parent")
     raw = spec.model_dump(mode="json")
     raw["lifecycle"] = "approved"
     raw["execution"] = {
@@ -50,7 +52,14 @@ def approve_strategy(spec_path: Path, root: Path | None = None) -> Path:
         "mode": "manual_signal",
         "broker": "none",
     }
-    return _write_lifecycle_spec(raw, "approved", root)
+    path = _write_lifecycle_spec(raw, "approved", root)
+    register_strategy_version(
+        path,
+        root,
+        parent_version_id=parent.version_id,
+        created_by="strategy_approve",
+    )
+    return path
 
 
 def activate_strategy(
@@ -58,33 +67,53 @@ def activate_strategy(
     root: Path | None = None,
     paper_auto: bool = False,
     allow_paper_auto: bool = False,
-    data_source: Literal["keep", "sample", "alpaca"] = "keep",
+    data_source: Literal["keep", "sample", "alpaca", "longbridge"] = "keep",
 ) -> Path:
     if paper_auto and not allow_paper_auto:
         raise ValueError("paper_auto activation requires --allow-paper-auto")
     spec = load_strategy_spec(spec_path)
+    parent = register_strategy_version(spec_path, root, created_by="activate_parent")
     raw = spec.model_dump(mode="json")
     raw["lifecycle"] = "active"
     if paper_auto:
-        raw["execution"] = {**raw["execution"], "mode": "paper_auto", "broker": "alpaca_paper"}
+        raw["execution"] = {
+            **raw["execution"],
+            "backend": "nautilus_trader",
+            "mode": "paper_auto",
+            "broker": "alpaca_paper",
+        }
     else:
         raw["execution"] = {**raw["execution"], "mode": "manual_signal", "broker": "none"}
     if data_source != "keep":
         raw["data"] = {**raw["data"], "source": data_source}
-        if data_source == "alpaca":
+        if data_source in {"alpaca", "longbridge"}:
             raw["data"]["path"] = None
             raw["data"]["symbol"] = spec.primary_symbol
-    return _write_lifecycle_spec(raw, "active", root)
+    path = _write_lifecycle_spec(raw, "active", root)
+    register_strategy_version(
+        path,
+        root,
+        parent_version_id=parent.version_id,
+        created_by="strategy_activate",
+    )
+    return path
 
 
 def disable_strategy(name_or_path: str | Path, root: Path | None = None) -> Path:
     base = root or project_root()
     active_path = _resolve_strategy_path(name_or_path, base, preferred_lifecycle="active")
     spec = load_strategy_spec(active_path)
+    parent = register_strategy_version(active_path, base, created_by="disable_parent")
     raw = spec.model_dump(mode="json")
     raw["lifecycle"] = "retired"
     raw["execution"] = {**raw["execution"], "mode": "manual_signal", "broker": "none"}
     retired_path = _write_lifecycle_spec(raw, "retired", base)
+    register_strategy_version(
+        retired_path,
+        base,
+        parent_version_id=parent.version_id,
+        created_by="strategy_disable",
+    )
     if active_path.exists():
         active_path.unlink()
     return retired_path

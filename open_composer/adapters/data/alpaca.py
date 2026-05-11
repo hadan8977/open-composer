@@ -6,6 +6,7 @@ from typing import Any
 
 import pandas as pd
 
+from open_composer.adapters.data.provenance import write_ohlcv_manifest
 from open_composer.adapters.data.sample import normalize_ohlcv
 from open_composer.config import alpaca_api_key_id, alpaca_api_secret_key, ensure_dir
 
@@ -25,7 +26,20 @@ def fetch_alpaca_bars(
 ) -> pd.DataFrame:
     cache_path = root / "data" / "cache" / f"{symbol.lower()}_{timeframe}_{feed}.csv"
     if use_cache and cache_path.exists() and start is None and end is None:
-        return normalize_ohlcv(pd.read_csv(cache_path))
+        frame = normalize_ohlcv(pd.read_csv(cache_path))
+        _annotate_frame(frame, feed, "cache", cache_path)
+        write_ohlcv_manifest(
+            root,
+            provider="alpaca",
+            feed=feed,
+            symbol=symbol,
+            timeframe=timeframe,
+            cache_path=cache_path,
+            frame=frame,
+            source_mode="cache",
+            caveats=_alpaca_caveats(feed),
+        )
+        return frame
 
     try:
         from alpaca.data.historical import StockHistoricalDataClient
@@ -46,9 +60,34 @@ def fetch_alpaca_bars(
     )
     response = client.get_stock_bars(request)
     frame = _bars_to_frame(response, symbol.upper())
+    _annotate_frame(frame, feed, "live_fetch", cache_path)
     ensure_dir(cache_path.parent)
     frame.to_csv(cache_path, index=False)
+    write_ohlcv_manifest(
+        root,
+        provider="alpaca",
+        feed=feed,
+        symbol=symbol,
+        timeframe=timeframe,
+        cache_path=cache_path,
+        frame=frame,
+        requested_start=start,
+        requested_end=end,
+        source_mode="live_fetch",
+        caveats=_alpaca_caveats(feed),
+    )
     return frame
+
+
+def _annotate_frame(frame: pd.DataFrame, feed: str, source_mode: str, path: Path) -> None:
+    frame.attrs.update(
+        {
+            "data_source_provider": "alpaca",
+            "data_source_mode": source_mode,
+            "data_source_feed": feed,
+            "data_source_path": str(path),
+        }
+    )
 
 
 def _alpaca_timeframe(timeframe: str) -> Any:
@@ -93,3 +132,9 @@ def _bars_to_frame(response: Any, symbol: str) -> pd.DataFrame:
         for row in rows
     ]
     return normalize_ohlcv(pd.DataFrame(records))
+
+
+def _alpaca_caveats(feed: str) -> list[str]:
+    if feed.lower() == "iex":
+        return ["Alpaca free IEX feed is not consolidated full-market SIP data"]
+    return [f"Alpaca feed {feed} permissions and coverage must be verified"]

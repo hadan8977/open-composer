@@ -1,30 +1,96 @@
 from open_composer.models.backtest import BacktestRun, Trade
 from open_composer.models.capability import Capability, CapabilityEvaluation, CapabilityRegistry
+from open_composer.models.dashboard import (
+    DashboardAuditEvent,
+    DashboardCapabilityFinding,
+    DashboardCatalog,
+    DashboardContext,
+    DashboardDataComparison,
+    DashboardFeaturePacket,
+    DashboardGroup,
+    DashboardJournalEntry,
+    DashboardOrder,
+    DashboardReview,
+    DashboardRun,
+    DashboardSignal,
+    DashboardStrategy,
+    DashboardSummary,
+    DashboardVersion,
+)
 from open_composer.models.event import EventRecord, SignalContext
+from open_composer.models.execution_backend import (
+    ExecutionBackendPlan,
+    NautilusBacktestPlan,
+    NautilusCustomDataBinding,
+    NautilusPaperPlan,
+)
 from open_composer.models.journal import TradeJournalEntry
 from open_composer.models.options import OptionBacktestRun, OptionBacktestTrade, OptionOverlaySpec
-from open_composer.models.paper import PaperOrderRecord
+from open_composer.models.paper import (
+    PaperAccountSnapshot,
+    PaperAlert,
+    PaperAlertReport,
+    PaperKillSwitch,
+    PaperMonitorReport,
+    PaperOrderRecord,
+    PaperPositionRecord,
+    PaperReconciliationIssue,
+    PaperReconciliationReport,
+    PaperStatusSnapshot,
+)
 from open_composer.models.review_card import ReviewCard
 from open_composer.models.runner import PaperRunCycle, PaperRunSignalResult
 from open_composer.models.signal import Signal
-from open_composer.models.strategy_spec import StrategySpec
+from open_composer.models.strategy_spec import CostConfig, FactorConfig, StrategySpec
+from open_composer.models.strategy_version import StrategyVersion
 
 __all__ = [
     "BacktestRun",
     "Capability",
     "CapabilityEvaluation",
     "CapabilityRegistry",
+    "DashboardAuditEvent",
+    "DashboardCatalog",
+    "DashboardCapabilityFinding",
+    "DashboardContext",
+    "DashboardDataComparison",
+    "DashboardFeaturePacket",
+    "DashboardGroup",
+    "DashboardJournalEntry",
+    "DashboardOrder",
+    "DashboardReview",
+    "DashboardRun",
+    "DashboardSignal",
+    "DashboardStrategy",
+    "DashboardSummary",
+    "DashboardVersion",
     "EventRecord",
+    "ExecutionBackendPlan",
+    "NautilusBacktestPlan",
+    "NautilusCustomDataBinding",
+    "NautilusPaperPlan",
+    "CostConfig",
+    "FactorConfig",
     "OptionBacktestRun",
     "OptionBacktestTrade",
     "OptionOverlaySpec",
+    "PaperKillSwitch",
+    "PaperAccountSnapshot",
+    "PaperAlert",
+    "PaperAlertReport",
     "PaperOrderRecord",
+    "PaperMonitorReport",
+    "PaperPositionRecord",
+    "PaperReconciliationIssue",
+    "PaperReconciliationReport",
+    "PaperStatusSnapshot",
     "PaperRunCycle",
     "PaperRunSignalResult",
     "ReviewCard",
     "Signal",
     "SignalContext",
     "StrategySpec",
+    "StrategyVersion",
     "Trade",
     "TradeJournalEntry",
 ]

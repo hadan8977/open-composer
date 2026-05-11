@@ -10,6 +10,7 @@ def test_capability_registry_loads(sample_workspace: Path) -> None:
     registry = load_registry(sample_workspace)
     ids = {capability.id for capability in registry.capabilities}
     assert "market.alpaca_bars" in ids
+    assert "market.longbridge_bars" in ids
     assert "events.sec_filings" in ids
     assert "macro.fred_series" in ids
     assert "news.alpha_vantage" in ids
