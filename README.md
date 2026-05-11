@@ -1,116 +1,129 @@
 # Open Composer
 
-Open Composer 是一个面向个人交易学习者的对话式 AI 策略工作台。
+Open Composer is a file-first strategy workbench for drafting, testing, reviewing,
+and paper-monitoring trading ideas with Codex.
 
-第一版用文件仓库作为产品界面：用户用自然语言描述交易想法，Codex 在仓库约束下生成 `StrategySpec`、Python 回测/扫描、TradingView Pine Script、信号日志、报告和交易复盘材料。用户先通过 TradingView/本地扫描获得 15m、1h、daily、weekly 级别的信号，再手动决定交易动作。
+`StrategySpec` is the source of truth. Python is the deterministic reference.
+NautilusTrader is the event-driven execution path. TradingView Pine is a
+compatibility export, not the main runtime.
 
-## 当前状态
-
-这个仓库已经包含增强版 MVP 的可运行骨架：
-
-- `StrategySpec` YAML schema/model；
-- sample OHLCV 数据；
-- `oc` CLI；
-- spec validation；
-- deterministic signal/backtest/scanner engine；
-- TradingView Pine v6 export；
-- Markdown reports、JSONL signal logs、journal；
-- OpenAI structured review card adapter；
-- Alpaca data 和 Alpaca Paper adapter；
-- capability registry、event/news/macro context builder；
-- paper-only 期权 overlay 研究回测与优化；
-- pytest/ruff 验证。
-
-实盘真钱交易仍然保持手动决策。MVP 只允许 Alpaca Paper 模拟盘自动下单，并要求 active `paper_auto` 策略、paper 环境变量和显式 `--allow-paper-orders`。
-
-## Quick Start
+## Setup
 
 ```bash
+cp .env.example .env
+cp .codex/config.example.toml .codex/config.toml
+uv sync
 uv run oc doctor
+```
+
+`.env` holds API keys and broker settings. `.codex/config.toml` holds non-secret
+Codex model and MCP settings. The project also reads `AGENTS.md` and repo skills
+under `.agents/skills/`.
+
+## Core Workflow
+
+```bash
+uv run oc capability test
 uv run oc spec validate strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc backtest strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc scan strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc capability test
-uv run oc events fetch --source sec --symbols QQQ
-uv run oc macro fetch --source fred
-uv run oc compile pine strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc compile pine-strategy strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc strategy list
-uv run oc strategy optimize-horizons strategy_specs/drafts/memory_storage_momentum_15m.yaml --symbols MU,SNDK,WDC,STX
-uv run oc options optimize strategy_specs/drafts/memory_storage_momentum_15m_mu_alpaca_optimized_opening_continuation.yaml
+uv run oc dashboard html
+uv run ruff check .
 uv run pytest
 ```
 
-TradingView 导出分两种：`oc compile pine` 生成 indicator 脚本，用于看图和 alerts；
-`oc compile pine-strategy` 生成 strategy 脚本，用于粘贴到 TradingView Pine Editor 后查看
-Strategy Tester 回测。
+TradingView export:
 
-可选环境变量见 `.env.example`：
+```bash
+uv run oc compile pine strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc compile pine-strategy strategy_specs/drafts/qqq_pullback_15m.yaml
+```
 
-- `OPENAI_API_KEY` + `OPENAI_MODEL` 用于 `oc review-signal <signal-id>`；
-- `OPENAI_BASE_URL` 可沿用当前 OpenAI 兼容网关配置；未设置时会尝试读取本机 Codex `~/.codex/config.toml` 的 responses provider；
-- `ALPACA_API_KEY_ID`、`ALPACA_API_SECRET_KEY`、`ALPACA_PAPER=true`、`ALPACA_API_BASE_URL=https://paper-api.alpaca.markets/v2`、`ALPACA_DATA_FEED=iex` 用于 Alpaca 数据和模拟盘。
-- `ALPHA_VANTAGE_API_KEY`、`FRED_API_KEY` 用于后续 live 新闻/宏观适配器；MVP 测试默认使用离线 fixture。
+Only deterministic OHLCV-compatible rules are exported. Pine is for charting and
+Strategy Tester compatibility, not full strategy execution.
 
-Alpaca Paper 下单示例：
+## Control Surface
+
+Codex follows this repo in a fixed order:
+
+1. `AGENTS.md`
+2. the relevant skill in `.agents/skills/`
+3. `capabilities/registry.yaml`
+4. the strategy spec and generated artifacts
+
+The important local gates are:
+
+- `uv run oc capability test` before adding a new required capability
+- `uv run oc spec validate <spec>` before code or Pine generation
+- `uv run oc backtest <spec>` before promotion
+- `uv run oc dashboard html` after new artifacts land
+
+## Data
+
+Open Composer records provenance in manifests and reports. When live data is
+available, use it. When not, the workflow falls back to local cache, sample, or
+fixture data and labels that clearly.
+
+Useful commands:
+
+```bash
+uv run oc data fetch --source alpaca --symbol MU --timeframe 15m --feed iex
+uv run oc data fetch --source longbridge --symbol QQQ --timeframe 15m
+uv run oc data compare --symbol QQQ --timeframe 15m --left alpaca --right longbridge
+```
+
+Current data sources:
+
+- Alpaca IEX: implemented for bars and Alpaca Paper context.
+- Longbridge: trial market-data adapter and comparison reports.
+- SEC, FRED, Alpha Vantage, GDELT: registered context sources for review and replay.
+
+Reports marked `sample fallback` or fixture replay are workflow evidence, not
+market evidence.
+
+## Paper Safety
+
+Alpaca Paper is the only automated order path in the MVP. A paper order requires:
+
+- a spec under `strategy_specs/active/`
+- `lifecycle=active`
+- `execution.mode=paper_auto`
+- `execution.broker=alpaca_paper`
+- paper environment variables
+- an explicit command flag such as `--allow-paper-orders`
+
+Example:
 
 ```bash
 uv run oc strategy approve strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc strategy activate qqq_pullback_15m --paper-auto --allow-paper-auto
 uv run oc run paper qqq_pullback_15m --max-cycles 1 --no-review
 uv run oc paper submit <signal-id> --allow-paper-orders
-uv run oc run paper qqq_pullback_15m --max-cycles 0 --interval-seconds 60 --allow-paper-orders
 uv run oc strategy disable qqq_pullback_15m
 ```
 
-该命令只接受 `strategy_specs/active/` 中 lifecycle 为 `active`、`execution.mode=paper_auto`、`broker=alpaca_paper` 的策略。
+Real-money broker writes are out of scope for this MVP.
 
-默认推荐先用 `oc run paper ... --no-review` 或带 review 但不加 `--allow-paper-orders`
-做扫描和人工确认；只有当策略已 active、处于 `paper_auto`、Alpaca Paper key 存在，并且命令显式传入
-`--allow-paper-orders` 时，runner 才会提交模拟盘订单。真钱 live broker 写入仍不在 MVP 范围内。
+## Validated Benchmarks
 
-期权研究示例：
+- `memory_storage_momentum_15m_wdc_alpaca_1h_trend_hold_optimized_volume_plus`
+  - Alpaca cache, 170 bars
+  - annualized return `16.15%`
+  - Sharpe `2.16`
+- `mu_breakout_volume_15m_alpaca_optimized_volume_plus`
+  - Alpaca live-fetch cache, 13,512 bars
+  - annualized return `3.76%`
+  - Sharpe `1.19`
 
-```bash
-uv run oc options optimize \
-  strategy_specs/drafts/memory_storage_momentum_15m_mu_alpaca_optimized_opening_continuation.yaml \
-  strategy_specs/drafts/memory_storage_momentum_15m_sndk_alpaca_optimized_trend_hold.yaml \
-  strategy_specs/drafts/memory_storage_momentum_15m_wdc_alpaca_optimized_volume.yaml \
-  strategy_specs/drafts/memory_storage_momentum_15m_stx_alpaca_optimized_opening_continuation.yaml \
-  --max-premium-weight 0.03
-```
+Sample-backed high-return candidates are documented in [docs/review-optimization-completion-audit.zh.md](docs/review-optimization-completion-audit.zh.md).
 
-当前期权能力是 research-only：用正股策略的 entry/exit 作为 underlying timing，模拟 long call 和 debit call spread overlay，输出 `strategy_specs/options/` 和 `reports/options/`。它不会提交期权订单，也不会把 Black-Scholes 近似回测误标成真实历史期权报价回测。
+## Project Docs
 
-## 阅读顺序
-
-1. [OPEN-COMPOSER-BUILD-HANDOFF.md](OPEN-COMPOSER-BUILD-HANDOFF.md)
-   - 新实现会话的唯一开工入口。包含产品定义、技术路线、目录结构、CLI 合同、Skill 合同、任务顺序和验收标准。
-
-2. [OPEN-COMPOSER-PRODUCT-MVP.md](OPEN-COMPOSER-PRODUCT-MVP.md)
-   - 正式 MVP 文档。说明用户、问题、范围、技术架构、核心流程、成功标准和阶段路线。
-
-3. [OPEN-COMPOSER-CONTEXT-SUMMARY.md](OPEN-COMPOSER-CONTEXT-SUMMARY.md)
-   - 背景研究总结。说明产品方向、市场参考、工具选型、LLM/Codex 分工和文档设计依据。
-
-4. [docs/quant-capability-expansion-plan.zh.md](docs/quant-capability-expansion-plan.zh.md)
-   - 中文版能力补全与 Dashboard 总体计划。覆盖策略能力、版本管理、Dashboard、LLM 工作区、策略组和执行路线。
-
-5. [docs/quant-capability-expansion-review.zh.md](docs/quant-capability-expansion-review.zh.md)
-   - 中文版严格审查文档。用产品、量化、执行、架构、LLM、UX、审计等视角审查计划并给出最终裁定。
-
-## 实现路线
-
-```text
-StrategySpec-first
-  -> Codex AGENTS.md + repo skills
-  -> Python signal/backtest/scanner engine
-  -> TradingView Pine export
-  -> signal parity report
-  -> reports + signal logs + journal
-  -> optional LLM review cards
-  -> later data, paper-tracking, execution, and research adapters
-```
-
-`OPEN-COMPOSER-BUILD-HANDOFF.md` 是当前实现依据。其他文档用于补充产品判断和研究背景。
+- [AGENTS.md](AGENTS.md)
+- [OPEN-COMPOSER-BUILD-HANDOFF.md](OPEN-COMPOSER-BUILD-HANDOFF.md)
+- [OPEN-COMPOSER-PRODUCT-MVP.md](OPEN-COMPOSER-PRODUCT-MVP.md)
+- [docs/quant-capability-expansion-plan.zh.md](docs/quant-capability-expansion-plan.zh.md)
+- [docs/quant-capability-expansion-review.zh.md](docs/quant-capability-expansion-review.zh.md)
+- [docs/review-methodology.zh.md](docs/review-methodology.zh.md)
