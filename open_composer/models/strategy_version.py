@@ -30,6 +30,7 @@ class StrategyVersion(BaseModel):
     universe: list[str] = Field(default_factory=list)
     factor_names: list[str] = Field(default_factory=list)
     llm_feature_factor_names: list[str] = Field(default_factory=list)
+    feature_packet_factor_names: list[str] = Field(default_factory=list)
     backend: ExecutionBackend = "python_reference"
     execution_mode: str
     broker: str

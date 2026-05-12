@@ -13,6 +13,10 @@ from open_composer.adapters.execution import (
 from open_composer.analytics import build_performance_metrics
 from open_composer.config import project_root, run_id
 from open_composer.engines.signal_engine import build_signal, signal_masks
+from open_composer.feature_packets import (
+    should_auto_emit_context_features,
+    write_context_feature_packet,
+)
 from open_composer.models.backtest import BacktestRun, Trade
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
@@ -90,6 +94,12 @@ def run_backtest(
     report_path = base / "reports" / "backtests" / f"{artifacts.run.run_id}.md"
     signal_log_path = base / "signal_logs" / f"{artifacts.run.run_id}.jsonl"
     append_jsonl(signal_log_path, artifacts.signals)
+    if should_auto_emit_context_features(spec):
+        for signal in artifacts.signals:
+            write_context_feature_packet(signal.id, base)
+        artifacts.run.assumptions.append(
+            "Context-derived feature packets were auto-written for context-capable signals."
+        )
     write_backtest_report(report_path, artifacts.run, artifacts.signals, artifacts.trades, spec)
     artifacts.run.report_path = str(report_path)
     artifacts.run.signal_log_path = str(signal_log_path)

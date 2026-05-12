@@ -58,7 +58,7 @@ export function Hero({ theme = "green", greeting, headline, meta, stat }: Props)
               fontWeight: 800,
               fontSize: "clamp(38px, 4.8vw, 72px)",
               lineHeight: 0.98,
-              letterSpacing: "-0.048em",
+              letterSpacing: 0,
               marginTop: 9,
               paddingBottom: "0.08em",
             }}
@@ -98,7 +98,7 @@ export function Hero({ theme = "green", greeting, headline, meta, stat }: Props)
                 fontWeight: 800,
                 fontSize: 30,
                 lineHeight: 1,
-                letterSpacing: "-0.035em",
+                letterSpacing: 0,
                 color: accent.text,
                 whiteSpace: "nowrap",
               }}

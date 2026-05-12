@@ -9,10 +9,11 @@ from open_composer.models.execution_backend import BackendStatus, ExecutionBacke
 
 Lifecycle = Literal["draft", "approved", "active", "retired"]
 CapabilityStatus = Literal["supported", "partial", "blocked", "unsupported"]
+PaperReadinessStatus = Literal["ok", "warning", "blocked"]
 ModelRole = Literal["pure_quant", "quant_review", "quant_scan", "quant_orchestrator"]
 RiskTier = Literal["stable", "moderate", "high"]
 RunKind = Literal["backtest", "scan", "paper", "unknown"]
-AuditKind = Literal["journal", "paper_order", "paper_kill_switch"]
+AuditKind = Literal["journal", "paper_order", "paper_kill_switch", "dashboard_command"]
 
 
 class DashboardCapabilityFinding(BaseModel):
@@ -21,6 +22,20 @@ class DashboardCapabilityFinding(BaseModel):
     capability: str
     status: CapabilityStatus
     reasons: list[str] = Field(default_factory=list)
+
+
+class DashboardCustomDataBinding(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    factor_name: str
+    source: str
+    path: str
+    field: str
+    record_count: int = 0
+    first_timestamp: str | None = None
+    last_timestamp: str | None = None
+    point_in_time_status: Literal["complete", "partial", "missing"] = "missing"
+    replay_warnings: list[str] = Field(default_factory=list)
 
 
 class DashboardVersion(BaseModel):
@@ -44,6 +59,7 @@ class DashboardVersion(BaseModel):
     universe: list[str] = Field(default_factory=list)
     factor_names: list[str] = Field(default_factory=list)
     llm_feature_factor_names: list[str] = Field(default_factory=list)
+    feature_packet_factor_names: list[str] = Field(default_factory=list)
     backend: ExecutionBackend = "python_reference"
     backend_status: BackendStatus = "supported"
     backend_reasons: list[str] = Field(default_factory=list)
@@ -79,6 +95,7 @@ class DashboardStrategy(BaseModel):
     factor_names: list[str] = Field(default_factory=list)
     factor_count: int = 0
     llm_feature_factor_names: list[str] = Field(default_factory=list)
+    feature_packet_factor_names: list[str] = Field(default_factory=list)
     backend: ExecutionBackend = "python_reference"
     backend_status: BackendStatus = "supported"
     backend_reasons: list[str] = Field(default_factory=list)
@@ -112,6 +129,8 @@ class DashboardRun(BaseModel):
     report_path: str | None = None
     signal_log_path: str | None = None
     backend_plan_path: str | None = None
+    paper_readiness_report_path: str | None = None
+    custom_data_bindings: list[DashboardCustomDataBinding] = Field(default_factory=list)
     symbol: str
     timeframe: str
     bars: int | None = None
@@ -216,6 +235,46 @@ class DashboardOrder(BaseModel):
     path: str
 
 
+class DashboardPaperPosition(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    symbol: str
+    qty: float
+    market_value: float | None = None
+    cost_basis: float | None = None
+    unrealized_pl: float | None = None
+    unrealized_plpc: float | None = None
+    current_price: float | None = None
+    side: str = ""
+    updated_at: datetime
+    paper: bool = True
+    path: str
+
+
+class DashboardPaperReadinessCheck(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    status: PaperReadinessStatus
+    message: str
+    suggested_actions: list[str] = Field(default_factory=list)
+
+
+class DashboardPaperReadinessReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    strategy_name: str
+    strategy_id: str
+    status: PaperReadinessStatus
+    ready: bool
+    generated_at: datetime
+    path: str
+    report_markdown_path: str | None = None
+    blocking_checks: list[str] = Field(default_factory=list)
+    warning_checks: list[str] = Field(default_factory=list)
+    checks: list[DashboardPaperReadinessCheck] = Field(default_factory=list)
+
+
 class DashboardAuditEvent(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -286,6 +345,65 @@ class DashboardFeaturePacket(BaseModel):
     field_names: list[str] = Field(default_factory=list)
     first_timestamp: str | None = None
     last_timestamp: str | None = None
+    has_timestamp: bool = False
+    has_published_at: bool = False
+    has_fetched_at: bool = False
+    has_dedupe_key: bool = False
+    point_in_time_status: Literal["complete", "partial", "missing"] = "missing"
+    replay_warnings: list[str] = Field(default_factory=list)
+
+
+class DashboardWorkflowReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    strategy_name: str
+    strategy_id: str
+    status: Literal["ok", "warning", "blocked"] = "warning"
+    source_path: str
+    spec_hash: str | None = None
+    backtest_run_id: str | None = None
+    scan_signal_count: int = 0
+    paper_readiness_status: PaperReadinessStatus | None = None
+    paper_ready: bool = False
+    output_paths: list[str] = Field(default_factory=list)
+    path: str
+    report_markdown_path: str | None = None
+
+
+class DashboardOperationalCheck(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    status: Literal["ok", "warning", "blocked"] = "warning"
+    message: str = ""
+    suggested_actions: list[str] = Field(default_factory=list)
+    details: dict[str, object] = Field(default_factory=dict)
+
+
+class DashboardDeploymentStep(DashboardOperationalCheck):
+    output_paths: list[str] = Field(default_factory=list)
+
+
+class DashboardReadinessReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["ok", "warning", "blocked"] = "warning"
+    ready: bool = False
+    generated_at: datetime | None = None
+    path: str
+    report_markdown_path: str | None = None
+    checks: list[DashboardOperationalCheck] = Field(default_factory=list)
+
+
+class DashboardDeploymentReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["ok", "warning", "blocked"] = "warning"
+    ready: bool = False
+    generated_at: datetime | None = None
+    path: str
+    report_markdown_path: str | None = None
+    steps: list[DashboardDeploymentStep] = Field(default_factory=list)
 
 
 class DashboardSummary(BaseModel):
@@ -305,6 +423,15 @@ class DashboardSummary(BaseModel):
     audit_count: int = 0
     data_comparison_count: int = 0
     feature_packet_count: int = 0
+    workflow_report_count: int = 0
+    readiness_status: Literal["ok", "warning", "blocked", "missing"] = "missing"
+    readiness_ready: bool = False
+    readiness_warning_count: int = 0
+    readiness_blocked_count: int = 0
+    deployment_status: Literal["ok", "warning", "blocked", "missing"] = "missing"
+    deployment_ready: bool = False
+    deployment_warning_count: int = 0
+    deployment_blocked_count: int = 0
     active_strategy_count: int = 0
     paper_auto_strategy_count: int = 0
     paper_kill_switch_enabled: bool = False
@@ -314,15 +441,19 @@ class DashboardSummary(BaseModel):
     paper_account_cash: float | None = None
     paper_account_buying_power: float | None = None
     paper_account_portfolio_value: float | None = None
+    paper_account_snapshot_at: datetime | None = None
     paper_position_count: int = 0
     paper_total_position_market_value: float = 0.0
     paper_total_unrealized_pl: float = 0.0
+    paper_positions_snapshot_at: datetime | None = None
     paper_reconciliation_status: str = "unknown"
     paper_reconciliation_issue_count: int = 0
     paper_reconciliation_report_path: str | None = None
     paper_alert_status: str = "unknown"
     paper_alert_count: int = 0
     paper_alert_report_path: str | None = None
+    paper_readiness_count: int = 0
+    paper_readiness_status_counts: dict[str, int] = Field(default_factory=dict)
     strategy_backend_counts: dict[str, int] = Field(default_factory=dict)
     backend_status_counts: dict[str, int] = Field(default_factory=dict)
     pure_quant_count: int = 0
@@ -355,7 +486,12 @@ class DashboardCatalog(BaseModel):
     contexts: list[DashboardContext] = Field(default_factory=list)
     journals: list[DashboardJournalEntry] = Field(default_factory=list)
     orders: list[DashboardOrder] = Field(default_factory=list)
+    paper_positions: list[DashboardPaperPosition] = Field(default_factory=list)
+    paper_readiness_reports: list[DashboardPaperReadinessReport] = Field(default_factory=list)
     audits: list[DashboardAuditEvent] = Field(default_factory=list)
     groups: list[DashboardGroup] = Field(default_factory=list)
     data_comparisons: list[DashboardDataComparison] = Field(default_factory=list)
     feature_packets: list[DashboardFeaturePacket] = Field(default_factory=list)
+    workflow_reports: list[DashboardWorkflowReport] = Field(default_factory=list)
+    readiness_report: DashboardReadinessReport | None = None
+    deployment_report: DashboardDeploymentReport | None = None

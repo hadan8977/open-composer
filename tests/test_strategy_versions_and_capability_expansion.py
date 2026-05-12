@@ -5,6 +5,7 @@ from pathlib import Path
 
 import yaml
 
+from open_composer.adapters.execution.nautilus_trader import build_nautilus_backtest_plan
 from open_composer.compiler.spec_to_pine import compile_pine_strategy
 from open_composer.dashboard import build_dashboard_catalog
 from open_composer.engines.backtest_engine import run_backtest
@@ -280,10 +281,21 @@ def test_llm_feature_factor_replays_from_saved_packets(
 
     spec = load_strategy_spec(spec_path)
     report = assess_strategy_capabilities(spec_path)
+    plan = build_nautilus_backtest_plan(
+        spec_path,
+        sample_workspace,
+        run_id_value="run_llm_feature",
+    )
     backtest = run_backtest(spec_path, root=sample_workspace)
     catalog = build_dashboard_catalog(sample_workspace)
+    binding = plan.custom_data_bindings[0]
 
     assert spec.factors["llm_sentiment"].source == "llm_feature"
+    assert binding.factor_name == "llm_sentiment"
+    assert binding.exists is True
+    assert binding.record_count == 1
+    assert binding.point_in_time_status == "partial"
+    assert "published_at is missing" in "; ".join(binding.replay_warnings)
     assert report.finding("python_mvp_backtest").status == "partial"
     assert report.finding("llm_quant_workflow").status == "partial"
     assert report.backend_plan.status == "partial"
@@ -293,3 +305,210 @@ def test_llm_feature_factor_replays_from_saved_packets(
     )
     assert strategy.llm_feature_factor_names == ["llm_sentiment"]
     assert strategy.backend_status == "partial"
+
+
+def test_feature_packet_factor_replays_nested_feature_fields(
+    sample_workspace: Path,
+) -> None:
+    feature_path = sample_workspace / "feature_logs" / "qqq_event_features.jsonl"
+    feature_path.write_text(
+        (
+            '{"timestamp":"2026-01-01T00:00:00Z","published_at":"2026-01-01T00:00:00Z",'
+            '"fetched_at":"2026-01-01T00:01:00Z","source":"alpha_vantage",'
+            '"symbol":"QQQ","dedupe_key":"news:qqq:1","schema_version":"1",'
+            '"features":{"event_risk_score":0.8}}\n'
+        ),
+        encoding="utf-8",
+    )
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_event_feature_15m.yaml"
+    spec_path.write_text(
+        yaml.safe_dump(
+            {
+                "name": "qqq_event_feature_15m",
+                "description": "QQQ strategy gated by replayed event feature packets.",
+                "timeframe": "15m",
+                "universe": ["QQQ"],
+                "lifecycle": "draft",
+                "factors": {
+                    "event_risk": {
+                        "source": "feature_packet",
+                        "path": "feature_logs/qqq_event_features.jsonl",
+                        "field": "event_risk_score",
+                        "default": 0.0,
+                        "description": "Point-in-time event risk score from saved packets.",
+                    },
+                    "trend_gap": {
+                        "source": "expression",
+                        "expression": "close - ema(close, 5)",
+                    },
+                },
+                "entry": {
+                    "all": [
+                        "event_risk > 0.5",
+                        "trend_gap > 0",
+                        "volume > sma(volume, 3)",
+                    ]
+                },
+                "exit": {"any": ["event_risk < 0.2", "close < ema(close, 5)"]},
+                "risk": {
+                    "max_trades_per_day": 2,
+                    "max_position_weight": 0.1,
+                    "stop_loss_pct": 1.0,
+                    "take_profit_pct": 2.0,
+                },
+                "execution": {
+                    "mode": "manual_signal",
+                    "signal_on": "bar_close",
+                    "fill_assumption": "next_bar_open",
+                    "broker": "none",
+                },
+                "data": {
+                    "source": "sample",
+                    "symbol": "QQQ",
+                    "path": "data/sample/qqq_15m.csv",
+                },
+                "llm_review": {"enabled": False},
+                "required_capabilities": ["market.sample_ohlcv", "news.alpha_vantage"],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    spec = load_strategy_spec(spec_path)
+    report = assess_strategy_capabilities(spec_path)
+    plan = build_nautilus_backtest_plan(
+        spec_path,
+        sample_workspace,
+        run_id_value="run_event_feature",
+    )
+    plan_path = sample_workspace / "reports" / "runs" / "nautilus" / "run_event_feature.json"
+    plan_path.parent.mkdir(parents=True, exist_ok=True)
+    plan_path.write_text(plan.model_dump_json(indent=2), encoding="utf-8")
+    report_path = sample_workspace / "reports" / "backtests" / "run_event_feature.md"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(
+        "\n".join(
+            [
+                "# Backtest Report: qqq_event_feature_15m",
+                "",
+                "- Run ID: `run_event_feature`",
+                "- Strategy ID: `qqq_event_feature_15m`",
+                "- Strategy backend: `nautilus_trader`",
+                "- Execution backend: `nautilus_backtest`",
+                f"- Backend plan path: `{plan_path}`",
+                "- Symbol: `QQQ`",
+                "- Timeframe: `15m`",
+                "- Bars: 1",
+                "- Signals: 0",
+                "- Closed trades: 0",
+                "- Start equity: 100000.00",
+                "- End equity: 100000.00",
+                "- Total return: 0.00%",
+                "- Annualized return: n/a",
+                "- Sharpe ratio: n/a",
+                "- Total fees: 0.00",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    backtest = run_backtest(spec_path, root=sample_workspace)
+    catalog = build_dashboard_catalog(sample_workspace)
+    binding = plan.custom_data_bindings[0]
+    dashboard_run = next(run for run in catalog.runs if run.run_id == "run_event_feature")
+
+    assert spec.factors["event_risk"].source == "feature_packet"
+    assert binding.factor_name == "event_risk"
+    assert binding.exists is True
+    assert binding.record_count == 1
+    assert binding.point_in_time_status == "complete"
+    assert binding.replay_warnings == []
+    assert binding.first_timestamp == "2026-01-01T00:00:00+00:00"
+    assert binding.last_timestamp == "2026-01-01T00:00:00+00:00"
+    assert dashboard_run.custom_data_bindings[0].factor_name == "event_risk"
+    assert dashboard_run.custom_data_bindings[0].point_in_time_status == "complete"
+    assert report.finding("python_mvp_backtest").status == "partial"
+    assert any(
+        "feature_packet factors" in reason
+        for reason in report.finding("python_mvp_backtest").reasons
+    )
+    assert report.finding("nautilus_trader_backend").status == "partial"
+    assert report.backend_plan.feature_packet_factor_names == ["event_risk"]
+    assert report.finding("tradingview_pine_strategy").status == "partial"
+    assert any(
+        "feature_packet factors" in reason
+        for reason in report.finding("tradingview_pine_strategy").reasons
+    )
+    assert backtest.signals
+    strategy = next(
+        item for item in catalog.strategies if item.strategy_name == "qqq_event_feature_15m"
+    )
+    assert "event_risk" in strategy.factor_names
+    assert strategy.llm_feature_factor_names == []
+
+
+def test_nautilus_backtest_replays_feature_packets_as_custom_data(
+    sample_workspace: Path,
+) -> None:
+    feature_path = sample_workspace / "feature_logs" / "qqq_event_features.jsonl"
+    feature_path.write_text(
+        (
+            '{"timestamp":"2026-01-01T00:00:00Z","published_at":"2026-01-01T00:00:00Z",'
+            '"fetched_at":"2026-01-01T00:01:00Z","source":"alpha_vantage",'
+            '"symbol":"QQQ","dedupe_key":"news:qqq:1","schema_version":"1",'
+            '"features":{"event_risk_score":0.8}}\n'
+        ),
+        encoding="utf-8",
+    )
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_nautilus_event_15m.yaml"
+    spec_path.write_text(
+        yaml.safe_dump(
+            {
+                "name": "qqq_nautilus_event_15m",
+                "description": "QQQ Nautilus strategy gated by replayed event feature packets.",
+                "timeframe": "15m",
+                "universe": ["QQQ"],
+                "lifecycle": "draft",
+                "factors": {
+                    "event_risk": {
+                        "source": "feature_packet",
+                        "path": "feature_logs/qqq_event_features.jsonl",
+                        "field": "event_risk_score",
+                        "default": 0.0,
+                        "description": "Point-in-time event risk score from saved packets.",
+                    }
+                },
+                "entry": {"all": ["event_risk > 0.5", "close > ema(close, 5)"]},
+                "exit": {"any": ["event_risk < 0.2", "close < ema(close, 5)"]},
+                "risk": {
+                    "max_trades_per_day": 2,
+                    "max_position_weight": 0.1,
+                    "stop_loss_pct": 1.0,
+                    "take_profit_pct": 2.0,
+                },
+                "execution": {
+                    "backend": "nautilus_trader",
+                    "mode": "manual_signal",
+                    "signal_on": "bar_close",
+                    "fill_assumption": "next_bar_open",
+                    "broker": "none",
+                },
+                "data": {
+                    "source": "sample",
+                    "symbol": "QQQ",
+                    "path": "data/sample/qqq_15m.csv",
+                },
+                "llm_review": {"enabled": False},
+                "required_capabilities": ["market.sample_ohlcv", "news.alpha_vantage"],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+
+    artifacts = run_backtest(spec_path, root=sample_workspace)
+
+    assert artifacts.run.execution_backend == "nautilus_backtest"
+    assert artifacts.signals
+    assert any("custom data events" in assumption for assumption in artifacts.run.assumptions)

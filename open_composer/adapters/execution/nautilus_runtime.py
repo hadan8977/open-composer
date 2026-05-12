@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from nautilus_trader.backtest.config import (
@@ -19,10 +20,12 @@ from nautilus_trader.backtest.node import BacktestNode
 from nautilus_trader.common.config import LoggingConfig
 from nautilus_trader.config import ImportableStrategyConfig, StrategyConfig
 from nautilus_trader.core.correctness import PyCondition
-from nautilus_trader.model.data import Bar, BarSpecification, BarType
+from nautilus_trader.core.data import Data
+from nautilus_trader.model.custom import customdataclass
+from nautilus_trader.model.data import Bar, BarSpecification, BarType, DataType
 from nautilus_trader.model.enums import BarAggregation, OrderSide, PriceType
 from nautilus_trader.model.events.order import OrderFilled
-from nautilus_trader.model.identifiers import InstrumentId, Symbol, Venue
+from nautilus_trader.model.identifiers import ClientId, InstrumentId, Symbol, Venue
 from nautilus_trader.model.instruments.equity import Equity
 from nautilus_trader.model.objects import Currency, Price, Quantity
 from nautilus_trader.persistence.catalog.parquet import ParquetDataCatalog
@@ -35,6 +38,8 @@ from open_composer.expressions import evaluate_rule_block
 from open_composer.models.backtest import BacktestRun, Trade
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec
+
+OPEN_COMPOSER_DATA_CLIENT_ID = ClientId("OPEN_COMPOSER")
 
 
 @dataclass
@@ -149,6 +154,19 @@ class NautilusBacktestArtifacts:
     trades: list[Trade]
 
 
+class OpenComposerFeatureData(Data):
+    __annotations__ = {
+        "instrument_id": InstrumentId,
+        "factor_name": str,
+        "source": str,
+        "field": str,
+        "value": float,
+    }
+
+
+OpenComposerFeatureData = customdataclass(OpenComposerFeatureData)
+
+
 class OpenComposerNautilusStrategyConfig(StrategyConfig, frozen=True):
     instrument_id: InstrumentId
     bar_type: BarType
@@ -168,6 +186,11 @@ class OpenComposerNautilusStrategy(Strategy):
         self._instrument = None
         self._history: list[dict[str, Any]] = []
         self._position_open = False
+        self._custom_feature_values = {
+            name: getattr(factor, "default", 0.0)
+            for name, factor in self.spec.factors.items()
+            if factor.source in {"llm_feature", "feature_packet"}
+        }
 
     def on_start(self) -> None:
         self._instrument = self.cache.instrument(self.config.instrument_id)
@@ -176,6 +199,16 @@ class OpenComposerNautilusStrategy(Strategy):
             self.stop()
             return
         self.subscribe_bars(self.config.bar_type)
+        if self._custom_feature_values:
+            self.subscribe_data(
+                DataType(OpenComposerFeatureData),
+                client_id=OPEN_COMPOSER_DATA_CLIENT_ID,
+                instrument_id=self.config.instrument_id,
+            )
+
+    def on_data(self, data: Any) -> None:  # noqa: ANN401
+        if isinstance(data, OpenComposerFeatureData):
+            self._custom_feature_values[data.factor_name] = data.value
 
     def on_bar(self, bar: Bar) -> None:
         if bar.is_single_price():
@@ -189,6 +222,7 @@ class OpenComposerNautilusStrategy(Strategy):
             "close": bar.close.as_double(),
             "volume": bar.volume.as_double(),
         }
+        row.update(self._custom_feature_values)
         self._history.append(row)
         frame = pd.DataFrame.from_records(self._history)
         timestamp = datetime.fromtimestamp(bar.ts_event / 1_000_000_000, tz=UTC)
@@ -333,8 +367,11 @@ def run_nautilus_backtest(
         catalog_root.mkdir(parents=True, exist_ok=True)
         catalog = ParquetDataCatalog.from_uri(str(catalog_root.resolve()))
         bars = _build_bars(frame, bar_type, instrument)
+        feature_data = _build_feature_data(spec, root, instrument.id)
         catalog.write_data([instrument])
         catalog.write_data(bars)
+        if feature_data:
+            catalog.write_data(feature_data)
 
         strategy_config = ImportableStrategyConfig(
             strategy_path="open_composer.adapters.execution.nautilus_runtime:OpenComposerNautilusStrategy",
@@ -365,16 +402,29 @@ def run_nautilus_backtest(
             strategies=[strategy_config],
             logging=LoggingConfig(log_level="ERROR", log_colors=False, print_config=False),
         )
-        run_config = BacktestRunConfig(
-            venues=[venue],
-            data=[
+        data_configs = [
+            BacktestDataConfig(
+                catalog_path=str(catalog_root.resolve()),
+                data_cls="nautilus_trader.model.data:Bar",
+                instrument_ids=[instrument.id.value],
+                bar_types=[str(bar_type)],
+            )
+        ]
+        if feature_data:
+            data_configs.append(
                 BacktestDataConfig(
                     catalog_path=str(catalog_root.resolve()),
-                    data_cls="nautilus_trader.model.data:Bar",
-                    instrument_ids=[instrument.id.value],
-                    bar_types=[str(bar_type)],
+                    data_cls=(
+                        "open_composer.adapters.execution.nautilus_runtime:OpenComposerFeatureData"
+                    ),
+                    instrument_id=instrument.id,
+                    client_id=OPEN_COMPOSER_DATA_CLIENT_ID.value,
                 )
-            ],
+            )
+
+        run_config = BacktestRunConfig(
+            venues=[venue],
+            data=data_configs,
             engine=engine,
             raise_exception=True,
             dispose_on_completion=True,
@@ -411,6 +461,10 @@ def run_nautilus_backtest(
             assumptions.insert(
                 0,
                 f"Data provenance: {provider_label} {data_provenance.replace('_', ' ')}.",
+            )
+        if feature_data:
+            assumptions.append(
+                "Feature packet factors were replayed as NautilusTrader custom data events."
             )
         run = BacktestRun(
             run_id=run_id_value,
@@ -453,6 +507,78 @@ def _build_bars(frame: pd.DataFrame, bar_type: BarType, instrument: Equity) -> l
         normalized.set_index("timestamp", drop=True)
     )
     return list(wrangled)
+
+
+def _build_feature_data(
+    spec: StrategySpec,
+    root: Path,
+    instrument_id: InstrumentId,
+) -> list[OpenComposerFeatureData]:
+    rows: list[OpenComposerFeatureData] = []
+    for factor_name, factor in spec.factors.items():
+        if factor.source not in {"llm_feature", "feature_packet"}:
+            continue
+        if not factor.path or not factor.field:
+            continue
+        path = Path(factor.path)
+        if not path.is_absolute():
+            path = root / path
+        if not path.exists():
+            continue
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                raw = json.loads(line)
+                if not isinstance(raw, dict):
+                    continue
+                value = _feature_packet_value(raw, factor.field)
+                if value is None or "timestamp" not in raw:
+                    continue
+                numeric_value = _numeric_feature_value(value)
+                if numeric_value is None:
+                    continue
+                timestamp = pd.Timestamp(raw["timestamp"])
+                ts_event = _timestamp_nanos(timestamp)
+                fetched_at = raw.get("fetched_at") or raw.get("published_at") or raw["timestamp"]
+                ts_init = _timestamp_nanos(pd.Timestamp(cast(str, fetched_at)))
+                rows.append(
+                    OpenComposerFeatureData(
+                        instrument_id=instrument_id,
+                        factor_name=factor_name,
+                        source=factor.source,
+                        field=factor.field,
+                        value=numeric_value,
+                        ts_event=ts_event,
+                        ts_init=ts_init,
+                    )
+                )
+    return sorted(rows, key=lambda item: (item.ts_event, item.factor_name))
+
+
+def _feature_packet_value(raw: dict[str, Any], field: str) -> Any:
+    if field in raw:
+        return raw[field]
+    features = raw.get("features")
+    if isinstance(features, dict) and field in features:
+        return features[field]
+    return None
+
+
+def _numeric_feature_value(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return 1.0 if value else 0.0
+    if isinstance(value, int | float):
+        return float(value)
+    return None
+
+
+def _timestamp_nanos(timestamp: pd.Timestamp) -> int:
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.tz_localize("UTC")
+    else:
+        timestamp = timestamp.tz_convert("UTC")
+    return int(timestamp.value)
 
 
 def _build_bar_type(spec: StrategySpec) -> BarType:

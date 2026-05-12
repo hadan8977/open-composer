@@ -6,8 +6,10 @@ import { Library } from "./components/library";
 import { Versions, Paper, Events, LLM, Groups, Audit } from "./components/sections";
 import { StrategyDetail } from "./components/strategy-detail";
 import { StatusFooter } from "./components/footer";
+import { useDashboardCatalogSync } from "./components/runtime";
 
 export default function App() {
+  useDashboardCatalogSync();
   const [tab, setTab] = useState<NavKey>("overview");
   const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(null);
 

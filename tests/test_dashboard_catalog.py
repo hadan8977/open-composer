@@ -13,6 +13,10 @@ from open_composer.engines.backtest_engine import run_backtest
 from open_composer.journal.writer import add_journal_entry
 from open_composer.models.paper import PaperOrderRecord
 from open_composer.models.review_card import ReviewCard
+from open_composer.paper_readiness import (
+    assess_paper_strategy_readiness,
+    write_paper_readiness_report,
+)
 from open_composer.storage import append_jsonl, write_json
 
 
@@ -115,6 +119,73 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
         ),
         encoding="utf-8",
     )
+    readiness = assess_paper_strategy_readiness(spec_path, sample_workspace)
+    write_paper_readiness_report(readiness, sample_workspace)
+    workflow_json = sample_workspace / "reports" / "workflows" / "qqq_pullback_15m.verify.json"
+    workflow_md = workflow_json.with_suffix(".md")
+    write_json(
+        workflow_json,
+        {
+            "strategy_name": "qqq_pullback_15m",
+            "source_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "spec_hash": "abc123",
+            "status": "warning",
+            "backtest_run_id": backtest.run.run_id,
+            "scan_signal_count": 2,
+            "paper_readiness_status": "blocked",
+            "paper_ready": False,
+            "output_paths": [
+                "reports/specs/qqq_pullback_15m.validation.json",
+                f"reports/backtests/{backtest.run.run_id}.md",
+            ],
+        },
+    )
+    workflow_md.write_text("# workflow verification\n", encoding="utf-8")
+    write_json(
+        sample_workspace / "reports" / "readiness" / "readiness.json",
+        {
+            "generated_at": "2026-05-12T10:00:00Z",
+            "source_root": str(sample_workspace),
+            "status": "warning",
+            "ready": True,
+            "checks": [
+                {
+                    "name": "strategy_capabilities",
+                    "status": "warning",
+                    "message": "Some strategies have degraded backend capability.",
+                    "suggested_actions": [
+                        "uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml"
+                    ],
+                    "details": {"backend_status_counts": {"partial": 1}},
+                }
+            ],
+        },
+    )
+    (sample_workspace / "reports" / "readiness" / "readiness.md").write_text(
+        "# readiness\n", encoding="utf-8"
+    )
+    write_json(
+        sample_workspace / "reports" / "deployment" / "prepare.json",
+        {
+            "generated_at": "2026-05-12T10:01:00Z",
+            "source_root": str(sample_workspace),
+            "status": "warning",
+            "ready": True,
+            "steps": [
+                {
+                    "name": "paper_monitor",
+                    "status": "warning",
+                    "message": "Paper monitor refreshed.",
+                    "suggested_actions": ["uv run oc paper monitor --sync-broker"],
+                    "output_paths": ["reports/paper/monitor.md"],
+                    "details": {"sync_status": "skipped"},
+                }
+            ],
+        },
+    )
+    (sample_workspace / "reports" / "deployment" / "prepare.md").write_text(
+        "# deployment\n", encoding="utf-8"
+    )
 
     catalog = build_dashboard_catalog(sample_workspace)
     artifacts = write_dashboard_catalog(catalog, sample_workspace)
@@ -136,6 +207,39 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.summary.audit_count == 2
     assert catalog.summary.data_comparison_count == 1
     assert catalog.summary.feature_packet_count == 1
+    assert catalog.summary.workflow_report_count == 1
+    assert catalog.summary.readiness_status == "warning"
+    assert catalog.summary.readiness_ready is True
+    assert catalog.summary.readiness_warning_count == 1
+    assert catalog.summary.deployment_status == "warning"
+    assert catalog.summary.deployment_ready is True
+    assert catalog.summary.deployment_warning_count == 1
+    assert catalog.readiness_report is not None
+    assert catalog.readiness_report.path == "reports/readiness/readiness.json"
+    assert catalog.readiness_report.checks[0].suggested_actions == [
+        "uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml"
+    ]
+    assert catalog.deployment_report is not None
+    assert catalog.deployment_report.path == "reports/deployment/prepare.json"
+    assert catalog.deployment_report.steps[0].output_paths == ["reports/paper/monitor.md"]
+    assert catalog.workflow_reports[0].strategy_name == "qqq_pullback_15m"
+    assert catalog.workflow_reports[0].status == "warning"
+    assert catalog.workflow_reports[0].backtest_run_id == backtest.run.run_id
+    assert catalog.workflow_reports[0].paper_readiness_status == "blocked"
+    assert catalog.workflow_reports[0].path == "reports/workflows/qqq_pullback_15m.verify.json"
+    assert catalog.workflow_reports[0].report_markdown_path == (
+        "reports/workflows/qqq_pullback_15m.verify.md"
+    )
+    assert catalog.summary.paper_readiness_count == 1
+    assert catalog.summary.paper_readiness_status_counts == {"blocked": 1}
+    assert catalog.paper_readiness_reports[0].strategy_name == "qqq_pullback_15m"
+    assert catalog.paper_readiness_reports[0].status == "blocked"
+    assert "lifecycle" in catalog.paper_readiness_reports[0].blocking_checks
+    assert catalog.paper_readiness_reports[0].checks[0].suggested_actions
+    assert catalog.feature_packets[0].point_in_time_status == "partial"
+    assert (
+        "published_at is missing for at least one row" in catalog.feature_packets[0].replay_warnings
+    )
     assert catalog.summary.strategy_backend_counts == {"python_reference": 1}
     assert catalog.summary.backend_status_counts == {"partial": 1}
     assert catalog.strategies[0].symbol == "QQQ"
@@ -167,12 +271,16 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert "alpaca / longbridge" in html
     assert "LLM Feature Replay" in html
     assert "qqq_llm_features.jsonl" in html
+    assert "Deployment Readiness" in html
+    assert "uv run oc paper monitor --sync-broker" in html
+    assert "uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml" in html
     detail_path = (
         sample_workspace / "reports" / "dashboard" / "strategies" / "qqq_pullback_15m.html"
     )
     assert detail_path.exists()
     detail_html = detail_path.read_text(encoding="utf-8")
     assert "Strategy Profile" in detail_html
+    assert "Backend plan" in detail_html
     assert backtest.run.run_id in detail_html
     assert signal.id in detail_html
     assert review_path == sample_workspace / "docs" / "dashboard-d0-review.zh.md"

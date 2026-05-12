@@ -3,13 +3,15 @@
  * A tight, horizontal hairline-bound bar showing system state and
  * machine-readable build metadata. Sits at the bottom of every screen.
  */
+import { dashboardSummary } from "./data";
+
 export function StatusFooter() {
   const items: Array<{ label: string; value: string; color?: string }> = [
-    { label: "Build",   value: "v0.1.0-alpha · a8c1f9" },
-    { label: "Engine",  value: "Python 3.12 · ready" },
-    { label: "Broker",  value: "Alpaca paper · OK", color: "#1FB85A" },
-    { label: "Sync",    value: "12s ago" },
-    { label: "Tz",      value: "America/New_York" },
+    { label: "Read model", value: `v${dashboardSummary.readModelVersion}` },
+    { label: "Strategies", value: String(dashboardSummary.strategyCount) },
+    { label: "Paper", value: dashboardSummary.paperKillSwitchEnabled ? "kill switch" : dashboardSummary.paperAlertStatus, color: dashboardSummary.paperKillSwitchEnabled ? "#FF2D7A" : "#1FB85A" },
+    { label: "Generated", value: dashboardSummary.generatedLabel },
+    { label: "Source", value: dashboardSummary.sourceRoot || "not generated" },
   ];
   return (
     <footer
@@ -22,7 +24,7 @@ export function StatusFooter() {
           className="block-green inline-block"
           style={{ width: 7, height: 7, borderRadius: 2 }}
         />
-        <span className="t-caption ink-muted">SYSTEM · GREEN</span>
+        <span className="t-caption ink-muted">SYSTEM · READ ONLY</span>
       </div>
       <div className="hairline-l h-3" />
       {items.map((it, i) => (

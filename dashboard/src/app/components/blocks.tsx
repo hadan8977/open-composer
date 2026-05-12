@@ -203,7 +203,7 @@ export function KPI({
             fontWeight: 800,
             fontSize: "clamp(22px, 2.4vw, 32px)",
             lineHeight: 1.04,
-            letterSpacing: "-0.035em",
+            letterSpacing: 0,
           }}
         >{value}</div>
         {delta && (
@@ -256,7 +256,7 @@ export function KPI({
       />
       <div
         className="t-caption"
-        style={{ color: "rgba(42,51,66,.58)", letterSpacing: "0.06em" }}
+        style={{ color: "rgba(42,51,66,.58)", letterSpacing: 0 }}
       >
         {label}
       </div>
@@ -268,7 +268,7 @@ export function KPI({
           fontWeight: 800,
           fontSize: "clamp(22px, 2.4vw, 32px)",
           lineHeight: 1.04,
-          letterSpacing: "-0.035em",
+          letterSpacing: 0,
         }}
       >{value}</div>
       {delta && (

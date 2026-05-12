@@ -29,7 +29,6 @@ from open_composer.config import (
     alpaca_api_base_url,
     data_feed,
     default_openai_model,
-    ensure_dir,
     openai_base_url,
     openai_base_url_source,
     optional_env_status,
@@ -37,13 +36,35 @@ from open_composer.config import (
 )
 from open_composer.context import build_signal_context
 from open_composer.dashboard import (
+    DashboardCommandError,
+    DashboardServerError,
     build_dashboard_catalog,
+    build_dashboard_command_plan,
+    build_feature_packet_records,
+    execute_dashboard_command_plan,
+    load_dashboard_command_plan,
+    serve_dashboard,
     write_dashboard_catalog,
+    write_dashboard_command_plan,
     write_dashboard_html,
     write_dashboard_review_markdown,
 )
+from open_composer.deployment import (
+    ensure_runtime_dirs,
+    prepare_workspace,
+    write_feature_validation_report,
+)
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
+from open_composer.feature_packets import (
+    FeaturePacketError,
+    build_context_feature_packet,
+    build_manual_feature_packet,
+    default_context_feature_path,
+    parse_datetime,
+    parse_feature_pairs,
+    write_feature_packet,
+)
 from open_composer.journal.writer import add_journal_entry
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.paper_controls import (
@@ -56,6 +77,11 @@ from open_composer.paper_controls import (
     run_paper_monitor_loop,
     write_paper_status,
 )
+from open_composer.paper_readiness import (
+    assess_paper_strategy_readiness,
+    write_paper_readiness_report,
+)
+from open_composer.readiness import build_readiness_report, write_readiness_report
 from open_composer.research import (
     draft_strategy_from_idea,
     optimize_option_overlays,
@@ -97,6 +123,8 @@ context_app = typer.Typer(no_args_is_help=True)
 strategy_app = typer.Typer(no_args_is_help=True)
 run_app = typer.Typer(no_args_is_help=True)
 options_app = typer.Typer(no_args_is_help=True)
+feature_app = typer.Typer(no_args_is_help=True)
+deploy_app = typer.Typer(no_args_is_help=True)
 dashboard_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
@@ -112,6 +140,8 @@ app.add_typer(context_app, name="context")
 app.add_typer(strategy_app, name="strategy")
 app.add_typer(run_app, name="run")
 app.add_typer(options_app, name="options")
+app.add_typer(feature_app, name="feature")
+app.add_typer(deploy_app, name="deploy")
 app.add_typer(dashboard_app, name="dashboard")
 
 
@@ -159,6 +189,11 @@ def doctor() -> None:
     table.add_row("ALPACA_API_BASE_URL", alpaca_api_base_url(), "paper trading endpoint")
     table.add_row("ALPACA_DATA_FEED", data_feed(), "default feed")
     table.add_row(
+        "OPEN_COMPOSER_DASHBOARD_TOKEN",
+        optional_env_status("OPEN_COMPOSER_DASHBOARD_TOKEN"),
+        "optional token for dashboard API",
+    )
+    table.add_row(
         "ALPHA_VANTAGE_API_KEY", optional_env_status("ALPHA_VANTAGE_API_KEY"), "optional news"
     )
     table.add_row("FRED_API_KEY", optional_env_status("FRED_API_KEY"), "optional macro")
@@ -171,6 +206,195 @@ def doctor() -> None:
         "optional for Longbridge",
     )
     console.print(table)
+
+
+@app.command("readiness")
+def readiness_command(
+    strict: Annotated[
+        bool,
+        typer.Option("--strict", help="Exit with code 1 when readiness is blocked."),
+    ] = False,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Path for readiness JSON report."),
+    ] = None,
+) -> None:
+    """Write and print a deployment readiness report."""
+    root = project_root()
+    report = build_readiness_report(root)
+    json_path, md_path = write_readiness_report(report, root, output)
+    table = Table(title="Open Composer Readiness")
+    table.add_column("Check")
+    table.add_column("Status")
+    table.add_column("Message")
+    table.add_column("Next action")
+    for check in report.checks:
+        table.add_row(
+            check.name,
+            check.status,
+            check.message,
+            check.suggested_actions[0] if check.suggested_actions else "",
+        )
+    console.print(table)
+    console.print(f"status={report.status} ready={'yes' if report.ready else 'no'}")
+    console.print(f"json={json_path}")
+    console.print(f"markdown={md_path}")
+    if strict and report.status == "blocked":
+        raise typer.Exit(1)
+
+
+@deploy_app.command("prepare")
+def deploy_prepare_command(
+    sync_broker: Annotated[
+        bool,
+        typer.Option("--sync-broker", help="Pull broker snapshots before refresh."),
+    ] = False,
+    strict: Annotated[
+        bool,
+        typer.Option("--strict", help="Exit with code 1 when deployment prepare is blocked."),
+    ] = False,
+) -> None:
+    """Rebuild the local deployment surface for a smooth workspace startup."""
+    root = project_root()
+    report = prepare_workspace(root, sync_broker=sync_broker)
+    table = Table(title="Open Composer Deployment Prepare")
+    table.add_column("Step")
+    table.add_column("Status")
+    table.add_column("Message")
+    table.add_column("Next action")
+    for step in report.steps:
+        table.add_row(
+            step.name,
+            step.status,
+            step.message,
+            step.suggested_actions[0] if step.suggested_actions else "",
+        )
+    console.print(table)
+    console.print(f"status={report.status} ready={'yes' if report.ready else 'no'}")
+    console.print(f"json={report.report_json_path}")
+    console.print(f"markdown={report.report_markdown_path}")
+    if strict and report.status == "blocked":
+        raise typer.Exit(1)
+
+
+@feature_app.command("validate")
+def feature_validate_command(
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Path for the feature validation report."),
+    ] = None,
+) -> None:
+    """Validate feature packet logs and write a point-in-time report."""
+    root = project_root()
+    packets = build_feature_packet_records(root)
+    report_path = output or root / "reports" / "features" / "validation.json"
+    report_path, md_path = write_feature_validation_report(
+        root,
+        packets=packets,
+        output_path=report_path,
+    )
+    table = Table(title="Feature Packet Validation")
+    table.add_column("Packet")
+    table.add_column("Status")
+    table.add_column("Records")
+    table.add_column("Warnings")
+    for packet in packets:
+        table.add_row(
+            packet.path,
+            packet.point_in_time_status,
+            str(packet.record_count),
+            "; ".join(packet.replay_warnings) or "none",
+        )
+    table.add_row("Report", "written", str(report_path), str(md_path))
+    console.print(table)
+
+
+@feature_app.command("write")
+def feature_write_command(
+    symbol: Annotated[str, typer.Option("--symbol", help="Feature packet symbol.")],
+    timestamp: Annotated[str, typer.Option("--timestamp", help="Packet timestamp.")],
+    features: Annotated[
+        list[str] | None,
+        typer.Option("--feature", "-f", help="Feature value as key=value; repeatable."),
+    ] = None,
+    output: Annotated[
+        Path,
+        typer.Option("--output", help="JSONL feature packet output path."),
+    ] = Path("feature_logs/manual_features.jsonl"),
+    source: Annotated[str, typer.Option("--source", help="Feature source label.")] = "manual",
+    published_at: Annotated[
+        str | None,
+        typer.Option("--published-at", help="Point-in-time publication timestamp."),
+    ] = None,
+    fetched_at: Annotated[
+        str | None,
+        typer.Option("--fetched-at", help="Fetch timestamp."),
+    ] = None,
+    dedupe_key: Annotated[
+        str | None,
+        typer.Option("--dedupe-key", help="Stable feature packet dedupe key."),
+    ] = None,
+    schema_version: Annotated[
+        str,
+        typer.Option("--schema-version", help="Feature packet schema version."),
+    ] = "1",
+    model: Annotated[
+        str | None,
+        typer.Option("--model", help="Model identifier for LLM-produced features."),
+    ] = None,
+    summary: Annotated[str, typer.Option("--summary", help="Optional packet summary.")] = "",
+    sentiment: Annotated[
+        str,
+        typer.Option("--sentiment", help="positive, neutral, negative, or unknown."),
+    ] = "unknown",
+) -> None:
+    """Append a canonical point-in-time feature packet row."""
+    if sentiment not in {"positive", "neutral", "negative", "unknown"}:
+        raise typer.BadParameter("--sentiment must be positive, neutral, negative, or unknown")
+    try:
+        feature_map = parse_feature_pairs(features or [])
+        if not feature_map:
+            raise FeaturePacketError("pass at least one --feature key=value option")
+        packet = build_manual_feature_packet(
+            symbol=symbol,
+            timestamp=parse_datetime(timestamp),
+            source=source,
+            features=feature_map,
+            published_at=parse_datetime(published_at) if published_at else None,
+            fetched_at=parse_datetime(fetched_at) if fetched_at else None,
+            dedupe_key=dedupe_key,
+            schema_version=schema_version,
+            model=model,
+            summary=summary,
+            sentiment=sentiment,  # type: ignore[arg-type]
+        )
+    except FeaturePacketError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    root = project_root()
+    path = _resolve_output_path(root, output)
+    write_feature_packet(path, packet)
+    console.print(f"[green]feature packet written[/green] {path} features={len(packet.features)}")
+
+
+@feature_app.command("from-context")
+def feature_from_context_command(
+    signal_id: str,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="JSONL feature packet output path."),
+    ] = None,
+) -> None:
+    """Convert a signal context packet into replayable feature values."""
+    root = project_root()
+    try:
+        packet = build_context_feature_packet(signal_id, root)
+    except (FeaturePacketError, FileNotFoundError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    path = _resolve_output_path(root, output or default_context_feature_path(root, signal_id))
+    write_feature_packet(path, packet)
+    console.print(
+        f"[green]context feature packet written[/green] {path} features={len(packet.features)}"
+    )
 
 
 @dashboard_app.command("catalog")
@@ -203,6 +427,8 @@ def dashboard_catalog_command(
     table.add_row("Paper orders", str(catalog.summary.order_count))
     table.add_row("Audit events", str(catalog.summary.audit_count))
     table.add_row("Data comparisons", str(catalog.summary.data_comparison_count))
+    table.add_row("Readiness", catalog.summary.readiness_status)
+    table.add_row("Deployment", catalog.summary.deployment_status)
     table.add_row("Read model", str(artifacts.catalog_path))
     table.add_row("Summary markdown", str(artifacts.markdown_path))
     console.print(table)
@@ -237,6 +463,133 @@ def dashboard_html_command(
     write_dashboard_catalog(catalog, root)
     path = write_dashboard_html(catalog, root, output_path)
     console.print(f"[green]dashboard html written[/green] {path}")
+
+
+@dashboard_app.command("serve")
+def dashboard_serve_command(
+    host: Annotated[
+        str,
+        typer.Option("--host", help="Host interface for the local dashboard server."),
+    ] = "127.0.0.1",
+    port: Annotated[
+        int,
+        typer.Option("--port", help="Port for the local dashboard server."),
+    ] = 8000,
+    api_token: Annotated[
+        str | None,
+        typer.Option(
+            "--api-token",
+            help=(
+                "Optional Dashboard API token. Defaults to OPEN_COMPOSER_DASHBOARD_TOKEN when set."
+            ),
+        ),
+    ] = None,
+) -> None:
+    """Serve the built React dashboard or the static read-only HTML locally."""
+    try:
+        serve_dashboard(project_root(), host=host, port=port, api_token=api_token)
+    except DashboardServerError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+@dashboard_app.command("command-plan")
+def dashboard_command_plan_command(
+    action: str,
+    reason: Annotated[
+        str,
+        typer.Option("--reason", help="Reason recorded with the command plan."),
+    ] = "",
+    requested_by: Annotated[
+        str,
+        typer.Option("--requested-by", help="Actor recorded on the command plan."),
+    ] = "dashboard",
+    strategy_path: Annotated[
+        str | None,
+        typer.Option("--strategy-path", help="Strategy YAML path or name for lifecycle commands."),
+    ] = None,
+    data_source: Annotated[
+        str,
+        typer.Option("--data-source", help="Data source used when activating a strategy."),
+    ] = "keep",
+    idea: Annotated[
+        str,
+        typer.Option("--idea", help="Natural-language idea for strategy.draft."),
+    ] = "",
+    use_llm: Annotated[
+        bool,
+        typer.Option("--use-llm", help="Allow LLM drafting for strategy.draft."),
+    ] = False,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Path for the command plan JSON."),
+    ] = None,
+) -> None:
+    """Create a local Dashboard command plan without executing it."""
+    allowed = {
+        "paper.status.refresh",
+        "paper.monitor.refresh",
+        "paper.sync.orders",
+        "paper.sync.account",
+        "paper.kill_switch.enable",
+        "paper.kill_switch.clear",
+        "system.prepare_workspace",
+        "system.readiness.refresh",
+        "strategy.draft",
+        "strategy.workflow.verify",
+        "strategy.validate",
+        "strategy.capabilities.refresh",
+        "strategy.approve",
+        "strategy.activate.manual",
+        "strategy.activate.paper_auto",
+        "strategy.backtest.rerun",
+        "strategy.scan.rerun",
+        "strategy.disable",
+    }
+    if action not in allowed:
+        raise typer.BadParameter(f"action must be one of: {', '.join(sorted(allowed))}")
+    root = project_root()
+    plan = build_dashboard_command_plan(
+        action,  # type: ignore[arg-type]
+        root,
+        reason=reason,
+        requested_by=requested_by,
+        strategy_path=strategy_path,
+        data_source=data_source,
+        idea=idea,
+        use_llm=use_llm,
+    )
+    path = write_dashboard_command_plan(plan, root, output)
+    console.print(f"[green]dashboard command plan written[/green] {path}")
+    console.print(f"confirmation_phrase={plan.confirmation_phrase!r}")
+    console.print("cli=" + " ".join(plan.cli_args))
+
+
+@dashboard_app.command("command-run")
+def dashboard_command_run_command(
+    plan: Path,
+    confirm: Annotated[
+        str,
+        typer.Option("--confirm", help="Exact confirmation phrase from the command plan."),
+    ],
+    executed_by: Annotated[
+        str,
+        typer.Option("--executed-by", help="Actor recorded on the command result."),
+    ] = "dashboard",
+) -> None:
+    """Execute a paper-only Dashboard command plan after explicit confirmation."""
+    root = project_root()
+    command_plan = load_dashboard_command_plan(plan)
+    try:
+        result = execute_dashboard_command_plan(
+            command_plan,
+            root,
+            confirmation=confirm,
+            executed_by=executed_by,
+        )
+    except DashboardCommandError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]dashboard command executed[/green] {result.result_path}")
+    console.print(result.message)
 
 
 @capability_app.command("list")
@@ -355,6 +708,10 @@ def spec_backend_plan(
     table.add_row("Timeframe", plan.timeframe)
     table.add_row("Factors", ", ".join(plan.factor_names) or "none")
     table.add_row("LLM feature factors", ", ".join(plan.llm_feature_factor_names) or "none")
+    table.add_row(
+        "Feature packet factors",
+        ", ".join(plan.feature_packet_factor_names) or "none",
+    )
     table.add_row("Required capabilities", ", ".join(plan.required_capabilities) or "none")
     table.add_row("Reasons", "\n".join(plan.reasons))
     console.print(table)
@@ -731,18 +1088,23 @@ def strategy_activate(
     paper_auto: bool = typer.Option(False, "--paper-auto"),
     allow_paper_auto: bool = typer.Option(False, "--allow-paper-auto"),
     data_source: str = typer.Option("keep", "--data-source"),
+    enforce_paper_readiness: bool = typer.Option(False, "--enforce-paper-readiness"),
 ) -> None:
     """Activate a StrategySpec for manual signals or Alpaca Paper automation."""
     if data_source not in {"keep", "sample", "alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source must be keep, sample, alpaca, or longbridge")
     root = project_root()
-    path = activate_strategy(
-        resolve_strategy_path(spec, root),
-        root,
-        paper_auto=paper_auto,
-        allow_paper_auto=allow_paper_auto,
-        data_source=data_source,  # type: ignore[arg-type]
-    )
+    try:
+        path = activate_strategy(
+            resolve_strategy_path(spec, root),
+            root,
+            paper_auto=paper_auto,
+            allow_paper_auto=allow_paper_auto,
+            data_source=data_source,  # type: ignore[arg-type]
+            enforce_paper_readiness=enforce_paper_readiness,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
     mode = "paper_auto" if paper_auto else "manual_signal"
     console.print(f"[green]active[/green] {path} mode={mode}")
 
@@ -784,6 +1146,12 @@ def run_paper(
             f"[green]paper cycle[/green] {cycle.run_id} "
             f"signals={len(cycle.signals)} report=reports/runs/{cycle.run_id}.md"
         )
+        if cycle.backend_plan_path:
+            console.print(f"backend plan: {cycle.backend_plan_path}")
+        if cycle.paper_readiness_report_path:
+            console.print(f"paper readiness: {cycle.paper_readiness_report_path}")
+        for note in cycle.notes:
+            console.print(f"note: {note}")
         for item in cycle.signals:
             console.print(
                 f"{item.signal_id} {item.action} {item.symbol} @ {item.price:.2f} "
@@ -831,6 +1199,39 @@ def paper_submit(
     except PaperOrderError as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(f"[green]paper order[/green] {order.id} status={order.status} qty={order.qty}")
+
+
+@paper_app.command("readiness")
+def paper_readiness(
+    strategy: str,
+    strict: Annotated[
+        bool,
+        typer.Option("--strict", help="Exit with code 1 when paper readiness is blocked."),
+    ] = False,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Path for the paper readiness JSON report."),
+    ] = None,
+) -> None:
+    """Check whether a strategy is ready for Alpaca Paper automation."""
+    root = project_root()
+    try:
+        report = assess_paper_strategy_readiness(resolve_strategy_path(strategy, root), root)
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, md_path = write_paper_readiness_report(report, root, output)
+    table = Table(title=f"Paper Readiness: {report.strategy_name}")
+    table.add_column("Check")
+    table.add_column("Status")
+    table.add_column("Message")
+    for check in report.checks:
+        table.add_row(check.name, check.status, check.message)
+    console.print(table)
+    console.print(f"status={report.status} ready={'yes' if report.ready else 'no'}")
+    console.print(f"json={json_path}")
+    console.print(f"markdown={md_path}")
+    if strict and report.status == "blocked":
+        raise typer.Exit(1)
 
 
 @paper_app.command("sync")
@@ -893,12 +1294,18 @@ def paper_alerts() -> None:
 
 
 @paper_app.command("monitor")
-def paper_monitor() -> None:
+def paper_monitor(
+    sync_broker: bool = typer.Option(
+        False,
+        "--sync-broker",
+        help="Sync Alpaca Paper orders, account, and positions before monitoring.",
+    ),
+) -> None:
     """Refresh local paper reconciliation, alerts, and status artifacts."""
-    report = refresh_paper_monitor(project_root())
+    report = refresh_paper_monitor(project_root(), sync_broker=sync_broker)
     console.print(
         f"[green]paper monitor refreshed[/green] {report.report_markdown_path} "
-        f"status={report.status} alerts={report.alert_count}"
+        f"status={report.status} alerts={report.alert_count} sync={report.sync_status}"
     )
 
 
@@ -906,12 +1313,18 @@ def paper_monitor() -> None:
 def paper_monitor_loop(
     interval_seconds: float = typer.Option(60.0, "--interval-seconds"),
     max_cycles: int = typer.Option(1, "--max-cycles"),
+    sync_broker: bool = typer.Option(
+        False,
+        "--sync-broker",
+        help="Sync Alpaca Paper orders, account, and positions before each monitor cycle.",
+    ),
 ) -> None:
     """Run repeated local paper monitor refresh cycles."""
     reports = run_paper_monitor_loop(
         project_root(),
         interval_seconds=interval_seconds,
         max_cycles=max_cycles,
+        sync_broker=sync_broker,
     )
     latest = reports[-1] if reports else None
     console.print(
@@ -951,30 +1364,12 @@ def journal_add(
     console.print(f"[green]journal written[/green] {entry.id}")
 
 
+def _resolve_output_path(root: Path, path: Path) -> Path:
+    return path if path.is_absolute() else root / path
+
+
 def _ensure_runtime_dirs(root: Path) -> None:
-    for relative in [
-        "data/cache",
-        "reports/backtests",
-        "reports/parity",
-        "reports/scans",
-        "reports/reviews",
-        "reports/weekly",
-        "reports/paper",
-        "reports/runs",
-        "reports/capabilities",
-        "reports/context",
-        "reports/research",
-        "reports/options",
-        "reports/dashboard",
-        "data/raw/events",
-        "data/raw/macro",
-        "event_logs",
-        "signal_logs",
-        "journal",
-        "strategies_pine/generated",
-        "strategy_versions",
-    ]:
-        ensure_dir(root / relative)
+    ensure_runtime_dirs(root)
 
 
 def _parse_datetime(value: str | None) -> datetime | None:

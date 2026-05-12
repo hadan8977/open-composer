@@ -6,13 +6,27 @@ from pathlib import Path
 from typing import Any
 
 from open_composer.adapters.broker.alpaca_paper import PaperOrderError, submit_paper_order
+from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.adapters.execution import build_nautilus_paper_plan, write_nautilus_paper_plan
 from open_composer.config import ensure_dir, project_root, run_id
 from open_composer.context import build_signal_context
 from open_composer.engines.scanner_engine import run_scan
+from open_composer.engines.signal_engine import build_signal, signal_masks
+from open_composer.feature_packets import (
+    should_auto_emit_context_features,
+    write_context_feature_packet,
+)
 from open_composer.models.runner import PaperRunCycle, PaperRunSignalResult
+from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.paper_controls import load_paper_kill_switch
+from open_composer.paper_readiness import (
+    PaperStrategyReadinessReport,
+    assess_paper_strategy_readiness,
+    format_paper_readiness_blockers,
+    write_paper_readiness_report,
+)
+from open_composer.reports.writer import write_scan_report
 from open_composer.review.llm import review_signal_with_status
 from open_composer.storage import append_jsonl
 from open_composer.strategy_lifecycle import resolve_strategy_path
@@ -35,6 +49,8 @@ def run_paper_cycle(
     spec_path = resolve_strategy_path(spec_ref, base)
     spec = load_strategy_spec(spec_path)
     _validate_runtime_spec(spec)
+    readiness = assess_paper_strategy_readiness(spec_path, base)
+    readiness_path, _ = write_paper_readiness_report(readiness, base)
     version = register_strategy_version(spec_path, base, created_by="paper_runner")
 
     cycle = PaperRunCycle(
@@ -45,13 +61,18 @@ def run_paper_cycle(
         spec_hash=version.content_hash,
         strategy_backend=spec.execution.backend,
         execution_backend="python_reference",
+        paper_readiness_report_path=str(readiness_path),
         spec_path=str(spec_path),
         notes=[
             "Runner uses deterministic latest-bar scan.",
             "Paper orders require active paper_auto strategy and explicit allow flag.",
             "Live real-money broker writes are out of scope.",
+            f"Paper readiness status={readiness.status}.",
         ],
     )
+    if not readiness.ready:
+        cycle.notes.append(format_paper_readiness_blockers(readiness))
+    signals: list[Signal]
     if spec.execution.backend == "nautilus_trader":
         plan_path = base / "reports" / "runs" / "nautilus_paper" / f"{cycle.run_id}.json"
         plan = build_nautilus_paper_plan(
@@ -63,14 +84,37 @@ def run_paper_cycle(
         )
         write_nautilus_paper_plan(plan_path, plan)
         cycle.backend_plan_path = str(plan_path)
+        cycle.execution_backend = plan.selected_backend
         cycle.notes.append(
-            "Nautilus paper runtime is planned; this cycle remains on the audited scan/order gate."
+            "Nautilus paper runtime generated latest-bar signals before the Alpaca Paper "
+            "safety gate."
+            if plan.selected_backend == "nautilus_paper"
+            else (
+                "Nautilus paper runtime fell back to the Python reference scan because the "
+                "paper plan is not executable."
+            )
         )
-    signals = run_scan(
-        spec_path,
-        root=base,
-        refresh_data=spec.data.source in {"alpaca", "longbridge"},
-    )
+        if plan.selected_backend == "nautilus_paper":
+            signals = _run_nautilus_paper_signal_cycle(
+                spec,
+                base,
+                run_id_value=cycle.run_id,
+                version_id=version.version_id,
+                spec_hash=version.content_hash,
+                refresh_data=spec.data.source in {"alpaca", "longbridge"},
+            )
+        else:
+            signals = run_scan(
+                spec_path,
+                root=base,
+                refresh_data=spec.data.source in {"alpaca", "longbridge"},
+            )
+    else:
+        signals = run_scan(
+            spec_path,
+            root=base,
+            refresh_data=spec.data.source in {"alpaca", "longbridge"},
+        )
     if not signals:
         cycle.notes.append("No latest-bar signal.")
         cycle.finished_at = datetime.now(UTC)
@@ -79,6 +123,15 @@ def run_paper_cycle(
 
     for signal in signals:
         context = build_signal_context(signal.id, base)
+        if should_auto_emit_context_features(spec):
+            write_context_feature_packet(signal.id, base)
+            if (
+                "Context-derived feature packets were auto-written for context-capable signals."
+                not in cycle.notes
+            ):
+                cycle.notes.append(
+                    "Context-derived feature packets were auto-written for context-capable signals."
+                )
         review_result = None
         if with_review and spec.llm_review.enabled:
             review_result = review_signal_with_status(signal, spec, base, context=context)
@@ -91,6 +144,7 @@ def run_paper_cycle(
             allow_paper_orders=allow_paper_orders,
             require_review_consider=require_review_consider,
             review_result=review_result,
+            readiness=readiness,
             root=base,
             client=client,
         )
@@ -130,6 +184,65 @@ def run_paper_loop(
     return cycles
 
 
+def _run_nautilus_paper_signal_cycle(
+    spec: StrategySpec,
+    root: Path,
+    *,
+    run_id_value: str,
+    version_id: str,
+    spec_hash: str,
+    refresh_data: bool,
+) -> list[Signal]:
+    frame = load_ohlcv_for_spec(spec, root, refresh=refresh_data)
+    entry_mask, exit_mask = signal_masks(spec, frame, root=root)
+    latest = frame.iloc[-1]
+    timestamp = latest["timestamp"].to_pydatetime()
+    signals: list[Signal] = []
+
+    if bool(entry_mask.iloc[-1]):
+        signals.append(
+            build_signal(
+                spec,
+                run_id_value,
+                timestamp,
+                "entry",
+                "paper",
+                float(latest["close"]),
+                version_id=version_id,
+                spec_hash=spec_hash,
+                execution_backend="nautilus_paper",
+            )
+        )
+    elif bool(exit_mask.iloc[-1]):
+        signals.append(
+            build_signal(
+                spec,
+                run_id_value,
+                timestamp,
+                "exit",
+                "paper",
+                float(latest["close"]),
+                version_id=version_id,
+                spec_hash=spec_hash,
+                execution_backend="nautilus_paper",
+            )
+        )
+
+    log_path = root / "signal_logs" / f"{run_id_value}.jsonl"
+    report_path = root / "reports" / "scans" / f"{run_id_value}.md"
+    append_jsonl(log_path, signals)
+    write_scan_report(
+        report_path,
+        run_id_value,
+        spec,
+        signals,
+        version_id=version_id,
+        spec_hash=spec_hash,
+        execution_backend="nautilus_paper",
+    )
+    return signals
+
+
 def _validate_runtime_spec(spec: StrategySpec) -> None:
     if spec.lifecycle != "active":
         raise PaperRunnerError("paper runner requires an active StrategySpec")
@@ -148,6 +261,7 @@ def _decide_signal(
     allow_paper_orders: bool,
     require_review_consider: bool,
     review_result: Any | None,
+    readiness: PaperStrategyReadinessReport,
     root: Path,
     client: Any | None,
 ) -> PaperRunSignalResult:
@@ -190,6 +304,17 @@ def _decide_signal(
             review_verdict=review_verdict,
             message="paper kill switch is enabled"
             + (f": {kill_switch.reason}" if kill_switch.reason else ""),
+        )
+    if not readiness.ready:
+        return PaperRunSignalResult(
+            signal_id=signal_id,
+            action=action,  # type: ignore[arg-type]
+            symbol=symbol,
+            price=price,
+            decision="blocked_by_readiness",
+            review_status=review_status,
+            review_verdict=review_verdict,
+            message=format_paper_readiness_blockers(readiness),
         )
     if require_review_consider and review_verdict != "consider":
         return PaperRunSignalResult(
@@ -247,6 +372,7 @@ def _write_cycle_markdown(path: Path, cycle: PaperRunCycle) -> Path:
         f"- Strategy backend: `{cycle.strategy_backend}`",
         f"- Execution backend: `{cycle.execution_backend}`",
         f"- Backend plan: `{cycle.backend_plan_path or 'n/a'}`",
+        f"- Paper readiness: `{cycle.paper_readiness_report_path or 'n/a'}`",
         f"- Started: {cycle.started_at.isoformat()}",
         f"- Finished: {cycle.finished_at.isoformat() if cycle.finished_at else 'open'}",
         f"- Spec: `{cycle.spec_path}`",

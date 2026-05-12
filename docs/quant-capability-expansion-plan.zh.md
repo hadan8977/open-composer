@@ -113,7 +113,7 @@ StrategySpec 作为源头
 - Dashboard catalog / HTML 已接入数据质量比较报告，可显示 Alpaca/Longbridge 覆盖率、bps 差异、缺失 bar 和 caveat。
 - Paper kill switch、paper status 快照和 Dashboard audit 事件。
 - Paper runner cycle 已进入 Dashboard run read model，可显示 `kind=paper`、版本、spec hash、strategy backend、execution backend、信号数量和门控说明。
-- Nautilus paper handoff plan 已补上：active `nautilus_trader` 策略跑 paper cycle 时会写入 `reports/runs/nautilus_paper/*.json`，明确 target backend、当前 fallback、version/spec hash 和安全说明；它不是完整 Nautilus paper runtime。
+- Nautilus paper runtime MVP 已补上：active `nautilus_trader` 策略跑 paper cycle 时会写入 `reports/runs/nautilus_paper/*.json`，并以 `nautilus_paper` execution backend 生成最新 bar paper 信号，再交给 Alpaca Paper readiness / kill switch / explicit allow gate 决定是否下单。
 - Alpaca Paper 账户 / 持仓快照已补上：`oc paper sync-account` 可写入 `reports/paper/account.json` 和 `reports/paper/positions.json`，paper status 与 Dashboard summary 会读取 equity、cash、buying power、position count、market value 和 unrealized PnL。
 - Paper 订单 / 持仓一致性检查已补上：`oc paper reconcile` 会生成 `reports/paper/reconciliation.json` 和 `.md`，检查缺失 account / positions、open orders、filled buy 无持仓、持仓无本地订单等问题，并把 status / issue count 汇总到 paper status 与 Dashboard。
 - Paper alert 层已补上：`oc paper alerts` 会生成 `reports/paper/alerts.json` 和 `.md`，把 kill switch、reconciliation、open orders、缺失 account snapshot、unrealized loss 等状态统一成告警，并汇总到 paper status 与 Dashboard。

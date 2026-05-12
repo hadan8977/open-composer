@@ -1,5 +1,6 @@
 import { LayoutDashboard, BookMarked, GitBranch, Activity, Newspaper, Sparkles, Layers, ShieldCheck } from "lucide-react";
 import logoMarkUrl from "../../../logo_optimized (2).svg";
+import { dashboardSummary } from "./data";
 
 export type NavKey =
   | "overview"
@@ -16,16 +17,18 @@ interface Props {
   onChange: (k: NavKey) => void;
 }
 
-const items: { key: NavKey; label: string; icon: any; count?: string; accent: string }[] = [
-  { key: "overview",   label: "Overview",         icon: LayoutDashboard, accent: "#1FB85A" },
-  { key: "strategies", label: "Strategy Library", icon: BookMarked, count: "24", accent: "#0A0A0A" },
-  { key: "versions",   label: "Versions",         icon: GitBranch, count: "118", accent: "#1AC8E8" },
-  { key: "paper",      label: "Paper Monitor",    icon: Activity, count: "6", accent: "#1FB85A" },
-  { key: "events",     label: "Events & News",    icon: Newspaper, accent: "#F8A93B" },
-  { key: "llm",        label: "LLM Center",       icon: Sparkles, count: "3", accent: "#8B5CF6" },
-  { key: "groups",     label: "Strategy Groups",  icon: Layers, accent: "#FF2D7A" },
-  { key: "audit",      label: "Audit",            icon: ShieldCheck, accent: "#0A0A0A" },
-];
+function navItems(): { key: NavKey; label: string; icon: any; count?: string; accent: string }[] {
+  return [
+    { key: "overview",   label: "Overview",         icon: LayoutDashboard, accent: "#1FB85A" },
+    { key: "strategies", label: "Strategy Library", icon: BookMarked, count: String(dashboardSummary.strategyCount), accent: "#0A0A0A" },
+    { key: "versions",   label: "Versions",         icon: GitBranch, count: String(dashboardSummary.versionCount), accent: "#1AC8E8" },
+    { key: "paper",      label: "Paper Monitor",    icon: Activity, count: String(dashboardSummary.paperAutoStrategyCount), accent: "#1FB85A" },
+    { key: "events",     label: "Events & News",    icon: Newspaper, count: String(dashboardSummary.dataComparisonCount + dashboardSummary.contextCount + dashboardSummary.featurePacketCount), accent: "#F8A93B" },
+    { key: "llm",        label: "LLM Center",       icon: Sparkles, count: String(dashboardSummary.reviewCount), accent: "#8B5CF6" },
+    { key: "groups",     label: "Strategy Groups",  icon: Layers, accent: "#FF2D7A" },
+    { key: "audit",      label: "Audit",            icon: ShieldCheck, count: String(dashboardSummary.auditCount), accent: "#0A0A0A" },
+  ];
+}
 
 export function Sidebar({ active, onChange }: Props) {
   return (
@@ -38,7 +41,7 @@ export function Sidebar({ active, onChange }: Props) {
             fontFamily: "var(--font-display)",
             fontSize: 18,
             fontWeight: 800,
-            letterSpacing: "-0.038em",
+            letterSpacing: 0,
             lineHeight: 1,
             whiteSpace: "nowrap",
           }}
@@ -49,7 +52,7 @@ export function Sidebar({ active, onChange }: Props) {
       </div>
 
       <nav className="flex flex-col gap-px">
-        {items.map(({ key, label, icon: Icon, count, accent }) => {
+        {navItems().map(({ key, label, icon: Icon, count, accent }) => {
           const isActive = active === key;
           return (
             <button
@@ -100,10 +103,10 @@ export function Sidebar({ active, onChange }: Props) {
             <span className="absolute inline-flex h-full w-full rounded-full bg-[#1FB85A] opacity-40 animate-ping" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#1FB85A]" />
           </span>
-          <span className="t-body-sm ink" style={{ fontWeight: 500 }}>Local catalog 路 synced</span>
+          <span className="t-body-sm ink" style={{ fontWeight: 500 }}>Local catalog synced</span>
         </div>
         <p className="t-body-sm ink-subtle leading-snug">
-          File-first source of truth 路 SQLite read model
+          File-first source of truth · read model v{dashboardSummary.readModelVersion}
         </p>
       </div>
     </aside>

@@ -81,17 +81,25 @@ def _python_mvp_backtest(spec: StrategySpec, expression_errors: list[str]) -> Ca
         )
     non_market = _non_market_required_capabilities(spec)
     llm_feature_factors = _llm_feature_factors(spec)
-    if spec.llm_review.enabled or non_market or llm_feature_factors:
-        reasons.append(
-            "deterministic entry/exit rules can be backtested, but LLM/event/news/macro "
-            "context is not replayed as trade logic"
-        )
+    feature_packet_factors = _feature_packet_factors(spec)
+    if spec.llm_review.enabled or non_market or llm_feature_factors or feature_packet_factors:
+        if spec.llm_review.enabled or non_market:
+            reasons.append(
+                "deterministic entry/exit rules can be backtested, but advisory "
+                "LLM/event/news/macro context outside explicit feature_packet factors is "
+                "not replayed as trade logic"
+            )
         if non_market:
             reasons.append(f"context capabilities are advisory only: {', '.join(non_market)}")
         if llm_feature_factors:
             reasons.append(
                 "LLM feature factors are replayed from saved packets, not generated during "
                 f"backtest: {', '.join(llm_feature_factors)}"
+            )
+        if feature_packet_factors:
+            reasons.append(
+                "feature_packet factors are replayed from saved point-in-time packets: "
+                + ", ".join(feature_packet_factors)
             )
         return CapabilityFinding("python_mvp_backtest", "partial", reasons)
     return CapabilityFinding("python_mvp_backtest", "supported", ["v1 OHLCV rules are supported"])
@@ -115,6 +123,12 @@ def _tradingview_pine_strategy(
         reasons.append(
             "LLM feature factors are not representable in Pine Strategy Tester: "
             + ", ".join(llm_feature_factors)
+        )
+    feature_packet_factors = _feature_packet_factors(spec)
+    if feature_packet_factors:
+        reasons.append(
+            "feature_packet factors are not representable in Pine Strategy Tester: "
+            + ", ".join(feature_packet_factors)
         )
     if len(spec.universe) > 1:
         reasons.append(
@@ -226,6 +240,12 @@ def _non_market_required_capabilities(spec: StrategySpec) -> list[str]:
 
 def _llm_feature_factors(spec: StrategySpec) -> list[str]:
     return sorted(name for name, factor in spec.factors.items() if factor.source == "llm_feature")
+
+
+def _feature_packet_factors(spec: StrategySpec) -> list[str]:
+    return sorted(
+        name for name, factor in spec.factors.items() if factor.source == "feature_packet"
+    )
 
 
 @dataclass(frozen=True)

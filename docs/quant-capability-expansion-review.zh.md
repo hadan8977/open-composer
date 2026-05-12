@@ -96,7 +96,7 @@
 | Longbridge 数据适配 | 部分完成，仍先 trial | 已有 cache replay、manifest、capability registry 和增强差异报告；差异报告已包含 feed、manifest、覆盖率、bps、缺失样本和 caveat。仍需真实 SDK 联调与覆盖验证。 | 继续保持 trial，等真实刷新、延迟与覆盖测试通过后再考虑升为 approved。 |
 | Alpaca 数据与 paper | 必要且保留 | 当前已实现，能支撑扫描、paper 和安全门控。 | 继续作为第一 paper 通道，并补足 feed 标注和差异报告。 |
 | NautilusTrader 执行后端 | 必要，单标的 backtest 已接入 | 需要事件驱动 backtest/sandbox/live 同构，且能接 replayable custom data。当前已完成单标的 OHLCV 真实 backtest adapter。 | 继续补 sandbox/paper、多标的、组合目标和更完整 custom data replay。 |
-| Nautilus paper handoff plan | 必要且已完成第一步 | 当前 paper runner 还不是 Nautilus runtime，但已写出 `reports/runs/nautilus_paper/*.json`，保留 target backend、fallback、version/spec hash 和安全说明。 | 不把它标成完整 runtime；下一步实现真正 Nautilus paper loop。 |
+| Nautilus paper runtime MVP | 必要且已完成第一步 | 当前 paper runner 已能为 active `nautilus_trader` 策略写出 `reports/runs/nautilus_paper/*.json`，并以 `nautilus_paper` execution backend 生成最新 bar paper 信号，再交给 Alpaca Paper readiness / kill switch / explicit allow gate。 | 继续把后续订单生命周期、持续同步和多资产 routing 放到 Paper 服务化与组合阶段。 |
 | Pine 全量支持 | 不必要且错误 | Pine 有明确限制，不适合作为全量量化运行时。 | 只保留 deterministic subset 导出。 |
 | LLM review | 必要 | 用户需要上下文和风险解释。 | 保持 advisory，并结构化存档。 |
 | LLM orchestrator | 必要但后置 | 组合策略是真需求，但依赖版本、分层和审计。 | 放到能力补全后再开放。 |

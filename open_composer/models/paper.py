@@ -113,6 +113,10 @@ class PaperMonitorReport(BaseModel):
 
     generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     status: Literal["ok", "warning", "error"] = "ok"
+    sync_broker: bool = False
+    sync_status: Literal["skipped", "ok", "error"] = "skipped"
+    sync_error: str = ""
+    sync_output_paths: list[str] = Field(default_factory=list)
     reconciliation_status: str = "unknown"
     reconciliation_issue_count: int = 0
     alert_status: str = "unknown"
@@ -136,9 +140,11 @@ class PaperStatusSnapshot(BaseModel):
     account_cash: float | None = None
     account_buying_power: float | None = None
     account_portfolio_value: float | None = None
+    account_snapshot_at: datetime | None = None
     position_count: int = 0
     total_position_market_value: float = 0.0
     total_unrealized_pl: float = 0.0
+    positions_snapshot_at: datetime | None = None
     reconciliation_status: str = "unknown"
     reconciliation_issue_count: int = 0
     reconciliation_report_path: str | None = None

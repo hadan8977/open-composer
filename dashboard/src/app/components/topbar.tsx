@@ -1,4 +1,5 @@
 import { Search, Plus, Bell, ChevronLeft } from "lucide-react";
+import { dashboardSummary } from "./data";
 
 export function TopBar({
   back,
@@ -20,7 +21,7 @@ export function TopBar({
               className="block-green inline-block"
               style={{ width: 8, height: 8, borderRadius: 2 }}
             />
-            <div className="t-caption ink-muted">DASHBOARD · v0.1</div>
+            <div className="t-caption ink-muted">DASHBOARD · catalog v{dashboardSummary.readModelVersion}</div>
           </div>
         )}
 
@@ -45,8 +46,8 @@ export function TopBar({
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#FF2D7A]" />
         </button>
 
-        <button className="pill pill-primary">
-          <Plus size={14} strokeWidth={2.6} /> New strategy
+        <button className="pill pill-primary opacity-70" disabled title="Use the CLI workflow to create or modify StrategySpecs.">
+          <Plus size={14} strokeWidth={2.6} /> CLI gated
         </button>
       </div>
     </header>

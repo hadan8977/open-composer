@@ -5,6 +5,10 @@ from pathlib import Path
 from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import project_root, run_id
 from open_composer.engines.signal_engine import build_signal, signal_masks
+from open_composer.feature_packets import (
+    should_auto_emit_context_features,
+    write_context_feature_packet,
+)
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.reports.writer import write_scan_report
@@ -57,6 +61,9 @@ def run_scan(
     log_path = base / "signal_logs" / f"{current_run_id}.jsonl"
     report_path = base / "reports" / "scans" / f"{current_run_id}.md"
     append_jsonl(log_path, signals)
+    if should_auto_emit_context_features(spec):
+        for signal in signals:
+            write_context_feature_packet(signal.id, base)
     write_scan_report(
         report_path,
         current_run_id,

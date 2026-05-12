@@ -105,6 +105,9 @@ def register_strategy_version(
             llm_feature_factor_names=sorted(
                 name for name, factor in spec.factors.items() if factor.source == "llm_feature"
             ),
+            feature_packet_factor_names=sorted(
+                name for name, factor in spec.factors.items() if factor.source == "feature_packet"
+            ),
             backend=spec.execution.backend,
             execution_mode=spec.execution.mode,
             broker=spec.execution.broker,

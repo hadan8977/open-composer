@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
@@ -32,6 +34,7 @@ def build_nautilus_trader_plan(
     registry = load_registry(base)
     expression_errors = _expression_errors(spec, base)
     llm_feature_factors = _llm_feature_factors(spec)
+    feature_packet_factors = _feature_packet_factors(spec)
     required_capabilities = list(spec.required_capabilities)
     reasons: list[str] = []
 
@@ -62,6 +65,12 @@ def build_nautilus_trader_plan(
                 f"the backend loop: {', '.join(llm_feature_factors)}"
             )
             status = "partial"
+        if feature_packet_factors:
+            reasons.append(
+                "feature_packet factors are replayed from saved point-in-time packets: "
+                + ", ".join(feature_packet_factors)
+            )
+            status = "partial"
 
     selected_backend = spec.execution.backend
     if selected_backend == "nautilus_trader":
@@ -89,6 +98,7 @@ def build_nautilus_trader_plan(
         reasons=reasons,
         factor_names=sorted(spec.factors),
         llm_feature_factor_names=llm_feature_factors,
+        feature_packet_factor_names=feature_packet_factors,
         required_capabilities=required_capabilities,
         nautilus_installed=nautilus_trader_available(),
     )
@@ -109,17 +119,23 @@ def build_nautilus_backtest_plan(
         path,
         base,
     )
-    llm_feature_bindings = _llm_feature_bindings(spec, base)
+    custom_data_bindings = _custom_data_bindings(spec, base)
     factor_expressions = _expression_factors(spec)
     data_path = _resolved_data_path(spec, base)
     bar_type = f"{spec.timeframe}-ohlcv"
     reasons = list(compatibility.reasons)
     if data_path is None:
         reasons.append("data path is not declared on the StrategySpec")
-    if llm_feature_bindings and any(
-        not Path(binding.path).exists() for binding in llm_feature_bindings
+    if custom_data_bindings and any(
+        not Path(binding.path).exists() for binding in custom_data_bindings
     ):
-        reasons.append("one or more llm_feature packets are missing on disk")
+        reasons.append("one or more custom data packets are missing on disk")
+    for binding in custom_data_bindings:
+        if binding.point_in_time_status != "complete":
+            reasons.append(
+                f"custom data binding {binding.factor_name} is "
+                f"{binding.point_in_time_status}: " + "; ".join(binding.replay_warnings[:3])
+            )
     status = compatibility.status
     if reasons and status == "supported":
         status = "partial"
@@ -143,9 +159,14 @@ def build_nautilus_backtest_plan(
         reasons=reasons or ["NautilusTrader-compatible OHLCV strategy plan"],
         factor_names=sorted(spec.factors),
         expression_factor_names=sorted(factor_expressions),
-        llm_feature_factor_names=sorted(binding.factor_name for binding in llm_feature_bindings),
+        llm_feature_factor_names=sorted(
+            binding.factor_name
+            for binding in custom_data_bindings
+            if binding.source == "llm_feature"
+        ),
         factor_expressions=factor_expressions,
-        custom_data_bindings=llm_feature_bindings,
+        custom_data_bindings=custom_data_bindings,
+        feature_packet_factor_names=_feature_packet_factors(spec),
         required_capabilities=list(spec.required_capabilities),
         nautilus_installed=nautilus_trader_available(),
     )
@@ -163,24 +184,34 @@ def build_nautilus_paper_plan(
     base = root or _infer_spec_root(path)
     spec = _load_strategy_for_plan(path)
     compatibility = build_nautilus_trader_plan(path, base)
+    custom_data_bindings = _custom_data_bindings(spec, base)
     reasons = list(compatibility.reasons)
     status = compatibility.status
-    selected_backend = "python_reference"
+    selected_backend = "nautilus_paper"
 
     if spec.execution.mode != "paper_auto":
-        reasons.append("Nautilus paper handoff requires execution.mode=paper_auto")
+        reasons.append("Nautilus paper runtime requires execution.mode=paper_auto")
         status = "partial"
     if spec.execution.broker != "alpaca_paper":
-        reasons.append("Nautilus paper handoff currently targets broker=alpaca_paper")
+        reasons.append("Nautilus paper runtime currently targets broker=alpaca_paper")
         status = "partial"
     if len(spec.universe) > 1:
-        reasons.append("Nautilus paper handoff is single-symbol until portfolio routing exists")
+        reasons.append("Nautilus paper runtime is single-symbol until portfolio routing exists")
         status = "partial"
-    reasons.append(
-        "Nautilus paper runtime is a handoff plan only; current paper runner still uses "
-        "deterministic latest-bar scan plus Alpaca paper order gate."
-    )
-    if status == "supported":
+        selected_backend = "python_reference"
+    if not nautilus_trader_available():
+        selected_backend = "python_reference"
+    if custom_data_bindings and any(
+        binding.point_in_time_status != "complete" for binding in custom_data_bindings
+    ):
+        status = "partial"
+        reasons.append("one or more Nautilus paper custom data bindings are not PIT-complete")
+    if selected_backend == "nautilus_paper":
+        reasons.append(
+            "Nautilus paper runtime emits latest-bar signals and delegates paper orders to "
+            "the Alpaca Paper safety gate."
+        )
+    elif status == "supported":
         status = "partial"
 
     return NautilusPaperPlan(
@@ -199,6 +230,7 @@ def build_nautilus_paper_plan(
         status=status,
         reasons=reasons,
         required_capabilities=list(spec.required_capabilities),
+        custom_data_bindings=custom_data_bindings,
         nautilus_installed=nautilus_trader_available(),
     )
 
@@ -235,24 +267,122 @@ def _llm_feature_factors(spec: StrategySpec) -> list[str]:
     return sorted(name for name, factor in spec.factors.items() if factor.source == "llm_feature")
 
 
-def _llm_feature_bindings(spec: StrategySpec, root: Path) -> list[NautilusCustomDataBinding]:
+def _feature_packet_factors(spec: StrategySpec) -> list[str]:
+    return sorted(
+        name for name, factor in spec.factors.items() if factor.source == "feature_packet"
+    )
+
+
+def _custom_data_bindings(spec: StrategySpec, root: Path) -> list[NautilusCustomDataBinding]:
     bindings: list[NautilusCustomDataBinding] = []
     for name, factor in spec.factors.items():
-        if factor.source != "llm_feature":
+        if factor.source not in {"llm_feature", "feature_packet"}:
             continue
         if not factor.path:
             continue
+        path = _resolve_path(root, factor.path)
+        metadata = _custom_data_metadata(path, str(factor.field or ""))
         bindings.append(
             NautilusCustomDataBinding(
                 factor_name=name,
-                source="llm_feature",
-                path=str(_resolve_path(root, factor.path)),
+                source=factor.source,
+                path=str(path),
                 field=str(factor.field or ""),
                 default=factor.default,
                 description=factor.description,
+                **metadata,
             )
         )
     return bindings
+
+
+def _custom_data_metadata(path: Path, field: str) -> dict[str, object]:
+    if not path.exists():
+        return {
+            "exists": False,
+            "record_count": 0,
+            "point_in_time_status": "missing",
+            "replay_warnings": ["custom data packet is missing on disk"],
+        }
+
+    rows: list[dict[str, object]] = []
+    warnings: list[str] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError:
+                warnings.append(f"line {line_number} is not valid JSON")
+                continue
+            if isinstance(raw, dict):
+                rows.append(raw)
+            else:
+                warnings.append(f"line {line_number} is not a JSON object")
+
+    timestamps: list[datetime] = []
+    for row in rows:
+        if not row.get("timestamp"):
+            continue
+        try:
+            timestamps.append(_parse_datetime(str(row["timestamp"])))
+        except ValueError:
+            warnings.append(f"timestamp {row.get('timestamp')!r} is not ISO-8601 parseable")
+    key_sets = [set(row) for row in rows]
+    has_timestamp = bool(rows) and all("timestamp" in keys for keys in key_sets)
+    has_published_at = bool(rows) and all("published_at" in keys for keys in key_sets)
+    has_fetched_at = bool(rows) and all("fetched_at" in keys for keys in key_sets)
+    has_dedupe_key = bool(rows) and all("dedupe_key" in keys for keys in key_sets)
+    has_field = bool(rows) and any(_custom_data_value(row, field) is not None for row in rows)
+
+    if not rows:
+        warnings.append("custom data packet contains no replayable rows")
+    if not has_timestamp:
+        warnings.append("timestamp is missing for at least one custom data row")
+    if not has_published_at:
+        warnings.append("published_at is missing for at least one custom data row")
+    if not has_fetched_at:
+        warnings.append("fetched_at is missing for at least one custom data row")
+    if not has_dedupe_key:
+        warnings.append("dedupe_key is missing for at least one custom data row")
+    if field and not has_field:
+        warnings.append(f"field {field!r} is missing from custom data rows")
+
+    if has_timestamp and has_published_at and has_fetched_at and has_dedupe_key and has_field:
+        point_in_time_status = "complete"
+    elif has_timestamp:
+        point_in_time_status = "partial"
+    else:
+        point_in_time_status = "missing"
+
+    return {
+        "exists": True,
+        "record_count": len(rows),
+        "first_timestamp": min(timestamps).isoformat() if timestamps else None,
+        "last_timestamp": max(timestamps).isoformat() if timestamps else None,
+        "point_in_time_status": point_in_time_status,
+        "replay_warnings": warnings,
+    }
+
+
+def _custom_data_value(row: dict[str, object], field: str) -> object | None:
+    if field in row:
+        return row[field]
+    features = row.get("features")
+    if isinstance(features, dict) and field in features:
+        return features[field]
+    return None
+
+
+def _parse_datetime(value: str) -> datetime:
+    text = value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    parsed = datetime.fromisoformat(text)
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed
 
 
 def _expression_factors(spec: StrategySpec) -> dict[str, str]:

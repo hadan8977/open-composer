@@ -113,3 +113,8 @@ def alpaca_sdk_base_url() -> str:
 
 def data_feed() -> str:
     return os.getenv("ALPACA_DATA_FEED", "iex")
+
+
+def dashboard_api_token() -> str | None:
+    token = os.getenv("OPEN_COMPOSER_DASHBOARD_TOKEN", "").strip()
+    return token or None

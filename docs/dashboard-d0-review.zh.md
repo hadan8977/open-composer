@@ -1,28 +1,33 @@
 # Dashboard D0 Review
 
-- Generated at: `2026-05-11T05:39:22.628157+00:00`
+- Generated at: `2026-05-12T18:46:57.835302+00:00`
 - Source root: `/root/codex-test/open-composer`
 
 ## Current Capability Baseline
 
-- Strategies indexed: `23`
-- Versions indexed: `26`
-- Runs indexed: `30`
-- Signals indexed: `2316`
-- Reviews indexed: `2`
-- Context packets indexed: `4`
-- Journal entries indexed: `1`
-- Data comparisons indexed: `1`
+- Strategies indexed: `3`
+- Versions indexed: `3`
+- Runs indexed: `1`
+- Signals indexed: `0`
+- Reviews indexed: `0`
+- Context packets indexed: `0`
+- Journal entries indexed: `0`
+- Data comparisons indexed: `0`
 - Feature packets indexed: `0`
+- Workflow reports indexed: `0`
+- Readiness status: `warning` ready=`True`
+- Deployment status: `warning` ready=`True`
 
 ## Backend Snapshot
 
-- Strategy backends: `{'python_reference': 23}`
-- Backend readiness: `{'partial': 18, 'supported': 5}`
+- Strategy backends: `{'python_reference': 3}`
+- Backend readiness: `{'partial': 2, 'supported': 1}`
 - Paper kill switch: `off`
-- Paper order status counts: `{'warning': 2}`
+- Paper order status counts: `{'warning': 1}`
 - Paper account equity: `n/a`
+- Paper account snapshot: `n/a`
 - Paper positions: `0`
+- Paper positions snapshot: `n/a`
 - Paper unrealized PnL: `$0.00`
 - Paper reconciliation: `warning` issues=`1`
 - Paper alerts: `warning` alerts=`2`
@@ -35,7 +40,7 @@
 - Signal, review, context, and journal pages can be populated from existing artifacts.
 - Paper status and kill switch events can be read from local paper artifacts.
 - Data comparison reports can show latest low-cost source coverage and caveats.
-- Feature packet logs can show replay inputs for llm_feature factors.
+- Feature packet logs can show replay inputs for llm_feature and feature_packet factors.
 - A static read-only Dashboard can now be generated at `reports/dashboard/index.html` and `reports/dashboard/strategies/*.html` from this catalog.
 
 ## What The Dashboard Should Not Pretend Yet
@@ -46,16 +51,16 @@
 
 ## Strategy Mix
 
-- Active strategies: `1`
+- Active strategies: `0`
 - Active paper_auto strategies: `0`
 - Paper kill switch: `off`
 - Open paper orders: `0`
 - Paper positions: `0`
 - Paper reconciliation issues: `1`
 - Paper alerts: `2`
-- Pure quant strategies: `6`
-- Quant + review strategies: `15`
-- Quant + scan strategies: `2`
+- Pure quant strategies: `2`
+- Quant + review strategies: `0`
+- Quant + scan strategies: `1`
 - Quant + orchestrator strategies: `0`
 
 ## Review Verdict
@@ -73,7 +78,7 @@
 
 ## Active Strategy Snapshot
 
-- No checked-in active strategy is kept in the repo; active state is runtime-only.
+- No active strategies were indexed.
 
 ## Paper Auto Snapshot
 

@@ -8,6 +8,11 @@ import yaml
 
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.paper_readiness import (
+    assess_paper_strategy_readiness_for_spec,
+    format_paper_readiness_blockers,
+    write_paper_readiness_report,
+)
 from open_composer.strategy_versions import register_strategy_version
 
 Lifecycle = Literal["draft", "approved", "active", "retired"]
@@ -68,11 +73,13 @@ def activate_strategy(
     paper_auto: bool = False,
     allow_paper_auto: bool = False,
     data_source: Literal["keep", "sample", "alpaca", "longbridge"] = "keep",
+    enforce_paper_readiness: bool = False,
 ) -> Path:
+    base = root or project_root()
     if paper_auto and not allow_paper_auto:
         raise ValueError("paper_auto activation requires --allow-paper-auto")
     spec = load_strategy_spec(spec_path)
-    parent = register_strategy_version(spec_path, root, created_by="activate_parent")
+    parent = register_strategy_version(spec_path, base, created_by="activate_parent")
     raw = spec.model_dump(mode="json")
     raw["lifecycle"] = "active"
     if paper_auto:
@@ -89,10 +96,24 @@ def activate_strategy(
         if data_source in {"alpaca", "longbridge"}:
             raw["data"]["path"] = None
             raw["data"]["symbol"] = spec.primary_symbol
-    path = _write_lifecycle_spec(raw, "active", root)
+    if paper_auto and enforce_paper_readiness:
+        candidate = StrategySpec.model_validate(raw)
+        report = assess_paper_strategy_readiness_for_spec(candidate, base)
+        write_paper_readiness_report(
+            report,
+            base,
+            output_path=base
+            / "reports"
+            / "paper"
+            / "readiness"
+            / f"{candidate.name}.activation_candidate.json",
+        )
+        if not report.ready:
+            raise ValueError(format_paper_readiness_blockers(report))
+    path = _write_lifecycle_spec(raw, "active", base)
     register_strategy_version(
         path,
-        root,
+        base,
         parent_version_id=parent.version_id,
         created_by="strategy_activate",
     )

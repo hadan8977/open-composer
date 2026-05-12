@@ -137,7 +137,7 @@ Dashboard catalog 读取后，相关 run 必须能回链到版本。
 - replayable 的自定义因子和 `llm_feature` packet 只能以 point-in-time 方式进入执行层；
 - paper gate、审计记录、version/spec hash 绑定在后端切换后仍然成立。
 - 自然语言生成的策略可以先生成草稿，再激活为 `nautilus_trader`，然后完成真实 backtest、signal log、report 和 Dashboard catalog 回链。
-- active `nautilus_trader` 策略执行 paper cycle 时会写出 Nautilus paper handoff plan；该 plan 必须明确当前仍 fallback 到 deterministic scan / Alpaca paper gate，不能被误标为完整 Nautilus paper runtime。
+- active `nautilus_trader` 策略执行 paper cycle 时会写出 Nautilus paper plan；该 plan 必须绑定 version/spec hash，并以 `nautilus_paper` execution backend 生成最新 bar paper 信号，再经 Alpaca Paper safety gate。
 
 ## 自动化测试
 
@@ -163,7 +163,7 @@ Dashboard catalog 读取后，相关 run 必须能回链到版本。
 | `tests/test_context_and_research_workflow.py` | 自然语言策略、能力评估、context、paper order 版本绑定。 |
 | `tests/test_strategy_lifecycle_and_runner.py` | approve / activate / disable 父子版本和 paper runner 版本绑定。 |
 | `tests/test_strategy_lifecycle_and_runner.py` | paper runner cycle 进入 Dashboard run read model，并保留 backend、version 和 spec hash。 |
-| `tests/test_strategy_lifecycle_and_runner.py` | Nautilus paper handoff plan 写入 `reports/runs/nautilus_paper/*.json`，并被 Dashboard paper run 回链。 |
+| `tests/test_strategy_lifecycle_and_runner.py` | Nautilus paper plan 写入 `reports/runs/nautilus_paper/*.json`，`nautilus_paper` paper 信号写入 signal log，并被 Dashboard paper run 回链。 |
 | `tests/test_strategy_capabilities.py` | capability report 区分 supported 和 unsupported 表达式。 |
 | `tests/test_longbridge_data_adapter.py` | Longbridge cache replay、manifest 写入、Alpaca/Longbridge 差异报告、coverage / bps / caveat 字段。 |
 
@@ -200,7 +200,7 @@ uv run pytest
 - Dashboard HTML：可生成 `reports/dashboard/index.html` 和 `reports/dashboard/strategies/*.html`，作为当前只读工作台基线。
 - 数据差异报告：`oc data compare --symbol QQQ --timeframe 15m --left alpaca --right longbridge --left-feed iex` 可以无凭证运行，并在本地 `reports/data/comparisons/` 下生成 JSON / Markdown 差异报告。
 - Paper cycle：Dashboard run read model 已可收录 `reports/runs/paper_cycles.jsonl`，显示 `kind=paper` 与版本 / backend 绑定。
-- Nautilus paper handoff：paper cycle 会写出 target `nautilus_paper`、selected `python_reference` 的 handoff plan，避免误把当前 runner 当成完整 Nautilus paper runtime。
+- Nautilus paper runtime MVP：paper cycle 会写出 target `nautilus_paper`、selected `nautilus_paper` 的 plan，并生成 `nautilus_paper` paper 信号；订单仍由 Alpaca Paper safety gate 控制。
 - Paper account：`oc paper sync-account` 对应的同步逻辑可写入 account / positions 快照，status 和 Dashboard 可读取 equity、cash、buying power、持仓数量、市值和 unrealized PnL。
 - Paper reconciliation：`oc paper reconcile` 对应的检查逻辑可生成 JSON / Markdown，识别 filled buy 无持仓、缺失 positions snapshot 等问题，并进入 paper status / Dashboard summary。
 - Paper alerts：`oc paper alerts` 对应的告警逻辑可生成 JSON / Markdown，并把 reconciliation、kill switch、open orders、缺失 account、unrealized loss 汇总到 paper status / Dashboard summary。

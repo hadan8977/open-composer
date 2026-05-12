@@ -1,18 +1,33 @@
-import { GitCommit, Pause, Layers, ArrowUpRight, Square } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  Activity,
+  ArrowUpRight,
+  GitCommit,
+  Layers,
+  RefreshCw,
+  ShieldAlert,
+  ShieldCheck,
+  Wrench,
+} from "lucide-react";
 import { Card, SectionTitle, Tag, KPI, Pill, ColorBlock } from "./blocks";
 import { Hero } from "./hero";
 import { Sparkline } from "./sparkline";
-import { strategies, events, llmReviews, auditLog } from "./data";
+import {
+  auditLog,
+  applyDashboardCatalog,
+  dashboardSummary,
+  events,
+  llmReviews,
+  paperOrders,
+  paperPositions,
+  paperReadinessReports,
+  strategies,
+  strategyGroups,
+  versions,
+} from "./data";
+import { getDashboardJson, postDashboardJson } from "./runtime";
 
 /* ---------------- Versions ---------------- */
-
-const versions = [
-  { id: "v12", strat: "Mean Reversion · QQQ", parent: "v11", by: "user", at: "2026-05-08 16:30", status: "active", diff: "+24 / -8", hash: "a8c1…f9" },
-  { id: "v11", strat: "Mean Reversion · QQQ", parent: "v10", by: "codex", at: "2026-05-04 11:02", status: "retired", diff: "+5 / -2", hash: "b3d2…11" },
-  { id: "v07", strat: "Earnings Drift · S&P 100", parent: "v06", by: "user", at: "2026-05-07 09:55", status: "active", diff: "+91 / -34", hash: "c4e8…aa" },
-  { id: "v04", strat: "Macro Regime Switch", parent: "v03", by: "llm", at: "2026-05-09 09:12", status: "approved", diff: "+12 / -1", hash: "d7f0…42" },
-  { id: "v02", strat: "News Sentiment Scanner", parent: "v01", by: "llm", at: "2026-05-09 08:00", status: "draft", diff: "+204 / -12", hash: "e1a3…7b" },
-];
 
 export function Versions() {
   return (
@@ -21,14 +36,14 @@ export function Versions() {
         theme="cyan"
         greeting="Version control · immutable"
         headline="Lineage"
-        meta="Every edit lives as its own version with parent, hash and replay."
-        stat={{ label: "Versions tracked", value: "118", delta: "4 created today" }}
+        meta="Every visible version is rebuilt from StrategySpec snapshots and registry records."
+        stat={{ label: "Versions tracked", value: String(dashboardSummary.versionCount), delta: dashboardSummary.generatedLabel }}
       />
       <div className="grid grid-cols-12 gap-3">
-        <div className="col-span-3"><KPI label="Versions tracked" value="118" accent="black" /></div>
-        <div className="col-span-3"><KPI label="Active pointers" value="12" accent="green" /></div>
-        <div className="col-span-3"><KPI label="Created today" value="4" accent="pink" /></div>
-        <div className="col-span-3"><KPI label="LLM-authored" value="38%" accent="orange" /></div>
+        <div className="col-span-3"><KPI label="Versions tracked" value={String(dashboardSummary.versionCount)} accent="black" /></div>
+        <div className="col-span-3"><KPI label="Active pointers" value={String(dashboardSummary.activeStrategyCount)} accent="green" /></div>
+        <div className="col-span-3"><KPI label="Draft specs" value={String(dashboardSummary.draftStrategyCount)} accent="pink" /></div>
+        <div className="col-span-3"><KPI label="LLM-enabled" value={String(strategies.filter((s) => s.llmReviewEnabled).length)} accent="orange" /></div>
       </div>
 
       <Card pad={false}>
@@ -52,7 +67,13 @@ export function Versions() {
             </tr>
           </thead>
           <tbody>
-            {versions.map((v) => (
+            {versions.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="px-5 py-8 t-body-sm ink-muted">
+                  No version records are present in the dashboard catalog.
+                </td>
+              </tr>
+            ) : versions.map((v) => (
               <tr key={v.id + v.strat} className="hairline-b last:border-b-0">
                 <td className="px-5 py-3 flex items-center gap-2">
                   <GitCommit size={14} className="ink-subtle" />
@@ -67,7 +88,7 @@ export function Versions() {
                 <td><Tag color={v.status === "active" ? "green" : v.status === "approved" ? "cyan" : "paper"}>{v.status}</Tag></td>
                 <td className="px-5 text-right whitespace-nowrap">
                   <button className="t-body-sm ink-muted hover:ink mr-3">diff</button>
-                  <button className="t-body-sm ink-muted hover:ink">rollback</button>
+                  <button className="t-body-sm ink-muted hover:ink" disabled title="Rollback is only available through the CLI safety gate.">rollback</button>
                 </td>
               </tr>
             ))}
@@ -80,32 +101,72 @@ export function Versions() {
 
 /* ---------------- Paper monitor ---------------- */
 
-const positions = [
-  { sym: "QQQ",  qty: 50,  avg: 441.20, mkt: 442.81, upnl: +80.5,  strat: "Mean Reversion · QQQ" },
-  { sym: "SPY",  qty: 25,  avg: 522.10, mkt: 523.95, upnl: +46.25, strat: "Earnings Drift · S&P 100" },
-  { sym: "VXX",  qty: 30,  avg: 18.41,  mkt: 18.10,  upnl: -9.30,  strat: "Vol Carry · VIX Term" },
-  { sym: "KO",   qty:200,  avg: 60.82,  mkt: 61.04,  upnl: +44.0,  strat: "Pairs · KO / PEP" },
-  { sym: "PEP",  qty:-180, avg:171.00,  mkt:170.55,  upnl: +81.0,  strat: "Pairs · KO / PEP" },
-  { sym: "XLE",  qty: 80,  avg: 88.10,  mkt: 88.40,  upnl: +24.0,  strat: "Sector Rotation" },
-];
-
 export function Paper() {
+  const runningStrategies = strategies.filter(
+    (strategy) => strategy.executionMode === "paper_auto" || strategy.status === "active",
+  );
+
   return (
     <div className="px-6 pb-8 space-y-3">
       <Hero
         theme="green"
-        greeting="Paper monitor · 6 running"
+        greeting={`Paper monitor · ${dashboardSummary.paperAutoStrategyCount} configured`}
         headline="Live"
-        meta="Paper_auto strategies, open positions, exposure and slippage in real time."
-        stat={{ label: "Day P&L", value: "+$1,562", delta: "Unrealized +$266" }}
+        meta="Read-only paper account, order and reconciliation state from the generated catalog."
+        stat={{
+          label: "Kill switch",
+          value: dashboardSummary.paperKillSwitchEnabled ? "Enabled" : "Clear",
+          delta: `${dashboardSummary.paperOpenOrderCount} open orders`,
+        }}
       />
+      <PaperCommandDock />
       <div className="grid grid-cols-12 gap-3">
-        <div className="col-span-3"><KPI label="Auto strategies" value="6" accent="green" /></div>
-        <div className="col-span-3"><KPI label="Open positions" value="14" accent="black" /></div>
-        <div className="col-span-2"><KPI label="Day P&L" value="+$1,562" accent="cyan" /></div>
-        <div className="col-span-2"><KPI label="Unrealized" value="+$266" accent="pink" /></div>
-        <div className="col-span-2"><KPI label="Slippage" value="2.1bp" accent="orange" /></div>
+        <div className="col-span-3"><KPI label="Auto strategies" value={String(dashboardSummary.paperAutoStrategyCount)} accent="green" /></div>
+        <div className="col-span-3"><KPI label="Open positions" value={String(dashboardSummary.paperPositionCount)} accent="black" /></div>
+        <div className="col-span-2"><KPI label="Orders" value={String(paperOrders.length)} accent="cyan" /></div>
+        <div className="col-span-2"><KPI label="Unrealized" value={money(dashboardSummary.paperTotalUnrealizedPl)} accent="pink" /></div>
+        <div className="col-span-2"><KPI label="Alerts" value={dashboardSummary.paperAlertStatus} accent="orange" /></div>
       </div>
+
+      <Card pad={false}>
+        <div className="px-5 py-4 hairline-b">
+          <SectionTitle tick="orange">Paper readiness</SectionTitle>
+        </div>
+        <div className="divide-y divide-[var(--hairline)]">
+          {paperReadinessReports.length === 0 ? (
+            <div className="px-5 py-5 t-body-sm ink-muted">
+              No paper readiness reports are present.
+            </div>
+          ) : paperReadinessReports.map((report) => {
+            const firstAction = report.checks.find((check) => check.status !== "ok")?.suggestedActions?.[0];
+            return (
+            <div key={report.path || report.strategyId} className="px-5 py-3.5 grid grid-cols-12 gap-3 items-start">
+              <div className="col-span-3 min-w-0">
+                <div className="t-title-sm truncate">{report.strategyName}</div>
+                <div className="t-caption ink-subtle t-mono truncate mt-1">{report.path}</div>
+              </div>
+              <div className="col-span-2">
+                <Tag color={report.status === "ok" ? "green" : report.status === "warning" ? "orange" : "pink"}>
+                  {report.status}
+                </Tag>
+              </div>
+              <div className="col-span-7 t-body-sm ink-muted">
+                {report.blockingChecks.length > 0 ? (
+                  <>Blocked: {report.blockingChecks.join(", ")}</>
+                ) : report.warningChecks.length > 0 ? (
+                  <>Warnings: {report.warningChecks.join(", ")}</>
+                ) : (
+                  <>Ready for paper automation</>
+                )}
+                {firstAction && (
+                  <div className="t-caption t-mono ink-subtle mt-1 truncate">{firstAction}</div>
+                )}
+              </div>
+            </div>
+            );
+          })}
+        </div>
+      </Card>
 
       <div className="grid grid-cols-12 gap-4">
         <Card className="col-span-7" pad={false}>
@@ -113,7 +174,11 @@ export function Paper() {
             <SectionTitle tick="green">Running strategies</SectionTitle>
           </div>
           <div className="divider-soft">
-            {strategies.filter((s) => s.status === "active").map((s) => (
+            {runningStrategies.length === 0 ? (
+              <div className="px-5 py-8 t-body-sm ink-muted">
+                No active or paper_auto strategies are checked into the current catalog.
+              </div>
+            ) : runningStrategies.map((s) => (
               <div key={s.id} className="px-5 py-3.5 flex items-center gap-4">
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full rounded-full bg-[#16C268] opacity-60 animate-ping" />
@@ -122,6 +187,11 @@ export function Paper() {
                 <div className="flex-1 min-w-0">
                   <div className="t-title-sm truncate">{s.name}</div>
                   <div className="t-body-sm ink-subtle mt-0.5">{s.symbol} · {s.version} · {s.group}</div>
+                  {s.backendPlanPath && (
+                    <div className="t-caption ink-subtle mt-1 truncate">
+                      Nautilus plan · {s.backendPlanPath}
+                    </div>
+                  )}
                 </div>
                 <Sparkline data={s.series} color={s.lastReturn >= 0 ? "#16C268" : "#FF2D7A"} width={140} height={28} />
                 <div className="text-right t-num">
@@ -129,10 +199,6 @@ export function Paper() {
                     {s.lastReturn >= 0 ? "+" : ""}{s.lastReturn}%
                   </div>
                   <div className="t-body-sm ink-subtle">{s.trades} trades</div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button className="p-2 hover:bg-[var(--paper-3)] transition-colors" style={{ borderRadius: "var(--r-sm)" }}><Pause size={14} /></button>
-                  <button className="p-2 hover:bg-[var(--paper-3)] transition-colors" style={{ borderRadius: "var(--r-sm)" }}><Square size={12} /></button>
                 </div>
               </div>
             ))}
@@ -154,7 +220,13 @@ export function Paper() {
               </tr>
             </thead>
             <tbody className="t-num">
-              {positions.map((p) => (
+              {paperPositions.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-8 t-body-sm ink-muted">
+                    No paper position snapshot is present.
+                  </td>
+                </tr>
+              ) : paperPositions.map((p) => (
                 <tr key={p.sym} className="hairline-b last:border-b-0">
                   <td className="px-5 py-3 t-title-sm">{p.sym}</td>
                   <td className="text-right">{p.qty}</td>
@@ -173,6 +245,319 @@ export function Paper() {
   );
 }
 
+function PaperCommandDock() {
+  type DashboardCommandPlan = {
+    command_id: string;
+    action: string;
+    plan_path?: string | null;
+    confirmation_phrase: string;
+    cli_args: string[];
+    warnings: string[];
+  };
+  type DashboardCommandResult = {
+    command_id: string;
+    action: string;
+    status: string;
+    message: string;
+    result_path?: string | null;
+    output_paths?: string[];
+  };
+  type RuntimePaperSummary = {
+    generated_at?: string | null;
+    paper_kill_switch_enabled?: boolean;
+    paper_open_order_count?: number;
+    paper_position_count?: number;
+    paper_alert_status?: string;
+    paper_reconciliation_status?: string;
+    paper_account_equity?: number | null;
+    paper_total_unrealized_pl?: number;
+    paper_account_snapshot_at?: string | null;
+    paper_positions_snapshot_at?: string | null;
+    audit_count?: number;
+  };
+
+  const [reason, setReason] = useState("operator check");
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState("Dashboard command API is local-only and confirmed.");
+  const [lastPlan, setLastPlan] = useState<DashboardCommandPlan | null>(null);
+  const [lastResult, setLastResult] = useState<DashboardCommandResult | null>(null);
+  const refreshRuntimeSummary = async () => {
+    const runtimeCatalog = await getDashboardJson<{ summary?: RuntimePaperSummary }>(
+      "/api/dashboard/catalog",
+    );
+    applyDashboardCatalog(runtimeCatalog as Parameters<typeof applyDashboardCatalog>[0]);
+  };
+
+  useEffect(() => {
+    void refreshRuntimeSummary().catch(() => {
+      setStatusMessage("Dashboard catalog refresh failed; run make dashboard-serve.");
+    });
+  }, []);
+
+  const actions = [
+    {
+      action: "paper.status.refresh",
+      label: "Refresh status",
+      hint: "Write a current paper snapshot",
+      icon: RefreshCw,
+      tone: "cyan" as const,
+    },
+    {
+      action: "paper.sync.orders",
+      label: "Sync orders",
+      hint: "Pull broker order snapshot",
+      icon: RefreshCw,
+      tone: "cyan" as const,
+    },
+    {
+      action: "paper.sync.account",
+      label: "Sync account",
+      hint: "Pull account and positions",
+      icon: ArrowUpRight,
+      tone: "green" as const,
+    },
+    {
+      action: "paper.monitor.refresh",
+      label: "Refresh monitor",
+      hint: "Update reconciliation and alerts",
+      icon: Activity,
+      tone: "green" as const,
+    },
+    {
+      action: "paper.kill_switch.enable",
+      label: "Enable kill switch",
+      hint: "Hold paper execution",
+      icon: ShieldAlert,
+      tone: "pink" as const,
+    },
+    {
+      action: "paper.kill_switch.clear",
+      label: "Clear kill switch",
+      hint: "Resume guarded flow",
+      icon: ShieldCheck,
+      tone: "orange" as const,
+    },
+    {
+      action: "system.prepare_workspace",
+      label: "Prepare workspace",
+      hint: "Rebuild catalog, reports, and readiness",
+      icon: Wrench,
+      tone: "green" as const,
+    },
+    {
+      action: "system.readiness.refresh",
+      label: "Refresh readiness",
+      hint: "Rebuild deployment readiness",
+      icon: RefreshCw,
+      tone: "cyan" as const,
+    },
+  ];
+
+  const runCommand = async (action: string) => {
+    setBusyAction(action);
+    setStatusMessage("Creating command plan…");
+    setLastPlan(null);
+    setLastResult(null);
+    try {
+      const plan = await postDashboardJson<DashboardCommandPlan>("/api/dashboard/command-plan", {
+        action,
+        reason,
+        requested_by: "dashboard",
+      });
+      setLastPlan(plan);
+      if (!plan.plan_path) {
+        throw new Error("dashboard command plan missing plan_path");
+      }
+      const confirmation = window.prompt(
+        `Type the exact confirmation phrase to execute this local command.\n\n${plan.confirmation_phrase}`,
+        plan.confirmation_phrase,
+      );
+      if (confirmation === null) {
+        setStatusMessage("Command plan created. Execution cancelled before confirmation.");
+        return;
+      }
+      setStatusMessage("Executing local command…");
+      const result = await postDashboardJson<DashboardCommandResult>("/api/dashboard/command-run", {
+        plan_path: plan.plan_path,
+        confirm: confirmation,
+        executed_by: "dashboard",
+      });
+      setLastResult(result);
+      await refreshRuntimeSummary();
+      setStatusMessage(`${result.message}${result.result_path ? ` · ${result.result_path}` : ""}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown dashboard command error";
+      setStatusMessage(message);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  return (
+    <Card pad={false}>
+      <div className="px-5 py-4 hairline-b">
+        <SectionTitle
+          tick="green"
+          hint="Paper and local maintenance gates exposed through the local dashboard server"
+        >
+          Command center
+        </SectionTitle>
+      </div>
+      <div className="p-4 space-y-3">
+        <label className="ds-input flex items-center gap-2 h-10 px-3">
+          <span className="t-caption ink-subtle shrink-0">Reason</span>
+          <input
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            className="bg-transparent outline-none flex-1 t-body-md placeholder:text-[#9A988F]"
+            placeholder="operator check"
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {actions.map(({ action, label, hint, icon: Icon, tone }) => (
+            <button
+              key={action}
+              onClick={() => runCommand(action)}
+              disabled={busyAction !== null}
+              className={`flex items-center gap-3 px-3.5 py-3 text-left transition-colors ${
+                busyAction === action ? "opacity-70" : "hover:bg-[var(--paper-3)]"
+              }`}
+              style={{
+                borderRadius: "var(--r-md)",
+                background: busyAction === action ? "var(--paper-3)" : "transparent",
+                border: "1px solid rgba(10,10,10,.08)",
+              }}
+            >
+              <span
+                className="flex h-8 w-8 items-center justify-center shrink-0"
+                style={{
+                  borderRadius: 4,
+                  background:
+                    tone === "pink"
+                      ? "rgba(255,45,122,.12)"
+                      : tone === "orange"
+                        ? "rgba(248,169,59,.16)"
+                        : tone === "green"
+                          ? "rgba(31,184,90,.12)"
+                          : "rgba(26,200,232,.12)",
+                  color:
+                    tone === "pink"
+                      ? "#C81E5C"
+                      : tone === "orange"
+                        ? "#A45A00"
+                        : tone === "green"
+                          ? "#0A6E3B"
+                          : "#087A96",
+                }}
+              >
+                <Icon size={15} strokeWidth={2.2} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="t-body-md block" style={{ fontWeight: 600 }}>
+                  {label}
+                </span>
+                <span className="t-body-sm ink-subtle block mt-0.5">{hint}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="space-y-2 rounded-lg bg-[var(--paper-3)] p-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="t-caption ink-subtle">Status</span>
+            <span className="t-caption ink-subtle">
+              {busyAction ? `Working on ${busyAction}` : "Idle"}
+            </span>
+          </div>
+          <div className="t-body-sm ink leading-snug">{statusMessage}</div>
+          {lastPlan && (
+            <div className="space-y-1 pt-1">
+              <div className="t-body-sm ink-subtle">
+                Plan <span className="t-mono">{lastPlan.command_id}</span>
+              </div>
+              <div className="t-body-sm ink-subtle">
+                Confirmation <span className="t-mono">{lastPlan.confirmation_phrase}</span>
+              </div>
+              {lastPlan.warnings.length > 0 && (
+                <div className="t-body-sm ink-subtle">
+                  Warnings: {lastPlan.warnings.join(" · ")}
+                </div>
+              )}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <RuntimeMetric
+              label="Kill switch"
+              value={dashboardSummary.paperKillSwitchEnabled ? "Enabled" : "Clear"}
+            />
+            <RuntimeMetric
+              label="Open orders"
+              value={String(dashboardSummary.paperOpenOrderCount ?? 0)}
+            />
+            <RuntimeMetric
+              label="Positions"
+              value={String(dashboardSummary.paperPositionCount ?? 0)}
+            />
+            <RuntimeMetric
+              label="Alerts"
+              value={dashboardSummary.paperAlertStatus ?? "unknown"}
+            />
+            <RuntimeMetric
+              label="Account sync"
+              value={formatRuntimeTimestamp(dashboardSummary.paperAccountSnapshotAt)}
+            />
+            <RuntimeMetric
+              label="Positions sync"
+              value={formatRuntimeTimestamp(dashboardSummary.paperPositionsSnapshotAt)}
+            />
+          </div>
+          {lastResult && (
+            <div className="space-y-1 pt-1">
+              <div className="t-body-sm ink-subtle">
+                Result <span className="t-mono">{lastResult.command_id}</span> · {lastResult.status}
+              </div>
+              <div className="t-body-sm ink-subtle">{lastResult.message}</div>
+              {lastResult.output_paths && lastResult.output_paths.length > 0 && (
+                <div className="t-body-sm ink-subtle">
+                  Outputs: {lastResult.output_paths.join(" · ")}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function RuntimeMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="px-3 py-2"
+      style={{
+        background: "rgba(255,255,255,.62)",
+        border: "1px solid rgba(10,10,10,.06)",
+        borderRadius: "var(--r-sm)",
+      }}
+    >
+      <div className="t-caption ink-subtle">{label}</div>
+      <div className="t-body-sm ink mt-0.5" style={{ fontWeight: 600 }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function formatRuntimeTimestamp(value: string | null | undefined): string {
+  if (!value) {
+    return "n/a";
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleString();
+}
+
 /* ---------------- Events / News / Macro ---------------- */
 
 export function Events() {
@@ -182,13 +567,13 @@ export function Events() {
         theme="orange"
         greeting="Events · macro · news"
         headline="Signal"
-        meta="Raw event stream, derived factors and which strategies they touch."
-        stat={{ label: "Events today", value: "48", delta: "5 high-impact" }}
+        meta="Catalog-visible data comparisons, context packets and replayable feature files."
+        stat={{ label: "Catalog events", value: String(events.length), delta: `${dashboardSummary.featurePacketCount} feature packets` }}
       />
       <div className="grid grid-cols-12 gap-3">
-        <div className="col-span-4"><KPI label="Events today" value="48" accent="cyan" /></div>
-        <div className="col-span-4"><KPI label="Linked to strategies" value="12" accent="green" /></div>
-        <div className="col-span-4"><KPI label="High-impact" value="5" accent="pink" /></div>
+        <div className="col-span-4"><KPI label="Data comparisons" value={String(dashboardSummary.dataComparisonCount)} accent="cyan" /></div>
+        <div className="col-span-4"><KPI label="Context packets" value={String(dashboardSummary.contextCount)} accent="green" /></div>
+        <div className="col-span-4"><KPI label="Feature packets" value={String(dashboardSummary.featurePacketCount)} accent="pink" /></div>
       </div>
 
       <div className="grid grid-cols-12 gap-4">
@@ -197,7 +582,11 @@ export function Events() {
             <SectionTitle tick="orange">Event stream</SectionTitle>
           </div>
           <ul className="divider-soft">
-            {[...events, ...events].map((e, i) => (
+            {events.length === 0 ? (
+              <li className="px-5 py-8 t-body-sm ink-muted">
+                No event, macro, news or replay feature artifacts are present.
+              </li>
+            ) : events.map((e, i) => (
               <li key={i} className="px-5 py-3 flex items-start gap-3">
                 <span className="t-body-sm ink-subtle t-num w-12">{e.t}</span>
                 <Tag color={e.kind === "Earnings" ? "pink" : e.kind === "Macro" ? "orange" : e.kind === "News" ? "cyan" : "paper"}>{e.kind}</Tag>
@@ -215,17 +604,15 @@ export function Events() {
             <SectionTitle tick="cyan">Factors derived</SectionTitle>
           </div>
           <div className="p-3 space-y-2">
-            {[
-              ["earnings_surprise_z", "+2.1σ", "green"],
-              ["macro_regime", "risk-off", "pink"],
-              ["news_sentiment_24h", "+0.18", "cyan"],
-              ["vol_term_slope", "contango", "orange"],
-              ["sector_breadth", "0.62", "paper"],
-            ].map(([k, v, c]) => (
-              <div key={k as string} className="flex items-center justify-between px-3.5 py-2.5"
+            {strategies.flatMap((strategy) => strategy.factors).slice(0, 8).length === 0 ? (
+              <div className="px-3.5 py-3 t-body-sm ink-muted" style={{ background: "var(--paper-3)", borderRadius: "var(--r-md)" }}>
+                No replayable feature factors are declared in the visible specs.
+              </div>
+            ) : strategies.flatMap((strategy) => strategy.factors).slice(0, 8).map((factor) => (
+              <div key={factor} className="flex items-center justify-between px-3.5 py-2.5"
                 style={{ background: "var(--paper-3)", borderRadius: "var(--r-md)" }}>
-                <span className="t-mono">{k}</span>
-                <Tag pill color={c as any}>{v}</Tag>
+                <span className="t-mono">{factor}</span>
+                <Tag pill color="cyan">spec</Tag>
               </div>
             ))}
           </div>
@@ -239,18 +626,24 @@ export function Events() {
 
 export function LLM() {
   const cols = [
-    { title: "Review", subtitle: "LLM acts as final reviewer", color: "green" as const, items: llmReviews.slice(0, 2) },
-    { title: "Scan", subtitle: "Events → structured features", color: "cyan" as const, items: llmReviews.slice(0, 3) },
-    { title: "Orchestrator", subtitle: "Selects which group runs", color: "purple" as const, items: llmReviews.slice(1, 3) },
+    { title: "Review", subtitle: "Structured review cards", color: "green" as const, items: llmReviews },
+    { title: "Scan", subtitle: "LLM-enabled StrategySpecs", color: "cyan" as const, items: strategies.filter((s) => s.llmReviewEnabled).map((strategy) => ({
+      id: strategy.id,
+      strat: strategy.name,
+      verdict: "enabled",
+      summary: strategy.llmReviewModel ?? "model pending",
+      color: "cyan" as const,
+    })) },
+    { title: "Orchestrator", subtitle: "Not enabled in this catalog", color: "purple" as const, items: [] },
   ];
   return (
     <div className="px-6 pb-8 space-y-3">
       <Hero
         theme="purple"
-        greeting="LLM workspace · 3 lanes"
+        greeting={`LLM workspace · ${dashboardSummary.reviewCount} cards`}
         headline="Reasoning"
-        meta="Review, scan and orchestrator outputs — every card is structured & replayable."
-        stat={{ label: "Pending review", value: "3", delta: "22 submissions / 7d" }}
+        meta="Review and scan records are shown only when they exist in the dashboard catalog."
+        stat={{ label: "LLM-enabled", value: String(strategies.filter((s) => s.llmReviewEnabled).length), delta: `${dashboardSummary.reviewCount} reviews` }}
       />
       <div className="grid grid-cols-3 gap-3">
         {cols.map((c) => (
@@ -260,7 +653,11 @@ export function LLM() {
               <div className="t-body-sm mt-0.5" style={{ opacity: 0.85, position: "relative", zIndex: 1 }}>{c.subtitle}</div>
             </ColorBlock>
             <div className="px-3 pb-3 space-y-2">
-              {c.items.map((r) => (
+              {c.items.length === 0 ? (
+                <div className="p-3.5 t-body-sm ink-muted" style={{ background: "var(--paper-3)", borderRadius: "var(--r-md)" }}>
+                  No catalog records in this lane.
+                </div>
+              ) : c.items.map((r) => (
                 <div key={r.id} className="p-3.5" style={{ background: "var(--paper-3)", borderRadius: "var(--r-md)" }}>
                   <div className="flex items-center justify-between mb-1">
                     <Tag pill color={r.color}>{r.verdict}</Tag>
@@ -295,19 +692,20 @@ export function LLM() {
             </tr>
           </thead>
           <tbody>
-            {[
-              ["sess-7afb", "claude-opus-4-7", "review.v3", "Vol Carry · VIX Term v09", "approved", 4120],
-              ["sess-7af2", "claude-sonnet-4-6", "scan.v2", "News Sentiment Scanner v02", "features.json", 8810],
-              ["sess-7adb", "claude-opus-4-7", "orchestrator.v1", "Macro Regime Switch v04", "needs-changes", 6204],
-              ["sess-7ac9", "claude-sonnet-4-6", "review.v3", "Earnings Drift · S&P 100 v07", "approved-w-caveats", 3620],
-            ].map((row) => (
-              <tr key={row[0] as string} className="hairline-b last:border-b-0">
-                <td className="px-5 py-3 t-mono">{row[0]}</td>
-                <td className="t-mono">{row[1]}</td>
-                <td className="t-mono">{row[2]}</td>
-                <td className="t-title-sm">{row[3]}</td>
-                <td><Tag color="paper">{row[4]}</Tag></td>
-                <td className="text-right t-num pr-5">{(row[5] as number).toLocaleString()}</td>
+            {strategies.filter((strategy) => strategy.llmReviewEnabled).length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-5 py-8 t-body-sm ink-muted">
+                  No LLM prompt lineage records are present.
+                </td>
+              </tr>
+            ) : strategies.filter((strategy) => strategy.llmReviewEnabled).map((strategy) => (
+              <tr key={strategy.id} className="hairline-b last:border-b-0">
+                <td className="px-5 py-3 t-mono">{strategy.id}</td>
+                <td className="t-mono">{strategy.llmReviewModel ?? "pending"}</td>
+                <td className="t-mono">review</td>
+                <td className="t-title-sm">{strategy.name} {strategy.version}</td>
+                <td><Tag color="paper">{strategy.llmReviewEnabled ? "enabled" : "disabled"}</Tag></td>
+                <td className="text-right t-num pr-5">n/a</td>
               </tr>
             ))}
           </tbody>
@@ -320,32 +718,28 @@ export function LLM() {
 /* ---------------- Strategy Groups ---------------- */
 
 export function Groups() {
-  const groups = [
-    { name: "Core Satellite", weight: 32, color: "green"  as const, risk: "stable",   children: ["Mean Reversion · QQQ", "Pairs · KO / PEP"] },
-    { name: "Event-driven",   weight: 22, color: "pink"   as const, risk: "moderate", children: ["Earnings Drift · S&P 100"] },
-    { name: "Vol",            weight: 16, color: "cyan"   as const, risk: "high",     children: ["Vol Carry · VIX Term"] },
-    { name: "Rotation",       weight: 10, color: "black"  as const, risk: "moderate", children: ["Sector Rotation"] },
-    { name: "Regime",         weight:  5, color: "purple" as const, risk: "high",     children: ["Macro Regime Switch"] },
-    { name: "LLM Scan",       weight:  3, color: "orange" as const, risk: "high",     children: ["News Sentiment Scanner"] },
-  ];
   return (
     <div className="px-6 pb-8 space-y-3">
       <Hero
         theme="pink"
-        greeting="Strategy groups · 6 active"
+        greeting={`Strategy groups · ${strategyGroups.length} read-model groups`}
         headline="Compose"
-        meta="First-class orchestrator objects — capital, frequency and regime are all here."
-        stat={{ label: "Capital allocated", value: "97%", delta: "3% cash" }}
+        meta="Groups are generated from current catalog categories until orchestrator objects become write-managed."
+        stat={{ label: "Strategies grouped", value: String(dashboardSummary.strategyCount), delta: `${dashboardSummary.activeStrategyCount} active` }}
       />
       <div className="grid grid-cols-3 gap-3">
-      {groups.map((g) => (
+      {strategyGroups.length === 0 ? (
+        <Card>
+          <div className="t-body-sm ink-muted">No strategy groups are present in the catalog.</div>
+        </Card>
+      ) : strategyGroups.map((g) => (
         <Card key={g.name} pad={false}>
           <ColorBlock color={g.color} rounded="sm" halftone className="m-3 px-5 py-5 relative overflow-hidden">
             <div className="t-caption" style={{ opacity: 0.78, position: "relative", zIndex: 1 }}>Strategy group</div>
             <div className="t-display-md mt-1" style={{ position: "relative", zIndex: 1 }}>{g.name}</div>
             <div className="mt-5 flex items-baseline gap-3" style={{ position: "relative", zIndex: 1 }}>
               <div className="t-display-xl t-num">{g.weight}%</div>
-              <div className="t-body-sm" style={{ opacity: 0.82 }}>capital allocation</div>
+              <div className="t-body-sm" style={{ opacity: 0.82 }}>catalog share</div>
             </div>
           </ColorBlock>
           <div className="px-4 pb-4 space-y-2">
@@ -362,10 +756,12 @@ export function Groups() {
               </div>
             ))}
             <button
-              className="w-full mt-1 t-body-sm ink-muted py-2.5 hover:bg-[var(--paper-3)]"
+              className="w-full mt-1 t-body-sm ink-muted py-2.5 opacity-60"
               style={{ borderRadius: "var(--r-md)", border: "1px dashed rgba(10,10,10,.18)" }}
+              disabled
+              title="Group write controls are intentionally not exposed in the read-only dashboard."
             >
-              + add child strategy
+              read-only group
             </button>
           </div>
         </Card>
@@ -382,16 +778,16 @@ export function Audit() {
     <div className="px-6 pb-8 space-y-3">
       <Hero
         theme="ink"
-        greeting="Activity ledger · last 7 days"
+        greeting={`Activity ledger · ${dashboardSummary.auditCount} events`}
         headline="Audit"
-        meta="Every write goes through CLI safety gates — full replayable trail."
-        stat={{ label: "Events 7d", value: "284", delta: "3 blocked by rules" }}
+        meta="Catalog audit events are rebuilt from journals, paper orders and safety controls."
+        stat={{ label: "Events", value: String(dashboardSummary.auditCount), delta: dashboardSummary.paperReconciliationStatus }}
       />
       <div className="grid grid-cols-12 gap-3">
-        <div className="col-span-3"><KPI label="Audit events 7d" value="284" accent="black" /></div>
-        <div className="col-span-3"><KPI label="Approvals" value="14" accent="green" /></div>
-        <div className="col-span-3"><KPI label="Blocked by rules" value="3" accent="pink" /></div>
-        <div className="col-span-3"><KPI label="LLM submissions" value="22" accent="cyan" /></div>
+        <div className="col-span-3"><KPI label="Audit events" value={String(dashboardSummary.auditCount)} accent="black" /></div>
+        <div className="col-span-3"><KPI label="Journal entries" value={String(dashboardSummary.journalCount)} accent="green" /></div>
+        <div className="col-span-3"><KPI label="Paper orders" value={String(paperOrders.length)} accent="pink" /></div>
+        <div className="col-span-3"><KPI label="LLM reviews" value={String(dashboardSummary.reviewCount)} accent="cyan" /></div>
       </div>
       <Card pad={false}>
         <div className="px-5 py-4 hairline-b">
@@ -408,7 +804,13 @@ export function Audit() {
             </tr>
           </thead>
           <tbody>
-            {[...auditLog, ...auditLog].map((a, i) => (
+            {auditLog.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-5 py-8 t-body-sm ink-muted">
+                  No audit events are present. Journals and paper orders will appear here after they are written.
+                </td>
+              </tr>
+            ) : auditLog.map((a, i) => (
               <tr key={i} className="hairline-b last:border-b-0">
                 <td className="px-5 py-3 t-num ink-muted">{a.t}</td>
                 <td><Tag color={a.who === "user" ? "paper" : a.who === "codex" ? "cyan" : a.who === "llm" ? "purple" : "orange"}>{a.who}</Tag></td>
@@ -424,4 +826,10 @@ export function Audit() {
       </Card>
     </div>
   );
+}
+
+function money(value: number) {
+  return value === 0
+    ? "$0.00"
+    : value.toLocaleString([], { style: "currency", currency: "USD" });
 }

@@ -18,12 +18,18 @@ class NautilusCustomDataBinding(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     factor_name: str
-    source: Literal["llm_feature"]
+    source: Literal["llm_feature", "feature_packet"]
     path: str
     field: str
     default: float | bool = 0.0
     replay_mode: str = "point_in_time_last_observation"
     description: str = ""
+    exists: bool = False
+    record_count: int = 0
+    first_timestamp: str | None = None
+    last_timestamp: str | None = None
+    point_in_time_status: Literal["complete", "partial", "missing"] = "missing"
+    replay_warnings: list[str] = Field(default_factory=list)
 
 
 class NautilusBacktestPlan(BaseModel):
@@ -51,6 +57,7 @@ class NautilusBacktestPlan(BaseModel):
     factor_names: list[str] = Field(default_factory=list)
     expression_factor_names: list[str] = Field(default_factory=list)
     llm_feature_factor_names: list[str] = Field(default_factory=list)
+    feature_packet_factor_names: list[str] = Field(default_factory=list)
     factor_expressions: dict[str, str] = Field(default_factory=dict)
     custom_data_bindings: list[NautilusCustomDataBinding] = Field(default_factory=list)
     required_capabilities: list[str] = Field(default_factory=list)
@@ -77,6 +84,7 @@ class NautilusPaperPlan(BaseModel):
     status: BackendStatus
     reasons: list[str] = Field(default_factory=list)
     required_capabilities: list[str] = Field(default_factory=list)
+    custom_data_bindings: list[NautilusCustomDataBinding] = Field(default_factory=list)
     nautilus_installed: bool = False
     generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
@@ -100,6 +108,7 @@ class ExecutionBackendPlan(BaseModel):
     reasons: list[str] = Field(default_factory=list)
     factor_names: list[str] = Field(default_factory=list)
     llm_feature_factor_names: list[str] = Field(default_factory=list)
+    feature_packet_factor_names: list[str] = Field(default_factory=list)
     required_capabilities: list[str] = Field(default_factory=list)
     nautilus_installed: bool = False
     generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

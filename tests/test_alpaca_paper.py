@@ -126,12 +126,20 @@ def test_paper_account_sync_feeds_status_and_dashboard(sample_workspace: Path) -
     assert snapshot.account_cash == 2500.25
     assert snapshot.account_buying_power == 5000.50
     assert snapshot.account_portfolio_value == 10500.50
+    assert snapshot.account_snapshot_at is not None
     assert snapshot.position_count == 1
     assert snapshot.total_position_market_value == 1200
     assert snapshot.total_unrealized_pl == 100
+    assert snapshot.positions_snapshot_at is not None
     assert catalog.summary.paper_account_equity == 10500.50
+    assert catalog.summary.paper_account_snapshot_at is not None
     assert catalog.summary.paper_position_count == 1
     assert catalog.summary.paper_total_unrealized_pl == 100
+    assert catalog.summary.paper_positions_snapshot_at is not None
+    assert len(catalog.paper_positions) == 1
+    assert catalog.paper_positions[0].symbol == "QQQ"
+    assert catalog.paper_positions[0].qty == 3
+    assert catalog.paper_positions[0].unrealized_pl == 100
 
 
 def test_paper_reconciliation_flags_order_position_mismatch(sample_workspace: Path) -> None:
@@ -205,6 +213,71 @@ def test_paper_monitor_refresh_writes_all_local_reports(sample_workspace: Path) 
     assert Path(report.status_path).exists()
     assert snapshot.alert_count == report.alert_count
     assert snapshot.reconciliation_issue_count == report.reconciliation_issue_count
+
+
+def test_paper_monitor_can_sync_broker_snapshots_before_refresh(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    account_path = sample_workspace / "reports" / "paper" / "account.json"
+    positions_path = sample_workspace / "reports" / "paper" / "positions.json"
+    sync_path = sample_workspace / "reports" / "paper" / "sync.jsonl"
+
+    def fake_sync(base: Path) -> list[str]:
+        account_path.parent.mkdir(parents=True, exist_ok=True)
+        account_path.write_text(
+            '{"equity":10000,"cash":5000,"buying_power":8000,'
+            '"portfolio_value":10000,"status":"ACTIVE","paper":true}\n',
+            encoding="utf-8",
+        )
+        positions_path.write_text('{"positions":[]}\n', encoding="utf-8")
+        sync_path.write_text("", encoding="utf-8")
+        return [str(sync_path), str(account_path), str(positions_path)]
+
+    monkeypatch.setattr("open_composer.paper_controls._sync_broker_snapshots", fake_sync)
+
+    report = refresh_paper_monitor(sample_workspace, sync_broker=True)
+    snapshot = build_paper_status(sample_workspace)
+
+    assert report.status == "ok"
+    assert report.sync_broker is True
+    assert report.sync_status == "ok"
+    assert report.sync_output_paths == [str(sync_path), str(account_path), str(positions_path)]
+    assert snapshot.account_equity == 10000
+    assert snapshot.account_snapshot_at is not None
+
+
+def test_paper_status_flags_stale_account_and_positions_snapshots(sample_workspace: Path) -> None:
+    account_path = sample_workspace / "reports" / "paper" / "account.json"
+    positions_path = sample_workspace / "reports" / "paper" / "positions.json"
+    account_path.parent.mkdir(parents=True, exist_ok=True)
+    account_path.write_text(
+        (
+            '{"generated_at":"2026-01-01T00:00:00Z","equity":10000,"cash":5000,'
+            '"buying_power":8000,"portfolio_value":10000,"status":"ACTIVE","paper":true}\n'
+        ),
+        encoding="utf-8",
+    )
+    positions_path.write_text(
+        (
+            '{"positions":[{"symbol":"QQQ","qty":3,"market_value":1200,'
+            '"cost_basis":1100,"unrealized_pl":100,"unrealized_plpc":0.09,'
+            '"current_price":400,"side":"long","updated_at":"2026-01-01T00:00:00Z",'
+            '"paper":true}]}\n'
+        ),
+        encoding="utf-8",
+    )
+
+    alerts = build_paper_alerts(sample_workspace)
+    snapshot = build_paper_status(sample_workspace)
+
+    assert alerts.status == "warning"
+    assert {alert.code for alert in alerts.alerts} >= {
+        "stale_paper_account_snapshot",
+        "stale_paper_positions_snapshot",
+    }
+    assert snapshot.account_snapshot_at is not None
+    assert snapshot.positions_snapshot_at is not None
 
 
 def test_paper_monitor_loop_records_cycles(sample_workspace: Path) -> None:

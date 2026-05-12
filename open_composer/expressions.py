@@ -117,8 +117,15 @@ def prepare_factor_frame(
                         evaluate_raw_expression(expression, prepared),
                         prepared,
                     )
-                elif source == "llm_feature":
-                    prepared[name] = _load_llm_feature(name, factor, prepared, root)
+                elif source in {"llm_feature", "feature_packet"}:
+                    if name not in prepared.columns:
+                        prepared[name] = _load_feature_packet(
+                            name,
+                            factor,
+                            prepared,
+                            root,
+                            source,
+                        )
                 else:
                     raise ExpressionError(f"unsupported factor source: {source}")
             except ExpressionError as exc:
@@ -363,17 +370,18 @@ def _series_from_factor_value(value: Any, frame: pd.DataFrame) -> pd.Series:
     raise ExpressionError("factor expression must evaluate to a series or scalar")
 
 
-def _load_llm_feature(
+def _load_feature_packet(
     name: str,
     factor: Any,
     frame: pd.DataFrame,
     root: Path | None,
+    source_label: str,
 ) -> pd.Series:
     default = getattr(factor, "default", 0.0)
     field = getattr(factor, "field", None)
     path_value = getattr(factor, "path", None)
     if not field:
-        raise ExpressionError(f"llm_feature factor {name} missing field")
+        raise ExpressionError(f"{source_label} factor {name} missing field")
     if not path_value:
         return pd.Series([default] * len(frame), index=frame.index)
     path = Path(path_value)
@@ -382,7 +390,7 @@ def _load_llm_feature(
     if not path.exists():
         return pd.Series([default] * len(frame), index=frame.index)
     if "timestamp" not in frame.columns:
-        raise ExpressionError("llm_feature factors require timestamp column")
+        raise ExpressionError(f"{source_label} factors require timestamp column")
 
     records: list[tuple[pd.Timestamp, Any]] = []
     with path.open("r", encoding="utf-8") as handle:
@@ -390,9 +398,12 @@ def _load_llm_feature(
             if not line.strip():
                 continue
             raw = json.loads(line)
-            if field not in raw or "timestamp" not in raw:
+            if not isinstance(raw, Mapping):
                 continue
-            records.append((pd.Timestamp(raw["timestamp"]), raw[field]))
+            value = _feature_packet_value(raw, field)
+            if value is _MISSING or "timestamp" not in raw:
+                continue
+            records.append((pd.Timestamp(raw["timestamp"]), value))
     if not records:
         return pd.Series([default] * len(frame), index=frame.index)
 
@@ -411,3 +422,15 @@ def _load_llm_feature(
             cursor += 1
         values.append(current)
     return pd.Series(values, index=frame.index)
+
+
+_MISSING = object()
+
+
+def _feature_packet_value(raw: Mapping[str, Any], field: str) -> Any:
+    if field in raw:
+        return raw[field]
+    features = raw.get("features")
+    if isinstance(features, Mapping) and field in features:
+        return features[field]
+    return _MISSING

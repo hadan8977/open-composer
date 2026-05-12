@@ -1,13 +1,15 @@
 import { useState } from "react";
 import {
-  GitBranch, Play, Pause, FlaskConical, Eye, ShieldCheck, Sparkles,
-  TrendingUp, ArrowRight, Plus,
+  GitBranch, Play, Pause, FlaskConical, Eye, ShieldCheck, Sparkles, RefreshCw,
+  TrendingUp, Plus,
 } from "lucide-react";
 import { Card, Tag, Pill, KPI, SectionTitle } from "./blocks";
 import { Sparkline } from "./sparkline";
-import { strategies } from "./data";
+import { applyDashboardCatalog, auditLog, llmReviews, recentSignals, strategies, versions } from "./data";
+import { getDashboardJson, postDashboardJson } from "./runtime";
 
 type Tab = "spec" | "backtest" | "signals" | "versions" | "llm" | "audit";
+type StrategyDataSource = "keep" | "sample" | "alpaca" | "longbridge";
 
 const TABS: { key: Tab; label: string; icon: any }[] = [
   { key: "spec",     label: "Spec",     icon: FlaskConical },
@@ -21,8 +23,192 @@ const TABS: { key: Tab; label: string; icon: any }[] = [
 export function StrategyDetail({ id }: { id: string }) {
   const s = strategies.find((x) => x.id === id) ?? strategies[0];
   const [tab, setTab] = useState<Tab>("spec");
+  const [reason, setReason] = useState("operator check");
+  const [dataSource, setDataSource] = useState<StrategyDataSource>(
+    s.dataSource === "sample" ? "alpaca" : (s.dataSource as "keep" | "sample" | "alpaca" | "longbridge"),
+  );
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState("Dashboard command API is local-only and confirmed.");
+  const [lastPlan, setLastPlan] = useState<{
+    command_id: string;
+    action: string;
+    confirmation_phrase: string;
+    warnings: string[];
+    plan_path?: string | null;
+  } | null>(null);
+  const [lastResult, setLastResult] = useState<{
+    command_id: string;
+    action: string;
+    status: string;
+    message: string;
+    result_path?: string | null;
+    output_paths?: string[];
+  } | null>(null);
   const positive = s.lastReturn >= 0;
   const accent = positive ? "#16C268" : "#FF2D7A";
+
+  const refreshCatalog = async () => {
+    const runtimeCatalog = await getDashboardJson<Parameters<typeof applyDashboardCatalog>[0]>(
+      "/api/dashboard/catalog",
+    );
+    applyDashboardCatalog(runtimeCatalog as Parameters<typeof applyDashboardCatalog>[0]);
+  };
+
+  const lifecycleActions = [
+    {
+      action: "strategy.approve",
+      label: "Approve",
+      hint: "Promote draft to approved",
+      icon: ShieldCheck,
+      tone: "cyan" as const,
+    },
+    {
+      action: "strategy.validate",
+      label: "Validate",
+      hint: "Write spec validation report",
+      icon: FlaskConical,
+      tone: "cyan" as const,
+    },
+    {
+      action: "strategy.capabilities.refresh",
+      label: "Capabilities",
+      hint: "Refresh backend capability report",
+      icon: RefreshCw,
+      tone: "cyan" as const,
+    },
+    {
+      action: "strategy.workflow.verify",
+      label: "Verify workflow",
+      hint: "Run validation, reports, backtest, scan",
+      icon: Play,
+      tone: "green" as const,
+    },
+    {
+      action: "strategy.activate.manual",
+      label: "Activate manual",
+      hint: "Keep manual signal mode",
+      icon: Play,
+      tone: "green" as const,
+    },
+    {
+      action: "strategy.activate.paper_auto",
+      label: "Activate paper",
+      hint: "Switch to Alpaca paper",
+      icon: Sparkles,
+      tone: "green" as const,
+    },
+    {
+      action: "strategy.disable",
+      label: "Disable",
+      hint: "Retire the strategy",
+      icon: Pause,
+      tone: "pink" as const,
+    },
+  ];
+
+  const parseSuggestedStrategyAction = (suggestion: string): {
+    action: string;
+    dataSource?: StrategyDataSource;
+    label: string;
+  } | null => {
+    const trimmed = suggestion.trim();
+    if (trimmed.includes("uv run oc deploy prepare")) {
+      return { action: "system.prepare_workspace", label: "Prepare workspace" };
+    }
+    if (trimmed.includes("uv run oc readiness") || trimmed.includes("uv run oc doctor")) {
+      return { action: "system.readiness.refresh", label: "Refresh readiness" };
+    }
+    if (trimmed.includes("uv run oc paper sync-account")) {
+      return { action: "paper.sync.account", label: "Sync account" };
+    }
+    if (trimmed.includes("uv run oc paper sync")) {
+      return { action: "paper.sync.orders", label: "Sync orders" };
+    }
+    if (trimmed.includes("uv run oc spec validate")) {
+      return { action: "strategy.validate", label: "Validate" };
+    }
+    if (trimmed.includes("uv run oc spec capabilities")) {
+      return { action: "strategy.capabilities.refresh", label: "Capabilities" };
+    }
+    if (trimmed.startsWith("uv run oc strategy approve ")) {
+      return { action: "strategy.approve", label: "Apply" };
+    }
+    if (trimmed.startsWith("uv run oc strategy activate ")) {
+      if (trimmed.includes("--paper-auto")) {
+        const dataSourceMatch = trimmed.match(/--data-source\s+([^\s]+)/);
+        const parsedDataSource = dataSourceMatch?.[1];
+        const resolvedDataSource: StrategyDataSource =
+          parsedDataSource === "sample" ||
+          parsedDataSource === "alpaca" ||
+          parsedDataSource === "longbridge"
+            ? parsedDataSource
+            : "keep";
+        return {
+          action: "strategy.activate.paper_auto",
+          dataSource: resolvedDataSource,
+          label: "Activate paper",
+        };
+      }
+      return { action: "strategy.activate.manual", label: "Activate manual" };
+    }
+    return null;
+  };
+
+  const runLifecycleCommand = async (action: string, overrideDataSource?: StrategyDataSource) => {
+    setBusyAction(action);
+    setStatusMessage("Creating dashboard command plan…");
+    setLastPlan(null);
+    setLastResult(null);
+    const commandDataSource = overrideDataSource ?? dataSource;
+    try {
+      const plan = await postDashboardJson<{
+        command_id: string;
+        action: string;
+        confirmation_phrase: string;
+        warnings: string[];
+        plan_path?: string | null;
+      }>("/api/dashboard/command-plan", {
+        action,
+        reason,
+        requested_by: "dashboard",
+        strategy_path: s.sourcePath,
+        data_source: commandDataSource,
+      });
+      setLastPlan(plan);
+      if (!plan.plan_path) {
+        throw new Error("dashboard command plan missing plan_path");
+      }
+      const confirmation = window.prompt(
+        `Type the exact confirmation phrase to execute this dashboard command.\n\n${plan.confirmation_phrase}`,
+        plan.confirmation_phrase,
+      );
+      if (confirmation === null) {
+        setStatusMessage("Command plan created. Execution cancelled before confirmation.");
+        return;
+      }
+      setStatusMessage("Executing dashboard command…");
+      const result = await postDashboardJson<{
+        command_id: string;
+        action: string;
+        status: string;
+        message: string;
+        result_path?: string | null;
+        output_paths?: string[];
+      }>("/api/dashboard/command-run", {
+        plan_path: plan.plan_path,
+        confirm: confirmation,
+        executed_by: "dashboard",
+      });
+      setLastResult(result);
+      await refreshCatalog();
+      setStatusMessage(`${result.message}${result.result_path ? ` · ${result.result_path}` : ""}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown dashboard command error";
+      setStatusMessage(message);
+    } finally {
+      setBusyAction(null);
+    }
+  };
 
   return (
     <div className="px-6 pb-8 space-y-3">
@@ -65,8 +251,8 @@ export function StrategyDetail({ id }: { id: string }) {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Pill variant="secondary"><Pause size={12} /> Pause</Pill>
-            <Pill variant="primary"><Play size={12} fill="white" /> Run backtest</Pill>
+            <Pill variant="secondary"><Pause size={12} /> Read-only</Pill>
+            <Pill variant="primary"><Play size={12} fill="white" /> CLI gated</Pill>
           </div>
         </div>
       </div>
@@ -88,11 +274,20 @@ export function StrategyDetail({ id }: { id: string }) {
       </div>
 
       {tab === "spec" && <SpecCanvas s={s} accent={accent} />}
-      {tab === "backtest" && <BacktestPanel s={s} accent={accent} />}
-      {tab === "signals" && <SignalsPanel />}
-      {tab === "versions" && <VersionsMini />}
-      {tab === "llm" && <LLMPanel />}
-      {tab === "audit" && <AuditMini />}
+      {tab === "backtest" && (
+        <BacktestPanel
+          s={s}
+          accent={accent}
+          onRerun={runLifecycleCommand}
+          busyAction={busyAction}
+        />
+      )}
+      {tab === "signals" && (
+        <SignalsPanel s={s} onRerun={runLifecycleCommand} busyAction={busyAction} />
+      )}
+      {tab === "versions" && <VersionsMini s={s} />}
+      {tab === "llm" && <LLMPanel s={s} />}
+      {tab === "audit" && <AuditMini s={s} />}
     </div>
   );
 }
@@ -100,6 +295,19 @@ export function StrategyDetail({ id }: { id: string }) {
 /* ---------------- Spec — halftone workspace canvas ---------------- */
 
 function SpecCanvas({ s, accent }: { s: any; accent: string }) {
+  const factorTitle = s.factors.length > 0 ? s.factors.slice(0, 3).join(", ") : "No custom factors";
+  const capabilityTitle =
+    s.requiredCapabilities.length > 0
+      ? s.requiredCapabilities.slice(0, 3).join(", ")
+      : "No required capabilities";
+  const backendReasons = s.backendReasons ?? [];
+  const compatibilityReasonEntries = Object.entries(s.compatibilityReasons ?? {}).filter(
+    ([, reasons]) => Array.isArray(reasons) && reasons.length > 0,
+  );
+  const reasonCount =
+    backendReasons.length +
+    compatibilityReasonEntries.reduce((count, [, reasons]) => count + reasons.length, 0);
+
   return (
     <div className="grid grid-cols-12 gap-3">
       {/* The canvas itself — halftone background, the "engineering file" */}
@@ -131,7 +339,7 @@ function SpecCanvas({ s, accent }: { s: any; accent: string }) {
             {/* Node: Universe */}
             <SpecNode
               x={48} y={48} w={220}
-              kind="UNIVERSE" title={s.symbol} subtitle="Daily · 1m bars" tone="ink"
+              kind="UNIVERSE" title={s.symbol} subtitle={`${s.timeframe} · ${s.dataSource}`} tone="ink"
             />
             {/* Connector */}
             <Connector x1={158} y1={104} x2={158} y2={150} />
@@ -139,36 +347,38 @@ function SpecCanvas({ s, accent }: { s: any; accent: string }) {
             {/* Node: Filter */}
             <SpecNode
               x={48} y={150} w={220}
-              kind="FILTER" title="ATR(14) > 1.0" subtitle="Volatility floor" tone="cyan"
+              kind="DATA" title={s.dataSource} subtitle={s.sourcePath || "StrategySpec source path"} tone="cyan"
             />
             <Connector x1={158} y1={206} x2={158} y2={252} />
 
             {/* Node: Entry */}
             <SpecNode
               x={48} y={252} w={220}
-              kind="ENTRY" title="RSI(2) < 10 AND close > SMA(200)" subtitle="Mean reversion" tone="green"
+              kind="FACTORS" title={factorTitle} subtitle={`${s.factors.length} declared factors`} tone="green"
             />
             <Connector x1={268} y1={290} x2={420} y2={290} />
 
             {/* Node: Sizing */}
             <SpecNode
               x={420} y={252} w={220}
-              kind="SIZING" title="Risk parity 1.5%" subtitle="Per-trade vol target" tone="orange"
+              kind="CAPABILITIES" title={capabilityTitle} subtitle={`${s.requiredCapabilities.length} required`} tone="orange"
             />
             <Connector x1={530} y1={308} x2={530} y2={360} />
 
             {/* Node: Exit */}
             <SpecNode
               x={420} y={360} w={220}
-              kind="EXIT" title="RSI(2) > 70 OR -1.5% stop" subtitle="3 conditions" tone="pink"
+              kind="EXECUTION" title={s.executionMode} subtitle={`${s.backend} · ${s.backendStatus}`} tone="pink"
             />
 
             {/* Drifting "+" placeholder */}
             <button
               className="absolute flex items-center gap-1 px-3 h-8 rounded-full t-body-sm ink-muted bg-white/70 hover:bg-white"
               style={{ left: 700, top: 380, boxShadow: "var(--e1)", border: "1px dashed rgba(10,10,10,.18)" }}
+              disabled
+              title="Dashboard writes are not exposed in read-only mode."
             >
-              <Plus size={12} /> add node
+              <Plus size={12} /> read only
             </button>
           </div>
         </Card>
@@ -197,19 +407,245 @@ function SpecCanvas({ s, accent }: { s: any; accent: string }) {
             <CompatRow label="Pine export" ok={s.pine} note="full subset" />
             <CompatRow label="Python engine" ok={s.python} note="primary runtime" />
             <CompatRow label="Alpaca paper" ok={s.alpaca} note="paper_auto eligible" />
+            <CompatRow label="Backend plan" ok={s.backendStatus === "supported"} note={s.backendStatus} />
+          </div>
+          {(backendReasons.length > 0 || compatibilityReasonEntries.length > 0) && (
+            <div className="px-3 pb-3 pt-1 space-y-2">
+              <div className="flex items-center justify-between gap-2 px-1">
+                <span className="t-caption ink-subtle">Reason chain</span>
+                <span className="t-caption ink-muted">{reasonCount} notes</span>
+              </div>
+              <ReasonStack title="Backend plan" status={s.backendStatus} reasons={backendReasons} />
+              {compatibilityReasonEntries.map(([capability, reasons]) => (
+                <ReasonStack
+                  key={capability}
+                  title={capability}
+                  status={s.compatibility[capability] ?? "partial"}
+                  reasons={reasons}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {s.paperReadiness && (
+          <Card pad={false}>
+            <div className="px-5 py-3 hairline-b flex items-center justify-between">
+              <SectionTitle>Paper Readiness</SectionTitle>
+              <Tag color={s.paperReadiness.status === "ok" ? "green" : s.paperReadiness.status === "warning" ? "orange" : "pink"}>
+                {s.paperReadiness.status}
+              </Tag>
+            </div>
+            <div className="p-4 space-y-2">
+              <div className="t-caption ink-subtle t-mono truncate">
+                {s.paperReadiness.path}
+              </div>
+              {s.paperReadiness.checks.slice(0, 5).map((check) => (
+                <div key={check.name} className="flex items-start gap-3 t-body-sm">
+                  <Tag color={check.status === "ok" ? "green" : check.status === "warning" ? "orange" : "pink"}>
+                    {check.status}
+                  </Tag>
+                  <div className="min-w-0">
+                    <div className="t-title-sm">{check.name}</div>
+                    <div className="ink-muted leading-snug">{check.message}</div>
+                    {check.suggestedActions.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {check.suggestedActions.map((suggestion) => {
+                          const mapped = parseSuggestedStrategyAction(suggestion);
+                          return (
+                            <div key={suggestion} className="flex items-center gap-2">
+                              <div className="t-caption t-mono ink-subtle truncate flex-1">
+                                {suggestion}
+                              </div>
+                              {mapped && (
+                                <button
+                                  type="button"
+                                  onClick={() => runLifecycleCommand(mapped.action, mapped.dataSource)}
+                                  className="t-caption px-2 py-1 rounded-md border border-[rgba(10,10,10,.12)] bg-white hover:bg-[var(--paper-3)]"
+                                >
+                                  {mapped.label}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        <Card pad={false}>
+          <div className="px-5 py-3 hairline-b flex items-center justify-between">
+            <SectionTitle>Lifecycle</SectionTitle>
+            <Tag color={s.status === "active" ? "green" : s.status === "approved" ? "cyan" : "paper"}>
+              {s.status}
+            </Tag>
+          </div>
+          <div className="p-4 space-y-3">
+            <label className="ds-input flex items-center gap-2 h-10 px-3">
+              <span className="t-caption ink-subtle shrink-0">Reason</span>
+              <input
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                className="bg-transparent outline-none flex-1 t-body-md placeholder:text-[#9A988F]"
+                placeholder="operator check"
+              />
+            </label>
+            <label className="ds-input flex items-center gap-2 h-10 px-3">
+              <span className="t-caption ink-subtle shrink-0">Data source</span>
+              <select
+                value={dataSource}
+                onChange={(event) =>
+                  setDataSource(event.target.value as "keep" | "sample" | "alpaca" | "longbridge")
+                }
+                className="bg-transparent outline-none flex-1 t-body-md"
+              >
+                <option value="keep">keep current</option>
+                <option value="sample">sample</option>
+                <option value="alpaca">alpaca</option>
+                <option value="longbridge">longbridge</option>
+              </select>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {lifecycleActions.map(({ action, label, hint, icon: Icon, tone }) => (
+                <button
+                  key={action}
+                  onClick={() => runLifecycleCommand(action)}
+                  disabled={busyAction !== null}
+                  className={`flex items-center gap-3 px-3.5 py-3 text-left transition-colors ${
+                    busyAction === action ? "opacity-70" : "hover:bg-[var(--paper-3)]"
+                  }`}
+                  style={{
+                    borderRadius: "var(--r-md)",
+                    background: busyAction === action ? "var(--paper-3)" : "transparent",
+                    border: "1px solid rgba(10,10,10,.08)",
+                  }}
+                >
+                  <span
+                    className="flex h-8 w-8 items-center justify-center shrink-0"
+                    style={{
+                      borderRadius: 4,
+                      background:
+                        tone === "pink"
+                          ? "rgba(255,45,122,.12)"
+                          : tone === "green"
+                            ? "rgba(31,184,90,.12)"
+                            : "rgba(26,200,232,.12)",
+                      color:
+                        tone === "pink"
+                          ? "#C81E5C"
+                          : tone === "green"
+                            ? "#0A6E3B"
+                            : "#087A96",
+                    }}
+                  >
+                    <Icon size={15} strokeWidth={2.2} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="t-body-md block" style={{ fontWeight: 600 }}>
+                      {label}
+                    </span>
+                    <span className="t-body-sm ink-subtle block mt-0.5">{hint}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+            <div className="space-y-2 rounded-lg bg-[var(--paper-3)] p-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="t-caption ink-subtle">Status</span>
+                <span className="t-caption ink-subtle">
+                  {busyAction ? `Working on ${busyAction}` : "Idle"}
+                </span>
+              </div>
+              <div className="t-body-sm ink leading-snug">{statusMessage}</div>
+              {lastPlan && (
+                <div className="space-y-1 pt-1">
+                  <div className="t-body-sm ink-subtle">
+                    Plan <span className="t-mono">{lastPlan.command_id}</span>
+                  </div>
+                  <div className="t-body-sm ink-subtle">
+                    Confirmation <span className="t-mono">{lastPlan.confirmation_phrase}</span>
+                  </div>
+                  {lastPlan.warnings.length > 0 && (
+                    <div className="t-body-sm ink-subtle">
+                      Warnings: {lastPlan.warnings.join(" · ")}
+                    </div>
+                  )}
+                </div>
+              )}
+              {lastResult && (
+                <div className="space-y-1 pt-1">
+                  <div className="t-body-sm ink-subtle">
+                    Result <span className="t-mono">{lastResult.command_id}</span> · {lastResult.status}
+                  </div>
+                  <div className="t-body-sm ink-subtle">{lastResult.message}</div>
+                  {lastResult.output_paths && lastResult.output_paths.length > 0 && (
+                    <div className="t-body-sm ink-subtle">
+                      Outputs: {lastResult.output_paths.join(" · ")}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </Card>
+
+        {s.customDataBindings.length > 0 && (
+          <Card pad={false}>
+            <div className="px-5 py-3 hairline-b">
+              <SectionTitle>Nautilus replay</SectionTitle>
+            </div>
+            <div className="p-3 space-y-2">
+              {s.customDataBindings.map((binding: any) => (
+                <div
+                  key={`${binding.factorName}-${binding.path}`}
+                  className="p-3"
+                  style={{ background: "var(--paper-3)", borderRadius: "var(--r-md)" }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="t-title-sm truncate">{binding.factorName}</div>
+                      <div className="t-caption ink-subtle truncate">
+                        {binding.source} · {binding.field} · {binding.recordCount} rows
+                      </div>
+                    </div>
+                    <Tag color={replayStatusColor(binding.pointInTimeStatus)}>
+                      {binding.pointInTimeStatus}
+                    </Tag>
+                  </div>
+                  <div className="t-caption ink-subtle mt-2 truncate">
+                    {binding.path}
+                  </div>
+                  <div className="t-caption ink-subtle mt-1">
+                    {binding.firstTimestamp || "n/a"} → {binding.lastTimestamp || "n/a"}
+                  </div>
+                  {binding.replayWarnings.length > 0 && (
+                    <div className="t-body-sm ink-muted mt-2 leading-snug">
+                      {binding.replayWarnings.slice(0, 2).join(" · ")}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
         <Card pad={false}>
           <div className="px-5 py-3 hairline-b">
             <SectionTitle>Provenance</SectionTitle>
           </div>
           <div className="p-4 t-body-sm space-y-1.5">
-            <ProvRow k="Created" v="2026-04-12" />
-            <ProvRow k="Author" v="user · cellinz" />
-            <ProvRow k="Hash" v="a8c1…f9" mono />
-            <ProvRow k="Parent" v="v11" mono />
-            <ProvRow k="Last run" v="2 min ago" />
+            <ProvRow k="Source" v={s.sourcePath || "unknown"} mono />
+            <ProvRow k="Version" v={s.version} mono />
+            <ProvRow k="Hash" v={s.specHash || "unknown"} mono />
+            <ProvRow k="Backend plan" v={s.backendPlanPath || "n/a"} mono />
+            <ProvRow k="Paper readiness" v={s.paperReadinessReportPath || "n/a"} mono />
+            <ProvRow k="Broker" v={s.broker} />
+            <ProvRow k="Data" v={s.dataSource} />
           </div>
         </Card>
       </div>
@@ -287,6 +723,51 @@ function CompatRow({ label, ok, note }: { label: string; ok: boolean; note: stri
   );
 }
 
+function replayStatusColor(status: string) {
+  if (status === "complete") {
+    return "green";
+  }
+  if (status === "partial") {
+    return "orange";
+  }
+  return "pink";
+}
+
+function ReasonStack({
+  title,
+  status,
+  reasons,
+}: {
+  title: string;
+  status: "supported" | "partial" | "blocked" | "unsupported" | string;
+  reasons: string[];
+}) {
+  if (reasons.length === 0) {
+    return null;
+  }
+  const tone: "green" | "orange" | "pink" | "paper" =
+    status === "supported" ? "green"
+      : status === "partial" ? "orange"
+      : status === "blocked" ? "pink"
+      : "paper";
+
+  return (
+    <div className="rounded-lg border border-[rgba(10,10,10,.08)] bg-white px-3 py-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="t-title-sm">{title}</span>
+        <Tag color={tone}>{status}</Tag>
+      </div>
+      <ul className="mt-2 space-y-1">
+        {reasons.map((reason, index) => (
+          <li key={`${title}-${index}`} className="t-body-sm ink-subtle leading-5">
+            - {reason}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ProvRow({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between">
@@ -298,32 +779,54 @@ function ProvRow({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
 
 /* ---------------- Other tabs (light placeholders) ---------------- */
 
-function BacktestPanel({ s, accent }: { s: any; accent: string }) {
+function BacktestPanel({
+  s,
+  accent,
+  onRerun,
+  busyAction,
+}: {
+  s: any;
+  accent: string;
+  onRerun: (action: string) => void;
+  busyAction: string | null;
+}) {
   return (
     <div className="grid grid-cols-12 gap-3">
       <Card variant="dark" pad={false} className="col-span-8">
         <div className="px-5 pt-4 pb-3 flex items-end justify-between gap-4">
           <div>
-            <div className="t-caption" style={{ color: "rgba(242,242,240,.55)" }}>Equity curve · 5y</div>
-            <div className="t-display-xl mt-1.5 t-num">+184.2%</div>
+            <div className="t-caption" style={{ color: "rgba(242,242,240,.55)" }}>Equity curve · latest catalog run</div>
+            <div className="t-display-xl mt-1.5 t-num">{s.lastReturn >= 0 ? "+" : ""}{s.lastReturn}%</div>
           </div>
-          <div className="flex items-center gap-0.5 p-1 rounded-full bg-white/5">
-            {["1M", "3M", "1Y", "3Y", "5Y", "All"].map((p, i) => (
-              <button
-                key={p}
-                className={`px-2.5 h-7 inline-flex items-center t-body-sm rounded-full transition-colors ${
-                  i === 4 ? "bg-white text-[#0A0A0A]" : "text-white/65 hover:text-white"
-                }`}
-                style={{ fontWeight: 600 }}
-              >
-                {p}
-              </button>
-            ))}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onRerun("strategy.backtest.rerun")}
+              disabled={busyAction !== null}
+              className="flex items-center gap-2 px-3 h-8 rounded-full t-body-sm text-white transition-colors hover:bg-white/10 disabled:opacity-60"
+              style={{ border: "1px solid rgba(255,255,255,.15)" }}
+            >
+              <RefreshCw size={13} />
+              Rerun backtest
+            </button>
+            <div className="flex items-center gap-0.5 p-1 rounded-full bg-white/5">
+              {["1M", "3M", "1Y", "3Y", "5Y", "All"].map((p, i) => (
+                <button
+                  key={p}
+                  className={`px-2.5 h-7 inline-flex items-center t-body-sm rounded-full transition-colors ${
+                    i === 4 ? "bg-white text-[#0A0A0A]" : "text-white/65 hover:text-white"
+                  }`}
+                  style={{ fontWeight: 600 }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
         <div className="px-5 pb-5">
           <Sparkline
-            data={s.series.concat(s.series)}
+            data={s.series}
             color={accent}
             width={760}
             height={240}
@@ -350,11 +853,11 @@ function BacktestPanel({ s, accent }: { s: any; accent: string }) {
         </div>
         <div className="p-3 grid grid-cols-2 gap-1.5">
           {[
-            ["Cumulative", "+184.2%", "green"],
-            ["Annualized", "+22.6%",  "green"],
+            ["Cumulative", `${s.lastReturn >= 0 ? "+" : ""}${s.lastReturn}%`, "green"],
+            ["Annualized", "catalog",  "green"],
             ["Sharpe",     String(s.sharpe), null],
-            ["Max DD",     "−7.4%",   "pink"],
-            ["Win rate",   "58.4%",   null],
+            ["Risk",       s.risk,   "pink"],
+            ["Backend",    s.backendStatus,   null],
             ["Trades",     String(s.trades), null],
           ].map(([k, v, accent]) => (
             <div
@@ -378,15 +881,98 @@ function BacktestPanel({ s, accent }: { s: any; accent: string }) {
   );
 }
 
-function SignalsPanel() {
-  return <Card><div className="t-body-md ink-muted">Signal log table — render last 200 entry/exit events with backtest replay.</div></Card>;
+function SignalsPanel({
+  s,
+  onRerun,
+  busyAction,
+}: {
+  s: any;
+  onRerun: (action: string) => void;
+  busyAction: string | null;
+}) {
+  const rows = recentSignals.filter((signal) => signal.symbol === s.symbol || signal.strat === s.name);
+  return (
+    <Card pad={false}>
+      <div className="px-5 py-3 hairline-b flex items-center justify-between gap-3">
+        <SectionTitle>Signal log</SectionTitle>
+        <button
+          type="button"
+          onClick={() => onRerun("strategy.scan.rerun")}
+          disabled={busyAction !== null}
+          className="flex items-center gap-2 px-3 h-8 rounded-full t-body-sm transition-colors hover:bg-[var(--paper-3)] disabled:opacity-60"
+          style={{ border: "1px solid rgba(10,10,10,.1)" }}
+        >
+          <RefreshCw size={13} />
+          Rerun scan
+        </button>
+      </div>
+      {rows.length === 0 ? (
+        <div className="p-5 t-body-md ink-muted">No signal log entries are linked to this strategy.</div>
+      ) : (
+        <table className="w-full t-body-sm">
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id} className="hairline-b last:border-b-0">
+                <td className="px-5 py-3 t-mono ink-muted">{row.t}</td>
+                <td>{row.side}</td>
+                <td>{row.symbol}</td>
+                <td className="text-right pr-5 t-num">{row.px.toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Card>
+  );
 }
-function VersionsMini() {
-  return <Card><div className="t-body-md ink-muted">Version lineage tree for this strategy — diff & rollback.</div></Card>;
+function VersionsMini({ s }: { s: any }) {
+  const rows = versions.filter((version) => version.strat === s.name || s.version === version.id);
+  return (
+    <Card>
+      {rows.length === 0 ? (
+        <div className="t-body-md ink-muted">No version rows are linked to this strategy.</div>
+      ) : rows.map((version) => (
+        <div key={version.id} className="flex items-center gap-3 py-2 hairline-b last:border-b-0">
+          <GitBranch size={14} className="ink-subtle" />
+          <span className="t-mono">{version.id}</span>
+          <span className="t-title-sm">{version.strat}</span>
+          <span className="ml-auto t-mono ink-muted">{version.hash}</span>
+        </div>
+      ))}
+    </Card>
+  );
 }
-function LLMPanel() {
-  return <Card><div className="t-body-md ink-muted">Review cards, scan outputs and orchestrator decisions tied to this strategy.</div></Card>;
+function LLMPanel({ s }: { s: any }) {
+  const rows = llmReviews.filter((review) => review.strat === s.name);
+  return (
+    <Card>
+      {rows.length === 0 ? (
+        <div className="t-body-md ink-muted">
+          {s.llmReviewEnabled ? "LLM review is enabled, but no review cards are present." : "LLM review is disabled for this strategy."}
+        </div>
+      ) : rows.map((review) => (
+        <div key={review.id} className="py-2 hairline-b last:border-b-0">
+          <Tag pill color={review.color}>{review.verdict}</Tag>
+          <div className="t-title-sm mt-2">{review.strat}</div>
+          <div className="t-body-sm ink-muted mt-1">{review.summary}</div>
+        </div>
+      ))}
+    </Card>
+  );
 }
-function AuditMini() {
-  return <Card><div className="t-body-md ink-muted">Audit events scoped to this strategy — approvals, blocks, paper toggles.</div></Card>;
+function AuditMini({ s }: { s: any }) {
+  const rows = auditLog.filter((audit) => audit.target.includes(s.id) || audit.target.includes(s.name));
+  return (
+    <Card>
+      {rows.length === 0 ? (
+        <div className="t-body-md ink-muted">No audit events are linked to this strategy.</div>
+      ) : rows.map((audit) => (
+        <div key={`${audit.t}-${audit.action}`} className="flex items-center gap-3 py-2 hairline-b last:border-b-0">
+          <span className="t-mono ink-muted">{audit.t}</span>
+          <Tag color={audit.who === "user" ? "paper" : "orange"}>{audit.who}</Tag>
+          <span>{audit.action}</span>
+        </div>
+      ))}
+    </Card>
+  );
 }

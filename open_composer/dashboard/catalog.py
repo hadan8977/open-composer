@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.dashboard import (
@@ -13,17 +13,26 @@ from open_composer.models.dashboard import (
     DashboardCapabilityFinding,
     DashboardCatalog,
     DashboardContext,
+    DashboardCustomDataBinding,
     DashboardDataComparison,
+    DashboardDeploymentReport,
+    DashboardDeploymentStep,
     DashboardFeaturePacket,
     DashboardGroup,
     DashboardJournalEntry,
+    DashboardOperationalCheck,
     DashboardOrder,
+    DashboardPaperPosition,
+    DashboardPaperReadinessCheck,
+    DashboardPaperReadinessReport,
+    DashboardReadinessReport,
     DashboardReview,
     DashboardRun,
     DashboardSignal,
     DashboardStrategy,
     DashboardSummary,
     DashboardVersion,
+    DashboardWorkflowReport,
 )
 from open_composer.models.journal import TradeJournalEntry
 from open_composer.models.review_card import ReviewCard
@@ -58,10 +67,15 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
     context_records = _build_context_records(base, signal_records)
     journal_records = _build_journal_records(base)
     order_records = _build_order_records(base)
+    paper_position_records = _build_paper_position_records(base)
+    paper_readiness_records = _build_paper_readiness_records(base)
     audit_records = _build_audit_records(base, journal_records, order_records)
     group_records = _build_group_records(strategy_records)
     data_comparison_records = _build_data_comparison_records(base)
-    feature_packet_records = _build_feature_packet_records(base)
+    feature_packet_records = build_feature_packet_records(base)
+    workflow_records = _build_workflow_records(base)
+    readiness_report = _build_readiness_record(base)
+    deployment_report = _build_deployment_record(base)
 
     summary = _build_summary(
         base=base,
@@ -77,6 +91,10 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         audits=audit_records,
         data_comparisons=data_comparison_records,
         feature_packets=feature_packet_records,
+        workflow_reports=workflow_records,
+        readiness_report=readiness_report,
+        deployment_report=deployment_report,
+        paper_readiness_reports=paper_readiness_records,
     )
 
     return DashboardCatalog(
@@ -91,10 +109,15 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         contexts=context_records,
         journals=journal_records,
         orders=order_records,
+        paper_positions=paper_position_records,
+        paper_readiness_reports=paper_readiness_records,
         audits=audit_records,
         groups=group_records,
         data_comparisons=data_comparison_records,
         feature_packets=feature_packet_records,
+        workflow_reports=workflow_records,
+        readiness_report=readiness_report,
+        deployment_report=deployment_report,
     )
 
 
@@ -178,6 +201,11 @@ def _build_version_records(base: Path, spec_paths: list[Path]) -> list[Dashboard
                 "llm_feature_factor_names": sorted(
                     name for name, factor in spec.factors.items() if factor.source == "llm_feature"
                 ),
+                "feature_packet_factor_names": sorted(
+                    name
+                    for name, factor in spec.factors.items()
+                    if factor.source == "feature_packet"
+                ),
                 "backend": spec.execution.backend,
                 "backend_status": capability_report.backend_plan.status,
                 "backend_reasons": list(capability_report.backend_plan.reasons),
@@ -248,6 +276,7 @@ def _build_version_records(base: Path, spec_paths: list[Path]) -> list[Dashboard
             "universe": list(registered.universe),
             "factor_names": list(registered.factor_names),
             "llm_feature_factor_names": list(registered.llm_feature_factor_names),
+            "feature_packet_factor_names": list(registered.feature_packet_factor_names),
             "backend": registered.backend,
             "backend_status": capability_report.backend_plan.status,
             "backend_reasons": list(capability_report.backend_plan.reasons),
@@ -297,6 +326,7 @@ def _build_version_records(base: Path, spec_paths: list[Path]) -> list[Dashboard
                 "universe",
                 "factor_names",
                 "llm_feature_factor_names",
+                "feature_packet_factor_names",
                 "backend",
                 "backend_status",
                 "backend_reasons",
@@ -366,6 +396,7 @@ def _build_strategy_records(version_records: list[DashboardVersion]) -> list[Das
                 factor_names=list(selected.factor_names),
                 factor_count=len(selected.factor_names),
                 llm_feature_factor_names=list(selected.llm_feature_factor_names),
+                feature_packet_factor_names=list(selected.feature_packet_factor_names),
                 backend=selected.backend,
                 backend_status=selected.backend_status,
                 backend_reasons=list(selected.backend_reasons),
@@ -418,6 +449,10 @@ def _build_run_and_signal_records(
         report_strategy_backend = _registered_value(report.get("strategy_backend"))
         report_execution_backend = _registered_value(report.get("execution_backend"))
         report_backend_plan_path = _registered_value(report.get("backend_plan_path"))
+        custom_data_bindings = _backend_plan_custom_data_bindings(
+            base,
+            report_backend_plan_path,
+        )
         if run_id.startswith("scan-") or report_path.parent.name == "scans":
             kind = "scan"
         else:
@@ -439,6 +474,7 @@ def _build_run_and_signal_records(
             report_path=_relpath(report_path, base),
             signal_log_path=None,
             backend_plan_path=report_backend_plan_path,
+            custom_data_bindings=custom_data_bindings,
             symbol=report["symbol"],
             timeframe=report["timeframe"],
             bars=report.get("bars"),
@@ -548,6 +584,8 @@ def _build_run_and_signal_records(
             signals_payload = list(row.get("signals", []))
             first_signal = signals_payload[0] if signals_payload else {}
             report_path = base / "reports" / "runs" / f"{run_id}.md"
+            backend_plan_path = _registered_value(row.get("backend_plan_path"))
+            paper_readiness_report_path = _registered_value(row.get("paper_readiness_report_path"))
             runs[run_id] = DashboardRun(
                 run_id=run_id,
                 strategy_id=strategy_id,
@@ -563,7 +601,12 @@ def _build_run_and_signal_records(
                 source_path=_relpath(cycle_path, base),
                 report_path=_relpath(report_path, base) if report_path.exists() else None,
                 signal_log_path=None,
-                backend_plan_path=_registered_value(row.get("backend_plan_path")),
+                backend_plan_path=backend_plan_path,
+                paper_readiness_report_path=paper_readiness_report_path,
+                custom_data_bindings=_backend_plan_custom_data_bindings(
+                    base,
+                    backend_plan_path,
+                ),
                 symbol=str(first_signal.get("symbol", "")),
                 timeframe=selected_version.timeframe if selected_version else "",
                 signals=len(signals_payload),
@@ -717,6 +760,72 @@ def _build_order_records(base: Path) -> list[DashboardOrder]:
     return order_records
 
 
+def _build_paper_position_records(base: Path) -> list[DashboardPaperPosition]:
+    path = base / "reports" / "paper" / "positions.json"
+    if not path.exists():
+        return []
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    rows = raw.get("positions", []) if isinstance(raw, dict) else []
+    positions: list[DashboardPaperPosition] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        positions.append(
+            DashboardPaperPosition(
+                symbol=str(row.get("symbol", "")),
+                qty=float(row.get("qty", 0) or 0),
+                market_value=_optional_float(row.get("market_value")),
+                cost_basis=_optional_float(row.get("cost_basis")),
+                unrealized_pl=_optional_float(row.get("unrealized_pl")),
+                unrealized_plpc=_optional_float(row.get("unrealized_plpc")),
+                current_price=_optional_float(row.get("current_price")),
+                side=str(row.get("side", "")),
+                updated_at=_parse_datetime(str(row.get("updated_at"))),
+                paper=bool(row.get("paper", True)),
+                path=_relpath(path, base),
+            )
+        )
+    positions.sort(key=lambda item: (item.symbol, item.side))
+    return positions
+
+
+def _build_paper_readiness_records(base: Path) -> list[DashboardPaperReadinessReport]:
+    records: list[DashboardPaperReadinessReport] = []
+    root = base / "reports" / "paper" / "readiness"
+    if not root.exists():
+        return records
+    for path in sorted(root.glob("*.json")):
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        checks = [
+            DashboardPaperReadinessCheck(
+                name=str(check.get("name", "")),
+                status=str(check.get("status", "blocked")),  # type: ignore[arg-type]
+                message=str(check.get("message", "")),
+                suggested_actions=[str(action) for action in check.get("suggested_actions", [])],
+            )
+            for check in raw.get("checks", [])
+            if isinstance(check, dict)
+        ]
+        records.append(
+            DashboardPaperReadinessReport(
+                strategy_name=str(raw.get("strategy_name", path.stem)),
+                strategy_id=str(raw.get("strategy_name", path.stem)),
+                status=str(raw.get("status", "blocked")),  # type: ignore[arg-type]
+                ready=bool(raw.get("ready", False)),
+                generated_at=_parse_datetime(raw.get("generated_at") or _file_mtime(path)),
+                path=_relpath(path, base),
+                report_markdown_path=_registered_value(raw.get("report_markdown_path")),
+                blocking_checks=[check.name for check in checks if check.status == "blocked"],
+                warning_checks=[check.name for check in checks if check.status == "warning"],
+                checks=checks,
+            )
+        )
+    return records
+
+
 def _build_audit_records(
     base: Path,
     journal_records: list[DashboardJournalEntry],
@@ -772,12 +881,40 @@ def _build_audit_records(
                 },
             )
         )
+    for index, row in enumerate(_load_dashboard_command_events(base), start=1):
+        created_at = _parse_datetime(str(row.get("created_at")))
+        audit_records.append(
+            DashboardAuditEvent(
+                id=f"dashboard_command_{index}",
+                kind="dashboard_command",
+                signal_id=None,
+                created_at=created_at,
+                action=str(row.get("status", "unknown")),
+                target=str(row.get("action", "dashboard_command")),
+                source_path="reports/dashboard/commands/events.jsonl",
+                details={
+                    "command_id": str(row.get("command_id", "")),
+                    "actor": str(row.get("actor", "")),
+                    "reason": str(row.get("reason", "")),
+                    "plan_path": row.get("plan_path"),
+                    "result_path": row.get("result_path"),
+                    "message": str(row.get("message", "")),
+                },
+            )
+        )
     audit_records.sort(key=lambda item: (item.created_at, item.id))
     return audit_records
 
 
 def _load_paper_kill_switch_events(base: Path) -> list[dict[str, Any]]:
     path = base / "reports" / "paper" / "kill_switch_events.jsonl"
+    if not path.exists():
+        return []
+    return _load_jsonl(path)
+
+
+def _load_dashboard_command_events(base: Path) -> list[dict[str, Any]]:
+    path = base / "reports" / "dashboard" / "commands" / "events.jsonl"
     if not path.exists():
         return []
     return _load_jsonl(path)
@@ -839,24 +976,191 @@ def _build_data_comparison_records(base: Path) -> list[DashboardDataComparison]:
     return records
 
 
-def _build_feature_packet_records(base: Path) -> list[DashboardFeaturePacket]:
+def _build_workflow_records(base: Path) -> list[DashboardWorkflowReport]:
+    records: list[DashboardWorkflowReport] = []
+    root = base / "reports" / "workflows"
+    if not root.exists():
+        return records
+    for path in sorted(root.glob("*.verify.json")):
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(raw, dict):
+            continue
+        status = str(raw.get("status", "warning"))
+        if status not in {"ok", "warning", "blocked"}:
+            status = "warning"
+        paper_status = _registered_value(raw.get("paper_readiness_status"))
+        if paper_status not in {"ok", "warning", "blocked"}:
+            paper_status = None
+        markdown_path = path.with_suffix(".md")
+        strategy_name = str(raw.get("strategy_name") or path.name.removesuffix(".verify.json"))
+        records.append(
+            DashboardWorkflowReport(
+                strategy_name=strategy_name,
+                strategy_id=str(raw.get("strategy_id") or strategy_name),
+                status=status,  # type: ignore[arg-type]
+                source_path=str(raw.get("source_path") or ""),
+                spec_hash=_registered_value(raw.get("spec_hash")),
+                backtest_run_id=_registered_value(raw.get("backtest_run_id")),
+                scan_signal_count=int(raw.get("scan_signal_count", 0) or 0),
+                paper_readiness_status=paper_status,  # type: ignore[arg-type]
+                paper_ready=bool(raw.get("paper_ready", False)),
+                output_paths=[
+                    str(output_path) for output_path in raw.get("output_paths", []) if output_path
+                ],
+                path=_relpath(path, base),
+                report_markdown_path=_relpath(markdown_path, base)
+                if markdown_path.exists()
+                else None,
+            )
+        )
+    records.sort(key=lambda item: (item.strategy_name.lower(), item.path))
+    return records
+
+
+def _build_readiness_record(base: Path) -> DashboardReadinessReport | None:
+    path = base / "reports" / "readiness" / "readiness.json"
+    if not path.exists():
+        return None
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    markdown_path = path.with_suffix(".md")
+    return DashboardReadinessReport(
+        status=_operational_status(raw.get("status")),
+        ready=bool(raw.get("ready", False)),
+        generated_at=_optional_datetime(raw.get("generated_at")),
+        path=_relpath(path, base),
+        report_markdown_path=_relpath(markdown_path, base) if markdown_path.exists() else None,
+        checks=[
+            _operational_check(check) for check in raw.get("checks", []) if isinstance(check, dict)
+        ],
+    )
+
+
+def _build_deployment_record(base: Path) -> DashboardDeploymentReport | None:
+    path = base / "reports" / "deployment" / "prepare.json"
+    if not path.exists():
+        return None
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    markdown_path = path.with_suffix(".md")
+    return DashboardDeploymentReport(
+        status=_operational_status(raw.get("status")),
+        ready=bool(raw.get("ready", False)),
+        generated_at=_optional_datetime(raw.get("generated_at")),
+        path=_relpath(path, base),
+        report_markdown_path=_relpath(markdown_path, base) if markdown_path.exists() else None,
+        steps=[_deployment_step(step) for step in raw.get("steps", []) if isinstance(step, dict)],
+    )
+
+
+def _operational_check(raw: dict[str, Any]) -> DashboardOperationalCheck:
+    return DashboardOperationalCheck(
+        name=str(raw.get("name", "")),
+        status=_operational_status(raw.get("status")),
+        message=str(raw.get("message", "")),
+        suggested_actions=[str(action) for action in raw.get("suggested_actions", []) if action],
+        details=raw.get("details", {}) if isinstance(raw.get("details", {}), dict) else {},
+    )
+
+
+def _deployment_step(raw: dict[str, Any]) -> DashboardDeploymentStep:
+    return DashboardDeploymentStep(
+        name=str(raw.get("name", "")),
+        status=_operational_status(raw.get("status")),
+        message=str(raw.get("message", "")),
+        suggested_actions=[str(action) for action in raw.get("suggested_actions", []) if action],
+        details=raw.get("details", {}) if isinstance(raw.get("details", {}), dict) else {},
+        output_paths=[str(path) for path in raw.get("output_paths", []) if path],
+    )
+
+
+def _operational_status(value: object) -> Literal["ok", "warning", "blocked"]:
+    text = str(value or "warning")
+    if text in {"ok", "warning", "blocked"}:
+        return text  # type: ignore[return-value]
+    return "warning"
+
+
+def _backend_plan_custom_data_bindings(
+    base: Path,
+    backend_plan_path: str | None,
+) -> list[DashboardCustomDataBinding]:
+    if not backend_plan_path:
+        return []
+    path = Path(backend_plan_path)
+    if not path.is_absolute():
+        path = base / path
+    if not path.exists():
+        return []
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    bindings = raw.get("custom_data_bindings", []) if isinstance(raw, dict) else []
+    records: list[DashboardCustomDataBinding] = []
+    for item in bindings:
+        if not isinstance(item, dict):
+            continue
+        status = str(item.get("point_in_time_status") or "missing")
+        if status not in {"complete", "partial", "missing"}:
+            status = "missing"
+        records.append(
+            DashboardCustomDataBinding(
+                factor_name=str(item.get("factor_name", "")),
+                source=str(item.get("source", "")),
+                path=str(item.get("path", "")),
+                field=str(item.get("field", "")),
+                record_count=int(item.get("record_count", 0) or 0),
+                first_timestamp=_registered_value(item.get("first_timestamp")),
+                last_timestamp=_registered_value(item.get("last_timestamp")),
+                point_in_time_status=status,  # type: ignore[arg-type]
+                replay_warnings=[str(value) for value in item.get("replay_warnings", [])],
+            )
+        )
+    return records
+
+
+def build_feature_packet_records(base: Path | None = None) -> list[DashboardFeaturePacket]:
+    base = base or project_root()
     records: list[DashboardFeaturePacket] = []
     for path in sorted((base / "feature_logs").glob("*.jsonl")):
         rows = _load_jsonl(path)
+        dict_rows = [row for row in rows if isinstance(row, dict)]
         timestamps = [
-            _parse_datetime(str(row["timestamp"]))
-            for row in rows
-            if isinstance(row, dict) and row.get("timestamp")
+            _parse_datetime(str(row["timestamp"])) for row in dict_rows if row.get("timestamp")
         ]
-        field_names = sorted(
-            {
-                key
-                for row in rows
-                if isinstance(row, dict)
-                for key in row.keys()
-                if key != "timestamp"
-            }
-        )
+        field_names = sorted({key for row in dict_rows for key in row.keys() if key != "timestamp"})
+        key_sets = [set(row) for row in dict_rows]
+        has_timestamp = bool(dict_rows) and all("timestamp" in keys for keys in key_sets)
+        has_published_at = bool(dict_rows) and all("published_at" in keys for keys in key_sets)
+        has_fetched_at = bool(dict_rows) and all("fetched_at" in keys for keys in key_sets)
+        has_dedupe_key = bool(dict_rows) and all("dedupe_key" in keys for keys in key_sets)
+        warnings: list[str] = []
+        if not has_timestamp:
+            warnings.append("feature packet rows must include timestamp for replay")
+        if not has_published_at:
+            warnings.append("published_at is missing for at least one row")
+        if not has_fetched_at:
+            warnings.append("fetched_at is missing for at least one row")
+        if not has_dedupe_key:
+            warnings.append("dedupe_key is missing for at least one row")
+        if has_timestamp and has_published_at and has_fetched_at and has_dedupe_key:
+            point_in_time_status = "complete"
+        elif has_timestamp:
+            point_in_time_status = "partial"
+        else:
+            point_in_time_status = "missing"
         records.append(
             DashboardFeaturePacket(
                 path=_relpath(path, base),
@@ -864,6 +1168,12 @@ def _build_feature_packet_records(base: Path) -> list[DashboardFeaturePacket]:
                 field_names=field_names,
                 first_timestamp=min(timestamps).isoformat() if timestamps else None,
                 last_timestamp=max(timestamps).isoformat() if timestamps else None,
+                has_timestamp=has_timestamp,
+                has_published_at=has_published_at,
+                has_fetched_at=has_fetched_at,
+                has_dedupe_key=has_dedupe_key,
+                point_in_time_status=point_in_time_status,
+                replay_warnings=warnings,
             )
         )
     return records
@@ -884,6 +1194,10 @@ def _build_summary(
     audits: list[DashboardAuditEvent],
     data_comparisons: list[DashboardDataComparison],
     feature_packets: list[DashboardFeaturePacket],
+    workflow_reports: list[DashboardWorkflowReport],
+    readiness_report: DashboardReadinessReport | None,
+    deployment_report: DashboardDeploymentReport | None,
+    paper_readiness_reports: list[DashboardPaperReadinessReport],
 ) -> DashboardSummary:
     lifecycle_counts = Counter(strategy.lifecycle for strategy in strategies)
     model_role_counts = Counter(strategy.model_role for strategy in strategies)
@@ -891,6 +1205,7 @@ def _build_summary(
     backend_counts = Counter(strategy.backend for strategy in strategies)
     backend_status_counts = Counter(strategy.backend_status for strategy in strategies)
     run_kind_counts = Counter(run.kind for run in runs)
+    paper_readiness_counts = Counter(report.status for report in paper_readiness_reports)
     paper_status = build_paper_status(base)
     compatibility_counts: dict[str, dict[str, int]] = {}
     capabilities_to_report = [
@@ -933,6 +1248,23 @@ def _build_summary(
         audit_count=len(audits),
         data_comparison_count=len(data_comparisons),
         feature_packet_count=len(feature_packets),
+        workflow_report_count=len(workflow_reports),
+        readiness_status=readiness_report.status if readiness_report else "missing",
+        readiness_ready=readiness_report.ready if readiness_report else False,
+        readiness_warning_count=_operational_count(readiness_report.checks, "warning")
+        if readiness_report
+        else 0,
+        readiness_blocked_count=_operational_count(readiness_report.checks, "blocked")
+        if readiness_report
+        else 0,
+        deployment_status=deployment_report.status if deployment_report else "missing",
+        deployment_ready=deployment_report.ready if deployment_report else False,
+        deployment_warning_count=_operational_count(deployment_report.steps, "warning")
+        if deployment_report
+        else 0,
+        deployment_blocked_count=_operational_count(deployment_report.steps, "blocked")
+        if deployment_report
+        else 0,
         active_strategy_count=sum(1 for item in strategies if item.lifecycle == "active"),
         paper_auto_strategy_count=sum(
             1
@@ -948,15 +1280,19 @@ def _build_summary(
         paper_account_cash=paper_status.account_cash,
         paper_account_buying_power=paper_status.account_buying_power,
         paper_account_portfolio_value=paper_status.account_portfolio_value,
+        paper_account_snapshot_at=paper_status.account_snapshot_at,
         paper_position_count=paper_status.position_count,
         paper_total_position_market_value=paper_status.total_position_market_value,
         paper_total_unrealized_pl=paper_status.total_unrealized_pl,
+        paper_positions_snapshot_at=paper_status.positions_snapshot_at,
         paper_reconciliation_status=paper_status.reconciliation_status,
         paper_reconciliation_issue_count=paper_status.reconciliation_issue_count,
         paper_reconciliation_report_path=paper_status.reconciliation_report_path,
         paper_alert_status=paper_status.alert_status,
         paper_alert_count=paper_status.alert_count,
         paper_alert_report_path=paper_status.alert_report_path,
+        paper_readiness_count=len(paper_readiness_reports),
+        paper_readiness_status_counts=dict(sorted(paper_readiness_counts.items())),
         strategy_backend_counts=dict(sorted(backend_counts.items())),
         backend_status_counts=dict(sorted(backend_status_counts.items())),
         pure_quant_count=model_role_counts.get("pure_quant", 0),
@@ -999,12 +1335,20 @@ def _render_catalog_markdown(catalog: DashboardCatalog) -> str:
         f"| Audit events | {summary.audit_count} |",
         f"| Data comparisons | {summary.data_comparison_count} |",
         f"| Feature packets | {summary.feature_packet_count} |",
+        f"| Workflow reports | {summary.workflow_report_count} |",
+        f"| Readiness | {summary.readiness_status} |",
+        f"| Deployment prepare | {summary.deployment_status} |",
         f"| Active strategies | {summary.active_strategy_count} |",
         f"| Active paper_auto strategies | {summary.paper_auto_strategy_count} |",
         f"| Paper kill switch | {'on' if summary.paper_kill_switch_enabled else 'off'} |",
         f"| Open paper orders | {summary.paper_open_order_count} |",
         f"| Paper account equity | {_money(summary.paper_account_equity)} |",
+        f"| Paper account snapshot | {_format_optional_dt(summary.paper_account_snapshot_at)} |",
         f"| Paper positions | {summary.paper_position_count} |",
+        (
+            "| Paper positions snapshot | "
+            f"{_format_optional_dt(summary.paper_positions_snapshot_at)} |"
+        ),
         f"| Paper unrealized PnL | {_money(summary.paper_total_unrealized_pl)} |",
         f"| Paper reconciliation | {summary.paper_reconciliation_status} "
         f"({summary.paper_reconciliation_issue_count} issues) |",
@@ -1102,6 +1446,9 @@ def _render_review_markdown(catalog: DashboardCatalog) -> str:
         f"- Journal entries indexed: `{summary.journal_count}`",
         f"- Data comparisons indexed: `{summary.data_comparison_count}`",
         f"- Feature packets indexed: `{summary.feature_packet_count}`",
+        f"- Workflow reports indexed: `{summary.workflow_report_count}`",
+        f"- Readiness status: `{summary.readiness_status}` ready=`{summary.readiness_ready}`",
+        f"- Deployment status: `{summary.deployment_status}` ready=`{summary.deployment_ready}`",
         "",
         "## Backend Snapshot",
         "",
@@ -1110,7 +1457,9 @@ def _render_review_markdown(catalog: DashboardCatalog) -> str:
         f"- Paper kill switch: `{'on' if summary.paper_kill_switch_enabled else 'off'}`",
         f"- Paper order status counts: `{summary.paper_order_status_counts}`",
         f"- Paper account equity: `{_money(summary.paper_account_equity)}`",
+        f"- Paper account snapshot: `{_format_optional_dt(summary.paper_account_snapshot_at)}`",
         f"- Paper positions: `{summary.paper_position_count}`",
+        f"- Paper positions snapshot: `{_format_optional_dt(summary.paper_positions_snapshot_at)}`",
         f"- Paper unrealized PnL: `{_money(summary.paper_total_unrealized_pl)}`",
         f"- Paper reconciliation: `{summary.paper_reconciliation_status}` "
         f"issues=`{summary.paper_reconciliation_issue_count}`",
@@ -1127,7 +1476,7 @@ def _render_review_markdown(catalog: DashboardCatalog) -> str:
         "- Signal, review, context, and journal pages can be populated from existing artifacts.",
         "- Paper status and kill switch events can be read from local paper artifacts.",
         "- Data comparison reports can show latest low-cost source coverage and caveats.",
-        "- Feature packet logs can show replay inputs for llm_feature factors.",
+        "- Feature packet logs can show replay inputs for llm_feature and feature_packet factors.",
         (
             "- A static read-only Dashboard can now be generated at "
             "`reports/dashboard/index.html` and `reports/dashboard/strategies/*.html` "
@@ -1298,6 +1647,31 @@ def _parse_datetime(value: str | datetime) -> datetime:
     return parsed
 
 
+def _optional_float(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_datetime(value: object) -> datetime | None:
+    if value is None:
+        return None
+    try:
+        return _parse_datetime(value if isinstance(value, datetime) else str(value))
+    except ValueError:
+        return None
+
+
+def _operational_count(
+    checks: list[DashboardOperationalCheck] | list[DashboardDeploymentStep],
+    status: str,
+) -> int:
+    return sum(1 for check in checks if check.status == status)
+
+
 def _strip_backticks(value: str) -> str:
     stripped = value.strip()
     if stripped.startswith("`") and stripped.endswith("`"):
@@ -1318,6 +1692,10 @@ def _money(value: float | None) -> str:
     if value is None:
         return "n/a"
     return f"${value:,.2f}"
+
+
+def _format_optional_dt(value: datetime | None) -> str:
+    return value.isoformat() if value else "n/a"
 
 
 def _relpath(path: Path, base: Path) -> str:

@@ -29,6 +29,7 @@ OPEN_ORDER_STATUSES = {
     "pending_new",
     "submitted",
 }
+PAPER_SNAPSHOT_STALE_SECONDS = 15 * 60
 
 
 def load_paper_kill_switch(root: Path | None = None) -> PaperKillSwitch:
@@ -111,6 +112,7 @@ def build_paper_status(root: Path | None = None) -> PaperStatusSnapshot:
     ]
     account = _paper_account(base)
     positions = _paper_positions(base)
+    positions_snapshot_at = max((item.updated_at for item in positions), default=None)
     reconciliation = _paper_reconciliation(base)
     alerts = _paper_alert_report(base)
     notes = ["Paper status is rebuilt from local strategy specs and paper order artifacts."]
@@ -129,9 +131,11 @@ def build_paper_status(root: Path | None = None) -> PaperStatusSnapshot:
         account_cash=account.cash if account else None,
         account_buying_power=account.buying_power if account else None,
         account_portfolio_value=account.portfolio_value if account else None,
+        account_snapshot_at=account.generated_at if account else None,
         position_count=len(positions),
         total_position_market_value=sum(item.market_value or 0.0 for item in positions),
         total_unrealized_pl=sum(item.unrealized_pl or 0.0 for item in positions),
+        positions_snapshot_at=positions_snapshot_at,
         reconciliation_status=reconciliation.status if reconciliation else "unknown",
         reconciliation_issue_count=reconciliation.issue_count if reconciliation else 0,
         reconciliation_report_path=reconciliation.report_markdown_path if reconciliation else None,
@@ -274,6 +278,30 @@ def build_paper_alerts(root: Path | None = None) -> PaperAlertReport:
                 source_path=str(base / "reports" / "paper" / "account.json"),
             )
         )
+    elif _is_stale(status.account_snapshot_at):
+        alerts.append(
+            PaperAlert(
+                severity="warning",
+                code="stale_paper_account_snapshot",
+                message=(
+                    "Paper account snapshot is stale; run oc paper sync-account before "
+                    "making paper execution decisions."
+                ),
+                source_path=str(base / "reports" / "paper" / "account.json"),
+            )
+        )
+    if status.position_count and _is_stale(status.positions_snapshot_at):
+        alerts.append(
+            PaperAlert(
+                severity="warning",
+                code="stale_paper_positions_snapshot",
+                message=(
+                    "Paper positions snapshot is stale; run oc paper sync-account before "
+                    "reviewing position risk."
+                ),
+                source_path=str(base / "reports" / "paper" / "positions.json"),
+            )
+        )
     if status.total_unrealized_pl < 0:
         alerts.append(
             PaperAlert(
@@ -297,16 +325,34 @@ def build_paper_alerts(root: Path | None = None) -> PaperAlertReport:
     return report
 
 
-def refresh_paper_monitor(root: Path | None = None) -> PaperMonitorReport:
+def refresh_paper_monitor(
+    root: Path | None = None,
+    *,
+    sync_broker: bool = False,
+) -> PaperMonitorReport:
     base = root or project_root()
+    sync_status = "skipped"
+    sync_error = ""
+    sync_output_paths: list[str] = []
+    if sync_broker:
+        try:
+            sync_output_paths = _sync_broker_snapshots(base)
+        except Exception as exc:
+            sync_status = "error"
+            sync_error = str(exc)
+        else:
+            sync_status = "ok"
+
     reconciliation = reconcile_paper_state(base)
     alerts = build_paper_alerts(base)
     status_path = write_paper_status(base)
-    status = (
-        "error" if alerts.status == "error" else "warning" if alerts.status == "warning" else "ok"
-    )
+    status = "error" if sync_status == "error" else _monitor_status(alerts.status)
     report = PaperMonitorReport(
         status=status,
+        sync_broker=sync_broker,
+        sync_status=sync_status,
+        sync_error=sync_error,
+        sync_output_paths=sync_output_paths,
         reconciliation_status=reconciliation.status,
         reconciliation_issue_count=reconciliation.issue_count,
         alert_status=alerts.status,
@@ -329,12 +375,13 @@ def run_paper_monitor_loop(
     *,
     interval_seconds: float = 60.0,
     max_cycles: int = 1,
+    sync_broker: bool = False,
 ) -> list[PaperMonitorReport]:
     base = root or project_root()
     reports: list[PaperMonitorReport] = []
     index = 0
     while max_cycles == 0 or index < max_cycles:
-        report = refresh_paper_monitor(base)
+        report = refresh_paper_monitor(base, sync_broker=sync_broker)
         reports.append(report)
         append_jsonl(base / "reports" / "paper" / "monitor_cycles.jsonl", [report])
         index += 1
@@ -396,6 +443,32 @@ def _alert_status(alerts: list[PaperAlert]) -> str:
     if any(item.severity == "warning" for item in alerts):
         return "warning"
     return "ok"
+
+
+def _monitor_status(alert_status: str) -> str:
+    if alert_status == "error":
+        return "error"
+    if alert_status == "warning":
+        return "warning"
+    return "ok"
+
+
+def _sync_broker_snapshots(base: Path) -> list[str]:
+    from open_composer.adapters.broker.alpaca_paper import (
+        sync_paper_account,
+        sync_paper_orders,
+    )
+
+    order_path = sync_paper_orders(base)
+    account_path, positions_path = sync_paper_account(base)
+    return [str(order_path), str(account_path), str(positions_path)]
+
+
+def _is_stale(timestamp: datetime | None) -> bool:
+    if timestamp is None:
+        return False
+    normalized = timestamp if timestamp.tzinfo else timestamp.replace(tzinfo=UTC)
+    return (datetime.now(UTC) - normalized).total_seconds() > PAPER_SNAPSHOT_STALE_SECONDS
 
 
 def _write_reconciliation_markdown(path: Path, report: PaperReconciliationReport) -> Path:
@@ -462,6 +535,9 @@ def _write_monitor_markdown(path: Path, report: PaperMonitorReport) -> Path:
         "",
         f"- Generated at: `{report.generated_at.isoformat()}`",
         f"- Status: `{report.status}`",
+        f"- Broker sync: `{report.sync_status}` requested=`{report.sync_broker}`",
+        f"- Broker sync outputs: `{', '.join(report.sync_output_paths) or 'n/a'}`",
+        f"- Broker sync error: `{report.sync_error or 'n/a'}`",
         f"- Reconciliation: `{report.reconciliation_status}` "
         f"issues=`{report.reconciliation_issue_count}`",
         f"- Alerts: `{report.alert_status}` alerts=`{report.alert_count}`",

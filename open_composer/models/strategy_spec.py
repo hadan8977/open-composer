@@ -84,7 +84,7 @@ class LLMReviewConfig(BaseModel):
 class FactorConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    source: Literal["expression", "llm_feature"] = "expression"
+    source: Literal["expression", "llm_feature", "feature_packet"] = "expression"
     expression: str | None = None
     path: str | None = None
     field: str | None = None
@@ -96,8 +96,8 @@ class FactorConfig(BaseModel):
         if self.source == "expression" and not self.expression:
             msg = "expression factors require expression"
             raise ValueError(msg)
-        if self.source == "llm_feature" and not self.field:
-            msg = "llm_feature factors require field"
+        if self.source in {"llm_feature", "feature_packet"} and not self.field:
+            msg = f"{self.source} factors require field"
             raise ValueError(msg)
         return self
 

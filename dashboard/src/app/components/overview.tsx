@@ -2,50 +2,69 @@ import { ArrowUpRight, Play, AlertTriangle } from "lucide-react";
 import { Card, KPI, SectionTitle, Tag, Pill, ColorBlock } from "./blocks";
 import { Hero } from "./hero";
 import { Sparkline } from "./sparkline";
-import { strategies, recentSignals, events, llmReviews } from "./data";
+import {
+  dashboardSummary,
+  events,
+  llmReviews,
+  recentSignals,
+  strategies,
+  strategyGroups,
+} from "./data";
 
 export function Overview() {
+  const activeStrategies = strategies.filter((s) => s.status === "active");
+  const highlightedStrategies = (activeStrategies.length > 0 ? activeStrategies : strategies).slice(0, 4);
+  const latestRun = strategies.find((s) => s.lastReturn !== 0);
+  const equityLabel = dashboardSummary.paperAccountEquity
+    ? money(dashboardSummary.paperAccountEquity)
+    : "No paper equity";
+  const deployLabel = `${dashboardSummary.deploymentStatus} deploy`;
+  const returnLabel = latestRun ? `${signed(latestRun.lastReturn)} last run` : deployLabel;
+  const sharpeLabel = latestRun ? `Sharpe ${latestRun.sharpe}` : "Awaiting backtest";
+  const groupHint = `${strategyGroups.length} read-model groups`;
+  const equitySeries = latestRun?.series ?? [100, 100];
+
   return (
     <div className="px-6 pb-8 space-y-3">
-      {/* Themed hero — green signature */}
       <Hero
         theme="green"
-        greeting="Friday · May 9, 2026"
+        greeting={`Catalog · ${dashboardSummary.generatedLabel}`}
         headline="Workbench"
-        meta="12 strategies live · paper auto running smoothly · 3 reviews need your attention."
-        stat={{ label: "Today P&L", value: "+1.84%", delta: "+$1,562" }}
+        meta={`${dashboardSummary.strategyCount} strategies · ${dashboardSummary.runCount} runs · ${dashboardSummary.signalCount} logged signals · ${dashboardSummary.workflowReportCount} workflow reports.`}
+        stat={{
+          label: "Paper state",
+          value: dashboardSummary.deploymentReady ? "Ready" : "Check",
+          delta: `${dashboardSummary.deploymentStatus} deploy`,
+        }}
       />
 
-      {/* KPI band — proportioned, primary metric leads */}
       <div className="grid grid-cols-12 gap-3">
-        {/* Primary — gradient KPI */}
         <div className="col-span-4">
           <PrimaryKPI
-            label="Aggregate equity"
-            value="$112,481.20"
-            sub="+12.48% YTD · Sharpe 1.62"
+            label="Paper account equity"
+            value={equityLabel}
+            sub={`${returnLabel} · ${sharpeLabel}`}
           />
         </div>
-        <div className="col-span-2"><KPI label="Active"        value="12"   delta="+2 this week" accent="black" /></div>
-        <div className="col-span-2"><KPI label="Paper auto"    value="6"    delta="3 stable"     accent="green" /></div>
-        <div className="col-span-2"><KPI label="Open pos."     value="14"   delta="$84.2k"       accent="pink" /></div>
-        <div className="col-span-2"><KPI label="Reviews"       value="3"    delta="LLM queue"    accent="orange" /></div>
+        <div className="col-span-2"><KPI label="Active" value={String(dashboardSummary.activeStrategyCount)} delta={`${dashboardSummary.approvedStrategyCount} approved`} accent="black" /></div>
+        <div className="col-span-2"><KPI label="Paper auto" value={String(dashboardSummary.paperAutoStrategyCount)} delta={`${dashboardSummary.paperOpenOrderCount} open orders`} accent="green" /></div>
+        <div className="col-span-2"><KPI label="Open pos." value={String(dashboardSummary.paperPositionCount)} delta={money(dashboardSummary.paperTotalUnrealizedPl)} accent="pink" /></div>
+        <div className="col-span-2"><KPI label="Deploy" value={dashboardSummary.deploymentStatus} delta={dashboardSummary.deploymentNextAction ?? "ready"} accent="orange" /></div>
       </div>
 
-      {/* Equity + Allocation */}
       <div className="grid grid-cols-12 gap-3">
         <Card variant="dark" pad={false} className="col-span-8">
           <div className="px-5 pt-4 pb-2 flex items-end justify-between gap-4">
             <div className="min-w-0">
               <div className="t-caption" style={{ color: "rgba(242,242,240,.55)" }}>
-                Aggregate equity · paper
+                Paper equity · read model
               </div>
-              <div className="t-display-lg t-num mt-2">$112,481.20</div>
+              <div className="t-display-lg t-num mt-2">{equityLabel}</div>
               <div className="t-body-sm mt-1.5 flex items-center gap-1.5" style={{ color: "#3DD68C" }}>
                 <ArrowUpRight size={13} strokeWidth={2.4} />
-                +12.48% YTD
+                {returnLabel}
                 <span style={{ color: "rgba(242,242,240,.4)" }}>·</span>
-                <span>Sharpe 1.62</span>
+                <span>{sharpeLabel}</span>
               </div>
             </div>
             <div className="flex items-center gap-0.5 p-1 rounded-full bg-white/5">
@@ -61,16 +80,16 @@ export function Overview() {
               ))}
             </div>
           </div>
-          <EquityChart />
+          <EquityChart data={equitySeries} />
           <div
             className="grid grid-cols-4 mx-3 mb-3 gap-px overflow-hidden"
             style={{ background: "rgba(255,255,255,.06)", borderRadius: "var(--r-md)" }}
           >
             {[
-              ["Cumulative", "+12.48%"],
-              ["Annualized", "+18.21%"],
-              ["Max DD", "−4.7%"],
-              ["Win rate", "58.4%"],
+              ["Runs", String(dashboardSummary.runCount)],
+              ["Signals", String(dashboardSummary.signalCount)],
+              ["Workflows", String(dashboardSummary.workflowReportCount)],
+              ["Ready", dashboardSummary.readinessReady ? "yes" : "no"],
             ].map(([k, v]) => (
               <div key={k} className="px-4 py-3" style={{ background: "#0B0B0C" }}>
                 <div className="t-caption" style={{ color: "rgba(242,242,240,.5)" }}>{k}</div>
@@ -80,51 +99,45 @@ export function Overview() {
           </div>
         </Card>
 
-        {/* Allocation */}
         <Card pad={false} className="col-span-4">
           <div className="px-5 pt-4 pb-3">
-            <SectionTitle tick="cyan" hint="7 strategies across 6 groups">Allocation</SectionTitle>
+            <SectionTitle tick="cyan" hint={groupHint}>Read-model groups</SectionTitle>
           </div>
           <div className="grid grid-cols-6 grid-rows-4 gap-1 px-4 pb-4 h-[260px]">
-            <ColorBlock color="green" rounded="sm" halftone className="col-span-3 row-span-2 p-3 flex flex-col justify-between">
-              <span className="t-caption" style={{ position: "relative", zIndex: 1 }}>Core Satellite</span>
-              <span className="t-display-md t-num" style={{ position: "relative", zIndex: 1 }}>32%</span>
-            </ColorBlock>
-            <ColorBlock color="pink" rounded="sm" className="col-span-3 p-3 flex flex-col justify-between">
-              <span className="t-caption">Event-driven</span>
-              <span className="t-title-md t-num">22%</span>
-            </ColorBlock>
-            <ColorBlock color="cyan" rounded="sm" halftone className="col-span-2 p-3 flex flex-col justify-between">
-              <span className="t-caption" style={{ position: "relative", zIndex: 1 }}>Vol</span>
-              <span className="t-title-md t-num" style={{ position: "relative", zIndex: 1 }}>16%</span>
-            </ColorBlock>
-            <ColorBlock color="orange" rounded="sm" className="col-span-1 p-2 flex items-end">
-              <span className="t-micro">Stat-Arb · 12%</span>
-            </ColorBlock>
-            <ColorBlock color="black" rounded="sm" className="col-span-2 p-3 flex flex-col justify-between">
-              <span className="t-caption" style={{ opacity: 0.7 }}>Rotation</span>
-              <span className="t-title-md t-num">10%</span>
-            </ColorBlock>
-            <ColorBlock color="purple" rounded="sm" className="col-span-2 p-2 flex items-end">
-              <span className="t-micro">Regime · 5%</span>
-            </ColorBlock>
-            <ColorBlock color="paper" rounded="sm" className="col-span-2 p-2 flex items-end">
-              <span className="t-micro" style={{ opacity: 0.55 }}>Cash · 3%</span>
-            </ColorBlock>
+            {strategyGroups.length === 0 ? (
+              <div className="col-span-6 row-span-4 p-4 bg-paper-3 flex items-end" style={{ borderRadius: "var(--r-md)" }}>
+                <span className="t-body-sm ink-muted">Run the dashboard catalog command to populate groups.</span>
+              </div>
+            ) : (
+              strategyGroups.slice(0, 6).map((group, index) => (
+                <ColorBlock
+                  key={group.id}
+                  color={group.color}
+                  rounded="sm"
+                  halftone={index % 2 === 0}
+                  className={`${index === 0 ? "col-span-3 row-span-2" : index === 1 ? "col-span-3" : "col-span-2"} p-3 flex flex-col justify-between`}
+                >
+                  <span className="t-caption" style={{ position: "relative", zIndex: 1 }}>{group.name}</span>
+                  <span className="t-display-md t-num" style={{ position: "relative", zIndex: 1 }}>{group.weight}%</span>
+                </ColorBlock>
+              ))
+            )}
           </div>
         </Card>
       </div>
 
-      {/* Active strategies */}
       <Card pad={false}>
         <div className="px-5 pt-4 pb-3 hairline-b">
           <SectionTitle tick="green" action={<Pill variant="ghost">View all →</Pill>}>
-            Active strategies
+            {activeStrategies.length > 0 ? "Active strategies" : "Catalog strategies"}
           </SectionTitle>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4">
-          {strategies.filter((s) => s.status === "active").slice(0, 4).map((s, i) => {
+          {highlightedStrategies.map((s, i) => {
             const stripe = s.lastReturn >= 0 ? "#1FB85A" : "#FF2D7A";
+            const reasonCount =
+              s.backendReasons.length +
+              Object.values(s.compatibilityReasons).reduce((count, reasons) => count + reasons.length, 0);
             return (
               <div
                 key={s.id}
@@ -138,9 +151,12 @@ export function Overview() {
                 />
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="t-mono ink-subtle">{s.symbol} · {s.version}</div>
-                    <div className="t-title-sm mt-1 truncate">{s.name}</div>
+                  <div className="t-mono ink-subtle">{s.symbol} · {s.version}</div>
+                  <div className="t-title-sm mt-1 truncate">{s.name}</div>
+                  <div className="t-body-xs mt-1" style={{ color: s.backendStatus === "supported" ? "#0F9A52" : s.backendStatus === "partial" ? "#C57A00" : "#C81E5C" }}>
+                    Backend {s.backendStatus}{reasonCount > 0 ? ` · ${reasonCount} reasons` : ""}
                   </div>
+                </div>
                   <Tag color={s.lastReturn >= 0 ? "green" : "pink"}>
                     {s.lastReturn >= 0 ? "+" : ""}{s.lastReturn}%
                   </Tag>
@@ -158,7 +174,7 @@ export function Overview() {
                   <span>·</span>
                   <span><span className="ink t-num" style={{ fontWeight: 600 }}>{s.trades}</span> trades</span>
                   <span className="ml-auto inline-flex items-center gap-1" style={{ color: "#0F9A52", fontWeight: 600 }}>
-                    <Play size={9} fill="#1FB85A" /> live
+                    <Play size={9} fill="#1FB85A" /> {s.status}
                   </span>
                 </div>
               </div>
@@ -167,7 +183,6 @@ export function Overview() {
         </div>
       </Card>
 
-      {/* Footer band */}
       <div className="grid grid-cols-12 gap-3">
         <Card pad={false} className="col-span-5">
           <div className="px-5 py-3 hairline-b">
@@ -184,7 +199,13 @@ export function Overview() {
               </tr>
             </thead>
             <tbody className="t-num">
-              {recentSignals.map((r, i) => (
+              {recentSignals.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-6 ink-muted t-body-sm">
+                    No signal log entries are present in the catalog.
+                  </td>
+                </tr>
+              ) : recentSignals.map((r, i) => (
                 <tr key={i} className="hairline-b last:border-b-0">
                   <td className="px-5 py-2.5 ink-muted">{r.t}</td>
                   <td className="truncate ink">{r.strat}</td>
@@ -204,7 +225,9 @@ export function Overview() {
             <SectionTitle tick="orange">Event & macro feed</SectionTitle>
           </div>
           <ul className="divider-soft">
-            {events.map((e, i) => (
+            {events.length === 0 ? (
+              <li className="px-5 py-6 t-body-sm ink-muted">No data, context or feature records are present.</li>
+            ) : events.map((e, i) => (
               <li key={i} className="px-5 py-2.5 flex items-center gap-3">
                 <span className="t-body-sm ink-subtle t-num w-10 shrink-0">{e.t}</span>
                 <Tag color={e.kind === "Earnings" ? "pink" : e.kind === "Macro" ? "orange" : e.kind === "News" ? "cyan" : "paper"}>
@@ -222,7 +245,11 @@ export function Overview() {
             <SectionTitle tick="purple">LLM review queue</SectionTitle>
           </div>
           <div className="p-2.5 space-y-2">
-            {llmReviews.map((r) => (
+            {llmReviews.length === 0 ? (
+              <div className="bg-paper-3 p-3 t-body-sm ink-muted" style={{ borderRadius: "var(--r-md)" }}>
+                No LLM review cards have been generated yet.
+              </div>
+            ) : llmReviews.map((r) => (
               <div key={r.id} className="bg-paper-3 p-3" style={{ borderRadius: "var(--r-md)" }}>
                 <div className="flex items-center justify-between mb-1.5">
                   <Tag pill color={r.color}>{r.verdict}</Tag>
@@ -237,6 +264,16 @@ export function Overview() {
       </div>
     </div>
   );
+}
+
+function signed(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function money(value: number) {
+  return value === 0
+    ? "$0.00"
+    : value.toLocaleString([], { style: "currency", currency: "USD" });
 }
 
 /* Primary KPI — composer-style ink panel, animated gradient value,
@@ -271,7 +308,7 @@ function PrimaryKPI({ label, value, sub }: { label: string; value: string; sub: 
       <span aria-hidden className="absolute" style={{ right: 12, top: 12, width: 14, height: 14, background: "#1FB85A", borderRadius: 2 }} />
       <span aria-hidden className="absolute" style={{ right: 30, top: 12, width: 8, height: 14, background: "#1AC8E8", borderRadius: 2 }} />
 
-      <div className="t-caption" style={{ color: "rgba(42,51,66,.58)", letterSpacing: "0.06em" }}>
+      <div className="t-caption" style={{ color: "rgba(42,51,66,.58)", letterSpacing: 0 }}>
         {label}
       </div>
       <div
@@ -281,7 +318,7 @@ function PrimaryKPI({ label, value, sub }: { label: string; value: string; sub: 
           fontWeight: 800,
           fontSize: "clamp(28px, 3vw, 42px)",
           lineHeight: 1.02,
-          letterSpacing: "-0.04em",
+          letterSpacing: 0,
           whiteSpace: "nowrap",
         }}
       >
@@ -325,20 +362,15 @@ function PrimaryKPI({ label, value, sub }: { label: string; value: string; sub: 
   );
 }
 
-function EquityChart() {
+function EquityChart({ data: inputData }: { data: number[] }) {
   const w = 760;
   const h = 220;
   const padL = 0;
   const padR = 0;
   const padT = 12;
   const padB = 28;
-  const N = 90;
-  const data: number[] = [];
-  let v = 100;
-  for (let i = 0; i < N; i++) {
-    v += (Math.random() - 0.42) * 2.4;
-    data.push(v);
-  }
+  const data = inputData.length >= 2 ? inputData : [100, 100];
+  const N = data.length;
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
@@ -355,8 +387,7 @@ function EquityChart() {
     y: padT + p * innerH,
     label: (max - p * range).toFixed(1),
   }));
-  // X-axis date markers — fake monthly stride
-  const xLabels = ["Feb", "Mar", "Apr", "May"];
+  const xLabels = ["Start", "Mid", "Last"];
 
   return (
     <div className="relative px-3 pb-2">
@@ -408,7 +439,7 @@ function EquityChart() {
               fontSize="9.5"
               fill="rgba(242,242,240,.4)"
               textAnchor={i === 0 ? "start" : i === xLabels.length - 1 ? "end" : "middle"}
-              letterSpacing="0.08em"
+              letterSpacing="0"
             >
               {label.toUpperCase()}
             </text>

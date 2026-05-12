@@ -21,6 +21,7 @@ class PaperRunSignalResult(BaseModel):
         "paper_orders_not_allowed",
         "blocked_by_review",
         "blocked_by_kill_switch",
+        "blocked_by_readiness",
         "order_error",
     ]
     review_status: str = "not_requested"
@@ -40,6 +41,7 @@ class PaperRunCycle(BaseModel):
     strategy_backend: ExecutionBackend = "python_reference"
     execution_backend: ExecutionBackend = "python_reference"
     backend_plan_path: str | None = None
+    paper_readiness_report_path: str | None = None
     spec_path: str
     started_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     finished_at: datetime | None = None

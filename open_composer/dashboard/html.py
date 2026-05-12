@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime
 from html import escape
 from pathlib import Path
 
@@ -241,7 +242,9 @@ def _render_dashboard_html(catalog: DashboardCatalog) -> str:
     }
             {_kv("Open orders", str(summary.paper_open_order_count))}
             {_kv("Account equity", _money(summary.paper_account_equity))}
+            {_kv("Account snapshot", _dt(summary.paper_account_snapshot_at))}
             {_kv("Positions", str(summary.paper_position_count))}
+            {_kv("Positions snapshot", _dt(summary.paper_positions_snapshot_at))}
             {_kv("Unrealized PnL", _money(summary.paper_total_unrealized_pl))}
             {
         _kv(
@@ -281,6 +284,48 @@ def _render_dashboard_html(catalog: DashboardCatalog) -> str:
     <section class="panel">
       <div class="section-head">
         <div>
+          <h2>Deployment Readiness</h2>
+          <p>
+            Latest local deploy prepare and readiness reports indexed into the
+            dashboard catalog.
+          </p>
+        </div>
+      </div>
+      <div class="grid">
+        {_kv("Deployment", summary.deployment_status, _status_class(summary.deployment_status))}
+        {_kv("Deployment ready", "yes" if summary.deployment_ready else "no")}
+        {
+        _kv(
+            "Deployment warnings",
+            str(summary.deployment_warning_count),
+            "warn" if summary.deployment_warning_count else "good",
+        )
+    }
+        {_kv("Readiness", summary.readiness_status, _status_class(summary.readiness_status))}
+        {_kv("Readiness ready", "yes" if summary.readiness_ready else "no")}
+        {
+        _kv(
+            "Readiness warnings",
+            str(summary.readiness_warning_count),
+            "warn" if summary.readiness_warning_count else "good",
+        )
+    }
+      </div>
+      <div class="split" style="margin-top: 14px;">
+        <div class="list">
+          <h3>Deploy prepare</h3>
+          {_deployment_step_items(catalog)}
+        </div>
+        <div class="list">
+          <h3>Readiness checks</h3>
+          {_readiness_check_items(catalog)}
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head">
+        <div>
           <h2>Data Quality</h2>
           <p>Latest source comparison reports used to check replay and research data quality.</p>
         </div>
@@ -309,7 +354,10 @@ def _render_dashboard_html(catalog: DashboardCatalog) -> str:
       <div class="section-head">
         <div>
           <h2>LLM Feature Replay</h2>
-          <p>Feature packet logs used as point-in-time inputs for llm_feature factors.</p>
+          <p>
+            Feature packet logs used as point-in-time inputs for llm_feature and
+            feature_packet factors.
+          </p>
         </div>
       </div>
       <div class="table-wrap">
@@ -319,6 +367,7 @@ def _render_dashboard_html(catalog: DashboardCatalog) -> str:
               <th>Log</th>
               <th>Records</th>
               <th>Fields</th>
+              <th>PIT</th>
               <th>First</th>
               <th>Last</th>
             </tr>
@@ -442,6 +491,47 @@ def _strategy_rows(catalog: DashboardCatalog) -> str:
     return "\n".join(rows)
 
 
+def _deployment_step_items(catalog: DashboardCatalog) -> str:
+    report = catalog.deployment_report
+    if report is None or not report.steps:
+        return '<div class="item">No deployment report indexed.</div>'
+    return "\n".join(
+        _operational_item(step.name, step.status, step.message, step.suggested_actions)
+        for step in report.steps
+    )
+
+
+def _readiness_check_items(catalog: DashboardCatalog) -> str:
+    report = catalog.readiness_report
+    if report is None or not report.checks:
+        return '<div class="item">No readiness report indexed.</div>'
+    return "\n".join(
+        _operational_item(check.name, check.status, check.message, check.suggested_actions)
+        for check in report.checks
+    )
+
+
+def _operational_item(
+    name: str,
+    status: str,
+    message: str,
+    suggested_actions: list[str],
+) -> str:
+    action = suggested_actions[0] if suggested_actions else ""
+    action_html = (
+        f'<div class="small mono">{escape(action)}</div>'
+        if action
+        else '<div class="small">No action required.</div>'
+    )
+    return (
+        '<div class="item">'
+        f"<h3>{escape(name)} {_pill(status, _status_class(status))}</h3>"
+        f"<p>{escape(message)}</p>"
+        f"{action_html}"
+        "</div>"
+    )
+
+
 def _render_strategy_html(catalog: DashboardCatalog, strategy_id: str) -> str:
     strategy = next(item for item in catalog.strategies if item.strategy_id == strategy_id)
     versions = [item for item in catalog.versions if item.strategy_id == strategy_id]
@@ -452,6 +542,9 @@ def _render_strategy_html(catalog: DashboardCatalog, strategy_id: str) -> str:
         for item in catalog.orders
         if item.strategy_id == strategy_id or item.strategy_name == strategy.strategy_name
     ]
+    backend_plan_path = next(
+        (item.backend_plan_path for item in runs if item.backend_plan_path), None
+    )
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -468,6 +561,7 @@ def _render_strategy_html(catalog: DashboardCatalog, strategy_id: str) -> str:
       <span>Version: <span class="mono">{escape(strategy.current_version_id or "")}</span></span>
       <span>Backend: <span class="mono">{escape(strategy.backend)}</span></span>
       <span>Data: <span class="mono">{escape(strategy.data_source)}</span></span>
+      <span>Backend plan: <span class="mono">{escape(backend_plan_path or "n/a")}</span></span>
     </div>
   </header>
   <main>
@@ -489,9 +583,16 @@ def _render_strategy_html(catalog: DashboardCatalog, strategy_id: str) -> str:
           {_kv("Risk tier", strategy.risk_tier, _risk_class(strategy.risk_tier))}
           {_kv("Execution mode", strategy.execution_mode)}
           {_kv("Broker", strategy.broker)}
+          {_kv("Backend plan", backend_plan_path or "n/a")}
           {_kv("Required capabilities", ", ".join(strategy.required_capabilities) or "none")}
           {_kv("Factors", ", ".join(strategy.factor_names) or "none")}
           {_kv("LLM feature factors", ", ".join(strategy.llm_feature_factor_names) or "none")}
+          {
+        _kv(
+            "Feature packet factors",
+            ", ".join(getattr(strategy, "feature_packet_factor_names", [])) or "none",
+        )
+    }
         </div>
       </div>
       <div class="panel">
@@ -613,14 +714,17 @@ def _data_comparison_rows(comparisons: list) -> str:
 
 def _feature_packet_rows(packets: list) -> str:
     if not packets:
-        return '<tr><td colspan="5">No feature packet logs indexed.</td></tr>'
+        return '<tr><td colspan="6">No feature packet logs indexed.</td></tr>'
     rows = []
     for item in packets:
+        status_class = "good" if item.point_in_time_status == "complete" else "warn"
         rows.append(
             "<tr>"
             f"<td>{_artifact_link(item.path, '../../')}</td>"
             f"<td>{item.record_count}</td>"
             f"<td>{escape(', '.join(item.field_names[:6]) or 'none')}</td>"
+            f'<td><span class="badge {status_class}">'
+            f"{escape(item.point_in_time_status)}</span></td>"
             f"<td>{escape(item.first_timestamp or 'n/a')}</td>"
             f"<td>{escape(item.last_timestamp or 'n/a')}</td>"
             "</tr>"
@@ -802,6 +906,14 @@ def _money(value: float | None) -> str:
     if value is None:
         return ""
     return f"${value:.2f}"
+
+
+def _dt(value: datetime | str | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
 
 
 def _link(path: str | None) -> str:

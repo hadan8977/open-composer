@@ -1,0 +1,115 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import yaml
+
+from open_composer.paper_readiness import (
+    assess_paper_strategy_readiness,
+    write_paper_readiness_report,
+)
+from open_composer.strategy_lifecycle import activate_strategy
+
+
+def test_paper_readiness_blocks_default_sample_paper_strategy(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("ALPACA_API_KEY_ID", raising=False)
+    monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    active = activate_strategy(
+        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+    )
+
+    report = assess_paper_strategy_readiness(active, sample_workspace)
+    json_path, md_path = write_paper_readiness_report(report, sample_workspace)
+
+    assert report.status == "blocked"
+    assert report.ready is False
+    assert {check.name for check in report.blocking_checks} >= {
+        "data_source",
+        "alpaca_env",
+        "capability_report",
+    }
+    data_source_check = next(check for check in report.checks if check.name == "data_source")
+    assert any("--data-source alpaca" in action for action in data_source_check.suggested_actions)
+    assert json_path.exists()
+    assert md_path.exists()
+    assert "Paper Strategy Readiness" in md_path.read_text(encoding="utf-8")
+
+
+def test_activate_can_enforce_paper_readiness(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("ALPACA_API_KEY_ID", raising=False)
+    monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
+
+    try:
+        activate_strategy(
+            sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+            sample_workspace,
+            paper_auto=True,
+            allow_paper_auto=True,
+            enforce_paper_readiness=True,
+        )
+    except ValueError as exc:
+        assert "paper strategy readiness blocked" in str(exc)
+    else:
+        raise AssertionError("paper_auto activation should be blocked by readiness")
+
+    report_path = (
+        sample_workspace
+        / "reports"
+        / "paper"
+        / "readiness"
+        / "qqq_pullback_15m.activation_candidate.json"
+    )
+    assert report_path.exists()
+    assert not (sample_workspace / "strategy_specs" / "active" / "qqq_pullback_15m.yaml").exists()
+
+
+def test_paper_readiness_passes_for_live_cache_alpaca_strategy(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    account_path = sample_workspace / "reports" / "paper" / "account.json"
+    account_path.parent.mkdir(parents=True, exist_ok=True)
+    account_path.write_text(
+        (
+            '{"generated_at":"2026-05-12T12:00:00Z","equity":10000,"cash":5000,'
+            '"buying_power":8000,"portfolio_value":10000,"status":"ACTIVE","paper":true}\n'
+        ),
+        encoding="utf-8",
+    )
+    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_paper_ready_15m.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "qqq_paper_ready_15m"
+    raw["required_capabilities"] = ["market.sample_ohlcv"]
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    active = activate_strategy(
+        draft,
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+        data_source="alpaca",
+    )
+
+    report = assess_paper_strategy_readiness(active, sample_workspace)
+
+    assert report.ready is True
+    assert report.status == "ok"
+    assert {check.name: check.status for check in report.checks}["data_source"] == "ok"
+    assert {check.name: check.status for check in report.checks}["alpaca_env"] == "ok"
+    assert {check.name: check.status for check in report.checks}["account_snapshot"] == "ok"
