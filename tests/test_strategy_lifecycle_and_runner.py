@@ -216,6 +216,19 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
         data_source="alpaca",
     )
     spec = load_strategy_spec(active)
+    promotion_path = (
+        sample_workspace / "reports" / "research" / "qqq_paper_ready_15m-promotion.json"
+    )
+    promotion_path.parent.mkdir(parents=True, exist_ok=True)
+    promotion_path.write_text(
+        (
+            '{"strategy_name":"qqq_paper_ready_15m","source_spec_path":"'
+            'strategy_specs/active/qqq_paper_ready_15m.yaml","status":"ok","ready":true,'
+            '"checks":[{"name":"in_sample","status":"ok","message":"ok","details":{}}]}'
+            "\n"
+        ),
+        encoding="utf-8",
+    )
 
     def fake_scan(spec_path: Path, root: Path | None = None, refresh_data: bool = False):
         assert refresh_data is True

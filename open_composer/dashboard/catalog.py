@@ -26,6 +26,7 @@ from open_composer.models.dashboard import (
     DashboardPaperReadinessCheck,
     DashboardPaperReadinessReport,
     DashboardReadinessReport,
+    DashboardResearchReport,
     DashboardReview,
     DashboardRun,
     DashboardSignal,
@@ -74,6 +75,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
     data_comparison_records = _build_data_comparison_records(base)
     feature_packet_records = build_feature_packet_records(base)
     workflow_records = _build_workflow_records(base)
+    research_records = _build_research_records(base)
     readiness_report = _build_readiness_record(base)
     deployment_report = _build_deployment_record(base)
 
@@ -92,6 +94,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         data_comparisons=data_comparison_records,
         feature_packets=feature_packet_records,
         workflow_reports=workflow_records,
+        research_reports=research_records,
         readiness_report=readiness_report,
         deployment_report=deployment_report,
         paper_readiness_reports=paper_readiness_records,
@@ -116,6 +119,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         data_comparisons=data_comparison_records,
         feature_packets=feature_packet_records,
         workflow_reports=workflow_records,
+        research_reports=research_records,
         readiness_report=readiness_report,
         deployment_report=deployment_report,
     )
@@ -1027,6 +1031,64 @@ def _build_workflow_records(base: Path) -> list[DashboardWorkflowReport]:
     return records
 
 
+def _build_research_records(base: Path) -> list[DashboardResearchReport]:
+    records: list[DashboardResearchReport] = []
+    root = base / "reports" / "research"
+    if not root.exists():
+        return records
+    for path in sorted(root.glob("*.json")):
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(raw, dict):
+            continue
+        name = path.name
+        if name.endswith("-promotion.json"):
+            kind = "promotion"
+        elif name.endswith("-parameter-sweep.json"):
+            kind = "parameter_sweep"
+        else:
+            kind = "unknown"
+        status = str(raw.get("status", "warning"))
+        if status not in {"ok", "warning", "blocked"}:
+            status = "warning"
+        report_md = path.with_suffix(".md")
+        strategy_name = str(raw.get("strategy_name") or path.stem)
+        records.append(
+            DashboardResearchReport(
+                strategy_name=strategy_name,
+                kind=kind,  # type: ignore[arg-type]
+                status=status,  # type: ignore[arg-type]
+                ready=bool(raw.get("ready", False)),
+                source_path=str(raw.get("source_spec_path") or raw.get("source_path") or ""),
+                report_json_path=_relpath(path, base),
+                report_markdown_path=_relpath(report_md, base) if report_md.exists() else None,
+                check_count=int(
+                    len(raw.get("checks", [])) if isinstance(raw.get("checks"), list) else 0
+                ),
+                candidate_count=(
+                    int(raw.get("candidate_count"))
+                    if raw.get("candidate_count") is not None
+                    else None
+                ),
+                output_paths=_research_output_paths(raw),
+            )
+        )
+    records.sort(key=lambda item: (item.strategy_name.lower(), item.kind, item.report_json_path))
+    return records
+
+
+def _research_output_paths(raw: dict[str, Any]) -> list[str]:
+    output_paths: list[str] = []
+    for key in ["written_specs", "output_paths"]:
+        values = raw.get(key, [])
+        if not isinstance(values, list):
+            continue
+        output_paths.extend(str(value) for value in values if value)
+    return output_paths
+
+
 def _build_readiness_record(base: Path) -> DashboardReadinessReport | None:
     path = base / "reports" / "readiness" / "readiness.json"
     if not path.exists():
@@ -1230,6 +1292,7 @@ def _build_summary(
     data_comparisons: list[DashboardDataComparison],
     feature_packets: list[DashboardFeaturePacket],
     workflow_reports: list[DashboardWorkflowReport],
+    research_reports: list[DashboardResearchReport],
     readiness_report: DashboardReadinessReport | None,
     deployment_report: DashboardDeploymentReport | None,
     paper_readiness_reports: list[DashboardPaperReadinessReport],
@@ -1284,6 +1347,7 @@ def _build_summary(
         data_comparison_count=len(data_comparisons),
         feature_packet_count=len(feature_packets),
         workflow_report_count=len(workflow_reports),
+        research_report_count=len(research_reports),
         readiness_status=readiness_report.status if readiness_report else "missing",
         readiness_ready=readiness_report.ready if readiness_report else False,
         readiness_warning_count=_operational_count(readiness_report.checks, "warning")
@@ -1371,6 +1435,7 @@ def _render_catalog_markdown(catalog: DashboardCatalog) -> str:
         f"| Data comparisons | {summary.data_comparison_count} |",
         f"| Feature packets | {summary.feature_packet_count} |",
         f"| Workflow reports | {summary.workflow_report_count} |",
+        f"| Research reports | {summary.research_report_count} |",
         f"| Readiness | {summary.readiness_status} |",
         f"| Deployment prepare | {summary.deployment_status} |",
         f"| Active strategies | {summary.active_strategy_count} |",
@@ -1496,6 +1561,7 @@ def _render_review_markdown(catalog: DashboardCatalog) -> str:
         f"- Data comparisons indexed: `{summary.data_comparison_count}`",
         f"- Feature packets indexed: `{summary.feature_packet_count}`",
         f"- Workflow reports indexed: `{summary.workflow_report_count}`",
+        f"- Research reports indexed: `{summary.research_report_count}`",
         f"- Readiness status: `{summary.readiness_status}` ready=`{summary.readiness_ready}`",
         f"- Deployment status: `{summary.deployment_status}` ready=`{summary.deployment_ready}`",
         "",

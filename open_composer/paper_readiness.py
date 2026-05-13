@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
@@ -84,6 +85,7 @@ def assess_paper_strategy_readiness_for_spec(
         _backend_check(spec),
         _portfolio_routing_check(spec),
         _feature_packet_binding_check(spec, base),
+        _promotion_report_check(spec, base, spec_path),
     ]
     if spec_path is not None and spec_path.exists():
         checks.append(_capability_check(spec_path))
@@ -420,6 +422,72 @@ def _feature_packet_binding_check(
         status="ok",
         message="Feature packet bindings are point-in-time complete.",
         details={"inspected": inspected},
+    )
+
+
+def _promotion_report_check(
+    spec: StrategySpec,
+    root: Path,
+    spec_path: Path | None,
+) -> PaperStrategyReadinessCheck:
+    report_path = root / "reports" / "research" / f"{spec.name}-promotion.json"
+    suggested_spec = str(spec_path) if spec_path is not None else spec.name
+    if not report_path.exists():
+        return PaperStrategyReadinessCheck(
+            name="promotion_report",
+            status="blocked",
+            message="Paper automation requires a promotion report before activation.",
+            details={"path": str(report_path)},
+            suggested_actions=[
+                (
+                    f"uv run oc strategy promotion-report {suggested_spec} "
+                    "--oos-ratio 0.3 --walk-forward-folds 3"
+                )
+            ],
+        )
+    try:
+        raw = json.loads(report_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return PaperStrategyReadinessCheck(
+            name="promotion_report",
+            status="blocked",
+            message="Promotion report exists but is not valid JSON.",
+            details={"path": str(report_path)},
+            suggested_actions=[f"uv run oc strategy promotion-report {suggested_spec}"],
+        )
+    if not isinstance(raw, dict):
+        return PaperStrategyReadinessCheck(
+            name="promotion_report",
+            status="blocked",
+            message="Promotion report is malformed.",
+            details={"path": str(report_path)},
+        )
+    ready = bool(raw.get("ready", False))
+    status = str(raw.get("status", "warning"))
+    if ready and status == "ok":
+        return PaperStrategyReadinessCheck(
+            name="promotion_report",
+            status="ok",
+            message="Promotion report is present and ready for paper review.",
+            details={
+                "path": str(report_path),
+                "status": status,
+                "ready": ready,
+                "check_count": len(raw.get("checks", []))
+                if isinstance(raw.get("checks"), list)
+                else 0,
+            },
+        )
+    return PaperStrategyReadinessCheck(
+        name="promotion_report",
+        status="blocked",
+        message="Promotion report is present but not ready for paper.",
+        details={
+            "path": str(report_path),
+            "status": status,
+            "ready": ready,
+        },
+        suggested_actions=[f"uv run oc strategy promotion-report {suggested_spec}"],
     )
 
 

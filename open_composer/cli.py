@@ -441,6 +441,7 @@ def dashboard_catalog_command(
     table.add_row("Paper orders", str(catalog.summary.order_count))
     table.add_row("Audit events", str(catalog.summary.audit_count))
     table.add_row("Data comparisons", str(catalog.summary.data_comparison_count))
+    table.add_row("Research reports", str(catalog.summary.research_report_count))
     table.add_row("Readiness", catalog.summary.readiness_status)
     table.add_row("Deployment", catalog.summary.deployment_status)
     table.add_row("Read model", str(artifacts.catalog_path))

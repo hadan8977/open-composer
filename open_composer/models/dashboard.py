@@ -378,6 +378,21 @@ class DashboardWorkflowReport(BaseModel):
     report_markdown_path: str | None = None
 
 
+class DashboardResearchReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    strategy_name: str
+    kind: Literal["promotion", "parameter_sweep", "unknown"] = "unknown"
+    status: Literal["ok", "warning", "blocked"] = "warning"
+    ready: bool = False
+    source_path: str
+    report_json_path: str
+    report_markdown_path: str | None = None
+    check_count: int = 0
+    candidate_count: int | None = None
+    output_paths: list[str] = Field(default_factory=list)
+
+
 class DashboardOperationalCheck(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -432,6 +447,7 @@ class DashboardSummary(BaseModel):
     data_comparison_count: int = 0
     feature_packet_count: int = 0
     workflow_report_count: int = 0
+    research_report_count: int = 0
     readiness_status: Literal["ok", "warning", "blocked", "missing"] = "missing"
     readiness_ready: bool = False
     readiness_warning_count: int = 0
@@ -501,5 +517,6 @@ class DashboardCatalog(BaseModel):
     data_comparisons: list[DashboardDataComparison] = Field(default_factory=list)
     feature_packets: list[DashboardFeaturePacket] = Field(default_factory=list)
     workflow_reports: list[DashboardWorkflowReport] = Field(default_factory=list)
+    research_reports: list[DashboardResearchReport] = Field(default_factory=list)
     readiness_report: DashboardReadinessReport | None = None
     deployment_report: DashboardDeploymentReport | None = None

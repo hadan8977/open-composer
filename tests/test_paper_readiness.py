@@ -34,6 +34,7 @@ def test_paper_readiness_blocks_default_sample_paper_strategy(
         "data_source",
         "alpaca_env",
         "capability_report",
+        "promotion_report",
     }
     data_source_check = next(check for check in report.checks if check.name == "data_source")
     assert any("--data-source alpaca" in action for action in data_source_check.suggested_actions)
@@ -86,6 +87,21 @@ def test_paper_readiness_passes_for_live_cache_alpaca_strategy(
         (
             '{"generated_at":"2026-05-12T12:00:00Z","equity":10000,"cash":5000,'
             '"buying_power":8000,"portfolio_value":10000,"status":"ACTIVE","paper":true}\n'
+        ),
+        encoding="utf-8",
+    )
+    promotion_path = (
+        sample_workspace / "reports" / "research" / "qqq_paper_ready_15m-promotion.json"
+    )
+    promotion_path.parent.mkdir(parents=True, exist_ok=True)
+    promotion_path.write_text(
+        (
+            '{"strategy_name":"qqq_paper_ready_15m","source_spec_path":"'
+            'strategy_specs/active/qqq_paper_ready_15m.yaml","status":"ok","ready":true,'
+            '"checks":[{"name":"in_sample","status":"ok","message":"ok","details":{}}],'
+            '"full_window":{"run_id":"full","bars":10,"signals":2,"trades":1,'
+            '"total_return_pct":1.0,"annualized_return_pct":2.0,"sharpe_ratio":1.0,'
+            '"data_sanity_status":"ok","evidence_level":"E1_single_source_research"}}\n'
         ),
         encoding="utf-8",
     )

@@ -32,8 +32,8 @@ README、Dashboard 首页或任何面向用户的摘要不允许展示短样本�
 - Python reference 与 Nautilus backtest 都已经写入 `BacktestRun.data_sanity`。
 - Backtest report 已有 `## Data Sanity` section，显示证据等级、数据源、fallback/fixture/sample 状态、bar/signal/trade、样本起止、样本跨度、平均持仓天数和 warning。
 - Dashboard catalog / HTML 已读取 evidence level、sanity status 和 warning count。
-- `oc strategy promotion-report` 已能输出 full-window、out-of-sample、walk-forward、cost sensitivity 和 data comparison 的最小 promotion gate。
-- 这只是可信度门禁，不替代样本外、walk-forward、成本敏感性和多数据源验证。
+- `oc strategy promotion-report` 已能输出 full-window、out-of-sample、walk-forward、cost sensitivity 和 data comparison 的最小 promotion gate，并已接入 paper readiness。
+- 这只是可信度门禁，不替代样本外、walk-forward、成本敏感性和多数据源验证，也不代表实盘收益。
 
 ## 调研校准
 

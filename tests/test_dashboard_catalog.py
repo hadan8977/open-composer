@@ -142,6 +142,29 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     )
     workflow_md.write_text("# workflow verification\n", encoding="utf-8")
     write_json(
+        sample_workspace / "reports" / "research" / "qqq_pullback_15m-promotion.json",
+        {
+            "strategy_name": "qqq_pullback_15m",
+            "source_spec_path": "strategy_specs/active/qqq_pullback_15m.yaml",
+            "status": "ok",
+            "ready": True,
+            "checks": [
+                {"name": "in_sample", "status": "ok", "message": "ok", "details": {}},
+            ],
+            "full_window": {
+                "run_id": "promo_full",
+                "bars": 10,
+                "signals": 2,
+                "trades": 1,
+                "total_return_pct": 1.0,
+                "annualized_return_pct": 2.0,
+                "sharpe_ratio": 1.0,
+                "data_sanity_status": "ok",
+                "evidence_level": "E1_single_source_research",
+            },
+        },
+    )
+    write_json(
         sample_workspace / "reports" / "readiness" / "readiness.json",
         {
             "generated_at": "2026-05-12T10:00:00Z",
@@ -208,6 +231,7 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.summary.data_comparison_count == 1
     assert catalog.summary.feature_packet_count == 1
     assert catalog.summary.workflow_report_count == 1
+    assert catalog.summary.research_report_count == 1
     assert catalog.summary.readiness_status == "warning"
     assert catalog.summary.readiness_ready is True
     assert catalog.summary.readiness_warning_count == 1
@@ -280,6 +304,7 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert "reports/dashboard/catalog.json" in html
     assert "Data Quality" in html
     assert "alpaca / longbridge" in html
+    assert "Research Evidence" in html
     assert "LLM Feature Replay" in html
     assert "qqq_llm_features.jsonl" in html
     assert "Deployment Readiness" in html
@@ -293,6 +318,7 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert "Strategy Profile" in detail_html
     assert "Backend plan" in detail_html
     assert "E0_sample_smoke" in detail_html
+    assert "Research Evidence" in detail_html
     assert backtest.run.run_id in detail_html
     assert signal.id in detail_html
     assert review_path == sample_workspace / "docs" / "dashboard-d0-review.zh.md"
