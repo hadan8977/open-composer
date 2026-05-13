@@ -249,14 +249,6 @@ Then open the UI once with `?token=<long-random-token>` so browser API calls sen
 `X-Open-Composer-Token`. The token protects `/api/dashboard/*`; static files are
 still served normally.
 
-## Example Benchmark
-
-- `mu_breakout_volume_15m_optimized_volume_plus`
-  - sample data, 52 bars
-  - annualized return `1089.90%`
-  - Sharpe `45.78`
-  - research-only, not production evidence
-
 The current research audit is documented in [docs/review-optimization-completion-audit.zh.md](docs/review-optimization-completion-audit.zh.md).
 The current backtest and optimization iteration plan is documented in [docs/backtest-optimization-system-review.zh.md](docs/backtest-optimization-system-review.zh.md).
 
@@ -266,6 +258,7 @@ The current backtest and optimization iteration plan is documented in [docs/back
 - [OPEN-COMPOSER-BUILD-HANDOFF.md](OPEN-COMPOSER-BUILD-HANDOFF.md)
 - [docs/current-unfinished-work-check.zh.md](docs/current-unfinished-work-check.zh.md)
 - [docs/plan-completion-gap-audit.zh.md](docs/plan-completion-gap-audit.zh.md)
+- [docs/next-product-optimization-plan-2026-05-13.zh.md](docs/next-product-optimization-plan-2026-05-13.zh.md)
 - [docs/backtest-optimization-system-review.zh.md](docs/backtest-optimization-system-review.zh.md)
 - [docs/goal-completion-audit-2026-05-13.zh.md](docs/goal-completion-audit-2026-05-13.zh.md)
 - [docs/project-repository-review-2026-05-12.zh.md](docs/project-repository-review-2026-05-12.zh.md)

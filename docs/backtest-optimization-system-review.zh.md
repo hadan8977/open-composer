@@ -17,6 +17,16 @@ StrategySpec
 
 本轮新增的能力是“通用参数批量扫描基线”，用于一次性跑多组参数组合，解决原有 `optimize_strategy` 只能跑硬编码候选的问题。
 
+## Benchmark 展示规则
+
+README、Dashboard 首页或任何面向用户的摘要不允许展示短样本夸张收益作为 Example Benchmark。尤其是：
+
+- 少于可解释样本长度的 sample-data 回测不得展示年化收益或 Sharpe 作为产品能力证明。
+- sample / fixture / fallback 数据只能证明工作流可运行，不能证明策略收益。
+- 参数扫描产生的 top candidate 只能是 research candidate，不能自动成为 benchmark。
+- 如果要展示性能数字，必须同时显示数据源、bar 数、交易数、样本区间、成本/滑点、样本外结果、walk-forward 结果和数据源对照。
+- 对异常高年化、异常高 Sharpe、极少交易、极短窗口结果，报告必须给出 data sanity warning。
+
 ## 调研校准
 
 | 参考 | 观察 | 对本项目的取舍 |
