@@ -280,6 +280,8 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.versions[0].universe == ["QQQ"]
     assert catalog.runs[0].strategy_backend == "python_reference"
     assert catalog.runs[0].execution_backend == "python_reference"
+    assert catalog.runs[0].buy_hold_return_pct is not None
+    assert catalog.runs[0].alpha_vs_buy_hold_pct is not None
     assert catalog.runs[0].annualized_return_pct is not None
     assert catalog.runs[0].sharpe_ratio is not None
     assert catalog.runs[0].data_sanity_status == "warning"
@@ -293,6 +295,7 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert html_path.exists()
     html = html_path.read_text(encoding="utf-8")
     assert "Open Composer Dashboard" in html
+    assert "Buy/Hold" in html
     assert "qqq_pullback_15m" in html
     assert "strategies/qqq_pullback_15m.html" in html
     assert "python_reference" in html

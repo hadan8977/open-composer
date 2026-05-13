@@ -33,10 +33,11 @@ capabilities:
     reliability: medium
     default_mode: live_with_cache
     fixture: data/fixtures/capabilities/longbridge_qqq_15m.csv
-    env: [LONGBRIDGE_APP_KEY, LONGBRIDGE_APP_SECRET]
+    env: [LONGBRIDGE_APP_KEY, LONGBRIDGE_APP_SECRET, LONGBRIDGE_ACCESS_TOKEN]
     min_score: 0.85
     caveats:
       - free US market data is based on Nasdaq Basic, not consolidated SIP data
+      - historical candlestick requests are limited to 1000 bars per request
       - minute history range and quote card permissions must be verified against the account
 
   - id: market.memory_storage_sample

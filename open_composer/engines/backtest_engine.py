@@ -11,6 +11,7 @@ from open_composer.adapters.execution import (
     write_nautilus_backtest_plan,
 )
 from open_composer.analytics import build_performance_metrics
+from open_composer.analytics.benchmark import build_buy_hold_benchmark
 from open_composer.analytics.data_sanity import evaluate_backtest_data_sanity
 from open_composer.config import project_root, run_id
 from open_composer.engines.signal_engine import build_signal, signal_masks
@@ -146,8 +147,11 @@ def backtest_frame(
     spec_hash: str | None = None,
     backend_plan_path: str | None = None,
     execution_backend: str = "python_reference",
+    evaluation_start_index: int = 0,
 ) -> BacktestArtifacts:
     entry_mask, exit_mask = signal_masks(spec, frame, root=root)
+    evaluation_start_index = max(0, min(evaluation_start_index, max(len(frame) - 1, 0)))
+    evaluation_frame = frame.iloc[evaluation_start_index:].copy()
     current_run_id = run_id_value or run_id(spec.name)
     data_provenance = frame.attrs.get("data_source_mode")
     data_provider = frame.attrs.get("data_source_provider")
@@ -165,51 +169,59 @@ def backtest_frame(
     slippage_rate = spec.costs.slippage_bps / 10_000
     equity_curve = [start_equity]
 
-    for idx in range(len(frame) - 1):
+    loop_start = max(0, evaluation_start_index - 1)
+    for idx in range(loop_start, len(frame) - 1):
         row = frame.iloc[idx]
         next_row = frame.iloc[idx + 1]
         timestamp = row["timestamp"].to_pydatetime()
-        day_key = timestamp.date().isoformat()
+        next_timestamp = next_row["timestamp"].to_pydatetime()
+        fill_is_in_evaluation = idx + 1 >= evaluation_start_index
+        signal_is_in_evaluation = idx >= evaluation_start_index
         close_price = float(row["close"])
         next_open = float(next_row["open"])
         entry_fill_price = next_open * (1 + slippage_rate)
         exit_fill_price = next_open * (1 - slippage_rate)
-        marked_equity = equity
-        if in_position and shares:
-            marked_equity += shares * (close_price - entry_price)
-        equity_curve.append(marked_equity)
+        if signal_is_in_evaluation:
+            marked_equity = equity
+            if in_position and shares:
+                marked_equity += shares * (close_price - entry_price)
+            equity_curve.append(marked_equity)
 
         if not in_position:
-            day_count = trades_by_day.get(day_key, 0)
+            fill_day_key = next_timestamp.date().isoformat()
+            day_count = trades_by_day.get(fill_day_key, 0)
             if bool(entry_mask.iloc[idx]) and day_count < spec.risk.max_trades_per_day:
-                signals.append(
-                    build_signal(
-                        spec=spec,
-                        run_id=current_run_id,
-                        timestamp=timestamp,
-                        action="entry",
-                        source="backtest",
-                        price=close_price,
-                        version_id=version_id,
-                        spec_hash=spec_hash,
+                if fill_is_in_evaluation:
+                    signals.append(
+                        build_signal(
+                            spec=spec,
+                            run_id=current_run_id,
+                            timestamp=timestamp,
+                            action="entry",
+                            source="backtest",
+                            price=close_price,
+                            version_id=version_id,
+                            spec_hash=spec_hash,
+                        )
                     )
-                )
-                entry_price = entry_fill_price
-                max_notional = equity * spec.risk.max_position_weight
-                shares = max_notional / (entry_price * (1 + commission_rate))
-                entry_fee = shares * entry_price * commission_rate
-                total_fees += entry_fee
-                equity -= entry_fee
-                trade = Trade(
-                    entry_time=next_row["timestamp"].to_pydatetime(),
-                    entry_price=entry_price,
-                    shares=shares,
-                    entry_fee=entry_fee,
-                )
-                in_position = True
-                trades_by_day[day_key] = day_count + 1
+                    entry_price = entry_fill_price
+                    max_notional = equity * spec.risk.max_position_weight
+                    shares = max_notional / (entry_price * (1 + commission_rate))
+                    entry_fee = shares * entry_price * commission_rate
+                    total_fees += entry_fee
+                    equity -= entry_fee
+                    trade = Trade(
+                        entry_time=next_timestamp,
+                        entry_price=entry_price,
+                        shares=shares,
+                        entry_fee=entry_fee,
+                    )
+                    in_position = True
+                    trades_by_day[fill_day_key] = day_count + 1
             continue
 
+        if not signal_is_in_evaluation:
+            continue
         stop_hit = spec.risk.stop_loss_pct is not None and close_price <= entry_price * (
             1 - spec.risk.stop_loss_pct / 100
         )
@@ -254,10 +266,15 @@ def backtest_frame(
     total_return_pct = (equity / start_equity - 1) * 100
     equity_curve.append(equity)
     metrics = build_performance_metrics(equity_curve, spec.timeframe)
+    benchmark = build_buy_hold_benchmark(evaluation_frame, total_return_pct)
     assumptions = [
         "Signals are confirmed on bar close.",
         "Backtest fills use next bar open.",
         "Total return is period account-level return, not annualized.",
+        (
+            "Buy-and-hold benchmark uses first available open to final close over the same "
+            "data window."
+        ),
         "Position size uses max_position_weight; it is not all-in unless configured.",
         "Open positions are marked to the final close and not counted as closed trades.",
         f"Commission is {spec.costs.commission_pct:.4g}% per fill.",
@@ -271,6 +288,10 @@ def backtest_frame(
             0,
             f"Data provenance: {provider_label} {data_provenance.replace('_', ' ')}.",
         )
+    if evaluation_start_index > 0:
+        assumptions.append(
+            f"Indicators were warmed with {evaluation_start_index} prior bars before scoring."
+        )
     run = BacktestRun(
         run_id=current_run_id,
         strategy_name=spec.name,
@@ -281,12 +302,14 @@ def backtest_frame(
         execution_backend=execution_backend,
         symbol=spec.primary_symbol,
         timeframe=spec.timeframe,
-        bars=len(frame),
+        bars=len(evaluation_frame),
         signals=len(signals),
         trades=len(trades),
         start_equity=start_equity,
         end_equity=equity,
         total_return_pct=total_return_pct,
+        buy_hold_return_pct=benchmark.return_pct,
+        alpha_vs_buy_hold_pct=benchmark.alpha_pct,
         annualized_return_pct=metrics.annualized_return_pct,
         sharpe_ratio=metrics.sharpe_ratio,
         total_fees=total_fees,
@@ -295,7 +318,7 @@ def backtest_frame(
     )
     run.data_sanity = evaluate_backtest_data_sanity(
         spec=spec,
-        frame=frame,
+        frame=evaluation_frame,
         run=run,
         trades=trades,
     )

@@ -363,6 +363,8 @@ def _run_details(artifacts: BacktestArtifacts) -> dict[str, object]:
         "signals": run.signals,
         "trades": run.trades,
         "total_return_pct": run.total_return_pct,
+        "buy_hold_return_pct": run.buy_hold_return_pct,
+        "alpha_vs_buy_hold_pct": run.alpha_vs_buy_hold_pct,
         "annualized_return_pct": run.annualized_return_pct,
         "sharpe_ratio": run.sharpe_ratio,
         "data_sanity_status": run.data_sanity.status if run.data_sanity else "warning",
@@ -498,6 +500,8 @@ def _run_lines(artifacts: BacktestArtifacts | None) -> list[str]:
     return [
         f"- Run: `{run.run_id}`",
         f"- Return: `{run.total_return_pct:.2f}%`",
+        f"- Buy/Hold: `{_format_optional_pct(run.buy_hold_return_pct)}`",
+        f"- Alpha vs Buy/Hold: `{_format_optional_pct(run.alpha_vs_buy_hold_pct)}`",
         f"- Annualized: `{run.annualized_return_pct:.2f}%`"
         if run.annualized_return_pct is not None
         else "- Annualized: `n/a`",
@@ -509,3 +513,7 @@ def _run_lines(artifacts: BacktestArtifacts | None) -> list[str]:
         f"- Data sanity: `{run.data_sanity.status if run.data_sanity else 'warning'}`",
         f"- Evidence level: `{run.data_sanity.evidence_level if run.data_sanity else 'unknown'}`",
     ]
+
+
+def _format_optional_pct(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.2f}%"

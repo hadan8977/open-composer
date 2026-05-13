@@ -1,27 +1,28 @@
 # Dashboard D0 Review
 
-- Generated at: `2026-05-12T18:46:57.835302+00:00`
+- Generated at: `2026-05-13T13:42:06.829950+00:00`
 - Source root: `/root/codex-test/open-composer`
 
 ## Current Capability Baseline
 
-- Strategies indexed: `3`
-- Versions indexed: `3`
-- Runs indexed: `1`
-- Signals indexed: `0`
+- Strategies indexed: `21`
+- Versions indexed: `21`
+- Runs indexed: `5`
+- Signals indexed: `58`
 - Reviews indexed: `0`
-- Context packets indexed: `0`
+- Context packets indexed: `8`
 - Journal entries indexed: `0`
 - Data comparisons indexed: `0`
-- Feature packets indexed: `0`
+- Feature packets indexed: `9`
 - Workflow reports indexed: `0`
+- Research reports indexed: `9`
 - Readiness status: `warning` ready=`True`
 - Deployment status: `warning` ready=`True`
 
 ## Backend Snapshot
 
-- Strategy backends: `{'python_reference': 3}`
-- Backend readiness: `{'partial': 2, 'supported': 1}`
+- Strategy backends: `{'python_reference': 21}`
+- Backend readiness: `{'partial': 20, 'supported': 1}`
 - Paper kill switch: `off`
 - Paper order status counts: `{'warning': 1}`
 - Paper account equity: `n/a`
@@ -60,9 +61,9 @@
 - Paper positions: `0`
 - Paper reconciliation issues: `1`
 - Paper alerts: `2`
-- Pure quant strategies: `2`
+- Pure quant strategies: `17`
 - Quant + review strategies: `0`
-- Quant + scan strategies: `1`
+- Quant + scan strategies: `4`
 - Quant + orchestrator strategies: `0`
 
 ## Review Verdict

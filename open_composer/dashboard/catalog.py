@@ -487,6 +487,8 @@ def _build_run_and_signal_records(
             start_equity=report.get("start_equity"),
             end_equity=report.get("end_equity"),
             total_return_pct=report.get("total_return_pct"),
+            buy_hold_return_pct=report.get("buy_hold_return_pct"),
+            alpha_vs_buy_hold_pct=report.get("alpha_vs_buy_hold_pct"),
             annualized_return_pct=report.get("annualized_return_pct"),
             sharpe_ratio=report.get("sharpe_ratio"),
             total_fees=report.get("total_fees"),
@@ -1512,14 +1514,17 @@ def _render_catalog_markdown(catalog: DashboardCatalog) -> str:
         "",
         "## Run Evidence",
         "",
-        "| Run | Strategy | Evidence | Sanity | Warnings |",
-        "|---|---|---|---|---:|",
+        "| Run | Strategy | Evidence | Sanity | Warnings | Return | Buy/Hold | Alpha |",
+        "|---|---|---|---|---:|---:|---:|---:|",
         *[
             (
                 f"| {run.run_id} | {run.strategy_name} | "
                 f"{run.evidence_level or 'unknown'} | "
                 f"{run.data_sanity_status or 'unknown'} | "
-                f"{len(run.data_sanity_warnings)} |"
+                f"{len(run.data_sanity_warnings)} | "
+                f"{_format_optional_pct(run.total_return_pct)} | "
+                f"{_format_optional_pct(run.buy_hold_return_pct)} | "
+                f"{_format_optional_pct(run.alpha_vs_buy_hold_pct)} |"
             )
             for run in catalog.runs
         ],
@@ -1727,6 +1732,10 @@ def _parse_report(path: Path) -> dict[str, Any]:
                 key = "trades"
             if key == "total_return":
                 key = "total_return_pct"
+            if key == "buy_and_hold_return":
+                key = "buy_hold_return_pct"
+            if key == "alpha_vs_buy_and_hold":
+                key = "alpha_vs_buy_hold_pct"
             if key == "annualized_return":
                 key = "annualized_return_pct"
             data[key] = _strip_backticks(value)
@@ -1751,6 +1760,8 @@ def _parse_report(path: Path) -> dict[str, Any]:
         "start_equity",
         "end_equity",
         "total_fees",
+        "buy_hold_return_pct",
+        "alpha_vs_buy_hold_pct",
         "annualized_return_pct",
         "sharpe_ratio",
     ]:
@@ -1839,6 +1850,12 @@ def _money(value: float | None) -> str:
     if value is None:
         return "n/a"
     return f"${value:,.2f}"
+
+
+def _format_optional_pct(value: float | None) -> str:
+    if value is None:
+        return "n/a"
+    return f"{value:.2f}%"
 
 
 def _format_optional_dt(value: datetime | None) -> str:

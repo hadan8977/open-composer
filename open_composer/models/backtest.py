@@ -62,6 +62,8 @@ class BacktestRun(BaseModel):
     start_equity: float
     end_equity: float
     total_return_pct: float
+    buy_hold_return_pct: float | None = None
+    alpha_vs_buy_hold_pct: float | None = None
     annualized_return_pct: float | None = None
     sharpe_ratio: float | None = None
     total_fees: float = 0.0

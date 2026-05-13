@@ -66,6 +66,7 @@ def openai_api_key() -> str | None:
 
 
 def openai_base_url() -> str | None:
+    """Return the user-configured OpenAI-compatible endpoint without a domain allowlist."""
     return os.getenv("OPENAI_BASE_URL") or _codex_responses_base_url()
 
 

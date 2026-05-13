@@ -33,6 +33,7 @@ from nautilus_trader.persistence.wranglers import BarDataWrangler
 from nautilus_trader.trading.strategy import Strategy
 
 from open_composer.analytics import build_performance_metrics
+from open_composer.analytics.benchmark import build_buy_hold_benchmark
 from open_composer.analytics.data_sanity import evaluate_backtest_data_sanity
 from open_composer.engines.signal_engine import build_signal
 from open_composer.expressions import evaluate_rule_block
@@ -236,6 +237,7 @@ class OpenComposerNautilusStrategy(Strategy):
             self.spec.entry.any,
             self.spec.factors,
             root=self.root_path,
+            symbol=self.spec.primary_symbol,
         )
         exit_mask = evaluate_rule_block(
             frame,
@@ -243,6 +245,7 @@ class OpenComposerNautilusStrategy(Strategy):
             self.spec.exit.any,
             self.spec.factors,
             root=self.root_path,
+            symbol=self.spec.primary_symbol,
         )
 
         if not self._position_open and not self._collector.pending_entry:
@@ -440,12 +443,17 @@ def run_nautilus_backtest(
         end_equity = collector.end_equity()
         total_return_pct = ((end_equity / start_equity) - 1) * 100 if start_equity else 0.0
         metrics = build_performance_metrics(collector.equity_curve, spec.timeframe)
+        benchmark = build_buy_hold_benchmark(frame, total_return_pct)
         data_provenance = frame.attrs.get("data_source_mode")
         data_provider = frame.attrs.get("data_source_provider")
         assumptions = [
             "Signals are evaluated inside NautilusTrader on bar callbacks.",
             "Orders are market orders on the backtest engine.",
             "Position sizing uses max_position_weight against current account equity.",
+            (
+                "Buy-and-hold benchmark uses first available open to final close over the same "
+                "data window."
+            ),
             "Commission uses the instrument fee model when available.",
             "Nonzero slippage is approximated with Nautilus' probabilistic fill model.",
             "Open positions are marked to the latest close recorded by the collector.",
@@ -483,6 +491,8 @@ def run_nautilus_backtest(
             start_equity=start_equity,
             end_equity=end_equity,
             total_return_pct=total_return_pct,
+            buy_hold_return_pct=benchmark.return_pct,
+            alpha_vs_buy_hold_pct=benchmark.alpha_pct,
             annualized_return_pct=metrics.annualized_return_pct,
             sharpe_ratio=metrics.sharpe_ratio,
             total_fees=collector.total_fees,
@@ -538,6 +548,9 @@ def _build_feature_data(
                     continue
                 raw = json.loads(line)
                 if not isinstance(raw, dict):
+                    continue
+                packet_symbol = str(raw.get("symbol", "")).upper()
+                if packet_symbol and packet_symbol not in {spec.primary_symbol.upper(), "*"}:
                     continue
                 value = _feature_packet_value(raw, factor.field)
                 if value is None or "timestamp" not in raw:

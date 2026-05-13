@@ -7,7 +7,7 @@ import pytest
 import yaml
 
 from open_composer.compiler.spec_to_pine import render_pine_strategy
-from open_composer.expressions import ExpressionError, evaluate_expression
+from open_composer.expressions import ExpressionError, evaluate_expression, prepare_factor_frame
 from open_composer.indicators import (
     atr,
     bollinger_lower,
@@ -26,7 +26,7 @@ from open_composer.indicators import (
     stddev,
     zscore,
 )
-from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.models.strategy_spec import FactorConfig, load_strategy_spec
 
 
 def test_sma_ema_rsi_outputs() -> None:
@@ -123,6 +123,99 @@ def test_expression_rejects_unknown_name() -> None:
     )
     with pytest.raises(ExpressionError):
         evaluate_expression("adj_close > close", frame)
+
+
+def test_feature_packet_replay_uses_published_at_visibility(tmp_path: Path) -> None:
+    packet_path = tmp_path / "features.jsonl"
+    packet_path.write_text(
+        "\n".join(
+            [
+                (
+                    '{"timestamp":"2026-01-01T00:00:00Z",'
+                    '"published_at":"2026-01-03T00:00:00Z",'
+                    '"source":"llm","symbol":"QQQ","features":{"theme_score":0.9}}'
+                ),
+                (
+                    '{"timestamp":"2026-01-04T00:00:00Z",'
+                    '"published_at":"2026-01-04T00:00:00Z",'
+                    '"source":"llm","symbol":"QQQ","features":{"theme_score":0.2}}'
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    frame = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(
+                ["2026-01-02T00:00:00Z", "2026-01-03T00:00:00Z", "2026-01-04T00:00:00Z"]
+            ),
+            "open": [1, 2, 3],
+            "high": [1, 2, 3],
+            "low": [1, 2, 3],
+            "close": [1, 2, 3],
+            "volume": [1, 2, 3],
+        }
+    )
+    prepared = prepare_factor_frame(
+        frame,
+        {
+            "theme_score": FactorConfig(
+                source="llm_feature",
+                path=str(packet_path),
+                field="theme_score",
+                default=0.0,
+            )
+        },
+    )
+
+    assert prepared["theme_score"].tolist() == [0.0, 0.9, 0.2]
+
+
+def test_feature_packet_replay_filters_by_symbol(tmp_path: Path) -> None:
+    packet_path = tmp_path / "features.jsonl"
+    packet_path.write_text(
+        "\n".join(
+            [
+                (
+                    '{"timestamp":"2026-01-01T00:00:00Z",'
+                    '"published_at":"2026-01-01T00:00:00Z",'
+                    '"source":"llm","symbol":"AAOI","features":{"theme_score":0.9}}'
+                ),
+                (
+                    '{"timestamp":"2026-01-02T00:00:00Z",'
+                    '"published_at":"2026-01-02T00:00:00Z",'
+                    '"source":"llm","symbol":"LITE","features":{"theme_score":0.1}}'
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    frame = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2026-01-01T00:00:00Z", "2026-01-02T00:00:00Z"]),
+            "open": [1, 2],
+            "high": [1, 2],
+            "low": [1, 2],
+            "close": [1, 2],
+            "volume": [1, 2],
+        }
+    )
+    factors = {
+        "theme_score": FactorConfig(
+            source="llm_feature",
+            path=str(packet_path),
+            field="theme_score",
+            default=0.0,
+        )
+    }
+
+    aaoi = prepare_factor_frame(frame, factors, symbol="AAOI")
+    lite = prepare_factor_frame(frame, factors, symbol="LITE")
+
+    assert aaoi["theme_score"].tolist() == [0.9, 0.9]
+    assert lite["theme_score"].tolist() == [0.0, 0.1]
 
 
 def test_statistical_factor_export_to_pine(tmp_path: Path) -> None:

@@ -30,7 +30,7 @@ requires_openai_auth = false
     assert openai_base_url_source() == "codex"
 
 
-def test_openai_env_overrides_codex_provider(tmp_path: Path, monkeypatch) -> None:
+def test_openai_env_accepts_trusted_compatible_gateway(tmp_path: Path, monkeypatch) -> None:
     codex_home = tmp_path / ".codex"
     codex_home.mkdir()
     (codex_home / "config.toml").write_text(
@@ -45,9 +45,9 @@ wire_api = "responses"
         encoding="utf-8",
     )
     monkeypatch.setenv("CODEX_HOME", str(codex_home))
-    monkeypatch.setenv("OPENAI_BASE_URL", "https://example.test/v1")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://trusted-gateway.example/v1")
     monkeypatch.setenv("OPENAI_MODEL", "custom-model")
 
     assert default_openai_model() == "custom-model"
-    assert openai_base_url() == "https://example.test/v1"
+    assert openai_base_url() == "https://trusted-gateway.example/v1"
     assert openai_base_url_source() == "env"

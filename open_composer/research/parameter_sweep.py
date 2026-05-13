@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 
 from open_composer.adapters.data import load_ohlcv_for_spec
+from open_composer.analytics.data_sanity import MIN_SIGNALS, MIN_TRADES
 from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
 from open_composer.expressions import validate_expression
@@ -364,13 +365,32 @@ def _candidate_payload(candidate: SweepCandidateResult) -> dict[str, Any]:
         "spec_path": str(candidate.spec_path) if candidate.spec_path else None,
         "metrics": {
             "total_return_pct": run.total_return_pct,
+            "buy_hold_return_pct": run.buy_hold_return_pct,
+            "alpha_vs_buy_hold_pct": run.alpha_vs_buy_hold_pct,
             "annualized_return_pct": run.annualized_return_pct,
             "sharpe_ratio": run.sharpe_ratio,
             "signals": run.signals,
             "trades": run.trades,
             "total_fees": run.total_fees,
         },
+        "quality_flags": _quality_flags(candidate),
     }
+
+
+def _quality_flags(candidate: SweepCandidateResult) -> list[str]:
+    run = candidate.artifacts.run
+    flags = ["in_sample_only"]
+    if run.data_sanity and run.data_sanity.status == "warning":
+        flags.append("data_sanity_warning")
+    if run.signals < MIN_SIGNALS:
+        flags.append("low_signal_count")
+    if run.trades < MIN_TRADES:
+        flags.append("low_trade_count")
+    if run.alpha_vs_buy_hold_pct is not None and run.alpha_vs_buy_hold_pct <= 0:
+        flags.append("no_positive_alpha_vs_buy_hold")
+    if run.total_fees == 0 and run.trades > 0:
+        flags.append("zero_fee_assumption")
+    return flags
 
 
 def _write_sweep_report(
@@ -417,10 +437,10 @@ def _write_sweep_report(
         lines.extend(
             [
                 (
-                    "| Rank | Candidate | Score | Return | Annualized | Sharpe | Signals | "
-                    "Trades | Params |"
+                    "| Rank | Candidate | Score | Return | Buy/Hold | Alpha | Annualized | "
+                    "Sharpe | Signals | Trades | Flags | Params |"
                 ),
-                "|---:|---|---:|---:|---:|---:|---:|---:|---|",
+                "|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---|",
             ]
         )
         for candidate in shown:
@@ -431,11 +451,14 @@ def _write_sweep_report(
                 else "n/a"
             )
             sharpe = f"{run.sharpe_ratio:.2f}" if run.sharpe_ratio is not None else "n/a"
+            buy_hold = _format_pct(run.buy_hold_return_pct)
+            alpha = _format_pct(run.alpha_vs_buy_hold_pct)
+            flags = ", ".join(_quality_flags(candidate))
             params = "; ".join(f"{key}={value}" for key, value in candidate.params.items())
             lines.append(
                 f"| {candidate.rank} | `{candidate.spec.name}` | {candidate.score:.2f} | "
-                f"{run.total_return_pct:.2f}% | {annualized} | {sharpe} | "
-                f"{run.signals} | {run.trades} | `{params}` |"
+                f"{run.total_return_pct:.2f}% | {buy_hold} | {alpha} | {annualized} | "
+                f"{sharpe} | {run.signals} | {run.trades} | `{flags}` | `{params}` |"
             )
     else:
         lines.append("- No candidates shown because `top_n` is 0.")
@@ -446,3 +469,7 @@ def _write_sweep_report(
         lines.append("- No candidate specs were written.")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
+
+
+def _format_pct(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.2f}%"

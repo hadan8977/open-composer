@@ -98,6 +98,8 @@ def prepare_factor_frame(
     frame: pd.DataFrame,
     factors: Mapping[str, Any] | None,
     root: Path | None = None,
+    symbol: str | None = None,
+    require_feature_symbol: bool = False,
 ) -> pd.DataFrame:
     if not factors:
         return frame
@@ -125,6 +127,8 @@ def prepare_factor_frame(
                             prepared,
                             root,
                             source,
+                            symbol,
+                            require_feature_symbol,
                         )
                 else:
                     raise ExpressionError(f"unsupported factor source: {source}")
@@ -145,8 +149,16 @@ def evaluate_rule_block(
     any_rules: list[str],
     factors: Mapping[str, Any] | None = None,
     root: Path | None = None,
+    symbol: str | None = None,
+    require_feature_symbol: bool = False,
 ) -> pd.Series:
-    frame = prepare_factor_frame(frame, factors or {}, root=root)
+    frame = prepare_factor_frame(
+        frame,
+        factors or {},
+        root=root,
+        symbol=symbol,
+        require_feature_symbol=require_feature_symbol,
+    )
     pieces: list[pd.Series] = []
     if all_rules:
         pieces.append(reduce(and_, [evaluate_expression(rule, frame) for rule in all_rules]))
@@ -376,6 +388,8 @@ def _load_feature_packet(
     frame: pd.DataFrame,
     root: Path | None,
     source_label: str,
+    symbol: str | None,
+    require_feature_symbol: bool,
 ) -> pd.Series:
     default = getattr(factor, "default", 0.0)
     field = getattr(factor, "field", None)
@@ -400,10 +414,17 @@ def _load_feature_packet(
             raw = json.loads(line)
             if not isinstance(raw, Mapping):
                 continue
+            packet_symbol = str(raw.get("symbol", "")).upper()
+            if symbol and packet_symbol not in {symbol.upper(), "*"}:
+                if not packet_symbol and not require_feature_symbol:
+                    pass
+                else:
+                    continue
             value = _feature_packet_value(raw, field)
             if value is _MISSING or "timestamp" not in raw:
                 continue
-            records.append((pd.Timestamp(raw["timestamp"]), value))
+            visible_at = raw.get("published_at") or raw["timestamp"]
+            records.append((pd.Timestamp(visible_at), value))
     if not records:
         return pd.Series([default] * len(frame), index=frame.index)
 

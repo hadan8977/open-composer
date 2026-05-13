@@ -1,10 +1,17 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 from open_composer.adapters.data.comparison import compare_ohlcv_sources
-from open_composer.adapters.data.longbridge import fetch_longbridge_bars, longbridge_cache_path
+from open_composer.adapters.data.longbridge import (
+    LongbridgeDataError,
+    fetch_longbridge_bars,
+    longbridge_cache_path,
+    missing_longbridge_credentials,
+)
 
 
 def test_longbridge_fetch_uses_cache_and_writes_manifest(sample_workspace: Path) -> None:
@@ -28,6 +35,107 @@ def test_longbridge_fetch_uses_cache_and_writes_manifest(sample_workspace: Path)
     assert len(frame) > 0
     assert manifest.exists()
     assert "longbridge" in manifest.read_text(encoding="utf-8")
+
+
+def test_longbridge_missing_credentials_requires_access_token(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("LONGBRIDGE_APP_KEY", "app-key")
+    monkeypatch.setenv("LONGBRIDGE_APP_SECRET", "secret")
+    monkeypatch.delenv("LONGBRIDGE_ACCESS_TOKEN", raising=False)
+
+    assert missing_longbridge_credentials(sample_workspace) == ["LONGBRIDGE_ACCESS_TOKEN"]
+
+
+def test_longbridge_live_fetch_uses_official_sdk_methods(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("LONGBRIDGE_APP_KEY", "app-key")
+    monkeypatch.setenv("LONGBRIDGE_APP_SECRET", "secret")
+    monkeypatch.setenv("LONGBRIDGE_ACCESS_TOKEN", "token")
+    captured = {}
+
+    class MockConfig:
+        @staticmethod
+        def from_apikey(app_key, app_secret, access_token, **kwargs):
+            captured["credentials"] = (app_key, app_secret, access_token, kwargs)
+            return object()
+
+    class MockQuoteContext:
+        def __init__(self, config) -> None:
+            captured["config"] = config
+
+        def candlesticks(self, symbol, period, count, adjust_type, trade_sessions):
+            captured["candlesticks"] = (symbol, period, count, adjust_type, trade_sessions)
+            return [
+                SimpleNamespace(
+                    timestamp=datetime.fromisoformat("2026-01-02T09:30:00+00:00"),
+                    open=1,
+                    high=2,
+                    low=1,
+                    close=2,
+                    volume=100,
+                )
+            ]
+
+    class MockPeriod:
+        Min_15 = "Min_15"
+
+    class MockAdjustType:
+        ForwardAdjust = "ForwardAdjust"
+        NoAdjust = "NoAdjust"
+
+    class MockTradeSessions:
+        Intraday = "Intraday"
+        All = "All"
+
+    monkeypatch.setattr("longbridge.openapi.Config", MockConfig)
+    monkeypatch.setattr("longbridge.openapi.QuoteContext", MockQuoteContext)
+    monkeypatch.setattr("longbridge.openapi.Period", MockPeriod)
+    monkeypatch.setattr("longbridge.openapi.AdjustType", MockAdjustType)
+    monkeypatch.setattr("longbridge.openapi.TradeSessions", MockTradeSessions)
+
+    frame = fetch_longbridge_bars(
+        sample_workspace,
+        "QQQ",
+        "15m",
+        None,
+        None,
+        use_cache=False,
+        count=7,
+    )
+
+    assert captured["credentials"] == (
+        "app-key",
+        "secret",
+        "token",
+        {"enable_print_quote_packages": False},
+    )
+    assert captured["candlesticks"] == ("QQQ.US", "Min_15", 7, "ForwardAdjust", "Intraday")
+    assert frame["close"].iloc[-1] == 2
+
+
+def test_longbridge_live_fetch_requires_valid_count(sample_workspace: Path, monkeypatch) -> None:
+    monkeypatch.setenv("LONGBRIDGE_APP_KEY", "app-key")
+    monkeypatch.setenv("LONGBRIDGE_APP_SECRET", "secret")
+    monkeypatch.setenv("LONGBRIDGE_ACCESS_TOKEN", "token")
+
+    try:
+        fetch_longbridge_bars(
+            sample_workspace,
+            "QQQ",
+            "15m",
+            None,
+            None,
+            use_cache=False,
+            count=1001,
+        )
+    except LongbridgeDataError as exc:
+        assert "between 1 and 1000" in str(exc)
+    else:
+        raise AssertionError("expected LongbridgeDataError")
 
 
 def test_ohlcv_comparison_writes_reports(sample_workspace: Path) -> None:

@@ -317,6 +317,8 @@ interface DashboardRunRecord {
   signals?: number;
   trades?: number | null;
   total_return_pct?: number | null;
+  buy_hold_return_pct?: number | null;
+  alpha_vs_buy_hold_pct?: number | null;
   annualized_return_pct?: number | null;
   sharpe_ratio?: number | null;
   end_equity?: number | null;

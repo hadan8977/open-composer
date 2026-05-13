@@ -1,13 +1,13 @@
 # Open Composer
 
-Open Composer is a file-first strategy workbench for drafting, testing, reviewing,
-and paper-monitoring trading ideas with Codex.
+Open Composer is a file-first AI strategy workbench for Codex-assisted quantitative research,
+backtesting, review, Dashboard monitoring, and Alpaca Paper safety workflows.
 
-`StrategySpec` is the source of truth. Python is the deterministic reference.
-NautilusTrader is the event-driven execution path. TradingView Pine is a
-compatibility export, not the main runtime.
+`StrategySpec` is the source of truth. Python is the deterministic reference runtime.
+NautilusTrader is the event-driven execution path. TradingView Pine is a compatibility export,
+not the main runtime.
 
-## Setup
+## Quick Start
 
 ```bash
 cp .env.example .env
@@ -15,19 +15,27 @@ cp .codex/config.example.toml .codex/config.toml
 make bootstrap
 uv run oc doctor
 make deploy-prepare
+make dashboard-serve
 ```
 
 `.env` holds API keys and broker settings. `.codex/config.toml` holds non-secret
 Codex model and MCP settings. The project also reads `AGENTS.md` and repo skills
 under `.agents/skills/`.
 
-## Core Workflow
+`OPENAI_BASE_URL` is optional and may point to OpenAI or a trusted
+OpenAI-compatible Responses API gateway. The project does not reject a configured
+review/drafting endpoint solely because it is not an official OpenAI domain.
+
+Open the Dashboard at `http://127.0.0.1:8000` after `make dashboard-serve`.
+
+## User Workflow
 
 ```bash
 uv run oc capability test
 uv run oc spec validate strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc backtest strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy promotion-report strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc scan strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc compile pine-strategy strategy_specs/drafts/qqq_pullback_15m.yaml
 uv run oc dashboard html
@@ -49,6 +57,14 @@ readiness reports. `make readiness` writes `reports/readiness/readiness.json`
 and `.md`, covering Dashboard bundle/catalog, feature packets, paper monitor
 state, and strategy capability readiness.
 
+Backtest and research reports always need context before they are trusted:
+
+- compare strategy return with buy-and-hold and Alpha in the same data window
+- inspect bar count, signal count, closed trades, fees, slippage, and data sanity
+- treat parameter sweeps as in-sample research only
+- require promotion evidence before paper use: out-of-sample, walk-forward, cost sensitivity,
+  and data-source comparison
+
 TradingView export:
 
 ```bash
@@ -59,7 +75,7 @@ uv run oc compile pine-strategy strategy_specs/drafts/qqq_pullback_15m.yaml
 Only deterministic OHLCV-compatible rules are exported. Pine is for charting and
 Strategy Tester compatibility, not full strategy execution.
 
-## Control Surface
+## Codex Control Surface
 
 Codex follows this repo in a fixed order:
 
@@ -73,8 +89,19 @@ The important local gates are:
 - `uv run oc capability test` before adding a new required capability
 - `uv run oc spec validate <spec>` before code or Pine generation
 - `uv run oc backtest <spec>` before promotion
+- `uv run oc strategy parameter-sweep <spec> --param ...` when parameters are adjustable
+- `uv run oc strategy promotion-report <spec>` before paper promotion
 - `uv run oc dashboard html` after new artifacts land
 - `make dashboard-build` before using the React Dashboard bundle
+
+When Codex designs a strategy, do not ask it to return one fixed parameter set. Ask it to:
+
+1. draft a `StrategySpec`
+2. list adjustable parameter ranges and factor alternatives
+3. run a bounded `parameter-sweep` over those ranges
+4. summarize the ranked grid with buy-and-hold, Alpha, quality flags, and data sanity
+5. choose the next iteration at the method/data/factor level before tuning more parameters
+6. run `promotion-report` before any paper candidate is considered
 
 Generated reports, signal logs, cache files, strategy versions, and paper state
 are local runtime outputs. They are intentionally ignored by git; checked-in
@@ -91,6 +118,8 @@ Useful commands:
 ```bash
 uv run oc data fetch --source alpaca --symbol MU --timeframe 15m --feed iex
 uv run oc data fetch --source longbridge --symbol QQQ --timeframe 15m
+uv run oc data fetch --source longbridge --symbol QQQ --timeframe 15m --strict-live --count 1000
+uv run oc data longbridge-check --symbol QQQ --timeframe 15m
 uv run oc data compare --symbol QQQ --timeframe 15m --left alpaca --right longbridge
 uv run oc feature validate
 ```
@@ -98,8 +127,20 @@ uv run oc feature validate
 Current data sources:
 
 - Alpaca IEX: implemented for bars and Alpaca Paper context.
-- Longbridge: trial market-data adapter and comparison reports.
+- Longbridge: trial market-data adapter, live quote checks, and comparison reports.
 - SEC, FRED, Alpha Vantage, GDELT: registered context sources for review and replay.
+
+Longbridge live access uses the official Python SDK with API Key authentication.
+Set `LONGBRIDGE_APP_KEY`, `LONGBRIDGE_APP_SECRET`, and
+`LONGBRIDGE_ACCESS_TOKEN`; app key/secret alone are not enough. The adapter
+maps bare US tickers like `QQQ` to Longbridge security codes like `QQQ.US` and
+supports `1m`, `5m`, `15m`, `1h`, `daily`, and `weekly` periods at the adapter
+level. `StrategySpec.timeframe` currently allows `5m`, `15m`, `1h`, `daily`,
+and `weekly`. Longbridge candlestick requests are capped at 1000 bars per
+request; account quote cards, monthly symbol quotas, minute-history start dates,
+and extended-hours access determine the usable range. Use `--trade-sessions all`
+only when extended-hours data is intended; US overnight quotes require the
+proper quote card plus `LONGBRIDGE_ENABLE_OVERNIGHT=true`.
 
 Reports marked `sample fallback` or fixture replay are workflow evidence, not
 market evidence.
@@ -146,6 +187,21 @@ Parameter sweeps write ranked JSON/Markdown reports under `reports/research/`
 and only write top draft specs when requested. Sweep results are in-sample
 research evidence; run out-of-sample, walk-forward, cost sensitivity, and data
 source comparisons before promotion.
+
+Promotion gate:
+
+```bash
+uv run oc strategy promotion-report strategy_specs/drafts/qqq_pullback_15m.yaml \
+  --oos-ratio 0.3 \
+  --walk-forward-folds 3 \
+  --cost-slippage-bps 0 \
+  --cost-slippage-bps 5 \
+  --cost-slippage-bps 10
+```
+
+The promotion report writes full-window, out-of-sample, walk-forward, cost sensitivity,
+data comparison, buy-and-hold, and Alpha evidence. It is still research evidence, not a
+promise of live returns.
 
 ## Paper Safety
 

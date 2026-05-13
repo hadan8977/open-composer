@@ -45,7 +45,11 @@ def test_parameter_sweep_runs_grid_and_writes_ranked_reports(sample_workspace: P
     }
     assert payload["candidates"][0]["rank"] == 1
     assert payload["candidates"][0]["metrics"]["signals"] >= 1
+    assert "buy_hold_return_pct" in payload["candidates"][0]["metrics"]
+    assert "alpha_vs_buy_hold_pct" in payload["candidates"][0]["metrics"]
+    assert "quality_flags" in payload["candidates"][0]
     assert "in-sample research evidence" in result.report_path.read_text(encoding="utf-8")
+    assert "Buy/Hold" in result.report_path.read_text(encoding="utf-8")
 
     best_spec = yaml.safe_load(result.written_specs[0].read_text(encoding="utf-8"))
     assert best_spec["lifecycle"] == "draft"

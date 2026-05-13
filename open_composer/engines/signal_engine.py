@@ -15,8 +15,22 @@ def signal_masks(
     frame: pd.DataFrame,
     root: Path | None = None,
 ) -> tuple[pd.Series, pd.Series]:
-    entry = evaluate_rule_block(frame, spec.entry.all, spec.entry.any, spec.factors, root=root)
-    exit_ = evaluate_rule_block(frame, spec.exit.all, spec.exit.any, spec.factors, root=root)
+    entry = evaluate_rule_block(
+        frame,
+        spec.entry.all,
+        spec.entry.any,
+        spec.factors,
+        root=root,
+        symbol=spec.primary_symbol,
+    )
+    exit_ = evaluate_rule_block(
+        frame,
+        spec.exit.all,
+        spec.exit.any,
+        spec.factors,
+        root=root,
+        symbol=spec.primary_symbol,
+    )
     return entry, exit_
 
 

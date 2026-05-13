@@ -44,6 +44,8 @@ def write_backtest_report(
         f"- Start equity: {run.start_equity:.2f}",
         f"- End equity: {run.end_equity:.2f}",
         f"- Total return: {run.total_return_pct:.2f}%",
+        f"- Buy and hold return: {_optional_pct(run.buy_hold_return_pct)}",
+        f"- Alpha vs buy and hold: {_optional_pct(run.alpha_vs_buy_hold_pct)}",
         f"- Annualized return: {run.annualized_return_pct:.2f}%"
         if run.annualized_return_pct is not None
         else "- Annualized return: n/a",
@@ -132,6 +134,10 @@ def _data_sanity_lines(run: BacktestRun) -> list[str]:
 
 def _optional_float(value: float | None) -> str:
     return "n/a" if value is None else f"{value:.4f}"
+
+
+def _optional_pct(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.2f}%"
 
 
 def _feature_replay_lines(spec: StrategySpec, root: Path | None) -> list[str]:

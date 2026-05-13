@@ -424,6 +424,8 @@ def _render_dashboard_html(catalog: DashboardCatalog) -> str:
               <th>Evidence</th>
               <th>Sanity</th>
               <th>Return</th>
+              <th>Buy/Hold</th>
+              <th>Alpha</th>
               <th>Annualized</th>
               <th>Sharpe</th>
               <th>Signals</th>
@@ -666,6 +668,8 @@ def _render_strategy_html(catalog: DashboardCatalog, strategy_id: str) -> str:
               <th>Evidence</th>
               <th>Sanity</th>
               <th>Return</th>
+              <th>Buy/Hold</th>
+              <th>Alpha</th>
               <th>Annualized</th>
               <th>Sharpe</th>
               <th>Fees</th>
@@ -730,7 +734,7 @@ def _render_strategy_html(catalog: DashboardCatalog, strategy_id: str) -> str:
 
 def _run_rows(runs: list) -> str:
     if not runs:
-        return '<tr><td colspan="11">No runs indexed.</td></tr>'
+        return '<tr><td colspan="13">No runs indexed.</td></tr>'
     rows = []
     for run in runs:
         report = _link(run.report_path) if run.report_path else ""
@@ -743,6 +747,8 @@ def _run_rows(runs: list) -> str:
             f"<td>{_evidence_cell(run)}</td>"
             f"<td>{_sanity_cell(run)}</td>"
             f"<td>{_pct(run.total_return_pct)}</td>"
+            f"<td>{_pct(run.buy_hold_return_pct)}</td>"
+            f"<td>{_pct(run.alpha_vs_buy_hold_pct)}</td>"
             f"<td>{_pct(run.annualized_return_pct)}</td>"
             f"<td>{_ratio(run.sharpe_ratio)}</td>"
             f"<td>{run.signals}</td>"
@@ -869,7 +875,7 @@ def _version_rows(versions: list) -> str:
 
 def _strategy_run_rows(runs: list) -> str:
     if not runs:
-        return '<tr><td colspan="12">No runs indexed for this strategy.</td></tr>'
+        return '<tr><td colspan="14">No runs indexed for this strategy.</td></tr>'
     rows = []
     for run in runs:
         rows.append(
@@ -880,6 +886,8 @@ def _strategy_run_rows(runs: list) -> str:
             f"<td>{_evidence_cell(run)}</td>"
             f"<td>{_sanity_cell(run)}</td>"
             f"<td>{_pct(run.total_return_pct)}</td>"
+            f"<td>{_pct(run.buy_hold_return_pct)}</td>"
+            f"<td>{_pct(run.alpha_vs_buy_hold_pct)}</td>"
             f"<td>{_pct(run.annualized_return_pct)}</td>"
             f"<td>{_ratio(run.sharpe_ratio)}</td>"
             f"<td>{_money(run.total_fees)}</td>"

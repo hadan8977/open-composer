@@ -21,6 +21,15 @@ from open_composer.adapters.broker.alpaca_paper import (
 )
 from open_composer.adapters.data import fetch_ohlcv
 from open_composer.adapters.data.comparison import compare_ohlcv_sources
+from open_composer.adapters.data.longbridge import (
+    DEFAULT_LONGBRIDGE_TRADE_SESSIONS,
+    MAX_LONGBRIDGE_CANDLESTICKS,
+    LongbridgeDataError,
+    fetch_longbridge_bars,
+    fetch_longbridge_quotes,
+    longbridge_credentials_status,
+    longbridge_quote_status,
+)
 from open_composer.adapters.events import fetch_capability_events
 from open_composer.adapters.execution import build_nautilus_trader_plan, write_nautilus_trader_plan
 from open_composer.capabilities import evaluate_capabilities, load_registry
@@ -90,7 +99,11 @@ from open_composer.research import (
     optimize_strategy_horizons,
     optimize_strategy_universe,
     parse_sweep_parameters,
+    run_leverage_research,
+    run_llm_rotation_meta_selection,
+    run_market_timing_research,
     run_parameter_sweep,
+    run_rotation_research,
 )
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
@@ -207,6 +220,11 @@ def doctor() -> None:
         "LONGBRIDGE_APP_SECRET",
         optional_env_status("LONGBRIDGE_APP_SECRET"),
         "optional for Longbridge",
+    )
+    table.add_row(
+        "LONGBRIDGE_ACCESS_TOKEN",
+        optional_env_status("LONGBRIDGE_ACCESS_TOKEN"),
+        "required for Longbridge live API Key auth",
     )
     console.print(table)
 
@@ -758,18 +776,53 @@ def data_fetch(
     start: str | None = typer.Option(None, "--start"),
     end: str | None = typer.Option(None, "--end"),
     feed: str | None = typer.Option(None, "--feed"),
+    strict_live: bool = typer.Option(
+        False,
+        "--strict-live",
+        help="Fail instead of falling back to local fixture/sample data.",
+    ),
+    count: int = typer.Option(
+        MAX_LONGBRIDGE_CANDLESTICKS,
+        "--count",
+        help="Longbridge candlestick count when no start/end is supplied.",
+    ),
+    trade_sessions: str = typer.Option(
+        DEFAULT_LONGBRIDGE_TRADE_SESSIONS,
+        "--trade-sessions",
+        help="Longbridge trade sessions: intraday or all.",
+    ),
 ) -> None:
     """Fetch OHLCV bars into data/cache."""
     root = project_root()
-    frame = fetch_ohlcv(
-        root=root,
-        symbol=symbol.upper(),
-        timeframe=timeframe,
-        start=_parse_datetime(start),
-        end=_parse_datetime(end),
-        source=source,
-        feed=feed,
-    )
+    selected_symbol = symbol.upper()
+    selected_start = _parse_datetime(start)
+    selected_end = _parse_datetime(end)
+    try:
+        if strict_live and source == "longbridge":
+            frame = fetch_longbridge_bars(
+                root=root,
+                symbol=selected_symbol,
+                timeframe=timeframe,
+                start=selected_start,
+                end=selected_end,
+                feed=feed,
+                use_cache=False,
+                count=count,
+                trade_sessions=trade_sessions,
+            )
+        else:
+            frame = fetch_ohlcv(
+                root=root,
+                symbol=selected_symbol,
+                timeframe=timeframe,
+                start=selected_start,
+                end=selected_end,
+                source=source,
+                feed=feed,
+            )
+    except LongbridgeDataError as exc:
+        console.print(f"[red]Longbridge fetch failed[/red] {exc}")
+        raise typer.Exit(1) from exc
     console.print(
         f"[green]fetched[/green] {len(frame)} bars for {symbol.upper()} {timeframe} source={source}"
     )
@@ -801,6 +854,73 @@ def data_compare(
         f"close_diff_bps={comparison.max_abs_close_diff_bps:.2f} "
         f"matched={comparison.matched_rows} coverage={comparison.matched_coverage_pct:.2f}%"
     )
+
+
+@data_app.command("longbridge-check")
+def data_longbridge_check(
+    symbol: str = typer.Option("QQQ", "--symbol"),
+    timeframe: str = typer.Option("15m", "--timeframe"),
+    count: int = typer.Option(5, "--count", min=1, max=MAX_LONGBRIDGE_CANDLESTICKS),
+    trade_sessions: str = typer.Option(
+        DEFAULT_LONGBRIDGE_TRADE_SESSIONS,
+        "--trade-sessions",
+        help="Longbridge trade sessions: intraday or all.",
+    ),
+) -> None:
+    """Validate Longbridge credentials, quote permission, and live bars."""
+    root = project_root()
+    credentials = longbridge_credentials_status(root)
+    table = Table(title="Longbridge Live Check")
+    table.add_column("Check")
+    table.add_column("Status")
+    table.add_column("Detail")
+    for name, status in credentials.items():
+        table.add_row(name, status, "presence only")
+    missing = [name for name, status in credentials.items() if status == "missing"]
+    if missing:
+        console.print(table)
+        raise typer.Exit(1)
+
+    try:
+        status = longbridge_quote_status(root)
+        quotes = fetch_longbridge_quotes(root, [symbol])
+        bars = fetch_longbridge_bars(
+            root=root,
+            symbol=symbol.upper(),
+            timeframe=timeframe,
+            start=None,
+            end=None,
+            feed=None,
+            use_cache=False,
+            count=count,
+            trade_sessions=trade_sessions,
+        )
+    except LongbridgeDataError as exc:
+        table.add_row("Live API", "failed", str(exc))
+        console.print(table)
+        raise typer.Exit(1) from exc
+
+    quote_packages = status.get("quote_packages", [])
+    package_names = [
+        str(item.get("name") or item.get("key"))
+        for item in quote_packages
+        if item.get("name") or item.get("key")
+    ]
+    latest = bars.iloc[-1] if not bars.empty else None
+    latest_timestamp = latest["timestamp"].isoformat() if latest is not None else "n/a"
+    table.add_row("Quote level", str(status.get("quote_level") or "unknown"), "")
+    table.add_row(
+        "Quote packages",
+        str(len(package_names)),
+        ", ".join(package_names[:5]) or "none reported",
+    )
+    table.add_row("Quote", "ok" if quotes else "empty", str(quotes[0]) if quotes else "n/a")
+    table.add_row(
+        "Candlesticks",
+        "ok" if len(bars) else "empty",
+        f"{len(bars)} bars latest={latest_timestamp}",
+    )
+    console.print(table)
 
 
 @events_app.command("fetch")
@@ -1073,6 +1193,293 @@ def strategy_optimize_horizons(
             f"return={selection.artifacts.run.total_return_pct:.2f}% "
             f"trades={selection.artifacts.run.trades} score={selection.score:.2f}"
         )
+
+
+@strategy_app.command("rotate-universe")
+def strategy_rotate_universe(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    objective: str = typer.Option(
+        "equal-weight-alpha",
+        "--objective",
+        help="Selection objective: equal-weight-alpha or primary-alpha.",
+    ),
+    lookback: Annotated[list[int] | None, typer.Option("--lookback")] = None,
+    rebalance_bars: Annotated[
+        list[int] | None,
+        typer.Option("--rebalance-bars"),
+    ] = None,
+    top_n: Annotated[list[int] | None, typer.Option("--top-n")] = None,
+    min_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-momentum-pct"),
+    ] = None,
+    primary_hold_margin_pct: Annotated[
+        list[float] | None,
+        typer.Option("--primary-hold-margin-pct"),
+    ] = None,
+    primary_min_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--primary-min-momentum-pct"),
+    ] = None,
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
+    max_candidates: int = typer.Option(200, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+    feature_gate: bool = typer.Option(
+        False,
+        "--feature-gate",
+        help="Apply replayable point-in-time llm_feature/feature_packet entry gates.",
+    ),
+) -> None:
+    """Research a point-in-time momentum rotation grid across a symbol universe."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    objective_key = _rotation_objective(objective)
+    result = run_rotation_research(
+        spec,
+        project_root(),
+        symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+        data_source=data_source,
+        lookback_bars=lookback,
+        rebalance_bars=rebalance_bars,
+        top_n_values=top_n,
+        min_momentum_pct=min_momentum_pct,
+        out_of_sample_ratio=oos_ratio,
+        walk_forward_folds=walk_forward_folds,
+        max_candidates=max_candidates,
+        refresh_data=refresh_data,
+        feature_gate=feature_gate,
+        start=start,
+        end=end,
+        objective=objective_key,
+        primary_hold_margin_pct=primary_hold_margin_pct,
+        primary_min_momentum_pct=primary_min_momentum_pct,
+    )
+    best = result.best
+    console.print(f"[green]rotation research complete[/green] report: {result.report_path}")
+    console.print(
+        f"best={best.params.label} "
+        f"train_primary_alpha={best.train.alpha_vs_primary_pct:.2f}% "
+        f"oos_primary_alpha={best.out_of_sample.alpha_vs_primary_pct:.2f}% "
+        f"oos_equal_weight_alpha={best.out_of_sample.alpha_vs_equal_weight_pct:.2f}% "
+        f"oos_sharpe={best.out_of_sample.sharpe_ratio or 0.0:.2f} "
+        f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
+    )
+
+
+@strategy_app.command("llm-rotate-universe")
+def strategy_llm_rotate_universe(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    objective: str = typer.Option(
+        "equal-weight-alpha",
+        "--objective",
+        help="Selection objective: equal-weight-alpha or primary-alpha.",
+    ),
+    lookback: Annotated[list[int] | None, typer.Option("--lookback")] = None,
+    rebalance_bars: Annotated[
+        list[int] | None,
+        typer.Option("--rebalance-bars"),
+    ] = None,
+    top_n: Annotated[list[int] | None, typer.Option("--top-n")] = None,
+    min_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-momentum-pct"),
+    ] = None,
+    validation_ratio: float = typer.Option(0.3, "--validation-ratio"),
+    validation_folds: int = typer.Option(3, "--validation-folds"),
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    max_candidates: int = typer.Option(200, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Use an LLM to select a rotation method from training-only evidence, then validate OOS."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    objective_key = _rotation_objective(objective)
+    result = run_llm_rotation_meta_selection(
+        spec,
+        project_root(),
+        symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+        data_source=data_source,
+        lookback_bars=lookback,
+        rebalance_bars=rebalance_bars,
+        top_n_values=top_n,
+        min_momentum_pct=min_momentum_pct,
+        validation_ratio=validation_ratio,
+        validation_folds=validation_folds,
+        out_of_sample_ratio=oos_ratio,
+        max_candidates=max_candidates,
+        refresh_data=refresh_data,
+        start=start,
+        end=end,
+        objective=objective_key,
+    )
+    selected = result.selected
+    console.print(f"[green]LLM rotation selection complete[/green] report: {result.report_path}")
+    console.print(
+        f"selected={selected.params.label} "
+        f"oos_primary_alpha={selected.out_of_sample.alpha_vs_primary_pct:.2f}% "
+        f"oos_equal_weight_alpha={selected.out_of_sample.alpha_vs_equal_weight_pct:.2f}% "
+        f"oos_sharpe={selected.out_of_sample.sharpe_ratio or 0.0:.2f} "
+        f"status={result.status} "
+        f"flags={','.join(selected.quality_flags) if selected.quality_flags else 'none'}"
+    )
+
+
+def _rotation_objective(value: str) -> str:
+    normalized = value.strip().lower().replace("_", "-")
+    if normalized == "equal-weight-alpha":
+        return "equal_weight_alpha"
+    if normalized == "primary-alpha":
+        return "primary_alpha"
+    raise typer.BadParameter("--objective must be equal-weight-alpha or primary-alpha")
+
+
+@strategy_app.command("market-time")
+def strategy_market_time(
+    spec: Path,
+    symbol: str | None = typer.Option(None, "--symbol"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    profile: Annotated[list[str] | None, typer.Option("--profile")] = None,
+    fast: Annotated[list[int] | None, typer.Option("--fast")] = None,
+    slow: Annotated[list[int] | None, typer.Option("--slow")] = None,
+    exit_bars: Annotated[list[int] | None, typer.Option("--exit-bars")] = None,
+    momentum_bars: Annotated[list[int] | None, typer.Option("--momentum-bars")] = None,
+    min_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-momentum-pct"),
+    ] = None,
+    breakout_bars: Annotated[list[int] | None, typer.Option("--breakout-bars")] = None,
+    volume_bars: Annotated[list[int] | None, typer.Option("--volume-bars")] = None,
+    stop_loss_pct: Annotated[list[float] | None, typer.Option("--stop-loss-pct")] = None,
+    take_profit_pct: Annotated[
+        list[str] | None,
+        typer.Option("--take-profit-pct"),
+    ] = None,
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
+    max_candidates: int = typer.Option(300, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+    write_best_spec: bool = typer.Option(True, "--write-best-spec/--no-write-best-spec"),
+) -> None:
+    """Research same-symbol timing grids against buy-and-hold."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    result = run_market_timing_research(
+        spec,
+        project_root(),
+        symbol=symbol,
+        data_source=data_source,
+        profiles=_timing_profiles(profile),
+        fast_bars=fast,
+        slow_bars=slow,
+        exit_bars=exit_bars,
+        momentum_bars=momentum_bars,
+        min_momentum_pct=min_momentum_pct,
+        breakout_bars=breakout_bars,
+        volume_bars=volume_bars,
+        stop_loss_pct=stop_loss_pct,
+        take_profit_pct=_take_profit_values(take_profit_pct),
+        out_of_sample_ratio=oos_ratio,
+        walk_forward_folds=walk_forward_folds,
+        max_candidates=max_candidates,
+        refresh_data=refresh_data,
+        start=start,
+        end=end,
+        write_best_spec=write_best_spec,
+    )
+    best = result.best
+    run = best.out_of_sample.run
+    console.print(f"[green]market timing research complete[/green] report: {result.report_path}")
+    if result.selected_spec_path:
+        console.print(f"selected spec: {result.selected_spec_path}")
+    console.print(
+        f"best={best.params.label} "
+        f"oos_alpha={run.alpha_vs_buy_hold_pct or 0.0:.2f}% "
+        f"oos_return={run.total_return_pct:.2f}% "
+        f"oos_buy_hold={run.buy_hold_return_pct or 0.0:.2f}% "
+        f"oos_sharpe={run.sharpe_ratio or 0.0:.2f} "
+        f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
+    )
+
+
+def _timing_profiles(values: list[str] | None) -> list[str] | None:
+    if values is None:
+        return None
+    allowed = {"risk_control_hold", "trend_pullback", "breakout_hold", "macd_trend"}
+    normalized = [item.strip().lower().replace("-", "_") for item in values if item.strip()]
+    unknown = sorted(set(normalized) - allowed)
+    if unknown:
+        raise typer.BadParameter(f"unsupported --profile values: {', '.join(unknown)}")
+    return normalized
+
+
+def _take_profit_values(values: list[str] | None) -> list[float | None] | None:
+    if values is None:
+        return None
+    parsed: list[float | None] = []
+    for value in values:
+        normalized = value.strip().lower()
+        if normalized in {"none", "null", "off"}:
+            parsed.append(None)
+        else:
+            parsed.append(float(value))
+    return parsed
+
+
+@strategy_app.command("leverage-research")
+def strategy_leverage_research(
+    spec: Path,
+    symbol: str | None = typer.Option(None, "--symbol"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    leverage: Annotated[list[float] | None, typer.Option("--leverage")] = None,
+    financing_rate_pct: Annotated[
+        list[float] | None,
+        typer.Option("--financing-rate-pct"),
+    ] = None,
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
+    max_candidates: int = typer.Option(100, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Research levered same-symbol exposure against unlevered buy-and-hold."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    result = run_leverage_research(
+        spec,
+        project_root(),
+        symbol=symbol,
+        data_source=data_source,
+        leverage_values=leverage,
+        financing_rate_pct=financing_rate_pct,
+        out_of_sample_ratio=oos_ratio,
+        walk_forward_folds=walk_forward_folds,
+        max_candidates=max_candidates,
+        refresh_data=refresh_data,
+        start=start,
+        end=end,
+    )
+    best = result.best
+    console.print(f"[green]leverage research complete[/green] report: {result.report_path}")
+    console.print(
+        f"best={best.params.label} "
+        f"oos_alpha={best.out_of_sample.alpha_vs_buy_hold_pct:.2f}% "
+        f"oos_return={best.out_of_sample.total_return_pct:.2f}% "
+        f"oos_buy_hold={best.out_of_sample.buy_hold_return_pct:.2f}% "
+        f"oos_sharpe={best.out_of_sample.sharpe_ratio or 0.0:.2f} "
+        f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
+    )
 
 
 @strategy_app.command("list")

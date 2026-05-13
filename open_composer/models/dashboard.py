@@ -139,6 +139,8 @@ class DashboardRun(BaseModel):
     start_equity: float | None = None
     end_equity: float | None = None
     total_return_pct: float | None = None
+    buy_hold_return_pct: float | None = None
+    alpha_vs_buy_hold_pct: float | None = None
     annualized_return_pct: float | None = None
     sharpe_ratio: float | None = None
     total_fees: float | None = None

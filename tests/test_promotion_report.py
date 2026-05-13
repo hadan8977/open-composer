@@ -92,11 +92,14 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     }
     assert payload["data_comparisons"]
     assert payload["out_of_sample"] is not None
+    assert "buy_hold_return_pct" in payload["full_window"]
+    assert "alpha_vs_buy_hold_pct" in payload["full_window"]
     assert payload["walk_forward"]
     assert payload["cost_sensitivity"]
     text = report_path.read_text(encoding="utf-8")
     assert "## Checks" in text
     assert "## Out Of Sample" in text
+    assert "Alpha vs Buy/Hold" in text
     assert "## Walk Forward" in text
     assert "## Cost Sensitivity" in text
     assert "## Data Comparisons" in text
