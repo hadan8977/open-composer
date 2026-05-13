@@ -2,6 +2,8 @@
 
 日期：2026-05-10
 
+> 状态说明（2026-05-13）：本文是早期广范围计划的严格审查，保留用于理解为什么拒绝 Pine 全量运行、自研完整引擎、Dashboard 第二真相源和真钱写入。当前执行型 `/goal` 的范围已经收敛，必须以 `docs/current-unfinished-work-check.zh.md` 和 `docs/product-maturation-plan.zh.md` 为准，不得把本文后置的策略组、完整编排器、机构级研究平台等内容提前加入近期任务。
+
 审查对象：
 
 - `docs/quant-capability-expansion-plan.zh.md`

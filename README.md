@@ -126,9 +126,30 @@ Makefile shortcuts:
 make feature-validate
 ```
 
+## Research Iteration
+
+Use the fixed candidate optimizer for the existing strategy family, or use
+parameter sweep when you want to test many combinations from one spec:
+
+```bash
+uv run oc strategy optimize strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy parameter-sweep strategy_specs/drafts/qqq_pullback_15m.yaml \
+  --param risk.stop_loss_pct=0.8,1.0,1.2 \
+  --param risk.take_profit_pct=1.5,2.0,3.0 \
+  --param costs.slippage_bps=0,5 \
+  --max-candidates 27 \
+  --top-n 10 \
+  --write-top 2
+```
+
+Parameter sweeps write ranked JSON/Markdown reports under `reports/research/`
+and only write top draft specs when requested. Sweep results are in-sample
+research evidence; run out-of-sample, walk-forward, cost sensitivity, and data
+source comparisons before promotion.
+
 ## Paper Safety
 
-Alpaca Paper is the only automated order path in the MVP. A paper order requires:
+Alpaca Paper is the only automated order path in the personal local workflow. A paper order requires:
 
 - a spec under `strategy_specs/active/`
 - `lifecycle=active`
@@ -154,7 +175,7 @@ Sample-data strategies can still be activated and previewed for local smoke test
 but `oc run paper ... --allow-paper-orders` blocks them with
 `blocked_by_readiness` instead of submitting an Alpaca Paper order.
 
-Real-money broker writes are out of scope for this MVP.
+Real-money broker writes are out of scope for this product boundary.
 
 Useful paper-monitoring make targets:
 
@@ -237,12 +258,16 @@ still served normally.
   - research-only, not production evidence
 
 The current research audit is documented in [docs/review-optimization-completion-audit.zh.md](docs/review-optimization-completion-audit.zh.md).
+The current backtest and optimization iteration plan is documented in [docs/backtest-optimization-system-review.zh.md](docs/backtest-optimization-system-review.zh.md).
 
 ## Project Docs
 
 - [AGENTS.md](AGENTS.md)
 - [OPEN-COMPOSER-BUILD-HANDOFF.md](OPEN-COMPOSER-BUILD-HANDOFF.md)
-- [OPEN-COMPOSER-PRODUCT-MVP.md](OPEN-COMPOSER-PRODUCT-MVP.md)
+- [docs/current-unfinished-work-check.zh.md](docs/current-unfinished-work-check.zh.md)
+- [docs/plan-completion-gap-audit.zh.md](docs/plan-completion-gap-audit.zh.md)
+- [docs/backtest-optimization-system-review.zh.md](docs/backtest-optimization-system-review.zh.md)
+- [docs/goal-completion-audit-2026-05-13.zh.md](docs/goal-completion-audit-2026-05-13.zh.md)
 - [docs/project-repository-review-2026-05-12.zh.md](docs/project-repository-review-2026-05-12.zh.md)
 - [docs/quant-capability-expansion-plan.zh.md](docs/quant-capability-expansion-plan.zh.md)
 - [docs/quant-capability-expansion-review.zh.md](docs/quant-capability-expansion-review.zh.md)

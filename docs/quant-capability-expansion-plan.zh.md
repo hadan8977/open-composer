@@ -2,6 +2,8 @@
 
 日期：2026-05-10
 
+> 状态说明（2026-05-13）：本文是早期广范围调研和能力设想文档，保留用于背景参考。当前实现型 `/goal` 不应把本文所有阶段都当作近期任务。近期执行以 `docs/current-unfinished-work-check.zh.md` 和 `docs/product-maturation-plan.zh.md` 为准，优先补齐复杂数据 / LLM feature replay、NautilusTrader backtest / paper 同构、Alpaca Paper 服务化和 Dashboard 真实接入。
+
 ## 摘要
 
 Open Composer 现在已经是一个可运行的 CLI + 文件仓库型 MVP，但它还不是一个足够完整的量化工作台。当前最重要的顺序不是“先把 Dashboard 做漂亮”，而是：

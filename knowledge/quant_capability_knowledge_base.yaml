@@ -1,5 +1,5 @@
 version: 1
-updated: "2026-05-09"
+updated: "2026-05-13"
 purpose: >
   Working knowledge base for expanding Open Composer from an MVP OHLCV signal
   workbench into a broader quant and LLM-assisted strategy platform. The entries
@@ -64,6 +64,13 @@ sources:
       - LEAN is an open-source engine for research, backtesting, and live trading.
       - It models data as a stream in backtests to reduce look-ahead bias.
       - Its architecture separates securities, portfolio, transactions, scheduling, and reality models.
+  - id: quantconnect_optimization
+    kind: official_docs
+    url: "https://www.quantconnect.com/docs/"
+    key_points:
+      - Mature quant platforms expose parameter optimization as a research workflow, not as automatic promotion to live trading.
+      - Optimization results must remain tied to data, assumptions, and algorithm configuration.
+      - Open Composer should generate ranked reports and draft candidates, then require separate promotion gates.
   - id: quantconnect_bootcamp
     kind: course_docs
     url: "https://www.quantconnect.com/announcements/15528/get-started-with-quantconnect-s-boot-camp/"
@@ -91,6 +98,13 @@ sources:
       - Vectorized research excels at large parameter sweeps and multi-dimensional arrays.
       - Indicator factories and TA-Lib/pandas-ta parsers support broad factor experimentation.
       - Vectorized research is complementary to, not a replacement for, event-driven execution simulation.
+  - id: backtrader_optimization
+    kind: official_docs
+    url: "https://www.backtrader.com/docu/"
+    key_points:
+      - Traditional backtesting engines commonly support strategy parameter grids.
+      - Parameter grids are useful for sensitivity analysis, but raw best-in-sample results are not robustness proof.
+      - Open Composer should cap candidate counts and write explicit in-sample warnings.
   - id: talib
     kind: official_docs
     url: "https://ta-lib.org/"
@@ -145,6 +159,13 @@ sources:
     key_points:
       - LLM strategy generation must be evaluated for syntax, successful backtest execution, actual trades, and semantic alignment.
       - The hard failures are often financial semantics and API usage, not only code syntax.
+  - id: backtest_overfitting
+    kind: paper
+    url: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2326253"
+    key_points:
+      - Multiple testing and parameter search can overstate strategy quality.
+      - Best-in-sample results need out-of-sample, walk-forward, deflated/adjusted performance, or comparable robustness checks.
+      - Open Composer reports should label parameter sweeps as research evidence rather than promotion evidence.
   - id: hummingbot_dashboard
     kind: official_docs
     url: "https://hummingbot.org/dashboard/"
@@ -214,6 +235,8 @@ capability_principles:
     statement: Use Longbridge plus Alpaca as the first low-cost US-stock data route; Longbridge is the trial primary market-data candidate, while Alpaca remains the implemented market-data and paper-trading path.
   - id: llm_as_structured_signal
     statement: LLM output may support research, labels, summaries, and reviews; if it affects trades it must become replayable structured data.
+  - id: parameter_sweeps_are_research
+    statement: Parameter sweeps are useful for sensitivity analysis and candidate discovery, but top-ranked in-sample candidates must remain drafts until out-of-sample, walk-forward, cost, and data-source checks pass.
   - id: paper_first
     statement: Alpaca Paper remains the only automated order target until review, reconciliation, and kill-switch controls mature.
   - id: dashboard_first_class

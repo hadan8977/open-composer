@@ -7,19 +7,19 @@
 
 - 本地项目：`/root/codex-test/open-composer`
 - GitHub 远端：`https://github.com/zhoucehuang-arch/open-composer.git`
-- 最新已推送基线：`9f5e981 Complete local strategy workbench loop`
+- 最新本地基线：`bfa29a1 Add backend parity and feature replay reports`
 - 本次更新性质：文档审查与后续 `/goal` 执行约束优化
 
-注意：2026-05-13 本轮已将 PIT feature store 草稿整理为可验证实现，并通过本地验证。提交/推送后可作为下一阶段基线。
+注意：2026-05-13 的当前执行范围已经收敛。本文保留项目级审查结论；后续实现型 `/goal` 的实时缺口以 `docs/current-unfinished-work-check.zh.md` 和 `docs/product-maturation-plan.zh.md` 为准。
 
 ## 总体判断
 
-Open Composer 已经从设计稿阶段进入可运行的个人本地 AI 策略工作台阶段。核心 MVP 已包括：
+Open Composer 已经从设计稿阶段进入可运行的个人本地 AI 策略工作台阶段。核心能力已包括：
 
 - `StrategySpec` 源头。
 - capability registry。
 - Python reference 回测/扫描。
-- NautilusTrader 单标的 backtest 与 custom data replay 子集。
+- NautilusTrader 单标的 backtest、custom data replay 子集和 backend parity 报告。
 - Pine 兼容子集导出。
 - feature packet / LLM feature 基础。
 - Alpaca Paper readiness、kill switch、audit。
@@ -28,8 +28,8 @@ Open Composer 已经从设计稿阶段进入可运行的个人本地 AI 策略�
 
 现在最重要的不是继续堆功能，而是把关键闭环补齐。后续优化必须围绕：
 
-1. LLM feature replay 的剩余报告和生成侧约束。
-2. NautilusTrader 回测与 paper 同构。
+1. 复杂数据 / LLM feature replay 的生成侧约束和 promotion gate。
+2. NautilusTrader backtest 与 paper 同构证据。
 3. Alpaca Paper 服务化。
 4. Dashboard 接入真实能力。
 
@@ -39,7 +39,7 @@ Open Composer 已经从设计稿阶段进入可运行的个人本地 AI 策略�
 |---|---|---|
 | 源头 | `StrategySpec` 仍是策略行为唯一真相源 | 保持 |
 | 数据 | sample、Alpaca、Longbridge、SEC、FRED、Alpha Vantage、GDELT 已通过 capability registry 管理 | 新能力必须先注册和评估 |
-| 回测 | Python reference 可作为确定性基线；NautilusTrader 已有单标的子集 | 继续做同构，不自研完整执行引擎 |
+| 回测 | Python reference 可作为确定性基线；NautilusTrader 已有单标的 backtest 子集和 backend parity 报告 | 继续做 paper 同构，不自研完整执行引擎 |
 | Pine | 只导出确定性兼容子集 | 保持兼容导出定位 |
 | LLM | review 是 advisory；feature 必须先落 packet | 需要强制 replay 门控 |
 | Paper | Alpaca Paper 受 readiness、kill switch、显式确认和 audit 门控 | 继续排除真钱写入 |
@@ -58,7 +58,7 @@ Open Composer 已经从设计稿阶段进入可运行的个人本地 AI 策略�
 - Paper readiness 阻断未 PIT-complete 的 `llm_feature` / `feature_packet` 因子。
 - 测试覆盖 feature validation、Dashboard catalog、strategy capability expansion。
 
-本轮验证：
+上一轮实现型验证基线：
 
 - `uv run ruff format .`：通过。
 - `uv run ruff check .`：通过。
@@ -70,14 +70,14 @@ Open Composer 已经从设计稿阶段进入可运行的个人本地 AI 策略�
 - `uv run oc readiness`：status=`warning` ready=`yes`。
 - `make verify`：通过。
 
-当前 warning 是可接受 MVP 边界：paper broker sync 建议、Dashboard token 建议和部分草稿策略 backend capability `partial`。
+当前 warning 属于个人版已知边界：paper broker sync 建议、Dashboard token 建议和部分草稿策略 backend capability `partial`。
 
 ## 固定缺口与优先级
 
 | 顺序 | 缺口 | 为什么优先 | Done 标准 |
 |---|---|---|---|
-| 1 | LLM feature replay | LLM+量化必须可审计，不能在执行时即时问模型 | LLM 输出先落 packet；回测/paper 只读 packet；报告显示 replay 元数据和 warning |
-| 2 | NautilusTrader 同构 | 这是目标执行路径，避免继续扩展自研引擎 | 单标的 backtest/paper 同一 spec、version、data manifest、feature packet、signal audit |
+| 1 | 复杂数据 / LLM feature replay | LLM+量化必须可审计，不能在执行时即时问模型 | LLM / 事件 / 新闻 / 宏观输出先落 packet；回测/paper 只读 packet；报告显示 replay 元数据和 warning |
+| 2 | NautilusTrader 同构 | 这是目标执行路径，避免继续扩展自研引擎 | 单标的 paper cycle 与 backtest 使用同一 spec、version、data manifest、feature packet、backend plan、signal audit |
 | 3 | Paper 服务化 | 个人模拟盘需要稳定运行和恢复 | 本地 monitor loop、status、reconcile、alerts、broker sync、kill switch、audit 全链路 |
 | 4 | Dashboard 产品化 | 提升日常使用效率，但必须服从真实后端能力 | Overview/Strategy/Paper 展示真实 catalog 与失败态；写操作继续 plan/confirm/audit |
 
@@ -159,7 +159,7 @@ uv run oc readiness
 make verify
 ```
 
-如果结果为 `warning` 而不是完全 clean，必须说明 warning 对当前 MVP 是否可接受。不能只写“已通过”。
+如果结果为 `warning` 而不是完全 clean，必须说明 warning 对当前个人版边界是否可接受。不能只写“已通过”。
 
 ## 最终审查结论
 

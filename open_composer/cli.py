@@ -88,6 +88,8 @@ from open_composer.research import (
     optimize_strategy,
     optimize_strategy_horizons,
     optimize_strategy_universe,
+    parse_sweep_parameters,
+    run_parameter_sweep,
 )
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
@@ -916,6 +918,53 @@ def strategy_optimize(
         f"signals={result.best_artifacts.run.signals}"
     )
     console.print(f"report: {result.report_path}")
+
+
+@strategy_app.command("parameter-sweep")
+def strategy_parameter_sweep(
+    spec: Path,
+    params: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--param",
+            help=(
+                "Sweep PATH=values. Use comma-separated scalar values or pipe-separated "
+                "expressions, for example risk.stop_loss_pct=0.8,1.2 or "
+                "'entry.all.0=close > ema(close, 5)|close > ema(close, 8)'."
+            ),
+        ),
+    ] = None,
+    min_return_pct: float = typer.Option(0.0, "--min-return-pct"),
+    min_signals: int = typer.Option(1, "--min-signals"),
+    min_sharpe: float = typer.Option(0.0, "--min-sharpe"),
+    max_candidates: int = typer.Option(200, "--max-candidates"),
+    top_n: int = typer.Option(10, "--top-n"),
+    write_top: int = typer.Option(1, "--write-top"),
+) -> None:
+    """Run a bounded parameter grid over a StrategySpec and write ranked reports."""
+    try:
+        parsed = parse_sweep_parameters(params or [])
+        result = run_parameter_sweep(
+            spec,
+            parsed,
+            project_root(),
+            min_return_pct=min_return_pct,
+            min_signals=min_signals,
+            min_sharpe=min_sharpe,
+            max_candidates=max_candidates,
+            top_n=top_n,
+            write_top=write_top,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]parameter sweep complete[/green] candidates={len(result.candidates)} "
+        f"best={result.best.spec.name} score={result.best.score:.2f}"
+    )
+    console.print(f"report: {result.report_path}")
+    console.print(f"json: {result.json_path}")
+    for path in result.written_specs:
+        console.print(f"spec: {path}")
 
 
 @strategy_app.command("optimize-universe")
