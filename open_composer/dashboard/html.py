@@ -370,6 +370,7 @@ def _render_dashboard_html(catalog: DashboardCatalog) -> str:
               <th>PIT</th>
               <th>First</th>
               <th>Last</th>
+              <th>Warnings</th>
             </tr>
           </thead>
           <tbody>
@@ -714,7 +715,7 @@ def _data_comparison_rows(comparisons: list) -> str:
 
 def _feature_packet_rows(packets: list) -> str:
     if not packets:
-        return '<tr><td colspan="6">No feature packet logs indexed.</td></tr>'
+        return '<tr><td colspan="7">No feature packet logs indexed.</td></tr>'
     rows = []
     for item in packets:
         status_class = "good" if item.point_in_time_status == "complete" else "warn"
@@ -727,6 +728,7 @@ def _feature_packet_rows(packets: list) -> str:
             f"{escape(item.point_in_time_status)}</span></td>"
             f"<td>{escape(item.first_timestamp or 'n/a')}</td>"
             f"<td>{escape(item.last_timestamp or 'n/a')}</td>"
+            f"<td>{escape('; '.join(item.replay_warnings[:3]) or 'none')}</td>"
             "</tr>"
         )
     return "\n".join(rows)

@@ -296,6 +296,7 @@ def test_llm_feature_factor_replays_from_saved_packets(
     assert binding.record_count == 1
     assert binding.point_in_time_status == "partial"
     assert "published_at is missing" in "; ".join(binding.replay_warnings)
+    assert "schema_version is missing" in "; ".join(binding.replay_warnings)
     assert report.finding("python_mvp_backtest").status == "partial"
     assert report.finding("llm_quant_workflow").status == "partial"
     assert report.backend_plan.status == "partial"

@@ -240,6 +240,11 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert (
         "published_at is missing for at least one row" in catalog.feature_packets[0].replay_warnings
     )
+    assert (
+        "schema_version is missing for at least one row"
+        in catalog.feature_packets[0].replay_warnings
+    )
+    assert catalog.feature_packets[0].has_schema_version is False
     assert catalog.summary.strategy_backend_counts == {"python_reference": 1}
     assert catalog.summary.backend_status_counts == {"partial": 1}
     assert catalog.strategies[0].symbol == "QQQ"

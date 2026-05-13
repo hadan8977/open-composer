@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -89,14 +90,22 @@ def write_feature_validation_report(
     *,
     packets: list[object] | None = None,
     output_path: Path | None = None,
-) -> tuple[Path, Path]:
+) -> tuple[Path, Path, Path]:
     base = root or project_root()
     packet_records = packets if packets is not None else build_feature_packet_records(base)
     report_path = output_path or base / "reports" / "features" / "validation.json"
+    generated_at = datetime.now(UTC)
+    manifest_path = write_feature_manifest(
+        base,
+        packets=packet_records,
+        output_path=report_path.parent / "manifest.json",
+        generated_at=generated_at,
+    )
     payload = {
-        "generated_at": datetime.now(UTC).isoformat(),
+        "generated_at": generated_at.isoformat(),
         "source_root": str(base),
         "feature_packet_count": len(packet_records),
+        "manifest_path": _relpath(manifest_path, base),
         "packets": [
             packet.model_dump(mode="json") if hasattr(packet, "model_dump") else packet
             for packet in packet_records
@@ -106,7 +115,23 @@ def write_feature_validation_report(
     md_path = report_path.with_suffix(".md")
     ensure_dir(md_path.parent)
     md_path.write_text(_render_feature_validation_markdown(payload), encoding="utf-8")
-    return report_path, md_path
+    return report_path, md_path, manifest_path
+
+
+def write_feature_manifest(
+    root: Path | None = None,
+    *,
+    packets: list[object] | None = None,
+    output_path: Path | None = None,
+    generated_at: datetime | None = None,
+) -> Path:
+    base = root or project_root()
+    packet_records = packets if packets is not None else build_feature_packet_records(base)
+    timestamp = generated_at or datetime.now(UTC)
+    manifest_path = output_path or base / "reports" / "features" / "manifest.json"
+    payload = _build_feature_manifest_payload(base, packet_records, timestamp)
+    write_json(manifest_path, payload)
+    return manifest_path
 
 
 def prepare_workspace(
@@ -127,7 +152,9 @@ def prepare_workspace(
         )
     )
 
-    feature_validation_path, feature_validation_md_path = write_feature_validation_report(base)
+    feature_validation_path, feature_validation_md_path, feature_manifest_path = (
+        write_feature_validation_report(base)
+    )
     packet_records = build_feature_packet_records(base)
     incomplete_packets = [
         packet for packet in packet_records if packet.point_in_time_status != "complete"
@@ -145,6 +172,7 @@ def prepare_workspace(
             output_paths=[
                 _relpath(feature_validation_path, base),
                 _relpath(feature_validation_md_path, base),
+                _relpath(feature_manifest_path, base),
             ],
             details={
                 "packet_count": len(packet_records),
@@ -281,6 +309,7 @@ def _render_feature_validation_markdown(payload: dict[str, object]) -> str:
         f"- Generated at: `{payload.get('generated_at')}`",
         f"- Source root: `{payload.get('source_root')}`",
         f"- Feature packet count: `{packet_count}`",
+        f"- Manifest: `{payload.get('manifest_path', 'n/a')}`",
         "",
         "## Packets",
         "",
@@ -296,11 +325,128 @@ def _render_feature_validation_markdown(payload: dict[str, object]) -> str:
         lines.append(f"- Source: `{packet.get('source', 'n/a')}`")
         lines.append(f"- Point-in-time status: `{packet.get('point_in_time_status', 'n/a')}`")
         lines.append(f"- Records: `{packet.get('record_count', 0)}`")
-        warnings = packet.get("warnings", [])
+        warnings = packet.get("replay_warnings", [])
         if warnings:
             lines.append(f"- Warnings: `{warnings}`")
         lines.append("")
     return "\n".join(lines)
+
+
+def _build_feature_manifest_payload(
+    base: Path,
+    packet_records: list[object],
+    generated_at: datetime,
+) -> dict[str, object]:
+    packet_payloads = [
+        packet.model_dump(mode="json") if hasattr(packet, "model_dump") else dict(packet)
+        for packet in packet_records
+    ]
+    indexed_packets = [
+        _feature_packet_manifest_entry(base, packet)
+        for packet in packet_payloads
+        if isinstance(packet, dict)
+    ]
+    status_counts: dict[str, int] = {}
+    for packet in indexed_packets:
+        status = str(packet.get("point_in_time_status", "missing"))
+        status_counts[status] = status_counts.get(status, 0) + 1
+    return {
+        "generated_at": generated_at.isoformat(),
+        "source_root": str(base),
+        "packet_count": len(indexed_packets),
+        "complete_count": status_counts.get("complete", 0),
+        "partial_count": status_counts.get("partial", 0),
+        "missing_count": status_counts.get("missing", 0),
+        "packets": indexed_packets,
+    }
+
+
+def _feature_packet_manifest_entry(base: Path, packet: dict[str, object]) -> dict[str, object]:
+    relative_path = str(packet.get("path", ""))
+    row_index = _feature_packet_row_index(base / relative_path)
+    rows = row_index["rows"]
+    return {
+        **packet,
+        "sources": _sorted_values(row.get("source") for row in rows),
+        "symbols": _sorted_values(row.get("symbol") for row in rows),
+        "schema_versions": _sorted_values(row.get("schema_version") for row in rows),
+        "models": _sorted_values(row.get("model") for row in rows),
+        "input_hashes": _sorted_values(row.get("input_hash") for row in rows),
+        "prompt_hashes": _sorted_values(row.get("prompt_hash") for row in rows),
+        "dedupe_key_count": len(_sorted_values(row.get("dedupe_key") for row in rows)),
+        "duplicate_dedupe_keys": row_index["duplicate_dedupe_keys"],
+        "rows": rows,
+    }
+
+
+def _feature_packet_row_index(path: Path) -> dict[str, object]:
+    rows: list[dict[str, object]] = []
+    seen_dedupe_keys: set[str] = set()
+    duplicate_dedupe_keys: set[str] = set()
+    if not path.exists():
+        return {"rows": rows, "duplicate_dedupe_keys": []}
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(raw, dict):
+                continue
+            dedupe_key = raw.get("dedupe_key")
+            if isinstance(dedupe_key, str):
+                if dedupe_key in seen_dedupe_keys:
+                    duplicate_dedupe_keys.add(dedupe_key)
+                seen_dedupe_keys.add(dedupe_key)
+            rows.append(
+                {
+                    "line_number": line_number,
+                    "timestamp": raw.get("timestamp"),
+                    "published_at": raw.get("published_at"),
+                    "fetched_at": raw.get("fetched_at"),
+                    "source": raw.get("source"),
+                    "symbol": raw.get("symbol"),
+                    "dedupe_key": raw.get("dedupe_key"),
+                    "schema_version": raw.get("schema_version"),
+                    "model": raw.get("model"),
+                    "input_hash": raw.get("input_hash"),
+                    "prompt_hash": raw.get("prompt_hash"),
+                    "feature_fields": _feature_fields(raw),
+                }
+            )
+    return {
+        "rows": rows,
+        "duplicate_dedupe_keys": sorted(duplicate_dedupe_keys),
+    }
+
+
+def _feature_fields(row: dict[str, object]) -> list[str]:
+    metadata_fields = {
+        "timestamp",
+        "published_at",
+        "fetched_at",
+        "source",
+        "symbol",
+        "dedupe_key",
+        "schema_version",
+        "summary",
+        "sentiment",
+        "model",
+        "input_hash",
+        "prompt_hash",
+        "features",
+    }
+    fields = {key for key in row if key not in metadata_fields}
+    nested = row.get("features")
+    if isinstance(nested, dict):
+        fields.update(str(key) for key in nested)
+    return sorted(fields)
+
+
+def _sorted_values(values) -> list[str]:
+    return sorted({str(value) for value in values if value not in {None, ""}})
 
 
 def _render_deployment_markdown(report: DeploymentReport) -> str:

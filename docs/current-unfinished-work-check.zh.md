@@ -1,128 +1,132 @@
-# Open Composer 当前检查结果与个人使用版优先级审查
+# Open Composer 当前未完成事项检查与执行优先级
 
-日期：2026-05-12
+日期：2026-05-13
 
 ## 结论
 
-当前项目已经不是“只有设计稿”的阶段，而是一个可运行的个人 AI 策略工作台 MVP：CLI、文件、报告、Dashboard read model、NautilusTrader 单标的回测、Alpaca Paper 安全门、feature packet 回放入口和部署前 readiness 都已经接上。
+Open Composer 已经具备个人本地 AI 策略工作台 MVP 的主体：`StrategySpec`、能力注册、Python reference 回测、NautilusTrader 子集、Alpaca Paper 安全门、feature packet、Dashboard catalog、受控命令、readiness 与部署检查都已经形成基础链路。
 
-但它还不能声明为“能力补全完成”。剩余工作必须围绕闭环能力推进，而不是继续扩展一个复杂的机构级平台。对个人使用场景，近期目标应收敛为：
+但它还不能被标记为“能力补全完成”。接下来不应继续扩展成机构级平台，也不应优先打磨 Dashboard 外观。剩余任务必须固定为下面这条闭环：
 
-1. 策略能由 Codex 生成、验证、回测、扫描、记录信号，并明确能力边界。
-2. NautilusTrader 成为主要事件驱动执行路径，先完成单标的 backtest/paper 同构，再扩展多标的。
-3. 事件、新闻、宏观、LLM feature 必须进入 point-in-time feature packet，并可在 Python 与 Nautilus 回放。
-4. Alpaca Paper 能以可恢复的本地服务方式运行、同步、监控和告警。
-5. Dashboard 作为本地可视化控制面，辅助查看和触发受控命令；不是唯一操作入口，也不做多人 SaaS。
-6. 每轮审查只能收敛和校准这些目标，不允许随意新增大范围功能，除非发现直接阻断闭环的问题。
+```text
+复杂数据 / LLM feature 的 PIT 可回放层
+  -> NautilusTrader 回测与 paper 同构
+  -> Alpaca Paper 本地服务化监控
+  -> Dashboard 只接入已经真实存在的能力
+  -> 全量验证、部署检查、readiness 审查
+```
 
-## 基于 `/goal` 已形成的主要改动
+后续 `/goal` 不允许避重就轻地先做页面、文案或非关键重构。每完成一部分，只能更新该部分状态、验证结果和直接阻断；不得随意新增大范围需求。
 
-| 领域 | 已落地改动 | 当前判断 |
+## 当前仓库状态判断
+
+- 最新已推送的 GitHub 主分支基线：`9f5e981 Complete local strategy workbench loop`。
+- 当前工作区已把 PIT feature store 草稿整理成可验证实现：feature packet schema、manifest/index、Dashboard replay warning、Nautilus custom data metadata、CLI `feature write` hash 字段、Paper readiness 阻断和相关测试都已补齐。
+- 本轮验证已通过：`ruff format`、`ruff check`、`pytest`、Dashboard build、`oc capability test`、`oc feature validate`、`oc deploy prepare`、`oc readiness`、`make verify`。
+- `oc deploy prepare` 和 `oc readiness` 当前为 `warning ready=yes`，主要原因是 paper broker sync 建议、Dashboard token 建议和部分草稿策略 backend capability 为 `partial`；这些是当前 MVP 边界，不是阻断部署的失败。
+
+## 基于 `/goal` 已完成的稳定能力
+
+| 领域 | 已有能力 | 当前判断 |
 |---|---|---|
-| Dashboard read model | React Dashboard 改为读取 `reports/dashboard/catalog.json`，新增运行时 `/api/dashboard/catalog` 同步，静态 HTML 也读取 catalog | 已具备个人本地查看能力 |
-| Dashboard command service | 新增 `open_composer/dashboard/commands.py`、`server.py`、`models/dashboard_command.py`，支持 command-plan / command-run / audit | 已具备本地受控命令基础 |
-| 策略生命周期命令 | Dashboard/CLI 支持 draft、validate、capabilities refresh、workflow verify、backtest rerun、scan rerun、approve、activate、disable | 已具备基础闭环入口 |
-| Paper 安全门 | 新增 `paper_readiness.py`、activation gate、自动下单前 readiness 阻断、kill switch、sync account/orders、monitor sync | 已具备安全基础；服务化未完成 |
-| NautilusTrader | 单标的 OHLCV backtest adapter、backend plan、feature packet / llm_feature custom data replay、Dashboard 展示 replay metadata、Nautilus paper 最新 bar 信号 runtime | 单标的 backtest/paper 最小闭环可用；多资产和更完整订单生命周期未完成 |
-| 复杂数据 / LLM feature | 新增 feature packet schema 收紧、`feature write`、`feature from-context`、PIT 校验、context-capable 自动落 packet | replay 入口可用；统一 live feature store 未完成 |
-| readiness / deployment | 新增 `oc readiness`、`oc deploy prepare`、`make readiness`、`make deploy-prepare`，报告进入 Dashboard catalog | 部署前检查可用 |
-| 测试覆盖 | 新增 dashboard command/server、deployment/readiness、feature validation、paper readiness 等测试 | 覆盖显著增强 |
+| 策略源头 | `StrategySpec` 仍是策略行为源头，CLI/Dashboard 围绕 spec、version、hash 工作 | 保持 |
+| Python reference | 可做确定性回测、扫描、smoke test | 保持为参考路径，不扩成完整执行引擎 |
+| NautilusTrader | 已有单标的 OHLCV backtest adapter、custom data replay metadata、最小 paper 最新 bar runtime | 方向正确，但仍未完成同构闭环 |
+| 数据能力 | `capabilities/registry.yaml` 已注册 sample、Alpaca、Longbridge、SEC、FRED、Alpha Vantage、GDELT | 继续强制走 registry 与 capability evaluation |
+| LLM feature | 已有 feature packet、context-derived packet、PIT 校验入口 | 仍需强制 replay 链路 |
+| Alpaca Paper | 已有 readiness gate、kill switch、account/orders/positions sync、monitor/monitor-loop | 仍需服务化恢复、reconcile、alert 稳定化 |
+| Dashboard | 已从 mock 外观进入 catalog-driven 本地控制面，支持 command plan/run | 只能作为辅助入口，不做第二真相源 |
+| 部署检查 | `oc deploy prepare`、`oc readiness`、`make verify` 已建立 | 继续作为交付门槛 |
 
-## 本次审查执行的检查
+## 本轮已完成的闭环补强
 
-| 命令 | 结果 | 说明 |
-|---|---|---|
-| `git status --short` | 有大量 modified / untracked | 当前包含 `/goal` 期间的本地改动。 |
-| `uv run oc capability test` | 通过 | registry 中 sample、Alpaca、Longbridge、SEC、FRED、Alpha Vantage、GDELT fixtures 均可评估。 |
-| `uv run oc dashboard catalog` | 通过 | 当前 catalog：3 strategies、3 versions、1 run、0 signals、0 reviews、9 audit events；readiness/deployment 为 warning。 |
-| `uv run oc readiness` | 通过 | status=`warning`，ready=`yes`；主要 warning 是部分策略 backend capability 为 partial。 |
+- `oc feature validate` 现在会生成 `reports/features/manifest.json`，作为 feature packet replay manifest/index。
+- manifest 记录 packet 状态、source、symbol、schema version、model、input hash、prompt hash、dedupe key、行级时间戳和 feature field。
+- `event_feature` schema 强制 `published_at`、`fetched_at`、`schema_version`。
+- Dashboard feature packet catalog 会显示 `schema_version` 缺失、非法 timestamp、重复 dedupe key 等 replay warning。
+- Nautilus custom data binding 使用统一 feature packet inspection，缺 PIT 元数据或重复 dedupe key 会标为非 complete。
+- Paper readiness 会阻断未 PIT-complete 的 `llm_feature` / `feature_packet` 因子，避免不可复现的 LLM/事件因子进入 paper。
+- `oc feature write` 支持 `--input-hash` 和 `--prompt-hash`。
 
-说明：沙箱中 `uv` 默认 cache 路径只读，本次使用 `UV_CACHE_DIR=/tmp/uv-cache` 执行检查。
+## 固定剩余缺口
 
-## 调研依据
+以下是后续必须完成的任务清单。除非发现直接阻断闭环、安全或可复现性的问题，不得向此表随意追加新大项。
 
-本轮重新查阅了以下资料，用来校准“个人使用版”优先级：
-
-- NautilusTrader 官方文档：Adapters 由 `DataClient` 与 `ExecutionClient` 接入数据和交易场所；Custom Data 能通过正常 runtime、persistence、query pipeline 路由；High-Level Backtest API 的策略/actor/执行算法可向 live trading 迁移。结论：继续补 Nautilus 同构执行是正确方向，不应再自研完整执行引擎。
-  - https://nautilustrader.io/docs/latest/concepts/adapters/
-  - https://nautilustrader.io/docs/latest/concepts/custom_data/
-  - https://nautilustrader.io/docs/latest/getting_started/backtest_high_level/
-- Alpaca 官方文档：Paper trading 免费、可用于实时模拟；订单有完整生命周期；free market data 主要是 IEX，SIP 需要订阅，IEX 只代表单一交易所。结论：Alpaca Paper 适合作为个人模拟盘执行通道，但数据 caveat 必须写入报告。
-  - https://docs.alpaca.markets/docs/paper-trading
-  - https://docs.alpaca.markets/docs/trading/orders/
-  - https://docs.alpaca.markets/docs/market-data-faq
-  - https://docs.alpaca.markets/v1.4.2/docs/historical-stock-data-1
-- Longbridge 官方文档：历史 K 线有 Basic 权限、按账户等级每月 100-3000 个标的配额；美股默认 Nasdaq Basic；美股分钟历史从 2023-12-04 起；接口限速 60 次 / 30 秒。结论：Longbridge 可作为低成本美股数据源之一，但必须做 coverage、quota、delay 和 adjustment caveat。
-  - https://open.longbridge.com/docs/quote/pull/history-candlestick
-  - https://open.longbridge.com/docs/quote/pull/candlestick
-- Qlib / QuantConnect LEAN 资料：Qlib 更偏 AI-oriented quant research workflow；LEAN 是成熟多资产 research/backtest/live 平台。结论：可借鉴其数据、模型、组合、执行分层，但近期不应改造成另一套 Qlib/LEAN；Open Composer 的价值是 Codex 驱动的 spec、报告、审查和个人操作闭环。
-  - https://qlib.readthedocs.io/en/stable/introduction/introduction.html
-  - https://www.microsoft.com/en-us/research/publication/qlib-an-ai-oriented-quantitative-investment-platform/
-  - https://www.quantconnect.com/docs/research/backtesting
-
-## 当前完成度
-
-### 已经足够支撑个人 MVP 的部分
-
-- `StrategySpec` 作为策略源头。
-- draft -> validate -> capability report -> backtest -> scan -> paper readiness 的基础链路。
-- Python reference engine 作为确定性参考。
-- NautilusTrader 单标的 OHLCV backtest 子集。
-- feature packet / llm_feature 的可回放输入入口。
-- Alpaca Paper 安全门、kill switch、同步和监控命令。
-- Dashboard 本地 read model、Strategy/Paper command center、runtime catalog sync。
-- `oc deploy prepare` / `oc readiness` / `make verify` 这类部署检查入口。
-
-### 仍必须补齐的关键缺口
-
-| 优先级 | 缺口 | 为什么必须做 | 成功标准 |
+| 顺序 | 缺口 | 必须解决的原因 | 最小验收标准 |
 |---|---|---|---|
-| P0 | 固定任务边界和优先级 | 后续执行容易把个人产品扩大成机构级平台 | 文档明确闭环优先、暂缓项和不可随意新增范围 |
-| P1 | NautilusTrader paper runtime | 单标的最新 bar 信号 runtime 已补；仍缺多资产 routing 和更完整订单生命周期同构 | paper run 复用 Nautilus paper plan、spec hash、version、signal audit，并仍走 Alpaca Paper 安全门 |
-| P1 | PIT feature store | 事件/新闻/宏观/LLM feature 不能只做 advisory | 数据进入统一 packet/store，含 source、published_at、fetched_at、dedupe_key、schema_version、model/prompt hash |
-| P1 | LLM feature replay 闭环 | LLM+量化策略必须可回测、可复现 | LLM 输出先落 feature packet，再被 Python/Nautilus 回放，禁止在执行 loop 内即时调用 LLM |
-| P1 | Paper 服务化 | 现在仍偏手动命令，长时间模拟盘不够稳 | 本地 monitor loop 可恢复，持续同步 orders/account/positions，产出 status/reconcile/alerts |
-| P2 | Dashboard 产品化 | 需要更流畅地查看和触发本地操作 | 保持本地单用户，补齐 Overview/Strategy/Paper 的关键操作和失败态，不做多人权限系统 |
-| P2 | 研究验证硬化 | 防止回测结果误导 | 增加 walk-forward、样本外、参数敏感性、数据源比较前置门 |
+| P1-1 | LLM + 量化 replay 闭环 | LLM 不能在回测或 paper loop 中临时决定交易，否则无法复现 | LLM 输出必须先落 packet，再进入策略；执行 loop 内禁止即时调用 LLM；报告显示模型、输入、prompt/hash、schema、replay warning |
+| P1-2 | NautilusTrader 同构路径 | 项目已决定不自研完整执行引擎，复杂执行语义必须靠 Nautilus 统一回测与 paper | 单标的 backtest/paper 使用同一 spec hash、version、data manifest、feature packet、backend plan 和 signal audit；差异能被报告解释 |
+| P1-3 | Paper 服务化 | 个人模拟盘需要能长时间运行、恢复、同步和告警，不能只依赖一次性命令 | 本地 monitor loop 可恢复；持续同步 orders、fills、positions、account、PnL；写入 status/reconcile/alerts；所有写入仍经 explicit confirmation、readiness gate、kill switch、audit |
+| P2-1 | Dashboard 本地产品化 | Dashboard 应该提高管理效率，但不能替代核心能力 | 仅接入真实 catalog 与 command service；展示 readiness、deployment、strategy workflow、feature replay、paper status、alerts；写操作继续走 plan/confirm/audit |
+| P2-2 | 研究验证硬化 | 防止短样本或单数据源回测误导 | promotion 前至少支持 walk-forward、样本外、参数敏感性、成本/滑点敏感性、Alpaca/Longbridge/sample 数据差异检查 |
 
-## 近期明确不做的内容
+## 后续执行顺序
 
-这些不是现在的目标，后续 Codex 不应把它们加入近期计划：
+1. PIT feature store MVP 已完成本地实现和验证；后续只维护，不再扩成数据湖。
+2. 下一步继续完成 LLM feature replay 闭环。
+3. 再补 NautilusTrader 单标的同构路径，不新增并行执行引擎。
+4. 再做 Paper 服务化，让 Alpaca Paper 本地 monitor loop 可恢复、可审计。
+5. 最后根据真实后端能力复审 Dashboard，补齐必要页面和命令入口。
+6. 每一阶段结束后运行完整验证并更新本文件的状态，不新增无关目标。
 
-- 多用户、团队协作、tenant isolation、复杂 RBAC。
+## 明确暂缓或不做
+
+这些内容不是个人使用版近期目标。后续 Codex 不应把它们重新加入近期计划：
+
+- 多用户登录、RBAC、tenant isolation、团队协作。
+- Dashboard 作为唯一运行方式。
 - 浏览器内完整 YAML 编辑器、复杂 diff/merge 产品。
-- 真钱实盘写入。
+- 真钱交易写入。
 - TradingView 全量策略执行适配。
 - 自研一个与 NautilusTrader 并行的完整事件驱动引擎。
-- 一次性覆盖“99% 全部主流策略/因子/算法”。
-- 期权、统计套利、机器学习 alpha、行业中性、多资产组合优化的完整机构级研究平台。
+- 多 broker 同时写入、云端运维平台、手机推送。
+- 期权、统计套利、行业中性、多资产组合优化、机器学习 alpha 的完整机构级研究平台。
+- 一次性承诺支持“99% 全部策略、因子、算法”。
 
-如果后续确实需要新增上述范围，必须在新文档中明确说明新增原因、阻断点和取舍，不能在普通审查中顺手扩大范围。
+如确实要新增上述范围，必须单独写明：新增原因、当前闭环阻断点、替代方案、对测试和维护成本的影响。
 
-## 给后续 Codex 的执行规则
+## 给后续 Codex 的硬性规则
 
-1. 能力补全和闭环优先，Dashboard 只是辅助入口；不要为了做页面而绕开核心能力。
-2. 每次完成一部分后，只允许更新该部分状态和直接相关缺口，不允许随意新增大目标。
-3. 任何策略能力进入 paper 前，必须能追溯到 spec、version/hash、data provenance、capability report、backtest/report、signal log。
-4. 复杂数据和 LLM 输出必须先变成 point-in-time replay data，再进入回测或执行。
-5. Alpaca Paper 写入必须继续显式确认、readiness gate、kill switch 和 audit。
-6. NautilusTrader 是目标执行路径；Python engine 是参考和 smoke test，不再扩展成并行完整执行引擎。
-7. 每个阶段完成时至少运行：`make verify`、`uv run oc deploy prepare`、`uv run oc readiness`，并说明 warning 是否是可接受边界。
+1. 能力补全和闭环优先，Dashboard 只能接入已存在能力。
+2. 新数据源、新事件源、新宏观源、新新闻源必须先进入 `capabilities/registry.yaml`，再运行 capability evaluation。
+3. 复杂数据和 LLM 输出必须先变成 point-in-time replay data，再进入回测或执行。
+4. 策略进入 paper 前必须能追溯到 spec、version/hash、data provenance、capability report、backtest report、signal log。
+5. Alpaca Paper 写入必须保留 explicit confirmation、readiness gate、kill switch 和 audit。
+6. NautilusTrader 是目标执行路径；Python reference 只做确定性参考和 smoke test。
+7. 每次更新审查文档只能记录真实完成状态、验证结果和直接缺口；不得为了显得“全面”而扩大范围。
 
-## 后续 goal 建议
+## 验证门槛
 
-1. **PIT feature store MVP**
-   - 目标：把事件/新闻/宏观/LLM feature 统一为可验证、可回放、可索引的数据层。
-   - 不做：实时新闻大规模采集平台。
-2. **Paper monitor 服务化**
-   - 目标：本地可恢复 monitor loop，稳定同步账户、订单、持仓、PnL、告警。
-   - 不做：云端运维平台。
-3. **Dashboard 本地产品化**
-   - 目标：把 readiness/deployment/paper/strategy workflow 的关键操作接到本地 Dashboard，并展示失败态。
-   - 不做：多用户权限、远程 SaaS。
+实现型 `/goal` 每完成一个阶段，至少运行：
 
-## 最终判断
+```bash
+uv run ruff format .
+uv run ruff check .
+uv run pytest
+npm --prefix dashboard run build
+uv run oc capability test
+uv run oc deploy prepare
+uv run oc readiness
+make verify
+```
 
-当前项目可以作为个人使用的本地 AI 策略工作台继续迭代。真正阻碍“直接流畅部署和使用所有功能”的不是 Dashboard 是否足够复杂，而是 PIT feature store、LLM feature replay、Paper 服务化和严格验证闭环还没有完全补齐。
+如果 `oc readiness` 或 `deploy prepare` 返回 `warning`，必须在交付说明中明确 warning 是否属于当前 MVP 已知边界，不能简单写“通过”。
 
-后续所有计划都应围绕这些闭环推进。
+## 调研校准
+
+- NautilusTrader 官方文档将 adapter 分为数据、instrument 与 execution 组件，并支持 custom data 在 runtime 中路由；其高阶 backtest 路径也强调向 live trading 迁移。因此 Open Composer 应继续补 Nautilus 同构，而不是自研完整执行引擎。
+- Alpaca Paper 是免费模拟交易环境，但 paper 与 live 在成交假设、滑点、市场冲击、费用、分红等方面不同；免费/基础行情也有 IEX/SIP 覆盖边界。因此 Paper 适合个人模拟盘闭环，不适合作为“真实收益证明”。
+- Longbridge OpenAPI 可作为低成本美股数据源候选，但美股基础权限、历史分钟线范围、symbol 配额、限速和 OpenAPI quote 权限需要写入 provenance 与 caveat。
+- Qlib、LEAN 等成熟平台说明：复杂量化/AI 策略需要数据层、模型层、回测层、执行层和审计层分离。Open Composer 的近期价值不是复制完整平台，而是用 Codex + StrategySpec + 文件审计把个人闭环做扎实。
+
+参考资料：
+
+- https://nautilustrader.io/docs/latest/concepts/adapters/
+- https://nautilustrader.io/docs/latest/concepts/custom_data/
+- https://nautilustrader.io/docs/latest/getting_started/backtest_high_level/
+- https://docs.alpaca.markets/us/docs/paper-trading
+- https://docs.alpaca.markets/v1.3/docs/historical-stock-data-1
+- https://docs.alpaca.markets/docs/market-data-faq
+- https://open.longbridge.com/docs/quote/pull/history-candlestick
+- https://open.longbridge.com/docs/quote/pull/quote
+- https://www.microsoft.com/en-us/research/publication/qlib-an-ai-oriented-quantitative-investment-platform/

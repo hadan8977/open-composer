@@ -22,6 +22,7 @@ def test_prepare_workspace_writes_deployment_artifacts(sample_workspace: Path) -
     assert report.report_markdown_path == "reports/deployment/prepare.md"
     assert (sample_workspace / "reports" / "deployment" / "prepare.json").exists()
     assert (sample_workspace / "reports" / "deployment" / "prepare.md").exists()
+    assert (sample_workspace / "reports" / "features" / "manifest.json").exists()
     assert any(path.startswith("reports/dashboard/") for path in report.output_paths)
     assert any(path.startswith("reports/features/") for path in report.output_paths)
     assert any(path.startswith("reports/paper/") for path in report.output_paths)

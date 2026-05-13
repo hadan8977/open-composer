@@ -288,7 +288,7 @@ def feature_validate_command(
     root = project_root()
     packets = build_feature_packet_records(root)
     report_path = output or root / "reports" / "features" / "validation.json"
-    report_path, md_path = write_feature_validation_report(
+    report_path, md_path, manifest_path = write_feature_validation_report(
         root,
         packets=packets,
         output_path=report_path,
@@ -306,6 +306,7 @@ def feature_validate_command(
             "; ".join(packet.replay_warnings) or "none",
         )
     table.add_row("Report", "written", str(report_path), str(md_path))
+    table.add_row("Manifest", "written", str(manifest_path), "")
     console.print(table)
 
 
@@ -342,6 +343,14 @@ def feature_write_command(
         str | None,
         typer.Option("--model", help="Model identifier for LLM-produced features."),
     ] = None,
+    input_hash: Annotated[
+        str | None,
+        typer.Option("--input-hash", help="Stable hash of the LLM feature input packet."),
+    ] = None,
+    prompt_hash: Annotated[
+        str | None,
+        typer.Option("--prompt-hash", help="Stable hash of the LLM feature prompt/template."),
+    ] = None,
     summary: Annotated[str, typer.Option("--summary", help="Optional packet summary.")] = "",
     sentiment: Annotated[
         str,
@@ -365,6 +374,8 @@ def feature_write_command(
             dedupe_key=dedupe_key,
             schema_version=schema_version,
             model=model,
+            input_hash=input_hash,
+            prompt_hash=prompt_hash,
             summary=summary,
             sentiment=sentiment,  # type: ignore[arg-type]
         )

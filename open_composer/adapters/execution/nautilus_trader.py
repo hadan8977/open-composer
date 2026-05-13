@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import importlib.util
-import json
-from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
@@ -10,6 +8,7 @@ import yaml
 from open_composer.capabilities import load_registry
 from open_composer.config import ensure_dir, project_root
 from open_composer.expressions import ExpressionError, validate_expression
+from open_composer.feature_packets import inspect_feature_packet
 from open_composer.models.execution_backend import (
     ExecutionBackendPlan,
     NautilusBacktestPlan,
@@ -297,92 +296,15 @@ def _custom_data_bindings(spec: StrategySpec, root: Path) -> list[NautilusCustom
 
 
 def _custom_data_metadata(path: Path, field: str) -> dict[str, object]:
-    if not path.exists():
-        return {
-            "exists": False,
-            "record_count": 0,
-            "point_in_time_status": "missing",
-            "replay_warnings": ["custom data packet is missing on disk"],
-        }
-
-    rows: list[dict[str, object]] = []
-    warnings: list[str] = []
-    with path.open("r", encoding="utf-8") as handle:
-        for line_number, line in enumerate(handle, start=1):
-            if not line.strip():
-                continue
-            try:
-                raw = json.loads(line)
-            except json.JSONDecodeError:
-                warnings.append(f"line {line_number} is not valid JSON")
-                continue
-            if isinstance(raw, dict):
-                rows.append(raw)
-            else:
-                warnings.append(f"line {line_number} is not a JSON object")
-
-    timestamps: list[datetime] = []
-    for row in rows:
-        if not row.get("timestamp"):
-            continue
-        try:
-            timestamps.append(_parse_datetime(str(row["timestamp"])))
-        except ValueError:
-            warnings.append(f"timestamp {row.get('timestamp')!r} is not ISO-8601 parseable")
-    key_sets = [set(row) for row in rows]
-    has_timestamp = bool(rows) and all("timestamp" in keys for keys in key_sets)
-    has_published_at = bool(rows) and all("published_at" in keys for keys in key_sets)
-    has_fetched_at = bool(rows) and all("fetched_at" in keys for keys in key_sets)
-    has_dedupe_key = bool(rows) and all("dedupe_key" in keys for keys in key_sets)
-    has_field = bool(rows) and any(_custom_data_value(row, field) is not None for row in rows)
-
-    if not rows:
-        warnings.append("custom data packet contains no replayable rows")
-    if not has_timestamp:
-        warnings.append("timestamp is missing for at least one custom data row")
-    if not has_published_at:
-        warnings.append("published_at is missing for at least one custom data row")
-    if not has_fetched_at:
-        warnings.append("fetched_at is missing for at least one custom data row")
-    if not has_dedupe_key:
-        warnings.append("dedupe_key is missing for at least one custom data row")
-    if field and not has_field:
-        warnings.append(f"field {field!r} is missing from custom data rows")
-
-    if has_timestamp and has_published_at and has_fetched_at and has_dedupe_key and has_field:
-        point_in_time_status = "complete"
-    elif has_timestamp:
-        point_in_time_status = "partial"
-    else:
-        point_in_time_status = "missing"
-
+    inspection = inspect_feature_packet(path, field)
     return {
-        "exists": True,
-        "record_count": len(rows),
-        "first_timestamp": min(timestamps).isoformat() if timestamps else None,
-        "last_timestamp": max(timestamps).isoformat() if timestamps else None,
-        "point_in_time_status": point_in_time_status,
-        "replay_warnings": warnings,
+        "exists": inspection.exists,
+        "record_count": inspection.record_count,
+        "first_timestamp": inspection.first_timestamp,
+        "last_timestamp": inspection.last_timestamp,
+        "point_in_time_status": inspection.point_in_time_status,
+        "replay_warnings": inspection.replay_warnings,
     }
-
-
-def _custom_data_value(row: dict[str, object], field: str) -> object | None:
-    if field in row:
-        return row[field]
-    features = row.get("features")
-    if isinstance(features, dict) and field in features:
-        return features[field]
-    return None
-
-
-def _parse_datetime(value: str) -> datetime:
-    text = value.strip()
-    if text.endswith("Z"):
-        text = text[:-1] + "+00:00"
-    parsed = datetime.fromisoformat(text)
-    if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=UTC)
-    return parsed
 
 
 def _expression_factors(spec: StrategySpec) -> dict[str, str]:

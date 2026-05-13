@@ -2,7 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "EventFeature",
   "type": "object",
-  "required": ["symbol", "timestamp", "source", "dedupe_key"],
+  "required": [
+    "symbol",
+    "timestamp",
+    "published_at",
+    "fetched_at",
+    "source",
+    "dedupe_key",
+    "schema_version"
+  ],
   "properties": {
     "symbol": {"type": "string"},
     "timestamp": {"type": "string", "format": "date-time"},
@@ -13,6 +21,8 @@
     "summary": {"type": "string"},
     "sentiment": {"enum": ["positive", "neutral", "negative", "unknown"]},
     "model": {"type": "string"},
+    "input_hash": {"type": "string"},
+    "prompt_hash": {"type": "string"},
     "schema_version": {"type": "string"},
     "features": {"type": "object"}
   }

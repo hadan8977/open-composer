@@ -15,6 +15,7 @@ from open_composer.config import (
     ensure_dir,
     project_root,
 )
+from open_composer.feature_packets import inspect_feature_packet
 from open_composer.models.paper import PaperAccountSnapshot, PaperKillSwitch
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.storage import write_json
@@ -366,6 +367,8 @@ def _feature_packet_binding_check(
     root: Path,
 ) -> PaperStrategyReadinessCheck:
     missing: list[str] = []
+    incomplete: list[str] = []
+    inspected: list[dict[str, object]] = []
     for name, factor in spec.factors.items():
         if factor.source not in {"llm_feature", "feature_packet"}:
             continue
@@ -373,14 +376,29 @@ def _feature_packet_binding_check(
             missing.append(f"{name}: missing packet path")
             continue
         path = _resolve_path(root, factor.path)
-        if not path.exists():
+        inspection = inspect_feature_packet(path, factor.field)
+        inspected.append(
+            {
+                "factor": name,
+                "path": factor.path,
+                "field": factor.field,
+                "status": inspection.point_in_time_status,
+                "warnings": inspection.replay_warnings,
+            }
+        )
+        if not inspection.exists:
             missing.append(f"{name}: packet not found at {factor.path}")
+        elif inspection.point_in_time_status != "complete":
+            warning_text = "; ".join(inspection.replay_warnings[:3]) or "not PIT complete"
+            incomplete.append(
+                f"{name}: {inspection.point_in_time_status} at {factor.path}: {warning_text}"
+            )
     if missing:
         return PaperStrategyReadinessCheck(
             name="feature_packets",
             status="blocked",
             message="Paper feature factors require saved replay packets: " + "; ".join(missing),
-            details={"missing": missing},
+            details={"missing": missing, "inspected": inspected},
             suggested_actions=[
                 (
                     "Write point-in-time packets with uv run oc feature write or "
@@ -388,10 +406,20 @@ def _feature_packet_binding_check(
                 )
             ],
         )
+    if incomplete:
+        return PaperStrategyReadinessCheck(
+            name="feature_packets",
+            status="blocked",
+            message="Paper feature factors require PIT-complete replay packets: "
+            + "; ".join(incomplete),
+            details={"incomplete": incomplete, "inspected": inspected},
+            suggested_actions=["uv run oc feature validate"],
+        )
     return PaperStrategyReadinessCheck(
         name="feature_packets",
         status="ok",
-        message="No missing feature packet bindings.",
+        message="Feature packet bindings are point-in-time complete.",
+        details={"inspected": inspected},
     )
 
 

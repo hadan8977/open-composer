@@ -349,6 +349,7 @@ class DashboardFeaturePacket(BaseModel):
     has_published_at: bool = False
     has_fetched_at: bool = False
     has_dedupe_key: bool = False
+    has_schema_version: bool = False
     point_in_time_status: Literal["complete", "partial", "missing"] = "missing"
     replay_warnings: list[str] = Field(default_factory=list)
 

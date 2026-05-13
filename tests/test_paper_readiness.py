@@ -113,3 +113,64 @@ def test_paper_readiness_passes_for_live_cache_alpaca_strategy(
     assert {check.name: check.status for check in report.checks}["data_source"] == "ok"
     assert {check.name: check.status for check in report.checks}["alpaca_env"] == "ok"
     assert {check.name: check.status for check in report.checks}["account_snapshot"] == "ok"
+
+
+def test_paper_readiness_blocks_incomplete_feature_packets(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    account_path = sample_workspace / "reports" / "paper" / "account.json"
+    account_path.parent.mkdir(parents=True, exist_ok=True)
+    account_path.write_text(
+        (
+            '{"generated_at":"2026-05-12T12:00:00Z","equity":10000,"cash":5000,'
+            '"buying_power":8000,"portfolio_value":10000,"status":"ACTIVE","paper":true}\n'
+        ),
+        encoding="utf-8",
+    )
+    feature_path = sample_workspace / "feature_logs" / "qqq_llm_features.jsonl"
+    feature_path.parent.mkdir(parents=True, exist_ok=True)
+    feature_path.write_text(
+        (
+            '{"timestamp":"2026-01-01T00:00:00Z","source":"llm","symbol":"QQQ",'
+            '"dedupe_key":"llm:qqq:1","llm_sentiment":0.8}\n'
+        ),
+        encoding="utf-8",
+    )
+    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_paper_llm_15m.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "qqq_paper_llm_15m"
+    raw["factors"] = {
+        **raw.get("factors", {}),
+        "llm_sentiment": {
+            "source": "llm_feature",
+            "path": "feature_logs/qqq_llm_features.jsonl",
+            "field": "llm_sentiment",
+            "default": 0.0,
+            "description": "Saved LLM sentiment replay input.",
+        },
+    }
+    raw["entry"]["all"].append("llm_sentiment > 0.5")
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    active = activate_strategy(
+        draft,
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+        data_source="alpaca",
+    )
+
+    report = assess_paper_strategy_readiness(active, sample_workspace)
+    feature_check = next(check for check in report.checks if check.name == "feature_packets")
+
+    assert report.ready is False
+    assert feature_check.status == "blocked"
+    assert "PIT-complete replay packets" in feature_check.message
+    assert "published_at is missing" in feature_check.message

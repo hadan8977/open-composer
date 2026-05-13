@@ -1,12 +1,14 @@
 # Open Composer 计划完成度检查与收敛版缺口审计
 
-日期：2026-05-12
+日期：2026-05-13
 
 ## 审查结论
 
 本项目的近期目标应是“个人可部署、可回测、可模拟盘运行、可审计”的 AI 策略工作台，而不是一次性做成多人量化平台。
 
 当前 `/goal` 期间已经补上大量基础设施：真实 Dashboard read model、本地 command service、paper readiness gate、Nautilus custom data replay、feature packet、readiness/deployment 报告和测试覆盖。现在最重要的不是继续横向增加页面或概念，而是把核心闭环补完。
+
+本审计的用途是约束后续实现型 `/goal`：先补关键能力，再补 Dashboard；每次完成一部分只更新真实状态和直接缺口，不允许顺手扩大范围。
 
 ## 已完成的关键能力
 
@@ -21,16 +23,16 @@
 | Alpaca Paper | 已有 readiness gate、kill switch、account/orders/positions sync、monitor、monitor-loop 和下单前阻断。 |
 | Dashboard | 已从 mock UI 变成 catalog-driven 本地控制面，支持 runtime catalog sync 和受控 command plan/run。 |
 | 部署检查 | `oc readiness`、`oc deploy prepare`、`make readiness`、`make deploy-prepare` 已建立。 |
+| PIT feature store | `oc feature validate` 已生成 validation report 与 manifest/index；schema、Dashboard、Nautilus custom data、Paper readiness 均接入 PIT warning / gate。 |
 
 ## 仍未完成但必须优先补的内容
 
 | 优先级 | 内容 | 当前缺口 | 验收标准 |
 |---|---|---|---|
 | P0 | 任务边界收敛 | 后续执行容易继续扩大范围 | 文档明确个人使用版目标、闭环优先级、暂缓项和不可随意新增范围 |
-| P1 | NautilusTrader paper runtime | 单标的最新 bar 信号 runtime 已接入；仍缺多资产 routing 和更完整订单生命周期同构 | paper runtime 引用 Nautilus plan、spec hash、version、signal audit，并经 Alpaca Paper 安全门 |
-| P1 | PIT feature store | 事件/新闻/宏观/LLM feature 尚未统一成正式 store | 所有上下文特征有 source、published_at、fetched_at、dedupe_key、schema_version、model/prompt hash，并能被 replay |
-| P1 | LLM feature 闭环 | LLM 输出还没有完整强制化 replay 链路 | LLM feature 必须先落 packet，再进入 Python/Nautilus 回测和 paper；执行 loop 内不得即时调用 LLM |
-| P1 | Paper 服务化 | monitor 仍偏命令式 | 本地 monitor loop 可恢复，持续同步 broker orders/account/positions/PnL，并写 status/reconcile/alerts |
+| P1 | LLM feature 闭环 | 已阻断非 PIT-complete packet 进入 paper；仍需补更完整报告表达和生成侧约束 | LLM feature 必须先落 packet，再进入 Python/Nautilus 回测和 paper；执行 loop 内不得即时调用 LLM |
+| P1 | NautilusTrader 同构路径 | 单标的最新 bar 信号 runtime 已接入；仍缺同一 spec/data/feature 下的 backtest/paper parity 证据 | paper runtime 引用 Nautilus plan、spec hash、version、data manifest、feature packet、signal audit，并经 Alpaca Paper 安全门 |
+| P1 | Paper 服务化 | monitor loop、reconcile、alerts 已有基础；仍需真实 broker sync 下的恢复和告警验证 | 本地 monitor loop 可恢复，持续同步 broker orders/fills/account/positions/PnL，并写 status/reconcile/alerts |
 | P2 | Dashboard 本地产品化 | 部分关键建议动作仍只是文本或 CLI 路径 | Overview/Strategy/Paper 能触发关键本地命令、显示失败态和最近产物路径 |
 | P2 | 研究验证硬化 | 回测结论还缺稳健性检查 | 增加 walk-forward、样本外、参数敏感性、成本/滑点敏感性、数据源比较门 |
 
@@ -56,27 +58,30 @@
 5. 复杂数据和 LLM 输出必须可回放、可审计、可复现。
 6. Paper 写入必须保留 explicit confirmation、readiness gate、kill switch 和 audit。
 
-## 最新验证基线
+## 最新验证基线口径
 
 本轮复查已执行：
 
 | 命令 | 结果 |
 |---|---|
-| `uv run oc capability test` | 通过，所有注册 fixture capability 可评估 |
-| `uv run oc dashboard catalog` | 通过，catalog 可生成 |
+| `uv run ruff format .` | 通过，102 files left unchanged |
+| `uv run ruff check .` | 通过 |
+| `uv run pytest` | 通过，104 passed, 1 warning |
+| `npm --prefix dashboard run build` | 通过 |
+| `uv run oc capability test` | 通过，所有 registry fixture capability 可评估 |
+| `uv run oc feature validate` | 通过，写入 validation report 与 manifest |
+| `uv run oc deploy prepare` | 通过，status=`warning` ready=`yes` |
 | `uv run oc readiness` | 通过，status=`warning` ready=`yes` |
+| `make verify` | 通过 |
 
-后续进入实现型 goal 前建议执行：
+`warning` 当前来自 paper broker sync 建议、Dashboard token 建议和部分草稿策略 backend capability `partial`，属于个人 MVP 边界，不是测试失败。
 
-- `uv run ruff format .`
-- `uv run ruff check .`
-- `uv run pytest`
-- `npm --prefix dashboard run build`
-- `uv run oc deploy prepare`
-- `uv run oc readiness`
+下一轮实现型 goal 必须重新运行验证，不得引用旧结果。
 
 ## 后续执行顺序
 
-1. 优先做 PIT feature store MVP。
-2. 然后做 Paper monitor 服务化。
-3. 最后再根据真实能力补 Dashboard 操作面。
+1. PIT feature store MVP 已完成本地实现和验证。
+2. 然后做 LLM + 量化 replay 闭环。
+3. 然后做 NautilusTrader 单标的 backtest/paper 同构。
+4. 然后做 Paper monitor 服务化。
+5. 最后根据真实能力补 Dashboard 操作面。

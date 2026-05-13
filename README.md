@@ -105,7 +105,8 @@ Reports marked `sample fallback` or fixture replay are workflow evidence, not
 market evidence.
 
 Feature logs under `feature_logs/*.jsonl` are replay inputs for `llm_feature`
-factors. Validate them before depending on them in a strategy:
+factors. Validate them before depending on them in a strategy; validation also
+writes a replay manifest at `reports/features/manifest.json`:
 
 ```bash
 uv run oc feature validate --output reports/features/validation.json
@@ -115,7 +116,7 @@ Write a point-in-time feature packet manually or derive one from a signal
 context:
 
 ```bash
-uv run oc feature write --symbol QQQ --timestamp 2026-01-01T00:00:00Z --source llm -f event_risk_score=0.8 -f regime=risk_on
+uv run oc feature write --symbol QQQ --timestamp 2026-01-01T00:00:00Z --source llm --input-hash input_sha256 --prompt-hash prompt_sha256 -f event_risk_score=0.8 -f regime=risk_on
 uv run oc feature from-context <signal-id>
 ```
 
@@ -242,6 +243,7 @@ The current research audit is documented in [docs/review-optimization-completion
 - [AGENTS.md](AGENTS.md)
 - [OPEN-COMPOSER-BUILD-HANDOFF.md](OPEN-COMPOSER-BUILD-HANDOFF.md)
 - [OPEN-COMPOSER-PRODUCT-MVP.md](OPEN-COMPOSER-PRODUCT-MVP.md)
+- [docs/project-repository-review-2026-05-12.zh.md](docs/project-repository-review-2026-05-12.zh.md)
 - [docs/quant-capability-expansion-plan.zh.md](docs/quant-capability-expansion-plan.zh.md)
 - [docs/quant-capability-expansion-review.zh.md](docs/quant-capability-expansion-review.zh.md)
 - [docs/product-maturation-plan.zh.md](docs/product-maturation-plan.zh.md)
