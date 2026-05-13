@@ -53,6 +53,14 @@ class FeaturePacketInspection(BaseModel):
     record_count: int = 0
     first_timestamp: str | None = None
     last_timestamp: str | None = None
+    sources: list[str] = Field(default_factory=list)
+    symbols: list[str] = Field(default_factory=list)
+    schema_versions: list[str] = Field(default_factory=list)
+    models: list[str] = Field(default_factory=list)
+    input_hashes: list[str] = Field(default_factory=list)
+    prompt_hashes: list[str] = Field(default_factory=list)
+    dedupe_key_count: int = 0
+    duplicate_dedupe_keys: list[str] = Field(default_factory=list)
     point_in_time_status: Literal["complete", "partial", "missing"] = "missing"
     replay_warnings: list[str] = Field(default_factory=list)
 
@@ -233,6 +241,14 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
         record_count=len(rows),
         first_timestamp=min(timestamps).isoformat() if timestamps else None,
         last_timestamp=max(timestamps).isoformat() if timestamps else None,
+        sources=_sorted_values(row.get("source") for row in rows),
+        symbols=_sorted_values(row.get("symbol") for row in rows),
+        schema_versions=_sorted_values(row.get("schema_version") for row in rows),
+        models=_sorted_values(row.get("model") for row in rows),
+        input_hashes=_sorted_values(row.get("input_hash") for row in rows),
+        prompt_hashes=_sorted_values(row.get("prompt_hash") for row in rows),
+        dedupe_key_count=len(_sorted_values(row.get("dedupe_key") for row in rows)),
+        duplicate_dedupe_keys=sorted(duplicate_dedupe_keys),
         point_in_time_status=point_in_time_status,
         replay_warnings=warnings,
     )
@@ -331,3 +347,7 @@ def _packet_value(raw: dict[str, object], field: str) -> object:
     if isinstance(features, dict) and field in features:
         return features[field]
     return _MISSING
+
+
+def _sorted_values(values: Iterable[object]) -> list[str]:
+    return sorted({str(value) for value in values if value not in {None, ""}})

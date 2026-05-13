@@ -203,6 +203,13 @@ def test_generated_strategy_can_run_real_nautilus_backtest(
     assert artifacts.run.backend_plan_path
     assert artifacts.run.report_path and Path(artifacts.run.report_path).exists()
     assert artifacts.run.signal_log_path and Path(artifacts.run.signal_log_path).exists()
+    parity_paths = sorted((sample_workspace / "reports" / "parity").glob("*backend-parity.md"))
+    assert parity_paths
+    parity_text = parity_paths[-1].read_text(encoding="utf-8")
+    assert "Backend Parity" in parity_text
+    assert "Primary backend: `nautilus_backtest`" in parity_text
+    assert "Reference backend: `python_reference`" in parity_text
+    assert any("backend parity report" in item for item in artifacts.run.assumptions)
     assert artifacts.run.bars > 0
     assert artifacts.signals
     assert all(signal.execution_backend == "nautilus_backtest" for signal in artifacts.signals)
@@ -287,6 +294,7 @@ def test_llm_feature_factor_replays_from_saved_packets(
         run_id_value="run_llm_feature",
     )
     backtest = run_backtest(spec_path, root=sample_workspace)
+    run_scan(spec_path, root=sample_workspace)
     catalog = build_dashboard_catalog(sample_workspace)
     binding = plan.custom_data_bindings[0]
 
@@ -301,6 +309,17 @@ def test_llm_feature_factor_replays_from_saved_packets(
     assert report.finding("llm_quant_workflow").status == "partial"
     assert report.backend_plan.status == "partial"
     assert backtest.signals
+    assert backtest.run.report_path
+    backtest_report = Path(backtest.run.report_path).read_text(encoding="utf-8")
+    assert "## Feature Replay" in backtest_report
+    assert "Backtest execution reads saved feature packets only" in backtest_report
+    assert "status=`partial`" in backtest_report
+    assert "published_at is missing" in backtest_report
+    scan_report = sorted(
+        (sample_workspace / "reports" / "scans").glob("scan-qqq_llm_feature_15m*.md")
+    )[-1].read_text(encoding="utf-8")
+    assert "## Feature Replay" in scan_report
+    assert "status=`partial`" in scan_report
     strategy = next(
         item for item in catalog.strategies if item.strategy_name == "qqq_llm_feature_15m"
     )
@@ -442,6 +461,12 @@ def test_feature_packet_factor_replays_nested_feature_fields(
         for reason in report.finding("tradingview_pine_strategy").reasons
     )
     assert backtest.signals
+    assert backtest.run.report_path
+    backtest_report = Path(backtest.run.report_path).read_text(encoding="utf-8")
+    assert "## Feature Replay" in backtest_report
+    assert "event_risk" in backtest_report
+    assert "status=`complete`" in backtest_report
+    assert "schema_versions=`['1']`" in backtest_report
     strategy = next(
         item for item in catalog.strategies if item.strategy_name == "qqq_event_feature_15m"
     )

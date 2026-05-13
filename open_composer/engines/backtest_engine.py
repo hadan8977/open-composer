@@ -20,7 +20,7 @@ from open_composer.feature_packets import (
 from open_composer.models.backtest import BacktestRun, Trade
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
-from open_composer.reports.writer import write_backtest_report
+from open_composer.reports.writer import write_backend_parity_report, write_backtest_report
 from open_composer.storage import append_jsonl
 from open_composer.strategy_versions import register_strategy_version
 
@@ -63,6 +63,17 @@ def run_backtest(
     if use_nautilus_backtest:
         from open_composer.adapters.execution.nautilus_runtime import run_nautilus_backtest
 
+        reference_artifacts = backtest_frame(
+            spec,
+            frame,
+            root=base,
+            start_equity=start_equity,
+            run_id_value=f"{current_run_id}-python-reference",
+            version_id=version.version_id,
+            spec_hash=version.content_hash,
+            backend_plan_path=str(backend_plan_path) if backend_plan_path else None,
+            execution_backend="python_reference",
+        )
         nautilus_artifacts = run_nautilus_backtest(
             spec,
             frame,
@@ -78,6 +89,16 @@ def run_backtest(
             signals=nautilus_artifacts.signals,
             trades=nautilus_artifacts.trades,
             backend_plan_path=str(backend_plan_path) if backend_plan_path else None,
+        )
+        parity_md_path, parity_json_path = write_backend_parity_report(
+            base / "reports" / "parity" / f"{current_run_id}-backend-parity.md",
+            strategy_name=spec.name,
+            primary=nautilus_artifacts.run,
+            reference=reference_artifacts.run,
+        )
+        artifacts.run.assumptions.append(
+            "Python reference / NautilusTrader backend parity report: "
+            f"{parity_md_path} ({parity_json_path})."
         )
     else:
         artifacts = backtest_frame(
@@ -100,7 +121,14 @@ def run_backtest(
         artifacts.run.assumptions.append(
             "Context-derived feature packets were auto-written for context-capable signals."
         )
-    write_backtest_report(report_path, artifacts.run, artifacts.signals, artifacts.trades, spec)
+    write_backtest_report(
+        report_path,
+        artifacts.run,
+        artifacts.signals,
+        artifacts.trades,
+        spec,
+        root=base,
+    )
     artifacts.run.report_path = str(report_path)
     artifacts.run.signal_log_path = str(signal_log_path)
     artifacts.backend_plan_path = str(backend_plan_path) if backend_plan_path else None

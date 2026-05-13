@@ -71,5 +71,6 @@ def run_scan(
         signals,
         version_id=version.version_id,
         spec_hash=version.content_hash,
+        root=base,
     )
     return signals

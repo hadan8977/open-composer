@@ -239,6 +239,7 @@ def _run_nautilus_paper_signal_cycle(
         version_id=version_id,
         spec_hash=spec_hash,
         execution_backend="nautilus_paper",
+        root=root,
     )
     return signals
 
