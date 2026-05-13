@@ -72,6 +72,8 @@ README 中曾出现 `mu_breakout_volume_15m_optimized_volume_plus` 的短样本�
 
 ## P2：研究验证硬化
 
+状态：最小 promotion gate 已实现，仍需和 paper gate 做强制联动。
+
 目标：补齐从 research-only 到 paper candidate 的验证门。
 
 任务：
@@ -81,6 +83,12 @@ README 中曾出现 `mu_breakout_volume_15m_optimized_volume_plus` 的短样本�
 - 增加 walk-forward。
 - 增加 Alpaca / Longbridge / sample 数据源比较。
 - 生成 promotion report，明确是否允许进入 paper candidate。
+
+实现记录：
+
+- 新增 `oc strategy promotion-report`。
+- report 会跑 full-window、out-of-sample、walk-forward、cost sensitivity 和 data comparison 汇总。
+- 报告与 JSON 明确列出缺失项和 warning，不把单次收益当作 promotion 证据。
 
 验收：
 

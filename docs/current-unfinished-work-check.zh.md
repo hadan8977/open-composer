@@ -51,7 +51,7 @@ Open Composer 现在已经不是单纯的设计稿。它已经具备个人本地
 | P1-2 | NautilusTrader backtest / paper 同构 | 单标的 backtest adapter 与 backend parity 报告已补；仍缺 paper runtime 与 backtest 使用同一 spec、version、data、feature、backend plan 的完整证据 | active `nautilus_trader` 策略的 paper cycle 能回链到 Nautilus plan、spec hash、version、data manifest、feature packet、signal audit，并经过 Alpaca Paper 安全门 |
 | P1-3 | Paper 服务化 | monitor、monitor-loop、reconcile、alerts 已有命令级基础；仍缺长时间本地运行、恢复、错误重试和真实 broker sync 下的稳定验证 | 本地 monitor loop 可恢复；持续同步 orders、fills、positions、account、PnL；写入 status/reconcile/alerts；所有写入仍经 explicit confirmation、readiness gate、kill switch、audit |
 | P2-1 | Dashboard 产品化 | catalog、静态 HTML、React bundle 和 command service 已有；仍有一些关键动作和失败态没有形成完整产品路径 | Overview/Strategy/Paper 只展示真实 catalog 和 reports；能触发关键受控命令；清楚显示 readiness、deployment、feature replay、paper status、alerts 和最近产物路径 |
-| P2-2 | 研究验证硬化 | 通用参数扫描和 backtest data sanity gate 已补基线；不是当前第一阻断，但策略升入 paper 前需要更稳健的研究证据 | 作为 promotion gate 继续增加样本外、walk-forward、成本/滑点敏感性和 Alpaca/Longbridge/sample 数据源比较；不要把它扩展成完整机构级研究平台 |
+| P2-2 | 研究验证硬化 | 通用参数扫描、backtest data sanity gate 和最小 promotion report 已补；不是当前第一阻断，但策略升入 paper 前仍需要更稳健的研究证据 | 继续把 promotion report 和 paper gate 强制联动；不要把它扩展成完整机构级研究平台 |
 
 ## 后续执行顺序
 

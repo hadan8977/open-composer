@@ -83,6 +83,7 @@ from open_composer.paper_readiness import (
 )
 from open_composer.readiness import build_readiness_report, write_readiness_report
 from open_composer.research import (
+    build_promotion_report,
     draft_strategy_from_idea,
     optimize_option_overlays,
     optimize_strategy,
@@ -965,6 +966,44 @@ def strategy_parameter_sweep(
     console.print(f"json: {result.json_path}")
     for path in result.written_specs:
         console.print(f"spec: {path}")
+
+
+@strategy_app.command("promotion-report")
+def strategy_promotion_report(
+    spec: Path,
+    oos_ratio: Annotated[
+        float,
+        typer.Option("--oos-ratio", help="Out-of-sample trailing slice ratio."),
+    ] = 0.3,
+    walk_forward_folds: Annotated[
+        int,
+        typer.Option("--walk-forward-folds", help="Number of walk-forward slices."),
+    ] = 3,
+    cost_slippage_bps: Annotated[
+        list[int] | None,
+        typer.Option(
+            "--cost-slippage-bps",
+            help="Repeatable slippage scenarios for cost sensitivity.",
+        ),
+    ] = None,
+) -> None:
+    """Build a promotion gate report with OOS, walk-forward, and cost sensitivity evidence."""
+    result = build_promotion_report(
+        spec,
+        project_root(),
+        out_of_sample_ratio=oos_ratio,
+        walk_forward_folds=walk_forward_folds,
+        cost_slippage_bps=cost_slippage_bps,
+    )
+    table = Table(title=f"Promotion Report: {result.strategy_name}")
+    table.add_column("Field")
+    table.add_column("Value")
+    table.add_row("Status", result.status)
+    table.add_row("Ready", "yes" if result.ready else "no")
+    table.add_row("Report", result.report_path)
+    table.add_row("JSON", result.json_path)
+    table.add_row("Checks", str(len(result.checks)))
+    console.print(table)
 
 
 @strategy_app.command("optimize-universe")
