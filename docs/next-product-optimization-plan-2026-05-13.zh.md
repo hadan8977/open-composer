@@ -46,6 +46,8 @@ README 中曾出现 `mu_breakout_volume_15m_optimized_volume_plus` 的短样本�
 
 ## P1：回测报告可信度增强
 
+状态：本轮已完成第一版 data sanity gate。
+
 目标：让系统能识别明显不可信的回测结果。
 
 任务：
@@ -54,6 +56,14 @@ README 中曾出现 `mu_breakout_volume_15m_optimized_volume_plus` 的短样本�
 - 标记 bar 数、交易数、持仓天数、样本跨度、数据源、fallback 状态。
 - 对短样本年化、极高 Sharpe、交易数过少、费用为零、sample/fallback 数据给 warning。
 - 对 annualized return 增加展示限制：短样本可以计算，但报告必须标注不可用于比较。
+
+实现记录：
+
+- `BacktestRun` 增加 `data_sanity` 结构化字段。
+- Python reference 与 Nautilus backtest 都会写入同一套 `data_sanity` 结果。
+- Backtest report 新增 `## Data Sanity`，显示 evidence level、数据源、数据模式、bar/signal/trade、样本起止、样本跨度、平均持仓天数和 warning。
+- Dashboard catalog / HTML 显示 evidence level、sanity status 和 warning count。
+- sample / fixture / fallback / 短样本 / 少交易 / 异常年化 / 异常 Sharpe / 零费用假设都会触发 warning。
 
 验收：
 
@@ -152,14 +162,16 @@ README 中曾出现 `mu_breakout_volume_15m_optimized_volume_plus` 的短样本�
 
 ## 下一步执行建议
 
-下一轮实现型 `/goal` 建议只做 P1：
+P1 已完成。下一轮实现型 `/goal` 建议只做 P2 的最小闭环，不跳到 Dashboard 美化或高级策略扩展：
 
 ```text
-Backtest data sanity gate
-  -> report warning
-  -> Dashboard catalog field
+Research promotion gate
+  -> out-of-sample split
+  -> walk-forward
+  -> cost/slippage sensitivity
+  -> Alpaca / Longbridge / sample data comparison summary
+  -> promotion report
   -> tests
-  -> README / docs verification
 ```
 
-完成 P1 后再做 P2，不要跳到 Dashboard 美化或高级策略扩展。
+完成 P2 后再复审 Dashboard 研究证据页；不要把 P2 扩展成机构级研究平台。

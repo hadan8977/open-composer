@@ -142,6 +142,13 @@ class DashboardRun(BaseModel):
     annualized_return_pct: float | None = None
     sharpe_ratio: float | None = None
     total_fees: float | None = None
+    data_sanity_status: Literal["ok", "warning", "unknown"] | None = None
+    evidence_level: str | None = None
+    data_sanity_source: str | None = None
+    data_sanity_mode: str | None = None
+    data_sanity_feed: str | None = None
+    data_sanity_path: str | None = None
+    data_sanity_warnings: list[str] = Field(default_factory=list)
     assumptions: list[str] = Field(default_factory=list)
     first_signal_at: datetime | None = None
     last_signal_at: datetime | None = None

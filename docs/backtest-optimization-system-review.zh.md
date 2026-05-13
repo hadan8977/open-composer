@@ -27,6 +27,13 @@ README、Dashboard 首页或任何面向用户的摘要不允许展示短样本�
 - 如果要展示性能数字，必须同时显示数据源、bar 数、交易数、样本区间、成本/滑点、样本外结果、walk-forward 结果和数据源对照。
 - 对异常高年化、异常高 Sharpe、极少交易、极短窗口结果，报告必须给出 data sanity warning。
 
+当前实现状态：
+
+- Python reference 与 Nautilus backtest 都已经写入 `BacktestRun.data_sanity`。
+- Backtest report 已有 `## Data Sanity` section，显示证据等级、数据源、fallback/fixture/sample 状态、bar/signal/trade、样本起止、样本跨度、平均持仓天数和 warning。
+- Dashboard catalog / HTML 已读取 evidence level、sanity status 和 warning count。
+- 这只是可信度门禁，不替代样本外、walk-forward、成本敏感性和多数据源验证。
+
 ## 调研校准
 
 | 参考 | 观察 | 对本项目的取舍 |

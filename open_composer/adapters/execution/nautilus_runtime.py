@@ -33,6 +33,7 @@ from nautilus_trader.persistence.wranglers import BarDataWrangler
 from nautilus_trader.trading.strategy import Strategy
 
 from open_composer.analytics import build_performance_metrics
+from open_composer.analytics.data_sanity import evaluate_backtest_data_sanity
 from open_composer.engines.signal_engine import build_signal
 from open_composer.expressions import evaluate_rule_block
 from open_composer.models.backtest import BacktestRun, Trade
@@ -487,6 +488,12 @@ def run_nautilus_backtest(
             total_fees=collector.total_fees,
             backend_plan_path=backend_plan_path,
             assumptions=assumptions,
+        )
+        run.data_sanity = evaluate_backtest_data_sanity(
+            spec=spec,
+            frame=frame,
+            run=run,
+            trades=collector.trades,
         )
         return NautilusBacktestArtifacts(
             run=run,

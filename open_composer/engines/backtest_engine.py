@@ -11,6 +11,7 @@ from open_composer.adapters.execution import (
     write_nautilus_backtest_plan,
 )
 from open_composer.analytics import build_performance_metrics
+from open_composer.analytics.data_sanity import evaluate_backtest_data_sanity
 from open_composer.config import project_root, run_id
 from open_composer.engines.signal_engine import build_signal, signal_masks
 from open_composer.feature_packets import (
@@ -262,7 +263,7 @@ def backtest_frame(
         f"Commission is {spec.costs.commission_pct:.4g}% per fill.",
         f"Slippage is {spec.costs.slippage_bps:.4g} bps per fill.",
         "NautilusTrader-compatible strategies may also emit a backend plan artifact.",
-        "MVP examples are long-only and do not model dividends or corporate actions.",
+        "This backtest does not model dividends or corporate actions.",
     ]
     if data_provenance:
         provider_label = str(data_provider or spec.data.source)
@@ -291,6 +292,12 @@ def backtest_frame(
         total_fees=total_fees,
         backend_plan_path=backend_plan_path,
         assumptions=assumptions,
+    )
+    run.data_sanity = evaluate_backtest_data_sanity(
+        spec=spec,
+        frame=frame,
+        run=run,
+        trades=trades,
     )
     return BacktestArtifacts(
         run=run, signals=signals, trades=trades, backend_plan_path=backend_plan_path

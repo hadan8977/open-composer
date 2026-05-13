@@ -19,9 +19,15 @@ def test_backtest_writes_report_and_signal_log(sample_workspace: Path) -> None:
     assert Path(artifacts.run.report_path).exists()
     assert Path(artifacts.run.signal_log_path).exists()
     assert artifacts.run.assumptions[0] == "Signals are confirmed on bar close."
+    assert artifacts.run.data_sanity is not None
+    assert artifacts.run.data_sanity.status == "warning"
+    assert artifacts.run.data_sanity.evidence_level == "E0_sample_smoke"
     assert artifacts.run.annualized_return_pct is not None
     assert artifacts.run.sharpe_ratio is not None
     report_text = Path(artifacts.run.report_path).read_text(encoding="utf-8")
+    assert "## Data Sanity" in report_text
+    assert "- Evidence level: `E0_sample_smoke`" in report_text
+    assert "sample data is workflow smoke-test evidence only" in report_text
     assert "- Annualized return:" in report_text
     assert "- Sharpe ratio:" in report_text
 

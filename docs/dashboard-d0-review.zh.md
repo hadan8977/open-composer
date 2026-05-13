@@ -41,6 +41,7 @@
 - Paper status and kill switch events can be read from local paper artifacts.
 - Data comparison reports can show latest low-cost source coverage and caveats.
 - Feature packet logs can show replay inputs for llm_feature and feature_packet factors.
+- Backtest rows can show `data_sanity` evidence levels and warning counts, so sample/fallback/short-window results are not presented as benchmark evidence.
 - A static read-only Dashboard can now be generated at `reports/dashboard/index.html` and `reports/dashboard/strategies/*.html` from this catalog.
 
 ## What The Dashboard Should Not Pretend Yet
@@ -48,6 +49,7 @@
 - Historical version lineage is now partially available from version manifests, but a full immutable event log is still not present.
 - Remote paper write actions must stay disabled until the Dashboard calls the existing command gate and confirmation flow.
 - LLM pages must stay advisory until their prompts, model refs, and replay caches are wired through the backend.
+- Warning-level backtests must not be promoted from Dashboard metrics alone.
 
 ## Strategy Mix
 

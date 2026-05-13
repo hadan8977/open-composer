@@ -258,6 +258,9 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.runs[0].execution_backend == "python_reference"
     assert catalog.runs[0].annualized_return_pct is not None
     assert catalog.runs[0].sharpe_ratio is not None
+    assert catalog.runs[0].data_sanity_status == "warning"
+    assert catalog.runs[0].evidence_level == "E0_sample_smoke"
+    assert catalog.runs[0].data_sanity_warnings
     assert catalog.orders[0].strategy_backend == "python_reference"
     assert catalog.orders[0].execution_backend == "python_reference"
     assert artifacts.catalog_path.exists()
@@ -271,6 +274,9 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert "python_reference" in html
     assert "Annualized" in html
     assert "Sharpe" in html
+    assert "Evidence" in html
+    assert "E0_sample_smoke" in html
+    assert "warnings" in html
     assert "reports/dashboard/catalog.json" in html
     assert "Data Quality" in html
     assert "alpaca / longbridge" in html
@@ -286,6 +292,7 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     detail_html = detail_path.read_text(encoding="utf-8")
     assert "Strategy Profile" in detail_html
     assert "Backend plan" in detail_html
+    assert "E0_sample_smoke" in detail_html
     assert backtest.run.run_id in detail_html
     assert signal.id in detail_html
     assert review_path == sample_workspace / "docs" / "dashboard-d0-review.zh.md"

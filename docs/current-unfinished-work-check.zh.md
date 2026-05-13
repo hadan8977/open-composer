@@ -6,7 +6,7 @@
 
 这份文档是后续 `/goal` 的当前执行检查表。它覆盖当前已经完成的能力、还没有闭合的关键缺口，以及不应该再被随意加入近期目标的内容。
 
-Open Composer 现在已经不是单纯的设计稿。它已经具备个人本地 AI 策略工作台的主体：`StrategySpec`、能力注册、Python reference 回测、NautilusTrader 单标的 backtest 子集、backend parity 报告、Alpaca Paper 安全门、PIT feature packet、Dashboard catalog、受控命令、readiness 与部署检查。
+Open Composer 现在已经不是单纯的设计稿。它已经具备个人本地 AI 策略工作台的主体：`StrategySpec`、能力注册、Python reference 回测、NautilusTrader 单标的 backtest 子集、backend parity 报告、backtest data sanity gate、Alpaca Paper 安全门、PIT feature packet、Dashboard catalog、受控命令、readiness 与部署检查。
 
 但它还不能被标记为“能力补全完成”。剩余工作必须收敛到下面这条个人使用版闭环：
 
@@ -22,10 +22,9 @@ Open Composer 现在已经不是单纯的设计稿。它已经具备个人本地
 
 ## 当前基线
 
-- 当前本地 `main` 最新提交：`bfa29a1 Add backend parity and feature replay reports`。
-- 本次任务只修改文档，不执行代码能力实现。
-- 本次修改前工作区为干净状态。
-- 上一轮实现型验证曾覆盖 `ruff`、`pytest`、Dashboard build、`oc capability test`、`oc feature validate`、`oc deploy prepare`、`oc readiness` 和 `make verify`。下一轮实现型 `/goal` 必须重新运行，不能直接复用旧结果。
+- 当前本地 `main` 基线已经包含 README benchmark 删除、参数扫描、backend parity、feature replay 和 backtest data sanity gate。
+- 本文档只记录当前真实状态和剩余缺口；不作为扩大近期目标的入口。
+- 上一轮实现型验证曾覆盖 `ruff`、`pytest`、Dashboard build、`oc capability test`、`oc feature validate`、`oc deploy prepare`、`oc readiness` 和 `make verify`；每轮交付必须重新运行，不能直接复用旧结果。
 
 ## 已完成能力
 
@@ -34,6 +33,7 @@ Open Composer 现在已经不是单纯的设计稿。它已经具备个人本地
 | 策略源头 | `StrategySpec` 仍是策略行为源头，版本、hash、run、signal、paper 产物都围绕 spec 回链 | 保持 |
 | Python reference | 可做确定性回测、扫描、smoke test 和语义回归 | 保持为参考路径，不扩展成完整执行引擎 |
 | NautilusTrader | 已有单标的 OHLCV backtest adapter；当策略使用 `nautilus_trader` 且环境可用时，会生成 Nautilus plan、运行 Nautilus backtest，并写 Python reference / Nautilus backend parity 报告 | 继续补 paper 同构和运行证据 |
+| 回测可信度 | Backtest report 已有 `Data Sanity` section；Python reference 与 Nautilus backtest 都会标注 evidence level、sample/fallback/fixture、短样本、低交易数、异常年化/Sharpe 和零费用假设 | 保持为展示和 promotion 的前置警告，不替代样本外验证 |
 | 复杂数据 | 已有 feature packet schema、`oc feature validate`、manifest/index、PIT warning、Dashboard catalog 展示和 Paper readiness gate | 继续补生成侧约束和执行链路证据 |
 | LLM feature | backtest / scan 报告会写明只读取已保存 feature packet，不在执行 loop 内调用 LLM | 继续补 LLM feature 从生成到 promotion 的闭环 |
 | 数据源 | sample、Alpaca、Longbridge、SEC、FRED、Alpha Vantage、GDELT 已进入 capability registry；Alpaca / Longbridge 可做数据差异报告 | Longbridge 仍是低成本 trial 路线，不是全市场数据已解决 |
@@ -51,7 +51,7 @@ Open Composer 现在已经不是单纯的设计稿。它已经具备个人本地
 | P1-2 | NautilusTrader backtest / paper 同构 | 单标的 backtest adapter 与 backend parity 报告已补；仍缺 paper runtime 与 backtest 使用同一 spec、version、data、feature、backend plan 的完整证据 | active `nautilus_trader` 策略的 paper cycle 能回链到 Nautilus plan、spec hash、version、data manifest、feature packet、signal audit，并经过 Alpaca Paper 安全门 |
 | P1-3 | Paper 服务化 | monitor、monitor-loop、reconcile、alerts 已有命令级基础；仍缺长时间本地运行、恢复、错误重试和真实 broker sync 下的稳定验证 | 本地 monitor loop 可恢复；持续同步 orders、fills、positions、account、PnL；写入 status/reconcile/alerts；所有写入仍经 explicit confirmation、readiness gate、kill switch、audit |
 | P2-1 | Dashboard 产品化 | catalog、静态 HTML、React bundle 和 command service 已有；仍有一些关键动作和失败态没有形成完整产品路径 | Overview/Strategy/Paper 只展示真实 catalog 和 reports；能触发关键受控命令；清楚显示 readiness、deployment、feature replay、paper status、alerts 和最近产物路径 |
-| P2-2 | 研究验证硬化 | 通用参数扫描已补基线；不是当前第一阻断，但策略升入 paper 前需要更稳健的研究证据 | 作为 promotion gate 继续增加样本外、walk-forward、成本/滑点敏感性和 Alpaca/Longbridge/sample 数据源比较；不要把它扩展成完整机构级研究平台 |
+| P2-2 | 研究验证硬化 | 通用参数扫描和 backtest data sanity gate 已补基线；不是当前第一阻断，但策略升入 paper 前需要更稳健的研究证据 | 作为 promotion gate 继续增加样本外、walk-forward、成本/滑点敏感性和 Alpaca/Longbridge/sample 数据源比较；不要把它扩展成完整机构级研究平台 |
 
 ## 后续执行顺序
 

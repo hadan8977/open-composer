@@ -395,6 +395,8 @@ def _render_dashboard_html(catalog: DashboardCatalog) -> str:
               <th>Kind</th>
               <th>Strategy</th>
               <th>Backend</th>
+              <th>Evidence</th>
+              <th>Sanity</th>
               <th>Return</th>
               <th>Annualized</th>
               <th>Sharpe</th>
@@ -632,6 +634,8 @@ def _render_strategy_html(catalog: DashboardCatalog, strategy_id: str) -> str:
               <th>Run</th>
               <th>Kind</th>
               <th>Execution Backend</th>
+              <th>Evidence</th>
+              <th>Sanity</th>
               <th>Return</th>
               <th>Annualized</th>
               <th>Sharpe</th>
@@ -673,7 +677,7 @@ def _render_strategy_html(catalog: DashboardCatalog, strategy_id: str) -> str:
 
 def _run_rows(runs: list) -> str:
     if not runs:
-        return '<tr><td colspan="9">No runs indexed.</td></tr>'
+        return '<tr><td colspan="11">No runs indexed.</td></tr>'
     rows = []
     for run in runs:
         report = _link(run.report_path) if run.report_path else ""
@@ -683,6 +687,8 @@ def _run_rows(runs: list) -> str:
             f"<td>{_pill(run.kind)}</td>"
             f"<td>{escape(run.strategy_name)}</td>"
             f'<td class="mono">{escape(run.execution_backend)}</td>'
+            f"<td>{_evidence_cell(run)}</td>"
+            f"<td>{_sanity_cell(run)}</td>"
             f"<td>{_pct(run.total_return_pct)}</td>"
             f"<td>{_pct(run.annualized_return_pct)}</td>"
             f"<td>{_ratio(run.sharpe_ratio)}</td>"
@@ -774,7 +780,7 @@ def _version_rows(versions: list) -> str:
 
 def _strategy_run_rows(runs: list) -> str:
     if not runs:
-        return '<tr><td colspan="10">No runs indexed for this strategy.</td></tr>'
+        return '<tr><td colspan="12">No runs indexed for this strategy.</td></tr>'
     rows = []
     for run in runs:
         rows.append(
@@ -782,6 +788,8 @@ def _strategy_run_rows(runs: list) -> str:
             f'<td class="mono">{escape(run.run_id)}</td>'
             f"<td>{_pill(run.kind)}</td>"
             f'<td class="mono">{escape(run.execution_backend)}</td>'
+            f"<td>{_evidence_cell(run)}</td>"
+            f"<td>{_sanity_cell(run)}</td>"
             f"<td>{_pct(run.total_return_pct)}</td>"
             f"<td>{_pct(run.annualized_return_pct)}</td>"
             f"<td>{_ratio(run.sharpe_ratio)}</td>"
@@ -792,6 +800,19 @@ def _strategy_run_rows(runs: list) -> str:
             "</tr>"
         )
     return "\n".join(rows)
+
+
+def _evidence_cell(run: object) -> str:
+    evidence = getattr(run, "evidence_level", None) or "unknown"
+    return _pill(evidence, "warn" if evidence.startswith("E0") else "")
+
+
+def _sanity_cell(run: object) -> str:
+    status = getattr(run, "data_sanity_status", None) or "unknown"
+    warnings = getattr(run, "data_sanity_warnings", [])
+    warning_count = len(warnings)
+    detail = f"{warning_count} warnings" if warning_count else "no warnings"
+    return f'{_pill(status, _status_class(status))}<br><span class="small">{escape(detail)}</span>'
 
 
 def _strategy_signal_rows(signals: list) -> str:

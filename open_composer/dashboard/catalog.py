@@ -486,6 +486,13 @@ def _build_run_and_signal_records(
             annualized_return_pct=report.get("annualized_return_pct"),
             sharpe_ratio=report.get("sharpe_ratio"),
             total_fees=report.get("total_fees"),
+            data_sanity_status=report.get("data_sanity_status"),
+            evidence_level=report.get("evidence_level"),
+            data_sanity_source=report.get("data_sanity_source"),
+            data_sanity_mode=report.get("data_sanity_mode"),
+            data_sanity_feed=report.get("data_sanity_feed"),
+            data_sanity_path=report.get("data_sanity_path"),
+            data_sanity_warnings=report.get("data_sanity_warnings", []),
             assumptions=report.get("assumptions", []),
         )
 
@@ -1438,6 +1445,20 @@ def _render_catalog_markdown(catalog: DashboardCatalog) -> str:
             for item in catalog.data_comparisons
         ],
         "",
+        "## Run Evidence",
+        "",
+        "| Run | Strategy | Evidence | Sanity | Warnings |",
+        "|---|---|---|---|---:|",
+        *[
+            (
+                f"| {run.run_id} | {run.strategy_name} | "
+                f"{run.evidence_level or 'unknown'} | "
+                f"{run.data_sanity_status or 'unknown'} | "
+                f"{len(run.data_sanity_warnings)} |"
+            )
+            for run in catalog.runs
+        ],
+        "",
         "## Derived Facets",
         "",
         *[f"- `{group.group_id}` -> {group.strategy_count} strategies" for group in catalog.groups],
@@ -1506,6 +1527,10 @@ def _render_review_markdown(catalog: DashboardCatalog) -> str:
         "- Data comparison reports can show latest low-cost source coverage and caveats.",
         "- Feature packet logs can show replay inputs for llm_feature and feature_packet factors.",
         (
+            "- Backtest rows can show `data_sanity` evidence levels and warning counts, so "
+            "sample/fallback/short-window results are not presented as benchmark evidence."
+        ),
+        (
             "- A static read-only Dashboard can now be generated at "
             "`reports/dashboard/index.html` and `reports/dashboard/strategies/*.html` "
             "from this catalog."
@@ -1523,6 +1548,7 @@ def _render_review_markdown(catalog: DashboardCatalog) -> str:
             "- LLM pages must stay advisory until their prompts, model refs, and replay caches "
             "are wired through the backend."
         ),
+        "- Warning-level backtests must not be promoted from Dashboard metrics alone.",
         "",
         "## Strategy Mix",
         "",
@@ -1600,7 +1626,7 @@ def _render_review_markdown(catalog: DashboardCatalog) -> str:
 
 def _parse_report(path: Path) -> dict[str, Any]:
     lines = path.read_text(encoding="utf-8").splitlines()
-    data: dict[str, Any] = {"assumptions": []}
+    data: dict[str, Any] = {"assumptions": [], "data_sanity_warnings": []}
     section = ""
     for line in lines:
         if line.startswith("## "):
@@ -1608,6 +1634,25 @@ def _parse_report(path: Path) -> dict[str, Any]:
             continue
         if section == "assumptions" and line.startswith("- "):
             data.setdefault("assumptions", []).append(line[2:].strip())
+            continue
+        if section == "data sanity" and line.startswith("- ") and ": " in line:
+            label, value = line[2:].split(": ", 1)
+            key = label.lower().replace(" ", "_")
+            value = _strip_backticks(value)
+            if key == "warning":
+                if value != "none":
+                    data.setdefault("data_sanity_warnings", []).append(value)
+                continue
+            if key == "status":
+                data["data_sanity_status"] = value
+                continue
+            if key in {"source", "mode", "feed", "path"}:
+                data[f"data_sanity_{key}"] = value
+                continue
+            if key in {"bars", "signals", "trades", "warning_count"}:
+                data[f"data_sanity_{key}"] = value
+                continue
+            data[key] = value
             continue
         if line.startswith("- ") and ": " in line:
             label, value = line[2:].split(": ", 1)
@@ -1626,6 +1671,14 @@ def _parse_report(path: Path) -> dict[str, Any]:
     if "timeframe" not in data:
         data["timeframe"] = ""
     for field in ["bars", "signals", "trades"]:
+        if field in data:
+            data[field] = int(str(data[field]).replace(",", "").strip())
+    for field in [
+        "data_sanity_bars",
+        "data_sanity_signals",
+        "data_sanity_trades",
+        "data_sanity_warning_count",
+    ]:
         if field in data:
             data[field] = int(str(data[field]).replace(",", "").strip())
     for field in [

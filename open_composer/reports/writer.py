@@ -52,6 +52,10 @@ def write_backtest_report(
         else "- Sharpe ratio: n/a",
         f"- Total fees: {run.total_fees:.2f}",
         "",
+        "## Data Sanity",
+        "",
+        *_data_sanity_lines(run),
+        "",
         "## Assumptions",
         "",
         *[f"- {assumption}" for assumption in run.assumptions],
@@ -95,6 +99,39 @@ def write_backtest_report(
         lines.append("- No closed trades.")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
+
+
+def _data_sanity_lines(run: BacktestRun) -> list[str]:
+    if run.data_sanity is None:
+        return ["- Status: `unknown`", "- Warning: data sanity was not evaluated."]
+    sanity = run.data_sanity
+    first_timestamp = sanity.first_timestamp.isoformat() if sanity.first_timestamp else "n/a"
+    last_timestamp = sanity.last_timestamp.isoformat() if sanity.last_timestamp else "n/a"
+    lines = [
+        f"- Status: `{sanity.status}`",
+        f"- Evidence level: `{sanity.evidence_level}`",
+        f"- Source: `{sanity.data_source}`",
+        f"- Mode: `{sanity.data_source_mode or 'unknown'}`",
+        f"- Feed: `{sanity.data_feed or 'none'}`",
+        f"- Path: `{sanity.data_path or 'none'}`",
+        f"- Bars: {sanity.bars}",
+        f"- Signals: {sanity.signals}",
+        f"- Trades: {sanity.trades}",
+        f"- First timestamp: `{first_timestamp}`",
+        f"- Last timestamp: `{last_timestamp}`",
+        f"- Data span days: {_optional_float(sanity.data_span_days)}",
+        f"- Average holding days: {_optional_float(sanity.average_holding_days)}",
+        f"- Warning count: {len(sanity.warnings)}",
+    ]
+    if sanity.warnings:
+        lines.extend(f"- Warning: {warning}" for warning in sanity.warnings)
+    else:
+        lines.append("- Warning: none")
+    return lines
+
+
+def _optional_float(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.4f}"
 
 
 def _feature_replay_lines(spec: StrategySpec, root: Path | None) -> list[str]:
