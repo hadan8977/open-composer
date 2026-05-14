@@ -4,7 +4,7 @@ MONITOR_INTERVAL_SECONDS ?= 60
 MONITOR_MAX_CYCLES ?= 1
 PAPER_STRATEGY ?= qqq_pullback_15m
 
-.PHONY: bootstrap doctor readiness deploy-prepare test lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync verify
+.PHONY: bootstrap doctor readiness deploy-prepare repo-check capability-test test lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync verify
 
 bootstrap:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv sync
@@ -14,10 +14,16 @@ doctor:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc doctor
 
 readiness:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc readiness
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc readiness --strict
 
 deploy-prepare:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc deploy prepare
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc deploy prepare --strict
+
+repo-check:
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc repo check --strict
+
+capability-test:
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc capability test
 
 test:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run pytest
@@ -48,7 +54,7 @@ dashboard-serve: dashboard-build
 dashboard-check: dashboard-html dashboard-build
 
 feature-validate:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc feature validate
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc feature validate --strict
 
 paper-readiness:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc paper readiness $(PAPER_STRATEGY)
@@ -80,4 +86,4 @@ paper-monitor-loop:
 paper-monitor-loop-sync:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc paper monitor-loop --sync-broker --interval-seconds $(MONITOR_INTERVAL_SECONDS) --max-cycles $(MONITOR_MAX_CYCLES)
 
-verify: check dashboard-check feature-validate
+verify: check repo-check capability-test deploy-prepare dashboard-check feature-validate readiness

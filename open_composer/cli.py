@@ -91,6 +91,7 @@ from open_composer.paper_readiness import (
     write_paper_readiness_report,
 )
 from open_composer.readiness import build_readiness_report, write_readiness_report
+from open_composer.repo_check import build_repo_check_report, write_repo_check_report
 from open_composer.research import (
     build_promotion_report,
     draft_strategy_from_idea,
@@ -99,12 +100,15 @@ from open_composer.research import (
     optimize_strategy_horizons,
     optimize_strategy_universe,
     parse_sweep_parameters,
+    run_exposure_switch_research,
     run_leverage_research,
+    run_llm_exposure_switch_meta_selection,
     run_llm_rotation_meta_selection,
     run_market_timing_research,
     run_parameter_sweep,
     run_rotation_research,
 )
+from open_composer.research.llm_exposure_switch import LLMExposureSwitchChoice
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
 from open_composer.storage import find_signal
@@ -142,6 +146,7 @@ options_app = typer.Typer(no_args_is_help=True)
 feature_app = typer.Typer(no_args_is_help=True)
 deploy_app = typer.Typer(no_args_is_help=True)
 dashboard_app = typer.Typer(no_args_is_help=True)
+repo_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -159,6 +164,7 @@ app.add_typer(options_app, name="options")
 app.add_typer(feature_app, name="feature")
 app.add_typer(deploy_app, name="deploy")
 app.add_typer(dashboard_app, name="dashboard")
+app.add_typer(repo_app, name="repo")
 
 
 @app.callback()
@@ -264,6 +270,41 @@ def readiness_command(
         raise typer.Exit(1)
 
 
+@repo_app.command("check")
+def repo_check_command(
+    strict: Annotated[
+        bool,
+        typer.Option("--strict", help="Exit with code 1 when repository checks are blocked."),
+    ] = False,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", help="Path for the repository check JSON report."),
+    ] = None,
+) -> None:
+    """Check repository docs, control surface, and sample workflow anchors."""
+    root = project_root()
+    report = build_repo_check_report(root)
+    json_path, md_path = write_repo_check_report(report, root, output)
+    table = Table(title="Open Composer Repository Check")
+    table.add_column("Check")
+    table.add_column("Status")
+    table.add_column("Message")
+    table.add_column("Next action")
+    for check in report.checks:
+        table.add_row(
+            check.name,
+            check.status,
+            check.message,
+            check.suggested_actions[0] if check.suggested_actions else "",
+        )
+    console.print(table)
+    console.print(f"status={report.status} ready={'yes' if report.ready else 'no'}")
+    console.print(f"json={json_path}")
+    console.print(f"markdown={md_path}")
+    if strict and report.status == "blocked":
+        raise typer.Exit(1)
+
+
 @deploy_app.command("prepare")
 def deploy_prepare_command(
     sync_broker: Annotated[
@@ -304,6 +345,10 @@ def feature_validate_command(
         Path | None,
         typer.Option("--output", help="Path for the feature validation report."),
     ] = None,
+    strict: Annotated[
+        bool,
+        typer.Option("--strict", help="Exit with code 1 when feature packets are incomplete."),
+    ] = False,
 ) -> None:
     """Validate feature packet logs and write a point-in-time report."""
     root = project_root()
@@ -329,6 +374,8 @@ def feature_validate_command(
     table.add_row("Report", "written", str(report_path), str(md_path))
     table.add_row("Manifest", "written", str(manifest_path), "")
     console.print(table)
+    if strict and any(packet.point_in_time_status != "complete" for packet in packets):
+        raise typer.Exit(1)
 
 
 @feature_app.command("write")
@@ -476,7 +523,7 @@ def dashboard_review_plan_command(
 ) -> None:
     """Write a strict D0 review of the current Dashboard plan against repo artifacts."""
     root = project_root()
-    output_path = output or root / "docs" / "dashboard-d0-review.zh.md"
+    output_path = output or root / "reports" / "dashboard" / "review.md"
     catalog = build_dashboard_catalog(root)
     path = write_dashboard_review_markdown(catalog, output_path, root)
     console.print(f"[green]dashboard review written[/green] {path}")
@@ -1227,6 +1274,11 @@ def strategy_rotate_universe(
     ] = None,
     oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
     walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
+    walk_forward_top_k: int | None = typer.Option(
+        None,
+        "--walk-forward-top-k",
+        help="Only re-score the top K training candidates inside walk-forward folds.",
+    ),
     max_candidates: int = typer.Option(200, "--max-candidates"),
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
     feature_gate: bool = typer.Option(
@@ -1258,6 +1310,7 @@ def strategy_rotate_universe(
         objective=objective_key,
         primary_hold_margin_pct=primary_hold_margin_pct,
         primary_min_momentum_pct=primary_min_momentum_pct,
+        walk_forward_top_k=walk_forward_top_k,
     )
     best = result.best
     console.print(f"[green]rotation research complete[/green] report: {result.report_path}")
@@ -1268,6 +1321,12 @@ def strategy_rotate_universe(
         f"oos_equal_weight_alpha={best.out_of_sample.alpha_vs_equal_weight_pct:.2f}% "
         f"oos_sharpe={best.out_of_sample.sharpe_ratio or 0.0:.2f} "
         f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
+    )
+    console.print(
+        f"candidates={result.research_cost['candidate_count']} "
+        f"walk_forward_candidates={result.research_cost['walk_forward_candidate_count']} "
+        f"estimated_passes={result.research_cost['estimated_total_backtest_passes']} "
+        f"runtime={result.runtime_seconds['total']:.2f}s"
     )
 
 
@@ -1367,6 +1426,11 @@ def strategy_market_time(
     ] = None,
     oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
     walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
+    walk_forward_top_k: int | None = typer.Option(
+        None,
+        "--walk-forward-top-k",
+        help="Only re-score the top K training candidates inside walk-forward folds.",
+    ),
     max_candidates: int = typer.Option(300, "--max-candidates"),
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
     write_best_spec: bool = typer.Option(True, "--write-best-spec/--no-write-best-spec"),
@@ -1396,6 +1460,7 @@ def strategy_market_time(
         start=start,
         end=end,
         write_best_spec=write_best_spec,
+        walk_forward_top_k=walk_forward_top_k,
     )
     best = result.best
     run = best.out_of_sample.run
@@ -1409,6 +1474,12 @@ def strategy_market_time(
         f"oos_buy_hold={run.buy_hold_return_pct or 0.0:.2f}% "
         f"oos_sharpe={run.sharpe_ratio or 0.0:.2f} "
         f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
+    )
+    console.print(
+        f"candidates={result.research_cost['candidate_count']} "
+        f"walk_forward_candidates={result.research_cost['walk_forward_candidate_count']} "
+        f"estimated_passes={result.research_cost['estimated_total_backtest_passes']} "
+        f"runtime={result.runtime_seconds['total']:.2f}s"
     )
 
 
@@ -1480,6 +1551,219 @@ def strategy_leverage_research(
         f"oos_sharpe={best.out_of_sample.sharpe_ratio or 0.0:.2f} "
         f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
     )
+
+
+@strategy_app.command("exposure-switch")
+def strategy_exposure_switch(
+    spec: Path,
+    symbol: str | None = typer.Option(None, "--symbol"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    fast: Annotated[list[int] | None, typer.Option("--fast")] = None,
+    slow: Annotated[list[int] | None, typer.Option("--slow")] = None,
+    momentum_bars: Annotated[list[int] | None, typer.Option("--momentum-bars")] = None,
+    min_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-momentum-pct"),
+    ] = None,
+    volatility_bars: Annotated[list[int] | None, typer.Option("--volatility-bars")] = None,
+    max_volatility_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-volatility-pct"),
+    ] = None,
+    drawdown_bars: Annotated[list[int] | None, typer.Option("--drawdown-bars")] = None,
+    max_drawdown_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-drawdown-pct"),
+    ] = None,
+    base_exposure: Annotated[list[float] | None, typer.Option("--base-exposure")] = None,
+    risk_on_exposure: Annotated[list[float] | None, typer.Option("--risk-on-exposure")] = None,
+    risk_off_exposure: Annotated[
+        list[float] | None,
+        typer.Option("--risk-off-exposure"),
+    ] = None,
+    financing_rate_pct: Annotated[
+        list[float] | None,
+        typer.Option("--financing-rate-pct"),
+    ] = None,
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
+    walk_forward_top_k: int | None = typer.Option(
+        None,
+        "--walk-forward-top-k",
+        help="Only re-score the top K training candidates inside walk-forward folds.",
+    ),
+    max_candidates: int = typer.Option(200, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Research point-in-time dynamic exposure switching against buy-and-hold."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    result = run_exposure_switch_research(
+        spec,
+        project_root(),
+        symbol=symbol,
+        data_source=data_source,
+        fast_bars=fast,
+        slow_bars=slow,
+        momentum_bars=momentum_bars,
+        min_momentum_pct=min_momentum_pct,
+        volatility_bars=volatility_bars,
+        max_volatility_pct=_optional_float_values(max_volatility_pct),
+        drawdown_bars=drawdown_bars,
+        max_drawdown_pct=_optional_float_values(max_drawdown_pct),
+        base_exposure=base_exposure,
+        risk_on_exposure=risk_on_exposure,
+        risk_off_exposure=risk_off_exposure,
+        financing_rate_pct=financing_rate_pct,
+        out_of_sample_ratio=oos_ratio,
+        walk_forward_folds=walk_forward_folds,
+        walk_forward_top_k=walk_forward_top_k,
+        max_candidates=max_candidates,
+        refresh_data=refresh_data,
+        start=start,
+        end=end,
+    )
+    best = result.best
+    console.print(f"[green]exposure switch research complete[/green] report: {result.report_path}")
+    console.print(
+        f"best={best.params.label} "
+        f"oos_alpha={best.out_of_sample.alpha_vs_buy_hold_pct:.2f}% "
+        f"oos_return={best.out_of_sample.total_return_pct:.2f}% "
+        f"oos_buy_hold={best.out_of_sample.buy_hold_return_pct:.2f}% "
+        f"oos_sharpe={best.out_of_sample.sharpe_ratio or 0.0:.2f} "
+        f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
+    )
+    console.print(
+        f"candidates={result.research_cost.candidate_count} "
+        f"walk_forward_candidates={result.research_cost.walk_forward_candidate_count} "
+        f"estimated_passes={result.research_cost.estimated_total_backtest_passes} "
+        f"runtime={result.runtime_seconds['total']:.2f}s"
+    )
+
+
+@strategy_app.command("llm-exposure-switch")
+def strategy_llm_exposure_switch(
+    spec: Path,
+    symbol: str | None = typer.Option(None, "--symbol"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    fast: Annotated[list[int] | None, typer.Option("--fast")] = None,
+    slow: Annotated[list[int] | None, typer.Option("--slow")] = None,
+    momentum_bars: Annotated[list[int] | None, typer.Option("--momentum-bars")] = None,
+    min_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-momentum-pct"),
+    ] = None,
+    volatility_bars: Annotated[list[int] | None, typer.Option("--volatility-bars")] = None,
+    max_volatility_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-volatility-pct"),
+    ] = None,
+    drawdown_bars: Annotated[list[int] | None, typer.Option("--drawdown-bars")] = None,
+    max_drawdown_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-drawdown-pct"),
+    ] = None,
+    base_exposure: Annotated[list[float] | None, typer.Option("--base-exposure")] = None,
+    risk_on_exposure: Annotated[list[float] | None, typer.Option("--risk-on-exposure")] = None,
+    risk_off_exposure: Annotated[
+        list[float] | None,
+        typer.Option("--risk-off-exposure"),
+    ] = None,
+    financing_rate_pct: Annotated[
+        list[float] | None,
+        typer.Option("--financing-rate-pct"),
+    ] = None,
+    validation_ratio: float = typer.Option(0.3, "--validation-ratio"),
+    validation_folds: int = typer.Option(3, "--validation-folds"),
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    max_candidates: int = typer.Option(200, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+    local_choice_label: str | None = typer.Option(
+        None,
+        "--local-choice-label",
+        help="Use a local Codex/operator choice from the prompt artifact instead of an API call.",
+    ),
+    local_choice_rationale: str = typer.Option(
+        "Local Codex/operator selected from training-only prompt evidence.",
+        "--local-choice-rationale",
+    ),
+) -> None:
+    """Use an LLM to select an exposure switch from training-only evidence."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    result = run_llm_exposure_switch_meta_selection(
+        spec,
+        project_root(),
+        symbol=symbol,
+        data_source=data_source,
+        fast_bars=fast,
+        slow_bars=slow,
+        momentum_bars=momentum_bars,
+        min_momentum_pct=min_momentum_pct,
+        volatility_bars=volatility_bars,
+        max_volatility_pct=_optional_float_values(max_volatility_pct),
+        drawdown_bars=drawdown_bars,
+        max_drawdown_pct=_optional_float_values(max_drawdown_pct),
+        base_exposure=base_exposure,
+        risk_on_exposure=risk_on_exposure,
+        risk_off_exposure=risk_off_exposure,
+        financing_rate_pct=financing_rate_pct,
+        validation_ratio=validation_ratio,
+        validation_folds=validation_folds,
+        out_of_sample_ratio=oos_ratio,
+        max_candidates=max_candidates,
+        refresh_data=refresh_data,
+        local_choice=_local_exposure_choice(local_choice_label, local_choice_rationale),
+        start=start,
+        end=end,
+    )
+    selected = result.selected
+    console.print(
+        f"[green]LLM exposure switch selection complete[/green] report: {result.report_path}"
+    )
+    console.print(
+        f"selected={selected.params.label} "
+        f"oos_alpha={selected.out_of_sample.alpha_vs_buy_hold_pct:.2f}% "
+        f"oos_return={selected.out_of_sample.total_return_pct:.2f}% "
+        f"oos_buy_hold={selected.out_of_sample.buy_hold_return_pct:.2f}% "
+        f"oos_sharpe={selected.out_of_sample.sharpe_ratio or 0.0:.2f} "
+        f"status={result.status} "
+        f"flags={','.join(selected.quality_flags) if selected.quality_flags else 'none'}"
+    )
+
+
+def _local_exposure_choice(
+    label: str | None,
+    rationale: str,
+) -> LLMExposureSwitchChoice | None:
+    if label is None:
+        return None
+    return LLMExposureSwitchChoice(
+        selected_label=label,
+        confidence=0.5,
+        rationale=rationale,
+        expected_risks=[
+            "Local choice is based only on prompt artifact evidence and must still pass OOS gates."
+        ],
+        rejected_labels=[],
+    )
+
+
+def _optional_float_values(values: list[str] | None) -> list[float | None] | None:
+    if values is None:
+        return None
+    parsed: list[float | None] = []
+    for value in values:
+        normalized = value.strip().lower()
+        if normalized in {"none", "null", "off"}:
+            parsed.append(None)
+        else:
+            parsed.append(float(value))
+    return parsed
 
 
 @strategy_app.command("list")

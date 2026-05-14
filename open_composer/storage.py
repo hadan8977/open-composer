@@ -7,6 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from open_composer.config import ensure_dir, project_root
+from open_composer.json_utils import json_safe_payload
 from open_composer.models.signal import Signal
 
 
@@ -26,6 +27,7 @@ def append_jsonl(path: Path, rows: Iterable[BaseModel | dict]) -> Path:
 def write_json(path: Path, model: BaseModel | dict) -> Path:
     ensure_dir(path.parent)
     record = model_to_record(model) if isinstance(model, BaseModel) else model
+    record = json_safe_payload(record)
     path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path
 

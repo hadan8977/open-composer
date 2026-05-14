@@ -181,12 +181,59 @@ uv run oc strategy parameter-sweep strategy_specs/drafts/qqq_pullback_15m.yaml \
   --max-candidates 27 \
   --top-n 10 \
   --write-top 2
+uv run oc strategy exposure-switch strategy_specs/drafts/qqq_pullback_15m.yaml \
+  --fast 5 --fast 8 \
+  --slow 21 --slow 34 \
+  --risk-on-exposure 1.25 --risk-on-exposure 1.5 \
+  --risk-off-exposure 0.75 --risk-off-exposure 1.0 \
+  --walk-forward-folds 3 \
+  --walk-forward-top-k 8
+uv run oc strategy llm-exposure-switch strategy_specs/drafts/qqq_pullback_15m.yaml \
+  --fast 5 --fast 8 \
+  --slow 21 --slow 34 \
+  --risk-on-exposure 1.25 --risk-on-exposure 1.5 \
+  --risk-off-exposure 0.75 --risk-off-exposure 1.0 \
+  --validation-folds 3
+uv run oc strategy rotate-universe strategy_specs/drafts/qqq_pullback_15m.yaml \
+  --symbol QQQ --symbol SPY --symbol IWM \
+  --lookback-bars 20 --lookback-bars 40 \
+  --rebalance-bars 5 \
+  --walk-forward-folds 3 \
+  --walk-forward-top-k 8
+uv run oc strategy market-time strategy_specs/drafts/qqq_pullback_15m.yaml \
+  --profile risk_control_hold --profile breakout_hold \
+  --fast-bars 5 --fast-bars 8 \
+  --slow-bars 21 \
+  --walk-forward-folds 3 \
+  --walk-forward-top-k 8
 ```
 
 Parameter sweeps write ranked JSON/Markdown reports under `reports/research/`
 and only write top draft specs when requested. Sweep results are in-sample
 research evidence; run out-of-sample, walk-forward, cost sensitivity, and data
-source comparisons before promotion.
+source comparisons before promotion. `exposure-switch`, `rotate-universe`, and
+`market-time` reports include `research_cost`, candidate count, walk-forward
+candidate count, estimated backtest passes, `runtime_seconds`, and stage timing;
+use `--walk-forward-top-k` during exploration to limit expensive fold-level
+re-scoring, then rerun without it for full validation. Research reports also
+write `data_profile` with data as-of, feed, source mode, strict-live/cache
+fallback state, and data warnings. Dashboard research records surface the same
+data as-of, feed, source mode, cache fallback, and warning fields.
+
+Every bounded research run writes `research_brief`, `search_space`, and
+`hypothesis_ledger` so parameter scans are tied to an explicit hypothesis,
+candidate count, visible evidence, hidden evidence, and counterevidence. The
+`llm-exposure-switch` report adds `llm_contribution`, `llm_contribution_ok`,
+`llm_contribution_level`, and `strategy_distinctiveness_ok`; fallback/local
+choices or selections identical to the deterministic top candidate are labeled
+`llm_assisted_selection_only`, not independent LLM Alpha. It also saves the
+exact prompt artifact and hides final out-of-sample/full-window metrics from the
+model until after selection. If the model call falls back because of a missing
+key, network failure, or gateway error, the acceptance gate stays failed.
+When an external gateway is unavailable, Codex may use
+`--local-choice-label` only by selecting from the saved prompt-visible
+candidates; the report records `codex_local_choice` and still computes OOS only
+after selection.
 
 Promotion gate:
 
@@ -305,20 +352,12 @@ Then open the UI once with `?token=<long-random-token>` so browser API calls sen
 `X-Open-Composer-Token`. The token protects `/api/dashboard/*`; static files are
 still served normally.
 
-The current research audit is documented in [docs/review-optimization-completion-audit.zh.md](docs/review-optimization-completion-audit.zh.md).
-The current backtest and optimization iteration plan is documented in [docs/backtest-optimization-system-review.zh.md](docs/backtest-optimization-system-review.zh.md).
-
 ## Project Docs
 
+- [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) — no-context Codex starting review document
 - [AGENTS.md](AGENTS.md)
-- [OPEN-COMPOSER-BUILD-HANDOFF.md](OPEN-COMPOSER-BUILD-HANDOFF.md)
 - [docs/current-unfinished-work-check.zh.md](docs/current-unfinished-work-check.zh.md)
-- [docs/plan-completion-gap-audit.zh.md](docs/plan-completion-gap-audit.zh.md)
-- [docs/next-product-optimization-plan-2026-05-13.zh.md](docs/next-product-optimization-plan-2026-05-13.zh.md)
-- [docs/backtest-optimization-system-review.zh.md](docs/backtest-optimization-system-review.zh.md)
-- [docs/goal-completion-audit-2026-05-13.zh.md](docs/goal-completion-audit-2026-05-13.zh.md)
-- [docs/project-repository-review-2026-05-12.zh.md](docs/project-repository-review-2026-05-12.zh.md)
-- [docs/quant-capability-expansion-plan.zh.md](docs/quant-capability-expansion-plan.zh.md)
-- [docs/quant-capability-expansion-review.zh.md](docs/quant-capability-expansion-review.zh.md)
+- [docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md](docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md)
 - [docs/product-maturation-plan.zh.md](docs/product-maturation-plan.zh.md)
 - [docs/review-methodology.zh.md](docs/review-methodology.zh.md)
+- [docs/longbridge-integration.md](docs/longbridge-integration.md)

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from itertools import product
 from math import prod
 from pathlib import Path
+from time import perf_counter
 from typing import Any, Literal
 
 import pandas as pd
@@ -12,7 +13,16 @@ import yaml
 from open_composer.adapters.data import fetch_ohlcv
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
+from open_composer.json_utils import json_safe_sorted_values
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.metadata import (
+    estimate_grid_research_cost,
+    frame_data_profile,
+    hypothesis_ledger,
+    research_brief,
+    runtime_payload,
+    search_space,
+)
 from open_composer.storage import write_json
 
 TimingObjective = Literal["primary_alpha"]
@@ -69,6 +79,9 @@ class TimingResearchResult:
     selected_spec_path: Path | None
     candidates: list[TimingCandidate]
     walk_forward: list[TimingWalkForwardSlice]
+    research_cost: dict[str, Any]
+    runtime_seconds: dict[str, Any]
+    data_profile: dict[str, Any]
 
     @property
     def best(self) -> TimingCandidate:
@@ -98,7 +111,11 @@ def run_market_timing_research(
     start: str | None = None,
     end: str | None = None,
     write_best_spec: bool = True,
+    walk_forward_top_k: int | None = None,
 ) -> TimingResearchResult:
+    started_at = perf_counter()
+    stages: dict[str, float] = {}
+    stage_started = perf_counter()
     base = root or project_root()
     source = load_strategy_spec(spec_path)
     selected_symbol = (symbol or source.primary_symbol).upper()
@@ -116,6 +133,16 @@ def run_market_timing_research(
     frame = _filter_time_window(_normalize_timestamps(frame), start, end)
     if frame.empty:
         raise ValueError("no OHLCV rows remained after applying the requested research window")
+    data_profile = frame_data_profile(
+        frame,
+        symbol=selected_symbol,
+        timeframe=source.timeframe,
+        provider=data_source,
+        feed=selected_feed,
+        source_mode="cache" if not refresh_data else "live_fetch",
+    )
+    stages["load_data"] = perf_counter() - stage_started
+    stage_started = perf_counter()
 
     params_grid = _build_timing_grid(
         profiles or ["risk_control_hold", "trend_pullback", "breakout_hold", "macd_trend"],
@@ -130,6 +157,8 @@ def run_market_timing_research(
         take_profit_pct or [None],
         max_candidates=max_candidates,
     )
+    stages["build_grid"] = perf_counter() - stage_started
+    stage_started = perf_counter()
     candidates = _evaluate_timing_candidates(
         source=source,
         frame=frame,
@@ -140,19 +169,36 @@ def run_market_timing_research(
         out_of_sample_ratio=out_of_sample_ratio,
         root=base,
     )
+    stages["evaluate_candidates"] = perf_counter() - stage_started
+    walk_forward_params = _walk_forward_params(
+        params_grid=params_grid,
+        candidates=candidates,
+        walk_forward_top_k=walk_forward_top_k,
+    )
+    research_cost = estimate_grid_research_cost(
+        candidate_count=len(params_grid),
+        walk_forward_candidate_count=len(walk_forward_params),
+        walk_forward_top_k=walk_forward_top_k,
+        walk_forward_folds=walk_forward_folds,
+    ).__dict__
+    stage_started = perf_counter()
     walk_forward = _walk_forward_timing(
         source=source,
         frame=frame,
         symbol=selected_symbol,
         data_source=data_source,
         feed=selected_feed,
-        params_grid=params_grid,
+        params_grid=walk_forward_params,
         folds=walk_forward_folds,
         root=base,
     )
+    stages["walk_forward"] = perf_counter() - stage_started
     selected_spec_path = _write_selected_spec(base, candidates[0].spec) if write_best_spec else None
     report_path = base / "reports" / "research" / f"{source.name}-market-timing-research.md"
     json_path = base / "reports" / "research" / f"{source.name}-market-timing-research.json"
+    stages["write_reports"] = 0.0
+    runtime_seconds = runtime_payload(started_at, stages)
+    write_started = perf_counter()
     _write_timing_json(
         json_path,
         source,
@@ -162,6 +208,10 @@ def run_market_timing_research(
         candidates,
         walk_forward,
         selected_spec_path,
+        research_cost,
+        runtime_seconds,
+        data_profile,
+        params_grid,
     )
     _write_timing_report(
         report_path,
@@ -173,6 +223,39 @@ def run_market_timing_research(
         candidates,
         walk_forward,
         selected_spec_path,
+        research_cost,
+        runtime_seconds,
+        data_profile,
+    )
+    stages["write_reports"] = perf_counter() - write_started
+    runtime_seconds = runtime_payload(started_at, stages)
+    _write_timing_json(
+        json_path,
+        source,
+        selected_symbol,
+        start,
+        end,
+        candidates,
+        walk_forward,
+        selected_spec_path,
+        research_cost,
+        runtime_seconds,
+        data_profile,
+        params_grid,
+    )
+    _write_timing_report(
+        report_path,
+        json_path,
+        source,
+        selected_symbol,
+        start,
+        end,
+        candidates,
+        walk_forward,
+        selected_spec_path,
+        research_cost,
+        runtime_seconds,
+        data_profile,
     )
     return TimingResearchResult(
         report_path=report_path,
@@ -180,6 +263,9 @@ def run_market_timing_research(
         selected_spec_path=selected_spec_path,
         candidates=candidates,
         walk_forward=walk_forward,
+        research_cost=research_cost,
+        runtime_seconds=runtime_seconds,
+        data_profile=data_profile,
     )
 
 
@@ -359,6 +445,19 @@ def _walk_forward_timing(
     return slices
 
 
+def _walk_forward_params(
+    *,
+    params_grid: list[TimingParams],
+    candidates: list[TimingCandidate],
+    walk_forward_top_k: int | None,
+) -> list[TimingParams]:
+    if walk_forward_top_k is None:
+        return params_grid
+    if walk_forward_top_k < 1:
+        raise ValueError("--walk-forward-top-k must be at least 1")
+    return [item.params for item in candidates[: min(walk_forward_top_k, len(candidates))]]
+
+
 def _candidate_spec(
     source: StrategySpec,
     symbol: str,
@@ -515,12 +614,47 @@ def _write_timing_json(
     candidates: list[TimingCandidate],
     walk_forward: list[TimingWalkForwardSlice],
     selected_spec_path: Path | None,
+    research_cost: dict[str, Any],
+    runtime_seconds: dict[str, Any],
+    data_profile: dict[str, Any],
+    params_grid: list[TimingParams],
 ) -> Path:
     payload = {
         "strategy_name": source.name,
         "mode": "single_symbol_market_timing",
         "symbol": symbol,
         "research_window": {"start": start, "end": end},
+        "data_profile": data_profile,
+        "research_brief": research_brief(
+            strategy_name=source.name,
+            objective="same-symbol timing Alpha versus buy-and-hold",
+            hypothesis=(
+                "Point-in-time trend, breakout, volume, and risk controls can improve "
+                "OOS Alpha versus holding the same symbol."
+            ),
+            constraints=[
+                "Signals are confirmed at bar close and filled at next bar open.",
+                "Breakout factors use lagged highest close.",
+                "No LLM call is made inside the backtest loop.",
+            ],
+        ),
+        "search_space": search_space(
+            family="single_symbol_market_timing",
+            candidate_count=len(params_grid),
+            parameter_ranges=_params_grid_ranges(params_grid),
+            filters=["fast_bars < slow_bars", "exit_bars >= fast_bars"],
+        ),
+        "hypothesis_ledger": hypothesis_ledger(
+            hypothesis="Timing rules improve OOS Alpha versus buy-and-hold.",
+            visible_evidence=["training score", "OOS metrics", "walk-forward folds"],
+            hidden_evidence=[],
+            counterevidence=candidates[0].quality_flags,
+            conclusion=(
+                "passed" if _acceptance_gate(candidates[0], walk_forward)["passed"] else "failed"
+            ),
+        ),
+        "research_cost": research_cost,
+        "runtime_seconds": runtime_seconds,
         "selection_objective": (
             "train score prioritizes Alpha versus same-symbol buy-and-hold; "
             "OOS and fixed walk-forward are validation evidence"
@@ -549,6 +683,9 @@ def _write_timing_report(
     candidates: list[TimingCandidate],
     walk_forward: list[TimingWalkForwardSlice],
     selected_spec_path: Path | None,
+    research_cost: dict[str, Any],
+    runtime_seconds: dict[str, Any],
+    data_profile: dict[str, Any],
 ) -> Path:
     ensure_dir(path.parent)
     lines = [
@@ -561,6 +698,10 @@ def _write_timing_report(
         f"- Symbol: `{symbol}`",
         f"- Timeframe: `{source.timeframe}`",
         f"- Research window: `{start or 'cache start'}` -> `{end or 'cache end'}`",
+        f"- Data as-of: `{data_profile.get('data_as_of') or 'unknown'}`",
+        f"- Data source/feed: `{data_profile.get('provider') or 'unknown'}` / "
+        f"`{data_profile.get('feed') or 'unknown'}`",
+        f"- Data source mode: `{data_profile.get('source_mode') or 'unknown'}`",
         "- Objective: train score prioritizes Alpha versus same-symbol buy-and-hold.",
         "- OOS and fixed walk-forward are validation evidence, not selection data.",
         "- Signal timing: bar-close confirmation; next-bar-open fills.",
@@ -571,6 +712,18 @@ def _write_timing_report(
             f"- {key}: `{value}`"
             for key, value in _acceptance_gate(candidates[0], walk_forward).items()
         ],
+        "",
+        "## Research Cost",
+        "",
+        f"- Candidates evaluated: `{research_cost['candidate_count']}`",
+        f"- Walk-forward candidates: `{research_cost['walk_forward_candidate_count']}`",
+        f"- Walk-forward top-K filter: `{research_cost['walk_forward_top_k'] or 'off'}`",
+        f"- Estimated backtest passes: `{research_cost['estimated_total_backtest_passes']}`",
+        f"- Runtime total seconds: `{runtime_seconds['total']:.2f}`",
+        "",
+        "## Runtime Stages",
+        "",
+        *[f"- {stage}: `{seconds:.2f}s`" for stage, seconds in runtime_seconds["stages"].items()],
         "",
         "## Top Candidates",
         "",
@@ -713,6 +866,25 @@ def _warmup(params: TimingParams) -> int:
         params.volume_bars,
         26,
     )
+
+
+def _params_grid_ranges(params_grid: list[TimingParams]) -> dict[str, list[Any]]:
+    keys = [
+        "profile",
+        "fast_bars",
+        "slow_bars",
+        "exit_bars",
+        "momentum_bars",
+        "min_momentum_pct",
+        "breakout_bars",
+        "volume_bars",
+        "stop_loss_pct",
+        "take_profit_pct",
+    ]
+    return {
+        key: json_safe_sorted_values({getattr(params, key) for params in params_grid})
+        for key in keys
+    }
 
 
 def _normalize_timestamps(frame: pd.DataFrame) -> pd.DataFrame:

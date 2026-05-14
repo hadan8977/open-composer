@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -16,6 +17,25 @@ def test_alpaca_fetch_uses_cache_without_credentials(sample_workspace: Path) -> 
     frame = fetch_alpaca_bars(sample_workspace, "QQQ", "15m", None, None, "iex")
     assert len(frame) > 0
     assert frame["close"].iloc[-1] > 0
+
+
+def test_alpaca_fetch_filters_cache_when_window_is_supplied(sample_workspace: Path) -> None:
+    cache = sample_workspace / "data" / "cache" / "qqq_15m_iex.csv"
+    sample = sample_workspace / "data" / "sample" / "qqq_15m.csv"
+    cache.write_text(sample.read_text(encoding="utf-8"), encoding="utf-8")
+
+    frame = fetch_alpaca_bars(
+        sample_workspace,
+        "QQQ",
+        "15m",
+        datetime(2026, 1, 2, 15, tzinfo=UTC),
+        datetime(2026, 1, 2, 16, tzinfo=UTC),
+        "iex",
+    )
+
+    assert len(frame) > 0
+    assert frame["timestamp"].min() >= __import__("pandas").Timestamp("2026-01-02T15:00:00Z")
+    assert frame["timestamp"].max() <= __import__("pandas").Timestamp("2026-01-02T16:00:00Z")
 
 
 def test_alpaca_fetch_can_refresh_with_credentials(sample_workspace: Path, monkeypatch) -> None:

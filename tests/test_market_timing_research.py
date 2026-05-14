@@ -87,6 +87,11 @@ def test_market_timing_research_reports_primary_buy_hold_alpha(
     assert payload["mode"] == "single_symbol_market_timing"
     assert payload["symbol"] == "AAOI"
     assert payload["research_window"] == {"start": "2024-01-05", "end": "2024-03-15"}
+    assert payload["research_cost"]["candidate_count"] == 1
+    assert payload["research_cost"]["walk_forward_candidate_count"] == 1
+    assert payload["runtime_seconds"]["total"] >= 0
+    assert payload["data_profile"]["data_as_of"] == "2024-03-15T00:00:00+00:00"
+    assert payload["search_space"]["candidate_count"] == 1
     assert "same-symbol buy-and-hold" in payload["selection_objective"]
     assert payload["acceptance_gate"]["passed"] is False
     assert "alpha_vs_buy_hold_pct" in payload["candidates"][0]["out_of_sample"]
@@ -100,6 +105,77 @@ def test_market_timing_research_reports_primary_buy_hold_alpha(
     assert selected["execution"]["mode"] == "manual_signal"
     assert selected["execution"]["fill_assumption"] == "next_bar_open"
     assert "lag(highest(close, 5), 1)" == selected["factors"]["prior_breakout"]["expression"]
+
+
+def test_market_timing_research_walk_forward_top_k_reduces_reported_cost(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    timestamps = pd.date_range("2024-01-01", periods=80, freq="D", tz="UTC")
+    close = [100 + index * 0.5 for index in range(80)]
+    frame = pd.DataFrame(
+        {
+            "timestamp": timestamps,
+            "open": close,
+            "high": [value + 1 for value in close],
+            "low": [value - 1 for value in close],
+            "close": close,
+            "volume": [1_000_000 + index * 100 for index in range(80)],
+        }
+    )
+
+    def fake_fetch_ohlcv(**kwargs):
+        return normalize_ohlcv(frame.copy())
+
+    monkeypatch.setattr("open_composer.research.market_timing.fetch_ohlcv", fake_fetch_ohlcv)
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "aaoi_timing_top_k.yaml"
+    spec_path.write_text(
+        yaml.safe_dump(
+            {
+                "name": "aaoi_timing_top_k",
+                "description": "AAOI timing top-k fixture.",
+                "timeframe": "daily",
+                "universe": ["AAOI"],
+                "lifecycle": "draft",
+                "entry": {"all": ["close > ema(close, 3)"], "any": []},
+                "exit": {"all": [], "any": ["close < ema(close, 8)"]},
+                "risk": {"max_position_weight": 1.0},
+                "costs": {"commission_pct": 0.0, "slippage_bps": 0.0},
+                "execution": {
+                    "mode": "manual_signal",
+                    "signal_on": "bar_close",
+                    "fill_assumption": "next_bar_open",
+                    "broker": "none",
+                },
+                "data": {"source": "alpaca", "symbol": "AAOI", "feed": "iex"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_market_timing_research(
+        spec_path,
+        sample_workspace,
+        profiles=["risk_control_hold"],
+        fast_bars=[3, 4],
+        slow_bars=[8],
+        exit_bars=[13],
+        momentum_bars=[3],
+        min_momentum_pct=[0.0],
+        breakout_bars=[5],
+        volume_bars=[3],
+        stop_loss_pct=[20.0],
+        take_profit_pct=[None],
+        max_candidates=2,
+        walk_forward_folds=2,
+        walk_forward_top_k=1,
+    )
+
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    assert payload["research_cost"]["candidate_count"] == 2
+    assert payload["research_cost"]["walk_forward_candidate_count"] == 1
+    assert payload["research_cost"]["walk_forward_top_k"] == 1
+    assert payload["research_cost"]["estimated_total_backtest_passes"] == 12
 
 
 def test_market_timing_research_supports_risk_control_hold_profile(

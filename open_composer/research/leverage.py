@@ -303,10 +303,18 @@ def _quality_flags(
         flags.append("oos_no_alpha_vs_buy_hold")
     if oos.sharpe_ratio is None or oos.sharpe_ratio < 0.5:
         flags.append("oos_low_sharpe")
+    if (
+        oos.sharpe_ratio is not None
+        and oos.buy_hold_sharpe_ratio is not None
+        and oos.sharpe_ratio < oos.buy_hold_sharpe_ratio
+    ):
+        flags.append("oos_sharpe_below_buy_hold")
     if full.alpha_vs_buy_hold_pct <= 0:
         flags.append("full_window_no_alpha_vs_buy_hold")
-    if full.max_drawdown_pct < full.buy_hold_max_drawdown_pct * 2.5:
-        flags.append("levered_drawdown_expansion")
+    if _drawdown_expanded(oos.max_drawdown_pct, oos.buy_hold_max_drawdown_pct, multiple=1.5):
+        flags.append("oos_levered_drawdown_expansion")
+    if _drawdown_expanded(full.max_drawdown_pct, full.buy_hold_max_drawdown_pct, multiple=1.5):
+        flags.append("full_levered_drawdown_expansion")
     return flags
 
 
@@ -320,9 +328,15 @@ def _acceptance_gate(
     passed = (
         candidate.out_of_sample.alpha_vs_buy_hold_pct > 0
         and (candidate.out_of_sample.sharpe_ratio or 0.0) >= 0.5
+        and (
+            candidate.out_of_sample.buy_hold_sharpe_ratio is None
+            or (candidate.out_of_sample.sharpe_ratio or 0.0)
+            >= candidate.out_of_sample.buy_hold_sharpe_ratio
+        )
         and wf_count > 0
         and positive_wf == wf_count
-        and "levered_drawdown_expansion" not in candidate.quality_flags
+        and "oos_levered_drawdown_expansion" not in candidate.quality_flags
+        and "full_levered_drawdown_expansion" not in candidate.quality_flags
     )
     return {
         "passed": passed,
@@ -336,6 +350,19 @@ def _acceptance_gate(
         "walk_forward_fold_count": wf_count,
         "quality_flags": candidate.quality_flags,
     }
+
+
+def _drawdown_expanded(
+    strategy_drawdown_pct: float,
+    buy_hold_drawdown_pct: float,
+    *,
+    multiple: float,
+) -> bool:
+    strategy_magnitude = abs(min(strategy_drawdown_pct, 0.0))
+    buy_hold_magnitude = abs(min(buy_hold_drawdown_pct, 0.0))
+    if buy_hold_magnitude <= 0:
+        return strategy_magnitude > 0
+    return strategy_magnitude > buy_hold_magnitude * multiple
 
 
 def _write_leverage_json(

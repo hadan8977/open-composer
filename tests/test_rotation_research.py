@@ -77,6 +77,11 @@ def test_rotation_research_uses_point_in_time_universe_grid(
     payload = json.loads(result.json_path.read_text(encoding="utf-8"))
     assert payload["candidate_count"] == 1
     assert payload["mode"] == "pure_price_rotation"
+    assert payload["research_cost"]["candidate_count"] == 1
+    assert payload["research_cost"]["walk_forward_candidate_count"] == 1
+    assert payload["runtime_seconds"]["total"] >= 0
+    assert payload["data_profile"]["data_as_of"] is not None
+    assert payload["search_space"]["candidate_count"] == 1
     assert "equal-weight" in payload["selection_objective"]
     assert isinstance(payload["acceptance_gate"]["passed"], bool)
     assert "out_of_sample" in payload["candidates"][0]
@@ -84,6 +89,62 @@ def test_rotation_research_uses_point_in_time_universe_grid(
         payload["candidates"][0]["out_of_sample"]["bars"]
         < payload["candidates"][0]["full_window"]["bars"]
     )
+
+
+def test_rotation_research_walk_forward_top_k_reduces_reported_cost(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    sample = normalize_ohlcv(pd.read_csv(sample_workspace / "data" / "sample" / "qqq_15m.csv"))
+    sample["timestamp"] = pd.date_range("2024-01-01", periods=len(sample), freq="D", tz="UTC")
+
+    def fake_fetch_ohlcv(**kwargs):
+        return normalize_ohlcv(sample.copy())
+
+    monkeypatch.setattr("open_composer.research.rotation.fetch_ohlcv", fake_fetch_ohlcv)
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "rotation_top_k_daily.yaml"
+    spec_path.write_text(
+        yaml.safe_dump(
+            {
+                "name": "rotation_top_k_daily",
+                "description": "Daily rotation top-k test.",
+                "timeframe": "daily",
+                "universe": ["AAA", "BBB"],
+                "lifecycle": "draft",
+                "entry": {"all": ["close > ema(close, 3)"], "any": []},
+                "exit": {"all": [], "any": ["close < ema(close, 3)"]},
+                "risk": {"max_position_weight": 1.0},
+                "costs": {"commission_pct": 0.0, "slippage_bps": 0.0},
+                "execution": {
+                    "mode": "manual_signal",
+                    "signal_on": "bar_close",
+                    "fill_assumption": "next_bar_open",
+                    "broker": "none",
+                },
+                "data": {"source": "alpaca", "symbol": "AAA", "feed": "iex"},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = run_rotation_research(
+        spec_path,
+        sample_workspace,
+        symbols=["AAA", "BBB"],
+        lookback_bars=[3, 4],
+        rebalance_bars=[2],
+        top_n_values=[1],
+        min_momentum_pct=[0.0],
+        max_candidates=2,
+        walk_forward_folds=2,
+        walk_forward_top_k=1,
+    )
+
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    assert payload["research_cost"]["candidate_count"] == 2
+    assert payload["research_cost"]["walk_forward_candidate_count"] == 1
+    assert payload["research_cost"]["walk_forward_top_k"] == 1
+    assert payload["research_cost"]["estimated_total_backtest_passes"] == 12
 
 
 def test_rotation_research_can_prioritize_primary_buy_hold_alpha(

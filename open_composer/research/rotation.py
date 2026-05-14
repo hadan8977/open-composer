@@ -5,6 +5,7 @@ from itertools import product
 from math import prod
 from pathlib import Path
 from statistics import mean
+from time import perf_counter
 from typing import Any, Literal
 
 import pandas as pd
@@ -13,7 +14,17 @@ from open_composer.adapters.data import fetch_ohlcv
 from open_composer.analytics import build_performance_metrics
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.expressions import evaluate_expression, prepare_factor_frame
+from open_composer.json_utils import json_safe_sorted_values
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.metadata import (
+    combined_data_profile,
+    estimate_grid_research_cost,
+    frame_data_profile,
+    hypothesis_ledger,
+    research_brief,
+    runtime_payload,
+    search_space,
+)
 from open_composer.storage import write_json
 
 RotationObjective = Literal["equal_weight_alpha", "primary_alpha"]
@@ -88,6 +99,9 @@ class RotationResearchResult:
     json_path: Path
     candidates: list[RotationCandidate]
     walk_forward: list[WalkForwardSlice]
+    research_cost: dict[str, Any]
+    runtime_seconds: dict[str, Any]
+    data_profile: dict[str, Any]
 
     @property
     def best(self) -> RotationCandidate:
@@ -114,7 +128,11 @@ def run_rotation_research(
     objective: RotationObjective = "equal_weight_alpha",
     primary_hold_margin_pct: list[float] | None = None,
     primary_min_momentum_pct: list[float] | None = None,
+    walk_forward_top_k: int | None = None,
 ) -> RotationResearchResult:
+    started_at = perf_counter()
+    stages: dict[str, float] = {}
+    stage_started = perf_counter()
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
     universe = [item.upper() for item in (symbols or spec.universe)]
@@ -145,6 +163,21 @@ def run_rotation_research(
         start=start,
         end=end,
     )
+    data_profile = combined_data_profile(
+        [
+            frame_data_profile(
+                frame,
+                symbol=symbol,
+                timeframe=spec.timeframe,
+                provider=data_source,
+                feed=selected_feed,
+                source_mode="cache" if not refresh_data else "live_fetch",
+            )
+            for symbol in universe
+        ]
+    )
+    stages["load_data"] = perf_counter() - stage_started
+    stage_started = perf_counter()
     params_grid = _build_params_grid(
         lookback_bars or [21, 42, 63, 126],
         rebalance_bars or [5, 10, 21],
@@ -154,6 +187,8 @@ def run_rotation_research(
         primary_hold_margin_pct=primary_hold_margin_pct,
         primary_min_momentum_pct=primary_min_momentum_pct,
     )
+    stages["build_grid"] = perf_counter() - stage_started
+    stage_started = perf_counter()
     candidates = _evaluate_candidates(
         spec=spec,
         frame=frame,
@@ -162,18 +197,47 @@ def run_rotation_research(
         out_of_sample_ratio=out_of_sample_ratio,
         objective=objective,
     )
+    stages["evaluate_candidates"] = perf_counter() - stage_started
+    walk_forward_params = _walk_forward_params(
+        params_grid=params_grid,
+        candidates=candidates,
+        walk_forward_top_k=walk_forward_top_k,
+    )
+    research_cost = estimate_grid_research_cost(
+        candidate_count=len(params_grid),
+        walk_forward_candidate_count=len(walk_forward_params),
+        walk_forward_top_k=walk_forward_top_k,
+        walk_forward_folds=walk_forward_folds,
+    ).__dict__
+    stage_started = perf_counter()
     walk_forward = _walk_forward(
         spec=spec,
         frame=frame,
         symbols=universe,
-        params_grid=params_grid,
+        params_grid=walk_forward_params,
         folds=walk_forward_folds,
         objective=objective,
     )
+    stages["walk_forward"] = perf_counter() - stage_started
     report_path = base / "reports" / "research" / f"{spec.name}-rotation-research.md"
     json_path = base / "reports" / "research" / f"{spec.name}-rotation-research.json"
+    stages["write_reports"] = 0.0
+    runtime_seconds = runtime_payload(started_at, stages)
+    write_started = perf_counter()
     _write_rotation_json(
-        json_path, spec, universe, candidates, walk_forward, feature_gate, start, end, objective
+        json_path,
+        spec,
+        universe,
+        candidates,
+        walk_forward,
+        feature_gate,
+        start,
+        end,
+        objective,
+        research_cost,
+        runtime_seconds,
+        data_profile,
+        params_grid,
     )
     _write_rotation_report(
         report_path,
@@ -186,12 +250,50 @@ def run_rotation_research(
         start,
         end,
         objective,
+        research_cost,
+        runtime_seconds,
+        data_profile,
+    )
+    stages["write_reports"] = perf_counter() - write_started
+    runtime_seconds = runtime_payload(started_at, stages)
+    _write_rotation_json(
+        json_path,
+        spec,
+        universe,
+        candidates,
+        walk_forward,
+        feature_gate,
+        start,
+        end,
+        objective,
+        research_cost,
+        runtime_seconds,
+        data_profile,
+        params_grid,
+    )
+    _write_rotation_report(
+        report_path,
+        json_path,
+        spec,
+        universe,
+        candidates,
+        walk_forward,
+        feature_gate,
+        start,
+        end,
+        objective,
+        research_cost,
+        runtime_seconds,
+        data_profile,
     )
     return RotationResearchResult(
         report_path=report_path,
         json_path=json_path,
         candidates=candidates,
         walk_forward=walk_forward,
+        research_cost=research_cost,
+        runtime_seconds=runtime_seconds,
+        data_profile=data_profile,
     )
 
 
@@ -403,6 +505,19 @@ def _walk_forward(
             )
         )
     return slices
+
+
+def _walk_forward_params(
+    *,
+    params_grid: list[RotationParams],
+    candidates: list[RotationCandidate],
+    walk_forward_top_k: int | None,
+) -> list[RotationParams]:
+    if walk_forward_top_k is None:
+        return params_grid
+    if walk_forward_top_k < 1:
+        raise ValueError("--walk-forward-top-k must be at least 1")
+    return [item.params for item in candidates[: min(walk_forward_top_k, len(candidates))]]
 
 
 def _backtest_rotation(
@@ -683,6 +798,10 @@ def _write_rotation_json(
     start: str | None,
     end: str | None,
     objective: RotationObjective,
+    research_cost: dict[str, Any],
+    runtime_seconds: dict[str, Any],
+    data_profile: dict[str, Any],
+    params_grid: list[RotationParams],
 ) -> Path:
     ensure_dir(path.parent)
     payload = {
@@ -691,6 +810,35 @@ def _write_rotation_json(
         "candidate_count": len(candidates),
         "mode": "llm_feature_gated_rotation" if feature_gate else "pure_price_rotation",
         "research_window": {"start": start, "end": end},
+        "data_profile": data_profile,
+        "research_brief": research_brief(
+            strategy_name=spec.name,
+            objective=_objective_label(objective),
+            hypothesis=(
+                "Point-in-time momentum rotation can improve validation Alpha versus the selected "
+                "benchmark without relying on future winners."
+            ),
+            constraints=_assumptions(spec),
+        ),
+        "search_space": search_space(
+            family="momentum_rotation",
+            candidate_count=len(params_grid),
+            parameter_ranges=_params_grid_ranges(params_grid),
+            filters=["top_n >= 1", "lookback >= 2", "inner-joined timestamps"],
+        ),
+        "hypothesis_ledger": hypothesis_ledger(
+            hypothesis="Rotation ranking improves OOS objective Alpha.",
+            visible_evidence=["training score", "OOS metrics", "walk-forward folds"],
+            hidden_evidence=[],
+            counterevidence=candidates[0].quality_flags,
+            conclusion=(
+                "passed"
+                if _acceptance_gate(candidates[0], walk_forward, objective)["passed"]
+                else "failed"
+            ),
+        ),
+        "research_cost": research_cost,
+        "runtime_seconds": runtime_seconds,
         "selection_objective": _objective_label(objective),
         "acceptance_gate": _acceptance_gate(candidates[0], walk_forward, objective),
         "assumptions": _assumptions(spec),
@@ -712,6 +860,9 @@ def _write_rotation_report(
     start: str | None,
     end: str | None,
     objective: RotationObjective,
+    research_cost: dict[str, Any],
+    runtime_seconds: dict[str, Any],
+    data_profile: dict[str, Any],
 ) -> Path:
     ensure_dir(path.parent)
     lines = [
@@ -721,6 +872,10 @@ def _write_rotation_report(
         f"- Symbols: {', '.join(symbols)}",
         f"- Timeframe: `{spec.timeframe}`",
         f"- Research window: `{start or 'cache start'}` -> `{end or 'cache end'}`",
+        f"- Data as-of: `{data_profile.get('data_as_of') or 'unknown'}`",
+        f"- Data source/feed: `{data_profile.get('provider') or 'mixed'}` / "
+        f"`{data_profile.get('feed') or 'mixed'}`",
+        f"- Data source mode: `{data_profile.get('source_mode') or 'mixed'}`",
         f"- Mode: `{'llm_feature_gated_rotation' if feature_gate else 'pure_price_rotation'}`",
         "- Point-in-time ranking: only current and historical closes are used.",
         "- Signal timing: rank at confirmed bar close; rebalance at next bar open.",
@@ -730,6 +885,18 @@ def _write_rotation_report(
         "## Assumptions",
         "",
         *[f"- {item}" for item in _assumptions(spec)],
+        "",
+        "## Research Cost",
+        "",
+        f"- Candidates evaluated: `{research_cost['candidate_count']}`",
+        f"- Walk-forward candidates: `{research_cost['walk_forward_candidate_count']}`",
+        f"- Walk-forward top-K filter: `{research_cost['walk_forward_top_k'] or 'off'}`",
+        f"- Estimated backtest passes: `{research_cost['estimated_total_backtest_passes']}`",
+        f"- Runtime total seconds: `{runtime_seconds['total']:.2f}`",
+        "",
+        "## Runtime Stages",
+        "",
+        *[f"- {stage}: `{seconds:.2f}s`" for stage, seconds in runtime_seconds["stages"].items()],
         "",
         "## Acceptance Gate",
         "",
@@ -877,6 +1044,21 @@ def _objective_alpha(metrics: RotationMetrics, objective: RotationObjective) -> 
     if objective == "primary_alpha":
         return metrics.alpha_vs_primary_pct
     return metrics.alpha_vs_equal_weight_pct
+
+
+def _params_grid_ranges(params_grid: list[RotationParams]) -> dict[str, list[Any]]:
+    keys = [
+        "lookback_bars",
+        "rebalance_bars",
+        "top_n",
+        "min_momentum_pct",
+        "primary_hold_margin_pct",
+        "primary_min_momentum_pct",
+    ]
+    return {
+        key: json_safe_sorted_values({getattr(params, key) for params in params_grid})
+        for key in keys
+    }
 
 
 def _format_optional(value: float | None) -> str:

@@ -228,7 +228,29 @@ def build_readiness_report(root: Path | None = None) -> ReadinessReport:
             )
         )
 
-        backend_counts = catalog.summary.backend_status_counts
+        checked_strategies = [
+            strategy
+            for strategy in catalog.strategies
+            if strategy.lifecycle in {"active", "approved"}
+        ]
+        backend_counts = {
+            status: sum(1 for strategy in checked_strategies if strategy.backend_status == status)
+            for status in sorted({strategy.backend_status for strategy in checked_strategies})
+        }
+        draft_backend_counts = {
+            status: sum(
+                1
+                for strategy in catalog.strategies
+                if strategy.lifecycle == "draft" and strategy.backend_status == status
+            )
+            for status in sorted(
+                {
+                    strategy.backend_status
+                    for strategy in catalog.strategies
+                    if strategy.lifecycle == "draft"
+                }
+            )
+        }
         degraded = {
             key: value
             for key, value in backend_counts.items()
@@ -241,11 +263,12 @@ def build_readiness_report(root: Path | None = None) -> ReadinessReport:
                 message=(
                     f"Some strategies have degraded backend capability: {degraded}."
                     if degraded
-                    else "Visible strategies have supported backend capability."
+                    else "Active and approved strategies have supported backend capability."
                 ),
                 suggested_actions=_strategy_capability_suggested_actions(degraded),
                 details={
                     "backend_status_counts": backend_counts,
+                    "draft_backend_status_counts": draft_backend_counts,
                     "compatibility_counts": catalog.summary.compatibility_counts,
                     "nautilus_installed": nautilus_trader_available(),
                 },

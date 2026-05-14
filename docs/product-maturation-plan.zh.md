@@ -42,7 +42,7 @@ Open Composer 的近期定位是个人 AI 策略工作台，不是多人 SaaS、
 | P1 | NautilusTrader 同构路径 | 部分完成 | 从已完成的 backtest parity 扩展到 paper runtime 同构证据 |
 | P1 | Paper 服务化 | 部分完成 | 本地可恢复 monitor loop、broker sync、reconcile、alert |
 | P2 | Dashboard 本地产品化 | 部分完成，需在 P1 后复审 | 只接入真实能力，提升查看和受控操作效率 |
-| P2 | 研究验证硬化 | 参数扫描已补基线，仍后置 | 策略 promotion 前增加样本外、walk-forward、成本敏感性和数据源比较 |
+| P2 | 研究验证硬化 | 参数扫描、promotion report、leverage research、exposure switch research 已补基线 | 策略 promotion 前增加样本外、walk-forward、成本敏感性、数据源比较和风险暴露检查 |
 
 ## P1：复杂数据与 LLM Feature 闭环
 
@@ -180,13 +180,15 @@ Dashboard 的完善必须在 P1 能力完成后再复审。它的职责是显示
 - 通用参数扫描基线：`oc strategy parameter-sweep` 可以一次性跑多组 `entry`、`exit`、`risk`、`costs`、`factors` 参数组合。
 - 参数扫描会生成 ranked JSON / Markdown 报告，并默认只写 top draft specs。
 - 候选策略强制为 draft/manual，不会直接进入 paper。
+- `oc strategy promotion-report` 会输出 full-window、out-of-sample、walk-forward、cost sensitivity 和 data comparison 的最小 promotion gate，并已接入 paper readiness。
+- `oc strategy leverage-research` 会把杠杆暴露与未杠杆 buy-and-hold 对照，报告 OOS Alpha、Sharpe、drawdown expansion 和 walk-forward 结果。
+- `oc strategy exposure-switch` 会研究 point-in-time 动态仓位切换，显式声明每根 bar 的暴露只使用上一根 bar close 已知指标，并输出 OOS / walk-forward / drawdown gate。
 
 下一步必须做：
 
-- out-of-sample。
-- walk-forward。
-- 成本/滑点敏感性。
-- Alpaca / Longbridge / sample 数据源比较。
+- 把 promotion、leverage 和 exposure-switch 结果在 Dashboard 中更直接地聚合展示。
+- 对数据源比较缺失的策略给出更清晰的 next action。
+- 继续补充真实 Alpaca / Longbridge 数据窗口下的验证样例，不把 sample fallback 当市场证据。
 
 不做：
 

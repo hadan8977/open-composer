@@ -148,6 +148,13 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
             "source_spec_path": "strategy_specs/active/qqq_pullback_15m.yaml",
             "status": "ok",
             "ready": True,
+            "data_profile": {
+                "data_as_of": "2026-01-02T16:00:00+00:00",
+                "feed": "iex",
+                "source_mode": "cache",
+                "cache_fallback": True,
+                "warnings": ["cache_data_used"],
+            },
             "checks": [
                 {"name": "in_sample", "status": "ok", "message": "ok", "details": {}},
             ],
@@ -213,11 +220,7 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     catalog = build_dashboard_catalog(sample_workspace)
     artifacts = write_dashboard_catalog(catalog, sample_workspace)
     html_path = write_dashboard_html(catalog, sample_workspace)
-    review_path = write_dashboard_review_markdown(
-        catalog,
-        sample_workspace / "docs" / "dashboard-d0-review.zh.md",
-        sample_workspace,
-    )
+    review_path = write_dashboard_review_markdown(catalog, root=sample_workspace)
 
     assert catalog.summary.strategy_count == 1
     assert catalog.summary.version_count == 1
@@ -232,6 +235,11 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.summary.feature_packet_count == 1
     assert catalog.summary.workflow_report_count == 1
     assert catalog.summary.research_report_count == 1
+    assert catalog.research_reports[0].data_as_of == "2026-01-02T16:00:00+00:00"
+    assert catalog.research_reports[0].data_feed == "iex"
+    assert catalog.research_reports[0].data_source_mode == "cache"
+    assert catalog.research_reports[0].cache_fallback is True
+    assert catalog.research_reports[0].data_warnings == ["cache_data_used"]
     assert catalog.summary.readiness_status == "warning"
     assert catalog.summary.readiness_ready is True
     assert catalog.summary.readiness_warning_count == 1
@@ -324,5 +332,5 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert "Research Evidence" in detail_html
     assert backtest.run.run_id in detail_html
     assert signal.id in detail_html
-    assert review_path == sample_workspace / "docs" / "dashboard-d0-review.zh.md"
+    assert review_path == sample_workspace / "reports" / "dashboard" / "review.md"
     assert review_path.exists()

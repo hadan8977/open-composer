@@ -384,7 +384,15 @@ class DashboardResearchReport(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     strategy_name: str
-    kind: Literal["promotion", "parameter_sweep", "unknown"] = "unknown"
+    kind: Literal[
+        "promotion",
+        "parameter_sweep",
+        "exposure_switch",
+        "llm_exposure_switch",
+        "rotation",
+        "market_timing",
+        "unknown",
+    ] = "unknown"
     status: Literal["ok", "warning", "blocked"] = "warning"
     ready: bool = False
     source_path: str
@@ -392,6 +400,11 @@ class DashboardResearchReport(BaseModel):
     report_markdown_path: str | None = None
     check_count: int = 0
     candidate_count: int | None = None
+    data_as_of: str | None = None
+    data_feed: str | None = None
+    data_source_mode: str | None = None
+    cache_fallback: bool = False
+    data_warnings: list[str] = Field(default_factory=list)
     output_paths: list[str] = Field(default_factory=list)
 
 

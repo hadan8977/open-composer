@@ -1,6 +1,6 @@
 # Open Composer 代码与文档审查方法
 
-日期：2026-05-13
+日期：2026-05-14
 
 ## 目标
 
@@ -60,6 +60,27 @@ Codex 审查方法参考 OpenAI 官方 Codex 文档：
 - `OPENAI_BASE_URL` 是否按用户本地信任配置处理；允许 OpenAI 兼容中转，不因非官方域名直接阻断 review / drafting 调用。
 - LLM 因子是否通过 point-in-time feature packet replay，不允许在 backtest loop 中动态调用 LLM 或读未来信息。
 - 参数扫描是否只写 draft / manual_signal 候选，并且标注 in-sample、质量旗标和 promotion 前置条件。
+
+## Codex 量化策略研究方法
+
+Codex 不应输出一套固定参数后再围绕单点微调。正确流程是：
+
+1. 先把策略思想拆成方法、数据、因子、可调参数和不可调约束。
+2. 对可调参数输出有限范围，由工具批量回测。
+3. 参数选择只看训练段和内部验证段。
+4. 最终样本外、full-window、walk-forward 只在选择后计算。
+5. 下一轮优先讨论是否换方法、换因子、换数据或换风险结构，而不是继续追一个最优数值。
+6. 任何 LLM 组合策略都必须保存 prompt artifact，证明模型没有看到最终 OOS 或 full-window 指标。
+7. LLM 调用失败、API fallback、fixture fallback、sample fallback 都不能被算作真实 LLM 策略通过。
+
+针对光通信 / AI optical 股票这类高波动短样本策略，还必须额外检查：
+
+- 是否把 `AAOI` 等单一大赢家的 beta 或杠杆收益误写成 stock-selection Alpha。
+- 是否在结果里同时列出 direct buy-and-hold、Alpha、Sharpe、最大回撤和 walk-forward fold。
+- 是否把高年化收益当成主要证据；短样本下应优先看区间收益、OOS、fold 稳定性和回撤。
+- 是否计入融资成本、slippage、数据截止日期和 cache/live 来源。
+- 是否明确标注策略是动态暴露、轮动、择时、期权覆盖或 LLM 因子，而不是混用概念。
+- 是否存在因大量试参导致的 backtest overfitting；最佳候选必须经过 OOS、walk-forward 和质量旗标过滤。
 
 ## 代码审查清单
 

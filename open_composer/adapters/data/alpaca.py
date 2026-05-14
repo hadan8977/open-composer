@@ -25,8 +25,8 @@ def fetch_alpaca_bars(
     use_cache: bool = True,
 ) -> pd.DataFrame:
     cache_path = root / "data" / "cache" / f"{symbol.lower()}_{timeframe}_{feed}.csv"
-    if use_cache and cache_path.exists() and start is None and end is None:
-        frame = normalize_ohlcv(pd.read_csv(cache_path))
+    if use_cache and cache_path.exists():
+        frame = _filter_cached_frame(normalize_ohlcv(pd.read_csv(cache_path)), start, end)
         _annotate_frame(frame, feed, "cache", cache_path)
         write_ohlcv_manifest(
             root,
@@ -36,6 +36,8 @@ def fetch_alpaca_bars(
             timeframe=timeframe,
             cache_path=cache_path,
             frame=frame,
+            requested_start=start,
+            requested_end=end,
             source_mode="cache",
             caveats=_alpaca_caveats(feed),
         )
@@ -88,6 +90,26 @@ def _annotate_frame(frame: pd.DataFrame, feed: str, source_mode: str, path: Path
             "data_source_path": str(path),
         }
     )
+
+
+def _filter_cached_frame(
+    frame: pd.DataFrame,
+    start: datetime | None,
+    end: datetime | None,
+) -> pd.DataFrame:
+    filtered = frame.copy()
+    if start is not None:
+        filtered = filtered[filtered["timestamp"] >= _utc_timestamp(start)]
+    if end is not None:
+        filtered = filtered[filtered["timestamp"] <= _utc_timestamp(end)]
+    return filtered.reset_index(drop=True)
+
+
+def _utc_timestamp(value: datetime) -> pd.Timestamp:
+    timestamp = pd.Timestamp(value)
+    if timestamp.tzinfo is None:
+        return timestamp.tz_localize("UTC")
+    return timestamp.tz_convert("UTC")
 
 
 def _alpaca_timeframe(timeframe: str) -> Any:

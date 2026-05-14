@@ -26,7 +26,9 @@ def test_readiness_report_covers_deploy_surface(sample_workspace: Path) -> None:
     assert checks["feature_packets"].details["packet_count"] == 0
     assert "paper_monitor" in checks
     assert "strategy_capabilities" in checks
-    assert checks["strategy_capabilities"].suggested_actions
+    assert checks["strategy_capabilities"].status == "ok"
+    assert checks["strategy_capabilities"].suggested_actions == []
+    assert checks["strategy_capabilities"].details["draft_backend_status_counts"]
     assert json_path.exists()
     assert md_path.exists()
     markdown = md_path.read_text(encoding="utf-8")

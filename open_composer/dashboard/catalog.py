@@ -141,7 +141,7 @@ def write_dashboard_catalog(
     return DashboardCatalogArtifacts(
         catalog_path=json_path,
         markdown_path=md_path,
-        review_path=base / "docs" / "dashboard-d0-review.zh.md",
+        review_path=base / "reports" / "dashboard" / "review.md",
     )
 
 
@@ -151,7 +151,7 @@ def write_dashboard_review_markdown(
     root: Path | None = None,
 ) -> Path:
     base = root or project_root()
-    target = path or (base / "docs" / "dashboard-d0-review.zh.md")
+    target = path or (base / "reports" / "dashboard" / "review.md")
     ensure_dir(target.parent)
     target.write_text(_render_review_markdown(catalog), encoding="utf-8")
     return target
@@ -1050,6 +1050,14 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
             kind = "promotion"
         elif name.endswith("-parameter-sweep.json"):
             kind = "parameter_sweep"
+        elif name.endswith("-exposure-switch-research.json"):
+            kind = "exposure_switch"
+        elif name.endswith("-llm-exposure-switch.json"):
+            kind = "llm_exposure_switch"
+        elif name.endswith("-rotation-research.json"):
+            kind = "rotation"
+        elif name.endswith("-market-timing-research.json"):
+            kind = "market_timing"
         else:
             kind = "unknown"
         status = str(raw.get("status", "warning"))
@@ -1057,6 +1065,10 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
             status = "warning"
         report_md = path.with_suffix(".md")
         strategy_name = str(raw.get("strategy_name") or path.stem)
+        data_profile = (
+            raw.get("data_profile", {}) if isinstance(raw.get("data_profile"), dict) else {}
+        )
+        candidate_count = _research_candidate_count(raw)
         records.append(
             DashboardResearchReport(
                 strategy_name=strategy_name,
@@ -1069,16 +1081,28 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
                 check_count=int(
                     len(raw.get("checks", [])) if isinstance(raw.get("checks"), list) else 0
                 ),
-                candidate_count=(
-                    int(raw.get("candidate_count"))
-                    if raw.get("candidate_count") is not None
-                    else None
-                ),
+                candidate_count=candidate_count,
+                data_as_of=_registered_value(data_profile.get("data_as_of")),
+                data_feed=_registered_value(data_profile.get("feed")),
+                data_source_mode=_registered_value(data_profile.get("source_mode")),
+                cache_fallback=bool(data_profile.get("cache_fallback", False)),
+                data_warnings=[
+                    str(warning) for warning in data_profile.get("warnings", []) if warning
+                ],
                 output_paths=_research_output_paths(raw),
             )
         )
     records.sort(key=lambda item: (item.strategy_name.lower(), item.kind, item.report_json_path))
     return records
+
+
+def _research_candidate_count(raw: dict[str, Any]) -> int | None:
+    value = raw.get("candidate_count")
+    if value is None and isinstance(raw.get("search_space"), dict):
+        value = raw["search_space"].get("candidate_count")
+    if value is None and isinstance(raw.get("research_cost"), dict):
+        value = raw["research_cost"].get("candidate_count")
+    return int(value) if value is not None else None
 
 
 def _research_output_paths(raw: dict[str, Any]) -> list[str]:

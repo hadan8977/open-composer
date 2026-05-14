@@ -1,6 +1,8 @@
 from open_composer.research.drafter import draft_strategy_from_idea
+from open_composer.research.exposure_switch import run_exposure_switch_research
 from open_composer.research.horizon_optimizer import optimize_strategy_horizons
 from open_composer.research.leverage import run_leverage_research
+from open_composer.research.llm_exposure_switch import run_llm_exposure_switch_meta_selection
 from open_composer.research.llm_rotation import run_llm_rotation_meta_selection
 from open_composer.research.market_timing import run_market_timing_research
 from open_composer.research.optimizer import optimize_strategy
@@ -12,10 +14,12 @@ from open_composer.research.universe_optimizer import optimize_strategy_universe
 
 __all__ = [
     "draft_strategy_from_idea",
+    "run_exposure_switch_research",
     "optimize_option_overlays",
     "parse_sweep_parameters",
     "build_promotion_report",
     "run_parameter_sweep",
+    "run_llm_exposure_switch_meta_selection",
     "run_llm_rotation_meta_selection",
     "run_leverage_research",
     "run_market_timing_research",
