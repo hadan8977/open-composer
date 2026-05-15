@@ -3,18 +3,22 @@ from __future__ import annotations
 import getpass
 import hashlib
 import ipaddress
+import json
 import os
 import re
 import secrets
 import shlex
 import shutil
+import socket
 import subprocess
+import time
 import urllib.request
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -26,6 +30,8 @@ from open_composer.storage import write_json
 DEFAULT_VERCEL_PROJECT = "open-composer-dashboard"
 DEFAULT_REMOTE_HOST = "127.0.0.1"
 DEFAULT_REMOTE_PORT = 8787
+DEFAULT_PUBLIC_HTTPS_PORT = 443
+FALLBACK_PUBLIC_HTTPS_PORT = 8443
 DEFAULT_OWNER = "owner"
 DEFAULT_SESSION_TTL_SECONDS = 604800
 DEFAULT_PBKDF2_ITERATIONS = 600_000
@@ -82,6 +88,7 @@ class VpsBootstrapPlan(BaseModel):
     daemon_bind: str = f"{DEFAULT_REMOTE_HOST}:{DEFAULT_REMOTE_PORT}"
     vercel_project: str
     vercel_origin: str | None = None
+    dashboard_url: str | None = None
     dashboard_dir: str
     remote_env_path: str
     systemd_unit_path: str
@@ -89,7 +96,9 @@ class VpsBootstrapPlan(BaseModel):
     generated_systemd_unit_path: str
     generated_caddyfile_path: str
     generated_password_path: str | None = None
+    password_available: bool = False
     deployment_url: str | None = None
+    verify_enabled: bool = True
     secret_env_names: list[str] = Field(default_factory=list)
     vercel_env_names: list[str] = Field(default_factory=list)
     steps: list[VpsBootstrapStep] = Field(default_factory=list)
@@ -127,6 +136,7 @@ class VpsBootstrapConfig(BaseModel):
     skip_system: bool = False
     skip_vercel: bool = False
     skip_prepare: bool = False
+    verify: bool = True
     dashboard_password: str | None = None
     generated_dashboard_password: bool = False
     remote_shared_secret: str
@@ -177,13 +187,18 @@ def build_vps_bootstrap_config(
     skip_system: bool = False,
     skip_vercel: bool = False,
     skip_prepare: bool = False,
+    verify: bool = True,
 ) -> VpsBootstrapConfig:
     base = root.resolve()
     env_file = env_path or base / ".env"
     existing_env = read_env_values(env_file)
     project = normalize_vercel_project(vercel_project)
     origin = normalize_https_url(vercel_origin or f"https://{project}.vercel.app")
-    resolved_daemon_url = resolve_daemon_url(daemon_url=daemon_url, public_ip=public_ip)
+    resolved_daemon_url = resolve_daemon_url(
+        daemon_url=daemon_url,
+        public_ip=public_ip,
+        prefer_fallback_port=apply and not daemon_url and public_ip is not None,
+    )
 
     remote_secret = (
         generate_shared_secret()
@@ -239,10 +254,12 @@ def build_vps_bootstrap_config(
         generated_systemd_unit_path=generated_dir / "open-composer-remote.service",
         generated_caddyfile_path=generated_dir / "Caddyfile",
         generated_password_path=password_path if generated_password else None,
+        password_available=bool(raw_password),
         vercel_token=vercel_token,
         skip_system=skip_system,
         skip_vercel=skip_vercel,
         skip_prepare=skip_prepare,
+        verify=verify,
     )
 
     return VpsBootstrapConfig(
@@ -265,9 +282,11 @@ def build_vps_bootstrap_config(
         env_path=env_file,
         systemd_unit_path=systemd_unit_path,
         caddyfile_path=caddyfile_path,
+        use_sudo=use_sudo,
         skip_system=skip_system,
         skip_vercel=skip_vercel,
         skip_prepare=skip_prepare,
+        verify=verify,
         dashboard_password=raw_password,
         generated_dashboard_password=generated_password,
         remote_shared_secret=remote_secret,
@@ -292,10 +311,12 @@ def build_vps_bootstrap_plan(
     generated_systemd_unit_path: Path,
     generated_caddyfile_path: Path,
     generated_password_path: Path | None,
+    password_available: bool,
     vercel_token: str | None,
     skip_system: bool,
     skip_vercel: bool,
     skip_prepare: bool,
+    verify: bool,
 ) -> VpsBootstrapPlan:
     steps: list[VpsBootstrapStep] = []
     steps.append(
@@ -421,6 +442,17 @@ def build_vps_bootstrap_plan(
                 message="Workspace deploy preparation is skipped.",
             )
         )
+    steps.append(
+        VpsBootstrapStep(
+            name="post_deploy_verify",
+            status="ok" if verify else "skipped",
+            message=(
+                "Post-deploy daemon, Vercel session, and BFF checks will run after apply."
+                if verify
+                else "Post-deploy verification is skipped."
+            ),
+        )
+    )
     blocked = any(step.status == "blocked" for step in steps)
     warning = any(step.status == "warning" for step in steps)
     status: Literal["ok", "warning", "blocked"] = (
@@ -436,6 +468,7 @@ def build_vps_bootstrap_plan(
         daemon_url=daemon_url,
         vercel_project=vercel_project,
         vercel_origin=vercel_origin,
+        dashboard_url=vercel_origin,
         dashboard_dir=relpath(root / "dashboard", root),
         remote_env_path=relpath(env_path, root),
         systemd_unit_path=systemd_unit_path.as_posix(),
@@ -445,8 +478,10 @@ def build_vps_bootstrap_plan(
         generated_password_path=relpath(generated_password_path, root)
         if generated_password_path
         else None,
+        password_available=password_available,
         secret_env_names=REMOTE_ENV_KEYS,
         vercel_env_names=VERCEL_ENV_KEYS,
+        verify_enabled=verify,
         steps=steps,
         report_json_path=relpath(report_json_path, root),
         report_markdown_path=relpath(report_markdown_path, root),
@@ -529,12 +564,25 @@ def apply_vps_bootstrap(
             True,
             None,
         )
+        runner(
+            [
+                *sudo_prefix(config, ["caddy"]),
+                "validate",
+                "--config",
+                config.caddyfile_path.as_posix(),
+            ],
+            config.root,
+            None,
+            120,
+            True,
+            None,
+        )
         runner([*systemctl, "restart", "caddy"], config.root, None, 120, True, None)
         steps.append(
             VpsBootstrapStep(
                 name="apply.system_service",
                 status="ok",
-                message="systemd service and Caddy reverse proxy were installed/reloaded.",
+                message="systemd service and Caddy reverse proxy were installed and validated.",
                 output_paths=[
                     config.systemd_unit_path.as_posix(),
                     config.caddyfile_path.as_posix(),
@@ -563,9 +611,15 @@ def apply_vps_bootstrap(
                 name="apply.vercel",
                 status="ok",
                 message="Vercel project environment and production deployment were updated.",
-                details={"deployment_url": deployment_url or config.vercel_origin},
+                details={
+                    "deployment_url": deployment_url or config.vercel_origin,
+                    "dashboard_url": config.vercel_origin,
+                },
             )
         )
+
+    if config.verify:
+        steps.extend(verify_vps_bootstrap(config))
 
     blocked = any(step.status == "blocked" for step in steps)
     warning = any(step.status == "warning" for step in steps)
@@ -579,6 +633,8 @@ def apply_vps_bootstrap(
             "status": status,
             "ready": not blocked,
             "deployment_url": deployment_url,
+            "dashboard_url": config.vercel_origin,
+            "password_available": bool(config.dashboard_password),
         }
     )
     write_vps_bootstrap_report(plan, config.root)
@@ -695,15 +751,16 @@ def apply_vercel(config: VpsBootstrapConfig, runner: CommandRunner) -> str | Non
     )
     for name, value in config.vercel_env.items():
         runner(
-            [*base_cmd, "env", "rm", name, "production", "--yes", *scope_args],
-            dashboard_dir,
-            None,
-            180,
-            False,
-            command_env,
-        )
-        runner(
-            [*base_cmd, "env", "add", name, "production", *scope_args],
+            [
+                *base_cmd,
+                "env",
+                "add",
+                name,
+                "production",
+                "--force",
+                "--sensitive",
+                *scope_args,
+            ],
             dashboard_dir,
             value + "\n",
             180,
@@ -719,6 +776,328 @@ def apply_vercel(config: VpsBootstrapConfig, runner: CommandRunner) -> str | Non
         command_env,
     )
     return parse_vercel_deployment_url(result.stdout) or config.vercel_origin
+
+
+def verify_vps_bootstrap(config: VpsBootstrapConfig) -> list[VpsBootstrapStep]:
+    steps: list[VpsBootstrapStep] = []
+    if config.daemon_url:
+        steps.append(verify_json_endpoint("verify.daemon_health", f"{config.daemon_url}/health"))
+    else:
+        steps.append(
+            VpsBootstrapStep(
+                name="verify.daemon_health",
+                status="blocked",
+                message="Daemon URL is missing; health verification cannot run.",
+            )
+        )
+
+    if config.skip_vercel:
+        steps.append(
+            VpsBootstrapStep(
+                name="verify.vercel_session",
+                status="skipped",
+                message=(
+                    "Vercel session verification is skipped because Vercel deployment is skipped."
+                ),
+            )
+        )
+        steps.append(
+            VpsBootstrapStep(
+                name="verify.vercel_bff_catalog",
+                status="skipped",
+                message="Vercel BFF verification is skipped because Vercel deployment is skipped.",
+            )
+        )
+        return steps
+
+    dashboard_url = config.vercel_origin or ""
+    session_step, session_payload, cookie_header = verify_dashboard_session(dashboard_url)
+    steps.append(session_step)
+    if session_step.status != "ok":
+        steps.append(
+            VpsBootstrapStep(
+                name="verify.vercel_bff_catalog",
+                status="blocked",
+                message=(
+                    "BFF catalog verification cannot run until dashboard session endpoint works."
+                ),
+            )
+        )
+        return steps
+
+    if not config.dashboard_password:
+        steps.append(
+            VpsBootstrapStep(
+                name="verify.vercel_bff_catalog",
+                status="warning",
+                message=(
+                    "Dashboard password is not available in this run; login and BFF catalog "
+                    "verification were skipped. Pass --dashboard-password or --rotate-secrets "
+                    "to enable full verification."
+                ),
+            )
+        )
+        return steps
+
+    login_step, auth_cookie, csrf = verify_dashboard_login(
+        dashboard_url,
+        password=config.dashboard_password,
+        cookie_header=cookie_header,
+    )
+    steps.append(login_step)
+    if login_step.status != "ok" or not auth_cookie:
+        steps.append(
+            VpsBootstrapStep(
+                name="verify.vercel_bff_catalog",
+                status="blocked",
+                message="BFF catalog verification cannot run because dashboard login failed.",
+            )
+        )
+        return steps
+
+    csrf = str(session_payload.get("csrf") or csrf)
+    steps.append(verify_dashboard_catalog(dashboard_url, cookie_header=auth_cookie, csrf=csrf))
+    return steps
+
+
+def verify_json_endpoint(name: str, url: str, *, timeout_seconds: int = 20) -> VpsBootstrapStep:
+    try:
+        status, headers, body = retry_http_request_json("GET", url, timeout_seconds=timeout_seconds)
+    except VpsBootstrapError as exc:
+        return VpsBootstrapStep(name=name, status="blocked", message=str(exc))
+    if status < 200 or status >= 300:
+        return VpsBootstrapStep(
+            name=name,
+            status="blocked",
+            message=f"{url} returned HTTP {status}.",
+            details={"status": status, "content_type": headers.get("content-type", "")},
+        )
+    if not isinstance(body, dict):
+        return VpsBootstrapStep(
+            name=name,
+            status="blocked",
+            message=f"{url} did not return a JSON object.",
+            details={"status": status, "content_type": headers.get("content-type", "")},
+        )
+    return VpsBootstrapStep(
+        name=name,
+        status="ok",
+        message=f"{url} returned JSON successfully.",
+        details={"status": status, "keys": sorted(body.keys())},
+    )
+
+
+def verify_dashboard_session(
+    dashboard_url: str,
+) -> tuple[VpsBootstrapStep, dict[str, object], str | None]:
+    url = f"{dashboard_url.rstrip('/')}/api/session"
+    try:
+        status, headers, body = retry_http_request_json("GET", url, timeout_seconds=30)
+    except VpsBootstrapError as exc:
+        return (
+            VpsBootstrapStep(
+                name="verify.vercel_session",
+                status="blocked",
+                message=str(exc),
+                suggested_actions=[
+                    "Check Vercel Deployment Protection or rerun after the production alias "
+                    "is ready."
+                ],
+            ),
+            {},
+            None,
+        )
+    if status != 200 or not isinstance(body, dict) or body.get("remote") is not True:
+        return (
+            VpsBootstrapStep(
+                name="verify.vercel_session",
+                status="blocked",
+                message=(
+                    "Dashboard session endpoint did not return the Open Composer remote "
+                    "session JSON. Vercel Deployment Protection may be blocking the alias."
+                ),
+                details={"status": status, "content_type": headers.get("content-type", "")},
+                suggested_actions=[
+                    "Disable Vercel Deployment Protection for the production deployment or "
+                    "use a token with permission to update project protection settings."
+                ],
+            ),
+            {},
+            None,
+        )
+    return (
+        VpsBootstrapStep(
+            name="verify.vercel_session",
+            status="ok",
+            message="Dashboard session endpoint is publicly reachable and returns remote JSON.",
+            details={"authenticated": body.get("authenticated"), "owner": body.get("owner")},
+        ),
+        body,
+        collect_set_cookie(headers),
+    )
+
+
+def verify_dashboard_login(
+    dashboard_url: str,
+    *,
+    password: str,
+    cookie_header: str | None,
+) -> tuple[VpsBootstrapStep, str | None, str]:
+    url = f"{dashboard_url.rstrip('/')}/api/login"
+    body = json.dumps({"password": password}).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
+    if cookie_header:
+        headers["Cookie"] = cookie_header
+    try:
+        status, response_headers, payload = retry_http_request_json(
+            "POST",
+            url,
+            body=body,
+            headers=headers,
+            timeout_seconds=30,
+        )
+    except VpsBootstrapError as exc:
+        return (
+            VpsBootstrapStep(name="verify.dashboard_login", status="blocked", message=str(exc)),
+            None,
+            "",
+        )
+    if status != 200 or not isinstance(payload, dict) or payload.get("authenticated") is not True:
+        return (
+            VpsBootstrapStep(
+                name="verify.dashboard_login",
+                status="blocked",
+                message="Dashboard login failed during post-deploy verification.",
+                details={"status": status},
+            ),
+            None,
+            "",
+        )
+    csrf = str(payload.get("csrf") or "")
+    auth_cookie = collect_set_cookie(response_headers) or cookie_header
+    step = VpsBootstrapStep(
+        name="verify.dashboard_login",
+        status="ok",
+        message="Dashboard password session login succeeded.",
+        details={
+            "owner": payload.get("owner"),
+            "csrf_present": bool(csrf),
+        },
+    )
+    return (step, auth_cookie, csrf)
+
+
+def verify_dashboard_catalog(
+    dashboard_url: str,
+    *,
+    cookie_header: str,
+    csrf: str,
+) -> VpsBootstrapStep:
+    url = f"{dashboard_url.rstrip('/')}/api/dashboard/catalog"
+    headers = {"Cookie": cookie_header}
+    if csrf:
+        headers["X-OC-CSRF"] = csrf
+    try:
+        status, response_headers, payload = retry_http_request_json(
+            "GET",
+            url,
+            headers=headers,
+            timeout_seconds=60,
+        )
+    except VpsBootstrapError as exc:
+        return VpsBootstrapStep(
+            name="verify.vercel_bff_catalog", status="blocked", message=str(exc)
+        )
+    if status != 200 or not isinstance(payload, dict):
+        return VpsBootstrapStep(
+            name="verify.vercel_bff_catalog",
+            status="blocked",
+            message="Vercel BFF catalog request failed.",
+            details={"status": status, "content_type": response_headers.get("content-type", "")},
+        )
+    return VpsBootstrapStep(
+        name="verify.vercel_bff_catalog",
+        status="ok",
+        message="Vercel BFF reached the VPS daemon and returned the dashboard catalog.",
+        details={"status": status, "keys": sorted(payload.keys())},
+    )
+
+
+def retry_http_request_json(
+    method: str,
+    url: str,
+    *,
+    body: bytes | None = None,
+    headers: dict[str, str] | None = None,
+    timeout_seconds: int = 30,
+    attempts: int = 6,
+    delay_seconds: float = 2.0,
+) -> tuple[int, dict[str, str], object]:
+    last_error: VpsBootstrapError | None = None
+    for attempt in range(attempts):
+        try:
+            return http_request_json(
+                method,
+                url,
+                body=body,
+                headers=headers,
+                timeout_seconds=timeout_seconds,
+            )
+        except VpsBootstrapError as exc:
+            last_error = exc
+            if attempt == attempts - 1:
+                break
+            time.sleep(delay_seconds)
+    raise last_error or VpsBootstrapError(f"{url} request failed")
+
+
+def http_request_json(
+    method: str,
+    url: str,
+    *,
+    body: bytes | None = None,
+    headers: dict[str, str] | None = None,
+    timeout_seconds: int = 30,
+) -> tuple[int, dict[str, str], object]:
+    request = urllib.request.Request(url, data=body, method=method.upper())
+    for key, value in (headers or {}).items():
+        request.add_header(key, value)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            raw = response.read()
+            status = response.status
+            response_headers = {key.lower(): value for key, value in response.headers.items()}
+    except HTTPError as exc:
+        raw = exc.read()
+        status = exc.code
+        response_headers = {key.lower(): value for key, value in exc.headers.items()}
+    except (OSError, URLError) as exc:
+        raise VpsBootstrapError(f"{url} request failed: {exc}") from exc
+    content_type = response_headers.get("content-type", "")
+    if "application/json" not in content_type:
+        preview = raw[:120].decode("utf-8", errors="replace")
+        raise VpsBootstrapError(
+            f"{url} did not return JSON (HTTP {status}, content-type {content_type!r}): {preview}"
+        )
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except json.JSONDecodeError as exc:
+        raise VpsBootstrapError(f"{url} returned invalid JSON") from exc
+    return status, response_headers, payload
+
+
+def collect_set_cookie(headers: dict[str, str]) -> str | None:
+    value = headers.get("set-cookie")
+    if not value:
+        return None
+    cookies: list[str] = []
+    for segment in value.split(", "):
+        if "=" not in segment:
+            continue
+        cookie = segment.split(";", 1)[0]
+        if cookie:
+            cookies.append(cookie)
+    return "; ".join(cookies) if cookies else None
 
 
 def merge_command_env(env: dict[str, str] | None) -> dict[str, str] | None:
@@ -758,22 +1137,50 @@ def run_command(
     return result
 
 
-def resolve_daemon_url(*, daemon_url: str | None, public_ip: str | None) -> str | None:
+def resolve_daemon_url(
+    *,
+    daemon_url: str | None,
+    public_ip: str | None,
+    prefer_fallback_port: bool = False,
+) -> str | None:
     if daemon_url:
         return normalize_https_url(daemon_url)
     if public_ip:
-        return daemon_url_from_public_ip(public_ip)
+        return daemon_url_from_public_ip(public_ip, prefer_fallback_port=prefer_fallback_port)
     return None
 
 
-def daemon_url_from_public_ip(public_ip: str) -> str:
+def daemon_url_from_public_ip(
+    public_ip: str,
+    *,
+    prefer_fallback_port: bool = False,
+    domain: str = "nip.io",
+) -> str:
     try:
         parsed = ipaddress.ip_address(public_ip.strip())
     except ValueError as exc:
         raise VpsBootstrapError(f"invalid public IP: {public_ip}") from exc
     if parsed.version != 4:
-        raise VpsBootstrapError("sslip.io daemon URL generation currently requires an IPv4 address")
-    return f"https://{parsed}.sslip.io"
+        raise VpsBootstrapError("daemon URL generation currently requires an IPv4 address")
+    if domain not in {"nip.io", "sslip.io"}:
+        raise VpsBootstrapError("daemon URL domain must be nip.io or sslip.io")
+    port = (
+        FALLBACK_PUBLIC_HTTPS_PORT
+        if prefer_fallback_port and not is_tcp_port_available(DEFAULT_PUBLIC_HTTPS_PORT)
+        else DEFAULT_PUBLIC_HTTPS_PORT
+    )
+    suffix = "" if port == DEFAULT_PUBLIC_HTTPS_PORT else f":{port}"
+    return f"https://{parsed}.{domain}{suffix}"
+
+
+def is_tcp_port_available(port: int, host: str = "0.0.0.0") -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind((host, port))
+        except OSError:
+            return False
+    return True
 
 
 def detect_public_ip(timeout_seconds: int = 5) -> str:
@@ -944,9 +1351,13 @@ def render_vps_bootstrap_markdown(plan: VpsBootstrapPlan) -> str:
         f"- Ready: `{plan.ready}`",
         f"- Apply: `{plan.apply}`",
         f"- Daemon URL: `{plan.daemon_url or 'missing'}`",
+        f"- Dashboard URL: `{plan.dashboard_url or 'missing'}`",
         f"- Vercel project: `{plan.vercel_project}`",
         f"- Vercel origin: `{plan.vercel_origin or 'missing'}`",
+        f"- Vercel deployment URL: `{plan.deployment_url or 'missing'}`",
         f"- Remote env: `{plan.remote_env_path}`",
+        f"- Password available this run: `{plan.password_available}`",
+        f"- Verify enabled: `{plan.verify_enabled}`",
         "",
         "## Steps",
         "",

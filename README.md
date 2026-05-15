@@ -384,8 +384,7 @@ Remote Dashboard deployments use Vercel as a password-session BFF and the
 Open Composer daemon as the only command executor:
 
 ```bash
-VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --generate-password
-VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply --generate-password
+VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply
 uv run oc remote doctor
 uv run oc remote serve --host 127.0.0.1 --port 8787
 uv run oc remote job-list
@@ -396,12 +395,14 @@ uv run oc remote job-status <job-id>
 `reports/deployment/vps-bootstrap/plan.json` and `.md` without leaking raw
 secrets. `--apply` generates remote secrets, merges `.env`, writes owner-only
 dashboard password output when generated, prepares systemd/Caddy templates, and
-uses `VERCEL_TOKEN` to link, configure, and deploy the Vercel Dashboard BFF. If
-no custom `--daemon-url` is supplied during apply, the command can detect the
-VPS public IPv4 and use `https://<ip>.sslip.io` as the daemon HTTPS name; pass
+uses `VERCEL_TOKEN` to link, configure, and deploy the Vercel Dashboard BFF.
+Apply mode also verifies daemon `/health`, Vercel `/api/session`, dashboard
+login, and the Vercel BFF catalog proxy before returning the final Dashboard
+URL. If no custom `--daemon-url` is supplied during apply, the command can detect
+the VPS public IPv4 and use `https://<ip>.nip.io` as the daemon HTTPS name; if
+443 is already occupied, it falls back to `https://<ip>.nip.io:8443`. Pass
 `--daemon-url https://oc-api.example.com` for a long-lived custom domain.
-Pass `--public-ip <vps-ip>` during dry run when you want the plan to include the
-exact generated `sslip.io` daemon URL before apply.
+Pass `--no-verify` only for debugging partial deployments.
 
 Vercel signs daemon requests with `X-OC-Timestamp`, `X-OC-Nonce`,
 `X-OC-Actor`, `X-OC-Body-SHA256`, and `X-OC-Signature`. Remote command-run is

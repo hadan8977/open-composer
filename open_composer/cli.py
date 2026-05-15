@@ -866,6 +866,13 @@ def remote_bootstrap_vps_command(
         bool,
         typer.Option("--skip-prepare", help="Do not run make deploy-prepare during apply."),
     ] = False,
+    verify: Annotated[
+        bool,
+        typer.Option(
+            "--verify/--no-verify",
+            help="Run daemon, Vercel session, and BFF checks after apply.",
+        ),
+    ] = True,
     use_sudo: Annotated[
         bool,
         typer.Option("--sudo", help="Prefix systemctl commands with sudo."),
@@ -893,6 +900,7 @@ def remote_bootstrap_vps_command(
             skip_system=skip_system,
             skip_vercel=skip_vercel,
             skip_prepare=skip_prepare,
+            verify=verify,
             use_sudo=use_sudo,
         )
         if apply:
@@ -911,11 +919,15 @@ def remote_bootstrap_vps_command(
     table.add_row("Status", plan.status)
     table.add_row("Apply", str(plan.apply))
     table.add_row("Daemon URL", plan.daemon_url or "missing")
+    table.add_row("Dashboard URL", plan.dashboard_url or plan.vercel_origin or "missing")
     table.add_row("Vercel origin", plan.vercel_origin or "missing")
     table.add_row("Vercel project", plan.vercel_project)
     table.add_row("Report", plan.report_markdown_path or "")
     if plan.deployment_url:
         table.add_row("Deployment URL", plan.deployment_url)
+    if plan.generated_password_path:
+        table.add_row("Password path", plan.generated_password_path)
+    table.add_row("Verify", "enabled" if plan.verify_enabled else "skipped")
     console.print(table)
     if config.generated_dashboard_password and apply and plan.generated_password_path:
         console.print(
