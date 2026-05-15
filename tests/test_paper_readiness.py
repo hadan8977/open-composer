@@ -228,3 +228,53 @@ def test_paper_readiness_blocks_incomplete_feature_packets(
     assert feature_check.status == "blocked"
     assert "PIT-complete replay packets" in feature_check.message
     assert "published_at is missing" in feature_check.message
+
+
+def test_paper_readiness_blocks_feature_packets_without_evidence(
+    sample_workspace: Path,
+) -> None:
+    feature_path = sample_workspace / "feature_logs" / "qqq_llm_features.jsonl"
+    feature_path.parent.mkdir(parents=True, exist_ok=True)
+    feature_path.write_text(
+        (
+            '{"timestamp":"2026-01-01T00:00:00Z","published_at":"2026-01-01T00:00:00Z",'
+            '"fetched_at":"2026-01-01T00:01:00Z","visible_at":"2026-01-01T00:01:00Z",'
+            '"source":"llm","symbol":"QQQ","dedupe_key":"llm:qqq:1",'
+            '"schema_version":"1","llm_sentiment":0.8}\n'
+        ),
+        encoding="utf-8",
+    )
+    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_paper_llm_15m.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "qqq_paper_llm_15m"
+    raw["factors"] = {
+        **raw.get("factors", {}),
+        "llm_sentiment": {
+            "source": "llm_feature",
+            "path": "feature_logs/qqq_llm_features.jsonl",
+            "field": "llm_sentiment",
+            "default": 0.0,
+            "description": "Saved LLM sentiment replay input.",
+        },
+    }
+    raw["entry"]["all"].append("llm_sentiment > 0.5")
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    active = activate_strategy(
+        draft,
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+        data_source="alpaca",
+    )
+
+    report = assess_paper_strategy_readiness(active, sample_workspace)
+    feature_check = next(check for check in report.checks if check.name == "feature_packets")
+
+    assert report.ready is False
+    assert feature_check.status == "blocked"
+    assert "marginal lift" in feature_check.message
+    assert feature_check.details["missing_evidence"]

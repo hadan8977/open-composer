@@ -119,3 +119,8 @@ def data_feed() -> str:
 def dashboard_api_token() -> str | None:
     token = os.getenv("OPEN_COMPOSER_DASHBOARD_TOKEN", "").strip()
     return token or None
+
+
+def dashboard_allowed_origin() -> str | None:
+    origin = os.getenv("OC_DASHBOARD_ALLOWED_ORIGIN", "").strip()
+    return origin or None

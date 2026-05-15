@@ -57,6 +57,40 @@ def test_agent_request_rejects_path_traversal(sample_workspace) -> None:
         )
 
 
+def test_agent_request_rejects_unc_paths(sample_workspace) -> None:
+    with pytest.raises(ValueError, match="workspace-relative"):
+        create_agent_request(
+            AgentRequestCreate(
+                title="UNC path",
+                prompt="UNC path",
+                related_paths=[r"\\server\share\evil.txt"],
+            ),
+            sample_workspace,
+        )
+
+
+def test_agent_request_rejects_windows_drive_paths(sample_workspace) -> None:
+    with pytest.raises(ValueError, match="workspace-relative"):
+        create_agent_request(
+            AgentRequestCreate(
+                title="Drive path",
+                prompt="Drive path",
+                related_paths=[r"C:\Windows\evil.txt"],
+            ),
+            sample_workspace,
+        )
+
+    with pytest.raises(ValueError, match="workspace-relative"):
+        create_agent_request(
+            AgentRequestCreate(
+                title="Drive path",
+                prompt="Drive path",
+                related_paths=["D:/Windows/evil.txt"],
+            ),
+            sample_workspace,
+        )
+
+
 def test_agent_request_cli_creates_request(sample_workspace, monkeypatch) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
 

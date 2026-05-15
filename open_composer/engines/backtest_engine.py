@@ -167,6 +167,9 @@ def backtest_frame(
     total_fees = 0.0
     commission_rate = spec.costs.commission_pct / 100
     slippage_rate = spec.costs.slippage_bps / 10_000
+    impact_rate = _impact_rate(
+        spec.costs.impact_model, spec.costs.impact_eta, spec.costs.impact_gamma
+    )
     equity_curve = [start_equity]
 
     loop_start = max(0, evaluation_start_index - 1)
@@ -179,8 +182,8 @@ def backtest_frame(
         signal_is_in_evaluation = idx >= evaluation_start_index
         close_price = float(row["close"])
         next_open = float(next_row["open"])
-        entry_fill_price = next_open * (1 + slippage_rate)
-        exit_fill_price = next_open * (1 - slippage_rate)
+        entry_fill_price = next_open * (1 + slippage_rate + impact_rate)
+        exit_fill_price = next_open * (1 - slippage_rate - impact_rate)
         if signal_is_in_evaluation:
             marked_equity = equity
             if in_position and shares:
@@ -325,3 +328,13 @@ def backtest_frame(
     return BacktestArtifacts(
         run=run, signals=signals, trades=trades, backend_plan_path=backend_plan_path
     )
+
+
+def _impact_rate(impact_model: str, impact_eta: float, impact_gamma: float) -> float:
+    if impact_model == "linear":
+        return 0.0
+    if impact_model == "sqrt":
+        return impact_eta / 10_000
+    if impact_model == "almgren_chriss":
+        return (impact_eta + impact_gamma) / 10_000
+    raise ValueError(f"unsupported impact model: {impact_model}")

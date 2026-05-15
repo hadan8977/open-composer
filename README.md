@@ -165,6 +165,16 @@ uv run oc feature write --symbol QQQ --timestamp 2026-01-01T00:00:00Z --source l
 uv run oc feature from-context <signal-id>
 ```
 
+The expression language is a restricted AST-checked subset: OHLCV names,
+registered factor names, supported indicator functions, boolean logic,
+comparisons, and basic arithmetic. Imports, attribute access, comprehensions,
+`eval`, `open`, and other Python runtime escapes are rejected before evaluation.
+
+LLM/news/event/macro or other new-modality feature packets can be written for
+research without marginal-lift evidence, but promotion and paper readiness
+require `evidence` showing a single-modality baseline, marginal lift, and
+missing-modality robustness.
+
 Makefile shortcuts:
 
 ```bash
@@ -210,6 +220,13 @@ uv run oc strategy market-time strategy_specs/drafts/qqq_pullback_15m.yaml \
   --slow 21 \
   --walk-forward-folds 3 \
   --walk-forward-top-k 8
+uv run oc strategy blind-test strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy cost-grid strategy_specs/drafts/qqq_pullback_15m.yaml \
+  --commission 0 --commission 0.01 \
+  --slippage 0 --slippage 5 \
+  --impact-model linear --impact-model sqrt
+uv run oc strategy regime-search strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy skill-attribution --sample-size 20
 ```
 
 Parameter sweeps write ranked JSON/Markdown reports under `reports/research/`
@@ -251,8 +268,9 @@ uv run oc strategy promotion-report strategy_specs/drafts/qqq_pullback_15m.yaml 
 ```
 
 The promotion report writes full-window, out-of-sample, walk-forward, cost sensitivity,
-data comparison, buy-and-hold, and Alpha evidence. It is still research evidence, not a
-promise of live returns.
+data comparison, buy-and-hold, and Alpha evidence. It also renders five-pass
+checks for workflow, research, LLM contribution, paper readiness, and code
+correctness. It is still research evidence, not a promise of live returns.
 
 ## Paper Safety
 
@@ -357,6 +375,11 @@ Then open the UI once with `?token=<long-random-token>` so browser API calls sen
 still served normally. Remote deployments must not use query tokens or
 `localStorage` tokens.
 
+Dashboard CORS is scoped by `OC_DASHBOARD_ALLOWED_ORIGIN`. When the variable is
+unset, `make dashboard-serve` only allows `http://127.0.0.1:<port>` and
+`http://localhost:<port>` browser origins. Set it explicitly when serving
+through a trusted reverse proxy or Vercel BFF origin.
+
 Remote Dashboard deployments use Vercel as a password-session BFF and the
 Open Composer daemon as the only command executor:
 
@@ -386,11 +409,14 @@ uv run oc agent request-complete <request-id> --result-link reports/research/exa
 
 - [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) — no-context Codex starting review document
 - [AGENTS.md](AGENTS.md)
+- [AUDIT-REPORT.md](AUDIT-REPORT.md)
 - [docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md](docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md)
+- [docs/codex-execution-plan-2026-05-15.zh.md](docs/codex-execution-plan-2026-05-15.zh.md)
 - [docs/current-unfinished-work-check.zh.md](docs/current-unfinished-work-check.zh.md)
 - [docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md](docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md)
 - [docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md](docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md)
 - [docs/product-maturation-plan.zh.md](docs/product-maturation-plan.zh.md)
+- [docs/quantml-paper-study-research-notes-2026-05-15.zh.md](docs/quantml-paper-study-research-notes-2026-05-15.zh.md)
 - [docs/review-methodology.zh.md](docs/review-methodology.zh.md)
 - [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md)
 - [docs/longbridge-integration.md](docs/longbridge-integration.md)

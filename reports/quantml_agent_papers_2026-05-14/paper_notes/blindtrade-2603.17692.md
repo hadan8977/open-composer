@@ -6,7 +6,7 @@
 - arXiv：[2603.17692](https://arxiv.org/abs/2603.17692v1)
 - 主题：LLM Agent 与多智能体交易系统
 - 截图来源：Image #9
-- 本地 PDF：`pdfs/blindtrade-2603-17692.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/blindtrade-2603-17692.pdf`
 - 本地抽取文本：`extracted_text/blindtrade-2603-17692.txt`
 
 ## 一句话定位

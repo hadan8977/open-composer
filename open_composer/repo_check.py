@@ -21,10 +21,12 @@ NO_CONTEXT_START_DOC = "docs/product-golden-path-codex-quant-review-2026-05-13.z
 CURRENT_DOCS = {
     NO_CONTEXT_START_DOC,
     "docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md",
+    "docs/codex-execution-plan-2026-05-15.zh.md",
     "docs/current-unfinished-work-check.zh.md",
     "docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md",
     "docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md",
     "docs/product-maturation-plan.zh.md",
+    "docs/quantml-paper-study-research-notes-2026-05-15.zh.md",
     "docs/review-methodology.zh.md",
     "docs/remote-dashboard-deploy.zh.md",
     "docs/longbridge-integration.md",

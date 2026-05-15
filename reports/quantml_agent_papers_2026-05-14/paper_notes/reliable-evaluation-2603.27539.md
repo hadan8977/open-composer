@@ -6,7 +6,7 @@
 - arXiv：[2603.27539](https://arxiv.org/abs/2603.27539v1)
 - 主题：评估基准与可靠性研究
 - 截图来源：Image #34-36
-- 本地 PDF：`pdfs/reliable-evaluation-2603-27539.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/reliable-evaluation-2603-27539.pdf`
 - 本地抽取文本：`extracted_text/reliable-evaluation-2603-27539.txt`
 
 ## 一句话定位

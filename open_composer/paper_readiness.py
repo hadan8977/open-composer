@@ -115,8 +115,8 @@ def write_paper_readiness_report(
     )
     md_path = markdown_path or json_path.with_suffix(".md")
     ensure_dir(json_path.parent)
-    report.report_json_path = str(json_path)
-    report.report_markdown_path = str(md_path)
+    report.report_json_path = _relpath(json_path, base)
+    report.report_markdown_path = _relpath(md_path, base)
     write_json(json_path, report)
     md_path.write_text(_render_markdown(report), encoding="utf-8")
     return json_path, md_path
@@ -425,6 +425,7 @@ def _feature_packet_binding_check(
 ) -> PaperStrategyReadinessCheck:
     missing: list[str] = []
     incomplete: list[str] = []
+    missing_evidence: list[str] = []
     inspected: list[dict[str, object]] = []
     for name, factor in spec.factors.items():
         if factor.source not in {"llm_feature", "feature_packet"}:
@@ -441,6 +442,8 @@ def _feature_packet_binding_check(
                 "field": factor.field,
                 "status": inspection.point_in_time_status,
                 "warnings": inspection.replay_warnings,
+                "evidence_count": inspection.evidence_count,
+                "missing_evidence_count": inspection.missing_evidence_count,
             }
         )
         if not inspection.exists:
@@ -449,6 +452,11 @@ def _feature_packet_binding_check(
             warning_text = "; ".join(inspection.replay_warnings[:3]) or "not PIT complete"
             incomplete.append(
                 f"{name}: {inspection.point_in_time_status} at {factor.path}: {warning_text}"
+            )
+        elif inspection.missing_evidence_count:
+            missing_evidence.append(
+                f"{name}: {inspection.missing_evidence_count} packet row(s) at "
+                f"{factor.path} lack marginal-lift evidence"
             )
     if missing:
         return PaperStrategyReadinessCheck(
@@ -471,6 +479,17 @@ def _feature_packet_binding_check(
             + "; ".join(incomplete),
             details={"incomplete": incomplete, "inspected": inspected},
             suggested_actions=["uv run oc feature validate"],
+        )
+    if missing_evidence:
+        return PaperStrategyReadinessCheck(
+            name="feature_packets",
+            status="blocked",
+            message="Paper feature factors require single-modality baseline, marginal lift, "
+            "and missing-modality robustness evidence: " + "; ".join(missing_evidence),
+            details={"missing_evidence": missing_evidence, "inspected": inspected},
+            suggested_actions=[
+                "Add feature packet evidence before promotion or paper_auto activation."
+            ],
         )
     return PaperStrategyReadinessCheck(
         name="feature_packets",
@@ -687,6 +706,6 @@ def _relpath(path: Path | None, base: Path) -> str | None:
     if path is None:
         return None
     try:
-        return str(path.relative_to(base))
+        return path.relative_to(base).as_posix()
     except ValueError:
-        return str(path)
+        return path.as_posix()

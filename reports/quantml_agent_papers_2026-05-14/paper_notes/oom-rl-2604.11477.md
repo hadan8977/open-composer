@@ -6,7 +6,7 @@
 - arXiv：[2604.11477](https://arxiv.org/abs/2604.11477)
 - 主题：LLM Agent 与多智能体交易系统
 - 截图来源：Image #6, #12
-- 本地 PDF：`pdfs/oom-rl-2604-11477.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/oom-rl-2604-11477.pdf`
 - 本地抽取文本：`extracted_text/oom-rl-2604-11477.txt`
 
 ## 一句话定位

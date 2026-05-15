@@ -26,6 +26,21 @@
     "input_hash": {"type": "string"},
     "prompt_hash": {"type": "string"},
     "schema_version": {"type": "string"},
-    "features": {"type": "object"}
+    "features": {"type": "object"},
+    "evidence": {
+      "type": "object",
+      "required": [
+        "single_modality_baseline_metric",
+        "marginal_lift_metric",
+        "missing_modality_robustness"
+      ],
+      "properties": {
+        "single_modality_baseline_metric": {"type": "string"},
+        "marginal_lift_metric": {"type": "string"},
+        "missing_modality_robustness": {"type": "string"},
+        "fixture_path": {"type": "string"},
+        "notes": {"type": "string"}
+      }
+    }
   }
 }

@@ -295,6 +295,6 @@ def _elapsed_seconds(started_at: datetime) -> float:
 
 def _relpath(path: Path, root: Path) -> str:
     try:
-        return str(path.relative_to(root))
+        return path.relative_to(root).as_posix()
     except ValueError:
-        return str(path)
+        return path.as_posix()

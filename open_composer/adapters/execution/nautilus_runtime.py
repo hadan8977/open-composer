@@ -369,7 +369,7 @@ def run_nautilus_backtest(
         instrument = _build_equity_instrument(bar_type, spec)
         catalog_root = root / "reports" / "runs" / "nautilus" / "catalogs" / run_id_value
         catalog_root.mkdir(parents=True, exist_ok=True)
-        catalog = ParquetDataCatalog.from_uri(str(catalog_root.resolve()))
+        catalog = ParquetDataCatalog.from_uri(catalog_root.resolve().as_uri())
         bars = _build_bars(frame, bar_type, instrument)
         feature_data = _build_feature_data(spec, root, instrument.id)
         catalog.write_data([instrument])

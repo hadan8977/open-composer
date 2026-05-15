@@ -6,7 +6,7 @@
 - arXiv：[2601.02677](https://arxiv.org/abs/2601.02677v1)
 - 主题：多模态金融预测与另类数据
 - 截图来源：Image #28-30
-- 本地 PDF：`pdfs/uni-finllm-2601-02677.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/uni-finllm-2601-02677.pdf`
 - 本地抽取文本：`extracted_text/uni-finllm-2601-02677.txt`
 
 ## 一句话定位

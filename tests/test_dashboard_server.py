@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import http.client
+import threading
 from pathlib import Path
 
 import pytest
+from conftest import assert_no_windows_paths
 
 from open_composer.dashboard.commands import DashboardCommandError, resolve_dashboard_serve_root
 from open_composer.dashboard.server import (
@@ -10,6 +13,7 @@ from open_composer.dashboard.server import (
     build_dashboard_command_plan_payload,
     build_dashboard_command_run_payload,
     build_dashboard_health_payload,
+    create_dashboard_server,
     dashboard_request_authorized,
 )
 from open_composer.strategy_lifecycle import activate_strategy
@@ -364,6 +368,38 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
         / "qqq_pullback_15m.activation_candidate.json"
     ).exists()
 
+    assert_no_windows_paths(
+        [
+            health,
+            catalog,
+            plan,
+            result,
+            sync_plan,
+            sync_result,
+            system_plan,
+            system_result,
+            readiness_plan,
+            readiness_result,
+            draft_plan,
+            draft_result,
+            validate_plan,
+            validate_result,
+            capability_plan,
+            capability_result,
+            workflow_plan,
+            workflow_result,
+            account_plan,
+            account_result,
+            lifecycle_plan,
+            lifecycle_result,
+            rerun_plan,
+            rerun_result,
+            scan_plan,
+            scan_result,
+            paper_auto_plan,
+        ]
+    )
+
     with pytest.raises(
         DashboardCommandError, match="plan_path must stay within the current workspace"
     ):
@@ -395,3 +431,75 @@ def test_dashboard_api_token_auth_gate(sample_workspace: Path) -> None:
     )
     assert dashboard_request_authorized({"Authorization": "Bearer secret"}, "secret") is True
     assert dashboard_request_authorized({"Authorization": "Bearer wrong"}, "secret") is False
+
+
+def test_dashboard_cors_blocks_external_origin_when_unconfigured(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("OC_DASHBOARD_ALLOWED_ORIGIN", raising=False)
+    status, headers = _dashboard_health_request(
+        sample_workspace,
+        origin="https://evil.example",
+    )
+
+    assert status == 200
+    assert "access-control-allow-origin" not in headers
+    assert headers["vary"] == "Origin"
+
+
+def test_dashboard_cors_allows_localhost_origin_when_unconfigured(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("OC_DASHBOARD_ALLOWED_ORIGIN", raising=False)
+    status, headers = _dashboard_health_request(sample_workspace, origin="__LOCALHOST__")
+
+    assert status == 200
+    assert headers["access-control-allow-origin"].startswith("http://127.0.0.1:")
+    assert headers["vary"] == "Origin"
+
+
+def test_dashboard_cors_allows_configured_origin(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OC_DASHBOARD_ALLOWED_ORIGIN", "https://dashboard.example")
+    status, headers = _dashboard_health_request(
+        sample_workspace,
+        origin="https://dashboard.example",
+    )
+
+    assert status == 200
+    assert headers["access-control-allow-origin"] == "https://dashboard.example"
+
+
+def _dashboard_health_request(
+    sample_workspace: Path,
+    *,
+    origin: str,
+) -> tuple[int, dict[str, str]]:
+    serve_root = sample_workspace / "reports" / "dashboard"
+    serve_root.mkdir(parents=True, exist_ok=True)
+    (serve_root / "index.html").write_text("<html><body>dashboard</body></html>", encoding="utf-8")
+
+    server = create_dashboard_server(sample_workspace, host="127.0.0.1", port=0, api_token=None)
+    port = int(server.server_address[1])
+    request_origin = f"http://127.0.0.1:{port}" if origin == "__LOCALHOST__" else origin
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        connection = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+        connection.request(
+            "GET",
+            "/api/dashboard/health",
+            headers={"Origin": request_origin},
+        )
+        response = connection.getresponse()
+        response.read()
+        headers = {key.lower(): value for key, value in response.getheaders()}
+        return response.status, headers
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)

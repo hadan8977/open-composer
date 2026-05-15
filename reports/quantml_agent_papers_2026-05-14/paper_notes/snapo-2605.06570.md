@@ -6,7 +6,7 @@
 - arXiv：[2605.06570](https://arxiv.org/abs/2605.06570)
 - 主题：强化学习组合优化与交易
 - 截图来源：Image #15-16, #18
-- 本地 PDF：`pdfs/snapo-2605-06570.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/snapo-2605-06570.pdf`
 - 本地抽取文本：`extracted_text/snapo-2605-06570.txt`
 
 ## 一句话定位

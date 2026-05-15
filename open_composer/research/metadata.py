@@ -186,7 +186,7 @@ def research_run_manifest(
         "git_dirty": git_dirty,
         "strategy_name": strategy.name,
         "spec_hash": strategy_content_hash(strategy),
-        "source_path": _relpath(source_path, root),
+        "source_path": workspace_relative_path(source_path, root),
         "data_profile": data_profile or {},
         "data_path_hash": _file_hash(root / str(data_path)) if data_path else None,
         "feature_packet_hashes": {
@@ -271,8 +271,8 @@ def _file_hash(path: Path) -> str | None:
     return digest.hexdigest()
 
 
-def _relpath(path: Path, base: Path) -> str:
+def workspace_relative_path(path: Path, base: Path) -> str:
     try:
-        return str(path.relative_to(base))
+        return path.relative_to(base).as_posix()
     except ValueError:
-        return str(path)
+        return path.as_posix()

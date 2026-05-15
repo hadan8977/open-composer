@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
@@ -12,6 +13,7 @@ from open_composer.storage import write_json
 
 AgentRequestStatus = Literal["open", "in_progress", "completed", "cancelled"]
 AgentRequestType = Literal["research", "review", "parameter_scan", "strategy_optimization"]
+_ABSOLUTE_PATH_PATTERN = re.compile(r"^([/\\]|[A-Za-z]:[\\/])")
 
 
 class AgentRequest(BaseModel):
@@ -113,6 +115,8 @@ def _validate_relative_path(root: Path, value: str) -> str:
     path = value.strip()
     if not path:
         return path
+    if _ABSOLUTE_PATH_PATTERN.match(path):
+        raise ValueError("agent request paths must be workspace-relative")
     candidate = Path(path)
     if candidate.is_absolute():
         raise ValueError("agent request paths must be workspace-relative")
@@ -120,4 +124,4 @@ def _validate_relative_path(root: Path, value: str) -> str:
     root_resolved = root.resolve()
     if resolved != root_resolved and not resolved.is_relative_to(root_resolved):
         raise ValueError("agent request paths must stay within the workspace")
-    return str(candidate)
+    return candidate.as_posix()

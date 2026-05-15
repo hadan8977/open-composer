@@ -19,6 +19,8 @@ class ReviewCard(BaseModel):
     evidence: list[str] = Field(default_factory=list)
     risks: list[str] = Field(default_factory=list)
     invalidation: list[str] = Field(default_factory=list)
+    primary_risk_source: str = ""
+    if_wrong_top_3_reasons: list[str] = Field(default_factory=list, max_length=3)
     action_suggestion: str
     model: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

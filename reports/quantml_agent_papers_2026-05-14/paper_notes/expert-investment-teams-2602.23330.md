@@ -6,7 +6,7 @@
 - arXiv：[2602.23330](https://arxiv.org/abs/2602.23330v1)
 - 主题：LLM Agent 与多智能体交易系统
 - 截图来源：Image #6, #11-12
-- 本地 PDF：`pdfs/expert-investment-teams-2602-23330.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/expert-investment-teams-2602-23330.pdf`
 - 本地抽取文本：`extracted_text/expert-investment-teams-2602-23330.txt`
 
 ## 一句话定位

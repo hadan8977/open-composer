@@ -439,6 +439,7 @@ def _feature_fields(row: dict[str, object]) -> list[str]:
         "input_hash",
         "prompt_hash",
         "features",
+        "evidence",
     }
     fields = {key for key in row if key not in metadata_fields}
     nested = row.get("features")
@@ -501,6 +502,6 @@ def _relpath(path: Path | str | None, base: Path) -> str | None:
         return None
     candidate = Path(path)
     try:
-        return str(candidate.relative_to(base))
+        return candidate.relative_to(base).as_posix()
     except ValueError:
-        return str(candidate)
+        return candidate.as_posix()

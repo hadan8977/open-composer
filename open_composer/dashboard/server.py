@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from open_composer.config import dashboard_api_token
+from open_composer.config import dashboard_allowed_origin, dashboard_api_token
 from open_composer.dashboard.catalog import build_dashboard_catalog
 from open_composer.dashboard.commands import (
     DashboardCommandError,
@@ -38,7 +38,20 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, **kwargs)
 
     def end_headers(self) -> None:
-        self.send_header("Access-Control-Allow-Origin", "*")
+        request_origin = str(self.headers.get("Origin", "")).strip()
+        allowed_origin = dashboard_allowed_origin()
+        if allowed_origin:
+            if request_origin == allowed_origin:
+                self.send_header("Access-Control-Allow-Origin", allowed_origin)
+        else:
+            port = int(self.server.server_address[1])
+            local_origins = {
+                f"http://127.0.0.1:{port}",
+                f"http://localhost:{port}",
+            }
+            if request_origin in local_origins:
+                self.send_header("Access-Control-Allow-Origin", request_origin)
+        self.send_header("Vary", "Origin")
         self.send_header(
             "Access-Control-Allow-Headers",
             "Authorization, Content-Type, X-Open-Composer-Token",
@@ -235,7 +248,7 @@ def build_dashboard_command_plan_payload(
     )
     path = write_dashboard_command_plan(plan, root)
     response = plan.model_dump(mode="json")
-    response["plan_path"] = str(path.relative_to(root))
+    response["plan_path"] = path.relative_to(root).as_posix()
     return response
 
 

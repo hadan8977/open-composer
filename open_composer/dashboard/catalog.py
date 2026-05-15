@@ -1999,9 +1999,9 @@ def _format_optional_dt(value: datetime | None) -> str:
 
 def _relpath(path: Path, base: Path) -> str:
     try:
-        return str(path.relative_to(base))
+        return path.relative_to(base).as_posix()
     except ValueError:
-        return str(path)
+        return path.as_posix()
 
 
 def _ordered_unique(values: list[str], order: list[str]) -> list[str]:

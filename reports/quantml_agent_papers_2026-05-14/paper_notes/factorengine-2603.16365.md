@@ -6,7 +6,7 @@
 - arXiv：[2603.16365](https://arxiv.org/abs/2603.16365v2)
 - 主题：自动化因子挖掘与 Alpha 发现
 - 截图来源：Image #23-24
-- 本地 PDF：`pdfs/factorengine-2603-16365.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/factorengine-2603-16365.pdf`
 - 本地抽取文本：`extracted_text/factorengine-2603-16365.txt`
 
 ## 一句话定位

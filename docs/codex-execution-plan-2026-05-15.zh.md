@@ -1,10 +1,37 @@
 # Open Composer 修复与演进计划 (Codex 执行版)
 
-**版本**: 2026-05-15 v1
+**版本**: 2026-05-15 v2
 **作者**: Open Composer 审计 (基于 2026-05-15 全仓库审计 + 2026-05-14 QuantML 论文学习报告)
+**v2 修订**: Codex review, 2026-05-15
 **执行者**: Codex / Claude Code
-**预期总工时**: P1-P3 ≈ 1-1.5 天;F1-F7 按优先级渐进,可独立并行
+**预期总工时**: P0-P3 ≈ 1-2 天;F1-F7 按优先级渐进,可独立并行
 **前置阅读**: `AGENTS.md`、`CLAUDE.md`、`AUDIT-REPORT.md`、`reports/quantml_agent_papers_2026-05-14/quantml_agent_paper_study_report.zh.md`
+
+---
+
+## v2 审查结论
+
+这份计划总体可执行,但 v1 把一次 Windows 审计报告、论文启发 backlog 和当前 repo 治理混在了一起。v2 采用下面的修订口径,后续 Codex / Claude Code 执行时以本节为准:
+
+1. **先做 P0 入库修复**: 远端新增 `docs/codex-execution-plan-2026-05-15.zh.md` 和 `docs/quantml-paper-study-research-notes-2026-05-15.zh.md` 后,必须同步 `repo_check.CURRENT_DOCS`、`tests/test_repo_check.py` 和 README Project Docs。否则 `uv run oc repo check --strict` 会被 docs inventory 阻断。
+2. **Windows 审计不是当前全平台事实**: `AUDIT-REPORT.md` 的 21 个失败是 Windows 11 + Python 3.13.7 环境下的结果。当前 Linux/macOS/CI 状态必须在每个执行 PR 里重新跑,不要把审计里的行号和通过数量当成永远有效。
+3. **路径修复只针对 artifact 边界**: JSON、Markdown、HTML、Dashboard catalog、audit、report、command plan/result 里的 repo-relative 路径必须 POSIX 化;传给本机 OS 或第三方库的真实 filesystem path 不能无脑改成 `.as_posix()`。Nautilus `from_uri` 这类 API 需要 URI 时用 `Path.as_uri()`。
+4. **F1-F7 是研究 backlog,不是一次性交付**: 近期执行顺序收敛为 P0 -> P1 -> P2 -> P3 -> F1 -> F4。F2/F3/F5/F6/F7 只有在前置 gate 和测试稳定后再做。
+5. **feature packet evidence 要分层**: 只有 LLM/news/event/macro 或新模态 feature 在影响交易、promotion 或 paper readiness 时,才强制要求 `single_modality_baseline` / `marginal_lift` 证据。sample workflow 和 research-only packet 不能因此被破坏。
+6. **表达式 AST 白名单要贴合现有实现**: `expressions.py` 已有自定义 AST evaluator。F4 的目标是显式安全 API 和恶意输入回归测试,不是改成更宽的 Python 子语言。`ast.Store`、`ast.Module`、comprehension、import、attribute escape 都不应被引入。
+7. **成本模型先作为 research report**: F5 不得静默改变现有 backtest 默认行为。默认 `linear + impact_eta=0` 必须与当前数值等价;新增冲击模型先通过 `cost-grid` 报告进入 promotion warning。
+8. **remote/dashboard 安全仍按当前产品约束**: Vercel 只做 password-session BFF,daemon 执行 async job。浏览器不接触 shared secret,也不提供任意 shell 或文件 API。
+
+### v2 发现的问题
+
+| 问题 | 严重度 | 修订 |
+|---|---|---|
+| 新增 docs 未进 repo check 白名单 | 高 | 新增 P0,并把本文和论文笔记加入 `CURRENT_DOCS` / README / repo_check tests |
+| v1 的测试状态写成固定事实 | 中 | 改成“审计环境事实 + 每轮重跑” |
+| `.as_posix()` 表述过宽 | 中 | 明确只用于 artifact / repo-relative serialization 边界 |
+| F2 可能阻断 sample workflow | 中 | 改为 paper/promotion path 强制, research-only 允许 |
+| F4 白名单示例过宽 | 中 | 强调维持现有 evaluator 的保守子集 |
+| CI matrix 可能受 Nautilus/native 依赖影响 | 低 | P3 需要先跑 P1/P2,再决定是否标记 slow/native tests |
 
 ---
 
@@ -24,10 +51,11 @@
 
 ### 0.3 项目当前状态 (你接手时)
 
-- **Lint**: `uv run ruff check .` clean (零警告)
-- **测试**: 在 Linux/macOS 上 159/159 通过;在 Windows 上 138/159 通过(剩 21 个失败均为路径分隔符或 fsspec URI 解析的 Windows 特定问题——本计划 P1 阶段修复)
+- **Lint**: 审计时 `uv run ruff check .` clean;任何执行 PR 仍必须重新跑。
+- **测试**: 2026-05-15 v2 本地收集到 159 个 pytest 用例。`AUDIT-REPORT.md` 记录 Windows 上 138/159 通过,剩 21 个失败主要是路径分隔符或 fsspec URI 解析问题;Linux/macOS 状态需要每轮重新验证。
+- **Repo check**: 远端报告合入后新增两个 `docs/*.md`,必须先完成 P0 白名单/README/test 同步,否则 `uv run oc repo check --strict` 会 blocked。
 - **架构**: 139 Python 文件 / ~32K LOC + 65 TS/TSX (Dashboard) / 8 个 capability 适配器 / 22 个 CLI 命令组 / 36 个测试文件
-- **审计评级**: B+(可投产 paper 场景);P1 完成后预期升 A-
+- **审计评级**: B+(可投产 paper 场景);P1/P2 完成并在三平台验证后再更新评级。
 
 ### 0.4 核心硬约束 (不要触线)
 
@@ -92,24 +120,46 @@
 
 ## 2. 计划全景
 
-> 单人节奏估算。P1 是必做项(修测试),F1-F7 按优先级渐进,可挑选执行。
+> 单人节奏估算。P0/P1 是必做项;P2/P3 是让远程与跨 OS 发布更稳的短任务;F1-F7 是研究质量 backlog,按产品价值分批执行。
 
 | 阶段 | 范围 | 必做? | 预估 | 风险 | 关键产出 |
 |---|---|---|---|---|---|
-| **P1** 跨 OS 路径根治 | M1 (路径分隔符) + M2 (NautilusTrader URI) | **是** | 0.5-1 day | 低 | Windows pytest 158-159/159 |
+| **P0** 报告入库与 repo 治理 | 新增 docs 白名单、README、repo_check tests | **是** | 0.5 hour | 低 | `oc repo check --strict` 恢复 ok |
+| **P1** 跨 OS 路径根治 | M1 (artifact 路径分隔符) + M2 (NautilusTrader URI) | **是** | 0.5-1 day | 低 | Windows pytest 159/159 或明确 skip |
 | **P2** 边界硬化 | L1 (Win 路径语义) + L2 (Dashboard CORS) | 推荐 | 1-2 hours | 低 | UNC 路径拒绝;CORS 收紧 |
-| **P3** 命名 + CI matrix | L3 (Dashboard 包名) + L4 (CI 三 OS × 双 Python) | 推荐 | 0.5-1 hour | 极低 | CI 三 OS × py311/313 全绿 |
+| **P3** 命名 + CI matrix | L3 (Dashboard 包名) + L4 (CI 三 OS × 双 Python) | 推荐 | 0.5-1 day | 低 | CI 三 OS × py311/313 全绿,必要时标记 slow/native |
 | **F1** promotion-report 五连否定渲染 | review_card / promotion_report 模板扩展 | **强烈推荐** | 1 day | 低 | report 渲染 5×PASS/FAIL 表 |
-| **F2** feature_packets 模态接收 gate | feature_packets 强制 marginal_lift | 推荐 | 1-2 day | 低 | 新模态必须证边际贡献 |
+| **F4** `expressions.py` AST 白名单 | 显式安全 API + 恶意输入回归测试 | **强烈推荐** | 1 week | 低-中 | LLM 生成因子的安全门 |
+| **F2** feature_packets 模态接收 gate | paper/promotion path 强制 marginal_lift | 推荐 | 1-2 day | 低 | 新模态进入 paper 前必须证边际贡献 |
 | **F3** `oc strategy blind-test` | 新子命令 + research/blind_test.py | 推荐 | 1 周 | 中(逻辑复杂) | 4 组对照协议 |
-| **F4** `expressions.py` AST 白名单 | expressions.py 改造 + 拒绝危险 import | **强烈推荐**(为后续 F6/B-future 铺路) | 1 周 | 低-中 | LLM 生成因子的安全门 |
 | **F5** `oc strategy cost-grid` | 新子命令 + research/cost_sensitivity.py | 推荐 | 1 周 | 低 | 多成本模型敏感性矩阵 |
 | **F6** `oc strategy regime-search` | 新子命令 + research/regime_retrieval.py | 中期 | 1-2 月 | 中(需嵌入空间) | 历史制度检索 |
 | **F7** `.agents/skills/` 贡献归因 | 新模块 research/skill_attribution.py | 中期 | 1-2 月 | 中(需多次回测样本) | DAG-Shapley 近似归因 |
 
-**强烈建议执行顺序**: P1 → F1 → F4 → P2 → P3 → F2 → F3 → F5 → F6 → F7
+**强烈建议执行顺序**: P0 → P1 → P2 → P3 → F1 → F4 → F2 → F3 → F5 → F6 → F7
 
-理由: P1 修测试是先决条件 (没绿 CI 后续无法可靠验证);F1/F4 是低成本但高战略价值的 gate;P2/P3 顺手做完;F2/F3/F5 都是单 backlog 一周内可结束的 self-contained 工作;F6/F7 需要更多前置数据。
+理由: P0 先恢复仓库治理;P1/P2 先修跨 OS 与安全边界;P3 让 CI 能持续防回归;F1/F4 是低成本但高战略价值的 gate;F2/F3/F5 都是可独立完成的研究质量增强;F6/F7 需要更多前置数据。
+
+### 2.1 阶段 P0 — 报告入库与 repo 治理
+
+远端分支新增的报告必须成为当前产品文档的一部分,否则仓库自己的严格检查会失败。
+
+交付:
+
+- `AUDIT-REPORT.md` 保留在 repo root,作为审计报告入口。
+- `docs/codex-execution-plan-2026-05-15.zh.md` 纳入 `open_composer/repo_check.py::CURRENT_DOCS`。
+- `docs/quantml-paper-study-research-notes-2026-05-15.zh.md` 纳入 `open_composer/repo_check.py::CURRENT_DOCS`。
+- README Project Docs 链接 `AUDIT-REPORT.md`、本文档和研究笔记。
+- `tests/test_repo_check.py::_copy_repo_check_inputs` 同步上述 docs。
+
+验收:
+
+```bash
+uv run ruff format .
+uv run ruff check .
+uv run pytest tests/test_repo_check.py
+uv run oc repo check --strict
+```
 
 ---
 
@@ -138,8 +188,10 @@ Windows 上 `D:\Users\...` 被 fsspec 当成 URI,`D` 被误判为 scheme,后续 
 
 #### 原则
 - **内部计算继续用 `Path` 对象**(不要把 `Path` 提前 `str()` 化)
-- **任何把路径写进 JSON / HTML / CLI 字符串 / 跨 OS 传递场景**,统一调用 `.as_posix()`
-- **永远不在序列化边界用 `str(path)` 或 `f"{path}"`**
+- **任何写进 JSON / Markdown / HTML / Dashboard catalog / audit / command result 的 repo-relative artifact path**,统一调用 `.as_posix()`
+- **传给本机 OS、subprocess、第三方库的真实 filesystem path**,保留 `Path` 或在最后一刻用 `str(path)`,不要为了显示层 POSIX 化而破坏 Windows 文件访问
+- **第三方 API 明确要求 URI 时**,用 `Path.as_uri()`;典型例子是 NautilusTrader `ParquetDataCatalog.from_uri(...)`
+- **不要把 `.as_posix()` 扩散成全仓库机械替换**;先判断该字符串是 artifact reference 还是 local filesystem path
 
 #### Step 1: 定位所有需要修的写入点
 
@@ -157,13 +209,13 @@ rg -nP '\bf?["\x27].*\{[^}]*path[^}]*\}' open_composer/   # f-string 里的 path
 |------|---------|------|
 | `open_composer/dashboard/catalog.py` | `path = str(file_path.relative_to(root))` 写进 catalog | `path = file_path.relative_to(root).as_posix()` |
 | `open_composer/dashboard/commands.py` | `output_paths.append(str(p.relative_to(root)))` | `output_paths.append(p.relative_to(root).as_posix())` |
-| `open_composer/deployment.py` | `report.report_json_path = str(json_path)` 类似字段 | `... = json_path.relative_to(root).as_posix()` (按字段语义决定要不要 relative) |
+| `open_composer/deployment.py` | `report.report_json_path = str(json_path)` 类似字段 | 如果字段是报告产物引用,用 repo-relative `.as_posix()`;如果字段是本机绝对路径,保留 `str(Path)` 并在命名中明确 |
 | `open_composer/paper_readiness.py:118-119` | 同上 | 同上 |
 | `open_composer/paper_controls.py` | `report_json_path / report_markdown_path` 字段 | 同上 |
 | `open_composer/feature_packets.py` | manifest_path 序列化 | 同上 |
 | `open_composer/agent_requests.py:123` | `return str(candidate)` | `return candidate.as_posix()` |
 | `open_composer/repo_check.py` | report 中的路径字段 | 同上 |
-| `open_composer/dashboard/server.py` | `build_dashboard_command_run_payload` 等返回字段 | 同上 |
+| `open_composer/dashboard/server.py` | `build_dashboard_command_run_payload` 等返回字段 | API payload 中的 artifact paths 用 repo-relative `.as_posix()`;server filesystem root 不要随意改 |
 | `open_composer/dashboard/html.py` | HTML 模板里的路径 | 同上(注意 HTML link href) |
 
 #### Step 2: 加单元测试加固(防回归)
@@ -238,8 +290,8 @@ uv run pytest tests/test_strategy_versions_and_capability_expansion.py -k nautil
 
 ### 3.4 P1 阶段 DoD
 
-- [ ] `uv run pytest -q` 在 Windows 上 ≥ 158/159 pass(允许 1 个真正环境性 skip)
-- [ ] `uv run pytest -q` 在 Linux/Mac 上 159/159 pass(本来就过,确认无回归)
+- [ ] `uv run pytest -q` 在 Windows 上 159/159 pass,或只有明确标记的环境性 skip
+- [ ] `uv run pytest -q` 在 Linux/Mac 上全量 pass;不要复用旧审计结论
 - [ ] `uv run ruff check .` 仍 clean
 - [ ] 任意 OS 生成的 `reports/dashboard/catalog.json` 内不含 `\\\\reports\\\\` 等 Windows 风格路径(用 `python -c` 抽样检查)
 - [ ] 提交一个 PR: `chore(paths): unify path serialization to POSIX across boundaries`
@@ -399,6 +451,8 @@ rg -ni 'figma|my-make' dashboard/ --glob '!node_modules' --glob '!*.lock'
 
 新增 `.github/workflows/ci.yml`:
 
+注意: 先完成 P1/P2 后再把 Windows 纳入 required check。NautilusTrader、pyarrow 等 native 依赖在 Windows / Python 3.13 上可能需要缓存或分组;如果某些测试是真正 slow/native,用 pytest marker 明确标记,不要让 CI 静默跳过核心安全和 repo check。
+
 ```yaml
 name: CI
 on:
@@ -540,6 +594,8 @@ def test_promotion_report_marks_llm_contribution_not_applicable(...):
 ### 7.1 动机
 论文 Acoustic Camouflage 证明:新增模态可能让尾部召回从 66% 掉到 47%。OC 当前接收 feature packet 时只检查 schema/timestamp,不要求作者证明"这个模态有边际贡献"。
 
+v2 约束: 这不是要求所有 packet 都带新 evidence。sample workflow、fixture replay 和 research-only packet 仍应可运行。强制 evidence 的范围是:LLM/news/event/macro 或新模态 feature 被用于 promotion、paper readiness 或 `paper_auto` 路径时。
+
 ### 7.2 改动点
 - 文件: `open_composer/feature_packets.py`
 - Schema: 在实际类 **`FeaturePacketRow`** (Pydantic, `extra="allow"`,见 `feature_packets.py:26`) 上加新字段
@@ -551,7 +607,7 @@ def test_promotion_report_marks_llm_contribution_not_applicable(...):
 ```python
 # open_composer/feature_packets.py
 class FeaturePacketEvidence(BaseModel):
-    """新模态进入 paper_auto 路径前,必须证明边际贡献(Acoustic Camouflage 反例驱动)。"""
+    """新模态进入 promotion/paper_auto 路径前,必须证明边际贡献(Acoustic Camouflage 反例驱动)。"""
     model_config = ConfigDict(extra="forbid")
 
     single_modality_baseline_metric: str   # 例 "auroc=0.62 on validation set"
@@ -586,7 +642,8 @@ def write_feature_packet(
 ```
 
 **Step 3**: 在 `paper_readiness.py:_feature_packet_binding_check` 中调用:
-- 如果 spec 用了 LLM feature 但对应 packet 没有 evidence → readiness check fail("blocked")
+- 如果 spec 用了 LLM/news/event/macro 或新模态 feature,且对应 packet 没有 evidence → readiness check fail("blocked")
+- 如果 packet 明确标记为 research-only,report 应展示 warning,但不要破坏 sample smoke workflow
 
 **Step 4**: look-ahead lint(顺手):
 - 加 helper `assert_visible_at_not_in_future(packet, now=None)`,如果 `visible_at > now` 直接 raise
@@ -769,8 +826,8 @@ import ast
 
 # 允许的 Python AST 节点类型
 ALLOWED_NODES = frozenset({
-    ast.Module, ast.Expression, ast.Expr,
-    ast.Load, ast.Store,   # 允许变量读取(必要)
+    ast.Expression,
+    ast.Load,
     ast.Constant, ast.Name,
     ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.Compare,
     ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod, ast.Pow, ast.FloorDiv,
@@ -882,6 +939,8 @@ def evaluate_raw_expression(expression: str, frame: pd.DataFrame) -> Any:
 
 注意:**不要把 `assert_expression_safe` 直接做成 `_eval_node` 的内部检查**——把它做成可独立 import 的公共 API,让 F3 的 blind-test、未来的 LLM 因子生成器都能在「写入 spec 前」就调用。
 
+v2 约束: 白名单必须贴合当前 evaluator 实际支持的节点。不要因为测试样例方便而允许 `ast.Module`、`ast.Store`、comprehension、lambda、assignment、import 或 dunder attribute。`assert_expression_safe` 应该比 `_eval_node` 更早失败,但不能比现有执行器更宽。
+
 扫一下其他可能调用点(本审计已确认 expressions.py 无 `eval()/compile()`,但下游可能有):
 ```bash
 rg -n '\beval\(|\bcompile\(' open_composer/   # 期望只在 ast.parse 上下文里出现
@@ -936,6 +995,8 @@ MACE(arXiv:2603.29086)证明:固定 bps 成本下 PPO 排第一,切到 Almgren-C
 - 模型: 在 `open_composer/models/strategy_spec.py` 的 `CostConfig` 加 `impact_model: Literal["linear", "sqrt", "almgren_chriss"]` (可选,默认 linear)
 
 ### 10.3 实现要点
+
+v2 约束: F5 先作为 research command 和 promotion warning 落地,不得改变现有 backtest 默认结果。默认 `impact_model="linear"` 且 `impact_eta=0`、`impact_gamma=0` 时,所有现有策略的回测数值必须与当前 main 等价。
 
 **Step 1**: 扩展 CostConfig:
 ```python
@@ -1090,7 +1151,7 @@ def strategy_skill_attribution(
 | SNAPO 式可微模拟 | 与 NautilusTrader 离散事件路径冲突 |
 | Vercel 端跑回测/pytest/dashboard build | AGENTS.md 明文反对 |
 | 任何绕过 capability evaluation 的"我先试试" | 直接违反工作纪律 |
-| NonceStore 加文件锁 | 单用户场景,真出现问题再说 |
+| NonceStore 文件锁作为 P1 阻断项 | 不是跨 OS 测试阻断;若 remote daemon 开始承载并发 Vercel 请求,应进入 remote hardening backlog |
 | 让 LLM 直接执行未经 AST 检查的因子代码 | F4 完成前**绝对不允许** |
 
 ---
@@ -1098,7 +1159,7 @@ def strategy_skill_attribution(
 ## 14. 全局完成定义 (DoD)
 
 P1-P3 完成后:
-- [ ] `pytest` 在 Windows / Linux / macOS 上 ≥ 158/159 通过(允许 1 个真正环境性 skip)
+- [ ] `pytest` 在 Windows / Linux / macOS 上全量通过;若有 skip,必须是显式标记且解释为环境性 skip
 - [ ] `ruff check .` 仍 clean
 - [ ] `make verify` 在三平台都过
 - [ ] 任意 OS 生成的 `reports/dashboard/catalog.json` 能被另一 OS 正确消费
@@ -1257,4 +1318,4 @@ P1 完成后,以下 21 个失败用例都应该转绿(在 Windows 上)。如果�
 
 ---
 
-*Plan v1, 2026-05-15. 自包含。Codex 可不依赖任何外部上下文执行。完成 P1-P3 后请把本节顶部的「执行者」字段改成你 (Codex / Claude Code) 的具体 model id + 完成日期,作为可追溯标记。*
+*Plan v2, 2026-05-15. 自包含。Codex 可不依赖任何外部上下文执行。完成 P1-P3 后请把本节顶部的「执行者」字段改成你 (Codex / Claude Code) 的具体 model id + 完成日期,作为可追溯标记。*

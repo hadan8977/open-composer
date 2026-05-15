@@ -6,7 +6,7 @@
 - arXiv：[2603.22567](https://arxiv.org/abs/2603.22567)
 - 主题：LLM Agent 与多智能体交易系统
 - 截图来源：Image #8
-- 本地 PDF：`pdfs/trusttrade-2603-22567.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/trusttrade-2603-22567.pdf`
 - 本地抽取文本：`extracted_text/trusttrade-2603-22567.txt`
 
 ## 一句话定位

@@ -6,7 +6,7 @@
 - arXiv：[2605.02300](https://arxiv.org/abs/2605.02300v1)
 - 主题：强化学习组合优化与交易
 - 截图来源：Image #16-17, #18-19
-- 本地 PDF：`pdfs/metarl-gbwm-2605-02300.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/metarl-gbwm-2605-02300.pdf`
 - 本地抽取文本：`extracted_text/metarl-gbwm-2605-02300.txt`
 
 ## 一句话定位

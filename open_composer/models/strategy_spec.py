@@ -37,6 +37,9 @@ class CostConfig(BaseModel):
 
     commission_pct: float = Field(default=0.0, ge=0)
     slippage_bps: float = Field(default=0.0, ge=0)
+    impact_model: Literal["linear", "sqrt", "almgren_chriss"] = "linear"
+    impact_eta: float = Field(default=0.0, ge=0)
+    impact_gamma: float = Field(default=0.0, ge=0)
 
 
 class ExecutionConfig(BaseModel):

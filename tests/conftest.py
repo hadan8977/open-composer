@@ -1,9 +1,24 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from shutil import copyfile, copytree
 
 import pytest
+
+_PATH_PREFIX_PATTERN = re.compile(r"(reports|strategy_specs|signal_logs|data|\.codex|\.agents)\\")
+
+
+def assert_no_windows_paths(payload: object) -> None:
+    """Recursively assert serialized artifact paths use POSIX separators."""
+    if isinstance(payload, dict):
+        for value in payload.values():
+            assert_no_windows_paths(value)
+    elif isinstance(payload, list):
+        for value in payload:
+            assert_no_windows_paths(value)
+    elif isinstance(payload, str) and _PATH_PREFIX_PATTERN.search(payload):
+        raise AssertionError(f"non-POSIX artifact path detected: {payload!r}")
 
 
 @pytest.fixture()

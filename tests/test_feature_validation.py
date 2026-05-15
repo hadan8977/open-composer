@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 from open_composer.cli import app
 from open_composer.dashboard import build_dashboard_catalog, build_feature_packet_records
 from open_composer.engines.backtest_engine import run_backtest
+from open_composer.feature_packets import FeaturePacketError, FeaturePacketRow, write_feature_packet
 
 
 def _context_capable_spec(sample_workspace: Path) -> Path:
@@ -210,6 +211,7 @@ def test_feature_packet_schema_requires_point_in_time_metadata(repo_root: Path) 
     }
     assert "input_hash" in schema["properties"]
     assert "prompt_hash" in schema["properties"]
+    assert "evidence" in schema["properties"]
 
 
 def test_feature_packet_validation_reports_invalid_timestamp(sample_workspace: Path) -> None:
@@ -250,3 +252,46 @@ def test_feature_packet_validation_reports_duplicate_dedupe_keys(
 
     assert packet.point_in_time_status == "partial"
     assert "duplicate dedupe_key value(s): llm:dup" in packet.replay_warnings
+
+
+def test_feature_packet_write_rejects_future_visible_at(tmp_path: Path) -> None:
+    packet = FeaturePacketRow(
+        timestamp=datetime(2099, 1, 1, tzinfo=UTC),
+        published_at=datetime(2099, 1, 1, tzinfo=UTC),
+        fetched_at=datetime(2099, 1, 1, tzinfo=UTC),
+        visible_at=datetime.now(UTC) + timedelta(days=1),
+        source="llm",
+        symbol="QQQ",
+        dedupe_key="llm:future",
+        schema_version="1",
+        features={"score": 0.8},
+    )
+
+    try:
+        write_feature_packet(tmp_path / "future.jsonl", packet)
+    except FeaturePacketError as exc:
+        assert "visible_at" in str(exc)
+        assert "future" in str(exc)
+    else:
+        raise AssertionError("future visible_at should be rejected")
+
+
+def test_feature_packet_write_requires_evidence_when_not_research_only(tmp_path: Path) -> None:
+    packet = FeaturePacketRow(
+        timestamp=datetime(2026, 1, 1, tzinfo=UTC),
+        published_at=datetime(2026, 1, 1, tzinfo=UTC),
+        fetched_at=datetime(2026, 1, 1, tzinfo=UTC),
+        visible_at=datetime(2026, 1, 1, tzinfo=UTC),
+        source="llm",
+        symbol="QQQ",
+        dedupe_key="llm:no-evidence",
+        schema_version="1",
+        features={"score": 0.8},
+    )
+
+    try:
+        write_feature_packet(tmp_path / "missing_evidence.jsonl", packet, allow_research_only=False)
+    except FeaturePacketError as exc:
+        assert "lacks evidence" in str(exc)
+    else:
+        raise AssertionError("paper-bound feature packet should require evidence")

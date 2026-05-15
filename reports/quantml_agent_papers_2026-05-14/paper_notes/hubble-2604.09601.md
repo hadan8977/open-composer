@@ -6,7 +6,7 @@
 - arXiv：[2604.09601](https://arxiv.org/abs/2604.09601)
 - 主题：自动化因子挖掘与 Alpha 发现
 - 截图来源：Image #24-25
-- 本地 PDF：`pdfs/hubble-2604-09601.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/hubble-2604-09601.pdf`
 - 本地抽取文本：`extracted_text/hubble-2604-09601.txt`
 
 ## 一句话定位

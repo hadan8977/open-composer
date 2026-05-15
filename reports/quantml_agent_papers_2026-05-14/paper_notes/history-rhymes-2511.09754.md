@@ -6,7 +6,7 @@
 - arXiv：[2511.09754](https://arxiv.org/abs/2511.09754v2)
 - 主题：多模态金融预测与另类数据
 - 截图来源：Image #28-30
-- 本地 PDF：`pdfs/history-rhymes-2511-09754.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/history-rhymes-2511-09754.pdf`
 - 本地抽取文本：`extracted_text/history-rhymes-2511-09754.txt`
 
 ## 一句话定位

@@ -294,8 +294,8 @@ def write_readiness_report(
     json_path = output_path or base / "reports" / "readiness" / "readiness.json"
     md_path = markdown_path or json_path.with_suffix(".md")
     ensure_dir(json_path.parent)
-    report.report_json_path = str(json_path)
-    report.report_markdown_path = str(md_path)
+    report.report_json_path = _relpath(json_path, base)
+    report.report_markdown_path = _relpath(md_path, base)
     write_json(json_path, report)
     md_path.write_text(_render_readiness_markdown(report), encoding="utf-8")
     return json_path, md_path
@@ -335,6 +335,13 @@ def _resolve_dashboard_serve_root(base: Path) -> Path | None:
     html_root = base / "reports" / "dashboard"
     candidate = dist_root if (dist_root / "index.html").exists() else html_root
     return candidate if (candidate / "index.html").exists() else None
+
+
+def _relpath(path: Path, base: Path) -> str:
+    try:
+        return path.relative_to(base).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _render_readiness_markdown(report: ReadinessReport) -> str:

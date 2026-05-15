@@ -6,7 +6,7 @@
 - arXiv：[2603.29086](https://arxiv.org/abs/2603.29086)
 - 主题：强化学习组合优化与交易
 - 截图来源：Image #17, #19
-- 本地 PDF：`pdfs/mace-realistic-market-impact-2603-29086.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/mace-realistic-market-impact-2603-29086.pdf`
 - 本地抽取文本：`extracted_text/mace-realistic-market-impact-2603-29086.txt`
 
 ## 一句话定位

@@ -231,8 +231,8 @@ def reconcile_paper_state(root: Path | None = None) -> PaperReconciliationReport
     )
     json_path = base / "reports" / "paper" / "reconciliation.json"
     md_path = base / "reports" / "paper" / "reconciliation.md"
-    report.report_json_path = str(json_path)
-    report.report_markdown_path = str(md_path)
+    report.report_json_path = _relpath(json_path, base)
+    report.report_markdown_path = _relpath(md_path, base)
     write_json(json_path, report)
     _write_reconciliation_markdown(md_path, report)
     return report
@@ -248,7 +248,7 @@ def build_paper_alerts(root: Path | None = None) -> PaperAlertReport:
                 severity="warning",
                 code="paper_kill_switch_enabled",
                 message="Paper kill switch is enabled; automated submissions are blocked.",
-                source_path=str(base / "reports" / "paper" / "kill_switch.json"),
+                source_path=_relpath(base / "reports" / "paper" / "kill_switch.json", base),
             )
         )
     if status.reconciliation_status in {"warning", "error"}:
@@ -266,7 +266,7 @@ def build_paper_alerts(root: Path | None = None) -> PaperAlertReport:
                 severity="info",
                 code="paper_open_orders",
                 message=f"{status.open_order_count} paper order(s) are still open.",
-                source_path=str(base / "reports" / "paper"),
+                source_path=_relpath(base / "reports" / "paper", base),
             )
         )
     if status.account_equity is None:
@@ -275,7 +275,7 @@ def build_paper_alerts(root: Path | None = None) -> PaperAlertReport:
                 severity="warning",
                 code="missing_paper_account_snapshot",
                 message="No paper account snapshot is available; run oc paper sync-account.",
-                source_path=str(base / "reports" / "paper" / "account.json"),
+                source_path=_relpath(base / "reports" / "paper" / "account.json", base),
             )
         )
     elif _is_stale(status.account_snapshot_at):
@@ -287,7 +287,7 @@ def build_paper_alerts(root: Path | None = None) -> PaperAlertReport:
                     "Paper account snapshot is stale; run oc paper sync-account before "
                     "making paper execution decisions."
                 ),
-                source_path=str(base / "reports" / "paper" / "account.json"),
+                source_path=_relpath(base / "reports" / "paper" / "account.json", base),
             )
         )
     if status.position_count and _is_stale(status.positions_snapshot_at):
@@ -299,7 +299,7 @@ def build_paper_alerts(root: Path | None = None) -> PaperAlertReport:
                     "Paper positions snapshot is stale; run oc paper sync-account before "
                     "reviewing position risk."
                 ),
-                source_path=str(base / "reports" / "paper" / "positions.json"),
+                source_path=_relpath(base / "reports" / "paper" / "positions.json", base),
             )
         )
     if status.total_unrealized_pl < 0:
@@ -308,7 +308,7 @@ def build_paper_alerts(root: Path | None = None) -> PaperAlertReport:
                 severity="warning",
                 code="paper_unrealized_loss",
                 message=f"Paper positions show unrealized PnL {status.total_unrealized_pl:.2f}.",
-                source_path=str(base / "reports" / "paper" / "positions.json"),
+                source_path=_relpath(base / "reports" / "paper" / "positions.json", base),
             )
         )
     report = PaperAlertReport(
@@ -318,8 +318,8 @@ def build_paper_alerts(root: Path | None = None) -> PaperAlertReport:
     )
     json_path = base / "reports" / "paper" / "alerts.json"
     md_path = base / "reports" / "paper" / "alerts.md"
-    report.report_json_path = str(json_path)
-    report.report_markdown_path = str(md_path)
+    report.report_json_path = _relpath(json_path, base)
+    report.report_markdown_path = _relpath(md_path, base)
     write_json(json_path, report)
     _write_alerts_markdown(md_path, report)
     return report
@@ -357,14 +357,14 @@ def refresh_paper_monitor(
         reconciliation_issue_count=reconciliation.issue_count,
         alert_status=alerts.status,
         alert_count=alerts.alert_count,
-        status_path=str(status_path),
+        status_path=_relpath(status_path, base),
         reconciliation_report_path=reconciliation.report_markdown_path,
         alert_report_path=alerts.report_markdown_path,
     )
     json_path = base / "reports" / "paper" / "monitor.json"
     md_path = base / "reports" / "paper" / "monitor.md"
-    report.report_json_path = str(json_path)
-    report.report_markdown_path = str(md_path)
+    report.report_json_path = _relpath(json_path, base)
+    report.report_markdown_path = _relpath(md_path, base)
     write_json(json_path, report)
     _write_monitor_markdown(md_path, report)
     return report
@@ -461,7 +461,11 @@ def _sync_broker_snapshots(base: Path) -> list[str]:
 
     order_path = sync_paper_orders(base)
     account_path, positions_path = sync_paper_account(base)
-    return [str(order_path), str(account_path), str(positions_path)]
+    return [
+        _relpath(order_path, base),
+        _relpath(account_path, base),
+        _relpath(positions_path, base),
+    ]
 
 
 def _is_stale(timestamp: datetime | None) -> bool:
@@ -469,6 +473,13 @@ def _is_stale(timestamp: datetime | None) -> bool:
         return False
     normalized = timestamp if timestamp.tzinfo else timestamp.replace(tzinfo=UTC)
     return (datetime.now(UTC) - normalized).total_seconds() > PAPER_SNAPSHOT_STALE_SECONDS
+
+
+def _relpath(path: Path, base: Path) -> str:
+    try:
+        return path.relative_to(base).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _write_reconciliation_markdown(path: Path, report: PaperReconciliationReport) -> Path:

@@ -23,6 +23,28 @@ class FeaturePacketError(ValueError):
 FeatureValue = str | int | float | bool | None
 
 
+class FeaturePacketEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    single_modality_baseline_metric: str
+    marginal_lift_metric: str
+    missing_modality_robustness: str
+    fixture_path: str | None = None
+    notes: str = ""
+
+    @field_validator("fixture_path")
+    @classmethod
+    def validate_fixture_path(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        if not stripped:
+            return None
+        if stripped.startswith(("/", "\\")) or "\\" in stripped or ":" in stripped:
+            raise ValueError("fixture_path must be a POSIX-style workspace-relative path")
+        return stripped
+
+
 class FeaturePacketRow(BaseModel):
     model_config = ConfigDict(extra="allow")
 
@@ -40,6 +62,7 @@ class FeaturePacketRow(BaseModel):
     input_hash: str | None = None
     prompt_hash: str | None = None
     features: dict[str, FeatureValue] = Field(default_factory=dict)
+    evidence: FeaturePacketEvidence | None = None
 
     @field_validator("symbol")
     @classmethod
@@ -60,6 +83,9 @@ class FeaturePacketInspection(BaseModel):
     models: list[str] = Field(default_factory=list)
     input_hashes: list[str] = Field(default_factory=list)
     prompt_hashes: list[str] = Field(default_factory=list)
+    evidence_count: int = 0
+    missing_evidence_count: int = 0
+    evidence_fixture_paths: list[str] = Field(default_factory=list)
     dedupe_key_count: int = 0
     duplicate_dedupe_keys: list[str] = Field(default_factory=list)
     point_in_time_status: Literal["complete", "partial", "missing"] = "missing"
@@ -149,9 +175,35 @@ def build_context_feature_packet(signal_id: str, root: Path) -> FeaturePacketRow
     )
 
 
-def write_feature_packet(path: Path, packet: FeaturePacketRow) -> Path:
+def write_feature_packet(
+    path: Path,
+    packet: FeaturePacketRow,
+    *,
+    allow_research_only: bool = True,
+) -> Path:
+    if packet.evidence is None and not allow_research_only:
+        raise FeaturePacketError(
+            f"feature packet {packet.symbol}@{packet.timestamp.isoformat()} lacks evidence; "
+            "cannot enter paper_auto path"
+        )
+    assert_visible_at_not_in_future(packet)
     ensure_dir(path.parent)
-    return append_jsonl(path, [packet])
+    return append_jsonl(path, [packet.model_dump(mode="json", exclude_none=True)])
+
+
+def assert_visible_at_not_in_future(
+    packet: FeaturePacketRow,
+    now: datetime | None = None,
+) -> None:
+    current = now or datetime.now(UTC)
+    visible_at = (
+        packet.visible_at if packet.visible_at.tzinfo else packet.visible_at.replace(tzinfo=UTC)
+    )
+    current = current if current.tzinfo else current.replace(tzinfo=UTC)
+    if visible_at > current:
+        raise FeaturePacketError(
+            f"feature packet visible_at {visible_at.isoformat()} is in the future"
+        )
 
 
 def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacketInspection:
@@ -202,6 +254,18 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
     has_dedupe_key = bool(rows) and all("dedupe_key" in keys for keys in key_sets)
     has_schema_version = bool(rows) and all("schema_version" in keys for keys in key_sets)
     has_field = True
+    evidence_count = 0
+    missing_evidence_count = 0
+    evidence_fixture_paths: list[str] = []
+    for row in rows:
+        evidence = row.get("evidence")
+        if isinstance(evidence, dict):
+            evidence_count += 1
+            fixture_path = evidence.get("fixture_path")
+            if isinstance(fixture_path, str) and fixture_path:
+                evidence_fixture_paths.append(fixture_path)
+        else:
+            missing_evidence_count += 1
     if field:
         has_field = bool(rows) and any(_packet_value(row, field) is not _MISSING for row in rows)
 
@@ -256,6 +320,9 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
         models=_sorted_values(row.get("model") for row in rows),
         input_hashes=_sorted_values(row.get("input_hash") for row in rows),
         prompt_hashes=_sorted_values(row.get("prompt_hash") for row in rows),
+        evidence_count=evidence_count,
+        missing_evidence_count=missing_evidence_count,
+        evidence_fixture_paths=sorted(set(evidence_fixture_paths)),
         dedupe_key_count=len(_sorted_values(row.get("dedupe_key") for row in rows)),
         duplicate_dedupe_keys=sorted(duplicate_dedupe_keys),
         point_in_time_status=point_in_time_status,

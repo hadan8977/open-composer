@@ -5,7 +5,7 @@
 ## 阅读顺序
 
 1. `quantml_agent_paper_study_report.zh.md`：主报告，正文约 66856 个非空白字符。
-2. `paper_inventory.csv`：19 篇可见论文的元数据、链接、PDF 状态和报告落点。
+2. `paper_inventory.csv`：19 篇可见论文的元数据、来源链接、抽取状态和报告落点。
 3. `paper_notes/`：逐篇学习笔记。
 4. `claims_traceability.md`：关键结论到论文的可追溯表。
 5. `source_post_extraction.md`：截图抽取与消歧记录。
@@ -13,11 +13,11 @@
 
 ## 文件说明
 
-- `pdfs/`：公开 arXiv PDF 下载件，共 19 个。
-- `extracted_text/`：由 PDF 抽取出的原文文本，便于本地检索。
+- `pdfs/`：可由 `scripts/collect_sources.py` 重新下载的 arXiv PDF 缓存，默认不纳入 Git。
+- `extracted_text/`：由 PDF 抽取出的原文文本，已保留以便本地检索和审计。
 - `references.bib`：BibTeX 参考文献。
-- `quantml_agent_paper_study_report.zh.html`：HTML 版本。
-- `pdf_generation_status.txt`：PDF 生成可用性说明。
+- `quantml_agent_paper_study_report.zh.html`：可由 `scripts/generate_report.py` 重新生成的 HTML 版本，默认不纳入 Git。
+- `pdf_generation_status.txt`：PDF 生成可用性说明；生成出的 PDF 默认不纳入 Git。
 
 ## 范围说明
 

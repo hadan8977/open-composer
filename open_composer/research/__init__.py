@@ -1,3 +1,5 @@
+from open_composer.research.blind_test import BlindTestReport, BlindTestResult, run_blind_test
+from open_composer.research.cost_sensitivity import CostGridReport, CostGridResult, run_cost_grid
 from open_composer.research.drafter import draft_strategy_from_idea
 from open_composer.research.exposure_switch import run_exposure_switch_research
 from open_composer.research.horizon_optimizer import optimize_strategy_horizons
@@ -8,15 +10,34 @@ from open_composer.research.market_timing import run_market_timing_research
 from open_composer.research.optimizer import optimize_strategy
 from open_composer.research.options_overlay import optimize_option_overlays
 from open_composer.research.parameter_sweep import parse_sweep_parameters, run_parameter_sweep
-from open_composer.research.promotion import build_promotion_report
+from open_composer.research.promotion import FivePassChecks, PromotionReport, build_promotion_report
+from open_composer.research.regime_retrieval import RegimeSearchReport, search_similar_regimes
 from open_composer.research.rotation import run_rotation_research
+from open_composer.research.skill_attribution import (
+    SkillAttributionReport,
+    SkillAttributionRow,
+    run_skill_attribution,
+)
 from open_composer.research.universe_optimizer import optimize_strategy_universe
 
 __all__ = [
     "draft_strategy_from_idea",
+    "BlindTestReport",
+    "BlindTestResult",
+    "CostGridReport",
+    "CostGridResult",
+    "RegimeSearchReport",
+    "SkillAttributionReport",
+    "SkillAttributionRow",
+    "run_blind_test",
+    "run_cost_grid",
+    "search_similar_regimes",
+    "run_skill_attribution",
     "run_exposure_switch_research",
     "optimize_option_overlays",
     "parse_sweep_parameters",
+    "FivePassChecks",
+    "PromotionReport",
     "build_promotion_report",
     "run_parameter_sweep",
     "run_llm_exposure_switch_meta_selection",

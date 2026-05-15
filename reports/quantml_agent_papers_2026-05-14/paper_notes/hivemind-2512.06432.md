@@ -6,7 +6,7 @@
 - arXiv：[2512.06432](https://arxiv.org/abs/2512.06432)
 - 主题：LLM Agent 与多智能体交易系统
 - 截图来源：Image #11-12
-- 本地 PDF：`pdfs/hivemind-2512-06432.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/hivemind-2512-06432.pdf`
 - 本地抽取文本：`extracted_text/hivemind-2512-06432.txt`
 
 ## 一句话定位

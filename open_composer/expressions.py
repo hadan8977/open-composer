@@ -52,10 +52,127 @@ STATISTICAL_FUNCTIONS = {
     "bollinger_upper": bollinger_upper,
     "bollinger_lower": bollinger_lower,
 }
+ALLOWED_AST_NODES = frozenset(
+    {
+        ast.Expression,
+        ast.Load,
+        ast.Constant,
+        ast.Name,
+        ast.Call,
+        ast.Compare,
+        ast.BoolOp,
+        ast.UnaryOp,
+        ast.BinOp,
+        ast.UAdd,
+        ast.USub,
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.Not,
+        ast.And,
+        ast.Or,
+        ast.Gt,
+        ast.GtE,
+        ast.Lt,
+        ast.LtE,
+        ast.Eq,
+        ast.NotEq,
+    }
+)
+ALLOWED_FUNCTIONS = frozenset(
+    {
+        *SERIES_WINDOW_FUNCTIONS,
+        *CROSS_FUNCTIONS,
+        "atr",
+        *STATISTICAL_FUNCTIONS,
+    }
+)
+FORBIDDEN_NAMES = frozenset(
+    {
+        "__import__",
+        "breakpoint",
+        "compile",
+        "delattr",
+        "eval",
+        "exec",
+        "getattr",
+        "globals",
+        "input",
+        "locals",
+        "open",
+        "os",
+        "requests",
+        "setattr",
+        "socket",
+        "subprocess",
+        "sys",
+        "urllib",
+        "vars",
+    }
+)
 
 
 class ExpressionError(ValueError):
     pass
+
+
+class ExpressionSafetyError(ExpressionError):
+    pass
+
+
+class _SafetyVisitor(ast.NodeVisitor):
+    def __init__(self) -> None:
+        self.violations: list[str] = []
+
+    def generic_visit(self, node: ast.AST) -> None:
+        if type(node) not in ALLOWED_AST_NODES:
+            self.violations.append(
+                f"forbidden AST node: {type(node).__name__} at line {getattr(node, 'lineno', '?')}"
+            )
+        super().generic_visit(node)
+
+    def visit_Name(self, node: ast.Name) -> None:
+        if node.id in FORBIDDEN_NAMES or node.id.startswith("__"):
+            self.violations.append(f"forbidden name: {node.id!r}")
+        self.generic_visit(node)
+
+    def visit_Call(self, node: ast.Call) -> None:
+        if isinstance(node.func, ast.Name):
+            if node.func.id in FORBIDDEN_NAMES or node.func.id.startswith("__"):
+                self.violations.append(f"forbidden function call: {node.func.id!r}")
+            elif node.func.id not in ALLOWED_FUNCTIONS:
+                self.violations.append(f"forbidden function call: {node.func.id!r}")
+        else:
+            self.violations.append("forbidden function call form")
+        self.generic_visit(node)
+
+    def visit_Attribute(self, node: ast.Attribute) -> None:
+        if node.attr in FORBIDDEN_NAMES or node.attr.startswith("__"):
+            self.violations.append(f"forbidden attribute: {node.attr!r}")
+        self.generic_visit(node)
+
+    def visit_Import(self, node: ast.Import) -> None:
+        self.violations.append("import is not allowed in expressions")
+        self.generic_visit(node)
+
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
+        self.violations.append("import is not allowed in expressions")
+        self.generic_visit(node)
+
+
+def assert_expression_safe(expression: str) -> None:
+    """Raise ExpressionSafetyError when an expression leaves OC's safe subset."""
+    try:
+        parsed = ast.parse(expression, mode="eval")
+    except SyntaxError as exc:
+        raise ExpressionSafetyError(f"expression is not valid Python: {exc}") from exc
+    visitor = _SafetyVisitor()
+    visitor.visit(parsed)
+    if visitor.violations:
+        raise ExpressionSafetyError(
+            "expression failed AST safety check:\n  - " + "\n  - ".join(visitor.violations)
+        )
 
 
 def validate_expression(
@@ -87,6 +204,7 @@ def evaluate_expression(expression: str, frame: pd.DataFrame) -> pd.Series:
 
 
 def evaluate_raw_expression(expression: str, frame: pd.DataFrame) -> Any:
+    assert_expression_safe(expression)
     try:
         parsed = ast.parse(expression, mode="eval")
     except SyntaxError as exc:

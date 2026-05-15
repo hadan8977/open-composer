@@ -359,7 +359,7 @@ def note_for(row: dict[str, str]) -> str:
 - arXiv：{md_link(row)}
 - 主题：{row['topic']}
 - 截图来源：{row.get('image_refs', '')}
-- 本地 PDF：`{row.get('pdf_file', '')}`
+- PDF 缓存路径（可重新下载）：`{row.get('pdf_file', '')}`
 - 本地抽取文本：`{row.get('text_file', '')}`
 
 ## 一句话定位
@@ -402,7 +402,7 @@ def paper_block(row: dict[str, str], index: int) -> str:
     d = DETAILS[row["key"]]
     return f"""### {index}. {row['key']}：{row['title']}
 
-**定位。** {d['one_liner']} 这篇论文在本报告中的作用不是提供一个可以直接照搬的交易策略，而是提供一个可讨论的技术构件：它回答了“量化 Agent 应该怎样组织、怎样验证、怎样约束”的一个具体侧面。原文入口为 arXiv:{md_link(row)}，本地 PDF 和抽取文本已保存到交付目录，便于复查。
+**定位。** {d['one_liner']} 这篇论文在本报告中的作用不是提供一个可以直接照搬的交易策略，而是提供一个可讨论的技术构件：它回答了“量化 Agent 应该怎样组织、怎样验证、怎样约束”的一个具体侧面。原文入口为 arXiv:{md_link(row)}，PDF 可按清单重新下载，抽取文本已保留到交付目录，便于复查。
 
 **研究问题。** {d['problem']} 从没有上下文的读者角度看，论文真正关心的是“传统金融机器学习假设在 Agent 时代哪里失效”。这些失效点包括非平稳、信息时点、角色协作、交易成本、任务分布、程序安全和评估污染。理解这个问题比记住模型名字更重要，因为同一模型换到不同市场后，首先失败的往往不是网络结构，而是问题设定。
 
@@ -422,7 +422,7 @@ def build_report(rows: list[dict[str, str]]) -> str:
     lines.append(f"# 量化 Agent 元年：QuantML 截图论文学习报告\n")
     lines.append(f"生成日期：{TODAY}\n")
     lines.append(
-        "说明：本报告根据用户提供的小红书截图逐项抽取可见论文，并对可解析论文联网核验 arXiv 原文、下载 PDF、抽取文本后整理。报告不构成投资建议，也不把论文回测结果视为可交易承诺。\n"
+        "说明：本报告根据用户提供的小红书截图逐项抽取可见论文，并对可解析论文联网核验 arXiv 原文、下载 PDF、抽取文本后整理；仓库保留抽取文本和清单，PDF 作为可再下载缓存不纳入 Git。报告不构成投资建议，也不把论文回测结果视为可交易承诺。\n"
     )
     lines.append("## 目录\n")
     for item in [
@@ -748,7 +748,7 @@ def write_readme(body_chars: int, rows: list[dict[str, str]]) -> None:
 ## 阅读顺序
 
 1. `quantml_agent_paper_study_report.zh.md`：主报告，正文约 {body_chars} 个非空白字符。
-2. `paper_inventory.csv`：19 篇可见论文的元数据、链接、PDF 状态和报告落点。
+2. `paper_inventory.csv`：19 篇可见论文的元数据、来源链接、抽取状态和报告落点。
 3. `paper_notes/`：逐篇学习笔记。
 4. `claims_traceability.md`：关键结论到论文的可追溯表。
 5. `source_post_extraction.md`：截图抽取与消歧记录。
@@ -756,11 +756,11 @@ def write_readme(body_chars: int, rows: list[dict[str, str]]) -> None:
 
 ## 文件说明
 
-- `pdfs/`：公开 arXiv PDF 下载件，共 {len(rows)} 个。
-- `extracted_text/`：由 PDF 抽取出的原文文本，便于本地检索。
+- `pdfs/`：可由 `scripts/collect_sources.py` 重新下载的 arXiv PDF 缓存，默认不纳入 Git。
+- `extracted_text/`：由 PDF 抽取出的原文文本，已保留以便本地检索和审计。
 - `references.bib`：BibTeX 参考文献。
-- `quantml_agent_paper_study_report.zh.html`：HTML 版本。
-- `pdf_generation_status.txt`：PDF 生成可用性说明。
+- `quantml_agent_paper_study_report.zh.html`：可由 `scripts/generate_report.py` 重新生成的 HTML 版本，默认不纳入 Git。
+- `pdf_generation_status.txt`：PDF 生成可用性说明；生成出的 PDF 默认不纳入 Git。
 
 ## 范围说明
 

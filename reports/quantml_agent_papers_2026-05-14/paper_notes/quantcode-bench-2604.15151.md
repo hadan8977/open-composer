@@ -6,7 +6,7 @@
 - arXiv：[2604.15151](https://arxiv.org/abs/2604.15151v1)
 - 主题：评估基准与可靠性研究
 - 截图来源：Image #33
-- 本地 PDF：`pdfs/quantcode-bench-2604-15151.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/quantcode-bench-2604-15151.pdf`
 - 本地抽取文本：`extracted_text/quantcode-bench-2604-15151.txt`
 
 ## 一句话定位

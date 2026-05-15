@@ -6,7 +6,7 @@
 - arXiv：[2605.05580](https://arxiv.org/abs/2605.05580v1)
 - 主题：LLM Agent 与多智能体交易系统
 - 截图来源：Image #6-7
-- 本地 PDF：`pdfs/alphacrafter-2605-05580.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/alphacrafter-2605-05580.pdf`
 - 本地抽取文本：`extracted_text/alphacrafter-2605-05580.txt`
 
 ## 一句话定位

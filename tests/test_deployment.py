@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from conftest import assert_no_windows_paths
+
 from open_composer.deployment import prepare_workspace
 
 
@@ -35,6 +37,7 @@ def test_prepare_workspace_writes_deployment_artifacts(sample_workspace: Path) -
     dashboard_step = next(step for step in report.steps if step.name == "dashboard_artifacts")
     assert dashboard_step.details["readiness_status"] in {"ok", "warning", "blocked"}
     assert dashboard_step.details["deployment_status"] in {"ok", "warning", "blocked"}
+    assert_no_windows_paths(report.model_dump(mode="json"))
     markdown = (sample_workspace / "reports" / "deployment" / "prepare.md").read_text(
         encoding="utf-8"
     )

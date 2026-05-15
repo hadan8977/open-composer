@@ -96,6 +96,11 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert payload["gate_summary"]["workflow_pass"] is True
     assert payload["gate_summary"]["research_pass"] is False
     assert payload["gate_summary"]["paper_ready_pass"] is False
+    assert payload["five_pass_checks"]["workflow_pass"] == "pass"
+    assert payload["five_pass_checks"]["research_pass"] == "fail"
+    assert payload["five_pass_checks"]["llm_contribution_pass"] == "not_applicable"
+    assert payload["five_pass_checks"]["paper_ready_pass"] == "fail"
+    assert payload["five_pass_checks"]["code_correctness_pass"] == "pass"
     assert payload["benchmark_family"]["benchmarks"]["same_symbol_buy_hold"]["status"] == "ok"
     assert "market_proxy" in payload["benchmark_family"]["missing"]
     assert payload["data_profile"]["source_mode"] == "sample"
@@ -117,3 +122,52 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert "## Benchmark Family" in text
     assert "## Research Manifest" in text
     assert "workflow_pass" in text
+    assert "## Five-Pass Checks" in text
+    assert "| research_pass | FAIL `fail`" in text
+    assert "| llm_contribution_pass | N/A `not_applicable`" in text
+
+
+def test_promotion_report_renders_five_pass_table(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "strategy",
+            "promotion-report",
+            str(sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"),
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    report_path = sample_workspace / "reports" / "research" / "qqq_pullback_15m-promotion.md"
+    text = report_path.read_text(encoding="utf-8")
+    assert "## Five-Pass Checks" in text
+    assert "| workflow_pass | PASS `pass`" in text
+    assert "| paper_ready_pass | FAIL `fail`" in text
+
+
+def test_promotion_report_marks_llm_contribution_not_applicable(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "strategy",
+            "promotion-report",
+            str(sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"),
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    json_path = sample_workspace / "reports" / "research" / "qqq_pullback_15m-promotion.json"
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    assert payload["five_pass_checks"]["llm_contribution_pass"] == "not_applicable"

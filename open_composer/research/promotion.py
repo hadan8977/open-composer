@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from statistics import mean
 from time import perf_counter
@@ -11,8 +11,10 @@ from typing import Literal
 from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
+from open_composer.expressions import ExpressionSafetyError, assert_expression_safe
 from open_composer.feature_packets import inspect_feature_packet
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.blind_test import load_blind_test_report
 from open_composer.research.metadata import (
     frame_data_profile,
     research_run_manifest,
@@ -22,6 +24,7 @@ from open_composer.research.metadata import (
 from open_composer.storage import write_json
 
 PromotionStatus = Literal["ok", "warning", "blocked"]
+FivePassStatus = Literal["pass", "fail", "skipped", "not_applicable"]
 
 
 @dataclass(frozen=True)
@@ -33,6 +36,20 @@ class PromotionCheck:
 
 
 @dataclass(frozen=True)
+class FivePassChecks:
+    workflow_pass: FivePassStatus
+    research_pass: FivePassStatus
+    llm_contribution_pass: FivePassStatus
+    paper_ready_pass: FivePassStatus
+    code_correctness_pass: FivePassStatus
+    workflow_reason: str = ""
+    research_reason: str = ""
+    llm_contribution_reason: str = ""
+    paper_ready_reason: str = ""
+    code_correctness_reason: str = ""
+
+
+@dataclass(frozen=True)
 class PromotionReport:
     strategy_name: str
     source_spec_path: str
@@ -41,6 +58,7 @@ class PromotionReport:
     checks: list[PromotionCheck]
     report_path: str
     json_path: str
+    five_pass_checks: FivePassChecks | None = None
 
 
 def build_promotion_report(
@@ -134,6 +152,7 @@ def build_promotion_report(
         status = "warning"
     else:
         status = "ok"
+    five_pass_checks = _five_pass_checks(spec, ready, checks, base)
     report_path = base / "reports" / "research" / f"{spec.name}-promotion.md"
     json_path = base / "reports" / "research" / f"{spec.name}-promotion.json"
     manifest = research_run_manifest(
@@ -169,6 +188,7 @@ def build_promotion_report(
         benchmark_family,
         data_profile,
         manifest,
+        five_pass_checks,
     )
     _write_promotion_report(
         report_path,
@@ -186,6 +206,7 @@ def build_promotion_report(
         json_path,
         data_profile,
         manifest,
+        five_pass_checks,
     )
     return PromotionReport(
         strategy_name=spec.name,
@@ -195,6 +216,7 @@ def build_promotion_report(
         checks=checks,
         report_path=str(report_path),
         json_path=str(json_path),
+        five_pass_checks=five_pass_checks,
     )
 
 
@@ -470,12 +492,19 @@ def _feature_packet_check(spec: StrategySpec, root: Path) -> PromotionCheck:
                 "field": factor.field,
                 "status": inspection.point_in_time_status,
                 "warnings": inspection.replay_warnings,
+                "evidence_count": inspection.evidence_count,
+                "missing_evidence_count": inspection.missing_evidence_count,
             }
         )
         if not inspection.exists or inspection.point_in_time_status != "complete":
             warning_text = "; ".join(inspection.replay_warnings[:3]) or "not PIT complete"
             missing_or_incomplete.append(
                 f"{name}: {inspection.point_in_time_status} at {factor.path}: {warning_text}"
+            )
+        elif inspection.missing_evidence_count:
+            missing_or_incomplete.append(
+                f"{name}: {inspection.missing_evidence_count} packet row(s) at "
+                f"{factor.path} lack marginal-lift evidence"
             )
     if missing_or_incomplete:
         return PromotionCheck(
@@ -627,6 +656,7 @@ def _write_promotion_json(
     benchmark_family: dict[str, object],
     data_profile: dict[str, object],
     manifest: dict[str, object],
+    five_pass_checks: FivePassChecks,
 ) -> Path:
     ensure_dir(path.parent)
     payload = {
@@ -635,6 +665,7 @@ def _write_promotion_json(
         "status": status,
         "ready": ready,
         "gate_summary": _gate_summary(spec, ready, checks, benchmark_family),
+        "five_pass_checks": asdict(five_pass_checks),
         "checks": [
             {
                 "name": check.name,
@@ -677,6 +708,7 @@ def _write_promotion_report(
     json_path: Path,
     data_profile: dict[str, object],
     manifest: dict[str, object],
+    five_pass_checks: FivePassChecks,
 ) -> Path:
     ensure_dir(path.parent)
     lines = [
@@ -684,13 +716,23 @@ def _write_promotion_report(
         "",
         f"- Status: `{status}`",
         f"- Ready for paper: `{'yes' if ready else 'no'}`",
-        "- Gate taxonomy: workflow_pass, research_pass, llm_contribution_pass, paper_ready_pass.",
+        "- Gate taxonomy: workflow_pass, research_pass, llm_contribution_pass, "
+        "paper_ready_pass, code_correctness_pass.",
         "- Safety note: promotion evidence is not a promise of live returns.",
         f"- Data source mode: `{data_profile.get('source_mode') or 'unknown'}`",
         f"- Data as-of: `{data_profile.get('data_as_of') or 'unknown'}`",
         f"- Trial count: `{manifest.get('trial_count')}`",
         f"- Source spec: `{spec_path}`",
         f"- JSON report: `{json_path}`",
+        "",
+        "## Five-Pass Checks",
+        "",
+        "| Pass | Status | Reason |",
+        "|---|---|---|",
+        *_five_pass_markdown_rows(five_pass_checks),
+        "",
+        "**Ready to advance toward paper readiness?** "
+        + ("yes" if five_pass_checks.paper_ready_pass == "pass" else "no"),
         "",
         "## Checks",
         "",
@@ -756,6 +798,19 @@ def _write_promotion_report(
     lines.append(f"- Git dirty: `{manifest.get('git_dirty')}`")
     lines.append(f"- Spec hash: `{manifest.get('spec_hash')}`")
     lines.append(f"- Data path hash: `{manifest.get('data_path_hash') or 'n/a'}`")
+    regime_path = path.parent.parent / "regime_search" / f"{spec.name}.json"
+    if regime_path.exists():
+        lines.extend(["", "## Similar Regimes", ""])
+        try:
+            regime = json.loads(regime_path.read_text(encoding="utf-8"))
+            for match in regime.get("matches", [])[:3]:
+                lines.append(
+                    f"- `{match.get('window_end')}` similarity "
+                    f"`{float(match.get('similarity', 0.0)):.3f}`: "
+                    f"{match.get('market_note')}"
+                )
+        except (json.JSONDecodeError, TypeError, ValueError):
+            lines.append("- Regime report exists but could not be parsed.")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
@@ -778,6 +833,172 @@ def _gate_summary(
         "warning_checks": sorted(warning),
         "benchmark_family_complete": bool(benchmark_family.get("complete", False)),
     }
+
+
+def _five_pass_checks(
+    spec: StrategySpec,
+    ready: bool,
+    checks: list[PromotionCheck],
+    root: Path,
+) -> FivePassChecks:
+    by_name = {check.name: check for check in checks}
+    blocked = {check.name for check in checks if check.status == "blocked"}
+    warning = {check.name for check in checks if check.status == "warning"}
+
+    workflow_failures = [
+        name
+        for name in ["in_sample", "feature_packets"]
+        if name in blocked or by_name.get(name, PromotionCheck(name, "ok", "")).status == "blocked"
+    ]
+    workflow_pass: FivePassStatus = "fail" if workflow_failures else "pass"
+    workflow_reason = (
+        "blocked checks: " + ", ".join(workflow_failures)
+        if workflow_failures
+        else "spec loaded, expressions validated, and reference backtest ran"
+    )
+
+    research_gate_names = {
+        "out_of_sample",
+        "walk_forward",
+        "cost_sensitivity",
+        "data_comparison",
+        "benchmark_family",
+    }
+    research_failures = sorted(
+        name for name in research_gate_names if name in blocked or name in warning
+    )
+    cost_grid_warning = _cost_grid_warning(spec, root)
+    if cost_grid_warning:
+        research_failures.append("cost_grid")
+    research_pass: FivePassStatus = "fail" if research_failures else "pass"
+    research_reason = (
+        "missing or weak research evidence: "
+        + ", ".join(research_failures)
+        + (f"; {cost_grid_warning}" if cost_grid_warning else "")
+        if research_failures
+        else "OOS, walk-forward, cost, data comparison, and benchmark gates passed"
+    )
+
+    llm_related = bool(spec.llm_review.enabled or _feature_packet_paths(spec))
+    if not llm_related:
+        llm_contribution_pass: FivePassStatus = "not_applicable"
+        llm_reason = "strategy does not use LLM review or LLM/feature packet factors"
+    elif "feature_packets" in blocked:
+        llm_contribution_pass = "fail"
+        llm_reason = "LLM/feature packet factors are missing PIT-complete evidence"
+    else:
+        llm_contribution_pass, llm_reason = _blind_test_contribution_pass(spec, root)
+
+    paper_ready_pass: FivePassStatus = "pass" if ready else "fail"
+    paper_reason = (
+        "all promotion checks are ok"
+        if ready
+        else "blocked checks: " + ", ".join(sorted(blocked or warning))
+    )
+
+    code_correctness_pass, code_reason = _code_correctness_pass(spec)
+
+    return FivePassChecks(
+        workflow_pass=workflow_pass,
+        research_pass=research_pass,
+        llm_contribution_pass=llm_contribution_pass,
+        paper_ready_pass=paper_ready_pass,
+        code_correctness_pass=code_correctness_pass,
+        workflow_reason=workflow_reason,
+        research_reason=research_reason,
+        llm_contribution_reason=llm_reason,
+        paper_ready_reason=paper_reason,
+        code_correctness_reason=code_reason,
+    )
+
+
+def _code_correctness_pass(spec: StrategySpec) -> tuple[FivePassStatus, str]:
+    expressions = [
+        *spec.all_expressions(),
+        *[
+            factor.expression
+            for factor in spec.factors.values()
+            if factor.source == "expression" and factor.expression
+        ],
+    ]
+    for expression in expressions:
+        try:
+            assert_expression_safe(expression)
+        except ExpressionSafetyError as exc:
+            return "fail", f"AST safety check failed for {expression!r}: {exc}"
+    return "pass", "all rule and expression-factor formulas pass the AST safety whitelist"
+
+
+def _blind_test_contribution_pass(spec: StrategySpec, root: Path) -> tuple[FivePassStatus, str]:
+    report = load_blind_test_report(spec.name, root)
+    if report is None:
+        return (
+            "fail",
+            f"missing BlindTrade counterfactual report: reports/blind_test/{spec.name}.json",
+        )
+    by_mode = {result.mode: result for result in report.results}
+    real = by_mode.get("real")
+    anonymous = by_mode.get("anonymous")
+    if real is None or anonymous is None:
+        return "fail", "blind-test report must include real and anonymous modes"
+    sharpe_diff = abs(real.sharpe - anonymous.sharpe)
+    if sharpe_diff > 0.3:
+        return "fail", f"anonymous Sharpe differs from real by {sharpe_diff:.2f}"
+    if anonymous.correlation_with_real is not None and anonymous.correlation_with_real < 0.8:
+        return (
+            "fail",
+            f"anonymous signal correlation with real is {anonymous.correlation_with_real:.2f}",
+        )
+    return "pass", "BlindTrade anonymous mode stays within Sharpe and signal-correlation thresholds"
+
+
+def _cost_grid_warning(spec: StrategySpec, root: Path) -> str:
+    path = root / "reports" / "cost_grid" / f"{spec.name}.json"
+    if not path.exists():
+        return ""
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return "cost-grid report is not valid JSON"
+    spread = raw.get("ranking_spread")
+    if isinstance(spread, int | float) and float(spread) > 1.0:
+        return f"cost-grid Sharpe spread {float(spread):.2f} exceeds 1.00"
+    return ""
+
+
+def _five_pass_markdown_rows(five_pass_checks: FivePassChecks) -> list[str]:
+    rows = [
+        ("workflow_pass", five_pass_checks.workflow_pass, five_pass_checks.workflow_reason),
+        ("research_pass", five_pass_checks.research_pass, five_pass_checks.research_reason),
+        (
+            "llm_contribution_pass",
+            five_pass_checks.llm_contribution_pass,
+            five_pass_checks.llm_contribution_reason,
+        ),
+        (
+            "paper_ready_pass",
+            five_pass_checks.paper_ready_pass,
+            five_pass_checks.paper_ready_reason,
+        ),
+        (
+            "code_correctness_pass",
+            five_pass_checks.code_correctness_pass,
+            five_pass_checks.code_correctness_reason,
+        ),
+    ]
+    return [
+        f"| {name} | {_status_icon(status)} `{status}` | {reason} |"
+        for name, status, reason in rows
+    ]
+
+
+def _status_icon(status: FivePassStatus) -> str:
+    return {
+        "pass": "PASS",
+        "fail": "FAIL",
+        "skipped": "SKIP",
+        "not_applicable": "N/A",
+    }[status]
 
 
 def _feature_packet_paths(spec: StrategySpec) -> list[str]:

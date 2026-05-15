@@ -6,7 +6,7 @@
 - arXiv：[2604.14619](https://arxiv.org/abs/2604.14619)
 - 主题：多模态金融预测与另类数据
 - 截图来源：Image #31
-- 本地 PDF：`pdfs/acoustic-camouflage-2604-14619.pdf`
+- PDF 缓存路径（可重新下载）：`pdfs/acoustic-camouflage-2604-14619.pdf`
 - 本地抽取文本：`extracted_text/acoustic-camouflage-2604-14619.txt`
 
 ## 一句话定位

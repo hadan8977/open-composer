@@ -108,6 +108,8 @@ from open_composer.research import (
     optimize_strategy_horizons,
     optimize_strategy_universe,
     parse_sweep_parameters,
+    run_blind_test,
+    run_cost_grid,
     run_exposure_switch_research,
     run_leverage_research,
     run_llm_exposure_switch_meta_selection,
@@ -115,6 +117,8 @@ from open_composer.research import (
     run_market_timing_research,
     run_parameter_sweep,
     run_rotation_research,
+    run_skill_attribution,
+    search_similar_regimes,
 )
 from open_composer.research.llm_exposure_switch import LLMExposureSwitchChoice
 from open_composer.review.llm import review_signal_with_status
@@ -1344,6 +1348,107 @@ def strategy_promotion_report(
     table.add_row("Report", result.report_path)
     table.add_row("JSON", result.json_path)
     table.add_row("Checks", str(len(result.checks)))
+    console.print(table)
+
+
+@strategy_app.command("blind-test")
+def strategy_blind_test(
+    spec: Path,
+    seed: int = typer.Option(42, "--seed", help="Deterministic remap seed."),
+) -> None:
+    """Run a BlindTrade-style counterfactual evaluation over remapped ticker identities."""
+    report = run_blind_test(spec, project_root(), seed=seed)
+    table = Table(title=f"Blind Test: {report.strategy_name}")
+    for column in ("Mode", "Return %", "Sharpe", "Signals", "Corr w/ real"):
+        table.add_column(column)
+    for result in report.results:
+        table.add_row(
+            result.mode,
+            f"{result.return_pct:.2f}",
+            f"{result.sharpe:.2f}",
+            str(result.signal_count),
+            f"{result.correlation_with_real:.2f}"
+            if result.correlation_with_real is not None
+            else "n/a",
+        )
+    console.print(table)
+    console.print(f"interpretation: {report.interpretation}")
+
+
+@strategy_app.command("cost-grid")
+def strategy_cost_grid(
+    spec: Path,
+    commission: Annotated[list[float] | None, typer.Option("--commission")] = None,
+    slippage: Annotated[list[float] | None, typer.Option("--slippage")] = None,
+    impact_model: Annotated[list[str] | None, typer.Option("--impact-model")] = None,
+) -> None:
+    """Run a cost sensitivity grid across commission, slippage, and impact model."""
+    report = run_cost_grid(
+        spec,
+        commission_grid=commission or [0.0, 0.01],
+        slippage_grid=slippage or [0.0, 5.0, 10.0],
+        impact_models=impact_model or ["linear", "sqrt", "almgren_chriss"],
+        root=project_root(),
+    )
+    table = Table(title=f"Cost Grid: {report.strategy_name}")
+    for column in ("Commission %", "Slippage bps", "Impact", "Return %", "Sharpe"):
+        table.add_column(column)
+    for result in report.results:
+        table.add_row(
+            f"{result.commission_pct:.4f}",
+            f"{result.slippage_bps:.1f}",
+            result.impact_model,
+            f"{result.return_pct:.2f}",
+            f"{result.sharpe:.2f}",
+        )
+    console.print(table)
+    console.print(f"spread={report.ranking_spread:.2f} warning={report.warning}")
+
+
+@strategy_app.command("regime-search")
+def strategy_regime_search(
+    spec: Path,
+    top_k: int = typer.Option(5, "--top-k"),
+    lookback_months: int = typer.Option(6, "--lookback-months"),
+) -> None:
+    """Search historical macro/news regimes similar to the latest available window."""
+    report = search_similar_regimes(
+        spec,
+        root=project_root(),
+        top_k=top_k,
+        lookback_months=lookback_months,
+    )
+    table = Table(title=f"Regime Search: {report.strategy_name}")
+    for column in ("Window", "Similarity", "Macro", "News", "Note"):
+        table.add_column(column)
+    for match in report.matches:
+        table.add_row(
+            match.window_end,
+            f"{match.similarity:.3f}",
+            str(match.macro_count),
+            str(match.news_count),
+            match.market_note,
+        )
+    console.print(table)
+
+
+@strategy_app.command("skill-attribution")
+def strategy_skill_attribution(
+    sample_size: int = typer.Option(20, "--sample-size"),
+) -> None:
+    """Estimate offline contribution of repo skills using recent promotion reports."""
+    report = run_skill_attribution(project_root(), sample_size=sample_size)
+    table = Table(title="Skill Attribution")
+    for column in ("Skill", "Shapley", "Tokens", "Value/token", "Recommendation"):
+        table.add_column(column)
+    for row in report.rows:
+        table.add_row(
+            row.skill_name,
+            f"{row.shapley_value:.4f}",
+            str(row.avg_token_cost_per_invocation),
+            f"{row.contribution_per_token:.6f}",
+            row.recommendation,
+        )
     console.print(table)
 
 

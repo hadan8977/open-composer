@@ -41,6 +41,8 @@ def test_llm_review_mock_writes_card(sample_workspace: Path) -> None:
         evidence=["bar-close signal"],
         risks=["sample-data only"],
         invalidation=["close below entry setup"],
+        primary_risk_source="sample-data only",
+        if_wrong_top_3_reasons=["sample data overfit", "execution friction", "regime shift"],
         action_suggestion="paper observe only",
         model="mock",
     )
@@ -48,6 +50,8 @@ def test_llm_review_mock_writes_card(sample_workspace: Path) -> None:
     result = review_signal_with_llm(signal, spec, sample_workspace, client=client, model="mock")
     assert result == review
     assert (sample_workspace / "reports" / "reviews" / f"{signal.id}.json").exists()
+    markdown = sample_workspace / "reports" / "reviews" / f"{signal.id}.md"
+    assert "Primary risk source: sample-data only" in markdown.read_text(encoding="utf-8")
 
 
 def test_llm_review_skips_without_key(sample_workspace: Path, monkeypatch) -> None:
