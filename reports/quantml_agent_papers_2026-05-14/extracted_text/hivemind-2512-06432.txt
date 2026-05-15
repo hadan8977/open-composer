@@ -1,0 +1,821 @@
+HiveMind: Contribution-Guided Online Prompt Optimization of LLM
+Multi-Agent Systems
+Yihan Xia1, Taotao Wang1,†, Shengli Zhang1, Zhangyuhua Weng1, Bin Cao2, Soung Chang Liew3 *
+1College of Electronic and Information Engineering, Shenzhen University
+2School of Information and Communication Engineering, Beijing University of Posts and Telecommunications
+3Department of Information Engineering, The Chinese University of Hong Kong
+xiayihan2023@email.szu.edu.cn, ttwang@szu.edu.cn, zsl@szu.edu.cn,
+2410043007@mails.szu.edu.cn, caobin@bupt.edu.cn, soung@ie.cuhk.edu.hk
+Abstract
+Recent advances in LLM-based multi-agent systems have
+demonstrated remarkable capabilities in complex decision-
+making scenarios such as financial trading and software
+engineering. However, evaluating each individual agent’s
+effectiveness and online optimization of underperforming
+agents remain open challenges. To address these issues, we
+present HiveMind, a self-adaptive framework designed to
+optimize LLM multi-agent collaboration through contribu-
+tion analysis. At its core, HiveMind introduces Contribution-
+Guided Online Prompt Optimization (CG-OPO), which au-
+tonomously refines agent prompts based on their quanti-
+fied contributions. We first propose the Shapley value as
+a grounded metric to quantify each agent’s contribution,
+thereby identifying underperforming agents in a principled
+manner for automated prompt refinement. To overcome the
+computational complexity of the classical Shapley value, we
+present DAG-Shapley, a novel and efficient attribution al-
+gorithm that leverages the inherent Directed Acyclic Graph
+structure of the agent workflow to axiomatically prune non-
+viable coalitions. By hierarchically reusing intermediate out-
+puts of agents in the DAG, our method further reduces re-
+dundant computations, and achieving substantial cost savings
+without compromising the theoretical guarantees of Shap-
+ley values. Evaluated in a multi-agent stock-trading scenario,
+HiveMind achieves superior performance compared to static
+baselines. Notably, DAG-Shapley reduces LLM calls by over
+80% while maintaining attribution accuracy comparable to
+full Shapley values, establishing a new standard for efficient
+credit assignment and enabling scalable, real-world optimiza-
+tion of multi-agent collaboration.
+Introduction
+Large Language Models (LLMs) have revolutionized Multi-
+Agent Systems (MAS), enabling the creation of sophisti-
+cated agent teams capable of addressing complex collabo-
+rative tasks across diverse domains, such as financial trad-
+ing, automated software development, and scientific discov-
+ery. Despite their remarkable potential, deploying these sys-
+tems in dynamic, real-world environments introduces crit-
+*† Corresponding author.
+Copyright © 2026, Association for the Advancement of Artificial
+Intelligence (www.aaai.org). All rights reserved.
+ical challenges, particularly in maintaining optimal perfor-
+mance through continuous, autonomous adaptation.
+Two fundamental issues arise in this context. First, opti-
+mizing underperforming agents autonomously during run-
+time is essential for adapting to dynamic environments
+but remains an open problem. Second, accurately attribut-
+ing individual agents’ contributions to the overall system
+performance is a significant challenge, especially in com-
+plex workflows where interactions between agents are non-
+trivial. Current solutions often rely on static agent config-
+urations, manually crafted prompts, and periodic updates.
+While this approach may suffice in stable environments, it
+struggles in dynamic scenarios where agent roles and re-
+quirements evolve rapidly, necessitating real-time adapta-
+tion.
+To address these challenges, we proposeHiveMind, a
+self-adaptive framework designed to optimize LLM-based
+multi-agent collaboration through autonomous refinement
+and contribution analysis. At its core, HiveMind introduces
+Contribution-Guided Online Prompt Optimization (CG-
+OPO), a closed-loop optimization mechanism that continu-
+ously refines agent prompts based on their quantified con-
+tributions. By autonomously monitoring agent performance,
+CG-OPO identifies underperforming agents and initiates tar-
+geted prompt refinements through an LLM-driven reflection
+process, enabling dynamic system improvement during run-
+time. A key enabler of CG-OPO isDAG-Shapley, a novel
+and efficient algorithm for contribution measurement. DAG-
+Shapley leverages the Directed Acyclic Graph (DAG) struc-
+ture inherent in agent workflows to compute Shapley values,
+a principled metric for quantifying individual contributions.
+By axiomatically pruning non-viable coalitions and hierar-
+chically reusing intermediate outputs, DAG-Shapley signifi-
+cantly reduces computational complexity compared to clas-
+sical Shapley value calculations, making real-time attribu-
+tion feasible without compromising theoretical guarantees.
+HiveMind operates as a self-adaptive cycle of diagnosis
+and optimization: DAG-Shapley provides rapid and accurate
+identification of performance bottlenecks, while CG-OPO
+executes targeted adjustments to enhance agent collabora-
+tion. This framework eliminates the need for human inter-
+vention, ensuring scalable and robust MAS performance in
+dynamic environments. Our primary contributions are as fol-
+arXiv:2512.06432v1  [cs.MA]  6 Dec 2025
+
+lows:
+•Dynamic Autonomous Optimization Framework: We
+introduce CG-OPO, a mechanism that enables continu-
+ous refinement of agent prompts based on quantified con-
+tributions, ensuring sustained system improvement dur-
+ing runtime.
+•Efficient Contribution Measurement Algorithm: We
+propose DAG-Shapley, a computationally efficient algo-
+rithm for real-time attribution in DAG-structured agent
+systems, reducing LLM calls by over 80% compared to
+classical Shapley value calculations.
+•Integrated Self-Adaptive Framework: HiveMind com-
+bines CG-OPO and DAG-Shapley into a cohesive frame-
+work for building scalable, self-optimizing agent teams.
+Evaluated in a multi-agent stock-trading scenario, Hive-
+Mind demonstrates superior performance compared to static
+baselines, achieving efficient credit assignment and scalable
+optimization of multi-agent collaboration. By addressing the
+challenges of dynamic optimization and real-time attribu-
+tion, HiveMind establishes a new standard for MAS, paving
+the way for robust applications in complex, evolving envi-
+ronments.
+Related Work
+Our work builds upon and contributes to three primary areas
+of research: LLM-based multi-agent systems, credit assign-
+ment in cooperative games, and automated prompt engineer-
+ing.
+LLM-Based Multi-Agent Systems
+The concept of multi-agent systems has a rich history, but
+the advent of LLMs has catalyzed a new wave of research
+into more capable and flexible agent architectures (Wang
+et al. 2024; Zhang et al. 2023). Recent works have demon-
+strated the potential of LLM-based agents for complex, col-
+laborative tasks. In software development, frameworks like
+MetaGPT (Hong et al. 2023) and ChatDev (Qian et al. 2023)
+simulate entire software companies with specialized agent
+roles. For social science and human behavior studies, sys-
+tems like Generative Agents (Park et al. 2023) create be-
+lievable simulacra of human interaction in sandbox environ-
+ments. Beyond specific domains, general-purpose collabo-
+rative frameworks such as AgentVerse (Chen et al. 2023)
+and AutoGen (Wu et al. 2023) have been proposed to fa-
+cilitate cooperation among LLM agents to solve a wide ar-
+ray of complex problems. Recent advances in multi-modal
+information processing have also explored efficient hashing
+techniques for handling heterogeneous data types in collabo-
+rative systems (Tu et al. 2025b). While these systems show-
+case impressive capabilities, the coordination and optimiza-
+tion of agent collaboration often rely on predefined heuris-
+tics or manual intervention. Our work moves beyond this by
+proposing a framework for autonomous, online optimization
+of the agent workflow itself.
+Credit Assignment
+The problem of fairly attributing a collective outcome to in-
+dividual contributors is a central theme in both reinforce-
+ment learning (Sutton and Barto 2018) and cooperative
+game theory. The Shapley value (Shapley et al. 1953) re-
+mains the gold standard for fair credit assignment due to its
+strong axiomatic guarantees. However, its exponential com-
+plexity has spurred a long line of research into approxima-
+tion methods. In multi-agent reinforcement learning, credit
+assignment is often addressed through value function fac-
+torization, as seen in influential works like VDN (Sunehag
+et al. 2017) and QMIX (Rashid et al. 2018). Our work,
+DAG-Shapley, falls into the category of structural credit
+assignment, we are the first to leverage the inherent Di-
+rected Acyclic Graph (DAG) structure of LLM-based agent
+workflows to create a computationally efficient and accurate
+credit assignment mechanism specifically for LLM-based
+systems.
+Automated Prompt Engineering
+The performance of LLMs is highly sensitive to the qual-
+ity of their prompts. This has led to a surge in research on
+automated prompt engineering, or “prompt optimization.”
+Foundational prompting strategies that elicit complex rea-
+soning, such as Chain-of-Thought (CoT) (Wei et al. 2022)
+and Tree-of-Thoughts (ToT) (Yao et al. 2023), have demon-
+strated the profound impact of prompt structure. Building
+on this, automated methods have emerged to discover opti-
+mal prompts. These include discrete optimization methods
+like Automatic Prompt Engineer (APE) (Zhou et al. 2022),
+gradient-free optimization (Pryzant et al. 2023), and meth-
+ods using reinforcement learning to refine prompts (Deng
+et al. 2022). Complementary research in vision-language
+pre-training has demonstrated the importance of seman-
+tic completion learning for enhancing multi-modal under-
+standing capabilities (Tu et al. 2025a). Our Contribution-
+Guided Online Prompt Optimization (CG-OPO) framework
+extends this concept to the multi-agent setting. It represents
+a novel approach where the optimization of individual agent
+prompts is guided by a global, system-level assessment of
+each agent’s contribution, creating a direct, performance-
+driven link between collaborative success and prompt refine-
+ment.
+System Formalization
+This section details HiveMind, our self-adaptive opti-
+mization framework for LLM-based multi-agent systems.
+The framework addresses two fundamental challenges: au-
+tonomous optimization of underperforming agents during
+runtime and accurate attribution of individual agent contri-
+butions to overall system performance. HiveMind introduces
+two key innovations: Contribution-Guided Online Prompt
+Optimization (CG-OPO), a closed-loop optimization mech-
+anism that continuously refines agent prompts based on
+quantified contributions; and DAG-Shapley, an efficient al-
+gorithm for contribution measurement that leverages Di-
+rected Acyclic Graph structure to compute Shapley values
+with dramatically reduced computational complexity.
+HiveMind operates as a closed-loop, periodic optimiza-
+tion system that continuously improves collective perfor-
+mance through autonomous adaptation. The framework con-
+
+Figure 1: Overall system architecture showing the closed-loop optimization cycle.
+sists of an iterative cycle: performance evaluation→contri-
+bution measurement→bottleneck identification→prompt
+optimization→system update. At its core, CG-OPO pro-
+vides targeted agent enhancement guided by precise contri-
+bution measurement from Shapley value. This combination
+eliminates manual intervention requirements while ensuring
+scalable optimization in dynamic environments. Figure 1 il-
+lustrates the primary components and their data flow within
+this continuous optimization loop, where each iteration re-
+fines individual agent behavior based on measured contribu-
+tions to overall system performance.
+System Architecture and Information Flow
+To systematically manage agent interactions and enable
+principled contribution analysis, we model our Multi-Agent
+System (MAS) as a Directed Acyclic Graph (DAG). This
+architectural choice is motivated by three key observations:
+(1) many collaborative tasks exhibit natural information flow
+hierarchies that preclude cycles, (2) acyclic structures en-
+able efficient topological scheduling and prevent informa-
+tion loops that can destabilize learning, and (3) DAG con-
+straints facilitate rigorous credit assignment through game-
+theoretic frameworks (Shapley et al. 1953; Li et al. 2024).
+Our approach builds upon recent advances in DAG-based
+multi-agent coordination (Qian et al. 2024) while address-
+ing the specific challenges of financial decision-making un-
+der uncertainty.
+Graph Formalization and ConstraintsFormally, we de-
+fine the system as a graphG= (V,E), whereV=
+{a1, a2, . . . , aN }is the set ofNagents, andE ⊆ V × V
+is the set of directed edges. An edge(a i, aj)∈ Esigni-
+fies that the output of agenta i is a required input for agent
+aj. The acyclicity constraint ensures that there exists a topo-
+logical orderingπ:V → {1,2, . . . , N}such that for all
+(ai, aj)∈ E, we haveπ(a i)< π(a j).
+Within this graph, we distinguish critical subsets of nodes:
+•Source nodes:V source ={v∈ V:in-degree(v) = 0},
+which process external information
+•Sink node:a T ∈ Vsuch that out-degree(a T ) = 0, which
+produces the system’s final output
+•Intermediate nodes:V intermediate =V \(V source ∪ {aT })
+Access Control and Data DependenciesThe DAG struc-
+ture enforces strict information flow constraints through a
+formal access control mechanism (Myerson 1977). LetD
+represent the universe of available data, and define an infor-
+mation access functionI:V →2 D that maps each agent to
+its accessible data subset. For any agenta i, its information
+setI(a i)includes:
+I(a i) =D (i)
+external ∪
+[
+(aj ,ai)∈E
+O(aj)(1)
+whereD (i)
+external represents external data directly accessible to
+agenta i, andO(a j)denotes the output of agenta j. This for-
+malization ensures that information flows strictly according
+to the DAG topology, preventing unauthorized data access
+that could compromise the system’s hierarchical structure.
+Structural Benefits and ComplexityThe DAG constraint
+provides several computational and organizational advan-
+tages:
+1.Efficient Scheduling: The topological ordering enables
+parallel execution within layers while maintaining de-
+pendencies, achieving optimal scheduling complexity
+O(|V|+|E|).
+2.Bounded Computation: The acyclic property guaran-
+tees termination and prevents infinite loops in iterative
+processes, ensuring system stability.
+3.Hierarchical Learning: The structured information flow
+enables layer-wise optimization and facilitates credit as-
+signment through backward propagation of gradients or
+game-theoretic value distribution.
+Implementation and Agent RolesTo ground this ab-
+straction, we instantiate our framework within a multi-agent
+financial trading system designed for stock market analy-
+sis and decision-making, a domain where multi-agent ap-
+proaches have demonstrated significant promise (Xiao et al.
+2024; Tran et al. 2025). The system comprises seven agents
+organized into three distinct hierarchical layers:
+
+Analysis Layer(V source): This layer consists of three in-
+dependent specialist agents:
+•News Analyst Agent (NAA): Processes news feeds and
+sentiment data
+•Technical Analyst Agent (TAA): Analyzes price history
+and technical indicators
+•Fundamental Analyst Agent (FAA): Evaluates finan-
+cial statements and company metrics
+Each agent processes raw, heterogeneous market data in
+parallel to produce focused analytical summaries, forming
+the source nodes of our DAG.
+Outlook Layer(V intermediate): This layer contains three
+agents that synthesize outputs from the Analysis Layer:
+•Bullish Outlook Agent (BOA): Aggregates positive
+market signals
+•Bearish Outlook Agent (BeOA): Consolidates negative
+market indicators
+•Neutral Outlook Agent (NOA): Balances conflicting
+signals
+These agents are explicitly prohibited from accessing raw
+market data through the information flow constraints defined
+byI(·), forcing reliance solely on structured analyses from
+the previous layer.
+Decision Layer(Sink Node): TheTrader Agent (TRA)
+constitutes the final layer, consuming competing outlooks to
+produce actionable trading decisions. This agent serves as
+the system’s sink nodeaT .
+The integration of Shapley value theory into this DAG-
+based framework provides a principled approach to contri-
+bution assessment that leverages the structured information
+flow (Myerson 1977). This combination enables both effi-
+cient execution and fair credit assignment, making it particu-
+larly suitable for collaborative decision-making tasks where
+individual agent contributions must be quantified and opti-
+mized.
+Contribution-Guided Online Prompt Optimization
+In multi-agent systems, evaluating each individual agent’s
+effectiveness and performing online optimization of under-
+performing agents remain open challenges.
+To address these challenges, we introduceContribution-
+Guided Online Prompt Optimization (CG-OPO), a sys-
+tematic framework that autonomously transforms contribu-
+tion measurement scores into targeted agent improvements.
+CG-OPO establishes a principled feedback mechanism uti-
+lizing game-theoretic attribution to concentrate optimiza-
+tion on underperforming components while preserving well-
+functioning agents. By integrating Shapley value-based at-
+tribution with automated prompt optimization techniques
+(Li et al. 2025; Pryzant et al. 2023), CG-OPO addresses fun-
+damental system bottlenecks, enabling scalable autonomous
+improvement in DAG-structured multi-agent architectures
+In our framework, the optimization is iterative. We uset
+to denote the current optimization cycle or time step (e.g., a
+weekly evaluation period), during which historical dataH t
+is collected.
+Four-Stage Optimization PipelineCG-OPO operates
+through four sequential stages:
+•Contribution Measurement: Evaluates individual agent
+performance using game-theoretic attribution
+•Identify Bottleneck Agent: Selects the lowest-
+performing agent for optimization
+•Performance-Based Reflection: Analyzes failure and
+success cases via meta-optimizer to extract improvement
+insights
+•Prompt Metamorphosis: Integrates learned lessons into
+the target agent’s prompt for enhanced performance
+The complete optimization process is formalized in Algo-
+rithm 1.
+Stage 1: Contribution MeasurementThe optimization
+cycle begins with comprehensive evaluation of each agent’s
+contribution to system performance. For each agenta i ∈ V,
+we compute the Shapley valueϕ i(t)representing agenti’s
+contribution to the system’s overall performance, based on
+the Sharpe ratio of coalition subsets (Hua et al. 2025; Liang
+et al. 2024). The Shapley value for agentiis defined as:
+ϕi(v) =
+X
+S⊆V\{a i}
+|S|!(N− |S| −1)!
+N! [v(S∪ {a i})−v(S)]
+(2)
+wherev(S)represents the coalition performance measured
+by the Sharpe ratio:
+v(S) =Sharpe(S) = E[RS]−R f
+σ(RS) (3)
+whereR S is the return generated by coalitionS,R f is the
+risk-free rate, andσ(R S)is the standard deviation of coali-
+tion returns.
+Stage 2: Identify Bottleneck AgentBased on the contri-
+bution scores computed in Stage 1, the system identifies the
+target agent for optimization:
+a∗ = arg min
+ai∈V
+ϕi(t)(4)
+Optimization is triggered only ifϕa∗(t)< τ threshold, focusing
+computational resources on genuine bottlenecks while pre-
+serving well-performing agents, as shown in Algorithm 1.
+Stage 3: Performance-Based ReflectionWhen a bottle-
+neck is identified, the system extracts failure casesF ∗ =
+{(s, a, r)∈ H t(a∗) :r <0}and success casesS ∗ =
+{(s, a, r)∈ H t(a∗) :r≥0}from the target agent’s histor-
+ical performance dataH t(a∗). A meta-optimizer analyzes
+these cases to generate actionable lessonsL t that identify
+systematic weaknesses and successful patterns through con-
+ceptual verbal reinforcement (Yu et al. 2024). This approach
+leverages collaborative agent interaction and iterative refine-
+ment of analysis to enhance reasoning capabilities, particu-
+larly effective in financial decision-making contexts. The re-
+flective learning mechanism draws upon meta-optimization
+principles to systematically improve agent performance. The
+detailed reflection process is presented in Algorithm 2.
+
+Algorithm 1: Contribution-Guided Online Prompt Opti-
+mization (CG-OPO)
+Input: Agent setV, contribution scores{ϕ i(t)}n
+i=1, weekly
+I/O dataH t
+Output: Updated agent prompts for cycle
+t+ 1
+1:a ∗ ←arg min ai∈V ϕi(t)// Bottleneck identification
+2:F ∗ ←f extract(Ht, a∗)// Collect performance feedback
+3:Π reflect ←f prompt(a∗, ϕa∗(t),F ∗)// Performance-Based
+Reflection
+4:L t ←f reflect(Πreflect)// Generate lessons learned
+5:P t+1(a∗)←P t(a∗)⊕f format(Lt)// Prompt metamor-
+phosis
+6:return{P t+1(ai)}n
+i=1
+Algorithm 2: Performance-Based Reflection Process
+Input: Target agenta ∗, historical dataH t(a∗), contribution
+scoreϕ a∗(t)
+Output: Lessons learnedL t
+1:F ← {(s, a, r)∈ H t(a∗) :r <0}// Extract failure
+cases
+2:S ← {(s, a, r)∈ H t(a∗) :r≥0}// Extract success
+cases
+3:Π context ←f format(F,S, ϕ a∗(t))
+4:Π reflect ←Π template ⊕Π context
+5:L t ←f optimize(Πreflect)
+6:returnL t
+Stage 4: Prompt MetamorphosisThe final stage inte-
+grates the extracted lessons into the target agent’s prompt
+through structured augmentation, following principles from
+automated prompt engineering and prompt evolution tech-
+niques:
+Pt+1(a∗) =P t(a∗)⊕ L t (5)
+where⊕denotes concatenation that preserves the agent’s
+core functionality while incorporating experience-based
+guidance. This approach ensures incremental improvement
+without disrupting established capabilities, as implemented
+in Algorithm 1.
+This creates a complete self-improvement mechanism
+where contribution measurement enables accurate targeting
+of genuine bottlenecks, while CG-OPO provides respon-
+sive optimization that adapts to changing system dynamics
+through continuous monitoring and validation of improve-
+ments.
+DAG-Shapley: Efficient Contribution
+Measurement
+CG-OPO requires precise computation of contribution
+scoresϕ i(t)for real-time bottleneck identification. While
+exact Shapley value computation provides optimal attribu-
+tion accuracy (Shapley et al. 1953), the exponential com-
+plexity of evaluating2 n coalitions necessitates efficient al-
+gorithms for operational deployment in LLM-based systems
+where each coalition evaluation requires expensive API calls
+(Hua et al. 2025).
+Algorithm 3: Coalition Space Pruning
+Input: Agent setV, source agentsV source, tradera T , DAGG
+Output: Viable coalitionsCviable
+1:C viable ← ∅
+2:foreach coalitionS∈2 V do
+3:ifa T /∈Sthen
+4:continue// Endpoint Rule
+5:end if
+6:ifS∩ V source =∅then
+7:continue// Source Rule
+8:end if
+9:if∄v∈ V source ∩S:v⇝a T inG| S then
+10:continue// Connectivity Rule
+11:end if
+12:C viable ← Cviable ∪ {S}
+13:end for
+14:returnC viable
+We introduce DAG-Shapley, exploiting DAG structure
+to achieve exact Shapley computation with enhanced ef-
+ficiency through coalition space reduction and hierarchi-
+cal memoization (Qian et al. 2024; Myerson 1977; Li and
+Shan 2020). The directed nature of our agent workflow
+aligns with directed graph games theory, where asymmet-
+ric information flow and hierarchical relationships naturally
+emerge. DAG-Shapley operates through two optimization
+stages: (1) Coalition Space Pruning eliminates structurally
+invalid coalitions, and (2) Generalized Hierarchical Memo-
+ization (GHM) caches functionally equivalent computations.
+Coalition Space PruningCoalition space pruning lever-
+ages the DAG structure to eliminate coalitions incapable of
+producing system outputs. The directed graph framework
+(Li and Shan 2020) provides theoretical foundation for an-
+alyzing coalition formation in hierarchical structures with
+asymmetric relationships.
+Given workflow structureG= (V,E)with source agents
+Vsource and sink agenta T , coalition viability requires three
+conditions:
+HasTrader(S)≜a T ∈S(6)
+HasSource(S)≜S∩ V source ̸=∅(7)
+Connected(S)≜∃v∈(V source ∩S) :v⇝a T inG| S (8)
+A coalitionSis considered viable if it meets these condi-
+tions. We define a viability function:
+Viable(S)≜HasTrader(S)∧HasSource(S)∧Connected(S)
+(9)
+For non-viable coalitions where Viable(S)is false, their
+value is zero (v(S) = 0), enabling systematic elimination
+while preserving Shapley exactness (Myerson 1977). The
+pruning process is formalized in Algorithm 3, reducing eval-
+uations from 128 to 49 coalitions for the 7-agent system.
+Generalized Hierarchical MemoizationThe layered
+architecture enables computational optimization through
+memoization of functionally equivalent computations.
+When different coalitions produce identical layer input
+
+Algorithm 4: Generalized Hierarchical Memoization
+(GHM)
+Input: Layered DAGG= (L 1, . . . ,LNL), viable coalitions
+Cviable
+Output: Agent output cacheMfor all required computa-
+tions
+1:M ← {}// Initialize memoization cache
+2:fori←1toN L do
+3:U i ← {I (k)
+i :S (k) ∈ Cviable}// Unique configurations
+4:foreach configurationI i ∈ U i do
+5:A active ← {a∈ L i :∃S (k) s.t.a∈S (k) ∧ I (k)
+i =
+Ii}
+6:foreach agenta∈ A active do
+7:if(a,I i)/∈ Mthen
+8:inputs← {O(a ′) :a ′ ∈ I i}fromM
+9:M[(a,I i)]←ExecuteAgent(a,inputs)
+10:end if
+11:end for
+12:end for
+13:end for
+14:returnM
+configurations, downstream computations are functionally
+equivalent, enabling efficient caching and reuse strategies.
+For coalitionS (k) ∈ C viable, the layer input configuration
+for layerL i is:
+I (k)
+i =
+i−1[
+j=1
+(S(k) ∩ Lj)(10)
+Under functional determinism:
+I (k)
+i =I (k′)
+i ⇒O a(I (k)
+i ) =O a(I (k′)
+i )(11)
+GHM computes each unique configuration once and reuses
+results across coalitions, as detailed in Algorithm 4. The
+computational cost becomes:
+CostGHM =
+NLX
+i=1
+|Ui| · |Li|(12)
+where|U i|represents unique input configurations for layer
+Li.
+The integration of coalition space pruning with GHM en-
+ables exact Shapley computation with complexity:
+ComplexityDAG-Shapley =O
+ NLX
+i=1
+|Ui| · |Li|
+!
+(13)
+where|U i|denotes the number of unique input configura-
+tions reaching layerL i, calculated as:
+|Ui|=
+i−1Y
+j=1
+(2|Lj | −δ j)(14)
+withδ j = 1if layerjrequires mandatory participation (ex-
+cluding empty coalitions), 0 otherwise. For the 7-agent sys-
+tem with architecture [3,3,1], this yields|U 1|= 1,|U 2|= 7,
+|U3|= 49, totaling 73 operations:1×3+7×3+49×1 = 73.
+Empirical validation demonstrates reduction from 448
+classical Shapley evaluations to 73 DAG-Shapley opera-
+tions (83% improvement), enabling real-time computation
+of precise contribution scores required by CG-OPO. This
+efficiency gain addresses the scalability challenges of LLM-
+based multi-agent systems where computational costs are
+substantial.
+Experimental Evaluation
+We conduct experiments to evaluate the effectiveness of
+HiveMind in optimizing multi-agent collaboration through
+its CG-OPO framework and DAG-Shapley algorithm. These
+experiments focus on validating the system’s ability to en-
+hance financial trading performance and computational effi-
+ciency compared to static baselines and traditional strategies
+across different market conditions.
+Dataset and Evaluation FrameworkWe evaluate CG-
+OPO using a 7-agent DAG system powered by GLM-4-
+Flash with temperature set to 0 across four major technol-
+ogy stocks: AAPL, META, MSFT, and NVDA. The evalu-
+ation spans two distinct market regimes over a 3-month pe-
+riod. CG-OPO performs optimization cycles every 5 trading
+days, computing Sharpe ratios for all viable agent coalition
+subsets within each evaluation window:
+•Bull Market Period: October 1–December 30, 2024
+•Bear Market Period: January 2–March 28, 2025
+Baseline MethodsWe compare CG-OPO against multi-
+ple baseline approaches to establish comprehensive perfor-
+mance benchmarks:
+•w/o CG-OPO: Multi-agent system without contribution-
+guided optimization, using static agent configurations
+•Technical Indicators:
+– MACD: Moving Average Convergence Divergence
+signal-based strategy
+– SMA: Simple Moving Average trend-following ap-
+proach
+•Buy & Hold: Passive investment benchmark represent-
+ing baseline market performance
+Performance MetricsSystem performance is evaluated
+using standard financial metrics: total return, Sharpe ra-
+tio, and maximum drawdown (MaxDD). These metrics pro-
+vide comprehensive assessment of both absolute and risk-
+adjusted performance characteristics.
+Results and Analysis
+Table 1 presents comprehensive performance comparison
+across both market regimes, with methods grouped by stock
+for direct comparison.
+CG-OPO consistently outperforms baseline methods
+across both market regimes. In bull markets, CG-OPO
+achieves substantial improvements over w/o CG-OPO:
+209% for META (13.72% vs 4.44%), 53% for NVDA
+(22.60% vs 14.76%), and 29% for MSFT (7.95% vs 6.15%).
+During bear markets, CG-OPO maintains positive returns
+for three stocks while traditional approaches fail: META
+
+Stock Method Bull Market (Oct–Dec 2024) Bear Market (Jan–Mar 2025)
+Return Sharpe MaxDD Return Sharpe MaxDD
+AAPL
+CG-OPO 27.59% 3.97 6.23% 3.89% 0.57 20.61%
+w/o CG-OPO 27.08% 3.90 6.23% 2.45% 0.41 17.96%
+Buy & Hold 11.49% 3.30 6.12% -10.64% -1.35 15.14%
+MACD 9.82% 5.27 7.89% -3.16% -0.31 15.67%
+SMA 0.85% 0.21 9.54% -3.93% -0.38 16.89%
+META
+CG-OPO 13.72% 1.58 12.84% 15.15% 1.60 21.20%
+w/o CG-OPO 4.44% 0.59 15.27% 6.88% 0.83 26.97%
+Buy & Hold 2.56% 0.41 7.50% -3.75% -0.45 21.71%
+MACD -9.34% -3.25 12.45% 5.13% 0.33 18.92%
+SMA -4.24% -1.71 6.12% 13.93% 3.16 7.54%
+MSFT
+CG-OPO 7.95% 1.14 8.72% 12.62% 2.00 10.05%
+w/o CG-OPO 6.15% 0.89 8.10% 8.29% 1.21 13.17%
+Buy & Hold 0.98% 0.19 6.52% -9.50% -1.35 15.30%
+MACD -2.55% -0.89 8.14% -7.40% -0.90 10.69%
+SMA -0.36% -0.15 7.68% -11.72% -1.30 19.12%
+NVDA
+CG-OPO 22.60% 1.58 26.28% -21.81% -1.09 38.11%
+w/o CG-OPO 14.76% 1.14 27.34% -41.71% -2.78 49.84%
+Buy & Hold 17.51% 2.54 13.41% -20.71% -0.94 28.41%
+MACD -10.53% -3.76 8.16% -24.17% -2.71 11.67%
+SMA -9.75% -3.75 8.54% -27.41% -2.88 17.54%
+Table 1: Performance Comparison Across Market Regimes
+Metric Classic Shapley DAG-Shapley Improvement
+Coalition Evaluations 128 49 61.7% reduction
+LLM Calls 448 73 83.7% reduction
+Table 2: Computational Efficiency Analysis
+(+15.15% vs Buy & Hold−3.75%), MSFT (+12.62% vs
+−9.50%), and AAPL (+3.89% vs−10.64%). For NVDA,
+CG-OPO limits losses to−21.81%compared to w/o CG-
+OPO’s−41.71%. Technical indicators consistently under-
+perform across all conditions, validating the superiority of
+adaptive multi-agent approaches over rule-based strategies.
+The results demonstrate CG-OPO’s effectiveness in both
+capturing opportunities during favorable conditions and pro-
+viding defensive capabilities during market stress.
+Computational Efficiency Analysis
+Table 2 demonstrates that DAG-Shapley optimization de-
+livers substantial computational advantages over traditional
+Shapley value computation through structural pruning and
+hierarchical memoization, enabling real-time deployment in
+live trading environments.
+DAG-Shapley optimization delivers substantial computa-
+tional benefits through structural pruning and hierarchical
+memoization. Importantly, our optimized DAG-Shapley al-
+gorithm produces identical contribution attribution results to
+the classical Shapley computation in all evaluated scenarios,
+ensuring that computational efficiency gains do not compro-
+mise the accuracy or reliability of agent contribution assess-
+ments. This enables real-time deployment in live trading en-
+vironments with full confidence in result validity.
+Discussion
+The experimental results validate CG-OPO’s effectiveness
+across varying market conditions, with particular strength
+in bull markets for high-volatility stocks and defensive ca-
+pabilities maintaining positive returns during bear markets.
+While CG-OPO consistently achieves higher returns, it ex-
+hibits increased volatility and maximum drawdowns, sug-
+gesting more aggressive trading strategies that enhance re-
+turns but increase risk exposure.
+The consistent underperformance of traditional technical
+indicators validates the superiority of adaptive multi-agent
+approaches over rule-based strategies. The 83.7% reduction
+in computation time enables real-time deployment in opera-
+tional trading environments.
+Current limitations include sector focus on technology
+stocks and evaluation during specific market periods. Future
+work should explore broader asset classes, extended time
+horizons, and integrated risk management mechanisms to
+control exposure while preserving adaptive advantages.
+Acknowledgements
+This work was supported in part by the Guangdong Ba-
+sic and Applied Basic Research Foundation under Grant
+2024A1515012407, in part by the 2024 Shenzhen-Hong
+Kong-Macao Science and Technology Program (Cate-
+gory C Project) under Grant SGDX20230821094359004,
+in part by the National Natural Science Foundation
+of China under Grant 62171291, and in part by the
+Shenzhen Science and Technology Program under Grant
+JCYJ20220531101015033.
+
+References
+Chen, W.; Su, Y .; Ge, Z.; Liu, C.; Zhang, C.; Zhang, Y .; Qiu,
+J.; and Zhang, L. 2023. Agentverse: Facilitating multi-agent
+collaboration and exploring emergent behaviors in agents.
+arXiv preprint arXiv:2308.10848.
+Deng, M.; Wang, J.; Hsieh, C.; Wang, Y .; Guo, H.; Shu, T.;
+Song, M.; Xing, E.; and Hu, Z. 2022. RLPrompt: Optimiz-
+ing Discrete Text Prompts with Reinforcement Learning. In
+Proceedings of the 2022 Conference on Empirical Methods
+in Natural Language Processing (EMNLP), 3369–3391. As-
+sociation for Computational Linguistics.
+Hong, S.; Zhuge, M.; Chen, J.; Zheng, X.; Cheng, Y .; Zhang,
+C.; Wang, Z.; Yau, S. K.; Lin, Z.; et al. 2023. MetaGPT:
+Meta Programming for A Multi-Agent Collaborative Frame-
+work.arXiv preprint arXiv:2308.00352.
+Hua, Y .; Chen, H.; Wang, S.; Li, W.; Wang, X.; and Luo,
+J. 2025. Shapley-Coop: Credit Assignment for Emergent
+Cooperation in Self-Interested LLM Agents.arXiv preprint
+arXiv:2506.07388.
+Li, D. L.; and Shan, E. 2020. The Myerson value for directed
+graph games.Operations research letters, 48(2): 142–146.
+Li, M.; Sun, H.; Huang, Y .; and Chen, H. 2024. Shapley
+value: from cooperative game to explainable artificial intel-
+ligence.Autonomous Intelligent Systems, 4(1): 2.
+Li, W.; Wang, X.; Li, W.; and Jin, B. 2025. A survey of
+automatic prompt engineering: An optimization perspective.
+arXiv preprint arXiv:2502.11560.
+Liang, Y .; Wu, H.; Wang, H.; and Cai, H. 2024. Asyn-
+chronous Credit Assignment for Multi-Agent Reinforce-
+ment Learning.arXiv preprint arXiv:2408.03692.
+Myerson, R. B. 1977. Graphs and cooperation in games.
+Mathematics of operations research, 2(3): 225–229.
+Park, J. S.; O’Brien, J. C.; Cai, C. J.; Morris, M. R.; Liang,
+P.; and Bernstein, M. S. 2023. Generative Agents: In-
+teractive Simulacra of Human Behavior.arXiv preprint
+arXiv:2304.03442.
+Pryzant, R.; Iter, D.; Li, J.; Lee, Y . T.; Zhu, C.; and Zeng, M.
+2023. Automatic prompt optimization with” gradient de-
+scent” and beam search.arXiv preprint arXiv:2305.03495.
+Qian, C.; Wang, X.; Zheng, Y .; Zhang, C.; Sun, Z.; Li,
+H.; and Li, J. 2023. ChatDev: Communicative Agents
+for Large-Scale Software Development.arXiv preprint
+arXiv:2307.07924.
+Qian, C.; Xie, Z.; Wang, Y .; Liu, W.; Zhu, K.; Xia, H.;
+Dang, Y .; Du, Z.; Chen, W.; Yang, C.; et al. 2024. Scal-
+ing large language model-based multi-agent collaboration.
+arXiv preprint arXiv:2406.07155.
+Rashid, T.; Samvelyan, M.; Schroeder, C.; Farquhar, G.; Fo-
+erster, J.; and Whiteson, S. 2018. Qmix: Monotonic value
+function factorisation for deep multi-agent reinforcement
+learning. InInternational conference on machine learning,
+4295–4304. PMLR.
+Shapley, L. S.; et al. 1953. A value for n-person games.
+Sunehag, P.; Lever, G.; Gruslys, A.; Czarnecki, W. M.; Zam-
+baldi, V .; Jaderberg, M.; Lanctot, M.; Sonnerat, N.; Leibo,
+J. Z.; Tuyls, K.; et al. 2017. Value-decomposition net-
+works for cooperative multi-agent learning.arXiv preprint
+arXiv:1706.05296.
+Sutton, R. S.; and Barto, A. G. 2018.Reinforcement Learn-
+ing: An Introduction. Cambridge, MA: MIT Press, 2nd edi-
+tion. ISBN 9780262039246.
+Tran, K.-T.; Dao, D.; Nguyen, M.-D.; Pham, Q.-V .;
+O’Sullivan, B.; and Nguyen, H. D. 2025. Multi-agent col-
+laboration mechanisms: A survey of llms.arXiv preprint
+arXiv:2501.06322.
+Tu, R.-C.; Ji, Y .; Jiang, J.; Kong, W.; Cai, C.; Zhao, W.;
+Wang, H.; Yang, Y .; and Liu, W. 2025a. Global and lo-
+cal semantic completion learning for vision-language pre-
+training.IEEE Transactions on Pattern Analysis and Ma-
+chine Intelligence.
+Tu, R.-C.; Mao, X.-L.; Liu, J.-Y .; Ma, Z.-A.; Lan, T.; and
+Huang, H. 2025b. Prospective Layout-Guided Multi-Modal
+Online Hashing.IEEE Transactions on Image Processing,
+34: 5935–5947.
+Wang, L.; Ma, C.; Feng, X.; Zhang, Z.; Yang, H.; Zhang, J.;
+Chen, Z.; Tang, J.; Chen, X.; Lin, Y .; et al. 2024. A survey on
+large language model based autonomous agents.Frontiers
+of Computer Science, 18(6): 186345.
+Wei, J.; Wang, X.; Schuurmans, D.; Bosma, M.; Ichter, B.;
+Xia, F.; Chi, E.; Le, Q.; and Zhou, D. 2022. Chain-of-
+thought prompting elicits reasoning in large language mod-
+els.Advances in Neural Information Processing Systems,
+35: 24824–24837.
+Wu, Q.; Bansal, G.; Zhang, J.; Wu, Y .; Li, S.; Zhu, E.; Li, B.;
+Jiang, L.; Zhang, X.; Wang, C.; et al. 2023. AutoGen: En-
+abling Next-Gen LLM Applications via Multi-Agent Con-
+versation Framework.arXiv preprint arXiv:2308.08155.
+Xiao, Y .; Sun, E.; Luo, D.; and Wang, W. 2024. Tradin-
+gAgents: Multi-Agents LLM Financial Trading Framework.
+arXiv preprint arXiv:2412.20138.
+Yao, S.; Yu, D.; Zhao, J.; Sha, I.; Chen, T.; Rao, S.; and
+Narasimhan, K. 2023. Tree of thoughts: Deliberate prob-
+lem solving with large language models.arXiv preprint
+arXiv:2305.10601.
+Yu, Y .; Yao, Z.; Li, H.; Deng, Z.; Cao, Y .; Chen, Z.; Su-
+chow, J. W.; Cui, Z.; Liu, R.; Xu, Z.; Zhang, D.; Subbal-
+akshmi, K.; Xiong, G.; He, Y .; Huang, J.; Li, D.; and Xie,
+Q. 2024. FinCon: A Synthesized LLM Multi-Agent System
+with Conceptual Verbal Reinforcement for Enhanced Finan-
+cial Decision Making.arXiv preprint arXiv:2407.06567.
+Zhang, H.; Du, W.; Shan, J.; Zhou, Q.; Du, Y .; Tenenbaum,
+J. B.; Shu, T.; and Gan, C. 2023. Building cooperative em-
+bodied agents modularly with large language models.arXiv
+preprint arXiv:2307.02485.
+Zhou, Y .; Muresanu, A. I.; Han, Z.; Paster, K.; Pitis,
+S.; Chan, H.; and Ba, J. 2022. Large Language Mod-
+els Are Human-Level Prompt Engineers.arXiv preprint
+arXiv:2211.01910.

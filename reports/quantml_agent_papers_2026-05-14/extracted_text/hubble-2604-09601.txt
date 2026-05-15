@@ -1,0 +1,545 @@
+Celestial Quant Lab Technical Report
+Hubble: An LLM-Driven Agentic Framework
+for Safe, Diverse, and Reproducible Alpha Factor
+Discovery
+Runze Shi ∗ Shengyu Yan Yuecheng Cai Chenxi Lv
+Celestial Quant Lab, Canada
+The University of British Columbia, Canada
+March 2026
+Abstract
+Automated alpha discovery is difficult because the search space of formulaic factors is combina-
+torial, the signal-to-noise ratio in daily equity data is low, and unconstrained program generation
+is operationally unsafe. We presentHubble, an agentic factor mining framework that combines
+large language models (LLMs) with a domain-specific operator language, an abstract syntax
+tree (AST) execution sandbox, a dual-channel retrieval-augmented generation (RAG) module,
+and a family-aware selection mechanism. Instead of treating the LLM as an unconstrained code
+generator, Hubble restricts generation to interpretable operator trees, evaluates every candidate
+through a deterministic cross-sectional pipeline, and feeds back both top formulas and structured
+family-level diagnostics to subsequent rounds. The current system additionally introduces posi-
+tive/negative RAG, formula-similarity penalties, standardized multi-metric scoring, dual reporting
+of RankIC and Pearson IC, and persistent diagnostics artifacts for post-hoc research analysis. On
+a U.S. equity universe of roughly 500 stocks, our main run evaluates 104 valid candidates across
+three rounds with zero runtime crashes and discovers a top set dominated byrange,volatility, and
+trendfamilies rather than crowded volume-only motifs. We then fix the resulting top-5factors
+and validate them on a held-out period from 2025-06-01 to 2026-03-13. In this out-of-sample
+window, the tworangefactors and twovolatilityfactors remain positive and several achieve
+HAC-significant Pearson IC and long-short evidence, whereas the weakest in-sampletrendfactor
+decays materially. These results suggest that safe LLM-guided search can be upgraded from a
+syntax-compliant generator into a reproducible alpha-research workflow that jointly optimizes
+validity, diversity, interpretability, and family-level generalization.
+Keywords:Large Language Models, Quantitative Finance, Alpha Factor Mining, Program
+Synthesis, Retrieval-Augmented Generation
+1 Introduction
+The search for predictive alpha factors remains a central task in quantitative equity investing [1, 2].
+In practice, however, useful signals are rare, financial data are noisy, and the hypothesis space of
+symbolic formulas grows combinatorially. Traditional automated discovery methods such as genetic
+programming can explore large search spaces efficiently [3], but they often produce brittle expressions
+that are difficult to interpret, difficult to operationalize, and prone to overfitting. On the other hand,
+hand-crafted libraries of formulaic alphas demonstrate the value of composable and interpretable
+expressions, but they remain labor-intensive to construct and extend [4].
+Large language models (LLMs) offer a different search primitive: they can propose structured
+hypotheses conditioned on operator documentation, prior successful motifs, and explicit error
+∗Corresponding author:runze.shi@ubc.ca
+1
+arXiv:2604.09601v2  [cs.AI]  14 Apr 2026
+
+Hubble Celestial Quant Lab
+feedback. Yet a naive use of LLMs for formula mining introduces several failure modes at once:
+unsafe code execution, semantically invalid expressions, repeated rediscovery of crowded templates,
+and convergence toward a narrow set of high-coverage but low-novelty signals. Recent work on
+LLM-based alpha mining has begun to address automated generation [5–7], but less attention has
+been paid to the joint requirements of execution safety, reproducibility, factor-family diversity, and
+research-ready diagnostics.
+This paper presents the current version ofHubble, an agentic alpha mining framework built
+around four design principles:
+1. Safe generation: all candidates are constrained to a curated domain-specific language (DSL)
+and validated by a three-layer AST sandbox before execution.
+2. Structured retrieval: positive RAG supplies representative mechanisms to explore under-
+covered themes, while negative RAG explicitly discourages crowded templates.
+3. Family-aware selection: scoring and top-k selection incorporate crowding, similarity, and
+factor-family concentration rather than rewarding raw predictive statistics alone.
+4. Research-ready outputs: every evaluated factor is archived with RankIC, Pearson IC, bucket
+returns, long-short spread, turnover, coverage, and formula complexity diagnostics.
+Compared with the earlier prototype, the current system is not merely safer or more convenient.
+It changes the effective search behavior. In the main run analyzed in this paper, the final top factors
+are no longer dominated by simple volume-normalization motifs; instead, the discovered factors
+spanrange,volatility, andprice-trendfamilies. This shift is important because it indicates that
+the framework is not only syntactically valid, but also capable of controlling diversity and avoiding
+over-crowded areas of the formula space.
+Our contributions are therefore threefold. First, we provide an end-to-end agentic framework for
+safe formula mining with deterministic storage, checkpointing, and structured diagnostics. Second,
+we introduce a dual-channel RAG design and family-aware scoring layer that directly shape both
+exploration and final ranking. Third, we demonstrate on a large daily U.S. equity panel that the
+framework can discover interpretable factors with coherent statistical and trading evidence, while
+remaining stable across multiple LLM backends.
+2 Related Work
+Automated factor discovery .Symbolic regression and genetic programming have long served as
+natural baselines for automated alpha discovery [3]. Qlib and related platforms provide industrial-
+strength research infrastructure, but usually operate over predefined factor pools rather than open-
+ended generation [8]. Formulaic alpha libraries such as the 101 alphas of Kakushadze[4] remain
+influential because they balance interpretability and composability, although their construction is
+still largely expert-driven.
+LLM-driven alpha mining.Recent work has explored using LLMs as alpha generators, co-
+designers, or memory-augmented mining agents [5–7]. These systems highlight the promise of
+language-guided search, but they often emphasize generation quality more than execution safety,
+research reproducibility, or explicit control over factor crowding and diversity. Our focus is narrower
+and more engineering-oriented: Hubble treats the LLM as a constrained hypothesis engine inside a
+deterministic evaluation loop.
+LLM-guided search and reasoning.Beyond finance, LLMs have shown value as search heuristics
+for structured reasoning and program discovery [9–12]. The closest analogy to our setting is program
+search with structured feedback: rather than directly emitting final solutions, the model proposes
+2
+
+Hubble Celestial Quant Lab
+candidate programs that are subsequently filtered, scored, and iteratively refined. Hubble applies
+this pattern to alpha mining while adding domain-specific control over DSL safety, factor-family
+coverage, and crowded-pattern avoidance.
+3 Methodology
+The current Hubble pipeline is a closed-loop mining system composed of a DSL-constrained generator,
+an AST validation sandbox, a deterministic evaluation engine, a dual-channel RAG module, and a
+family-aware scorer. Figure 1 illustrates the modular agentic loop of the Hubble closed-loop factor
+mining pipeline. The system consists of five core components: a DSL-constrained generator, a
+retrieval-enhanced RAG module, a safety parser with AST validation, a deterministic evaluation
+engine, and a weighted scoring module with archival feedback.
+The Generator produces candidate formulas using an LLM under a constrained operator registry
+and dynamic prompt construction. To guide exploration and avoid redundant factor discovery, the
+generator is augmented by a dual-channel RAG module, which retrieves metadata-aware samples
+from a factor corpus and provides both positive and negative examples.
+All generated formulas are passed through a Parser safety sandbox, which enforces syntactic
+and semantic constraints via AST validation. This sandbox ensures safe execution by disallowing
+arbitrary code execution (“exec-free”), while enforcing limits on expression depth, node count, variable
+alignment, and operator signatures.
+Valid formulas are then executed by the evaluation engine, which performs data cleaning, align-
+ment, and statistical quality checks. Multiple metrics are computed, including rank-based information
+coefficient (RankIC), Pearson IC, their respective annualized information ratios (RankICIR and
+ICIR), turnover, bucket returns, and factor coverage.
+The resulting metrics are aggregated by a weighted scoring module, which applies reward and
+penalty mechanisms based on predictive power, stability, turnover, and ecological diversity across
+factor families. Finally, all results are archived in the storage and reporting layer, which records
+factor reports and compiles feedback signals used to guide subsequent search rounds, forming a fully
+closed-loop discovery system.
+Figure 1: Hubble agentic search loop. Positive and negative RAG references guide the generator;
+scored results and family diagnostics are fed back each round.
+3
+
+Hubble Celestial Quant Lab
+3.1 DSL and AST Sandbox
+Candidate formulas are written in a restricted domain-specific language over registered operators and
+raw data fields. The primitive inputs are daily panel series such asOPEN, HIGH, LOW, CLOSE, VOLUME,
+and VWAP; the operator registry contains arithmetic, time-series, cross-sectional, and logical operators.
+Examples includeTS_SMA,TS_STD,TS_VAR,TS_LOGRET,CS_RANK,CS_ZSCORE, andIF.
+Each candidate expression is parsed into a Python abstract syntax tree and validated through
+three layers:
+1.Structural security: only a safe whitelist of AST node types is allowed.
+2.Complexity control: expressions exceeding preset depth or node-count limits are rejected.
+3. Semantic validity: operator names, arities, and variable names must all belong to the
+registered DSL.
+This design prevents arbitrary code execution while preserving a sufficiently expressive formula
+language for factor discovery.
+Figure 2: Hubble infrastructure and safety stack, integrating market data ingestion, AST-based
+sandboxing, and multi-metric evaluation.
+3.2 Agentic Generation with Dual-Channel RAG
+At roundr, the LLM receives a prompt bundle composed of a static operator prefix and a dynamic
+suffix that contains generation instructions, diversity requirements, optional feedback from round
+r− 1, and optional RAG references. Unlike the earlier version of the system, the current prompt
+explicitly requires theme diversity across factor families such asprice trend,mean reversion,volatility,
+range,liquidity-volume, andprice-volume interaction.
+The RAG layer isdual channel. Positive RAG retrieves representative formulas or distilled
+templates from a curated corpus to encourage exploration of under-covered mechanisms. Negative
+RAG retrieves crowded or over-explored templates and presents them asavoid-likereferences. This
+design follows the broader retrieval-augmented generation paradigm, but specializes retrieval into
+4
+
+Hubble Celestial Quant Lab
+exploration and avoidance channels rather than pure factual augmentation [13]. Operationally, the
+prompt therefore contains both:
+•positive references: mechanisms worth learning from, and
+• negative references: formulasorstructuralmotifsthatshouldnotbetriviallyre-parameterized.
+This is a materially different use of retrieval than random few-shot prompting. It turns the reference
+corpus into a control signal for exploration rather than a passive source of examples.
+3.3 Evaluation Pipeline
+For every validated factorα, Hubble computes a forward return label and evaluates the factor
+cross-sectionally on each date. The system reports both rank-based and linear metrics:
+RankICt =ρS
+(
+αt,·,r (h)
+t,·
+)
+,(1)
+ICt =ρP
+(
+αt,·,r (h)
+t,·
+)
+,(2)
+where ρS is Spearman correlation andρP is Pearson correlation. The aggregated metrics include
+mean, standard deviation, daily information ratio, and annualized information ratio for both RankIC
+and IC.
+In addition, the evaluator computes:
+•coverageanddrop ratioafter aligning factors with forward labels,
+•bucket returnsacross factor quantiles,
+•long-short returnas the average top-minus-bottom bucket spread,
+•turnovermeasured both on the top-decile set and on rank dynamics,1
+• formula complexityvia AST-derived depth, node count, operator count, and window count.
+For significance testing, we test whether the time-series mean of each IC and long-short series
+differs from zero using a Bartlett-kernel HAC variance estimator with automatic lag selection following
+Newey and West[14]. These diagnostics are saved to per-factor artifacts and subsequently reused by
+the reporting and plotting layers. The paper therefore uses the same persisted research outputs that
+the runtime system uses, rather than re-computing ad hoc metrics offline.
+3.4 Standardized Scoring and Family-Aware Selection
+The current scoring layer no longer uses a raw linear combination of heterogeneous metrics. Instead,
+each metricm j is first standardized through a fixed center-and-scale transform,
+˜mj = tanh
+(
+mj −c j
+sj
+)
+,(3)
+where(c j,s j)are metric-specific normalization constants. The base score is then computed as
+scorebase(α) =
+∑
+j
+wj ˜mj(α),(4)
+with positive weights for predictive and economic metrics and negative weights for turnover or data
+loss.
+1Top-decile turnover is defined as the Jaccard distance between consecutive top-decile sets:1−|A∩B|/|A∪B|,
+whereAandBare the top-decile asset sets on adjacent dates.
+5
+
+Hubble Celestial Quant Lab
+This base score is further adjusted by metadata-aware penalties and bonuses:
+score(α) = scorebase(α)−λcPcrowded(α)−λsPsimilar(α)−λfPfamily(α) +λnBnovelty(α).(5)
+Here Pcrowded penalizes proximity to crowded negative-RAG templates,Psimilar penalizes near-
+duplicates of already selected formulas, andPfamily discourages excessive concentration within a single
+factor family.Bnovelty is a small reward for candidates that expand the currently selected family set.
+In the implementation, penalty and bonus magnitudes are pre-scaled when constructing the factor
+metadata; the scoring function receives them as direct additive adjustments to the base score, so the
+λcoefficients above represent a conceptual decomposition rather than explicit run-time multipliers.
+Selection is therefore performed under bothqualityanddiversityconstraints. This matters
+empirically: in earlier runs, candidate generation became more diverse but the final top-k remained
+dominated by liquidity-volume formulas. The present scoring and selection scheme was introduced
+specifically to transmit diversity from the candidate pool into the final winners.
+3.5 Feedback and Persistent Artifacts
+At the end of each round, the system compiles feedback consisting of:
+•top formulas and their scores,
+•error summaries,
+•top, over-explored, and under-explored factor families,
+•positive and negative RAG sample identifiers,
+•prompt and usage metadata for reproducibility.
+Every run is stored in a structured directory with append-only records, JSON summaries,
+prompt/response snapshots, and diagnostics artifacts. This storage design is part of the research
+contribution because it makes the mining process auditable and reproducible rather than merely
+executable.
+4 Experiments
+4.1 Data, Configuration, and Main Runs
+We evaluate Hubble on a daily U.S. equity universe loaded fromsp500.txt. The discovery run uses
+a panel of 501 valid stocks over 840 trading days from January 1, 2022 to May 31, 2025. The main
+mining experiment is configured with three mining rounds, batch size 20, top-k = 5, feedback enabled,
+RAG enabled, and the OpenRouter-backed model nvidia/nemotron-3-super-120b-a12b:free.
+For backend robustness, we additionally run the same pipeline configuration with the backend model
+switched toopenrouter/hunter-alpha.
+The main run uses data strictly through 2025-05-31 (840 trading days), so the OOS period from
+2025-06-01 to 2026-03-13 (195 trading days) is entirely unseen during factor discovery. The five
+discovered factors, their formulas, and parameters are fixed before the OOS window begins. No
+reranking or formula regeneration is performed on the OOS slice.
+4.2 Overall Mining Results
+Table 2 reports the per-round throughput of the main run. Each round consists of a primary
+generation batch of 20 candidates followed by a feedback batch of up to 20 additional candidates,
+so the number of evaluated candidates per round exceeds the nominal batch size of 20. Across
+three rounds, Hubble processed 60 primary candidates and completed 104 full evaluations. All 104
+6
+
+Hubble Celestial Quant Lab
+Table 1: Main experimental configuration.
+Item Setting
+Universe S&P 500 ticker list (sp500.txt)
+Discovery panel 501 valid stocks
+Discovery date range 2022-01-01 to 2025-05-31
+Discovery trading days 840
+OOS window 2025-06-01 to 2026-03-13
+OOS trading days 195
+Rounds 3
+Candidates per round 20
+Feedback round Enabled
+RAG Enabled, positive + negative channels
+Main modelnvidia/nemotron-3-super-120b-a12b:free
+Robustness modelopenrouter/hunter-alpha
+Top-kfamily cap 2 per family
+Table 2: Per-round summary for the main run.
+Round Candidates Evaluated OK Errors Best Score
+R1 20 40 40 0 5.195
+R2 20 34 34 6 5.622
+R3 20 30 30 10 5.436
+T otal 60 104 104 16 5.622
+evaluated factors completed successfully; the only errors were 16 duplicate detections. No parser
+crash, runtime crash, or storage failure occurred during the run.
+Figure 3 shows that the feedback loop remains productive after the initial round. The best
+score is achieved in Round 2 rather than Round 1, while the number of successful evaluations stays
+high. This pattern is consistent with the intended behavior of the system: the first round broadens
+exploration, and later rounds refine themes without sacrificing runtime stability.
+4.3 In-Sample Factor Discovery
+Table 3 summarizes the structural description of each discovered factor. Table 4 reports the statistical
+performance on the discovery panel. The selected set is concentrated inrange,volatility, andprice
+trend, rather than collapsing into crowded liquidity-volume motifs. Within the IS slice, the top
+factors are all directionally positive on both RankIC and Pearson IC, though the strongest HAC
+evidence is uneven across families. This already suggests that the ranking signal is not purely driven
+by a single metric.
+The leading factor, denotedRange-1, is a smoothed normalized intraday range. Its financial
+hypothesis is that sustained cross-sectional differences in normalized trading range proxy for latent
+information arrival, disagreement, and inventory pressure. Stocks persistently exhibiting large
+normalized intraday ranges may be undergoing repricing or temporary demand imbalance that is not
+fully incorporated into next-period returns.
+The strongest volatility-family factor, denotedVolatility-1, measures recent variance of daily
+log returns. Its financial hypothesis is related to volatility clustering and conditional risk repricing:
+assets with elevated recent idiosyncratic activity may continue to experience cross-sectional repricing
+as information diffuses and investors update risk demands.
+The trend-family representative, denotedTrend-1, compares a recent moving-average anchor
+7
+
+Hubble Celestial Quant Lab
+Figure 3: Throughput and best-score progression across rounds for the main run.
+to the current price. Its financial interpretation is a relative dislocation-to-trend-anchor measure.
+When used as a cross-sectional rank, it captures whether an asset is trading below or above a recent
+trend baseline, which can proxy for short-horizon mean reversion, trend continuation, or delayed
+adjustment depending on the cross-sectional context.
+Taken together, the IS results indicate that Hubble is not merely rediscovering one crowded motif.
+Rather, it recovers a compact family of interpretable mechanisms tied to price range, volatility state,
+and relative trend positioning.
+4.4 Out-of-Sample Validation
+Since the main run uses data strictly through 2025-05-31, the OOS period from 2025-06-01 to
+2026-03-13 is entirely held out from factor discovery. The five factors, their formulas, and parameters
+are fixed before the OOS window begins. Table 5 shows that the four higher-ranked factors remain
+directionally positive in OOS, whileT rend-1is the only factor that clearly deteriorates.
+The most important pattern is family-specific. BothRange-1andRange-2strengthen materially
+in OOS: their Pearson IC HACt-statistics reach 2.98 and 3.01, respectively, and both retain significant
+long-short evidence.V olatility-1also remains strong, achieving a RankIC HACt-statistic of 2.25
+and a long-short HACt-statistic of 2.60.V olatility-2is slightly weaker on rank-based evidence but
+remains supported by Pearson IC and long-short significance. In contrast,T rend-1, which already
+had the lowest composite score in-sample, fails to generalize: its Pearson IC reverses sign and its
+long-short spread is no longer significant.
+This differential OOS outcome is informative. It suggests that the in-sample composite ranking is
+not arbitrary: the factor that the mining system ranked last is also the one that decays most clearly
+in holdout evaluation. At the same time, the OOS window favorsrangeandvolatilityfamilies, so
+these results should be interpreted as preliminary holdout evidence rather than unconditional alpha
+8
+
+Hubble Celestial Quant Lab
+Table 3: Structural descriptions of the top-5factors.
+ID F amily Structural Summary
+Range-1 range normalized intraday range with temporal smooth-
+ing
+Range-2 range normalized intraday range with smoothing and
+cross-sectional normalization
+Volatility-1 volatility rolling variance of short-horizon log returns
+Volatility-2 volatility rolling standard deviation of short-horizon log
+returns
+Trend-1 price trend moving-average anchor relative to current price
+Table 4: Top-5factors from the main run, evaluated on the discovery panel (2022-01-01 to 2025-05-31).
+ID F amily Score RankIC RankICIR (ann.) IC ICIR (ann.) LS Ret. T urnover
+Range-1 range 5.622 0.0059 0.350 0.0127 0.687 0.000810 0.113
+Range-2 range 5.486 0.0057 0.342 0.0130 0.716 0.000724 0.161
+Volatility-1 volatility 5.475 0.0057 0.368 0.0133 1.028 0.000546 0.174
+Volatility-2 volatility 5.272 0.0047 0.297 0.0124 0.851 0.000587 0.137
+Trend-1 price trend 4.609 0.0115 0.900 0.0110 0.968 0.000350 0.368
+claims.
+4.5 Visual Evidence
+The visual evidence is organized as paired IS/OOS figures so that discovery and validation can be
+read together. The IS diagnostics in Figure 4 and Figure 6 show that the top factors already form
+sensible cross-sectional structures before the holdout period begins. The corresponding OOS figures
+then reveal which structures persist.
+Finally, diversity should be visible not only in the candidate pool but also in the selected winners.
+Figure 14 therefore compares the family mix of all successful candidates with that of the final top-k.
+The key point is that the final winners remain distributed across range, volatility, and trend families,
+rather than collapsing back into a single crowded theme.
+4.6 Robustness Across LLM Backends
+To test whether the result is idiosyncratic to one backend, we compare the main run with a robustness
+run that usesopenrouter/hunter-alpha under the same mining pipeline. The robustness run is
+slightly weaker in peak score and includes 15 total errors (13 duplicate detections and 2 evaluation
+failures), but it recovers a qualitatively similar factor profile: top factors still come from therange,
+volatility, andprice trendfamilies, with positive RankIC, positive Pearson IC, and meaningful
+long-short spreads.
+9
+
+Hubble Celestial Quant Lab
+Figure 4: In-sample statistical and trading diagnostics for the top-5factors.
+Figure 5: Out-of-sample statistical and trading diagnostics for the top-5factors.
+10
+
+Hubble Celestial Quant Lab
+Figure 6: In-sample bucket-return profile of the best factor.
+Figure 7: Out-of-sample bucket-return profile of the best factor.
+Figure 8: HAC significance of the top-5factors in-sample.
+11
+
+Hubble Celestial Quant Lab
+Figure 9: HAC significance of the top-5factors out-of-sample.
+Figure 10: Cumulative IC for the top-3factors in-sample.
+Figure 11: Cumulative IC for the top-3factors out-of-sample.
+12
+
+Hubble Celestial Quant Lab
+Figure 12: Cumulative long-short spread of the top-3factors in-sample.
+Figure 13: Cumulative long-short spread of the top-3factors out-of-sample.
+Figure 14: Family composition of the main run: candidate pool versus final top-kselection.
+13
+
+Hubble Celestial Quant Lab
+Table 5: Out-of-sample validation for the top-5factors (2025-06-01 to 2026-03-13). Significance stars
+are based on HAC standard errors: *p<0.05, **p<0.01, ***p<0.001.
+ID F amily RankIC RankICIR (ann.) RankICt(HAC) IC ICIR (ann.) ICt(HAC) LS Ret. LSt(HAC) T urnover
+Range-1 range 0.0242 1.804 1.75 0.0391 2.788 2.98** 0.00205 2.17* 0.133
+Range-2 range 0.0245 1.860 1.81 0.0385 2.797 3.01** 0.00209 2.31* 0.182
+Volatility-1 volatility 0.0275 2.305 2.25* 0.0131 1.656 1.68 0.00200 2.60** 0.173
+Volatility-2 volatility 0.0232 1.900 1.81 0.0204 2.251 2.47* 0.00189 2.27* 0.133
+Trend-1 price trend 0.0083 0.794 0.81−0.0034−0.380−0.39−0.00064−0.87 0.374
+Table 6: Robustness comparison across two LLM backends.
+Metric Main Run Robustness Run
+Model Nemotron-120B-free Hunter-Alpha
+Total evaluated 104 107
+Total OK 104 105
+Total errors 16 15
+Best score 5.622 5.460
+Top families range, volatility, trend range, volatility, trend
+Best factor type smoothed normalized in-
+traday range
+averaged normalized in-
+traday range
+This robustness check is not intended to replace the OOS analysis. Rather, it shows that the
+revised system design does not depend on a single backend to escape the earlier liquidity-volume
+collapse. That is an important practical property for public deployment and reproducible research.
+On formula disclosure.For a public arXiv version, we intentionally avoid disclosing exact factor
+formulas and hyper-parameters. Instead, we report factor families, structural summaries, and finance-
+motivated hypotheses. This preserves the scientific value of the paper by making the discovered
+mechanisms interpretable, while avoiding direct release of production-grade alpha specifications.
+5 Discussion
+The most important empirical finding is not the absolute magnitude of the composite score. It is the
+fact that diversity constraints, negative RAG, and family-aware scoring changed theidentityof the
+winning factors and that this change survives a holdout check at the family level. Earlier versions of
+the pipeline generated broader candidate pools but still selected mostly liquidity-volume variants at
+the end. In contrast, the current system produces a final top set dominated byrange,volatility, and
+one weakertrendfactor, and the OOS analysis shows that the two range factors and two volatility
+factors generalize more convincingly than the trend factor.
+This shift matters for at least three reasons. First, it reduces the risk that the framework is simply
+optimizing for high-coverage crowded templates. Second, it yields more interpretable hypotheses that
+can be discussed in financial terms rather than only statistically. Third, it makes the framework more
+useful as a research assistant: the archived diagnostics, bucket profiles, long-short curves, and HAC
+significance reports can be inspected directly when deciding whether a discovered factor deserves
+follow-up analysis.
+The OOS results also suggest a second, subtler point: in-sample ranking does not perfectly
+determine cross-period robustness. The factor with the lowest in-sample composite score,T rend-1, is
+also the one that fails most clearly out-of-sample. However, the strongest OOS evidence concentrates
+in the range and volatility families rather than being distributed uniformly across all five winners. This
+supports a family-level interpretation of generalization: the framework appears better at discovering
+stablemechanismsthan at guaranteeing that every top-ranked formula will generalize equally well.
+14
+
+Hubble Celestial Quant Lab
+At the same time, the absolute correlation magnitudes remain small, as is typical in daily cross-
+sectional equity prediction. This should not be misread as weakness by itself; in this domain, even
+small cross-sectional predictive correlations can be meaningful if they are stable, diversified, and
+economically coherent. That is why we report both IC-style measures and portfolio-style diagnostics,
+and why we interpret the OOS evidence as supportive but not definitive.
+6 Limitations
+• No neutralization.The discovered factors are evaluated without market, sector, or style
+neutralization. The reported IC and long-short statistics may therefore incorporate systematic
+risk exposures—such as market beta or sector tilts—in addition to idiosyncratic alpha signals.
+This is a likely contributor to the elevated OOS IC magnitudes, particularly for range and
+volatility factors during the 2025–2026 window when broad market volatility was elevated.
+Neutralized factor evaluation remains an important direction for future work.
+• Single panel, no walk-forward.The present analysis is based on a single U.S. daily equity
+panel and does not yet include a full walk-forward out-of-sample protocol. The OOS validation
+in this paper is informative, but it remains one temporal split rather than a rolling retraining
+study.
+• Short OOS window and regime risk.The OOS window spans only 195 trading days and
+may partly reflect a regime favorable to range- and volatility-sensitive signals. The positive
+OOS results should therefore be interpreted as preliminary holdout evidence rather than
+unconditional alpha claims. This caution is consistent with the broader evidence that many
+published return predictors attenuate materially after discovery or fail to replicate cleanly
+across samples [15–17].
+• RAG corpus bias.The RAG corpus still reflects curated historical examples and may retain
+residual thematic bias from earlier experiments.
+• Lightweight robustness analysis.The robustness analysis across backends is intentionally
+lightweight; a more complete public version should include explicit ablations such as RAG
+on/off and standardized scoring on/off.
+• No transaction-cost evaluation.Formula quality is assessed through statistical and simple
+portfolio diagnostics rather than a full transaction-cost-aware backtest.
+• LLM temporal leakage.The LLM generator operates under a temporal isolation constraint
+that applies only at the data layer. The model’s pretraining corpus necessarily includes financial
+literature and research published after the IS window begins, meaning the LLM may have
+internalized meta-knowledge about which factor families or structural motifs have been reported
+as effective in the subsequent period. The DSL constraint prevents direct encoding of historical
+return series, but cannot prevent the model from having absorbed documented findings about
+factor effectiveness. A fully rigorous temporal firewall would require retraining the generator on
+a strictly pre-discovery corpus, which is not currently feasible with publicly available models.
+• LLM narrative bias.The LLM’s generative fluency introduces a systematic narrative risk.
+Because language models are trained to produce coherent, domain-consistent explanations,
+every discovered factor arrives paired with a ready-made financial rationale. A spurious
+signal accompanied by a compelling mechanism story is structurally harder to reject than a
+transparently flawed one: the plausibility of the explanation lowers the researcher’s critical
+threshold independent of the statistical evidence. Hubble’s deterministic evaluation pipeline and
+held-out OOS validation partially offset this risk, but they cannot eliminate it. Practitioners
+15
+
+Hubble Celestial Quant Lab
+should treat the LLM-generated financial hypotheses as prompts for further scrutiny, not as
+independent corroboration of a factor’s validity.
+7 Conclusion
+We presented the current public version of Hubble, an agentic framework for safe and diverse
+alpha factor discovery. The system combines a DSL-constrained LLM generator, an AST execution
+sandbox, dual-channel RAG, standardized multi-metric scoring, family-aware selection, and persistent
+diagnostics artifacts. On a 501-stock U.S. equity panel, the framework achieved complete runtime
+stability in the main run while discovering interpretable factors from range, volatility, and trend
+families. Under a holdout validation from 2025-06-01 to 2026-03-13, the strongest evidence remained
+concentrated in the range and volatility families, while the weakest trend factor decayed materially.
+The main value of the current system is not that it replaces traditional alpha research. Rather, it
+provides a reproducible research workflow in which LLMs propose structured hypotheses, deterministic
+components adjudicate validity and quality, and the resulting artifacts are immediately usable for
+financial interpretation and follow-up testing. Future work should focus on explicit ablations, walk-
+forward validation, transaction-cost-aware evaluation, and continued refinement of the RAG corpus
+to improve novelty without sacrificing reliability.
+References
+[1] Richard C Grinold and Ronald N Kahn.Active Portfolio Management: A Quantitative Approach
+for Producing Superior Returns and Controlling Risk. McGraw-Hill, 2nd edition, 2000.
+[2] Edward E Qian, Ronald H Hua, and Eric H Sorensen.Quantitative Equity Portfolio Management:
+Modern Techniques and Applications. Chapman and Hall/CRC, 2007.
+[3] John R Koza.Genetic Programming: On the Programming of Computers by Means of Natural
+Selection. MIT Press, 1992.
+[4] Zura Kakushadze. 101 formulaic alphas.Wilmott, 2016(84):72–81, 2016.
+[5] Saizhuo Wang, Hang Yuan, Leon Zhou, Lionel M. Ni, Heung-Yeung Shum, and Jian Guo.
+Alpha-GPT: Human-AI interactive alpha mining for quantitative investment.arXiv preprint
+arXiv:2308.00016, 2023.
+[6] Ziyi Tang, Zechuan Chen, Jiarui Yang, Jiayao Mai, Yongsen Zheng, Keze Wang, Jinrui Chen, and
+Liang Lin. AlphaAgent: LLM-driven alpha mining with regularized exploration to counteract
+alpha decay.arXiv preprint arXiv:2502.16789, 2025.
+[7] Yanlong Wang, Jian Xu, Hongkang Zhang, Shao-Lun Huang, Danny Dongning Sun, and Xiao-
+Ping Zhang. FactorMiner: A self-evolving agent with skills and experience memory for financial
+alpha discovery.arXiv preprint arXiv:2602.14670, 2026.
+[8] Xiao Yang, Weiqing Liu, Dong Zhou, Jiang Bian, and Tie-Yan Liu. Qlib: An ai-oriented
+quantitative investment platform.arXiv preprint arXiv:2009.11189, 2020.
+[9] OpenAI. Gpt-4 technical report.arXiv preprint arXiv:2303.08774, 2023.
+[10] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Brian Ichter, Fei Xia, Ed Chi,
+Quoc Le, and Denny Zhou. Chain-of-thought prompting elicits reasoning in large language
+models.Advances in Neural Information Processing Systems, 35:24824–24837, 2022.
+16
+
+Hubble Celestial Quant Lab
+[11] Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran, Thomas L Griffiths, Yuan Cao, and Karthik
+Narasimhan. Tree of thoughts: Deliberate problem solving with large language models. In
+Advances in Neural Information Processing Systems, volume 36, 2023.
+[12] Bernardino Romera-Paredes, Mohammadamin Barekatain, Alexander Novikov, Matej Balog,
+M Pawan Kumar, Emilien Dupont, Francisco J R Ruiz, Jordan S Ellenberg, Pengming Wang,
+Omar Fawzi, et al. Mathematical discoveries from program search with large language models.
+Nature, 625:468–475, 2024.
+[13] Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin, Naman
+Goyal, Heinrich Küttler, Mike Lewis, Wen-tau Yih, Tim Rocktäschel, Sebastian Riedel, and
+Douwe Kiela. Retrieval-augmented generation for knowledge-intensive NLP tasks.Advances in
+Neural Information Processing Systems, 33, 2020.
+[14] Whitney K. Newey and Kenneth D. West. A simple, positive semi-definite, heteroskedasticity
+and autocorrelation consistent covariance matrix.Econometrica, 55(3):703–708, 1987.
+[15] R. David McLean and Jeffrey Pontiff. Does academic research destroy stock return predictability?
+The Journal of Finance, 71(1):5–32, 2016.
+[16] Kewei Hou, Chen Xue, and Lu Zhang. Replicating anomalies.The Review of Financial Studies,
+33(5):2019–2133, 2020.
+[17] Campbell R Harvey, Yan Liu, and Heqing Zhu. ... and the cross-section of expected returns.
+The Review of Financial Studies, 29(1):5–68, 2016.
+17
