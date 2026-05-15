@@ -384,11 +384,24 @@ Remote Dashboard deployments use Vercel as a password-session BFF and the
 Open Composer daemon as the only command executor:
 
 ```bash
+VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --generate-password
+VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply --generate-password
 uv run oc remote doctor
 uv run oc remote serve --host 127.0.0.1 --port 8787
 uv run oc remote job-list
 uv run oc remote job-status <job-id>
 ```
+
+`oc remote bootstrap-vps` is the preferred VPS mode. Dry run writes
+`reports/deployment/vps-bootstrap/plan.json` and `.md` without leaking raw
+secrets. `--apply` generates remote secrets, merges `.env`, writes owner-only
+dashboard password output when generated, prepares systemd/Caddy templates, and
+uses `VERCEL_TOKEN` to link, configure, and deploy the Vercel Dashboard BFF. If
+no custom `--daemon-url` is supplied during apply, the command can detect the
+VPS public IPv4 and use `https://<ip>.sslip.io` as the daemon HTTPS name; pass
+`--daemon-url https://oc-api.example.com` for a long-lived custom domain.
+Pass `--public-ip <vps-ip>` during dry run when you want the plan to include the
+exact generated `sslip.io` daemon URL before apply.
 
 Vercel signs daemon requests with `X-OC-Timestamp`, `X-OC-Nonce`,
 `X-OC-Actor`, `X-OC-Body-SHA256`, and `X-OC-Signature`. Remote command-run is
@@ -419,4 +432,5 @@ uv run oc agent request-complete <request-id> --result-link reports/research/exa
 - [docs/quantml-paper-study-research-notes-2026-05-15.zh.md](docs/quantml-paper-study-research-notes-2026-05-15.zh.md)
 - [docs/review-methodology.zh.md](docs/review-methodology.zh.md)
 - [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md)
+- [docs/vps-mode-remote-dashboard-plan-2026-05-15.zh.md](docs/vps-mode-remote-dashboard-plan-2026-05-15.zh.md)
 - [docs/longbridge-integration.md](docs/longbridge-integration.md)

@@ -98,6 +98,14 @@ from open_composer.paper_readiness import (
 )
 from open_composer.readiness import build_readiness_report, write_readiness_report
 from open_composer.remote import RemoteJobManager, build_remote_doctor_report, serve_remote
+from open_composer.remote.bootstrap import (
+    VpsBootstrapError,
+    apply_vps_bootstrap,
+    build_vps_bootstrap_config,
+    detect_public_ip,
+    write_system_templates,
+    write_vps_bootstrap_report,
+)
 from open_composer.remote.server import RemoteServerError
 from open_composer.repo_check import build_repo_check_report, write_repo_check_report
 from open_composer.research import (
@@ -772,6 +780,151 @@ def remote_doctor_command(
         table.add_row(check.name, check.status, check.message)
     console.print(table)
     if strict and report.status == "blocked":
+        raise typer.Exit(code=1)
+
+
+@remote_app.command("bootstrap-vps")
+def remote_bootstrap_vps_command(
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", help="Write files and run Vercel/system service commands."),
+    ] = False,
+    vercel_token: Annotated[
+        str | None,
+        typer.Option(
+            "--vercel-token",
+            envvar="VERCEL_TOKEN",
+            help="Vercel API token. Defaults to VERCEL_TOKEN.",
+        ),
+    ] = None,
+    vercel_project: Annotated[
+        str,
+        typer.Option("--vercel-project", help="Vercel project name for the Dashboard BFF."),
+    ] = "open-composer-dashboard",
+    vercel_scope: Annotated[
+        str | None,
+        typer.Option("--vercel-scope", help="Optional Vercel team/user scope."),
+    ] = None,
+    vercel_command: Annotated[
+        str | None,
+        typer.Option(
+            "--vercel-command",
+            help="Vercel command to run, e.g. 'vercel' or 'npx --yes vercel@latest'.",
+        ),
+    ] = None,
+    daemon_url: Annotated[
+        str | None,
+        typer.Option("--daemon-url", help="Public HTTPS URL for the VPS remote daemon."),
+    ] = None,
+    public_ip: Annotated[
+        str | None,
+        typer.Option("--public-ip", help="VPS public IPv4; creates https://<ip>.sslip.io."),
+    ] = None,
+    detect_ip: Annotated[
+        bool,
+        typer.Option(
+            "--detect-ip/--no-detect-ip",
+            help="Detect public IPv4 during --apply when daemon URL is not provided.",
+        ),
+    ] = True,
+    vercel_origin: Annotated[
+        str | None,
+        typer.Option(
+            "--vercel-origin", help="Allowed browser origin; defaults to project.vercel.app."
+        ),
+    ] = None,
+    dashboard_password: Annotated[
+        str | None,
+        typer.Option("--dashboard-password", help="Dashboard login password to hash."),
+    ] = None,
+    generate_password: Annotated[
+        bool,
+        typer.Option(
+            "--generate-password/--no-generate-password",
+            help="Generate a dashboard password when none exists.",
+        ),
+    ] = True,
+    rotate_secrets: Annotated[
+        bool,
+        typer.Option(
+            "--rotate-secrets", help="Generate new remote/session secrets and password hash."
+        ),
+    ] = False,
+    owner: Annotated[
+        str,
+        typer.Option("--owner", help="Remote actor owner used in HMAC requests."),
+    ] = "owner",
+    skip_system: Annotated[
+        bool,
+        typer.Option("--skip-system", help="Do not install systemd or Caddy files."),
+    ] = False,
+    skip_vercel: Annotated[
+        bool,
+        typer.Option("--skip-vercel", help="Do not configure or deploy Vercel."),
+    ] = False,
+    skip_prepare: Annotated[
+        bool,
+        typer.Option("--skip-prepare", help="Do not run make deploy-prepare during apply."),
+    ] = False,
+    use_sudo: Annotated[
+        bool,
+        typer.Option("--sudo", help="Prefix systemctl commands with sudo."),
+    ] = False,
+) -> None:
+    """Bootstrap Remote Dashboard from a VPS using Vercel as the password-session BFF."""
+    resolved_public_ip = public_ip
+    if apply and not daemon_url and not resolved_public_ip and detect_ip:
+        resolved_public_ip = detect_public_ip()
+    try:
+        config = build_vps_bootstrap_config(
+            project_root(),
+            apply=apply,
+            vercel_token=vercel_token,
+            vercel_project=vercel_project,
+            vercel_scope=vercel_scope,
+            vercel_command=vercel_command,
+            daemon_url=daemon_url,
+            public_ip=resolved_public_ip,
+            vercel_origin=vercel_origin,
+            dashboard_password=dashboard_password,
+            generate_password=generate_password,
+            rotate_secrets=rotate_secrets,
+            owner=owner,
+            skip_system=skip_system,
+            skip_vercel=skip_vercel,
+            skip_prepare=skip_prepare,
+            use_sudo=use_sudo,
+        )
+        if apply:
+            plan = apply_vps_bootstrap(config)
+        else:
+            if config.daemon_url:
+                write_system_templates(config)
+            plan = config.plan
+            write_vps_bootstrap_report(plan, config.root)
+    except VpsBootstrapError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    table = Table(title="Open Composer VPS Bootstrap")
+    table.add_column("Item")
+    table.add_column("Value")
+    table.add_row("Status", plan.status)
+    table.add_row("Apply", str(plan.apply))
+    table.add_row("Daemon URL", plan.daemon_url or "missing")
+    table.add_row("Vercel origin", plan.vercel_origin or "missing")
+    table.add_row("Vercel project", plan.vercel_project)
+    table.add_row("Report", plan.report_markdown_path or "")
+    if plan.deployment_url:
+        table.add_row("Deployment URL", plan.deployment_url)
+    console.print(table)
+    if config.generated_dashboard_password and apply and plan.generated_password_path:
+        console.print(
+            "[yellow]generated dashboard password written to[/yellow] "
+            f"{plan.generated_password_path}"
+        )
+    if not apply:
+        console.print("[yellow]dry run only[/yellow] rerun with --apply to deploy.")
+    if plan.status == "blocked":
         raise typer.Exit(code=1)
 
 

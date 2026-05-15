@@ -39,6 +39,56 @@ OC_DASHBOARD_OWNER=owner
 
 `.env` 在服务器上应为 `0600`。
 
+## VPS 模式（推荐）
+
+当 Codex 已经运行在目标 VPS 上时，推荐使用 VPS 模式自动生成 secret、写入
+本机 `.env`、生成 systemd/Caddy 模板，并用 Vercel token 配置 Dashboard BFF：
+
+```bash
+cd /srv/open-composer/repo
+VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --generate-password
+VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply --generate-password
+```
+
+dry run 默认只写：
+
+```text
+reports/deployment/vps-bootstrap/plan.json
+reports/deployment/vps-bootstrap/plan.md
+reports/deployment/vps-bootstrap/open-composer-remote.service
+reports/deployment/vps-bootstrap/Caddyfile
+```
+
+`--apply` 才会写 `.env`、设置 `chmod 600`、安装或刷新 systemd/Caddy，并调用
+Vercel CLI。若不传 `--daemon-url`，apply 模式会探测 VPS 公网 IPv4 并使用
+`https://<ip>.sslip.io` 作为默认 daemon HTTPS URL。生产长期使用建议传入自有域名。
+dry run 阶段如果也想看到准确的 `sslip.io` URL，可传 `--public-ip <vps-ip>`。
+
+```bash
+VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps \
+  --apply \
+  --daemon-url https://oc-api.example.com \
+  --generate-password
+```
+
+如果系统文件由 root 管理但当前用户有 sudo：
+
+```bash
+VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply --sudo --generate-password
+```
+
+如果只想生成本机 daemon 配置，不部署 Vercel：
+
+```bash
+uv run oc remote bootstrap-vps --public-ip <vps-ip> --skip-vercel --generate-password
+```
+
+如果只想配置 Vercel，不安装 systemd/Caddy：
+
+```bash
+VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply --skip-system --generate-password
+```
+
 ## 启动 daemon
 
 ```bash

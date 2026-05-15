@@ -29,6 +29,7 @@ CURRENT_DOCS = {
     "docs/quantml-paper-study-research-notes-2026-05-15.zh.md",
     "docs/review-methodology.zh.md",
     "docs/remote-dashboard-deploy.zh.md",
+    "docs/vps-mode-remote-dashboard-plan-2026-05-15.zh.md",
     "docs/longbridge-integration.md",
 }
 
