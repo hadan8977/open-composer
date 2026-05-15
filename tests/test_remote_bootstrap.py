@@ -271,12 +271,16 @@ def test_vps_bootstrap_apply_uses_vercel_env_and_redacts_token(
     assert all(call[2] == {"VERCEL_TOKEN": "vercel_token_secret"} for call in calls)
     assert not any(call[0][:3] == ["vercel", "env", "rm"] for call in calls)
     assert all("--force" in call[0] and "--sensitive" in call[0] for call in env_adds)
+    assert all("--value" in call[0] and "--yes" in call[0] for call in env_adds)
     assert {call[0][3] for call in env_adds} >= {
         "OC_REMOTE_BASE_URL",
         "OC_REMOTE_SHARED_SECRET",
         "OC_DASHBOARD_PASSWORD_HASH",
     }
-    assert any(call[1] == "https://203.0.113.10.nip.io\n" for call in env_adds)
+    assert any(
+        call[0][call[0].index("--value") + 1] == "https://203.0.113.10.nip.io" for call in env_adds
+    )
+    assert all(call[1] is None for call in env_adds)
     assert "vercel_token_secret" not in (
         sample_workspace / "reports" / "deployment" / "vps-bootstrap" / "plan.json"
     ).read_text(encoding="utf-8")
