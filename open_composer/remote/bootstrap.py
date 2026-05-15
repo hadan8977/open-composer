@@ -565,6 +565,14 @@ def apply_vps_bootstrap(
             None,
         )
         runner(
+            [*systemctl, "restart", config.systemd_unit_path.stem],
+            config.root,
+            None,
+            120,
+            True,
+            None,
+        )
+        runner(
             [
                 *sudo_prefix(config, ["caddy"]),
                 "validate",

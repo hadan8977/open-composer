@@ -365,6 +365,40 @@ def test_vps_bootstrap_apply_runs_post_deploy_verify(sample_workspace: Path, mon
     )
 
 
+def test_vps_bootstrap_restarts_existing_remote_service(sample_workspace: Path) -> None:
+    calls: list[list[str]] = []
+    (sample_workspace / "dashboard").mkdir()
+    (sample_workspace / "dashboard" / "package.json").write_text(
+        '{"name":"@open-composer/dashboard"}\n',
+        encoding="utf-8",
+    )
+
+    def fake_runner(
+        args: Sequence[str],
+        cwd: Path,
+        input_text: str | None,
+        timeout_seconds: int,
+        check: bool,
+        env: dict[str, str] | None,
+    ) -> CommandExecutionResult:
+        calls.append(list(args))
+        return CommandExecutionResult(args=list(args), returncode=0, stdout="", stderr="")
+
+    config = build_vps_bootstrap_config(
+        sample_workspace,
+        apply=True,
+        daemon_url="https://oc-api.example.com",
+        dashboard_password="dashboard-secret",
+        skip_vercel=True,
+        skip_prepare=True,
+        verify=False,
+    )
+
+    apply_vps_bootstrap(config, command_runner=fake_runner)
+
+    assert ["systemctl", "restart", "open-composer-remote"] in calls
+
+
 def test_vps_bootstrap_verify_blocks_vercel_protection_html(
     sample_workspace: Path, monkeypatch
 ) -> None:
