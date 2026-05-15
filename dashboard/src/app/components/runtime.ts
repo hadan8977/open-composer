@@ -44,18 +44,35 @@ export type DashboardCommandRunResponse = {
   output_paths?: string[];
 };
 
-export function useDashboardCatalogSync(intervalMs = 15000): void {
+export type DashboardCatalogSyncState = {
+  status: "syncing" | "ok" | "error";
+  error: string | null;
+  lastSyncedAt: string | null;
+  revision: number;
+};
+
+export function useDashboardCatalogSync(intervalMs = 15000): DashboardCatalogSyncState {
   const [, setRevision] = useState(0);
+  const [state, setState] = useState<DashboardCatalogSyncState>({
+    status: "syncing",
+    error: null,
+    lastSyncedAt: null,
+    revision: 0,
+  });
 
   useEffect(() => {
     let cancelled = false;
 
     const handleUpdate = () => {
       setRevision((value) => value + 1);
+      setState((value) => ({ ...value, revision: value.revision + 1 }));
     };
 
     const refresh = async () => {
       try {
+        if (!cancelled) {
+          setState((value) => ({ ...value, status: "syncing" }));
+        }
         const response = await fetch("/api/dashboard/catalog", {
           headers: dashboardApiHeaders({
             Accept: "application/json",
@@ -63,14 +80,44 @@ export function useDashboardCatalogSync(intervalMs = 15000): void {
           cache: "no-store",
         });
         if (!response.ok) {
+          let message = `Catalog sync failed with HTTP ${response.status}`;
+          try {
+            const payload = (await response.json()) as { error?: string; message?: string };
+            message = payload.error ?? payload.message ?? message;
+          } catch {
+            // Keep the status-derived message.
+          }
+          if (response.status === 401) {
+            try {
+              await fetch("/api/session", { headers: { Accept: "application/json" }, cache: "no-store" });
+            } catch {
+              // The visible catalog error is enough for the operator.
+            }
+          }
+          if (!cancelled) {
+            setState((value) => ({ ...value, status: "error", error: message }));
+          }
           return;
         }
         const payload = (await response.json()) as Parameters<typeof applyDashboardCatalog>[0];
         if (!cancelled) {
           applyDashboardCatalog(payload);
+          setState((value) => ({
+            ...value,
+            status: "ok",
+            error: null,
+            lastSyncedAt: new Date().toISOString(),
+            revision: value.revision + 1,
+          }));
         }
-      } catch {
-        return;
+      } catch (error) {
+        if (!cancelled) {
+          setState((value) => ({
+            ...value,
+            status: "error",
+            error: error instanceof Error ? error.message : "Catalog sync failed.",
+          }));
+        }
       }
     };
 
@@ -86,6 +133,8 @@ export function useDashboardCatalogSync(intervalMs = 15000): void {
       window.clearInterval(timer);
     };
   }, [intervalMs]);
+
+  return state;
 }
 
 export function dashboardApiHeaders(
@@ -211,17 +260,22 @@ export async function promptDashboardConfirmations(
   plan: DashboardCommandPlanResponse,
   promptText: string,
 ): Promise<{ confirm: string; double_confirm: string } | null> {
-  const confirmation = window.prompt(`${promptText}\n\n${plan.confirmation_phrase}`, plan.confirmation_phrase);
+  const confirmation = await showConfirmationModal({
+    title: "Confirm command",
+    promptText,
+    phrase: plan.confirmation_phrase,
+  });
   if (confirmation === null) {
     return null;
   }
   let doubleConfirm = "";
   const doublePhrase = plan.remote?.double_confirmation_phrase;
   if (doublePhrase) {
-    const second = window.prompt(
-      `Type the remote double confirmation phrase.\n\n${doublePhrase}`,
-      doublePhrase,
-    );
+    const second = await showConfirmationModal({
+      title: "Remote double confirmation",
+      promptText: "Type the remote double confirmation phrase.",
+      phrase: doublePhrase,
+    });
     if (second === null) {
       return null;
     }
@@ -301,4 +355,136 @@ function isRemoteDashboard(): boolean {
     return false;
   }
   return window.location.protocol === "https:" || host.endsWith(".vercel.app");
+}
+
+function showConfirmationModal({
+  title,
+  promptText,
+  phrase,
+}: {
+  title: string;
+  promptText: string;
+  phrase: string;
+}): Promise<string | null> {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.style.cssText = [
+      "position:fixed",
+      "inset:0",
+      "z-index:9999",
+      "display:grid",
+      "place-items:center",
+      "background:rgba(10,10,10,.36)",
+      "backdrop-filter:blur(2px)",
+      "padding:16px",
+    ].join(";");
+
+    const panel = document.createElement("form");
+    panel.style.cssText = [
+      "width:min(520px,100%)",
+      "background:#fff",
+      "border:1px solid rgba(10,10,10,.12)",
+      "box-shadow:0 24px 80px rgba(10,10,10,.22)",
+      "border-radius:8px",
+      "padding:20px",
+      "font-family:Inter,system-ui,sans-serif",
+      "color:#0A0A0A",
+    ].join(";");
+
+    const heading = document.createElement("div");
+    heading.textContent = title;
+    heading.style.cssText = "font-size:18px;font-weight:750;line-height:1.2;margin-bottom:8px;";
+
+    const prompt = document.createElement("div");
+    prompt.textContent = promptText;
+    prompt.style.cssText = "font-size:13px;line-height:1.45;color:#5E6672;margin-bottom:12px;";
+
+    const phraseBlock = document.createElement("code");
+    phraseBlock.textContent = phrase;
+    phraseBlock.style.cssText = [
+      "display:block",
+      "padding:10px 12px",
+      "border-radius:4px",
+      "background:#EEF2F7",
+      "font-size:13px",
+      "line-height:1.4",
+      "word-break:break-word",
+      "margin-bottom:12px",
+    ].join(";");
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = "";
+    input.autocomplete = "off";
+    input.style.cssText = [
+      "width:100%",
+      "height:40px",
+      "border:1px solid rgba(10,10,10,.16)",
+      "border-radius:6px",
+      "padding:0 10px",
+      "font-size:14px",
+      "outline:none",
+      "box-sizing:border-box",
+      "margin-bottom:14px",
+    ].join(";");
+
+    const actions = document.createElement("div");
+    actions.style.cssText = "display:flex;justify-content:flex-end;gap:8px;";
+
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "Cancel";
+    cancel.style.cssText = buttonStyle("secondary");
+
+    const confirm = document.createElement("button");
+    confirm.type = "submit";
+    confirm.textContent = "Confirm";
+    confirm.style.cssText = buttonStyle("primary");
+
+    const cleanup = (value: string | null) => {
+      document.removeEventListener("keydown", handleKeydown);
+      overlay.remove();
+      resolve(value);
+    };
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        cleanup(null);
+      }
+    };
+
+    cancel.addEventListener("click", () => cleanup(null));
+    panel.addEventListener("submit", (event) => {
+      event.preventDefault();
+      cleanup(input.value);
+    });
+    document.addEventListener("keydown", handleKeydown);
+
+    actions.append(cancel, confirm);
+    panel.append(heading, prompt, phraseBlock, input, actions);
+    overlay.append(panel);
+    document.body.append(overlay);
+    input.focus();
+  });
+}
+
+function buttonStyle(variant: "primary" | "secondary"): string {
+  const base = [
+    "height:34px",
+    "border-radius:6px",
+    "padding:0 14px",
+    "font-size:13px",
+    "font-weight:650",
+    "cursor:pointer",
+  ];
+  if (variant === "primary") {
+    return [...base, "border:1px solid #0A0A0A", "background:#0A0A0A", "color:#fff"].join(";");
+  }
+  return [
+    ...base,
+    "border:1px solid rgba(10,10,10,.12)",
+    "background:#fff",
+    "color:#0A0A0A",
+  ].join(";");
 }

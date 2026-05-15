@@ -1,6 +1,7 @@
-import { LayoutDashboard, BookMarked, GitBranch, Activity, Newspaper, Sparkles, Layers, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, BookMarked, GitBranch, Activity, Newspaper, Sparkles, Layers, ShieldCheck, Bell } from "lucide-react";
 import logoMarkUrl from "../../../logo_optimized (2).svg";
 import { dashboardSummary } from "./data";
+import type { DashboardCatalogSyncState } from "./runtime";
 
 export type NavKey =
   | "overview"
@@ -10,11 +11,13 @@ export type NavKey =
   | "events"
   | "llm"
   | "groups"
-  | "audit";
+  | "audit"
+  | "notifications";
 
 interface Props {
   active: NavKey;
   onChange: (k: NavKey) => void;
+  catalogSync?: DashboardCatalogSyncState;
 }
 
 function navItems(): { key: NavKey; label: string; icon: any; count?: string; accent: string }[] {
@@ -27,10 +30,12 @@ function navItems(): { key: NavKey; label: string; icon: any; count?: string; ac
     { key: "llm",        label: "LLM Center",       icon: Sparkles, count: String(dashboardSummary.reviewCount), accent: "#8B5CF6" },
     { key: "groups",     label: "Strategy Groups",  icon: Layers, accent: "#FF2D7A" },
     { key: "audit",      label: "Audit",            icon: ShieldCheck, count: String(dashboardSummary.auditCount), accent: "#0A0A0A" },
+    { key: "notifications", label: "Notifications", icon: Bell, accent: "#F8A93B" },
   ];
 }
 
-export function Sidebar({ active, onChange }: Props) {
+export function Sidebar({ active, onChange, catalogSync }: Props) {
+  const syncOk = catalogSync?.status !== "error";
   return (
     <aside className="w-[236px] shrink-0 p-4 flex flex-col gap-3">
       <div className="flex items-center gap-3 px-2 pt-1 pb-3 hairline-b">
@@ -100,13 +105,15 @@ export function Sidebar({ active, onChange }: Props) {
       <div className="mt-auto px-3 pt-3 hairline-t">
         <div className="flex items-center gap-2 mb-1">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-[#1FB85A] opacity-40 animate-ping" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#1FB85A]" />
+            {syncOk && <span className="absolute inline-flex h-full w-full rounded-full bg-[#1FB85A] opacity-40 animate-ping" />}
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${syncOk ? "bg-[#1FB85A]" : "bg-[#FF2D7A]"}`} />
           </span>
-          <span className="t-body-sm ink" style={{ fontWeight: 500 }}>Local catalog synced</span>
+          <span className="t-body-sm ink" style={{ fontWeight: 500 }}>
+            {syncOk ? "Catalog synced" : "Catalog error"}
+          </span>
         </div>
         <p className="t-body-sm ink-subtle leading-snug">
-          File-first source of truth · read model v{dashboardSummary.readModelVersion}
+          {catalogSync?.error ?? `File-first source of truth · read model v${dashboardSummary.readModelVersion}`}
         </p>
       </div>
     </aside>

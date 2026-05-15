@@ -3,6 +3,7 @@ import { Filter, Download, ArrowUpDown, Sparkles } from "lucide-react";
 import { Card, Tag, Pill } from "./blocks";
 import { Hero } from "./hero";
 import { Sparkline } from "./sparkline";
+import { CommandResultDetails } from "./command-details";
 import { applyDashboardCatalog, dashboardSummary, strategies, Strategy } from "./data";
 import {
   getDashboardJson,
@@ -39,6 +40,8 @@ export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
   const [useLlm, setUseLlm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [draftStatus, setDraftStatus] = useState("Local command API is idle.");
+  const [lastPlan, setLastPlan] = useState<DashboardCommandPlanResponse | null>(null);
+  const [lastResult, setLastResult] = useState<DashboardCommandRunResponse | null>(null);
   const filters = [
     ["All", dashboardSummary.strategyCount],
     ["Active", dashboardSummary.activeStrategyCount],
@@ -62,6 +65,8 @@ export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
     }
     setBusy(true);
     setDraftStatus("Creating draft command plan...");
+    setLastPlan(null);
+    setLastResult(null);
     try {
       const plan = await postDashboardJson<DashboardCommandPlanResponse>("/api/dashboard/command-plan", {
         action: "strategy.draft",
@@ -73,6 +78,7 @@ export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
       if (!plan.plan_path) {
         throw new Error("dashboard command plan missing plan_path");
       }
+      setLastPlan(plan);
       const confirmations = await promptDashboardConfirmations(
         plan,
         "Type the exact confirmation phrase to draft this strategy.",
@@ -90,6 +96,7 @@ export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
       const result = await resolveDashboardCommandRun(queued, (job) => {
         setDraftStatus(`${job.status}: ${job.message}`);
       });
+      setLastResult(result);
       await refreshCatalog();
       const output = result.output_paths?.[0] ? ` · ${result.output_paths[0]}` : "";
       const backup = result.backup_manifest_path ? ` · ${result.backup_manifest_path}` : "";
@@ -170,6 +177,9 @@ export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
             </button>
             <div className="t-body-sm ink-subtle leading-snug">{draftStatus}</div>
           </div>
+        </div>
+        <div className="px-4 pb-4">
+          <CommandResultDetails plan={lastPlan} result={lastResult} />
         </div>
       </Card>
 

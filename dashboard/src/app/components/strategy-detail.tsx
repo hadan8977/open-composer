@@ -4,6 +4,7 @@ import {
   TrendingUp, Plus,
 } from "lucide-react";
 import { Card, Tag, Pill, KPI, SectionTitle } from "./blocks";
+import { CommandResultDetails } from "./command-details";
 import { Sparkline } from "./sparkline";
 import { applyDashboardCatalog, auditLog, llmReviews, recentSignals, strategies, versions } from "./data";
 import {
@@ -588,6 +589,7 @@ function SpecCanvas({ s, accent }: { s: any; accent: string }) {
                   )}
                 </div>
               )}
+              <CommandResultDetails plan={lastPlan} result={lastResult} />
             </div>
           </div>
         </Card>

@@ -19,6 +19,7 @@ from open_composer.feature_packets import (
 from open_composer.models.runner import PaperRunCycle, PaperRunSignalResult
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.notifications import safe_dispatch_notification
 from open_composer.paper_controls import load_paper_kill_switch
 from open_composer.paper_readiness import (
     PaperStrategyReadinessReport,
@@ -148,6 +149,7 @@ def run_paper_cycle(
             root=base,
             client=client,
         )
+        _notify_paper_signal(signal_result, spec, base)
         cycle.signals.append(signal_result)
     cycle.finished_at = datetime.now(UTC)
     _write_cycle_artifacts(base, cycle)
@@ -353,6 +355,45 @@ def _decide_signal(
         review_verdict=review_verdict,
         order_id=order.id,
         message=f"paper order status={order.status}",
+    )
+
+
+def _notify_paper_signal(
+    signal_result: PaperRunSignalResult,
+    spec: StrategySpec,
+    root: Path,
+) -> None:
+    if signal_result.decision == "order_error":
+        kind = "alpaca_error"
+        severity = "red"
+    elif signal_result.decision in {
+        "blocked_by_kill_switch",
+        "blocked_by_readiness",
+        "blocked_by_review",
+    }:
+        kind = "signal_actionable"
+        severity = "warn"
+    else:
+        kind = "signal_actionable"
+        severity = "info"
+    safe_dispatch_notification(
+        kind=kind,  # type: ignore[arg-type]
+        severity=severity,  # type: ignore[arg-type]
+        title=(
+            f"{spec.name}: {signal_result.action.upper()} "
+            f"{signal_result.symbol} {signal_result.decision}"
+        ),
+        body=signal_result.message,
+        metadata={
+            "signal_id": signal_result.signal_id,
+            "strategy": spec.name,
+            "symbol": signal_result.symbol,
+            "action": signal_result.action,
+            "price": signal_result.price,
+            "decision": signal_result.decision,
+            "execution_mode": spec.execution.mode,
+        },
+        root=root,
     )
 
 

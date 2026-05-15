@@ -6,11 +6,12 @@ import { Overview } from "./components/overview";
 import { Library } from "./components/library";
 import { Versions, Paper, Events, LLM, Groups, Audit } from "./components/sections";
 import { StrategyDetail } from "./components/strategy-detail";
+import { Notifications } from "./components/notifications";
 import { StatusFooter } from "./components/footer";
 import { loginDashboard, useDashboardCatalogSync, useDashboardSession } from "./components/runtime";
 
 export default function App() {
-  useDashboardCatalogSync();
+  const catalogSync = useDashboardCatalogSync();
   const session = useDashboardSession();
   const [tab, setTab] = useState<NavKey>("overview");
   const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(null);
@@ -30,7 +31,7 @@ export default function App() {
 
   return (
     <div className="size-full flex bg-paper">
-      <Sidebar active={tab} onChange={handleNav} />
+      <Sidebar active={tab} onChange={handleNav} catalogSync={catalogSync} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 hairline-l">
         <TopBar
           back={selectedStrategyId ? "Library" : undefined}
@@ -38,6 +39,8 @@ export default function App() {
           deploymentMode={session.remote ? "Remote Commands Enabled" : "Local"}
           owner={session.owner}
           onLogout={session.remote ? session.logout : undefined}
+          onNotifications={() => handleNav("notifications")}
+          catalogSync={catalogSync}
         />
         <div className="flex-1 overflow-auto flex flex-col">
           <div className="flex-1 pt-3">
@@ -53,6 +56,7 @@ export default function App() {
                 {tab === "llm"        && <LLM />}
                 {tab === "groups"     && <Groups />}
                 {tab === "audit"      && <Audit />}
+                {tab === "notifications" && <Notifications />}
               </>
             )}
           </div>

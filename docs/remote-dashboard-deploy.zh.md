@@ -105,6 +105,27 @@ VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply --skip-system
 VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply --no-verify
 ```
 
+## 通知配置
+
+Dashboard 远程模式支持 outbound-only Telegram 通知。实际配置文件
+`config/notifications.yaml` 不入仓；示例文件入仓在
+`config/notifications.yaml.example`。VPS `.env` 中只需要放环境变量：
+
+```bash
+TELEGRAM_BOT_TOKEN=<bot-token>
+TELEGRAM_CHAT_ID=<chat-id>
+```
+
+验证命令：
+
+```bash
+uv run oc notify status
+uv run oc notify test --dry-run
+```
+
+Telegram 只用于 Open Composer 向外发送消息；项目不实现 webhook、polling、
+callback 或聊天命令入口。
+
 ## 启动 daemon
 
 ```bash

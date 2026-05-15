@@ -19,8 +19,12 @@ from open_composer.agent_requests import (
 from open_composer.config import ensure_dir
 from open_composer.dashboard.commands import DashboardCommandError
 from open_composer.dashboard.server import (
+    _query_limit,
     build_dashboard_catalog_payload,
     build_dashboard_command_plan_payload,
+    build_notification_config_payload,
+    build_notification_log_payload,
+    build_notification_test_payload,
 )
 from open_composer.remote.auth import HMACAuthError, NonceStore, verify_signed_request
 from open_composer.remote.jobs import RemoteJobError, RemoteJobManager
@@ -69,7 +73,8 @@ class RemoteHTTPRequestHandler(BaseHTTPRequestHandler):
         super().end_headers()
 
     def do_GET(self) -> None:  # noqa: N802
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
         if path == "/health":
             self._send_json({"status": "ok", "service": "open-composer-remote"})
             return
@@ -85,6 +90,14 @@ class RemoteHTTPRequestHandler(BaseHTTPRequestHandler):
                 return
             if path == "/dashboard/events":
                 self._send_json({"events": self.job_manager.read_events()})
+                return
+            if path == "/notifications/config":
+                self._send_json(build_notification_config_payload(self.root))
+                return
+            if path == "/notifications/log":
+                self._send_json(
+                    build_notification_log_payload(self.root, limit=_query_limit(parsed.query))
+                )
                 return
             if path == "/agent-requests":
                 self._send_json(
@@ -129,6 +142,9 @@ class RemoteHTTPRequestHandler(BaseHTTPRequestHandler):
                     self.root,
                 )
                 self._send_json(request.model_dump(mode="json"), status=201)
+                return
+            if path == "/notifications/test":
+                self._send_json(build_notification_test_payload(self.root, payload))
                 return
             self._send_json({"error": "Unknown remote API path"}, status=404)
         except (DashboardCommandError, RemoteServerError, ValueError, ValidationError) as exc:

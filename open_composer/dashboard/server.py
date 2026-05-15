@@ -6,8 +6,8 @@ from collections.abc import Mapping
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
-from urllib.parse import urlparse
+from typing import Any, get_args
+from urllib.parse import parse_qs, urlparse
 
 from open_composer.config import dashboard_allowed_origin, dashboard_api_token
 from open_composer.dashboard.catalog import build_dashboard_catalog
@@ -18,6 +18,12 @@ from open_composer.dashboard.commands import (
     load_dashboard_command_plan,
     resolve_dashboard_serve_root,
     write_dashboard_command_plan,
+)
+from open_composer.models.notification import NotificationKind, NotificationSeverity
+from open_composer.notifications import (
+    notification_config_status,
+    read_notification_log,
+    send_test_notification,
 )
 
 
@@ -65,7 +71,8 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self) -> None:  # noqa: N802
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
         if path.startswith("/api/") and not self._authorize_api():
             return
         if path == "/api/dashboard/health":
@@ -80,6 +87,13 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         if path == "/api/dashboard/catalog":
             self._send_json(build_dashboard_catalog_payload(self.dashboard_root))
             return
+        if path == "/api/notifications/config":
+            self._send_json(build_notification_config_payload(self.dashboard_root))
+            return
+        if path == "/api/notifications/log":
+            limit = _query_limit(parsed.query)
+            self._send_json(build_notification_log_payload(self.dashboard_root, limit=limit))
+            return
         super().do_GET()
 
     def do_POST(self) -> None:  # noqa: N802
@@ -93,6 +107,9 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         if path == "/api/dashboard/command-run":
             self._handle_command_run(payload)
             return
+        if path == "/api/notifications/test":
+            self._handle_notification_test(payload)
+            return
         self.send_error(404, "Unknown dashboard API path")
 
     def _handle_command_plan(self, payload: dict[str, Any]) -> None:
@@ -105,6 +122,12 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         try:
             self._send_json(build_dashboard_command_run_payload(self.dashboard_root, payload))
         except DashboardCommandError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+
+    def _handle_notification_test(self, payload: dict[str, Any]) -> None:
+        try:
+            self._send_json(build_notification_test_payload(self.dashboard_root, payload))
+        except ValueError as exc:
             self._send_json({"error": str(exc)}, status=400)
 
     def _read_json_body(self) -> dict[str, Any]:
@@ -275,3 +298,38 @@ def build_dashboard_command_run_payload(
         executed_by=executed_by,
     )
     return result.model_dump(mode="json")
+
+
+def build_notification_config_payload(root: Path) -> dict[str, Any]:
+    return notification_config_status(root).model_dump(mode="json")
+
+
+def build_notification_log_payload(root: Path, *, limit: int = 50) -> dict[str, Any]:
+    return {"notifications": read_notification_log(root, limit=limit)}
+
+
+def build_notification_test_payload(root: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    kind = str(payload.get("kind", "signal_actionable")).strip() or "signal_actionable"
+    severity = str(payload.get("severity", "info")).strip() or "info"
+    dry_run = bool(payload.get("dry_run", False))
+    if kind not in set(get_args(NotificationKind)):
+        raise ValueError("invalid notification kind")
+    if severity not in set(get_args(NotificationSeverity)):
+        raise ValueError("invalid notification severity")
+    record = send_test_notification(
+        root,
+        kind=kind,  # type: ignore[arg-type]
+        severity=severity,  # type: ignore[arg-type]
+        dry_run=dry_run,
+    )
+    return {"notification": record.model_dump(mode="json")}
+
+
+def _query_limit(query: str, default: int = 50) -> int:
+    values = parse_qs(query).get("limit", [])
+    if not values:
+        return default
+    try:
+        return max(1, min(500, int(values[0])))
+    except ValueError:
+        return default

@@ -39,6 +39,9 @@ the browser command center:
 - `GET /api/dashboard/catalog`
 - `POST /api/dashboard/command-plan`
 - `POST /api/dashboard/command-run`
+- `GET /api/notifications/config`
+- `GET /api/notifications/log`
+- `POST /api/notifications/test`
 
 The Paper command center reads `/api/dashboard/catalog` on load and after command
 execution so its status panel can reflect the latest paper summary, including

@@ -18,6 +18,7 @@ from open_composer.models.paper import (
     PaperReconciliationReport,
     PaperStatusSnapshot,
 )
+from open_composer.notifications import safe_dispatch_notification
 from open_composer.storage import append_jsonl, write_json
 from open_composer.strategy_lifecycle import list_strategies
 
@@ -57,6 +58,14 @@ def set_paper_kill_switch(
     ensure_dir(path.parent)
     write_json(path, state)
     append_jsonl(base / "reports" / "paper" / "kill_switch_events.jsonl", [state])
+    safe_dispatch_notification(
+        kind="kill_switch",
+        severity="red",
+        title=f"Paper kill switch {'enabled' if enabled else 'cleared'}",
+        body=state.reason or "No reason supplied.",
+        metadata={"enabled": enabled, "updated_by": updated_by},
+        root=base,
+    )
     return state
 
 

@@ -6,7 +6,7 @@ import os
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, get_args
 
 import typer
 from dotenv import load_dotenv
@@ -81,7 +81,13 @@ from open_composer.feature_packets import (
     write_feature_packet,
 )
 from open_composer.journal.writer import add_journal_entry
+from open_composer.models.notification import NotificationKind, NotificationSeverity
 from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.notifications import (
+    notification_config_status,
+    read_notification_log,
+    send_test_notification,
+)
 from open_composer.paper_controls import (
     build_paper_alerts,
     build_paper_status,
@@ -169,6 +175,7 @@ dashboard_app = typer.Typer(no_args_is_help=True)
 repo_app = typer.Typer(no_args_is_help=True)
 remote_app = typer.Typer(no_args_is_help=True)
 agent_app = typer.Typer(no_args_is_help=True)
+notify_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -189,6 +196,7 @@ app.add_typer(dashboard_app, name="dashboard")
 app.add_typer(repo_app, name="repo")
 app.add_typer(remote_app, name="remote")
 app.add_typer(agent_app, name="agent")
+app.add_typer(notify_app, name="notify")
 
 
 @app.callback()
@@ -1019,6 +1027,86 @@ def agent_request_complete_command(
     except (FileNotFoundError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(f"[green]agent request completed[/green] {request.request_id}")
+
+
+@notify_app.command("status")
+def notify_status_command(
+    limit: Annotated[int, typer.Option("--limit", help="Recent notification log rows.")] = 10,
+) -> None:
+    """Show outbound notification configuration without exposing secrets."""
+    root = project_root()
+    status = notification_config_status(root)
+    table = Table(title="Open Composer Notifications")
+    table.add_column("Item")
+    table.add_column("Value")
+    table.add_row("Config", status.config_path)
+    table.add_row("Config exists", str(status.config_exists))
+    table.add_row("Log", status.log_path)
+    table.add_row("Telegram enabled", str(status.telegram_enabled))
+    table.add_row(
+        status.telegram_bot_token_env, "set" if status.telegram_bot_token_present else "missing"
+    )
+    table.add_row(
+        status.telegram_chat_id_env, "set" if status.telegram_chat_id_present else "missing"
+    )
+    table.add_row("Parse mode", status.telegram_parse_mode)
+    console.print(table)
+
+    policy_table = Table(title="Notification Policies")
+    policy_table.add_column("Kind")
+    policy_table.add_column("Min severity")
+    policy_table.add_column("Channels")
+    for policy in status.policies:
+        policy_table.add_row(policy.kind, policy.min_severity, ", ".join(policy.channels))
+    console.print(policy_table)
+
+    rows = read_notification_log(root, limit=limit)
+    if rows:
+        log_table = Table(title="Recent Notifications")
+        log_table.add_column("Created")
+        log_table.add_column("Kind")
+        log_table.add_column("Severity")
+        log_table.add_column("Title")
+        for row in rows:
+            log_table.add_row(
+                str(row.get("created_at", "")),
+                str(row.get("kind", "")),
+                str(row.get("severity", "")),
+                str(row.get("title", "")),
+            )
+        console.print(log_table)
+
+
+@notify_app.command("test")
+def notify_test_command(
+    kind: Annotated[
+        str, typer.Option("--kind", help="Notification kind to test.")
+    ] = "signal_actionable",
+    severity: Annotated[str, typer.Option("--severity", help="info, warn, or red.")] = "info",
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Do not send to outbound channels."),
+    ] = False,
+) -> None:
+    """Send or dry-run a test outbound notification."""
+    allowed_kinds = set(get_args(NotificationKind))
+    allowed_severities = set(get_args(NotificationSeverity))
+    if kind not in allowed_kinds:
+        raise typer.BadParameter(f"kind must be one of: {', '.join(sorted(allowed_kinds))}")
+    if severity not in allowed_severities:
+        raise typer.BadParameter(
+            f"severity must be one of: {', '.join(sorted(allowed_severities))}"
+        )
+    record = send_test_notification(
+        project_root(),
+        kind=kind,  # type: ignore[arg-type]
+        severity=severity,  # type: ignore[arg-type]
+        dry_run=dry_run,
+    )
+    console.print(
+        f"[green]notification recorded[/green] {record.id} "
+        f"deliveries={[(item.channel, item.status) for item in record.deliveries]}"
+    )
 
 
 @capability_app.command("list")

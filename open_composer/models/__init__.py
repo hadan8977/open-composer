@@ -25,6 +25,13 @@ from open_composer.models.execution_backend import (
     NautilusPaperPlan,
 )
 from open_composer.models.journal import TradeJournalEntry
+from open_composer.models.notification import (
+    NotificationConfig,
+    NotificationConfigStatus,
+    NotificationDelivery,
+    NotificationPolicy,
+    NotificationRecord,
+)
 from open_composer.models.options import OptionBacktestRun, OptionBacktestTrade, OptionOverlaySpec
 from open_composer.models.paper import (
     PaperAccountSnapshot,
@@ -69,6 +76,11 @@ __all__ = [
     "NautilusBacktestPlan",
     "NautilusCustomDataBinding",
     "NautilusPaperPlan",
+    "NotificationConfig",
+    "NotificationConfigStatus",
+    "NotificationDelivery",
+    "NotificationPolicy",
+    "NotificationRecord",
     "CostConfig",
     "FactorConfig",
     "OptionBacktestRun",

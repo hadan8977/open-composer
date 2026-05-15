@@ -412,6 +412,19 @@ always an async job. Yellow and Red actions create
 actions require the normal confirmation phrase plus `CONFIRM REMOTE STRATEGY
 MUTATION` or `CONFIRM REMOTE PAPER CONTROL`.
 
+Outbound notifications are configured file-first. Copy
+`config/notifications.yaml.example` to `config/notifications.yaml`, set
+`TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env`, then verify without
+sending:
+
+```bash
+uv run oc notify status
+uv run oc notify test --dry-run
+```
+
+Telegram is outbound-only; Open Composer does not consume Telegram webhooks,
+polling updates, callbacks, or chat commands.
+
 Long-running work can be handed to local agents through file-backed requests:
 
 ```bash

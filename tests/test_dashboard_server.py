@@ -13,6 +13,9 @@ from open_composer.dashboard.server import (
     build_dashboard_command_plan_payload,
     build_dashboard_command_run_payload,
     build_dashboard_health_payload,
+    build_notification_config_payload,
+    build_notification_log_payload,
+    build_notification_test_payload,
     create_dashboard_server,
     dashboard_request_authorized,
 )
@@ -411,6 +414,23 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
                 "executed_by": "pytest",
             },
         )
+
+
+def test_dashboard_notification_payloads(sample_workspace: Path) -> None:
+    config = build_notification_config_payload(sample_workspace)
+    assert config["config_path"] == "config/notifications.yaml"
+    assert config["log_path"] == "reports/notifications/log.jsonl"
+    assert config["telegram_bot_token_present"] is False
+
+    test_payload = build_notification_test_payload(
+        sample_workspace,
+        {"kind": "system_alert", "severity": "info", "dry_run": True},
+    )
+    assert test_payload["notification"]["kind"] == "system_alert"
+    assert any(item["channel"] == "log_only" for item in test_payload["notification"]["deliveries"])
+
+    log = build_notification_log_payload(sample_workspace, limit=10)
+    assert log["notifications"][-1]["title"] == "Open Composer notification test"
 
 
 def test_dashboard_api_token_auth_gate(sample_workspace: Path) -> None:

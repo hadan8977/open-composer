@@ -12,6 +12,7 @@ import {
 import { Card, SectionTitle, Tag, KPI, Pill, ColorBlock } from "./blocks";
 import { Hero } from "./hero";
 import { Sparkline } from "./sparkline";
+import { CommandResultDetails } from "./command-details";
 import {
   auditLog,
   applyDashboardCatalog,
@@ -536,6 +537,7 @@ function PaperCommandDock() {
               )}
             </div>
           )}
+          <CommandResultDetails plan={lastPlan} result={lastResult} />
         </div>
       </div>
     </Card>
