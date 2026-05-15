@@ -89,6 +89,7 @@ class VpsBootstrapPlan(BaseModel):
     vercel_project: str
     vercel_origin: str | None = None
     dashboard_url: str | None = None
+    cleanup_vercel: bool = True
     dashboard_dir: str
     remote_env_path: str
     systemd_unit_path: str
@@ -136,6 +137,7 @@ class VpsBootstrapConfig(BaseModel):
     skip_system: bool = False
     skip_vercel: bool = False
     skip_prepare: bool = False
+    cleanup_vercel: bool = True
     verify: bool = True
     dashboard_password: str | None = None
     generated_dashboard_password: bool = False
@@ -187,6 +189,7 @@ def build_vps_bootstrap_config(
     skip_system: bool = False,
     skip_vercel: bool = False,
     skip_prepare: bool = False,
+    cleanup_vercel: bool = True,
     verify: bool = True,
 ) -> VpsBootstrapConfig:
     base = root.resolve()
@@ -259,6 +262,7 @@ def build_vps_bootstrap_config(
         skip_system=skip_system,
         skip_vercel=skip_vercel,
         skip_prepare=skip_prepare,
+        cleanup_vercel=cleanup_vercel,
         verify=verify,
     )
 
@@ -286,6 +290,7 @@ def build_vps_bootstrap_config(
         skip_system=skip_system,
         skip_vercel=skip_vercel,
         skip_prepare=skip_prepare,
+        cleanup_vercel=cleanup_vercel,
         verify=verify,
         dashboard_password=raw_password,
         generated_dashboard_password=generated_password,
@@ -316,6 +321,7 @@ def build_vps_bootstrap_plan(
     skip_system: bool,
     skip_vercel: bool,
     skip_prepare: bool,
+    cleanup_vercel: bool,
     verify: bool,
 ) -> VpsBootstrapPlan:
     steps: list[VpsBootstrapStep] = []
@@ -444,6 +450,22 @@ def build_vps_bootstrap_plan(
         )
     steps.append(
         VpsBootstrapStep(
+            name="vercel_cleanup",
+            status="skipped" if skip_vercel else ("ok" if cleanup_vercel else "skipped"),
+            message=(
+                "Stale Vercel deployments will be removed safely after apply."
+                if not skip_vercel and cleanup_vercel
+                else (
+                    "Vercel deployment cleanup is disabled."
+                    if not skip_vercel
+                    else "Vercel deployment cleanup is skipped."
+                )
+            ),
+            details={"safe": True, "enabled": cleanup_vercel and not skip_vercel},
+        )
+    )
+    steps.append(
+        VpsBootstrapStep(
             name="post_deploy_verify",
             status="ok" if verify else "skipped",
             message=(
@@ -469,6 +491,7 @@ def build_vps_bootstrap_plan(
         vercel_project=vercel_project,
         vercel_origin=vercel_origin,
         dashboard_url=vercel_origin,
+        cleanup_vercel=cleanup_vercel and not skip_vercel,
         dashboard_dir=relpath(root / "dashboard", root),
         remote_env_path=relpath(env_path, root),
         systemd_unit_path=systemd_unit_path.as_posix(),
@@ -625,6 +648,9 @@ def apply_vps_bootstrap(
                 },
             )
         )
+        if config.cleanup_vercel:
+            cleanup_step = cleanup_vercel_deployments(config, runner)
+            steps.append(cleanup_step)
 
     if config.verify:
         steps.extend(verify_vps_bootstrap(config))
@@ -742,6 +768,7 @@ def apply_vercel(config: VpsBootstrapConfig, runner: CommandRunner) -> str | Non
     scope_args = ["--scope", config.vercel_scope] if config.vercel_scope else []
     command_env = {"VERCEL_TOKEN": config.vercel_token}
 
+    ensure_vercel_project(config, runner, dashboard_dir, base_cmd, scope_args, command_env)
     runner(
         [
             *base_cmd,
@@ -767,13 +794,11 @@ def apply_vercel(config: VpsBootstrapConfig, runner: CommandRunner) -> str | Non
                 "production",
                 "--force",
                 "--sensitive",
-                "--value",
-                value,
                 "--yes",
                 *scope_args,
             ],
             dashboard_dir,
-            None,
+            value + "\n",
             180,
             True,
             command_env,
@@ -787,6 +812,107 @@ def apply_vercel(config: VpsBootstrapConfig, runner: CommandRunner) -> str | Non
         command_env,
     )
     return parse_vercel_deployment_url(result.stdout) or config.vercel_origin
+
+
+def ensure_vercel_project(
+    config: VpsBootstrapConfig,
+    runner: CommandRunner,
+    dashboard_dir: Path,
+    base_cmd: Sequence[str],
+    scope_args: Sequence[str],
+    command_env: dict[str, str],
+) -> None:
+    inspect = runner(
+        [
+            *base_cmd,
+            "project",
+            "inspect",
+            config.vercel_project,
+            "--non-interactive",
+            *scope_args,
+        ],
+        dashboard_dir,
+        None,
+        180,
+        False,
+        command_env,
+    )
+    if inspect.returncode == 0:
+        return
+    runner(
+        [
+            *base_cmd,
+            "project",
+            "add",
+            config.vercel_project,
+            "--non-interactive",
+            *scope_args,
+        ],
+        dashboard_dir,
+        None,
+        180,
+        True,
+        command_env,
+    )
+
+
+def cleanup_vercel_deployments(
+    config: VpsBootstrapConfig,
+    runner: CommandRunner,
+) -> VpsBootstrapStep:
+    if not config.vercel_token:
+        return VpsBootstrapStep(
+            name="apply.vercel_cleanup",
+            status="skipped",
+            message="Vercel cleanup is skipped because VERCEL_TOKEN is missing.",
+        )
+    dashboard_dir = config.root / "dashboard"
+    base_cmd = list(config.vercel_command)
+    scope_args = ["--scope", config.vercel_scope] if config.vercel_scope else []
+    command_env = {"VERCEL_TOKEN": config.vercel_token}
+    result = runner(
+        [
+            *base_cmd,
+            "remove",
+            config.vercel_project,
+            "--safe",
+            "--yes",
+            *scope_args,
+        ],
+        dashboard_dir,
+        None,
+        600,
+        False,
+        command_env,
+    )
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip()
+        if "Could not find unaliased deployments" in detail:
+            return VpsBootstrapStep(
+                name="apply.vercel_cleanup",
+                status="ok",
+                message="Safe Vercel cleanup found no stale deployments to remove.",
+                details={"safe": True, "project": config.vercel_project},
+            )
+        return VpsBootstrapStep(
+            name="apply.vercel_cleanup",
+            status="warning",
+            message="Safe Vercel cleanup failed; the new production deployment remains live.",
+            details={
+                "returncode": result.returncode,
+                "output": detail[:500],
+            },
+            suggested_actions=[
+                "Run `vercel remove <project> --safe --yes` manually if stale "
+                "deployments need cleanup."
+            ],
+        )
+    return VpsBootstrapStep(
+        name="apply.vercel_cleanup",
+        status="ok",
+        message="Safe Vercel cleanup removed stale deployments for the project.",
+        details={"safe": True, "project": config.vercel_project},
+    )
 
 
 def verify_vps_bootstrap(config: VpsBootstrapConfig) -> list[VpsBootstrapStep]:
@@ -1195,15 +1321,31 @@ def is_tcp_port_available(port: int, host: str = "0.0.0.0") -> bool:
 
 
 def detect_public_ip(timeout_seconds: int = 5) -> str:
-    try:
-        with urllib.request.urlopen("https://api.ipify.org", timeout=timeout_seconds) as response:
-            value = response.read().decode("utf-8").strip()
-    except OSError as exc:
-        raise VpsBootstrapError(
-            "public IP detection failed; pass --public-ip or --daemon-url"
-        ) from exc
-    ipaddress.ip_address(value)
-    return value
+    probes = [
+        "https://api.ipify.org",
+        "https://ifconfig.me/ip",
+        "https://checkip.amazonaws.com",
+    ]
+    errors: list[str] = []
+    for probe in probes:
+        try:
+            with urllib.request.urlopen(probe, timeout=timeout_seconds) as response:
+                value = response.read().decode("utf-8").strip()
+        except (OSError, ValueError) as exc:
+            errors.append(f"{probe}: {exc}")
+            continue
+        try:
+            parsed = ipaddress.ip_address(value)
+        except ValueError as exc:
+            errors.append(f"{probe}: {exc}")
+            continue
+        if parsed.version == 4:
+            return value
+        errors.append(f"{probe}: IPv{parsed.version} address is not usable for nip.io")
+    raise VpsBootstrapError(
+        "public IP detection failed; pass --public-ip or --daemon-url"
+        + (f" ({'; '.join(errors)})" if errors else "")
+    )
 
 
 def normalize_https_url(value: str) -> str:
@@ -1366,6 +1508,7 @@ def render_vps_bootstrap_markdown(plan: VpsBootstrapPlan) -> str:
         f"- Vercel project: `{plan.vercel_project}`",
         f"- Vercel origin: `{plan.vercel_origin or 'missing'}`",
         f"- Vercel deployment URL: `{plan.deployment_url or 'missing'}`",
+        f"- Vercel cleanup: `{plan.cleanup_vercel}`",
         f"- Remote env: `{plan.remote_env_path}`",
         f"- Password available this run: `{plan.password_available}`",
         f"- Verify enabled: `{plan.verify_enabled}`",

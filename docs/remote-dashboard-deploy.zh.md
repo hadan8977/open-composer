@@ -42,7 +42,8 @@ OC_DASHBOARD_OWNER=owner
 ## VPS 模式（推荐）
 
 当 Codex 已经运行在目标 VPS 上时，推荐使用 VPS 模式自动生成 secret、写入
-本机 `.env`、生成 systemd/Caddy 模板，并用 Vercel token 配置 Dashboard BFF：
+本机 `.env`、生成 systemd/Caddy 模板，并用 Vercel token 自动创建缺失的 project，
+再配置 Dashboard BFF：
 
 ```bash
 cd /srv/open-composer/repo
@@ -61,7 +62,9 @@ reports/deployment/vps-bootstrap/Caddyfile
 `--apply` 才会写 `.env`、设置 `chmod 600`、安装或刷新 systemd/Caddy，并调用
 Vercel CLI。若不传 `--daemon-url`，apply 模式会探测 VPS 公网 IPv4，默认使用
 `https://<ip>.nip.io`。如果 443 已被占用，脚本会自动回退到
-`https://<ip>.nip.io:8443`。生产长期使用建议传入自有域名。
+`https://<ip>.nip.io:8443`。生产长期使用建议传入自有域名。Vercel production
+deploy 成功后，脚本默认使用 safe cleanup 清理 stale deployments；如果需要保留历史
+deployments，可加 `--no-cleanup-vercel`。
 
 apply 默认会执行部署后验证：
 

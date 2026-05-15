@@ -866,6 +866,13 @@ def remote_bootstrap_vps_command(
         bool,
         typer.Option("--skip-prepare", help="Do not run make deploy-prepare during apply."),
     ] = False,
+    cleanup_vercel: Annotated[
+        bool,
+        typer.Option(
+            "--cleanup-vercel/--no-cleanup-vercel",
+            help="Safely remove stale Vercel deployments after a production deploy.",
+        ),
+    ] = True,
     verify: Annotated[
         bool,
         typer.Option(
@@ -900,6 +907,7 @@ def remote_bootstrap_vps_command(
             skip_system=skip_system,
             skip_vercel=skip_vercel,
             skip_prepare=skip_prepare,
+            cleanup_vercel=cleanup_vercel,
             verify=verify,
             use_sudo=use_sudo,
         )
@@ -922,6 +930,7 @@ def remote_bootstrap_vps_command(
     table.add_row("Dashboard URL", plan.dashboard_url or plan.vercel_origin or "missing")
     table.add_row("Vercel origin", plan.vercel_origin or "missing")
     table.add_row("Vercel project", plan.vercel_project)
+    table.add_row("Vercel cleanup", "enabled" if plan.cleanup_vercel else "disabled")
     table.add_row("Report", plan.report_markdown_path or "")
     if plan.deployment_url:
         table.add_row("Deployment URL", plan.deployment_url)

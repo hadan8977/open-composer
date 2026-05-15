@@ -395,7 +395,8 @@ uv run oc remote job-status <job-id>
 `reports/deployment/vps-bootstrap/plan.json` and `.md` without leaking raw
 secrets. `--apply` generates remote secrets, merges `.env`, writes owner-only
 dashboard password output when generated, prepares systemd/Caddy templates, and
-uses `VERCEL_TOKEN` to link, configure, and deploy the Vercel Dashboard BFF.
+uses `VERCEL_TOKEN` to create the Vercel project when missing, link, configure,
+and deploy the Vercel Dashboard BFF.
 Apply mode also verifies daemon `/health`, Vercel `/api/session`, dashboard
 login, and the Vercel BFF catalog proxy before returning the final Dashboard
 URL. If no custom `--daemon-url` is supplied during apply, the command can detect
@@ -426,6 +427,7 @@ uv run oc agent request-complete <request-id> --result-link reports/research/exa
 - [AUDIT-REPORT.md](AUDIT-REPORT.md)
 - [docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md](docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md)
 - [docs/codex-execution-plan-2026-05-15.zh.md](docs/codex-execution-plan-2026-05-15.zh.md)
+- [docs/codex-execution-plan-v2-dashboard-telegram-2026-05-16.zh.md](docs/codex-execution-plan-v2-dashboard-telegram-2026-05-16.zh.md)
 - [docs/current-unfinished-work-check.zh.md](docs/current-unfinished-work-check.zh.md)
 - [docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md](docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md)
 - [docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md](docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md)
@@ -433,5 +435,6 @@ uv run oc agent request-complete <request-id> --result-link reports/research/exa
 - [docs/quantml-paper-study-research-notes-2026-05-15.zh.md](docs/quantml-paper-study-research-notes-2026-05-15.zh.md)
 - [docs/review-methodology.zh.md](docs/review-methodology.zh.md)
 - [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md)
+- [docs/vps-mode-one-click-deploy-review-plan-2026-05-15.zh.md](docs/vps-mode-one-click-deploy-review-plan-2026-05-15.zh.md)
 - [docs/vps-mode-remote-dashboard-plan-2026-05-15.zh.md](docs/vps-mode-remote-dashboard-plan-2026-05-15.zh.md)
 - [docs/longbridge-integration.md](docs/longbridge-integration.md)

@@ -20,19 +20,25 @@ VPS 模式的目标不是“提供若干脚本片段”，而是在 Codex 已运
    Vercel CLI 返回的 deployment URL 可能是 preview/generated URL，不一定是最终用户
    应访问的 production alias。preview URL 可能被 Vercel Deployment Protection 拦截。
 
-2. **VPS 入口选择依赖人工判断**
+2. **旧部署清理没有自动化**
+   production alias 更新后，旧 deployment URL 可能仍作为历史部署留在 Vercel 项目中。
+   VPS 模式应在新 production deploy 成功后用 Vercel safe remove 清理 stale deployments，
+   同时保留当前 active production。
+   如果 project 本身被删除，脚本也应先自动重建 project，再 link / deploy。
+
+3. **VPS 入口选择依赖人工判断**
    443 被占用、`sslip.io` 证书限流、需要改用 `nip.io:8443` 这类情况目前靠人工补救。
    脚本应自动选择可用 HTTPS 入口并验证。
 
-3. **Vercel 配置缺少部署后验证**
+4. **Vercel 配置缺少部署后验证**
    当前只执行 link/env/deploy，没有验证 production alias 的 `/api/session` 是否返回
    Open Composer 应用 JSON，也没有验证登录后 BFF 能否通过 HMAC 调用 daemon。
 
-4. **密码状态不够明确**
+5. **密码状态不够明确**
    首次部署生成密码时有 owner-only 文件；二次部署复用已有 hash 时可能没有原始密码。
    输出必须说明是否有可用 password path，以及何时需要 `--rotate-secrets`。
 
-5. **失败信息不够面向自动化**
+6. **失败信息不够面向自动化**
    命令失败时缺少 stage 化的 verify 结果，不利于下一次自动重试或用户快速定位。
 
 ## 本次执行范围
@@ -42,11 +48,16 @@ VPS 模式的目标不是“提供若干脚本片段”，而是在 Codex 已运
 必须完成：
 
 - `bootstrap-vps --apply` 默认执行部署后验证。
+- 若 project 被删除，`bootstrap-vps --apply` 先自动 `project inspect`，失败后创建 project，
+  再 link / env / deploy。
 - 增加 `dashboard_url`，将最终可访问 URL 与 Vercel deployment URL 分离。
 - 自动选择 daemon URL：无 `--daemon-url` 时根据公网 IPv4 生成候选 URL。
+- 公网 IPv4 自动探测不依赖单一服务，按多 probe 回退。
 - 允许自动回退到 `:8443`，并优先使用 `nip.io`，降低 `sslip.io` 限流风险。
 - Caddy 写入前自动检测 443 是否可用。
 - Caddy restart 后验证 daemon `/health`。
+- Vercel env 值通过 stdin 传入 CLI，避免 secret 进入 argv。
+- 新 production deploy 成功后默认执行 Vercel safe cleanup，清理 stale deployments。
 - Vercel 部署后验证 production alias `/api/session`。
 - 若本次有可用原始密码，自动登录并验证 `/api/dashboard/catalog`。
 - 输出和报告中记录 verify 步骤、最终 URL、密码文件路径，不泄露 secret/token。
@@ -70,6 +81,7 @@ VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply
 uv run oc remote bootstrap-vps --apply --daemon-url https://oc-api.example.com
 uv run oc remote bootstrap-vps --apply --skip-vercel
 uv run oc remote bootstrap-vps --apply --skip-system
+uv run oc remote bootstrap-vps --apply --no-cleanup-vercel
 uv run oc remote bootstrap-vps --apply --no-verify
 uv run oc remote bootstrap-vps --apply --rotate-secrets
 ```
@@ -98,8 +110,11 @@ uv run oc remote bootstrap-vps --apply --rotate-secrets
 ### Vercel
 
 - CLI token 继续只通过 `VERCEL_TOKEN` 环境变量传入，不进入 argv、报告或日志。
+- `vercel env add` 的值通过 stdin 传入，不使用 token 或 secret argv。
 - deployment URL 只作为审计字段。
 - `dashboard_url` 默认使用 `vercel_origin`，即 production alias。
+- production deploy 成功后默认运行 `vercel remove <project> --safe --yes`，只清理
+  stale deployments，保留 active production / active preview。
 - verify 阶段请求 `${dashboard_url}/api/session`，必须返回 JSON 且 `remote=true`。
 - 若返回 HTML/401 Vercel Authentication 页面，部署视为 blocked，并提示关闭外层保护或给 token 增加权限后重试。
 
@@ -112,14 +127,16 @@ uv run oc remote bootstrap-vps --apply --rotate-secrets
 
 ## Review 后计划
 
-1. 扩展 plan schema：加入 `dashboard_url`、`password_available`、verify steps。
+1. 扩展 plan schema：加入 `dashboard_url`、`password_available`、`cleanup_vercel`、verify steps。
 2. 扩展 CLI：加入 `--verify/--no-verify`。
-3. 修改默认 daemon URL 生成：优先 `nip.io`，443 不可用时自动 `:8443`。
-4. 修改 Caddy 安装流程：增加 `caddy validate`。
-5. 增加 HTTP verify helpers：daemon health、Vercel session、login、catalog。
-6. 更新测试覆盖一键路径、URL 区分、443 fallback、verify 成功/失败。
-7. 更新 README 与部署文档。
-8. 运行 `uv run ruff format .`、`uv run ruff check .`、`uv run pytest`。
+3. 修改默认 daemon URL 生成：优先 `nip.io`，443 不可用时自动 `:8443`，并增加公网 IP 多 probe 回退。
+4. 修改 Vercel env 写入：通过 stdin 写值，避免 secret argv。
+5. 修改 Vercel deploy 后处理：默认 safe cleanup stale deployments，可用 `--no-cleanup-vercel` 关闭。
+6. 修改 Caddy 安装流程：增加 `caddy validate`。
+7. 增加 HTTP verify helpers：daemon health、Vercel session、login、catalog。
+8. 更新测试覆盖一键路径、URL 区分、443 fallback、verify 成功/失败、safe cleanup。
+9. 更新 README 与部署文档。
+10. 运行 `uv run ruff format .`、`uv run ruff check .`、`uv run pytest`。
 
 ## 成功标准
 
@@ -128,6 +145,7 @@ uv run oc remote bootstrap-vps --apply --rotate-secrets
   - Dashboard URL
   - Daemon URL
   - Deployment URL
+  - Vercel cleanup 状态
   - Password path 或无法验证登录的原因
   - Verify status
 - 报告和日志不包含 Vercel token、raw shared secret、session secret 或 raw password。

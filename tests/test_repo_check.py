@@ -19,6 +19,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "scripts/check-agent-parity.py",
         "docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md",
         "docs/codex-execution-plan-2026-05-15.zh.md",
+        "docs/codex-execution-plan-v2-dashboard-telegram-2026-05-16.zh.md",
         "docs/product-golden-path-codex-quant-review-2026-05-13.zh.md",
         "docs/current-unfinished-work-check.zh.md",
         "docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md",
@@ -27,6 +28,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/quantml-paper-study-research-notes-2026-05-15.zh.md",
         "docs/review-methodology.zh.md",
         "docs/remote-dashboard-deploy.zh.md",
+        "docs/vps-mode-one-click-deploy-review-plan-2026-05-15.zh.md",
         "docs/vps-mode-remote-dashboard-plan-2026-05-15.zh.md",
         "docs/longbridge-integration.md",
     ]:
