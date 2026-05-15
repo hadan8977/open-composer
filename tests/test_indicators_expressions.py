@@ -133,11 +133,15 @@ def test_feature_packet_replay_uses_published_at_visibility(tmp_path: Path) -> N
                 (
                     '{"timestamp":"2026-01-01T00:00:00Z",'
                     '"published_at":"2026-01-03T00:00:00Z",'
+                    '"fetched_at":"2026-01-03T00:00:00Z",'
+                    '"visible_at":"2026-01-03T00:00:00Z",'
                     '"source":"llm","symbol":"QQQ","features":{"theme_score":0.9}}'
                 ),
                 (
                     '{"timestamp":"2026-01-04T00:00:00Z",'
                     '"published_at":"2026-01-04T00:00:00Z",'
+                    '"fetched_at":"2026-01-04T00:00:00Z",'
+                    '"visible_at":"2026-01-04T00:00:00Z",'
                     '"source":"llm","symbol":"QQQ","features":{"theme_score":0.2}}'
                 ),
             ]
@@ -180,11 +184,15 @@ def test_feature_packet_replay_filters_by_symbol(tmp_path: Path) -> None:
                 (
                     '{"timestamp":"2026-01-01T00:00:00Z",'
                     '"published_at":"2026-01-01T00:00:00Z",'
+                    '"fetched_at":"2026-01-01T00:00:00Z",'
+                    '"visible_at":"2026-01-01T00:00:00Z",'
                     '"source":"llm","symbol":"AAOI","features":{"theme_score":0.9}}'
                 ),
                 (
                     '{"timestamp":"2026-01-02T00:00:00Z",'
                     '"published_at":"2026-01-02T00:00:00Z",'
+                    '"fetched_at":"2026-01-02T00:00:00Z",'
+                    '"visible_at":"2026-01-02T00:00:00Z",'
                     '"source":"llm","symbol":"LITE","features":{"theme_score":0.1}}'
                 ),
             ]

@@ -365,6 +365,8 @@ def _render_dashboard_html(catalog: DashboardCatalog) -> str:
               <th>Kind</th>
               <th>Status</th>
               <th>Ready</th>
+              <th>Evidence</th>
+              <th>Next Action</th>
               <th>Checks</th>
               <th>Report</th>
             </tr>
@@ -697,6 +699,10 @@ def _render_strategy_html(catalog: DashboardCatalog, strategy_id: str) -> str:
               <th>Kind</th>
               <th>Status</th>
               <th>Ready</th>
+              <th>Evidence</th>
+              <th>Benchmark</th>
+              <th>Overfit</th>
+              <th>Next Action</th>
               <th>Checks</th>
               <th>Candidates</th>
               <th>Report</th>
@@ -780,7 +786,7 @@ def _data_comparison_rows(comparisons: list) -> str:
 
 def _research_report_rows(reports: list) -> str:
     if not reports:
-        return '<tr><td colspan="6">No research reports indexed.</td></tr>'
+        return '<tr><td colspan="8">No research reports indexed.</td></tr>'
     rows = []
     for item in reports:
         rows.append(
@@ -789,6 +795,8 @@ def _research_report_rows(reports: list) -> str:
             f"<td>{_pill(item.kind)}</td>"
             f"<td>{_pill(item.status, _status_class(item.status))}</td>"
             f"<td>{'yes' if item.ready else 'no'}</td>"
+            f"<td>{escape(item.evidence_strength)}</td>"
+            f"<td>{escape(item.next_action or 'n/a')}</td>"
             f"<td>{item.check_count}</td>"
             f"<td>{_artifact_link(item.report_json_path, '../../')}</td>"
             "</tr>"
@@ -798,14 +806,23 @@ def _research_report_rows(reports: list) -> str:
 
 def _strategy_research_report_rows(reports: list) -> str:
     if not reports:
-        return '<tr><td colspan="6">No research reports indexed for this strategy.</td></tr>'
+        return '<tr><td colspan="10">No research reports indexed for this strategy.</td></tr>'
     rows = []
     for item in reports:
+        benchmark = (
+            "n/a"
+            if item.benchmark_family_complete is None
+            else ("complete" if item.benchmark_family_complete else "missing")
+        )
         rows.append(
             "<tr>"
             f"<td>{_pill(item.kind)}</td>"
             f"<td>{_pill(item.status, _status_class(item.status))}</td>"
             f"<td>{'yes' if item.ready else 'no'}</td>"
+            f"<td>{escape(item.evidence_strength)}</td>"
+            f"<td>{escape(benchmark)}</td>"
+            f"<td>{escape(item.overfit_risk or 'n/a')}</td>"
+            f"<td>{escape(item.next_action or 'n/a')}</td>"
             f"<td>{item.check_count}</td>"
             f"<td>{item.candidate_count if item.candidate_count is not None else 'n/a'}</td>"
             f"<td>{_artifact_link(item.report_json_path, '../../../')}</td>"

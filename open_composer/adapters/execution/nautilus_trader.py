@@ -17,6 +17,7 @@ from open_composer.models.execution_backend import (
 )
 from open_composer.models.strategy_spec import StrategySpec
 from open_composer.storage import write_json
+from open_composer.timeframes import supported_timeframes, timeframe_supported
 
 
 def nautilus_trader_available() -> bool:
@@ -39,6 +40,12 @@ def build_nautilus_trader_plan(
 
     if expression_errors:
         reasons.extend(expression_errors)
+        status = "blocked"
+    elif not timeframe_supported("nautilus_trader", spec.timeframe):
+        supported = ", ".join(supported_timeframes("nautilus_trader"))
+        reasons.append(
+            f"unsupported NautilusTrader timeframe {spec.timeframe}; supported: {supported}"
+        )
         status = "blocked"
     elif not nautilus_trader_available():
         reasons.append("nautilus_trader package is not installed")

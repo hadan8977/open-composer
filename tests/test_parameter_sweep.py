@@ -48,8 +48,19 @@ def test_parameter_sweep_runs_grid_and_writes_ranked_reports(sample_workspace: P
     assert "buy_hold_return_pct" in payload["candidates"][0]["metrics"]
     assert "alpha_vs_buy_hold_pct" in payload["candidates"][0]["metrics"]
     assert "quality_flags" in payload["candidates"][0]
+    assert payload["trial_count"] == 4
+    assert payload["search_space"]["family"] == "parameter_sweep"
+    assert payload["stability"]["trial_count"] == 4
+    assert "neighbor_success_rate" in payload["stability"]
+    assert payload["stability"]["rank_correlation_train_oos"] is None
+    assert payload["stability"]["top_decile_oos_retention"] is None
+    assert payload["dsr_inputs"]["trial_count"] == 4
+    assert payload["selection_bias_note"]
+    assert payload["research_manifest"]["spec_hash"]
+    assert "stability" in payload["candidates"][0]
     assert "in-sample research evidence" in result.report_path.read_text(encoding="utf-8")
     assert "Buy/Hold" in result.report_path.read_text(encoding="utf-8")
+    assert "## Stability" in result.report_path.read_text(encoding="utf-8")
 
     best_spec = yaml.safe_load(result.written_specs[0].read_text(encoding="utf-8"))
     assert best_spec["lifecycle"] == "draft"

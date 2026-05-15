@@ -279,6 +279,7 @@ class DashboardPaperReadinessReport(BaseModel):
     generated_at: datetime
     path: str
     report_markdown_path: str | None = None
+    gate_summary: dict[str, object] = Field(default_factory=dict)
     blocking_checks: list[str] = Field(default_factory=list)
     warning_checks: list[str] = Field(default_factory=list)
     checks: list[DashboardPaperReadinessCheck] = Field(default_factory=list)
@@ -357,6 +358,7 @@ class DashboardFeaturePacket(BaseModel):
     has_timestamp: bool = False
     has_published_at: bool = False
     has_fetched_at: bool = False
+    has_visible_at: bool = False
     has_dedupe_key: bool = False
     has_schema_version: bool = False
     point_in_time_status: Literal["complete", "partial", "missing"] = "missing"
@@ -406,6 +408,14 @@ class DashboardResearchReport(BaseModel):
     cache_fallback: bool = False
     data_warnings: list[str] = Field(default_factory=list)
     output_paths: list[str] = Field(default_factory=list)
+    gate_summary: dict[str, object] = Field(default_factory=dict)
+    next_action: str = ""
+    evidence_strength: str = "unknown"
+    benchmark_family_complete: bool | None = None
+    overfit_risk: str | None = None
+    llm_contribution_status: str | None = None
+    paper_readiness_status: PaperReadinessStatus | None = None
+    data_provenance: dict[str, object] = Field(default_factory=dict)
 
 
 class DashboardOperationalCheck(BaseModel):

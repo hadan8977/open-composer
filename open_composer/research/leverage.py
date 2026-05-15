@@ -13,6 +13,7 @@ from open_composer.analytics import build_performance_metrics
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.storage import write_json
+from open_composer.timeframes import bars_per_year
 
 
 @dataclass(frozen=True)
@@ -500,18 +501,7 @@ def _split_index(frame: pd.DataFrame, out_of_sample_ratio: float) -> int:
 
 
 def _financing_per_bar(financing_rate_pct: float, timeframe: str) -> float:
-    return financing_rate_pct / 100 / _bars_per_year(timeframe)
-
-
-def _bars_per_year(timeframe: str) -> float:
-    mapping = {
-        "5m": 252 * 78,
-        "15m": 252 * 26,
-        "1h": 252 * 6.5,
-        "daily": 252,
-        "weekly": 52,
-    }
-    return float(mapping.get(timeframe, 252))
+    return financing_rate_pct / 100 / (bars_per_year(timeframe) or 252)
 
 
 def _max_drawdown_pct(equity_curve: list[float]) -> float:

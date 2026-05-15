@@ -80,7 +80,7 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert report_path.exists()
 
     payload = json.loads(json_path.read_text(encoding="utf-8"))
-    assert payload["status"] == "warning"
+    assert payload["status"] == "blocked"
     assert payload["ready"] is False
     assert payload["checks"]
     assert {item["name"] for item in payload["checks"]} == {
@@ -89,7 +89,18 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
         "walk_forward",
         "cost_sensitivity",
         "data_comparison",
+        "strict_data",
+        "feature_packets",
+        "benchmark_family",
     }
+    assert payload["gate_summary"]["workflow_pass"] is True
+    assert payload["gate_summary"]["research_pass"] is False
+    assert payload["gate_summary"]["paper_ready_pass"] is False
+    assert payload["benchmark_family"]["benchmarks"]["same_symbol_buy_hold"]["status"] == "ok"
+    assert "market_proxy" in payload["benchmark_family"]["missing"]
+    assert payload["data_profile"]["source_mode"] == "sample"
+    assert payload["research_manifest"]["trial_count"] >= 1
+    assert payload["research_manifest"]["spec_hash"]
     assert payload["data_comparisons"]
     assert payload["out_of_sample"] is not None
     assert "buy_hold_return_pct" in payload["full_window"]
@@ -103,3 +114,6 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert "## Walk Forward" in text
     assert "## Cost Sensitivity" in text
     assert "## Data Comparisons" in text
+    assert "## Benchmark Family" in text
+    assert "## Research Manifest" in text
+    assert "workflow_pass" in text

@@ -6,6 +6,8 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from open_composer.timeframes import StrategyTimeframe
+
 
 class RuleBlock(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -114,7 +116,7 @@ class StrategySpec(BaseModel):
 
     name: str
     description: str
-    timeframe: Literal["5m", "15m", "1h", "daily", "weekly"]
+    timeframe: StrategyTimeframe
     universe: list[str] = Field(min_length=1)
     lifecycle: Literal["draft", "approved", "active", "retired"]
     entry: RuleBlock

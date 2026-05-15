@@ -625,13 +625,22 @@ def _build_equity_instrument(bar_type: BarType, spec: StrategySpec) -> Equity:
 
 def _bar_spec_from_timeframe(timeframe: str) -> BarSpecification:
     mapping = {
+        "1m": (1, BarAggregation.MINUTE),
         "5m": (5, BarAggregation.MINUTE),
         "15m": (15, BarAggregation.MINUTE),
+        "30m": (30, BarAggregation.MINUTE),
         "1h": (1, BarAggregation.HOUR),
+        "4h": (4, BarAggregation.HOUR),
         "daily": (1, BarAggregation.DAY),
         "weekly": (1, BarAggregation.WEEK),
     }
-    step, aggregation = mapping[timeframe]
+    try:
+        step, aggregation = mapping[timeframe]
+    except KeyError as exc:
+        supported = ", ".join(mapping)
+        raise ValueError(
+            f"unsupported Nautilus timeframe: {timeframe}; supported: {supported}"
+        ) from exc
     return BarSpecification(step, aggregation, PriceType.LAST)
 
 

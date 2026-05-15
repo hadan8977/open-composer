@@ -221,12 +221,38 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
     )
     promotion_path.parent.mkdir(parents=True, exist_ok=True)
     promotion_path.write_text(
-        (
-            '{"strategy_name":"qqq_paper_ready_15m","source_spec_path":"'
-            'strategy_specs/active/qqq_paper_ready_15m.yaml","status":"ok","ready":true,'
-            '"checks":[{"name":"in_sample","status":"ok","message":"ok","details":{}}]}'
-            "\n"
-        ),
+        json.dumps(
+            {
+                "strategy_name": "qqq_paper_ready_15m",
+                "source_spec_path": "strategy_specs/active/qqq_paper_ready_15m.yaml",
+                "status": "ok",
+                "ready": True,
+                "gate_summary": {
+                    "workflow_pass": True,
+                    "research_pass": True,
+                    "llm_contribution_pass": None,
+                    "paper_ready_pass": True,
+                },
+                "checks": [
+                    {"name": "in_sample", "status": "ok", "message": "ok", "details": {}},
+                    {"name": "strict_data", "status": "ok", "message": "ok", "details": {}},
+                    {
+                        "name": "feature_packets",
+                        "status": "ok",
+                        "message": "ok",
+                        "details": {},
+                    },
+                    {
+                        "name": "benchmark_family",
+                        "status": "ok",
+                        "message": "ok",
+                        "details": {},
+                    },
+                ],
+                "benchmark_family": {"complete": True, "missing": [], "benchmarks": {}},
+            }
+        )
+        + "\n",
         encoding="utf-8",
     )
 

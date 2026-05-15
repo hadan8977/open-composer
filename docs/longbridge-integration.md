@@ -46,7 +46,10 @@ and labels that fallback in the manifest.
 
 - Default feed label: `nasdaq_basic`.
 - Adapter periods: `1m`, `5m`, `15m`, `1h`, `daily`, `weekly`.
-- `StrategySpec.timeframe`: `5m`, `15m`, `1h`, `daily`, `weekly`.
+- `StrategySpec.timeframe`: `1m`, `5m`, `15m`, `30m`, `1h`, `4h`, `daily`,
+  `weekly`.
+- Longbridge provider support: `1m`, `5m`, `15m`, `1h`, `daily`, `weekly`;
+  unsupported `30m` and `4h` requests fail fast rather than falling back.
 - Per-request candlestick count: 1 to 1000 bars.
 - Trade sessions: `intraday` by default, or `all` for extended sessions.
 - US free/basic data is not consolidated SIP data.

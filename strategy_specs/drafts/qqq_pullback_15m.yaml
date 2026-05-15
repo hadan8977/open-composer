@@ -48,5 +48,28 @@ required_capabilities:
 
 notes:
   intent: Buy short-window pullbacks during a positive sample trend and exit on recovery or trend damage.
+  research_design:
+    data_timeframe: 15m
+    signal_timeframe: 15m
+    rebalance_frequency: bar_close
+    llm_review_frequency: post_signal_only
+    method_variants:
+      - pullback
+      - breakout
+      - trend_follow
+    factor_variants:
+      - ema_trend
+      - rsi_state
+      - volume_confirmation
+    parameter_ranges:
+      entry_ema_bars: [3, 5, 8, 13]
+      rsi_bars: [3, 6, 14]
+      stop_loss_pct: [0.8, 1.0, 1.2, 1.5]
+      take_profit_pct: [1.5, 2.0, 2.5, 3.0]
+    universe_variants:
+      - [QQQ]
+      - [SPY]
+    candidate_cap: 200
+    objective: alpha_vs_benchmark_family_after_costs
   open_questions:
     - Replace short sample windows with production windows after real-data validation.

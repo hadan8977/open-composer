@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-composer.local/schemas/agent_request.schema.json",
+  "title": "Open Composer Agent Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "created_at",
+    "requested_by",
+    "task_type",
+    "title",
+    "prompt",
+    "related_paths",
+    "status",
+    "result_links"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "pattern": "^agentreq_[0-9TZ]+_[a-f0-9]{8}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "requested_by": {
+      "type": "string"
+    },
+    "task_type": {
+      "type": "string",
+      "enum": ["research", "review", "parameter_scan", "strategy_optimization"]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "related_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["open", "in_progress", "completed", "cancelled"]
+    },
+    "result_links": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

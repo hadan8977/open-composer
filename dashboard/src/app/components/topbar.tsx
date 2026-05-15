@@ -4,9 +4,15 @@ import { dashboardSummary } from "./data";
 export function TopBar({
   back,
   onBack,
+  deploymentMode = "Local",
+  owner,
+  onLogout,
 }: {
   back?: string;
   onBack?: () => void;
+  deploymentMode?: "Local" | "Remote Commands Enabled";
+  owner?: string | null;
+  onLogout?: () => Promise<void>;
 }) {
   return (
     <header className="px-6 pt-4 pb-3 hairline-b">
@@ -45,6 +51,16 @@ export function TopBar({
           <Bell size={15} strokeWidth={2.0} />
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#FF2D7A]" />
         </button>
+
+        <span className="pill pill-secondary">
+          {deploymentMode}
+          {owner ? ` · ${owner}` : ""}
+        </span>
+        {onLogout && (
+          <button className="pill pill-secondary" onClick={() => void onLogout()}>
+            Logout
+          </button>
+        )}
 
         <button className="pill pill-primary opacity-70" disabled title="Use the CLI workflow to create or modify StrategySpecs.">
           <Plus size={14} strokeWidth={2.6} /> CLI gated

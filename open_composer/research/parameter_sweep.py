@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import copy
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import product
 from math import prod
 from pathlib import Path
+from statistics import fmean, pstdev
+from time import perf_counter
 from typing import Any
 
 import yaml
@@ -16,6 +18,12 @@ from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
 from open_composer.expressions import validate_expression
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.metadata import (
+    frame_data_profile,
+    research_run_manifest,
+    runtime_payload,
+    search_space,
+)
 from open_composer.research.optimizer import _score_candidate
 
 ALLOWED_SWEEP_ROOTS = {"entry", "exit", "risk", "costs", "factors"}
@@ -29,6 +37,7 @@ class SweepCandidateResult:
     artifacts: BacktestArtifacts
     score: float
     spec_path: Path | None = None
+    stability: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -77,6 +86,7 @@ def run_parameter_sweep(
     top_n: int = 10,
     write_top: int = 1,
 ) -> ParameterSweepResult:
+    started_at = perf_counter()
     base = root or project_root()
     source = load_strategy_spec(spec_path)
     if not parameters:
@@ -94,6 +104,15 @@ def run_parameter_sweep(
         raise ValueError(msg)
 
     frame = load_ohlcv_for_spec(source, base)
+    data_profile = frame_data_profile(
+        frame,
+        symbol=source.primary_symbol,
+        timeframe=source.timeframe,
+        provider=source.data.source,
+        feed=source.data.feed,
+        source_mode=frame.attrs.get("data_source_mode") or source.data.source,
+        path=frame.attrs.get("data_source_path") or source.data.path,
+    )
     candidate_results: list[SweepCandidateResult] = []
     for index, params in enumerate(_parameter_combinations(parameters), start=1):
         candidate, applied = _candidate_from_params(source, params, index, base)
@@ -117,6 +136,32 @@ def run_parameter_sweep(
     candidate_results.sort(key=lambda item: item.score, reverse=True)
     for rank, candidate in enumerate(candidate_results, start=1):
         candidate.rank = rank
+    sweep_analysis = _sweep_analysis(
+        candidate_results,
+        parameters,
+        min_return_pct,
+        min_signals,
+        min_sharpe,
+    )
+    search_space_payload = search_space(
+        family="parameter_sweep",
+        candidate_count=len(candidate_results),
+        parameter_ranges=parameters,
+        filters=[
+            f"min_return_pct={min_return_pct}",
+            f"min_signals={min_signals}",
+            f"min_sharpe={min_sharpe}",
+        ],
+    )
+    manifest = research_run_manifest(
+        root=base,
+        strategy=source,
+        source_path=spec_path,
+        trial_count=len(candidate_results),
+        search_space_payload=search_space_payload,
+        data_profile=data_profile,
+        runtime=runtime_payload(started_at, {}),
+    )
 
     written_specs = _write_top_specs(base, candidate_results, write_top)
     report_path = base / "reports" / "research" / f"{source.name}-parameter-sweep.md"
@@ -131,6 +176,10 @@ def run_parameter_sweep(
         min_sharpe,
         max_candidates,
         written_specs,
+        data_profile,
+        search_space_payload,
+        sweep_analysis,
+        manifest,
     )
     _write_sweep_report(
         report_path,
@@ -144,6 +193,9 @@ def run_parameter_sweep(
         top_n,
         written_specs,
         json_path,
+        data_profile,
+        search_space_payload,
+        sweep_analysis,
     )
     return ParameterSweepResult(
         report_path=report_path,
@@ -330,6 +382,10 @@ def _write_sweep_json(
     min_sharpe: float,
     max_candidates: int,
     written_specs: list[Path],
+    data_profile: dict[str, Any],
+    search_space_payload: dict[str, Any],
+    sweep_analysis: dict[str, Any],
+    manifest: dict[str, Any],
 ) -> Path:
     ensure_dir(path.parent)
     payload = {
@@ -337,8 +393,15 @@ def _write_sweep_json(
         "source_timeframe": source.timeframe,
         "source_symbol": source.primary_symbol,
         "candidate_count": len(candidates),
+        "trial_count": len(candidates),
         "max_candidates": max_candidates,
         "parameters": parameters,
+        "search_space": search_space_payload,
+        "data_profile": data_profile,
+        "research_manifest": manifest,
+        "stability": sweep_analysis,
+        "dsr_inputs": sweep_analysis.get("dsr_inputs", {}),
+        "selection_bias_note": sweep_analysis.get("selection_bias_note"),
         "thresholds": {
             "min_return_pct": min_return_pct,
             "min_signals": min_signals,
@@ -374,7 +437,97 @@ def _candidate_payload(candidate: SweepCandidateResult) -> dict[str, Any]:
             "total_fees": run.total_fees,
         },
         "quality_flags": _quality_flags(candidate),
+        "stability": candidate.stability,
     }
+
+
+def _sweep_analysis(
+    candidates: list[SweepCandidateResult],
+    parameters: dict[str, list[str]],
+    min_return_pct: float,
+    min_signals: int,
+    min_sharpe: float,
+) -> dict[str, Any]:
+    paths = list(parameters)
+    for candidate in candidates:
+        neighbors = [
+            other
+            for other in candidates
+            if other is not candidate
+            and sum(candidate.params.get(path) != other.params.get(path) for path in paths) == 1
+        ]
+        successful_neighbors = [
+            other
+            for other in neighbors
+            if _candidate_passes(other, min_return_pct, min_signals, min_sharpe)
+        ]
+        neighbor_success_rate = len(successful_neighbors) / len(neighbors) if neighbors else None
+        candidate.stability = {
+            "neighbor_count": len(neighbors),
+            "successful_neighbor_count": len(successful_neighbors),
+            "neighbor_success_rate": neighbor_success_rate,
+            "stable_region_score": neighbor_success_rate,
+        }
+
+    best = candidates[0]
+    scores = [candidate.score for candidate in candidates]
+    best_neighbor_success_rate = best.stability.get("neighbor_success_rate")
+    overfit_risk = _overfit_risk(
+        trial_count=len(candidates),
+        neighbor_success_rate=best_neighbor_success_rate,
+    )
+    return {
+        "trial_count": len(candidates),
+        "stable_region_score": best.stability.get("stable_region_score"),
+        "neighbor_success_rate": best_neighbor_success_rate,
+        "rank_correlation_train_oos": None,
+        "top_decile_oos_retention": None,
+        "overfit_risk": overfit_risk,
+        "selection_bias_note": (
+            f"{len(candidates)} in-sample trial(s) were compared. Treat the selected rank as "
+            "hypothesis generation until out-of-sample, walk-forward, cost sensitivity, and "
+            "benchmark-family checks pass."
+        ),
+        "dsr_inputs": {
+            "trial_count": len(candidates),
+            "best_score": best.score,
+            "mean_score": fmean(scores) if scores else None,
+            "score_stddev": pstdev(scores) if len(scores) > 1 else 0.0,
+            "computed_dsr": None,
+            "computed_pbo": None,
+            "note": "DSR/PBO proxy inputs are recorded; full DSR/PBO is not computed yet.",
+        },
+    }
+
+
+def _candidate_passes(
+    candidate: SweepCandidateResult,
+    min_return_pct: float,
+    min_signals: int,
+    min_sharpe: float,
+) -> bool:
+    run = candidate.artifacts.run
+    annualized_return = (
+        run.annualized_return_pct if run.annualized_return_pct is not None else run.total_return_pct
+    )
+    return (
+        (annualized_return or 0.0) >= min_return_pct
+        and run.signals >= min_signals
+        and (run.sharpe_ratio or 0.0) >= min_sharpe
+    )
+
+
+def _overfit_risk(
+    *,
+    trial_count: int,
+    neighbor_success_rate: object,
+) -> str:
+    rate = neighbor_success_rate if isinstance(neighbor_success_rate, int | float) else None
+    if trial_count >= 30 or rate is None or rate < 0.25:
+        return "high"
+    if trial_count >= 10 or rate < 0.5:
+        return "moderate"
+    return "low"
 
 
 def _quality_flags(candidate: SweepCandidateResult) -> list[str]:
@@ -405,6 +558,9 @@ def _write_sweep_report(
     top_n: int,
     written_specs: list[Path],
     json_path: Path,
+    data_profile: dict[str, Any],
+    search_space_payload: dict[str, Any],
+    sweep_analysis: dict[str, Any],
 ) -> Path:
     ensure_dir(path.parent)
     shown = candidates[: max(top_n, 0)]
@@ -415,7 +571,10 @@ def _write_sweep_report(
         f"- Symbol: `{source.primary_symbol}`",
         f"- Timeframe: `{source.timeframe}`",
         f"- Candidate count: {len(candidates)}",
+        f"- Trial count: {sweep_analysis.get('trial_count')}",
         f"- Candidate cap: {max_candidates}",
+        f"- Data source mode: `{data_profile.get('source_mode') or 'unknown'}`",
+        f"- Data as-of: `{data_profile.get('data_as_of') or 'unknown'}`",
         f"- Minimum return target: {min_return_pct:.2f}%",
         f"- Minimum signal target: {min_signals}",
         f"- Minimum Sharpe target: {min_sharpe:.2f}",
@@ -432,6 +591,25 @@ def _write_sweep_report(
     ]
     for path_name, values in parameters.items():
         lines.append(f"- `{path_name}`: {', '.join(str(value) for value in values)}")
+    lines.extend(
+        [
+            "",
+            "## Search Space",
+            "",
+            f"- Family: `{search_space_payload.get('family')}`",
+            f"- Candidate count: `{search_space_payload.get('candidate_count')}`",
+            f"- Filters: `{search_space_payload.get('filters')}`",
+            "",
+            "## Stability",
+            "",
+            f"- Stable region score: `{sweep_analysis.get('stable_region_score')}`",
+            f"- Neighbor success rate: `{sweep_analysis.get('neighbor_success_rate')}`",
+            f"- Rank correlation train/OOS: `{sweep_analysis.get('rank_correlation_train_oos')}`",
+            f"- Top decile OOS retention: `{sweep_analysis.get('top_decile_oos_retention')}`",
+            f"- Overfit risk: `{sweep_analysis.get('overfit_risk')}`",
+            f"- Selection bias note: {sweep_analysis.get('selection_bias_note')}",
+        ]
+    )
     lines.extend(["", "## Top Candidates", ""])
     if shown:
         lines.extend(

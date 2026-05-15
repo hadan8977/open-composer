@@ -228,7 +228,13 @@ def test_llm_feature_factor_replays_from_saved_packets(
         lambda: True,
     )
     feature_path.write_text(
-        '{"timestamp":"2026-01-01T00:00:00Z","llm_sentiment_score":0.8}\n',
+        (
+            '{"timestamp":"2026-01-01T00:00:00Z",'
+            '"published_at":"2026-01-01T00:00:00Z",'
+            '"fetched_at":"2026-01-01T00:00:00Z",'
+            '"visible_at":"2026-01-01T00:00:00Z",'
+            '"source":"llm","symbol":"QQQ","llm_sentiment_score":0.8}\n'
+        ),
         encoding="utf-8",
     )
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_llm_feature_15m.yaml"
@@ -303,7 +309,7 @@ def test_llm_feature_factor_replays_from_saved_packets(
     assert binding.exists is True
     assert binding.record_count == 1
     assert binding.point_in_time_status == "partial"
-    assert "published_at is missing" in "; ".join(binding.replay_warnings)
+    assert "dedupe_key is missing" in "; ".join(binding.replay_warnings)
     assert "schema_version is missing" in "; ".join(binding.replay_warnings)
     assert report.finding("python_mvp_backtest").status == "partial"
     assert report.finding("llm_quant_workflow").status == "partial"
@@ -314,7 +320,7 @@ def test_llm_feature_factor_replays_from_saved_packets(
     assert "## Feature Replay" in backtest_report
     assert "Backtest execution reads saved feature packets only" in backtest_report
     assert "status=`partial`" in backtest_report
-    assert "published_at is missing" in backtest_report
+    assert "dedupe_key is missing" in backtest_report
     scan_report = sorted(
         (sample_workspace / "reports" / "scans").glob("scan-qqq_llm_feature_15m*.md")
     )[-1].read_text(encoding="utf-8")

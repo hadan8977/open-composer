@@ -4,7 +4,7 @@ MONITOR_INTERVAL_SECONDS ?= 60
 MONITOR_MAX_CYCLES ?= 1
 PAPER_STRATEGY ?= qqq_pullback_15m
 
-.PHONY: bootstrap doctor readiness deploy-prepare repo-check capability-test test lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync verify
+.PHONY: bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync remote-doctor verify
 
 bootstrap:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv sync
@@ -24,6 +24,9 @@ repo-check:
 
 capability-test:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc capability test
+
+agent-parity:
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run python scripts/check-agent-parity.py
 
 test:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run pytest
@@ -86,4 +89,7 @@ paper-monitor-loop:
 paper-monitor-loop-sync:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc paper monitor-loop --sync-broker --interval-seconds $(MONITOR_INTERVAL_SECONDS) --max-cycles $(MONITOR_MAX_CYCLES)
 
-verify: check repo-check capability-test deploy-prepare dashboard-check feature-validate readiness
+remote-doctor:
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc remote doctor
+
+verify: check repo-check capability-test agent-parity deploy-prepare dashboard-check feature-validate readiness

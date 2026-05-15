@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import yaml
@@ -95,14 +96,49 @@ def test_paper_readiness_passes_for_live_cache_alpaca_strategy(
     )
     promotion_path.parent.mkdir(parents=True, exist_ok=True)
     promotion_path.write_text(
-        (
-            '{"strategy_name":"qqq_paper_ready_15m","source_spec_path":"'
-            'strategy_specs/active/qqq_paper_ready_15m.yaml","status":"ok","ready":true,'
-            '"checks":[{"name":"in_sample","status":"ok","message":"ok","details":{}}],'
-            '"full_window":{"run_id":"full","bars":10,"signals":2,"trades":1,'
-            '"total_return_pct":1.0,"annualized_return_pct":2.0,"sharpe_ratio":1.0,'
-            '"data_sanity_status":"ok","evidence_level":"E1_single_source_research"}}\n'
-        ),
+        json.dumps(
+            {
+                "strategy_name": "qqq_paper_ready_15m",
+                "source_spec_path": "strategy_specs/active/qqq_paper_ready_15m.yaml",
+                "status": "ok",
+                "ready": True,
+                "gate_summary": {
+                    "workflow_pass": True,
+                    "research_pass": True,
+                    "llm_contribution_pass": None,
+                    "paper_ready_pass": True,
+                },
+                "checks": [
+                    {"name": "in_sample", "status": "ok", "message": "ok", "details": {}},
+                    {"name": "strict_data", "status": "ok", "message": "ok", "details": {}},
+                    {
+                        "name": "feature_packets",
+                        "status": "ok",
+                        "message": "ok",
+                        "details": {},
+                    },
+                    {
+                        "name": "benchmark_family",
+                        "status": "ok",
+                        "message": "ok",
+                        "details": {},
+                    },
+                ],
+                "benchmark_family": {"complete": True, "missing": [], "benchmarks": {}},
+                "full_window": {
+                    "run_id": "full",
+                    "bars": 10,
+                    "signals": 2,
+                    "trades": 1,
+                    "total_return_pct": 1.0,
+                    "annualized_return_pct": 2.0,
+                    "sharpe_ratio": 1.0,
+                    "data_sanity_status": "ok",
+                    "evidence_level": "E1_single_source_research",
+                },
+            }
+        )
+        + "\n",
         encoding="utf-8",
     )
     draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_paper_ready_15m.yaml"
@@ -129,6 +165,8 @@ def test_paper_readiness_passes_for_live_cache_alpaca_strategy(
     assert {check.name: check.status for check in report.checks}["data_source"] == "ok"
     assert {check.name: check.status for check in report.checks}["alpaca_env"] == "ok"
     assert {check.name: check.status for check in report.checks}["account_snapshot"] == "ok"
+    assert {check.name: check.status for check in report.checks}["portfolio_risk"] == "ok"
+    assert report.gate_summary["paper_ready_pass"] is True
 
 
 def test_paper_readiness_blocks_incomplete_feature_packets(

@@ -500,3 +500,30 @@ LLM 混合策略：
 - 它还需要把策略差异、LLM 贡献、过拟合概率、数据新鲜度和运行耗时做成 Dashboard 和报告里的核心字段。
 
 下一阶段不应该先继续追求更高收益，而应该先把这些 gate 和报告结构补齐。否则产品会很容易产出看似漂亮、实则只是同一信号路径变体的策略结果。
+
+## 九、本轮继续验证记录
+
+继续接手后，对本文档中的结论做了三类核对：
+
+- OpenAI Codex 官方文档确认：`AGENTS.md` 适合承载可复用仓库规则，Codex 工作流应包含测试、lint、行为确认和 diff review；reasoning model 工作流应优先使用结构化输出、tool calling、state/compaction 和 prompt caching。
+- 量化研究外部依据确认：PBO/CSCV、Deflated Sharpe Ratio、TimeSeriesSplit gap、LLM 多 agent 金融研究和 LLM 交易指令执行准确性问题，均支持本文对“防过拟合、结构化输出、LLM 不应只选参数”的判断。
+- 仓库规则核对：`AGENTS.md` 和 `README.md` 已经写入参数范围、方法/factor alternatives、workflow/research/llm/paper 分层、LLM fallback 降级、strategy distinctiveness 和 PIT feature packet 要求。
+
+同时补齐了上一轮留下的一个悬空运行产物：`strategy_specs/drafts/optical_storage_intraday_llm_feature_rotation_30m.yaml` 引用的 `feature_logs/optical_storage_local_codex_theme_2026q2.jsonl` 不存在。已新增一个最小的 `local_codex_research` point-in-time replay packet，包含 `AAOI`、`MU`、`CIEN` 三个标的的静态主题分数，`visible_at` 均设在研究窗口起点，避免把当前知识注入历史 bar。该 packet 只证明本地 Codex feature replay workflow 完整，不是外部 LLM API Alpha 证据。
+
+本轮验证结果：
+
+```bash
+env UV_CACHE_DIR=/tmp/uv-cache-spec uv run oc spec validate strategy_specs/drafts/optical_storage_intraday_llm_feature_rotation_30m.yaml
+env UV_CACHE_DIR=/tmp/uv-cache-spec2 uv run oc spec validate strategy_specs/drafts/optical_storage_intraday_quant_15m.yaml
+env UV_CACHE_DIR=/tmp/uv-cache-feature uv run oc feature validate --output reports/features/validation.json
+env UV_CACHE_DIR=/tmp/uv-cache-repo uv run oc repo check
+env UV_CACHE_DIR=/tmp/uv-cache-pytest uv run pytest tests/test_feature_validation.py tests/test_spec_validation.py tests/test_repo_check.py
+```
+
+结果：
+
+- 两个 optical/storage draft spec 均通过 `oc spec validate`。
+- `oc feature validate` 写出 `reports/features/validation.json`、`validation.md` 和 `manifest.json`；所有 feature packets 状态为 `complete`。
+- `oc repo check` 状态为 `ok` / `ready=yes`。
+- 相关测试 `19 passed in 5.32s`。

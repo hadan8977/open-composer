@@ -116,9 +116,12 @@ def _alpaca_timeframe(timeframe: str) -> Any:
     from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
 
     mapping = {
+        "1m": TimeFrame(1, TimeFrameUnit.Minute),
         "5m": TimeFrame(5, TimeFrameUnit.Minute),
         "15m": TimeFrame(15, TimeFrameUnit.Minute),
+        "30m": TimeFrame(30, TimeFrameUnit.Minute),
         "1h": TimeFrame(1, TimeFrameUnit.Hour),
+        "4h": TimeFrame(4, TimeFrameUnit.Hour),
         "daily": TimeFrame(1, TimeFrameUnit.Day),
         "weekly": TimeFrame(1, TimeFrameUnit.Week),
     }

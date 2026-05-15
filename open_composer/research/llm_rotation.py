@@ -27,6 +27,7 @@ from open_composer.research.rotation import (
     _score_rotation_candidate,
 )
 from open_composer.storage import write_json
+from open_composer.timeframes import STRATEGY_TIMEFRAMES
 
 
 class LLMRotationChoice(BaseModel):
@@ -91,8 +92,9 @@ def run_llm_rotation_meta_selection(
     universe = [item.upper() for item in (symbols or spec.universe)]
     if len(universe) < 2:
         raise ValueError("LLM rotation meta-selection requires at least two symbols")
-    if spec.timeframe not in {"5m", "15m", "1h", "daily", "weekly"}:
-        raise ValueError("LLM rotation meta-selection supports 5m, 15m, 1h, daily, or weekly specs")
+    if spec.timeframe not in STRATEGY_TIMEFRAMES:
+        supported = ", ".join(STRATEGY_TIMEFRAMES)
+        raise ValueError(f"LLM rotation meta-selection supports these timeframes: {supported}")
 
     selected_feed = feed or spec.data.feed
     frame = _load_universe_frame(

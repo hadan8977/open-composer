@@ -26,6 +26,7 @@ from open_composer.research.metadata import (
     search_space,
 )
 from open_composer.storage import write_json
+from open_composer.timeframes import STRATEGY_TIMEFRAMES
 
 RotationObjective = Literal["equal_weight_alpha", "primary_alpha"]
 
@@ -139,8 +140,9 @@ def run_rotation_research(
     if len(universe) < 2:
         msg = "rotation research requires at least two symbols"
         raise ValueError(msg)
-    if spec.timeframe not in {"5m", "15m", "1h", "daily", "weekly"}:
-        msg = "rotation research supports 5m, 15m, 1h, daily, or weekly StrategySpecs"
+    if spec.timeframe not in STRATEGY_TIMEFRAMES:
+        supported = ", ".join(STRATEGY_TIMEFRAMES)
+        msg = f"rotation research supports these StrategySpec timeframes: {supported}"
         raise ValueError(msg)
     feature_factor_names = _feature_factor_names(spec)
     if feature_factor_names and not feature_gate:

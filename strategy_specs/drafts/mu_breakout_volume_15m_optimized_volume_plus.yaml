@@ -67,6 +67,43 @@ llm_review:
 notes:
   intent: Trade deterministic price breakouts only after a prior-window high is exceeded
     with volume and minimum realized range.
+  research_design:
+    data_timeframe: 15m
+    signal_timeframe: 15m
+    rebalance_frequency: bar_close
+    llm_review_frequency: post_signal_only
+    method_variants:
+    - breakout
+    - volume_expansion
+    - trend_follow
+    factor_variants:
+    - lagged_high
+    - volume_confirmation
+    - atr_filter
+    - ema_exit
+    parameter_ranges:
+      breakout_lookback_bars:
+      - 5
+      - 6
+      - 10
+      atr_bars:
+      - 5
+      - 8
+      stop_loss_pct:
+      - 0.8
+      - 1.0
+      - 1.2
+      take_profit_pct:
+      - 2.4
+      - 3.0
+      - 4.0
+    universe_variants:
+    - - MU
+    - - MU
+      - WDC
+      - STX
+    candidate_cap: 200
+    objective: alpha_vs_benchmark_family_after_costs
   open_questions:
   - Add commission and slippage sensitivity before paper automation.
   - Validate breakout lookback length with out-of-sample data.

@@ -7,6 +7,9 @@ capabilities:
     use_for: [backtest, scan, fixture]
     reliability: high
     default_mode: offline
+    supported_timeframes: [5m, 15m, 1h, daily, weekly]
+    paper_ready_timeframes: []
+    strict_behavior: workflow_only
     fixture: data/sample/qqq_15m.csv
     min_score: 0.95
     caveats:
@@ -19,6 +22,9 @@ capabilities:
     use_for: [ohlcv, scan, backtest, paper_context]
     reliability: medium
     default_mode: live_with_cache
+    supported_timeframes: [1m, 5m, 15m, 30m, 1h, 4h, daily, weekly]
+    paper_ready_timeframes: [1m, 5m, 15m, 30m, 1h, 4h, daily, weekly]
+    strict_behavior: fail_fast_for_unsupported_timeframes
     fixture: data/fixtures/capabilities/alpaca_qqq_15m.csv
     env: [ALPACA_API_KEY_ID, ALPACA_API_SECRET_KEY, ALPACA_DATA_FEED]
     min_score: 0.85
@@ -32,6 +38,9 @@ capabilities:
     use_for: [ohlcv, scan, backtest, paper_context]
     reliability: medium
     default_mode: live_with_cache
+    supported_timeframes: [1m, 5m, 15m, 1h, daily, weekly]
+    paper_ready_timeframes: [1m, 5m, 15m, 1h, daily, weekly]
+    strict_behavior: fail_fast_for_unsupported_timeframes
     fixture: data/fixtures/capabilities/longbridge_qqq_15m.csv
     env: [LONGBRIDGE_APP_KEY, LONGBRIDGE_APP_SECRET, LONGBRIDGE_ACCESS_TOKEN]
     min_score: 0.85
@@ -47,6 +56,9 @@ capabilities:
     use_for: [scenario_test, intraday_backtest, optimization]
     reliability: high
     default_mode: offline
+    supported_timeframes: [15m]
+    paper_ready_timeframes: []
+    strict_behavior: workflow_only
     fixture: data/sample/mu_15m.csv
     min_score: 0.95
     caveats:

@@ -20,10 +20,13 @@ NO_CONTEXT_START_DOC = "docs/product-golden-path-codex-quant-review-2026-05-13.z
 
 CURRENT_DOCS = {
     NO_CONTEXT_START_DOC,
+    "docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md",
     "docs/current-unfinished-work-check.zh.md",
     "docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md",
+    "docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md",
     "docs/product-maturation-plan.zh.md",
     "docs/review-methodology.zh.md",
+    "docs/remote-dashboard-deploy.zh.md",
     "docs/longbridge-integration.md",
 }
 
@@ -101,6 +104,7 @@ def build_repo_check_report(root: Path | None = None) -> RepoConsistencyReport:
         _agents_rules_check(base),
         _current_product_docs_check(base),
         _docs_inventory_check(base),
+        _claude_parity_check(base),
         _repo_skills_check(base),
         _capability_registry_check(base),
         _sample_workflow_check(base),
@@ -251,6 +255,15 @@ def _agents_rules_check(root: Path) -> RepoConsistencyCheck:
     required = [
         "StrategySpec",
         "capabilities/registry.yaml",
+        "parameter ranges",
+        "benchmark family",
+        "workflow_pass",
+        "research_pass",
+        "llm_contribution_pass",
+        "paper_ready_pass",
+        "Sample, fixture, cache fallback, and trial/research-only data",
+        "visible_at",
+        "untrusted reader input",
         "Real-money broker write access is out of scope",
         "Run `uv run ruff format .`, `uv run ruff check .`, and `uv run pytest`",
     ]
@@ -325,6 +338,24 @@ def _repo_skills_check(root: Path) -> RepoConsistencyCheck:
         for skill in REQUIRED_SKILLS
         if not (root / ".agents" / "skills" / skill / "SKILL.md").exists()
     ]
+    required_anchors = {
+        "capability-evaluator": ["provider timeframe support", "paper-ready market evidence"],
+        "nautilus-trader-adapter": ["data manifest", "feature packet", "backend plan"],
+        "python-backtest-writer": ["visible_at", "benchmark family", "trial count"],
+        "risk-reviewer": ["workflow_pass", "paper_ready_pass", "LLM fallback"],
+        "strategy-designer": ["notes.research_design", "parameter ranges", "benchmark family"],
+        "strategy-researcher": ["parameter-sweep", "promotion-report", "llm_contribution_pass"],
+        "weekly-reviewer": ["LLM contribution evidence", "paper readiness evidence"],
+    }
+    missing_anchors: dict[str, list[str]] = {}
+    for skill, anchors in required_anchors.items():
+        skill_path = root / ".agents" / "skills" / skill / "SKILL.md"
+        if not skill_path.exists():
+            continue
+        text = skill_path.read_text(encoding="utf-8")
+        missing_for_skill = [anchor for anchor in anchors if anchor not in text]
+        if missing_for_skill:
+            missing_anchors[skill] = missing_for_skill
     if missing:
         return RepoConsistencyCheck(
             name="repo_skills",
@@ -333,10 +364,80 @@ def _repo_skills_check(root: Path) -> RepoConsistencyCheck:
             details={"missing": missing},
             suggested_actions=["Restore .agents/skills entries"],
         )
+    if missing_anchors:
+        return RepoConsistencyCheck(
+            name="repo_skills",
+            status="blocked",
+            message="Required repo skills are missing research, strict-data, or gate anchors.",
+            details={"missing_anchors": missing_anchors},
+            suggested_actions=["Update .agents/skills/*/SKILL.md"],
+        )
     return RepoConsistencyCheck(
         name="repo_skills",
         status="ok",
-        message="Required repo skills are present.",
+        message="Required repo skills are present and carry research gate anchors.",
+        details={"skill_count": len(REQUIRED_SKILLS)},
+    )
+
+
+def _claude_parity_check(root: Path) -> RepoConsistencyCheck:
+    required_paths = [
+        "CLAUDE.md",
+        ".claude/settings.json",
+        ".claude/commands/repo-check.md",
+        ".claude/commands/remote-doctor.md",
+        ".claude/commands/verify.md",
+        "scripts/sync-agent-skills.py",
+        "scripts/check-agent-parity.py",
+    ]
+    missing_paths = [path for path in required_paths if not (root / path).exists()]
+    missing_skills = [
+        skill
+        for skill in REQUIRED_SKILLS
+        if not (root / ".claude" / "skills" / skill / "SKILL.md").exists()
+    ]
+    drifted_skills = []
+    for skill in REQUIRED_SKILLS:
+        source = root / ".agents" / "skills" / skill / "SKILL.md"
+        target = root / ".claude" / "skills" / skill / "SKILL.md"
+        if (
+            source.exists()
+            and target.exists()
+            and source.read_text(encoding="utf-8") != target.read_text(encoding="utf-8")
+        ):
+            drifted_skills.append(skill)
+    required_anchors = [
+        "StrategySpec",
+        "capabilities/registry.yaml",
+        "parameter ranges",
+        "workflow_pass",
+        "research_pass",
+        "llm_contribution_pass",
+        "paper_ready_pass",
+        "Remote Dashboard commands",
+    ]
+    missing_anchors = _missing_text(root / "CLAUDE.md", required_anchors)
+    problems = {
+        "missing_paths": missing_paths,
+        "missing_skills": missing_skills,
+        "drifted_skills": drifted_skills,
+        "missing_anchors": missing_anchors,
+    }
+    if any(problems.values()):
+        return RepoConsistencyCheck(
+            name="claude_parity",
+            status="blocked",
+            message="Claude Code parity artifacts are missing or drifted.",
+            details=problems,
+            suggested_actions=[
+                "Run uv run python scripts/sync-agent-skills.py",
+                "Run uv run python scripts/check-agent-parity.py",
+            ],
+        )
+    return RepoConsistencyCheck(
+        name="claude_parity",
+        status="ok",
+        message="Claude Code rules, commands, settings, and mirrored skills are present.",
         details={"skill_count": len(REQUIRED_SKILLS)},
     )
 
@@ -360,16 +461,25 @@ def _capability_registry_check(root: Path) -> RepoConsistencyCheck:
         for capability in registry.capabilities
         if capability.fixture and not (root / capability.fixture).exists()
     )
+    missing_timeframe_matrix = sorted(
+        capability.id
+        for capability in registry.capabilities
+        if capability.kind == "market" and not getattr(capability, "supported_timeframes", None)
+    )
     problems = {
         "duplicates": duplicate_ids,
         "missing_required": missing_required,
         "missing_fixtures": missing_fixtures,
+        "missing_timeframe_matrix": missing_timeframe_matrix,
     }
     if any(problems.values()):
         return RepoConsistencyCheck(
             name="capability_registry",
             status="blocked",
-            message="Capability registry has missing ids, duplicate ids, or missing fixtures.",
+            message=(
+                "Capability registry has missing ids, duplicate ids, missing fixtures, "
+                "or market capabilities without timeframe support."
+            ),
             details=problems,
             suggested_actions=["Update capabilities/registry.yaml and capability fixtures"],
         )
@@ -455,6 +565,8 @@ def _makefile_verify_check(root: Path) -> RepoConsistencyCheck:
         missing.append("repo-check target")
     if "capability-test:" not in text:
         missing.append("capability-test target")
+    if "agent-parity:" not in text:
+        missing.append("agent-parity target")
     if "uv run oc repo check --strict" not in text:
         missing.append("repo-check runs strict")
     if "uv run oc readiness --strict" not in text:
@@ -467,6 +579,8 @@ def _makefile_verify_check(root: Path) -> RepoConsistencyCheck:
         missing.append("verify depends on repo-check")
     if not re.search(r"^verify:.*\bcapability-test\b", text, re.MULTILINE):
         missing.append("verify depends on capability-test")
+    if not re.search(r"^verify:.*\bagent-parity\b", text, re.MULTILINE):
+        missing.append("verify depends on agent-parity")
     if not re.search(r"^verify:.*\bdeploy-prepare\b", text, re.MULTILINE):
         missing.append("verify depends on deploy-prepare")
     if not re.search(r"^verify:.*\breadiness\b", text, re.MULTILINE):

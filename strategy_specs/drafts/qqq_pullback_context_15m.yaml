@@ -40,6 +40,37 @@ llm_review:
 notes:
   intent: Buy pullbacks only after deterministic technical confirmation; attach company
     event, macro, and news context before manual or paper action.
+  research_design:
+    data_timeframe: 15m
+    signal_timeframe: 15m
+    rebalance_frequency: bar_close
+    llm_review_frequency: post_signal_only
+    method_variants:
+    - pullback
+    - context_filter
+    factor_variants:
+    - ema_trend
+    - rsi_state
+    - volume_confirmation
+    - event_news_macro_context
+    parameter_ranges:
+      entry_ema_bars:
+      - 3
+      - 5
+      - 8
+      rsi_bars:
+      - 3
+      - 6
+      stop_loss_pct:
+      - 0.8
+      - 1.2
+      take_profit_pct:
+      - 1.5
+      - 2.0
+    universe_variants:
+    - - QQQ
+    candidate_cap: 200
+    objective: alpha_vs_benchmark_family_after_costs
   open_questions:
   - Evaluate Alpaca IEX versus paid SIP before relying on intraday fills.
   - Measure Alpha Vantage and GDELT coverage against the active watchlist.

@@ -423,7 +423,9 @@ def _load_feature_packet(
             value = _feature_packet_value(raw, field)
             if value is _MISSING or "timestamp" not in raw:
                 continue
-            visible_at = raw.get("published_at") or raw["timestamp"]
+            visible_at = _feature_packet_visible_at(raw)
+            if visible_at is None:
+                continue
             records.append((pd.Timestamp(visible_at), value))
     if not records:
         return pd.Series([default] * len(frame), index=frame.index)
@@ -446,6 +448,18 @@ def _load_feature_packet(
 
 
 _MISSING = object()
+
+
+def _feature_packet_visible_at(raw: Mapping[str, Any]) -> Any | None:
+    if raw.get("visible_at"):
+        return raw["visible_at"]
+    published_at = raw.get("published_at")
+    fetched_at = raw.get("fetched_at")
+    if published_at and fetched_at:
+        published = pd.Timestamp(published_at)
+        fetched = pd.Timestamp(fetched_at)
+        return max(published, fetched)
+    return None
 
 
 def _feature_packet_value(raw: Mapping[str, Any], field: str) -> Any:

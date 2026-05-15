@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from math import sqrt
 from statistics import fmean, stdev
 
+from open_composer.timeframes import bars_per_year
+
 
 @dataclass(frozen=True)
 class PerformanceMetrics:
@@ -32,10 +34,10 @@ def _annualized_return_pct(equity_curve: list[float], timeframe: str) -> float |
     if start <= 0 or end <= 0:
         return None
     periods = len(equity_curve) - 1
-    bars_per_year = _bars_per_year(timeframe)
-    if periods <= 0 or bars_per_year <= 0:
+    annual_bars = bars_per_year(timeframe)
+    if periods <= 0 or annual_bars <= 0:
         return None
-    return ((end / start) ** (bars_per_year / periods) - 1) * 100
+    return ((end / start) ** (annual_bars / periods) - 1) * 100
 
 
 def _sharpe_ratio(returns: list[float], timeframe: str) -> float | None:
@@ -44,10 +46,10 @@ def _sharpe_ratio(returns: list[float], timeframe: str) -> float | None:
     volatility = stdev(returns)
     if volatility == 0:
         return None
-    bars_per_year = _bars_per_year(timeframe)
-    if bars_per_year <= 0:
+    annual_bars = bars_per_year(timeframe)
+    if annual_bars <= 0:
         return None
-    return (fmean(returns) / volatility) * sqrt(bars_per_year)
+    return (fmean(returns) / volatility) * sqrt(annual_bars)
 
 
 def _period_returns(equity_curve: list[float]) -> list[float]:
@@ -57,14 +59,3 @@ def _period_returns(equity_curve: list[float]) -> list[float]:
             continue
         returns.append((current / previous) - 1)
     return returns
-
-
-def _bars_per_year(timeframe: str) -> float:
-    mapping = {
-        "5m": 252 * 78,
-        "15m": 252 * 26,
-        "1h": 252 * 6.5,
-        "daily": 252,
-        "weekly": 52,
-    }
-    return float(mapping.get(timeframe, 0))

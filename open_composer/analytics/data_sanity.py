@@ -9,9 +9,12 @@ from open_composer.models.backtest import BacktestDataSanity, BacktestRun, Trade
 from open_composer.models.strategy_spec import StrategySpec
 
 MIN_BARS_BY_TIMEFRAME = {
+    "1m": 500,
     "5m": 250,
     "15m": 200,
+    "30m": 160,
     "1h": 120,
+    "4h": 80,
     "daily": 100,
     "weekly": 52,
 }

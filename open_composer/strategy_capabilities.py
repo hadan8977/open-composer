@@ -11,6 +11,7 @@ from open_composer.adapters.execution.nautilus_trader import build_nautilus_trad
 from open_composer.expressions import ExpressionError, validate_expression
 from open_composer.models.execution_backend import ExecutionBackendPlan
 from open_composer.models.strategy_spec import StrategySpec
+from open_composer.timeframes import supported_timeframes, timeframe_supported
 
 CapabilityStatus = Literal["supported", "partial", "blocked", "unsupported"]
 
@@ -78,6 +79,15 @@ def _python_mvp_backtest(spec: StrategySpec, expression_errors: list[str]) -> Ca
             "python_mvp_backtest",
             "unsupported",
             [f"unsupported data source: {spec.data.source}"],
+        )
+    if spec.data.source in {"alpaca", "longbridge"} and not timeframe_supported(
+        spec.data.source, spec.timeframe
+    ):
+        supported = ", ".join(supported_timeframes(spec.data.source))
+        return CapabilityFinding(
+            "python_mvp_backtest",
+            "unsupported",
+            [f"unsupported {spec.data.source} timeframe: {spec.timeframe}; supported: {supported}"],
         )
     non_market = _non_market_required_capabilities(spec)
     llm_feature_factors = _llm_feature_factors(spec)
@@ -157,6 +167,12 @@ def _alpaca_paper_execution(spec: StrategySpec, expression_errors: list[str]) ->
     if spec.data.source not in {"alpaca", "longbridge"}:
         reasons.append(
             "live paper runs should use data.source=alpaca or longbridge, not offline fixtures"
+        )
+    elif not timeframe_supported(spec.data.source, spec.timeframe):
+        supported = ", ".join(supported_timeframes(spec.data.source))
+        reasons.append(
+            f"data.source={spec.data.source} does not support timeframe={spec.timeframe}; "
+            f"supported: {supported}"
         )
     if reasons:
         return CapabilityFinding("alpaca_paper_execution", "blocked", reasons)

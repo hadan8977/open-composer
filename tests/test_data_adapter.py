@@ -107,6 +107,54 @@ def test_fetch_ohlcv_uses_local_fallback_without_credentials(
     assert "workflow validation" in payload["caveats"][1]
 
 
+def test_fetch_ohlcv_can_disable_fallback_without_credentials(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("ALPACA_API_KEY_ID", raising=False)
+    monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
+
+    try:
+        fetch_ohlcv(
+            sample_workspace,
+            "QQQ",
+            "1h",
+            None,
+            None,
+            source="alpaca",
+            feed="iex",
+            use_cache=False,
+            allow_fallback=False,
+        )
+    except Exception as exc:
+        assert "authentication" in str(exc).lower()
+    else:
+        raise AssertionError("strict fetch unexpectedly fell back to local sample data")
+
+
+def test_fetch_ohlcv_supports_expanded_alpaca_timeframe_fallback(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("ALPACA_API_KEY_ID", raising=False)
+    monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
+
+    frame = fetch_ohlcv(
+        sample_workspace,
+        "QQQ",
+        "30m",
+        None,
+        None,
+        source="alpaca",
+        feed="iex",
+        use_cache=False,
+    )
+
+    assert len(frame) > 0
+    manifest = sample_workspace / "data" / "cache" / "manifests" / "qqq_30m_alpaca_iex.json"
+    assert json.loads(manifest.read_text(encoding="utf-8"))["source_mode"] == "sample_fallback"
+
+
 def test_load_ohlcv_for_alpaca_spec_uses_local_fallback_without_credentials(
     sample_workspace: Path,
     monkeypatch,

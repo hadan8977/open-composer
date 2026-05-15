@@ -108,6 +108,7 @@ def test_feature_write_command_writes_complete_point_in_time_packet(
     assert row["source"] == "llm"
     assert row["published_at"]
     assert row["fetched_at"]
+    assert row["visible_at"]
     assert row["dedupe_key"] == "llm:QQQ:2026-01-01T00:00:00+00:00"
     assert row["input_hash"] == "input_sha256_abc"
     assert row["prompt_hash"] == "prompt_sha256_def"
@@ -128,6 +129,7 @@ def test_feature_write_command_writes_complete_point_in_time_packet(
     assert manifest_packet["input_hashes"] == ["input_sha256_abc"]
     assert manifest_packet["prompt_hashes"] == ["prompt_sha256_def"]
     assert manifest_packet["rows"][0]["feature_fields"] == ["event_risk_score", "regime"]
+    assert manifest_packet["rows"][0]["visible_at"]
 
 
 def test_feature_from_context_command_writes_replayable_context_features(
@@ -154,6 +156,7 @@ def test_feature_from_context_command_writes_replayable_context_features(
     assert datetime.fromisoformat(row["timestamp"].replace("Z", "+00:00")) == signal.timestamp
     assert row["source"] == "context"
     assert row["symbol"] == signal.symbol
+    assert row["visible_at"]
     assert row["dedupe_key"] == f"context:{signal.id}"
     assert row["features"]["event_count"] >= 0
     assert row["features"]["news_count"] >= 0
@@ -200,6 +203,7 @@ def test_feature_packet_schema_requires_point_in_time_metadata(repo_root: Path) 
         "timestamp",
         "published_at",
         "fetched_at",
+        "visible_at",
         "source",
         "dedupe_key",
         "schema_version",

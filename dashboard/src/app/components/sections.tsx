@@ -25,7 +25,13 @@ import {
   strategyGroups,
   versions,
 } from "./data";
-import { getDashboardJson, postDashboardJson } from "./runtime";
+import {
+  getDashboardJson,
+  postDashboardJson,
+  promptDashboardConfirmations,
+  resolveDashboardCommandRun,
+} from "./runtime";
+import type { DashboardCommandPlanResponse, DashboardCommandRunResponse } from "./runtime";
 
 /* ---------------- Versions ---------------- */
 
@@ -246,22 +252,11 @@ export function Paper() {
 }
 
 function PaperCommandDock() {
-  type DashboardCommandPlan = {
-    command_id: string;
-    action: string;
-    plan_path?: string | null;
-    confirmation_phrase: string;
+  type DashboardCommandPlan = DashboardCommandPlanResponse & {
     cli_args: string[];
     warnings: string[];
   };
-  type DashboardCommandResult = {
-    command_id: string;
-    action: string;
-    status: string;
-    message: string;
-    result_path?: string | null;
-    output_paths?: string[];
-  };
+  type DashboardCommandResult = DashboardCommandRunResponse;
   type RuntimePaperSummary = {
     generated_at?: string | null;
     paper_kill_switch_enabled?: boolean;
@@ -368,23 +363,30 @@ function PaperCommandDock() {
       if (!plan.plan_path) {
         throw new Error("dashboard command plan missing plan_path");
       }
-      const confirmation = window.prompt(
-        `Type the exact confirmation phrase to execute this local command.\n\n${plan.confirmation_phrase}`,
-        plan.confirmation_phrase,
+      const confirmations = await promptDashboardConfirmations(
+        plan,
+        "Type the exact confirmation phrase to execute this dashboard command.",
       );
-      if (confirmation === null) {
+      if (confirmations === null) {
         setStatusMessage("Command plan created. Execution cancelled before confirmation.");
         return;
       }
-      setStatusMessage("Executing local command…");
-      const result = await postDashboardJson<DashboardCommandResult>("/api/dashboard/command-run", {
+      setStatusMessage(plan.remote ? "Queueing remote command job…" : "Executing local command…");
+      const queued = await postDashboardJson<DashboardCommandResult>("/api/dashboard/command-run", {
         plan_path: plan.plan_path,
-        confirm: confirmation,
+        ...confirmations,
         executed_by: "dashboard",
+      });
+      const result = await resolveDashboardCommandRun(queued, (job) => {
+        setStatusMessage(`${job.status}: ${job.message}`);
       });
       setLastResult(result);
       await refreshRuntimeSummary();
-      setStatusMessage(`${result.message}${result.result_path ? ` · ${result.result_path}` : ""}`);
+      setStatusMessage(
+        `${result.message}${result.result_path ? ` · ${result.result_path}` : ""}${
+          result.backup_manifest_path ? ` · ${result.backup_manifest_path}` : ""
+        }`,
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown dashboard command error";
       setStatusMessage(message);
@@ -482,6 +484,12 @@ function PaperCommandDock() {
                   Warnings: {lastPlan.warnings.join(" · ")}
                 </div>
               )}
+              {lastPlan.remote && (
+                <div className="t-body-sm ink-subtle">
+                  Remote {lastPlan.remote.risk_level}
+                  {lastPlan.remote.backup_required ? " · backup required" : ""}
+                </div>
+              )}
             </div>
           )}
           <div className="grid grid-cols-2 gap-2 pt-1">
@@ -519,6 +527,11 @@ function PaperCommandDock() {
               {lastResult.output_paths && lastResult.output_paths.length > 0 && (
                 <div className="t-body-sm ink-subtle">
                   Outputs: {lastResult.output_paths.join(" · ")}
+                </div>
+              )}
+              {lastResult.backup_manifest_path && (
+                <div className="t-body-sm ink-subtle">
+                  Backup: {lastResult.backup_manifest_path}
                 </div>
               )}
             </div>

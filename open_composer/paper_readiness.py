@@ -21,6 +21,7 @@ from open_composer.models.paper import PaperAccountSnapshot, PaperKillSwitch
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.storage import write_json
 from open_composer.strategy_capabilities import assess_strategy_capabilities
+from open_composer.timeframes import require_paper_ready_timeframe
 
 PaperReadinessStatus = Literal["ok", "warning", "blocked"]
 
@@ -43,6 +44,7 @@ class PaperStrategyReadinessReport(BaseModel):
     strategy_path: str | None = None
     status: PaperReadinessStatus
     ready: bool
+    gate_summary: dict[str, object] = Field(default_factory=dict)
     checks: list[PaperStrategyReadinessCheck] = Field(default_factory=list)
     report_json_path: str | None = None
     report_markdown_path: str | None = None
@@ -84,6 +86,7 @@ def assess_paper_strategy_readiness_for_spec(
         _account_snapshot_check(base),
         _backend_check(spec),
         _portfolio_routing_check(spec),
+        _portfolio_risk_check(spec),
         _feature_packet_binding_check(spec, base),
         _promotion_report_check(spec, base, spec_path),
     ]
@@ -95,6 +98,7 @@ def assess_paper_strategy_readiness_for_spec(
         strategy_path=_relpath(spec_path, base) if spec_path else None,
         status=status,
         ready=status != "blocked",
+        gate_summary=_gate_summary(checks, status),
         checks=checks,
     )
 
@@ -202,11 +206,32 @@ def _execution_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
 
 def _data_source_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
     if spec.data.source in {"alpaca", "longbridge"}:
+        try:
+            require_paper_ready_timeframe(spec.data.source, spec.timeframe)
+        except ValueError as exc:
+            return PaperStrategyReadinessCheck(
+                name="data_source",
+                status="blocked",
+                message=str(exc),
+                details={
+                    "source": spec.data.source,
+                    "symbol": spec.primary_symbol,
+                    "timeframe": spec.timeframe,
+                },
+                suggested_actions=[
+                    "Choose a provider-supported timeframe or change data.source before paper."
+                ],
+            )
         return PaperStrategyReadinessCheck(
             name="data_source",
             status="ok",
             message="Paper automation uses a live/cache market data source.",
-            details={"source": spec.data.source, "symbol": spec.primary_symbol},
+            details={
+                "source": spec.data.source,
+                "symbol": spec.primary_symbol,
+                "timeframe": spec.timeframe,
+                "data_mode": "paper_ready",
+            },
         )
     return PaperStrategyReadinessCheck(
         name="data_source",
@@ -364,6 +389,36 @@ def _portfolio_routing_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
     )
 
 
+def _portfolio_risk_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
+    details = {
+        "universe": spec.universe,
+        "gross_exposure_limit_pct": round(
+            spec.risk.max_position_weight * len(spec.universe) * 100, 4
+        ),
+        "single_name_weight_limit_pct": round(spec.risk.max_position_weight * 100, 4),
+        "sector_concentration": "unknown_until_sector_map_is_registered",
+        "turnover_limit": "not_declared",
+        "capacity_limit": "not_declared",
+        "borrow_short_caveat": "long-only paper routing; borrow is out of scope",
+    }
+    if len(spec.universe) <= 1:
+        return PaperStrategyReadinessCheck(
+            name="portfolio_risk",
+            status="ok",
+            message="Single-symbol portfolio risk envelope is explicit.",
+            details=details,
+        )
+    return PaperStrategyReadinessCheck(
+        name="portfolio_risk",
+        status="blocked",
+        message="Multi-symbol paper requires gross/net exposure and concentration limits.",
+        details=details,
+        suggested_actions=[
+            "Keep paper_auto single-symbol or add a portfolio risk policy before activation."
+        ],
+    )
+
+
 def _feature_packet_binding_check(
     spec: StrategySpec,
     root: Path,
@@ -464,7 +519,24 @@ def _promotion_report_check(
         )
     ready = bool(raw.get("ready", False))
     status = str(raw.get("status", "warning"))
-    if ready and status == "ok":
+    checks = raw.get("checks", []) if isinstance(raw.get("checks"), list) else []
+    checks_by_name = {
+        str(check.get("name")): str(check.get("status"))
+        for check in checks
+        if isinstance(check, dict)
+    }
+    gate_summary = raw.get("gate_summary", {}) if isinstance(raw.get("gate_summary"), dict) else {}
+    benchmark_family = (
+        raw.get("benchmark_family", {}) if isinstance(raw.get("benchmark_family"), dict) else {}
+    )
+    missing_requirements = _promotion_missing_requirements(
+        ready=ready,
+        status=status,
+        checks_by_name=checks_by_name,
+        gate_summary=gate_summary,
+        benchmark_family=benchmark_family,
+    )
+    if not missing_requirements:
         return PaperStrategyReadinessCheck(
             name="promotion_report",
             status="ok",
@@ -473,22 +545,49 @@ def _promotion_report_check(
                 "path": str(report_path),
                 "status": status,
                 "ready": ready,
-                "check_count": len(raw.get("checks", []))
-                if isinstance(raw.get("checks"), list)
-                else 0,
+                "check_count": len(checks),
+                "gate_summary": gate_summary,
+                "benchmark_family_complete": benchmark_family.get("complete"),
             },
         )
     return PaperStrategyReadinessCheck(
         name="promotion_report",
         status="blocked",
-        message="Promotion report is present but not ready for paper.",
+        message="Promotion report is present but not ready for paper: "
+        + "; ".join(missing_requirements),
         details={
             "path": str(report_path),
             "status": status,
             "ready": ready,
+            "missing_requirements": missing_requirements,
+            "gate_summary": gate_summary,
+            "benchmark_family_complete": benchmark_family.get("complete"),
         },
         suggested_actions=[f"uv run oc strategy promotion-report {suggested_spec}"],
     )
+
+
+def _promotion_missing_requirements(
+    *,
+    ready: bool,
+    status: str,
+    checks_by_name: dict[str, str],
+    gate_summary: dict[str, object],
+    benchmark_family: dict[str, object],
+) -> list[str]:
+    missing: list[str] = []
+    if not ready:
+        missing.append("ready=false")
+    if status != "ok":
+        missing.append(f"status={status}")
+    if gate_summary.get("paper_ready_pass") is not True:
+        missing.append("gate_summary.paper_ready_pass is not true")
+    for check_name in ["strict_data", "feature_packets", "benchmark_family"]:
+        if checks_by_name.get(check_name) != "ok":
+            missing.append(f"{check_name} check is not ok")
+    if benchmark_family.get("complete") is not True:
+        missing.append("benchmark_family.complete is not true")
+    return missing
 
 
 def _capability_check(spec_path: Path) -> PaperStrategyReadinessCheck:
@@ -518,6 +617,22 @@ def _overall_status(checks: list[PaperStrategyReadinessCheck]) -> PaperReadiness
     return "ok"
 
 
+def _gate_summary(
+    checks: list[PaperStrategyReadinessCheck],
+    status: PaperReadinessStatus,
+) -> dict[str, object]:
+    blocked = [check.name for check in checks if check.status == "blocked"]
+    warning = [check.name for check in checks if check.status == "warning"]
+    return {
+        "workflow_pass": "lifecycle" not in blocked and "execution" not in blocked,
+        "research_pass": "promotion_report" not in blocked,
+        "llm_contribution_pass": None,
+        "paper_ready_pass": status != "blocked",
+        "blocked_checks": blocked,
+        "warning_checks": warning,
+    }
+
+
 def _render_markdown(report: PaperStrategyReadinessReport) -> str:
     lines = [
         f"# Paper Strategy Readiness: {report.strategy_name}",
@@ -526,6 +641,9 @@ def _render_markdown(report: PaperStrategyReadinessReport) -> str:
         f"- Strategy path: `{report.strategy_path or 'candidate'}`",
         f"- Status: `{report.status}`",
         f"- Ready: `{'yes' if report.ready else 'no'}`",
+        "- Gate taxonomy: workflow_pass, research_pass, llm_contribution_pass, paper_ready_pass.",
+        f"- Gate summary: `{report.gate_summary}`",
+        "- Safety note: paper readiness is a control gate for Alpaca Paper only, not live trading.",
         "",
         "## Checks",
         "",

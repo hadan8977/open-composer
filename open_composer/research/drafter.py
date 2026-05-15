@@ -142,6 +142,23 @@ def _deterministic_draft(idea: str) -> StrategySpec:
                     "Buy pullbacks only after deterministic technical confirmation; attach "
                     "company event, macro, and news context before manual or paper action."
                 ),
+                "research_design": _research_design(
+                    data_timeframe=timeframe,
+                    method_variants=["pullback", "context_filter"],
+                    factor_variants=[
+                        "ema_trend",
+                        "rsi_state",
+                        "volume_confirmation",
+                        "event_news_macro_context",
+                    ],
+                    parameter_ranges={
+                        "entry_ema_bars": [3, 5, 8],
+                        "rsi_bars": [3, 6, 14],
+                        "stop_loss_pct": [0.8, 1.0, 1.2],
+                        "take_profit_pct": [1.5, 2.0, 2.5],
+                    },
+                    universe_variants=[[symbol]],
+                ),
                 "open_questions": [
                     (
                         "Evaluate Longbridge Nasdaq Basic versus Alpaca IEX before relying on "
@@ -227,6 +244,23 @@ def _breakout_draft(idea: str) -> StrategySpec:
                     "Trade deterministic price breakouts only after a prior-window high is "
                     "exceeded with volume and minimum realized range."
                 ),
+                "research_design": _research_design(
+                    data_timeframe=timeframe,
+                    method_variants=["breakout", "volume_expansion", "trend_follow"],
+                    factor_variants=[
+                        "lagged_high",
+                        "volume_confirmation",
+                        "atr_filter",
+                        "ema_exit",
+                    ],
+                    parameter_ranges={
+                        "breakout_lookback_bars": [5, 6, 10],
+                        "atr_bars": [5, 8, 14],
+                        "stop_loss_pct": [0.8, 1.0, 1.2],
+                        "take_profit_pct": [2.0, 2.4, 3.0],
+                    },
+                    universe_variants=[[symbol]],
+                ),
                 "open_questions": [
                     "Add commission and slippage sensitivity before paper automation.",
                     "Validate breakout lookback length with out-of-sample data.",
@@ -287,6 +321,24 @@ def _memory_storage_draft(idea: str) -> StrategySpec:
                     "Trade intraday continuation in memory/storage names when MU leads on "
                     "price, volume, and AI data-center context. Real trading remains manual."
                 ),
+                "research_design": _research_design(
+                    data_timeframe=timeframe,
+                    method_variants=["momentum", "rotation", "theme_proxy"],
+                    factor_variants=[
+                        "ema_trend",
+                        "relative_momentum",
+                        "volume_confirmation",
+                        "event_news_macro_context",
+                    ],
+                    parameter_ranges={
+                        "fast_ema_bars": [5, 8, 13],
+                        "slow_ema_bars": [13, 21, 34],
+                        "rsi_bars": [6, 14],
+                        "stop_loss_pct": [0.8, 1.1, 1.5],
+                        "take_profit_pct": [2.0, 3.2, 4.0],
+                    },
+                    universe_variants=[["MU"], ["MU", "WDC", "STX"]],
+                ),
                 "open_questions": [
                     "Confirm live Alpaca IEX coverage versus paid SIP before production use.",
                     "Measure whether MU, WDC, or STX provides the cleanest intraday proxy.",
@@ -335,6 +387,28 @@ def _extract_symbol(idea: str) -> str:
         if token not in {"SEC", "LLM", "API"}:
             return token
     return "QQQ"
+
+
+def _research_design(
+    *,
+    data_timeframe: str,
+    method_variants: list[str],
+    factor_variants: list[str],
+    parameter_ranges: dict[str, list[object]],
+    universe_variants: list[list[str]],
+) -> dict[str, object]:
+    return {
+        "data_timeframe": data_timeframe,
+        "signal_timeframe": data_timeframe,
+        "rebalance_frequency": "bar_close",
+        "llm_review_frequency": "post_signal_only",
+        "method_variants": method_variants,
+        "factor_variants": factor_variants,
+        "parameter_ranges": parameter_ranges,
+        "universe_variants": universe_variants,
+        "candidate_cap": 200,
+        "objective": "alpha_vs_benchmark_family_after_costs",
+    }
 
 
 def _prompt_session_id(idea: str) -> str:

@@ -148,6 +148,15 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
             "source_spec_path": "strategy_specs/active/qqq_pullback_15m.yaml",
             "status": "ok",
             "ready": True,
+            "gate_summary": {
+                "workflow_pass": True,
+                "research_pass": True,
+                "llm_contribution_pass": None,
+                "paper_ready_pass": True,
+                "blocked_checks": [],
+                "warning_checks": [],
+                "benchmark_family_complete": True,
+            },
             "data_profile": {
                 "data_as_of": "2026-01-02T16:00:00+00:00",
                 "feed": "iex",
@@ -157,7 +166,11 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
             },
             "checks": [
                 {"name": "in_sample", "status": "ok", "message": "ok", "details": {}},
+                {"name": "strict_data", "status": "ok", "message": "ok", "details": {}},
+                {"name": "feature_packets", "status": "ok", "message": "ok", "details": {}},
+                {"name": "benchmark_family", "status": "ok", "message": "ok", "details": {}},
             ],
+            "benchmark_family": {"complete": True, "missing": [], "benchmarks": {}},
             "full_window": {
                 "run_id": "promo_full",
                 "bars": 10,
@@ -240,6 +253,11 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.research_reports[0].data_source_mode == "cache"
     assert catalog.research_reports[0].cache_fallback is True
     assert catalog.research_reports[0].data_warnings == ["cache_data_used"]
+    assert catalog.research_reports[0].gate_summary["paper_ready_pass"] is True
+    assert catalog.research_reports[0].evidence_strength == "paper_ready"
+    assert catalog.research_reports[0].benchmark_family_complete is True
+    assert catalog.research_reports[0].paper_readiness_status == "ok"
+    assert "Review paper readiness" in catalog.research_reports[0].next_action
     assert catalog.summary.readiness_status == "warning"
     assert catalog.summary.readiness_ready is True
     assert catalog.summary.readiness_warning_count == 1

@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
+from open_composer.adapters.data import fetch_ohlcv
 from open_composer.adapters.data.comparison import compare_ohlcv_sources
 from open_composer.adapters.data.longbridge import (
     LongbridgeDataError,
@@ -136,6 +137,24 @@ def test_longbridge_live_fetch_requires_valid_count(sample_workspace: Path, monk
         assert "between 1 and 1000" in str(exc)
     else:
         raise AssertionError("expected LongbridgeDataError")
+
+
+def test_longbridge_unsupported_timeframe_fails_before_fallback(sample_workspace: Path) -> None:
+    try:
+        fetch_ohlcv(
+            sample_workspace,
+            "QQQ",
+            "30m",
+            None,
+            None,
+            source="longbridge",
+            feed=None,
+            use_cache=False,
+        )
+    except ValueError as exc:
+        assert "unsupported longbridge timeframe: 30m" in str(exc)
+    else:
+        raise AssertionError("expected unsupported timeframe ValueError")
 
 
 def test_ohlcv_comparison_writes_reports(sample_workspace: Path) -> None:

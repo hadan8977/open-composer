@@ -117,6 +117,7 @@ Useful commands:
 
 ```bash
 uv run oc data fetch --source alpaca --symbol MU --timeframe 15m --feed iex
+uv run oc data fetch --source alpaca --symbol MU --timeframe 15m --feed iex --strict-live
 uv run oc data fetch --source longbridge --symbol QQQ --timeframe 15m
 uv run oc data fetch --source longbridge --symbol QQQ --timeframe 15m --strict-live --count 1000
 uv run oc data longbridge-check --symbol QQQ --timeframe 15m
@@ -135,8 +136,11 @@ Set `LONGBRIDGE_APP_KEY`, `LONGBRIDGE_APP_SECRET`, and
 `LONGBRIDGE_ACCESS_TOKEN`; app key/secret alone are not enough. The adapter
 maps bare US tickers like `QQQ` to Longbridge security codes like `QQQ.US` and
 supports `1m`, `5m`, `15m`, `1h`, `daily`, and `weekly` periods at the adapter
-level. `StrategySpec.timeframe` currently allows `5m`, `15m`, `1h`, `daily`,
-and `weekly`. Longbridge candlestick requests are capped at 1000 bars per
+level. `StrategySpec.timeframe` now allows `1m`, `5m`, `15m`, `30m`, `1h`,
+`4h`, `daily`, and `weekly`, but provider support is checked through the
+timeframe matrix before fetching. Longbridge currently rejects unsupported
+`30m` and `4h` requests instead of falling back. Longbridge candlestick
+requests are capped at 1000 bars per
 request; account quote cards, monthly symbol quotas, minute-history start dates,
 and extended-hours access determine the usable range. Use `--trade-sessions all`
 only when extended-hours data is intended; US overnight quotes require the
@@ -195,15 +199,15 @@ uv run oc strategy llm-exposure-switch strategy_specs/drafts/qqq_pullback_15m.ya
   --risk-off-exposure 0.75 --risk-off-exposure 1.0 \
   --validation-folds 3
 uv run oc strategy rotate-universe strategy_specs/drafts/qqq_pullback_15m.yaml \
-  --symbol QQQ --symbol SPY --symbol IWM \
-  --lookback-bars 20 --lookback-bars 40 \
+  --symbols QQQ,SPY,IWM \
+  --lookback 20 --lookback 40 \
   --rebalance-bars 5 \
   --walk-forward-folds 3 \
   --walk-forward-top-k 8
 uv run oc strategy market-time strategy_specs/drafts/qqq_pullback_15m.yaml \
   --profile risk_control_hold --profile breakout_hold \
-  --fast-bars 5 --fast-bars 8 \
-  --slow-bars 21 \
+  --fast 5 --fast 8 \
+  --slow 21 \
   --walk-forward-folds 3 \
   --walk-forward-top-k 8
 ```
@@ -342,7 +346,7 @@ Supported Dashboard command actions are `paper.status.refresh`,
 `strategy.backtest.rerun`, `strategy.scan.rerun`, and `strategy.disable`.
 They never submit real-money orders.
 
-For anything beyond local-only use, set a Dashboard API token before serving:
+For local-only browser use, set a Dashboard API token before serving:
 
 ```bash
 OPEN_COMPOSER_DASHBOARD_TOKEN=<long-random-token> make dashboard-serve
@@ -350,14 +354,43 @@ OPEN_COMPOSER_DASHBOARD_TOKEN=<long-random-token> make dashboard-serve
 
 Then open the UI once with `?token=<long-random-token>` so browser API calls send
 `X-Open-Composer-Token`. The token protects `/api/dashboard/*`; static files are
-still served normally.
+still served normally. Remote deployments must not use query tokens or
+`localStorage` tokens.
+
+Remote Dashboard deployments use Vercel as a password-session BFF and the
+Open Composer daemon as the only command executor:
+
+```bash
+uv run oc remote doctor
+uv run oc remote serve --host 127.0.0.1 --port 8787
+uv run oc remote job-list
+uv run oc remote job-status <job-id>
+```
+
+Vercel signs daemon requests with `X-OC-Timestamp`, `X-OC-Nonce`,
+`X-OC-Actor`, `X-OC-Body-SHA256`, and `X-OC-Signature`. Remote command-run is
+always an async job. Yellow and Red actions create
+`reports/backups/remote/<job_id>/manifest.json` before execution, and Red
+actions require the normal confirmation phrase plus `CONFIRM REMOTE STRATEGY
+MUTATION` or `CONFIRM REMOTE PAPER CONTROL`.
+
+Long-running work can be handed to local agents through file-backed requests:
+
+```bash
+uv run oc agent request-create --title "Review sweep" --prompt "Review reports/research/example.json"
+uv run oc agent request-list
+uv run oc agent request-complete <request-id> --result-link reports/research/example.md
+```
 
 ## Project Docs
 
 - [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) — no-context Codex starting review document
 - [AGENTS.md](AGENTS.md)
+- [docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md](docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md)
 - [docs/current-unfinished-work-check.zh.md](docs/current-unfinished-work-check.zh.md)
 - [docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md](docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md)
+- [docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md](docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md)
 - [docs/product-maturation-plan.zh.md](docs/product-maturation-plan.zh.md)
 - [docs/review-methodology.zh.md](docs/review-methodology.zh.md)
+- [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md)
 - [docs/longbridge-integration.md](docs/longbridge-integration.md)

@@ -32,6 +32,12 @@ from open_composer.adapters.data.longbridge import (
 )
 from open_composer.adapters.events import fetch_capability_events
 from open_composer.adapters.execution import build_nautilus_trader_plan, write_nautilus_trader_plan
+from open_composer.agent_requests import (
+    AgentRequestCreate,
+    complete_agent_request,
+    create_agent_request,
+    list_agent_requests,
+)
 from open_composer.capabilities import evaluate_capabilities, load_registry
 from open_composer.compiler.spec_to_pine import compile_pine, compile_pine_strategy
 from open_composer.config import (
@@ -91,6 +97,8 @@ from open_composer.paper_readiness import (
     write_paper_readiness_report,
 )
 from open_composer.readiness import build_readiness_report, write_readiness_report
+from open_composer.remote import RemoteJobManager, build_remote_doctor_report, serve_remote
+from open_composer.remote.server import RemoteServerError
 from open_composer.repo_check import build_repo_check_report, write_repo_check_report
 from open_composer.research import (
     build_promotion_report,
@@ -147,6 +155,8 @@ feature_app = typer.Typer(no_args_is_help=True)
 deploy_app = typer.Typer(no_args_is_help=True)
 dashboard_app = typer.Typer(no_args_is_help=True)
 repo_app = typer.Typer(no_args_is_help=True)
+remote_app = typer.Typer(no_args_is_help=True)
+agent_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -165,6 +175,8 @@ app.add_typer(feature_app, name="feature")
 app.add_typer(deploy_app, name="deploy")
 app.add_typer(dashboard_app, name="dashboard")
 app.add_typer(repo_app, name="repo")
+app.add_typer(remote_app, name="remote")
+app.add_typer(agent_app, name="agent")
 
 
 @app.callback()
@@ -672,6 +684,165 @@ def dashboard_command_run_command(
     console.print(result.message)
 
 
+@remote_app.command("serve")
+def remote_serve_command(
+    host: Annotated[
+        str,
+        typer.Option("--host", help="Host interface for the remote command daemon."),
+    ] = "127.0.0.1",
+    port: Annotated[
+        int,
+        typer.Option("--port", help="Port for the remote command daemon."),
+    ] = 8787,
+    shared_secret: Annotated[
+        str | None,
+        typer.Option(
+            "--shared-secret",
+            help="HMAC shared secret. Defaults to OC_REMOTE_SHARED_SECRET.",
+        ),
+    ] = None,
+    allowed_actor: Annotated[
+        str | None,
+        typer.Option("--allowed-actor", help="Allowed HMAC actor. Defaults to OC_DASHBOARD_OWNER."),
+    ] = None,
+) -> None:
+    """Serve the HMAC-protected remote Dashboard command daemon."""
+    try:
+        serve_remote(
+            project_root(),
+            host=host,
+            port=port,
+            shared_secret=shared_secret,
+            allowed_actor=allowed_actor,
+        )
+    except RemoteServerError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+@remote_app.command("job-list")
+def remote_job_list_command() -> None:
+    """List remote Dashboard command jobs."""
+    manager = RemoteJobManager(project_root(), autostart=False)
+    table = Table(title="Open Composer Remote Jobs")
+    table.add_column("Job")
+    table.add_column("Status")
+    table.add_column("Action")
+    table.add_column("Actor")
+    table.add_column("Created")
+    for job in manager.list_jobs():
+        table.add_row(
+            job.job_id,
+            job.status,
+            job.action,
+            job.actor,
+            job.created_at.isoformat(),
+        )
+    console.print(table)
+
+
+@remote_app.command("job-status")
+def remote_job_status_command(job_id: str) -> None:
+    """Show a remote Dashboard command job record."""
+    manager = RemoteJobManager(project_root(), autostart=False)
+    try:
+        job = manager.load_job(job_id)
+    except Exception as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    print(json.dumps(job.model_dump(mode="json"), indent=2, sort_keys=True))
+
+
+@remote_app.command("doctor")
+def remote_doctor_command(
+    strict: Annotated[
+        bool,
+        typer.Option("--strict", help="Exit with code 1 when remote readiness is blocked."),
+    ] = False,
+) -> None:
+    """Check local prerequisites for the remote Dashboard command daemon."""
+    report = build_remote_doctor_report(project_root())
+    table = Table(title="Open Composer Remote Doctor")
+    table.add_column("Check")
+    table.add_column("Status")
+    table.add_column("Message")
+    for check in report.checks:
+        table.add_row(check.name, check.status, check.message)
+    console.print(table)
+    if strict and report.status == "blocked":
+        raise typer.Exit(code=1)
+
+
+@agent_app.command("request-create")
+def agent_request_create_command(
+    title: Annotated[str, typer.Option("--title", help="Short request title.")],
+    prompt: Annotated[str, typer.Option("--prompt", help="Task prompt for Codex or Claude Code.")],
+    task_type: Annotated[
+        str,
+        typer.Option(
+            "--task-type",
+            help="research, review, parameter_scan, or strategy_optimization.",
+        ),
+    ] = "research",
+    related_path: Annotated[
+        list[str] | None,
+        typer.Option("--related-path", help="Workspace-relative path to link to the request."),
+    ] = None,
+    requested_by: Annotated[
+        str,
+        typer.Option("--requested-by", help="Actor recorded on the request."),
+    ] = "dashboard",
+) -> None:
+    """Create a file-backed agent request for Codex or Claude Code follow-up."""
+    try:
+        request = create_agent_request(
+            AgentRequestCreate(
+                requested_by=requested_by,
+                task_type=task_type,  # type: ignore[arg-type]
+                title=title,
+                prompt=prompt,
+                related_paths=related_path or [],
+            ),
+            project_root(),
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]agent request written[/green] reports/agent_requests/{request.request_id}.json"
+    )
+
+
+@agent_app.command("request-list")
+def agent_request_list_command() -> None:
+    """List file-backed agent requests."""
+    table = Table(title="Open Composer Agent Requests")
+    table.add_column("Request")
+    table.add_column("Status")
+    table.add_column("Type")
+    table.add_column("Title")
+    for request in list_agent_requests(project_root()):
+        table.add_row(request.request_id, request.status, request.task_type, request.title)
+    console.print(table)
+
+
+@agent_app.command("request-complete")
+def agent_request_complete_command(
+    request_id: str,
+    result_link: Annotated[
+        list[str],
+        typer.Option("--result-link", help="Workspace-relative result path to link."),
+    ],
+) -> None:
+    """Mark an agent request completed and attach result links."""
+    try:
+        request = complete_agent_request(
+            request_id,
+            result_links=result_link,
+            root=project_root(),
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]agent request completed[/green] {request.request_id}")
+
+
 @capability_app.command("list")
 def capability_list() -> None:
     """List registered strategy/data capabilities."""
@@ -866,6 +1037,8 @@ def data_fetch(
                 end=selected_end,
                 source=source,
                 feed=feed,
+                use_cache=not strict_live,
+                allow_fallback=not strict_live,
             )
     except LongbridgeDataError as exc:
         console.print(f"[red]Longbridge fetch failed[/red] {exc}")

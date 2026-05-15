@@ -13,12 +13,18 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
     for relative in [
         "README.md",
         "AGENTS.md",
+        "CLAUDE.md",
         "Makefile",
+        "scripts/sync-agent-skills.py",
+        "scripts/check-agent-parity.py",
+        "docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md",
         "docs/product-golden-path-codex-quant-review-2026-05-13.zh.md",
         "docs/current-unfinished-work-check.zh.md",
         "docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md",
+        "docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md",
         "docs/product-maturation-plan.zh.md",
         "docs/review-methodology.zh.md",
+        "docs/remote-dashboard-deploy.zh.md",
         "docs/longbridge-integration.md",
     ]:
         source = repo_root / relative
@@ -26,6 +32,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
     copytree(repo_root / ".agents", target / ".agents", dirs_exist_ok=True)
+    copytree(repo_root / ".claude", target / ".claude", dirs_exist_ok=True)
 
 
 def test_repo_check_passes_for_repo_control_surface(
@@ -41,6 +48,7 @@ def test_repo_check_passes_for_repo_control_surface(
     assert {check.name: check.status for check in report.checks}["no_context_start_doc"] == "ok"
     assert {check.name: check.status for check in report.checks}["capability_registry"] == "ok"
     assert {check.name: check.status for check in report.checks}["docs_inventory"] == "ok"
+    assert {check.name: check.status for check in report.checks}["claude_parity"] == "ok"
     assert {check.name: check.status for check in report.checks}["readme_research_controls"] == "ok"
 
 
@@ -148,6 +156,22 @@ def test_repo_check_blocks_non_strict_verify_gates(
     assert check.status == "blocked"
     assert "repo-check runs strict" in str(check.details)
     assert "feature-validate runs strict" in str(check.details)
+
+
+def test_repo_check_blocks_when_claude_skill_mirror_drifts(
+    sample_workspace: Path,
+    repo_root: Path,
+) -> None:
+    _copy_repo_check_inputs(repo_root, sample_workspace)
+    skill = sample_workspace / ".claude" / "skills" / "risk-reviewer" / "SKILL.md"
+    skill.write_text(skill.read_text(encoding="utf-8") + "\nDrifted.\n", encoding="utf-8")
+
+    report = build_repo_check_report(sample_workspace)
+
+    assert report.status == "blocked"
+    check = next(item for item in report.checks if item.name == "claude_parity")
+    assert check.status == "blocked"
+    assert "risk-reviewer" in str(check.details)
 
 
 def test_repo_check_cli_writes_reports(

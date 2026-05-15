@@ -14,6 +14,24 @@ def test_sample_strategy_valid(repo_root: Path) -> None:
     assert spec.name == "qqq_pullback_15m"
     assert spec.execution.mode == "manual_signal"
     assert spec.data.source == "sample"
+    assert spec.notes.model_extra and "research_design" in spec.notes.model_extra
+
+
+def test_strategy_spec_accepts_expanded_timeframes(tmp_path: Path, repo_root: Path) -> None:
+    raw = yaml.safe_load(
+        (repo_root / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["timeframe"] = "30m"
+    raw["data"]["source"] = "alpaca"
+    raw["data"]["path"] = None
+    path = tmp_path / "expanded_timeframe.yaml"
+    path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    spec = load_strategy_spec(path)
+
+    assert spec.timeframe == "30m"
 
 
 def test_unsupported_expression_rejected(tmp_path: Path, repo_root: Path) -> None:

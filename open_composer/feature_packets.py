@@ -29,6 +29,7 @@ class FeaturePacketRow(BaseModel):
     timestamp: datetime
     published_at: datetime
     fetched_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    visible_at: datetime
     source: str
     symbol: str
     dedupe_key: str
@@ -96,10 +97,12 @@ def build_manual_feature_packet(
 ) -> FeaturePacketRow:
     published = published_at or timestamp
     fetched = fetched_at or datetime.now(UTC)
+    visible = _max_datetime([published, fetched], timestamp)
     return FeaturePacketRow(
         timestamp=timestamp,
         published_at=published,
         fetched_at=fetched,
+        visible_at=visible,
         source=source,
         symbol=symbol,
         dedupe_key=dedupe_key or f"{source}:{symbol.upper()}:{timestamp.isoformat()}",
@@ -119,6 +122,7 @@ def build_context_feature_packet(signal_id: str, root: Path) -> FeaturePacketRow
     records = [*context.events, *context.news, *context.macro]
     latest_published = _max_datetime((record.published_at for record in records), signal.timestamp)
     latest_fetched = _max_datetime((record.fetched_at for record in records), datetime.now(UTC))
+    visible = _max_datetime([latest_published, latest_fetched], signal.timestamp)
     features: dict[str, FeatureValue] = {
         "event_count": len(context.events),
         "news_count": len(context.news),
@@ -134,6 +138,7 @@ def build_context_feature_packet(signal_id: str, root: Path) -> FeaturePacketRow
         timestamp=signal.timestamp,
         published_at=latest_published,
         fetched_at=latest_fetched,
+        visible_at=visible,
         source="context",
         symbol=signal.symbol,
         dedupe_key=f"context:{signal.id}",
@@ -193,6 +198,7 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
     has_timestamp = bool(rows) and all("timestamp" in keys for keys in key_sets)
     has_published_at = bool(rows) and all("published_at" in keys for keys in key_sets)
     has_fetched_at = bool(rows) and all("fetched_at" in keys for keys in key_sets)
+    has_visible_at = bool(rows) and all("visible_at" in keys for keys in key_sets)
     has_dedupe_key = bool(rows) and all("dedupe_key" in keys for keys in key_sets)
     has_schema_version = bool(rows) and all("schema_version" in keys for keys in key_sets)
     has_field = True
@@ -209,6 +215,8 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
         warnings.append("published_at is missing for at least one row")
     if not has_fetched_at:
         warnings.append("fetched_at is missing for at least one row")
+    if not has_visible_at and not (has_published_at and has_fetched_at):
+        warnings.append("visible_at is missing and cannot be inferred for at least one row")
     if not has_dedupe_key:
         warnings.append("dedupe_key is missing for at least one row")
     if not has_schema_version:
@@ -225,6 +233,7 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
         and not invalid_timestamps
         and has_published_at
         and has_fetched_at
+        and (has_visible_at or (has_published_at and has_fetched_at))
         and has_dedupe_key
         and has_schema_version
         and not duplicate_dedupe_keys

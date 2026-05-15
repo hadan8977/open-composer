@@ -6,7 +6,13 @@ import {
 import { Card, Tag, Pill, KPI, SectionTitle } from "./blocks";
 import { Sparkline } from "./sparkline";
 import { applyDashboardCatalog, auditLog, llmReviews, recentSignals, strategies, versions } from "./data";
-import { getDashboardJson, postDashboardJson } from "./runtime";
+import {
+  getDashboardJson,
+  postDashboardJson,
+  promptDashboardConfirmations,
+  resolveDashboardCommandRun,
+} from "./runtime";
+import type { DashboardCommandPlanResponse, DashboardCommandRunResponse } from "./runtime";
 
 type Tab = "spec" | "backtest" | "signals" | "versions" | "llm" | "audit";
 type StrategyDataSource = "keep" | "sample" | "alpaca" | "longbridge";
@@ -29,21 +35,8 @@ export function StrategyDetail({ id }: { id: string }) {
   );
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState("Dashboard command API is local-only and confirmed.");
-  const [lastPlan, setLastPlan] = useState<{
-    command_id: string;
-    action: string;
-    confirmation_phrase: string;
-    warnings: string[];
-    plan_path?: string | null;
-  } | null>(null);
-  const [lastResult, setLastResult] = useState<{
-    command_id: string;
-    action: string;
-    status: string;
-    message: string;
-    result_path?: string | null;
-    output_paths?: string[];
-  } | null>(null);
+  const [lastPlan, setLastPlan] = useState<DashboardCommandPlanResponse | null>(null);
+  const [lastResult, setLastResult] = useState<DashboardCommandRunResponse | null>(null);
   const positive = s.lastReturn >= 0;
   const accent = positive ? "#16C268" : "#FF2D7A";
 
@@ -161,13 +154,7 @@ export function StrategyDetail({ id }: { id: string }) {
     setLastResult(null);
     const commandDataSource = overrideDataSource ?? dataSource;
     try {
-      const plan = await postDashboardJson<{
-        command_id: string;
-        action: string;
-        confirmation_phrase: string;
-        warnings: string[];
-        plan_path?: string | null;
-      }>("/api/dashboard/command-plan", {
+      const plan = await postDashboardJson<DashboardCommandPlanResponse>("/api/dashboard/command-plan", {
         action,
         reason,
         requested_by: "dashboard",
@@ -178,30 +165,30 @@ export function StrategyDetail({ id }: { id: string }) {
       if (!plan.plan_path) {
         throw new Error("dashboard command plan missing plan_path");
       }
-      const confirmation = window.prompt(
-        `Type the exact confirmation phrase to execute this dashboard command.\n\n${plan.confirmation_phrase}`,
-        plan.confirmation_phrase,
+      const confirmations = await promptDashboardConfirmations(
+        plan,
+        "Type the exact confirmation phrase to execute this dashboard command.",
       );
-      if (confirmation === null) {
+      if (confirmations === null) {
         setStatusMessage("Command plan created. Execution cancelled before confirmation.");
         return;
       }
-      setStatusMessage("Executing dashboard command…");
-      const result = await postDashboardJson<{
-        command_id: string;
-        action: string;
-        status: string;
-        message: string;
-        result_path?: string | null;
-        output_paths?: string[];
-      }>("/api/dashboard/command-run", {
+      setStatusMessage(plan.remote ? "Queueing remote command job…" : "Executing dashboard command…");
+      const queued = await postDashboardJson<DashboardCommandRunResponse>("/api/dashboard/command-run", {
         plan_path: plan.plan_path,
-        confirm: confirmation,
+        ...confirmations,
         executed_by: "dashboard",
+      });
+      const result = await resolveDashboardCommandRun(queued, (job) => {
+        setStatusMessage(`${job.status}: ${job.message}`);
       });
       setLastResult(result);
       await refreshCatalog();
-      setStatusMessage(`${result.message}${result.result_path ? ` · ${result.result_path}` : ""}`);
+      setStatusMessage(
+        `${result.message}${result.result_path ? ` · ${result.result_path}` : ""}${
+          result.backup_manifest_path ? ` · ${result.backup_manifest_path}` : ""
+        }`,
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown dashboard command error";
       setStatusMessage(message);
@@ -570,9 +557,15 @@ function SpecCanvas({ s, accent }: { s: any; accent: string }) {
                   <div className="t-body-sm ink-subtle">
                     Confirmation <span className="t-mono">{lastPlan.confirmation_phrase}</span>
                   </div>
-                  {lastPlan.warnings.length > 0 && (
+                  {(lastPlan.warnings ?? []).length > 0 && (
                     <div className="t-body-sm ink-subtle">
-                      Warnings: {lastPlan.warnings.join(" · ")}
+                      Warnings: {(lastPlan.warnings ?? []).join(" · ")}
+                    </div>
+                  )}
+                  {lastPlan.remote && (
+                    <div className="t-body-sm ink-subtle">
+                      Remote {lastPlan.remote.risk_level}
+                      {lastPlan.remote.backup_required ? " · backup required" : ""}
                     </div>
                   )}
                 </div>
@@ -586,6 +579,11 @@ function SpecCanvas({ s, accent }: { s: any; accent: string }) {
                   {lastResult.output_paths && lastResult.output_paths.length > 0 && (
                     <div className="t-body-sm ink-subtle">
                       Outputs: {lastResult.output_paths.join(" · ")}
+                    </div>
+                  )}
+                  {lastResult.backup_manifest_path && (
+                    <div className="t-body-sm ink-subtle">
+                      Backup: {lastResult.backup_manifest_path}
                     </div>
                   )}
                 </div>

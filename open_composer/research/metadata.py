@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import hashlib
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
 from typing import Any
 
 import pandas as pd
+
+from open_composer.models.strategy_spec import StrategySpec
+from open_composer.strategy_versions import strategy_content_hash
 
 
 @dataclass(frozen=True)
@@ -162,6 +167,38 @@ def search_space(
     }
 
 
+def research_run_manifest(
+    *,
+    root: Path,
+    strategy: StrategySpec,
+    source_path: Path,
+    trial_count: int,
+    search_space_payload: dict[str, Any],
+    data_profile: dict[str, Any] | None = None,
+    feature_packet_paths: list[str] | None = None,
+    prompt_hash: str | None = None,
+    runtime: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    git_commit, git_dirty = _git_state(root)
+    data_path = data_profile.get("path") if data_profile else None
+    return {
+        "git_commit": git_commit,
+        "git_dirty": git_dirty,
+        "strategy_name": strategy.name,
+        "spec_hash": strategy_content_hash(strategy),
+        "source_path": _relpath(source_path, root),
+        "data_profile": data_profile or {},
+        "data_path_hash": _file_hash(root / str(data_path)) if data_path else None,
+        "feature_packet_hashes": {
+            path: _file_hash(root / path) for path in feature_packet_paths or []
+        },
+        "prompt_hash": prompt_hash,
+        "trial_count": trial_count,
+        "search_space": search_space_payload,
+        "runtime": runtime or {},
+    }
+
+
 def hypothesis_ledger(
     *,
     hypothesis: str,
@@ -199,3 +236,43 @@ def _data_profile_warnings(
     if first_timestamp is None or last_timestamp is None:
         warnings.append("missing_data_timestamps")
     return warnings
+
+
+def _git_state(root: Path) -> tuple[str | None, bool | None]:
+    commit = _git_output(root, "rev-parse", "HEAD")
+    status = _git_output(root, "status", "--short")
+    return commit, bool(status) if status is not None else None
+
+
+def _git_output(root: Path, *args: str) -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip() or None
+
+
+def _file_hash(path: Path) -> str | None:
+    if not path.exists() or not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _relpath(path: Path, base: Path) -> str:
+    try:
+        return str(path.relative_to(base))
+    except ValueError:
+        return str(path)

@@ -11,6 +11,7 @@ from open_composer.adapters.data.provenance import write_ohlcv_manifest
 from open_composer.adapters.data.sample import load_sample_ohlcv, normalize_ohlcv
 from open_composer.config import data_feed
 from open_composer.models.strategy_spec import StrategySpec
+from open_composer.timeframes import require_timeframe_supported
 
 
 def load_ohlcv_for_spec(spec: StrategySpec, root: Path, refresh: bool = False) -> pd.DataFrame:
@@ -50,8 +51,10 @@ def fetch_ohlcv(
     source: str = "alpaca",
     feed: str | None = None,
     use_cache: bool = True,
+    allow_fallback: bool = True,
 ) -> pd.DataFrame:
     if source == "alpaca":
+        require_timeframe_supported("alpaca", timeframe)
         try:
             return fetch_alpaca_bars(
                 root=root,
@@ -63,8 +66,11 @@ def fetch_ohlcv(
                 use_cache=use_cache,
             )
         except Exception:
+            if not allow_fallback:
+                raise
             return _fallback_ohlcv(root, symbol, timeframe, source, feed or data_feed())
     if source == "longbridge":
+        require_timeframe_supported("longbridge", timeframe)
         try:
             return fetch_longbridge_bars(
                 root=root,
@@ -76,6 +82,8 @@ def fetch_ohlcv(
                 use_cache=use_cache,
             )
         except Exception:
+            if not allow_fallback:
+                raise
             return _fallback_ohlcv(root, symbol, timeframe, source, feed)
     raise ValueError(f"unsupported data source: {source}")
 
@@ -167,7 +175,15 @@ def _write_fallback_manifest(
 def _resample_ohlcv(frame: pd.DataFrame, timeframe: str) -> pd.DataFrame:
     if timeframe == "15m":
         return frame
-    freq_map = {"5m": "5min", "15m": "15min", "1h": "1h", "daily": "1D"}
+    freq_map = {
+        "5m": "5min",
+        "15m": "15min",
+        "30m": "30min",
+        "1h": "1h",
+        "4h": "4h",
+        "daily": "1D",
+        "weekly": "1W",
+    }
     if timeframe not in freq_map:
         raise ValueError(f"unsupported fallback timeframe: {timeframe}")
     indexed = frame.copy()

@@ -831,6 +831,9 @@ def _build_paper_readiness_records(base: Path) -> list[DashboardPaperReadinessRe
                 generated_at=_parse_datetime(raw.get("generated_at") or _file_mtime(path)),
                 path=_relpath(path, base),
                 report_markdown_path=_registered_value(raw.get("report_markdown_path")),
+                gate_summary=raw.get("gate_summary", {})
+                if isinstance(raw.get("gate_summary"), dict)
+                else {},
                 blocking_checks=[check.name for check in checks if check.status == "blocked"],
                 warning_checks=[check.name for check in checks if check.status == "warning"],
                 checks=checks,
@@ -1068,7 +1071,22 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
         data_profile = (
             raw.get("data_profile", {}) if isinstance(raw.get("data_profile"), dict) else {}
         )
+        gate_summary = (
+            raw.get("gate_summary", {}) if isinstance(raw.get("gate_summary"), dict) else {}
+        )
+        benchmark_family = (
+            raw.get("benchmark_family", {}) if isinstance(raw.get("benchmark_family"), dict) else {}
+        )
+        stability = raw.get("stability", {}) if isinstance(raw.get("stability"), dict) else {}
         candidate_count = _research_candidate_count(raw)
+        benchmark_family_complete = (
+            bool(benchmark_family.get("complete"))
+            if kind == "promotion" and benchmark_family
+            else None
+        )
+        paper_readiness_status = _paper_readiness_status(raw, gate_summary)
+        llm_contribution_status = _llm_contribution_status(gate_summary)
+        overfit_risk = _registered_value(stability.get("overfit_risk"))
         records.append(
             DashboardResearchReport(
                 strategy_name=strategy_name,
@@ -1090,6 +1108,34 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
                     str(warning) for warning in data_profile.get("warnings", []) if warning
                 ],
                 output_paths=_research_output_paths(raw),
+                gate_summary=gate_summary,
+                next_action=_research_next_action(
+                    status=status,
+                    gate_summary=gate_summary,
+                    benchmark_family=benchmark_family,
+                    stability=stability,
+                ),
+                evidence_strength=_research_evidence_strength(
+                    status=status,
+                    ready=bool(raw.get("ready", False)),
+                    data_profile=data_profile,
+                    benchmark_family_complete=benchmark_family_complete,
+                    overfit_risk=overfit_risk,
+                ),
+                benchmark_family_complete=benchmark_family_complete,
+                overfit_risk=overfit_risk,
+                llm_contribution_status=llm_contribution_status,
+                paper_readiness_status=paper_readiness_status,
+                data_provenance={
+                    "data_as_of": _registered_value(data_profile.get("data_as_of")),
+                    "feed": _registered_value(data_profile.get("feed")),
+                    "source_mode": _registered_value(data_profile.get("source_mode")),
+                    "provider": _registered_value(data_profile.get("provider")),
+                    "path": _registered_value(data_profile.get("path")),
+                    "warnings": [
+                        str(warning) for warning in data_profile.get("warnings", []) if warning
+                    ],
+                },
             )
         )
     records.sort(key=lambda item: (item.strategy_name.lower(), item.kind, item.report_json_path))
@@ -1113,6 +1159,66 @@ def _research_output_paths(raw: dict[str, Any]) -> list[str]:
             continue
         output_paths.extend(str(value) for value in values if value)
     return output_paths
+
+
+def _paper_readiness_status(
+    raw: dict[str, Any],
+    gate_summary: dict[str, Any],
+) -> Literal["ok", "warning", "blocked"] | None:
+    if "paper_ready_pass" not in gate_summary:
+        return None
+    if gate_summary.get("paper_ready_pass") is True:
+        return "ok" if raw.get("status") == "ok" else "warning"
+    return "blocked"
+
+
+def _llm_contribution_status(gate_summary: dict[str, Any]) -> str | None:
+    value = gate_summary.get("llm_contribution_pass")
+    if value is None:
+        return None
+    return "pass" if value is True else "blocked"
+
+
+def _research_next_action(
+    *,
+    status: str,
+    gate_summary: dict[str, Any],
+    benchmark_family: dict[str, Any],
+    stability: dict[str, Any],
+) -> str:
+    blocked = [str(item) for item in gate_summary.get("blocked_checks", [])]
+    if blocked:
+        return "Fix blocked checks: " + ", ".join(blocked)
+    missing = [str(item) for item in benchmark_family.get("missing", [])]
+    if missing:
+        return "Attach benchmark family members: " + ", ".join(missing)
+    if stability.get("overfit_risk") in {"high", "moderate"}:
+        return "Run out-of-sample, walk-forward, and cost sensitivity before promotion."
+    if status == "ok":
+        return "Review paper readiness gates before any Alpaca Paper activation."
+    return "Resolve warnings before treating this as market evidence."
+
+
+def _research_evidence_strength(
+    *,
+    status: str,
+    ready: bool,
+    data_profile: dict[str, Any],
+    benchmark_family_complete: bool | None,
+    overfit_risk: str | None,
+) -> str:
+    source_mode = str(data_profile.get("source_mode") or "")
+    if status == "blocked" or any(
+        token in source_mode for token in ["sample", "fixture", "fallback"]
+    ):
+        return "insufficient"
+    if ready and benchmark_family_complete is True:
+        return "paper_ready"
+    if benchmark_family_complete is False or overfit_risk in {"high", "moderate"}:
+        return "research_limited"
+    if status in {"ok", "warning"}:
+        return "research"
+    return "unknown"
 
 
 def _build_readiness_record(base: Path) -> DashboardReadinessReport | None:
@@ -1246,6 +1352,7 @@ def build_feature_packet_records(base: Path | None = None) -> list[DashboardFeat
         has_timestamp = bool(dict_rows) and all("timestamp" in keys for keys in key_sets)
         has_published_at = bool(dict_rows) and all("published_at" in keys for keys in key_sets)
         has_fetched_at = bool(dict_rows) and all("fetched_at" in keys for keys in key_sets)
+        has_visible_at = bool(dict_rows) and all("visible_at" in keys for keys in key_sets)
         has_dedupe_key = bool(dict_rows) and all("dedupe_key" in keys for keys in key_sets)
         has_schema_version = bool(dict_rows) and all("schema_version" in keys for keys in key_sets)
         dedupe_keys = [str(row["dedupe_key"]) for row in dict_rows if row.get("dedupe_key")]
@@ -1261,6 +1368,8 @@ def build_feature_packet_records(base: Path | None = None) -> list[DashboardFeat
             warnings.append("published_at is missing for at least one row")
         if not has_fetched_at:
             warnings.append("fetched_at is missing for at least one row")
+        if not has_visible_at and not (has_published_at and has_fetched_at):
+            warnings.append("visible_at is missing and cannot be inferred for at least one row")
         if not has_dedupe_key:
             warnings.append("dedupe_key is missing for at least one row")
         if not has_schema_version:
@@ -1274,6 +1383,7 @@ def build_feature_packet_records(base: Path | None = None) -> list[DashboardFeat
             and not invalid_timestamps
             and has_published_at
             and has_fetched_at
+            and (has_visible_at or (has_published_at and has_fetched_at))
             and has_dedupe_key
             and has_schema_version
             and not duplicate_dedupe_keys
@@ -1293,6 +1403,7 @@ def build_feature_packet_records(base: Path | None = None) -> list[DashboardFeat
                 has_timestamp=has_timestamp,
                 has_published_at=has_published_at,
                 has_fetched_at=has_fetched_at,
+                has_visible_at=has_visible_at,
                 has_dedupe_key=has_dedupe_key,
                 has_schema_version=has_schema_version,
                 point_in_time_status=point_in_time_status,

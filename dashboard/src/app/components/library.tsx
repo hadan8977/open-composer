@@ -4,7 +4,13 @@ import { Card, Tag, Pill } from "./blocks";
 import { Hero } from "./hero";
 import { Sparkline } from "./sparkline";
 import { applyDashboardCatalog, dashboardSummary, strategies, Strategy } from "./data";
-import { getDashboardJson, postDashboardJson } from "./runtime";
+import {
+  getDashboardJson,
+  postDashboardJson,
+  promptDashboardConfirmations,
+  resolveDashboardCommandRun,
+} from "./runtime";
+import type { DashboardCommandPlanResponse, DashboardCommandRunResponse } from "./runtime";
 
 const riskTag: Record<Strategy["risk"], { color: any; label: string }> = {
   stable:   { color: "green",  label: "stable" },
@@ -57,11 +63,7 @@ export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
     setBusy(true);
     setDraftStatus("Creating draft command plan...");
     try {
-      const plan = await postDashboardJson<{
-        command_id: string;
-        confirmation_phrase: string;
-        plan_path?: string | null;
-      }>("/api/dashboard/command-plan", {
+      const plan = await postDashboardJson<DashboardCommandPlanResponse>("/api/dashboard/command-plan", {
         action: "strategy.draft",
         reason: "dashboard draft",
         requested_by: "dashboard",
@@ -71,27 +73,27 @@ export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
       if (!plan.plan_path) {
         throw new Error("dashboard command plan missing plan_path");
       }
-      const confirmation = window.prompt(
-        `Type the exact confirmation phrase to draft this strategy.\n\n${plan.confirmation_phrase}`,
-        plan.confirmation_phrase,
+      const confirmations = await promptDashboardConfirmations(
+        plan,
+        "Type the exact confirmation phrase to draft this strategy.",
       );
-      if (confirmation === null) {
+      if (confirmations === null) {
         setDraftStatus("Draft command plan created. Execution cancelled before confirmation.");
         return;
       }
-      setDraftStatus("Executing draft command...");
-      const result = await postDashboardJson<{
-        status: string;
-        message: string;
-        output_paths?: string[];
-      }>("/api/dashboard/command-run", {
+      setDraftStatus(plan.remote ? "Queueing remote draft job..." : "Executing draft command...");
+      const queued = await postDashboardJson<DashboardCommandRunResponse>("/api/dashboard/command-run", {
         plan_path: plan.plan_path,
-        confirm: confirmation,
+        ...confirmations,
         executed_by: "dashboard",
+      });
+      const result = await resolveDashboardCommandRun(queued, (job) => {
+        setDraftStatus(`${job.status}: ${job.message}`);
       });
       await refreshCatalog();
       const output = result.output_paths?.[0] ? ` · ${result.output_paths[0]}` : "";
-      setDraftStatus(`${result.message}${output}`);
+      const backup = result.backup_manifest_path ? ` · ${result.backup_manifest_path}` : "";
+      setDraftStatus(`${result.message}${output}${backup}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown dashboard command error";
       setDraftStatus(message);
