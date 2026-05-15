@@ -151,7 +151,7 @@ def test_vps_bootstrap_renders_system_templates(sample_workspace: Path) -> None:
 
     assert "User=opencomposer" in unit
     assert f"WorkingDirectory={sample_workspace.as_posix()}" in unit
-    assert "uv run oc remote serve --host 127.0.0.1 --port 8787" in unit
+    assert "run oc remote serve --host 127.0.0.1 --port 8787" in unit
     assert "203.0.113.10.sslip.io {" in caddyfile
     assert "reverse_proxy 127.0.0.1:8787" in caddyfile
 
@@ -168,7 +168,7 @@ def test_parse_vercel_deployment_url_from_cli_output() -> None:
 
 
 def test_vps_bootstrap_apply_uses_vercel_env_and_redacts_token(sample_workspace: Path) -> None:
-    calls: list[tuple[list[str], str | None]] = []
+    calls: list[tuple[list[str], str | None, dict[str, str] | None]] = []
     (sample_workspace / "dashboard").mkdir()
     (sample_workspace / "dashboard" / "package.json").write_text(
         '{"name":"@open-composer/dashboard"}\n',
@@ -183,7 +183,7 @@ def test_vps_bootstrap_apply_uses_vercel_env_and_redacts_token(sample_workspace:
         check: bool,
         env: dict[str, str] | None,
     ) -> CommandExecutionResult:
-        calls.append((list(args), input_text))
+        calls.append((list(args), input_text, env))
         stdout = "https://open-composer-dashboard.vercel.app\n" if "deploy" in args else ""
         return CommandExecutionResult(args=list(args), returncode=0, stdout=stdout, stderr="")
 
@@ -204,6 +204,8 @@ def test_vps_bootstrap_apply_uses_vercel_env_and_redacts_token(sample_workspace:
     assert plan.deployment_url == "https://open-composer-dashboard.vercel.app"
     assert any(call[0][:2] == ["vercel", "link"] for call in calls)
     env_adds = [call for call in calls if call[0][:3] == ["vercel", "env", "add"]]
+    assert all("--token" not in call[0] for call in calls)
+    assert all(call[2] == {"VERCEL_TOKEN": "vercel_token_secret"} for call in calls)
     assert {call[0][3] for call in env_adds} >= {
         "OC_REMOTE_BASE_URL",
         "OC_REMOTE_SHARED_SECRET",

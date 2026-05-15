@@ -529,7 +529,7 @@ def apply_vps_bootstrap(
             True,
             None,
         )
-        runner([*systemctl, "reload", "caddy"], config.root, None, 120, True, None)
+        runner([*systemctl, "restart", "caddy"], config.root, None, 120, True, None)
         steps.append(
             VpsBootstrapStep(
                 name="apply.system_service",
@@ -675,8 +675,8 @@ def apply_vercel(config: VpsBootstrapConfig, runner: CommandRunner) -> str | Non
     if not dashboard_dir.exists():
         raise VpsBootstrapError("dashboard directory is missing")
     base_cmd = list(config.vercel_command)
-    token_args = ["--token", config.vercel_token]
     scope_args = ["--scope", config.vercel_scope] if config.vercel_scope else []
+    command_env = {"VERCEL_TOKEN": config.vercel_token}
 
     runner(
         [
@@ -686,40 +686,45 @@ def apply_vercel(config: VpsBootstrapConfig, runner: CommandRunner) -> str | Non
             "--project",
             config.vercel_project,
             *scope_args,
-            *token_args,
         ],
         dashboard_dir,
         None,
         300,
         True,
-        None,
+        command_env,
     )
     for name, value in config.vercel_env.items():
         runner(
-            [*base_cmd, "env", "rm", name, "production", "--yes", *scope_args, *token_args],
+            [*base_cmd, "env", "rm", name, "production", "--yes", *scope_args],
             dashboard_dir,
             None,
             180,
             False,
-            None,
+            command_env,
         )
         runner(
-            [*base_cmd, "env", "add", name, "production", *scope_args, *token_args],
+            [*base_cmd, "env", "add", name, "production", *scope_args],
             dashboard_dir,
             value + "\n",
             180,
             True,
-            None,
+            command_env,
         )
     result = runner(
-        [*base_cmd, "deploy", "--prod", "--yes", *scope_args, *token_args],
+        [*base_cmd, "deploy", "--prod", "--yes", *scope_args],
         dashboard_dir,
         None,
         900,
         True,
-        None,
+        command_env,
     )
     return parse_vercel_deployment_url(result.stdout) or config.vercel_origin
+
+
+def merge_command_env(env: dict[str, str] | None) -> dict[str, str] | None:
+    if env is None:
+        return None
+    return {**os.environ, **env}
 
 
 def run_command(
@@ -738,7 +743,7 @@ def run_command(
         capture_output=True,
         timeout=timeout_seconds,
         check=False,
-        env=env,
+        env=merge_command_env(env),
     )
     result = CommandExecutionResult(
         args=list(args),
@@ -881,6 +886,7 @@ def merge_env_text(existing_text: str, updates: dict[str, str]) -> str:
 
 
 def render_systemd_unit(config: VpsBootstrapConfig) -> str:
+    uv = shutil.which("uv") or "/usr/bin/env uv"
     return "\n".join(
         [
             "[Unit]",
@@ -895,7 +901,7 @@ def render_systemd_unit(config: VpsBootstrapConfig) -> str:
             f"WorkingDirectory={config.root.as_posix()}",
             f"EnvironmentFile={config.env_path.as_posix()}",
             (
-                "ExecStart=/usr/bin/env uv run oc remote serve "
+                f"ExecStart={uv} run oc remote serve "
                 f"--host {config.remote_host} --port {config.remote_port}"
             ),
             "Restart=on-failure",
