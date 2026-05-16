@@ -44,8 +44,8 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
     catalog = build_dashboard_catalog_payload(sample_workspace)
 
     assert health["status"] == "ok"
-    assert health["dashboard_root"] == str(sample_workspace)
-    assert health["serve_root"] == str(serve_root)
+    assert health["dashboard_root"] == sample_workspace.as_posix()
+    assert health["serve_root"] == serve_root.as_posix()
     assert health["auth_required"] is False
     assert catalog["summary"]["strategy_count"] >= 1
 

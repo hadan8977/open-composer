@@ -4,9 +4,9 @@
 
 ## 用途
 
-这份文档是无上下文的 no-context Codex 进入仓库时优先阅读的起始审查文档。它不替代 `AGENTS.md`，而是把当前产品定位、真实能力、近期计划、禁止扩张范围和验证门槛收敛成一个入口。
+这份文档是无上下文的 no-context Codex 进入仓库时优先阅读的起始审查文档。它不替代 `AGENTS.md`，而是把当前产品定位、真实能力、近期主线、禁止扩张范围和验证门槛收敛成一个入口。
 
-若本文与旧的宽泛计划冲突，以本文、`AGENTS.md`、`docs/current-unfinished-work-check.zh.md` 和 `docs/product-maturation-plan.zh.md` 为准。历史审查只作背景材料，不得直接变成近期实现清单。
+若本文与旧的宽泛计划冲突，以本文、`AGENTS.md` 和 README 为准。历史审查只作背景材料，不得直接变成近期实现清单。
 
 ## 产品裁定
 
@@ -88,7 +88,7 @@ make verify
 | 顺序 | 计划 | 动作 | 验收 |
 |---|---|---|---|
 | P0 | 入口收敛 | README Project Docs 明确把本文标为 no-context Codex 起点；`oc repo check` 纳入验证 | 新 Codex 第一眼看到唯一当前主线 |
-| P0 | 文档精简 | `docs/` 只保留当前入口、当前检查、成熟化计划、审查方法和必要集成文档 | `oc repo check` 阻断历史文档重新堆回当前文档目录 |
+| P0 | 文档精简 | `docs/` 只保留入口、部署、本地 setup 和必要集成文档 | `oc repo check` 阻断历史文档重新堆回当前文档目录 |
 | P1 | 复杂数据 / LLM feature 闭环 | 生成侧必须先写 PIT packet；报告显示 model、input hash、prompt hash、schema、source、timestamp、warning | 未 PIT-complete 的 feature 不能 paper-ready |
 | P1 | NautilusTrader paper 同构 | paper cycle 回链 spec hash、version、data manifest、feature packet、backend plan、signal audit | Python / Nautilus / paper 差异可解释 |
 | P1 | Paper 服务化 | monitor loop 记录 cycle、恢复状态、sync 错误、stale snapshot、open order、PnL alert | 写入仍经 readiness、kill switch、显式确认 |
@@ -122,7 +122,7 @@ make verify
 
 开始任务前：
 
-- 是否先读 `AGENTS.md`、本文、`docs/current-unfinished-work-check.zh.md`、`docs/product-maturation-plan.zh.md`。
+- 是否先读 `AGENTS.md`、本文和 README。
 - 是否落在 P1 / P2 固定缺口内。
 - 是否会绕过 `StrategySpec`、`capabilities/registry.yaml`、feature packet、readiness 或 audit。
 - 是否把旧历史计划误当当前路线。

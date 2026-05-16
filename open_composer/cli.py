@@ -826,7 +826,7 @@ def remote_bootstrap_vps_command(
     ] = None,
     public_ip: Annotated[
         str | None,
-        typer.Option("--public-ip", help="VPS public IPv4; creates https://<ip>.sslip.io."),
+        typer.Option("--public-ip", help="VPS public IPv4; creates https://<ip>.nip.io."),
     ] = None,
     detect_ip: Annotated[
         bool,

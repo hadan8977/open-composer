@@ -437,8 +437,6 @@ uv run oc agent request-complete <request-id> --result-link reports/research/exa
 
 - [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) — no-context Codex starting review document
 - [AGENTS.md](AGENTS.md)
-- [docs/current-unfinished-work-check.zh.md](docs/current-unfinished-work-check.zh.md)
-- [docs/product-maturation-plan.zh.md](docs/product-maturation-plan.zh.md)
-- [docs/review-methodology.zh.md](docs/review-methodology.zh.md)
 - [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md)
+- [docs/setup-local.zh.md](docs/setup-local.zh.md)
 - [docs/longbridge-integration.md](docs/longbridge-integration.md)

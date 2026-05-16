@@ -202,8 +202,8 @@ def build_dashboard_health_payload(
 ) -> dict[str, Any]:
     return {
         "status": "ok",
-        "dashboard_root": str(root),
-        "serve_root": str(serve_root),
+        "dashboard_root": root.as_posix(),
+        "serve_root": serve_root.as_posix(),
         "auth_required": auth_required,
     }
 

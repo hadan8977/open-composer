@@ -18,10 +18,8 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "scripts/sync-agent-skills.py",
         "scripts/check-agent-parity.py",
         "docs/product-golden-path-codex-quant-review-2026-05-13.zh.md",
-        "docs/current-unfinished-work-check.zh.md",
-        "docs/product-maturation-plan.zh.md",
-        "docs/review-methodology.zh.md",
         "docs/remote-dashboard-deploy.zh.md",
+        "docs/setup-local.zh.md",
         "docs/longbridge-integration.md",
     ]:
         source = repo_root / relative

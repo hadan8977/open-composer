@@ -20,10 +20,8 @@ NO_CONTEXT_START_DOC = "docs/product-golden-path-codex-quant-review-2026-05-13.z
 
 CURRENT_DOCS = {
     NO_CONTEXT_START_DOC,
-    "docs/current-unfinished-work-check.zh.md",
-    "docs/product-maturation-plan.zh.md",
-    "docs/review-methodology.zh.md",
     "docs/remote-dashboard-deploy.zh.md",
+    "docs/setup-local.zh.md",
     "docs/longbridge-integration.md",
 }
 
@@ -309,9 +307,9 @@ def _docs_inventory_check(root: Path) -> RepoConsistencyCheck:
             suggested_actions=["Restore docs directory with current product documents"],
         )
     extra_docs = sorted(
-        str(path.relative_to(root))
+        path.relative_to(root).as_posix()
         for path in docs_root.glob("*")
-        if path.is_file() and str(path.relative_to(root)) not in CURRENT_DOCS
+        if path.is_file() and path.relative_to(root).as_posix() not in CURRENT_DOCS
     )
     if extra_docs:
         return RepoConsistencyCheck(
