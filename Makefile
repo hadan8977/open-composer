@@ -4,7 +4,10 @@ MONITOR_INTERVAL_SECONDS ?= 60
 MONITOR_MAX_CYCLES ?= 1
 PAPER_STRATEGY ?= qqq_pullback_15m
 
-.PHONY: bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync remote-doctor verify
+VPS_BOOTSTRAP_ARGS ?=
+VPS_STOP_ARGS ?=
+
+.PHONY: bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync remote-plan remote-deploy remote-stop remote-doctor verify
 
 bootstrap:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv sync
@@ -91,5 +94,14 @@ paper-monitor-loop-sync:
 
 remote-doctor:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc remote doctor
+
+remote-plan:
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc remote bootstrap-vps $(VPS_BOOTSTRAP_ARGS)
+
+remote-deploy:
+	UV_CACHE_DIR=$(UV_CACHE_DIR) NPM_CONFIG_CACHE=$(NPM_CONFIG_CACHE) ./scripts/deploy-vps.sh $(VPS_BOOTSTRAP_ARGS)
+
+remote-stop:
+	./scripts/stop-remote-dashboard.sh $(VPS_STOP_ARGS)
 
 verify: check repo-check capability-test agent-parity deploy-prepare dashboard-check feature-validate readiness
