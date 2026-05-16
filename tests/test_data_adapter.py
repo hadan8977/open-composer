@@ -38,6 +38,62 @@ def test_alpaca_fetch_filters_cache_when_window_is_supplied(sample_workspace: Pa
     assert frame["timestamp"].max() <= __import__("pandas").Timestamp("2026-01-02T16:00:00Z")
 
 
+def test_alpaca_fetch_refreshes_when_cache_does_not_cover_requested_window(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    cache = sample_workspace / "data" / "cache" / "qqq_15m_iex.csv"
+    cache.write_text(
+        "\n".join(
+            [
+                "timestamp,open,high,low,close,volume",
+                "2026-01-02T15:00:00Z,1,2,1,2,100",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    class MockClient:
+        def __init__(self, **kwargs) -> None:
+            pass
+
+        def get_stock_bars(self, request) -> SimpleNamespace:
+            return SimpleNamespace(
+                df=SimpleNamespace(
+                    reset_index=lambda: __import__("pandas").DataFrame(
+                        [
+                            {
+                                "symbol": "QQQ",
+                                "timestamp": "2026-01-03T15:00:00Z",
+                                "open": 2,
+                                "high": 3,
+                                "low": 2,
+                                "close": 3,
+                                "volume": 200,
+                            }
+                        ]
+                    )
+                )
+            )
+
+    monkeypatch.setattr("alpaca.data.historical.StockHistoricalDataClient", MockClient)
+
+    frame = fetch_alpaca_bars(
+        sample_workspace,
+        "QQQ",
+        "15m",
+        datetime(2026, 1, 2, 15, tzinfo=UTC),
+        datetime(2026, 1, 3, 16, tzinfo=UTC),
+        "iex",
+    )
+
+    assert frame["timestamp"].max() == __import__("pandas").Timestamp("2026-01-03T15:00:00Z")
+    assert frame.attrs["data_source_mode"] == "live_fetch"
+
+
 def test_alpaca_fetch_can_refresh_with_credentials(sample_workspace: Path, monkeypatch) -> None:
     monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
     monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")

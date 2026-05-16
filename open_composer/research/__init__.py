@@ -3,6 +3,11 @@ from open_composer.research.cost_sensitivity import CostGridReport, CostGridResu
 from open_composer.research.drafter import draft_strategy_from_idea
 from open_composer.research.exposure_switch import run_exposure_switch_research
 from open_composer.research.horizon_optimizer import optimize_strategy_horizons
+from open_composer.research.intraday_daily_rotation import (
+    run_intraday_daily_rotation_research,
+    run_llm_intraday_daily_rotation_selection,
+    write_intraday_product_reflection,
+)
 from open_composer.research.leverage import run_leverage_research
 from open_composer.research.llm_exposure_switch import run_llm_exposure_switch_meta_selection
 from open_composer.research.llm_rotation import run_llm_rotation_meta_selection
@@ -34,6 +39,9 @@ __all__ = [
     "search_similar_regimes",
     "run_skill_attribution",
     "run_exposure_switch_research",
+    "run_intraday_daily_rotation_research",
+    "run_llm_intraday_daily_rotation_selection",
+    "write_intraday_product_reflection",
     "optimize_option_overlays",
     "parse_sweep_parameters",
     "FivePassChecks",

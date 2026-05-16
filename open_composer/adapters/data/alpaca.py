@@ -26,22 +26,24 @@ def fetch_alpaca_bars(
 ) -> pd.DataFrame:
     cache_path = root / "data" / "cache" / f"{symbol.lower()}_{timeframe}_{feed}.csv"
     if use_cache and cache_path.exists():
-        frame = _filter_cached_frame(normalize_ohlcv(pd.read_csv(cache_path)), start, end)
-        _annotate_frame(frame, feed, "cache", cache_path)
-        write_ohlcv_manifest(
-            root,
-            provider="alpaca",
-            feed=feed,
-            symbol=symbol,
-            timeframe=timeframe,
-            cache_path=cache_path,
-            frame=frame,
-            requested_start=start,
-            requested_end=end,
-            source_mode="cache",
-            caveats=_alpaca_caveats(feed),
-        )
-        return frame
+        cached = normalize_ohlcv(pd.read_csv(cache_path))
+        if _cache_covers_window(cached, start, end):
+            frame = _filter_cached_frame(cached, start, end)
+            _annotate_frame(frame, feed, "cache", cache_path)
+            write_ohlcv_manifest(
+                root,
+                provider="alpaca",
+                feed=feed,
+                symbol=symbol,
+                timeframe=timeframe,
+                cache_path=cache_path,
+                frame=frame,
+                requested_start=start,
+                requested_end=end,
+                source_mode="cache",
+                caveats=_alpaca_caveats(feed),
+            )
+            return frame
 
     try:
         from alpaca.data.historical import StockHistoricalDataClient
@@ -103,6 +105,23 @@ def _filter_cached_frame(
     if end is not None:
         filtered = filtered[filtered["timestamp"] <= _utc_timestamp(end)]
     return filtered.reset_index(drop=True)
+
+
+def _cache_covers_window(
+    frame: pd.DataFrame,
+    start: datetime | None,
+    end: datetime | None,
+) -> bool:
+    if start is None and end is None:
+        return True
+    if frame.empty:
+        return False
+    timestamps = pd.to_datetime(frame["timestamp"], utc=True)
+    if start is not None and timestamps.min() > _utc_timestamp(start):
+        return False
+    if end is not None and timestamps.max() < _utc_timestamp(end):
+        return False
+    return True
 
 
 def _utc_timestamp(value: datetime) -> pd.Timestamp:

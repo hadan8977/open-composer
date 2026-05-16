@@ -1,0 +1,131 @@
+{
+  "anti_leakage_rules": [
+    "Do not infer final OOS performance.",
+    "Prefer stable validation alpha and positive prior folds.",
+    "Penalize sparse trading and high drawdown.",
+    "Do not use benchmark buy-and-hold as a tradable intraday target."
+  ],
+  "available_evidence": "training, internal validation, and prior validation folds only",
+  "benchmark_symbol": "TQQQ",
+  "candidates": [
+    {
+      "fold_avg_objective_alpha_annualized_pct": -17.422702792958663,
+      "fold_count": 3,
+      "fold_min_objective_alpha_annualized_pct": -45.181482781827626,
+      "fold_positive_count": 0,
+      "label": "lb10_entry5_top2_open0_mom0_rv0.8_qprior_negative_reversal_maxopen-0.2_maxmomnone",
+      "meta_score": -40.14273798348624,
+      "params": {
+        "entry_after_bars": 5,
+        "lookback_days": 10,
+        "market_gate": "qqq_prior_negative",
+        "max_opening_return_pct": -0.2,
+        "max_prior_momentum_pct": null,
+        "min_opening_return_pct": 0.0,
+        "min_prior_momentum_pct": 0.0,
+        "min_relative_volume": 0.8,
+        "selection_style": "opening_reversal",
+        "top_n": 2
+      },
+      "rank": 1,
+      "train_objective_alpha_annualized_pct": 8.068767904754893,
+      "validation_objective_alpha_annualized_pct": -27.197376272949494,
+      "validation_sharpe": 3.0510813505461374,
+      "validation_traded_days": 11
+    },
+    {
+      "fold_avg_objective_alpha_annualized_pct": -20.42480908087868,
+      "fold_count": 3,
+      "fold_min_objective_alpha_annualized_pct": -54.00101565208977,
+      "fold_positive_count": 1,
+      "label": "lb10_entry5_top1_open0_mom0_rv0.8_qprior_negative_reversal_maxopen-0.2_maxmomnone",
+      "meta_score": -55.00584914691275,
+      "params": {
+        "entry_after_bars": 5,
+        "lookback_days": 10,
+        "market_gate": "qqq_prior_negative",
+        "max_opening_return_pct": -0.2,
+        "max_prior_momentum_pct": null,
+        "min_opening_return_pct": 0.0,
+        "min_prior_momentum_pct": 0.0,
+        "min_relative_volume": 0.8,
+        "selection_style": "opening_reversal",
+        "top_n": 1
+      },
+      "rank": 2,
+      "train_objective_alpha_annualized_pct": 23.650517611739563,
+      "validation_objective_alpha_annualized_pct": -34.264425970274374,
+      "validation_sharpe": 1.2631028632185177,
+      "validation_traded_days": 11
+    },
+    {
+      "fold_avg_objective_alpha_annualized_pct": -31.112641013581307,
+      "fold_count": 3,
+      "fold_min_objective_alpha_annualized_pct": -80.83529998138967,
+      "fold_positive_count": 1,
+      "label": "lb5_entry5_top1_open0_mom0_rv0.8_qprior_negative_reversal_maxopen-0.2_maxmomnone",
+      "meta_score": -80.64126245789608,
+      "params": {
+        "entry_after_bars": 5,
+        "lookback_days": 5,
+        "market_gate": "qqq_prior_negative",
+        "max_opening_return_pct": -0.2,
+        "max_prior_momentum_pct": null,
+        "min_opening_return_pct": 0.0,
+        "min_prior_momentum_pct": 0.0,
+        "min_relative_volume": 0.8,
+        "selection_style": "opening_reversal",
+        "top_n": 1
+      },
+      "rank": 3,
+      "train_objective_alpha_annualized_pct": 7.5738368943013334,
+      "validation_objective_alpha_annualized_pct": -39.802985418068374,
+      "validation_sharpe": 0.2332923912936652,
+      "validation_traded_days": 19
+    },
+    {
+      "fold_avg_objective_alpha_annualized_pct": -40.43301271454065,
+      "fold_count": 3,
+      "fold_min_objective_alpha_annualized_pct": -103.60369071853307,
+      "fold_positive_count": 1,
+      "label": "lb5_entry5_top2_open0_mom0_rv0.8_qprior_negative_reversal_maxopen-0.2_maxmomnone",
+      "meta_score": -97.61028022459801,
+      "params": {
+        "entry_after_bars": 5,
+        "lookback_days": 5,
+        "market_gate": "qqq_prior_negative",
+        "max_opening_return_pct": -0.2,
+        "max_prior_momentum_pct": null,
+        "min_opening_return_pct": 0.0,
+        "min_prior_momentum_pct": 0.0,
+        "min_relative_volume": 0.8,
+        "selection_style": "opening_reversal",
+        "top_n": 2
+      },
+      "rank": 4,
+      "train_objective_alpha_annualized_pct": -3.9689048558717808,
+      "validation_objective_alpha_annualized_pct": -42.89937965577558,
+      "validation_sharpe": -0.10698565817863888,
+      "validation_traded_days": 19
+    }
+  ],
+  "hidden_from_model": "final out-of-sample and full-window metrics",
+  "market_symbol": "QQQ",
+  "selection_objective": "prefer stable annualized Alpha versus benchmark-symbol intraday exposure",
+  "strategy_name": "nasdaq_intraday_cycle_reversal_1m_llm",
+  "symbols": [
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "META",
+    "GOOGL",
+    "AVGO",
+    "AMD",
+    "QCOM",
+    "AMAT",
+    "NFLX",
+    "TSLA"
+  ],
+  "task": "Select one daily intraday NASDAQ stock-selection method from training-only evidence."
+}

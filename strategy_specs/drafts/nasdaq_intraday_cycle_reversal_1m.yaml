@@ -1,0 +1,94 @@
+name: nasdaq_intraday_cycle_reversal_1m
+description: Daily NASDAQ intraday cycle-reversal rotation after prior QQQ weakness, with same-day exits and no overnight exposure.
+timeframe: 1m
+universe:
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - META
+  - GOOGL
+  - AVGO
+  - AMD
+  - QCOM
+  - AMAT
+  - NFLX
+  - TSLA
+lifecycle: draft
+
+entry:
+  all:
+    - "close < ema(close, 8)"
+    - "rsi(close, 3) < 45"
+    - "volume > sma(volume, 4)"
+
+exit:
+  any:
+    - "close > ema(close, 8)"
+    - "rsi(close, 3) > 55"
+
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 0.15
+  stop_loss_pct: 0.9
+  take_profit_pct: 1.4
+
+costs:
+  commission_pct: 0.005
+  slippage_bps: 2.0
+
+execution:
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: alpaca
+  symbol: AAPL
+  feed: iex
+
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+
+llm_review:
+  enabled: false
+
+required_capabilities:
+  - market.alpaca_bars
+
+notes:
+  intent: Identify prior-weakness market cycles using QQQ, then buy the most opening-dislocated NASDAQ stock for same-day mean reversion.
+  research_design:
+    data_timeframe: 1m
+    signal_timeframe: 1m
+    rebalance_frequency: daily
+    llm_review_frequency: post_signal_only
+    method_variants:
+      - opening_reversal
+      - prior_negative_market_cycle
+      - same_day_flatten
+    factor_variants:
+      - qqq_prior_momentum_gate
+      - opening_return_dislocation
+      - relative_opening_volume
+    parameter_ranges:
+      lookback_days: [5, 10]
+      entry_after_bars: [5]
+      top_n: [1, 2]
+      max_opening_return_pct: [-0.2]
+      min_relative_volume: [0.8]
+      market_gate: [qqq_prior_negative]
+    benchmark_family:
+      - TQQQ buy-and-hold
+      - TQQQ intraday-only
+      - equal-weight universe intraday
+      - equal-weight universe buy-and-hold
+      - ex-post best symbol
+    candidate_cap: 8
+    objective: equal_weight_intraday_alpha_after_costs
+  open_questions:
+    - Add a true unseen forward window before any promotion.
+    - Compare Alpaca IEX against Longbridge Nasdaq Basic and Alpaca SIP if available.

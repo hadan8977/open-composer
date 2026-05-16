@@ -125,14 +125,17 @@ from open_composer.research import (
     run_blind_test,
     run_cost_grid,
     run_exposure_switch_research,
+    run_intraday_daily_rotation_research,
     run_leverage_research,
     run_llm_exposure_switch_meta_selection,
+    run_llm_intraday_daily_rotation_selection,
     run_llm_rotation_meta_selection,
     run_market_timing_research,
     run_parameter_sweep,
     run_rotation_research,
     run_skill_attribution,
     search_similar_regimes,
+    write_intraday_product_reflection,
 )
 from open_composer.research.llm_exposure_switch import LLMExposureSwitchChoice
 from open_composer.review.llm import review_signal_with_status
@@ -1939,6 +1942,248 @@ def _rotation_objective(value: str) -> str:
     if normalized == "primary-alpha":
         return "primary_alpha"
     raise typer.BadParameter("--objective must be equal-weight-alpha or primary-alpha")
+
+
+@strategy_app.command("intraday-daily-rotation")
+def strategy_intraday_daily_rotation(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    objective: str = typer.Option(
+        "equal-weight-alpha",
+        "--objective",
+        help="Selection objective: equal-weight-alpha or benchmark-intraday-alpha.",
+    ),
+    lookback_days: Annotated[list[int] | None, typer.Option("--lookback-days")] = None,
+    entry_after_bars: Annotated[
+        list[int] | None,
+        typer.Option("--entry-after-bars"),
+    ] = None,
+    top_n: Annotated[list[int] | None, typer.Option("--top-n")] = None,
+    min_opening_return_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-opening-return-pct"),
+    ] = None,
+    min_prior_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-prior-momentum-pct"),
+    ] = None,
+    min_relative_volume: Annotated[
+        list[float] | None,
+        typer.Option("--min-relative-volume"),
+    ] = None,
+    selection_style: Annotated[list[str] | None, typer.Option("--selection-style")] = None,
+    max_opening_return_pct: Annotated[
+        list[float] | None,
+        typer.Option("--max-opening-return-pct"),
+    ] = None,
+    max_prior_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--max-prior-momentum-pct"),
+    ] = None,
+    market_gate: Annotated[list[str] | None, typer.Option("--market-gate")] = None,
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
+    walk_forward_top_k: int | None = typer.Option(None, "--walk-forward-top-k"),
+    max_candidates: int = typer.Option(240, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Research daily selected, same-day-exit NASDAQ intraday stock rotation."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    result = run_intraday_daily_rotation_research(
+        spec,
+        project_root(),
+        symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+        data_source=data_source,
+        start=start,
+        end=end,
+        benchmark_symbol=benchmark_symbol.upper(),
+        market_symbol=market_symbol.upper(),
+        lookback_days=lookback_days,
+        entry_after_bars=entry_after_bars,
+        top_n_values=top_n,
+        min_opening_return_pct=min_opening_return_pct,
+        min_prior_momentum_pct=min_prior_momentum_pct,
+        min_relative_volume=min_relative_volume,
+        selection_styles=_intraday_selection_styles(selection_style),
+        max_opening_return_pct=max_opening_return_pct,
+        max_prior_momentum_pct=max_prior_momentum_pct,
+        market_gates=_intraday_market_gates(market_gate),
+        objective=_intraday_objective(objective),
+        out_of_sample_ratio=oos_ratio,
+        walk_forward_folds=walk_forward_folds,
+        walk_forward_top_k=walk_forward_top_k,
+        max_candidates=max_candidates,
+        refresh_data=refresh_data,
+    )
+    best = result.best
+    console.print(f"[green]intraday daily rotation complete[/green] report: {result.report_path}")
+    console.print(
+        f"best={best.params.label} "
+        f"oos_ann={best.out_of_sample.annualized_return_pct or 0.0:.2f}% "
+        f"oos_equal_weight_alpha_ann="
+        f"{best.out_of_sample.alpha_vs_equal_weight_annualized_pct or 0.0:.2f}% "
+        f"oos_benchmark_intraday_alpha_ann="
+        f"{best.out_of_sample.alpha_vs_benchmark_intraday_annualized_pct or 0.0:.2f}% "
+        f"oos_sharpe={best.out_of_sample.sharpe_ratio or 0.0:.2f} "
+        f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
+    )
+    console.print(
+        f"candidates={result.research_cost['candidate_count']} "
+        f"walk_forward_candidates={result.research_cost['walk_forward_candidate_count']} "
+        f"estimated_passes={result.research_cost['estimated_total_backtest_passes']} "
+        f"runtime={result.runtime_seconds['total']:.2f}s"
+    )
+
+
+@strategy_app.command("llm-intraday-daily-rotation")
+def strategy_llm_intraday_daily_rotation(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    objective: str = typer.Option(
+        "equal-weight-alpha",
+        "--objective",
+        help="Selection objective: equal-weight-alpha or benchmark-intraday-alpha.",
+    ),
+    lookback_days: Annotated[list[int] | None, typer.Option("--lookback-days")] = None,
+    entry_after_bars: Annotated[
+        list[int] | None,
+        typer.Option("--entry-after-bars"),
+    ] = None,
+    top_n: Annotated[list[int] | None, typer.Option("--top-n")] = None,
+    min_opening_return_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-opening-return-pct"),
+    ] = None,
+    min_prior_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-prior-momentum-pct"),
+    ] = None,
+    min_relative_volume: Annotated[
+        list[float] | None,
+        typer.Option("--min-relative-volume"),
+    ] = None,
+    selection_style: Annotated[list[str] | None, typer.Option("--selection-style")] = None,
+    max_opening_return_pct: Annotated[
+        list[float] | None,
+        typer.Option("--max-opening-return-pct"),
+    ] = None,
+    max_prior_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--max-prior-momentum-pct"),
+    ] = None,
+    market_gate: Annotated[list[str] | None, typer.Option("--market-gate")] = None,
+    validation_ratio: float = typer.Option(0.3, "--validation-ratio"),
+    validation_folds: int = typer.Option(3, "--validation-folds"),
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    max_candidates: int = typer.Option(240, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+    local_choice_label: str | None = typer.Option(None, "--local-choice-label"),
+) -> None:
+    """Use an LLM to select an intraday daily rotation method from training evidence."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    result = run_llm_intraday_daily_rotation_selection(
+        spec,
+        project_root(),
+        symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+        data_source=data_source,
+        start=start,
+        end=end,
+        benchmark_symbol=benchmark_symbol.upper(),
+        market_symbol=market_symbol.upper(),
+        lookback_days=lookback_days,
+        entry_after_bars=entry_after_bars,
+        top_n_values=top_n,
+        min_opening_return_pct=min_opening_return_pct,
+        min_prior_momentum_pct=min_prior_momentum_pct,
+        min_relative_volume=min_relative_volume,
+        selection_styles=_intraday_selection_styles(selection_style),
+        max_opening_return_pct=max_opening_return_pct,
+        max_prior_momentum_pct=max_prior_momentum_pct,
+        market_gates=_intraday_market_gates(market_gate),
+        objective=_intraday_objective(objective),
+        validation_ratio=validation_ratio,
+        validation_folds=validation_folds,
+        out_of_sample_ratio=oos_ratio,
+        max_candidates=max_candidates,
+        refresh_data=refresh_data,
+        local_choice_label=local_choice_label,
+    )
+    selected = result.selected
+    pure_report_stem = spec.stem.removesuffix("_llm")
+    reflection_path = write_intraday_product_reflection(
+        project_root(),
+        pure_report=project_root()
+        / "reports"
+        / "research"
+        / f"{pure_report_stem}-intraday-daily-rotation.md",
+        llm_report=result.report_path,
+    )
+    console.print(f"[green]LLM intraday selection complete[/green] report: {result.report_path}")
+    console.print(f"[green]product reflection written[/green] {reflection_path}")
+    console.print(
+        f"selected={result.choice.selected_label} "
+        f"status={result.status} "
+        f"oos_ann={selected.out_of_sample.annualized_return_pct or 0.0:.2f}% "
+        f"oos_equal_weight_alpha_ann="
+        f"{selected.out_of_sample.alpha_vs_equal_weight_annualized_pct or 0.0:.2f}% "
+        f"oos_benchmark_intraday_alpha_ann="
+        f"{selected.out_of_sample.alpha_vs_benchmark_intraday_annualized_pct or 0.0:.2f}% "
+        f"oos_sharpe={selected.out_of_sample.sharpe_ratio or 0.0:.2f} "
+        f"flags={','.join(selected.quality_flags) if selected.quality_flags else 'none'}"
+    )
+
+
+def _intraday_objective(value: str) -> str:
+    normalized = value.strip().lower().replace("_", "-")
+    if normalized == "equal-weight-alpha":
+        return "equal_weight_alpha"
+    if normalized == "benchmark-intraday-alpha":
+        return "benchmark_intraday_alpha"
+    raise typer.BadParameter("--objective must be equal-weight-alpha or benchmark-intraday-alpha")
+
+
+def _intraday_market_gates(values: list[str] | None) -> list[str] | None:
+    if not values:
+        return None
+    allowed = {
+        "none",
+        "qqq_open_negative",
+        "qqq_open_positive",
+        "qqq_prior_negative",
+        "qqq_prior_positive",
+        "qqq_open_and_prior_positive",
+        "qqq_open_positive_prior_negative",
+    }
+    normalized = [item.strip().lower().replace("-", "_") for item in values if item.strip()]
+    bad = [item for item in normalized if item not in allowed]
+    if bad:
+        raise typer.BadParameter("--market-gate contains unsupported value(s): " + ", ".join(bad))
+    return normalized
+
+
+def _intraday_selection_styles(values: list[str] | None) -> list[str] | None:
+    if not values:
+        return None
+    allowed = {"opening_momentum", "opening_reversal"}
+    normalized = [item.strip().lower().replace("-", "_") for item in values if item.strip()]
+    bad = [item for item in normalized if item not in allowed]
+    if bad:
+        raise typer.BadParameter(
+            "--selection-style contains unsupported value(s): " + ", ".join(bad)
+        )
+    return normalized
 
 
 @strategy_app.command("market-time")
