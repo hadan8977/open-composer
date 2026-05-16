@@ -43,7 +43,7 @@ Codex 审查方法参考 OpenAI 官方 Codex 文档：
 ## 审查顺序
 
 1. 先看 `git status` 和 `git diff --stat`。
-2. 再看 `README.md`、`AGENTS.md`、`OPEN-COMPOSER-BUILD-HANDOFF.md` 和产品计划文档。
+2. 再看 `README.md`、`AGENTS.md`、`docs/product-golden-path-codex-quant-review-2026-05-13.zh.md` 和当前产品文档。
 3. 再看核心模型、CLI、能力注册、数据适配器、执行后端、Dashboard、paper 管控。
 4. 再看测试，确认每个公开能力都有覆盖。
 5. 最后看生成物和报告，确认没有重复真相源。

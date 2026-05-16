@@ -437,17 +437,8 @@ uv run oc agent request-complete <request-id> --result-link reports/research/exa
 
 - [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) — no-context Codex starting review document
 - [AGENTS.md](AGENTS.md)
-- [AUDIT-REPORT.md](AUDIT-REPORT.md)
-- [docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md](docs/claude-code-vercel-remote-dashboard-plan-2026-05-14.zh.md)
-- [docs/codex-execution-plan-2026-05-15.zh.md](docs/codex-execution-plan-2026-05-15.zh.md)
-- [docs/codex-execution-plan-v2-dashboard-telegram-2026-05-16.zh.md](docs/codex-execution-plan-v2-dashboard-telegram-2026-05-16.zh.md)
 - [docs/current-unfinished-work-check.zh.md](docs/current-unfinished-work-check.zh.md)
-- [docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md](docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md)
-- [docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md](docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md)
 - [docs/product-maturation-plan.zh.md](docs/product-maturation-plan.zh.md)
-- [docs/quantml-paper-study-research-notes-2026-05-15.zh.md](docs/quantml-paper-study-research-notes-2026-05-15.zh.md)
 - [docs/review-methodology.zh.md](docs/review-methodology.zh.md)
 - [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md)
-- [docs/vps-mode-one-click-deploy-review-plan-2026-05-15.zh.md](docs/vps-mode-one-click-deploy-review-plan-2026-05-15.zh.md)
-- [docs/vps-mode-remote-dashboard-plan-2026-05-15.zh.md](docs/vps-mode-remote-dashboard-plan-2026-05-15.zh.md)
 - [docs/longbridge-integration.md](docs/longbridge-integration.md)

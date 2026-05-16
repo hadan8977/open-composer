@@ -183,13 +183,17 @@ def test_paper_reconciliation_flags_order_position_mismatch(sample_workspace: Pa
         "filled_buy_without_position",
         "missing_positions_snapshot",
     }
-    assert report.report_json_path and Path(report.report_json_path).exists()
-    assert report.report_markdown_path and Path(report.report_markdown_path).exists()
+    assert report.report_json_path
+    assert (sample_workspace / report.report_json_path).exists()
+    assert report.report_markdown_path
+    assert (sample_workspace / report.report_markdown_path).exists()
     assert alert_report.status == "warning"
     assert alert_report.alert_count == 1
     assert alert_report.alerts[0].code == "paper_reconciliation_issues"
-    assert alert_report.report_json_path and Path(alert_report.report_json_path).exists()
-    assert alert_report.report_markdown_path and Path(alert_report.report_markdown_path).exists()
+    assert alert_report.report_json_path
+    assert (sample_workspace / alert_report.report_json_path).exists()
+    assert alert_report.report_markdown_path
+    assert (sample_workspace / alert_report.report_markdown_path).exists()
     assert snapshot.reconciliation_status == "warning"
     assert snapshot.reconciliation_issue_count == 2
     assert snapshot.alert_status == "warning"
@@ -208,9 +212,11 @@ def test_paper_monitor_refresh_writes_all_local_reports(sample_workspace: Path) 
     assert report.alert_count >= 1
     assert report.reconciliation_report_path
     assert report.alert_report_path
-    assert report.report_json_path and Path(report.report_json_path).exists()
-    assert report.report_markdown_path and Path(report.report_markdown_path).exists()
-    assert Path(report.status_path).exists()
+    assert report.report_json_path
+    assert (sample_workspace / report.report_json_path).exists()
+    assert report.report_markdown_path
+    assert (sample_workspace / report.report_markdown_path).exists()
+    assert (sample_workspace / report.status_path).exists()
     assert snapshot.alert_count == report.alert_count
     assert snapshot.reconciliation_issue_count == report.reconciliation_issue_count
 
