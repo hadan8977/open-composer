@@ -10,7 +10,14 @@ from open_composer.adapters.execution import (
     build_nautilus_backtest_plan,
     write_nautilus_backtest_plan,
 )
-from open_composer.analytics import build_performance_metrics
+from open_composer.analytics import (
+    build_performance_metrics,
+    evaluate_execution_reality,
+    exposure_pct_from_trades,
+    trade_pnls,
+    trade_return_pcts,
+    turnover_ratio_from_trades,
+)
 from open_composer.analytics.benchmark import build_buy_hold_benchmark
 from open_composer.analytics.data_sanity import evaluate_backtest_data_sanity
 from open_composer.config import project_root, run_id
@@ -268,7 +275,15 @@ def backtest_frame(
 
     total_return_pct = (equity / start_equity - 1) * 100
     equity_curve.append(equity)
-    metrics = build_performance_metrics(equity_curve, spec.timeframe)
+    metrics = build_performance_metrics(
+        equity_curve,
+        spec.timeframe,
+        trade_pnls=trade_pnls(trades),
+        trade_return_pcts=trade_return_pcts(trades),
+        exposure_pct=exposure_pct_from_trades(trades, evaluation_frame),
+        turnover_ratio=turnover_ratio_from_trades(trades, start_equity),
+    )
+    execution_reality = evaluate_execution_reality(evaluation_frame, trades)
     benchmark = build_buy_hold_benchmark(evaluation_frame, total_return_pct)
     assumptions = [
         "Signals are confirmed on bar close.",
@@ -282,6 +297,7 @@ def backtest_frame(
         "Open positions are marked to the final close and not counted as closed trades.",
         f"Commission is {spec.costs.commission_pct:.4g}% per fill.",
         f"Slippage is {spec.costs.slippage_bps:.4g} bps per fill.",
+        "Execution reality uses conservative OHLCV-only liquidity proxies.",
         "NautilusTrader-compatible strategies may also emit a backend plan artifact.",
         "This backtest does not model dividends or corporate actions.",
     ]
@@ -315,8 +331,19 @@ def backtest_frame(
         alpha_vs_buy_hold_pct=benchmark.alpha_pct,
         annualized_return_pct=metrics.annualized_return_pct,
         sharpe_ratio=metrics.sharpe_ratio,
+        annualized_volatility_pct=metrics.annualized_volatility_pct,
+        max_drawdown_pct=metrics.max_drawdown_pct,
+        downside_volatility_pct=metrics.downside_volatility_pct,
+        sortino_ratio=metrics.sortino_ratio,
+        calmar_ratio=metrics.calmar_ratio,
+        win_rate_pct=metrics.win_rate_pct,
+        profit_factor=metrics.profit_factor,
+        average_trade_return_pct=metrics.average_trade_return_pct,
+        exposure_pct=metrics.exposure_pct,
+        turnover_ratio=metrics.turnover_ratio,
         total_fees=total_fees,
         backend_plan_path=backend_plan_path,
+        execution_reality=execution_reality,
         assumptions=assumptions,
     )
     run.data_sanity = evaluate_backtest_data_sanity(

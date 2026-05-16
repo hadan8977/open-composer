@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from open_composer.models.execution_backend import ExecutionBackend
 
 DataSanityStatus = Literal["ok", "warning"]
+ExecutionRealityStatus = Literal["ok", "warning", "blocked"]
 
 
 class BacktestDataSanity(BaseModel):
@@ -26,6 +27,21 @@ class BacktestDataSanity(BaseModel):
     last_timestamp: datetime | None = None
     data_span_days: float | None = None
     average_holding_days: float | None = None
+    warnings: list[str] = Field(default_factory=list)
+
+
+class ExecutionRealityMetrics(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: ExecutionRealityStatus
+    average_dollar_volume: float | None = None
+    median_dollar_volume: float | None = None
+    min_dollar_volume: float | None = None
+    max_trade_notional: float | None = None
+    max_bar_participation_pct: float | None = None
+    average_bar_participation_pct: float | None = None
+    max_adv_participation_pct: float | None = None
+    estimated_capacity_notional: float | None = None
     warnings: list[str] = Field(default_factory=list)
 
 
@@ -66,9 +82,20 @@ class BacktestRun(BaseModel):
     alpha_vs_buy_hold_pct: float | None = None
     annualized_return_pct: float | None = None
     sharpe_ratio: float | None = None
+    annualized_volatility_pct: float | None = None
+    max_drawdown_pct: float | None = None
+    downside_volatility_pct: float | None = None
+    sortino_ratio: float | None = None
+    calmar_ratio: float | None = None
+    win_rate_pct: float | None = None
+    profit_factor: float | None = None
+    average_trade_return_pct: float | None = None
+    exposure_pct: float | None = None
+    turnover_ratio: float | None = None
     total_fees: float = 0.0
     backend_plan_path: str | None = None
     data_sanity: BacktestDataSanity | None = None
+    execution_reality: ExecutionRealityMetrics | None = None
     assumptions: list[str] = Field(default_factory=list)
     report_path: str | None = None
     signal_log_path: str | None = None

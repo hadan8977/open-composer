@@ -32,7 +32,14 @@ from nautilus_trader.persistence.catalog.parquet import ParquetDataCatalog
 from nautilus_trader.persistence.wranglers import BarDataWrangler
 from nautilus_trader.trading.strategy import Strategy
 
-from open_composer.analytics import build_performance_metrics
+from open_composer.analytics import (
+    build_performance_metrics,
+    evaluate_execution_reality,
+    exposure_pct_from_trades,
+    trade_pnls,
+    trade_return_pcts,
+    turnover_ratio_from_trades,
+)
 from open_composer.analytics.benchmark import build_buy_hold_benchmark
 from open_composer.analytics.data_sanity import evaluate_backtest_data_sanity
 from open_composer.engines.signal_engine import build_signal
@@ -442,7 +449,15 @@ def run_nautilus_backtest(
         result = results[0]
         end_equity = collector.end_equity()
         total_return_pct = ((end_equity / start_equity) - 1) * 100 if start_equity else 0.0
-        metrics = build_performance_metrics(collector.equity_curve, spec.timeframe)
+        metrics = build_performance_metrics(
+            collector.equity_curve,
+            spec.timeframe,
+            trade_pnls=trade_pnls(collector.trades),
+            trade_return_pcts=trade_return_pcts(collector.trades),
+            exposure_pct=exposure_pct_from_trades(collector.trades, frame),
+            turnover_ratio=turnover_ratio_from_trades(collector.trades, start_equity),
+        )
+        execution_reality = evaluate_execution_reality(frame, collector.trades)
         benchmark = build_buy_hold_benchmark(frame, total_return_pct)
         data_provenance = frame.attrs.get("data_source_mode")
         data_provider = frame.attrs.get("data_source_provider")
@@ -456,6 +471,7 @@ def run_nautilus_backtest(
             ),
             "Commission uses the instrument fee model when available.",
             "Nonzero slippage is approximated with Nautilus' probabilistic fill model.",
+            "Execution reality uses conservative OHLCV-only liquidity proxies.",
             "Open positions are marked to the latest close recorded by the collector.",
             f"NautilusTrader result run_id: {result.run_id}",
             (
@@ -495,8 +511,19 @@ def run_nautilus_backtest(
             alpha_vs_buy_hold_pct=benchmark.alpha_pct,
             annualized_return_pct=metrics.annualized_return_pct,
             sharpe_ratio=metrics.sharpe_ratio,
+            annualized_volatility_pct=metrics.annualized_volatility_pct,
+            max_drawdown_pct=metrics.max_drawdown_pct,
+            downside_volatility_pct=metrics.downside_volatility_pct,
+            sortino_ratio=metrics.sortino_ratio,
+            calmar_ratio=metrics.calmar_ratio,
+            win_rate_pct=metrics.win_rate_pct,
+            profit_factor=metrics.profit_factor,
+            average_trade_return_pct=metrics.average_trade_return_pct,
+            exposure_pct=metrics.exposure_pct,
+            turnover_ratio=metrics.turnover_ratio,
             total_fees=collector.total_fees,
             backend_plan_path=backend_plan_path,
+            execution_reality=execution_reality,
             assumptions=assumptions,
         )
         run.data_sanity = evaluate_backtest_data_sanity(

@@ -125,6 +125,7 @@ from open_composer.research import (
     run_blind_test,
     run_cost_grid,
     run_exposure_switch_research,
+    run_factor_lab,
     run_intraday_daily_rotation_research,
     run_leverage_research,
     run_llm_exposure_switch_meta_selection,
@@ -1576,6 +1577,27 @@ def strategy_parameter_sweep(
     console.print(f"json: {result.json_path}")
     for path in result.written_specs:
         console.print(f"spec: {path}")
+
+
+@strategy_app.command("factor-lab")
+def strategy_factor_lab(
+    spec: Path,
+    forward_bars: int = typer.Option(1, "--forward-bars"),
+    quantiles: int = typer.Option(5, "--quantiles"),
+) -> None:
+    """Run a lightweight factor diagnostic report for a StrategySpec."""
+    result = run_factor_lab(
+        spec,
+        project_root(),
+        forward_bars=forward_bars,
+        quantiles=quantiles,
+    )
+    console.print(
+        f"[green]factor lab complete[/green] status={result.status} "
+        f"factors={len(result.factor_metrics)}"
+    )
+    console.print(f"report: {result.report_path}")
+    console.print(f"json: {result.json_path}")
 
 
 @strategy_app.command("promotion-report")

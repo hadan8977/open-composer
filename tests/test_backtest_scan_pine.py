@@ -28,14 +28,21 @@ def test_backtest_writes_report_and_signal_log(sample_workspace: Path) -> None:
     assert artifacts.run.alpha_vs_buy_hold_pct is not None
     assert artifacts.run.annualized_return_pct is not None
     assert artifacts.run.sharpe_ratio is not None
+    assert artifacts.run.annualized_volatility_pct is not None
+    assert artifacts.run.max_drawdown_pct is not None
+    assert artifacts.run.execution_reality is not None
     report_text = Path(artifacts.run.report_path).read_text(encoding="utf-8")
     assert "## Data Sanity" in report_text
+    assert "## Execution Reality" in report_text
     assert "- Evidence level: `E0_sample_smoke`" in report_text
     assert "sample data is workflow smoke-test evidence only" in report_text
     assert "- Buy and hold return:" in report_text
     assert "- Alpha vs buy and hold:" in report_text
     assert "- Annualized return:" in report_text
     assert "- Sharpe ratio:" in report_text
+    assert "- Max drawdown:" in report_text
+    assert "- Sortino ratio:" in report_text
+    assert "- Max bar participation:" in report_text
 
 
 def test_backtest_models_commission_and_slippage(sample_workspace: Path) -> None:
@@ -56,6 +63,46 @@ def test_backtest_models_commission_and_slippage(sample_workspace: Path) -> None
     assert all(trade.entry_fee >= 0 and trade.exit_fee >= 0 for trade in costed.trades)
     assert costed.run.report_path is not None
     assert "- Total fees:" in Path(costed.run.report_path).read_text(encoding="utf-8")
+
+
+def test_backtest_flags_execution_reality_for_low_liquidity() -> None:
+    frame = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-01-01", periods=5, freq="D", tz="UTC"),
+            "open": [100.0, 101.0, 102.0, 103.0, 104.0],
+            "high": [101.0, 102.0, 103.0, 104.0, 105.0],
+            "low": [99.0, 100.0, 101.0, 102.0, 103.0],
+            "close": [100.0, 101.0, 102.0, 103.0, 104.0],
+            "volume": [10] * 5,
+        }
+    )
+    spec = StrategySpec.model_validate(
+        {
+            "name": "low_liquidity_test",
+            "description": "Low liquidity execution reality fixture.",
+            "timeframe": "daily",
+            "universe": ["AAA"],
+            "lifecycle": "draft",
+            "entry": {"all": ["close > 0"], "any": []},
+            "exit": {"all": [], "any": ["close > 0"]},
+            "risk": {"max_position_weight": 1.0},
+            "costs": {"commission_pct": 0.0, "slippage_bps": 0.0},
+            "execution": {
+                "mode": "manual_signal",
+                "signal_on": "bar_close",
+                "fill_assumption": "next_bar_open",
+                "broker": "none",
+            },
+            "data": {"source": "alpaca", "symbol": "AAA", "feed": "iex"},
+        }
+    )
+
+    artifacts = backtest_frame(spec, frame)
+
+    assert artifacts.run.execution_reality is not None
+    assert artifacts.run.execution_reality.status == "blocked"
+    assert artifacts.run.execution_reality.max_bar_participation_pct is not None
+    assert any("block threshold" in item for item in artifacts.run.execution_reality.warnings)
 
 
 def test_backtest_oos_warmup_can_trigger_first_evaluation_open_entry() -> None:

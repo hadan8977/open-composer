@@ -52,11 +52,25 @@ def write_backtest_report(
         f"- Sharpe ratio: {run.sharpe_ratio:.2f}"
         if run.sharpe_ratio is not None
         else "- Sharpe ratio: n/a",
+        f"- Annualized volatility: {_optional_pct(run.annualized_volatility_pct)}",
+        f"- Max drawdown: {_optional_pct(run.max_drawdown_pct)}",
+        f"- Downside volatility: {_optional_pct(run.downside_volatility_pct)}",
+        f"- Sortino ratio: {_optional_ratio(run.sortino_ratio)}",
+        f"- Calmar ratio: {_optional_ratio(run.calmar_ratio)}",
+        f"- Win rate: {_optional_pct(run.win_rate_pct)}",
+        f"- Profit factor: {_optional_ratio(run.profit_factor)}",
+        f"- Average trade return: {_optional_pct(run.average_trade_return_pct)}",
+        f"- Exposure: {_optional_pct(run.exposure_pct)}",
+        f"- Turnover estimate: {_optional_multiple(run.turnover_ratio)}",
         f"- Total fees: {run.total_fees:.2f}",
         "",
         "## Data Sanity",
         "",
         *_data_sanity_lines(run),
+        "",
+        "## Execution Reality",
+        "",
+        *_execution_reality_lines(run),
         "",
         "## Assumptions",
         "",
@@ -132,12 +146,47 @@ def _data_sanity_lines(run: BacktestRun) -> list[str]:
     return lines
 
 
+def _execution_reality_lines(run: BacktestRun) -> list[str]:
+    if run.execution_reality is None:
+        return ["- Status: `unknown`", "- Warning: execution reality was not evaluated."]
+    reality = run.execution_reality
+    lines = [
+        f"- Status: `{reality.status}`",
+        f"- Average dollar volume: {_optional_money(reality.average_dollar_volume)}",
+        f"- Median dollar volume: {_optional_money(reality.median_dollar_volume)}",
+        f"- Minimum dollar volume: {_optional_money(reality.min_dollar_volume)}",
+        f"- Max trade notional: {_optional_money(reality.max_trade_notional)}",
+        f"- Max bar participation: {_optional_pct(reality.max_bar_participation_pct)}",
+        f"- Average bar participation: {_optional_pct(reality.average_bar_participation_pct)}",
+        f"- Max ADV participation: {_optional_pct(reality.max_adv_participation_pct)}",
+        f"- Estimated 5% ADV capacity: {_optional_money(reality.estimated_capacity_notional)}",
+        f"- Warning count: {len(reality.warnings)}",
+    ]
+    if reality.warnings:
+        lines.extend(f"- Warning: {warning}" for warning in reality.warnings)
+    else:
+        lines.append("- Warning: none")
+    return lines
+
+
 def _optional_float(value: float | None) -> str:
     return "n/a" if value is None else f"{value:.4f}"
 
 
 def _optional_pct(value: float | None) -> str:
     return "n/a" if value is None else f"{value:.2f}%"
+
+
+def _optional_ratio(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.2f}"
+
+
+def _optional_multiple(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.2f}x"
+
+
+def _optional_money(value: float | None) -> str:
+    return "n/a" if value is None else f"${value:,.2f}"
 
 
 def _feature_replay_lines(spec: StrategySpec, root: Path | None) -> list[str]:

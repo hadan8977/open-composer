@@ -632,6 +632,17 @@ def _run_details(artifacts: BacktestArtifacts) -> dict[str, object]:
         "alpha_vs_buy_hold_pct": run.alpha_vs_buy_hold_pct,
         "annualized_return_pct": run.annualized_return_pct,
         "sharpe_ratio": run.sharpe_ratio,
+        "annualized_volatility_pct": run.annualized_volatility_pct,
+        "max_drawdown_pct": run.max_drawdown_pct,
+        "sortino_ratio": run.sortino_ratio,
+        "calmar_ratio": run.calmar_ratio,
+        "win_rate_pct": run.win_rate_pct,
+        "profit_factor": run.profit_factor,
+        "exposure_pct": run.exposure_pct,
+        "turnover_ratio": run.turnover_ratio,
+        "execution_reality_status": (
+            run.execution_reality.status if run.execution_reality else "unknown"
+        ),
         "data_sanity_status": run.data_sanity.status if run.data_sanity else "warning",
         "evidence_level": run.data_sanity.evidence_level if run.data_sanity else "unknown",
     }
