@@ -24,12 +24,15 @@ CURRENT_DOCS = {
     "docs/codex-execution-plan-2026-05-15.zh.md",
     "docs/codex-execution-plan-v2-dashboard-telegram-2026-05-16.zh.md",
     "docs/current-unfinished-work-check.zh.md",
+    "docs/dashboard-slimming-plan-2026-05-16.zh.md",
     "docs/goal-retrospective-llm-quant-workflow-2026-05-14.zh.md",
     "docs/gstack-audit-verified-optimization-plan-2026-05-14.zh.md",
     "docs/product-maturation-plan.zh.md",
     "docs/quantml-paper-study-research-notes-2026-05-15.zh.md",
     "docs/review-methodology.zh.md",
     "docs/remote-dashboard-deploy.zh.md",
+    "docs/setup-local.zh.md",
+    "docs/setup-standardization-plan-2026-05-16.zh.md",
     "docs/vps-mode-one-click-deploy-review-plan-2026-05-15.zh.md",
     "docs/vps-mode-remote-dashboard-plan-2026-05-15.zh.md",
     "docs/longbridge-integration.md",
@@ -317,9 +320,9 @@ def _docs_inventory_check(root: Path) -> RepoConsistencyCheck:
             suggested_actions=["Restore docs directory with current product documents"],
         )
     extra_docs = sorted(
-        str(path.relative_to(root))
+        path.relative_to(root).as_posix()
         for path in docs_root.glob("*")
-        if path.is_file() and str(path.relative_to(root)) not in CURRENT_DOCS
+        if path.is_file() and path.relative_to(root).as_posix() not in CURRENT_DOCS
     )
     if extra_docs:
         return RepoConsistencyCheck(
