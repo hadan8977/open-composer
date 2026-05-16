@@ -4,16 +4,15 @@ import { Sidebar, NavKey } from "./components/sidebar";
 import { TopBar } from "./components/topbar";
 import { Overview } from "./components/overview";
 import { Library } from "./components/library";
-import { Versions, Paper, Events, LLM, Groups, Audit } from "./components/sections";
+import { ActivityView } from "./components/sections";
 import { StrategyDetail } from "./components/strategy-detail";
-import { Notifications } from "./components/notifications";
 import { StatusFooter } from "./components/footer";
 import { loginDashboard, useDashboardCatalogSync, useDashboardSession } from "./components/runtime";
 
 export default function App() {
   const catalogSync = useDashboardCatalogSync();
   const session = useDashboardSession();
-  const [tab, setTab] = useState<NavKey>("overview");
+  const [tab, setTab] = useState<NavKey>("monitor");
   const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(null);
 
   const handleNav = (key: NavKey) => {
@@ -39,7 +38,7 @@ export default function App() {
           deploymentMode={session.remote ? "Remote Commands Enabled" : "Local"}
           owner={session.owner}
           onLogout={session.remote ? session.logout : undefined}
-          onNotifications={() => handleNav("notifications")}
+          onNotifications={() => handleNav("activity")}
           catalogSync={catalogSync}
         />
         <div className="flex-1 overflow-auto flex flex-col">
@@ -48,15 +47,9 @@ export default function App() {
               <StrategyDetail id={selectedStrategyId} />
             ) : (
               <>
-                {tab === "overview"   && <Overview />}
+                {tab === "monitor"   && <Overview />}
                 {tab === "strategies" && <Library onSelect={(id) => setSelectedStrategyId(id)} />}
-                {tab === "versions"   && <Versions />}
-                {tab === "paper"      && <Paper />}
-                {tab === "events"     && <Events />}
-                {tab === "llm"        && <LLM />}
-                {tab === "groups"     && <Groups />}
-                {tab === "audit"      && <Audit />}
-                {tab === "notifications" && <Notifications />}
+                {tab === "activity" && <ActivityView />}
               </>
             )}
           </div>

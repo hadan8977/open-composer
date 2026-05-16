@@ -1,17 +1,8 @@
-import { useState } from "react";
-import { Filter, Download, ArrowUpDown, Sparkles } from "lucide-react";
+import { ArrowUpDown, Download, Filter, Terminal } from "lucide-react";
 import { Card, Tag, Pill } from "./blocks";
 import { Hero } from "./hero";
 import { Sparkline } from "./sparkline";
-import { CommandResultDetails } from "./command-details";
-import { applyDashboardCatalog, dashboardSummary, strategies, Strategy } from "./data";
-import {
-  getDashboardJson,
-  postDashboardJson,
-  promptDashboardConfirmations,
-  resolveDashboardCommandRun,
-} from "./runtime";
-import type { DashboardCommandPlanResponse, DashboardCommandRunResponse } from "./runtime";
+import { dashboardSummary, strategies, Strategy } from "./data";
 
 const riskTag: Record<Strategy["risk"], { color: any; label: string }> = {
   stable:   { color: "green",  label: "stable" },
@@ -34,14 +25,6 @@ const statusTag: Record<Strategy["status"], any> = {
 };
 
 export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
-  const [idea, setIdea] = useState(
-    "Create a QQQ 15m breakout strategy with volume expansion and volatility filter.",
-  );
-  const [useLlm, setUseLlm] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [draftStatus, setDraftStatus] = useState("Local command API is idle.");
-  const [lastPlan, setLastPlan] = useState<DashboardCommandPlanResponse | null>(null);
-  const [lastResult, setLastResult] = useState<DashboardCommandRunResponse | null>(null);
   const filters = [
     ["All", dashboardSummary.strategyCount],
     ["Active", dashboardSummary.activeStrategyCount],
@@ -49,65 +32,6 @@ export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
     ["Draft", dashboardSummary.draftStrategyCount],
     ["Retired", dashboardSummary.retiredStrategyCount],
   ] as const;
-
-  const refreshCatalog = async () => {
-    const runtimeCatalog = await getDashboardJson<Parameters<typeof applyDashboardCatalog>[0]>(
-      "/api/dashboard/catalog",
-    );
-    applyDashboardCatalog(runtimeCatalog as Parameters<typeof applyDashboardCatalog>[0]);
-  };
-
-  const runDraftCommand = async () => {
-    const cleanIdea = idea.trim();
-    if (!cleanIdea) {
-      setDraftStatus("Idea is required.");
-      return;
-    }
-    setBusy(true);
-    setDraftStatus("Creating draft command plan...");
-    setLastPlan(null);
-    setLastResult(null);
-    try {
-      const plan = await postDashboardJson<DashboardCommandPlanResponse>("/api/dashboard/command-plan", {
-        action: "strategy.draft",
-        reason: "dashboard draft",
-        requested_by: "dashboard",
-        idea: cleanIdea,
-        use_llm: useLlm,
-      });
-      if (!plan.plan_path) {
-        throw new Error("dashboard command plan missing plan_path");
-      }
-      setLastPlan(plan);
-      const confirmations = await promptDashboardConfirmations(
-        plan,
-        "Type the exact confirmation phrase to draft this strategy.",
-      );
-      if (confirmations === null) {
-        setDraftStatus("Draft command plan created. Execution cancelled before confirmation.");
-        return;
-      }
-      setDraftStatus(plan.remote ? "Queueing remote draft job..." : "Executing draft command...");
-      const queued = await postDashboardJson<DashboardCommandRunResponse>("/api/dashboard/command-run", {
-        plan_path: plan.plan_path,
-        ...confirmations,
-        executed_by: "dashboard",
-      });
-      const result = await resolveDashboardCommandRun(queued, (job) => {
-        setDraftStatus(`${job.status}: ${job.message}`);
-      });
-      setLastResult(result);
-      await refreshCatalog();
-      const output = result.output_paths?.[0] ? ` · ${result.output_paths[0]}` : "";
-      const backup = result.backup_manifest_path ? ` · ${result.backup_manifest_path}` : "";
-      setDraftStatus(`${result.message}${output}${backup}`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown dashboard command error";
-      setDraftStatus(message);
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <div className="px-6 pb-8 space-y-3">
@@ -148,38 +72,35 @@ export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
       </div>
 
       <Card pad={false}>
-        <div className="grid grid-cols-12 gap-3 p-4 items-stretch">
-          <div className="col-span-8">
-            <textarea
-              value={idea}
-              onChange={(event) => setIdea(event.target.value)}
-              className="ds-input w-full min-h-[86px] resize-none bg-transparent px-3 py-2 outline-none t-body-md"
-              placeholder="Create a QQQ 15m breakout strategy with volume expansion and volatility filter."
-            />
+        <div className="grid grid-cols-[44px_minmax(0,1fr)] gap-3 p-4 items-start">
+          <span
+            className="flex h-11 w-11 items-center justify-center bg-[rgba(10,10,10,.06)]"
+            style={{ borderRadius: "var(--r-md)" }}
+          >
+            <Terminal size={17} strokeWidth={2.2} />
+          </span>
+          <div className="min-w-0">
+            <div className="t-title-sm">Strategy creation stays in CLI files.</div>
+            <div className="t-body-sm ink-subtle mt-1 leading-snug">
+              Draft and verify StrategySpecs from the terminal, then rebuild the dashboard catalog.
+            </div>
+            <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-2">
+              {[
+                'uv run oc strategy draft --idea "QQQ 15m breakout with volume filter"',
+                "uv run oc spec validate strategy_specs/drafts/<name>.yaml",
+                "uv run oc spec capabilities strategy_specs/drafts/<name>.yaml",
+              ].map((command) => (
+                <div
+                  key={command}
+                  className="t-mono ink bg-[var(--paper-3)] px-3 py-2 truncate"
+                  style={{ borderRadius: "var(--r-sm)" }}
+                  title={command}
+                >
+                  {command}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="col-span-4 flex flex-col gap-2">
-            <label className="ds-input flex items-center gap-2 h-10 px-3">
-              <input
-                type="checkbox"
-                checked={useLlm}
-                onChange={(event) => setUseLlm(event.target.checked)}
-              />
-              <span className="t-body-sm ink">Use LLM</span>
-            </label>
-            <button
-              onClick={runDraftCommand}
-              disabled={busy}
-              className="pill pill-primary justify-center h-10"
-              style={{ opacity: busy ? 0.72 : 1 }}
-            >
-              <Sparkles size={14} />
-              Draft strategy
-            </button>
-            <div className="t-body-sm ink-subtle leading-snug">{draftStatus}</div>
-          </div>
-        </div>
-        <div className="px-4 pb-4">
-          <CommandResultDetails plan={lastPlan} result={lastResult} />
         </div>
       </Card>
 

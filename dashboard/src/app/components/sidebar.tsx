@@ -1,18 +1,9 @@
-import { LayoutDashboard, BookMarked, GitBranch, Activity, Newspaper, Sparkles, Layers, ShieldCheck, Bell } from "lucide-react";
+import { Activity, BookMarked, ListChecks } from "lucide-react";
 import logoMarkUrl from "../../../logo_optimized (2).svg";
 import { dashboardSummary } from "./data";
 import type { DashboardCatalogSyncState } from "./runtime";
 
-export type NavKey =
-  | "overview"
-  | "strategies"
-  | "versions"
-  | "paper"
-  | "events"
-  | "llm"
-  | "groups"
-  | "audit"
-  | "notifications";
+export type NavKey = "monitor" | "strategies" | "activity";
 
 interface Props {
   active: NavKey;
@@ -22,15 +13,9 @@ interface Props {
 
 function navItems(): { key: NavKey; label: string; icon: any; count?: string; accent: string }[] {
   return [
-    { key: "overview",   label: "Overview",         icon: LayoutDashboard, accent: "#1FB85A" },
-    { key: "strategies", label: "Strategy Library", icon: BookMarked, count: String(dashboardSummary.strategyCount), accent: "#0A0A0A" },
-    { key: "versions",   label: "Versions",         icon: GitBranch, count: String(dashboardSummary.versionCount), accent: "#1AC8E8" },
-    { key: "paper",      label: "Paper Monitor",    icon: Activity, count: String(dashboardSummary.paperAutoStrategyCount), accent: "#1FB85A" },
-    { key: "events",     label: "Events & News",    icon: Newspaper, count: String(dashboardSummary.dataComparisonCount + dashboardSummary.contextCount + dashboardSummary.featurePacketCount), accent: "#F8A93B" },
-    { key: "llm",        label: "LLM Center",       icon: Sparkles, count: String(dashboardSummary.reviewCount), accent: "#8B5CF6" },
-    { key: "groups",     label: "Strategy Groups",  icon: Layers, accent: "#FF2D7A" },
-    { key: "audit",      label: "Audit",            icon: ShieldCheck, count: String(dashboardSummary.auditCount), accent: "#0A0A0A" },
-    { key: "notifications", label: "Notifications", icon: Bell, accent: "#F8A93B" },
+    { key: "monitor", label: "Monitor", icon: Activity, count: String(dashboardSummary.paperAutoStrategyCount), accent: "#1FB85A" },
+    { key: "strategies", label: "Strategies", icon: BookMarked, count: String(dashboardSummary.strategyCount), accent: "#0A0A0A" },
+    { key: "activity", label: "Activity", icon: ListChecks, count: String(dashboardSummary.signalCount + dashboardSummary.orderCount + dashboardSummary.auditCount + dashboardSummary.reviewCount), accent: "#F8A93B" },
   ];
 }
 
