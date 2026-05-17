@@ -134,6 +134,7 @@ artifact size without deleting anything.
 - [docs/product-structure-efficiency-review-2026-05-17.zh.md](docs/product-structure-efficiency-review-2026-05-17.zh.md) - product structure and redundancy review
 - [docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md](docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md) - Dashboard, strategy workflow, and research-kernel optimization plan
 - [docs/product-mvp-hardening-research-plan-2026-05-17.zh.md](docs/product-mvp-hardening-research-plan-2026-05-17.zh.md) - MVP hardening plan for Dashboard, strategy iteration, and the shared research kernel
+- [docs/harness-engineering-agent-quant-review-2026-05-17.zh.md](docs/harness-engineering-agent-quant-review-2026-05-17.zh.md) - harness engineering plan for stronger agent, skill, workflow, and quant research constraints
 
 ## License
 

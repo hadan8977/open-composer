@@ -28,6 +28,7 @@ CURRENT_DOCS = {
     "docs/product-structure-efficiency-review-2026-05-17.zh.md",
     "docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md",
     "docs/product-mvp-hardening-research-plan-2026-05-17.zh.md",
+    "docs/harness-engineering-agent-quant-review-2026-05-17.zh.md",
 }
 
 REQUIRED_SKILLS = [
