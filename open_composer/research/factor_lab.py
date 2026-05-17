@@ -28,7 +28,11 @@ class FactorLabFactorMetric:
     unique_values: int
     forward_return_corr: float | None
     rank_ic: float | None
+    rolling_rank_ic_mean: float | None
+    rolling_rank_ic_min: float | None
+    stability_score: float | None
     quantile_mean_forward_return_pct: dict[str, float]
+    horizon_mean_forward_return_pct: dict[str, float]
     top_bottom_spread_pct: float | None
     quantile_turnover_pct: float | None
     flags: list[str] = field(default_factory=list)
@@ -50,6 +54,7 @@ def run_factor_lab(
     root: Path | None = None,
     *,
     forward_bars: int = 1,
+    horizons: list[int] | None = None,
     quantiles: int = 5,
 ) -> FactorLabResult:
     started_at = perf_counter()
@@ -57,6 +62,9 @@ def run_factor_lab(
         raise ValueError("--forward-bars must be at least 1")
     if quantiles < 2:
         raise ValueError("--quantiles must be at least 2")
+    selected_horizons = sorted({item for item in (horizons or [1, 5, 10]) if item >= 1})
+    if not selected_horizons:
+        selected_horizons = [forward_bars]
 
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
@@ -86,12 +94,16 @@ def run_factor_lab(
             require_feature_symbol=False,
         )
         forward_returns = _forward_returns(prepared, forward_bars)
+        horizon_returns = {
+            horizon: _forward_returns(prepared, horizon) for horizon in selected_horizons
+        }
         factor_metrics = [
             _factor_metric(
                 spec,
                 prepared,
                 name,
                 forward_returns,
+                horizon_returns,
                 quantiles=quantiles,
             )
             for name in spec.factors
@@ -116,6 +128,7 @@ def run_factor_lab(
         factor_correlation_matrix,
         quality_flags,
         forward_bars,
+        selected_horizons,
         quantiles,
         data_profile,
         runtime_payload(started_at, {}),
@@ -129,6 +142,7 @@ def run_factor_lab(
         factor_correlation_matrix,
         quality_flags,
         forward_bars,
+        selected_horizons,
         quantiles,
         data_profile,
         json_path,
@@ -149,6 +163,7 @@ def _factor_metric(
     frame: pd.DataFrame,
     name: str,
     forward_returns: pd.Series,
+    horizon_returns: dict[int, pd.Series],
     *,
     quantiles: int,
 ) -> FactorLabFactorMetric:
@@ -167,11 +182,20 @@ def _factor_metric(
 
     forward_corr = _safe_corr(joined["factor"], joined["forward_return"])
     rank_ic = _safe_corr(joined["factor"].rank(), joined["forward_return"].rank())
+    rolling_rank_ic_values = _rolling_rank_ic(joined["factor"], joined["forward_return"])
+    rolling_rank_ic_mean = (
+        float(pd.Series(rolling_rank_ic_values).mean()) if rolling_rank_ic_values else None
+    )
+    rolling_rank_ic_min = (
+        float(pd.Series(rolling_rank_ic_values).min()) if rolling_rank_ic_values else None
+    )
+    stability_score = _stability_score(rank_ic, rolling_rank_ic_values)
     quantile_returns, top_bottom_spread, quantile_turnover = _quantile_metrics(
         joined["factor"],
         joined["forward_return"],
         quantiles=quantiles,
     )
+    horizon_mean_forward_return_pct = _horizon_mean_returns(raw, horizon_returns)
     if rank_ic is None:
         flags.append("rank_ic_unavailable")
     elif abs(rank_ic) < 0.02:
@@ -188,7 +212,11 @@ def _factor_metric(
         unique_values=unique_values,
         forward_return_corr=forward_corr,
         rank_ic=rank_ic,
+        rolling_rank_ic_mean=rolling_rank_ic_mean,
+        rolling_rank_ic_min=rolling_rank_ic_min,
+        stability_score=stability_score,
         quantile_mean_forward_return_pct=quantile_returns,
+        horizon_mean_forward_return_pct=horizon_mean_forward_return_pct,
         top_bottom_spread_pct=top_bottom_spread,
         quantile_turnover_pct=quantile_turnover,
         flags=flags,
@@ -206,6 +234,50 @@ def _safe_corr(left: pd.Series, right: pd.Series) -> float | None:
         return None
     value = joined["left"].corr(joined["right"])
     return None if pd.isna(value) else float(value)
+
+
+def _rolling_rank_ic(
+    factor: pd.Series,
+    forward_returns: pd.Series,
+    *,
+    window: int = 20,
+) -> list[float]:
+    joined = pd.DataFrame({"factor": factor, "forward_return": forward_returns}).dropna()
+    if len(joined) < max(window, 4):
+        return []
+    values: list[float] = []
+    for start in range(0, len(joined) - window + 1):
+        chunk = joined.iloc[start : start + window]
+        value = _safe_corr(chunk["factor"].rank(), chunk["forward_return"].rank())
+        if value is not None:
+            values.append(value)
+    return values
+
+
+def _stability_score(rank_ic: float | None, rolling_values: list[float]) -> float | None:
+    if rank_ic is None:
+        return None
+    if not rolling_values:
+        return abs(rank_ic)
+    same_sign = [
+        value
+        for value in rolling_values
+        if (rank_ic >= 0 and value >= 0) or (rank_ic < 0 and value < 0)
+    ]
+    return abs(rank_ic) * (len(same_sign) / len(rolling_values))
+
+
+def _horizon_mean_returns(
+    factor: pd.Series,
+    horizon_returns: dict[int, pd.Series],
+) -> dict[str, float]:
+    output: dict[str, float] = {}
+    for horizon, returns in horizon_returns.items():
+        joined = pd.DataFrame({"factor": factor, "forward_return": returns}).dropna()
+        if joined.empty:
+            continue
+        output[str(horizon)] = float(joined["forward_return"].mean() * 100)
+    return output
 
 
 def _quantile_metrics(
@@ -274,6 +346,7 @@ def _write_factor_lab_json(
     factor_correlation_matrix: dict[str, dict[str, float | None]],
     quality_flags: list[str],
     forward_bars: int,
+    horizons: list[int],
     quantiles: int,
     data_profile: dict[str, Any],
     runtime: dict[str, Any],
@@ -283,6 +356,7 @@ def _write_factor_lab_json(
         "source_spec_path": str(spec_path),
         "status": status,
         "forward_bars": forward_bars,
+        "horizons": horizons,
         "quantiles": quantiles,
         "data_profile": data_profile,
         "quality_flags": quality_flags,
@@ -302,6 +376,7 @@ def _write_factor_lab_report(
     factor_correlation_matrix: dict[str, dict[str, float | None]],
     quality_flags: list[str],
     forward_bars: int,
+    horizons: list[int],
     quantiles: int,
     data_profile: dict[str, Any],
     json_path: Path,
@@ -314,6 +389,7 @@ def _write_factor_lab_report(
         f"- JSON: `{json_path}`",
         f"- Status: `{status}`",
         f"- Forward bars: `{forward_bars}`",
+        f"- Horizons: `{horizons}`",
         f"- Quantiles: `{quantiles}`",
         f"- Data source/feed: `{data_profile.get('provider')}` / "
         f"`{data_profile.get('feed') or 'none'}`",
@@ -331,8 +407,8 @@ def _write_factor_lab_report(
         lines.extend(
             [
                 "| Factor | Source | Coverage | Obs | Unique | Corr | RankIC | "
-                "Spread | Turnover | Flags |",
-                "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+                "Rolling RankIC | Stability | Spread | Turnover | Flags |",
+                "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
             ]
         )
         for metric in factor_metrics:
@@ -344,6 +420,8 @@ def _write_factor_lab_report(
                 f"{metric.unique_values} | "
                 f"{_fmt(metric.forward_return_corr)} | "
                 f"{_fmt(metric.rank_ic)} | "
+                f"{_fmt(metric.rolling_rank_ic_mean)} | "
+                f"{_fmt(metric.stability_score)} | "
                 f"{_fmt_pct(metric.top_bottom_spread_pct)} | "
                 f"{_fmt_pct(metric.quantile_turnover_pct)} | "
                 f"`{', '.join(metric.flags) or 'none'}` |"

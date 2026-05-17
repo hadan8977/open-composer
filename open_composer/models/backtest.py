@@ -42,6 +42,9 @@ class ExecutionRealityMetrics(BaseModel):
     average_bar_participation_pct: float | None = None
     max_adv_participation_pct: float | None = None
     estimated_capacity_notional: float | None = None
+    capacity_curve: dict[str, float] = Field(default_factory=dict)
+    recommended_max_participation_pct: float | None = None
+    slippage_stress_bps: dict[str, float] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
 
 

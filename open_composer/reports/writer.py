@@ -160,6 +160,10 @@ def _execution_reality_lines(run: BacktestRun) -> list[str]:
         f"- Average bar participation: {_optional_pct(reality.average_bar_participation_pct)}",
         f"- Max ADV participation: {_optional_pct(reality.max_adv_participation_pct)}",
         f"- Estimated 5% ADV capacity: {_optional_money(reality.estimated_capacity_notional)}",
+        f"- Recommended max participation: "
+        f"{_optional_pct(reality.recommended_max_participation_pct)}",
+        f"- Capacity curve: `{reality.capacity_curve}`",
+        f"- Slippage stress bps: `{reality.slippage_stress_bps}`",
         f"- Warning count: {len(reality.warnings)}",
     ]
     if reality.warnings:

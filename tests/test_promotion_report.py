@@ -91,6 +91,9 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
         "data_comparison",
         "strict_data",
         "feature_packets",
+        "factor_lab",
+        "execution_reality",
+        "alternative_data",
         "benchmark_family",
     }
     assert payload["gate_summary"]["workflow_pass"] is True
@@ -106,6 +109,12 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert payload["data_profile"]["source_mode"] == "sample"
     assert payload["research_manifest"]["trial_count"] >= 1
     assert payload["research_manifest"]["spec_hash"]
+    assert payload["research_manifest"]["research_contract_path"]
+    assert payload["research_manifest"]["factor_lab_path"]
+    assert payload["research_manifest"]["alt_data_quality_path"]
+    walk_forward = next(item for item in payload["checks"] if item["name"] == "walk_forward")
+    assert walk_forward["details"]["purged"] is True
+    assert walk_forward["details"]["embargo_bars"] == 1
     assert payload["data_comparisons"]
     assert payload["out_of_sample"] is not None
     assert "buy_hold_return_pct" in payload["full_window"]

@@ -14,7 +14,10 @@ from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_fr
 from open_composer.expressions import ExpressionSafetyError, assert_expression_safe
 from open_composer.feature_packets import inspect_feature_packet
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.alt_data_quality import build_alternative_data_quality_report
 from open_composer.research.blind_test import load_blind_test_report
+from open_composer.research.contracts import write_research_contract
+from open_composer.research.factor_lab import run_factor_lab
 from open_composer.research.metadata import (
     frame_data_profile,
     research_run_manifest,
@@ -78,6 +81,7 @@ def build_promotion_report(
 
     cost_slippage_bps = cost_slippage_bps or [0, 5, 10]
     checks: list[PromotionCheck] = []
+    contract_path = write_research_contract(spec_path, base)
     data_profile = frame_data_profile(
         frame,
         symbol=spec.primary_symbol,
@@ -141,6 +145,17 @@ def build_promotion_report(
     feature_packet_check = _feature_packet_check(spec, base)
     checks.append(feature_packet_check)
 
+    factor_lab_result = run_factor_lab(spec_path, base)
+    factor_lab_check = _factor_lab_check(factor_lab_result)
+    checks.append(factor_lab_check)
+
+    execution_reality_check = _execution_reality_check(full)
+    checks.append(execution_reality_check)
+
+    alt_data_result = build_alternative_data_quality_report(spec_path, base)
+    alt_data_check = _alternative_data_check(alt_data_result)
+    checks.append(alt_data_check)
+
     benchmark_check, benchmark_family = _benchmark_family_check(spec, full)
     checks.append(benchmark_check)
 
@@ -173,6 +188,9 @@ def build_promotion_report(
         feature_packet_paths=_feature_packet_paths(spec),
         runtime=runtime_payload(started_at, {}),
     )
+    manifest["research_contract_path"] = str(contract_path.relative_to(base))
+    manifest["factor_lab_path"] = str(factor_lab_result.json_path.relative_to(base))
+    manifest["alt_data_quality_path"] = str(alt_data_result.json_path.relative_to(base))
     _write_promotion_json(
         json_path,
         spec_path,
@@ -275,7 +293,7 @@ def _walk_forward_check(
     runs: list[BacktestArtifacts] = []
     fold_details: list[dict[str, object]] = []
     for index in range(folds):
-        start = (index + 1) * fold_size
+        start = (index + 1) * fold_size + 1
         end = min(len(frame), start + fold_size)
         wf_frame = frame.iloc[start:end].copy()
         if len(wf_frame) < 2:
@@ -321,11 +339,11 @@ def _walk_forward_check(
                 "mean_return_pct": mean(item["total_return_pct"] for item in fold_details),
                 "mean_sharpe": mean(float(item["sharpe_ratio"] or 0.0) for item in fold_details),
                 "validation_policy": "sequential_walk_forward",
-                "purged": False,
-                "embargo_bars": 0,
+                "purged": True,
+                "embargo_bars": 1,
                 "embargo_note": (
-                    "Purged or embargoed validation is not applied in this lightweight "
-                    "promotion gate; use it before event/news/multi-asset paper promotion."
+                    "A one-bar embargo separates sequential validation slices in the "
+                    "lightweight promotion gate."
                 ),
             },
         ),
@@ -373,6 +391,98 @@ def _cost_sensitivity_check(
             },
         ),
         runs,
+    )
+
+
+def _factor_lab_check(result) -> PromotionCheck:
+    details = {
+        "status": result.status,
+        "report_path": str(result.report_path),
+        "json_path": str(result.json_path),
+        "quality_flags": result.quality_flags,
+        "factor_count": len(result.factor_metrics),
+    }
+    if result.status == "blocked":
+        return PromotionCheck(
+            name="factor_lab",
+            status="blocked",
+            message="Factor Lab diagnostics are blocked: " + ", ".join(result.quality_flags),
+            details=details,
+        )
+    if result.status == "warning":
+        return PromotionCheck(
+            name="factor_lab",
+            status="warning",
+            message="Factor Lab diagnostics produced warnings.",
+            details=details,
+        )
+    return PromotionCheck(
+        name="factor_lab",
+        status="ok",
+        message="Factor Lab diagnostics passed.",
+        details=details,
+    )
+
+
+def _execution_reality_check(full: BacktestArtifacts) -> PromotionCheck:
+    reality = full.run.execution_reality
+    if reality is None:
+        return PromotionCheck(
+            name="execution_reality",
+            status="blocked",
+            message="Execution reality metrics are missing.",
+            details={},
+        )
+    details = reality.model_dump(mode="json")
+    if reality.status == "blocked":
+        return PromotionCheck(
+            name="execution_reality",
+            status="blocked",
+            message="Execution reality blocks promotion: " + "; ".join(reality.warnings),
+            details=details,
+        )
+    if reality.status == "warning":
+        return PromotionCheck(
+            name="execution_reality",
+            status="warning",
+            message="Execution reality warnings require review.",
+            details=details,
+        )
+    return PromotionCheck(
+        name="execution_reality",
+        status="ok",
+        message="Execution reality diagnostics passed.",
+        details=details,
+    )
+
+
+def _alternative_data_check(result) -> PromotionCheck:
+    details = {
+        "status": result.status,
+        "report_path": str(result.report_path),
+        "json_path": str(result.json_path),
+        "warnings": result.warnings,
+        "factor_count": len(result.rows),
+    }
+    if result.status == "blocked":
+        return PromotionCheck(
+            name="alternative_data",
+            status="blocked",
+            message="Alternative data quality blocks promotion: " + ", ".join(result.warnings),
+            details=details,
+        )
+    if result.status == "warning":
+        return PromotionCheck(
+            name="alternative_data",
+            status="warning",
+            message="Alternative data quality produced warnings.",
+            details=details,
+        )
+    return PromotionCheck(
+        name="alternative_data",
+        status="ok",
+        message="Alternative data quality passed or no alternative data is used.",
+        details=details,
     )
 
 
@@ -874,6 +984,9 @@ def _five_pass_checks(
         "cost_sensitivity",
         "data_comparison",
         "benchmark_family",
+        "factor_lab",
+        "execution_reality",
+        "alternative_data",
     }
     research_failures = sorted(
         name for name in research_gate_names if name in blocked or name in warning

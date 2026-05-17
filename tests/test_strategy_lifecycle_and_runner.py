@@ -248,8 +248,26 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
                         "message": "ok",
                         "details": {},
                     },
+                    {"name": "factor_lab", "status": "ok", "message": "ok", "details": {}},
+                    {
+                        "name": "execution_reality",
+                        "status": "ok",
+                        "message": "ok",
+                        "details": {},
+                    },
+                    {
+                        "name": "alternative_data",
+                        "status": "ok",
+                        "message": "ok",
+                        "details": {},
+                    },
                 ],
                 "benchmark_family": {"complete": True, "missing": [], "benchmarks": {}},
+                "research_manifest": {
+                    "research_contract_path": (
+                        "reports/research/qqq_paper_ready_15m-research-contract.json"
+                    )
+                },
             }
         )
         + "\n",

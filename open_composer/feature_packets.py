@@ -83,6 +83,9 @@ class FeaturePacketInspection(BaseModel):
     models: list[str] = Field(default_factory=list)
     input_hashes: list[str] = Field(default_factory=list)
     prompt_hashes: list[str] = Field(default_factory=list)
+    missing_model_count: int = 0
+    missing_input_hash_count: int = 0
+    missing_prompt_hash_count: int = 0
     evidence_count: int = 0
     missing_evidence_count: int = 0
     evidence_fixture_paths: list[str] = Field(default_factory=list)
@@ -257,7 +260,16 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
     evidence_count = 0
     missing_evidence_count = 0
     evidence_fixture_paths: list[str] = []
+    missing_model_count = 0
+    missing_input_hash_count = 0
+    missing_prompt_hash_count = 0
     for row in rows:
+        if not row.get("model"):
+            missing_model_count += 1
+        if not row.get("input_hash"):
+            missing_input_hash_count += 1
+        if not row.get("prompt_hash"):
+            missing_prompt_hash_count += 1
         evidence = row.get("evidence")
         if isinstance(evidence, dict):
             evidence_count += 1
@@ -320,6 +332,9 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
         models=_sorted_values(row.get("model") for row in rows),
         input_hashes=_sorted_values(row.get("input_hash") for row in rows),
         prompt_hashes=_sorted_values(row.get("prompt_hash") for row in rows),
+        missing_model_count=missing_model_count,
+        missing_input_hash_count=missing_input_hash_count,
+        missing_prompt_hash_count=missing_prompt_hash_count,
         evidence_count=evidence_count,
         missing_evidence_count=missing_evidence_count,
         evidence_fixture_paths=sorted(set(evidence_fixture_paths)),

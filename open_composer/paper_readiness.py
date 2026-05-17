@@ -548,12 +548,16 @@ def _promotion_report_check(
     benchmark_family = (
         raw.get("benchmark_family", {}) if isinstance(raw.get("benchmark_family"), dict) else {}
     )
+    research_manifest = (
+        raw.get("research_manifest", {}) if isinstance(raw.get("research_manifest"), dict) else {}
+    )
     missing_requirements = _promotion_missing_requirements(
         ready=ready,
         status=status,
         checks_by_name=checks_by_name,
         gate_summary=gate_summary,
         benchmark_family=benchmark_family,
+        research_manifest=research_manifest,
     )
     if not missing_requirements:
         return PaperStrategyReadinessCheck(
@@ -593,6 +597,7 @@ def _promotion_missing_requirements(
     checks_by_name: dict[str, str],
     gate_summary: dict[str, object],
     benchmark_family: dict[str, object],
+    research_manifest: dict[str, object],
 ) -> list[str]:
     missing: list[str] = []
     if not ready:
@@ -601,9 +606,18 @@ def _promotion_missing_requirements(
         missing.append(f"status={status}")
     if gate_summary.get("paper_ready_pass") is not True:
         missing.append("gate_summary.paper_ready_pass is not true")
-    for check_name in ["strict_data", "feature_packets", "benchmark_family"]:
+    for check_name in [
+        "strict_data",
+        "feature_packets",
+        "benchmark_family",
+        "factor_lab",
+        "execution_reality",
+        "alternative_data",
+    ]:
         if checks_by_name.get(check_name) != "ok":
             missing.append(f"{check_name} check is not ok")
+    if not research_manifest.get("research_contract_path"):
+        missing.append("research contract path is missing")
     if benchmark_family.get("complete") is not True:
         missing.append("benchmark_family.complete is not true")
     return missing

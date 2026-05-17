@@ -12,6 +12,7 @@ ADV_PARTICIPATION_WARNING_PCT = 10.0
 MIN_AVERAGE_DOLLAR_VOLUME = 1_000_000.0
 MIN_BAR_DOLLAR_VOLUME = 100_000.0
 CAPACITY_ADV_PARTICIPATION_PCT = 5.0
+CAPACITY_CURVE_PCTS = (1.0, 2.5, 5.0, 10.0)
 
 
 def evaluate_execution_reality(
@@ -46,6 +47,14 @@ def evaluate_execution_reality(
         else None
     )
     estimated_capacity_notional = average_dollar_volume * (CAPACITY_ADV_PARTICIPATION_PCT / 100)
+    capacity_curve = {
+        f"{pct:g}%_adv": average_dollar_volume * (pct / 100) for pct in CAPACITY_CURVE_PCTS
+    }
+    recommended_max_participation_pct = min(
+        BAR_PARTICIPATION_WARNING_PCT,
+        ADV_PARTICIPATION_WARNING_PCT,
+    )
+    slippage_stress_bps = _slippage_stress_bps(max_bar_participation_pct)
 
     if average_dollar_volume < MIN_AVERAGE_DOLLAR_VOLUME:
         warnings.append(
@@ -87,6 +96,9 @@ def evaluate_execution_reality(
         average_bar_participation_pct=average_bar_participation_pct,
         max_adv_participation_pct=max_adv_participation_pct,
         estimated_capacity_notional=estimated_capacity_notional,
+        capacity_curve=capacity_curve,
+        recommended_max_participation_pct=recommended_max_participation_pct,
+        slippage_stress_bps=slippage_stress_bps,
         warnings=warnings,
     )
 
@@ -135,3 +147,13 @@ def _utc_timestamp(value: object) -> pd.Timestamp:
     if timestamp.tzinfo is None:
         return timestamp.tz_localize("UTC")
     return timestamp.tz_convert("UTC")
+
+
+def _slippage_stress_bps(max_bar_participation_pct: float | None) -> dict[str, float]:
+    participation = max(max_bar_participation_pct or 0.0, 0.0)
+    base = 2.5 + participation * 0.5
+    return {
+        "low": round(base, 4),
+        "medium": round(base * 2, 4),
+        "high": round(base * 4, 4),
+    }

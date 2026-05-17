@@ -116,6 +116,7 @@ from open_composer.remote.server import RemoteServerError
 from open_composer.repo_check import build_repo_check_report, write_repo_check_report
 from open_composer.research import (
     build_promotion_report,
+    build_strategy_research_report,
     draft_strategy_from_idea,
     optimize_option_overlays,
     optimize_strategy,
@@ -136,7 +137,9 @@ from open_composer.research import (
     run_rotation_research,
     run_skill_attribution,
     search_similar_regimes,
+    validate_strategy_dag,
     write_intraday_product_reflection,
+    write_strategy_dag_validation,
 )
 from open_composer.research.llm_exposure_switch import LLMExposureSwitchChoice
 from open_composer.review.llm import review_signal_with_status
@@ -1598,6 +1601,26 @@ def strategy_factor_lab(
     )
     console.print(f"report: {result.report_path}")
     console.print(f"json: {result.json_path}")
+
+
+@strategy_app.command("research-report")
+def strategy_research_report(spec: Path) -> None:
+    """Run the default research contract pipeline for a StrategySpec."""
+    result = build_strategy_research_report(spec, project_root())
+    console.print(f"[green]research report complete[/green] status={result.status}")
+    console.print(f"contract: {result.contract_path}")
+    console.print(f"report: {result.report_path}")
+    console.print(f"json: {result.json_path}")
+
+
+@strategy_app.command("dag-validate")
+def strategy_dag_validate(path: Path) -> None:
+    """Validate a replay-only StrategyDAG file."""
+    result = validate_strategy_dag(path, project_root())
+    json_path, md_path = write_strategy_dag_validation(result, project_root())
+    console.print(f"[green]dag validation complete[/green] status={result.status}")
+    console.print(f"json: {json_path}")
+    console.print(f"report: {md_path}")
 
 
 @strategy_app.command("promotion-report")
