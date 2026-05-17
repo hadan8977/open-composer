@@ -2,6 +2,26 @@
 
 日期：2026-05-17
 
+## 术语说明和研究范围
+
+本文把用户提出的 “Honest 工程” 理解为 Open Composer 需要建立的
+Honest/Harness engineering：让 AI 生成、量化研究、回测评估、Dashboard 展示和远程部署
+都被同一套证据、权限、状态、审计和晋升规则约束。这里的 “Honest” 不是道德宣言，而是
+工程属性：系统必须诚实地区分猜测、研究结果、可复验证据、LLM 辅助贡献、paper readiness
+和真实交易能力。
+
+研究范围覆盖三类参考对象：
+
+- Agent 工程：OpenAI Agents SDK、LangGraph、AutoGen。
+- 量化产品与研究平台：QuantConnect、NautilusTrader、MLflow、Qlib、Alphalens、OpenBB。
+- AI + 量化项目与论文方法：FinRL、FinGPT、Microsoft RD-Agent、MLFinLab/Lopez de Prado
+  的数据泄漏、回测过拟合、deflated Sharpe ratio、purged/embargoed validation 相关方法。
+
+这些对象不应被照搬成 Open Composer 的复杂依赖，而应转化成更轻的本地文件优先控制层：
+`StrategySpec` 保持 source of truth；CLI 和 research kernel 负责生成证据；Dashboard 只读
+证据和发起受控 request；Codex/Claude Code 负责执行受限任务；repo check、readiness、
+promotion gate 和 harness policy 负责阻断不诚实的晋升。
+
 ## 结论
 
 这里的 harness engineering 不是再给用户一份更长的提示词模板，而是把
@@ -30,6 +50,19 @@ Open Composer 当前已经有 harness 的几个关键零件：
 ## 成熟系统给出的依据
 
 ### Agent workflow 依据
+
+OpenAI Agents SDK 的启发是：agent 产品需要 code-first orchestration，而不是只靠
+prompt。官方文档把 Agent、Handoff、Guardrail、Session、tools、sandbox 和 tracing
+作为核心原语；tracing 默认记录 model calls、tool calls、handoffs、guardrails 和
+custom spans。对 Open Composer 来说，这对应一个明确原则：Codex/Claude Code 可以
+承担研究和代码生成，但产品必须保存结构化 run trace、tool/action boundary、guardrail
+结果和可复验 artifact，而不是把 agent 最终回答当成事实。
+
+参考：
+
+- https://developers.openai.com/api/docs/libraries#use-the-agents-sdk
+- https://developers.openai.com/tracks/building-agents#foundations-of-the-agents-sdk
+- https://developers.openai.com/api/docs/guides/agents/integrations-observability#tracing
 
 LangGraph 的核心启发是：长时间运行的 agent 不能只靠一次 prompt，而要有持久状态、可恢复执行、人工介入和可追踪执行路径。官方文档把 durable execution、human-in-the-loop、memory、debugging/trace 和 production deployment 作为核心能力。这对应 Open Composer 的要求：agent 生成策略时应该留下状态和证据，而不是只留下自然语言结论。
 
@@ -66,6 +99,85 @@ MLflow 和 Qlib Recorder 的启发是：研究结果必须是 experiment/run/rec
 
 - https://mlflow.org/docs/latest/ml/tracking/
 - https://qlib.readthedocs.io/en/stable/component/recorder.html
+
+Alphalens 的启发是：因子研究要看 forward returns、information coefficient、
+quantile tearsheet、turnover 等诊断，而不是只看策略级 Sharpe。Open Composer 的因子
+诊断应继续向“每个因子是否稳定、是否有单独贡献、是否只是追随某个 regime”收敛。
+
+参考：https://alphalens.ml4trading.io/
+
+MLFinLab 与 Lopez de Prado 系列方法的启发是：金融机器学习最危险的问题是数据泄漏、
+多重试验和回测过拟合。purged/embargoed cross-validation、deflated Sharpe ratio、
+probability of backtest overfitting 这类方法的价值不在于让 MVP 立刻实现完整库，而在
+于给 Open Composer 设定默认 gate：不能把大量试出来的最优参数当作未经折扣的 Alpha；
+不能把时间相邻、标签重叠的数据随意交叉验证；不能把只在一个回测窗口里漂亮的结果直接
+推进 paper readiness。
+
+参考：
+
+- https://hudsonthames.org/mlfinlab/
+- https://mlfinlab.readthedocs.io/
+- https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2460551
+- https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2326253
+
+### AI + 量化项目与论文依据
+
+FinRL 的启发是：AI 交易系统需要 data layer、environment layer、agent layer 的清晰分层，
+并且要把训练、验证、测试和交易分开。它适合提醒 Open Composer：即使未来支持机器学习或
+强化学习，也应该先进入 research-only sandbox，保留数据切分、环境假设、reward、成本和
+行动空间记录，不能让黑盒模型绕过现有 `StrategySpec` 和 paper readiness gate。
+
+参考：
+
+- https://finrl.readthedocs.io/
+- https://arxiv.org/abs/2011.09607
+
+FinGPT 的启发是：金融 LLM 的价值更多来自领域数据流水线、检索/微调/评估闭环和任务化
+benchmark，而不是把通用 LLM 直接接到交易指令上。对 Open Composer 来说，LLM 可以用于
+研究总结、事件解释、节点化判断、特征候选生成和 review card；但只要 LLM 输出要影响策略
+信号，就必须先落成 point-in-time feature packet，并通过 pure quant baseline、marginal
+lift 和 missing-modality robustness。
+
+参考：
+
+- https://github.com/AI4Finance-Foundation/FinGPT
+- https://arxiv.org/abs/2306.06031
+
+Microsoft RD-Agent 的启发是：AI for data-driven R&D 应把假设、实验、反馈和知识库做成
+闭环，让 agent 自动提出实验、执行、总结并迭代。它和 Open Composer 的契合点很强：策略
+研究不应该是一次生成，而应该是 `hypothesis -> experiment -> evidence -> critique ->
+next action` 的可审计循环。区别是 Open Composer 必须更严格地区分 workflow success、
+research evidence、LLM contribution 和 paper readiness。
+
+参考：https://github.com/microsoft/RD-Agent
+
+OpenBB 的启发是：现代金融研究平台通常把多源数据、标准化接口和 notebook/API workflow
+放在核心位置。Open Composer 不需要复制一个完整数据终端，但应保持 `capabilities/registry.yaml`
+作为数据能力入口，所有 market/event/macro/news/alternative data 先经过 capability
+evaluation，再进入 replayable artifact。
+
+参考：https://docs.openbb.co/
+
+这些项目和论文共同指向同一个结论：AI+量化产品的“诚实”不在于模型多聪明，而在于每个
+研究结论都有可追踪输入、受限工具、可复验实验、明确失败原因和不可绕过的晋升 gate。
+
+### 参考对象到产品控制的映射
+
+| 参考对象 | 可借鉴的成熟做法 | Open Composer 应转成的控制 |
+| --- | --- | --- |
+| OpenAI Agents SDK | agent、handoff、guardrail、session、tracing | `WorkflowPlan`、`StepResult`、tool boundary、guardrail evidence、run trace |
+| LangGraph | durable state、human-in-loop、可恢复 graph | `ResearchWorkflowHarness`、可恢复 step、人工确认 Red action |
+| AutoGen | 多 agent team、GraphFlow、tool/use state、logging | skill policy、agent request owner、expected artifacts、acceptance gates |
+| QuantConnect Algorithm Framework | universe、alpha、portfolio、execution、risk 模块化 | `StrategySpec` 内部 contract 拆清 signal/portfolio/execution/risk |
+| QuantConnect Reality Modeling | fill、fee、slippage、buying power、settlement | 默认成本、容量、成交难易度、流动性和执行 reality gate |
+| NautilusTrader | event-driven backtest 与执行语义复用 | Python engine 做确定性参考，Nautilus adapter 做严肃执行 parity |
+| MLflow/Qlib | experiment、run、recorder、artifact | `ResearchRunIndexRecord`、`TrialLedger`、`EvidenceManifest` |
+| Alphalens | factor IC、forward returns、turnover、tearsheet | 因子级诊断，不只看策略级 Sharpe |
+| MLFinLab/Lopez de Prado | purged CV、embargo、DSR、PBO | 默认防泄漏、防多重试验、防回测过拟合 gate |
+| FinRL | data/env/agent 分层，训练/验证/测试/交易分离 | ML/RL 只能先进入 research-only sandbox |
+| FinGPT | 金融数据流水线、任务化 benchmark、LLM 金融适配 | LLM 输出必须落成 replayable feature packet 才能影响信号 |
+| RD-Agent | hypothesis、experiment、feedback、knowledge 闭环 | 策略研究改成 hypothesis -> experiment -> critique -> next action |
+| OpenBB | 多源金融数据统一 API | `capabilities/registry.yaml` 继续作为数据能力入口 |
 
 ## 当前 harness 工程实际状态
 
@@ -412,4 +524,3 @@ Dashboard 不需要变成重型交易平台，而应更像决策驾驶舱：
 4. 推荐优先做什么？
 
 优先做 P0 + P1：`HarnessPolicyManifest`、`oc harness check`、`oc harness policy-list`、`oc strategy research-workflow <spec>`。这会直接解决“不要靠用户提示词补充专业约束”的核心问题。
-
