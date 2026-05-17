@@ -18,6 +18,7 @@ from open_composer.research.alt_data_quality import build_alternative_data_quali
 from open_composer.research.blind_test import load_blind_test_report
 from open_composer.research.contracts import write_research_contract
 from open_composer.research.factor_lab import run_factor_lab
+from open_composer.research.kernel import ResearchArtifactWriter, ResearchRunIndexRecord
 from open_composer.research.metadata import (
     frame_data_profile,
     research_run_manifest,
@@ -25,6 +26,7 @@ from open_composer.research.metadata import (
     search_space,
 )
 from open_composer.storage import write_json
+from open_composer.strategy_versions import strategy_content_hash
 
 PromotionStatus = Literal["ok", "warning", "blocked"]
 FivePassStatus = Literal["pass", "fail", "skipped", "not_applicable"]
@@ -73,6 +75,7 @@ def build_promotion_report(
 ) -> PromotionReport:
     started_at = perf_counter()
     base = root or project_root()
+    writer = ResearchArtifactWriter(base)
     spec = load_strategy_spec(spec_path)
     frame = load_ohlcv_for_spec(spec, base)
     if len(frame) < 4:
@@ -191,6 +194,32 @@ def build_promotion_report(
     manifest["research_contract_path"] = str(contract_path.relative_to(base))
     manifest["factor_lab_path"] = str(factor_lab_result.json_path.relative_to(base))
     manifest["alt_data_quality_path"] = str(alt_data_result.json_path.relative_to(base))
+    gate_summary = _gate_summary(spec, ready, checks, benchmark_family)
+    index_record = ResearchRunIndexRecord(
+        run_id=f"promotion-{spec.name}-{strategy_content_hash(spec)[:12]}",
+        strategy_name=spec.name,
+        source_spec_path=_relpath(spec_path, base),
+        spec_hash=strategy_content_hash(spec),
+        status=status,
+        kind="promotion",
+        data_profile=data_profile,
+        candidate_count=1,
+        trial_count=int(manifest.get("trial_count", 1) or 1),
+        runtime_seconds=(manifest.get("runtime") or {}).get("total")
+        if isinstance(manifest.get("runtime"), dict)
+        else None,
+        gate_status=status,
+        blocked_items=[str(item) for item in gate_summary.get("blocked_checks", [])],
+        warning_items=[str(item) for item in gate_summary.get("warning_checks", [])],
+        report_path=_relpath(report_path, base),
+        json_path=_relpath(json_path, base),
+        contract_path=_relpath(contract_path, base),
+        source_artifacts={
+            "factor_lab": _relpath(factor_lab_result.json_path, base),
+            "alternative_data_quality": _relpath(alt_data_result.json_path, base),
+            "full_window": full.run.report_path,
+        },
+    )
     _write_promotion_json(
         json_path,
         spec_path,
@@ -207,7 +236,10 @@ def build_promotion_report(
         data_profile,
         manifest,
         five_pass_checks,
+        gate_summary,
+        index_record,
     )
+    writer.append_index(index_record)
     _write_promotion_report(
         report_path,
         spec_path,
@@ -778,6 +810,8 @@ def _write_promotion_json(
     data_profile: dict[str, object],
     manifest: dict[str, object],
     five_pass_checks: FivePassChecks,
+    gate_summary: dict[str, object],
+    index_record: ResearchRunIndexRecord,
 ) -> Path:
     ensure_dir(path.parent)
     payload = {
@@ -785,7 +819,8 @@ def _write_promotion_json(
         "source_spec_path": str(spec_path),
         "status": status,
         "ready": ready,
-        "gate_summary": _gate_summary(spec, ready, checks, benchmark_family),
+        "gate_summary": gate_summary,
+        "research_run_index_record": index_record.model_dump(mode="json"),
         "five_pass_checks": asdict(five_pass_checks),
         "checks": [
             {
@@ -1164,3 +1199,11 @@ def _run_lines(artifacts: BacktestArtifacts | None) -> list[str]:
 
 def _format_optional_pct(value: float | None) -> str:
     return "n/a" if value is None else f"{value:.2f}%"
+
+
+def _relpath(path: Path | str, base: Path) -> str:
+    candidate = Path(path)
+    try:
+        return candidate.relative_to(base).as_posix()
+    except ValueError:
+        return candidate.as_posix()

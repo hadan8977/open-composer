@@ -112,6 +112,15 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert payload["research_manifest"]["research_contract_path"]
     assert payload["research_manifest"]["factor_lab_path"]
     assert payload["research_manifest"]["alt_data_quality_path"]
+    assert payload["research_run_index_record"]["kind"] == "promotion"
+    assert (
+        payload["research_run_index_record"]["trial_count"]
+        == payload["research_manifest"]["trial_count"]
+    )
+    index_path = sample_workspace / "reports" / "research" / "index.jsonl"
+    assert index_path.exists()
+    index_rows = [json.loads(line) for line in index_path.read_text(encoding="utf-8").splitlines()]
+    assert index_rows[0]["kind"] == "promotion"
     walk_forward = next(item for item in payload["checks"] if item["name"] == "walk_forward")
     assert walk_forward["details"]["purged"] is True
     assert walk_forward["details"]["embargo_bars"] == 1

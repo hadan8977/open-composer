@@ -184,6 +184,36 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
             },
         },
     )
+    append_jsonl(
+        sample_workspace / "reports" / "research" / "index.jsonl",
+        [
+            {
+                "run_id": "research-qqq_pullback_15m-fixture",
+                "generated_at": "2026-05-12T10:02:00Z",
+                "strategy_name": "qqq_pullback_15m",
+                "source_spec_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+                "spec_hash": "abc123",
+                "status": "blocked",
+                "kind": "research_report",
+                "data_profile": {
+                    "source_mode": "sample",
+                    "data_as_of": "2026-01-02T16:00:00+00:00",
+                },
+                "candidate_count": 3,
+                "trial_count": 2,
+                "runtime_seconds": 1.25,
+                "gate_status": "blocked",
+                "blocked_items": ["paper_gap"],
+                "warning_items": ["sample_data"],
+                "report_path": "reports/research/qqq_pullback_15m-research-report.md",
+                "json_path": "reports/research/qqq_pullback_15m-research-report.json",
+                "contract_path": "reports/research/qqq_pullback_15m-research-contract.json",
+                "source_artifacts": {
+                    "promotion": "reports/research/qqq_pullback_15m-promotion.json"
+                },
+            }
+        ],
+    )
     write_json(
         sample_workspace / "reports" / "readiness" / "readiness.json",
         {
@@ -248,6 +278,26 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.summary.feature_packet_count == 1
     assert catalog.summary.workflow_report_count == 1
     assert catalog.summary.research_report_count == 1
+    assert catalog.summary.research_run_count == 1
+    assert catalog.summary.research_blocked_count == 1
+    assert catalog.research_runs[0].run_id == "research-qqq_pullback_15m-fixture"
+    assert catalog.research_runs[0].candidate_count == 3
+    assert catalog.research_runs[0].trial_count == 2
+    assert catalog.research_runs[0].blocked_items == ["paper_gap"]
+    write_json(
+        sample_workspace / "reports" / "research" / "qqq_pullback_15m-geometry-features.json",
+        {
+            "strategy_name": "qqq_pullback_15m",
+            "kind": "geometry_features",
+            "status": "blocked",
+            "research_only": True,
+            "source_spec_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "data_profile": {"source_mode": "sample"},
+            "promotion_blockers": ["research_only_feature_family"],
+        },
+    )
+    geometry_catalog = build_dashboard_catalog(sample_workspace)
+    assert any(report.kind == "geometry_features" for report in geometry_catalog.research_reports)
     assert catalog.research_reports[0].data_as_of == "2026-01-02T16:00:00+00:00"
     assert catalog.research_reports[0].data_feed == "iex"
     assert catalog.research_reports[0].data_source_mode == "cache"
@@ -334,6 +384,8 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert "Data Quality" in html
     assert "alpaca / longbridge" in html
     assert "Research Evidence" in html
+    assert "research-qqq_pullback_15m-fixture" in html
+    assert "paper_gap" in html
     assert "LLM Feature Replay" in html
     assert "qqq_llm_features.jsonl" in html
     assert "Deployment Readiness" in html

@@ -14,6 +14,11 @@ from open_composer.config import (
     project_root,
 )
 from open_composer.models.strategy_spec import StrategySpec
+from open_composer.research.kernel import (
+    build_default_research_brief,
+    search_space_from_spec,
+)
+from open_composer.storage import write_json
 from open_composer.strategy_versions import register_strategy_version
 
 
@@ -33,6 +38,7 @@ def draft_strategy_from_idea(
     path = base / "strategy_specs" / "drafts" / f"{spec.name}.yaml"
     ensure_dir(path.parent)
     path.write_text(yaml.safe_dump(spec.model_dump(mode="json"), sort_keys=False), encoding="utf-8")
+    _write_draft_research_plan(spec, path, base)
     register_strategy_version(
         path,
         base,
@@ -41,6 +47,37 @@ def draft_strategy_from_idea(
         prompt_session_id=_prompt_session_id(idea),
     )
     return path
+
+
+def _write_draft_research_plan(spec: StrategySpec, spec_path: Path, root: Path) -> Path:
+    research_brief = build_default_research_brief(spec)
+    search_space = search_space_from_spec(spec)
+    plan_path = root / "reports" / "research" / f"{spec.name}-draft-research-plan.json"
+    write_json(
+        plan_path,
+        {
+            "strategy_name": spec.name,
+            "source_spec_path": _relpath(spec_path, root),
+            "status": "draft",
+            "research_brief": research_brief.model_dump(mode="json"),
+            "search_space": search_space.model_dump(mode="json"),
+            "default_validation": [
+                "spec_validation",
+                "capability_evaluation",
+                "reference_backtest",
+                "factor_lab",
+                "promotion_report",
+                "paper_readiness_summary",
+            ],
+            "promotion_blockers_until_evidenced": [
+                "oos_walk_forward_cost_benchmark_evidence",
+                "execution_reality",
+                "data_quality",
+                "paper_readiness",
+            ],
+        },
+    )
+    return plan_path
 
 
 def _has_openai_config(client: Any | None) -> bool:
@@ -416,3 +453,10 @@ def _prompt_session_id(idea: str) -> str:
 
     digest = hashlib.sha256(idea.encode("utf-8")).hexdigest()[:16]
     return f"idea_{digest}"
+
+
+def _relpath(path: Path, base: Path) -> str:
+    try:
+        return path.relative_to(base).as_posix()
+    except ValueError:
+        return path.as_posix()

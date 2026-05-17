@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from shutil import copyfile
 from types import SimpleNamespace
@@ -38,6 +39,14 @@ def test_natural_language_to_context_to_paper_mock(sample_workspace: Path, monke
     spec_path = draft_strategy_from_idea(idea, sample_workspace)
     spec = load_strategy_spec(spec_path)
     assert "events.sec_filings" in spec.required_capabilities
+    research_plan = json.loads(
+        (
+            sample_workspace / "reports" / "research" / f"{spec.name}-draft-research-plan.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert research_plan["research_brief"]["strategy_name"] == spec.name
+    assert research_plan["search_space"]["candidate_count"] >= 1
+    assert "promotion_report" in research_plan["default_validation"]
     assert all(evaluation.passed for evaluation in evaluate_capabilities(sample_workspace))
 
     fetch_capability_events("sec", sample_workspace, ["QQQ"], offline=True)

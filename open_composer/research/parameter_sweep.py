@@ -18,13 +18,18 @@ from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
 from open_composer.expressions import validate_expression
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.kernel import ResearchArtifactWriter
+from open_composer.research.kernel.trials import TrialLedger, TrialRecord
+from open_composer.research.kernel.workflow import ResearchRunIndexRecord
 from open_composer.research.metadata import (
     frame_data_profile,
     research_run_manifest,
     runtime_payload,
     search_space,
+    workspace_relative_path,
 )
 from open_composer.research.optimizer import _score_candidate
+from open_composer.strategy_versions import strategy_content_hash
 
 ALLOWED_SWEEP_ROOTS = {"entry", "exit", "risk", "costs", "factors"}
 
@@ -88,6 +93,7 @@ def run_parameter_sweep(
 ) -> ParameterSweepResult:
     started_at = perf_counter()
     base = root or project_root()
+    writer = ResearchArtifactWriter(base)
     source = load_strategy_spec(spec_path)
     if not parameters:
         msg = "parameter sweep requires at least one parameter"
@@ -143,6 +149,7 @@ def run_parameter_sweep(
         min_signals,
         min_sharpe,
     )
+    runtime = runtime_payload(started_at, {})
     search_space_payload = search_space(
         family="parameter_sweep",
         candidate_count=len(candidate_results),
@@ -160,12 +167,33 @@ def run_parameter_sweep(
         trial_count=len(candidate_results),
         search_space_payload=search_space_payload,
         data_profile=data_profile,
-        runtime=runtime_payload(started_at, {}),
+        runtime=runtime,
     )
 
     written_specs = _write_top_specs(base, candidate_results, write_top)
     report_path = base / "reports" / "research" / f"{source.name}-parameter-sweep.md"
     json_path = base / "reports" / "research" / f"{source.name}-parameter-sweep.json"
+    ledger = _trial_ledger(source, candidate_results, max_candidates)
+    index_record = ResearchRunIndexRecord(
+        run_id=f"parameter-sweep-{source.name}-{strategy_content_hash(source)[:12]}",
+        strategy_name=source.name,
+        source_spec_path=workspace_relative_path(spec_path, base),
+        spec_hash=strategy_content_hash(source),
+        status="warning",
+        kind="parameter_sweep",
+        data_profile=data_profile,
+        candidate_count=len(candidate_results),
+        trial_count=len(candidate_results),
+        runtime_seconds=runtime.get("total"),
+        gate_status="warning",
+        blocked_items=[],
+        warning_items=["in_sample_only", "requires_oos_walk_forward_cost_and_benchmark_review"],
+        report_path=workspace_relative_path(report_path, base),
+        json_path=workspace_relative_path(json_path, base),
+        source_artifacts={
+            "trial_ledger": workspace_relative_path(json_path, base),
+        },
+    )
     _write_sweep_json(
         json_path,
         source,
@@ -180,7 +208,10 @@ def run_parameter_sweep(
         search_space_payload,
         sweep_analysis,
         manifest,
+        ledger,
+        index_record,
     )
+    writer.append_index(index_record)
     _write_sweep_report(
         report_path,
         source,
@@ -386,6 +417,8 @@ def _write_sweep_json(
     search_space_payload: dict[str, Any],
     sweep_analysis: dict[str, Any],
     manifest: dict[str, Any],
+    ledger: TrialLedger,
+    index_record: ResearchRunIndexRecord,
 ) -> Path:
     ensure_dir(path.parent)
     payload = {
@@ -399,6 +432,8 @@ def _write_sweep_json(
         "search_space": search_space_payload,
         "data_profile": data_profile,
         "research_manifest": manifest,
+        "trial_ledger": ledger.model_dump(mode="json"),
+        "research_run_index_record": index_record.model_dump(mode="json"),
         "stability": sweep_analysis,
         "dsr_inputs": sweep_analysis.get("dsr_inputs", {}),
         "selection_bias_note": sweep_analysis.get("selection_bias_note"),
@@ -407,7 +442,7 @@ def _write_sweep_json(
             "min_signals": min_signals,
             "min_sharpe": min_sharpe,
         },
-        "written_specs": [str(path) for path in written_specs],
+        "written_specs": [path.as_posix() for path in written_specs],
         "warning": (
             "Parameter sweep is in-sample research evidence only; run out-of-sample, "
             "walk-forward, cost sensitivity, and data-source comparison before promotion."
@@ -416,6 +451,38 @@ def _write_sweep_json(
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
+
+
+def _trial_ledger(
+    source: StrategySpec,
+    candidates: list[SweepCandidateResult],
+    max_candidates: int,
+) -> TrialLedger:
+    trials = [
+        TrialRecord(
+            trial_id=f"{source.name}-sweep-{candidate.rank:03d}",
+            rank=candidate.rank,
+            candidate_name=candidate.spec.name,
+            params=candidate.params,
+            score=candidate.score,
+            status="warning",
+            metrics=_candidate_payload(candidate)["metrics"],
+            quality_flags=_quality_flags(candidate),
+            artifact_paths={
+                "spec_path": str(candidate.spec_path) if candidate.spec_path else None,
+                "backtest_report": str(candidate.artifacts.run.report_path)
+                if candidate.artifacts.run.report_path
+                else None,
+            },
+        )
+        for candidate in candidates
+    ]
+    return TrialLedger.from_trials(
+        strategy_name=source.name,
+        family="parameter_sweep",
+        trials=trials,
+        max_candidates=max_candidates,
+    )
 
 
 def _candidate_payload(candidate: SweepCandidateResult) -> dict[str, Any]:

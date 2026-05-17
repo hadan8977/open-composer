@@ -36,11 +36,24 @@ def test_strategy_research_report_writes_default_contract_pipeline(
     payload = json.loads(report_json.read_text(encoding="utf-8"))
     contract = json.loads(contract_json.read_text(encoding="utf-8"))
     assert payload["status"] == "blocked"
+    assert payload["kind"] == "research_report"
     assert payload["contract_path"] == "reports/research/qqq_pullback_15m-research-contract.json"
+    assert payload["research_brief"]["strategy_name"] == "qqq_pullback_15m"
+    assert payload["search_space"]["family"] == "default_research_contract"
+    assert payload["candidate_count"] >= 1
+    assert payload["trial_count"] == 1
+    assert payload["runtime_seconds"] >= 0
+    assert payload["evaluation_bundle"]["strategy_name"] == "qqq_pullback_15m"
+    assert payload["research_run_index_record"]["run_id"].startswith("research-qqq_pullback_15m-")
     assert "factor_lab" in contract["required_checks"]
     assert any(item["name"] == "execution_reality" for item in payload["checklist"])
     assert payload["factor_lab"]["status"] == "blocked"
     assert payload["promotion"]["status"] == "blocked"
+    index_path = sample_workspace / "reports" / "research" / "index.jsonl"
+    assert index_path.exists()
+    index_rows = [json.loads(line) for line in index_path.read_text(encoding="utf-8").splitlines()]
+    research_row = next(item for item in index_rows if item["kind"] == "research_report")
+    assert research_row["blocked_items"]
 
 
 def test_strategy_dag_validation_blocks_incomplete_llm_packets(

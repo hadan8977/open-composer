@@ -4,7 +4,7 @@ import { Sidebar, NavKey } from "./components/sidebar";
 import { TopBar } from "./components/topbar";
 import { Overview } from "./components/overview";
 import { Library } from "./components/library";
-import { ActivityView } from "./components/sections";
+import { ActivityView, ResearchView } from "./components/sections";
 import { StrategyDetail } from "./components/strategy-detail";
 import { StatusFooter } from "./components/footer";
 import { loginDashboard, useDashboardCatalogSync, useDashboardSession } from "./components/runtime";
@@ -49,6 +49,7 @@ export default function App() {
               <>
                 {tab === "monitor"   && <Overview />}
                 {tab === "strategies" && <Library onSelect={(id) => setSelectedStrategyId(id)} />}
+                {tab === "research" && <ResearchView />}
                 {tab === "activity" && <ActivityView />}
               </>
             )}

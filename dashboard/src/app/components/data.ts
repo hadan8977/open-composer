@@ -7,6 +7,7 @@ export type ModelClass =
   | "quant-scan"
   | "quant-orchestrator";
 export type CapabilityStatus = "supported" | "partial" | "blocked" | "unsupported";
+export type OperationalStatus = "ok" | "warning" | "blocked";
 
 export interface Strategy {
   id: string;
@@ -141,6 +142,25 @@ export interface PaperReadinessReport {
   checks: PaperReadinessCheck[];
 }
 
+export interface ResearchRun {
+  id: string;
+  generatedAt: string | null;
+  strategyName: string;
+  kind: string;
+  status: OperationalStatus;
+  gateStatus: OperationalStatus;
+  sourceSpecPath: string;
+  reportPath: string | null;
+  jsonPath: string | null;
+  candidateCount: number;
+  trialCount: number;
+  runtimeSeconds: number | null;
+  blockedItems: string[];
+  warningItems: string[];
+  dataSourceMode: string;
+  dataAsOf: string | null;
+}
+
 export interface DashboardSummaryView {
   catalogPath: string;
   generatedAt: string | null;
@@ -163,6 +183,10 @@ export interface DashboardSummaryView {
   dataComparisonCount: number;
   featurePacketCount: number;
   workflowReportCount: number;
+  researchReportCount: number;
+  researchRunCount: number;
+  researchBlockedCount: number;
+  researchWarningCount: number;
   readinessStatus: "ok" | "warning" | "blocked" | "missing";
   readinessReady: boolean;
   readinessWarningCount: number;
@@ -212,6 +236,8 @@ interface DashboardCatalog {
   data_comparisons?: DashboardDataComparisonRecord[];
   feature_packets?: DashboardFeaturePacketRecord[];
   workflow_reports?: DashboardWorkflowReportRecord[];
+  research_reports?: DashboardResearchReportRecord[];
+  research_runs?: DashboardResearchRunRecord[];
   readiness_report?: DashboardReadinessReportRecord | null;
   deployment_report?: DashboardDeploymentReportRecord | null;
 }
@@ -233,6 +259,10 @@ interface DashboardSummaryRecord {
   data_comparison_count?: number;
   feature_packet_count?: number;
   workflow_report_count?: number;
+  research_report_count?: number;
+  research_run_count?: number;
+  research_blocked_count?: number;
+  research_warning_count?: number;
   readiness_status?: "ok" | "warning" | "blocked" | "missing";
   readiness_ready?: boolean;
   readiness_warning_count?: number;
@@ -467,6 +497,34 @@ interface DashboardWorkflowReportRecord {
   report_markdown_path?: string | null;
 }
 
+interface DashboardResearchReportRecord {
+  strategy_name?: string;
+  kind?: string;
+  status?: OperationalStatus;
+  ready?: boolean;
+  report_json_path?: string;
+  report_markdown_path?: string | null;
+  next_action?: string;
+}
+
+interface DashboardResearchRunRecord {
+  run_id?: string;
+  generated_at?: string | null;
+  strategy_name?: string;
+  source_spec_path?: string;
+  status?: OperationalStatus;
+  kind?: string;
+  data_profile?: Record<string, unknown>;
+  candidate_count?: number;
+  trial_count?: number;
+  runtime_seconds?: number | null;
+  gate_status?: OperationalStatus;
+  blocked_items?: string[];
+  warning_items?: string[];
+  report_path?: string | null;
+  json_path?: string | null;
+}
+
 interface DashboardOperationalCheckRecord {
   name?: string;
   status?: "ok" | "warning" | "blocked";
@@ -503,6 +561,7 @@ let catalogGeneratedAt = catalog.generated_at ?? summaryRecord.generated_at ?? n
 let allRuns = asArray(catalog.runs);
 let allVersions = asArray(catalog.versions);
 let allPaperReadiness = asArray(catalog.paper_readiness_reports);
+let allResearchRuns = asArray(catalog.research_runs);
 let versionById = new Map(allVersions.map((version) => [version.version_id, version]));
 let paperReadinessByStrategy = buildPaperReadinessByStrategy();
 
@@ -517,6 +576,7 @@ export let strategyGroups: StrategyGroup[] = buildStrategyGroups();
 export let paperPositions: PaperPosition[] = buildPaperPositions();
 export let paperOrders = buildPaperOrders();
 export let paperReadinessReports: PaperReadinessReport[] = buildPaperReadinessReports();
+export let researchRuns: ResearchRun[] = buildResearchRuns();
 
 export function applyDashboardCatalog(nextCatalog: DashboardCatalog): void {
   catalog = nextCatalog ?? {};
@@ -525,6 +585,7 @@ export function applyDashboardCatalog(nextCatalog: DashboardCatalog): void {
   allRuns = asArray(catalog.runs);
   allVersions = asArray(catalog.versions);
   allPaperReadiness = asArray(catalog.paper_readiness_reports);
+  allResearchRuns = asArray(catalog.research_runs);
   versionById = new Map(allVersions.map((version) => [version.version_id, version]));
   paperReadinessByStrategy = buildPaperReadinessByStrategy();
 
@@ -537,6 +598,7 @@ export function applyDashboardCatalog(nextCatalog: DashboardCatalog): void {
   paperPositions = buildPaperPositions();
   paperOrders = buildPaperOrders();
   paperReadinessReports = buildPaperReadinessReports();
+  researchRuns = buildResearchRuns();
   events = buildTimelineEvents();
   strategyGroups = buildStrategyGroups();
 
@@ -571,6 +633,15 @@ function buildDashboardSummary(): DashboardSummaryView {
       summaryRecord.feature_packet_count ?? asArray(catalog.feature_packets).length,
     workflowReportCount:
       summaryRecord.workflow_report_count ?? asArray(catalog.workflow_reports).length,
+    researchReportCount:
+      summaryRecord.research_report_count ?? asArray(catalog.research_reports).length,
+    researchRunCount: summaryRecord.research_run_count ?? allResearchRuns.length,
+    researchBlockedCount:
+      summaryRecord.research_blocked_count ??
+      allResearchRuns.filter((run) => run.status === "blocked").length,
+    researchWarningCount:
+      summaryRecord.research_warning_count ??
+      allResearchRuns.filter((run) => run.status === "warning").length,
     readinessStatus:
       summaryRecord.readiness_status ?? catalog.readiness_report?.status ?? "missing",
     readinessReady: summaryRecord.readiness_ready ?? Boolean(catalog.readiness_report?.ready),
@@ -803,6 +874,33 @@ function buildPaperReadinessByStrategy(): Map<string, PaperReadinessReport> {
   return new Map(
     buildPaperReadinessReports().map((report) => [report.strategyId, report]),
   );
+}
+
+function buildResearchRuns(): ResearchRun[] {
+  return allResearchRuns
+    .slice()
+    .sort((left, right) => compareDateDesc(left.generated_at, right.generated_at))
+    .map((run) => {
+      const dataProfile = run.data_profile ?? {};
+      return {
+        id: run.run_id ?? "research-run",
+        generatedAt: run.generated_at ?? null,
+        strategyName: humanize(run.strategy_name ?? "unknown"),
+        kind: run.kind ?? "research_report",
+        status: run.status ?? "warning",
+        gateStatus: run.gate_status ?? run.status ?? "warning",
+        sourceSpecPath: run.source_spec_path ?? "",
+        reportPath: run.report_path ?? null,
+        jsonPath: run.json_path ?? null,
+        candidateCount: run.candidate_count ?? 0,
+        trialCount: run.trial_count ?? 0,
+        runtimeSeconds: run.runtime_seconds ?? null,
+        blockedItems: run.blocked_items ?? [],
+        warningItems: run.warning_items ?? [],
+        dataSourceMode: String(dataProfile.source_mode ?? dataProfile.status ?? "unknown"),
+        dataAsOf: typeof dataProfile.data_as_of === "string" ? dataProfile.data_as_of : null,
+      };
+    });
 }
 
 function latestRunFor(strategyId: string): DashboardRunRecord | undefined {

@@ -393,6 +393,7 @@ class DashboardResearchReport(BaseModel):
         "llm_exposure_switch",
         "rotation",
         "market_timing",
+        "geometry_features",
         "unknown",
     ] = "unknown"
     status: Literal["ok", "warning", "blocked"] = "warning"
@@ -416,6 +417,29 @@ class DashboardResearchReport(BaseModel):
     llm_contribution_status: str | None = None
     paper_readiness_status: PaperReadinessStatus | None = None
     data_provenance: dict[str, object] = Field(default_factory=dict)
+
+
+class DashboardResearchRun(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run_id: str
+    generated_at: datetime | None = None
+    strategy_name: str
+    source_spec_path: str
+    spec_hash: str | None = None
+    status: Literal["ok", "warning", "blocked"] = "warning"
+    kind: str = "research_report"
+    data_profile: dict[str, object] = Field(default_factory=dict)
+    candidate_count: int = 0
+    trial_count: int = 0
+    runtime_seconds: float | None = None
+    gate_status: Literal["ok", "warning", "blocked"] = "warning"
+    blocked_items: list[str] = Field(default_factory=list)
+    warning_items: list[str] = Field(default_factory=list)
+    report_path: str | None = None
+    json_path: str | None = None
+    contract_path: str | None = None
+    source_artifacts: dict[str, str | None] = Field(default_factory=dict)
 
 
 class DashboardOperationalCheck(BaseModel):
@@ -473,6 +497,9 @@ class DashboardSummary(BaseModel):
     feature_packet_count: int = 0
     workflow_report_count: int = 0
     research_report_count: int = 0
+    research_run_count: int = 0
+    research_blocked_count: int = 0
+    research_warning_count: int = 0
     readiness_status: Literal["ok", "warning", "blocked", "missing"] = "missing"
     readiness_ready: bool = False
     readiness_warning_count: int = 0
@@ -543,5 +570,6 @@ class DashboardCatalog(BaseModel):
     feature_packets: list[DashboardFeaturePacket] = Field(default_factory=list)
     workflow_reports: list[DashboardWorkflowReport] = Field(default_factory=list)
     research_reports: list[DashboardResearchReport] = Field(default_factory=list)
+    research_runs: list[DashboardResearchRun] = Field(default_factory=list)
     readiness_report: DashboardReadinessReport | None = None
     deployment_report: DashboardDeploymentReport | None = None

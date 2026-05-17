@@ -120,6 +120,7 @@ from open_composer.remote.bootstrap import (
 from open_composer.remote.server import RemoteServerError
 from open_composer.repo_check import build_repo_check_report, write_repo_check_report
 from open_composer.research import (
+    build_geometry_feature_report,
     build_promotion_report,
     build_strategy_research_report,
     draft_strategy_from_idea,
@@ -1727,6 +1728,28 @@ def strategy_factor_lab(
     console.print(
         f"[green]factor lab complete[/green] status={result.status} "
         f"factors={len(result.factor_metrics)}"
+    )
+    console.print(f"report: {result.report_path}")
+    console.print(f"json: {result.json_path}")
+
+
+@strategy_app.command("geometry-features")
+def strategy_geometry_features(
+    spec: Path,
+    window_bars: int = typer.Option(20, "--window-bars"),
+) -> None:
+    """Build a research-only geometry/topology feature sandbox report."""
+    try:
+        result = build_geometry_feature_report(
+            spec,
+            project_root(),
+            window_bars=window_bars,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]geometry features complete[/green] status={result.status} "
+        f"research_only={result.research_only}"
     )
     console.print(f"report: {result.report_path}")
     console.print(f"json: {result.json_path}")

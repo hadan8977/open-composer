@@ -354,8 +354,28 @@ def _render_dashboard_html(catalog: DashboardCatalog) -> str:
       <div class="section-head">
         <div>
           <h2>Research Evidence</h2>
-          <p>Promotion and parameter sweep reports used as paper promotion evidence.</p>
+          <p>Research runs and reports indexed from the shared research kernel.</p>
         </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Run</th>
+              <th>Strategy</th>
+              <th>Kind</th>
+              <th>Status</th>
+              <th>Candidates</th>
+              <th>Trials</th>
+              <th>Runtime</th>
+              <th>Blockers</th>
+              <th>Report</th>
+            </tr>
+          </thead>
+          <tbody>
+            {_research_run_rows(catalog.research_runs)}
+          </tbody>
+        </table>
       </div>
       <div class="table-wrap">
         <table>
@@ -804,6 +824,28 @@ def _research_report_rows(reports: list) -> str:
     return "\n".join(rows)
 
 
+def _research_run_rows(runs: list) -> str:
+    if not runs:
+        return '<tr><td colspan="9">No research runs indexed.</td></tr>'
+    rows = []
+    for item in runs[:20]:
+        blockers = ", ".join(item.blocked_items[:3]) or ", ".join(item.warning_items[:3]) or "none"
+        rows.append(
+            "<tr>"
+            f"<td>{escape(item.run_id)}</td>"
+            f"<td>{escape(item.strategy_name)}</td>"
+            f"<td>{_pill(item.kind)}</td>"
+            f"<td>{_pill(item.status, _status_class(item.status))}</td>"
+            f"<td>{item.candidate_count}</td>"
+            f"<td>{item.trial_count}</td>"
+            f"<td>{_format_seconds(item.runtime_seconds)}</td>"
+            f"<td>{escape(blockers)}</td>"
+            f"<td>{_artifact_link(item.json_path or item.report_path or '', '../../')}</td>"
+            "</tr>"
+        )
+    return "\n".join(rows)
+
+
 def _strategy_research_report_rows(reports: list) -> str:
     if not reports:
         return '<tr><td colspan="10">No research reports indexed for this strategy.</td></tr>'
@@ -1043,6 +1085,12 @@ def _money(value: float | None) -> str:
     if value is None:
         return ""
     return f"${value:.2f}"
+
+
+def _format_seconds(value: float | None) -> str:
+    if value is None:
+        return "n/a"
+    return f"{value:.2f}s"
 
 
 def _dt(value: datetime | str | None) -> str:

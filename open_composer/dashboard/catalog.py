@@ -27,6 +27,7 @@ from open_composer.models.dashboard import (
     DashboardPaperReadinessReport,
     DashboardReadinessReport,
     DashboardResearchReport,
+    DashboardResearchRun,
     DashboardReview,
     DashboardRun,
     DashboardSignal,
@@ -76,6 +77,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
     feature_packet_records = build_feature_packet_records(base)
     workflow_records = _build_workflow_records(base)
     research_records = _build_research_records(base)
+    research_run_records = _build_research_run_records(base)
     readiness_report = _build_readiness_record(base)
     deployment_report = _build_deployment_record(base)
 
@@ -95,6 +97,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         feature_packets=feature_packet_records,
         workflow_reports=workflow_records,
         research_reports=research_records,
+        research_runs=research_run_records,
         readiness_report=readiness_report,
         deployment_report=deployment_report,
         paper_readiness_reports=paper_readiness_records,
@@ -120,6 +123,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         feature_packets=feature_packet_records,
         workflow_reports=workflow_records,
         research_reports=research_records,
+        research_runs=research_run_records,
         readiness_report=readiness_report,
         deployment_report=deployment_report,
     )
@@ -1049,6 +1053,8 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
         if not isinstance(raw, dict):
             continue
         name = path.name
+        if name in {"index.json", "index.jsonl"}:
+            continue
         if name.endswith("-promotion.json"):
             kind = "promotion"
         elif name.endswith("-parameter-sweep.json"):
@@ -1061,6 +1067,8 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
             kind = "rotation"
         elif name.endswith("-market-timing-research.json"):
             kind = "market_timing"
+        elif name.endswith("-geometry-features.json"):
+            kind = "geometry_features"
         else:
             kind = "unknown"
         status = str(raw.get("status", "warning"))
@@ -1140,6 +1148,81 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
         )
     records.sort(key=lambda item: (item.strategy_name.lower(), item.kind, item.report_json_path))
     return records
+
+
+def _build_research_run_records(base: Path) -> list[DashboardResearchRun]:
+    records: list[DashboardResearchRun] = []
+    seen: set[str] = set()
+    index_path = base / "reports" / "research" / "index.jsonl"
+    for raw in _load_jsonl(index_path):
+        record = _research_run_record(raw)
+        if record is None:
+            continue
+        seen.add(record.run_id)
+        records.append(record)
+
+    root = base / "reports" / "research"
+    if root.exists():
+        for path in sorted(root.glob("*.json")):
+            try:
+                raw = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(raw, dict):
+                continue
+            embedded = raw.get("research_run_index_record")
+            if not isinstance(embedded, dict):
+                continue
+            record = _research_run_record(embedded)
+            if record is None or record.run_id in seen:
+                continue
+            seen.add(record.run_id)
+            records.append(record)
+
+    records.sort(
+        key=lambda item: (
+            item.generated_at or datetime.min.replace(tzinfo=UTC),
+            item.strategy_name,
+            item.run_id,
+        ),
+        reverse=True,
+    )
+    return records
+
+
+def _research_run_record(raw: dict[str, Any]) -> DashboardResearchRun | None:
+    try:
+        return DashboardResearchRun(
+            run_id=str(raw.get("run_id") or ""),
+            generated_at=_optional_datetime(raw.get("generated_at")),
+            strategy_name=str(raw.get("strategy_name") or "unknown"),
+            source_spec_path=str(raw.get("source_spec_path") or ""),
+            spec_hash=_registered_value(raw.get("spec_hash")),
+            status=_status_value(raw.get("status")),
+            kind=str(raw.get("kind") or "research_report"),
+            data_profile=raw.get("data_profile", {})
+            if isinstance(raw.get("data_profile"), dict)
+            else {},
+            candidate_count=int(raw.get("candidate_count", 0) or 0),
+            trial_count=int(raw.get("trial_count", 0) or 0),
+            runtime_seconds=_optional_float(raw.get("runtime_seconds")),
+            gate_status=_status_value(raw.get("gate_status")),
+            blocked_items=[str(item) for item in raw.get("blocked_items", []) if item],
+            warning_items=[str(item) for item in raw.get("warning_items", []) if item],
+            report_path=_registered_value(raw.get("report_path")),
+            json_path=_registered_value(raw.get("json_path")),
+            contract_path=_registered_value(raw.get("contract_path")),
+            source_artifacts={
+                str(key): _registered_value(value)
+                for key, value in (
+                    raw.get("source_artifacts", {})
+                    if isinstance(raw.get("source_artifacts"), dict)
+                    else {}
+                ).items()
+            },
+        )
+    except (TypeError, ValueError):
+        return None
 
 
 def _research_candidate_count(raw: dict[str, Any]) -> int | None:
@@ -1430,6 +1513,7 @@ def _build_summary(
     feature_packets: list[DashboardFeaturePacket],
     workflow_reports: list[DashboardWorkflowReport],
     research_reports: list[DashboardResearchReport],
+    research_runs: list[DashboardResearchRun],
     readiness_report: DashboardReadinessReport | None,
     deployment_report: DashboardDeploymentReport | None,
     paper_readiness_reports: list[DashboardPaperReadinessReport],
@@ -1485,6 +1569,9 @@ def _build_summary(
         feature_packet_count=len(feature_packets),
         workflow_report_count=len(workflow_reports),
         research_report_count=len(research_reports),
+        research_run_count=len(research_runs),
+        research_blocked_count=sum(1 for item in research_runs if item.status == "blocked"),
+        research_warning_count=sum(1 for item in research_runs if item.status == "warning"),
         readiness_status=readiness_report.status if readiness_report else "missing",
         readiness_ready=readiness_report.ready if readiness_report else False,
         readiness_warning_count=_operational_count(readiness_report.checks, "warning")
@@ -1573,6 +1660,11 @@ def _render_catalog_markdown(catalog: DashboardCatalog) -> str:
         f"| Feature packets | {summary.feature_packet_count} |",
         f"| Workflow reports | {summary.workflow_report_count} |",
         f"| Research reports | {summary.research_report_count} |",
+        f"| Research runs | {summary.research_run_count} |",
+        (
+            f"| Research blocked / warning | {summary.research_blocked_count} / "
+            f"{summary.research_warning_count} |"
+        ),
         f"| Readiness | {summary.readiness_status} |",
         f"| Deployment prepare | {summary.deployment_status} |",
         f"| Active strategies | {summary.active_strategy_count} |",
@@ -1702,6 +1794,11 @@ def _render_review_markdown(catalog: DashboardCatalog) -> str:
         f"- Feature packets indexed: `{summary.feature_packet_count}`",
         f"- Workflow reports indexed: `{summary.workflow_report_count}`",
         f"- Research reports indexed: `{summary.research_report_count}`",
+        f"- Research runs indexed: `{summary.research_run_count}`",
+        (
+            f"- Research blocked/warning: `{summary.research_blocked_count}` / "
+            f"`{summary.research_warning_count}`"
+        ),
         f"- Readiness status: `{summary.readiness_status}` ready=`{summary.readiness_ready}`",
         f"- Deployment status: `{summary.deployment_status}` ready=`{summary.deployment_ready}`",
         "",
@@ -1917,10 +2014,18 @@ def _title_from_report(path: Path) -> str:
 
 def _load_jsonl(path: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
+    if not path.exists():
+        return rows
     with path.open("r", encoding="utf-8") as handle:
         for line in handle:
-            if line.strip():
-                rows.append(json.loads(line))
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(row, dict):
+                rows.append(row)
     return rows
 
 
@@ -1956,6 +2061,11 @@ def _optional_datetime(value: object) -> datetime | None:
         return _parse_datetime(value if isinstance(value, datetime) else str(value))
     except ValueError:
         return None
+
+
+def _status_value(value: object) -> Literal["ok", "warning", "blocked"]:
+    text = str(value or "warning")
+    return text if text in {"ok", "warning", "blocked"} else "warning"  # type: ignore[return-value]
 
 
 def _operational_count(

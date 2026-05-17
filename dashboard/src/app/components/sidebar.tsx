@@ -1,9 +1,9 @@
-import { Activity, BookMarked, ListChecks } from "lucide-react";
+import { Activity, BookMarked, FlaskConical, ListChecks } from "lucide-react";
 import logoMarkUrl from "../../../logo_optimized (2).svg";
 import { dashboardSummary } from "./data";
 import type { DashboardCatalogSyncState } from "./runtime";
 
-export type NavKey = "monitor" | "strategies" | "activity";
+export type NavKey = "monitor" | "strategies" | "research" | "activity";
 
 interface Props {
   active: NavKey;
@@ -15,6 +15,7 @@ function navItems(): { key: NavKey; label: string; icon: any; count?: string; ac
   return [
     { key: "monitor", label: "Monitor", icon: Activity, count: String(dashboardSummary.paperAutoStrategyCount), accent: "#1FB85A" },
     { key: "strategies", label: "Strategies", icon: BookMarked, count: String(dashboardSummary.strategyCount), accent: "#0A0A0A" },
+    { key: "research", label: "Research", icon: FlaskConical, count: String(dashboardSummary.researchRunCount), accent: "#3B82F6" },
     { key: "activity", label: "Activity", icon: ListChecks, count: String(dashboardSummary.signalCount + dashboardSummary.orderCount + dashboardSummary.auditCount + dashboardSummary.reviewCount), accent: "#F8A93B" },
   ];
 }

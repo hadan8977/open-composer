@@ -57,6 +57,17 @@ def test_parameter_sweep_runs_grid_and_writes_ranked_reports(sample_workspace: P
     assert payload["dsr_inputs"]["trial_count"] == 4
     assert payload["selection_bias_note"]
     assert payload["research_manifest"]["spec_hash"]
+    assert payload["trial_ledger"]["trial_count"] == 4
+    assert (
+        payload["trial_ledger"]["trials"][0]["candidate_name"]
+        == payload["candidates"][0]["strategy_name"]
+    )
+    assert payload["research_run_index_record"]["kind"] == "parameter_sweep"
+    assert payload["research_run_index_record"]["trial_count"] == 4
+    index_path = sample_workspace / "reports" / "research" / "index.jsonl"
+    assert index_path.exists()
+    index_rows = [json.loads(line) for line in index_path.read_text(encoding="utf-8").splitlines()]
+    assert index_rows[0]["kind"] == "parameter_sweep"
     assert "stability" in payload["candidates"][0]
     assert "in-sample research evidence" in result.report_path.read_text(encoding="utf-8")
     assert "Buy/Hold" in result.report_path.read_text(encoding="utf-8")

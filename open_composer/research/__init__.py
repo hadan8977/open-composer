@@ -5,6 +5,10 @@ from open_composer.research.cost_sensitivity import CostGridReport, CostGridResu
 from open_composer.research.drafter import draft_strategy_from_idea
 from open_composer.research.exposure_switch import run_exposure_switch_research
 from open_composer.research.factor_lab import FactorLabResult, run_factor_lab
+from open_composer.research.geometry_features import (
+    GeometryFeatureReportResult,
+    build_geometry_feature_report,
+)
 from open_composer.research.horizon_optimizer import optimize_strategy_horizons
 from open_composer.research.intraday_daily_rotation import (
     run_intraday_daily_rotation_research,
@@ -51,6 +55,8 @@ __all__ = [
     "run_skill_attribution",
     "run_exposure_switch_research",
     "FactorLabResult",
+    "GeometryFeatureReportResult",
+    "build_geometry_feature_report",
     "run_factor_lab",
     "run_intraday_daily_rotation_research",
     "run_llm_intraday_daily_rotation_selection",
