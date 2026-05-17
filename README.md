@@ -135,6 +135,8 @@ artifact size without deleting anything.
 - [docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md](docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md) - Dashboard, strategy workflow, and research-kernel optimization plan
 - [docs/product-mvp-hardening-research-plan-2026-05-17.zh.md](docs/product-mvp-hardening-research-plan-2026-05-17.zh.md) - MVP hardening plan for Dashboard, strategy iteration, and the shared research kernel
 - [docs/harness-engineering-agent-quant-review-2026-05-17.zh.md](docs/harness-engineering-agent-quant-review-2026-05-17.zh.md) - harness engineering plan for stronger agent, skill, workflow, and quant research constraints
+- [docs/harness-engineering-expanded-research-log-2026-05-17.zh.md](docs/harness-engineering-expanded-research-log-2026-05-17.zh.md) - expanded research log for agent, quant, financial LLM, data, and risk-control references
+- [docs/harness-engineering-expanded-architecture-review-2026-05-17.zh.md](docs/harness-engineering-expanded-architecture-review-2026-05-17.zh.md) - expanded Honest/Harness engineering architecture review and implementation plan
 
 ## License
 

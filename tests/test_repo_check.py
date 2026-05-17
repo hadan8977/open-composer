@@ -28,6 +28,8 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md",
         "docs/product-mvp-hardening-research-plan-2026-05-17.zh.md",
         "docs/harness-engineering-agent-quant-review-2026-05-17.zh.md",
+        "docs/harness-engineering-expanded-research-log-2026-05-17.zh.md",
+        "docs/harness-engineering-expanded-architecture-review-2026-05-17.zh.md",
     ]:
         source = repo_root / relative
         destination = target / relative
