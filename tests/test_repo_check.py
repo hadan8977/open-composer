@@ -14,13 +14,18 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "README.md",
         "AGENTS.md",
         "CLAUDE.md",
+        "LICENSE",
         "Makefile",
         "scripts/sync-agent-skills.py",
         "scripts/check-agent-parity.py",
         "docs/product-golden-path-codex-quant-review-2026-05-13.zh.md",
+        "docs/user-guide.md",
         "docs/remote-dashboard-deploy.zh.md",
         "docs/setup-local.zh.md",
         "docs/longbridge-integration.md",
+        "docs/research-contract-p0-p2-plan-2026-05-17.zh.md",
+        "docs/product-structure-efficiency-review-2026-05-17.zh.md",
+        "docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md",
     ]:
         source = repo_root / relative
         destination = target / relative
@@ -90,9 +95,9 @@ def test_repo_check_blocks_when_research_controls_are_missing(
     repo_root: Path,
 ) -> None:
     _copy_repo_check_inputs(repo_root, sample_workspace)
-    readme = sample_workspace / "README.md"
-    readme.write_text(
-        readme.read_text(encoding="utf-8").replace(
+    user_guide = sample_workspace / "docs" / "user-guide.md"
+    user_guide.write_text(
+        user_guide.read_text(encoding="utf-8").replace(
             "uv run oc strategy llm-exposure-switch",
             "uv run oc strategy removed-llm-command",
         ),
@@ -112,9 +117,9 @@ def test_repo_check_blocks_when_research_metadata_controls_are_missing(
     repo_root: Path,
 ) -> None:
     _copy_repo_check_inputs(repo_root, sample_workspace)
-    readme = sample_workspace / "README.md"
-    readme.write_text(
-        readme.read_text(encoding="utf-8").replace(
+    user_guide = sample_workspace / "docs" / "user-guide.md"
+    user_guide.write_text(
+        user_guide.read_text(encoding="utf-8").replace(
             "research_brief",
             "removed_brief_anchor",
         ),

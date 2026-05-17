@@ -38,6 +38,11 @@ from open_composer.agent_requests import (
     create_agent_request,
     list_agent_requests,
 )
+from open_composer.cache import (
+    build_cache_inventory,
+    clean_cache_targets,
+    resolve_clean_target_keys,
+)
 from open_composer.capabilities import evaluate_capabilities, load_registry
 from open_composer.compiler.spec_to_pine import compile_pine, compile_pine_strategy
 from open_composer.config import (
@@ -183,6 +188,7 @@ repo_app = typer.Typer(no_args_is_help=True)
 remote_app = typer.Typer(no_args_is_help=True)
 agent_app = typer.Typer(no_args_is_help=True)
 notify_app = typer.Typer(no_args_is_help=True)
+cache_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -204,6 +210,7 @@ app.add_typer(repo_app, name="repo")
 app.add_typer(remote_app, name="remote")
 app.add_typer(agent_app, name="agent")
 app.add_typer(notify_app, name="notify")
+app.add_typer(cache_app, name="cache")
 
 
 @app.callback()
@@ -272,6 +279,128 @@ def doctor() -> None:
         "required for Longbridge live API Key auth",
     )
     console.print(table)
+
+
+@cache_app.command("status")
+def cache_status_command(
+    json_output: Annotated[
+        bool,
+        typer.Option("--json", help="Print machine-readable cache inventory."),
+    ] = False,
+) -> None:
+    """Show local dependency, cache, and runtime artifact sizes."""
+    root = project_root()
+    inventory = build_cache_inventory(root)
+    payload = {
+        "root": str(root),
+        "targets": [item.to_dict() for item in inventory],
+    }
+    if json_output:
+        sys.stdout.write(json.dumps(payload, indent=2) + "\n")
+        return
+
+    table = Table(title="Open Composer Cache Status")
+    table.add_column("Target")
+    table.add_column("Path")
+    table.add_column("Size")
+    table.add_column("Files")
+    table.add_column("Cleanable")
+    table.add_column("Protected")
+    table.add_column("Note")
+    for item in inventory:
+        data = item.to_dict()
+        cleanable = data["cleanable_size"] if data["cleanable"] else "status only"
+        table.add_row(
+            data["label"],
+            data["path"],
+            data["size"],
+            str(data["file_count"]),
+            cleanable,
+            str(data["protected_files"]),
+            data["note"],
+        )
+    console.print(table)
+
+
+@cache_app.command("clean")
+def cache_clean_command(
+    data_cache: Annotated[
+        bool,
+        typer.Option("--data-cache", help="Select data/cache."),
+    ] = False,
+    reports: Annotated[
+        bool,
+        typer.Option("--reports", help="Select generated reports."),
+    ] = False,
+    signal_logs: Annotated[
+        bool,
+        typer.Option("--signal-logs", help="Select signal_logs."),
+    ] = False,
+    feature_logs: Annotated[
+        bool,
+        typer.Option("--feature-logs", help="Select feature_logs."),
+    ] = False,
+    event_logs: Annotated[
+        bool,
+        typer.Option("--event-logs", help="Select event_logs."),
+    ] = False,
+    all_runtime: Annotated[
+        bool,
+        typer.Option("--all-runtime", help="Select all cleanable runtime targets."),
+    ] = False,
+    dry_run: Annotated[
+        bool,
+        typer.Option(
+            "--dry-run/--apply",
+            help="Preview by default; pass --apply to delete selected artifacts.",
+        ),
+    ] = True,
+    json_output: Annotated[
+        bool,
+        typer.Option("--json", help="Print machine-readable clean result."),
+    ] = False,
+) -> None:
+    """Preview or clean ignored local cache and runtime artifacts."""
+    root = project_root()
+    selected = resolve_clean_target_keys(
+        data_cache=data_cache,
+        reports=reports,
+        signal_logs=signal_logs,
+        feature_logs=feature_logs,
+        event_logs=event_logs,
+        all_runtime=all_runtime,
+    )
+    try:
+        result = clean_cache_targets(root, selected, dry_run=dry_run)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    payload = result.to_dict()
+    payload["root"] = str(root)
+    payload["selected"] = list(selected)
+    if json_output:
+        sys.stdout.write(json.dumps(payload, indent=2) + "\n")
+        return
+
+    table = Table(title=f"Open Composer Cache Clean ({'dry run' if dry_run else 'applied'})")
+    table.add_column("Target")
+    table.add_column("Files")
+    table.add_column("Dirs")
+    table.add_column("Size")
+    table.add_column("Protected")
+    for item in result.targets:
+        table.add_row(
+            item.path,
+            str(item.files),
+            str(item.dirs),
+            item.to_dict()["size"],
+            str(item.protected_files),
+        )
+    console.print(table)
+    if dry_run:
+        console.print("dry_run=yes; pass --apply to delete selected artifacts")
+    else:
+        console.print("dry_run=no; selected unprotected artifacts were removed")
 
 
 @app.command("readiness")

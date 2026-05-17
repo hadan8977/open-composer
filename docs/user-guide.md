@@ -1,0 +1,225 @@
+# Open Composer User Guide
+
+This guide keeps command-level usage out of the README. Start with
+`make start`; use this page when you need the underlying workflow.
+
+## Local Setup
+
+Linux or macOS:
+
+```bash
+./scripts/setup-local.sh
+```
+
+Windows PowerShell:
+
+```powershell
+.\scripts\setup-local.ps1
+```
+
+Manual equivalent:
+
+```bash
+cp .env.example .env
+make bootstrap
+make verify
+make dashboard-serve
+```
+
+The Dashboard is available at `http://127.0.0.1:8000` by default.
+
+## Core Strategy Workflow
+
+Validate a draft, inspect capabilities, run research, and build Dashboard
+artifacts:
+
+```bash
+uv run oc spec validate strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy research-report strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy promotion-report strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc dashboard html
+```
+
+`research-report` is the preferred first evidence artifact. It brings together
+spec validation, capability status, reference backtest, Factor Lab, promotion,
+paper-readiness summary, and research-contract checks.
+
+## Bounded Research
+
+Use bounded search when parameters, factor variants, or method variants are
+adjustable:
+
+```bash
+uv run oc strategy parameter-sweep strategy_specs/drafts/qqq_pullback_15m.yaml \
+  --param risk.stop_loss_pct=0.8,1.0,1.2 \
+  --param risk.take_profit_pct=1.5,2.0,3.0 \
+  --param costs.slippage_bps=0,5 \
+  --max-candidates 27 \
+  --top-n 10 \
+  --write-top 2
+```
+
+Other research commands:
+
+```bash
+uv run oc strategy factor-lab strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy exposure-switch strategy_specs/drafts/qqq_pullback_15m.yaml --walk-forward-folds 3 --walk-forward-top-k 8
+uv run oc strategy rotate-universe strategy_specs/drafts/qqq_pullback_15m.yaml --symbols QQQ,SPY,IWM --walk-forward-folds 3
+uv run oc strategy market-time strategy_specs/drafts/qqq_pullback_15m.yaml --profile risk_control_hold --walk-forward-folds 3
+uv run oc strategy llm-exposure-switch strategy_specs/drafts/qqq_pullback_15m.yaml --validation-folds 3
+uv run oc strategy blind-test strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy cost-grid strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy regime-search strategy_specs/drafts/qqq_pullback_15m.yaml
+```
+
+Research reports write `research_brief`, `search_space`,
+`hypothesis_ledger`, `research_cost`, candidate counts, estimated backtest passes,
+`runtime_seconds`, `data_profile`, source mode, fallback warnings, and Dashboard research records
+where applicable.
+
+LLM selection reports must expose `llm_contribution`,
+`llm_contribution_ok`, `llm_contribution_level`,
+`strategy_distinctiveness_ok`, the prompt artifact, and fallback status.
+Fallback, local choices, or choices identical to the deterministic top
+candidate are labeled `llm_assisted_selection_only`; if an external gateway is
+unavailable, the acceptance gate stays failed. `--local-choice-label` records
+`codex_local_choice` and must select from prompt-visible candidates.
+
+## Data And Feature Packets
+
+```bash
+uv run oc capability test
+uv run oc data fetch --source alpaca --symbol MU --timeframe 15m --feed iex
+uv run oc data fetch --source longbridge --symbol QQQ --timeframe 15m
+uv run oc data longbridge-check --symbol QQQ --timeframe 15m
+uv run oc data compare --symbol QQQ --timeframe 15m --left alpaca --right longbridge
+uv run oc feature validate --strict
+```
+
+Choose data, event, macro, and news sources through
+`capabilities/registry.yaml`. Run capability evaluation before adding a new
+required strategy capability.
+
+Feature packets must be point-in-time replay data with `visible_at`,
+`published_at`, `fetched_at`, `source`, input hash, and prompt hash before
+they affect trading. Promotion and paper readiness require evidence for
+single-modality baseline, marginal lift, and missing-modality robustness.
+
+The expression language is an AST-checked subset: OHLCV names, registered
+factor names, supported indicator functions, boolean logic, comparisons, and
+basic arithmetic. Imports, attribute access, comprehensions, `eval`, `open`,
+and runtime escapes are rejected before evaluation.
+
+## StrategyDAG And Alternative Data
+
+Validate replay-only StrategyDAG files with:
+
+```bash
+uv run oc strategy dag-validate path/to/strategy_dag.yaml
+```
+
+Backtests must not call live LLMs. Live or paper LLM decisions must first be
+written as decision packets with `visible_at`, `input_hash`, `prompt_hash`,
+`model`, and `schema_version`.
+
+## Paper Safety
+
+Alpaca Paper is the only automated order path. A paper order requires:
+
+- a spec under `strategy_specs/active/`
+- `lifecycle=active`
+- `execution.mode=paper_auto`
+- `execution.broker=alpaca_paper`
+- `data.source=alpaca` or `data.source=longbridge`
+- paper environment variables
+- a passing `oc paper readiness` report
+- an explicit flag such as `--allow-paper-orders`
+
+Typical flow:
+
+```bash
+uv run oc strategy approve strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy activate qqq_pullback_15m --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness
+uv run oc paper readiness qqq_pullback_15m
+uv run oc run paper qqq_pullback_15m --max-cycles 1 --no-review
+uv run oc paper submit <signal-id> --allow-paper-orders
+uv run oc strategy disable qqq_pullback_15m
+```
+
+Sample-data strategies can be activated for local smoke tests, but paper order
+submission blocks them with `blocked_by_readiness`.
+
+## Dashboard
+
+```bash
+make dashboard-catalog
+make dashboard-build
+make dashboard-serve
+```
+
+When launched with `make dashboard-serve`, the UI syncs the runtime catalog
+from `/api/dashboard/catalog`. Local browser API calls can be protected with:
+
+```bash
+OPEN_COMPOSER_DASHBOARD_TOKEN=<long-random-token> make dashboard-serve
+```
+
+Remote Dashboard deployments must use password session, Vercel BFF, HMAC,
+async jobs, backups, audit, and double confirmation for Red actions. See
+`docs/remote-dashboard-deploy.zh.md`.
+
+## Notifications
+
+Outbound notifications are configured file-first. Copy
+`config/notifications.yaml.example` to `config/notifications.yaml`, set
+`TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env`, then verify without
+sending:
+
+```bash
+uv run oc notify status
+uv run oc notify test --dry-run
+```
+
+Telegram is outbound-only. Open Composer does not consume Telegram webhooks,
+polling updates, callbacks, or chat commands.
+
+## Workspace Cache And Artifacts
+
+Inspect local dependency, cache, report, and log size without deleting anything:
+
+```bash
+uv run oc cache status
+```
+
+Preview the default clean set, which includes `data/cache` and generated
+`reports` while preserving tracked example research reports:
+
+```bash
+uv run oc cache clean --dry-run
+```
+
+Apply that cleanup explicitly:
+
+```bash
+uv run oc cache clean --data-cache --reports --apply
+```
+
+Evidence logs are not selected by default. Use `--signal-logs`,
+`--feature-logs`, `--event-logs`, or `--all-runtime --apply` only when you
+intentionally reset local run evidence. Dependency folders such as `.venv` and
+`dashboard/node_modules` are status-only in this command.
+
+## Quality Gates
+
+```bash
+uv run ruff format .
+uv run ruff check .
+uv run pytest
+uv run oc repo check --strict
+make verify
+```
+
+`make verify` runs the local closure: format, lint, tests, repo check,
+capability test, agent parity, deployment prepare, Dashboard check, feature
+validation, and readiness.

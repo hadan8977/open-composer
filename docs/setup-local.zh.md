@@ -7,7 +7,24 @@
 
 ---
 
-## 一键脚本 (推荐)
+## 一键入口 (推荐)
+
+Linux / macOS 用户可以直接运行：
+
+```bash
+make start
+```
+
+它会调用 `scripts/setup-local.sh`，完成依赖安装、仓库检查、`.env` 初始化、
+Dashboard catalog/build 和本地 Dashboard 启动。
+
+Windows PowerShell 用户使用：
+
+```powershell
+.\scripts\setup-local.ps1
+```
+
+## 一键脚本
 
 | 系统 | 命令 |
 |---|---|

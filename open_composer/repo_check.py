@@ -20,9 +20,13 @@ NO_CONTEXT_START_DOC = "docs/product-golden-path-codex-quant-review-2026-05-13.z
 
 CURRENT_DOCS = {
     NO_CONTEXT_START_DOC,
+    "docs/user-guide.md",
     "docs/remote-dashboard-deploy.zh.md",
     "docs/setup-local.zh.md",
     "docs/longbridge-integration.md",
+    "docs/research-contract-p0-p2-plan-2026-05-17.zh.md",
+    "docs/product-structure-efficiency-review-2026-05-17.zh.md",
+    "docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md",
 }
 
 REQUIRED_SKILLS = [
@@ -93,6 +97,7 @@ class RepoConsistencyReport(BaseModel):
 def build_repo_check_report(root: Path | None = None) -> RepoConsistencyReport:
     base = root or project_root()
     checks = [
+        _license_check(base),
         _no_context_start_doc_check(base),
         _readme_project_docs_check(base),
         _readme_research_controls_check(base),
@@ -128,6 +133,33 @@ def write_repo_check_report(
     ensure_dir(md_path.parent)
     md_path.write_text(_render_markdown(report), encoding="utf-8")
     return json_path, md_path
+
+
+def _license_check(root: Path) -> RepoConsistencyCheck:
+    path = root / "LICENSE"
+    if not path.exists():
+        return RepoConsistencyCheck(
+            name="license",
+            status="blocked",
+            message="LICENSE file is missing.",
+            suggested_actions=["Add an explicit project license file"],
+        )
+    text = path.read_text(encoding="utf-8")
+    missing = [item for item in ["MIT License", "Permission is hereby granted"] if item not in text]
+    if missing:
+        return RepoConsistencyCheck(
+            name="license",
+            status="blocked",
+            message="LICENSE exists but does not look like the expected MIT license.",
+            details={"missing": missing},
+            suggested_actions=["Update LICENSE"],
+        )
+    return RepoConsistencyCheck(
+        name="license",
+        status="ok",
+        message="MIT license file is present.",
+        details={"path": "LICENSE"},
+    )
 
 
 def _no_context_start_doc_check(root: Path) -> RepoConsistencyCheck:
@@ -178,6 +210,8 @@ def _readme_project_docs_check(root: Path) -> RepoConsistencyCheck:
     missing = []
     if "## Project Docs" not in text:
         missing.append("## Project Docs")
+    if "docs/user-guide.md" not in text:
+        missing.append("docs/user-guide.md")
     if NO_CONTEXT_START_DOC not in text:
         missing.append(NO_CONTEXT_START_DOC)
     if "no-context Codex" not in text:
@@ -199,7 +233,7 @@ def _readme_project_docs_check(root: Path) -> RepoConsistencyCheck:
 
 
 def _readme_research_controls_check(root: Path) -> RepoConsistencyCheck:
-    path = root / "README.md"
+    path = root / "docs" / "user-guide.md"
     required = [
         "uv run oc strategy parameter-sweep",
         "uv run oc strategy exposure-switch",
@@ -231,16 +265,18 @@ def _readme_research_controls_check(root: Path) -> RepoConsistencyCheck:
             name="readme_research_controls",
             status="blocked",
             message=(
-                "README is missing Codex-facing research cost, data, hypothesis, or LLM controls."
+                "User guide is missing Codex-facing research cost, data, hypothesis, "
+                "or LLM controls."
             ),
             details={"missing": missing},
-            suggested_actions=["Update README.md Research Iteration"],
+            suggested_actions=["Update docs/user-guide.md Bounded Research"],
         )
     return RepoConsistencyCheck(
         name="readme_research_controls",
         status="ok",
         message=(
-            "README documents research cost, data freshness, hypothesis, and LLM fallback gates."
+            "User guide documents research cost, data freshness, hypothesis, "
+            "and LLM fallback gates."
         ),
     )
 
