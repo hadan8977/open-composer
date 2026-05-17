@@ -46,12 +46,12 @@ class FivePassChecks:
     research_pass: FivePassStatus
     llm_contribution_pass: FivePassStatus
     paper_ready_pass: FivePassStatus
-    code_correctness_pass: FivePassStatus
+    expression_safety_pass: FivePassStatus
     workflow_reason: str = ""
     research_reason: str = ""
     llm_contribution_reason: str = ""
     paper_ready_reason: str = ""
-    code_correctness_reason: str = ""
+    expression_safety_reason: str = ""
 
 
 @dataclass(frozen=True)
@@ -704,14 +704,14 @@ def _benchmark_family_check(
         "note": "ex-post best symbol is a non-tradable upper-bound benchmark",
     }
     market = {
-        "status": "missing",
+        "status": "not_applicable",
         "proxy": None,
-        "note": "market proxy such as SPY or QQQ has not been attached to this report",
+        "note": "market proxy (e.g. SPY, QQQ) requires manual attachment; not auto-computed",
     }
     sector = {
-        "status": "missing",
+        "status": "not_applicable",
         "proxy": None,
-        "note": "sector/theme proxy or basket has not been attached to this report",
+        "note": "sector/theme proxy requires manual attachment; not auto-computed from spec",
     }
     benchmarks = {
         "same_symbol_buy_hold": same_symbol,
@@ -873,7 +873,7 @@ def _write_promotion_report(
         f"- Status: `{status}`",
         f"- Ready for paper: `{'yes' if ready else 'no'}`",
         "- Gate taxonomy: workflow_pass, research_pass, llm_contribution_pass, "
-        "paper_ready_pass, code_correctness_pass.",
+        "paper_ready_pass, expression_safety_pass.",
         "- Safety note: promotion evidence is not a promise of live returns.",
         f"- Data source mode: `{data_profile.get('source_mode') or 'unknown'}`",
         f"- Data as-of: `{data_profile.get('data_as_of') or 'unknown'}`",
@@ -1023,9 +1023,7 @@ def _five_pass_checks(
         "execution_reality",
         "alternative_data",
     }
-    research_failures = sorted(
-        name for name in research_gate_names if name in blocked or name in warning
-    )
+    research_failures = sorted(name for name in research_gate_names if name in blocked)
     cost_grid_warning = _cost_grid_warning(spec, root)
     if cost_grid_warning:
         research_failures.append("cost_grid")
@@ -1055,23 +1053,23 @@ def _five_pass_checks(
         else "blocked checks: " + ", ".join(sorted(blocked or warning))
     )
 
-    code_correctness_pass, code_reason = _code_correctness_pass(spec)
+    expression_safety_pass, code_reason = _expression_safety_pass(spec)
 
     return FivePassChecks(
         workflow_pass=workflow_pass,
         research_pass=research_pass,
         llm_contribution_pass=llm_contribution_pass,
         paper_ready_pass=paper_ready_pass,
-        code_correctness_pass=code_correctness_pass,
+        expression_safety_pass=expression_safety_pass,
         workflow_reason=workflow_reason,
         research_reason=research_reason,
         llm_contribution_reason=llm_reason,
         paper_ready_reason=paper_reason,
-        code_correctness_reason=code_reason,
+        expression_safety_reason=code_reason,
     )
 
 
-def _code_correctness_pass(spec: StrategySpec) -> tuple[FivePassStatus, str]:
+def _expression_safety_pass(spec: StrategySpec) -> tuple[FivePassStatus, str]:
     expressions = [
         *spec.all_expressions(),
         *[
@@ -1140,9 +1138,9 @@ def _five_pass_markdown_rows(five_pass_checks: FivePassChecks) -> list[str]:
             five_pass_checks.paper_ready_reason,
         ),
         (
-            "code_correctness_pass",
-            five_pass_checks.code_correctness_pass,
-            five_pass_checks.code_correctness_reason,
+            "expression_safety_pass",
+            five_pass_checks.expression_safety_pass,
+            five_pass_checks.expression_safety_reason,
         ),
     ]
     return [

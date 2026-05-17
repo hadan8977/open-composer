@@ -190,6 +190,7 @@ remote_app = typer.Typer(no_args_is_help=True)
 agent_app = typer.Typer(no_args_is_help=True)
 notify_app = typer.Typer(no_args_is_help=True)
 cache_app = typer.Typer(no_args_is_help=True)
+harness_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -212,6 +213,7 @@ app.add_typer(remote_app, name="remote")
 app.add_typer(agent_app, name="agent")
 app.add_typer(notify_app, name="notify")
 app.add_typer(cache_app, name="cache")
+app.add_typer(harness_app, name="harness")
 
 
 @app.callback()
@@ -2890,6 +2892,150 @@ def strategy_disable(strategy: str) -> None:
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(f"[yellow]disabled[/yellow] retired={path}")
+
+
+@strategy_app.command("advance")
+def strategy_advance(
+    spec: Path,
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", help="Write the run record to the harness JSONL log."),
+    ] = False,
+    stage: Annotated[
+        str,
+        typer.Option("--stage", help="Lifecycle stage to check gates for."),
+    ] = "research",
+) -> None:
+    """Check harness gates for a strategy at a given lifecycle stage.
+
+    Use --apply to record the gate run to reports/research/harness-runs.jsonl.
+    """
+    from open_composer.harness.runs import append_run
+    from open_composer.harness.stages import check_stage
+    from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.strategy_versions import strategy_content_hash
+
+    root = project_root()
+    status, results = check_stage(stage, spec, root)
+    spec_obj = load_strategy_spec(spec)
+    spec_hash = strategy_content_hash(spec_obj)
+
+    for result in results:
+        color = "yellow" if result.status == "warning" else "red"
+        icon = (
+            "[green]ok[/green]"
+            if result.status == "ok"
+            else f"[{color}]{result.status}[/{color}]"
+        )
+        console.print(f"  {icon} {result.name}: {result.message}")
+
+    if apply:
+        log_path = append_run(
+            strategy_name=spec_obj.name,
+            spec_hash=spec_hash,
+            stage=stage,
+            results=results,
+            root=root,
+        )
+        console.print(f"[green]run recorded[/green] log={log_path}")
+
+    agg_color = "yellow" if status == "warning" else "red"
+    aggregate_icon = (
+        "[green]ok[/green]"
+        if status == "ok"
+        else f"[{agg_color}]{status}[/{agg_color}]"
+    )
+    console.print(f"\nstage={stage!r} status={aggregate_icon}")
+    if status == "blocked":
+        raise typer.Exit(code=1)
+
+
+@strategy_app.command("diff")
+def strategy_diff(
+    spec: Path,
+    vs: Annotated[
+        str,
+        typer.Option("--vs", help="Content hash of the spec version to compare against."),
+    ],
+) -> None:
+    """Diff the current spec against a previously recorded version hash."""
+    from open_composer.harness.diff import spec_diff
+
+    result = spec_diff(spec, vs, root=project_root())
+    console.print(f"current_hash : {result['current_hash']}")
+    console.print(f"vs_hash      : {result['vs_hash']}")
+    console.print(f"found        : {result['found']}")
+    if not result["found"]:
+        console.print(f"[yellow]{result['summary']}[/yellow]")
+        return
+    if result["changed_fields"]:
+        console.print(f"changed      : {', '.join(result['changed_fields'])}")
+        for field, delta in result["diff"].items():
+            console.print(f"  {field}:")
+            console.print(f"    before: {delta['before']!r}")
+            console.print(f"    after : {delta['after']!r}")
+    else:
+        console.print("[green]no changes detected[/green]")
+    console.print(f"\nsummary: {result['summary']}")
+
+
+@harness_app.command("check")
+def harness_check(
+    spec: Path,
+    stage: Annotated[
+        str,
+        typer.Option("--stage", help="Lifecycle stage to check gates for (default: research)."),
+    ] = "research",
+    record: Annotated[
+        bool,
+        typer.Option("--record", help="Append the run to the harness JSONL evidence log."),
+    ] = False,
+) -> None:
+    """Run harness gates for a StrategySpec at a given lifecycle stage.
+
+    Exits with code 1 if any gate is blocked. Use --record to persist the result.
+    """
+    from open_composer.harness.runs import append_run
+    from open_composer.harness.stages import check_stage
+    from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.strategy_versions import strategy_content_hash
+
+    root = project_root()
+    try:
+        status, results = check_stage(stage, spec, root)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    spec_obj = load_strategy_spec(spec)
+    spec_hash = strategy_content_hash(spec_obj)
+
+    console.print(
+        f"[bold]harness check[/bold] "
+        f"strategy={spec_obj.name!r} stage={stage!r} hash={spec_hash[:12]}"
+    )
+    console.print("")
+    for result in results:
+        if result.status == "ok":
+            icon = "[green]✓[/green]"
+        elif result.status == "warning":
+            icon = "[yellow]![/yellow]"
+        else:
+            icon = "[red]✗[/red]"
+        console.print(f"  {icon} {result.name}: {result.message}")
+
+    if record:
+        log_path = append_run(
+            strategy_name=spec_obj.name,
+            spec_hash=spec_hash,
+            stage=stage,
+            results=results,
+            root=root,
+        )
+        console.print(f"\n[green]recorded[/green] log={log_path}")
+
+    console.print(f"\nstatus: {status}")
+    if status == "blocked":
+        raise typer.Exit(code=1)
 
 
 @run_app.command("paper")

@@ -8,7 +8,7 @@ from typing import Any
 from open_composer.capabilities import evaluate_capabilities
 from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import run_backtest
-from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.paper_readiness import assess_paper_strategy_readiness_for_spec
 from open_composer.research.alt_data_quality import build_alternative_data_quality_report
 from open_composer.research.contracts import build_research_contract
@@ -65,6 +65,7 @@ def build_strategy_research_report(
     )
 
     checklist = _research_checklist(
+        spec=spec,
         backtest=backtest.run.model_dump(mode="json"),
         factor_status=factor_lab.status,
         alt_data_status=alt_data.status,
@@ -291,8 +292,29 @@ def _default_research_controls() -> dict[str, Any]:
     }
 
 
+def _leakage_gate(spec: StrategySpec) -> tuple[str, dict[str, object]]:
+    llm_factors = [
+        name for name, f in spec.factors.items() if f.source in {"llm_feature", "feature_packet"}
+    ]
+    evidence: dict[str, object] = {
+        "signal_on": spec.execution.signal_on,
+        "fill_assumption": spec.execution.fill_assumption,
+        "llm_review_enabled": spec.llm_review.enabled,
+        "llm_factor_count": len(llm_factors),
+        "llm_factors": llm_factors,
+    }
+    if spec.llm_review.enabled and not llm_factors:
+        evidence["warning"] = (
+            "llm_review.enabled but no feature_packet factors; "
+            "ensure LLM calls are replayed from PIT packets"
+        )
+        return "warning", evidence
+    return "ok", evidence
+
+
 def _research_checklist(
     *,
+    spec: StrategySpec,
     backtest: dict[str, Any],
     factor_status: str,
     alt_data_status: str,
@@ -301,11 +323,12 @@ def _research_checklist(
 ) -> list[dict[str, object]]:
     execution_reality = backtest.get("execution_reality") or {}
     data_sanity = backtest.get("data_sanity") or {}
+    leakage_status, leakage_evidence = _leakage_gate(spec)
     return [
         {
             "name": "leakage_defaults",
-            "status": "ok",
-            "evidence": "bar-close signals, next-bar-open fills, visible_at feature replay",
+            "status": leakage_status,
+            "evidence": leakage_evidence,
         },
         {
             "name": "overfit_controls",

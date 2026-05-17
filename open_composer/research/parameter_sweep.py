@@ -4,7 +4,7 @@ import copy
 import json
 from dataclasses import dataclass, field
 from itertools import product
-from math import prod
+from math import log, prod, sqrt
 from pathlib import Path
 from statistics import fmean, pstdev
 from time import perf_counter
@@ -631,11 +631,54 @@ def _sweep_analysis(
             "best_score": best.score,
             "mean_score": fmean(scores) if scores else None,
             "score_stddev": pstdev(scores) if len(scores) > 1 else 0.0,
-            "computed_dsr": None,
-            "computed_pbo": None,
-            "note": "DSR/PBO proxy inputs are recorded; full DSR/PBO is not computed yet.",
+            "computed_dsr": _compute_dsr_proxy(
+                trial_count=len(candidates),
+                best_score=best.score,
+                mean_score=fmean(scores) if scores else None,
+                score_stddev=pstdev(scores) if len(scores) > 1 else 0.0,
+            ),
+            "computed_pbo": _compute_pbo_proxy(best_neighbor_success_rate),
+            "note": (
+                "DSR uses extreme-value proxy E[max]=μ+σ√(2·ln N) (Bailey & López de Prado 2014). "
+                "PBO uses 1−neighbor_success_rate proxy. "
+                "Values < 1 for DSR and < 0.10 for PBO suggest lower overfit risk."
+            ),
         },
     }
+
+
+def _compute_dsr_proxy(
+    *,
+    trial_count: int,
+    best_score: float | None,
+    mean_score: float | None,
+    score_stddev: float,
+) -> float | None:
+    """Extreme-value proxy for Deflated Sharpe Ratio (Bailey & López de Prado 2014).
+
+    Computes (best − mean) / E[max − mean] where E[max] ≈ μ + σ√(2·ln N).
+    Values < 1 suggest the best trial is within the expected range (lower overfit risk).
+    Values > 1 suggest the selected trial is an outlier (higher overfit risk).
+    Returns None when trial_count ≤ 1 or scores have no spread.
+    """
+    if trial_count <= 1 or best_score is None or mean_score is None or score_stddev <= 0.0:
+        return None
+    expected_max = mean_score + score_stddev * sqrt(2.0 * log(float(trial_count)))
+    excess_expected = expected_max - mean_score
+    if excess_expected <= 0.0:
+        return None
+    return (best_score - mean_score) / excess_expected
+
+
+def _compute_pbo_proxy(neighbor_success_rate: float | None) -> float | None:
+    """Proxy for Probability of Backtest Overfitting based on neighbourhood stability.
+
+    Returns 1 − neighbor_success_rate: low stability implies high PBO risk.
+    Returns None when neighbor_success_rate is unavailable (single trial or no neighbours).
+    """
+    if neighbor_success_rate is None:
+        return None
+    return max(0.0, 1.0 - neighbor_success_rate)
 
 
 def _candidate_passes(
