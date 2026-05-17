@@ -152,3 +152,12 @@ def test_parameter_sweep_cli_writes_reports(sample_workspace: Path, monkeypatch)
     assert (
         sample_workspace / "reports" / "research" / "qqq_pullback_15m-parameter-sweep.json"
     ).exists()
+    payload = json.loads(
+        (
+            sample_workspace / "reports" / "research" / "qqq_pullback_15m-parameter-sweep.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert payload["candidate_set"]["family"] == "parameter_sweep"
+    assert payload["candidate_set"]["candidate_count"] == 4
+    assert payload["selection_decision"]["status"] == "warning"
+    assert "selection_is_in_sample_only" in payload["selection_decision"]["promotion_blockers"]

@@ -143,6 +143,7 @@ def build_strategy_research_report(
         "spec_hash": strategy_content_hash(spec),
         "research_brief": research_brief.model_dump(mode="json"),
         "search_space": search_space.model_dump(mode="json"),
+        "default_research_controls": _default_research_controls(),
         "trial_count": 1,
         "candidate_count": search_space.candidate_count,
         "runtime_seconds": runtime_seconds,
@@ -268,6 +269,26 @@ def _evaluation_bundle(
         blockers=blocked_items,
         warnings=warning_items,
     )
+
+
+def _default_research_controls() -> dict[str, Any]:
+    return {
+        "leakage_controls": [
+            "bar_close_signal_next_bar_open_fill_assumption",
+            "feature_packets_require_visible_at_before_trading_use",
+            "event_news_macro_context_filters_published_at_before_signal",
+        ],
+        "overfit_controls": [
+            "bounded_search_space_required_for_adjustable_parameters",
+            "trial_ledger_required_for_parameter_selection",
+            "promotion_requires_oos_walk_forward_cost_and_benchmark_review",
+        ],
+        "live_gap_controls": [
+            "execution_reality_required_in_research_report",
+            "paper_readiness_blocks_sample_fixture_fallback_and_trial_only_evidence",
+            "llm_or_alternative_data_requires_pit_packets_and_marginal_lift_evidence",
+        ],
+    }
 
 
 def _research_checklist(

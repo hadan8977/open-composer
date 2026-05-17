@@ -19,6 +19,7 @@ from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_fr
 from open_composer.expressions import validate_expression
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.kernel import ResearchArtifactWriter
+from open_composer.research.kernel.candidates import CandidateScore, CandidateSet, CandidateSpec
 from open_composer.research.kernel.trials import TrialLedger, TrialRecord
 from open_composer.research.kernel.workflow import ResearchRunIndexRecord
 from open_composer.research.metadata import (
@@ -174,6 +175,8 @@ def run_parameter_sweep(
     report_path = base / "reports" / "research" / f"{source.name}-parameter-sweep.md"
     json_path = base / "reports" / "research" / f"{source.name}-parameter-sweep.json"
     ledger = _trial_ledger(source, candidate_results, max_candidates)
+    candidate_set = _candidate_set(source, spec_path, candidate_results)
+    selection_decision = _selection_decision(candidate_results)
     index_record = ResearchRunIndexRecord(
         run_id=f"parameter-sweep-{source.name}-{strategy_content_hash(source)[:12]}",
         strategy_name=source.name,
@@ -209,6 +212,8 @@ def run_parameter_sweep(
         sweep_analysis,
         manifest,
         ledger,
+        candidate_set,
+        selection_decision,
         index_record,
     )
     writer.append_index(index_record)
@@ -418,6 +423,8 @@ def _write_sweep_json(
     sweep_analysis: dict[str, Any],
     manifest: dict[str, Any],
     ledger: TrialLedger,
+    candidate_set: CandidateSet,
+    selection_decision: dict[str, Any],
     index_record: ResearchRunIndexRecord,
 ) -> Path:
     ensure_dir(path.parent)
@@ -433,6 +440,11 @@ def _write_sweep_json(
         "data_profile": data_profile,
         "research_manifest": manifest,
         "trial_ledger": ledger.model_dump(mode="json"),
+        "candidate_set": {
+            **candidate_set.model_dump(mode="json"),
+            "candidate_count": candidate_set.candidate_count,
+        },
+        "selection_decision": selection_decision,
         "research_run_index_record": index_record.model_dump(mode="json"),
         "stability": sweep_analysis,
         "dsr_inputs": sweep_analysis.get("dsr_inputs", {}),
@@ -451,6 +463,65 @@ def _write_sweep_json(
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
+
+
+def _candidate_set(
+    source: StrategySpec,
+    spec_path: Path,
+    candidates: list[SweepCandidateResult],
+) -> CandidateSet:
+    return CandidateSet(
+        family="parameter_sweep",
+        candidates=[
+            CandidateSpec(
+                candidate_id=f"{source.name}-candidate-{candidate.rank:03d}",
+                strategy_name=candidate.spec.name,
+                params=candidate.params,
+                source_spec_path=str(spec_path),
+                spec_path=str(candidate.spec_path) if candidate.spec_path else None,
+            )
+            for candidate in candidates
+        ],
+        scores=[
+            CandidateScore(
+                candidate_id=f"{source.name}-candidate-{candidate.rank:03d}",
+                rank=candidate.rank,
+                score=candidate.score,
+                metrics=_candidate_payload(candidate)["metrics"],
+                quality_flags=_quality_flags(candidate),
+                gate_status="warning",
+            )
+            for candidate in candidates
+        ],
+    )
+
+
+def _selection_decision(candidates: list[SweepCandidateResult]) -> dict[str, Any]:
+    selected = candidates[0] if candidates else None
+    rejected = [
+        {
+            "rank": candidate.rank,
+            "strategy_name": candidate.spec.name,
+            "reason": "lower_score_or_weaker_research_quality_than_selected_candidate",
+            "score": candidate.score,
+            "quality_flags": _quality_flags(candidate),
+        }
+        for candidate in candidates[1:]
+    ]
+    return {
+        "status": "warning",
+        "selected_candidate": _candidate_payload(selected) if selected else None,
+        "selection_basis": [
+            "score_after_thresholds",
+            "quality_flags",
+            "trial_ledger_required_before_research_pass",
+        ],
+        "rejected_candidates": rejected,
+        "promotion_blockers": [
+            "selection_is_in_sample_only",
+            "requires_oos_walk_forward_cost_capacity_and_benchmark_review",
+        ],
+    }
 
 
 def _trial_ledger(

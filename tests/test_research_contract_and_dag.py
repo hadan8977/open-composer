@@ -44,6 +44,9 @@ def test_strategy_research_report_writes_default_contract_pipeline(
     assert payload["trial_count"] == 1
     assert payload["runtime_seconds"] >= 0
     assert payload["evaluation_bundle"]["strategy_name"] == "qqq_pullback_15m"
+    assert "leakage_controls" in payload["default_research_controls"]
+    assert "overfit_controls" in payload["default_research_controls"]
+    assert "live_gap_controls" in payload["default_research_controls"]
     assert payload["research_run_index_record"]["run_id"].startswith("research-qqq_pullback_15m-")
     assert "factor_lab" in contract["required_checks"]
     assert any(item["name"] == "execution_reality" for item in payload["checklist"])
