@@ -3035,6 +3035,80 @@ def strategy_diff(
     console.print(f"\nsummary: {result['summary']}")
 
 
+@strategy_app.command("research-workflow")
+def strategy_research_workflow(
+    spec: Path,
+    stage: Annotated[
+        str,
+        typer.Option("--stage", help="Harness stage to check after research artifacts are built."),
+    ] = "promotion",
+    record: Annotated[
+        bool,
+        typer.Option(
+            "--record/--no-record",
+            help="Append the workflow gate result to reports/research/harness-runs.jsonl.",
+        ),
+    ] = True,
+) -> None:
+    """Run the core research workflow for a StrategySpec and record harness evidence."""
+    from open_composer.harness.runs import append_run
+    from open_composer.harness.stages import check_stage
+    from open_composer.strategy_versions import strategy_content_hash
+
+    root = project_root()
+    try:
+        spec_obj = load_strategy_spec(spec)
+        spec_hash = strategy_content_hash(spec_obj)
+        harness_status, harness_results = check_stage(stage, spec, root)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    backtest_evidence = _gate_evidence(harness_results, "reference_backtest")
+    promotion_evidence = _gate_evidence(harness_results, "promotion_report")
+
+    log_path = None
+    if record:
+        log_path = append_run(
+            strategy_name=spec_obj.name,
+            spec_hash=spec_hash,
+            stage=stage,
+            results=harness_results,
+            root=root,
+            extra={
+                "workflow": "strategy.research_workflow",
+                "artifacts": {
+                    "backtest_report": _project_relpath(
+                        str(backtest_evidence.get("report_path") or ""), root
+                    ),
+                    "signal_log": _project_relpath(
+                        str(backtest_evidence.get("signal_log_path") or ""), root
+                    ),
+                    "promotion_report": _project_relpath(
+                        str(promotion_evidence.get("report_path") or ""), root
+                    ),
+                    "promotion_json": _project_relpath(
+                        str(promotion_evidence.get("json_path") or ""), root
+                    ),
+                },
+                "promotion_status": _gate_status(harness_results, "promotion_report"),
+            },
+        )
+
+    console.print(
+        f"[green]research workflow complete[/green] strategy={spec_obj.name} "
+        f"backtest={backtest_evidence.get('run_id') or 'n/a'} "
+        f"promotion={_gate_status(harness_results, 'promotion_report') or 'n/a'} "
+        f"harness={harness_status}"
+    )
+    console.print(f"backtest report: {backtest_evidence.get('report_path') or 'n/a'}")
+    console.print(f"signals: {backtest_evidence.get('signal_log_path') or 'n/a'}")
+    console.print(f"promotion report: {promotion_evidence.get('report_path') or 'n/a'}")
+    console.print(f"promotion json: {promotion_evidence.get('json_path') or 'n/a'}")
+    if log_path:
+        console.print(f"harness log: {log_path}")
+    if harness_status == "blocked":
+        raise typer.Exit(code=1)
+
+
 @harness_app.command("check")
 def harness_check(
     spec: Path,
@@ -3092,6 +3166,33 @@ def harness_check(
     console.print(f"\nstatus: {status}")
     if status == "blocked":
         raise typer.Exit(code=1)
+
+
+def _project_relpath(value: str | None, root: Path) -> str | None:
+    if not value:
+        return None
+    path = Path(value)
+    if not path.is_absolute():
+        return path.as_posix()
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def _gate_evidence(results: list[object], name: str) -> dict[str, object]:
+    for result in results:
+        if getattr(result, "name", None) == name:
+            evidence = getattr(result, "evidence", None)
+            return evidence if isinstance(evidence, dict) else {}
+    return {}
+
+
+def _gate_status(results: list[object], name: str) -> str | None:
+    for result in results:
+        if getattr(result, "name", None) == name:
+            return str(getattr(result, "status", ""))
+    return None
 
 
 @run_app.command("paper")

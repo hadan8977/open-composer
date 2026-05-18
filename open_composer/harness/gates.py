@@ -17,6 +17,23 @@ GateFunction = Callable[[Path, Path], GateResult]
 GATE_REGISTRY: dict[str, GateFunction] = {}
 
 
+def _classify_capability_findings(
+    findings, *, is_not_applicable: Callable[[object], bool] | None = None
+) -> tuple[list[str], list[str], list[str]]:
+    blocked: list[str] = []
+    warnings: list[str] = []
+    not_applicable: list[str] = []
+    for finding in findings.findings:
+        if is_not_applicable and is_not_applicable(finding):
+            not_applicable.append(finding.capability)
+            continue
+        if finding.status in {"blocked", "unsupported"}:
+            blocked.append(finding.capability)
+        elif finding.status == "partial":
+            warnings.append(finding.capability)
+    return blocked, warnings, not_applicable
+
+
 def gate(name: str) -> Callable[[GateFunction], GateFunction]:
     """Decorator to register a gate function by name."""
 
@@ -160,8 +177,7 @@ def _capability_evaluation(spec_path: Path, root: Path) -> GateResult:
 
     findings = assess_strategy_capabilities(spec_path)
     registry = evaluate_capabilities(root)
-    blocked = [f for f in findings.findings if f.status == "blocked"]
-    warnings = [f for f in findings.findings if f.status == "warning"]
+    blocked, warnings, _ = _classify_capability_findings(findings)
     status = "blocked" if blocked else "warning" if warnings else "ok"
     return GateResult(
         name="capability_evaluation",
@@ -171,8 +187,66 @@ def _capability_evaluation(spec_path: Path, root: Path) -> GateResult:
             f"of {len(findings.findings)} capabilities. Registry: {len(registry)} entries."
         ),
         evidence={
-            "blocked": [f.capability for f in blocked],
-            "warnings": [f.capability for f in warnings],
+            "blocked": blocked,
+            "warnings": warnings,
+        },
+    )
+
+
+@gate("research_capability_evaluation")
+def _research_capability_evaluation(spec_path: Path, root: Path) -> GateResult:
+    from open_composer.capabilities import evaluate_capabilities
+    from open_composer.strategy_capabilities import assess_strategy_capabilities
+
+    spec = load_strategy_spec(spec_path)
+    findings = assess_strategy_capabilities(spec_path)
+    registry = evaluate_capabilities(root)
+    factor_sources = {factor.source for factor in spec.factors.values()}
+    has_packet_trade_logic = bool(factor_sources.intersection({"llm_feature", "feature_packet"}))
+    has_llm_trade_logic = spec.llm_review.enabled or "llm_feature" in factor_sources
+    has_advisory_context = any(
+        not capability.startswith("market.") for capability in spec.required_capabilities
+    )
+
+    def is_research_not_applicable(finding: object) -> bool:
+        capability = getattr(finding, "capability", "")
+        status = getattr(finding, "status", "")
+        advisory_context_only = (
+            status == "partial"
+            and has_advisory_context
+            and not spec.llm_review.enabled
+            and not has_packet_trade_logic
+        )
+        if capability == "alpaca_paper_execution":
+            return True
+        if capability == "llm_quant_workflow" and not has_llm_trade_logic:
+            return True
+        if capability == "nautilus_trader_backend" and spec.execution.backend != "nautilus_trader":
+            return True
+        if capability == "python_mvp_backtest" and advisory_context_only:
+            return True
+        return (
+            capability == "tradingview_pine_strategy"
+            and advisory_context_only
+            and len(spec.universe) == 1
+        )
+
+    blocked, warnings, not_applicable = _classify_capability_findings(
+        findings, is_not_applicable=is_research_not_applicable
+    )
+    status = "blocked" if blocked else "warning" if warnings else "ok"
+    return GateResult(
+        name="research_capability_evaluation",
+        status=status,
+        message=(
+            f"Research capability check: {len(blocked)} blocked, "
+            f"{len(warnings)} warnings, {len(not_applicable)} not applicable "
+            f"of {len(findings.findings)} capabilities. Registry: {len(registry)} entries."
+        ),
+        evidence={
+            "blocked": blocked,
+            "warnings": warnings,
+            "not_applicable": not_applicable,
         },
     )
 
@@ -193,10 +267,13 @@ def _reference_backtest(spec_path: Path, root: Path) -> GateResult:
                 f"sharpe={run.sharpe_ratio}, return={run.total_return_pct}%"
             ),
             evidence={
+                "run_id": run.run_id,
                 "signals": run.signals,
                 "trades": run.trades,
                 "sharpe_ratio": run.sharpe_ratio,
                 "total_return_pct": run.total_return_pct,
+                "report_path": run.report_path,
+                "signal_log_path": run.signal_log_path,
             },
         )
     except Exception as exc:
@@ -213,12 +290,19 @@ def _factor_lab(spec_path: Path, root: Path) -> GateResult:
     from open_composer.research.factor_lab import run_factor_lab
 
     result = run_factor_lab(spec_path, root)
+    if result.status == "blocked" and result.quality_flags == ["no_custom_factors"]:
+        return GateResult(
+            name="factor_lab",
+            status="ok",
+            message="Factor lab not applicable: strategy has no custom factors.",
+            evidence={"quality_flags": result.quality_flags, "not_applicable": True},
+        )
     status = result.status if result.status in {"ok", "warning", "blocked"} else "warning"
     return GateResult(
         name="factor_lab",
         status=status,  # type: ignore[arg-type]
         message=f"Factor lab status={result.status}; flags={result.quality_flags}",
-        evidence={"quality_flags": result.quality_flags},
+        evidence={"quality_flags": result.quality_flags, "not_applicable": False},
     )
 
 
@@ -233,6 +317,23 @@ def _alternative_data(spec_path: Path, root: Path) -> GateResult:
         status=status,  # type: ignore[arg-type]
         message=f"Alternative data status={result.status}; warnings={result.warnings}",
         evidence={"warnings": result.warnings},
+    )
+
+
+@gate("promotion_report")
+def _promotion_report(spec_path: Path, root: Path) -> GateResult:
+    from open_composer.research.promotion import build_promotion_report
+
+    result = build_promotion_report(spec_path, root)
+    return GateResult(
+        name="promotion_report",
+        status=result.status,
+        message=f"Promotion report status={result.status}; ready={result.ready}",
+        evidence={
+            "ready": result.ready,
+            "report_path": result.report_path,
+            "json_path": result.json_path,
+        },
     )
 
 

@@ -51,9 +51,11 @@ class TestGateRegistry:
             "expression_safety",
             "leakage_check",
             "capability_evaluation",
+            "research_capability_evaluation",
             "reference_backtest",
             "factor_lab",
             "alternative_data",
+            "promotion_report",
             "paper_readiness",
         }
         assert expected.issubset(GATE_REGISTRY)
@@ -129,6 +131,83 @@ class TestLeakageCheckGate:
         assert "PIT packets" in result.message
 
 
+class TestResearchCapabilityGate:
+    def test_research_capability_ignores_paper_and_llm_non_applicable_blockers(
+        self, tmp_path: Path, spec_path: Path
+    ) -> None:
+        result = run_gate("research_capability_evaluation", spec_path, tmp_path)
+
+        assert result.status in {"ok", "warning"}
+        assert result.evidence is not None
+        evidence = result.evidence
+        assert "alpaca_paper_execution" in evidence["not_applicable"]  # type: ignore[index]
+        assert "llm_quant_workflow" in evidence["not_applicable"]  # type: ignore[index]
+        assert "alpaca_paper_execution" not in evidence["blocked"]  # type: ignore[index]
+        assert "llm_quant_workflow" not in evidence["blocked"]  # type: ignore[index]
+
+    def test_advisory_context_partial_is_not_applicable_for_research(
+        self, tmp_path: Path, spec_path: Path
+    ) -> None:
+        result = run_gate("research_capability_evaluation", spec_path, tmp_path)
+
+        assert result.status == "ok"
+        assert result.evidence is not None
+        evidence = result.evidence
+        assert "python_mvp_backtest" in evidence["not_applicable"]  # type: ignore[index]
+        assert "tradingview_pine_strategy" in evidence["not_applicable"]  # type: ignore[index]
+
+    def test_partial_capabilities_are_warnings(self, tmp_path: Path, spec_path: Path) -> None:
+        import yaml
+
+        raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+        raw["llm_review"] = {"enabled": True}
+        raw["required_capabilities"] = [
+            "market.sample_ohlcv",
+            "events.sec_filings",
+            "news.alpha_vantage",
+        ]
+        spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+        result = run_gate("research_capability_evaluation", spec_path, tmp_path)
+
+        assert result.status == "warning"
+        assert result.evidence is not None
+        evidence = result.evidence
+        assert "python_mvp_backtest" in evidence["warnings"]  # type: ignore[index]
+        assert "tradingview_pine_strategy" in evidence["warnings"]  # type: ignore[index]
+        assert "llm_quant_workflow" in evidence["warnings"]  # type: ignore[index]
+        assert "nautilus_trader_backend" in evidence["not_applicable"]  # type: ignore[index]
+
+
+class TestCapabilityEvaluationGate:
+    def test_unsupported_capabilities_are_blocked(self, tmp_path: Path, spec_path: Path) -> None:
+        import yaml
+
+        raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+        raw["entry"]["all"] = ["supertrend(close, 10) > 0"]
+        spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+        result = run_gate("capability_evaluation", spec_path, tmp_path)
+
+        assert result.status == "blocked"
+        assert result.evidence is not None
+        evidence = result.evidence
+        assert "python_mvp_backtest" in evidence["blocked"]  # type: ignore[index]
+        assert "tradingview_pine_strategy" in evidence["blocked"]  # type: ignore[index]
+
+
+class TestFactorLabHarnessGate:
+    def test_no_custom_factors_are_not_applicable_for_harness(
+        self, tmp_path: Path, spec_path: Path
+    ) -> None:
+        result = run_gate("factor_lab", spec_path, tmp_path)
+
+        assert result.status == "ok"
+        assert "not applicable" in result.message.lower()
+        assert result.evidence is not None
+        assert result.evidence["not_applicable"] is True  # type: ignore[index]
+
+
 class TestStageRequirements:
     def test_all_stages_defined(self) -> None:
         assert set(STAGE_REQUIREMENTS) >= {"draft", "research", "promotion", "paper_ready"}
@@ -147,6 +226,16 @@ class TestStageRequirements:
         with pytest.raises(ValueError, match="Unknown stage"):
             gates_for_stage("nonexistent_stage")
 
+    def test_research_uses_research_capability_gate(self) -> None:
+        assert "research_capability_evaluation" in STAGE_REQUIREMENTS["research"]
+        assert "capability_evaluation" not in STAGE_REQUIREMENTS["research"]
+
+    def test_promotion_does_not_include_paper_readiness(self) -> None:
+        assert "promotion_report" in STAGE_REQUIREMENTS["promotion"]
+        assert "paper_readiness" not in STAGE_REQUIREMENTS["promotion"]
+        assert "promotion_report" in STAGE_REQUIREMENTS["paper_ready"]
+        assert "paper_readiness" in STAGE_REQUIREMENTS["paper_ready"]
+
 
 class TestCheckStage:
     def test_draft_stage_ok_for_valid_spec(self, tmp_path: Path, spec_path: Path) -> None:
@@ -159,3 +248,11 @@ class TestCheckStage:
         for result in results:
             assert isinstance(result, GateResult)
             assert result.status in {"ok", "warning", "blocked"}
+
+    def test_research_stage_no_longer_blocks_on_non_applicable_surfaces(
+        self, tmp_path: Path, spec_path: Path
+    ) -> None:
+        status, results = check_stage("research", spec_path, tmp_path)
+
+        assert status == "ok"
+        assert {result.name for result in results} == set(gates_for_stage("research"))
