@@ -186,12 +186,13 @@ step 7 "Doctor (env check)"
 if [[ $DRY_RUN -eq 1 ]]; then
   skip "(dry-run)"
 else
-  doctor_out=$(uv run oc doctor 2>&1)
-  missing_count=$(echo "$doctor_out" | grep -c '| missing' || true)
-  ok_count=$(echo "$doctor_out" | grep -c '| ok' || true)
+  doctor_out=$(uv run oc doctor --plain 2>&1)
+  missing_count=$(echo "$doctor_out" | awk -F'\t' '$2=="missing"' | wc -l | tr -d ' ')
+  ok_count=$(echo "$doctor_out" | awk -F'\t' '$2=="ok"' | wc -l | tr -d ' ')
   if [[ $missing_count -gt 0 ]]; then
-    warn "$ok_count ok / $missing_count missing (missing are optional)"
-    WARNINGS+=("$missing_count optional API keys missing - capabilities will use fixtures")
+    missing_names=$(echo "$doctor_out" | awk -F'\t' '$2=="missing" {print $1}' | tr '\n' ',' | sed 's/,$//')
+    warn "$ok_count ok / $missing_count missing (optional: $missing_names)"
+    WARNINGS+=("$missing_count optional keys missing - capabilities will use fixtures: $missing_names")
   else
     ok "$ok_count checks ok, no missing"
   fi

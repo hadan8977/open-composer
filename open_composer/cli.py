@@ -123,7 +123,7 @@ from open_composer.research import (
     build_geometry_feature_report,
     build_promotion_report,
     build_strategy_research_report,
-    draft_strategy_from_idea,
+    draft_strategy_from_idea_with_status,
     optimize_option_overlays,
     optimize_strategy,
     optimize_strategy_horizons,
@@ -223,64 +223,91 @@ def _load_env() -> None:
 
 
 @app.command()
-def doctor() -> None:
-    """Check local Open Composer environment status."""
+def doctor(
+    plain: Annotated[
+        bool,
+        typer.Option(
+            "--plain",
+            help="Emit grep-friendly NAME\\tSTATUS\\tDETAIL lines instead of a Rich table.",
+        ),
+    ] = False,
+) -> None:
+    """Check local Open Composer environment status.
+
+    Use --plain for shell-parseable output (one row per line, tab-separated).
+    """
     root = project_root()
     _ensure_runtime_dirs(root)
+    sample_path = root / "data" / "sample" / "qqq_15m.csv"
+    rows: list[tuple[str, str, str]] = [("Python", "ok", sys.version.split()[0])]
+    for package in ["pydantic", "pandas", "numpy", "yaml", "typer", "rich"]:
+        status = "ok" if importlib.util.find_spec(package) else "missing"
+        rows.append((f"Package {package}", status, ""))
+    rows.append(("Sample data", "ok" if sample_path.exists() else "missing", str(sample_path)))
+    rows.extend(
+        [
+            (
+                "OPENAI_API_KEY",
+                optional_env_status("OPENAI_API_KEY"),
+                "optional for review cards; presence only",
+            ),
+            (
+                "OPENAI_BASE_URL",
+                openai_base_url_source(),
+                openai_base_url() or "optional OpenAI-compatible gateway",
+            ),
+            ("OPENAI_MODEL", default_openai_model(), "default review model"),
+            (
+                "ALPACA_API_KEY_ID",
+                optional_env_status("ALPACA_API_KEY_ID"),
+                "optional for Alpaca",
+            ),
+            (
+                "ALPACA_API_SECRET_KEY",
+                optional_env_status("ALPACA_API_SECRET_KEY"),
+                "optional for Alpaca",
+            ),
+            ("ALPACA_PAPER", os.getenv("ALPACA_PAPER", "true"), "must remain true for orders"),
+            ("ALPACA_API_BASE_URL", alpaca_api_base_url(), "paper trading endpoint"),
+            ("ALPACA_DATA_FEED", data_feed(), "default feed"),
+            (
+                "OPEN_COMPOSER_DASHBOARD_TOKEN",
+                optional_env_status("OPEN_COMPOSER_DASHBOARD_TOKEN"),
+                "optional token for dashboard API",
+            ),
+            (
+                "ALPHA_VANTAGE_API_KEY",
+                optional_env_status("ALPHA_VANTAGE_API_KEY"),
+                "optional news",
+            ),
+            ("FRED_API_KEY", optional_env_status("FRED_API_KEY"), "optional macro"),
+            (
+                "LONGBRIDGE_APP_KEY",
+                optional_env_status("LONGBRIDGE_APP_KEY"),
+                "optional for Longbridge",
+            ),
+            (
+                "LONGBRIDGE_APP_SECRET",
+                optional_env_status("LONGBRIDGE_APP_SECRET"),
+                "optional for Longbridge",
+            ),
+            (
+                "LONGBRIDGE_ACCESS_TOKEN",
+                optional_env_status("LONGBRIDGE_ACCESS_TOKEN"),
+                "required for Longbridge live API Key auth",
+            ),
+        ]
+    )
+    if plain:
+        for name, status, detail in rows:
+            sys.stdout.write(f"{name}\t{status}\t{detail}\n")
+        return
     table = Table(title="Open Composer Doctor")
     table.add_column("Check")
     table.add_column("Status")
     table.add_column("Detail")
-    table.add_row("Python", "ok", sys.version.split()[0])
-    for package in ["pydantic", "pandas", "numpy", "yaml", "typer", "rich"]:
-        status = "ok" if importlib.util.find_spec(package) else "missing"
-        table.add_row(f"Package {package}", status, "")
-    sample_path = root / "data" / "sample" / "qqq_15m.csv"
-    table.add_row("Sample data", "ok" if sample_path.exists() else "missing", str(sample_path))
-    table.add_row(
-        "OPENAI_API_KEY",
-        optional_env_status("OPENAI_API_KEY"),
-        "optional for review cards; presence only",
-    )
-    table.add_row(
-        "OPENAI_BASE_URL",
-        openai_base_url_source(),
-        openai_base_url() or "optional OpenAI-compatible gateway",
-    )
-    table.add_row("OPENAI_MODEL", default_openai_model(), "default review model")
-    table.add_row(
-        "ALPACA_API_KEY_ID", optional_env_status("ALPACA_API_KEY_ID"), "optional for Alpaca"
-    )
-    table.add_row(
-        "ALPACA_API_SECRET_KEY",
-        optional_env_status("ALPACA_API_SECRET_KEY"),
-        "optional for Alpaca",
-    )
-    table.add_row("ALPACA_PAPER", os.getenv("ALPACA_PAPER", "true"), "must remain true for orders")
-    table.add_row("ALPACA_API_BASE_URL", alpaca_api_base_url(), "paper trading endpoint")
-    table.add_row("ALPACA_DATA_FEED", data_feed(), "default feed")
-    table.add_row(
-        "OPEN_COMPOSER_DASHBOARD_TOKEN",
-        optional_env_status("OPEN_COMPOSER_DASHBOARD_TOKEN"),
-        "optional token for dashboard API",
-    )
-    table.add_row(
-        "ALPHA_VANTAGE_API_KEY", optional_env_status("ALPHA_VANTAGE_API_KEY"), "optional news"
-    )
-    table.add_row("FRED_API_KEY", optional_env_status("FRED_API_KEY"), "optional macro")
-    table.add_row(
-        "LONGBRIDGE_APP_KEY", optional_env_status("LONGBRIDGE_APP_KEY"), "optional for Longbridge"
-    )
-    table.add_row(
-        "LONGBRIDGE_APP_SECRET",
-        optional_env_status("LONGBRIDGE_APP_SECRET"),
-        "optional for Longbridge",
-    )
-    table.add_row(
-        "LONGBRIDGE_ACCESS_TOKEN",
-        optional_env_status("LONGBRIDGE_ACCESS_TOKEN"),
-        "required for Longbridge live API Key auth",
-    )
+    for name, status, detail in rows:
+        table.add_row(name, status, detail)
     console.print(table)
 
 
@@ -1616,13 +1643,26 @@ def compile_pine_strategy_command(spec: Path) -> None:
 
 
 @app.command("review-signal")
-def review_signal(signal_id: str) -> None:
-    """Generate an optional OpenAI structured review card for a signal."""
+def review_signal(
+    signal_id: str,
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            help="Run review even when the strategy has llm_review.enabled=false.",
+        ),
+    ] = False,
+) -> None:
+    """Generate an optional OpenAI structured review card for a signal.
+
+    By default, respects the strategy's llm_review.enabled flag. Use --force to
+    override and request a review for strategies that have it disabled.
+    """
     root = project_root()
     signal = find_signal(signal_id, root)
     spec_path = _find_strategy_spec(signal.strategy_name, root)
     spec = load_strategy_spec(spec_path)
-    result = review_signal_with_status(signal, spec, root)
+    result = review_signal_with_status(signal, spec, root, force=force)
     if result.review is None:
         console.print(f"[yellow]review skipped[/yellow] {result.message}")
         return
@@ -1644,10 +1684,21 @@ def strategy_draft(
     idea: str = typer.Option(..., "--idea"),
     use_llm: bool = typer.Option(False, "--use-llm"),
 ) -> None:
-    """Draft a StrategySpec from a natural-language idea using registered capabilities."""
-    path = draft_strategy_from_idea(idea, project_root(), use_llm=use_llm)
-    spec = load_strategy_spec(path)
-    console.print(f"[green]draft written[/green] {path} ({spec.name})")
+    """Draft a StrategySpec from a natural-language idea using registered capabilities.
+
+    If --use-llm is set but the LLM call fails (network error, auth, 502, etc.),
+    falls back to the deterministic drafter and records the fallback reason in
+    the draft research plan.
+    """
+    result = draft_strategy_from_idea_with_status(idea, project_root(), use_llm=use_llm)
+    spec = load_strategy_spec(result.path)
+    if result.fallback_reason:
+        console.print(
+            f"[yellow]LLM draft failed[/yellow]: {result.fallback_reason}; "
+            "fell back to deterministic draft"
+        )
+    mode = "llm" if result.used_llm else "deterministic"
+    console.print(f"[green]draft written[/green] {result.path} ({spec.name}) [mode={mode}]")
 
 
 @strategy_app.command("optimize")
@@ -2194,32 +2245,35 @@ def strategy_intraday_daily_rotation(
     """Research daily selected, same-day-exit NASDAQ intraday stock rotation."""
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
-    result = run_intraday_daily_rotation_research(
-        spec,
-        project_root(),
-        symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
-        data_source=data_source,
-        start=start,
-        end=end,
-        benchmark_symbol=benchmark_symbol.upper(),
-        market_symbol=market_symbol.upper(),
-        lookback_days=lookback_days,
-        entry_after_bars=entry_after_bars,
-        top_n_values=top_n,
-        min_opening_return_pct=min_opening_return_pct,
-        min_prior_momentum_pct=min_prior_momentum_pct,
-        min_relative_volume=min_relative_volume,
-        selection_styles=_intraday_selection_styles(selection_style),
-        max_opening_return_pct=max_opening_return_pct,
-        max_prior_momentum_pct=max_prior_momentum_pct,
-        market_gates=_intraday_market_gates(market_gate),
-        objective=_intraday_objective(objective),
-        out_of_sample_ratio=oos_ratio,
-        walk_forward_folds=walk_forward_folds,
-        walk_forward_top_k=walk_forward_top_k,
-        max_candidates=max_candidates,
-        refresh_data=refresh_data,
-    )
+    try:
+        result = run_intraday_daily_rotation_research(
+            spec,
+            project_root(),
+            symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+            data_source=data_source,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            lookback_days=lookback_days,
+            entry_after_bars=entry_after_bars,
+            top_n_values=top_n,
+            min_opening_return_pct=min_opening_return_pct,
+            min_prior_momentum_pct=min_prior_momentum_pct,
+            min_relative_volume=min_relative_volume,
+            selection_styles=_intraday_selection_styles(selection_style),
+            max_opening_return_pct=max_opening_return_pct,
+            max_prior_momentum_pct=max_prior_momentum_pct,
+            market_gates=_intraday_market_gates(market_gate),
+            objective=_intraday_objective(objective),
+            out_of_sample_ratio=oos_ratio,
+            walk_forward_folds=walk_forward_folds,
+            walk_forward_top_k=walk_forward_top_k,
+            max_candidates=max_candidates,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
     best = result.best
     console.print(f"[green]intraday daily rotation complete[/green] report: {result.report_path}")
     console.print(
@@ -2292,33 +2346,36 @@ def strategy_llm_intraday_daily_rotation(
     """Use an LLM to select an intraday daily rotation method from training evidence."""
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
-    result = run_llm_intraday_daily_rotation_selection(
-        spec,
-        project_root(),
-        symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
-        data_source=data_source,
-        start=start,
-        end=end,
-        benchmark_symbol=benchmark_symbol.upper(),
-        market_symbol=market_symbol.upper(),
-        lookback_days=lookback_days,
-        entry_after_bars=entry_after_bars,
-        top_n_values=top_n,
-        min_opening_return_pct=min_opening_return_pct,
-        min_prior_momentum_pct=min_prior_momentum_pct,
-        min_relative_volume=min_relative_volume,
-        selection_styles=_intraday_selection_styles(selection_style),
-        max_opening_return_pct=max_opening_return_pct,
-        max_prior_momentum_pct=max_prior_momentum_pct,
-        market_gates=_intraday_market_gates(market_gate),
-        objective=_intraday_objective(objective),
-        validation_ratio=validation_ratio,
-        validation_folds=validation_folds,
-        out_of_sample_ratio=oos_ratio,
-        max_candidates=max_candidates,
-        refresh_data=refresh_data,
-        local_choice_label=local_choice_label,
-    )
+    try:
+        result = run_llm_intraday_daily_rotation_selection(
+            spec,
+            project_root(),
+            symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+            data_source=data_source,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            lookback_days=lookback_days,
+            entry_after_bars=entry_after_bars,
+            top_n_values=top_n,
+            min_opening_return_pct=min_opening_return_pct,
+            min_prior_momentum_pct=min_prior_momentum_pct,
+            min_relative_volume=min_relative_volume,
+            selection_styles=_intraday_selection_styles(selection_style),
+            max_opening_return_pct=max_opening_return_pct,
+            max_prior_momentum_pct=max_prior_momentum_pct,
+            market_gates=_intraday_market_gates(market_gate),
+            objective=_intraday_objective(objective),
+            validation_ratio=validation_ratio,
+            validation_folds=validation_folds,
+            out_of_sample_ratio=oos_ratio,
+            max_candidates=max_candidates,
+            refresh_data=refresh_data,
+            local_choice_label=local_choice_label,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
     selected = result.selected
     pure_report_stem = spec.stem.removesuffix("_llm")
     reflection_path = write_intraday_product_reflection(
@@ -2584,31 +2641,34 @@ def strategy_exposure_switch(
     """Research point-in-time dynamic exposure switching against buy-and-hold."""
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
-    result = run_exposure_switch_research(
-        spec,
-        project_root(),
-        symbol=symbol,
-        data_source=data_source,
-        fast_bars=fast,
-        slow_bars=slow,
-        momentum_bars=momentum_bars,
-        min_momentum_pct=min_momentum_pct,
-        volatility_bars=volatility_bars,
-        max_volatility_pct=_optional_float_values(max_volatility_pct),
-        drawdown_bars=drawdown_bars,
-        max_drawdown_pct=_optional_float_values(max_drawdown_pct),
-        base_exposure=base_exposure,
-        risk_on_exposure=risk_on_exposure,
-        risk_off_exposure=risk_off_exposure,
-        financing_rate_pct=financing_rate_pct,
-        out_of_sample_ratio=oos_ratio,
-        walk_forward_folds=walk_forward_folds,
-        walk_forward_top_k=walk_forward_top_k,
-        max_candidates=max_candidates,
-        refresh_data=refresh_data,
-        start=start,
-        end=end,
-    )
+    try:
+        result = run_exposure_switch_research(
+            spec,
+            project_root(),
+            symbol=symbol,
+            data_source=data_source,
+            fast_bars=fast,
+            slow_bars=slow,
+            momentum_bars=momentum_bars,
+            min_momentum_pct=min_momentum_pct,
+            volatility_bars=volatility_bars,
+            max_volatility_pct=_optional_float_values(max_volatility_pct),
+            drawdown_bars=drawdown_bars,
+            max_drawdown_pct=_optional_float_values(max_drawdown_pct),
+            base_exposure=base_exposure,
+            risk_on_exposure=risk_on_exposure,
+            risk_off_exposure=risk_off_exposure,
+            financing_rate_pct=financing_rate_pct,
+            out_of_sample_ratio=oos_ratio,
+            walk_forward_folds=walk_forward_folds,
+            walk_forward_top_k=walk_forward_top_k,
+            max_candidates=max_candidates,
+            refresh_data=refresh_data,
+            start=start,
+            end=end,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
     best = result.best
     console.print(f"[green]exposure switch research complete[/green] report: {result.report_path}")
     console.print(
@@ -2923,9 +2983,7 @@ def strategy_advance(
     for result in results:
         color = "yellow" if result.status == "warning" else "red"
         icon = (
-            "[green]ok[/green]"
-            if result.status == "ok"
-            else f"[{color}]{result.status}[/{color}]"
+            "[green]ok[/green]" if result.status == "ok" else f"[{color}]{result.status}[/{color}]"
         )
         console.print(f"  {icon} {result.name}: {result.message}")
 
@@ -2941,9 +2999,7 @@ def strategy_advance(
 
     agg_color = "yellow" if status == "warning" else "red"
     aggregate_icon = (
-        "[green]ok[/green]"
-        if status == "ok"
-        else f"[{agg_color}]{status}[/{agg_color}]"
+        "[green]ok[/green]" if status == "ok" else f"[{agg_color}]{status}[/{agg_color}]"
     )
     console.print(f"\nstage={stage!r} status={aggregate_icon}")
     if status == "blocked":

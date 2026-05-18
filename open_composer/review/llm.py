@@ -14,6 +14,7 @@ from open_composer.storage import write_json
 
 ReviewStatus = Literal[
     "written",
+    "disabled",
     "missing_api_key",
     "refused",
     "auth_failed",
@@ -37,8 +38,9 @@ def review_signal_with_llm(
     client: Any | None = None,
     model: str | None = None,
     context: SignalContext | None = None,
+    force: bool = False,
 ) -> ReviewCard | None:
-    return review_signal_with_status(signal, spec, root, client, model, context).review
+    return review_signal_with_status(signal, spec, root, client, model, context, force=force).review
 
 
 def review_signal_with_status(
@@ -48,7 +50,14 @@ def review_signal_with_status(
     client: Any | None = None,
     model: str | None = None,
     context: SignalContext | None = None,
+    force: bool = False,
 ) -> ReviewResult:
+    if not force and not spec.llm_review.enabled:
+        return ReviewResult(
+            None,
+            "disabled",
+            f"strategy {spec.name!r} has llm_review.enabled=false; pass force=True to override",
+        )
     selected_model = model or spec.llm_review.model or default_openai_model()
     if client is None and not openai_api_key():
         return ReviewResult(None, "missing_api_key", "OPENAI_API_KEY is not set")

@@ -2,7 +2,11 @@ from open_composer.research.alt_data_quality import build_alternative_data_quali
 from open_composer.research.blind_test import BlindTestReport, BlindTestResult, run_blind_test
 from open_composer.research.contracts import build_research_contract, write_research_contract
 from open_composer.research.cost_sensitivity import CostGridReport, CostGridResult, run_cost_grid
-from open_composer.research.drafter import draft_strategy_from_idea
+from open_composer.research.drafter import (
+    DraftResult,
+    draft_strategy_from_idea,
+    draft_strategy_from_idea_with_status,
+)
 from open_composer.research.exposure_switch import run_exposure_switch_research
 from open_composer.research.factor_lab import FactorLabResult, run_factor_lab
 from open_composer.research.geometry_features import (
@@ -38,7 +42,9 @@ from open_composer.research.strategy_dag import validate_strategy_dag, write_str
 from open_composer.research.universe_optimizer import optimize_strategy_universe
 
 __all__ = [
+    "DraftResult",
     "draft_strategy_from_idea",
+    "draft_strategy_from_idea_with_status",
     "BlindTestReport",
     "BlindTestResult",
     "CostGridReport",

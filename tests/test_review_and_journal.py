@@ -47,7 +47,9 @@ def test_llm_review_mock_writes_card(sample_workspace: Path) -> None:
         model="mock",
     )
     client = SimpleNamespace(responses=MockResponses(review))
-    result = review_signal_with_llm(signal, spec, sample_workspace, client=client, model="mock")
+    result = review_signal_with_llm(
+        signal, spec, sample_workspace, client=client, model="mock", force=True
+    )
     assert result == review
     assert (sample_workspace / "reports" / "reviews" / f"{signal.id}.json").exists()
     markdown = sample_workspace / "reports" / "reviews" / f"{signal.id}.md"
@@ -59,7 +61,17 @@ def test_llm_review_skips_without_key(sample_workspace: Path, monkeypatch) -> No
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
     artifacts = run_backtest(spec_path, root=sample_workspace)
     spec = load_strategy_spec(spec_path)
-    assert review_signal_with_llm(artifacts.signals[0], spec, sample_workspace) is None
+    assert review_signal_with_llm(artifacts.signals[0], spec, sample_workspace, force=True) is None
+
+
+def test_llm_review_skips_when_disabled_in_spec(sample_workspace: Path) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    artifacts = run_backtest(spec_path, root=sample_workspace)
+    spec = load_strategy_spec(spec_path)
+    assert spec.llm_review.enabled is False
+    result = review_signal_with_status(artifacts.signals[0], spec, sample_workspace)
+    assert result.review is None
+    assert result.status == "disabled"
 
 
 def test_llm_review_reports_auth_failure(sample_workspace: Path, monkeypatch) -> None:
@@ -77,7 +89,7 @@ def test_llm_review_reports_auth_failure(sample_workspace: Path, monkeypatch) ->
     client = SimpleNamespace(responses=MockResponses())
 
     result = review_signal_with_status(
-        artifacts.signals[0], spec, sample_workspace, client=client, model="mock"
+        artifacts.signals[0], spec, sample_workspace, client=client, model="mock", force=True
     )
 
     assert result.review is None

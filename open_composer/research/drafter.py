@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -22,15 +23,43 @@ from open_composer.storage import write_json
 from open_composer.strategy_versions import register_strategy_version
 
 
+@dataclass(frozen=True)
+class DraftResult:
+    path: Path
+    used_llm: bool
+    fallback_reason: str | None
+
+
 def draft_strategy_from_idea(
     idea: str,
     root: Path | None = None,
     use_llm: bool = False,
     client: Any | None = None,
 ) -> Path:
+    """Draft a strategy from an idea and return the spec path.
+
+    For backwards compatibility, returns only the path. Use
+    draft_strategy_from_idea_with_status() to also get LLM fallback metadata.
+    """
+    return draft_strategy_from_idea_with_status(idea, root, use_llm, client).path
+
+
+def draft_strategy_from_idea_with_status(
+    idea: str,
+    root: Path | None = None,
+    use_llm: bool = False,
+    client: Any | None = None,
+) -> DraftResult:
     base = root or project_root()
     used_llm = False
-    spec = _draft_with_llm(idea, client) if use_llm and _has_openai_config(client) else None
+    fallback_reason: str | None = None
+    spec: StrategySpec | None = None
+    if use_llm and _has_openai_config(client):
+        try:
+            spec = _draft_with_llm(idea, client)
+        except Exception as exc:
+            fallback_reason = f"{type(exc).__name__}: {exc}"
+            spec = None
     if spec is not None:
         used_llm = True
     if spec is None:
@@ -38,7 +67,7 @@ def draft_strategy_from_idea(
     path = base / "strategy_specs" / "drafts" / f"{spec.name}.yaml"
     ensure_dir(path.parent)
     path.write_text(yaml.safe_dump(spec.model_dump(mode="json"), sort_keys=False), encoding="utf-8")
-    _write_draft_research_plan(spec, path, base)
+    _write_draft_research_plan(spec, path, base, fallback_reason=fallback_reason)
     register_strategy_version(
         path,
         base,
@@ -46,37 +75,43 @@ def draft_strategy_from_idea(
         model_ref=default_openai_model() if used_llm else None,
         prompt_session_id=_prompt_session_id(idea),
     )
-    return path
+    return DraftResult(path=path, used_llm=used_llm, fallback_reason=fallback_reason)
 
 
-def _write_draft_research_plan(spec: StrategySpec, spec_path: Path, root: Path) -> Path:
+def _write_draft_research_plan(
+    spec: StrategySpec,
+    spec_path: Path,
+    root: Path,
+    *,
+    fallback_reason: str | None = None,
+) -> Path:
     research_brief = build_default_research_brief(spec)
     search_space = search_space_from_spec(spec)
     plan_path = root / "reports" / "research" / f"{spec.name}-draft-research-plan.json"
-    write_json(
-        plan_path,
-        {
-            "strategy_name": spec.name,
-            "source_spec_path": _relpath(spec_path, root),
-            "status": "draft",
-            "research_brief": research_brief.model_dump(mode="json"),
-            "search_space": search_space.model_dump(mode="json"),
-            "default_validation": [
-                "spec_validation",
-                "capability_evaluation",
-                "reference_backtest",
-                "factor_lab",
-                "promotion_report",
-                "paper_readiness_summary",
-            ],
-            "promotion_blockers_until_evidenced": [
-                "oos_walk_forward_cost_benchmark_evidence",
-                "execution_reality",
-                "data_quality",
-                "paper_readiness",
-            ],
-        },
-    )
+    payload: dict[str, object] = {
+        "strategy_name": spec.name,
+        "source_spec_path": _relpath(spec_path, root),
+        "status": "draft",
+        "research_brief": research_brief.model_dump(mode="json"),
+        "search_space": search_space.model_dump(mode="json"),
+        "default_validation": [
+            "spec_validation",
+            "capability_evaluation",
+            "reference_backtest",
+            "factor_lab",
+            "promotion_report",
+            "paper_readiness_summary",
+        ],
+        "promotion_blockers_until_evidenced": [
+            "oos_walk_forward_cost_benchmark_evidence",
+            "execution_reality",
+            "data_quality",
+            "paper_readiness",
+        ],
+    }
+    if fallback_reason:
+        payload["llm_fallback_reason"] = fallback_reason
+    write_json(plan_path, payload)
     return plan_path
 
 
