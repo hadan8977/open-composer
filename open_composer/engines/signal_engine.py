@@ -44,18 +44,27 @@ def build_signal(
     version_id: str | None = None,
     spec_hash: str | None = None,
     execution_backend: str = "python_reference",
+    symbol: str | None = None,
+    conditions: list[str] | None = None,
+    qty: float | None = None,
+    target_weight: float | None = None,
 ) -> Signal:
     side = "buy" if action == "entry" else "sell"
+    selected_symbol = symbol or spec.primary_symbol
     conditions = (
-        [*spec.entry.all, *spec.entry.any]
-        if action == "entry"
-        else [
-            *spec.exit.all,
-            *spec.exit.any,
-        ]
+        conditions
+        if conditions is not None
+        else (
+            [*spec.entry.all, *spec.entry.any]
+            if action == "entry"
+            else [
+                *spec.exit.all,
+                *spec.exit.any,
+            ]
+        )
     )
     return Signal(
-        id=signal_id(spec.name, spec.primary_symbol, timestamp, action),
+        id=signal_id(spec.name, selected_symbol, timestamp, action),
         run_id=run_id,
         strategy_name=spec.name,
         strategy_id=spec.name,
@@ -63,13 +72,15 @@ def build_signal(
         spec_hash=spec_hash,
         strategy_backend=spec.execution.backend,
         execution_backend=execution_backend,
-        symbol=spec.primary_symbol,
+        symbol=selected_symbol,
         timeframe=spec.timeframe,
         timestamp=timestamp,
         action=action,  # type: ignore[arg-type]
         side=side,  # type: ignore[arg-type]
         source=source,
         price=float(price),
+        qty=qty,
+        target_weight=target_weight,
         conditions=conditions,
         lifecycle=spec.lifecycle,
         execution_mode=spec.execution.mode,

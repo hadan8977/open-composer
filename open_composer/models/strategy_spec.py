@@ -32,6 +32,36 @@ class RiskConfig(BaseModel):
     take_profit_pct: float | None = Field(default=None, gt=0)
 
 
+class PortfolioConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal[
+        "single_symbol",
+        "adaptive_intraday_internal_router",
+        "hybrid_adaptive_router",
+    ] = "single_symbol"
+    max_symbols_per_day: int | None = Field(default=None, ge=1)
+    gross_exposure_limit: float | None = Field(default=None, gt=0, le=1)
+    max_symbol_weight: float | None = Field(default=None, gt=0, le=1)
+    same_day_flatten: bool = False
+    duplicate_signal_policy: Literal["stable_signal_id", "allow_duplicates"] = "stable_signal_id"
+    selected_route_label: str | None = None
+
+    @model_validator(mode="after")
+    def require_router_route(self) -> PortfolioConfig:
+        if (
+            self.mode
+            in {
+                "adaptive_intraday_internal_router",
+                "hybrid_adaptive_router",
+            }
+            and not self.selected_route_label
+        ):
+            msg = f"{self.mode} portfolio mode requires selected_route_label"
+            raise ValueError(msg)
+        return self
+
+
 class CostConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -125,6 +155,7 @@ class StrategySpec(BaseModel):
     entry: RuleBlock
     exit: RuleBlock
     risk: RiskConfig
+    portfolio: PortfolioConfig = Field(default_factory=PortfolioConfig)
     costs: CostConfig = Field(default_factory=CostConfig)
     execution: ExecutionConfig
     data: DataConfig = Field(default_factory=DataConfig)

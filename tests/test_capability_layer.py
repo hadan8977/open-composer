@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from open_composer.adapters.events import fetch_capability_events
+from open_composer.adapters.events import fetch_capability_events, fetcher
 from open_composer.capabilities import evaluate_capabilities, load_registry
 
 
@@ -28,3 +28,57 @@ def test_event_fetch_replays_fixture_and_dedupes(sample_workspace: Path) -> None
     assert events
     assert all(event.source == "sec" for event in events)
     assert list((sample_workspace / "data" / "raw" / "events" / "sec").glob("*.jsonl"))
+
+
+def test_alpha_vantage_live_fetch_expands_requested_ticker_sentiment(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    captured_params: list[dict[str, object]] = []
+
+    def fake_http_get_json(url: str, params: dict[str, object] | None = None):
+        captured_params.append(params or {})
+        symbol = str((params or {})["tickers"])
+        return {
+            "feed": [
+                {
+                    "time_published": "20260515T143000",
+                    "title": f"{symbol} news",
+                    "summary": "Synthetic Alpha Vantage payload.",
+                    "url": f"https://example.test/{symbol.lower()}",
+                    "overall_sentiment_label": "Neutral",
+                    "ticker_sentiment": [
+                        {
+                            "ticker": symbol,
+                            "relevance_score": "0.91",
+                            "ticker_sentiment_label": "Bullish",
+                        },
+                        {
+                            "ticker": "IGNORED",
+                            "relevance_score": "0.99",
+                            "ticker_sentiment_label": "Bearish",
+                        },
+                    ],
+                }
+            ]
+        }
+
+    monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "test-key")
+    monkeypatch.setattr(fetcher, "_http_get_json", fake_http_get_json)
+
+    events = fetch_capability_events(
+        "alpha_vantage",
+        sample_workspace,
+        ["AAPL", "MSFT"],
+        offline=False,
+        limit=1000,
+        sort="EARLIEST",
+    )
+
+    assert [event.symbol for event in events] == ["AAPL", "MSFT"]
+    assert all(event.sentiment == "positive" for event in events)
+    assert all(event.relevance_score == 0.91 for event in events)
+    assert [params["tickers"] for params in captured_params] == ["AAPL", "MSFT"]
+    assert all(params["limit"] == 1000 for params in captured_params)
+    assert all(params["sort"] == "EARLIEST" for params in captured_params)
+    assert list((sample_workspace / "data" / "raw" / "events" / "alpha_vantage").glob("*.jsonl"))

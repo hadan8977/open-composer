@@ -5,8 +5,10 @@ from pathlib import Path
 
 import yaml
 
+from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.paper_readiness import (
     assess_paper_strategy_readiness,
+    assess_paper_strategy_readiness_for_spec,
     write_paper_readiness_report,
 )
 from open_composer.strategy_lifecycle import activate_strategy
@@ -73,6 +75,34 @@ def test_activate_can_enforce_paper_readiness(
     )
     assert report_path.exists()
     assert not (sample_workspace / "strategy_specs" / "active" / "qqq_pullback_15m.yaml").exists()
+
+
+def test_candidate_paper_readiness_capability_uses_candidate_spec(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    source = load_strategy_spec(draft)
+    raw = source.model_dump(mode="json")
+    raw["lifecycle"] = "active"
+    raw["execution"] = {
+        **raw["execution"],
+        "backend": "nautilus_trader",
+        "mode": "paper_auto",
+        "broker": "alpaca_paper",
+    }
+    raw["data"] = {**raw["data"], "source": "alpaca", "path": None}
+    candidate = StrategySpec.model_validate(raw)
+
+    report = assess_paper_strategy_readiness_for_spec(candidate, sample_workspace, spec_path=draft)
+    capability_check = next(check for check in report.checks if check.name == "capability_report")
+
+    assert capability_check.status in {"ok", "warning"}
+    assert "strategy must be promoted to lifecycle=active" not in capability_check.message
+    assert "execution.mode must be paper_auto" not in capability_check.message
 
 
 def test_paper_readiness_passes_for_live_cache_alpaca_strategy(
@@ -350,3 +380,76 @@ def test_paper_readiness_blocks_feature_packets_without_evidence(
     assert feature_check.status == "blocked"
     assert "marginal lift" in feature_check.message
     assert feature_check.details["missing_evidence"]
+
+
+def test_paper_readiness_accepts_adaptive_router_portfolio_routing(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("ALPACA_API_KEY_ID", raising=False)
+    monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
+    draft = sample_workspace / "strategy_specs" / "drafts" / "adaptive_router_portfolio.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "adaptive_router_portfolio"
+    raw["universe"] = ["AAPL", "MSFT", "NVDA"]
+    raw["timeframe"] = "1m"
+    raw["data"] = {"source": "alpaca", "symbol": "AAPL", "feed": "iex"}
+    raw["required_capabilities"] = ["market.alpaca_bars"]
+    raw["portfolio"] = {
+        "mode": "adaptive_intraday_internal_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 0.15,
+        "max_symbol_weight": 0.15,
+        "same_day_flatten": True,
+        "duplicate_signal_policy": "stable_signal_id",
+        "selected_route_label": "open_momentum:lb5_entry1_top1_open0_mom0_rv0.8_none",
+    }
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    report = assess_paper_strategy_readiness(draft, sample_workspace)
+    checks = {check.name: check for check in report.checks}
+
+    assert checks["portfolio_routing"].status == "ok"
+    assert checks["portfolio_risk"].status == "ok"
+    assert checks["alpaca_env"].status == "blocked"
+
+
+def test_paper_readiness_accepts_hybrid_router_portfolio_routing(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv("ALPACA_API_KEY_ID", raising=False)
+    monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
+    draft = sample_workspace / "strategy_specs" / "drafts" / "hybrid_router_portfolio.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "hybrid_router_portfolio"
+    raw["universe"] = ["AAPL", "MSFT", "NVDA"]
+    raw["timeframe"] = "1m"
+    raw["data"] = {"source": "alpaca", "symbol": "AAPL", "feed": "iex"}
+    raw["required_capabilities"] = ["market.alpaca_bars"]
+    raw["portfolio"] = {
+        "mode": "hybrid_adaptive_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 1.0,
+        "same_day_flatten": False,
+        "duplicate_signal_policy": "stable_signal_id",
+        "selected_route_label": "open_to_open:lb20_top1_qsm50_min0_w1",
+    }
+    raw["risk"]["max_position_weight"] = 1.0
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    report = assess_paper_strategy_readiness(draft, sample_workspace)
+    checks = {check.name: check for check in report.checks}
+
+    assert checks["portfolio_routing"].status == "ok"
+    assert checks["portfolio_risk"].status == "ok"
+    assert checks["alpaca_env"].status == "blocked"

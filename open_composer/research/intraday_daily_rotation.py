@@ -183,6 +183,7 @@ class LLMIntradayDailyResearchResult:
 
 @dataclass(frozen=True)
 class _DailyBars:
+    timestamps: np.ndarray
     opens: np.ndarray
     closes: np.ndarray
     volumes: np.ndarray
@@ -698,6 +699,10 @@ def _regular_session_days(frame: pd.DataFrame) -> dict[str, _DailyBars]:
         if len(group) < 4:
             continue
         days[date] = _DailyBars(
+            timestamps=np.array(
+                [timestamp.to_pydatetime() for timestamp in group["timestamp"]],
+                dtype=object,
+            ),
             opens=group["open"].to_numpy(dtype=float, copy=True),
             closes=group["close"].to_numpy(dtype=float, copy=True),
             volumes=group["volume"].to_numpy(dtype=float, copy=True),

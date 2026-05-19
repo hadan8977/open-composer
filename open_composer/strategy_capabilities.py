@@ -41,6 +41,13 @@ class StrategyCapabilityReport:
 
 def assess_strategy_capabilities(spec_path: Path | str) -> StrategyCapabilityReport:
     spec = _load_strategy_for_assessment(spec_path)
+    return assess_strategy_capabilities_for_spec(spec, spec_path)
+
+
+def assess_strategy_capabilities_for_spec(
+    spec: StrategySpec,
+    spec_path: Path | str,
+) -> StrategyCapabilityReport:
     expression_inventory = _inventory_expressions(spec)
     expression_errors = _expression_errors(spec)
     findings = [

@@ -1,0 +1,16 @@
+[Unit]
+Description=Open Composer Alpaca Paper broker monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/root/.paseo/worktrees/229b4rkt/aquatic-koala
+Environment=OC_EXTRA_ENV_FILE=/root/.paseo/worktrees/229b4rkt/idiotic-donkey/.env
+ExecStart=/root/.local/bin/uv run oc paper monitor --sync-broker
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/root/.paseo/worktrees/229b4rkt/aquatic-koala

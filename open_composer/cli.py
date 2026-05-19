@@ -32,6 +32,9 @@ from open_composer.adapters.data.longbridge import (
 )
 from open_composer.adapters.events import fetch_capability_events
 from open_composer.adapters.execution import build_nautilus_trader_plan, write_nautilus_trader_plan
+from open_composer.adapters.execution.hybrid_target_weights import (
+    run_hybrid_target_weight_mapping,
+)
 from open_composer.agent_requests import (
     AgentRequestCreate,
     complete_agent_request,
@@ -121,6 +124,7 @@ from open_composer.remote.server import RemoteServerError
 from open_composer.repo_check import build_repo_check_report, write_repo_check_report
 from open_composer.research import (
     build_geometry_feature_report,
+    build_hybrid_paper_plan,
     build_promotion_report,
     build_strategy_research_report,
     draft_strategy_from_idea_with_status,
@@ -129,12 +133,18 @@ from open_composer.research import (
     optimize_strategy_horizons,
     optimize_strategy_universe,
     parse_sweep_parameters,
+    run_adaptive_intraday_router_research,
+    run_adaptive_intraday_router_scan,
     run_blind_test,
     run_cost_grid,
     run_exposure_switch_research,
     run_factor_lab,
+    run_hybrid_adaptive_router_research,
+    run_hybrid_factor_attribution,
+    run_hybrid_news_marginal_lift_research,
     run_intraday_daily_rotation_research,
     run_leverage_research,
+    run_llm_adaptive_intraday_router_selection,
     run_llm_exposure_switch_meta_selection,
     run_llm_intraday_daily_rotation_selection,
     run_llm_rotation_meta_selection,
@@ -220,6 +230,9 @@ app.add_typer(harness_app, name="harness")
 def _load_env() -> None:
     root = project_root()
     load_dotenv(root / ".env")
+    extra_env = os.getenv("OC_EXTRA_ENV_FILE")
+    if extra_env:
+        load_dotenv(Path(extra_env).expanduser(), override=False)
 
 
 @app.command()
@@ -1580,10 +1593,23 @@ def events_fetch(
     source: str = typer.Option("sec", "--source"),
     symbols: str = typer.Option("QQQ", "--symbols"),
     offline: bool = typer.Option(True, "--offline/--live"),
+    limit: int | None = typer.Option(None, "--limit"),
+    time_from: str | None = typer.Option(None, "--time-from"),
+    time_to: str | None = typer.Option(None, "--time-to"),
+    sort: str | None = typer.Option(None, "--sort"),
 ) -> None:
     """Fetch or replay event/news records into raw event logs."""
     selected_symbols = [symbol.strip().upper() for symbol in symbols.split(",") if symbol.strip()]
-    events = fetch_capability_events(source, project_root(), selected_symbols, offline=offline)
+    events = fetch_capability_events(
+        source,
+        project_root(),
+        selected_symbols,
+        offline=offline,
+        limit=limit,
+        time_from=time_from,
+        time_to=time_to,
+        sort=sort,
+    )
     console.print(f"[green]events fetched[/green] source={source} records={len(events)}")
 
 
@@ -2237,6 +2263,7 @@ def strategy_intraday_daily_rotation(
     ] = None,
     market_gate: Annotated[list[str] | None, typer.Option("--market-gate")] = None,
     oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    validation_ratio: float = typer.Option(0.3, "--validation-ratio"),
     walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
     walk_forward_top_k: int | None = typer.Option(None, "--walk-forward-top-k"),
     max_candidates: int = typer.Option(240, "--max-candidates"),
@@ -2267,6 +2294,7 @@ def strategy_intraday_daily_rotation(
             market_gates=_intraday_market_gates(market_gate),
             objective=_intraday_objective(objective),
             out_of_sample_ratio=oos_ratio,
+            validation_ratio=validation_ratio,
             walk_forward_folds=walk_forward_folds,
             walk_forward_top_k=walk_forward_top_k,
             max_candidates=max_candidates,
@@ -2399,6 +2427,509 @@ def strategy_llm_intraday_daily_rotation(
         f"oos_sharpe={selected.out_of_sample.sharpe_ratio or 0.0:.2f} "
         f"flags={','.join(selected.quality_flags) if selected.quality_flags else 'none'}"
     )
+
+
+@strategy_app.command("adaptive-intraday-router")
+def strategy_adaptive_intraday_router(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    objective: str = typer.Option(
+        "equal-weight-alpha",
+        "--objective",
+        help="Selection objective: equal-weight-alpha or benchmark-intraday-alpha.",
+    ),
+    lookback_days: Annotated[list[int] | None, typer.Option("--lookback-days")] = None,
+    entry_after_bars: Annotated[
+        list[int] | None,
+        typer.Option("--entry-after-bars"),
+    ] = None,
+    top_n: Annotated[list[int] | None, typer.Option("--top-n")] = None,
+    min_opening_return_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-opening-return-pct"),
+    ] = None,
+    min_prior_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-prior-momentum-pct"),
+    ] = None,
+    min_relative_volume: Annotated[
+        list[float] | None,
+        typer.Option("--min-relative-volume"),
+    ] = None,
+    selection_style: Annotated[list[str] | None, typer.Option("--selection-style")] = None,
+    max_opening_return_pct: Annotated[
+        list[float] | None,
+        typer.Option("--max-opening-return-pct"),
+    ] = None,
+    max_prior_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--max-prior-momentum-pct"),
+    ] = None,
+    market_gate: Annotated[list[str] | None, typer.Option("--market-gate")] = None,
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
+    top_per_family: int = typer.Option(3, "--top-per-family"),
+    max_route_candidates: int = typer.Option(180, "--max-route-candidates"),
+    max_base_candidates: int = typer.Option(720, "--max-base-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Research one StrategySpec with internal market scanning and sub-strategy routing."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_adaptive_intraday_router_research(
+            spec,
+            project_root(),
+            symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+            data_source=data_source,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            lookback_days=lookback_days,
+            entry_after_bars=entry_after_bars,
+            top_n_values=top_n,
+            min_opening_return_pct=min_opening_return_pct,
+            min_prior_momentum_pct=min_prior_momentum_pct,
+            min_relative_volume=min_relative_volume,
+            selection_styles=_intraday_selection_styles(selection_style),
+            max_opening_return_pct=max_opening_return_pct,
+            max_prior_momentum_pct=max_prior_momentum_pct,
+            market_gates=_intraday_market_gates(market_gate),
+            objective=_intraday_objective(objective),
+            out_of_sample_ratio=oos_ratio,
+            walk_forward_folds=walk_forward_folds,
+            top_per_family=top_per_family,
+            max_route_candidates=max_route_candidates,
+            max_base_candidates=max_base_candidates,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    best = result.best
+    console.print(f"[green]adaptive intraday router complete[/green] report: {result.report_path}")
+    console.print(
+        f"best_rank={best.rank} "
+        f"oos_ann={best.out_of_sample.base.annualized_return_pct or 0.0:.2f}% "
+        f"oos_equal_weight_alpha_ann="
+        f"{best.out_of_sample.base.alpha_vs_equal_weight_annualized_pct or 0.0:.2f}% "
+        f"oos_benchmark_intraday_alpha_ann="
+        f"{best.out_of_sample.base.alpha_vs_benchmark_intraday_annualized_pct or 0.0:.2f}% "
+        f"oos_sharpe={best.out_of_sample.base.sharpe_ratio or 0.0:.2f} "
+        f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
+    )
+    console.print(
+        f"routes={result.research_cost['route_candidate_count']} "
+        f"base_candidates={result.research_cost['candidate_count']} "
+        f"runtime={result.runtime_seconds['total']:.2f}s"
+    )
+
+
+@strategy_app.command("adaptive-intraday-router-scan")
+def strategy_adaptive_intraday_router_scan(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    route_label: str | None = typer.Option(None, "--route-label"),
+    scan_date: str | None = typer.Option(None, "--scan-date"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+    emit_context_packets: bool = typer.Option(
+        True,
+        "--emit-context-packets/--no-context-packets",
+    ),
+    emit_news_packet: bool = typer.Option(True, "--emit-news-packet/--no-news-packet"),
+    news_lookback_hours: int = typer.Option(72, "--news-lookback-hours"),
+) -> None:
+    """Scan the adaptive router and write standard signals plus replayable feature packets."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_adaptive_intraday_router_scan(
+            spec,
+            project_root(),
+            symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+            data_source=data_source,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            route_label=route_label,
+            scan_date=scan_date,
+            refresh_data=refresh_data,
+            emit_context_packets=emit_context_packets,
+            emit_news_packet=emit_news_packet,
+            news_lookback_hours=news_lookback_hours,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]adaptive router scan complete[/green] report: {result.report_path}")
+    console.print(f"signals={len(result.signals)} log={result.signal_log_path}")
+    console.print(f"json={result.json_path}")
+    if result.feature_packet_path:
+        console.print(f"news_features={result.feature_packet_path}")
+    for signal in result.signals:
+        console.print(f"{signal.id} {signal.action} {signal.symbol} @ {signal.price:.2f}")
+
+
+@strategy_app.command("llm-adaptive-intraday-router")
+def strategy_llm_adaptive_intraday_router(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    objective: str = typer.Option(
+        "equal-weight-alpha",
+        "--objective",
+        help="Selection objective: equal-weight-alpha or benchmark-intraday-alpha.",
+    ),
+    lookback_days: Annotated[list[int] | None, typer.Option("--lookback-days")] = None,
+    entry_after_bars: Annotated[
+        list[int] | None,
+        typer.Option("--entry-after-bars"),
+    ] = None,
+    top_n: Annotated[list[int] | None, typer.Option("--top-n")] = None,
+    min_opening_return_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-opening-return-pct"),
+    ] = None,
+    min_prior_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-prior-momentum-pct"),
+    ] = None,
+    min_relative_volume: Annotated[
+        list[float] | None,
+        typer.Option("--min-relative-volume"),
+    ] = None,
+    selection_style: Annotated[list[str] | None, typer.Option("--selection-style")] = None,
+    max_opening_return_pct: Annotated[
+        list[float] | None,
+        typer.Option("--max-opening-return-pct"),
+    ] = None,
+    max_prior_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--max-prior-momentum-pct"),
+    ] = None,
+    market_gate: Annotated[list[str] | None, typer.Option("--market-gate")] = None,
+    validation_ratio: float = typer.Option(0.3, "--validation-ratio"),
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    top_per_family: int = typer.Option(3, "--top-per-family"),
+    max_route_candidates: int = typer.Option(120, "--max-route-candidates"),
+    max_base_candidates: int = typer.Option(720, "--max-base-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+    local_choice_label: str | None = typer.Option(None, "--local-choice-label"),
+) -> None:
+    """Use an LLM to select an internal adaptive intraday route from training evidence."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_llm_adaptive_intraday_router_selection(
+            spec,
+            project_root(),
+            symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+            data_source=data_source,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            lookback_days=lookback_days,
+            entry_after_bars=entry_after_bars,
+            top_n_values=top_n,
+            min_opening_return_pct=min_opening_return_pct,
+            min_prior_momentum_pct=min_prior_momentum_pct,
+            min_relative_volume=min_relative_volume,
+            selection_styles=_intraday_selection_styles(selection_style),
+            max_opening_return_pct=max_opening_return_pct,
+            max_prior_momentum_pct=max_prior_momentum_pct,
+            market_gates=_intraday_market_gates(market_gate),
+            objective=_intraday_objective(objective),
+            validation_ratio=validation_ratio,
+            out_of_sample_ratio=oos_ratio,
+            top_per_family=top_per_family,
+            max_route_candidates=max_route_candidates,
+            max_base_candidates=max_base_candidates,
+            refresh_data=refresh_data,
+            local_choice_label=local_choice_label,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    selected = result.selected
+    console.print(f"[green]LLM adaptive router complete[/green] report: {result.report_path}")
+    console.print(
+        f"selected_rank={selected.rank} status={result.status} "
+        f"oos_ann={selected.out_of_sample.base.annualized_return_pct or 0.0:.2f}% "
+        f"oos_equal_weight_alpha_ann="
+        f"{selected.out_of_sample.base.alpha_vs_equal_weight_annualized_pct or 0.0:.2f}% "
+        f"oos_benchmark_intraday_alpha_ann="
+        f"{selected.out_of_sample.base.alpha_vs_benchmark_intraday_annualized_pct or 0.0:.2f}% "
+        f"oos_sharpe={selected.out_of_sample.base.sharpe_ratio or 0.0:.2f} "
+        f"flags={','.join(selected.quality_flags) if selected.quality_flags else 'none'}"
+    )
+
+
+@strategy_app.command("hybrid-adaptive-router")
+def strategy_hybrid_adaptive_router(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    objective: str = typer.Option(
+        "benchmark-buy-hold-alpha",
+        "--objective",
+        help=("Selection objective: benchmark-buy-hold-alpha or risk-adjusted-benchmark-alpha."),
+    ),
+    holding_mode: Annotated[list[str] | None, typer.Option("--holding-mode")] = None,
+    momentum_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--momentum-lookback-days"),
+    ] = None,
+    top_n: Annotated[list[int] | None, typer.Option("--top-n")] = None,
+    market_sma_days: Annotated[list[str] | None, typer.Option("--market-sma-days")] = None,
+    min_momentum_pct: Annotated[list[float] | None, typer.Option("--min-momentum-pct")] = None,
+    max_position_weight: Annotated[
+        list[float] | None,
+        typer.Option("--max-position-weight"),
+    ] = None,
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
+    walk_forward_top_k: int | None = typer.Option(20, "--walk-forward-top-k"),
+    max_candidates: int = typer.Option(240, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Research a hybrid intraday/swing NASDAQ router against TQQQ buy-hold."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_hybrid_adaptive_router_research(
+            spec,
+            project_root(),
+            symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+            data_source=data_source,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            holding_modes=_hybrid_holding_modes(holding_mode),
+            momentum_lookback_days=momentum_lookback_days,
+            top_n_values=top_n,
+            market_sma_days=_hybrid_market_sma_days(market_sma_days),
+            min_momentum_pct=min_momentum_pct,
+            max_position_weight=max_position_weight,
+            out_of_sample_ratio=oos_ratio,
+            walk_forward_folds=walk_forward_folds,
+            walk_forward_top_k=walk_forward_top_k,
+            max_candidates=max_candidates,
+            refresh_data=refresh_data,
+            objective=_hybrid_objective(objective),
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    best = result.best
+    console.print(f"[green]hybrid adaptive router complete[/green] report: {result.report_path}")
+    console.print(
+        f"best={best.params.label} "
+        f"train_alpha_vs_tqqq_ann="
+        f"{best.train.alpha_vs_benchmark_buy_hold_annualized_pct or 0.0:.2f}% "
+        f"oos_alpha_vs_tqqq_ann="
+        f"{best.out_of_sample.alpha_vs_benchmark_buy_hold_annualized_pct or 0.0:.2f}% "
+        f"full_alpha_vs_tqqq_ann="
+        f"{best.full_window.alpha_vs_benchmark_buy_hold_annualized_pct or 0.0:.2f}% "
+        f"oos_ann={best.out_of_sample.annualized_return_pct or 0.0:.2f}% "
+        f"oos_sharpe={best.out_of_sample.sharpe_ratio or 0.0:.2f} "
+        f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
+    )
+    console.print(
+        f"candidates={result.research_cost['candidate_count']} "
+        f"walk_forward_candidates={result.research_cost['walk_forward_candidate_count']} "
+        f"estimated_passes={result.research_cost['estimated_total_backtest_passes']} "
+        f"runtime={result.runtime_seconds['total']:.2f}s"
+    )
+
+
+@strategy_app.command("hybrid-news-marginal-lift")
+def strategy_hybrid_news_marginal_lift(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    selected_route_label: str | None = typer.Option(None, "--selected-route-label"),
+    lookback_days: int = typer.Option(5, "--lookback-days"),
+    sentiment_threshold: float = typer.Option(0.0, "--sentiment-threshold"),
+    min_oos_lift_pct: float = typer.Option(1.0, "--min-oos-lift-pct"),
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Measure PIT news/LLM-style marginal lift for the selected hybrid route."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_hybrid_news_marginal_lift_research(
+            spec,
+            project_root(),
+            symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+            data_source=data_source,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            selected_route_label=selected_route_label,
+            lookback_days=lookback_days,
+            sentiment_threshold=sentiment_threshold,
+            min_oos_lift_pct=min_oos_lift_pct,
+            out_of_sample_ratio=oos_ratio,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]hybrid news marginal lift complete[/green] report: {result.report_path}")
+    console.print(f"feature_packets={result.feature_packet_path}")
+    console.print(
+        f"baseline_oos_alpha_vs_tqqq_ann="
+        f"{result.baseline.alpha_vs_benchmark_buy_hold_annualized_pct or 0.0:.2f}% "
+        f"news_gated_oos_alpha_vs_tqqq_ann="
+        f"{result.news_gated.alpha_vs_benchmark_buy_hold_annualized_pct or 0.0:.2f}% "
+        f"lift={result.marginal_lift_alpha_annualized_pct or 0.0:.2f}% "
+        f"llm_contribution_pass={result.llm_contribution_pass}"
+    )
+
+
+@strategy_app.command("hybrid-factor-attribution")
+def strategy_hybrid_factor_attribution(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    selected_route_label: str | None = typer.Option(None, "--selected-route-label"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Run route-level factor attribution for the selected hybrid route."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_hybrid_factor_attribution(
+            spec,
+            project_root(),
+            symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+            data_source=data_source,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            selected_route_label=selected_route_label,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]hybrid factor attribution complete[/green] report: {result.report_path}")
+    console.print(
+        f"route={result.selected_route_label} status={result.status} "
+        f"blockers={','.join(result.blockers) if result.blockers else 'none'}"
+    )
+
+
+@strategy_app.command("hybrid-target-weights")
+def strategy_hybrid_target_weights(
+    spec: Path,
+    symbols: str = typer.Option(..., "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    selected_route_label: str | None = typer.Option(None, "--selected-route-label"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Map the selected hybrid route into Nautilus-compatible target weights."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_hybrid_target_weight_mapping(
+            spec,
+            project_root(),
+            symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+            data_source=data_source,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            selected_route_label=selected_route_label,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]hybrid target weights complete[/green] report: {result.report_path}")
+    console.print(
+        f"parity={result.parity_status} "
+        f"rebalance_sessions={result.rebalance_sessions} "
+        f"target_rows={result.target_weight_count} "
+        f"nonzero_targets={result.nonzero_target_rows} "
+        f"reference_round_trips={result.reference_metrics.round_trips}"
+    )
+
+
+@strategy_app.command("hybrid-paper-plan")
+def strategy_hybrid_paper_plan(spec: Path) -> None:
+    """Build a paper_auto candidate plan without activating or submitting orders."""
+    result = build_hybrid_paper_plan(spec, project_root())
+    console.print(f"[green]hybrid paper plan complete[/green] report: {result.report_path}")
+    console.print(
+        f"candidate={result.candidate_spec_path} readiness={result.status} ready={result.ready}"
+    )
+
+
+def _hybrid_objective(value: str) -> str:
+    normalized = value.strip().lower().replace("_", "-")
+    if normalized == "benchmark-buy-hold-alpha":
+        return "benchmark_buy_hold_alpha"
+    if normalized == "risk-adjusted-benchmark-alpha":
+        return "risk_adjusted_benchmark_alpha"
+    raise typer.BadParameter(
+        "--objective must be benchmark-buy-hold-alpha or risk-adjusted-benchmark-alpha"
+    )
+
+
+def _hybrid_holding_modes(values: list[str] | None) -> list[str] | None:
+    if not values:
+        return None
+    allowed = {"open_to_open", "open_to_close"}
+    normalized = [item.strip().lower().replace("-", "_") for item in values if item.strip()]
+    bad = [item for item in normalized if item not in allowed]
+    if bad:
+        raise typer.BadParameter("--holding-mode contains unsupported value(s): " + ", ".join(bad))
+    return normalized
+
+
+def _hybrid_market_sma_days(values: list[str] | None) -> list[int | None] | None:
+    if not values:
+        return None
+    parsed: list[int | None] = []
+    for value in values:
+        normalized = value.strip().lower()
+        if normalized in {"none", "off", "0"}:
+            parsed.append(None)
+        else:
+            parsed.append(int(normalized))
+    return parsed
 
 
 def _intraday_objective(value: str) -> str:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -44,7 +45,14 @@ def submit_paper_order(
         return existing_order
 
     client = client or _trading_client()
-    order_qty = qty or _default_quantity(client, spec, signal)
+    signal_qty = getattr(signal, "qty", None)
+    order_qty = (
+        qty
+        if qty is not None
+        else signal_qty
+        if signal_qty is not None
+        else _default_quantity(client, spec, signal)
+    )
     client_order_id = f"oc-{signal.id}"
     order = _submit_market_order(client, signal, order_qty, client_order_id)
     record = PaperOrderRecord(
@@ -84,6 +92,14 @@ def sync_paper_orders(root: Path, client: Any | None = None) -> Path:
     ]
     path = root / "reports" / "paper" / "sync.jsonl"
     append_jsonl(path, rows)
+    write_json(
+        root / "reports" / "paper" / "open_orders.json",
+        {
+            "generated_at": datetime.now(UTC).isoformat(),
+            "orders": rows,
+            "paper": True,
+        },
+    )
     return path
 
 

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
 
 def json_safe_value(value: Any) -> Any:
+    if isinstance(value, datetime | date):
+        return value.isoformat()
     if isinstance(value, Path):
         return str(value)
     if hasattr(value, "item"):

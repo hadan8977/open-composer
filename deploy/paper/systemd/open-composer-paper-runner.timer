@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Open Composer Alpaca Paper strategy before the US regular open
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 09:25:00 America/New_York
+Persistent=true
+Unit=open-composer-paper-runner.service
+
+[Install]
+WantedBy=timers.target

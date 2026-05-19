@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import yaml
 from typer.testing import CliRunner
 
 from open_composer.cli import app
@@ -189,3 +190,395 @@ def test_promotion_report_marks_llm_contribution_not_applicable(
     json_path = sample_workspace / "reports" / "research" / "qqq_pullback_15m-promotion.json"
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload["five_pass_checks"]["llm_contribution_pass"] == "not_applicable"
+
+
+def test_adaptive_router_promotion_report_uses_router_research_artifacts(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "adaptive_router_promotion.yaml"
+    selected_label = (
+        "open_reversal:lb10_entry5_top1_open0_mom0_rv0.8_qprior_negative_"
+        "reversal_maxopen-0.2_maxmomnone__"
+        "open_momentum:lb10_entry5_top1_open0_mom0_rv0.8_qprior_negative"
+    )
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "adaptive_router_promotion"
+    raw["timeframe"] = "1m"
+    raw["universe"] = ["AAPL", "MSFT", "NVDA"]
+    raw["data"] = {"source": "alpaca", "symbol": "AAPL", "feed": "iex"}
+    raw["llm_review"] = {"enabled": True, "model": "gpt-5.5"}
+    raw["required_capabilities"] = ["market.alpaca_bars", "news.gdelt"]
+    raw["portfolio"] = {
+        "mode": "adaptive_intraday_internal_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 0.15,
+        "max_symbol_weight": 0.15,
+        "same_day_flatten": True,
+        "selected_route_label": selected_label,
+    }
+    raw["factors"] = {
+        "news_sentiment_gate": {
+            "source": "feature_packet",
+            "path": "feature_logs/adaptive_router_promotion_news.jsonl",
+            "field": "sentiment_score",
+        }
+    }
+    spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    research_json = (
+        sample_workspace
+        / "reports"
+        / "research"
+        / ("adaptive_router_promotion-adaptive-intraday-router.json")
+    )
+    research_json.write_text(
+        json.dumps(
+            {
+                "data_profile": {
+                    "source_mode": "cache",
+                    "data_as_of": "2026-05-15T20:00:00+00:00",
+                    "warnings": ["cache_data_used", "iex_feed_not_full_market_sip"],
+                },
+                "pass_status": {
+                    "workflow_pass": True,
+                    "research_pass": False,
+                    "llm_contribution_pass": False,
+                    "paper_ready_pass": False,
+                },
+                "acceptance_gate": {
+                    "passed": False,
+                    "oos_sharpe_ratio": 1.43,
+                    "oos_traded_days": 63,
+                    "walk_forward_fold_count": 2,
+                    "walk_forward_positive_alpha_folds": 1,
+                    "quality_flags": ["does_not_beat_ex_post_best_symbol"],
+                },
+                "research_cost": {"estimated_total_backtest_passes": 58},
+                "candidates": [
+                    {
+                        "rank": 2,
+                        "score": 9.3,
+                        "route": {"label": selected_label},
+                        "quality_flags": ["does_not_beat_ex_post_best_symbol"],
+                        "out_of_sample": {
+                            "total_return_pct": 18.7,
+                            "annualized_return_pct": 33.5,
+                            "sharpe_ratio": 1.43,
+                            "max_drawdown_pct": -8.9,
+                            "traded_days": 63,
+                            "benchmark_symbol": "TQQQ",
+                            "benchmark_buy_hold_return_pct": -30.6,
+                            "benchmark_intraday_return_pct": -14.0,
+                            "universe_equal_weight_buy_hold_pct": 17.4,
+                            "alpha_vs_equal_weight_annualized_pct": 41.0,
+                            "best_symbol": "AMAT",
+                            "best_symbol_buy_hold_pct": 97.8,
+                        },
+                        "full_window": {
+                            "total_return_pct": 37.1,
+                            "benchmark_symbol": "TQQQ",
+                            "universe_equal_weight_buy_hold_pct": 35.2,
+                            "best_symbol": "AMD",
+                            "best_symbol_buy_hold_pct": 153.8,
+                        },
+                    }
+                ],
+                "walk_forward": [{"fold": 1}, {"fold": 2}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    llm_json = (
+        sample_workspace
+        / "reports"
+        / "research"
+        / ("adaptive_router_promotion-llm-adaptive-router.json")
+    )
+    llm_json.write_text(
+        json.dumps(
+            {
+                "status": "written",
+                "selected": {"route": {"label": selected_label}},
+                "choice": {"selected_label": selected_label, "confidence": 0.78},
+                "pass_status": {"llm_contribution_pass": True},
+                "llm_contribution": {
+                    "selected_prompt_rank": 2,
+                    "llm_contribution_ok": True,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    feature_path = sample_workspace / "feature_logs" / "adaptive_router_promotion_news.jsonl"
+    feature_path.write_text(
+        (
+            '{"timestamp":"2026-01-02T20:00:00Z","published_at":"2026-01-02T14:20:00Z",'
+            '"fetched_at":"2026-01-02T14:25:00Z","visible_at":"2026-01-02T14:25:00Z",'
+            '"source":"adaptive_router_news_replay","symbol":"AAPL",'
+            '"dedupe_key":"adaptive_news:promotion:2026-01-02:AAPL","schema_version":"1",'
+            '"model":"local-rule-news-v1","input_hash":"sha256:abc","prompt_hash":"sha256:def",'
+            '"features":{"sentiment_score":0.0},'
+            '"evidence":{"single_modality_baseline_metric":"baseline_oos_alpha=198.8",'
+            '"marginal_lift_metric":"lift=0.0",'
+            '"missing_modality_robustness":"missing_news_oos_alpha=198.8",'
+            '"fixture_path":"reports/research/adaptive_router_promotion-llm-adaptive-router.json"}}\n'
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+
+    result = CliRunner().invoke(
+        app,
+        ["strategy", "promotion-report", str(spec_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    json_path = (
+        sample_workspace / "reports" / "research" / "adaptive_router_promotion-promotion.json"
+    )
+    report_path = json_path.with_suffix(".md")
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+
+    assert report_path.exists()
+    assert payload["mode"] == "adaptive_intraday_router_promotion"
+    assert payload["status"] == "blocked"
+    assert payload["ready"] is False
+    assert payload["selected_route"]["route"]["label"] == selected_label
+    assert payload["five_pass_checks"]["workflow_pass"] == "pass"
+    assert payload["five_pass_checks"]["llm_contribution_pass"] == "pass"
+    assert payload["gate_summary"]["paper_ready_pass"] is False
+    check_names = {item["name"] for item in payload["checks"]}
+    assert {
+        "strict_data",
+        "feature_packets",
+        "benchmark_family",
+        "execution_reality",
+    } <= check_names
+    assert payload["research_manifest"]["adaptive_router_research_path"].endswith(
+        "adaptive_router_promotion-adaptive-intraday-router.json"
+    )
+    assert "adaptive_intraday_router_promotion" in report_path.read_text(encoding="utf-8")
+
+
+def test_hybrid_router_promotion_report_uses_hybrid_research_artifacts(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_router_promotion.yaml"
+    selected_label = "open_to_open:lb20_top1_qsm100_min5_w1"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "hybrid_router_promotion"
+    raw["timeframe"] = "1m"
+    raw["universe"] = ["AAPL", "MSFT", "NVDA"]
+    raw["data"] = {"source": "alpaca", "symbol": "AAPL", "feed": "iex"}
+    raw["llm_review"] = {"enabled": True, "model": "gpt-5.5"}
+    raw["required_capabilities"] = ["market.alpaca_bars", "news.gdelt"]
+    raw["risk"]["max_position_weight"] = 1.0
+    raw["portfolio"] = {
+        "mode": "hybrid_adaptive_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 1.0,
+        "same_day_flatten": False,
+        "selected_route_label": selected_label,
+    }
+    raw["factors"] = {
+        "news_sentiment_gate": {
+            "source": "feature_packet",
+            "path": "feature_logs/hybrid_router_promotion_news.jsonl",
+            "field": "sentiment_score",
+        }
+    }
+    spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    research_json = (
+        sample_workspace
+        / "reports"
+        / "research"
+        / "hybrid_router_promotion-hybrid-adaptive-router.json"
+    )
+    research_json.parent.mkdir(parents=True, exist_ok=True)
+    research_json.write_text(
+        json.dumps(
+            {
+                "data_profile": {
+                    "source_mode": "cache",
+                    "data_as_of": "2026-05-15T20:00:00+00:00",
+                    "warnings": ["cache_data_used", "iex_feed_not_full_market_sip"],
+                },
+                "pass_status": {
+                    "workflow_pass": True,
+                    "research_pass": True,
+                    "llm_contribution_pass": False,
+                    "paper_ready_pass": False,
+                },
+                "acceptance_gate": {
+                    "passed": True,
+                    "train_alpha_vs_tqqq_buy_hold_annualized_pct": 103.5,
+                    "oos_alpha_vs_tqqq_buy_hold_annualized_pct": 198.8,
+                    "full_alpha_vs_tqqq_buy_hold_annualized_pct": 149.2,
+                    "oos_sharpe_ratio": 2.15,
+                    "oos_traded_days": 105,
+                    "oos_max_drawdown_pct": -15.9,
+                    "walk_forward_fold_count": 3,
+                    "walk_forward_positive_alpha_folds": 3,
+                    "quality_flags": [],
+                },
+                "research_cost": {"estimated_total_backtest_passes": 186},
+                "candidates": [
+                    {
+                        "rank": 1,
+                        "score": 200.5,
+                        "params": {
+                            "holding_mode": "open_to_open",
+                            "momentum_lookback_days": 20,
+                            "top_n": 1,
+                            "market_sma_days": 100,
+                            "min_momentum_pct": 5.0,
+                            "max_position_weight": 1.0,
+                        },
+                        "quality_flags": [],
+                        "out_of_sample": {
+                            "total_return_pct": 74.7,
+                            "annualized_return_pct": 157.0,
+                            "sharpe_ratio": 2.15,
+                            "max_drawdown_pct": -15.9,
+                            "traded_days": 105,
+                            "benchmark_symbol": "TQQQ",
+                            "benchmark_buy_hold_return_pct": -24.0,
+                            "benchmark_buy_hold_annualized_pct": -41.7,
+                            "alpha_vs_benchmark_buy_hold_annualized_pct": 198.8,
+                            "market_symbol": "QQQ",
+                            "market_buy_hold_return_pct": 12.0,
+                            "alpha_vs_market_buy_hold_annualized_pct": 125.2,
+                            "equal_weight_buy_hold_return_pct": 31.0,
+                            "alpha_vs_equal_weight_buy_hold_annualized_pct": 70.0,
+                            "best_symbol": "AMAT",
+                            "best_symbol_buy_hold_pct": 99.9,
+                        },
+                        "full_window": {
+                            "total_return_pct": 335.8,
+                            "annualized_return_pct": 154.0,
+                            "benchmark_symbol": "TQQQ",
+                            "benchmark_buy_hold_return_pct": 9.0,
+                            "benchmark_buy_hold_annualized_pct": 4.8,
+                            "alpha_vs_benchmark_buy_hold_annualized_pct": 149.2,
+                            "market_symbol": "QQQ",
+                            "market_buy_hold_return_pct": 40.0,
+                            "alpha_vs_market_buy_hold_annualized_pct": 126.5,
+                            "equal_weight_buy_hold_return_pct": 80.0,
+                            "equal_weight_buy_hold_annualized_pct": 34.0,
+                            "best_symbol": "AMD",
+                            "best_symbol_buy_hold_pct": 164.9,
+                        },
+                    }
+                ],
+                "walk_forward": [{"fold": 1}, {"fold": 2}, {"fold": 3}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    feature_path = sample_workspace / "feature_logs" / "hybrid_router_promotion_news.jsonl"
+    feature_path.write_text(
+        (
+            '{"timestamp":"2026-01-02T20:00:00Z","published_at":"2026-01-02T14:20:00Z",'
+            '"fetched_at":"2026-01-02T14:25:00Z","visible_at":"2026-01-02T14:25:00Z",'
+            '"source":"hybrid_router_news_replay","symbol":"AAPL",'
+            '"dedupe_key":"hybrid_news:promotion:2026-01-02:AAPL","schema_version":"1",'
+            '"model":"local-rule-news-v1","input_hash":"sha256:abc","prompt_hash":"sha256:def",'
+            '"features":{"sentiment_score":0.0},'
+            '"evidence":{"single_modality_baseline_metric":"baseline_oos_alpha=198.8",'
+            '"marginal_lift_metric":"lift=0.0",'
+            '"missing_modality_robustness":"missing_news_oos_alpha=198.8",'
+            '"fixture_path":"reports/research/hybrid_router_promotion-news-marginal-lift.json"}}\n'
+        ),
+        encoding="utf-8",
+    )
+    news_lift_json = (
+        sample_workspace
+        / "reports"
+        / "research"
+        / "hybrid_router_promotion-news-marginal-lift.json"
+    )
+    news_lift_json.write_text(
+        json.dumps(
+            {
+                "marginal_lift": {
+                    "llm_contribution_pass": False,
+                    "alpha_vs_tqqq_annualized_pct": 0.0,
+                    "interpretation": "No independent LLM/news Alpha is evidenced.",
+                },
+                "feature_packets": {"path": "feature_logs/hybrid_router_promotion_news.jsonl"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    execution_json = (
+        sample_workspace / "reports" / "execution" / "hybrid_router_promotion-target-weights.json"
+    )
+    execution_json.parent.mkdir(parents=True, exist_ok=True)
+    execution_json.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "rebalance_sessions": 398,
+                    "target_weight_rows": 1194,
+                    "nonzero_target_rows": 303,
+                    "max_gross_exposure": 1.0,
+                },
+                "parity_check": {
+                    "status": "pass",
+                    "blockers": [],
+                    "warnings": ["manual_signal mapping only"],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+
+    result = CliRunner().invoke(
+        app,
+        ["strategy", "promotion-report", str(spec_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    json_path = sample_workspace / "reports" / "research" / "hybrid_router_promotion-promotion.json"
+    report_path = json_path.with_suffix(".md")
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+
+    assert report_path.exists()
+    assert payload["mode"] == "hybrid_adaptive_router_promotion"
+    assert payload["status"] == "blocked"
+    assert payload["ready"] is False
+    assert payload["selected_route"]["params"]["market_sma_days"] == 100
+    assert payload["five_pass_checks"]["workflow_pass"] == "pass"
+    assert payload["five_pass_checks"]["llm_contribution_pass"] == "fail"
+    assert payload["gate_summary"]["paper_ready_pass"] is False
+    check_names = {item["name"] for item in payload["checks"]}
+    assert {"hybrid_router_research", "out_of_sample", "benchmark_family"} <= check_names
+    llm_check = next(item for item in payload["checks"] if item["name"] == "llm_contribution")
+    assert llm_check["status"] == "warning"
+    execution_check = next(
+        item for item in payload["checks"] if item["name"] == "execution_reality"
+    )
+    assert execution_check["details"]["target_weight_mapping_status"] == "pass"
+    assert (
+        "hybrid router needs Nautilus target-weight mapping"
+        not in execution_check["details"]["blockers"]
+    )
+    assert payload["research_manifest"]["hybrid_router_research_path"].endswith(
+        "hybrid_router_promotion-hybrid-adaptive-router.json"
+    )
+    assert "hybrid_adaptive_router_promotion" in report_path.read_text(encoding="utf-8")

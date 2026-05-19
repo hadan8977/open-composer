@@ -1,3 +1,8 @@
+from open_composer.research.adaptive_intraday_router import (
+    run_adaptive_intraday_router_research,
+    run_adaptive_intraday_router_scan,
+    run_llm_adaptive_intraday_router_selection,
+)
 from open_composer.research.alt_data_quality import build_alternative_data_quality_report
 from open_composer.research.blind_test import BlindTestReport, BlindTestResult, run_blind_test
 from open_composer.research.contracts import build_research_contract, write_research_contract
@@ -14,6 +19,10 @@ from open_composer.research.geometry_features import (
     build_geometry_feature_report,
 )
 from open_composer.research.horizon_optimizer import optimize_strategy_horizons
+from open_composer.research.hybrid_adaptive_router import run_hybrid_adaptive_router_research
+from open_composer.research.hybrid_factor_attribution import run_hybrid_factor_attribution
+from open_composer.research.hybrid_news_evidence import run_hybrid_news_marginal_lift_research
+from open_composer.research.hybrid_paper_plan import build_hybrid_paper_plan
 from open_composer.research.intraday_daily_rotation import (
     run_intraday_daily_rotation_research,
     run_llm_intraday_daily_rotation_selection,
@@ -53,6 +62,9 @@ __all__ = [
     "SkillAttributionReport",
     "SkillAttributionRow",
     "run_blind_test",
+    "run_adaptive_intraday_router_scan",
+    "run_adaptive_intraday_router_research",
+    "run_llm_adaptive_intraday_router_selection",
     "build_alternative_data_quality_report",
     "build_research_contract",
     "write_research_contract",
@@ -64,6 +76,10 @@ __all__ = [
     "GeometryFeatureReportResult",
     "build_geometry_feature_report",
     "run_factor_lab",
+    "run_hybrid_adaptive_router_research",
+    "run_hybrid_factor_attribution",
+    "run_hybrid_news_marginal_lift_research",
+    "build_hybrid_paper_plan",
     "run_intraday_daily_rotation_research",
     "run_llm_intraday_daily_rotation_selection",
     "write_intraday_product_reflection",

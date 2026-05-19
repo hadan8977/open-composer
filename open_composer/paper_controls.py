@@ -112,7 +112,9 @@ def build_paper_status(root: Path | None = None) -> PaperStatusSnapshot:
         and item.broker == "alpaca_paper"
     ]
     order_rows = _paper_order_rows(base)
-    status_counts = Counter(str(row.get("status", "unknown")) or "unknown" for row in order_rows)
+    status_counts = Counter(
+        _order_status_token(row.get("status")) or "unknown" for row in order_rows
+    )
     open_order_count = sum(
         count for status, count in status_counts.items() if status.lower() in OPEN_ORDER_STATUSES
     )
@@ -201,7 +203,7 @@ def reconcile_paper_state(root: Path | None = None) -> PaperReconciliationReport
             )
         )
     for row in orders:
-        status = str(row.get("status", "")).lower()
+        status = _order_status_token(row.get("status"))
         symbol = str(row.get("symbol", "")).upper() or None
         side = str(row.get("side", "")).lower()
         if status in OPEN_ORDER_STATUSES:
@@ -230,10 +232,10 @@ def reconcile_paper_state(root: Path | None = None) -> PaperReconciliationReport
         order_count=len(orders),
         position_count=len(positions),
         open_order_count=sum(
-            1 for row in orders if str(row.get("status", "")).lower() in OPEN_ORDER_STATUSES
+            1 for row in orders if _order_status_token(row.get("status")) in OPEN_ORDER_STATUSES
         ),
         filled_order_count=sum(
-            1 for row in orders if str(row.get("status", "")).lower() == "filled"
+            1 for row in orders if _order_status_token(row.get("status")) == "filled"
         ),
         issue_count=len(issues),
         issues=issues,
@@ -400,20 +402,54 @@ def run_paper_monitor_loop(
     return reports
 
 
+def paper_open_order_rows(root: Path | None = None) -> list[dict[str, object]] | None:
+    return _broker_open_order_rows(root or project_root())
+
+
 def _paper_order_rows(root: Path) -> list[dict[str, object]]:
-    rows: list[dict[str, object]] = []
+    broker_rows = _broker_open_order_rows(root)
+    if broker_rows is not None:
+        return broker_rows
+    rows_by_key: dict[str, dict[str, object]] = {}
     paper_root = root / "reports" / "paper"
     for path in sorted(paper_root.glob("*.jsonl")):
         if path.name == "kill_switch_events.jsonl":
             continue
         with path.open("r", encoding="utf-8") as handle:
-            for line in handle:
+            for index, line in enumerate(handle):
                 if not line.strip():
                     continue
                 raw = json.loads(line)
                 if isinstance(raw, dict) and "status" in raw:
-                    rows.append(raw)
-    return rows
+                    key = str(raw.get("client_order_id") or raw.get("id") or f"{path.name}:{index}")
+                    rows_by_key[key] = raw
+    return list(rows_by_key.values())
+
+
+def _broker_open_order_rows(root: Path) -> list[dict[str, object]] | None:
+    path = root / "reports" / "paper" / "open_orders.json"
+    if not path.exists():
+        return None
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(raw, dict):
+        return None
+    generated_at = raw.get("generated_at")
+    if generated_at:
+        try:
+            _parse_datetime(str(generated_at))
+        except ValueError:
+            return None
+    rows = raw.get("orders", [])
+    if not isinstance(rows, list):
+        return None
+    return [row for row in rows if isinstance(row, dict) and "status" in row]
+
+
+def _order_status_token(value: object) -> str:
+    return str(value or "").lower().split(".")[-1]
 
 
 def _paper_account(root: Path) -> PaperAccountSnapshot | None:

@@ -86,6 +86,36 @@ def test_paper_sync_writes_mock_orders(sample_workspace: Path) -> None:
 
     path = alpaca_paper.sync_paper_orders(sample_workspace, client=MockClient())
     assert path.exists()
+    assert (sample_workspace / "reports" / "paper" / "open_orders.json").exists()
+
+
+def test_paper_status_prefers_current_broker_open_order_snapshot(
+    sample_workspace: Path,
+) -> None:
+    orders_path = sample_workspace / "reports" / "paper" / "orders.jsonl"
+    orders_path.parent.mkdir(parents=True, exist_ok=True)
+    orders_path.write_text(
+        (
+            '{"id":"order_old","signal_id":"sig_old","client_order_id":"oc-sig_old",'
+            '"strategy_name":"qqq_pullback_15m","symbol":"AMD","side":"buy",'
+            '"qty":1,"status":"accepted","paper":true,'
+            '"submitted_at":"2026-01-02T15:45:00Z"}\n'
+        ),
+        encoding="utf-8",
+    )
+
+    class MockClient:
+        def get_orders(self) -> list[SimpleNamespace]:
+            return []
+
+    alpaca_paper.sync_paper_orders(sample_workspace, client=MockClient())
+    snapshot = build_paper_status(sample_workspace)
+    reconciliation = reconcile_paper_state(sample_workspace)
+
+    assert snapshot.open_order_count == 0
+    assert snapshot.order_status_counts == {}
+    assert reconciliation.open_order_count == 0
+    assert not any(issue.code == "open_order" for issue in reconciliation.issues)
 
 
 def test_paper_account_sync_feeds_status_and_dashboard(sample_workspace: Path) -> None:

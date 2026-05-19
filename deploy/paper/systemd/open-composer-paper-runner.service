@@ -1,0 +1,16 @@
+[Unit]
+Description=Open Composer Alpaca Paper strategy runner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/root/.paseo/worktrees/229b4rkt/aquatic-koala
+Environment=OC_EXTRA_ENV_FILE=/root/.paseo/worktrees/229b4rkt/idiotic-donkey/.env
+ExecStart=/root/.local/bin/uv run oc run paper nasdaq_hybrid_adaptive_router_1m_paper_auto_candidate --max-cycles 1 --allow-paper-orders --no-review
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/root/.paseo/worktrees/229b4rkt/aquatic-koala

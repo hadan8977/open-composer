@@ -20,7 +20,9 @@ from open_composer.feature_packets import inspect_feature_packet
 from open_composer.models.paper import PaperAccountSnapshot, PaperKillSwitch
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.storage import write_json
-from open_composer.strategy_capabilities import assess_strategy_capabilities
+from open_composer.strategy_capabilities import (
+    assess_strategy_capabilities_for_spec,
+)
 from open_composer.timeframes import require_paper_ready_timeframe
 
 PaperReadinessStatus = Literal["ok", "warning", "blocked"]
@@ -91,7 +93,7 @@ def assess_paper_strategy_readiness_for_spec(
         _promotion_report_check(spec, base, spec_path),
     ]
     if spec_path is not None and spec_path.exists():
-        checks.append(_capability_check(spec_path))
+        checks.append(_capability_check(spec, spec_path))
     status = _overall_status(checks)
     return PaperStrategyReadinessReport(
         strategy_name=spec.name,
@@ -375,6 +377,32 @@ def _portfolio_routing_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
             message="Single-symbol paper routing is supported.",
             details={"universe": spec.universe},
         )
+    if spec.portfolio.mode in {"adaptive_intraday_internal_router", "hybrid_adaptive_router"}:
+        missing: list[str] = []
+        if not spec.portfolio.selected_route_label:
+            missing.append("selected_route_label")
+        if not spec.portfolio.max_symbols_per_day:
+            missing.append("max_symbols_per_day")
+        if not spec.portfolio.gross_exposure_limit:
+            missing.append("gross_exposure_limit")
+        if missing:
+            return PaperStrategyReadinessCheck(
+                name="portfolio_routing",
+                status="blocked",
+                message=f"{spec.portfolio.mode} portfolio routing is missing: "
+                + ", ".join(missing),
+                details=spec.portfolio.model_dump(mode="json"),
+                suggested_actions=[
+                    "Set portfolio.selected_route_label, max_symbols_per_day, and "
+                    "gross_exposure_limit before paper review."
+                ],
+            )
+        return PaperStrategyReadinessCheck(
+            name="portfolio_routing",
+            status="ok",
+            message=f"{spec.portfolio.mode} portfolio routing is declared inside StrategySpec.",
+            details=spec.portfolio.model_dump(mode="json") | {"universe": spec.universe},
+        )
     return PaperStrategyReadinessCheck(
         name="portfolio_routing",
         status="blocked",
@@ -390,6 +418,53 @@ def _portfolio_routing_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
 
 
 def _portfolio_risk_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
+    portfolio = spec.portfolio
+    if portfolio.mode in {"adaptive_intraday_internal_router", "hybrid_adaptive_router"}:
+        gross_limit = portfolio.gross_exposure_limit or (
+            (portfolio.max_symbols_per_day or 0)
+            * (portfolio.max_symbol_weight or spec.risk.max_position_weight)
+        )
+        max_symbol_weight = portfolio.max_symbol_weight or spec.risk.max_position_weight
+        details = {
+            "universe": spec.universe,
+            "mode": portfolio.mode,
+            "gross_exposure_limit_pct": round(gross_limit * 100, 4),
+            "single_name_weight_limit_pct": round(max_symbol_weight * 100, 4),
+            "max_symbols_per_day": portfolio.max_symbols_per_day,
+            "same_day_flatten": portfolio.same_day_flatten,
+            "duplicate_signal_policy": portfolio.duplicate_signal_policy,
+            "sector_concentration": "bounded_by_max_symbols_and_weight; sector map not registered",
+            "borrow_short_caveat": "long-only paper routing; borrow is out of scope",
+        }
+        problems: list[str] = []
+        if gross_limit <= 0 or gross_limit > 1:
+            problems.append("gross_exposure_limit must be within (0, 1]")
+        if max_symbol_weight <= 0 or max_symbol_weight > spec.risk.max_position_weight:
+            problems.append("max_symbol_weight must not exceed risk.max_position_weight")
+        if portfolio.mode == "adaptive_intraday_internal_router" and not portfolio.same_day_flatten:
+            problems.append("same_day_flatten must be true for intraday router paper review")
+        if (
+            portfolio.max_symbols_per_day
+            and gross_limit < portfolio.max_symbols_per_day * max_symbol_weight
+        ):
+            details["effective_weight_note"] = (
+                "gross limit is tighter than max_symbols_per_day * max_symbol_weight; "
+                "scanner will equalize down to the gross limit"
+            )
+        if problems:
+            return PaperStrategyReadinessCheck(
+                name="portfolio_risk",
+                status="blocked",
+                message="; ".join(problems),
+                details=details,
+                suggested_actions=["Tighten StrategySpec portfolio risk before activation."],
+            )
+        return PaperStrategyReadinessCheck(
+            name="portfolio_risk",
+            status="ok",
+            message=f"{portfolio.mode} gross exposure and concentration limits are explicit.",
+            details=details,
+        )
     details = {
         "universe": spec.universe,
         "gross_exposure_limit_pct": round(
@@ -623,8 +698,8 @@ def _promotion_missing_requirements(
     return missing
 
 
-def _capability_check(spec_path: Path) -> PaperStrategyReadinessCheck:
-    report = assess_strategy_capabilities(spec_path)
+def _capability_check(spec: StrategySpec, spec_path: Path) -> PaperStrategyReadinessCheck:
+    report = assess_strategy_capabilities_for_spec(spec, spec_path)
     finding = report.finding("alpaca_paper_execution")
     status: PaperReadinessStatus
     if finding.status == "supported":

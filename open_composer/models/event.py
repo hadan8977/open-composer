@@ -15,6 +15,7 @@ class EventRecord(BaseModel):
     symbol: str
     published_at: datetime
     fetched_at: datetime
+    visible_at: datetime | None = None
     event_type: str
     title: str
     summary: str

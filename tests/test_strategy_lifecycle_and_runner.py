@@ -13,7 +13,11 @@ from open_composer.engines.signal_engine import build_signal
 from open_composer.models.paper import PaperOrderRecord
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.paper_controls import clear_paper_kill_switch, enable_paper_kill_switch
-from open_composer.runner.paper import PaperRunnerError, run_paper_cycle
+from open_composer.runner.paper import (
+    PaperRunnerError,
+    _paper_order_window_allows,
+    run_paper_cycle,
+)
 from open_composer.storage import append_jsonl
 from open_composer.strategy_lifecycle import activate_strategy, approve_strategy, disable_strategy
 from open_composer.strategy_versions import load_strategy_versions
@@ -288,7 +292,7 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
         append_jsonl(base / "signal_logs" / "scan-ready.jsonl", [signal])
         return [signal]
 
-    def fake_submit(signal, spec_arg, root, client=None):
+    def fake_submit(signal, spec_arg, root, client=None, qty=None):
         return PaperOrderRecord(
             id="order_ready",
             signal_id=signal.id,
@@ -313,6 +317,40 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
 
     assert cycle.signals[0].decision == "paper_order_submitted"
     assert cycle.signals[0].order_id == "order_ready"
+
+
+def test_hybrid_open_to_open_paper_orders_require_open_window(sample_workspace: Path) -> None:
+    draft = sample_workspace / "strategy_specs" / "drafts" / "hybrid_router_window.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "hybrid_router_window"
+    raw["timeframe"] = "1m"
+    raw["universe"] = ["AAPL", "MSFT", "NVDA"]
+    raw["portfolio"] = {
+        "mode": "hybrid_adaptive_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 1.0,
+        "same_day_flatten": False,
+        "duplicate_signal_policy": "stable_signal_id",
+        "selected_route_label": "open_to_open:lb20_top1_qsm50_min0_w1",
+    }
+    raw["risk"]["max_position_weight"] = 1.0
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    active = activate_strategy(
+        draft,
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+        data_source="alpaca",
+    )
+    spec = load_strategy_spec(active)
+
+    assert _paper_order_window_allows(spec, datetime(2026, 5, 19, 13, 25, tzinfo=UTC))
+    assert not _paper_order_window_allows(spec, datetime(2026, 5, 19, 4, 14, tzinfo=UTC))
 
 
 def test_paper_runner_blocks_when_kill_switch_enabled(sample_workspace: Path, monkeypatch) -> None:

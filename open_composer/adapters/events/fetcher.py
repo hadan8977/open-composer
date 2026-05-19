@@ -28,6 +28,10 @@ def fetch_capability_events(
     root: Path | None = None,
     symbols: list[str] | None = None,
     offline: bool = True,
+    limit: int | None = None,
+    time_from: str | None = None,
+    time_to: str | None = None,
+    sort: str | None = None,
 ) -> list[EventRecord]:
     base = root or project_root()
     capability_id = SOURCE_TO_CAPABILITY.get(source, source)
@@ -35,7 +39,14 @@ def fetch_capability_events(
     events = (
         _load_fixture_events(base / capability.fixture)
         if offline
-        else _fetch_live_events(capability, symbols)
+        else _fetch_live_events(
+            capability,
+            symbols,
+            limit=limit,
+            time_from=time_from,
+            time_to=time_to,
+            sort=sort,
+        )
     )
     selected = _filter_symbols(events, symbols)
     destination = _destination_path(base, capability.kind, capability.provider)
@@ -44,14 +55,28 @@ def fetch_capability_events(
     return selected
 
 
-def _fetch_live_events(capability: Capability, symbols: list[str] | None) -> list[EventRecord]:
+def _fetch_live_events(
+    capability: Capability,
+    symbols: list[str] | None,
+    *,
+    limit: int | None = None,
+    time_from: str | None = None,
+    time_to: str | None = None,
+    sort: str | None = None,
+) -> list[EventRecord]:
     selected_symbols = symbols or ["QQQ"]
     if capability.id == "events.sec_filings":
         return _fetch_sec_filings(selected_symbols)
     if capability.id == "macro.fred_series":
         return _fetch_fred_series(["DGS10", "FEDFUNDS"])
     if capability.id == "news.alpha_vantage":
-        return _fetch_alpha_vantage_news(selected_symbols)
+        return _fetch_alpha_vantage_news(
+            selected_symbols,
+            limit=limit,
+            time_from=time_from,
+            time_to=time_to,
+            sort=sort,
+        )
     if capability.id == "news.gdelt":
         return _fetch_gdelt_news(selected_symbols)
     raise NotImplementedError(f"live fetch is not implemented for {capability.id}")
@@ -199,17 +224,70 @@ def _fetch_fred_series(series_ids: list[str]) -> list[EventRecord]:
     return _dedupe_events(records)
 
 
-def _fetch_alpha_vantage_news(symbols: list[str]) -> list[EventRecord]:
+def _fetch_alpha_vantage_news(
+    symbols: list[str],
+    *,
+    limit: int | None = None,
+    time_from: str | None = None,
+    time_to: str | None = None,
+    sort: str | None = None,
+) -> list[EventRecord]:
     api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
     if not api_key:
         raise RuntimeError("ALPHA_VANTAGE_API_KEY is required for live Alpha Vantage fetch")
-    tickers = ",".join(symbol.upper() for symbol in symbols)
-    payload = _http_get_json(
-        "https://www.alphavantage.co/query",
-        {"function": "NEWS_SENTIMENT", "tickers": tickers, "apikey": api_key, "limit": 50},
-    )
+    records: list[EventRecord] = []
+    for requested_symbol in symbols:
+        payload = _fetch_alpha_vantage_news_payload(
+            api_key=api_key,
+            symbol=requested_symbol.upper(),
+            limit=limit,
+            time_from=time_from,
+            time_to=time_to,
+            sort=sort,
+        )
+        records.extend(
+            _alpha_vantage_records_from_payload(
+                payload=payload,
+                symbols=[requested_symbol.upper()],
+            )
+        )
+    return _dedupe_events(records)
+
+
+def _fetch_alpha_vantage_news_payload(
+    *,
+    api_key: str,
+    symbol: str,
+    limit: int | None,
+    time_from: str | None,
+    time_to: str | None,
+    sort: str | None,
+) -> dict[str, Any] | list[Any]:
+    params: dict[str, Any] = {
+        "function": "NEWS_SENTIMENT",
+        "tickers": symbol,
+        "apikey": api_key,
+        "limit": limit or 50,
+    }
+    if time_from:
+        params["time_from"] = time_from
+    if time_to:
+        params["time_to"] = time_to
+    if sort:
+        params["sort"] = sort
+    return _http_get_json("https://www.alphavantage.co/query", params)
+
+
+def _alpha_vantage_records_from_payload(
+    *,
+    payload: dict[str, Any] | list[Any],
+    symbols: list[str],
+) -> list[EventRecord]:
     if not isinstance(payload, dict):
         return []
+    if payload.get("Information") or payload.get("Note") or payload.get("Error Message"):
+        message = payload.get("Information") or payload.get("Note") or payload.get("Error Message")
+        raise RuntimeError(f"Alpha Vantage NEWS_SENTIMENT response: {message}")
     records: list[EventRecord] = []
     for item in payload.get("feed", []):
         time_published = str(item.get("time_published", ""))
@@ -217,24 +295,30 @@ def _fetch_alpha_vantage_news(symbols: list[str]) -> list[EventRecord]:
             continue
         published = datetime.strptime(time_published[:14], "%Y%m%dT%H%M%S").replace(tzinfo=UTC)
         ticker_sentiment = item.get("ticker_sentiment", [])
-        symbol = _best_news_symbol(symbols, ticker_sentiment)
-        records.append(
-            EventRecord(
-                id=f"alpha-vantage-{symbol.lower()}-{time_published}",
-                source="alpha_vantage",
-                symbol=symbol,
-                published_at=published,
-                fetched_at=datetime.now(UTC),
-                event_type="news_sentiment",
-                title=str(item.get("title", "")),
-                summary=str(item.get("summary", "")),
-                url=str(item.get("url", "")),
-                sentiment=_normalize_sentiment(item.get("overall_sentiment_label")),
-                relevance_score=_ticker_relevance(symbol, ticker_sentiment),
-                dedupe_key=f"alpha_vantage:{symbol}:{item.get('url', time_published)}",
-                raw=item,
+        visible = _alpha_vantage_visible_at(item, published)
+        for symbol, relevance, sentiment in _alpha_vantage_symbol_rows(
+            symbols,
+            ticker_sentiment,
+            item,
+        ):
+            records.append(
+                EventRecord(
+                    id=f"alpha-vantage-{symbol.lower()}-{time_published}",
+                    source="alpha_vantage",
+                    symbol=symbol,
+                    published_at=published,
+                    fetched_at=datetime.now(UTC),
+                    visible_at=visible,
+                    event_type="news_sentiment",
+                    title=str(item.get("title", "")),
+                    summary=str(item.get("summary", "")),
+                    url=str(item.get("url", "")),
+                    sentiment=sentiment,
+                    relevance_score=relevance,
+                    dedupe_key=f"alpha_vantage:{symbol}:{item.get('url', time_published)}",
+                    raw=item,
+                )
             )
-        )
     return _dedupe_events(records)
 
 
@@ -295,6 +379,34 @@ def _ticker_relevance(symbol: str, ticker_sentiment: list[dict[str, Any]]) -> fl
     return 0.5
 
 
+def _alpha_vantage_symbol_rows(
+    symbols: list[str],
+    ticker_sentiment: list[dict[str, Any]],
+    item: dict[str, Any],
+) -> list[tuple[str, float, str]]:
+    selected = {symbol.upper() for symbol in symbols}
+    rows: list[tuple[str, float, str]] = []
+    for ticker_row in ticker_sentiment:
+        ticker = str(ticker_row.get("ticker", "")).upper()
+        if ticker not in selected:
+            continue
+        relevance = float(ticker_row.get("relevance_score", 0.0) or 0.0)
+        sentiment = _normalize_sentiment(
+            ticker_row.get("ticker_sentiment_label") or item.get("overall_sentiment_label")
+        )
+        rows.append((ticker, relevance, sentiment))
+    if rows:
+        return rows
+    symbol = _best_news_symbol(symbols, ticker_sentiment)
+    return [
+        (
+            symbol,
+            _ticker_relevance(symbol, ticker_sentiment),
+            _normalize_sentiment(item.get("overall_sentiment_label")),
+        )
+    ]
+
+
 def _normalize_sentiment(value: Any) -> str:
     normalized = str(value or "unknown").lower()
     if "bull" in normalized or "positive" in normalized:
@@ -304,6 +416,23 @@ def _normalize_sentiment(value: Any) -> str:
     if "neutral" in normalized:
         return "neutral"
     return "unknown"
+
+
+def _alpha_vantage_visible_at(item: dict[str, Any], published: datetime) -> datetime:
+    visible_raw = (
+        item.get("visible_at")
+        or item.get("first_seen_at")
+        or item.get("published_at")
+        or item.get("time_published")
+    )
+    if isinstance(visible_raw, str) and visible_raw:
+        try:
+            if len(visible_raw) >= 15 and visible_raw[:8].isdigit() and "T" in visible_raw:
+                return datetime.strptime(visible_raw[:14], "%Y%m%dT%H%M%S").replace(tzinfo=UTC)
+            return datetime.fromisoformat(visible_raw.replace("Z", "+00:00"))
+        except ValueError:
+            pass
+    return published
 
 
 def _first_symbol_in_text(symbols: list[str], text: str) -> str:

@@ -27,6 +27,8 @@ class Signal(BaseModel):
     side: Literal["buy", "sell"]
     source: str
     price: float
+    qty: float | None = None
+    target_weight: float | None = None
     conditions: list[str] = Field(default_factory=list)
     lifecycle: str
     execution_mode: str

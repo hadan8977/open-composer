@@ -25,8 +25,8 @@ def fetch_alpaca_bars(
     use_cache: bool = True,
 ) -> pd.DataFrame:
     cache_path = root / "data" / "cache" / f"{symbol.lower()}_{timeframe}_{feed}.csv"
-    if use_cache and cache_path.exists():
-        cached = normalize_ohlcv(pd.read_csv(cache_path))
+    cached = normalize_ohlcv(pd.read_csv(cache_path)) if cache_path.exists() else None
+    if use_cache and cached is not None:
         if _cache_covers_window(cached, start, end):
             frame = _filter_cached_frame(cached, start, end)
             _annotate_frame(frame, feed, "cache", cache_path)
@@ -54,7 +54,7 @@ def fetch_alpaca_bars(
     request = StockBarsRequest(
         symbol_or_symbols=[symbol.upper()],
         timeframe=_alpaca_timeframe(timeframe),
-        start=start or datetime.now(UTC) - timedelta(days=30),
+        start=_request_start(start, end, cached),
         end=end or datetime.now(UTC),
         feed=feed,
     )
@@ -64,6 +64,9 @@ def fetch_alpaca_bars(
     )
     response = client.get_stock_bars(request)
     frame = _bars_to_frame(response, symbol.upper())
+    if cached is not None:
+        frame = _merge_cached_and_fetched(cached, frame)
+    frame = _filter_cached_frame(frame, start, end)
     _annotate_frame(frame, feed, "live_fetch", cache_path)
     ensure_dir(cache_path.parent)
     frame.to_csv(cache_path, index=False)
@@ -81,6 +84,32 @@ def fetch_alpaca_bars(
         caveats=_alpaca_caveats(feed),
     )
     return frame
+
+
+def _request_start(
+    start: datetime | None,
+    end: datetime | None,
+    cached: pd.DataFrame | None,
+) -> datetime:
+    if start is not None:
+        return start
+    if end is None and cached is not None and not cached.empty:
+        latest = pd.to_datetime(cached["timestamp"], utc=True).max().to_pydatetime()
+        return latest - timedelta(days=7)
+    return datetime.now(UTC) - timedelta(days=30)
+
+
+def _merge_cached_and_fetched(cached: pd.DataFrame, fetched: pd.DataFrame) -> pd.DataFrame:
+    if fetched.empty:
+        return cached.copy().reset_index(drop=True)
+    merged = pd.concat([cached, fetched], ignore_index=True)
+    merged["timestamp"] = pd.to_datetime(merged["timestamp"], utc=True)
+    merged = (
+        merged.sort_values("timestamp")
+        .drop_duplicates(subset=["timestamp"], keep="last")
+        .reset_index(drop=True)
+    )
+    return normalize_ohlcv(merged)
 
 
 def _annotate_frame(frame: pd.DataFrame, feed: str, source_mode: str, path: Path) -> None:
