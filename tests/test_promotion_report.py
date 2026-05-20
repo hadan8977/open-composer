@@ -582,3 +582,169 @@ def test_hybrid_router_promotion_report_uses_hybrid_research_artifacts(
         "hybrid_router_promotion-hybrid-adaptive-router.json"
     )
     assert "hybrid_adaptive_router_promotion" in report_path.read_text(encoding="utf-8")
+
+
+def test_beta_router_promotion_report_uses_beta_research_artifacts(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "beta_router_promotion.yaml"
+    selected_label = (
+        "beta:sma200_mom120_min0_vol20_maxvnone_dd120_maxddnone_"
+        "levsma50_levmaxvnone_levdd60_levmaxdd25_onTQQQ1_neuQQQ1_offCASH0_vtnone"
+    )
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "beta_router_promotion"
+    raw["timeframe"] = "daily"
+    raw["universe"] = ["QQQ", "TQQQ", "SQQQ"]
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["llm_review"] = {"enabled": False, "model": None}
+    raw["required_capabilities"] = ["market.alpaca_bars"]
+    raw["risk"]["max_position_weight"] = 1.0
+    raw["portfolio"] = {
+        "mode": "beta_exposure_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 1.0,
+        "same_day_flatten": False,
+        "selected_route_label": selected_label,
+    }
+    raw["factors"] = {}
+    spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    research_json = (
+        sample_workspace
+        / "reports"
+        / "research"
+        / ("beta_router_promotion-beta-exposure-router.json")
+    )
+    research_json.parent.mkdir(parents=True, exist_ok=True)
+    research_json.write_text(
+        json.dumps(
+            {
+                "data_profile": {
+                    "source_mode": "cache",
+                    "data_as_of": "2026-05-15T20:00:00+00:00",
+                    "warnings": ["cache_data_used", "iex_feed_not_full_market_sip"],
+                },
+                "pass_status": {
+                    "workflow_pass": True,
+                    "research_pass": True,
+                    "llm_contribution_pass": False,
+                    "paper_ready_pass": False,
+                },
+                "acceptance_gate": {
+                    "passed": True,
+                    "train_alpha_vs_qqq_annualized_pct": 25.3,
+                    "oos_alpha_vs_qqq_annualized_pct": 30.8,
+                    "full_alpha_vs_qqq_annualized_pct": 27.6,
+                    "oos_sharpe_ratio": 1.47,
+                    "oos_max_drawdown_pct": -28.4,
+                    "walk_forward_fold_count": 5,
+                    "walk_forward_positive_alpha_folds": 4,
+                    "quality_flags": [],
+                },
+                "research_cost": {"candidate_count": 96},
+                "candidates": [
+                    {
+                        "rank": 1,
+                        "score": 44.5,
+                        "params": {"label": selected_label},
+                        "quality_flags": [],
+                        "out_of_sample": {
+                            "annualized_return_pct": 60.38,
+                            "sharpe_ratio": 1.47,
+                            "max_drawdown_pct": -28.38,
+                            "market_symbol": "QQQ",
+                            "market_buy_hold_return_pct": 48.2,
+                            "alpha_vs_market_buy_hold_annualized_pct": 30.8,
+                            "leverage_symbol": "TQQQ",
+                            "leverage_buy_hold_return_pct": 12.0,
+                            "alpha_vs_leverage_buy_hold_annualized_pct": 52.2,
+                            "total_return_pct": 98.3,
+                        },
+                        "full_window": {
+                            "annualized_return_pct": 59.47,
+                            "sharpe_ratio": 1.45,
+                            "max_drawdown_pct": -29.48,
+                            "market_symbol": "QQQ",
+                            "market_buy_hold_return_pct": 167.1,
+                            "market_buy_hold_annualized_pct": 31.9,
+                            "alpha_vs_market_buy_hold_annualized_pct": 27.6,
+                            "leverage_symbol": "TQQQ",
+                            "leverage_buy_hold_return_pct": 250.0,
+                            "leverage_buy_hold_annualized_pct": 48.5,
+                            "alpha_vs_leverage_buy_hold_annualized_pct": 11.0,
+                            "total_return_pct": 420.0,
+                        },
+                    }
+                ],
+                "walk_forward": [{"fold": 1}, {"fold": 2}, {"fold": 3}, {"fold": 4}, {"fold": 5}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    execution_json = (
+        sample_workspace
+        / "reports"
+        / "execution"
+        / ("beta_router_promotion-beta-target-weights.json")
+    )
+    execution_json.parent.mkdir(parents=True, exist_ok=True)
+    execution_json.write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "rebalance_sessions": 894,
+                    "target_weight_rows": 2682,
+                    "nonzero_target_rows": 767,
+                    "max_gross_exposure": 1.0,
+                },
+                "parity_check": {
+                    "status": "pass",
+                    "blockers": [],
+                    "warnings": ["manual_signal mapping only"],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+
+    result = CliRunner().invoke(
+        app,
+        ["strategy", "promotion-report", str(spec_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    json_path = sample_workspace / "reports" / "research" / "beta_router_promotion-promotion.json"
+    report_path = json_path.with_suffix(".md")
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+
+    assert report_path.exists()
+    assert payload["mode"] == "beta_exposure_router_promotion"
+    assert payload["status"] == "blocked"
+    assert payload["ready"] is False
+    assert payload["selected_route"]["params"]["label"] == selected_label
+    assert payload["five_pass_checks"]["workflow_pass"] == "pass"
+    assert payload["five_pass_checks"]["llm_contribution_pass"] == "not_applicable"
+    assert payload["gate_summary"]["paper_ready_pass"] is False
+    check_names = {item["name"] for item in payload["checks"]}
+    assert {"beta_router_research", "out_of_sample", "benchmark_family"} <= check_names
+    execution_check = next(
+        item for item in payload["checks"] if item["name"] == "execution_reality"
+    )
+    assert execution_check["details"]["target_weight_mapping_status"] == "pass"
+    assert (
+        "beta router needs Nautilus target-weight mapping"
+        not in execution_check["details"]["blockers"]
+    )
+    assert payload["research_manifest"]["beta_router_research_path"].endswith(
+        "beta_router_promotion-beta-exposure-router.json"
+    )
+    assert "beta_exposure_router_promotion" in report_path.read_text(encoding="utf-8")

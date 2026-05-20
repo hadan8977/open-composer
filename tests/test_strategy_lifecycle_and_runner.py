@@ -16,6 +16,7 @@ from open_composer.paper_controls import clear_paper_kill_switch, enable_paper_k
 from open_composer.runner.paper import (
     PaperRunnerError,
     _paper_order_window_allows,
+    _run_adaptive_intraday_paper_signal_cycle,
     run_paper_cycle,
 )
 from open_composer.storage import append_jsonl
@@ -351,6 +352,187 @@ def test_hybrid_open_to_open_paper_orders_require_open_window(sample_workspace: 
 
     assert _paper_order_window_allows(spec, datetime(2026, 5, 19, 13, 25, tzinfo=UTC))
     assert not _paper_order_window_allows(spec, datetime(2026, 5, 19, 4, 14, tzinfo=UTC))
+
+
+def test_adaptive_intraday_paper_cycle_exits_stale_position(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    draft = sample_workspace / "strategy_specs" / "drafts" / "adaptive_intraday_exit.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "adaptive_intraday_exit"
+    raw["timeframe"] = "1m"
+    raw["universe"] = ["AAA", "BBB"]
+    raw["lifecycle"] = "active"
+    raw["risk"] = {
+        "max_trades_per_day": 2,
+        "max_position_weight": 0.25,
+        "stop_loss_pct": 1.0,
+        "take_profit_pct": 2.0,
+    }
+    raw["portfolio"] = {
+        "mode": "adaptive_intraday_internal_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 0.25,
+        "max_symbol_weight": 0.25,
+        "same_day_flatten": True,
+        "duplicate_signal_policy": "stable_signal_id",
+        "selected_route_label": "open_momentum:lb5_entry1_top1_open0_mom0_rv0.8_none",
+    }
+    raw["execution"] = {
+        "backend": "nautilus_trader",
+        "mode": "paper_auto",
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "broker": "alpaca_paper",
+    }
+    raw["data"] = {"source": "alpaca", "symbol": "AAA", "feed": "iex"}
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    spec = load_strategy_spec(draft)
+
+    fake_scan = SimpleNamespace(
+        route=SimpleNamespace(label=spec.portfolio.selected_route_label),
+        selected_sub_strategy=None,
+        signal_plans=[],
+        signals=[],
+        latest_prices={"AAA": 100.0, "BBB": 50.0},
+        date="2026-05-19",
+    )
+
+    class MockClient:
+        def get_account(self) -> SimpleNamespace:
+            return SimpleNamespace(equity="10000")
+
+        def get_all_positions(self) -> list[SimpleNamespace]:
+            return [SimpleNamespace(symbol="AAA", qty="10")]
+
+    monkeypatch.setattr(
+        "open_composer.runner.paper.run_adaptive_intraday_router_scan",
+        lambda *args, **kwargs: fake_scan,
+    )
+    monkeypatch.setattr(
+        "open_composer.runner.paper.sync_paper_orders", lambda *args, **kwargs: None
+    )
+    monkeypatch.setattr(
+        "open_composer.runner.paper.sync_paper_account",
+        lambda *args, **kwargs: None,
+    )
+
+    signals = _run_adaptive_intraday_paper_signal_cycle(
+        draft,
+        spec,
+        sample_workspace,
+        run_id_value="paper-adaptive-test",
+        version_id="ver_test",
+        spec_hash="hash_test",
+        client=MockClient(),
+        refresh_data=False,
+    )
+
+    assert len(signals) == 1
+    assert signals[0].symbol == "AAA"
+    assert signals[0].action == "exit"
+    assert signals[0].side == "sell"
+    assert signals[0].qty == 10
+    assert signals[0].target_weight == 0.0
+    assert signals[0].execution_backend == "nautilus_paper"
+
+
+def test_beta_router_paper_orders_require_open_window(sample_workspace: Path) -> None:
+    draft = sample_workspace / "strategy_specs" / "drafts" / "beta_router_window.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "beta_router_window"
+    raw["timeframe"] = "daily"
+    raw["universe"] = ["QQQ", "TQQQ", "SQQQ"]
+    raw["portfolio"] = {
+        "mode": "beta_exposure_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 0.75,
+        "max_symbol_weight": 0.75,
+        "same_day_flatten": False,
+        "duplicate_signal_policy": "stable_signal_id",
+        "selected_route_label": (
+            "beta:sma200_mom120_min0_vol20_maxvnone_dd120_maxddnone_"
+            "levsma50_levmaxvnone_levdd60_levmaxdd20_"
+            "onTQQQ0.75_neuQQQ0.75_offCASH0_vtnone"
+        ),
+    }
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    active = activate_strategy(
+        draft,
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+        data_source="alpaca",
+    )
+    spec = load_strategy_spec(active)
+
+    assert _paper_order_window_allows(spec, datetime(2026, 5, 19, 13, 25, tzinfo=UTC))
+    assert not _paper_order_window_allows(spec, datetime(2026, 5, 19, 13, 35, tzinfo=UTC))
+    assert not _paper_order_window_allows(spec, datetime(2026, 5, 23, 13, 25, tzinfo=UTC))
+
+
+def test_beta_router_paper_runtime_uses_route_symbols(sample_workspace: Path, monkeypatch) -> None:
+    draft = sample_workspace / "strategy_specs" / "drafts" / "beta_qld_runtime.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "beta_qld_runtime"
+    raw["timeframe"] = "daily"
+    raw["universe"] = ["QQQ", "QLD", "QID"]
+    raw["portfolio"] = {
+        "mode": "beta_exposure_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 1.0,
+        "same_day_flatten": False,
+        "duplicate_signal_policy": "stable_signal_id",
+        "selected_route_label": (
+            "beta:sma20_mom10_min0_vol10_maxvnone_dd20_maxddnone_"
+            "levsmanone_levmaxvnone_levdd20_levmaxddnone_"
+            "onQLD1_neuQQQ0.75_offCASH0_vtnone"
+        ),
+    }
+    raw["risk"]["max_position_weight"] = 1.0
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    active = activate_strategy(
+        draft,
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+        data_source="alpaca",
+    )
+
+    called = {}
+
+    def fake_dataset(**kwargs):
+        called.update(kwargs)
+        raise RuntimeError("stop after symbol resolution")
+
+    monkeypatch.setattr("open_composer.runner.paper.load_beta_router_dataset", fake_dataset)
+
+    try:
+        run_paper_cycle(active, sample_workspace, with_review=False)
+    except RuntimeError as exc:
+        assert "stop after symbol resolution" in str(exc)
+    else:
+        raise AssertionError("fake dataset should stop the paper cycle")
+
+    assert called["market_symbol"] == "QQQ"
+    assert called["leverage_symbol"] == "QLD"
+    assert called["hedge_symbol"] == "QID"
 
 
 def test_paper_runner_blocks_when_kill_switch_enabled(sample_workspace: Path, monkeypatch) -> None:

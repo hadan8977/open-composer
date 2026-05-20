@@ -37,10 +37,16 @@ from open_composer.paper_readiness import (
     write_paper_readiness_report,
 )
 from open_composer.reports.writer import write_scan_report
+from open_composer.research.adaptive_intraday_router import run_adaptive_intraday_router_scan
+from open_composer.research.beta_exposure_router import (
+    beta_params_from_label,
+    beta_target_weight_snapshot,
+    load_beta_router_dataset,
+)
 from open_composer.research.hybrid_adaptive_router import (
-    _hybrid_selected_symbols,
     _load_daily_hybrid_dataset,
     hybrid_params_from_label,
+    hybrid_target_weight_snapshot,
 )
 from open_composer.review.llm import review_signal_with_status
 from open_composer.storage import append_jsonl
@@ -63,6 +69,12 @@ OPEN_ORDER_STATUSES = {
 RECENT_OPEN_ORDER_SECONDS = 36 * 60 * 60
 OPEN_TO_OPEN_ORDER_WINDOW_START = (9, 20)
 OPEN_TO_OPEN_ORDER_WINDOW_END = (9, 30)
+OPEN_TO_OPEN_PORTFOLIO_MODES = {"hybrid_adaptive_router", "beta_exposure_router"}
+ROUTED_PORTFOLIO_MODES = {
+    "adaptive_intraday_internal_router",
+    "hybrid_adaptive_router",
+    "beta_exposure_router",
+}
 
 
 def run_paper_cycle(
@@ -123,8 +135,9 @@ def run_paper_cycle(
             )
         )
         if plan.selected_backend == "nautilus_paper":
-            if spec.portfolio.mode == "hybrid_adaptive_router":
-                signals = _run_hybrid_paper_signal_cycle(
+            if spec.portfolio.mode in ROUTED_PORTFOLIO_MODES:
+                signals = _run_routed_paper_signal_cycle(
+                    spec_path,
                     spec,
                     base,
                     run_id_value=cycle.run_id,
@@ -284,6 +297,39 @@ def _run_nautilus_paper_signal_cycle(
     return signals
 
 
+def _run_routed_paper_signal_cycle(
+    spec_path: Path,
+    spec: StrategySpec,
+    root: Path,
+    *,
+    run_id_value: str,
+    version_id: str,
+    spec_hash: str,
+    client: Any | None,
+    refresh_data: bool,
+) -> list[Signal]:
+    if spec.portfolio.mode == "adaptive_intraday_internal_router":
+        return _run_adaptive_intraday_paper_signal_cycle(
+            spec_path,
+            spec,
+            root,
+            run_id_value=run_id_value,
+            version_id=version_id,
+            spec_hash=spec_hash,
+            client=client,
+            refresh_data=refresh_data,
+        )
+    return _run_hybrid_paper_signal_cycle(
+        spec,
+        root,
+        run_id_value=run_id_value,
+        version_id=version_id,
+        spec_hash=spec_hash,
+        client=client,
+        refresh_data=refresh_data,
+    )
+
+
 def _run_hybrid_paper_signal_cycle(
     spec: StrategySpec,
     root: Path,
@@ -296,6 +342,16 @@ def _run_hybrid_paper_signal_cycle(
 ) -> list[Signal]:
     if not spec.portfolio.selected_route_label:
         raise PaperRunnerError("hybrid paper runtime requires a selected_route_label")
+    if spec.portfolio.mode == "beta_exposure_router":
+        return _run_beta_router_paper_signal_cycle(
+            spec,
+            root,
+            run_id_value=run_id_value,
+            version_id=version_id,
+            spec_hash=spec_hash,
+            client=client,
+            refresh_data=refresh_data,
+        )
     params = hybrid_params_from_label(spec.portfolio.selected_route_label)
     dataset = _load_daily_hybrid_dataset(
         spec=spec,
@@ -310,14 +366,8 @@ def _run_hybrid_paper_signal_cycle(
         refresh_data=refresh_data,
     )
     latest_index = len(dataset.dates)
-    gross_limit = spec.portfolio.gross_exposure_limit or 1.0
-    max_symbol_weight = spec.portfolio.max_symbol_weight or spec.risk.max_position_weight
-    effective_top_n = min(
-        params.top_n,
-        max(1, int(gross_limit / max_symbol_weight)) if max_symbol_weight > 0 else 1,
-        spec.risk.max_trades_per_day,
-    )
-    selected = _hybrid_selected_symbols(dataset, latest_index, params, effective_top_n)
+    target_snapshot = hybrid_target_weight_snapshot(spec, dataset, params, latest_index)
+    selected_symbols = set(target_snapshot.selected)
     latest = dataset.frame.iloc[-1]
     timestamp = latest["timestamp"].to_pydatetime()
     price_by_symbol = {
@@ -330,13 +380,12 @@ def _run_hybrid_paper_signal_cycle(
     equity = float(getattr(client.get_account(), "equity", 0) or 0)
     positions = {position.symbol: float(position.qty) for position in _client_positions(client)}
     pending_by_symbol = _pending_open_order_deltas(root, strategy_name=spec.name)
-    selected_weight = min(max_symbol_weight, gross_limit / len(selected)) if selected else 0.0
     signals: list[Signal] = []
     for symbol in dataset.symbols:
         price = price_by_symbol.get(symbol)
         if price is None or price <= 0:
             continue
-        target_weight = selected_weight if symbol in selected else 0.0
+        target_weight = target_snapshot.weights.get(symbol, 0.0)
         target_qty = math.floor((equity * target_weight) / price) if target_weight > 0 else 0
         pending_qty = pending_by_symbol.get(symbol, 0.0)
         if abs(pending_qty) > 1e-9:
@@ -348,8 +397,10 @@ def _run_hybrid_paper_signal_cycle(
         action = "entry" if delta_qty > 0 else "exit"
         conditions = [
             f"route={params.label}",
-            f"selected={symbol in selected}",
+            f"selected={symbol in selected_symbols}",
             f"target_weight={target_weight:.6f}",
+            f"volatility_scale={target_snapshot.volatility_scale:.6f}",
+            f"market_drawdown_scale={target_snapshot.market_drawdown_scale:.6f}",
             f"target_qty={target_qty:.4f}",
             f"current_qty={current_qty:.4f}",
             f"delta_qty={delta_qty:.4f}",
@@ -386,6 +437,266 @@ def _run_hybrid_paper_signal_cycle(
         root=root,
     )
     return signals
+
+
+def _run_adaptive_intraday_paper_signal_cycle(
+    spec_path: Path,
+    spec: StrategySpec,
+    root: Path,
+    *,
+    run_id_value: str,
+    version_id: str,
+    spec_hash: str,
+    client: Any | None,
+    refresh_data: bool,
+) -> list[Signal]:
+    if not spec.portfolio.selected_route_label:
+        raise PaperRunnerError("adaptive intraday paper runtime requires a selected_route_label")
+    scan = run_adaptive_intraday_router_scan(
+        spec_path,
+        root,
+        symbols=[item.upper() for item in spec.universe],
+        data_source=spec.data.source,
+        feed=spec.data.feed,
+        benchmark_symbol="TQQQ",
+        market_symbol="QQQ",
+        route_label=spec.portfolio.selected_route_label,
+        refresh_data=refresh_data,
+        emit_context_packets=False,
+        emit_news_packet=spec.llm_review.enabled,
+    )
+    client = client or _trading_client()
+    _sync_broker_state(root, client)
+    equity = float(getattr(client.get_account(), "equity", 0) or 0)
+    positions = {position.symbol: float(position.qty) for position in _client_positions(client)}
+    pending_by_symbol = _pending_open_order_deltas(root, strategy_name=spec.name)
+    target_symbols = {plan.symbol for plan in scan.signal_plans}
+    signal_by_symbol = {signal.symbol: signal for signal in scan.signals}
+    signal_plans = {plan.symbol: plan for plan in scan.signal_plans}
+    signals: list[Signal] = []
+    for symbol in sorted(target_symbols | set(positions)):
+        plan = signal_plans.get(symbol)
+        target_weight = plan.weight if plan is not None else 0.0
+        price = plan.signal_price if plan is not None else _latest_scan_price(scan, symbol)
+        if price is None or price <= 0:
+            continue
+        pending_qty = pending_by_symbol.get(symbol, 0.0)
+        if abs(pending_qty) > 1e-9:
+            continue
+        current_qty = positions.get(symbol, 0.0)
+        target_qty = math.floor((equity * target_weight) / price) if target_weight > 0 else 0
+        delta_qty = target_qty - current_qty
+        if abs(delta_qty) < 1e-9:
+            continue
+        source_signal = signal_by_symbol.get(symbol)
+        action = "entry" if delta_qty > 0 else "exit"
+        selected_sub_strategy = (
+            scan.selected_sub_strategy.label if scan.selected_sub_strategy else "none"
+        )
+        conditions = [
+            f"route={scan.route.label}",
+            f"selected_sub_strategy={selected_sub_strategy}",
+            f"target_weight={target_weight:.6f}",
+            f"same_day_flatten={spec.portfolio.same_day_flatten}",
+            f"scan_date={scan.date}",
+            f"target_qty={target_qty:.4f}",
+            f"current_qty={current_qty:.4f}",
+            f"delta_qty={delta_qty:.4f}",
+            *(
+                source_signal.conditions
+                if source_signal is not None and action == "entry"
+                else ["adaptive intraday target-weight exit"]
+            ),
+        ]
+        signals.append(
+            build_signal(
+                spec,
+                run_id_value,
+                (
+                    source_signal.timestamp
+                    if source_signal is not None
+                    else scan.signals[0].timestamp
+                )
+                if scan.signals
+                else _scan_fallback_timestamp(),
+                action,
+                "paper",
+                price,
+                version_id=version_id,
+                spec_hash=spec_hash,
+                execution_backend="nautilus_paper",
+                symbol=symbol,
+                conditions=conditions,
+                qty=abs(delta_qty),
+                target_weight=target_weight,
+            )
+        )
+
+    log_path = root / "signal_logs" / f"{run_id_value}.jsonl"
+    report_path = root / "reports" / "scans" / f"{run_id_value}.md"
+    append_jsonl(log_path, signals)
+    write_scan_report(
+        report_path,
+        run_id_value,
+        spec,
+        signals,
+        version_id=version_id,
+        spec_hash=spec_hash,
+        execution_backend="nautilus_paper",
+        root=root,
+    )
+    return signals
+
+
+def _run_beta_router_paper_signal_cycle(
+    spec: StrategySpec,
+    root: Path,
+    *,
+    run_id_value: str,
+    version_id: str,
+    spec_hash: str,
+    client: Any | None,
+    refresh_data: bool,
+) -> list[Signal]:
+    if not spec.portfolio.selected_route_label:
+        raise PaperRunnerError("beta router paper runtime requires a selected_route_label")
+    params = beta_params_from_label(spec.portfolio.selected_route_label)
+    market_symbol = spec.primary_symbol
+    route_symbols = {
+        params.risk_on_symbol,
+        params.neutral_symbol,
+        params.risk_off_symbol,
+        *spec.universe,
+    }
+    leverage_symbol = params.risk_on_symbol
+    if leverage_symbol in {"CASH", market_symbol}:
+        leverage_symbol = next(
+            (symbol for symbol in spec.universe if symbol.upper() not in {market_symbol, "CASH"}),
+            params.neutral_symbol,
+        )
+    hedge_symbol = (
+        params.risk_off_symbol
+        if params.risk_off_symbol not in {"CASH", market_symbol, leverage_symbol}
+        else next(
+            (
+                symbol
+                for symbol in route_symbols
+                if symbol not in {"CASH", market_symbol, leverage_symbol}
+            ),
+            None,
+        )
+    )
+    dataset = load_beta_router_dataset(
+        root=root,
+        market_symbol=market_symbol,
+        leverage_symbol=leverage_symbol,
+        hedge_symbol=hedge_symbol,
+        timeframe=spec.timeframe,
+        data_source=spec.data.source,
+        feed=spec.data.feed,
+        start=None,
+        end=None,
+        refresh_data=refresh_data,
+    )
+    latest_index = len(dataset.dates)
+    target_snapshot = beta_target_weight_snapshot(dataset, params, latest_index)
+    latest = dataset.frame.iloc[-1]
+    timestamp = latest["timestamp"].to_pydatetime()
+    symbols = [dataset.market_symbol, dataset.leverage_symbol]
+    if dataset.hedge_symbol:
+        symbols.append(dataset.hedge_symbol)
+    price_by_symbol = {
+        symbol: float(latest[f"{symbol}_close"])
+        for symbol in symbols
+        if f"{symbol}_close" in latest and float(latest[f"{symbol}_close"]) > 0
+    }
+    client = client or _trading_client()
+    _sync_broker_state(root, client)
+    equity = float(getattr(client.get_account(), "equity", 0) or 0)
+    positions = {position.symbol: float(position.qty) for position in _client_positions(client)}
+    pending_by_symbol = _pending_open_order_deltas(root, strategy_name=spec.name)
+    signals: list[Signal] = []
+    for symbol in symbols:
+        price = price_by_symbol.get(symbol)
+        if price is None or price <= 0:
+            continue
+        target_weight = target_snapshot.weights.get(symbol, 0.0)
+        target_qty = math.floor((equity * target_weight) / price) if target_weight > 0 else 0
+        pending_qty = pending_by_symbol.get(symbol, 0.0)
+        if abs(pending_qty) > 1e-9:
+            continue
+        current_qty = positions.get(symbol, 0.0)
+        delta_qty = target_qty - current_qty
+        if abs(delta_qty) < 1e-9:
+            continue
+        action = "entry" if delta_qty > 0 else "exit"
+        conditions = [
+            f"route={params.label}",
+            f"target_weight={target_weight:.6f}",
+            f"state={target_snapshot.state}",
+            f"volatility_scale={target_snapshot.volatility_scale:.6f}",
+            f"qqq_trend_ok={target_snapshot.qqq_trend_ok}",
+            f"qqq_momentum_ok={target_snapshot.qqq_momentum_ok}",
+            f"qqq_drawdown_ok={target_snapshot.qqq_drawdown_ok}",
+            f"leverage_trend_ok={target_snapshot.leverage_trend_ok}",
+            f"leverage_drawdown_ok={target_snapshot.leverage_drawdown_ok}",
+            f"target_qty={target_qty:.4f}",
+            f"current_qty={current_qty:.4f}",
+            f"delta_qty={delta_qty:.4f}",
+        ]
+        signals.append(
+            build_signal(
+                spec,
+                run_id_value,
+                timestamp,
+                action,
+                "paper",
+                price,
+                version_id=version_id,
+                spec_hash=spec_hash,
+                execution_backend="nautilus_paper",
+                symbol=symbol,
+                conditions=conditions,
+                qty=abs(delta_qty),
+                target_weight=target_weight,
+            )
+        )
+
+    log_path = root / "signal_logs" / f"{run_id_value}.jsonl"
+    report_path = root / "reports" / "scans" / f"{run_id_value}.md"
+    append_jsonl(log_path, signals)
+    write_scan_report(
+        report_path,
+        run_id_value,
+        spec,
+        signals,
+        version_id=version_id,
+        spec_hash=spec_hash,
+        execution_backend="nautilus_paper",
+        root=root,
+    )
+    return signals
+
+
+def _latest_scan_price(scan: Any, symbol: str) -> float | None:
+    latest_prices = getattr(scan, "latest_prices", {})
+    if isinstance(latest_prices, dict):
+        value = latest_prices.get(symbol)
+        if value is not None:
+            try:
+                price = float(value)
+            except (TypeError, ValueError):
+                price = 0.0
+            if price > 0:
+                return price
+    for plan in scan.signal_plans:
+        if plan.symbol == symbol:
+            return plan.signal_price
+    return None
+
+
+def _scan_fallback_timestamp() -> datetime:
+    return datetime.now(UTC)
 
 
 def _validate_runtime_spec(spec: StrategySpec) -> None:
@@ -462,6 +773,8 @@ def _decide_signal(
             message=format_paper_readiness_blockers(readiness),
         )
     if not _paper_order_window_allows(spec):
+        start = f"{OPEN_TO_OPEN_ORDER_WINDOW_START[0]:02d}:{OPEN_TO_OPEN_ORDER_WINDOW_START[1]:02d}"
+        end = f"{OPEN_TO_OPEN_ORDER_WINDOW_END[0]:02d}:{OPEN_TO_OPEN_ORDER_WINDOW_END[1]:02d}"
         return PaperRunSignalResult(
             signal_id=signal_id,
             action=action,  # type: ignore[arg-type]
@@ -471,7 +784,8 @@ def _decide_signal(
             review_status=review_status,
             review_verdict=review_verdict,
             message=(
-                "open_to_open hybrid paper orders are only allowed 09:20-09:30 America/New_York"
+                f"open-to-open paper orders are only allowed {start}-{end} "
+                f"{spec.data_assumptions.timezone}"
             ),
         )
     if require_review_consider and review_verdict != "consider":
@@ -521,10 +835,10 @@ def _decide_signal(
 
 
 def _paper_order_window_allows(spec: StrategySpec, now: datetime | None = None) -> bool:
-    if spec.portfolio.mode != "hybrid_adaptive_router":
+    if spec.portfolio.mode not in OPEN_TO_OPEN_PORTFOLIO_MODES:
         return True
     route = spec.portfolio.selected_route_label or ""
-    if not route.startswith("open_to_open:"):
+    if spec.portfolio.mode == "hybrid_adaptive_router" and not route.startswith("open_to_open:"):
         return True
     current = now or datetime.now(UTC)
     if current.tzinfo is None:

@@ -202,10 +202,18 @@ def build_nautilus_paper_plan(
         reasons.append("Nautilus paper runtime currently targets broker=alpaca_paper")
         status = "partial"
     if len(spec.universe) > 1:
-        if spec.portfolio.mode == "hybrid_adaptive_router" and spec.portfolio.selected_route_label:
+        if (
+            spec.portfolio.mode
+            in {
+                "adaptive_intraday_internal_router",
+                "hybrid_adaptive_router",
+                "beta_exposure_router",
+            }
+            and spec.portfolio.selected_route_label
+        ):
             reasons.append(
-                "hybrid portfolio routing will execute through the local target-weight "
-                "paper mapping"
+                f"{spec.portfolio.mode} portfolio routing will execute through the local "
+                "target-weight paper mapping"
             )
             if status == "supported":
                 status = "partial"

@@ -39,6 +39,8 @@ class PortfolioConfig(BaseModel):
         "single_symbol",
         "adaptive_intraday_internal_router",
         "hybrid_adaptive_router",
+        "beta_exposure_router",
+        "core_beta_satellite_router",
     ] = "single_symbol"
     max_symbols_per_day: int | None = Field(default=None, ge=1)
     gross_exposure_limit: float | None = Field(default=None, gt=0, le=1)
@@ -54,6 +56,8 @@ class PortfolioConfig(BaseModel):
             in {
                 "adaptive_intraday_internal_router",
                 "hybrid_adaptive_router",
+                "beta_exposure_router",
+                "core_beta_satellite_router",
             }
             and not self.selected_route_label
         ):

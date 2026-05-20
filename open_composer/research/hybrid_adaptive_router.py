@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import math
+import re
 from dataclasses import dataclass
+from datetime import datetime
 from itertools import product
 from pathlib import Path
 from statistics import mean
@@ -9,6 +12,7 @@ from typing import Any, Literal
 
 import pandas as pd
 
+from open_composer.adapters.data import fetch_ohlcv
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.intraday_daily_rotation import (
@@ -21,6 +25,7 @@ from open_composer.research.intraday_daily_rotation import (
 from open_composer.research.metadata import (
     combined_data_profile,
     estimate_grid_research_cost,
+    frame_data_profile,
     hypothesis_ledger,
     research_brief,
     runtime_payload,
@@ -33,6 +38,7 @@ from .intraday_daily_rotation import _DailyBars, _load_dataset
 
 HybridObjective = Literal["benchmark_buy_hold_alpha", "risk_adjusted_benchmark_alpha"]
 HoldingMode = Literal["open_to_open", "open_to_close"]
+MomentumScoreMode = Literal["raw", "risk_adjusted"]
 
 
 @dataclass(frozen=True)
@@ -43,14 +49,40 @@ class HybridRouterParams:
     market_sma_days: int | None
     min_momentum_pct: float
     max_position_weight: float
+    gross_exposure_limit: float = 1.0
+    momentum_score_mode: MomentumScoreMode = "raw"
+    risk_adjustment_lookback_days: int | None = None
+    market_below_sma_scale: float = 0.0
+    volatility_lookback_days: int | None = None
+    target_volatility_annual_pct: float | None = None
+    market_drawdown_lookback_days: int | None = None
+    market_drawdown_brake_pct: float | None = None
+    brake_exposure_scale: float = 1.0
 
     @property
     def label(self) -> str:
         gate = "nogate" if self.market_sma_days is None else f"qsm{self.market_sma_days}"
-        return (
+        label = (
             f"{self.holding_mode}:lb{self.momentum_lookback_days}_top{self.top_n}_"
             f"{gate}_min{self.min_momentum_pct:g}_w{self.max_position_weight:g}"
         )
+        if self.gross_exposure_limit < 0.999999:
+            label += f"_g{self.gross_exposure_limit:g}"
+        if self.momentum_score_mode != "raw":
+            label += "_scoreradj"
+        if self.risk_adjustment_lookback_days:
+            label += f"_radj{self.risk_adjustment_lookback_days}"
+        if self.market_sma_days is not None and self.market_below_sma_scale > 0:
+            label += f"_qoff{self.market_below_sma_scale:g}"
+        if self.volatility_lookback_days and self.target_volatility_annual_pct:
+            label += f"_vol{self.volatility_lookback_days}t{self.target_volatility_annual_pct:g}"
+        if self.market_drawdown_lookback_days and self.market_drawdown_brake_pct:
+            label += (
+                f"_mdd{self.market_drawdown_lookback_days}"
+                f"p{self.market_drawdown_brake_pct:g}"
+                f"s{self.brake_exposure_scale:g}"
+            )
+        return label
 
 
 @dataclass(frozen=True)
@@ -82,6 +114,21 @@ class HybridRouterMetrics:
     alpha_vs_best_symbol_buy_hold_pct: float
     exposure_pct: float
     skipped_days: int
+    average_gross_exposure_pct: float = 0.0
+    max_gross_exposure_pct: float = 0.0
+    max_symbol_weight_pct: float = 0.0
+    market_regime_scaled_days: int = 0
+    volatility_scaled_days: int = 0
+    market_drawdown_brake_days: int = 0
+
+
+@dataclass(frozen=True)
+class _HybridTargetWeightSnapshot:
+    selected: list[str]
+    weights: dict[str, float]
+    volatility_scale: float
+    market_regime_scale: float
+    market_drawdown_scale: float
 
 
 @dataclass(frozen=True)
@@ -122,7 +169,7 @@ def hybrid_params_from_label(label: str) -> HybridRouterParams:
     try:
         holding_mode, remainder = label.split(":", 1)
         parts = remainder.split("_")
-        if len(parts) != 5:
+        if len(parts) < 5:
             raise ValueError
         lookback = int(parts[0].removeprefix("lb"))
         top_n = int(parts[1].removeprefix("top"))
@@ -130,6 +177,48 @@ def hybrid_params_from_label(label: str) -> HybridRouterParams:
         market_sma = None if gate == "nogate" else int(gate.removeprefix("qsm"))
         min_momentum = float(parts[3].removeprefix("min"))
         weight = float(parts[4].removeprefix("w"))
+        gross = 1.0
+        score_mode: MomentumScoreMode = "raw"
+        risk_adjustment_lookback: int | None = None
+        market_below_sma_scale = 0.0
+        vol_lookback: int | None = None
+        target_vol: float | None = None
+        drawdown_lookback: int | None = None
+        drawdown_brake: float | None = None
+        brake_scale = 1.0
+        for token in parts[5:]:
+            if token.startswith("g"):
+                gross = float(token.removeprefix("g"))
+            elif token.startswith("score"):
+                score_value = token.removeprefix("score")
+                if score_value == "radj":
+                    score_mode = "risk_adjusted"
+                elif score_value in {"raw", "risk_adjusted"}:
+                    score_mode = score_value  # type: ignore[assignment]
+                else:
+                    raise ValueError
+            elif token.startswith("radj"):
+                risk_adjustment_lookback = int(token.removeprefix("radj"))
+            elif token.startswith("qoff"):
+                market_below_sma_scale = float(token.removeprefix("qoff"))
+            elif token.startswith("vol"):
+                match = re.fullmatch(r"vol(?P<lookback>\d+)t(?P<target>[0-9.]+)", token)
+                if match is None:
+                    raise ValueError
+                vol_lookback = int(match.group("lookback"))
+                target_vol = float(match.group("target"))
+            elif token.startswith("mdd"):
+                match = re.fullmatch(
+                    r"mdd(?P<lookback>\d+)p(?P<brake>[0-9.]+)s(?P<scale>[0-9.]+)",
+                    token,
+                )
+                if match is None:
+                    raise ValueError
+                drawdown_lookback = int(match.group("lookback"))
+                drawdown_brake = float(match.group("brake"))
+                brake_scale = float(match.group("scale"))
+            else:
+                raise ValueError
     except ValueError as exc:
         raise ValueError(f"unsupported hybrid route label: {label}") from exc
     if holding_mode not in {"open_to_open", "open_to_close"}:
@@ -141,6 +230,15 @@ def hybrid_params_from_label(label: str) -> HybridRouterParams:
         market_sma_days=market_sma,
         min_momentum_pct=min_momentum,
         max_position_weight=weight,
+        gross_exposure_limit=gross,
+        momentum_score_mode=score_mode,
+        risk_adjustment_lookback_days=risk_adjustment_lookback,
+        market_below_sma_scale=market_below_sma_scale,
+        volatility_lookback_days=vol_lookback,
+        target_volatility_annual_pct=target_vol,
+        market_drawdown_lookback_days=drawdown_lookback,
+        market_drawdown_brake_pct=drawdown_brake,
+        brake_exposure_scale=brake_scale,
     )
 
 
@@ -171,6 +269,15 @@ def run_hybrid_adaptive_router_research(
     market_sma_days: list[int | None] | None = None,
     min_momentum_pct: list[float] | None = None,
     max_position_weight: list[float] | None = None,
+    gross_exposure_limit: list[float] | None = None,
+    momentum_score_mode: list[MomentumScoreMode] | None = None,
+    risk_adjustment_lookback_days: list[int | None] | None = None,
+    market_below_sma_scale: list[float] | None = None,
+    volatility_lookback_days: list[int | None] | None = None,
+    target_volatility_annual_pct: list[float | None] | None = None,
+    market_drawdown_lookback_days: list[int | None] | None = None,
+    market_drawdown_brake_pct: list[float | None] | None = None,
+    brake_exposure_scale: list[float] | None = None,
     out_of_sample_ratio: float = 0.3,
     walk_forward_folds: int = 3,
     walk_forward_top_k: int | None = 20,
@@ -210,6 +317,15 @@ def run_hybrid_adaptive_router_research(
         market_sma_days=market_sma_days or [None, 20, 50, 100],
         min_momentum_pct=min_momentum_pct or [0.0],
         max_position_weight=max_position_weight or [spec.risk.max_position_weight],
+        gross_exposure_limit=gross_exposure_limit or [spec.portfolio.gross_exposure_limit or 1.0],
+        momentum_score_mode=momentum_score_mode or ["raw"],
+        risk_adjustment_lookback_days=risk_adjustment_lookback_days or [None],
+        market_below_sma_scale=market_below_sma_scale or [0.0],
+        volatility_lookback_days=volatility_lookback_days or [None],
+        target_volatility_annual_pct=target_volatility_annual_pct or [None],
+        market_drawdown_lookback_days=market_drawdown_lookback_days or [None],
+        market_drawdown_brake_pct=market_drawdown_brake_pct or [None],
+        brake_exposure_scale=brake_exposure_scale or [1.0],
         max_candidates=max_candidates,
     )
     stages["build_grid"] = perf_counter() - stage_started
@@ -299,6 +415,19 @@ def _load_daily_hybrid_dataset(
     market_symbol: str,
     refresh_data: bool,
 ) -> _DailyHybridDataset:
+    if spec.timeframe == "daily":
+        return _load_daily_hybrid_dataset_from_daily_bars(
+            spec=spec,
+            root=root,
+            symbols=symbols,
+            data_source=data_source,
+            feed=feed,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol,
+            market_symbol=market_symbol,
+            refresh_data=refresh_data,
+        )
     intraday = _load_dataset(
         spec=spec,
         root=root,
@@ -327,6 +456,93 @@ def _load_daily_hybrid_dataset(
         frame=frame,
         data_profile=combined_data_profile(intraday.profiles),
     )
+
+
+def _load_daily_hybrid_dataset_from_daily_bars(
+    *,
+    spec: StrategySpec,
+    root: Path,
+    symbols: list[str],
+    data_source: str,
+    feed: str,
+    start: str | None,
+    end: str | None,
+    benchmark_symbol: str,
+    market_symbol: str,
+    refresh_data: bool,
+) -> _DailyHybridDataset:
+    required_symbols = list(
+        dict.fromkeys([*symbols, benchmark_symbol.upper(), market_symbol.upper()])
+    )
+    bars: dict[str, dict[str, _DailyBars]] = {}
+    profiles: list[dict[str, Any]] = []
+    for symbol in required_symbols:
+        frame = fetch_ohlcv(
+            root=root,
+            symbol=symbol,
+            timeframe="daily",
+            start=_parse_research_timestamp(start),
+            end=_parse_research_timestamp(end),
+            source=data_source,
+            feed=feed,
+            use_cache=not refresh_data,
+            allow_fallback=False,
+        )
+        profiles.append(
+            frame_data_profile(
+                frame,
+                symbol=symbol,
+                timeframe="daily",
+                provider=data_source,
+                feed=feed,
+                source_mode=frame.attrs.get("data_source_mode"),
+                path=frame.attrs.get("data_source_path"),
+            )
+        )
+        bars[symbol] = _daily_bars_from_daily_frame(frame)
+    common_dates = sorted(set.intersection(*(set(bars[symbol]) for symbol in required_symbols)))
+    if len(common_dates) < 120:
+        raise ValueError("hybrid adaptive router requires at least 120 common daily sessions")
+    frame = _daily_frame_from_intraday(bars, common_dates, required_symbols)
+    frame = _filter_time_window(frame, start, end)
+    dates = list(frame["date"].astype(str))
+    if len(dates) < 120:
+        raise ValueError("hybrid adaptive router requires at least 120 common daily sessions")
+    return _DailyHybridDataset(
+        symbols=symbols,
+        benchmark_symbol=benchmark_symbol.upper(),
+        market_symbol=market_symbol.upper(),
+        dates=dates,
+        frame=frame,
+        data_profile=combined_data_profile(profiles),
+    )
+
+
+def _daily_bars_from_daily_frame(frame: pd.DataFrame) -> dict[str, _DailyBars]:
+    data = frame.copy()
+    data["timestamp"] = pd.to_datetime(data["timestamp"], utc=True)
+    data = data.sort_values("timestamp").reset_index(drop=True)
+    days: dict[str, _DailyBars] = {}
+    for _, row in data.iterrows():
+        date = pd.Timestamp(row["timestamp"]).tz_convert("America/New_York").date().isoformat()
+        days[date] = _DailyBars(
+            timestamps=[row["timestamp"]],
+            opens=pd.Series([row["open"]]).to_numpy(dtype=float),
+            closes=pd.Series([row["close"]]).to_numpy(dtype=float),
+            volumes=pd.Series([row["volume"]]).to_numpy(dtype=float),
+        )
+    return days
+
+
+def _parse_research_timestamp(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    timestamp = pd.Timestamp(value)
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.tz_localize("UTC")
+    else:
+        timestamp = timestamp.tz_convert("UTC")
+    return timestamp.to_pydatetime()
 
 
 def _daily_frame_from_intraday(
@@ -361,16 +577,50 @@ def _build_hybrid_params_grid(
     market_sma_days: list[int | None],
     min_momentum_pct: list[float],
     max_position_weight: list[float],
+    gross_exposure_limit: list[float],
+    momentum_score_mode: list[MomentumScoreMode],
+    risk_adjustment_lookback_days: list[int | None],
+    market_below_sma_scale: list[float],
+    volatility_lookback_days: list[int | None],
+    target_volatility_annual_pct: list[float | None],
+    market_drawdown_lookback_days: list[int | None],
+    market_drawdown_brake_pct: list[float | None],
+    brake_exposure_scale: list[float],
     max_candidates: int,
 ) -> list[HybridRouterParams]:
     params: list[HybridRouterParams] = []
-    for mode, lookback, top_n, sma, min_mom, weight in product(
+    for (
+        mode,
+        lookback,
+        top_n,
+        sma,
+        min_mom,
+        weight,
+        gross,
+        score_mode,
+        risk_adjustment_lookback,
+        market_below_scale,
+        vol_lookback,
+        target_vol,
+        drawdown_lookback,
+        drawdown_brake,
+        brake_scale,
+    ) in product(
         holding_modes,
         momentum_lookback_days,
         top_n_values,
         market_sma_days,
         min_momentum_pct,
         max_position_weight,
+        gross_exposure_limit,
+        momentum_score_mode,
+        risk_adjustment_lookback_days,
+        market_below_sma_scale,
+        volatility_lookback_days,
+        target_volatility_annual_pct,
+        market_drawdown_lookback_days,
+        market_drawdown_brake_pct,
+        brake_exposure_scale,
     ):
         if lookback < 2:
             raise ValueError("momentum lookback must be at least 2 days")
@@ -378,6 +628,40 @@ def _build_hybrid_params_grid(
             raise ValueError("top_n must be at least 1")
         if sma is not None and sma < 2:
             raise ValueError("market_sma_days must be at least 2")
+        if weight <= 0 or weight > 1:
+            raise ValueError("max_position_weight must be within (0, 1]")
+        if gross <= 0 or gross > 1:
+            raise ValueError("gross_exposure_limit must be within (0, 1]")
+        if score_mode not in {"raw", "risk_adjusted"}:
+            raise ValueError("momentum_score_mode must be raw or risk_adjusted")
+        if score_mode == "raw" and risk_adjustment_lookback is not None:
+            continue
+        if score_mode == "risk_adjusted" and risk_adjustment_lookback is None:
+            continue
+        if risk_adjustment_lookback is not None and risk_adjustment_lookback < 2:
+            raise ValueError("risk_adjustment_lookback_days must be at least 2")
+        if market_below_scale < 0 or market_below_scale > 1:
+            raise ValueError("market_below_sma_scale must be within [0, 1]")
+        if sma is None and market_below_scale > 0:
+            continue
+        if vol_lookback is None and target_vol is not None:
+            continue
+        if vol_lookback is not None and target_vol is None:
+            continue
+        if vol_lookback is not None and vol_lookback < 2:
+            raise ValueError("volatility_lookback_days must be at least 2")
+        if target_vol is not None and target_vol <= 0:
+            raise ValueError("target_volatility_annual_pct must be positive")
+        if drawdown_lookback is None and drawdown_brake is not None:
+            continue
+        if drawdown_lookback is not None and drawdown_brake is None:
+            continue
+        if drawdown_lookback is not None and drawdown_lookback < 2:
+            raise ValueError("market_drawdown_lookback_days must be at least 2")
+        if drawdown_brake is not None and drawdown_brake <= 0:
+            raise ValueError("market_drawdown_brake_pct must be positive")
+        if brake_scale <= 0 or brake_scale > 1:
+            raise ValueError("brake_exposure_scale must be within (0, 1]")
         params.append(
             HybridRouterParams(
                 holding_mode=mode,
@@ -386,6 +670,15 @@ def _build_hybrid_params_grid(
                 market_sma_days=sma,
                 min_momentum_pct=min_mom,
                 max_position_weight=weight,
+                gross_exposure_limit=gross,
+                momentum_score_mode=score_mode,
+                risk_adjustment_lookback_days=risk_adjustment_lookback,
+                market_below_sma_scale=market_below_scale,
+                volatility_lookback_days=vol_lookback,
+                target_volatility_annual_pct=target_vol,
+                market_drawdown_lookback_days=drawdown_lookback,
+                market_drawdown_brake_pct=drawdown_brake,
+                brake_exposure_scale=brake_scale,
             )
         )
     return params[:max_candidates]
@@ -427,7 +720,7 @@ def _evaluate_hybrid_candidates(
             HybridRouterCandidate(
                 rank=0,
                 params=params,
-                score=_hybrid_score(train, oos, full, objective),
+                score=_hybrid_score(train, objective),
                 train=train,
                 out_of_sample=oos,
                 full_window=full,
@@ -527,27 +820,42 @@ def _backtest_hybrid_params(
     end_index = min(end_index, len(frame) - (1 if params.holding_mode == "open_to_open" else 0))
     returns: list[float] = []
     selected_counts: list[int] = []
+    gross_exposures: list[float] = []
+    max_symbol_weights: list[float] = []
     equity_curve = [start_equity]
     equity = start_equity
     traded_days = 0
     round_trips = 0
     skipped_days = 0
-    max_names_by_weight = max(1, int(1 / params.max_position_weight))
-    effective_top_n = min(params.top_n, max_names_by_weight, spec.risk.max_trades_per_day)
+    market_regime_scaled_days = 0
+    volatility_scaled_days = 0
+    market_drawdown_brake_days = 0
     for index in range(start_index, end_index):
-        selected = _hybrid_selected_symbols(dataset, index, params, effective_top_n)
-        if not selected:
+        targets = hybrid_target_weight_snapshot(spec, dataset, params, index)
+        selected = targets.selected
+        weights = targets.weights
+        gross_exposure = sum(abs(weight) for weight in weights.values())
+        max_symbol_weight = max((abs(weight) for weight in weights.values()), default=0.0)
+        if targets.volatility_scale < 0.999999:
+            volatility_scaled_days += 1
+        if targets.market_regime_scale < 0.999999:
+            market_regime_scaled_days += 1
+        if targets.market_drawdown_scale < 0.999999:
+            market_drawdown_brake_days += 1
+        if gross_exposure <= 0:
             strategy_return = 0.0
             skipped_days += 1
         else:
-            weight = min(params.max_position_weight, 1 / len(selected))
             strategy_return = sum(
                 weight * _symbol_holding_return(dataset, symbol, index, params.holding_mode, spec)
-                for symbol in selected
+                for symbol, weight in weights.items()
+                if weight > 0
             )
             traded_days += 1
             round_trips += len(selected)
         selected_counts.append(len(selected))
+        gross_exposures.append(gross_exposure)
+        max_symbol_weights.append(max_symbol_weight)
         returns.append(strategy_return)
         equity *= 1 + strategy_return
         equity_curve.append(equity)
@@ -607,6 +915,12 @@ def _backtest_hybrid_params(
         alpha_vs_best_symbol_buy_hold_pct=total_return_pct - best_return,
         exposure_pct=(traded_days / len(returns) * 100) if returns else 0.0,
         skipped_days=skipped_days,
+        average_gross_exposure_pct=mean(gross_exposures) * 100 if gross_exposures else 0.0,
+        max_gross_exposure_pct=max(gross_exposures) * 100 if gross_exposures else 0.0,
+        max_symbol_weight_pct=max(max_symbol_weights) * 100 if max_symbol_weights else 0.0,
+        market_regime_scaled_days=market_regime_scaled_days,
+        volatility_scaled_days=volatility_scaled_days,
+        market_drawdown_brake_days=market_drawdown_brake_days,
     )
 
 
@@ -617,7 +931,7 @@ def _hybrid_selected_symbols(
     top_n: int,
 ) -> list[str]:
     frame = dataset.frame
-    if params.market_sma_days is not None:
+    if params.market_sma_days is not None and params.market_below_sma_scale <= 0:
         market_close = frame[f"{dataset.market_symbol}_close"]
         if index < params.market_sma_days:
             return []
@@ -636,9 +950,166 @@ def _hybrid_selected_symbols(
             continue
         momentum = (current / previous - 1) * 100
         if momentum >= params.min_momentum_pct:
-            scores.append((momentum, symbol))
+            scores.append((_momentum_score(dataset, symbol, index, params, momentum), symbol))
     scores.sort(reverse=True)
     return [symbol for _, symbol in scores[:top_n]]
+
+
+def hybrid_target_weight_snapshot(
+    spec: StrategySpec,
+    dataset: _DailyHybridDataset,
+    params: HybridRouterParams,
+    index: int,
+) -> _HybridTargetWeightSnapshot:
+    max_symbol_weight = min(
+        params.max_position_weight,
+        spec.portfolio.max_symbol_weight or spec.risk.max_position_weight,
+        spec.risk.max_position_weight,
+    )
+    gross_limit = min(
+        params.gross_exposure_limit,
+        spec.portfolio.gross_exposure_limit or params.gross_exposure_limit,
+    )
+    if max_symbol_weight <= 0 or gross_limit <= 0:
+        return _HybridTargetWeightSnapshot([], {}, 0.0, 0.0, 0.0)
+    effective_top_n = min(
+        params.top_n,
+        spec.portfolio.max_symbols_per_day or params.top_n,
+        spec.risk.max_trades_per_day,
+    )
+    selected = _hybrid_selected_symbols(dataset, index, params, effective_top_n)
+    if not selected:
+        regime_scale = _market_regime_exposure_scale(dataset, params, index)
+        return _HybridTargetWeightSnapshot([], {}, 1.0, regime_scale, 1.0)
+
+    vol_scale = _volatility_exposure_scale(dataset, params, index)
+    regime_scale = _market_regime_exposure_scale(dataset, params, index)
+    drawdown_scale = _market_drawdown_exposure_scale(dataset, params, index)
+    effective_gross = gross_limit * vol_scale * regime_scale * drawdown_scale
+    if effective_gross <= 0:
+        return _HybridTargetWeightSnapshot([], {}, vol_scale, regime_scale, drawdown_scale)
+    per_symbol_weight = min(max_symbol_weight, effective_gross / len(selected))
+    weights = {symbol: per_symbol_weight for symbol in selected if per_symbol_weight > 0}
+    return _HybridTargetWeightSnapshot(
+        selected=list(weights),
+        weights=weights,
+        volatility_scale=vol_scale,
+        market_regime_scale=regime_scale,
+        market_drawdown_scale=drawdown_scale,
+    )
+
+
+def _volatility_exposure_scale(
+    dataset: _DailyHybridDataset,
+    params: HybridRouterParams,
+    index: int,
+) -> float:
+    if not params.volatility_lookback_days or not params.target_volatility_annual_pct:
+        return 1.0
+    lookback = params.volatility_lookback_days
+    if index - lookback < 1:
+        return 1.0
+    annual_vol_pct = _cached_close_volatility_pct(dataset, dataset.market_symbol, lookback, index)
+    if annual_vol_pct <= 0:
+        return 1.0
+    return max(0.0, min(1.0, params.target_volatility_annual_pct / annual_vol_pct))
+
+
+def _momentum_score(
+    dataset: _DailyHybridDataset,
+    symbol: str,
+    index: int,
+    params: HybridRouterParams,
+    momentum_pct: float,
+) -> float:
+    if params.momentum_score_mode == "raw":
+        return momentum_pct
+    lookback = params.risk_adjustment_lookback_days
+    if not lookback or index - lookback < 1:
+        return float("-inf")
+    annual_vol_pct = _cached_close_volatility_pct(dataset, symbol, lookback, index)
+    if annual_vol_pct <= 0:
+        return float("-inf")
+    return momentum_pct / annual_vol_pct
+
+
+def _cached_close_volatility_pct(
+    dataset: _DailyHybridDataset,
+    symbol: str,
+    lookback: int,
+    index: int,
+) -> float:
+    column = f"__{symbol}_close_vol_{lookback}"
+    frame = dataset.frame
+    if column not in frame.columns:
+        close = frame[f"{symbol}_close"].astype(float)
+        window = max(2, lookback - 1)
+        frame[column] = (
+            close.pct_change().rolling(window=window, min_periods=2).std() * math.sqrt(252) * 100
+        )
+    value = float(frame[column].iloc[index - 1]) if index > 0 else 0.0
+    if math.isnan(value):
+        return 0.0
+    return value
+
+
+def _market_regime_exposure_scale(
+    dataset: _DailyHybridDataset,
+    params: HybridRouterParams,
+    index: int,
+) -> float:
+    if params.market_sma_days is None:
+        return 1.0
+    market_close = dataset.frame[f"{dataset.market_symbol}_close"]
+    if index < params.market_sma_days:
+        return 0.0
+    market_sma = float(market_close.iloc[index - params.market_sma_days : index].mean())
+    if float(market_close.iloc[index - 1]) > market_sma:
+        return 1.0
+    return params.market_below_sma_scale
+
+
+def _market_drawdown_exposure_scale(
+    dataset: _DailyHybridDataset,
+    params: HybridRouterParams,
+    index: int,
+) -> float:
+    if not params.market_drawdown_lookback_days or not params.market_drawdown_brake_pct:
+        return 1.0
+    lookback = params.market_drawdown_lookback_days
+    if index - lookback < 0:
+        return 1.0
+    frame = dataset.frame
+    close = frame[f"{dataset.market_symbol}_close"]
+    window = close.iloc[index - lookback : index]
+    if window.empty:
+        return 1.0
+    peak = float(window.max())
+    latest = float(close.iloc[index - 1])
+    if peak <= 0:
+        return 1.0
+    drawdown_pct = (latest / peak - 1) * 100
+    if drawdown_pct <= -params.market_drawdown_brake_pct:
+        return params.brake_exposure_scale
+    return 1.0
+
+
+def _close_to_close_returns(
+    dataset: _DailyHybridDataset,
+    symbol: str,
+    *,
+    start_index: int,
+    end_index: int,
+) -> list[float]:
+    frame = dataset.frame
+    close = frame[f"{symbol}_close"]
+    returns: list[float] = []
+    for index in range(max(start_index + 1, 1), min(end_index, len(close))):
+        previous = float(close.iloc[index - 1])
+        current = float(close.iloc[index])
+        if previous > 0:
+            returns.append(current / previous - 1)
+    return returns
 
 
 def _symbol_holding_return(
@@ -686,7 +1157,13 @@ def _split_for_hybrid(
 
 
 def _effective_lookback(params: HybridRouterParams) -> int:
-    return max(params.momentum_lookback_days + 1, (params.market_sma_days or 0) + 1)
+    return max(
+        params.momentum_lookback_days + 1,
+        (params.market_sma_days or 0) + 1,
+        (params.risk_adjustment_lookback_days or 0) + 1,
+        (params.volatility_lookback_days or 0) + 1,
+        (params.market_drawdown_lookback_days or 0) + 1,
+    )
 
 
 def _objective_alpha(metrics: HybridRouterMetrics, objective: HybridObjective) -> float:
@@ -700,37 +1177,33 @@ def _walk_score(metrics: HybridRouterMetrics, objective: HybridObjective) -> flo
     return _objective_alpha(metrics, objective) + (metrics.sharpe_ratio or 0.0) * 5
 
 
-def _hybrid_score(
-    train: HybridRouterMetrics,
-    oos: HybridRouterMetrics,
-    full: HybridRouterMetrics,
-    objective: HybridObjective,
-) -> float:
+def _hybrid_score(train: HybridRouterMetrics, objective: HybridObjective) -> float:
     raw_train_alpha = train.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0
-    raw_oos_alpha = oos.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0
-    raw_full_alpha = full.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0
     train_alpha = _objective_alpha(train, objective)
-    oos_alpha = _objective_alpha(oos, objective)
-    full_alpha = _objective_alpha(full, objective)
-    consistency_penalty = abs(train_alpha - oos_alpha) * 0.12
-    drawdown_penalty = abs(min(oos.max_drawdown_pct, 0.0)) * 0.35
-    sparse_penalty = max(0, 40 - oos.traded_days) * 1.0
+    drawdown_penalty = abs(min(train.max_drawdown_pct, 0.0)) * 0.55
+    sparse_penalty = max(0, 60 - train.traded_days) * 1.0
+    concentration_penalty = max(0.0, train.max_symbol_weight_pct - 25.0) * 4.0
+    high_sharpe_penalty = max(0.0, (train.sharpe_ratio or 0.0) - 2.5) * 25.0
+    exposure_penalty = max(0.0, train.max_gross_exposure_pct - 80.0) * 0.5
     score = (
-        min(train_alpha, oos_alpha, full_alpha) * 0.7
-        + oos_alpha * 0.6
-        + (oos.sharpe_ratio or 0.0) * 12
-        - consistency_penalty
+        train_alpha
+        + (train.sharpe_ratio or 0.0) * 8
         - drawdown_penalty
         - sparse_penalty
+        - concentration_penalty
+        - high_sharpe_penalty
+        - exposure_penalty
     )
-    if min(raw_train_alpha, raw_oos_alpha, raw_full_alpha) <= 0:
+    if raw_train_alpha <= 0:
         score -= 10_000
-    if oos.sharpe_ratio is None or oos.sharpe_ratio < 0.7:
+    if train.sharpe_ratio is None or train.sharpe_ratio < 0.5:
         score -= 1_000
-    if oos.traded_days < 40:
+    if train.traded_days < 60:
         score -= 1_000
-    if oos.max_drawdown_pct <= -30:
-        score -= 1_000
+    if train.max_drawdown_pct <= -25:
+        score -= 1_500
+    if train.max_symbol_weight_pct > 35:
+        score -= 2_000
     return score
 
 
@@ -752,6 +1225,12 @@ def _hybrid_quality_flags(
         flags.append("oos_low_traded_days")
     if oos.max_drawdown_pct <= -30:
         flags.append("oos_large_drawdown")
+    if train.max_symbol_weight_pct > 35 or oos.max_symbol_weight_pct > 35:
+        flags.append("concentrated_single_name_weight")
+    if train.max_gross_exposure_pct > 80 or oos.max_gross_exposure_pct > 80:
+        flags.append("high_gross_exposure")
+    if (train.sharpe_ratio or 0.0) > 2.5 or (oos.sharpe_ratio or 0.0) > 2.5:
+        flags.append("suspiciously_high_sharpe_review_overfit")
     if full.alpha_vs_best_symbol_buy_hold_pct <= 0:
         flags.append("does_not_beat_ex_post_best_symbol")
     return flags
@@ -775,6 +1254,9 @@ def _acceptance_gate(
         and (candidate.out_of_sample.sharpe_ratio or 0.0) >= 0.7
         and candidate.out_of_sample.traded_days >= 40
         and candidate.out_of_sample.max_drawdown_pct > -30
+        and candidate.out_of_sample.max_symbol_weight_pct <= 35
+        and candidate.out_of_sample.max_gross_exposure_pct <= 80
+        and (candidate.out_of_sample.sharpe_ratio or 0.0) <= 2.5
         and fold_count > 0
         and positive_wf == fold_count
     )
@@ -787,6 +1269,8 @@ def _acceptance_gate(
         "oos_sharpe_ratio": candidate.out_of_sample.sharpe_ratio,
         "oos_traded_days": candidate.out_of_sample.traded_days,
         "oos_max_drawdown_pct": candidate.out_of_sample.max_drawdown_pct,
+        "oos_max_symbol_weight_pct": candidate.out_of_sample.max_symbol_weight_pct,
+        "oos_max_gross_exposure_pct": candidate.out_of_sample.max_gross_exposure_pct,
         "walk_forward_positive_alpha_folds": positive_wf,
         "walk_forward_fold_count": fold_count,
         "quality_flags": candidate.quality_flags,
@@ -802,7 +1286,7 @@ def _pass_status(
     blockers = [
         "draft/manual_signal strategy only",
         "Alpaca IEX/cache evidence is not consolidated live SIP evidence",
-        "hybrid portfolio target mapping is research-only until Nautilus parity is added",
+        "hybrid portfolio target mapping must be regenerated after route or risk changes",
         "news/LLM features are advisory until PIT marginal-lift evidence exists",
     ]
     return {
@@ -850,11 +1334,17 @@ def _write_hybrid_json(
             candidate_count=len(params_grid),
             parameter_ranges=_params_grid_ranges(params_grid),
             filters=[
+                "selection score uses training metrics only",
+                "OOS/full metrics are validation evidence only",
                 "signal uses previous confirmed close",
                 "fill uses next regular-session open",
                 "commission and slippage applied on each entry and exit",
                 "long-only",
                 "NASDAQ basket only",
+                "per-symbol and gross exposure caps are applied before returns",
+                "risk-adjusted momentum ranking uses prior closes only",
+                "market SMA can reduce exposure instead of forcing a full cash gate",
+                "volatility targeting and market drawdown brake use only prior closes",
             ],
         ),
         "hypothesis_ledger": hypothesis_ledger(
@@ -907,9 +1397,12 @@ def _write_hybrid_report(
         f"- Data source mode: `{dataset.data_profile.get('source_mode') or 'mixed'}`",
         "- Signal timing: rank at previous confirmed close; fill at next regular-session open.",
         "- Holding modes searched: `open_to_open`, `open_to_close`.",
+        "- Selection policy: train-window metrics choose the route; OOS/full-window metrics are "
+        "validation only.",
         f"- Commission/slippage per fill: `{spec.costs.commission_pct:g}%` / "
         f"`{spec.costs.slippage_bps:g} bps`.",
-        "- Acceptance requires train, OOS, and full-window annualized Alpha vs TQQQ buy-hold > 0.",
+        "- Acceptance requires positive train/OOS/full annualized Alpha vs TQQQ buy-hold, "
+        "bounded concentration, bounded drawdown, and a non-suspicious OOS Sharpe.",
         "",
         "## Assumptions",
         "",
@@ -977,12 +1470,19 @@ def _assumptions(spec: StrategySpec, dataset: _DailyHybridDataset) -> list[str]:
         "Entry fill is modeled at the next regular-session open.",
         "Open-to-open mode exits/rebalances at the following regular-session open.",
         "Open-to-close mode exits at the same regular-session close.",
+        "Route selection score is computed from train metrics only; validation metrics do not "
+        "rank candidates.",
+        "Volatility scaling and market drawdown braking use prior market closes only.",
+        "Risk-adjusted momentum scoring, when selected, divides prior momentum by prior "
+        "realized volatility.",
+        "Market SMA regime scanning can either block trades or scale exposure below the SMA.",
         f"Commission is {spec.costs.commission_pct:.4g}% per fill.",
         f"Slippage is {spec.costs.slippage_bps:.4g} bps per fill.",
         f"Universe is restricted to: {', '.join(dataset.symbols)}.",
         f"Benchmark stress test is {dataset.benchmark_symbol} buy-and-hold.",
         f"Market regime scanner is {dataset.market_symbol}.",
-        f"Max per-symbol weight is bounded by spec risk ({spec.risk.max_position_weight:.2f}).",
+        f"Max per-symbol weight is bounded by spec risk ({spec.risk.max_position_weight:.2f}) "
+        "and route parameters.",
         "No LLM/news feature is used inside the execution loop for this first hybrid pass.",
     ]
 
@@ -1000,6 +1500,12 @@ def _metric_lines(label: str, metrics: HybridRouterMetrics) -> list[str]:
         f"- {label} max drawdown: `{metrics.max_drawdown_pct:.2f}%`",
         f"- {label} traded days / round trips: `{metrics.traded_days}/{metrics.round_trips}`",
         f"- {label} exposure: `{metrics.exposure_pct:.2f}%`",
+        f"- {label} average/max gross exposure: "
+        f"`{metrics.average_gross_exposure_pct:.2f}%/{metrics.max_gross_exposure_pct:.2f}%`",
+        f"- {label} max symbol weight: `{metrics.max_symbol_weight_pct:.2f}%`",
+        f"- {label} regime-scaled / volatility-scaled / drawdown-braked days: "
+        f"`{metrics.market_regime_scaled_days}/{metrics.volatility_scaled_days}/"
+        f"{metrics.market_drawdown_brake_days}`",
         f"- {label} ex-post best buy-hold: "
         f"`{metrics.best_symbol} {metrics.best_symbol_buy_hold_pct:.2f}%`",
     ]
@@ -1037,6 +1543,30 @@ def _params_grid_ranges(params_grid: list[HybridRouterParams]) -> dict[str, list
         ),
         "min_momentum_pct": sorted({item.min_momentum_pct for item in params_grid}),
         "max_position_weight": sorted({item.max_position_weight for item in params_grid}),
+        "gross_exposure_limit": sorted({item.gross_exposure_limit for item in params_grid}),
+        "momentum_score_mode": sorted({item.momentum_score_mode for item in params_grid}),
+        "risk_adjustment_lookback_days": sorted(
+            {item.risk_adjustment_lookback_days for item in params_grid},
+            key=lambda value: -1 if value is None else value,
+        ),
+        "market_below_sma_scale": sorted({item.market_below_sma_scale for item in params_grid}),
+        "volatility_lookback_days": sorted(
+            {item.volatility_lookback_days for item in params_grid},
+            key=lambda value: -1 if value is None else value,
+        ),
+        "target_volatility_annual_pct": sorted(
+            {item.target_volatility_annual_pct for item in params_grid},
+            key=lambda value: -1 if value is None else value,
+        ),
+        "market_drawdown_lookback_days": sorted(
+            {item.market_drawdown_lookback_days for item in params_grid},
+            key=lambda value: -1 if value is None else value,
+        ),
+        "market_drawdown_brake_pct": sorted(
+            {item.market_drawdown_brake_pct for item in params_grid},
+            key=lambda value: -1 if value is None else value,
+        ),
+        "brake_exposure_scale": sorted({item.brake_exposure_scale for item in params_grid}),
     }
 
 

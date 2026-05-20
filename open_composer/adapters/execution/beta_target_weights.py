@@ -8,73 +8,72 @@ from typing import Any
 from open_composer.adapters.execution.nautilus_trader import nautilus_trader_available
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
-from open_composer.research.hybrid_adaptive_router import (
-    HybridRouterMetrics,
-    _backtest_hybrid_params,
+from open_composer.research.beta_exposure_router import (
+    BetaRouterMetrics,
     _effective_lookback,
-    _load_daily_hybrid_dataset,
-    hybrid_params_from_label,
-    hybrid_target_weight_snapshot,
+    backtest_beta_router_params,
+    beta_params_from_label,
+    beta_target_weight_snapshot,
+    load_beta_router_dataset,
 )
 from open_composer.research.metadata import runtime_payload
 from open_composer.storage import write_json
 
 
 @dataclass(frozen=True)
-class HybridTargetWeightMappingResult:
+class BetaTargetWeightMappingResult:
     report_path: Path
     json_path: Path
     target_weight_count: int
     rebalance_sessions: int
     nonzero_target_rows: int
     parity_status: str
-    reference_metrics: HybridRouterMetrics
+    reference_metrics: BetaRouterMetrics
 
 
-def run_hybrid_target_weight_mapping(
+def run_beta_target_weight_mapping(
     spec_path: Path,
     root: Path | None = None,
     *,
-    symbols: list[str] | None = None,
     data_source: str = "alpaca",
     feed: str | None = None,
     start: str | None = None,
     end: str | None = None,
-    benchmark_symbol: str = "TQQQ",
     market_symbol: str = "QQQ",
+    leverage_symbol: str = "TQQQ",
+    hedge_symbol: str | None = "SQQQ",
     selected_route_label: str | None = None,
     refresh_data: bool = False,
-) -> HybridTargetWeightMappingResult:
+) -> BetaTargetWeightMappingResult:
     started_at = perf_counter()
     stages: dict[str, float] = {}
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
-    universe = [item.upper() for item in (symbols or spec.universe)]
     selected_feed = feed or spec.data.feed or data_feed()
     label = selected_route_label or spec.portfolio.selected_route_label
     if not label:
-        raise ValueError("hybrid target-weight mapping requires selected_route_label")
-    params = hybrid_params_from_label(label)
+        raise ValueError("beta target-weight mapping requires selected_route_label")
+    params = beta_params_from_label(label)
 
     stage_started = perf_counter()
-    dataset = _load_daily_hybrid_dataset(
-        spec=spec,
+    dataset = load_beta_router_dataset(
         root=base,
-        symbols=universe,
+        market_symbol=market_symbol,
+        leverage_symbol=leverage_symbol,
+        hedge_symbol=hedge_symbol,
+        timeframe=spec.timeframe,
         data_source=data_source,
         feed=selected_feed,
         start=start,
         end=end,
-        benchmark_symbol=benchmark_symbol,
-        market_symbol=market_symbol,
         refresh_data=refresh_data,
     )
     stages["load_data"] = perf_counter() - stage_started
 
     stage_started = perf_counter()
-    start_index = _effective_lookback(params)
-    end_index = len(dataset.frame) - (1 if params.holding_mode == "open_to_open" else 0)
-    reference = _backtest_hybrid_params(
+    start_index = _effective_lookback(params) + 1
+    end_index = len(dataset.frame) - 1
+    reference = backtest_beta_router_params(
         spec,
         dataset,
         params,
@@ -95,18 +94,19 @@ def run_hybrid_target_weight_mapping(
     )
     stages["build_mapping"] = perf_counter() - stage_started
 
-    json_path = base / "reports" / "execution" / f"{spec.name}-target-weights.json"
+    json_path = base / "reports" / "execution" / f"{spec.name}-beta-target-weights.json"
     report_path = json_path.with_suffix(".md")
     runtime = runtime_payload(started_at, stages)
     payload = {
         "strategy_name": spec.name,
-        "mode": "hybrid_target_weight_mapping",
+        "mode": "beta_target_weight_mapping",
         "target_backend": "nautilus_trader",
         "source_spec_path": _relpath(spec_path, base),
         "route_label": params.label,
-        "universe": dataset.symbols,
         "market_symbol": dataset.market_symbol,
-        "benchmark_symbol": dataset.benchmark_symbol,
+        "leverage_symbol": dataset.leverage_symbol,
+        "hedge_symbol": dataset.hedge_symbol,
+        "universe": _symbols(dataset),
         "data_profile": dataset.data_profile,
         "mapping_assumptions": _mapping_assumptions(spec, params.label),
         "nautilus_installed": nautilus_trader_available(),
@@ -129,7 +129,7 @@ def run_hybrid_target_weight_mapping(
         "rebalance_intents": rebalance_intents,
         "runtime_seconds": runtime,
         "safety_note": (
-            "This artifact maps the selected hybrid route to target weights for Nautilus. "
+            "This artifact maps the selected beta route to target weights for Nautilus. "
             "It does not submit broker orders or enable paper_auto."
         ),
     }
@@ -145,7 +145,7 @@ def run_hybrid_target_weight_mapping(
         nautilus_installed=payload["nautilus_installed"],
         runtime=runtime,
     )
-    return HybridTargetWeightMappingResult(
+    return BetaTargetWeightMappingResult(
         report_path=report_path,
         json_path=json_path,
         target_weight_count=len(target_rows),
@@ -164,15 +164,16 @@ def _build_target_weight_rows(
     start_index: int,
     end_index: int,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    symbols = _symbols(dataset)
     target_rows: list[dict[str, object]] = []
     intents: list[dict[str, object]] = []
-    previous_targets = {symbol: 0.0 for symbol in dataset.symbols}
+    previous_targets = {symbol: 0.0 for symbol in symbols}
     for index in range(start_index, end_index):
         rebalance_session = dataset.dates[index]
         signal_session = dataset.dates[index - 1] if index > 0 else dataset.dates[index]
-        snapshot = hybrid_target_weight_snapshot(spec, dataset, params, index)
-        target_by_symbol = {symbol: snapshot.weights.get(symbol, 0.0) for symbol in dataset.symbols}
-        for symbol in dataset.symbols:
+        snapshot = beta_target_weight_snapshot(dataset, params, index)
+        target_by_symbol = {symbol: snapshot.weights.get(symbol, 0.0) for symbol in symbols}
+        for symbol in symbols:
             target = float(target_by_symbol[symbol])
             previous = float(previous_targets[symbol])
             delta = target - previous
@@ -183,13 +184,16 @@ def _build_target_weight_rows(
                 "time_rule": "regular_session_open",
                 "symbol": symbol,
                 "target_weight": target,
-                "selected": symbol in snapshot.selected,
+                "state": snapshot.state,
                 "route_label": params.label,
-                "holding_mode": params.holding_mode,
                 "volatility_scale": snapshot.volatility_scale,
-                "market_regime_scale": snapshot.market_regime_scale,
-                "market_drawdown_scale": snapshot.market_drawdown_scale,
-                "source": "hybrid_python_reference",
+                "qqq_trend_ok": snapshot.qqq_trend_ok,
+                "qqq_momentum_ok": snapshot.qqq_momentum_ok,
+                "qqq_drawdown_ok": snapshot.qqq_drawdown_ok,
+                "leverage_trend_ok": snapshot.leverage_trend_ok,
+                "leverage_volatility_ok": snapshot.leverage_volatility_ok,
+                "leverage_drawdown_ok": snapshot.leverage_drawdown_ok,
+                "source": "beta_python_reference",
             }
             target_rows.append(row)
             if target > 0 or previous > 0:
@@ -205,7 +209,7 @@ def _build_target_weight_rows(
                         "side": _side(delta),
                         "intent_type": "set_target_weight",
                         "requires_order": abs(delta) > 1e-12,
-                        "reference_daily_roll": params.holding_mode == "open_to_open",
+                        "reference_daily_roll": True,
                     }
                 )
         previous_targets = target_by_symbol
@@ -216,7 +220,7 @@ def _parity_check(
     *,
     spec: StrategySpec,
     target_rows: list[dict[str, object]],
-    reference: HybridRouterMetrics,
+    reference: BetaRouterMetrics,
 ) -> dict[str, object]:
     blockers: list[str] = []
     warnings: list[str] = []
@@ -224,20 +228,14 @@ def _parity_check(
     selected_sessions = {
         str(row["rebalance_session"]) for row in target_rows if float(row["target_weight"]) > 0
     }
-    nonzero_target_rows = sum(float(row["target_weight"]) > 0 for row in target_rows)
-    gross_limit = spec.portfolio.gross_exposure_limit or 1.0
-    max_symbol_weight = spec.portfolio.max_symbol_weight or spec.risk.max_position_weight
     max_gross = max((_gross_for_session(target_rows, session) for session in sessions), default=0.0)
     max_weight = max((float(row["target_weight"]) for row in target_rows), default=0.0)
-    if len(selected_sessions) != reference.traded_days:
+    gross_limit = spec.portfolio.gross_exposure_limit or 1.0
+    max_symbol_weight = spec.portfolio.max_symbol_weight or spec.risk.max_position_weight
+    if len(selected_sessions) != reference.risk_on_days + reference.neutral_days:
         blockers.append(
             f"selected_sessions={len(selected_sessions)} does not match "
-            f"reference_traded_days={reference.traded_days}"
-        )
-    if nonzero_target_rows != reference.round_trips:
-        blockers.append(
-            f"nonzero_target_rows={nonzero_target_rows} does not match "
-            f"reference_round_trips={reference.round_trips}"
+            f"reference_exposed_days={reference.risk_on_days + reference.neutral_days}"
         )
     if max_gross > gross_limit + 1e-9:
         blockers.append(f"max_gross_exposure={max_gross:.4f} exceeds limit={gross_limit:.4f}")
@@ -247,19 +245,14 @@ def _parity_check(
         warnings.append(f"execution.mode={spec.execution.mode}; mapping only, no paper runtime")
     if spec.execution.broker != "alpaca_paper":
         warnings.append(f"execution.broker={spec.execution.broker}; no broker order submission")
-    warnings.append(
-        "open-to-open cost parity requires explicit daily rebalance accounting when a symbol "
-        "stays selected across consecutive sessions"
-    )
+    warnings.append("cash return is modeled at 0%; target rows are not broker submissions")
     return {
         "status": "pass" if not blockers else "blocked",
         "blockers": blockers,
         "warnings": warnings,
         "checks": {
             "selected_sessions": len(selected_sessions),
-            "reference_traded_days": reference.traded_days,
-            "nonzero_target_rows": nonzero_target_rows,
-            "reference_round_trips": reference.round_trips,
+            "reference_exposed_days": reference.risk_on_days + reference.neutral_days,
             "max_gross_exposure": max_gross,
             "gross_exposure_limit": gross_limit,
             "max_symbol_weight": max_weight,
@@ -273,7 +266,6 @@ def _mapping_assumptions(spec: StrategySpec, route_label: str) -> list[str]:
         f"StrategySpec selected route is {route_label}.",
         "Signals are confirmed after the prior regular-session close.",
         "Target weights become effective at the next regular-session open.",
-        "Open-to-open holdings rebalance or flatten at the following regular-session open.",
         "Rows are target weights, not broker order submissions.",
         f"Gross exposure is capped at {spec.portfolio.gross_exposure_limit or 1.0:.4f}.",
         "Per-symbol target is capped at "
@@ -287,7 +279,7 @@ def _write_report(
     json_path: Path,
     spec: StrategySpec,
     route_label: str,
-    reference: HybridRouterMetrics,
+    reference: BetaRouterMetrics,
     summary: dict[str, object],
     parity: dict[str, object],
     nautilus_installed: object,
@@ -295,7 +287,7 @@ def _write_report(
 ) -> Path:
     ensure_dir(path.parent)
     lines = [
-        f"# Hybrid Target-Weight Mapping: {spec.name}",
+        f"# Beta Target-Weight Mapping: {spec.name}",
         "",
         f"- JSON report: `{json_path}`",
         "- Target backend: `nautilus_trader`",
@@ -317,24 +309,31 @@ def _write_report(
         "## Reference Metrics",
         "",
         f"- Full-window days: `{reference.days}`",
-        f"- Traded days / round trips: `{reference.traded_days}/{reference.round_trips}`",
-        f"- Return: `{reference.total_return_pct:.2f}%`",
-        f"- Annualized: `{_fmt(reference.annualized_return_pct)}%`",
-        f"- Alpha vs TQQQ annualized: "
-        f"`{_fmt(reference.alpha_vs_benchmark_buy_hold_annualized_pct)}%`",
+        f"- Annualized return: `{_fmt(reference.annualized_return_pct)}%`",
+        f"- Sharpe: `{_fmt(reference.sharpe_ratio)}`",
+        f"- Max drawdown: `{_fmt(reference.max_drawdown_pct)}%`",
+        f"- Alpha vs QQQ annualized: `{_fmt(reference.alpha_vs_market_buy_hold_annualized_pct)}%`",
+        f"- Risk-on / neutral / risk-off days: "
+        f"`{reference.risk_on_days}/{reference.neutral_days}/{reference.risk_off_days}`",
         "",
         "## Parity",
         "",
-        f"- Blockers: `{parity['blockers']}`",
-        f"- Warnings: `{parity['warnings']}`",
+        f"- Blockers: `{', '.join(parity['blockers']) if parity['blockers'] else 'none'}`",
+        f"- Warnings: `{', '.join(parity['warnings']) if parity['warnings'] else 'none'}`",
         "",
-        "## Notes",
+        "## Safety",
         "",
-        "- This closes the target-weight mapping artifact gap for the hybrid router.",
-        "- It does not enable paper_auto and does not submit Alpaca Paper orders.",
+        "- This mapping does not submit orders or enable paper_auto.",
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
+
+
+def _symbols(dataset) -> list[str]:
+    symbols = [dataset.market_symbol, dataset.leverage_symbol]
+    if dataset.hedge_symbol:
+        symbols.append(dataset.hedge_symbol)
+    return symbols
 
 
 def _gross_for_session(target_rows: list[dict[str, object]], session: str) -> float:
@@ -353,13 +352,16 @@ def _side(delta: float) -> str:
     return "hold"
 
 
-def _fmt(value: float | None) -> str:
-    return "n/a" if value is None else f"{value:.2f}"
-
-
-def _relpath(path: Path | str, root: Path) -> str:
-    candidate = Path(path)
+def _relpath(path: Path, root: Path) -> str:
     try:
-        return candidate.relative_to(root).as_posix()
+        return str(path.relative_to(root))
     except ValueError:
-        return candidate.as_posix()
+        return str(path)
+
+
+def _fmt(value: object) -> str:
+    if value is None:
+        return "n/a"
+    if isinstance(value, float):
+        return f"{value:.2f}"
+    return str(value)

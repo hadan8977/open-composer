@@ -426,6 +426,27 @@ def test_hybrid_route_label_parser_round_trips_selected_route() -> None:
     assert params.min_momentum_pct == 5.0
 
 
+def test_hybrid_route_label_parser_supports_risk_controls() -> None:
+    label = (
+        "open_to_open:lb20_top3_qsm100_min5_w0.25_g0.6_scoreradj_radj20_qoff0.5_"
+        "vol20t20_mdd20p8s0.5"
+    )
+    params = hybrid_params_from_label(label)
+
+    assert params.label == label
+    assert params.top_n == 3
+    assert params.max_position_weight == 0.25
+    assert params.gross_exposure_limit == 0.6
+    assert params.momentum_score_mode == "risk_adjusted"
+    assert params.risk_adjustment_lookback_days == 20
+    assert params.market_below_sma_scale == 0.5
+    assert params.volatility_lookback_days == 20
+    assert params.target_volatility_annual_pct == 20.0
+    assert params.market_drawdown_lookback_days == 20
+    assert params.market_drawdown_brake_pct == 8.0
+    assert params.brake_exposure_scale == 0.5
+
+
 def test_hybrid_news_marginal_lift_writes_pit_evidence(
     sample_workspace: Path,
     monkeypatch,

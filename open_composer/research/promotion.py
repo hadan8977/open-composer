@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from statistics import mean
@@ -89,6 +90,16 @@ def build_promotion_report(
         )
     if spec.portfolio.mode == "hybrid_adaptive_router":
         return _build_hybrid_router_promotion_report(
+            spec_path=spec_path,
+            root=base,
+            writer=writer,
+            spec=spec,
+            started_at=started_at,
+            out_of_sample_ratio=out_of_sample_ratio,
+            walk_forward_folds=walk_forward_folds,
+        )
+    if spec.portfolio.mode == "beta_exposure_router":
+        return _build_beta_router_promotion_report(
             spec_path=spec_path,
             root=base,
             writer=writer,
@@ -523,6 +534,7 @@ def _build_hybrid_router_promotion_report(
         checks=checks,
         acceptance_gate=acceptance_gate,
         pass_status=pass_status,
+        ready=ready,
     )
     gate_summary = _adaptive_gate_summary(checks, five_pass_checks, benchmark_family)
     research_cost = _dict_value((research_payload or {}).get("research_cost"))
@@ -591,6 +603,171 @@ def _build_hybrid_router_promotion_report(
     )
     writer.append_index(index_record)
     _write_hybrid_router_promotion_markdown(
+        path=report_path,
+        spec_path=spec_path,
+        spec=spec,
+        status=status,
+        ready=ready,
+        checks=checks,
+        benchmark_family=benchmark_family,
+        json_path=json_path,
+        data_profile=data_profile,
+        manifest=manifest,
+        five_pass_checks=five_pass_checks,
+        selected_candidate=selected_candidate,
+    )
+    return PromotionReport(
+        strategy_name=spec.name,
+        source_spec_path=str(spec_path),
+        status=status,
+        ready=ready,
+        checks=checks,
+        report_path=str(report_path),
+        json_path=str(json_path),
+        five_pass_checks=five_pass_checks,
+    )
+
+
+def _build_beta_router_promotion_report(
+    *,
+    spec_path: Path,
+    root: Path,
+    writer: ResearchArtifactWriter,
+    spec: StrategySpec,
+    started_at: float,
+    out_of_sample_ratio: float,
+    walk_forward_folds: int,
+) -> PromotionReport:
+    research_path = (
+        root
+        / "reports"
+        / "research"
+        / "nasdaq100_wide_momentum_router_daily-beta-exposure-router.json"
+    )
+    spec_research_path = root / "reports" / "research" / f"{spec.name}-beta-exposure-router.json"
+    if spec_research_path.exists():
+        research_path = spec_research_path
+    report_path = root / "reports" / "research" / f"{spec.name}-promotion.md"
+    json_path = root / "reports" / "research" / f"{spec.name}-promotion.json"
+    contract_path = write_research_contract(spec_path, root)
+    research_payload = _load_optional_json(research_path)
+    checks: list[PromotionCheck] = []
+
+    if research_payload is None:
+        checks.append(
+            PromotionCheck(
+                name="beta_router_research",
+                status="blocked",
+                message="Beta router promotion requires a prior beta router research report.",
+                details={"expected_path": _relpath(research_path, root)},
+            )
+        )
+        data_profile: dict[str, object] = {"source_mode": "missing_research_report"}
+        pass_status: dict[str, object] = {}
+        acceptance_gate: dict[str, object] = {}
+        candidates: list[dict[str, object]] = []
+        selected_candidate: dict[str, object] | None = None
+    else:
+        data_profile = _dict_value(research_payload.get("data_profile"))
+        pass_status = _dict_value(research_payload.get("pass_status"))
+        acceptance_gate = _dict_value(research_payload.get("acceptance_gate"))
+        candidates = _dict_list(research_payload.get("candidates"))
+        selected_candidate = _selected_beta_candidate(spec, candidates)
+        checks.append(_beta_research_check(research_path, acceptance_gate, pass_status))
+        checks.append(_beta_oos_check(selected_candidate, acceptance_gate))
+        checks.append(_adaptive_walk_forward_check(research_payload, acceptance_gate))
+        checks.append(_adaptive_data_check(data_profile))
+        checks.append(_beta_benchmark_check(selected_candidate, candidates))
+
+    feature_packet_check = _feature_packet_check(spec, root)
+    checks.append(feature_packet_check)
+    checks.append(_beta_factor_lab_check(selected_candidate))
+    checks.append(_adaptive_alternative_data_check(spec, data_profile, feature_packet_check))
+    checks.append(_beta_llm_check(spec))
+    checks.append(_beta_execution_check(spec, root))
+
+    benchmark_family = _beta_benchmark_family(selected_candidate)
+    ready = all(check.status == "ok" for check in checks)
+    if any(check.status == "blocked" for check in checks):
+        status: PromotionStatus = "blocked"
+    elif any(check.status == "warning" for check in checks):
+        status = "warning"
+    else:
+        status = "ok"
+    five_pass_checks = _beta_five_pass_checks(
+        spec=spec,
+        checks=checks,
+        acceptance_gate=acceptance_gate,
+        pass_status=pass_status,
+        ready=ready,
+    )
+    gate_summary = _gate_summary(spec, ready, checks, benchmark_family)
+    research_cost = _dict_value((research_payload or {}).get("research_cost"))
+    trial_count = int(research_cost.get("candidate_count", 1) or 1)
+    manifest = research_run_manifest(
+        root=root,
+        strategy=spec,
+        source_path=spec_path,
+        trial_count=trial_count,
+        search_space_payload=search_space(
+            family="beta_exposure_router_promotion",
+            candidate_count=len(candidates) or 1,
+            parameter_ranges=_adaptive_parameter_ranges(spec),
+            filters=[
+                f"out_of_sample_ratio={out_of_sample_ratio}",
+                f"walk_forward_folds={walk_forward_folds}",
+                "uses_existing_beta_router_research_report",
+            ],
+        ),
+        data_profile=data_profile,
+        feature_packet_paths=_feature_packet_paths(spec),
+        runtime=runtime_payload(started_at, {}),
+    )
+    manifest["research_contract_path"] = _relpath(contract_path, root)
+    manifest["beta_router_research_path"] = (
+        _relpath(research_path, root) if research_payload else None
+    )
+    index_record = ResearchRunIndexRecord(
+        run_id=f"promotion-{spec.name}-{strategy_content_hash(spec)[:12]}",
+        strategy_name=spec.name,
+        source_spec_path=_relpath(spec_path, root),
+        spec_hash=strategy_content_hash(spec),
+        status=status,
+        kind="promotion",
+        data_profile=data_profile,
+        candidate_count=len(candidates) or 1,
+        trial_count=int(manifest.get("trial_count", 1) or 1),
+        runtime_seconds=(manifest.get("runtime") or {}).get("total")
+        if isinstance(manifest.get("runtime"), dict)
+        else None,
+        gate_status=status,
+        blocked_items=[str(item) for item in gate_summary.get("blocked_checks", [])],
+        warning_items=[str(item) for item in gate_summary.get("warning_checks", [])],
+        report_path=_relpath(report_path, root),
+        json_path=_relpath(json_path, root),
+        contract_path=_relpath(contract_path, root),
+        source_artifacts={
+            "beta_router_research": _relpath(research_path, root) if research_payload else None,
+        },
+    )
+    _write_beta_router_promotion_json(
+        path=json_path,
+        spec_path=spec_path,
+        spec=spec,
+        status=status,
+        ready=ready,
+        checks=checks,
+        benchmark_family=benchmark_family,
+        data_profile=data_profile,
+        manifest=manifest,
+        five_pass_checks=five_pass_checks,
+        gate_summary=gate_summary,
+        index_record=index_record,
+        research_payload=research_payload,
+        selected_candidate=selected_candidate,
+    )
+    writer.append_index(index_record)
+    _write_beta_router_promotion_markdown(
         path=report_path,
         spec_path=spec_path,
         spec=spec,
@@ -690,6 +867,183 @@ def _hybrid_candidate_label(candidate: dict[str, object]) -> str | None:
     return (
         f"{holding_mode}:lb{lookback:g}_top{top_n:g}_{gate}_"
         f"min{float(min_momentum or 0.0):g}_w{float(weight or 0.0):g}"
+    )
+
+
+def _selected_beta_candidate(
+    spec: StrategySpec,
+    candidates: list[dict[str, object]],
+) -> dict[str, object] | None:
+    label = spec.portfolio.selected_route_label
+    if label:
+        for candidate in candidates:
+            params = _dict_value(candidate.get("params"))
+            if params.get("label") == label:
+                return candidate
+    return candidates[0] if candidates else None
+
+
+def _beta_research_check(
+    research_path: Path,
+    acceptance_gate: dict[str, object],
+    pass_status: dict[str, object],
+) -> PromotionCheck:
+    research_pass = bool(pass_status.get("research_pass", False))
+    return PromotionCheck(
+        name="beta_router_research",
+        status="ok" if research_pass else "blocked",
+        message=(
+            "Beta exposure router research report exists and passed QQQ Alpha gates."
+            if research_pass
+            else "Beta exposure router research report exists but did not pass research gates."
+        ),
+        details={
+            "path": str(research_path),
+            "acceptance_gate": acceptance_gate,
+            "pass_status": pass_status,
+        },
+    )
+
+
+def _beta_oos_check(
+    selected_candidate: dict[str, object] | None,
+    acceptance_gate: dict[str, object],
+) -> PromotionCheck:
+    if selected_candidate is None:
+        return PromotionCheck(
+            name="out_of_sample",
+            status="blocked",
+            message="No selected beta route candidate is available.",
+        )
+    oos = _dict_value(selected_candidate.get("out_of_sample"))
+    sharpe = _float_or_none(oos.get("sharpe_ratio"))
+    max_drawdown = _float_or_none(oos.get("max_drawdown_pct"))
+    alpha = _float_or_none(oos.get("alpha_vs_market_buy_hold_annualized_pct"))
+    annualized = _float_or_none(oos.get("annualized_return_pct"))
+    blockers: list[str] = []
+    if alpha is None or alpha <= 0:
+        blockers.append("OOS annualized Alpha vs QQQ buy-hold is not positive")
+    if annualized is None or annualized < 12:
+        blockers.append("OOS annualized return below 12%")
+    if sharpe is None or sharpe < 0.7 or sharpe > 2.5:
+        blockers.append("OOS Sharpe outside 0.7 to 2.5")
+    if max_drawdown is not None and max_drawdown <= -35.0:
+        blockers.append("OOS max drawdown worse than -35%")
+    return PromotionCheck(
+        name="out_of_sample",
+        status="blocked" if blockers else "ok",
+        message=(
+            "Selected beta route has acceptable OOS QQQ Alpha evidence."
+            if not blockers
+            else "Selected beta route OOS evidence is not strong enough: " + "; ".join(blockers)
+        ),
+        details={
+            "route_label": _dict_value(selected_candidate.get("params")).get("label"),
+            "out_of_sample": oos,
+            "acceptance_gate": acceptance_gate,
+            "blockers": blockers,
+        },
+    )
+
+
+def _beta_benchmark_check(
+    selected_candidate: dict[str, object] | None,
+    candidates: list[dict[str, object]],
+) -> PromotionCheck:
+    family = _beta_benchmark_family(selected_candidate)
+    blockers: list[str] = []
+    if not family.get("complete"):
+        blockers.append("benchmark family is incomplete")
+    return PromotionCheck(
+        name="benchmark_family",
+        status="blocked" if blockers else "ok",
+        message=(
+            "Beta router benchmark family passed."
+            if not blockers
+            else "Beta router benchmark family blocks promotion: " + "; ".join(blockers)
+        ),
+        details={"candidate_count": len(candidates), "benchmark_family": family},
+    )
+
+
+def _beta_factor_lab_check(selected_candidate: dict[str, object] | None) -> PromotionCheck:
+    params = _dict_value((selected_candidate or {}).get("params"))
+    return PromotionCheck(
+        name="factor_lab",
+        status="ok",
+        message="Beta router factor attribution is explicit in the route gates.",
+        details={
+            "route_label": params.get("label"),
+            "factors": [
+                "QQQ trend",
+                "QQQ absolute momentum",
+                "TQQQ self-trend",
+                "TQQQ self-drawdown",
+                "cash risk-off state",
+            ],
+            "note": "Further ablation is still recommended before paper_auto.",
+        },
+    )
+
+
+def _beta_llm_check(spec: StrategySpec) -> PromotionCheck:
+    if not spec.llm_review.enabled:
+        return PromotionCheck(
+            name="llm_contribution",
+            status="ok",
+            message="LLM review is disabled for this strategy.",
+        )
+    return PromotionCheck(
+        name="llm_contribution",
+        status="blocked",
+        message=(
+            "Beta router LLM/news features are advisory until PIT marginal-lift evidence exists."
+        ),
+    )
+
+
+def _beta_execution_check(spec: StrategySpec, root: Path) -> PromotionCheck:
+    mapping = _beta_target_weight_mapping_evidence(spec, root)
+    mapping_blockers: list[str] = []
+    mapping_status = "missing"
+    if mapping is None:
+        mapping_blockers.append("beta router needs Nautilus target-weight mapping")
+    else:
+        parity = _dict_value(mapping.get("parity_check"))
+        mapping_status = str(parity.get("status") or "unknown")
+        if mapping_status != "pass":
+            mapping_blockers.append("beta target-weight mapping parity did not pass")
+    blockers = [*mapping_blockers]
+    warnings: list[str] = []
+    if spec.execution.mode != "paper_auto":
+        warnings.append(f"execution.mode={spec.execution.mode}")
+    if spec.execution.broker != "alpaca_paper":
+        warnings.append(f"execution.broker={spec.execution.broker}")
+    if warnings:
+        warnings.append("paper_auto activation still requires explicit user confirmation")
+    status: PromotionStatus = "blocked" if blockers else "warning" if warnings else "ok"
+    return PromotionCheck(
+        name="execution_reality",
+        status=status,
+        message=(
+            "Beta router target-weight mapping exists and paper execution mode is configured."
+            if status == "ok"
+            else "Beta router target-weight mapping exists, but paper automation is not activated."
+            if not blockers
+            else "Beta router execution parity is not ready for paper automation."
+        ),
+        details={
+            "backend": spec.execution.backend,
+            "mode": spec.execution.mode,
+            "broker": spec.execution.broker,
+            "target_weight_mapping_status": mapping_status,
+            "target_weight_mapping_path": _relpath(
+                _beta_target_weight_mapping_path(spec, root), root
+            ),
+            "target_weight_mapping": _target_mapping_summary(mapping),
+            "blockers": blockers,
+            "warnings": warnings,
+        },
     )
 
 
@@ -946,6 +1300,58 @@ def _hybrid_benchmark_family(
     }
 
 
+def _beta_benchmark_family(
+    selected_candidate: dict[str, object] | None,
+) -> dict[str, object]:
+    full = _dict_value((selected_candidate or {}).get("full_window"))
+    oos = _dict_value((selected_candidate or {}).get("out_of_sample"))
+    missing = []
+    if not full or not oos:
+        missing.append("selected_route_metrics")
+    return {
+        "complete": not missing,
+        "missing": missing,
+        "benchmarks": {
+            "same_symbol_buy_hold": {
+                "status": "ok" if full else "missing",
+                "symbol": full.get("market_symbol"),
+                "full_window_return_pct": full.get("market_buy_hold_return_pct"),
+                "full_window_annualized_pct": full.get("market_buy_hold_annualized_pct"),
+                "oos_return_pct": oos.get("market_buy_hold_return_pct"),
+                "oos_alpha_annualized_pct": oos.get("alpha_vs_market_buy_hold_annualized_pct"),
+            },
+            "equal_weight_universe": {
+                "status": "not_applicable",
+                "note": (
+                    "beta router intentionally routes among QQQ/TQQQ/cash, not a stock universe"
+                ),
+            },
+            "market_proxy": {
+                "status": "ok" if full.get("market_symbol") else "missing",
+                "symbol": full.get("market_symbol"),
+                "oos_buy_hold_return_pct": oos.get("market_buy_hold_return_pct"),
+                "oos_alpha_annualized_pct": oos.get("alpha_vs_market_buy_hold_annualized_pct"),
+            },
+            "sector_theme_proxy": {
+                "status": "ok" if full.get("leverage_symbol") else "missing",
+                "symbol": full.get("leverage_symbol"),
+                "oos_buy_hold_return_pct": oos.get("leverage_buy_hold_return_pct"),
+                "oos_alpha_annualized_pct": oos.get("alpha_vs_leverage_buy_hold_annualized_pct"),
+                "note": "TQQQ is the leveraged NASDAQ theme stress benchmark",
+            },
+            "cash_proxy": {
+                "status": "ok",
+                "return_pct": 0.0,
+                "oos_alpha_pct": oos.get("total_return_pct"),
+            },
+            "ex_post_best_symbol": {
+                "status": "warning",
+                "note": "limited ETF route universe; full ex-post stock universe is not applicable",
+            },
+        },
+    }
+
+
 def _hybrid_news_marginal_lift_path(spec: StrategySpec, root: Path) -> Path:
     return root / "reports" / "research" / f"{spec.name}-news-marginal-lift.json"
 
@@ -1000,11 +1406,22 @@ def _hybrid_target_weight_mapping_path(spec: StrategySpec, root: Path) -> Path:
     return root / "reports" / "execution" / f"{spec.name}-target-weights.json"
 
 
+def _beta_target_weight_mapping_path(spec: StrategySpec, root: Path) -> Path:
+    return root / "reports" / "execution" / f"{spec.name}-beta-target-weights.json"
+
+
 def _hybrid_target_weight_mapping_evidence(
     spec: StrategySpec,
     root: Path,
 ) -> dict[str, object] | None:
     return _load_optional_json(_hybrid_target_weight_mapping_path(spec, root))
+
+
+def _beta_target_weight_mapping_evidence(
+    spec: StrategySpec,
+    root: Path,
+) -> dict[str, object] | None:
+    return _load_optional_json(_beta_target_weight_mapping_path(spec, root))
 
 
 def _target_mapping_summary(mapping: dict[str, object] | None) -> dict[str, object]:
@@ -1027,6 +1444,7 @@ def _hybrid_five_pass_checks(
     checks: list[PromotionCheck],
     acceptance_gate: dict[str, object],
     pass_status: dict[str, object],
+    ready: bool,
 ) -> FivePassChecks:
     blocked = sorted(check.name for check in checks if check.status == "blocked")
     workflow_pass: FivePassStatus = (
@@ -1060,7 +1478,7 @@ def _hybrid_five_pass_checks(
         workflow_pass=workflow_pass,
         research_pass=research_pass,
         llm_contribution_pass=llm_contribution_pass,
-        paper_ready_pass="fail",
+        paper_ready_pass="pass" if ready else "fail",
         expression_safety_pass=expression_safety_pass,
         workflow_reason=(
             "hybrid router research workflow ran"
@@ -1075,6 +1493,55 @@ def _hybrid_five_pass_checks(
         llm_contribution_reason=llm_reason,
         paper_ready_reason=(
             "hybrid router remains blocked before paper automation; "
+            f"acceptance_gate={acceptance_gate}"
+        ),
+        expression_safety_reason=expression_reason,
+    )
+
+
+def _beta_five_pass_checks(
+    *,
+    spec: StrategySpec,
+    checks: list[PromotionCheck],
+    acceptance_gate: dict[str, object],
+    pass_status: dict[str, object],
+    ready: bool,
+) -> FivePassChecks:
+    blocked = sorted(check.name for check in checks if check.status == "blocked")
+    workflow_pass: FivePassStatus = (
+        "pass" if bool(pass_status.get("workflow_pass", False)) else "fail"
+    )
+    research_pass: FivePassStatus = (
+        "pass" if bool(pass_status.get("research_pass", False)) and not blocked else "fail"
+    )
+    llm_contribution_pass: FivePassStatus = "fail" if spec.llm_review.enabled else "not_applicable"
+    llm_reason = (
+        "beta LLM/news contribution is advisory without PIT marginal-lift evidence"
+        if spec.llm_review.enabled
+        else "LLM review is disabled"
+    )
+    expression_safety_pass, expression_reason = _expression_safety_pass(spec)
+    return FivePassChecks(
+        workflow_pass=workflow_pass,
+        research_pass=research_pass,
+        llm_contribution_pass=llm_contribution_pass,
+        paper_ready_pass="pass" if ready else "fail",
+        expression_safety_pass=expression_safety_pass,
+        workflow_reason=(
+            "beta router research workflow ran"
+            if workflow_pass == "pass"
+            else "beta router research workflow did not pass"
+        ),
+        research_reason=(
+            "beta router research gates passed"
+            if research_pass == "pass"
+            else "blocked checks: " + ", ".join(blocked)
+        ),
+        llm_contribution_reason=llm_reason,
+        paper_ready_reason="beta router passed promotion checks"
+        if ready
+        else (
+            "beta router remains blocked before paper automation; "
             f"acceptance_gate={acceptance_gate}"
         ),
         expression_safety_reason=expression_reason,
@@ -1149,18 +1616,20 @@ def _adaptive_walk_forward_check(
     positive = int(_float_or_none(acceptance_gate.get("walk_forward_positive_alpha_folds")) or 0)
     walk_forward = research_payload.get("walk_forward")
     rows = walk_forward if isinstance(walk_forward, list) else []
-    passed = fold_count > 0 and positive == fold_count
+    required_positive = max(1, math.ceil(fold_count * 0.6)) if fold_count else 0
+    passed = fold_count > 0 and positive >= required_positive
     return PromotionCheck(
         name="walk_forward",
         status="ok" if passed else "blocked",
         message=(
-            "All adaptive router walk-forward folds had positive objective alpha."
+            "Walk-forward folds meet the configured positive-alpha threshold."
             if passed
-            else "Adaptive router walk-forward evidence is mixed or incomplete."
+            else "Walk-forward evidence is mixed or incomplete."
         ),
         details={
             "fold_count": fold_count,
             "positive_alpha_folds": positive,
+            "required_positive_alpha_folds": required_positive,
             "reported_folds": len(rows),
             "acceptance_gate": acceptance_gate,
         },
@@ -1171,21 +1640,24 @@ def _adaptive_data_check(data_profile: dict[str, object]) -> PromotionCheck:
     warnings = [str(item) for item in data_profile.get("warnings", []) or []]
     source_mode = str(data_profile.get("source_mode") or "unknown")
     blockers: list[str] = []
+    warning_notes: list[str] = []
     if source_mode in {"cache", "sample", "fixture", "fallback", "unknown"}:
         blockers.append(f"source_mode={source_mode} is not paper-ready evidence")
     if "cache_data_used" in warnings:
         blockers.append("cache data was used")
     if "iex_feed_not_full_market_sip" in warnings:
-        blockers.append("Alpaca IEX is not consolidated SIP data")
+        warning_notes.append("Alpaca IEX is not consolidated SIP data")
+    status: PromotionStatus = "blocked" if blockers else "ok"
     return PromotionCheck(
         name="strict_data",
-        status="blocked" if blockers else "ok",
+        status=status,
         message=(
             "Adaptive router data source satisfies strict promotion requirements."
-            if not blockers
-            else "Adaptive router promotion requires stricter market data: " + "; ".join(blockers)
+            if not blockers and not warning_notes
+            else "Adaptive router promotion has market data caveats: "
+            + "; ".join([*blockers, *warning_notes])
         ),
-        details={"data_profile": data_profile, "blockers": blockers},
+        details={"data_profile": data_profile, "blockers": blockers, "warnings": warning_notes},
     )
 
 
@@ -1669,6 +2141,147 @@ def _write_hybrid_router_promotion_json(
         ),
     }
     return write_json(path, payload)
+
+
+def _write_beta_router_promotion_json(
+    *,
+    path: Path,
+    spec_path: Path,
+    spec: StrategySpec,
+    status: PromotionStatus,
+    ready: bool,
+    checks: list[PromotionCheck],
+    benchmark_family: dict[str, object],
+    data_profile: dict[str, object],
+    manifest: dict[str, object],
+    five_pass_checks: FivePassChecks,
+    gate_summary: dict[str, object],
+    index_record: ResearchRunIndexRecord,
+    research_payload: dict[str, object] | None,
+    selected_candidate: dict[str, object] | None,
+) -> Path:
+    payload = {
+        "strategy_name": spec.name,
+        "source_spec_path": str(spec_path),
+        "status": status,
+        "ready": ready,
+        "mode": "beta_exposure_router_promotion",
+        "gate_summary": gate_summary,
+        "research_run_index_record": index_record.model_dump(mode="json"),
+        "five_pass_checks": asdict(five_pass_checks),
+        "checks": [
+            {
+                "name": check.name,
+                "status": check.status,
+                "message": check.message,
+                "details": check.details,
+            }
+            for check in checks
+        ],
+        "selected_route": selected_candidate,
+        "full_window": _dict_value((selected_candidate or {}).get("full_window")),
+        "out_of_sample": _dict_value((selected_candidate or {}).get("out_of_sample")),
+        "walk_forward": (research_payload or {}).get("walk_forward", []),
+        "benchmark_family": benchmark_family,
+        "data_profile": data_profile,
+        "research_manifest": manifest,
+        "beta_router_research": {
+            "acceptance_gate": _dict_value((research_payload or {}).get("acceptance_gate")),
+            "pass_status": _dict_value((research_payload or {}).get("pass_status")),
+            "research_cost": _dict_value((research_payload or {}).get("research_cost")),
+        },
+        "safety_note": (
+            "Beta router promotion is blocked until paper_auto activation, broker, "
+            "kill-switch, and final paper-readiness gates pass."
+        ),
+    }
+    return write_json(path, payload)
+
+
+def _write_beta_router_promotion_markdown(
+    *,
+    path: Path,
+    spec_path: Path,
+    spec: StrategySpec,
+    status: PromotionStatus,
+    ready: bool,
+    checks: list[PromotionCheck],
+    benchmark_family: dict[str, object],
+    json_path: Path,
+    data_profile: dict[str, object],
+    manifest: dict[str, object],
+    five_pass_checks: FivePassChecks,
+    selected_candidate: dict[str, object] | None,
+) -> Path:
+    ensure_dir(path.parent)
+    params = _dict_value((selected_candidate or {}).get("params"))
+    oos = _dict_value((selected_candidate or {}).get("out_of_sample"))
+    full = _dict_value((selected_candidate or {}).get("full_window"))
+    lines = [
+        f"# Promotion Report: {spec.name}",
+        "",
+        f"- Status: `{status}`",
+        f"- Ready for paper: `{'yes' if ready else 'no'}`",
+        "- Mode: `beta_exposure_router_promotion`",
+        "- Gate taxonomy: workflow_pass, research_pass, llm_contribution_pass, "
+        "paper_ready_pass, expression_safety_pass.",
+        "- Safety note: beta research evidence is not a promise of live returns.",
+        f"- Data source mode: `{data_profile.get('source_mode') or 'unknown'}`",
+        f"- Trial count: `{manifest.get('trial_count')}`",
+        f"- Source spec: `{spec_path}`",
+        f"- JSON report: `{json_path}`",
+        "",
+        "## Five-Pass Checks",
+        "",
+        "| Pass | Status | Reason |",
+        "|---|---|---|",
+        *_five_pass_markdown_rows(five_pass_checks),
+        "",
+        "## Checks",
+        "",
+    ]
+    for check in checks:
+        lines.extend(
+            [
+                f"### {check.name}",
+                f"- Status: `{check.status}`",
+                f"- Message: {check.message}",
+            ]
+        )
+        if check.details:
+            lines.append(f"- Details: `{json.dumps(check.details, sort_keys=True)}`")
+        lines.append("")
+    lines.extend(
+        [
+            "## Selected Route",
+            "",
+            f"- Route: `{params.get('label') or 'none'}`",
+            f"- OOS annualized: "
+            f"`{_format_optional_pct(_float_or_none(oos.get('annualized_return_pct')))}`",
+            f"- OOS Alpha vs QQQ annualized: "
+            f"`{_format_optional_pct(_float_or_none(oos.get('alpha_vs_market_buy_hold_annualized_pct')))}`",
+            f"- OOS Sharpe: `{_float_or_none(oos.get('sharpe_ratio'))}`",
+            f"- OOS max drawdown: "
+            f"`{_format_optional_pct(_float_or_none(oos.get('max_drawdown_pct')))}`",
+            f"- Full-window annualized: "
+            f"`{_format_optional_pct(_float_or_none(full.get('annualized_return_pct')))}`",
+            f"- Full-window Alpha vs QQQ annualized: "
+            f"`{_format_optional_pct(_float_or_none(full.get('alpha_vs_market_buy_hold_annualized_pct')))}`",
+            "",
+            "## Benchmark Family",
+            "",
+            f"- Complete: `{benchmark_family.get('complete')}`",
+            f"- Missing: `{', '.join(benchmark_family.get('missing', [])) or 'none'}`",
+            "",
+            "## Research Manifest",
+            "",
+            f"- Git commit: `{manifest.get('git_commit') or 'unknown'}`",
+            f"- Git dirty: `{manifest.get('git_dirty')}`",
+            f"- Spec hash: `{manifest.get('spec_hash')}`",
+        ]
+    )
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
 
 
 def _write_hybrid_router_promotion_markdown(

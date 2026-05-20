@@ -32,6 +32,7 @@ from open_composer.adapters.data.longbridge import (
 )
 from open_composer.adapters.events import fetch_capability_events
 from open_composer.adapters.execution import build_nautilus_trader_plan, write_nautilus_trader_plan
+from open_composer.adapters.execution.beta_target_weights import run_beta_target_weight_mapping
 from open_composer.adapters.execution.hybrid_target_weights import (
     run_hybrid_target_weight_mapping,
 )
@@ -135,7 +136,11 @@ from open_composer.research import (
     parse_sweep_parameters,
     run_adaptive_intraday_router_research,
     run_adaptive_intraday_router_scan,
+    run_aggressive_theme_router_research,
+    run_beta_exposure_router_research,
     run_blind_test,
+    run_core_beta_satellite_router_research,
+    run_core_satellite_router_research,
     run_cost_grid,
     run_exposure_switch_research,
     run_factor_lab,
@@ -152,6 +157,8 @@ from open_composer.research import (
     run_parameter_sweep,
     run_rotation_research,
     run_skill_attribution,
+    run_theme_intraday_rotation_router_research,
+    run_wide_router_research,
     search_similar_regimes,
     validate_strategy_dag,
     write_intraday_product_reflection,
@@ -2704,6 +2711,42 @@ def strategy_hybrid_adaptive_router(
         list[float] | None,
         typer.Option("--max-position-weight"),
     ] = None,
+    gross_exposure_limit: Annotated[
+        list[float] | None,
+        typer.Option("--gross-exposure-limit"),
+    ] = None,
+    momentum_score_mode: Annotated[
+        list[str] | None,
+        typer.Option("--momentum-score-mode"),
+    ] = None,
+    risk_adjustment_lookback_days: Annotated[
+        list[str] | None,
+        typer.Option("--risk-adjustment-lookback-days"),
+    ] = None,
+    market_below_sma_scale: Annotated[
+        list[float] | None,
+        typer.Option("--market-below-sma-scale"),
+    ] = None,
+    volatility_lookback_days: Annotated[
+        list[str] | None,
+        typer.Option("--volatility-lookback-days"),
+    ] = None,
+    target_volatility_annual_pct: Annotated[
+        list[str] | None,
+        typer.Option("--target-volatility-annual-pct"),
+    ] = None,
+    market_drawdown_lookback_days: Annotated[
+        list[str] | None,
+        typer.Option("--market-drawdown-lookback-days"),
+    ] = None,
+    market_drawdown_brake_pct: Annotated[
+        list[str] | None,
+        typer.Option("--market-drawdown-brake-pct"),
+    ] = None,
+    brake_exposure_scale: Annotated[
+        list[float] | None,
+        typer.Option("--brake-exposure-scale"),
+    ] = None,
     oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
     walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
     walk_forward_top_k: int | None = typer.Option(20, "--walk-forward-top-k"),
@@ -2729,6 +2772,15 @@ def strategy_hybrid_adaptive_router(
             market_sma_days=_hybrid_market_sma_days(market_sma_days),
             min_momentum_pct=min_momentum_pct,
             max_position_weight=max_position_weight,
+            gross_exposure_limit=gross_exposure_limit,
+            momentum_score_mode=_hybrid_momentum_score_modes(momentum_score_mode),
+            risk_adjustment_lookback_days=_optional_int_values(risk_adjustment_lookback_days),
+            market_below_sma_scale=market_below_sma_scale,
+            volatility_lookback_days=_optional_int_values(volatility_lookback_days),
+            target_volatility_annual_pct=_optional_float_values(target_volatility_annual_pct),
+            market_drawdown_lookback_days=_optional_int_values(market_drawdown_lookback_days),
+            market_drawdown_brake_pct=_optional_float_values(market_drawdown_brake_pct),
+            brake_exposure_scale=brake_exposure_scale,
             out_of_sample_ratio=oos_ratio,
             walk_forward_folds=walk_forward_folds,
             walk_forward_top_k=walk_forward_top_k,
@@ -2757,6 +2809,44 @@ def strategy_hybrid_adaptive_router(
         f"walk_forward_candidates={result.research_cost['walk_forward_candidate_count']} "
         f"estimated_passes={result.research_cost['estimated_total_backtest_passes']} "
         f"runtime={result.runtime_seconds['total']:.2f}s"
+    )
+
+
+@strategy_app.command("wide-router-research")
+def strategy_wide_router_research(
+    spec: Path,
+    symbols: str | None = typer.Option(None, "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Run the formal wide NASDAQ daily hybrid-router research contract."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    symbol_list = None
+    if symbols:
+        symbol_list = [item.strip().upper() for item in symbols.split(",") if item.strip()]
+    try:
+        result = run_wide_router_research(
+            spec,
+            project_root(),
+            symbols=symbol_list,
+            data_source=data_source,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]wide router research complete[/green] report: {result.report_path}")
+    console.print(
+        f"route={result.selected_route_label} "
+        f"research_pass={result.research_pass} paper_ready={result.paper_ready_pass}"
     )
 
 
@@ -2847,6 +2937,486 @@ def strategy_hybrid_factor_attribution(
     )
 
 
+@strategy_app.command("beta-router-research")
+def strategy_beta_router_research(
+    spec: Path,
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    leverage_symbol: str = typer.Option("TQQQ", "--leverage-symbol"),
+    hedge_symbol: str | None = typer.Option("SQQQ", "--hedge-symbol"),
+    trend_sma_days: Annotated[list[int] | None, typer.Option("--trend-sma-days")] = None,
+    momentum_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--momentum-lookback-days"),
+    ] = None,
+    min_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-momentum-pct"),
+    ] = None,
+    volatility_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--volatility-lookback-days"),
+    ] = None,
+    max_volatility_annual_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-volatility-annual-pct"),
+    ] = None,
+    drawdown_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--drawdown-lookback-days"),
+    ] = None,
+    max_drawdown_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-drawdown-pct"),
+    ] = None,
+    leverage_trend_sma_days: Annotated[
+        list[str] | None,
+        typer.Option("--leverage-trend-sma-days"),
+    ] = None,
+    max_leverage_volatility_annual_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-leverage-volatility-annual-pct"),
+    ] = None,
+    leverage_drawdown_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--leverage-drawdown-lookback-days"),
+    ] = None,
+    max_leverage_drawdown_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-leverage-drawdown-pct"),
+    ] = None,
+    risk_on_symbol: Annotated[list[str] | None, typer.Option("--risk-on-symbol")] = None,
+    risk_on_weight: Annotated[list[float] | None, typer.Option("--risk-on-weight")] = None,
+    neutral_weight: Annotated[list[float] | None, typer.Option("--neutral-weight")] = None,
+    risk_off_symbol: Annotated[list[str] | None, typer.Option("--risk-off-symbol")] = None,
+    risk_off_weight: Annotated[list[float] | None, typer.Option("--risk-off-weight")] = None,
+    target_volatility_annual_pct: Annotated[
+        list[str] | None,
+        typer.Option("--target-volatility-annual-pct"),
+    ] = None,
+    oos_ratio: float = typer.Option(0.35, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(5, "--walk-forward-folds"),
+    walk_forward_top_k: int | None = typer.Option(20, "--walk-forward-top-k"),
+    max_candidates: int = typer.Option(600, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Research a QQQ/TQQQ/cash beta target-weight router."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_beta_exposure_router_research(
+            spec,
+            project_root(),
+            data_source=data_source,
+            start=start,
+            end=end,
+            market_symbol=market_symbol,
+            leverage_symbol=leverage_symbol,
+            hedge_symbol=hedge_symbol,
+            trend_sma_days=trend_sma_days,
+            momentum_lookback_days=momentum_lookback_days,
+            min_momentum_pct=min_momentum_pct,
+            volatility_lookback_days=volatility_lookback_days,
+            max_volatility_annual_pct=_optional_float_values(max_volatility_annual_pct),
+            drawdown_lookback_days=drawdown_lookback_days,
+            max_drawdown_pct=_optional_float_values(max_drawdown_pct),
+            leverage_trend_sma_days=_optional_int_values(leverage_trend_sma_days),
+            max_leverage_volatility_annual_pct=_optional_float_values(
+                max_leverage_volatility_annual_pct
+            ),
+            leverage_drawdown_lookback_days=leverage_drawdown_lookback_days,
+            max_leverage_drawdown_pct=_optional_float_values(max_leverage_drawdown_pct),
+            risk_on_symbol=risk_on_symbol,
+            risk_on_weight=risk_on_weight,
+            neutral_weight=neutral_weight,
+            risk_off_symbol=risk_off_symbol,
+            risk_off_weight=risk_off_weight,
+            target_volatility_annual_pct=_optional_float_values(target_volatility_annual_pct),
+            out_of_sample_ratio=oos_ratio,
+            walk_forward_folds=walk_forward_folds,
+            walk_forward_top_k=walk_forward_top_k,
+            max_candidates=max_candidates,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]beta router research complete[/green] report: {result.report_path}")
+    console.print(
+        f"selected={result.selected_route_label} "
+        f"research_pass={result.research_pass} paper_ready={result.paper_ready_pass}"
+    )
+
+
+@strategy_app.command("core-satellite-router-research")
+def strategy_core_satellite_router_research(
+    spec: Path,
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    satellite_symbol: Annotated[list[str] | None, typer.Option("--satellite-symbol")] = None,
+    trend_sma_days: Annotated[list[int] | None, typer.Option("--trend-sma-days")] = None,
+    momentum_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--momentum-lookback-days"),
+    ] = None,
+    min_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-momentum-pct"),
+    ] = None,
+    volatility_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--volatility-lookback-days"),
+    ] = None,
+    max_volatility_annual_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-volatility-annual-pct"),
+    ] = None,
+    drawdown_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--drawdown-lookback-days"),
+    ] = None,
+    max_drawdown_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-drawdown-pct"),
+    ] = None,
+    core_weight: Annotated[list[float] | None, typer.Option("--core-weight")] = None,
+    satellite_weight: Annotated[list[float] | None, typer.Option("--satellite-weight")] = None,
+    risk_off_core_scale: Annotated[
+        list[float] | None,
+        typer.Option("--risk-off-core-scale"),
+    ] = None,
+    target_satellite_volatility_pct: Annotated[
+        list[str] | None,
+        typer.Option("--target-satellite-volatility-pct"),
+    ] = None,
+    rebalance_threshold_pct: Annotated[
+        list[float] | None,
+        typer.Option("--rebalance-threshold-pct"),
+    ] = None,
+    oos_ratio: float = typer.Option(0.35, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(5, "--walk-forward-folds"),
+    walk_forward_top_k: int | None = typer.Option(20, "--walk-forward-top-k"),
+    max_candidates: int = typer.Option(900, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Research a QQQ core plus bounded leveraged ETF satellite router."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_core_satellite_router_research(
+            spec,
+            project_root(),
+            data_source=data_source,
+            start=start,
+            end=end,
+            satellite_symbols=satellite_symbol,
+            trend_sma_days=trend_sma_days,
+            momentum_lookback_days=momentum_lookback_days,
+            min_momentum_pct=min_momentum_pct,
+            volatility_lookback_days=volatility_lookback_days,
+            max_volatility_annual_pct=_optional_float_values(max_volatility_annual_pct),
+            drawdown_lookback_days=drawdown_lookback_days,
+            max_drawdown_pct=_optional_float_values(max_drawdown_pct),
+            core_weight=core_weight,
+            satellite_weight=satellite_weight,
+            risk_off_core_scale=risk_off_core_scale,
+            target_satellite_volatility_pct=_optional_float_values(target_satellite_volatility_pct),
+            rebalance_threshold_pct=rebalance_threshold_pct,
+            out_of_sample_ratio=oos_ratio,
+            walk_forward_folds=walk_forward_folds,
+            walk_forward_top_k=walk_forward_top_k,
+            max_candidates=max_candidates,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]core satellite router complete[/green] report: {result.report_path}")
+    console.print(
+        f"selected={result.selected_route_label} "
+        f"research_pass={result.research_pass} paper_ready={result.paper_ready_pass}"
+    )
+
+
+@strategy_app.command("core-beta-satellite-router-research")
+def strategy_core_beta_satellite_router_research(
+    spec: Path,
+    symbols: str | None = typer.Option(None, "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    core_variant: Annotated[list[str] | None, typer.Option("--core-variant")] = None,
+    universe_mode: Annotated[list[str] | None, typer.Option("--universe-mode")] = None,
+    satellite_budget: Annotated[list[float] | None, typer.Option("--satellite-budget")] = None,
+    satellite_momentum_days: Annotated[
+        list[int] | None,
+        typer.Option("--satellite-momentum-days"),
+    ] = None,
+    confirmation_days: Annotated[list[int] | None, typer.Option("--confirmation-days")] = None,
+    top_n: Annotated[list[int] | None, typer.Option("--top-n")] = None,
+    max_symbol_weight: Annotated[list[float] | None, typer.Option("--max-symbol-weight")] = None,
+    score_mode: Annotated[list[str] | None, typer.Option("--score-mode")] = None,
+    theme_gate_symbol: Annotated[list[str] | None, typer.Option("--theme-gate-symbol")] = None,
+    theme_sma_days: Annotated[list[int] | None, typer.Option("--theme-sma-days")] = None,
+    theme_momentum_days: Annotated[list[int] | None, typer.Option("--theme-momentum-days")] = None,
+    min_theme_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-theme-momentum-pct"),
+    ] = None,
+    satellite_volatility_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--satellite-volatility-lookback-days"),
+    ] = None,
+    target_satellite_volatility_pct: Annotated[
+        list[str] | None,
+        typer.Option("--target-satellite-volatility-pct"),
+    ] = None,
+    walk_forward_top_k: int | None = typer.Option(30, "--walk-forward-top-k"),
+    max_candidates: int = typer.Option(700, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Research a validated beta core plus bounded NASDAQ/theme satellite router."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    universe = (
+        [item.strip().upper() for item in symbols.split(",") if item.strip()] if symbols else None
+    )
+    try:
+        result = run_core_beta_satellite_router_research(
+            spec,
+            project_root(),
+            symbols=universe,
+            data_source=data_source,
+            start=start,
+            end=end,
+            core_variant=core_variant,
+            universe_mode=universe_mode,
+            satellite_budget=satellite_budget,
+            satellite_momentum_days=satellite_momentum_days,
+            confirmation_days=confirmation_days,
+            top_n=top_n,
+            max_symbol_weight=max_symbol_weight,
+            score_mode=score_mode,
+            theme_gate_symbol=theme_gate_symbol,
+            theme_sma_days=theme_sma_days,
+            theme_momentum_days=theme_momentum_days,
+            min_theme_momentum_pct=min_theme_momentum_pct,
+            satellite_volatility_lookback_days=satellite_volatility_lookback_days,
+            target_satellite_volatility_pct=_optional_float_values(target_satellite_volatility_pct),
+            walk_forward_top_k=walk_forward_top_k,
+            max_candidates=max_candidates,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]core beta satellite router complete[/green] report: {result.report_path}"
+    )
+    console.print(
+        f"selected={result.selected_route_label} "
+        f"research_pass={result.research_pass} paper_ready={result.paper_ready_pass}"
+    )
+
+
+@strategy_app.command("aggressive-theme-router-research")
+def strategy_aggressive_theme_router_research(
+    spec: Path,
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    trend_sma_days: Annotated[list[int] | None, typer.Option("--trend-sma-days")] = None,
+    momentum_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--momentum-lookback-days"),
+    ] = None,
+    top_n: Annotated[list[int] | None, typer.Option("--top-n")] = None,
+    min_theme_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-theme-momentum-pct"),
+    ] = None,
+    core_weight: Annotated[list[float] | None, typer.Option("--core-weight")] = None,
+    theme_gross_weight: Annotated[
+        list[float] | None,
+        typer.Option("--theme-gross-weight"),
+    ] = None,
+    levered_symbol: Annotated[list[str] | None, typer.Option("--levered-symbol")] = None,
+    levered_weight: Annotated[list[float] | None, typer.Option("--levered-weight")] = None,
+    defensive_symbol: Annotated[list[str] | None, typer.Option("--defensive-symbol")] = None,
+    defensive_weight: Annotated[list[float] | None, typer.Option("--defensive-weight")] = None,
+    volatility_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--volatility-lookback-days"),
+    ] = None,
+    target_portfolio_volatility_pct: Annotated[
+        list[str] | None,
+        typer.Option("--target-portfolio-volatility-pct"),
+    ] = None,
+    max_market_volatility_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-market-volatility-pct"),
+    ] = None,
+    drawdown_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--drawdown-lookback-days"),
+    ] = None,
+    max_market_drawdown_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-market-drawdown-pct"),
+    ] = None,
+    rebalance_threshold_pct: Annotated[
+        list[float] | None,
+        typer.Option("--rebalance-threshold-pct"),
+    ] = None,
+    oos_ratio: float = typer.Option(0.35, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(5, "--walk-forward-folds"),
+    walk_forward_top_k: int | None = typer.Option(30, "--walk-forward-top-k"),
+    max_candidates: int = typer.Option(1600, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Research a theme-momentum router with bounded leveraged ETF satellite exposure."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_aggressive_theme_router_research(
+            spec,
+            project_root(),
+            data_source=data_source,
+            start=start,
+            end=end,
+            trend_sma_days=trend_sma_days,
+            momentum_lookback_days=momentum_lookback_days,
+            top_n_values=top_n,
+            min_theme_momentum_pct=min_theme_momentum_pct,
+            core_weight=core_weight,
+            theme_gross_weight=theme_gross_weight,
+            levered_symbol=levered_symbol,
+            levered_weight=levered_weight,
+            defensive_symbol=defensive_symbol,
+            defensive_weight=defensive_weight,
+            volatility_lookback_days=volatility_lookback_days,
+            target_portfolio_volatility_pct=_optional_float_values(target_portfolio_volatility_pct),
+            max_market_volatility_pct=_optional_float_values(max_market_volatility_pct),
+            drawdown_lookback_days=drawdown_lookback_days,
+            max_market_drawdown_pct=_optional_float_values(max_market_drawdown_pct),
+            rebalance_threshold_pct=rebalance_threshold_pct,
+            out_of_sample_ratio=oos_ratio,
+            walk_forward_folds=walk_forward_folds,
+            walk_forward_top_k=walk_forward_top_k,
+            max_candidates=max_candidates,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]aggressive theme router complete[/green] report: {result.report_path}")
+    console.print(
+        f"selected={result.selected_route_label} "
+        f"research_pass={result.research_pass} paper_ready={result.paper_ready_pass}"
+    )
+
+
+@strategy_app.command("theme-intraday-router-research")
+def strategy_theme_intraday_router_research(
+    spec: Path,
+    symbols: str | None = typer.Option(None, "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_sma_days: Annotated[list[int] | None, typer.Option("--market-sma-days")] = None,
+    market_momentum_days: Annotated[
+        list[int] | None,
+        typer.Option("--market-momentum-days"),
+    ] = None,
+    min_market_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--min-market-momentum-pct"),
+    ] = None,
+    signal_momentum_days: Annotated[
+        list[int] | None,
+        typer.Option("--signal-momentum-days"),
+    ] = None,
+    confirmation_days: Annotated[list[int] | None, typer.Option("--confirmation-days")] = None,
+    top_n: Annotated[list[int] | None, typer.Option("--top-n")] = None,
+    beta_symbol: Annotated[list[str] | None, typer.Option("--beta-symbol")] = None,
+    beta_weight: Annotated[list[float] | None, typer.Option("--beta-weight")] = None,
+    satellite_weight: Annotated[list[float] | None, typer.Option("--satellite-weight")] = None,
+    max_symbol_weight: Annotated[list[float] | None, typer.Option("--max-symbol-weight")] = None,
+    market_below_sma_scale: Annotated[
+        list[float] | None,
+        typer.Option("--market-below-sma-scale"),
+    ] = None,
+    target_market_volatility_pct: Annotated[
+        list[str] | None,
+        typer.Option("--target-market-volatility-pct"),
+    ] = None,
+    drawdown_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--drawdown-lookback-days"),
+    ] = None,
+    max_market_drawdown_pct: Annotated[
+        list[str] | None,
+        typer.Option("--max-market-drawdown-pct"),
+    ] = None,
+    score_mode: Annotated[list[str] | None, typer.Option("--score-mode")] = None,
+    semiconductor_gate: Annotated[
+        list[bool] | None,
+        typer.Option("--semiconductor-gate/--no-semiconductor-gate"),
+    ] = None,
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    walk_forward_folds: int = typer.Option(5, "--walk-forward-folds"),
+    walk_forward_top_k: int | None = typer.Option(30, "--walk-forward-top-k"),
+    max_candidates: int = typer.Option(900, "--max-candidates"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Research a daily-scanned, same-session NASDAQ theme intraday router."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    universe = (
+        [item.strip().upper() for item in symbols.split(",") if item.strip()] if symbols else None
+    )
+    try:
+        result = run_theme_intraday_rotation_router_research(
+            spec,
+            project_root(),
+            symbols=universe,
+            data_source=data_source,
+            start=start,
+            end=end,
+            market_symbol=market_symbol.upper(),
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_sma_days=market_sma_days,
+            market_momentum_days=market_momentum_days,
+            min_market_momentum_pct=min_market_momentum_pct,
+            signal_momentum_days=signal_momentum_days,
+            confirmation_days=confirmation_days,
+            top_n=top_n,
+            beta_symbol=beta_symbol,
+            beta_weight=beta_weight,
+            satellite_weight=satellite_weight,
+            max_symbol_weight=max_symbol_weight,
+            market_below_sma_scale=market_below_sma_scale,
+            target_market_volatility_pct=_optional_float_values(target_market_volatility_pct),
+            drawdown_lookback_days=drawdown_lookback_days,
+            max_market_drawdown_pct=_optional_float_values(max_market_drawdown_pct),
+            score_mode=score_mode,
+            semiconductor_gate=semiconductor_gate,
+            out_of_sample_ratio=oos_ratio,
+            walk_forward_folds=walk_forward_folds,
+            walk_forward_top_k=walk_forward_top_k,
+            max_candidates=max_candidates,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]theme intraday router complete[/green] report: {result.report_path}")
+    console.print(
+        f"selected={result.selected_route_label} "
+        f"research_pass={result.research_pass} paper_ready={result.paper_ready_pass}"
+    )
+
+
 @strategy_app.command("hybrid-target-weights")
 def strategy_hybrid_target_weights(
     spec: Path,
@@ -2887,6 +3457,45 @@ def strategy_hybrid_target_weights(
     )
 
 
+@strategy_app.command("beta-target-weights")
+def strategy_beta_target_weights(
+    spec: Path,
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    leverage_symbol: str = typer.Option("TQQQ", "--leverage-symbol"),
+    hedge_symbol: str | None = typer.Option("SQQQ", "--hedge-symbol"),
+    selected_route_label: str | None = typer.Option(None, "--selected-route-label"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Map the selected beta exposure route into Nautilus-compatible target weights."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    try:
+        result = run_beta_target_weight_mapping(
+            spec,
+            project_root(),
+            data_source=data_source,
+            start=start,
+            end=end,
+            market_symbol=market_symbol.upper(),
+            leverage_symbol=leverage_symbol.upper(),
+            hedge_symbol=hedge_symbol.upper() if hedge_symbol else None,
+            selected_route_label=selected_route_label,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]beta target weights complete[/green] report: {result.report_path}")
+    console.print(
+        f"parity={result.parity_status} "
+        f"rebalance_sessions={result.rebalance_sessions} "
+        f"target_rows={result.target_weight_count} "
+        f"nonzero_targets={result.nonzero_target_rows}"
+    )
+
+
 @strategy_app.command("hybrid-paper-plan")
 def strategy_hybrid_paper_plan(spec: Path) -> None:
     """Build a paper_auto candidate plan without activating or submitting orders."""
@@ -2917,6 +3526,24 @@ def _hybrid_holding_modes(values: list[str] | None) -> list[str] | None:
     if bad:
         raise typer.BadParameter("--holding-mode contains unsupported value(s): " + ", ".join(bad))
     return normalized
+
+
+def _hybrid_momentum_score_modes(values: list[str] | None) -> list[str] | None:
+    if not values:
+        return None
+    aliases = {
+        "raw": "raw",
+        "risk-adjusted": "risk_adjusted",
+        "risk_adjusted": "risk_adjusted",
+        "radj": "risk_adjusted",
+    }
+    normalized = [aliases.get(item.strip().lower().replace("_", "-")) for item in values]
+    bad = [value for value, parsed in zip(values, normalized, strict=True) if parsed is None]
+    if bad:
+        raise typer.BadParameter(
+            "--momentum-score-mode contains unsupported value(s): " + ", ".join(bad)
+        )
+    return [item for item in normalized if item is not None]
 
 
 def _hybrid_market_sma_days(values: list[str] | None) -> list[int | None] | None:
@@ -3338,6 +3965,19 @@ def _optional_float_values(values: list[str] | None) -> list[float | None] | Non
             parsed.append(None)
         else:
             parsed.append(float(value))
+    return parsed
+
+
+def _optional_int_values(values: list[str] | None) -> list[int | None] | None:
+    if values is None:
+        return None
+    parsed: list[int | None] = []
+    for value in values:
+        normalized = value.strip().lower()
+        if normalized in {"none", "null", "off", "0"}:
+            parsed.append(None)
+        else:
+            parsed.append(int(value))
     return parsed
 
 

@@ -167,6 +167,7 @@ class AdaptiveRouterScanResult:
     feature_packet_path: Path | None
     context_packet_paths: list[Path]
     risk_policy: dict[str, Any]
+    latest_prices: dict[str, float]
     notes: list[str]
 
 
@@ -556,6 +557,7 @@ def run_adaptive_intraday_router_scan(
     scan_state = _scan_market_state(dataset, index, route)
     selected = _route_selection(dataset, index, route)
     risk_policy = _portfolio_risk_policy(spec, route)
+    latest_prices = _latest_prices(dataset, index)
     plans = (
         _signal_plans_for_selection(
             spec=spec,
@@ -612,6 +614,7 @@ def run_adaptive_intraday_router_scan(
         feature_packet_path=feature_packet_path,
         context_packet_paths=context_packet_paths,
         risk_policy=risk_policy,
+        latest_prices=latest_prices,
         notes=notes,
     )
     _write_adaptive_scan_json(result, spec, dataset, version.version_id, version.content_hash)
@@ -1092,6 +1095,7 @@ def _write_adaptive_scan_json(
             else None
         ),
         "risk_policy": result.risk_policy,
+        "latest_prices": result.latest_prices,
         "signals": [signal.model_dump(mode="json") for signal in result.signals],
         "signal_plans": [plan.__dict__ for plan in result.signal_plans],
         "signal_log_path": _relpath(result.signal_log_path, result.json_path.parents[2]),
@@ -1166,6 +1170,18 @@ def _write_adaptive_scan_report(
     lines.extend(["", "## Notes", "", *[f"- {note}" for note in result.notes]])
     result.report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return result.report_path
+
+
+def _latest_prices(dataset: _IntradayDataset, index: int) -> dict[str, float]:
+    prices: dict[str, float] = {}
+    for symbol in [*dataset.symbols, dataset.benchmark_symbol, dataset.market_symbol]:
+        day = _day_bars(dataset, symbol, index)
+        if day is None or day.bar_count == 0:
+            continue
+        price = float(day.closes[-1])
+        if price > 0:
+            prices[symbol] = price
+    return prices
 
 
 def _relpath(path: Path, root: Path) -> str:

@@ -31,8 +31,8 @@ class StrategyListing:
 def list_strategies(root: Path | None = None) -> list[StrategyListing]:
     base = root or project_root()
     listings: list[StrategyListing] = []
-    for lifecycle in ["drafts", "approved", "active", "retired"]:
-        for path in sorted((base / "strategy_specs" / lifecycle).glob("*.yaml")):
+    for folder in ["drafts", "approved", "active", "retired"]:
+        for path in sorted((base / "strategy_specs" / folder).glob("*.yaml")):
             spec = load_strategy_spec(path)
             listings.append(
                 StrategyListing(

@@ -377,7 +377,11 @@ def _portfolio_routing_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
             message="Single-symbol paper routing is supported.",
             details={"universe": spec.universe},
         )
-    if spec.portfolio.mode in {"adaptive_intraday_internal_router", "hybrid_adaptive_router"}:
+    if spec.portfolio.mode in {
+        "adaptive_intraday_internal_router",
+        "hybrid_adaptive_router",
+        "beta_exposure_router",
+    }:
         missing: list[str] = []
         if not spec.portfolio.selected_route_label:
             missing.append("selected_route_label")
@@ -419,7 +423,11 @@ def _portfolio_routing_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
 
 def _portfolio_risk_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
     portfolio = spec.portfolio
-    if portfolio.mode in {"adaptive_intraday_internal_router", "hybrid_adaptive_router"}:
+    if portfolio.mode in {
+        "adaptive_intraday_internal_router",
+        "hybrid_adaptive_router",
+        "beta_exposure_router",
+    }:
         gross_limit = portfolio.gross_exposure_limit or (
             (portfolio.max_symbols_per_day or 0)
             * (portfolio.max_symbol_weight or spec.risk.max_position_weight)
