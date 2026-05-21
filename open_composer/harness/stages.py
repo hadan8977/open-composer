@@ -29,6 +29,7 @@ STAGE_REQUIREMENTS: dict[str, list[str]] = {
         "reference_backtest",
         "factor_lab",
         "alternative_data",
+        "harness_artifacts",
         "promotion_report",
     ],
     "paper_ready": [
@@ -39,6 +40,7 @@ STAGE_REQUIREMENTS: dict[str, list[str]] = {
         "reference_backtest",
         "factor_lab",
         "alternative_data",
+        "harness_artifacts",
         "promotion_report",
         "paper_readiness",
     ],

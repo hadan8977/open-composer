@@ -105,3 +105,16 @@ staleness_checked_source_types:
   - provider_official_docs
   - platform_docs
   - industry_standard
+
+# Per-source-type staleness threshold (days). Read by oc harness curate and the
+# SourceCard evaluator. A card whose accessed_at is older than the threshold is
+# flagged as stale and must be re-verified.
+staleness_days:
+  broker_official_docs: 30
+  exchange_official_docs: 90
+  provider_official_docs: 60
+  regulatory_docs: 365
+  paper: 730
+  platform_docs: 30
+  industry_standard: 90
+  unverified: 14

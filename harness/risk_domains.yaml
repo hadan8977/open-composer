@@ -70,7 +70,6 @@ risk_domains:
       metrics represent an upper bound, not a realistic expectation.
     triggers:
       has_adjustable_parameters: true
-      has_optimizer_output: true
     required_skills:
       - backtest-forensics
     required_artifacts:
@@ -99,6 +98,7 @@ risk_domains:
       these inputs create future-leak in backtests and undefined behavior in
       live paper execution.
     triggers:
+      match: any
       required_capability_kinds: [llm, news, event, macro]
       llm_review_enabled: true
     required_skills:
@@ -173,6 +173,7 @@ risk_domains:
       Backtest window is below 252 trading days or total trade count is below
       30. Results may be statistically unreliable.
     triggers:
+      match: any
       backtest_days_lt: 252
       trade_count_lt: 30
     required_skills:

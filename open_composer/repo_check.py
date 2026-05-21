@@ -31,6 +31,12 @@ CURRENT_DOCS = {
     "docs/harness-engineering-agent-quant-review-2026-05-17.zh.md",
     "docs/harness-engineering-expanded-research-log-2026-05-17.zh.md",
     "docs/harness-engineering-expanded-architecture-review-2026-05-17.zh.md",
+    "docs/harness-engineering-implementation-plan-2026-05-17.zh.md",
+    "docs/harness-engineering-implementation-plan-v2-2026-05-17.zh.md",
+    "docs/nasdaq-core-beta-satellite-router-standard-2026-05-20.zh.md",
+    "docs/nasdaq-intraday-theme-momentum-router-standard-2026-05-20.zh.md",
+    "docs/nasdaq-theme-intraday-rotation-router-standard-2026-05-20.zh.md",
+    "docs/skill-first-harness-engineering-roadmap-2026-05-20.zh.md",
 }
 
 REQUIRED_SKILLS = [
@@ -43,6 +49,18 @@ REQUIRED_SKILLS = [
     "strategy-designer",
     "strategy-researcher",
     "weekly-reviewer",
+]
+
+# Harness skills introduced by the skill-first harness foundation (P0-P2).
+# These are checked in addition to REQUIRED_SKILLS to ensure the harness
+# pack is mirrored to .claude/skills and contains expected anchors.
+HARNESS_SKILLS = [
+    "strategy-research-orchestrator",
+    "source-researcher",
+    "execution-reality-reviewer",
+    "backtest-forensics",
+    "paper-auto-safety-reviewer",
+    "evidence-curator",
 ]
 
 REQUIRED_CAPABILITIES = {
@@ -114,6 +132,7 @@ def build_repo_check_report(root: Path | None = None) -> RepoConsistencyReport:
         _sample_workflow_check(base),
         _dashboard_command_model_check(),
         _makefile_verify_check(base),
+        _harness_policy_check(base),
     ]
     status = _overall_status(checks)
     return RepoConsistencyReport(
@@ -638,6 +657,101 @@ def _makefile_verify_check(root: Path) -> RepoConsistencyCheck:
             "make verify includes repository, capability, deployment, dashboard, feature, "
             "and readiness checks."
         ),
+    )
+
+
+def _harness_policy_check(root: Path) -> RepoConsistencyCheck:
+    """Validate that harness/*.yaml exists, parses, and references real skills/contracts."""
+    import yaml
+
+    harness_dir = root / "harness"
+    required_files = [
+        "risk_domains.yaml",
+        "artifact_contracts.yaml",
+        "source_policy.yaml",
+        "skill_manifest.yaml",
+    ]
+    missing_files = [f for f in required_files if not (harness_dir / f).exists()]
+    if missing_files:
+        return RepoConsistencyCheck(
+            name="harness_policy",
+            status="blocked",
+            message="Harness policy YAML files are missing.",
+            details={"missing": missing_files},
+            suggested_actions=[f"Create harness/{name}" for name in missing_files],
+        )
+
+    parse_errors: dict[str, str] = {}
+    parsed: dict[str, object] = {}
+    for name in required_files:
+        try:
+            parsed[name] = yaml.safe_load((harness_dir / name).read_text(encoding="utf-8"))
+        except yaml.YAMLError as exc:
+            parse_errors[name] = str(exc)
+    if parse_errors:
+        return RepoConsistencyCheck(
+            name="harness_policy",
+            status="blocked",
+            message="Harness policy YAML files contain parse errors.",
+            details={"errors": parse_errors},
+        )
+
+    contracts_doc = parsed.get("artifact_contracts.yaml") or {}
+    contract_names = set((contracts_doc.get("artifacts") or {}).keys())  # type: ignore[union-attr]
+
+    domains_doc = parsed.get("risk_domains.yaml") or {}
+    domains_map = (domains_doc.get("risk_domains") or {}) if isinstance(domains_doc, dict) else {}
+    referenced_skills: set[str] = set()
+    referenced_artifacts: set[str] = set()
+    for domain_raw in domains_map.values():
+        if not isinstance(domain_raw, dict):
+            continue
+        for skill in domain_raw.get("required_skills") or []:
+            referenced_skills.add(skill)
+        for artifact in domain_raw.get("required_artifacts") or []:
+            referenced_artifacts.add(artifact)
+
+    skill_dirs = {p.name for p in (root / ".agents" / "skills").iterdir() if p.is_dir()}
+    missing_skills = sorted(referenced_skills - skill_dirs)
+    missing_contracts = sorted(referenced_artifacts - contract_names)
+
+    if missing_skills or missing_contracts:
+        return RepoConsistencyCheck(
+            name="harness_policy",
+            status="blocked",
+            message=("Risk domains reference skills or artifact contracts that do not exist."),
+            details={
+                "missing_skills": missing_skills,
+                "missing_artifact_contracts": missing_contracts,
+            },
+        )
+
+    missing_claude_mirrors = [
+        skill
+        for skill in HARNESS_SKILLS
+        if not (root / ".claude" / "skills" / skill / "SKILL.md").exists()
+    ]
+    if missing_claude_mirrors:
+        return RepoConsistencyCheck(
+            name="harness_policy",
+            status="warning",
+            message="Harness skills are missing from .claude/skills mirror.",
+            details={"missing_claude_mirrors": missing_claude_mirrors},
+            suggested_actions=["uv run python scripts/sync-agent-skills.py"],
+        )
+
+    return RepoConsistencyCheck(
+        name="harness_policy",
+        status="ok",
+        message=(
+            f"Harness policy ok: {len(domains_map)} risk domains, "
+            f"{len(contract_names)} artifact contracts, "
+            f"{len(referenced_skills)} skills referenced."
+        ),
+        details={
+            "risk_domain_count": len(domains_map),
+            "artifact_contract_count": len(contract_names),
+        },
     )
 
 

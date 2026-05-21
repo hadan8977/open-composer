@@ -183,3 +183,62 @@ skills:
       - weekly review cycle
       - user requests weekly summary
     skill_path: .agents/skills/weekly-reviewer/SKILL.md
+
+# ── Claude Code hook entry points ─────────────────────────────────────────────
+# Hooks run automatically in Claude Code sessions. They are lightweight scripts;
+# they do NOT invoke skills or run backtests. Skills are invoked separately by
+# the orchestrator or user commands.
+
+hooks:
+
+  UserPromptSubmit-harness-context:
+    path: .claude/hooks/UserPromptSubmit-harness-context.sh
+    event: UserPromptSubmit
+    description: >
+      Detects strategy-related prompts and injects a brief harness context note
+      (last verify status, missing report warning). Exits 0 always; never blocks.
+    scope: lightweight — reads one JSON file at most
+
+  PreToolUse-paper-write-guard:
+    path: .claude/hooks/PreToolUse-paper-write-guard.sh
+    event: PreToolUse
+    matcher: Bash
+    description: >
+      Intercepts Bash tool calls that look like paper order submission. Blocks
+      execution and prints an actionable error if no harness verify report exists
+      or the report status is 'blocked'. Exits 0 to allow, 1 to block.
+    scope: lightweight — reads one JSON file at most
+
+  Stop-artifact-summary:
+    path: .claude/hooks/Stop-artifact-summary.sh
+    event: Stop
+    description: >
+      At session end, prints a summary of harness verify findings (blocked/warning
+      strategies) and stale source cards (> 60 days). Informational only; exits 0.
+    scope: lightweight — scans reports/harness/*.json and source_cards/*.jsonl
+
+# ── Subagent templates ──────────────────────────────────────────────────────────
+# Agent templates in .claude/agents/ describe research-agent roles, I/O contracts,
+# and constraints. They are invoked by the strategy-research-orchestrator or by
+# the user via the Claude Code Agent tool.
+
+agents:
+  source-research-agent:
+    path: .claude/agents/source-research-agent.md
+    role: mandatory-web-research
+    skills_used: [source-researcher]
+
+  backtest-forensics-agent:
+    path: .claude/agents/backtest-forensics-agent.md
+    role: forensic-backtest-review
+    skills_used: [backtest-forensics]
+
+  execution-reality-agent:
+    path: .claude/agents/execution-reality-agent.md
+    role: execution-reality-review
+    skills_used: [execution-reality-reviewer]
+
+  paper-safety-agent:
+    path: .claude/agents/paper-safety-agent.md
+    role: paper-auto-safety-review
+    skills_used: [paper-auto-safety-reviewer]

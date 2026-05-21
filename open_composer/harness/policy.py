@@ -130,67 +130,74 @@ def _domain_matches(domain: RiskDomain, spec: object, root: Path | None) -> bool
     def _get(attr: str, default=None):
         return getattr(spec, attr, default)
 
-    # timeframe
-    if "timeframe" in triggers:
+    # Trigger composition: default is "all" (every trigger must match).
+    # Set "match: any" in YAML to activate the domain if any single trigger matches.
+    # The "match" key itself is metadata, not a trigger condition.
+    match_mode = str(triggers.get("match", "all")).lower()
+    trigger_keys = [k for k in triggers if k != "match"]
+
+    def _check(key: str) -> bool:
+        return _check_single_trigger(key, triggers[key], spec, _get)
+
+    if match_mode == "any":
+        return any(_check(k) for k in trigger_keys)
+    return all(_check(k) for k in trigger_keys)
+
+
+def _check_single_trigger(key: str, value: object, spec: object, _get) -> bool:
+    """Evaluate one trigger condition. Returns True if the spec satisfies it.
+
+    Unknown trigger keys return False (strict) — adding a trigger without a handler
+    here is treated as 'cannot evaluate', not 'always passes'.
+    """
+    if key == "timeframe":
         tf = _get("timeframe") or _get("data", {})
         if isinstance(tf, str):
             tf = [tf]
         elif hasattr(tf, "timeframe"):
             tf = [tf.timeframe]
         if not isinstance(tf, list):
-            tf = []
-        if not any(t in triggers["timeframe"] for t in tf):
             return False
+        return any(t in value for t in tf)
 
-    # fill_assumption
-    if "fill_assumption" in triggers:
+    if key == "fill_assumption":
         exec_obj = _get("execution")
         fa = getattr(exec_obj, "fill_assumption", None) if exec_obj else None
-        if fa not in triggers["fill_assumption"]:
-            return False
+        return fa in value
 
-    # execution_mode
-    if "execution_mode" in triggers:
+    if key == "execution_mode":
         exec_obj = _get("execution")
         mode = getattr(exec_obj, "mode", None) if exec_obj else None
-        if mode not in triggers["execution_mode"]:
-            return False
+        return mode in value
 
-    # symbol_patterns (universe symbols match against regex list)
-    if "symbol_patterns" in triggers:
+    if key == "symbol_patterns":
         universe = _get("universe")
         symbols: list[str] = []
-        if universe is not None:
+        if isinstance(universe, list):
+            symbols = [str(s) for s in universe]
+        elif universe is not None:
             raw_syms = getattr(universe, "symbols", None) or []
             symbols = list(raw_syms)
-        patterns = triggers["symbol_patterns"]
-        if not any(
+        patterns = value if isinstance(value, list) else [value]
+        return any(
             any(re.search(rf"^{pat}$", sym, re.IGNORECASE) for pat in patterns) for sym in symbols
-        ):
-            return False
+        )
 
-    # has_adjustable_parameters
-    if triggers.get("has_adjustable_parameters"):
+    if key == "has_adjustable_parameters":
+        if not value:
+            return False
         params = _get("parameters") or {}
-        has_range = False
-        if isinstance(params, dict):
-            for v in params.values():
-                if isinstance(v, dict) and ("range" in v or "step" in v):
-                    has_range = True
-                    break
-        if not has_range:
+        if not isinstance(params, dict):
             return False
+        return any(isinstance(v, dict) and ("range" in v or "step" in v) for v in params.values())
 
-    # llm_review_enabled
-    if "llm_review_enabled" in triggers:
+    if key == "llm_review_enabled":
         llm_review = _get("llm_review")
         enabled = getattr(llm_review, "enabled", False) if llm_review else False
-        if bool(enabled) != bool(triggers["llm_review_enabled"]):
-            return False
+        return bool(enabled) == bool(value)
 
-    # required_capability_kinds (checks spec's declared capabilities)
-    if "required_capability_kinds" in triggers:
-        needed_kinds = set(triggers["required_capability_kinds"])
+    if key == "required_capability_kinds":
+        needed_kinds = set(value) if isinstance(value, list) else set()
         cap_obj = _get("capabilities") or {}
         found_kinds: set[str] = set()
         if isinstance(cap_obj, dict):
@@ -198,24 +205,22 @@ def _domain_matches(domain: RiskDomain, spec: object, root: Path | None) -> bool
                 kind = getattr(v, "kind", None) or (v.get("kind") if isinstance(v, dict) else None)
                 if kind:
                     found_kinds.add(kind)
-        if not needed_kinds.intersection(found_kinds):
-            return False
+        return bool(needed_kinds.intersection(found_kinds))
 
-    # all_capabilities_workflow_only
-    if triggers.get("all_capabilities_workflow_only"):
-        if root is None:
-            return False
-        # Full evaluation requires a spec_path; skip if unavailable
-        return False
-
-    # broker
-    if "broker" in triggers:
+    if key == "broker":
         exec_obj = _get("execution")
         broker = getattr(exec_obj, "broker", None) if exec_obj else None
-        if broker not in triggers["broker"]:
-            return False
+        return broker in value
 
-    return True
+    if key == "all_capabilities_workflow_only":
+        # Requires spec_path + capability registry; only evaluated by full verify path.
+        return False
+
+    if key in {"backtest_days_lt", "trade_count_lt"}:
+        # These need post-backtest evidence that is not available at plan time.
+        return False
+
+    return False
 
 
 # ---------------------------------------------------------------------------

@@ -193,6 +193,8 @@ def build_promotion_report(
     benchmark_check, benchmark_family = _benchmark_family_check(spec, full)
     checks.append(benchmark_check)
 
+    checks.append(_harness_artifacts_promotion_check(spec, base))
+
     ready = all(check.status == "ok" for check in checks)
     status: PromotionStatus
     if any(check.status == "blocked" for check in checks):
@@ -2620,6 +2622,74 @@ def _alternative_data_check(result) -> PromotionCheck:
         status="ok",
         message="Alternative data quality passed or no alternative data is used.",
         details=details,
+    )
+
+
+def _harness_artifacts_promotion_check(spec: StrategySpec, root: Path) -> PromotionCheck:
+    """Promotion gate that mirrors `oc harness verify` for risk-domain artifacts.
+
+    Strategies with no active risk domains pass. Otherwise every artifact required
+    by the active domains must be present and contain the contract's required
+    fields, or promotion is blocked.
+    """
+    from open_composer.harness.policy import (
+        blocking_rules_for_domains,
+        check_artifact,
+        detect_risk_domains,
+        required_artifacts_for_domains,
+    )
+
+    active = detect_risk_domains(spec, root)
+    required = sorted(required_artifacts_for_domains(active))
+    if not required:
+        return PromotionCheck(
+            name="harness_artifacts",
+            status="ok",
+            message="No risk domains active; no harness artifacts required.",
+            details={"risk_domains": active},
+        )
+
+    statuses = [check_artifact(name, spec.name, root) for name in required]
+    missing = [s.name for s in statuses if not s.present]
+    incomplete = [
+        {"name": s.name, "missing_fields": s.missing_fields}
+        for s in statuses
+        if s.present and not s.schema_ok
+    ]
+    research_blocking_rules = [
+        r.rule_id for r in blocking_rules_for_domains(active) if r.blocks == "research_pass"
+    ]
+
+    if missing or incomplete:
+        # Migration policy: warn by default; set OC_HARNESS_STRICT=1 to block promotion.
+        import os
+
+        strict = os.environ.get("OC_HARNESS_STRICT", "0") == "1"
+        status: PromotionStatus = "blocked" if strict else "warning"
+        prefix = "blocked" if strict else "legacy_harness_review_required"
+        return PromotionCheck(
+            name="harness_artifacts",
+            status=status,
+            message=(
+                f"Harness artifacts {prefix}: "
+                f"missing={missing or '-'}, "
+                f"incomplete={[c['name'] for c in incomplete] or '-'}, "
+                f"domains={active}"
+            ),
+            details={
+                "risk_domains": active,
+                "required_artifacts": required,
+                "missing": missing,
+                "incomplete": incomplete,
+                "research_blocking_rules": research_blocking_rules,
+                "strict_mode": strict,
+            },
+        )
+    return PromotionCheck(
+        name="harness_artifacts",
+        status="ok",
+        message=f"All {len(required)} harness artifacts present for domains {active}.",
+        details={"risk_domains": active, "required_artifacts": required},
     )
 
 

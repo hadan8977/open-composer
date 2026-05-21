@@ -37,6 +37,20 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
     copytree(repo_root / ".agents", target / ".agents", dirs_exist_ok=True)
     copytree(repo_root / ".claude", target / ".claude", dirs_exist_ok=True)
+    copytree(repo_root / "harness", target / "harness", dirs_exist_ok=True)
+    for new_doc in [
+        "docs/harness-engineering-implementation-plan-2026-05-17.zh.md",
+        "docs/harness-engineering-implementation-plan-v2-2026-05-17.zh.md",
+        "docs/nasdaq-core-beta-satellite-router-standard-2026-05-20.zh.md",
+        "docs/nasdaq-intraday-theme-momentum-router-standard-2026-05-20.zh.md",
+        "docs/nasdaq-theme-intraday-rotation-router-standard-2026-05-20.zh.md",
+        "docs/skill-first-harness-engineering-roadmap-2026-05-20.zh.md",
+    ]:
+        source = repo_root / new_doc
+        destination = target / new_doc
+        if source.exists():
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def test_repo_check_passes_for_repo_control_surface(

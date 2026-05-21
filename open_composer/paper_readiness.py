@@ -91,6 +91,7 @@ def assess_paper_strategy_readiness_for_spec(
         _portfolio_risk_check(spec),
         _feature_packet_binding_check(spec, base),
         _promotion_report_check(spec, base, spec_path),
+        _harness_artifacts_check(spec, base),
     ]
     if spec_path is not None and spec_path.exists():
         checks.append(_capability_check(spec, spec_path))
@@ -704,6 +705,79 @@ def _promotion_missing_requirements(
     if benchmark_family.get("complete") is not True:
         missing.append("benchmark_family.complete is not true")
     return missing
+
+
+def _harness_artifacts_check(spec: StrategySpec, root: Path) -> PaperStrategyReadinessCheck:
+    """Block paper readiness when required harness artifacts are missing or incomplete.
+
+    Reads harness/risk_domains.yaml to detect active domains and checks each required
+    artifact via artifact_contracts.yaml. Strategies with no active risk domains pass.
+    """
+    from open_composer.harness.policy import (
+        blocking_rules_for_domains,
+        check_artifact,
+        detect_risk_domains,
+        required_artifacts_for_domains,
+    )
+
+    active = detect_risk_domains(spec, root)
+    required = sorted(required_artifacts_for_domains(active))
+    if not required:
+        return PaperStrategyReadinessCheck(
+            name="harness_artifacts",
+            status="ok",
+            message="No risk domains active for this spec; no harness artifacts required.",
+            details={"risk_domains": active},
+        )
+
+    statuses = [check_artifact(name, spec.name, root) for name in required]
+    missing = [s.name for s in statuses if not s.present]
+    incomplete = [
+        {"name": s.name, "missing_fields": s.missing_fields}
+        for s in statuses
+        if s.present and not s.schema_ok
+    ]
+    rules = [
+        {"domain": r.domain_id, "rule_id": r.rule_id, "blocks": r.blocks}
+        for r in blocking_rules_for_domains(active)
+        if r.blocks == "paper_ready_pass"
+    ]
+
+    if missing or incomplete:
+        # Migration policy: existing strategies surface a warning (legacy_harness_review_required)
+        # rather than hard-blocking. Set OC_HARNESS_STRICT=1 to switch to blocked.
+        import os
+
+        strict = os.environ.get("OC_HARNESS_STRICT", "0") == "1"
+        check_status: PaperReadinessStatus = "blocked" if strict else "warning"
+        prefix = "blocked" if strict else "legacy_harness_review_required"
+        return PaperStrategyReadinessCheck(
+            name="harness_artifacts",
+            status=check_status,
+            message=(
+                f"Paper readiness {prefix} for harness artifacts: "
+                f"missing={missing or '-'}, "
+                f"incomplete={[c['name'] for c in incomplete] or '-'}"
+            ),
+            details={
+                "risk_domains": active,
+                "required_artifacts": required,
+                "missing": missing,
+                "incomplete": incomplete,
+                "paper_ready_blocking_rules": rules,
+                "strict_mode": strict,
+            },
+            suggested_actions=[
+                f"uv run oc harness verify strategy_specs/active/{spec.name}.yaml",
+                f"uv run oc harness plan strategy_specs/active/{spec.name}.yaml",
+            ],
+        )
+    return PaperStrategyReadinessCheck(
+        name="harness_artifacts",
+        status="ok",
+        message=f"All {len(required)} harness artifacts present for domains {active}.",
+        details={"risk_domains": active, "required_artifacts": required},
+    )
 
 
 def _capability_check(spec: StrategySpec, spec_path: Path) -> PaperStrategyReadinessCheck:

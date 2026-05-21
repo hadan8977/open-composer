@@ -148,6 +148,127 @@ class NotesConfig(BaseModel):
     open_questions: list[str] = Field(default_factory=list)
 
 
+# ---------------------------------------------------------------------------
+# Optional execution-policy and reality-model extensions (skill-first harness)
+# These fields are opt-in; specs without them continue to validate. Strategies
+# whose risk domains require execution_policy / execution_reality_report
+# artifacts may either populate these fields and generate the artifact via
+# `oc strategy execution-policy`, or hand-write the JSON artifact directly.
+# ---------------------------------------------------------------------------
+
+
+class PriceProtection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    limit_offset_bps: float | None = Field(default=None, ge=0)
+    max_open_gap_pct: float | None = Field(default=None, ge=0)
+    max_spread_bps: float | None = Field(default=None, ge=0)
+
+
+class ParticipationCap(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    max_adv_pct: float | None = Field(default=None, ge=0, le=100)
+    max_open_bar_volume_pct: float | None = Field(default=None, ge=0, le=100)
+
+
+class FallbackBehavior(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    if_not_filled: Literal["skip", "retry_5m", "retry_15m", "delay_to_close"] = "skip"
+    if_gap_exceeds_limit: Literal["skip", "delay_to_5m", "delay_to_15m"] = "skip"
+    if_spread_exceeds_limit: Literal["skip", "delay_to_5m", "delay_to_15m"] = "skip"
+
+
+class TCAPlan(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    compare_to: list[Literal["decision_price", "official_open", "arrival_price", "vwap"]] = Field(
+        default_factory=lambda: ["decision_price", "official_open"]
+    )
+    record_submitted_at: bool = True
+    record_fill_price: bool = True
+    review_frequency: Literal["per_order", "daily", "weekly"] = "weekly"
+
+
+class ExecutionPolicy(BaseModel):
+    """Structured execution policy for paper_auto / daily-open strategies.
+
+    Used when a strategy declares an explicit execution method other than the
+    default DAY market order. The execution-reality-reviewer skill compares at
+    least two alternatives; the recommended policy is recorded here.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    policy_id: str = Field(min_length=1)
+    order_style: Literal[
+        "day_market",
+        "moo_market",
+        "opg_limit",
+        "loo_limit",
+        "delayed_open_5m",
+        "delayed_open_15m",
+        "twap",
+    ]
+    time_in_force: Literal["day", "opg", "ioc", "gtc"] = "day"
+    price_protection: PriceProtection = Field(default_factory=PriceProtection)
+    participation_cap: ParticipationCap = Field(default_factory=ParticipationCap)
+    fallback_behavior: FallbackBehavior = Field(default_factory=FallbackBehavior)
+    tca: TCAPlan = Field(default_factory=TCAPlan)
+    alternatives_compared: list[str] = Field(default_factory=list, min_length=0)
+    source_card_ids: list[str] = Field(default_factory=list)
+    naked_market_justification: str | None = None
+
+    @model_validator(mode="after")
+    def require_justification_for_naked_market(self) -> ExecutionPolicy:
+        if (
+            self.order_style == "day_market"
+            and self.price_protection.limit_offset_bps is None
+            and self.price_protection.max_open_gap_pct is None
+            and not self.naked_market_justification
+        ):
+            msg = (
+                "day_market without price_protection requires naked_market_justification "
+                "explaining why the risk is acceptable"
+            )
+            raise ValueError(msg)
+        return self
+
+
+class StressScenario(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    slippage_bps: float = Field(ge=0)
+    open_gap_pct: float = Field(default=0.0, ge=0)
+
+
+class RealityModel(BaseModel):
+    """Optional execution-reality assumptions used by the execution-reality reviewer.
+
+    Mirrors the QuantConnect Reality Modeling split between strategy logic and
+    broker/fill assumptions. Populated by execution-reality-reviewer skill or by
+    `oc strategy execution-policy`.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    fill_model: Literal[
+        "next_bar_open",
+        "next_regular_open_with_policy",
+        "delayed_open_with_policy",
+        "twap",
+    ] = "next_bar_open"
+    slippage_model: Literal[
+        "fixed_bps",
+        "stress_bps_by_volatility_and_participation",
+        "almgren_chriss",
+    ] = "fixed_bps"
+    stress_scenarios: list[StressScenario] = Field(default_factory=list)
+
+
 class StrategySpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -168,6 +289,8 @@ class StrategySpec(BaseModel):
     llm_review: LLMReviewConfig = Field(default_factory=LLMReviewConfig)
     notes: NotesConfig = Field(default_factory=NotesConfig)
     required_capabilities: list[str] = Field(default_factory=list)
+    execution_policy: ExecutionPolicy | None = None
+    reality_model: RealityModel | None = None
 
     @field_validator("name")
     @classmethod

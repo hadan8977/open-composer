@@ -337,6 +337,75 @@ def _promotion_report(spec_path: Path, root: Path) -> GateResult:
     )
 
 
+@gate("harness_artifacts")
+def _harness_artifacts(spec_path: Path, root: Path) -> GateResult:
+    """Check that all artifacts required by detected risk domains are present and complete.
+
+    Reads harness/risk_domains.yaml and harness/artifact_contracts.yaml; does not run
+    backtests. Returns ``blocked`` when any required artifact is missing or has missing
+    fields, ``warning`` when only optional artifacts (none currently) are absent, ``ok``
+    when no risk domains are active or every required artifact passes the contract.
+    """
+    from open_composer.harness.policy import (
+        blocking_rules_for_domains,
+        check_artifact,
+        detect_risk_domains,
+        required_artifacts_for_domains,
+    )
+
+    try:
+        spec = load_strategy_spec(spec_path)
+    except Exception as exc:
+        return GateResult(
+            name="harness_artifacts",
+            status="blocked",
+            message=f"Could not load spec: {exc}",
+        )
+
+    active = detect_risk_domains(spec, root)
+    required = sorted(required_artifacts_for_domains(active))
+    if not required:
+        return GateResult(
+            name="harness_artifacts",
+            status="ok",
+            message="No risk domains active; no harness artifacts required.",
+            evidence={"risk_domains": active, "required_artifacts": []},
+        )
+
+    statuses = [check_artifact(name, spec.name, root) for name in required]
+    missing = [s.name for s in statuses if not s.present]
+    incomplete = [s.name for s in statuses if s.present and not s.schema_ok]
+    rules = blocking_rules_for_domains(active)
+    rule_ids = [r.rule_id for r in rules]
+
+    if missing or incomplete:
+        return GateResult(
+            name="harness_artifacts",
+            status="blocked",
+            message=(
+                f"Harness artifacts incomplete: missing={missing or '-'}, "
+                f"incomplete={incomplete or '-'}, domains={active}"
+            ),
+            evidence={
+                "risk_domains": active,
+                "required_artifacts": required,
+                "missing": missing,
+                "incomplete": incomplete,
+                "blocking_rules": rule_ids,
+            },
+        )
+    return GateResult(
+        name="harness_artifacts",
+        status="ok",
+        message=(f"All {len(required)} harness artifacts present for domains={active}."),
+        evidence={
+            "risk_domains": active,
+            "required_artifacts": required,
+            "blocking_rules": rule_ids,
+        },
+    )
+
+
 @gate("paper_readiness")
 def _paper_readiness(spec_path: Path, root: Path) -> GateResult:
     from open_composer.models.strategy_spec import load_strategy_spec

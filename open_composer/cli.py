@@ -1899,6 +1899,59 @@ def strategy_promotion_report(
     console.print(table)
 
 
+@strategy_app.command("execution-policy")
+def strategy_execution_policy(
+    spec: Path,
+    overwrite: Annotated[
+        bool,
+        typer.Option(
+            "--overwrite/--no-overwrite",
+            help="Overwrite existing execution_policy/reality artifacts.",
+        ),
+    ] = False,
+    source_cards: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--source-card",
+            help=(
+                "Source card IDs that back this execution policy (repeatable). "
+                "Required for paper_auto: see source-researcher skill."
+            ),
+        ),
+    ] = None,
+) -> None:
+    """Generate execution_policy and execution_reality_report draft artifacts.
+
+    Compares at least two execution alternatives, picks a recommended policy
+    based on detected risk context (leveraged_etf, daily_open, paper_auto),
+    and writes the artifacts under ``reports/harness/execution/``. The artifacts
+    conform to ``harness/artifact_contracts.yaml`` and unblock ``oc harness verify``.
+
+    Source cards (from the source-researcher skill) should be passed via
+    ``--source-card`` so the policy artifact references official broker docs.
+    """
+    from open_composer.research.execution_policy import generate_execution_policy_artifacts
+
+    root = project_root()
+    artifacts = generate_execution_policy_artifacts(
+        spec,
+        root=root,
+        overwrite=overwrite,
+        source_card_ids=source_cards,
+    )
+    console.print(
+        f"[bold]execution-policy[/bold] recommended={artifacts.recommended_order_style!r}"
+    )
+    console.print(f"  policy   → {artifacts.policy_path.relative_to(root)}")
+    console.print(f"  reality  → {artifacts.reality_path.relative_to(root)}")
+    console.print(f"  markdown → {artifacts.markdown_path.relative_to(root)}")
+    if not source_cards:
+        console.print(
+            "[yellow]warning[/yellow] no --source-card ids provided; "
+            "broker_specific risk domain will block research_pass."
+        )
+
+
 @strategy_app.command("blind-test")
 def strategy_blind_test(
     spec: Path,
@@ -4521,6 +4574,170 @@ def harness_verify(
 
     if overall == "blocked":
         raise typer.Exit(code=1)
+
+
+@harness_app.command("curate")
+def harness_curate(
+    strategy: Annotated[
+        str | None,
+        typer.Option("--strategy", help="Limit curation to one strategy by name."),
+    ] = None,
+    output: Annotated[
+        bool,
+        typer.Option(
+            "--output/--no-output", help="Write curation report to reports/harness/curation/."
+        ),
+    ] = True,
+) -> None:
+    """Audit source cards: flag stale, duplicate, unverified, or expired records.
+
+    Reads every ``reports/harness/source_cards/*.jsonl`` (or just one strategy
+    with --strategy), evaluates each card against
+    ``harness/source_policy.yaml`` staleness rules, and prints a tabular
+    summary. Writes a dated markdown report under
+    ``reports/harness/curation/`` so the evidence-curator skill has a baseline.
+    """
+    import datetime as _dt
+    import json as _json
+
+    from open_composer.models.source_card import evaluate_source_cards
+
+    root = project_root()
+    cards_dir = root / "reports" / "harness" / "source_cards"
+
+    if strategy:
+        strategy_names = [strategy]
+    elif cards_dir.exists():
+        strategy_names = sorted(p.stem for p in cards_dir.glob("*.jsonl"))
+    else:
+        strategy_names = []
+
+    if not strategy_names:
+        console.print("[dim]No source cards found.[/dim]")
+        return
+
+    today = _dt.date.today()
+    rows: list[dict[str, object]] = []
+    url_index: dict[str, list[tuple[str, str]]] = {}
+
+    for name in strategy_names:
+        try:
+            statuses = evaluate_source_cards(name, root, today=today)
+        except ValueError as exc:
+            console.print(f"[red]{name}[/red]: {exc}")
+            continue
+        for status in statuses:
+            card = status.card
+            rows.append(
+                {
+                    "strategy": name,
+                    "claim_id": card.claim_id,
+                    "source_type": card.source_type,
+                    "accessed_at": card.accessed_at,
+                    "age_days": status.age_days,
+                    "stale": status.stale,
+                    "expired": status.expired,
+                    "url": card.source_url,
+                }
+            )
+            url_index.setdefault(card.source_url, []).append((name, card.claim_id))
+
+    total = len(rows)
+    stale = [r for r in rows if r["stale"]]
+    expired = [r for r in rows if r["expired"]]
+    unverified = [r for r in rows if r["source_type"] == "unverified"]
+    duplicates = {url: refs for url, refs in url_index.items() if len({n for n, _ in refs}) > 1}
+
+    table = Table(title="Source Card Curation")
+    table.add_column("Strategy")
+    table.add_column("Claim ID")
+    table.add_column("Source Type")
+    table.add_column("Accessed")
+    table.add_column("Age (d)")
+    table.add_column("Flags")
+    for row in rows:
+        flags = []
+        if row["expired"]:
+            flags.append("expired")
+        elif row["stale"]:
+            flags.append("stale")
+        if row["source_type"] == "unverified":
+            flags.append("unverified")
+        table.add_row(
+            str(row["strategy"]),
+            str(row["claim_id"]),
+            str(row["source_type"]),
+            str(row["accessed_at"]),
+            str(row["age_days"]),
+            ", ".join(flags) or "ok",
+        )
+    console.print(table)
+    console.print(
+        f"\n[bold]Summary[/bold]: total={total}, stale={len(stale)}, "
+        f"expired={len(expired)}, unverified={len(unverified)}, "
+        f"shared_urls={len(duplicates)}"
+    )
+
+    if not output:
+        return
+
+    curation_dir = root / "reports" / "harness" / "curation"
+    curation_dir.mkdir(parents=True, exist_ok=True)
+    md_path = curation_dir / f"{today.isoformat()}-evidence-curation.md"
+    json_path = curation_dir / f"{today.isoformat()}-evidence-curation.json"
+
+    md_lines = [
+        f"# Evidence Curation — {today.isoformat()}",
+        "",
+        "## Source Card Status",
+        f"- Total cards: {total}",
+        f"- Stale: {len(stale)}",
+        f"- Expired: {len(expired)}",
+        f"- Unverified: {len(unverified)}",
+        f"- URLs shared by 2+ strategies: {len(duplicates)}",
+        "",
+        "## Stale Cards Requiring Refresh",
+    ]
+    if stale:
+        md_lines.append("| Strategy | Claim ID | Source Type | Accessed | Age (d) |")
+        md_lines.append("|---|---|---|---|---|")
+        for r in stale:
+            md_lines.append(
+                f"| {r['strategy']} | {r['claim_id']} | {r['source_type']} | "
+                f"{r['accessed_at']} | {r['age_days']} |"
+            )
+    else:
+        md_lines.append("- (none)")
+    md_lines.extend(["", "## Shared URLs (Candidates for Deduplication)"])
+    if duplicates:
+        for url, refs in duplicates.items():
+            md_lines.append(f"- {url}")
+            for n, cid in refs:
+                md_lines.append(f"  - {n} / {cid}")
+    else:
+        md_lines.append("- (none)")
+    md_lines.extend(
+        [
+            "",
+            "## Next Curation Due",
+            f"{(today + _dt.timedelta(days=7)).isoformat()} (or after 20 strategy research runs)",
+        ]
+    )
+    md_path.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+
+    json_payload = {
+        "generated_at": today.isoformat(),
+        "total_cards": total,
+        "stale_count": len(stale),
+        "expired_count": len(expired),
+        "unverified_count": len(unverified),
+        "shared_url_count": len(duplicates),
+        "rows": rows,
+        "shared_urls": {url: refs for url, refs in duplicates.items()},
+    }
+    json_path.write_text(_json.dumps(json_payload, indent=2, ensure_ascii=False))
+
+    console.print(f"[green]curation written[/green] {md_path.relative_to(root)}")
 
 
 @harness_app.command("policy-list")

@@ -209,12 +209,16 @@ def test_paper_readiness_passes_for_live_cache_alpaca_strategy(
     report = assess_paper_strategy_readiness(active, sample_workspace)
 
     assert report.ready is True
-    assert report.status == "ok"
+    # paper_auto strategies activate harness risk domains; without harness artifacts
+    # the report surfaces a legacy_harness_review_required warning (migration mode).
+    assert report.status in {"ok", "warning"}
     assert {check.name: check.status for check in report.checks}["data_source"] == "ok"
     assert {check.name: check.status for check in report.checks}["alpaca_env"] == "ok"
     assert {check.name: check.status for check in report.checks}["account_snapshot"] == "ok"
     assert {check.name: check.status for check in report.checks}["portfolio_risk"] == "ok"
     assert report.gate_summary["paper_ready_pass"] is True
+    harness_check = {check.name: check for check in report.checks}.get("harness_artifacts")
+    assert harness_check is not None, "harness_artifacts check must run for paper_auto specs"
 
 
 def test_paper_readiness_requires_research_contract_and_new_promotion_checks(
