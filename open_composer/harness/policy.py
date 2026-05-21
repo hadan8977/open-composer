@@ -61,7 +61,7 @@ def load_risk_domains() -> dict[str, RiskDomain]:
     path = _HARNESS_DIR / "risk_domains.yaml"
     if not path.exists():
         return {}
-    data = yaml.safe_load(path.read_text())
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
     domains: dict[str, RiskDomain] = {}
     for domain_id, raw in (data.get("risk_domains") or {}).items():
         rules = [
@@ -88,7 +88,7 @@ def load_artifact_contracts() -> dict[str, ArtifactContract]:
     path = _HARNESS_DIR / "artifact_contracts.yaml"
     if not path.exists():
         return {}
-    data = yaml.safe_load(path.read_text())
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
     contracts: dict[str, ArtifactContract] = {}
     for name, raw in (data.get("artifacts") or {}).items():
         contracts[name] = ArtifactContract(
@@ -322,14 +322,14 @@ def check_artifact(artifact_name: str, strategy_name: str, root: Path) -> Artifa
     if contract.required_fields:
         try:
             if contract.format == "jsonl":
-                lines = [ln for ln in path.read_text().splitlines() if ln.strip()]
+                lines = [ln for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
                 if not lines:
                     missing = contract.required_fields
                 else:
                     first = json.loads(lines[0])
                     missing = [f for f in contract.required_fields if f not in first]
             elif contract.format == "json":
-                obj = json.loads(path.read_text())
+                obj = json.loads(path.read_text(encoding="utf-8"))
                 missing = [f for f in contract.required_fields if f not in obj]
         except Exception:
             missing = contract.required_fields
