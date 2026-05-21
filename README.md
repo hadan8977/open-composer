@@ -137,6 +137,7 @@ artifact size without deleting anything.
 - [docs/harness-engineering-agent-quant-review-2026-05-17.zh.md](docs/harness-engineering-agent-quant-review-2026-05-17.zh.md) - harness engineering plan for stronger agent, skill, workflow, and quant research constraints
 - [docs/harness-engineering-expanded-research-log-2026-05-17.zh.md](docs/harness-engineering-expanded-research-log-2026-05-17.zh.md) - expanded research log for agent, quant, financial LLM, data, and risk-control references
 - [docs/harness-engineering-expanded-architecture-review-2026-05-17.zh.md](docs/harness-engineering-expanded-architecture-review-2026-05-17.zh.md) - expanded Honest/Harness engineering architecture review and implementation plan
+- [docs/strategy-iteration-execution-architecture-plan-2026-05-22.zh.md](docs/strategy-iteration-execution-architecture-plan-2026-05-22.zh.md) - strategy iteration, router execution observation, short-selling, and options architecture plan
 
 ## License
 

@@ -45,6 +45,8 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/nasdaq-intraday-theme-momentum-router-standard-2026-05-20.zh.md",
         "docs/nasdaq-theme-intraday-rotation-router-standard-2026-05-20.zh.md",
         "docs/skill-first-harness-engineering-roadmap-2026-05-20.zh.md",
+        "docs/llm-quant-epistemological-loop-roadmap-2026-05-21.zh.md",
+        "docs/strategy-iteration-execution-architecture-plan-2026-05-22.zh.md",
     ]:
         source = repo_root / new_doc
         destination = target / new_doc
