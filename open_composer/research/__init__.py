@@ -11,6 +11,11 @@ from open_composer.research.beta_exposure_router import (
 )
 from open_composer.research.blind_test import BlindTestReport, BlindTestResult, run_blind_test
 from open_composer.research.contracts import build_research_contract, write_research_contract
+from open_composer.research.control import (
+    ResearchControlResult,
+    load_memory_packet,
+    update_research_control,
+)
 from open_composer.research.core_beta_satellite_router import (
     run_core_beta_satellite_router_research,
 )
@@ -71,6 +76,7 @@ __all__ = [
     "BlindTestResult",
     "CostGridReport",
     "CostGridResult",
+    "ResearchControlResult",
     "RegimeSearchReport",
     "SkillAttributionReport",
     "SkillAttributionRow",
@@ -87,6 +93,8 @@ __all__ = [
     "build_research_contract",
     "write_research_contract",
     "run_cost_grid",
+    "update_research_control",
+    "load_memory_packet",
     "search_similar_regimes",
     "run_skill_attribution",
     "run_exposure_switch_research",

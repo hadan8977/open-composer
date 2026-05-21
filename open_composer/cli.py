@@ -160,6 +160,7 @@ from open_composer.research import (
     run_theme_intraday_rotation_router_research,
     run_wide_router_research,
     search_similar_regimes,
+    update_research_control,
     validate_strategy_dag,
     write_intraday_product_reflection,
     write_strategy_dag_validation,
@@ -1794,6 +1795,8 @@ def strategy_parameter_sweep(
     )
     console.print(f"report: {result.report_path}")
     console.print(f"json: {result.json_path}")
+    control = update_research_control(spec, project_root())
+    console.print(f"memory: {control.memory_path}")
     for path in result.written_specs:
         console.print(f"spec: {path}")
 
@@ -1845,10 +1848,21 @@ def strategy_geometry_features(
 def strategy_research_report(spec: Path) -> None:
     """Run the default research contract pipeline for a StrategySpec."""
     result = build_strategy_research_report(spec, project_root())
+    control = update_research_control(spec, project_root())
     console.print(f"[green]research report complete[/green] status={result.status}")
     console.print(f"contract: {result.contract_path}")
     console.print(f"report: {result.report_path}")
     console.print(f"json: {result.json_path}")
+    console.print(f"memory: {control.memory_path}")
+
+
+@strategy_app.command("research-control")
+def strategy_research_control(spec: Path) -> None:
+    """Refresh the compact research state and LLM memory packet for a StrategySpec."""
+    result = update_research_control(spec, project_root())
+    console.print(f"[green]research control updated[/green] strategy={result.strategy_name}")
+    console.print(f"state: {result.state_path}")
+    console.print(f"memory: {result.memory_path}")
 
 
 @strategy_app.command("dag-validate")

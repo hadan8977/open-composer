@@ -22,7 +22,7 @@ def test_cache_inventory_separates_cleanable_and_protected_reports(
     reports = inventory["reports"]
     assert reports.cleanable_files == 1
     assert reports.protected_files == 1
-    assert reports.cleanable_bytes == len("generated\n")
+    assert reports.cleanable_bytes == generated.stat().st_size
 
 
 def test_cache_clean_defaults_to_data_cache_and_reports_only(sample_workspace: Path) -> None:

@@ -532,13 +532,17 @@ def _trial_ledger(
     trials = [
         TrialRecord(
             trial_id=f"{source.name}-sweep-{candidate.rank:03d}",
+            parent_trial_id=f"{source.name}-source",
             rank=candidate.rank,
             candidate_name=candidate.spec.name,
             params=candidate.params,
+            changed_from=candidate.params,
+            change_summary=_change_summary(candidate.params),
             score=candidate.score,
             status="warning",
             metrics=_candidate_payload(candidate)["metrics"],
             quality_flags=_quality_flags(candidate),
+            lesson_tags=_lesson_tags(candidate),
             artifact_paths={
                 "spec_path": str(candidate.spec_path) if candidate.spec_path else None,
                 "backtest_report": str(candidate.artifacts.run.report_path)
@@ -554,6 +558,22 @@ def _trial_ledger(
         trials=trials,
         max_candidates=max_candidates,
     )
+
+
+def _change_summary(params: dict[str, Any]) -> str:
+    if not params:
+        return "baseline candidate"
+    return "changed " + ", ".join(f"{key}={value}" for key, value in sorted(params.items()))
+
+
+def _lesson_tags(candidate: SweepCandidateResult) -> list[str]:
+    flags = _quality_flags(candidate)
+    tags = list(flags)
+    if candidate.rank == 1:
+        tags.append("current_best_in_sample")
+    if candidate.stability.get("neighbor_success_rate") is not None:
+        tags.append("has_neighbor_stability")
+    return sorted(set(tags))
 
 
 def _candidate_payload(candidate: SweepCandidateResult) -> dict[str, Any]:

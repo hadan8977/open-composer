@@ -383,8 +383,8 @@ def build_vps_bootstrap_plan(
         system_tools_missing = [
             name for name in ["systemctl", "caddy"] if shutil.which(name) is None
         ]
-        system_tools_status: Literal["ok", "warning", "blocked"] = (
-            "ok" if not system_tools_missing else "blocked" if apply else "warning"
+        system_tools_status: Literal["ok", "warning"] = (
+            "ok" if not system_tools_missing else "warning"
         )
         steps.append(
             VpsBootstrapStep(
@@ -396,9 +396,7 @@ def build_vps_bootstrap_plan(
                     else "Missing system tool(s): " + ", ".join(system_tools_missing)
                 ),
                 details={"missing": system_tools_missing},
-                suggested_actions=[
-                    "Install Caddy or rerun with --skip-system.",
-                ]
+                suggested_actions=["Install systemctl/Caddy or rerun with --skip-system."]
                 if system_tools_missing
                 else [],
             )
@@ -680,7 +678,7 @@ def write_remote_env(config: VpsBootstrapConfig) -> Path:
     merged = merge_env_text(text, config.remote_env)
     ensure_dir(config.env_path.parent)
     config.env_path.write_text(merged, encoding="utf-8")
-    os.chmod(config.env_path, 0o600)
+    set_owner_only_permissions(config.env_path)
     return config.env_path
 
 
@@ -690,7 +688,7 @@ def write_generated_password(config: VpsBootstrapConfig) -> Path:
     path = config.root / REPORT_DIR / "generated-dashboard-password.txt"
     ensure_dir(path.parent)
     path.write_text(config.dashboard_password + "\n", encoding="utf-8")
-    os.chmod(path, 0o600)
+    set_owner_only_permissions(path)
     return path
 
 
@@ -1238,9 +1236,12 @@ def collect_set_cookie(headers: dict[str, str]) -> str | None:
 
 
 def merge_command_env(env: dict[str, str] | None) -> dict[str, str] | None:
-    if env is None:
-        return None
-    return {**os.environ, **env}
+    merged = dict(os.environ)
+    merged.setdefault("PYTHONIOENCODING", "utf-8")
+    merged.setdefault("PYTHONUTF8", "1")
+    if env:
+        merged.update(env)
+    return merged
 
 
 def run_command(
@@ -1256,6 +1257,8 @@ def run_command(
         cwd=cwd,
         input=input_text,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         timeout=timeout_seconds,
         check=False,
@@ -1272,6 +1275,14 @@ def run_command(
         detail = (result.stderr or result.stdout).strip()
         raise VpsBootstrapError(f"command failed ({result.returncode}): {safe}\n{detail}")
     return result
+
+
+def set_owner_only_permissions(path: Path) -> None:
+    """Best-effort owner-only permissions for secret files across platforms."""
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
 
 
 def resolve_daemon_url(

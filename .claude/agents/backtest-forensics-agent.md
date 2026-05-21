@@ -14,7 +14,7 @@ Required for all parameter-optimized strategies and before promotion.
 ## Inputs expected
 ```
 strategy_name: <name>
-spec_path: strategies/<name>/<name>.yaml
+spec_path: strategy_specs/drafts/<name>.yaml
 backtest_report_path: reports/<name>-backtest-report.json   # or .yaml
 parameter_search_space: <from spec or optimizer output>
 ```

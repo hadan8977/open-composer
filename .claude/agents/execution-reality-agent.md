@@ -15,7 +15,7 @@ scenarios, capacity, and produces a TCA plan. Required before paper_auto activat
 ## Inputs expected
 ```
 strategy_name: <name>
-spec_path: strategies/<name>/<name>.yaml
+spec_path: strategy_specs/drafts/<name>.yaml
 source_card_ids: [list of verified broker/exchange source card IDs]
 ```
 

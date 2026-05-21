@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -179,7 +180,10 @@ def test_vps_bootstrap_merges_env_without_dropping_existing_values(sample_worksp
     assert "OC_REMOTE_SHARED_SECRET=old" in text
     assert "OC_REMOTE_BASE_URL=https://203.0.113.10.nip.io" in text
     assert "OC_DASHBOARD_ALLOWED_ORIGIN=https://open-composer-dashboard.vercel.app" in text
-    assert oct(env_path.stat().st_mode & 0o777) == "0o600"
+    if os.name != "nt":
+        assert oct(env_path.stat().st_mode & 0o777) == "0o600"
+    else:
+        assert env_path.exists()
 
 
 def test_merge_env_text_replaces_known_keys_and_appends_missing() -> None:

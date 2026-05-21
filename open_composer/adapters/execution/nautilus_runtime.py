@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from decimal import Decimal
+from hashlib import sha1
 from pathlib import Path
 from typing import Any, cast
 
@@ -374,15 +377,16 @@ def run_nautilus_backtest(
     try:
         bar_type = _build_bar_type(spec)
         instrument = _build_equity_instrument(bar_type, spec)
-        catalog_root = root / "reports" / "runs" / "nautilus" / "catalogs" / run_id_value
+        catalog_root = _catalog_root(root, run_id_value)
         catalog_root.mkdir(parents=True, exist_ok=True)
         catalog = ParquetDataCatalog.from_uri(catalog_root.resolve().as_uri())
         bars = _build_bars(frame, bar_type, instrument)
         feature_data = _build_feature_data(spec, root, instrument.id)
+        _ensure_catalog_write_dirs(catalog_root, bars, feature_data)
         catalog.write_data([instrument])
-        catalog.write_data(bars)
+        _catalog_write_data(catalog, bars)
         if feature_data:
-            catalog.write_data(feature_data)
+            _catalog_write_data(catalog, feature_data)
 
         strategy_config = ImportableStrategyConfig(
             strategy_path="open_composer.adapters.execution.nautilus_runtime:OpenComposerNautilusStrategy",
@@ -551,6 +555,62 @@ def _build_bars(frame: pd.DataFrame, bar_type: BarType, instrument: Equity) -> l
         normalized.set_index("timestamp", drop=True)
     )
     return list(wrangled)
+
+
+def _ensure_catalog_write_dirs(
+    catalog_root: Path,
+    bars: list[Bar],
+    feature_data: list[OpenComposerFeatureData],
+) -> None:
+    """Pre-create Nautilus catalog partitions for Windows pyarrow writes."""
+    if bars:
+        first = min(item.ts_init for item in bars)
+        last = max(item.ts_init for item in bars)
+        (
+            catalog_root
+            / "data"
+            / "bar"
+            / str(bars[0].bar_type)
+            / f"{_catalog_timestamp(first)}_{_catalog_timestamp(last)}.parquet"
+        ).parent.mkdir(parents=True, exist_ok=True)
+    if feature_data:
+        (
+            catalog_root / "data" / "custom" / OpenComposerFeatureData.__name__
+        ).mkdir(parents=True, exist_ok=True)
+
+
+def _catalog_write_data(catalog: ParquetDataCatalog, data: list[Any]) -> None:
+    try:
+        catalog.write_data(data)
+    except FileNotFoundError as exc:
+        missing = _missing_path_from_exception(exc)
+        if missing is None:
+            raise
+        missing.parent.mkdir(parents=True, exist_ok=True)
+        catalog.write_data(data)
+
+
+def _missing_path_from_exception(exc: FileNotFoundError) -> Path | None:
+    text = str(exc)
+    match = re.search(r"local file '([^']+)'", text)
+    if match:
+        return Path(match.group(1))
+    filename = getattr(exc, "filename", None)
+    return Path(filename) if filename else None
+
+
+def _catalog_timestamp(nanos: int) -> str:
+    return pd.Timestamp(nanos, tz="UTC").strftime("%Y-%m-%dT%H-%M-%S-%f000Z")
+
+
+def _catalog_root(root: Path, run_id_value: str) -> Path:
+    # Nautilus appends long type and timestamp partitions. Keep the base short
+    # enough for Windows environments without long-path support.
+    configured_root = os.getenv("OC_NAUTILUS_CATALOG_DIR") or os.getenv("TMP") or os.getenv("TEMP")
+    base = Path(configured_root) if configured_root else root / ".tmp"
+    safe_run_id = re.sub(r"[^A-Za-z0-9_-]+", "-", run_id_value)[:16]
+    digest = sha1(f"{root.resolve()}::{run_id_value}".encode()).hexdigest()[:10]
+    return base / "ntc" / f"{safe_run_id}-{digest}"
 
 
 def _build_feature_data(

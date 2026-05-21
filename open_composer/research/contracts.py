@@ -102,6 +102,6 @@ def write_research_contract(
 
 def _relpath(path: Path, base: Path) -> str:
     try:
-        return str(path.relative_to(base))
+        return path.relative_to(base).as_posix()
     except ValueError:
-        return str(path)
+        return path.as_posix()

@@ -14,8 +14,8 @@ Required before any paper_auto strategy is activated.
 ## Inputs expected
 ```
 strategy_name: <name>
-spec_path: strategies/<name>/<name>.yaml
-harness_verify_report: reports/harness/<name>-harness-verify.json
+spec_path: strategy_specs/active/<name>.yaml
+harness_verify_report: reports/harness/verify/<name>.json
 execution_policy: reports/harness/execution/<name>-execution-policy.json
 ```
 

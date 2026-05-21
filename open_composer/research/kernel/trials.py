@@ -10,13 +10,17 @@ class TrialRecord(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     trial_id: str
+    parent_trial_id: str | None = None
     rank: int | None = None
     candidate_name: str
     params: dict[str, Any] = Field(default_factory=dict)
+    changed_from: dict[str, Any] = Field(default_factory=dict)
+    change_summary: str | None = None
     score: float | None = None
     status: Literal["ok", "warning", "blocked"] = "warning"
     metrics: dict[str, Any] = Field(default_factory=dict)
     quality_flags: list[str] = Field(default_factory=list)
+    lesson_tags: list[str] = Field(default_factory=list)
     artifact_paths: dict[str, str | None] = Field(default_factory=dict)
 
 

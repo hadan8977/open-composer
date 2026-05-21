@@ -422,6 +422,6 @@ def _write_markdown(path: Path, payload: dict[str, Any]) -> Path:
 
 def _relpath(path: Path, base: Path) -> str:
     try:
-        return str(path.relative_to(base))
+        return path.relative_to(base).as_posix()
     except ValueError:
-        return str(path)
+        return path.as_posix()

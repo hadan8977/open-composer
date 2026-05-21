@@ -98,11 +98,13 @@ def _git_output(root: Path, args: list[str]) -> str:
             check=False,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=20,
         )
     except (OSError, subprocess.SubprocessError) as exc:
         return f"unavailable: {exc}\n"
-    output = completed.stdout
+    output = completed.stdout or ""
     if completed.stderr:
         output += completed.stderr
     return output
