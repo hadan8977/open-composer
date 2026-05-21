@@ -22,3 +22,8 @@ def get_capability(capability_id: str, root: Path | None = None) -> Capability:
         if capability.id == capability_id:
             return capability
     raise KeyError(f"unknown capability: {capability_id}")
+
+
+def find_capabilities_by_kind(kind: str, root: Path | None = None) -> list[Capability]:
+    registry = load_registry(root)
+    return [capability for capability in registry.capabilities if capability.kind == kind]

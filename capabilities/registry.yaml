@@ -114,3 +114,19 @@ capabilities:
     min_score: 0.7
     caveats:
       - broad coverage creates noise; use strict filters and dedupe
+
+  - id: options.trial_chain
+    kind: options_chain
+    status: trial
+    provider: unconfigured
+    use_for: [options_research, observation]
+    reliability: unknown
+    default_mode: live_with_cache
+    supported_timeframes: [daily]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    fixture: data/fixtures/capabilities/options_chain_sample.jsonl
+    min_score: 0.7
+    caveats:
+      - options chains are research-only until provider coverage, greeks, spreads, and broker rules are verified
+      - options strategies do not enter automatic paper order flow in this MVP

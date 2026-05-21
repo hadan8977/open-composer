@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+from typing import Literal
 
 import pandas as pd
 
@@ -48,8 +49,14 @@ def build_signal(
     conditions: list[str] | None = None,
     qty: float | None = None,
     target_weight: float | None = None,
+    side_override: Literal["buy", "sell"] | None = None,
 ) -> Signal:
-    side = "buy" if action == "entry" else "sell"
+    if side_override is not None:
+        side = side_override
+    elif spec.position_direction == "short_only":
+        side = "sell" if action == "entry" else "buy"
+    else:
+        side = "buy" if action == "entry" else "sell"
     selected_symbol = symbol or spec.primary_symbol
     conditions = (
         conditions

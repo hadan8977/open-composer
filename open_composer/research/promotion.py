@@ -29,6 +29,13 @@ from open_composer.research.metadata import (
 from open_composer.storage import write_json
 from open_composer.strategy_versions import strategy_content_hash
 
+DATA_TIERS_NOT_PAPER_READY = {
+    "sample_smoke",
+    "fixture_replay",
+    "cached_live",
+    "research_cross_check",
+}
+
 PromotionStatus = Literal["ok", "warning", "blocked"]
 FivePassStatus = Literal["pass", "fail", "skipped", "not_applicable"]
 
@@ -194,6 +201,7 @@ def build_promotion_report(
     checks.append(benchmark_check)
 
     checks.append(_harness_artifacts_promotion_check(spec, base))
+    checks.append(_research_design_check(spec))
 
     ready = all(check.status == "ok" for check in checks)
     status: PromotionStatus
@@ -364,6 +372,8 @@ def _build_adaptive_router_promotion_report(
     checks.append(_adaptive_alternative_data_check(spec, data_profile, feature_packet_check))
     checks.append(_adaptive_llm_check(spec, llm_path, llm_payload))
     checks.append(_adaptive_execution_check(spec))
+    checks.append(_harness_artifacts_promotion_check(spec, root))
+    checks.append(_research_design_check(spec))
 
     ready = False
     status: PromotionStatus = "blocked"
@@ -526,6 +536,8 @@ def _build_hybrid_router_promotion_report(
     checks.append(_adaptive_alternative_data_check(spec, data_profile, feature_packet_check))
     checks.append(_hybrid_llm_check(spec, root))
     checks.append(_hybrid_execution_check(spec, root))
+    checks.append(_harness_artifacts_promotion_check(spec, root))
+    checks.append(_research_design_check(spec))
 
     ready = False
     status: PromotionStatus = "blocked"
@@ -687,6 +699,8 @@ def _build_beta_router_promotion_report(
     checks.append(_adaptive_alternative_data_check(spec, data_profile, feature_packet_check))
     checks.append(_beta_llm_check(spec))
     checks.append(_beta_execution_check(spec, root))
+    checks.append(_harness_artifacts_promotion_check(spec, root))
+    checks.append(_research_design_check(spec))
 
     benchmark_family = _beta_benchmark_family(selected_candidate)
     ready = all(check.status == "ok" for check in checks)
@@ -1011,9 +1025,9 @@ def _beta_execution_check(spec: StrategySpec, root: Path) -> PromotionCheck:
     if mapping is None:
         mapping_blockers.append("beta router needs Nautilus target-weight mapping")
     else:
-        parity = _dict_value(mapping.get("parity_check"))
+        parity = _dict_value(mapping.get("parity_check") or mapping.get("validation"))
         mapping_status = str(parity.get("status") or "unknown")
-        if mapping_status != "pass":
+        if mapping_status not in {"pass", "ok"}:
             mapping_blockers.append("beta target-weight mapping parity did not pass")
     blockers = [*mapping_blockers]
     warnings: list[str] = []
@@ -1212,9 +1226,9 @@ def _hybrid_execution_check(spec: StrategySpec, root: Path) -> PromotionCheck:
     if mapping is None:
         mapping_blockers.append("hybrid router needs Nautilus target-weight mapping")
     else:
-        parity = _dict_value(mapping.get("parity_check"))
+        parity = _dict_value(mapping.get("parity_check") or mapping.get("validation"))
         mapping_status = str(parity.get("status") or "unknown")
-        if mapping_status != "pass":
+        if mapping_status not in {"pass", "ok"}:
             mapping_blockers.append("hybrid target-weight mapping parity did not pass")
     blockers = [
         *mapping_blockers,
@@ -1409,6 +1423,9 @@ def _hybrid_target_weight_mapping_path(spec: StrategySpec, root: Path) -> Path:
 
 
 def _beta_target_weight_mapping_path(spec: StrategySpec, root: Path) -> Path:
+    standard = root / "reports" / "execution" / f"{spec.name}-target-weights.json"
+    if standard.exists():
+        return standard
     return root / "reports" / "execution" / f"{spec.name}-beta-target-weights.json"
 
 
@@ -1431,6 +1448,8 @@ def _target_mapping_summary(mapping: dict[str, object] | None) -> dict[str, obje
         return {}
     summary = _dict_value(mapping.get("summary"))
     parity = _dict_value(mapping.get("parity_check"))
+    if not parity:
+        parity = _dict_value(mapping.get("validation"))
     return {
         "summary": summary,
         "parity_status": parity.get("status"),
@@ -1980,6 +1999,7 @@ def _write_adaptive_router_promotion_json(
         "walk_forward": (research_payload or {}).get("walk_forward", []),
         "benchmark_family": benchmark_family,
         "data_profile": data_profile,
+        "evidence_acquisition_tier": _evidence_acquisition_tier(spec, data_profile),
         "research_manifest": manifest,
         "adaptive_router_research": {
             "acceptance_gate": _dict_value((research_payload or {}).get("acceptance_gate")),
@@ -2131,6 +2151,7 @@ def _write_hybrid_router_promotion_json(
         "walk_forward": (research_payload or {}).get("walk_forward", []),
         "benchmark_family": benchmark_family,
         "data_profile": data_profile,
+        "evidence_acquisition_tier": _evidence_acquisition_tier(spec, data_profile),
         "research_manifest": manifest,
         "hybrid_router_research": {
             "acceptance_gate": _dict_value((research_payload or {}).get("acceptance_gate")),
@@ -2186,6 +2207,7 @@ def _write_beta_router_promotion_json(
         "walk_forward": (research_payload or {}).get("walk_forward", []),
         "benchmark_family": benchmark_family,
         "data_profile": data_profile,
+        "evidence_acquisition_tier": _evidence_acquisition_tier(spec, data_profile),
         "research_manifest": manifest,
         "beta_router_research": {
             "acceptance_gate": _dict_value((research_payload or {}).get("acceptance_gate")),
@@ -2693,6 +2715,60 @@ def _harness_artifacts_promotion_check(spec: StrategySpec, root: Path) -> Promot
     )
 
 
+def _research_design_check(spec: StrategySpec) -> PromotionCheck:
+    design = spec.research_design.model_dump(mode="json") if spec.research_design else None
+    notes = spec.notes.model_dump(mode="json")
+    legacy = notes.get("research_design") if isinstance(notes, dict) else None
+    source = design if isinstance(design, dict) else legacy if isinstance(legacy, dict) else {}
+    missing: list[str] = []
+    parameter_space = source.get("parameter_space") or source.get("parameter_ranges")
+    objective = source.get("selection_objective") or source.get("objective")
+    candidate_budget = source.get("candidate_budget") or source.get("candidate_cap")
+    validation_plan = source.get("validation_plan") or source.get("default_validation")
+    anti_overfit = source.get("anti_overfit_notes") or source.get("anti_overfit")
+    if not isinstance(parameter_space, dict) or not parameter_space:
+        missing.append("parameter_space")
+    if not objective:
+        missing.append("selection_objective")
+    if not candidate_budget:
+        missing.append("candidate_budget")
+    if not validation_plan:
+        missing.append("validation_plan")
+    if not anti_overfit:
+        missing.append("anti_overfit_notes")
+    if missing:
+        return PromotionCheck(
+            name="research_design",
+            status="warning",
+            message="Research design is incomplete: " + ", ".join(missing),
+            details={"missing": missing, "source": source},
+        )
+    return PromotionCheck(
+        name="research_design",
+        status="ok",
+        message="Research design defines parameter space, objective, budget, and validation plan.",
+        details={"source": source},
+    )
+
+
+def _evidence_acquisition_tier(
+    spec: StrategySpec,
+    data_profile: dict[str, object],
+) -> str:
+    if spec.data_assumptions.acquisition_tier:
+        return spec.data_assumptions.acquisition_tier
+    source_mode = str(data_profile.get("source_mode") or data_profile.get("data_source_mode") or "")
+    if spec.data.source == "sample" or "sample" in source_mode:
+        return "sample_smoke"
+    if "fixture" in source_mode or "fallback" in source_mode:
+        return "fixture_replay"
+    if source_mode == "live_fetch":
+        return "paper_ready_live"
+    if source_mode == "cache":
+        return "cached_live"
+    return "research_cross_check"
+
+
 def _data_comparison_check(
     spec: StrategySpec,
     root: Path,
@@ -2757,9 +2833,15 @@ def _strict_data_check(spec: StrategySpec, artifacts: BacktestArtifacts) -> Prom
     mode = sanity.data_source_mode if sanity else None
     evidence_level = sanity.evidence_level if sanity else "unknown"
     warnings = sanity.warnings if sanity else []
+    acquisition_tier = _evidence_acquisition_tier(
+        spec,
+        {"source_mode": mode or "", "data_source_mode": mode or ""},
+    )
     blocked_reasons: list[str] = []
     if spec.data.source == "sample":
         blocked_reasons.append("sample data is workflow evidence only")
+    if acquisition_tier in DATA_TIERS_NOT_PAPER_READY:
+        blocked_reasons.append(f"acquisition_tier={acquisition_tier} is not paper-ready")
     mode_text = mode or ""
     if any(token in mode_text for token in ["sample", "fixture", "fallback"]):
         blocked_reasons.append(f"data_source_mode={mode_text} is not paper-ready")
@@ -2775,6 +2857,7 @@ def _strict_data_check(spec: StrategySpec, artifacts: BacktestArtifacts) -> Prom
                 "data_source": spec.data.source,
                 "data_source_mode": mode,
                 "evidence_level": evidence_level,
+                "acquisition_tier": acquisition_tier,
                 "warnings": warnings,
             },
         )
@@ -2786,6 +2869,7 @@ def _strict_data_check(spec: StrategySpec, artifacts: BacktestArtifacts) -> Prom
             "data_source": spec.data.source,
             "data_source_mode": mode,
             "evidence_level": evidence_level,
+            "acquisition_tier": acquisition_tier,
         },
     )
 
@@ -3013,6 +3097,7 @@ def _write_promotion_json(
         "data_comparisons": comparison_rows,
         "benchmark_family": benchmark_family,
         "data_profile": data_profile,
+        "evidence_acquisition_tier": _evidence_acquisition_tier(spec, data_profile),
         "research_manifest": manifest,
         "safety_note": (
             "Promotion ready means research and paper-readiness gates passed; it is not a "
@@ -3197,6 +3282,8 @@ def _five_pass_checks(
         "factor_lab",
         "execution_reality",
         "alternative_data",
+        "harness_artifacts",
+        "research_design",
     }
     research_failures = sorted(name for name in research_gate_names if name in blocked)
     cost_grid_warning = _cost_grid_warning(spec, root)

@@ -73,6 +73,7 @@ REQUIRED_CAPABILITIES = {
     "macro.fred_series",
     "news.alpha_vantage",
     "news.gdelt",
+    "options.trial_chain",
 }
 
 REQUIRED_DASHBOARD_ACTIONS = {
@@ -545,7 +546,7 @@ def _capability_registry_check(root: Path) -> RepoConsistencyCheck:
     return RepoConsistencyCheck(
         name="capability_registry",
         status="ok",
-        message="Capability registry loads and core data/event/macro/news ids are present.",
+        message="Capability registry loads and core data/event/macro/news/options ids are present.",
         details={"capability_count": len(ids), "status_counts": status_counts},
     )
 

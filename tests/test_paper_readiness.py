@@ -457,3 +457,223 @@ def test_paper_readiness_accepts_hybrid_router_portfolio_routing(
     assert checks["portfolio_routing"].status == "ok"
     assert checks["portfolio_risk"].status == "ok"
     assert checks["alpaca_env"].status == "blocked"
+
+
+def test_paper_readiness_router_can_be_observation_only_when_evidence_exists(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    account_path = sample_workspace / "reports" / "paper" / "account.json"
+    account_path.parent.mkdir(parents=True, exist_ok=True)
+    account_path.write_text(
+        (
+            '{"generated_at":"2026-05-12T12:00:00Z","equity":10000,"cash":5000,'
+            '"buying_power":8000,"portfolio_value":10000,"status":"ACTIVE","paper":true}\n'
+        ),
+        encoding="utf-8",
+    )
+    draft = sample_workspace / "strategy_specs" / "drafts" / "beta_router_observation.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "beta_router_observation"
+    raw["timeframe"] = "daily"
+    raw["universe"] = ["QQQ", "TQQQ", "SQQQ"]
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["required_capabilities"] = ["market.alpaca_bars"]
+    raw["risk"]["max_position_weight"] = 1.0
+    raw["portfolio"] = {
+        "mode": "beta_exposure_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 1.0,
+        "same_day_flatten": False,
+        "selected_route_label": (
+            "beta:sma200_mom120_min0_vol20_maxvnone_dd120_maxddnone_"
+            "levsmanone_levmaxvnone_levdd60_levmaxddnone_"
+            "onTQQQ1_neuQQQ1_offCASH0_vtnone"
+        ),
+    }
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    active = activate_strategy(
+        draft,
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+        data_source="alpaca",
+    )
+
+    _write_ready_promotion(sample_workspace, "beta_router_observation")
+    _write_router_harness_artifacts(sample_workspace, "beta_router_observation")
+
+    report = assess_paper_strategy_readiness(active, sample_workspace)
+
+    assert report.ready is True
+    assert report.execution_substate == "observation_only"
+    assert report.gate_summary["paper_ready_pass"] is True
+    assert report.gate_summary["execution_substate"] == "observation_only"
+
+
+def test_paper_readiness_sample_acquisition_tier_blocks_live_paper(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "qqq_sample_tier_blocked"
+    raw["lifecycle"] = "active"
+    raw["execution"] = {
+        **raw["execution"],
+        "backend": "nautilus_trader",
+        "mode": "paper_auto",
+        "broker": "alpaca_paper",
+    }
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["data_assumptions"] = {
+        **raw.get("data_assumptions", {}),
+        "acquisition_tier": "sample_smoke",
+    }
+    spec = StrategySpec.model_validate(raw)
+
+    report = assess_paper_strategy_readiness_for_spec(spec, sample_workspace)
+    checks = {check.name: check for check in report.checks}
+
+    assert report.execution_substate == "blocked"
+    assert checks["data_source"].status == "blocked"
+    assert "sample_smoke" in checks["data_source"].message
+
+
+def _write_ready_promotion(root: Path, strategy_name: str) -> None:
+    path = root / "reports" / "research" / f"{strategy_name}-promotion.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "source_spec_path": f"strategy_specs/active/{strategy_name}.yaml",
+                "status": "ok",
+                "ready": True,
+                "gate_summary": {"paper_ready_pass": True},
+                "checks": [
+                    {"name": "strict_data", "status": "ok", "message": "ok", "details": {}},
+                    {"name": "feature_packets", "status": "ok", "message": "ok", "details": {}},
+                    {"name": "benchmark_family", "status": "ok", "message": "ok", "details": {}},
+                    {"name": "factor_lab", "status": "ok", "message": "ok", "details": {}},
+                    {
+                        "name": "execution_reality",
+                        "status": "ok",
+                        "message": "ok",
+                        "details": {},
+                    },
+                    {
+                        "name": "alternative_data",
+                        "status": "ok",
+                        "message": "ok",
+                        "details": {},
+                    },
+                ],
+                "benchmark_family": {"complete": True, "missing": [], "benchmarks": {}},
+                "research_manifest": {
+                    "research_contract_path": f"reports/research/{strategy_name}-contract.json"
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_router_harness_artifacts(root: Path, strategy_name: str) -> None:
+    execution_dir = root / "reports" / "execution"
+    research_dir = root / "reports" / "research"
+    execution_dir.mkdir(parents=True, exist_ok=True)
+    research_dir.mkdir(parents=True, exist_ok=True)
+    target_path = execution_dir / f"{strategy_name}-target-weights.json"
+    intents_path = execution_dir / f"{strategy_name}-rebalance-intents.json"
+    cost_path = research_dir / f"{strategy_name}-router-cost-stress.json"
+    data_path = research_dir / f"{strategy_name}-router-data-evidence.json"
+    validation_path = research_dir / f"{strategy_name}-router-validation.json"
+    observation_path = execution_dir / f"{strategy_name}-execution-observation.json"
+    target_path.write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "source_spec_path": f"strategy_specs/active/{strategy_name}.yaml",
+                "portfolio_mode": "beta_exposure_router",
+                "target_weights": [],
+                "summary": {},
+                "acquisition_tier": "paper_ready_live",
+            }
+        ),
+        encoding="utf-8",
+    )
+    intents_path.write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "source_spec_path": f"strategy_specs/active/{strategy_name}.yaml",
+                "portfolio_mode": "beta_exposure_router",
+                "intents": [],
+                "summary": {},
+                "execution_substate": "observation_only",
+            }
+        ),
+        encoding="utf-8",
+    )
+    cost_path.write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "status": "ok",
+                "scenarios": [],
+                "recommendation": "observe",
+            }
+        ),
+        encoding="utf-8",
+    )
+    data_path.write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "status": "ok",
+                "data_source": "alpaca",
+                "acquisition_tier": "paper_ready_live",
+                "data_profile": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+    validation_path.write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "status": "ok",
+                "portfolio_mode": "beta_exposure_router",
+                "summary": {},
+                "blockers": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    observation_path.write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "source_spec_path": f"strategy_specs/active/{strategy_name}.yaml",
+                "execution_substate": "observation_only",
+                "target_weights_path": str(target_path.relative_to(root)),
+                "rebalance_intents_path": str(intents_path.relative_to(root)),
+            }
+        ),
+        encoding="utf-8",
+    )

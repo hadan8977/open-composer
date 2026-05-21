@@ -84,6 +84,25 @@ def _collect_evidence(root: Path, strategy_name: str) -> dict[str, Any]:
         "harness_runs": _read_jsonl(
             root / "reports" / "research" / "harness-runs.jsonl", strategy_name
         ),
+        "router_target_weights": _read_json(
+            root / "reports" / "execution" / f"{strategy_name}-target-weights.json"
+        ),
+        "router_observation": _read_json(
+            root / "reports" / "execution" / f"{strategy_name}-execution-observation.json"
+        ),
+        "router_cost_stress": _read_json(
+            root / "reports" / "research" / f"{strategy_name}-router-cost-stress.json"
+        ),
+        "router_data_evidence": _read_json(
+            root / "reports" / "research" / f"{strategy_name}-router-data-evidence.json"
+        ),
+        "short_exposure_policy": _read_json(
+            root
+            / "reports"
+            / "harness"
+            / "execution"
+            / f"{strategy_name}-short-exposure-policy.json"
+        ),
     }
 
 
@@ -100,6 +119,9 @@ def _build_state(
     report = raw_report if isinstance(raw_report, dict) else {}
     verify = raw_verify if isinstance(raw_verify, dict) else {}
     promotion = evidence.get("promotion") if isinstance(evidence.get("promotion"), dict) else {}
+    router_state = _router_state(evidence)
+    short_state = _dict(evidence.get("short_exposure_policy"))
+    research_design = _research_design_state(strategy)
 
     candidates = _list(sweep.get("candidates"))
     selected = _dict(sweep.get("selection_decision")).get("selected_candidate")
@@ -117,6 +139,9 @@ def _build_state(
         effective_combinations=effective_combinations,
         sweep=sweep,
         verify=verify,
+        router_state=router_state,
+        short_state=short_state,
+        research_design=research_design,
     )
 
     return {
@@ -127,6 +152,10 @@ def _build_state(
         "spec_hash": strategy_content_hash(strategy),
         "objective": _objective(strategy, report),
         "current_best": _current_best(selected),
+        "router_state": router_state,
+        "short_state": short_state,
+        "data_acquisition_tier": _data_acquisition_tier(strategy, router_state, promotion),
+        "research_design": research_design,
         "effective_combinations": effective_combinations,
         "failed_configurations": failed_configurations,
         "blocked_items": blocked_items,
@@ -169,6 +198,22 @@ def _memory_packet(state: dict[str, Any], *, max_bytes: int) -> str:
     blocked = _list(state.get("blocked_items"))
     if blocked:
         lines.append("- Fix first: " + _clip("; ".join(str(item) for item in blocked[:3]), 220))
+    router = _dict(state.get("router_state"))
+    if router:
+        lines.append(
+            "- Router: "
+            + _clip(
+                (
+                    f"substate={router.get('execution_substate')} "
+                    f"latest={router.get('latest_rebalance_session')} "
+                    f"orders={router.get('latest_order_required_intents')}"
+                ),
+                180,
+            )
+        )
+    tier = state.get("data_acquisition_tier")
+    if tier:
+        lines.append(f"- Data tier: {tier}")
     failures = _list(state.get("failed_configurations"))
     if failures:
         lines.append(
@@ -292,6 +337,9 @@ def _next_actions(
     effective_combinations: list[dict[str, Any]],
     sweep: dict[str, Any],
     verify: dict[str, Any],
+    router_state: dict[str, Any],
+    short_state: dict[str, Any],
+    research_design: dict[str, Any],
 ) -> list[str]:
     actions: list[str] = []
     if blocked_items:
@@ -313,6 +361,14 @@ def _next_actions(
         )
     if _dict(verify).get("overall") == "ok":
         actions.append("move toward promotion diagnostics rather than broad exploration")
+    if router_state and router_state.get("execution_substate") != "observation_only":
+        actions.append("refresh router target weights and execution observation")
+    if router_state and not router_state.get("latest_rebalance_session"):
+        actions.append("refresh router target weights and execution observation")
+    if short_state and short_state.get("paper_auto_default") == "blocked":
+        actions.append("resolve short-selling broker and borrow evidence before paper")
+    if research_design and research_design.get("selection_objective"):
+        actions.append("align next trial with research design selection objective")
     return _dedupe(actions)[:5]
 
 
@@ -331,17 +387,27 @@ def _current_best(selected: dict[str, Any] | None) -> dict[str, Any] | None:
 
 def _source_artifacts(root: Path, strategy_name: str) -> dict[str, str | None]:
     paths = {
-        "parameter_sweep": root
-        / "reports"
-        / "research"
-        / f"{strategy_name}-parameter-sweep.json",
-        "research_report": root
-        / "reports"
-        / "research"
-        / f"{strategy_name}-research-report.json",
+        "parameter_sweep": root / "reports" / "research" / f"{strategy_name}-parameter-sweep.json",
+        "research_report": root / "reports" / "research" / f"{strategy_name}-research-report.json",
         "promotion": root / "reports" / "research" / f"{strategy_name}-promotion.json",
         "harness_verify": root / "reports" / "harness" / "verify" / f"{strategy_name}.json",
         "harness_runs": root / "reports" / "research" / "harness-runs.jsonl",
+        "router_target_weights": root
+        / "reports"
+        / "execution"
+        / f"{strategy_name}-target-weights.json",
+        "router_observation": root
+        / "reports"
+        / "execution"
+        / f"{strategy_name}-execution-observation.json",
+        "router_cost_stress": root
+        / "reports"
+        / "research"
+        / f"{strategy_name}-router-cost-stress.json",
+        "router_data_evidence": root
+        / "reports"
+        / "research"
+        / f"{strategy_name}-router-data-evidence.json",
     }
     return {
         key: workspace_relative_path(path, root) if path.exists() else None
@@ -350,6 +416,9 @@ def _source_artifacts(root: Path, strategy_name: str) -> dict[str, str | None]:
 
 
 def _objective(strategy: Any, report: dict[str, Any]) -> str:
+    design = _research_design_state(strategy)
+    if design.get("selection_objective"):
+        return str(design["selection_objective"])
     brief = _dict(report.get("research_brief"))
     if brief.get("objective"):
         return str(brief["objective"])
@@ -359,6 +428,67 @@ def _objective(strategy: Any, report: dict[str, Any]) -> str:
     return str(
         intent or f"Research {strategy.name} efficiently with bounded evidence-driven iterations."
     )
+
+
+def _router_state(evidence: dict[str, Any]) -> dict[str, Any]:
+    observation = _dict(evidence.get("router_observation"))
+    if not observation:
+        target = _dict(evidence.get("router_target_weights"))
+        if not target:
+            return {}
+        summary = _dict(target.get("summary"))
+        return {
+            "execution_substate": "observation_only",
+            "route_label": target.get("route_label"),
+            "latest_rebalance_session": None,
+            "latest_order_required_intents": summary.get("order_required_intents"),
+            "target_weight_summary": summary,
+            "blockers": [],
+        }
+    return {
+        "execution_substate": observation.get("execution_substate"),
+        "route_label": observation.get("route_label"),
+        "latest_rebalance_session": observation.get("latest_rebalance_session"),
+        "latest_order_required_intents": observation.get("latest_order_required_intents"),
+        "blockers": _list(observation.get("blockers")),
+        "warnings": _list(observation.get("warnings")),
+    }
+
+
+def _research_design_state(strategy: Any) -> dict[str, Any]:
+    design = getattr(strategy, "research_design", None)
+    if design is not None:
+        return design.model_dump(mode="json")
+    notes = getattr(strategy, "notes", None)
+    if notes is None:
+        return {}
+    raw = notes.model_dump(mode="json").get("research_design")
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        "parameter_space": raw.get("parameter_ranges", {}),
+        "candidate_budget": raw.get("candidate_cap"),
+        "selection_objective": raw.get("objective", ""),
+        "anti_overfit_notes": raw.get("anti_overfit_notes", []),
+        "validation_plan": raw.get("validation_plan", []),
+    }
+
+
+def _data_acquisition_tier(
+    strategy: Any,
+    router_state: dict[str, Any],
+    promotion: dict[str, Any],
+) -> str | None:
+    assumptions = getattr(strategy, "data_assumptions", None)
+    explicit = getattr(assumptions, "acquisition_tier", None) if assumptions else None
+    if explicit:
+        return str(explicit)
+    if promotion.get("evidence_acquisition_tier"):
+        return str(promotion["evidence_acquisition_tier"])
+    target_summary = _dict(router_state.get("target_weight_summary"))
+    if target_summary.get("acquisition_tier"):
+        return str(target_summary["acquisition_tier"])
+    return None
 
 
 def _failure_reason(flags: list[str], metrics: dict[str, Any], score: Any) -> str:

@@ -574,9 +574,9 @@ def _ensure_catalog_write_dirs(
             / f"{_catalog_timestamp(first)}_{_catalog_timestamp(last)}.parquet"
         ).parent.mkdir(parents=True, exist_ok=True)
     if feature_data:
-        (
-            catalog_root / "data" / "custom" / OpenComposerFeatureData.__name__
-        ).mkdir(parents=True, exist_ok=True)
+        (catalog_root / "data" / "custom" / OpenComposerFeatureData.__name__).mkdir(
+            parents=True, exist_ok=True
+        )
 
 
 def _catalog_write_data(catalog: ParquetDataCatalog, data: list[Any]) -> None:

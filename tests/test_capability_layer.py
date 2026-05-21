@@ -14,12 +14,24 @@ def test_capability_registry_loads(sample_workspace: Path) -> None:
     assert "events.sec_filings" in ids
     assert "macro.fred_series" in ids
     assert "news.alpha_vantage" in ids
+    assert "options.trial_chain" in ids
+    options = next(
+        capability for capability in registry.capabilities if capability.id == "options.trial_chain"
+    )
+    assert options.kind == "options_chain"
+    assert options.status == "trial"
 
 
 def test_capability_evaluation_passes_with_fixtures(sample_workspace: Path) -> None:
     evaluations = evaluate_capabilities(sample_workspace)
     assert evaluations
     assert all(evaluation.passed for evaluation in evaluations)
+    options = next(
+        evaluation
+        for evaluation in evaluations
+        if evaluation.capability_id == "options.trial_chain"
+    )
+    assert options.records >= 1
     assert (sample_workspace / "reports" / "capabilities" / "evaluation.md").exists()
 
 

@@ -46,6 +46,7 @@ class PaperStrategyReadinessReport(BaseModel):
     strategy_path: str | None = None
     status: PaperReadinessStatus
     ready: bool
+    execution_substate: Literal["blocked", "observation_only", "order_authorized"] = "blocked"
     gate_summary: dict[str, object] = Field(default_factory=dict)
     checks: list[PaperStrategyReadinessCheck] = Field(default_factory=list)
     report_json_path: str | None = None
@@ -96,12 +97,14 @@ def assess_paper_strategy_readiness_for_spec(
     if spec_path is not None and spec_path.exists():
         checks.append(_capability_check(spec, spec_path))
     status = _overall_status(checks)
+    execution_substate = _execution_substate(spec, checks, status)
     return PaperStrategyReadinessReport(
         strategy_name=spec.name,
         strategy_path=_relpath(spec_path, base) if spec_path else None,
         status=status,
         ready=status != "blocked",
-        gate_summary=_gate_summary(checks, status),
+        execution_substate=execution_substate,
+        gate_summary=_gate_summary(checks, status, execution_substate),
         checks=checks,
     )
 
@@ -207,7 +210,46 @@ def _execution_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
     )
 
 
+def _execution_substate(
+    spec: StrategySpec,
+    checks: list[PaperStrategyReadinessCheck],
+    status: PaperReadinessStatus,
+) -> Literal["blocked", "observation_only", "order_authorized"]:
+    if spec.position_direction in {"short_only", "long_short"} and status == "blocked":
+        return "blocked"
+    if spec.position_direction in {"short_only", "long_short"}:
+        short_check = next((check for check in checks if check.name == "harness_artifacts"), None)
+        if short_check is None or short_check.status != "ok":
+            return "blocked"
+    if spec.portfolio.mode in {
+        "adaptive_intraday_internal_router",
+        "hybrid_adaptive_router",
+        "beta_exposure_router",
+        "core_beta_satellite_router",
+    }:
+        return "observation_only" if status != "blocked" else "blocked"
+    if status == "blocked":
+        return "blocked"
+    return "order_authorized"
+
+
 def _data_source_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
+    tier = spec.data_assumptions.acquisition_tier
+    if tier in {"sample_smoke", "fixture_replay", "research_cross_check"}:
+        return PaperStrategyReadinessCheck(
+            name="data_source",
+            status="blocked",
+            message=f"acquisition_tier={tier} is not paper-ready market evidence.",
+            details={
+                "source": spec.data.source,
+                "symbol": spec.primary_symbol,
+                "timeframe": spec.timeframe,
+                "acquisition_tier": tier,
+            },
+            suggested_actions=[
+                "Use paper_ready_live or cross_source_verified evidence before paper."
+            ],
+        )
     if spec.data.source in {"alpaca", "longbridge"}:
         try:
             require_paper_ready_timeframe(spec.data.source, spec.timeframe)
@@ -382,6 +424,7 @@ def _portfolio_routing_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
         "adaptive_intraday_internal_router",
         "hybrid_adaptive_router",
         "beta_exposure_router",
+        "core_beta_satellite_router",
     }:
         missing: list[str] = []
         if not spec.portfolio.selected_route_label:
@@ -428,6 +471,7 @@ def _portfolio_risk_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
         "adaptive_intraday_internal_router",
         "hybrid_adaptive_router",
         "beta_exposure_router",
+        "core_beta_satellite_router",
     }:
         gross_limit = portfolio.gross_exposure_limit or (
             (portfolio.max_symbols_per_day or 0)
@@ -810,6 +854,7 @@ def _overall_status(checks: list[PaperStrategyReadinessCheck]) -> PaperReadiness
 def _gate_summary(
     checks: list[PaperStrategyReadinessCheck],
     status: PaperReadinessStatus,
+    execution_substate: str,
 ) -> dict[str, object]:
     blocked = [check.name for check in checks if check.status == "blocked"]
     warning = [check.name for check in checks if check.status == "warning"]
@@ -818,6 +863,7 @@ def _gate_summary(
         "research_pass": "promotion_report" not in blocked,
         "llm_contribution_pass": None,
         "paper_ready_pass": status != "blocked",
+        "execution_substate": execution_substate,
         "blocked_checks": blocked,
         "warning_checks": warning,
     }
@@ -831,6 +877,7 @@ def _render_markdown(report: PaperStrategyReadinessReport) -> str:
         f"- Strategy path: `{report.strategy_path or 'candidate'}`",
         f"- Status: `{report.status}`",
         f"- Ready: `{'yes' if report.ready else 'no'}`",
+        f"- Execution substate: `{report.execution_substate}`",
         "- Gate taxonomy: workflow_pass, research_pass, llm_contribution_pass, paper_ready_pass.",
         f"- Gate summary: `{report.gate_summary}`",
         "- Safety note: paper readiness is a control gate for Alpaca Paper only, not live trading.",

@@ -6,6 +6,10 @@ from time import perf_counter
 from typing import Any
 
 from open_composer.adapters.execution.nautilus_trader import nautilus_trader_available
+from open_composer.adapters.execution.router_target_weights import (
+    infer_acquisition_tier,
+    write_router_execution_artifacts,
+)
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.beta_exposure_router import (
@@ -97,6 +101,26 @@ def run_beta_target_weight_mapping(
     json_path = base / "reports" / "execution" / f"{spec.name}-beta-target-weights.json"
     report_path = json_path.with_suffix(".md")
     runtime = runtime_payload(started_at, stages)
+    acquisition_tier = infer_acquisition_tier(
+        data_source=data_source,
+        data_profile=dataset.data_profile,
+        refresh_data=refresh_data,
+    )
+    router_artifacts = write_router_execution_artifacts(
+        root=base,
+        spec_path=spec_path,
+        spec=spec,
+        target_rows=target_rows,
+        rebalance_intents=rebalance_intents,
+        data_profile=dataset.data_profile,
+        route_label=params.label,
+        mapping_summary={
+            "reference_metrics": reference.__dict__,
+            "mapping_mode": "beta_target_weight_mapping",
+        },
+        acquisition_tier=acquisition_tier,
+        parity_check=parity,
+    )
     payload = {
         "strategy_name": spec.name,
         "mode": "beta_target_weight_mapping",
@@ -108,6 +132,7 @@ def run_beta_target_weight_mapping(
         "hedge_symbol": dataset.hedge_symbol,
         "universe": _symbols(dataset),
         "data_profile": dataset.data_profile,
+        "acquisition_tier": acquisition_tier,
         "mapping_assumptions": _mapping_assumptions(spec, params.label),
         "nautilus_installed": nautilus_trader_available(),
         "reference_metrics": reference.__dict__,
@@ -125,6 +150,9 @@ def run_beta_target_weight_mapping(
             else 0.0,
         },
         "parity_check": parity,
+        "router_execution_artifacts": {
+            name: _relpath(path, base) for name, path in router_artifacts.items()
+        },
         "target_weights": target_rows,
         "rebalance_intents": rebalance_intents,
         "runtime_seconds": runtime,

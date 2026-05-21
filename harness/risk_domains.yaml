@@ -168,6 +168,121 @@ risk_domains:
         blocks: research_pass
 
   # ── Short sample / low trade count ──────────────────────────────────────────
+  # ── Router strategies ───────────────────────────────────────────────────────
+  router_strategy:
+    description: >
+      Strategy routes across multiple internal sleeves or symbols. Research
+      reports must be converted into observation-only target weights, rebalance
+      intents, cost stress, data evidence, and validation before paper review.
+    triggers:
+      portfolio_modes:
+        - beta_exposure_router
+        - hybrid_adaptive_router
+        - adaptive_intraday_internal_router
+        - core_beta_satellite_router
+    required_skills:
+      - execution-reality-reviewer
+      - backtest-forensics
+    required_artifacts:
+      - router_target_weights
+      - router_rebalance_intents
+      - router_execution_observation
+      - router_cost_stress
+      - router_data_evidence
+      - router_validation
+    blocking_rules:
+      - id: router_requires_target_weight_observation
+        description: >
+          Router strategy promotion requires target weights, rebalance intents,
+          cost stress, data evidence, and validation artifacts.
+        blocks: research_pass
+      - id: router_order_authorization_requires_readiness
+        description: >
+          Router execution can remain observation_only before paper order
+          authorization; broker orders require paper readiness and safety artifacts.
+        blocks: paper_ready_pass
+
+  # ── Short selling ───────────────────────────────────────────────────────────
+  short_selling:
+    description: >
+      Strategy can enter short exposure. Shorting requires broker rule evidence,
+      borrow/shortable assumptions, squeeze stress, dividend risk, and explicit
+      exposure policy.
+    triggers:
+      position_direction: [short_only, long_short]
+    required_skills:
+      - source-researcher
+      - backtest-forensics
+      - execution-reality-reviewer
+    required_artifacts:
+      - short_sale_source_cards
+      - borrow_cost_estimate
+      - short_squeeze_stress
+      - ex_dividend_risk_note
+      - short_exposure_policy
+    blocking_rules:
+      - id: short_requires_borrow_and_rule_evidence
+        description: >
+          Short-selling research pass requires broker/rule source cards and
+          borrow/shortable evidence.
+        blocks: research_pass
+      - id: short_paper_ready_requires_squeeze_and_dividend_stress
+        description: >
+          Paper readiness for short exposure requires squeeze stress and
+          ex-dividend risk review.
+        blocks: paper_ready_pass
+
+  # ── Options overlay ─────────────────────────────────────────────────────────
+  options_overlay:
+    description: >
+      Options overlay research is observation-only and must not enter automatic
+      paper order flow.
+    triggers:
+      instrument_type: [options_overlay]
+    required_skills:
+      - source-researcher
+      - execution-reality-reviewer
+    required_artifacts:
+      - options_chain_source_cards
+      - greeks_profile
+      - roll_schedule
+      - iv_stress_report
+      - overlay_cost_report
+      - assignment_risk_note
+    blocking_rules:
+      - id: options_overlay_observation_only
+        description: >
+          Options overlays remain observation_only until a future product
+          decision explicitly authorizes paper order support.
+        blocks: paper_ready_pass
+
+  # ── Primary options strategy ────────────────────────────────────────────────
+  options_primary:
+    description: >
+      Independent options strategies require separate contract selection,
+      expiry ladder, greeks, IV stress, and assignment evidence. They do not use
+      ordinary StrategySpec paper_auto.
+    triggers:
+      match: any
+      instrument_type: [options]
+      required_capability_kinds: [options_chain]
+    required_skills:
+      - source-researcher
+      - execution-reality-reviewer
+    required_artifacts:
+      - options_chain_source_cards
+      - greeks_profile
+      - contract_selection_log
+      - expiry_ladder
+      - iv_stress_report
+      - assignment_risk_note
+    blocking_rules:
+      - id: options_no_paper_auto
+        description: >
+          Options strategies do not enter automatic paper order flow in this MVP.
+        blocks: paper_ready_pass
+
+  # ── Short sample / low trade count ──────────────────────────────────────────
   short_sample:
     description: >
       Backtest window is below 252 trading days or total trade count is below

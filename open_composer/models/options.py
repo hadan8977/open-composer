@@ -6,6 +6,37 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
+class OptionsOverlaySpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    overlay_version: int = 1
+    name: str
+    instrument_type: Literal["options_overlay"] = "options_overlay"
+    base_strategy: str
+    overlay_type: Literal["protective_put", "covered_call", "collar", "simple_hedge_overlay"]
+    expiry_target: Literal["weekly", "monthly", "quarterly"] = "monthly"
+    delta_target: float | None = None
+    max_premium_pct: float = Field(gt=0, le=100)
+    lifecycle: Literal["draft", "approved", "active", "retired"] = "draft"
+    notes: list[str] = Field(default_factory=list)
+
+
+class OptionsSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    spec_version: int = 1
+    name: str
+    instrument_type: Literal["options"] = "options"
+    underlying: str
+    strategy_type: Literal["put_spread", "call_spread", "straddle", "strangle", "covered_call"]
+    expiry_target: Literal["weekly", "monthly", "quarterly"]
+    delta_target_long: float | None = None
+    delta_target_short: float | None = None
+    max_position_pct: float = Field(gt=0, le=1)
+    lifecycle: Literal["draft", "approved", "active", "retired"] = "draft"
+    notes: list[str] = Field(default_factory=list)
+
+
 class OptionOverlaySpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

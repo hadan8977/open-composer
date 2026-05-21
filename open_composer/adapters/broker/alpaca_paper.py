@@ -145,6 +145,15 @@ def _validate_paper_allowed(spec: StrategySpec) -> None:
         raise PaperOrderError(
             "paper orders require execution.mode=paper_auto and broker=alpaca_paper"
         )
+    if spec.position_direction in {"short_only", "long_short"}:
+        raise PaperOrderError("short paper orders require separate short-readiness authorization")
+    if spec.portfolio.mode in {
+        "adaptive_intraday_internal_router",
+        "hybrid_adaptive_router",
+        "beta_exposure_router",
+        "core_beta_satellite_router",
+    }:
+        raise PaperOrderError("router strategies are observation_only until order authorization")
     if not alpaca_paper_enabled():
         raise PaperOrderError("ALPACA_PAPER must be true; live broker writes are out of scope")
     if not alpaca_api_key_id() or not alpaca_api_secret_key():

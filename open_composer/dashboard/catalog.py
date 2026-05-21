@@ -29,6 +29,7 @@ from open_composer.models.dashboard import (
     DashboardResearchReport,
     DashboardResearchRun,
     DashboardReview,
+    DashboardRouterExecutionArtifact,
     DashboardRun,
     DashboardSignal,
     DashboardStrategy,
@@ -75,6 +76,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
     group_records = _build_group_records(strategy_records)
     data_comparison_records = _build_data_comparison_records(base)
     feature_packet_records = build_feature_packet_records(base)
+    router_execution_records = _build_router_execution_records(base)
     workflow_records = _build_workflow_records(base)
     research_records = _build_research_records(base)
     research_run_records = _build_research_run_records(base)
@@ -95,6 +97,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         audits=audit_records,
         data_comparisons=data_comparison_records,
         feature_packets=feature_packet_records,
+        router_execution_artifacts=router_execution_records,
         workflow_reports=workflow_records,
         research_reports=research_records,
         research_runs=research_run_records,
@@ -121,6 +124,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         groups=group_records,
         data_comparisons=data_comparison_records,
         feature_packets=feature_packet_records,
+        router_execution_artifacts=router_execution_records,
         workflow_reports=workflow_records,
         research_reports=research_records,
         research_runs=research_run_records,
@@ -1069,6 +1073,22 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
             kind = "market_timing"
         elif name.endswith("-geometry-features.json"):
             kind = "geometry_features"
+        elif (
+            name.endswith("-router-cost-stress.json")
+            or name.endswith("-router-data-evidence.json")
+            or name.endswith("-router-validation.json")
+        ):
+            kind = "router_evidence"
+        elif (
+            name.endswith("-pit-replay.json")
+            or name.endswith("-marginal-lift.json")
+            or name.endswith("-modality-robustness.json")
+        ):
+            kind = "alternative_data_evidence"
+        elif name.endswith("-borrow-cost-estimate.json") or name.endswith(
+            "-short-squeeze-stress.json"
+        ):
+            kind = "short_risk"
         else:
             kind = "unknown"
         status = str(raw.get("status", "warning"))
@@ -1496,6 +1516,34 @@ def build_feature_packet_records(base: Path | None = None) -> list[DashboardFeat
     return records
 
 
+def _build_router_execution_records(base: Path) -> list[DashboardRouterExecutionArtifact]:
+    records: list[DashboardRouterExecutionArtifact] = []
+    for path in sorted((base / "reports" / "execution").glob("*-execution-observation.json")):
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(raw, dict):
+            continue
+        records.append(
+            DashboardRouterExecutionArtifact(
+                strategy_name=str(raw.get("strategy_name", path.stem)),
+                execution_substate=str(raw.get("execution_substate", "unknown")),
+                route_label=_registered_value(raw.get("route_label")),
+                latest_rebalance_session=_registered_value(raw.get("latest_rebalance_session")),
+                latest_order_required_intents=int(raw.get("latest_order_required_intents", 0) or 0),
+                target_weights_path=_registered_value(raw.get("target_weights_path")),
+                rebalance_intents_path=_registered_value(raw.get("rebalance_intents_path")),
+                cost_stress_path=_registered_value(raw.get("cost_stress_path")),
+                data_evidence_path=_registered_value(raw.get("data_evidence_path")),
+                validation_path=_registered_value(raw.get("validation_path")),
+                blockers=[str(item) for item in raw.get("blockers", [])],
+                warnings=[str(item) for item in raw.get("warnings", [])],
+            )
+        )
+    return records
+
+
 def _build_summary(
     *,
     base: Path,
@@ -1511,6 +1559,7 @@ def _build_summary(
     audits: list[DashboardAuditEvent],
     data_comparisons: list[DashboardDataComparison],
     feature_packets: list[DashboardFeaturePacket],
+    router_execution_artifacts: list[DashboardRouterExecutionArtifact],
     workflow_reports: list[DashboardWorkflowReport],
     research_reports: list[DashboardResearchReport],
     research_runs: list[DashboardResearchRun],
@@ -1567,6 +1616,12 @@ def _build_summary(
         audit_count=len(audits),
         data_comparison_count=len(data_comparisons),
         feature_packet_count=len(feature_packets),
+        router_execution_artifact_count=len(router_execution_artifacts),
+        router_observation_only_count=sum(
+            1
+            for item in router_execution_artifacts
+            if item.execution_substate == "observation_only"
+        ),
         workflow_report_count=len(workflow_reports),
         research_report_count=len(research_reports),
         research_run_count=len(research_runs),
@@ -1658,6 +1713,8 @@ def _render_catalog_markdown(catalog: DashboardCatalog) -> str:
         f"| Audit events | {summary.audit_count} |",
         f"| Data comparisons | {summary.data_comparison_count} |",
         f"| Feature packets | {summary.feature_packet_count} |",
+        f"| Router execution artifacts | {summary.router_execution_artifact_count} |",
+        f"| Router observation-only | {summary.router_observation_only_count} |",
         f"| Workflow reports | {summary.workflow_report_count} |",
         f"| Research reports | {summary.research_report_count} |",
         f"| Research runs | {summary.research_run_count} |",

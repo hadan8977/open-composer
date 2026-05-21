@@ -145,6 +145,90 @@ def test_backtest_oos_warmup_can_trigger_first_evaluation_open_entry() -> None:
     assert artifacts.run.buy_hold_return_pct == pytest.approx(artifacts.run.total_return_pct)
 
 
+def test_backtest_supports_short_only_direction() -> None:
+    frame = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-01-01", periods=5, freq="D", tz="UTC"),
+            "open": [100.0, 100.0, 95.0, 90.0, 90.0],
+            "high": [101.0, 101.0, 96.0, 91.0, 91.0],
+            "low": [99.0, 99.0, 94.0, 89.0, 89.0],
+            "close": [100.0, 100.0, 95.0, 90.0, 90.0],
+            "volume": [1_000_000] * 5,
+        }
+    )
+    spec = StrategySpec.model_validate(
+        {
+            "name": "short_only_test",
+            "description": "Short-only reference semantics.",
+            "timeframe": "daily",
+            "universe": ["AAA"],
+            "lifecycle": "draft",
+            "position_direction": "short_only",
+            "entry": {"all": ["close >= 100"], "any": []},
+            "exit": {"all": [], "any": ["close <= 95"]},
+            "risk": {"max_position_weight": 1.0},
+            "costs": {"commission_pct": 0.0, "slippage_bps": 0.0},
+            "execution": {
+                "mode": "manual_signal",
+                "signal_on": "bar_close",
+                "fill_assumption": "next_bar_open",
+                "broker": "none",
+            },
+            "data": {"source": "alpaca", "symbol": "AAA", "feed": "iex"},
+        }
+    )
+
+    artifacts = backtest_frame(spec, frame)
+
+    assert [signal.side for signal in artifacts.signals] == ["sell", "buy"]
+    assert artifacts.trades[0].direction == "short"
+    assert artifacts.trades[0].pnl > 0
+    assert artifacts.run.total_return_pct > 0
+    assert any("Short-only backtest" in item for item in artifacts.run.assumptions)
+
+
+def test_backtest_supports_long_short_direction_flips() -> None:
+    frame = pd.DataFrame(
+        {
+            "timestamp": pd.date_range("2024-01-01", periods=6, freq="D", tz="UTC"),
+            "open": [100.0, 100.0, 100.0, 120.0, 115.0, 110.0],
+            "high": [102.0, 111.0, 116.0, 121.0, 116.0, 111.0],
+            "low": [99.0, 99.0, 99.0, 99.0, 94.0, 89.0],
+            "close": [101.0, 110.0, 115.0, 100.0, 95.0, 90.0],
+            "volume": [1_000_000] * 6,
+        }
+    )
+    spec = StrategySpec.model_validate(
+        {
+            "name": "long_short_test",
+            "description": "Long-short reference semantics.",
+            "timeframe": "daily",
+            "universe": ["AAA"],
+            "lifecycle": "draft",
+            "position_direction": "long_short",
+            "entry": {"all": ["close >= 105"], "any": []},
+            "exit": {"all": [], "any": ["close <= 100"]},
+            "risk": {"max_trades_per_day": 2, "max_position_weight": 1.0},
+            "costs": {"commission_pct": 0.0, "slippage_bps": 0.0},
+            "execution": {
+                "mode": "manual_signal",
+                "signal_on": "bar_close",
+                "fill_assumption": "next_bar_open",
+                "broker": "none",
+            },
+            "data": {"source": "alpaca", "symbol": "AAA", "feed": "iex"},
+        }
+    )
+
+    artifacts = backtest_frame(spec, frame)
+
+    assert [trade.direction for trade in artifacts.trades] == ["long"]
+    assert [signal.side for signal in artifacts.signals] == ["buy", "sell", "sell"]
+    assert artifacts.trades[0].pnl > 0
+    assert artifacts.run.total_return_pct > 0
+    assert any("Long-short backtest" in item for item in artifacts.run.assumptions)
+
+
 def test_scan_writes_latest_signal_log(sample_workspace: Path) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
     signals = run_scan(spec_path, root=sample_workspace)
@@ -177,6 +261,38 @@ def test_pine_strategy_export_uses_strategy_tester_orders(sample_workspace: Path
     assert (
         sample_workspace / "reports" / "parity" / "qqq_pullback_15m-strategy-checklist.md"
     ).exists()
+
+
+def test_pine_strategy_export_uses_short_orders_for_short_specs(sample_workspace: Path) -> None:
+    source_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    raw = yaml.safe_load(source_path.read_text(encoding="utf-8"))
+    raw["name"] = "qqq_short_only"
+    raw["position_direction"] = "short_only"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_short_only.yaml"
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    path = compile_pine_strategy(spec_path, root=sample_workspace)
+    text = path.read_text(encoding="utf-8")
+
+    assert 'strategy.entry("Short", strategy.short' in text
+    assert 'strategy.close("Short"' in text
+
+
+def test_pine_strategy_export_uses_long_short_orders(sample_workspace: Path) -> None:
+    source_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    raw = yaml.safe_load(source_path.read_text(encoding="utf-8"))
+    raw["name"] = "qqq_long_short"
+    raw["position_direction"] = "long_short"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_long_short.yaml"
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    path = compile_pine_strategy(spec_path, root=sample_workspace)
+    text = path.read_text(encoding="utf-8")
+
+    assert 'strategy.entry("Long", strategy.long' in text
+    assert 'strategy.entry("Short", strategy.short' in text
+    assert 'strategy.close("Long"' in text
+    assert 'strategy.close("Short"' in text
 
 
 def test_pine_export_preserves_any_semantics(sample_workspace: Path) -> None:

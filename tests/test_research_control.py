@@ -135,8 +135,7 @@ def test_claude_prompt_hook_injects_memory_from_real_paths(
         input=json.dumps(
             {
                 "prompt": (
-                    "optimize strategy_specs/drafts/qqq_pullback_15m.yaml "
-                    "with a bounded sweep"
+                    "optimize strategy_specs/drafts/qqq_pullback_15m.yaml with a bounded sweep"
                 )
             }
         ),

@@ -111,6 +111,17 @@ class DataAssumptions(BaseModel):
     source: str = "sample"
     adjusted: bool = True
     timezone: str = "America/New_York"
+    acquisition_tier: (
+        Literal[
+            "sample_smoke",
+            "fixture_replay",
+            "cached_live",
+            "research_cross_check",
+            "cross_source_verified",
+            "paper_ready_live",
+        ]
+        | None
+    ) = None
 
 
 class LLMReviewConfig(BaseModel):
@@ -146,6 +157,16 @@ class NotesConfig(BaseModel):
 
     intent: str = ""
     open_questions: list[str] = Field(default_factory=list)
+
+
+class ResearchDesign(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    parameter_space: dict[str, list[float | int | str | bool | None]] = Field(default_factory=dict)
+    candidate_budget: int | None = Field(default=None, ge=1)
+    selection_objective: str = ""
+    anti_overfit_notes: list[str] = Field(default_factory=list)
+    validation_plan: list[str] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -277,6 +298,7 @@ class StrategySpec(BaseModel):
     timeframe: StrategyTimeframe
     universe: list[str] = Field(min_length=1)
     lifecycle: Literal["draft", "approved", "active", "retired"]
+    position_direction: Literal["long_only", "short_only", "long_short"] = "long_only"
     entry: RuleBlock
     exit: RuleBlock
     risk: RiskConfig
@@ -288,6 +310,7 @@ class StrategySpec(BaseModel):
     factors: dict[str, FactorConfig] = Field(default_factory=dict)
     llm_review: LLMReviewConfig = Field(default_factory=LLMReviewConfig)
     notes: NotesConfig = Field(default_factory=NotesConfig)
+    research_design: ResearchDesign | None = None
     required_capabilities: list[str] = Field(default_factory=list)
     execution_policy: ExecutionPolicy | None = None
     reality_model: RealityModel | None = None

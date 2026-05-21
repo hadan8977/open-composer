@@ -69,11 +69,16 @@ OPEN_ORDER_STATUSES = {
 RECENT_OPEN_ORDER_SECONDS = 36 * 60 * 60
 OPEN_TO_OPEN_ORDER_WINDOW_START = (9, 20)
 OPEN_TO_OPEN_ORDER_WINDOW_END = (9, 30)
-OPEN_TO_OPEN_PORTFOLIO_MODES = {"hybrid_adaptive_router", "beta_exposure_router"}
+OPEN_TO_OPEN_PORTFOLIO_MODES = {
+    "hybrid_adaptive_router",
+    "beta_exposure_router",
+    "core_beta_satellite_router",
+}
 ROUTED_PORTFOLIO_MODES = {
     "adaptive_intraday_internal_router",
     "hybrid_adaptive_router",
     "beta_exposure_router",
+    "core_beta_satellite_router",
 }
 
 
@@ -351,6 +356,10 @@ def _run_hybrid_paper_signal_cycle(
             spec_hash=spec_hash,
             client=client,
             refresh_data=refresh_data,
+        )
+    if spec.portfolio.mode == "core_beta_satellite_router":
+        raise PaperRunnerError(
+            "core_beta_satellite_router runtime is observation_only; run target-weights first"
         )
     params = hybrid_params_from_label(spec.portfolio.selected_route_label)
     dataset = _load_daily_hybrid_dataset(
@@ -706,6 +715,11 @@ def _validate_runtime_spec(spec: StrategySpec) -> None:
         raise PaperRunnerError(f"unsupported execution mode: {spec.execution.mode}")
     if spec.execution.mode == "paper_auto" and spec.execution.broker != "alpaca_paper":
         raise PaperRunnerError("paper_auto runner requires broker=alpaca_paper")
+    if spec.execution.mode == "paper_auto" and spec.position_direction in {
+        "short_only",
+        "long_short",
+    }:
+        raise PaperRunnerError("short paper_auto is blocked until short-readiness authorization")
 
 
 def _decide_signal(
@@ -747,6 +761,19 @@ def _decide_signal(
             review_status=review_status,
             review_verdict=review_verdict,
             message="pass --allow-paper-orders or use oc paper submit after manual approval",
+        )
+    if readiness.execution_substate == "observation_only":
+        return PaperRunSignalResult(
+            signal_id=signal_id,
+            action=action,  # type: ignore[arg-type]
+            symbol=symbol,
+            price=price,
+            decision="observation_only",
+            review_status=review_status,
+            review_verdict=review_verdict,
+            message=(
+                "paper runtime generated an observation signal; broker orders are not authorized"
+            ),
         )
     kill_switch = load_paper_kill_switch(root)
     if kill_switch.enabled:
@@ -840,6 +867,8 @@ def _paper_order_window_allows(spec: StrategySpec, now: datetime | None = None) 
     route = spec.portfolio.selected_route_label or ""
     if spec.portfolio.mode == "hybrid_adaptive_router" and not route.startswith("open_to_open:"):
         return True
+    if spec.portfolio.mode == "core_beta_satellite_router":
+        return False
     current = now or datetime.now(UTC)
     if current.tzinfo is None:
         current = current.replace(tzinfo=UTC)

@@ -160,6 +160,17 @@ def _check_single_trigger(key: str, value: object, spec: object, _get) -> bool:
             return False
         return any(t in value for t in tf)
 
+    if key == "portfolio_modes":
+        portfolio = _get("portfolio")
+        mode = getattr(portfolio, "mode", None) if portfolio else None
+        return mode in value
+
+    if key == "position_direction":
+        return _get("position_direction") in value
+
+    if key == "instrument_type":
+        return _get("instrument_type") in value
+
     if key == "fill_assumption":
         exec_obj = _get("execution")
         fa = getattr(exec_obj, "fill_assumption", None) if exec_obj else None
@@ -198,6 +209,15 @@ def _check_single_trigger(key: str, value: object, spec: object, _get) -> bool:
 
     if key == "required_capability_kinds":
         needed_kinds = set(value) if isinstance(value, list) else set()
+        required = _get("required_capabilities") or []
+        for capability_id in required:
+            if not isinstance(capability_id, str):
+                continue
+            prefix = capability_id.split(".", 1)[0]
+            if prefix in needed_kinds:
+                return True
+            if capability_id.startswith("options.") and "options_chain" in needed_kinds:
+                return True
         cap_obj = _get("capabilities") or {}
         found_kinds: set[str] = set()
         if isinstance(cap_obj, dict):

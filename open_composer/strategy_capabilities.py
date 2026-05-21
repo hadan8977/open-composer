@@ -181,8 +181,25 @@ def _alpaca_paper_execution(spec: StrategySpec, expression_errors: list[str]) ->
             f"data.source={spec.data.source} does not support timeframe={spec.timeframe}; "
             f"supported: {supported}"
         )
+    observation_only_reasons: list[str] = []
+    if spec.position_direction in {"short_only", "long_short"}:
+        observation_only_reasons.append(
+            "short exposure requires short_selling risk-domain evidence before broker orders"
+        )
+    if spec.portfolio.mode in {
+        "adaptive_intraday_internal_router",
+        "hybrid_adaptive_router",
+        "beta_exposure_router",
+        "core_beta_satellite_router",
+    }:
+        observation_only_reasons.append(
+            "router strategies may run observation-only target-weight cycles before order "
+            "authorization"
+        )
     if reasons:
         return CapabilityFinding("alpaca_paper_execution", "blocked", reasons)
+    if observation_only_reasons:
+        return CapabilityFinding("alpaca_paper_execution", "partial", observation_only_reasons)
     if spec.llm_review.enabled:
         return CapabilityFinding(
             "alpaca_paper_execution",

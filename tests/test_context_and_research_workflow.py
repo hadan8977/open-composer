@@ -15,6 +15,8 @@ from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research import draft_strategy_from_idea, optimize_strategy
+from open_composer.research.alternative_data_evidence import build_alternative_data_evidence
+from open_composer.research.short_risk import build_short_risk_report
 
 
 def test_signal_context_excludes_future_records(sample_workspace: Path) -> None:
@@ -119,6 +121,56 @@ def test_chinese_memory_storage_prompt_optimizes_and_scans(sample_workspace: Pat
     assert context.events
     assert context.news
     assert context.macro
+
+
+def test_short_risk_report_writes_harness_artifacts(sample_workspace: Path) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_short_risk.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "qqq_short_risk"
+    raw["position_direction"] = "long_short"
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    result = build_short_risk_report(spec_path, sample_workspace)
+
+    assert result.status == "ok"
+    assert result.report_path.exists()
+    assert result.source_cards_path.exists()
+    assert result.borrow_cost_path.exists()
+    assert result.squeeze_stress_path.exists()
+    assert result.dividend_risk_path.exists()
+    assert result.exposure_policy_path.exists()
+    policy = json.loads(result.exposure_policy_path.read_text(encoding="utf-8"))
+    assert policy["paper_auto_default"] == "blocked"
+    assert policy["position_direction"] == "long_short"
+
+
+def test_alternative_data_evidence_marks_non_trading_llm_as_advisory(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_advisory_llm.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "qqq_advisory_llm"
+    raw["llm_review"] = {"enabled": True}
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    result = build_alternative_data_evidence(spec_path, sample_workspace)
+
+    assert result.status == "ok"
+    assert result.advisory_only is True
+    pit = json.loads(result.pit_replay_path.read_text(encoding="utf-8"))
+    lift = json.loads(result.marginal_lift_path.read_text(encoding="utf-8"))
+    robustness = json.loads(result.modality_robustness_path.read_text(encoding="utf-8"))
+    assert pit["replay_method"] == "not_applicable_advisory_only"
+    assert lift["robustness_check"] == "advisory_only"
+    assert robustness["fallback_behavior"] == "ignore_advisory_context"
 
 
 def test_alpaca_cache_strategy_meets_target_thresholds(

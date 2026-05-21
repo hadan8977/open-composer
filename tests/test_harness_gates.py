@@ -8,7 +8,13 @@ from shutil import copyfile, copytree
 import pytest
 
 from open_composer.harness.gates import GATE_REGISTRY, GateResult, run_gate, run_gates
+from open_composer.harness.policy import (
+    detect_risk_domains,
+    required_artifacts_for_domains,
+)
 from open_composer.harness.stages import STAGE_REQUIREMENTS, check_stage, gates_for_stage
+from open_composer.models.options import OptionsOverlaySpec, OptionsSpec
+from open_composer.models.strategy_spec import load_strategy_spec
 
 
 @pytest.fixture()
@@ -194,6 +200,109 @@ class TestCapabilityEvaluationGate:
         evidence = result.evidence
         assert "python_mvp_backtest" in evidence["blocked"]  # type: ignore[index]
         assert "tradingview_pine_strategy" in evidence["blocked"]  # type: ignore[index]
+
+
+class TestRiskDomainPolicy:
+    def test_router_domain_triggers_required_artifacts(
+        self, tmp_path: Path, spec_path: Path
+    ) -> None:
+        import yaml
+
+        raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+        raw["name"] = "beta_router_harness"
+        raw["timeframe"] = "daily"
+        raw["universe"] = ["QQQ", "TQQQ", "SQQQ"]
+        raw["risk"]["max_position_weight"] = 1.0
+        raw["portfolio"] = {
+            "mode": "beta_exposure_router",
+            "max_symbols_per_day": 1,
+            "gross_exposure_limit": 1.0,
+            "max_symbol_weight": 1.0,
+            "same_day_flatten": False,
+            "selected_route_label": (
+                "beta:sma200_mom120_min0_vol20_maxvnone_dd120_maxddnone_"
+                "levsmanone_levmaxvnone_levdd60_levmaxddnone_"
+                "onTQQQ1_neuQQQ1_offCASH0_vtnone"
+            ),
+        }
+        spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+        spec = load_strategy_spec(spec_path)
+
+        domains = detect_risk_domains(spec, tmp_path)
+        artifacts = required_artifacts_for_domains(domains)
+
+        assert "router_strategy" in domains
+        assert {
+            "router_target_weights",
+            "router_rebalance_intents",
+            "router_execution_observation",
+            "router_cost_stress",
+            "router_data_evidence",
+            "router_validation",
+        } <= artifacts
+
+    def test_short_domain_triggers_required_artifacts(
+        self, tmp_path: Path, spec_path: Path
+    ) -> None:
+        import yaml
+
+        raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+        raw["position_direction"] = "long_short"
+        spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+        spec = load_strategy_spec(spec_path)
+
+        domains = detect_risk_domains(spec, tmp_path)
+        artifacts = required_artifacts_for_domains(domains)
+
+        assert "short_selling" in domains
+        assert {
+            "short_sale_source_cards",
+            "borrow_cost_estimate",
+            "short_squeeze_stress",
+            "ex_dividend_risk_note",
+            "short_exposure_policy",
+        } <= artifacts
+
+    def test_options_domains_trigger_contract_artifacts(self, tmp_path: Path) -> None:
+        overlay = OptionsOverlaySpec.model_validate(
+            {
+                "name": "qqq_protective_put_overlay",
+                "base_strategy": "strategy_specs/active/qqq_router.yaml",
+                "overlay_type": "protective_put",
+                "max_premium_pct": 1.0,
+            }
+        )
+        primary = OptionsSpec.model_validate(
+            {
+                "name": "spx_put_spread_weekly",
+                "underlying": "SPX",
+                "strategy_type": "put_spread",
+                "expiry_target": "weekly",
+                "max_position_pct": 0.05,
+            }
+        )
+
+        overlay_domains = detect_risk_domains(overlay, tmp_path)
+        primary_domains = detect_risk_domains(primary, tmp_path)
+
+        assert overlay_domains == ["options_overlay"]
+        assert "options_primary" in primary_domains
+        assert {
+            "options_chain_source_cards",
+            "greeks_profile",
+            "roll_schedule",
+            "iv_stress_report",
+            "overlay_cost_report",
+            "assignment_risk_note",
+        } <= required_artifacts_for_domains(overlay_domains)
+        assert {
+            "options_chain_source_cards",
+            "greeks_profile",
+            "contract_selection_log",
+            "expiry_ladder",
+            "iv_stress_report",
+            "assignment_risk_note",
+        } <= required_artifacts_for_domains(primary_domains)
 
 
 class TestFactorLabHarnessGate:

@@ -233,3 +233,217 @@ artifacts:
       - sample_data_caveats
       - trade_count
       - conclusion
+
+  router_target_weights:
+    description: >
+      Observation-only target-weight snapshot for router strategies.
+    path: reports/execution/{strategy}-target-weights.json
+    format: json
+    required_fields:
+      - strategy_name
+      - source_spec_path
+      - portfolio_mode
+      - target_weights
+      - summary
+      - acquisition_tier
+
+  router_rebalance_intents:
+    description: >
+      Rebalance intents derived from router target weights. Intents are not
+      broker orders and remain observation-only until paper readiness authorizes execution.
+    path: reports/execution/{strategy}-rebalance-intents.json
+    format: json
+    required_fields:
+      - strategy_name
+      - source_spec_path
+      - portfolio_mode
+      - intents
+      - summary
+      - execution_substate
+
+  router_execution_observation:
+    description: >
+      Read-only execution observation state for router strategies, linking
+      target weights, rebalance intents, cost stress, data evidence, and validation.
+    path: reports/execution/{strategy}-execution-observation.json
+    format: json
+    required_fields:
+      - strategy_name
+      - source_spec_path
+      - execution_substate
+      - target_weights_path
+      - rebalance_intents_path
+
+  router_cost_stress:
+    description: >
+      Cost and turnover stress for router rebalance intents.
+    path: reports/research/{strategy}-router-cost-stress.json
+    format: json
+    required_fields:
+      - strategy_name
+      - status
+      - scenarios
+      - recommendation
+
+  router_data_evidence:
+    description: >
+      Data-source and acquisition-tier evidence for router target-weight generation.
+    path: reports/research/{strategy}-router-data-evidence.json
+    format: json
+    required_fields:
+      - strategy_name
+      - status
+      - data_source
+      - acquisition_tier
+      - data_profile
+
+  router_validation:
+    description: >
+      Validation checks for router target weights against StrategySpec exposure limits.
+    path: reports/research/{strategy}-router-validation.json
+    format: json
+    required_fields:
+      - strategy_name
+      - status
+      - portfolio_mode
+      - summary
+      - blockers
+
+  short_sale_source_cards:
+    description: >
+      Broker and rule source cards specific to short-selling capability.
+    path: reports/harness/source_cards/{strategy}.jsonl
+    format: jsonl
+    required_fields:
+      - claim_id
+      - claim
+      - source_url
+      - source_type
+      - accessed_at
+      - applies_to
+      - impact_on_spec
+      - limitations
+
+  borrow_cost_estimate:
+    description: >
+      Borrow cost and locate assumptions for short-selling research.
+    path: reports/research/{strategy}-borrow-cost-estimate.json
+    format: json
+    required_fields:
+      - strategy_name
+      - position_direction
+      - status
+      - borrow_rate_assumption_annual_pct
+      - shortable_field_required
+
+  short_squeeze_stress:
+    description: >
+      Short squeeze and adverse gap stress scenarios.
+    path: reports/research/{strategy}-short-squeeze-stress.json
+    format: json
+    required_fields:
+      - strategy_name
+      - status
+      - scenarios
+      - kill_switch_recommendation
+
+  ex_dividend_risk_note:
+    description: >
+      Written note covering dividend and corporate-action risk for short positions.
+    path: reports/research/{strategy}-ex-dividend-risk-note.md
+    format: md
+    required_fields: []
+
+  short_exposure_policy:
+    description: >
+      Exposure and authorization policy for short or long-short strategies.
+    path: reports/harness/execution/{strategy}-short-exposure-policy.json
+    format: json
+    required_fields:
+      - strategy_name
+      - position_direction
+      - max_gross_short_exposure
+      - paper_auto_default
+      - requires
+
+  options_chain_source_cards:
+    description: >
+      Source cards for options chain data provider coverage, greeks, spreads,
+      and broker/product rules.
+    path: reports/harness/source_cards/{strategy}.jsonl
+    format: jsonl
+    required_fields:
+      - claim_id
+      - claim
+      - source_url
+      - source_type
+      - accessed_at
+      - applies_to
+      - impact_on_spec
+      - limitations
+
+  greeks_profile:
+    description: Options greeks exposure profile.
+    path: reports/options/{strategy}-greeks-profile.json
+    format: json
+    required_fields:
+      - strategy_name
+      - instrument_type
+      - delta
+      - theta
+      - vega
+
+  roll_schedule:
+    description: Roll schedule for options overlays.
+    path: reports/options/{strategy}-roll-schedule.json
+    format: json
+    required_fields:
+      - strategy_name
+      - schedule
+      - expiry_target
+
+  iv_stress_report:
+    description: Implied-volatility stress report for options.
+    path: reports/options/{strategy}-iv-stress.json
+    format: json
+    required_fields:
+      - strategy_name
+      - scenarios
+      - conclusion
+
+  overlay_cost_report:
+    description: Premium, spread, and carry cost report for options overlays.
+    path: reports/options/{strategy}-overlay-cost.json
+    format: json
+    required_fields:
+      - strategy_name
+      - max_premium_pct
+      - spread_assumption
+      - conclusion
+
+  assignment_risk_note:
+    description: Written assignment and exercise risk note for options strategies.
+    path: reports/options/{strategy}-assignment-risk.md
+    format: md
+    required_fields: []
+
+  contract_selection_log:
+    description: Contract selection log for primary options strategies.
+    path: reports/options/{strategy}-contract-selection.jsonl
+    format: jsonl
+    required_fields:
+      - selected_at
+      - underlying
+      - expiry
+      - strike
+      - right
+      - rationale
+
+  expiry_ladder:
+    description: Expiry ladder considered for an options strategy.
+    path: reports/options/{strategy}-expiry-ladder.json
+    format: json
+    required_fields:
+      - strategy_name
+      - expiries
+      - selection_rule

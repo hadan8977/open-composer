@@ -51,6 +51,7 @@ class ExecutionRealityMetrics(BaseModel):
 class Trade(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    direction: Literal["long", "short"] = "long"
     entry_time: datetime
     exit_time: datetime | None = None
     entry_price: float

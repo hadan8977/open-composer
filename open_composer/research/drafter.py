@@ -64,6 +64,7 @@ def draft_strategy_from_idea_with_status(
         used_llm = True
     if spec is None:
         spec = _deterministic_draft(idea)
+    spec = _with_standard_research_design(spec)
     path = base / "strategy_specs" / "drafts" / f"{spec.name}.yaml"
     ensure_dir(path.parent)
     path.write_text(yaml.safe_dump(spec.model_dump(mode="json"), sort_keys=False), encoding="utf-8")
@@ -76,6 +77,42 @@ def draft_strategy_from_idea_with_status(
         prompt_session_id=_prompt_session_id(idea),
     )
     return DraftResult(path=path, used_llm=used_llm, fallback_reason=fallback_reason)
+
+
+def _with_standard_research_design(spec: StrategySpec) -> StrategySpec:
+    if spec.research_design is not None:
+        return spec
+    notes = spec.notes.model_dump(mode="json")
+    legacy = notes.get("research_design") if isinstance(notes, dict) else None
+    parameter_space: dict[str, list[object]] = {}
+    candidate_budget = 100
+    selection_objective = "risk_adjusted_alpha_after_costs"
+    validation_plan = [
+        "reference_backtest",
+        "out_of_sample",
+        "walk_forward",
+        "cost_sensitivity",
+        "benchmark_family",
+    ]
+    if isinstance(legacy, dict):
+        ranges = legacy.get("parameter_ranges")
+        if isinstance(ranges, dict):
+            parameter_space = {
+                str(key): list(value) for key, value in ranges.items() if isinstance(value, list)
+            }
+        candidate_budget = int(legacy.get("candidate_cap") or candidate_budget)
+        selection_objective = str(legacy.get("objective") or selection_objective)
+        raw_validation = legacy.get("validation_plan")
+        if isinstance(raw_validation, list) and raw_validation:
+            validation_plan = [str(item) for item in raw_validation]
+    raw = spec.model_dump(mode="json")
+    raw["research_design"] = _standard_research_design(
+        parameter_space=parameter_space,
+        candidate_budget=candidate_budget,
+        selection_objective=selection_objective,
+        validation_plan=validation_plan,
+    )
+    return StrategySpec.model_validate(raw)
 
 
 def _write_draft_research_plan(
@@ -113,6 +150,33 @@ def _write_draft_research_plan(
         payload["llm_fallback_reason"] = fallback_reason
     write_json(plan_path, payload)
     return plan_path
+
+
+def _standard_research_design(
+    *,
+    parameter_space: dict[str, list[object]],
+    candidate_budget: int,
+    selection_objective: str,
+    validation_plan: list[str] | None = None,
+) -> dict[str, object]:
+    return {
+        "parameter_space": parameter_space,
+        "candidate_budget": candidate_budget,
+        "selection_objective": selection_objective,
+        "anti_overfit_notes": [
+            "Select candidates on training windows before evaluating OOS evidence.",
+            "Keep the full searched parameter space and trial ledger as artifacts.",
+            "Do not promote sample, fixture, or fallback data as paper-ready evidence.",
+        ],
+        "validation_plan": validation_plan
+        or [
+            "reference_backtest",
+            "out_of_sample",
+            "walk_forward",
+            "cost_sensitivity",
+            "benchmark_family",
+        ],
+    }
 
 
 def _has_openai_config(client: Any | None) -> bool:
@@ -209,6 +273,16 @@ def _deterministic_draft(idea: str) -> StrategySpec:
                 "news.alpha_vantage",
                 "news.gdelt",
             ],
+            "research_design": _standard_research_design(
+                parameter_space={
+                    "entry_ema_bars": [3, 5, 8],
+                    "rsi_bars": [3, 6, 14],
+                    "stop_loss_pct": [0.8, 1.0, 1.2],
+                    "take_profit_pct": [1.5, 2.0, 2.5],
+                },
+                candidate_budget=200,
+                selection_objective="alpha_vs_benchmark_family_after_costs",
+            ),
             "notes": {
                 "intent": (
                     "Buy pullbacks only after deterministic technical confirmation; attach "
@@ -311,6 +385,16 @@ def _breakout_draft(idea: str) -> StrategySpec:
             },
             "llm_review": {"enabled": False, "model": None},
             "required_capabilities": ["market.sample_ohlcv"],
+            "research_design": _standard_research_design(
+                parameter_space={
+                    "breakout_lookback_bars": [5, 6, 10],
+                    "atr_bars": [5, 8, 14],
+                    "stop_loss_pct": [0.8, 1.0, 1.2],
+                    "take_profit_pct": [2.0, 2.4, 3.0],
+                },
+                candidate_budget=120,
+                selection_objective="risk_adjusted_alpha_after_costs",
+            ),
             "notes": {
                 "intent": (
                     "Trade deterministic price breakouts only after a prior-window high is "
@@ -388,6 +472,17 @@ def _memory_storage_draft(idea: str) -> StrategySpec:
                 "news.alpha_vantage",
                 "news.gdelt",
             ],
+            "research_design": _standard_research_design(
+                parameter_space={
+                    "fast_ema_bars": [5, 8, 13],
+                    "slow_ema_bars": [13, 21, 34],
+                    "rsi_bars": [6, 14],
+                    "stop_loss_pct": [0.8, 1.1, 1.5],
+                    "take_profit_pct": [2.0, 3.2, 4.0],
+                },
+                candidate_budget=200,
+                selection_objective="theme_proxy_alpha_after_costs",
+            ),
             "notes": {
                 "intent": (
                     "Trade intraday continuation in memory/storage names when MU leads on "

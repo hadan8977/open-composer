@@ -5,6 +5,7 @@ from open_composer.research.adaptive_intraday_router import (
 )
 from open_composer.research.aggressive_theme_router import run_aggressive_theme_router_research
 from open_composer.research.alt_data_quality import build_alternative_data_quality_report
+from open_composer.research.alternative_data_evidence import build_alternative_data_evidence
 from open_composer.research.beta_exposure_router import (
     backtest_beta_router_params,
     run_beta_exposure_router_research,
@@ -49,6 +50,10 @@ from open_composer.research.llm_rotation import run_llm_rotation_meta_selection
 from open_composer.research.market_timing import run_market_timing_research
 from open_composer.research.optimizer import optimize_strategy
 from open_composer.research.options_overlay import optimize_option_overlays
+from open_composer.research.options_research import (
+    build_options_overlay_report,
+    build_options_research_report,
+)
 from open_composer.research.parameter_sweep import parse_sweep_parameters, run_parameter_sweep
 from open_composer.research.promotion import FivePassChecks, PromotionReport, build_promotion_report
 from open_composer.research.regime_retrieval import RegimeSearchReport, search_similar_regimes
@@ -57,6 +62,7 @@ from open_composer.research.research_report import (
     build_strategy_research_report,
 )
 from open_composer.research.rotation import run_rotation_research
+from open_composer.research.short_risk import build_short_risk_report
 from open_composer.research.skill_attribution import (
     SkillAttributionReport,
     SkillAttributionRow,
@@ -90,6 +96,7 @@ __all__ = [
     "run_llm_adaptive_intraday_router_selection",
     "run_aggressive_theme_router_research",
     "build_alternative_data_quality_report",
+    "build_alternative_data_evidence",
     "build_research_contract",
     "write_research_contract",
     "run_cost_grid",
@@ -97,6 +104,7 @@ __all__ = [
     "load_memory_packet",
     "search_similar_regimes",
     "run_skill_attribution",
+    "build_short_risk_report",
     "run_exposure_switch_research",
     "FactorLabResult",
     "GeometryFeatureReportResult",
@@ -111,6 +119,8 @@ __all__ = [
     "run_llm_intraday_daily_rotation_selection",
     "write_intraday_product_reflection",
     "optimize_option_overlays",
+    "build_options_overlay_report",
+    "build_options_research_report",
     "parse_sweep_parameters",
     "FivePassChecks",
     "PromotionReport",

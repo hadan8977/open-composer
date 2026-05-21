@@ -33,6 +33,9 @@ from open_composer.adapters.data.longbridge import (
 from open_composer.adapters.events import fetch_capability_events
 from open_composer.adapters.execution import build_nautilus_trader_plan, write_nautilus_trader_plan
 from open_composer.adapters.execution.beta_target_weights import run_beta_target_weight_mapping
+from open_composer.adapters.execution.core_beta_satellite_target_weights import (
+    run_core_beta_satellite_target_weight_mapping,
+)
 from open_composer.adapters.execution.hybrid_target_weights import (
     run_hybrid_target_weight_mapping,
 )
@@ -124,9 +127,13 @@ from open_composer.remote.bootstrap import (
 from open_composer.remote.server import RemoteServerError
 from open_composer.repo_check import build_repo_check_report, write_repo_check_report
 from open_composer.research import (
+    build_alternative_data_evidence,
     build_geometry_feature_report,
     build_hybrid_paper_plan,
+    build_options_overlay_report,
+    build_options_research_report,
     build_promotion_report,
+    build_short_risk_report,
     build_strategy_research_report,
     draft_strategy_from_idea_with_status,
     optimize_option_overlays,
@@ -423,7 +430,7 @@ def cache_clean_command(
     )
     try:
         result = clean_cache_targets(root, selected, dry_run=dry_run)
-    except ValueError as exc:
+    except (FileNotFoundError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
 
     payload = result.to_dict()
@@ -3563,6 +3570,113 @@ def strategy_beta_target_weights(
     )
 
 
+@strategy_app.command("target-weights")
+def strategy_target_weights(
+    spec: Path,
+    symbols: str | None = typer.Option(None, "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    selected_route_label: str | None = typer.Option(None, "--selected-route-label"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Generate router target weights, rebalance intents, and observation artifacts."""
+    spec_obj = load_strategy_spec(spec)
+    parsed_symbols = (
+        [item.strip().upper() for item in symbols.split(",") if item.strip()] if symbols else None
+    )
+    try:
+        if spec_obj.portfolio.mode == "hybrid_adaptive_router":
+            result = run_hybrid_target_weight_mapping(
+                spec,
+                project_root(),
+                symbols=parsed_symbols or spec_obj.universe,
+                data_source=data_source,
+                start=start,
+                end=end,
+                selected_route_label=selected_route_label,
+                refresh_data=refresh_data,
+            )
+            status = result.parity_status
+        elif spec_obj.portfolio.mode == "beta_exposure_router":
+            result = run_beta_target_weight_mapping(
+                spec,
+                project_root(),
+                data_source=data_source,
+                start=start,
+                end=end,
+                selected_route_label=selected_route_label,
+                refresh_data=refresh_data,
+            )
+            status = result.parity_status
+        elif spec_obj.portfolio.mode == "core_beta_satellite_router":
+            result = run_core_beta_satellite_target_weight_mapping(
+                spec,
+                project_root(),
+                symbols=parsed_symbols,
+                data_source=data_source,
+                start=start,
+                end=end,
+                selected_route_label=selected_route_label,
+                refresh_data=refresh_data,
+            )
+            status = result.validation_status
+        else:
+            raise typer.BadParameter(
+                f"strategy target-weights does not support portfolio.mode={spec_obj.portfolio.mode}"
+            )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]target weights complete[/green] report: {result.report_path}")
+    console.print(
+        f"status={status} rebalance_sessions={result.rebalance_sessions} "
+        f"target_rows={result.target_weight_count} nonzero_targets={result.nonzero_target_rows}"
+    )
+
+
+@strategy_app.command("router-cost-stress")
+def strategy_router_cost_stress(spec: Path) -> None:
+    """Print the router cost-stress artifact path for a generated target-weight run."""
+    spec_obj = load_strategy_spec(spec)
+    path = project_root() / "reports" / "research" / f"{spec_obj.name}-router-cost-stress.json"
+    if not path.exists():
+        raise typer.BadParameter("router cost stress missing; run oc strategy target-weights first")
+    console.print(f"router cost stress: {path}")
+
+
+@strategy_app.command("data-evidence")
+def strategy_data_evidence(spec: Path) -> None:
+    """Print the router data-evidence artifact path for a generated target-weight run."""
+    spec_obj = load_strategy_spec(spec)
+    path = project_root() / "reports" / "research" / f"{spec_obj.name}-router-data-evidence.json"
+    if not path.exists():
+        raise typer.BadParameter(
+            "router data evidence missing; run oc strategy target-weights first"
+        )
+    console.print(f"router data evidence: {path}")
+
+
+@strategy_app.command("alt-data-evidence")
+def strategy_alt_data_evidence(spec: Path) -> None:
+    """Generate PIT replay, marginal lift, and robustness shells for alternative data."""
+    result = build_alternative_data_evidence(spec, project_root())
+    console.print(f"[green]alternative data evidence complete[/green] report: {result.report_path}")
+    console.print(
+        f"status={result.status} advisory_only={result.advisory_only} pit={result.pit_replay_path}"
+    )
+
+
+@strategy_app.command("short-risk")
+def strategy_short_risk(spec: Path) -> None:
+    """Generate short-selling borrow, squeeze, dividend, and exposure artifacts."""
+    try:
+        result = build_short_risk_report(spec, project_root())
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]short risk complete[/green] report: {result.report_path}")
+    console.print(f"status={result.status} exposure_policy={result.exposure_policy_path}")
+
+
 @strategy_app.command("hybrid-paper-plan")
 def strategy_hybrid_paper_plan(spec: Path) -> None:
     """Build a paper_auto candidate plan without activating or submitting orders."""
@@ -4297,6 +4411,39 @@ def strategy_research_workflow(
     try:
         spec_obj = load_strategy_spec(spec)
         spec_hash = strategy_content_hash(spec_obj)
+        workflow_artifacts: dict[str, str] = {}
+        if (
+            spec_obj.portfolio.mode
+            in {
+                "hybrid_adaptive_router",
+                "beta_exposure_router",
+                "core_beta_satellite_router",
+            }
+            and spec_obj.data.source != "sample"
+        ):
+            try:
+                target_result = _run_router_target_weights_for_workflow(spec, spec_obj, root)
+                workflow_artifacts["target_weights_report"] = _project_relpath(
+                    str(target_result.report_path), root
+                )
+                workflow_artifacts["target_weights_json"] = _project_relpath(
+                    str(target_result.json_path), root
+                )
+            except Exception as exc:
+                workflow_artifacts["target_weights_error"] = str(exc)
+        if spec_obj.position_direction in {"short_only", "long_short"}:
+            short_result = build_short_risk_report(spec, root)
+            workflow_artifacts["short_risk_report"] = _project_relpath(
+                str(short_result.report_path), root
+            )
+        if spec_obj.llm_review.enabled or any(
+            factor.source in {"llm_feature", "feature_packet"}
+            for factor in spec_obj.factors.values()
+        ):
+            alt_result = build_alternative_data_evidence(spec, root)
+            workflow_artifacts["alternative_data_evidence"] = _project_relpath(
+                str(alt_result.report_path), root
+            )
         harness_status, harness_results = check_stage(stage, spec, root)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -4326,6 +4473,7 @@ def strategy_research_workflow(
                     "promotion_json": _project_relpath(
                         str(promotion_evidence.get("json_path") or ""), root
                     ),
+                    **workflow_artifacts,
                 },
                 "promotion_status": _gate_status(harness_results, "promotion_report"),
             },
@@ -4343,8 +4491,34 @@ def strategy_research_workflow(
     console.print(f"promotion json: {promotion_evidence.get('json_path') or 'n/a'}")
     if log_path:
         console.print(f"harness log: {log_path}")
+    if workflow_artifacts:
+        console.print(f"workflow artifacts: {workflow_artifacts}")
     if harness_status == "blocked":
         raise typer.Exit(code=1)
+
+
+def _run_router_target_weights_for_workflow(spec: Path, spec_obj, root: Path):
+    if spec_obj.portfolio.mode == "hybrid_adaptive_router":
+        return run_hybrid_target_weight_mapping(
+            spec,
+            root,
+            symbols=list(spec_obj.universe),
+            data_source=spec_obj.data.source,
+        )
+    if spec_obj.portfolio.mode == "beta_exposure_router":
+        return run_beta_target_weight_mapping(
+            spec,
+            root,
+            data_source=spec_obj.data.source,
+        )
+    if spec_obj.portfolio.mode == "core_beta_satellite_router":
+        return run_core_beta_satellite_target_weight_mapping(
+            spec,
+            root,
+            symbols=list(spec_obj.universe),
+            data_source=spec_obj.data.source,
+        )
+    raise ValueError(f"unsupported router mode: {spec_obj.portfolio.mode}")
 
 
 @harness_app.command("check")
@@ -4863,6 +5037,32 @@ def options_optimize(
             f"return={item.run.total_return_pct:.2f}% "
             f"trades={item.run.trades} score={item.score:.2f}"
         )
+
+
+@options_app.command("overlay-report")
+def options_overlay_report(overlay: Path) -> None:
+    """Generate observation-only research report for an OptionsOverlay spec."""
+    try:
+        result = build_options_overlay_report(overlay, project_root())
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]options overlay report complete[/green] report: {result.report_path}")
+    console.print(
+        f"execution_substate={result.execution_substate} paper_ready_pass={result.paper_ready_pass}"
+    )
+
+
+@options_app.command("research-report")
+def options_research_report(options_spec: Path) -> None:
+    """Generate observation-only research report for an independent OptionsSpec."""
+    try:
+        result = build_options_research_report(options_spec, project_root())
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]options research report complete[/green] report: {result.report_path}")
+    console.print(
+        f"execution_substate={result.execution_substate} paper_ready_pass={result.paper_ready_pass}"
+    )
 
 
 @paper_app.command("submit")

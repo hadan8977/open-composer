@@ -163,7 +163,7 @@ def backtest_frame(
     data_provenance = frame.attrs.get("data_source_mode")
     data_provider = frame.attrs.get("data_source_provider")
     equity = start_equity
-    in_position = False
+    position_direction: str | None = None
     entry_price = 0.0
     entry_fee = 0.0
     shares = 0.0
@@ -178,6 +178,14 @@ def backtest_frame(
         spec.costs.impact_model, spec.costs.impact_eta, spec.costs.impact_gamma
     )
     equity_curve = [start_equity]
+    entry_fill_by_direction = {
+        "long": lambda open_price: open_price * (1 + slippage_rate + impact_rate),
+        "short": lambda open_price: open_price * (1 - slippage_rate - impact_rate),
+    }
+    exit_fill_by_direction = {
+        "long": lambda open_price: open_price * (1 - slippage_rate - impact_rate),
+        "short": lambda open_price: open_price * (1 + slippage_rate + impact_rate),
+    }
 
     loop_start = max(0, evaluation_start_index - 1)
     for idx in range(loop_start, len(frame) - 1):
@@ -189,19 +197,26 @@ def backtest_frame(
         signal_is_in_evaluation = idx >= evaluation_start_index
         close_price = float(row["close"])
         next_open = float(next_row["open"])
-        entry_fill_price = next_open * (1 + slippage_rate + impact_rate)
-        exit_fill_price = next_open * (1 - slippage_rate - impact_rate)
         if signal_is_in_evaluation:
             marked_equity = equity
-            if in_position and shares:
-                marked_equity += shares * (close_price - entry_price)
+            if position_direction and shares:
+                marked_equity += (
+                    _direction_multiplier(position_direction) * shares * (close_price - entry_price)
+                )
             equity_curve.append(marked_equity)
 
-        if not in_position:
+        target_direction = _target_direction(
+            spec,
+            entry=bool(entry_mask.iloc[idx]),
+            exit_=bool(exit_mask.iloc[idx]),
+        )
+
+        if position_direction is None:
             fill_day_key = next_timestamp.date().isoformat()
             day_count = trades_by_day.get(fill_day_key, 0)
-            if bool(entry_mask.iloc[idx]) and day_count < spec.risk.max_trades_per_day:
+            if target_direction and day_count < spec.risk.max_trades_per_day:
                 if fill_is_in_evaluation:
+                    entry_fill_price = entry_fill_by_direction[target_direction](next_open)
                     signals.append(
                         build_signal(
                             spec=spec,
@@ -212,6 +227,7 @@ def backtest_frame(
                             price=close_price,
                             version_id=version_id,
                             spec_hash=spec_hash,
+                            side_override=_entry_side(target_direction),
                         )
                     )
                     entry_price = entry_fill_price
@@ -221,24 +237,42 @@ def backtest_frame(
                     total_fees += entry_fee
                     equity -= entry_fee
                     trade = Trade(
+                        direction=target_direction,
                         entry_time=next_timestamp,
                         entry_price=entry_price,
                         shares=shares,
                         entry_fee=entry_fee,
                     )
-                    in_position = True
+                    position_direction = target_direction
                     trades_by_day[fill_day_key] = day_count + 1
             continue
 
         if not signal_is_in_evaluation:
             continue
-        stop_hit = spec.risk.stop_loss_pct is not None and close_price <= entry_price * (
-            1 - spec.risk.stop_loss_pct / 100
+        stop_hit = _stop_hit(
+            position_direction,
+            close_price,
+            entry_price,
+            spec.risk.stop_loss_pct,
         )
-        take_hit = spec.risk.take_profit_pct is not None and close_price >= entry_price * (
-            1 + spec.risk.take_profit_pct / 100
+        take_hit = _take_hit(
+            position_direction,
+            close_price,
+            entry_price,
+            spec.risk.take_profit_pct,
         )
-        if bool(exit_mask.iloc[idx]) or stop_hit or take_hit:
+        should_exit = (
+            stop_hit
+            or take_hit
+            or (bool(exit_mask.iloc[idx]) if spec.position_direction != "long_short" else False)
+        )
+        should_reverse = (
+            spec.position_direction == "long_short"
+            and target_direction is not None
+            and target_direction != position_direction
+        )
+        if should_exit or should_reverse:
+            exit_fill_price = exit_fill_by_direction[position_direction](next_open)
             signals.append(
                 build_signal(
                     spec=spec,
@@ -249,9 +283,11 @@ def backtest_frame(
                     price=close_price,
                     version_id=version_id,
                     spec_hash=spec_hash,
+                    side_override=_exit_side(position_direction),
                 )
             )
-            gross_pnl = shares * (exit_fill_price - entry_price)
+            direction = _direction_multiplier(position_direction)
+            gross_pnl = direction * shares * (exit_fill_price - entry_price)
             exit_fee = shares * exit_fill_price * commission_rate
             total_fees += exit_fee
             pnl = gross_pnl - exit_fee
@@ -264,14 +300,48 @@ def backtest_frame(
                 trade.pnl = pnl
                 trade.return_pct = (pnl / (shares * entry_price + entry_fee)) * 100
                 trades.append(trade)
-            in_position = False
+            position_direction = None
             entry_price = 0.0
             entry_fee = 0.0
             shares = 0.0
             trade = None
+            if should_reverse:
+                fill_day_key = next_timestamp.date().isoformat()
+                day_count = trades_by_day.get(fill_day_key, 0)
+                if day_count < spec.risk.max_trades_per_day and target_direction:
+                    entry_fill_price = entry_fill_by_direction[target_direction](next_open)
+                    signals.append(
+                        build_signal(
+                            spec=spec,
+                            run_id=current_run_id,
+                            timestamp=timestamp,
+                            action="entry",
+                            source="backtest",
+                            price=close_price,
+                            version_id=version_id,
+                            spec_hash=spec_hash,
+                            side_override=_entry_side(target_direction),
+                        )
+                    )
+                    max_notional = equity * spec.risk.max_position_weight
+                    shares = max_notional / (entry_fill_price * (1 + commission_rate))
+                    entry_fee = shares * entry_fill_price * commission_rate
+                    total_fees += entry_fee
+                    equity -= entry_fee
+                    trade = Trade(
+                        direction=target_direction,
+                        entry_time=next_timestamp,
+                        entry_price=entry_fill_price,
+                        shares=shares,
+                        entry_fee=entry_fee,
+                    )
+                    entry_price = entry_fill_price
+                    position_direction = target_direction
+                    trades_by_day[fill_day_key] = day_count + 1
 
-    if in_position and shares:
-        equity += shares * (float(frame.iloc[-1]["close"]) - entry_price)
+    if position_direction and shares:
+        direction = _direction_multiplier(position_direction)
+        equity += direction * shares * (float(frame.iloc[-1]["close"]) - entry_price)
 
     total_return_pct = (equity / start_equity - 1) * 100
     equity_curve.append(equity)
@@ -301,6 +371,17 @@ def backtest_frame(
         "NautilusTrader-compatible strategies may also emit a backend plan artifact.",
         "This backtest does not model dividends or corporate actions.",
     ]
+    if spec.position_direction == "short_only":
+        assumptions.append(
+            "Short-only backtest reverses entry/exit PnL direction but does not model borrow "
+            "availability, borrow fees, buy-in risk, or dividend liability."
+        )
+    if spec.position_direction == "long_short":
+        assumptions.append(
+            "Long-short backtest treats entry rules as target-long signals and exit rules as "
+            "target-short signals. It flips the single active leg on the next bar open and does "
+            "not model borrow availability, borrow fees, buy-in risk, or dividend liability."
+        )
     if data_provenance:
         provider_label = str(data_provider or spec.data.source)
         assumptions.insert(
@@ -365,3 +446,58 @@ def _impact_rate(impact_model: str, impact_eta: float, impact_gamma: float) -> f
     if impact_model == "almgren_chriss":
         return (impact_eta + impact_gamma) / 10_000
     raise ValueError(f"unsupported impact model: {impact_model}")
+
+
+def _target_direction(
+    spec: StrategySpec,
+    *,
+    entry: bool,
+    exit_: bool,
+) -> str | None:
+    if spec.position_direction == "short_only":
+        return "short" if entry else None
+    if spec.position_direction == "long_short":
+        if entry:
+            return "long"
+        if exit_:
+            return "short"
+        return None
+    return "long" if entry else None
+
+
+def _direction_multiplier(direction: str) -> float:
+    return -1.0 if direction == "short" else 1.0
+
+
+def _entry_side(direction: str) -> str:
+    return "sell" if direction == "short" else "buy"
+
+
+def _exit_side(direction: str) -> str:
+    return "buy" if direction == "short" else "sell"
+
+
+def _stop_hit(
+    direction: str,
+    close_price: float,
+    entry_price: float,
+    stop_loss_pct: float | None,
+) -> bool:
+    if stop_loss_pct is None:
+        return False
+    if direction == "short":
+        return close_price >= entry_price * (1 + stop_loss_pct / 100)
+    return close_price <= entry_price * (1 - stop_loss_pct / 100)
+
+
+def _take_hit(
+    direction: str,
+    close_price: float,
+    entry_price: float,
+    take_profit_pct: float | None,
+) -> bool:
+    if take_profit_pct is None:
+        return False
+    if direction == "short":
+        return close_price <= entry_price * (1 - take_profit_pct / 100)
+    return close_price >= entry_price * (1 + take_profit_pct / 100)

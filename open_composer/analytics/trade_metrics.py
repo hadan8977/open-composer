@@ -39,9 +39,9 @@ def turnover_ratio_from_trades(trades: list[Trade], start_equity: float) -> floa
         return None
     traded_notional = 0.0
     for trade in trades:
-        traded_notional += trade.entry_price * trade.shares
+        traded_notional += abs(trade.entry_price * trade.shares)
         if trade.exit_price is not None:
-            traded_notional += trade.exit_price * trade.shares
+            traded_notional += abs(trade.exit_price * trade.shares)
     return traded_notional / start_equity
 
 

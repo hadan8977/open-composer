@@ -56,13 +56,19 @@ def _evaluate_capability(root: Path, capability: Capability) -> CapabilityEvalua
         except Exception as exc:
             issues.append(str(exc))
             score_parts.append(0.0)
-    else:
+    elif capability.kind in {"event", "macro", "news"}:
         valid, duplicates, event_issues = _evaluate_event_fixture(path)
         records = valid
         issues.extend(event_issues)
         score_parts.append(1.0 if valid > 0 else 0.0)
         score_parts.append(max(0.0, 1.0 - duplicates))
         score_parts.append(1.0 if not event_issues else 0.6)
+    else:
+        valid, option_issues = _evaluate_jsonl_fixture(path)
+        records = valid
+        issues.extend(option_issues)
+        score_parts.append(1.0 if valid > 0 else 0.0)
+        score_parts.append(1.0 if not option_issues else 0.6)
 
     score = round(sum(score_parts) / len(score_parts), 4) if score_parts else 0.0
     passed = score >= capability.min_score and not any(
@@ -103,3 +109,24 @@ def _evaluate_event_fixture(path: Path) -> tuple[int, float, list[str]]:
             dedupe_keys.add(event.dedupe_key)
     duplicate_ratio = duplicates / valid if valid else 1.0
     return valid, duplicate_ratio, issues
+
+
+def _evaluate_jsonl_fixture(path: Path) -> tuple[int, list[str]]:
+    import json
+
+    issues: list[str] = []
+    valid = 0
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError as exc:
+                issues.append(f"line {line_number}: {exc}")
+                continue
+            if not isinstance(raw, dict):
+                issues.append(f"line {line_number}: expected object")
+                continue
+            valid += 1
+    return valid, issues

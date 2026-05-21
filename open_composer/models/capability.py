@@ -10,8 +10,8 @@ class Capability(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     id: str
-    kind: Literal["market", "event", "macro", "news"]
-    status: Literal["approved", "trial", "retired"]
+    kind: Literal["market", "event", "macro", "news", "options_chain"]
+    status: Literal["approved", "trial", "retired", "workflow_only"]
     provider: str
     use_for: list[str] = Field(default_factory=list)
     reliability: str

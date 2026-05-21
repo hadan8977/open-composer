@@ -97,6 +97,7 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
         "alternative_data",
         "benchmark_family",
         "harness_artifacts",
+        "research_design",
     }
     assert payload["gate_summary"]["workflow_pass"] is True
     assert payload["gate_summary"]["research_pass"] is False

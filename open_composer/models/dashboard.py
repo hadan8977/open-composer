@@ -365,6 +365,23 @@ class DashboardFeaturePacket(BaseModel):
     replay_warnings: list[str] = Field(default_factory=list)
 
 
+class DashboardRouterExecutionArtifact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    strategy_name: str
+    execution_substate: str = "unknown"
+    route_label: str | None = None
+    latest_rebalance_session: str | None = None
+    latest_order_required_intents: int = 0
+    target_weights_path: str | None = None
+    rebalance_intents_path: str | None = None
+    cost_stress_path: str | None = None
+    data_evidence_path: str | None = None
+    validation_path: str | None = None
+    blockers: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 class DashboardWorkflowReport(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -394,6 +411,9 @@ class DashboardResearchReport(BaseModel):
         "rotation",
         "market_timing",
         "geometry_features",
+        "router_evidence",
+        "alternative_data_evidence",
+        "short_risk",
         "unknown",
     ] = "unknown"
     status: Literal["ok", "warning", "blocked"] = "warning"
@@ -495,6 +515,8 @@ class DashboardSummary(BaseModel):
     audit_count: int = 0
     data_comparison_count: int = 0
     feature_packet_count: int = 0
+    router_execution_artifact_count: int = 0
+    router_observation_only_count: int = 0
     workflow_report_count: int = 0
     research_report_count: int = 0
     research_run_count: int = 0
@@ -568,6 +590,7 @@ class DashboardCatalog(BaseModel):
     groups: list[DashboardGroup] = Field(default_factory=list)
     data_comparisons: list[DashboardDataComparison] = Field(default_factory=list)
     feature_packets: list[DashboardFeaturePacket] = Field(default_factory=list)
+    router_execution_artifacts: list[DashboardRouterExecutionArtifact] = Field(default_factory=list)
     workflow_reports: list[DashboardWorkflowReport] = Field(default_factory=list)
     research_reports: list[DashboardResearchReport] = Field(default_factory=list)
     research_runs: list[DashboardResearchRun] = Field(default_factory=list)

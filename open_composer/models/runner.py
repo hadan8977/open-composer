@@ -19,6 +19,7 @@ class PaperRunSignalResult(BaseModel):
         "manual_review",
         "paper_order_submitted",
         "paper_orders_not_allowed",
+        "observation_only",
         "blocked_by_review",
         "blocked_by_kill_switch",
         "blocked_by_readiness",

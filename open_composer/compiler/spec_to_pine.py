@@ -88,15 +88,10 @@ def render_pine_strategy(spec: StrategySpec) -> str:
     exit_expr = _rule_block_to_pine(spec.exit.all, spec.exit.any)
     title = f"{spec.name.replace('_', ' ').title()} Strategy"
     position_pct = spec.risk.max_position_weight * 100
-    stop_expr = (
-        f"close <= strategy.position_avg_price * {1 - spec.risk.stop_loss_pct / 100:.10g}"
-        if spec.risk.stop_loss_pct is not None
-        else "false"
-    )
-    take_expr = (
-        f"close >= strategy.position_avg_price * {1 + spec.risk.take_profit_pct / 100:.10g}"
-        if spec.risk.take_profit_pct is not None
-        else "false"
+    long_stop_expr, long_take_expr = _risk_exit_exprs(spec, "long")
+    short_stop_expr, short_take_expr = _risk_exit_exprs(spec, "short")
+    body = _pine_strategy_body(
+        spec, long_stop_expr, long_take_expr, short_stop_expr, short_take_expr
     )
     return "\n".join(
         [
@@ -116,19 +111,11 @@ def render_pine_strategy(spec: StrategySpec) -> str:
             "if newDay",
             "    tradesToday := 0",
             "",
-            "canEnter = strategy.position_size == 0 and "
-            f"tradesToday < {spec.risk.max_trades_per_day}",
-            "if entrySignal and canEnter",
-            f'    strategy.entry("Long", strategy.long, alert_message="{spec.name} entry")',
-            "    tradesToday += 1",
-            "",
-            f"riskExit = strategy.position_size > 0 and (({stop_expr}) or ({take_expr}))",
-            "if strategy.position_size > 0 and (exitSignal or riskExit)",
-            f'    strategy.close("Long", alert_message="{spec.name} exit")',
+            *body,
             "",
             'plotshape(entrySignal and canEnter, title="Entry", style=shape.triangleup, '
             "location=location.belowbar, color=color.new(color.green, 0), size=size.tiny)",
-            'plotshape(strategy.position_size > 0 and (exitSignal or riskExit), title="Exit", '
+            'plotshape(exitMarker, title="Exit", '
             "style=shape.triangledown, location=location.abovebar, "
             "color=color.new(color.red, 0), size=size.tiny)",
             "",
@@ -148,6 +135,87 @@ def _rule_block_to_pine(all_rules: list[str], any_rules: list[str]) -> str:
         any_expr = " or ".join(f"({_to_pine(rule)})" for rule in any_rules)
         pieces.append(f"({any_expr})")
     return " and ".join(pieces) if pieces else "false"
+
+
+def _risk_exit_exprs(spec: StrategySpec, direction: str) -> tuple[str, str]:
+    if direction == "short":
+        stop_expr = (
+            f"close >= strategy.position_avg_price * {1 + spec.risk.stop_loss_pct / 100:.10g}"
+            if spec.risk.stop_loss_pct is not None
+            else "false"
+        )
+        take_expr = (
+            f"close <= strategy.position_avg_price * {1 - spec.risk.take_profit_pct / 100:.10g}"
+            if spec.risk.take_profit_pct is not None
+            else "false"
+        )
+        return stop_expr, take_expr
+    stop_expr = (
+        f"close <= strategy.position_avg_price * {1 - spec.risk.stop_loss_pct / 100:.10g}"
+        if spec.risk.stop_loss_pct is not None
+        else "false"
+    )
+    take_expr = (
+        f"close >= strategy.position_avg_price * {1 + spec.risk.take_profit_pct / 100:.10g}"
+        if spec.risk.take_profit_pct is not None
+        else "false"
+    )
+    return stop_expr, take_expr
+
+
+def _pine_strategy_body(
+    spec: StrategySpec,
+    long_stop_expr: str,
+    long_take_expr: str,
+    short_stop_expr: str,
+    short_take_expr: str,
+) -> list[str]:
+    max_trades = spec.risk.max_trades_per_day
+    if spec.position_direction == "short_only":
+        return [
+            f"canEnter = strategy.position_size == 0 and tradesToday < {max_trades}",
+            "if entrySignal and canEnter",
+            f'    strategy.entry("Short", strategy.short, alert_message="{spec.name} entry")',
+            "    tradesToday += 1",
+            "",
+            "riskExit = strategy.position_size < 0 and "
+            f"(({short_stop_expr}) or ({short_take_expr}))",
+            "exitMarker = strategy.position_size < 0 and (exitSignal or riskExit)",
+            "if exitMarker",
+            f'    strategy.close("Short", alert_message="{spec.name} exit")',
+        ]
+    if spec.position_direction == "long_short":
+        return [
+            f"canEnter = strategy.position_size == 0 and tradesToday < {max_trades}",
+            f"canReverse = strategy.position_size != 0 and tradesToday < {max_trades}",
+            "if entrySignal and (canEnter or (strategy.position_size < 0 and canReverse))",
+            f'    strategy.entry("Long", strategy.long, alert_message="{spec.name} long")',
+            "    tradesToday += 1",
+            "if exitSignal and (canEnter or (strategy.position_size > 0 and canReverse))",
+            f'    strategy.entry("Short", strategy.short, alert_message="{spec.name} short")',
+            "    tradesToday += 1",
+            "",
+            "longRiskExit = strategy.position_size > 0 and "
+            f"(({long_stop_expr}) or ({long_take_expr}))",
+            "shortRiskExit = strategy.position_size < 0 and "
+            f"(({short_stop_expr}) or ({short_take_expr}))",
+            "exitMarker = longRiskExit or shortRiskExit",
+            "if longRiskExit",
+            f'    strategy.close("Long", alert_message="{spec.name} risk exit")',
+            "if shortRiskExit",
+            f'    strategy.close("Short", alert_message="{spec.name} risk exit")',
+        ]
+    return [
+        f"canEnter = strategy.position_size == 0 and tradesToday < {max_trades}",
+        "if entrySignal and canEnter",
+        f'    strategy.entry("Long", strategy.long, alert_message="{spec.name} entry")',
+        "    tradesToday += 1",
+        "",
+        f"riskExit = strategy.position_size > 0 and (({long_stop_expr}) or ({long_take_expr}))",
+        "exitMarker = strategy.position_size > 0 and (exitSignal or riskExit)",
+        "if exitMarker",
+        f'    strategy.close("Long", alert_message="{spec.name} exit")',
+    ]
 
 
 def _factor_declarations_to_pine(spec: StrategySpec) -> list[str]:

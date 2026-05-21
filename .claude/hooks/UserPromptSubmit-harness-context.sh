@@ -5,14 +5,15 @@
 
 set -euo pipefail
 
-python3 - <<'PYEOF'
+payload="$(cat)"
+OC_HOOK_PAYLOAD="$payload" python3 - <<'PYEOF'
 import json
 import os
 import re
 import sys
 from pathlib import Path
 
-data = json.load(sys.stdin)
+data = json.loads(os.environ.get("OC_HOOK_PAYLOAD") or "{}")
 prompt = data.get("prompt", "")
 
 KEYWORDS = re.compile(
