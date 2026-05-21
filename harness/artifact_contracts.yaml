@@ -1,0 +1,235 @@
+version: 1
+
+# Artifact contracts define the required path pattern and minimum fields for
+# each artifact type. The harness verifier checks these contracts to determine
+# whether an artifact is present and structurally complete.
+#
+# path: may use {strategy} as a placeholder for the strategy name.
+# required_fields: top-level keys that must be non-null.
+# format: jsonl | json | yaml | md
+
+artifacts:
+
+  source_cards:
+    description: >
+      Point-in-time citations for every unstable external claim (broker API,
+      exchange rules, data provider specs, recent papers or platform docs).
+    path: reports/harness/source_cards/{strategy}.jsonl
+    format: jsonl
+    required_fields:
+      - claim_id
+      - claim
+      - source_url
+      - source_type
+      - accessed_at
+      - applies_to
+      - impact_on_spec
+      - limitations
+    source_types:
+      - broker_official_docs
+      - exchange_official_docs
+      - provider_official_docs
+      - regulatory_docs
+      - paper
+      - platform_docs
+      - industry_standard
+
+  execution_policy:
+    description: >
+      Structured comparison of execution methods for the strategy.
+      Must document at least two order styles, price protection, fallback, and TCA plan.
+    path: reports/harness/execution/{strategy}-execution-policy.json
+    format: json
+    required_fields:
+      - strategy_name
+      - policy_id
+      - order_style
+      - time_in_force
+      - price_protection
+      - gap_filter
+      - spread_filter
+      - participation_cap
+      - fallback_behavior
+      - tca_plan
+      - source_card_ids
+      - alternatives_compared
+
+  execution_reality_report:
+    description: >
+      Analysis of slippage stress, gap scenarios, capacity, and TCA for the
+      chosen execution policy.
+    path: reports/harness/execution/{strategy}-execution-reality.json
+    format: json
+    required_fields:
+      - strategy_name
+      - policy_id
+      - slippage_scenarios
+      - gap_stress
+      - capacity_assessment
+      - tca_reference_prices
+
+  trial_ledger:
+    description: >
+      Append-only record of every parameter set trialed during optimization.
+      Enables PBO/DSR risk assessment and prevents silent overfitting.
+    path: reports/research/{strategy}-trial-ledger.jsonl
+    format: jsonl
+    required_fields:
+      - trial_id
+      - parameter_set
+      - data_profile
+      - train_window
+      - test_window
+      - metrics
+      - selected
+      - rejection_reason
+
+  bounded_search_space:
+    description: >
+      Declaration of the complete parameter search space before optimization runs.
+      Documents what was searched, not just what was selected.
+    path: reports/research/{strategy}-search-space.json
+    format: json
+    required_fields:
+      - strategy_name
+      - parameters
+      - total_combinations
+      - search_method
+      - created_at
+
+  candidate_set:
+    description: >
+      Shortlist of parameter candidates from optimization, with selection rationale.
+    path: reports/research/{strategy}-candidate-set.json
+    format: json
+    required_fields:
+      - strategy_name
+      - candidates
+      - selection_criteria
+      - selected_candidate_id
+
+  walk_forward_report:
+    description: >
+      Walk-forward or OOS validation evidence for optimized strategies.
+    path: reports/research/{strategy}-walk-forward.json
+    format: json
+    required_fields:
+      - strategy_name
+      - method
+      - windows
+      - oos_metrics
+      - conclusion
+
+  feature_packet_schema:
+    description: >
+      Schema and sample for every LLM/news/event/macro feature packet used by
+      the strategy. Must include PIT metadata fields.
+    path: reports/research/{strategy}-feature-packet-schema.json
+    format: json
+    required_fields:
+      - strategy_name
+      - packet_kind
+      - visible_at
+      - published_at
+      - fetched_at
+      - source
+      - input_hash
+      - prompt_hash
+      - fields
+
+  pit_replay_evidence:
+    description: >
+      Evidence that LLM/news/macro inputs are replayed from PIT packets during
+      backtest, not via live API calls.
+    path: reports/research/{strategy}-pit-replay.json
+    format: json
+    required_fields:
+      - strategy_name
+      - replay_method
+      - pit_fields_verified
+      - live_call_prohibited
+
+  marginal_lift_report:
+    description: >
+      Comparison of strategy performance with vs. without LLM/news signal,
+      proving the alternative data adds value over a deterministic baseline.
+    path: reports/research/{strategy}-marginal-lift.json
+    format: json
+    required_fields:
+      - strategy_name
+      - baseline_sharpe
+      - with_signal_sharpe
+      - lift_pct
+      - robustness_check
+
+  missing_modality_robustness_report:
+    description: >
+      Evidence that the strategy degrades gracefully when LLM/news/macro
+      input is unavailable or delayed.
+    path: reports/research/{strategy}-modality-robustness.json
+    format: json
+    required_fields:
+      - strategy_name
+      - degradation_mode
+      - fallback_behavior
+      - performance_impact
+
+  gap_stress_report:
+    description: >
+      Stress analysis of opening gap scenarios, specifically for leveraged ETFs
+      or strategies with next_bar_open fill assumption.
+    path: reports/harness/execution/{strategy}-gap-stress.json
+    format: json
+    required_fields:
+      - strategy_name
+      - scenarios
+      - max_adverse_gap_pct
+      - fill_model_gap_handling
+      - recommended_gap_filter
+
+  leveraged_etf_risk_note:
+    description: >
+      Written acknowledgment of leveraged ETF path-dependency and rebalance
+      decay risk, with proposed mitigations.
+    path: reports/harness/execution/{strategy}-leveraged-etf-risk.md
+    format: md
+    required_fields: []
+
+  paper_safety_review:
+    description: >
+      Safety review for paper_auto activation: lifecycle, kill switch, order
+      window, duplicate order policy, credential scope, audit linkage.
+    path: reports/harness/paper/{strategy}-paper-safety-review.json
+    format: json
+    required_fields:
+      - strategy_name
+      - lifecycle_status
+      - kill_switch_verified
+      - order_window
+      - duplicate_order_policy
+      - credential_scope
+      - signal_order_linkage
+
+  short_sample_caveat:
+    description: >
+      Written caveat for strategies with fewer than 252 trading days or
+      fewer than 30 trades in the reference backtest.
+    path: reports/research/{strategy}-short-sample-caveat.md
+    format: md
+    required_fields: []
+
+  backtest_forensics:
+    description: >
+      Checklist of lookahead, future-leak, overfit, multiple-testing, and
+      capacity risks identified in the reference backtest.
+    path: reports/harness/forensics/{strategy}-backtest-forensics.json
+    format: json
+    required_fields:
+      - strategy_name
+      - lookahead_check
+      - future_leak_check
+      - overfit_risk
+      - multiple_testing_count
+      - sample_data_caveats
+      - trade_count
+      - conclusion

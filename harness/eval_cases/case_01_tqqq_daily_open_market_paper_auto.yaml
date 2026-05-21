@@ -1,0 +1,54 @@
+id: case_01_tqqq_daily_open_market_paper_auto
+title: TQQQ daily open market paper_auto — naked order, no execution policy
+version: 1
+
+description: >
+  A daily strategy holding TQQQ uses fill_assumption=next_bar_open and
+  execution.mode=paper_auto with a naked DAY market order. No execution_policy
+  or source_cards artifact is present. This is the exact scenario that triggered
+  the skill-first harness engineering roadmap.
+
+spec_stub:
+  name: nasdaq_tqqq_daily_beta_router
+  lifecycle: research
+  universe:
+    symbols: [TQQQ, QQQ]
+  timeframe: daily
+  execution:
+    fill_assumption: next_bar_open
+    mode: paper_auto
+    broker: alpaca_paper
+    order_type: market
+  llm_review:
+    enabled: false
+
+artifacts_present: []
+
+expected:
+  risk_domains_detected:
+    - daily_open_execution
+    - leveraged_etf
+    - paper_auto
+    - broker_specific
+  required_skills:
+    - source-researcher
+    - execution-reality-reviewer
+    - paper-auto-safety-reviewer
+    - backtest-forensics
+  workflow_pass: true
+  research_pass: false
+  paper_ready_pass: false
+  blocking_rules_triggered:
+    - naked_market_order_must_be_justified
+    - compare_at_least_two_execution_methods
+    - leveraged_etf_paper_auto_requires_stress
+    - paper_auto_requires_harness_verify
+  expected_message_fragments:
+    - "execution_policy"
+    - "at least two execution methods"
+    - "price protection"
+
+rationale: >
+  Verifies that the harness detects daily_open_execution + leveraged_etf +
+  paper_auto domains and blocks research_pass and paper_ready_pass when no
+  execution artifacts exist.

@@ -1,0 +1,185 @@
+version: 1
+
+# Skill manifest maps skill names to their trigger conditions and primary outputs.
+# Used by oc harness plan to determine which skills should be invoked for a
+# given strategy, and by repo check to verify skill parity.
+#
+# Codex reads this file progressively — only skill metadata is loaded at start;
+# full SKILL.md is loaded when the skill is selected.
+
+skills:
+
+  strategy-research-orchestrator:
+    description: >
+      Orchestrates the full research workflow: spec → harness plan → capabilities
+      → source research → search space → trials → benchmark family → forensics →
+      execution reality → promotion → paper readiness.
+    triggers:
+      - user requests strategy creation, optimization, or evaluation
+      - user gives a natural-language trading idea
+      - user requests paper ready or paper automation
+      - user requests professional research or full review
+    primary_outputs:
+      - reports/harness/plans/{strategy}.json
+      - reports/research/{strategy}-research-brief.json
+      - reports/research/{strategy}-evidence-manifest.json
+    skill_path: .agents/skills/strategy-research-orchestrator/SKILL.md
+
+  source-researcher:
+    description: >
+      Performs mandatory web research for unstable external facts: broker API,
+      exchange rules, data provider specs, methodology papers, recent platform docs.
+      Generates source cards for every claim that affects strategy design.
+    triggers:
+      - any strategy needing broker / order type verification
+      - any strategy needing exchange auction rule verification
+      - any strategy referencing external data providers
+      - any strategy using backtest methodology claims
+      - risk domain broker_specific or daily_open_execution is active
+    primary_outputs:
+      - reports/harness/source_cards/{strategy}.jsonl
+    skill_path: .agents/skills/source-researcher/SKILL.md
+
+  execution-reality-reviewer:
+    description: >
+      Reviews order type, TIF, price protection, spread/gap filters, participation cap,
+      slippage stress, and TCA for strategies with daily open or paper_auto execution.
+      Compares at least two execution methods.
+    triggers:
+      - execution.mode == paper_auto
+      - fill_assumption in [next_bar_open, next_open]
+      - risk domain daily_open_execution or leveraged_etf is active
+      - user asks about order types, execution, slippage, or TCA
+    primary_outputs:
+      - reports/harness/execution/{strategy}-execution-policy.json
+      - reports/harness/execution/{strategy}-execution-reality.json
+      - reports/harness/execution/{strategy}-execution-reality.md
+    skill_path: .agents/skills/execution-reality-reviewer/SKILL.md
+
+  backtest-forensics:
+    description: >
+      Checks for lookahead, future-leak, overfit, multiple-testing, short sample,
+      low trade count, and sample data caveats. Required for parameter-optimized
+      strategies and before promotion.
+    triggers:
+      - strategy has adjustable parameters or uses an optimizer
+      - risk domain parameter_search is active
+      - promotion gate is being evaluated
+      - user asks about overfitting, PBO, DSR, or walk-forward
+    primary_outputs:
+      - reports/harness/forensics/{strategy}-backtest-forensics.json
+      - reports/harness/forensics/{strategy}-backtest-forensics.md
+    skill_path: .agents/skills/backtest-forensics/SKILL.md
+
+  data-capability-reviewer:
+    description: >
+      Evaluates data capability registry against strategy requirements. Flags
+      sample / fixture / cache-fallback data as non-paper-ready. Checks PIT
+      metadata for LLM/news/event/macro features.
+    triggers:
+      - new data source or timeframe added to strategy
+      - risk domain llm_or_news_signal is active
+      - user asks about data coverage, PIT, or feature packets
+      - capability.status == trial
+    primary_outputs:
+      - reports/harness/data/{strategy}-capability-review.json
+    skill_path: .agents/skills/data-capability-reviewer/SKILL.md
+
+  paper-auto-safety-reviewer:
+    description: >
+      Safety review for paper_auto activation: lifecycle, kill switch, order window,
+      duplicate order policy, credential scope, broker capability, audit linkage,
+      and harness verify status.
+    triggers:
+      - execution.mode == paper_auto being activated
+      - paper order submission flow
+      - runner or timer configuration changed
+      - risk domain paper_auto is active
+    primary_outputs:
+      - reports/harness/paper/{strategy}-paper-safety-review.json
+    skill_path: .agents/skills/paper-auto-safety-reviewer/SKILL.md
+
+  evidence-curator:
+    description: >
+      Periodic curation of source cards, evidence artifacts, and skill references.
+      Merges duplicates, flags stale sources, consolidates recurring lessons.
+    triggers:
+      - weekly review cycle
+      - every 20 strategy research runs
+      - repo check warns about source staleness
+      - user requests evidence cleanup
+    primary_outputs:
+      - reports/harness/curation/{date}-evidence-curation.md
+    skill_path: .agents/skills/evidence-curator/SKILL.md
+
+  # ── Existing skills (retained, not restructured) ──────────────────────────
+
+  capability-evaluator:
+    description: >
+      Evaluate market, event, macro, and news data capabilities before allowing
+      a strategy to depend on them.
+    triggers:
+      - new capability kind added to strategy
+      - capability.status == trial
+      - oc capability evaluate called
+    skill_path: .agents/skills/capability-evaluator/SKILL.md
+
+  python-backtest-writer:
+    description: >
+      Implement or update deterministic Python signal, scanner, and backtest
+      behavior for a StrategySpec.
+    triggers:
+      - strategy.lifecycle in [draft, research]
+      - user requests Python backtest implementation
+    skill_path: .agents/skills/python-backtest-writer/SKILL.md
+
+  strategy-designer:
+    description: >
+      Create or revise Open Composer StrategySpec YAML files from natural-language
+      trading ideas.
+    triggers:
+      - user gives a new trading idea
+      - user requests spec revision
+    skill_path: .agents/skills/strategy-designer/SKILL.md
+
+  risk-reviewer:
+    description: >
+      Review a candidate signal, strategy report, and market context for manual
+      or paper-trading risk.
+    triggers:
+      - signal generated and ready for review
+      - user requests risk review of a specific signal or report
+    skill_path: .agents/skills/risk-reviewer/SKILL.md
+
+  nautilus-trader-adapter:
+    description: >
+      Implement or update NautilusTrader-backed execution, backtest, and custom
+      data adapters for Open Composer StrategySpecs.
+    triggers:
+      - user requests NautilusTrader execution parity
+      - execution_policy references nautilus adapter
+    skill_path: .agents/skills/nautilus-trader-adapter/SKILL.md
+
+  pine-exporter:
+    description: >
+      Export TradingView Pine Script from an Open Composer StrategySpec.
+    triggers:
+      - user requests Pine Script export
+    skill_path: .agents/skills/pine-exporter/SKILL.md
+
+  signal-parity-reviewer:
+    description: >
+      Compare Python signal logs with Pine semantics and record parity risks.
+    triggers:
+      - Pine Script exported and Python signals diverge
+      - user requests parity check
+    skill_path: .agents/skills/signal-parity-reviewer/SKILL.md
+
+  weekly-reviewer:
+    description: >
+      Produce weekly reviews from backtest reports, signal logs, paper orders,
+      and journal entries.
+    triggers:
+      - weekly review cycle
+      - user requests weekly summary
+    skill_path: .agents/skills/weekly-reviewer/SKILL.md

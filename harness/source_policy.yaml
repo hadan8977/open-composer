@@ -1,0 +1,107 @@
+version: 1
+
+# Source policy defines when web research is mandatory and what source quality
+# is required. The source-researcher skill and oc harness verify use this to
+# determine whether existing source cards are sufficient.
+#
+# must_browse: true means a fresh web lookup is required; cannot rely on
+# training-data knowledge alone.
+# minimum_sources: minimum distinct source cards required.
+# staleness_days: source cards older than this are flagged as stale.
+
+source_requirements:
+
+  broker_order_types:
+    description: Order type, time_in_force, and session support by broker.
+    must_browse: true
+    minimum_sources: 1
+    staleness_days: 30
+    preferred_source_types:
+      - broker_official_docs
+    examples:
+      - Alpaca OPG / LOO support
+      - Alpaca DAY market order auction behavior
+      - Interactive Brokers MOO order routing
+
+  exchange_auction_rules:
+    description: Opening/closing auction mechanics, order imbalance, and session rules.
+    must_browse: true
+    minimum_sources: 1
+    staleness_days: 90
+    preferred_source_types:
+      - exchange_official_docs
+    examples:
+      - Nasdaq opening auction order types
+      - NYSE MOO / LOO cutoff times
+      - CBOE opening rotation rules
+
+  data_provider_specs:
+    description: Provider data coverage, feed type, bar construction, and SIP vs. proprietary feed.
+    must_browse: true
+    minimum_sources: 1
+    staleness_days: 60
+    preferred_source_types:
+      - provider_official_docs
+    examples:
+      - Alpaca IEX vs. SIP vs. Nasdaq Basic
+      - Longbridge US market data permissions
+      - Alpha Vantage news sentiment coverage
+
+  backtest_methodology:
+    description: Methodological claims about backtest design, statistics, or risk metrics.
+    must_browse: true
+    minimum_sources: 2
+    staleness_days: 365
+    preferred_source_types:
+      - paper
+      - platform_docs
+    examples:
+      - PBO / DSR formulas
+      - Walk-forward methodology
+      - Implementation shortfall definition
+
+  regulatory_rules:
+    description: FINRA, SEC, exchange, or regulatory order and reporting rules.
+    must_browse: true
+    minimum_sources: 1
+    staleness_days: 90
+    preferred_source_types:
+      - regulatory_docs
+    examples:
+      - PDT rule
+      - FINRA order type definitions
+      - Reg NMS best execution
+
+  software_library_api:
+    description: Current API, parameter names, or behavior of external libraries or platforms.
+    must_browse: true
+    minimum_sources: 1
+    staleness_days: 30
+    preferred_source_types:
+      - platform_docs
+    examples:
+      - NautilusTrader fill model parameters
+      - Alpaca SDK order submission
+      - QuantConnect Reality Modeling options
+
+  market_structure:
+    description: Market microstructure facts that can change (spread norms, auction participation, capacity).
+    must_browse: true
+    minimum_sources: 1
+    staleness_days: 30
+    preferred_source_types:
+      - exchange_official_docs
+      - industry_standard
+
+# Source types that are always acceptable without additional requirements.
+always_acceptable_source_types:
+  - paper             # academic papers are stable references
+  - regulatory_docs   # regulatory text changes slowly
+
+# Source types that must have staleness checked.
+staleness_checked_source_types:
+  - broker_official_docs
+  - exchange_official_docs
+  - provider_official_docs
+  - platform_docs
+  - industry_standard

@@ -1,0 +1,47 @@
+id: case_02_llm_signal_no_pit_packet
+title: LLM / news signal without PIT packet metadata
+version: 1
+
+description: >
+  A strategy uses an LLM sentiment factor (source: llm_feature) and enables
+  llm_review. No feature_packet_schema or pit_replay_evidence artifact is present.
+  This verifies the PIT-packet gate for alternative data.
+
+spec_stub:
+  name: nasdaq_llm_intraday_selector
+  lifecycle: research
+  timeframe: 15m
+  execution:
+    fill_assumption: next_bar_open
+    mode: manual
+  llm_review:
+    enabled: true
+  factors:
+    llm_sentiment:
+      source: llm_feature
+      description: LLM news sentiment score for the symbol
+
+artifacts_present: []
+
+expected:
+  risk_domains_detected:
+    - llm_or_news_signal
+  required_skills:
+    - source-researcher
+    - data-capability-reviewer
+  workflow_pass: true
+  research_pass: false
+  llm_contribution_pass: false
+  paper_ready_pass: false
+  blocking_rules_triggered:
+    - no_live_llm_call_inside_backtest
+    - llm_alpha_requires_quant_baseline
+  expected_message_fragments:
+    - "feature_packet_schema"
+    - "visible_at"
+    - "pit_replay_evidence"
+    - "marginal_lift"
+
+rationale: >
+  Verifies that llm_or_news_signal domain is detected and that missing PIT
+  artifacts block research_pass and llm_contribution_pass.

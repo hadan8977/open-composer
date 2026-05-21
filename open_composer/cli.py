@@ -4339,6 +4339,212 @@ def harness_check(
         raise typer.Exit(code=1)
 
 
+@harness_app.command("plan")
+def harness_plan(
+    spec: Path,
+    output: Annotated[
+        bool,
+        typer.Option(
+            "--output/--no-output", help="Write JSON+Markdown plan to reports/harness/plans/."
+        ),
+    ] = True,
+) -> None:
+    """Detect risk domains and required skills/artifacts for a StrategySpec.
+
+    Reads harness/risk_domains.yaml and harness/skill_manifest.yaml — no backtest runs.
+    Writes reports/harness/plans/{strategy}.json and .md when --output is set.
+    """
+    import json
+
+    from open_composer.harness.policy import (
+        blocking_rules_for_domains,
+        detect_risk_domains,
+        required_artifacts_for_domains,
+        required_skills_for_domains,
+    )
+    from open_composer.models.strategy_spec import load_strategy_spec
+
+    root = project_root()
+    spec_obj = load_strategy_spec(spec)
+    active_domains = detect_risk_domains(spec_obj, root)
+    artifacts = sorted(required_artifacts_for_domains(active_domains))
+    skills = sorted(required_skills_for_domains(active_domains))
+    rules = blocking_rules_for_domains(active_domains)
+
+    console.print(f"[bold]harness plan[/bold] strategy={spec_obj.name!r}")
+    console.print("")
+
+    if active_domains:
+        console.print("[bold]Risk domains detected:[/bold]")
+        for d in active_domains:
+            console.print(f"  • {d}")
+    else:
+        console.print("[dim]No risk domains detected (deterministic, non-paper strategy).[/dim]")
+
+    if skills:
+        console.print("\n[bold]Required skills:[/bold]")
+        for s in skills:
+            console.print(f"  • {s}")
+
+    if artifacts:
+        console.print("\n[bold]Required artifacts:[/bold]")
+        for a in artifacts:
+            console.print(f"  • {a}")
+
+    if rules:
+        console.print("\n[bold]Blocking rules:[/bold]")
+        for r in rules:
+            console.print(f"  • [{r.blocks}] {r.rule_id}")
+
+    plan = {
+        "strategy_name": spec_obj.name,
+        "spec_path": str(spec),
+        "risk_domains": active_domains,
+        "required_skills": skills,
+        "required_artifacts": artifacts,
+        "blocking_rules": [
+            {
+                "domain": r.domain_id,
+                "rule_id": r.rule_id,
+                "blocks": r.blocks,
+                "description": r.description,
+            }
+            for r in rules
+        ],
+    }
+
+    if output:
+        import datetime
+
+        plans_dir = root / "reports" / "harness" / "plans"
+        plans_dir.mkdir(parents=True, exist_ok=True)
+        json_path = plans_dir / f"{spec_obj.name}.json"
+        md_path = plans_dir / f"{spec_obj.name}.md"
+
+        json_path.write_text(json.dumps(plan, indent=2))
+
+        domain_lines = [f"- {d}" for d in active_domains] or ["- (none)"]
+        skill_lines = [f"- {s}" for s in skills] or ["- (none)"]
+        artifact_lines = [f"- {a}" for a in artifacts] or ["- (none)"]
+        rule_lines = [
+            f"- **{r.rule_id}** (blocks `{r.blocks}`): {r.description}" for r in rules
+        ] or ["- (none)"]
+        md_lines = [
+            f"# Harness Plan — {spec_obj.name}",
+            f"\nGenerated: {datetime.date.today()}",
+            "\n## Risk Domains\n",
+            *domain_lines,
+            "\n## Required Skills\n",
+            *skill_lines,
+            "\n## Required Artifacts\n",
+            *artifact_lines,
+            "\n## Blocking Rules\n",
+            *rule_lines,
+        ]
+        md_path.write_text("\n".join(md_lines) + "\n")
+
+        console.print(f"\n[green]plan written[/green] {json_path.relative_to(root)}")
+
+
+@harness_app.command("verify")
+def harness_verify(
+    spec: Path,
+    stage: Annotated[
+        str,
+        typer.Option("--stage", help="Lifecycle stage context (default: research)."),
+    ] = "research",
+) -> None:
+    """Verify that all required harness artifacts exist and are structurally complete.
+
+    Reads harness/risk_domains.yaml and harness/artifact_contracts.yaml.
+    Exits with code 1 when any required artifact is missing or fails schema check.
+    Writes reports/harness/verify/{strategy}.json.
+    """
+    import json
+
+    from open_composer.harness.policy import (
+        check_artifact,
+        detect_risk_domains,
+        required_artifacts_for_domains,
+    )
+    from open_composer.models.strategy_spec import load_strategy_spec
+
+    root = project_root()
+    spec_obj = load_strategy_spec(spec)
+    active_domains = detect_risk_domains(spec_obj, root)
+    required = sorted(required_artifacts_for_domains(active_domains))
+
+    console.print(f"[bold]harness verify[/bold] strategy={spec_obj.name!r} stage={stage!r}")
+    console.print("")
+
+    statuses = [check_artifact(a, spec_obj.name, root) for a in required]
+    blocked = [s for s in statuses if not s.present or not s.schema_ok]
+    warnings: list = []
+
+    for s in statuses:
+        if not s.present:
+            icon = "[red]✗[/red]"
+            detail = "missing"
+        elif not s.schema_ok:
+            icon = "[yellow]![/yellow]"
+            detail = f"missing fields: {', '.join(s.missing_fields)}"
+        else:
+            icon = "[green]✓[/green]"
+            detail = "ok"
+        console.print(f"  {icon} {s.name}: {detail}")
+
+    overall = "blocked" if blocked else "warning" if warnings else "ok"
+    console.print(f"\nstatus: {overall}")
+
+    verify_dir = root / "reports" / "harness" / "verify"
+    verify_dir.mkdir(parents=True, exist_ok=True)
+    result = {
+        "strategy_name": spec_obj.name,
+        "stage": stage,
+        "risk_domains": active_domains,
+        "required_artifacts": required,
+        "artifacts": [
+            {
+                "name": s.name,
+                "present": s.present,
+                "schema_ok": s.schema_ok,
+                "missing_fields": s.missing_fields,
+                "path": str(s.path),
+            }
+            for s in statuses
+        ],
+        "overall": overall,
+    }
+    out_path = verify_dir / f"{spec_obj.name}.json"
+    out_path.write_text(json.dumps(result, indent=2))
+    console.print(f"[green]verify written[/green] {out_path.relative_to(root)}")
+
+    if overall == "blocked":
+        raise typer.Exit(code=1)
+
+
+@harness_app.command("policy-list")
+def harness_policy_list() -> None:
+    """List all registered risk domains, required skills, and artifact contracts."""
+    from open_composer.harness.policy import load_artifact_contracts, load_risk_domains
+
+    domains = load_risk_domains()
+    contracts = load_artifact_contracts()
+
+    console.print("[bold]Risk Domains[/bold]")
+    for did, domain in domains.items():
+        console.print(f"  {did}")
+        if domain.required_skills:
+            console.print(f"    skills: {', '.join(domain.required_skills)}")
+        if domain.required_artifacts:
+            console.print(f"    artifacts: {', '.join(domain.required_artifacts)}")
+
+    console.print("\n[bold]Artifact Contracts[/bold]")
+    for name in sorted(contracts):
+        c = contracts[name]
+        console.print(f"  {name} ({c.format}) → {c.path_template}")
+
+
 def _project_relpath(value: str | None, root: Path) -> str | None:
     if not value:
         return None

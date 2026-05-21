@@ -1,0 +1,53 @@
+id: case_03_optimized_strategy_no_trial_ledger
+title: Parameter-optimized strategy without trial ledger
+version: 1
+
+description: >
+  A strategy was produced by parameter sweep / optimization but has no
+  trial_ledger, bounded_search_space, or walk_forward_report artifact.
+  The reported backtest metrics represent an overfitted upper bound.
+
+spec_stub:
+  name: nasdaq_momentum_optimized
+  lifecycle: research
+  timeframe: daily
+  parameters:
+    fast_window:
+      type: int
+      range: [5, 50]
+      step: 5
+    slow_window:
+      type: int
+      range: [20, 200]
+      step: 10
+    threshold:
+      type: float
+      range: [0.01, 0.05]
+      step: 0.005
+  execution:
+    fill_assumption: next_bar_open
+    mode: manual
+
+artifacts_present: []
+
+expected:
+  risk_domains_detected:
+    - parameter_search
+  required_skills:
+    - backtest-forensics
+  workflow_pass: true
+  research_pass: false
+  paper_ready_pass: false
+  blocking_rules_triggered:
+    - optimized_strategy_requires_trial_ledger
+    - optimized_strategy_requires_walk_forward
+  expected_message_fragments:
+    - "trial_ledger"
+    - "bounded_search_space"
+    - "walk_forward"
+    - "overfitting"
+
+rationale: >
+  Verifies that parameter_search domain is detected when spec.parameters
+  has adjustable ranges, and that research_pass is blocked without a
+  trial_ledger and walk_forward_report.

@@ -1,0 +1,49 @@
+id: case_05_intraday_unsupported_provider_timeframe
+title: Intraday strategy with provider that does not support required timeframe
+version: 1
+
+description: >
+  A 1-minute intraday strategy is configured to use a data provider that does
+  not list 1m in its supported_timeframes. The capability gate should block
+  workflow_pass or produce a hard-blocked status.
+
+spec_stub:
+  name: intraday_1m_longbridge_test
+  lifecycle: draft
+  timeframe: 1m
+  execution:
+    fill_assumption: next_bar_open
+    mode: manual
+  capabilities_used:
+    - id: market.longbridge_bars
+      kind: market
+      status: trial
+      supported_timeframes: [5m, 15m, 1h, daily, weekly]
+      paper_ready_timeframes: [5m, 15m, 1h, daily, weekly]
+
+# Note: longbridge_bars does support 1m per registry.yaml, but this eval case
+# uses a stub that intentionally omits 1m to test the timeframe gate.
+# In real usage, replace with a provider that genuinely lacks 1m support.
+
+artifacts_present: []
+
+expected:
+  risk_domains_detected: []
+  required_skills:
+    - data-capability-reviewer
+  workflow_pass: false
+  research_pass: false
+  paper_ready_pass: false
+  blocking_rules_triggered: []
+  gate_blocked: capability_evaluation
+  expected_message_fragments:
+    - "timeframe"
+    - "not supported"
+    - "1m"
+    - "provider"
+
+rationale: >
+  Verifies that the capability_evaluation gate catches a mismatch between
+  strategy timeframe and provider supported_timeframes, producing a blocked
+  result at workflow level. The harness should not silently allow a strategy
+  to proceed with an unsupported provider timeframe combination.

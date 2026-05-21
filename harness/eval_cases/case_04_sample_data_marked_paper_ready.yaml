@@ -1,0 +1,44 @@
+id: case_04_sample_data_marked_paper_ready
+title: Strategy backed only by sample / fixture data, attempted paper_ready promotion
+version: 1
+
+description: >
+  A strategy has been developed and tested only against local sample data
+  (strict_behavior: workflow_only). Someone attempts to set lifecycle=paper_ready
+  or activate paper_auto. The harness must block this.
+
+spec_stub:
+  name: demo_sample_strategy
+  lifecycle: promotion
+  timeframe: daily
+  execution:
+    fill_assumption: next_bar_open
+    mode: manual
+  capabilities_used:
+    - id: market.sample_ohlcv
+      kind: market
+      status: approved
+      strict_behavior: workflow_only
+      paper_ready_timeframes: []
+
+artifacts_present: []
+
+expected:
+  risk_domains_detected:
+    - sample_data_only
+  required_skills: []
+  workflow_pass: true
+  research_pass: true
+  paper_ready_pass: false
+  blocking_rules_triggered:
+    - sample_data_cannot_paper_ready
+  expected_message_fragments:
+    - "sample"
+    - "fixture"
+    - "paper_ready_timeframes"
+    - "approved live-data capability"
+
+rationale: >
+  Verifies that a strategy with only workflow_only capabilities cannot reach
+  paper_ready_pass, even if other gates pass. This prevents sample-data
+  strategies from being accidentally activated for paper trading.

@@ -1,0 +1,205 @@
+version: 1
+
+# Risk domains map strategy characteristics to required professional checks.
+# The Python harness reads this file to determine which gates, skills, and
+# artifacts are required for a given spec — rather than using a static
+# per-stage list.
+#
+# Triggers are evaluated against the loaded StrategySpec. If any trigger
+# matches, the domain is activated and its requirements apply.
+
+risk_domains:
+
+  # ── Daily open execution ────────────────────────────────────────────────────
+  daily_open_execution:
+    description: >
+      Daily strategy whose intended fill is the next regular-session open.
+      Naked DAY market orders expose the strategy to opening gap, spread,
+      and auction slippage risks that the backtest's next_bar_open assumption
+      does not model.
+    triggers:
+      timeframe: [daily]
+      fill_assumption: [next_bar_open, next_open]
+    required_skills:
+      - source-researcher
+      - execution-reality-reviewer
+    required_artifacts:
+      - source_cards
+      - execution_policy
+      - execution_reality_report
+    blocking_rules:
+      - id: naked_market_order_must_be_justified
+        description: >
+          A DAY market order without price protection requires a written
+          justification in execution_policy explaining why the risk is
+          acceptable.
+        blocks: research_pass
+      - id: compare_at_least_two_execution_methods
+        description: >
+          Execution policy must compare at least two order styles
+          (e.g. DAY market vs. MOO/OPG vs. LOO/OPG).
+        blocks: research_pass
+
+  # ── Leveraged / inverse ETF ─────────────────────────────────────────────────
+  leveraged_etf:
+    description: >
+      Strategy holds leveraged or inverse ETFs. These instruments have
+      path-dependency, amplified gap risk, and daily rebalance decay that
+      require explicit stress analysis.
+    triggers:
+      symbol_patterns: [TQQQ, SQQQ, UPRO, SPXL, SPXS, SOXL, SOXS, TECL, TECS,
+                        LABU, LABD, NUGT, DUST, JNUG, JDST, FAS, FAZ, ERX, ERY]
+    required_skills:
+      - execution-reality-reviewer
+      - backtest-forensics
+    required_artifacts:
+      - gap_stress_report
+      - leveraged_etf_risk_note
+    blocking_rules:
+      - id: leveraged_etf_paper_auto_requires_stress
+        description: >
+          paper_auto activation for a leveraged ETF strategy requires a
+          completed gap_stress_report and leveraged_etf_risk_note.
+        blocks: paper_ready_pass
+
+  # ── Parameter search / optimization ─────────────────────────────────────────
+  parameter_search:
+    description: >
+      Strategy has adjustable parameters or was produced by an optimizer.
+      Without a bounded search space and trial ledger, the reported backtest
+      metrics represent an upper bound, not a realistic expectation.
+    triggers:
+      has_adjustable_parameters: true
+      has_optimizer_output: true
+    required_skills:
+      - backtest-forensics
+    required_artifacts:
+      - bounded_search_space
+      - trial_ledger
+      - candidate_set
+      - walk_forward_report
+    blocking_rules:
+      - id: optimized_strategy_requires_trial_ledger
+        description: >
+          A strategy with optimized parameters must have a trial_ledger
+          recording each parameter set trialed, its metrics, and its
+          selection / rejection reason.
+        blocks: research_pass
+      - id: optimized_strategy_requires_walk_forward
+        description: >
+          Walk-forward or OOS evidence must be present to confirm that the
+          selected parameters generalize beyond the training window.
+        blocks: research_pass
+
+  # ── LLM / news / event / macro signal ───────────────────────────────────────
+  llm_or_news_signal:
+    description: >
+      Strategy uses LLM inference, news sentiment, calendar events, or macro
+      series as a factor or signal gate. Without point-in-time (PIT) packets,
+      these inputs create future-leak in backtests and undefined behavior in
+      live paper execution.
+    triggers:
+      required_capability_kinds: [llm, news, event, macro]
+      llm_review_enabled: true
+    required_skills:
+      - source-researcher
+      - data-capability-reviewer
+    required_artifacts:
+      - feature_packet_schema
+      - pit_replay_evidence
+      - marginal_lift_report
+      - missing_modality_robustness_report
+    blocking_rules:
+      - id: no_live_llm_call_inside_backtest
+        description: >
+          LLM and news calls must be replayed from PIT packets during backtest;
+          live API calls inside the backtest loop are prohibited.
+        blocks: research_pass
+      - id: llm_alpha_requires_quant_baseline
+        description: >
+          An LLM or news-driven strategy must include a deterministic
+          (non-LLM) baseline and a marginal_lift_report showing additive value.
+        blocks: research_pass
+
+  # ── Paper automation ─────────────────────────────────────────────────────────
+  paper_auto:
+    description: >
+      Strategy is configured for paper_auto execution mode. Automated order
+      submission requires a complete execution safety chain.
+    triggers:
+      execution_mode: [paper_auto]
+    required_skills:
+      - paper-auto-safety-reviewer
+      - execution-reality-reviewer
+    required_artifacts:
+      - execution_policy
+      - execution_reality_report
+      - paper_safety_review
+    blocking_rules:
+      - id: paper_auto_requires_harness_verify
+        description: >
+          paper_auto activation is blocked until oc harness verify passes for
+          this spec. The verify output must be present in
+          reports/harness/verify/.
+        blocks: paper_ready_pass
+      - id: paper_order_must_link_signal
+        description: >
+          Every paper order must record signal_id, spec_version, spec_hash,
+          and execution_policy_id for audit traceability.
+        blocks: paper_ready_pass
+
+  # ── Broker-specific ──────────────────────────────────────────────────────────
+  broker_specific:
+    description: >
+      Strategy targets a specific broker API. Broker capabilities, order types,
+      and paper-fill semantics vary and must be verified against current
+      official documentation.
+    triggers:
+      broker: [alpaca_paper, alpaca_live, longbridge]
+    required_skills:
+      - source-researcher
+    required_artifacts:
+      - source_cards
+    blocking_rules:
+      - id: broker_order_type_must_be_sourced
+        description: >
+          Any order type or time_in_force value used in execution_policy must
+          have a corresponding source card pointing to official broker docs.
+        blocks: research_pass
+
+  # ── Short sample / low trade count ──────────────────────────────────────────
+  short_sample:
+    description: >
+      Backtest window is below 252 trading days or total trade count is below
+      30. Results may be statistically unreliable.
+    triggers:
+      backtest_days_lt: 252
+      trade_count_lt: 30
+    required_skills:
+      - backtest-forensics
+    required_artifacts:
+      - short_sample_caveat
+    blocking_rules:
+      - id: short_sample_cannot_research_pass_without_caveat
+        description: >
+          A short-sample backtest requires a written short_sample_caveat
+          documenting sample limitations before research_pass is granted.
+        blocks: research_pass
+
+  # ── Sample / fixture data ────────────────────────────────────────────────────
+  sample_data_only:
+    description: >
+      Strategy has only been tested against sample or fixture data
+      (strict_behavior: workflow_only). Such evidence cannot support
+      paper readiness.
+    triggers:
+      all_capabilities_workflow_only: true
+    required_skills: []
+    required_artifacts: []
+    blocking_rules:
+      - id: sample_data_cannot_paper_ready
+        description: >
+          A strategy backed only by sample or fixture data cannot reach
+          paper_ready_pass. At least one approved live-data capability
+          with paper_ready_timeframes coverage is required.
+        blocks: paper_ready_pass
