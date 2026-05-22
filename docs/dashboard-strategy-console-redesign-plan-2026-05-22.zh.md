@@ -16,6 +16,8 @@ Open Composer 目前的核心能力已经不只是“运行几条 CLI 命令”�
 - Product Service 负责状态机、任务编排、上下文编译、迭代控制和确定性 paper gate。
 - Codex / Claude Code / Claude API 只作为 Worker Runtime，负责生成、修改、验证和产出结构化证据。
 - 模拟盘数据直接在 Dashboard 展示；实盘相关信息仅做只读通知和事件展示，不提供真钱写入。
+- 迭代默认支持异步自动推进: 用户可以启动多个策略项目，让系统按预算和停止条件运行，完成、阻塞或超预算时再通知用户。
+- Worker 输出不被直接信任。Product Service 必须用确定性 harness verify 对 Worker 自报的 gate、artifact 和路径做独立核验。
 
 不应另起一个独立 UI。应保留现有 Dashboard 的视觉风格、登录、远程代理、command plan/run、通知和 catalog 基础，把其信息架构从 catalog 面板升级为 Strategy Console。
 
@@ -31,6 +33,7 @@ Open Composer 目前的核心能力已经不只是“运行几条 CLI 命令”�
 4. Dashboard 更像 `StrategySpec` 和报告的 catalog，不像一个可以直接推进策略生命周期的产品工作台。
 5. 用户需要到第三方 broker 网站查看模拟盘状态，Open Composer 没有形成完整的实时操作视图。
 6. 实盘相关事件只能依赖外部通知或第三方界面，缺少统一的只读通知流。
+7. 慢研究任务要求用户守在浏览器前逐轮决策，无法高效批量运行多个策略想法。
 
 ### 1.2 产品问题
 
@@ -42,6 +45,8 @@ Open Composer 已经有强 Harness，但缺少产品层对象。现在系统中�
 - 缺少每轮优化的统一摘要。
 - 缺少 Dashboard 级状态机和按钮权限模型。
 - 缺少 paper/live 统一监控视图。
+- 缺少 Worker 输出和 Harness 真相之间的对账机制。
+- 缺少成本预算、锁心跳、取消和 memory 压缩机制。
 
 ### 1.3 设计目标
 
@@ -53,6 +58,7 @@ Open Composer 已经有强 Harness，但缺少产品层对象。现在系统中�
   -> 生成 StrategyProject
   -> 生成或更新 StrategySpec
   -> 自动运行受控研究和优化
+  -> Product Service 独立核验 Worker 产物
   -> 展示证据、阻塞项和下一步动作
   -> 在 paper_ready_pass 后由用户二次确认进入模拟盘
   -> 在 Dashboard 内持续监控 paper/live 事件
@@ -81,6 +87,12 @@ Open Composer 已经有强 Harness，但缺少产品层对象。现在系统中�
 
 6. **所有高风险动作都有确定性 gate 和用户确认。**
    `Active Paper` 必须满足 `paper_ready_pass=true`，并要求用户二次确认。真钱 broker write 永远不在 MVP 范围内。
+
+7. **慢任务默认异步运行。**
+   用户启动策略生成或优化后可以离开页面。系统按 `IterationPolicy` 自动推进到停止条件、阻塞或预算上限，再通过 Dashboard、Telegram 或 email 通知用户。
+
+8. **Worker 是产物生成者，不是真相裁判。**
+   Worker 自报的 `RunSummary` 只能作为候选结果。Product Service 必须独立检查 artifact 存在性、schema、gate 和 harness verify 结果，再决定是否接受本轮输出。
 
 ### 2.2 用户主导航
 
@@ -255,9 +267,35 @@ Retired <- Monitoring <- Active Paper <- Paper-Ready Review
 用户流程:
 
 1. 用户进入 Build。
-2. 输入自然语言策略需求。
-3. 系统生成 `InteractionPlan` 草案。
-4. UI 展示理解结果:
+2. 选择 starter template 或直接输入自然语言策略需求。
+3. 系统用确定性规则判断走 fast path 还是 clarify path。
+4. 系统生成 `InteractionPlan` 记录。
+5. Dashboard 刷新项目状态和下一步建议。
+
+Fast path:
+
+- 输入包含标的或 universe、时间周期、方向或策略风格。
+- 系统不强制二次确认，直接创建 Project 并开始生成。
+- `InteractionPlan` 仍落盘，作为可审计记录。
+
+Clarify path:
+
+- 输入缺少关键约束，或包含互相冲突的要求。
+- UI 只追问 1-2 个具体问题。
+- 用户回答后立即创建 Project。
+
+Starter templates:
+
+| 模板 | 预填内容 |
+|---|---|
+| QQQ 日内动量 | NASDAQ ETF、intraday momentum、manual signal、严格成本检查 |
+| S&P 行业轮动 | sector/theme universe、daily/weekly rotation、benchmark family |
+| 美债-美股配置 | TLT/SPY/QQQ 风险切换、低换手、drawdown 控制 |
+| 杠杆 ETF 趋势 | TQQQ/SQQQ 或 LETF trend、leveraged ETF 风险域 |
+| 做空风险研究 | short/long-short research、禁止默认 paper_auto |
+
+InteractionPlan 预览只在 clarify path 或用户点击“查看计划”时展开。预览内容:
+
    - 标的 / universe
    - 时间周期
    - 策略风格
@@ -266,12 +304,8 @@ Retired <- Monitoring <- Active Paper <- Paper-Ready Review
    - 默认数据源
    - 默认迭代轮数
    - 已识别的不确定问题
-5. 用户确认或补充。
-6. 系统创建 `StrategyProject`。
-7. Worker 生成 `StrategySpec draft`、验证、报告和第一轮 `RunSummary`。
-8. Dashboard 刷新项目状态和下一步建议。
 
-用户看到的是“计划确认 -> 运行进度 -> 结果摘要”，不是原始 Prompt。
+用户看到的是“输入或选模板 -> 自动生成或少量澄清 -> 运行进度 -> 结果摘要”，不是原始 Prompt。
 
 ### 2.8 优化迭代流程
 
@@ -282,9 +316,28 @@ Retired <- Monitoring <- Active Paper <- Paper-Ready Review
 3. 点击继续优化。
 4. 系统根据 `IterationPolicy` 和最新 `RunSummary` 生成下一轮计划。
 5. 用户可补充一句改进方向，例如“减少参数，不要扩大 universe”。
-6. Worker 执行一轮优化。
-7. 系统写入新的 `RunSummary`。
-8. 达到停止条件时自动停止，并显示停止原因。
+6. 系统按 `user_engagement_mode` 决定只跑一轮，还是自动继续直到停止条件。
+7. Worker 执行一轮优化。
+8. Product Service 独立核验 Worker 输出。
+9. 系统写入 verified `RunSummary`。
+10. 达到停止条件时自动停止，并显示停止原因。
+
+默认交互模式:
+
+```yaml
+user_engagement_mode:
+  type: auto_continue_until_stop
+  notification_channels:
+    - dashboard
+    - telegram
+  notify_on:
+    - round_complete
+    - stop_condition_met
+    - blocker_encountered
+    - budget_exhausted
+```
+
+用户可以切换为 `notify_and_wait`。该模式下每轮结束后暂停等待用户选择继续、调整或停止。
 
 停止原因必须是结构化值:
 
@@ -294,7 +347,10 @@ Retired <- Monitoring <- Active Paper <- Paper-Ready Review
 - `overfit_risk_high`
 - `paper_ready_blocked_by_data_or_execution`
 - `worker_failed`
+- `worker_self_report_mismatch`
 - `user_stopped`
+
+每个停止原因必须写入 `RunSummary.stop_reason`，并在 Project 页面显示为状态卡。
 
 ### 2.9 Live Ops 设计
 
@@ -332,21 +388,6 @@ reports/paper/alerts.json
 
 #### Live Notifications
 
-### 2.10 现状对比和改造方向
-
-| 当前模块 | 当前定位 | 问题 | 改造后定位 |
-|---|---|---|---|
-| `Monitor / Overview` | paper 和系统概览 | 缺少项目级待处理事项 | 全局运行健康、用户待确认事项、paper/live 告警 |
-| `Strategies / Library` | `StrategySpec` catalog | 以 spec 为中心，缺少用户项目对象 | `StrategyProject` 列表，legacy spec 作为 fallback |
-| `StrategyDetail` | spec、backtest、signal、version、audit | 信息多但缺少状态机和下一步动作 | Project 详情页，固定展示 thesis、evidence、gate、iteration、live |
-| `Research` | research runs 和 decision cards | 与策略项目和用户操作脱节 | Evidence 工作台，服务于 Project 的晋升和迭代决策 |
-| `Activity` | signals、orders、reviews、audit | paper/live/worker/notification 混杂 | 统一事件流，支持过滤、acknowledge 和来源回链 |
-| `Dashboard command` | 本地/远程受控命令 | 以底层 action 为中心 | 作为 Product Service mutation 的安全执行层 |
-| `notifications` | Telegram/log 通知 | 事件类型不够覆盖 live ops | 产品层事件 inbox，Telegram/email 只订阅筛选后的事件 |
-| `paper_controls` | paper 状态和 kill switch | UI 展示不够完整 | Live Ops 的 paper read model 和安全控制源 |
-
-改造原则是渐进替换: 先让 Dashboard catalog 能读取 Project，再把旧 strategy catalog 收进 Project detail 的 Spec/Advanced tab，避免一次性破坏现有可用界面。
-
 实盘相关内容在 MVP 中只做只读通知:
 
 - broker alert
@@ -365,6 +406,21 @@ reports/notifications/log.jsonl
 ```
 
 Telegram / email 只订阅产品层事件，不订阅 worker 内部日志。实盘通知可以展示在 Dashboard，但不触发实盘下单。
+
+### 2.10 现状对比和改造方向
+
+| 当前模块 | 当前定位 | 问题 | 改造后定位 |
+|---|---|---|---|
+| `Monitor / Overview` | paper 和系统概览 | 缺少项目级待处理事项 | 全局运行健康、用户待确认事项、paper/live 告警 |
+| `Strategies / Library` | `StrategySpec` catalog | 以 spec 为中心，缺少用户项目对象 | `StrategyProject` 列表，legacy spec 作为 fallback |
+| `StrategyDetail` | spec、backtest、signal、version、audit | 信息多但缺少状态机和下一步动作 | Project 详情页，固定展示 thesis、evidence、gate、iteration、live |
+| `Research` | research runs 和 decision cards | 与策略项目和用户操作脱节 | Evidence 工作台，服务于 Project 的晋升和迭代决策 |
+| `Activity` | signals、orders、reviews、audit | paper/live/worker/notification 混杂 | 统一事件流，支持过滤、acknowledge 和来源回链 |
+| `Dashboard command` | 本地/远程受控命令 | 以底层 action 为中心 | 作为 Product Service mutation 的安全执行层 |
+| `notifications` | Telegram/log 通知 | 事件类型不够覆盖 live ops | 产品层事件 inbox，Telegram/email 只订阅筛选后的事件 |
+| `paper_controls` | paper 状态和 kill switch | UI 展示不够完整 | Live Ops 的 paper read model 和安全控制源 |
+
+改造原则是渐进替换: 先让 Dashboard catalog 能读取 Project，再把旧 strategy catalog 收进 Project detail 的 Spec/Advanced tab，避免一次性破坏现有可用界面。
 
 ## 3. 终端产品结构设计
 
@@ -424,6 +480,8 @@ current_spec_path: strategy_specs/drafts/qqq_daily_trend.yaml
 current_spec_hash: abc123
 iteration_policy_path: projects/qqq-daily-trend/iteration-policy.yaml
 latest_run_summary_path: projects/qqq-daily-trend/runs/round-003.yaml
+cumulative_cost_usd: 12.4
+active_lock_path: projects/qqq-daily-trend/.lock
 gate_summary:
   workflow_pass: true
   research_pass: false
@@ -446,6 +504,7 @@ interaction_id: interact_20260522T120000Z
 project_id: qqq-daily-trend
 user_intent: "Build a conservative QQQ daily trend strategy."
 task_type: create_strategy
+path_type: fast
 normalized_objective: "Research a low-turnover QQQ daily trend-following strategy."
 constraints:
   - manual_signal_until_paper_ready
@@ -456,6 +515,12 @@ questions:
   - "Should the strategy allow leveraged ETFs?"
 confirmed_by_user: true
 ```
+
+`path_type` 可取:
+
+- `fast`: 输入足够明确，直接创建 Project。
+- `clarify`: 缺少关键约束，先追问。
+- `manual_review`: 高风险或冲突需求，需要用户显式确认。
 
 #### IterationPolicy
 
@@ -468,6 +533,21 @@ schema_version: 1
 max_rounds: 5
 max_runtime_minutes: 90
 min_trade_count: 30
+user_engagement_mode:
+  type: auto_continue_until_stop
+  notification_channels:
+    - dashboard
+    - telegram
+  notify_on:
+    - round_complete
+    - stop_condition_met
+    - blocker_encountered
+    - budget_exhausted
+memory_compaction_strategy: semantic_dedup
+budget:
+  max_cost_usd_per_project: 25.0
+  max_cost_usd_per_round: 8.0
+  on_budget_exhausted: stop
 required_benchmarks:
   - same_symbol_buy_hold
   - equal_weight_universe
@@ -484,12 +564,12 @@ targets:
   min_oos_sharpe: 0.8
   max_drawdown_below_benchmark: true
   cost_stress_survives: true
-model_routing:
-  draft: balanced
-  iteration: balanced
-  promotion_review: deep_review
-  paper_readiness: deep_review
+worker_config:
+  provider: codex
+  model: default
 ```
+
+本方案不要求复杂模型路由。`worker_config` 使用一个默认模型/worker 配置即可；后续如需降低成本，可在不改变产品语义的前提下增加更细粒度路由。
 
 #### RunSummary
 
@@ -506,6 +586,7 @@ started_at: 2026-05-22T12:00:00Z
 completed_at: 2026-05-22T12:40:00Z
 worker_provider: codex
 task_type: strategy_optimization
+context_pack_hash: sha256:abc123
 spec_before_hash: old123
 spec_after_hash: new456
 changed_paths:
@@ -516,20 +597,34 @@ metrics:
   oos_sharpe: 0.7
   max_drawdown_pct: 8.4
   trade_count: 42
-gate_summary:
+worker_self_reported_gate:
+  workflow_pass: true
+  research_pass: true
+  llm_contribution_pass: null
+  paper_ready_pass: false
+verified_gate:
   workflow_pass: true
   research_pass: false
   llm_contribution_pass: null
   paper_ready_pass: false
+verification_mismatch: true
 blockers:
+  - worker_self_report_mismatch
   - oos_sharpe_below_target
 warnings:
   - walk_forward_decay
 stop_reason: null
+cost_usd: 3.42
+api_tokens:
+  input: 12450
+  output: 3210
+  cache_read: 0
 next_recommended_action: "Reduce parameter count and retest OOS."
 artifact_paths:
   report: reports/research/qqq_daily_trend-round-003.md
 ```
+
+`verified_gate` 是 Product Service 独立核验后的结果，才允许回填到 `StrategyProject.gate_summary`。`worker_self_reported_gate` 仅用于对账和诊断。
 
 ### 3.3 Dashboard read model
 
@@ -609,8 +704,15 @@ CLI 是备用入口和 worker 接口，不是普通用户的主入口。
 
 同一个 Project 同时只允许一个 mutation job:
 
-```text
-projects/{project}/.lock
+```json
+{
+  "acquired_at": "2026-05-22T12:00:00Z",
+  "ttl_seconds": 1800,
+  "worker_id": "worker_abc123",
+  "heartbeat_at": "2026-05-22T12:05:00Z",
+  "cancel_requested": false,
+  "task_type": "strategy_optimization"
+}
 ```
 
 读操作不加锁。写操作必须:
@@ -621,6 +723,14 @@ projects/{project}/.lock
 4. 写 artifact。
 5. 写 audit event。
 6. 释放锁。
+
+锁必须支持 TTL、heartbeat 和 cancel:
+
+- Worker 每分钟更新 `heartbeat_at`。
+- Product Service watcher 发现 heartbeat 超时后，把 Project 标记为 `Blocked`，写入 `worker_heartbeat_timeout`，并释放锁。
+- 用户点击停止时，Product Service 设置 `cancel_requested=true`。
+- Worker 必须在每个长步骤之间检查 `cancel_requested`，优雅终止并写入 `user_stopped`。
+- 锁文件本身不能作为业务状态唯一来源；Project 状态仍以 `project.yaml` 为准。
 
 ### 4.2 Worker 编排
 
@@ -649,6 +759,28 @@ expected_outputs:
 
 Worker 的输出必须结构化。自由文本只能作为说明，不能作为状态迁移依据。
 
+#### Worker 输出对账
+
+Worker 完成后，Product Service 必须独立核验:
+
+1. `changed_paths` 是否存在、非空且在 workspace 内。
+2. `RunSummary` 是否符合 schema。
+3. 必需 artifact 是否满足 `harness/artifact_contracts.yaml`。
+4. `StrategySpec` 是否能加载并通过 spec validation。
+5. 是否能运行确定性 harness verify。
+6. Worker 自报 gate 是否和 verified gate 一致。
+
+对账规则:
+
+```text
+worker_self_reported_gate != verified_gate
+  -> Project.state = Blocked
+  -> blocker += worker_self_report_mismatch
+  -> 不把 Worker 自报 gate 回填到 Project
+```
+
+只有 verified `RunSummary` 可以驱动状态迁移。Worker 是产物生成者，Harness verify 是真相裁判。
+
 ### 4.3 Context Compiler
 
 Context Compiler 解决“每次都要让 Agent 读项目”的问题。
@@ -671,6 +803,21 @@ Context Compiler 解决“每次都要让 Agent 读项目”的问题。
 - 默认注入摘要和 hash，不无脑注入全文。
 - 只有当前任务需要时才附关键原文片段。
 - 上下文包必须落盘，便于复现。
+- 使用一个默认 worker/model 配置即可；prompt caching 和多模型路由是成本优化，不是 P0-P3 的必要产品语义。
+- 如果所用模型或 SDK 支持 prompt caching，Context Compiler 可以把稳定规则摘要、Project 状态和本轮任务分层输出；不支持时仍按普通上下文包运行。
+
+### 4.3.1 Project Memory Compaction
+
+`memory.md` 用于跨轮保留关键经验，不应无限增长。它必须在 P3 进入核心实现，而不是后续优化。
+
+默认策略:
+
+- 保留最近 2 轮完整摘要。
+- 历史轮只保留 key lessons、失败路径、有效参数区间、永久 blocker。
+- 每轮结束后触发 compaction。
+- `memory.md` 建议控制在 1KB 左右；超限时 Product Service 标 warning，但不静默截断。
+
+压缩可以由当前默认 worker/model 完成，但输出必须结构化，并由 Product Service 校验字段。
 
 ### 4.4 Iteration Controller
 
@@ -678,6 +825,7 @@ Iteration Controller 每轮开始前检查:
 
 - 是否超过 `max_rounds`。
 - 是否超过 `max_runtime_minutes`。
+- 是否超过 `budget.max_cost_usd_per_project` 或 `budget.max_cost_usd_per_round`。
 - 是否有正在运行的 job。
 - 是否存在未解决 blocker。
 - 是否满足停止条件。
@@ -690,8 +838,12 @@ Iteration Controller 每轮开始前检查:
 - 是否出现高过拟合风险。
 - 是否因数据或执行阻塞 paper-ready。
 - 是否需要停止或建议下一轮。
+- 是否需要压缩 memory。
+- 是否需要发送通知。
 
-判断结果写入 `RunSummary.stop_reason` 和 `StrategyProject.blockers`。
+判断结果写入 `RunSummary.stop_reason`、`StrategyProject.blockers`、`StrategyProject.cumulative_cost_usd` 和通知事件。
+
+Product Service 必须记录每轮估算成本和实际成本。无法从 provider 获取精确 token 时，也要记录估算成本和估算方法。预算耗尽时触发 `budget_exhausted`，按 policy 选择停止或通知等待。
 
 ### 4.5 Dashboard 前端实现
 
@@ -802,9 +954,12 @@ GET  /api/live/notifications
 - schema 校验: 必填字段、枚举、路径必须 workspace-relative。
 - 状态机测试: 合法迁移通过，非法迁移 blocked。
 - Project CRUD 测试: create/list/show/archive/import legacy spec。
-- IterationPolicy 测试: round budget、runtime budget、stop condition。
+- Project lock 测试: TTL 超时、heartbeat 更新、cancel_requested、orphan lock recovery。
+- IterationPolicy 测试: round budget、runtime budget、stop condition、user_engagement_mode、budget、memory_compaction_strategy。
 - RunSummary 测试: 缺少 gate 或 artifact 时不能推进状态。
+- Worker 对账测试: 自报 gate 与 verified gate 不一致时进入 Blocked。
 - Context Compiler 测试: 输出包含 required hash，且不会泄露无关大文件。
+- Memory compaction 测试: 保留最近轮次和历史 key lessons，不静默截断。
 - Live read model 测试: paper snapshot stale、缺 account、reconciliation warning。
 - Notification 测试: 产品层事件进入 log，Telegram/email 策略可 dry run。
 
@@ -813,7 +968,9 @@ Dashboard 测试:
 - catalog fixture 包含 Project、legacy spec、paper status、notifications。
 - Project list 能展示 empty、running、blocked、active paper、retired。
 - Project detail 在不同状态下只显示允许按钮。
-- Build 页面能生成 plan preview，不直接执行 worker。
+- Build 页面支持 starter templates、fast path 和 clarify path。
+- fast path 创建 Project 后能异步启动 worker。
+- Iterate 页面能显示 auto_continue_until_stop、预算、取消和停止原因。
 - Live 页面能展示 stale warning 和 kill switch 状态。
 - Red action 必须出现确认流程。
 
@@ -826,6 +983,9 @@ Dashboard 测试:
 5. `paper_ready_pass=false` 时无法进入 Active Paper。
 6. 模拟盘账户、持仓、订单和告警能在 Live 页面看到。
 7. 实盘通知只读展示，不出现真钱下单入口。
+8. 用户可以一次启动多个 Project，它们能在后台自动运行到停止条件。
+9. Worker 漏跑必需 gate 或虚报 artifact 时，系统会阻塞而不是误晋升。
+10. 超过预算、取消请求、心跳超时都能产生明确状态和通知。
 
 ## 5. 分阶段计划
 
@@ -838,6 +998,7 @@ Dashboard 测试:
 - 新增 4 个 Pydantic schema。
 - 新增 `projects/` 文件读写和路径校验。
 - 新增状态机和状态迁移测试。
+- 新增 Project lock schema，支持 TTL、heartbeat、cancel_requested。
 - 新增 `oc project list/show/create`。
 - Dashboard catalog 读取 Project。
 
@@ -846,6 +1007,7 @@ Dashboard 测试:
 - 无 UI 时也能创建、读取、验证 Project。
 - Project 能引用 StrategySpec。
 - 状态迁移非法时被阻止。
+- 孤儿锁能被检测，取消请求能落盘。
 
 ### P1: Strategy Console MVP
 
@@ -873,25 +1035,35 @@ Dashboard 测试:
 
 - 新增 Build 页面。
 - 用户输入自然语言。
-- 生成 InteractionPlan 草案。
-- 用户确认后创建 Project 和 agent request。
+- 支持 starter templates。
+- 用确定性规则选择 fast path 或 clarify path。
+- 生成 InteractionPlan 记录。
+- fast path 直接创建 Project 和 agent request。
+- clarify path 最多追问 1-2 个问题。
 - Worker 完成后写 RunSummary。
 
 验收:
 
 - 用户不需要写 Prompt 模板。
 - 每次创建都有可复查 InteractionPlan。
+- 明确输入不会被强制二次确认。
+- 模糊输入不会被盲目执行。
 - 失败会进入 Blocked 并显示原因。
 
 ### P3: Iteration Controller
 
-目标: 支持受控优化迭代。
+目标: 支持可长期运行、可取消、可对账、可预算控制的优化迭代。
 
 任务:
 
 - 实现 IterationPolicy。
 - 实现 round budget 和 stop conditions。
-- 实现继续优化、停止、调整方向。
+- 实现 `user_engagement_mode`: `auto_continue_until_stop` 和 `notify_and_wait`。
+- 实现继续优化、停止、调整方向和优雅取消。
+- 实现 Worker 输出对账: artifact、schema、harness verify、gate mismatch。
+- 实现 memory compaction。
+- 实现成本预算和 `budget_exhausted` 触发。
+- 实现 lock watcher，处理 heartbeat timeout 和 orphan lock。
 - Dashboard 显示轮次历史和停止原因。
 
 验收:
@@ -899,6 +1071,11 @@ Dashboard 测试:
 - 不能无限优化。
 - 到达停止条件会自动停。
 - 停止原因结构化记录。
+- 用户不守着浏览器也能让多个 Project 自动运行到停止条件。
+- Worker 自报 gate 和 verified gate 不一致时进入 Blocked。
+- 超预算会停止或通知等待。
+- 用户点击停止后 Worker 能在 checkpoint 优雅退出。
+- `memory.md` 不会无限增长，也不会静默丢失关键经验。
 
 ### P4: Live Ops
 
@@ -989,6 +1166,9 @@ Dashboard 测试:
 - 缺少必需 artifact 时 Project 进入 Blocked。
 - UI 显示失败阶段和可重试动作。
 - 不用自由文本驱动状态迁移。
+- Product Service 独立运行 artifact/schema/harness verify 对账。
+- Worker 自报 gate 与 verified gate 不一致时标记 `worker_self_report_mismatch`。
+- 只有 verified `RunSummary` 可以驱动 Project 状态迁移。
 
 ### 6.6 并发冲突
 
@@ -996,11 +1176,23 @@ Dashboard 测试:
 
 应对:
 
-- Project 级写锁。
+- Project 级写锁，包含 TTL、heartbeat 和 cancel_requested。
 - 同一 Project 同时只能有一个 mutation job。
 - 新任务排队或要求用户取消旧任务。
+- Product Service watcher 释放 orphan lock，并把 Project 标记为 Blocked。
 
-### 6.7 模拟盘状态陈旧
+### 6.7 用户必须守着慢任务
+
+风险: 参数扫描、walk-forward、forensics 和报告生成耗时较长，如果每轮都等用户确认，产品无法高效批量运行。
+
+应对:
+
+- 默认 `auto_continue_until_stop`。
+- 支持 `notify_and_wait` 供保守用户选择。
+- 通知只在 round complete、stop condition、blocker、budget exhausted 等产品事件触发。
+- 用户可随时介入、取消或调整方向。
+
+### 6.8 模拟盘状态陈旧
 
 风险: 本地 paper artifacts 不是 broker 最新状态。
 
@@ -1011,7 +1203,7 @@ Dashboard 测试:
 - 提供受控 Sync。
 - reconciliation 报告显示本地和 broker 差异。
 
-### 6.8 实盘通知被误认为执行能力
+### 6.9 实盘通知被误认为执行能力
 
 风险: 用户以为 Dashboard 可以实盘交易。
 
@@ -1021,7 +1213,7 @@ Dashboard 测试:
 - UI 文案区分 paper orders 和 live notifications。
 - 禁止真钱 broker write。
 
-### 6.9 远程部署安全
+### 6.10 远程部署安全
 
 风险: Vercel 或远程 UI 直接执行重任务或写文件。
 
@@ -1031,7 +1223,7 @@ Dashboard 测试:
 - 长任务走 VPS daemon / local runner。
 - 红色动作必须 double confirmation、HMAC、audit 和 backup。
 
-### 6.10 旧策略无 Project
+### 6.11 旧策略无 Project
 
 风险: 现有 `StrategySpec` 没有 Project，重构后不可见。
 
@@ -1041,7 +1233,7 @@ Dashboard 测试:
 - 提供 `oc project import-strategy <spec>`。
 - 导入后创建 Project，但不改变原 spec。
 
-### 6.11 通知噪声
+### 6.12 通知噪声
 
 风险: Telegram/email 被 worker 内部日志刷屏。
 
@@ -1051,7 +1243,7 @@ Dashboard 测试:
 - 按 severity 和 kind 配置策略。
 - worker debug logs 不进入通知渠道。
 
-### 6.12 Agent 权限边界不清
+### 6.13 Agent 权限边界不清
 
 风险: Worker 越权修改 paper/live 状态。
 
@@ -1060,6 +1252,27 @@ Dashboard 测试:
 - Worker 只产出 artifact。
 - Product Service 校验 artifact 后迁移状态。
 - paper activation 和 order submission 只能由确定性 runner 触发。
+
+### 6.14 成本失控
+
+风险: 多个策略自动迭代时，API、worker 和数据调用成本可能累计过高。
+
+应对:
+
+- `IterationPolicy.budget` 设置 project 和 round 上限。
+- Product Service 记录每轮成本、累计成本和估算方法。
+- 超预算触发 `budget_exhausted`，默认停止并通知。
+- 模型路由和 prompt caching 可以作为成本优化，但不是核心产品语义的前置条件。
+
+### 6.15 Memory 膨胀或关键经验丢失
+
+风险: 多轮优化后 `memory.md` 过长，或被简单截断导致失败路径和有效经验丢失。
+
+应对:
+
+- P3 必须实现 memory compaction。
+- 保留最近 2 轮完整摘要，历史信息压缩为 key lessons。
+- 超限标 warning，不静默截断。
 
 ## 7. 下一步优化方向
 
@@ -1071,7 +1284,7 @@ Dashboard 测试:
 6. 引入 notification inbox 规则，支持 acknowledge、mute、digest 和 escalation。
 7. 引入 paper/live divergence 检测，把模拟盘表现、信号和 broker 状态差异显式展示。
 
-## 8. 自我 Review 与修订结论
+## 8. 深度 Review 与修订结论
 
 本方案按以下检查项自审:
 
@@ -1087,14 +1300,22 @@ Dashboard 测试:
 | 是否包含实现路径和代码落点 | 通过 |
 | 是否包含风险和应对 | 通过 |
 | 是否可被自然人或 Agent 脱离上下文理解 | 通过 |
+| 是否支持用户不守着浏览器的慢任务 | 已补充 auto_continue_until_stop 和通知 |
+| 是否降低首次创建策略的摩擦 | 已补充 starter templates 和 fast/clarify 双路径 |
+| 是否防止 Worker 虚报或漏步 | 已补充 Product Service 独立对账 |
+| 是否处理锁孤儿、取消和 worker 崩溃 | 已补充 TTL、heartbeat、cancel_requested 和 watcher |
+| 是否控制多轮迭代成本 | 已补充 budget 和成本记录 |
+| 是否避免 memory 膨胀 | 已补充 P3 memory compaction |
 
 修订后的关键决定:
 
 1. 不新建独立 UI，重构现有 Dashboard。
 2. 不把 Dashboard 定义为唯一真相源，而是用户主入口。
-3. 不把 WorkerProvider 绑定到单一模型。
+3. Worker 配置默认使用一个模型/worker，不把复杂模型路由作为核心架构前提。
 4. 不无脑注入全文上下文，改为摘要 + hash + 必要片段。
 5. 不把实盘通知扩展成实盘交易能力。
 6. 不把 Sharpe 排名作为默认产品排序，而以用户待处理事项和风险状态优先。
+7. 不信任 Worker 自报 gate，必须由 Product Service 通过 harness verify 独立裁决。
+8. 不要求用户逐轮守候，默认异步运行到停止条件。
 
-本方案可以作为 P0-P5 的实施依据。下一步应先实现 P0 schema、状态机和 Dashboard catalog 扩展，再进入 Strategy Console UI。
+本方案可以作为 P0-P5 的实施依据。下一步应先实现 P0 schema、状态机、锁机制和 Dashboard catalog 扩展，再进入 Strategy Console UI。P3 是可靠性关键阶段，必须同时落地 Worker 对账、memory compaction、预算、取消、锁 watcher 和异步迭代通知。
