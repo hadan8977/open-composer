@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import importlib.util
 import json
+import os
 import secrets
+import sys
 from collections.abc import Mapping
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -10,7 +13,17 @@ from typing import Any, get_args
 from urllib.parse import parse_qs, urlparse
 
 from open_composer.agent_requests import AgentRequestCreate, create_agent_request
-from open_composer.config import dashboard_allowed_origin, dashboard_api_token
+from open_composer.config import (
+    alpaca_api_base_url,
+    dashboard_allowed_origin,
+    dashboard_api_token,
+    data_feed,
+    default_openai_model,
+    openai_api_key_env_name,
+    openai_base_url,
+    openai_base_url_source,
+    optional_env_status,
+)
 from open_composer.dashboard.catalog import build_dashboard_catalog
 from open_composer.dashboard.commands import (
     DashboardCommandError,
@@ -96,6 +109,15 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/dashboard/catalog":
             self._send_json(build_dashboard_catalog_payload(self.dashboard_root))
+            return
+        if path == "/api/dashboard/environment":
+            self._send_json(
+                build_dashboard_environment_payload(
+                    self.dashboard_root,
+                    Path(self.directory),
+                    auth_required=bool(self.dashboard_token),
+                )
+            )
             return
         if path == "/api/notifications/config":
             self._send_json(build_notification_config_payload(self.dashboard_root))
@@ -234,6 +256,196 @@ def build_dashboard_health_payload(
         "dashboard_root": root.as_posix(),
         "serve_root": serve_root.as_posix(),
         "auth_required": auth_required,
+    }
+
+
+def build_dashboard_environment_payload(
+    root: Path,
+    serve_root: Path,
+    *,
+    auth_required: bool = False,
+) -> dict[str, Any]:
+    notification_status = notification_config_status(root)
+    sample_path = root / "data" / "sample" / "qqq_15m.csv"
+    package_names = ["pydantic", "pandas", "numpy", "yaml", "typer", "rich"]
+    packages = [
+        _env_item(
+            name=f"Package {name}",
+            status="ok" if importlib.util.find_spec(name) else "blocked",
+            detail="installed" if importlib.util.find_spec(name) else "missing Python package",
+            required=True,
+        )
+        for name in package_names
+    ]
+    openai_key_env = openai_api_key_env_name()
+    sections = [
+        {
+            "section": "workspace",
+            "title": "Workspace",
+            "items": [
+                _env_item("Python", "ok", sys.version.split()[0], required=True),
+                _env_item(
+                    "Workspace root",
+                    "ok" if root.exists() else "blocked",
+                    root.as_posix(),
+                    required=True,
+                ),
+                _env_item(
+                    "Dashboard build",
+                    "ok" if (serve_root / "index.html").exists() else "warning",
+                    serve_root.relative_to(root).as_posix()
+                    if _is_relative_to(serve_root, root)
+                    else serve_root.as_posix(),
+                    required=True,
+                    next_action="run `uv run oc dashboard build`"
+                    if not (serve_root / "index.html").exists()
+                    else "",
+                ),
+                _env_item(
+                    "Sample data",
+                    "ok" if sample_path.exists() else "blocked",
+                    sample_path.relative_to(root).as_posix()
+                    if _is_relative_to(sample_path, root)
+                    else sample_path.as_posix(),
+                    required=True,
+                ),
+                *packages,
+            ],
+        },
+        {
+            "section": "model",
+            "title": "Model access",
+            "items": [
+                _env_item(
+                    openai_key_env,
+                    "ok" if os.getenv(openai_key_env) or os.getenv("OPENAI_API_KEY") else "warning",
+                    "presence only; value never exposed",
+                    required=False,
+                    next_action=f"set `{openai_key_env}` for LLM review/drafting"
+                    if optional_env_status(openai_key_env) == "missing"
+                    and optional_env_status("OPENAI_API_KEY") == "missing"
+                    else "",
+                ),
+                _env_item(
+                    "OPENAI_BASE_URL",
+                    "ok" if openai_base_url_source() != "missing" else "warning",
+                    openai_base_url() or "default provider endpoint",
+                    required=False,
+                ),
+                _env_item("OPENAI_MODEL", "ok", default_openai_model(), required=False),
+            ],
+        },
+        {
+            "section": "paper",
+            "title": "Paper trading",
+            "items": [
+                _env_item(
+                    "ALPACA_API_KEY_ID",
+                    "ok" if os.getenv("ALPACA_API_KEY_ID") else "warning",
+                    "presence only; value never exposed",
+                    required=False,
+                    next_action="set `ALPACA_API_KEY_ID` for paper account sync"
+                    if not os.getenv("ALPACA_API_KEY_ID")
+                    else "",
+                ),
+                _env_item(
+                    "ALPACA_API_SECRET_KEY",
+                    "ok" if os.getenv("ALPACA_API_SECRET_KEY") else "warning",
+                    "presence only; value never exposed",
+                    required=False,
+                    next_action="set `ALPACA_API_SECRET_KEY` for paper account sync"
+                    if not os.getenv("ALPACA_API_SECRET_KEY")
+                    else "",
+                ),
+                _env_item(
+                    "ALPACA_PAPER",
+                    "ok"
+                    if os.getenv("ALPACA_PAPER", "true").strip().lower() == "true"
+                    else "blocked",
+                    os.getenv("ALPACA_PAPER", "true"),
+                    required=True,
+                    next_action="keep `ALPACA_PAPER=true`; real-money writes are out of scope",
+                ),
+                _env_item("ALPACA_API_BASE_URL", "ok", alpaca_api_base_url(), required=False),
+                _env_item("ALPACA_DATA_FEED", "ok", data_feed(), required=False),
+            ],
+        },
+        {
+            "section": "notifications",
+            "title": "Notifications",
+            "items": [
+                _env_item(
+                    "config/notifications.yaml",
+                    "ok" if notification_status.config_exists else "warning",
+                    notification_status.config_path,
+                    required=False,
+                    next_action="create `config/notifications.yaml` to customize policies"
+                    if not notification_status.config_exists
+                    else "",
+                ),
+                _env_item(
+                    "Telegram enabled",
+                    "ok" if notification_status.telegram_enabled else "warning",
+                    str(notification_status.telegram_enabled).lower(),
+                    required=False,
+                ),
+                _env_item(
+                    notification_status.telegram_bot_token_env,
+                    "ok" if notification_status.telegram_bot_token_present else "warning",
+                    "presence only; value never exposed",
+                    required=False,
+                ),
+                _env_item(
+                    notification_status.telegram_chat_id_env,
+                    "ok" if notification_status.telegram_chat_id_present else "warning",
+                    "presence only; value never exposed",
+                    required=False,
+                ),
+            ],
+        },
+        {
+            "section": "remote_dashboard",
+            "title": "Dashboard safety",
+            "items": [
+                _env_item(
+                    "OPEN_COMPOSER_DASHBOARD_TOKEN",
+                    "ok" if auth_required else "warning",
+                    "required for remote mode; value never exposed",
+                    required=False,
+                    next_action="set `OPEN_COMPOSER_DASHBOARD_TOKEN` before remote exposure"
+                    if not auth_required
+                    else "",
+                ),
+                _env_item(
+                    "OC_DASHBOARD_ALLOWED_ORIGIN",
+                    "ok" if dashboard_allowed_origin() else "warning",
+                    dashboard_allowed_origin() or "not restricted",
+                    required=False,
+                ),
+            ],
+        },
+    ]
+    all_items = [item for section in sections for item in section["items"]]
+    blockers = [
+        item["name"] for item in all_items if item["required"] and item["status"] == "blocked"
+    ]
+    warnings = [item["name"] for item in all_items if item["status"] == "warning"]
+    status = "blocked" if blockers else "warning" if warnings else "ok"
+    return {
+        "schema_version": 1,
+        "generated_at": _now_iso(),
+        "status": status,
+        "root": root.as_posix(),
+        "serve_root": serve_root.as_posix(),
+        "auth_required": auth_required,
+        "sections": sections,
+        "blocked_items": blockers,
+        "warning_items": warnings,
+        "notes": [
+            "Secrets are never returned by this API; only presence is shown.",
+            "Dashboard does not run long backtests or broker writes in the browser.",
+            "Real-money broker write access remains out of scope for this MVP.",
+        ],
     }
 
 
@@ -432,6 +644,37 @@ def build_notification_test_payload(root: Path, payload: dict[str, Any]) -> dict
         dry_run=dry_run,
     )
     return {"notification": record.model_dump(mode="json")}
+
+
+def _env_item(
+    name: str,
+    status: str,
+    detail: str,
+    *,
+    required: bool,
+    next_action: str = "",
+) -> dict[str, Any]:
+    return {
+        "name": name,
+        "status": status,
+        "detail": detail,
+        "required": required,
+        "next_action": next_action,
+    }
+
+
+def _now_iso() -> str:
+    from datetime import UTC, datetime
+
+    return datetime.now(UTC).isoformat()
+
+
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
 
 
 def _query_limit(query: str, default: int = 50) -> int:

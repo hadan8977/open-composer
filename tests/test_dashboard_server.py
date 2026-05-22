@@ -12,6 +12,7 @@ from open_composer.dashboard.server import (
     build_dashboard_catalog_payload,
     build_dashboard_command_plan_payload,
     build_dashboard_command_run_payload,
+    build_dashboard_environment_payload,
     build_dashboard_health_payload,
     build_notification_config_payload,
     build_notification_log_payload,
@@ -81,6 +82,15 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
     assert health["serve_root"] == serve_root.as_posix()
     assert health["auth_required"] is False
     assert catalog["summary"]["strategy_count"] >= 1
+    environment = build_dashboard_environment_payload(sample_workspace, serve_root)
+    assert environment["status"] in {"ok", "warning", "blocked"}
+    assert environment["auth_required"] is False
+    assert any(section["section"] == "model" for section in environment["sections"])
+    assert any(
+        item["name"] == "ALPACA_PAPER"
+        for section in environment["sections"]
+        for item in section["items"]
+    )
 
     plan = build_dashboard_command_plan_payload(
         sample_workspace,

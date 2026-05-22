@@ -10,14 +10,23 @@ import { BuildView } from "./components/build";
 import { LiveView } from "./components/live";
 import { ProjectDetail, ProjectsView } from "./components/projects";
 import { StatusFooter } from "./components/footer";
-import { loginDashboard, useDashboardCatalogSync, useDashboardSession } from "./components/runtime";
+import { SettingsView } from "./components/settings";
+import {
+  loginDashboard,
+  useDashboardCatalogSync,
+  useDashboardSession,
+} from "./components/runtime";
 
 export default function App() {
   const catalogSync = useDashboardCatalogSync();
   const session = useDashboardSession();
   const [tab, setTab] = useState<NavKey>("overview");
-  const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(null);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(
+    null,
+  );
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    null,
+  );
 
   const handleNav = (key: NavKey) => {
     setSelectedStrategyId(null);
@@ -30,7 +39,9 @@ export default function App() {
   }
 
   if (session.remote && !session.authenticated) {
-    return <RemoteLogin onAuthenticated={session.refresh} error={session.error} />;
+    return (
+      <RemoteLogin onAuthenticated={session.refresh} error={session.error} />
+    );
   }
 
   return (
@@ -38,8 +49,20 @@ export default function App() {
       <Sidebar active={tab} onChange={handleNav} catalogSync={catalogSync} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 hairline-l">
         <TopBar
-          back={selectedStrategyId ? "Strategy" : selectedProjectId ? "Projects" : undefined}
-          onBack={selectedStrategyId ? () => setSelectedStrategyId(null) : selectedProjectId ? () => setSelectedProjectId(null) : undefined}
+          back={
+            selectedStrategyId
+              ? "Strategy"
+              : selectedProjectId
+                ? "Projects"
+                : undefined
+          }
+          onBack={
+            selectedStrategyId
+              ? () => setSelectedStrategyId(null)
+              : selectedProjectId
+                ? () => setSelectedProjectId(null)
+                : undefined
+          }
           deploymentMode={session.remote ? "Remote Commands Enabled" : "Local"}
           owner={session.owner}
           onLogout={session.remote ? session.logout : undefined}
@@ -60,13 +83,18 @@ export default function App() {
               />
             ) : (
               <>
-                {tab === "overview"   && <Overview />}
-                {tab === "projects" && <ProjectsView onSelect={(id) => setSelectedProjectId(id)} />}
+                {tab === "overview" && <Overview />}
+                {tab === "projects" && (
+                  <ProjectsView onSelect={(id) => setSelectedProjectId(id)} />
+                )}
                 {tab === "build" && <BuildView />}
                 {tab === "live" && <LiveView />}
                 {tab === "research" && <ResearchView />}
                 {tab === "activity" && <ActivityView />}
-                {tab === "settings" && <Library onSelect={(id) => setSelectedStrategyId(id)} />}
+                {tab === "catalog" && (
+                  <Library onSelect={(id) => setSelectedStrategyId(id)} />
+                )}
+                {tab === "settings" && <SettingsView />}
               </>
             )}
           </div>
@@ -107,7 +135,9 @@ function RemoteLogin({
       await loginDashboard(password);
       await onAuthenticated();
     } catch (loginError) {
-      setStatus(loginError instanceof Error ? loginError.message : "Login failed.");
+      setStatus(
+        loginError instanceof Error ? loginError.message : "Login failed.",
+      );
     } finally {
       setBusy(false);
     }
@@ -129,7 +159,10 @@ function RemoteLogin({
             placeholder="Dashboard password"
           />
         </label>
-        <button className="pill pill-primary w-full justify-center" disabled={busy || !password}>
+        <button
+          className="pill pill-primary w-full justify-center"
+          disabled={busy || !password}
+        >
           {busy ? "Signing in" : "Sign in"}
         </button>
         {status && <div className="t-body-sm ink-subtle">{status}</div>}

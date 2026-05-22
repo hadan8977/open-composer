@@ -1,9 +1,26 @@
-import { Activity, BellRing, BookMarked, FilePlus2, FlaskConical, ListChecks, SlidersHorizontal } from "lucide-react";
+import {
+  Activity,
+  BellRing,
+  BookOpen,
+  BookMarked,
+  FilePlus2,
+  FlaskConical,
+  ListChecks,
+  SlidersHorizontal,
+} from "lucide-react";
 import logoMarkUrl from "../../../logo_optimized (2).svg";
 import { dashboardSummary } from "./data";
 import type { DashboardCatalogSyncState } from "./runtime";
 
-export type NavKey = "overview" | "projects" | "build" | "live" | "research" | "activity" | "settings";
+export type NavKey =
+  | "overview"
+  | "projects"
+  | "build"
+  | "live"
+  | "research"
+  | "activity"
+  | "catalog"
+  | "settings";
 
 interface Props {
   active: NavKey;
@@ -11,15 +28,73 @@ interface Props {
   catalogSync?: DashboardCatalogSyncState;
 }
 
-function navItems(): { key: NavKey; label: string; icon: any; count?: string; accent: string }[] {
+function navItems(): {
+  key: NavKey;
+  label: string;
+  icon: any;
+  count?: string;
+  accent: string;
+}[] {
   return [
-    { key: "overview", label: "Overview", icon: Activity, count: String(dashboardSummary.projectBlockedCount), accent: "#1FB85A" },
-    { key: "projects", label: "Projects", icon: BookMarked, count: String(dashboardSummary.projectCount || dashboardSummary.strategyCount), accent: "#0A0A0A" },
+    {
+      key: "overview",
+      label: "Overview",
+      icon: Activity,
+      count: String(dashboardSummary.projectBlockedCount),
+      accent: "#1FB85A",
+    },
+    {
+      key: "projects",
+      label: "Projects",
+      icon: BookMarked,
+      count: String(
+        dashboardSummary.projectCount || dashboardSummary.strategyCount,
+      ),
+      accent: "#0A0A0A",
+    },
     { key: "build", label: "Build", icon: FilePlus2, accent: "#1AC8E8" },
-    { key: "live", label: "Live", icon: BellRing, count: String(dashboardSummary.paperOpenOrderCount + dashboardSummary.paperPositionCount), accent: "#1FB85A" },
-    { key: "research", label: "Research", icon: FlaskConical, count: String(dashboardSummary.researchRunCount), accent: "#3B82F6" },
-    { key: "activity", label: "Activity", icon: ListChecks, count: String(dashboardSummary.signalCount + dashboardSummary.orderCount + dashboardSummary.auditCount + dashboardSummary.reviewCount), accent: "#F8A93B" },
-    { key: "settings", label: "Settings", icon: SlidersHorizontal, accent: "#8B5CF6" },
+    {
+      key: "live",
+      label: "Live",
+      icon: BellRing,
+      count: String(
+        dashboardSummary.paperOpenOrderCount +
+          dashboardSummary.paperPositionCount,
+      ),
+      accent: "#1FB85A",
+    },
+    {
+      key: "research",
+      label: "Research",
+      icon: FlaskConical,
+      count: String(dashboardSummary.researchRunCount),
+      accent: "#3B82F6",
+    },
+    {
+      key: "activity",
+      label: "Activity",
+      icon: ListChecks,
+      count: String(
+        dashboardSummary.signalCount +
+          dashboardSummary.orderCount +
+          dashboardSummary.auditCount +
+          dashboardSummary.reviewCount,
+      ),
+      accent: "#F8A93B",
+    },
+    {
+      key: "catalog",
+      label: "Catalog",
+      icon: BookOpen,
+      count: String(dashboardSummary.strategyCount),
+      accent: "#0A0A0A",
+    },
+    {
+      key: "settings",
+      label: "Settings",
+      icon: SlidersHorizontal,
+      accent: "#8B5CF6",
+    },
   ];
 }
 
@@ -63,18 +138,33 @@ export function Sidebar({ active, onChange, catalogSync }: Props) {
                 aria-hidden
                 className="absolute"
                 style={{
-                  left: 6, top: "50%", transform: "translateY(-50%)",
-                  width: 4, height: isActive ? 16 : 8,
-                  background: accent, borderRadius: 1,
+                  left: 6,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 4,
+                  height: isActive ? 16 : 8,
+                  background: accent,
+                  borderRadius: 1,
                   transition: "height .12s ease",
                 }}
               />
-              <Icon size={15} strokeWidth={isActive ? 2.2 : 1.8} className="shrink-0" />
-              <span className="t-body-md flex-1 text-left" style={{ fontWeight: isActive ? 600 : 500 }}>{label}</span>
+              <Icon
+                size={15}
+                strokeWidth={isActive ? 2.2 : 1.8}
+                className="shrink-0"
+              />
+              <span
+                className="t-body-md flex-1 text-left"
+                style={{ fontWeight: isActive ? 600 : 500 }}
+              >
+                {label}
+              </span>
               {count && (
                 <span
                   className={`t-num inline-flex items-center justify-center min-w-[20px] h-[18px] px-1.5 ${
-                    isActive ? "bg-white/15 text-white" : "ink-muted bg-[rgba(10,10,10,.06)]"
+                    isActive
+                      ? "bg-white/15 text-white"
+                      : "ink-muted bg-[rgba(10,10,10,.06)]"
                   }`}
                   style={{
                     borderRadius: 2,
@@ -94,15 +184,20 @@ export function Sidebar({ active, onChange, catalogSync }: Props) {
       <div className="mt-auto px-3 pt-3 hairline-t">
         <div className="flex items-center gap-2 mb-1">
           <span className="relative flex h-2 w-2">
-            {syncOk && <span className="absolute inline-flex h-full w-full rounded-full bg-[#1FB85A] opacity-40 animate-ping" />}
-            <span className={`relative inline-flex rounded-full h-2 w-2 ${syncOk ? "bg-[#1FB85A]" : "bg-[#FF2D7A]"}`} />
+            {syncOk && (
+              <span className="absolute inline-flex h-full w-full rounded-full bg-[#1FB85A] opacity-40 animate-ping" />
+            )}
+            <span
+              className={`relative inline-flex rounded-full h-2 w-2 ${syncOk ? "bg-[#1FB85A]" : "bg-[#FF2D7A]"}`}
+            />
           </span>
           <span className="t-body-sm ink" style={{ fontWeight: 500 }}>
             {syncOk ? "Catalog synced" : "Catalog error"}
           </span>
         </div>
         <p className="t-body-sm ink-subtle leading-snug">
-          {catalogSync?.error ?? `File-first source of truth · read model v${dashboardSummary.readModelVersion}`}
+          {catalogSync?.error ??
+            `File-first source of truth · read model v${dashboardSummary.readModelVersion}`}
         </p>
       </div>
     </aside>
