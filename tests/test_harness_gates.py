@@ -9,6 +9,7 @@ import pytest
 
 from open_composer.harness.gates import GATE_REGISTRY, GateResult, run_gate, run_gates
 from open_composer.harness.policy import (
+    check_artifact,
     detect_risk_domains,
     required_artifacts_for_domains,
 )
@@ -303,6 +304,63 @@ class TestRiskDomainPolicy:
             "iv_stress_report",
             "assignment_risk_note",
         } <= required_artifacts_for_domains(primary_domains)
+
+    def test_shared_source_card_path_requires_contract_specific_claim_id(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        cards_dir = tmp_path / "reports" / "harness" / "source_cards"
+        cards_dir.mkdir(parents=True, exist_ok=True)
+        (cards_dir / "shared_source_card_strategy.jsonl").write_text(
+            (
+                '{"claim_id":"shared_source_card_strategy:short-paper-broker-verification-required",'
+                '"claim":"Short broker rules verified.",'
+                '"source_url":"https://docs.alpaca.markets/",'
+                '"source_type":"broker_official_docs",'
+                '"accessed_at":"2026-05-22",'
+                '"applies_to":["shared_source_card_strategy","short_selling"],'
+                '"impact_on_spec":"blocks short order authorization until current",'
+                '"limitations":"fixture"}\n'
+            ),
+            encoding="utf-8",
+        )
+
+        short_status = check_artifact(
+            "short_sale_source_cards",
+            "shared_source_card_strategy",
+            tmp_path,
+        )
+        options_status = check_artifact(
+            "options_chain_source_cards",
+            "shared_source_card_strategy",
+            tmp_path,
+        )
+
+        assert short_status.schema_ok is True
+        assert options_status.schema_ok is False
+        assert (
+            "claim_id:shared_source_card_strategy:options-chain-provider-coverage"
+            in options_status.missing_fields
+        )
+
+        (cards_dir / "shared_source_card_strategy.jsonl").write_text(
+            (
+                '{"claim_id":"shared_source_card_strategy:options-chain-provider-coverage",'
+                '"claim":"Options provider coverage verified."}\n'
+            ),
+            encoding="utf-8",
+        )
+        incomplete_options_status = check_artifact(
+            "options_chain_source_cards",
+            "shared_source_card_strategy",
+            tmp_path,
+        )
+
+        assert incomplete_options_status.schema_ok is False
+        assert (
+            "claim_id:shared_source_card_strategy:options-chain-provider-coverage:source_url"
+            in incomplete_options_status.missing_fields
+        )
 
 
 class TestFactorLabHarnessGate:

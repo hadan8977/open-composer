@@ -49,6 +49,7 @@ class ArtifactContract:
     path_template: str
     format: str
     required_fields: list[str]
+    required_claim_ids: list[str]
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +98,7 @@ def load_artifact_contracts() -> dict[str, ArtifactContract]:
             path_template=raw.get("path", ""),
             format=raw.get("format", ""),
             required_fields=raw.get("required_fields") or [],
+            required_claim_ids=raw.get("required_claim_ids") or [],
         )
     return contracts
 
@@ -339,15 +341,27 @@ def check_artifact(artifact_name: str, strategy_name: str, root: Path) -> Artifa
         )
 
     missing: list[str] = []
-    if contract.required_fields:
+    if contract.required_fields or contract.required_claim_ids:
         try:
             if contract.format == "jsonl":
-                lines = [ln for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+                lines = [
+                    ln
+                    for ln in path.read_text(encoding="utf-8").splitlines()
+                    if ln.strip() and not ln.lstrip().startswith("#")
+                ]
                 if not lines:
-                    missing = contract.required_fields
+                    missing = contract.required_fields + _format_required_claim_ids(
+                        contract.required_claim_ids,
+                        strategy_name,
+                    )
                 else:
-                    first = json.loads(lines[0])
-                    missing = [f for f in contract.required_fields if f not in first]
+                    rows = [json.loads(line) for line in lines]
+                    missing = _missing_jsonl_contract_fields(
+                        contract.required_fields,
+                        contract.required_claim_ids,
+                        rows,
+                        strategy_name,
+                    )
             elif contract.format == "json":
                 obj = json.loads(path.read_text(encoding="utf-8"))
                 missing = [f for f in contract.required_fields if f not in obj]
@@ -362,3 +376,38 @@ def check_artifact(artifact_name: str, strategy_name: str, root: Path) -> Artifa
         schema_ok=len(missing) == 0,
         missing_fields=missing,
     )
+
+
+def _missing_jsonl_contract_fields(
+    required_fields: list[str],
+    required_claim_ids: list[str],
+    rows: list[object],
+    strategy_name: str,
+) -> list[str]:
+    dict_rows = [row for row in rows if isinstance(row, dict)]
+    if not required_claim_ids:
+        return [
+            f"row:{index}:{field}"
+            for index, row in enumerate(rows, start=1)
+            for field in required_fields
+            if not isinstance(row, dict) or field not in row
+        ]
+
+    expected = [item.replace("{strategy}", strategy_name) for item in required_claim_ids]
+    missing: list[str] = []
+    for claim_id in expected:
+        row = next((item for item in dict_rows if str(item.get("claim_id")) == claim_id), None)
+        if row is None:
+            missing.append(f"claim_id:{claim_id}")
+            continue
+        missing.extend(
+            f"claim_id:{claim_id}:{field}" for field in required_fields if field not in row
+        )
+    return missing
+
+
+def _format_required_claim_ids(
+    required_claim_ids: list[str],
+    strategy_name: str,
+) -> list[str]:
+    return [f"claim_id:{item.replace('{strategy}', strategy_name)}" for item in required_claim_ids]
