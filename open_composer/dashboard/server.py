@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, get_args
 from urllib.parse import parse_qs, urlparse
 
+from open_composer.agent_requests import AgentRequestCreate, create_agent_request
 from open_composer.config import dashboard_allowed_origin, dashboard_api_token
 from open_composer.dashboard.catalog import build_dashboard_catalog
 from open_composer.dashboard.commands import (
@@ -20,10 +21,19 @@ from open_composer.dashboard.commands import (
     write_dashboard_command_plan,
 )
 from open_composer.models.notification import NotificationKind, NotificationSeverity
+from open_composer.models.project import StrategyProjectCreate
 from open_composer.notifications import (
     notification_config_status,
     read_notification_log,
     send_test_notification,
+)
+from open_composer.projects import (
+    create_project,
+    load_project,
+    project_agent_prompt,
+    update_project_state,
+    write_project,
+    write_project_context,
 )
 
 
@@ -107,6 +117,13 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         if path == "/api/dashboard/command-run":
             self._handle_command_run(payload)
             return
+        if path == "/api/projects":
+            self._handle_project_create(payload)
+            return
+        if path.startswith("/api/projects/") and path.endswith("/state"):
+            project_id = path.removeprefix("/api/projects/").removesuffix("/state").strip("/")
+            self._handle_project_state(project_id, payload)
+            return
         if path == "/api/notifications/test":
             self._handle_notification_test(payload)
             return
@@ -128,6 +145,18 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         try:
             self._send_json(build_notification_test_payload(self.dashboard_root, payload))
         except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=400)
+
+    def _handle_project_create(self, payload: dict[str, Any]) -> None:
+        try:
+            self._send_json(build_project_create_payload(self.dashboard_root, payload), status=201)
+        except (ValueError, OSError) as exc:
+            self._send_json({"error": str(exc)}, status=400)
+
+    def _handle_project_state(self, project_id: str, payload: dict[str, Any]) -> None:
+        try:
+            self._send_json(build_project_state_payload(self.dashboard_root, project_id, payload))
+        except (ValueError, FileNotFoundError) as exc:
             self._send_json({"error": str(exc)}, status=400)
 
     def _read_json_body(self) -> dict[str, Any]:
@@ -224,6 +253,93 @@ def dashboard_request_authorized(
 def build_dashboard_catalog_payload(root: Path) -> dict[str, Any]:
     catalog = build_dashboard_catalog(root)
     return catalog.model_dump(mode="json")
+
+
+def build_project_create_payload(root: Path, payload: dict[str, Any]) -> dict[str, Any]:
+    project, request = create_project(StrategyProjectCreate.model_validate(payload), root)
+    response: dict[str, Any] = {
+        "project": project.model_dump(mode="json"),
+        "project_path": f"projects/{project.project_id}/project.yaml",
+        "context_path": f"projects/{project.project_id}/context.md",
+    }
+    if request is not None:
+        response["agent_request"] = request.model_dump(mode="json")
+        response["agent_request_path"] = f"reports/agent_requests/{request.request_id}.json"
+    return response
+
+
+def build_project_state_payload(
+    root: Path, project_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
+    action = str(payload.get("action", "")).strip()
+    request = None
+    if action == "stop":
+        project = load_project(project_id, root)
+        project.iteration.user_requested_stop = True
+        project.iteration.stop_reason = "user_requested_stop"
+        project.next_action = "iteration_stopped_by_user"
+        write_project(project, root)
+    elif action == "archive":
+        project = update_project_state(project_id, "retired", root, next_action="archived")
+        project.archived = True
+        write_project(project, root)
+    elif action == "continue":
+        direction = str(payload.get("direction") or "continue_iteration")
+        project = update_project_state(
+            project_id,
+            "iterating",
+            root,
+            next_action=direction,
+            blockers=[],
+        )
+        project.iteration.user_requested_stop = False
+        write_project(project, root)
+        write_project_context(project, root, task=direction)
+        request = create_agent_request(
+            AgentRequestCreate(
+                requested_by=str(payload.get("requested_by") or "dashboard"),
+                task_type="strategy_optimization",
+                title=f"Continue strategy project: {project.name}",
+                prompt=project_agent_prompt(project, direction),
+                related_paths=[
+                    f"projects/{project.project_id}/project.yaml",
+                    f"projects/{project.project_id}/context.md",
+                    *([project.current_spec_path] if project.current_spec_path else []),
+                ],
+            ),
+            root,
+        )
+    elif action == "paper_review":
+        project = update_project_state(
+            project_id,
+            "paper_review",
+            root,
+            next_action="run_paper_readiness_review",
+        )
+        project.paper.status = "review_requested"
+        write_project(project, root)
+        write_project_context(project, root, task="Run paper readiness review for this project.")
+        request = create_agent_request(
+            AgentRequestCreate(
+                requested_by=str(payload.get("requested_by") or "dashboard"),
+                task_type="review",
+                title=f"Paper review strategy project: {project.name}",
+                prompt=project_agent_prompt(project, "Run paper readiness review."),
+                related_paths=[
+                    f"projects/{project.project_id}/project.yaml",
+                    f"projects/{project.project_id}/context.md",
+                    *([project.current_spec_path] if project.current_spec_path else []),
+                ],
+            ),
+            root,
+        )
+    else:
+        raise ValueError("action must be one of: stop, archive, continue, paper_review")
+    response = {"project": project.model_dump(mode="json")}
+    if request is not None:
+        response["agent_request"] = request.model_dump(mode="json")
+        response["agent_request_path"] = f"reports/agent_requests/{request.request_id}.json"
+    return response
 
 
 def build_dashboard_command_plan_payload(

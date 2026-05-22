@@ -15,7 +15,7 @@ from open_composer.research.cost_sensitivity import run_cost_grid
 
 def test_cost_config_defaults_preserve_backtest_result(sample_workspace: Path) -> None:
     spec = load_strategy_spec(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     )
     frame = load_ohlcv_for_spec(spec, sample_workspace)
     baseline = backtest_frame(spec, frame, root=sample_workspace, run_id_value="baseline")
@@ -34,7 +34,7 @@ def test_cost_config_defaults_preserve_backtest_result(sample_workspace: Path) -
 
 
 def test_cost_grid_writes_json_and_markdown(sample_workspace: Path) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     report = run_cost_grid(
         spec_path,
@@ -46,8 +46,8 @@ def test_cost_grid_writes_json_and_markdown(sample_workspace: Path) -> None:
 
     assert len(report.results) == 4
     assert report.results[0].impact_model == "linear"
-    assert (sample_workspace / "reports" / "cost_grid" / "qqq_pullback_15m.json").exists()
-    assert (sample_workspace / "reports" / "cost_grid" / "qqq_pullback_15m.md").exists()
+    assert (sample_workspace / "reports" / "cost_grid" / "fixture_pullback_15m.json").exists()
+    assert (sample_workspace / "reports" / "cost_grid" / "fixture_pullback_15m.md").exists()
 
 
 def test_cost_grid_cli_command(sample_workspace: Path, monkeypatch) -> None:
@@ -57,7 +57,7 @@ def test_cost_grid_cli_command(sample_workspace: Path, monkeypatch) -> None:
         [
             "strategy",
             "cost-grid",
-            str(sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"),
+            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
             "--commission",
             "0",
             "--slippage",
@@ -71,7 +71,7 @@ def test_cost_grid_cli_command(sample_workspace: Path, monkeypatch) -> None:
     assert result.exit_code == 0
     assert "Cost Grid" in result.output
     payload = json.loads(
-        (sample_workspace / "reports" / "cost_grid" / "qqq_pullback_15m.json").read_text(
+        (sample_workspace / "reports" / "cost_grid" / "fixture_pullback_15m.json").read_text(
             encoding="utf-8"
         )
     )

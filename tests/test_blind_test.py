@@ -12,7 +12,7 @@ from open_composer.research.promotion import build_promotion_report
 
 
 def test_blind_test_writes_four_mode_report(sample_workspace: Path) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     report = run_blind_test(spec_path, sample_workspace, seed=11)
 
@@ -24,8 +24,8 @@ def test_blind_test_writes_four_mode_report(sample_workspace: Path) -> None:
     ]
     assert report.results[1].correlation_with_real == 1.0
     assert "structure-driven" in report.interpretation
-    assert (sample_workspace / "reports" / "blind_test" / "qqq_pullback_15m.json").exists()
-    assert (sample_workspace / "reports" / "blind_test" / "qqq_pullback_15m.md").exists()
+    assert (sample_workspace / "reports" / "blind_test" / "fixture_pullback_15m.json").exists()
+    assert (sample_workspace / "reports" / "blind_test" / "fixture_pullback_15m.md").exists()
 
 
 def test_blind_test_cli_command_writes_report(
@@ -38,7 +38,7 @@ def test_blind_test_cli_command_writes_report(
         [
             "strategy",
             "blind-test",
-            str(sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"),
+            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
             "--seed",
             "7",
         ],
@@ -48,7 +48,7 @@ def test_blind_test_cli_command_writes_report(
     assert result.exit_code == 0
     assert "Blind Test" in result.output
     payload = json.loads(
-        (sample_workspace / "reports" / "blind_test" / "qqq_pullback_15m.json").read_text(
+        (sample_workspace / "reports" / "blind_test" / "fixture_pullback_15m.json").read_text(
             encoding="utf-8"
         )
     )
@@ -82,7 +82,7 @@ def test_promotion_report_accepts_matching_blind_test_for_llm_contribution(
 
 
 def _llm_review_spec(sample_workspace: Path, name: str) -> Path:
-    source = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    source = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     target = sample_workspace / "strategy_specs" / "drafts" / f"{name}.yaml"
     raw = yaml.safe_load(source.read_text(encoding="utf-8"))
     raw["name"] = name

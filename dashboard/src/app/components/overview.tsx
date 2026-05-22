@@ -30,7 +30,7 @@ export function Overview() {
         theme="green"
         greeting={`Catalog · ${dashboardSummary.generatedLabel}`}
         headline="Workbench"
-        meta={`${dashboardSummary.strategyCount} strategies · ${dashboardSummary.runCount} runs · ${dashboardSummary.signalCount} logged signals · ${dashboardSummary.workflowReportCount} workflow reports.`}
+        meta={`${dashboardSummary.projectCount || dashboardSummary.strategyCount} projects · ${dashboardSummary.strategyCount} specs · ${dashboardSummary.runCount} runs · ${dashboardSummary.signalCount} logged signals.`}
         stat={{
           label: "Paper state",
           value: dashboardSummary.deploymentReady ? "Ready" : "Check",
@@ -86,9 +86,9 @@ export function Overview() {
             style={{ background: "rgba(255,255,255,.06)", borderRadius: "var(--r-md)" }}
           >
             {[
+              ["Projects", String(dashboardSummary.projectCount || dashboardSummary.strategyCount)],
               ["Runs", String(dashboardSummary.runCount)],
               ["Signals", String(dashboardSummary.signalCount)],
-              ["Workflows", String(dashboardSummary.workflowReportCount)],
               ["Ready", dashboardSummary.readinessReady ? "yes" : "no"],
             ].map(([k, v]) => (
               <div key={k} className="px-4 py-3" style={{ background: "#0B0B0C" }}>

@@ -21,12 +21,12 @@ from open_composer.paper_controls import (
 
 
 def _active_paper_spec(sample_workspace: Path) -> Path:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     raw = yaml.safe_load(draft.read_text(encoding="utf-8"))
     raw["lifecycle"] = "active"
     raw["execution"]["mode"] = "paper_auto"
     raw["execution"]["broker"] = "alpaca_paper"
-    active = sample_workspace / "strategy_specs" / "active" / "qqq_pullback_15m.yaml"
+    active = sample_workspace / "strategy_specs" / "active" / "fixture_pullback_15m.yaml"
     active.write_text(yaml.safe_dump(raw), encoding="utf-8")
     return active
 
@@ -97,7 +97,7 @@ def test_paper_status_prefers_current_broker_open_order_snapshot(
     orders_path.write_text(
         (
             '{"id":"order_old","signal_id":"sig_old","client_order_id":"oc-sig_old",'
-            '"strategy_name":"qqq_pullback_15m","symbol":"AMD","side":"buy",'
+            '"strategy_name":"fixture_pullback_15m","symbol":"AMD","side":"buy",'
             '"qty":1,"status":"accepted","paper":true,'
             '"submitted_at":"2026-01-02T15:45:00Z"}\n'
         ),
@@ -195,7 +195,7 @@ def test_paper_reconciliation_flags_order_position_mismatch(sample_workspace: Pa
     write_order.write_text(
         (
             '{"id":"order_1","signal_id":"sig_1","client_order_id":"oc-sig_1",'
-            '"strategy_name":"qqq_pullback_15m","symbol":"QQQ","side":"buy",'
+            '"strategy_name":"fixture_pullback_15m","symbol":"QQQ","side":"buy",'
             '"qty":1,"status":"filled","paper":true,'
             '"submitted_at":"2026-01-02T15:45:00Z"}\n'
         ),

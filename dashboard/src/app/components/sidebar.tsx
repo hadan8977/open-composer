@@ -1,9 +1,9 @@
-import { Activity, BookMarked, FlaskConical, ListChecks } from "lucide-react";
+import { Activity, BellRing, BookMarked, FilePlus2, FlaskConical, ListChecks, SlidersHorizontal } from "lucide-react";
 import logoMarkUrl from "../../../logo_optimized (2).svg";
 import { dashboardSummary } from "./data";
 import type { DashboardCatalogSyncState } from "./runtime";
 
-export type NavKey = "monitor" | "strategies" | "research" | "activity";
+export type NavKey = "overview" | "projects" | "build" | "live" | "research" | "activity" | "settings";
 
 interface Props {
   active: NavKey;
@@ -13,10 +13,13 @@ interface Props {
 
 function navItems(): { key: NavKey; label: string; icon: any; count?: string; accent: string }[] {
   return [
-    { key: "monitor", label: "Monitor", icon: Activity, count: String(dashboardSummary.paperAutoStrategyCount), accent: "#1FB85A" },
-    { key: "strategies", label: "Strategies", icon: BookMarked, count: String(dashboardSummary.strategyCount), accent: "#0A0A0A" },
+    { key: "overview", label: "Overview", icon: Activity, count: String(dashboardSummary.projectBlockedCount), accent: "#1FB85A" },
+    { key: "projects", label: "Projects", icon: BookMarked, count: String(dashboardSummary.projectCount || dashboardSummary.strategyCount), accent: "#0A0A0A" },
+    { key: "build", label: "Build", icon: FilePlus2, accent: "#1AC8E8" },
+    { key: "live", label: "Live", icon: BellRing, count: String(dashboardSummary.paperOpenOrderCount + dashboardSummary.paperPositionCount), accent: "#1FB85A" },
     { key: "research", label: "Research", icon: FlaskConical, count: String(dashboardSummary.researchRunCount), accent: "#3B82F6" },
     { key: "activity", label: "Activity", icon: ListChecks, count: String(dashboardSummary.signalCount + dashboardSummary.orderCount + dashboardSummary.auditCount + dashboardSummary.reviewCount), accent: "#F8A93B" },
+    { key: "settings", label: "Settings", icon: SlidersHorizontal, accent: "#8B5CF6" },
   ];
 }
 

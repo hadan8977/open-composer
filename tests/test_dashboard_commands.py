@@ -18,12 +18,12 @@ from open_composer.paper_controls import load_paper_kill_switch
 
 
 def _active_paper_spec(sample_workspace: Path) -> Path:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     raw = yaml.safe_load(draft.read_text(encoding="utf-8"))
     raw["lifecycle"] = "active"
     raw["execution"]["mode"] = "paper_auto"
     raw["execution"]["broker"] = "alpaca_paper"
-    active = sample_workspace / "strategy_specs" / "active" / "qqq_pullback_15m.yaml"
+    active = sample_workspace / "strategy_specs" / "active" / "fixture_pullback_15m.yaml"
     active.write_text(yaml.safe_dump(raw), encoding="utf-8")
     return active
 
@@ -49,7 +49,7 @@ def test_dashboard_command_plan_is_paper_only_and_bound_to_active_spec(
     assert plan.confirmation_required is True
     assert plan.cli_args == ["uv", "run", "oc", "paper", "monitor"]
     assert len(plan.target_strategy_bindings) == 1
-    assert plan.target_strategy_bindings[0].strategy_name == "qqq_pullback_15m"
+    assert plan.target_strategy_bindings[0].strategy_name == "fixture_pullback_15m"
     assert plan.target_strategy_bindings[0].execution_mode == "paper_auto"
     assert plan.target_strategy_bindings[0].broker == "alpaca_paper"
     assert plan.target_strategy_bindings[0].spec_hash
@@ -58,7 +58,7 @@ def test_dashboard_command_plan_is_paper_only_and_bound_to_active_spec(
 def test_dashboard_strategy_lifecycle_command_plan_is_bound_to_spec(
     sample_workspace: Path,
 ) -> None:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     plan = build_dashboard_command_plan(
         "strategy.approve",
@@ -76,14 +76,14 @@ def test_dashboard_strategy_lifecycle_command_plan_is_bound_to_spec(
         "oc",
         "strategy",
         "approve",
-        "strategy_specs/drafts/qqq_pullback_15m.yaml",
+        "strategy_specs/drafts/fixture_pullback_15m.yaml",
     ]
     assert len(plan.target_strategy_bindings) == 1
-    assert plan.target_strategy_bindings[0].strategy_name == "qqq_pullback_15m"
+    assert plan.target_strategy_bindings[0].strategy_name == "fixture_pullback_15m"
     assert plan.target_strategy_bindings[0].lifecycle == "draft"
     assert (
         plan.target_strategy_bindings[0].source_path
-        == "strategy_specs/drafts/qqq_pullback_15m.yaml"
+        == "strategy_specs/drafts/fixture_pullback_15m.yaml"
     )
 
 
@@ -130,7 +130,7 @@ def test_dashboard_strategy_draft_requires_idea(sample_workspace: Path) -> None:
 def test_dashboard_strategy_approve_command_writes_lifecycle_files(
     sample_workspace: Path,
 ) -> None:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     plan = build_dashboard_command_plan(
         "strategy.approve",
@@ -147,7 +147,7 @@ def test_dashboard_strategy_approve_command_writes_lifecycle_files(
         executed_by="dashboard",
     )
 
-    approved = sample_workspace / "strategy_specs" / "approved" / "qqq_pullback_15m.yaml"
+    approved = sample_workspace / "strategy_specs" / "approved" / "fixture_pullback_15m.yaml"
     assert result.status == "executed"
     assert approved.exists()
     assert load_strategy_spec(approved).lifecycle == "approved"
@@ -156,7 +156,7 @@ def test_dashboard_strategy_approve_command_writes_lifecycle_files(
 def test_dashboard_strategy_backtest_command_writes_reports(
     sample_workspace: Path,
 ) -> None:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     plan = build_dashboard_command_plan(
         "strategy.backtest.rerun",
@@ -171,7 +171,7 @@ def test_dashboard_strategy_backtest_command_writes_reports(
         "run",
         "oc",
         "backtest",
-        "strategy_specs/drafts/qqq_pullback_15m.yaml",
+        "strategy_specs/drafts/fixture_pullback_15m.yaml",
     ]
     write_dashboard_command_plan(plan, sample_workspace)
     result = execute_dashboard_command_plan(
@@ -190,7 +190,7 @@ def test_dashboard_strategy_backtest_command_writes_reports(
 def test_dashboard_strategy_validate_and_capability_commands_write_reports(
     sample_workspace: Path,
 ) -> None:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     validate_plan = build_dashboard_command_plan(
         "strategy.validate",
@@ -205,7 +205,7 @@ def test_dashboard_strategy_validate_and_capability_commands_write_reports(
         "oc",
         "spec",
         "validate",
-        "strategy_specs/drafts/qqq_pullback_15m.yaml",
+        "strategy_specs/drafts/fixture_pullback_15m.yaml",
     ]
     write_dashboard_command_plan(validate_plan, sample_workspace)
     validate_result = execute_dashboard_command_plan(
@@ -217,8 +217,8 @@ def test_dashboard_strategy_validate_and_capability_commands_write_reports(
     assert validate_result.status == "executed"
     assert validate_result.message == "Strategy validated."
     assert validate_result.output_paths == [
-        "reports/specs/qqq_pullback_15m.validation.json",
-        "reports/specs/qqq_pullback_15m.validation.md",
+        "reports/specs/fixture_pullback_15m.validation.json",
+        "reports/specs/fixture_pullback_15m.validation.md",
     ]
 
     capability_plan = build_dashboard_command_plan(
@@ -234,7 +234,7 @@ def test_dashboard_strategy_validate_and_capability_commands_write_reports(
         "oc",
         "spec",
         "capabilities",
-        "strategy_specs/drafts/qqq_pullback_15m.yaml",
+        "strategy_specs/drafts/fixture_pullback_15m.yaml",
     ]
     write_dashboard_command_plan(capability_plan, sample_workspace)
     capability_result = execute_dashboard_command_plan(
@@ -246,15 +246,15 @@ def test_dashboard_strategy_validate_and_capability_commands_write_reports(
     assert capability_result.status == "executed"
     assert capability_result.message == "Strategy capability report refreshed."
     assert capability_result.output_paths == [
-        "reports/capabilities/qqq_pullback_15m.json",
-        "reports/capabilities/qqq_pullback_15m.md",
+        "reports/capabilities/fixture_pullback_15m.json",
+        "reports/capabilities/fixture_pullback_15m.md",
     ]
 
 
 def test_dashboard_strategy_workflow_verify_runs_core_checks(
     sample_workspace: Path,
 ) -> None:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     plan = build_dashboard_command_plan(
         "strategy.workflow.verify",
@@ -275,9 +275,9 @@ def test_dashboard_strategy_workflow_verify_runs_core_checks(
 
     assert result.status == "executed"
     assert result.message == "Strategy workflow verification completed."
-    assert "reports/workflows/qqq_pullback_15m.verify.json" in result.output_paths
-    assert "reports/specs/qqq_pullback_15m.validation.json" in result.output_paths
-    assert "reports/capabilities/qqq_pullback_15m.json" in result.output_paths
+    assert "reports/workflows/fixture_pullback_15m.verify.json" in result.output_paths
+    assert "reports/specs/fixture_pullback_15m.validation.json" in result.output_paths
+    assert "reports/capabilities/fixture_pullback_15m.json" in result.output_paths
     assert any(path.startswith("reports/backtests/") for path in result.output_paths)
     assert any(path.startswith("reports/paper/readiness/") for path in result.output_paths)
 
@@ -285,7 +285,7 @@ def test_dashboard_strategy_workflow_verify_runs_core_checks(
 def test_dashboard_strategy_scan_command_writes_reports(
     sample_workspace: Path,
 ) -> None:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     plan = build_dashboard_command_plan(
         "strategy.scan.rerun",
@@ -300,7 +300,7 @@ def test_dashboard_strategy_scan_command_writes_reports(
         "run",
         "oc",
         "scan",
-        "strategy_specs/drafts/qqq_pullback_15m.yaml",
+        "strategy_specs/drafts/fixture_pullback_15m.yaml",
     ]
     write_dashboard_command_plan(plan, sample_workspace)
     result = execute_dashboard_command_plan(
@@ -319,7 +319,7 @@ def test_dashboard_strategy_scan_command_writes_reports(
 def test_dashboard_strategy_paper_auto_activation_blocks_on_readiness(
     sample_workspace: Path,
 ) -> None:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     plan = build_dashboard_command_plan(
         "strategy.activate.paper_auto",
@@ -347,7 +347,7 @@ def test_dashboard_strategy_paper_auto_activation_blocks_on_readiness(
         / "reports"
         / "paper"
         / "readiness"
-        / "qqq_pullback_15m.activation_candidate.json"
+        / "fixture_pullback_15m.activation_candidate.json"
     )
     assert result_path.exists()
     assert readiness_path.exists()

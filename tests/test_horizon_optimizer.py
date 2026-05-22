@@ -52,7 +52,7 @@ def test_horizon_optimizer_compares_frequency_and_hold_profiles(
 
     monkeypatch.setattr("open_composer.research.horizon_optimizer.fetch_ohlcv", fake_fetch_ohlcv)
     result = optimize_strategy_horizons(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         sample_workspace,
         symbols=["AAA"],
         refresh_data=False,

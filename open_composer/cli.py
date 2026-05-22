@@ -94,6 +94,7 @@ from open_composer.feature_packets import (
 )
 from open_composer.journal.writer import add_journal_entry
 from open_composer.models.notification import NotificationKind, NotificationSeverity
+from open_composer.models.project import StrategyProjectCreate, StrategyProjectRun
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.notifications import (
     notification_config_status,
@@ -114,6 +115,7 @@ from open_composer.paper_readiness import (
     assess_paper_strategy_readiness,
     write_paper_readiness_report,
 )
+from open_composer.projects import create_project, list_projects, load_project, update_project_state
 from open_composer.readiness import build_readiness_report, write_readiness_report
 from open_composer.remote import RemoteJobManager, build_remote_doctor_report, serve_remote
 from open_composer.remote.bootstrap import (
@@ -216,6 +218,7 @@ agent_app = typer.Typer(no_args_is_help=True)
 notify_app = typer.Typer(no_args_is_help=True)
 cache_app = typer.Typer(no_args_is_help=True)
 harness_app = typer.Typer(no_args_is_help=True)
+project_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -239,6 +242,7 @@ app.add_typer(agent_app, name="agent")
 app.add_typer(notify_app, name="notify")
 app.add_typer(cache_app, name="cache")
 app.add_typer(harness_app, name="harness")
+app.add_typer(project_app, name="project")
 
 
 @app.callback()
@@ -1221,6 +1225,123 @@ def agent_request_complete_command(
     except (FileNotFoundError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(f"[green]agent request completed[/green] {request.request_id}")
+
+
+@project_app.command("create")
+def project_create_command(
+    name: Annotated[str, typer.Option("--name", help="StrategyProject display name.")],
+    thesis: Annotated[str, typer.Option("--thesis", help="User-facing strategy thesis.")],
+    idea: Annotated[str, typer.Option("--idea", help="Natural-language build request.")],
+    template_id: Annotated[str | None, typer.Option("--template-id")] = None,
+    max_rounds: Annotated[int, typer.Option("--max-rounds")] = 5,
+    requested_by: Annotated[str, typer.Option("--requested-by")] = "cli",
+    use_llm: Annotated[bool, typer.Option("--use-llm/--no-llm")] = False,
+) -> None:
+    """Create a lightweight StrategyProject and agent request."""
+    try:
+        project, request = create_project(
+            StrategyProjectCreate(
+                name=name,
+                thesis=thesis,
+                idea=idea,
+                template_id=template_id,
+                max_rounds=max_rounds,
+                requested_by=requested_by,
+                use_llm=use_llm,
+            ),
+            project_root(),
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]project written[/green] projects/{project.project_id}/project.yaml")
+    console.print(f"context: projects/{project.project_id}/context.md")
+    if request:
+        console.print(f"agent_request: reports/agent_requests/{request.request_id}.json")
+
+
+@project_app.command("list")
+def project_list_command() -> None:
+    """List StrategyProject records."""
+    table = Table(title="Open Composer Strategy Projects")
+    table.add_column("Project")
+    table.add_column("State")
+    table.add_column("Round")
+    table.add_column("Spec")
+    table.add_column("Next action")
+    for project in list_projects(project_root()):
+        table.add_row(
+            project.project_id,
+            project.state,
+            f"{project.iteration.current_round}/{project.iteration.max_rounds}",
+            project.current_spec_path or "",
+            project.next_action,
+        )
+    console.print(table)
+
+
+@project_app.command("state")
+def project_state_command(
+    project_id: str,
+    state: Annotated[str, typer.Option("--state", help="New project state.")],
+    next_action: Annotated[str | None, typer.Option("--next-action")] = None,
+) -> None:
+    """Update lightweight StrategyProject state."""
+    try:
+        project = update_project_state(
+            project_id,
+            state,  # type: ignore[arg-type]
+            project_root(),
+            next_action=next_action,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]project updated[/green] {project.project_id} state={project.state}")
+
+
+@project_app.command("show")
+def project_show_command(project_id: str) -> None:
+    """Show a StrategyProject as JSON."""
+    try:
+        project = load_project(project_id, project_root())
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    print(json.dumps(project.model_dump(mode="json"), indent=2, sort_keys=True))
+
+
+@project_app.command("run-append")
+def project_run_append_command(
+    project_id: str,
+    round_number: Annotated[int, typer.Option("--round", help="Iteration round number.")],
+    status: Annotated[
+        str,
+        typer.Option("--status", help="ok, warning, blocked, or failed."),
+    ] = "warning",
+    changed_path: Annotated[
+        list[str] | None,
+        typer.Option("--changed-path", help="Workspace-relative artifact path changed by worker."),
+    ] = None,
+    blocker: Annotated[
+        list[str] | None,
+        typer.Option("--blocker", help="Project blocker recorded for this round."),
+    ] = None,
+    next_action: Annotated[str, typer.Option("--next-action")] = "",
+) -> None:
+    """Append a lightweight worker run summary and run deterministic path/spec checks."""
+    from open_composer.projects import append_project_run, verify_project_run
+
+    root = project_root()
+    project = load_project(project_id, root)
+    run = StrategyProjectRun(
+        round=round_number,
+        status=status,  # type: ignore[arg-type]
+        changed_paths=changed_path or [],
+        blockers=blocker or [],
+        next_action=next_action,
+    )
+    verified_run = verify_project_run(project, run, root)
+    updated, run_path = append_project_run(project_id, verified_run, root)
+    console.print(f"[green]project run written[/green] {run_path.relative_to(root)}")
+    console.print(f"project={updated.project_id} state={updated.state} blockers={updated.blockers}")
 
 
 @notify_app.command("status")

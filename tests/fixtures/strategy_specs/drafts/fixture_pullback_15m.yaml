@@ -1,5 +1,5 @@
-name: qqq_pullback_15m
-description: QQQ pullback strategy with short sample-data windows for MVP verification.
+name: fixture_pullback_15m
+description: Test-only pullback StrategySpec fixture for CLI and workflow tests.
 timeframe: 15m
 universe: [QQQ]
 lifecycle: draft
@@ -47,7 +47,7 @@ required_capabilities:
   - news.alpha_vantage
 
 notes:
-  intent: Buy short-window pullbacks during a positive sample trend and exit on recovery or trend damage.
+  intent: Exercise the StrategySpec, backtest, scan, research, dashboard, and paper-readiness workflows in tests.
   research_design:
     data_timeframe: 15m
     signal_timeframe: 15m
@@ -72,4 +72,4 @@ notes:
     candidate_cap: 200
     objective: alpha_vs_benchmark_family_after_costs
   open_questions:
-    - Replace short sample windows with production windows after real-data validation.
+    - Test fixture only; do not promote or use as market evidence.

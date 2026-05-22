@@ -31,7 +31,7 @@ Open Composer 当前定位是个人 AI 策略工作台，不是多人 SaaS、机
 |---|---|---|
 | 入口文档 | README 已有 Quick Start、Workflow、Codex Control Surface、Data、Research、Paper、Dashboard 和 Project Docs | 需要把本文标为 no-context Codex 起点 |
 | 策略源头 | `StrategySpec`、版本、hash、报告、信号和 paper 产物围绕 spec 回链 | 保持 |
-| 样例闭环 | `qqq_pullback_15m.yaml` 和 sample data 可支撑无凭证 smoke workflow | 必须持续可运行 |
+| 策略样例 | 产品仓库不固定保留低质量样例策略；测试 fixture 与真实策略管理分离 | 需要新策略通过研究证据后再纳入策略池 |
 | 能力注册 | sample、Alpaca、Longbridge、SEC、FRED、Alpha Vantage、GDELT 已注册 | 新 required capability 先评估再使用 |
 | 复杂数据 | feature packet validation、manifest、Dashboard 展示和 paper readiness gate 已存在 | 继续补生成侧强约束 |
 | 回测可信度 | data sanity、buy-and-hold、Alpha、promotion report 已有 | 不能把 sample / fixture 结果当 benchmark |
@@ -66,13 +66,13 @@ Idea
 ```bash
 uv run oc repo check
 uv run oc capability test
-uv run oc spec validate strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc backtest strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc strategy parameter-sweep strategy_specs/drafts/qqq_pullback_15m.yaml --param costs.slippage_bps=0,5
-uv run oc strategy promotion-report strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc strategy leverage-research strategy_specs/drafts/qqq_pullback_15m.yaml --max-candidates 4
-uv run oc strategy exposure-switch strategy_specs/drafts/qqq_pullback_15m.yaml --max-candidates 4
+uv run oc spec validate strategy_specs/drafts/<strategy>.yaml
+uv run oc spec capabilities strategy_specs/drafts/<strategy>.yaml
+uv run oc backtest strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy parameter-sweep strategy_specs/drafts/<strategy>.yaml --param costs.slippage_bps=0,5
+uv run oc strategy promotion-report strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy leverage-research strategy_specs/drafts/<strategy>.yaml --max-candidates 4
+uv run oc strategy exposure-switch strategy_specs/drafts/<strategy>.yaml --max-candidates 4
 uv run oc feature validate
 uv run oc deploy prepare
 uv run oc readiness

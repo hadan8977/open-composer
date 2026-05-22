@@ -20,7 +20,7 @@ def test_strategy_research_report_writes_default_contract_pipeline(
         [
             "strategy",
             "research-report",
-            str(sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"),
+            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
         ],
         catch_exceptions=False,
     )
@@ -28,26 +28,30 @@ def test_strategy_research_report_writes_default_contract_pipeline(
     assert result.exit_code == 0
     assert "research report complete" in result.output
     report_json = (
-        sample_workspace / "reports" / "research" / "qqq_pullback_15m-research-report.json"
+        sample_workspace / "reports" / "research" / "fixture_pullback_15m-research-report.json"
     )
     contract_json = (
-        sample_workspace / "reports" / "research" / "qqq_pullback_15m-research-contract.json"
+        sample_workspace / "reports" / "research" / "fixture_pullback_15m-research-contract.json"
     )
     payload = json.loads(report_json.read_text(encoding="utf-8"))
     contract = json.loads(contract_json.read_text(encoding="utf-8"))
     assert payload["status"] == "blocked"
     assert payload["kind"] == "research_report"
-    assert payload["contract_path"] == "reports/research/qqq_pullback_15m-research-contract.json"
-    assert payload["research_brief"]["strategy_name"] == "qqq_pullback_15m"
+    assert (
+        payload["contract_path"] == "reports/research/fixture_pullback_15m-research-contract.json"
+    )
+    assert payload["research_brief"]["strategy_name"] == "fixture_pullback_15m"
     assert payload["search_space"]["family"] == "default_research_contract"
     assert payload["candidate_count"] >= 1
     assert payload["trial_count"] == 1
     assert payload["runtime_seconds"] >= 0
-    assert payload["evaluation_bundle"]["strategy_name"] == "qqq_pullback_15m"
+    assert payload["evaluation_bundle"]["strategy_name"] == "fixture_pullback_15m"
     assert "leakage_controls" in payload["default_research_controls"]
     assert "overfit_controls" in payload["default_research_controls"]
     assert "live_gap_controls" in payload["default_research_controls"]
-    assert payload["research_run_index_record"]["run_id"].startswith("research-qqq_pullback_15m-")
+    assert payload["research_run_index_record"]["run_id"].startswith(
+        "research-fixture_pullback_15m-"
+    )
     assert "factor_lab" in contract["required_checks"]
     assert any(item["name"] == "execution_reality" for item in payload["checklist"])
     assert payload["factor_lab"]["status"] == "blocked"
@@ -78,7 +82,7 @@ def test_strategy_dag_validation_blocks_incomplete_llm_packets(
         yaml.safe_dump(
             {
                 "name": "dag_fixture",
-                "strategy_name": "qqq_pullback_15m",
+                "strategy_name": "fixture_pullback_15m",
                 "nodes": [
                     {"id": "quant", "type": "quant_signal"},
                     {
@@ -139,7 +143,7 @@ def test_strategy_dag_validation_accepts_pit_complete_llm_packet(
         yaml.safe_dump(
             {
                 "name": "dag_complete_fixture",
-                "strategy_name": "qqq_pullback_15m",
+                "strategy_name": "fixture_pullback_15m",
                 "nodes": [
                     {"id": "quant", "type": "quant_signal"},
                     {
@@ -199,7 +203,7 @@ def test_strategy_dag_validation_blocks_llm_packet_without_hashes(
         yaml.safe_dump(
             {
                 "name": "dag_no_hash_fixture",
-                "strategy_name": "qqq_pullback_15m",
+                "strategy_name": "fixture_pullback_15m",
                 "nodes": [
                     {"id": "quant", "type": "quant_signal"},
                     {

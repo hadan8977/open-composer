@@ -6,6 +6,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from open_composer.models.execution_backend import BackendStatus, ExecutionBackend
+from open_composer.models.project import ProjectEvidenceStatus, ProjectState
 
 Lifecycle = Literal["draft", "approved", "active", "retired"]
 CapabilityStatus = Literal["supported", "partial", "blocked", "unsupported"]
@@ -462,6 +463,55 @@ class DashboardResearchRun(BaseModel):
     source_artifacts: dict[str, str | None] = Field(default_factory=dict)
 
 
+class DashboardProjectEvidenceItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: ProjectEvidenceStatus = "unknown"
+    summary: str = ""
+    artifact_path: str | None = None
+    blockers: list[str] = Field(default_factory=list)
+    updated_at: datetime | None = None
+
+
+class DashboardProjectEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    factor_quality: DashboardProjectEvidenceItem = Field(
+        default_factory=DashboardProjectEvidenceItem
+    )
+    execution_reality: DashboardProjectEvidenceItem = Field(
+        default_factory=DashboardProjectEvidenceItem
+    )
+    alt_llm_evidence: DashboardProjectEvidenceItem = Field(
+        default_factory=DashboardProjectEvidenceItem
+    )
+
+
+class DashboardProject(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    project_id: str
+    name: str
+    state: ProjectState
+    thesis: str = ""
+    current_spec_path: str | None = None
+    latest_run_path: str | None = None
+    gate_summary: dict[str, object] = Field(default_factory=dict)
+    evidence: DashboardProjectEvidence = Field(default_factory=DashboardProjectEvidence)
+    blockers: list[str] = Field(default_factory=list)
+    next_action: str = ""
+    current_round: int = 0
+    max_rounds: int = 5
+    iteration_mode: str = "auto_continue_until_stop"
+    stop_reason: str | None = None
+    user_requested_stop: bool = False
+    paper_status: str = "not_requested"
+    archived: bool = False
+    imported_from_strategy: bool = False
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
 class DashboardOperationalCheck(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -522,6 +572,11 @@ class DashboardSummary(BaseModel):
     research_run_count: int = 0
     research_blocked_count: int = 0
     research_warning_count: int = 0
+    project_count: int = 0
+    project_blocked_count: int = 0
+    project_iterating_count: int = 0
+    project_candidate_count: int = 0
+    project_active_paper_count: int = 0
     readiness_status: Literal["ok", "warning", "blocked", "missing"] = "missing"
     readiness_ready: bool = False
     readiness_warning_count: int = 0
@@ -577,6 +632,7 @@ class DashboardCatalog(BaseModel):
     source_root: str
     summary: DashboardSummary
     strategies: list[DashboardStrategy] = Field(default_factory=list)
+    projects: list[DashboardProject] = Field(default_factory=list)
     versions: list[DashboardVersion] = Field(default_factory=list)
     runs: list[DashboardRun] = Field(default_factory=list)
     signals: list[DashboardSignal] = Field(default_factory=list)

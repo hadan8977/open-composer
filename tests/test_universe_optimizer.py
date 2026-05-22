@@ -19,7 +19,7 @@ def test_universe_optimizer_writes_per_symbol_specs(sample_workspace: Path, monk
 
     monkeypatch.setattr("open_composer.research.universe_optimizer.fetch_ohlcv", fake_fetch_ohlcv)
     result = optimize_strategy_universe(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         sample_workspace,
         symbols=["AAA", "BBB"],
         refresh_data=False,

@@ -36,8 +36,11 @@ def spec_path(tmp_path: Path, repo_root: Path) -> Path:
         "strategy_versions",
     ]:
         (tmp_path / relative).mkdir(parents=True, exist_ok=True)
-    dest = tmp_path / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
-    copyfile(repo_root / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml", dest)
+    dest = tmp_path / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    fixture = (
+        repo_root / "tests" / "fixtures" / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    )
+    copyfile(fixture, dest)
     copyfile(
         repo_root / "data" / "sample" / "qqq_15m.csv",
         tmp_path / "data" / "sample" / "qqq_15m.csv",
@@ -90,7 +93,7 @@ class TestSpecValidationGate:
     def test_valid_spec_returns_ok(self, tmp_path: Path, spec_path: Path) -> None:
         result = run_gate("spec_validation", spec_path, tmp_path)
         assert result.status == "ok"
-        assert "qqq_pullback_15m" in result.message
+        assert "fixture_pullback_15m" in result.message
 
     def test_missing_spec_returns_blocked(self, tmp_path: Path) -> None:
         result = run_gate("spec_validation", tmp_path / "missing.yaml", tmp_path)
@@ -106,7 +109,14 @@ class TestExpressionSafetyGate:
         import yaml
 
         dest = tmp_path / "bad_spec.yaml"
-        src = repo_root / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+        src = (
+            repo_root
+            / "tests"
+            / "fixtures"
+            / "strategy_specs"
+            / "drafts"
+            / "fixture_pullback_15m.yaml"
+        )
         raw = yaml.safe_load(src.read_text(encoding="utf-8"))
         raw["entry"]["all"] = ["__import__('os').system('rm -rf /')"]
         dest.write_text(yaml.safe_dump(raw), encoding="utf-8")
@@ -129,7 +139,14 @@ class TestLeakageCheckGate:
         import yaml
 
         dest = tmp_path / "llm_spec.yaml"
-        src = repo_root / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+        src = (
+            repo_root
+            / "tests"
+            / "fixtures"
+            / "strategy_specs"
+            / "drafts"
+            / "fixture_pullback_15m.yaml"
+        )
         raw = yaml.safe_load(src.read_text(encoding="utf-8"))
         raw["llm_review"] = {"enabled": True}
         dest.write_text(yaml.safe_dump(raw), encoding="utf-8")

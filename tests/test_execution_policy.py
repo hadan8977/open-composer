@@ -24,12 +24,18 @@ def repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
+def _fixture_spec(repo_root: Path) -> Path:
+    return (
+        repo_root / "tests" / "fixtures" / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    )
+
+
 @pytest.fixture()
 def minimal_workspace(tmp_path: Path, repo_root: Path) -> Path:
     """Minimal workspace with a real spec for execution policy tests."""
     for relative in [
         "strategy_specs/drafts",
-        "strategies/qqq_pullback_15m",
+        "strategies/fixture_pullback_15m",
         "capabilities",
         "data/sample",
         "data/fixtures/capabilities",
@@ -37,9 +43,9 @@ def minimal_workspace(tmp_path: Path, repo_root: Path) -> Path:
     ]:
         (tmp_path / relative).mkdir(parents=True, exist_ok=True)
 
-    src_spec = repo_root / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    src_spec = _fixture_spec(repo_root)
     if src_spec.exists():
-        dest = tmp_path / "strategies" / "qqq_pullback_15m" / "qqq_pullback_15m.yaml"
+        dest = tmp_path / "strategies" / "fixture_pullback_15m" / "fixture_pullback_15m.yaml"
         copyfile(src_spec, dest)
 
     copytree(repo_root / "capabilities", tmp_path / "capabilities", dirs_exist_ok=True)
@@ -92,10 +98,10 @@ class TestDetectContext:
     def test_detect_context_from_spec(self, repo_root: Path, tmp_path: Path) -> None:
         from open_composer.models.strategy_spec import load_strategy_spec
 
-        src_spec = repo_root / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+        src_spec = _fixture_spec(repo_root)
         if not src_spec.exists():
-            pytest.skip("qqq_pullback_15m.yaml not present")
-        dest = tmp_path / "qqq_pullback_15m.yaml"
+            pytest.skip("fixture_pullback_15m.yaml not present")
+        dest = tmp_path / "fixture_pullback_15m.yaml"
         copyfile(src_spec, dest)
         copytree(repo_root / "capabilities", tmp_path / "capabilities", dirs_exist_ok=True)
         spec = load_strategy_spec(dest)
@@ -180,7 +186,9 @@ class TestRecommendAlternative:
 
 class TestGenerateExecutionPolicyArtifacts:
     def test_generates_required_artifacts(self, minimal_workspace: Path) -> None:
-        spec_path = minimal_workspace / "strategies" / "qqq_pullback_15m" / "qqq_pullback_15m.yaml"
+        spec_path = (
+            minimal_workspace / "strategies" / "fixture_pullback_15m" / "fixture_pullback_15m.yaml"
+        )
         if not spec_path.exists():
             pytest.skip("spec not copied")
 
@@ -197,7 +205,9 @@ class TestGenerateExecutionPolicyArtifacts:
         assert result.markdown_path.exists(), "execution reality narrative not written"
 
     def test_policy_json_has_required_fields(self, minimal_workspace: Path) -> None:
-        spec_path = minimal_workspace / "strategies" / "qqq_pullback_15m" / "qqq_pullback_15m.yaml"
+        spec_path = (
+            minimal_workspace / "strategies" / "fixture_pullback_15m" / "fixture_pullback_15m.yaml"
+        )
         if not spec_path.exists():
             pytest.skip("spec not copied")
 
@@ -218,7 +228,9 @@ class TestGenerateExecutionPolicyArtifacts:
         assert policy["source_card_ids"] == ["sc-001"]
 
     def test_does_not_overwrite_without_flag(self, minimal_workspace: Path) -> None:
-        spec_path = minimal_workspace / "strategies" / "qqq_pullback_15m" / "qqq_pullback_15m.yaml"
+        spec_path = (
+            minimal_workspace / "strategies" / "fixture_pullback_15m" / "fixture_pullback_15m.yaml"
+        )
         if not spec_path.exists():
             pytest.skip("spec not copied")
 
@@ -242,7 +254,9 @@ class TestGenerateExecutionPolicyArtifacts:
         )
 
     def test_reality_json_has_slippage_scenarios(self, minimal_workspace: Path) -> None:
-        spec_path = minimal_workspace / "strategies" / "qqq_pullback_15m" / "qqq_pullback_15m.yaml"
+        spec_path = (
+            minimal_workspace / "strategies" / "fixture_pullback_15m" / "fixture_pullback_15m.yaml"
+        )
         if not spec_path.exists():
             pytest.skip("spec not copied")
 

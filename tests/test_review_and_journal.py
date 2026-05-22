@@ -26,7 +26,7 @@ class MockResponses:
 
 
 def test_llm_review_mock_writes_card(sample_workspace: Path) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     artifacts = run_backtest(spec_path, root=sample_workspace)
     signal = artifacts.signals[0]
     spec = load_strategy_spec(spec_path)
@@ -58,14 +58,14 @@ def test_llm_review_mock_writes_card(sample_workspace: Path) -> None:
 
 def test_llm_review_skips_without_key(sample_workspace: Path, monkeypatch) -> None:
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     artifacts = run_backtest(spec_path, root=sample_workspace)
     spec = load_strategy_spec(spec_path)
     assert review_signal_with_llm(artifacts.signals[0], spec, sample_workspace, force=True) is None
 
 
 def test_llm_review_skips_when_disabled_in_spec(sample_workspace: Path) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     artifacts = run_backtest(spec_path, root=sample_workspace)
     spec = load_strategy_spec(spec_path)
     assert spec.llm_review.enabled is False
@@ -83,7 +83,7 @@ def test_llm_review_reports_auth_failure(sample_workspace: Path, monkeypatch) ->
             raise AuthenticationError("Incorrect API key provided: redacted-secret")
 
     monkeypatch.setenv("OPENAI_API_KEY", "redacted-secret")
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     artifacts = run_backtest(spec_path, root=sample_workspace)
     spec = load_strategy_spec(spec_path)
     client = SimpleNamespace(responses=MockResponses())
@@ -98,7 +98,7 @@ def test_llm_review_reports_auth_failure(sample_workspace: Path, monkeypatch) ->
 
 
 def test_journal_entry_links_signal(sample_workspace: Path) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     artifacts = run_backtest(spec_path, root=sample_workspace)
     entry = add_journal_entry(
         sample_workspace, artifacts.signals[0].id, "watched", "note", "pending"

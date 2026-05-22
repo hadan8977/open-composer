@@ -9,7 +9,7 @@ from open_composer.research.geometry_features import build_geometry_feature_repo
 
 
 def test_geometry_features_writes_research_only_report(sample_workspace, monkeypatch) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
 
     result = CliRunner().invoke(
@@ -27,10 +27,10 @@ def test_geometry_features_writes_research_only_report(sample_workspace, monkeyp
     assert result.exit_code == 0
     assert "geometry features complete" in result.output
     json_path = (
-        sample_workspace / "reports" / "research" / "qqq_pullback_15m-geometry-features.json"
+        sample_workspace / "reports" / "research" / "fixture_pullback_15m-geometry-features.json"
     )
     report_path = (
-        sample_workspace / "reports" / "research" / "qqq_pullback_15m-geometry-features.md"
+        sample_workspace / "reports" / "research" / "fixture_pullback_15m-geometry-features.md"
     )
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload["status"] == "blocked"
@@ -54,7 +54,7 @@ def test_geometry_features_writes_research_only_report(sample_workspace, monkeyp
 
 
 def test_geometry_features_rejects_too_small_window(sample_workspace) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     try:
         build_geometry_feature_report(spec_path, sample_workspace, window_bars=4)

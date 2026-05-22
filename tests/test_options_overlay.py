@@ -19,12 +19,12 @@ from open_composer.research.options_research import (
 
 def test_option_overlay_backtest_uses_whole_contracts(sample_workspace: Path) -> None:
     equity_artifacts = run_backtest(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         root=sample_workspace,
     )
     overlay = OptionOverlaySpec(
         name="qqq_overlay_test",
-        underlying_strategy="qqq_pullback_15m",
+        underlying_strategy="fixture_pullback_15m",
         symbol="QQQ",
         overlay_type="long_call",
         dte=30,
@@ -50,7 +50,7 @@ def test_option_overlay_backtest_uses_whole_contracts(sample_workspace: Path) ->
 
 def test_options_optimizer_writes_specs_and_report(sample_workspace: Path) -> None:
     result = optimize_option_overlays(
-        [sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"],
+        [sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"],
         sample_workspace,
     )
 
@@ -65,7 +65,7 @@ def test_option_overlay_spec_rejects_invalid_short_leg() -> None:
     with pytest.raises(ValueError):
         OptionOverlaySpec(
             name="bad_spread",
-            underlying_strategy="qqq_pullback_15m",
+            underlying_strategy="fixture_pullback_15m",
             symbol="QQQ",
             overlay_type="debit_call_spread",
             dte=30,

@@ -8,6 +8,17 @@ export type ModelClass =
   | "quant-orchestrator";
 export type CapabilityStatus = "supported" | "partial" | "blocked" | "unsupported";
 export type OperationalStatus = "ok" | "warning" | "blocked";
+export type ProjectEvidenceStatus = "ok" | "warning" | "blocked" | "not_applicable" | "unknown";
+export type ProjectState =
+  | "idea"
+  | "draft"
+  | "researching"
+  | "iterating"
+  | "candidate"
+  | "paper_review"
+  | "active_paper"
+  | "retired"
+  | "blocked";
 
 export interface Strategy {
   id: string;
@@ -45,6 +56,51 @@ export interface Strategy {
   compatibilityReasons: Record<string, string[]>;
   llmReviewEnabled: boolean;
   llmReviewModel?: string | null;
+}
+
+export interface ProjectEvidenceItem {
+  status: ProjectEvidenceStatus;
+  summary: string;
+  artifactPath: string | null;
+  blockers: string[];
+  updatedAt: string | null;
+}
+
+export interface ProjectEvidence {
+  factorQuality: ProjectEvidenceItem;
+  executionReality: ProjectEvidenceItem;
+  altLLMEvidence: ProjectEvidenceItem;
+}
+
+export interface StrategyProject {
+  projectId: string;
+  name: string;
+  state: ProjectState;
+  thesis: string;
+  currentSpecPath: string | null;
+  latestRunPath: string | null;
+  gateSummary: {
+    workflowPass: boolean | null;
+    researchPass: boolean | null;
+    llmContributionPass: boolean | null;
+    paperReadyPass: boolean | null;
+    status: string;
+    blockedChecks: string[];
+    warningChecks: string[];
+  };
+  evidence: ProjectEvidence;
+  blockers: string[];
+  nextAction: string;
+  currentRound: number;
+  maxRounds: number;
+  iterationMode: string;
+  stopReason: string | null;
+  userRequestedStop: boolean;
+  paperStatus: string;
+  archived: boolean;
+  importedFromStrategy: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface CustomDataBinding {
@@ -187,6 +243,11 @@ export interface DashboardSummaryView {
   researchRunCount: number;
   researchBlockedCount: number;
   researchWarningCount: number;
+  projectCount: number;
+  projectBlockedCount: number;
+  projectIteratingCount: number;
+  projectCandidateCount: number;
+  projectActivePaperCount: number;
   readinessStatus: "ok" | "warning" | "blocked" | "missing";
   readinessReady: boolean;
   readinessWarningCount: number;
@@ -223,6 +284,7 @@ interface DashboardCatalog {
   source_root?: string;
   summary?: DashboardSummaryRecord;
   strategies?: DashboardStrategyRecord[];
+  projects?: DashboardProjectRecord[];
   versions?: DashboardVersionRecord[];
   runs?: DashboardRunRecord[];
   signals?: DashboardSignalRecord[];
@@ -263,6 +325,11 @@ interface DashboardSummaryRecord {
   research_run_count?: number;
   research_blocked_count?: number;
   research_warning_count?: number;
+  project_count?: number;
+  project_blocked_count?: number;
+  project_iterating_count?: number;
+  project_candidate_count?: number;
+  project_active_paper_count?: number;
   readiness_status?: "ok" | "warning" | "blocked" | "missing";
   readiness_ready?: boolean;
   readiness_warning_count?: number;
@@ -315,6 +382,49 @@ interface DashboardStrategyRecord {
   compatibility_reasons?: Record<string, string[]>;
   llm_review_enabled?: boolean;
   llm_review_model?: string | null;
+}
+
+interface DashboardProjectRecord {
+  project_id: string;
+  name: string;
+  state: ProjectState;
+  thesis?: string;
+  current_spec_path?: string | null;
+  latest_run_path?: string | null;
+  gate_summary?: {
+    workflow_pass?: boolean | null;
+    research_pass?: boolean | null;
+    llm_contribution_pass?: boolean | null;
+    paper_ready_pass?: boolean | null;
+    status?: string;
+    blocked_checks?: string[];
+    warning_checks?: string[];
+  };
+  evidence?: {
+    factor_quality?: DashboardProjectEvidenceItemRecord;
+    execution_reality?: DashboardProjectEvidenceItemRecord;
+    alt_llm_evidence?: DashboardProjectEvidenceItemRecord;
+  };
+  blockers?: string[];
+  next_action?: string;
+  current_round?: number;
+  max_rounds?: number;
+  iteration_mode?: string;
+  stop_reason?: string | null;
+  user_requested_stop?: boolean;
+  paper_status?: string;
+  archived?: boolean;
+  imported_from_strategy?: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+interface DashboardProjectEvidenceItemRecord {
+  status?: ProjectEvidenceStatus;
+  summary?: string;
+  artifact_path?: string | null;
+  blockers?: string[];
+  updated_at?: string | null;
 }
 
 interface DashboardVersionRecord extends DashboardStrategyRecord {
@@ -560,6 +670,7 @@ let summaryRecord = catalog.summary ?? {};
 let catalogGeneratedAt = catalog.generated_at ?? summaryRecord.generated_at ?? null;
 let allRuns = asArray(catalog.runs);
 let allVersions = asArray(catalog.versions);
+let allProjects = asArray(catalog.projects);
 let allPaperReadiness = asArray(catalog.paper_readiness_reports);
 let allResearchRuns = asArray(catalog.research_runs);
 let versionById = new Map(allVersions.map((version) => [version.version_id, version]));
@@ -567,6 +678,7 @@ let paperReadinessByStrategy = buildPaperReadinessByStrategy();
 
 export let dashboardSummary: DashboardSummaryView = buildDashboardSummary();
 export let strategies: Strategy[] = buildStrategies();
+export let projects: StrategyProject[] = buildProjects();
 export let recentSignals: RecentSignal[] = buildRecentSignals();
 export let events: TimelineEvent[] = buildTimelineEvents();
 export let llmReviews: LLMReview[] = buildLLMReviews();
@@ -584,6 +696,7 @@ export function applyDashboardCatalog(nextCatalog: DashboardCatalog): void {
   catalogGeneratedAt = catalog.generated_at ?? summaryRecord.generated_at ?? null;
   allRuns = asArray(catalog.runs);
   allVersions = asArray(catalog.versions);
+  allProjects = asArray(catalog.projects);
   allPaperReadiness = asArray(catalog.paper_readiness_reports);
   allResearchRuns = asArray(catalog.research_runs);
   versionById = new Map(allVersions.map((version) => [version.version_id, version]));
@@ -591,6 +704,7 @@ export function applyDashboardCatalog(nextCatalog: DashboardCatalog): void {
 
   dashboardSummary = buildDashboardSummary();
   strategies = buildStrategies();
+  projects = buildProjects();
   recentSignals = buildRecentSignals();
   llmReviews = buildLLMReviews();
   auditLog = buildAuditLog();
@@ -642,6 +756,19 @@ function buildDashboardSummary(): DashboardSummaryView {
     researchWarningCount:
       summaryRecord.research_warning_count ??
       allResearchRuns.filter((run) => run.status === "warning").length,
+    projectCount: summaryRecord.project_count ?? allProjects.length,
+    projectBlockedCount:
+      summaryRecord.project_blocked_count ??
+      allProjects.filter((project) => project.state === "blocked").length,
+    projectIteratingCount:
+      summaryRecord.project_iterating_count ??
+      allProjects.filter((project) => project.state === "researching" || project.state === "iterating").length,
+    projectCandidateCount:
+      summaryRecord.project_candidate_count ??
+      allProjects.filter((project) => project.state === "candidate").length,
+    projectActivePaperCount:
+      summaryRecord.project_active_paper_count ??
+      allProjects.filter((project) => project.state === "active_paper").length,
     readinessStatus:
       summaryRecord.readiness_status ?? catalog.readiness_report?.status ?? "missing",
     readinessReady: summaryRecord.readiness_ready ?? Boolean(catalog.readiness_report?.ready),
@@ -735,6 +862,105 @@ function buildStrategies(): Strategy[] {
   });
 }
 
+function buildProjects(): StrategyProject[] {
+  const derived = allProjects.length > 0 ? allProjects : deriveProjectsFromStrategies();
+  return derived
+    .slice()
+    .sort((left, right) => projectSortWeight(left) - projectSortWeight(right) || left.name.localeCompare(right.name))
+    .map((project) => ({
+      projectId: project.project_id,
+      name: humanize(project.name),
+      state: project.state,
+      thesis: project.thesis ?? "",
+      currentSpecPath: project.current_spec_path ?? null,
+      latestRunPath: project.latest_run_path ?? null,
+      gateSummary: {
+        workflowPass: project.gate_summary?.workflow_pass ?? null,
+        researchPass: project.gate_summary?.research_pass ?? null,
+        llmContributionPass: project.gate_summary?.llm_contribution_pass ?? null,
+        paperReadyPass: project.gate_summary?.paper_ready_pass ?? null,
+        status: project.gate_summary?.status ?? "unknown",
+        blockedChecks: project.gate_summary?.blocked_checks ?? [],
+        warningChecks: project.gate_summary?.warning_checks ?? [],
+      },
+      evidence: {
+        factorQuality: buildProjectEvidenceItem(project.evidence?.factor_quality),
+        executionReality: buildProjectEvidenceItem(project.evidence?.execution_reality),
+        altLLMEvidence: buildProjectEvidenceItem(project.evidence?.alt_llm_evidence),
+      },
+      blockers: project.blockers ?? [],
+      nextAction: project.next_action ?? "",
+      currentRound: project.current_round ?? 0,
+      maxRounds: project.max_rounds ?? 5,
+      iterationMode: project.iteration_mode ?? "auto_continue_until_stop",
+      stopReason: project.stop_reason ?? null,
+      userRequestedStop: project.user_requested_stop ?? false,
+      paperStatus: project.paper_status ?? "not_requested",
+      archived: project.archived ?? false,
+      importedFromStrategy: project.imported_from_strategy ?? false,
+      createdAt: project.created_at ?? null,
+      updatedAt: project.updated_at ?? null,
+    }));
+}
+
+function deriveProjectsFromStrategies(): DashboardProjectRecord[] {
+  return asArray(catalog.strategies).map((strategy) => {
+    const latestRun = latestRunFor(strategy.strategy_id);
+    return {
+      project_id: strategy.strategy_id,
+      name: strategy.strategy_name,
+      state: strategy.lifecycle === "active" ? "candidate" : strategy.lifecycle === "draft" ? "draft" : "candidate",
+      thesis: strategy.note ?? "",
+      current_spec_path: strategy.source_paths?.[0] ?? null,
+      latest_run_path: latestRun?.report_path ?? latestRun?.source_path ?? null,
+      gate_summary: {
+        workflow_pass: strategy.lifecycle !== "draft",
+        research_pass: latestRun?.kind === "paper" ? true : null,
+        llm_contribution_pass: strategy.llm_review_enabled ? null : null,
+        paper_ready_pass: null,
+        status: "unknown",
+        blocked_checks: [],
+        warning_checks: [],
+      },
+      evidence: {
+        factor_quality: {
+          status: strategy.factor_names.length > 0 ? "unknown" : "not_applicable",
+          summary: strategy.factor_names.length > 0 ? "Factor diagnostics have not been linked yet." : "No factor lab evidence is required.",
+          artifact_path: null,
+          blockers: [],
+          updated_at: null,
+        },
+        execution_reality: {
+          status: "unknown",
+          summary: "Execution reality evidence has not been linked yet.",
+          artifact_path: null,
+          blockers: [],
+          updated_at: null,
+        },
+        alt_llm_evidence: {
+          status: strategy.llm_review_enabled || strategy.llm_feature_factor_names?.length || strategy.feature_packet_factor_names?.length ? "unknown" : "not_applicable",
+          summary: strategy.llm_review_enabled || strategy.llm_feature_factor_names?.length || strategy.feature_packet_factor_names?.length ? "Alt/LLM evidence has not been linked yet." : "No LLM or alternative-data factor is declared.",
+          artifact_path: null,
+          blockers: [],
+          updated_at: null,
+        },
+      },
+      blockers: [],
+      next_action: strategy.lifecycle === "active" ? "review_project_evidence" : "create_or_link_strategy_project",
+      current_round: 0,
+      max_rounds: 5,
+      iteration_mode: "auto_continue_until_stop",
+      stop_reason: null,
+      user_requested_stop: false,
+      paper_status: strategy.lifecycle === "active" ? "review_requested" : "not_requested",
+      archived: strategy.lifecycle === "retired",
+      imported_from_strategy: true,
+      created_at: null,
+      updated_at: null,
+    };
+  });
+}
+
 function buildCustomDataBindings(
   bindings: DashboardCustomDataBindingRecord[] | undefined,
 ): CustomDataBinding[] {
@@ -749,6 +975,33 @@ function buildCustomDataBindings(
     pointInTimeStatus: binding.point_in_time_status ?? "missing",
     replayWarnings: binding.replay_warnings ?? [],
   }));
+}
+
+function buildProjectEvidenceItem(
+  item: DashboardProjectEvidenceItemRecord | undefined,
+): ProjectEvidenceItem {
+  return {
+    status: item?.status ?? "unknown",
+    summary: item?.summary ?? "No evidence has been linked yet.",
+    artifactPath: item?.artifact_path ?? null,
+    blockers: item?.blockers ?? [],
+    updatedAt: item?.updated_at ?? null,
+  };
+}
+
+function projectSortWeight(project: DashboardProjectRecord): number {
+  const order: Record<ProjectState, number> = {
+    blocked: 0,
+    paper_review: 1,
+    active_paper: 2,
+    iterating: 3,
+    researching: 4,
+    candidate: 5,
+    draft: 6,
+    idea: 7,
+    retired: 8,
+  };
+  return order[project.state] ?? 99;
 }
 
 function buildRecentSignals(): RecentSignal[] {

@@ -140,7 +140,7 @@ def test_kill_switch_records_notification(sample_workspace: Path) -> None:
 
 def test_paper_runner_signal_notification_hook(sample_workspace: Path) -> None:
     spec = load_strategy_spec(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     )
     signal_result = PaperRunSignalResult(
         signal_id="sig-order-error",

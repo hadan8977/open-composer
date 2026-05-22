@@ -34,10 +34,10 @@ Validate a draft, inspect capabilities, run research, and build Dashboard
 artifacts:
 
 ```bash
-uv run oc spec validate strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc strategy research-report strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc strategy promotion-report strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc spec validate strategy_specs/drafts/<strategy>.yaml
+uv run oc spec capabilities strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy research-report strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy promotion-report strategy_specs/drafts/<strategy>.yaml
 uv run oc dashboard html
 ```
 
@@ -51,7 +51,7 @@ Use bounded search when parameters, factor variants, or method variants are
 adjustable:
 
 ```bash
-uv run oc strategy parameter-sweep strategy_specs/drafts/qqq_pullback_15m.yaml \
+uv run oc strategy parameter-sweep strategy_specs/drafts/<strategy>.yaml \
   --param risk.stop_loss_pct=0.8,1.0,1.2 \
   --param risk.take_profit_pct=1.5,2.0,3.0 \
   --param costs.slippage_bps=0,5 \
@@ -63,14 +63,14 @@ uv run oc strategy parameter-sweep strategy_specs/drafts/qqq_pullback_15m.yaml \
 Other research commands:
 
 ```bash
-uv run oc strategy factor-lab strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc strategy exposure-switch strategy_specs/drafts/qqq_pullback_15m.yaml --walk-forward-folds 3 --walk-forward-top-k 8
-uv run oc strategy rotate-universe strategy_specs/drafts/qqq_pullback_15m.yaml --symbols QQQ,SPY,IWM --walk-forward-folds 3
-uv run oc strategy market-time strategy_specs/drafts/qqq_pullback_15m.yaml --profile risk_control_hold --walk-forward-folds 3
-uv run oc strategy llm-exposure-switch strategy_specs/drafts/qqq_pullback_15m.yaml --validation-folds 3
-uv run oc strategy blind-test strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc strategy cost-grid strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc strategy regime-search strategy_specs/drafts/qqq_pullback_15m.yaml
+uv run oc strategy factor-lab strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy exposure-switch strategy_specs/drafts/<strategy>.yaml --walk-forward-folds 3 --walk-forward-top-k 8
+uv run oc strategy rotate-universe strategy_specs/drafts/<strategy>.yaml --symbols QQQ,SPY,IWM --walk-forward-folds 3
+uv run oc strategy market-time strategy_specs/drafts/<strategy>.yaml --profile risk_control_hold --walk-forward-folds 3
+uv run oc strategy llm-exposure-switch strategy_specs/drafts/<strategy>.yaml --validation-folds 3
+uv run oc strategy blind-test strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy cost-grid strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy regime-search strategy_specs/drafts/<strategy>.yaml
 ```
 
 Research reports write `research_brief`, `search_space`,
@@ -139,12 +139,12 @@ Alpaca Paper is the only automated order path. A paper order requires:
 Typical flow:
 
 ```bash
-uv run oc strategy approve strategy_specs/drafts/qqq_pullback_15m.yaml
-uv run oc strategy activate qqq_pullback_15m --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness
-uv run oc paper readiness qqq_pullback_15m
-uv run oc run paper qqq_pullback_15m --max-cycles 1 --no-review
+uv run oc strategy approve strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy activate <strategy> --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness
+uv run oc paper readiness <strategy>
+uv run oc run paper <strategy> --max-cycles 1 --no-review
 uv run oc paper submit <signal-id> --allow-paper-orders
-uv run oc strategy disable qqq_pullback_15m
+uv run oc strategy disable <strategy>
 ```
 
 Sample-data strategies can be activated for local smoke tests, but paper order

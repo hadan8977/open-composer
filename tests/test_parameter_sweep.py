@@ -12,7 +12,7 @@ from open_composer.research.parameter_sweep import parse_sweep_parameters, run_p
 
 
 def test_parameter_sweep_runs_grid_and_writes_ranked_reports(sample_workspace: Path) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     parameters = parse_sweep_parameters(
         [
             "risk.stop_loss_pct=0.8,1.2",
@@ -81,7 +81,7 @@ def test_parameter_sweep_runs_grid_and_writes_ranked_reports(sample_workspace: P
 
 
 def test_parameter_sweep_can_vary_expression_paths(sample_workspace: Path) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     parameters = parse_sweep_parameters(
         [
             "entry.all.0=close > ema(close, 5)|close > ema(close, 8)",
@@ -102,7 +102,7 @@ def test_parameter_sweep_can_vary_expression_paths(sample_workspace: Path) -> No
 
 
 def test_parameter_sweep_rejects_execution_paths(sample_workspace: Path) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     parameters = parse_sweep_parameters(["execution.mode=paper_auto,manual_signal"])
 
     with pytest.raises(ValueError, match="unsupported sweep path"):
@@ -110,7 +110,7 @@ def test_parameter_sweep_rejects_execution_paths(sample_workspace: Path) -> None
 
 
 def test_parameter_sweep_enforces_candidate_cap(sample_workspace: Path) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     parameters = parse_sweep_parameters(
         [
             "risk.stop_loss_pct=0.8,1.0,1.2",
@@ -131,7 +131,7 @@ def test_parameter_sweep_cli_writes_reports(sample_workspace: Path, monkeypatch)
         [
             "strategy",
             "parameter-sweep",
-            str(sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"),
+            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
             "--param",
             "risk.take_profit_pct=1.5,2.0",
             "--param",
@@ -147,14 +147,14 @@ def test_parameter_sweep_cli_writes_reports(sample_workspace: Path, monkeypatch)
     assert result.exit_code == 0
     assert "parameter sweep complete" in result.output
     assert (
-        sample_workspace / "reports" / "research" / "qqq_pullback_15m-parameter-sweep.md"
+        sample_workspace / "reports" / "research" / "fixture_pullback_15m-parameter-sweep.md"
     ).exists()
     assert (
-        sample_workspace / "reports" / "research" / "qqq_pullback_15m-parameter-sweep.json"
+        sample_workspace / "reports" / "research" / "fixture_pullback_15m-parameter-sweep.json"
     ).exists()
     payload = json.loads(
         (
-            sample_workspace / "reports" / "research" / "qqq_pullback_15m-parameter-sweep.json"
+            sample_workspace / "reports" / "research" / "fixture_pullback_15m-parameter-sweep.json"
         ).read_text(encoding="utf-8")
     )
     assert payload["candidate_set"]["family"] == "parameter_sweep"

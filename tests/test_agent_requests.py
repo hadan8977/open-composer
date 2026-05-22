@@ -18,7 +18,7 @@ def test_agent_request_file_lifecycle(sample_workspace) -> None:
             task_type="research",
             title="Review sweep",
             prompt="Review reports/research/example.json",
-            related_paths=["strategy_specs/drafts/qqq_pullback_15m.yaml"],
+            related_paths=["strategy_specs/drafts/fixture_pullback_15m.yaml"],
         ),
         sample_workspace,
     )
@@ -104,7 +104,7 @@ def test_agent_request_cli_creates_request(sample_workspace, monkeypatch) -> Non
             "--prompt",
             "Review reports/research/example.json",
             "--related-path",
-            "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "strategy_specs/drafts/fixture_pullback_15m.yaml",
         ],
         catch_exceptions=False,
     )

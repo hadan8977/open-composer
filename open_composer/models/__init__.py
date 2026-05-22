@@ -10,6 +10,9 @@ from open_composer.models.dashboard import (
     DashboardGroup,
     DashboardJournalEntry,
     DashboardOrder,
+    DashboardProject,
+    DashboardProjectEvidence,
+    DashboardProjectEvidenceItem,
     DashboardReview,
     DashboardRun,
     DashboardSignal,
@@ -45,6 +48,14 @@ from open_composer.models.paper import (
     PaperReconciliationReport,
     PaperStatusSnapshot,
 )
+from open_composer.models.project import (
+    ProjectEvidence,
+    ProjectEvidenceItem,
+    ProjectGateSummary,
+    StrategyProject,
+    StrategyProjectCreate,
+    StrategyProjectRun,
+)
 from open_composer.models.review_card import ReviewCard
 from open_composer.models.runner import PaperRunCycle, PaperRunSignalResult
 from open_composer.models.signal import Signal
@@ -65,6 +76,9 @@ __all__ = [
     "DashboardGroup",
     "DashboardJournalEntry",
     "DashboardOrder",
+    "DashboardProject",
+    "DashboardProjectEvidence",
+    "DashboardProjectEvidenceItem",
     "DashboardReview",
     "DashboardRun",
     "DashboardSignal",
@@ -98,9 +112,15 @@ __all__ = [
     "PaperStatusSnapshot",
     "PaperRunCycle",
     "PaperRunSignalResult",
+    "ProjectEvidence",
+    "ProjectEvidenceItem",
+    "ProjectGateSummary",
     "ReviewCard",
     "Signal",
     "SignalContext",
+    "StrategyProject",
+    "StrategyProjectCreate",
+    "StrategyProjectRun",
     "StrategySpec",
     "StrategyVersion",
     "Trade",

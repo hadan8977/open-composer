@@ -22,7 +22,7 @@ def test_paper_readiness_blocks_default_sample_paper_strategy(
     monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
     monkeypatch.setenv("ALPACA_PAPER", "true")
     active = activate_strategy(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         sample_workspace,
         paper_auto=True,
         allow_paper_auto=True,
@@ -55,7 +55,7 @@ def test_activate_can_enforce_paper_readiness(
 
     try:
         activate_strategy(
-            sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+            sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
             sample_workspace,
             paper_auto=True,
             allow_paper_auto=True,
@@ -71,10 +71,12 @@ def test_activate_can_enforce_paper_readiness(
         / "reports"
         / "paper"
         / "readiness"
-        / "qqq_pullback_15m.activation_candidate.json"
+        / "fixture_pullback_15m.activation_candidate.json"
     )
     assert report_path.exists()
-    assert not (sample_workspace / "strategy_specs" / "active" / "qqq_pullback_15m.yaml").exists()
+    assert not (
+        sample_workspace / "strategy_specs" / "active" / "fixture_pullback_15m.yaml"
+    ).exists()
 
 
 def test_candidate_paper_readiness_capability_uses_candidate_spec(
@@ -84,7 +86,7 @@ def test_candidate_paper_readiness_capability_uses_candidate_spec(
     monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
     monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
     monkeypatch.setenv("ALPACA_PAPER", "true")
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     source = load_strategy_spec(draft)
     raw = source.model_dump(mode="json")
     raw["lifecycle"] = "active"
@@ -191,7 +193,7 @@ def test_paper_readiness_passes_for_live_cache_alpaca_strategy(
     )
     draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_paper_ready_15m.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -252,7 +254,7 @@ def test_paper_readiness_requires_research_contract_and_new_promotion_checks(
     )
     draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_missing_research_contract.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -302,7 +304,7 @@ def test_paper_readiness_blocks_incomplete_feature_packets(
     )
     draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_paper_llm_15m.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -352,7 +354,7 @@ def test_paper_readiness_blocks_feature_packets_without_evidence(
     )
     draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_paper_llm_15m.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -394,7 +396,7 @@ def test_paper_readiness_accepts_adaptive_router_portfolio_routing(
     monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
     draft = sample_workspace / "strategy_specs" / "drafts" / "adaptive_router_portfolio.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -430,7 +432,7 @@ def test_paper_readiness_accepts_hybrid_router_portfolio_routing(
     monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
     draft = sample_workspace / "strategy_specs" / "drafts" / "hybrid_router_portfolio.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -477,7 +479,7 @@ def test_paper_readiness_router_can_be_observation_only_when_evidence_exists(
     )
     draft = sample_workspace / "strategy_specs" / "drafts" / "beta_router_observation.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -527,7 +529,7 @@ def test_paper_readiness_sample_acquisition_tier_blocks_live_paper(
     monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
     monkeypatch.setenv("ALPACA_PAPER", "true")
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )

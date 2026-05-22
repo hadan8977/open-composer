@@ -11,7 +11,6 @@ from pydantic import BaseModel, ConfigDict, Field
 from open_composer.capabilities import load_registry
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.dashboard_command import DashboardCommandAction
-from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.storage import write_json
 
 RepoCheckStatus = Literal["ok", "warning", "blocked"]
@@ -132,7 +131,6 @@ def build_repo_check_report(root: Path | None = None) -> RepoConsistencyReport:
         _claude_parity_check(base),
         _repo_skills_check(base),
         _capability_registry_check(base),
-        _sample_workflow_check(base),
         _dashboard_command_model_check(),
         _makefile_verify_check(base),
         _harness_policy_check(base),
@@ -548,43 +546,6 @@ def _capability_registry_check(root: Path) -> RepoConsistencyCheck:
         status="ok",
         message="Capability registry loads and core data/event/macro/news/options ids are present.",
         details={"capability_count": len(ids), "status_counts": status_counts},
-    )
-
-
-def _sample_workflow_check(root: Path) -> RepoConsistencyCheck:
-    spec_path = root / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
-    data_path = root / "data" / "sample" / "qqq_15m.csv"
-    if not spec_path.exists() or not data_path.exists():
-        return RepoConsistencyCheck(
-            name="sample_workflow",
-            status="blocked",
-            message="Sample StrategySpec or deterministic sample data is missing.",
-            details={
-                "spec_exists": spec_path.exists(),
-                "data_exists": data_path.exists(),
-            },
-            suggested_actions=["Restore qqq_pullback_15m.yaml and qqq_15m.csv"],
-        )
-    try:
-        spec = load_strategy_spec(spec_path)
-    except Exception as exc:
-        return RepoConsistencyCheck(
-            name="sample_workflow",
-            status="blocked",
-            message=f"Sample StrategySpec could not be loaded: {exc}",
-            details={"path": str(spec_path)},
-            suggested_actions=[f"uv run oc spec validate {spec_path}"],
-        )
-    return RepoConsistencyCheck(
-        name="sample_workflow",
-        status="ok",
-        message="Deterministic sample strategy workflow inputs are present and valid.",
-        details={
-            "strategy": spec.name,
-            "lifecycle": spec.lifecycle,
-            "timeframe": spec.timeframe,
-            "data_source": spec.data.source,
-        },
     )
 
 

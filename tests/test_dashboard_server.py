@@ -16,10 +16,41 @@ from open_composer.dashboard.server import (
     build_notification_config_payload,
     build_notification_log_payload,
     build_notification_test_payload,
+    build_project_create_payload,
+    build_project_state_payload,
     create_dashboard_server,
     dashboard_request_authorized,
 )
 from open_composer.strategy_lifecycle import activate_strategy
+
+
+def test_dashboard_server_creates_and_updates_strategy_project(sample_workspace: Path) -> None:
+    response = build_project_create_payload(
+        sample_workspace,
+        {
+            "name": "QQQ Momentum",
+            "thesis": "Follow QQQ momentum with bounded drawdown.",
+            "idea": "Create a QQQ 15m momentum StrategySpec with evidence tracks.",
+            "max_rounds": 4,
+        },
+    )
+
+    assert response["project_path"] == "projects/qqq-momentum/project.yaml"
+    assert response["context_path"] == "projects/qqq-momentum/context.md"
+    assert "agent_request_path" in response
+
+    state = build_project_state_payload(sample_workspace, "qqq-momentum", {"action": "stop"})
+    assert state["project"]["iteration"]["user_requested_stop"] is True
+    assert state["project"]["iteration"]["stop_reason"] == "user_requested_stop"
+
+    continued = build_project_state_payload(
+        sample_workspace,
+        "qqq-momentum",
+        {"action": "continue", "direction": "reduce parameters and retest"},
+    )
+    assert continued["project"]["state"] == "iterating"
+    assert continued["agent_request"]["task_type"] == "strategy_optimization"
+    assert continued["agent_request_path"].startswith("reports/agent_requests/")
 
 
 def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
@@ -27,7 +58,7 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
     monkeypatch,
 ) -> None:
     active = activate_strategy(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         sample_workspace,
         paper_auto=True,
         allow_paper_auto=True,
@@ -178,7 +209,7 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
             "action": "strategy.validate",
             "reason": "server validate test",
             "requested_by": "pytest",
-            "strategy_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "strategy_path": "strategy_specs/drafts/fixture_pullback_15m.yaml",
         },
     )
     assert validate_plan["action"] == "strategy.validate"
@@ -192,8 +223,8 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
     )
     assert validate_result["status"] == "executed"
     assert validate_result["output_paths"] == [
-        "reports/specs/qqq_pullback_15m.validation.json",
-        "reports/specs/qqq_pullback_15m.validation.md",
+        "reports/specs/fixture_pullback_15m.validation.json",
+        "reports/specs/fixture_pullback_15m.validation.md",
     ]
 
     capability_plan = build_dashboard_command_plan_payload(
@@ -202,7 +233,7 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
             "action": "strategy.capabilities.refresh",
             "reason": "server capability test",
             "requested_by": "pytest",
-            "strategy_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "strategy_path": "strategy_specs/drafts/fixture_pullback_15m.yaml",
         },
     )
     assert capability_plan["action"] == "strategy.capabilities.refresh"
@@ -223,7 +254,7 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
             "action": "strategy.workflow.verify",
             "reason": "server workflow test",
             "requested_by": "pytest",
-            "strategy_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "strategy_path": "strategy_specs/drafts/fixture_pullback_15m.yaml",
         },
     )
     assert workflow_plan["action"] == "strategy.workflow.verify"
@@ -282,7 +313,7 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
             "action": "strategy.approve",
             "reason": "server lifecycle test",
             "requested_by": "pytest",
-            "strategy_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "strategy_path": "strategy_specs/drafts/fixture_pullback_15m.yaml",
         },
     )
     assert lifecycle_plan["action"] == "strategy.approve"
@@ -296,7 +327,7 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
         },
     )
     assert lifecycle_result["status"] == "executed"
-    assert (sample_workspace / "strategy_specs" / "approved" / "qqq_pullback_15m.yaml").exists()
+    assert (sample_workspace / "strategy_specs" / "approved" / "fixture_pullback_15m.yaml").exists()
 
     rerun_plan = build_dashboard_command_plan_payload(
         sample_workspace,
@@ -304,7 +335,7 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
             "action": "strategy.backtest.rerun",
             "reason": "server backtest test",
             "requested_by": "pytest",
-            "strategy_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "strategy_path": "strategy_specs/drafts/fixture_pullback_15m.yaml",
         },
     )
     assert rerun_plan["action"] == "strategy.backtest.rerun"
@@ -327,7 +358,7 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
             "action": "strategy.scan.rerun",
             "reason": "server scan test",
             "requested_by": "pytest",
-            "strategy_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "strategy_path": "strategy_specs/drafts/fixture_pullback_15m.yaml",
         },
     )
     assert scan_plan["action"] == "strategy.scan.rerun"
@@ -349,7 +380,7 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
             "action": "strategy.activate.paper_auto",
             "reason": "server paper automation test",
             "requested_by": "pytest",
-            "strategy_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "strategy_path": "strategy_specs/drafts/fixture_pullback_15m.yaml",
             "data_source": "sample",
         },
     )
@@ -368,7 +399,7 @@ def test_dashboard_server_payloads_expose_health_catalog_and_command_api(
         / "reports"
         / "paper"
         / "readiness"
-        / "qqq_pullback_15m.activation_candidate.json"
+        / "fixture_pullback_15m.activation_candidate.json"
     ).exists()
 
     assert_no_windows_paths(

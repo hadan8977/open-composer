@@ -59,7 +59,7 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
         [
             "strategy",
             "promotion-report",
-            str(sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"),
+            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
             "--oos-ratio",
             "0.3",
             "--walk-forward-folds",
@@ -75,8 +75,8 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert result.exit_code == 0
     assert "Promotion Report" in result.output
 
-    json_path = sample_workspace / "reports" / "research" / "qqq_pullback_15m-promotion.json"
-    report_path = sample_workspace / "reports" / "research" / "qqq_pullback_15m-promotion.md"
+    json_path = sample_workspace / "reports" / "research" / "fixture_pullback_15m-promotion.json"
+    report_path = sample_workspace / "reports" / "research" / "fixture_pullback_15m-promotion.md"
     assert json_path.exists()
     assert report_path.exists()
 
@@ -159,13 +159,13 @@ def test_promotion_report_renders_five_pass_table(
         [
             "strategy",
             "promotion-report",
-            str(sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"),
+            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
         ],
         catch_exceptions=False,
     )
 
     assert result.exit_code == 0
-    report_path = sample_workspace / "reports" / "research" / "qqq_pullback_15m-promotion.md"
+    report_path = sample_workspace / "reports" / "research" / "fixture_pullback_15m-promotion.md"
     text = report_path.read_text(encoding="utf-8")
     assert "## Five-Pass Checks" in text
     assert "| workflow_pass | PASS `pass`" in text
@@ -183,13 +183,13 @@ def test_promotion_report_marks_llm_contribution_not_applicable(
         [
             "strategy",
             "promotion-report",
-            str(sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"),
+            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
         ],
         catch_exceptions=False,
     )
 
     assert result.exit_code == 0
-    json_path = sample_workspace / "reports" / "research" / "qqq_pullback_15m-promotion.json"
+    json_path = sample_workspace / "reports" / "research" / "fixture_pullback_15m-promotion.json"
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload["five_pass_checks"]["llm_contribution_pass"] == "not_applicable"
 
@@ -205,7 +205,7 @@ def test_adaptive_router_promotion_report_uses_router_research_artifacts(
         "open_momentum:lb10_entry5_top1_open0_mom0_rv0.8_qprior_negative"
     )
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -375,7 +375,7 @@ def test_hybrid_router_promotion_report_uses_hybrid_research_artifacts(
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_router_promotion.yaml"
     selected_label = "open_to_open:lb20_top1_qsm100_min5_w1"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -596,7 +596,7 @@ def test_beta_router_promotion_report_uses_beta_research_artifacts(
         "levsma50_levmaxvnone_levdd60_levmaxdd25_onTQQQ1_neuQQQ1_offCASH0_vtnone"
     )
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )

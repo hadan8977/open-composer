@@ -25,7 +25,7 @@ from open_composer.strategy_versions import (
 def test_strategy_version_registry_snapshots_specs_and_binds_runs(
     sample_workspace: Path,
 ) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     version = register_strategy_version(
         spec_path,
@@ -34,7 +34,7 @@ def test_strategy_version_registry_snapshots_specs_and_binds_runs(
     )
     artifacts = run_backtest(spec_path, root=sample_workspace)
 
-    versions = load_strategy_versions(sample_workspace, "qqq_pullback_15m")
+    versions = load_strategy_versions(sample_workspace, "fixture_pullback_15m")
     assert versions[0].version_id == version.version_id
     assert version.backend == "python_reference"
     assert (sample_workspace / version.snapshot_path).exists()
@@ -56,7 +56,7 @@ def test_nautilus_backtest_plan_is_written_for_nautilus_backend(
         lambda: True,
     )
     active_path = activate_strategy(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         sample_workspace,
         paper_auto=True,
         allow_paper_auto=True,
@@ -76,7 +76,7 @@ def test_nautilus_backtest_plan_is_written_for_nautilus_backend(
     assert backend_plan_path.exists()
     assert artifacts.backend_plan_path == str(backend_plan_path)
     assert artifacts.signals[0].execution_backend == "nautilus_backtest"
-    assert plan["strategy_name"] == "qqq_pullback_15m"
+    assert plan["strategy_name"] == "fixture_pullback_15m"
     assert plan["execution_backend"] == "nautilus_backtest"
     assert plan["selected_backend"] == "nautilus_trader"
     assert plan["bar_type"] == "15m-ohlcv"
@@ -84,7 +84,7 @@ def test_nautilus_backtest_plan_is_written_for_nautilus_backend(
 
 
 def test_strategy_versions_diff_and_safe_rollback(sample_workspace: Path) -> None:
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     draft_version = register_strategy_version(spec_path, sample_workspace, created_by="test")
     active_path = activate_strategy(
         spec_path,
@@ -92,17 +92,17 @@ def test_strategy_versions_diff_and_safe_rollback(sample_workspace: Path) -> Non
         paper_auto=True,
         allow_paper_auto=True,
     )
-    active_version = load_strategy_versions(sample_workspace, "qqq_pullback_15m")[-1]
+    active_version = load_strategy_versions(sample_workspace, "fixture_pullback_15m")[-1]
 
     diff = diff_strategy_versions(
         sample_workspace,
-        "qqq_pullback_15m",
+        "fixture_pullback_15m",
         draft_version.version_id,
         active_version.version_id,
     )
     rollback = rollback_strategy_version(
         sample_workspace,
-        "qqq_pullback_15m",
+        "fixture_pullback_15m",
         active_version.version_id,
     )
     rolled_back = load_strategy_spec(rollback.path)
@@ -110,14 +110,17 @@ def test_strategy_versions_diff_and_safe_rollback(sample_workspace: Path) -> Non
     rolled_catalog_version = next(
         version
         for version in catalog.versions
-        if version.strategy_name == "qqq_pullback_15m"
+        if version.strategy_name == "fixture_pullback_15m"
         and version.version_id == rollback.version.version_id
     )
 
     assert active_path.exists()
     assert diff.changed
     assert any("paper_auto" in line or "nautilus_trader" in line for line in diff.diff_lines)
-    assert rollback.path == sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    assert (
+        rollback.path
+        == sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    )
     assert rolled_back.lifecycle == "draft"
     assert rolled_back.execution.mode == "manual_signal"
     assert rolled_back.execution.broker == "none"

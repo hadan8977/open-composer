@@ -6,17 +6,22 @@ import { Overview } from "./components/overview";
 import { Library } from "./components/library";
 import { ActivityView, ResearchView } from "./components/sections";
 import { StrategyDetail } from "./components/strategy-detail";
+import { BuildView } from "./components/build";
+import { LiveView } from "./components/live";
+import { ProjectDetail, ProjectsView } from "./components/projects";
 import { StatusFooter } from "./components/footer";
 import { loginDashboard, useDashboardCatalogSync, useDashboardSession } from "./components/runtime";
 
 export default function App() {
   const catalogSync = useDashboardCatalogSync();
   const session = useDashboardSession();
-  const [tab, setTab] = useState<NavKey>("monitor");
+  const [tab, setTab] = useState<NavKey>("overview");
   const [selectedStrategyId, setSelectedStrategyId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
   const handleNav = (key: NavKey) => {
     setSelectedStrategyId(null);
+    setSelectedProjectId(null);
     setTab(key);
   };
 
@@ -33,8 +38,8 @@ export default function App() {
       <Sidebar active={tab} onChange={handleNav} catalogSync={catalogSync} />
       <main className="flex-1 flex flex-col overflow-hidden min-w-0 hairline-l">
         <TopBar
-          back={selectedStrategyId ? "Library" : undefined}
-          onBack={selectedStrategyId ? () => setSelectedStrategyId(null) : undefined}
+          back={selectedStrategyId ? "Strategy" : selectedProjectId ? "Projects" : undefined}
+          onBack={selectedStrategyId ? () => setSelectedStrategyId(null) : selectedProjectId ? () => setSelectedProjectId(null) : undefined}
           deploymentMode={session.remote ? "Remote Commands Enabled" : "Local"}
           owner={session.owner}
           onLogout={session.remote ? session.logout : undefined}
@@ -45,12 +50,23 @@ export default function App() {
           <div className="flex-1 pt-3">
             {selectedStrategyId ? (
               <StrategyDetail id={selectedStrategyId} />
+            ) : selectedProjectId ? (
+              <ProjectDetail
+                id={selectedProjectId}
+                onOpenStrategy={(id) => {
+                  setSelectedProjectId(null);
+                  setSelectedStrategyId(id);
+                }}
+              />
             ) : (
               <>
-                {tab === "monitor"   && <Overview />}
-                {tab === "strategies" && <Library onSelect={(id) => setSelectedStrategyId(id)} />}
+                {tab === "overview"   && <Overview />}
+                {tab === "projects" && <ProjectsView onSelect={(id) => setSelectedProjectId(id)} />}
+                {tab === "build" && <BuildView />}
+                {tab === "live" && <LiveView />}
                 {tab === "research" && <ResearchView />}
                 {tab === "activity" && <ActivityView />}
+                {tab === "settings" && <Library onSelect={(id) => setSelectedStrategyId(id)} />}
               </>
             )}
           </div>

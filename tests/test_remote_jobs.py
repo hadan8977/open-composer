@@ -30,7 +30,7 @@ def test_remote_green_command_runs_as_job(sample_workspace: Path) -> None:
     plan_path = _write_plan(
         sample_workspace,
         "strategy.validate",
-        strategy_path="strategy_specs/drafts/qqq_pullback_15m.yaml",
+        strategy_path="strategy_specs/drafts/fixture_pullback_15m.yaml",
     )
     manager = RemoteJobManager(sample_workspace, autostart=False)
     record = manager.create_command_job(
@@ -54,7 +54,7 @@ def test_remote_yellow_command_creates_backup(sample_workspace: Path) -> None:
     plan_path = _write_plan(
         sample_workspace,
         "strategy.backtest.rerun",
-        strategy_path="strategy_specs/drafts/qqq_pullback_15m.yaml",
+        strategy_path="strategy_specs/drafts/fixture_pullback_15m.yaml",
     )
     manager = RemoteJobManager(sample_workspace, autostart=False)
     record = manager.create_command_job(
@@ -76,7 +76,7 @@ def test_remote_red_command_requires_double_confirmation(sample_workspace: Path)
     plan_path = _write_plan(
         sample_workspace,
         "strategy.approve",
-        strategy_path="strategy_specs/drafts/qqq_pullback_15m.yaml",
+        strategy_path="strategy_specs/drafts/fixture_pullback_15m.yaml",
     )
     manager = RemoteJobManager(sample_workspace, autostart=False)
     record = manager.create_command_job(
@@ -91,14 +91,16 @@ def test_remote_red_command_requires_double_confirmation(sample_workspace: Path)
 
     assert completed.status == "blocked"
     assert "double confirmation" in completed.message
-    assert not (sample_workspace / "strategy_specs" / "approved" / "qqq_pullback_15m.yaml").exists()
+    assert not (
+        sample_workspace / "strategy_specs" / "approved" / "fixture_pullback_15m.yaml"
+    ).exists()
 
 
 def test_remote_red_command_creates_backup_and_executes(sample_workspace: Path) -> None:
     plan_path = _write_plan(
         sample_workspace,
         "strategy.approve",
-        strategy_path="strategy_specs/drafts/qqq_pullback_15m.yaml",
+        strategy_path="strategy_specs/drafts/fixture_pullback_15m.yaml",
     )
     manager = RemoteJobManager(sample_workspace, autostart=False)
     record = manager.create_command_job(
@@ -121,14 +123,14 @@ def test_remote_red_command_creates_backup_and_executes(sample_workspace: Path) 
             "*.yaml"
         )
     )
-    assert (sample_workspace / "strategy_specs" / "approved" / "qqq_pullback_15m.yaml").exists()
+    assert (sample_workspace / "strategy_specs" / "approved" / "fixture_pullback_15m.yaml").exists()
 
 
 def test_remote_paper_auto_activation_keeps_readiness_gate(sample_workspace: Path) -> None:
     plan_path = _write_plan(
         sample_workspace,
         "strategy.activate.paper_auto",
-        strategy_path="strategy_specs/drafts/qqq_pullback_15m.yaml",
+        strategy_path="strategy_specs/drafts/fixture_pullback_15m.yaml",
         data_source="sample",
     )
     manager = RemoteJobManager(sample_workspace, autostart=False)
@@ -146,7 +148,9 @@ def test_remote_paper_auto_activation_keeps_readiness_gate(sample_workspace: Pat
     assert completed.status == "blocked"
     assert completed.backup_manifest_path
     assert "sample" in completed.message or "readiness" in completed.message
-    assert not (sample_workspace / "strategy_specs" / "active" / "qqq_pullback_15m.yaml").exists()
+    assert not (
+        sample_workspace / "strategy_specs" / "active" / "fixture_pullback_15m.yaml"
+    ).exists()
 
 
 def test_remote_job_rejects_plan_path_traversal(sample_workspace: Path) -> None:

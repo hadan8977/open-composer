@@ -28,7 +28,7 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
         "open_composer.adapters.execution.nautilus_trader.nautilus_trader_available",
         lambda: True,
     )
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     backtest = run_backtest(spec_path, root=sample_workspace)
     signal = backtest.signals[0]
 
@@ -121,13 +121,13 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     )
     readiness = assess_paper_strategy_readiness(spec_path, sample_workspace)
     write_paper_readiness_report(readiness, sample_workspace)
-    workflow_json = sample_workspace / "reports" / "workflows" / "qqq_pullback_15m.verify.json"
+    workflow_json = sample_workspace / "reports" / "workflows" / "fixture_pullback_15m.verify.json"
     workflow_md = workflow_json.with_suffix(".md")
     write_json(
         workflow_json,
         {
-            "strategy_name": "qqq_pullback_15m",
-            "source_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "strategy_name": "fixture_pullback_15m",
+            "source_path": "strategy_specs/drafts/fixture_pullback_15m.yaml",
             "spec_hash": "abc123",
             "status": "warning",
             "backtest_run_id": backtest.run.run_id,
@@ -135,17 +135,17 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
             "paper_readiness_status": "blocked",
             "paper_ready": False,
             "output_paths": [
-                "reports/specs/qqq_pullback_15m.validation.json",
+                "reports/specs/fixture_pullback_15m.validation.json",
                 f"reports/backtests/{backtest.run.run_id}.md",
             ],
         },
     )
     workflow_md.write_text("# workflow verification\n", encoding="utf-8")
     write_json(
-        sample_workspace / "reports" / "research" / "qqq_pullback_15m-promotion.json",
+        sample_workspace / "reports" / "research" / "fixture_pullback_15m-promotion.json",
         {
-            "strategy_name": "qqq_pullback_15m",
-            "source_spec_path": "strategy_specs/active/qqq_pullback_15m.yaml",
+            "strategy_name": "fixture_pullback_15m",
+            "source_spec_path": "strategy_specs/active/fixture_pullback_15m.yaml",
             "status": "ok",
             "ready": True,
             "gate_summary": {
@@ -188,10 +188,10 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
         sample_workspace / "reports" / "research" / "index.jsonl",
         [
             {
-                "run_id": "research-qqq_pullback_15m-fixture",
+                "run_id": "research-fixture_pullback_15m-fixture",
                 "generated_at": "2026-05-12T10:02:00Z",
-                "strategy_name": "qqq_pullback_15m",
-                "source_spec_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+                "strategy_name": "fixture_pullback_15m",
+                "source_spec_path": "strategy_specs/drafts/fixture_pullback_15m.yaml",
                 "spec_hash": "abc123",
                 "status": "blocked",
                 "kind": "research_report",
@@ -205,11 +205,11 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
                 "gate_status": "blocked",
                 "blocked_items": ["paper_gap"],
                 "warning_items": ["sample_data"],
-                "report_path": "reports/research/qqq_pullback_15m-research-report.md",
-                "json_path": "reports/research/qqq_pullback_15m-research-report.json",
-                "contract_path": "reports/research/qqq_pullback_15m-research-contract.json",
+                "report_path": "reports/research/fixture_pullback_15m-research-report.md",
+                "json_path": "reports/research/fixture_pullback_15m-research-report.json",
+                "contract_path": "reports/research/fixture_pullback_15m-research-contract.json",
                 "source_artifacts": {
-                    "promotion": "reports/research/qqq_pullback_15m-promotion.json"
+                    "promotion": "reports/research/fixture_pullback_15m-promotion.json"
                 },
             }
         ],
@@ -227,7 +227,10 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
                     "status": "warning",
                     "message": "Some strategies have degraded backend capability.",
                     "suggested_actions": [
-                        "uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml"
+                        (
+                            "uv run oc spec capabilities "
+                            "strategy_specs/drafts/fixture_pullback_15m.yaml"
+                        )
                     ],
                     "details": {"backend_status_counts": {"partial": 1}},
                 }
@@ -280,18 +283,18 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.summary.research_report_count == 1
     assert catalog.summary.research_run_count == 1
     assert catalog.summary.research_blocked_count == 1
-    assert catalog.research_runs[0].run_id == "research-qqq_pullback_15m-fixture"
+    assert catalog.research_runs[0].run_id == "research-fixture_pullback_15m-fixture"
     assert catalog.research_runs[0].candidate_count == 3
     assert catalog.research_runs[0].trial_count == 2
     assert catalog.research_runs[0].blocked_items == ["paper_gap"]
     write_json(
-        sample_workspace / "reports" / "research" / "qqq_pullback_15m-geometry-features.json",
+        sample_workspace / "reports" / "research" / "fixture_pullback_15m-geometry-features.json",
         {
-            "strategy_name": "qqq_pullback_15m",
+            "strategy_name": "fixture_pullback_15m",
             "kind": "geometry_features",
             "status": "blocked",
             "research_only": True,
-            "source_spec_path": "strategy_specs/drafts/qqq_pullback_15m.yaml",
+            "source_spec_path": "strategy_specs/drafts/fixture_pullback_15m.yaml",
             "data_profile": {"source_mode": "sample"},
             "promotion_blockers": ["research_only_feature_family"],
         },
@@ -317,22 +320,22 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.readiness_report is not None
     assert catalog.readiness_report.path == "reports/readiness/readiness.json"
     assert catalog.readiness_report.checks[0].suggested_actions == [
-        "uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml"
+        "uv run oc spec capabilities strategy_specs/drafts/fixture_pullback_15m.yaml"
     ]
     assert catalog.deployment_report is not None
     assert catalog.deployment_report.path == "reports/deployment/prepare.json"
     assert catalog.deployment_report.steps[0].output_paths == ["reports/paper/monitor.md"]
-    assert catalog.workflow_reports[0].strategy_name == "qqq_pullback_15m"
+    assert catalog.workflow_reports[0].strategy_name == "fixture_pullback_15m"
     assert catalog.workflow_reports[0].status == "warning"
     assert catalog.workflow_reports[0].backtest_run_id == backtest.run.run_id
     assert catalog.workflow_reports[0].paper_readiness_status == "blocked"
-    assert catalog.workflow_reports[0].path == "reports/workflows/qqq_pullback_15m.verify.json"
+    assert catalog.workflow_reports[0].path == "reports/workflows/fixture_pullback_15m.verify.json"
     assert catalog.workflow_reports[0].report_markdown_path == (
-        "reports/workflows/qqq_pullback_15m.verify.md"
+        "reports/workflows/fixture_pullback_15m.verify.md"
     )
     assert catalog.summary.paper_readiness_count == 1
     assert catalog.summary.paper_readiness_status_counts == {"blocked": 1}
-    assert catalog.paper_readiness_reports[0].strategy_name == "qqq_pullback_15m"
+    assert catalog.paper_readiness_reports[0].strategy_name == "fixture_pullback_15m"
     assert catalog.paper_readiness_reports[0].status == "blocked"
     assert "lifecycle" in catalog.paper_readiness_reports[0].blocking_checks
     assert catalog.paper_readiness_reports[0].checks[0].suggested_actions
@@ -372,8 +375,8 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     html = html_path.read_text(encoding="utf-8")
     assert "Open Composer Dashboard" in html
     assert "Buy/Hold" in html
-    assert "qqq_pullback_15m" in html
-    assert "strategies/qqq_pullback_15m.html" in html
+    assert "fixture_pullback_15m" in html
+    assert "strategies/fixture_pullback_15m.html" in html
     assert "python_reference" in html
     assert "Annualized" in html
     assert "Sharpe" in html
@@ -384,15 +387,15 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert "Data Quality" in html
     assert "alpaca / longbridge" in html
     assert "Research Evidence" in html
-    assert "research-qqq_pullback_15m-fixture" in html
+    assert "research-fixture_pullback_15m-fixture" in html
     assert "paper_gap" in html
     assert "LLM Feature Replay" in html
     assert "qqq_llm_features.jsonl" in html
     assert "Deployment Readiness" in html
     assert "uv run oc paper monitor --sync-broker" in html
-    assert "uv run oc spec capabilities strategy_specs/drafts/qqq_pullback_15m.yaml" in html
+    assert "uv run oc spec capabilities strategy_specs/drafts/fixture_pullback_15m.yaml" in html
     detail_path = (
-        sample_workspace / "reports" / "dashboard" / "strategies" / "qqq_pullback_15m.html"
+        sample_workspace / "reports" / "dashboard" / "strategies" / "fixture_pullback_15m.html"
     )
     assert detail_path.exists()
     detail_html = detail_path.read_text(encoding="utf-8")

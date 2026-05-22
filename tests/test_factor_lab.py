@@ -49,7 +49,7 @@ def test_factor_lab_writes_factor_diagnostics(
 
 def test_factor_lab_blocks_specs_without_custom_factors(sample_workspace: Path) -> None:
     result = run_factor_lab(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         sample_workspace,
     )
 
@@ -63,7 +63,9 @@ def test_factor_lab_blocks_specs_without_custom_factors(sample_workspace: Path) 
 def _write_factor_spec(root: Path) -> Path:
     spec_path = root / "strategy_specs" / "drafts" / "factor_lab_fixture.yaml"
     source = yaml.safe_load(
-        (root / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(encoding="utf-8")
+        (root / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
     )
     source["name"] = "factor_lab_fixture"
     source["description"] = "Factor Lab fixture."

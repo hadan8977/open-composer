@@ -13,7 +13,7 @@ def test_strategy_research_workflow_writes_artifacts_and_harness_log(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
-    spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     result = CliRunner().invoke(
         app,
@@ -26,7 +26,9 @@ def test_strategy_research_workflow_writes_artifacts_and_harness_log(
     assert "promotion=blocked" in result.output
     assert "harness=blocked" in result.output
 
-    promotion_json = sample_workspace / "reports" / "research" / "qqq_pullback_15m-promotion.json"
+    promotion_json = (
+        sample_workspace / "reports" / "research" / "fixture_pullback_15m-promotion.json"
+    )
     promotion_report = promotion_json.with_suffix(".md")
     harness_log = sample_workspace / "reports" / "research" / "harness-runs.jsonl"
 
@@ -46,9 +48,11 @@ def test_strategy_research_workflow_writes_artifacts_and_harness_log(
     assert record["status"] == "blocked"
     assert record["promotion_status"] == "blocked"
     assert (
-        record["artifacts"]["promotion_json"] == "reports/research/qqq_pullback_15m-promotion.json"
+        record["artifacts"]["promotion_json"]
+        == "reports/research/fixture_pullback_15m-promotion.json"
     )
     assert (
-        record["artifacts"]["promotion_report"] == "reports/research/qqq_pullback_15m-promotion.md"
+        record["artifacts"]["promotion_report"]
+        == "reports/research/fixture_pullback_15m-promotion.md"
     )
     assert any(gate["name"] == "promotion_report" for gate in record["gate_results"])

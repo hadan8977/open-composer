@@ -12,14 +12,14 @@ from open_composer.research.skill_attribution import run_skill_attribution
 
 
 def test_regime_search_writes_report_from_fixtures(sample_workspace: Path) -> None:
-    spec = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    spec = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     report = search_similar_regimes(spec, root=sample_workspace, top_k=2)
 
-    assert report.strategy_name == "qqq_pullback_15m"
+    assert report.strategy_name == "fixture_pullback_15m"
     assert len(report.matches) >= 1
-    assert (sample_workspace / "reports" / "regime_search" / "qqq_pullback_15m.json").exists()
-    assert (sample_workspace / "reports" / "regime_search" / "qqq_pullback_15m.md").exists()
+    assert (sample_workspace / "reports" / "regime_search" / "fixture_pullback_15m.json").exists()
+    assert (sample_workspace / "reports" / "regime_search" / "fixture_pullback_15m.md").exists()
 
 
 def test_regime_search_cli(sample_workspace: Path, monkeypatch) -> None:
@@ -29,7 +29,7 @@ def test_regime_search_cli(sample_workspace: Path, monkeypatch) -> None:
         [
             "strategy",
             "regime-search",
-            str(sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"),
+            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
             "--top-k",
             "1",
         ],

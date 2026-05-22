@@ -24,7 +24,7 @@ def test_signal_context_excludes_future_records(sample_workspace: Path) -> None:
     fetch_capability_events("alpha_vantage", sample_workspace, ["QQQ"], offline=True)
     fetch_capability_events("fred", sample_workspace, None, offline=True)
     artifacts = run_backtest(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         root=sample_workspace,
     )
     context = build_signal_context(artifacts.signals[0].id, sample_workspace)
@@ -126,7 +126,7 @@ def test_chinese_memory_storage_prompt_optimizes_and_scans(sample_workspace: Pat
 def test_short_risk_report_writes_harness_artifacts(sample_workspace: Path) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_short_risk.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -153,7 +153,7 @@ def test_alternative_data_evidence_marks_non_trading_llm_as_advisory(
 ) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "qqq_advisory_llm.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -178,17 +178,16 @@ def test_alpaca_cache_strategy_meets_target_thresholds(
     repo_root: Path,
 ) -> None:
     spec_path = (
-        sample_workspace
-        / "strategy_specs"
-        / "drafts"
-        / "mu_breakout_volume_15m_optimized_volume_plus.yaml"
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_mu_breakout_volume_15m.yaml"
     )
     cache_path = sample_workspace / "data" / "cache" / "mu_15m_iex.csv"
     copyfile(
         repo_root
+        / "tests"
+        / "fixtures"
         / "strategy_specs"
         / "drafts"
-        / "mu_breakout_volume_15m_optimized_volume_plus.yaml",
+        / "fixture_mu_breakout_volume_15m.yaml",
         spec_path,
     )
     copyfile(repo_root / "data" / "sample" / "mu_15m.csv", cache_path)

@@ -25,6 +25,9 @@ from open_composer.models.dashboard import (
     DashboardPaperPosition,
     DashboardPaperReadinessCheck,
     DashboardPaperReadinessReport,
+    DashboardProject,
+    DashboardProjectEvidence,
+    DashboardProjectEvidenceItem,
     DashboardReadinessReport,
     DashboardResearchReport,
     DashboardResearchRun,
@@ -38,9 +41,11 @@ from open_composer.models.dashboard import (
     DashboardWorkflowReport,
 )
 from open_composer.models.journal import TradeJournalEntry
+from open_composer.models.project import ProjectEvidenceItem, ProjectGateSummary, StrategyProject
 from open_composer.models.review_card import ReviewCard
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.paper_controls import build_paper_status
+from open_composer.projects import build_project_from_strategy, list_projects, slugify
 from open_composer.storage import write_json
 from open_composer.strategy_capabilities import assess_strategy_capabilities
 from open_composer.strategy_versions import load_strategy_versions, strategy_content_hash
@@ -82,11 +87,18 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
     research_run_records = _build_research_run_records(base)
     readiness_report = _build_readiness_record(base)
     deployment_report = _build_deployment_record(base)
+    project_records = _build_project_records(
+        base,
+        strategies=strategy_records,
+        paper_readiness_reports=paper_readiness_records,
+        research_reports=research_records,
+    )
 
     summary = _build_summary(
         base=base,
         generated_at=generated_at,
         strategies=strategy_records,
+        projects=project_records,
         versions=version_records,
         runs=run_records,
         signals=signal_records,
@@ -111,6 +123,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         source_root=str(base),
         summary=summary,
         strategies=strategy_records,
+        projects=project_records,
         versions=version_records,
         runs=run_records,
         signals=signal_records,
@@ -1245,6 +1258,297 @@ def _research_run_record(raw: dict[str, Any]) -> DashboardResearchRun | None:
         return None
 
 
+def _build_project_records(
+    base: Path,
+    *,
+    strategies: list[DashboardStrategy],
+    paper_readiness_reports: list[DashboardPaperReadinessReport],
+    research_reports: list[DashboardResearchReport],
+) -> list[DashboardProject]:
+    projects = list_projects(base)
+    by_project_id = {project.project_id: project for project in projects}
+    strategy_by_id = {strategy.strategy_id: strategy for strategy in strategies}
+    paper_by_strategy = {
+        report.strategy_id or report.strategy_name: report for report in paper_readiness_reports
+    }
+    research_by_strategy: dict[str, list[DashboardResearchReport]] = defaultdict(list)
+    for report in research_reports:
+        research_by_strategy[report.strategy_name].append(report)
+
+    records = [
+        _dashboard_project_from_project(
+            base,
+            project,
+            imported_from_strategy=False,
+            strategy_by_id=strategy_by_id,
+            research_by_strategy=research_by_strategy,
+        )
+        for project in projects
+    ]
+
+    for strategy in strategies:
+        project_id = slugify(strategy.strategy_name)
+        if project_id in by_project_id:
+            continue
+        paper_ready = None
+        if strategy.strategy_id in paper_by_strategy:
+            paper_ready = paper_by_strategy[strategy.strategy_id].ready
+        project = build_project_from_strategy(
+            strategy.strategy_name,
+            strategy_path=strategy.source_paths[0] if strategy.source_paths else None,
+            lifecycle=strategy.lifecycle,
+            factors=strategy.factor_names,
+            llm_or_alt=bool(
+                strategy.llm_feature_factor_names
+                or strategy.feature_packet_factor_names
+                or strategy.llm_review_enabled
+            ),
+            paper_ready=paper_ready,
+            root=base,
+        )
+        _apply_research_evidence(
+            base, project, research_by_strategy.get(strategy.strategy_name, [])
+        )
+        records.append(
+            _dashboard_project_from_project(
+                base,
+                project,
+                imported_from_strategy=True,
+                strategy_by_id=strategy_by_id,
+                research_by_strategy=research_by_strategy,
+            )
+        )
+
+    records.sort(
+        key=lambda item: (
+            item.archived,
+            _project_state_rank(item.state),
+            item.name.lower(),
+            item.project_id,
+        )
+    )
+    return records
+
+
+def _dashboard_project_from_project(
+    base: Path,
+    project: StrategyProject,
+    *,
+    imported_from_strategy: bool,
+    strategy_by_id: dict[str, DashboardStrategy],
+    research_by_strategy: dict[str, list[DashboardResearchReport]],
+) -> DashboardProject:
+    if not imported_from_strategy:
+        _apply_research_evidence(base, project, research_by_strategy.get(project.name, []))
+        strategy = strategy_by_id.get(project.name)
+        if strategy:
+            _apply_strategy_fallback_evidence(project, strategy)
+    return DashboardProject(
+        project_id=project.project_id,
+        name=project.name,
+        state=project.state,
+        thesis=project.thesis,
+        current_spec_path=project.current_spec_path,
+        latest_run_path=project.latest_run_path,
+        gate_summary=project.gate_summary.model_dump(mode="json"),
+        evidence=DashboardProjectEvidence(
+            factor_quality=_dashboard_evidence_item(project.evidence.factor_quality, base),
+            execution_reality=_dashboard_evidence_item(project.evidence.execution_reality, base),
+            alt_llm_evidence=_dashboard_evidence_item(project.evidence.alt_llm_evidence, base),
+        ),
+        blockers=list(project.blockers),
+        next_action=project.next_action,
+        current_round=project.iteration.current_round,
+        max_rounds=project.iteration.max_rounds,
+        iteration_mode=project.iteration.mode,
+        stop_reason=project.iteration.stop_reason,
+        user_requested_stop=project.iteration.user_requested_stop,
+        paper_status=project.paper.status,
+        archived=project.archived,
+        imported_from_strategy=imported_from_strategy,
+        created_at=project.created_at,
+        updated_at=project.updated_at,
+    )
+
+
+def _dashboard_evidence_item(item: ProjectEvidenceItem, base: Path) -> DashboardProjectEvidenceItem:
+    artifact_path = item.artifact_path
+    if artifact_path and not (base / artifact_path).exists():
+        blockers = sorted(set([*item.blockers, "artifact_missing"]))
+        status = "blocked" if item.status == "ok" else item.status
+    else:
+        blockers = list(item.blockers)
+        status = item.status
+    return DashboardProjectEvidenceItem(
+        status=status,
+        summary=item.summary,
+        artifact_path=artifact_path,
+        blockers=blockers,
+        updated_at=item.updated_at,
+    )
+
+
+def _apply_strategy_fallback_evidence(
+    project: StrategyProject, strategy: DashboardStrategy
+) -> None:
+    if project.evidence.factor_quality.status == "unknown" and not strategy.factor_names:
+        project.evidence.factor_quality.status = "not_applicable"
+        project.evidence.factor_quality.summary = (
+            "No StrategySpec factor list is present; Factor Quality is not applicable yet."
+        )
+    uses_alt_or_llm = bool(
+        strategy.llm_feature_factor_names
+        or strategy.feature_packet_factor_names
+        or strategy.llm_review_enabled
+    )
+    if project.evidence.alt_llm_evidence.status == "unknown" and not uses_alt_or_llm:
+        project.evidence.alt_llm_evidence.status = "not_applicable"
+        project.evidence.alt_llm_evidence.summary = (
+            "No LLM, news, event, macro, or alternative-data factor is declared."
+        )
+
+
+def _apply_research_evidence(
+    base: Path,
+    project: StrategyProject,
+    reports: list[DashboardResearchReport],
+) -> None:
+    if not reports:
+        return
+    latest = sorted(reports, key=lambda item: item.report_json_path, reverse=True)[0]
+    if latest.gate_summary:
+        project.gate_summary = ProjectGateSummary.model_validate(_project_gate_from_report(latest))
+    if latest.report_json_path:
+        _apply_research_json_evidence(base, project, latest.report_json_path)
+    if latest.paper_readiness_status and project.paper.status == "not_requested":
+        project.paper.status = (
+            "blocked" if latest.paper_readiness_status == "blocked" else "review_requested"
+        )
+
+
+def _apply_research_json_evidence(base: Path, project: StrategyProject, report_path: str) -> None:
+    path = Path(report_path)
+    if not path.is_absolute():
+        path = base / path
+    if not path.exists():
+        return
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    factor_lab = raw.get("factor_lab")
+    if isinstance(factor_lab, dict):
+        artifact = _first_path(
+            factor_lab.get("report_path"),
+            factor_lab.get("json_path"),
+            raw.get("factor_lab_path"),
+        )
+        flags = [str(item) for item in factor_lab.get("quality_flags", [])]
+        status = _evidence_status_from_raw(str(factor_lab.get("status", "unknown")))
+        project.evidence.factor_quality = ProjectEvidenceItem(
+            status=status,
+            summary=_summary_from_flags("Factor diagnostics", flags),
+            artifact_path=artifact,
+            blockers=flags if status == "blocked" else [],
+        )
+    gate_summary = raw.get("gate_summary")
+    if isinstance(gate_summary, dict):
+        for gate in gate_summary.get("gates", []):
+            if not isinstance(gate, dict):
+                continue
+            name = str(gate.get("name", ""))
+            if name == "execution_reality":
+                evidence = gate.get("evidence")
+                summary = (
+                    _shorten_json(evidence)
+                    if isinstance(evidence, dict)
+                    else str(gate.get("message", ""))
+                )
+                status = _evidence_status_from_raw(str(gate.get("status", "unknown")))
+                project.evidence.execution_reality = ProjectEvidenceItem(
+                    status=status,
+                    summary=summary or "Execution reality gate was reported.",
+                    artifact_path=report_path,
+                    blockers=[] if status == "ok" else [name],
+                )
+            elif name in {"alternative_data", "llm_contribution"}:
+                status = _evidence_status_from_raw(str(gate.get("status", "unknown")))
+                project.evidence.alt_llm_evidence = ProjectEvidenceItem(
+                    status=status,
+                    summary=str(gate.get("message", "Alternative/LLM evidence gate was reported.")),
+                    artifact_path=report_path,
+                    blockers=[] if status == "ok" else [name],
+                )
+    llm_contribution = raw.get("llm_contribution")
+    if isinstance(llm_contribution, dict):
+        ok = bool(llm_contribution.get("llm_contribution_ok", False))
+        blockers = [str(item) for item in llm_contribution.get("blockers", [])]
+        project.evidence.alt_llm_evidence = ProjectEvidenceItem(
+            status="ok" if ok else "blocked",
+            summary=str(
+                llm_contribution.get("llm_contribution_label")
+                or llm_contribution.get("llm_contribution_level")
+                or "LLM contribution evidence is present."
+            ),
+            artifact_path=report_path,
+            blockers=blockers,
+        )
+
+
+def _project_gate_from_report(report: DashboardResearchReport) -> dict[str, object]:
+    gate = report.gate_summary
+    return {
+        "workflow_pass": gate.get("workflow_pass"),
+        "research_pass": gate.get("research_pass"),
+        "llm_contribution_pass": gate.get("llm_contribution_pass"),
+        "paper_ready_pass": gate.get("paper_ready_pass"),
+        "status": report.status,
+        "blocked_checks": list(gate.get("blocked_checks", [])),
+        "warning_checks": list(gate.get("warning_checks", [])),
+    }
+
+
+def _first_path(*values: object) -> str | None:
+    for value in values:
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def _summary_from_flags(prefix: str, flags: list[str]) -> str:
+    if not flags:
+        return f"{prefix} artifact is present."
+    return f"{prefix}: {', '.join(flags[:3])}"
+
+
+def _evidence_status_from_raw(status: str) -> str:
+    if status in {"ok", "warning", "blocked", "not_applicable", "unknown"}:
+        return status
+    return "unknown"
+
+
+def _shorten_json(value: object, limit: int = 220) -> str:
+    text = json.dumps(value, sort_keys=True)
+    if len(text) <= limit:
+        return text
+    return text[: limit - 1].rstrip() + "..."
+
+
+def _project_state_rank(state: str) -> int:
+    order = {
+        "blocked": 0,
+        "paper_review": 1,
+        "active_paper": 2,
+        "iterating": 3,
+        "researching": 4,
+        "candidate": 5,
+        "draft": 6,
+        "idea": 7,
+        "retired": 8,
+    }
+    return order.get(state, 99)
+
+
 def _research_candidate_count(raw: dict[str, Any]) -> int | None:
     value = raw.get("candidate_count")
     if value is None and isinstance(raw.get("search_space"), dict):
@@ -1549,6 +1853,7 @@ def _build_summary(
     base: Path,
     generated_at: datetime,
     strategies: list[DashboardStrategy],
+    projects: list[DashboardProject],
     versions: list[DashboardVersion],
     runs: list[DashboardRun],
     signals: list[DashboardSignal],
@@ -1627,6 +1932,13 @@ def _build_summary(
         research_run_count=len(research_runs),
         research_blocked_count=sum(1 for item in research_runs if item.status == "blocked"),
         research_warning_count=sum(1 for item in research_runs if item.status == "warning"),
+        project_count=len(projects),
+        project_blocked_count=sum(1 for item in projects if item.state == "blocked"),
+        project_iterating_count=sum(
+            1 for item in projects if item.state in {"researching", "iterating"}
+        ),
+        project_candidate_count=sum(1 for item in projects if item.state == "candidate"),
+        project_active_paper_count=sum(1 for item in projects if item.state == "active_paper"),
         readiness_status=readiness_report.status if readiness_report else "missing",
         readiness_ready=readiness_report.ready if readiness_report else False,
         readiness_warning_count=_operational_count(readiness_report.checks, "warning")
@@ -1702,6 +2014,15 @@ def _render_catalog_markdown(catalog: DashboardCatalog) -> str:
         "",
         "| Metric | Value |",
         "|---|---:|",
+        f"| Strategy projects | {summary.project_count} |",
+        (
+            "| Project blocked / iterating | "
+            f"{summary.project_blocked_count} / {summary.project_iterating_count} |"
+        ),
+        (
+            "| Project candidates / active paper | "
+            f"{summary.project_candidate_count} / {summary.project_active_paper_count} |"
+        ),
         f"| Strategies | {summary.strategy_count} |",
         f"| Versions | {summary.version_count} |",
         f"| Runs | {summary.run_count} |",
@@ -1739,6 +2060,25 @@ def _render_catalog_markdown(catalog: DashboardCatalog) -> str:
         f"| Paper reconciliation | {summary.paper_reconciliation_status} "
         f"({summary.paper_reconciliation_issue_count} issues) |",
         f"| Paper alerts | {summary.paper_alert_status} ({summary.paper_alert_count} alerts) |",
+        "",
+        "## Strategy Projects",
+        "",
+        "| Project | State | Spec | Gates | Evidence | Blocker | Next action |",
+        "|---|---|---|---|---|---|---|",
+        *[
+            (
+                f"| {project.name} | {project.state} | "
+                f"{project.current_spec_path or 'n/a'} | "
+                f"workflow={_gate_label(project.gate_summary.get('workflow_pass'))}, "
+                f"research={_gate_label(project.gate_summary.get('research_pass'))}, "
+                f"paper={_gate_label(project.gate_summary.get('paper_ready_pass'))} | "
+                f"factor={project.evidence.factor_quality.status}, "
+                f"execution={project.evidence.execution_reality.status}, "
+                f"alt_llm={project.evidence.alt_llm_evidence.status} | "
+                f"{(project.blockers or ['none'])[0]} | {project.next_action} |"
+            )
+            for project in catalog.projects
+        ],
         "",
         "## Capability Mix",
         "",
@@ -2158,6 +2498,14 @@ def _format_optional_pct(value: float | None) -> str:
     if value is None:
         return "n/a"
     return f"{value:.2f}%"
+
+
+def _gate_label(value: object) -> str:
+    if value is True:
+        return "pass"
+    if value is False:
+        return "fail"
+    return "unknown"
 
 
 def _format_optional_dt(value: datetime | None) -> str:

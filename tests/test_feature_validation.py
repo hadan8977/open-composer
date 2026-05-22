@@ -14,7 +14,7 @@ from open_composer.feature_packets import FeaturePacketError, FeaturePacketRow, 
 
 
 def _context_capable_spec(sample_workspace: Path) -> Path:
-    source = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    source = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     target = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_context_auto.yaml"
     raw = yaml.safe_load(source.read_text(encoding="utf-8"))
     raw["name"] = "qqq_pullback_context_auto"
@@ -139,7 +139,7 @@ def test_feature_from_context_command_writes_replayable_context_features(
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
     backtest = run_backtest(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         root=sample_workspace,
     )
     signal = backtest.signals[0]

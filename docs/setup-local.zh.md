@@ -299,8 +299,8 @@ uv run pytest tests/test_repo_check.py tests/test_dashboard_server.py tests/test
 | 想做 | 命令 |
 |---|---|
 | 草拟一个策略 | `uv run oc strategy draft --idea "QQQ 15min breakout with volume filter"` |
-| 跑一遍样本回测 | `uv run oc backtest strategy_specs/drafts/qqq_pullback_15m.yaml` |
-| 看 paper readiness | `uv run oc paper readiness qqq_pullback_15m` |
+| 跑一遍回测 | `uv run oc backtest strategy_specs/drafts/<strategy>.yaml` |
+| 看 paper readiness | `uv run oc paper readiness <strategy>` |
 | 部署到 VPS | 见 [docs/remote-dashboard-deploy.zh.md](./remote-dashboard-deploy.zh.md) |
 | 配 Telegram 通知 | `uv run oc notify test --dry-run` |
 

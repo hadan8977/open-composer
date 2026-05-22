@@ -25,7 +25,7 @@ from open_composer.strategy_versions import load_strategy_versions
 
 
 def _context_capable_spec(sample_workspace: Path) -> Path:
-    source = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    source = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     target = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_context_auto.yaml"
     raw = yaml.safe_load(source.read_text(encoding="utf-8"))
     raw["name"] = "qqq_pullback_context_auto"
@@ -36,7 +36,7 @@ def _context_capable_spec(sample_workspace: Path) -> Path:
 
 
 def test_strategy_lifecycle_approve_activate_disable(sample_workspace: Path) -> None:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     approved = approve_strategy(draft, sample_workspace)
     approved_spec = load_strategy_spec(approved)
@@ -62,13 +62,13 @@ def test_strategy_lifecycle_approve_activate_disable(sample_workspace: Path) -> 
     assert retired_spec.execution.backend == "nautilus_trader"
     assert retired_spec.execution.mode == "manual_signal"
     assert not active.exists()
-    versions = load_strategy_versions(sample_workspace, "qqq_pullback_15m")
+    versions = load_strategy_versions(sample_workspace, "fixture_pullback_15m")
     assert {version.lifecycle for version in versions} >= {"draft", "approved", "active", "retired"}
     assert any(version.parent_version_id is not None for version in versions)
 
 
 def test_paper_runner_requires_active_strategy(sample_workspace: Path) -> None:
-    draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml"
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
     try:
         run_paper_cycle(draft, sample_workspace, with_review=False)
@@ -86,7 +86,7 @@ def test_paper_runner_preview_then_blocks_unready_auto_submit(
     monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
     monkeypatch.setenv("ALPACA_PAPER", "true")
     active = activate_strategy(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         sample_workspace,
         paper_auto=True,
         allow_paper_auto=True,
@@ -173,7 +173,7 @@ def test_paper_runner_preview_then_blocks_unready_auto_submit(
 
 def test_manual_signal_runner_never_submits_even_with_allow(sample_workspace: Path) -> None:
     active = activate_strategy(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         sample_workspace,
     )
 
@@ -206,7 +206,7 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
     )
     draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_paper_ready_15m.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -323,7 +323,7 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
 def test_hybrid_open_to_open_paper_orders_require_open_window(sample_workspace: Path) -> None:
     draft = sample_workspace / "strategy_specs" / "drafts" / "hybrid_router_window.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -360,7 +360,7 @@ def test_adaptive_intraday_paper_cycle_exits_stale_position(
 ) -> None:
     draft = sample_workspace / "strategy_specs" / "drafts" / "adaptive_intraday_exit.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -445,7 +445,7 @@ def test_adaptive_intraday_paper_cycle_exits_stale_position(
 def test_beta_router_paper_orders_require_open_window(sample_workspace: Path) -> None:
     draft = sample_workspace / "strategy_specs" / "drafts" / "beta_router_window.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -484,7 +484,7 @@ def test_beta_router_paper_orders_require_open_window(sample_workspace: Path) ->
 def test_beta_router_paper_runtime_uses_route_symbols(sample_workspace: Path, monkeypatch) -> None:
     draft = sample_workspace / "strategy_specs" / "drafts" / "beta_qld_runtime.yaml"
     raw = yaml.safe_load(
-        (sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml").read_text(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -540,7 +540,7 @@ def test_paper_runner_blocks_when_kill_switch_enabled(sample_workspace: Path, mo
     monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
     monkeypatch.setenv("ALPACA_PAPER", "true")
     active = activate_strategy(
-        sample_workspace / "strategy_specs" / "drafts" / "qqq_pullback_15m.yaml",
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
         sample_workspace,
         paper_auto=True,
         allow_paper_auto=True,
