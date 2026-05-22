@@ -115,7 +115,13 @@ from open_composer.paper_readiness import (
     assess_paper_strategy_readiness,
     write_paper_readiness_report,
 )
-from open_composer.projects import create_project, list_projects, load_project, update_project_state
+from open_composer.projects import (
+    create_project,
+    list_projects,
+    load_project,
+    load_project_run_summary,
+    update_project_state,
+)
 from open_composer.readiness import build_readiness_report, write_readiness_report
 from open_composer.remote import RemoteJobManager, build_remote_doctor_report, serve_remote
 from open_composer.remote.bootstrap import (
@@ -1311,7 +1317,9 @@ def project_show_command(project_id: str) -> None:
 @project_app.command("run-append")
 def project_run_append_command(
     project_id: str,
-    round_number: Annotated[int, typer.Option("--round", help="Iteration round number.")],
+    round_number: Annotated[
+        int | None, typer.Option("--round", help="Iteration round number.")
+    ] = None,
     status: Annotated[
         str,
         typer.Option("--status", help="ok, warning, blocked, or failed."),
@@ -1325,23 +1333,69 @@ def project_run_append_command(
         typer.Option("--blocker", help="Project blocker recorded for this round."),
     ] = None,
     next_action: Annotated[str, typer.Option("--next-action")] = "",
+    summary_json: Annotated[
+        Path | None,
+        typer.Option(
+            "--summary-json",
+            help="JSON/YAML StrategyProjectRun summary with step_events and blocker_summary.",
+        ),
+    ] = None,
 ) -> None:
     """Append a lightweight worker run summary and run deterministic path/spec checks."""
     from open_composer.projects import append_project_run, verify_project_run
 
     root = project_root()
     project = load_project(project_id, root)
-    run = StrategyProjectRun(
-        round=round_number,
-        status=status,  # type: ignore[arg-type]
-        changed_paths=changed_path or [],
-        blockers=blocker or [],
-        next_action=next_action,
-    )
+    if summary_json is not None:
+        run = load_project_run_summary(summary_json)
+    else:
+        if round_number is None:
+            raise typer.BadParameter("--round is required unless --summary-json is provided")
+        run = StrategyProjectRun(
+            round=round_number,
+            status=status,  # type: ignore[arg-type]
+            changed_paths=changed_path or [],
+            blockers=blocker or [],
+            next_action=next_action,
+        )
     verified_run = verify_project_run(project, run, root)
     updated, run_path = append_project_run(project_id, verified_run, root)
     console.print(f"[green]project run written[/green] {run_path.relative_to(root)}")
     console.print(f"project={updated.project_id} state={updated.state} blockers={updated.blockers}")
+
+
+@project_app.command("iterate")
+def project_iterate_command(
+    project_id: str,
+    rounds: Annotated[
+        int, typer.Option("--rounds", help="Number of bounded rounds to request.")
+    ] = 1,
+    advice: Annotated[
+        str | None,
+        typer.Option("--advice", help="Inline user advice for the next iteration."),
+    ] = None,
+    advice_file: Annotated[
+        Path | None,
+        typer.Option("--advice-file", help="Markdown/text file with user advice."),
+    ] = None,
+    requested_by: Annotated[str, typer.Option("--requested-by")] = "cli",
+) -> None:
+    """Create a deterministic iteration plan and agent request for a StrategyProject."""
+    from open_composer.research.iteration_controller import create_project_iteration_request
+
+    advice_text = advice or ""
+    if advice_file is not None:
+        advice_text = advice_file.read_text(encoding="utf-8")
+    result = create_project_iteration_request(
+        project_id,
+        project_root(),
+        rounds=rounds,
+        advice=advice_text,
+        requested_by=requested_by,
+    )
+    console.print(f"[green]iteration request created[/green] {result.agent_request_path}")
+    console.print(f"plan={result.iteration_plan_path} intent={result.iteration_plan.intent}")
+    console.print(f"artifact_state={result.iteration_plan.artifact_state_path}")
 
 
 @notify_app.command("status")

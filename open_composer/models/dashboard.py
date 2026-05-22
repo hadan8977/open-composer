@@ -498,6 +498,11 @@ class DashboardProject(BaseModel):
     latest_run_path: str | None = None
     gate_summary: dict[str, object] = Field(default_factory=dict)
     evidence: DashboardProjectEvidence = Field(default_factory=DashboardProjectEvidence)
+    artifact_state: dict[str, object] = Field(default_factory=dict)
+    latest_run_summary: dict[str, object] = Field(default_factory=dict)
+    blocker_summary: dict[str, object] = Field(default_factory=dict)
+    next_minimal_actions: list[str] = Field(default_factory=list)
+    do_not_repeat: list[str] = Field(default_factory=list)
     blockers: list[str] = Field(default_factory=list)
     next_action: str = ""
     current_round: int = 0

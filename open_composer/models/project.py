@@ -26,6 +26,7 @@ ProjectAction = Literal[
 ProjectIterationMode = Literal["auto_continue_until_stop", "notify_and_wait"]
 ProjectPaperStatus = Literal["not_requested", "review_requested", "active", "blocked", "disabled"]
 ProjectRunStatus = Literal["ok", "warning", "blocked", "failed"]
+ProjectStepStatus = Literal["ok", "warning", "blocked", "failed", "skipped"]
 
 
 class ProjectGateSummary(BaseModel):
@@ -141,6 +142,40 @@ class StrategyProject(BaseModel):
         return normalized
 
 
+class ProjectStepEvent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    step_name: str
+    status: ProjectStepStatus = "ok"
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
+    input_artifacts: list[str] = Field(default_factory=list)
+    output_artifacts: list[str] = Field(default_factory=list)
+    blocked_items: list[str] = Field(default_factory=list)
+    warning_items: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("step_name")
+    @classmethod
+    def validate_step_name(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("step_name is required")
+        return normalized
+
+
+class ProjectBlockerSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    trigger: str = "blocked"
+    failed_step: str = "unknown"
+    root_blockers: list[str] = Field(default_factory=list)
+    next_minimal_actions: list[str] = Field(default_factory=list)
+    do_not_repeat: list[str] = Field(default_factory=list)
+    artifact_refs: list[str] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
 class StrategyProjectRun(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -151,6 +186,8 @@ class StrategyProjectRun(BaseModel):
     worker_provider: str = "agent_request"
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     changed_paths: list[str] = Field(default_factory=list)
+    step_events: list[ProjectStepEvent] = Field(default_factory=list)
+    blocker_summary: ProjectBlockerSummary | None = None
     worker_claim: dict[str, Any] = Field(default_factory=dict)
     verified: dict[str, Any] = Field(default_factory=dict)
     metrics: dict[str, float | int | str | bool | None] = Field(default_factory=dict)

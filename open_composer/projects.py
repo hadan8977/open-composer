@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -138,6 +139,7 @@ def append_project_run(
 ) -> tuple[StrategyProject, Path]:
     base = root or project_root()
     project = load_project(project_id, base)
+    _augment_repeated_blockers(base, project, run)
     run_path = base / "projects" / project_id / "runs" / f"round-{run.round:03d}.yaml"
     ensure_dir(run_path.parent)
     run_path.write_text(
@@ -146,7 +148,12 @@ def append_project_run(
     )
     project.latest_run_path = _relpath(run_path, base)
     project.iteration.current_round = max(project.iteration.current_round, run.round)
-    project.blockers = list(run.blockers)
+    project.blockers = _unique_strings(
+        [
+            *run.blockers,
+            *(run.blocker_summary.root_blockers if run.blocker_summary else []),
+        ]
+    )
     if run.next_action:
         project.next_action = run.next_action
     if run.status in {"blocked", "failed"}:
@@ -154,6 +161,12 @@ def append_project_run(
     elif project.state in {"idea", "draft", "researching"}:
         project.state = "iterating"
     write_project(project, base)
+    try:
+        from open_composer.research.artifact_state import write_project_artifact_state
+
+        write_project_artifact_state(project, base)
+    except (OSError, ValueError, yaml.YAMLError):  # pragma: no cover - artifact-state best effort
+        pass
     safe_dispatch_notification(
         kind="system_alert",
         severity="warn" if run.status in {"blocked", "failed"} else "info",
@@ -229,6 +242,12 @@ def write_project_context(
         f"- max_rounds: {project.iteration.max_rounds}",
         f"- mode: `{project.iteration.mode}`",
         f"- stop_conditions: {', '.join(project.iteration.stop_conditions)}",
+        "",
+        "## Artifact State",
+        *_context_artifact_state_lines(base, project),
+        "",
+        "## Latest Run Ledger",
+        *_context_latest_run_lines(base, project),
         "",
         "## Current Task",
         task.strip() or "Continue according to the project next_action.",
@@ -333,7 +352,8 @@ def verify_project_run(
     root: Path | None = None,
 ) -> StrategyProjectRun:
     base = root or project_root()
-    missing_paths = [path for path in run.changed_paths if not (base / path).exists()]
+    expected_paths = _run_artifact_paths(run)
+    missing_paths = [path for path in expected_paths if not (base / path).exists()]
     spec_status = "unknown"
     if project.current_spec_path:
         try:
@@ -347,7 +367,10 @@ def verify_project_run(
     if worker_gate and verified_gate:
         mismatch = worker_gate != verified_gate
     artifact_status = "ok" if not missing_paths else "blocked"
-    blockers = list(run.blockers)
+    blockers = [
+        *run.blockers,
+        *(run.blocker_summary.root_blockers if run.blocker_summary else []),
+    ]
     if missing_paths:
         blockers.append("changed_paths_missing")
     if mismatch:
@@ -359,7 +382,7 @@ def verify_project_run(
         "spec_status": spec_status,
         "mismatch": mismatch,
     }
-    run.blockers = sorted(set(blockers))
+    run.blockers = _unique_strings(blockers)
     if run.blockers and run.status == "ok":
         run.status = "blocked"
     return run
@@ -426,6 +449,60 @@ def _context_evidence_line(name: str, item: ProjectEvidenceItem) -> str:
     )
 
 
+def _context_artifact_state_lines(base: Path, project: StrategyProject) -> list[str]:
+    path = base / "projects" / project.project_id / "artifact-state.json"
+    raw = _read_json_mapping(path)
+    if not raw:
+        return ["- artifact_state_path: `n/a`", "- last_successful_step: `unknown`"]
+    evidence = raw.get("evidence_status")
+    evidence_lines: list[str] = []
+    if isinstance(evidence, dict):
+        for key in ("factor_quality", "execution_reality", "alt_llm_evidence"):
+            value = evidence.get(key)
+            if isinstance(value, dict):
+                evidence_lines.append(f"- evidence.{key}: `{value.get('status', 'unknown')}`")
+            else:
+                evidence_lines.append(f"- evidence.{key}: `{value or 'unknown'}`")
+    return [
+        f"- artifact_state_path: `projects/{project.project_id}/artifact-state.json`",
+        f"- last_successful_step: `{raw.get('last_successful_step', 'unknown')}`",
+        f"- blocked_items: {_join_short_list(raw.get('blocked_items'))}",
+        f"- warning_items: {_join_short_list(raw.get('warning_items'))}",
+        f"- next_minimal_actions: {_join_short_list(raw.get('next_minimal_actions'))}",
+        f"- do_not_repeat: {_join_short_list(raw.get('do_not_repeat'))}",
+        *evidence_lines,
+    ]
+
+
+def _context_latest_run_lines(base: Path, project: StrategyProject) -> list[str]:
+    if not project.latest_run_path:
+        return ["- latest_run: `n/a`"]
+    run = _read_yaml_mapping(base / project.latest_run_path)
+    if not run:
+        return [f"- latest_run: `{project.latest_run_path}`", "- latest_run_status: `unreadable`"]
+    blocker_summary = run.get("blocker_summary")
+    lines = [
+        f"- latest_run: `{project.latest_run_path}`",
+        f"- status: `{run.get('status', 'unknown')}`",
+        f"- round: {run.get('round', 'unknown')}",
+        f"- blockers: {_join_short_list(run.get('blockers'))}",
+        f"- next_action: `{run.get('next_action', '') or 'n/a'}`",
+    ]
+    if isinstance(blocker_summary, dict):
+        lines.extend(
+            [
+                f"- failed_step: `{blocker_summary.get('failed_step', 'unknown')}`",
+                f"- root_blockers: {_join_short_list(blocker_summary.get('root_blockers'))}",
+                (
+                    "- next_minimal_actions: "
+                    f"{_join_short_list(blocker_summary.get('next_minimal_actions'))}"
+                ),
+                f"- do_not_repeat: {_join_short_list(blocker_summary.get('do_not_repeat'))}",
+            ]
+        )
+    return lines
+
+
 def _gate_from_mapping(value: Any) -> dict[str, Any] | None:
     if not isinstance(value, dict):
         return None
@@ -446,3 +523,97 @@ def evidence_status_from_gate(status: str | None) -> ProjectEvidenceStatus:
     if status == "warning":
         return "warning"
     return "unknown"
+
+
+def load_project_run_summary(path: Path) -> StrategyProjectRun:
+    raw = _read_yaml_mapping(path)
+    if not raw:
+        raise ValueError(f"project run summary is empty or unreadable: {path}")
+    return StrategyProjectRun.model_validate(raw)
+
+
+def _run_artifact_paths(run: StrategyProjectRun) -> list[str]:
+    paths: list[str] = []
+    paths.extend(run.changed_paths)
+    for event in run.step_events:
+        paths.extend(event.output_artifacts)
+    if run.blocker_summary:
+        paths.extend(run.blocker_summary.artifact_refs)
+    return _unique_strings(paths)
+
+
+def _augment_repeated_blockers(
+    base: Path, project: StrategyProject, run: StrategyProjectRun
+) -> None:
+    if not run.blocker_summary or not run.blocker_summary.root_blockers:
+        return
+    previous = _latest_run_with_blocker_summary(base, project)
+    if previous is None or previous.blocker_summary is None:
+        return
+    previous_blockers = set(previous.blocker_summary.root_blockers)
+    repeated = [
+        blocker for blocker in run.blocker_summary.root_blockers if blocker in previous_blockers
+    ]
+    if not repeated:
+        return
+    additions = [f"do not repeat unresolved blocker: {blocker}" for blocker in repeated]
+    run.blocker_summary.do_not_repeat = _unique_strings(
+        [*run.blocker_summary.do_not_repeat, *additions]
+    )
+
+
+def _latest_run_with_blocker_summary(
+    base: Path, project: StrategyProject
+) -> StrategyProjectRun | None:
+    run_dir = base / "projects" / project.project_id / "runs"
+    if not run_dir.exists():
+        return None
+    for path in sorted(run_dir.glob("round-*.yaml"), reverse=True):
+        try:
+            run = load_project_run_summary(path)
+        except ValueError:
+            continue
+        if run.blocker_summary:
+            return run
+    return None
+
+
+def _read_json_mapping(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def _read_yaml_mapping(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def _join_short_list(value: object, *, limit: int = 4) -> str:
+    if not isinstance(value, list):
+        return "none"
+    values = [str(item) for item in value if str(item).strip()]
+    if not values:
+        return "none"
+    suffix = "" if len(values) <= limit else f", +{len(values) - limit} more"
+    return "; ".join(values[:limit]) + suffix
+
+
+def _unique_strings(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        normalized = str(value).strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            result.append(normalized)
+    return result

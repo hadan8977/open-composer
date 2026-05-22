@@ -49,9 +49,11 @@ from open_composer.models.paper import (
     PaperStatusSnapshot,
 )
 from open_composer.models.project import (
+    ProjectBlockerSummary,
     ProjectEvidence,
     ProjectEvidenceItem,
     ProjectGateSummary,
+    ProjectStepEvent,
     StrategyProject,
     StrategyProjectCreate,
     StrategyProjectRun,
@@ -112,9 +114,11 @@ __all__ = [
     "PaperStatusSnapshot",
     "PaperRunCycle",
     "PaperRunSignalResult",
+    "ProjectBlockerSummary",
     "ProjectEvidence",
     "ProjectEvidenceItem",
     "ProjectGateSummary",
+    "ProjectStepEvent",
     "ReviewCard",
     "Signal",
     "SignalContext",

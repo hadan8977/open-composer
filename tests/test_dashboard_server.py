@@ -51,6 +51,8 @@ def test_dashboard_server_creates_and_updates_strategy_project(sample_workspace:
     assert continued["project"]["state"] == "iterating"
     assert continued["agent_request"]["task_type"] == "strategy_optimization"
     assert continued["agent_request_path"].startswith("reports/agent_requests/")
+    assert continued["iteration_plan_path"] == "projects/qqq-momentum/iteration-plan-latest.json"
+    assert continued["artifact_state_path"] == "projects/qqq-momentum/artifact-state.json"
 
 
 def test_dashboard_server_payloads_expose_health_catalog_and_command_api(

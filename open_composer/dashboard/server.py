@@ -285,30 +285,19 @@ def build_project_state_payload(
         write_project(project, root)
     elif action == "continue":
         direction = str(payload.get("direction") or "continue_iteration")
-        project = update_project_state(
+        from open_composer.research.iteration_controller import create_project_iteration_request
+
+        result = create_project_iteration_request(
             project_id,
-            "iterating",
             root,
-            next_action=direction,
-            blockers=[],
+            rounds=int(payload.get("rounds") or 1),
+            advice=direction,
+            requested_by=str(payload.get("requested_by") or "dashboard"),
         )
-        project.iteration.user_requested_stop = False
-        write_project(project, root)
-        write_project_context(project, root, task=direction)
-        request = create_agent_request(
-            AgentRequestCreate(
-                requested_by=str(payload.get("requested_by") or "dashboard"),
-                task_type="strategy_optimization",
-                title=f"Continue strategy project: {project.name}",
-                prompt=project_agent_prompt(project, direction),
-                related_paths=[
-                    f"projects/{project.project_id}/project.yaml",
-                    f"projects/{project.project_id}/context.md",
-                    *([project.current_spec_path] if project.current_spec_path else []),
-                ],
-            ),
-            root,
-        )
+        project = result.project
+        request = result.agent_request
+        iteration_plan_path = result.iteration_plan_path
+        artifact_state_path = result.iteration_plan.artifact_state_path
     elif action == "paper_review":
         project = update_project_state(
             project_id,
@@ -339,6 +328,10 @@ def build_project_state_payload(
     if request is not None:
         response["agent_request"] = request.model_dump(mode="json")
         response["agent_request_path"] = f"reports/agent_requests/{request.request_id}.json"
+    if "iteration_plan_path" in locals():
+        response["iteration_plan_path"] = iteration_plan_path
+    if "artifact_state_path" in locals():
+        response["artifact_state_path"] = artifact_state_path
     return response
 
 

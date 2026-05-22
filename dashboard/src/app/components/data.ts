@@ -6,9 +6,18 @@ export type ModelClass =
   | "quant-review"
   | "quant-scan"
   | "quant-orchestrator";
-export type CapabilityStatus = "supported" | "partial" | "blocked" | "unsupported";
+export type CapabilityStatus =
+  | "supported"
+  | "partial"
+  | "blocked"
+  | "unsupported";
 export type OperationalStatus = "ok" | "warning" | "blocked";
-export type ProjectEvidenceStatus = "ok" | "warning" | "blocked" | "not_applicable" | "unknown";
+export type ProjectEvidenceStatus =
+  | "ok"
+  | "warning"
+  | "blocked"
+  | "not_applicable"
+  | "unknown";
 export type ProjectState =
   | "idea"
   | "draft"
@@ -72,6 +81,27 @@ export interface ProjectEvidence {
   altLLMEvidence: ProjectEvidenceItem;
 }
 
+export interface ProjectControlState {
+  lastSuccessfulStep: string;
+  latestArtifacts: Record<string, string>;
+  blockedItems: string[];
+  warningItems: string[];
+}
+
+export interface ProjectRunLedger {
+  status: string;
+  round: number | null;
+  taskType: string;
+  changedPaths: string[];
+  stepEvents: Array<{
+    stepName: string;
+    status: string;
+    outputArtifacts: string[];
+    blockedItems: string[];
+    warningItems: string[];
+  }>;
+}
+
 export interface StrategyProject {
   projectId: string;
   name: string;
@@ -89,6 +119,18 @@ export interface StrategyProject {
     warningChecks: string[];
   };
   evidence: ProjectEvidence;
+  artifactState: ProjectControlState;
+  latestRunSummary: ProjectRunLedger | null;
+  blockerSummary: {
+    trigger: string;
+    failedStep: string;
+    rootBlockers: string[];
+    nextMinimalActions: string[];
+    doNotRepeat: string[];
+    artifactRefs: string[];
+  } | null;
+  nextMinimalActions: string[];
+  doNotRepeat: string[];
   blockers: string[];
   nextAction: string;
   currentRound: number;
@@ -373,7 +415,11 @@ interface DashboardStrategyRecord {
   broker?: string;
   data_source?: string;
   execution_mode?: string;
-  model_role?: "pure_quant" | "quant_review" | "quant_scan" | "quant_orchestrator";
+  model_role?:
+    | "pure_quant"
+    | "quant_review"
+    | "quant_scan"
+    | "quant_orchestrator";
   risk_tier?: RiskLevel;
   factor_names?: string[];
   required_capabilities?: string[];
@@ -405,6 +451,11 @@ interface DashboardProjectRecord {
     execution_reality?: DashboardProjectEvidenceItemRecord;
     alt_llm_evidence?: DashboardProjectEvidenceItemRecord;
   };
+  artifact_state?: Record<string, unknown>;
+  latest_run_summary?: Record<string, unknown>;
+  blocker_summary?: Record<string, unknown>;
+  next_minimal_actions?: string[];
+  do_not_repeat?: string[];
   blockers?: string[];
   next_action?: string;
   current_round?: number;
@@ -667,13 +718,16 @@ interface DashboardDeploymentReportRecord {
 
 let catalog = (rawCatalog ?? {}) as DashboardCatalog;
 let summaryRecord = catalog.summary ?? {};
-let catalogGeneratedAt = catalog.generated_at ?? summaryRecord.generated_at ?? null;
+let catalogGeneratedAt =
+  catalog.generated_at ?? summaryRecord.generated_at ?? null;
 let allRuns = asArray(catalog.runs);
 let allVersions = asArray(catalog.versions);
 let allProjects = asArray(catalog.projects);
 let allPaperReadiness = asArray(catalog.paper_readiness_reports);
 let allResearchRuns = asArray(catalog.research_runs);
-let versionById = new Map(allVersions.map((version) => [version.version_id, version]));
+let versionById = new Map(
+  allVersions.map((version) => [version.version_id, version]),
+);
 let paperReadinessByStrategy = buildPaperReadinessByStrategy();
 
 export let dashboardSummary: DashboardSummaryView = buildDashboardSummary();
@@ -687,19 +741,23 @@ export let versions: VersionEntry[] = buildVersions();
 export let strategyGroups: StrategyGroup[] = buildStrategyGroups();
 export let paperPositions: PaperPosition[] = buildPaperPositions();
 export let paperOrders = buildPaperOrders();
-export let paperReadinessReports: PaperReadinessReport[] = buildPaperReadinessReports();
+export let paperReadinessReports: PaperReadinessReport[] =
+  buildPaperReadinessReports();
 export let researchRuns: ResearchRun[] = buildResearchRuns();
 
 export function applyDashboardCatalog(nextCatalog: DashboardCatalog): void {
   catalog = nextCatalog ?? {};
   summaryRecord = catalog.summary ?? {};
-  catalogGeneratedAt = catalog.generated_at ?? summaryRecord.generated_at ?? null;
+  catalogGeneratedAt =
+    catalog.generated_at ?? summaryRecord.generated_at ?? null;
   allRuns = asArray(catalog.runs);
   allVersions = asArray(catalog.versions);
   allProjects = asArray(catalog.projects);
   allPaperReadiness = asArray(catalog.paper_readiness_reports);
   allResearchRuns = asArray(catalog.research_runs);
-  versionById = new Map(allVersions.map((version) => [version.version_id, version]));
+  versionById = new Map(
+    allVersions.map((version) => [version.version_id, version]),
+  );
   paperReadinessByStrategy = buildPaperReadinessByStrategy();
 
   dashboardSummary = buildDashboardSummary();
@@ -728,8 +786,10 @@ function buildDashboardSummary(): DashboardSummaryView {
     generatedLabel: formatDateTime(catalogGeneratedAt),
     sourceRoot: summaryRecord.source_root ?? catalog.source_root ?? "",
     readModelVersion: summaryRecord.read_model_version ?? "1",
-    strategyCount: summaryRecord.strategy_count ?? asArray(catalog.strategies).length,
-    activeStrategyCount: summaryRecord.active_strategy_count ?? lifecycleCount("active"),
+    strategyCount:
+      summaryRecord.strategy_count ?? asArray(catalog.strategies).length,
+    activeStrategyCount:
+      summaryRecord.active_strategy_count ?? lifecycleCount("active"),
     approvedStrategyCount: lifecycleCount("approved"),
     draftStrategyCount: lifecycleCount("draft"),
     retiredStrategyCount: lifecycleCount("retired"),
@@ -737,19 +797,25 @@ function buildDashboardSummary(): DashboardSummaryView {
     runCount: summaryRecord.run_count ?? allRuns.length,
     signalCount: summaryRecord.signal_count ?? asArray(catalog.signals).length,
     reviewCount: summaryRecord.review_count ?? asArray(catalog.reviews).length,
-    contextCount: summaryRecord.context_count ?? asArray(catalog.contexts).length,
+    contextCount:
+      summaryRecord.context_count ?? asArray(catalog.contexts).length,
     journalCount: summaryRecord.journal_count ?? 0,
     orderCount: summaryRecord.order_count ?? asArray(catalog.orders).length,
     auditCount: summaryRecord.audit_count ?? asArray(catalog.audits).length,
     dataComparisonCount:
-      summaryRecord.data_comparison_count ?? asArray(catalog.data_comparisons).length,
+      summaryRecord.data_comparison_count ??
+      asArray(catalog.data_comparisons).length,
     featurePacketCount:
-      summaryRecord.feature_packet_count ?? asArray(catalog.feature_packets).length,
+      summaryRecord.feature_packet_count ??
+      asArray(catalog.feature_packets).length,
     workflowReportCount:
-      summaryRecord.workflow_report_count ?? asArray(catalog.workflow_reports).length,
+      summaryRecord.workflow_report_count ??
+      asArray(catalog.workflow_reports).length,
     researchReportCount:
-      summaryRecord.research_report_count ?? asArray(catalog.research_reports).length,
-    researchRunCount: summaryRecord.research_run_count ?? allResearchRuns.length,
+      summaryRecord.research_report_count ??
+      asArray(catalog.research_reports).length,
+    researchRunCount:
+      summaryRecord.research_run_count ?? allResearchRuns.length,
     researchBlockedCount:
       summaryRecord.research_blocked_count ??
       allResearchRuns.filter((run) => run.status === "blocked").length,
@@ -762,7 +828,10 @@ function buildDashboardSummary(): DashboardSummaryView {
       allProjects.filter((project) => project.state === "blocked").length,
     projectIteratingCount:
       summaryRecord.project_iterating_count ??
-      allProjects.filter((project) => project.state === "researching" || project.state === "iterating").length,
+      allProjects.filter(
+        (project) =>
+          project.state === "researching" || project.state === "iterating",
+      ).length,
     projectCandidateCount:
       summaryRecord.project_candidate_count ??
       allProjects.filter((project) => project.state === "candidate").length,
@@ -770,8 +839,11 @@ function buildDashboardSummary(): DashboardSummaryView {
       summaryRecord.project_active_paper_count ??
       allProjects.filter((project) => project.state === "active_paper").length,
     readinessStatus:
-      summaryRecord.readiness_status ?? catalog.readiness_report?.status ?? "missing",
-    readinessReady: summaryRecord.readiness_ready ?? Boolean(catalog.readiness_report?.ready),
+      summaryRecord.readiness_status ??
+      catalog.readiness_report?.status ??
+      "missing",
+    readinessReady:
+      summaryRecord.readiness_ready ?? Boolean(catalog.readiness_report?.ready),
     readinessWarningCount:
       summaryRecord.readiness_warning_count ??
       operationalCount(catalog.readiness_report?.checks, "warning"),
@@ -779,21 +851,28 @@ function buildDashboardSummary(): DashboardSummaryView {
       summaryRecord.readiness_blocked_count ??
       operationalCount(catalog.readiness_report?.checks, "blocked"),
     deploymentStatus:
-      summaryRecord.deployment_status ?? catalog.deployment_report?.status ?? "missing",
-    deploymentReady: summaryRecord.deployment_ready ?? Boolean(catalog.deployment_report?.ready),
+      summaryRecord.deployment_status ??
+      catalog.deployment_report?.status ??
+      "missing",
+    deploymentReady:
+      summaryRecord.deployment_ready ??
+      Boolean(catalog.deployment_report?.ready),
     deploymentWarningCount:
       summaryRecord.deployment_warning_count ??
       operationalCount(catalog.deployment_report?.steps, "warning"),
     deploymentBlockedCount:
       summaryRecord.deployment_blocked_count ??
       operationalCount(catalog.deployment_report?.steps, "blocked"),
-    deploymentNextAction: firstSuggestedAction(catalog.deployment_report?.steps),
+    deploymentNextAction: firstSuggestedAction(
+      catalog.deployment_report?.steps,
+    ),
     readinessNextAction: firstSuggestedAction(catalog.readiness_report?.checks),
     paperAutoStrategyCount: summaryRecord.paper_auto_strategy_count ?? 0,
     paperOpenOrderCount: summaryRecord.paper_open_order_count ?? 0,
     paperPositionCount: summaryRecord.paper_position_count ?? 0,
     paperKillSwitchEnabled: summaryRecord.paper_kill_switch_enabled ?? false,
-    paperReconciliationStatus: summaryRecord.paper_reconciliation_status ?? "unknown",
+    paperReconciliationStatus:
+      summaryRecord.paper_reconciliation_status ?? "unknown",
     paperAlertStatus: summaryRecord.paper_alert_status ?? "unknown",
     paperAccountEquity: summaryRecord.paper_account_equity ?? null,
     paperAccountCash: summaryRecord.paper_account_cash ?? null,
@@ -801,7 +880,8 @@ function buildDashboardSummary(): DashboardSummaryView {
     paperPositionsSnapshotAt: summaryRecord.paper_positions_snapshot_at ?? null,
     paperTotalUnrealizedPl: summaryRecord.paper_total_unrealized_pl ?? 0,
     paperReadinessCount: summaryRecord.paper_readiness_count ?? 0,
-    paperReadinessStatusCounts: summaryRecord.paper_readiness_status_counts ?? {},
+    paperReadinessStatusCounts:
+      summaryRecord.paper_readiness_status_counts ?? {},
     backendStatusCounts: summaryRecord.backend_status_counts ?? {},
     modelRoleCounts: summaryRecord.model_role_counts ?? {},
     riskCounts: summaryRecord.risk_counts ?? {},
@@ -818,7 +898,9 @@ function buildStrategies(): Strategy[] {
       versionById.get(strategy.current_version_id ?? "") ??
       allVersions.find((record) => record.strategy_id === strategy.strategy_id);
     const compatibility = strategy.compatibility ?? {};
-    const versionLabel = shortVersion(strategy.current_version_id ?? version?.version_id);
+    const versionLabel = shortVersion(
+      strategy.current_version_id ?? version?.version_id,
+    );
     const contentHash = version?.content_hash;
     const totalReturn = latestRun?.total_return_pct ?? 0;
 
@@ -844,8 +926,11 @@ function buildStrategies(): Strategy[] {
       backendReasons: strategy.backend_reasons ?? [],
       backendPlanPath: latestRun?.backend_plan_path ?? null,
       paperReadinessReportPath: latestRun?.paper_readiness_report_path ?? null,
-      paperReadiness: paperReadinessByStrategy.get(strategy.strategy_id) ?? null,
-      customDataBindings: buildCustomDataBindings(latestRun?.custom_data_bindings),
+      paperReadiness:
+        paperReadinessByStrategy.get(strategy.strategy_id) ?? null,
+      customDataBindings: buildCustomDataBindings(
+        latestRun?.custom_data_bindings,
+      ),
       broker: strategy.broker ?? "none",
       dataSource: strategy.data_source ?? "unknown",
       executionMode: strategy.execution_mode ?? "manual_signal",
@@ -863,10 +948,15 @@ function buildStrategies(): Strategy[] {
 }
 
 function buildProjects(): StrategyProject[] {
-  const derived = allProjects.length > 0 ? allProjects : deriveProjectsFromStrategies();
+  const derived =
+    allProjects.length > 0 ? allProjects : deriveProjectsFromStrategies();
   return derived
     .slice()
-    .sort((left, right) => projectSortWeight(left) - projectSortWeight(right) || left.name.localeCompare(right.name))
+    .sort(
+      (left, right) =>
+        projectSortWeight(left) - projectSortWeight(right) ||
+        left.name.localeCompare(right.name),
+    )
     .map((project) => ({
       projectId: project.project_id,
       name: humanize(project.name),
@@ -877,17 +967,29 @@ function buildProjects(): StrategyProject[] {
       gateSummary: {
         workflowPass: project.gate_summary?.workflow_pass ?? null,
         researchPass: project.gate_summary?.research_pass ?? null,
-        llmContributionPass: project.gate_summary?.llm_contribution_pass ?? null,
+        llmContributionPass:
+          project.gate_summary?.llm_contribution_pass ?? null,
         paperReadyPass: project.gate_summary?.paper_ready_pass ?? null,
         status: project.gate_summary?.status ?? "unknown",
         blockedChecks: project.gate_summary?.blocked_checks ?? [],
         warningChecks: project.gate_summary?.warning_checks ?? [],
       },
       evidence: {
-        factorQuality: buildProjectEvidenceItem(project.evidence?.factor_quality),
-        executionReality: buildProjectEvidenceItem(project.evidence?.execution_reality),
-        altLLMEvidence: buildProjectEvidenceItem(project.evidence?.alt_llm_evidence),
+        factorQuality: buildProjectEvidenceItem(
+          project.evidence?.factor_quality,
+        ),
+        executionReality: buildProjectEvidenceItem(
+          project.evidence?.execution_reality,
+        ),
+        altLLMEvidence: buildProjectEvidenceItem(
+          project.evidence?.alt_llm_evidence,
+        ),
       },
+      artifactState: buildProjectControlState(project.artifact_state),
+      latestRunSummary: buildProjectRunLedger(project.latest_run_summary),
+      blockerSummary: buildProjectBlockerSummary(project.blocker_summary),
+      nextMinimalActions: asStringArray(project.next_minimal_actions),
+      doNotRepeat: asStringArray(project.do_not_repeat),
       blockers: project.blockers ?? [],
       nextAction: project.next_action ?? "",
       currentRound: project.current_round ?? 0,
@@ -909,7 +1011,12 @@ function deriveProjectsFromStrategies(): DashboardProjectRecord[] {
     return {
       project_id: strategy.strategy_id,
       name: strategy.strategy_name,
-      state: strategy.lifecycle === "active" ? "candidate" : strategy.lifecycle === "draft" ? "draft" : "candidate",
+      state:
+        strategy.lifecycle === "active"
+          ? "candidate"
+          : strategy.lifecycle === "draft"
+            ? "draft"
+            : "candidate",
       thesis: strategy.note ?? "",
       current_spec_path: strategy.source_paths?.[0] ?? null,
       latest_run_path: latestRun?.report_path ?? latestRun?.source_path ?? null,
@@ -924,8 +1031,12 @@ function deriveProjectsFromStrategies(): DashboardProjectRecord[] {
       },
       evidence: {
         factor_quality: {
-          status: strategy.factor_names.length > 0 ? "unknown" : "not_applicable",
-          summary: strategy.factor_names.length > 0 ? "Factor diagnostics have not been linked yet." : "No factor lab evidence is required.",
+          status:
+            strategy.factor_names.length > 0 ? "unknown" : "not_applicable",
+          summary:
+            strategy.factor_names.length > 0
+              ? "Factor diagnostics have not been linked yet."
+              : "No factor lab evidence is required.",
           artifact_path: null,
           blockers: [],
           updated_at: null,
@@ -938,21 +1049,40 @@ function deriveProjectsFromStrategies(): DashboardProjectRecord[] {
           updated_at: null,
         },
         alt_llm_evidence: {
-          status: strategy.llm_review_enabled || strategy.llm_feature_factor_names?.length || strategy.feature_packet_factor_names?.length ? "unknown" : "not_applicable",
-          summary: strategy.llm_review_enabled || strategy.llm_feature_factor_names?.length || strategy.feature_packet_factor_names?.length ? "Alt/LLM evidence has not been linked yet." : "No LLM or alternative-data factor is declared.",
+          status:
+            strategy.llm_review_enabled ||
+            strategy.llm_feature_factor_names?.length ||
+            strategy.feature_packet_factor_names?.length
+              ? "unknown"
+              : "not_applicable",
+          summary:
+            strategy.llm_review_enabled ||
+            strategy.llm_feature_factor_names?.length ||
+            strategy.feature_packet_factor_names?.length
+              ? "Alt/LLM evidence has not been linked yet."
+              : "No LLM or alternative-data factor is declared.",
           artifact_path: null,
           blockers: [],
           updated_at: null,
         },
       },
+      artifact_state: {},
+      latest_run_summary: {},
+      blocker_summary: {},
+      next_minimal_actions: [],
+      do_not_repeat: [],
       blockers: [],
-      next_action: strategy.lifecycle === "active" ? "review_project_evidence" : "create_or_link_strategy_project",
+      next_action:
+        strategy.lifecycle === "active"
+          ? "review_project_evidence"
+          : "create_or_link_strategy_project",
       current_round: 0,
       max_rounds: 5,
       iteration_mode: "auto_continue_until_stop",
       stop_reason: null,
       user_requested_stop: false,
-      paper_status: strategy.lifecycle === "active" ? "review_requested" : "not_requested",
+      paper_status:
+        strategy.lifecycle === "active" ? "review_requested" : "not_requested",
       archived: strategy.lifecycle === "retired",
       imported_from_strategy: true,
       created_at: null,
@@ -986,6 +1116,64 @@ function buildProjectEvidenceItem(
     artifactPath: item?.artifact_path ?? null,
     blockers: item?.blockers ?? [],
     updatedAt: item?.updated_at ?? null,
+  };
+}
+
+function buildProjectControlState(
+  value: Record<string, unknown> | undefined,
+): ProjectControlState {
+  const record = value ?? {};
+  const artifacts = isRecord(record.latest_artifacts)
+    ? record.latest_artifacts
+    : {};
+  return {
+    lastSuccessfulStep:
+      typeof record?.last_successful_step === "string"
+        ? record.last_successful_step
+        : "unknown",
+    latestArtifacts: Object.fromEntries(
+      Object.entries(artifacts).map(([key, value]) => [key, String(value)]),
+    ),
+    blockedItems: asStringArray(record?.blocked_items),
+    warningItems: asStringArray(record?.warning_items),
+  };
+}
+
+function buildProjectRunLedger(
+  record: Record<string, unknown> | undefined,
+): ProjectRunLedger | null {
+  if (!record || Object.keys(record).length === 0) return null;
+  return {
+    status: typeof record.status === "string" ? record.status : "unknown",
+    round: typeof record.round === "number" ? record.round : null,
+    taskType:
+      typeof record.task_type === "string" ? record.task_type : "unknown",
+    changedPaths: asStringArray(record.changed_paths),
+    stepEvents: asArray(record.step_events)
+      .filter(isRecord)
+      .map((event) => ({
+        stepName:
+          typeof event.step_name === "string" ? event.step_name : "unknown",
+        status: typeof event.status === "string" ? event.status : "unknown",
+        outputArtifacts: asStringArray(event.output_artifacts),
+        blockedItems: asStringArray(event.blocked_items),
+        warningItems: asStringArray(event.warning_items),
+      })),
+  };
+}
+
+function buildProjectBlockerSummary(
+  record: Record<string, unknown> | undefined,
+): StrategyProject["blockerSummary"] {
+  if (!record || Object.keys(record).length === 0) return null;
+  return {
+    trigger: typeof record.trigger === "string" ? record.trigger : "blocked",
+    failedStep:
+      typeof record.failed_step === "string" ? record.failed_step : "unknown",
+    rootBlockers: asStringArray(record.root_blockers),
+    nextMinimalActions: asStringArray(record.next_minimal_actions),
+    doNotRepeat: asStringArray(record.do_not_repeat),
+    artifactRefs: asStringArray(record.artifact_refs),
   };
 }
 
@@ -1051,7 +1239,12 @@ function buildAuditLog(): AuditLogEntry[] {
 function buildVersions(): VersionEntry[] {
   return allVersions
     .slice()
-    .sort((left, right) => compareDateDesc(left.modified_at ?? left.created_at, right.modified_at ?? right.created_at))
+    .sort((left, right) =>
+      compareDateDesc(
+        left.modified_at ?? left.created_at,
+        right.modified_at ?? right.created_at,
+      ),
+    )
     .map((version) => ({
       id: shortVersion(version.version_id),
       strat: humanize(version.strategy_name),
@@ -1082,7 +1275,9 @@ function buildPaperPositions(): PaperPosition[] {
       avg: round(avg, 2),
       mkt: round(mkt, 2),
       upnl: round(position.unrealized_pl ?? 0, 2),
-      strat: linkedOrder ? humanize(linkedOrder.strategy_name) : "Paper account",
+      strat: linkedOrder
+        ? humanize(linkedOrder.strategy_name)
+        : "Paper account",
     };
   });
 }
@@ -1103,10 +1298,14 @@ function buildPaperOrders() {
 function buildPaperReadinessReports(): PaperReadinessReport[] {
   return allPaperReadiness
     .slice()
-    .sort((left, right) => compareDateDesc(left.generated_at, right.generated_at))
+    .sort((left, right) =>
+      compareDateDesc(left.generated_at, right.generated_at),
+    )
     .map((report) => ({
       strategyId: report.strategy_id ?? report.strategy_name ?? "unknown",
-      strategyName: humanize(report.strategy_name ?? report.strategy_id ?? "unknown"),
+      strategyName: humanize(
+        report.strategy_name ?? report.strategy_id ?? "unknown",
+      ),
       status: report.status ?? "blocked",
       ready: Boolean(report.ready),
       generatedAt: report.generated_at ?? null,
@@ -1132,7 +1331,9 @@ function buildPaperReadinessByStrategy(): Map<string, PaperReadinessReport> {
 function buildResearchRuns(): ResearchRun[] {
   return allResearchRuns
     .slice()
-    .sort((left, right) => compareDateDesc(left.generated_at, right.generated_at))
+    .sort((left, right) =>
+      compareDateDesc(left.generated_at, right.generated_at),
+    )
     .map((run) => {
       const dataProfile = run.data_profile ?? {};
       return {
@@ -1150,8 +1351,13 @@ function buildResearchRuns(): ResearchRun[] {
         runtimeSeconds: run.runtime_seconds ?? null,
         blockedItems: run.blocked_items ?? [],
         warningItems: run.warning_items ?? [],
-        dataSourceMode: String(dataProfile.source_mode ?? dataProfile.status ?? "unknown"),
-        dataAsOf: typeof dataProfile.data_as_of === "string" ? dataProfile.data_as_of : null,
+        dataSourceMode: String(
+          dataProfile.source_mode ?? dataProfile.status ?? "unknown",
+        ),
+        dataAsOf:
+          typeof dataProfile.data_as_of === "string"
+            ? dataProfile.data_as_of
+            : null,
       };
     });
 }
@@ -1216,13 +1422,20 @@ function buildTimelineEvents(): TimelineEvent[] {
       t: workflow.status ?? "warning",
       kind: "Workflow",
       title: `${humanize(workflow.strategy_name ?? workflow.strategy_id)} verification: ${workflow.status ?? "warning"} · ${workflow.scan_signal_count ?? 0} scan signals`,
-      impact: workflow.status === "ok" ? "low" : workflow.status === "blocked" ? "high" : "med",
+      impact:
+        workflow.status === "ok"
+          ? "low"
+          : workflow.status === "blocked"
+            ? "high"
+            : "med",
     });
   }
 
   for (const context of asArray(catalog.contexts).slice(0, 5)) {
     const total =
-      (context.event_count ?? 0) + (context.macro_count ?? 0) + (context.news_count ?? 0);
+      (context.event_count ?? 0) +
+      (context.macro_count ?? 0) +
+      (context.news_count ?? 0);
     rows.push({
       t: formatTime(context.generated_at),
       kind: "Context",
@@ -1231,7 +1444,10 @@ function buildTimelineEvents(): TimelineEvent[] {
     });
   }
 
-  for (const note of dashboardSummary.notes.slice(0, Math.max(0, 6 - rows.length))) {
+  for (const note of dashboardSummary.notes.slice(
+    0,
+    Math.max(0, 6 - rows.length),
+  )) {
     rows.push({
       t: "note",
       kind: "Status",
@@ -1244,7 +1460,9 @@ function buildTimelineEvents(): TimelineEvent[] {
 }
 
 function buildStrategyGroups(): StrategyGroup[] {
-  const modelGroups = asArray(catalog.groups).filter((group) => group.category === "model_role");
+  const modelGroups = asArray(catalog.groups).filter(
+    (group) => group.category === "model_role",
+  );
   const fallbackGroups = asArray(catalog.groups).filter((group) =>
     ["risk_tier", "backend", "data_source"].includes(group.category),
   );
@@ -1255,13 +1473,18 @@ function buildStrategyGroups(): StrategyGroup[] {
     id: group.group_id,
     name: groupLabel(group),
     weight: Math.round(((group.strategy_count ?? 0) / total) * 100),
-    color: ["green", "cyan", "purple", "orange", "black", "pink"][index % 6] as StrategyGroup["color"],
+    color: ["green", "cyan", "purple", "orange", "black", "pink"][
+      index % 6
+    ] as StrategyGroup["color"],
     risk: group.risk_tiers?.includes("high")
       ? "high"
       : group.risk_tiers?.includes("moderate")
         ? "moderate"
         : "stable",
-    children: asArray(group.strategy_ids).map((id) => strategies.find((strategy) => strategy.id === id)?.name ?? humanize(id)),
+    children: asArray(group.strategy_ids).map(
+      (id) =>
+        strategies.find((strategy) => strategy.id === id)?.name ?? humanize(id),
+    ),
     category: group.category,
   }));
 }
@@ -1277,7 +1500,9 @@ function isRunnable(status?: CapabilityStatus): boolean {
   return status === "supported" || status === "partial";
 }
 
-function normalizeModelClass(role?: DashboardStrategyRecord["model_role"]): ModelClass {
+function normalizeModelClass(
+  role?: DashboardStrategyRecord["model_role"],
+): ModelClass {
   switch (role) {
     case "quant_review":
       return "quant-review";
@@ -1308,14 +1533,20 @@ function lifecycleCount(lifecycle: Strategy["status"]): number {
 }
 
 function operationalCount(
-  checks: DashboardOperationalCheckRecord[] | DashboardDeploymentStepRecord[] | undefined,
+  checks:
+    | DashboardOperationalCheckRecord[]
+    | DashboardDeploymentStepRecord[]
+    | undefined,
   status: "warning" | "blocked",
 ): number {
   return asArray(checks).filter((check) => check.status === status).length;
 }
 
 function firstSuggestedAction(
-  checks: DashboardOperationalCheckRecord[] | DashboardDeploymentStepRecord[] | undefined,
+  checks:
+    | DashboardOperationalCheckRecord[]
+    | DashboardDeploymentStepRecord[]
+    | undefined,
 ): string | null {
   for (const check of asArray(checks)) {
     const action = check.suggested_actions?.[0];
@@ -1326,7 +1557,9 @@ function firstSuggestedAction(
   return null;
 }
 
-function operationalImpact(status?: "ok" | "warning" | "blocked"): TimelineEvent["impact"] {
+function operationalImpact(
+  status?: "ok" | "warning" | "blocked",
+): TimelineEvent["impact"] {
   if (status === "ok") {
     return "low";
   }
@@ -1363,7 +1596,7 @@ function seededSeries(seedText: string, returnPct: number, n = 28): number[] {
     seed = (1664525 * seed + 1013904223) >>> 0;
     const progress = i / Math.max(1, n - 1);
     const drift = start + (end - start) * progress;
-    const noise = ((seed / 0xffffffff) - 0.5) * 2;
+    const noise = (seed / 0xffffffff - 0.5) * 2;
     const dampener = Math.sin(progress * Math.PI);
     out.push(round(drift + noise * dampener * 2.4, 2));
   }
@@ -1371,7 +1604,10 @@ function seededSeries(seedText: string, returnPct: number, n = 28): number[] {
   return out;
 }
 
-function compareRunDesc(left: DashboardRunRecord, right: DashboardRunRecord): number {
+function compareRunDesc(
+  left: DashboardRunRecord,
+  right: DashboardRunRecord,
+): number {
   return String(right.run_id).localeCompare(String(left.run_id));
 }
 
@@ -1439,8 +1675,20 @@ function humanize(value?: string | null): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function asArray<T>(value?: T[]): T[] {
-  return Array.isArray(value) ? value : [];
+function asArray<T>(value: T[] | undefined | null): T[];
+function asArray<T = unknown>(value: unknown): T[];
+function asArray<T = unknown>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function asStringArray(value: unknown): string[] {
+  return asArray(value)
+    .map((item) => String(item))
+    .filter(Boolean);
 }
 
 function round(value: number, digits: number): number {

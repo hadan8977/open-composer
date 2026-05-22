@@ -7,6 +7,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
+import yaml
+
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.dashboard import (
     DashboardAuditEvent,
@@ -1343,6 +1345,15 @@ def _dashboard_project_from_project(
         strategy = strategy_by_id.get(project.name)
         if strategy:
             _apply_strategy_fallback_evidence(project, strategy)
+    artifact_state = _load_project_artifact_state_record(base, project)
+    latest_run_summary = _load_project_run_summary_record(base, project)
+    blocker_summary = _blocker_summary_from_run(latest_run_summary)
+    next_minimal_actions = _list_from_record(artifact_state.get("next_minimal_actions"))
+    if not next_minimal_actions:
+        next_minimal_actions = _list_from_record(blocker_summary.get("next_minimal_actions"))
+    do_not_repeat = _list_from_record(artifact_state.get("do_not_repeat"))
+    if not do_not_repeat:
+        do_not_repeat = _list_from_record(blocker_summary.get("do_not_repeat"))
     return DashboardProject(
         project_id=project.project_id,
         name=project.name,
@@ -1356,7 +1367,14 @@ def _dashboard_project_from_project(
             execution_reality=_dashboard_evidence_item(project.evidence.execution_reality, base),
             alt_llm_evidence=_dashboard_evidence_item(project.evidence.alt_llm_evidence, base),
         ),
-        blockers=list(project.blockers),
+        artifact_state=artifact_state,
+        latest_run_summary=latest_run_summary,
+        blocker_summary=blocker_summary,
+        next_minimal_actions=next_minimal_actions,
+        do_not_repeat=do_not_repeat,
+        blockers=_unique_strings(
+            [*project.blockers, *_list_from_record(artifact_state.get("blocked_items"))]
+        ),
         next_action=project.next_action,
         current_round=project.iteration.current_round,
         max_rounds=project.iteration.max_rounds,
@@ -1386,6 +1404,24 @@ def _dashboard_evidence_item(item: ProjectEvidenceItem, base: Path) -> Dashboard
         blockers=blockers,
         updated_at=item.updated_at,
     )
+
+
+def _load_project_artifact_state_record(base: Path, project: StrategyProject) -> dict[str, object]:
+    path = base / "projects" / project.project_id / "artifact-state.json"
+    raw = _read_json_mapping(path)
+    return _json_object(raw)
+
+
+def _load_project_run_summary_record(base: Path, project: StrategyProject) -> dict[str, object]:
+    if not project.latest_run_path:
+        return {}
+    raw = _read_yaml_mapping(base / project.latest_run_path)
+    return _json_object(raw)
+
+
+def _blocker_summary_from_run(run: dict[str, object]) -> dict[str, object]:
+    blocker_summary = run.get("blocker_summary")
+    return _json_object(blocker_summary)
 
 
 def _apply_strategy_fallback_evidence(
@@ -2517,6 +2553,49 @@ def _relpath(path: Path, base: Path) -> str:
         return path.relative_to(base).as_posix()
     except ValueError:
         return path.as_posix()
+
+
+def _read_json_mapping(path: Path) -> dict[str, object]:
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def _read_yaml_mapping(path: Path) -> dict[str, object]:
+    if not path.exists():
+        return {}
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return {}
+    return raw if isinstance(raw, dict) else {}
+
+
+def _json_object(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): item for key, item in value.items()}
+
+
+def _list_from_record(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value if str(item).strip()]
+
+
+def _unique_strings(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        normalized = str(value).strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            result.append(normalized)
+    return result
 
 
 def _ordered_unique(values: list[str], order: list[str]) -> list[str]:
