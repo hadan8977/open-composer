@@ -76,6 +76,18 @@ from open_composer.dashboard import (
     write_dashboard_html,
     write_dashboard_review_markdown,
 )
+from open_composer.dashboard.vps_deploy import (
+    VpsDashboardDeployError,
+    apply_vps_dashboard_deploy,
+    build_vps_dashboard_deploy_config,
+    write_vps_dashboard_deploy_report,
+)
+from open_composer.dashboard.vps_deploy import (
+    detect_public_ip as detect_dashboard_public_ip,
+)
+from open_composer.dashboard.vps_deploy import (
+    write_system_templates as write_dashboard_system_templates,
+)
 from open_composer.deployment import (
     ensure_runtime_dirs,
     prepare_workspace,
@@ -806,6 +818,116 @@ def dashboard_serve_command(
         serve_dashboard(project_root(), host=host, port=port, api_token=api_token)
     except DashboardServerError as exc:
         raise typer.BadParameter(str(exc)) from exc
+
+
+@dashboard_app.command("deploy-vps")
+def dashboard_deploy_vps_command(
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", help="Write files and start the VPS Dashboard service."),
+    ] = False,
+    dashboard_url: Annotated[
+        str | None,
+        typer.Option("--dashboard-url", help="Public HTTPS URL for the VPS Dashboard."),
+    ] = None,
+    public_ip: Annotated[
+        str | None,
+        typer.Option("--public-ip", help="VPS public IPv4; creates https://<ip>.nip.io."),
+    ] = None,
+    detect_ip: Annotated[
+        bool,
+        typer.Option(
+            "--detect-ip/--no-detect-ip",
+            help="Detect public IPv4 during --apply when Dashboard URL is not provided.",
+        ),
+    ] = True,
+    dashboard_token: Annotated[
+        str | None,
+        typer.Option(
+            "--dashboard-token",
+            envvar="OPEN_COMPOSER_DASHBOARD_TOKEN",
+            help="Dashboard API token. Defaults to OPEN_COMPOSER_DASHBOARD_TOKEN.",
+        ),
+    ] = None,
+    rotate_token: Annotated[
+        bool,
+        typer.Option("--rotate-token", help="Generate a new Dashboard API token."),
+    ] = False,
+    dashboard_host: Annotated[
+        str,
+        typer.Option("--host", help="Local host interface for the Dashboard service."),
+    ] = "127.0.0.1",
+    dashboard_port: Annotated[
+        int,
+        typer.Option("--port", help="Local port for the Dashboard service."),
+    ] = 8000,
+    skip_system: Annotated[
+        bool,
+        typer.Option("--skip-system", help="Do not install systemd or Caddy files."),
+    ] = False,
+    skip_prepare: Annotated[
+        bool,
+        typer.Option("--skip-prepare", help="Do not run deployment prepare/build during apply."),
+    ] = False,
+    verify: Annotated[
+        bool,
+        typer.Option("--verify/--no-verify", help="Run Dashboard health check after apply."),
+    ] = True,
+    use_sudo: Annotated[
+        bool,
+        typer.Option("--sudo", help="Prefix systemctl/install commands with sudo."),
+    ] = False,
+) -> None:
+    """Deploy the canonical VPS-hosted Dashboard without Vercel."""
+    resolved_public_ip = public_ip
+    if apply and not dashboard_url and not resolved_public_ip and detect_ip:
+        resolved_public_ip = detect_dashboard_public_ip()
+    try:
+        config = build_vps_dashboard_deploy_config(
+            project_root(),
+            apply=apply,
+            dashboard_url=dashboard_url,
+            public_ip=resolved_public_ip,
+            dashboard_token=dashboard_token,
+            rotate_token=rotate_token,
+            dashboard_host=dashboard_host,
+            dashboard_port=dashboard_port,
+            skip_system=skip_system,
+            skip_prepare=skip_prepare,
+            verify=verify,
+            use_sudo=use_sudo,
+        )
+        if apply:
+            plan = apply_vps_dashboard_deploy(config)
+        else:
+            if config.dashboard_url:
+                write_dashboard_system_templates(config)
+            plan = config.plan
+            write_vps_dashboard_deploy_report(plan, config.root)
+    except VpsDashboardDeployError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    table = Table(title="Open Composer VPS Dashboard Deploy")
+    table.add_column("Item")
+    table.add_column("Value")
+    table.add_row("Status", plan.status)
+    table.add_row("Apply", str(plan.apply))
+    table.add_row("Mode", plan.mode)
+    table.add_row("Dashboard URL", plan.dashboard_url or "missing")
+    table.add_row("Dashboard bind", plan.dashboard_bind)
+    table.add_row("Report", plan.report_markdown_path or "")
+    if plan.generated_token_path:
+        table.add_row("Token path", plan.generated_token_path)
+    table.add_row("Verify", "enabled" if plan.verify_enabled else "skipped")
+    console.print(table)
+    if config.generated_dashboard_token and apply and plan.generated_token_path:
+        console.print(
+            f"[yellow]generated Dashboard token written to[/yellow] {plan.generated_token_path}"
+        )
+    if not apply:
+        console.print("[yellow]dry run only[/yellow] rerun with --apply to deploy.")
+    if plan.status == "blocked":
+        raise typer.Exit(code=1)
 
 
 @dashboard_app.command("command-plan")

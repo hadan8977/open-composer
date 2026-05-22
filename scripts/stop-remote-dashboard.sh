@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Stop the Open Composer Remote Dashboard on a VPS.
+# Stop the Open Composer Dashboard on a VPS.
 
 set -euo pipefail
 
-SERVICE_NAME="open-composer-remote.service"
+SERVICE_NAME="open-composer-dashboard.service"
 CADDY_SERVICE="caddy.service"
 CADDYFILE="/etc/caddy/Caddyfile"
 CADDY_DISABLED_BACKUP="/etc/caddy/Caddyfile.open-composer-disabled"
@@ -20,7 +20,7 @@ Usage:
 
 Options:
   --sudo              Run system and file operations through sudo.
-  --remove-systemd    Remove /etc/systemd/system/open-composer-remote.service.
+  --remove-systemd    Remove /etc/systemd/system/open-composer-dashboard.service.
   --disable-caddy     Stop and disable caddy.service after safety checks.
   --remove-caddyfile  Move /etc/caddy/Caddyfile to a disabled backup after safety checks.
   --force-caddy       Skip the Open Composer Caddyfile safety check.
@@ -78,10 +78,10 @@ service_exists() {
 }
 
 caddyfile_is_open_composer() {
-  [[ -f "$CADDYFILE" ]] && grep -q "reverse_proxy 127.0.0.1:8787" "$CADDYFILE"
+  [[ -f "$CADDYFILE" ]] && grep -q "reverse_proxy 127.0.0.1:8000" "$CADDYFILE"
 }
 
-echo "[1/4] Stopping remote daemon"
+echo "[1/4] Stopping Dashboard service"
 if service_exists "$SERVICE_NAME"; then
   run_system systemctl disable --now "$SERVICE_NAME"
 else
@@ -125,5 +125,5 @@ fi
 echo "[4/4] Current state"
 systemctl is-active "$SERVICE_NAME" "$CADDY_SERVICE" || true
 if command -v ss >/dev/null 2>&1; then
-  ss -tlnp | grep -E ':(8787|8443|80)\b' || true
+  ss -tlnp | grep -E ':(8000|8443|80)\b' || true
 fi

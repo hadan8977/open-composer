@@ -1,131 +1,132 @@
-# Open Composer Remote Dashboard 部署说明
+# Open Composer VPS Dashboard 部署说明
 
-日期：2026-05-16
+日期：2026-05-22
 
-## 边界
+## 结论
 
-Remote Dashboard 是个人敏感控制面。Vercel 只负责 password session、CSRF、HMAC 签名和 API proxy；策略执行、回测、扫描、pytest、文件写入和 paper 控制只在 Open Composer remote daemon 上执行。
+Open Composer 的标准部署方式只有一个：**VPS 直接托管 Dashboard，策略研究和执行仍然保持本地 / CLI / 文件优先**。
 
-## 云服务器目录
+不再把 Vercel 作为正常产品路径。旧的 Vercel BFF / remote daemon 代码只保留为遗留兼容，不作为新部署入口。
+
+## 架构边界
+
+```text
+Browser
+  -> HTTPS Dashboard on VPS (Caddy)
+  -> oc dashboard serve (systemd)
+  -> repo files: projects/, reports/, strategy_specs/, signal_logs/
+
+Codex / Claude Code / CLI
+  -> local workspace commands
+  -> writes audited files and reports
+```
+
+关键规则：
+
+- Dashboard 是用户入口和状态面板，不在浏览器里跑长任务。
+- 策略行为仍以 `StrategySpec` 为真相来源。
+- 回测、扫描、pytest、构建、策略文件写入由本地 CLI / agent 请求完成。
+- Alpaca Paper 仍需 readiness gate 和显式确认。
+- 真钱 broker 写入不属于 MVP。
+- Dashboard 对外暴露时必须启用 `OPEN_COMPOSER_DASHBOARD_TOKEN`。
+
+## VPS 目录
+
+推荐目录：
 
 ```text
 /srv/open-composer/repo
 /srv/open-composer/repo/.env
 /srv/open-composer/repo/reports
+/srv/open-composer/repo/projects
 /srv/open-composer/repo/strategy_specs
 ```
 
-推荐运行用户为 `opencomposer`。daemon 只监听 `127.0.0.1:8787`，公网 HTTPS 入口由 Caddy 或 Nginx 反代。
+推荐运行用户为 `opencomposer`。Dashboard 服务监听 `127.0.0.1:8000`，公网 HTTPS 入口由 Caddy 反代。
 
-## 环境变量
+## 一键部署
 
-Vercel:
-
-```text
-OC_REMOTE_BASE_URL=https://oc-api.example.com
-OC_REMOTE_SHARED_SECRET=<same-random-secret-as-daemon>
-OC_DASHBOARD_PASSWORD_HASH=pbkdf2-sha256:<iterations>:<salt>:<hex>
-OC_DASHBOARD_SESSION_SECRET=<random-session-secret>
-OC_DASHBOARD_OWNER=owner
-OC_DASHBOARD_ALLOWED_ORIGIN=https://<vercel-app-domain>
-```
-
-Daemon:
-
-```text
-OC_REMOTE_SHARED_SECRET=<same-random-secret-as-vercel>
-OC_DASHBOARD_OWNER=owner
-```
-
-`.env` 在服务器上应为 `0600`。正常 VPS 模式不需要手写这些变量；脚本会生成
-secret、hash 密码、合并 `.env`，并把 Vercel 环境变量写入项目。
-
-## VPS 模式（推荐）
-
-当 Codex 已经运行在目标 VPS 上时，推荐使用 VPS 模式。只需要设置
-`VERCEL_TOKEN`，然后运行仓库脚本：
+在目标 VPS 上进入仓库：
 
 ```bash
 cd /srv/open-composer/repo
-export VERCEL_TOKEN=<token>
 ./scripts/deploy-vps.sh
 ```
 
-脚本会同步 Python 依赖，然后执行 `uv run oc remote bootstrap-vps --apply`。
-默认行为包括：
+脚本会执行：
 
-- 探测 VPS 公网 IPv4，并选择 `https://<ip>.nip.io` 或
-  `https://<ip>.nip.io:8443`
-- 生成 remote shared secret、session secret、Dashboard password hash
-- 合并 `.env` 并设置 `chmod 600`
-- 把生成的 Dashboard 明文密码写入 owner-only 文件
-- 生成并安装 systemd/Caddy 配置
-- 用 Vercel token 创建或链接 project，写入 Vercel env，部署 production BFF
-- 验证 daemon `/health`、Vercel `/api/session`、Dashboard 登录和 BFF catalog proxy
-- 输出 `Dashboard URL`、`Daemon URL`、`Deployment URL`、密码文件路径和 verify 状态
+- `uv sync`
+- `make deploy-prepare`
+- `make dashboard-build`
+- 生成或复用 `OPEN_COMPOSER_DASHBOARD_TOKEN`
+- 写入 `.env` 并设置 `chmod 600`
+- 生成 `open-composer-dashboard.service`
+- 生成 Caddyfile
+- 启动 / 重启 systemd 服务和 Caddy
+- 验证 `/api/dashboard/health`
+- 输出部署报告和 token 文件路径
 
-只生成计划、不部署：
-
-```bash
-./scripts/deploy-vps.sh --plan
-```
-
-计划默认只写：
+部署报告位置：
 
 ```text
-reports/deployment/vps-bootstrap/plan.json
-reports/deployment/vps-bootstrap/plan.md
-reports/deployment/vps-bootstrap/open-composer-remote.service
-reports/deployment/vps-bootstrap/Caddyfile
+reports/deployment/vps-dashboard/plan.json
+reports/deployment/vps-dashboard/plan.md
+reports/deployment/vps-dashboard/generated-dashboard-token.txt
 ```
 
-生产长期使用建议传入自有域名：
+首次打开 Dashboard 时使用：
+
+```text
+https://<your-dashboard-domain>/?token=<OPEN_COMPOSER_DASHBOARD_TOKEN>
+```
+
+浏览器会把 token 存到 localStorage，之后正常访问域名即可。
+
+## 常用命令
+
+只生成计划，不改系统：
 
 ```bash
-./scripts/deploy-vps.sh --daemon-url https://oc-api.example.com
+./scripts/deploy-vps.sh --plan --public-ip 203.0.113.10
 ```
 
-如果系统文件由 root 管理但当前用户有 sudo：
+使用自有域名：
 
 ```bash
-./scripts/deploy-vps.sh --sudo
+./scripts/deploy-vps.sh --dashboard-url https://composer.example.com
 ```
 
-如果只想生成本机 daemon 配置，不部署 Vercel：
+系统目录需要 sudo：
 
 ```bash
-./scripts/deploy-vps.sh --skip-vercel
+./scripts/deploy-vps.sh --sudo --dashboard-url https://composer.example.com
 ```
 
-如果只想配置 Vercel，不安装 systemd/Caddy：
+轮换 Dashboard token：
 
 ```bash
-./scripts/deploy-vps.sh --skip-system
+./scripts/deploy-vps.sh --rotate-token
 ```
 
-调试时可以跳过部署后验证：
+跳过部署后验证：
 
 ```bash
 ./scripts/deploy-vps.sh --no-verify
 ```
 
-底层命令仍可直接使用：
+底层 CLI 入口：
 
 ```bash
-VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply
+uv run oc dashboard deploy-vps --apply --dashboard-url https://composer.example.com
 ```
 
-## 停止和清理远程 Dashboard
-
-标准停止入口：
+## 停止服务
 
 ```bash
 ./scripts/stop-remote-dashboard.sh --remove-systemd --disable-caddy --remove-caddyfile
 ```
 
-这个脚本会停止并禁用 `open-composer-remote.service`，可选删除 systemd 单元，
-并在 Caddyfile 看起来是 Open Composer 专用反代时才停止 Caddy 或移动
-`/etc/caddy/Caddyfile`。如果系统目录需要 sudo：
+如果系统目录需要 sudo：
 
 ```bash
 ./scripts/stop-remote-dashboard.sh --sudo --remove-systemd --disable-caddy --remove-caddyfile
@@ -133,76 +134,56 @@ VERCEL_TOKEN=<token> uv run oc remote bootstrap-vps --apply
 
 当 Caddy 同时服务其他站点时，不要传 `--disable-caddy` 或 `--remove-caddyfile`。
 
-## 通知配置
+## 环境变量
 
-Dashboard 远程模式支持 outbound-only Telegram 通知。实际配置文件
-`config/notifications.yaml` 不入仓；示例文件入仓在
-`config/notifications.yaml.example`。VPS `.env` 中只需要放环境变量：
+必需或推荐：
 
-```bash
-TELEGRAM_BOT_TOKEN=<bot-token>
-TELEGRAM_CHAT_ID=<chat-id>
+```text
+OPEN_COMPOSER_DASHBOARD_TOKEN=<random-token>
+OC_DASHBOARD_ALLOWED_ORIGIN=https://composer.example.com
+ALPACA_PAPER=true
 ```
 
-验证命令：
+可选：
+
+```text
+OPENAI_API_KEY=<optional>
+OPENAI_BASE_URL=<optional>
+OPENAI_MODEL=<optional>
+ALPACA_API_KEY_ID=<optional-paper>
+ALPACA_API_SECRET_KEY=<optional-paper>
+TELEGRAM_BOT_TOKEN=<optional>
+TELEGRAM_CHAT_ID=<optional>
+```
+
+Dashboard Settings 页面只显示 secret 是否存在，不显示 secret 值。
+
+## 通知配置
+
+Dashboard 支持 outbound-only Telegram 通知。实际配置文件 `config/notifications.yaml` 不入仓；示例文件在 `config/notifications.yaml.example`。
+
+验证：
 
 ```bash
 uv run oc notify status
 uv run oc notify test --dry-run
 ```
 
-Telegram 只用于 Open Composer 向外发送消息；项目不实现 webhook、polling、
-callback 或聊天命令入口。
+Telegram 只用于向外发送通知；不实现 webhook、polling、callback 或聊天命令入口。
 
-## 手动启动 daemon
+## 手动运行 Dashboard
 
 ```bash
 cd /srv/open-composer/repo
-uv run oc remote doctor
-uv run oc remote serve --host 127.0.0.1 --port 8787
+uv run oc dashboard serve --host 127.0.0.1 --port 8000
 ```
 
-正常 VPS 部署不需要手动运行 daemon；`scripts/deploy-vps.sh` 会安装并启动
-`open-composer-remote.service`。
-
-`/health` 不需要签名，只返回服务状态。其余 route 都需要 HMAC：
-
-```text
-GET  /dashboard/catalog
-POST /dashboard/command-plan
-POST /dashboard/command-run
-GET  /dashboard/jobs/{job_id}
-GET  /dashboard/events
-GET  /agent-requests
-POST /agent-requests
-```
-
-## 命令控制
-
-Green action 只需要 session、HMAC、audit 和 job。
-
-Yellow action 执行前创建 `reports/backups/remote/<job_id>/manifest.json`。
-
-Red action 执行前需要原 command confirmation phrase 加二次确认：
-
-```text
-CONFIRM REMOTE STRATEGY MUTATION
-CONFIRM REMOTE PAPER CONTROL
-```
-
-所有 remote command-run 都创建异步 job，job 文件写入：
-
-```text
-reports/dashboard/jobs/<job_id>.json
-reports/dashboard/jobs/<job_id>.log
-reports/dashboard/jobs/events.jsonl
-```
+本地调试可以不设 token；VPS 对外暴露必须设 `OPEN_COMPOSER_DASHBOARD_TOKEN`。
 
 ## 验证
 
 ```bash
-uv run oc remote doctor
-uv run python scripts/check-agent-parity.py
+uv run oc dashboard deploy-vps --dashboard-url https://composer.example.com
 uv run oc repo check --strict
 make verify
 ```

@@ -1,5 +1,5 @@
 [Unit]
-Description=Open Composer Remote Dashboard daemon
+Description=Open Composer Dashboard
 After=network-online.target
 Wants=network-online.target
 
@@ -9,7 +9,7 @@ User=opencomposer
 Group=opencomposer
 WorkingDirectory=/srv/open-composer/repo
 EnvironmentFile=/srv/open-composer/repo/.env
-ExecStart=/usr/bin/env uv run oc remote serve --host 127.0.0.1 --port 8787
+ExecStart=/usr/bin/env uv run oc dashboard serve --host 127.0.0.1 --port 8000
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=true

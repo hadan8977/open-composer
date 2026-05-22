@@ -312,9 +312,6 @@ function dashboardApiToken(): string | null {
   if (typeof window === "undefined") {
     return null;
   }
-  if (isRemoteDashboard()) {
-    return null;
-  }
   const params = new URLSearchParams(window.location.search);
   const queryToken = params.get("token") ?? params.get("dashboard_token");
   if (queryToken) {
@@ -351,10 +348,7 @@ function isRemoteDashboard(): boolean {
     return false;
   }
   const host = window.location.hostname;
-  if (host === "127.0.0.1" || host === "localhost" || host === "") {
-    return false;
-  }
-  return window.location.protocol === "https:" || host.endsWith(".vercel.app");
+  return host.endsWith(".vercel.app");
 }
 
 function showConfirmationModal({

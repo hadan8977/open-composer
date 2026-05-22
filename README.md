@@ -50,9 +50,9 @@ fixtures are enough for a local smoke test.
 | Strategy specs | YAML `StrategySpec` drafts, approvals, activation state, version diffs, and rollback. |
 | Research reports | Backtests, promotion gates, research contracts, factor diagnostics, execution reality, cost sensitivity, and data quality. |
 | Data capabilities | Sample OHLCV, Alpaca, Longbridge, SEC filings, FRED macro, Alpha Vantage news, and GDELT through a registry. |
-| Dashboard | Local artifact read model with Monitor, Strategies, and Activity views. |
+| Dashboard | Local or VPS-hosted artifact read model with Monitor, Strategies, Activity, and Settings views. |
 | Paper safety | Alpaca Paper-only automation with explicit confirmation, readiness gates, kill switch, and audit artifacts. |
-| Remote mode | Vercel password-session BFF plus a VPS daemon; browser sessions never receive daemon secrets. |
+| Deployment | One normal path: VPS serves Dashboard directly; strategy work stays local/file-first. |
 
 ## Typical Workflow
 
@@ -79,19 +79,19 @@ Optional credentials unlock live or cached provider workflows:
 | Alpha Vantage | `ALPHA_VANTAGE_API_KEY` | News sentiment capability. |
 
 Secrets belong in `.env`; `.env` is ignored by Git. Do not commit broker,
-OpenAI, Longbridge, Vercel, or remote daemon secrets.
+OpenAI, Longbridge, Dashboard, or legacy remote secrets.
 
 ## Dashboard And Deployment
 
 Local Dashboard is part of the normal setup flow. For a remote personal control
-plane, use the VPS deployment script after setting `VERCEL_TOKEN`:
+plane, use the VPS deployment script:
 
 ```bash
-make remote-deploy
+make vps-deploy
 ```
 
-Remote Dashboard mode keeps long-running work on the daemon. Vercel handles the
-password session, CSRF, HMAC signing, and proxy layer only. See
+The VPS hosts the Dashboard directly behind Caddy/systemd. Strategy research,
+backtests, scans, tests, and file edits remain CLI/file/agent driven. See
 [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md).
 
 ## Safety Boundaries
@@ -127,7 +127,7 @@ artifact size without deleting anything.
 
 - [docs/user-guide.md](docs/user-guide.md) - command-level user guide
 - [docs/setup-local.zh.md](docs/setup-local.zh.md) - local setup details and troubleshooting
-- [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md) - VPS and Vercel remote Dashboard deployment
+- [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md) - VPS Dashboard deployment
 - [docs/longbridge-integration.md](docs/longbridge-integration.md) - Longbridge configuration and data scope
 - [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) - no-context Codex starting review document
 - [docs/research-contract-p0-p2-plan-2026-05-17.zh.md](docs/research-contract-p0-p2-plan-2026-05-17.zh.md) - research contract and StrategyDAG execution plan

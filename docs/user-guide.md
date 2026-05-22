@@ -165,9 +165,14 @@ from `/api/dashboard/catalog`. Local browser API calls can be protected with:
 OPEN_COMPOSER_DASHBOARD_TOKEN=<long-random-token> make dashboard-serve
 ```
 
-Remote Dashboard deployments must use password session, Vercel BFF, HMAC,
-async jobs, backups, audit, and double confirmation for Red actions. See
-`docs/remote-dashboard-deploy.zh.md`.
+The normal remote deployment is VPS-hosted Dashboard:
+
+```bash
+./scripts/deploy-vps.sh
+```
+
+The VPS Dashboard uses `OPEN_COMPOSER_DASHBOARD_TOKEN`; strategy work remains
+CLI/file/agent driven. See `docs/remote-dashboard-deploy.zh.md`.
 
 ## Notifications
 

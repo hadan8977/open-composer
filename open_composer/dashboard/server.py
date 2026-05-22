@@ -404,22 +404,28 @@ def build_dashboard_environment_payload(
             ],
         },
         {
-            "section": "remote_dashboard",
-            "title": "Dashboard safety",
+            "section": "deployment",
+            "title": "Deployment",
             "items": [
+                _env_item(
+                    "Deployment mode",
+                    "ok",
+                    "VPS-hosted Dashboard; strategy work remains local/file-first",
+                    required=True,
+                ),
                 _env_item(
                     "OPEN_COMPOSER_DASHBOARD_TOKEN",
                     "ok" if auth_required else "warning",
-                    "required for remote mode; value never exposed",
+                    "required before exposing the VPS Dashboard; value never exposed",
                     required=False,
-                    next_action="set `OPEN_COMPOSER_DASHBOARD_TOKEN` before remote exposure"
+                    next_action="set `OPEN_COMPOSER_DASHBOARD_TOKEN` or run `scripts/deploy-vps.sh`"
                     if not auth_required
                     else "",
                 ),
                 _env_item(
                     "OC_DASHBOARD_ALLOWED_ORIGIN",
                     "ok" if dashboard_allowed_origin() else "warning",
-                    dashboard_allowed_origin() or "not restricted",
+                    dashboard_allowed_origin() or "not restricted; acceptable for localhost only",
                     required=False,
                 ),
             ],
@@ -443,6 +449,8 @@ def build_dashboard_environment_payload(
         "warning_items": warnings,
         "notes": [
             "Secrets are never returned by this API; only presence is shown.",
+            "Canonical deployment is VPS-hosted Dashboard plus local/file-first execution.",
+            "Vercel is not required for normal deployment.",
             "Dashboard does not run long backtests or broker writes in the browser.",
             "Real-money broker write access remains out of scope for this MVP.",
         ],

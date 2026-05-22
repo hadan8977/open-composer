@@ -231,14 +231,10 @@ curl http://127.0.0.1:8000/api/dashboard/health
 
 | 变量 | 必需? | 用途 |
 |---|---|---|
-| `OPEN_COMPOSER_DASHBOARD_TOKEN` | 可选 | 本地 dashboard API token (本地默认不需要) |
-| `OC_REMOTE_SHARED_SECRET` | 仅 VPS | Vercel BFF ↔ VPS daemon HMAC |
-| `OC_DASHBOARD_PASSWORD_HASH` | 仅 VPS | Dashboard 登录密码 hash |
-| `OC_DASHBOARD_SESSION_SECRET` | 仅 VPS | session cookie 签名 |
-| `OC_DASHBOARD_ALLOWED_ORIGIN` | 仅 VPS | CORS allowed origin |
-| `OC_DASHBOARD_OWNER` | 仅 VPS | 显示用户名 |
+| `OPEN_COMPOSER_DASHBOARD_TOKEN` | VPS 必需 | Dashboard API token；本地 localhost 可不设 |
+| `OC_DASHBOARD_ALLOWED_ORIGIN` | VPS 推荐 | CORS allowed origin，例如 `https://composer.example.com` |
 
-VPS 模式用 `oc remote bootstrap-vps --apply --generate-password` 自动生成,见 [docs/remote-dashboard-deploy.zh.md](./remote-dashboard-deploy.zh.md)。
+VPS 模式用 `./scripts/deploy-vps.sh` 自动生成 token 和 systemd/Caddy 配置,见 [docs/remote-dashboard-deploy.zh.md](./remote-dashboard-deploy.zh.md)。
 
 ### 3.5 通知
 
