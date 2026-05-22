@@ -32,6 +32,7 @@ Open Composer 不需要马上扩张成一个完整的多服务交易平台。当
 4. 能直接查看模拟盘账户、订单、持仓和运行状态。
 5. 能看到实盘相关通知，但不让产品具备真钱写入能力。
 6. 能保持策略研究的严谨性，避免把弱回测、样本数据或 Agent 自报当成可交易证据。
+7. 能看到因子质量、执行难度、另类数据/LLM 贡献这三类关键证据，哪怕第一版不做成独立大页面。
 
 ### 1.2 当前产品问题
 
@@ -71,6 +72,7 @@ Open Composer 不需要马上扩张成一个完整的多服务交易平台。当
 - Dashboard Strategy Console。
 - Build / Iterate 基础交互。
 - Worker 输出对账。
+- Project Evidence 三条证据线: Factor Quality、Execution Reality、Alt/LLM Evidence。
 - Paper Monitor 和通知流。
 - 最小必要的状态机和停止条件。
 
@@ -119,6 +121,19 @@ gate_summary:
   research_pass: false
   llm_contribution_pass: null
   paper_ready_pass: false
+evidence:
+  factor_quality:
+    status: warning
+    summary: RankIC is unstable; factor correlation is high.
+    artifact_path: reports/research/qqq_daily_trend-factor-quality.md
+  execution_reality:
+    status: unknown
+    summary: Not reviewed yet.
+    artifact_path: null
+  alt_llm_evidence:
+    status: not_applicable
+    summary: No LLM/news/alternative-data factor declared.
+    artifact_path: null
 blockers:
   - walk_forward_decay
 next_action: continue_iteration
@@ -247,7 +262,8 @@ Summary
   thesis / current spec / state / next action
 
 Evidence
-  latest metrics / benchmark / OOS / blocker / source artifact
+  latest metrics / benchmark / OOS / blocker
+  factor quality / execution reality / alt-LLM evidence
 
 Iteration
   current round / max rounds / stop reason / continue or stop
@@ -259,9 +275,70 @@ Audit
   command plans / agent requests / changed paths
 ```
 
-不要一开始拆太多 tab。复杂 evidence view、factor lab、execution reality 专页可以后续再做。
+不要一开始拆太多 tab。Factor Quality、Execution Reality、Alt/LLM Evidence 先作为 Evidence 区域中的三条证据线展示；复杂图表和独立专页可以后续再做。
 
-### 2.6 Build 交互
+### 2.6 Project Evidence 三条证据线
+
+这三项不应取消。轻量版的做法是: **先把它们纳入 Project 的证据结构和阻塞逻辑，不先做成三个独立大页面。**
+
+#### Factor Quality
+
+目的: 判断策略因子是否真的有质量，而不是只靠一次回测结果。
+
+第一版展示:
+
+- 是否有 factor quality artifact。
+- IC / RankIC 摘要。
+- 分位收益是否单调。
+- 因子相关性是否过高。
+- rolling 稳定性是否有明显衰减。
+- 当前状态: `ok / warning / blocked / not_applicable / unknown`。
+
+轻量实现:
+
+- 如果策略声明了多个因子或横截面因子，Project Evidence 必须显示 Factor Quality。
+- 没有完整分析时显示 `unknown` 或 `warning`，不能假装通过。
+- 先展示摘要和 artifact 链接，不做完整 Factor Lab 页面。
+
+#### Execution Reality
+
+目的: 判断策略是否有真实执行可能，避免回测很好但滑点、成交量、开盘跳空或 partial fill 使结果不可交易。
+
+第一版展示:
+
+- 成本后表现是否仍可接受。
+- 滑点压力是否通过。
+- 成交量/容量是否明显不足。
+- 是否依赖难以成交的开盘价、分钟级数据或高频换手。
+- 当前状态: `ok / warning / blocked / unknown`。
+
+轻量实现:
+
+- Candidate 或 paper review 前必须显示 Execution Reality 状态。
+- 没有执行现实证据时，不能进入 `active_paper`。
+- 第一版只展示摘要、blocker 和 artifact 链接，不做独立 execution reality 页面。
+
+#### Alt/LLM Evidence
+
+目的: 判断新闻、事件、宏观、另类数据或 LLM 特征是否真的贡献了独立信息，而不是只是重复了普通量化信号。
+
+第一版展示:
+
+- 策略是否使用 LLM/news/event/macro/alternative-data factor。
+- 是否有 point-in-time packet 或 replayable artifact。
+- 是否有 pure-quant baseline 对照。
+- 是否有 marginal lift 摘要。
+- 缺少该模态时策略是否还能工作。
+- 当前状态: `ok / warning / blocked / not_applicable / unknown`。
+
+轻量实现:
+
+- 不使用 LLM/另类数据的策略显示 `not_applicable`。
+- 一旦策略声明这类能力，Alt/LLM Evidence 必须参与 blocker。
+- 没有 PIT packet、baseline 或 marginal lift 时，不能把结果标成独立 LLM Alpha，也不能 paper-ready。
+- 第一版只做证据摘要和 gate/blocker，不做独立 LLM Evidence 页面。
+
+### 2.7 Build 交互
 
 Build 页面支持两种入口:
 
@@ -290,7 +367,7 @@ Starter templates 先保留 3 个，避免产品显得过重:
 
 不强制每次展示完整 `InteractionPlan` 让用户确认。计划作为审计记录保存即可。
 
-### 2.7 Iterate 交互
+### 2.8 Iterate 交互
 
 默认支持异步运行:
 
@@ -317,7 +394,7 @@ iteration:
 
 每轮结束后通知用户，但默认不要求用户守在页面前逐轮确认。用户可以随时手动停止。
 
-### 2.8 Live 交互
+### 2.9 Live 交互
 
 Live 页面 P0/P1 只做两件事:
 
@@ -395,9 +472,16 @@ Worker 完成后，Product 层必须做轻量对账:
 2. spec 是否能加载。
 3. validation / harness report 是否存在。
 4. gate summary 是否来自确定性报告。
-5. Worker 自报和 verified 结果不一致时，把 Project 标为 `blocked`。
+5. Factor Quality、Execution Reality、Alt/LLM Evidence 是否有明确状态或明确 `not_applicable`。
+6. Worker 自报和 verified 结果不一致时，把 Project 标为 `blocked`。
 
 不需要第一版就实现完整 `oc_harness_verify()` 新框架。如果现有报告中已有 gate，就读取现有报告；没有 gate 时显示 `unknown` 或 `blocked`，不能误显示 ready。
+
+三条证据线的轻量对账规则:
+
+- 没有声明因子研究需求的简单单因子策略，Factor Quality 可以是 `unknown` 或 `not_applicable`，但不能伪造 `ok`。
+- `candidate` 可以带 Execution Reality `warning`，但 `active_paper` 前必须不为 `unknown`。
+- 只要使用 LLM/news/event/macro/alternative-data，Alt/LLM Evidence 不能是 `not_applicable`；缺 PIT/baseline/lift 时必须阻塞相关 Alpha 或 paper-ready 结论。
 
 ### 3.4 迭代控制
 
@@ -463,10 +547,11 @@ UI 首轮只需要完成:
 - Overview 显示待处理事项。
 - Projects 列表。
 - Project 详情。
+- Project Evidence 三条证据线摘要。
 - Build 入口。
 - Live paper/notification 摘要。
 
-复杂图表、candidate compare、factor lab、execution reality 专页全部后移。
+复杂图表、candidate compare、完整 Factor Lab 页面、完整 Execution Reality 页面、完整 LLM Evidence 页面全部后移；但三条证据线的状态、摘要和 blocker 必须进入第一版 Project 详情。
 
 ## 4. 分阶段计划
 
@@ -533,12 +618,14 @@ UI 首轮只需要完成:
 - 支持 `max_rounds` 和基本 stop conditions。
 - 支持 `user_requested_stop`。
 - 支持 Worker 输出轻量对账。
+- 支持 Factor Quality、Execution Reality、Alt/LLM Evidence 的状态更新和 blocker。
 - 支持 round complete / blocked 通知。
 
 验收:
 
 - 用户不需要守着页面逐轮操作。
 - Worker 漏产物或自报不一致时不会误晋升。
+- 三条证据线能显示 `ok / warning / blocked / not_applicable / unknown`，且不会把缺失证据显示为通过。
 - 不引入复杂调度器也能跑通 1-5 轮优化。
 
 ### P4: Live MVP
@@ -568,8 +655,11 @@ UI 首轮只需要完成:
 - 更细的 context compiler。
 - prompt caching。
 - candidate compare。
-- execution reality 专页。
-- factor / LLM evidence 专页。
+- 完整 Factor Lab 页面。
+- 完整 Execution Reality 页面。
+- 完整 LLM Evidence 页面。
+
+注意: P5 后移的是“完整页面和高级图表”，不是三条证据线本身。Factor Quality、Execution Reality、Alt/LLM Evidence 的状态、摘要和 blocker 必须在 P3 进入 Project Evidence。
 
 ## 5. 风险与应对
 
@@ -613,6 +703,7 @@ UI 首轮只需要完成:
 - 默认 `max_rounds=5`。
 - 默认 stop condition 包含 no material improvement 和 overfit risk。
 - `research_pass` 和 `paper_ready_pass` 继续由 Harness / readiness 决定。
+- Factor Quality 进入 Project Evidence，避免只看回测收益。
 
 ### 5.5 用户仍不知道怎么开始
 
@@ -644,7 +735,19 @@ UI 首轮只需要完成:
 - 只有 paper runner 可以在 gate 和确认后提交 paper order。
 - MVP 不提供真钱 broker write。
 
-### 5.8 现有未提交改动和迁移风险
+### 5.8 三条证据线被轻量化后失真
+
+风险: Factor Quality、Execution Reality、Alt/LLM Evidence 如果只显示一个标签，可能被误解为已经完成专业审查。
+
+应对:
+
+- 每条证据线必须显示状态、摘要、artifact 链接和 blocker。
+- `unknown` 不能被当作通过。
+- `not_applicable` 只能在策略确实没有使用对应能力时使用。
+- paper review 前必须至少明确 Execution Reality 状态。
+- 使用 LLM/news/event/macro/alternative-data 时，Alt/LLM Evidence 缺失必须阻塞独立 Alpha 或 paper-ready 结论。
+
+### 5.9 现有未提交改动和迁移风险
 
 风险: 当前工作区已有策略清理改动，重构时容易混入不相关变更。
 
@@ -683,7 +786,7 @@ dirty_count: 42
 
 1. 先让 Dashboard 管理 StrategyProject。
 2. 再让用户能从 Dashboard 创建策略。
-3. 再让用户能异步迭代，并看到 verified blocker。
+3. 再让用户能异步迭代，并看到 verified blocker 和三条证据线状态。
 4. 再接入 paper/live 查看。
 5. 最后按真实使用痛点做可靠性硬化。
 
@@ -701,6 +804,9 @@ dirty_count: 42
 | 实盘通知 | Live Notifications 只读展示 notification log |
 | 不做真钱交易 | MVP 明确禁止真钱 broker write |
 | 保持研究严谨 | `StrategySpec` 仍是真相；gate 由 Harness/readiness 决定；Worker 产物要对账 |
+| 分析因子质量 | Project Evidence 中显示 Factor Quality 状态、摘要、artifact 和 blocker |
+| 分析策略执行难度 | Project Evidence 中显示 Execution Reality 状态，paper review 前不能缺失 |
+| 分析另类数据/LLM 贡献 | Project Evidence 中显示 Alt/LLM Evidence；使用相关能力时缺证据会阻塞 |
 | 避免过重 | 只新增一个核心 schema，其他能力嵌入或后移 |
 | 保持效率 | 复用现有 Dashboard、agent_requests、reports、paper_controls、notifications |
 
