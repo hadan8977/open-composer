@@ -12,7 +12,11 @@ from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
 from open_composer.expressions import ExpressionSafetyError, assert_expression_safe
-from open_composer.feature_packets import inspect_feature_packet
+from open_composer.feature_packets import (
+    feature_packet_path_for_factor,
+    feature_packet_path_label,
+    inspect_feature_packet,
+)
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.alt_data_quality import build_alternative_data_quality_report
 from open_composer.research.blind_test import load_blind_test_report
@@ -192,6 +196,7 @@ def build_promotion_report(
 
     feature_packet_check = _feature_packet_check(spec, base)
     checks.append(feature_packet_check)
+    checks.extend(_llm_marginal_lift_checks(spec=spec, frame=frame, root=base, variant=full))
 
     factor_lab_result = run_factor_lab(spec_path, base)
     factor_lab_check = _factor_lab_check(factor_lab_result)
@@ -218,7 +223,7 @@ def build_promotion_report(
         status = "warning"
     else:
         status = "ok"
-    five_pass_checks = _five_pass_checks(spec, ready, checks, base)
+    five_pass_checks = _build_pass_summary(spec, ready, checks, base)
     report_path = base / "reports" / "research" / f"{spec.name}-promotion.md"
     json_path = base / "reports" / "research" / f"{spec.name}-promotion.json"
     manifest = research_run_manifest(
@@ -806,16 +811,17 @@ def _feature_packet_check(spec: StrategySpec, root: Path) -> GateResult:
     for name, factor in spec.factors.items():
         if factor.source not in {"llm_feature", "feature_packet"}:
             continue
-        if not factor.path:
+        path = feature_packet_path_for_factor(root, spec.name, name, factor)
+        path_value = feature_packet_path_label(spec.name, name, factor)
+        if path is None or path_value is None:
             missing_or_incomplete.append(f"{name}: missing packet path")
             inspected.append({"factor": name, "status": "missing"})
             continue
-        path = _resolve_path(root, factor.path)
         inspection = inspect_feature_packet(path, factor.field)
         inspected.append(
             {
                 "factor": name,
-                "path": factor.path,
+                "path": path_value,
                 "field": factor.field,
                 "status": inspection.point_in_time_status,
                 "warnings": inspection.replay_warnings,
@@ -826,12 +832,12 @@ def _feature_packet_check(spec: StrategySpec, root: Path) -> GateResult:
         if not inspection.exists or inspection.point_in_time_status != "complete":
             warning_text = "; ".join(inspection.replay_warnings[:3]) or "not PIT complete"
             missing_or_incomplete.append(
-                f"{name}: {inspection.point_in_time_status} at {factor.path}: {warning_text}"
+                f"{name}: {inspection.point_in_time_status} at {path_value}: {warning_text}"
             )
         elif inspection.missing_evidence_count:
             missing_or_incomplete.append(
                 f"{name}: {inspection.missing_evidence_count} packet row(s) at "
-                f"{factor.path} lack marginal-lift evidence"
+                f"{path_value} lack marginal-lift evidence"
             )
     if missing_or_incomplete:
         return GateResult(
@@ -846,6 +852,113 @@ def _feature_packet_check(spec: StrategySpec, root: Path) -> GateResult:
         status="ok",
         message="Feature packet factors are absent or PIT-complete.",
         details={"inspected": inspected},
+    )
+
+
+def _llm_marginal_lift_checks(
+    *,
+    spec: StrategySpec,
+    frame,
+    root: Path,
+    variant: BacktestArtifacts,
+) -> list[GateResult]:
+    llm_factors = sorted(
+        name for name, factor in spec.factors.items() if factor.source == "llm_feature"
+    )
+    if not llm_factors:
+        return []
+    baseline_spec = copy.deepcopy(spec)
+    for name in llm_factors:
+        baseline_spec.factors[name].default = 0.0
+        baseline_spec.factors[name].path = "__missing_llm_baseline_packet__.jsonl"
+    baseline = backtest_frame(
+        baseline_spec,
+        frame,
+        root=root,
+        run_id_value=f"promotion-{spec.name}-quant-baseline",
+    )
+    missing_spec = copy.deepcopy(spec)
+    for name in llm_factors:
+        missing_spec.factors[name].path = "__missing_llm_modality_packet__.jsonl"
+    missing = backtest_frame(
+        missing_spec,
+        frame,
+        root=root,
+        run_id_value=f"promotion-{spec.name}-missing-modality",
+    )
+    baseline_sharpe = _metric_value(baseline.run.sharpe_ratio)
+    variant_sharpe = _metric_value(variant.run.sharpe_ratio)
+    lift = variant_sharpe - baseline_sharpe
+    jaccard = _signal_jaccard(baseline.signals, variant.signals)
+    checks = [
+        GateResult(
+            name="llm_quant_baseline",
+            status="ok",
+            message="Pure quant baseline was replayed with LLM factors neutralized.",
+            details={"sharpe": baseline.run.sharpe_ratio, "signals": baseline.run.signals},
+        ),
+        GateResult(
+            name="llm_variant",
+            status="ok",
+            message="LLM-factor variant was replayed from saved PIT packets.",
+            details={"sharpe": variant.run.sharpe_ratio, "signals": variant.run.signals},
+        ),
+        GateResult(
+            name="llm_missing_modality_robustness",
+            status="ok",
+            message="Missing-modality fallback replay completed without live LLM calls.",
+            details={"sharpe": missing.run.sharpe_ratio, "signals": missing.run.signals},
+        ),
+        GateResult(
+            name="llm_marginal_lift",
+            status="ok" if lift > 0 else "blocked",
+            message=f"LLM variant Sharpe lift versus quant baseline is {lift:.3f}.",
+            details={
+                "baseline_sharpe": baseline.run.sharpe_ratio,
+                "variant_sharpe": variant.run.sharpe_ratio,
+                "missing_modality_sharpe": missing.run.sharpe_ratio,
+                "lift": lift,
+            },
+        ),
+        GateResult(
+            name="llm_independence",
+            status="ok" if jaccard < 0.95 else "warning",
+            message=f"LLM variant signal Jaccard versus baseline is {jaccard:.3f}.",
+            details={"signal_jaccard": jaccard},
+        ),
+    ]
+    write_json(
+        root / "reports" / "research" / f"{spec.name}-llm-marginal-evidence.json",
+        {
+            "strategy_name": spec.name,
+            "llm_factors": llm_factors,
+            "baseline": checks[0].details,
+            "variant": checks[1].details,
+            "missing_modality": checks[2].details,
+            "marginal_lift": checks[3].details,
+            "independence": checks[4].details,
+        },
+    )
+    return checks
+
+
+def _metric_value(value: float | None) -> float:
+    return float(value) if isinstance(value, int | float) else 0.0
+
+
+def _signal_jaccard(left: list[object], right: list[object]) -> float:
+    left_keys = {_signal_key(signal) for signal in left}
+    right_keys = {_signal_key(signal) for signal in right}
+    if not left_keys and not right_keys:
+        return 1.0
+    return len(left_keys & right_keys) / max(len(left_keys | right_keys), 1)
+
+
+def _signal_key(signal: object) -> str:
+    return (
+        f"{getattr(signal, 'symbol', '')}:"
+        f"{getattr(signal, 'timestamp', '')}:"
+        f"{getattr(signal, 'action', '')}"
     )
 
 
@@ -1166,11 +1279,19 @@ def _gate_summary(
 ) -> dict[str, object]:
     blocked = {check.name for check in checks if check.status == "blocked"}
     warning = {check.name for check in checks if check.status == "warning"}
-    llm_related = bool(spec.llm_review.enabled or _feature_packet_paths(spec))
+    llm_related = bool(
+        spec.llm_review.enabled
+        or _feature_packet_paths(spec)
+        or any(factor.source == "llm_feature" for factor in spec.factors.values())
+    )
     return {
         "workflow_pass": "in_sample" not in blocked,
         "research_pass": not blocked,
-        "llm_contribution_pass": None if not llm_related else "feature_packets" not in blocked,
+        "llm_contribution_pass": (
+            None
+            if not llm_related
+            else "feature_packets" not in blocked and "llm_marginal_lift" not in blocked
+        ),
         "paper_ready_pass": ready,
         "blocked_checks": sorted(blocked),
         "warning_checks": sorted(warning),
@@ -1178,7 +1299,7 @@ def _gate_summary(
     }
 
 
-def _five_pass_checks(
+def _build_pass_summary(
     spec: StrategySpec,
     ready: bool,
     checks: list[GateResult],
@@ -1225,13 +1346,20 @@ def _five_pass_checks(
         else "OOS, walk-forward, cost, data comparison, and benchmark gates passed"
     )
 
-    llm_related = bool(spec.llm_review.enabled or _feature_packet_paths(spec))
+    llm_related = bool(
+        spec.llm_review.enabled
+        or _feature_packet_paths(spec)
+        or any(factor.source == "llm_feature" for factor in spec.factors.values())
+    )
     if not llm_related:
         llm_contribution_pass: FivePassStatus = "not_applicable"
         llm_reason = "strategy does not use LLM review or LLM/feature packet factors"
-    elif "feature_packets" in blocked:
+    elif "feature_packets" in blocked or "llm_marginal_lift" in blocked:
         llm_contribution_pass = "fail"
-        llm_reason = "LLM/feature packet factors are missing PIT-complete evidence"
+        llm_reason = "LLM factors are missing PIT-complete or marginal-lift evidence"
+    elif any(factor.source == "llm_feature" for factor in spec.factors.values()):
+        llm_contribution_pass = "pass"
+        llm_reason = "LLM feature marginal-lift, replay, fallback, and independence checks passed"
     else:
         llm_contribution_pass, llm_reason = _blind_test_contribution_pass(spec, root)
 

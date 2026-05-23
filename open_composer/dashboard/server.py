@@ -474,15 +474,15 @@ def build_dashboard_catalog_payload(root: Path) -> dict[str, Any]:
 
 
 def build_project_create_payload(root: Path, payload: dict[str, Any]) -> dict[str, Any]:
-    project, request = create_project(StrategyProjectCreate.model_validate(payload), root)
+    project, command = create_project(StrategyProjectCreate.model_validate(payload), root)
     response: dict[str, Any] = {
         "project": project.model_dump(mode="json"),
         "project_path": f"projects/{project.project_id}/project.yaml",
         "context_path": f"projects/{project.project_id}/context.md",
     }
-    if request is not None:
-        response["agent_request"] = request.model_dump(mode="json")
-        response["agent_request_path"] = f"reports/agent_requests/{request.request_id}.json"
+    if command is not None:
+        response["queue_command"] = command.model_dump(mode="json", by_alias=True)
+        response["queue_path"] = f"projects/{project.project_id}/queue.jsonl"
     return response
 
 
@@ -503,19 +503,23 @@ def build_project_state_payload(
         write_project(project, root)
     elif action == "continue":
         direction = str(payload.get("direction") or "continue_iteration")
-        from open_composer.research.iteration_controller import create_project_iteration_request
+        from open_composer.research.iteration_controller import continue_project
 
-        result = create_project_iteration_request(
+        result = continue_project(
             project_id,
-            root,
+            root=root,
+            body=direction,
+            kind="continue",
+            via="dashboard",
             rounds=int(payload.get("rounds") or 1),
-            advice=direction,
             requested_by=str(payload.get("requested_by") or "dashboard"),
         )
         project = result.project
-        request = result.agent_request
-        iteration_plan_path = result.iteration_plan_path
-        artifact_state_path = result.iteration_plan.artifact_state_path
+        queue_command = result.queue_command
+        queue_path = result.queue_path
+        trace_path = result.trace_path
+        context_path = result.context_path
+        artifact_state_path = result.artifact_state_path
     elif action == "paper_review":
         project = update_project_state(
             project_id,
@@ -529,11 +533,11 @@ def build_project_state_payload(
     else:
         raise ValueError("action must be one of: stop, archive, continue, paper_review")
     response = {"project": project.model_dump(mode="json")}
-    if request is not None:
-        response["agent_request"] = request.model_dump(mode="json")
-        response["agent_request_path"] = f"reports/agent_requests/{request.request_id}.json"
-    if "iteration_plan_path" in locals():
-        response["iteration_plan_path"] = iteration_plan_path
+    if "queue_command" in locals():
+        response["queue_command"] = queue_command.model_dump(mode="json", by_alias=True)
+        response["queue_path"] = queue_path
+        response["trace_path"] = trace_path
+        response["context_path"] = context_path
     if "artifact_state_path" in locals():
         response["artifact_state_path"] = artifact_state_path
     return response

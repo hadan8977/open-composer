@@ -1,0 +1,103 @@
+name: qqq_macro_regime_15m
+description: QQQ pullback strategy gated by a materialized LLM macro regime score.
+timeframe: 15m
+universe:
+- QQQ
+lifecycle: draft
+entry:
+  all:
+  - close > ema(close, 8)
+  - macro_regime_score + 0.25 > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close < ema(close, 8)
+  - macro_regime_score + 0.5 < 0
+risk:
+  max_trades_per_day: 2
+  max_position_weight: 0.1
+  stop_loss_pct: 1.0
+  take_profit_pct: 2.0
+costs:
+  commission_pct: 0.0
+  slippage_bps: 0.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: sample
+  symbol: QQQ
+  path: data/sample/qqq_15m.csv
+  feed: null
+data_assumptions:
+  source: sample
+  adjusted: true
+  timezone: America/New_York
+factors:
+  macro_regime_score:
+    source: llm_feature
+    field: score
+    default: 0.0
+    description: Materialized LLM score for macro regime context.
+    input_view: macro_window_v1
+    input_view_version: 1
+    prompt_template_path: prompts/examples/macro_regime_score.md
+    output_schema:
+      type: object
+      required:
+      - score
+      - confidence
+      - regime
+      properties:
+        score:
+          type: number
+          minimum: -1
+          maximum: 1
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        regime:
+          type: string
+    cache_policy:
+      mode: materialize_then_replay
+      key_fields:
+      - symbol
+      - visible_at
+      - input_view_version
+      - input_hash
+      - prompt_hash
+      - model
+      - schema_version
+    model_ref: local_test_stub
+llm_review:
+  enabled: false
+notes:
+  intent: Demonstrate a macro-flavored LLM factor with materialize-then-replay behavior.
+  open_questions:
+  - Replace sample OHLCV-derived input windows with real PIT macro packets before paper readiness.
+research_design:
+  parameter_space:
+    ema_bars:
+    - 8
+    - 13
+    macro_threshold:
+    - -0.25
+    - 0.0
+  candidate_budget: 4
+  selection_objective: alpha_after_costs_with_llm_marginal_lift
+  anti_overfit_notes:
+  - LLM macro factor must prove marginal lift against pure quant baseline.
+  validation_plan:
+  - Materialize LLM factor before replay backtest.
+  - Compare quant baseline, LLM variant, and missing-modality fallback.
+required_capabilities:
+- market.sample_ohlcv
+- macro.fred_series

@@ -16,7 +16,11 @@ from open_composer.config import (
     ensure_dir,
     project_root,
 )
-from open_composer.feature_packets import inspect_feature_packet
+from open_composer.feature_packets import (
+    feature_packet_path_for_factor,
+    feature_packet_path_label,
+    inspect_feature_packet,
+)
 from open_composer.models.paper import PaperAccountSnapshot, PaperKillSwitch
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.storage import write_json
@@ -558,15 +562,16 @@ def _feature_packet_binding_check(
     for name, factor in spec.factors.items():
         if factor.source not in {"llm_feature", "feature_packet"}:
             continue
-        if not factor.path:
+        path = feature_packet_path_for_factor(root, spec.name, name, factor)
+        path_label = feature_packet_path_label(spec.name, name, factor)
+        if path is None or path_label is None:
             missing.append(f"{name}: missing packet path")
             continue
-        path = _resolve_path(root, factor.path)
         inspection = inspect_feature_packet(path, factor.field)
         inspected.append(
             {
                 "factor": name,
-                "path": factor.path,
+                "path": path_label,
                 "field": factor.field,
                 "status": inspection.point_in_time_status,
                 "warnings": inspection.replay_warnings,
@@ -575,16 +580,16 @@ def _feature_packet_binding_check(
             }
         )
         if not inspection.exists:
-            missing.append(f"{name}: packet not found at {factor.path}")
+            missing.append(f"{name}: packet not found at {path_label}")
         elif inspection.point_in_time_status != "complete":
             warning_text = "; ".join(inspection.replay_warnings[:3]) or "not PIT complete"
             incomplete.append(
-                f"{name}: {inspection.point_in_time_status} at {factor.path}: {warning_text}"
+                f"{name}: {inspection.point_in_time_status} at {path_label}: {warning_text}"
             )
         elif inspection.missing_evidence_count:
             missing_evidence.append(
                 f"{name}: {inspection.missing_evidence_count} packet row(s) at "
-                f"{factor.path} lack marginal-lift evidence"
+                f"{path_label} lack marginal-lift evidence"
             )
     if missing:
         return PaperStrategyReadinessCheck(

@@ -515,7 +515,11 @@ def _load_feature_packet(
     if not field:
         raise ExpressionError(f"{source_label} factor {name} missing field")
     if not path_value:
-        return pd.Series([default] * len(frame), index=frame.index)
+        strategy_name = frame.attrs.get("strategy_name")
+        if source_label == "llm_feature" and strategy_name and root is not None:
+            path_value = f"reports/features/{strategy_name}/{name}/packets.jsonl"
+        else:
+            return pd.Series([default] * len(frame), index=frame.index)
     path = Path(path_value)
     if not path.is_absolute() and root is not None:
         path = root / path

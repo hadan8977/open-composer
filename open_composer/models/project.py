@@ -27,6 +27,19 @@ ProjectIterationMode = Literal["auto_continue_until_stop", "notify_and_wait"]
 ProjectPaperStatus = Literal["not_requested", "review_requested", "active", "blocked", "disabled"]
 ProjectRunStatus = Literal["ok", "warning", "blocked", "failed"]
 ProjectStepStatus = Literal["ok", "warning", "blocked", "failed", "skipped"]
+QueueCommandKind = Literal[
+    "continue",
+    "advice",
+    "stop",
+    "llm_factor_eval",
+    "materialize",
+    "approve",
+    "activate_manual",
+    "activate_paper",
+    "disable",
+]
+QueueCommandVia = Literal["dashboard", "cli", "api", "agent"]
+TraceAgent = Literal["codex", "claude_code", "cli", "system", "dashboard"]
 
 
 class ProjectEvidenceItem(BaseModel):
@@ -171,7 +184,7 @@ class StrategyProjectRun(BaseModel):
     round: int = Field(ge=1)
     status: ProjectRunStatus = "warning"
     task_type: str = "strategy_optimization"
-    worker_provider: str = "agent_request"
+    worker_provider: str = "project_queue"
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     changed_paths: list[str] = Field(default_factory=list)
     step_events: list[ProjectStepEvent] = Field(default_factory=list)
@@ -195,3 +208,44 @@ class StrategyProjectCreate(BaseModel):
     max_rounds: int = Field(default=5, ge=1, le=50)
     use_llm: bool = False
     tags: list[str] = Field(default_factory=list)
+
+
+class QueueCommand(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    ts: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    id: str
+    from_actor: str = Field(default="user", alias="from")
+    via: QueueCommandVia = "cli"
+    kind: QueueCommandKind
+    body: str = ""
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    consumed_at: datetime | None = None
+
+    @field_validator("id")
+    @classmethod
+    def validate_command_id(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized.startswith("q_"):
+            raise ValueError("queue command id must start with q_")
+        return normalized
+
+
+class TraceEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    ts: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    span_id: str
+    parent_span_id: str | None = None
+    agent: TraceAgent = "system"
+    operation: str
+    queue_command_id: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("span_id")
+    @classmethod
+    def validate_span_id(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized.startswith("sp_"):
+            raise ValueError("trace span_id must start with sp_")
+        return normalized

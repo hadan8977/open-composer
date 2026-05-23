@@ -16,6 +16,10 @@
     "data": {"type": "object"},
     "data_assumptions": {"type": "object"},
     "llm_review": {"type": "object"},
+    "factors": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/factorConfig"}
+    },
     "notes": {"type": "object"}
   },
   "$defs": {
@@ -24,6 +28,44 @@
       "properties": {
         "all": {"type": "array", "items": {"type": "string"}},
         "any": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "factorConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {"enum": ["expression", "llm_feature", "feature_packet"]},
+        "expression": {"type": ["string", "null"]},
+        "path": {"type": ["string", "null"]},
+        "field": {"type": ["string", "null"]},
+        "default": {"type": ["number", "boolean"]},
+        "description": {"type": "string"},
+        "input_view": {"type": ["string", "null"]},
+        "input_view_version": {"type": ["integer", "null"], "minimum": 1},
+        "prompt_template_path": {"type": ["string", "null"]},
+        "output_schema": {"$ref": "#/$defs/llmFactorOutputSchema"},
+        "cache_policy": {"$ref": "#/$defs/llmFactorCachePolicy"},
+        "model_ref": {"type": ["string", "null"]}
+      }
+    },
+    "llmFactorOutputSchema": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {"const": "object"},
+        "required": {"type": "array", "items": {"type": "string"}},
+        "properties": {
+          "type": "object",
+          "additionalProperties": {"type": "object"}
+        }
+      }
+    },
+    "llmFactorCachePolicy": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {"const": "materialize_then_replay"},
+        "key_fields": {"type": "array", "items": {"type": "string"}}
       }
     }
   }

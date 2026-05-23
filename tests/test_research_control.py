@@ -36,7 +36,13 @@ def test_research_control_reduces_sweep_into_state_and_memory(sample_workspace: 
 
     assert result.state_path.exists()
     assert result.memory_path.exists()
-    assert len(result.memory_packet.encode("utf-8")) <= 1024
+    assert len(result.memory_packet.encode("utf-8")) <= 32 * 1024
+    capped = update_research_control(
+        spec_path,
+        sample_workspace,
+        max_memory_bytes=1024,
+    )
+    assert len(capped.memory_packet.encode("utf-8")) <= 1024
     state = json.loads(result.state_path.read_text(encoding="utf-8"))
     assert state["strategy_name"] == "fixture_pullback_15m"
     assert state["current_best"]["params"]

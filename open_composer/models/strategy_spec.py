@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -131,6 +131,31 @@ class LLMReviewConfig(BaseModel):
     model: str | None = None
 
 
+class LLMFactorOutputSchema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["object"] = "object"
+    required: list[str] = Field(default_factory=list)
+    properties: dict[str, dict[str, Any]] = Field(default_factory=dict)
+
+
+class LLMFactorCachePolicy(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal["materialize_then_replay"] = "materialize_then_replay"
+    key_fields: list[str] = Field(
+        default_factory=lambda: [
+            "symbol",
+            "visible_at",
+            "input_view_version",
+            "input_hash",
+            "prompt_hash",
+            "model",
+            "schema_version",
+        ]
+    )
+
+
 class FactorConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -140,15 +165,41 @@ class FactorConfig(BaseModel):
     field: str | None = None
     default: float | bool = 0.0
     description: str = ""
+    input_view: str | None = None
+    input_view_version: int | None = Field(default=None, ge=1)
+    prompt_template_path: str | None = None
+    output_schema: LLMFactorOutputSchema | None = None
+    cache_policy: LLMFactorCachePolicy | None = None
+    model_ref: str | None = None
 
     @model_validator(mode="after")
     def require_factor_source_fields(self) -> FactorConfig:
         if self.source == "expression" and not self.expression:
             msg = "expression factors require expression"
             raise ValueError(msg)
-        if self.source in {"llm_feature", "feature_packet"} and not self.field:
-            msg = f"{self.source} factors require field"
+        if self.source == "feature_packet" and not self.field:
+            msg = "feature_packet factors require field"
             raise ValueError(msg)
+        if self.source == "llm_feature":
+            missing = [
+                name
+                for name, value in {
+                    "field": self.field,
+                    "input_view": self.input_view,
+                    "input_view_version": self.input_view_version,
+                    "prompt_template_path": self.prompt_template_path,
+                    "output_schema": self.output_schema,
+                }.items()
+                if value is None or value == ""
+            ]
+            if missing and not self.path:
+                msg = (
+                    "llm_feature factors require either a replay packet path or materialization "
+                    f"fields: {', '.join(missing)}"
+                )
+                raise ValueError(msg)
+            if not self.path and self.cache_policy is None:
+                self.cache_policy = LLMFactorCachePolicy()
         return self
 
 

@@ -9,24 +9,30 @@ from uuid import uuid4
 
 import yaml
 
-from open_composer.agent_requests import AgentRequest, AgentRequestCreate, create_agent_request
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.project import (
     ProjectEvidence,
     ProjectEvidenceItem,
     ProjectEvidenceStatus,
     ProjectState,
+    QueueCommand,
+    QueueCommandKind,
+    QueueCommandVia,
     StrategyProject,
     StrategyProjectCreate,
     StrategyProjectRun,
+    TraceAgent,
+    TraceEntry,
 )
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.notifications import safe_dispatch_notification
-from open_composer.storage import write_json
+from open_composer.storage import append_jsonl, write_json
 
 _ABSOLUTE_PATH_PATTERN = re.compile(r"^([/\\]|[A-Za-z]:[\\/])")
 _SLUG_SAFE_PATTERN = re.compile(r"[^a-z0-9]+")
 _PROJECT_FILE = "project.yaml"
+DEFAULT_PROJECT_CONTEXT_BYTES = 32 * 1024
+MAX_PROJECT_CONTEXT_BYTES = 128 * 1024
 
 
 def project_dir(root: Path | None = None) -> Path:
@@ -43,7 +49,7 @@ def create_project(
     root: Path | None = None,
     *,
     create_request: bool = False,
-) -> tuple[StrategyProject, AgentRequest | None]:
+) -> tuple[StrategyProject, QueueCommand | None]:
     base = root or project_root()
     project_id = unique_project_id(
         slugify(payload.name or payload.thesis or "strategy-project"), base
@@ -72,24 +78,24 @@ def create_project(
         task=payload.idea or payload.thesis,
         template_id=payload.template_id,
     )
-    request: AgentRequest | None = None
+    request: QueueCommand | None = None
     if create_request:
-        # DEPRECATED: Step 2 replaces one-shot reports/agent_requests with
-        # project queue.jsonl commands. This compatibility path remains for
-        # callers that still opt in explicitly.
-        request = create_agent_request(
-            AgentRequestCreate(
-                requested_by=payload.requested_by,
-                task_type="research",
-                title=f"Build strategy project: {project.name}",
-                prompt=project_agent_prompt(project, payload.idea or payload.thesis),
-                related_paths=[
+        request = append_queue(
+            project.project_id,
+            kind="continue",
+            body=project_agent_prompt(project, payload.idea or payload.thesis),
+            via="cli",
+            metadata={
+                "requested_by": payload.requested_by,
+                "task_type": "research",
+                "title": f"Build strategy project: {project.name}",
+                "related_paths": [
                     f"projects/{project.project_id}/project.yaml",
                     f"projects/{project.project_id}/context.md",
                     *([current_spec_path] if current_spec_path else []),
                 ],
-            ),
-            base,
+            },
+            root=base,
         )
     return project, request
 
@@ -210,6 +216,7 @@ def write_project_context(
     *,
     task: str = "",
     template_id: str | None = None,
+    max_bytes: int | None = DEFAULT_PROJECT_CONTEXT_BYTES,
 ) -> Path:
     base = root or project_root()
     path = base / "projects" / project.project_id / "context.md"
@@ -248,6 +255,12 @@ def write_project_context(
         "## Artifact State",
         *_context_artifact_state_lines(base, project),
         "",
+        "## Latest Queue Commands",
+        *_context_queue_lines(base, project),
+        "",
+        "## Latest Trace",
+        *_context_trace_lines(base, project),
+        "",
         "## Latest Run Ledger",
         *_context_latest_run_lines(base, project),
         "",
@@ -256,8 +269,108 @@ def write_project_context(
     ]
     if template_id:
         lines.append(f"- template_id: `{template_id}`")
-    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    text = "\n".join(lines).rstrip() + "\n"
+    if max_bytes is not None:
+        text = _truncate_utf8(text, min(max_bytes, MAX_PROJECT_CONTEXT_BYTES))
+    path.write_text(text, encoding="utf-8")
     return path
+
+
+def queue_path(project_id: str, root: Path | None = None) -> Path:
+    base = root or project_root()
+    return base / "projects" / project_id / "queue.jsonl"
+
+
+def trace_path(project_id: str, root: Path | None = None) -> Path:
+    base = root or project_root()
+    return base / "projects" / project_id / "trace.jsonl"
+
+
+def append_queue(
+    project_id: str,
+    kind: QueueCommandKind,
+    body: str,
+    root: Path | None = None,
+    *,
+    via: QueueCommandVia = "cli",
+    metadata: dict[str, Any] | None = None,
+    from_actor: str = "user",
+) -> QueueCommand:
+    base = root or project_root()
+    load_project(project_id, base)
+    command = QueueCommand(
+        id=f"q_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}_{uuid4().hex[:8]}",
+        from_actor=from_actor,
+        via=via,
+        kind=kind,
+        body=body.strip(),
+        metadata=metadata or {},
+    )
+    append_jsonl(queue_path(project_id, base), [command.model_dump(mode="json", by_alias=True)])
+    return command
+
+
+def read_queue(project_id: str, root: Path | None = None) -> list[QueueCommand]:
+    return [
+        QueueCommand.model_validate(raw)
+        for raw in _read_jsonl_mappings(queue_path(project_id, root))
+    ]
+
+
+def unconsumed_queue(project_id: str, root: Path | None = None) -> list[QueueCommand]:
+    return [command for command in read_queue(project_id, root) if command.consumed_at is None]
+
+
+def mark_queue_command_consumed(
+    project_id: str,
+    command_id: str,
+    root: Path | None = None,
+) -> None:
+    base = root or project_root()
+    path = queue_path(project_id, base)
+    commands = read_queue(project_id, base)
+    updated: list[dict[str, Any]] = []
+    now = datetime.now(UTC)
+    for command in commands:
+        if command.id == command_id and command.consumed_at is None:
+            command.consumed_at = now
+        updated.append(command.model_dump(mode="json", by_alias=True))
+    ensure_dir(path.parent)
+    path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in updated),
+        encoding="utf-8",
+    )
+
+
+def append_trace(
+    project_id: str,
+    *,
+    agent: TraceAgent = "system",
+    operation: str,
+    queue_command_id: str | None = None,
+    metadata: dict[str, Any] | None = None,
+    root: Path | None = None,
+) -> TraceEntry:
+    base = root or project_root()
+    load_project(project_id, base)
+    entry = TraceEntry(
+        span_id=f"sp_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}_{uuid4().hex[:8]}",
+        agent=agent,
+        operation=operation,
+        queue_command_id=queue_command_id,
+        metadata=metadata or {},
+    )
+    append_jsonl(trace_path(project_id, base), [entry])
+    return entry
+
+
+def read_trace_tail(
+    project_id: str,
+    n: int = 20,
+    root: Path | None = None,
+) -> list[TraceEntry]:
+    rows = _read_jsonl_mappings(trace_path(project_id, root))
+    return [TraceEntry.model_validate(raw) for raw in rows[-n:]]
 
 
 def project_agent_prompt(project: StrategyProject, idea: str) -> str:
@@ -476,6 +589,35 @@ def _context_artifact_state_lines(base: Path, project: StrategyProject) -> list[
     ]
 
 
+def _context_queue_lines(base: Path, project: StrategyProject) -> list[str]:
+    commands = read_queue(project.project_id, base)[-5:]
+    if not commands:
+        return ["- queue: `empty`"]
+    lines: list[str] = []
+    for command in commands:
+        body = command.body.replace("\n", " ").strip()
+        if len(body) > 160:
+            body = body[:157] + "..."
+        consumed = "consumed" if command.consumed_at else "pending"
+        lines.append(
+            f"- [{command.ts.isoformat()}] `{command.kind}` {consumed}: {body or '(empty)'}"
+        )
+    return lines
+
+
+def _context_trace_lines(base: Path, project: StrategyProject) -> list[str]:
+    entries = read_trace_tail(project.project_id, 5, base)
+    if not entries:
+        return ["- trace: `empty`"]
+    lines: list[str] = []
+    for entry in entries:
+        lines.append(
+            f"- [{entry.ts.isoformat()}] `{entry.agent}` `{entry.operation}` "
+            f"queue={entry.queue_command_id or 'n/a'}"
+        )
+    return lines
+
+
 def _context_latest_run_lines(base: Path, project: StrategyProject) -> list[str]:
     if not project.latest_run_path:
         return ["- latest_run: `n/a`"]
@@ -598,6 +740,34 @@ def _read_yaml_mapping(path: Path) -> dict[str, Any]:
     except (OSError, yaml.YAMLError):
         return {}
     return raw if isinstance(raw, dict) else {}
+
+
+def _read_jsonl_mappings(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    rows: list[dict[str, Any]] = []
+    with path.open("r", encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(raw, dict):
+                rows.append(raw)
+    return rows
+
+
+def _truncate_utf8(text: str, max_bytes: int) -> str:
+    if max_bytes <= 0:
+        return ""
+    encoded = text.encode("utf-8")
+    if len(encoded) <= max_bytes:
+        return text
+    marker = "\n\n[context truncated to byte budget]\n"
+    budget = max(max_bytes - len(marker.encode("utf-8")), 0)
+    return encoded[:budget].decode("utf-8", errors="ignore").rstrip() + marker
 
 
 def _join_short_list(value: object, *, limit: int = 4) -> str:

@@ -370,6 +370,34 @@ def default_context_feature_path(root: Path, signal_id: str) -> Path:
     return root / "feature_logs" / f"{signal_id}_context_features.jsonl"
 
 
+def default_materialized_feature_path(root: Path, strategy_name: str, factor_name: str) -> Path:
+    return root / "reports" / "features" / strategy_name / factor_name / "packets.jsonl"
+
+
+def feature_packet_path_for_factor(
+    root: Path,
+    strategy_name: str,
+    factor_name: str,
+    factor: object,
+) -> Path | None:
+    path_value = getattr(factor, "path", None)
+    if path_value:
+        path = Path(str(path_value))
+        return path if path.is_absolute() else root / path
+    if getattr(factor, "source", "") == "llm_feature":
+        return default_materialized_feature_path(root, strategy_name, factor_name)
+    return None
+
+
+def feature_packet_path_label(strategy_name: str, factor_name: str, factor: object) -> str | None:
+    path_value = getattr(factor, "path", None)
+    if path_value:
+        return str(path_value)
+    if getattr(factor, "source", "") == "llm_feature":
+        return f"reports/features/{strategy_name}/{factor_name}/packets.jsonl"
+    return None
+
+
 def parse_datetime(value: str) -> datetime:
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))

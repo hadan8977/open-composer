@@ -156,6 +156,8 @@ def backtest_frame(
     execution_backend: str = "python_reference",
     evaluation_start_index: int = 0,
 ) -> BacktestArtifacts:
+    frame = frame.copy()
+    frame.attrs.update({"strategy_name": spec.name})
     entry_mask, exit_mask = signal_masks(spec, frame, root=root)
     evaluation_start_index = max(0, min(evaluation_start_index, max(len(frame) - 1, 0)))
     evaluation_frame = frame.iloc[evaluation_start_index:].copy()

@@ -49,11 +49,14 @@ Idea
   -> draft StrategySpec
   -> capability check
   -> spec validation
+  -> oc feature materialize <strategy> when llm_feature factors are declared
   -> deterministic Python backtest / scan
   -> data sanity + buy-and-hold + Alpha report
   -> parameter-sweep when parameters are adjustable
+  -> oc strategy evidence <strategy>
   -> promotion-report
   -> PIT feature packet validation when complex data or LLM is used
+  -> LLM marginal-lift / missing-modality / independence evidence when LLM is used
   -> NautilusTrader backend parity where supported
   -> paper readiness
   -> Alpaca Paper command gate
@@ -68,14 +71,18 @@ uv run oc repo check
 uv run oc capability test
 uv run oc spec validate strategy_specs/drafts/<strategy>.yaml
 uv run oc spec capabilities strategy_specs/drafts/<strategy>.yaml
+uv run oc feature materialize strategy_specs/drafts/<strategy>.yaml --backend local_test_stub
 uv run oc backtest strategy_specs/drafts/<strategy>.yaml
 uv run oc strategy parameter-sweep strategy_specs/drafts/<strategy>.yaml --param costs.slippage_bps=0,5
+uv run oc strategy evidence strategy_specs/drafts/<strategy>.yaml
 uv run oc strategy promotion-report strategy_specs/drafts/<strategy>.yaml
 uv run oc strategy leverage-research strategy_specs/drafts/<strategy>.yaml --max-candidates 4
 uv run oc strategy exposure-switch strategy_specs/drafts/<strategy>.yaml --max-candidates 4
 uv run oc feature validate
 uv run oc deploy prepare
 uv run oc readiness
+uv run oc project continue <project-id> --advice "next bounded research step"
+uv run oc agent status <project-id>
 make verify
 ```
 
@@ -89,7 +96,7 @@ make verify
 |---|---|---|---|
 | P0 | 入口收敛 | README Project Docs 明确把本文标为 no-context Codex 起点；`oc repo check` 纳入验证 | 新 Codex 第一眼看到唯一当前主线 |
 | P0 | 文档精简 | `docs/` 只保留入口、部署、本地 setup 和必要集成文档 | `oc repo check` 阻断历史文档重新堆回当前文档目录 |
-| P1 | 复杂数据 / LLM feature 闭环 | 生成侧必须先写 PIT packet；报告显示 model、input hash、prompt hash、schema、source、timestamp、warning | 未 PIT-complete 的 feature 不能 paper-ready |
+| P1 | 复杂数据 / LLM feature 闭环 | 生成侧先 `oc feature materialize` 写 PIT packet；报告显示 model、input hash、prompt hash、schema、source、timestamp、warning、边际贡献 | 未 PIT-complete 或无边际证据的 feature 不能 paper-ready |
 | P1 | NautilusTrader paper 同构 | paper cycle 回链 spec hash、version、data manifest、feature packet、backend plan、signal audit | Python / Nautilus / paper 差异可解释 |
 | P1 | Paper 服务化 | monitor loop 记录 cycle、恢复状态、sync 错误、stale snapshot、open order、PnL alert | 写入仍经 readiness、kill switch、显式确认 |
 | P2 | Dashboard 本地产品化 | Overview / Strategy / Paper 只展示真实 catalog、reports、logs、audit 和 next action | 每个关键数字可追溯到文件产物 |

@@ -11,7 +11,9 @@ from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.metadata import workspace_relative_path
 from open_composer.strategy_versions import strategy_content_hash
 
-MAX_MEMORY_BYTES = 1024
+DEFAULT_CONTEXT_BYTES = 32 * 1024
+MAX_CONTEXT_BYTES = 128 * 1024
+MAX_MEMORY_BYTES = DEFAULT_CONTEXT_BYTES
 
 
 @dataclass(frozen=True)
@@ -27,7 +29,7 @@ def update_research_control(
     spec: Path | str,
     root: Path | None = None,
     *,
-    max_memory_bytes: int = MAX_MEMORY_BYTES,
+    max_memory_bytes: int = DEFAULT_CONTEXT_BYTES,
 ) -> ResearchControlResult:
     """Build the compact research control state and LLM memory packet.
 
@@ -41,7 +43,8 @@ def update_research_control(
     control_dir = ensure_dir(base / "reports" / "research" / "control")
     evidence = _collect_evidence(base, strategy.name)
     state = _build_state(base, spec_path, strategy, evidence)
-    memory_packet = _memory_packet(state, max_bytes=max_memory_bytes)
+    byte_budget = min(max_memory_bytes, MAX_CONTEXT_BYTES)
+    memory_packet = _memory_packet(state, max_bytes=byte_budget)
 
     state_path = control_dir / f"{strategy.name}-state.json"
     memory_path = control_dir / f"{strategy.name}-memory.md"

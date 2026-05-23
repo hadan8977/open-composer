@@ -219,6 +219,7 @@ notify_app = typer.Typer(no_args_is_help=True)
 cache_app = typer.Typer(no_args_is_help=True)
 harness_app = typer.Typer(no_args_is_help=True)
 project_app = typer.Typer(no_args_is_help=True)
+agent_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -241,6 +242,7 @@ app.add_typer(notify_app, name="notify")
 app.add_typer(cache_app, name="cache")
 app.add_typer(harness_app, name="harness")
 app.add_typer(project_app, name="project")
+app.add_typer(agent_app, name="agent")
 
 
 @app.callback()
@@ -704,6 +706,43 @@ def feature_from_context_command(
     )
 
 
+@feature_app.command("materialize")
+def feature_materialize_command(
+    spec: Path,
+    factor: Annotated[
+        str | None,
+        typer.Option("--factor", help="Single llm_feature factor; omit for all."),
+    ] = None,
+    backend: Annotated[
+        str,
+        typer.Option("--backend", help="openai or local_test_stub."),
+    ] = "openai",
+    refresh: Annotated[
+        bool,
+        typer.Option("--refresh", help="Ignore cache and recompute feature packets."),
+    ] = False,
+) -> None:
+    """Materialize llm_feature factors into PIT replay packets."""
+    from open_composer.research.llm_materialize import materialize_factor
+
+    root = project_root()
+    spec_obj = load_strategy_spec(spec)
+    targets = (
+        [factor]
+        if factor
+        else [name for name, config in spec_obj.factors.items() if config.source == "llm_feature"]
+    )
+    if not targets:
+        raise typer.BadParameter("spec has no source=llm_feature factors")
+    for name in targets:
+        result = materialize_factor(spec, name, root=root, backend=backend, refresh=refresh)
+        console.print(
+            f"[green]{name}[/green] packets={result.packet_count} "
+            f"hits={result.cache_hits} misses={result.cache_misses} "
+            f"errors={result.errors} path={result.packets_path.relative_to(root)}"
+        )
+
+
 @dashboard_app.command("catalog")
 def dashboard_catalog_command(
     output: Annotated[
@@ -1022,7 +1061,7 @@ def project_create_command(
 ) -> None:
     """Create a lightweight StrategyProject."""
     try:
-        project, request = create_project(
+        project, command = create_project(
             StrategyProjectCreate(
                 name=name,
                 thesis=thesis,
@@ -1038,8 +1077,8 @@ def project_create_command(
         raise typer.BadParameter(str(exc)) from exc
     console.print(f"[green]project written[/green] projects/{project.project_id}/project.yaml")
     console.print(f"context: projects/{project.project_id}/context.md")
-    if request:
-        console.print(f"agent_request: reports/agent_requests/{request.request_id}.json")
+    if command:
+        console.print(f"queue_command: {command.id}")
 
 
 @project_app.command("list")
@@ -1141,8 +1180,8 @@ def project_run_append_command(
     console.print(f"project={updated.project_id} state={updated.state} blockers={updated.blockers}")
 
 
-@project_app.command("iterate")
-def project_iterate_command(
+@project_app.command("continue")
+def project_continue_command(
     project_id: str,
     rounds: Annotated[
         int, typer.Option("--rounds", help="Number of bounded rounds to request.")
@@ -1156,23 +1195,110 @@ def project_iterate_command(
         typer.Option("--advice-file", help="Markdown/text file with user advice."),
     ] = None,
     requested_by: Annotated[str, typer.Option("--requested-by")] = "cli",
+    kind: Annotated[
+        str,
+        typer.Option("--kind", help="continue, advice, stop, llm_factor_eval, or materialize."),
+    ] = "continue",
+    via_backend: Annotated[
+        bool,
+        typer.Option("--via-backend/--queue-only", help="Send through configured AgentBackend."),
+    ] = True,
 ) -> None:
-    """Create a deterministic iteration plan and agent request for a StrategyProject."""
-    from open_composer.research.iteration_controller import create_project_iteration_request
+    """Append a durable queue command and refresh context for a StrategyProject."""
+    from open_composer.agent_backend import get_agent_backend
+    from open_composer.research.iteration_controller import continue_project
 
     advice_text = advice or ""
     if advice_file is not None:
         advice_text = advice_file.read_text(encoding="utf-8")
-    result = create_project_iteration_request(
+    result = continue_project(
         project_id,
-        project_root(),
+        root=project_root(),
+        kind=kind,  # type: ignore[arg-type]
+        body=advice_text,
+        via="cli",
         rounds=rounds,
-        advice=advice_text,
         requested_by=requested_by,
     )
-    console.print(f"[green]iteration request created[/green] {result.agent_request_path}")
-    console.print(f"plan={result.iteration_plan_path} intent={result.iteration_plan.intent}")
-    console.print(f"artifact_state={result.iteration_plan.artifact_state_path}")
+    if via_backend:
+        backend = get_agent_backend()
+        backend.send_command(
+            project_id,
+            kind=kind,
+            body=advice_text,
+            root=project_root(),
+            existing_command_id=result.queue_command.id,
+        )
+    console.print(f"[green]queue command written[/green] {result.queue_command.id}")
+    console.print(f"context={result.context_path} ({result.context_bytes} bytes)")
+    console.print(f"queue={result.queue_path} trace={result.trace_path} intent={result.intent}")
+    console.print(f"artifact_state={result.artifact_state_path}")
+
+
+@project_app.command("iterate", hidden=True)
+def project_iterate_command(
+    project_id: str,
+    rounds: Annotated[int, typer.Option("--rounds")] = 1,
+    advice: Annotated[str | None, typer.Option("--advice")] = None,
+    advice_file: Annotated[Path | None, typer.Option("--advice-file")] = None,
+    requested_by: Annotated[str, typer.Option("--requested-by")] = "cli",
+) -> None:
+    """[DEPRECATED] Use `oc project continue`."""
+    console.print("[yellow][DEPRECATED][/yellow] Use `oc project continue`.")
+    project_continue_command(
+        project_id=project_id,
+        rounds=rounds,
+        advice=advice,
+        advice_file=advice_file,
+        requested_by=requested_by,
+        kind="continue",
+        via_backend=False,
+    )
+
+
+@agent_app.command("status")
+def agent_status_command(project_id: str) -> None:
+    """Show the configured agent backend status for a StrategyProject."""
+    from open_composer.agent_backend import get_agent_backend
+
+    backend = get_agent_backend()
+    status = backend.status(project_id, project_root())
+    console.print(
+        f"backend={status.backend} status={status.status} "
+        f"session={status.session_id or 'n/a'} queue_pending={status.queue_pending}"
+    )
+
+
+@agent_app.command("use")
+def agent_use_command(
+    backend: Annotated[str, typer.Option("--backend", help="codex_sdk or file_queue")],
+) -> None:
+    """Persist the default agent backend in .env."""
+    if backend not in {"codex_sdk", "file_queue"}:
+        raise typer.BadParameter("--backend must be codex_sdk or file_queue")
+    root = project_root()
+    env_path = root / ".env"
+    lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
+    updated = False
+    for index, line in enumerate(lines):
+        if line.startswith("OPEN_COMPOSER_AGENT_BACKEND="):
+            lines[index] = f"OPEN_COMPOSER_AGENT_BACKEND={backend}"
+            updated = True
+            break
+    if not updated:
+        lines.append(f"OPEN_COMPOSER_AGENT_BACKEND={backend}")
+    env_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    console.print(f"[green]agent backend set[/green] {backend} in {env_path}")
+
+
+@agent_app.command("stop")
+def agent_stop_command(project_id: str) -> None:
+    """Request stop/cancel through the configured agent backend."""
+    from open_composer.agent_backend import get_agent_backend
+
+    backend = get_agent_backend()
+    backend.stop(project_id, project_root())
+    console.print(f"[green]stop requested[/green] backend={backend.name} project={project_id}")
 
 
 @notify_app.command("status")

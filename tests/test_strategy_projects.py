@@ -12,7 +12,7 @@ from open_composer.projects import (
     verify_project_run,
 )
 from open_composer.research.artifact_state import write_project_artifact_state
-from open_composer.research.iteration_controller import create_project_iteration_request
+from open_composer.research.iteration_controller import continue_project
 
 
 def test_create_project_writes_context_without_request(sample_workspace: Path) -> None:
@@ -85,7 +85,7 @@ def test_dashboard_catalog_includes_project_control_state(sample_workspace: Path
         sample_workspace,
         create_request=False,
     )
-    result = create_project_iteration_request(project.project_id, sample_workspace)
+    result = continue_project(project.project_id, root=sample_workspace)
 
     catalog = build_dashboard_catalog(sample_workspace)
     record = next(item for item in catalog.projects if item.project_id == project.project_id)
@@ -93,7 +93,7 @@ def test_dashboard_catalog_includes_project_control_state(sample_workspace: Path
     assert record.artifact_state["project_id"] == project.project_id
     assert record.next_minimal_actions
     assert record.latest_run_summary == {}
-    assert result.iteration_plan_path == f"projects/{project.project_id}/iteration-plan-latest.json"
+    assert result.queue_path == f"projects/{project.project_id}/queue.jsonl"
 
 
 def test_project_run_append_verifies_missing_paths_and_logs_notification(
@@ -220,7 +220,7 @@ def test_project_run_ledger_tracks_steps_and_repeated_blocker(
     assert (sample_workspace / "projects" / project.project_id / "artifact-state.json").exists()
 
 
-def test_iteration_controller_creates_plan_context_and_request(sample_workspace: Path) -> None:
+def test_iteration_controller_creates_context_queue_and_trace(sample_workspace: Path) -> None:
     project, _ = create_project(
         StrategyProjectCreate(
             name="Fixture Pullback",
@@ -231,20 +231,19 @@ def test_iteration_controller_creates_plan_context_and_request(sample_workspace:
         create_request=False,
     )
 
-    result = create_project_iteration_request(
+    result = continue_project(
         project.project_id,
-        sample_workspace,
+        root=sample_workspace,
         rounds=2,
-        advice="reduce parameter count before retesting",
+        body="reduce parameter count before retesting",
         requested_by="pytest",
     )
 
-    assert result.iteration_plan_path == f"projects/{project.project_id}/iteration-plan-latest.json"
-    assert result.agent_request.task_type == "strategy_optimization"
-    assert (
-        result.iteration_plan.artifact_state_path
-        == f"projects/{project.project_id}/artifact-state.json"
-    )
-    assert "projects/fixture-pullback/context.md" in result.agent_request.related_paths
+    assert result.queue_path == f"projects/{project.project_id}/queue.jsonl"
+    assert result.trace_path == f"projects/{project.project_id}/trace.jsonl"
+    assert result.artifact_state_path == f"projects/{project.project_id}/artifact-state.json"
+    assert result.queue_command.kind == "continue"
     context = sample_workspace / "projects" / project.project_id / "context.md"
     assert "Artifact State" in context.read_text(encoding="utf-8")
+    assert (sample_workspace / result.queue_path).exists()
+    assert (sample_workspace / result.trace_path).exists()

@@ -5,7 +5,11 @@ from pathlib import Path
 from typing import Any
 
 from open_composer.config import ensure_dir, project_root
-from open_composer.feature_packets import inspect_feature_packet
+from open_composer.feature_packets import (
+    feature_packet_path_for_factor,
+    feature_packet_path_label,
+    inspect_feature_packet,
+)
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.storage import write_json
 
@@ -31,17 +35,18 @@ def build_alternative_data_quality_report(
     for name, factor in spec.factors.items():
         if factor.source not in {"llm_feature", "feature_packet"}:
             continue
-        if not factor.path:
+        path = feature_packet_path_for_factor(base, spec.name, name, factor)
+        path_label = feature_packet_path_label(spec.name, name, factor)
+        if path is None or path_label is None:
             row = {"factor": name, "source": factor.source, "status": "missing_path"}
             rows.append(row)
             warnings.append(f"{name}:missing_path")
             continue
-        path = _resolve_path(base, factor.path)
         inspection = inspect_feature_packet(path, factor.field)
         row = {
             "factor": name,
             "source": factor.source,
-            "path": factor.path,
+            "path": path_label,
             "field": factor.field,
             "exists": inspection.exists,
             "record_count": inspection.record_count,
@@ -121,11 +126,6 @@ def _write_markdown(
             lines.append(f"- `{row.get('factor')}`: `{row}`")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
-
-
-def _resolve_path(root: Path, value: str) -> Path:
-    path = Path(value)
-    return path if path.is_absolute() else root / path
 
 
 def alt_data_quality_payload(result: AlternativeDataQualityResult) -> dict[str, Any]:

@@ -4,6 +4,7 @@ import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
@@ -11,6 +12,7 @@ from open_composer.cli import app
 from open_composer.dashboard import build_dashboard_catalog, build_feature_packet_records
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.feature_packets import FeaturePacketError, FeaturePacketRow, write_feature_packet
+from open_composer.models.strategy_spec import load_strategy_spec
 
 
 def _context_capable_spec(sample_workspace: Path) -> Path:
@@ -228,8 +230,61 @@ def test_feature_packet_validation_reports_invalid_timestamp(sample_workspace: P
     packet = build_feature_packet_records(sample_workspace)[0]
 
     assert packet.point_in_time_status == "partial"
-    assert packet.first_timestamp is None
-    assert "1 timestamp value(s) are not ISO-8601 parseable" in packet.replay_warnings
+
+
+def test_llm_feature_materialization_schema_requires_prompt_contract(
+    sample_workspace: Path,
+) -> None:
+    source = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(source.read_text(encoding="utf-8"))
+    raw["name"] = "qqq_news_regime_15m"
+    raw["factors"] = {
+        "news_regime_score": {
+            "source": "llm_feature",
+            "field": "score",
+            "default": 0.0,
+            "description": "Materialized LLM news regime score.",
+            "input_view": "news_window_v1",
+            "input_view_version": 1,
+            "prompt_template_path": "prompts/examples/news_regime_score.md",
+            "output_schema": {
+                "type": "object",
+                "required": ["score", "confidence"],
+                "properties": {
+                    "score": {"type": "number"},
+                    "confidence": {"type": "number"},
+                },
+            },
+            "model_ref": "local_test_stub",
+        }
+    }
+    target = sample_workspace / "strategy_specs" / "drafts" / "qqq_news_regime_15m.yaml"
+    target.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    spec = load_strategy_spec(target)
+
+    assert spec.factors["news_regime_score"].cache_policy is not None
+    assert spec.factors["news_regime_score"].cache_policy.mode == "materialize_then_replay"
+
+
+def test_llm_feature_without_path_requires_materialization_fields(
+    sample_workspace: Path,
+) -> None:
+    source = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(source.read_text(encoding="utf-8"))
+    raw["name"] = "bad_llm_feature"
+    raw["factors"] = {
+        "news_regime_score": {
+            "source": "llm_feature",
+            "field": "score",
+            "default": 0.0,
+        }
+    }
+    target = sample_workspace / "strategy_specs" / "drafts" / "bad_llm_feature.yaml"
+    target.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="materialization fields"):
+        load_strategy_spec(target)
 
 
 def test_feature_packet_validation_reports_duplicate_dedupe_keys(

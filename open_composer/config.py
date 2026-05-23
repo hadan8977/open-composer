@@ -124,3 +124,10 @@ def dashboard_api_token() -> str | None:
 def dashboard_allowed_origin() -> str | None:
     origin = os.getenv("OC_DASHBOARD_ALLOWED_ORIGIN", "").strip()
     return origin or None
+
+
+def agent_backend_name() -> str:
+    explicit = os.getenv("OPEN_COMPOSER_AGENT_BACKEND", "").strip()
+    if explicit in {"codex_sdk", "file_queue"}:
+        return explicit
+    return "file_queue"

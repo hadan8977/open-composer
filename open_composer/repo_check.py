@@ -119,6 +119,7 @@ def build_repo_check_report(root: Path | None = None) -> RepoConsistencyReport:
         _repo_skills_check(base),
         _capability_registry_check(base),
         _dashboard_command_model_check(),
+        _no_live_llm_backtest_check(base),
         _makefile_verify_check(base),
         _harness_policy_check(base),
     ]
@@ -551,6 +552,37 @@ def _dashboard_command_model_check() -> RepoConsistencyCheck:
         status="ok",
         message="Dashboard command model exposes the controlled local action set.",
         details={"action_count": len(actions)},
+    )
+
+
+def _no_live_llm_backtest_check(root: Path) -> RepoConsistencyCheck:
+    paths = [
+        root / "open_composer" / "expressions.py",
+        root / "open_composer" / "engines" / "backtest_engine.py",
+        root / "open_composer" / "adapters" / "execution" / "nautilus_runtime.py",
+    ]
+    offenders: list[str] = []
+    patterns = ("import openai", "from openai", "import anthropic", "from anthropic")
+    for path in paths:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        if any(pattern in text for pattern in patterns):
+            offenders.append(path.relative_to(root).as_posix())
+    if offenders:
+        return RepoConsistencyCheck(
+            name="no_live_llm_backtest",
+            status="blocked",
+            message="Backtest/replay paths must not import live LLM clients.",
+            details={"offenders": offenders},
+            suggested_actions=[
+                "Move LLM calls to research/llm_materialize.py and replay packets in backtests"
+            ],
+        )
+    return RepoConsistencyCheck(
+        name="no_live_llm_backtest",
+        status="ok",
+        message="Backtest/replay paths do not import live LLM clients.",
     )
 
 

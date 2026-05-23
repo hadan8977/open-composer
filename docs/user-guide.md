@@ -36,14 +36,31 @@ artifacts:
 ```bash
 uv run oc spec validate strategy_specs/drafts/<strategy>.yaml
 uv run oc spec capabilities strategy_specs/drafts/<strategy>.yaml
-uv run oc strategy research-report strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy evidence strategy_specs/drafts/<strategy>.yaml
 uv run oc strategy promotion-report strategy_specs/drafts/<strategy>.yaml
 uv run oc dashboard html
 ```
 
-`research-report` is the preferred first evidence artifact. It brings together
+`strategy evidence` is the preferred first evidence artifact. It brings together
 spec validation, capability status, reference backtest, Factor Lab, promotion,
 paper-readiness summary, and research-contract checks.
+
+## Strategy Work Sessions
+
+StrategyProject iteration is durable at the project level. `continue` writes a
+command into `projects/{project}/queue.jsonl`, refreshes
+`projects/{project}/context.md`, and records control events in
+`projects/{project}/trace.jsonl`.
+
+```bash
+uv run oc project continue <project-id> --advice "focus on execution reality"
+uv run oc agent status <project-id>
+uv run oc agent stop <project-id>
+```
+
+The default backend is `file_queue`, which is always available. Set
+`OPEN_COMPOSER_AGENT_BACKEND=codex_sdk` to use the optional Codex backend when
+the SDK is installed. File artifacts remain the audit source either way.
 
 ## Bounded Research
 
@@ -95,6 +112,7 @@ uv run oc data fetch --source longbridge --symbol QQQ --timeframe 15m
 uv run oc data longbridge-check --symbol QQQ --timeframe 15m
 uv run oc data compare --symbol QQQ --timeframe 15m --left alpaca --right longbridge
 uv run oc feature validate --strict
+uv run oc feature materialize strategy_specs/drafts/<strategy>.yaml --backend local_test_stub
 ```
 
 Choose data, event, macro, and news sources through
@@ -105,6 +123,11 @@ Feature packets must be point-in-time replay data with `visible_at`,
 `published_at`, `fetched_at`, `source`, input hash, and prompt hash before
 they affect trading. Promotion and paper readiness require evidence for
 single-modality baseline, marginal lift, and missing-modality robustness.
+
+For `source=llm_feature`, the preferred flow is prompt design, materialization,
+replay, and marginal contribution review. Backtests do not call live LLMs; they
+read `reports/features/{strategy}/{factor}/packets.jsonl` or an explicit
+feature packet path.
 
 The expression language is an AST-checked subset: OHLCV names, registered
 factor names, supported indicator functions, boolean logic, comparisons, and
