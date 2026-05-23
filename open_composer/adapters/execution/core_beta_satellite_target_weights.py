@@ -10,10 +10,8 @@ from open_composer.adapters.execution.router_target_weights import (
 )
 from open_composer.config import data_feed, project_root
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
-from open_composer.research.beta_exposure_router import beta_params_from_label
-from open_composer.research.core_beta_satellite_router import (
-    _build_beta_indicator_cache,
-    _build_cache,
+from open_composer.research.beta_router_core import beta_params_from_label
+from open_composer.research.core_beta_satellite_core import (
     _effective_lookback,
     _target_snapshot,
     core_beta_satellite_params_from_label,
@@ -60,7 +58,6 @@ def run_core_beta_satellite_target_weight_mapping(
         root=base,
         spec=spec,
         symbols=symbols,
-        params_grid=[params],
         data_source=data_source,
         feed=selected_feed,
         start=start,
@@ -70,16 +67,12 @@ def run_core_beta_satellite_target_weight_mapping(
     stages["load_data"] = perf_counter() - stage_started
 
     stage_started = perf_counter()
-    cache = _build_cache(dataset)
-    beta_cache = _build_beta_indicator_cache(dataset.beta_dataset)
     core_params = beta_params_from_label(params.core_route_label)
     start_index = _effective_lookback(params)
     end_index = len(dataset.frame) - 1
     target_rows, rebalance_intents = _build_target_weight_rows(
         spec=spec,
         dataset=dataset,
-        cache=cache,
-        beta_cache=beta_cache,
         core_params=core_params,
         params=params,
         start_index=start_index,
@@ -165,8 +158,6 @@ def _build_target_weight_rows(
     *,
     spec: StrategySpec,
     dataset,
-    cache,
-    beta_cache,
     core_params,
     params,
     start_index: int,
@@ -179,7 +170,7 @@ def _build_target_weight_rows(
     for index in range(start_index, end_index):
         rebalance_session = dataset.dates[index]
         signal_session = dataset.dates[index - 1] if index > 0 else dataset.dates[index]
-        snapshot = _target_snapshot(dataset, cache, beta_cache, core_params, params, index)
+        snapshot = _target_snapshot(dataset, core_params, params, index)
         target_by_symbol = {symbol: snapshot.weights.get(symbol, 0.0) for symbol in symbols}
         for symbol in symbols:
             target = float(target_by_symbol[symbol])

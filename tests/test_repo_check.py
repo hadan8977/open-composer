@@ -23,13 +23,6 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/remote-dashboard-deploy.zh.md",
         "docs/setup-local.zh.md",
         "docs/longbridge-integration.md",
-        "docs/research-contract-p0-p2-plan-2026-05-17.zh.md",
-        "docs/product-structure-efficiency-review-2026-05-17.zh.md",
-        "docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md",
-        "docs/product-mvp-hardening-research-plan-2026-05-17.zh.md",
-        "docs/harness-engineering-agent-quant-review-2026-05-17.zh.md",
-        "docs/harness-engineering-expanded-research-log-2026-05-17.zh.md",
-        "docs/harness-engineering-expanded-architecture-review-2026-05-17.zh.md",
     ]:
         source = repo_root / relative
         destination = target / relative
@@ -39,16 +32,8 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
     copytree(repo_root / ".claude", target / ".claude", dirs_exist_ok=True)
     copytree(repo_root / "harness", target / "harness", dirs_exist_ok=True)
     for new_doc in [
-        "docs/harness-engineering-implementation-plan-2026-05-17.zh.md",
-        "docs/harness-engineering-implementation-plan-v2-2026-05-17.zh.md",
-        "docs/nasdaq-core-beta-satellite-router-standard-2026-05-20.zh.md",
-        "docs/nasdaq-intraday-theme-momentum-router-standard-2026-05-20.zh.md",
-        "docs/nasdaq-theme-intraday-rotation-router-standard-2026-05-20.zh.md",
-        "docs/skill-first-harness-engineering-roadmap-2026-05-20.zh.md",
-        "docs/llm-quant-epistemological-loop-roadmap-2026-05-21.zh.md",
-        "docs/strategy-iteration-execution-architecture-plan-2026-05-22.zh.md",
-        "docs/dashboard-strategy-console-redesign-plan-2026-05-22.zh.md",
-        "docs/product-iteration-control-final-plan-2026-05-22.zh.md",
+        "docs/plan-step-1-simplification-2026-05-22.zh.md",
+        "docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md",
     ]:
         source = repo_root / new_doc
         destination = target / new_doc

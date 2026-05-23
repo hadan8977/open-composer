@@ -15,7 +15,7 @@ from open_composer.research.artifact_state import write_project_artifact_state
 from open_composer.research.iteration_controller import create_project_iteration_request
 
 
-def test_create_project_writes_context_and_agent_request(sample_workspace: Path) -> None:
+def test_create_project_writes_context_without_request(sample_workspace: Path) -> None:
     project, request = create_project(
         StrategyProjectCreate(
             name="QQQ Momentum",
@@ -30,12 +30,11 @@ def test_create_project_writes_context_and_agent_request(sample_workspace: Path)
     assert project.project_id == "qqq-momentum"
     assert project.state == "idea"
     assert project.iteration.max_rounds == 3
-    assert request is not None
+    assert request is None
     assert (sample_workspace / "projects" / "qqq-momentum" / "project.yaml").exists()
     context = sample_workspace / "projects" / "qqq-momentum" / "context.md"
     assert context.exists()
     assert "Factor Quality" in context.read_text(encoding="utf-8")
-    assert (sample_workspace / "reports" / "agent_requests" / f"{request.request_id}.json").exists()
 
     loaded = load_project("qqq-momentum", sample_workspace)
     assert loaded.name == "QQQ Momentum"

@@ -15,7 +15,6 @@ from open_composer.models.project import (
     ProjectEvidence,
     ProjectEvidenceItem,
     ProjectEvidenceStatus,
-    ProjectGateSummary,
     ProjectState,
     StrategyProject,
     StrategyProjectCreate,
@@ -43,7 +42,7 @@ def create_project(
     payload: StrategyProjectCreate,
     root: Path | None = None,
     *,
-    create_request: bool = True,
+    create_request: bool = False,
 ) -> tuple[StrategyProject, AgentRequest | None]:
     base = root or project_root()
     project_id = unique_project_id(
@@ -75,6 +74,9 @@ def create_project(
     )
     request: AgentRequest | None = None
     if create_request:
+        # DEPRECATED: Step 2 replaces one-shot reports/agent_requests with
+        # project queue.jsonl commands. This compatibility path remains for
+        # callers that still opt in explicitly.
         request = create_agent_request(
             AgentRequestCreate(
                 requested_by=payload.requested_by,
@@ -318,11 +320,11 @@ def build_project_from_strategy(
             else "No LLM, news, event, macro, or alternative-data factor is declared.",
         ),
     )
-    gate = ProjectGateSummary(
-        workflow_pass=lifecycle in {"approved", "active"},
-        paper_ready_pass=paper_ready,
-        status="unknown",
-    )
+    gate = {
+        "workflow_pass": lifecycle in {"approved", "active"},
+        "paper_ready_pass": paper_ready,
+        "status": "unknown",
+    }
     state: ProjectState
     if lifecycle == "active":
         state = "active_paper" if paper_ready else "candidate"

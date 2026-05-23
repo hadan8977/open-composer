@@ -4,7 +4,7 @@ from open_composer.research.kernel.artifacts import (
     research_report_paths,
 )
 from open_composer.research.kernel.candidates import CandidateScore, CandidateSet, CandidateSpec
-from open_composer.research.kernel.gates import GateResult, GateStatus, ResearchGateSummary
+from open_composer.research.kernel.gates import GateResult, GateStatus
 from open_composer.research.kernel.metrics import EvaluationBundle, MetricSummary
 from open_composer.research.kernel.trials import TrialLedger, TrialRecord
 from open_composer.research.kernel.workflow import (
@@ -25,7 +25,6 @@ __all__ = [
     "MetricSummary",
     "ResearchArtifactWriter",
     "ResearchBrief",
-    "ResearchGateSummary",
     "ResearchRunIndexRecord",
     "SearchSpace",
     "TrialLedger",

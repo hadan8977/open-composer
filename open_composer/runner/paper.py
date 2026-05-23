@@ -37,13 +37,13 @@ from open_composer.paper_readiness import (
     write_paper_readiness_report,
 )
 from open_composer.reports.writer import write_scan_report
-from open_composer.research.adaptive_intraday_router import run_adaptive_intraday_router_scan
-from open_composer.research.beta_exposure_router import (
+from open_composer.research.adaptive_intraday_router_core import run_adaptive_intraday_router_scan
+from open_composer.research.beta_router_core import (
     beta_params_from_label,
     beta_target_weight_snapshot,
     load_beta_router_dataset,
 )
-from open_composer.research.hybrid_adaptive_router import (
+from open_composer.research.hybrid_router_core import (
     _load_daily_hybrid_dataset,
     hybrid_params_from_label,
     hybrid_target_weight_snapshot,

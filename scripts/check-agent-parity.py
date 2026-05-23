@@ -18,7 +18,6 @@ REQUIRED_CLAUDE_ANCHORS = [
 
 REQUIRED_COMMANDS = [
     "repo-check.md",
-    "remote-doctor.md",
     "verify.md",
 ]
 

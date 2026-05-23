@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-from typer.testing import CliRunner
 
 from open_composer.agent_requests import (
     AgentRequestCreate,
@@ -9,7 +8,6 @@ from open_composer.agent_requests import (
     create_agent_request,
     list_agent_requests,
 )
-from open_composer.cli import app
 
 
 def test_agent_request_file_lifecycle(sample_workspace) -> None:
@@ -89,26 +87,3 @@ def test_agent_request_rejects_windows_drive_paths(sample_workspace) -> None:
             ),
             sample_workspace,
         )
-
-
-def test_agent_request_cli_creates_request(sample_workspace, monkeypatch) -> None:
-    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
-
-    result = CliRunner().invoke(
-        app,
-        [
-            "agent",
-            "request-create",
-            "--title",
-            "Review sweep",
-            "--prompt",
-            "Review reports/research/example.json",
-            "--related-path",
-            "strategy_specs/drafts/fixture_pullback_15m.yaml",
-        ],
-        catch_exceptions=False,
-    )
-
-    assert result.exit_code == 0
-    assert "agent request written" in result.output
-    assert len(list_agent_requests(sample_workspace)) == 1

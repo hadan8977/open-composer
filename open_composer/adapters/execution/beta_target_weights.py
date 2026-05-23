@@ -12,7 +12,7 @@ from open_composer.adapters.execution.router_target_weights import (
 )
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
-from open_composer.research.beta_exposure_router import (
+from open_composer.research.beta_router_core import (
     BetaRouterMetrics,
     _effective_lookback,
     backtest_beta_router_params,

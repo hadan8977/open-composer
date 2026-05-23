@@ -9,7 +9,7 @@ from typing import Any
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.json_utils import json_safe_payload
 from open_composer.models.strategy_spec import load_strategy_spec
-from open_composer.research.hybrid_adaptive_router import (
+from open_composer.research.hybrid_router_core import (
     HybridRouterMetrics,
     HybridRouterParams,
     _backtest_hybrid_params,

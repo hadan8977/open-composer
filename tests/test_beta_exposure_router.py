@@ -29,7 +29,7 @@ def test_beta_exposure_router_reports_target_weight_research(
         return normalize_ohlcv(frames[symbol].copy())
 
     monkeypatch.setattr(
-        "open_composer.research.beta_exposure_router.fetch_ohlcv",
+        "open_composer.research.beta_router_core.fetch_ohlcv",
         fake_fetch_ohlcv,
     )
     spec_path = _write_spec(sample_workspace, "beta_router_fixture")
@@ -110,7 +110,7 @@ def test_beta_target_weight_mapping_matches_python_reference(
         return normalize_ohlcv(frames[symbol].copy())
 
     monkeypatch.setattr(
-        "open_composer.research.beta_exposure_router.fetch_ohlcv",
+        "open_composer.research.beta_router_core.fetch_ohlcv",
         fake_fetch_ohlcv,
     )
     spec_path = _write_spec(sample_workspace, "beta_target_fixture")

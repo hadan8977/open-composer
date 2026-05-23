@@ -64,8 +64,9 @@ def test_promotion_report_requires_blind_test_for_llm_contribution(
     report = build_promotion_report(spec_path, sample_workspace)
 
     assert report.five_pass_checks
-    assert report.five_pass_checks.llm_contribution_pass == "fail"
-    assert "missing BlindTrade" in report.five_pass_checks.llm_contribution_reason
+    assert report.llm_contribution_pass is False
+    assert report.five_pass_checks["llm_contribution_pass"] == "fail"
+    assert "missing BlindTrade" in report.pass_reasons["llm_contribution"]
 
 
 def test_promotion_report_accepts_matching_blind_test_for_llm_contribution(
@@ -77,8 +78,9 @@ def test_promotion_report_accepts_matching_blind_test_for_llm_contribution(
     report = build_promotion_report(spec_path, sample_workspace)
 
     assert report.five_pass_checks
-    assert report.five_pass_checks.llm_contribution_pass == "pass"
-    assert "BlindTrade anonymous mode" in report.five_pass_checks.llm_contribution_reason
+    assert report.llm_contribution_pass is True
+    assert report.five_pass_checks["llm_contribution_pass"] == "pass"
+    assert "BlindTrade anonymous mode" in report.pass_reasons["llm_contribution"]
 
 
 def _llm_review_spec(sample_workspace: Path, name: str) -> Path:

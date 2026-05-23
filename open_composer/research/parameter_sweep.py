@@ -17,6 +17,7 @@ from open_composer.analytics.data_sanity import MIN_SIGNALS, MIN_TRADES
 from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
 from open_composer.expressions import validate_expression
+from open_composer.json_utils import json_safe_payload
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.kernel import ResearchArtifactWriter
 from open_composer.research.kernel.candidates import CandidateScore, CandidateSet, CandidateSpec
@@ -461,7 +462,10 @@ def _write_sweep_json(
         ),
         "candidates": [_candidate_payload(candidate) for candidate in candidates],
     }
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    path.write_text(
+        json.dumps(json_safe_payload(payload), indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
     return path
 
 

@@ -130,14 +130,8 @@ artifact size without deleting anything.
 - [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md) - VPS Dashboard deployment
 - [docs/longbridge-integration.md](docs/longbridge-integration.md) - Longbridge configuration and data scope
 - [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) - no-context Codex starting review document
-- [docs/research-contract-p0-p2-plan-2026-05-17.zh.md](docs/research-contract-p0-p2-plan-2026-05-17.zh.md) - research contract and StrategyDAG execution plan
-- [docs/product-structure-efficiency-review-2026-05-17.zh.md](docs/product-structure-efficiency-review-2026-05-17.zh.md) - product structure and redundancy review
-- [docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md](docs/product-efficiency-optimization-roadmap-2026-05-17.zh.md) - Dashboard, strategy workflow, and research-kernel optimization plan
-- [docs/product-mvp-hardening-research-plan-2026-05-17.zh.md](docs/product-mvp-hardening-research-plan-2026-05-17.zh.md) - MVP hardening plan for Dashboard, strategy iteration, and the shared research kernel
-- [docs/harness-engineering-agent-quant-review-2026-05-17.zh.md](docs/harness-engineering-agent-quant-review-2026-05-17.zh.md) - harness engineering plan for stronger agent, skill, workflow, and quant research constraints
-- [docs/harness-engineering-expanded-research-log-2026-05-17.zh.md](docs/harness-engineering-expanded-research-log-2026-05-17.zh.md) - expanded research log for agent, quant, financial LLM, data, and risk-control references
-- [docs/harness-engineering-expanded-architecture-review-2026-05-17.zh.md](docs/harness-engineering-expanded-architecture-review-2026-05-17.zh.md) - expanded Honest/Harness engineering architecture review and implementation plan
-- [docs/strategy-iteration-execution-architecture-plan-2026-05-22.zh.md](docs/strategy-iteration-execution-architecture-plan-2026-05-22.zh.md) - strategy iteration, router execution observation, short-selling, and options architecture plan
+- [docs/plan-step-1-simplification-2026-05-22.zh.md](docs/plan-step-1-simplification-2026-05-22.zh.md) - Step 1 simplification and legacy cleanup plan
+- [docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md](docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md) - Step 2 long-lived worksession and LLM factor plan
 
 ## License
 

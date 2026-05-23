@@ -119,7 +119,7 @@ def build_strategy_research_report(
         candidate_count=search_space.candidate_count,
         trial_count=1,
         runtime_seconds=runtime_seconds,
-        gate_status=gate_summary.status,
+        gate_status=str(gate_summary.get("status", "warning")),
         blocked_items=blocked_items,
         warning_items=warning_items,
         report_path=_relpath(report_path, base),
@@ -149,7 +149,7 @@ def build_strategy_research_report(
         "candidate_count": search_space.candidate_count,
         "runtime_seconds": runtime_seconds,
         "checklist": checklist,
-        "gate_summary": gate_summary.model_dump(mode="json"),
+        "gate_summary": gate_summary,
         "evaluation_bundle": evaluation_bundle.model_dump(mode="json"),
         "research_run_index_record": index_record.model_dump(mode="json"),
         "capability_findings": [

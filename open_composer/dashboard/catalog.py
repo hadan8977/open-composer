@@ -43,7 +43,7 @@ from open_composer.models.dashboard import (
     DashboardWorkflowReport,
 )
 from open_composer.models.journal import TradeJournalEntry
-from open_composer.models.project import ProjectEvidenceItem, ProjectGateSummary, StrategyProject
+from open_composer.models.project import ProjectEvidenceItem, StrategyProject
 from open_composer.models.review_card import ReviewCard
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.paper_controls import build_paper_status
@@ -1361,7 +1361,7 @@ def _dashboard_project_from_project(
         thesis=project.thesis,
         current_spec_path=project.current_spec_path,
         latest_run_path=project.latest_run_path,
-        gate_summary=project.gate_summary.model_dump(mode="json"),
+        gate_summary=dict(project.gate_summary),
         evidence=DashboardProjectEvidence(
             factor_quality=_dashboard_evidence_item(project.evidence.factor_quality, base),
             execution_reality=_dashboard_evidence_item(project.evidence.execution_reality, base),
@@ -1453,7 +1453,7 @@ def _apply_research_evidence(
         return
     latest = sorted(reports, key=lambda item: item.report_json_path, reverse=True)[0]
     if latest.gate_summary:
-        project.gate_summary = ProjectGateSummary.model_validate(_project_gate_from_report(latest))
+        project.gate_summary = _project_gate_from_report(latest)
     if latest.report_json_path:
         _apply_research_json_evidence(base, project, latest.report_json_path)
     if latest.paper_readiness_status and project.paper.status == "not_requested":

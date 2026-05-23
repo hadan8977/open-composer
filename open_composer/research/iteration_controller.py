@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+# DEPRECATED: Step 2 replaces this one-shot request path with project queue/trace
+# primitives, but Step 1 keeps it as a compatibility surface for Dashboard flows.
 from open_composer.agent_requests import AgentRequest, AgentRequestCreate, create_agent_request
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.project import StrategyProject
@@ -177,7 +179,10 @@ def _choose_intent(
     evidence = artifact_state.evidence_status
     if any(item.status == "blocked" for item in evidence.values()):
         return "produce_missing_evidence"
-    if project.gate_summary.paper_ready_pass is False:
+    if (
+        isinstance(project.gate_summary, dict)
+        and project.gate_summary.get("paper_ready_pass") is False
+    ):
         return "paper_readiness_review"
     return "small_strategy_optimization"
 

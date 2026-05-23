@@ -38,7 +38,7 @@ def test_dashboard_server_creates_and_updates_strategy_project(sample_workspace:
 
     assert response["project_path"] == "projects/qqq-momentum/project.yaml"
     assert response["context_path"] == "projects/qqq-momentum/context.md"
-    assert "agent_request_path" in response
+    assert "agent_request_path" not in response
 
     state = build_project_state_payload(sample_workspace, "qqq-momentum", {"action": "stop"})
     assert state["project"]["iteration"]["user_requested_stop"] is True

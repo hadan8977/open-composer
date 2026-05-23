@@ -100,7 +100,8 @@ def test_research_control_cli_writes_state_and_memory(sample_workspace: Path, mo
     )
 
     assert result.exit_code == 0
-    assert "research control updated" in result.output
+    assert "[DEPRECATED]" in result.output
+    assert "strategy evidence complete" in result.output
     assert (
         sample_workspace / "reports" / "research" / "control" / "fixture_pullback_15m-state.json"
     ).exists()

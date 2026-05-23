@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+# DEPRECATED: one-shot agent requests are kept only as a compatibility adapter
+# until Step 2 replaces them with projects/{id}/queue.jsonl.
 import re
 from datetime import UTC, datetime
 from pathlib import Path

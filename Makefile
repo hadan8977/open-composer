@@ -7,7 +7,7 @@ PAPER_STRATEGY ?= qqq_pullback_15m
 VPS_DEPLOY_ARGS ?=
 VPS_STOP_ARGS ?=
 
-.PHONY: start bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync vps-plan vps-deploy vps-stop remote-plan remote-deploy remote-stop remote-doctor verify
+.PHONY: start bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync vps-plan vps-deploy vps-stop verify
 
 start:
 	./scripts/setup-local.sh
@@ -103,14 +103,5 @@ vps-deploy:
 
 vps-stop:
 	./scripts/stop-remote-dashboard.sh $(VPS_STOP_ARGS)
-
-remote-doctor:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc remote doctor
-
-remote-plan: vps-plan
-
-remote-deploy: vps-deploy
-
-remote-stop: vps-stop
 
 verify: check repo-check capability-test agent-parity deploy-prepare dashboard-check feature-validate readiness

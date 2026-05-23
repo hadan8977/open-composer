@@ -1,37 +1,35 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from open_composer.research.kernel.datamodel import ResearchDataModel
 
 
-class CandidateSpec(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+@dataclass(frozen=True)
+class CandidateSpec(ResearchDataModel):
     candidate_id: str
     strategy_name: str
-    params: dict[str, Any] = Field(default_factory=dict)
+    params: dict[str, Any] = field(default_factory=dict)
     source_spec_path: str | None = None
     spec_path: str | None = None
 
 
-class CandidateScore(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+@dataclass(frozen=True)
+class CandidateScore(ResearchDataModel):
     candidate_id: str
     rank: int
     score: float
-    metrics: dict[str, Any] = Field(default_factory=dict)
-    quality_flags: list[str] = Field(default_factory=list)
+    metrics: dict[str, Any] = field(default_factory=dict)
+    quality_flags: list[str] = field(default_factory=list)
     gate_status: str = "warning"
 
 
-class CandidateSet(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+@dataclass(frozen=True)
+class CandidateSet(ResearchDataModel):
     family: str
-    candidates: list[CandidateSpec] = Field(default_factory=list)
-    scores: list[CandidateScore] = Field(default_factory=list)
+    candidates: list[CandidateSpec] = field(default_factory=list)
+    scores: list[CandidateScore] = field(default_factory=list)
 
     @property
     def candidate_count(self) -> int:

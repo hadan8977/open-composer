@@ -20,17 +20,13 @@ from open_composer.feature_packets import (
 from open_composer.json_utils import json_safe_payload
 from open_composer.models.event import EventRecord
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
-from open_composer.research.hybrid_adaptive_router import (
+from open_composer.research.hybrid_router_core import (
     HybridRouterMetrics,
     HybridRouterParams,
-    _daily_buy_hold_return,
-    _daily_sharpe,
     _DailyHybridDataset,
     _effective_lookback,
     _hybrid_selected_symbols,
     _load_daily_hybrid_dataset,
-    _max_drawdown_pct,
-    _symbol_holding_return,
     hybrid_params_from_label,
 )
 from open_composer.research.intraday_daily_rotation import (
@@ -42,6 +38,18 @@ from open_composer.research.metadata import (
     hypothesis_ledger,
     runtime_payload,
     search_space,
+)
+from open_composer.research.router_common import (
+    daily_buy_hold_return as _daily_buy_hold_return,
+)
+from open_composer.research.router_common import (
+    daily_sharpe as _daily_sharpe,
+)
+from open_composer.research.router_common import (
+    max_drawdown_pct as _max_drawdown_pct,
+)
+from open_composer.research.router_common import (
+    symbol_holding_return as _symbol_holding_return,
 )
 from open_composer.storage import write_json
 

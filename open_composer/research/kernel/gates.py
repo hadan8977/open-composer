@@ -1,44 +1,34 @@
 from __future__ import annotations
 
+from dataclasses import asdict, dataclass, field
 from typing import Literal
-
-from pydantic import BaseModel, ConfigDict, Field
 
 GateStatus = Literal["ok", "warning", "blocked"]
 
 
-class GateResult(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+@dataclass(frozen=True)
+class GateResult:
     name: str
     status: GateStatus
     message: str = ""
     evidence: object | None = None
+    details: dict[str, object] = field(default_factory=dict)
+
+    def model_dump(self, mode: str = "json") -> dict[str, object]:
+        return asdict(self)
 
 
-class ResearchGateSummary(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    workflow_pass: bool = False
-    research_pass: bool = False
-    llm_contribution_pass: bool | None = None
-    paper_ready_pass: bool = False
-    status: GateStatus = "warning"
-    blocked_checks: list[str] = Field(default_factory=list)
-    warning_checks: list[str] = Field(default_factory=list)
-    gates: list[GateResult] = Field(default_factory=list)
-
-
-def summarize_gates(gates: list[GateResult]) -> ResearchGateSummary:
+def summarize_gates(gates: list[GateResult]) -> dict[str, object]:
     blocked = [gate.name for gate in gates if gate.status == "blocked"]
     warnings = [gate.name for gate in gates if gate.status == "warning"]
     status: GateStatus = "blocked" if blocked else "warning" if warnings else "ok"
-    return ResearchGateSummary(
-        workflow_pass=status != "blocked",
-        research_pass=status == "ok",
-        paper_ready_pass=status == "ok",
-        status=status,
-        blocked_checks=blocked,
-        warning_checks=warnings,
-        gates=gates,
-    )
+    return {
+        "workflow_pass": status != "blocked",
+        "research_pass": status == "ok",
+        "llm_contribution_pass": None,
+        "paper_ready_pass": status == "ok",
+        "status": status,
+        "blocked_checks": blocked,
+        "warning_checks": warnings,
+        "gates": [gate.model_dump(mode="json") for gate in gates],
+    }

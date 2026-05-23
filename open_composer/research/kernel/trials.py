@@ -1,41 +1,40 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from open_composer.research.kernel.datamodel import ResearchDataModel
 
 
-class TrialRecord(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+@dataclass(frozen=True)
+class TrialRecord(ResearchDataModel):
     trial_id: str
+    candidate_name: str
     parent_trial_id: str | None = None
     rank: int | None = None
-    candidate_name: str
-    params: dict[str, Any] = Field(default_factory=dict)
-    changed_from: dict[str, Any] = Field(default_factory=dict)
+    params: dict[str, Any] = field(default_factory=dict)
+    changed_from: dict[str, Any] = field(default_factory=dict)
     change_summary: str | None = None
     score: float | None = None
     status: Literal["ok", "warning", "blocked"] = "warning"
-    metrics: dict[str, Any] = Field(default_factory=dict)
-    quality_flags: list[str] = Field(default_factory=list)
-    lesson_tags: list[str] = Field(default_factory=list)
-    artifact_paths: dict[str, str | None] = Field(default_factory=dict)
+    metrics: dict[str, Any] = field(default_factory=dict)
+    quality_flags: list[str] = field(default_factory=list)
+    lesson_tags: list[str] = field(default_factory=list)
+    artifact_paths: dict[str, str | None] = field(default_factory=dict)
 
 
-class TrialLedger(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+@dataclass(frozen=True)
+class TrialLedger(ResearchDataModel):
     strategy_name: str
     family: str
+    generated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     trial_count: int = 0
     candidate_count: int = 0
     max_candidates: int | None = None
     random_seed: int | None = None
     local_choice_label: str | None = None
-    trials: list[TrialRecord] = Field(default_factory=list)
+    trials: list[TrialRecord] = field(default_factory=list)
     selection_bias_note: str = (
         "Trial ledgers are research evidence only until OOS, walk-forward, cost, "
         "benchmark, and paper-readiness gates pass."

@@ -29,18 +29,6 @@ ProjectRunStatus = Literal["ok", "warning", "blocked", "failed"]
 ProjectStepStatus = Literal["ok", "warning", "blocked", "failed", "skipped"]
 
 
-class ProjectGateSummary(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    workflow_pass: bool | None = None
-    research_pass: bool | None = None
-    llm_contribution_pass: bool | None = None
-    paper_ready_pass: bool | None = None
-    status: Literal["ok", "warning", "blocked", "unknown"] = "unknown"
-    blocked_checks: list[str] = Field(default_factory=list)
-    warning_checks: list[str] = Field(default_factory=list)
-
-
 class ProjectEvidenceItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -111,7 +99,7 @@ class StrategyProject(BaseModel):
     thesis: str = ""
     current_spec_path: str | None = None
     latest_run_path: str | None = None
-    gate_summary: ProjectGateSummary = Field(default_factory=ProjectGateSummary)
+    gate_summary: dict[str, Any] = Field(default_factory=dict)
     evidence: ProjectEvidence = Field(default_factory=ProjectEvidence)
     blockers: list[str] = Field(default_factory=list)
     next_action: str = "create_or_link_strategy_spec"

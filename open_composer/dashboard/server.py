@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Any, get_args
 from urllib.parse import parse_qs, urlparse
 
-from open_composer.agent_requests import AgentRequestCreate, create_agent_request
 from open_composer.config import (
     alpaca_api_base_url,
     dashboard_allowed_origin,
@@ -43,7 +42,6 @@ from open_composer.notifications import (
 from open_composer.projects import (
     create_project,
     load_project,
-    project_agent_prompt,
     update_project_state,
     write_project,
     write_project_context,
@@ -528,20 +526,6 @@ def build_project_state_payload(
         project.paper.status = "review_requested"
         write_project(project, root)
         write_project_context(project, root, task="Run paper readiness review for this project.")
-        request = create_agent_request(
-            AgentRequestCreate(
-                requested_by=str(payload.get("requested_by") or "dashboard"),
-                task_type="review",
-                title=f"Paper review strategy project: {project.name}",
-                prompt=project_agent_prompt(project, "Run paper readiness review."),
-                related_paths=[
-                    f"projects/{project.project_id}/project.yaml",
-                    f"projects/{project.project_id}/context.md",
-                    *([project.current_spec_path] if project.current_spec_path else []),
-                ],
-            ),
-            root,
-        )
     else:
         raise ValueError("action must be one of: stop, archive, continue, paper_review")
     response = {"project": project.model_dump(mode="json")}

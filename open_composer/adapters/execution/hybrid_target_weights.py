@@ -12,7 +12,7 @@ from open_composer.adapters.execution.router_target_weights import (
 )
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
-from open_composer.research.hybrid_adaptive_router import (
+from open_composer.research.hybrid_router_core import (
     HybridRouterMetrics,
     _backtest_hybrid_params,
     _effective_lookback,

@@ -26,7 +26,8 @@ def test_strategy_research_report_writes_default_contract_pipeline(
     )
 
     assert result.exit_code == 0
-    assert "research report complete" in result.output
+    assert "[DEPRECATED]" in result.output
+    assert "strategy evidence complete" in result.output
     report_json = (
         sample_workspace / "reports" / "research" / "fixture_pullback_15m-research-report.json"
     )
@@ -52,7 +53,7 @@ def test_strategy_research_report_writes_default_contract_pipeline(
     assert payload["research_run_index_record"]["run_id"].startswith(
         "research-fixture_pullback_15m-"
     )
-    assert "factor_lab" in contract["required_checks"]
+    assert "factor_lab" in contract["requirements"]["workflow"]
     assert any(item["name"] == "execution_reality" for item in payload["checklist"])
     assert payload["factor_lab"]["status"] == "blocked"
     assert payload["promotion"]["status"] == "blocked"

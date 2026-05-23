@@ -27,6 +27,7 @@ from open_composer.research.drafter import (
     draft_strategy_from_idea,
     draft_strategy_from_idea_with_status,
 )
+from open_composer.research.evidence import StrategyEvidenceResult, build_strategy_evidence
 from open_composer.research.exposure_switch import run_exposure_switch_research
 from open_composer.research.factor_lab import FactorLabResult, run_factor_lab
 from open_composer.research.geometry_features import (
@@ -55,7 +56,7 @@ from open_composer.research.options_research import (
     build_options_research_report,
 )
 from open_composer.research.parameter_sweep import parse_sweep_parameters, run_parameter_sweep
-from open_composer.research.promotion import FivePassChecks, PromotionReport, build_promotion_report
+from open_composer.research.promotion import PromotionReport, build_promotion_report
 from open_composer.research.regime_retrieval import RegimeSearchReport, search_similar_regimes
 from open_composer.research.research_report import (
     StrategyResearchReportResult,
@@ -78,6 +79,7 @@ __all__ = [
     "DraftResult",
     "draft_strategy_from_idea",
     "draft_strategy_from_idea_with_status",
+    "StrategyEvidenceResult",
     "BlindTestReport",
     "BlindTestResult",
     "CostGridReport",
@@ -122,10 +124,10 @@ __all__ = [
     "build_options_overlay_report",
     "build_options_research_report",
     "parse_sweep_parameters",
-    "FivePassChecks",
     "PromotionReport",
     "StrategyResearchReportResult",
     "build_strategy_research_report",
+    "build_strategy_evidence",
     "build_promotion_report",
     "run_parameter_sweep",
     "run_llm_exposure_switch_meta_selection",

@@ -39,12 +39,6 @@ from open_composer.adapters.execution.core_beta_satellite_target_weights import 
 from open_composer.adapters.execution.hybrid_target_weights import (
     run_hybrid_target_weight_mapping,
 )
-from open_composer.agent_requests import (
-    AgentRequestCreate,
-    complete_agent_request,
-    create_agent_request,
-    list_agent_requests,
-)
 from open_composer.cache import (
     build_cache_inventory,
     clean_cache_targets,
@@ -135,16 +129,6 @@ from open_composer.projects import (
     update_project_state,
 )
 from open_composer.readiness import build_readiness_report, write_readiness_report
-from open_composer.remote import RemoteJobManager, build_remote_doctor_report, serve_remote
-from open_composer.remote.bootstrap import (
-    VpsBootstrapError,
-    apply_vps_bootstrap,
-    build_vps_bootstrap_config,
-    detect_public_ip,
-    write_system_templates,
-    write_vps_bootstrap_report,
-)
-from open_composer.remote.server import RemoteServerError
 from open_composer.repo_check import build_repo_check_report, write_repo_check_report
 from open_composer.research import (
     build_alternative_data_evidence,
@@ -154,7 +138,7 @@ from open_composer.research import (
     build_options_research_report,
     build_promotion_report,
     build_short_risk_report,
-    build_strategy_research_report,
+    build_strategy_evidence,
     draft_strategy_from_idea_with_status,
     optimize_option_overlays,
     optimize_strategy,
@@ -231,8 +215,6 @@ feature_app = typer.Typer(no_args_is_help=True)
 deploy_app = typer.Typer(no_args_is_help=True)
 dashboard_app = typer.Typer(no_args_is_help=True)
 repo_app = typer.Typer(no_args_is_help=True)
-remote_app = typer.Typer(no_args_is_help=True)
-agent_app = typer.Typer(no_args_is_help=True)
 notify_app = typer.Typer(no_args_is_help=True)
 cache_app = typer.Typer(no_args_is_help=True)
 harness_app = typer.Typer(no_args_is_help=True)
@@ -255,8 +237,6 @@ app.add_typer(feature_app, name="feature")
 app.add_typer(deploy_app, name="deploy")
 app.add_typer(dashboard_app, name="dashboard")
 app.add_typer(repo_app, name="repo")
-app.add_typer(remote_app, name="remote")
-app.add_typer(agent_app, name="agent")
 app.add_typer(notify_app, name="notify")
 app.add_typer(cache_app, name="cache")
 app.add_typer(harness_app, name="harness")
@@ -1030,331 +1010,6 @@ def dashboard_command_run_command(
     console.print(result.message)
 
 
-@remote_app.command("serve")
-def remote_serve_command(
-    host: Annotated[
-        str,
-        typer.Option("--host", help="Host interface for the remote command daemon."),
-    ] = "127.0.0.1",
-    port: Annotated[
-        int,
-        typer.Option("--port", help="Port for the remote command daemon."),
-    ] = 8787,
-    shared_secret: Annotated[
-        str | None,
-        typer.Option(
-            "--shared-secret",
-            help="HMAC shared secret. Defaults to OC_REMOTE_SHARED_SECRET.",
-        ),
-    ] = None,
-    allowed_actor: Annotated[
-        str | None,
-        typer.Option("--allowed-actor", help="Allowed HMAC actor. Defaults to OC_DASHBOARD_OWNER."),
-    ] = None,
-) -> None:
-    """Serve the HMAC-protected remote Dashboard command daemon."""
-    try:
-        serve_remote(
-            project_root(),
-            host=host,
-            port=port,
-            shared_secret=shared_secret,
-            allowed_actor=allowed_actor,
-        )
-    except RemoteServerError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-
-
-@remote_app.command("job-list")
-def remote_job_list_command() -> None:
-    """List remote Dashboard command jobs."""
-    manager = RemoteJobManager(project_root(), autostart=False)
-    table = Table(title="Open Composer Remote Jobs")
-    table.add_column("Job")
-    table.add_column("Status")
-    table.add_column("Action")
-    table.add_column("Actor")
-    table.add_column("Created")
-    for job in manager.list_jobs():
-        table.add_row(
-            job.job_id,
-            job.status,
-            job.action,
-            job.actor,
-            job.created_at.isoformat(),
-        )
-    console.print(table)
-
-
-@remote_app.command("job-status")
-def remote_job_status_command(job_id: str) -> None:
-    """Show a remote Dashboard command job record."""
-    manager = RemoteJobManager(project_root(), autostart=False)
-    try:
-        job = manager.load_job(job_id)
-    except Exception as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    print(json.dumps(job.model_dump(mode="json"), indent=2, sort_keys=True))
-
-
-@remote_app.command("doctor")
-def remote_doctor_command(
-    strict: Annotated[
-        bool,
-        typer.Option("--strict", help="Exit with code 1 when remote readiness is blocked."),
-    ] = False,
-) -> None:
-    """Check local prerequisites for the remote Dashboard command daemon."""
-    report = build_remote_doctor_report(project_root())
-    table = Table(title="Open Composer Remote Doctor")
-    table.add_column("Check")
-    table.add_column("Status")
-    table.add_column("Message")
-    for check in report.checks:
-        table.add_row(check.name, check.status, check.message)
-    console.print(table)
-    if strict and report.status == "blocked":
-        raise typer.Exit(code=1)
-
-
-@remote_app.command("bootstrap-vps")
-def remote_bootstrap_vps_command(
-    apply: Annotated[
-        bool,
-        typer.Option("--apply", help="Write files and run Vercel/system service commands."),
-    ] = False,
-    vercel_token: Annotated[
-        str | None,
-        typer.Option(
-            "--vercel-token",
-            envvar="VERCEL_TOKEN",
-            help="Vercel API token. Defaults to VERCEL_TOKEN.",
-        ),
-    ] = None,
-    vercel_project: Annotated[
-        str,
-        typer.Option("--vercel-project", help="Vercel project name for the Dashboard BFF."),
-    ] = "open-composer-dashboard",
-    vercel_scope: Annotated[
-        str | None,
-        typer.Option("--vercel-scope", help="Optional Vercel team/user scope."),
-    ] = None,
-    vercel_command: Annotated[
-        str | None,
-        typer.Option(
-            "--vercel-command",
-            help="Vercel command to run, e.g. 'vercel' or 'npx --yes vercel@latest'.",
-        ),
-    ] = None,
-    daemon_url: Annotated[
-        str | None,
-        typer.Option("--daemon-url", help="Public HTTPS URL for the VPS remote daemon."),
-    ] = None,
-    public_ip: Annotated[
-        str | None,
-        typer.Option("--public-ip", help="VPS public IPv4; creates https://<ip>.nip.io."),
-    ] = None,
-    detect_ip: Annotated[
-        bool,
-        typer.Option(
-            "--detect-ip/--no-detect-ip",
-            help="Detect public IPv4 during --apply when daemon URL is not provided.",
-        ),
-    ] = True,
-    vercel_origin: Annotated[
-        str | None,
-        typer.Option(
-            "--vercel-origin", help="Allowed browser origin; defaults to project.vercel.app."
-        ),
-    ] = None,
-    dashboard_password: Annotated[
-        str | None,
-        typer.Option("--dashboard-password", help="Dashboard login password to hash."),
-    ] = None,
-    generate_password: Annotated[
-        bool,
-        typer.Option(
-            "--generate-password/--no-generate-password",
-            help="Generate a dashboard password when none exists.",
-        ),
-    ] = True,
-    rotate_secrets: Annotated[
-        bool,
-        typer.Option(
-            "--rotate-secrets", help="Generate new remote/session secrets and password hash."
-        ),
-    ] = False,
-    owner: Annotated[
-        str,
-        typer.Option("--owner", help="Remote actor owner used in HMAC requests."),
-    ] = "owner",
-    skip_system: Annotated[
-        bool,
-        typer.Option("--skip-system", help="Do not install systemd or Caddy files."),
-    ] = False,
-    skip_vercel: Annotated[
-        bool,
-        typer.Option("--skip-vercel", help="Do not configure or deploy Vercel."),
-    ] = False,
-    skip_prepare: Annotated[
-        bool,
-        typer.Option("--skip-prepare", help="Do not run make deploy-prepare during apply."),
-    ] = False,
-    cleanup_vercel: Annotated[
-        bool,
-        typer.Option(
-            "--cleanup-vercel/--no-cleanup-vercel",
-            help="Safely remove stale Vercel deployments after a production deploy.",
-        ),
-    ] = True,
-    verify: Annotated[
-        bool,
-        typer.Option(
-            "--verify/--no-verify",
-            help="Run daemon, Vercel session, and BFF checks after apply.",
-        ),
-    ] = True,
-    use_sudo: Annotated[
-        bool,
-        typer.Option("--sudo", help="Prefix systemctl commands with sudo."),
-    ] = False,
-) -> None:
-    """Bootstrap Remote Dashboard from a VPS using Vercel as the password-session BFF."""
-    resolved_public_ip = public_ip
-    if apply and not daemon_url and not resolved_public_ip and detect_ip:
-        resolved_public_ip = detect_public_ip()
-    try:
-        config = build_vps_bootstrap_config(
-            project_root(),
-            apply=apply,
-            vercel_token=vercel_token,
-            vercel_project=vercel_project,
-            vercel_scope=vercel_scope,
-            vercel_command=vercel_command,
-            daemon_url=daemon_url,
-            public_ip=resolved_public_ip,
-            vercel_origin=vercel_origin,
-            dashboard_password=dashboard_password,
-            generate_password=generate_password,
-            rotate_secrets=rotate_secrets,
-            owner=owner,
-            skip_system=skip_system,
-            skip_vercel=skip_vercel,
-            skip_prepare=skip_prepare,
-            cleanup_vercel=cleanup_vercel,
-            verify=verify,
-            use_sudo=use_sudo,
-        )
-        if apply:
-            plan = apply_vps_bootstrap(config)
-        else:
-            if config.daemon_url:
-                write_system_templates(config)
-            plan = config.plan
-            write_vps_bootstrap_report(plan, config.root)
-    except VpsBootstrapError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-
-    table = Table(title="Open Composer VPS Bootstrap")
-    table.add_column("Item")
-    table.add_column("Value")
-    table.add_row("Status", plan.status)
-    table.add_row("Apply", str(plan.apply))
-    table.add_row("Daemon URL", plan.daemon_url or "missing")
-    table.add_row("Dashboard URL", plan.dashboard_url or plan.vercel_origin or "missing")
-    table.add_row("Vercel origin", plan.vercel_origin or "missing")
-    table.add_row("Vercel project", plan.vercel_project)
-    table.add_row("Vercel cleanup", "enabled" if plan.cleanup_vercel else "disabled")
-    table.add_row("Report", plan.report_markdown_path or "")
-    if plan.deployment_url:
-        table.add_row("Deployment URL", plan.deployment_url)
-    if plan.generated_password_path:
-        table.add_row("Password path", plan.generated_password_path)
-    table.add_row("Verify", "enabled" if plan.verify_enabled else "skipped")
-    console.print(table)
-    if config.generated_dashboard_password and apply and plan.generated_password_path:
-        console.print(
-            "[yellow]generated dashboard password written to[/yellow] "
-            f"{plan.generated_password_path}"
-        )
-    if not apply:
-        console.print("[yellow]dry run only[/yellow] rerun with --apply to deploy.")
-    if plan.status == "blocked":
-        raise typer.Exit(code=1)
-
-
-@agent_app.command("request-create")
-def agent_request_create_command(
-    title: Annotated[str, typer.Option("--title", help="Short request title.")],
-    prompt: Annotated[str, typer.Option("--prompt", help="Task prompt for Codex or Claude Code.")],
-    task_type: Annotated[
-        str,
-        typer.Option(
-            "--task-type",
-            help="research, review, parameter_scan, or strategy_optimization.",
-        ),
-    ] = "research",
-    related_path: Annotated[
-        list[str] | None,
-        typer.Option("--related-path", help="Workspace-relative path to link to the request."),
-    ] = None,
-    requested_by: Annotated[
-        str,
-        typer.Option("--requested-by", help="Actor recorded on the request."),
-    ] = "dashboard",
-) -> None:
-    """Create a file-backed agent request for Codex or Claude Code follow-up."""
-    try:
-        request = create_agent_request(
-            AgentRequestCreate(
-                requested_by=requested_by,
-                task_type=task_type,  # type: ignore[arg-type]
-                title=title,
-                prompt=prompt,
-                related_paths=related_path or [],
-            ),
-            project_root(),
-        )
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    console.print(
-        f"[green]agent request written[/green] reports/agent_requests/{request.request_id}.json"
-    )
-
-
-@agent_app.command("request-list")
-def agent_request_list_command() -> None:
-    """List file-backed agent requests."""
-    table = Table(title="Open Composer Agent Requests")
-    table.add_column("Request")
-    table.add_column("Status")
-    table.add_column("Type")
-    table.add_column("Title")
-    for request in list_agent_requests(project_root()):
-        table.add_row(request.request_id, request.status, request.task_type, request.title)
-    console.print(table)
-
-
-@agent_app.command("request-complete")
-def agent_request_complete_command(
-    request_id: str,
-    result_link: Annotated[
-        list[str],
-        typer.Option("--result-link", help="Workspace-relative result path to link."),
-    ],
-) -> None:
-    """Mark an agent request completed and attach result links."""
-    try:
-        request = complete_agent_request(
-            request_id,
-            result_links=result_link,
-            root=project_root(),
-        )
-    except (FileNotFoundError, ValueError) as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    console.print(f"[green]agent request completed[/green] {request.request_id}")
-
-
 @project_app.command("create")
 def project_create_command(
     name: Annotated[str, typer.Option("--name", help="StrategyProject display name.")],
@@ -1365,7 +1020,7 @@ def project_create_command(
     requested_by: Annotated[str, typer.Option("--requested-by")] = "cli",
     use_llm: Annotated[bool, typer.Option("--use-llm/--no-llm")] = False,
 ) -> None:
-    """Create a lightweight StrategyProject and agent request."""
+    """Create a lightweight StrategyProject."""
     try:
         project, request = create_project(
             StrategyProjectCreate(
@@ -2148,25 +1803,34 @@ def strategy_geometry_features(
     console.print(f"json: {result.json_path}")
 
 
-@strategy_app.command("research-report")
+@strategy_app.command("evidence")
+def strategy_evidence(spec: Path) -> None:
+    """Run the consolidated research evidence pipeline for a StrategySpec."""
+    _print_strategy_evidence(spec)
+
+
+def _print_strategy_evidence(spec: Path) -> None:
+    result = build_strategy_evidence(spec, project_root())
+    console.print(f"[green]strategy evidence complete[/green] status={result.status}")
+    console.print(f"contract: {result.research_report.contract_path}")
+    console.print(f"report: {result.research_report.report_path}")
+    console.print(f"json: {result.research_report.json_path}")
+    console.print(f"state: {result.control.state_path}")
+    console.print(f"memory: {result.control.memory_path}")
+
+
+@strategy_app.command("research-report", hidden=True)
 def strategy_research_report(spec: Path) -> None:
-    """Run the default research contract pipeline for a StrategySpec."""
-    result = build_strategy_research_report(spec, project_root())
-    control = update_research_control(spec, project_root())
-    console.print(f"[green]research report complete[/green] status={result.status}")
-    console.print(f"contract: {result.contract_path}")
-    console.print(f"report: {result.report_path}")
-    console.print(f"json: {result.json_path}")
-    console.print(f"memory: {control.memory_path}")
+    """[DEPRECATED] Use `oc strategy evidence`."""
+    console.print("[yellow][DEPRECATED][/yellow] Use `oc strategy evidence`.")
+    _print_strategy_evidence(spec)
 
 
-@strategy_app.command("research-control")
+@strategy_app.command("research-control", hidden=True)
 def strategy_research_control(spec: Path) -> None:
-    """Refresh the compact research state and LLM memory packet for a StrategySpec."""
-    result = update_research_control(spec, project_root())
-    console.print(f"[green]research control updated[/green] strategy={result.strategy_name}")
-    console.print(f"state: {result.state_path}")
-    console.print(f"memory: {result.memory_path}")
+    """[DEPRECATED] Use `oc strategy evidence`."""
+    console.print("[yellow][DEPRECATED][/yellow] Use `oc strategy evidence`.")
+    _print_strategy_evidence(spec)
 
 
 @strategy_app.command("dag-validate")
@@ -4684,7 +4348,7 @@ def strategy_diff(
     console.print(f"\nsummary: {result['summary']}")
 
 
-@strategy_app.command("research-workflow")
+@strategy_app.command("research-workflow", hidden=True)
 def strategy_research_workflow(
     spec: Path,
     stage: Annotated[
@@ -4699,123 +4363,10 @@ def strategy_research_workflow(
         ),
     ] = True,
 ) -> None:
-    """Run the core research workflow for a StrategySpec and record harness evidence."""
-    from open_composer.harness.runs import append_run
-    from open_composer.harness.stages import check_stage
-    from open_composer.strategy_versions import strategy_content_hash
-
-    root = project_root()
-    try:
-        spec_obj = load_strategy_spec(spec)
-        spec_hash = strategy_content_hash(spec_obj)
-        workflow_artifacts: dict[str, str] = {}
-        if (
-            spec_obj.portfolio.mode
-            in {
-                "hybrid_adaptive_router",
-                "beta_exposure_router",
-                "core_beta_satellite_router",
-            }
-            and spec_obj.data.source != "sample"
-        ):
-            try:
-                target_result = _run_router_target_weights_for_workflow(spec, spec_obj, root)
-                workflow_artifacts["target_weights_report"] = _project_relpath(
-                    str(target_result.report_path), root
-                )
-                workflow_artifacts["target_weights_json"] = _project_relpath(
-                    str(target_result.json_path), root
-                )
-            except Exception as exc:
-                workflow_artifacts["target_weights_error"] = str(exc)
-        if spec_obj.position_direction in {"short_only", "long_short"}:
-            short_result = build_short_risk_report(spec, root)
-            workflow_artifacts["short_risk_report"] = _project_relpath(
-                str(short_result.report_path), root
-            )
-        if spec_obj.llm_review.enabled or any(
-            factor.source in {"llm_feature", "feature_packet"}
-            for factor in spec_obj.factors.values()
-        ):
-            alt_result = build_alternative_data_evidence(spec, root)
-            workflow_artifacts["alternative_data_evidence"] = _project_relpath(
-                str(alt_result.report_path), root
-            )
-        harness_status, harness_results = check_stage(stage, spec, root)
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    backtest_evidence = _gate_evidence(harness_results, "reference_backtest")
-    promotion_evidence = _gate_evidence(harness_results, "promotion_report")
-
-    log_path = None
-    if record:
-        log_path = append_run(
-            strategy_name=spec_obj.name,
-            spec_hash=spec_hash,
-            stage=stage,
-            results=harness_results,
-            root=root,
-            extra={
-                "workflow": "strategy.research_workflow",
-                "artifacts": {
-                    "backtest_report": _project_relpath(
-                        str(backtest_evidence.get("report_path") or ""), root
-                    ),
-                    "signal_log": _project_relpath(
-                        str(backtest_evidence.get("signal_log_path") or ""), root
-                    ),
-                    "promotion_report": _project_relpath(
-                        str(promotion_evidence.get("report_path") or ""), root
-                    ),
-                    "promotion_json": _project_relpath(
-                        str(promotion_evidence.get("json_path") or ""), root
-                    ),
-                    **workflow_artifacts,
-                },
-                "promotion_status": _gate_status(harness_results, "promotion_report"),
-            },
-        )
-
-    console.print(
-        f"[green]research workflow complete[/green] strategy={spec_obj.name} "
-        f"backtest={backtest_evidence.get('run_id') or 'n/a'} "
-        f"promotion={_gate_status(harness_results, 'promotion_report') or 'n/a'} "
-        f"harness={harness_status}"
-    )
-    console.print(f"backtest report: {backtest_evidence.get('report_path') or 'n/a'}")
-    console.print(f"signals: {backtest_evidence.get('signal_log_path') or 'n/a'}")
-    console.print(f"promotion report: {promotion_evidence.get('report_path') or 'n/a'}")
-    console.print(f"promotion json: {promotion_evidence.get('json_path') or 'n/a'}")
-    if log_path:
-        console.print(f"harness log: {log_path}")
-    if workflow_artifacts:
-        console.print(f"workflow artifacts: {workflow_artifacts}")
-    if harness_status == "blocked":
-        raise typer.Exit(code=1)
-
-
-def _run_router_target_weights_for_workflow(spec: Path, spec_obj, root: Path):
-    if spec_obj.portfolio.mode == "hybrid_adaptive_router":
-        return run_hybrid_target_weight_mapping(
-            spec,
-            root,
-            symbols=list(spec_obj.universe),
-            data_source=spec_obj.data.source,
-        )
-    if spec_obj.portfolio.mode == "beta_exposure_router":
-        return run_beta_target_weight_mapping(
-            spec,
-            root,
-            data_source=spec_obj.data.source,
-        )
-    if spec_obj.portfolio.mode == "core_beta_satellite_router":
-        return run_core_beta_satellite_target_weight_mapping(
-            spec,
-            root,
-            symbols=list(spec_obj.universe),
-            data_source=spec_obj.data.source,
-        )
-    raise ValueError(f"unsupported router mode: {spec_obj.portfolio.mode}")
+    """[DEPRECATED] Use `oc strategy evidence`."""
+    _ = stage, record
+    console.print("[yellow][DEPRECATED][/yellow] Use `oc strategy evidence`.")
+    _print_strategy_evidence(spec)
 
 
 @harness_app.command("check")

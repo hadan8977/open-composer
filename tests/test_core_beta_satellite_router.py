@@ -49,7 +49,7 @@ def test_core_beta_satellite_router_reports_ablation_and_pit_timing(
         return normalize_ohlcv(frames[symbol].copy())
 
     monkeypatch.setattr(
-        "open_composer.research.core_beta_satellite_router.fetch_ohlcv",
+        "open_composer.research.core_beta_satellite_core.fetch_ohlcv",
         fake_fetch_ohlcv,
     )
     spec_path = _write_spec(sample_workspace, "core_beta_satellite_fixture")

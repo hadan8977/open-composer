@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -11,22 +13,27 @@ from open_composer.json_utils import json_safe_payload
 from open_composer.models.signal import Signal
 
 
-def model_to_record(model: BaseModel) -> dict:
-    return model.model_dump(mode="json")
+def model_to_record(model: Any) -> dict:
+    if hasattr(model, "model_dump"):
+        return model.model_dump(mode="json")
+    if is_dataclass(model) and not isinstance(model, type):
+        return asdict(model)
+    return dict(model)
 
 
-def append_jsonl(path: Path, rows: Iterable[BaseModel | dict]) -> Path:
+def append_jsonl(path: Path, rows: Iterable[BaseModel | dict | Any]) -> Path:
     ensure_dir(path.parent)
     with path.open("a", encoding="utf-8") as handle:
         for row in rows:
-            record = model_to_record(row) if isinstance(row, BaseModel) else row
+            record = row if isinstance(row, dict) else model_to_record(row)
+            record = json_safe_payload(record)
             handle.write(json.dumps(record, sort_keys=True) + "\n")
     return path
 
 
-def write_json(path: Path, model: BaseModel | dict) -> Path:
+def write_json(path: Path, model: BaseModel | dict | Any) -> Path:
     ensure_dir(path.parent)
-    record = model_to_record(model) if isinstance(model, BaseModel) else model
+    record = model if isinstance(model, dict) else model_to_record(model)
     record = json_safe_payload(record)
     path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path

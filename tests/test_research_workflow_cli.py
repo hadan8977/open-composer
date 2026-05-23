@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -8,7 +7,7 @@ from typer.testing import CliRunner
 from open_composer.cli import app
 
 
-def test_strategy_research_workflow_writes_artifacts_and_harness_log(
+def test_strategy_research_workflow_aliases_strategy_evidence(
     sample_workspace: Path,
     monkeypatch,
 ) -> None:
@@ -21,38 +20,15 @@ def test_strategy_research_workflow_writes_artifacts_and_harness_log(
         catch_exceptions=False,
     )
 
-    assert result.exit_code == 1
-    assert "research workflow complete" in result.output
-    assert "promotion=blocked" in result.output
-    assert "harness=blocked" in result.output
+    assert result.exit_code == 0
+    assert "[DEPRECATED]" in result.output
+    assert "strategy evidence complete" in result.output
 
     promotion_json = (
         sample_workspace / "reports" / "research" / "fixture_pullback_15m-promotion.json"
     )
     promotion_report = promotion_json.with_suffix(".md")
-    harness_log = sample_workspace / "reports" / "research" / "harness-runs.jsonl"
 
     assert promotion_json.exists()
     assert promotion_report.exists()
-    assert harness_log.exists()
-
-    records = [
-        json.loads(line)
-        for line in harness_log.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-    assert len(records) == 1
-    record = records[0]
-    assert record["workflow"] == "strategy.research_workflow"
-    assert record["stage"] == "promotion"
-    assert record["status"] == "blocked"
-    assert record["promotion_status"] == "blocked"
-    assert (
-        record["artifacts"]["promotion_json"]
-        == "reports/research/fixture_pullback_15m-promotion.json"
-    )
-    assert (
-        record["artifacts"]["promotion_report"]
-        == "reports/research/fixture_pullback_15m-promotion.md"
-    )
-    assert any(gate["name"] == "promotion_report" for gate in record["gate_results"])
+    assert not (sample_workspace / "reports" / "research" / "harness-runs.jsonl").exists()

@@ -1,61 +1,58 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from open_composer.models.strategy_spec import StrategySpec
+from open_composer.research.kernel.datamodel import ResearchDataModel
 from open_composer.strategy_versions import strategy_content_hash
 
 
-class ResearchBrief(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+@dataclass(frozen=True)
+class ResearchBrief(ResearchDataModel):
     strategy_name: str
     objective: str
     hypothesis: str
     target_market: str
     default_risk: str = "manual_signal_only_until_research_and_paper_readiness_pass"
-    constraints: list[str] = Field(default_factory=list)
-    required_questions: list[str] = Field(default_factory=list)
+    constraints: list[str] = field(default_factory=list)
+    required_questions: list[str] = field(default_factory=list)
 
 
-class SearchSpace(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+@dataclass(frozen=True)
+class SearchSpace(ResearchDataModel):
     family: str
     candidate_count: int = 1
     max_candidates: int = 1
-    method_variants: list[str] = Field(default_factory=list)
-    factor_variants: list[str] = Field(default_factory=list)
-    universe_variants: list[list[str]] = Field(default_factory=list)
-    parameter_ranges: dict[str, list[Any]] = Field(default_factory=dict)
-    cost_assumptions: dict[str, Any] = Field(default_factory=dict)
-    filters: list[str] = Field(default_factory=list)
+    method_variants: list[str] = field(default_factory=list)
+    factor_variants: list[str] = field(default_factory=list)
+    universe_variants: list[list[str]] = field(default_factory=list)
+    parameter_ranges: dict[str, list[Any]] = field(default_factory=dict)
+    cost_assumptions: dict[str, Any] = field(default_factory=dict)
+    filters: list[str] = field(default_factory=list)
 
 
-class ResearchRunIndexRecord(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
+@dataclass(frozen=True)
+class ResearchRunIndexRecord(ResearchDataModel):
     run_id: str
-    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     strategy_name: str
     source_spec_path: str
+    generated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     spec_hash: str | None = None
     status: Literal["ok", "warning", "blocked"] = "warning"
     kind: str = "research_report"
-    data_profile: dict[str, Any] = Field(default_factory=dict)
+    data_profile: dict[str, Any] = field(default_factory=dict)
     candidate_count: int = 1
     trial_count: int = 1
     runtime_seconds: float | None = None
     gate_status: Literal["ok", "warning", "blocked"] = "warning"
-    blocked_items: list[str] = Field(default_factory=list)
-    warning_items: list[str] = Field(default_factory=list)
+    blocked_items: list[str] = field(default_factory=list)
+    warning_items: list[str] = field(default_factory=list)
     report_path: str | None = None
     json_path: str | None = None
     contract_path: str | None = None
-    source_artifacts: dict[str, str | None] = Field(default_factory=dict)
+    source_artifacts: dict[str, str | None] = field(default_factory=dict)
 
 
 def build_default_research_brief(spec: StrategySpec) -> ResearchBrief:
