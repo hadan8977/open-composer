@@ -38,6 +38,42 @@ def test_alpaca_fetch_filters_cache_when_window_is_supplied(sample_workspace: Pa
     assert frame["timestamp"].max() <= __import__("pandas").Timestamp("2026-01-02T16:00:00Z")
 
 
+def test_alpaca_daily_fetch_resamples_intraday_cache_when_daily_cache_is_short(
+    sample_workspace: Path,
+) -> None:
+    cache = sample_workspace / "data" / "cache" / "qqq_15m_iex.csv"
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.write_text(
+        "\n".join(
+            [
+                "timestamp,open,high,low,close,volume",
+                "2026-01-02T14:30:00Z,100,101,99,100.5,1000",
+                "2026-01-02T14:45:00Z,100.5,102,100,101.5,1100",
+                "2026-01-05T14:30:00Z,102,103,101,102.5,1200",
+                "2026-01-05T14:45:00Z,102.5,104,102,103.5,1300",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    frame = fetch_alpaca_bars(
+        sample_workspace,
+        "QQQ",
+        "daily",
+        datetime(2026, 1, 2, tzinfo=UTC),
+        datetime(2026, 1, 5, 23, tzinfo=UTC),
+        "iex",
+    )
+
+    assert list(frame["close"]) == [101.5, 103.5]
+    assert frame.attrs["data_source_mode"] == "cache_resampled"
+    manifest = sample_workspace / "data" / "cache" / "manifests" / "qqq_daily_alpaca_iex.json"
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    assert payload["source_mode"] == "cache_resampled"
+    assert payload["request_params"]["resampled_from"] == "qqq_15m_iex.csv"
+
+
 def test_alpaca_fetch_refreshes_when_cache_does_not_cover_requested_window(
     sample_workspace: Path,
     monkeypatch,

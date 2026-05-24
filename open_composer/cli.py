@@ -32,6 +32,9 @@ from open_composer.adapters.data.longbridge import (
 )
 from open_composer.adapters.events import fetch_capability_events
 from open_composer.adapters.execution import build_nautilus_trader_plan, write_nautilus_trader_plan
+from open_composer.adapters.execution.adaptive_intraday_target_weights import (
+    run_adaptive_intraday_target_weight_mapping,
+)
 from open_composer.adapters.execution.beta_target_weights import run_beta_target_weight_mapping
 from open_composer.adapters.execution.core_beta_satellite_target_weights import (
     run_core_beta_satellite_target_weight_mapping,
@@ -713,6 +716,10 @@ def feature_materialize_command(
         str | None,
         typer.Option("--factor", help="Single llm_feature factor; omit for all."),
     ] = None,
+    symbols: Annotated[
+        str | None,
+        typer.Option("--symbols", help="Optional comma-separated symbol subset to materialize."),
+    ] = None,
     backend: Annotated[
         str,
         typer.Option("--backend", help="openai or local_test_stub."),
@@ -732,10 +739,20 @@ def feature_materialize_command(
         if factor
         else [name for name, config in spec_obj.factors.items() if config.source == "llm_feature"]
     )
+    selected_symbols = (
+        [item.strip().upper() for item in symbols.split(",") if item.strip()] if symbols else None
+    )
     if not targets:
         raise typer.BadParameter("spec has no source=llm_feature factors")
     for name in targets:
-        result = materialize_factor(spec, name, root=root, backend=backend, refresh=refresh)
+        result = materialize_factor(
+            spec,
+            name,
+            root=root,
+            backend=backend,
+            refresh=refresh,
+            symbols=selected_symbols,
+        )
         console.print(
             f"[green]{name}[/green] packets={result.packet_count} "
             f"hits={result.cache_hits} misses={result.cache_misses} "
@@ -2692,8 +2709,10 @@ def strategy_adaptive_intraday_router(
         f"flags={','.join(best.quality_flags) if best.quality_flags else 'none'}"
     )
     console.print(
-        f"routes={result.research_cost['route_candidate_count']} "
-        f"base_candidates={result.research_cost['candidate_count']} "
+        f"candidates={result.research_cost.get('candidate_count', 0)} "
+        f"walk_forward_candidates="
+        f"{result.research_cost.get('walk_forward_candidate_count', 0)} "
+        f"estimated_passes={result.research_cost.get('estimated_total_backtest_passes', 0)} "
         f"runtime={result.runtime_seconds['total']:.2f}s"
     )
 
@@ -3175,7 +3194,9 @@ def strategy_beta_router_research(
             end=end,
             market_symbol=market_symbol,
             leverage_symbol=leverage_symbol,
-            hedge_symbol=hedge_symbol,
+            hedge_symbol=None
+            if hedge_symbol is not None and hedge_symbol.strip().lower() in {"", "none", "cash"}
+            else hedge_symbol,
             trend_sma_days=trend_sma_days,
             momentum_lookback_days=momentum_lookback_days,
             min_momentum_pct=min_momentum_pct,
@@ -3673,7 +3694,19 @@ def strategy_target_weights(
         [item.strip().upper() for item in symbols.split(",") if item.strip()] if symbols else None
     )
     try:
-        if spec_obj.portfolio.mode == "hybrid_adaptive_router":
+        if spec_obj.portfolio.mode == "adaptive_intraday_internal_router":
+            result = run_adaptive_intraday_target_weight_mapping(
+                spec,
+                project_root(),
+                symbols=parsed_symbols or spec_obj.universe,
+                data_source=data_source,
+                start=start,
+                end=end,
+                selected_route_label=selected_route_label,
+                refresh_data=refresh_data,
+            )
+            status = result.parity_status
+        elif spec_obj.portfolio.mode == "hybrid_adaptive_router":
             result = run_hybrid_target_weight_mapping(
                 spec,
                 project_root(),

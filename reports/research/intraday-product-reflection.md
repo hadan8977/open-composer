@@ -1,7 +1,7 @@
 # Intraday Strategy Product Reflection
 
-- Pure quant report: `/root/codex-test/open-composer/reports/research/nasdaq_intraday_cycle_reversal_1m-intraday-daily-rotation.md`
-- LLM meta-selection report: `/root/codex-test/open-composer/reports/research/nasdaq_intraday_cycle_reversal_1m_llm-llm-intraday-selection.md`
+- Pure quant report: `/root/codex-test/open-composer/reports/research/nasdaq_long_short_event_router_15m_sweep_001-intraday-daily-rotation.md`
+- LLM meta-selection report: `/root/codex-test/open-composer/reports/research/nasdaq_long_short_event_router_15m_sweep_001-llm-intraday-selection.md`
 
 ## What Worked
 

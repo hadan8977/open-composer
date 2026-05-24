@@ -16,6 +16,8 @@ def signal_masks(
     frame: pd.DataFrame,
     root: Path | None = None,
 ) -> tuple[pd.Series, pd.Series]:
+    frame = frame.copy()
+    frame.attrs.update({"strategy_name": spec.name})
     entry = evaluate_rule_block(
         frame,
         spec.entry.all,

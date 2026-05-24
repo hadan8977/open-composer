@@ -7,15 +7,15 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from open_composer.adapters.data import load_ohlcv_for_spec
-from open_composer.config import default_openai_model, ensure_dir, project_root
+from open_composer.adapters.data import fetch_ohlcv, load_ohlcv_for_spec
+from open_composer.config import data_feed, default_openai_model, ensure_dir, project_root
 from open_composer.feature_packets import (
     FeaturePacketEvidence,
     FeaturePacketRow,
     default_materialized_feature_path,
     write_feature_packet,
 )
-from open_composer.models.strategy_spec import FactorConfig, load_strategy_spec
+from open_composer.models.strategy_spec import FactorConfig, StrategySpec, load_strategy_spec
 from open_composer.research.llm_backends import get_backend
 from open_composer.storage import append_jsonl, write_json
 
@@ -46,6 +46,7 @@ def materialize_factor(
     root: Path | None = None,
     backend: str = "openai",
     refresh: bool = False,
+    symbols: list[str] | None = None,
 ) -> MaterializationResult:
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
@@ -71,94 +72,96 @@ def materialize_factor(
     existing = _read_existing_keys(packets_path) if not refresh else set()
     llm = get_backend(backend)
 
-    frame = load_ohlcv_for_spec(spec, base)
-    rows = _input_rows(frame, spec.primary_symbol)
+    target_symbols = [item.upper() for item in (symbols or [spec.primary_symbol])]
     cache_hits = 0
     cache_misses = 0
     errors = 0
     packet_count = 0
     output_schema = factor.output_schema.model_dump(mode="json") if factor.output_schema else {}
-    for row in rows:
-        input_payload = _input_payload(row, factor)
-        input_hash = _hash_json(input_payload)
-        key = _cache_key(
-            symbol=spec.primary_symbol,
-            visible_at=row["visible_at"],
-            input_view_version=int(factor.input_view_version or 1),
-            input_hash=input_hash,
-            prompt_hash=prompt_hash,
-            model=model,
-        )
-        if key in existing:
-            cache_hits += 1
-            continue
-        cache_misses += 1
-        try:
-            output = llm.infer(
-                model=model,
-                prompt=prompt,
-                input_payload=input_payload,
-                output_schema=output_schema,
-            )
-            features = _features_from_output(output, factor)
-            packet = FeaturePacketRow(
-                timestamp=row["timestamp"],
-                published_at=row["timestamp"],
-                fetched_at=datetime.now(UTC),
+    for symbol in target_symbols:
+        frame = _load_symbol_frame(spec, base, symbol, refresh=refresh)
+        rows = _input_rows(frame, symbol)
+        for row in rows:
+            input_payload = _input_payload(row, factor)
+            input_hash = _hash_json(input_payload)
+            key = _cache_key(
+                symbol=symbol,
                 visible_at=row["visible_at"],
-                source=f"llm_materialize:{factor.input_view}",
-                symbol=spec.primary_symbol,
-                dedupe_key=key,
-                schema_version=SCHEMA_VERSION,
-                summary=f"Materialized {factor_name} from {factor.input_view}.",
-                model=model,
+                input_view_version=int(factor.input_view_version or 1),
                 input_hash=input_hash,
                 prompt_hash=prompt_hash,
-                features=features,
-                evidence=FeaturePacketEvidence(
-                    single_modality_baseline_metric="pending_promotion_quant_baseline",
-                    marginal_lift_metric="pending_promotion_marginal_lift",
-                    missing_modality_robustness="pending_promotion_missing_modality",
-                    notes=(
-                        "Materialized packet; promotion writes aggregate marginal evidence "
-                        "for this factor."
+                model=model,
+            )
+            if key in existing:
+                cache_hits += 1
+                continue
+            cache_misses += 1
+            try:
+                output = llm.infer(
+                    model=model,
+                    prompt=prompt,
+                    input_payload=input_payload,
+                    output_schema=output_schema,
+                )
+                features = _features_from_output(output, factor)
+                packet = FeaturePacketRow(
+                    timestamp=row["timestamp"],
+                    published_at=row["timestamp"],
+                    fetched_at=datetime.now(UTC),
+                    visible_at=row["visible_at"],
+                    source=f"llm_materialize:{factor.input_view}",
+                    symbol=symbol,
+                    dedupe_key=key,
+                    schema_version=SCHEMA_VERSION,
+                    summary=f"Materialized {factor_name} from {factor.input_view}.",
+                    model=model,
+                    input_hash=input_hash,
+                    prompt_hash=prompt_hash,
+                    features=features,
+                    evidence=FeaturePacketEvidence(
+                        single_modality_baseline_metric="pending_promotion_quant_baseline",
+                        marginal_lift_metric="pending_promotion_marginal_lift",
+                        missing_modality_robustness="pending_promotion_missing_modality",
+                        notes=(
+                            "Materialized packet; promotion writes aggregate marginal evidence "
+                            "for this factor."
+                        ),
                     ),
-                ),
-                input_view=str(factor.input_view),
-                input_view_version=factor.input_view_version,
-            )
-            write_feature_packet(packets_path, packet)
-            append_jsonl(
-                trial_ledger_path,
-                [
-                    {
-                        "ts": datetime.now(UTC).isoformat(),
-                        "dedupe_key": key,
-                        "status": "ok",
-                        "input_hash": input_hash,
-                        "prompt_hash": prompt_hash,
-                        "model": model,
-                    }
-                ],
-            )
-            existing.add(key)
-            packet_count += 1
-        except Exception as exc:  # noqa: BLE001 - per-row materialization ledger
-            errors += 1
-            append_jsonl(
-                trial_ledger_path,
-                [
-                    {
-                        "ts": datetime.now(UTC).isoformat(),
-                        "dedupe_key": key,
-                        "status": "error",
-                        "error": str(exc),
-                        "input_hash": input_hash,
-                        "prompt_hash": prompt_hash,
-                        "model": model,
-                    }
-                ],
-            )
+                    input_view=str(factor.input_view),
+                    input_view_version=factor.input_view_version,
+                )
+                write_feature_packet(packets_path, packet)
+                append_jsonl(
+                    trial_ledger_path,
+                    [
+                        {
+                            "ts": datetime.now(UTC).isoformat(),
+                            "dedupe_key": key,
+                            "status": "ok",
+                            "input_hash": input_hash,
+                            "prompt_hash": prompt_hash,
+                            "model": model,
+                        }
+                    ],
+                )
+                existing.add(key)
+                packet_count += 1
+            except Exception as exc:  # noqa: BLE001 - per-row materialization ledger
+                errors += 1
+                append_jsonl(
+                    trial_ledger_path,
+                    [
+                        {
+                            "ts": datetime.now(UTC).isoformat(),
+                            "dedupe_key": key,
+                            "status": "error",
+                            "error": str(exc),
+                            "input_hash": input_hash,
+                            "prompt_hash": prompt_hash,
+                            "model": model,
+                        }
+                    ],
+                )
 
     result = MaterializationResult(
         strategy_name=spec.name,
@@ -193,6 +196,27 @@ def _validate_materializable_factor(name: str, factor: FactorConfig) -> None:
     ]
     if missing:
         raise ValueError(f"llm_feature factor {name} is missing: {', '.join(missing)}")
+
+
+def _load_symbol_frame(
+    spec: StrategySpec,
+    root: Path,
+    symbol: str,
+    *,
+    refresh: bool = False,
+) -> Any:
+    if spec.data.source == "sample":
+        return load_ohlcv_for_spec(spec, root, refresh=refresh)
+    return fetch_ohlcv(
+        root=root,
+        symbol=symbol,
+        timeframe=spec.timeframe,
+        start=None,
+        end=None,
+        source=spec.data.source,
+        feed=spec.data.feed or data_feed(),
+        use_cache=not refresh,
+    )
 
 
 def _input_rows(frame, symbol: str) -> list[dict[str, Any]]:

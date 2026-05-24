@@ -299,7 +299,7 @@ def test_adaptive_router_promotion_report_uses_router_research_artifacts(
         sample_workspace
         / "reports"
         / "research"
-        / ("adaptive_router_promotion-llm-adaptive-router.json")
+        / ("adaptive_router_promotion-llm-intraday-selection.json")
     )
     llm_json.write_text(
         json.dumps(
@@ -328,7 +328,7 @@ def test_adaptive_router_promotion_report_uses_router_research_artifacts(
             '"evidence":{"single_modality_baseline_metric":"baseline_oos_alpha=198.8",'
             '"marginal_lift_metric":"lift=0.0",'
             '"missing_modality_robustness":"missing_news_oos_alpha=198.8",'
-            '"fixture_path":"reports/research/adaptive_router_promotion-llm-adaptive-router.json"}}\n'
+            '"fixture_path":"reports/research/adaptive_router_promotion-llm-intraday-selection.json"}}\n'
         ),
         encoding="utf-8",
     )
@@ -366,6 +366,246 @@ def test_adaptive_router_promotion_report_uses_router_research_artifacts(
         "adaptive_router_promotion-adaptive-intraday-router.json"
     )
     assert "adaptive_intraday_router_promotion" in report_path.read_text(encoding="utf-8")
+
+
+def test_adaptive_router_promotion_selects_intraday_candidate_by_generated_label(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "adaptive_router_label.yaml"
+    selected_label = "open_momentum:lb3_entry1_top1_open0_mom0_rv0.8_qopen_positive"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "adaptive_router_label"
+    raw["universe"] = ["AAPL", "MSFT", "QQQ"]
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["factors"] = {}
+    raw["portfolio"] = {
+        "mode": "adaptive_intraday_internal_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 0.15,
+        "max_symbol_weight": 0.15,
+        "same_day_flatten": True,
+        "selected_route_label": selected_label,
+    }
+    spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    research_json = (
+        sample_workspace
+        / "reports"
+        / "research"
+        / "adaptive_router_label-adaptive-intraday-router.json"
+    )
+    research_json.parent.mkdir(parents=True, exist_ok=True)
+    research_json.write_text(
+        json.dumps(
+            {
+                "data_profile": {
+                    "source_mode": "live_fetch",
+                    "provider": "alpaca",
+                    "feed": "iex",
+                },
+                "pass_status": {"workflow_pass": True, "research_pass": False},
+                "acceptance_gate": {
+                    "passed": False,
+                    "oos_sharpe_ratio": 1.0,
+                    "oos_traded_days": 12,
+                    "walk_forward_fold_count": 2,
+                    "walk_forward_positive_alpha_folds": 1,
+                    "quality_flags": ["oos_no_annualized_alpha_vs_benchmark_buy_hold"],
+                },
+                "research_cost": {"estimated_total_backtest_passes": 2},
+                "candidates": [
+                    {
+                        "rank": 1,
+                        "params": {
+                            "selection_style": "opening_reversal",
+                            "lookback_days": 3,
+                            "entry_after_bars": 1,
+                            "top_n": 1,
+                            "min_opening_return_pct": 0.0,
+                            "min_prior_momentum_pct": 0.0,
+                            "min_relative_volume": 1.0,
+                            "max_opening_return_pct": 0.0,
+                            "max_prior_momentum_pct": None,
+                            "market_gate": "qqq_open_positive",
+                        },
+                        "quality_flags": [],
+                        "out_of_sample": {"sharpe_ratio": 1.0, "traded_days": 12},
+                        "full_window": {"benchmark_symbol": "QQQ", "best_symbol": "AAPL"},
+                    },
+                    {
+                        "rank": 2,
+                        "params": {
+                            "selection_style": "opening_momentum",
+                            "lookback_days": 3,
+                            "entry_after_bars": 1,
+                            "top_n": 1,
+                            "min_opening_return_pct": 0.0,
+                            "min_prior_momentum_pct": 0.0,
+                            "min_relative_volume": 0.8,
+                            "max_opening_return_pct": None,
+                            "max_prior_momentum_pct": None,
+                            "market_gate": "qqq_open_positive",
+                        },
+                        "quality_flags": [],
+                        "out_of_sample": {"sharpe_ratio": 1.2, "traded_days": 13},
+                        "full_window": {"benchmark_symbol": "QQQ", "best_symbol": "MSFT"},
+                    },
+                ],
+                "walk_forward": [{"fold": 1}, {"fold": 2}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+
+    result = CliRunner().invoke(
+        app,
+        ["strategy", "promotion-report", str(spec_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(
+        (
+            sample_workspace / "reports" / "research" / "adaptive_router_label-promotion.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert payload["selected_route"]["rank"] == 2
+    assert payload["selected_route"]["params"]["min_relative_volume"] == 0.8
+
+
+def test_adaptive_router_promotion_treats_llm_feature_as_llm_related(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "adaptive_router_llm_feature.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "adaptive_router_llm_feature"
+    raw["universe"] = ["AAPL", "MSFT", "QQQ"]
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["llm_review"] = {"enabled": False, "model": None}
+    raw["portfolio"] = {
+        "mode": "adaptive_intraday_internal_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 0.15,
+        "max_symbol_weight": 0.15,
+        "same_day_flatten": True,
+        "selected_route_label": "open_momentum:lb3_entry1_top1_open0_mom0_rv0.8_none",
+    }
+    raw["factors"] = {
+        "event_risk_score": {
+            "source": "llm_feature",
+            "field": "score",
+            "default": 0.0,
+            "description": "Materialized LLM event-risk score.",
+            "input_view": "test_event_view",
+            "input_view_version": 1,
+            "prompt_template_path": "prompts/examples/event_risk.md",
+            "output_schema": {
+                "type": "object",
+                "required": ["score"],
+                "properties": {"score": {"type": "number"}},
+            },
+            "cache_policy": {"mode": "materialize_then_replay", "key_fields": ["symbol"]},
+            "model_ref": "local-test",
+        }
+    }
+    spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    research_json = (
+        sample_workspace
+        / "reports"
+        / "research"
+        / "adaptive_router_llm_feature-adaptive-intraday-router.json"
+    )
+    research_json.parent.mkdir(parents=True, exist_ok=True)
+    research_json.write_text(
+        json.dumps(
+            {
+                "data_profile": {"source_mode": "live_fetch", "provider": "alpaca"},
+                "pass_status": {"workflow_pass": True, "research_pass": False},
+                "acceptance_gate": {
+                    "passed": False,
+                    "oos_sharpe_ratio": 1.0,
+                    "oos_traded_days": 12,
+                    "walk_forward_fold_count": 2,
+                    "walk_forward_positive_alpha_folds": 1,
+                    "quality_flags": [],
+                },
+                "research_cost": {"estimated_total_backtest_passes": 1},
+                "candidates": [
+                    {
+                        "rank": 1,
+                        "label": "lb3_entry1_top1_open0_mom0_rv0.8_none",
+                        "params": {
+                            "selection_style": "opening_momentum",
+                            "lookback_days": 3,
+                            "entry_after_bars": 1,
+                            "top_n": 1,
+                            "min_opening_return_pct": 0.0,
+                            "min_prior_momentum_pct": 0.0,
+                            "min_relative_volume": 0.8,
+                            "max_opening_return_pct": None,
+                            "max_prior_momentum_pct": None,
+                            "market_gate": "none",
+                        },
+                        "quality_flags": [],
+                        "out_of_sample": {"sharpe_ratio": 1.0, "traded_days": 12},
+                        "full_window": {"benchmark_symbol": "QQQ", "best_symbol": "AAPL"},
+                    }
+                ],
+                "walk_forward": [{"fold": 1}, {"fold": 2}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    packet_path = (
+        sample_workspace
+        / "reports"
+        / "features"
+        / "adaptive_router_llm_feature"
+        / "event_risk_score"
+        / "packets.jsonl"
+    )
+    packet_path.parent.mkdir(parents=True, exist_ok=True)
+    packet_path.write_text(
+        (
+            '{"timestamp":"2026-01-02T20:00:00Z","published_at":"2026-01-02T14:20:00Z",'
+            '"fetched_at":"2026-01-02T14:25:00Z","visible_at":"2026-01-02T14:25:00Z",'
+            '"source":"event_risk_replay","symbol":"AAPL","dedupe_key":"event:AAPL:2026-01-02",'
+            '"schema_version":"1","model":"local-test","input_hash":"sha256:abc",'
+            '"prompt_hash":"sha256:def","features":{"score":0.0},'
+            '"evidence":{"single_modality_baseline_metric":"baseline=1",'
+            '"marginal_lift_metric":"lift=0","missing_modality_robustness":"missing=1"}}\n'
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+
+    result = CliRunner().invoke(
+        app,
+        ["strategy", "promotion-report", str(spec_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(
+        (
+            sample_workspace / "reports" / "research" / "adaptive_router_llm_feature-promotion.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert payload["five_pass_checks"]["llm_contribution_pass"] == "fail"
+    llm_check = next(item for item in payload["checks"] if item["name"] == "llm_contribution")
+    assert llm_check["details"]["applicable"] is True
 
 
 def test_hybrid_router_promotion_report_uses_hybrid_research_artifacts(

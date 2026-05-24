@@ -111,6 +111,12 @@ class IntradayDailyMetrics:
 
 
 @dataclass(frozen=True)
+class _DirectionalSelection:
+    symbol: str
+    side: str
+
+
+@dataclass(frozen=True)
 class IntradayDailyCandidate:
     rank: int
     params: IntradayDailyParams
@@ -858,9 +864,10 @@ def _backtest_params(
     traded_days = 0
     round_trips = 0
     for index in range(start_index, end_index):
-        selected = _selected_symbols(dataset, index, params)
+        selected = _selected_positions(dataset, index, params, spec)
         day_returns = [
-            _symbol_intraday_return(dataset, symbol, index, params, spec) for symbol in selected
+            _symbol_intraday_return(dataset, item.symbol, index, params, spec, side=item.side)
+            for item in selected
         ]
         day_returns = [value for value in day_returns if value is not None]
         strategy_return = mean(day_returns) if day_returns else 0.0
@@ -870,8 +877,18 @@ def _backtest_params(
         selected_counts.append(len(day_returns))
         strategy_returns.append(strategy_return)
         universe_returns = [
-            _symbol_intraday_return(dataset, symbol, index, params, spec)
+            value
             for symbol in dataset.symbols
+            for value in [
+                _symbol_intraday_return(
+                    dataset,
+                    symbol,
+                    index,
+                    params,
+                    spec,
+                    side=_benchmark_side(spec),
+                )
+            ]
         ]
         universe_returns = [value for value in universe_returns if value is not None]
         equal_weight_returns.append(mean(universe_returns) if universe_returns else 0.0)
@@ -950,6 +967,52 @@ def _selected_symbols(
     index: int,
     params: IntradayDailyParams,
 ) -> list[str]:
+    return _ranked_symbol_scores(dataset, index, params, side="long")[: params.top_n]
+
+
+def _selected_positions(
+    dataset: _IntradayDataset,
+    index: int,
+    params: IntradayDailyParams,
+    spec: StrategySpec,
+) -> list[_DirectionalSelection]:
+    if spec.position_direction == "short_only":
+        return [
+            _DirectionalSelection(symbol=symbol, side="short")
+            for symbol in _ranked_symbol_scores(dataset, index, params, side="short")[
+                : params.top_n
+            ]
+        ]
+    if spec.position_direction != "long_short":
+        return [
+            _DirectionalSelection(symbol=symbol, side="long")
+            for symbol in _ranked_symbol_scores(dataset, index, params, side="long")[: params.top_n]
+        ]
+    top_per_side = max(1, params.top_n)
+    selections: list[_DirectionalSelection] = []
+    used: set[str] = set()
+    for symbol in _ranked_symbol_scores(dataset, index, params, side="long"):
+        if symbol not in used:
+            selections.append(_DirectionalSelection(symbol=symbol, side="long"))
+            used.add(symbol)
+        if sum(item.side == "long" for item in selections) >= top_per_side:
+            break
+    for symbol in _ranked_symbol_scores(dataset, index, params, side="short"):
+        if symbol not in used:
+            selections.append(_DirectionalSelection(symbol=symbol, side="short"))
+            used.add(symbol)
+        if sum(item.side == "short" for item in selections) >= top_per_side:
+            break
+    return selections
+
+
+def _ranked_symbol_scores(
+    dataset: _IntradayDataset,
+    index: int,
+    params: IntradayDailyParams,
+    *,
+    side: str,
+) -> list[str]:
     if not _market_gate_passes(dataset, index, params):
         return []
     scores: list[tuple[float, str]] = []
@@ -958,7 +1021,7 @@ def _selected_symbols(
         if stats is None:
             continue
         opening_return, prior_momentum, relative_volume = stats
-        if params.selection_style == "opening_reversal":
+        if params.selection_style == "opening_reversal" or side == "short":
             if (
                 params.max_opening_return_pct is not None
                 and opening_return > params.max_opening_return_pct
@@ -976,7 +1039,7 @@ def _selected_symbols(
                 continue
         if relative_volume < params.min_relative_volume:
             continue
-        if params.selection_style == "opening_reversal":
+        if params.selection_style == "opening_reversal" or side == "short":
             score = -opening_return * 0.55 - prior_momentum * 0.20 + (relative_volume - 1.0) * 20.0
         else:
             score = prior_momentum * 0.45 + opening_return * 0.35 + (relative_volume - 1.0) * 20.0
@@ -1051,6 +1114,8 @@ def _symbol_intraday_return(
     index: int,
     params: IntradayDailyParams,
     spec: StrategySpec,
+    *,
+    side: str = "long",
 ) -> float | None:
     day = _day_bars(dataset, symbol, index)
     if day is None or day.bar_count <= params.entry_after_bars:
@@ -1060,7 +1125,13 @@ def _symbol_intraday_return(
     if entry <= 0:
         return None
     cost_rate = spec.costs.commission_pct / 100 + spec.costs.slippage_bps / 10_000
+    if side == "short":
+        return (entry * (1 - cost_rate)) / (exit_price * (1 + cost_rate)) - 1
     return (exit_price * (1 - cost_rate)) / (entry * (1 + cost_rate)) - 1
+
+
+def _benchmark_side(spec: StrategySpec) -> str:
+    return "short" if spec.position_direction == "short_only" else "long"
 
 
 def _day_bars(dataset: _IntradayDataset, symbol: str, index: int) -> _DailyBars | None:
@@ -1515,7 +1586,13 @@ def _write_research_json(
         "runtime_seconds": runtime_seconds,
         "selection_objective": _objective_label(objective),
         "acceptance_gate": _acceptance_gate(candidates[0], walk_forward, objective),
-        "pass_status": _pass_status(candidates[0], objective),
+        "pass_status": _pass_status(
+            candidates[0],
+            objective,
+            acceptance_passed=bool(
+                _acceptance_gate(candidates[0], walk_forward, objective)["passed"]
+            ),
+        ),
         "assumptions": _assumptions(spec, dataset),
         "candidates": [_candidate_payload(item) for item in candidates],
         "walk_forward": [_walk_payload(item) for item in walk_forward],
@@ -1578,7 +1655,16 @@ def _write_research_report(
         "",
         "## Pass Labels",
         "",
-        *[f"- {key}: `{value}`" for key, value in _pass_status(candidates[0], objective).items()],
+        *[
+            f"- {key}: `{value}`"
+            for key, value in _pass_status(
+                candidates[0],
+                objective,
+                acceptance_passed=bool(
+                    _acceptance_gate(candidates[0], walk_forward, objective)["passed"]
+                ),
+            ).items()
+        ],
         "",
         "## Top Candidates",
         "",
@@ -1794,14 +1880,18 @@ def _pass_status(
     objective: IntradayObjective,
     *,
     llm_contribution_ok: bool = False,
+    acceptance_passed: bool | None = None,
 ) -> dict[str, Any]:
     oos_objective_alpha = _objective_alpha(candidate.out_of_sample, objective) or -100.0
-    research_pass = (
+    candidate_research_pass = (
         oos_objective_alpha > 0
         and (candidate.out_of_sample.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0) > 0
         and (candidate.full_window.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0) > 0
         and (candidate.out_of_sample.sharpe_ratio or 0.0) >= 0.5
         and candidate.out_of_sample.traded_days >= 10
+    )
+    research_pass = (
+        bool(acceptance_passed) if acceptance_passed is not None else candidate_research_pass
     )
     return {
         "workflow_pass": True,
@@ -1820,6 +1910,7 @@ def _pass_status(
 def _candidate_payload(candidate: IntradayDailyCandidate) -> dict[str, Any]:
     return {
         "rank": candidate.rank,
+        "label": candidate.params.label,
         "params": candidate.params.__dict__,
         "score": candidate.score,
         "quality_flags": candidate.quality_flags,
@@ -1890,11 +1981,20 @@ def _fmt(value: float | None) -> str:
 
 
 def _assumptions(spec: StrategySpec, dataset: _IntradayDataset) -> list[str]:
+    direction_note = (
+        "Long/short specs select a long basket and a separate short basket; short leg returns are "
+        "modeled as same-day entry-to-exit inverse returns with the same cost assumptions."
+        if spec.position_direction == "long_short"
+        else "Short-only specs model same-day entry-to-exit inverse returns with the same cost "
+        "assumptions."
+        if spec.position_direction == "short_only"
+        else "No shorts or real broker orders are used."
+    )
     return [
         "Selection uses only previous regular-session closes plus confirmed same-day opening bars.",
         "Entry occurs at the next bar open after the opening window.",
         "All positions are exited at the same day's final regular-session close.",
-        "No overnight positions, leverage, shorts, or real broker orders are used.",
+        f"No overnight positions or leverage are used. {direction_note}",
         f"Commission is {spec.costs.commission_pct:.4g}% per fill.",
         f"Slippage is {spec.costs.slippage_bps:.4g} bps per fill.",
         f"{dataset.benchmark_symbol} buy-and-hold is reported as a stress benchmark, not "

@@ -47,8 +47,9 @@ ROUTER_PROMOTION_CONFIGS: dict[str, RouterPromotionConfig] = {
         research_suffix="adaptive-intraday-router",
         research_check_name="adaptive_router_research",
         research_manifest_key="adaptive_router_research_path",
-        llm_suffix="llm-adaptive-router",
-        llm_manifest_key="llm_adaptive_router_path",
+        target_weights_suffix="target-weights",
+        llm_suffix="llm-intraday-selection",
+        llm_manifest_key="llm_intraday_selection_path",
     ),
     "hybrid_adaptive_router": RouterPromotionConfig(
         mode="hybrid_adaptive_router",
@@ -274,7 +275,7 @@ def _router_checks(
         _walk_forward_check(research_payload, acceptance_gate),
         _strict_data_check(spec, data_profile),
         _feature_packet_check(spec, root),
-        _factor_lab_check(selected_route),
+        _factor_lab_check(spec, root),
         _alternative_data_check(spec, data_profile),
         _llm_contribution_check(config, spec, llm_path, llm_payload),
         _execution_check(config, spec, target_weights_path, target_weights_payload),
@@ -408,17 +409,69 @@ def _strict_data_check(spec: StrategySpec, data_profile: dict[str, Any]) -> Gate
     )
 
 
-def _factor_lab_check(selected_route: dict[str, Any] | None) -> GateResult:
-    quality_flags = _string_list((selected_route or {}).get("quality_flags"))
+def _factor_lab_check(spec: StrategySpec, root: Path) -> GateResult:
+    factor_lab_path = root / "reports" / "research" / f"{spec.name}-factor-lab.json"
+    factor_lab_payload = _load_optional_json(factor_lab_path)
+    if factor_lab_payload is None:
+        return GateResult(
+            name="factor_lab",
+            status="warning" if spec.factors else "ok",
+            message=(
+                "Factor Lab diagnostics are missing for this router."
+                if spec.factors
+                else "Factor Lab is not applicable: strategy has no custom factors."
+            ),
+            details={
+                "quality_flags": [],
+                "factor_count": 0,
+                "factor_lab_path": str(factor_lab_path),
+                "not_applicable": not bool(spec.factors),
+            },
+        )
+    status = str(factor_lab_payload.get("status") or "warning")
+    quality_flags = _string_list(factor_lab_payload.get("quality_flags"))
+    factor_count = len(_dict_list(factor_lab_payload.get("factor_metrics")))
+    if status == "blocked" and quality_flags == ["no_custom_factors"]:
+        return GateResult(
+            name="factor_lab",
+            status="ok",
+            message="Factor Lab is not applicable: strategy has no custom factors.",
+            details={
+                "status": status,
+                "quality_flags": quality_flags,
+                "factor_count": factor_count,
+                "factor_lab_path": str(factor_lab_path),
+                "not_applicable": True,
+            },
+        )
+    if status == "blocked":
+        return GateResult(
+            name="factor_lab",
+            status="blocked",
+            message="Factor Lab diagnostics are blocked.",
+            details={
+                "status": status,
+                "quality_flags": quality_flags,
+                "factor_count": factor_count,
+                "factor_lab_path": str(factor_lab_path),
+                "not_applicable": False,
+            },
+        )
     return GateResult(
         name="factor_lab",
-        status="warning" if quality_flags else "ok",
+        status="warning" if status == "warning" or quality_flags else "ok",
         message=(
-            "Selected router candidate has quality flags."
-            if quality_flags
-            else "Router candidate quality flags are clear."
+            "Factor Lab diagnostics produced warnings."
+            if status == "warning" or quality_flags
+            else "Factor Lab diagnostics are clear."
         ),
-        details={"quality_flags": quality_flags},
+        details={
+            "status": status,
+            "quality_flags": quality_flags,
+            "factor_count": factor_count,
+            "factor_lab_path": str(factor_lab_path),
+            "not_applicable": False,
+        },
     )
 
 
@@ -426,7 +479,7 @@ def _alternative_data_check(
     spec: StrategySpec,
     data_profile: dict[str, Any],
 ) -> GateResult:
-    uses_alt_data = bool(spec.llm_review.enabled or _feature_packet_paths(spec))
+    uses_alt_data = _strategy_uses_llm_or_feature_packets(spec)
     if not uses_alt_data:
         return GateResult(
             name="alternative_data",
@@ -453,7 +506,8 @@ def _llm_contribution_check(
     llm_path: Path | None,
     llm_payload: dict[str, Any] | None,
 ) -> GateResult:
-    if not bool(spec.llm_review.enabled or _feature_packet_paths(spec)):
+    llm_related = _strategy_uses_llm_or_feature_packets(spec)
+    if not llm_related:
         return GateResult(
             name="llm_contribution",
             status="ok",
@@ -472,9 +526,20 @@ def _llm_contribution_check(
         name="llm_contribution",
         status="warning",
         message=(
-            f"{config.mode} uses LLM/news inputs but independent lift evidence is incomplete."
+            f"{config.mode} uses LLM/news or llm_feature inputs but independent "
+            "lift evidence is incomplete."
         ),
         details={"applicable": True, "llm_path": str(llm_path) if llm_path else None},
+    )
+
+
+def _strategy_uses_llm_or_feature_packets(spec: StrategySpec) -> bool:
+    return bool(
+        spec.llm_review.enabled
+        or _feature_packet_paths(spec)
+        or any(
+            factor.source in {"llm_feature", "feature_packet"} for factor in spec.factors.values()
+        )
     )
 
 
@@ -548,7 +613,8 @@ def _router_pass_summary(
         and not {"out_of_sample", "walk_forward"}.intersection(blocked)
         else "fail"
     )
-    if not bool(spec.llm_review.enabled or _feature_packet_paths(spec)):
+    llm_related = _strategy_uses_llm_or_feature_packets(spec)
+    if not llm_related:
         llm_pass = "not_applicable"
         llm_reason = "strategy does not use LLM review or LLM/feature packet factors"
     elif _llm_pass_status(llm_payload) == "pass":
@@ -732,12 +798,23 @@ def _selected_candidate(
 
 
 def _candidate_label(candidate: dict[str, Any]) -> str | None:
-    label = _nested_get(candidate, "route", "label") or _nested_get(candidate, "params", "label")
+    label = (
+        _nested_get(candidate, "route", "label")
+        or candidate.get("label")
+        or _nested_get(candidate, "params", "label")
+    )
     if label:
-        return str(label)
+        label_text = str(label)
+        params_for_label = _dict_value(candidate.get("params"))
+        if ":" not in label_text and _intraday_candidate_label(params_for_label) is not None:
+            return f"open_momentum:{label_text}"
+        return label_text
     params = _dict_value(candidate.get("params"))
     if not params:
         return None
+    intraday_label = _intraday_candidate_label(params)
+    if intraday_label is not None:
+        return f"open_momentum:{intraday_label}"
     holding_mode = params.get("holding_mode")
     lookback = params.get("momentum_lookback_days")
     top_n = params.get("top_n")
@@ -748,6 +825,45 @@ def _candidate_label(candidate: dict[str, Any]) -> str | None:
         gate = "nogate" if market_sma is None else f"qsm{market_sma}"
         return f"{holding_mode}:lb{lookback}_top{top_n}_{gate}_min{min_momentum:g}_w{weight:g}"
     return None
+
+
+def _intraday_candidate_label(params: dict[str, Any]) -> str | None:
+    required = {
+        "selection_style",
+        "lookback_days",
+        "entry_after_bars",
+        "top_n",
+        "min_opening_return_pct",
+        "min_prior_momentum_pct",
+        "min_relative_volume",
+        "market_gate",
+    }
+    if not required <= set(params):
+        return None
+    gate = str(params["market_gate"]).replace("qqq_", "q")
+    base = (
+        f"lb{int(params['lookback_days'])}_entry{int(params['entry_after_bars'])}_"
+        f"top{int(params['top_n'])}_open{_compact_number(params['min_opening_return_pct'])}_"
+        f"mom{_compact_number(params['min_prior_momentum_pct'])}_"
+        f"rv{_compact_number(params['min_relative_volume'])}_{gate}"
+    )
+    if params.get("selection_style") == "opening_momentum":
+        return base
+    max_open = _compact_optional_number(params.get("max_opening_return_pct"))
+    max_mom = _compact_optional_number(params.get("max_prior_momentum_pct"))
+    return f"{base}_reversal_maxopen{max_open}_maxmom{max_mom}"
+
+
+def _compact_optional_number(value: object) -> str:
+    return "none" if value is None else _compact_number(value)
+
+
+def _compact_number(value: object) -> str:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    return f"{number:g}"
 
 
 def _benchmark_family(selected_route: dict[str, Any] | None) -> dict[str, Any]:

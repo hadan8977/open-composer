@@ -69,6 +69,7 @@ def run_factor_lab(
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
     frame = load_ohlcv_for_spec(spec, base)
+    frame.attrs.update({"strategy_name": spec.name})
     data_profile = frame_data_profile(
         frame,
         symbol=spec.primary_symbol,

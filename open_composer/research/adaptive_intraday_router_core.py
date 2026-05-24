@@ -20,7 +20,7 @@ from open_composer.research.intraday_daily_rotation import (
     LLMIntradayDailyResearchResult,
     _day_bars,
     _load_dataset,
-    _selected_symbols,
+    _selected_positions,
     run_intraday_daily_rotation_research,
     run_llm_intraday_daily_rotation_selection,
 )
@@ -84,6 +84,7 @@ class RoutedIntradaySignalPlan:
     weight: float
     signal_price: float
     sub_strategy_label: str
+    side: str = "long"
 
 
 @dataclass(frozen=True)
@@ -107,20 +108,25 @@ def run_adaptive_intraday_router_research(
     **kwargs: Any,
 ) -> AdaptiveRouterResearchResult:
     result = run_intraday_daily_rotation_research(spec_path, root, **_base_kwargs(kwargs))
+    base = root or project_root()
+    spec = load_strategy_spec(spec_path)
     payload = json.loads(result.json_path.read_text(encoding="utf-8"))
     payload["mode"] = "adaptive_intraday_internal_router"
     payload["route_family"] = "open_momentum"
     payload["acceptance_gate"] = payload.get("acceptance_gate", {"passed": False})
-    write_json(result.json_path, payload)
-    result.report_path.write_text(
-        result.report_path.read_text(encoding="utf-8").replace(
-            "# Intraday Daily Rotation", "# Adaptive Intraday Router"
-        ),
-        encoding="utf-8",
+    json_path = base / "reports" / "research" / f"{spec.name}-adaptive-intraday-router.json"
+    report_path = json_path.with_suffix(".md")
+    write_json(json_path, payload)
+    report_text = result.report_path.read_text(encoding="utf-8").replace(
+        "# Intraday Daily Rotation",
+        "# Adaptive Intraday Router",
     )
+    report_text = report_text.replace(str(result.json_path), str(json_path))
+    ensure_dir(report_path.parent)
+    report_path.write_text(report_text, encoding="utf-8")
     return AdaptiveRouterResearchResult(
-        report_path=result.report_path,
-        json_path=result.json_path,
+        report_path=report_path,
+        json_path=json_path,
         candidates=result.candidates,
         walk_forward=result.walk_forward,
         research_cost=result.research_cost,
@@ -206,10 +212,10 @@ def run_adaptive_intraday_router_scan(
         refresh_data=refresh_data,
     )
     index = _scan_index(dataset, scan_date)
-    selected = _selected_symbols(dataset, index, params)
+    selected = _selected_positions(dataset, index, params, spec)
     day = dataset.dates[index]
     timestamp = _day_bars(
-        dataset, selected[0] if selected else dataset.symbols[0], index
+        dataset, selected[0].symbol if selected else dataset.symbols[0], index
     ).timestamps[-1]
     max_weight = spec.portfolio.max_symbol_weight or spec.risk.max_position_weight
     weight = min(
@@ -222,12 +228,22 @@ def run_adaptive_intraday_router_scan(
         bars = _day_bars(dataset, symbol, index)
         if bars is not None:
             latest_prices[symbol] = float(bars.closes[-1])
-    for symbol in selected:
-        bars = _day_bars(dataset, symbol, index)
+    for item in selected:
+        bars = _day_bars(dataset, item.symbol, index)
         if bars is None:
             continue
         price = float(bars.closes[-1])
-        plans.append(RoutedIntradaySignalPlan(symbol, weight, price, params.label))
+        signed_weight = weight if item.side == "long" else -weight
+        side_override = "buy" if item.side == "long" else "sell"
+        plans.append(
+            RoutedIntradaySignalPlan(
+                item.symbol,
+                signed_weight,
+                price,
+                params.label,
+                item.side,
+            )
+        )
         signals.append(
             build_signal(
                 spec,
@@ -237,16 +253,25 @@ def run_adaptive_intraday_router_scan(
                 "adaptive_router_scan",
                 price,
                 execution_backend="python_reference",
-                symbol=symbol,
-                conditions=[f"route={selected_label}", f"sub_strategy={params.label}"],
-                target_weight=weight,
+                symbol=item.symbol,
+                conditions=[
+                    f"route={selected_label}",
+                    f"sub_strategy={params.label}",
+                    f"side={item.side}",
+                ],
+                target_weight=signed_weight,
+                side_override=side_override,
             )
         )
     signal_log_path = base / "signal_logs" / f"adaptive-router-scan-{spec.name}-{day}.jsonl"
     append_jsonl(signal_log_path, signals)
     json_path = base / "reports" / "scans" / f"{spec.name}-adaptive-router-scan.json"
     report_path = json_path.with_suffix(".md")
-    feature_path = _write_news_packet(base, spec.name, day, selected) if emit_news_packet else None
+    feature_path = (
+        _write_news_packet(base, spec.name, day, [item.symbol for item in selected])
+        if emit_news_packet
+        else None
+    )
     result = AdaptiveRouterScanResult(
         report_path=report_path,
         json_path=json_path,
@@ -281,6 +306,8 @@ def run_adaptive_intraday_router_scan(
 
 
 def _base_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+    if "max_candidates" not in kwargs and kwargs.get("max_base_candidates") is not None:
+        kwargs = {**kwargs, "max_candidates": kwargs["max_base_candidates"]}
     allowed = {
         "symbols",
         "data_source",
@@ -312,11 +339,18 @@ def _base_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
 def _parse_route_label(label: str) -> IntradayDailyParams:
     raw = label.split(":", 1)[1] if ":" in label else label
     parts = raw.split("_")
-    market_gate = parts[6].replace("qopen", "qqq_open").replace("qprior", "qqq_prior")
-    if market_gate == "none":
-        gate = "none"
-    else:
-        gate = market_gate
+    gate, suffix_start = _parse_market_gate_parts(parts)
+    suffix = "_".join(parts[suffix_start:])
+    max_opening = None
+    max_momentum = None
+    if "reversal" in suffix:
+        for item in parts[suffix_start:]:
+            if item.startswith("maxopen"):
+                raw_open = item.removeprefix("maxopen")
+                max_opening = None if raw_open == "none" else float(raw_open)
+            if item.startswith("maxmom"):
+                raw_mom = item.removeprefix("maxmom")
+                max_momentum = None if raw_mom == "none" else float(raw_mom)
     return IntradayDailyParams(
         selection_style="opening_reversal" if "reversal" in raw else "opening_momentum",
         lookback_days=int(parts[0].removeprefix("lb")),
@@ -326,7 +360,20 @@ def _parse_route_label(label: str) -> IntradayDailyParams:
         min_prior_momentum_pct=float(parts[4].removeprefix("mom")),
         min_relative_volume=float(parts[5].removeprefix("rv")),
         market_gate=gate,  # type: ignore[arg-type]
+        max_opening_return_pct=max_opening,
+        max_prior_momentum_pct=max_momentum,
     )
+
+
+def _parse_market_gate_parts(parts: list[str]) -> tuple[str, int]:
+    token = parts[6]
+    if token == "none":
+        return "none", 7
+    if token == "qopen" and len(parts) > 9 and parts[8] == "prior":
+        return f"qqq_open_{parts[7]}_prior_{parts[9]}", 10
+    if token in {"qopen", "qprior"} and len(parts) > 7:
+        return f"qqq_{token.removeprefix('q')}_{parts[7]}", 8
+    return token.replace("qopen", "qqq_open").replace("qprior", "qqq_prior"), 7
 
 
 def _scan_index(dataset: Any, scan_date: str | None) -> int:

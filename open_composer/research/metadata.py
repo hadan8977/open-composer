@@ -101,7 +101,7 @@ def frame_data_profile(
         "first_timestamp": first_timestamp,
         "last_timestamp": last_timestamp,
         "data_as_of": last_timestamp,
-        "cache_fallback": source_mode_value == "cache",
+        "cache_fallback": source_mode_value in {"cache", "cache_resampled"},
         "strict_live": source_mode_value == "live_fetch",
         "warnings": warnings,
     }
@@ -231,6 +231,8 @@ def _data_profile_warnings(
         warnings.append("no_rows_available")
     if source_mode == "cache":
         warnings.append("cache_data_used")
+    if source_mode == "cache_resampled":
+        warnings.append("cache_resampled_from_intraday")
     if str(feed or "").lower() == "iex":
         warnings.append("iex_feed_not_full_market_sip")
     if first_timestamp is None or last_timestamp is None:

@@ -54,6 +54,11 @@ def evaluate_backtest_data_sanity(
         warnings.append(
             "fixture replay data is deterministic test evidence only, not production market data."
         )
+    if "resampled" in mode_text:
+        warnings.append(
+            "provider bars were resampled from a local cache; validate the native provider "
+            "timeframe before paper automation."
+        )
 
     min_bars = MIN_BARS_BY_TIMEFRAME.get(spec.timeframe, 200)
     if run.bars < min_bars:

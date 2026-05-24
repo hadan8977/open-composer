@@ -1,0 +1,51 @@
+schema_version: 1
+round: 3
+status: blocked
+task_type: strategy_optimization
+worker_provider: codex
+created_at: '2026-05-23T20:26:54Z'
+changed_paths:
+- strategy_specs/drafts/nasdaq_long_short_event_router_15m_sweep_001.yaml
+- reports/research/nasdaq_long_short_event_router_15m_sweep_001-adaptive-intraday-router.json
+- reports/research/nasdaq_long_short_event_router_15m_sweep_001-promotion.json
+- reports/paper/readiness/nasdaq_long_short_event_router_15m_sweep_001.json
+- reports/execution/nasdaq_long_short_event_router_15m_sweep_001-target-weights.json
+- reports/harness/forensics/nasdaq_long_short_event_router_15m_sweep_001-backtest-forensics.json
+- reports/research/control/nasdaq_long_short_event_router_15m_sweep_001-state.json
+- reports/research/control/nasdaq_long_short_event_router_15m_sweep_001-memory.md
+step_events:
+- ran longer-window Alpaca/IEX NASDAQ long/short router validation
+- expanded validation window from 2026-02-02 start to 2025-11-03 start
+- increased walk-forward folds from 3 to 5
+- updated selected route to the long-window top candidate
+- regenerated observation-only adaptive target weights
+- wrote backtest forensics artifact marking high overfit risk
+- refreshed promotion, paper readiness, and harness verify
+verified:
+  spec_validate: ok
+  harness_verify: ok
+  promotion_status: warning
+  paper_readiness: blocked
+metrics:
+  candidates: 576
+  estimated_backtest_passes: 4618
+  runtime_seconds: 482.00
+  oos_annualized_return_pct: -27.0961
+  oos_equal_weight_alpha_annualized_pct: -161.2603
+  oos_benchmark_intraday_alpha_annualized_pct: -142.3593
+  oos_sharpe: -1.3200
+  oos_traded_days: 41
+  walk_forward_positive_alpha_folds: 2
+  walk_forward_fold_count: 5
+  target_weight_rows: 1408
+  nonzero_target_rows: 285
+blockers:
+- paper_ready_blocked:lifecycle_not_active
+- paper_ready_blocked:execution_not_paper_auto
+- paper_ready_blocked:broker_not_alpaca_paper
+- promotion_warning:oos_no_annualized_alpha_vs_equal_weight_intraday
+- promotion_warning:oos_low_sharpe
+- forensics_warning:high_overfit_risk
+next_action: Narrow the route search and require walk-forward stability before
+  further promotion. Cross-source data validation and short-sale borrow evidence
+  remain required before simulated-paper activation.

@@ -1,0 +1,94 @@
+{
+  "blocked_items": [
+    "paper_ready_blocked:lifecycle_not_active",
+    "paper_ready_blocked:execution_not_paper_auto",
+    "paper_ready_blocked:broker_not_alpaca_paper",
+    "promotion_warning:oos_no_annualized_alpha_vs_benchmark_buy_hold",
+    "promotion_warning:does_not_beat_ex_post_best_symbol",
+    "factor_lab_warning:low_coverage_and_low_ic",
+    "llm_contribution_warning:independent_lift_incomplete",
+    "alt_data_warning:cache_data_used",
+    "promotion:research_pass_false",
+    "promotion:paper_ready_pass_false",
+    "paper_readiness:blocked"
+  ],
+  "current_spec_path": "strategy_specs/drafts/nasdaq_long_short_event_router_15m_sweep_001.yaml",
+  "do_not_repeat": [],
+  "evidence_status": {
+    "alt_llm_evidence": {
+      "artifact_path": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-alt-data-quality.json",
+      "blockers": [],
+      "status": "ok",
+      "summary": "Alternative-data/LLM evidence status is ok; factors=1.",
+      "warnings": []
+    },
+    "execution_reality": {
+      "artifact_path": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-research-report.json",
+      "blockers": [],
+      "status": "ok",
+      "summary": "Execution reality was recovered from the latest research report.",
+      "warnings": []
+    },
+    "factor_quality": {
+      "artifact_path": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-factor-lab.json",
+      "blockers": [],
+      "status": "warning",
+      "summary": "Factor Lab status is warning: trend_spread:low_coverage, trend_spread:insufficient_observations, trend_spread:low_unique_values.",
+      "warnings": [
+        "trend_spread:low_coverage",
+        "trend_spread:insufficient_observations",
+        "trend_spread:low_unique_values",
+        "trend_spread:rank_ic_unavailable",
+        "trend_spread:quantile_spread_unavailable",
+        "intraday_volume_pressure:low_coverage",
+        "event_risk_score:low_unique_values",
+        "event_risk_score:rank_ic_unavailable",
+        "event_risk_score:quantile_spread_unavailable"
+      ]
+    }
+  },
+  "generated_at": "2026-05-23T21:36:23.403348Z",
+  "last_successful_step": "promotion",
+  "latest_artifacts": {
+    "alternative_data_quality": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-alt-data-quality.json",
+    "borrow_cost_estimate": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-borrow-cost-estimate.json",
+    "ex_dividend_risk_note": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-ex-dividend-risk-note.md",
+    "factor_lab": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-factor-lab.json",
+    "latest_run": "projects/nasdaq-long-short-event-router/runs/round-004.yaml",
+    "paper_readiness": "reports/paper/readiness/nasdaq_long_short_event_router_15m_sweep_001.json",
+    "promotion": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-promotion.json",
+    "research_report": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-research-report.json",
+    "router_cost_stress": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-router-cost-stress.json",
+    "router_data_evidence": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-router-data-evidence.json",
+    "router_execution_observation": "reports/execution/nasdaq_long_short_event_router_15m_sweep_001-execution-observation.json",
+    "router_rebalance_intents": "reports/execution/nasdaq_long_short_event_router_15m_sweep_001-rebalance-intents.json",
+    "router_target_weights": "reports/execution/nasdaq_long_short_event_router_15m_sweep_001-target-weights.json",
+    "router_validation": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-router-validation.json",
+    "short_exposure_policy": "reports/harness/execution/nasdaq_long_short_event_router_15m_sweep_001-short-exposure-policy.json",
+    "short_sale_source_cards": "reports/harness/source_cards/nasdaq_long_short_event_router_15m_sweep_001.jsonl",
+    "short_squeeze_stress": "reports/research/nasdaq_long_short_event_router_15m_sweep_001-short-squeeze-stress.json"
+  },
+  "next_minimal_actions": [
+    "resolve current blockers before continuing optimization"
+  ],
+  "project_id": "nasdaq-long-short-event-router",
+  "schema_version": 1,
+  "strategy_name": "nasdaq_long_short_event_router_15m_sweep_001",
+  "warning_items": [
+    "factor_quality:trend_spread:low_coverage",
+    "factor_quality:trend_spread:insufficient_observations",
+    "factor_quality:trend_spread:low_unique_values",
+    "factor_quality:trend_spread:rank_ic_unavailable",
+    "factor_quality:trend_spread:quantile_spread_unavailable",
+    "factor_quality:intraday_volume_pressure:low_coverage",
+    "factor_quality:event_risk_score:low_unique_values",
+    "factor_quality:event_risk_score:rank_ic_unavailable",
+    "factor_quality:event_risk_score:quantile_spread_unavailable",
+    "promotion:adaptive_router_research",
+    "promotion:out_of_sample",
+    "promotion:factor_lab",
+    "promotion:alternative_data",
+    "promotion:llm_contribution",
+    "router:execution_observation_only"
+  ]
+}

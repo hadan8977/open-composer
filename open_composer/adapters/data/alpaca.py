@@ -44,6 +44,32 @@ def fetch_alpaca_bars(
                 caveats=_alpaca_caveats(feed),
             )
             return frame
+    if use_cache:
+        resampled = _resampled_cache(root, symbol, timeframe, start, end, feed)
+        if resampled is not None:
+            frame, source_path = resampled
+            _annotate_frame(frame, feed, "cache_resampled", source_path)
+            write_ohlcv_manifest(
+                root,
+                provider="alpaca",
+                feed=feed,
+                symbol=symbol,
+                timeframe=timeframe,
+                cache_path=source_path,
+                frame=frame,
+                requested_start=start,
+                requested_end=end,
+                source_mode="cache_resampled",
+                request_params={"resampled_from": source_path.name},
+                caveats=[
+                    *_alpaca_caveats(feed),
+                    (
+                        "Daily bars were resampled from local intraday cache because the "
+                        "requested daily cache window was unavailable."
+                    ),
+                ],
+            )
+            return frame
 
     try:
         from alpaca.data.historical import StockHistoricalDataClient
@@ -134,6 +160,65 @@ def _filter_cached_frame(
     if end is not None:
         filtered = filtered[filtered["timestamp"] <= _utc_timestamp(end)]
     return filtered.reset_index(drop=True)
+
+
+def _resampled_cache(
+    root: Path,
+    symbol: str,
+    timeframe: str,
+    start: datetime | None,
+    end: datetime | None,
+    feed: str,
+) -> tuple[pd.DataFrame, Path] | None:
+    if timeframe != "daily":
+        return None
+    for source_timeframe in ("15m", "5m", "1m"):
+        source_path = root / "data" / "cache" / f"{symbol.lower()}_{source_timeframe}_{feed}.csv"
+        if not source_path.exists():
+            continue
+        source = normalize_ohlcv(pd.read_csv(source_path))
+        if source.empty or not _cache_covers_daily_dates(source, start, end):
+            continue
+        frame = _resample_to_daily(source)
+        frame = _filter_cached_frame(frame, start, end)
+        if frame.empty:
+            continue
+        return frame, source_path
+    return None
+
+
+def _resample_to_daily(frame: pd.DataFrame) -> pd.DataFrame:
+    indexed = frame.copy()
+    indexed["timestamp"] = pd.to_datetime(indexed["timestamp"], utc=True)
+    indexed = indexed.sort_values("timestamp").set_index("timestamp")
+    resampled = indexed.resample("1D", label="left", closed="left").agg(
+        {
+            "open": "first",
+            "high": "max",
+            "low": "min",
+            "close": "last",
+            "volume": "sum",
+        }
+    )
+    resampled = resampled.dropna().reset_index()
+    return normalize_ohlcv(resampled)
+
+
+def _cache_covers_daily_dates(
+    frame: pd.DataFrame,
+    start: datetime | None,
+    end: datetime | None,
+) -> bool:
+    if start is None and end is None:
+        return True
+    if frame.empty:
+        return False
+    dates = pd.to_datetime(frame["timestamp"], utc=True).dt.date
+    if start is not None and dates.min() > _utc_timestamp(start).date():
+        return False
+    if end is not None and dates.max() < _utc_timestamp(end).date():
+        return False
+    return True
 
 
 def _cache_covers_window(

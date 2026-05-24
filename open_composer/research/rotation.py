@@ -1120,6 +1120,8 @@ def _feature_eligible_mask(
     }
     if not feature_factors:
         return pd.Series([True] * len(frame), index=frame.index)
+    frame = frame.copy()
+    frame.attrs.update({"strategy_name": spec.name})
     prepared = prepare_factor_frame(
         frame,
         feature_factors,

@@ -6,8 +6,12 @@ from pathlib import Path
 import yaml
 from typer.testing import CliRunner
 
+from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.cli import app
+from open_composer.engines.signal_engine import signal_masks
+from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research import llm_materialize
+from open_composer.research.factor_lab import run_factor_lab
 
 
 def _materializable_spec(sample_workspace: Path) -> Path:
@@ -112,6 +116,70 @@ def test_feature_materialize_prompt_change_misses_cache(
     assert first.exit_code == 0
     assert second.exit_code == 0
     assert "misses=16" in second.output
+
+
+def test_feature_materialize_accepts_symbol_subset(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    spec_path = _materializable_spec(sample_workspace)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "feature",
+            "materialize",
+            str(spec_path),
+            "--backend",
+            "local_test_stub",
+            "--symbols",
+            "QQQ,MSFT",
+        ],
+        catch_exceptions=False,
+    )
+
+    packet_path = (
+        sample_workspace
+        / "reports"
+        / "features"
+        / "qqq_news_regime_15m"
+        / "news_regime_score"
+        / "packets.jsonl"
+    )
+    rows = [
+        json.loads(line)
+        for line in packet_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert result.exit_code == 0
+    assert "misses=32" in result.output
+    assert {row["symbol"] for row in rows} == {"MSFT", "QQQ"}
+
+
+def test_materialized_llm_feature_replays_from_default_path(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    spec_path = _materializable_spec(sample_workspace)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        ["feature", "materialize", str(spec_path), "--backend", "local_test_stub"],
+        catch_exceptions=False,
+    )
+    spec = load_strategy_spec(spec_path)
+    frame = load_ohlcv_for_spec(spec, sample_workspace)
+    entry_mask, _ = signal_masks(spec, frame, root=sample_workspace)
+    lab = run_factor_lab(spec_path, sample_workspace)
+    metric = next(item for item in lab.factor_metrics if item.name == "news_regime_score")
+
+    assert result.exit_code == 0
+    assert entry_mask.any()
+    assert metric.unique_values > 1
 
 
 def test_feature_materialize_input_view_version_change_misses_cache(
