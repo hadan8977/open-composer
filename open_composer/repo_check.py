@@ -25,6 +25,7 @@ CURRENT_DOCS = {
     "docs/longbridge-integration.md",
     "docs/plan-step-1-simplification-2026-05-22.zh.md",
     "docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md",
+    "docs/plan-step-3-dashboard-first-2026-05-22.zh.md",
 }
 
 REQUIRED_SKILLS = [

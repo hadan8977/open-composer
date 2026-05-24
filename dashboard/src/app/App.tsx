@@ -11,6 +11,8 @@ import { LiveView } from "./components/live";
 import { ProjectDetail, ProjectsView } from "./components/projects";
 import { StatusFooter } from "./components/footer";
 import { SettingsView } from "./components/settings";
+import { Card } from "./components/blocks";
+import { dashboardSummary } from "./components/data";
 import {
   loginDashboard,
   useDashboardCatalogSync,
@@ -33,6 +35,10 @@ export default function App() {
     setSelectedProjectId(null);
     setTab(key);
   };
+  const emptyWorkspace =
+    dashboardSummary.strategyCount === 0 &&
+    dashboardSummary.projectCount === 0 &&
+    dashboardSummary.runCount === 0;
 
   if (session.loading) {
     return <RemoteGate status="Checking session" />;
@@ -83,7 +89,9 @@ export default function App() {
               />
             ) : (
               <>
-                {tab === "overview" && <Overview />}
+                {tab === "overview" && (
+                  emptyWorkspace ? <OnboardingHero onBuild={() => handleNav("build")} /> : <Overview />
+                )}
                 {tab === "projects" && (
                   <ProjectsView onSelect={(id) => setSelectedProjectId(id)} />
                 )}
@@ -102,6 +110,77 @@ export default function App() {
         </div>
       </main>
     </div>
+  );
+}
+
+function OnboardingHero({ onBuild }: { onBuild: () => void }) {
+  return (
+    <div className="px-6 pb-8 space-y-3">
+      <section
+        className="relative overflow-hidden bg-white"
+        style={{ borderRadius: "var(--r-xl)", boxShadow: "var(--e2)" }}
+      >
+        <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-[#1FB85A]" />
+        <div className="p-7 md:p-8">
+          <div className="t-caption ink-subtle">WELCOME TO OPEN COMPOSER</div>
+          <h1
+            className="mt-2"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontWeight: 800,
+              fontSize: "clamp(36px, 5vw, 70px)",
+              lineHeight: 0.98,
+              letterSpacing: 0,
+            }}
+          >
+            Build your first strategy
+          </h1>
+          <p className="t-body-md ink-muted mt-4 max-w-3xl">
+            Start from a sample idea, create a Strategy Project, then continue research from the Strategy Detail workbench. Files remain the source of truth, but ordinary workflow starts here.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
+            <StartCard
+              title="Try a sample"
+              body="Use sample data and a bounded QQQ idea to see the full evidence loop."
+              action="Open Build"
+              onClick={onBuild}
+            />
+            <StartCard
+              title="Build from idea"
+              body="Describe the thesis, choose pure quant or LLM-assisted, and create a project."
+              action="Create Draft"
+              onClick={onBuild}
+            />
+            <StartCard
+              title="Import YAML"
+              body="Place a StrategySpec in strategy_specs/drafts and rebuild the catalog."
+              action="Use Catalog"
+              onClick={onBuild}
+            />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function StartCard({
+  title,
+  body,
+  action,
+  onClick,
+}: {
+  title: string;
+  body: string;
+  action: string;
+  onClick: () => void;
+}) {
+  return (
+    <Card>
+      <div className="t-title-md">{title}</div>
+      <div className="t-body-sm ink-subtle mt-2 min-h-[44px]">{body}</div>
+      <button className="pill pill-primary mt-4" onClick={onClick}>{action}</button>
+    </Card>
   );
 }
 

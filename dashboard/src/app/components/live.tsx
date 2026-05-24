@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { RefreshCw, ShieldAlert } from "lucide-react";
-import { Card, KPI, Pill, SectionTitle, Tag } from "./blocks";
+import { Card, KPI, SectionTitle, Tag } from "./blocks";
 import { Hero } from "./hero";
 import {
   dashboardSummary,
@@ -9,16 +10,54 @@ import {
   recentSignals,
 } from "./data";
 import { Notifications } from "./notifications";
+import { PaperPnlChart } from "./charts/paper-pnl";
+import { getDashboardJson, postDashboardJson } from "./runtime";
+import { applyDashboardCatalog } from "./data";
 
 export function LiveView() {
   const activePaperProjects = projects.filter((project) => project.state === "active_paper");
+  const [status, setStatus] = useState("Paper monitor is ready.");
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const refreshCatalog = async () => {
+    const catalog = await getDashboardJson<Parameters<typeof applyDashboardCatalog>[0]>(
+      "/api/dashboard/catalog",
+    );
+    applyDashboardCatalog(catalog);
+  };
+
+  const runPaperAction = async (action: "kill" | "clear" | "sync" | "monitor") => {
+    if ((action === "kill" || action === "clear") && !confirmPaperPhrase()) {
+      setStatus("Paper kill switch action cancelled.");
+      return;
+    }
+    setBusy(action);
+    try {
+      if (action === "kill" || action === "clear") {
+        await postDashboardJson("/api/paper/kill-switch", {
+          enabled: action === "kill",
+          reason: action === "kill" ? "Dashboard operator enabled kill switch." : "Dashboard operator cleared kill switch.",
+        });
+      } else if (action === "sync") {
+        await postDashboardJson("/api/paper/sync", {});
+      } else {
+        await postDashboardJson("/api/paper/monitor/refresh", {});
+      }
+      await refreshCatalog();
+      setStatus(`${action} submitted.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Paper action failed.");
+    } finally {
+      setBusy(null);
+    }
+  };
   return (
     <div className="px-6 pb-8 space-y-3">
       <Hero
         theme="green"
         greeting="Live · read-only operations"
         headline="Paper & Alerts"
-        meta="Paper account, paper orders, positions and notification log in one Dashboard view. Live brokerage content is notification-only for this MVP."
+        meta={status}
         stat={{
           label: "Paper equity",
           value: dashboardSummary.paperAccountEquity ? money(dashboardSummary.paperAccountEquity) : "n/a",
@@ -35,7 +74,7 @@ export function LiveView() {
 
       <div className="grid grid-cols-12 gap-3">
         <Card className="col-span-4">
-          <SectionTitle tick="green" action={<Pill><RefreshCw size={12} /> Refresh via command</Pill>}>
+          <SectionTitle tick="green" action={<button className="pill pill-secondary" disabled={!!busy} onClick={() => void runPaperAction("monitor")}><RefreshCw size={12} /> Refresh</button>}>
             Paper status
           </SectionTitle>
           <div className="mt-4 space-y-2">
@@ -88,7 +127,22 @@ export function LiveView() {
       </div>
 
       <div className="grid grid-cols-12 gap-3">
-        <Card className="col-span-7" pad={false}>
+        <Card className="col-span-4" pad={false}>
+          <div className="px-5 py-4 hairline-b">
+            <SectionTitle tick={dashboardSummary.paperTotalUnrealizedPl >= 0 ? "green" : "pink"}>Paper PnL</SectionTitle>
+          </div>
+          <div className="p-4"><PaperPnlChart value={dashboardSummary.paperTotalUnrealizedPl} /></div>
+          <div className="px-5 pb-4 flex flex-wrap gap-2">
+            <button className="pill pill-secondary" disabled={!!busy} onClick={() => void runPaperAction("sync")}>
+              <RefreshCw size={13} /> Queue Sync
+            </button>
+            <button className="pill pill-secondary" disabled={!!busy} onClick={() => void runPaperAction(dashboardSummary.paperKillSwitchEnabled ? "clear" : "kill")}>
+              <ShieldAlert size={13} /> {dashboardSummary.paperKillSwitchEnabled ? "Clear Kill Switch" : "Kill Switch"}
+            </button>
+          </div>
+        </Card>
+
+        <Card className="col-span-8" pad={false}>
           <div className="px-5 py-4 hairline-b">
             <SectionTitle tick="pink">Paper orders</SectionTitle>
           </div>
@@ -120,7 +174,7 @@ export function LiveView() {
           </div>
         </Card>
 
-        <Card className="col-span-5" pad={false}>
+        <Card className="col-span-12" pad={false}>
           <div className="px-5 py-4 hairline-b">
             <SectionTitle tick="green">Latest signals</SectionTitle>
           </div>
@@ -150,6 +204,10 @@ export function LiveView() {
       <Notifications />
     </div>
   );
+}
+
+function confirmPaperPhrase() {
+  return window.prompt("Type exactly: CONFIRM PAPER COMMAND") === "CONFIRM PAPER COMMAND";
 }
 
 function StatusRow({ label, value, danger = false }: { label: string; value: string; danger?: boolean }) {

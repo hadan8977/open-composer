@@ -1,878 +1,416 @@
-import { useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
-  GitBranch, Play, Pause, FlaskConical, Eye, ShieldCheck, Sparkles, RefreshCw,
-  TrendingUp, Plus,
+  Bot,
+  Check,
+  CircleStop,
+  Play,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
-import { Card, Tag, Pill, KPI, SectionTitle } from "./blocks";
-import { CommandResultDetails } from "./command-details";
-import { Sparkline } from "./sparkline";
-import { applyDashboardCatalog, auditLog, llmReviews, recentSignals, strategies, versions } from "./data";
-import {
-  getDashboardJson,
-  postDashboardJson,
-  promptDashboardConfirmations,
-  resolveDashboardCommandRun,
-} from "./runtime";
-import type { DashboardCommandPlanResponse, DashboardCommandRunResponse } from "./runtime";
+import { Card, KPI, SectionTitle, Tag } from "./blocks";
+import { applyDashboardCatalog, strategies } from "./data";
+import { dashboardApiToken, getDashboardJson, postDashboardJson } from "./runtime";
+import { EquityCurve } from "./charts/equity-curve";
+import { DrawdownChart } from "./charts/drawdown";
+import { SignalLogChart } from "./charts/signal-log";
+import { FactorICChart } from "./charts/factor-ic";
 
-type Tab = "spec" | "backtest" | "signals" | "versions" | "llm" | "audit";
-type StrategyDataSource = "keep" | "sample" | "alpaca" | "longbridge";
+type Tab =
+  | "overview"
+  | "conversation"
+  | "spec"
+  | "runs"
+  | "promotion"
+  | "paper"
+  | "llm"
+  | "trace";
 
-const TABS: { key: Tab; label: string; icon: any }[] = [
-  { key: "spec",     label: "Spec",     icon: FlaskConical },
-  { key: "backtest", label: "Backtest", icon: TrendingUp },
-  { key: "signals",  label: "Signals",  icon: Eye },
-  { key: "versions", label: "Versions", icon: GitBranch },
-  { key: "llm",      label: "LLM",      icon: Sparkles },
-  { key: "audit",    label: "Audit",    icon: ShieldCheck },
+type StrategyDetailPayload = {
+  strategy: Record<string, any>;
+  project_id: string;
+  project: Record<string, any> | null;
+  queue: QueueRow[];
+  trace: TraceRow[];
+  runs: Array<Record<string, any>>;
+  signals: SignalRow[];
+  paper_readiness: Array<Record<string, any>>;
+  research_reports: Array<Record<string, any>>;
+  spec: SpecPayload;
+  equity: { points: Array<{ ts: string; value: number; benchmark?: number }> };
+  drawdown: { points: Array<{ ts: string; value: number }> };
+  llm_factors: Array<Record<string, any>>;
+};
+
+type QueueRow = {
+  id: string;
+  ts: string;
+  kind: string;
+  body: string;
+  consumed_at?: string | null;
+  metadata?: Record<string, any>;
+};
+
+type TraceRow = {
+  ts: string;
+  span_id: string;
+  agent: string;
+  operation: string;
+  queue_command_id?: string | null;
+  metadata?: Record<string, any>;
+};
+
+type SignalRow = {
+  id?: string;
+  signal_id?: string;
+  timestamp: string;
+  price: number;
+  side: string;
+  action?: string;
+};
+
+type SpecPayload = {
+  strategy_name: string;
+  active_path: string;
+  active_hash: string;
+  active_text: string;
+  draft_path: string | null;
+  draft_hash: string | null;
+  draft_text: string;
+  has_pending_draft: boolean;
+};
+
+const TABS: Array<{ key: Tab; label: string }> = [
+  { key: "overview", label: "Overview" },
+  { key: "conversation", label: "Conversation" },
+  { key: "spec", label: "Spec" },
+  { key: "runs", label: "Runs" },
+  { key: "promotion", label: "Promotion" },
+  { key: "paper", label: "Paper" },
+  { key: "llm", label: "LLM Factors" },
+  { key: "trace", label: "Trace" },
 ];
 
 export function StrategyDetail({ id }: { id: string }) {
-  const s = strategies.find((x) => x.id === id) ?? strategies[0];
-  const [tab, setTab] = useState<Tab>("spec");
-  const [reason, setReason] = useState("operator check");
-  const [dataSource, setDataSource] = useState<StrategyDataSource>(
-    s.dataSource === "sample" ? "alpaca" : (s.dataSource as "keep" | "sample" | "alpaca" | "longbridge"),
-  );
-  const [busyAction, setBusyAction] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState("Dashboard command API is local-only and confirmed.");
-  const [lastPlan, setLastPlan] = useState<DashboardCommandPlanResponse | null>(null);
-  const [lastResult, setLastResult] = useState<DashboardCommandRunResponse | null>(null);
-  const positive = s.lastReturn >= 0;
-  const accent = positive ? "#16C268" : "#FF2D7A";
+  const fallback = strategies.find((item) => item.id === id) ?? strategies[0];
+  const [data, setData] = useState<StrategyDetailPayload | null>(null);
+  const [tab, setTab] = useState<Tab>("overview");
+  const [status, setStatus] = useState("Loading strategy workspace.");
+  const [busy, setBusy] = useState<string | null>(null);
 
-  const refreshCatalog = async () => {
-    const runtimeCatalog = await getDashboardJson<Parameters<typeof applyDashboardCatalog>[0]>(
-      "/api/dashboard/catalog",
-    );
-    applyDashboardCatalog(runtimeCatalog as Parameters<typeof applyDashboardCatalog>[0]);
+  const strategyId = data?.strategy?.strategy_id ?? fallback?.id ?? id;
+  const name = data?.strategy?.strategy_name ?? fallback?.name ?? id;
+
+  const refresh = async () => {
+    setStatus("Refreshing strategy workspace.");
+    const payload = await getDashboardJson<StrategyDetailPayload>(`/api/strategies/${strategyId}`);
+    setData(payload);
+    setStatus("Strategy workspace loaded.");
   };
 
-  const lifecycleActions = [
-    {
-      action: "strategy.approve",
-      label: "Approve",
-      hint: "Promote draft to approved",
-      icon: ShieldCheck,
-      tone: "cyan" as const,
-    },
-    {
-      action: "strategy.validate",
-      label: "Validate",
-      hint: "Write spec validation report",
-      icon: FlaskConical,
-      tone: "cyan" as const,
-    },
-    {
-      action: "strategy.capabilities.refresh",
-      label: "Capabilities",
-      hint: "Refresh backend capability report",
-      icon: RefreshCw,
-      tone: "cyan" as const,
-    },
-    {
-      action: "strategy.workflow.verify",
-      label: "Verify workflow",
-      hint: "Run validation, reports, backtest, scan",
-      icon: Play,
-      tone: "green" as const,
-    },
-    {
-      action: "strategy.activate.manual",
-      label: "Activate manual",
-      hint: "Keep manual signal mode",
-      icon: Play,
-      tone: "green" as const,
-    },
-    {
-      action: "strategy.activate.paper_auto",
-      label: "Activate paper",
-      hint: "Switch to Alpaca paper",
-      icon: Sparkles,
-      tone: "green" as const,
-    },
-    {
-      action: "strategy.disable",
-      label: "Disable",
-      hint: "Retire the strategy",
-      icon: Pause,
-      tone: "pink" as const,
-    },
-  ];
+  useEffect(() => {
+    void refresh().catch((error) => {
+      setStatus(error instanceof Error ? error.message : "Strategy workspace failed to load.");
+    });
+  }, [id]);
 
-  const parseSuggestedStrategyAction = (suggestion: string): {
-    action: string;
-    dataSource?: StrategyDataSource;
-    label: string;
-  } | null => {
-    const trimmed = suggestion.trim();
-    if (trimmed.includes("uv run oc deploy prepare")) {
-      return { action: "system.prepare_workspace", label: "Prepare workspace" };
-    }
-    if (trimmed.includes("uv run oc readiness") || trimmed.includes("uv run oc doctor")) {
-      return { action: "system.readiness.refresh", label: "Refresh readiness" };
-    }
-    if (trimmed.includes("uv run oc paper sync-account")) {
-      return { action: "paper.sync.account", label: "Sync account" };
-    }
-    if (trimmed.includes("uv run oc paper sync")) {
-      return { action: "paper.sync.orders", label: "Sync orders" };
-    }
-    if (trimmed.includes("uv run oc spec validate")) {
-      return { action: "strategy.validate", label: "Validate" };
-    }
-    if (trimmed.includes("uv run oc spec capabilities")) {
-      return { action: "strategy.capabilities.refresh", label: "Capabilities" };
-    }
-    if (trimmed.startsWith("uv run oc strategy approve ")) {
-      return { action: "strategy.approve", label: "Apply" };
-    }
-    if (trimmed.startsWith("uv run oc strategy activate ")) {
-      if (trimmed.includes("--paper-auto")) {
-        const dataSourceMatch = trimmed.match(/--data-source\s+([^\s]+)/);
-        const parsedDataSource = dataSourceMatch?.[1];
-        const resolvedDataSource: StrategyDataSource =
-          parsedDataSource === "sample" ||
-          parsedDataSource === "alpaca" ||
-          parsedDataSource === "longbridge"
-            ? parsedDataSource
-            : "keep";
-        return {
-          action: "strategy.activate.paper_auto",
-          dataSource: resolvedDataSource,
-          label: "Activate paper",
-        };
+  useEffect(() => {
+    if (!data?.project_id) return;
+    const token = dashboardApiToken();
+    const streamPath = token
+      ? `/api/projects/${data.project_id}/trace/stream?token=${encodeURIComponent(token)}`
+      : `/api/projects/${data.project_id}/trace/stream`;
+    const source = new EventSource(streamPath);
+    let polling = false;
+    source.onmessage = (event) => {
+      try {
+        const row = JSON.parse(event.data) as TraceRow;
+        setData((current) =>
+          current ? { ...current, trace: [...current.trace, row].slice(-200) } : current,
+        );
+      } catch {
+        // Keep polling fallback below.
       }
-      return { action: "strategy.activate.manual", label: "Activate manual" };
-    }
-    return null;
-  };
+    };
+    source.onerror = () => {
+      polling = true;
+      source.close();
+    };
+    const timer = window.setInterval(() => {
+      if (!polling) return;
+      void getDashboardJson<{ entries: TraceRow[] }>(`/api/projects/${data.project_id}/trace?limit=200`)
+        .then((payload) => {
+          setData((current) => current ? { ...current, trace: payload.entries } : current);
+        })
+        .catch(() => {
+          // Keep the existing trace; the next catalog refresh can recover.
+        });
+    }, 3000);
+    return () => {
+      source.close();
+      window.clearInterval(timer);
+    };
+  }, [data?.project_id]);
 
-  const runLifecycleCommand = async (action: string, overrideDataSource?: StrategyDataSource) => {
-    setBusyAction(action);
-    setStatusMessage("Creating dashboard command plan…");
-    setLastPlan(null);
-    setLastResult(null);
-    const commandDataSource = overrideDataSource ?? dataSource;
+  const runAction = async (action: string, payload: Record<string, unknown> = {}) => {
+    if (!data) return;
+    const phrase = confirmationPhrase(action, payload);
+    if (phrase && !confirmTypedPhrase(phrase, `Confirm ${action}`)) return;
+    setBusy(action);
+    setStatus(`Submitting ${action}.`);
     try {
-      const plan = await postDashboardJson<DashboardCommandPlanResponse>("/api/dashboard/command-plan", {
-        action,
-        reason,
-        requested_by: "dashboard",
-        strategy_path: s.sourcePath,
-        data_source: commandDataSource,
-      });
-      setLastPlan(plan);
-      if (!plan.plan_path) {
-        throw new Error("dashboard command plan missing plan_path");
-      }
-      const confirmations = await promptDashboardConfirmations(
-        plan,
-        "Type the exact confirmation phrase to execute this dashboard command.",
+      const result = await postDashboardJson<Record<string, any>>(
+        `/api/strategies/${strategyId}/actions/${action}`,
+        payload,
       );
-      if (confirmations === null) {
-        setStatusMessage("Command plan created. Execution cancelled before confirmation.");
-        return;
-      }
-      setStatusMessage(plan.remote ? "Queueing remote command job…" : "Executing dashboard command…");
-      const queued = await postDashboardJson<DashboardCommandRunResponse>("/api/dashboard/command-run", {
-        plan_path: plan.plan_path,
-        ...confirmations,
-        executed_by: "dashboard",
-      });
-      const result = await resolveDashboardCommandRun(queued, (job) => {
-        setStatusMessage(`${job.status}: ${job.message}`);
-      });
-      setLastResult(result);
-      await refreshCatalog();
-      setStatusMessage(
-        `${result.message}${result.result_path ? ` · ${result.result_path}` : ""}${
-          result.backup_manifest_path ? ` · ${result.backup_manifest_path}` : ""
-        }`,
+      setStatus(result.status === "queued" ? `${action} queued.` : `${action} executed.`);
+      if (result.status === "queued") setTab("trace");
+      await refresh();
+      const catalog = await getDashboardJson<Parameters<typeof applyDashboardCatalog>[0]>(
+        "/api/dashboard/catalog",
       );
+      applyDashboardCatalog(catalog);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown dashboard command error";
-      setStatusMessage(message);
+      setStatus(error instanceof Error ? error.message : `${action} failed.`);
     } finally {
-      setBusyAction(null);
+      setBusy(null);
     }
   };
+
+  const acceptDraft = async (accept: boolean) => {
+    setBusy(accept ? "accept" : "reject");
+    try {
+      await postDashboardJson(`/api/strategies/${strategyId}/spec/${accept ? "accept" : "reject"}`, {
+        reason: accept ? "Dashboard accept draft" : "Dashboard reject draft",
+      });
+      setStatus(accept ? "Draft accepted." : "Draft rejected.");
+      await refresh();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Spec action failed.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (!fallback && !data) {
+    return <div className="px-6 pb-8"><Card>No strategy found for {id}.</Card></div>;
+  }
+
+  const gate = data?.project?.gate_summary ?? {};
+  const paperReport = data?.paper_readiness?.[0];
+  const latestRun = data?.runs?.[0];
+  const evidence = data?.project?.evidence ?? {};
+  const signals = data?.signals ?? [];
 
   return (
     <div className="px-6 pb-8 space-y-3">
-      {/* Detail header — strategy hero */}
-      <div
-        className="dscard relative overflow-hidden"
-        style={{ borderRadius: "var(--r-2xl)", padding: "22px 26px" }}
-      >
-        {/* composer-style multi-tile color signature in corner */}
-        <div
-          aria-hidden
-          className="absolute blend-multiply tile-halftone"
-          style={{ top: 0, right: 0, width: 240, height: 56, background: accent }}
-        />
-        <div
-          aria-hidden
-          className="absolute blend-multiply"
-          style={{ top: 56, right: 96, width: 56, height: 32, background: "#0A0A0A" }}
-        />
-        <div
-          aria-hidden
-          className="absolute blend-multiply"
-          style={{ top: 56, right: 152, width: 32, height: 16, background: accent, opacity: 0.55 }}
-        />
-        <div className="relative flex items-start justify-between gap-6">
+      <div className="dscard p-5">
+        <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 t-caption ink-subtle">
-              <span>STRATEGY</span>
-              <span>·</span>
-              <span className="t-mono">{s.symbol}</span>
-              <span>·</span>
-              <span className="t-mono">{s.version}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="t-caption ink-subtle">STRATEGY WORKBENCH</span>
+              <Tag color="paper">{data?.strategy?.lifecycle ?? fallback?.status ?? "unknown"}</Tag>
+              <Tag color="cyan">{data?.strategy?.timeframe ?? fallback?.timeframe ?? "n/a"}</Tag>
+              <Tag color="paper">{data?.strategy?.backend ?? fallback?.backend ?? "python_reference"}</Tag>
             </div>
-            <h1 className="t-display-lg mt-2 grad-ink-green">{s.name}</h1>
-            <div className="flex items-center gap-2 mt-3">
-              <Tag color={s.status === "active" ? "green" : "paper"}>{s.status}</Tag>
-              <Tag color="cyan">{s.modelClass.replace("-", " ")}</Tag>
-              <Tag color={s.risk === "stable" ? "green" : s.risk === "moderate" ? "orange" : "pink"}>{s.risk}</Tag>
-              <span className="t-body-sm ink-subtle ml-1">in {s.group}</span>
+            <h1 className="t-title-xl mt-2 truncate">{humanize(name)}</h1>
+            <div className="t-body-sm ink-subtle mt-1 truncate">
+              {data?.spec?.active_path ?? fallback?.sourcePath ?? "No StrategySpec path"}
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Pill variant="secondary"><Pause size={12} /> Read-only</Pill>
-            <Pill variant="primary"><Play size={12} fill="white" /> CLI gated</Pill>
+          <div className="flex flex-wrap justify-end gap-2">
+            <button className="pill pill-primary" disabled={!!busy} onClick={() => void runAction("evidence")}>
+              <Play size={13} /> Run Evidence
+            </button>
+            <button className="pill pill-secondary" disabled={!!busy} onClick={() => void runAction("materialize")}>
+              <Sparkles size={13} /> Materialize
+            </button>
+            <button className="pill pill-secondary" disabled={!!busy} onClick={() => void runAction("promote")}>
+              <ShieldCheck size={13} /> Promote
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 px-1">
-        {TABS.map(({ key, label, icon: Icon }) => {
-          const isActive = key === tab;
-          return (
+      <div className="sticky top-0 z-10 dscard p-3 grid grid-cols-4 gap-2">
+        <PassBadge label="workflow_pass" value={gate.workflow_pass} />
+        <PassBadge label="research_pass" value={gate.research_pass} />
+        <PassBadge label="llm_contribution_pass" value={gate.llm_contribution_pass} />
+        <PassBadge label="paper_ready_pass" value={gate.paper_ready_pass ?? paperReport?.ready} />
+      </div>
+
+      <div className="flex flex-wrap gap-1 px-1">
+        {TABS.map((item) => (
+          <button
+            key={item.key}
+            onClick={() => setTab(item.key)}
+            className={`pill ${tab === item.key ? "pill-primary" : "pill-secondary"}`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "overview" && (
+        <OverviewTab
+          data={data}
+          latestRun={latestRun}
+          evidence={evidence}
+          status={status}
+          busy={busy}
+          onAction={runAction}
+        />
+      )}
+      {tab === "conversation" && (
+        <ConversationTab projectId={data?.project_id} queue={data?.queue ?? []} trace={data?.trace ?? []} />
+      )}
+      {tab === "spec" && (
+        <SpecTab spec={data?.spec} busy={busy} onAccept={() => void acceptDraft(true)} onReject={() => void acceptDraft(false)} />
+      )}
+      {tab === "runs" && <RunsTab runs={data?.runs ?? []} signals={signals} />}
+      {tab === "promotion" && <PromotionTab reports={data?.research_reports ?? []} paper={paperReport} />}
+      {tab === "paper" && (
+        <PaperTab
+          paper={paperReport}
+          onActivate={(mode) => void runAction("activate", { mode })}
+          onDisable={() => void runAction("disable")}
+          busy={busy}
+        />
+      )}
+      {tab === "llm" && <LLMFactorsTab factors={data?.llm_factors ?? []} onMaterialize={(factor) => void runAction("materialize", { factor })} />}
+      {tab === "trace" && <TraceTab trace={data?.trace ?? []} />}
+    </div>
+  );
+}
+
+function confirmationPhrase(action: string, payload: Record<string, unknown>) {
+  if (action === "promote" || action === "disable") return "CONFIRM STRATEGY COMMAND";
+  if (action === "activate" && payload.mode === "paper_auto") return "CONFIRM PAPER COMMAND";
+  return "";
+}
+
+function confirmTypedPhrase(phrase: string, title: string) {
+  const typed = window.prompt(`${title}\n\nType exactly: ${phrase}`);
+  return typed === phrase;
+}
+
+function OverviewTab({
+  data,
+  latestRun,
+  evidence,
+  status,
+  busy,
+  onAction,
+}: {
+  data: StrategyDetailPayload | null;
+  latestRun?: Record<string, any>;
+  evidence: Record<string, any>;
+  status: string;
+  busy: string | null;
+  onAction: (action: string, payload?: Record<string, unknown>) => Promise<void>;
+}) {
+  const equity = data?.equity?.points ?? [];
+  const drawdown = data?.drawdown?.points ?? [];
+  return (
+    <div className="grid grid-cols-12 gap-3">
+      <Card className="col-span-8" pad={false}>
+        <div className="px-5 py-4 hairline-b"><SectionTitle tick="green">Equity Curve</SectionTitle></div>
+        <div className="p-4"><EquityCurve data={equity} /></div>
+      </Card>
+      <Card className="col-span-4">
+        <SectionTitle tick="ink" hint={status}>Key Metrics</SectionTitle>
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          <KPI label="Return" value={formatPct(latestRun?.total_return_pct)} accent="green" />
+          <KPI label="Sharpe" value={formatNumber(latestRun?.sharpe_ratio)} accent="cyan" />
+          <KPI label="Trades" value={String(latestRun?.trades ?? latestRun?.signals ?? 0)} accent="orange" />
+          <KPI label="Fees" value={money(latestRun?.total_fees ?? 0)} accent="black" />
+        </div>
+      </Card>
+      <Card className="col-span-5" pad={false}>
+        <div className="px-5 py-4 hairline-b"><SectionTitle tick="pink">Drawdown</SectionTitle></div>
+        <div className="p-4"><DrawdownChart data={drawdown} /></div>
+      </Card>
+      <Card className="col-span-3">
+        <SectionTitle tick="cyan">Evidence Tracks</SectionTitle>
+        <EvidenceLine label="Factor Quality" item={evidence.factor_quality} />
+        <EvidenceLine label="Execution Reality" item={evidence.execution_reality} />
+        <EvidenceLine label="Alt/LLM Evidence" item={evidence.alt_llm_evidence} />
+      </Card>
+      <Card className="col-span-4">
+        <SectionTitle tick="orange">Actions</SectionTitle>
+        <div className="grid grid-cols-1 gap-2 mt-4">
+          {[
+            ["evidence", "Run Evidence", Play],
+            ["materialize", "Materialize LLM Factors", Sparkles],
+            ["promote", "Promote to Approved", ShieldCheck],
+            ["disable", "Disable", CircleStop],
+          ].map(([action, label, Icon]: any) => (
             <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`pill ${isActive ? "pill-primary" : "pill-ghost"}`}
+              key={action}
+              className="pill pill-secondary justify-start"
+              disabled={!!busy}
+              onClick={() => void onAction(action)}
             >
               <Icon size={13} /> {label}
             </button>
-          );
-        })}
-      </div>
-
-      {tab === "spec" && <SpecCanvas s={s} accent={accent} />}
-      {tab === "backtest" && (
-        <BacktestPanel
-          s={s}
-          accent={accent}
-          onRerun={runLifecycleCommand}
-          busyAction={busyAction}
-        />
-      )}
-      {tab === "signals" && (
-        <SignalsPanel s={s} onRerun={runLifecycleCommand} busyAction={busyAction} />
-      )}
-      {tab === "versions" && <VersionsMini s={s} />}
-      {tab === "llm" && <LLMPanel s={s} />}
-      {tab === "audit" && <AuditMini s={s} />}
-    </div>
-  );
-}
-
-/* ---------------- Spec — halftone workspace canvas ---------------- */
-
-function SpecCanvas({ s, accent }: { s: any; accent: string }) {
-  const factorTitle = s.factors.length > 0 ? s.factors.slice(0, 3).join(", ") : "No custom factors";
-  const capabilityTitle =
-    s.requiredCapabilities.length > 0
-      ? s.requiredCapabilities.slice(0, 3).join(", ")
-      : "No required capabilities";
-  const backendReasons = s.backendReasons ?? [];
-  const compatibilityReasonEntries = Object.entries(s.compatibilityReasons ?? {}).filter(
-    ([, reasons]) => Array.isArray(reasons) && reasons.length > 0,
-  );
-  const reasonCount =
-    backendReasons.length +
-    compatibilityReasonEntries.reduce((count, [, reasons]) => count + reasons.length, 0);
-
-  return (
-    <div className="grid grid-cols-12 gap-3">
-      {/* The canvas itself — halftone background, the "engineering file" */}
-      <div className="col-span-8">
-        <Card pad={false}>
-          <div className="px-5 py-3 hairline-b flex items-center justify-between">
-            <SectionTitle hint="StrategySpec · YAML-backed workspace">Editor canvas</SectionTitle>
-            <div className="flex items-center gap-1.5">
-              <Pill variant="ghost">YAML</Pill>
-              <Pill variant="ghost">Visual</Pill>
-            </div>
-          </div>
-          <div
-            className="relative halftone bg-paper-3 overflow-hidden"
-            style={{ height: 460 }}
-          >
-            {/* subtle grid hint */}
-            <div
-              aria-hidden
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                backgroundImage:
-                  "linear-gradient(rgba(0,0,0,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.04) 1px, transparent 1px)",
-                backgroundSize: "48px 48px",
-                backgroundPosition: "-1px -1px",
-              }}
-            />
-
-            {/* Node: Universe */}
-            <SpecNode
-              x={48} y={48} w={220}
-              kind="UNIVERSE" title={s.symbol} subtitle={`${s.timeframe} · ${s.dataSource}`} tone="ink"
-            />
-            {/* Connector */}
-            <Connector x1={158} y1={104} x2={158} y2={150} />
-
-            {/* Node: Filter */}
-            <SpecNode
-              x={48} y={150} w={220}
-              kind="DATA" title={s.dataSource} subtitle={s.sourcePath || "StrategySpec source path"} tone="cyan"
-            />
-            <Connector x1={158} y1={206} x2={158} y2={252} />
-
-            {/* Node: Entry */}
-            <SpecNode
-              x={48} y={252} w={220}
-              kind="FACTORS" title={factorTitle} subtitle={`${s.factors.length} declared factors`} tone="green"
-            />
-            <Connector x1={268} y1={290} x2={420} y2={290} />
-
-            {/* Node: Sizing */}
-            <SpecNode
-              x={420} y={252} w={220}
-              kind="CAPABILITIES" title={capabilityTitle} subtitle={`${s.requiredCapabilities.length} required`} tone="orange"
-            />
-            <Connector x1={530} y1={308} x2={530} y2={360} />
-
-            {/* Node: Exit */}
-            <SpecNode
-              x={420} y={360} w={220}
-              kind="EXECUTION" title={s.executionMode} subtitle={`${s.backend} · ${s.backendStatus}`} tone="pink"
-            />
-
-            {/* Drifting "+" placeholder */}
-            <button
-              className="absolute flex items-center gap-1 px-3 h-8 rounded-full t-body-sm ink-muted bg-white/70 hover:bg-white"
-              style={{ left: 700, top: 380, boxShadow: "var(--e1)", border: "1px dashed rgba(10,10,10,.18)" }}
-              disabled
-              title="Dashboard writes are not exposed in read-only mode."
-            >
-              <Plus size={12} /> read only
-            </button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Side panel — stats + spec metadata */}
-      <div className="col-span-4 space-y-3">
-        <Card pad={false}>
-          <div className="px-5 py-3 hairline-b">
-            <SectionTitle>Live metrics</SectionTitle>
-          </div>
-          <div className="p-3 grid grid-cols-2 gap-2">
-            <KPI label="Sharpe" value={String(s.sharpe)} accent="black" />
-            <KPI label="30d return" value={`${s.lastReturn > 0 ? "+" : ""}${s.lastReturn}%`} accent={s.lastReturn >= 0 ? "green" : "pink"} />
-          </div>
-          <div className="px-5 pb-4 pt-1">
-            <Sparkline data={s.series} color={accent} width={340} height={64} />
-          </div>
-        </Card>
-
-        <Card pad={false}>
-          <div className="px-5 py-3 hairline-b">
-            <SectionTitle>Compatibility</SectionTitle>
-          </div>
-          <div className="p-3 space-y-1.5">
-            <CompatRow label="Pine export" ok={s.pine} note="full subset" />
-            <CompatRow label="Python engine" ok={s.python} note="primary runtime" />
-            <CompatRow label="Alpaca paper" ok={s.alpaca} note="paper_auto eligible" />
-            <CompatRow label="Backend plan" ok={s.backendStatus === "supported"} note={s.backendStatus} />
-          </div>
-          {(backendReasons.length > 0 || compatibilityReasonEntries.length > 0) && (
-            <div className="px-3 pb-3 pt-1 space-y-2">
-              <div className="flex items-center justify-between gap-2 px-1">
-                <span className="t-caption ink-subtle">Reason chain</span>
-                <span className="t-caption ink-muted">{reasonCount} notes</span>
-              </div>
-              <ReasonStack title="Backend plan" status={s.backendStatus} reasons={backendReasons} />
-              {compatibilityReasonEntries.map(([capability, reasons]) => (
-                <ReasonStack
-                  key={capability}
-                  title={capability}
-                  status={s.compatibility[capability] ?? "partial"}
-                  reasons={reasons}
-                />
-              ))}
-            </div>
-          )}
-        </Card>
-
-        {s.paperReadiness && (
-          <Card pad={false}>
-            <div className="px-5 py-3 hairline-b flex items-center justify-between">
-              <SectionTitle>Paper Readiness</SectionTitle>
-              <Tag color={s.paperReadiness.status === "ok" ? "green" : s.paperReadiness.status === "warning" ? "orange" : "pink"}>
-                {s.paperReadiness.status}
-              </Tag>
-            </div>
-            <div className="p-4 space-y-2">
-              <div className="t-caption ink-subtle t-mono truncate">
-                {s.paperReadiness.path}
-              </div>
-              {s.paperReadiness.checks.slice(0, 5).map((check) => (
-                <div key={check.name} className="flex items-start gap-3 t-body-sm">
-                  <Tag color={check.status === "ok" ? "green" : check.status === "warning" ? "orange" : "pink"}>
-                    {check.status}
-                  </Tag>
-                  <div className="min-w-0">
-                    <div className="t-title-sm">{check.name}</div>
-                    <div className="ink-muted leading-snug">{check.message}</div>
-                    {check.suggestedActions.length > 0 && (
-                      <div className="mt-2 space-y-1">
-                        {check.suggestedActions.map((suggestion) => {
-                          const mapped = parseSuggestedStrategyAction(suggestion);
-                          return (
-                            <div key={suggestion} className="flex items-center gap-2">
-                              <div className="t-caption t-mono ink-subtle truncate flex-1">
-                                {suggestion}
-                              </div>
-                              {mapped && (
-                                <button
-                                  type="button"
-                                  onClick={() => runLifecycleCommand(mapped.action, mapped.dataSource)}
-                                  className="t-caption px-2 py-1 rounded-md border border-[rgba(10,10,10,.12)] bg-white hover:bg-[var(--paper-3)]"
-                                >
-                                  {mapped.label}
-                                </button>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
-
-        <Card pad={false}>
-          <div className="px-5 py-3 hairline-b flex items-center justify-between">
-            <SectionTitle>Lifecycle</SectionTitle>
-            <Tag color={s.status === "active" ? "green" : s.status === "approved" ? "cyan" : "paper"}>
-              {s.status}
-            </Tag>
-          </div>
-          <div className="p-4 space-y-3">
-            <label className="ds-input flex items-center gap-2 h-10 px-3">
-              <span className="t-caption ink-subtle shrink-0">Reason</span>
-              <input
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                className="bg-transparent outline-none flex-1 t-body-md placeholder:text-[#9A988F]"
-                placeholder="operator check"
-              />
-            </label>
-            <label className="ds-input flex items-center gap-2 h-10 px-3">
-              <span className="t-caption ink-subtle shrink-0">Data source</span>
-              <select
-                value={dataSource}
-                onChange={(event) =>
-                  setDataSource(event.target.value as "keep" | "sample" | "alpaca" | "longbridge")
-                }
-                className="bg-transparent outline-none flex-1 t-body-md"
-              >
-                <option value="keep">keep current</option>
-                <option value="sample">sample</option>
-                <option value="alpaca">alpaca</option>
-                <option value="longbridge">longbridge</option>
-              </select>
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {lifecycleActions.map(({ action, label, hint, icon: Icon, tone }) => (
-                <button
-                  key={action}
-                  onClick={() => runLifecycleCommand(action)}
-                  disabled={busyAction !== null}
-                  className={`flex items-center gap-3 px-3.5 py-3 text-left transition-colors ${
-                    busyAction === action ? "opacity-70" : "hover:bg-[var(--paper-3)]"
-                  }`}
-                  style={{
-                    borderRadius: "var(--r-md)",
-                    background: busyAction === action ? "var(--paper-3)" : "transparent",
-                    border: "1px solid rgba(10,10,10,.08)",
-                  }}
-                >
-                  <span
-                    className="flex h-8 w-8 items-center justify-center shrink-0"
-                    style={{
-                      borderRadius: 4,
-                      background:
-                        tone === "pink"
-                          ? "rgba(255,45,122,.12)"
-                          : tone === "green"
-                            ? "rgba(31,184,90,.12)"
-                            : "rgba(26,200,232,.12)",
-                      color:
-                        tone === "pink"
-                          ? "#C81E5C"
-                          : tone === "green"
-                            ? "#0A6E3B"
-                            : "#087A96",
-                    }}
-                  >
-                    <Icon size={15} strokeWidth={2.2} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="t-body-md block" style={{ fontWeight: 600 }}>
-                      {label}
-                    </span>
-                    <span className="t-body-sm ink-subtle block mt-0.5">{hint}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-            <div className="space-y-2 rounded-lg bg-[var(--paper-3)] p-3">
-              <div className="flex items-center justify-between gap-3">
-                <span className="t-caption ink-subtle">Status</span>
-                <span className="t-caption ink-subtle">
-                  {busyAction ? `Working on ${busyAction}` : "Idle"}
-                </span>
-              </div>
-              <div className="t-body-sm ink leading-snug">{statusMessage}</div>
-              {lastPlan && (
-                <div className="space-y-1 pt-1">
-                  <div className="t-body-sm ink-subtle">
-                    Plan <span className="t-mono">{lastPlan.command_id}</span>
-                  </div>
-                  <div className="t-body-sm ink-subtle">
-                    Confirmation <span className="t-mono">{lastPlan.confirmation_phrase}</span>
-                  </div>
-                  {(lastPlan.warnings ?? []).length > 0 && (
-                    <div className="t-body-sm ink-subtle">
-                      Warnings: {(lastPlan.warnings ?? []).join(" · ")}
-                    </div>
-                  )}
-                  {lastPlan.remote && (
-                    <div className="t-body-sm ink-subtle">
-                      Remote {lastPlan.remote.risk_level}
-                      {lastPlan.remote.backup_required ? " · backup required" : ""}
-                    </div>
-                  )}
-                </div>
-              )}
-              {lastResult && (
-                <div className="space-y-1 pt-1">
-                  <div className="t-body-sm ink-subtle">
-                    Result <span className="t-mono">{lastResult.command_id}</span> · {lastResult.status}
-                  </div>
-                  <div className="t-body-sm ink-subtle">{lastResult.message}</div>
-                  {lastResult.output_paths && lastResult.output_paths.length > 0 && (
-                    <div className="t-body-sm ink-subtle">
-                      Outputs: {lastResult.output_paths.join(" · ")}
-                    </div>
-                  )}
-                  {lastResult.backup_manifest_path && (
-                    <div className="t-body-sm ink-subtle">
-                      Backup: {lastResult.backup_manifest_path}
-                    </div>
-                  )}
-                </div>
-              )}
-              <CommandResultDetails plan={lastPlan} result={lastResult} />
-            </div>
-          </div>
-        </Card>
-
-        {s.customDataBindings.length > 0 && (
-          <Card pad={false}>
-            <div className="px-5 py-3 hairline-b">
-              <SectionTitle>Nautilus replay</SectionTitle>
-            </div>
-            <div className="p-3 space-y-2">
-              {s.customDataBindings.map((binding: any) => (
-                <div
-                  key={`${binding.factorName}-${binding.path}`}
-                  className="p-3"
-                  style={{ background: "var(--paper-3)", borderRadius: "var(--r-md)" }}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="t-title-sm truncate">{binding.factorName}</div>
-                      <div className="t-caption ink-subtle truncate">
-                        {binding.source} · {binding.field} · {binding.recordCount} rows
-                      </div>
-                    </div>
-                    <Tag color={replayStatusColor(binding.pointInTimeStatus)}>
-                      {binding.pointInTimeStatus}
-                    </Tag>
-                  </div>
-                  <div className="t-caption ink-subtle mt-2 truncate">
-                    {binding.path}
-                  </div>
-                  <div className="t-caption ink-subtle mt-1">
-                    {binding.firstTimestamp || "n/a"} → {binding.lastTimestamp || "n/a"}
-                  </div>
-                  {binding.replayWarnings.length > 0 && (
-                    <div className="t-body-sm ink-muted mt-2 leading-snug">
-                      {binding.replayWarnings.slice(0, 2).join(" · ")}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
-
-        <Card pad={false}>
-          <div className="px-5 py-3 hairline-b">
-            <SectionTitle>Provenance</SectionTitle>
-          </div>
-          <div className="p-4 t-body-sm space-y-1.5">
-            <ProvRow k="Source" v={s.sourcePath || "unknown"} mono />
-            <ProvRow k="Version" v={s.version} mono />
-            <ProvRow k="Hash" v={s.specHash || "unknown"} mono />
-            <ProvRow k="Backend plan" v={s.backendPlanPath || "n/a"} mono />
-            <ProvRow k="Paper readiness" v={s.paperReadinessReportPath || "n/a"} mono />
-            <ProvRow k="Broker" v={s.broker} />
-            <ProvRow k="Data" v={s.dataSource} />
-          </div>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function SpecNode({
-  x, y, w, kind, title, subtitle, tone,
-}: {
-  x: number; y: number; w: number; kind: string; title: string; subtitle: string;
-  tone: "ink" | "green" | "pink" | "cyan" | "orange";
-}) {
-  const tones: Record<string, { bg: string; bar: string; ink: string }> = {
-    ink:    { bg: "#FFFFFF", bar: "#0A0A0A", ink: "#0A0A0A" },
-    green:  { bg: "#FFFFFF", bar: "#16C268", ink: "#0A0A0A" },
-    pink:   { bg: "#FFFFFF", bar: "#FF2D7A", ink: "#0A0A0A" },
-    cyan:   { bg: "#FFFFFF", bar: "#21CFEF", ink: "#0A0A0A" },
-    orange: { bg: "#FFFFFF", bar: "#F8A93B", ink: "#0A0A0A" },
-  };
-  const t = tones[tone];
-  return (
-    <div
-      className="absolute"
-      style={{
-        left: x, top: y, width: w,
-        background: t.bg,
-        borderRadius: "var(--r-md)",
-        boxShadow: "var(--e2)",
-        border: "1px solid rgba(10,10,10,.06)",
-        overflow: "hidden",
-      }}
-    >
-      <div className="flex items-center gap-2 px-3 py-1.5" style={{ borderBottom: "1px solid rgba(10,10,10,.06)" }}>
-        <span style={{ width: 6, height: 6, background: t.bar, borderRadius: 2, display: "inline-block" }} />
-        <span className="t-caption" style={{ color: "#6B6B68" }}>{kind}</span>
-      </div>
-      <div className="px-3 py-2.5">
-        <div className="t-title-sm" style={{ color: t.ink }}>{title}</div>
-        <div className="t-body-sm ink-subtle mt-0.5">{subtitle}</div>
-      </div>
-    </div>
-  );
-}
-
-function Connector({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }) {
-  const isHorizontal = y1 === y2;
-  const left = Math.min(x1, x2) - 4;
-  const top = Math.min(y1, y2) - 4;
-  const width = isHorizontal ? Math.abs(x2 - x1) + 8 : 8;
-  const height = isHorizontal ? 8 : Math.abs(y2 - y1) + 8;
-  return (
-    <svg
-      className="absolute pointer-events-none"
-      style={{ left, top, width, height }}
-      viewBox={`0 0 ${width} ${height}`}
-    >
-      {isHorizontal ? (
-        <line x1={4} y1={4} x2={width - 4} y2={4} stroke="#0A0A0A" strokeWidth="1.5" strokeDasharray="3 3" />
-      ) : (
-        <line x1={4} y1={4} x2={4} y2={height - 4} stroke="#0A0A0A" strokeWidth="1.5" strokeDasharray="3 3" />
-      )}
-      <circle cx={isHorizontal ? width - 4 : 4} cy={isHorizontal ? 4 : height - 4} r="2" fill="#0A0A0A" />
-    </svg>
-  );
-}
-
-function CompatRow({ label, ok, note }: { label: string; ok: boolean; note: string }) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: ok ? "var(--paper-3)" : "transparent" }}>
-      <span style={{ width: 8, height: 8, borderRadius: 2, background: ok ? "#16C268" : "rgba(10,10,10,.18)" }} />
-      <span className="t-body-md flex-1">{label}</span>
-      <span className="t-body-sm ink-subtle">{note}</span>
-    </div>
-  );
-}
-
-function replayStatusColor(status: string) {
-  if (status === "complete") {
-    return "green";
-  }
-  if (status === "partial") {
-    return "orange";
-  }
-  return "pink";
-}
-
-function ReasonStack({
-  title,
-  status,
-  reasons,
-}: {
-  title: string;
-  status: "supported" | "partial" | "blocked" | "unsupported" | string;
-  reasons: string[];
-}) {
-  if (reasons.length === 0) {
-    return null;
-  }
-  const tone: "green" | "orange" | "pink" | "paper" =
-    status === "supported" ? "green"
-      : status === "partial" ? "orange"
-      : status === "blocked" ? "pink"
-      : "paper";
-
-  return (
-    <div className="rounded-lg border border-[rgba(10,10,10,.08)] bg-white px-3 py-2.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="t-title-sm">{title}</span>
-        <Tag color={tone}>{status}</Tag>
-      </div>
-      <ul className="mt-2 space-y-1">
-        {reasons.map((reason, index) => (
-          <li key={`${title}-${index}`} className="t-body-sm ink-subtle leading-5">
-            - {reason}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function ProvRow({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="ink-subtle">{k}</span>
-      <span className={mono ? "t-mono" : "ink"}>{v}</span>
-    </div>
-  );
-}
-
-/* ---------------- Other tabs (light placeholders) ---------------- */
-
-function BacktestPanel({
-  s,
-  accent,
-  onRerun,
-  busyAction,
-}: {
-  s: any;
-  accent: string;
-  onRerun: (action: string) => void;
-  busyAction: string | null;
-}) {
-  return (
-    <div className="grid grid-cols-12 gap-3">
-      <Card variant="dark" pad={false} className="col-span-8">
-        <div className="px-5 pt-4 pb-3 flex items-end justify-between gap-4">
-          <div>
-            <div className="t-caption" style={{ color: "rgba(242,242,240,.55)" }}>Equity curve · latest catalog run</div>
-            <div className="t-display-xl mt-1.5 t-num">{s.lastReturn >= 0 ? "+" : ""}{s.lastReturn}%</div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onRerun("strategy.backtest.rerun")}
-              disabled={busyAction !== null}
-              className="flex items-center gap-2 px-3 h-8 rounded-full t-body-sm text-white transition-colors hover:bg-white/10 disabled:opacity-60"
-              style={{ border: "1px solid rgba(255,255,255,.15)" }}
-            >
-              <RefreshCw size={13} />
-              Rerun backtest
-            </button>
-            <div className="flex items-center gap-0.5 p-1 rounded-full bg-white/5">
-              {["1M", "3M", "1Y", "3Y", "5Y", "All"].map((p, i) => (
-                <button
-                  key={p}
-                  className={`px-2.5 h-7 inline-flex items-center t-body-sm rounded-full transition-colors ${
-                    i === 4 ? "bg-white text-[#0A0A0A]" : "text-white/65 hover:text-white"
-                  }`}
-                  style={{ fontWeight: 600 }}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="px-5 pb-5">
-          <Sparkline
-            data={s.series}
-            color={accent}
-            width={760}
-            height={240}
-            area
-            strokeWidth={1.8}
-          />
-        </div>
-        {/* benchmark legend */}
-        <div className="px-5 pb-5 flex items-center gap-4 t-body-sm" style={{ color: "rgba(242,242,240,.7)" }}>
-          <span className="inline-flex items-center gap-1.5">
-            <span style={{ width: 8, height: 8, background: accent, borderRadius: 1 }} /> Strategy
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span style={{ width: 8, height: 8, background: "rgba(242,242,240,.45)", borderRadius: 1 }} /> SPY benchmark
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span style={{ width: 8, height: 8, background: "#1AC8E8", borderRadius: 1 }} /> Risk-free
-          </span>
+          ))}
         </div>
       </Card>
-      <Card pad={false} className="col-span-4">
-        <div className="px-5 py-3 hairline-b">
-          <SectionTitle tick="green">Performance</SectionTitle>
-        </div>
-        <div className="p-3 grid grid-cols-2 gap-1.5">
-          {[
-            ["Cumulative", `${s.lastReturn >= 0 ? "+" : ""}${s.lastReturn}%`, "green"],
-            ["Annualized", "catalog",  "green"],
-            ["Sharpe",     String(s.sharpe), null],
-            ["Risk",       s.risk,   "pink"],
-            ["Backend",    s.backendStatus,   null],
-            ["Trades",     String(s.trades), null],
-          ].map(([k, v, accent]) => (
-            <div
-              key={k as string}
-              className="px-3.5 py-2.5"
-              style={{ background: "var(--paper-3)", borderRadius: "var(--r-sm)" }}
-            >
-              <div className="t-caption ink-subtle">{k}</div>
-              <div
-                className="t-title-md t-num mt-1"
-                style={{
-                  color: accent === "green" ? "#0A6E3B" : accent === "pink" ? "#C81E5C" : "var(--ink)",
-                  fontWeight: 700,
-                }}
-              >{v}</div>
+    </div>
+  );
+}
+
+function ConversationTab({
+  projectId,
+  queue,
+  trace,
+}: {
+  projectId?: string;
+  queue: QueueRow[];
+  trace: TraceRow[];
+}) {
+  const [body, setBody] = useState("");
+  const [status, setStatus] = useState(projectId ? "Queue is ready." : "No linked project yet.");
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!projectId || !body.trim()) return;
+    setStatus("Writing queue command.");
+    try {
+      await postDashboardJson(`/api/projects/${projectId}/queue`, { kind: "advice", body });
+      setBody("");
+      setStatus("Command queued. Trace will update as the agent works.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Queue write failed.");
+    }
+  };
+  return (
+    <div className="grid grid-cols-12 gap-3">
+      <Card className="col-span-7" pad={false}>
+        <div className="px-5 py-4 hairline-b"><SectionTitle tick="purple">Conversation Trace</SectionTitle></div>
+        <TraceList rows={trace.slice(-60)} />
+      </Card>
+      <Card className="col-span-5">
+        <SectionTitle tick="green" hint={status}>Send Advice</SectionTitle>
+        <form onSubmit={submit} className="mt-4 space-y-3">
+          <textarea
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            className="ds-input w-full min-h-[140px] px-3 py-2 t-body-sm"
+            placeholder="Describe what the agent should try next."
+          />
+          <button className="pill pill-primary" disabled={!projectId || !body.trim()}>
+            <Bot size={13} /> Queue to Agent
+          </button>
+        </form>
+        <div className="mt-5 space-y-2">
+          <SectionTitle tick="ink">Queue</SectionTitle>
+          {queue.slice(-8).reverse().map((item) => (
+            <div key={item.id} className="rounded-md bg-[var(--paper-3)] p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="t-title-sm">{item.kind}</span>
+                <Tag color={item.consumed_at ? "green" : "orange"}>{item.consumed_at ? "consumed" : "pending"}</Tag>
+              </div>
+              <div className="t-body-sm ink-subtle mt-1 line-clamp-3">{item.body || "(empty)"}</div>
             </div>
           ))}
         </div>
@@ -881,98 +419,313 @@ function BacktestPanel({
   );
 }
 
-function SignalsPanel({
-  s,
-  onRerun,
-  busyAction,
+function SpecTab({
+  spec,
+  busy,
+  onAccept,
+  onReject,
 }: {
-  s: any;
-  onRerun: (action: string) => void;
-  busyAction: string | null;
+  spec?: SpecPayload;
+  busy: string | null;
+  onAccept: () => void;
+  onReject: () => void;
 }) {
-  const rows = recentSignals.filter((signal) => signal.symbol === s.symbol || signal.strat === s.name);
+  const diff = useMemo(() => buildDiff(spec?.active_text ?? "", spec?.draft_text ?? ""), [spec]);
+  if (!spec) return <Card>Spec is loading.</Card>;
   return (
-    <Card pad={false}>
-      <div className="px-5 py-3 hairline-b flex items-center justify-between gap-3">
-        <SectionTitle>Signal log</SectionTitle>
-        <button
-          type="button"
-          onClick={() => onRerun("strategy.scan.rerun")}
-          disabled={busyAction !== null}
-          className="flex items-center gap-2 px-3 h-8 rounded-full t-body-sm transition-colors hover:bg-[var(--paper-3)] disabled:opacity-60"
-          style={{ border: "1px solid rgba(10,10,10,.1)" }}
-        >
-          <RefreshCw size={13} />
-          Rerun scan
-        </button>
-      </div>
-      {rows.length === 0 ? (
-        <div className="p-5 t-body-md ink-muted">No signal log entries are linked to this strategy.</div>
+    <div className="grid grid-cols-12 gap-3">
+      <Card className="col-span-6" pad={false}>
+        <div className="px-5 py-4 hairline-b"><SectionTitle tick="ink">Active Spec</SectionTitle></div>
+        <CodeBlock text={spec.active_text} />
+      </Card>
+      <Card className="col-span-6" pad={false}>
+        <div className="px-5 py-4 hairline-b">
+          <SectionTitle tick={spec.has_pending_draft ? "orange" : "cyan"} action={
+            <div className="flex gap-2">
+              <button className="pill pill-primary" disabled={!!busy || !spec.has_pending_draft} onClick={onAccept}>
+                <Check size={13} /> Accept
+              </button>
+              <button className="pill pill-secondary" disabled={!!busy || !spec.has_pending_draft} onClick={onReject}>
+                Reject
+              </button>
+            </div>
+          }>
+            Draft Diff
+          </SectionTitle>
+        </div>
+        <CodeBlock text={diff.length ? diff.join("\n") : "No pending draft diff."} />
+      </Card>
+    </div>
+  );
+}
+
+function RunsTab({ runs, signals }: { runs: Array<Record<string, any>>; signals: SignalRow[] }) {
+  return (
+    <div className="space-y-3">
+      <Card pad={false}>
+        <div className="px-5 py-4 hairline-b"><SectionTitle tick="cyan">Runs</SectionTitle></div>
+        <div className="overflow-auto">
+          <table className="w-full t-body-sm">
+            <thead><tr className="hairline-b bg-[var(--paper-4)]">
+              <th className="text-left px-5 py-2">Run</th><th className="text-left">Kind</th><th className="text-right">Return</th><th className="text-right">Sharpe</th><th className="text-right pr-5">Signals</th>
+            </tr></thead>
+            <tbody>
+              {runs.length === 0 ? <tr><td colSpan={5} className="px-5 py-8 ink-muted">No runs indexed yet.</td></tr> : runs.map((run) => (
+                <tr key={run.run_id} className="hairline-b">
+                  <td className="px-5 py-3 t-mono">{run.run_id}</td>
+                  <td><Tag color="paper">{run.kind ?? "unknown"}</Tag></td>
+                  <td className="text-right t-num">{formatPct(run.total_return_pct)}</td>
+                  <td className="text-right t-num">{formatNumber(run.sharpe_ratio)}</td>
+                  <td className="text-right pr-5 t-num">{run.signals ?? 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+      <Card pad={false}>
+        <div className="px-5 py-4 hairline-b"><SectionTitle tick="green">Signal Log</SectionTitle></div>
+        <div className="p-4"><SignalLogChart data={signals.map((row) => ({ timestamp: row.timestamp, price: Number(row.price), side: row.side, action: row.action }))} /></div>
+      </Card>
+    </div>
+  );
+}
+
+function PromotionTab({ reports, paper }: { reports: Array<Record<string, any>>; paper?: Record<string, any> }) {
+  return (
+    <div className="grid grid-cols-12 gap-3">
+      <Card className="col-span-7" pad={false}>
+        <div className="px-5 py-4 hairline-b"><SectionTitle tick="cyan">Research Reports</SectionTitle></div>
+        <div className="divide-y divide-[var(--hairline)]">
+          {reports.length === 0 ? <div className="px-5 py-8 ink-muted">No promotion or evidence report is indexed yet.</div> : reports.map((report) => (
+            <div key={report.report_json_path ?? report.source_path} className="px-5 py-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="t-title-sm">{report.kind ?? "research"}</div>
+                <Tag color={statusColor(report.status)}>{report.status ?? "warning"}</Tag>
+              </div>
+              <div className="t-body-sm ink-subtle mt-1 truncate">{report.report_json_path ?? report.source_path}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+      <Card className="col-span-5">
+        <SectionTitle tick="orange">Paper Readiness</SectionTitle>
+        <div className="mt-4 space-y-2">
+          <StatusRow label="Status" value={paper?.status ?? "missing"} />
+          <StatusRow label="Ready" value={paper?.ready ? "yes" : "no"} />
+          <StatusRow label="Report" value={paper?.path ?? "n/a"} />
+        </div>
+        <div className="mt-4 space-y-2">
+          {(paper?.checks ?? []).slice(0, 8).map((check: any) => (
+            <div key={check.name} className="rounded-md bg-[var(--paper-3)] p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="t-title-sm">{check.name}</span>
+                <Tag color={statusColor(check.status)}>{check.status}</Tag>
+              </div>
+              <div className="t-body-sm ink-subtle mt-1">{check.message}</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function PaperTab({
+  paper,
+  busy,
+  onActivate,
+  onDisable,
+}: {
+  paper?: Record<string, any>;
+  busy: string | null;
+  onActivate: (mode: "manual" | "paper_auto") => void;
+  onDisable: () => void;
+}) {
+  return (
+    <div className="grid grid-cols-12 gap-3">
+      <Card className="col-span-5">
+        <SectionTitle tick="green">Lifecycle</SectionTitle>
+        <div className="mt-4 grid grid-cols-1 gap-2">
+          <button className="pill pill-primary justify-start" disabled={!!busy} onClick={() => onActivate("manual")}>
+            <Play size={13} /> Activate Manual
+          </button>
+          <button className="pill pill-secondary justify-start" disabled={!!busy} onClick={() => onActivate("paper_auto")}>
+            <ShieldCheck size={13} /> Activate Paper
+          </button>
+          <button className="pill pill-secondary justify-start" disabled={!!busy} onClick={onDisable}>
+            <CircleStop size={13} /> Disable
+          </button>
+        </div>
+      </Card>
+      <Card className="col-span-7">
+        <SectionTitle tick="orange">Readiness Gates</SectionTitle>
+        <div className="mt-4 space-y-2">
+          {(paper?.checks ?? []).length === 0 ? (
+            <div className="t-body-sm ink-muted">No paper readiness report is indexed.</div>
+          ) : (
+            paper?.checks.map((check: any) => (
+              <StatusRow key={check.name} label={check.name} value={`${check.status}: ${check.message}`} />
+            ))
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function LLMFactorsTab({
+  factors,
+  onMaterialize,
+}: {
+  factors: Array<Record<string, any>>;
+  onMaterialize: (factor: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-12 gap-3">
+      {factors.length === 0 ? (
+        <Card className="col-span-12">This strategy has no source=llm_feature factors.</Card>
       ) : (
-        <table className="w-full t-body-sm">
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id} className="hairline-b last:border-b-0">
-                <td className="px-5 py-3 t-mono ink-muted">{row.t}</td>
-                <td>{row.side}</td>
-                <td>{row.symbol}</td>
-                <td className="text-right pr-5 t-num">{row.px.toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        factors.map((factor) => (
+          <Card key={factor.name} className="col-span-6">
+            <SectionTitle tick="purple" action={
+              <button className="pill pill-secondary" onClick={() => onMaterialize(String(factor.name))}>
+                <RefreshCw size={13} /> Materialize
+              </button>
+            }>
+              {factor.name}
+            </SectionTitle>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <KPI label="Packets" value={String(factor.packet_count ?? 0)} accent={factor.point_in_time_ready ? "green" : "orange"} />
+              <KPI label="Input view" value={String(factor.input_view_version ?? "n/a")} accent="cyan" />
+            </div>
+            <div className="mt-4 rounded-md bg-[var(--paper-3)] p-3 t-body-sm ink-subtle whitespace-pre-wrap max-h-36 overflow-auto">
+              {factor.prompt_preview || "No prompt template preview."}
+            </div>
+            <div className="mt-3"><FactorICChart data={[{ name: "IC", value: factor.packet_count ? 0.02 : 0 }]} /></div>
+          </Card>
+        ))
       )}
-    </Card>
+    </div>
   );
 }
-function VersionsMini({ s }: { s: any }) {
-  const rows = versions.filter((version) => version.strat === s.name || s.version === version.id);
+
+function TraceTab({ trace }: { trace: TraceRow[] }) {
+  return <Card pad={false}><TraceList rows={trace} detailed /></Card>;
+}
+
+function TraceList({ rows, detailed = false }: { rows: TraceRow[]; detailed?: boolean }) {
+  if (rows.length === 0) return <div className="px-5 py-8 t-body-sm ink-muted">No trace rows yet.</div>;
   return (
-    <Card>
-      {rows.length === 0 ? (
-        <div className="t-body-md ink-muted">No version rows are linked to this strategy.</div>
-      ) : rows.map((version) => (
-        <div key={version.id} className="flex items-center gap-3 py-2 hairline-b last:border-b-0">
-          <GitBranch size={14} className="ink-subtle" />
-          <span className="t-mono">{version.id}</span>
-          <span className="t-title-sm">{version.strat}</span>
-          <span className="ml-auto t-mono ink-muted">{version.hash}</span>
+    <div className="divide-y divide-[var(--hairline)]">
+      {rows.slice().reverse().map((row) => (
+        <div key={`${row.span_id}-${row.ts}`} className="px-5 py-3 grid grid-cols-[132px_100px_minmax(0,1fr)] gap-3">
+          <div className="t-body-xs t-mono ink-subtle">{formatDate(row.ts)}</div>
+          <div><Tag color={agentColor(row.agent)}>{row.agent}</Tag></div>
+          <div className="min-w-0">
+            <div className="t-title-sm truncate">{row.operation}</div>
+            <div className="t-body-xs ink-subtle truncate">{row.queue_command_id ?? row.span_id}</div>
+            {detailed && <pre className="mt-2 t-body-xs bg-[var(--paper-3)] p-2 overflow-auto">{JSON.stringify(row.metadata ?? {}, null, 2)}</pre>}
+          </div>
         </div>
       ))}
-    </Card>
+    </div>
   );
 }
-function LLMPanel({ s }: { s: any }) {
-  const rows = llmReviews.filter((review) => review.strat === s.name);
+
+function PassBadge({ label, value }: { label: string; value: unknown }) {
+  const color = value === true ? "green" : value === false ? "pink" : "orange";
   return (
-    <Card>
-      {rows.length === 0 ? (
-        <div className="t-body-md ink-muted">
-          {s.llmReviewEnabled ? "LLM review is enabled, but no review cards are present." : "LLM review is disabled for this strategy."}
-        </div>
-      ) : rows.map((review) => (
-        <div key={review.id} className="py-2 hairline-b last:border-b-0">
-          <Tag pill color={review.color}>{review.verdict}</Tag>
-          <div className="t-title-sm mt-2">{review.strat}</div>
-          <div className="t-body-sm ink-muted mt-1">{review.summary}</div>
-        </div>
-      ))}
-    </Card>
+    <div className="rounded-md bg-[var(--paper-3)] px-3 py-2 flex items-center justify-between gap-2 min-w-0">
+      <span className="t-caption ink-subtle truncate">{label}</span>
+      <Tag color={color}>{value === true ? "pass" : value === false ? "fail" : "unknown"}</Tag>
+    </div>
   );
 }
-function AuditMini({ s }: { s: any }) {
-  const rows = auditLog.filter((audit) => audit.target.includes(s.id) || audit.target.includes(s.name));
+
+function EvidenceLine({ label, item }: { label: string; item?: Record<string, any> }) {
   return (
-    <Card>
-      {rows.length === 0 ? (
-        <div className="t-body-md ink-muted">No audit events are linked to this strategy.</div>
-      ) : rows.map((audit) => (
-        <div key={`${audit.t}-${audit.action}`} className="flex items-center gap-3 py-2 hairline-b last:border-b-0">
-          <span className="t-mono ink-muted">{audit.t}</span>
-          <Tag color={audit.who === "user" ? "paper" : "orange"}>{audit.who}</Tag>
-          <span>{audit.action}</span>
-        </div>
-      ))}
-    </Card>
+    <div className="mt-3 rounded-md bg-[var(--paper-3)] p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="t-title-sm">{label}</span>
+        <Tag color={evidenceColor(item?.status)}>{item?.status ?? "unknown"}</Tag>
+      </div>
+      <div className="t-body-sm ink-subtle mt-1 line-clamp-2">{item?.summary ?? "No evidence linked."}</div>
+    </div>
   );
+}
+
+function StatusRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[150px_minmax(0,1fr)] gap-3 py-2 hairline-b t-body-sm">
+      <span className="ink-subtle">{label}</span>
+      <span className="truncate" title={value}>{value}</span>
+    </div>
+  );
+}
+
+function CodeBlock({ text }: { text: string }) {
+  return <pre className="max-h-[620px] overflow-auto p-4 t-body-xs bg-[var(--paper-3)] whitespace-pre-wrap">{text}</pre>;
+}
+
+function buildDiff(left: string, right: string) {
+  if (!right.trim() || left === right) return [];
+  const leftLines = left.split("\n");
+  const rightLines = right.split("\n");
+  const rows: string[] = [];
+  const length = Math.max(leftLines.length, rightLines.length);
+  for (let index = 0; index < length; index += 1) {
+    if (leftLines[index] === rightLines[index]) {
+      rows.push(`  ${leftLines[index] ?? ""}`);
+    } else {
+      if (leftLines[index] !== undefined) rows.push(`- ${leftLines[index]}`);
+      if (rightLines[index] !== undefined) rows.push(`+ ${rightLines[index]}`);
+    }
+  }
+  return rows;
+}
+
+function humanize(value: string) {
+  return value.replace(/[_-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatPct(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) ? `${number.toFixed(2)}%` : "n/a";
+}
+
+function formatNumber(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number.toFixed(2) : "n/a";
+}
+
+function money(value: number) {
+  return `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+}
+
+function statusColor(status: string): "green" | "orange" | "pink" | "paper" {
+  if (status === "ok") return "green";
+  if (status === "blocked" || status === "failed") return "pink";
+  if (status === "warning") return "orange";
+  return "paper";
+}
+
+function evidenceColor(status: string): "green" | "orange" | "pink" | "paper" {
+  if (status === "ok") return "green";
+  if (status === "blocked") return "pink";
+  if (status === "warning" || status === "unknown") return "orange";
+  return "paper";
+}
+
+function agentColor(agent: string): "green" | "cyan" | "purple" | "black" | "paper" {
+  if (agent === "dashboard") return "cyan";
+  if (agent === "codex") return "green";
+  if (agent === "claude_code") return "purple";
+  if (agent === "cli") return "black";
+  return "paper";
 }

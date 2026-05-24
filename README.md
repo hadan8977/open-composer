@@ -54,12 +54,23 @@ fixtures are enough for a local smoke test.
 | Paper safety | Alpaca Paper-only automation with explicit confirmation, readiness gates, kill switch, and audit artifacts. |
 | Deployment | One normal path: VPS serves Dashboard directly; strategy work stays local/file-first. |
 
+## Two Ways To Use Open Composer
+
+| Audience | Primary interface |
+|---|---|
+| Day-to-day user | Dashboard at `http://127.0.0.1:8000`; create, continue, review, promote, and monitor strategies without opening a terminal. |
+| Agent (Codex / Claude Code) | CLI plus file contracts: `oc strategy ...`, `projects/{id}/queue.jsonl`, `projects/{id}/trace.jsonl`, and `projects/{id}/context.md`. |
+| Advanced user | Both: Dashboard for status and controlled actions, CLI for batch work and debugging. |
+
+Every Dashboard action writes an audit or trace entry with `via=dashboard`.
+Agent and CLI paths write the same project files, so browser sessions can close
+without losing strategy context.
+
 ## Typical Workflow
 
-1. Draft or edit a `StrategySpec`.
-2. Run the research report for the spec.
-3. Review factor, execution, data, benchmark, LLM contribution, and paper
-   readiness gates.
+1. Open the Dashboard and use Build to create a Strategy Project from a natural-language idea.
+2. Work from Strategy Detail: continue research, inspect trace, review spec diff, and queue evidence or LLM-factor materialization.
+3. Review factor, execution, data, benchmark, LLM contribution, and paper readiness gates.
 4. Promote only when the report evidence is sufficient.
 5. Use paper automation only for active `paper_auto` specs that pass readiness.
 
@@ -132,6 +143,7 @@ artifact size without deleting anything.
 - [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) - no-context Codex starting review document
 - [docs/plan-step-1-simplification-2026-05-22.zh.md](docs/plan-step-1-simplification-2026-05-22.zh.md) - Step 1 simplification and legacy cleanup plan
 - [docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md](docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md) - Step 2 long-lived worksession and LLM factor plan
+- [docs/plan-step-3-dashboard-first-2026-05-22.zh.md](docs/plan-step-3-dashboard-first-2026-05-22.zh.md) - Step 3 Dashboard-first interaction plan
 
 ## License
 

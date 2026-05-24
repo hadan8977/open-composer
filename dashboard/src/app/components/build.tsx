@@ -1,54 +1,55 @@
-import { FormEvent, useState } from "react";
-import { Bot, CheckCircle2, FilePlus2, Send } from "lucide-react";
-import { Card, KPI, Pill, SectionTitle, Tag } from "./blocks";
+import { FormEvent, useEffect, useState } from "react";
+import { Bot, CheckCircle2, FilePlus2, Sparkles } from "lucide-react";
+import { Card, KPI, SectionTitle, Tag } from "./blocks";
 import { Hero } from "./hero";
 import { getDashboardJson, postDashboardJson } from "./runtime";
 import { applyDashboardCatalog } from "./data";
 
-type Template = {
+type BuildTemplate = {
   id: string;
   name: string;
+  strategy_kind: "pure_quant" | "quant_with_llm_review" | "quant_with_llm_factor" | "router";
   thesis: string;
   idea: string;
   tag: string;
 };
 
-const templates: Template[] = [
-  {
-    id: "qqq-momentum",
-    name: "QQQ Trend / Momentum",
-    thesis: "Follow QQQ trend or intraday momentum with bounded drawdown and simple execution.",
-    idea: "Create a QQQ trend or momentum StrategySpec with bounded parameter ranges, benchmark family, Factor Quality, Execution Reality, and no paper readiness claim until gates pass.",
-    tag: "single-symbol",
-  },
-  {
-    id: "sector-rotation",
-    name: "Sector / Theme Rotation",
-    thesis: "Rotate across ETFs or a constrained stock universe using transparent factors and turnover control.",
-    idea: "Create a sector or theme rotation StrategySpec with bounded factor variants, candidate budget, benchmark family, Factor Quality, Execution Reality, and capacity review.",
-    tag: "rotation",
-  },
-  {
-    id: "risk-switch",
-    name: "Equity / Bond Risk Switch",
-    thesis: "Switch exposure between risk assets and defensive assets based on regime or trend evidence.",
-    idea: "Create a SPY or QQQ versus TLT risk-switch StrategySpec with simple regime factors, OOS validation, cost sensitivity, and clear paper-readiness blockers.",
-    tag: "allocation",
-  },
-];
+type BuildTemplatesPayload = {
+  templates: BuildTemplate[];
+  strategy_kinds: Array<{ id: string; label: string; description: string }>;
+};
 
 export function BuildView() {
-  const [selected, setSelected] = useState<Template | null>(templates[0]);
-  const [name, setName] = useState(templates[0].name);
-  const [thesis, setThesis] = useState(templates[0].thesis);
-  const [idea, setIdea] = useState(templates[0].idea);
+  const [templates, setTemplates] = useState<BuildTemplate[]>([]);
+  const [selected, setSelected] = useState<BuildTemplate | null>(null);
+  const [strategyKind, setStrategyKind] = useState<BuildTemplate["strategy_kind"]>("pure_quant");
+  const [name, setName] = useState("");
+  const [thesis, setThesis] = useState("");
+  const [idea, setIdea] = useState("");
   const [maxRounds, setMaxRounds] = useState(5);
   const [useLLM, setUseLLM] = useState(false);
-  const [status, setStatus] = useState("Select a template or write a strategy idea. Clear ideas create a project directly; vague ideas should be refined before submission.");
+  const [status, setStatus] = useState("Choose a template or write a new idea. Clear ideas can go straight into a project.");
   const [busy, setBusy] = useState(false);
 
-  const choose = (template: Template) => {
+  useEffect(() => {
+    void getDashboardJson<BuildTemplatesPayload>("/api/build/templates")
+      .then((payload) => {
+        setTemplates(payload.templates);
+        const first = payload.templates[0] ?? null;
+        setSelected(first);
+        if (first) {
+          setStrategyKind(first.strategy_kind);
+          setName(first.name);
+          setThesis(first.thesis);
+          setIdea(first.idea);
+        }
+      })
+      .catch((error) => setStatus(error instanceof Error ? error.message : "Template load failed."));
+  }, []);
+
+  const choose = (template: BuildTemplate) => {
     setSelected(template);
+    setStrategyKind(template.strategy_kind);
     setName(template.name);
     setThesis(template.thesis);
     setIdea(template.idea);
@@ -56,32 +57,31 @@ export function BuildView() {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const missing = missingFields(name, thesis, idea);
-    if (missing.length > 0) {
-      setStatus(`Clarify before creating: ${missing.join(", ")}.`);
+    if (!name.trim() || !thesis.trim() || !idea.trim()) {
+      setStatus("Fill name, thesis, and idea before creating a project.");
       return;
     }
     setBusy(true);
-    setStatus("Creating StrategyProject and agent request...");
+    setStatus("Creating draft spec and project.");
     try {
-      const response = await postDashboardJson<{
-        project_path: string;
-        context_path: string;
-        agent_request_path?: string;
-      }>("/api/projects", {
+      const response = await postDashboardJson<Record<string, unknown>>("/api/build/draft", {
         name,
         thesis,
         idea,
         template_id: selected?.id ?? null,
+        strategy_kind: strategyKind,
         max_rounds: maxRounds,
         use_llm: useLLM,
-        tags: selected ? [selected.tag] : [],
       });
       const catalog = await getDashboardJson<Parameters<typeof applyDashboardCatalog>[0]>(
         "/api/dashboard/catalog",
       );
       applyDashboardCatalog(catalog);
-      setStatus(`Created ${response.project_path}; context ${response.context_path}; request ${response.agent_request_path ?? "not created"}.`);
+      setStatus(
+        `Created ${String(response.project_path ?? "project")}; queued ${String(
+          response.queue_command_id ?? "n/a",
+        )}.`,
+      );
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Project creation failed.");
     } finally {
@@ -95,29 +95,29 @@ export function BuildView() {
         theme="green"
         greeting="Build · StrategyProject"
         headline="New Strategy"
-        meta="Create a persistent project, compile worker context, and open an agent request without asking the user to re-explain the repository."
-        stat={{ label: "Default rounds", value: String(maxRounds), delta: "auto until stop" }}
+        meta="Create a persistent project, draft the first StrategySpec, and hand the work to the agent without forcing the user into CLI."
+        stat={{ label: "Flow", value: "Build → Queue → Detail", delta: "Dashboard-first" }}
       />
 
       <div className="grid grid-cols-12 gap-3">
-        <div className="col-span-3"><KPI label="Fast path" value="Direct" delta="clear idea" accent="green" /></div>
-        <div className="col-span-3"><KPI label="Clarify path" value="1-2" delta="missing fields" accent="orange" /></div>
-        <div className="col-span-3"><KPI label="Evidence" value="3 tracks" delta="Factor / Exec / Alt-LLM" accent="cyan" /></div>
-        <div className="col-span-3"><KPI label="Paper" value="Gated" delta="no auto live writes" accent="black" /></div>
+        <div className="col-span-3"><KPI label="Templates" value={String(templates.length)} accent="green" /></div>
+        <div className="col-span-3"><KPI label="Strategy kind" value={strategyKind.replace(/_/g, " ")} accent="cyan" /></div>
+        <div className="col-span-3"><KPI label="Rounds" value={String(maxRounds)} accent="orange" /></div>
+        <div className="col-span-3"><KPI label="LLM" value={useLLM ? "On" : "Off"} accent={useLLM ? "purple" : "paper"} /></div>
       </div>
 
       <div className="grid grid-cols-12 gap-3">
         <Card className="col-span-4" pad={false}>
-          <div className="px-5 py-4 hairline-b">
-            <SectionTitle tick="green">Starter templates</SectionTitle>
-          </div>
+          <div className="px-5 py-4 hairline-b"><SectionTitle tick="green">Starter templates</SectionTitle></div>
           <div className="p-3 space-y-2">
             {templates.map((template) => (
               <button
                 key={template.id}
                 type="button"
                 onClick={() => choose(template)}
-                className={`w-full text-left p-3 transition-colors ${selected?.id === template.id ? "bg-[#0A0A0A] text-white" : "bg-[var(--paper-3)] hover:bg-[var(--paper-4)] ink"}`}
+                className={`w-full text-left p-3 transition-colors ${
+                  selected?.id === template.id ? "bg-[#0A0A0A] text-white" : "bg-[var(--paper-3)] hover:bg-[var(--paper-4)] ink"
+                }`}
                 style={{ borderRadius: "var(--r-md)" }}
               >
                 <div className="flex items-center justify-between gap-3">
@@ -135,6 +135,15 @@ export function BuildView() {
         <Card className="col-span-8">
           <SectionTitle tick="cyan" hint={status}>Project request</SectionTitle>
           <form className="mt-4 space-y-3" onSubmit={submit}>
+            <label className="block">
+              <span className="t-caption ink-muted">Strategy kind</span>
+              <select className="ds-input mt-1 w-full h-10 px-3 t-body-sm" value={strategyKind} onChange={(event) => setStrategyKind(event.target.value as BuildTemplate["strategy_kind"])}>
+                <option value="pure_quant">Pure quant</option>
+                <option value="quant_with_llm_review">Quant + LLM review</option>
+                <option value="quant_with_llm_factor">Quant + LLM factor</option>
+                <option value="router">Router</option>
+              </select>
+            </label>
             <label className="block">
               <span className="t-caption ink-muted">Project name</span>
               <input className="ds-input mt-1 w-full h-10 px-3 t-body-sm" value={name} onChange={(event) => setName(event.target.value)} />
@@ -165,17 +174,21 @@ export function BuildView() {
               </label>
               <label className="flex items-center gap-2 t-body-sm ink-subtle">
                 <input type="checkbox" checked={useLLM} onChange={(event) => setUseLLM(event.target.checked)} />
-                Allow LLM/news/alternative-data evidence if the spec needs it
+                Allow LLM-assisted drafting
               </label>
               <div className="ml-auto flex gap-2">
-                <Pill variant="ghost" onClick={() => {
-                  setSelected(null);
-                  setName("");
-                  setThesis("");
-                  setIdea("");
-                }}>
+                <button
+                  type="button"
+                  className="pill pill-secondary"
+                  onClick={() => {
+                    setSelected(null);
+                    setName("");
+                    setThesis("");
+                    setIdea("");
+                  }}
+                >
                   <Bot size={12} /> Blank
-                </Pill>
+                </button>
                 <button className="pill pill-primary" disabled={busy}>
                   {busy ? <CheckCircle2 size={13} /> : <FilePlus2 size={13} />}
                   Create project
@@ -195,7 +208,7 @@ export function BuildView() {
             ["Boundary", "The worker can research and edit specs; paper orders remain gated product actions."],
           ].map(([title, body]) => (
             <div key={title} className="bg-[var(--paper-3)] p-3" style={{ borderRadius: "var(--r-md)" }}>
-              <div className="flex items-center gap-2 t-title-sm"><Send size={12} /> {title}</div>
+              <div className="flex items-center gap-2 t-title-sm"><Sparkles size={12} /> {title}</div>
               <div className="t-body-sm ink-subtle mt-2 leading-snug">{body}</div>
             </div>
           ))}
@@ -203,19 +216,4 @@ export function BuildView() {
       </Card>
     </div>
   );
-}
-
-function missingFields(name: string, thesis: string, idea: string) {
-  const missing: string[] = [];
-  if (!name.trim()) missing.push("project name");
-  if (!thesis.trim()) missing.push("thesis");
-  if (!idea.trim()) missing.push("request");
-  const text = `${name} ${thesis} ${idea}`.toLowerCase();
-  if (!/(qqq|spy|tlt|iwm|sector|theme|etf|stock|universe|symbol)/.test(text)) {
-    missing.push("tradable symbol or universe");
-  }
-  if (!/(day|daily|1m|5m|15m|hour|intraday|weekly|timeframe|周期)/.test(text)) {
-    missing.push("timeframe");
-  }
-  return missing;
 }

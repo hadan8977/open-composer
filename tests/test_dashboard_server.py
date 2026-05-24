@@ -9,16 +9,39 @@ from conftest import assert_no_windows_paths
 
 from open_composer.dashboard.commands import DashboardCommandError, resolve_dashboard_serve_root
 from open_composer.dashboard.server import (
+    DASHBOARD_CLI_PARITY,
     build_dashboard_catalog_payload,
     build_dashboard_command_plan_payload,
     build_dashboard_command_run_payload,
     build_dashboard_environment_payload,
     build_dashboard_health_payload,
+    build_draft_payload,
     build_notification_config_payload,
     build_notification_log_payload,
     build_notification_test_payload,
+    build_paper_alerts_payload,
+    build_paper_kill_switch_payload,
+    build_paper_monitor_refresh_payload,
+    build_project_context_payload,
     build_project_create_payload,
+    build_project_detail_payload,
+    build_project_queue_create_payload,
+    build_project_queue_payload,
     build_project_state_payload,
+    build_project_trace_payload,
+    build_settings_agent_backend_payload,
+    build_settings_agent_backend_update_payload,
+    build_settings_capabilities_payload,
+    build_settings_capabilities_test_payload,
+    build_strategy_action_payload,
+    build_strategy_detail_payload,
+    build_strategy_drawdown_payload,
+    build_strategy_equity_payload,
+    build_strategy_runs_payload,
+    build_strategy_signals_payload,
+    build_strategy_spec_diff_payload,
+    build_strategy_spec_payload,
+    build_templates_payload,
     create_dashboard_server,
     dashboard_request_authorized,
 )
@@ -55,6 +78,138 @@ def test_dashboard_server_creates_and_updates_strategy_project(sample_workspace:
     assert continued["trace_path"] == "projects/qqq-momentum/trace.jsonl"
     assert continued["context_path"] == "projects/qqq-momentum/context.md"
     assert continued["artifact_state_path"] == "projects/qqq-momentum/artifact-state.json"
+
+
+def test_dashboard_step3_project_queue_trace_and_context_api(sample_workspace: Path) -> None:
+    created = build_project_create_payload(
+        sample_workspace,
+        {
+            "name": "Queue Test",
+            "thesis": "Exercise dashboard queue.",
+            "idea": "QQQ 15m queue test.",
+        },
+    )
+    project_id = created["project"]["project_id"]
+
+    queued = build_project_queue_create_payload(
+        sample_workspace,
+        project_id,
+        {"kind": "advice", "body": "try a tighter stop", "metadata": {"source": "pytest"}},
+    )
+
+    assert queued["status"] == "queued"
+    assert queued["queue_command_id"].startswith("q_")
+    assert (sample_workspace / queued["queue_path"]).exists()
+
+    detail = build_project_detail_payload(sample_workspace, project_id)
+    context = build_project_context_payload(sample_workspace, project_id)
+    queue = build_project_queue_payload(sample_workspace, project_id)
+    trace = build_project_trace_payload(sample_workspace, project_id)
+
+    assert detail["project"]["project_id"] == project_id
+    assert "Strategy Project Context" in context["text"]
+    assert queue["pending_count"] >= 1
+    assert any(entry["metadata"].get("via") == "dashboard" for entry in trace["entries"])
+
+
+def test_dashboard_step3_strategy_read_and_action_api(sample_workspace: Path) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+
+    detail = build_strategy_detail_payload(sample_workspace, "fixture_pullback_15m")
+    spec = build_strategy_spec_payload(sample_workspace, "fixture_pullback_15m")
+    diff = build_strategy_spec_diff_payload(sample_workspace, "fixture_pullback_15m")
+    runs = build_strategy_runs_payload(sample_workspace, "fixture_pullback_15m")
+    signals = build_strategy_signals_payload(sample_workspace, "fixture_pullback_15m")
+    equity = build_strategy_equity_payload(sample_workspace, "fixture_pullback_15m")
+    drawdown = build_strategy_drawdown_payload(sample_workspace, "fixture_pullback_15m")
+
+    assert detail["strategy"]["strategy_id"] == "fixture_pullback_15m"
+    assert spec["active_path"] == "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    assert "diff" in diff
+    assert runs["runs"] == []
+    assert signals["signals"] == []
+    assert isinstance(equity["points"], list)
+    assert isinstance(drawdown["points"], list)
+
+    queued = build_strategy_action_payload(
+        sample_workspace,
+        "fixture_pullback_15m",
+        "evidence",
+        {"reason": "pytest evidence"},
+    )
+    assert queued["status"] == "queued"
+    assert queued["project_id"] == "fixture-pullback-15m"
+    assert (sample_workspace / "projects" / queued["project_id"] / "queue.jsonl").exists()
+
+    promoted = build_strategy_action_payload(
+        sample_workspace,
+        str(spec_path),
+        "promote",
+        {"reason": "pytest promote"},
+    )
+    assert promoted["status"] == "executed"
+    assert promoted["output_paths"] == ["strategy_specs/approved/fixture_pullback_15m.yaml"]
+
+
+def test_dashboard_step3_build_settings_and_paper_api(sample_workspace: Path) -> None:
+    templates = build_templates_payload()
+    assert {item["strategy_kind"] for item in templates["templates"]} >= {
+        "pure_quant",
+        "quant_with_llm_review",
+        "quant_with_llm_factor",
+        "router",
+    }
+
+    draft = build_draft_payload(
+        sample_workspace,
+        {
+            "strategy_kind": "pure_quant",
+            "name": "QQQ Build Test",
+            "thesis": "Build from dashboard.",
+            "idea": "Create a QQQ 15m breakout strategy with volume expansion.",
+            "max_rounds": 3,
+        },
+    )
+    assert draft["status"] == "created"
+    assert draft["spec_path"].startswith("strategy_specs/drafts/")
+    assert (sample_workspace / draft["queue_path"]).exists()
+
+    capabilities = build_settings_capabilities_payload(sample_workspace)
+    assert capabilities["capabilities"]
+    evaluated = build_settings_capabilities_test_payload(sample_workspace, {})
+    assert evaluated["status"] == "executed"
+    assert (sample_workspace / "reports" / "capabilities" / "evaluation.json").exists()
+
+    backend = build_settings_agent_backend_payload(sample_workspace)
+    assert backend["backend"] in {"file_queue", "codex_sdk"}
+    switched = build_settings_agent_backend_update_payload(
+        sample_workspace,
+        {"backend": "file_queue"},
+    )
+    assert switched["status"] == "updated"
+    assert "OPEN_COMPOSER_AGENT_BACKEND=file_queue" in (sample_workspace / ".env").read_text(
+        encoding="utf-8"
+    )
+
+    kill = build_paper_kill_switch_payload(
+        sample_workspace,
+        {"enabled": True, "reason": "pytest stop"},
+    )
+    assert kill["kill_switch"]["enabled"] is True
+    assert (sample_workspace / "reports" / "paper" / "kill_switch_events.jsonl").exists()
+    monitor = build_paper_monitor_refresh_payload(sample_workspace, {})
+    assert monitor["status"] == "executed"
+    alerts = build_paper_alerts_payload(sample_workspace)
+    assert "alerts" in alerts
+
+
+def test_dashboard_step3_cli_parity_table_has_core_actions() -> None:
+    assert DASHBOARD_CLI_PARITY["POST /api/build/draft"] == "oc strategy draft"
+    assert DASHBOARD_CLI_PARITY["POST /api/projects/{id}/queue"] == "oc project continue"
+    assert DASHBOARD_CLI_PARITY["POST /api/strategies/{name}/actions/materialize"] == (
+        "oc feature materialize"
+    )
+    assert DASHBOARD_CLI_PARITY["POST /api/paper/kill-switch"] == "oc paper kill-switch"
 
 
 def test_dashboard_server_payloads_expose_health_catalog_and_command_api(

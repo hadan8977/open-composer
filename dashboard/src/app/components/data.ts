@@ -422,6 +422,8 @@ interface DashboardStrategyRecord {
     | "quant_orchestrator";
   risk_tier?: RiskLevel;
   factor_names?: string[];
+  llm_feature_factor_names?: string[];
+  feature_packet_factor_names?: string[];
   required_capabilities?: string[];
   source_paths?: string[];
   compatibility?: Record<string, CapabilityStatus>;

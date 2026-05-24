@@ -58,6 +58,9 @@ function dashboardCatalogResolver() {
 }
 
 export default defineConfig({
+  build: {
+    chunkSizeWarningLimit: 3800,
+  },
   plugins: [
     dashboardCatalogResolver(),
     react(),

@@ -1,4 +1,4 @@
-import { ArrowUpDown, Download, Filter, Terminal } from "lucide-react";
+import { ArrowUpDown, Download, Filter, FilePlus2 } from "lucide-react";
 import { Card, Tag, Pill } from "./blocks";
 import { Hero } from "./hero";
 import { Sparkline } from "./sparkline";
@@ -77,26 +77,26 @@ export function Library({ onSelect }: { onSelect?: (id: string) => void }) {
             className="flex h-11 w-11 items-center justify-center bg-[rgba(10,10,10,.06)]"
             style={{ borderRadius: "var(--r-md)" }}
           >
-            <Terminal size={17} strokeWidth={2.2} />
+          <FilePlus2 size={17} strokeWidth={2.2} />
           </span>
           <div className="min-w-0">
-            <div className="t-title-sm">Strategy creation stays in CLI files.</div>
+            <div className="t-title-sm">Dashboard is the day-to-day strategy entry point.</div>
             <div className="t-body-sm ink-subtle mt-1 leading-snug">
-              Draft and verify StrategySpecs from the terminal, then rebuild the dashboard catalog.
+              Start from Build, review the Strategy Detail workbench, and let the agent continue through project queue and trace. CLI remains available for agents and advanced batch work.
             </div>
             <div className="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-2">
               {[
-                'uv run oc strategy draft --idea "QQQ 15m breakout with volume filter"',
-                "uv run oc spec validate strategy_specs/drafts/<name>.yaml",
-                "uv run oc spec capabilities strategy_specs/drafts/<name>.yaml",
-              ].map((command) => (
+                "Build from a natural-language idea",
+                "Open Strategy Detail and send advice",
+                "Accept spec diff after evidence is queued",
+              ].map((step) => (
                 <div
-                  key={command}
+                  key={step}
                   className="t-mono ink bg-[var(--paper-3)] px-3 py-2 truncate"
                   style={{ borderRadius: "var(--r-sm)" }}
-                  title={command}
+                  title={step}
                 >
-                  {command}
+                  {step}
                 </div>
               ))}
             </div>

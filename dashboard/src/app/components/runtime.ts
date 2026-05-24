@@ -308,7 +308,7 @@ export async function resolveDashboardCommandRun(
   };
 }
 
-function dashboardApiToken(): string | null {
+export function dashboardApiToken(): string | null {
   if (typeof window === "undefined") {
     return null;
   }

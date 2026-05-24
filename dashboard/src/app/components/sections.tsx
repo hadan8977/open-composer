@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { Card, SectionTitle, Tag, KPI } from "./blocks";
 import { Hero } from "./hero";
 import {
@@ -6,17 +7,51 @@ import {
   events,
   llmReviews,
   paperOrders,
+  projects,
   recentSignals,
   researchRuns,
 } from "./data";
 import { Notifications } from "./notifications";
 
 export function ActivityView() {
-  const timeline = [
+  const [kindFilter, setKindFilter] = useState("all");
+  const [projectFilter, setProjectFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const timeline = useMemo(() => [
+    ...projects.flatMap((project) => {
+      const steps = project.latestRunSummary?.stepEvents ?? [];
+      const stepItems = steps.map((step, index) => ({
+        id: `project-${project.projectId}-step-${index}`,
+        time: project.updatedAt ?? project.createdAt ?? "",
+        kind: "Project trace",
+        project: project.name,
+        title: `${step.stepName} · ${step.status}`,
+        detail: [
+          ...step.blockedItems,
+          ...step.warningItems,
+          ...step.outputArtifacts,
+        ].join(" · ") || project.nextAction || "Project step recorded.",
+        color: traceColor(step.status),
+      }));
+      const blocker = project.blockerSummary
+        ? [{
+            id: `project-${project.projectId}-blocker`,
+            time: project.updatedAt ?? project.createdAt ?? "",
+            kind: "Blocker",
+            project: project.name,
+            title: `${project.blockerSummary.failedStep || "blocked"} · ${project.blockerSummary.trigger || "failure"}`,
+            detail: project.blockerSummary.rootBlockers.join(" · ") || project.nextAction,
+            color: "pink" as const,
+          }]
+        : [];
+      return [...stepItems, ...blocker];
+    }),
     ...recentSignals.map((signal) => ({
       id: `signal-${signal.id}`,
       time: signal.t,
       kind: "Signal",
+      project: signal.strat,
       title: `${signal.side} ${signal.symbol}`,
       detail: `${signal.strat} · ${signal.tag} · ${signal.px.toFixed(2)}`,
       color: "green" as const,
@@ -25,6 +60,7 @@ export function ActivityView() {
       id: `order-${order.id}`,
       time: order.submittedAt,
       kind: "Paper order",
+      project: order.strategy,
       title: `${order.side} ${order.symbol}`,
       detail: `${order.strategy} · ${order.qty} · ${order.status}`,
       color: "pink" as const,
@@ -33,6 +69,7 @@ export function ActivityView() {
       id: `event-${index}`,
       time: event.t,
       kind: event.kind,
+      project: "Market context",
       title: event.title,
       detail: `Impact ${event.impact}`,
       color: event.impact === "high" ? "orange" as const : "cyan" as const,
@@ -41,6 +78,7 @@ export function ActivityView() {
       id: `review-${review.id}`,
       time: review.id,
       kind: "LLM review",
+      project: review.strat,
       title: `${review.strat} · ${review.verdict}`,
       detail: review.summary,
       color: "purple" as const,
@@ -49,19 +87,41 @@ export function ActivityView() {
       id: `audit-${index}`,
       time: entry.t,
       kind: "Audit",
+      project: entry.target,
       title: entry.action,
       detail: `${entry.who} · ${entry.target}`,
       color: "black" as const,
     })),
-  ].slice(0, 24);
+  ], [
+    dashboardSummary.auditCount,
+    dashboardSummary.generatedAt,
+    dashboardSummary.orderCount,
+    dashboardSummary.projectCount,
+    dashboardSummary.reviewCount,
+    dashboardSummary.signalCount,
+  ]);
+
+  const projectOptions = useMemo(
+    () => ["all", ...Array.from(new Set(timeline.map((item) => item.project).filter(Boolean)))],
+    [timeline],
+  );
+  const kindOptions = useMemo(
+    () => ["all", ...Array.from(new Set(timeline.map((item) => item.kind)))],
+    [timeline],
+  );
+  const filteredTimeline = timeline
+    .filter((item) => kindFilter === "all" || item.kind === kindFilter)
+    .filter((item) => projectFilter === "all" || item.project === projectFilter)
+    .filter((item) => matchesDateFilter(item.time, dateFilter))
+    .slice(0, 80);
 
   return (
     <div className="px-6 pb-8 space-y-3">
       <Hero
         theme="orange"
-        greeting={`Activity · ${timeline.length} visible records`}
+        greeting={`Activity · ${filteredTimeline.length} visible records`}
         headline="Timeline"
-        meta="Signals, paper orders, notifications, reviews, replay records and audits from the generated dashboard catalog."
+        meta="Signals, paper orders, project trace summaries, notifications, reviews, replay records and audits from the generated dashboard catalog."
         stat={{
           label: "Signals / orders",
           value: `${dashboardSummary.signalCount} / ${dashboardSummary.orderCount}`,
@@ -85,19 +145,30 @@ export function ActivityView() {
       </div>
 
       <Card pad={false}>
-        <div className="px-5 py-4 hairline-b">
+        <div className="px-5 py-4 hairline-b space-y-3">
           <SectionTitle tick="orange">Unified activity</SectionTitle>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            <FilterSelect label="Kind" value={kindFilter} options={kindOptions} onChange={setKindFilter} />
+            <FilterSelect label="Project" value={projectFilter} options={projectOptions} onChange={setProjectFilter} />
+            <FilterSelect
+              label="Date"
+              value={dateFilter}
+              options={["all", "today", "7d"]}
+              onChange={setDateFilter}
+            />
+          </div>
         </div>
         <div className="divide-y divide-[var(--hairline)]">
-          {timeline.length === 0 ? (
+          {filteredTimeline.length === 0 ? (
             <div className="px-5 py-8 t-body-sm ink-muted">
-              No activity records are present in the current dashboard catalog.
+              No activity records match the selected filters.
             </div>
           ) : (
-            timeline.map((item) => (
-              <div
+            filteredTimeline.map((item) => (
+              <button
                 key={item.id}
-                className="grid grid-cols-[96px_120px_minmax(0,1fr)] gap-3 px-5 py-3 items-start"
+                onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                className="w-full text-left grid grid-cols-[96px_120px_minmax(0,1fr)] gap-3 px-5 py-3 items-start hover:bg-[var(--paper-4)]"
               >
                 <div className="t-body-sm t-num ink-subtle truncate">{item.time}</div>
                 <div>
@@ -105,9 +176,14 @@ export function ActivityView() {
                 </div>
                 <div className="min-w-0">
                   <div className="t-title-sm truncate">{item.title}</div>
-                  <div className="t-body-sm ink-subtle mt-0.5 truncate">{item.detail}</div>
+                  <div className="t-body-sm ink-subtle mt-0.5 truncate">{item.project} · {item.detail}</div>
+                  {expandedId === item.id && (
+                    <div className="mt-2 t-body-sm ink bg-[var(--paper-3)] p-3" style={{ borderRadius: "var(--r-sm)" }}>
+                      {item.detail || "No additional detail."}
+                    </div>
+                  )}
                 </div>
-              </div>
+              </button>
             ))
           )}
         </div>
@@ -116,6 +192,50 @@ export function ActivityView() {
       <Notifications />
     </div>
   );
+}
+
+function FilterSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="ds-input flex items-center gap-2 px-3 h-10">
+      <span className="t-caption ink-muted w-14">{label}</span>
+      <select
+        className="bg-transparent outline-none flex-1 t-body-sm ink min-w-0"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>{option === "all" ? "All" : option}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function matchesDateFilter(value: string, filter: string) {
+  if (filter === "all") return true;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return true;
+  const now = new Date();
+  if (filter === "today") return date.toDateString() === now.toDateString();
+  if (filter === "7d") return now.getTime() - date.getTime() <= 7 * 24 * 60 * 60 * 1000;
+  return true;
+}
+
+function traceColor(status: string): "green" | "orange" | "pink" | "cyan" {
+  if (status === "ok" || status === "pass" || status === "completed") return "green";
+  if (status === "blocked" || status === "failed") return "pink";
+  if (status === "warning") return "orange";
+  return "cyan";
 }
 
 export function ResearchView() {
