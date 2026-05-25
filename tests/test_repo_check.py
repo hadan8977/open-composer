@@ -35,6 +35,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/plan-step-1-simplification-2026-05-22.zh.md",
         "docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md",
         "docs/plan-step-3-dashboard-first-2026-05-22.zh.md",
+        "docs/local-product-optimization-plan-2026-05-25.zh.md",
     ]:
         source = repo_root / new_doc
         destination = target / new_doc

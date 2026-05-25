@@ -3,8 +3,10 @@ import {
   Bot,
   Check,
   CircleStop,
+  Pencil,
   Play,
   RefreshCw,
+  Save,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -40,6 +42,7 @@ type StrategyDetailPayload = {
   equity: { points: Array<{ ts: string; value: number; benchmark?: number }> };
   drawdown: { points: Array<{ ts: string; value: number }> };
   llm_factors: Array<Record<string, any>>;
+  pass_reasons: Record<string, string[]>;
 };
 
 type QueueRow = {
@@ -233,10 +236,10 @@ export function StrategyDetail({ id }: { id: string }) {
       </div>
 
       <div className="sticky top-0 z-10 dscard p-3 grid grid-cols-4 gap-2">
-        <PassBadge label="workflow_pass" value={gate.workflow_pass} />
-        <PassBadge label="research_pass" value={gate.research_pass} />
-        <PassBadge label="llm_contribution_pass" value={gate.llm_contribution_pass} />
-        <PassBadge label="paper_ready_pass" value={gate.paper_ready_pass ?? paperReport?.ready} />
+        <PassBadge label="workflow_pass" value={gate.workflow_pass} reasons={data?.pass_reasons?.workflow_pass ?? []} />
+        <PassBadge label="research_pass" value={gate.research_pass} reasons={data?.pass_reasons?.research_pass ?? []} />
+        <PassBadge label="llm_contribution_pass" value={gate.llm_contribution_pass} reasons={data?.pass_reasons?.llm_contribution_pass ?? []} />
+        <PassBadge label="paper_ready_pass" value={gate.paper_ready_pass ?? paperReport?.ready} reasons={data?.pass_reasons?.paper_ready_pass ?? []} />
       </div>
 
       <div className="flex flex-wrap gap-1 px-1">
@@ -277,7 +280,14 @@ export function StrategyDetail({ id }: { id: string }) {
           busy={busy}
         />
       )}
-      {tab === "llm" && <LLMFactorsTab factors={data?.llm_factors ?? []} onMaterialize={(factor) => void runAction("materialize", { factor })} />}
+      {tab === "llm" && (
+        <LLMFactorsTab
+          strategyId={strategyId}
+          factors={data?.llm_factors ?? []}
+          onMaterialize={(factor, windowBars) => void runAction("materialize", { factor, window_bars: windowBars ?? "full" })}
+          onPromptSaved={() => void refresh()}
+        />
+      )}
       {tab === "trace" && <TraceTab trace={data?.trace ?? []} />}
     </div>
   );
@@ -575,34 +585,123 @@ function PaperTab({
 }
 
 function LLMFactorsTab({
+  strategyId,
   factors,
   onMaterialize,
+  onPromptSaved,
 }: {
+  strategyId: string;
   factors: Array<Record<string, any>>;
-  onMaterialize: (factor: string) => void;
+  onMaterialize: (factor: string, windowBars?: number) => void;
+  onPromptSaved: () => void;
 }) {
+  const [windowByFactor, setWindowByFactor] = useState<Record<string, string>>({});
+  const [editing, setEditing] = useState<string | null>(null);
+  const [promptText, setPromptText] = useState("");
+  const [status, setStatus] = useState("LLM factor prompts are ready.");
+
+  const editPrompt = async (factor: string) => {
+    setStatus("Loading prompt.");
+    try {
+      const payload = await getDashboardJson<Record<string, any>>(
+        `/api/strategies/${strategyId}/llm-factors/${factor}/prompt`,
+      );
+      setEditing(factor);
+      setPromptText(String(payload.prompt ?? ""));
+      setStatus("Prompt loaded.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Prompt load failed.");
+    }
+  };
+
+  const savePrompt = async (factor: string) => {
+    setStatus("Saving prompt.");
+    try {
+      const payload = await postDashboardJson<Record<string, any>>(
+        `/api/strategies/${strategyId}/llm-factors/${factor}/prompt`,
+        { prompt: promptText },
+      );
+      setStatus(payload.needs_rematerialize ? "Prompt saved. Re-materialize this factor before promotion." : "Prompt saved.");
+      setEditing(null);
+      onPromptSaved();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Prompt save failed.");
+    }
+  };
+
   return (
     <div className="grid grid-cols-12 gap-3">
+      <div className="col-span-12 t-body-sm ink-subtle">{status}</div>
       {factors.length === 0 ? (
         <Card className="col-span-12">This strategy has no source=llm_feature factors.</Card>
       ) : (
         factors.map((factor) => (
           <Card key={factor.name} className="col-span-6">
             <SectionTitle tick="purple" action={
-              <button className="pill pill-secondary" onClick={() => onMaterialize(String(factor.name))}>
-                <RefreshCw size={13} /> Materialize
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <select
+                  className="ds-input h-8 px-2 t-body-xs"
+                  value={windowByFactor[String(factor.name)] ?? "full"}
+                  onChange={(event) => setWindowByFactor((current) => ({ ...current, [String(factor.name)]: event.target.value }))}
+                >
+                  <option value="16">Last 16</option>
+                  <option value="200">Last 200</option>
+                  <option value="1000">Last 1000</option>
+                  <option value="full">Full history</option>
+                </select>
+                <button
+                  className="pill pill-secondary"
+                  onClick={() => {
+                    const selected = windowByFactor[String(factor.name)] ?? "full";
+                    onMaterialize(String(factor.name), selected === "full" ? undefined : Number(selected));
+                  }}
+                >
+                  <RefreshCw size={13} /> Materialize
+                </button>
+              </div>
             }>
               {factor.name}
             </SectionTitle>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <KPI label="Packets" value={String(factor.packet_count ?? 0)} accent={factor.point_in_time_ready ? "green" : "orange"} />
               <KPI label="Input view" value={String(factor.input_view_version ?? "n/a")} accent="cyan" />
+              <KPI label="Prompt hash" value={shortHash(factor.prompt_hash)} accent="black" />
+              <KPI label="PIT" value={factor.point_in_time_ready ? "ready" : "missing"} accent={factor.point_in_time_ready ? "green" : "orange"} />
             </div>
-            <div className="mt-4 rounded-md bg-[var(--paper-3)] p-3 t-body-sm ink-subtle whitespace-pre-wrap max-h-36 overflow-auto">
-              {factor.prompt_preview || "No prompt template preview."}
+            {editing === factor.name ? (
+              <div className="mt-4 space-y-2">
+                <textarea
+                  value={promptText}
+                  onChange={(event) => setPromptText(event.target.value)}
+                  className="ds-input w-full min-h-[220px] px-3 py-2 t-body-sm"
+                />
+                <div className="flex gap-2">
+                  <button className="pill pill-primary" onClick={() => void savePrompt(String(factor.name))}>
+                    <Save size={13} /> Save
+                  </button>
+                  <button className="pill pill-secondary" onClick={() => setEditing(null)}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 rounded-md bg-[var(--paper-3)] p-3 t-body-sm ink-subtle whitespace-pre-wrap max-h-36 overflow-auto">
+                {factor.prompt_preview || "No prompt template preview."}
+              </div>
+            )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button className="pill pill-secondary" onClick={() => void editPrompt(String(factor.name))}>
+                <Pencil size={13} /> Edit prompt
+              </button>
+              {factor.factor_lab?.flags?.slice(0, 3).map((flag: string) => (
+                <Tag key={flag} color="orange">{flag}</Tag>
+              ))}
             </div>
-            <div className="mt-3"><FactorICChart data={[{ name: "IC", value: factor.packet_count ? 0.02 : 0 }]} /></div>
+            <div className="mt-3">
+              <FactorICChart data={[
+                { name: "RankIC", value: numericOrNull(factor.factor_lab?.rank_ic) },
+                { name: "RollMean", value: numericOrNull(factor.factor_lab?.rolling_rank_ic_mean) },
+                { name: "RollMin", value: numericOrNull(factor.factor_lab?.rolling_rank_ic_min) },
+              ]} />
+            </div>
           </Card>
         ))
       )}
@@ -633,10 +732,11 @@ function TraceList({ rows, detailed = false }: { rows: TraceRow[]; detailed?: bo
   );
 }
 
-function PassBadge({ label, value }: { label: string; value: unknown }) {
+function PassBadge({ label, value, reasons }: { label: string; value: unknown; reasons: string[] }) {
   const color = value === true ? "green" : value === false ? "pink" : "orange";
+  const detail = reasons.length ? reasons.slice(0, 6).join("\n") : "No blocker or warning detail indexed.";
   return (
-    <div className="rounded-md bg-[var(--paper-3)] px-3 py-2 flex items-center justify-between gap-2 min-w-0">
+    <div className="rounded-md bg-[var(--paper-3)] px-3 py-2 flex items-center justify-between gap-2 min-w-0" title={detail}>
       <span className="t-caption ink-subtle truncate">{label}</span>
       <Tag color={color}>{value === true ? "pass" : value === false ? "fail" : "unknown"}</Tag>
     </div>
@@ -697,6 +797,17 @@ function formatPct(value: unknown) {
 function formatNumber(value: unknown) {
   const number = Number(value);
   return Number.isFinite(number) ? number.toFixed(2) : "n/a";
+}
+
+function numericOrNull(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function shortHash(value: unknown) {
+  const text = String(value ?? "");
+  if (!text) return "n/a";
+  return text.replace("sha256:", "").slice(0, 10);
 }
 
 function money(value: number) {

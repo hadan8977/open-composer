@@ -82,8 +82,8 @@ def test_feature_materialize_command_writes_packets_and_uses_cache(
     assert packet_path.exists()
     assert run_path.exists()
     assert ledger_path.exists()
-    assert "misses=16" in first.output
-    assert "hits=16 misses=0" in second.output
+    assert "misses=40" in first.output
+    assert "hits=40 misses=0" in second.output
     row = json.loads(packet_path.read_text(encoding="utf-8").splitlines()[0])
     assert row["schema_version"] == "2"
     assert row["prompt_hash"].startswith("sha256:")
@@ -115,7 +115,7 @@ def test_feature_materialize_prompt_change_misses_cache(
 
     assert first.exit_code == 0
     assert second.exit_code == 0
-    assert "misses=16" in second.output
+    assert "misses=40" in second.output
 
 
 def test_feature_materialize_accepts_symbol_subset(
@@ -154,7 +154,7 @@ def test_feature_materialize_accepts_symbol_subset(
         if line.strip()
     ]
     assert result.exit_code == 0
-    assert "misses=32" in result.output
+    assert "misses=80" in result.output
     assert {row["symbol"] for row in rows} == {"MSFT", "QQQ"}
 
 
@@ -206,7 +206,7 @@ def test_feature_materialize_input_view_version_change_misses_cache(
 
     assert first.exit_code == 0
     assert second.exit_code == 0
-    assert "misses=16" in second.output
+    assert "misses=40" in second.output
 
 
 def test_feature_materialize_schema_version_change_misses_cache(
@@ -231,4 +231,40 @@ def test_feature_materialize_schema_version_change_misses_cache(
 
     assert first.exit_code == 0
     assert second.exit_code == 0
-    assert "misses=16" in second.output
+    assert "misses=40" in second.output
+
+
+def test_feature_materialize_window_bars_limits_rows(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    spec_path = _materializable_spec(sample_workspace)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "feature",
+            "materialize",
+            str(spec_path),
+            "--backend",
+            "local_test_stub",
+            "--window-bars",
+            "16",
+        ],
+        catch_exceptions=False,
+    )
+
+    packet_path = (
+        sample_workspace
+        / "reports"
+        / "features"
+        / "qqq_news_regime_15m"
+        / "news_regime_score"
+        / "packets.jsonl"
+    )
+    rows = [line for line in packet_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert result.exit_code == 0
+    assert "misses=16" in result.output
+    assert len(rows) == 16

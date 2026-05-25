@@ -728,6 +728,13 @@ def feature_materialize_command(
         bool,
         typer.Option("--refresh", help="Ignore cache and recompute feature packets."),
     ] = False,
+    window_bars: Annotated[
+        int | None,
+        typer.Option(
+            "--window-bars",
+            help="Materialize only the latest N bars; omit for full history.",
+        ),
+    ] = None,
 ) -> None:
     """Materialize llm_feature factors into PIT replay packets."""
     from open_composer.research.llm_materialize import materialize_factor
@@ -752,6 +759,7 @@ def feature_materialize_command(
             backend=backend,
             refresh=refresh,
             symbols=selected_symbols,
+            window_bars=window_bars,
         )
         console.print(
             f"[green]{name}[/green] packets={result.packet_count} "

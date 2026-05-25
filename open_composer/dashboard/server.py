@@ -1,4 +1,5 @@
 import difflib
+import hashlib
 import importlib.util
 import json
 import os
@@ -47,6 +48,7 @@ from open_composer.dashboard.commands import (
     resolve_dashboard_serve_root,
     write_dashboard_command_plan,
 )
+from open_composer.feature_packets import default_materialized_feature_path
 from open_composer.models.notification import NotificationKind, NotificationSeverity
 from open_composer.models.project import QueueCommandKind, StrategyProjectCreate
 from open_composer.models.strategy_spec import load_strategy_spec
@@ -175,6 +177,9 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         if path == "/api/settings/notifications":
             self._send_json(build_notification_config_payload(self.dashboard_root))
             return
+        if path == "/api/activity/trace":
+            self._send_json(build_activity_trace_payload(self.dashboard_root, parsed.query))
+            return
         if path == "/api/build/templates":
             self._send_json(build_templates_payload())
             return
@@ -224,6 +229,9 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
             if len(parts) == 5 and parts[2] == "runs" and parts[4] == "equity":
                 self._handle_json_result(build_strategy_run_equity_payload, parts[1], parts[3])
                 return
+            if len(parts) == 5 and parts[2] == "llm-factors" and parts[4] == "prompt":
+                self._handle_json_result(build_llm_factor_prompt_payload, parts[1], parts[3])
+                return
         if path == "/api/paper/positions":
             self._send_json(build_paper_positions_payload(self.dashboard_root))
             return
@@ -271,6 +279,14 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
                 return
             if len(parts) == 4 and parts[2] == "actions":
                 self._handle_strategy_action(parts[1], parts[3], payload)
+                return
+            if len(parts) == 5 and parts[2] == "llm-factors" and parts[4] == "prompt":
+                self._handle_json_result(
+                    build_llm_factor_prompt_update_payload,
+                    parts[1],
+                    parts[3],
+                    payload,
+                )
                 return
         if path == "/api/build/draft":
             self._handle_build_draft(payload)
@@ -421,7 +437,7 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         load_project(project_id, self.dashboard_root)
         values = parse_qs(query)
         last_ts = self.headers.get("Last-Event-ID") or values.get("since_ts", [""])[0] or ""
-        ticks = _query_int(query, "ticks", default=30, minimum=1, maximum=3600)
+        ticks = _query_int(query, "ticks", default=300, minimum=1, maximum=3600)
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
@@ -924,6 +940,45 @@ def build_project_trace_payload(root: Path, project_id: str, query: str = "") ->
     }
 
 
+def build_activity_trace_payload(root: Path, query: str = "") -> dict[str, Any]:
+    values = parse_qs(query)
+    project_filter = str(values.get("project", [""])[0] or "").strip()
+    kind_filter = str(values.get("kind", [""])[0] or "").strip()
+    since_ts = str(values.get("since_ts", [""])[0] or "").strip()
+    limit = _query_int(query, "limit", default=100, minimum=1, maximum=1000)
+    rows: list[dict[str, Any]] = []
+    for project in list_projects(root):
+        if (
+            project_filter
+            and project.project_id != project_filter
+            and project.name != project_filter
+        ):
+            continue
+        for row in _read_jsonl_rows(trace_path(project.project_id, root)):
+            ts = str(row.get("ts") or "")
+            if since_ts and ts <= since_ts:
+                continue
+            agent = str(row.get("agent") or "")
+            operation = str(row.get("operation") or "")
+            if kind_filter and kind_filter not in {agent, operation}:
+                continue
+            rows.append(
+                {
+                    **row,
+                    "project_id": project.project_id,
+                    "project_name": project.name,
+                }
+            )
+    rows.sort(key=lambda item: str(item.get("ts") or ""), reverse=True)
+    return {
+        "entries": rows[:limit],
+        "limit": limit,
+        "project": project_filter or None,
+        "kind": kind_filter or None,
+        "since_ts": since_ts or None,
+    }
+
+
 def build_project_queue_create_payload(
     root: Path, project_id: str, payload: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1052,6 +1107,7 @@ def build_strategy_detail_payload(root: Path, strategy_name: str) -> dict[str, A
         "equity": build_strategy_equity_payload(root, resolved_name, ""),
         "drawdown": build_strategy_drawdown_payload(root, resolved_name, ""),
         "llm_factors": _llm_factor_rows(root, resolved_name),
+        "pass_reasons": _pass_reasons(project_payload, paper_readiness, research),
     }
 
 
@@ -1093,6 +1149,61 @@ def build_strategy_spec_diff_payload(
         )
     )
     return {**payload, "diff": diff}
+
+
+def build_llm_factor_prompt_payload(
+    root: Path, strategy_name: str, factor_name: str
+) -> dict[str, Any]:
+    spec_path, spec, factor = _load_llm_factor(root, strategy_name, factor_name)
+    prompt_path = _resolve_dashboard_path(root, str(factor.prompt_template_path))
+    prompt = prompt_path.read_text(encoding="utf-8")
+    return {
+        "strategy_name": spec.name,
+        "factor_name": factor_name,
+        "source_spec_path": _relpath(spec_path, root),
+        "prompt_template_path": _relpath(prompt_path, root),
+        "prompt": prompt,
+        "prompt_hash": _hash_text(prompt),
+        "needs_rematerialize": False,
+    }
+
+
+def build_llm_factor_prompt_update_payload(
+    root: Path,
+    strategy_name: str,
+    factor_name: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    spec_path, spec, factor = _load_llm_factor(root, strategy_name, factor_name)
+    prompt = str(payload.get("prompt") or "")
+    if not prompt.strip():
+        raise ValueError("prompt must not be empty")
+    prompt_path = _resolve_dashboard_path(root, str(factor.prompt_template_path))
+    ensure_dir(prompt_path.parent)
+    prompt_path.write_text(prompt.rstrip() + "\n", encoding="utf-8")
+    prompt_hash = _hash_text(prompt_path.read_text(encoding="utf-8"))
+    project = _ensure_project_for_strategy(root, spec.name, spec_path)
+    append_trace(
+        project.project_id,
+        agent="dashboard",
+        operation="dashboard_edit_llm_factor_prompt",
+        metadata={
+            "factor": factor_name,
+            "prompt_hash": prompt_hash,
+            "prompt_template_path": _relpath(prompt_path, root),
+            "needs_rematerialize": True,
+        },
+        root=root,
+    )
+    return {
+        "status": "updated",
+        "strategy_name": spec.name,
+        "factor_name": factor_name,
+        "prompt_template_path": _relpath(prompt_path, root),
+        "prompt_hash": prompt_hash,
+        "needs_rematerialize": True,
+        "trace_path": f"projects/{project.project_id}/trace.jsonl",
+    }
 
 
 def build_strategy_runs_payload(root: Path, strategy_name: str) -> dict[str, Any]:
@@ -1426,6 +1537,7 @@ def build_settings_agent_backend_payload(root: Path) -> dict[str, Any]:
         "backend": backend.name,
         "configured_backend": agent_backend_name(),
         "available": ["file_queue", "codex_sdk"],
+        "fallback_hint": "Set OPEN_COMPOSER_AGENT_BACKEND=file_queue if codex_sdk is unavailable.",
         "project_statuses": project_statuses,
     }
 
@@ -1620,8 +1732,16 @@ def _queue_strategy_action(
         factor = str(payload.get("factor") or "").strip()
         refresh = " --refresh" if bool(payload.get("refresh", False)) else ""
         factor_arg = f" --factor {factor}" if factor else ""
+        window_bars = payload.get("window_bars")
+        window_arg = ""
+        if window_bars not in {None, "", "full"}:
+            window_value = int(window_bars)
+            if window_value < 1:
+                raise ValueError("window_bars must be positive")
+            window_arg = f" --window-bars {window_value}"
         body = (
-            f"Run `uv run oc feature materialize {_relpath(spec_path, root)}{factor_arg}{refresh}` "
+            f"Run `uv run oc feature materialize "
+            f"{_relpath(spec_path, root)}{factor_arg}{refresh}{window_arg}` "
             "then rerun LLM contribution evidence."
         )
         kind = "materialize"
@@ -1692,23 +1812,100 @@ def _llm_factor_rows(root: Path, strategy_name: str) -> list[dict[str, Any]]:
     for name, factor in spec.factors.items():
         if factor.source != "llm_feature":
             continue
-        packet_path = root / factor.path if factor.path else None
-        prompt_path = root / factor.prompt_template_path if factor.prompt_template_path else None
+        packet_path = (
+            _resolve_dashboard_path(root, str(factor.path))
+            if factor.path
+            else default_materialized_feature_path(root, spec.name, name)
+        )
+        prompt_path = (
+            _resolve_dashboard_path(root, str(factor.prompt_template_path))
+            if factor.prompt_template_path
+            else None
+        )
+        prompt = (
+            prompt_path.read_text(encoding="utf-8") if prompt_path and prompt_path.exists() else ""
+        )
+        packet_count = len(_read_jsonl_rows(packet_path))
         rows.append(
             {
                 "name": name,
                 "field": factor.field,
-                "path": factor.path,
-                "packet_count": len(_read_jsonl_rows(packet_path)) if packet_path else 0,
+                "path": factor.path or _relpath(packet_path, root),
+                "packet_count": packet_count,
                 "prompt_template_path": factor.prompt_template_path,
-                "prompt_preview": _read_text(prompt_path, max_bytes=1200) if prompt_path else "",
+                "prompt_preview": prompt[:1200],
+                "prompt_hash": _hash_text(prompt) if prompt else None,
                 "input_view": factor.input_view,
                 "input_view_version": factor.input_view_version,
                 "model_ref": factor.model_ref,
-                "point_in_time_ready": bool(packet_path and packet_path.exists()),
+                "point_in_time_ready": packet_count > 0,
+                "factor_lab": _factor_lab_metric(root, spec.name, name),
             }
         )
     return rows
+
+
+def _pass_reasons(
+    project_payload: dict[str, Any] | None,
+    paper_readiness: list[dict[str, Any]],
+    research_reports: list[dict[str, Any]],
+) -> dict[str, list[str]]:
+    project = project_payload.get("project") if project_payload else {}
+    gate = project.get("gate_summary") if isinstance(project, dict) else {}
+    blockers = _string_items(project.get("blockers") if isinstance(project, dict) else None)
+    blocked_checks = _string_items(gate.get("blocked_checks") if isinstance(gate, dict) else None)
+    warning_checks = _string_items(gate.get("warning_checks") if isinstance(gate, dict) else None)
+    report_items: list[str] = []
+    for report in research_reports:
+        report_items.extend(_string_items(report.get("blocked_items")))
+        report_items.extend(_string_items(report.get("warning_items")))
+    paper_items: list[str] = []
+    for report in paper_readiness:
+        checks = report.get("checks")
+        if isinstance(checks, list):
+            for check in checks:
+                if isinstance(check, dict) and str(check.get("status") or "") != "pass":
+                    message = check.get("message", check.get("status"))
+                    paper_items.append(f"{check.get('name', 'paper_check')}: {message}")
+    common = [*blocked_checks, *warning_checks, *blockers, *report_items]
+    return {
+        "workflow_pass": common,
+        "research_pass": common,
+        "llm_contribution_pass": common,
+        "paper_ready_pass": [*common, *paper_items],
+    }
+
+
+def _load_llm_factor(root: Path, strategy_name: str, factor_name: str):
+    spec_path = resolve_strategy_path(strategy_name, root)
+    spec = load_strategy_spec(spec_path)
+    factor = spec.factors.get(factor_name)
+    if factor is None:
+        raise FileNotFoundError(f"factor not found: {factor_name}")
+    if factor.source != "llm_feature":
+        raise ValueError(f"factor is not source=llm_feature: {factor_name}")
+    if not factor.prompt_template_path:
+        raise ValueError(f"factor has no prompt_template_path: {factor_name}")
+    return spec_path, spec, factor
+
+
+def _factor_lab_metric(root: Path, strategy_name: str, factor_name: str) -> dict[str, Any] | None:
+    payload = _read_json_mapping(root / "reports" / "research" / f"{strategy_name}-factor-lab.json")
+    metrics = payload.get("factor_metrics")
+    if not isinstance(metrics, list):
+        return None
+    for metric in metrics:
+        if isinstance(metric, dict) and str(metric.get("name") or "") == factor_name:
+            return {
+                "status": payload.get("status"),
+                "rank_ic": metric.get("rank_ic"),
+                "rolling_rank_ic_mean": metric.get("rolling_rank_ic_mean"),
+                "rolling_rank_ic_min": metric.get("rolling_rank_ic_min"),
+                "observations": metric.get("observations"),
+                "coverage_pct": metric.get("coverage_pct"),
+                "flags": metric.get("flags", []),
+            }
+    return None
 
 
 def _signal_rows(
@@ -1872,6 +2069,14 @@ def _json_mapping(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def _string_items(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item).strip()]
+    return [str(value)] if str(value).strip() else []
+
+
 def _slugify(value: str) -> str:
     text = "".join(char.lower() if char.isalnum() else "-" for char in value.strip())
     while "--" in text:
@@ -1884,6 +2089,20 @@ def _relpath(path: Path, root: Path) -> str:
         return path.resolve().relative_to(root.resolve()).as_posix()
     except ValueError:
         return path.as_posix()
+
+
+def _resolve_dashboard_path(root: Path, value: str) -> Path:
+    path = Path(value)
+    resolved = path if path.is_absolute() else root / path
+    try:
+        resolved.resolve().relative_to(root.resolve())
+    except ValueError as exc:
+        raise ValueError(f"path must stay inside dashboard root: {value}") from exc
+    return resolved
+
+
+def _hash_text(value: str) -> str:
+    return "sha256:" + hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def build_project_create_payload(root: Path, payload: dict[str, Any]) -> dict[str, Any]:

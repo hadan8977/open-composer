@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, SectionTitle, Tag, KPI } from "./blocks";
 import { Hero } from "./hero";
 import {
@@ -12,13 +12,43 @@ import {
   researchRuns,
 } from "./data";
 import { Notifications } from "./notifications";
+import { getDashboardJson } from "./runtime";
+
+type ActivityItem = {
+  id: string;
+  time: string;
+  kind: string;
+  project: string;
+  title: string;
+  detail: string;
+  color: "green" | "orange" | "pink" | "cyan" | "purple" | "black" | "paper";
+};
 
 export function ActivityView() {
   const [kindFilter, setKindFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const timeline = useMemo(() => [
+  const [traceItems, setTraceItems] = useState<ActivityItem[]>([]);
+  useEffect(() => {
+    void getDashboardJson<{ entries: Array<Record<string, any>> }>("/api/activity/trace?limit=200")
+      .then((payload) => {
+        setTraceItems(payload.entries.map((row) => ({
+          id: `trace-${row.project_id}-${row.span_id ?? row.ts}`,
+          time: String(row.ts ?? ""),
+          kind: String(row.agent ?? "Trace"),
+          project: String(row.project_name ?? row.project_id ?? ""),
+          title: String(row.operation ?? "trace event"),
+          detail: JSON.stringify(row.metadata ?? {}),
+          color: agentColor(String(row.agent ?? "")),
+        })));
+      })
+      .catch(() => {
+        setTraceItems([]);
+      });
+  }, []);
+  const timeline = useMemo<ActivityItem[]>(() => [
+    ...traceItems,
     ...projects.flatMap((project) => {
       const steps = project.latestRunSummary?.stepEvents ?? [];
       const stepItems = steps.map((step, index) => ({
@@ -93,6 +123,7 @@ export function ActivityView() {
       color: "black" as const,
     })),
   ], [
+    traceItems,
     dashboardSummary.auditCount,
     dashboardSummary.generatedAt,
     dashboardSummary.orderCount,
@@ -236,6 +267,15 @@ function traceColor(status: string): "green" | "orange" | "pink" | "cyan" {
   if (status === "blocked" || status === "failed") return "pink";
   if (status === "warning") return "orange";
   return "cyan";
+}
+
+function agentColor(agent: string): "green" | "orange" | "pink" | "cyan" | "purple" | "black" | "paper" {
+  if (agent === "codex") return "green";
+  if (agent === "claude_code") return "purple";
+  if (agent === "dashboard") return "cyan";
+  if (agent === "cli") return "black";
+  if (agent === "system") return "orange";
+  return "paper";
 }
 
 export function ResearchView() {

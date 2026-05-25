@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RefreshCw, ShieldAlert } from "lucide-react";
 import { Card, KPI, SectionTitle, Tag } from "./blocks";
 import { Hero } from "./hero";
@@ -18,6 +18,13 @@ export function LiveView() {
   const activePaperProjects = projects.filter((project) => project.state === "active_paper");
   const [status, setStatus] = useState("Paper monitor is ready.");
   const [busy, setBusy] = useState<string | null>(null);
+  const [positionRows, setPositionRows] = useState(paperPositions);
+  const [orderRows, setOrderRows] = useState(paperOrders);
+  const [alertStatus, setAlertStatus] = useState<Record<string, any> | null>(null);
+  const liveUnrealizedPnl = useMemo(
+    () => positionRows.reduce((total, position) => total + Number(position.upnl ?? 0), 0),
+    [positionRows],
+  );
 
   const refreshCatalog = async () => {
     const catalog = await getDashboardJson<Parameters<typeof applyDashboardCatalog>[0]>(
@@ -25,6 +32,30 @@ export function LiveView() {
     );
     applyDashboardCatalog(catalog);
   };
+
+  const refreshPaperData = async () => {
+    const [positionsPayload, ordersPayload, alertsPayload] = await Promise.all([
+      getDashboardJson<{ positions: typeof paperPositions }>("/api/paper/positions"),
+      getDashboardJson<{ orders: typeof paperOrders }>("/api/paper/orders"),
+      getDashboardJson<Record<string, any>>("/api/paper/alerts"),
+    ]);
+    setPositionRows(positionsPayload.positions ?? positionRows);
+    setOrderRows(ordersPayload.orders ?? orderRows);
+    setAlertStatus(alertsPayload.alerts ?? alertsPayload.status ?? null);
+    setStatus("Paper data refreshed.");
+  };
+
+  useEffect(() => {
+    void refreshPaperData().catch(() => {
+      setStatus("Paper polling failed; keeping last successful data.");
+    });
+    const timer = window.setInterval(() => {
+      void refreshPaperData().catch(() => {
+        setStatus("Paper polling failed; keeping last successful data.");
+      });
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const runPaperAction = async (action: "kill" | "clear" | "sync" | "monitor") => {
     if ((action === "kill" || action === "clear") && !confirmPaperPhrase()) {
@@ -44,6 +75,7 @@ export function LiveView() {
         await postDashboardJson("/api/paper/monitor/refresh", {});
       }
       await refreshCatalog();
+      await refreshPaperData();
       setStatus(`${action} submitted.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Paper action failed.");
@@ -69,7 +101,7 @@ export function LiveView() {
         <div className="col-span-3"><KPI label="Equity" value={dashboardSummary.paperAccountEquity ? money(dashboardSummary.paperAccountEquity) : "n/a"} accent="green" /></div>
         <div className="col-span-3"><KPI label="Cash" value={dashboardSummary.paperAccountCash ? money(dashboardSummary.paperAccountCash) : "n/a"} accent="cyan" /></div>
         <div className="col-span-3"><KPI label="Open orders" value={String(dashboardSummary.paperOpenOrderCount)} accent="orange" /></div>
-        <div className="col-span-3"><KPI label="Unrealized PnL" value={money(dashboardSummary.paperTotalUnrealizedPl)} accent={dashboardSummary.paperTotalUnrealizedPl >= 0 ? "green" : "pink"} /></div>
+        <div className="col-span-3"><KPI label="Unrealized PnL" value={money(liveUnrealizedPnl)} accent={liveUnrealizedPnl >= 0 ? "green" : "pink"} /></div>
       </div>
 
       <div className="grid grid-cols-12 gap-3">
@@ -81,7 +113,7 @@ export function LiveView() {
             <StatusRow label="Account snapshot" value={dashboardSummary.paperAccountSnapshotAt ?? "missing"} />
             <StatusRow label="Positions snapshot" value={dashboardSummary.paperPositionsSnapshotAt ?? "missing"} />
             <StatusRow label="Reconciliation" value={dashboardSummary.paperReconciliationStatus} />
-            <StatusRow label="Alerts" value={dashboardSummary.paperAlertStatus} />
+            <StatusRow label="Alerts" value={String(alertStatus?.status ?? dashboardSummary.paperAlertStatus)} />
             <StatusRow label="Kill switch" value={dashboardSummary.paperKillSwitchEnabled ? "enabled" : "clear"} danger={dashboardSummary.paperKillSwitchEnabled} />
           </div>
         </Card>
@@ -91,9 +123,9 @@ export function LiveView() {
             <SectionTitle tick="cyan">Positions</SectionTitle>
           </div>
           <div className="divide-y divide-[var(--hairline)]">
-            {paperPositions.length === 0 ? (
+            {positionRows.length === 0 ? (
               <div className="px-5 py-8 t-body-sm ink-muted">No paper positions are present.</div>
-            ) : paperPositions.map((position) => (
+            ) : positionRows.map((position) => (
               <div key={`${position.sym}-${position.strat}`} className="grid grid-cols-[1fr_70px_90px] gap-3 px-5 py-3">
                 <div className="min-w-0">
                   <div className="t-title-sm truncate">{position.sym}</div>
@@ -131,7 +163,7 @@ export function LiveView() {
           <div className="px-5 py-4 hairline-b">
             <SectionTitle tick={dashboardSummary.paperTotalUnrealizedPl >= 0 ? "green" : "pink"}>Paper PnL</SectionTitle>
           </div>
-          <div className="p-4"><PaperPnlChart value={dashboardSummary.paperTotalUnrealizedPl} /></div>
+          <div className="p-4"><PaperPnlChart value={liveUnrealizedPnl} /></div>
           <div className="px-5 pb-4 flex flex-wrap gap-2">
             <button className="pill pill-secondary" disabled={!!busy} onClick={() => void runPaperAction("sync")}>
               <RefreshCw size={13} /> Queue Sync
@@ -158,9 +190,9 @@ export function LiveView() {
                 </tr>
               </thead>
               <tbody>
-                {paperOrders.length === 0 ? (
+                {orderRows.length === 0 ? (
                   <tr><td colSpan={5} className="px-5 py-8 t-body-sm ink-muted">No paper orders are present.</td></tr>
-                ) : paperOrders.slice().reverse().slice(0, 12).map((order) => (
+                ) : orderRows.slice().reverse().slice(0, 12).map((order) => (
                   <tr key={order.id} className="hairline-b last:border-b-0">
                     <td className="px-5 py-2.5 ink-subtle">{order.submittedAt}</td>
                     <td>{order.strategy}</td>

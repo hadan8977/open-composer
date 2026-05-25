@@ -5,18 +5,22 @@ import threading
 from pathlib import Path
 
 import pytest
+import yaml
 from conftest import assert_no_windows_paths
 
 import open_composer.dashboard.auth as dashboard_auth
 from open_composer.dashboard.commands import DashboardCommandError, resolve_dashboard_serve_root
 from open_composer.dashboard.server import (
     DASHBOARD_CLI_PARITY,
+    build_activity_trace_payload,
     build_dashboard_catalog_payload,
     build_dashboard_command_plan_payload,
     build_dashboard_command_run_payload,
     build_dashboard_environment_payload,
     build_dashboard_health_payload,
     build_draft_payload,
+    build_llm_factor_prompt_payload,
+    build_llm_factor_prompt_update_payload,
     build_notification_config_payload,
     build_notification_log_payload,
     build_notification_test_payload,
@@ -150,6 +154,51 @@ def test_dashboard_step3_strategy_read_and_action_api(sample_workspace: Path) ->
     )
     assert promoted["status"] == "executed"
     assert promoted["output_paths"] == ["strategy_specs/approved/fixture_pullback_15m.yaml"]
+
+
+def test_dashboard_llm_factor_prompt_trace_and_window_materialize(
+    sample_workspace: Path,
+) -> None:
+    spec_path = _write_dashboard_llm_factor_spec(sample_workspace)
+    factor_lab_path = (
+        sample_workspace / "reports" / "research" / "qqq_news_regime_15m-factor-lab.json"
+    )
+    factor_lab_path.write_text(
+        '{"status":"warning","factor_metrics":[{"name":"news_regime_score",'
+        '"rank_ic":0.12,"rolling_rank_ic_mean":0.08,"rolling_rank_ic_min":-0.02,'
+        '"observations":40,"coverage_pct":100,"flags":["sample_data"]}]}',
+        encoding="utf-8",
+    )
+
+    prompt = build_llm_factor_prompt_payload(
+        sample_workspace,
+        "qqq_news_regime_15m",
+        "news_regime_score",
+    )
+    updated = build_llm_factor_prompt_update_payload(
+        sample_workspace,
+        "qqq_news_regime_15m",
+        "news_regime_score",
+        {"prompt": prompt["prompt"] + "\nUse stricter point-in-time evidence."},
+    )
+    detail = build_strategy_detail_payload(sample_workspace, "qqq_news_regime_15m")
+    queued = build_strategy_action_payload(
+        sample_workspace,
+        str(spec_path),
+        "materialize",
+        {"factor": "news_regime_score", "window_bars": 200},
+    )
+    trace = build_activity_trace_payload(sample_workspace, "limit=20&kind=dashboard")
+
+    assert updated["needs_rematerialize"] is True
+    assert updated["prompt_hash"].startswith("sha256:")
+    assert detail["llm_factors"][0]["factor_lab"]["rank_ic"] == 0.12
+    assert detail["llm_factors"][0]["prompt_hash"].startswith("sha256:")
+    assert queued["status"] == "queued"
+    assert "--window-bars 200" in (
+        sample_workspace / "projects" / queued["project_id"] / "queue.jsonl"
+    ).read_text(encoding="utf-8")
+    assert any(row["operation"] == "dashboard_edit_llm_factor_prompt" for row in trace["entries"])
 
 
 def test_dashboard_step3_build_settings_and_paper_api(sample_workspace: Path) -> None:
@@ -760,3 +809,37 @@ def _dashboard_health_request(
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+
+
+def _write_dashboard_llm_factor_spec(sample_workspace: Path) -> Path:
+    prompt = sample_workspace / "prompts" / "examples" / "news_regime_score.md"
+    prompt.parent.mkdir(parents=True, exist_ok=True)
+    prompt.write_text("Return score and confidence as JSON.\n", encoding="utf-8")
+    source = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(source.read_text(encoding="utf-8"))
+    raw["name"] = "qqq_news_regime_15m"
+    raw["factors"] = {
+        "news_regime_score": {
+            "source": "llm_feature",
+            "field": "score",
+            "default": 0.0,
+            "description": "Materialized LLM score.",
+            "input_view": "news_window_v1",
+            "input_view_version": 1,
+            "prompt_template_path": "prompts/examples/news_regime_score.md",
+            "output_schema": {
+                "type": "object",
+                "required": ["score", "confidence"],
+                "properties": {
+                    "score": {"type": "number"},
+                    "confidence": {"type": "number"},
+                },
+            },
+            "model_ref": "local_test_stub",
+        }
+    }
+    raw["entry"] = {"all": ["news_regime_score > 0"]}
+    raw["exit"] = {"any": ["news_regime_score < 0"]}
+    target = sample_workspace / "strategy_specs" / "drafts" / "qqq_news_regime_15m.yaml"
+    target.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    return target

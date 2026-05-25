@@ -1,14 +1,24 @@
-# Open Composer VPS Dashboard 部署说明
+# Open Composer 远程 Dashboard 部署说明（暂停）
 
 日期：2026-05-22
 
 ## 结论
 
-Open Composer 的标准部署方式只有一个：**VPS 直接托管 Dashboard，策略研究和执行仍然保持本地 / CLI / 文件优先**。
+当前阶段远程 Dashboard 部署已暂停，不作为产品主线、验收项或日常使用前提。Open Composer 的当前标准使用方式是：
+
+```text
+localhost Dashboard
+  -> 本地 StrategySpec / projects / reports
+  -> CLI + Codex / Claude Code work session
+```
+
+下面的 VPS / Cloudflare Access 内容只保留为未来可选方案和历史参考。恢复远程访问前，需要重新显式评估安全边界、认证方式和部署脚本。
+
+历史 VPS 方案的边界是：**VPS 直接托管 Dashboard，策略研究和执行仍然保持本地 / CLI / 文件优先**。
 
 不再把 Vercel 作为正常产品路径。旧的 Vercel BFF / remote daemon 代码只保留为遗留兼容，不作为新部署入口。
 
-手机和异地访问优先使用 **Cloudflare Tunnel + Cloudflare Access**。该模式不暴露 Dashboard 端口：Cloudflare 通过出站 tunnel 访问 VPS 本机 `127.0.0.1:8000`，用户在浏览器中通过 Cloudflare Access 登录。
+如果未来恢复手机和异地访问，优先重新评估 **Cloudflare Tunnel + Cloudflare Access**。该模式不暴露 Dashboard 端口：Cloudflare 通过出站 tunnel 访问 VPS 本机 `127.0.0.1:8000`，用户在浏览器中通过 Cloudflare Access 登录。
 
 ## 架构边界
 

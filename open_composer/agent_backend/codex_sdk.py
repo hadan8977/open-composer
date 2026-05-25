@@ -10,6 +10,14 @@ from open_composer.projects import append_trace, unconsumed_queue
 from .base import AgentSessionStatus
 from .file_queue import FileQueueAgentBackend
 
+REQUIRED_CLIENT_METHODS = (
+    "start_session",
+    "send_user_message",
+    "is_session_alive",
+    "cancel_session",
+)
+FALLBACK_HINT = "Set OPEN_COMPOSER_AGENT_BACKEND=file_queue to use the audited file queue fallback."
+
 try:  # pragma: no cover - optional dependency surface
     from codex_sdk import CodexAppServerClient  # type: ignore
 except ImportError:  # pragma: no cover - optional dependency surface
@@ -21,9 +29,19 @@ class CodexAgentBackend:
 
     def __init__(self, model: str | None = None):
         if CodexAppServerClient is None:
-            raise RuntimeError("codex_sdk package is not installed")
+            raise RuntimeError(f"codex_sdk package is not installed. {FALLBACK_HINT}")
         self.model = model or default_openai_model()
         self._client = CodexAppServerClient()
+        missing = [
+            method
+            for method in REQUIRED_CLIENT_METHODS
+            if not callable(getattr(self._client, method, None))
+        ]
+        if missing:
+            raise RuntimeError(
+                "codex_sdk API is incompatible; missing methods: "
+                f"{', '.join(missing)}. {FALLBACK_HINT}"
+            )
         self._fallback = FileQueueAgentBackend()
 
     def send_command(

@@ -47,6 +47,7 @@ def materialize_factor(
     backend: str = "openai",
     refresh: bool = False,
     symbols: list[str] | None = None,
+    window_bars: int | None = None,
 ) -> MaterializationResult:
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
@@ -80,7 +81,7 @@ def materialize_factor(
     output_schema = factor.output_schema.model_dump(mode="json") if factor.output_schema else {}
     for symbol in target_symbols:
         frame = _load_symbol_frame(spec, base, symbol, refresh=refresh)
-        rows = _input_rows(frame, symbol)
+        rows = _input_rows(frame, symbol, window_bars=window_bars)
         for row in rows:
             input_payload = _input_payload(row, factor)
             input_hash = _hash_json(input_payload)
@@ -219,11 +220,19 @@ def _load_symbol_frame(
     )
 
 
-def _input_rows(frame, symbol: str) -> list[dict[str, Any]]:
+def _input_rows(
+    frame,
+    symbol: str,
+    *,
+    window_bars: int | None = None,
+) -> list[dict[str, Any]]:
     if "timestamp" not in frame.columns:
         raise ValueError("materialization requires timestamp column")
+    if window_bars is not None and window_bars < 1:
+        raise ValueError("--window-bars must be a positive integer")
+    input_frame = frame if window_bars is None else frame.tail(window_bars)
     rows: list[dict[str, Any]] = []
-    for raw in frame.tail(16).to_dict(orient="records"):
+    for raw in input_frame.to_dict(orient="records"):
         timestamp = _timestamp(raw["timestamp"])
         rows.append(
             {
