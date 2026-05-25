@@ -1,0 +1,177 @@
+name: nasdaq_long_short_event_router_1m_sweep_001
+description: Research draft for a NASDAQ long-short adaptive intraday router using the
+  available two-year 1m Alpaca IEX cache. This variant keeps broker writes disabled
+  and uses event/news logic only as observation evidence until independent PIT lift
+  is proven.
+timeframe: 1m
+universe:
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - META
+  - GOOGL
+  - AVGO
+  - AMD
+  - QCOM
+  - AMAT
+  - NFLX
+  - TSLA
+lifecycle: draft
+position_direction: long_short
+
+entry:
+  all:
+    - "close > ema(close, 8)"
+    - "volume > sma(volume, 4)"
+
+exit:
+  any:
+    - "close < ema(close, 8)"
+
+risk:
+  max_trades_per_day: 4
+  max_position_weight: 0.08
+  stop_loss_pct: 0.9
+  take_profit_pct: 1.4
+
+portfolio:
+  mode: adaptive_intraday_internal_router
+  max_symbols_per_day: 4
+  gross_exposure_limit: 0.32
+  max_symbol_weight: 0.08
+  same_day_flatten: true
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: open_momentum:lb10_entry5_top1_open0_mom0_rv0.8_qprior_negative_reversal_maxopen-0.2_maxmomnone
+
+costs:
+  commission_pct: 0.005
+  slippage_bps: 2.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: alpaca
+  symbol: QQQ
+  feed: iex
+
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: cached_live
+
+factors:
+  opening_return:
+    source: expression
+    expression: "close / sma(close, 4) - 1"
+    default: 0.0
+    description: Short-window price pressure proxy; adaptive router opening-window
+      calculations are produced by the research module from OHLC bars.
+  intraday_volume_pressure:
+    source: expression
+    expression: "volume / sma(volume, 4)"
+    default: 1.0
+    description: Opening-window relative volume pressure.
+  event_risk_score:
+    source: llm_feature
+    field: score
+    default: 0.0
+    description: Materialized event/news risk score. Not used as independent Alpha
+      until PIT packets prove marginal lift against the deterministic router.
+    input_view: nasdaq_event_window_v1
+    input_view_version: 1
+    prompt_template_path: prompts/examples/nasdaq_long_short_event_risk.md
+    output_schema:
+      type: object
+      required:
+        - score
+        - confidence
+        - regime
+      properties:
+        score:
+          type: number
+          minimum: -1
+          maximum: 1
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        regime:
+          type: string
+        notes:
+          type: string
+    cache_policy:
+      mode: materialize_then_replay
+      key_fields:
+        - symbol
+        - visible_at
+        - input_view_version
+        - input_hash
+        - prompt_hash
+        - model
+        - schema_version
+    model_ref: local_test_stub
+
+llm_review:
+  enabled: false
+  model: null
+
+notes:
+  intent: Test whether the NASDAQ event router concept is better expressed as a
+    daily-scanned 1m adaptive intraday long/short router with same-day flattening
+    and observation-only event/news packets.
+  open_questions:
+    - Alpaca IEX/cache evidence is acceptable for this research loop only; compare
+      with another provider or SIP before paper readiness.
+    - Short execution remains disabled until shortability, borrow, squeeze, and
+      dividend evidence pass.
+    - Event/news/LLM packets must prove independent marginal lift before claiming
+      LLM Alpha.
+
+research_design:
+  parameter_space:
+    lookback_days: [5, 10, 20]
+    entry_after_bars: [1, 2, 5]
+    top_n: [1, 2]
+    selection_style: [opening_momentum, opening_reversal]
+    min_opening_return_pct: [0.0, 0.2]
+    min_prior_momentum_pct: [0.0, 2.0, 4.0]
+    min_relative_volume: [0.8, 1.0, 1.2]
+    max_opening_return_pct: [-0.2, 0.0]
+    max_prior_momentum_pct: [null, 0.0]
+    market_gate:
+      - none
+      - qqq_open_positive
+      - qqq_open_negative
+      - qqq_prior_positive
+      - qqq_prior_negative
+      - qqq_open_positive_prior_negative
+  candidate_budget: 540
+  selection_objective: Maximize OOS and walk-forward alpha versus equal-weight
+    intraday exposure and benchmark intraday exposure after realistic same-day costs.
+  anti_overfit_notes:
+    - Select parameters on train only; evaluate OOS chronologically.
+    - Require every walk-forward test fold to show positive objective alpha for
+      research_pass.
+    - Treat ex-post best symbol as an upper-bound warning, not a tradable benchmark.
+    - Keep LLM/news contribution separate from deterministic router performance.
+  validation_plan:
+    - Validate StrategySpec.
+    - Run adaptive intraday router research on cached two-year 1m data.
+    - Generate observation-only target weights and signal logs for the selected route.
+    - Run data capability, forensics, execution reality, promotion, harness verify,
+      and paper readiness checks before any paper_auto discussion.
+
+required_capabilities:
+  - market.alpaca_bars
+  - events.sec_filings
+  - news.alpha_vantage

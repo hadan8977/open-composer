@@ -1,0 +1,114 @@
+name: memory_storage_momentum_15m_sweep_007
+description: Intraday MU momentum strategy for the memory/storage AI data-center theme.
+  Parameter sweep candidate 7.
+timeframe: 15m
+universe:
+- MU
+- WDC
+- STX
+lifecycle: draft
+entry:
+  all:
+  - close > ema(close, 5)
+  - ema(close, 5) > ema(close, 13)
+  - rsi(close, 6) > 55
+  - volume > sma(volume, 8)
+  any: []
+exit:
+  all: []
+  any:
+  - close < ema(close, 8)
+  - rsi(close, 6) > 88
+risk:
+  max_trades_per_day: 2
+  max_position_weight: 0.2
+  stop_loss_pct: 0.8
+  take_profit_pct: 4.0
+costs:
+  commission_pct: 0.0
+  slippage_bps: 0.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: sample
+  symbol: MU
+  path: data/sample/mu_15m.csv
+  feed: null
+data_assumptions:
+  source: sample
+  adjusted: true
+  timezone: America/New_York
+factors: {}
+llm_review:
+  enabled: true
+  model: gpt-5.5
+notes:
+  intent: Trade intraday continuation in memory/storage names when MU leads on price,
+    volume, and AI data-center context. Real trading remains manual.
+  open_questions:
+  - Confirm live Alpaca IEX coverage versus paid SIP before production use.
+  - Measure whether MU, WDC, or STX provides the cleanest intraday proxy.
+  - Keep news/event context as a filter and review input, not a sole entry rule.
+  research_design:
+    data_timeframe: 15m
+    signal_timeframe: 15m
+    rebalance_frequency: bar_close
+    llm_review_frequency: post_signal_only
+    method_variants:
+    - momentum
+    - rotation
+    - theme_proxy
+    factor_variants:
+    - ema_trend
+    - relative_momentum
+    - volume_confirmation
+    - event_news_macro_context
+    parameter_ranges:
+      fast_ema_bars:
+      - 5
+      - 8
+      - 13
+      slow_ema_bars:
+      - 13
+      - 21
+      - 34
+      rsi_bars:
+      - 6
+      - 14
+      stop_loss_pct:
+      - 0.8
+      - 1.1
+      - 1.5
+      take_profit_pct:
+      - 2.0
+      - 3.2
+      - 4.0
+    universe_variants:
+    - - MU
+    - - MU
+      - WDC
+      - STX
+    candidate_cap: 200
+    objective: alpha_vs_benchmark_family_after_costs
+  parameter_sweep:
+    source_strategy: memory_storage_momentum_15m
+    candidate_index: 7
+    params:
+      risk.stop_loss_pct: 0.8
+      risk.take_profit_pct: 4.0
+      entry.all.0: close > ema(close, 5)
+    promotion_note: In-sample sweep result only; require out-of-sample, walk-forward,
+      cost sensitivity, and data-source comparison before paper promotion.
+required_capabilities:
+- market.memory_storage_sample
+- events.sec_filings
+- macro.fred_series
+- news.alpha_vantage
+- news.gdelt

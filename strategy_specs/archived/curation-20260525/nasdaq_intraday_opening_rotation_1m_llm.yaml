@@ -1,0 +1,93 @@
+name: nasdaq_intraday_opening_rotation_1m_llm
+description: LLM-assisted daily NASDAQ intraday opening-range rotation with same-day exits and prompt-visible parameter selection.
+timeframe: 1m
+universe:
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - META
+  - GOOGL
+  - AVGO
+  - AMD
+  - QCOM
+  - AMAT
+  - NFLX
+  - TSLA
+lifecycle: draft
+
+entry:
+  all:
+    - "close > ema(close, 8)"
+    - "rsi(close, 3) > 55"
+    - "volume > sma(volume, 4)"
+
+exit:
+  any:
+    - "close < ema(close, 8)"
+    - "rsi(close, 3) < 45"
+
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 0.15
+  stop_loss_pct: 0.9
+  take_profit_pct: 1.4
+
+costs:
+  commission_pct: 0.005
+  slippage_bps: 2.0
+
+execution:
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: alpaca
+  symbol: AAPL
+  feed: iex
+
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+
+llm_review:
+  enabled: true
+  model: gpt-5.5
+
+required_capabilities:
+  - market.alpaca_bars
+
+notes:
+  intent: Use an LLM only for prompt-visible parameter selection over daily intraday NASDAQ candidates; the LLM must not see final OOS metrics before selecting.
+  research_design:
+    data_timeframe: 1m
+    signal_timeframe: 1m
+    rebalance_frequency: daily
+    llm_review_frequency: pre_selection_only
+    method_variants:
+      - opening_range_breakout
+      - opening_range_momentum
+      - relative_strength_rotation
+    factor_variants:
+      - opening_return
+      - prior_close_momentum
+      - relative_opening_volume
+      - market_gate
+    parameter_ranges:
+      lookback_days: [5, 10, 20]
+      entry_after_bars: [1, 2]
+      top_n: [1, 2]
+      min_opening_return_pct: [0.0, 0.2]
+      min_prior_momentum_pct: [0.0, 3.0]
+      min_relative_volume: [0.8, 1.0]
+    universe_variants:
+      - [AAPL, MSFT, NVDA, AMZN, META, GOOGL, AVGO, AMD, QCOM, AMAT, NFLX, TSLA]
+      - [AAPL, MSFT, NVDA, AMZN, META, GOOGL, AVGO, AMD]
+    candidate_cap: 240
+    objective: benchmark_intraday_alpha_after_costs
+  open_questions:
+    - Compare the LLM-selected candidates against a deterministic parameter choice on the same training window.
+    - Keep the LLM limited to prompt-visible candidate summaries and replayable reports only.

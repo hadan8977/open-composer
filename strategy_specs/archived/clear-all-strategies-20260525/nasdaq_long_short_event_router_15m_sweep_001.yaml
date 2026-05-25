@@ -1,0 +1,223 @@
+name: nasdaq_long_short_event_router_15m_sweep_001
+description: "Research draft for a NASDAQ long-short router. It combines market-regime\
+  \ filters, intraday momentum/reversal routing, and a materialized LLM event-risk\
+  \ score for earnings/news event-risk context. Short exposure is research-only until\
+  \ broker shortability, borrow, squeeze, and dividend evidence pass.\n Parameter\
+  \ sweep candidate 1."
+timeframe: 15m
+universe:
+- AAPL
+- MSFT
+- NVDA
+- AMZN
+- META
+- GOOGL
+- TSLA
+- AVGO
+- COST
+- AMD
+- NFLX
+- QQQ
+lifecycle: draft
+position_direction: long_short
+entry:
+  all:
+  - close > ema(close, 13)
+  - close > sma(close, 40)
+  - volume > sma(volume, 20)
+  - event_risk_score + 0.25 > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close < ema(close, 13)
+  - close < sma(close, 40)
+  - event_risk_score + 0.35 < 0
+risk:
+  max_trades_per_day: 4
+  max_position_weight: 0.12
+  stop_loss_pct: 0.8
+  take_profit_pct: 1.6
+portfolio:
+  mode: adaptive_intraday_internal_router
+  max_symbols_per_day: 3
+  gross_exposure_limit: 0.6
+  max_symbol_weight: 0.12
+  same_day_flatten: true
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: open_momentum:lb3_entry1_top1_open0_mom0_rv0.8_qopen_positive_reversal_maxopen0_maxmomnone
+costs:
+  commission_pct: 0.0
+  slippage_bps: 0.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: QQQ
+  path: null
+  feed: iex
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: paper_ready_live
+factors:
+  trend_spread:
+    source: expression
+    expression: ema(close, 13) - sma(close, 40)
+    path: null
+    field: null
+    default: 0.0
+    description: Short-term trend relative to intermediate trend.
+    input_view: null
+    input_view_version: null
+    prompt_template_path: null
+    output_schema: null
+    cache_policy: null
+    model_ref: null
+  intraday_volume_pressure:
+    source: expression
+    expression: volume / sma(volume, 20)
+    path: null
+    field: null
+    default: 1.0
+    description: Current volume relative to recent baseline.
+    input_view: null
+    input_view_version: null
+    prompt_template_path: null
+    output_schema: null
+    cache_policy: null
+    model_ref: null
+  event_risk_score:
+    source: llm_feature
+    expression: null
+    path: null
+    field: score
+    default: 0.0
+    description: 'Materialized LLM score for earnings/news event risk. In research
+      replay this uses point-in-time packets only; live LLM calls are prohibited inside
+      backtests.
+
+      '
+    input_view: nasdaq_event_window_v1
+    input_view_version: 1
+    prompt_template_path: prompts/examples/nasdaq_long_short_event_risk.md
+    output_schema:
+      type: object
+      required:
+      - score
+      - confidence
+      - regime
+      properties:
+        score:
+          type: number
+          minimum: -1
+          maximum: 1
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        regime:
+          type: string
+        notes:
+          type: string
+    cache_policy:
+      mode: materialize_then_replay
+      key_fields:
+      - symbol
+      - visible_at
+      - input_view_version
+      - input_hash
+      - prompt_hash
+      - model
+      - schema_version
+    model_ref: local_test_stub
+llm_review:
+  enabled: false
+  model: null
+notes:
+  intent: 'Build a professional research path toward a NASDAQ long-short strategy
+    that scans market regime, daily market state, stock momentum/reversal candidates,
+    and event-risk context before any paper trading.
+
+    '
+  open_questions:
+  - Cross-check Alpaca IEX NASDAQ 15m research data against a second provider before
+    any paper-ready claim.
+  - Add PIT earnings calendar, SEC filing, and news packets before paper readiness.
+  - Test pre-earnings unusual-options detection as a separate observation-only variant.
+  - Short orders are blocked until broker shortability, borrow, and dividend evidence
+    pass.
+  parameter_sweep:
+    source_strategy: nasdaq_long_short_event_router_15m
+    candidate_index: 1
+    params:
+      risk.stop_loss_pct: 0.8
+      risk.take_profit_pct: 1.6
+      costs.slippage_bps: 0.0
+    promotion_note: In-sample sweep result only; require out-of-sample, walk-forward,
+      cost sensitivity, and data-source comparison before paper promotion.
+research_design:
+  parameter_space:
+    ema_bars:
+    - 8
+    - 13
+    - 21
+    trend_sma_bars:
+    - 40
+    - 80
+    stop_loss_pct:
+    - 0.8
+    - 1.2
+    - 1.8
+    take_profit_pct:
+    - 1.6
+    - 2.4
+    - 3.2
+    event_risk_entry_threshold:
+    - -0.25
+    - 0.0
+    event_risk_short_threshold:
+    - -0.35
+    - -0.5
+    router_lookback_days:
+    - 3
+    - 5
+    - 10
+    router_selection_style:
+    - opening_momentum
+    - opening_reversal
+  candidate_budget: 96
+  selection_objective: 'maximize OOS risk-adjusted alpha versus NASDAQ equal-weight
+    and QQQ/TQQQ proxies after costs, while requiring PIT event-risk marginal lift
+    before any LLM Alpha claim.
+
+    '
+  anti_overfit_notes:
+  - Use chronological train/OOS splits; no random split for time series.
+  - Treat sample-data evidence as workflow-only and not paper-ready.
+  - Require trial ledger and walk-forward evidence for optimized parameters.
+  - Report LLM contribution separately from deterministic quant baseline.
+  validation_plan:
+  - Validate StrategySpec and capability compatibility.
+  - Materialize event_risk_score packets before replay.
+  - Run deterministic reference backtest on Alpaca research data, with sample smoke kept
+    only for local workflow checks.
+  - Run bounded parameter sweep on the single-symbol smoke leg.
+  - Run adaptive router research on live/cached NASDAQ data when credentials are available.
+  - Generate short-risk, source-card, execution, and paper-readiness artifacts before
+    simulation.
+required_capabilities:
+- market.sample_ohlcv
+- market.alpaca_bars
+- events.sec_filings
+- news.alpha_vantage
+execution_policy: null
+reality_model: null
