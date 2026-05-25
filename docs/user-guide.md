@@ -188,14 +188,27 @@ from `/api/dashboard/catalog`. Local browser API calls can be protected with:
 OPEN_COMPOSER_DASHBOARD_TOKEN=<long-random-token> make dashboard-serve
 ```
 
-The normal remote deployment is VPS-hosted Dashboard:
+The normal remote deployment is VPS-hosted Dashboard behind Cloudflare Tunnel
+and Cloudflare Access. The Dashboard process still listens on
+`127.0.0.1:8000`; Cloudflare is only the remote access gate.
 
 ```bash
-./scripts/deploy-vps.sh
+./scripts/deploy-vps.sh --cloudflare-access --dashboard-url https://dashboard.example.com
 ```
 
-The VPS Dashboard uses `OPEN_COMPOSER_DASHBOARD_TOKEN`; strategy work remains
-CLI/file/agent driven. See `docs/remote-dashboard-deploy.zh.md`.
+Set these on the VPS, or pass the matching CLI options:
+
+```bash
+OPEN_COMPOSER_DASHBOARD_AUTH_MODE=cloudflare_access
+OC_DASHBOARD_ALLOWED_ORIGIN=https://dashboard.example.com
+OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN=https://<team>.cloudflareaccess.com
+OC_CLOUDFLARE_ACCESS_AUD=<Access application AUD tag>
+OC_DASHBOARD_ALLOWED_EMAILS=you@example.com
+```
+
+`cloudflare_access_or_token` is available for migration/debug fallback.
+Strategy work remains CLI/file/agent driven. See
+`docs/remote-dashboard-deploy.zh.md`.
 
 ## Notifications
 

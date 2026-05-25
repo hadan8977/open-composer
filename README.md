@@ -50,9 +50,9 @@ fixtures are enough for a local smoke test.
 | Strategy specs | YAML `StrategySpec` drafts, approvals, activation state, version diffs, and rollback. |
 | Research reports | Backtests, promotion gates, research contracts, factor diagnostics, execution reality, cost sensitivity, and data quality. |
 | Data capabilities | Sample OHLCV, Alpaca, Longbridge, SEC filings, FRED macro, Alpha Vantage news, and GDELT through a registry. |
-| Dashboard | Local or VPS-hosted artifact read model with Monitor, Strategies, Activity, and Settings views. |
+| Dashboard | Local or VPS-hosted artifact read model with Monitor, Strategies, Activity, Settings, and Cloudflare Access-ready auth views. |
 | Paper safety | Alpaca Paper-only automation with explicit confirmation, readiness gates, kill switch, and audit artifacts. |
-| Deployment | One normal path: VPS serves Dashboard directly; strategy work stays local/file-first. |
+| Deployment | One normal path: VPS serves Dashboard from local files; Cloudflare Access is the recommended mobile-friendly remote gate. |
 
 ## Two Ways To Use Open Composer
 
@@ -98,12 +98,14 @@ Local Dashboard is part of the normal setup flow. For a remote personal control
 plane, use the VPS deployment script:
 
 ```bash
-make vps-deploy
+make vps-deploy VPS_DEPLOY_ARGS="--cloudflare-access --dashboard-url https://dashboard.example.com"
 ```
 
-The VPS hosts the Dashboard directly behind Caddy/systemd. Strategy research,
-backtests, scans, tests, and file edits remain CLI/file/agent driven. See
-[docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md).
+The VPS hosts the Dashboard as a local service. For mobile-friendly remote
+access, keep the Dashboard bound to `127.0.0.1:8000` and publish it through
+Cloudflare Tunnel + Cloudflare Access rather than exposing a raw port. Strategy
+research, backtests, scans, tests, and file edits remain CLI/file/agent driven.
+See [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md).
 
 ## Safety Boundaries
 

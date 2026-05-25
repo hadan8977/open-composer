@@ -870,6 +870,37 @@ def dashboard_deploy_vps_command(
         str | None,
         typer.Option("--public-ip", help="VPS public IPv4; creates https://<ip>.nip.io."),
     ] = None,
+    cloudflare_access: Annotated[
+        bool,
+        typer.Option(
+            "--cloudflare-access",
+            help="Use Cloudflare Tunnel + Access; install systemd only and skip Caddy.",
+        ),
+    ] = False,
+    cloudflare_team_domain: Annotated[
+        str | None,
+        typer.Option(
+            "--cloudflare-team-domain",
+            envvar="OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN",
+            help="Cloudflare Access team domain, e.g. https://team.cloudflareaccess.com.",
+        ),
+    ] = None,
+    cloudflare_aud: Annotated[
+        str | None,
+        typer.Option(
+            "--cloudflare-aud",
+            envvar="OC_CLOUDFLARE_ACCESS_AUD",
+            help="Cloudflare Access application AUD tag.",
+        ),
+    ] = None,
+    allowed_emails: Annotated[
+        str | None,
+        typer.Option(
+            "--allowed-emails",
+            envvar="OC_DASHBOARD_ALLOWED_EMAILS",
+            help="Comma-separated Dashboard email allowlist for Cloudflare Access.",
+        ),
+    ] = None,
     detect_ip: Annotated[
         bool,
         typer.Option(
@@ -922,8 +953,13 @@ def dashboard_deploy_vps_command(
         config = build_vps_dashboard_deploy_config(
             project_root(),
             apply=apply,
+            remote_access_mode="cloudflare_tunnel" if cloudflare_access else "token_caddy",
+            dashboard_auth_mode="cloudflare_access" if cloudflare_access else None,
             dashboard_url=dashboard_url,
             public_ip=resolved_public_ip,
+            cloudflare_access_team_domain=cloudflare_team_domain,
+            cloudflare_access_audience=cloudflare_aud,
+            dashboard_allowed_emails=allowed_emails,
             dashboard_token=dashboard_token,
             rotate_token=rotate_token,
             dashboard_host=dashboard_host,
@@ -949,6 +985,7 @@ def dashboard_deploy_vps_command(
     table.add_row("Status", plan.status)
     table.add_row("Apply", str(plan.apply))
     table.add_row("Mode", plan.mode)
+    table.add_row("Remote access", plan.remote_access_mode)
     table.add_row("Dashboard URL", plan.dashboard_url or "missing")
     table.add_row("Dashboard bind", plan.dashboard_bind)
     table.add_row("Report", plan.report_markdown_path or "")

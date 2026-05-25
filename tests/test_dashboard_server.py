@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from conftest import assert_no_windows_paths
 
+import open_composer.dashboard.auth as dashboard_auth
 from open_composer.dashboard.commands import DashboardCommandError, resolve_dashboard_serve_root
 from open_composer.dashboard.server import (
     DASHBOARD_CLI_PARITY,
@@ -650,6 +651,43 @@ def test_dashboard_api_token_auth_gate(sample_workspace: Path) -> None:
     )
     assert dashboard_request_authorized({"Authorization": "Bearer secret"}, "secret") is True
     assert dashboard_request_authorized({"Authorization": "Bearer wrong"}, "secret") is False
+
+
+def test_dashboard_cloudflare_access_auth_gate(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("OC_DASHBOARD_ALLOWED_EMAILS", "owner@example.com")
+    monkeypatch.setenv("OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN", "https://team.cloudflareaccess.com")
+    monkeypatch.setenv("OC_CLOUDFLARE_ACCESS_AUD", "aud")
+    monkeypatch.setattr(
+        dashboard_auth,
+        "decode_cloudflare_access_jwt",
+        lambda assertion: {"email": assertion},
+    )
+
+    assert (
+        dashboard_request_authorized(
+            {"Cf-Access-Jwt-Assertion": "owner@example.com"},
+            None,
+            auth_mode="cloudflare_access",
+        )
+        is True
+    )
+    assert (
+        dashboard_request_authorized(
+            {"Cf-Access-Jwt-Assertion": "other@example.com"},
+            None,
+            auth_mode="cloudflare_access",
+        )
+        is False
+    )
+    assert dashboard_request_authorized({}, None, auth_mode="cloudflare_access") is False
+    assert (
+        dashboard_request_authorized(
+            {"Authorization": "Bearer secret"},
+            "secret",
+            auth_mode="cloudflare_access_or_token",
+        )
+        is True
+    )
 
 
 def test_dashboard_cors_blocks_external_origin_when_unconfigured(

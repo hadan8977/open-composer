@@ -30,10 +30,15 @@ DEFAULT_SYSTEMD_UNIT_PATH = Path("/etc/systemd/system/open-composer-dashboard.se
 DEFAULT_CADDYFILE_PATH = Path("/etc/caddy/Caddyfile")
 REPORT_DIR = Path("reports/deployment/vps-dashboard")
 SECRET_PLACEHOLDER = "<redacted>"
+RemoteAccessMode = Literal["token_caddy", "cloudflare_tunnel"]
 
 DASHBOARD_ENV_KEYS = [
     "OPEN_COMPOSER_DASHBOARD_TOKEN",
+    "OPEN_COMPOSER_DASHBOARD_AUTH_MODE",
     "OC_DASHBOARD_ALLOWED_ORIGIN",
+    "OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN",
+    "OC_CLOUDFLARE_ACCESS_AUD",
+    "OC_DASHBOARD_ALLOWED_EMAILS",
 ]
 
 
@@ -61,6 +66,7 @@ class VpsDashboardDeployPlan(BaseModel):
     ready: bool
     status: Literal["ok", "warning", "blocked"]
     mode: Literal["vps_dashboard"] = "vps_dashboard"
+    remote_access_mode: RemoteAccessMode = "token_caddy"
     dashboard_url: str | None = None
     dashboard_bind: str = f"{DEFAULT_DASHBOARD_HOST}:{DEFAULT_DASHBOARD_PORT}"
     env_path: str
@@ -70,6 +76,7 @@ class VpsDashboardDeployPlan(BaseModel):
     generated_caddyfile_path: str
     generated_token_path: str | None = None
     token_available: bool = False
+    caddy_enabled: bool = True
     verify_enabled: bool = True
     secret_env_names: list[str] = Field(default_factory=list)
     steps: list[VpsDashboardDeployStep] = Field(default_factory=list)
@@ -82,6 +89,7 @@ class VpsDashboardDeployConfig(BaseModel):
 
     root: Path
     apply: bool = False
+    remote_access_mode: RemoteAccessMode = "token_caddy"
     dashboard_url: str | None = None
     dashboard_host: str = DEFAULT_DASHBOARD_HOST
     dashboard_port: int = DEFAULT_DASHBOARD_PORT
@@ -93,8 +101,9 @@ class VpsDashboardDeployConfig(BaseModel):
     use_sudo: bool = False
     skip_system: bool = False
     skip_prepare: bool = False
+    caddy_enabled: bool = True
     verify: bool = True
-    dashboard_token: str
+    dashboard_token: str | None = None
     generated_dashboard_token: bool = False
     dashboard_env: dict[str, str]
     plan: VpsDashboardDeployPlan
@@ -119,6 +128,11 @@ def build_vps_dashboard_deploy_config(
     apply: bool = False,
     dashboard_url: str | None = None,
     public_ip: str | None = None,
+    remote_access_mode: str = "token_caddy",
+    dashboard_auth_mode: str | None = None,
+    cloudflare_access_team_domain: str | None = None,
+    cloudflare_access_audience: str | None = None,
+    dashboard_allowed_emails: str | None = None,
     dashboard_host: str = DEFAULT_DASHBOARD_HOST,
     dashboard_port: int = DEFAULT_DASHBOARD_PORT,
     dashboard_token: str | None = None,
@@ -136,32 +150,66 @@ def build_vps_dashboard_deploy_config(
     base = root.resolve()
     env_file = env_path or base / ".env"
     existing_env = read_env_values(env_file)
+    access_mode = normalize_remote_access_mode(remote_access_mode)
+    caddy_enabled = access_mode == "token_caddy"
+    auth_mode = normalize_auth_mode(
+        dashboard_auth_mode
+        or existing_env.get("OPEN_COMPOSER_DASHBOARD_AUTH_MODE")
+        or ("cloudflare_access" if access_mode == "cloudflare_tunnel" else "token")
+    )
     resolved_url = resolve_dashboard_url(
         dashboard_url=dashboard_url,
         public_ip=public_ip,
         prefer_fallback_port=apply and not dashboard_url and public_ip is not None,
     )
-    token = resolve_dashboard_token(
-        existing_token=existing_env.get("OPEN_COMPOSER_DASHBOARD_TOKEN"),
-        provided_token=dashboard_token,
-        rotate_token=rotate_token,
+    token_required = auth_mode in {"token", "cloudflare_access_or_token"}
+    token = (
+        resolve_dashboard_token(
+            existing_token=existing_env.get("OPEN_COMPOSER_DASHBOARD_TOKEN"),
+            provided_token=dashboard_token,
+            rotate_token=rotate_token,
+        )
+        if token_required
+        else (dashboard_token or existing_env.get("OPEN_COMPOSER_DASHBOARD_TOKEN"))
     )
     generated_token = bool(
         token
+        and token_required
         and dashboard_token is None
         and (rotate_token or not existing_env.get("OPEN_COMPOSER_DASHBOARD_TOKEN"))
     )
+    team_domain = (
+        cloudflare_access_team_domain or existing_env.get("OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN") or ""
+    ).strip()
+    audience = (
+        cloudflare_access_audience or existing_env.get("OC_CLOUDFLARE_ACCESS_AUD") or ""
+    ).strip()
+    allowed_emails = (
+        dashboard_allowed_emails or existing_env.get("OC_DASHBOARD_ALLOWED_EMAILS") or ""
+    ).strip()
     env = {
-        "OPEN_COMPOSER_DASHBOARD_TOKEN": token,
+        "OPEN_COMPOSER_DASHBOARD_AUTH_MODE": auth_mode,
         "OC_DASHBOARD_ALLOWED_ORIGIN": resolved_url
         or existing_env.get("OC_DASHBOARD_ALLOWED_ORIGIN", ""),
     }
+    if token:
+        env["OPEN_COMPOSER_DASHBOARD_TOKEN"] = token
+    if auth_mode in {"cloudflare_access", "cloudflare_access_or_token"}:
+        env.update(
+            {
+                "OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN": team_domain,
+                "OC_CLOUDFLARE_ACCESS_AUD": audience,
+                "OC_DASHBOARD_ALLOWED_EMAILS": allowed_emails,
+            }
+        )
+    cloudflare_ready = bool(team_domain and audience and allowed_emails)
     generated_unit_path = base / REPORT_DIR / "open-composer-dashboard.service"
     generated_caddyfile_path = base / REPORT_DIR / "Caddyfile"
     generated_token_path = base / REPORT_DIR / "generated-dashboard-token.txt"
     plan = build_vps_dashboard_deploy_plan(
         root=base,
         apply=apply,
+        remote_access_mode=access_mode,
         dashboard_url=resolved_url,
         env_path=env_file,
         systemd_unit_path=systemd_unit_path,
@@ -170,9 +218,13 @@ def build_vps_dashboard_deploy_config(
         generated_caddyfile_path=generated_caddyfile_path,
         generated_token_path=generated_token_path,
         token_available=bool(token),
+        token_required=token_required,
         generated_token=generated_token,
+        auth_mode=auth_mode,
+        cloudflare_ready=cloudflare_ready,
         skip_system=skip_system,
         skip_prepare=skip_prepare,
+        caddy_enabled=caddy_enabled,
         verify=verify,
         dashboard_host=dashboard_host,
         dashboard_port=dashboard_port,
@@ -180,6 +232,7 @@ def build_vps_dashboard_deploy_config(
     return VpsDashboardDeployConfig(
         root=base,
         apply=apply,
+        remote_access_mode=access_mode,
         dashboard_url=resolved_url,
         dashboard_host=dashboard_host,
         dashboard_port=dashboard_port,
@@ -191,6 +244,7 @@ def build_vps_dashboard_deploy_config(
         use_sudo=use_sudo,
         skip_system=skip_system,
         skip_prepare=skip_prepare,
+        caddy_enabled=caddy_enabled,
         verify=verify,
         dashboard_token=token,
         generated_dashboard_token=generated_token,
@@ -203,6 +257,7 @@ def build_vps_dashboard_deploy_plan(
     *,
     root: Path,
     apply: bool,
+    remote_access_mode: RemoteAccessMode,
     dashboard_url: str | None,
     env_path: Path,
     systemd_unit_path: Path,
@@ -211,9 +266,13 @@ def build_vps_dashboard_deploy_plan(
     generated_caddyfile_path: Path,
     generated_token_path: Path,
     token_available: bool,
+    token_required: bool,
     generated_token: bool,
+    auth_mode: str,
+    cloudflare_ready: bool,
     skip_system: bool,
     skip_prepare: bool,
+    caddy_enabled: bool,
     verify: bool,
     dashboard_host: str,
     dashboard_port: int,
@@ -235,18 +294,15 @@ def build_vps_dashboard_deploy_plan(
             message=(
                 f"Dashboard public URL will be {dashboard_url}."
                 if dashboard_url
-                else "Dashboard public HTTPS URL is required before apply."
+                else "Dashboard HTTPS URL is required before apply."
             ),
             suggested_actions=[] if dashboard_url else ["Pass --dashboard-url or --public-ip."],
         ),
-        VpsDashboardDeployStep(
-            name="api_token",
-            status="ok" if token_available else "blocked",
-            message="Dashboard API token is available and will not be exposed in reports."
-            if token_available
-            else "Dashboard API token is required before exposing the Dashboard.",
-            details={"raw_value": SECRET_PLACEHOLDER if token_available else None},
-            suggested_actions=[] if token_available else ["Set OPEN_COMPOSER_DASHBOARD_TOKEN."],
+        _auth_plan_step(
+            auth_mode=auth_mode,
+            token_required=token_required,
+            token_available=token_available,
+            cloudflare_ready=cloudflare_ready,
         ),
         VpsDashboardDeployStep(
             name="local_env",
@@ -256,15 +312,14 @@ def build_vps_dashboard_deploy_plan(
         ),
     ]
     if not skip_system:
-        system_tools_missing = [
-            name for name in ["systemctl", "caddy"] if shutil.which(name) is None
-        ]
+        required_tools = ["systemctl", *([] if not caddy_enabled else ["caddy"])]
+        system_tools_missing = [name for name in required_tools if shutil.which(name) is None]
         steps.append(
             VpsDashboardDeployStep(
                 name="system_tools",
                 status="ok" if not system_tools_missing else "warning",
                 message=(
-                    "systemctl and caddy are available."
+                    "Required system tools are available."
                     if not system_tools_missing
                     else "Missing system tool(s): " + ", ".join(system_tools_missing)
                 ),
@@ -281,11 +336,13 @@ def build_vps_dashboard_deploy_plan(
             message=(
                 "System service installation is skipped."
                 if skip_system
+                else "systemd template will be generated; Caddy is skipped for Cloudflare Tunnel."
+                if not caddy_enabled
                 else "systemd and Caddy templates will be generated and installed on apply."
             ),
             output_paths=[
                 relpath(generated_systemd_unit_path, root),
-                relpath(generated_caddyfile_path, root),
+                *([relpath(generated_caddyfile_path, root)] if caddy_enabled else []),
             ],
         )
     )
@@ -318,6 +375,7 @@ def build_vps_dashboard_deploy_plan(
     return VpsDashboardDeployPlan(
         source_root=str(root),
         apply=apply,
+        remote_access_mode=remote_access_mode,
         ready=not blocked,
         status=status,
         dashboard_url=dashboard_url,
@@ -329,6 +387,7 @@ def build_vps_dashboard_deploy_plan(
         generated_caddyfile_path=relpath(generated_caddyfile_path, root),
         generated_token_path=relpath(generated_token_path, root) if generated_token else None,
         token_available=token_available,
+        caddy_enabled=caddy_enabled,
         verify_enabled=verify,
         secret_env_names=DASHBOARD_ENV_KEYS,
         steps=steps,
@@ -385,10 +444,12 @@ def apply_vps_dashboard_deploy(
             VpsDashboardDeployStep(
                 name="apply.system_templates",
                 status="ok",
-                message="systemd and Caddy templates were generated.",
+                message="systemd and Caddy templates were generated."
+                if config.caddy_enabled
+                else "systemd template was generated; Caddy is skipped for Cloudflare Tunnel.",
                 output_paths=[
                     relpath(generated_unit, config.root),
-                    relpath(generated_caddyfile, config.root),
+                    *([relpath(generated_caddyfile, config.root)] if generated_caddyfile else []),
                 ],
             )
         )
@@ -411,28 +472,31 @@ def apply_vps_dashboard_deploy(
             True,
             None,
         )
-        runner(
-            [
-                *sudo_prefix(config, ["caddy"]),
-                "validate",
-                "--config",
-                config.caddyfile_path.as_posix(),
-            ],
-            config.root,
-            None,
-            120,
-            True,
-            None,
-        )
-        runner([*systemctl, "restart", "caddy"], config.root, None, 120, True, None)
+        if config.caddy_enabled:
+            runner(
+                [
+                    *sudo_prefix(config, ["caddy"]),
+                    "validate",
+                    "--config",
+                    config.caddyfile_path.as_posix(),
+                ],
+                config.root,
+                None,
+                120,
+                True,
+                None,
+            )
+            runner([*systemctl, "restart", "caddy"], config.root, None, 120, True, None)
         steps.append(
             VpsDashboardDeployStep(
                 name="apply.system_service",
                 status="ok",
-                message="Dashboard systemd service and Caddy reverse proxy were installed.",
+                message="Dashboard systemd service and Caddy reverse proxy were installed."
+                if config.caddy_enabled
+                else "Dashboard systemd service was installed for Cloudflare Tunnel access.",
                 output_paths=[
                     config.systemd_unit_path.as_posix(),
-                    config.caddyfile_path.as_posix(),
+                    *([config.caddyfile_path.as_posix()] if config.caddy_enabled else []),
                 ],
             )
         )
@@ -489,14 +553,16 @@ def write_generated_token(config: VpsDashboardDeployConfig) -> Path:
     return path
 
 
-def write_system_templates(config: VpsDashboardDeployConfig) -> tuple[Path, Path]:
-    if not config.dashboard_url:
+def write_system_templates(config: VpsDashboardDeployConfig) -> tuple[Path, Path | None]:
+    if config.caddy_enabled and not config.dashboard_url:
         raise VpsDashboardDeployError("dashboard URL is required to render Caddyfile")
     output_dir = config.root / REPORT_DIR
     unit_path = output_dir / "open-composer-dashboard.service"
     caddyfile_path = output_dir / "Caddyfile"
     ensure_dir(output_dir)
     unit_path.write_text(render_systemd_unit(config), encoding="utf-8")
+    if not config.caddy_enabled:
+        return unit_path, None
     caddyfile_path.write_text(render_caddyfile(config), encoding="utf-8")
     return unit_path, caddyfile_path
 
@@ -504,7 +570,7 @@ def write_system_templates(config: VpsDashboardDeployConfig) -> tuple[Path, Path
 def install_system_templates(
     config: VpsDashboardDeployConfig,
     generated_unit: Path,
-    generated_caddyfile: Path,
+    generated_caddyfile: Path | None,
     runner: CommandRunner,
 ) -> None:
     if config.use_sudo:
@@ -524,30 +590,52 @@ def install_system_templates(
             True,
             None,
         )
-        runner(
-            [
-                "sudo",
-                "install",
-                "-D",
-                "-m",
-                "0644",
-                generated_caddyfile.as_posix(),
-                config.caddyfile_path.as_posix(),
-            ],
-            config.root,
-            None,
-            120,
-            True,
-            None,
-        )
+        if generated_caddyfile is not None:
+            runner(
+                [
+                    "sudo",
+                    "install",
+                    "-D",
+                    "-m",
+                    "0644",
+                    generated_caddyfile.as_posix(),
+                    config.caddyfile_path.as_posix(),
+                ],
+                config.root,
+                None,
+                120,
+                True,
+                None,
+            )
         return
     ensure_dir(config.systemd_unit_path.parent)
-    ensure_dir(config.caddyfile_path.parent)
     shutil.copy2(generated_unit, config.systemd_unit_path)
-    shutil.copy2(generated_caddyfile, config.caddyfile_path)
+    if generated_caddyfile is not None:
+        ensure_dir(config.caddyfile_path.parent)
+        shutil.copy2(generated_caddyfile, config.caddyfile_path)
 
 
 def verify_vps_dashboard_deploy(config: VpsDashboardDeployConfig) -> VpsDashboardDeployStep:
+    if config.remote_access_mode == "cloudflare_tunnel":
+        local_url = f"http://{config.dashboard_host}:{config.dashboard_port}/"
+        try:
+            status = http_request_status(local_url, timeout=15)
+        except (HTTPError, URLError, TimeoutError, OSError) as exc:
+            return VpsDashboardDeployStep(
+                name="verify.dashboard_local",
+                status="blocked",
+                message="Local Dashboard service check failed.",
+                details={"url": local_url, "error": str(exc)},
+                suggested_actions=["Check `systemctl status open-composer-dashboard`."],
+            )
+        return VpsDashboardDeployStep(
+            name="verify.dashboard_local",
+            status="ok" if status == 200 else "blocked",
+            message="Local Dashboard service returned HTTP 200."
+            if status == 200
+            else "Local Dashboard service did not return HTTP 200.",
+            details={"url": local_url, "status_code": status},
+        )
     if not config.dashboard_url:
         return VpsDashboardDeployStep(
             name="verify.dashboard_health",
@@ -595,6 +683,13 @@ def http_request_json(
     return payload
 
 
+def http_request_status(url: str, *, timeout: int = 15) -> int:
+    request = urllib.request.Request(url, method="GET")
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        response.read(1)
+        return int(response.status)
+
+
 def render_systemd_unit(config: VpsDashboardDeployConfig) -> str:
     uv = shutil.which("uv") or "/usr/bin/env uv"
     uv_prefix = shlex.split(uv) if uv != "/usr/bin/env uv" else ["/usr/bin/env", "uv"]
@@ -638,6 +733,8 @@ def render_systemd_unit(config: VpsDashboardDeployConfig) -> str:
 
 
 def render_caddyfile(config: VpsDashboardDeployConfig) -> str:
+    if not config.caddy_enabled:
+        raise VpsDashboardDeployError("Caddy is disabled for this deployment mode")
     if not config.dashboard_url:
         raise VpsDashboardDeployError("dashboard URL is required to render Caddyfile")
     parsed = urlparse(config.dashboard_url)
@@ -754,6 +851,65 @@ def resolve_dashboard_token(
     return secrets.token_urlsafe(32)
 
 
+def normalize_remote_access_mode(value: str) -> RemoteAccessMode:
+    normalized = value.strip().lower().replace("-", "_")
+    if normalized in {"token", "token_caddy", "caddy"}:
+        return "token_caddy"
+    if normalized in {"cloudflare", "cloudflare_access", "cloudflare_tunnel", "tunnel"}:
+        return "cloudflare_tunnel"
+    raise VpsDashboardDeployError("remote access mode must be `token_caddy` or `cloudflare_tunnel`")
+
+
+def normalize_auth_mode(value: str) -> str:
+    normalized = value.strip().lower()
+    if normalized in {"token", "cloudflare_access", "cloudflare_access_or_token", "disabled"}:
+        return normalized
+    raise VpsDashboardDeployError(
+        "Dashboard auth mode must be token, cloudflare_access, "
+        "cloudflare_access_or_token, or disabled"
+    )
+
+
+def _auth_plan_step(
+    *,
+    auth_mode: str,
+    token_required: bool,
+    token_available: bool,
+    cloudflare_ready: bool,
+) -> VpsDashboardDeployStep:
+    if auth_mode in {"cloudflare_access", "cloudflare_access_or_token"}:
+        return VpsDashboardDeployStep(
+            name="cloudflare_access",
+            status="ok" if cloudflare_ready else "blocked",
+            message="Cloudflare Access origin JWT validation is configured."
+            if cloudflare_ready
+            else "Cloudflare Access requires team domain, AUD tag, and allowed email list.",
+            details={
+                "auth_mode": auth_mode,
+                "token_fallback": token_required,
+                "raw_value": SECRET_PLACEHOLDER if token_available else None,
+            },
+            suggested_actions=[]
+            if cloudflare_ready
+            else [
+                "Set OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN, OC_CLOUDFLARE_ACCESS_AUD, "
+                "and OC_DASHBOARD_ALLOWED_EMAILS."
+            ],
+        )
+    return VpsDashboardDeployStep(
+        name="api_token",
+        status="ok" if token_available else "blocked",
+        message="Dashboard API token is available and will not be exposed in reports."
+        if token_available
+        else "Dashboard API token is required before exposing the Dashboard.",
+        details={
+            "auth_mode": auth_mode,
+            "raw_value": SECRET_PLACEHOLDER if token_available else None,
+        },
+        suggested_actions=[] if token_available else ["Set OPEN_COMPOSER_DASHBOARD_TOKEN."],
+    )
+
+
 def read_env_values(path: Path) -> dict[str, str]:
     if not path.exists():
         return {}
@@ -807,14 +963,16 @@ def render_vps_dashboard_deploy_markdown(plan: VpsDashboardDeployPlan) -> str:
         "",
         f"- Generated: `{plan.generated_at.isoformat()}`",
         f"- Mode: `{plan.mode}`",
+        f"- Remote access: `{plan.remote_access_mode}`",
         f"- Status: `{plan.status}`",
         f"- Ready: `{str(plan.ready).lower()}`",
         f"- Dashboard URL: `{plan.dashboard_url or 'missing'}`",
         f"- Dashboard bind: `{plan.dashboard_bind}`",
         f"- Token available: `{str(plan.token_available).lower()}`",
+        f"- Caddy enabled: `{str(plan.caddy_enabled).lower()}`",
         f"- Env path: `{plan.env_path}`",
         f"- systemd unit: `{plan.systemd_unit_path}`",
-        f"- Caddyfile: `{plan.caddyfile_path}`",
+        f"- Caddyfile: `{plan.caddyfile_path if plan.caddy_enabled else 'disabled'}`",
         "",
         "## Steps",
         "",
@@ -833,11 +991,12 @@ def render_vps_dashboard_deploy_markdown(plan: VpsDashboardDeployPlan) -> str:
             "## Operator Notes",
             "",
             "- This is the canonical deployment mode: VPS serves the Dashboard directly.",
-            "- Vercel is not required for normal deployments.",
+            "- Recommended remote access is Cloudflare Tunnel + Cloudflare Access.",
+            "- Vercel and raw public Dashboard ports are not required for normal deployments.",
             "- Long strategy work remains file/CLI/agent driven; the Dashboard only "
             "shows state and sends controlled local requests.",
-            "- Open the Dashboard with `?token=<OPEN_COMPOSER_DASHBOARD_TOKEN>` once; "
-            "the browser stores the token locally.",
+            "- In Cloudflare Access mode, open the Dashboard through the Access-protected "
+            "hostname. Token URL login is only for token/Caddy compatibility mode.",
             "",
         ]
     )

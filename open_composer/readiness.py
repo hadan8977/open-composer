@@ -7,7 +7,15 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from open_composer.adapters.execution.nautilus_trader import nautilus_trader_available
-from open_composer.config import dashboard_api_token, ensure_dir, project_root
+from open_composer.config import (
+    cloudflare_access_audience,
+    cloudflare_access_team_domain,
+    dashboard_allowed_emails,
+    dashboard_api_token,
+    dashboard_auth_mode,
+    ensure_dir,
+    project_root,
+)
 from open_composer.dashboard.catalog import build_dashboard_catalog, build_feature_packet_records
 from open_composer.paper_controls import build_paper_status
 from open_composer.paper_readiness import assess_paper_strategy_readiness
@@ -101,22 +109,42 @@ def build_readiness_report(root: Path | None = None) -> ReadinessReport:
         )
     )
 
+    auth_mode = dashboard_auth_mode()
     token = dashboard_api_token()
+    cloudflare_ready = bool(
+        cloudflare_access_team_domain()
+        and cloudflare_access_audience()
+        and dashboard_allowed_emails()
+    )
+    auth_ready = (
+        auth_mode == "disabled"
+        or (auth_mode == "token" and bool(token))
+        or (auth_mode == "cloudflare_access" and cloudflare_ready)
+        or (auth_mode == "cloudflare_access_or_token" and (cloudflare_ready or bool(token)))
+    )
+    suggested_actions: list[str] = []
+    if auth_mode == "token" and not token:
+        suggested_actions.append("export OPEN_COMPOSER_DASHBOARD_TOKEN=<local-token>")
+    if auth_mode in {"cloudflare_access", "cloudflare_access_or_token"} and not cloudflare_ready:
+        suggested_actions.append(
+            "set OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN, OC_CLOUDFLARE_ACCESS_AUD, "
+            "and OC_DASHBOARD_ALLOWED_EMAILS"
+        )
     checks.append(
         ReadinessCheck(
             name="dashboard_api_auth",
             status="ok",
             message=(
-                "Dashboard API token gate is configured."
-                if token
-                else (
-                    "Dashboard API token gate is disabled; keep dashboard serve bound to localhost."
-                )
+                f"Dashboard API auth mode is configured: {auth_mode}."
+                if auth_ready
+                else f"Dashboard API auth mode needs configuration: {auth_mode}."
             ),
-            suggested_actions=[]
-            if token
-            else ["export OPEN_COMPOSER_DASHBOARD_TOKEN=<local-token>"],
-            details={"token_configured": bool(token)},
+            suggested_actions=suggested_actions,
+            details={
+                "auth_mode": auth_mode,
+                "token_configured": bool(token),
+                "cloudflare_access_configured": cloudflare_ready,
+            },
         )
     )
 

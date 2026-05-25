@@ -231,10 +231,22 @@ curl http://127.0.0.1:8000/api/dashboard/health
 
 | 变量 | 必需? | 用途 |
 |---|---|---|
-| `OPEN_COMPOSER_DASHBOARD_TOKEN` | VPS 必需 | Dashboard API token；本地 localhost 可不设 |
-| `OC_DASHBOARD_ALLOWED_ORIGIN` | VPS 推荐 | CORS allowed origin，例如 `https://composer.example.com` |
+| `OPEN_COMPOSER_DASHBOARD_AUTH_MODE` | VPS 推荐 | `cloudflare_access`、`cloudflare_access_or_token` 或 `token` |
+| `OC_DASHBOARD_ALLOWED_ORIGIN` | VPS 推荐 | CORS allowed origin，例如 `https://dashboard.example.com` |
+| `OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN` | Cloudflare 必需 | Zero Trust team domain，例如 `https://team.cloudflareaccess.com` |
+| `OC_CLOUDFLARE_ACCESS_AUD` | Cloudflare 必需 | Access application AUD tag |
+| `OC_DASHBOARD_ALLOWED_EMAILS` | Cloudflare 必需 | 允许访问 Dashboard 的邮箱，逗号分隔 |
+| `OPEN_COMPOSER_DASHBOARD_TOKEN` | token 模式必需 | Dashboard API token；Cloudflare 模式下只作为可选 fallback |
 
-VPS 模式用 `./scripts/deploy-vps.sh` 自动生成 token 和 systemd/Caddy 配置,见 [docs/remote-dashboard-deploy.zh.md](./remote-dashboard-deploy.zh.md)。
+推荐远程方式是 Cloudflare Tunnel + Access：Dashboard 继续只监听
+`127.0.0.1:8000`，公网不开放 Dashboard 端口。
+
+```bash
+./scripts/deploy-vps.sh --cloudflare-access --dashboard-url https://dashboard.example.com
+```
+
+旧的 token/Caddy 模式仍保留兼容，但不作为推荐手机远程入口。见
+[docs/remote-dashboard-deploy.zh.md](./remote-dashboard-deploy.zh.md)。
 
 ### 3.5 通知
 

@@ -39,7 +39,11 @@ def test_vps_dashboard_deploy_builds_plan_without_raw_token(sample_workspace: Pa
     assert "dashboard-token-secret" not in markdown
     assert payload["secret_env_names"] == [
         "OPEN_COMPOSER_DASHBOARD_TOKEN",
+        "OPEN_COMPOSER_DASHBOARD_AUTH_MODE",
         "OC_DASHBOARD_ALLOWED_ORIGIN",
+        "OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN",
+        "OC_CLOUDFLARE_ACCESS_AUD",
+        "OC_DASHBOARD_ALLOWED_EMAILS",
     ]
 
 
@@ -102,6 +106,53 @@ def test_vps_dashboard_deploy_renders_system_templates(sample_workspace: Path) -
     assert "reverse_proxy 127.0.0.1:8000" in caddyfile
     assert generated_unit.name == "open-composer-dashboard.service"
     assert generated_caddyfile.name == "Caddyfile"
+
+
+def test_vps_dashboard_cloudflare_access_skips_caddy(sample_workspace: Path, monkeypatch) -> None:
+    calls: list[list[str]] = []
+
+    def fake_runner(
+        args: Sequence[str],
+        cwd: Path,
+        input_text: str | None,
+        timeout_seconds: int,
+        check: bool,
+        env: dict[str, str] | None,
+    ) -> CommandExecutionResult:
+        calls.append(list(args))
+        return CommandExecutionResult(args=list(args), returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(
+        "open_composer.dashboard.vps_deploy.http_request_status",
+        lambda *_args, **_kwargs: 200,
+    )
+    config = build_vps_dashboard_deploy_config(
+        sample_workspace,
+        apply=True,
+        remote_access_mode="cloudflare_tunnel",
+        dashboard_auth_mode="cloudflare_access",
+        dashboard_url="https://dashboard.example.com",
+        cloudflare_access_team_domain="https://team.cloudflareaccess.com",
+        cloudflare_access_audience="aud",
+        dashboard_allowed_emails="owner@example.com",
+        systemd_unit_path=sample_workspace / "open-composer-dashboard.service",
+        caddyfile_path=sample_workspace / "Caddyfile",
+        skip_prepare=True,
+        verify=True,
+    )
+
+    plan = apply_vps_dashboard_deploy(config, command_runner=fake_runner)
+    env_path = sample_workspace / ".env"
+    env_text = env_path.read_text(encoding="utf-8")
+
+    assert config.caddy_enabled is False
+    assert plan.status == "ok"
+    assert plan.remote_access_mode == "cloudflare_tunnel"
+    assert plan.caddy_enabled is False
+    assert "OPEN_COMPOSER_DASHBOARD_AUTH_MODE=cloudflare_access" in env_text
+    assert "OC_CLOUDFLARE_ACCESS_AUD=aud" in env_text
+    assert any(step.name == "verify.dashboard_local" for step in plan.steps)
+    assert not any("caddy" in part for call in calls for part in call)
 
 
 def test_vps_dashboard_deploy_apply_does_not_call_vercel(

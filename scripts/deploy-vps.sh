@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Deploy Open Composer Dashboard from the target VPS.
 #
-# Default behavior is apply mode: build the Dashboard, configure a local
-# Dashboard API token, install systemd/Caddy templates, verify the result, and
-# print the Dashboard URL plus token file path.
+# Default behavior is apply mode: build the Dashboard, configure auth, install
+# the local systemd service, and verify the result. Public access should use
+# Cloudflare Tunnel + Access unless you intentionally pass the legacy Caddy
+# token mode options.
 
 set -euo pipefail
 
@@ -22,16 +23,23 @@ Common options:
   --sudo                 Use sudo for systemd/Caddy installation.
   --dashboard-url URL    Public HTTPS URL for the Dashboard.
   --public-ip IP         VPS public IPv4; creates https://<ip>.nip.io.
+  --cloudflare-access    Use Cloudflare Tunnel + Access; skips Caddy.
+  --cloudflare-team-domain URL
+                         Cloudflare Access team domain.
+  --cloudflare-aud AUD   Cloudflare Access application AUD tag.
+  --allowed-emails CSV   Comma-separated Access email allowlist.
   --rotate-token         Generate a new Dashboard API token.
   --no-verify            Skip deployment verification.
 
 Environment:
   OPEN_COMPOSER_DASHBOARD_TOKEN  Optional; generated when missing.
+  OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN / OC_CLOUDFLARE_ACCESS_AUD /
+  OC_DASHBOARD_ALLOWED_EMAILS       Used with --cloudflare-access.
 
 Examples:
-  scripts/deploy-vps.sh
-  scripts/deploy-vps.sh --sudo
+  scripts/deploy-vps.sh --cloudflare-access --dashboard-url https://dashboard.example.com
   scripts/deploy-vps.sh --plan --public-ip 203.0.113.10
+  scripts/deploy-vps.sh --sudo --dashboard-url https://dashboard.example.com
 EOF
 }
 

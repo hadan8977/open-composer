@@ -121,9 +121,35 @@ def dashboard_api_token() -> str | None:
     return token or None
 
 
+def dashboard_auth_mode() -> str:
+    mode = os.getenv("OPEN_COMPOSER_DASHBOARD_AUTH_MODE", "token").strip().lower()
+    if mode in {"token", "cloudflare_access", "cloudflare_access_or_token", "disabled"}:
+        return mode
+    return "token"
+
+
 def dashboard_allowed_origin() -> str | None:
     origin = os.getenv("OC_DASHBOARD_ALLOWED_ORIGIN", "").strip()
     return origin or None
+
+
+def cloudflare_access_team_domain() -> str | None:
+    value = os.getenv("OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN", "").strip().rstrip("/")
+    if not value:
+        return None
+    if not value.startswith(("https://", "http://")):
+        value = f"https://{value}"
+    return value
+
+
+def cloudflare_access_audience() -> str | None:
+    value = os.getenv("OC_CLOUDFLARE_ACCESS_AUD", "").strip()
+    return value or None
+
+
+def dashboard_allowed_emails() -> set[str]:
+    raw = os.getenv("OC_DASHBOARD_ALLOWED_EMAILS", "")
+    return {item.strip().lower() for item in raw.split(",") if item.strip()}
 
 
 def agent_backend_name() -> str:

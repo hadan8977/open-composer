@@ -2,10 +2,8 @@ import difflib
 import importlib.util
 import json
 import os
-import secrets
 import sys
 import time
-from collections.abc import Mapping
 from datetime import UTC, datetime
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -21,8 +19,12 @@ from open_composer.capabilities import evaluate_capabilities, load_registry
 from open_composer.config import (
     agent_backend_name,
     alpaca_api_base_url,
+    cloudflare_access_audience,
+    cloudflare_access_team_domain,
+    dashboard_allowed_emails,
     dashboard_allowed_origin,
     dashboard_api_token,
+    dashboard_auth_mode,
     data_feed,
     default_openai_model,
     ensure_dir,
@@ -30,6 +32,10 @@ from open_composer.config import (
     openai_base_url,
     openai_base_url_source,
     optional_env_status,
+)
+from open_composer.dashboard.auth import (
+    dashboard_auth_required,
+    dashboard_request_authorized,
 )
 from open_composer.dashboard.catalog import build_dashboard_catalog
 from open_composer.dashboard.commands import (
@@ -128,7 +134,7 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
                 build_dashboard_health_payload(
                     self.dashboard_root,
                     Path(self.directory),
-                    auth_required=bool(self.dashboard_token),
+                    auth_required=dashboard_auth_required(self.dashboard_token),
                 )
             )
             return
@@ -140,7 +146,7 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
                 build_dashboard_environment_payload(
                     self.dashboard_root,
                     Path(self.directory),
-                    auth_required=bool(self.dashboard_token),
+                    auth_required=dashboard_auth_required(self.dashboard_token),
                 )
             )
             return
@@ -156,7 +162,7 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
                 build_dashboard_environment_payload(
                     self.dashboard_root,
                     Path(self.directory),
-                    auth_required=bool(self.dashboard_token),
+                    auth_required=dashboard_auth_required(self.dashboard_token),
                 )
             )
             return
@@ -456,7 +462,7 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         query = urlparse(self.path).query
         if dashboard_request_authorized(self.headers, self.dashboard_token, query=query):
             return True
-        self._send_json({"error": "Dashboard API token is required."}, status=401)
+        self._send_json({"error": "Dashboard API authentication is required."}, status=401)
         return False
 
 
@@ -490,10 +496,14 @@ def serve_dashboard(
     api_token: str | None = None,
 ) -> None:
     token = api_token if api_token is not None else dashboard_api_token()
+    auth_mode = dashboard_auth_mode()
     with create_dashboard_server(root, host=host, port=port, api_token=token) as server:
         print(f"dashboard serving http://{host}:{port}")
         print(f"root={resolve_dashboard_serve_root(root)}")
-        print(f"api_auth={'required' if token else 'disabled'}")
+        print(
+            f"api_auth={'required' if dashboard_auth_required(token) else 'disabled'} "
+            f"mode={auth_mode}"
+        )
         server.serve_forever()
 
 
@@ -530,6 +540,10 @@ def build_dashboard_environment_payload(
         for name in package_names
     ]
     openai_key_env = openai_api_key_env_name()
+    auth_mode = dashboard_auth_mode()
+    token_required = auth_mode in {"token", "cloudflare_access_or_token"}
+    cloudflare_required = auth_mode in {"cloudflare_access", "cloudflare_access_or_token"}
+    allowed_emails = sorted(dashboard_allowed_emails())
     sections = [
         {
             "section": "workspace",
@@ -666,12 +680,19 @@ def build_dashboard_environment_payload(
                     required=True,
                 ),
                 _env_item(
+                    "OPEN_COMPOSER_DASHBOARD_AUTH_MODE",
+                    "ok",
+                    auth_mode,
+                    required=False,
+                ),
+                _env_item(
                     "OPEN_COMPOSER_DASHBOARD_TOKEN",
-                    "ok" if auth_required else "warning",
-                    "required before exposing the VPS Dashboard; value never exposed",
+                    "ok" if (not token_required or auth_required) else "warning",
+                    "required for token mode; optional Cloudflare Access fallback; "
+                    "value never exposed",
                     required=False,
                     next_action="set `OPEN_COMPOSER_DASHBOARD_TOKEN` or run `scripts/deploy-vps.sh`"
-                    if not auth_required
+                    if token_required and not auth_required
                     else "",
                 ),
                 _env_item(
@@ -679,6 +700,39 @@ def build_dashboard_environment_payload(
                     "ok" if dashboard_allowed_origin() else "warning",
                     dashboard_allowed_origin() or "not restricted; acceptable for localhost only",
                     required=False,
+                ),
+                _env_item(
+                    "OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN",
+                    "ok"
+                    if (not cloudflare_required or cloudflare_access_team_domain())
+                    else "blocked",
+                    cloudflare_access_team_domain() or "missing",
+                    required=cloudflare_required,
+                    next_action="set your Cloudflare team domain, e.g. https://team.cloudflareaccess.com"
+                    if cloudflare_required and not cloudflare_access_team_domain()
+                    else "",
+                ),
+                _env_item(
+                    "OC_CLOUDFLARE_ACCESS_AUD",
+                    "ok"
+                    if (not cloudflare_required or cloudflare_access_audience())
+                    else "blocked",
+                    "presence only; value never exposed"
+                    if cloudflare_access_audience()
+                    else "missing",
+                    required=cloudflare_required,
+                    next_action="copy the Access application AUD tag from Cloudflare"
+                    if cloudflare_required and not cloudflare_access_audience()
+                    else "",
+                ),
+                _env_item(
+                    "OC_DASHBOARD_ALLOWED_EMAILS",
+                    "ok" if (not cloudflare_required or allowed_emails) else "blocked",
+                    ", ".join(allowed_emails) if allowed_emails else "missing",
+                    required=cloudflare_required,
+                    next_action="set the comma-separated email allowlist for Dashboard users"
+                    if cloudflare_required and not allowed_emails
+                    else "",
                 ),
             ],
         },
@@ -707,24 +761,6 @@ def build_dashboard_environment_payload(
             "Real-money broker write access remains out of scope for this MVP.",
         ],
     }
-
-
-def dashboard_request_authorized(
-    headers: Mapping[str, str],
-    api_token: str | None,
-    *,
-    query: str = "",
-) -> bool:
-    if not api_token:
-        return True
-    provided = str(headers.get("X-Open-Composer-Token", "")).strip()
-    authorization = str(headers.get("Authorization", "")).strip()
-    if not provided and authorization.lower().startswith("bearer "):
-        provided = authorization[7:].strip()
-    if not provided and query:
-        values = parse_qs(query)
-        provided = str((values.get("token") or values.get("dashboard_token") or [""])[0]).strip()
-    return secrets.compare_digest(provided, api_token)
 
 
 def build_dashboard_catalog_payload(root: Path) -> dict[str, Any]:
