@@ -929,6 +929,7 @@ def test_hybrid_target_weight_mapping_matches_python_reference(
     assert result.nonzero_target_rows == result.reference_metrics.round_trips
     payload = json.loads(result.json_path.read_text(encoding="utf-8"))
     assert payload["mode"] == "hybrid_target_weight_mapping"
+    assert payload["portfolio_mode"] == "hybrid_adaptive_router"
     assert payload["parity_check"]["status"] == "pass"
     assert payload["summary"]["max_gross_exposure"] <= 1.0
     assert {"symbol", "target_weight", "rebalance_session"} <= set(payload["target_weights"][0])

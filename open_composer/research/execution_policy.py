@@ -168,13 +168,13 @@ def detect_context(spec: StrategySpec) -> RecommendationContext:
 def recommend_alternative(context: RecommendationContext) -> ExecutionAlternative:
     """Pick a recommended execution alternative based on detected risk context.
 
-    Leveraged ETFs + paper_auto: LOO limit (price protection + cancel on gap).
-    Daily open + paper_auto without leveraged ETF: OPG limit.
+    Leveraged ETFs + daily open: LOO limit (price protection + cancel on gap).
+    Daily open without leveraged ETF: OPG limit.
     Otherwise: day_market.
     """
-    if context.is_leveraged_etf and context.is_paper_auto:
+    if context.is_leveraged_etf and context.is_daily_open:
         return next(a for a in DEFAULT_ALTERNATIVES if a.order_style == "loo_limit")
-    if context.is_daily_open and context.is_paper_auto:
+    if context.is_daily_open:
         return next(a for a in DEFAULT_ALTERNATIVES if a.order_style == "opg_limit")
     return next(a for a in DEFAULT_ALTERNATIVES if a.order_style == "day_market")
 

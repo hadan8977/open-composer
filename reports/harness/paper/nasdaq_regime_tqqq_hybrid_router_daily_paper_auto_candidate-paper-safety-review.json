@@ -1,0 +1,33 @@
+{
+  "strategy_name": "nasdaq_regime_tqqq_hybrid_router_daily_paper_auto_candidate",
+  "reviewed_at": "2026-05-25",
+  "lifecycle_status": "active",
+  "harness_verify_pass": true,
+  "kill_switch_verified": true,
+  "order_window": "09:20-09:30 America/New_York for open-to-open router orders; observation cycle can run outside the order window without submitting orders",
+  "duplicate_order_policy": "stable_signal_id; skip if matching open order or same rebalance intent already exists",
+  "credential_scope": "paper_only; ALPACA_PAPER=true; real-money broker writes are out of scope",
+  "signal_order_linkage": true,
+  "execution_policy_id": "loo_limit_nasdaq_regime_tqqq_hybrid_router_daily_paper_auto_candidate_v1",
+  "source_card_ids": [
+    "alpaca_opg_moo_loo",
+    "alpaca_opg_cutoff",
+    "alpaca_fractional_opg_constraint",
+    "sec_leveraged_inverse_etf_daily_objective",
+    "sec_leveraged_etf_buy_hold_risk"
+  ],
+  "overall": "blocked",
+  "blocking_items": [
+    "automatic Alpaca Paper order submission has not been explicitly authorized by the user",
+    "router strategy remains observation_only until order authorization is explicitly granted"
+  ],
+  "observation_ready": true,
+  "account_snapshot_path": "reports/paper/account.json",
+  "open_orders_snapshot_path": "reports/paper/open_orders.json",
+  "latest_observation_run_id": "paper-nasdaq_regime_tqqq_hybrid_router_daily_paper_auto_candidate-20260525T193758Z",
+  "latest_signal_log_path": "signal_logs/paper-nasdaq_regime_tqqq_hybrid_router_daily_paper_auto_candidate-20260525T193758Z.jsonl",
+  "latest_observation_decisions": [
+    "paper_orders_not_allowed"
+  ],
+  "order_submission_status": "not_authorized"
+}

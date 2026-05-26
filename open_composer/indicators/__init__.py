@@ -1,4 +1,4 @@
-from open_composer.indicators.momentum import atr, roc, rsi
+from open_composer.indicators.momentum import atr, roc, rsi, rsi_simple
 from open_composer.indicators.statistics import (
     bollinger_lower,
     bollinger_mid,
@@ -27,6 +27,7 @@ __all__ = [
     "lowest",
     "roc",
     "rsi",
+    "rsi_simple",
     "stddev",
     "sma",
     "zscore",

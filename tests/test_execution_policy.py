@@ -164,6 +164,26 @@ class TestRecommendAlternative:
         assert isinstance(alt, ExecutionAlternative)
         assert alt.order_style  # non-empty
 
+    def test_daily_open_manual_signal_recommends_opening_style(self) -> None:
+        ctx = RecommendationContext(
+            is_leveraged_etf=False,
+            is_paper_auto=False,
+            is_daily_open=True,
+            universe_symbols=["SPY"],
+        )
+        alt = recommend_alternative(ctx)
+        assert alt.order_style == "opg_limit"
+
+    def test_leveraged_daily_open_manual_signal_recommends_limit_on_open(self) -> None:
+        ctx = RecommendationContext(
+            is_leveraged_etf=True,
+            is_paper_auto=False,
+            is_daily_open=True,
+            universe_symbols=["TQQQ"],
+        )
+        alt = recommend_alternative(ctx)
+        assert alt.order_style == "loo_limit"
+
     def test_fallback_returns_day_market(self) -> None:
         ctx = RecommendationContext(
             is_leveraged_etf=False,

@@ -290,8 +290,15 @@ def write_parity_report(path: Path, spec: StrategySpec, pine_path: Path) -> Path
         "- Backtest fill assumption: next bar open.",
         "- Repaint risk: low for supported OHLCV and ta.* expressions without lookahead.",
         "- Manual check: compare TradingView alert timestamps against `signal_logs/*.jsonl`.",
-        "",
     ]
+    expressions = " ".join(spec.all_expressions())
+    if "rsi_simple(" in expressions:
+        lines.append(
+            "- ⚠ RSI parity: this spec uses `rsi_simple` (simple rolling mean). "
+            "Pine `ta.rsi` uses Wilder smoothing. Expect small numerical drift "
+            "(~3-5 RSI units). Switch to `rsi(...)` for full Pine parity."
+        )
+    lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")
     return path
 

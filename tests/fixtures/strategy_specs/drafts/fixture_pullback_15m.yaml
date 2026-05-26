@@ -7,12 +7,12 @@ lifecycle: draft
 entry:
   all:
     - "close > ema(close, 5)"
-    - "rsi(close, 3) < 75"
+    - "rsi_simple(close, 3) < 75"
     - "volume > sma(volume, 3)"
 
 exit:
   any:
-    - "rsi(close, 3) > 82"
+    - "rsi_simple(close, 3) > 82"
     - "close < ema(close, 5)"
 
 risk:

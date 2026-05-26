@@ -72,6 +72,10 @@ def sample_workspace(tmp_path: Path, repo_root: Path, fixture_specs_root: Path) 
         repo_root / "data" / "sample" / "mu_15m.csv", tmp_path / "data" / "sample" / "mu_15m.csv"
     )
     copyfile(
+        repo_root / "data" / "sample" / "syn_daily.csv",
+        tmp_path / "data" / "sample" / "syn_daily.csv",
+    )
+    copyfile(
         repo_root / "watchlists" / "memory_storage.yaml",
         tmp_path / "watchlists" / "memory_storage.yaml",
     )

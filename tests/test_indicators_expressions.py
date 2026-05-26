@@ -22,6 +22,7 @@ from open_composer.indicators import (
     macd_signal,
     roc,
     rsi,
+    rsi_simple,
     sma,
     stddev,
     zscore,
@@ -38,6 +39,46 @@ def test_sma_ema_rsi_outputs() -> None:
         series.ewm(span=3, adjust=False, min_periods=3).mean().iloc[-1]
     )
     assert rsi(series, 3).iloc[-1] == 100
+
+
+def test_rsi_uses_wilder_smoothing() -> None:
+    """Verify standard `rsi` uses Wilder EWMA (matches TradingView ta.rsi)."""
+    series = pd.Series(
+        [100.0, 102, 101, 103, 102, 105, 104, 106, 105, 108, 110, 109, 111, 113, 112]
+    )
+    out = rsi(series, 14)
+    # Reproduce Wilder smoothing independently to lock the formula.
+    delta = series.diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    avg_gain = gain.ewm(alpha=1 / 14, adjust=False, min_periods=14).mean()
+    avg_loss = loss.ewm(alpha=1 / 14, adjust=False, min_periods=14).mean()
+    expected = 100 - 100 / (1 + avg_gain / avg_loss)
+    assert out.iloc[-1] == pytest.approx(expected.iloc[-1])
+    # Sanity: this series ends in a strong uptrend, RSI should be elevated (>= 60).
+    assert out.iloc[-1] >= 60
+
+
+def test_rsi_simple_matches_legacy_rolling_mean() -> None:
+    """`rsi_simple` keeps the pre-Wilder rolling-mean form for back-compat."""
+    series = pd.Series(
+        [100.0, 102, 101, 103, 102, 105, 104, 106, 105, 108, 110, 109, 111, 113, 112]
+    )
+    legacy = rsi_simple(series, 14)
+    delta = series.diff()
+    gain = delta.clip(lower=0).rolling(window=14, min_periods=14).mean()
+    loss = (-delta.clip(upper=0)).rolling(window=14, min_periods=14).mean()
+    rs = gain / loss
+    expected = (100 - 100 / (1 + rs)).fillna(100)
+    assert legacy.iloc[-1] == pytest.approx(expected.iloc[-1])
+
+
+def test_rsi_simple_differs_from_wilder_rsi() -> None:
+    """Wilder vs simple-rolling-mean must produce different values on real-ish data."""
+    series = pd.Series([100.0 + i + (i % 3) * 0.7 for i in range(40)])
+    wilder = rsi(series, 14).iloc[-1]
+    simple = rsi_simple(series, 14).iloc[-1]
+    assert abs(wilder - simple) > 0.5  # at least half an RSI unit apart
 
 
 def test_advanced_factor_outputs() -> None:

@@ -1,0 +1,28 @@
+{
+  "strategy_name": "nasdaq_regime_tqqq_hybrid_router_daily",
+  "reviewed_at": "2026-05-25",
+  "lifecycle_status": "draft",
+  "harness_verify_pass": true,
+  "kill_switch_verified": true,
+  "order_window": "not authorized; planned LOO/OPG submit before 09:28 ET only after paper_auto approval",
+  "duplicate_order_policy": "stable_signal_id; skip/hold duplicate rebalance intent until paper runner approval",
+  "credential_scope": "paper_only; ALPACA_PAPER=true observed by oc doctor, no live broker writes in scope",
+  "signal_order_linkage": false,
+  "execution_policy_id": "loo_limit_nasdaq_regime_tqqq_hybrid_router_daily_v1",
+  "source_card_ids": [
+    "alpaca_opg_moo_loo",
+    "alpaca_opg_cutoff",
+    "alpaca_fractional_opg_constraint",
+    "sec_leveraged_inverse_etf_daily_objective",
+    "sec_leveraged_etf_buy_hold_risk"
+  ],
+  "overall": "blocked",
+  "blocking_items": [
+    "strategy lifecycle is draft, not active",
+    "execution.mode is manual_signal and broker is none",
+    "promotion report status is warning / ready=false",
+    "paper readiness is blocked: lifecycle, execution, alpaca_env, promotion_report, capability_report",
+    "paper account snapshot is missing; run uv run oc paper sync-account before automation",
+    "signal/order linkage cannot be verified until paper_auto runner is explicitly activated"
+  ]
+}

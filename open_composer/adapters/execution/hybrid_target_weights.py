@@ -125,6 +125,7 @@ def run_hybrid_target_weight_mapping(
     payload = {
         "strategy_name": spec.name,
         "mode": "hybrid_target_weight_mapping",
+        "portfolio_mode": spec.portfolio.mode,
         "target_backend": "nautilus_trader",
         "source_spec_path": _relpath(spec_path, base),
         "route_label": params.label,

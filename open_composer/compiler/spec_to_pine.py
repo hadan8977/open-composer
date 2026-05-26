@@ -24,6 +24,7 @@ PINE_FUNCTION_NAMES = {
     "macd_signal",
     "roc",
     "rsi",
+    "rsi_simple",
     "sma",
     "stddev",
     "zscore",
@@ -278,9 +279,24 @@ def _node_to_pine(node: ast.AST) -> str:
         if not isinstance(node.func, ast.Name):
             raise ValueError("unsupported Pine expression function")
         function_name = node.func.id
-        if function_name in {"sma", "ema", "rsi", "highest", "lowest", "roc", "stddev"}:
+        if function_name in {
+            "sma",
+            "ema",
+            "rsi",
+            "rsi_simple",
+            "highest",
+            "lowest",
+            "roc",
+            "stddev",
+        }:
             args = ", ".join(_node_to_pine(arg) for arg in node.args)
-            pine_name = "stdev" if function_name == "stddev" else function_name
+            pine_name = (
+                "stdev"
+                if function_name == "stddev"
+                else "rsi"
+                if function_name == "rsi_simple"
+                else function_name
+            )
             return f"ta.{pine_name}({args})"
         if function_name in {"crossover", "crossunder"}:
             args = ", ".join(_node_to_pine(arg) for arg in node.args)
@@ -350,6 +366,9 @@ def _node_to_pine(node: ast.AST) -> str:
         return f"{_node_to_pine(node.left)} {_op_to_pine(node.op)} {_node_to_pine(node.right)}"
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
         return f"not ({_node_to_pine(node.operand)})"
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+        sign = "-" if isinstance(node.op, ast.USub) else "+"
+        return f"({sign}{_node_to_pine(node.operand)})"
     raise ValueError(f"unsupported Pine expression element: {node.__class__.__name__}")
 
 

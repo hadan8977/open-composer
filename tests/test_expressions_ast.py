@@ -16,6 +16,13 @@ from open_composer.expressions import ExpressionSafetyError, assert_expression_s
         "zscore(close, 20) > -1.0",
         "atr(14) > 0",
         "bollinger_upper(close, 20, 2.0) > close",
+        # Unary minus / plus on numeric literals
+        "close > -1",
+        "close - lag(close, 1) > -0.5",
+        # Unary minus applied to a name/series
+        "(-roc(close, 5)) > 0",
+        # Unary plus is a no-op but should also pass
+        "close > +1",
     ],
 )
 def test_safe_expressions_pass_ast_safety(safe_expr: str) -> None:

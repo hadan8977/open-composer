@@ -238,11 +238,11 @@ def _deterministic_draft(idea: str) -> StrategySpec:
             "entry": {
                 "all": [
                     "close > ema(close, 5)",
-                    "rsi(close, 3) < 75",
+                    "rsi_simple(close, 3) < 75",
                     "volume > sma(volume, 3)",
                 ]
             },
-            "exit": {"any": ["rsi(close, 3) > 82", "close < ema(close, 5)"]},
+            "exit": {"any": ["rsi_simple(close, 3) > 82", "close < ema(close, 5)"]},
             "risk": {
                 "max_trades_per_day": 3,
                 "max_position_weight": 0.2,

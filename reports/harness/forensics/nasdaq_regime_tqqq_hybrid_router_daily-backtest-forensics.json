@@ -1,0 +1,25 @@
+{
+  "strategy_name": "nasdaq_regime_tqqq_hybrid_router_daily",
+  "lookahead_check": "pass",
+  "future_leak_check": "pass",
+  "overfit_risk": "medium",
+  "multiple_testing_count": 32,
+  "pbo_proxy": 0.4,
+  "dsr_proxy": {
+    "selected_oos_sharpe": 1.2817110648402232,
+    "train_sharpe": 0.3987115436033272,
+    "expected_max_sharpe_proxy": 3.0314803913374866,
+    "method": "rough proxy using train Sharpe + sqrt(2 ln N); not a formal DSR"
+  },
+  "sample_data_caveats": [
+    "Alpaca IEX feed is not consolidated SIP market data.",
+    "Universe uses current liquid NASDAQ leaders/theme ETF and may contain survivorship bias until PIT universe membership is added.",
+    "Selected route does not beat ex-post best single symbol; treat as router/risk-control candidate, not stock-selection alpha proof."
+  ],
+  "trade_count": 1269,
+  "trading_days": 1362,
+  "capacity_assessment": "Target-weight mapping caps max gross exposure at 25% and single-name weight at 25%; latest order-required intents=557. Capacity is likely acceptable for small paper accounts, but paper_auto still needs TCA review against ADV/open volume and whole-share OPG/LOO sizing.",
+  "short_sample": false,
+  "conclusion": "warning",
+  "notes": "Research gate passed on strict-live Alpaca IEX daily data from 2020-07-27 to 2026-05-21: OOS annualized 16.00%, OOS alpha vs TQQQ +11.78%, OOS Sharpe 1.28, OOS max drawdown -11.50%, 3/5 walk-forward folds positive. Warnings remain for multiple testing, factor diagnostics, IEX-vs-SIP data caveat, and ex-post best-symbol underperformance."
+}

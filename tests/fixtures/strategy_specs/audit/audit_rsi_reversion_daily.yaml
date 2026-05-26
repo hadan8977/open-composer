@@ -1,0 +1,45 @@
+name: audit_rsi_reversion_daily
+description: "Audit fixture: RSI(2) mean reversion (Larry Connors style)."
+timeframe: daily
+universe: [SYN]
+lifecycle: draft
+entry:
+  all:
+  - rsi(close, 2) < 10
+  any: []
+exit:
+  all: []
+  any:
+  - rsi(close, 2) > 70
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 1.0
+costs:
+  commission_pct: 0.0
+  slippage_bps: 0.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: sample
+  symbol: SYN
+  path: data/sample/syn_daily.csv
+  feed: null
+data_assumptions:
+  source: sample
+  adjusted: true
+  timezone: America/New_York
+factors: {}
+llm_review:
+  enabled: false
+notes:
+  intent: "RSI(2) < 10 entry, > 70 exit for backtest correctness audit."
+  open_questions: []
+required_capabilities:
+- market.sample_ohlcv

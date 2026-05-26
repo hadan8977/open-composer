@@ -64,6 +64,22 @@ capabilities:
     caveats:
       - deterministic scenario fixture for product verification, not live market evidence
 
+  - id: market.synthetic_daily_long
+    kind: market
+    status: approved
+    provider: local
+    use_for: [backtest_audit, regression_test, long_window_smoke]
+    reliability: high
+    default_mode: offline
+    supported_timeframes: [daily]
+    paper_ready_timeframes: []
+    strict_behavior: workflow_only
+    fixture: data/sample/syn_daily.csv
+    min_score: 0.95
+    caveats:
+      - 1000-bar synthetic GBM (mu=10%, sigma=18%) with one injected 25% crash window
+      - deterministic reproducible fixture (seed=42); not a real market series
+
   - id: events.sec_filings
     kind: event
     status: approved

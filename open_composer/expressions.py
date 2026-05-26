@@ -26,6 +26,7 @@ from open_composer.indicators import (
     macd_signal,
     roc,
     rsi,
+    rsi_simple,
     sma,
     stddev,
     zscore,
@@ -36,6 +37,7 @@ SERIES_WINDOW_FUNCTIONS = {
     "sma": sma,
     "ema": ema,
     "rsi": rsi,
+    "rsi_simple": rsi_simple,
     "highest": highest,
     "lowest": lowest,
     "lag": lag,
@@ -313,6 +315,9 @@ def _eval_node(node: ast.AST, frame: pd.DataFrame) -> Any:
         raise ExpressionError("unsupported boolean operator")
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
         return ~_eval_node(node.operand, frame)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
+        operand = _eval_node(node.operand, frame)
+        return -operand if isinstance(node.op, ast.USub) else operand
     if isinstance(node, ast.BinOp):
         left = _eval_node(node.left, frame)
         right = _eval_node(node.right, frame)
