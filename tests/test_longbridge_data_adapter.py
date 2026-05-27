@@ -11,6 +11,7 @@ from open_composer.adapters.data.longbridge import (
     LongbridgeDataError,
     fetch_longbridge_bars,
     longbridge_cache_path,
+    longbridge_materialized_history_path,
     missing_longbridge_credentials,
 )
 
@@ -36,6 +37,42 @@ def test_longbridge_fetch_uses_cache_and_writes_manifest(sample_workspace: Path)
     assert len(frame) > 0
     assert manifest.exists()
     assert "longbridge" in manifest.read_text(encoding="utf-8")
+
+
+def test_longbridge_daily_fetch_uses_materialized_history_with_date_filter(
+    sample_workspace: Path,
+) -> None:
+    history = longbridge_materialized_history_path(sample_workspace, "QQQ", "daily")
+    history.parent.mkdir(parents=True, exist_ok=True)
+    history.write_text(
+        "\n".join(
+            [
+                "timestamp,open,high,low,close,volume",
+                "2024-01-02T05:00:00+00:00,100,101,99,100.5,1000",
+                "2024-01-03T05:00:00+00:00,101,102,100,101.5,1100",
+                "2024-01-04T05:00:00+00:00,102,103,101,102.5,1200",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    frame = fetch_longbridge_bars(
+        sample_workspace,
+        "QQQ",
+        "daily",
+        datetime.fromisoformat("2024-01-03T00:00:00+00:00"),
+        datetime.fromisoformat("2024-01-04T23:59:59+00:00"),
+        feed=None,
+        use_cache=True,
+    )
+
+    assert list(frame["close"]) == [101.5, 102.5]
+    assert frame.attrs["data_source_mode"] == "materialized_history_cache"
+    manifest = (
+        sample_workspace / "data" / "cache" / "manifests" / "qqq_daily_longbridge_nasdaq_basic.json"
+    )
+    assert "materialized_history_cache" in manifest.read_text(encoding="utf-8")
 
 
 def test_longbridge_missing_credentials_requires_access_token(

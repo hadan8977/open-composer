@@ -23,6 +23,10 @@ from open_composer.feature_packets import (
 )
 from open_composer.models.paper import PaperAccountSnapshot, PaperKillSwitch
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.router_authorization import (
+    assess_router_order_authorization,
+    is_router_strategy,
+)
 from open_composer.storage import write_json
 from open_composer.strategy_capabilities import (
     assess_strategy_capabilities_for_spec,
@@ -88,6 +92,7 @@ def assess_paper_strategy_readiness_for_spec(
         _lifecycle_check(spec),
         _execution_check(spec),
         _data_source_check(spec),
+        _universe_audit_check(spec, base),
         _alpaca_env_check(spec),
         _kill_switch_check(base),
         _account_snapshot_check(base),
@@ -98,6 +103,8 @@ def assess_paper_strategy_readiness_for_spec(
         _promotion_report_check(spec, base, spec_path),
         _harness_artifacts_check(spec, base),
     ]
+    if is_router_strategy(spec):
+        checks.append(_router_order_authorization_check(spec, base))
     if spec_path is not None and spec_path.exists():
         checks.append(_capability_check(spec, spec_path))
     status = _overall_status(checks)
@@ -225,13 +232,16 @@ def _execution_substate(
         short_check = next((check for check in checks if check.name == "harness_artifacts"), None)
         if short_check is None or short_check.status != "ok":
             return "blocked"
-    if spec.portfolio.mode in {
-        "adaptive_intraday_internal_router",
-        "hybrid_adaptive_router",
-        "beta_exposure_router",
-        "core_beta_satellite_router",
-    }:
-        return "observation_only" if status != "blocked" else "blocked"
+    if is_router_strategy(spec):
+        if status == "blocked":
+            return "blocked"
+        router_auth = next(
+            (check for check in checks if check.name == "router_order_authorization"),
+            None,
+        )
+        return (
+            "order_authorized" if router_auth and router_auth.status == "ok" else "observation_only"
+        )
     if status == "blocked":
         return "blocked"
     return "order_authorized"
@@ -297,6 +307,82 @@ def _data_source_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
                 "--data-source longbridge --enforce-paper-readiness"
             ),
         ],
+    )
+
+
+def _router_order_authorization_check(
+    spec: StrategySpec,
+    root: Path,
+) -> PaperStrategyReadinessCheck:
+    status = assess_router_order_authorization(spec, root)
+    details = {"path": _relpath(status.path, root), **status.details}
+    if status.authorized:
+        return PaperStrategyReadinessCheck(
+            name="router_order_authorization",
+            status="ok",
+            message=status.message,
+            details=details,
+        )
+    return PaperStrategyReadinessCheck(
+        name="router_order_authorization",
+        status="warning",
+        message=status.message + " Router remains observation_only.",
+        details=details,
+        suggested_actions=[
+            (
+                "Write reports/harness/paper/"
+                f"{spec.name}-router-order-authorization.json after PIT, promotion, "
+                "harness verify, and paper safety review pass."
+            )
+        ],
+    )
+
+
+def _universe_audit_check(spec: StrategySpec, root: Path) -> PaperStrategyReadinessCheck:
+    from open_composer.research.universe_audit import assess_universe_audit
+
+    result = assess_universe_audit(spec, root)
+    findings = [
+        {
+            "code": item.code,
+            "severity": item.severity,
+            "message": item.message,
+            "evidence": item.evidence,
+        }
+        for item in result.findings
+    ]
+    details = {
+        "status": result.status,
+        "json_path": _relpath(result.json_path, root),
+        "report_path": _relpath(result.report_path, root),
+        "findings": findings,
+    }
+    if result.status == "blocked":
+        return PaperStrategyReadinessCheck(
+            name="universe_audit",
+            status="blocked",
+            message=(
+                "Paper automation requires point-in-time universe membership or explicit "
+                "fixed-universe evidence."
+            ),
+            details=details,
+            suggested_actions=[
+                "Add notes.universe_audit point_in_time_membership evidence, or reduce the "
+                "strategy to an explicitly fixed instrument universe before paper_auto."
+            ],
+        )
+    if result.status == "warning":
+        return PaperStrategyReadinessCheck(
+            name="universe_audit",
+            status="warning",
+            message="Universe audit warnings should be reviewed before paper automation.",
+            details=details,
+        )
+    return PaperStrategyReadinessCheck(
+        name="universe_audit",
+        status="ok",
+        message="Universe audit passed.",
+        details=details,
     )
 
 

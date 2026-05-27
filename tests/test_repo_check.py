@@ -23,6 +23,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/remote-dashboard-deploy.zh.md",
         "docs/setup-local.zh.md",
         "docs/longbridge-integration.md",
+        "docs/strategy-research-product-remediation-plan-2026-05-26.zh.md",
     ]:
         source = repo_root / relative
         destination = target / relative

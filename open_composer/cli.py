@@ -129,6 +129,7 @@ from open_composer.projects import (
     list_projects,
     load_project,
     load_project_run_summary,
+    update_gate_state,
     update_project_state,
 )
 from open_composer.readiness import build_readiness_report, write_readiness_report
@@ -139,6 +140,7 @@ from open_composer.research import (
     build_hybrid_paper_plan,
     build_options_overlay_report,
     build_options_research_report,
+    build_overfit_risk_report,
     build_promotion_report,
     build_short_risk_report,
     build_strategy_evidence,
@@ -172,6 +174,7 @@ from open_composer.research import (
     run_rotation_research,
     run_skill_attribution,
     run_theme_intraday_rotation_router_research,
+    run_universe_audit,
     run_wide_router_research,
     search_similar_regimes,
     update_research_control,
@@ -180,6 +183,7 @@ from open_composer.research import (
     write_strategy_dag_validation,
 )
 from open_composer.research.llm_exposure_switch import LLMExposureSwitchChoice
+from open_composer.research.research_brief import init_research_brief, validate_research_brief
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
 from open_composer.storage import find_signal
@@ -223,6 +227,7 @@ cache_app = typer.Typer(no_args_is_help=True)
 harness_app = typer.Typer(no_args_is_help=True)
 project_app = typer.Typer(no_args_is_help=True)
 agent_app = typer.Typer(no_args_is_help=True)
+research_brief_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -235,6 +240,7 @@ app.add_typer(events_app, name="events")
 app.add_typer(macro_app, name="macro")
 app.add_typer(context_app, name="context")
 app.add_typer(strategy_app, name="strategy")
+strategy_app.add_typer(research_brief_app, name="research-brief")
 app.add_typer(run_app, name="run")
 app.add_typer(options_app, name="options")
 app.add_typer(feature_app, name="feature")
@@ -1182,6 +1188,33 @@ def project_state_command(
     console.print(f"[green]project updated[/green] {project.project_id} state={project.state}")
 
 
+@project_app.command("gate-state")
+def project_gate_state_command(
+    project_id: str,
+    gate: Annotated[str, typer.Option("--gate", help="Gate name, e.g. research_pass.")],
+    status: Annotated[str, typer.Option("--status", help="Gate status/value.")],
+    reason: Annotated[
+        list[str] | None,
+        typer.Option("--reason", help="Repeatable reason recorded in gate_summary and trace."),
+    ] = None,
+) -> None:
+    """Update project gate_summary through the single gate-state writer."""
+    try:
+        project = update_gate_state(
+            project_id,
+            gate,
+            _parse_gate_status(status),
+            project_root(),
+            reasons=reason or [],
+            agent="cli",
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]gate updated[/green] {project.project_id} {gate}={project.gate_summary.get(gate)}"
+    )
+
+
 @project_app.command("show")
 def project_show_command(project_id: str) -> None:
     """Show a StrategyProject as JSON."""
@@ -1586,6 +1619,17 @@ def _strategy_capability_payload(report: StrategyCapabilityReport) -> dict[str, 
     }
 
 
+def _parse_gate_status(value: str) -> object:
+    normalized = value.strip().lower()
+    if normalized in {"true", "pass", "passed", "ok"}:
+        return True if normalized == "true" else normalized
+    if normalized in {"false", "fail", "failed", "blocked"}:
+        return False if normalized == "false" else normalized
+    if normalized in {"none", "null", "not_applicable", "n/a"}:
+        return None if normalized in {"none", "null"} else "not_applicable"
+    return value
+
+
 @data_app.command("fetch")
 def data_fetch(
     symbol: str = typer.Option("QQQ", "--symbol"),
@@ -1919,6 +1963,8 @@ def strategy_parameter_sweep(
     max_candidates: int = typer.Option(200, "--max-candidates"),
     top_n: int = typer.Option(10, "--top-n"),
     write_top: int = typer.Option(1, "--write-top"),
+    search_strategy: str = typer.Option("grid", "--search-strategy"),
+    random_seed: int | None = typer.Option(None, "--random-seed"),
 ) -> None:
     """Run a bounded parameter grid over a StrategySpec and write ranked reports."""
     try:
@@ -1933,6 +1979,8 @@ def strategy_parameter_sweep(
             max_candidates=max_candidates,
             top_n=top_n,
             write_top=write_top,
+            search_strategy=search_strategy,
+            random_seed=random_seed,
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -1944,8 +1992,32 @@ def strategy_parameter_sweep(
     console.print(f"json: {result.json_path}")
     control = update_research_control(spec, project_root())
     console.print(f"memory: {control.memory_path}")
-    for path in result.written_specs:
-        console.print(f"spec: {path}")
+
+
+@research_brief_app.command("init")
+def strategy_research_brief_init(
+    spec: Path,
+    search_budget: int | None = typer.Option(None, "--search-budget"),
+    overwrite: bool = typer.Option(False, "--overwrite"),
+) -> None:
+    """Create or refresh the research brief required before optimization."""
+    json_path, md_path = init_research_brief(
+        spec,
+        project_root(),
+        search_budget=search_budget,
+        overwrite=overwrite,
+    )
+    console.print(f"[green]research brief ready[/green] json: {json_path}")
+    console.print(f"markdown: {md_path}")
+
+
+@research_brief_app.command("validate")
+def strategy_research_brief_validate(spec: Path) -> None:
+    """Validate a research brief against the current StrategySpec hash."""
+    result = validate_research_brief(spec, project_root(), require_for_optimization=True)
+    if not result.ok:
+        raise typer.BadParameter("research brief invalid: " + ", ".join(result.blocked))
+    console.print(f"[green]research brief valid[/green] {result.path}")
 
 
 @strategy_app.command("factor-lab")
@@ -2005,6 +2077,27 @@ def _print_strategy_evidence(spec: Path) -> None:
     console.print(f"json: {result.research_report.json_path}")
     console.print(f"state: {result.control.state_path}")
     console.print(f"memory: {result.control.memory_path}")
+
+
+@strategy_app.command("universe-audit")
+def strategy_universe_audit(spec: Path) -> None:
+    """Audit PIT universe, current-symbol, and survivorship risks."""
+    result = run_universe_audit(spec, project_root())
+    console.print(f"[green]universe audit complete[/green] status={result.status}")
+    console.print(f"report: {result.report_path}")
+    console.print(f"json: {result.json_path}")
+
+
+@strategy_app.command("overfit-risk")
+def strategy_overfit_risk(spec: Path) -> None:
+    """Write the lightweight PBO/DSR proxy report for a parameter-sweep run."""
+    result = build_overfit_risk_report(spec, project_root())
+    console.print(f"[green]overfit risk complete[/green] status={result.status}")
+    console.print(f"trials={result.trial_count} dsr={result.dsr_proxy} pbo={result.pbo_proxy}")
+    if result.report_path:
+        console.print(f"report: {result.report_path}")
+    if result.json_path:
+        console.print(f"json: {result.json_path}")
 
 
 @strategy_app.command("research-report", hidden=True)
@@ -2972,6 +3065,34 @@ def strategy_hybrid_adaptive_router(
         list[float] | None,
         typer.Option("--brake-exposure-scale"),
     ] = None,
+    beta_override_base_mode: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-base-mode"),
+    ] = None,
+    beta_override_advantage_pct: Annotated[
+        list[float] | None,
+        typer.Option("--beta-override-advantage-pct"),
+    ] = None,
+    beta_override_confirmation_sma_days: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-confirmation-sma-days"),
+    ] = None,
+    beta_override_exclude_tqqq: bool = typer.Option(
+        True,
+        "--beta-override-exclude-tqqq/--beta-override-include-tqqq",
+    ),
+    beta_override_cycle_gate: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-cycle-gate"),
+    ] = None,
+    beta_override_symbol_drawdown_lookback_days: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-symbol-drawdown-lookback-days"),
+    ] = None,
+    beta_override_max_symbol_drawdown_pct: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-max-symbol-drawdown-pct"),
+    ] = None,
     oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
     walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
     walk_forward_top_k: int | None = typer.Option(20, "--walk-forward-top-k"),
@@ -3006,6 +3127,19 @@ def strategy_hybrid_adaptive_router(
             market_drawdown_lookback_days=_optional_int_values(market_drawdown_lookback_days),
             market_drawdown_brake_pct=_optional_float_values(market_drawdown_brake_pct),
             brake_exposure_scale=brake_exposure_scale,
+            beta_override_base_modes=_hybrid_beta_override_base_modes(beta_override_base_mode),
+            beta_override_advantage_pct=beta_override_advantage_pct,
+            beta_override_confirmation_sma_days=_optional_int_values(
+                beta_override_confirmation_sma_days
+            ),
+            beta_override_exclude_tqqq=beta_override_exclude_tqqq,
+            beta_override_cycle_gates=_hybrid_beta_override_cycle_gates(beta_override_cycle_gate),
+            beta_override_symbol_drawdown_lookback_days=_optional_int_values(
+                beta_override_symbol_drawdown_lookback_days
+            ),
+            beta_override_max_symbol_drawdown_pct=_optional_float_values(
+                beta_override_max_symbol_drawdown_pct
+            ),
             out_of_sample_ratio=oos_ratio,
             walk_forward_folds=walk_forward_folds,
             walk_forward_top_k=walk_forward_top_k,
@@ -3128,7 +3262,7 @@ def strategy_hybrid_news_marginal_lift(
 @strategy_app.command("hybrid-factor-attribution")
 def strategy_hybrid_factor_attribution(
     spec: Path,
-    symbols: str = typer.Option(..., "--symbols"),
+    symbols: str | None = typer.Option(None, "--symbols"),
     data_source: str = typer.Option("alpaca", "--data-source"),
     start: str | None = typer.Option(None, "--start"),
     end: str | None = typer.Option(None, "--end"),
@@ -3144,7 +3278,11 @@ def strategy_hybrid_factor_attribution(
         result = run_hybrid_factor_attribution(
             spec,
             project_root(),
-            symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
+            symbols=(
+                [item.strip().upper() for item in symbols.split(",") if item.strip()]
+                if symbols
+                else None
+            ),
             data_source=data_source,
             start=start,
             end=end,
@@ -3903,6 +4041,32 @@ def _hybrid_market_sma_days(values: list[str] | None) -> list[int | None] | None
         else:
             parsed.append(int(normalized))
     return parsed
+
+
+def _hybrid_beta_override_base_modes(values: list[str] | None) -> list[str] | None:
+    if not values:
+        return None
+    allowed = {"iter2", "tqqq_cycle", "tqqq_always"}
+    normalized = [item.strip().lower().replace("-", "_") for item in values if item.strip()]
+    bad = [item for item in normalized if item not in allowed]
+    if bad:
+        raise typer.BadParameter(
+            "--beta-override-base-mode contains unsupported value(s): " + ", ".join(bad)
+        )
+    return normalized
+
+
+def _hybrid_beta_override_cycle_gates(values: list[str] | None) -> list[str] | None:
+    if not values:
+        return None
+    allowed = {"none", "q200", "mom120", "q200ormom120", "q200andmom120"}
+    normalized = [item.strip().lower().replace("-", "") for item in values if item.strip()]
+    bad = [item for item in normalized if item not in allowed]
+    if bad:
+        raise typer.BadParameter(
+            "--beta-override-cycle-gate contains unsupported value(s): " + ", ".join(bad)
+        )
+    return normalized
 
 
 def _intraday_objective(value: str) -> str:

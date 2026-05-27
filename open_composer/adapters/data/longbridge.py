@@ -38,6 +38,16 @@ def longbridge_cache_path(
     return root / "data" / "cache" / f"{symbol.lower()}_{timeframe}_longbridge_{selected_feed}.csv"
 
 
+def longbridge_materialized_history_path(root: Path, symbol: str, timeframe: str) -> Path:
+    return (
+        root
+        / "data"
+        / "research"
+        / "longbridge_adjusted_daily"
+        / f"{symbol.lower()}_{timeframe}_longbridge_adjusted.csv"
+    )
+
+
 def fetch_longbridge_bars(
     root: Path,
     symbol: str,
@@ -52,6 +62,18 @@ def fetch_longbridge_bars(
 ) -> pd.DataFrame:
     selected_feed = feed or DEFAULT_LONGBRIDGE_FEED
     cache_path = longbridge_cache_path(root, symbol, timeframe, selected_feed)
+    materialized = _load_materialized_history(
+        root=root,
+        symbol=symbol,
+        timeframe=timeframe,
+        feed=selected_feed,
+        start=start,
+        end=end,
+        use_cache=use_cache,
+        trade_sessions=trade_sessions,
+    )
+    if materialized is not None:
+        return materialized
     if use_cache and cache_path.exists() and start is None and end is None:
         frame = normalize_ohlcv(pd.read_csv(cache_path))
         _annotate_frame(frame, selected_feed, "cache", cache_path)
@@ -125,6 +147,71 @@ def fetch_longbridge_bars(
         caveats=_longbridge_caveats(selected_feed, trade_sessions),
     )
     return frame
+
+
+def _load_materialized_history(
+    *,
+    root: Path,
+    symbol: str,
+    timeframe: str,
+    feed: str,
+    start: datetime | None,
+    end: datetime | None,
+    use_cache: bool,
+    trade_sessions: str,
+) -> pd.DataFrame | None:
+    if not use_cache or timeframe != "daily" or feed != DEFAULT_LONGBRIDGE_FEED:
+        return None
+    path = longbridge_materialized_history_path(root, symbol, timeframe)
+    if not path.exists():
+        return None
+    frame = normalize_ohlcv(pd.read_csv(path))
+    frame = _filter_materialized_history(frame, start, end)
+    if frame.empty:
+        return None
+    _annotate_frame(frame, feed, "materialized_history_cache", path)
+    write_ohlcv_manifest(
+        root,
+        provider="longbridge",
+        feed=feed,
+        symbol=symbol,
+        timeframe=timeframe,
+        cache_path=path,
+        frame=frame,
+        requested_start=start,
+        requested_end=end,
+        source_mode="materialized_history_cache",
+        request_params={"adjusted": True, "trade_sessions": trade_sessions},
+        caveats=[
+            *_longbridge_caveats(feed, trade_sessions),
+            (
+                "materialized adjusted daily history is local replay; "
+                "refresh against Longbridge before paper_auto"
+            ),
+        ],
+    )
+    return frame
+
+
+def _filter_materialized_history(
+    frame: pd.DataFrame,
+    start: datetime | None,
+    end: datetime | None,
+) -> pd.DataFrame:
+    output = frame.copy()
+    output["timestamp"] = pd.to_datetime(output["timestamp"], utc=True)
+    if start is not None:
+        output = output.loc[output["timestamp"] >= _utc_timestamp(start)]
+    if end is not None:
+        output = output.loc[output["timestamp"] <= _utc_timestamp(end)]
+    return output.reset_index(drop=True)
+
+
+def _utc_timestamp(value: datetime) -> pd.Timestamp:
+    timestamp = pd.Timestamp(value)
+    if timestamp.tzinfo is None:
+        return timestamp.tz_localize("UTC")
+    return timestamp.tz_convert("UTC")
 
 
 def _annotate_frame(frame: pd.DataFrame, feed: str, source_mode: str, path: Path) -> None:

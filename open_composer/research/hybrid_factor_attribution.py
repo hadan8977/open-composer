@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -10,6 +10,7 @@ from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.json_utils import json_safe_payload
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.hybrid_router_core import (
+    BetaOverrideHybridParams,
     HybridRouterMetrics,
     HybridRouterParams,
     _backtest_hybrid_params,
@@ -159,7 +160,11 @@ def run_hybrid_factor_attribution(
     )
 
 
-def _build_variants(params: HybridRouterParams) -> dict[str, HybridRouterParams]:
+def _build_variants(
+    params: HybridRouterParams | BetaOverrideHybridParams,
+) -> dict[str, HybridRouterParams | BetaOverrideHybridParams]:
+    if isinstance(params, BetaOverrideHybridParams):
+        return _build_beta_override_variants(params)
     return {
         "no_market_gate": HybridRouterParams(
             holding_mode=params.holding_mode,
@@ -194,6 +199,31 @@ def _build_variants(params: HybridRouterParams) -> dict[str, HybridRouterParams]
             max_position_weight=params.max_position_weight,
         ),
     }
+
+
+def _build_beta_override_variants(
+    params: BetaOverrideHybridParams,
+) -> dict[str, BetaOverrideHybridParams]:
+    variants: dict[str, BetaOverrideHybridParams] = {}
+    if params.cycle_gate != "none":
+        variants["no_cycle_gate"] = replace(params, cycle_gate="none")
+    if params.market_drawdown_lookback_days or params.max_market_drawdown_pct is not None:
+        variants["no_market_drawdown_filter"] = replace(
+            params,
+            market_drawdown_lookback_days=None,
+            max_market_drawdown_pct=None,
+        )
+    if params.confirmation_sma_days is not None:
+        variants["no_confirmation_sma"] = replace(params, confirmation_sma_days=None)
+    if params.min_momentum_pct > 0:
+        variants["no_min_momentum"] = replace(params, min_momentum_pct=0.0)
+    if params.gross_exposure_scale < 0.999999:
+        variants["full_gross_exposure"] = replace(params, gross_exposure_scale=1.0)
+    if params.base_mode != "iter2":
+        variants["base_iter2"] = replace(params, base_mode="iter2")
+    if params.base_mode != "tqqq_always":
+        variants["base_tqqq_always"] = replace(params, base_mode="tqqq_always")
+    return variants
 
 
 def _attribution_table(
@@ -231,15 +261,43 @@ def _attribution_status(
     walk_forward_summary: dict[str, Any],
 ) -> tuple[str, list[str]]:
     blockers: list[str] = []
-    if _float(attribution["open_to_close_holding"]["delta_alpha_vs_tqqq_annualized_pct"]) <= 0:
+    if (
+        "open_to_close_holding" in attribution
+        and _float(attribution["open_to_close_holding"]["delta_alpha_vs_tqqq_annualized_pct"]) <= 0
+    ):
         blockers.append("holding-mode attribution did not favor open_to_open")
-    if _float(
-        attribution["no_market_gate"]["delta_alpha_vs_tqqq_annualized_pct"]
-    ) < -5 and not bool(walk_forward_summary.get("all_positive_alpha_folds")):
+    if (
+        "no_market_gate" in attribution
+        and _float(attribution["no_market_gate"]["delta_alpha_vs_tqqq_annualized_pct"]) < -5
+        and not bool(walk_forward_summary.get("all_positive_alpha_folds"))
+    ):
         blockers.append("market-gate ablation materially outperformed selected route")
-    if _float(attribution["no_min_momentum"]["delta_alpha_vs_tqqq_annualized_pct"]) < -5:
+    if (
+        "no_min_momentum" in attribution
+        and _float(attribution["no_min_momentum"]["delta_alpha_vs_tqqq_annualized_pct"]) < -5
+        and _variant_materially_dominates_selected(attribution["no_min_momentum"])
+    ):
         blockers.append("minimum-momentum ablation materially outperformed selected route")
+    for name in (
+        "no_cycle_gate",
+        "no_market_drawdown_filter",
+        "no_confirmation_sma",
+        "full_gross_exposure",
+        "base_iter2",
+        "base_tqqq_always",
+    ):
+        if name not in attribution:
+            continue
+        if _variant_materially_dominates_selected(attribution[name]):
+            blockers.append(f"{name} ablation materially dominated selected route")
     return ("ok" if not blockers else "blocked", blockers)
+
+
+def _variant_materially_dominates_selected(row: dict[str, float | str | None]) -> bool:
+    delta_alpha = _float(row.get("delta_alpha_vs_tqqq_annualized_pct"))
+    delta_sharpe = _float(row.get("delta_sharpe_ratio"))
+    delta_drawdown = _float(row.get("delta_max_drawdown_pct"))
+    return delta_alpha < -5.0 and delta_sharpe <= 0.0 and delta_drawdown >= -2.0
 
 
 def _walk_forward_summary(root: Path, strategy_name: str) -> dict[str, Any]:
@@ -337,7 +395,15 @@ def _write_markdown(
 def _interpretation(name: str) -> str:
     return {
         "no_market_gate": "Tests whether QQQ regime filtering adds value.",
+        "no_cycle_gate": "Tests whether the QQQ cycle gate adds value.",
+        "no_market_drawdown_filter": "Tests whether the market drawdown filter adds value.",
+        "no_confirmation_sma": "Tests whether symbol SMA confirmation adds value.",
         "no_min_momentum": "Tests whether the minimum momentum threshold adds value.",
+        "full_gross_exposure": (
+            "Tests whether reduced gross exposure improves risk-adjusted quality."
+        ),
+        "base_iter2": "Tests whether the original iter2 base sleeve is preferable.",
+        "base_tqqq_always": "Tests whether unconditional TQQQ base exposure is preferable.",
         "top2_diversified": "Tests whether two half-weight names improve risk-adjusted results.",
         "open_to_close_holding": "Tests whether intraday holding beats open-to-open holding.",
     }.get(name, "Route ablation.")

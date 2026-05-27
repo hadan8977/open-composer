@@ -7,12 +7,22 @@ import yaml
 from typer.testing import CliRunner
 
 from open_composer.cli import app
+from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.research.hybrid_paper_plan import (
+    _paper_activation_candidate_spec,
+    _paper_candidate_spec,
+)
+from open_composer.research.research_brief import init_research_brief
 
 
 def test_strategy_promotion_report_writes_promotion_artifacts(
     sample_workspace: Path,
     monkeypatch,
 ) -> None:
+    init_research_brief(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        sample_workspace,
+    )
     comparison_path = (
         sample_workspace / "reports" / "data" / "comparisons" / "qqq_15m_alpaca_vs_longbridge.json"
     )
@@ -91,6 +101,7 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
         "cost_sensitivity",
         "data_comparison",
         "strict_data",
+        "universe_audit",
         "feature_packets",
         "factor_lab",
         "execution_reality",
@@ -98,6 +109,8 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
         "benchmark_family",
         "harness_artifacts",
         "research_design",
+        "research_brief",
+        "overfit_risk",
     }
     assert payload["gate_summary"]["workflow_pass"] is True
     assert payload["gate_summary"]["research_pass"] is False
@@ -148,11 +161,31 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert "| llm_contribution_pass | N/A `not_applicable`" in text
 
 
+def test_hybrid_paper_plan_candidate_file_is_not_active(sample_workspace: Path) -> None:
+    spec = load_strategy_spec(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    )
+
+    file_candidate = _paper_candidate_spec(spec)
+    activation_candidate = _paper_activation_candidate_spec(spec)
+
+    assert file_candidate.lifecycle == "draft"
+    assert file_candidate.execution.mode == "paper_auto"
+    assert file_candidate.execution.broker == "alpaca_paper"
+    assert file_candidate.notes.model_dump(mode="json")["paper_candidate_not_activated"] is True
+    assert activation_candidate.lifecycle == "active"
+    assert activation_candidate.execution.mode == "paper_auto"
+
+
 def test_promotion_report_renders_five_pass_table(
     sample_workspace: Path,
     monkeypatch,
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    init_research_brief(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        sample_workspace,
+    )
 
     result = CliRunner().invoke(
         app,
@@ -177,6 +210,10 @@ def test_promotion_report_marks_llm_contribution_not_applicable(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    init_research_brief(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        sample_workspace,
+    )
 
     result = CliRunner().invoke(
         app,

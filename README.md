@@ -143,6 +143,7 @@ artifact size without deleting anything.
 - [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md) - VPS Dashboard deployment
 - [docs/longbridge-integration.md](docs/longbridge-integration.md) - Longbridge configuration and data scope
 - [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) - no-context Codex starting review document
+- [docs/strategy-research-product-remediation-plan-2026-05-26.zh.md](docs/strategy-research-product-remediation-plan-2026-05-26.zh.md) - strategy research workflow remediation plan for no-context agent review
 - [docs/plan-step-1-simplification-2026-05-22.zh.md](docs/plan-step-1-simplification-2026-05-22.zh.md) - Step 1 simplification and legacy cleanup plan
 - [docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md](docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md) - Step 2 long-lived worksession and LLM factor plan
 - [docs/plan-step-3-dashboard-first-2026-05-22.zh.md](docs/plan-step-3-dashboard-first-2026-05-22.zh.md) - Step 3 Dashboard-first interaction plan

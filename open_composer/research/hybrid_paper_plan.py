@@ -35,6 +35,7 @@ def build_hybrid_paper_plan(
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
     candidate_spec = _paper_candidate_spec(spec)
+    activation_candidate_spec = _paper_activation_candidate_spec(spec)
     candidate_spec_path = (
         base / "strategy_specs" / "drafts" / f"{spec.name}_paper_auto_candidate.yaml"
     )
@@ -45,12 +46,12 @@ def build_hybrid_paper_plan(
     )
     activation_promotion_path = _write_paper_activation_promotion_report(
         source_spec=spec,
-        candidate_spec=candidate_spec,
+        candidate_spec=activation_candidate_spec,
         candidate_spec_path=candidate_spec_path,
         root=base,
     )
     readiness = assess_paper_strategy_readiness_for_spec(
-        candidate_spec,
+        activation_candidate_spec,
         base,
         spec_path=candidate_spec_path,
     )
@@ -120,6 +121,21 @@ def build_hybrid_paper_plan(
 
 
 def _paper_candidate_spec(spec: StrategySpec) -> StrategySpec:
+    raw = _paper_activation_candidate_spec(spec).model_dump(mode="json")
+    raw["lifecycle"] = "draft"
+    raw["notes"] = {
+        **raw["notes"],
+        "paper_candidate_not_activated": True,
+        "paper_ready_position": (
+            "This candidate records the paper_auto intent but is not activated. "
+            "Readiness reports evaluate an in-memory active activation candidate; "
+            "broker orders still require an explicit activation/run command."
+        ),
+    }
+    return StrategySpec.model_validate(raw)
+
+
+def _paper_activation_candidate_spec(spec: StrategySpec) -> StrategySpec:
     raw = spec.model_dump(mode="json")
     raw["name"] = f"{spec.name}_paper_auto_candidate"
     raw["lifecycle"] = "active"
@@ -167,11 +183,71 @@ def _write_paper_activation_promotion_report(
     target_weights = _load_optional_json(target_weights_path)
     factor_attribution = _load_optional_json(factor_attribution_path)
     news_lift = _load_optional_json(news_lift_path)
-    if source_promotion is None or target_weights is None or factor_attribution is None:
-        return None
+    missing_inputs = [
+        name
+        for name, payload in {
+            "source_promotion": source_promotion,
+            "target_weights": target_weights,
+            "factor_attribution": factor_attribution,
+        }.items()
+        if payload is None
+    ]
+    if missing_inputs:
+        return _write_blocked_activation_promotion_report(
+            candidate_spec=candidate_spec,
+            candidate_spec_path=candidate_spec_path,
+            root=root,
+            source_name=source_name,
+            blockers=[f"missing {name}" for name in missing_inputs],
+            source_evidence={
+                "source_promotion_path": _relpath(source_promotion_path, root),
+                "target_weights_path": _relpath(target_weights_path, root),
+                "factor_attribution_path": _relpath(factor_attribution_path, root),
+            },
+        )
+    if (
+        source_promotion.get("status") != "ok"
+        or source_promotion.get("ready") is not True
+        or (source_promotion.get("gate_summary") or {}).get("paper_ready_pass") is not True
+    ):
+        source_checks = source_promotion.get("checks") if isinstance(source_promotion, dict) else []
+        blockers = [
+            str(item.get("name"))
+            for item in source_checks
+            if isinstance(item, dict) and item.get("status") == "blocked"
+        ]
+        if not blockers:
+            blockers = [
+                f"source_status={source_promotion.get('status')}",
+                f"source_ready={source_promotion.get('ready')}",
+            ]
+        return _write_blocked_activation_promotion_report(
+            candidate_spec=candidate_spec,
+            candidate_spec_path=candidate_spec_path,
+            root=root,
+            source_name=source_name,
+            blockers=blockers,
+            source_evidence={
+                "source_promotion_path": _relpath(source_promotion_path, root),
+                "target_weights_path": _relpath(target_weights_path, root),
+                "factor_attribution_path": _relpath(factor_attribution_path, root),
+                "news_marginal_lift_path": _relpath(news_lift_path, root),
+            },
+        )
     parity_check = target_weights.get("parity_check")
     if not isinstance(parity_check, dict) or parity_check.get("status") != "pass":
-        return None
+        return _write_blocked_activation_promotion_report(
+            candidate_spec=candidate_spec,
+            candidate_spec_path=candidate_spec_path,
+            root=root,
+            source_name=source_name,
+            blockers=["target weight parity check is not pass"],
+            source_evidence={
+                "source_promotion_path": _relpath(source_promotion_path, root),
+                "target_weights_path": _relpath(target_weights_path, root),
+                "factor_attribution_path": _relpath(factor_attribution_path, root),
+            },
+        )
 
     contract_path = write_research_contract(candidate_spec_path, root)
     benchmark_family = source_promotion.get("benchmark_family")
@@ -284,6 +360,59 @@ def _write_paper_activation_promotion_report(
             "details": news_details,
         }
     )
+    json_path = root / "reports" / "research" / f"{candidate_spec.name}-promotion.json"
+    report_path = json_path.with_suffix(".md")
+    write_json(json_path, payload)
+    _write_activation_promotion_markdown(report_path, json_path, payload)
+    return json_path
+
+
+def _write_blocked_activation_promotion_report(
+    *,
+    candidate_spec: StrategySpec,
+    candidate_spec_path: Path,
+    root: Path,
+    source_name: str,
+    blockers: list[str],
+    source_evidence: dict[str, Any],
+) -> Path:
+    contract_path = write_research_contract(candidate_spec_path, root)
+    payload = {
+        "strategy_name": candidate_spec.name,
+        "source_spec_path": _relpath(candidate_spec_path, root),
+        "status": "blocked",
+        "ready": False,
+        "mode": "hybrid_paper_activation",
+        "gate_summary": {
+            "workflow_pass": True,
+            "research_pass": False,
+            "llm_contribution_pass": None,
+            "paper_ready_pass": False,
+            "blocked_checks": ["source_promotion"],
+            "warning_checks": [],
+            "benchmark_family_complete": False,
+        },
+        "checks": [
+            {
+                "name": "source_promotion",
+                "status": "blocked",
+                "message": "Source strategy is not paper-ready for activation.",
+                "details": {"blockers": blockers, "source_strategy": source_name},
+            }
+        ],
+        "benchmark_family": {"complete": False, "missing": ["source_promotion_ready"]},
+        "data_profile": {},
+        "research_manifest": {
+            "research_contract_path": _relpath(contract_path, root),
+            "source_spec_path": _relpath(candidate_spec_path, root),
+            "paper_candidate_source": source_name,
+        },
+        "source_evidence": source_evidence,
+        "safety_note": (
+            "Paper activation is blocked until the source strategy promotion and readiness "
+            "gates pass without blocked checks."
+        ),
+    }
     json_path = root / "reports" / "research" / f"{candidate_spec.name}-promotion.json"
     report_path = json_path.with_suffix(".md")
     write_json(json_path, payload)

@@ -15,6 +15,7 @@ from open_composer.models.source_card import (
     evaluate_source_cards,
     load_source_cards,
 )
+from open_composer.research.research_brief import init_research_brief, validate_research_brief
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -226,3 +227,34 @@ class TestEvaluateSourceCards:
     def test_returns_empty_for_missing_strategy(self, tmp_path: Path) -> None:
         statuses = evaluate_source_cards("nonexistent", tmp_path)
         assert statuses == []
+
+
+def test_research_brief_requires_source_cards_for_method_families(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    raw = spec_path.read_text(encoding="utf-8")
+    raw = raw.replace("universe: [QQQ]", "universe: [QQQ, SQQQ]")
+    spec_path.write_text(raw, encoding="utf-8")
+    init_research_brief(spec_path, sample_workspace, overwrite=True)
+
+    missing = validate_research_brief(spec_path, sample_workspace)
+
+    assert not missing.ok
+    assert "source_card_missing_for_method_family:inverse_etf" in missing.blocked
+
+    _write_cards(
+        sample_workspace,
+        "fixture_pullback_15m",
+        [
+            _minimal_card(
+                claim_id="inverse-etf-path-dependence",
+                claim="Inverse ETF daily reset creates path dependence.",
+                source_type="paper",
+                applies_to=["inverse_etf"],
+                method_family="inverse_etf",
+            )
+        ],
+    )
+    ok = validate_research_brief(spec_path, sample_workspace)
+    assert ok.ok

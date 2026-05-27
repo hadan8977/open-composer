@@ -71,7 +71,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
     spec_paths = _strategy_spec_paths(base)
 
     version_records = _build_version_records(base, spec_paths)
-    strategy_records = _build_strategy_records(version_records)
+    strategy_records = _build_strategy_records(base, version_records)
     run_records, signal_records = _build_run_and_signal_records(base, strategy_records)
     review_records = _build_review_records(base, signal_records, strategy_records)
     context_records = _build_context_records(base, signal_records)
@@ -386,15 +386,23 @@ def _build_version_records(base: Path, spec_paths: list[Path]) -> list[Dashboard
     return versions
 
 
-def _build_strategy_records(version_records: list[DashboardVersion]) -> list[DashboardStrategy]:
+def _build_strategy_records(
+    base: Path, version_records: list[DashboardVersion]
+) -> list[DashboardStrategy]:
     grouped: dict[str, list[DashboardVersion]] = defaultdict(list)
     for version in version_records:
         grouped[version.strategy_id].append(version)
 
     strategies: list[DashboardStrategy] = []
     for strategy_id, versions in grouped.items():
+        current_versions = [
+            version
+            for version in versions
+            if any((base / source_path).exists() for source_path in version.source_paths)
+        ]
+        selectable_versions = current_versions or versions
         selected = max(
-            versions,
+            selectable_versions,
             key=lambda item: (
                 LIFECYCLE_PRIORITY[item.primary_lifecycle],
                 item.modified_at,
@@ -406,6 +414,14 @@ def _build_strategy_records(version_records: list[DashboardVersion]) -> list[Das
         compatibility_reasons = {
             finding.capability: list(finding.reasons) for finding in selected.compatibility
         }
+        source_paths = _union_paths(version.source_paths for version in versions)
+        source_paths.sort(
+            key=lambda path: (
+                not (base / path).exists(),
+                path != selected.primary_path,
+                path,
+            )
+        )
         strategies.append(
             DashboardStrategy(
                 strategy_id=strategy_id,
@@ -413,7 +429,7 @@ def _build_strategy_records(version_records: list[DashboardVersion]) -> list[Das
                 current_version_id=selected.version_id,
                 version_ids=[version.version_id for version in versions],
                 version_count=len(versions),
-                source_paths=_union_paths(version.source_paths for version in versions),
+                source_paths=source_paths,
                 lifecycle=selected.primary_lifecycle,
                 lifecycle_counts=dict(sorted(lifecycle_counts.items())),
                 symbol=selected.symbol,
@@ -1073,6 +1089,8 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
             continue
         name = path.name
         if name in {"index.json", "index.jsonl"}:
+            continue
+        if name.endswith("-universe-audit.json"):
             continue
         if name.endswith("-promotion.json"):
             kind = "promotion"

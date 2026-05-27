@@ -210,6 +210,52 @@ def update_project_state(
     return project
 
 
+def update_gate_state(
+    project_id: str,
+    gate_name: str,
+    status: Any,
+    root: Path | None = None,
+    *,
+    reasons: list[str] | None = None,
+    agent: TraceAgent = "system",
+    metadata: dict[str, Any] | None = None,
+) -> StrategyProject:
+    """Update project.yaml.gate_summary and append a matching trace row.
+
+    This is the single write path for gate state. Dashboard, CLI, and agent
+    entrypoints should call it instead of mutating ``project.gate_summary``
+    directly when recording a gate transition.
+    """
+    base = root or project_root()
+    normalized_gate = gate_name.strip()
+    if not normalized_gate:
+        raise ValueError("gate_name is required")
+    project = load_project(project_id, base)
+    gate_summary = dict(project.gate_summary or {})
+    gate_summary[normalized_gate] = status
+    reason_items = _unique_strings([str(item) for item in reasons or [] if str(item).strip()])
+    if reason_items:
+        key = "blocked_reasons" if status in {False, "fail", "blocked"} else "warning_reasons"
+        existing = gate_summary.get(key)
+        existing_items = [str(item) for item in existing] if isinstance(existing, list) else []
+        gate_summary[key] = _unique_strings([*existing_items, *reason_items])
+    project.gate_summary = gate_summary
+    write_project(project, base)
+    append_trace(
+        project_id,
+        agent=agent,
+        operation="gate_state_update",
+        metadata={
+            "gate_name": normalized_gate,
+            "status": status,
+            "reasons": reason_items,
+            **(metadata or {}),
+        },
+        root=base,
+    )
+    return project
+
+
 def write_project_context(
     project: StrategyProject,
     root: Path | None = None,

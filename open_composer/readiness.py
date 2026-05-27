@@ -198,6 +198,7 @@ def build_readiness_report(root: Path | None = None) -> ReadinessReport:
 
     if catalog is not None:
         paper_strategy_reports = []
+        missing_paper_strategy_sources: list[dict[str, object]] = []
         for strategy in catalog.strategies:
             if not (
                 strategy.lifecycle == "active"
@@ -206,7 +207,19 @@ def build_readiness_report(root: Path | None = None) -> ReadinessReport:
                 and strategy.source_paths
             ):
                 continue
-            report = assess_paper_strategy_readiness(base / strategy.source_paths[0], base)
+            source_path = next(
+                (base / path for path in strategy.source_paths if (base / path).exists()),
+                None,
+            )
+            if source_path is None:
+                missing_paper_strategy_sources.append(
+                    {
+                        "strategy_name": strategy.strategy_name,
+                        "source_paths": list(strategy.source_paths),
+                    }
+                )
+                continue
+            report = assess_paper_strategy_readiness(source_path, base)
             paper_strategy_reports.append(report)
         paper_strategy_status = _overall_status(
             [
@@ -230,12 +243,16 @@ def build_readiness_report(root: Path | None = None) -> ReadinessReport:
                 for report in paper_strategy_reports
             ]
         )
+        if missing_paper_strategy_sources and paper_strategy_status == "ok":
+            paper_strategy_status = "warning"
         checks.append(
             ReadinessCheck(
                 name="paper_strategy_readiness",
                 status=paper_strategy_status,
                 message=(
-                    "No active paper_auto strategies are checked in."
+                    "Active paper_auto strategy source paths are missing."
+                    if missing_paper_strategy_sources and not paper_strategy_reports
+                    else "No active paper_auto strategies are checked in."
                     if not paper_strategy_reports
                     else f"{len(paper_strategy_reports)} active paper_auto strategy readiness "
                     f"report(s) checked."
@@ -243,6 +260,7 @@ def build_readiness_report(root: Path | None = None) -> ReadinessReport:
                 suggested_actions=[],
                 details={
                     "strategy_count": len(paper_strategy_reports),
+                    "missing_sources": missing_paper_strategy_sources,
                     "reports": [
                         {
                             "strategy_name": report.strategy_name,

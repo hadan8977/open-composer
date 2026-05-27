@@ -22,6 +22,13 @@ class TrialRecord(ResearchDataModel):
     quality_flags: list[str] = field(default_factory=list)
     lesson_tags: list[str] = field(default_factory=list)
     artifact_paths: dict[str, str | None] = field(default_factory=dict)
+    optimizer_type: str | None = None
+    seed: int | None = None
+    generation_or_iteration: int | None = None
+    train_window: dict[str, Any] = field(default_factory=dict)
+    validation_window: dict[str, Any] = field(default_factory=dict)
+    pruned: bool = False
+    rejection_reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -49,6 +56,7 @@ class TrialLedger(ResearchDataModel):
         trials: list[TrialRecord],
         max_candidates: int | None = None,
         local_choice_label: str | None = None,
+        random_seed: int | None = None,
     ) -> TrialLedger:
         return cls(
             strategy_name=strategy_name,
@@ -56,6 +64,7 @@ class TrialLedger(ResearchDataModel):
             trial_count=len(trials),
             candidate_count=len(trials),
             max_candidates=max_candidates,
+            random_seed=random_seed,
             local_choice_label=local_choice_label,
             trials=trials,
         )

@@ -24,6 +24,7 @@ from open_composer.research.promotion import (
     _relpath,
     _research_design_check,
 )
+from open_composer.research.universe_audit import assess_universe_audit
 from open_composer.storage import write_json
 from open_composer.strategy_versions import strategy_content_hash
 
@@ -274,6 +275,7 @@ def _router_checks(
         _out_of_sample_check(selected_route, acceptance_gate),
         _walk_forward_check(research_payload, acceptance_gate),
         _strict_data_check(spec, data_profile),
+        _universe_audit_check(spec, root),
         _feature_packet_check(spec, root),
         _factor_lab_check(spec, root),
         _alternative_data_check(spec, data_profile),
@@ -409,10 +411,81 @@ def _strict_data_check(spec: StrategySpec, data_profile: dict[str, Any]) -> Gate
     )
 
 
+def _universe_audit_check(spec: StrategySpec, root: Path) -> GateResult:
+    result = assess_universe_audit(spec, root)
+    findings = [
+        {
+            "code": item.code,
+            "severity": item.severity,
+            "message": item.message,
+            "evidence": item.evidence,
+        }
+        for item in result.findings
+    ]
+    details = {
+        "status": result.status,
+        "json_path": _relpath(result.json_path, root),
+        "report_path": _relpath(result.report_path, root),
+        "findings": findings,
+    }
+    if result.status == "blocked":
+        return GateResult(
+            name="universe_audit",
+            status="blocked",
+            message=(
+                "Router promotion requires PIT universe membership or explicit fixed-universe "
+                "evidence before research can be treated as paper-ready."
+            ),
+            details=details,
+        )
+    if result.status == "warning":
+        return GateResult(
+            name="universe_audit",
+            status="warning",
+            message="Router universe audit produced warnings.",
+            details=details,
+        )
+    return GateResult(
+        name="universe_audit",
+        status="ok",
+        message="Router universe audit passed.",
+        details=details,
+    )
+
+
 def _factor_lab_check(spec: StrategySpec, root: Path) -> GateResult:
     factor_lab_path = root / "reports" / "research" / f"{spec.name}-factor-lab.json"
     factor_lab_payload = _load_optional_json(factor_lab_path)
+    attribution_path = (
+        root / "reports" / "research" / f"{spec.name}-hybrid-factor-attribution.json"
+        if spec.portfolio.mode == "hybrid_adaptive_router"
+        else None
+    )
+    attribution_payload = _load_optional_json(attribution_path) if attribution_path else None
+    attribution_status = (
+        str(attribution_payload.get("status") or "warning")
+        if attribution_payload is not None
+        else None
+    )
+    attribution_details = {
+        "status": attribution_status,
+        "path": str(attribution_path) if attribution_path else None,
+        "blockers": _string_list((attribution_payload or {}).get("blockers")),
+    }
     if factor_lab_payload is None:
+        if attribution_status == "ok":
+            return GateResult(
+                name="factor_lab",
+                status="ok",
+                message="Router-aware factor attribution is present and passed.",
+                details={
+                    "quality_flags": [],
+                    "factor_count": 0,
+                    "factor_lab_path": str(factor_lab_path),
+                    "route_factor_attribution": attribution_details,
+                    "not_applicable": False,
+                },
+            )
         return GateResult(
             name="factor_lab",
             status="warning" if spec.factors else "ok",
@@ -425,6 +498,7 @@ def _factor_lab_check(spec: StrategySpec, root: Path) -> GateResult:
                 "quality_flags": [],
                 "factor_count": 0,
                 "factor_lab_path": str(factor_lab_path),
+                "route_factor_attribution": attribution_details,
                 "not_applicable": not bool(spec.factors),
             },
         )
@@ -441,6 +515,7 @@ def _factor_lab_check(spec: StrategySpec, root: Path) -> GateResult:
                 "quality_flags": quality_flags,
                 "factor_count": factor_count,
                 "factor_lab_path": str(factor_lab_path),
+                "route_factor_attribution": attribution_details,
                 "not_applicable": True,
             },
         )
@@ -454,6 +529,38 @@ def _factor_lab_check(spec: StrategySpec, root: Path) -> GateResult:
                 "quality_flags": quality_flags,
                 "factor_count": factor_count,
                 "factor_lab_path": str(factor_lab_path),
+                "route_factor_attribution": attribution_details,
+                "not_applicable": False,
+            },
+        )
+    if attribution_status == "blocked":
+        return GateResult(
+            name="factor_lab",
+            status="warning",
+            message="Route-level factor attribution has blockers.",
+            details={
+                "status": status,
+                "quality_flags": quality_flags,
+                "factor_count": factor_count,
+                "factor_lab_path": str(factor_lab_path),
+                "route_factor_attribution": attribution_details,
+                "not_applicable": False,
+            },
+        )
+    if attribution_status == "ok":
+        return GateResult(
+            name="factor_lab",
+            status="ok",
+            message=(
+                "Router-aware factor attribution passed; single-symbol Factor Lab "
+                "diagnostics are advisory for this route."
+            ),
+            details={
+                "status": status,
+                "quality_flags": quality_flags,
+                "factor_count": factor_count,
+                "factor_lab_path": str(factor_lab_path),
+                "route_factor_attribution": attribution_details,
                 "not_applicable": False,
             },
         )
@@ -470,6 +577,7 @@ def _factor_lab_check(spec: StrategySpec, root: Path) -> GateResult:
             "quality_flags": quality_flags,
             "factor_count": factor_count,
             "factor_lab_path": str(factor_lab_path),
+            "route_factor_attribution": attribution_details,
             "not_applicable": False,
         },
     )

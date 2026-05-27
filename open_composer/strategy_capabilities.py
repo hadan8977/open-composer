@@ -11,6 +11,7 @@ from open_composer.adapters.execution.nautilus_trader import build_nautilus_trad
 from open_composer.expressions import ExpressionError, validate_expression
 from open_composer.models.execution_backend import ExecutionBackendPlan
 from open_composer.models.strategy_spec import StrategySpec
+from open_composer.router_authorization import assess_router_order_authorization, is_router_strategy
 from open_composer.timeframes import supported_timeframes, timeframe_supported
 
 CapabilityStatus = Literal["supported", "partial", "blocked", "unsupported"]
@@ -48,13 +49,14 @@ def assess_strategy_capabilities_for_spec(
     spec: StrategySpec,
     spec_path: Path | str,
 ) -> StrategyCapabilityReport:
+    root = _root_for_spec_path(Path(spec_path))
     expression_inventory = _inventory_expressions(spec)
     expression_errors = _expression_errors(spec)
     findings = [
         _python_mvp_backtest(spec, expression_errors),
         _tradingview_pine_strategy(spec, expression_errors),
         _nautilus_trader_backend(spec_path),
-        _alpaca_paper_execution(spec, expression_errors),
+        _alpaca_paper_execution(spec, expression_errors, root),
         _llm_quant_workflow(spec),
     ]
     return StrategyCapabilityReport(
@@ -161,7 +163,11 @@ def _tradingview_pine_strategy(
     )
 
 
-def _alpaca_paper_execution(spec: StrategySpec, expression_errors: list[str]) -> CapabilityFinding:
+def _alpaca_paper_execution(
+    spec: StrategySpec,
+    expression_errors: list[str],
+    root: Path,
+) -> CapabilityFinding:
     reasons: list[str] = []
     if expression_errors:
         return CapabilityFinding("alpaca_paper_execution", "unsupported", expression_errors)
@@ -186,12 +192,7 @@ def _alpaca_paper_execution(spec: StrategySpec, expression_errors: list[str]) ->
         observation_only_reasons.append(
             "short exposure requires short_selling risk-domain evidence before broker orders"
         )
-    if spec.portfolio.mode in {
-        "adaptive_intraday_internal_router",
-        "hybrid_adaptive_router",
-        "beta_exposure_router",
-        "core_beta_satellite_router",
-    }:
+    if is_router_strategy(spec) and not assess_router_order_authorization(spec, root).authorized:
         observation_only_reasons.append(
             "router strategies may run observation-only target-weight cycles before order "
             "authorization"
@@ -211,6 +212,15 @@ def _alpaca_paper_execution(spec: StrategySpec, expression_errors: list[str]) ->
         "supported",
         ["active paper_auto Alpaca strategy can submit paper orders with explicit allow flag"],
     )
+
+
+def _root_for_spec_path(spec_path: Path) -> Path:
+    parts = spec_path.parts
+    if "strategy_specs" in parts:
+        idx = parts.index("strategy_specs")
+        if idx > 0:
+            return Path(*parts[:idx])
+    return spec_path.parent
 
 
 def _nautilus_trader_backend(spec_path: Path | str) -> CapabilityFinding:

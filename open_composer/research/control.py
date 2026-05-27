@@ -265,6 +265,15 @@ def _blocked_items(
             items.append(detail)
     for blocker in _list(_dict(promotion.get("five_pass_checks")).get("blockers")):
         items.append(str(blocker))
+    gate_summary = _dict(promotion.get("gate_summary"))
+    for blocker in _list(gate_summary.get("blocked_checks")):
+        items.append(f"promotion:{blocker}")
+    for check in _list(promotion.get("checks")):
+        if not isinstance(check, dict) or check.get("status") != "blocked":
+            continue
+        name = str(check.get("name") or "unknown_check")
+        message = str(check.get("message") or "").strip()
+        items.append(f"promotion:{name}" + (f":{_clip(message, 80)}" if message else ""))
     return _dedupe(items)[:8]
 
 

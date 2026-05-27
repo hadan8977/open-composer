@@ -29,6 +29,9 @@ from open_composer.research.metadata import (
     runtime_payload,
     search_space,
 )
+from open_composer.research.pbo import build_overfit_risk_report
+from open_composer.research.research_brief import validate_research_brief
+from open_composer.research.universe_audit import assess_universe_audit
 from open_composer.storage import write_json
 from open_composer.strategy_versions import strategy_content_hash
 
@@ -193,6 +196,8 @@ def build_promotion_report(
 
     strict_data_check = _strict_data_check(spec, full)
     checks.append(strict_data_check)
+    universe_audit_check = _universe_audit_promotion_check(spec, base)
+    checks.append(universe_audit_check)
 
     feature_packet_check = _feature_packet_check(spec, base)
     checks.append(feature_packet_check)
@@ -214,6 +219,8 @@ def build_promotion_report(
 
     checks.append(_harness_artifacts_promotion_check(spec, base))
     checks.append(_research_design_check(spec))
+    checks.append(_research_brief_check(spec_path, base))
+    checks.append(_overfit_risk_check(spec_path, base))
 
     ready = all(check.status == "ok" for check in checks)
     status: PromotionStatus
@@ -682,6 +689,117 @@ def _research_design_check(spec: StrategySpec) -> GateResult:
     )
 
 
+def _research_brief_check(spec_path: Path, root: Path) -> GateResult:
+    result = validate_research_brief(spec_path, root, require_for_optimization=False)
+    details = {
+        "path": str(result.path),
+        "blocked": result.blocked,
+        "warnings": result.warnings,
+    }
+    if result.blocked:
+        return GateResult(
+            name="research_brief",
+            status="blocked",
+            message="Research brief is missing, stale, or incomplete.",
+            details=details,
+        )
+    if result.warnings:
+        return GateResult(
+            name="research_brief",
+            status="warning",
+            message="Research brief has warnings.",
+            details=details,
+        )
+    return GateResult(
+        name="research_brief",
+        status="ok",
+        message="Research brief is valid and bound to the current spec hash.",
+        details=details,
+    )
+
+
+def _overfit_risk_check(spec_path: Path, root: Path) -> GateResult:
+    result = build_overfit_risk_report(spec_path, root)
+    details = {
+        "trial_count": result.trial_count,
+        "dsr_proxy": result.dsr_proxy,
+        "pbo_proxy": result.pbo_proxy,
+        "blockers": result.blockers,
+        "warnings": result.warnings,
+        "json_path": str(result.json_path) if result.json_path else None,
+        "report_path": str(result.report_path) if result.report_path else None,
+    }
+    if result.status == "blocked":
+        return GateResult(
+            name="overfit_risk",
+            status="blocked",
+            message="Multiple-testing overfit risk blocks promotion: " + ", ".join(result.blockers),
+            details=details,
+        )
+    if result.status == "warning":
+        return GateResult(
+            name="overfit_risk",
+            status="warning",
+            message="Multiple-testing overfit risk warnings: " + ", ".join(result.warnings),
+            details=details,
+        )
+    if result.status == "not_applicable":
+        return GateResult(
+            name="overfit_risk",
+            status="ok",
+            message="No large parameter sweep requiring overfit-risk review was found.",
+            details=details,
+        )
+    return GateResult(
+        name="overfit_risk",
+        status="ok",
+        message="Multiple-testing overfit risk proxy passed.",
+        details=details,
+    )
+
+
+def _universe_audit_promotion_check(spec: StrategySpec, root: Path) -> GateResult:
+    result = assess_universe_audit(spec, root)
+    findings = [
+        {
+            "code": item.code,
+            "severity": item.severity,
+            "message": item.message,
+            "evidence": item.evidence,
+        }
+        for item in result.findings
+    ]
+    details = {
+        "status": result.status,
+        "json_path": _relpath(result.json_path, root),
+        "report_path": _relpath(result.report_path, root),
+        "findings": findings,
+    }
+    if result.status == "blocked":
+        return GateResult(
+            name="universe_audit",
+            status="blocked",
+            message=(
+                "Universe audit blocks promotion because PIT membership or "
+                "survivorship controls are incomplete."
+            ),
+            details=details,
+        )
+    if result.status == "warning":
+        return GateResult(
+            name="universe_audit",
+            status="warning",
+            message="Universe audit produced warnings that should be resolved before paper.",
+            details=details,
+        )
+    return GateResult(
+        name="universe_audit",
+        status="ok",
+        message="Universe audit passed.",
+        details=details,
+    )
+
+
 def _evidence_acquisition_tier(
     spec: StrategySpec,
     data_profile: dict[str, object],
@@ -808,6 +926,7 @@ def _strict_data_check(spec: StrategySpec, artifacts: BacktestArtifacts) -> Gate
 def _feature_packet_check(spec: StrategySpec, root: Path) -> GateResult:
     inspected: list[dict[str, object]] = []
     missing_or_incomplete: list[str] = []
+    stability_warnings: list[str] = []
     for name, factor in spec.factors.items():
         if factor.source not in {"llm_feature", "feature_packet"}:
             continue
@@ -827,6 +946,8 @@ def _feature_packet_check(spec: StrategySpec, root: Path) -> GateResult:
                 "warnings": inspection.replay_warnings,
                 "evidence_count": inspection.evidence_count,
                 "missing_evidence_count": inspection.missing_evidence_count,
+                "prompt_hashes": inspection.prompt_hashes,
+                "missing_prompt_hash_count": inspection.missing_prompt_hash_count,
             }
         )
         if not inspection.exists or inspection.point_in_time_status != "complete":
@@ -839,6 +960,16 @@ def _feature_packet_check(spec: StrategySpec, root: Path) -> GateResult:
                 f"{name}: {inspection.missing_evidence_count} packet row(s) at "
                 f"{path_value} lack marginal-lift evidence"
             )
+        if len(inspection.prompt_hashes) > 1:
+            stability_warnings.append(
+                f"{name}: multiple prompt_hash values in {path_value}: "
+                + ", ".join(inspection.prompt_hashes[:5])
+            )
+        if inspection.missing_prompt_hash_count:
+            stability_warnings.append(
+                f"{name}: {inspection.missing_prompt_hash_count} packet row(s) at "
+                f"{path_value} missing prompt_hash"
+            )
     if missing_or_incomplete:
         return GateResult(
             name="feature_packets",
@@ -846,6 +977,14 @@ def _feature_packet_check(spec: StrategySpec, root: Path) -> GateResult:
             message="Promotion requires PIT-complete feature packets: "
             + "; ".join(missing_or_incomplete),
             details={"inspected": inspected},
+        )
+    if stability_warnings:
+        return GateResult(
+            name="feature_packets",
+            status="warning",
+            message="Feature packets are PIT-complete but prompt/version stability needs review: "
+            + "; ".join(stability_warnings),
+            details={"inspected": inspected, "prompt_version_warnings": stability_warnings},
         )
     return GateResult(
         name="feature_packets",
@@ -1332,6 +1471,8 @@ def _build_pass_summary(
         "alternative_data",
         "harness_artifacts",
         "research_design",
+        "research_brief",
+        "overfit_risk",
     }
     research_failures = sorted(name for name in research_gate_names if name in blocked)
     cost_grid_warning = _cost_grid_warning(spec, root)

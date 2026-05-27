@@ -31,6 +31,8 @@ from open_composer.research.metadata import (
     workspace_relative_path,
 )
 from open_composer.research.optimizer import _score_candidate
+from open_composer.research.optimizers.random_search import select_random_combinations
+from open_composer.research.research_brief import ensure_research_brief_for_sweep
 from open_composer.strategy_versions import strategy_content_hash
 
 ALLOWED_SWEEP_ROOTS = {"entry", "exit", "risk", "costs", "factors"}
@@ -92,6 +94,8 @@ def run_parameter_sweep(
     max_candidates: int = 200,
     top_n: int = 10,
     write_top: int = 1,
+    search_strategy: str = "grid",
+    random_seed: int | None = None,
 ) -> ParameterSweepResult:
     started_at = perf_counter()
     base = root or project_root()
@@ -104,12 +108,24 @@ def run_parameter_sweep(
         msg = "--max-candidates must be at least 1"
         raise ValueError(msg)
     total_candidates = prod(len(values) for values in parameters.values())
-    if total_candidates > max_candidates:
+    if search_strategy not in {"grid", "random"}:
+        msg = "--search-strategy must be one of: grid, random"
+        raise ValueError(msg)
+    _validate_sweep_paths(source, parameters)
+    if search_strategy == "grid" and total_candidates > max_candidates:
         msg = (
             f"parameter sweep would create {total_candidates} candidates; "
             f"raise --max-candidates above {total_candidates} or narrow the grid"
         )
         raise ValueError(msg)
+    planned_candidates = (
+        total_candidates if search_strategy == "grid" else min(total_candidates, max_candidates)
+    )
+    brief_validation = ensure_research_brief_for_sweep(
+        spec_path,
+        _planned_parameter_budget(parameters, planned_candidates),
+        base,
+    )
 
     frame = load_ohlcv_for_spec(source, base)
     data_profile = frame_data_profile(
@@ -122,7 +138,13 @@ def run_parameter_sweep(
         path=frame.attrs.get("data_source_path") or source.data.path,
     )
     candidate_results: list[SweepCandidateResult] = []
-    for index, params in enumerate(_parameter_combinations(parameters), start=1):
+    selected_params = _select_parameter_combinations(
+        parameters,
+        search_strategy=search_strategy,
+        max_candidates=max_candidates,
+        random_seed=random_seed,
+    )
+    for index, params in enumerate(selected_params, start=1):
         candidate, applied = _candidate_from_params(source, params, index, base)
         artifacts = backtest_frame(
             candidate,
@@ -160,6 +182,8 @@ def run_parameter_sweep(
             f"min_return_pct={min_return_pct}",
             f"min_signals={min_signals}",
             f"min_sharpe={min_sharpe}",
+            f"search_strategy={search_strategy}",
+            f"search_budget={brief_validation.payload.get('search_budget')}",
         ],
     )
     manifest = research_run_manifest(
@@ -175,7 +199,13 @@ def run_parameter_sweep(
     written_specs = _write_top_specs(base, candidate_results, write_top)
     report_path = base / "reports" / "research" / f"{source.name}-parameter-sweep.md"
     json_path = base / "reports" / "research" / f"{source.name}-parameter-sweep.json"
-    ledger = _trial_ledger(source, candidate_results, max_candidates)
+    ledger = _trial_ledger(
+        source,
+        candidate_results,
+        max_candidates,
+        search_strategy=search_strategy,
+        random_seed=random_seed,
+    )
     candidate_set = _candidate_set(source, spec_path, candidate_results)
     selection_decision = _selection_decision(candidate_results)
     index_record = ResearchRunIndexRecord(
@@ -196,6 +226,7 @@ def run_parameter_sweep(
         json_path=workspace_relative_path(json_path, base),
         source_artifacts={
             "trial_ledger": workspace_relative_path(json_path, base),
+            "research_brief": workspace_relative_path(brief_validation.path, base),
         },
     )
     _write_sweep_json(
@@ -216,6 +247,9 @@ def run_parameter_sweep(
         candidate_set,
         selection_decision,
         index_record,
+        search_strategy,
+        random_seed,
+        brief_validation.payload,
     )
     writer.append_index(index_record)
     _write_sweep_report(
@@ -233,6 +267,7 @@ def run_parameter_sweep(
         data_profile,
         search_space_payload,
         sweep_analysis,
+        search_strategy,
     )
     return ParameterSweepResult(
         report_path=report_path,
@@ -253,6 +288,41 @@ def _parameter_combinations(parameters: dict[str, list[str]]) -> list[dict[str, 
         dict(zip(paths, values, strict=True))
         for values in product(*(parameters[path] for path in paths))
     ]
+
+
+def _select_parameter_combinations(
+    parameters: dict[str, list[str]],
+    *,
+    search_strategy: str,
+    max_candidates: int,
+    random_seed: int | None,
+) -> list[dict[str, str]]:
+    combinations = _parameter_combinations(parameters)
+    if search_strategy == "grid":
+        return combinations
+    return select_random_combinations(
+        combinations,
+        max_candidates=max_candidates,
+        seed=random_seed,
+    )
+
+
+def _planned_parameter_budget(
+    parameters: dict[str, list[str]],
+    planned_candidates: int,
+) -> dict[str, list[str]]:
+    if len(parameters) <= 1:
+        return parameters
+    return {"candidate_sample": [str(index) for index in range(planned_candidates)]}
+
+
+def _validate_sweep_paths(source: StrategySpec, parameters: dict[str, list[str]]) -> None:
+    raw = source.model_dump(mode="json")
+    for path, values in parameters.items():
+        if not values:
+            msg = f"sweep parameter has no values: {path}"
+            raise ValueError(msg)
+        _set_sweep_path(raw, path, values[0])
 
 
 def _candidate_from_params(
@@ -427,6 +497,9 @@ def _write_sweep_json(
     candidate_set: CandidateSet,
     selection_decision: dict[str, Any],
     index_record: ResearchRunIndexRecord,
+    search_strategy: str,
+    random_seed: int | None,
+    research_brief_payload: dict[str, Any],
 ) -> Path:
     ensure_dir(path.parent)
     payload = {
@@ -437,6 +510,9 @@ def _write_sweep_json(
         "trial_count": len(candidates),
         "max_candidates": max_candidates,
         "parameters": parameters,
+        "search_strategy": search_strategy,
+        "random_seed": random_seed,
+        "research_brief": research_brief_payload,
         "search_space": search_space_payload,
         "data_profile": data_profile,
         "research_manifest": manifest,
@@ -532,6 +608,9 @@ def _trial_ledger(
     source: StrategySpec,
     candidates: list[SweepCandidateResult],
     max_candidates: int,
+    *,
+    search_strategy: str,
+    random_seed: int | None,
 ) -> TrialLedger:
     trials = [
         TrialRecord(
@@ -553,6 +632,13 @@ def _trial_ledger(
                 if candidate.artifacts.run.report_path
                 else None,
             },
+            optimizer_type=search_strategy,
+            seed=random_seed,
+            generation_or_iteration=candidate.rank,
+            pruned=False,
+            rejection_reason=None
+            if candidate.rank == 1
+            else "lower_score_or_weaker_research_quality_than_selected_candidate",
         )
         for candidate in candidates
     ]
@@ -561,6 +647,7 @@ def _trial_ledger(
         family="parameter_sweep",
         trials=trials,
         max_candidates=max_candidates,
+        random_seed=random_seed,
     )
 
 
@@ -766,6 +853,7 @@ def _write_sweep_report(
     data_profile: dict[str, Any],
     search_space_payload: dict[str, Any],
     sweep_analysis: dict[str, Any],
+    search_strategy: str,
 ) -> Path:
     ensure_dir(path.parent)
     shown = candidates[: max(top_n, 0)]
@@ -778,6 +866,7 @@ def _write_sweep_report(
         f"- Candidate count: {len(candidates)}",
         f"- Trial count: {sweep_analysis.get('trial_count')}",
         f"- Candidate cap: {max_candidates}",
+        f"- Search strategy: `{search_strategy}`",
         f"- Data source mode: `{data_profile.get('source_mode') or 'unknown'}`",
         f"- Data as-of: `{data_profile.get('data_as_of') or 'unknown'}`",
         f"- Minimum return target: {min_return_pct:.2f}%",
@@ -791,7 +880,7 @@ def _write_sweep_report(
             "and data-source comparison."
         ),
         "",
-        "## Grid",
+        "## Search Grid",
         "",
     ]
     for path_name, values in parameters.items():

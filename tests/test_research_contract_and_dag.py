@@ -7,6 +7,7 @@ import yaml
 from typer.testing import CliRunner
 
 from open_composer.cli import app
+from open_composer.research.research_brief import init_research_brief
 
 
 def test_strategy_research_report_writes_default_contract_pipeline(
@@ -14,6 +15,10 @@ def test_strategy_research_report_writes_default_contract_pipeline(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    init_research_brief(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        sample_workspace,
+    )
 
     result = CliRunner().invoke(
         app,

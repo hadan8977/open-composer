@@ -9,6 +9,8 @@ from open_composer.projects import (
     create_project,
     list_projects,
     load_project,
+    read_trace_tail,
+    update_gate_state,
     verify_project_run,
 )
 from open_composer.research.artifact_state import write_project_artifact_state
@@ -124,6 +126,34 @@ def test_project_run_append_verifies_missing_paths_and_logs_notification(
     log_path = sample_workspace / "reports" / "notifications" / "log.jsonl"
     assert log_path.exists()
     assert "Strategy project round 1 complete" in log_path.read_text(encoding="utf-8")
+
+
+def test_project_gate_update_writes_project_yaml_and_trace(sample_workspace: Path) -> None:
+    project, _ = create_project(
+        StrategyProjectCreate(
+            name="QQQ Momentum",
+            thesis="Follow QQQ momentum with bounded drawdown.",
+        ),
+        sample_workspace,
+        create_request=False,
+    )
+
+    updated = update_gate_state(
+        project.project_id,
+        "research_pass",
+        "blocked",
+        sample_workspace,
+        reasons=["factor_lab_missing"],
+        agent="cli",
+    )
+
+    loaded = load_project(project.project_id, sample_workspace)
+    trace = read_trace_tail(project.project_id, 1, sample_workspace)
+    assert updated.gate_summary["research_pass"] == "blocked"
+    assert loaded.gate_summary["research_pass"] == "blocked"
+    assert "factor_lab_missing" in loaded.gate_summary["blocked_reasons"]
+    assert trace[0].operation == "gate_state_update"
+    assert trace[0].metadata["gate_name"] == "research_pass"
 
 
 def test_artifact_state_scans_project_evidence_and_financial_boundaries(

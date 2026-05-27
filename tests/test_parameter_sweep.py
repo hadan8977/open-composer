@@ -9,10 +9,12 @@ from typer.testing import CliRunner
 
 from open_composer.cli import app
 from open_composer.research.parameter_sweep import parse_sweep_parameters, run_parameter_sweep
+from open_composer.research.research_brief import init_research_brief
 
 
 def test_parameter_sweep_runs_grid_and_writes_ranked_reports(sample_workspace: Path) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    init_research_brief(spec_path, sample_workspace, search_budget=4)
     parameters = parse_sweep_parameters(
         [
             "risk.stop_loss_pct=0.8,1.2",
@@ -82,6 +84,7 @@ def test_parameter_sweep_runs_grid_and_writes_ranked_reports(sample_workspace: P
 
 def test_parameter_sweep_can_vary_expression_paths(sample_workspace: Path) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    init_research_brief(spec_path, sample_workspace, search_budget=2)
     parameters = parse_sweep_parameters(
         [
             "entry.all.0=close > ema(close, 5)|close > ema(close, 8)",
@@ -111,6 +114,7 @@ def test_parameter_sweep_rejects_execution_paths(sample_workspace: Path) -> None
 
 def test_parameter_sweep_enforces_candidate_cap(sample_workspace: Path) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    init_research_brief(spec_path, sample_workspace, search_budget=6)
     parameters = parse_sweep_parameters(
         [
             "risk.stop_loss_pct=0.8,1.0,1.2",
@@ -122,8 +126,113 @@ def test_parameter_sweep_enforces_candidate_cap(sample_workspace: Path) -> None:
         run_parameter_sweep(spec_path, parameters, sample_workspace, max_candidates=5)
 
 
+def test_parameter_sweep_blocked_without_brief(sample_workspace: Path) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    parameters = parse_sweep_parameters(["risk.stop_loss_pct=0.8,1.2"])
+
+    with pytest.raises(ValueError, match="research_brief_missing"):
+        run_parameter_sweep(spec_path, parameters, sample_workspace, max_candidates=2)
+
+
+def test_parameter_sweep_blocked_when_brief_hash_is_stale(sample_workspace: Path) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    brief_path, _ = init_research_brief(spec_path, sample_workspace, search_budget=2)
+    payload = json.loads(brief_path.read_text(encoding="utf-8"))
+    payload["spec_hash"] = "stale"
+    brief_path.write_text(json.dumps(payload), encoding="utf-8")
+    parameters = parse_sweep_parameters(["risk.stop_loss_pct=0.8,1.2"])
+
+    with pytest.raises(ValueError, match="research_brief_stale_spec_hash"):
+        run_parameter_sweep(spec_path, parameters, sample_workspace, max_candidates=2)
+
+
+def test_parameter_sweep_blocked_when_candidates_exceed_budget(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    init_research_brief(spec_path, sample_workspace, search_budget=1)
+    parameters = parse_sweep_parameters(["risk.stop_loss_pct=0.8,1.2"])
+
+    with pytest.raises(ValueError, match="candidate_count_exceeds_search_budget:2>1"):
+        run_parameter_sweep(spec_path, parameters, sample_workspace, max_candidates=2)
+
+
+def test_research_brief_cli_init_and_validate(sample_workspace: Path, monkeypatch) -> None:
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    runner = CliRunner()
+
+    init_result = runner.invoke(
+        app,
+        ["strategy", "research-brief", "init", str(spec_path), "--search-budget", "2"],
+        catch_exceptions=False,
+    )
+    validate_result = runner.invoke(
+        app,
+        ["strategy", "research-brief", "validate", str(spec_path)],
+        catch_exceptions=False,
+    )
+
+    assert init_result.exit_code == 0
+    assert validate_result.exit_code == 0
+    assert "research brief valid" in validate_result.output
+    payload = json.loads(
+        (
+            sample_workspace / "reports" / "research" / "fixture_pullback_15m-research-brief.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert payload["search_budget"] == 2
+
+
+def test_parameter_sweep_random_respects_budget_seed_and_records_optimizer(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    init_research_brief(spec_path, sample_workspace, search_budget=3)
+    parameters = parse_sweep_parameters(
+        [
+            "risk.stop_loss_pct=0.8,1.0,1.2",
+            "costs.slippage_bps=0,5",
+        ]
+    )
+
+    first = run_parameter_sweep(
+        spec_path,
+        parameters,
+        sample_workspace,
+        max_candidates=3,
+        write_top=0,
+        search_strategy="random",
+        random_seed=7,
+    )
+    second = run_parameter_sweep(
+        spec_path,
+        parameters,
+        sample_workspace,
+        max_candidates=3,
+        write_top=0,
+        search_strategy="random",
+        random_seed=7,
+    )
+
+    first_payload = json.loads(first.json_path.read_text(encoding="utf-8"))
+    second_payload = json.loads(second.json_path.read_text(encoding="utf-8"))
+    assert first_payload["candidate_count"] == 3
+    assert first_payload["search_strategy"] == "random"
+    assert first_payload["random_seed"] == 7
+    assert first_payload["candidates"] == second_payload["candidates"]
+    trial = first_payload["trial_ledger"]["trials"][0]
+    assert trial["optimizer_type"] == "random"
+    assert trial["seed"] == 7
+
+
 def test_parameter_sweep_cli_writes_reports(sample_workspace: Path, monkeypatch) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    init_research_brief(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        sample_workspace,
+        search_budget=4,
+    )
     runner = CliRunner()
 
     result = runner.invoke(

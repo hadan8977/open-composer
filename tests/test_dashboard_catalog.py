@@ -18,6 +18,7 @@ from open_composer.paper_readiness import (
     write_paper_readiness_report,
 )
 from open_composer.storage import append_jsonl, write_json
+from open_composer.strategy_lifecycle import activate_strategy, disable_strategy
 
 
 def test_dashboard_catalog_rebuilds_repo_artifacts(
@@ -407,3 +408,22 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert signal.id in detail_html
     assert review_path == sample_workspace / "reports" / "dashboard" / "review.md"
     assert review_path.exists()
+
+
+def test_dashboard_catalog_prefers_current_spec_over_stale_active_version(
+    sample_workspace: Path,
+) -> None:
+    draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    activate_strategy(draft, sample_workspace)
+    draft.unlink()
+    retired = disable_strategy("fixture_pullback_15m", sample_workspace)
+
+    catalog = build_dashboard_catalog(sample_workspace)
+
+    strategy = next(
+        item for item in catalog.strategies if item.strategy_name == "fixture_pullback_15m"
+    )
+    assert retired.exists()
+    assert strategy.lifecycle == "retired"
+    assert strategy.execution_mode == "manual_signal"
+    assert strategy.source_paths[0] == "strategy_specs/retired/fixture_pullback_15m.yaml"

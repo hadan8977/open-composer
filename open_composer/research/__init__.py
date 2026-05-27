@@ -56,6 +56,7 @@ from open_composer.research.options_research import (
     build_options_research_report,
 )
 from open_composer.research.parameter_sweep import parse_sweep_parameters, run_parameter_sweep
+from open_composer.research.pbo import OverfitRiskResult, build_overfit_risk_report
 from open_composer.research.promotion import PromotionReport, build_promotion_report
 from open_composer.research.regime_retrieval import RegimeSearchReport, search_similar_regimes
 from open_composer.research.research_report import (
@@ -72,6 +73,11 @@ from open_composer.research.skill_attribution import (
 from open_composer.research.strategy_dag import validate_strategy_dag, write_strategy_dag_validation
 from open_composer.research.theme_intraday_rotation_router import (
     run_theme_intraday_rotation_router_research,
+)
+from open_composer.research.universe_audit import (
+    UniverseAuditResult,
+    assess_universe_audit,
+    run_universe_audit,
 )
 from open_composer.research.universe_optimizer import optimize_strategy_universe
 
@@ -125,11 +131,16 @@ __all__ = [
     "build_options_research_report",
     "parse_sweep_parameters",
     "PromotionReport",
+    "OverfitRiskResult",
     "StrategyResearchReportResult",
+    "UniverseAuditResult",
+    "assess_universe_audit",
     "build_strategy_research_report",
     "build_strategy_evidence",
     "build_promotion_report",
+    "build_overfit_risk_report",
     "run_parameter_sweep",
+    "run_universe_audit",
     "run_llm_exposure_switch_meta_selection",
     "run_llm_rotation_meta_selection",
     "run_leverage_research",

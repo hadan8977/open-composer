@@ -36,6 +36,23 @@ artifacts:
     required_claim_ids:
       - "{strategy}:source-research"
 
+  pit_universe_membership:
+    description: >
+      Official or authorized point-in-time universe membership evidence used to
+      prevent current-symbol and survivorship bias in multi-symbol strategy
+      research. A boolean StrategySpec note is not sufficient; the audit must
+      read this artifact.
+    path: reports/research/{strategy}-pit-universe.json
+    format: json
+    required_fields:
+      - strategy_name
+      - source_type
+      - source_url
+      - as_of
+      - selection_timestamp
+      - delisting_policy
+      - memberships
+
   execution_policy:
     description: >
       Structured comparison of execution methods for the strategy.
@@ -211,6 +228,24 @@ artifacts:
       - duplicate_order_policy
       - credential_scope
       - signal_order_linkage
+
+  router_order_authorization:
+    description: >
+      Explicit authorization that lets a router strategy move from
+      observation_only target-weight cycles to Alpaca Paper broker orders.
+      Missing authorization keeps router strategies observation-only even when
+      paper readiness is otherwise green.
+    path: reports/harness/paper/{strategy}-router-order-authorization.json
+    format: json
+    required_fields:
+      - strategy_name
+      - execution_substate
+      - authorized
+      - authorized_at
+      - execution_policy_id
+      - target_weights_path
+      - rebalance_intents_path
+      - paper_safety_review_path
 
   short_sample_caveat:
     description: >

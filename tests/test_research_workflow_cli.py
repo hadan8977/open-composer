@@ -5,6 +5,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from open_composer.cli import app
+from open_composer.research.research_brief import init_research_brief
 
 
 def test_strategy_research_workflow_aliases_strategy_evidence(
@@ -13,6 +14,7 @@ def test_strategy_research_workflow_aliases_strategy_evidence(
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    init_research_brief(spec_path, sample_workspace)
 
     result = CliRunner().invoke(
         app,

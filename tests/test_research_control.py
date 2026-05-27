@@ -12,10 +12,12 @@ from typer.testing import CliRunner
 from open_composer.cli import app
 from open_composer.research.control import update_research_control
 from open_composer.research.parameter_sweep import parse_sweep_parameters, run_parameter_sweep
+from open_composer.research.research_brief import init_research_brief
 
 
 def test_research_control_reduces_sweep_into_state_and_memory(sample_workspace: Path) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    init_research_brief(spec_path, sample_workspace, search_budget=4)
     parameters = parse_sweep_parameters(
         [
             "risk.stop_loss_pct=0.8,1.2",
@@ -59,6 +61,11 @@ def test_parameter_sweep_cli_refreshes_research_control_memory(
     monkeypatch,
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    init_research_brief(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        sample_workspace,
+        search_budget=2,
+    )
 
     result = CliRunner().invoke(
         app,
@@ -94,6 +101,10 @@ def test_parameter_sweep_cli_refreshes_research_control_memory(
 
 def test_research_control_cli_writes_state_and_memory(sample_workspace: Path, monkeypatch) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    init_research_brief(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        sample_workspace,
+    )
 
     result = CliRunner().invoke(
         app,

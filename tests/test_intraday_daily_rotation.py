@@ -16,6 +16,7 @@ from open_composer.adapters.execution.hybrid_target_weights import (
     run_hybrid_target_weight_mapping,
 )
 from open_composer.cli import app
+from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.adaptive_intraday_router import (
     LLMAdaptiveRouterChoice,
     run_adaptive_intraday_router_research,
@@ -30,9 +31,16 @@ from open_composer.research.hybrid_adaptive_router import (
     hybrid_params_from_label,
     run_hybrid_adaptive_router_research,
 )
+from open_composer.research.hybrid_factor_attribution import _build_variants
 from open_composer.research.hybrid_news_evidence import (
     run_hybrid_news_marginal_lift_research,
 )
+from open_composer.research.hybrid_router_core import (
+    BetaOverrideHybridParams,
+    _build_beta_override_params_grid,
+    hybrid_target_weight_snapshot,
+)
+from open_composer.research.router_common import RouterFrameDataset
 from open_composer.research.intraday_daily_rotation import (
     IntradayDailyCandidate,
     IntradayDailyMetrics,
@@ -808,6 +816,142 @@ def test_hybrid_route_label_parser_supports_risk_controls() -> None:
     assert params.brake_exposure_scale == 0.5
 
 
+def test_hybrid_beta_override_label_parser_supports_iter6_controls() -> None:
+    label = (
+        "beta_override:baseiter2_lb20_min20_adv0_sma50_exTQQQ_"
+        "gateq200ormom120_mdd504p25_g0.87_tqqq_cycle"
+    )
+    params = hybrid_params_from_label(label)
+
+    assert params.label == label
+    assert params.momentum_lookback_days == 20
+    assert params.min_momentum_pct == 20.0
+    assert params.override_advantage_pct == 0.0
+    assert params.confirmation_sma_days == 50
+    assert params.exclude_tqqq is True
+    assert params.cycle_gate == "q200ormom120"
+    assert params.market_drawdown_lookback_days == 504
+    assert params.max_market_drawdown_pct == 25.0
+    assert params.gross_exposure_scale == 0.87
+    assert params.base_mode == "tqqq_cycle"
+
+
+def test_hybrid_beta_override_grid_builds_deduped_tqqq_cycle_params() -> None:
+    grid = _build_beta_override_params_grid(
+        momentum_lookback_days=[20],
+        min_momentum_pct=[20.0],
+        override_advantage_pct=[0.0],
+        confirmation_sma_days=[50],
+        exclude_tqqq=True,
+        cycle_gates=["q200ormom120"],
+        market_drawdown_lookback_days=[None, 504],
+        max_market_drawdown_pct=[None, 25.0],
+        gross_exposure_scale=[0.87],
+        base_modes=["tqqq_cycle"],
+        max_candidates=10,
+    )
+
+    assert any(item.base_mode == "tqqq_cycle" for item in grid)
+    assert len({item.label for item in grid}) == len(grid)
+
+
+def test_hybrid_beta_override_market_drawdown_blocks_tqqq_cycle_base(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_mdd_fixture.yaml"
+    _write_spec(spec_path, llm_review=False)
+    spec = load_strategy_spec(spec_path)
+    sessions = pd.bdate_range("2024-01-02", periods=260, tz="America/New_York")
+    rows = []
+    qqq_prices = []
+    for index in range(260):
+        if index < 220:
+            qqq_prices.append(100.0 + index * 0.5)
+        else:
+            qqq_prices.append(210.0 - (index - 220) * 1.6)
+    for session, qqq_price in zip(sessions, qqq_prices, strict=True):
+        timestamp = session.replace(hour=9, minute=30).tz_convert("UTC")
+        rows.append(
+            {
+                "date": str(timestamp.date()),
+                "timestamp": timestamp,
+                "QQQ_timestamp": timestamp,
+                "QQQ_open": qqq_price,
+                "QQQ_close": qqq_price,
+                "TQQQ_timestamp": timestamp,
+                "TQQQ_open": qqq_price * 2.0,
+                "TQQQ_close": qqq_price * 2.0,
+            }
+        )
+    dataset = RouterFrameDataset(
+        symbols=["QQQ", "TQQQ"],
+        market_symbol="QQQ",
+        benchmark_symbol="TQQQ",
+        dates=[row["date"] for row in rows],
+        frame=pd.DataFrame(rows),
+        data_profile={},
+    )
+    params = BetaOverrideHybridParams(
+        holding_mode="open_to_open",
+        momentum_lookback_days=20,
+        min_momentum_pct=0.0,
+        override_advantage_pct=0.0,
+        confirmation_sma_days=None,
+        exclude_tqqq=True,
+        cycle_gate="q200",
+        market_drawdown_lookback_days=60,
+        max_market_drawdown_pct=10.0,
+        base_mode="tqqq_cycle",
+    )
+    unblocked_params = BetaOverrideHybridParams(
+        holding_mode="open_to_open",
+        momentum_lookback_days=20,
+        min_momentum_pct=0.0,
+        override_advantage_pct=0.0,
+        confirmation_sma_days=None,
+        exclude_tqqq=True,
+        cycle_gate="q200",
+        base_mode="tqqq_cycle",
+    )
+
+    blocked = hybrid_target_weight_snapshot(spec, dataset, params, 245)
+    unblocked = hybrid_target_weight_snapshot(spec, dataset, unblocked_params, 245)
+
+    assert blocked.weights == {}
+    assert blocked.qqq_drawdown_ok is False
+    assert unblocked.weights == {"TQQQ": 1.0}
+
+
+def test_hybrid_factor_attribution_builds_beta_override_ablations() -> None:
+    params = BetaOverrideHybridParams(
+        holding_mode="open_to_open",
+        momentum_lookback_days=20,
+        min_momentum_pct=20.0,
+        override_advantage_pct=0.0,
+        confirmation_sma_days=50,
+        exclude_tqqq=True,
+        cycle_gate="q200ormom120",
+        market_drawdown_lookback_days=504,
+        max_market_drawdown_pct=25.0,
+        gross_exposure_scale=0.87,
+        base_mode="tqqq_cycle",
+    )
+
+    variants = _build_variants(params)
+
+    assert set(variants) >= {
+        "no_cycle_gate",
+        "no_market_drawdown_filter",
+        "no_confirmation_sma",
+        "no_min_momentum",
+        "full_gross_exposure",
+        "base_iter2",
+        "base_tqqq_always",
+    }
+    assert variants["no_market_drawdown_filter"].market_drawdown_lookback_days is None
+    assert variants["full_gross_exposure"].gross_exposure_scale == 1.0
+
+
 def test_hybrid_news_marginal_lift_writes_pit_evidence(
     sample_workspace: Path,
     monkeypatch,
@@ -926,8 +1070,8 @@ def test_hybrid_target_weight_mapping_matches_python_reference(
     assert result.report_path.exists()
     assert result.json_path.exists()
     assert result.parity_status == "pass"
-    assert result.nonzero_target_rows == result.reference_metrics.round_trips
     payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    assert payload["summary"]["order_required_sessions"] == result.reference_metrics.round_trips
     assert payload["mode"] == "hybrid_target_weight_mapping"
     assert payload["portfolio_mode"] == "hybrid_adaptive_router"
     assert payload["parity_check"]["status"] == "pass"

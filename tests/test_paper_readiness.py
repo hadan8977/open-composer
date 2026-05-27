@@ -461,6 +461,48 @@ def test_paper_readiness_accepts_hybrid_router_portfolio_routing(
     assert checks["alpaca_env"].status == "blocked"
 
 
+def test_paper_readiness_blocks_static_current_symbol_universe(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    account_path = sample_workspace / "reports" / "paper" / "account.json"
+    account_path.parent.mkdir(parents=True, exist_ok=True)
+    account_path.write_text(
+        (
+            '{"generated_at":"2026-05-12T12:00:00Z","equity":10000,"cash":5000,'
+            '"buying_power":8000,"portfolio_value":10000,"status":"ACTIVE","paper":true}\n'
+        ),
+        encoding="utf-8",
+    )
+    draft = sample_workspace / "strategy_specs" / "drafts" / "static_universe_router.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "static_universe_router"
+    raw["universe"] = ["AAPL", "MSFT", "NVDA"]
+    raw["data"] = {"source": "alpaca", "symbol": "AAPL", "feed": "iex"}
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    active = activate_strategy(
+        draft,
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+        data_source="alpaca",
+    )
+
+    report = assess_paper_strategy_readiness(active, sample_workspace)
+    checks = {check.name: check for check in report.checks}
+
+    assert report.ready is False
+    assert checks["universe_audit"].status == "blocked"
+    assert "point-in-time universe membership" in checks["universe_audit"].message
+
+
 def test_paper_readiness_router_can_be_observation_only_when_evidence_exists(
     sample_workspace: Path,
     monkeypatch,
@@ -488,6 +530,14 @@ def test_paper_readiness_router_can_be_observation_only_when_evidence_exists(
     raw["universe"] = ["QQQ", "TQQQ", "SQQQ"]
     raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
     raw["required_capabilities"] = ["market.alpaca_bars"]
+    raw["notes"] = {
+        **raw.get("notes", {}),
+        "universe_audit": {
+            "point_in_time_membership": True,
+            "selection_timestamp": "2026-05-22T00:00:00Z",
+            "delisting_policy": "Fixed ETF route; no current equity-index membership backfill.",
+        },
+    }
     raw["risk"]["max_position_weight"] = 1.0
     raw["portfolio"] = {
         "mode": "beta_exposure_router",
@@ -519,6 +569,75 @@ def test_paper_readiness_router_can_be_observation_only_when_evidence_exists(
     assert report.execution_substate == "observation_only"
     assert report.gate_summary["paper_ready_pass"] is True
     assert report.gate_summary["execution_substate"] == "observation_only"
+
+
+def test_paper_readiness_router_can_be_order_authorized_with_artifact(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    account_path = sample_workspace / "reports" / "paper" / "account.json"
+    account_path.parent.mkdir(parents=True, exist_ok=True)
+    account_path.write_text(
+        (
+            '{"generated_at":"2026-05-12T12:00:00Z","equity":10000,"cash":5000,'
+            '"buying_power":8000,"portfolio_value":10000,"status":"ACTIVE","paper":true}\n'
+        ),
+        encoding="utf-8",
+    )
+    draft = sample_workspace / "strategy_specs" / "drafts" / "beta_router_authorized.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "beta_router_authorized"
+    raw["timeframe"] = "daily"
+    raw["universe"] = ["QQQ", "TQQQ", "SQQQ"]
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["required_capabilities"] = ["market.alpaca_bars"]
+    raw["notes"] = {
+        **raw.get("notes", {}),
+        "universe_audit": {
+            "point_in_time_membership": True,
+            "selection_timestamp": "2026-05-22T00:00:00Z",
+            "delisting_policy": "Fixed ETF route; no current equity-index membership backfill.",
+        },
+    }
+    raw["risk"]["max_position_weight"] = 1.0
+    raw["portfolio"] = {
+        "mode": "beta_exposure_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 1.0,
+        "same_day_flatten": False,
+        "selected_route_label": (
+            "beta:sma200_mom120_min0_vol20_maxvnone_dd120_maxddnone_"
+            "levsmanone_levmaxvnone_levdd60_levmaxddnone_"
+            "onTQQQ1_neuQQQ1_offCASH0_vtnone"
+        ),
+    }
+    draft.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    active = activate_strategy(
+        draft,
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+        data_source="alpaca",
+    )
+
+    _write_ready_promotion(sample_workspace, "beta_router_authorized")
+    _write_router_harness_artifacts(sample_workspace, "beta_router_authorized")
+    _write_router_order_authorization(sample_workspace, "beta_router_authorized")
+
+    report = assess_paper_strategy_readiness(active, sample_workspace)
+
+    assert report.ready is True
+    assert report.execution_substate == "order_authorized"
+    assert report.gate_summary["paper_ready_pass"] is True
+    assert report.gate_summary["execution_substate"] == "order_authorized"
 
 
 def test_paper_readiness_sample_acquisition_tier_blocks_live_paper(
@@ -569,6 +688,7 @@ def _write_ready_promotion(root: Path, strategy_name: str) -> None:
                 "gate_summary": {"paper_ready_pass": True},
                 "checks": [
                     {"name": "strict_data", "status": "ok", "message": "ok", "details": {}},
+                    {"name": "universe_audit", "status": "ok", "message": "ok", "details": {}},
                     {"name": "feature_packets", "status": "ok", "message": "ok", "details": {}},
                     {"name": "benchmark_family", "status": "ok", "message": "ok", "details": {}},
                     {"name": "factor_lab", "status": "ok", "message": "ok", "details": {}},
@@ -675,6 +795,46 @@ def _write_router_harness_artifacts(root: Path, strategy_name: str) -> None:
                 "execution_substate": "observation_only",
                 "target_weights_path": str(target_path.relative_to(root)),
                 "rebalance_intents_path": str(intents_path.relative_to(root)),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_router_order_authorization(root: Path, strategy_name: str) -> None:
+    paper_dir = root / "reports" / "harness" / "paper"
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    safety_path = paper_dir / f"{strategy_name}-paper-safety-review.json"
+    safety_path.write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "overall": "ok",
+                "blocking_items": [],
+                "lifecycle_status": "active",
+                "kill_switch_verified": True,
+                "order_window": "09:28-09:32 ET",
+                "duplicate_order_policy": "stable_signal_id",
+                "credential_scope": "paper_only",
+                "signal_order_linkage": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    auth_path = paper_dir / f"{strategy_name}-router-order-authorization.json"
+    auth_path.write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "execution_substate": "order_authorized",
+                "authorized": True,
+                "authorized_at": "2026-05-22T00:00:00Z",
+                "execution_policy_id": f"policy-{strategy_name}",
+                "target_weights_path": f"reports/execution/{strategy_name}-target-weights.json",
+                "rebalance_intents_path": (
+                    f"reports/execution/{strategy_name}-rebalance-intents.json"
+                ),
+                "paper_safety_review_path": str(safety_path.relative_to(root)),
             }
         ),
         encoding="utf-8",

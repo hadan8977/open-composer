@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,6 +20,7 @@ from open_composer.models.paper import (
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec
 from open_composer.paper_controls import load_paper_kill_switch
+from open_composer.router_authorization import assess_router_order_authorization, is_router_strategy
 from open_composer.storage import append_jsonl, write_json
 
 
@@ -33,7 +35,7 @@ def submit_paper_order(
     client: Any | None = None,
     qty: float | None = None,
 ) -> PaperOrderRecord:
-    _validate_paper_allowed(spec)
+    _validate_paper_allowed(spec, root)
     kill_switch = load_paper_kill_switch(root)
     if kill_switch.enabled:
         raise PaperOrderError(
@@ -54,7 +56,7 @@ def submit_paper_order(
         else _default_quantity(client, spec, signal)
     )
     client_order_id = f"oc-{signal.id}"
-    order = _submit_market_order(client, signal, order_qty, client_order_id)
+    order = _submit_policy_order(client, signal, spec, root, order_qty, client_order_id)
     record = PaperOrderRecord(
         id=str(getattr(order, "id", client_order_id)),
         signal_id=signal.id,
@@ -138,7 +140,7 @@ def sync_paper_account(root: Path, client: Any | None = None) -> tuple[Path, Pat
     return account_path, positions_path
 
 
-def _validate_paper_allowed(spec: StrategySpec) -> None:
+def _validate_paper_allowed(spec: StrategySpec, root: Path) -> None:
     if spec.lifecycle != "active":
         raise PaperOrderError("paper orders require an active StrategySpec")
     if spec.execution.mode != "paper_auto" or spec.execution.broker != "alpaca_paper":
@@ -147,13 +149,10 @@ def _validate_paper_allowed(spec: StrategySpec) -> None:
         )
     if spec.position_direction in {"short_only", "long_short"}:
         raise PaperOrderError("short paper orders require separate short-readiness authorization")
-    if spec.portfolio.mode in {
-        "adaptive_intraday_internal_router",
-        "hybrid_adaptive_router",
-        "beta_exposure_router",
-        "core_beta_satellite_router",
-    }:
-        raise PaperOrderError("router strategies are observation_only until order authorization")
+    if is_router_strategy(spec):
+        router_auth = assess_router_order_authorization(spec, root)
+        if not router_auth.authorized:
+            raise PaperOrderError(router_auth.message)
     if not alpaca_paper_enabled():
         raise PaperOrderError("ALPACA_PAPER must be true; live broker writes are out of scope")
     if not alpaca_api_key_id() or not alpaca_api_secret_key():
@@ -183,6 +182,57 @@ def _default_quantity(client: Any, spec: StrategySpec, signal: Signal) -> float:
         return 1.0
 
 
+def _submit_policy_order(
+    client: Any,
+    signal: Signal,
+    spec: StrategySpec,
+    root: Path,
+    qty: float,
+    client_order_id: str,
+) -> Any:
+    policy = _execution_policy(spec, root)
+    if policy and str(policy.get("time_in_force", "")).lower() == "opg":
+        limit_price = _policy_limit_price(signal, policy)
+        if limit_price is not None:
+            return _submit_limit_order(
+                client,
+                signal,
+                qty,
+                client_order_id,
+                limit_price=limit_price,
+                time_in_force="opg",
+            )
+    return _submit_market_order(client, signal, qty, client_order_id)
+
+
+def _execution_policy(spec: StrategySpec, root: Path) -> dict[str, Any] | None:
+    if spec.execution_policy is not None:
+        return spec.execution_policy.model_dump(mode="json")
+    path = root / "reports" / "harness" / "execution" / f"{spec.name}-execution-policy.json"
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _policy_limit_price(signal: Signal, policy: dict[str, Any]) -> float | None:
+    style = str(policy.get("order_style") or "")
+    if style not in {"opg_limit", "loo_limit"}:
+        return None
+    protection = policy.get("price_protection")
+    if not isinstance(protection, dict):
+        protection = {}
+    offset_bps = protection.get("limit_offset_bps")
+    if offset_bps is None:
+        return round(float(signal.price), 2)
+    offset = float(offset_bps) / 10_000.0
+    multiplier = 1 + offset if signal.side == "buy" else 1 - offset
+    return round(float(signal.price) * multiplier, 2)
+
+
 def _submit_market_order(client: Any, signal: Signal, qty: float, client_order_id: str) -> Any:
     try:
         from alpaca.trading.enums import OrderSide, TimeInForce
@@ -196,6 +246,34 @@ def _submit_market_order(client: Any, signal: Signal, qty: float, client_order_i
         qty=qty,
         side=side,
         time_in_force=TimeInForce.DAY,
+        client_order_id=client_order_id,
+    )
+    return client.submit_order(request)
+
+
+def _submit_limit_order(
+    client: Any,
+    signal: Signal,
+    qty: float,
+    client_order_id: str,
+    *,
+    limit_price: float,
+    time_in_force: str,
+) -> Any:
+    try:
+        from alpaca.trading.enums import OrderSide, TimeInForce
+        from alpaca.trading.requests import LimitOrderRequest
+    except ImportError as exc:
+        raise PaperOrderError("alpaca-py trading limit request classes are unavailable") from exc
+
+    side = OrderSide.BUY if signal.side == "buy" else OrderSide.SELL
+    tif = getattr(TimeInForce, time_in_force.upper())
+    request = LimitOrderRequest(
+        symbol=signal.symbol,
+        qty=qty,
+        side=side,
+        time_in_force=tif,
+        limit_price=limit_price,
         client_order_id=client_order_id,
     )
     return client.submit_order(request)

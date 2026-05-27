@@ -95,6 +95,7 @@ def run_hybrid_target_weight_mapping(
     parity = _parity_check(
         spec=spec,
         target_rows=target_rows,
+        rebalance_intents=rebalance_intents,
         reference=reference,
     )
     stages["build_mapping"] = perf_counter() - stage_started
@@ -143,6 +144,9 @@ def run_hybrid_target_weight_mapping(
             "nonzero_target_rows": sum(float(row["target_weight"]) > 0 for row in target_rows),
             "rebalance_intents": len(rebalance_intents),
             "order_required_intents": sum(bool(row["requires_order"]) for row in rebalance_intents),
+            "order_required_sessions": len(
+                {row["rebalance_session"] for row in rebalance_intents if row["requires_order"]}
+            ),
             "max_gross_exposure": max(
                 _gross_for_session(target_rows, str(session))
                 for session in {row["rebalance_session"] for row in target_rows}
@@ -245,6 +249,7 @@ def _parity_check(
     *,
     spec: StrategySpec,
     target_rows: list[dict[str, object]],
+    rebalance_intents: list[dict[str, object]],
     reference: HybridRouterMetrics,
 ) -> dict[str, object]:
     blockers: list[str] = []
@@ -254,6 +259,10 @@ def _parity_check(
         str(row["rebalance_session"]) for row in target_rows if float(row["target_weight"]) > 0
     }
     nonzero_target_rows = sum(float(row["target_weight"]) > 0 for row in target_rows)
+    order_required_intents = sum(bool(row["requires_order"]) for row in rebalance_intents)
+    order_required_sessions = len(
+        {str(row["rebalance_session"]) for row in rebalance_intents if row["requires_order"]}
+    )
     gross_limit = spec.portfolio.gross_exposure_limit or 1.0
     max_symbol_weight = spec.portfolio.max_symbol_weight or spec.risk.max_position_weight
     max_gross = max((_gross_for_session(target_rows, session) for session in sessions), default=0.0)
@@ -263,9 +272,9 @@ def _parity_check(
             f"selected_sessions={len(selected_sessions)} does not match "
             f"reference_traded_days={reference.traded_days}"
         )
-    if nonzero_target_rows != reference.round_trips:
+    if order_required_sessions != reference.round_trips:
         blockers.append(
-            f"nonzero_target_rows={nonzero_target_rows} does not match "
+            f"order_required_sessions={order_required_sessions} does not match "
             f"reference_round_trips={reference.round_trips}"
         )
     if max_gross > gross_limit + 1e-9:
@@ -276,10 +285,7 @@ def _parity_check(
         warnings.append(f"execution.mode={spec.execution.mode}; mapping only, no paper runtime")
     if spec.execution.broker != "alpaca_paper":
         warnings.append(f"execution.broker={spec.execution.broker}; no broker order submission")
-    warnings.append(
-        "open-to-open cost parity requires explicit daily rebalance accounting when a symbol "
-        "stays selected across consecutive sessions"
-    )
+    warnings.append("open-to-open cost parity uses target-weight turnover, not daily re-entry")
     return {
         "status": "pass" if not blockers else "blocked",
         "blockers": blockers,
@@ -288,6 +294,8 @@ def _parity_check(
             "selected_sessions": len(selected_sessions),
             "reference_traded_days": reference.traded_days,
             "nonzero_target_rows": nonzero_target_rows,
+            "order_required_intents": order_required_intents,
+            "order_required_sessions": order_required_sessions,
             "reference_round_trips": reference.round_trips,
             "max_gross_exposure": max_gross,
             "gross_exposure_limit": gross_limit,

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
 import math
 from collections.abc import Callable, Iterable
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from statistics import mean, pstdev
@@ -36,6 +37,8 @@ class RouterFrameDataset:
     dates: list[str]
     frame: pd.DataFrame
     data_profile: dict[str, Any]
+    pit_membership: dict[str, list[tuple[str, str | None]]] | None = None
+    runtime_cache: dict[str, Any] = field(default_factory=dict, compare=False, repr=False)
 
 
 @dataclass(frozen=True)
@@ -206,14 +209,88 @@ def load_daily_dataset(
         )
         output = output.merge(selected, on="date", how="left")
     output["timestamp"] = pd.to_datetime(output[f"{market_symbol.upper()}_timestamp"], utc=True)
+    pit_membership = _load_pit_membership(spec, root)
+    profile = combined_data_profile(profiles)
+    if pit_membership:
+        profile["pit_universe_membership"] = {
+            "status": "loaded",
+            "symbol_count": len(pit_membership),
+        }
     return RouterFrameDataset(
         symbols=[item.upper() for item in symbols],
         market_symbol=market_symbol.upper(),
         benchmark_symbol=benchmark_symbol.upper(),
         dates=common_dates,
         frame=output.reset_index(drop=True),
-        data_profile=combined_data_profile(profiles),
+        data_profile=profile,
+        pit_membership=pit_membership,
     )
+
+
+def active_membership_symbols(
+    dataset: RouterFrameDataset,
+    index: int,
+    symbols: Iterable[str] | None = None,
+) -> list[str]:
+    candidates = [symbol.upper() for symbol in (symbols or dataset.symbols)]
+    if not dataset.pit_membership:
+        return candidates
+    session = dataset.dates[index]
+    return [
+        symbol
+        for symbol in candidates
+        if any(
+            _membership_active(session, start, end)
+            for start, end in dataset.pit_membership.get(symbol, [])
+        )
+    ]
+
+
+def _membership_active(session: str, start: str, end: str | None) -> bool:
+    return start <= session and (end is None or session <= end)
+
+
+def _load_pit_membership(
+    spec: StrategySpec,
+    root: Path,
+) -> dict[str, list[tuple[str, str | None]]] | None:
+    spec_notes = getattr(spec, "notes", None)
+    if spec_notes is None:
+        return None
+    notes = spec_notes.model_dump(mode="json")
+    metadata = notes.get("universe_audit") if isinstance(notes, dict) else None
+    if not isinstance(metadata, dict):
+        return None
+    path_ref = (
+        metadata.get("pit_membership_path")
+        or metadata.get("membership_path")
+        or metadata.get("artifact_path")
+    )
+    if not path_ref:
+        return None
+    path = Path(str(path_ref)).expanduser()
+    if not path.is_absolute():
+        path = root / path
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    memberships = payload.get("memberships") if isinstance(payload, dict) else None
+    if not isinstance(memberships, list):
+        return None
+    by_symbol: dict[str, list[tuple[str, str | None]]] = {}
+    for row in memberships:
+        if not isinstance(row, dict):
+            continue
+        symbol = str(row.get("symbol") or "").upper().strip()
+        start = str(row.get("effective_from") or "")[:10]
+        end_value = row.get("effective_to")
+        end = str(end_value)[:10] if end_value else None
+        if symbol and start:
+            by_symbol.setdefault(symbol, []).append((start, end))
+    return by_symbol or None
 
 
 def run_router_research(
@@ -246,6 +323,7 @@ def run_router_research(
         params_grid=params_grid,
         snapshot=snapshot,
         out_of_sample_ratio=out_of_sample_ratio,
+        objective=objective,
     )
     stages["evaluate_candidates"] = perf_counter() - stage_started
 
@@ -263,6 +341,7 @@ def run_router_research(
         params_grid=walk_params,
         snapshot=snapshot,
         folds=walk_forward_folds,
+        objective=objective,
     )
     stages["walk_forward"] = perf_counter() - stage_started
     runtime = runtime_payload(started_at, stages)
@@ -318,6 +397,7 @@ def evaluate_router_candidates(
     params_grid: list[Any],
     snapshot: Callable[[StrategySpec, RouterFrameDataset, Any, int], TargetSnapshot],
     out_of_sample_ratio: float,
+    objective: str,
 ) -> list[RouterCandidate]:
     split = split_for_oos(len(dataset.dates), out_of_sample_ratio, params_grid)
     rows: list[RouterCandidate] = []
@@ -346,7 +426,7 @@ def evaluate_router_candidates(
             RouterCandidate(
                 rank=0,
                 params=params,
-                score=score_metrics(train),
+                score=score_metrics(train, objective),
                 train=train,
                 out_of_sample=oos,
                 full_window=full,
@@ -375,6 +455,7 @@ def walk_forward_router(
     params_grid: list[Any],
     snapshot: Callable[[StrategySpec, RouterFrameDataset, Any, int], TargetSnapshot],
     folds: int,
+    objective: str,
 ) -> list[RouterWalkForwardSlice]:
     if not params_grid:
         return []
@@ -396,7 +477,7 @@ def walk_forward_router(
                 start_index=max_lookback,
                 end_index=test_start,
             )
-            scored.append((score_metrics(train), params))
+            scored.append((score_metrics(train, objective), params))
         scored.sort(key=lambda item: item[0], reverse=True)
         selected = scored[0][1]
         rows.append(
@@ -449,6 +530,8 @@ def backtest_router_params(
     regime_scaled = 0
     vol_scaled = 0
     drawdown_scaled = 0
+    previous_weights: dict[str, float] = {}
+    cost_rate = spec.costs.commission_pct / 100 + spec.costs.slippage_bps / 10_000
     for index in range(start_index, end_index):
         targets = snapshot(spec, dataset, params, index)
         gross = sum(abs(value) for value in targets.weights.values())
@@ -459,16 +542,23 @@ def backtest_router_params(
             vol_scaled += 1
         if targets.market_drawdown_scale < 0.999999:
             drawdown_scaled += 1
-        strategy_return = sum(
+        raw_return = sum(
             weight * symbol_holding_return(dataset, symbol, index, _holding_mode(params), spec)
             for symbol, weight in targets.weights.items()
             if weight > 0
         )
+        turnover = sum(
+            abs(targets.weights.get(symbol, 0.0) - previous_weights.get(symbol, 0.0))
+            for symbol in set(targets.weights) | set(previous_weights)
+        )
+        strategy_return = raw_return - turnover * cost_rate
         if gross <= 0:
             skipped_days += 1
         else:
             traded_days += 1
-            round_trips += len([value for value in targets.weights.values() if value > 0])
+        if turnover > 1e-12:
+            round_trips += 1
+        previous_weights = {} if _holding_mode(params) == "open_to_close" else targets.weights
         selected_counts.append(len(targets.selected))
         gross_values.append(gross)
         max_weights.append(max_weight)
@@ -547,7 +637,7 @@ def selected_by_momentum(
     if previous_index < 0 or current_index < 0:
         return []
     scored: list[tuple[float, str]] = []
-    for symbol in symbols or dataset.symbols:
+    for symbol in active_membership_symbols(dataset, index, symbols):
         previous = close_value(dataset, symbol, previous_index)
         current = close_value(dataset, symbol, current_index)
         if previous <= 0:
@@ -577,8 +667,7 @@ def market_sma_scale(
         return 1.0
     if index < lookback:
         return 0.0
-    close = dataset.frame[f"{dataset.market_symbol}_close"].astype(float)
-    sma = float(close.iloc[index - lookback : index].mean())
+    sma = float(rolling_close_mean(dataset, dataset.market_symbol, lookback).iloc[index - 1])
     if close_value(dataset, dataset.market_symbol, index - 1) > sma:
         return 1.0
     return float(getattr(params, scale_field, 0.0) or 0.0)
@@ -633,6 +722,7 @@ def effective_lookback(params: Any) -> int:
         getattr(params, "drawdown_lookback_days", 0) or 0,
         getattr(params, "market_drawdown_lookback_days", 0) or 0,
         getattr(params, "risk_adjustment_lookback_days", 0) or 0,
+        getattr(params, "confirmation_sma_days", 0) or 0,
         getattr(params, "leverage_trend_sma_days", 0) or 0,
         getattr(params, "leverage_drawdown_lookback_days", 0) or 0,
         getattr(params, "satellite_momentum_days", 0) or 0,
@@ -643,20 +733,32 @@ def effective_lookback(params: Any) -> int:
     return max(int(value) for value in values if value is not None)
 
 
-def score_metrics(metrics: RouterMetrics) -> float:
+def score_metrics(
+    metrics: RouterMetrics,
+    objective: str = "risk_adjusted_benchmark_alpha",
+) -> float:
     annualized = metrics.annualized_return_pct or -100.0
     benchmark_alpha = metrics.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0
     market_alpha = metrics.alpha_vs_market_buy_hold_annualized_pct or -100.0
     sharpe = metrics.sharpe_ratio or 0.0
     drawdown = abs(min(metrics.max_drawdown_pct, 0.0))
     sparse_penalty = max(0, 40 - metrics.traded_days) * 2.0
-    concentration_penalty = max(0.0, metrics.max_symbol_weight_pct - 35.0) * 4.0
+    concentration_penalty = max(0.0, metrics.max_symbol_weight_pct - 50.0) * 1.25
+    if objective == "benchmark_buy_hold_alpha":
+        return (
+            1.20 * benchmark_alpha
+            + 0.80 * annualized
+            + 0.30 * market_alpha
+            + 5.0 * sharpe
+            - 0.45 * drawdown
+            - sparse_penalty
+        )
     return (
-        annualized
-        + 0.4 * benchmark_alpha
-        + 0.4 * market_alpha
-        + 8 * sharpe
-        - drawdown
+        0.65 * annualized
+        + 0.75 * benchmark_alpha
+        + 0.35 * market_alpha
+        + 10.0 * sharpe
+        - 0.85 * drawdown
         - sparse_penalty
         - concentration_penalty
     )
@@ -682,10 +784,13 @@ def quality_flags(train: RouterMetrics, oos: RouterMetrics, full: RouterMetrics)
 def acceptance_gate(
     candidate: RouterCandidate, walk_forward: list[RouterWalkForwardSlice], objective: str
 ) -> dict[str, Any]:
-    wf_positive = sum((item.test.annualized_return_pct or -100.0) > 0 for item in walk_forward)
+    objective_alpha = objective_alpha_pct(candidate.out_of_sample, objective)
+    wf_positive = sum(
+        (objective_alpha_pct(item.test, objective) or -100.0) > 0 for item in walk_forward
+    )
     passed = (
-        (candidate.train.annualized_return_pct or -100.0) > 0
-        and (candidate.out_of_sample.annualized_return_pct or -100.0) > 0
+        (objective_alpha or -100.0) > 0
+        and (candidate.out_of_sample.sharpe_ratio or 0.0) >= 0.5
         and (candidate.out_of_sample.max_drawdown_pct > -30)
         and wf_positive >= max(1, len(walk_forward) // 2 + 1)
     )
@@ -708,6 +813,12 @@ def acceptance_gate(
         "walk_forward_fold_count": len(walk_forward),
         "quality_flags": candidate.quality_flags,
     }
+
+
+def objective_alpha_pct(metrics: RouterMetrics, objective: str) -> float | None:
+    if objective in {"benchmark_buy_hold_alpha", "risk_adjusted_benchmark_alpha"}:
+        return metrics.alpha_vs_benchmark_buy_hold_annualized_pct
+    return metrics.alpha_vs_benchmark_buy_hold_annualized_pct
 
 
 def pass_status(
@@ -818,13 +929,49 @@ def write_router_markdown(path: Path, json_path: Path, payload: dict[str, Any]) 
 def close_value(dataset: RouterFrameDataset, symbol: str, index: int) -> float:
     if index < 0 or index >= len(dataset.frame):
         return 0.0
-    return float(dataset.frame[f"{symbol}_close"].iloc[index])
+    return float(close_series(dataset, symbol).iloc[index])
 
 
 def open_value(dataset: RouterFrameDataset, symbol: str, index: int) -> float:
     if index < 0 or index >= len(dataset.frame):
         return 0.0
-    return float(dataset.frame[f"{symbol}_open"].iloc[index])
+    return float(open_series(dataset, symbol).iloc[index])
+
+
+def close_series(dataset: RouterFrameDataset, symbol: str) -> pd.Series:
+    key = f"close:{symbol.upper()}"
+    cached = dataset.runtime_cache.get(key)
+    if cached is None:
+        cached = dataset.frame[f"{symbol.upper()}_close"].astype(float)
+        dataset.runtime_cache[key] = cached
+    return cached
+
+
+def open_series(dataset: RouterFrameDataset, symbol: str) -> pd.Series:
+    key = f"open:{symbol.upper()}"
+    cached = dataset.runtime_cache.get(key)
+    if cached is None:
+        cached = dataset.frame[f"{symbol.upper()}_open"].astype(float)
+        dataset.runtime_cache[key] = cached
+    return cached
+
+
+def rolling_close_mean(dataset: RouterFrameDataset, symbol: str, lookback: int) -> pd.Series:
+    key = f"close_mean:{symbol.upper()}:{lookback}"
+    cached = dataset.runtime_cache.get(key)
+    if cached is None:
+        cached = close_series(dataset, symbol).rolling(lookback).mean()
+        dataset.runtime_cache[key] = cached
+    return cached
+
+
+def rolling_close_max(dataset: RouterFrameDataset, symbol: str, lookback: int) -> pd.Series:
+    key = f"close_max:{symbol.upper()}:{lookback}"
+    cached = dataset.runtime_cache.get(key)
+    if cached is None:
+        cached = close_series(dataset, symbol).rolling(lookback).max()
+        dataset.runtime_cache[key] = cached
+    return cached
 
 
 def symbol_holding_return(
@@ -841,8 +988,7 @@ def symbol_holding_return(
         exit_price = open_value(dataset, symbol, index + 1)
     if entry <= 0 or exit_price <= 0:
         return 0.0
-    cost_rate = spec.costs.commission_pct / 100 + spec.costs.slippage_bps / 10_000
-    return (exit_price * (1 - cost_rate)) / (entry * (1 + cost_rate)) - 1
+    return (exit_price / entry) - 1
 
 
 def daily_buy_hold_return(
