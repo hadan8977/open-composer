@@ -5,6 +5,8 @@ from pathlib import Path
 
 import yaml
 
+from open_composer.experiments import append_experiment_run
+from open_composer.models.experiment import ExperimentRun
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.paper_readiness import (
     assess_paper_strategy_readiness,
@@ -77,6 +79,28 @@ def test_activate_can_enforce_paper_readiness(
     assert not (
         sample_workspace / "strategy_specs" / "active" / "fixture_pullback_15m.yaml"
     ).exists()
+
+
+def test_paper_readiness_blocks_playground_only_evidence(sample_workspace: Path) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    append_experiment_run(
+        ExperimentRun(
+            run_id="playground-only",
+            name="Playground only",
+            research_mode="playground",
+            kind="parameter_sweep",
+            strategy_name="fixture_pullback_15m",
+            status="warning",
+            gate_status="warning",
+        ),
+        sample_workspace,
+    )
+
+    report = assess_paper_strategy_readiness(spec_path, sample_workspace)
+    check = next(item for item in report.checks if item.name == "research_mode")
+
+    assert check.status == "blocked"
+    assert "playground" in check.message
 
 
 def test_candidate_paper_readiness_capability_uses_candidate_spec(

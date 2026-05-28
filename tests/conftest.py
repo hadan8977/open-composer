@@ -41,6 +41,7 @@ def sample_workspace(tmp_path: Path, repo_root: Path, fixture_specs_root: Path) 
         "data/sample",
         "data/cache",
         "data/fixtures/capabilities",
+        "data/fixtures/market_data",
         "data/raw/events",
         "data/raw/macro",
         "event_logs",
@@ -83,6 +84,11 @@ def sample_workspace(tmp_path: Path, repo_root: Path, fixture_specs_root: Path) 
     copytree(
         repo_root / "data" / "fixtures" / "capabilities",
         tmp_path / "data" / "fixtures" / "capabilities",
+        dirs_exist_ok=True,
+    )
+    copytree(
+        repo_root / "data" / "fixtures" / "market_data",
+        tmp_path / "data" / "fixtures" / "market_data",
         dirs_exist_ok=True,
     )
     return tmp_path

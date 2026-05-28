@@ -98,6 +98,7 @@ class BacktestRun(BaseModel):
     turnover_ratio: float | None = None
     total_fees: float = 0.0
     backend_plan_path: str | None = None
+    equity_series_path: str | None = None
     data_sanity: BacktestDataSanity | None = None
     execution_reality: ExecutionRealityMetrics | None = None
     assumptions: list[str] = Field(default_factory=list)

@@ -16,6 +16,7 @@ from open_composer.config import (
     ensure_dir,
     project_root,
 )
+from open_composer.experiments import read_experiment_runs
 from open_composer.feature_packets import (
     feature_packet_path_for_factor,
     feature_packet_path_label,
@@ -31,6 +32,7 @@ from open_composer.storage import write_json
 from open_composer.strategy_capabilities import (
     assess_strategy_capabilities_for_spec,
 )
+from open_composer.strategy_versions import strategy_content_hash
 from open_composer.timeframes import require_paper_ready_timeframe
 
 PaperReadinessStatus = Literal["ok", "warning", "blocked"]
@@ -100,6 +102,7 @@ def assess_paper_strategy_readiness_for_spec(
         _portfolio_routing_check(spec),
         _portfolio_risk_check(spec),
         _feature_packet_binding_check(spec, base),
+        _playground_evidence_check(spec, base),
         _promotion_report_check(spec, base, spec_path),
         _harness_artifacts_check(spec, base),
     ]
@@ -245,6 +248,53 @@ def _execution_substate(
     if status == "blocked":
         return "blocked"
     return "order_authorized"
+
+
+def _playground_evidence_check(spec: StrategySpec, root: Path) -> PaperStrategyReadinessCheck:
+    spec_hash = strategy_content_hash(spec)
+    matches = [
+        run
+        for run in read_experiment_runs(root)
+        if run.spec_hash == spec_hash or run.strategy_name == spec.name
+    ]
+    playground = [run for run in matches if run.research_mode == "playground"]
+    audited = [run for run in matches if run.research_mode == "audited"]
+    if playground and not audited:
+        return PaperStrategyReadinessCheck(
+            name="research_mode",
+            status="blocked",
+            message=(
+                "Only playground experiment evidence is linked to this strategy; "
+                "paper readiness requires audited reruns."
+            ),
+            details={
+                "playground_runs": [run.run_id for run in playground],
+                "audited_runs": [],
+            },
+            suggested_actions=[
+                (
+                    "uv run oc strategy parameter-sweep "
+                    f"strategy_specs/drafts/{spec.name}.yaml --research-mode audited"
+                ),
+                f"uv run oc strategy promotion-report strategy_specs/active/{spec.name}.yaml",
+            ],
+        )
+    if playground:
+        return PaperStrategyReadinessCheck(
+            name="research_mode",
+            status="warning",
+            message="Playground experiments exist but audited evidence is also present.",
+            details={
+                "playground_runs": [run.run_id for run in playground],
+                "audited_runs": [run.run_id for run in audited],
+            },
+        )
+    return PaperStrategyReadinessCheck(
+        name="research_mode",
+        status="ok",
+        message="No playground-only evidence is linked to this strategy.",
+        details={"linked_experiment_runs": [run.run_id for run in matches]},
+    )
 
 
 def _data_source_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:

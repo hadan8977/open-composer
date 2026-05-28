@@ -64,6 +64,11 @@ the SDK is installed. File artifacts remain the audit source either way.
 
 ## Bounded Research
 
+Research runs now distinguish `audited` and `playground` modes. `audited` is
+the default path for promotion evidence. `playground` is for fast local
+experiments and is recorded in the experiment index, but its artifacts must not
+satisfy promotion, paper readiness, or paper automation gates.
+
 Use bounded search when parameters, factor variants, or method variants are
 adjustable:
 
@@ -74,13 +79,20 @@ uv run oc strategy parameter-sweep strategy_specs/drafts/<strategy>.yaml \
   --param costs.slippage_bps=0,5 \
   --max-candidates 27 \
   --top-n 10 \
-  --write-top 2
+  --write-top 2 \
+  --research-mode audited
 ```
 
 Other research commands:
 
 ```bash
 uv run oc strategy factor-lab strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy factor-panel build strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy factor-lab-v2 reports/research/<strategy>-factor-panel.csv
+uv run oc strategy alpha-decay strategy_specs/drafts/<strategy>.yaml
+uv run oc strategy regime-performance strategy_specs/drafts/<strategy>.yaml
+uv run oc data market-data-manifest data/fixtures/market_data/quote_ticks.jsonl --kind quote_tick
+uv run oc strategy execution-sim strategy_specs/drafts/<strategy>.yaml --market-data reports/data/market_data/QQQ-quote_tick-manifest.json
 uv run oc strategy exposure-switch strategy_specs/drafts/<strategy>.yaml --walk-forward-folds 3 --walk-forward-top-k 8
 uv run oc strategy rotate-universe strategy_specs/drafts/<strategy>.yaml --symbols QQQ,SPY,IWM --walk-forward-folds 3
 uv run oc strategy market-time strategy_specs/drafts/<strategy>.yaml --profile risk_control_hold --walk-forward-folds 3
@@ -88,6 +100,11 @@ uv run oc strategy llm-exposure-switch strategy_specs/drafts/<strategy>.yaml --v
 uv run oc strategy blind-test strategy_specs/drafts/<strategy>.yaml
 uv run oc strategy cost-grid strategy_specs/drafts/<strategy>.yaml
 uv run oc strategy regime-search strategy_specs/drafts/<strategy>.yaml
+uv run oc experiment list
+uv run oc experiment show <run-id>
+uv run oc experiment compare <left-run-id> <right-run-id>
+uv run oc experiment artifacts <run-id>
+uv run oc experiment trace <strategy-name>
 ```
 
 Research reports write `research_brief`, `search_space`,

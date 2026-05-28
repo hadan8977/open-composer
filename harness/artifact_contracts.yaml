@@ -139,6 +139,84 @@ artifacts:
       - oos_metrics
       - conclusion
 
+  regime_performance_report:
+    description: >
+      Leak-free regime-aware strategy return attribution. Labels each bar with
+      trailing-information market regimes and reports worst-regime performance.
+    path: reports/research/{strategy}-regime-performance.json
+    format: json
+    required_fields:
+      - strategy_name
+      - status
+      - regimes
+      - min_regime_sharpe
+      - min_regime_return_pct
+      - blockers
+      - warnings
+
+  alpha_decay_report:
+    description: >
+      Lightweight alpha-decay proxy for front-loaded returns, recent Sharpe
+      degradation, and stale-edge risk.
+    path: reports/research/{strategy}-alpha-decay.json
+    format: json
+    required_fields:
+      - strategy_name
+      - status
+      - slope
+      - recent_sharpe
+      - old_sharpe
+      - pnl_concentration_old
+      - alpha_stale
+      - blockers
+      - warnings
+
+  factor_panel_report:
+    description: >
+      Cross-sectional non-ML factor panel diagnostics with ICIR, t-stat,
+      horizon decay, quantile returns, turnover, correlation, and optional
+      group/bucket neutralized RankIC.
+    path: reports/research/{strategy}-factor-lab-v2.json
+    format: json
+    required_fields:
+      - status
+      - panel_path
+      - factor_metrics
+      - factor_correlation_matrix
+      - quality_flags
+
+  market_data_manifest:
+    description: >
+      Tick/L1/L2 local fixture manifest used for research-only replay and
+      execution simulation readiness evidence.
+    path: reports/data/market_data/{symbol}-{kind}-manifest.json
+    format: json
+    required_fields:
+      - kind
+      - path
+      - symbol
+      - first_timestamp
+      - last_timestamp
+      - row_count
+      - source
+      - quality_flags
+      - sha256
+
+  execution_sim_report:
+    description: >
+      Research-only execution simulation report backed by a market-data manifest
+      and NautilusTrader backend compatibility plan.
+    path: reports/research/{strategy}-execution-sim.json
+    format: json
+    required_fields:
+      - strategy_name
+      - status
+      - selected_backend
+      - market_data_manifest_path
+      - market_data_kind
+      - blockers
+      - warnings
+
   feature_packet_schema:
     description: >
       Schema and sample for every LLM/news/event/macro feature packet used by

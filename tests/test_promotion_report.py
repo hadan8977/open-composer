@@ -111,6 +111,8 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
         "research_design",
         "research_brief",
         "overfit_risk",
+        "regime_performance",
+        "alpha_decay",
     }
     assert payload["gate_summary"]["workflow_pass"] is True
     assert payload["gate_summary"]["research_pass"] is False

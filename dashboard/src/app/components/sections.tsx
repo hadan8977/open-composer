@@ -295,7 +295,7 @@ export function ResearchView() {
         theme="cyan"
         greeting={`Research · ${dashboardSummary.researchRunCount} indexed runs`}
         headline="Evidence"
-        meta="ResearchRunIndex records from the shared kernel, including candidate counts, trial counts, gate status, blockers and source artifacts."
+        meta="ResearchRunIndex and ExperimentRun records from the shared kernel, including candidate counts, trial counts, gate status, blockers and source artifacts."
         stat={{
           label: "Blocked / warning",
           value: `${dashboardSummary.researchBlockedCount} / ${dashboardSummary.researchWarningCount}`,
@@ -425,7 +425,12 @@ export function ResearchView() {
                       <div className="t-body-xs ink-subtle mt-0.5">{formatDate(run.generatedAt)}</div>
                     </td>
                     <td className="py-3">{run.strategyName}</td>
-                    <td><Tag color="paper">{run.kind}</Tag></td>
+                    <td>
+                      <Tag color="paper">{run.kind}</Tag>
+                      <div className="t-body-xs ink-subtle mt-1">
+                        {run.researchMode ?? "legacy"} · {run.artifactCount} artifacts
+                      </div>
+                    </td>
                     <td><Tag color={statusColor(run.status)}>{run.status}</Tag></td>
                     <td className="text-right t-num">{run.candidateCount}</td>
                     <td className="text-right t-num">{run.trialCount}</td>
@@ -435,7 +440,7 @@ export function ResearchView() {
                         {blockers.join(", ") || "none"}
                       </div>
                       <div className="t-body-xs ink-subtle mt-0.5">
-                        {run.dataSourceMode}{run.dataAsOf ? ` · ${formatDate(run.dataAsOf)}` : ""}
+                        {run.nextAction || run.dataSourceMode}{run.dataAsOf ? ` · ${formatDate(run.dataAsOf)}` : ""}
                       </div>
                     </td>
                     <td className="pr-5 max-w-[240px]">

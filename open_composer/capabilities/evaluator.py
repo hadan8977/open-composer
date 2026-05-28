@@ -6,6 +6,7 @@ import pandas as pd
 
 from open_composer.adapters.data.sample import normalize_ohlcv
 from open_composer.config import ensure_dir, project_root
+from open_composer.data_contracts import build_market_data_manifest
 from open_composer.models.capability import Capability, CapabilityEvaluation
 from open_composer.models.event import EventRecord
 from open_composer.reports.capabilities import write_capability_report
@@ -43,19 +44,37 @@ def _evaluate_capability(root: Path, capability: Capability) -> CapabilityEvalua
         )
 
     if capability.kind == "market":
-        try:
-            frame = normalize_ohlcv(pd.read_csv(path))
-            records = len(frame)
-            score_parts.append(1.0 if records >= 5 else 0.5)
-            score_parts.append(1.0 if frame["timestamp"].is_monotonic_increasing else 0.5)
-            score_parts.append(
-                1.0
-                if frame[["open", "high", "low", "close", "volume"]].notna().all().all()
-                else 0.0
-            )
-        except Exception as exc:
-            issues.append(str(exc))
-            score_parts.append(0.0)
+        market_data_kinds = getattr(capability, "market_data_kinds", None)
+        if market_data_kinds and "ohlcv_bar" not in market_data_kinds:
+            try:
+                manifest = build_market_data_manifest(
+                    path,
+                    market_data_kinds[0],
+                    root=root,
+                    source=capability.provider,
+                )
+                records = manifest.row_count
+                issues.extend(manifest.quality_flags)
+                score_parts.append(1.0 if records >= 2 else 0.5)
+                score_parts.append(1.0 if "timestamps_not_monotonic" not in issues else 0.5)
+                score_parts.append(1.0 if not manifest.paper_ready else 0.8)
+            except Exception as exc:
+                issues.append(str(exc))
+                score_parts.append(0.0)
+        else:
+            try:
+                frame = normalize_ohlcv(pd.read_csv(path))
+                records = len(frame)
+                score_parts.append(1.0 if records >= 5 else 0.5)
+                score_parts.append(1.0 if frame["timestamp"].is_monotonic_increasing else 0.5)
+                score_parts.append(
+                    1.0
+                    if frame[["open", "high", "low", "close", "volume"]].notna().all().all()
+                    else 0.0
+                )
+            except Exception as exc:
+                issues.append(str(exc))
+                score_parts.append(0.0)
     elif capability.kind in {"event", "macro", "news"}:
         valid, duplicates, event_issues = _evaluate_event_fixture(path)
         records = valid

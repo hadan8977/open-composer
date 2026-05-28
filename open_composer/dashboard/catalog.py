@@ -1206,6 +1206,14 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
 def _build_research_run_records(base: Path) -> list[DashboardResearchRun]:
     records: list[DashboardResearchRun] = []
     seen: set[str] = set()
+    experiment_index_path = base / "reports" / "experiments" / "index.jsonl"
+    for raw in _load_jsonl(experiment_index_path):
+        record = _experiment_run_record(raw)
+        if record is None:
+            continue
+        seen.add(record.run_id)
+        records.append(record)
+
     index_path = base / "reports" / "research" / "index.jsonl"
     for raw in _load_jsonl(index_path):
         record = _research_run_record(raw)
@@ -1243,6 +1251,55 @@ def _build_research_run_records(base: Path) -> list[DashboardResearchRun]:
     return records
 
 
+def _experiment_run_record(raw: dict[str, Any]) -> DashboardResearchRun | None:
+    try:
+        artifact_refs = raw.get("artifact_refs", [])
+        if not isinstance(artifact_refs, list):
+            artifact_refs = []
+        trials = raw.get("trials", [])
+        if not isinstance(trials, list):
+            trials = []
+        status = _experiment_status_value(raw.get("status"))
+        gate_status = _experiment_status_value(raw.get("gate_status") or status)
+        report_path = _first_artifact_path(artifact_refs, "report")
+        json_path = _first_artifact_path(artifact_refs, "json")
+        return DashboardResearchRun(
+            run_id=str(raw.get("run_id") or ""),
+            generated_at=_optional_datetime(raw.get("ended_at") or raw.get("started_at")),
+            strategy_name=str(raw.get("strategy_name") or "unknown"),
+            source_spec_path=str(raw.get("source_spec_path") or ""),
+            spec_hash=_registered_value(raw.get("spec_hash")),
+            status=status,
+            kind=str(raw.get("kind") or "experiment"),
+            research_mode=_research_mode_value(raw.get("research_mode")),
+            data_profile={"dataset_hash": _registered_value(raw.get("dataset_hash"))},
+            candidate_count=int(raw.get("metrics", {}).get("candidate_count", 0) or 0)
+            if isinstance(raw.get("metrics"), dict)
+            else 0,
+            trial_count=len(trials),
+            gate_status=gate_status,
+            blocked_items=[str(item) for item in raw.get("blocked_reasons", []) if item],
+            warning_items=[str(item) for item in raw.get("warning_reasons", []) if item],
+            report_path=report_path,
+            json_path=json_path,
+            source_artifacts={},
+            artifact_count=len(artifact_refs),
+            artifact_refs=[
+                {
+                    "path": str(ref.get("path") or ""),
+                    "kind": str(ref.get("kind") or ""),
+                    "producer": str(ref.get("producer") or ""),
+                    "sha256": _registered_value(ref.get("sha256")),
+                }
+                for ref in artifact_refs
+                if isinstance(ref, dict)
+            ],
+            next_action=_experiment_next_action(status, gate_status),
+        )
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
 def _research_run_record(raw: dict[str, Any]) -> DashboardResearchRun | None:
     try:
         return DashboardResearchRun(
@@ -1273,6 +1330,10 @@ def _research_run_record(raw: dict[str, Any]) -> DashboardResearchRun | None:
                     else {}
                 ).items()
             },
+            next_action=_experiment_next_action(
+                _status_value(raw.get("status")),
+                _status_value(raw.get("gate_status")),
+            ),
         )
     except (TypeError, ValueError):
         return None
@@ -2517,6 +2578,35 @@ def _optional_datetime(value: object) -> datetime | None:
 def _status_value(value: object) -> Literal["ok", "warning", "blocked"]:
     text = str(value or "warning")
     return text if text in {"ok", "warning", "blocked"} else "warning"  # type: ignore[return-value]
+
+
+def _experiment_status_value(value: object) -> Literal["ok", "warning", "blocked"]:
+    text = str(value or "warning")
+    if text in {"ok", "warning", "blocked"}:
+        return text  # type: ignore[return-value]
+    if text == "failed":
+        return "blocked"
+    return "warning"
+
+
+def _research_mode_value(value: object) -> Literal["playground", "audited"] | None:
+    text = str(value or "")
+    return text if text in {"playground", "audited"} else None  # type: ignore[return-value]
+
+
+def _first_artifact_path(artifact_refs: list[object], kind: str) -> str | None:
+    for item in artifact_refs:
+        if isinstance(item, dict) and item.get("kind") == kind:
+            return _registered_value(item.get("path"))
+    return None
+
+
+def _experiment_next_action(status: str, gate_status: str) -> str:
+    if status == "blocked" or gate_status == "blocked":
+        return "Review blocked_items and rerun the audited workflow after fixing inputs."
+    if status == "warning" or gate_status == "warning":
+        return "Review warning_items before using this run as promotion evidence."
+    return "No blocking research action recorded."
 
 
 def _operational_count(

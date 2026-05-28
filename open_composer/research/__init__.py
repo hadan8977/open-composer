@@ -4,6 +4,7 @@ from open_composer.research.adaptive_intraday_router import (
     run_llm_adaptive_intraday_router_selection,
 )
 from open_composer.research.aggressive_theme_router import run_aggressive_theme_router_research
+from open_composer.research.alpha_decay import AlphaDecayResult, build_alpha_decay_report
 from open_composer.research.alt_data_quality import build_alternative_data_quality_report
 from open_composer.research.alternative_data_evidence import build_alternative_data_evidence
 from open_composer.research.beta_exposure_router import (
@@ -28,8 +29,11 @@ from open_composer.research.drafter import (
     draft_strategy_from_idea_with_status,
 )
 from open_composer.research.evidence import StrategyEvidenceResult, build_strategy_evidence
+from open_composer.research.execution_sim import ExecutionSimResult, run_execution_sim
 from open_composer.research.exposure_switch import run_exposure_switch_research
 from open_composer.research.factor_lab import FactorLabResult, run_factor_lab
+from open_composer.research.factor_lab_v2 import FactorPanelReport, run_factor_lab_v2
+from open_composer.research.factor_panel import FactorPanelBuildResult, build_factor_panel_from_spec
 from open_composer.research.geometry_features import (
     GeometryFeatureReportResult,
     build_geometry_feature_report,
@@ -58,6 +62,10 @@ from open_composer.research.options_research import (
 from open_composer.research.parameter_sweep import parse_sweep_parameters, run_parameter_sweep
 from open_composer.research.pbo import OverfitRiskResult, build_overfit_risk_report
 from open_composer.research.promotion import PromotionReport, build_promotion_report
+from open_composer.research.regime_performance import (
+    RegimePerformanceResult,
+    build_regime_performance_report,
+)
 from open_composer.research.regime_retrieval import RegimeSearchReport, search_similar_regimes
 from open_composer.research.research_report import (
     StrategyResearchReportResult,
@@ -91,7 +99,9 @@ __all__ = [
     "CostGridReport",
     "CostGridResult",
     "ResearchControlResult",
+    "ExecutionSimResult",
     "RegimeSearchReport",
+    "RegimePerformanceResult",
     "SkillAttributionReport",
     "SkillAttributionRow",
     "run_blind_test",
@@ -108,6 +118,7 @@ __all__ = [
     "build_research_contract",
     "write_research_contract",
     "run_cost_grid",
+    "run_execution_sim",
     "update_research_control",
     "load_memory_packet",
     "search_similar_regimes",
@@ -115,9 +126,13 @@ __all__ = [
     "build_short_risk_report",
     "run_exposure_switch_research",
     "FactorLabResult",
+    "FactorPanelBuildResult",
+    "FactorPanelReport",
     "GeometryFeatureReportResult",
     "build_geometry_feature_report",
     "run_factor_lab",
+    "run_factor_lab_v2",
+    "build_factor_panel_from_spec",
     "run_hybrid_adaptive_router_research",
     "run_hybrid_factor_attribution",
     "run_hybrid_news_marginal_lift_research",
@@ -139,6 +154,9 @@ __all__ = [
     "build_strategy_evidence",
     "build_promotion_report",
     "build_overfit_risk_report",
+    "AlphaDecayResult",
+    "build_alpha_decay_report",
+    "build_regime_performance_report",
     "run_parameter_sweep",
     "run_universe_audit",
     "run_llm_exposure_switch_meta_selection",

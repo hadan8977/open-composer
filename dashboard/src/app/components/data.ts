@@ -245,6 +245,7 @@ export interface ResearchRun {
   generatedAt: string | null;
   strategyName: string;
   kind: string;
+  researchMode: "playground" | "audited" | null;
   status: OperationalStatus;
   gateStatus: OperationalStatus;
   sourceSpecPath: string;
@@ -257,6 +258,8 @@ export interface ResearchRun {
   warningItems: string[];
   dataSourceMode: string;
   dataAsOf: string | null;
+  artifactCount: number;
+  nextAction: string;
 }
 
 export interface DashboardSummaryView {
@@ -677,6 +680,7 @@ interface DashboardResearchRunRecord {
   source_spec_path?: string;
   status?: OperationalStatus;
   kind?: string;
+  research_mode?: "playground" | "audited" | null;
   data_profile?: Record<string, unknown>;
   candidate_count?: number;
   trial_count?: number;
@@ -686,6 +690,8 @@ interface DashboardResearchRunRecord {
   warning_items?: string[];
   report_path?: string | null;
   json_path?: string | null;
+  artifact_count?: number;
+  next_action?: string;
 }
 
 interface DashboardOperationalCheckRecord {
@@ -1343,6 +1349,7 @@ function buildResearchRuns(): ResearchRun[] {
         generatedAt: run.generated_at ?? null,
         strategyName: humanize(run.strategy_name ?? "unknown"),
         kind: run.kind ?? "research_report",
+        researchMode: run.research_mode ?? null,
         status: run.status ?? "warning",
         gateStatus: run.gate_status ?? run.status ?? "warning",
         sourceSpecPath: run.source_spec_path ?? "",
@@ -1360,6 +1367,8 @@ function buildResearchRuns(): ResearchRun[] {
           typeof dataProfile.data_as_of === "string"
             ? dataProfile.data_as_of
             : null,
+        artifactCount: run.artifact_count ?? 0,
+        nextAction: run.next_action ?? "",
       };
     });
 }

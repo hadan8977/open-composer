@@ -82,7 +82,12 @@ class ExecutionConfig(BaseModel):
     backend: Literal["python_reference", "nautilus_trader"] = "python_reference"
     mode: Literal["manual_signal", "paper_auto"] = "manual_signal"
     signal_on: Literal["bar_close"] = "bar_close"
-    fill_assumption: Literal["next_bar_open"] = "next_bar_open"
+    fill_assumption: Literal[
+        "next_bar_open",
+        "bar_limit_touch",
+        "quote_mid_or_limit",
+        "nautilus_fill_model",
+    ] = "next_bar_open"
     broker: Literal["none", "alpaca_paper"] = "none"
 
     @model_validator(mode="after")
@@ -220,6 +225,17 @@ class ResearchDesign(BaseModel):
     validation_plan: list[str] = Field(default_factory=list)
 
 
+class EvaluationPolicy(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    edge_type: Literal["microstructure", "intraday_momentum", "swing", "value_macro"] | None = None
+    edge_half_life_days: float | None = Field(default=None, gt=0)
+    trade_frequency_per_day: float | None = Field(default=None, gt=0)
+    backtest_window_policy: Literal["recent", "multi_cycle", "auto"] = "auto"
+    refit: Literal["rolling", "expanding", "none"] = "none"
+    require_recent_oos_positive: bool = True
+
+
 # ---------------------------------------------------------------------------
 # Optional execution-policy and reality-model extensions (skill-first harness)
 # These fields are opt-in; specs without them continue to validate. Strategies
@@ -332,6 +348,9 @@ class RealityModel(BaseModel):
         "next_regular_open_with_policy",
         "delayed_open_with_policy",
         "twap",
+        "bar_limit_touch",
+        "quote_mid_or_limit",
+        "nautilus_fill_model",
     ] = "next_bar_open"
     slippage_model: Literal[
         "fixed_bps",
@@ -339,6 +358,11 @@ class RealityModel(BaseModel):
         "almgren_chriss",
     ] = "fixed_bps"
     stress_scenarios: list[StressScenario] = Field(default_factory=list)
+    latency_ms: float = Field(default=0.0, ge=0)
+    partial_fill_model: Literal["none", "pro_rata", "queue_position"] = "none"
+    spread_model: Literal["fixed_bps", "quote_replay", "depth_replay"] = "fixed_bps"
+    queue_model: Literal["none", "level_priority", "fifo_proxy"] = "none"
+    volume_participation_cap: float | None = Field(default=None, gt=0, le=1)
 
 
 class StrategySpec(BaseModel):
@@ -362,6 +386,7 @@ class StrategySpec(BaseModel):
     llm_review: LLMReviewConfig = Field(default_factory=LLMReviewConfig)
     notes: NotesConfig = Field(default_factory=NotesConfig)
     research_design: ResearchDesign | None = None
+    evaluation_policy: EvaluationPolicy | None = None
     required_capabilities: list[str] = Field(default_factory=list)
     execution_policy: ExecutionPolicy | None = None
     reality_model: RealityModel | None = None

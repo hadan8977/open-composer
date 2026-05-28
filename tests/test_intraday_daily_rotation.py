@@ -40,7 +40,6 @@ from open_composer.research.hybrid_router_core import (
     _build_beta_override_params_grid,
     hybrid_target_weight_snapshot,
 )
-from open_composer.research.router_common import RouterFrameDataset
 from open_composer.research.intraday_daily_rotation import (
     IntradayDailyCandidate,
     IntradayDailyMetrics,
@@ -51,6 +50,7 @@ from open_composer.research.intraday_daily_rotation import (
     run_llm_intraday_daily_rotation_selection,
     write_intraday_product_reflection,
 )
+from open_composer.research.router_common import RouterFrameDataset
 
 
 def _make_intraday_frame(

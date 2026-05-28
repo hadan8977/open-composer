@@ -80,6 +80,26 @@ capabilities:
       - 1000-bar synthetic GBM (mu=10%, sigma=18%) with one injected 25% crash window
       - deterministic reproducible fixture (seed=42); not a real market series
 
+  - id: market.microstructure_fixture
+    kind: market
+    status: trial
+    provider: local
+    use_for: [microstructure_research, execution_sim_fixture]
+    reliability: medium
+    default_mode: offline
+    supported_timeframes: [tick]
+    paper_ready_timeframes: []
+    market_data_kinds: [quote_tick]
+    min_resolution: tick
+    book_depth: 1
+    venues: [XNAS]
+    strict_behavior: research_only
+    fixture: data/fixtures/market_data/quote_ticks.jsonl
+    min_score: 0.75
+    caveats:
+      - deterministic microstructure fixture for contract validation only
+      - not broker-grade live or historical tick evidence
+
   - id: events.sec_filings
     kind: event
     status: approved

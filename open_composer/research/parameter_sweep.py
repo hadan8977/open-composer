@@ -16,8 +16,10 @@ from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.analytics.data_sanity import MIN_SIGNALS, MIN_TRADES
 from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
+from open_composer.experiments import append_experiment_run, artifact_ref
 from open_composer.expressions import validate_expression
 from open_composer.json_utils import json_safe_payload
+from open_composer.models.experiment import ExperimentRun, ExperimentTrial, ResearchMode
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.kernel import ResearchArtifactWriter
 from open_composer.research.kernel.candidates import CandidateScore, CandidateSet, CandidateSpec
@@ -33,6 +35,7 @@ from open_composer.research.metadata import (
 from open_composer.research.optimizer import _score_candidate
 from open_composer.research.optimizers.random_search import select_random_combinations
 from open_composer.research.research_brief import ensure_research_brief_for_sweep
+from open_composer.research.search_policy import ObjectiveSet, SearchPolicy
 from open_composer.strategy_versions import strategy_content_hash
 
 ALLOWED_SWEEP_ROOTS = {"entry", "exit", "risk", "costs", "factors"}
@@ -96,6 +99,7 @@ def run_parameter_sweep(
     write_top: int = 1,
     search_strategy: str = "grid",
     random_seed: int | None = None,
+    research_mode: ResearchMode = "audited",
 ) -> ParameterSweepResult:
     started_at = perf_counter()
     base = root or project_root()
@@ -111,6 +115,21 @@ def run_parameter_sweep(
     if search_strategy not in {"grid", "random"}:
         msg = "--search-strategy must be one of: grid, random"
         raise ValueError(msg)
+    search_policy = SearchPolicy(
+        strategy=search_strategy,  # type: ignore[arg-type]
+        candidate_budget=max_candidates,
+        random_seed=random_seed,
+        objective_set=ObjectiveSet(
+            primary_metric="score",
+            secondary_metrics=["total_return_pct", "sharpe_ratio", "signals"],
+            constraints={
+                "min_return_pct": min_return_pct,
+                "min_signals": min_signals,
+                "min_sharpe": min_sharpe,
+            },
+        ),
+    )
+    search_policy.validate()
     _validate_sweep_paths(source, parameters)
     if search_strategy == "grid" and total_candidates > max_candidates:
         msg = (
@@ -250,8 +269,22 @@ def run_parameter_sweep(
         search_strategy,
         random_seed,
         brief_validation.payload,
+        search_policy,
+        research_mode,
     )
     writer.append_index(index_record)
+    _append_parameter_sweep_experiment(
+        root=base,
+        source=source,
+        spec_path=spec_path,
+        report_path=report_path,
+        json_path=json_path,
+        candidates=candidate_results,
+        search_policy=search_policy,
+        research_mode=research_mode,
+        data_profile=data_profile,
+        index_record=index_record,
+    )
     _write_sweep_report(
         report_path,
         source,
@@ -500,6 +533,8 @@ def _write_sweep_json(
     search_strategy: str,
     random_seed: int | None,
     research_brief_payload: dict[str, Any],
+    search_policy: SearchPolicy,
+    research_mode: ResearchMode,
 ) -> Path:
     ensure_dir(path.parent)
     payload = {
@@ -511,7 +546,29 @@ def _write_sweep_json(
         "max_candidates": max_candidates,
         "parameters": parameters,
         "search_strategy": search_strategy,
+        "research_mode": research_mode,
         "random_seed": random_seed,
+        "search_policy": {
+            "strategy": search_policy.strategy,
+            "candidate_budget": search_policy.candidate_budget,
+            "random_seed": search_policy.random_seed,
+            "objective_set": {
+                "primary_metric": search_policy.objective_set.primary_metric
+                if search_policy.objective_set
+                else None,
+                "secondary_metrics": search_policy.objective_set.secondary_metrics
+                if search_policy.objective_set
+                else [],
+                "constraints": search_policy.objective_set.constraints
+                if search_policy.objective_set
+                else {},
+                "tie_breakers": search_policy.objective_set.tie_breakers
+                if search_policy.objective_set
+                else [],
+            },
+            "prune_rules": search_policy.prune_rules,
+            "requires_nested_validation": search_policy.requires_nested_validation,
+        },
         "research_brief": research_brief_payload,
         "search_space": search_space_payload,
         "data_profile": data_profile,
@@ -543,6 +600,72 @@ def _write_sweep_json(
         encoding="utf-8",
     )
     return path
+
+
+def _append_parameter_sweep_experiment(
+    *,
+    root: Path,
+    source: StrategySpec,
+    spec_path: Path,
+    report_path: Path,
+    json_path: Path,
+    candidates: list[SweepCandidateResult],
+    search_policy: SearchPolicy,
+    research_mode: ResearchMode,
+    data_profile: dict[str, Any],
+    index_record: ResearchRunIndexRecord,
+) -> None:
+    run_id = index_record.run_id
+    append_experiment_run(
+        ExperimentRun(
+            run_id=run_id,
+            name=f"Parameter Sweep: {source.name}",
+            research_mode=research_mode,
+            kind="parameter_sweep",
+            strategy_name=source.name,
+            source_spec_path=workspace_relative_path(spec_path, root),
+            spec_hash=strategy_content_hash(source),
+            dataset_hash=str(data_profile.get("input_hash") or data_profile.get("path") or ""),
+            status="warning",
+            gate_status="warning",
+            params={
+                "search_policy": {
+                    "strategy": search_policy.strategy,
+                    "candidate_budget": search_policy.candidate_budget,
+                    "random_seed": search_policy.random_seed,
+                }
+            },
+            metrics={
+                "candidate_count": len(candidates),
+                "best_score": candidates[0].score if candidates else None,
+                "best_total_return_pct": candidates[0].artifacts.run.total_return_pct
+                if candidates
+                else None,
+            },
+            artifact_refs=[
+                artifact_ref(report_path, root=root, kind="report", producer="parameter_sweep"),
+                artifact_ref(json_path, root=root, kind="json", producer="parameter_sweep"),
+            ],
+            warning_reasons=[
+                "parameter_sweep_is_in_sample_only",
+                "requires_oos_walk_forward_cost_and_benchmark_review",
+            ],
+            trials=[
+                ExperimentTrial(
+                    trial_id=f"{source.name}-sweep-{candidate.rank:03d}",
+                    run_id=run_id,
+                    params=candidate.params,
+                    metrics=_candidate_payload(candidate)["metrics"],
+                    decision="kept" if candidate.rank == 1 else "rejected",
+                    decision_reason="selected_best_score"
+                    if candidate.rank == 1
+                    else "lower_score_or_weaker_research_quality_than_selected_candidate",
+                )
+                for candidate in candidates
+            ],
+        ),
+        root,
+    )
 
 
 def _candidate_set(

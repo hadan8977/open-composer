@@ -30,7 +30,7 @@ from open_composer.models.backtest import BacktestRun, Trade
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.reports.writer import write_backend_parity_report, write_backtest_report
-from open_composer.storage import append_jsonl
+from open_composer.storage import append_jsonl, write_json
 from open_composer.strategy_versions import register_strategy_version
 
 
@@ -180,6 +180,7 @@ def backtest_frame(
         spec.costs.impact_model, spec.costs.impact_eta, spec.costs.impact_gamma
     )
     equity_curve = [start_equity]
+    equity_timestamps = [_timestamp_label(evaluation_frame.iloc[0]["timestamp"])]
     entry_fill_by_direction = {
         "long": lambda open_price: open_price * (1 + slippage_rate + impact_rate),
         "short": lambda open_price: open_price * (1 - slippage_rate - impact_rate),
@@ -206,6 +207,7 @@ def backtest_frame(
                     _direction_multiplier(position_direction) * shares * (close_price - entry_price)
                 )
             equity_curve.append(marked_equity)
+            equity_timestamps.append(_timestamp_label(row["timestamp"]))
 
         target_direction = _target_direction(
             spec,
@@ -347,6 +349,13 @@ def backtest_frame(
 
     total_return_pct = (equity / start_equity - 1) * 100
     equity_curve.append(equity)
+    equity_timestamps.append(_timestamp_label(frame.iloc[-1]["timestamp"]))
+    equity_series_path = _write_equity_series(
+        root or project_root(),
+        current_run_id,
+        equity_timestamps,
+        equity_curve,
+    )
     metrics = build_performance_metrics(
         equity_curve,
         spec.timeframe,
@@ -426,6 +435,7 @@ def backtest_frame(
         turnover_ratio=metrics.turnover_ratio,
         total_fees=total_fees,
         backend_plan_path=backend_plan_path,
+        equity_series_path=str(equity_series_path),
         execution_reality=execution_reality,
         assumptions=assumptions,
     )
@@ -448,6 +458,47 @@ def _impact_rate(impact_model: str, impact_eta: float, impact_gamma: float) -> f
     if impact_model == "almgren_chriss":
         return (impact_eta + impact_gamma) / 10_000
     raise ValueError(f"unsupported impact model: {impact_model}")
+
+
+def _write_equity_series(
+    root: Path,
+    current_run_id: str,
+    timestamps: list[str],
+    equity_curve: list[float],
+) -> Path:
+    if len(timestamps) != len(equity_curve):
+        length = min(len(timestamps), len(equity_curve))
+        timestamps = timestamps[:length]
+        equity_curve = equity_curve[:length]
+    bar_returns: list[float] = []
+    previous: float | None = None
+    for value in equity_curve:
+        current = float(value)
+        if previous is None or previous == 0.0:
+            bar_returns.append(0.0)
+        else:
+            bar_returns.append((current / previous) - 1.0)
+        previous = current
+    path = root / "reports" / "backtests" / f"{current_run_id}-equity.json"
+    write_json(
+        path,
+        {
+            "run_id": current_run_id,
+            "timestamps": timestamps,
+            "equity": [float(value) for value in equity_curve],
+            "bar_returns": bar_returns,
+        },
+    )
+    return path
+
+
+def _timestamp_label(value: object) -> str:
+    timestamp = pd.Timestamp(value)
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.tz_localize("UTC")
+    else:
+        timestamp = timestamp.tz_convert("UTC")
+    return timestamp.isoformat()
 
 
 def _target_direction(

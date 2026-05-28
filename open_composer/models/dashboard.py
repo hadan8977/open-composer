@@ -483,6 +483,7 @@ class DashboardResearchRun(DashboardDataModel):
     spec_hash: str | None = None
     status: Literal["ok", "warning", "blocked"] = "warning"
     kind: str = "research_report"
+    research_mode: Literal["playground", "audited"] | None = None
     data_profile: dict[str, object] = field(default_factory=dict)
     candidate_count: int = 0
     trial_count: int = 0
@@ -494,6 +495,9 @@ class DashboardResearchRun(DashboardDataModel):
     json_path: str | None = None
     contract_path: str | None = None
     source_artifacts: dict[str, str | None] = field(default_factory=dict)
+    artifact_count: int = 0
+    artifact_refs: list[dict[str, object]] = field(default_factory=list)
+    next_action: str = ""
 
 
 @dataclass(kw_only=True)

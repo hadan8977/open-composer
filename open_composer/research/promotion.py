@@ -18,6 +18,7 @@ from open_composer.feature_packets import (
     inspect_feature_packet,
 )
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.alpha_decay import build_alpha_decay_report
 from open_composer.research.alt_data_quality import build_alternative_data_quality_report
 from open_composer.research.blind_test import load_blind_test_report
 from open_composer.research.contracts import write_research_contract
@@ -30,6 +31,7 @@ from open_composer.research.metadata import (
     search_space,
 )
 from open_composer.research.pbo import build_overfit_risk_report
+from open_composer.research.regime_performance import build_regime_performance_report
 from open_composer.research.research_brief import validate_research_brief
 from open_composer.research.universe_audit import assess_universe_audit
 from open_composer.storage import write_json
@@ -221,6 +223,8 @@ def build_promotion_report(
     checks.append(_research_design_check(spec))
     checks.append(_research_brief_check(spec_path, base))
     checks.append(_overfit_risk_check(spec_path, base))
+    checks.append(_regime_performance_check(spec_path, base))
+    checks.append(_alpha_decay_check(spec_path, base))
 
     ready = all(check.status == "ok" for check in checks)
     status: PromotionStatus
@@ -754,6 +758,76 @@ def _overfit_risk_check(spec_path: Path, root: Path) -> GateResult:
         name="overfit_risk",
         status="ok",
         message="Multiple-testing overfit risk proxy passed.",
+        details=details,
+    )
+
+
+def _regime_performance_check(spec_path: Path, root: Path) -> GateResult:
+    result = build_regime_performance_report(spec_path, root)
+    details = {
+        "status": result.status,
+        "min_regime_sharpe": result.min_regime_sharpe,
+        "min_regime_return_pct": result.min_regime_return_pct,
+        "blockers": result.blockers,
+        "warnings": result.warnings,
+        "json_path": str(result.json_path) if result.json_path else None,
+        "report_path": str(result.report_path) if result.report_path else None,
+    }
+    if result.status == "blocked":
+        return GateResult(
+            name="regime_performance",
+            status="blocked",
+            message="Regime performance blocks promotion: " + ", ".join(result.blockers),
+            details=details,
+        )
+    if result.status in {"warning", "not_applicable"}:
+        return GateResult(
+            name="regime_performance",
+            status="warning",
+            message="Regime performance needs review: "
+            + ", ".join(result.warnings or [result.status]),
+            details=details,
+        )
+    return GateResult(
+        name="regime_performance",
+        status="ok",
+        message="Regime performance did not find a blocking worst-regime failure.",
+        details=details,
+    )
+
+
+def _alpha_decay_check(spec_path: Path, root: Path) -> GateResult:
+    result = build_alpha_decay_report(spec_path, root)
+    details = {
+        "status": result.status,
+        "slope": result.slope,
+        "recent_sharpe": result.recent_sharpe,
+        "old_sharpe": result.old_sharpe,
+        "pnl_concentration_old": result.pnl_concentration_old,
+        "alpha_stale": result.alpha_stale,
+        "blockers": result.blockers,
+        "warnings": result.warnings,
+        "json_path": str(result.json_path) if result.json_path else None,
+        "report_path": str(result.report_path) if result.report_path else None,
+    }
+    if result.status == "blocked":
+        return GateResult(
+            name="alpha_decay",
+            status="blocked",
+            message="Alpha decay blocks promotion: " + ", ".join(result.blockers),
+            details=details,
+        )
+    if result.status in {"warning", "not_applicable"}:
+        return GateResult(
+            name="alpha_decay",
+            status="warning",
+            message="Alpha decay needs review: " + ", ".join(result.warnings or [result.status]),
+            details=details,
+        )
+    return GateResult(
+        name="alpha_decay",
+        status="ok",
+        message="Alpha decay proxy did not find stale-edge evidence.",
         details=details,
     )
 
@@ -1473,6 +1547,8 @@ def _build_pass_summary(
         "research_design",
         "research_brief",
         "overfit_risk",
+        "regime_performance",
+        "alpha_decay",
     }
     research_failures = sorted(name for name in research_gate_names if name in blocked)
     cost_grid_warning = _cost_grid_warning(spec, root)

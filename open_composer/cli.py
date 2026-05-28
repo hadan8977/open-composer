@@ -85,6 +85,7 @@ from open_composer.dashboard.vps_deploy import (
 from open_composer.dashboard.vps_deploy import (
     write_system_templates as write_dashboard_system_templates,
 )
+from open_composer.data_contracts import build_market_data_manifest, write_market_data_manifest
 from open_composer.deployment import (
     ensure_runtime_dirs,
     prepare_workspace,
@@ -92,6 +93,13 @@ from open_composer.deployment import (
 )
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
+from open_composer.experiments import (
+    compare_experiment_runs,
+    experiment_artifacts,
+    find_experiment_run,
+    read_experiment_runs,
+    trace_experiment_runs,
+)
 from open_composer.feature_packets import (
     FeaturePacketError,
     build_context_feature_packet,
@@ -135,13 +143,16 @@ from open_composer.projects import (
 from open_composer.readiness import build_readiness_report, write_readiness_report
 from open_composer.repo_check import build_repo_check_report, write_repo_check_report
 from open_composer.research import (
+    build_alpha_decay_report,
     build_alternative_data_evidence,
+    build_factor_panel_from_spec,
     build_geometry_feature_report,
     build_hybrid_paper_plan,
     build_options_overlay_report,
     build_options_research_report,
     build_overfit_risk_report,
     build_promotion_report,
+    build_regime_performance_report,
     build_short_risk_report,
     build_strategy_evidence,
     draft_strategy_from_idea_with_status,
@@ -158,8 +169,10 @@ from open_composer.research import (
     run_core_beta_satellite_router_research,
     run_core_satellite_router_research,
     run_cost_grid,
+    run_execution_sim,
     run_exposure_switch_research,
     run_factor_lab,
+    run_factor_lab_v2,
     run_hybrid_adaptive_router_research,
     run_hybrid_factor_attribution,
     run_hybrid_news_marginal_lift_research,
@@ -184,6 +197,7 @@ from open_composer.research import (
 )
 from open_composer.research.llm_exposure_switch import LLMExposureSwitchChoice
 from open_composer.research.research_brief import init_research_brief, validate_research_brief
+from open_composer.research.research_mode import normalize_research_mode
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
 from open_composer.storage import find_signal
@@ -227,7 +241,9 @@ cache_app = typer.Typer(no_args_is_help=True)
 harness_app = typer.Typer(no_args_is_help=True)
 project_app = typer.Typer(no_args_is_help=True)
 agent_app = typer.Typer(no_args_is_help=True)
+experiment_app = typer.Typer(no_args_is_help=True)
 research_brief_app = typer.Typer(no_args_is_help=True)
+factor_panel_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -241,6 +257,7 @@ app.add_typer(macro_app, name="macro")
 app.add_typer(context_app, name="context")
 app.add_typer(strategy_app, name="strategy")
 strategy_app.add_typer(research_brief_app, name="research-brief")
+strategy_app.add_typer(factor_panel_app, name="factor-panel")
 app.add_typer(run_app, name="run")
 app.add_typer(options_app, name="options")
 app.add_typer(feature_app, name="feature")
@@ -252,6 +269,7 @@ app.add_typer(cache_app, name="cache")
 app.add_typer(harness_app, name="harness")
 app.add_typer(project_app, name="project")
 app.add_typer(agent_app, name="agent")
+app.add_typer(experiment_app, name="experiment")
 
 
 @app.callback()
@@ -261,6 +279,98 @@ def _load_env() -> None:
     extra_env = os.getenv("OC_EXTRA_ENV_FILE")
     if extra_env:
         load_dotenv(Path(extra_env).expanduser(), override=False)
+
+
+@experiment_app.command("list")
+def experiment_list() -> None:
+    """List local experiment runs."""
+    runs = read_experiment_runs(project_root())
+    table = Table(title="Experiment Runs")
+    for column in ("Run ID", "Mode", "Kind", "Strategy", "Status", "Gate"):
+        table.add_column(column)
+    for run in runs:
+        table.add_row(
+            run.run_id,
+            run.research_mode,
+            run.kind,
+            run.strategy_name,
+            run.status,
+            run.gate_status,
+        )
+    console.print(table)
+
+
+@experiment_app.command("show")
+def experiment_show(run_id: str) -> None:
+    """Show one local experiment run."""
+    run = find_experiment_run(run_id, project_root())
+    table = Table(title=f"Experiment: {run.run_id}")
+    table.add_column("Field")
+    table.add_column("Value")
+    for key, value in [
+        ("name", run.name),
+        ("mode", run.research_mode),
+        ("kind", run.kind),
+        ("strategy", run.strategy_name),
+        ("status", run.status),
+        ("gate", run.gate_status),
+        ("artifacts", str(len(run.artifact_refs))),
+        ("trials", str(len(run.trials))),
+    ]:
+        table.add_row(key, value)
+    console.print(table)
+
+
+@experiment_app.command("compare")
+def experiment_compare(left_run_id: str, right_run_id: str) -> None:
+    """Compare metrics between two local experiment runs."""
+    payload = compare_experiment_runs(left_run_id, right_run_id, project_root())
+    table = Table(title=f"Experiment Compare: {left_run_id} -> {right_run_id}")
+    for column in ("Metric", "Left", "Right", "Delta"):
+        table.add_column(column)
+    metrics = payload.get("metrics", {})
+    if isinstance(metrics, dict):
+        for key, row in metrics.items():
+            if isinstance(row, dict):
+                table.add_row(
+                    key,
+                    str(row.get("left")),
+                    str(row.get("right")),
+                    str(row.get("delta")),
+                )
+    console.print(table)
+
+
+@experiment_app.command("artifacts")
+def experiment_artifacts_command(run_id: str) -> None:
+    """List artifacts recorded for one local experiment run."""
+    refs = experiment_artifacts(run_id, project_root())
+    table = Table(title=f"Experiment Artifacts: {run_id}")
+    for column in ("Kind", "Path", "Producer", "SHA256"):
+        table.add_column(column)
+    for ref in refs:
+        table.add_row(ref.kind, ref.path, ref.producer, ref.sha256 or "")
+    console.print(table)
+
+
+@experiment_app.command("trace")
+def experiment_trace(strategy_name: str) -> None:
+    """List experiment lineage for one strategy."""
+    runs = trace_experiment_runs(strategy_name, project_root())
+    table = Table(title=f"Experiment Trace: {strategy_name}")
+    for column in ("Run ID", "Started", "Mode", "Kind", "Status", "Gate", "Artifacts"):
+        table.add_column(column)
+    for run in runs:
+        table.add_row(
+            run.run_id,
+            run.started_at.isoformat(),
+            run.research_mode,
+            run.kind,
+            run.status,
+            run.gate_status,
+            str(len(run.artifact_refs)),
+        )
+    console.print(table)
 
 
 @app.command()
@@ -1720,6 +1830,45 @@ def data_compare(
     )
 
 
+@data_app.command("market-data-manifest")
+def data_market_data_manifest(
+    path: Path,
+    kind: Annotated[str, typer.Option("--kind")],
+    output: Annotated[Path | None, typer.Option("--output")] = None,
+    symbol: Annotated[str | None, typer.Option("--symbol")] = None,
+    venue: Annotated[str, typer.Option("--venue")] = "",
+    source: Annotated[str, typer.Option("--source")] = "local_fixture",
+) -> None:
+    """Validate tick/L1/L2 fixture data and write a replay manifest."""
+    allowed = {"trade_tick", "quote_tick", "order_book_delta", "depth_snapshot"}
+    if kind not in allowed:
+        raise typer.BadParameter("--kind must be one of: " + ", ".join(sorted(allowed)))
+    try:
+        manifest = build_market_data_manifest(
+            path,
+            kind,  # type: ignore[arg-type]
+            root=project_root(),
+            symbol=symbol,
+            venue=venue,
+            source=source,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    target = output or (
+        project_root()
+        / "reports"
+        / "data"
+        / "market_data"
+        / f"{manifest.symbol}-{manifest.kind}-manifest.json"
+    )
+    write_market_data_manifest(target, manifest)
+    console.print(
+        f"[green]market data manifest written[/green] kind={manifest.kind} "
+        f"rows={manifest.row_count}"
+    )
+    console.print(f"json: {target}")
+
+
 @data_app.command("longbridge-check")
 def data_longbridge_check(
     symbol: str = typer.Option("QQQ", "--symbol"),
@@ -1965,6 +2114,7 @@ def strategy_parameter_sweep(
     write_top: int = typer.Option(1, "--write-top"),
     search_strategy: str = typer.Option("grid", "--search-strategy"),
     random_seed: int | None = typer.Option(None, "--random-seed"),
+    research_mode: str = typer.Option("audited", "--research-mode"),
 ) -> None:
     """Run a bounded parameter grid over a StrategySpec and write ranked reports."""
     try:
@@ -1981,6 +2131,7 @@ def strategy_parameter_sweep(
             write_top=write_top,
             search_strategy=search_strategy,
             random_seed=random_seed,
+            research_mode=normalize_research_mode(research_mode),
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -2035,6 +2186,58 @@ def strategy_factor_lab(
     )
     console.print(
         f"[green]factor lab complete[/green] status={result.status} "
+        f"factors={len(result.factor_metrics)}"
+    )
+    console.print(f"report: {result.report_path}")
+    console.print(f"json: {result.json_path}")
+
+
+@factor_panel_app.command("build")
+def strategy_factor_panel_build(
+    spec: Path,
+    forward_bars: int = typer.Option(1, "--forward-bars"),
+    output: Annotated[Path | None, typer.Option("--output")] = None,
+    output_format: str = typer.Option("csv", "--format"),
+) -> None:
+    """Materialize a StrategySpec factor panel for cross-sectional diagnostics."""
+    if output_format not in {"csv", "jsonl"}:
+        raise typer.BadParameter("--format must be one of: csv, jsonl")
+    try:
+        result = build_factor_panel_from_spec(
+            spec,
+            project_root(),
+            forward_bars=forward_bars,
+            output_path=output,
+            output_format=output_format,  # type: ignore[arg-type]
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]factor panel written[/green] rows={result.rows} factors={len(result.factor_names)}"
+    )
+    if result.warnings:
+        console.print("warnings: " + ", ".join(result.warnings))
+    console.print(f"path: {result.path}")
+
+
+@strategy_app.command("factor-lab-v2")
+def strategy_factor_lab_v2(
+    panel: Path,
+    strategy_name: str | None = typer.Option(None, "--strategy-name"),
+    quantiles: int = typer.Option(5, "--quantiles"),
+) -> None:
+    """Run a cross-sectional factor panel diagnostic report."""
+    try:
+        result = run_factor_lab_v2(
+            panel,
+            project_root(),
+            strategy_name=strategy_name,
+            quantiles=quantiles,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]factor lab v2 complete[/green] status={result.status} "
         f"factors={len(result.factor_metrics)}"
     )
     console.print(f"report: {result.report_path}")
@@ -2098,6 +2301,67 @@ def strategy_overfit_risk(spec: Path) -> None:
         console.print(f"report: {result.report_path}")
     if result.json_path:
         console.print(f"json: {result.json_path}")
+
+
+@strategy_app.command("regime-performance")
+def strategy_regime_performance(spec: Path) -> None:
+    """Write a leak-free regime performance report for a StrategySpec."""
+    result = build_regime_performance_report(spec, project_root())
+    table = Table(title=f"Regime Performance: {result.strategy_name}")
+    for column in ("Status", "Min Sharpe", "Min Return", "Warnings", "Blockers"):
+        table.add_column(column)
+    table.add_row(
+        result.status,
+        "n/a" if result.min_regime_sharpe is None else f"{result.min_regime_sharpe:.3f}",
+        "n/a" if result.min_regime_return_pct is None else f"{result.min_regime_return_pct:.2f}%",
+        ", ".join(result.warnings) or "none",
+        ", ".join(result.blockers) or "none",
+    )
+    console.print(table)
+    console.print(f"report: {result.report_path}")
+    console.print(f"json: {result.json_path}")
+
+
+@strategy_app.command("alpha-decay")
+def strategy_alpha_decay(spec: Path) -> None:
+    """Write an alpha decay report for a StrategySpec."""
+    result = build_alpha_decay_report(spec, project_root())
+    table = Table(title=f"Alpha Decay: {result.strategy_name}")
+    for column in ("Status", "Old Sharpe", "Recent Sharpe", "Old PnL Conc.", "Stale"):
+        table.add_column(column)
+    table.add_row(
+        result.status,
+        "n/a" if result.old_sharpe is None else f"{result.old_sharpe:.3f}",
+        "n/a" if result.recent_sharpe is None else f"{result.recent_sharpe:.3f}",
+        "n/a" if result.pnl_concentration_old is None else f"{result.pnl_concentration_old:.3f}",
+        "yes" if result.alpha_stale else "no",
+    )
+    console.print(table)
+    console.print(f"report: {result.report_path}")
+    console.print(f"json: {result.json_path}")
+
+
+@strategy_app.command("execution-sim")
+def strategy_execution_sim(
+    spec: Path,
+    market_data: Annotated[Path | None, typer.Option("--market-data")] = None,
+) -> None:
+    """Write a research-only execution simulation report from a market-data manifest."""
+    result = run_execution_sim(spec, market_data, project_root())
+    table = Table(title=f"Execution Sim: {result.strategy_name}")
+    for column in ("Status", "Backend", "Kind", "Rows", "Spread bps", "Blockers"):
+        table.add_column(column)
+    table.add_row(
+        result.status,
+        result.selected_backend,
+        result.market_data_kind or "missing",
+        str(result.row_count),
+        "n/a" if result.average_spread_bps is None else f"{result.average_spread_bps:.3f}",
+        ", ".join(result.blockers) or "none",
+    )
+    console.print(table)
+    console.print(f"report: {result.report_path}")
+    console.print(f"json: {result.json_path}")
 
 
 @strategy_app.command("research-report", hidden=True)
