@@ -161,6 +161,7 @@ from open_composer.research import (
     optimize_strategy_horizons,
     optimize_strategy_universe,
     parse_sweep_parameters,
+    run_adaptive_factor_attribution,
     run_adaptive_intraday_router_research,
     run_adaptive_intraday_router_scan,
     run_aggressive_theme_router_research,
@@ -186,6 +187,7 @@ from open_composer.research import (
     run_parameter_sweep,
     run_rotation_research,
     run_skill_attribution,
+    run_strategy_data_compare,
     run_theme_intraday_rotation_router_research,
     run_universe_audit,
     run_wide_router_research,
@@ -200,10 +202,12 @@ from open_composer.research.research_brief import init_research_brief, validate_
 from open_composer.research.research_mode import normalize_research_mode
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
-from open_composer.storage import find_signal
+from open_composer.storage import find_signal, write_json
 from open_composer.strategy_capabilities import (
     StrategyCapabilityReport,
     assess_strategy_capabilities,
+    strategy_capability_payload,
+    write_strategy_capability_report,
 )
 from open_composer.strategy_lifecycle import (
     activate_strategy,
@@ -1622,6 +1626,27 @@ def capability_test() -> None:
         raise typer.Exit(code=1)
 
 
+@capability_app.command("evaluate")
+def capability_evaluate(
+    path: Path,
+    json_output: bool = typer.Option(False, "--json", help="Print machine-readable JSON."),
+) -> None:
+    """Write a strategy-level capability review artifact for a StrategySpec."""
+    report = assess_strategy_capabilities(path)
+    json_path, md_path = write_strategy_capability_report(project_root(), report)
+    if json_output:
+        print(json.dumps(strategy_capability_payload(report), indent=2))
+        return
+    table = Table(title=f"Capability Evaluation: {report.strategy_name}")
+    table.add_column("Capability")
+    table.add_column("Status")
+    table.add_column("Reasons")
+    for finding in report.findings:
+        table.add_row(finding.capability, finding.status, "\n".join(finding.reasons))
+    console.print(table)
+    console.print(f"[green]capability evaluation written[/green] {json_path} {md_path}")
+
+
 @spec_app.command("validate")
 def spec_validate(path: Path) -> None:
     """Validate a StrategySpec YAML file and supported expressions."""
@@ -1712,21 +1737,7 @@ def spec_backend_plan(
 
 
 def _strategy_capability_payload(report: StrategyCapabilityReport) -> dict[str, object]:
-    return {
-        "strategy_name": report.strategy_name,
-        "lifecycle": report.lifecycle,
-        "expression_functions": report.expression_functions,
-        "expression_names": report.expression_names,
-        "backend_plan": report.backend_plan.model_dump(mode="json"),
-        "findings": [
-            {
-                "capability": finding.capability,
-                "status": finding.status,
-                "reasons": finding.reasons,
-            }
-            for finding in report.findings
-        ],
-    }
+    return strategy_capability_payload(report)
 
 
 def _parse_gate_status(value: str) -> object:
@@ -2855,6 +2866,9 @@ def strategy_intraday_daily_rotation(
     walk_forward_top_k: int | None = typer.Option(None, "--walk-forward-top-k"),
     max_candidates: int = typer.Option(240, "--max-candidates"),
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+    run_id: str | None = typer.Option(None, "--run-id"),
+    progress_every: int = typer.Option(25, "--progress-every"),
+    max_runtime_seconds: float | None = typer.Option(None, "--max-runtime-seconds"),
 ) -> None:
     """Research daily selected, same-day-exit NASDAQ intraday stock rotation."""
     if data_source not in {"alpaca", "longbridge"}:
@@ -2886,6 +2900,9 @@ def strategy_intraday_daily_rotation(
             walk_forward_top_k=walk_forward_top_k,
             max_candidates=max_candidates,
             refresh_data=refresh_data,
+            run_id=run_id,
+            progress_every=progress_every,
+            max_runtime_seconds=max_runtime_seconds,
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -3064,6 +3081,9 @@ def strategy_adaptive_intraday_router(
     max_route_candidates: int = typer.Option(180, "--max-route-candidates"),
     max_base_candidates: int = typer.Option(720, "--max-base-candidates"),
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+    run_id: str | None = typer.Option(None, "--run-id"),
+    progress_every: int = typer.Option(25, "--progress-every"),
+    max_runtime_seconds: float | None = typer.Option(None, "--max-runtime-seconds"),
 ) -> None:
     """Research one StrategySpec with internal market scanning and sub-strategy routing."""
     if data_source not in {"alpaca", "longbridge"}:
@@ -3095,6 +3115,9 @@ def strategy_adaptive_intraday_router(
             max_route_candidates=max_route_candidates,
             max_base_candidates=max_base_candidates,
             refresh_data=refresh_data,
+            run_id=run_id,
+            progress_every=progress_every,
+            max_runtime_seconds=max_runtime_seconds,
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -3117,6 +3140,126 @@ def strategy_adaptive_intraday_router(
         f"estimated_passes={result.research_cost.get('estimated_total_backtest_passes', 0)} "
         f"runtime={result.runtime_seconds['total']:.2f}s"
     )
+
+
+@strategy_app.command("adaptive-factor-attribution")
+def strategy_adaptive_factor_attribution(
+    spec: Path,
+    symbols: str | None = typer.Option(None, "--symbols"),
+    data_source: str = typer.Option("alpaca", "--data-source"),
+    feed: str | None = typer.Option(None, "--feed"),
+    start: str | None = typer.Option(None, "--start"),
+    end: str | None = typer.Option(None, "--end"),
+    benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
+    market_symbol: str = typer.Option("QQQ", "--market-symbol"),
+    selected_route_label: str | None = typer.Option(None, "--selected-route-label"),
+    oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Write route-level attribution evidence for an adaptive intraday router."""
+    if data_source not in {"alpaca", "longbridge"}:
+        raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
+    symbol_list = None
+    if symbols:
+        symbol_list = [item.strip().upper() for item in symbols.split(",") if item.strip()]
+    try:
+        result = run_adaptive_factor_attribution(
+            spec,
+            project_root(),
+            symbols=symbol_list,
+            data_source=data_source,
+            feed=feed,
+            start=start,
+            end=end,
+            benchmark_symbol=benchmark_symbol.upper(),
+            market_symbol=market_symbol.upper(),
+            selected_route_label=selected_route_label,
+            out_of_sample_ratio=oos_ratio,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]adaptive factor attribution complete[/green] "
+        f"status={result.status} report: {result.report_path}"
+    )
+    if result.blockers:
+        console.print(f"blockers={', '.join(result.blockers)}")
+
+
+@strategy_app.command("data-compare")
+def strategy_data_compare(
+    spec: Path,
+    primary: str = typer.Option(..., "--primary", help="Primary source as source:feed."),
+    secondary: str = typer.Option(..., "--secondary", help="Secondary source as source:feed."),
+    symbols: str | None = typer.Option(None, "--symbols"),
+    max_symbols: int | None = typer.Option(None, "--max-symbols"),
+) -> None:
+    """Write a strategy-level OHLCV source comparison artifact for strict_data review."""
+    symbol_list = None
+    if symbols:
+        symbol_list = [item.strip().upper() for item in symbols.split(",") if item.strip()]
+    result = run_strategy_data_compare(
+        spec,
+        project_root(),
+        primary=primary,
+        secondary=secondary,
+        symbols=symbol_list,
+        max_symbols=max_symbols,
+    )
+    color = "green" if result.status == "ok" else "yellow" if result.status == "warning" else "red"
+    console.print(
+        f"[{color}]data compare {result.status}[/{color}] "
+        f"symbols={len(result.compared_symbols)} report: {result.report_path}"
+    )
+    if result.blockers:
+        console.print(f"blockers={'; '.join(result.blockers[:5])}")
+
+
+@strategy_app.command("fixed-universe")
+def strategy_fixed_universe(spec: Path) -> None:
+    """Write a fixed-universe evidence artifact from StrategySpec universe metadata."""
+    spec_obj = load_strategy_spec(spec)
+    root = project_root()
+    metadata = (
+        spec_obj.universe_metadata.model_dump(mode="json", exclude_none=True)
+        if spec_obj.universe_metadata is not None
+        else {}
+    )
+    json_path = root / "reports" / "research" / f"{spec_obj.name}-fixed-universe.json"
+    payload = {
+        "schema_version": 1,
+        "strategy_name": spec_obj.name,
+        "source_spec_path": _project_relpath(str(spec), root),
+        "generated_at": datetime.now(UTC).isoformat(),
+        "universe": sorted(set(spec_obj.universe)),
+        "universe_metadata": metadata,
+        "status": "warning",
+        "warning": (
+            "Fixed research watchlists reduce current-index backfill risk but remain "
+            "research evidence until survivorship and delisting handling are reviewed."
+        ),
+    }
+    write_json(json_path, payload)
+    md_path = json_path.with_suffix(".md")
+    md_path.write_text(
+        "\n".join(
+            [
+                f"# Fixed Universe: {spec_obj.name}",
+                "",
+                f"- Symbols: `{', '.join(payload['universe'])}`",
+                f"- Selection timestamp: `{metadata.get('selection_timestamp') or 'missing'}`",
+                f"- Selection basis: `{metadata.get('selection_basis') or 'missing'}`",
+                f"- PIT status: `{metadata.get('pit_membership_status') or 'missing'}`",
+                f"- Delisting policy: `{metadata.get('delisting_policy') or 'missing'}`",
+                "",
+                str(payload["warning"]),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    console.print(f"[green]fixed universe artifact written[/green] {json_path} {md_path}")
 
 
 @strategy_app.command("adaptive-intraday-router-scan")

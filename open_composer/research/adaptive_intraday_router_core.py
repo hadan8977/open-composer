@@ -47,6 +47,9 @@ class AdaptiveRouterResearchResult:
     research_cost: dict[str, Any]
     runtime_seconds: dict[str, Any]
     data_profile: dict[str, Any]
+    run_id: str | None = None
+    progress_event_path: Path | None = None
+    partial: bool = False
 
     @property
     def best(self) -> Any:
@@ -132,6 +135,9 @@ def run_adaptive_intraday_router_research(
         research_cost=result.research_cost,
         runtime_seconds=result.runtime_seconds,
         data_profile=result.data_profile,
+        run_id=result.run_id,
+        progress_event_path=result.progress_event_path,
+        partial=result.partial,
     )
 
 
@@ -332,6 +338,9 @@ def _base_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
         "walk_forward_top_k",
         "max_candidates",
         "refresh_data",
+        "run_id",
+        "progress_every",
+        "max_runtime_seconds",
     }
     return {key: value for key, value in kwargs.items() if key in allowed}
 

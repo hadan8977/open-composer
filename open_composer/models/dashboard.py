@@ -472,6 +472,10 @@ class DashboardResearchReport(DashboardDataModel):
     llm_contribution_status: str | None = None
     paper_readiness_status: PaperReadinessStatus | None = None
     data_provenance: dict[str, object] = field(default_factory=dict)
+    iteration_outcome: str | None = None
+    candidate_status: str | None = None
+    data_compare_status: str | None = None
+    route_attribution_status: str | None = None
 
 
 @dataclass(kw_only=True)
@@ -498,6 +502,12 @@ class DashboardResearchRun(DashboardDataModel):
     artifact_count: int = 0
     artifact_refs: list[dict[str, object]] = field(default_factory=list)
     next_action: str = ""
+    progress_status: str | None = None
+    progress_stage: str | None = None
+    progress_event_path: str | None = None
+    progress_partial: bool = False
+    progress_candidate_index: int | None = None
+    progress_candidate_count: int | None = None
 
 
 @dataclass(kw_only=True)

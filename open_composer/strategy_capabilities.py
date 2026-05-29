@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import ast
+import json
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -43,6 +45,64 @@ class StrategyCapabilityReport:
 def assess_strategy_capabilities(spec_path: Path | str) -> StrategyCapabilityReport:
     spec = _load_strategy_for_assessment(spec_path)
     return assess_strategy_capabilities_for_spec(spec, spec_path)
+
+
+def strategy_capability_payload(report: StrategyCapabilityReport) -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "strategy_name": report.strategy_name,
+        "lifecycle": report.lifecycle,
+        "expression_functions": report.expression_functions,
+        "expression_names": report.expression_names,
+        "backend_plan": report.backend_plan.model_dump(mode="json"),
+        "findings": [
+            {
+                "capability": finding.capability,
+                "status": finding.status,
+                "reasons": finding.reasons,
+            }
+            for finding in report.findings
+        ],
+    }
+
+
+def write_strategy_capability_report(
+    root: Path,
+    report: StrategyCapabilityReport,
+) -> tuple[Path, Path]:
+    output_dir = root / "reports" / "capabilities" / "strategy"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / f"{report.strategy_name}-capability-evaluation.json"
+    md_path = output_dir / f"{report.strategy_name}-capability-evaluation.md"
+    payload = strategy_capability_payload(report)
+    json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    md_lines = [
+        f"# Capability Evaluation: {report.strategy_name}",
+        "",
+        f"- Lifecycle: `{report.lifecycle}`",
+        f"- Backend status: `{report.backend_plan.status}`",
+        f"- Selected backend: `{report.backend_plan.selected_backend}`",
+        "",
+        "## Findings",
+        "",
+        "| Capability | Status | Reasons |",
+        "|---|---|---|",
+    ]
+    for finding in report.findings:
+        reasons = "<br>".join(reason.replace("|", "\\|") for reason in finding.reasons)
+        md_lines.append(f"| {finding.capability} | {finding.status} | {reasons} |")
+    md_lines.extend(
+        [
+            "",
+            "## Expression Inventory",
+            "",
+            f"- Names: {', '.join(report.expression_names) or 'none'}",
+            f"- Functions: {', '.join(report.expression_functions) or 'none'}",
+        ]
+    )
+    md_path.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+    return json_path, md_path
 
 
 def assess_strategy_capabilities_for_spec(

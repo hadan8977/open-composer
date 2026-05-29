@@ -28,7 +28,10 @@ description: >
 1. **Draft spec** — `uv run oc strategy draft --idea "<idea>"` or load existing spec under `strategy_specs/{drafts,active,approved}/`.
 2. **Validate spec** — `uv run oc spec validate <spec>`. Fix any schema errors before proceeding.
 3. **Harness plan** — `uv run oc harness plan <spec>`. Read detected risk domains and required skills. Do not skip this step.
-4. **Capability evaluation** — `uv run oc capability evaluate <spec>`. Flag trial or sample capabilities.
+4. **Capability evaluation** — `uv run oc capability evaluate <spec>`. This writes
+   `reports/capabilities/strategy/{strategy}-capability-evaluation.{json,md}`.
+   Flag trial or sample capabilities. Use `uv run oc capability test` only for
+   registry fixture smoke tests.
 5. **Source research** — invoke `source-researcher` for every risk domain that requires source cards. Do not proceed past research without source cards for unstable external claims.
 6. **Bounded search space** — if spec has adjustable parameters, define a small parameter range before running sweep.
 7. **Trials and candidate set** — run `uv run oc strategy parameter-sweep <spec>` and write trial ledger. This automatically refreshes research control memory.

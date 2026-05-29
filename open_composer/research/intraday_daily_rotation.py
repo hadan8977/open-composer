@@ -23,7 +23,9 @@ from open_composer.config import (
     openai_base_url,
     project_root,
 )
+from open_composer.experiments import append_experiment_run, artifact_ref
 from open_composer.json_utils import json_safe_payload
+from open_composer.models.experiment import ExperimentRun
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.metadata import (
     combined_data_profile,
@@ -34,7 +36,9 @@ from open_composer.research.metadata import (
     runtime_payload,
     search_space,
 )
+from open_composer.research.run_progress import ResearchProgressWriter
 from open_composer.storage import write_json
+from open_composer.strategy_versions import strategy_content_hash
 
 MarketGate = Literal[
     "none",
@@ -144,6 +148,9 @@ class IntradayDailyResearchResult:
     research_cost: dict[str, Any]
     runtime_seconds: dict[str, Any]
     data_profile: dict[str, Any]
+    run_id: str | None = None
+    progress_event_path: Path | None = None
+    partial: bool = False
 
     @property
     def best(self) -> IntradayDailyCandidate:
@@ -232,16 +239,28 @@ def run_intraday_daily_rotation_research(
     market_gates: list[MarketGate] | None = None,
     objective: IntradayObjective = "equal_weight_alpha",
     out_of_sample_ratio: float = 0.3,
+    validation_ratio: float | None = None,
     walk_forward_folds: int = 3,
     walk_forward_top_k: int | None = None,
     max_candidates: int = 240,
     refresh_data: bool = False,
+    run_id: str | None = None,
+    progress_every: int = 25,
+    max_runtime_seconds: float | None = None,
 ) -> IntradayDailyResearchResult:
     started_at = perf_counter()
     stages: dict[str, float] = {}
     stage_started = perf_counter()
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
+    effective_run_id = run_id or _default_run_id(spec.name)
+    progress = ResearchProgressWriter(
+        base,
+        strategy_name=spec.name,
+        run_id=effective_run_id,
+        experiment_run_id=effective_run_id,
+    )
+    progress.event(event_type="started", stage="init", status="running")
     universe = [item.upper() for item in (symbols or spec.universe)]
     if len(universe) < 2:
         raise ValueError("intraday daily rotation requires at least two NASDAQ symbols")
@@ -260,6 +279,12 @@ def run_intraday_daily_rotation_research(
         max_candidates=max_candidates,
     )
     stages["build_grid"] = perf_counter() - stage_started
+    progress.event(
+        event_type="stage_complete",
+        stage="build_grid",
+        candidate_count=len(params_grid),
+        extra={"max_runtime_seconds": max_runtime_seconds},
+    )
     stage_started = perf_counter()
     dataset = _load_dataset(
         spec=spec,
@@ -275,15 +300,44 @@ def run_intraday_daily_rotation_research(
     )
     data_profile = combined_data_profile(dataset.profiles)
     stages["load_data"] = perf_counter() - stage_started
+    progress.event(
+        event_type="stage_complete",
+        stage="load_data",
+        candidate_count=len(params_grid),
+        extra={"symbols": dataset.symbols, "date_count": len(dataset.dates)},
+    )
     stage_started = perf_counter()
+    deadline = None
+    if max_runtime_seconds is not None and max_runtime_seconds > 0:
+        deadline = started_at + max_runtime_seconds
     candidates = _evaluate_candidates(
         spec=spec,
         dataset=dataset,
         params_grid=params_grid,
         out_of_sample_ratio=out_of_sample_ratio,
         objective=objective,
+        progress=progress,
+        progress_every=progress_every,
+        deadline=deadline,
     )
+    partial = len(candidates) < len(params_grid)
     stages["evaluate_candidates"] = perf_counter() - stage_started
+    if not candidates:
+        raise ValueError("intraday daily rotation produced no candidates")
+    progress.event(
+        event_type="stage_complete",
+        stage="evaluate_candidates",
+        candidate_index=len(candidates),
+        candidate_count=len(params_grid),
+        best_label=candidates[0].params.label,
+        best_score=candidates[0].score,
+        best_oos_sharpe=candidates[0].out_of_sample.sharpe_ratio,
+        best_oos_return_pct=candidates[0].out_of_sample.annualized_return_pct,
+        best_max_drawdown_pct=candidates[0].out_of_sample.max_drawdown_pct,
+        status="warning" if partial else "running",
+        partial=partial,
+        warning_items=["runtime_budget_exhausted_before_full_candidate_grid"] if partial else [],
+    )
     walk_params = _walk_forward_params(params_grid, candidates, walk_forward_top_k)
     research_cost = estimate_grid_research_cost(
         candidate_count=len(params_grid),
@@ -300,6 +354,18 @@ def run_intraday_daily_rotation_research(
         objective=objective,
     )
     stages["walk_forward"] = perf_counter() - stage_started
+    progress.event(
+        event_type="stage_complete",
+        stage="walk_forward",
+        candidate_count=len(walk_params),
+        best_label=candidates[0].params.label,
+        best_score=candidates[0].score,
+        best_oos_sharpe=candidates[0].out_of_sample.sharpe_ratio,
+        best_oos_return_pct=candidates[0].out_of_sample.annualized_return_pct,
+        best_max_drawdown_pct=candidates[0].out_of_sample.max_drawdown_pct,
+        status="warning" if partial else "running",
+        partial=partial,
+    )
     report_path = base / "reports" / "research" / f"{spec.name}-intraday-daily-rotation.md"
     json_path = base / "reports" / "research" / f"{spec.name}-intraday-daily-rotation.json"
     runtime_seconds = runtime_payload(started_at, stages)
@@ -316,6 +382,13 @@ def run_intraday_daily_rotation_research(
         runtime_seconds,
         data_profile,
         params_grid,
+        run_metadata={
+            "run_id": effective_run_id,
+            "experiment_run_id": effective_run_id,
+            "progress_event_path": _relpath(progress.event_path, base),
+            "progress_latest_path": _relpath(progress.latest_path, base),
+            "partial": partial,
+        },
     )
     _write_research_report(
         report_path,
@@ -331,6 +404,39 @@ def run_intraday_daily_rotation_research(
         runtime_seconds,
         data_profile,
     )
+    progress.event(
+        event_type="completed" if not partial else "partial_completed",
+        stage="report_write",
+        status="warning" if partial else "ok",
+        candidate_index=len(candidates),
+        candidate_count=len(params_grid),
+        best_label=candidates[0].params.label,
+        best_score=candidates[0].score,
+        best_oos_sharpe=candidates[0].out_of_sample.sharpe_ratio,
+        best_oos_return_pct=candidates[0].out_of_sample.annualized_return_pct,
+        best_max_drawdown_pct=candidates[0].out_of_sample.max_drawdown_pct,
+        warning_items=["partial_candidate_grid"] if partial else [],
+        partial=partial,
+        artifacts={
+            "report": _relpath(report_path, base),
+            "json": _relpath(json_path, base),
+            "experiment_index": "reports/experiments/index.jsonl",
+        },
+    )
+    _append_intraday_experiment(
+        root=base,
+        spec=spec,
+        spec_path=spec_path,
+        run_id=effective_run_id,
+        report_path=report_path,
+        json_path=json_path,
+        progress_path=progress.event_path,
+        candidates=candidates,
+        runtime_seconds=runtime_seconds,
+        data_profile=data_profile,
+        params_grid=params_grid,
+        partial=partial,
+    )
     return IntradayDailyResearchResult(
         report_path=report_path,
         json_path=json_path,
@@ -339,6 +445,9 @@ def run_intraday_daily_rotation_research(
         research_cost=research_cost,
         runtime_seconds=runtime_seconds,
         data_profile=data_profile,
+        run_id=effective_run_id,
+        progress_event_path=progress.event_path,
+        partial=partial,
     )
 
 
@@ -730,10 +839,14 @@ def _evaluate_candidates(
     params_grid: list[IntradayDailyParams],
     out_of_sample_ratio: float,
     objective: IntradayObjective,
+    progress: ResearchProgressWriter | None = None,
+    progress_every: int = 25,
+    deadline: float | None = None,
 ) -> list[IntradayDailyCandidate]:
     split = _split_for_oos(len(dataset.dates), out_of_sample_ratio, params_grid)
     rows: list[IntradayDailyCandidate] = []
-    for params in params_grid:
+    best_so_far: IntradayDailyCandidate | None = None
+    for index, params in enumerate(params_grid, start=1):
         train = _backtest_params(
             spec, dataset, params, start_index=params.lookback_days, end_index=split
         )
@@ -749,17 +862,57 @@ def _evaluate_candidates(
             end_index=len(dataset.dates),
         )
         flags = _quality_flags(oos, full)
-        rows.append(
-            IntradayDailyCandidate(
-                rank=0,
-                params=params,
-                score=_score_metrics(train, objective),
-                train=train,
-                out_of_sample=oos,
-                full_window=full,
-                quality_flags=flags,
-            )
+        candidate = IntradayDailyCandidate(
+            rank=0,
+            params=params,
+            score=_score_metrics(train, objective),
+            train=train,
+            out_of_sample=oos,
+            full_window=full,
+            quality_flags=flags,
         )
+        rows.append(candidate)
+        if best_so_far is None or candidate.score > best_so_far.score:
+            best_so_far = candidate
+        if progress and (
+            index == 1 or index == len(params_grid) or index % max(progress_every, 1) == 0
+        ):
+            progress.event(
+                event_type="candidate_progress",
+                stage="evaluate_candidates",
+                candidate_index=index,
+                candidate_count=len(params_grid),
+                best_label=best_so_far.params.label if best_so_far else None,
+                best_score=best_so_far.score if best_so_far else None,
+                best_oos_sharpe=best_so_far.out_of_sample.sharpe_ratio if best_so_far else None,
+                best_oos_return_pct=best_so_far.out_of_sample.annualized_return_pct
+                if best_so_far
+                else None,
+                best_max_drawdown_pct=best_so_far.out_of_sample.max_drawdown_pct
+                if best_so_far
+                else None,
+            )
+        if deadline is not None and perf_counter() >= deadline and rows:
+            if progress:
+                progress.event(
+                    event_type="runtime_budget_exhausted",
+                    stage="evaluate_candidates",
+                    status="warning",
+                    candidate_index=index,
+                    candidate_count=len(params_grid),
+                    best_label=best_so_far.params.label if best_so_far else None,
+                    best_score=best_so_far.score if best_so_far else None,
+                    best_oos_sharpe=best_so_far.out_of_sample.sharpe_ratio if best_so_far else None,
+                    best_oos_return_pct=best_so_far.out_of_sample.annualized_return_pct
+                    if best_so_far
+                    else None,
+                    best_max_drawdown_pct=best_so_far.out_of_sample.max_drawdown_pct
+                    if best_so_far
+                    else None,
+                    warning_items=["runtime_budget_exhausted_before_full_candidate_grid"],
+                    partial=True,
+                )
+            break
     rows.sort(key=lambda item: item.score, reverse=True)
     return [
         IntradayDailyCandidate(
@@ -1548,10 +1701,13 @@ def _write_research_json(
     runtime_seconds: dict[str, Any],
     data_profile: dict[str, Any],
     params_grid: list[IntradayDailyParams],
+    run_metadata: dict[str, Any] | None = None,
 ) -> Path:
     payload = {
         "strategy_name": spec.name,
         "mode": _research_mode(spec),
+        "run": run_metadata or {},
+        "iteration_outcome": _iteration_outcome(spec),
         "symbols": dataset.symbols,
         "market_symbol": dataset.market_symbol,
         "benchmark_symbol": dataset.benchmark_symbol,
@@ -2028,3 +2184,85 @@ def _objective_label(objective: IntradayObjective) -> str:
     if objective == "benchmark_intraday_alpha":
         return "prefer stable annualized Alpha versus benchmark-symbol intraday exposure"
     return "prefer stable annualized Alpha versus equal-weight universe intraday exposure"
+
+
+def _default_run_id(strategy_name: str) -> str:
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    return f"intraday-{strategy_name}-{timestamp}"
+
+
+def _relpath(path: Path, root: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def _iteration_outcome(spec: StrategySpec) -> str:
+    raw = spec.notes.model_dump(mode="json")
+    value = raw.get("iteration_outcome") or raw.get("candidate_status")
+    if value in {"adopted", "rejected", "needs_more_research"}:
+        return str(value)
+    research_design = raw.get("research_design")
+    if isinstance(research_design, dict):
+        value = research_design.get("iteration_outcome") or research_design.get("candidate_status")
+        if value in {"adopted", "rejected", "needs_more_research"}:
+            return str(value)
+    return "needs_more_research"
+
+
+def _append_intraday_experiment(
+    *,
+    root: Path,
+    spec: StrategySpec,
+    spec_path: Path,
+    run_id: str,
+    report_path: Path,
+    json_path: Path,
+    progress_path: Path,
+    candidates: list[IntradayDailyCandidate],
+    runtime_seconds: dict[str, Any],
+    data_profile: dict[str, Any],
+    params_grid: list[IntradayDailyParams],
+    partial: bool,
+) -> None:
+    best = candidates[0] if candidates else None
+    append_experiment_run(
+        ExperimentRun(
+            run_id=run_id,
+            name=f"Intraday Daily Rotation: {spec.name}",
+            research_mode="audited",
+            kind="intraday_daily_rotation",
+            strategy_name=spec.name,
+            source_spec_path=_relpath(spec_path, root),
+            spec_hash=strategy_content_hash(spec),
+            dataset_hash=str(data_profile.get("input_hash") or data_profile.get("path") or ""),
+            ended_at=datetime.now(UTC),
+            status="warning" if partial else "ok",
+            gate_status="warning",
+            params={"candidate_count_requested": len(params_grid)},
+            metrics={
+                "candidate_count_completed": len(candidates),
+                "candidate_count_requested": len(params_grid),
+                "best_score": best.score if best else None,
+                "best_oos_annualized_return_pct": best.out_of_sample.annualized_return_pct
+                if best
+                else None,
+                "best_oos_sharpe": best.out_of_sample.sharpe_ratio if best else None,
+                "best_oos_max_drawdown_pct": best.out_of_sample.max_drawdown_pct if best else None,
+                "runtime_seconds": runtime_seconds.get("total"),
+            },
+            artifact_refs=[
+                artifact_ref(report_path, root=root, kind="report", producer="intraday_rotation"),
+                artifact_ref(json_path, root=root, kind="json", producer="intraday_rotation"),
+                artifact_ref(
+                    progress_path,
+                    root=root,
+                    kind="progress_jsonl",
+                    producer="intraday_rotation",
+                ),
+            ],
+            warning_reasons=["partial_candidate_grid"] if partial else [],
+        ),
+        root,
+    )

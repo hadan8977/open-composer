@@ -1,3 +1,7 @@
+from open_composer.research.adaptive_factor_attribution import (
+    AdaptiveFactorAttributionResult,
+    run_adaptive_factor_attribution,
+)
 from open_composer.research.adaptive_intraday_router import (
     run_adaptive_intraday_router_research,
     run_adaptive_intraday_router_scan,
@@ -79,6 +83,10 @@ from open_composer.research.skill_attribution import (
     run_skill_attribution,
 )
 from open_composer.research.strategy_dag import validate_strategy_dag, write_strategy_dag_validation
+from open_composer.research.strategy_data_compare import (
+    StrategyDataCompareResult,
+    run_strategy_data_compare,
+)
 from open_composer.research.theme_intraday_rotation_router import (
     run_theme_intraday_rotation_router_research,
 )
@@ -112,6 +120,8 @@ __all__ = [
     "run_adaptive_intraday_router_scan",
     "run_adaptive_intraday_router_research",
     "run_llm_adaptive_intraday_router_selection",
+    "AdaptiveFactorAttributionResult",
+    "run_adaptive_factor_attribution",
     "run_aggressive_theme_router_research",
     "build_alternative_data_quality_report",
     "build_alternative_data_evidence",
@@ -170,4 +180,6 @@ __all__ = [
     "optimize_strategy_universe",
     "validate_strategy_dag",
     "write_strategy_dag_validation",
+    "StrategyDataCompareResult",
+    "run_strategy_data_compare",
 ]

@@ -52,3 +52,39 @@ def test_invalid_execution_mode_rejected(tmp_path: Path, repo_root: Path) -> Non
     path.write_text(yaml.safe_dump(raw), encoding="utf-8")
     with pytest.raises(ValueError):
         load_strategy_spec(path)
+
+
+def test_draft_router_allows_empty_route_label(tmp_path: Path, repo_root: Path) -> None:
+    raw = yaml.safe_load(_fixture_spec(repo_root).read_text(encoding="utf-8"))
+    raw["portfolio"] = {
+        "mode": "adaptive_intraday_internal_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 1.0,
+        "same_day_flatten": True,
+        "selected_route_label": None,
+    }
+    path = tmp_path / "draft_router.yaml"
+    path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    spec = load_strategy_spec(path)
+
+    assert spec.portfolio.selected_route_label is None
+
+
+def test_active_router_requires_route_label(tmp_path: Path, repo_root: Path) -> None:
+    raw = yaml.safe_load(_fixture_spec(repo_root).read_text(encoding="utf-8"))
+    raw["lifecycle"] = "active"
+    raw["portfolio"] = {
+        "mode": "adaptive_intraday_internal_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 1.0,
+        "same_day_flatten": True,
+        "selected_route_label": None,
+    }
+    path = tmp_path / "active_router.yaml"
+    path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="requires selected_route_label"):
+        load_strategy_spec(path)

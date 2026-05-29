@@ -386,6 +386,10 @@ def _max_effective_to(indexed: dict[str, list[dict[str, Any]]]) -> str | None:
 
 
 def _universe_metadata(spec: StrategySpec) -> dict[str, Any]:
+    if spec.universe_metadata is not None:
+        explicit = spec.universe_metadata.model_dump(mode="json", exclude_none=True)
+        if any(value not in ("", [], {}) for value in explicit.values()):
+            return explicit
     notes = spec.notes.model_dump(mode="json")
     metadata = notes.get("universe_audit") if isinstance(notes, dict) else None
     if isinstance(metadata, dict):

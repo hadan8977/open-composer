@@ -513,6 +513,12 @@ function PromotionTab({ reports, paper }: { reports: Array<Record<string, any>>;
                 <div className="t-title-sm">{report.kind ?? "research"}</div>
                 <Tag color={statusColor(report.status)}>{report.status ?? "warning"}</Tag>
               </div>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {report.candidate_status ? <Tag color="paper">candidate: {report.candidate_status}</Tag> : null}
+                {report.iteration_outcome ? <Tag color="paper">outcome: {report.iteration_outcome}</Tag> : null}
+                {report.data_compare_status ? <Tag color={statusColor(report.data_compare_status)}>data: {report.data_compare_status}</Tag> : null}
+                {report.route_attribution_status ? <Tag color={statusColor(report.route_attribution_status)}>route: {report.route_attribution_status}</Tag> : null}
+              </div>
               <div className="t-body-sm ink-subtle mt-1 truncate">{report.report_json_path ?? report.source_path}</div>
             </div>
           ))}

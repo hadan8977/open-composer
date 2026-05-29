@@ -24,8 +24,10 @@ description: >
 
 1. Read `spec.required_capabilities` and any factor whose `source` is `llm_feature`
    or `feature_packet`. List the capability IDs that the strategy depends on.
-2. Run `uv run oc capability evaluate <spec>`. Capture status and warnings per
-   capability.
+2. Run `uv run oc capability evaluate <spec>`. Read
+   `reports/capabilities/strategy/{strategy}-capability-evaluation.json` and
+   capture status and warnings per capability. Use `uv run oc capability test`
+   only for registry fixture smoke tests.
 3. For every capability whose `strict_behavior` is `workflow_only`, mark the
    capability as `sample_evidence` and add a `sample_data_caveat` line to the
    output. Such evidence cannot back paper readiness.

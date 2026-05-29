@@ -8,6 +8,13 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from open_composer.timeframes import StrategyTimeframe
 
+ROUTER_PORTFOLIO_MODES = {
+    "adaptive_intraday_internal_router",
+    "hybrid_adaptive_router",
+    "beta_exposure_router",
+    "core_beta_satellite_router",
+}
+
 
 class RuleBlock(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -48,22 +55,6 @@ class PortfolioConfig(BaseModel):
     same_day_flatten: bool = False
     duplicate_signal_policy: Literal["stable_signal_id", "allow_duplicates"] = "stable_signal_id"
     selected_route_label: str | None = None
-
-    @model_validator(mode="after")
-    def require_router_route(self) -> PortfolioConfig:
-        if (
-            self.mode
-            in {
-                "adaptive_intraday_internal_router",
-                "hybrid_adaptive_router",
-                "beta_exposure_router",
-                "core_beta_satellite_router",
-            }
-            and not self.selected_route_label
-        ):
-            msg = f"{self.mode} portfolio mode requires selected_route_label"
-            raise ValueError(msg)
-        return self
 
 
 class CostConfig(BaseModel):
@@ -236,6 +227,15 @@ class EvaluationPolicy(BaseModel):
     require_recent_oos_positive: bool = True
 
 
+class UniverseMetadata(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    selection_timestamp: str | None = None
+    selection_basis: str = ""
+    pit_membership_status: str = ""
+    delisting_policy: str = ""
+
+
 # ---------------------------------------------------------------------------
 # Optional execution-policy and reality-model extensions (skill-first harness)
 # These fields are opt-in; specs without them continue to validate. Strategies
@@ -387,6 +387,7 @@ class StrategySpec(BaseModel):
     notes: NotesConfig = Field(default_factory=NotesConfig)
     research_design: ResearchDesign | None = None
     evaluation_policy: EvaluationPolicy | None = None
+    universe_metadata: UniverseMetadata | None = None
     required_capabilities: list[str] = Field(default_factory=list)
     execution_policy: ExecutionPolicy | None = None
     reality_model: RealityModel | None = None
@@ -416,6 +417,20 @@ class StrategySpec(BaseModel):
                 msg = f"factor name is reserved: {name}"
                 raise ValueError(msg)
         return value
+
+    @model_validator(mode="after")
+    def require_route_for_live_router_lifecycle(self) -> StrategySpec:
+        if (
+            self.lifecycle in {"approved", "active"}
+            and self.portfolio.mode in ROUTER_PORTFOLIO_MODES
+            and not self.portfolio.selected_route_label
+        ):
+            msg = (
+                f"{self.portfolio.mode} portfolio mode requires selected_route_label "
+                f"when lifecycle={self.lifecycle}"
+            )
+            raise ValueError(msg)
+        return self
 
     @property
     def primary_symbol(self) -> str:

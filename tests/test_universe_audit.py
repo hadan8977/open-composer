@@ -45,6 +45,27 @@ def test_universe_audit_accepts_documented_fixed_universe(sample_workspace: Path
     assert not any(item["code"] == "current_symbol_universe_bias" for item in report["findings"])
 
 
+def test_universe_audit_prefers_strategy_universe_metadata(sample_workspace: Path) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    payload = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    payload["universe"] = ["QQQ", "TQQQ", "SQQQ"]
+    payload["universe_metadata"] = {
+        "selection_timestamp": "2026-05-28T00:00:00Z",
+        "selection_basis": "fixed research watchlist",
+        "pit_membership_status": "fixed_universe_not_historical_index",
+        "delisting_policy": "No historical constituent backfill.",
+        "point_in_time_membership": True,
+    }
+    payload["notes"] = {**payload.get("notes", {}), "universe_audit": {}}
+    spec_path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    result = run_universe_audit(spec_path, sample_workspace)
+
+    assert result.status == "warning"
+    report = json.loads(result.json_path.read_text(encoding="utf-8"))
+    assert not any(item["code"] == "current_symbol_universe_bias" for item in report["findings"])
+
+
 def test_universe_audit_rejects_boolean_only_pit_for_stock_universe(
     sample_workspace: Path,
 ) -> None:

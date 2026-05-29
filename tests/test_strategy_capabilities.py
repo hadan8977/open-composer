@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
+from typer.testing import CliRunner
+
+from open_composer.cli import app
 from open_composer.strategy_capabilities import assess_strategy_capabilities
 
 
@@ -138,3 +142,32 @@ def test_strategy_capability_report_accepts_longbridge_data_source(tmp_path: Pat
     report = assess_strategy_capabilities(spec_path)
 
     assert report.finding("python_mvp_backtest").status == "supported"
+
+
+def test_capability_evaluate_cli_writes_strategy_artifact(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    spec_path = _write_spec(tmp_path / "pure.yaml")
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: tmp_path)
+
+    result = CliRunner().invoke(
+        app,
+        ["capability", "evaluate", str(spec_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    payload_path = (
+        tmp_path
+        / "reports"
+        / "capabilities"
+        / "strategy"
+        / "test_strategy-capability-evaluation.json"
+    )
+    report_path = payload_path.with_suffix(".md")
+    assert payload_path.exists()
+    assert report_path.exists()
+    payload = json.loads(payload_path.read_text(encoding="utf-8"))
+    assert payload["strategy_name"] == "test_strategy"
+    assert payload["findings"][0]["capability"] == "python_mvp_backtest"

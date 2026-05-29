@@ -260,6 +260,12 @@ export interface ResearchRun {
   dataAsOf: string | null;
   artifactCount: number;
   nextAction: string;
+  progressStatus: string | null;
+  progressStage: string | null;
+  progressEventPath: string | null;
+  progressPartial: boolean;
+  progressCandidateIndex: number | null;
+  progressCandidateCount: number | null;
 }
 
 export interface DashboardSummaryView {
@@ -692,6 +698,12 @@ interface DashboardResearchRunRecord {
   json_path?: string | null;
   artifact_count?: number;
   next_action?: string;
+  progress_status?: string | null;
+  progress_stage?: string | null;
+  progress_event_path?: string | null;
+  progress_partial?: boolean;
+  progress_candidate_index?: number | null;
+  progress_candidate_count?: number | null;
 }
 
 interface DashboardOperationalCheckRecord {
@@ -1369,6 +1381,12 @@ function buildResearchRuns(): ResearchRun[] {
             : null,
         artifactCount: run.artifact_count ?? 0,
         nextAction: run.next_action ?? "",
+        progressStatus: run.progress_status ?? null,
+        progressStage: run.progress_stage ?? null,
+        progressEventPath: run.progress_event_path ?? null,
+        progressPartial: run.progress_partial ?? false,
+        progressCandidateIndex: run.progress_candidate_index ?? null,
+        progressCandidateCount: run.progress_candidate_count ?? null,
       };
     });
 }

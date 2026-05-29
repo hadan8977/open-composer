@@ -17,6 +17,7 @@ from open_composer.adapters.execution.hybrid_target_weights import (
 )
 from open_composer.cli import app
 from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.research.adaptive_factor_attribution import run_adaptive_factor_attribution
 from open_composer.research.adaptive_intraday_router import (
     LLMAdaptiveRouterChoice,
     run_adaptive_intraday_router_research,
@@ -276,10 +277,26 @@ def test_intraday_daily_rotation_research_builds_reports(
         min_relative_volume=[0.8],
         market_gates=["none"],
         max_candidates=1,
+        run_id="test-progress-run",
+        progress_every=1,
     )
 
     assert result.report_path.exists()
     assert result.json_path.exists()
+    assert result.progress_event_path is not None
+    assert result.progress_event_path.exists()
+    latest_path = (
+        sample_workspace
+        / "reports"
+        / "research"
+        / "runs"
+        / "intraday_daily_rotation_fixture-latest.json"
+    )
+    latest = json.loads(latest_path.read_text(encoding="utf-8"))
+    assert latest["run_id"] == "test-progress-run"
+    assert latest["status"] == "ok"
+    experiment_index = sample_workspace / "reports" / "experiments" / "index.jsonl"
+    assert "test-progress-run" in experiment_index.read_text(encoding="utf-8")
     payload = result.json_path.read_text(encoding="utf-8")
     assert "benchmark_symbol" in payload
     assert "TQQQ" in payload
@@ -426,6 +443,19 @@ def test_adaptive_intraday_router_builds_internal_route_report(
     payload = result.json_path.read_text(encoding="utf-8")
     assert "adaptive_intraday_internal_router" in payload
     assert result.best.route.sub_strategies
+
+    attribution = run_adaptive_factor_attribution(
+        spec_path,
+        sample_workspace,
+        symbols=["AAA", "BBB", "CCC"],
+        data_source="alpaca",
+        benchmark_symbol="TQQQ",
+        market_symbol="QQQ",
+        selected_route_label=result.best.route.label,
+    )
+    attribution_payload = json.loads(attribution.json_path.read_text(encoding="utf-8"))
+    assert attribution_payload["mode"] == "adaptive_factor_attribution"
+    assert attribution_payload["attribution"]
 
 
 def test_adaptive_intraday_router_cli_reports_research_cost(

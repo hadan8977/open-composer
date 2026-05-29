@@ -113,6 +113,7 @@ def build_router_promotion_report(
     candidates = _dict_list((research_payload or {}).get("candidates"))
     selected_route = _selected_candidate(spec, candidates, llm_payload)
     benchmark_family = _benchmark_family(selected_route)
+    candidate_status = _candidate_status(spec, research_payload)
 
     checks = _router_checks(
         config=config,
@@ -127,13 +128,14 @@ def build_router_promotion_report(
         target_weights_payload=target_weights_payload,
         llm_path=llm_path,
         llm_payload=llm_payload,
+        candidate_status=candidate_status,
     )
-    ready = all(check.status == "ok" for check in checks)
+    ready = candidate_status != "rejected" and all(check.status == "ok" for check in checks)
     status: PromotionStatus = (
         "blocked"
         if any(check.status == "blocked" for check in checks)
         else "warning"
-        if any(check.status == "warning" for check in checks)
+        if candidate_status == "rejected" or any(check.status == "warning" for check in checks)
         else "ok"
     )
     five_pass_checks = _router_pass_summary(
@@ -225,6 +227,7 @@ def build_router_promotion_report(
         llm_payload=llm_payload,
         target_weights_payload=target_weights_payload,
         selected_route=selected_route,
+        candidate_status=candidate_status,
     )
     writer.append_index(index_record)
     _write_router_promotion_markdown(
@@ -241,6 +244,7 @@ def build_router_promotion_report(
         manifest=manifest,
         five_pass_checks=five_pass_checks,
         selected_route=selected_route,
+        candidate_status=candidate_status,
     )
     return PromotionReport(
         strategy_name=spec.name,
@@ -269,12 +273,29 @@ def _router_checks(
     target_weights_payload: dict[str, Any] | None,
     llm_path: Path | None,
     llm_payload: dict[str, Any] | None,
+    candidate_status: str,
 ) -> list[GateResult]:
+    if candidate_status == "rejected":
+        return [
+            _research_check(config, research_path, research_payload, acceptance_gate),
+            _out_of_sample_check(selected_route, acceptance_gate),
+            _walk_forward_check(research_payload, acceptance_gate),
+            _benchmark_check(selected_route),
+            GateResult(
+                name="candidate_status",
+                status="warning",
+                message=(
+                    "Candidate is marked rejected; promotion-only artifacts are not required "
+                    "and this report must not be used as paper-readiness evidence."
+                ),
+                details={"candidate_status": candidate_status},
+            ),
+        ]
     checks: list[GateResult] = [
         _research_check(config, research_path, research_payload, acceptance_gate),
         _out_of_sample_check(selected_route, acceptance_gate),
         _walk_forward_check(research_payload, acceptance_gate),
-        _strict_data_check(spec, data_profile),
+        _strict_data_check_with_root(spec, root, data_profile),
         _universe_audit_check(spec, root),
         _feature_packet_check(spec, root),
         _factor_lab_check(spec, root),
@@ -387,6 +408,12 @@ def _walk_forward_check(
 def _strict_data_check(spec: StrategySpec, data_profile: dict[str, Any]) -> GateResult:
     source_mode = str(data_profile.get("source_mode") or data_profile.get("data_source_mode") or "")
     tier = _evidence_acquisition_tier(spec, data_profile)
+    compare_path = Path("reports") / "harness" / "data" / f"{spec.name}-data-compare.json"
+    compare_payload = _load_optional_json(Path.cwd() / compare_path)
+    # Router promotion is normally called with an explicit root, but this helper keeps
+    # its existing signature. If cwd is not the project root, the caller-specific root
+    # path is checked by _strict_data_check_with_root below.
+    compare_details = _data_compare_details(compare_payload, compare_path.as_posix())
     blockers: list[str] = []
     if spec.data.source == "sample":
         blockers.append("sample data is workflow evidence only")
@@ -394,6 +421,23 @@ def _strict_data_check(spec: StrategySpec, data_profile: dict[str, Any]) -> Gate
         blockers.append(f"acquisition_tier={tier} is not paper-ready")
     if any(token in source_mode for token in ["sample", "fixture", "fallback"]):
         blockers.append(f"data_source_mode={source_mode} is not paper-ready")
+    if blockers and compare_details.get("strict_data_status") == "ok":
+        return GateResult(
+            name="strict_data",
+            status="warning",
+            message=(
+                "Router data profile still has non-paper-ready caveats, but a source "
+                "comparison artifact exists and passed threshold."
+            ),
+            details={
+                "data_source": spec.data.source,
+                "data_source_mode": source_mode,
+                "evidence_acquisition_tier": tier,
+                "warnings": data_profile.get("warnings", []),
+                "data_compare": compare_details,
+                "remaining_caveats": blockers,
+            },
+        )
     return GateResult(
         name="strict_data",
         status="blocked" if blockers else "ok",
@@ -407,8 +451,84 @@ def _strict_data_check(spec: StrategySpec, data_profile: dict[str, Any]) -> Gate
             "data_source_mode": source_mode,
             "evidence_acquisition_tier": tier,
             "warnings": data_profile.get("warnings", []),
+            "data_compare": compare_details,
         },
     )
+
+
+def _strict_data_check_with_root(
+    spec: StrategySpec,
+    root: Path,
+    data_profile: dict[str, Any],
+) -> GateResult:
+    result = _strict_data_check(spec, data_profile)
+    compare_path = root / "reports" / "harness" / "data" / f"{spec.name}-data-compare.json"
+    compare_payload = _load_optional_json(compare_path)
+    compare_details = _data_compare_details(compare_payload, _relpath(compare_path, root))
+    compare_status = str(compare_details.get("strict_data_status") or "missing")
+    if compare_status in {"missing", "blocked"}:
+        remediation = compare_details.get("remediation") or []
+        return GateResult(
+            name="strict_data",
+            status="blocked",
+            message=(
+                f"{result.message} Strategy data comparison is {compare_status}: {remediation}"
+            ),
+            details={**result.details, "data_compare": compare_details},
+        )
+    if compare_status == "warning" and result.status == "ok":
+        return GateResult(
+            name="strict_data",
+            status="warning",
+            message="Router data profile is acceptable but source comparison has warnings.",
+            details={**result.details, "data_compare": compare_details},
+        )
+    if result.status == "blocked" and compare_details.get("strict_data_status") == "ok":
+        return GateResult(
+            name="strict_data",
+            status="warning",
+            message=(
+                "Router data profile has non-paper-ready caveats, but the strategy data "
+                "comparison passed. Review before paper readiness."
+            ),
+            details={**result.details, "data_compare": compare_details},
+        )
+    if result.status == "blocked" and compare_details.get("strict_data_status") == "blocked":
+        remediation = compare_details.get("remediation") or []
+        return GateResult(
+            name="strict_data",
+            status="blocked",
+            message=f"{result.message} Data comparison is blocked: {remediation}",
+            details={**result.details, "data_compare": compare_details},
+        )
+    return GateResult(
+        name=result.name,
+        status=result.status,
+        message=result.message,
+        details={**result.details, "data_compare": compare_details},
+    )
+
+
+def _data_compare_details(payload: dict[str, Any] | None, path: str) -> dict[str, Any]:
+    if payload is None:
+        return {
+            "strict_data_status": "missing",
+            "path": path,
+            "remediation": [
+                "Run `uv run oc strategy data-compare <spec> --primary ... --secondary ...`."
+            ],
+        }
+    return {
+        "strict_data_status": str(payload.get("strict_data_status") or "blocked"),
+        "path": path,
+        "compared_symbols": _string_list(payload.get("compared_symbols")),
+        "timestamp_alignment_pct": payload.get("timestamp_alignment_pct"),
+        "close_drift_bps_p95": payload.get("close_drift_bps_p95"),
+        "close_drift_bps_max": payload.get("close_drift_bps_max"),
+        "missing_bar_count": payload.get("missing_bar_count"),
+        "remediation": _string_list(payload.get("remediation")),
+        "blockers": _string_list(payload.get("blockers")),
+    }
 
 
 def _universe_audit_check(spec: StrategySpec, root: Path) -> GateResult:
@@ -456,11 +576,15 @@ def _universe_audit_check(spec: StrategySpec, root: Path) -> GateResult:
 def _factor_lab_check(spec: StrategySpec, root: Path) -> GateResult:
     factor_lab_path = root / "reports" / "research" / f"{spec.name}-factor-lab.json"
     factor_lab_payload = _load_optional_json(factor_lab_path)
-    attribution_path = (
-        root / "reports" / "research" / f"{spec.name}-hybrid-factor-attribution.json"
-        if spec.portfolio.mode == "hybrid_adaptive_router"
-        else None
-    )
+    attribution_path = None
+    if spec.portfolio.mode == "hybrid_adaptive_router":
+        attribution_path = (
+            root / "reports" / "research" / f"{spec.name}-hybrid-factor-attribution.json"
+        )
+    elif spec.portfolio.mode == "adaptive_intraday_internal_router":
+        attribution_path = (
+            root / "reports" / "research" / f"{spec.name}-adaptive-factor-attribution.json"
+        )
     attribution_payload = _load_optional_json(attribution_path) if attribution_path else None
     attribution_status = (
         str(attribution_payload.get("status") or "warning")
@@ -796,11 +920,14 @@ def _write_router_promotion_json(
     llm_payload: dict[str, Any] | None,
     target_weights_payload: dict[str, Any] | None,
     selected_route: dict[str, Any] | None,
+    candidate_status: str,
 ) -> Path:
     payload = {
         "mode": config.report_mode,
         "strategy_name": spec.name,
         "source_spec_path": str(spec_path),
+        "candidate_status": candidate_status,
+        "paper_readiness_evidence": candidate_status != "rejected",
         "status": status,
         "ready": ready,
         "gate_summary": gate_summary,
@@ -839,6 +966,7 @@ def _write_router_promotion_markdown(
     manifest: dict[str, Any],
     five_pass_checks: PassSummary,
     selected_route: dict[str, Any] | None,
+    candidate_status: str,
 ) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     lines = [
@@ -846,6 +974,7 @@ def _write_router_promotion_markdown(
         "",
         f"- Mode: `{config.report_mode}`",
         f"- Status: `{status}`",
+        f"- Candidate status: `{candidate_status}`",
         f"- Ready for paper: `{'yes' if ready else 'no'}`",
         f"- Data source mode: `{data_profile.get('source_mode') or 'unknown'}`",
         f"- Trial count: `{manifest.get('trial_count')}`",
@@ -903,6 +1032,28 @@ def _selected_candidate(
         if selected_label and _candidate_label(candidate) == selected_label:
             return candidate
     return candidates[0] if candidates else None
+
+
+def _candidate_status(spec: StrategySpec, research_payload: dict[str, Any] | None) -> str:
+    for value in (
+        (research_payload or {}).get("iteration_outcome"),
+        (research_payload or {}).get("candidate_status"),
+    ):
+        if value in {"adopted", "rejected", "needs_more_research"}:
+            return str(value)
+    notes = spec.notes.model_dump(mode="json")
+    for value in (notes.get("iteration_outcome"), notes.get("candidate_status")):
+        if value in {"adopted", "rejected", "needs_more_research"}:
+            return str(value)
+    research_design = notes.get("research_design")
+    if isinstance(research_design, dict):
+        for value in (
+            research_design.get("iteration_outcome"),
+            research_design.get("candidate_status"),
+        ):
+            if value in {"adopted", "rejected", "needs_more_research"}:
+                return str(value)
+    return "needs_more_research"
 
 
 def _candidate_label(candidate: dict[str, Any]) -> str | None:

@@ -29,6 +29,7 @@ CURRENT_DOCS = {
     "docs/local-product-optimization-plan-2026-05-25.zh.md",
     "docs/strategy-research-product-remediation-plan-2026-05-26.zh.md",
     "docs/non-ml-non-ashare-product-remediation-plan-2026-05-28.zh.md",
+    "docs/strategy-research-product-hardening-plan-2026-05-29.zh.md",
 }
 
 REQUIRED_SKILLS = [

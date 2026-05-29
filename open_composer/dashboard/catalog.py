@@ -1110,6 +1110,8 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
             name.endswith("-router-cost-stress.json")
             or name.endswith("-router-data-evidence.json")
             or name.endswith("-router-validation.json")
+            or name.endswith("-adaptive-factor-attribution.json")
+            or name.endswith("-hybrid-factor-attribution.json")
         ):
             kind = "router_evidence"
         elif (
@@ -1148,6 +1150,10 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
         paper_readiness_status = _paper_readiness_status(raw, gate_summary)
         llm_contribution_status = _llm_contribution_status(gate_summary)
         overfit_risk = _registered_value(stability.get("overfit_risk"))
+        candidate_status = _registered_value(raw.get("candidate_status"))
+        iteration_outcome = _registered_value(raw.get("iteration_outcome"))
+        data_compare_status = _research_data_compare_status(raw)
+        route_attribution_status = _research_route_attribution_status(raw)
         records.append(
             DashboardResearchReport(
                 strategy_name=strategy_name,
@@ -1197,6 +1203,10 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
                         str(warning) for warning in data_profile.get("warnings", []) if warning
                     ],
                 },
+                iteration_outcome=iteration_outcome,
+                candidate_status=candidate_status,
+                data_compare_status=data_compare_status,
+                route_attribution_status=route_attribution_status,
             )
         )
     records.sort(key=lambda item: (item.strategy_name.lower(), item.kind, item.report_json_path))
@@ -1236,6 +1246,28 @@ def _build_research_run_records(base: Path) -> list[DashboardResearchRun]:
                 continue
             record = _research_run_record(embedded)
             if record is None or record.run_id in seen:
+                continue
+            seen.add(record.run_id)
+            records.append(record)
+
+    progress_root = base / "reports" / "research" / "runs"
+    if progress_root.exists():
+        by_run_id = {record.run_id: record for record in records}
+        for path in sorted(progress_root.glob("*-latest.json")):
+            try:
+                raw = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(raw, dict):
+                continue
+            run_id = str(raw.get("run_id") or "")
+            if not run_id:
+                continue
+            if run_id in by_run_id:
+                _attach_progress(by_run_id[run_id], raw)
+                continue
+            record = _progress_run_record(raw)
+            if record is None:
                 continue
             seen.add(record.run_id)
             records.append(record)
@@ -1337,6 +1369,47 @@ def _research_run_record(raw: dict[str, Any]) -> DashboardResearchRun | None:
         )
     except (TypeError, ValueError):
         return None
+
+
+def _progress_run_record(raw: dict[str, Any]) -> DashboardResearchRun | None:
+    try:
+        status = _status_value(raw.get("status"))
+        record = DashboardResearchRun(
+            run_id=str(raw.get("run_id") or ""),
+            generated_at=_optional_datetime(raw.get("updated_at") or raw.get("ended_at")),
+            strategy_name=str(raw.get("strategy_name") or "unknown"),
+            source_spec_path="",
+            status=status,
+            kind="research_progress",
+            candidate_count=int(raw.get("candidate_count") or 0),
+            trial_count=0,
+            gate_status=status,
+            blocked_items=[str(item) for item in raw.get("blocked_items", []) if item],
+            warning_items=[str(item) for item in raw.get("warning_items", []) if item],
+            report_path=None,
+            json_path=None,
+            artifact_count=1 if raw.get("event_path") else 0,
+            next_action=_experiment_next_action(status, status),
+        )
+        _attach_progress(record, raw)
+        return record
+    except (TypeError, ValueError):
+        return None
+
+
+def _attach_progress(record: DashboardResearchRun, raw: dict[str, Any]) -> None:
+    record.progress_status = _registered_value(raw.get("status"))
+    record.progress_stage = _registered_value(raw.get("stage"))
+    record.progress_event_path = _registered_value(raw.get("event_path"))
+    record.progress_partial = bool(raw.get("partial", False))
+    try:
+        record.progress_candidate_index = int(raw.get("candidate_index"))
+    except (TypeError, ValueError):
+        record.progress_candidate_index = None
+    try:
+        record.progress_candidate_count = int(raw.get("candidate_count"))
+    except (TypeError, ValueError):
+        record.progress_candidate_count = None
 
 
 def _build_project_records(
@@ -1699,6 +1772,37 @@ def _llm_contribution_status(gate_summary: dict[str, Any]) -> str | None:
     if value is None:
         return None
     return "pass" if value is True else "blocked"
+
+
+def _research_data_compare_status(raw: dict[str, Any]) -> str | None:
+    for check in raw.get("checks", []):
+        if not isinstance(check, dict) or check.get("name") != "strict_data":
+            continue
+        details = check.get("details")
+        if not isinstance(details, dict):
+            return None
+        data_compare = details.get("data_compare")
+        if isinstance(data_compare, dict):
+            return _registered_value(data_compare.get("strict_data_status"))
+    if raw.get("mode") == "strategy_data_compare":
+        return _registered_value(raw.get("strict_data_status"))
+    return _registered_value(raw.get("strict_data_status"))
+
+
+def _research_route_attribution_status(raw: dict[str, Any]) -> str | None:
+    mode = str(raw.get("mode") or "")
+    if mode in {"adaptive_factor_attribution", "hybrid_factor_attribution"}:
+        return _registered_value(raw.get("status"))
+    for check in raw.get("checks", []):
+        if not isinstance(check, dict) or check.get("name") != "factor_lab":
+            continue
+        details = check.get("details")
+        if not isinstance(details, dict):
+            return None
+        route_attribution = details.get("route_factor_attribution")
+        if isinstance(route_attribution, dict):
+            return _registered_value(route_attribution.get("status"))
+    return None
 
 
 def _research_next_action(

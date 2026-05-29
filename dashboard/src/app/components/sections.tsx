@@ -442,6 +442,14 @@ export function ResearchView() {
                       <div className="t-body-xs ink-subtle mt-0.5">
                         {run.nextAction || run.dataSourceMode}{run.dataAsOf ? ` · ${formatDate(run.dataAsOf)}` : ""}
                       </div>
+                      {run.progressStage ? (
+                        <div className="t-body-xs ink-subtle mt-0.5 truncate" title={run.progressEventPath ?? ""}>
+                          {run.progressPartial ? "partial" : run.progressStatus ?? "progress"} · {run.progressStage}
+                          {run.progressCandidateCount
+                            ? ` · ${run.progressCandidateIndex ?? 0}/${run.progressCandidateCount}`
+                            : ""}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="pr-5 max-w-[240px]">
                       <div className="t-mono truncate" title={run.jsonPath ?? run.reportPath ?? run.sourceSpecPath}>

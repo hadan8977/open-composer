@@ -25,6 +25,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/longbridge-integration.md",
         "docs/strategy-research-product-remediation-plan-2026-05-26.zh.md",
         "docs/non-ml-non-ashare-product-remediation-plan-2026-05-28.zh.md",
+        "docs/strategy-research-product-hardening-plan-2026-05-29.zh.md",
     ]:
         source = repo_root / relative
         destination = target / relative
