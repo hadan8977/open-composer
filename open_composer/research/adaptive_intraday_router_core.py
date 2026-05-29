@@ -124,6 +124,7 @@ def run_adaptive_intraday_router_research(
     report_text = report_text.replace(str(result.json_path), str(json_path))
     ensure_dir(report_path.parent)
     report_path.write_text(report_text, encoding="utf-8")
+    _write_adaptive_router_factor_lab(base, spec.name, payload)
     return AdaptiveRouterResearchResult(
         report_path=report_path,
         json_path=json_path,
@@ -133,6 +134,108 @@ def run_adaptive_intraday_router_research(
         runtime_seconds=result.runtime_seconds,
         data_profile=result.data_profile,
     )
+
+
+def _write_adaptive_router_factor_lab(
+    root: Path,
+    strategy_name: str,
+    payload: dict[str, Any],
+) -> None:
+    """Write route-level diagnostics for adaptive router promotion gates."""
+
+    candidates = payload.get("candidates") if isinstance(payload.get("candidates"), list) else []
+    selected = candidates[0] if candidates and isinstance(candidates[0], dict) else {}
+    acceptance = payload.get("acceptance_gate")
+    acceptance = acceptance if isinstance(acceptance, dict) else {}
+    selected_flags = selected.get("quality_flags")
+    acceptance_flags = acceptance.get("quality_flags")
+    quality_flags = [
+        str(item)
+        for item in (
+            selected_flags
+            if isinstance(selected_flags, list)
+            else acceptance_flags
+            if isinstance(acceptance_flags, list)
+            else []
+        )
+    ]
+    hard_flags = [flag for flag in quality_flags if flag != "does_not_beat_ex_post_best_symbol"]
+    status = "ok" if bool(acceptance.get("passed")) and not hard_flags else "warning"
+    oos = _metrics_dict(selected.get("out_of_sample"))
+    full = _metrics_dict(selected.get("full_window"))
+    factor_metrics = [
+        {
+            "name": "selected_route_oos_equal_weight_alpha",
+            "source": "adaptive_intraday_router",
+            "value": oos.get("alpha_vs_equal_weight_annualized_pct"),
+            "status": "ok"
+            if (oos.get("alpha_vs_equal_weight_annualized_pct") or 0) > 0
+            else "warning",
+        },
+        {
+            "name": "selected_route_oos_sharpe",
+            "source": "adaptive_intraday_router",
+            "value": oos.get("sharpe_ratio"),
+            "status": "ok" if (oos.get("sharpe_ratio") or 0) >= 1.0 else "warning",
+        },
+        {
+            "name": "selected_route_full_max_drawdown",
+            "source": "adaptive_intraday_router",
+            "value": full.get("max_drawdown_pct"),
+            "status": "ok" if abs(full.get("max_drawdown_pct") or 0) <= 30.0 else "warning",
+        },
+        {
+            "name": "walk_forward_positive_alpha_folds",
+            "source": "adaptive_intraday_router",
+            "value": acceptance.get("walk_forward_positive_alpha_folds"),
+            "status": "ok"
+            if acceptance.get("walk_forward_positive_alpha_folds")
+            == acceptance.get("walk_forward_fold_count")
+            else "warning",
+        },
+    ]
+    json_path = root / "reports" / "research" / f"{strategy_name}-factor-lab.json"
+    report_path = json_path.with_suffix(".md")
+    report_payload = {
+        "schema_version": "1",
+        "strategy_name": strategy_name,
+        "mode": "router_level_diagnostic",
+        "status": status,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "selected_route_label": selected.get("label"),
+        "quality_flags": hard_flags,
+        "benchmark_warnings": quality_flags,
+        "acceptance_gate": acceptance,
+        "factor_metrics": factor_metrics,
+        "source_artifact": f"reports/research/{strategy_name}-adaptive-intraday-router.json",
+    }
+    write_json(json_path, report_payload)
+    lines = [
+        f"# Router Factor Lab: {strategy_name}",
+        "",
+        "- Mode: `router_level_diagnostic`",
+        f"- Status: `{status}`",
+        f"- Selected route: `{selected.get('label') or 'missing'}`",
+        f"- Quality flags: `{', '.join(hard_flags) if hard_flags else 'none'}`",
+        f"- Benchmark warnings: `{', '.join(quality_flags) if quality_flags else 'none'}`",
+        "",
+        "## Route Metrics",
+        "",
+        "| Metric | Value | Status |",
+        "| --- | ---: | --- |",
+    ]
+    for metric in factor_metrics:
+        lines.append(f"| `{metric['name']}` | `{metric.get('value')}` | `{metric['status']}` |")
+    report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _metrics_dict(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        nested = value.get("base")
+        if isinstance(nested, dict):
+            return nested
+        return value
+    return {}
 
 
 def run_llm_adaptive_intraday_router_selection(

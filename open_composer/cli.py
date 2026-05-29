@@ -2617,7 +2617,6 @@ def strategy_intraday_daily_rotation(
             market_gates=_intraday_market_gates(market_gate),
             objective=_intraday_objective(objective),
             out_of_sample_ratio=oos_ratio,
-            validation_ratio=validation_ratio,
             walk_forward_folds=walk_forward_folds,
             walk_forward_top_k=walk_forward_top_k,
             max_candidates=max_candidates,

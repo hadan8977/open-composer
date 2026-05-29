@@ -528,6 +528,15 @@ def test_adaptive_intraday_router_builds_internal_route_report(
     payload = result.json_path.read_text(encoding="utf-8")
     assert "adaptive_intraday_internal_router" in payload
     assert result.best.route.sub_strategies
+    factor_lab_path = (
+        sample_workspace
+        / "reports"
+        / "research"
+        / "adaptive_intraday_router_fixture-factor-lab.json"
+    )
+    factor_lab = json.loads(factor_lab_path.read_text(encoding="utf-8"))
+    assert factor_lab["mode"] == "router_level_diagnostic"
+    assert factor_lab["factor_metrics"]
 
 
 def test_adaptive_intraday_router_cli_reports_research_cost(
@@ -609,6 +618,75 @@ def test_adaptive_intraday_router_cli_reports_research_cost(
     assert "adaptive intraday router complete" in result.output
     assert "candidates=" in result.output
     assert "walk_forward_candidates=" in result.output
+    assert "estimated_passes=" in result.output
+
+
+def test_intraday_daily_rotation_cli_runs_without_stale_validation_ratio(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    frames = {
+        "AAA": _make_intraday_frame(days=42, symbol_factor=0.0, daily_drift=0.2, opening_boost=0.2),
+        "BBB": _make_intraday_frame(days=42, symbol_factor=4.0, daily_drift=0.3, opening_boost=0.6),
+        "QQQ": _make_intraday_frame(
+            days=42, symbol_factor=1.0, daily_drift=0.15, opening_boost=0.15
+        ),
+        "TQQQ": _make_intraday_frame(
+            days=42, symbol_factor=2.0, daily_drift=0.25, opening_boost=0.2
+        ),
+    }
+
+    def fake_fetch_ohlcv(**kwargs):
+        return frames[kwargs["symbol"]].copy()
+
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    monkeypatch.setattr(
+        "open_composer.research.intraday_daily_rotation.fetch_ohlcv", fake_fetch_ohlcv
+    )
+
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "intraday_cli.yaml"
+    _write_spec(spec_path, llm_review=False)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "strategy",
+            "intraday-daily-rotation",
+            str(spec_path),
+            "--symbols",
+            "AAA,BBB",
+            "--data-source",
+            "alpaca",
+            "--benchmark-symbol",
+            "TQQQ",
+            "--market-symbol",
+            "QQQ",
+            "--lookback-days",
+            "5",
+            "--entry-after-bars",
+            "1",
+            "--top-n",
+            "1",
+            "--min-opening-return-pct",
+            "0",
+            "--min-prior-momentum-pct",
+            "0",
+            "--min-relative-volume",
+            "0.8",
+            "--selection-style",
+            "opening_momentum",
+            "--market-gate",
+            "none",
+            "--max-candidates",
+            "1",
+            "--walk-forward-folds",
+            "1",
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    assert "intraday daily rotation complete" in result.output
     assert "estimated_passes=" in result.output
 
 
