@@ -700,9 +700,7 @@ def drawdown_scale(
 ) -> float:
     if not lookback or max_drawdown is None or index - lookback < 0:
         return 1.0
-    close = dataset.frame[f"{symbol}_close"].astype(float).iloc[index - lookback : index]
-    peak = close.cummax()
-    drawdown = ((close / peak) - 1).min() * 100
+    drawdown = rolling_drawdown_pct(dataset, symbol, lookback).iloc[index - 1]
     return brake_scale if drawdown <= -abs(max_drawdown) else 1.0
 
 
@@ -721,8 +719,13 @@ def effective_lookback(params: Any) -> int:
         getattr(params, "volatility_lookback_days", 0) or 0,
         getattr(params, "drawdown_lookback_days", 0) or 0,
         getattr(params, "market_drawdown_lookback_days", 0) or 0,
+        getattr(params, "market_reentry_momentum_lookback_days", 0) or 0,
+        getattr(params, "override_short_momentum_lookback_days", 0) or 0,
         getattr(params, "risk_adjustment_lookback_days", 0) or 0,
         getattr(params, "confirmation_sma_days", 0) or 0,
+        getattr(params, "bear_inverse_lookback_days", 0) or 0,
+        getattr(params, "bear_inverse_confirmation_sma_days", 0) or 0,
+        getattr(params, "leadership_breadth_lookback_days", 0) or 0,
         getattr(params, "leverage_trend_sma_days", 0) or 0,
         getattr(params, "leverage_drawdown_lookback_days", 0) or 0,
         getattr(params, "satellite_momentum_days", 0) or 0,
@@ -1006,11 +1009,42 @@ def close_volatility_pct(
 ) -> float:
     if index - lookback < 1:
         return 0.0
-    closes = dataset.frame[f"{symbol}_close"].astype(float).iloc[index - lookback : index]
-    returns = closes.pct_change().dropna()
-    if len(returns) < 2:
-        return 0.0
-    return float(returns.std(ddof=0) * math.sqrt(252) * 100)
+    value = rolling_close_volatility_pct(dataset, symbol, lookback).iloc[index - 1]
+    return 0.0 if pd.isna(value) else float(value)
+
+
+def rolling_close_volatility_pct(
+    dataset: RouterFrameDataset,
+    symbol: str,
+    lookback: int,
+) -> pd.Series:
+    key = f"close_volatility_pct:{symbol.upper()}:{lookback}"
+    cached = dataset.runtime_cache.get(key)
+    if cached is None:
+        returns = close_series(dataset, symbol).pct_change()
+        window = max(lookback - 1, 2)
+        cached = returns.rolling(window).std(ddof=0) * math.sqrt(252) * 100
+        dataset.runtime_cache[key] = cached
+    return cached
+
+
+def rolling_drawdown_pct(
+    dataset: RouterFrameDataset,
+    symbol: str,
+    lookback: int,
+) -> pd.Series:
+    key = f"rolling_drawdown_pct:{symbol.upper()}:{lookback}"
+    cached = dataset.runtime_cache.get(key)
+    if cached is None:
+        close = close_series(dataset, symbol)
+        cached = close.rolling(lookback).apply(_window_drawdown_pct, raw=False)
+        dataset.runtime_cache[key] = cached
+    return cached
+
+
+def _window_drawdown_pct(values: pd.Series) -> float:
+    peak = values.cummax()
+    return float(((values / peak) - 1).min() * 100)
 
 
 def trend_ok(dataset: RouterFrameDataset, symbol: str, index: int, lookback: int) -> bool:

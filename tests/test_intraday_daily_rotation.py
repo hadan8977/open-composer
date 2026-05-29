@@ -40,17 +40,18 @@ from open_composer.research.hybrid_router_core import (
     _build_beta_override_params_grid,
     hybrid_target_weight_snapshot,
 )
-from open_composer.research.router_common import RouterFrameDataset
 from open_composer.research.intraday_daily_rotation import (
     IntradayDailyCandidate,
     IntradayDailyMetrics,
     IntradayDailyParams,
     LLMIntradayDailyChoice,
+    _candidate_sort_key,
     _pass_status,
     run_intraday_daily_rotation_research,
     run_llm_intraday_daily_rotation_selection,
     write_intraday_product_reflection,
 )
+from open_composer.research.router_common import RouterFrameDataset
 
 
 def _make_intraday_frame(
@@ -228,6 +229,107 @@ def test_intraday_daily_research_pass_respects_acceptance_gate() -> None:
     assert (
         _pass_status(candidate, "equal_weight_alpha", acceptance_passed=False)["research_pass"]
         is False
+    )
+
+
+def test_intraday_candidate_sort_demotes_weak_oos_candidate() -> None:
+    params = IntradayDailyParams(
+        selection_style="opening_reversal",
+        lookback_days=20,
+        entry_after_bars=2,
+        top_n=1,
+        min_opening_return_pct=0.0,
+        min_prior_momentum_pct=0.0,
+        min_relative_volume=0.8,
+    )
+    strong_oos = _metrics(
+        annualized_return_pct=55.0,
+        sharpe_ratio=1.8,
+        max_drawdown_pct=-8.0,
+        alpha_vs_equal_weight_annualized_pct=40.0,
+    )
+    weak_oos = _metrics(
+        annualized_return_pct=-6.0,
+        sharpe_ratio=-0.2,
+        max_drawdown_pct=-12.0,
+        alpha_vs_equal_weight_annualized_pct=-6.0,
+    )
+    high_train = _metrics(
+        annualized_return_pct=90.0,
+        sharpe_ratio=2.5,
+        max_drawdown_pct=-5.0,
+        alpha_vs_equal_weight_annualized_pct=80.0,
+    )
+    low_train = _metrics(
+        annualized_return_pct=10.0,
+        sharpe_ratio=0.8,
+        max_drawdown_pct=-10.0,
+        alpha_vs_equal_weight_annualized_pct=5.0,
+    )
+    weak_candidate = IntradayDailyCandidate(
+        rank=1,
+        params=params,
+        score=100.0,
+        train=high_train,
+        out_of_sample=weak_oos,
+        full_window=weak_oos,
+        quality_flags=[
+            "oos_no_annualized_alpha_vs_equal_weight_intraday",
+            "oos_low_sharpe",
+        ],
+    )
+    strong_candidate = IntradayDailyCandidate(
+        rank=2,
+        params=params,
+        score=10.0,
+        train=low_train,
+        out_of_sample=strong_oos,
+        full_window=strong_oos,
+        quality_flags=[],
+    )
+
+    ordered = sorted(
+        [weak_candidate, strong_candidate],
+        key=lambda item: _candidate_sort_key(item, "equal_weight_alpha"),
+        reverse=True,
+    )
+
+    assert ordered[0] is strong_candidate
+
+
+def _metrics(
+    *,
+    annualized_return_pct: float,
+    sharpe_ratio: float,
+    max_drawdown_pct: float,
+    alpha_vs_equal_weight_annualized_pct: float,
+) -> IntradayDailyMetrics:
+    return IntradayDailyMetrics(
+        days=60,
+        start_date="2026-01-01",
+        end_date="2026-03-31",
+        total_return_pct=12.0,
+        annualized_return_pct=annualized_return_pct,
+        sharpe_ratio=sharpe_ratio,
+        max_drawdown_pct=max_drawdown_pct,
+        traded_days=40,
+        round_trips=40,
+        average_selected_count=1.0,
+        win_day_pct=55.0,
+        equal_weight_intraday_return_pct=2.0,
+        equal_weight_intraday_annualized_pct=8.0,
+        alpha_vs_equal_weight_annualized_pct=alpha_vs_equal_weight_annualized_pct,
+        benchmark_symbol="TQQQ",
+        benchmark_intraday_return_pct=1.0,
+        benchmark_intraday_annualized_pct=5.0,
+        alpha_vs_benchmark_intraday_annualized_pct=alpha_vs_equal_weight_annualized_pct,
+        benchmark_buy_hold_return_pct=1.0,
+        benchmark_buy_hold_annualized_pct=5.0,
+        alpha_vs_benchmark_buy_hold_annualized_pct=alpha_vs_equal_weight_annualized_pct,
+        universe_equal_weight_buy_hold_pct=2.0,
+        best_symbol_buy_hold_pct=8.0,
+        best_symbol="AAA",
+        alpha_vs_best_symbol_buy_hold_pct=4.0,
     )
 
 
@@ -836,6 +938,65 @@ def test_hybrid_beta_override_label_parser_supports_iter6_controls() -> None:
     assert params.base_mode == "tqqq_cycle"
 
 
+def test_hybrid_beta_override_label_parser_supports_bear_inverse_branch() -> None:
+    label = (
+        "beta_override:baseiter2_lb60_min0_adv5_sma200_exTQQQ_"
+        "gateq200ormom120_vol120t40_ovt55_g0.7_ows0.6_"
+        "bearSQQQlb60min5sma50w0.5_tqqq_cycle"
+    )
+    params = hybrid_params_from_label(label)
+
+    assert params.label == label
+    assert params.override_target_volatility_annual_pct == 55.0
+    assert params.override_weight_scale == 0.6
+    assert params.bear_inverse_symbol == "SQQQ"
+    assert params.bear_inverse_lookback_days == 60
+    assert params.bear_inverse_min_momentum_pct == 5.0
+    assert params.bear_inverse_confirmation_sma_days == 50
+    assert params.bear_inverse_weight == 0.5
+    assert params.base_mode == "tqqq_cycle"
+
+
+def test_hybrid_beta_override_label_parser_supports_leadership_breadth() -> None:
+    label = (
+        "beta_override:baseiter2_lb60_min0_adv0_sma200_exTQQQ_"
+        "gateq200ormom120_mdd20p8_vol120t40_ovt60_g0.65_br60n3m0s0.5_tqqq_cycle"
+    )
+    params = hybrid_params_from_label(label)
+
+    assert params.label == label
+    assert params.leadership_breadth_lookback_days == 60
+    assert params.min_leadership_breadth_count == 3
+    assert params.min_leadership_breadth_momentum_pct == 0.0
+    assert params.leadership_breadth_scale == 0.5
+    assert params.base_mode == "tqqq_cycle"
+
+
+def test_hybrid_beta_override_label_parser_supports_market_drawdown_scale() -> None:
+    label = (
+        "beta_override:baseiter2_lb60_min0_adv0_sma200_exTQQQ_"
+        "gateq200ormom120_mdd20p8s0.5_vol120t40_ovt60_g0.65_tqqq_cycle"
+    )
+    params = hybrid_params_from_label(label)
+
+    assert params.label == label
+    assert params.market_drawdown_lookback_days == 20
+    assert params.max_market_drawdown_pct == 8.0
+    assert params.market_drawdown_brake_scale == 0.5
+
+
+def test_hybrid_beta_override_label_parser_supports_short_momentum_gate() -> None:
+    label = (
+        "beta_override:baseiter2_lb60_min5_adv0_sma200_exTQQQ_"
+        "gateq200ormom120_osm10p0_mdd20p6_vol120t40_ovt95_g0.6_tqqq_cycle"
+    )
+    params = hybrid_params_from_label(label)
+
+    assert params.label == label
+    assert params.override_short_momentum_lookback_days == 10
+    assert params.min_override_short_momentum_pct == 0.0
+
+
 def test_hybrid_beta_override_grid_builds_deduped_tqqq_cycle_params() -> None:
     grid = _build_beta_override_params_grid(
         momentum_lookback_days=[20],
@@ -843,15 +1004,90 @@ def test_hybrid_beta_override_grid_builds_deduped_tqqq_cycle_params() -> None:
         override_advantage_pct=[0.0],
         confirmation_sma_days=[50],
         exclude_tqqq=True,
+        override_weight_scale=[1.0, 0.6],
         cycle_gates=["q200ormom120"],
         market_drawdown_lookback_days=[None, 504],
         max_market_drawdown_pct=[None, 25.0],
+        override_target_volatility_annual_pct=[None, 55.0],
+        bear_inverse_symbols=[None, "SQQQ"],
+        bear_inverse_weight=[0.0, 0.5],
         gross_exposure_scale=[0.87],
         base_modes=["tqqq_cycle"],
-        max_candidates=10,
+        max_candidates=20,
     )
 
     assert any(item.base_mode == "tqqq_cycle" for item in grid)
+    assert any(item.bear_inverse_symbol == "SQQQ" for item in grid)
+    assert any(item.override_target_volatility_annual_pct == 55.0 for item in grid)
+    assert any(item.override_weight_scale == 0.6 for item in grid)
+    assert len({item.label for item in grid}) == len(grid)
+
+
+def test_hybrid_beta_override_grid_builds_leadership_breadth_params() -> None:
+    grid = _build_beta_override_params_grid(
+        momentum_lookback_days=[60],
+        min_momentum_pct=[0.0],
+        override_advantage_pct=[0.0],
+        confirmation_sma_days=[200],
+        exclude_tqqq=True,
+        cycle_gates=["q200ormom120"],
+        leadership_breadth_lookback_days=[None, 60],
+        min_leadership_breadth_count=[None, 3],
+        min_leadership_breadth_momentum_pct=[0.0],
+        leadership_breadth_scale=[0.5],
+        market_drawdown_brake_scale=[0.25],
+        gross_exposure_scale=[0.65],
+        base_modes=["tqqq_cycle"],
+        max_candidates=4,
+    )
+
+    assert any(item.leadership_breadth_lookback_days == 60 for item in grid)
+    assert any(item.market_drawdown_brake_scale == 0.25 for item in grid)
+    assert any("_br60n3m0s0.5_" in item.label for item in grid)
+    assert len({item.label for item in grid}) == len(grid)
+
+
+def test_hybrid_beta_override_grid_builds_market_reentry_params() -> None:
+    grid = _build_beta_override_params_grid(
+        momentum_lookback_days=[60],
+        min_momentum_pct=[5.0],
+        override_advantage_pct=[0.0],
+        confirmation_sma_days=[200],
+        exclude_tqqq=True,
+        cycle_gates=["q200ormom120"],
+        market_drawdown_lookback_days=[20],
+        max_market_drawdown_pct=[6.0],
+        market_reentry_momentum_lookback_days=[None, 10],
+        min_market_reentry_momentum_pct=[None, 2.0],
+        gross_exposure_scale=[0.65],
+        base_modes=["tqqq_cycle"],
+        max_candidates=4,
+    )
+
+    assert any(item.market_reentry_momentum_lookback_days == 10 for item in grid)
+    assert any(item.min_market_reentry_momentum_pct == 2.0 for item in grid)
+    assert any("_mre10p2_" in item.label for item in grid)
+    assert len({item.label for item in grid}) == len(grid)
+
+
+def test_hybrid_beta_override_grid_builds_short_momentum_params() -> None:
+    grid = _build_beta_override_params_grid(
+        momentum_lookback_days=[60],
+        min_momentum_pct=[5.0],
+        override_advantage_pct=[0.0],
+        confirmation_sma_days=[200],
+        exclude_tqqq=True,
+        cycle_gates=["q200ormom120"],
+        short_momentum_lookback_days=[None, 10],
+        min_short_momentum_pct=[None, 0.0],
+        gross_exposure_scale=[0.6],
+        base_modes=["tqqq_cycle"],
+        max_candidates=4,
+    )
+
+    assert any(item.override_short_momentum_lookback_days == 10 for item in grid)
+    assert any(item.min_override_short_momentum_pct == 0.0 for item in grid)
+    assert any("_osm10p0_" in item.label for item in grid)
     assert len({item.label for item in grid}) == len(grid)
 
 
@@ -920,6 +1156,455 @@ def test_hybrid_beta_override_market_drawdown_blocks_tqqq_cycle_base(
     assert blocked.weights == {}
     assert blocked.qqq_drawdown_ok is False
     assert unblocked.weights == {"TQQQ": 1.0}
+
+
+def test_hybrid_beta_override_market_drawdown_allows_reentry_momentum(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_mdd_reentry.yaml"
+    _write_spec(spec_path, llm_review=False)
+    spec = load_strategy_spec(spec_path)
+    sessions = pd.bdate_range("2024-01-02", periods=260, tz="America/New_York")
+    rows = []
+    qqq_prices = []
+    for index in range(260):
+        if index < 220:
+            qqq_prices.append(100.0 + index * 0.5)
+        elif index < 235:
+            qqq_prices.append(210.0 - (index - 220) * 2.2)
+        else:
+            qqq_prices.append(177.0 + (index - 235) * 0.8)
+    for session, qqq_price in zip(sessions, qqq_prices, strict=True):
+        timestamp = session.replace(hour=9, minute=30).tz_convert("UTC")
+        rows.append(
+            {
+                "date": str(timestamp.date()),
+                "timestamp": timestamp,
+                "QQQ_timestamp": timestamp,
+                "QQQ_open": qqq_price,
+                "QQQ_close": qqq_price,
+                "TQQQ_timestamp": timestamp,
+                "TQQQ_open": qqq_price * 2.0,
+                "TQQQ_close": qqq_price * 2.0,
+            }
+        )
+    dataset = RouterFrameDataset(
+        symbols=["QQQ", "TQQQ"],
+        market_symbol="QQQ",
+        benchmark_symbol="TQQQ",
+        dates=[row["date"] for row in rows],
+        frame=pd.DataFrame(rows),
+        data_profile={},
+    )
+    base_kwargs = dict(
+        holding_mode="open_to_open",
+        momentum_lookback_days=20,
+        min_momentum_pct=0.0,
+        override_advantage_pct=0.0,
+        confirmation_sma_days=None,
+        exclude_tqqq=True,
+        cycle_gate="q200",
+        market_drawdown_lookback_days=60,
+        max_market_drawdown_pct=10.0,
+        base_mode="tqqq_cycle",
+    )
+    blocked_params = BetaOverrideHybridParams(**base_kwargs)
+    reentry_params = BetaOverrideHybridParams(
+        **base_kwargs,
+        market_reentry_momentum_lookback_days=10,
+        min_market_reentry_momentum_pct=2.0,
+    )
+
+    blocked = hybrid_target_weight_snapshot(spec, dataset, blocked_params, 245)
+    reentry = hybrid_target_weight_snapshot(spec, dataset, reentry_params, 245)
+
+    assert blocked.weights == {}
+    assert blocked.qqq_drawdown_ok is False
+    assert reentry.weights == {"TQQQ": 1.0}
+    assert reentry.market_drawdown_scale == 1.0
+
+
+def test_hybrid_beta_override_market_drawdown_can_scale_tqqq_cycle_base(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_mdd_scale_fixture.yaml"
+    _write_spec(spec_path, llm_review=False)
+    spec = load_strategy_spec(spec_path)
+    sessions = pd.bdate_range("2024-01-02", periods=260, tz="America/New_York")
+    rows = []
+    qqq_prices = []
+    for index in range(260):
+        if index < 220:
+            qqq_prices.append(100.0 + index * 0.5)
+        else:
+            qqq_prices.append(210.0 - (index - 220) * 1.6)
+    for session, qqq_price in zip(sessions, qqq_prices, strict=True):
+        timestamp = session.replace(hour=9, minute=30).tz_convert("UTC")
+        rows.append(
+            {
+                "date": str(timestamp.date()),
+                "timestamp": timestamp,
+                "QQQ_timestamp": timestamp,
+                "QQQ_open": qqq_price,
+                "QQQ_close": qqq_price,
+                "TQQQ_timestamp": timestamp,
+                "TQQQ_open": qqq_price * 2.0,
+                "TQQQ_close": qqq_price * 2.0,
+            }
+        )
+    dataset = RouterFrameDataset(
+        symbols=["QQQ", "TQQQ"],
+        market_symbol="QQQ",
+        benchmark_symbol="TQQQ",
+        dates=[row["date"] for row in rows],
+        frame=pd.DataFrame(rows),
+        data_profile={},
+    )
+    params = BetaOverrideHybridParams(
+        holding_mode="open_to_open",
+        momentum_lookback_days=20,
+        min_momentum_pct=0.0,
+        override_advantage_pct=0.0,
+        confirmation_sma_days=None,
+        exclude_tqqq=True,
+        cycle_gate="q200",
+        market_drawdown_lookback_days=60,
+        max_market_drawdown_pct=10.0,
+        market_drawdown_brake_scale=0.5,
+        base_mode="tqqq_cycle",
+    )
+
+    scaled = hybrid_target_weight_snapshot(spec, dataset, params, 245)
+
+    assert scaled.weights == {"TQQQ": 0.5}
+    assert scaled.market_drawdown_scale == 0.5
+    assert scaled.qqq_drawdown_ok is False
+
+
+def test_hybrid_beta_override_cycle_gate_controls_tqqq_cycle_base(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_cycle_fixture.yaml"
+    _write_spec(spec_path, llm_review=False)
+    spec = load_strategy_spec(spec_path)
+    sessions = pd.bdate_range("2024-01-02", periods=260, tz="America/New_York")
+    rows = []
+    for index, session in enumerate(sessions):
+        timestamp = session.replace(hour=9, minute=30).tz_convert("UTC")
+        if index < 80:
+            qqq_price = 300.0
+        elif index < 125:
+            qqq_price = 100.0
+        else:
+            qqq_price = 100.0 + (index - 125) * 0.25
+        rows.append(
+            {
+                "date": str(timestamp.date()),
+                "timestamp": timestamp,
+                "QQQ_timestamp": timestamp,
+                "QQQ_open": qqq_price,
+                "QQQ_close": qqq_price,
+                "TQQQ_timestamp": timestamp,
+                "TQQQ_open": qqq_price * 3.0,
+                "TQQQ_close": qqq_price * 3.0,
+            }
+        )
+    dataset = RouterFrameDataset(
+        symbols=["QQQ", "TQQQ"],
+        market_symbol="QQQ",
+        benchmark_symbol="TQQQ",
+        dates=[row["date"] for row in rows],
+        frame=pd.DataFrame(rows),
+        data_profile={},
+    )
+    or_params = BetaOverrideHybridParams(
+        holding_mode="open_to_open",
+        momentum_lookback_days=20,
+        min_momentum_pct=0.0,
+        override_advantage_pct=100.0,
+        confirmation_sma_days=None,
+        exclude_tqqq=True,
+        cycle_gate="q200ormom120",
+        base_mode="tqqq_cycle",
+    )
+    and_params = BetaOverrideHybridParams(
+        holding_mode="open_to_open",
+        momentum_lookback_days=20,
+        min_momentum_pct=0.0,
+        override_advantage_pct=100.0,
+        confirmation_sma_days=None,
+        exclude_tqqq=True,
+        cycle_gate="q200andmom120",
+        base_mode="tqqq_cycle",
+    )
+
+    risk_on = hybrid_target_weight_snapshot(spec, dataset, or_params, 245)
+    risk_off = hybrid_target_weight_snapshot(spec, dataset, and_params, 245)
+
+    assert risk_on.weights == {"TQQQ": 1.0}
+    assert risk_off.weights == {}
+
+
+def test_hybrid_beta_override_market_drawdown_allows_confirmed_bear_inverse(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_mdd_bear_fixture.yaml"
+    _write_spec(spec_path, llm_review=False)
+    spec = load_strategy_spec(spec_path)
+    sessions = pd.bdate_range("2024-01-02", periods=260, tz="America/New_York")
+    rows = []
+    for index, session in enumerate(sessions):
+        timestamp = session.replace(hour=9, minute=30).tz_convert("UTC")
+        if index < 220:
+            qqq_price = 100.0 + index * 0.5
+            sqqq_price = 20.0 + index * 0.02
+        else:
+            qqq_price = 210.0 - (index - 220) * 1.6
+            sqqq_price = 24.4 + (index - 220) * 0.8
+        rows.append(
+            {
+                "date": str(timestamp.date()),
+                "timestamp": timestamp,
+                "QQQ_timestamp": timestamp,
+                "QQQ_open": qqq_price,
+                "QQQ_close": qqq_price,
+                "TQQQ_timestamp": timestamp,
+                "TQQQ_open": qqq_price * 2.0,
+                "TQQQ_close": qqq_price * 2.0,
+                "SQQQ_timestamp": timestamp,
+                "SQQQ_open": sqqq_price,
+                "SQQQ_close": sqqq_price,
+            }
+        )
+    dataset = RouterFrameDataset(
+        symbols=["QQQ", "TQQQ", "SQQQ"],
+        market_symbol="QQQ",
+        benchmark_symbol="TQQQ",
+        dates=[row["date"] for row in rows],
+        frame=pd.DataFrame(rows),
+        data_profile={},
+    )
+    params = BetaOverrideHybridParams(
+        holding_mode="open_to_open",
+        momentum_lookback_days=20,
+        min_momentum_pct=0.0,
+        override_advantage_pct=0.0,
+        confirmation_sma_days=None,
+        exclude_tqqq=True,
+        cycle_gate="q200",
+        market_drawdown_lookback_days=60,
+        max_market_drawdown_pct=10.0,
+        base_mode="tqqq_cycle",
+        bear_inverse_symbol="SQQQ",
+        bear_inverse_lookback_days=20,
+        bear_inverse_min_momentum_pct=5.0,
+        bear_inverse_confirmation_sma_days=20,
+        bear_inverse_weight=0.5,
+    )
+
+    snapshot = hybrid_target_weight_snapshot(spec, dataset, params, 245)
+
+    assert snapshot.state == "bear_inverse"
+    assert snapshot.qqq_drawdown_ok is False
+    assert snapshot.weights == {"SQQQ": 0.5}
+
+
+def test_hybrid_beta_override_leadership_breadth_scales_risk_on_base(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_breadth_fixture.yaml"
+    _write_spec(spec_path, llm_review=False)
+    spec = load_strategy_spec(spec_path)
+    sessions = pd.bdate_range("2024-01-02", periods=260, tz="America/New_York")
+    rows = []
+    for index, session in enumerate(sessions):
+        timestamp = session.replace(hour=9, minute=30).tz_convert("UTC")
+        qqq_price = 100.0 + index * 0.5
+        weak_price = 100.0 - index * 0.05
+        rows.append(
+            {
+                "date": str(timestamp.date()),
+                "timestamp": timestamp,
+                "QQQ_timestamp": timestamp,
+                "QQQ_open": qqq_price,
+                "QQQ_close": qqq_price,
+                "TQQQ_timestamp": timestamp,
+                "TQQQ_open": qqq_price * 3.0,
+                "TQQQ_close": qqq_price * 3.0,
+                "SMH_timestamp": timestamp,
+                "SMH_open": weak_price,
+                "SMH_close": weak_price,
+                "SOXX_timestamp": timestamp,
+                "SOXX_open": weak_price,
+                "SOXX_close": weak_price,
+                "XLK_timestamp": timestamp,
+                "XLK_open": weak_price,
+                "XLK_close": weak_price,
+                "IGV_timestamp": timestamp,
+                "IGV_open": weak_price,
+                "IGV_close": weak_price,
+                "USD_timestamp": timestamp,
+                "USD_open": weak_price,
+                "USD_close": weak_price,
+            }
+        )
+    dataset = RouterFrameDataset(
+        symbols=["QQQ", "TQQQ", "SMH", "SOXX", "XLK", "IGV", "USD"],
+        market_symbol="QQQ",
+        benchmark_symbol="TQQQ",
+        dates=[row["date"] for row in rows],
+        frame=pd.DataFrame(rows),
+        data_profile={},
+    )
+    params = BetaOverrideHybridParams(
+        holding_mode="open_to_open",
+        momentum_lookback_days=60,
+        min_momentum_pct=0.0,
+        override_advantage_pct=100.0,
+        confirmation_sma_days=200,
+        exclude_tqqq=True,
+        cycle_gate="q200ormom120",
+        base_mode="tqqq_cycle",
+        leadership_breadth_lookback_days=60,
+        min_leadership_breadth_count=3,
+        leadership_breadth_scale=0.5,
+    )
+
+    snapshot = hybrid_target_weight_snapshot(spec, dataset, params, 245)
+
+    assert snapshot.market_regime_scale == 0.5
+    assert snapshot.weights == {"TQQQ": 0.5}
+
+
+def test_hybrid_beta_override_short_momentum_blocks_deteriorating_override(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_short_mom_fixture.yaml"
+    _write_spec(spec_path, llm_review=False)
+    spec = load_strategy_spec(spec_path)
+    sessions = pd.bdate_range("2024-01-02", periods=260, tz="America/New_York")
+    rows = []
+    for index, session in enumerate(sessions):
+        timestamp = session.replace(hour=9, minute=30).tz_convert("UTC")
+        qqq_price = 100.0 + index * 0.2
+        soxl_price = 50.0 + index * 1.5
+        if index >= 235:
+            soxl_price -= (index - 234) * 3.0
+        rows.append(
+            {
+                "date": str(timestamp.date()),
+                "timestamp": timestamp,
+                "QQQ_timestamp": timestamp,
+                "QQQ_open": qqq_price,
+                "QQQ_close": qqq_price,
+                "TQQQ_timestamp": timestamp,
+                "TQQQ_open": qqq_price * 3.0,
+                "TQQQ_close": qqq_price * 3.0,
+                "SOXL_timestamp": timestamp,
+                "SOXL_open": soxl_price,
+                "SOXL_close": soxl_price,
+            }
+        )
+    dataset = RouterFrameDataset(
+        symbols=["QQQ", "TQQQ", "SOXL"],
+        market_symbol="QQQ",
+        benchmark_symbol="TQQQ",
+        dates=[row["date"] for row in rows],
+        frame=pd.DataFrame(rows),
+        data_profile={},
+    )
+    base_kwargs = {
+        "holding_mode": "open_to_open",
+        "momentum_lookback_days": 60,
+        "min_momentum_pct": 5.0,
+        "override_advantage_pct": 5.0,
+        "confirmation_sma_days": None,
+        "exclude_tqqq": True,
+        "cycle_gate": "q200ormom120",
+        "base_mode": "tqqq_cycle",
+    }
+
+    unfiltered = hybrid_target_weight_snapshot(
+        spec,
+        dataset,
+        BetaOverrideHybridParams(**base_kwargs),
+        245,
+    )
+    filtered = hybrid_target_weight_snapshot(
+        spec,
+        dataset,
+        BetaOverrideHybridParams(
+            **base_kwargs,
+            override_short_momentum_lookback_days=10,
+            min_override_short_momentum_pct=0.0,
+        ),
+        245,
+    )
+
+    assert unfiltered.weights == {"SOXL": 1.0}
+    assert filtered.weights == {"TQQQ": 1.0}
+
+
+def test_hybrid_beta_override_bear_inverse_branch_uses_confirmed_inverse_signal(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_bear_fixture.yaml"
+    _write_spec(spec_path, llm_review=False)
+    spec = load_strategy_spec(spec_path)
+    sessions = pd.bdate_range("2024-01-02", periods=260, tz="America/New_York")
+    rows = []
+    for index, session in enumerate(sessions):
+        timestamp = session.replace(hour=9, minute=30).tz_convert("UTC")
+        if index < 210:
+            qqq_price = 200.0 - index * 0.05
+            sqqq_price = 20.0 + index * 0.01
+        else:
+            qqq_price = 190.0 - (index - 210) * 1.2
+            sqqq_price = 22.0 + (index - 210) * 0.8
+        rows.append(
+            {
+                "date": str(timestamp.date()),
+                "timestamp": timestamp,
+                "QQQ_timestamp": timestamp,
+                "QQQ_open": qqq_price,
+                "QQQ_close": qqq_price,
+                "TQQQ_timestamp": timestamp,
+                "TQQQ_open": qqq_price * 3.0,
+                "TQQQ_close": qqq_price * 3.0,
+                "SQQQ_timestamp": timestamp,
+                "SQQQ_open": sqqq_price,
+                "SQQQ_close": sqqq_price,
+            }
+        )
+    dataset = RouterFrameDataset(
+        symbols=["QQQ", "TQQQ", "SQQQ"],
+        market_symbol="QQQ",
+        benchmark_symbol="TQQQ",
+        dates=[row["date"] for row in rows],
+        frame=pd.DataFrame(rows),
+        data_profile={},
+    )
+    params = BetaOverrideHybridParams(
+        holding_mode="open_to_open",
+        momentum_lookback_days=60,
+        min_momentum_pct=0.0,
+        override_advantage_pct=5.0,
+        confirmation_sma_days=200,
+        exclude_tqqq=True,
+        cycle_gate="q200ormom120",
+        gross_exposure_scale=0.8,
+        base_mode="tqqq_cycle",
+        bear_inverse_symbol="SQQQ",
+        bear_inverse_lookback_days=20,
+        bear_inverse_min_momentum_pct=5.0,
+        bear_inverse_confirmation_sma_days=20,
+        bear_inverse_weight=0.5,
+    )
+
+    snapshot = hybrid_target_weight_snapshot(spec, dataset, params, 245)
+
+    assert snapshot.state == "bear_inverse"
+    assert snapshot.weights == {"SQQQ": 0.4}
 
 
 def test_hybrid_factor_attribution_builds_beta_override_ablations() -> None:

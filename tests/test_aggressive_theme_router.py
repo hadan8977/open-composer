@@ -100,6 +100,68 @@ def test_aggressive_theme_route_label_round_trips() -> None:
     assert params.label.endswith("defSPY0.5_vol20_tvol45_maxv35_dd120_maxdd20_thr5")
 
 
+def test_aggressive_theme_market_risk_controls_route_to_defensive(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    frames = {
+        "QQQ": _sample_frame(100.0, 0.25),
+        "SPY": _sample_frame(100.0, 0.12),
+        "SMH": _sample_frame(80.0, 0.45),
+        "SOXX": _sample_frame(85.0, 0.38),
+        "XLK": _sample_frame(90.0, 0.28),
+        "IGV": _sample_frame(75.0, 0.2),
+        "ARKK": _sample_frame(60.0, 0.1),
+        "IWM": _sample_frame(70.0, 0.08),
+        "DIA": _sample_frame(95.0, 0.06),
+        "TQQQ": _sample_frame(50.0, 0.7),
+        "QLD": _sample_frame(55.0, 0.5),
+        "SOXL": _sample_frame(40.0, 0.85),
+    }
+
+    def fake_fetch_ohlcv(**kwargs):
+        symbol = str(kwargs["symbol"]).upper()
+        return normalize_ohlcv(frames[symbol].copy())
+
+    monkeypatch.setattr(
+        "open_composer.research.aggressive_theme_router.fetch_ohlcv",
+        fake_fetch_ohlcv,
+    )
+    spec_path = _write_spec(sample_workspace, "aggressive_theme_risk_control_fixture")
+
+    result = run_aggressive_theme_router_research(
+        spec_path,
+        sample_workspace,
+        data_source="alpaca",
+        start="2024-01-01",
+        end="2024-12-31",
+        trend_sma_days=[20],
+        momentum_lookback_days=[10],
+        top_n_values=[1],
+        min_theme_momentum_pct=[0.0],
+        core_weight=[0.2],
+        theme_gross_weight=[0.6],
+        levered_symbol=["TQQQ"],
+        levered_weight=[0.1],
+        defensive_symbol=["QQQ"],
+        defensive_weight=[0.4],
+        volatility_lookback_days=[10],
+        target_portfolio_volatility_pct=[None],
+        max_market_volatility_pct=[-1.0],
+        drawdown_lookback_days=[20],
+        max_market_drawdown_pct=[None],
+        rebalance_threshold_pct=[0.0],
+        walk_forward_folds=1,
+        walk_forward_top_k=1,
+        max_candidates=1,
+    )
+
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    full = payload["selected_candidate"]["full_window"]
+    assert full["market_regime_scaled_days"] > 0
+    assert full["max_gross_exposure_pct"] <= 40.0
+
+
 def _sample_frame(start: float, drift: float) -> pd.DataFrame:
     timestamps = pd.date_range("2024-01-01", periods=360, freq="D", tz="UTC")
     close: list[float] = []

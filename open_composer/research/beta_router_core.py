@@ -180,6 +180,7 @@ def run_beta_exposure_router_research(
             market_symbol=market_symbol,
             leverage_symbol=leverage_symbol,
             hedge_symbol=hedge_symbol,
+            extra_symbols=_symbols_from_params_grid(params_grid),
             timeframe=spec.timeframe,
             data_source=data_source,
             feed=feed or spec.data.feed,
@@ -204,6 +205,7 @@ def load_beta_router_dataset(
     market_symbol: str,
     leverage_symbol: str,
     hedge_symbol: str | None,
+    extra_symbols: list[str] | None = None,
     timeframe: str,
     data_source: str,
     feed: str | None,
@@ -215,6 +217,11 @@ def load_beta_router_dataset(
     symbols = [market_symbol.upper(), leverage_symbol.upper()]
     if hedge_symbol:
         symbols.append(hedge_symbol.upper())
+    for symbol in extra_symbols or []:
+        normalized = symbol.upper()
+        if normalized != "CASH":
+            symbols.append(normalized)
+    symbols = list(dict.fromkeys(symbols))
     base = load_daily_dataset(
         spec=_synthetic_spec(timeframe=timeframe, data_source=data_source, feed=feed),
         root=root,
@@ -239,6 +246,19 @@ def load_beta_router_dataset(
         leverage_symbol=leverage_symbol.upper(),
         hedge_symbol=hedge_symbol.upper() if hedge_symbol else None,
     )
+
+
+def _symbols_from_params_grid(params_grid: list[BetaRouterParams]) -> list[str]:
+    symbols: list[str] = []
+    for params in params_grid:
+        symbols.extend(
+            [
+                params.risk_on_symbol,
+                params.neutral_symbol,
+                params.risk_off_symbol,
+            ]
+        )
+    return list(dict.fromkeys(symbol.upper() for symbol in symbols if symbol.upper() != "CASH"))
 
 
 def beta_target_weight_snapshot(

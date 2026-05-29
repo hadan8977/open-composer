@@ -10,8 +10,10 @@ from open_composer.models.strategy_spec import StrategySpec
 from open_composer.research.router_common import (
     RouterFrameDataset,
     TargetSnapshot,
+    drawdown_scale,
     load_daily_dataset,
     market_sma_scale,
+    max_volatility_ok,
     run_router_research,
     selected_by_momentum,
     volatility_scale,
@@ -193,9 +195,23 @@ def core_satellite_target_weight_snapshot(
     trend_scale = market_sma_scale(
         dataset, params, index, field="trend_sma_days", scale_field="risk_off_core_scale"
     )
-    core = (
-        params.core_weight if trend_scale >= 1 else params.core_weight * params.risk_off_core_scale
+    market_volatility_ok = max_volatility_ok(
+        dataset,
+        dataset.market_symbol,
+        index,
+        params.volatility_lookback_days,
+        params.max_volatility_annual_pct,
     )
+    market_drawdown_scale = drawdown_scale(
+        dataset,
+        dataset.market_symbol,
+        index,
+        lookback=params.drawdown_lookback_days,
+        max_drawdown=params.max_drawdown_pct,
+        brake_scale=0.0,
+    )
+    risk_on = trend_scale >= 1 and market_volatility_ok and market_drawdown_scale > 0
+    core = params.core_weight if risk_on else params.core_weight * params.risk_off_core_scale
     selected = selected_by_momentum(
         dataset,
         index,
@@ -212,11 +228,17 @@ def core_satellite_target_weight_snapshot(
         target_pct=params.target_satellite_volatility_pct,
     )
     weights = {"QQQ": max(0.0, core)}
-    if selected and trend_scale > 0:
+    if selected and risk_on:
         weights[params.satellite_symbol] = params.satellite_weight * sat_scale
     max_weight = spec.portfolio.max_symbol_weight or spec.risk.max_position_weight
     weights = {symbol: min(weight, max_weight) for symbol, weight in weights.items() if weight > 0}
-    return TargetSnapshot(list(weights), weights, sat_scale, trend_scale, 1.0)
+    return TargetSnapshot(
+        list(weights),
+        weights,
+        sat_scale,
+        1.0 if risk_on else params.risk_off_core_scale,
+        market_drawdown_scale,
+    )
 
 
 def _opt(value: float | None) -> str:

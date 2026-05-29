@@ -31,6 +31,8 @@ HybridObjective = Literal["benchmark_buy_hold_alpha", "risk_adjusted_benchmark_a
 HoldingMode = Literal["open_to_open", "open_to_close"]
 MomentumScoreMode = Literal["raw", "risk_adjusted"]
 
+LEADERSHIP_BREADTH_SYMBOLS = ("QQQ", "SMH", "SOXX", "XLK", "IGV", "USD")
+
 
 @dataclass(frozen=True)
 class HybridRouterParams:
@@ -84,6 +86,7 @@ class BetaOverrideHybridParams:
     override_advantage_pct: float
     confirmation_sma_days: int | None
     exclude_tqqq: bool
+    override_weight_scale: float = 1.0
     trend_sma_days: int = 250
     beta_momentum_lookback_days: int = 120
     leverage_trend_sma_days: int = 50
@@ -94,12 +97,28 @@ class BetaOverrideHybridParams:
     cycle_gate: str = "none"
     symbol_drawdown_lookback_days: int | None = None
     max_symbol_drawdown_pct: float | None = None
+    override_short_momentum_lookback_days: int | None = None
+    min_override_short_momentum_pct: float | None = None
     market_drawdown_lookback_days: int | None = None
     max_market_drawdown_pct: float | None = None
+    market_drawdown_brake_scale: float = 0.0
+    market_reentry_momentum_lookback_days: int | None = None
+    min_market_reentry_momentum_pct: float | None = None
     volatility_lookback_days: int | None = None
     target_volatility_annual_pct: float | None = None
+    override_target_volatility_annual_pct: float | None = None
     gross_exposure_scale: float = 1.0
     base_mode: Literal["iter2", "tqqq_cycle", "tqqq_always"] = "iter2"
+    bear_inverse_symbol: str | None = None
+    bear_inverse_lookback_days: int = 60
+    bear_inverse_min_momentum_pct: float = 0.0
+    bear_inverse_confirmation_sma_days: int | None = 50
+    bear_inverse_weight: float = 0.0
+    leadership_breadth_lookback_days: int | None = None
+    min_leadership_breadth_count: int | None = None
+    min_leadership_breadth_momentum_pct: float = 0.0
+    leadership_breadth_scale: float = 1.0
+    leadership_breadth_symbols: tuple[str, ...] = LEADERSHIP_BREADTH_SYMBOLS
 
     @property
     def label(self) -> str:
@@ -113,12 +132,54 @@ class BetaOverrideHybridParams:
         )
         if self.symbol_drawdown_lookback_days and self.max_symbol_drawdown_pct is not None:
             label += f"_sdd{self.symbol_drawdown_lookback_days}p{self.max_symbol_drawdown_pct:g}"
+        if (
+            self.override_short_momentum_lookback_days
+            and self.min_override_short_momentum_pct is not None
+        ):
+            label += (
+                f"_osm{self.override_short_momentum_lookback_days}"
+                f"p{self.min_override_short_momentum_pct:g}"
+            )
         if self.market_drawdown_lookback_days and self.max_market_drawdown_pct is not None:
             label += f"_mdd{self.market_drawdown_lookback_days}p{self.max_market_drawdown_pct:g}"
+            if self.market_drawdown_brake_scale > 0:
+                label += f"s{self.market_drawdown_brake_scale:g}"
+            if (
+                self.market_reentry_momentum_lookback_days
+                and self.min_market_reentry_momentum_pct is not None
+            ):
+                label += (
+                    f"_mre{self.market_reentry_momentum_lookback_days}"
+                    f"p{self.min_market_reentry_momentum_pct:g}"
+                )
         if self.volatility_lookback_days and self.target_volatility_annual_pct is not None:
             label += f"_vol{self.volatility_lookback_days}t{self.target_volatility_annual_pct:g}"
+        if self.override_target_volatility_annual_pct is not None:
+            label += f"_ovt{self.override_target_volatility_annual_pct:g}"
         if self.gross_exposure_scale < 0.999999:
             label += f"_g{self.gross_exposure_scale:g}"
+        if self.override_weight_scale < 0.999999:
+            label += f"_ows{self.override_weight_scale:g}"
+        if self.bear_inverse_symbol and self.bear_inverse_weight > 0:
+            bear_sma = (
+                "none"
+                if self.bear_inverse_confirmation_sma_days is None
+                else str(self.bear_inverse_confirmation_sma_days)
+            )
+            label += (
+                f"_bear{self.bear_inverse_symbol.upper()}"
+                f"lb{self.bear_inverse_lookback_days}"
+                f"min{self.bear_inverse_min_momentum_pct:g}"
+                f"sma{bear_sma}"
+                f"w{self.bear_inverse_weight:g}"
+            )
+        if self.leadership_breadth_lookback_days and self.min_leadership_breadth_count:
+            label += (
+                f"_br{self.leadership_breadth_lookback_days}"
+                f"n{self.min_leadership_breadth_count}"
+                f"m{self.min_leadership_breadth_momentum_pct:g}"
+                f"s{self.leadership_breadth_scale:g}"
+            )
         if self.base_mode != "iter2":
             label += f"_{self.base_mode}"
         return label
@@ -135,9 +196,19 @@ def hybrid_params_from_label(label: str) -> HybridRouterParams | BetaOverrideHyb
             r"adv(?P<adv>[-0-9.]+)_sma(?P<sma>none|\d+)(?P<ex>_exTQQQ)?"
             r"(?:_gate(?P<gate>[A-Za-z0-9]+))?"
             r"(?:_sdd(?P<sdd_lb>\d+)p(?P<sdd>[-0-9.]+))?"
-            r"(?:_mdd(?P<mdd_lb>\d+)p(?P<mdd>[-0-9.]+))?"
+            r"(?:_osm(?P<osm_lb>\d+)p(?P<osm>[-0-9.]+))?"
+            r"(?:_mdd(?P<mdd_lb>\d+)p(?P<mdd>[-0-9.]+)"
+            r"(?:s(?P<mdd_scale>[-0-9.]+))?)?"
+            r"(?:_mre(?P<mre_lb>\d+)p(?P<mre>[-0-9.]+))?"
             r"(?:_vol(?P<vol_lb>\d+)t(?P<vol>[-0-9.]+))?"
+            r"(?:_ovt(?P<ovt>[-0-9.]+))?"
             r"(?:_g(?P<gross>[-0-9.]+))?"
+            r"(?:_ows(?P<ows>[-0-9.]+))?"
+            r"(?P<bear>_bear(?P<bear_symbol>[A-Z0-9]+)lb(?P<bear_lb>\d+)"
+            r"min(?P<bear_min>[-0-9.]+)sma(?P<bear_sma>none|\d+)"
+            r"w(?P<bear_w>[-0-9.]+))?"
+            r"(?:_br(?P<br_lb>\d+)n(?P<br_count>\d+)"
+            r"m(?P<br_min>[-0-9.]+)s(?P<br_scale>[-0-9.]+))?"
             r"(?:_(?P<base>tqqq_cycle|tqqq_always|iter2))?",
             label,
         )
@@ -151,23 +222,67 @@ def hybrid_params_from_label(label: str) -> HybridRouterParams | BetaOverrideHyb
             override_advantage_pct=float(match.group("adv")),
             confirmation_sma_days=None if sma_raw == "none" else int(sma_raw),
             exclude_tqqq=bool(match.group("ex")),
+            override_weight_scale=float(match.group("ows") or 1.0),
             cycle_gate=match.group("gate") or "none",
             symbol_drawdown_lookback_days=(
                 int(match.group("sdd_lb")) if match.group("sdd_lb") else None
             ),
             max_symbol_drawdown_pct=float(match.group("sdd")) if match.group("sdd") else None,
+            override_short_momentum_lookback_days=(
+                int(match.group("osm_lb")) if match.group("osm_lb") else None
+            ),
+            min_override_short_momentum_pct=(
+                float(match.group("osm")) if match.group("osm") else None
+            ),
             market_drawdown_lookback_days=(
                 int(match.group("mdd_lb")) if match.group("mdd_lb") else None
             ),
             max_market_drawdown_pct=float(match.group("mdd")) if match.group("mdd") else None,
+            market_drawdown_brake_scale=float(match.group("mdd_scale") or 0.0),
+            market_reentry_momentum_lookback_days=(
+                int(match.group("mre_lb")) if match.group("mre_lb") else None
+            ),
+            min_market_reentry_momentum_pct=(
+                float(match.group("mre")) if match.group("mre") else None
+            ),
             volatility_lookback_days=(
                 int(match.group("vol_lb")) if match.group("vol_lb") else None
             ),
             target_volatility_annual_pct=(
                 float(match.group("vol")) if match.group("vol") else None
             ),
+            override_target_volatility_annual_pct=(
+                float(match.group("ovt")) if match.group("ovt") else None
+            ),
             gross_exposure_scale=float(match.group("gross") or 1.0),
             base_mode=match.group("base") or "iter2",  # type: ignore[arg-type]
+            bear_inverse_symbol=match.group("bear_symbol"),
+            bear_inverse_lookback_days=(
+                int(match.group("bear_lb")) if match.group("bear_lb") else 60
+            ),
+            bear_inverse_min_momentum_pct=(
+                float(match.group("bear_min")) if match.group("bear_min") else 0.0
+            ),
+            bear_inverse_confirmation_sma_days=(
+                None
+                if match.group("bear_sma") == "none"
+                else int(match.group("bear_sma"))
+                if match.group("bear_sma")
+                else 50
+            ),
+            bear_inverse_weight=float(match.group("bear_w") or 0.0),
+            leadership_breadth_lookback_days=(
+                int(match.group("br_lb")) if match.group("br_lb") else None
+            ),
+            min_leadership_breadth_count=(
+                int(match.group("br_count")) if match.group("br_count") else None
+            ),
+            min_leadership_breadth_momentum_pct=(
+                float(match.group("br_min")) if match.group("br_min") else 0.0
+            ),
+            leadership_breadth_scale=(
+                float(match.group("br_scale")) if match.group("br_scale") else 1.0
+            ),
         )
     try:
         holding_mode, remainder = label.split(":", 1)
@@ -268,9 +383,25 @@ def run_hybrid_adaptive_router_research(
     beta_override_advantage_pct: list[float] | None = None,
     beta_override_confirmation_sma_days: list[int | None] | None = None,
     beta_override_exclude_tqqq: bool = True,
+    beta_override_weight_scale: list[float] | None = None,
     beta_override_cycle_gates: list[str] | None = None,
     beta_override_symbol_drawdown_lookback_days: list[int | None] | None = None,
     beta_override_max_symbol_drawdown_pct: list[float | None] | None = None,
+    beta_override_short_momentum_lookback_days: list[int | None] | None = None,
+    beta_override_min_short_momentum_pct: list[float | None] | None = None,
+    beta_override_target_volatility_annual_pct: list[float | None] | None = None,
+    beta_override_bear_inverse_symbols: list[str | None] | None = None,
+    beta_override_bear_inverse_lookback_days: list[int] | None = None,
+    beta_override_bear_inverse_min_momentum_pct: list[float] | None = None,
+    beta_override_bear_inverse_confirmation_sma_days: list[int | None] | None = None,
+    beta_override_bear_inverse_weight: list[float] | None = None,
+    beta_override_leadership_breadth_lookback_days: list[int | None] | None = None,
+    beta_override_min_leadership_breadth_count: list[int | None] | None = None,
+    beta_override_min_leadership_breadth_momentum_pct: list[float] | None = None,
+    beta_override_leadership_breadth_scale: list[float] | None = None,
+    beta_override_market_reentry_momentum_lookback_days: list[int | None] | None = None,
+    beta_override_min_market_reentry_momentum_pct: list[float | None] | None = None,
+    beta_override_market_drawdown_brake_scale: list[float] | None = None,
     out_of_sample_ratio: float = 0.3,
     walk_forward_folds: int = 3,
     walk_forward_top_k: int | None = 20,
@@ -289,13 +420,41 @@ def run_hybrid_adaptive_router_research(
             override_advantage_pct=beta_override_advantage_pct or [0.0],
             confirmation_sma_days=beta_override_confirmation_sma_days or [None],
             exclude_tqqq=beta_override_exclude_tqqq,
+            override_weight_scale=beta_override_weight_scale or [1.0],
             cycle_gates=beta_override_cycle_gates or ["none"],
             symbol_drawdown_lookback_days=(beta_override_symbol_drawdown_lookback_days or [None]),
             max_symbol_drawdown_pct=beta_override_max_symbol_drawdown_pct or [None],
+            short_momentum_lookback_days=beta_override_short_momentum_lookback_days or [None],
+            min_short_momentum_pct=beta_override_min_short_momentum_pct or [None],
+            bear_inverse_symbols=beta_override_bear_inverse_symbols or [None],
+            bear_inverse_lookback_days=beta_override_bear_inverse_lookback_days or [60],
+            bear_inverse_min_momentum_pct=(beta_override_bear_inverse_min_momentum_pct or [0.0]),
+            bear_inverse_confirmation_sma_days=(
+                beta_override_bear_inverse_confirmation_sma_days or [50]
+            ),
+            bear_inverse_weight=beta_override_bear_inverse_weight or [0.0],
+            leadership_breadth_lookback_days=(
+                beta_override_leadership_breadth_lookback_days or [None]
+            ),
+            min_leadership_breadth_count=(beta_override_min_leadership_breadth_count or [None]),
+            min_leadership_breadth_momentum_pct=(
+                beta_override_min_leadership_breadth_momentum_pct or [0.0]
+            ),
+            leadership_breadth_scale=beta_override_leadership_breadth_scale or [1.0],
             market_drawdown_lookback_days=market_drawdown_lookback_days or [None],
             max_market_drawdown_pct=market_drawdown_brake_pct or [None],
+            market_drawdown_brake_scale=beta_override_market_drawdown_brake_scale or [0.0],
+            market_reentry_momentum_lookback_days=(
+                beta_override_market_reentry_momentum_lookback_days or [None]
+            ),
+            min_market_reentry_momentum_pct=(
+                beta_override_min_market_reentry_momentum_pct or [None]
+            ),
             volatility_lookback_days=volatility_lookback_days or [None],
             target_volatility_annual_pct=target_volatility_annual_pct or [None],
+            override_target_volatility_annual_pct=(
+                beta_override_target_volatility_annual_pct or [None]
+            ),
             gross_exposure_scale=gross_exposure_limit
             or [preview_spec.portfolio.gross_exposure_limit or 1.0],
             base_modes=beta_override_base_modes,
@@ -404,12 +563,28 @@ def _build_beta_override_params_grid(
     confirmation_sma_days: list[int | None],
     exclude_tqqq: bool,
     cycle_gates: list[str],
+    override_weight_scale: list[float] | None = None,
     symbol_drawdown_lookback_days: list[int | None] | None = None,
     max_symbol_drawdown_pct: list[float | None] | None = None,
+    short_momentum_lookback_days: list[int | None] | None = None,
+    min_short_momentum_pct: list[float | None] | None = None,
+    bear_inverse_symbols: list[str | None] | None = None,
+    bear_inverse_lookback_days: list[int] | None = None,
+    bear_inverse_min_momentum_pct: list[float] | None = None,
+    bear_inverse_confirmation_sma_days: list[int | None] | None = None,
+    bear_inverse_weight: list[float] | None = None,
+    leadership_breadth_lookback_days: list[int | None] | None = None,
+    min_leadership_breadth_count: list[int | None] | None = None,
+    min_leadership_breadth_momentum_pct: list[float] | None = None,
+    leadership_breadth_scale: list[float] | None = None,
+    market_drawdown_brake_scale: list[float] | None = None,
     market_drawdown_lookback_days: list[int | None] | None = None,
     max_market_drawdown_pct: list[float | None] | None = None,
+    market_reentry_momentum_lookback_days: list[int | None] | None = None,
+    min_market_reentry_momentum_pct: list[float | None] | None = None,
     volatility_lookback_days: list[int | None] | None = None,
     target_volatility_annual_pct: list[float | None] | None = None,
+    override_target_volatility_annual_pct: list[float | None] | None = None,
     gross_exposure_scale: list[float] | None = None,
     base_modes: list[Literal["iter2", "tqqq_cycle", "tqqq_always"]] | None = None,
     max_candidates: int = 240,
@@ -422,13 +597,29 @@ def _build_beta_override_params_grid(
             override_advantage_pct=advantage,
             confirmation_sma_days=sma,
             exclude_tqqq=exclude_tqqq,
+            override_weight_scale=override_scale,
             cycle_gate=cycle_gate,
             symbol_drawdown_lookback_days=symbol_drawdown_lookback,
             max_symbol_drawdown_pct=symbol_drawdown_pct,
+            override_short_momentum_lookback_days=short_momentum_lookback,
+            min_override_short_momentum_pct=short_momentum_pct,
+            bear_inverse_symbol=bear_symbol.upper() if bear_symbol else None,
+            bear_inverse_lookback_days=bear_lookback,
+            bear_inverse_min_momentum_pct=bear_min_momentum,
+            bear_inverse_confirmation_sma_days=bear_sma,
+            bear_inverse_weight=bear_weight,
+            leadership_breadth_lookback_days=leadership_lookback,
+            min_leadership_breadth_count=leadership_count,
+            min_leadership_breadth_momentum_pct=leadership_momentum,
+            leadership_breadth_scale=leadership_scale,
+            market_drawdown_brake_scale=drawdown_scale_value,
             market_drawdown_lookback_days=drawdown_lookback,
             max_market_drawdown_pct=drawdown_pct,
+            market_reentry_momentum_lookback_days=reentry_lookback,
+            min_market_reentry_momentum_pct=reentry_momentum,
             volatility_lookback_days=vol_lookback,
             target_volatility_annual_pct=target_vol,
+            override_target_volatility_annual_pct=override_target_vol,
             gross_exposure_scale=gross,
             base_mode=base_mode,
         )
@@ -437,13 +628,29 @@ def _build_beta_override_params_grid(
             min_momentum,
             advantage,
             sma,
+            override_scale,
             cycle_gate,
             symbol_drawdown_lookback,
             symbol_drawdown_pct,
+            short_momentum_lookback,
+            short_momentum_pct,
+            bear_symbol,
+            bear_lookback,
+            bear_min_momentum,
+            bear_sma,
+            bear_weight,
+            leadership_lookback,
+            leadership_count,
+            leadership_momentum,
+            leadership_scale,
+            drawdown_scale_value,
             drawdown_lookback,
             drawdown_pct,
+            reentry_lookback,
+            reentry_momentum,
             vol_lookback,
             target_vol,
+            override_target_vol,
             gross,
             base_mode,
         ) in product(
@@ -451,13 +658,29 @@ def _build_beta_override_params_grid(
             min_momentum_pct,
             override_advantage_pct,
             confirmation_sma_days,
+            override_weight_scale or [1.0],
             cycle_gates,
             symbol_drawdown_lookback_days or [None],
             max_symbol_drawdown_pct or [None],
+            short_momentum_lookback_days or [None],
+            min_short_momentum_pct or [None],
+            bear_inverse_symbols or [None],
+            bear_inverse_lookback_days or [60],
+            bear_inverse_min_momentum_pct or [0.0],
+            bear_inverse_confirmation_sma_days or [50],
+            bear_inverse_weight or [0.0],
+            leadership_breadth_lookback_days or [None],
+            min_leadership_breadth_count or [None],
+            min_leadership_breadth_momentum_pct or [0.0],
+            leadership_breadth_scale or [1.0],
+            market_drawdown_brake_scale or [0.0],
             market_drawdown_lookback_days or [None],
             max_market_drawdown_pct or [None],
+            market_reentry_momentum_lookback_days or [None],
+            min_market_reentry_momentum_pct or [None],
             volatility_lookback_days or [None],
             target_volatility_annual_pct or [None],
+            override_target_volatility_annual_pct or [None],
             gross_exposure_scale or [1.0],
             base_modes or ["iter2"],
         )
@@ -579,7 +802,23 @@ def _beta_override_target_weight_snapshot(
         lookback=params.volatility_lookback_days,
         target_pct=params.target_volatility_annual_pct,
     )
-    if not _beta_override_market_drawdown_ok(dataset, params, index):
+    market_drawdown_scale = _beta_override_market_drawdown_scale(dataset, params, index)
+    if market_drawdown_scale <= 0:
+        bear_weights = _beta_override_bear_inverse_weights(dataset, params, index)
+        if bear_weights:
+            scaled_bear = {
+                symbol: weight * vol_scale
+                for symbol, weight in bear_weights.items()
+                if weight * vol_scale > 0
+            }
+            return TargetSnapshot(
+                selected=list(scaled_bear),
+                weights=scaled_bear,
+                volatility_scale=vol_scale,
+                market_drawdown_scale=0.0,
+                state="bear_inverse",
+                qqq_drawdown_ok=False,
+            )
         return TargetSnapshot(
             selected=[],
             weights={},
@@ -588,32 +827,66 @@ def _beta_override_target_weight_snapshot(
             state="risk_off",
             qqq_drawdown_ok=False,
         )
+    leadership_scale = _beta_override_leadership_breadth_scale(dataset, params, index)
+    if leadership_scale <= 0:
+        return TargetSnapshot(
+            selected=[],
+            weights={},
+            volatility_scale=vol_scale,
+            market_regime_scale=0.0,
+            state="breadth_off",
+            theme_gate_ok=False,
+        )
     base_weights, state = _beta_override_base_weights(dataset, params, index)
     override = _beta_override_symbol(dataset, params, index)
     if override is not None:
-        weight = params.risk_on_weight * params.gross_exposure_scale * vol_scale
+        override_vol_scale = (
+            volatility_scale(
+                dataset,
+                override,
+                index,
+                lookback=params.volatility_lookback_days,
+                target_pct=params.override_target_volatility_annual_pct,
+            )
+            if params.override_target_volatility_annual_pct is not None
+            else vol_scale
+        )
+        weight = (
+            params.risk_on_weight
+            * params.gross_exposure_scale
+            * params.override_weight_scale
+            * leadership_scale
+            * market_drawdown_scale
+            * override_vol_scale
+        )
         return TargetSnapshot(
             selected=[override] if weight > 0 else [],
             weights={override: weight} if weight > 0 else {},
-            volatility_scale=vol_scale,
+            volatility_scale=override_vol_scale,
+            market_regime_scale=leadership_scale,
+            market_drawdown_scale=market_drawdown_scale,
             state="override",
             qqq_trend_ok=True,
             qqq_momentum_ok=True,
+            qqq_drawdown_ok=market_drawdown_scale >= 1,
             leverage_trend_ok=True,
             leverage_drawdown_ok=True,
         )
     scaled_base = {
-        symbol: weight * vol_scale
+        symbol: weight * vol_scale * leadership_scale * market_drawdown_scale
         for symbol, weight in base_weights.items()
-        if weight * vol_scale > 0
+        if weight * vol_scale * leadership_scale * market_drawdown_scale > 0
     }
     return TargetSnapshot(
         selected=list(scaled_base),
         weights=scaled_base,
         volatility_scale=vol_scale,
+        market_regime_scale=leadership_scale,
+        market_drawdown_scale=market_drawdown_scale,
         state=state,
         qqq_trend_ok=state in {"risk_on", "neutral"},
         qqq_momentum_ok=state == "risk_on",
+        qqq_drawdown_ok=market_drawdown_scale >= 1,
         leverage_trend_ok=state == "risk_on",
         leverage_drawdown_ok=state == "risk_on",
     )
@@ -636,10 +909,14 @@ def _beta_override_base_weights(
             "risk_on"
         )
     if params.base_mode == "tqqq_cycle":
-        if _beta_override_cycle_gate(dataset, "q200ormom120", index):
+        base_gate = params.cycle_gate if params.cycle_gate != "none" else "q200ormom120"
+        if _beta_override_cycle_gate(dataset, base_gate, index):
             return {
                 dataset.benchmark_symbol: params.risk_on_weight * params.gross_exposure_scale
             }, ("risk_on")
+        bear_weights = _beta_override_bear_inverse_weights(dataset, params, index)
+        if bear_weights:
+            return bear_weights, "bear_inverse"
         return {}, "risk_off"
     raise ValueError(f"unsupported beta override base mode: {params.base_mode}")
 
@@ -719,6 +996,8 @@ def _beta_override_symbol(
                 continue
         if not _beta_override_symbol_drawdown_ok(dataset, symbol, params, index):
             continue
+        if not _beta_override_short_momentum_ok(dataset, symbol, params, index):
+            continue
         scores.append((momentum, symbol))
     if not scores:
         return None
@@ -732,6 +1011,70 @@ def _beta_override_symbol(
     if top_momentum < tqqq_momentum + params.override_advantage_pct:
         return None
     return top_symbol
+
+
+def _beta_override_bear_inverse_weights(
+    dataset: _DailyHybridDataset,
+    params: BetaOverrideHybridParams,
+    index: int,
+) -> dict[str, float]:
+    symbol = (params.bear_inverse_symbol or "").upper()
+    if not symbol or params.bear_inverse_weight <= 0:
+        return {}
+    if f"{symbol}_close" not in dataset.frame.columns:
+        return {}
+    if symbol not in active_membership_symbols(dataset, index, [symbol]):
+        return {}
+    if index < params.bear_inverse_lookback_days + 1:
+        return {}
+    previous = close_value(dataset, symbol, index - params.bear_inverse_lookback_days - 1)
+    current = close_value(dataset, symbol, index - 1)
+    if previous <= 0 or current <= 0:
+        return {}
+    momentum = (current / previous - 1) * 100
+    if momentum < params.bear_inverse_min_momentum_pct:
+        return {}
+    sma_days = params.bear_inverse_confirmation_sma_days
+    if sma_days is not None:
+        if index < sma_days:
+            return {}
+        sma = float(rolling_close_mean(dataset, symbol, sma_days).iloc[index - 1])
+        if current <= sma:
+            return {}
+    weight = params.bear_inverse_weight * params.gross_exposure_scale
+    return {symbol: weight} if weight > 0 else {}
+
+
+def _beta_override_leadership_breadth_scale(
+    dataset: _DailyHybridDataset,
+    params: BetaOverrideHybridParams,
+    index: int,
+) -> float:
+    lookback = params.leadership_breadth_lookback_days
+    min_count = params.min_leadership_breadth_count
+    if not lookback or not min_count:
+        return 1.0
+    if index - lookback - 1 < 0:
+        return 0.0
+    positive = 0
+    valid = 0
+    for symbol in params.leadership_breadth_symbols:
+        symbol = symbol.upper()
+        if f"{symbol}_close" not in dataset.frame.columns:
+            continue
+        if symbol not in active_membership_symbols(dataset, index, [symbol]):
+            continue
+        previous = close_value(dataset, symbol, index - lookback - 1)
+        current = close_value(dataset, symbol, index - 1)
+        if previous <= 0 or current <= 0:
+            continue
+        valid += 1
+        momentum = (current / previous - 1) * 100
+        if momentum >= params.min_leadership_breadth_momentum_pct:
+            positive += 1
+    if valid < min_count:
+        return max(0.0, min(1.0, params.leadership_breadth_scale))
+    return 1.0 if positive >= min_count else max(0.0, min(1.0, params.leadership_breadth_scale))
 
 
 def _beta_override_cycle_gate_passes(
@@ -776,13 +1119,42 @@ def _beta_override_market_drawdown_ok(
 ) -> bool:
     if not params.market_drawdown_lookback_days or params.max_market_drawdown_pct is None:
         return True
-    return _rolling_drawdown_ok(
+    if _rolling_drawdown_ok(
         dataset,
         dataset.market_symbol,
         index,
         params.market_drawdown_lookback_days,
         params.max_market_drawdown_pct,
-    )
+    ):
+        return True
+    return _beta_override_market_reentry_ok(dataset, params, index)
+
+
+def _beta_override_market_reentry_ok(
+    dataset: _DailyHybridDataset,
+    params: BetaOverrideHybridParams,
+    index: int,
+) -> bool:
+    lookback = params.market_reentry_momentum_lookback_days
+    min_momentum = params.min_market_reentry_momentum_pct
+    if not lookback or min_momentum is None or index - lookback - 1 < 0:
+        return False
+    previous = close_value(dataset, dataset.market_symbol, index - lookback - 1)
+    current = close_value(dataset, dataset.market_symbol, index - 1)
+    if previous <= 0 or current <= 0:
+        return False
+    momentum = (current / previous - 1) * 100
+    return momentum >= min_momentum
+
+
+def _beta_override_market_drawdown_scale(
+    dataset: _DailyHybridDataset,
+    params: BetaOverrideHybridParams,
+    index: int,
+) -> float:
+    if _beta_override_market_drawdown_ok(dataset, params, index):
+        return 1.0
+    return max(0.0, min(1.0, params.market_drawdown_brake_scale))
 
 
 def _beta_override_symbol_drawdown_ok(
@@ -800,6 +1172,26 @@ def _beta_override_symbol_drawdown_ok(
         params.symbol_drawdown_lookback_days,
         params.max_symbol_drawdown_pct,
     )
+
+
+def _beta_override_short_momentum_ok(
+    dataset: _DailyHybridDataset,
+    symbol: str,
+    params: BetaOverrideHybridParams,
+    index: int,
+) -> bool:
+    lookback = params.override_short_momentum_lookback_days
+    min_momentum = params.min_override_short_momentum_pct
+    if not lookback or min_momentum is None:
+        return True
+    if index - lookback - 1 < 0:
+        return False
+    previous = close_value(dataset, symbol, index - lookback - 1)
+    current = close_value(dataset, symbol, index - 1)
+    if previous <= 0 or current <= 0:
+        return False
+    momentum = (current / previous - 1) * 100
+    return momentum >= min_momentum
 
 
 def _rolling_drawdown_ok(

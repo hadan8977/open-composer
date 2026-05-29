@@ -86,6 +86,55 @@ def test_core_satellite_route_label_round_trips() -> None:
     assert params.label.endswith("satQLD0.2_off0.5_tvol45_thr5")
 
 
+def test_core_satellite_market_risk_controls_disable_satellite(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    frames = {
+        "QQQ": _sample_frame(100.0, 0.35),
+        "TQQQ": _sample_frame(50.0, 0.8),
+    }
+
+    def fake_fetch_ohlcv(**kwargs):
+        symbol = str(kwargs["symbol"]).upper()
+        return normalize_ohlcv(frames[symbol].copy())
+
+    monkeypatch.setattr(
+        "open_composer.research.core_satellite_router.fetch_ohlcv",
+        fake_fetch_ohlcv,
+    )
+    spec_path = _write_spec(sample_workspace, "core_satellite_risk_control_fixture")
+
+    result = run_core_satellite_router_research(
+        spec_path,
+        sample_workspace,
+        data_source="alpaca",
+        start="2024-01-01",
+        end="2024-12-31",
+        satellite_symbols=["TQQQ"],
+        trend_sma_days=[20],
+        momentum_lookback_days=[10],
+        min_momentum_pct=[0.0],
+        volatility_lookback_days=[10],
+        max_volatility_annual_pct=[-1.0],
+        drawdown_lookback_days=[20],
+        max_drawdown_pct=[None],
+        core_weight=[0.6],
+        satellite_weight=[0.2],
+        risk_off_core_scale=[0.5],
+        target_satellite_volatility_pct=[None],
+        rebalance_threshold_pct=[0.0],
+        walk_forward_folds=1,
+        walk_forward_top_k=1,
+        max_candidates=1,
+    )
+
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    full = payload["selected_candidate"]["full_window"]
+    assert full["market_regime_scaled_days"] > 0
+    assert full["max_gross_exposure_pct"] <= 30.0
+
+
 def _sample_frame(start: float, drift: float) -> pd.DataFrame:
     timestamps = pd.date_range("2024-01-01", periods=360, freq="D", tz="UTC")
     close: list[float] = []

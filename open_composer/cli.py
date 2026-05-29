@@ -3081,6 +3081,14 @@ def strategy_hybrid_adaptive_router(
         True,
         "--beta-override-exclude-tqqq/--beta-override-include-tqqq",
     ),
+    beta_override_weight_scale: Annotated[
+        list[float] | None,
+        typer.Option("--beta-override-weight-scale"),
+    ] = None,
+    beta_override_target_volatility_annual_pct: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-target-volatility-annual-pct"),
+    ] = None,
     beta_override_cycle_gate: Annotated[
         list[str] | None,
         typer.Option("--beta-override-cycle-gate"),
@@ -3092,6 +3100,58 @@ def strategy_hybrid_adaptive_router(
     beta_override_max_symbol_drawdown_pct: Annotated[
         list[str] | None,
         typer.Option("--beta-override-max-symbol-drawdown-pct"),
+    ] = None,
+    beta_override_short_momentum_lookback_days: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-short-momentum-lookback-days"),
+    ] = None,
+    beta_override_min_short_momentum_pct: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-min-short-momentum-pct"),
+    ] = None,
+    beta_override_bear_inverse_symbol: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-bear-inverse-symbol"),
+    ] = None,
+    beta_override_bear_inverse_lookback_days: Annotated[
+        list[int] | None,
+        typer.Option("--beta-override-bear-inverse-lookback-days"),
+    ] = None,
+    beta_override_bear_inverse_min_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--beta-override-bear-inverse-min-momentum-pct"),
+    ] = None,
+    beta_override_bear_inverse_confirmation_sma_days: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-bear-inverse-confirmation-sma-days"),
+    ] = None,
+    beta_override_bear_inverse_weight: Annotated[
+        list[float] | None,
+        typer.Option("--beta-override-bear-inverse-weight"),
+    ] = None,
+    beta_override_leadership_breadth_lookback_days: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-leadership-breadth-lookback-days"),
+    ] = None,
+    beta_override_min_leadership_breadth_count: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-min-leadership-breadth-count"),
+    ] = None,
+    beta_override_min_leadership_breadth_momentum_pct: Annotated[
+        list[float] | None,
+        typer.Option("--beta-override-min-leadership-breadth-momentum-pct"),
+    ] = None,
+    beta_override_leadership_breadth_scale: Annotated[
+        list[float] | None,
+        typer.Option("--beta-override-leadership-breadth-scale"),
+    ] = None,
+    beta_override_market_reentry_momentum_lookback_days: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-market-reentry-momentum-lookback-days"),
+    ] = None,
+    beta_override_min_market_reentry_momentum_pct: Annotated[
+        list[str] | None,
+        typer.Option("--beta-override-min-market-reentry-momentum-pct"),
     ] = None,
     oos_ratio: float = typer.Option(0.3, "--oos-ratio"),
     walk_forward_folds: int = typer.Option(3, "--walk-forward-folds"),
@@ -3133,6 +3193,10 @@ def strategy_hybrid_adaptive_router(
                 beta_override_confirmation_sma_days
             ),
             beta_override_exclude_tqqq=beta_override_exclude_tqqq,
+            beta_override_weight_scale=beta_override_weight_scale,
+            beta_override_target_volatility_annual_pct=_optional_float_values(
+                beta_override_target_volatility_annual_pct
+            ),
             beta_override_cycle_gates=_hybrid_beta_override_cycle_gates(beta_override_cycle_gate),
             beta_override_symbol_drawdown_lookback_days=_optional_int_values(
                 beta_override_symbol_drawdown_lookback_days
@@ -3140,6 +3204,42 @@ def strategy_hybrid_adaptive_router(
             beta_override_max_symbol_drawdown_pct=_optional_float_values(
                 beta_override_max_symbol_drawdown_pct
             ),
+            beta_override_short_momentum_lookback_days=_optional_int_values(
+                beta_override_short_momentum_lookback_days
+            ),
+            beta_override_min_short_momentum_pct=_optional_float_values(
+                beta_override_min_short_momentum_pct
+            ),
+            beta_override_bear_inverse_symbols=(
+                _optional_symbol_values(beta_override_bear_inverse_symbol)
+                if beta_override_bear_inverse_symbol
+                else None
+            ),
+            beta_override_bear_inverse_lookback_days=(beta_override_bear_inverse_lookback_days),
+            beta_override_bear_inverse_min_momentum_pct=(
+                beta_override_bear_inverse_min_momentum_pct
+            ),
+            beta_override_bear_inverse_confirmation_sma_days=_optional_int_values(
+                beta_override_bear_inverse_confirmation_sma_days
+            ),
+            beta_override_bear_inverse_weight=beta_override_bear_inverse_weight,
+            beta_override_leadership_breadth_lookback_days=_optional_int_values(
+                beta_override_leadership_breadth_lookback_days
+            ),
+            beta_override_min_leadership_breadth_count=_optional_int_values(
+                beta_override_min_leadership_breadth_count
+            ),
+            beta_override_min_leadership_breadth_momentum_pct=(
+                beta_override_min_leadership_breadth_momentum_pct
+            ),
+            beta_override_leadership_breadth_scale=beta_override_leadership_breadth_scale,
+            beta_override_market_reentry_momentum_lookback_days=_optional_int_values(
+                beta_override_market_reentry_momentum_lookback_days
+            ),
+            beta_override_min_market_reentry_momentum_pct=_optional_float_values(
+                beta_override_min_market_reentry_momentum_pct
+            ),
+            beta_override_market_drawdown_brake_scale=brake_exposure_scale,
             out_of_sample_ratio=oos_ratio,
             walk_forward_folds=walk_forward_folds,
             walk_forward_top_k=walk_forward_top_k,
@@ -4488,6 +4588,19 @@ def _optional_int_values(values: list[str] | None) -> list[int | None] | None:
             parsed.append(None)
         else:
             parsed.append(int(value))
+    return parsed
+
+
+def _optional_symbol_values(values: list[str] | None) -> list[str | None] | None:
+    if values is None:
+        return None
+    parsed: list[str | None] = []
+    for value in values:
+        normalized = value.strip().lower()
+        if normalized in {"none", "null", "off", ""}:
+            parsed.append(None)
+        else:
+            parsed.append(value.strip().upper())
     return parsed
 
 

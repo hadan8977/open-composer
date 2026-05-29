@@ -41,10 +41,24 @@ DATA_TIERS_NOT_PAPER_READY = {
     "cached_live",
     "research_cross_check",
 }
+ROUTER_FACTOR_LAB_PORTFOLIO_MODES = {
+    "adaptive_intraday_internal_router",
+    "hybrid_adaptive_router",
+    "beta_exposure_router",
+}
 
 PromotionStatus = Literal["ok", "warning", "blocked"]
 FivePassStatus = Literal["pass", "fail", "skipped", "not_applicable"]
 PassSummary = dict[str, str]
+
+
+@dataclass(frozen=True)
+class _FactorLabArtifact:
+    status: str
+    report_path: Path
+    json_path: Path
+    factor_metrics: list[object]
+    quality_flags: list[str]
 
 
 def _pass_summary(
@@ -203,7 +217,7 @@ def build_promotion_report(
     checks.append(feature_packet_check)
     checks.extend(_llm_marginal_lift_checks(spec=spec, frame=frame, root=base, variant=full))
 
-    factor_lab_result = run_factor_lab(spec_path, base)
+    factor_lab_result = _factor_lab_result_for_promotion(spec, spec_path, base)
     factor_lab_check = _factor_lab_check(factor_lab_result)
     checks.append(factor_lab_check)
 
@@ -490,6 +504,56 @@ def _cost_sensitivity_check(
             },
         ),
         runs,
+    )
+
+
+def _factor_lab_result_for_promotion(
+    spec: StrategySpec,
+    spec_path: Path,
+    root: Path,
+) -> _FactorLabArtifact:
+    if spec.portfolio.mode in ROUTER_FACTOR_LAB_PORTFOLIO_MODES:
+        return _router_factor_lab_artifact(spec, root)
+    return run_factor_lab(spec_path, root)
+
+
+def _router_factor_lab_artifact(spec: StrategySpec, root: Path) -> _FactorLabArtifact:
+    json_path = root / "reports" / "research" / f"{spec.name}-factor-lab.json"
+    report_path = json_path.with_suffix(".md")
+    if not json_path.exists():
+        return _FactorLabArtifact(
+            status="warning",
+            report_path=report_path,
+            json_path=json_path,
+            factor_metrics=[],
+            quality_flags=["router_factor_lab_missing"],
+        )
+    try:
+        raw = json.loads(json_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return _FactorLabArtifact(
+            status="warning",
+            report_path=report_path,
+            json_path=json_path,
+            factor_metrics=[],
+            quality_flags=["router_factor_lab_invalid_json"],
+        )
+    if not isinstance(raw, dict):
+        return _FactorLabArtifact(
+            status="warning",
+            report_path=report_path,
+            json_path=json_path,
+            factor_metrics=[],
+            quality_flags=["router_factor_lab_invalid_payload"],
+        )
+    metrics = raw.get("factor_metrics")
+    flags = raw.get("quality_flags")
+    return _FactorLabArtifact(
+        status=str(raw.get("status") or "warning"),
+        report_path=report_path,
+        json_path=json_path,
+        factor_metrics=metrics if isinstance(metrics, list) else [],
+        quality_flags=[str(item) for item in flags] if isinstance(flags, list) else [],
     )
 
 

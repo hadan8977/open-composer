@@ -10,7 +10,9 @@ from open_composer.models.strategy_spec import StrategySpec
 from open_composer.research.router_common import (
     RouterFrameDataset,
     TargetSnapshot,
+    drawdown_scale,
     load_daily_dataset,
+    max_volatility_ok,
     run_router_research,
     selected_by_momentum,
     volatility_scale,
@@ -188,6 +190,23 @@ def _target_snapshot(
     params: AggressiveThemeParams,
     index: int,
 ) -> TargetSnapshot:
+    volatility_gate = max_volatility_ok(
+        dataset,
+        dataset.market_symbol,
+        index,
+        params.volatility_lookback_days,
+        params.max_market_volatility_pct,
+    )
+    market_volatility_scale = 1.0 if volatility_gate else 0.0
+    market_drawdown_scale = drawdown_scale(
+        dataset,
+        dataset.market_symbol,
+        index,
+        lookback=params.drawdown_lookback_days,
+        max_drawdown=params.max_market_drawdown_pct,
+        brake_scale=0.0,
+    )
+    risk_scale = market_volatility_scale * market_drawdown_scale
     selected = selected_by_momentum(
         dataset,
         index,
@@ -205,17 +224,29 @@ def _target_snapshot(
         lookback=params.volatility_lookback_days,
         target_pct=params.target_portfolio_volatility_pct,
     )
-    weights = {"QQQ": params.core_weight * scale}
-    if selected:
+    scale *= risk_scale
+    weights: dict[str, float] = {}
+    if risk_scale <= 0:
+        if params.defensive_symbol != "CASH":
+            weights[params.defensive_symbol] = params.defensive_weight
+    else:
+        weights["QQQ"] = params.core_weight * scale
+    if risk_scale > 0 and selected:
         per_theme = params.theme_gross_weight * scale / len(selected)
         weights.update({symbol: per_theme for symbol in selected})
-    if params.levered_symbol != "CASH":
+    if risk_scale > 0 and params.levered_symbol != "CASH":
         weights[params.levered_symbol] = params.levered_weight * scale
-    if not selected and params.defensive_symbol != "CASH":
+    if risk_scale > 0 and not selected and params.defensive_symbol != "CASH":
         weights[params.defensive_symbol] = params.defensive_weight
     max_weight = spec.portfolio.max_symbol_weight or spec.risk.max_position_weight
     weights = {symbol: min(weight, max_weight) for symbol, weight in weights.items() if weight > 0}
-    return TargetSnapshot(list(weights), weights, scale, 1.0, 1.0)
+    return TargetSnapshot(
+        list(weights),
+        weights,
+        scale,
+        market_volatility_scale,
+        market_drawdown_scale,
+    )
 
 
 def _opt(value: float | None) -> str:

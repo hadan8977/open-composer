@@ -29,6 +29,14 @@ ACTIVE_BETA_ROUTE_LABEL = (
     "onTQQQ0.5_neuQQQ0.5_offCASH0_vtnone"
 )
 
+CORE_VARIANT_WEIGHTS = {
+    "active50": 0.5,
+    "conservative50": 0.5,
+    "active75": 0.75,
+    "aggressive100": 1.0,
+    "active100": 1.0,
+}
+
 
 @dataclass(frozen=True)
 class CoreBetaSatelliteParams:
@@ -61,7 +69,20 @@ class CoreBetaSatelliteParams:
 
     @property
     def core_route_label(self) -> str:
-        return ACTIVE_BETA_ROUTE_LABEL
+        return core_route_label(self.core_variant)
+
+
+def core_route_label(core_variant: str) -> str:
+    normalized = core_variant.strip().lower().replace("-", "").replace("_", "")
+    if normalized not in CORE_VARIANT_WEIGHTS:
+        supported = ", ".join(sorted(CORE_VARIANT_WEIGHTS))
+        raise ValueError(f"unsupported core_variant={core_variant!r}; supported: {supported}")
+    weight = CORE_VARIANT_WEIGHTS[normalized]
+    return (
+        "beta:sma20_mom20_min0_vol20_maxvnone_dd60_maxddnone_"
+        "levsmanone_levmaxvnone_levdd60_levmaxddnone_"
+        f"onTQQQ{weight:g}_neuQQQ{weight:g}_offCASH0_vtnone"
+    )
 
 
 @dataclass(frozen=True)

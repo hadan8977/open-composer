@@ -77,6 +77,60 @@ def test_beta_exposure_router_reports_target_weight_research(
     assert payload["candidates"][0]["params"]["label"].startswith("beta:")
 
 
+def test_beta_exposure_router_loads_non_cash_risk_off_symbol(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    frames = {
+        "QQQ": _sample_frame(100.0, 0.5),
+        "TQQQ": _sample_frame(50.0, 0.9),
+        "SQQQ": _sample_frame(80.0, -0.3),
+        "GLD": _sample_frame(150.0, 0.1),
+    }
+
+    def fake_fetch_ohlcv(**kwargs):
+        symbol = str(kwargs["symbol"]).upper()
+        return normalize_ohlcv(frames[symbol].copy())
+
+    monkeypatch.setattr(
+        "open_composer.research.beta_router_core.fetch_ohlcv",
+        fake_fetch_ohlcv,
+    )
+    spec_path = _write_spec(sample_workspace, "beta_router_gld_fixture")
+
+    result = run_beta_exposure_router_research(
+        spec_path,
+        sample_workspace,
+        market_symbol="QQQ",
+        leverage_symbol="TQQQ",
+        hedge_symbol="SQQQ",
+        trend_sma_days=[20],
+        momentum_lookback_days=[10],
+        min_momentum_pct=[0.0],
+        volatility_lookback_days=[10],
+        max_volatility_annual_pct=[None],
+        drawdown_lookback_days=[20],
+        max_drawdown_pct=[None],
+        leverage_trend_sma_days=[20],
+        max_leverage_volatility_annual_pct=[None],
+        leverage_drawdown_lookback_days=[20],
+        max_leverage_drawdown_pct=[None],
+        risk_on_symbol=["TQQQ"],
+        risk_on_weight=[0.5],
+        neutral_weight=[0.5],
+        risk_off_symbol=["GLD"],
+        risk_off_weight=[0.25],
+        target_volatility_annual_pct=[None],
+        walk_forward_folds=2,
+        walk_forward_top_k=1,
+        max_candidates=1,
+    )
+
+    payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+    assert "GLD" in payload["symbols"]
+    assert any(item["symbol"] == "GLD" for item in payload["data_profile"]["per_symbol"])
+
+
 def test_beta_router_label_round_trip_supports_hedge_asset() -> None:
     params = beta_params_from_label(
         "beta:sma200_mom60_min3_vol20_maxv25_dd120_maxdd15_"

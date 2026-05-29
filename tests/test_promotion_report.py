@@ -353,6 +353,20 @@ def test_adaptive_router_promotion_report_uses_router_research_artifacts(
         ),
         encoding="utf-8",
     )
+    factor_lab_json = (
+        sample_workspace / "reports" / "research" / "adaptive_router_promotion-factor-lab.json"
+    )
+    factor_lab_json.write_text(
+        json.dumps(
+            {
+                "status": "warning",
+                "mode": "router_level_diagnostic",
+                "quality_flags": ["router_level_diagnostic_only"],
+                "factor_metrics": [{"name": "selected_route"}],
+            }
+        ),
+        encoding="utf-8",
+    )
     feature_path = sample_workspace / "feature_logs" / "adaptive_router_promotion_news.jsonl"
     feature_path.write_text(
         (
@@ -370,6 +384,12 @@ def test_adaptive_router_promotion_report_uses_router_research_artifacts(
         encoding="utf-8",
     )
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    monkeypatch.setattr(
+        "open_composer.research.promotion.run_factor_lab",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("router promotion must use route-level Factor Lab artifacts")
+        ),
+    )
 
     result = CliRunner().invoke(
         app,
@@ -402,6 +422,9 @@ def test_adaptive_router_promotion_report_uses_router_research_artifacts(
     strict_data = next(item for item in payload["checks"] if item["name"] == "strict_data")
     assert strict_data["details"]["required_evidence_tiers"] == ["research_strict", "paper_ready"]
     assert any("second provider" in item for item in strict_data["details"]["next_actions"])
+    factor_lab = next(item for item in payload["checks"] if item["name"] == "factor_lab")
+    assert factor_lab["details"]["factor_count"] == 1
+    assert factor_lab["details"]["quality_flags"] == ["router_level_diagnostic_only"]
     assert payload["research_manifest"]["adaptive_router_research_path"].endswith(
         "adaptive_router_promotion-adaptive-intraday-router.json"
     )

@@ -760,7 +760,7 @@ def _evaluate_candidates(
                 quality_flags=flags,
             )
         )
-    rows.sort(key=lambda item: item.score, reverse=True)
+    rows.sort(key=lambda item: _candidate_sort_key(item, objective), reverse=True)
     return [
         IntradayDailyCandidate(
             rank=index,
@@ -773,6 +773,27 @@ def _evaluate_candidates(
         )
         for index, item in enumerate(rows, start=1)
     ]
+
+
+def _candidate_sort_key(
+    candidate: IntradayDailyCandidate,
+    objective: IntradayObjective,
+) -> tuple[float, float, float, float, float, float]:
+    hard_flag_count = sum(
+        flag != "does_not_beat_ex_post_best_symbol" for flag in candidate.quality_flags
+    )
+    oos_objective = _objective_alpha(candidate.out_of_sample, objective) or -100.0
+    oos_score = _score_metrics(candidate.out_of_sample, objective)
+    oos_sharpe = candidate.out_of_sample.sharpe_ratio or -10.0
+    full_drawdown = candidate.full_window.max_drawdown_pct
+    return (
+        -float(hard_flag_count),
+        oos_score,
+        oos_objective,
+        oos_sharpe,
+        full_drawdown,
+        candidate.score,
+    )
 
 
 def _walk_forward(

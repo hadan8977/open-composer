@@ -70,6 +70,11 @@ def build_strategy_research_report(
         factor_status=factor_lab.status,
         alt_data_status=alt_data.status,
         promotion_status=promotion.status,
+        promotion_research_pass=promotion.research_pass,
+        promotion_workflow_pass=promotion.workflow_pass,
+        promotion_llm_contribution_pass=promotion.llm_contribution_pass,
+        promotion_paper_ready_pass=promotion.paper_ready_pass,
+        promotion_checks=promotion.checks,
         paper_status=paper_readiness.status,
     )
     status = "ok" if all(item["status"] == "ok" for item in checklist) else "blocked"
@@ -79,16 +84,12 @@ def build_strategy_research_report(
     json_path = base / "reports" / "research" / f"{spec.name}-research-report.json"
     research_brief = build_default_research_brief(spec)
     search_space = search_space_from_spec(spec)
-    gate_summary = summarize_gates(
-        [
-            GateResult(
-                name=str(item["name"]),
-                status=str(item["status"]),  # type: ignore[arg-type]
-                message=str(item["evidence"]),
-                evidence=item["evidence"],
-            )
-            for item in checklist
-        ]
+    gate_summary = _research_gate_summary(
+        checklist,
+        promotion_workflow_pass=promotion.workflow_pass,
+        promotion_research_pass=promotion.research_pass,
+        promotion_llm_contribution_pass=promotion.llm_contribution_pass,
+        promotion_paper_ready_pass=promotion.paper_ready_pass,
     )
     evaluation_bundle = _evaluation_bundle(
         spec.name,
@@ -319,11 +320,23 @@ def _research_checklist(
     factor_status: str,
     alt_data_status: str,
     promotion_status: str,
+    promotion_research_pass: bool,
+    promotion_workflow_pass: bool,
+    promotion_llm_contribution_pass: bool | None,
+    promotion_paper_ready_pass: bool,
+    promotion_checks: list[GateResult],
     paper_status: str,
 ) -> list[dict[str, object]]:
     execution_reality = backtest.get("execution_reality") or {}
     data_sanity = backtest.get("data_sanity") or {}
     leakage_status, leakage_evidence = _leakage_gate(spec)
+    factor_effective_status = _effective_factor_status(factor_status, promotion_checks)
+    promotion_effective_status = (
+        "ok" if promotion_status == "ok" else "warning" if promotion_research_pass else "blocked"
+    )
+    paper_effective_status = (
+        "ok" if promotion_paper_ready_pass and paper_status == "ok" else "blocked"
+    )
     return [
         {
             "name": "leakage_defaults",
@@ -332,12 +345,12 @@ def _research_checklist(
         },
         {
             "name": "overfit_controls",
-            "status": "ok" if promotion_status == "ok" else "blocked",
+            "status": promotion_effective_status,
             "evidence": f"promotion_status={promotion_status}",
         },
         {
             "name": "factor_diagnostics",
-            "status": "ok" if factor_status == "ok" else "blocked",
+            "status": "ok" if factor_effective_status == "ok" else "blocked",
             "evidence": f"factor_lab_status={factor_status}",
         },
         {
@@ -357,10 +370,50 @@ def _research_checklist(
         },
         {
             "name": "paper_gap",
-            "status": "ok" if paper_status == "ok" else "blocked",
+            "status": paper_effective_status,
             "evidence": f"paper_readiness_status={paper_status}",
         },
     ]
+
+
+def _effective_factor_status(factor_status: str, promotion_checks: list[GateResult]) -> str:
+    promotion_factor = next((item for item in promotion_checks if item.name == "factor_lab"), None)
+    if promotion_factor and promotion_factor.status == "ok":
+        return "ok"
+    return factor_status
+
+
+def _research_gate_summary(
+    checklist: list[dict[str, object]],
+    *,
+    promotion_workflow_pass: bool,
+    promotion_research_pass: bool,
+    promotion_llm_contribution_pass: bool | None,
+    promotion_paper_ready_pass: bool,
+) -> dict[str, object]:
+    gates = [
+        GateResult(
+            name=str(item["name"]),
+            status=str(item["status"]),  # type: ignore[arg-type]
+            message=str(item["evidence"]),
+            evidence=item["evidence"],
+        )
+        for item in checklist
+    ]
+    summary = summarize_gates(gates)
+    blocked_checks = list(summary.get("blocked_checks") or [])
+    hard_workflow_blockers = {
+        "leakage_defaults",
+        "execution_reality",
+        "data_quality",
+        "alternative_data",
+    }
+    workflow_blocked = bool(hard_workflow_blockers.intersection(blocked_checks))
+    summary["workflow_pass"] = bool(promotion_workflow_pass) and not workflow_blocked
+    summary["research_pass"] = bool(promotion_research_pass) and not workflow_blocked
+    summary["llm_contribution_pass"] = promotion_llm_contribution_pass
+    summary["paper_ready_pass"] = bool(promotion_paper_ready_pass)
+    return summary
 
 
 def _registered_path(value: object) -> str | None:

@@ -9,6 +9,7 @@ import yaml
 from open_composer.adapters.data.sample import normalize_ohlcv
 from open_composer.research.core_beta_satellite_router import (
     core_beta_satellite_params_from_label,
+    core_route_label,
     run_core_beta_satellite_router_research,
 )
 
@@ -97,6 +98,21 @@ def test_core_beta_satellite_label_round_trips() -> None:
     assert params.theme_gate_symbol == "SMH"
     assert params.satellite_budget == 0.1
     assert params.label.endswith("gateSMH_gsma50_gmom20_gmin0_vol20_tvolnone")
+
+
+def test_core_beta_satellite_core_variant_changes_beta_route() -> None:
+    active75 = core_beta_satellite_params_from_label(
+        "core_beta_sat:coreactive75_usemiconductor_sat0.1_mom20_conf5_top2_"
+        "maxw0.1_scoreraw_gateSMH_gsma50_gmom20_gmin0_vol20_tvolnone"
+    )
+    aggressive100 = core_beta_satellite_params_from_label(
+        "core_beta_sat:coreaggressive100_usemiconductor_sat0.1_mom20_conf5_top2_"
+        "maxw0.1_scoreraw_gateSMH_gsma50_gmom20_gmin0_vol20_tvolnone"
+    )
+
+    assert "onTQQQ0.75_neuQQQ0.75" in active75.core_route_label
+    assert "onTQQQ1_neuQQQ1" in aggressive100.core_route_label
+    assert active75.core_route_label == core_route_label("active75")
 
 
 def _sample_frame(start: float, drift: float) -> pd.DataFrame:
