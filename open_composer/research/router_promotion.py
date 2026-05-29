@@ -394,6 +394,7 @@ def _strict_data_check(spec: StrategySpec, data_profile: dict[str, Any]) -> Gate
         blockers.append(f"acquisition_tier={tier} is not paper-ready")
     if any(token in source_mode for token in ["sample", "fixture", "fallback"]):
         blockers.append(f"data_source_mode={source_mode} is not paper-ready")
+    next_actions = _strict_data_next_actions(blockers=blockers, data_profile=data_profile)
     return GateResult(
         name="strict_data",
         status="blocked" if blockers else "ok",
@@ -407,8 +408,37 @@ def _strict_data_check(spec: StrategySpec, data_profile: dict[str, Any]) -> Gate
             "data_source_mode": source_mode,
             "evidence_acquisition_tier": tier,
             "warnings": data_profile.get("warnings", []),
+            "blocked_reasons": blockers,
+            "required_evidence_tiers": ["research_strict", "paper_ready"],
+            "next_actions": next_actions,
         },
     )
+
+
+def _strict_data_next_actions(
+    *,
+    blockers: list[str],
+    data_profile: dict[str, Any],
+) -> list[str]:
+    warnings = _string_list(data_profile.get("warnings"))
+    actions: list[str] = []
+    if blockers:
+        actions.append(
+            "rerun or cross-check the selected route on research_strict or paper_ready "
+            "intraday data before more parameter optimization"
+        )
+    if "cache_data_used" in warnings or data_profile.get("cache_fallback") is True:
+        actions.append("replace cached 1m bars with a fresh strict pull or independent comparison")
+    if (
+        "iex_feed_not_full_market_sip" in warnings
+        or str(data_profile.get("feed", "")).lower() == "iex"
+    ):
+        actions.append(
+            "validate the IEX-derived result against full-market/SIP data or a second provider"
+        )
+    if blockers:
+        actions.append("rerun `oc strategy evidence <spec>` after strict data evidence is written")
+    return actions
 
 
 def _universe_audit_check(spec: StrategySpec, root: Path) -> GateResult:

@@ -130,16 +130,20 @@ def _build_state(
     selected = _dict(sweep.get("selection_decision")).get("selected_candidate")
     if not isinstance(selected, dict) and candidates:
         selected = candidates[0]
+    if not isinstance(selected, dict):
+        selected = _promotion_selected_route(promotion)
 
     blocked_items = _blocked_items(report, verify, promotion)
     warning_items = _warning_items(sweep, report, promotion)
     failed_configurations = _failed_configurations(candidates, selected)
     effective_combinations = _effective_combinations(selected)
+    promotion_state = _promotion_state(promotion)
     next_actions = _next_actions(
         blocked_items=blocked_items,
         warning_items=warning_items,
         failed_configurations=failed_configurations,
         effective_combinations=effective_combinations,
+        promotion=promotion,
         sweep=sweep,
         verify=verify,
         router_state=router_state,
@@ -157,6 +161,7 @@ def _build_state(
         "current_best": _current_best(selected),
         "router_state": router_state,
         "short_state": short_state,
+        "promotion_state": promotion_state,
         "data_acquisition_tier": _data_acquisition_tier(strategy, router_state, promotion),
         "research_design": research_design,
         "effective_combinations": effective_combinations,
@@ -193,9 +198,9 @@ def _memory_packet(state: dict[str, Any], *, max_bytes: int) -> str:
             + _clip(
                 (
                     f"{best.get('candidate_name')} score={best.get('score')} "
-                    f"params={best.get('params')}"
+                    f"params={best.get('params')} metrics={best.get('metrics')}"
                 ),
-                220,
+                300,
             )
         )
     blocked = _list(state.get("blocked_items"))
@@ -217,6 +222,13 @@ def _memory_packet(state: dict[str, Any], *, max_bytes: int) -> str:
     tier = state.get("data_acquisition_tier")
     if tier:
         lines.append(f"- Data tier: {tier}")
+    promotion = _dict(state.get("promotion_state"))
+    strict_data = _dict(promotion.get("strict_data"))
+    if strict_data and strict_data.get("status") == "blocked":
+        lines.append(
+            "- Data blocker: "
+            + _clip(str(strict_data.get("message") or "strict_data is blocked"), 220)
+        )
     failures = _list(state.get("failed_configurations"))
     if failures:
         lines.append(
@@ -328,14 +340,22 @@ def _effective_combinations(selected: dict[str, Any] | None) -> list[dict[str, A
     if not isinstance(selected, dict):
         return []
     metrics = _dict(selected.get("metrics"))
+    if not metrics:
+        metrics = _router_selected_metrics(selected)
+    reason = (
+        "current selected router route from promotion evidence; strict data and paper-readiness "
+        "checks still decide whether it can move to paper"
+        if selected.get("full_window") or selected.get("out_of_sample")
+        else (
+            "current best in latest available sweep; still requires OOS, walk-forward, "
+            "cost, benchmark, and paper-readiness evidence"
+        )
+    )
     return [
         {
-            "candidate_name": selected.get("strategy_name"),
+            "candidate_name": selected.get("strategy_name") or _route_label(selected),
             "params": _dict(selected.get("params")),
-            "reason": (
-                "current best in latest available sweep; still requires OOS, walk-forward, "
-                "cost, benchmark, and paper-readiness evidence"
-            ),
+            "reason": reason,
             "metrics": _compact_metrics(metrics),
         }
     ]
@@ -347,6 +367,7 @@ def _next_actions(
     warning_items: list[str],
     failed_configurations: list[dict[str, Any]],
     effective_combinations: list[dict[str, Any]],
+    promotion: dict[str, Any],
     sweep: dict[str, Any],
     verify: dict[str, Any],
     router_state: dict[str, Any],
@@ -354,6 +375,7 @@ def _next_actions(
     research_design: dict[str, Any],
 ) -> list[str]:
     actions: list[str] = []
+    actions.extend(_strict_data_actions(promotion))
     if blocked_items:
         actions.append("clear blocked harness/research evidence before adding strategy complexity")
     if not sweep:
@@ -387,14 +409,101 @@ def _next_actions(
 def _current_best(selected: dict[str, Any] | None) -> dict[str, Any] | None:
     if not isinstance(selected, dict):
         return None
+    metrics = _dict(selected.get("metrics"))
+    if not metrics:
+        metrics = _router_selected_metrics(selected)
     return {
-        "candidate_name": selected.get("strategy_name"),
+        "candidate_name": selected.get("strategy_name") or _route_label(selected),
         "rank": selected.get("rank"),
         "score": selected.get("score"),
         "params": _dict(selected.get("params")),
-        "metrics": _compact_metrics(_dict(selected.get("metrics"))),
+        "metrics": _compact_metrics(metrics),
         "quality_flags": [str(item) for item in _list(selected.get("quality_flags"))],
     }
+
+
+def _promotion_selected_route(promotion: dict[str, Any]) -> dict[str, Any] | None:
+    selected = promotion.get("selected_route")
+    return selected if isinstance(selected, dict) else None
+
+
+def _promotion_state(promotion: dict[str, Any]) -> dict[str, Any]:
+    if not promotion:
+        return {}
+    gate_summary = _dict(promotion.get("gate_summary"))
+    strict_data = _promotion_check(promotion, "strict_data")
+    return {
+        "status": promotion.get("status"),
+        "ready": promotion.get("ready"),
+        "blocked_checks": _list(gate_summary.get("blocked_checks")),
+        "warning_checks": _list(gate_summary.get("warning_checks")),
+        "strict_data": strict_data,
+    }
+
+
+def _promotion_check(promotion: dict[str, Any], name: str) -> dict[str, Any]:
+    for check in _list(promotion.get("checks")):
+        if isinstance(check, dict) and check.get("name") == name:
+            return {
+                "status": check.get("status"),
+                "message": check.get("message"),
+                "details": _dict(check.get("details")),
+            }
+    return {}
+
+
+def _strict_data_actions(promotion: dict[str, Any]) -> list[str]:
+    strict_data = _promotion_check(promotion, "strict_data")
+    if strict_data.get("status") != "blocked":
+        return []
+    details = _dict(strict_data.get("details"))
+    actions = [str(item) for item in _list(details.get("next_actions"))]
+    if not actions:
+        actions = [
+            (
+                "validate the selected route on research_strict or paper_ready data before "
+                "more optimization"
+            )
+        ]
+    actions.append("pause broad parameter search until strict data evidence is no longer blocked")
+    return actions
+
+
+def _router_selected_metrics(selected: dict[str, Any]) -> dict[str, Any]:
+    full = _dict(selected.get("full_window"))
+    oos = _dict(selected.get("out_of_sample"))
+    metrics: dict[str, Any] = {}
+    for prefix, source in (("oos", oos), ("full", full)):
+        for key in (
+            "annualized_return_pct",
+            "total_return_pct",
+            "sharpe_ratio",
+            "max_drawdown_pct",
+            "round_trips",
+            "traded_days",
+        ):
+            if key in source:
+                metrics[f"{prefix}_{key}"] = source[key]
+    if oos:
+        metrics.update(
+            {
+                "annualized_return_pct": oos.get("annualized_return_pct"),
+                "sharpe_ratio": oos.get("sharpe_ratio"),
+                "max_drawdown_pct": oos.get("max_drawdown_pct"),
+            }
+        )
+    return {key: value for key, value in metrics.items() if value is not None}
+
+
+def _route_label(selected: dict[str, Any]) -> str | None:
+    route = _dict(selected.get("route"))
+    label = route.get("label") or selected.get("label")
+    if label:
+        return str(label)
+    params = _dict(selected.get("params"))
+    if params:
+        return str(params)
+    return None
 
 
 def _source_artifacts(root: Path, strategy_name: str) -> dict[str, str | None]:
@@ -528,7 +637,23 @@ def _effective_line(item: Any) -> str:
 
 
 def _compact_metrics(metrics: dict[str, Any]) -> dict[str, Any]:
-    keys = ["total_return_pct", "alpha_vs_buy_hold_pct", "sharpe_ratio", "signals", "trades"]
+    keys = [
+        "total_return_pct",
+        "annualized_return_pct",
+        "alpha_vs_buy_hold_pct",
+        "sharpe_ratio",
+        "max_drawdown_pct",
+        "signals",
+        "trades",
+        "oos_annualized_return_pct",
+        "oos_sharpe_ratio",
+        "oos_max_drawdown_pct",
+        "oos_round_trips",
+        "full_annualized_return_pct",
+        "full_sharpe_ratio",
+        "full_max_drawdown_pct",
+        "full_round_trips",
+    ]
     return {key: metrics.get(key) for key in keys if key in metrics}
 
 

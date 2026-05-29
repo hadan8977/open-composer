@@ -87,19 +87,21 @@ def build_lightweight_router_evidence_report(
     write_json(contract_path, contract)
 
     promotion = build_promotion_report(spec_path, base)
+    promotion_payload = _read_json(Path(promotion.json_path))
     paper = assess_paper_strategy_readiness_for_spec(spec, base, spec_path=spec_path)
     verify = _read_json(base / "reports" / "harness" / "verify" / f"{spec.name}.json")
     router_artifacts = _router_artifacts(base, spec.name, spec.portfolio.mode)
     checklist = _router_checklist(
         promotion_status=promotion.status,
         promotion_ready=promotion.ready,
+        promotion_payload=promotion_payload,
         paper_status=paper.status,
         verify=verify,
         artifacts=router_artifacts,
     )
     status = _report_status(checklist)
-    blocked_items = [item["name"] for item in checklist if item["status"] == "blocked"]
-    warning_items = [item["name"] for item in checklist if item["status"] == "warning"]
+    blocked_items = _check_items(checklist, status="blocked")
+    warning_items = _check_items(checklist, status="warning")
 
     report_path = base / "reports" / "research" / f"{spec.name}-research-report.md"
     json_path = base / "reports" / "research" / f"{spec.name}-research-report.json"
@@ -125,6 +127,12 @@ def build_lightweight_router_evidence_report(
             "paper_ready_pass": promotion.paper_ready_pass,
             "report_path": promotion.report_path,
             "json_path": promotion.json_path,
+            "blocked_checks": _list(
+                _dict(promotion_payload.get("gate_summary")).get("blocked_checks")
+            ),
+            "warning_checks": _list(
+                _dict(promotion_payload.get("gate_summary")).get("warning_checks")
+            ),
         },
         "paper_readiness": paper.model_dump(mode="json"),
         "harness_verify": verify,
@@ -152,16 +160,32 @@ def _router_checklist(
     *,
     promotion_status: str,
     promotion_ready: bool,
+    promotion_payload: dict[str, Any],
     paper_status: str,
     verify: dict[str, Any],
     artifacts: dict[str, str | None],
 ) -> list[dict[str, Any]]:
     verify_status = str(verify.get("overall") or verify.get("status") or "missing")
+    gate_summary = _dict(promotion_payload.get("gate_summary"))
+    promotion_blocked = [str(item) for item in _list(gate_summary.get("blocked_checks"))]
+    promotion_warnings = [str(item) for item in _list(gate_summary.get("warning_checks"))]
+    blocked_details = _promotion_check_details(promotion_payload, status="blocked")
+    warning_details = _promotion_check_details(promotion_payload, status="warning")
+    promotion_message = f"router promotion status is {promotion_status}"
+    if promotion_blocked:
+        promotion_message = "router promotion blocked by: " + ", ".join(promotion_blocked)
     return [
         {
             "name": "promotion",
             "status": promotion_status,
-            "message": f"router promotion status is {promotion_status}",
+            "message": promotion_message,
+            "details": {
+                "blocked_checks": promotion_blocked,
+                "warning_checks": promotion_warnings,
+                "blocked_check_details": blocked_details,
+                "warning_check_details": warning_details,
+                "next_actions": _promotion_next_actions(blocked_details),
+            },
         },
         {
             "name": "paper_readiness",
@@ -189,6 +213,53 @@ def _report_status(checklist: list[dict[str, Any]]) -> str:
     if "warning" in statuses:
         return "warning"
     return "ok"
+
+
+def _check_items(checklist: list[dict[str, Any]], *, status: str) -> list[str]:
+    items: list[str] = []
+    for item in checklist:
+        if item.get("status") != status:
+            continue
+        name = str(item.get("name") or "unknown")
+        details = _dict(item.get("details"))
+        checks = (
+            details.get("blocked_checks") if status == "blocked" else details.get("warning_checks")
+        )
+        nested = [str(value) for value in _list(checks)]
+        if nested:
+            items.extend(f"{name}:{value}" for value in nested)
+        else:
+            items.append(name)
+    return _dedupe(items)
+
+
+def _promotion_check_details(
+    promotion_payload: dict[str, Any],
+    *,
+    status: str,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for check in _list(promotion_payload.get("checks")):
+        if not isinstance(check, dict) or check.get("status") != status:
+            continue
+        details = _dict(check.get("details"))
+        rows.append(
+            {
+                "name": check.get("name"),
+                "message": check.get("message"),
+                "blocked_reasons": _list(details.get("blocked_reasons")),
+                "warnings": _list(details.get("warnings")),
+                "next_actions": _list(details.get("next_actions")),
+            }
+        )
+    return rows
+
+
+def _promotion_next_actions(blocked_details: list[dict[str, Any]]) -> list[str]:
+    actions: list[str] = []
+    for detail in blocked_details:
+        actions.extend(str(item) for item in _list(detail.get("next_actions")))
+    return _dedupe(actions)[:5]
 
 
 def _router_artifacts(
@@ -269,3 +340,22 @@ def _read_json(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _dict(value: object) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _list(value: object) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def _dedupe(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result

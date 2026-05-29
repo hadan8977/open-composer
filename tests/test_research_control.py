@@ -56,6 +56,79 @@ def test_research_control_reduces_sweep_into_state_and_memory(sample_workspace: 
     assert "global factor bans" in result.memory_packet
 
 
+def test_research_control_prioritizes_router_strict_data_blocker(
+    sample_workspace: Path,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    promotion_path = (
+        sample_workspace / "reports" / "research" / "fixture_pullback_15m-promotion.json"
+    )
+    promotion_path.parent.mkdir(parents=True, exist_ok=True)
+    promotion_path.write_text(
+        json.dumps(
+            {
+                "status": "blocked",
+                "ready": False,
+                "gate_summary": {
+                    "blocked_checks": ["strict_data"],
+                    "warning_checks": [],
+                    "paper_ready_pass": False,
+                },
+                "evidence_acquisition_tier": "cached_live",
+                "checks": [
+                    {
+                        "name": "strict_data",
+                        "status": "blocked",
+                        "message": (
+                            "Router promotion requires research_strict or paper_ready data; "
+                            "acquisition_tier=cached_live is not paper-ready"
+                        ),
+                        "details": {
+                            "evidence_acquisition_tier": "cached_live",
+                            "warnings": ["cache_data_used", "iex_feed_not_full_market_sip"],
+                            "next_actions": [
+                                (
+                                    "validate the IEX-derived result against full-market/SIP "
+                                    "data or a second provider"
+                                )
+                            ],
+                        },
+                    }
+                ],
+                "selected_route": {
+                    "route": {"label": "open_reversal:test_route"},
+                    "quality_flags": ["does_not_beat_ex_post_best_symbol"],
+                    "out_of_sample": {
+                        "annualized_return_pct": 68.1,
+                        "sharpe_ratio": 2.14,
+                        "max_drawdown_pct": -9.6,
+                        "round_trips": 56,
+                    },
+                    "full_window": {
+                        "annualized_return_pct": 33.1,
+                        "sharpe_ratio": 1.28,
+                        "max_drawdown_pct": -16.2,
+                        "round_trips": 141,
+                    },
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = update_research_control(spec_path, sample_workspace)
+
+    state = json.loads(result.state_path.read_text(encoding="utf-8"))
+    assert state["current_best"]["candidate_name"] == "open_reversal:test_route"
+    assert state["current_best"]["metrics"]["oos_sharpe_ratio"] == 2.14
+    assert state["promotion_state"]["blocked_checks"] == ["strict_data"]
+    assert state["promotion_state"]["strict_data"]["status"] == "blocked"
+    assert state["next_actions"][0].startswith("validate the IEX-derived result")
+    assert "pause broad parameter search" in "; ".join(state["next_actions"])
+    assert "Data blocker" in result.memory_packet
+    assert "oos_sharpe_ratio" in result.memory_packet
+
+
 def test_parameter_sweep_cli_refreshes_research_control_memory(
     sample_workspace: Path,
     monkeypatch,

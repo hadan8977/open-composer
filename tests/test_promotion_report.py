@@ -399,6 +399,9 @@ def test_adaptive_router_promotion_report_uses_router_research_artifacts(
         "benchmark_family",
         "execution_reality",
     } <= check_names
+    strict_data = next(item for item in payload["checks"] if item["name"] == "strict_data")
+    assert strict_data["details"]["required_evidence_tiers"] == ["research_strict", "paper_ready"]
+    assert any("second provider" in item for item in strict_data["details"]["next_actions"])
     assert payload["research_manifest"]["adaptive_router_research_path"].endswith(
         "adaptive_router_promotion-adaptive-intraday-router.json"
     )

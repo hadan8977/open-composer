@@ -110,6 +110,9 @@ def test_strategy_evidence_uses_lightweight_router_report(
     assert payload["kind"] == "router_research_report"
     assert payload["portfolio_mode"] == "adaptive_intraday_internal_router"
     assert any(item["name"] == "promotion" for item in payload["checklist"])
+    assert any(item.startswith("promotion:") for item in payload["blocked_items"])
+    promotion_check = next(item for item in payload["checklist"] if item["name"] == "promotion")
+    assert promotion_check["details"]["blocked_checks"]
 
 
 def test_strategy_dag_validation_blocks_incomplete_llm_packets(
