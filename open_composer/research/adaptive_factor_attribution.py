@@ -184,19 +184,23 @@ def _build_variants(params: IntradayDailyParams) -> dict[str, IntradayDailyParam
         variants["no_relative_volume_filter"] = replace(params, min_relative_volume=0.0)
     variants["entry_delay_alternative"] = replace(
         params,
-        entry_after_bars=2 if params.entry_after_bars <= 1 else max(1, params.entry_after_bars - 1),
-    )
-    variants["prior_momentum_gate_alternative"] = replace(
-        params,
-        min_prior_momentum_pct=0.0 if params.min_prior_momentum_pct > 0 else 3.0,
+        entry_after_bars=max(1, params.entry_after_bars + 1),
     )
     if params.selection_style == "opening_reversal":
+        variants["prior_momentum_gate_alternative"] = replace(
+            params,
+            max_prior_momentum_pct=(None if params.max_prior_momentum_pct is not None else 0.0),
+        )
         variants["reversal_threshold_alternative"] = replace(
             params,
             max_opening_return_pct=None,
             max_prior_momentum_pct=None,
         )
     else:
+        variants["prior_momentum_gate_alternative"] = replace(
+            params,
+            min_prior_momentum_pct=0.0 if params.min_prior_momentum_pct > 0 else 3.0,
+        )
         variants["reversal_threshold_alternative"] = replace(
             params,
             selection_style="opening_reversal",

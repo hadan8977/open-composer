@@ -17,7 +17,12 @@ from open_composer.adapters.execution.hybrid_target_weights import (
 )
 from open_composer.cli import app
 from open_composer.models.strategy_spec import load_strategy_spec
-from open_composer.research.adaptive_factor_attribution import run_adaptive_factor_attribution
+from open_composer.research.adaptive_factor_attribution import (
+    _build_variants as _build_adaptive_variants,
+)
+from open_composer.research.adaptive_factor_attribution import (
+    run_adaptive_factor_attribution,
+)
 from open_composer.research.adaptive_intraday_router import (
     LLMAdaptiveRouterChoice,
     run_adaptive_intraday_router_research,
@@ -46,6 +51,7 @@ from open_composer.research.intraday_daily_rotation import (
     IntradayDailyMetrics,
     IntradayDailyParams,
     LLMIntradayDailyChoice,
+    _iteration_outcome,
     _pass_status,
     run_intraday_daily_rotation_research,
     run_llm_intraday_daily_rotation_selection,
@@ -303,6 +309,85 @@ def test_intraday_daily_rotation_research_builds_reports(
     assert "equal_weight_alpha" in payload
     assert result.best.out_of_sample.days > 0
     assert result.best.out_of_sample.benchmark_symbol == "TQQQ"
+
+
+def test_intraday_daily_rotation_runtime_budget_skips_walk_forward(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    frames = {
+        "AAA": _make_intraday_frame(days=40, symbol_factor=0.0, daily_drift=0.2, opening_boost=0.2),
+        "BBB": _make_intraday_frame(days=40, symbol_factor=4.0, daily_drift=0.3, opening_boost=0.6),
+        "CCC": _make_intraday_frame(
+            days=40, symbol_factor=-2.0, daily_drift=0.05, opening_boost=0.1
+        ),
+        "QQQ": _make_intraday_frame(
+            days=40, symbol_factor=1.0, daily_drift=0.15, opening_boost=0.15
+        ),
+        "TQQQ": _make_intraday_frame(
+            days=40, symbol_factor=2.0, daily_drift=0.25, opening_boost=0.2
+        ),
+    }
+
+    def fake_fetch_ohlcv(**kwargs):
+        return frames[kwargs["symbol"]].copy()
+
+    monkeypatch.setattr(
+        "open_composer.research.intraday_daily_rotation.fetch_ohlcv",
+        fake_fetch_ohlcv,
+    )
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "intraday_budget.yaml"
+    _write_spec(spec_path, llm_review=False)
+
+    result = run_intraday_daily_rotation_research(
+        spec_path,
+        sample_workspace,
+        symbols=["AAA", "BBB", "CCC"],
+        data_source="alpaca",
+        benchmark_symbol="TQQQ",
+        market_symbol="QQQ",
+        lookback_days=[5],
+        entry_after_bars=[1],
+        top_n_values=[1, 2],
+        min_opening_return_pct=[0.0],
+        min_prior_momentum_pct=[0.0],
+        min_relative_volume=[0.8],
+        market_gates=["none"],
+        max_candidates=2,
+        run_id="test-budget-run",
+        max_runtime_seconds=0.000001,
+    )
+
+    assert result.partial is True
+    assert result.walk_forward == []
+    latest = json.loads(
+        (
+            sample_workspace / "reports" / "research" / "runs" / "intraday_budget-latest.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert latest["partial"] is True
+    assert latest["status"] == "warning"
+
+
+def test_adaptive_factor_attribution_variants_change_reversal_prior_gate() -> None:
+    params = _parse_route_label(
+        "lb20_entry2_top1_open0_mom0_rv0.8_qprior_negative_reversal_maxopen0_maxmomnone"
+    )
+    variants = _build_adaptive_variants(params)
+
+    assert variants["entry_delay_alternative"].entry_after_bars > params.entry_after_bars
+    assert variants["prior_momentum_gate_alternative"].max_prior_momentum_pct == 0.0
+
+
+def test_iteration_outcome_reads_top_level_research_design(sample_workspace: Path) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "iteration_outcome.yaml"
+    _write_spec(spec_path, llm_review=False)
+    payload = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    payload["research_design"] = {"iteration_outcome": "rejected"}
+    spec_path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    spec = load_strategy_spec(spec_path)
+    assert _iteration_outcome(spec) == "rejected"
 
 
 def test_llm_intraday_daily_rotation_selection_and_reflection(

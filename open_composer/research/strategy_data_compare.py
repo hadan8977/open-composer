@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from math import floor
 from pathlib import Path
-from statistics import mean
+from statistics import mean, median
 from typing import Any
 
 from open_composer.adapters.data.comparison import OhlcvComparison, compare_ohlcv_sources
@@ -78,18 +79,22 @@ def run_strategy_data_compare(
             item.missing_left_rows + item.missing_right_rows for item in comparisons
         ),
         "timestamp_alignment_pct": _mean_or_zero(item.matched_coverage_pct for item in comparisons),
-        "close_drift_bps_p50": _mean_or_zero(item.mean_abs_close_diff_bps for item in comparisons),
-        "close_drift_bps_p95": max(
-            (item.max_abs_close_diff_bps for item in comparisons), default=0.0
+        "close_drift_bps_p50": _median_or_zero(
+            item.mean_abs_close_diff_bps for item in comparisons
+        ),
+        "close_drift_bps_p95": _percentile_or_zero(
+            (item.max_abs_close_diff_bps for item in comparisons),
+            95,
         ),
         "close_drift_bps_max": max(
             (item.max_abs_close_diff_bps for item in comparisons), default=0.0
         ),
-        "volume_drift_pct_p50": _mean_or_zero(
+        "volume_drift_pct_p50": _median_or_zero(
             item.max_volume_diff_ratio * 100 for item in comparisons
         ),
-        "volume_drift_pct_p95": max(
-            (item.max_volume_diff_ratio * 100 for item in comparisons), default=0.0
+        "volume_drift_pct_p95": _percentile_or_zero(
+            (item.max_volume_diff_ratio * 100 for item in comparisons),
+            95,
         ),
         "volume_drift_pct_max": max(
             (item.max_volume_diff_ratio * 100 for item in comparisons), default=0.0
@@ -171,6 +176,25 @@ def _compared_window(comparisons: list[OhlcvComparison]) -> dict[str, str | None
 def _mean_or_zero(values: Any) -> float:
     rows = [float(item) for item in values]
     return mean(rows) if rows else 0.0
+
+
+def _median_or_zero(values: Any) -> float:
+    rows = [float(item) for item in values]
+    return median(rows) if rows else 0.0
+
+
+def _percentile_or_zero(values: Any, percentile: float) -> float:
+    rows = sorted(float(item) for item in values)
+    if not rows:
+        return 0.0
+    if len(rows) == 1:
+        return rows[0]
+    bounded = min(max(percentile, 0.0), 100.0)
+    position = (len(rows) - 1) * bounded / 100.0
+    lower = floor(position)
+    upper = min(lower + 1, len(rows) - 1)
+    weight = position - lower
+    return rows[lower] * (1 - weight) + rows[upper] * weight
 
 
 def _write_markdown(path: Path, payload: dict[str, Any]) -> Path:

@@ -338,7 +338,12 @@ def run_intraday_daily_rotation_research(
         partial=partial,
         warning_items=["runtime_budget_exhausted_before_full_candidate_grid"] if partial else [],
     )
-    walk_params = _walk_forward_params(params_grid, candidates, walk_forward_top_k)
+    walk_source_params = (
+        [item.params for item in candidates]
+        if partial and walk_forward_top_k is None
+        else params_grid
+    )
+    walk_params = _walk_forward_params(walk_source_params, candidates, walk_forward_top_k)
     research_cost = estimate_grid_research_cost(
         candidate_count=len(params_grid),
         walk_forward_candidate_count=len(walk_params),
@@ -346,14 +351,33 @@ def run_intraday_daily_rotation_research(
         walk_forward_folds=walk_forward_folds,
     ).__dict__
     stage_started = perf_counter()
-    walk_forward = _walk_forward(
-        spec=spec,
-        dataset=dataset,
-        params_grid=walk_params,
-        folds=walk_forward_folds,
-        objective=objective,
-    )
-    stages["walk_forward"] = perf_counter() - stage_started
+    skip_walk_forward = deadline is not None and perf_counter() >= deadline and partial
+    if skip_walk_forward:
+        walk_forward = []
+        stages["walk_forward"] = 0.0
+        progress.event(
+            event_type="runtime_budget_exhausted",
+            stage="walk_forward",
+            status="warning",
+            candidate_index=len(candidates),
+            candidate_count=len(params_grid),
+            best_label=candidates[0].params.label,
+            best_score=candidates[0].score,
+            best_oos_sharpe=candidates[0].out_of_sample.sharpe_ratio,
+            best_oos_return_pct=candidates[0].out_of_sample.annualized_return_pct,
+            best_max_drawdown_pct=candidates[0].out_of_sample.max_drawdown_pct,
+            warning_items=["runtime_budget_exhausted_before_walk_forward"],
+            partial=True,
+        )
+    else:
+        walk_forward = _walk_forward(
+            spec=spec,
+            dataset=dataset,
+            params_grid=walk_params,
+            folds=walk_forward_folds,
+            objective=objective,
+        )
+        stages["walk_forward"] = perf_counter() - stage_started
     progress.event(
         event_type="stage_complete",
         stage="walk_forward",
@@ -2205,6 +2229,11 @@ def _iteration_outcome(spec: StrategySpec) -> str:
         return str(value)
     research_design = raw.get("research_design")
     if isinstance(research_design, dict):
+        value = research_design.get("iteration_outcome") or research_design.get("candidate_status")
+        if value in {"adopted", "rejected", "needs_more_research"}:
+            return str(value)
+    if spec.research_design is not None:
+        research_design = spec.research_design.model_dump(mode="json")
         value = research_design.get("iteration_outcome") or research_design.get("candidate_status")
         if value in {"adopted", "rejected", "needs_more_research"}:
             return str(value)

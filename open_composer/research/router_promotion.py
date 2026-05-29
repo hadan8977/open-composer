@@ -1053,6 +1053,14 @@ def _candidate_status(spec: StrategySpec, research_payload: dict[str, Any] | Non
         ):
             if value in {"adopted", "rejected", "needs_more_research"}:
                 return str(value)
+    if spec.research_design is not None:
+        research_design = spec.research_design.model_dump(mode="json")
+        for value in (
+            research_design.get("iteration_outcome"),
+            research_design.get("candidate_status"),
+        ):
+            if value in {"adopted", "rejected", "needs_more_research"}:
+                return str(value)
     return "needs_more_research"
 
 
