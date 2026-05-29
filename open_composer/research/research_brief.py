@@ -318,6 +318,7 @@ def _source_card_link_blockers(
 
 
 def _card_matches_family(card: dict[str, Any], family: str) -> bool:
+    aliases = _method_family_aliases(family)
     values: list[str] = []
     for key in ["method_family", "applies_to", "claim_id", "claim", "impact_on_spec"]:
         value = card.get(key)
@@ -325,7 +326,15 @@ def _card_matches_family(card: dict[str, Any], family: str) -> bool:
             values.extend(str(item).lower() for item in value)
         elif value is not None:
             values.append(str(value).lower())
-    return any(family.lower() in value for value in values)
+    return any(alias in value for alias in aliases for value in values)
+
+
+def _method_family_aliases(family: str) -> set[str]:
+    normalized = family.lower().replace("-", "_").replace(" ", "_")
+    aliases = {normalized}
+    if normalized == "shorting":
+        aliases.update({"short_selling", "short_sale", "short"})
+    return aliases
 
 
 def _int_or_none(value: object) -> int | None:

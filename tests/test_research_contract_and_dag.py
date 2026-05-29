@@ -7,6 +7,7 @@ import yaml
 from typer.testing import CliRunner
 
 from open_composer.cli import app
+from open_composer.research.evidence import build_strategy_evidence
 from open_composer.research.research_brief import init_research_brief
 
 
@@ -67,6 +68,48 @@ def test_strategy_research_report_writes_default_contract_pipeline(
     index_rows = [json.loads(line) for line in index_path.read_text(encoding="utf-8").splitlines()]
     research_row = next(item for item in index_rows if item["kind"] == "research_report")
     assert research_row["blocked_items"]
+
+
+def test_strategy_evidence_uses_lightweight_router_report(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    fixture = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "router_fixture.yaml"
+    raw = yaml.safe_load(fixture.read_text(encoding="utf-8"))
+    raw["name"] = "router_fixture"
+    raw["timeframe"] = "1m"
+    raw["universe"] = ["AAPL", "MSFT"]
+    raw.pop("research_design", None)
+    if isinstance(raw.get("notes"), dict):
+        raw["notes"].pop("research_design", None)
+    raw["portfolio"] = {
+        "mode": "adaptive_intraday_internal_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 0.2,
+        "max_symbol_weight": 0.1,
+        "same_day_flatten": True,
+        "selected_route_label": (
+            "lb20_entry2_top1_open0_mom0_rv0.8_qprior_negative_reversal_maxopen0_maxmomnone"
+        ),
+    }
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    def fail_generic_report(*args, **kwargs):
+        raise AssertionError("generic research report should be skipped for router specs")
+
+    monkeypatch.setattr(
+        "open_composer.research.evidence.build_strategy_research_report",
+        fail_generic_report,
+    )
+
+    result = build_strategy_evidence(spec_path, sample_workspace)
+
+    assert result.status == "blocked"
+    payload = json.loads(result.research_report.json_path.read_text(encoding="utf-8"))
+    assert payload["kind"] == "router_research_report"
+    assert payload["portfolio_mode"] == "adaptive_intraday_internal_router"
+    assert any(item["name"] == "promotion" for item in payload["checklist"])
 
 
 def test_strategy_dag_validation_blocks_incomplete_llm_packets(

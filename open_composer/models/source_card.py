@@ -13,7 +13,7 @@ import datetime as _dt
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -49,6 +49,15 @@ class SourceCard(BaseModel):
     def _validate_accessed_at(cls, value: str) -> str:
         _dt.date.fromisoformat(value)
         return value
+
+    @field_validator("limitations", mode="before")
+    @classmethod
+    def _normalize_limitations(cls, value: Any) -> str:
+        if isinstance(value, list):
+            return "; ".join(str(item) for item in value if item is not None)
+        if value is None:
+            return ""
+        return str(value)
 
     @field_validator("expires_at")
     @classmethod

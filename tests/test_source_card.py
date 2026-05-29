@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 import pytest
+import yaml
 from pydantic import ValidationError
 
 from open_composer.models.source_card import (
@@ -93,6 +94,13 @@ class TestSourceCardValidation:
         for st in valid_types:
             card = SourceCard.model_validate(_minimal_card(source_type=st))
             assert card.source_type == st
+
+    def test_legacy_limitations_list_is_normalized(self) -> None:
+        card = SourceCard.model_validate(
+            _minimal_card(limitations=["generated placeholder", "refresh before paper_auto"])
+        )
+
+        assert card.limitations == "generated placeholder; refresh before paper_auto"
 
 
 # ---------------------------------------------------------------------------
@@ -253,6 +261,38 @@ def test_research_brief_requires_source_cards_for_method_families(
                 source_type="paper",
                 applies_to=["inverse_etf"],
                 method_family="inverse_etf",
+            )
+        ],
+    )
+    ok = validate_research_brief(spec_path, sample_workspace)
+    assert ok.ok
+
+
+def test_research_brief_accepts_short_selling_source_card_alias(
+    sample_workspace: Path,
+) -> None:
+    fixture = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "short_alias.yaml"
+    raw = yaml.safe_load(fixture.read_text(encoding="utf-8"))
+    raw["name"] = "short_alias"
+    raw["position_direction"] = "long_short"
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    init_research_brief(spec_path, sample_workspace, overwrite=True)
+
+    missing = validate_research_brief(spec_path, sample_workspace)
+
+    assert not missing.ok
+    assert "source_card_missing_for_method_family:shorting" in missing.blocked
+
+    _write_cards(
+        sample_workspace,
+        "short_alias",
+        [
+            _minimal_card(
+                claim_id="short-selling-locate",
+                claim="Short selling requires locate and borrow evidence.",
+                applies_to=["short_selling"],
+                impact_on_spec="Blocks paper short orders until locate evidence is current.",
             )
         ],
     )
