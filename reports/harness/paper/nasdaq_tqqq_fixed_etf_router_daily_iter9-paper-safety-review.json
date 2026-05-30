@@ -1,0 +1,57 @@
+{
+  "strategy_name": "nasdaq_tqqq_fixed_etf_router_daily_iter9",
+  "reviewed_at": "2026-05-30T19:52:38Z",
+  "lifecycle_status": "active",
+  "harness_verify_pass": true,
+  "kill_switch_verified": true,
+  "order_window": "09:28-09:32 ET opening-auction window; use LOO/OPG limit, skip if not filled",
+  "duplicate_order_policy": "stable_signal_id; skip if an open order or same-day submitted signal already exists",
+  "credential_scope": "paper_only",
+  "signal_order_linkage": true,
+  "execution_policy_id": "loo_limit_nasdaq_tqqq_fixed_etf_router_daily_iter9_v1",
+  "source_card_ids": [
+    "iter9_alpaca_order_support",
+    "iter9_nasdaq_opening_cross",
+    "iter9_alpaca_iex_vs_sip_feed",
+    "iter9_finra_leveraged_inverse_etf_risk",
+    "iter9_proshares_tqqq_daily_3x"
+  ],
+  "spec_path": "strategy_specs/active/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml",
+  "spec_hash": "sha256:5e00cd5c4b8032fb731f6d7010ad7318f01530b5c7f634ade45ba70a5497164c",
+  "target_weights_path": "reports/execution/nasdaq_tqqq_fixed_etf_router_daily_iter9-target-weights.json",
+  "rebalance_intents_path": "reports/execution/nasdaq_tqqq_fixed_etf_router_daily_iter9-rebalance-intents.json",
+  "execution_policy_path": "reports/harness/execution/nasdaq_tqqq_fixed_etf_router_daily_iter9-execution-policy.json",
+  "paper_account_snapshot": {
+    "generated_at": "2026-05-30T19:50:40.716856Z",
+    "equity": 1100944.22,
+    "cash": 235472.62,
+    "buying_power": 1336416.84,
+    "paper": true
+  },
+  "existing_positions": [
+    {
+      "symbol": "TQQQ",
+      "qty": 10235.0,
+      "market_value": 865471.6,
+      "side": "long",
+      "snapshot_at": "2026-05-30T19:50:40.716910Z"
+    }
+  ],
+  "controls": {
+    "real_money_broker_writes": "out_of_scope",
+    "order_style": "loo_limit",
+    "time_in_force": "opg",
+    "limit_offset_bps": 25.0,
+    "max_open_gap_pct": 2.5,
+    "max_spread_bps": 20.0,
+    "if_not_filled": "skip",
+    "tca_review_frequency": "weekly"
+  },
+  "warnings": [
+    "Alpaca IEX feed is not consolidated SIP evidence; this remains paper-only.",
+    "Leveraged ETF exposure is path-dependent and requires gap/TCA monitoring.",
+    "Activation did not submit any broker order; broker orders require runner execution and signal linkage."
+  ],
+  "overall": "approved",
+  "blocking_items": []
+}

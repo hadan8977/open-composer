@@ -215,12 +215,15 @@ def _alpaca_paper_execution(
 
 
 def _root_for_spec_path(spec_path: Path) -> Path:
-    parts = spec_path.parts
+    path = spec_path.expanduser()
+    if not path.is_absolute():
+        path = path.resolve()
+    parts = path.parts
     if "strategy_specs" in parts:
         idx = parts.index("strategy_specs")
         if idx > 0:
             return Path(*parts[:idx])
-    return spec_path.parent
+    return path.parent
 
 
 def _nautilus_trader_backend(spec_path: Path | str) -> CapabilityFinding:

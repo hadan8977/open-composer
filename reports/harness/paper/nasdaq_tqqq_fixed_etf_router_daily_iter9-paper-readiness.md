@@ -1,32 +1,27 @@
 # Paper Strategy Readiness: nasdaq_tqqq_fixed_etf_router_daily_iter9
 
-- Generated at: `2026-05-30T16:28:26.506791+00:00`
-- Strategy path: `strategy_specs/drafts/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml`
-- Status: `blocked`
-- Ready: `no`
-- Execution substate: `blocked`
+- Generated at: `2026-05-30T19:57:16.230953+00:00`
+- Strategy path: `strategy_specs/active/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml`
+- Status: `ok`
+- Ready: `yes`
+- Execution substate: `order_authorized`
 - Gate taxonomy: workflow_pass, research_pass, llm_contribution_pass, paper_ready_pass.
-- Gate summary: `{'workflow_pass': False, 'research_pass': True, 'llm_contribution_pass': None, 'paper_ready_pass': False, 'execution_substate': 'blocked', 'blocked_checks': ['lifecycle', 'execution', 'alpaca_env', 'capability_report'], 'warning_checks': ['router_order_authorization']}`
+- Gate summary: `{'workflow_pass': True, 'research_pass': True, 'llm_contribution_pass': None, 'paper_ready_pass': True, 'execution_substate': 'order_authorized', 'blocked_checks': [], 'warning_checks': []}`
 - Safety note: paper readiness is a control gate for Alpaca Paper only, not live trading.
 
 ## Checks
 
 ### lifecycle
 
-- Status: `blocked`
-- Message: Paper automation requires lifecycle=active.
-- Details: `{'lifecycle': 'draft'}`
-- Suggested actions:
-  - `uv run oc strategy approve nasdaq_tqqq_fixed_etf_router_daily_iter9`
-  - `uv run oc strategy activate nasdaq_tqqq_fixed_etf_router_daily_iter9 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness`
+- Status: `ok`
+- Message: Strategy is active.
+- Details: `{'lifecycle': 'active'}`
 
 ### execution
 
-- Status: `blocked`
-- Message: execution.mode must be paper_auto; execution.broker must be alpaca_paper
-- Details: `{'mode': 'manual_signal', 'broker': 'none', 'backend': 'nautilus_trader'}`
-- Suggested actions:
-  - `uv run oc strategy activate nasdaq_tqqq_fixed_etf_router_daily_iter9 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness`
+- Status: `ok`
+- Message: Execution mode, broker, and backend are paper-ready.
+- Details: `{'mode': 'paper_auto', 'broker': 'alpaca_paper', 'backend': 'nautilus_trader'}`
 
 ### data_source
 
@@ -42,11 +37,9 @@
 
 ### alpaca_env
 
-- Status: `blocked`
-- Message: Paper readiness currently targets broker=alpaca_paper.
-- Details: `{'broker': 'none'}`
-- Suggested actions:
-  - `uv run oc strategy activate nasdaq_tqqq_fixed_etf_router_daily_iter9 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness`
+- Status: `ok`
+- Message: Alpaca Paper environment is configured.
+- Details: `{'paper_enabled': True, 'base_url': 'https://paper-api.alpaca.markets/v2'}`
 
 ### kill_switch
 
@@ -57,7 +50,7 @@
 
 - Status: `ok`
 - Message: Paper account snapshot is available.
-- Details: `{'generated_at': '2026-05-26T18:01:08.927968+00:00', 'equity': 1066810.5, 'cash': 235472.62, 'buying_power': 1302283.12}`
+- Details: `{'generated_at': '2026-05-30T19:50:40.716856+00:00', 'equity': 1100944.22, 'cash': 235472.62, 'buying_power': 1336416.84}`
 
 ### nautilus_backend
 
@@ -92,21 +85,19 @@
 ### harness_artifacts
 
 - Status: `ok`
-- Message: All 11 harness artifacts present for domains ['daily_open_execution', 'leveraged_etf', 'router_strategy'].
-- Details: `{'risk_domains': ['daily_open_execution', 'leveraged_etf', 'router_strategy'], 'required_artifacts': ['execution_policy', 'execution_reality_report', 'gap_stress_report', 'leveraged_etf_risk_note', 'router_cost_stress', 'router_data_evidence', 'router_execution_observation', 'router_rebalance_intents', 'router_target_weights', 'router_validation', 'source_cards']}`
+- Message: All 12 harness artifacts present for domains ['daily_open_execution', 'leveraged_etf', 'paper_auto', 'broker_specific', 'router_strategy'].
+- Details: `{'risk_domains': ['daily_open_execution', 'leveraged_etf', 'paper_auto', 'broker_specific', 'router_strategy'], 'required_artifacts': ['execution_policy', 'execution_reality_report', 'gap_stress_report', 'leveraged_etf_risk_note', 'paper_safety_review', 'router_cost_stress', 'router_data_evidence', 'router_execution_observation', 'router_rebalance_intents', 'router_target_weights', 'router_validation', 'source_cards']}`
 
 ### router_order_authorization
 
-- Status: `warning`
-- Message: Router order authorization artifact is missing. Router remains observation_only.
-- Details: `{'path': 'reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-router-order-authorization.json', 'portfolio_mode': 'hybrid_adaptive_router'}`
-- Suggested actions:
-  - `Write reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-router-order-authorization.json after PIT, promotion, harness verify, and paper safety review pass.`
+- Status: `ok`
+- Message: Router order authorization is valid.
+- Details: `{'path': 'reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-router-order-authorization.json', 'execution_policy_id': 'loo_limit_nasdaq_tqqq_fixed_etf_router_daily_iter9_v1', 'target_weights_path': 'reports/execution/nasdaq_tqqq_fixed_etf_router_daily_iter9-target-weights.json', 'rebalance_intents_path': 'reports/execution/nasdaq_tqqq_fixed_etf_router_daily_iter9-rebalance-intents.json', 'paper_safety_review_path': 'reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-paper-safety-review.json'}`
 
 ### capability_report
 
-- Status: `blocked`
-- Message: strategy must be promoted to lifecycle=active; execution.mode must be paper_auto; execution.broker must be alpaca_paper
-- Details: `{'capability': 'alpaca_paper_execution', 'status': 'blocked'}`
+- Status: `ok`
+- Message: active paper_auto Alpaca strategy can submit paper orders with explicit allow flag
+- Details: `{'capability': 'alpaca_paper_execution', 'status': 'supported'}`
 - Suggested actions:
-  - `uv run oc spec capabilities /root/codex-test/open-composer/strategy_specs/drafts/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml`
+  - `uv run oc spec capabilities /root/codex-test/open-composer/strategy_specs/active/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml`

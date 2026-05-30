@@ -2,28 +2,23 @@
   "checks": [
     {
       "details": {
-        "lifecycle": "draft"
+        "lifecycle": "active"
       },
-      "message": "Paper automation requires lifecycle=active.",
+      "message": "Strategy is active.",
       "name": "lifecycle",
-      "status": "blocked",
-      "suggested_actions": [
-        "uv run oc strategy approve nasdaq_tqqq_fixed_etf_router_daily_iter9",
-        "uv run oc strategy activate nasdaq_tqqq_fixed_etf_router_daily_iter9 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness"
-      ]
+      "status": "ok",
+      "suggested_actions": []
     },
     {
       "details": {
         "backend": "nautilus_trader",
-        "broker": "none",
-        "mode": "manual_signal"
+        "broker": "alpaca_paper",
+        "mode": "paper_auto"
       },
-      "message": "execution.mode must be paper_auto; execution.broker must be alpaca_paper",
+      "message": "Execution mode, broker, and backend are paper-ready.",
       "name": "execution",
-      "status": "blocked",
-      "suggested_actions": [
-        "uv run oc strategy activate nasdaq_tqqq_fixed_etf_router_daily_iter9 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness"
-      ]
+      "status": "ok",
+      "suggested_actions": []
     },
     {
       "details": {
@@ -85,14 +80,13 @@
     },
     {
       "details": {
-        "broker": "none"
+        "base_url": "https://paper-api.alpaca.markets/v2",
+        "paper_enabled": true
       },
-      "message": "Paper readiness currently targets broker=alpaca_paper.",
+      "message": "Alpaca Paper environment is configured.",
       "name": "alpaca_env",
-      "status": "blocked",
-      "suggested_actions": [
-        "uv run oc strategy activate nasdaq_tqqq_fixed_etf_router_daily_iter9 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness"
-      ]
+      "status": "ok",
+      "suggested_actions": []
     },
     {
       "details": {},
@@ -103,10 +97,10 @@
     },
     {
       "details": {
-        "buying_power": 1302283.12,
+        "buying_power": 1336416.84,
         "cash": 235472.62,
-        "equity": 1066810.5,
-        "generated_at": "2026-05-26T18:01:08.927968+00:00"
+        "equity": 1100944.22,
+        "generated_at": "2026-05-30T19:50:40.716856+00:00"
       },
       "message": "Paper account snapshot is available.",
       "name": "account_snapshot",
@@ -232,6 +226,7 @@
           "execution_reality_report",
           "gap_stress_report",
           "leveraged_etf_risk_note",
+          "paper_safety_review",
           "router_cost_stress",
           "router_data_evidence",
           "router_execution_observation",
@@ -243,61 +238,57 @@
         "risk_domains": [
           "daily_open_execution",
           "leveraged_etf",
+          "paper_auto",
+          "broker_specific",
           "router_strategy"
         ]
       },
-      "message": "All 11 harness artifacts present for domains ['daily_open_execution', 'leveraged_etf', 'router_strategy'].",
+      "message": "All 12 harness artifacts present for domains ['daily_open_execution', 'leveraged_etf', 'paper_auto', 'broker_specific', 'router_strategy'].",
       "name": "harness_artifacts",
       "status": "ok",
       "suggested_actions": []
     },
     {
       "details": {
+        "execution_policy_id": "loo_limit_nasdaq_tqqq_fixed_etf_router_daily_iter9_v1",
+        "paper_safety_review_path": "reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-paper-safety-review.json",
         "path": "reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-router-order-authorization.json",
-        "portfolio_mode": "hybrid_adaptive_router"
+        "rebalance_intents_path": "reports/execution/nasdaq_tqqq_fixed_etf_router_daily_iter9-rebalance-intents.json",
+        "target_weights_path": "reports/execution/nasdaq_tqqq_fixed_etf_router_daily_iter9-target-weights.json"
       },
-      "message": "Router order authorization artifact is missing. Router remains observation_only.",
+      "message": "Router order authorization is valid.",
       "name": "router_order_authorization",
-      "status": "warning",
-      "suggested_actions": [
-        "Write reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-router-order-authorization.json after PIT, promotion, harness verify, and paper safety review pass."
-      ]
+      "status": "ok",
+      "suggested_actions": []
     },
     {
       "details": {
         "capability": "alpaca_paper_execution",
-        "status": "blocked"
+        "status": "supported"
       },
-      "message": "strategy must be promoted to lifecycle=active; execution.mode must be paper_auto; execution.broker must be alpaca_paper",
+      "message": "active paper_auto Alpaca strategy can submit paper orders with explicit allow flag",
       "name": "capability_report",
-      "status": "blocked",
+      "status": "ok",
       "suggested_actions": [
-        "uv run oc spec capabilities /root/codex-test/open-composer/strategy_specs/drafts/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml"
+        "uv run oc spec capabilities /root/codex-test/open-composer/strategy_specs/active/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml"
       ]
     }
   ],
-  "execution_substate": "blocked",
+  "execution_substate": "order_authorized",
   "gate_summary": {
-    "blocked_checks": [
-      "lifecycle",
-      "execution",
-      "alpaca_env",
-      "capability_report"
-    ],
-    "execution_substate": "blocked",
+    "blocked_checks": [],
+    "execution_substate": "order_authorized",
     "llm_contribution_pass": null,
-    "paper_ready_pass": false,
+    "paper_ready_pass": true,
     "research_pass": true,
-    "warning_checks": [
-      "router_order_authorization"
-    ],
-    "workflow_pass": false
+    "warning_checks": [],
+    "workflow_pass": true
   },
-  "generated_at": "2026-05-30T16:28:26.506791Z",
-  "ready": false,
+  "generated_at": "2026-05-30T19:57:16.230953Z",
+  "ready": true,
   "report_json_path": "reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-paper-readiness.json",
   "report_markdown_path": "reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-paper-readiness.md",
-  "status": "blocked",
+  "status": "ok",
   "strategy_name": "nasdaq_tqqq_fixed_etf_router_daily_iter9",
-  "strategy_path": "strategy_specs/drafts/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml"
+  "strategy_path": "strategy_specs/active/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml"
 }

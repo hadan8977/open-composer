@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from open_composer.models.execution_backend import ExecutionBackendPlan
 from open_composer.strategy_capabilities import assess_strategy_capabilities
 
 
@@ -138,3 +139,94 @@ def test_strategy_capability_report_accepts_longbridge_data_source(tmp_path: Pat
     report = assess_strategy_capabilities(spec_path)
 
     assert report.finding("python_mvp_backtest").status == "supported"
+
+
+def test_strategy_capability_relative_path_finds_router_authorization(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "open_composer.strategy_capabilities.build_nautilus_trader_plan",
+        lambda _: ExecutionBackendPlan(
+            strategy_id="router",
+            strategy_name="router",
+            selected_backend="nautilus_trader",
+            target_backend="nautilus_trader",
+            execution_mode="paper_auto",
+            broker="alpaca_paper",
+            data_source="alpaca",
+            symbol="QQQ",
+            timeframe="daily",
+            supported=True,
+            status="supported",
+            reasons=[],
+            nautilus_installed=True,
+        ),
+    )
+    spec_dir = tmp_path / "strategy_specs" / "active"
+    spec_dir.mkdir(parents=True)
+    spec_path = spec_dir / "router.yaml"
+    spec_path.write_text(
+        """name: router
+description: Relative path router fixture.
+timeframe: daily
+universe: [QQQ, TQQQ]
+lifecycle: active
+position_direction: long_only
+entry:
+  all:
+    - "close > sma(close, 50)"
+exit:
+  any:
+    - "close < sma(close, 50)"
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 0.8
+execution:
+  backend: nautilus_trader
+  mode: paper_auto
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: alpaca_paper
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 0.8
+  max_symbol_weight: 0.8
+  selected_route_label: beta_override:test
+data:
+  source: alpaca
+  symbol: QQQ
+llm_review:
+  enabled: false
+required_capabilities:
+  - market.alpaca_bars
+""",
+        encoding="utf-8",
+    )
+    paper_dir = tmp_path / "reports" / "harness" / "paper"
+    paper_dir.mkdir(parents=True)
+    safety_path = paper_dir / "router-paper-safety-review.json"
+    safety_path.write_text('{"strategy_name":"router","overall":"approved","blocking_items":[]}')
+    execution_dir = tmp_path / "reports" / "execution"
+    execution_dir.mkdir(parents=True)
+    (execution_dir / "router-target-weights.json").write_text("{}", encoding="utf-8")
+    (execution_dir / "router-rebalance-intents.json").write_text("{}", encoding="utf-8")
+    (paper_dir / "router-router-order-authorization.json").write_text(
+        """{
+  "strategy_name": "router",
+  "execution_substate": "order_authorized",
+  "authorized": true,
+  "authorized_at": "2026-05-30T00:00:00Z",
+  "execution_policy_id": "policy-router",
+  "target_weights_path": "reports/execution/router-target-weights.json",
+  "rebalance_intents_path": "reports/execution/router-rebalance-intents.json",
+  "paper_safety_review_path": "reports/harness/paper/router-paper-safety-review.json"
+}""",
+        encoding="utf-8",
+    )
+
+    report = assess_strategy_capabilities(Path("strategy_specs/active/router.yaml"))
+
+    assert report.finding("alpaca_paper_execution").status == "supported"
