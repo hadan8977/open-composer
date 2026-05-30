@@ -394,7 +394,11 @@ def _strict_data_check(spec: StrategySpec, data_profile: dict[str, Any]) -> Gate
         blockers.append(f"acquisition_tier={tier} is not paper-ready")
     if any(token in source_mode for token in ["sample", "fixture", "fallback"]):
         blockers.append(f"data_source_mode={source_mode} is not paper-ready")
-    next_actions = _strict_data_next_actions(blockers=blockers, data_profile=data_profile)
+    next_actions = _strict_data_next_actions(
+        blockers=blockers,
+        data_profile=data_profile,
+        timeframe=spec.timeframe,
+    )
     return GateResult(
         name="strict_data",
         status="blocked" if blockers else "ok",
@@ -419,13 +423,15 @@ def _strict_data_next_actions(
     *,
     blockers: list[str],
     data_profile: dict[str, Any],
+    timeframe: str,
 ) -> list[str]:
     warnings = _string_list(data_profile.get("warnings"))
     actions: list[str] = []
+    timeframe_label = "intraday" if str(timeframe).lower() not in {"daily", "1d"} else "daily"
     if blockers:
         actions.append(
             "rerun or cross-check the selected route on research_strict or paper_ready "
-            "intraday data before more parameter optimization"
+            f"{timeframe_label} data before more parameter optimization"
         )
     if "cache_data_used" in warnings or data_profile.get("cache_fallback") is True:
         actions.append("replace cached 1m bars with a fresh strict pull or independent comparison")

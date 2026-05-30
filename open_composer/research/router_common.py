@@ -378,6 +378,14 @@ def run_router_research(
         "walk_forward": [walk_payload(item) for item in walk_forward],
     }
     write_json(json_path, payload)
+    write_router_research_artifacts(
+        base=base,
+        strategy_name=spec.name,
+        mode=mode,
+        report_suffix=report_suffix,
+        payload=payload,
+        data_profile=dataset.data_profile,
+    )
     write_router_markdown(report_path, json_path, payload)
     return RouterResearchReport(
         report_path=report_path,
@@ -430,7 +438,7 @@ def evaluate_router_candidates(
                 train=train,
                 out_of_sample=oos,
                 full_window=full,
-                quality_flags=quality_flags(train, oos, full),
+                quality_flags=quality_flags(train, oos, full, objective=objective),
             )
         )
     rows.sort(key=lambda item: item.score, reverse=True)
@@ -747,6 +755,14 @@ def score_metrics(
     drawdown = abs(min(metrics.max_drawdown_pct, 0.0))
     sparse_penalty = max(0, 40 - metrics.traded_days) * 2.0
     concentration_penalty = max(0.0, metrics.max_symbol_weight_pct - 50.0) * 1.25
+    if objective == "absolute_return_risk":
+        return (
+            1.00 * annualized
+            + 12.0 * sharpe
+            - 0.80 * drawdown
+            - sparse_penalty
+            - concentration_penalty
+        )
     if objective == "benchmark_buy_hold_alpha":
         return (
             1.20 * benchmark_alpha
@@ -767,19 +783,36 @@ def score_metrics(
     )
 
 
-def quality_flags(train: RouterMetrics, oos: RouterMetrics, full: RouterMetrics) -> list[str]:
+def quality_flags(
+    train: RouterMetrics,
+    oos: RouterMetrics,
+    full: RouterMetrics,
+    *,
+    objective: str = "risk_adjusted_benchmark_alpha",
+) -> list[str]:
     flags: list[str] = []
-    if (train.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0) <= 0:
-        flags.append("train_no_alpha_vs_benchmark")
-    if (oos.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0) <= 0:
-        flags.append("oos_no_alpha_vs_benchmark")
+    benchmark_alpha_objective = objective in {
+        "benchmark_buy_hold_alpha",
+        "risk_adjusted_benchmark_alpha",
+    }
+    if benchmark_alpha_objective:
+        if (train.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0) <= 0:
+            flags.append("train_no_alpha_vs_benchmark")
+        if (oos.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0) <= 0:
+            flags.append("oos_no_alpha_vs_benchmark")
+    else:
+        if (train.annualized_return_pct or -100.0) <= 0:
+            flags.append("train_nonpositive_return")
+        if (oos.annualized_return_pct or -100.0) <= 0:
+            flags.append("oos_nonpositive_return")
     if oos.sharpe_ratio is None or oos.sharpe_ratio < 0.5:
         flags.append("oos_low_sharpe")
     if oos.traded_days < 20:
         flags.append("oos_low_traded_days")
-    if oos.max_drawdown_pct <= -30:
+    drawdown_limit = -40 if objective == "absolute_return_risk" else -30
+    if oos.max_drawdown_pct <= drawdown_limit:
         flags.append("oos_large_drawdown")
-    if full.alpha_vs_best_symbol_buy_hold_pct <= 0:
+    if benchmark_alpha_objective and full.alpha_vs_best_symbol_buy_hold_pct <= 0:
         flags.append("does_not_beat_ex_post_best_symbol")
     return flags
 
@@ -791,12 +824,23 @@ def acceptance_gate(
     wf_positive = sum(
         (objective_alpha_pct(item.test, objective) or -100.0) > 0 for item in walk_forward
     )
-    passed = (
-        (objective_alpha or -100.0) > 0
-        and (candidate.out_of_sample.sharpe_ratio or 0.0) >= 0.5
-        and (candidate.out_of_sample.max_drawdown_pct > -30)
-        and wf_positive >= max(1, len(walk_forward) // 2 + 1)
-    )
+    if objective == "absolute_return_risk":
+        passed = (
+            (candidate.full_window.annualized_return_pct or -100.0) >= 30.0
+            and (candidate.full_window.sharpe_ratio or 0.0) >= 1.0
+            and candidate.full_window.max_drawdown_pct > -40.0
+            and (candidate.out_of_sample.annualized_return_pct or -100.0) >= 30.0
+            and (candidate.out_of_sample.sharpe_ratio or 0.0) >= 1.0
+            and candidate.out_of_sample.max_drawdown_pct > -40.0
+            and wf_positive >= max(1, len(walk_forward) // 2 + 1)
+        )
+    else:
+        passed = (
+            (objective_alpha or -100.0) > 0
+            and (candidate.out_of_sample.sharpe_ratio or 0.0) >= 0.5
+            and (candidate.out_of_sample.max_drawdown_pct > -30)
+            and wf_positive >= max(1, len(walk_forward) // 2 + 1)
+        )
     return {
         "passed": passed,
         "objective": objective,
@@ -815,13 +859,27 @@ def acceptance_gate(
         "walk_forward_positive_alpha_folds": wf_positive,
         "walk_forward_fold_count": len(walk_forward),
         "quality_flags": candidate.quality_flags,
+        "advisory_flags": advisory_quality_flags(candidate),
     }
 
 
 def objective_alpha_pct(metrics: RouterMetrics, objective: str) -> float | None:
     if objective in {"benchmark_buy_hold_alpha", "risk_adjusted_benchmark_alpha"}:
         return metrics.alpha_vs_benchmark_buy_hold_annualized_pct
+    if objective == "absolute_return_risk":
+        return metrics.annualized_return_pct
     return metrics.alpha_vs_benchmark_buy_hold_annualized_pct
+
+
+def advisory_quality_flags(candidate: RouterCandidate) -> list[str]:
+    flags: list[str] = []
+    if (candidate.train.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0) <= 0:
+        flags.append("train_no_alpha_vs_benchmark")
+    if (candidate.out_of_sample.alpha_vs_benchmark_buy_hold_annualized_pct or -100.0) <= 0:
+        flags.append("oos_no_alpha_vs_benchmark")
+    if candidate.full_window.alpha_vs_best_symbol_buy_hold_pct <= 0:
+        flags.append("does_not_beat_ex_post_best_symbol")
+    return flags
 
 
 def pass_status(
@@ -863,6 +921,151 @@ def walk_payload(item: RouterWalkForwardSlice) -> dict[str, Any]:
         "train": asdict(item.train),
         "test": asdict(item.test),
     }
+
+
+def write_router_research_artifacts(
+    *,
+    base: Path,
+    strategy_name: str,
+    mode: str,
+    report_suffix: str,
+    payload: dict[str, Any],
+    data_profile: dict[str, Any],
+) -> None:
+    """Write router evidence in the generic harness artifact shapes."""
+    out_dir = base / "reports" / "research"
+    ensure_dir(out_dir)
+    source_report = f"reports/research/{strategy_name}-{report_suffix}.json"
+    created_at = datetime.now(UTC).isoformat()
+    search_payload = payload.get("search_space", {})
+    parameters = search_payload.get("parameter_ranges") or search_payload.get("parameters") or {}
+    total_combinations = int(
+        search_payload.get("candidate_count")
+        or search_payload.get("total_combinations")
+        or len(payload.get("candidates", []))
+    )
+
+    write_json(
+        out_dir / f"{strategy_name}-search-space.json",
+        {
+            "strategy_name": strategy_name,
+            "parameters": parameters,
+            "total_combinations": total_combinations,
+            "search_method": f"{mode}:{report_suffix}",
+            "created_at": created_at,
+            "source_report": source_report,
+            "filters": search_payload.get("filters", []),
+        },
+    )
+
+    candidates = [item for item in payload.get("candidates", []) if isinstance(item, dict)]
+    selected = (
+        payload.get("selected_candidate")
+        if isinstance(payload.get("selected_candidate"), dict)
+        else {}
+    )
+    selected_label = str((selected.get("params") or {}).get("label") or "")
+    ledger_path = out_dir / f"{strategy_name}-trial-ledger.jsonl"
+    with ledger_path.open("w", encoding="utf-8") as handle:
+        for item in candidates:
+            params = item.get("params") if isinstance(item.get("params"), dict) else {}
+            label = str(params.get("label") or f"rank-{item.get('rank', 'unknown')}")
+            train = item.get("train") if isinstance(item.get("train"), dict) else {}
+            oos = item.get("out_of_sample") if isinstance(item.get("out_of_sample"), dict) else {}
+            selected_item = label == selected_label
+            record = {
+                "trial_id": f"{strategy_name}:{mode}:{item.get('rank', 0)}",
+                "parameter_set": params,
+                "data_profile": data_profile,
+                "train_window": {
+                    "start": train.get("start_date"),
+                    "end": train.get("end_date"),
+                    "days": train.get("days"),
+                },
+                "test_window": {
+                    "start": oos.get("start_date"),
+                    "end": oos.get("end_date"),
+                    "days": oos.get("days"),
+                },
+                "metrics": {
+                    "score": item.get("score"),
+                    "train": train,
+                    "out_of_sample": oos,
+                    "full_window": item.get("full_window") or item.get("full"),
+                },
+                "selected": selected_item,
+                "rejection_reason": None
+                if selected_item
+                else "lower_router_objective_score_or_weaker_gate_quality_than_selected_candidate",
+                "source_report": source_report,
+            }
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
+
+    candidate_rows = []
+    for item in candidates:
+        params = item.get("params") if isinstance(item.get("params"), dict) else {}
+        label = str(params.get("label") or f"rank-{item.get('rank', 'unknown')}")
+        candidate_rows.append(
+            {
+                "candidate_id": label,
+                "rank": item.get("rank"),
+                "parameter_set": params,
+                "score": item.get("score"),
+                "metrics": {
+                    "train": item.get("train"),
+                    "out_of_sample": item.get("out_of_sample"),
+                    "full_window": item.get("full_window") or item.get("full"),
+                },
+                "quality_flags": item.get("quality_flags", []),
+                "selected": label == selected_label,
+            }
+        )
+    write_json(
+        out_dir / f"{strategy_name}-candidate-set.json",
+        {
+            "strategy_name": strategy_name,
+            "candidates": candidate_rows,
+            "selection_criteria": {
+                "objective": payload.get("acceptance_gate", {}).get("objective"),
+                "filters": search_payload.get("filters", []),
+                "research_cost": payload.get("research_cost", {}),
+                "source_report": source_report,
+            },
+            "selected_candidate_id": selected_label,
+        },
+    )
+
+    walk_rows = [item for item in payload.get("walk_forward", []) if isinstance(item, dict)]
+    write_json(
+        out_dir / f"{strategy_name}-walk-forward.json",
+        {
+            "strategy_name": strategy_name,
+            "method": "sequential_router_walk_forward",
+            "windows": [
+                {
+                    "fold": item.get("fold"),
+                    "parameter_set": item.get("params"),
+                    "train_window": {
+                        "start": (item.get("train") or {}).get("start_date"),
+                        "end": (item.get("train") or {}).get("end_date"),
+                        "days": (item.get("train") or {}).get("days"),
+                    },
+                    "test_window": {
+                        "start": (item.get("test") or {}).get("start_date"),
+                        "end": (item.get("test") or {}).get("end_date"),
+                        "days": (item.get("test") or {}).get("days"),
+                    },
+                    "test_metrics": item.get("test"),
+                }
+                for item in walk_rows
+            ],
+            "oos_metrics": selected.get("out_of_sample") if selected else {},
+            "conclusion": "pass"
+            if bool(payload.get("acceptance_gate", {}).get("passed"))
+            else "warning",
+            "source_report": source_report,
+        },
+    )
 
 
 def params_payload(params: Any) -> dict[str, Any]:

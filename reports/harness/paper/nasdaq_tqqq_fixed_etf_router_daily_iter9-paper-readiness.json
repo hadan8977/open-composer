@@ -1,0 +1,303 @@
+{
+  "checks": [
+    {
+      "details": {
+        "lifecycle": "draft"
+      },
+      "message": "Paper automation requires lifecycle=active.",
+      "name": "lifecycle",
+      "status": "blocked",
+      "suggested_actions": [
+        "uv run oc strategy approve nasdaq_tqqq_fixed_etf_router_daily_iter9",
+        "uv run oc strategy activate nasdaq_tqqq_fixed_etf_router_daily_iter9 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness"
+      ]
+    },
+    {
+      "details": {
+        "backend": "nautilus_trader",
+        "broker": "none",
+        "mode": "manual_signal"
+      },
+      "message": "execution.mode must be paper_auto; execution.broker must be alpaca_paper",
+      "name": "execution",
+      "status": "blocked",
+      "suggested_actions": [
+        "uv run oc strategy activate nasdaq_tqqq_fixed_etf_router_daily_iter9 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness"
+      ]
+    },
+    {
+      "details": {
+        "data_mode": "paper_ready",
+        "source": "alpaca",
+        "symbol": "QQQ",
+        "timeframe": "daily"
+      },
+      "message": "Paper automation uses a live/cache market data source.",
+      "name": "data_source",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "findings": [
+          {
+            "code": "fixed_universe_documented",
+            "evidence": {
+              "metadata": {
+                "delisting_policy": "Fixed ETF instrument set; no current equity-index membership backfill is used.",
+                "explicit_fixed_universe": true,
+                "point_in_time_membership": true,
+                "selection_timestamp": "2026-05-30T00:00:00Z"
+              },
+              "symbols": [
+                "BIL",
+                "GLD",
+                "IGV",
+                "PSQ",
+                "QLD",
+                "QQQ",
+                "ROM",
+                "SMH",
+                "SOXL",
+                "SOXS",
+                "SOXX",
+                "SPY",
+                "SQQQ",
+                "TECL",
+                "TECS",
+                "TQQQ",
+                "USD",
+                "XLK"
+              ]
+            },
+            "message": "Universe is documented as a fixed tradable-instrument set; historical index-membership PIT evidence is not required.",
+            "severity": "ok"
+          }
+        ],
+        "json_path": "reports/research/nasdaq_tqqq_fixed_etf_router_daily_iter9-universe-audit.json",
+        "report_path": "reports/research/nasdaq_tqqq_fixed_etf_router_daily_iter9-universe-audit.md",
+        "status": "ok"
+      },
+      "message": "Universe audit passed.",
+      "name": "universe_audit",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "broker": "none"
+      },
+      "message": "Paper readiness currently targets broker=alpaca_paper.",
+      "name": "alpaca_env",
+      "status": "blocked",
+      "suggested_actions": [
+        "uv run oc strategy activate nasdaq_tqqq_fixed_etf_router_daily_iter9 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness"
+      ]
+    },
+    {
+      "details": {},
+      "message": "Paper kill switch is clear.",
+      "name": "kill_switch",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "buying_power": 1302283.12,
+        "cash": 235472.62,
+        "equity": 1066810.5,
+        "generated_at": "2026-05-26T18:01:08.927968+00:00"
+      },
+      "message": "Paper account snapshot is available.",
+      "name": "account_snapshot",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "backend": "nautilus_trader",
+        "nautilus_installed": true
+      },
+      "message": "NautilusTrader package is available.",
+      "name": "nautilus_backend",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "duplicate_signal_policy": "stable_signal_id",
+        "gross_exposure_limit": 0.8,
+        "max_symbol_weight": 0.8,
+        "max_symbols_per_day": 1,
+        "mode": "hybrid_adaptive_router",
+        "same_day_flatten": false,
+        "selected_route_label": "beta_override:baseiter2_lb20_min5_adv0_sma200_exTQQQ_mdd20p6_ov120t105_g0.55_bearGLDlb60min0sma50w0.8_tqqq_cycle",
+        "universe": [
+          "QQQ",
+          "TQQQ",
+          "SQQQ",
+          "QLD",
+          "PSQ",
+          "SMH",
+          "SOXL",
+          "SOXS",
+          "TECL",
+          "TECS",
+          "ROM",
+          "USD",
+          "SPY",
+          "XLK",
+          "SOXX",
+          "IGV",
+          "GLD",
+          "BIL"
+        ]
+      },
+      "message": "hybrid_adaptive_router portfolio routing is declared inside StrategySpec.",
+      "name": "portfolio_routing",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "borrow_short_caveat": "long-only paper routing; borrow is out of scope",
+        "duplicate_signal_policy": "stable_signal_id",
+        "gross_exposure_limit_pct": 80.0,
+        "max_symbols_per_day": 1,
+        "mode": "hybrid_adaptive_router",
+        "same_day_flatten": false,
+        "sector_concentration": "bounded_by_max_symbols_and_weight; sector map not registered",
+        "single_name_weight_limit_pct": 80.0,
+        "universe": [
+          "QQQ",
+          "TQQQ",
+          "SQQQ",
+          "QLD",
+          "PSQ",
+          "SMH",
+          "SOXL",
+          "SOXS",
+          "TECL",
+          "TECS",
+          "ROM",
+          "USD",
+          "SPY",
+          "XLK",
+          "SOXX",
+          "IGV",
+          "GLD",
+          "BIL"
+        ]
+      },
+      "message": "hybrid_adaptive_router gross exposure and concentration limits are explicit.",
+      "name": "portfolio_risk",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "inspected": []
+      },
+      "message": "Feature packet bindings are point-in-time complete.",
+      "name": "feature_packets",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "benchmark_family_complete": true,
+        "check_count": 13,
+        "gate_summary": {
+          "benchmark_family_complete": true,
+          "blocked_checks": [],
+          "llm_contribution_pass": null,
+          "paper_ready_pass": true,
+          "research_pass": true,
+          "warning_checks": [],
+          "workflow_pass": true
+        },
+        "path": "/root/codex-test/open-composer/reports/research/nasdaq_tqqq_fixed_etf_router_daily_iter9-promotion.json",
+        "ready": true,
+        "status": "ok"
+      },
+      "message": "Promotion report is present and ready for paper review.",
+      "name": "promotion_report",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "required_artifacts": [
+          "execution_policy",
+          "execution_reality_report",
+          "gap_stress_report",
+          "leveraged_etf_risk_note",
+          "router_cost_stress",
+          "router_data_evidence",
+          "router_execution_observation",
+          "router_rebalance_intents",
+          "router_target_weights",
+          "router_validation",
+          "source_cards"
+        ],
+        "risk_domains": [
+          "daily_open_execution",
+          "leveraged_etf",
+          "router_strategy"
+        ]
+      },
+      "message": "All 11 harness artifacts present for domains ['daily_open_execution', 'leveraged_etf', 'router_strategy'].",
+      "name": "harness_artifacts",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "path": "reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-router-order-authorization.json",
+        "portfolio_mode": "hybrid_adaptive_router"
+      },
+      "message": "Router order authorization artifact is missing. Router remains observation_only.",
+      "name": "router_order_authorization",
+      "status": "warning",
+      "suggested_actions": [
+        "Write reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-router-order-authorization.json after PIT, promotion, harness verify, and paper safety review pass."
+      ]
+    },
+    {
+      "details": {
+        "capability": "alpaca_paper_execution",
+        "status": "blocked"
+      },
+      "message": "strategy must be promoted to lifecycle=active; execution.mode must be paper_auto; execution.broker must be alpaca_paper",
+      "name": "capability_report",
+      "status": "blocked",
+      "suggested_actions": [
+        "uv run oc spec capabilities /root/codex-test/open-composer/strategy_specs/drafts/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml"
+      ]
+    }
+  ],
+  "execution_substate": "blocked",
+  "gate_summary": {
+    "blocked_checks": [
+      "lifecycle",
+      "execution",
+      "alpaca_env",
+      "capability_report"
+    ],
+    "execution_substate": "blocked",
+    "llm_contribution_pass": null,
+    "paper_ready_pass": false,
+    "research_pass": true,
+    "warning_checks": [
+      "router_order_authorization"
+    ],
+    "workflow_pass": false
+  },
+  "generated_at": "2026-05-30T16:28:26.506791Z",
+  "ready": false,
+  "report_json_path": "reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-paper-readiness.json",
+  "report_markdown_path": "reports/harness/paper/nasdaq_tqqq_fixed_etf_router_daily_iter9-paper-readiness.md",
+  "status": "blocked",
+  "strategy_name": "nasdaq_tqqq_fixed_etf_router_daily_iter9",
+  "strategy_path": "strategy_specs/drafts/nasdaq_tqqq_fixed_etf_router_daily_iter9.yaml"
+}

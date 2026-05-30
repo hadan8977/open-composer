@@ -3007,6 +3007,7 @@ def strategy_hybrid_adaptive_router(
     spec: Path,
     symbols: str = typer.Option(..., "--symbols"),
     data_source: str = typer.Option("alpaca", "--data-source"),
+    feed: str | None = typer.Option(None, "--feed"),
     start: str | None = typer.Option(None, "--start"),
     end: str | None = typer.Option(None, "--end"),
     benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
@@ -3014,7 +3015,10 @@ def strategy_hybrid_adaptive_router(
     objective: str = typer.Option(
         "benchmark-buy-hold-alpha",
         "--objective",
-        help=("Selection objective: benchmark-buy-hold-alpha or risk-adjusted-benchmark-alpha."),
+        help=(
+            "Selection objective: benchmark-buy-hold-alpha, risk-adjusted-benchmark-alpha, "
+            "or absolute-return-risk."
+        ),
     ),
     holding_mode: Annotated[list[str] | None, typer.Option("--holding-mode")] = None,
     momentum_lookback_days: Annotated[
@@ -3167,6 +3171,7 @@ def strategy_hybrid_adaptive_router(
             project_root(),
             symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
             data_source=data_source,
+            feed=feed,
             start=start,
             end=end,
             benchmark_symbol=benchmark_symbol.upper(),
@@ -3313,6 +3318,7 @@ def strategy_hybrid_news_marginal_lift(
     spec: Path,
     symbols: str = typer.Option(..., "--symbols"),
     data_source: str = typer.Option("alpaca", "--data-source"),
+    feed: str | None = typer.Option(None, "--feed"),
     start: str | None = typer.Option(None, "--start"),
     end: str | None = typer.Option(None, "--end"),
     benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
@@ -3333,6 +3339,7 @@ def strategy_hybrid_news_marginal_lift(
             project_root(),
             symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
             data_source=data_source,
+            feed=feed,
             start=start,
             end=end,
             benchmark_symbol=benchmark_symbol.upper(),
@@ -3363,6 +3370,7 @@ def strategy_hybrid_factor_attribution(
     spec: Path,
     symbols: str | None = typer.Option(None, "--symbols"),
     data_source: str = typer.Option("alpaca", "--data-source"),
+    feed: str | None = typer.Option(None, "--feed"),
     start: str | None = typer.Option(None, "--start"),
     end: str | None = typer.Option(None, "--end"),
     benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
@@ -3383,6 +3391,7 @@ def strategy_hybrid_factor_attribution(
                 else None
             ),
             data_source=data_source,
+            feed=feed,
             start=start,
             end=end,
             benchmark_symbol=benchmark_symbol.upper(),
@@ -3886,6 +3895,7 @@ def strategy_hybrid_target_weights(
     spec: Path,
     symbols: str = typer.Option(..., "--symbols"),
     data_source: str = typer.Option("alpaca", "--data-source"),
+    feed: str | None = typer.Option(None, "--feed"),
     start: str | None = typer.Option(None, "--start"),
     end: str | None = typer.Option(None, "--end"),
     benchmark_symbol: str = typer.Option("TQQQ", "--benchmark-symbol"),
@@ -3902,6 +3912,7 @@ def strategy_hybrid_target_weights(
             project_root(),
             symbols=[item.strip().upper() for item in symbols.split(",") if item.strip()],
             data_source=data_source,
+            feed=feed,
             start=start,
             end=end,
             benchmark_symbol=benchmark_symbol.upper(),
@@ -4095,8 +4106,11 @@ def _hybrid_objective(value: str) -> str:
         return "benchmark_buy_hold_alpha"
     if normalized == "risk-adjusted-benchmark-alpha":
         return "risk_adjusted_benchmark_alpha"
+    if normalized == "absolute-return-risk":
+        return "absolute_return_risk"
     raise typer.BadParameter(
-        "--objective must be benchmark-buy-hold-alpha or risk-adjusted-benchmark-alpha"
+        "--objective must be benchmark-buy-hold-alpha, risk-adjusted-benchmark-alpha, "
+        "or absolute-return-risk"
     )
 
 

@@ -1075,6 +1075,33 @@ def test_hybrid_beta_override_label_parser_supports_short_momentum_gate() -> Non
     assert params.min_override_short_momentum_pct == 0.0
 
 
+def test_hybrid_beta_override_label_encodes_override_vol_lookback_without_base_target() -> None:
+    params = BetaOverrideHybridParams(
+        holding_mode="open_to_open",
+        momentum_lookback_days=20,
+        min_momentum_pct=5.0,
+        override_advantage_pct=0.0,
+        confirmation_sma_days=200,
+        exclude_tqqq=True,
+        cycle_gate="q200ormom120",
+        market_drawdown_lookback_days=20,
+        max_market_drawdown_pct=6.0,
+        volatility_lookback_days=120,
+        target_volatility_annual_pct=None,
+        override_target_volatility_annual_pct=105.0,
+        gross_exposure_scale=0.55,
+        bear_inverse_symbol="GLD",
+        bear_inverse_weight=0.8,
+        base_mode="tqqq_cycle",
+    )
+
+    assert "_ov120t105_" in params.label
+    parsed = hybrid_params_from_label(params.label)
+    assert parsed.volatility_lookback_days == 120
+    assert parsed.target_volatility_annual_pct is None
+    assert parsed.override_target_volatility_annual_pct == 105.0
+
+
 def test_hybrid_beta_override_grid_builds_deduped_tqqq_cycle_params() -> None:
     grid = _build_beta_override_params_grid(
         momentum_lookback_days=[20],

@@ -27,7 +27,11 @@ from open_composer.research.router_common import (
     volatility_scale,
 )
 
-HybridObjective = Literal["benchmark_buy_hold_alpha", "risk_adjusted_benchmark_alpha"]
+HybridObjective = Literal[
+    "benchmark_buy_hold_alpha",
+    "risk_adjusted_benchmark_alpha",
+    "absolute_return_risk",
+]
 HoldingMode = Literal["open_to_open", "open_to_close"]
 MomentumScoreMode = Literal["raw", "risk_adjusted"]
 
@@ -155,7 +159,13 @@ class BetaOverrideHybridParams:
         if self.volatility_lookback_days and self.target_volatility_annual_pct is not None:
             label += f"_vol{self.volatility_lookback_days}t{self.target_volatility_annual_pct:g}"
         if self.override_target_volatility_annual_pct is not None:
-            label += f"_ovt{self.override_target_volatility_annual_pct:g}"
+            if self.volatility_lookback_days and self.target_volatility_annual_pct is None:
+                label += (
+                    f"_ov{self.volatility_lookback_days}"
+                    f"t{self.override_target_volatility_annual_pct:g}"
+                )
+            else:
+                label += f"_ovt{self.override_target_volatility_annual_pct:g}"
         if self.gross_exposure_scale < 0.999999:
             label += f"_g{self.gross_exposure_scale:g}"
         if self.override_weight_scale < 0.999999:
@@ -201,7 +211,7 @@ def hybrid_params_from_label(label: str) -> HybridRouterParams | BetaOverrideHyb
             r"(?:s(?P<mdd_scale>[-0-9.]+))?)?"
             r"(?:_mre(?P<mre_lb>\d+)p(?P<mre>[-0-9.]+))?"
             r"(?:_vol(?P<vol_lb>\d+)t(?P<vol>[-0-9.]+))?"
-            r"(?:_ovt(?P<ovt>[-0-9.]+))?"
+            r"(?:(?:_ov(?P<ov_lb>\d+)t(?P<ovt>[-0-9.]+))|(?:_ovt(?P<legacy_ovt>[-0-9.]+)))?"
             r"(?:_g(?P<gross>[-0-9.]+))?"
             r"(?:_ows(?P<ows>[-0-9.]+))?"
             r"(?P<bear>_bear(?P<bear_symbol>[A-Z0-9]+)lb(?P<bear_lb>\d+)"
@@ -246,13 +256,17 @@ def hybrid_params_from_label(label: str) -> HybridRouterParams | BetaOverrideHyb
                 float(match.group("mre")) if match.group("mre") else None
             ),
             volatility_lookback_days=(
-                int(match.group("vol_lb")) if match.group("vol_lb") else None
+                int(match.group("vol_lb") or match.group("ov_lb"))
+                if match.group("vol_lb") or match.group("ov_lb")
+                else None
             ),
             target_volatility_annual_pct=(
                 float(match.group("vol")) if match.group("vol") else None
             ),
             override_target_volatility_annual_pct=(
-                float(match.group("ovt")) if match.group("ovt") else None
+                float(match.group("ovt") or match.group("legacy_ovt"))
+                if match.group("ovt") or match.group("legacy_ovt")
+                else None
             ),
             gross_exposure_scale=float(match.group("gross") or 1.0),
             base_mode=match.group("base") or "iter2",  # type: ignore[arg-type]
