@@ -14,6 +14,7 @@ from open_composer.adapters.data.longbridge import (
     longbridge_materialized_history_path,
     missing_longbridge_credentials,
 )
+from open_composer.research.metadata import frame_data_profile
 
 
 def test_longbridge_fetch_uses_cache_and_writes_manifest(sample_workspace: Path) -> None:
@@ -37,6 +38,61 @@ def test_longbridge_fetch_uses_cache_and_writes_manifest(sample_workspace: Path)
     assert len(frame) > 0
     assert manifest.exists()
     assert "longbridge" in manifest.read_text(encoding="utf-8")
+
+
+def test_longbridge_ignores_alpaca_only_feed_alias_for_provenance(
+    sample_workspace: Path,
+) -> None:
+    cache = sample_workspace / "data" / "cache" / "qqq_15m_longbridge_iex.csv"
+    sample = sample_workspace / "data" / "sample" / "qqq_15m.csv"
+    cache.write_text(sample.read_text(encoding="utf-8"), encoding="utf-8")
+
+    frame = fetch_ohlcv(
+        sample_workspace,
+        "QQQ",
+        "15m",
+        None,
+        None,
+        source="longbridge",
+        feed="iex",
+        use_cache=True,
+        allow_fallback=False,
+    )
+
+    assert frame.attrs["data_source_feed"] == "nasdaq_basic"
+    assert frame.attrs["data_source_path"].endswith("qqq_15m_longbridge_nasdaq_basic.csv")
+    assert longbridge_cache_path(sample_workspace, "QQQ", "15m").exists()
+
+
+def test_data_profile_prefers_frame_provenance_over_requested_feed(
+    sample_workspace: Path,
+) -> None:
+    cache = longbridge_cache_path(sample_workspace, "QQQ", "15m")
+    sample = sample_workspace / "data" / "sample" / "qqq_15m.csv"
+    cache.write_text(sample.read_text(encoding="utf-8"), encoding="utf-8")
+    frame = fetch_ohlcv(
+        sample_workspace,
+        "QQQ",
+        "15m",
+        None,
+        None,
+        source="longbridge",
+        feed="iex",
+        use_cache=True,
+        allow_fallback=False,
+    )
+
+    profile = frame_data_profile(
+        frame,
+        symbol="QQQ",
+        timeframe="15m",
+        provider="longbridge",
+        feed="iex",
+        source_mode=frame.attrs.get("data_source_mode"),
+    )
+
+    assert profile["feed"] == "nasdaq_basic"
+    assert "iex_feed_not_full_market_sip" not in profile["warnings"]
 
 
 def test_longbridge_daily_fetch_uses_materialized_history_with_date_filter(
@@ -155,6 +211,98 @@ def test_longbridge_live_fetch_uses_official_sdk_methods(
     assert frame["close"].iloc[-1] == 2
 
 
+def test_longbridge_date_range_fetch_pages_by_offset(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("LONGBRIDGE_APP_KEY", "app-key")
+    monkeypatch.setenv("LONGBRIDGE_APP_SECRET", "secret")
+    monkeypatch.setenv("LONGBRIDGE_ACCESS_TOKEN", "token")
+    monkeypatch.setenv("LONGBRIDGE_MAX_HISTORY_PAGES", "3")
+    calls = []
+
+    class MockConfig:
+        @staticmethod
+        def from_apikey(*_args, **_kwargs):
+            return object()
+
+    class MockQuoteContext:
+        def __init__(self, _config) -> None:
+            pass
+
+        def history_candlesticks_by_offset(
+            self,
+            symbol,
+            period,
+            adjust_type,
+            forward,
+            count,
+            time,
+            trade_sessions,
+        ):
+            calls.append((symbol, period, adjust_type, forward, count, time, trade_sessions))
+            if len(calls) == 1:
+                return [
+                    SimpleNamespace(
+                        timestamp=datetime.fromisoformat("2026-01-02T14:30:00+00:00"),
+                        open=1,
+                        high=2,
+                        low=1,
+                        close=2,
+                        volume=100,
+                    ),
+                    SimpleNamespace(
+                        timestamp=datetime.fromisoformat("2026-01-02T14:31:00+00:00"),
+                        open=2,
+                        high=3,
+                        low=2,
+                        close=3,
+                        volume=200,
+                    ),
+                ]
+            return [
+                SimpleNamespace(
+                    timestamp=datetime.fromisoformat("2026-01-02T14:32:00+00:00"),
+                    open=3,
+                    high=4,
+                    low=3,
+                    close=4,
+                    volume=300,
+                )
+            ]
+
+    class MockPeriod:
+        Min_1 = "Min_1"
+
+    class MockAdjustType:
+        ForwardAdjust = "ForwardAdjust"
+        NoAdjust = "NoAdjust"
+
+    class MockTradeSessions:
+        Intraday = "Intraday"
+        All = "All"
+
+    monkeypatch.setattr("longbridge.openapi.Config", MockConfig)
+    monkeypatch.setattr("longbridge.openapi.QuoteContext", MockQuoteContext)
+    monkeypatch.setattr("longbridge.openapi.Period", MockPeriod)
+    monkeypatch.setattr("longbridge.openapi.AdjustType", MockAdjustType)
+    monkeypatch.setattr("longbridge.openapi.TradeSessions", MockTradeSessions)
+
+    frame = fetch_longbridge_bars(
+        sample_workspace,
+        "QQQ",
+        "1m",
+        datetime.fromisoformat("2026-01-02T14:30:00+00:00"),
+        datetime.fromisoformat("2026-01-02T14:32:00+00:00"),
+        use_cache=False,
+        count=2,
+    )
+
+    assert len(calls) == 2
+    assert calls[0][3] is True
+    assert list(frame["close"]) == [2, 3, 4]
+
+
 def test_longbridge_live_fetch_requires_valid_count(sample_workspace: Path, monkeypatch) -> None:
     monkeypatch.setenv("LONGBRIDGE_APP_KEY", "app-key")
     monkeypatch.setenv("LONGBRIDGE_APP_SECRET", "secret")
@@ -219,6 +367,7 @@ def test_ohlcv_comparison_writes_reports(sample_workspace: Path) -> None:
     assert report.matched_coverage_pct > 0
     assert report.left_manifest_path
     assert report.right_manifest_path
+    assert report.right_feed == "nasdaq_basic"
     assert any("Alpaca IEX" in caveat for caveat in report.caveats)
     assert any("Longbridge free US market data" in caveat for caveat in report.caveats)
     assert Path(report.report_json_path).exists()

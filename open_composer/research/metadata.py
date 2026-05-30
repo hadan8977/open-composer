@@ -79,10 +79,10 @@ def frame_data_profile(
     first_timestamp = timestamps.iloc[0].isoformat() if len(timestamps) else None
     last_timestamp = timestamps.iloc[-1].isoformat() if len(timestamps) else None
     attrs = getattr(frame, "attrs", {})
-    provider_value = provider or attrs.get("data_source_provider")
-    feed_value = feed or attrs.get("data_source_feed")
-    source_mode_value = source_mode or attrs.get("data_source_mode")
-    path_value = path or attrs.get("data_source_path")
+    provider_value = attrs.get("data_source_provider") or provider
+    feed_value = attrs.get("data_source_feed") or feed
+    source_mode_value = attrs.get("data_source_mode") or source_mode
+    path_value = attrs.get("data_source_path") or path
     warnings = _data_profile_warnings(
         records=len(frame),
         feed=feed_value,

@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from open_composer.adapters.data.alpaca import fetch_alpaca_bars
-from open_composer.adapters.data.longbridge import fetch_longbridge_bars
+from open_composer.adapters.data.longbridge import fetch_longbridge_bars, normalize_longbridge_feed
 from open_composer.adapters.data.provenance import write_ohlcv_manifest
 from open_composer.adapters.data.sample import load_sample_ohlcv, normalize_ohlcv
 from open_composer.config import data_feed
@@ -71,6 +71,7 @@ def fetch_ohlcv(
             return _fallback_ohlcv(root, symbol, timeframe, source, feed or data_feed())
     if source == "longbridge":
         require_timeframe_supported("longbridge", timeframe)
+        selected_feed = normalize_longbridge_feed(feed)
         try:
             return fetch_longbridge_bars(
                 root=root,
@@ -78,13 +79,14 @@ def fetch_ohlcv(
                 timeframe=timeframe,
                 start=start,
                 end=end,
-                feed=feed,
+                feed=selected_feed,
+                legacy_feed_alias=feed,
                 use_cache=use_cache,
             )
         except Exception:
             if not allow_fallback:
                 raise
-            return _fallback_ohlcv(root, symbol, timeframe, source, feed)
+            return _fallback_ohlcv(root, symbol, timeframe, source, selected_feed)
     raise ValueError(f"unsupported data source: {source}")
 
 

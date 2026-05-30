@@ -6,7 +6,11 @@ from pathlib import Path
 import pandas as pd
 
 from open_composer.adapters.data.alpaca import fetch_alpaca_bars
-from open_composer.adapters.data.longbridge import fetch_longbridge_bars, longbridge_cache_path
+from open_composer.adapters.data.longbridge import (
+    fetch_longbridge_bars,
+    longbridge_cache_path,
+    normalize_longbridge_feed,
+)
 from open_composer.adapters.data.provenance import cache_manifest_path, write_ohlcv_manifest
 from open_composer.adapters.data.sample import normalize_ohlcv
 from open_composer.config import data_feed, ensure_dir
@@ -55,6 +59,8 @@ def compare_ohlcv_sources(
 ) -> OhlcvComparison:
     left = _load_source_frame(root, symbol, timeframe, left_source, left_feed)
     right = _load_source_frame(root, symbol, timeframe, right_source, right_feed)
+    effective_left_feed = left.attrs.get("data_source_feed") or left_feed
+    effective_right_feed = right.attrs.get("data_source_feed") or right_feed
     merged = left.merge(
         right,
         on="timestamp",
@@ -101,8 +107,8 @@ def compare_ohlcv_sources(
         timeframe=timeframe,
         left_source=left_source,
         right_source=right_source,
-        left_feed=left_feed,
-        right_feed=right_feed,
+        left_feed=effective_left_feed,
+        right_feed=effective_right_feed,
         left_rows=len(left),
         right_rows=len(right),
         matched_rows=len(matched),
@@ -129,7 +135,12 @@ def compare_ohlcv_sources(
         right_manifest_path=str(right_manifest)
         if right_manifest and right_manifest.exists()
         else None,
-        caveats=_comparison_caveats(left_source, right_source, left_feed, right_feed),
+        caveats=_comparison_caveats(
+            left_source,
+            right_source,
+            effective_left_feed,
+            effective_right_feed,
+        ),
         report_json_path="",
         report_markdown_path="",
     )
@@ -203,7 +214,7 @@ def _load_source_frame(
             use_cache=True,
         )
     if source == "longbridge":
-        selected_feed = feed or "nasdaq_basic"
+        selected_feed = normalize_longbridge_feed(feed)
         cache_path = longbridge_cache_path(root, symbol, timeframe, selected_feed)
         if cache_path.exists():
             return fetch_longbridge_bars(
@@ -350,7 +361,9 @@ def _manifest_path(
     if source == "alpaca":
         return cache_manifest_path(root, symbol, timeframe, "alpaca", feed or data_feed())
     if source == "longbridge":
-        return cache_manifest_path(root, symbol, timeframe, "longbridge", feed or "nasdaq_basic")
+        return cache_manifest_path(
+            root, symbol, timeframe, "longbridge", normalize_longbridge_feed(feed)
+        )
     if source == "sample":
         return None
     return cache_manifest_path(root, symbol, timeframe, source, feed)

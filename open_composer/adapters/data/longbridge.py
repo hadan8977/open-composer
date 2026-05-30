@@ -19,8 +19,10 @@ class LongbridgeDataError(RuntimeError):
 
 
 DEFAULT_LONGBRIDGE_FEED = "nasdaq_basic"
+ALPACA_ONLY_FEEDS = {"iex", "sip"}
 DEFAULT_LONGBRIDGE_TRADE_SESSIONS = "intraday"
 MAX_LONGBRIDGE_CANDLESTICKS = 1000
+DEFAULT_LONGBRIDGE_HISTORY_PAGES = 20
 REQUIRED_LONGBRIDGE_ENV = (
     "LONGBRIDGE_APP_KEY",
     "LONGBRIDGE_APP_SECRET",
@@ -34,8 +36,22 @@ def longbridge_cache_path(
     timeframe: str,
     feed: str | None = None,
 ) -> Path:
-    selected_feed = feed or DEFAULT_LONGBRIDGE_FEED
+    selected_feed = normalize_longbridge_feed(feed)
     return root / "data" / "cache" / f"{symbol.lower()}_{timeframe}_longbridge_{selected_feed}.csv"
+
+
+def legacy_longbridge_cache_path(
+    root: Path,
+    symbol: str,
+    timeframe: str,
+    feed: str | None = None,
+) -> Path | None:
+    if feed is None:
+        return None
+    selected = feed.strip().lower()
+    if selected not in ALPACA_ONLY_FEEDS:
+        return None
+    return root / "data" / "cache" / f"{symbol.lower()}_{timeframe}_longbridge_{selected}.csv"
 
 
 def longbridge_materialized_history_path(root: Path, symbol: str, timeframe: str) -> Path:
@@ -55,13 +71,19 @@ def fetch_longbridge_bars(
     start: datetime | None,
     end: datetime | None,
     feed: str | None = None,
+    legacy_feed_alias: str | None = None,
     use_cache: bool = True,
     adjusted: bool = True,
     count: int = MAX_LONGBRIDGE_CANDLESTICKS,
     trade_sessions: str = DEFAULT_LONGBRIDGE_TRADE_SESSIONS,
 ) -> pd.DataFrame:
-    selected_feed = feed or DEFAULT_LONGBRIDGE_FEED
+    selected_feed = normalize_longbridge_feed(feed)
     cache_path = longbridge_cache_path(root, symbol, timeframe, selected_feed)
+    legacy_cache_paths: list[Path] = []
+    for alias in (legacy_feed_alias, feed, *sorted(ALPACA_ONLY_FEEDS)):
+        legacy_cache_path = legacy_longbridge_cache_path(root, symbol, timeframe, alias)
+        if legacy_cache_path and legacy_cache_path not in legacy_cache_paths:
+            legacy_cache_paths.append(legacy_cache_path)
     materialized = _load_materialized_history(
         root=root,
         symbol=symbol,
@@ -74,22 +96,33 @@ def fetch_longbridge_bars(
     )
     if materialized is not None:
         return materialized
-    if use_cache and cache_path.exists() and start is None and end is None:
-        frame = normalize_ohlcv(pd.read_csv(cache_path))
-        _annotate_frame(frame, selected_feed, "cache", cache_path)
-        write_ohlcv_manifest(
-            root,
-            provider="longbridge",
-            feed=selected_feed,
-            symbol=symbol,
-            timeframe=timeframe,
-            cache_path=cache_path,
-            frame=frame,
-            source_mode="cache",
-            request_params={"adjusted": adjusted, "trade_sessions": trade_sessions},
-            caveats=_longbridge_caveats(selected_feed, trade_sessions),
-        )
-        return frame
+    if use_cache and start is None and end is None:
+        source_cache_path = cache_path
+        if not source_cache_path.exists():
+            for legacy_cache_path in legacy_cache_paths:
+                if legacy_cache_path.exists():
+                    source_cache_path = legacy_cache_path
+                    break
+        if source_cache_path.exists():
+            frame = normalize_ohlcv(pd.read_csv(source_cache_path))
+            if source_cache_path != cache_path:
+                ensure_dir(cache_path.parent)
+                frame.to_csv(cache_path, index=False)
+                source_cache_path = cache_path
+            _annotate_frame(frame, selected_feed, "cache", source_cache_path)
+            write_ohlcv_manifest(
+                root,
+                provider="longbridge",
+                feed=selected_feed,
+                symbol=symbol,
+                timeframe=timeframe,
+                cache_path=source_cache_path,
+                frame=frame,
+                source_mode="cache",
+                request_params={"adjusted": adjusted, "trade_sessions": trade_sessions},
+                caveats=_longbridge_caveats(selected_feed, trade_sessions),
+            )
+            return frame
 
     try:
         frame = _fetch_live_longbridge_bars(
@@ -147,6 +180,15 @@ def fetch_longbridge_bars(
         caveats=_longbridge_caveats(selected_feed, trade_sessions),
     )
     return frame
+
+
+def normalize_longbridge_feed(feed: str | None) -> str:
+    if feed is None:
+        return DEFAULT_LONGBRIDGE_FEED
+    selected = feed.strip().lower()
+    if not selected or selected in ALPACA_ONLY_FEEDS:
+        return DEFAULT_LONGBRIDGE_FEED
+    return selected
 
 
 def _load_materialized_history(
@@ -255,13 +297,25 @@ def _fetch_live_longbridge_bars(
     selected_sessions = _longbridge_trade_sessions(TradeSessions, trade_sessions)
     security_code = _longbridge_security_code(symbol)
 
-    if start is not None or end is not None:
+    if start is not None:
+        return _fetch_live_longbridge_range_by_offset(
+            context=context,
+            security_code=security_code,
+            period=period,
+            adjust_type=adjust_type,
+            start=start,
+            end=end,
+            count=count,
+            trade_sessions=selected_sessions,
+            timeframe=timeframe,
+        )
+    if end is not None:
         rows = context.history_candlesticks_by_date(
             security_code,
             period,
             adjust_type,
-            start.date() if start else None,
-            end.date() if end else None,
+            None,
+            end.date(),
             selected_sessions,
         )
     else:
@@ -273,6 +327,85 @@ def _fetch_live_longbridge_bars(
             selected_sessions,
         )
     return _rows_to_frame(rows)
+
+
+def _fetch_live_longbridge_range_by_offset(
+    *,
+    context: Any,
+    security_code: str,
+    period: Any,
+    adjust_type: Any,
+    start: datetime,
+    end: datetime | None,
+    count: int,
+    trade_sessions: Any,
+    timeframe: str,
+) -> pd.DataFrame:
+    start_ts = _utc_timestamp(start)
+    end_ts = _utc_timestamp(end) if end is not None else None
+    cursor = start_ts.to_pydatetime()
+    frames: list[pd.DataFrame] = []
+    last_seen: pd.Timestamp | None = None
+    for _ in range(_longbridge_history_pages()):
+        rows = context.history_candlesticks_by_offset(
+            security_code,
+            period,
+            adjust_type,
+            True,
+            count,
+            cursor,
+            trade_sessions,
+        )
+        frame = _rows_to_frame(rows)
+        if frame.empty:
+            break
+        frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True)
+        raw_last = frame["timestamp"].max()
+        window = frame.loc[frame["timestamp"] >= start_ts].copy()
+        if end_ts is not None:
+            window = window.loc[window["timestamp"] <= end_ts].copy()
+        if not window.empty:
+            frames.append(window)
+        if last_seen is not None and raw_last <= last_seen:
+            break
+        last_seen = raw_last
+        if end_ts is not None and raw_last >= end_ts:
+            break
+        cursor = (raw_last + _timeframe_delta(timeframe)).to_pydatetime()
+    if not frames:
+        return _empty_ohlcv_frame()
+    combined = pd.concat(frames, ignore_index=True)
+    combined = combined.drop_duplicates(subset=["timestamp"]).sort_values("timestamp")
+    return normalize_ohlcv(combined.reset_index(drop=True))
+
+
+def _longbridge_history_pages() -> int:
+    raw = os.getenv("LONGBRIDGE_MAX_HISTORY_PAGES")
+    if not raw:
+        return DEFAULT_LONGBRIDGE_HISTORY_PAGES
+    try:
+        parsed = int(raw)
+    except ValueError:
+        return DEFAULT_LONGBRIDGE_HISTORY_PAGES
+    return max(1, min(parsed, 240))
+
+
+def _timeframe_delta(timeframe: str) -> pd.Timedelta:
+    mapping = {
+        "1m": pd.Timedelta(minutes=1),
+        "5m": pd.Timedelta(minutes=5),
+        "15m": pd.Timedelta(minutes=15),
+        "1h": pd.Timedelta(hours=1),
+        "daily": pd.Timedelta(days=1),
+        "weekly": pd.Timedelta(weeks=1),
+    }
+    return mapping.get(timeframe, pd.Timedelta(minutes=1))
+
+
+def _empty_ohlcv_frame() -> pd.DataFrame:
+    return normalize_ohlcv(
+        pd.DataFrame(columns=["timestamp", "open", "high", "low", "close", "volume"])
+    )
 
 
 def fetch_longbridge_quotes(root: Path, symbols: list[str]) -> list[dict[str, Any]]:
@@ -425,6 +558,8 @@ def _rows_to_frame(rows: Any) -> pd.DataFrame:
                 "volume": _row_value(row, "volume"),
             }
         )
+    if not records:
+        return _empty_ohlcv_frame()
     return normalize_ohlcv(pd.DataFrame(records))
 
 
