@@ -103,6 +103,40 @@ candidate are labeled `llm_assisted_selection_only`; if an external gateway is
 unavailable, the acceptance gate stays failed. `--local-choice-label` records
 `codex_local_choice` and must select from prompt-visible candidates.
 
+## AI-Driven Auto Research
+
+Use `oc research auto` when you want the catalog workflow to turn a thesis into
+candidate factors, single-factor IC diagnostics, a draft StrategySpec, strategy
+evidence, and an auto research report:
+
+```bash
+uv run oc research auto "Trend continuation on QQQ daily."
+```
+
+The default is `--universe QQQ --timeframe daily --data-source alpaca`. If
+Alpaca credentials are not configured, the command falls back to sample
+synthetic data and writes `data_source_fallback.txt` into the run directory.
+Sample fallback output is workflow evidence only and remains not paper-ready.
+
+For explicit sample-only research:
+
+```bash
+uv run oc research auto "Trend continuation on SYN daily." \
+  --universe SYN --timeframe daily \
+  --data-source sample --data-path data/sample/syn_daily.csv
+```
+
+After multiple theses, generate a cross-thesis factor view:
+
+```bash
+uv run oc research compare
+```
+
+The output at `reports/research/auto/_compare/cross_thesis_compare.md` shows
+factor appearances, selection rate, mean/min/max rank IC, and diagnosis
+breakdowns such as `insufficient_observations`, `zero_variance_signal`, and
+`all_nan_signal`.
+
 ## Data And Feature Packets
 
 ```bash
