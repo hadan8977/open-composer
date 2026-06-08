@@ -447,6 +447,17 @@ def research_auto_command(
     console.print(f"report: {result.report_path}")
 
 
+@research_app.command("compare")
+def research_compare_command() -> None:
+    """Aggregate ic_scores.json across all auto research runs."""
+    from open_composer.research.auto_compare import write_cross_thesis_compare
+
+    json_path, md_path = write_cross_thesis_compare(project_root())
+    console.print("[green]cross-thesis compare written[/green]")
+    console.print(f"json: {json_path}")
+    console.print(f"markdown: {md_path}")
+
+
 def _parse_kv_pairs(raw: str) -> dict[str, Any]:
     result: dict[str, Any] = {}
     if not raw.strip():
