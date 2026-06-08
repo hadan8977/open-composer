@@ -135,7 +135,7 @@ class _SafetyVisitor(ast.NodeVisitor):
         super().generic_visit(node)
 
     def visit_Name(self, node: ast.Name) -> None:
-        if node.id in FORBIDDEN_NAMES or node.id.startswith("__"):
+        if node.id not in OHLCV_NAMES and (node.id in FORBIDDEN_NAMES or node.id.startswith("__")):
             self.violations.append(f"forbidden name: {node.id!r}")
         self.generic_visit(node)
 
@@ -231,7 +231,7 @@ def prepare_factor_frame(
         for name, factor in list(remaining.items()):
             source = getattr(factor, "source", "expression")
             try:
-                if source == "expression":
+                if source in {"expression", "factor_library"}:
                     expression = getattr(factor, "expression", None)
                     if not expression:
                         raise ExpressionError(f"factor {name} missing expression")

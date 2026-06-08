@@ -1,0 +1,54 @@
+name: example_catalog_factor_daily
+description: "Audit fixture using source=factor_library for trend and overnight factors."
+timeframe: daily
+universe: [SYN]
+lifecycle: draft
+entry:
+  all:
+  - trend_momentum_signal > 0
+  - overnight_gap < 0.02
+  any: []
+exit:
+  all: []
+  any:
+  - trend_momentum_signal < 0
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 1.0
+costs:
+  commission_pct: 0.0
+  slippage_bps: 0.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: sample
+  symbol: SYN
+  path: data/sample/syn_daily.csv
+  feed: null
+data_assumptions:
+  source: sample
+  adjusted: true
+  timezone: America/New_York
+factors:
+  trend_momentum_signal:
+    source: factor_library
+    factor_id: absolute_time_series_momentum_120
+    params:
+      lookback_days: 120
+  overnight_gap:
+    source: factor_library
+    factor_id: alpha158_overnight_gap
+llm_review:
+  enabled: false
+notes:
+  intent: "Demonstrates catalog factor usage for AI-driven research."
+  open_questions: []
+required_capabilities:
+- market.synthetic_daily_long

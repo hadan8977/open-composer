@@ -76,6 +76,23 @@ without losing strategy context.
 
 For command-level usage, see [docs/user-guide.md](docs/user-guide.md).
 
+## AI-Driven Research
+
+When you do not know which indicator or parameter set to start with, describe
+the thesis and let the catalog workflow draft the first research pass:
+
+```bash
+uv run oc research auto "Find a TQQQ trend strategy that exits in high-volatility regimes" \
+  --universe TQQQ --timeframe daily
+```
+
+The pipeline selects candidate factors from the catalog, runs single-factor IC
+diagnostics, drafts a `StrategySpec` with `source: factor_library`, runs the
+strategy evidence workflow, and writes a report under `reports/research/auto/`.
+Browse the catalog with `oc factor list`, inspect one factor with
+`oc factor show <factor_id>`, and add a catalog factor to an existing spec with
+`oc factor use-in`.
+
 ## Data And Integrations
 
 Open Composer runs without credentials by using sample data and fixtures.

@@ -159,12 +159,14 @@ class LLMFactorCachePolicy(BaseModel):
 class FactorConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    source: Literal["expression", "llm_feature", "feature_packet"] = "expression"
+    source: Literal["expression", "llm_feature", "feature_packet", "factor_library"] = "expression"
     expression: str | None = None
     path: str | None = None
     field: str | None = None
     default: float | bool = 0.0
     description: str = ""
+    factor_id: str | None = None
+    params: dict[str, Any] = Field(default_factory=dict)
     input_view: str | None = None
     input_view_version: int | None = Field(default=None, ge=1)
     prompt_template_path: str | None = None
@@ -200,6 +202,27 @@ class FactorConfig(BaseModel):
                 raise ValueError(msg)
             if not self.path and self.cache_policy is None:
                 self.cache_policy = LLMFactorCachePolicy()
+        if self.source == "factor_library":
+            if not self.factor_id:
+                msg = "factor_library factors require factor_id"
+                raise ValueError(msg)
+            from open_composer.research.factor_library import get_factor, materialize_expression
+
+            try:
+                factor = get_factor(self.factor_id)
+            except KeyError as exc:
+                msg = f"factor_id {self.factor_id!r} not in factor_library catalog"
+                raise ValueError(msg) from exc
+            if not factor.expression:
+                msg = (
+                    f"factor {self.factor_id} has no expression template; "
+                    "cannot use as source=factor_library"
+                )
+                raise ValueError(msg)
+            rendered = materialize_expression(factor, self.params)
+            object.__setattr__(self, "expression", rendered)
+            if not self.description:
+                object.__setattr__(self, "description", factor.description)
         return self
 
 

@@ -4,11 +4,13 @@ import importlib.util
 import json
 import os
 import sys
+from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, get_args
+from typing import Annotated, Any, get_args
 
 import typer
+import yaml
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
@@ -228,6 +230,8 @@ harness_app = typer.Typer(no_args_is_help=True)
 project_app = typer.Typer(no_args_is_help=True)
 agent_app = typer.Typer(no_args_is_help=True)
 research_brief_app = typer.Typer(no_args_is_help=True)
+factor_app = typer.Typer(no_args_is_help=True)
+research_app = typer.Typer(no_args_is_help=True)
 console = Console()
 
 app.add_typer(spec_app, name="spec")
@@ -252,12 +256,226 @@ app.add_typer(cache_app, name="cache")
 app.add_typer(harness_app, name="harness")
 app.add_typer(project_app, name="project")
 app.add_typer(agent_app, name="agent")
+app.add_typer(factor_app, name="factor")
+app.add_typer(research_app, name="research")
 
 
 @app.callback()
 def _load_env() -> None:
     root = project_root()
     load_dotenv(root / ".env")
+
+
+@factor_app.command("list")
+def factor_list_command(
+    family: Annotated[str | None, typer.Option("--family")] = None,
+    inputs: Annotated[
+        str | None, typer.Option("--inputs", help="Comma-separated OHLCV inputs")
+    ] = None,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """List factor catalog entries."""
+    from open_composer.research.factor_library import list_factors
+
+    inputs_set = {item.strip() for item in inputs.split(",") if item.strip()} if inputs else None
+    factors = list_factors(family=family, inputs=inputs_set)
+    if json_output:
+        sys.stdout.write(json.dumps([asdict(factor) for factor in factors], indent=2) + "\n")
+        return
+    table = Table(title=f"Factor Catalog ({len(factors)} factors)")
+    table.add_column("id")
+    table.add_column("family")
+    table.add_column("inputs")
+    table.add_column("expression")
+    table.add_column("label")
+    for factor in factors:
+        table.add_row(
+            factor.id,
+            factor.family,
+            ",".join(factor.inputs),
+            "yes" if factor.expression else "no",
+            factor.label,
+        )
+    console.print(table)
+
+
+@factor_app.command("show")
+def factor_show_command(factor_id: str) -> None:
+    """Show one factor definition."""
+    from open_composer.research.factor_library import get_factor, materialize_expression
+
+    try:
+        factor = get_factor(factor_id)
+    except KeyError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[bold]{factor.id}[/bold] - {factor.label}")
+    console.print(f"family: {factor.family}")
+    console.print(f"inputs: {', '.join(factor.inputs)}")
+    console.print(f"output: {factor.output}")
+    console.print(f"\n[bold]description[/bold]\n{factor.description}")
+    if factor.expression:
+        console.print(f"\n[bold]expression (defaults)[/bold]\n{materialize_expression(factor, {})}")
+    else:
+        console.print("\n[yellow]no expression template[/yellow]")
+    if factor.default_parameter_space:
+        console.print("\n[bold]parameter space[/bold]")
+        for key, value in factor.default_parameter_space.items():
+            console.print(f"- {key}: {value}")
+    if factor.source_card_ids:
+        console.print("\n[bold]source cards[/bold]")
+        for source_card_id in factor.source_card_ids:
+            console.print(f"- {source_card_id}")
+    lineage_path = project_root() / "reports" / "factors" / factor.id / "lineage.json"
+    if lineage_path.exists():
+        payload = json.loads(lineage_path.read_text(encoding="utf-8"))
+        used = payload.get("used_in_specs", [])
+        if isinstance(used, list) and used:
+            console.print(f"\n[bold]used in specs[/bold] ({len(used)})")
+            for item in used[:10]:
+                if isinstance(item, dict):
+                    console.print(f"- {item.get('spec_path')}")
+
+
+@factor_app.command("use-in")
+def factor_use_in_command(
+    spec_path: Path,
+    factor_id: str,
+    name: Annotated[str, typer.Option("--name", help="Factor key to add to the spec")] = "",
+    params: Annotated[
+        str | None, typer.Option("--params", help="Comma-separated k=v pairs")
+    ] = None,
+) -> None:
+    """Add a catalog factor to a StrategySpec in place."""
+    from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.research.factor_library import get_factor
+    from open_composer.research.factor_lineage import append_lineage
+
+    try:
+        factor = get_factor(factor_id)
+    except KeyError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if not factor.expression:
+        raise typer.BadParameter(f"factor {factor_id} has no expression template")
+    params_dict = _parse_kv_pairs(params or "")
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise typer.BadParameter(f"{spec_path} must contain a YAML mapping")
+    factor_name = name or factor.id
+    raw.setdefault("factors", {})
+    if not isinstance(raw["factors"], dict):
+        raise typer.BadParameter("spec factors field must be a mapping")
+    raw["factors"][factor_name] = {
+        "source": "factor_library",
+        "factor_id": factor.id,
+        "params": params_dict,
+    }
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    try:
+        load_strategy_spec(spec_path)
+    except Exception as exc:
+        raise typer.BadParameter(f"updated spec failed validation: {exc}") from exc
+    lineage = append_lineage(factor.id, spec_path, added_by="cli", root=project_root())
+    console.print(f"[green]factor added[/green] {factor.id} -> {spec_path} as {factor_name}")
+    console.print(f"lineage: {lineage}")
+
+
+@factor_app.command("catalog-status")
+def factor_catalog_status_command(
+    strict: Annotated[bool, typer.Option("--strict")] = False,
+) -> None:
+    """Validate catalog expression templates and parameter defaults."""
+    from open_composer.expressions import ExpressionSafetyError, assert_expression_safe
+    from open_composer.research.factor_library import ALL_FACTORS, materialize_expression
+
+    errors: list[str] = []
+    warnings: list[str] = []
+    for factor in ALL_FACTORS:
+        if not factor.expression:
+            warnings.append(f"{factor.id}: no expression template")
+            continue
+        try:
+            rendered = materialize_expression(factor, {})
+            assert_expression_safe(rendered)
+        except (ValueError, ExpressionSafetyError) as exc:
+            errors.append(f"{factor.id}: {exc}")
+    console.print(f"catalog size: {len(ALL_FACTORS)}")
+    console.print(f"expressionable: {len([factor for factor in ALL_FACTORS if factor.expression])}")
+    console.print(f"errors: {len(errors)}")
+    console.print(f"warnings: {len(warnings)}")
+    for error in errors:
+        console.print(f"[red]error[/red] {error}")
+    for warning in warnings:
+        console.print(f"[yellow]warning[/yellow] {warning}")
+    if strict and errors:
+        raise typer.Exit(1)
+
+
+@research_app.command("auto")
+def research_auto_command(
+    thesis: str,
+    universe: Annotated[str, typer.Option("--universe")] = "SYN",
+    timeframe: Annotated[str, typer.Option("--timeframe")] = "daily",
+    data_source: Annotated[str, typer.Option("--data-source")] = "sample",
+    data_path: Annotated[str | None, typer.Option("--data-path")] = None,
+    max_factors: Annotated[int, typer.Option("--max-factors")] = 5,
+    use_llm: Annotated[bool, typer.Option("--use-llm/--no-llm")] = False,
+) -> None:
+    """Run thesis -> catalog factors -> IC -> draft spec -> evidence."""
+    from open_composer.research.auto_research import run_auto_research
+
+    universe_list = [item.strip().upper() for item in universe.split(",") if item.strip()]
+    try:
+        result = run_auto_research(
+            thesis,
+            universe_list,
+            timeframe=timeframe,
+            data_source=data_source,
+            data_path=data_path,
+            max_factors=max_factors,
+            use_llm=use_llm,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]auto research complete[/green] {result.run_id}")
+    console.print(f"selected factors: {', '.join(result.selected_factors) or 'none'}")
+    console.print(f"spec: {result.spec_path}")
+    console.print(f"evidence status: {result.evidence_status}")
+    if result.blockers:
+        console.print("blockers: " + "; ".join(result.blockers))
+    console.print(f"report: {result.report_path}")
+
+
+def _parse_kv_pairs(raw: str) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    if not raw.strip():
+        return result
+    for item in raw.split(","):
+        if "=" not in item:
+            raise typer.BadParameter(f"parameter must use k=v syntax: {item}")
+        key, value = item.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise typer.BadParameter("parameter key cannot be empty")
+        result[key] = _parse_scalar(value.strip())
+    return result
+
+
+def _parse_scalar(raw: str) -> Any:
+    lowered = raw.lower()
+    if lowered == "true":
+        return True
+    if lowered == "false":
+        return False
+    if lowered in {"none", "null"}:
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        pass
+    try:
+        return float(raw)
+    except ValueError:
+        return raw
     extra_env = os.getenv("OC_EXTRA_ENV_FILE")
     if extra_env:
         load_dotenv(Path(extra_env).expanduser(), override=False)

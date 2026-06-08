@@ -28,6 +28,9 @@ CURRENT_DOCS = {
     "docs/plan-step-3-dashboard-first-2026-05-22.zh.md",
     "docs/local-product-optimization-plan-2026-05-25.zh.md",
     "docs/strategy-research-product-remediation-plan-2026-05-26.zh.md",
+    "docs/plan-step-6-factor-catalog-and-ai-research-2026-05-26.zh.md",
+    "docs/plan-step-6-5-auto-research-fixes-2026-06-08.zh.md",
+    "docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md",
 }
 
 REQUIRED_SKILLS = [
