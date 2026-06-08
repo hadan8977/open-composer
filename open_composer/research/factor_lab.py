@@ -174,15 +174,21 @@ def _factor_metric(
     observations = int(len(joined))
     unique_values = int(raw.nunique(dropna=True))
     flags: list[str] = []
+    if raw.dropna().empty:
+        flags.append("all_nan")
     if coverage_pct < LOW_COVERAGE_PCT:
         flags.append("low_coverage")
     if observations < MIN_FACTOR_OBSERVATIONS:
         flags.append("insufficient_observations")
+    if unique_values <= 1 and observations >= MIN_FACTOR_OBSERVATIONS:
+        flags.append("zero_variance")
     if unique_values < 3:
         flags.append("low_unique_values")
 
     forward_corr = _safe_corr(joined["factor"], joined["forward_return"])
-    rank_ic = _safe_corr(joined["factor"].rank(), joined["forward_return"].rank())
+    rank_ic = None
+    if not {"all_nan", "zero_variance", "insufficient_observations"}.intersection(flags):
+        rank_ic = _safe_corr(joined["factor"].rank(), joined["forward_return"].rank())
     rolling_rank_ic_values = _rolling_rank_ic(joined["factor"], joined["forward_return"])
     rolling_rank_ic_mean = (
         float(pd.Series(rolling_rank_ic_values).mean()) if rolling_rank_ic_values else None

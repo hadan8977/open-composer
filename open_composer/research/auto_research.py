@@ -315,7 +315,12 @@ def _run_single_factor_ic(
     mini_dir = ensure_dir(run_dir / "mini_specs")
     for factor in candidates:
         if not factor.expression:
-            scores[factor.id] = {"skipped": True, "reason": "no expression"}
+            scores[factor.id] = {
+                "status": "skipped",
+                "reason": "no_expression_template",
+                "rank_ic": None,
+                "rank_ic_diagnosis": "no_expression_template",
+            }
             continue
         spec_path = _mini_spec_path(
             factor=factor,
@@ -330,21 +335,58 @@ def _run_single_factor_ic(
         try:
             result = run_factor_lab(spec_path, base, forward_bars=5, quantiles=5)
             metric = result.factor_metrics[0] if result.factor_metrics else None
+            if metric is None:
+                scores[factor.id] = {
+                    "status": "failed",
+                    "reason": "no_metric_returned",
+                    "rank_ic": None,
+                    "rank_ic_diagnosis": "rank_ic_undefined_unknown_reason",
+                    "flags": ["missing_metric"],
+                    "spec_path": _relpath(spec_path, base),
+                    "json_path": _relpath(result.json_path, base),
+                }
+                continue
+            rank_ic = metric.rank_ic
+            rank_ic_diagnosis = (
+                _rank_ic_diagnosis(metric.flags, metric.observations, metric.coverage_pct)
+                if rank_ic is None
+                else None
+            )
             scores[factor.id] = {
-                "status": result.status,
-                "rank_ic": metric.rank_ic if metric else None,
-                "rolling_rank_ic_mean": metric.rolling_rank_ic_mean if metric else None,
-                "stability_score": metric.stability_score if metric else None,
-                "coverage_pct": metric.coverage_pct if metric else None,
-                "observations": metric.observations if metric else 0,
-                "top_bottom_spread_pct": metric.top_bottom_spread_pct if metric else None,
-                "flags": metric.flags if metric else ["missing_metric"],
+                "status": result.status if rank_ic is not None else "diagnostic",
+                "rank_ic": rank_ic,
+                "rank_ic_diagnosis": rank_ic_diagnosis,
+                "rolling_rank_ic_mean": metric.rolling_rank_ic_mean,
+                "stability_score": metric.stability_score,
+                "coverage_pct": metric.coverage_pct,
+                "observations": metric.observations,
+                "top_bottom_spread_pct": metric.top_bottom_spread_pct,
+                "flags": metric.flags,
                 "spec_path": _relpath(spec_path, base),
                 "json_path": _relpath(result.json_path, base),
             }
         except Exception as exc:  # noqa: BLE001
-            scores[factor.id] = {"status": "failed", "error": str(exc), "rank_ic": None}
+            scores[factor.id] = {
+                "status": "failed",
+                "reason": "factor_lab_exception",
+                "error": str(exc),
+                "rank_ic": None,
+                "rank_ic_diagnosis": "factor_lab_exception",
+            }
     return scores
+
+
+def _rank_ic_diagnosis(flags: list[str], observations: int, coverage_pct: float) -> str:
+    flag_set = set(flags)
+    if observations < 30 or "insufficient_observations" in flag_set:
+        return "insufficient_observations"
+    if coverage_pct < 50 or "low_coverage" in flag_set:
+        return "low_coverage"
+    if "zero_variance" in flag_set or "constant_series" in flag_set:
+        return "zero_variance_signal"
+    if "all_nan" in flag_set:
+        return "all_nan_signal"
+    return "rank_ic_undefined_unknown_reason"
 
 
 def _select_top_k(
