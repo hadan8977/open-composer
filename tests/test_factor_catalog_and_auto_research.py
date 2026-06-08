@@ -217,3 +217,47 @@ def test_auto_research_downgrades_sample_strict_data_to_warning(
     report = result.report_path.read_text(encoding="utf-8")
     assert "- Research status: `warning`" in report
     assert "- Raw strategy evidence status: `blocked`" in report
+
+
+def test_auto_research_defaults_to_alpaca_and_falls_back_without_credentials(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    metric = SimpleNamespace(
+        rank_ic=0.08,
+        rolling_rank_ic_mean=0.04,
+        stability_score=0.75,
+        coverage_pct=96.0,
+        observations=250,
+        top_bottom_spread_pct=1.2,
+        flags=[],
+    )
+
+    def fake_factor_lab(spec_path: Path, root: Path, **kwargs):  # noqa: ARG001
+        return SimpleNamespace(
+            status="ok",
+            factor_metrics=[metric],
+            json_path=sample_workspace / "reports" / "research" / f"{spec_path.stem}.json",
+        )
+
+    def fake_evidence(spec_path: Path, root: Path):  # noqa: ARG001
+        return SimpleNamespace(status="warning")
+
+    monkeypatch.delenv("ALPACA_API_KEY_ID", raising=False)
+    monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
+    monkeypatch.setattr("open_composer.research.auto_research.run_factor_lab", fake_factor_lab)
+    monkeypatch.setattr("open_composer.research.evidence.build_strategy_evidence", fake_evidence)
+
+    result = run_auto_research(
+        "Trend thesis on QQQ daily.",
+        ["QQQ"],
+        max_factors=2,
+        root=sample_workspace,
+    )
+
+    assert result.fallback_message
+    assert "falling back to sample" in result.fallback_message
+    assert (result.report_path.parent / "data_source_fallback.txt").exists()
+    spec = load_strategy_spec(result.spec_path)
+    assert spec.data.source == "sample"
+    assert spec.data.path == "data/sample/syn_daily.csv"

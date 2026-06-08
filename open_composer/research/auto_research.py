@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -9,7 +10,12 @@ from typing import Any
 
 import yaml
 
-from open_composer.config import ensure_dir, project_root
+from open_composer.config import (
+    alpaca_api_key_id,
+    alpaca_api_secret_key,
+    ensure_dir,
+    project_root,
+)
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.factor_lab import run_factor_lab
 from open_composer.research.factor_library import (
@@ -32,6 +38,7 @@ class AutoResearchResult:
     raw_evidence_status: str = "not_run"
     promotion_status: str | None = None
     paper_readiness_status: str | None = None
+    fallback_message: str | None = None
     warnings: list[str] = field(default_factory=list)
     blockers: list[str] = field(default_factory=list)
     next_actions: list[str] = field(default_factory=list)
@@ -85,7 +92,7 @@ def run_auto_research(
     universe: list[str],
     *,
     timeframe: str = "daily",
-    data_source: str = "sample",
+    data_source: str = "alpaca",
     data_path: str | None = None,
     max_factors: int = 5,
     use_llm: bool = False,
@@ -101,6 +108,15 @@ def run_auto_research(
     run_id = _make_run_id(thesis)
     run_dir = ensure_dir(base / "reports" / "research" / "auto" / run_id)
     (run_dir / "thesis.md").write_text(thesis.rstrip() + "\n", encoding="utf-8")
+    fallback_message: str | None = None
+    available, reason = _check_data_source_available(data_source)
+    if not available:
+        fallback_message = (
+            f"data_source={data_source} unavailable ({reason}); falling back to sample"
+        )
+        data_source = "sample"
+        data_path = data_path or _sample_data_path_for_symbol(symbols[0], base)
+        (run_dir / "data_source_fallback.txt").write_text(fallback_message + "\n", encoding="utf-8")
 
     candidates = (
         _select_with_llm(thesis, symbols) if use_llm else _select_with_keyword_heuristic(thesis)
@@ -174,6 +190,7 @@ def run_auto_research(
         raw_evidence_status=evidence_summary.raw_status,
         promotion_status=evidence_summary.promotion_status,
         paper_readiness_status=evidence_summary.paper_readiness_status,
+        fallback_message=fallback_message,
         report_path=report_path,
         warnings=evidence_summary.warnings,
         blockers=evidence_summary.blockers,
@@ -814,6 +831,29 @@ def _market_capability(data_source: str, timeframe: str) -> str:
     if data_source == "longbridge":
         return "market.longbridge_bars"
     return "market.sample_ohlcv"
+
+
+def _check_data_source_available(data_source: str) -> tuple[bool, str]:
+    if data_source == "sample":
+        return True, ""
+    if data_source == "alpaca":
+        if not (alpaca_api_key_id() and alpaca_api_secret_key()):
+            return False, "ALPACA_API_KEY_ID / ALPACA_API_SECRET_KEY not configured"
+        return True, ""
+    if data_source == "longbridge":
+        keys = ["LONGBRIDGE_APP_KEY", "LONGBRIDGE_APP_SECRET", "LONGBRIDGE_ACCESS_TOKEN"]
+        missing = [key for key in keys if not os.getenv(key)]
+        if missing:
+            return False, f"Longbridge env missing: {','.join(missing)}"
+        return True, ""
+    return False, f"unknown data_source: {data_source}"
+
+
+def _sample_data_path_for_symbol(symbol: str, base: Path) -> str:
+    candidate = f"data/sample/{symbol.lower()}_daily.csv"
+    if (base / candidate).exists():
+        return candidate
+    return "data/sample/syn_daily.csv"
 
 
 def _make_run_id(thesis: str) -> str:

@@ -413,9 +413,9 @@ def factor_catalog_status_command(
 @research_app.command("auto")
 def research_auto_command(
     thesis: str,
-    universe: Annotated[str, typer.Option("--universe")] = "SYN",
+    universe: Annotated[str, typer.Option("--universe")] = "QQQ",
     timeframe: Annotated[str, typer.Option("--timeframe")] = "daily",
-    data_source: Annotated[str, typer.Option("--data-source")] = "sample",
+    data_source: Annotated[str, typer.Option("--data-source")] = "alpaca",
     data_path: Annotated[str | None, typer.Option("--data-path")] = None,
     max_factors: Annotated[int, typer.Option("--max-factors")] = 5,
     use_llm: Annotated[bool, typer.Option("--use-llm/--no-llm")] = False,
@@ -440,6 +440,8 @@ def research_auto_command(
     console.print(f"selected factors: {', '.join(result.selected_factors) or 'none'}")
     console.print(f"spec: {result.spec_path}")
     console.print(f"evidence status: {result.evidence_status}")
+    if result.fallback_message:
+        console.print(f"[yellow]{result.fallback_message}[/yellow]")
     if result.blockers:
         console.print("blockers: " + "; ".join(result.blockers))
     console.print(f"report: {result.report_path}")
