@@ -116,6 +116,8 @@ class DataAssumptions(BaseModel):
             "sample_smoke",
             "fixture_replay",
             "cached_live",
+            "research_replay_cache",
+            "research_strict",
             "research_cross_check",
             "cross_source_verified",
             "paper_ready_live",

@@ -56,6 +56,7 @@ def run_factor_lab(
     forward_bars: int = 1,
     horizons: list[int] | None = None,
     quantiles: int = 5,
+    refresh_data: bool = False,
 ) -> FactorLabResult:
     started_at = perf_counter()
     if forward_bars < 1:
@@ -68,7 +69,7 @@ def run_factor_lab(
 
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
-    frame = load_ohlcv_for_spec(spec, base)
+    frame = load_ohlcv_for_spec(spec, base, refresh=refresh_data)
     frame.attrs.update({"strategy_name": spec.name})
     data_profile = frame_data_profile(
         frame,

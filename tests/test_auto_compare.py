@@ -18,6 +18,8 @@ def test_compare_aggregates_existing_runs(repo_root) -> None:
     assert "factor_id" in first
     assert "appearances" in first
     assert "selection_rate" in first
+    assert "concentration" in payload
+    assert "top_factor_selection_share" in payload["concentration"]
 
 
 def test_compare_writes_json_and_md(repo_root) -> None:
@@ -27,4 +29,6 @@ def test_compare_writes_json_and_md(repo_root) -> None:
     assert md_path.exists()
     data = json.loads(json_path.read_text(encoding="utf-8"))
     assert "factors" in data
-    assert "# Cross-Thesis Factor Comparison" in md_path.read_text(encoding="utf-8")
+    markdown = md_path.read_text(encoding="utf-8")
+    assert "# Cross-Thesis Factor Comparison" in markdown
+    assert "## Concentration" in markdown

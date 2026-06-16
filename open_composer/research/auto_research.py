@@ -10,12 +10,14 @@ from typing import Any
 
 import yaml
 
+from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import (
     alpaca_api_key_id,
     alpaca_api_secret_key,
     ensure_dir,
     project_root,
 )
+from open_composer.expressions import evaluate_raw_expression, prepare_factor_frame
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.factor_lab import run_factor_lab
 from open_composer.research.factor_library import (
@@ -23,8 +25,10 @@ from open_composer.research.factor_library import (
     FactorDefinition,
     get_factor,
     list_factors,
+    materialize_expression,
 )
 from open_composer.research.factor_lineage import append_lineage
+from open_composer.research.metadata import frame_data_profile
 
 
 @dataclass(frozen=True)
@@ -86,6 +90,21 @@ _THESIS_FAMILY_ASSERTIONS: tuple[tuple[tuple[str, ...], str], ...] = (
     (("volatility", " vol "), "volatility_rank"),
 )
 
+_ZSCORE_WINDOW_BY_TIMEFRAME: dict[str, int] = {
+    "daily": 60,
+    "weekly": 26,
+    "4h": 60,
+    "1h": 120,
+    "30m": 120,
+    "15m": 120,
+    "5m": 240,
+    "1m": 240,
+}
+_DEFAULT_ZSCORE_WINDOW = 60
+_COMPOSITE_ENTRY_THRESHOLD = 0.3
+_COMPOSITE_EXIT_THRESHOLD = -0.3
+_MIN_ABS_RANK_IC_FOR_SIGNAL = 0.02
+
 
 def run_auto_research(
     thesis: str,
@@ -96,6 +115,8 @@ def run_auto_research(
     data_path: str | None = None,
     max_factors: int = 5,
     use_llm: bool = False,
+    refresh_data: bool = False,
+    zero_cost_smoke: bool = False,
     root: Path | None = None,
 ) -> AutoResearchResult:
     base = root or project_root()
@@ -135,8 +156,20 @@ def run_auto_research(
         data_path=data_path,
         base=base,
         run_dir=run_dir,
+        refresh_data=refresh_data,
     )
     _write_json(run_dir / "ic_scores.json", ic_scores)
+    oos_summary = _write_oos_summary(
+        candidates=candidates,
+        thesis=thesis,
+        universe=symbols,
+        timeframe=timeframe,
+        data_source=data_source,
+        data_path=data_path,
+        base=base,
+        run_dir=run_dir,
+        refresh_data=refresh_data,
+    )
 
     selected = _select_top_k(ic_scores, candidates, max_factors)
     if not selected:
@@ -147,11 +180,19 @@ def run_auto_research(
         thesis=thesis,
         run_id=run_id,
         selected=selected,
+        ic_scores=ic_scores,
         universe=symbols,
         timeframe=timeframe,
         data_source=data_source,
         data_path=data_path,
         base=base,
+        zero_cost_smoke=zero_cost_smoke,
+    )
+    data_profile = _write_auto_data_profile(
+        spec_path=spec_path,
+        run_dir=run_dir,
+        base=base,
+        refresh_data=refresh_data,
     )
 
     evidence_summary = _AutoEvidenceSummary(
@@ -163,7 +204,7 @@ def run_auto_research(
         from open_composer.research.research_brief import init_research_brief
 
         init_research_brief(spec_path, base, search_budget=max(1, len(selected)), overwrite=True)
-        evidence = build_strategy_evidence(spec_path, base)
+        evidence = build_strategy_evidence(spec_path, base, refresh_data=refresh_data)
         evidence_summary = _summarize_auto_evidence(evidence)
     except Exception as exc:  # noqa: BLE001
         evidence_summary = _AutoEvidenceSummary(
@@ -180,6 +221,9 @@ def run_auto_research(
         selected=selected,
         spec_path=spec_path,
         evidence_summary=evidence_summary,
+        data_profile=data_profile,
+        oos_summary=oos_summary,
+        zero_cost_smoke=zero_cost_smoke,
     )
     return AutoResearchResult(
         run_id=run_id,
@@ -327,6 +371,7 @@ def _run_single_factor_ic(
     data_path: str | None,
     base: Path,
     run_dir: Path,
+    refresh_data: bool = False,
 ) -> dict[str, dict[str, Any]]:
     scores: dict[str, dict[str, Any]] = {}
     mini_dir = ensure_dir(run_dir / "mini_specs")
@@ -350,7 +395,13 @@ def _run_single_factor_ic(
             mini_dir=mini_dir,
         )
         try:
-            result = run_factor_lab(spec_path, base, forward_bars=5, quantiles=5)
+            result = run_factor_lab(
+                spec_path,
+                base,
+                forward_bars=5,
+                quantiles=5,
+                refresh_data=refresh_data,
+            )
             metric = result.factor_metrics[0] if result.factor_metrics else None
             if metric is None:
                 scores[factor.id] = {
@@ -393,6 +444,102 @@ def _run_single_factor_ic(
     return scores
 
 
+def _write_oos_summary(
+    *,
+    candidates: list[FactorDefinition],
+    thesis: str,
+    universe: list[str],
+    timeframe: str,
+    data_source: str,
+    data_path: str | None,
+    base: Path,
+    run_dir: Path,
+    refresh_data: bool,
+) -> dict[str, Any]:
+    if not candidates:
+        payload = {"status": "blocked", "reason": "no_candidates", "factors": {}}
+        _write_json(run_dir / "oos_summary.json", payload)
+        return payload
+    spec_path = _mini_spec_path(
+        factor=candidates[0],
+        thesis=thesis,
+        universe=universe,
+        timeframe=timeframe,
+        data_source=data_source,
+        data_path=data_path,
+        base=base,
+        mini_dir=ensure_dir(run_dir / "mini_specs"),
+    )
+    spec = load_strategy_spec(spec_path)
+    frame = load_ohlcv_for_spec(spec, base, refresh=refresh_data)
+    prepared = prepare_factor_frame(
+        frame,
+        {},
+        root=base,
+        symbol=spec.primary_symbol,
+        require_feature_symbol=False,
+    )
+    forward = prepared["close"].astype(float).pct_change(5).shift(-5)
+    split_index = max(1, min(len(prepared) - 1, int(len(prepared) * 0.7)))
+    rows: dict[str, dict[str, Any]] = {}
+    for factor in candidates:
+        try:
+            expression = materialize_expression(factor, {})
+            signal = evaluate_raw_expression(expression, prepared)
+        except Exception as exc:  # noqa: BLE001
+            rows[factor.id] = {"status": "failed", "error": str(exc)}
+            continue
+        series = signal.astype(float)
+        train_ic, train_obs = _rank_ic_for_slice(
+            series.iloc[:split_index], forward.iloc[:split_index]
+        )
+        test_ic, test_obs = _rank_ic_for_slice(
+            series.iloc[split_index:], forward.iloc[split_index:]
+        )
+        rows[factor.id] = {
+            "status": "ok" if train_ic is not None and test_ic is not None else "diagnostic",
+            "train_rank_ic": train_ic,
+            "test_rank_ic": test_ic,
+            "train_observations": train_obs,
+            "test_observations": test_obs,
+            "sign_consistent": _sign_consistent(train_ic, test_ic),
+        }
+    payload = {
+        "status": "ok",
+        "split": "chronological_70_30",
+        "forward_bars": 5,
+        "candidate_count": len(candidates),
+        "split_index": split_index,
+        "records": len(prepared),
+        "factors": rows,
+    }
+    _write_json(run_dir / "oos_summary.json", payload)
+    return payload
+
+
+def _rank_ic_for_slice(signal: Any, forward: Any) -> tuple[float | None, int]:
+    import pandas as pd
+
+    frame = pd.DataFrame({"signal": signal, "forward": forward}).dropna()
+    observations = len(frame)
+    if observations < 30:
+        return None, observations
+    if frame["signal"].nunique(dropna=True) <= 1 or frame["forward"].nunique(dropna=True) <= 1:
+        return None, observations
+    value = frame["signal"].rank().corr(frame["forward"].rank())
+    if value != value:
+        return None, observations
+    return float(value), observations
+
+
+def _sign_consistent(train_ic: float | None, test_ic: float | None) -> bool | None:
+    if train_ic is None or test_ic is None:
+        return None
+    if train_ic == 0 or test_ic == 0:
+        return True
+    return (train_ic > 0 and test_ic > 0) or (train_ic < 0 and test_ic < 0)
+
+
 def _rank_ic_diagnosis(flags: list[str], observations: int, coverage_pct: float) -> str:
     flag_set = set(flags)
     if observations < 30 or "insufficient_observations" in flag_set:
@@ -422,7 +569,32 @@ def _select_top_k(
             continue
         scored.append((factor, abs(rank_ic) * max(stability, 0.1) * (coverage / 100.0)))
     scored.sort(key=lambda item: item[1], reverse=True)
-    return [factor for factor, _ in scored[:k]]
+    selected: list[FactorDefinition] = []
+    family_counts: dict[str, int] = {}
+    risk_filter_count = 0
+    risk_families = {"risk_regime", "drawdown_guard", "volatility_rank"}
+    for factor, _score in scored:
+        family_count = family_counts.get(factor.family, 0)
+        if family_count >= 2:
+            continue
+        if factor.family in risk_families and risk_filter_count >= max(1, min(2, k - 1)):
+            continue
+        selected.append(factor)
+        family_counts[factor.family] = family_count + 1
+        if factor.family in risk_families:
+            risk_filter_count += 1
+        if len(selected) >= k:
+            break
+    if len(selected) < k:
+        selected_ids = {factor.id for factor in selected}
+        for factor, _score in scored:
+            if factor.id in selected_ids:
+                continue
+            selected.append(factor)
+            selected_ids.add(factor.id)
+            if len(selected) >= k:
+                break
+    return selected
 
 
 def _draft_spec(
@@ -430,11 +602,13 @@ def _draft_spec(
     thesis: str,
     run_id: str,
     selected: list[FactorDefinition],
+    ic_scores: dict[str, dict[str, Any]],
     universe: list[str],
     timeframe: str,
     data_source: str,
     data_path: str | None,
     base: Path,
+    zero_cost_smoke: bool = False,
 ) -> Path:
     slug = run_id.lower().replace("-", "_")
     spec_name = f"auto_{slug}"
@@ -449,6 +623,45 @@ def _draft_spec(
         }
         for name, factor in zip(factor_names, selected, strict=True)
     }
+    zscore_window = _ZSCORE_WINDOW_BY_TIMEFRAME.get(timeframe, _DEFAULT_ZSCORE_WINDOW)
+    oriented_terms: list[str] = []
+    for name, factor in zip(factor_names, selected, strict=True):
+        rank_ic = _float_or_none((ic_scores.get(factor.id) or {}).get("rank_ic"))
+        if rank_ic is None or abs(rank_ic) < _MIN_ABS_RANK_IC_FOR_SIGNAL:
+            continue
+        prefix = "" if rank_ic >= 0 else "-1 * "
+        oriented_terms.append(f"({prefix}zscore({name}, {zscore_window}))")
+
+    if oriented_terms:
+        factors["composite_score"] = {
+            "source": "expression",
+            "expression": "(" + " + ".join(oriented_terms) + f") / {len(oriented_terms)}",
+        }
+        entry_all = [f"composite_score > {_COMPOSITE_ENTRY_THRESHOLD}"]
+        exit_any = [f"composite_score < {_COMPOSITE_EXIT_THRESHOLD}"]
+        signal_construction = (
+            f"Oriented composite z-score over {len(oriented_terms)} factors with "
+            f"|rank_ic| >= {_MIN_ABS_RANK_IC_FOR_SIGNAL}; window={zscore_window}; "
+            f"entry>{_COMPOSITE_ENTRY_THRESHOLD}, exit<{_COMPOSITE_EXIT_THRESHOLD}."
+        )
+    elif factor_names:
+        factors["composite_score"] = {
+            "source": "expression",
+            "expression": f"zscore({factor_names[0]}, {zscore_window})",
+        }
+        entry_all = [f"composite_score > {_COMPOSITE_ENTRY_THRESHOLD}"]
+        exit_any = [f"composite_score < {_COMPOSITE_EXIT_THRESHOLD}"]
+        signal_construction = (
+            "Fallback single-factor z-score because no selected factor had usable "
+            f"|rank_ic| >= {_MIN_ABS_RANK_IC_FOR_SIGNAL}; window={zscore_window}; "
+            f"entry>{_COMPOSITE_ENTRY_THRESHOLD}, exit<{_COMPOSITE_EXIT_THRESHOLD}."
+        )
+    else:
+        entry_all = ["close > sma(close, 20)"]
+        exit_any = ["close < sma(close, 20)"]
+        signal_construction = (
+            "Fallback close-vs-SMA signal because auto research selected no factors."
+        )
     parameter_space = {
         f"{name}.{param}": values
         for name, factor in zip(factor_names, selected, strict=True)
@@ -461,12 +674,12 @@ def _draft_spec(
         "timeframe": timeframe,
         "universe": universe,
         "lifecycle": "draft",
-        "entry": {"all": [f"{name} > 0" for name in factor_names], "any": []},
-        "exit": {"all": [], "any": [f"{name} < 0" for name in factor_names]},
+        "entry": {"all": entry_all, "any": []},
+        "exit": {"all": [], "any": exit_any},
         "risk": {"max_trades_per_day": 1, "max_position_weight": 0.5, "stop_loss_pct": 3.0},
         "costs": {
             "commission_pct": 0.0,
-            "slippage_bps": 0.0,
+            "slippage_bps": 0.0 if zero_cost_smoke else _default_slippage_bps(timeframe),
             "impact_model": "linear",
             "impact_eta": 0.0,
             "impact_gamma": 0.0,
@@ -486,7 +699,11 @@ def _draft_spec(
         },
         "factors": factors,
         "llm_review": {"enabled": False},
-        "notes": {"intent": f"AI-driven research from thesis: {thesis}", "open_questions": []},
+        "notes": {
+            "intent": f"AI-driven research from thesis: {thesis}",
+            "open_questions": [],
+            "signal_construction": signal_construction,
+        },
         "research_design": {
             "parameter_space": parameter_space,
             "candidate_budget": max(1, min(150, len(parameter_space) * 3 or len(selected))),
@@ -510,6 +727,35 @@ def _draft_spec(
             factor.id, spec_path, added_by="auto_research", creation_thesis=thesis, root=base
         )
     return spec_path
+
+
+def _default_slippage_bps(timeframe: str) -> float:
+    if timeframe == "daily":
+        return 5.0
+    return 2.0
+
+
+def _write_auto_data_profile(
+    *,
+    spec_path: Path,
+    run_dir: Path,
+    base: Path,
+    refresh_data: bool,
+) -> dict[str, Any]:
+    spec = load_strategy_spec(spec_path)
+    frame = load_ohlcv_for_spec(spec, base, refresh=refresh_data)
+    profile = frame_data_profile(
+        frame,
+        symbol=spec.primary_symbol,
+        timeframe=spec.timeframe,
+        provider=spec.data.source,
+        feed=spec.data.feed,
+        source_mode=frame.attrs.get("data_source_mode") or spec.data.source,
+        path=frame.attrs.get("data_source_path") or spec.data.path,
+    )
+    profile["refresh_data"] = refresh_data
+    _write_json(run_dir / "data_profile.json", profile)
+    return profile
 
 
 def _mini_spec_path(
@@ -583,6 +829,9 @@ def _write_final_report(
     selected: list[FactorDefinition],
     spec_path: Path,
     evidence_summary: _AutoEvidenceSummary,
+    data_profile: dict[str, Any],
+    oos_summary: dict[str, Any],
+    zero_cost_smoke: bool,
 ) -> Path:
     selected_ids = {factor.id for factor in selected}
     lines = [
@@ -595,6 +844,22 @@ def _write_final_report(
         f"- Raw strategy evidence status: `{evidence_summary.raw_status}`",
         f"- Promotion status: `{evidence_summary.promotion_status or 'not_available'}`",
         f"- Paper readiness status: `{evidence_summary.paper_readiness_status or 'not_available'}`",
+        f"- Data tier: `{data_profile.get('acquisition_tier') or 'unknown'}`",
+        f"- Data source mode: `{data_profile.get('source_mode') or 'unknown'}`",
+        f"- Data feed: `{data_profile.get('feed') or 'unknown'}`",
+        f"- Zero-cost smoke: `{zero_cost_smoke}`",
+        "",
+        "## Data Provenance",
+        "",
+        f"- Provider: `{data_profile.get('provider') or 'unknown'}`",
+        f"- Feed: `{data_profile.get('feed') or 'unknown'}`",
+        f"- Source mode: `{data_profile.get('source_mode') or 'unknown'}`",
+        f"- Acquisition tier: `{data_profile.get('acquisition_tier') or 'unknown'}`",
+        f"- Records: `{data_profile.get('records') or 0}`",
+        f"- Window: `{data_profile.get('first_timestamp') or 'unknown'}` -> "
+        f"`{data_profile.get('last_timestamp') or 'unknown'}`",
+        f"- Refresh data: `{data_profile.get('refresh_data')}`",
+        f"- Path: `{data_profile.get('path') or 'unknown'}`",
         "",
         f"## Candidate Factors ({len(candidates)})",
         "",
@@ -613,6 +878,9 @@ def _write_final_report(
     lines.extend(["", f"## Selected Factors ({len(selected)})", ""])
     for factor in selected:
         lines.append(f"- `{factor.id}` ({factor.family}): {factor.description}")
+    lines.extend(_oos_summary_lines(selected, oos_summary))
+    lines.extend(_thesis_alignment_lines(thesis, candidates, selected, ic_scores))
+    lines.extend(_factor_rejection_lines(candidates, selected, ic_scores))
     if evidence_summary.warnings:
         lines.extend(["", "## Warnings", ""])
         lines.extend(f"- {item}" for item in evidence_summary.warnings)
@@ -626,12 +894,117 @@ def _write_final_report(
             "",
             f"- Review `{spec_path}` before promotion.",
             f"- Re-run `oc strategy evidence {spec_path}` after manual edits.",
-            "- Treat sample or cache-backed outputs as workflow evidence only.",
+            "- Treat sample, fixture, fallback, or research replay cache outputs as "
+            "workflow evidence only.",
         ]
     )
     report_path = run_dir / "report.md"
     report_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
     return report_path
+
+
+def _oos_summary_lines(
+    selected: list[FactorDefinition],
+    oos_summary: dict[str, Any],
+) -> list[str]:
+    factors = oos_summary.get("factors")
+    if not isinstance(factors, dict):
+        return []
+    lines = ["", "## OOS Check", ""]
+    lines.append(
+        f"- Split: `{oos_summary.get('split') or 'unknown'}`, "
+        f"forward bars: `{oos_summary.get('forward_bars') or 'unknown'}`"
+    )
+    lines.append("")
+    lines.append("| Factor | Train IC | Test IC | Train Obs | Test Obs | Sign Consistent |")
+    lines.append("|---|---:|---:|---:|---:|---|")
+    for factor in selected:
+        row = factors.get(factor.id, {})
+        if not isinstance(row, dict):
+            continue
+        lines.append(
+            "| "
+            f"`{factor.id}` | {_fmt(row.get('train_rank_ic'))} | "
+            f"{_fmt(row.get('test_rank_ic'))} | {row.get('train_observations') or 0} | "
+            f"{row.get('test_observations') or 0} | {row.get('sign_consistent')} |"
+        )
+    return lines
+
+
+def _thesis_alignment_lines(
+    thesis: str,
+    candidates: list[FactorDefinition],
+    selected: list[FactorDefinition],
+    ic_scores: dict[str, dict[str, Any]],
+) -> list[str]:
+    required = _required_families_for_thesis(thesis)
+    if not required:
+        return []
+    candidate_families = {factor.family for factor in candidates}
+    selected_families = {factor.family for factor in selected}
+    lines = ["", "## Thesis Alignment", ""]
+    for family in required:
+        family_candidates = [factor for factor in candidates if factor.family == family]
+        family_selected = [factor for factor in selected if factor.family == family]
+        if family not in candidate_families:
+            lines.append(f"- `{family}`: no expressionable candidate was available.")
+        elif family in selected_families:
+            lines.append(
+                f"- `{family}`: selected "
+                + ", ".join(f"`{factor.id}`" for factor in family_selected)
+                + "."
+            )
+        else:
+            reasons = [
+                f"`{factor.id}` ({_rejection_reason(ic_scores.get(factor.id, {}))})"
+                for factor in family_candidates
+            ]
+            lines.append(
+                f"- `{family}`: candidate present but not selected: " + "; ".join(reasons) + "."
+            )
+    return lines
+
+
+def _factor_rejection_lines(
+    candidates: list[FactorDefinition],
+    selected: list[FactorDefinition],
+    ic_scores: dict[str, dict[str, Any]],
+) -> list[str]:
+    selected_ids = {factor.id for factor in selected}
+    rejected = [factor for factor in candidates if factor.id not in selected_ids]
+    if not rejected:
+        return []
+    lines = ["", "## Factor Rejections", ""]
+    for factor in rejected:
+        score = ic_scores.get(factor.id, {})
+        lines.append(f"- `{factor.id}` ({factor.family}): {_rejection_reason(score)}.")
+    return lines
+
+
+def _required_families_for_thesis(thesis: str) -> list[str]:
+    text = thesis.lower()
+    families: list[str] = []
+    for triggers, family in _THESIS_FAMILY_ASSERTIONS:
+        if any(trigger in text for trigger in triggers) and family not in families:
+            families.append(family)
+    return families
+
+
+def _rejection_reason(score: dict[str, Any]) -> str:
+    diagnosis = score.get("rank_ic_diagnosis")
+    if diagnosis:
+        return f"rank IC unavailable: {diagnosis}"
+    rank_ic = _float_or_none(score.get("rank_ic"))
+    observations = int(score.get("observations") or 0)
+    coverage = _float_or_none(score.get("coverage_pct")) or 0.0
+    status = str(score.get("status") or "unknown")
+    if rank_ic is None:
+        return f"rank IC unavailable: {status}"
+    if observations < 30:
+        return f"insufficient observations ({observations})"
+    if coverage < 70:
+        return f"low coverage ({coverage:.1f}%)"
+    return f"weaker selection score; rank_ic={rank_ic:.4f}, coverage={coverage:.1f}%"
 
 
 def _summarize_auto_evidence(evidence: Any) -> _AutoEvidenceSummary:

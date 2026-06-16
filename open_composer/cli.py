@@ -419,6 +419,8 @@ def research_auto_command(
     data_path: Annotated[str | None, typer.Option("--data-path")] = None,
     max_factors: Annotated[int, typer.Option("--max-factors")] = 5,
     use_llm: Annotated[bool, typer.Option("--use-llm/--no-llm")] = False,
+    refresh_data: Annotated[bool, typer.Option("--refresh-data/--use-cache")] = False,
+    zero_cost_smoke: Annotated[bool, typer.Option("--zero-cost-smoke")] = False,
 ) -> None:
     """Run thesis -> catalog factors -> IC -> draft spec -> evidence."""
     from open_composer.research.auto_research import run_auto_research
@@ -433,6 +435,8 @@ def research_auto_command(
             data_path=data_path,
             max_factors=max_factors,
             use_llm=use_llm,
+            refresh_data=refresh_data,
+            zero_cost_smoke=zero_cost_smoke,
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc

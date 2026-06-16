@@ -30,6 +30,8 @@ CURRENT_DOCS = {
     "docs/strategy-research-product-remediation-plan-2026-05-26.zh.md",
     "docs/plan-step-6-factor-catalog-and-ai-research-2026-05-26.zh.md",
     "docs/plan-step-6-5-auto-research-fixes-2026-06-08.zh.md",
+    "docs/plan-step-6-6-pre-step7-research-hardening-2026-06-08.zh.md",
+    "docs/plan-step-6-7-tradeable-signal-generation-2026-06-16.zh.md",
     "docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md",
 }
 

@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from open_composer.research.auto_research import _select_with_keyword_heuristic
+from open_composer.research.auto_research import (
+    _select_top_k,
+    _select_with_keyword_heuristic,
+    _thesis_alignment_lines,
+)
+from open_composer.research.factor_library import get_factor
 
 
 def test_overnight_thesis_selects_overnight_gap_family() -> None:
@@ -69,3 +74,59 @@ def test_at_least_two_families_in_all_cases() -> None:
         assert len(families) >= 2, (
             f"single-family lockdown still present for thesis={thesis!r}; families={families}"
         )
+
+
+def test_thesis_alignment_explains_unselected_required_family() -> None:
+    candidates = [
+        get_factor("alpha158_overnight_gap"),
+        get_factor("volatility_rank_20_252"),
+    ]
+    selected = [get_factor("volatility_rank_20_252")]
+    lines = _thesis_alignment_lines(
+        "Overnight gap exploit on QQQ daily.",
+        candidates,
+        selected,
+        {
+            "alpha158_overnight_gap": {
+                "rank_ic": 0.0043,
+                "coverage_pct": 99.8,
+                "observations": 495,
+            },
+            "volatility_rank_20_252": {
+                "rank_ic": 0.188,
+                "coverage_pct": 99.8,
+                "observations": 495,
+            },
+        },
+    )
+
+    text = "\n".join(lines)
+    assert "`overnight_gap`: candidate present but not selected" in text
+    assert "weaker selection score" in text
+
+
+def test_top_k_limits_risk_filter_concentration() -> None:
+    candidates = [
+        get_factor("volatility_rank_20_252"),
+        get_factor("drawdown_guard_20_60"),
+        get_factor("leveraged_etf_extension_guard"),
+        get_factor("overextension_mean_reversion_guard"),
+        get_factor("alpha101_007_price_above_sma_10d"),
+        get_factor("alpha101_009_roc_5d"),
+    ]
+    scores = {
+        factor.id: {
+            "rank_ic": 0.10 - index * 0.001,
+            "coverage_pct": 95.0,
+            "observations": 250,
+            "stability_score": 0.8,
+        }
+        for index, factor in enumerate(candidates)
+    }
+
+    selected = _select_top_k(scores, candidates, 5)
+    risk_families = {"risk_regime", "drawdown_guard", "volatility_rank"}
+
+    assert len(selected) == 5
+    assert sum(1 for factor in selected[:3] if factor.family in risk_families) <= 2
+    assert any(factor.family == "trend_momentum" for factor in selected)

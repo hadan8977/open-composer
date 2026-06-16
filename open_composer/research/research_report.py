@@ -41,6 +41,8 @@ class StrategyResearchReportResult:
 def build_strategy_research_report(
     spec_path: Path,
     root: Path | None = None,
+    *,
+    refresh_data: bool = False,
 ) -> StrategyResearchReportResult:
     started_at = perf_counter()
     base = root or project_root()
@@ -52,10 +54,10 @@ def build_strategy_research_report(
 
     capability_report = assess_strategy_capabilities(spec_path)
     capability_evaluation = evaluate_capabilities(base)
-    backtest = run_backtest(spec_path, root=base)
-    factor_lab = run_factor_lab(spec_path, base)
+    backtest = run_backtest(spec_path, root=base, refresh_data=refresh_data)
+    factor_lab = run_factor_lab(spec_path, base, refresh_data=refresh_data)
     alt_data = build_alternative_data_quality_report(spec_path, base)
-    promotion = build_promotion_report(spec_path, base)
+    promotion = build_promotion_report(spec_path, base, refresh_data=refresh_data)
     paper_readiness = assess_paper_strategy_readiness_for_spec(spec, base, spec_path=spec_path)
     promotion_json_path = _relpath(Path(promotion.json_path), base) if promotion.json_path else None
     paper_readiness_json_path = (

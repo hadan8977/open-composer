@@ -39,6 +39,8 @@ class StrategyEvidenceResult:
 def build_strategy_evidence(
     spec_path: Path,
     root: Path | None = None,
+    *,
+    refresh_data: bool = False,
 ) -> StrategyEvidenceResult:
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
@@ -48,9 +50,13 @@ def build_strategy_evidence(
             msg = "research brief validation failed: " + ", ".join(brief.blocked)
             raise ValueError(msg)
     if spec.portfolio.mode in LIGHTWEIGHT_EVIDENCE_PORTFOLIO_MODES:
-        research_report = build_lightweight_router_evidence_report(spec_path, base)
+        research_report = build_lightweight_router_evidence_report(
+            spec_path,
+            base,
+            refresh_data=refresh_data,
+        )
     else:
-        research_report = build_strategy_research_report(spec_path, base)
+        research_report = build_strategy_research_report(spec_path, base, refresh_data=refresh_data)
     control = update_research_control(spec_path, base)
     return StrategyEvidenceResult(
         strategy_name=research_report.strategy_name,
@@ -71,6 +77,8 @@ def _has_optimized_research_design(spec) -> bool:
 def build_lightweight_router_evidence_report(
     spec_path: Path,
     root: Path | None = None,
+    *,
+    refresh_data: bool = False,
 ) -> StrategyResearchReportResult:
     """Build evidence for router specs without running generic single-symbol research.
 
@@ -86,7 +94,7 @@ def build_lightweight_router_evidence_report(
     contract_path = base / "reports" / "research" / f"{spec.name}-research-contract.json"
     write_json(contract_path, contract)
 
-    promotion = build_promotion_report(spec_path, base)
+    promotion = build_promotion_report(spec_path, base, refresh_data=refresh_data)
     promotion_payload = _read_json(Path(promotion.json_path))
     paper = assess_paper_strategy_readiness_for_spec(spec, base, spec_path=spec_path)
     verify = _read_json(base / "reports" / "harness" / "verify" / f"{spec.name}.json")

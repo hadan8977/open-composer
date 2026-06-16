@@ -24,6 +24,7 @@ from open_composer.research.contracts import write_research_contract
 from open_composer.research.factor_lab import run_factor_lab
 from open_composer.research.kernel import GateResult, ResearchArtifactWriter, ResearchRunIndexRecord
 from open_composer.research.metadata import (
+    data_acquisition_tier,
     frame_data_profile,
     research_run_manifest,
     runtime_payload,
@@ -38,7 +39,7 @@ from open_composer.strategy_versions import strategy_content_hash
 DATA_TIERS_NOT_PAPER_READY = {
     "sample_smoke",
     "fixture_replay",
-    "cached_live",
+    "research_replay_cache",
     "research_cross_check",
 }
 ROUTER_FACTOR_LAB_PORTFOLIO_MODES = {
@@ -126,6 +127,7 @@ def build_promotion_report(
     out_of_sample_ratio: float = 0.3,
     walk_forward_folds: int = 3,
     cost_slippage_bps: list[int] | None = None,
+    refresh_data: bool = False,
 ) -> PromotionReport:
     started_at = perf_counter()
     base = root or project_root()
@@ -143,7 +145,7 @@ def build_promotion_report(
             out_of_sample_ratio=out_of_sample_ratio,
             walk_forward_folds=walk_forward_folds,
         )
-    frame = load_ohlcv_for_spec(spec, base)
+    frame = load_ohlcv_for_spec(spec, base, refresh=refresh_data)
     if len(frame) < 4:
         msg = "promotion gate requires at least 4 bars of data"
         raise ValueError(msg)
@@ -870,16 +872,14 @@ def _evidence_acquisition_tier(
 ) -> str:
     if spec.data_assumptions.acquisition_tier:
         return spec.data_assumptions.acquisition_tier
+    if data_profile.get("acquisition_tier"):
+        return str(data_profile["acquisition_tier"])
     source_mode = str(data_profile.get("source_mode") or data_profile.get("data_source_mode") or "")
-    if spec.data.source == "sample" or "sample" in source_mode:
-        return "sample_smoke"
-    if "fixture" in source_mode or "fallback" in source_mode:
-        return "fixture_replay"
-    if source_mode == "live_fetch":
-        return "paper_ready_live"
-    if source_mode == "cache":
-        return "cached_live"
-    return "research_cross_check"
+    return data_acquisition_tier(
+        data_source=spec.data.source,
+        source_mode=source_mode,
+        strict_live=bool(data_profile.get("strict_live")),
+    )
 
 
 def _data_comparison_check(
@@ -1617,7 +1617,7 @@ def _expression_safety_pass(spec: StrategySpec) -> tuple[FivePassStatus, str]:
         *[
             factor.expression
             for factor in spec.factors.values()
-            if factor.source == "expression" and factor.expression
+            if factor.source in {"expression", "factor_library"} and factor.expression
         ],
     ]
     for expression in expressions:

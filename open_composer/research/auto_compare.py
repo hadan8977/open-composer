@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -29,6 +30,7 @@ def build_cross_thesis_compare(root: Path | None = None) -> dict[str, Any]:
     auto_dir = base / "reports" / "research" / "auto"
     aggregates: dict[str, FactorAggregate] = {}
     runs: list[dict[str, Any]] = []
+    top3_signatures: Counter[tuple[str, ...]] = Counter()
 
     for run_dir in sorted(auto_dir.iterdir() if auto_dir.exists() else []):
         if not run_dir.is_dir() or run_dir.name.startswith("_"):
@@ -51,6 +53,9 @@ def build_cross_thesis_compare(root: Path | None = None) -> dict[str, Any]:
         if not isinstance(ic_scores, dict):
             continue
         selected_ids = {str(item) for item in selected if item}
+        selected_list = [str(item) for item in selected if item]
+        if len(selected_list) >= 3:
+            top3_signatures[tuple(selected_list[:3])] += 1
         runs.append(
             {
                 "run_id": run_dir.name,
@@ -90,10 +95,29 @@ def build_cross_thesis_compare(root: Path | None = None) -> dict[str, Any]:
             reverse=True,
         )
     ]
+    total_selected = sum(factor["selected_count"] for factor in factors)
+    top_factor = factors[0] if factors else None
+    top_signature, top_signature_count = (
+        top3_signatures.most_common(1)[0] if top3_signatures else ((), 0)
+    )
+    concentration = {
+        "total_selected_factor_slots": total_selected,
+        "top_factor_id": top_factor["factor_id"] if top_factor else None,
+        "top_factor_selected_count": top_factor["selected_count"] if top_factor else 0,
+        "top_factor_selection_share": (
+            (top_factor["selected_count"] / total_selected)
+            if top_factor and total_selected
+            else 0.0
+        ),
+        "top3_signature": list(top_signature),
+        "top3_signature_count": top_signature_count,
+        "top3_signature_run_share": top_signature_count / max(len(runs), 1),
+    }
     return {
         "generated_at": datetime.now(UTC).isoformat(),
         "total_runs": len(runs),
         "total_factors_seen": len(aggregates),
+        "concentration": concentration,
         "runs": runs,
         "factors": factors,
     }
@@ -134,6 +158,16 @@ def _render_markdown(payload: dict[str, Any]) -> str:
         f"- Generated: `{payload['generated_at']}`",
         f"- total_runs: `{payload['total_runs']}`",
         f"- unique_factors: `{payload['total_factors_seen']}`",
+        "",
+        "## Concentration",
+        "",
+        f"- top_factor: `{payload['concentration']['top_factor_id']}` "
+        f"({payload['concentration']['top_factor_selected_count']} selections, "
+        f"{payload['concentration']['top_factor_selection_share'] * 100:.1f}% of selected slots)",
+        "- top3_signature: "
+        + ", ".join(f"`{item}`" for item in payload["concentration"]["top3_signature"])
+        + f" ({payload['concentration']['top3_signature_count']} runs, "
+        f"{payload['concentration']['top3_signature_run_share'] * 100:.1f}% of runs)",
         "",
         "## Runs",
         "",

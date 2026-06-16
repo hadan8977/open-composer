@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import subprocess
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -83,6 +84,11 @@ def frame_data_profile(
     feed_value = attrs.get("data_source_feed") or feed
     source_mode_value = attrs.get("data_source_mode") or source_mode
     path_value = attrs.get("data_source_path") or path
+    acquisition_tier = data_acquisition_tier(
+        data_source=str(provider_value or ""),
+        source_mode=str(source_mode_value or ""),
+        strict_live=source_mode_value == "live_fetch",
+    )
     warnings = _data_profile_warnings(
         records=len(frame),
         feed=feed_value,
@@ -101,6 +107,8 @@ def frame_data_profile(
         "first_timestamp": first_timestamp,
         "last_timestamp": last_timestamp,
         "data_as_of": last_timestamp,
+        "profile_generated_at": datetime.now(UTC).isoformat(),
+        "acquisition_tier": acquisition_tier,
         "cache_fallback": source_mode_value in {"cache", "cache_resampled"},
         "strict_live": source_mode_value == "live_fetch",
         "warnings": warnings,
@@ -128,6 +136,8 @@ def combined_data_profile(profiles: list[dict[str, Any]]) -> dict[str, Any]:
         "first_timestamp": min(first_values) if first_values else None,
         "last_timestamp": min(last_values) if last_values else None,
         "data_as_of": min(last_values) if last_values else None,
+        "profile_generated_at": datetime.now(UTC).isoformat(),
+        "acquisition_tier": combined_data_acquisition_tier(profiles),
         "cache_fallback": any(bool(item.get("cache_fallback")) for item in profiles),
         "strict_live": (
             all(bool(item.get("strict_live")) for item in profiles) if profiles else False
@@ -135,6 +145,41 @@ def combined_data_profile(profiles: list[dict[str, Any]]) -> dict[str, Any]:
         "warnings": sorted(set(warnings)),
         "per_symbol": profiles,
     }
+
+
+def data_acquisition_tier(
+    *,
+    data_source: str | None,
+    source_mode: str | None,
+    strict_live: bool = False,
+) -> str:
+    """Classify market data evidence for research and promotion gates."""
+    source = (data_source or "").lower()
+    mode = (source_mode or "").lower()
+    if source == "sample" or "sample" in mode:
+        return "sample_smoke"
+    if "fixture" in mode or "fallback" in mode:
+        return "fixture_replay"
+    if strict_live or mode == "live_fetch":
+        return "research_strict"
+    if mode in {"cache", "cache_resampled", "materialized_history_cache"}:
+        return "research_replay_cache"
+    return "research_cross_check"
+
+
+def combined_data_acquisition_tier(profiles: list[dict[str, Any]]) -> str:
+    if not profiles:
+        return "research_cross_check"
+    tiers = [str(item.get("acquisition_tier") or "") for item in profiles]
+    if any(tier == "sample_smoke" for tier in tiers):
+        return "sample_smoke"
+    if any(tier == "fixture_replay" for tier in tiers):
+        return "fixture_replay"
+    if all(tier == "research_strict" for tier in tiers):
+        return "research_strict"
+    if any(tier == "research_replay_cache" for tier in tiers):
+        return "research_replay_cache"
+    return "research_cross_check"
 
 
 def research_brief(
