@@ -31,7 +31,8 @@ description: >
 
 ### Kill switch
 - [ ] Kill switch documented in spec or runner config.
-- [ ] `oc paper kill-switch <strategy>` command is tested and operational.
+- [ ] `uv run oc paper kill-switch --enable --reason "<reason>"` and
+  `uv run oc paper kill-switch --disable --reason "<reason>"` are tested and operational.
 - [ ] Kill switch does not require database access or network to stop local paper loop.
 
 ### Order window

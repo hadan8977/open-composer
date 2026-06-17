@@ -193,6 +193,19 @@ artifacts:
       - fallback_behavior
       - performance_impact
 
+  capability_review:
+    description: >
+      Strategy-specific review of required capabilities, PIT metadata, strict
+      behavior, and paper-readiness caveats for market/event/macro/news/LLM data.
+    path: reports/harness/data/{strategy}-capability-review.json
+    format: json
+    required_fields:
+      - strategy_name
+      - capabilities
+      - feature_packet_pit_check
+      - sample_data_caveats
+      - conclusion
+
   gap_stress_report:
     description: >
       Stress analysis of opening gap scenarios, specifically for leveraged ETFs

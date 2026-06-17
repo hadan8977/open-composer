@@ -169,6 +169,7 @@ artifact size without deleting anything.
 - [docs/plan-step-6-5-auto-research-fixes-2026-06-08.zh.md](docs/plan-step-6-5-auto-research-fixes-2026-06-08.zh.md) - Step 6.5 auto research fixes
 - [docs/plan-step-6-6-pre-step7-research-hardening-2026-06-08.zh.md](docs/plan-step-6-6-pre-step7-research-hardening-2026-06-08.zh.md) - Step 6.6 pre-Step 7 research evidence hardening
 - [docs/plan-step-6-7-tradeable-signal-generation-2026-06-16.zh.md](docs/plan-step-6-7-tradeable-signal-generation-2026-06-16.zh.md) - Step 6.7 tradeable auto research signal generation fix
+- [docs/plan-step-6-8-skill-and-research-workflow-hardening-2026-06-17.zh.md](docs/plan-step-6-8-skill-and-research-workflow-hardening-2026-06-17.zh.md) - Step 6.8 skill governance and research workflow hardening
 - [docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md](docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md) - Step 7 conditional ML, decay, and LLM plan
 
 ## License

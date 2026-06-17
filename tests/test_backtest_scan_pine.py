@@ -45,6 +45,37 @@ def test_backtest_writes_report_and_signal_log(sample_workspace: Path) -> None:
     assert "- Max bar participation:" in report_text
 
 
+def test_backtest_passes_refresh_data_to_adapter(
+    sample_workspace: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    observed: dict[str, bool] = {}
+
+    def fake_load_ohlcv_for_spec(_spec, _root, refresh: bool = False):  # noqa: ANN001
+        observed["refresh"] = refresh
+        return pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=5, freq="D", tz="UTC"),
+                "open": [100.0, 101.0, 102.0, 103.0, 104.0],
+                "high": [101.0, 102.0, 103.0, 104.0, 105.0],
+                "low": [99.0, 100.0, 101.0, 102.0, 103.0],
+                "close": [100.0, 101.0, 102.0, 103.0, 104.0],
+                "volume": [1_000_000] * 5,
+            }
+        )
+
+    monkeypatch.setattr(
+        "open_composer.engines.backtest_engine.load_ohlcv_for_spec",
+        fake_load_ohlcv_for_spec,
+    )
+
+    artifacts = run_backtest(spec_path, root=sample_workspace, refresh_data=True)
+
+    assert observed["refresh"] is True
+    assert artifacts.run.bars == 5
+
+
 def test_backtest_models_commission_and_slippage(sample_workspace: Path) -> None:
     source_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     no_cost = run_backtest(source_path, root=sample_workspace)

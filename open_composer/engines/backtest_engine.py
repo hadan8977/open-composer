@@ -46,6 +46,7 @@ def run_backtest(
     spec_path: Path,
     root: Path | None = None,
     start_equity: float = 100_000.0,
+    refresh_data: bool = False,
 ) -> BacktestArtifacts:
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
@@ -68,7 +69,7 @@ def run_backtest(
             and backend_plan.nautilus_installed
             and len(spec.universe) == 1
         )
-    frame = load_ohlcv_for_spec(spec, base)
+    frame = load_ohlcv_for_spec(spec, base, refresh=refresh_data)
     if use_nautilus_backtest:
         from open_composer.adapters.execution.nautilus_runtime import run_nautilus_backtest
 

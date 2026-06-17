@@ -32,6 +32,7 @@ CURRENT_DOCS = {
     "docs/plan-step-6-5-auto-research-fixes-2026-06-08.zh.md",
     "docs/plan-step-6-6-pre-step7-research-hardening-2026-06-08.zh.md",
     "docs/plan-step-6-7-tradeable-signal-generation-2026-06-16.zh.md",
+    "docs/plan-step-6-8-skill-and-research-workflow-hardening-2026-06-17.zh.md",
     "docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md",
 }
 
@@ -44,6 +45,7 @@ REQUIRED_SKILLS = [
     "signal-parity-reviewer",
     "strategy-designer",
     "strategy-researcher",
+    "ultracode-reviewer",
     "weekly-reviewer",
 ]
 
@@ -55,6 +57,7 @@ HARNESS_SKILLS = [
     "source-researcher",
     "execution-reality-reviewer",
     "backtest-forensics",
+    "data-capability-reviewer",
     "paper-auto-safety-reviewer",
     "evidence-curator",
 ]
@@ -396,6 +399,7 @@ def _repo_skills_check(root: Path) -> RepoConsistencyCheck:
         "risk-reviewer": ["workflow_pass", "paper_ready_pass", "LLM fallback"],
         "strategy-designer": ["notes.research_design", "parameter ranges", "benchmark family"],
         "strategy-researcher": ["parameter-sweep", "promotion-report", "llm_contribution_pass"],
+        "ultracode-reviewer": ["UltraCode-style", "sidecar", "P0 blockers", "StrategySpec"],
         "weekly-reviewer": ["LLM contribution evidence", "paper readiness evidence"],
     }
     missing_anchors: dict[str, list[str]] = {}
@@ -689,6 +693,20 @@ def _harness_policy_check(root: Path) -> RepoConsistencyCheck:
     contracts_doc = parsed.get("artifact_contracts.yaml") or {}
     contract_names = set((contracts_doc.get("artifacts") or {}).keys())  # type: ignore[union-attr]
 
+    skill_dirs = _agent_skill_dirs(root)
+    manifest_doc = parsed.get("skill_manifest.yaml") or {}
+    manifest_problems = _validate_skill_manifest(root, manifest_doc, skill_dirs=skill_dirs)
+    if manifest_problems:
+        return RepoConsistencyCheck(
+            name="harness_policy",
+            status="blocked",
+            message=(
+                "Skill manifest references missing or inconsistent skill, hook, or agent files."
+            ),
+            details=manifest_problems,
+            suggested_actions=["Update harness/skill_manifest.yaml or restore referenced files"],
+        )
+
     domains_doc = parsed.get("risk_domains.yaml") or {}
     domains_map = (domains_doc.get("risk_domains") or {}) if isinstance(domains_doc, dict) else {}
     referenced_skills: set[str] = set()
@@ -701,7 +719,6 @@ def _harness_policy_check(root: Path) -> RepoConsistencyCheck:
         for artifact in domain_raw.get("required_artifacts") or []:
             referenced_artifacts.add(artifact)
 
-    skill_dirs = {p.name for p in (root / ".agents" / "skills").iterdir() if p.is_dir()}
     missing_skills = sorted(referenced_skills - skill_dirs)
     missing_contracts = sorted(referenced_artifacts - contract_names)
 
@@ -743,6 +760,107 @@ def _harness_policy_check(root: Path) -> RepoConsistencyCheck:
             "artifact_contract_count": len(contract_names),
         },
     )
+
+
+def _agent_skill_dirs(root: Path) -> set[str]:
+    skills_root = root / ".agents" / "skills"
+    if not skills_root.exists():
+        return set()
+    return {p.name for p in skills_root.iterdir() if p.is_dir()}
+
+
+def _validate_skill_manifest(
+    root: Path,
+    manifest_doc: object,
+    skill_dirs: set[str] | None = None,
+) -> dict[str, object]:
+    if not isinstance(manifest_doc, dict):
+        return {"manifest": "skill_manifest.yaml must parse as a mapping"}
+    skill_dirs = skill_dirs if skill_dirs is not None else _agent_skill_dirs(root)
+    problems: dict[str, object] = {}
+
+    skills = manifest_doc.get("skills") or {}
+    if not isinstance(skills, dict):
+        problems["skills"] = "skills must be a mapping"
+    else:
+        missing_paths: list[str] = []
+        missing_names: dict[str, str] = {}
+        name_mismatches: dict[str, str] = {}
+        for skill_name, raw in skills.items():
+            if not isinstance(raw, dict):
+                missing_paths.append(str(skill_name))
+                continue
+            raw_path = str(raw.get("skill_path") or "")
+            if not raw_path:
+                missing_paths.append(str(skill_name))
+                continue
+            path = root / raw_path
+            if not path.exists():
+                missing_paths.append(raw_path)
+                continue
+            frontmatter_name = _skill_frontmatter_name(path)
+            if frontmatter_name is None:
+                missing_names[str(skill_name)] = raw_path
+            elif frontmatter_name != skill_name:
+                name_mismatches[str(skill_name)] = frontmatter_name
+        unmanifested_skills = sorted(skill_dirs - {str(name) for name in skills.keys()})
+        if missing_paths:
+            problems["missing_skill_paths"] = sorted(missing_paths)
+        if missing_names:
+            problems["missing_skill_frontmatter_name"] = missing_names
+        if name_mismatches:
+            problems["skill_name_mismatches"] = name_mismatches
+        if unmanifested_skills:
+            problems["unmanifested_skills"] = unmanifested_skills
+
+    hooks = manifest_doc.get("hooks") or {}
+    if not isinstance(hooks, dict):
+        problems["hooks"] = "hooks must be a mapping"
+    else:
+        missing_hook_paths = sorted(
+            str(raw.get("path") or hook_name)
+            for hook_name, raw in hooks.items()
+            if not isinstance(raw, dict)
+            or not raw.get("path")
+            or not (root / str(raw.get("path"))).exists()
+        )
+        if missing_hook_paths:
+            problems["missing_hook_paths"] = missing_hook_paths
+
+    agents = manifest_doc.get("agents") or {}
+    if not isinstance(agents, dict):
+        problems["agents"] = "agents must be a mapping"
+    else:
+        missing_agent_paths: list[str] = []
+        unknown_agent_skills: dict[str, list[str]] = {}
+        for agent_name, raw in agents.items():
+            if not isinstance(raw, dict):
+                missing_agent_paths.append(str(agent_name))
+                continue
+            raw_path = str(raw.get("path") or "")
+            if not raw_path or not (root / raw_path).exists():
+                missing_agent_paths.append(raw_path or str(agent_name))
+            used = raw.get("skills_used") or []
+            if not isinstance(used, list):
+                unknown_agent_skills[str(agent_name)] = ["(skills_used must be a list)"]
+                continue
+            unknown = sorted(str(skill) for skill in used if str(skill) not in skill_dirs)
+            if unknown:
+                unknown_agent_skills[str(agent_name)] = unknown
+        if missing_agent_paths:
+            problems["missing_agent_paths"] = sorted(missing_agent_paths)
+        if unknown_agent_skills:
+            problems["unknown_agent_skills"] = unknown_agent_skills
+
+    return problems
+
+
+def _skill_frontmatter_name(path: Path) -> str | None:
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---"):
+        return None
+    match = re.search(r"(?m)^name:\s*([A-Za-z0-9_-]+)\s*$", text)
+    return match.group(1) if match else None
 
 
 def _missing_text(path: Path, required: list[str]) -> list[str]:

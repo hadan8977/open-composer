@@ -14,8 +14,8 @@ description: >
 4. Validate: `uv run oc spec validate <spec>`.
 5. Run `uv run oc harness plan <spec>` — read detected risk domains before proceeding.
 6. Convert adjustable ideas into bounded parameter ranges before running optimization.
-7. Replay event/news/macro fixtures with `oc events fetch` and `oc macro fetch`.
-8. Run `oc backtest`, `oc strategy parameter-sweep` (if adjustable), `oc strategy promotion-report`.
+7. Replay event/news/macro fixtures with `uv run oc events fetch` and `uv run oc macro fetch`.
+8. Run `uv run oc backtest <spec>`, `uv run oc strategy parameter-sweep <spec>` (if adjustable), and `uv run oc strategy promotion-report <spec>`.
 9. Label `workflow_pass`, `research_pass`, `llm_contribution_pass`, `paper_ready_pass` separately.
 10. For paper consideration: invoke `strategy-research-orchestrator` for full professional workflow.
 11. Never enable live broker writes for real-money trading.

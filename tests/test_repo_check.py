@@ -41,6 +41,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/plan-step-6-5-auto-research-fixes-2026-06-08.zh.md",
         "docs/plan-step-6-6-pre-step7-research-hardening-2026-06-08.zh.md",
         "docs/plan-step-6-7-tradeable-signal-generation-2026-06-16.zh.md",
+        "docs/plan-step-6-8-skill-and-research-workflow-hardening-2026-06-17.zh.md",
         "docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md",
     ]:
         source = repo_root / new_doc
@@ -187,6 +188,29 @@ def test_repo_check_blocks_when_claude_skill_mirror_drifts(
     check = next(item for item in report.checks if item.name == "claude_parity")
     assert check.status == "blocked"
     assert "risk-reviewer" in str(check.details)
+
+
+def test_repo_check_blocks_when_skill_manifest_path_is_missing(
+    sample_workspace: Path,
+    repo_root: Path,
+) -> None:
+    _copy_repo_check_inputs(repo_root, sample_workspace)
+    manifest = sample_workspace / "harness" / "skill_manifest.yaml"
+    manifest.write_text(
+        manifest.read_text(encoding="utf-8").replace(
+            ".agents/skills/ultracode-reviewer/SKILL.md",
+            ".agents/skills/ultracode-reviewer/MISSING.md",
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_repo_check_report(sample_workspace)
+
+    assert report.status == "blocked"
+    check = next(item for item in report.checks if item.name == "harness_policy")
+    assert check.status == "blocked"
+    assert "missing_skill_paths" in str(check.details)
+    assert "ultracode-reviewer/MISSING.md" in str(check.details)
 
 
 def test_repo_check_cli_writes_reports(

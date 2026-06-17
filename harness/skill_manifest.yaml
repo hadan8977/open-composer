@@ -1,8 +1,9 @@
 version: 1
 
 # Skill manifest maps skill names to their trigger conditions and primary outputs.
-# Used by oc harness plan to determine which skills should be invoked for a
-# given strategy, and by repo check to verify skill parity.
+# Used as the skill trigger index. Risk domains determine required skills for
+# `oc harness plan`; repo check verifies this manifest's skill, hook, and agent
+# paths so the trigger index does not drift from local files.
 #
 # Codex reads this file progressively — only skill metadata is loaded at start;
 # full SKILL.md is loaded when the skill is selected.
@@ -121,8 +122,19 @@ skills:
     triggers:
       - new capability kind added to strategy
       - capability.status == trial
-      - oc capability evaluate called
+      - oc capability test called
     skill_path: .agents/skills/capability-evaluator/SKILL.md
+
+  strategy-researcher:
+    description: >
+      Lightweight draft-to-research quick path for a natural-language idea.
+      Escalates to strategy-research-orchestrator for optimization, paper
+      readiness, source research, execution reality, and forensics.
+    triggers:
+      - user gives a simple natural-language trading idea
+      - user asks for a quick draft or smoke research path
+      - no high-risk domains are active yet
+    skill_path: .agents/skills/strategy-researcher/SKILL.md
 
   python-backtest-writer:
     description: >
@@ -183,6 +195,17 @@ skills:
       - weekly review cycle
       - user requests weekly summary
     skill_path: .agents/skills/weekly-reviewer/SKILL.md
+
+  ultracode-reviewer:
+    description: >
+      Meta-review workflow for Open Composer codebase, architecture, project
+      optimization, broad bug/risk assessment, and professional implementation
+      planning before edits.
+    triggers:
+      - user asks to review, audit, evaluate, optimize, harden, or improve Open Composer
+      - user asks for broad bug, architecture, research workflow, or project assessment
+      - user asks for an implementation plan before coding
+    skill_path: .agents/skills/ultracode-reviewer/SKILL.md
 
 # ── Claude Code hook entry points ─────────────────────────────────────────────
 # Hooks run automatically in Claude Code sessions. They are lightweight scripts;

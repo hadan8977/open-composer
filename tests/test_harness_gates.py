@@ -202,6 +202,26 @@ class TestResearchCapabilityGate:
         assert "llm_quant_workflow" in evidence["warnings"]  # type: ignore[index]
         assert "nautilus_trader_backend" in evidence["not_applicable"]  # type: ignore[index]
 
+    def test_llm_or_news_domain_requires_capability_review_artifact(
+        self, tmp_path: Path, spec_path: Path
+    ) -> None:
+        import yaml
+
+        raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+        raw["llm_review"] = {"enabled": True}
+        raw["required_capabilities"] = ["market.sample_ohlcv", "news.alpha_vantage"]
+        spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+        spec = load_strategy_spec(spec_path)
+
+        domains = detect_risk_domains(spec, tmp_path)
+        artifacts = required_artifacts_for_domains(domains)
+
+        assert "llm_or_news_signal" in domains
+        assert "capability_review" in artifacts
+        status = check_artifact("capability_review", spec.name, tmp_path)
+        assert status.present is False
+        assert "feature_packet_pit_check" in status.missing_fields
+
 
 class TestCapabilityEvaluationGate:
     def test_unsupported_capabilities_are_blocked(self, tmp_path: Path, spec_path: Path) -> None:
