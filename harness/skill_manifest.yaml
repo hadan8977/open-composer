@@ -1,9 +1,10 @@
 version: 1
 
 # Skill manifest maps skill names to their trigger conditions and primary outputs.
-# Used as the skill trigger index. Risk domains determine required skills for
-# `oc harness plan`; repo check verifies this manifest's skill, hook, and agent
-# paths so the trigger index does not drift from local files.
+# Used as the skill trigger/parity index. Runtime risk-domain requirements for
+# `oc harness plan` come from `harness/risk_domains.yaml`; repo check verifies
+# every risk-domain required skill is also present here, and validates this
+# manifest's skill, hook, and agent paths so the trigger index does not drift.
 #
 # Codex reads this file progressively — only skill metadata is loaded at start;
 # full SKILL.md is loaded when the skill is selected.

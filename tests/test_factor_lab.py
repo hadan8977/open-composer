@@ -39,11 +39,15 @@ def test_factor_lab_writes_factor_diagnostics(
     assert payload["status"] == "warning"
     assert payload["forward_bars"] == 1
     assert {item["name"] for item in payload["factor_metrics"]} == {"mom3", "mom3_copy"}
+    assert any(item["ir"] is not None for item in payload["factor_metrics"])
+    assert any(item["rolling_rank_ic_std"] is not None for item in payload["factor_metrics"])
     assert payload["factor_correlation_matrix"]["mom3"]["mom3_copy"] == 1.0
     assert any(flag.startswith("high_factor_correlation") for flag in payload["quality_flags"])
     text = report_path.read_text(encoding="utf-8")
     assert "## Factor Metrics" in text
     assert "## Factor Correlation Matrix" in text
+    assert "Rolling Std" in text
+    assert "IR" in text
     assert "`mom3`" in text
 
 

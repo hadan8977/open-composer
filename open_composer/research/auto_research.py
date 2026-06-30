@@ -104,6 +104,9 @@ _DEFAULT_ZSCORE_WINDOW = 60
 _COMPOSITE_ENTRY_THRESHOLD = 0.3
 _COMPOSITE_EXIT_THRESHOLD = -0.3
 _MIN_ABS_RANK_IC_FOR_SIGNAL = 0.02
+_MIN_IR_FOR_SELECTION = 0.3
+_AUTO_RESEARCH_SCHEMA_VERSION = "2"
+_DEFAULT_COMMISSION_PCT = 0.05
 
 
 def run_auto_research(
@@ -172,9 +175,11 @@ def run_auto_research(
     )
 
     selected = _select_top_k(ic_scores, candidates, max_factors)
+    usable_selection = bool(selected)
     if not selected:
         selected = candidates[: min(max_factors, max(1, len(candidates)))]
-    _write_json(run_dir / "selected_factors.json", [factor.id for factor in selected])
+    selected_ids_for_research = [factor.id for factor in selected] if usable_selection else []
+    _write_json(run_dir / "selected_factors.json", selected_ids_for_research)
 
     spec_path = _draft_spec(
         thesis=thesis,
@@ -219,16 +224,34 @@ def run_auto_research(
         candidates=candidates,
         ic_scores=ic_scores,
         selected=selected,
+        usable_selection=usable_selection,
         spec_path=spec_path,
         evidence_summary=evidence_summary,
         data_profile=data_profile,
         oos_summary=oos_summary,
         zero_cost_smoke=zero_cost_smoke,
     )
+    _write_run_metadata(
+        run_dir=run_dir,
+        run_id=run_id,
+        thesis=thesis,
+        universe=symbols,
+        timeframe=timeframe,
+        data_source=data_source,
+        max_factors=max_factors,
+        candidates=candidates,
+        selected=selected,
+        usable_selection=usable_selection,
+        evidence_summary=evidence_summary,
+        data_profile=data_profile,
+        spec_path=spec_path,
+        report_path=report_path,
+        base=base,
+    )
     return AutoResearchResult(
         run_id=run_id,
         thesis=thesis,
-        selected_factors=[factor.id for factor in selected],
+        selected_factors=selected_ids_for_research,
         spec_path=spec_path,
         evidence_status=evidence_summary.research_status,
         raw_evidence_status=evidence_summary.raw_status,
@@ -425,6 +448,8 @@ def _run_single_factor_ic(
                 "rank_ic": rank_ic,
                 "rank_ic_diagnosis": rank_ic_diagnosis,
                 "rolling_rank_ic_mean": metric.rolling_rank_ic_mean,
+                "rolling_rank_ic_std": getattr(metric, "rolling_rank_ic_std", None),
+                "ir": getattr(metric, "ir", None),
                 "stability_score": metric.stability_score,
                 "coverage_pct": metric.coverage_pct,
                 "observations": metric.observations,
@@ -562,12 +587,18 @@ def _select_top_k(
     for factor in candidates:
         score = ic_scores.get(factor.id, {})
         rank_ic = _float_or_none(score.get("rank_ic"))
+        ir = _float_or_none(score.get("ir"))
         coverage = _float_or_none(score.get("coverage_pct")) or 0.0
         observations = int(score.get("observations") or 0)
         stability = _float_or_none(score.get("stability_score")) or 0.0
-        if rank_ic is None or observations < 30 or coverage < 70:
+        if rank_ic is None or ir is None or observations < 30 or coverage < 70:
             continue
-        scored.append((factor, abs(rank_ic) * max(stability, 0.1) * (coverage / 100.0)))
+        if abs(rank_ic) < _MIN_ABS_RANK_IC_FOR_SIGNAL:
+            continue
+        if ir < _MIN_IR_FOR_SELECTION:
+            continue
+        quality = max(ir, 0.1) * max(stability, 0.1)
+        scored.append((factor, abs(rank_ic) * quality * (coverage / 100.0)))
     scored.sort(key=lambda item: item[1], reverse=True)
     selected: list[FactorDefinition] = []
     family_counts: dict[str, int] = {}
@@ -619,7 +650,7 @@ def _draft_spec(
         name: {
             "source": "factor_library",
             "factor_id": factor.id,
-            "params": {},
+            "params": _factor_default_params(factor),
         }
         for name, factor in zip(factor_names, selected, strict=True)
     }
@@ -663,7 +694,7 @@ def _draft_spec(
             "Fallback close-vs-SMA signal because auto research selected no factors."
         )
     parameter_space = {
-        f"{name}.{param}": values
+        f"factors.{name}.params.{param}": values
         for name, factor in zip(factor_names, selected, strict=True)
         for param, values in factor.default_parameter_space.items()
         if values and all(_is_scalar(item) for item in values)
@@ -678,7 +709,7 @@ def _draft_spec(
         "exit": {"all": [], "any": exit_any},
         "risk": {"max_trades_per_day": 1, "max_position_weight": 0.5, "stop_loss_pct": 3.0},
         "costs": {
-            "commission_pct": 0.0,
+            "commission_pct": 0.0 if zero_cost_smoke else _DEFAULT_COMMISSION_PCT,
             "slippage_bps": 0.0 if zero_cost_smoke else _default_slippage_bps(timeframe),
             "impact_model": "linear",
             "impact_eta": 0.0,
@@ -707,7 +738,7 @@ def _draft_spec(
         "research_design": {
             "parameter_space": parameter_space,
             "candidate_budget": max(1, min(150, len(parameter_space) * 3 or len(selected))),
-            "selection_objective": "rank_ic_stability_then_research_evidence",
+            "selection_objective": "rank_ic_ir_stability_then_research_evidence",
             "anti_overfit_notes": [
                 "Catalog candidates are selected before backtest evidence.",
                 "Sample-data evidence is workflow-only and not paper-ready.",
@@ -735,6 +766,15 @@ def _default_slippage_bps(timeframe: str) -> float:
     return 2.0
 
 
+def _factor_default_params(factor: FactorDefinition) -> dict[str, Any]:
+    params: dict[str, Any] = {}
+    for name, values in factor.default_parameter_space.items():
+        if not values:
+            continue
+        params[name] = values[0]
+    return params
+
+
 def _write_auto_data_profile(
     *,
     spec_path: Path,
@@ -756,6 +796,49 @@ def _write_auto_data_profile(
     profile["refresh_data"] = refresh_data
     _write_json(run_dir / "data_profile.json", profile)
     return profile
+
+
+def _write_run_metadata(
+    *,
+    run_dir: Path,
+    run_id: str,
+    thesis: str,
+    universe: list[str],
+    timeframe: str,
+    data_source: str,
+    max_factors: int,
+    candidates: list[FactorDefinition],
+    selected: list[FactorDefinition],
+    usable_selection: bool,
+    evidence_summary: _AutoEvidenceSummary,
+    data_profile: dict[str, Any],
+    spec_path: Path,
+    report_path: Path,
+    base: Path,
+) -> None:
+    payload = {
+        "schema_version": _AUTO_RESEARCH_SCHEMA_VERSION,
+        "run_id": run_id,
+        "thesis": thesis,
+        "universe": universe,
+        "primary_symbol": universe[0] if universe else None,
+        "timeframe": timeframe,
+        "data_source": data_source,
+        "data_source_mode": data_profile.get("source_mode"),
+        "data_acquisition_tier": data_profile.get("acquisition_tier"),
+        "max_factors": max_factors,
+        "candidate_count": len(candidates),
+        "selected_count": len(selected) if usable_selection else 0,
+        "usable_selection": usable_selection,
+        "research_status": evidence_summary.research_status,
+        "raw_evidence_status": evidence_summary.raw_status,
+        "promotion_status": evidence_summary.promotion_status,
+        "paper_readiness_status": evidence_summary.paper_readiness_status,
+        "spec_path": _relpath(spec_path, base),
+        "report_path": _relpath(report_path, base),
+        "generated_at": datetime.now(UTC).isoformat(),
+    }
+    _write_json(run_dir / "run_metadata.json", payload)
 
 
 def _mini_spec_path(
@@ -781,8 +864,8 @@ def _mini_spec_path(
         "exit": {"all": [], "any": [f"{factor_name} < 0"]},
         "risk": {"max_trades_per_day": 1, "max_position_weight": 0.5},
         "costs": {
-            "commission_pct": 0.0,
-            "slippage_bps": 0.0,
+            "commission_pct": _DEFAULT_COMMISSION_PCT,
+            "slippage_bps": _default_slippage_bps(timeframe),
             "impact_model": "linear",
             "impact_eta": 0.0,
             "impact_gamma": 0.0,
@@ -827,13 +910,14 @@ def _write_final_report(
     candidates: list[FactorDefinition],
     ic_scores: dict[str, dict[str, Any]],
     selected: list[FactorDefinition],
+    usable_selection: bool,
     spec_path: Path,
     evidence_summary: _AutoEvidenceSummary,
     data_profile: dict[str, Any],
     oos_summary: dict[str, Any],
     zero_cost_smoke: bool,
 ) -> Path:
-    selected_ids = {factor.id for factor in selected}
+    selected_ids = {factor.id for factor in selected} if usable_selection else set()
     lines = [
         "# AI Auto-Research Report",
         "",
@@ -863,8 +947,8 @@ def _write_final_report(
         "",
         f"## Candidate Factors ({len(candidates)})",
         "",
-        "| Factor | Family | Rank IC | Stability | Coverage | Observations | Status |",
-        "|---|---|---:|---:|---:|---:|---|",
+        "| Factor | Family | Rank IC | IR | Stability | Coverage | Observations | Status |",
+        "|---|---|---:|---:|---:|---:|---:|---|",
     ]
     for factor in candidates:
         score = ic_scores.get(factor.id, {})
@@ -872,12 +956,18 @@ def _write_final_report(
         lines.append(
             "| "
             f"`{factor.id}` | {factor.family} | {_fmt(score.get('rank_ic'))} | "
-            f"{_fmt(score.get('stability_score'))} | {_fmt(score.get('coverage_pct'))} | "
-            f"{score.get('observations') or 0} | {status} |"
+            f"{_fmt(score.get('ir'))} | {_fmt(score.get('stability_score'))} | "
+            f"{_fmt(score.get('coverage_pct'))} | {score.get('observations') or 0} | {status} |"
         )
-    lines.extend(["", f"## Selected Factors ({len(selected)})", ""])
-    for factor in selected:
-        lines.append(f"- `{factor.id}` ({factor.family}): {factor.description}")
+    lines.extend(["", f"## Selected Factors ({len(selected_ids)})", ""])
+    if usable_selection:
+        for factor in selected:
+            lines.append(f"- `{factor.id}` ({factor.family}): {factor.description}")
+    else:
+        lines.append(
+            "- No factor met the usable IC/IR/coverage/observation threshold; the draft spec "
+            "uses fallback catalog factors for manual inspection only."
+        )
     lines.extend(_oos_summary_lines(selected, oos_summary))
     lines.extend(_thesis_alignment_lines(thesis, candidates, selected, ic_scores))
     lines.extend(_factor_rejection_lines(candidates, selected, ic_scores))
@@ -995,6 +1085,7 @@ def _rejection_reason(score: dict[str, Any]) -> str:
     if diagnosis:
         return f"rank IC unavailable: {diagnosis}"
     rank_ic = _float_or_none(score.get("rank_ic"))
+    ir = _float_or_none(score.get("ir"))
     observations = int(score.get("observations") or 0)
     coverage = _float_or_none(score.get("coverage_pct")) or 0.0
     status = str(score.get("status") or "unknown")
@@ -1004,7 +1095,17 @@ def _rejection_reason(score: dict[str, Any]) -> str:
         return f"insufficient observations ({observations})"
     if coverage < 70:
         return f"low coverage ({coverage:.1f}%)"
-    return f"weaker selection score; rank_ic={rank_ic:.4f}, coverage={coverage:.1f}%"
+    if abs(rank_ic) < _MIN_ABS_RANK_IC_FOR_SIGNAL:
+        return (
+            f"rank_ic below selection threshold ({rank_ic:.4f} < {_MIN_ABS_RANK_IC_FOR_SIGNAL:.2f})"
+        )
+    if ir is None:
+        return "IR unavailable"
+    if ir < _MIN_IR_FOR_SELECTION:
+        return f"IR below selection threshold ({ir:.3f} < {_MIN_IR_FOR_SELECTION:.2f})"
+    if ir is None:
+        return f"weaker selection score; rank_ic={rank_ic:.4f}, coverage={coverage:.1f}%"
+    return f"weaker selection score; rank_ic={rank_ic:.4f}, ir={ir:.3f}, coverage={coverage:.1f}%"
 
 
 def _summarize_auto_evidence(evidence: Any) -> _AutoEvidenceSummary:

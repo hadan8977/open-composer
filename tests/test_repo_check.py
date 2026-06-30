@@ -213,6 +213,30 @@ def test_repo_check_blocks_when_skill_manifest_path_is_missing(
     assert "ultracode-reviewer/MISSING.md" in str(check.details)
 
 
+def test_repo_check_blocks_when_risk_domain_skill_is_not_manifested(
+    sample_workspace: Path,
+    repo_root: Path,
+) -> None:
+    _copy_repo_check_inputs(repo_root, sample_workspace)
+    manifest = sample_workspace / "harness" / "skill_manifest.yaml"
+    manifest.write_text(
+        manifest.read_text(encoding="utf-8").replace(
+            "  source-researcher:\n",
+            "  source-researcher-unlisted:\n",
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_repo_check_report(sample_workspace)
+
+    assert report.status == "blocked"
+    check = next(item for item in report.checks if item.name == "harness_policy")
+    assert check.status == "blocked"
+    assert "unmanifested_required_skills" in str(check.details)
+    assert "source-researcher" in str(check.details)
+
+
 def test_repo_check_cli_writes_reports(
     sample_workspace: Path,
     repo_root: Path,

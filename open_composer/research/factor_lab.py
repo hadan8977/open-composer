@@ -29,6 +29,8 @@ class FactorLabFactorMetric:
     forward_return_corr: float | None
     rank_ic: float | None
     rolling_rank_ic_mean: float | None
+    rolling_rank_ic_std: float | None
+    ir: float | None
     rolling_rank_ic_min: float | None
     stability_score: float | None
     quantile_mean_forward_return_pct: dict[str, float]
@@ -194,9 +196,15 @@ def _factor_metric(
     rolling_rank_ic_mean = (
         float(pd.Series(rolling_rank_ic_values).mean()) if rolling_rank_ic_values else None
     )
+    rolling_rank_ic_std = (
+        float(pd.Series(rolling_rank_ic_values).std(ddof=0))
+        if len(rolling_rank_ic_values) > 1
+        else None
+    )
     rolling_rank_ic_min = (
         float(pd.Series(rolling_rank_ic_values).min()) if rolling_rank_ic_values else None
     )
+    ir = _information_ratio(rolling_rank_ic_mean, rolling_rank_ic_std)
     stability_score = _stability_score(rank_ic, rolling_rank_ic_values)
     quantile_returns, top_bottom_spread, quantile_turnover = _quantile_metrics(
         joined["factor"],
@@ -208,6 +216,10 @@ def _factor_metric(
         flags.append("rank_ic_unavailable")
     elif abs(rank_ic) < 0.02:
         flags.append("weak_rank_ic")
+    if ir is None:
+        flags.append("ir_unavailable")
+    elif ir < 0.3:
+        flags.append("weak_ir")
     if top_bottom_spread is None:
         flags.append("quantile_spread_unavailable")
 
@@ -221,6 +233,8 @@ def _factor_metric(
         forward_return_corr=forward_corr,
         rank_ic=rank_ic,
         rolling_rank_ic_mean=rolling_rank_ic_mean,
+        rolling_rank_ic_std=rolling_rank_ic_std,
+        ir=ir,
         rolling_rank_ic_min=rolling_rank_ic_min,
         stability_score=stability_score,
         quantile_mean_forward_return_pct=quantile_returns,
@@ -273,6 +287,17 @@ def _stability_score(rank_ic: float | None, rolling_values: list[float]) -> floa
         if (rank_ic >= 0 and value >= 0) or (rank_ic < 0 and value < 0)
     ]
     return abs(rank_ic) * (len(same_sign) / len(rolling_values))
+
+
+def _information_ratio(
+    rolling_rank_ic_mean: float | None,
+    rolling_rank_ic_std: float | None,
+) -> float | None:
+    if rolling_rank_ic_mean is None or rolling_rank_ic_std is None:
+        return None
+    if rolling_rank_ic_std <= 0:
+        return None
+    return abs(rolling_rank_ic_mean) / rolling_rank_ic_std
 
 
 def _horizon_mean_returns(
@@ -415,8 +440,11 @@ def _write_factor_lab_report(
         lines.extend(
             [
                 "| Factor | Source | Coverage | Obs | Unique | Corr | RankIC | "
-                "Rolling RankIC | Stability | Spread | Turnover | Flags |",
-                "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+                "Rolling RankIC | Rolling Std | IR | Stability | Spread | Turnover | Flags |",
+                (
+                    "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | "
+                    "---: | ---: | ---: | ---: | ---: | --- |"
+                ),
             ]
         )
         for metric in factor_metrics:
@@ -429,6 +457,8 @@ def _write_factor_lab_report(
                 f"{_fmt(metric.forward_return_corr)} | "
                 f"{_fmt(metric.rank_ic)} | "
                 f"{_fmt(metric.rolling_rank_ic_mean)} | "
+                f"{_fmt(metric.rolling_rank_ic_std)} | "
+                f"{_fmt(metric.ir)} | "
                 f"{_fmt(metric.stability_score)} | "
                 f"{_fmt_pct(metric.top_bottom_spread_pct)} | "
                 f"{_fmt_pct(metric.quantile_turnover_pct)} | "

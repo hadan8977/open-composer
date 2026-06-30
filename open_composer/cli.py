@@ -179,6 +179,7 @@ from open_composer.research import (
     run_universe_audit,
     run_wide_router_research,
     search_similar_regimes,
+    sweep_parameters_from_spec,
     update_research_control,
     validate_strategy_dag,
     write_intraday_product_reflection,
@@ -2200,10 +2201,21 @@ def strategy_parameter_sweep(
     write_top: int = typer.Option(1, "--write-top"),
     search_strategy: str = typer.Option("grid", "--search-strategy"),
     random_seed: int | None = typer.Option(None, "--random-seed"),
+    from_spec: bool = typer.Option(
+        False,
+        "--from-spec",
+        help="Use StrategySpec.research_design.parameter_space as sweep parameters.",
+    ),
 ) -> None:
     """Run a bounded parameter grid over a StrategySpec and write ranked reports."""
     try:
-        parsed = parse_sweep_parameters(params or [])
+        parsed = sweep_parameters_from_spec(spec, project_root()) if from_spec else {}
+        parsed.update(parse_sweep_parameters(params or []))
+        if from_spec and not parsed:
+            raise ValueError(
+                "StrategySpec research_design has no executable sweep paths; "
+                "use paths rooted at entry, exit, risk, costs, or factors."
+            )
         result = run_parameter_sweep(
             spec,
             parsed,

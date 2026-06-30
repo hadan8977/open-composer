@@ -8,7 +8,13 @@ import yaml
 from typer.testing import CliRunner
 
 from open_composer.cli import app
-from open_composer.research.parameter_sweep import parse_sweep_parameters, run_parameter_sweep
+from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.research.kernel.workflow import search_space_from_spec
+from open_composer.research.parameter_sweep import (
+    parse_sweep_parameters,
+    run_parameter_sweep,
+    sweep_parameters_from_spec,
+)
 from open_composer.research.research_brief import init_research_brief
 
 
@@ -270,3 +276,67 @@ def test_parameter_sweep_cli_writes_reports(sample_workspace: Path, monkeypatch)
     assert payload["candidate_set"]["candidate_count"] == 4
     assert payload["selection_decision"]["status"] == "warning"
     assert "selection_is_in_sample_only" in payload["selection_decision"]["promotion_blockers"]
+
+
+def test_search_space_reads_top_level_research_design(sample_workspace: Path) -> None:
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw["research_design"] = {
+        "parameter_space": {"risk.stop_loss_pct": [0.8, 1.0, 1.2]},
+        "candidate_budget": 3,
+        "selection_objective": "test_top_level_design",
+    }
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    spec = load_strategy_spec(spec_path)
+
+    space = search_space_from_spec(spec)
+
+    assert space.parameter_ranges["risk.stop_loss_pct"] == [0.8, 1.0, 1.2]
+    assert space.candidate_count >= 3
+
+
+def test_parameter_sweep_from_spec_uses_research_design(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw["research_design"] = {
+        "parameter_space": {"risk.stop_loss_pct": [0.8, 1.0, 1.2]},
+        "candidate_budget": 3,
+        "selection_objective": "test_top_level_design",
+    }
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    init_research_brief(spec_path, sample_workspace, search_budget=3)
+
+    assert sweep_parameters_from_spec(spec_path, sample_workspace)["risk.stop_loss_pct"] == [
+        "0.8",
+        "1.0",
+        "1.2",
+    ]
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "strategy",
+            "parameter-sweep",
+            str(spec_path),
+            "--from-spec",
+            "--max-candidates",
+            "3",
+            "--write-top",
+            "0",
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(
+        (
+            sample_workspace / "reports" / "research" / "fixture_pullback_15m-parameter-sweep.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert payload["parameters"] == {"risk.stop_loss_pct": ["0.8", "1.0", "1.2"]}
+    assert payload["candidate_count"] == 3

@@ -102,7 +102,7 @@ def test_thesis_alignment_explains_unselected_required_family() -> None:
 
     text = "\n".join(lines)
     assert "`overnight_gap`: candidate present but not selected" in text
-    assert "weaker selection score" in text
+    assert "rank_ic below selection threshold" in text
 
 
 def test_top_k_limits_risk_filter_concentration() -> None:
@@ -117,6 +117,7 @@ def test_top_k_limits_risk_filter_concentration() -> None:
     scores = {
         factor.id: {
             "rank_ic": 0.10 - index * 0.001,
+            "ir": 0.8 - index * 0.01,
             "coverage_pct": 95.0,
             "observations": 250,
             "stability_score": 0.8,
@@ -130,3 +131,47 @@ def test_top_k_limits_risk_filter_concentration() -> None:
     assert len(selected) == 5
     assert sum(1 for factor in selected[:3] if factor.family in risk_families) <= 2
     assert any(factor.family == "trend_momentum" for factor in selected)
+
+
+def test_top_k_prefers_higher_ir_when_rank_ic_is_tied() -> None:
+    low_ir = get_factor("alpha101_007_price_above_sma_10d")
+    high_ir = get_factor("alpha101_009_roc_5d")
+    candidates = [low_ir, high_ir]
+    scores = {
+        low_ir.id: {
+            "rank_ic": 0.05,
+            "ir": 0.4,
+            "coverage_pct": 95.0,
+            "observations": 250,
+            "stability_score": 0.6,
+        },
+        high_ir.id: {
+            "rank_ic": 0.05,
+            "ir": 1.1,
+            "coverage_pct": 95.0,
+            "observations": 250,
+            "stability_score": 0.6,
+        },
+    }
+
+    selected = _select_top_k(scores, candidates, 1)
+
+    assert selected == [high_ir]
+
+
+def test_top_k_requires_rank_ic_and_ir_thresholds() -> None:
+    factor = get_factor("alpha101_007_price_above_sma_10d")
+    candidates = [factor]
+    scores = {
+        factor.id: {
+            "rank_ic": 0.01,
+            "ir": 0.8,
+            "coverage_pct": 95.0,
+            "observations": 250,
+            "stability_score": 0.6,
+        }
+    }
+
+    selected = _select_top_k(scores, candidates, 1)
+
+    assert selected == []

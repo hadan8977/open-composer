@@ -84,10 +84,10 @@ def build_default_research_brief(spec: StrategySpec) -> ResearchBrief:
 
 
 def search_space_from_spec(spec: StrategySpec) -> SearchSpace:
-    research_design = _notes_mapping(spec).get("research_design", {})
-    if not isinstance(research_design, dict):
-        research_design = {}
-    parameter_ranges = _dict_of_lists(research_design.get("parameter_ranges"))
+    research_design = _research_design_mapping(spec)
+    parameter_ranges = _dict_of_lists(
+        research_design.get("parameter_space") or research_design.get("parameter_ranges")
+    )
     method_variants = _string_list(research_design.get("method_variants"))
     factor_variants = _string_list(research_design.get("factor_variants")) or sorted(spec.factors)
     universe_variants = _universe_variants(research_design.get("universe_variants"), spec)
@@ -120,6 +120,21 @@ def research_run_id(strategy_name: str, spec: StrategySpec) -> str:
 
 def _notes_mapping(spec: StrategySpec) -> dict[str, Any]:
     return spec.notes.model_dump(mode="json")
+
+
+def _research_design_mapping(spec: StrategySpec) -> dict[str, Any]:
+    if spec.research_design is not None:
+        raw = spec.research_design.model_dump(mode="json")
+        legacy = _notes_mapping(spec).get("research_design")
+        if isinstance(legacy, dict):
+            raw.setdefault("parameter_ranges", legacy.get("parameter_ranges"))
+            raw.setdefault("method_variants", legacy.get("method_variants"))
+            raw.setdefault("factor_variants", legacy.get("factor_variants"))
+            raw.setdefault("universe_variants", legacy.get("universe_variants"))
+            raw.setdefault("family", legacy.get("family"))
+        return raw
+    research_design = _notes_mapping(spec).get("research_design", {})
+    return research_design if isinstance(research_design, dict) else {}
 
 
 def _dict_of_lists(value: object) -> dict[str, list[Any]]:

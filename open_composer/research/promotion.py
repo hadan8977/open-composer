@@ -1205,14 +1205,14 @@ def _benchmark_family_check(
         "note": "ex-post best symbol is a non-tradable upper-bound benchmark",
     }
     market = {
-        "status": "not_applicable",
+        "status": "missing",
         "proxy": None,
-        "note": "market proxy (e.g. SPY, QQQ) requires manual attachment; not auto-computed",
+        "note": "market proxy (e.g. SPY, QQQ) requires explicit evidence or structured waiver",
     }
     sector = {
-        "status": "not_applicable",
+        "status": "missing",
         "proxy": None,
-        "note": "sector/theme proxy requires manual attachment; not auto-computed from spec",
+        "note": "sector/theme proxy requires explicit evidence or structured waiver",
     }
     benchmarks = {
         "same_symbol_buy_hold": same_symbol,

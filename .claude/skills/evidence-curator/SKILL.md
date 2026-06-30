@@ -40,8 +40,9 @@ description: >
 ### 4. Lesson consolidation
 - Review backtest forensics reports for recurring patterns (e.g. repeated lookahead
   warnings of the same type).
-- If a pattern appears in >= 3 strategies, add a concise rule to the relevant skill's
-  SKILL.md or references/ directory.
+- If a pattern appears in >= 3 strategies, propose a concise rule for the relevant
+  skill's SKILL.md or references/ directory. Do not edit skill files unless the user
+  has explicitly asked for implementation, not just curation.
 - Do not add redundant lessons already in AGENTS.md or skill references.
 
 ### 5. Artifact cleanup
@@ -78,4 +79,6 @@ description: >
 
 - Do not delete artifacts without explicit user confirmation.
 - Do not modify active strategy specs during curation.
+- Do not modify `.agents/skills` during advisory curation without explicit
+  implementation approval.
 - Curation output is advisory; user reviews before any structural change.

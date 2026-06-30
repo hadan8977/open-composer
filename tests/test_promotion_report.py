@@ -120,8 +120,9 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert payload["five_pass_checks"]["llm_contribution_pass"] == "not_applicable"
     assert payload["five_pass_checks"]["paper_ready_pass"] == "fail"
     assert payload["five_pass_checks"]["expression_safety_pass"] == "pass"
+    assert payload["benchmark_family"]["complete"] is False
     assert payload["benchmark_family"]["benchmarks"]["same_symbol_buy_hold"]["status"] == "ok"
-    assert payload["benchmark_family"]["benchmarks"]["market_proxy"]["status"] == "not_applicable"
+    assert payload["benchmark_family"]["benchmarks"]["market_proxy"]["status"] == "missing"
     assert payload["data_profile"]["source_mode"] == "sample"
     assert payload["research_manifest"]["trial_count"] >= 1
     assert payload["research_manifest"]["spec_hash"]

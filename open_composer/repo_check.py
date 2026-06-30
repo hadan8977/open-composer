@@ -398,7 +398,11 @@ def _repo_skills_check(root: Path) -> RepoConsistencyCheck:
         "python-backtest-writer": ["visible_at", "benchmark family", "trial count"],
         "risk-reviewer": ["workflow_pass", "paper_ready_pass", "LLM fallback"],
         "strategy-designer": ["notes.research_design", "parameter ranges", "benchmark family"],
-        "strategy-researcher": ["parameter-sweep", "promotion-report", "llm_contribution_pass"],
+        "strategy-researcher": [
+            "strategy-research-orchestrator",
+            "promotion-report",
+            "llm_contribution_pass",
+        ],
         "ultracode-reviewer": ["UltraCode-style", "sidecar", "P0 blockers", "StrategySpec"],
         "weekly-reviewer": ["LLM contribution evidence", "paper readiness evidence"],
     }
@@ -693,20 +697,6 @@ def _harness_policy_check(root: Path) -> RepoConsistencyCheck:
     contracts_doc = parsed.get("artifact_contracts.yaml") or {}
     contract_names = set((contracts_doc.get("artifacts") or {}).keys())  # type: ignore[union-attr]
 
-    skill_dirs = _agent_skill_dirs(root)
-    manifest_doc = parsed.get("skill_manifest.yaml") or {}
-    manifest_problems = _validate_skill_manifest(root, manifest_doc, skill_dirs=skill_dirs)
-    if manifest_problems:
-        return RepoConsistencyCheck(
-            name="harness_policy",
-            status="blocked",
-            message=(
-                "Skill manifest references missing or inconsistent skill, hook, or agent files."
-            ),
-            details=manifest_problems,
-            suggested_actions=["Update harness/skill_manifest.yaml or restore referenced files"],
-        )
-
     domains_doc = parsed.get("risk_domains.yaml") or {}
     domains_map = (domains_doc.get("risk_domains") or {}) if isinstance(domains_doc, dict) else {}
     referenced_skills: set[str] = set()
@@ -718,6 +708,25 @@ def _harness_policy_check(root: Path) -> RepoConsistencyCheck:
             referenced_skills.add(skill)
         for artifact in domain_raw.get("required_artifacts") or []:
             referenced_artifacts.add(artifact)
+
+    skill_dirs = _agent_skill_dirs(root)
+    manifest_doc = parsed.get("skill_manifest.yaml") or {}
+    manifest_problems = _validate_skill_manifest(
+        root,
+        manifest_doc,
+        skill_dirs=skill_dirs,
+        required_skills=referenced_skills,
+    )
+    if manifest_problems:
+        return RepoConsistencyCheck(
+            name="harness_policy",
+            status="blocked",
+            message=(
+                "Skill manifest references missing or inconsistent skill, hook, or agent files."
+            ),
+            details=manifest_problems,
+            suggested_actions=["Update harness/skill_manifest.yaml or restore referenced files"],
+        )
 
     missing_skills = sorted(referenced_skills - skill_dirs)
     missing_contracts = sorted(referenced_artifacts - contract_names)
@@ -773,6 +782,7 @@ def _validate_skill_manifest(
     root: Path,
     manifest_doc: object,
     skill_dirs: set[str] | None = None,
+    required_skills: set[str] | None = None,
 ) -> dict[str, object]:
     if not isinstance(manifest_doc, dict):
         return {"manifest": "skill_manifest.yaml must parse as a mapping"}
@@ -786,6 +796,7 @@ def _validate_skill_manifest(
         missing_paths: list[str] = []
         missing_names: dict[str, str] = {}
         name_mismatches: dict[str, str] = {}
+        manifest_skill_names = {str(name) for name in skills.keys()}
         for skill_name, raw in skills.items():
             if not isinstance(raw, dict):
                 missing_paths.append(str(skill_name))
@@ -803,7 +814,8 @@ def _validate_skill_manifest(
                 missing_names[str(skill_name)] = raw_path
             elif frontmatter_name != skill_name:
                 name_mismatches[str(skill_name)] = frontmatter_name
-        unmanifested_skills = sorted(skill_dirs - {str(name) for name in skills.keys()})
+        unmanifested_skills = sorted(skill_dirs - manifest_skill_names)
+        unmanifested_required_skills = sorted((required_skills or set()) - manifest_skill_names)
         if missing_paths:
             problems["missing_skill_paths"] = sorted(missing_paths)
         if missing_names:
@@ -812,6 +824,8 @@ def _validate_skill_manifest(
             problems["skill_name_mismatches"] = name_mismatches
         if unmanifested_skills:
             problems["unmanifested_skills"] = unmanifested_skills
+        if unmanifested_required_skills:
+            problems["unmanifested_required_skills"] = unmanifested_required_skills
 
     hooks = manifest_doc.get("hooks") or {}
     if not isinstance(hooks, dict):

@@ -55,7 +55,11 @@ from open_composer.research.options_research import (
     build_options_overlay_report,
     build_options_research_report,
 )
-from open_composer.research.parameter_sweep import parse_sweep_parameters, run_parameter_sweep
+from open_composer.research.parameter_sweep import (
+    parse_sweep_parameters,
+    run_parameter_sweep,
+    sweep_parameters_from_spec,
+)
 from open_composer.research.pbo import OverfitRiskResult, build_overfit_risk_report
 from open_composer.research.promotion import PromotionReport, build_promotion_report
 from open_composer.research.regime_retrieval import RegimeSearchReport, search_similar_regimes
@@ -140,6 +144,7 @@ __all__ = [
     "build_promotion_report",
     "build_overfit_risk_report",
     "run_parameter_sweep",
+    "sweep_parameters_from_spec",
     "run_universe_audit",
     "run_llm_exposure_switch_meta_selection",
     "run_llm_rotation_meta_selection",

@@ -14,6 +14,7 @@ from open_composer.research.factor_library import get_factor
 def _fake_ic(rank_ic: float | None) -> dict[str, object]:
     return {
         "rank_ic": rank_ic,
+        "ir": None if rank_ic is None else abs(rank_ic) * 10,
         "coverage_pct": 95.0,
         "observations": 500,
         "stability_score": 0.75,

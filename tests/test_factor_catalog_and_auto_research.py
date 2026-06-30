@@ -80,6 +80,7 @@ def test_auto_research_writes_spec_report_and_lineage(
 ) -> None:
     metric = SimpleNamespace(
         rank_ic=0.08,
+        ir=0.64,
         rolling_rank_ic_mean=0.04,
         stability_score=0.75,
         coverage_pct=96.0,
@@ -130,9 +131,58 @@ def test_auto_research_writes_spec_report_and_lineage(
         factor_name = f"{factor_id}_signal"
         assert spec.factors[factor_name].source == "factor_library"
     assert spec.factors["composite_score"].source == "expression"
+    assert spec.costs.commission_pct == 0.05
     assert spec.costs.slippage_bps == 5.0
     for factor_id in result.selected_factors:
         assert (sample_workspace / "reports" / "factors" / factor_id / "lineage.json").exists()
+
+
+def test_auto_research_marks_fallback_when_no_usable_ic(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    metric = SimpleNamespace(
+        rank_ic=None,
+        ir=None,
+        rolling_rank_ic_mean=None,
+        stability_score=0.0,
+        coverage_pct=96.0,
+        observations=250,
+        top_bottom_spread_pct=None,
+        flags=["zero_variance"],
+    )
+
+    def fake_factor_lab(spec_path: Path, root: Path, **kwargs):  # noqa: ARG001
+        return SimpleNamespace(
+            status="warning",
+            factor_metrics=[metric],
+            json_path=sample_workspace / "reports" / "research" / f"{spec_path.stem}.json",
+        )
+
+    def fake_evidence(spec_path: Path, root: Path, **kwargs):  # noqa: ARG001
+        return SimpleNamespace(status="warning")
+
+    monkeypatch.setattr("open_composer.research.auto_research.run_factor_lab", fake_factor_lab)
+    monkeypatch.setattr("open_composer.research.evidence.build_strategy_evidence", fake_evidence)
+
+    result = run_auto_research(
+        "Find a daily trend strategy that exits in high-volatility regimes.",
+        ["SYN"],
+        timeframe="daily",
+        data_source="sample",
+        data_path="data/sample/syn_daily.csv",
+        max_factors=2,
+        root=sample_workspace,
+    )
+
+    run_dir = result.report_path.parent
+    metadata = json.loads((run_dir / "run_metadata.json").read_text(encoding="utf-8"))
+
+    assert result.selected_factors == []
+    assert json.loads((run_dir / "selected_factors.json").read_text(encoding="utf-8")) == []
+    assert metadata["usable_selection"] is False
+    assert metadata["selected_count"] == 0
+    assert "fallback catalog factors" in result.report_path.read_text(encoding="utf-8")
 
 
 def test_auto_research_downgrades_sample_strict_data_to_warning(
@@ -141,6 +191,7 @@ def test_auto_research_downgrades_sample_strict_data_to_warning(
 ) -> None:
     metric = SimpleNamespace(
         rank_ic=0.08,
+        ir=0.64,
         rolling_rank_ic_mean=0.04,
         stability_score=0.75,
         coverage_pct=96.0,
@@ -242,6 +293,7 @@ def test_auto_research_zero_cost_smoke_is_explicit(
 ) -> None:
     metric = SimpleNamespace(
         rank_ic=0.08,
+        ir=0.64,
         rolling_rank_ic_mean=0.04,
         stability_score=0.75,
         coverage_pct=96.0,
@@ -285,6 +337,7 @@ def test_auto_research_defaults_to_alpaca_and_falls_back_without_credentials(
 ) -> None:
     metric = SimpleNamespace(
         rank_ic=0.08,
+        ir=0.64,
         rolling_rank_ic_mean=0.04,
         stability_score=0.75,
         coverage_pct=96.0,

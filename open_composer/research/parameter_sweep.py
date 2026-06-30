@@ -84,6 +84,26 @@ def parse_sweep_parameters(items: list[str]) -> dict[str, list[str]]:
     return parameters
 
 
+def sweep_parameters_from_spec(spec_path: Path, root: Path | None = None) -> dict[str, list[str]]:
+    """Extract executable parameter-sweep values from StrategySpec.research_design."""
+    source = load_strategy_spec(spec_path)
+    raw = source.research_design.model_dump(mode="json") if source.research_design else {}
+    if not raw:
+        legacy = source.notes.model_dump(mode="json").get("research_design")
+        raw = legacy if isinstance(legacy, dict) else {}
+    parameters = raw.get("parameter_space") or raw.get("parameter_ranges") or {}
+    if not isinstance(parameters, dict):
+        return {}
+    normalized: dict[str, list[str]] = {}
+    for key, values in _iter_parameter_lists(parameters).items():
+        path = str(key)
+        if not _is_executable_sweep_path(path):
+            continue
+        normalized[path] = [_parameter_value_to_cli(value) for value in values]
+    _validate_sweep_paths(source, normalized)
+    return normalized
+
+
 def run_parameter_sweep(
     spec_path: Path,
     parameters: dict[str, list[str]],
@@ -280,6 +300,33 @@ def run_parameter_sweep(
 def _split_values(raw_values: str) -> list[str]:
     separator = "|" if "|" in raw_values else ","
     return [value.strip() for value in raw_values.split(separator) if value.strip()]
+
+
+def _iter_parameter_lists(parameters: dict[Any, Any]) -> dict[str, list[Any]]:
+    output: dict[str, list[Any]] = {}
+    for key, value in parameters.items():
+        if isinstance(value, list):
+            items = list(value)
+        elif value is None:
+            items = [None]
+        else:
+            items = [value]
+        if items:
+            output[str(key)] = items
+    return output
+
+
+def _is_executable_sweep_path(path: str) -> bool:
+    root, _, _ = path.partition(".")
+    return root in ALLOWED_SWEEP_ROOTS
+
+
+def _parameter_value_to_cli(value: Any) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
 
 
 def _parameter_combinations(parameters: dict[str, list[str]]) -> list[dict[str, str]]:
