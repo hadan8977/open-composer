@@ -366,6 +366,53 @@ class RealityModel(BaseModel):
     stress_scenarios: list[StressScenario] = Field(default_factory=list)
 
 
+class MLLabel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["forward_return", "forward_direction"] = "forward_return"
+    horizon_bars: int = Field(default=5, ge=1, le=60)
+    threshold_pct: float | None = None
+
+
+class MLTraining(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    window_bars: int = Field(default=378, ge=120)
+    retrain_every_bars: int = Field(default=21, ge=5)
+    test_window_bars: int = Field(default=63, ge=21)
+    embargo_bars: int = Field(default=5, ge=0)
+    seed: int = 42
+
+
+class MLSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    method: Literal["threshold", "top_quantile"] = "threshold"
+    threshold: float | None = None
+    quantile: float | None = Field(default=None, gt=0, lt=1)
+
+    @model_validator(mode="after")
+    def require_selection_value(self) -> MLSelection:
+        if self.method == "threshold" and self.threshold is None:
+            object.__setattr__(self, "threshold", 0.0)
+        if self.method == "top_quantile" and self.quantile is None:
+            msg = "selection.method=top_quantile requires 0<quantile<1"
+            raise ValueError(msg)
+        return self
+
+
+class MLModelConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal["lightgbm_regressor", "lightgbm_classifier"] = "lightgbm_regressor"
+    label: MLLabel = Field(default_factory=MLLabel)
+    features: list[str] = Field(min_length=1)
+    training: MLTraining = Field(default_factory=MLTraining)
+    selection: MLSelection = Field(default_factory=MLSelection)
+    hyperparameters: dict[str, Any] = Field(default_factory=dict)
+    baseline: Literal["linear_composite", "none"] = "linear_composite"
+
+
 class StrategySpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -390,6 +437,7 @@ class StrategySpec(BaseModel):
     required_capabilities: list[str] = Field(default_factory=list)
     execution_policy: ExecutionPolicy | None = None
     reality_model: RealityModel | None = None
+    model: MLModelConfig | None = None
 
     @field_validator("name")
     @classmethod
@@ -416,6 +464,16 @@ class StrategySpec(BaseModel):
                 msg = f"factor name is reserved: {name}"
                 raise ValueError(msg)
         return value
+
+    @model_validator(mode="after")
+    def validate_model_features(self) -> StrategySpec:
+        if self.model is None:
+            return self
+        missing = [feature for feature in self.model.features if feature not in self.factors]
+        if missing:
+            msg = "model.features must reference declared spec factors: " + ", ".join(missing)
+            raise ValueError(msg)
+        return self
 
     @property
     def primary_symbol(self) -> str:

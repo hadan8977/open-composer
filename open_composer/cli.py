@@ -422,6 +422,7 @@ def research_auto_command(
     use_llm: Annotated[bool, typer.Option("--use-llm/--no-llm")] = False,
     refresh_data: Annotated[bool, typer.Option("--refresh-data/--use-cache")] = False,
     zero_cost_smoke: Annotated[bool, typer.Option("--zero-cost-smoke")] = False,
+    model: Annotated[str | None, typer.Option("--model")] = None,
 ) -> None:
     """Run thesis -> catalog factors -> IC -> draft spec -> evidence."""
     from open_composer.research.auto_research import run_auto_research
@@ -438,6 +439,7 @@ def research_auto_command(
             use_llm=use_llm,
             refresh_data=refresh_data,
             zero_cost_smoke=zero_cost_smoke,
+            model_kind=model,
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -2286,6 +2288,52 @@ def strategy_factor_lab(
     )
     console.print(f"report: {result.report_path}")
     console.print(f"json: {result.json_path}")
+
+
+@strategy_app.command("train")
+def strategy_train(spec: Path) -> None:
+    """Train a StrategySpec.model using purged walk-forward OOS folds."""
+    from open_composer.research.ml_backend.evaluation import train_strategy_model
+
+    try:
+        training, paths = train_strategy_model(spec, project_root())
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]ML training complete[/green] folds={len(training.folds)} "
+        f"predictions={int(training.full_predictions.notna().sum())}"
+    )
+    console.print(f"json: {paths.training_json}")
+    console.print(f"report: {paths.training_md}")
+
+
+@strategy_app.command("backtest-walk-forward")
+def strategy_backtest_walk_forward(spec: Path) -> None:
+    """Backtest ML OOS predictions and compare with the linear baseline."""
+    from open_composer.research.ml_backend.evaluation import compare_ml_to_baseline
+
+    try:
+        payload, paths = compare_ml_to_baseline(spec, project_root())
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]ML walk-forward comparison complete[/green] status={payload['status']}")
+    ml_sharpe = payload["ml"].get("sharpe_ratio")
+    baseline_sharpe = payload["baseline"].get("sharpe_ratio")
+    console.print(f"ml_sharpe={ml_sharpe} baseline_sharpe={baseline_sharpe}")
+    console.print(f"json: {paths.comparison_json}")
+    console.print(f"report: {paths.comparison_md}")
+
+
+@strategy_app.command("explain")
+def strategy_explain(spec: Path, top_n: int = typer.Option(10, "--top-n")) -> None:
+    """Write a lightweight ML feature-importance explanation."""
+    from open_composer.research.ml_backend.evaluation import explain_strategy_model
+
+    try:
+        path = explain_strategy_model(spec, project_root(), top_n=top_n)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]ML explanation written[/green] {path}")
 
 
 @strategy_app.command("geometry-features")

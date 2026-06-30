@@ -159,7 +159,7 @@ def backtest_frame(
 ) -> BacktestArtifacts:
     frame = frame.copy()
     frame.attrs.update({"strategy_name": spec.name})
-    entry_mask, exit_mask = signal_masks(spec, frame, root=root)
+    entry_mask, exit_mask = _entry_exit_masks(spec, frame, root=root)
     evaluation_start_index = max(0, min(evaluation_start_index, max(len(frame) - 1, 0)))
     evaluation_frame = frame.iloc[evaluation_start_index:].copy()
     current_run_id = run_id_value or run_id(spec.name)
@@ -395,6 +395,13 @@ def backtest_frame(
         assumptions.append(
             f"Indicators were warmed with {evaluation_start_index} prior bars before scoring."
         )
+    if spec.model is not None:
+        ml_training = frame.attrs.get("ml_training_run")
+        fold_count = len(getattr(ml_training, "folds", []) or [])
+        assumptions.append(
+            "ML signals use stitched out-of-sample walk-forward predictions only; "
+            f"fold_count={fold_count}."
+        )
     run = BacktestRun(
         run_id=current_run_id,
         strategy_name=spec.name,
@@ -439,6 +446,21 @@ def backtest_frame(
     return BacktestArtifacts(
         run=run, signals=signals, trades=trades, backend_plan_path=backend_plan_path
     )
+
+
+def _entry_exit_masks(
+    spec: StrategySpec,
+    frame: pd.DataFrame,
+    root: Path | None,
+) -> tuple[pd.Series, pd.Series]:
+    if spec.model is None:
+        return signal_masks(spec, frame, root=root)
+    from open_composer.research.ml_backend.prediction import predictions_to_signals
+    from open_composer.research.ml_backend.training import run_rolling_training
+
+    training = run_rolling_training(spec, frame, root or project_root())
+    frame.attrs["ml_training_run"] = training
+    return predictions_to_signals(training.full_predictions, spec, frame)
 
 
 def _impact_rate(impact_model: str, impact_eta: float, impact_gamma: float) -> float:

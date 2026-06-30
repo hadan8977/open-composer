@@ -237,6 +237,8 @@ def build_promotion_report(
     checks.append(_research_design_check(spec))
     checks.append(_research_brief_check(spec_path, base))
     checks.append(_overfit_risk_check(spec_path, base))
+    if spec.model is not None:
+        checks.append(_ml_baseline_check(spec_path, base))
 
     ready = all(check.status == "ok" for check in checks)
     status: PromotionStatus
@@ -820,6 +822,48 @@ def _overfit_risk_check(spec_path: Path, root: Path) -> GateResult:
         name="overfit_risk",
         status="ok",
         message="Multiple-testing overfit risk proxy passed.",
+        details=details,
+    )
+
+
+def _ml_baseline_check(spec_path: Path, root: Path) -> GateResult:
+    try:
+        from open_composer.research.ml_backend.evaluation import compare_ml_to_baseline
+
+        payload, paths = compare_ml_to_baseline(spec_path, root)
+    except Exception as exc:  # noqa: BLE001
+        return GateResult(
+            name="ml_beats_linear_baseline",
+            status="blocked",
+            message=f"ML baseline comparison failed: {exc}",
+            details={"error": str(exc)},
+        )
+    status = str(payload.get("status") or "blocked")
+    details = {
+        "ml": payload.get("ml"),
+        "baseline": payload.get("baseline"),
+        "fold_count": payload.get("fold_count"),
+        "json_path": str(paths.comparison_json) if paths.comparison_json else None,
+        "report_path": str(paths.comparison_md) if paths.comparison_md else None,
+    }
+    if status == "ok":
+        return GateResult(
+            name="ml_beats_linear_baseline",
+            status="ok",
+            message="ML walk-forward result beat the linear baseline after costs.",
+            details=details,
+        )
+    if status == "warning":
+        return GateResult(
+            name="ml_beats_linear_baseline",
+            status="warning",
+            message="ML walk-forward result is roughly tied with the linear baseline.",
+            details=details,
+        )
+    return GateResult(
+        name="ml_beats_linear_baseline",
+        status="blocked",
+        message="ML walk-forward result did not beat the linear baseline; keep strategy in draft.",
         details=details,
     )
 

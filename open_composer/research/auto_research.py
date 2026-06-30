@@ -120,6 +120,7 @@ def run_auto_research(
     use_llm: bool = False,
     refresh_data: bool = False,
     zero_cost_smoke: bool = False,
+    model_kind: str | None = None,
     root: Path | None = None,
 ) -> AutoResearchResult:
     base = root or project_root()
@@ -192,6 +193,7 @@ def run_auto_research(
         data_path=data_path,
         base=base,
         zero_cost_smoke=zero_cost_smoke,
+        model_kind=model_kind,
     )
     data_profile = _write_auto_data_profile(
         spec_path=spec_path,
@@ -640,6 +642,7 @@ def _draft_spec(
     data_path: str | None,
     base: Path,
     zero_cost_smoke: bool = False,
+    model_kind: str | None = None,
 ) -> Path:
     slug = run_id.lower().replace("-", "_")
     spec_name = f"auto_{slug}"
@@ -751,6 +754,23 @@ def _draft_spec(
         },
         "required_capabilities": [_market_capability(data_source, timeframe)],
     }
+    if model_kind:
+        if model_kind != "lightgbm":
+            raise ValueError("--model currently supports only lightgbm")
+        spec_yaml["model"] = {
+            "kind": "lightgbm_regressor",
+            "features": factor_names,
+            "label": {"type": "forward_return", "horizon_bars": 5},
+            "training": {
+                "window_bars": 378 if timeframe == "daily" else 240,
+                "retrain_every_bars": 21 if timeframe == "daily" else 40,
+                "test_window_bars": 63 if timeframe == "daily" else 80,
+                "embargo_bars": 5,
+                "seed": 42,
+            },
+            "selection": {"method": "threshold", "threshold": 0.0},
+            "baseline": "linear_composite",
+        }
     spec_path.write_text(yaml.safe_dump(spec_yaml, sort_keys=False), encoding="utf-8")
     load_strategy_spec(spec_path)
     for factor in selected:
