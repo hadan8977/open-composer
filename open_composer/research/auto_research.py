@@ -201,6 +201,7 @@ def run_auto_research(
         base=base,
         refresh_data=refresh_data,
     )
+    _persist_research_strict_tier(spec_path, data_profile)
 
     evidence_summary = _AutoEvidenceSummary(
         research_status="not_run",
@@ -816,6 +817,21 @@ def _write_auto_data_profile(
     profile["refresh_data"] = refresh_data
     _write_json(run_dir / "data_profile.json", profile)
     return profile
+
+
+def _persist_research_strict_tier(spec_path: Path, data_profile: dict[str, Any]) -> None:
+    if data_profile.get("acquisition_tier") != "research_strict":
+        return
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8")) or {}
+    if not isinstance(raw, dict):
+        return
+    data_assumptions = raw.setdefault("data_assumptions", {})
+    if not isinstance(data_assumptions, dict):
+        data_assumptions = {}
+        raw["data_assumptions"] = data_assumptions
+    data_assumptions["acquisition_tier"] = "research_strict"
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    load_strategy_spec(spec_path)
 
 
 def _write_run_metadata(

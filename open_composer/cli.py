@@ -2437,6 +2437,13 @@ def strategy_promotion_report(
             help="Repeatable slippage scenarios for cost sensitivity.",
         ),
     ] = None,
+    refresh_data: Annotated[
+        bool,
+        typer.Option(
+            "--refresh-data/--use-cache",
+            help="Refresh provider data before building the promotion report.",
+        ),
+    ] = False,
 ) -> None:
     """Build a promotion gate report with OOS, walk-forward, and cost sensitivity evidence."""
     result = build_promotion_report(
@@ -2445,6 +2452,7 @@ def strategy_promotion_report(
         out_of_sample_ratio=oos_ratio,
         walk_forward_folds=walk_forward_folds,
         cost_slippage_bps=cost_slippage_bps,
+        refresh_data=refresh_data,
     )
     table = Table(title=f"Promotion Report: {result.strategy_name}")
     table.add_column("Field")

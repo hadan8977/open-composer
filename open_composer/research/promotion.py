@@ -169,34 +169,49 @@ def build_promotion_report(
         root=base,
         run_id_value=f"promotion-{spec.name}-full",
     )
+    in_sample_details = _run_details(full)
+    in_sample_message = (
+        "Full-window backtest captured in-sample research evidence; "
+        "review data sanity before promotion."
+    )
+    if spec.model is not None:
+        in_sample_details["evidence_kind"] = "ml_purged_stitched_full_window"
+        in_sample_message = (
+            "Full-window ML backtest uses stitched purged walk-forward predictions; "
+            "review data sanity before promotion."
+        )
     checks.append(
         GateResult(
             name="in_sample",
             status=_status_from_sanity(
                 full.run.data_sanity.status if full.run.data_sanity else "warning"
             ),
-            message=(
-                "Full-window backtest captured in-sample research evidence; "
-                "review data sanity before promotion."
-            ),
-            details=_run_details(full),
+            message=in_sample_message,
+            details=in_sample_details,
         )
     )
 
-    oos_check, oos_artifacts = _out_of_sample_check(
-        spec=spec,
-        frame=frame,
-        root=base,
-        out_of_sample_ratio=out_of_sample_ratio,
-    )
+    if spec.model is not None:
+        ml_training = _run_ml_training_for_promotion(spec=spec, frame=frame, root=base)
+        oos_check, oos_artifacts = _ml_out_of_sample_check(full=full, training=ml_training)
+        wf_check, walk_forward_runs = _ml_walk_forward_check(
+            full=full,
+            training=ml_training,
+        )
+    else:
+        oos_check, oos_artifacts = _out_of_sample_check(
+            spec=spec,
+            frame=frame,
+            root=base,
+            out_of_sample_ratio=out_of_sample_ratio,
+        )
+        wf_check, walk_forward_runs = _walk_forward_check(
+            spec=spec,
+            frame=frame,
+            root=base,
+            folds=walk_forward_folds,
+        )
     checks.append(oos_check)
-
-    wf_check, walk_forward_runs = _walk_forward_check(
-        spec=spec,
-        frame=frame,
-        root=base,
-        folds=walk_forward_folds,
-    )
     checks.append(wf_check)
 
     cost_check, cost_runs = _cost_sensitivity_check(
@@ -210,7 +225,7 @@ def build_promotion_report(
     comparison_check, comparison_rows = _data_comparison_check(spec, base)
     checks.append(comparison_check)
 
-    strict_data_check = _strict_data_check(spec, full)
+    strict_data_check = _strict_data_check(spec, full, data_profile)
     checks.append(strict_data_check)
     universe_audit_check = _universe_audit_promotion_check(spec, base)
     checks.append(universe_audit_check)
@@ -396,6 +411,155 @@ def _out_of_sample_check(
         ),
         artifacts,
     )
+
+
+def _run_ml_training_for_promotion(
+    *,
+    spec: StrategySpec,
+    frame,
+    root: Path,
+):
+    from open_composer.research.ml_backend.training import run_rolling_training
+
+    return run_rolling_training(spec, frame, root)
+
+
+def _ml_out_of_sample_check(
+    *,
+    full: BacktestArtifacts,
+    training,
+) -> tuple[GateResult, BacktestArtifacts | None]:
+    fold_count = len(training.folds)
+    prediction_count = int(training.full_predictions.notna().sum())
+    details = _run_details(full)
+    details.update(_ml_training_summary(training))
+    details["evidence_kind"] = "ml_purged_stitched_oos"
+    details["validation_policy"] = "ml_purged_embargo_walk_forward"
+    if fold_count == 0 or prediction_count == 0:
+        return (
+            GateResult(
+                name="out_of_sample",
+                status="blocked",
+                message=(
+                    "ML promotion requires stitched out-of-sample predictions from at "
+                    "least one purged walk-forward fold."
+                ),
+                details=details,
+            ),
+            None,
+        )
+    return (
+        GateResult(
+            name="out_of_sample",
+            status=_status_from_sanity(
+                full.run.data_sanity.status if full.run.data_sanity else "warning"
+            ),
+            message=(
+                "ML out-of-sample evidence uses stitched purged walk-forward predictions "
+                "from the full frame."
+            ),
+            details=details,
+        ),
+        full,
+    )
+
+
+def _ml_walk_forward_check(
+    *,
+    full: BacktestArtifacts,
+    training,
+) -> tuple[GateResult, list[BacktestArtifacts]]:
+    fold_count = len(training.folds)
+    prediction_count = int(training.full_predictions.notna().sum())
+    details = _ml_training_summary(training)
+    details.update(
+        {
+            "validation_policy": "ml_purged_embargo_walk_forward",
+            "purged": True,
+            "embargo_bars": _ml_embargo_bars(training),
+            "folds": _ml_fold_details(training),
+        }
+    )
+    if fold_count == 0 or prediction_count == 0:
+        return (
+            GateResult(
+                name="walk_forward",
+                status="blocked",
+                message=(
+                    "No usable ML walk-forward folds or stitched OOS predictions were "
+                    "available for promotion."
+                ),
+                details=details,
+            ),
+            [],
+        )
+    status = _status_from_sanity(full.run.data_sanity.status if full.run.data_sanity else "warning")
+    if any(fold.test_metric is None for fold in training.folds):
+        status = "warning"
+    return (
+        GateResult(
+            name="walk_forward",
+            status=status,
+            message=(
+                "ML walk-forward evidence is derived from purged training folds and "
+                "stitched OOS prediction coverage."
+            ),
+            details=details,
+        ),
+        [],
+    )
+
+
+def _ml_training_summary(training) -> dict[str, object]:
+    prediction_count = int(training.full_predictions.notna().sum())
+    total_rows = int(len(training.full_predictions))
+    coverage = (prediction_count / total_rows * 100.0) if total_rows else 0.0
+    test_metrics = [fold.test_metric for fold in training.folds if fold.test_metric is not None]
+    return {
+        "fold_count": len(training.folds),
+        "prediction_count": prediction_count,
+        "prediction_coverage_pct": coverage,
+        "test_metric_mean": _mean_or_none(test_metrics),
+        "feature_importance_mean": training.feature_importance_mean,
+        "window_count": len(training.window_metadata),
+    }
+
+
+def _ml_fold_details(training) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for index, fold in enumerate(training.folds):
+        item = {
+            "fold": fold.fold,
+            "train_rows": fold.train_rows,
+            "test_rows": fold.test_rows,
+            "train_metric": fold.train_metric,
+            "test_metric": fold.test_metric,
+            "train_start_idx": fold.train_start_idx,
+            "train_end_idx": fold.train_end_idx,
+            "test_start_idx": fold.test_start_idx,
+            "test_end_idx": fold.test_end_idx,
+        }
+        if index < len(training.window_metadata):
+            item["window_metadata"] = training.window_metadata[index]
+        rows.append(item)
+    return rows
+
+
+def _ml_embargo_bars(training) -> int | None:
+    for item in training.window_metadata:
+        train = item.get("train") if isinstance(item, dict) else None
+        embargo = train.get("embargo") if isinstance(train, dict) else None
+        if isinstance(embargo, dict):
+            value = embargo.get("embargo_bars")
+            if isinstance(value, int):
+                return value
+    return None
+
+
+def _mean_or_none(values: list[float]) -> float | None:
+    if not values:
+        return None
+    return float(mean(values))
 
 
 def _walk_forward_check(
@@ -985,15 +1149,19 @@ def _data_comparison_check(
     )
 
 
-def _strict_data_check(spec: StrategySpec, artifacts: BacktestArtifacts) -> GateResult:
+def _strict_data_check(
+    spec: StrategySpec,
+    artifacts: BacktestArtifacts,
+    data_profile: dict[str, object] | None = None,
+) -> GateResult:
     sanity = artifacts.run.data_sanity
     mode = sanity.data_source_mode if sanity else None
     evidence_level = sanity.evidence_level if sanity else "unknown"
     warnings = sanity.warnings if sanity else []
-    acquisition_tier = _evidence_acquisition_tier(
-        spec,
-        {"source_mode": mode or "", "data_source_mode": mode or ""},
-    )
+    profile = dict(data_profile or {})
+    profile.setdefault("source_mode", mode or "")
+    profile.setdefault("data_source_mode", mode or "")
+    acquisition_tier = _evidence_acquisition_tier(spec, profile)
     blocked_reasons: list[str] = []
     if spec.data.source == "sample":
         blocked_reasons.append("sample data is workflow evidence only")

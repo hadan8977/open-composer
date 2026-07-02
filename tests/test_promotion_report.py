@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import yaml
 from typer.testing import CliRunner
@@ -160,6 +161,60 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert "## Five-Pass Checks" in text
     assert "| research_pass | FAIL `fail`" in text
     assert "| llm_contribution_pass | N/A `not_applicable`" in text
+
+
+def test_strategy_promotion_report_refresh_flag_passes_through(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_build_promotion_report(
+        spec: Path,
+        root: Path,
+        *,
+        out_of_sample_ratio: float,
+        walk_forward_folds: int,
+        cost_slippage_bps: list[int] | None,
+        refresh_data: bool,
+    ) -> SimpleNamespace:
+        captured.update(
+            {
+                "spec": spec,
+                "root": root,
+                "out_of_sample_ratio": out_of_sample_ratio,
+                "walk_forward_folds": walk_forward_folds,
+                "cost_slippage_bps": cost_slippage_bps,
+                "refresh_data": refresh_data,
+            }
+        )
+        return SimpleNamespace(
+            strategy_name="refresh_probe",
+            status="blocked",
+            ready=False,
+            report_path="reports/research/refresh_probe-promotion.md",
+            json_path="reports/research/refresh_probe-promotion.json",
+            checks=[],
+        )
+
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    monkeypatch.setattr("open_composer.cli.build_promotion_report", fake_build_promotion_report)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        app,
+        [
+            "strategy",
+            "promotion-report",
+            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
+            "--refresh-data",
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+    assert captured["refresh_data"] is True
+    assert captured["root"] == sample_workspace
 
 
 def test_hybrid_paper_plan_candidate_file_is_not_active(sample_workspace: Path) -> None:
