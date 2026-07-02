@@ -46,11 +46,13 @@ def compare_ml_to_baseline(
         raise ValueError("ML comparison requires StrategySpec.model")
     frame = load_ohlcv_for_spec(spec, base)
     training = run_rolling_training(spec, frame, base)
+    evaluation_start_index = _first_oos_prediction_index(training.full_predictions)
     ml_artifacts = backtest_frame(
         spec,
         frame,
         root=base,
         run_id_value=f"ml-walk-forward-{spec.name}",
+        evaluation_start_index=evaluation_start_index,
     )
     baseline_spec = _linear_baseline_spec(spec)
     baseline_artifacts = backtest_frame(
@@ -58,18 +60,26 @@ def compare_ml_to_baseline(
         frame,
         root=base,
         run_id_value=f"linear-baseline-{spec.name}",
+        evaluation_start_index=evaluation_start_index,
+    )
+    status, status_reason = _comparison_status(
+        ml_artifacts.run.sharpe_ratio, baseline_artifacts.run.sharpe_ratio
     )
     payload = {
         "strategy_name": spec.name,
-        "status": _comparison_status(
-            ml_artifacts.run.sharpe_ratio, baseline_artifacts.run.sharpe_ratio
-        ),
+        "status": status,
+        "status_reason": status_reason,
         "ml": _run_metrics(ml_artifacts.run),
         "baseline": _run_metrics(baseline_artifacts.run),
         "fold_count": len(training.folds),
+        "oos_start_index": evaluation_start_index,
+        "oos_start_timestamp": _timestamp_at(frame, evaluation_start_index),
+        "oos_prediction_count": int(training.full_predictions.notna().sum()),
+        "evaluation_window_bars": int(len(frame) - evaluation_start_index),
         "feature_importance_mean": training.feature_importance_mean,
         "interpretation": (
-            "ML must beat the linear StrategySpec baseline after costs before promotion. "
+            "ML and the linear StrategySpec baseline are evaluated on the same stitched-OOS "
+            "window after costs. ML must beat that baseline before promotion. "
             "This comparison is research-only and does not imply paper readiness."
         ),
     }
@@ -90,30 +100,17 @@ def compare_ml_to_baseline(
     )
 
 
-def explain_strategy_model(spec_path: Path, root: Path | None = None, top_n: int = 10) -> Path:
-    training, paths = train_strategy_model(spec_path, root)
-    spec = load_strategy_spec(spec_path)
-    out_path = paths.training_json.parent / "explain.md"
-    rows = sorted(training.feature_importance_mean.items(), key=lambda item: item[1], reverse=True)
-    lines = [
-        f"# ML Explain: {spec.name}",
-        "",
-        "## Feature Importance",
-        "",
-        "| feature | importance |",
-        "|---|---:|",
-    ]
-    for feature, importance in rows[:top_n]:
-        lines.append(f"| `{feature}` | {importance:.6f} |")
-    lines.extend(
-        [
-            "",
-            "This explanation is based on LightGBM split/gain-style feature importance from "
-            "walk-forward training folds. It is advisory research output, not a trading approval.",
-        ]
-    )
-    out_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
-    return out_path
+def explain_strategy_model(
+    spec_path: Path,
+    root: Path | None = None,
+    top_n: int = 10,
+    *,
+    use_llm: bool = False,
+) -> Path:
+    from open_composer.research.llm_explainer import explain_strategy_model as explain_model
+
+    paths = explain_model(spec_path, root, top_n=top_n, use_llm=use_llm)
+    return paths["markdown"]
 
 
 def _linear_baseline_spec(spec: StrategySpec) -> StrategySpec:
@@ -126,6 +123,7 @@ def _linear_baseline_spec(spec: StrategySpec) -> StrategySpec:
 def _run_metrics(run: Any) -> dict[str, Any]:
     return {
         "run_id": run.run_id,
+        "bars": run.bars,
         "signals": run.signals,
         "trades": run.trades,
         "total_return_pct": run.total_return_pct,
@@ -136,14 +134,45 @@ def _run_metrics(run: Any) -> dict[str, Any]:
     }
 
 
-def _comparison_status(ml_sharpe: float | None, baseline_sharpe: float | None) -> str:
-    ml = ml_sharpe if ml_sharpe is not None else float("-inf")
-    baseline = baseline_sharpe if baseline_sharpe is not None else float("-inf")
-    if ml >= baseline * 1.05:
-        return "ok"
-    if ml >= baseline * 0.95:
-        return "warning"
-    return "blocked"
+def _first_oos_prediction_index(predictions: Any) -> int:
+    mask = predictions.notna()
+    if not bool(mask.any()):
+        raise ValueError("ML comparison requires at least one stitched OOS prediction")
+    first_label = mask[mask].index[0]
+    location = predictions.index.get_loc(first_label)
+    if isinstance(location, slice):
+        return int(location.start or 0)
+    if isinstance(location, int):
+        return int(location)
+    if hasattr(location, "nonzero"):
+        return int(location.nonzero()[0][0])
+    return int(location)
+
+
+def _timestamp_at(frame: Any, index: int) -> str | None:
+    if len(frame) == 0:
+        return None
+    position = max(0, min(index, len(frame) - 1))
+    value = frame.iloc[position].get("timestamp")
+    if hasattr(value, "isoformat"):
+        return str(value.isoformat())
+    return str(value) if value is not None else None
+
+
+def _comparison_status(ml_sharpe: float | None, baseline_sharpe: float | None) -> tuple[str, str]:
+    if ml_sharpe is None:
+        return "blocked", "ML Sharpe is unavailable on the stitched OOS window."
+    if baseline_sharpe is None:
+        return "ok", "Linear baseline Sharpe is unavailable; ML has a scored OOS result."
+    ml = float(ml_sharpe)
+    baseline = float(baseline_sharpe)
+    delta = ml - baseline
+    tolerance = max(0.05, abs(baseline) * 0.05)
+    if delta > tolerance:
+        return "ok", f"ML Sharpe beats baseline by {delta:.3f}."
+    if delta >= -tolerance:
+        return "warning", f"ML Sharpe is within {tolerance:.3f} of baseline."
+    return "blocked", f"ML Sharpe trails baseline by {abs(delta):.3f}."
 
 
 def _render_training_markdown(spec: StrategySpec, training: MLTrainingRun) -> str:
@@ -178,7 +207,11 @@ def _render_comparison_markdown(payload: dict[str, Any]) -> str:
         f"# ML vs Linear Baseline: {payload['strategy_name']}",
         "",
         f"- Status: `{payload['status']}`",
+        f"- Reason: {payload.get('status_reason', '')}",
         f"- Fold count: `{payload['fold_count']}`",
+        f"- OOS start index: `{payload.get('oos_start_index')}`",
+        f"- OOS start timestamp: `{payload.get('oos_start_timestamp')}`",
+        f"- Evaluation window bars: `{payload.get('evaluation_window_bars')}`",
         "",
         "| path | signals | trades | return % | ann % | sharpe | max dd % | fees |",
         "|---|---:|---:|---:|---:|---:|---:|---:|",

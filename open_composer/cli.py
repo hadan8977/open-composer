@@ -411,6 +411,179 @@ def factor_catalog_status_command(
         raise typer.Exit(1)
 
 
+@factor_app.command("decay-monitor")
+def factor_decay_monitor_command(
+    factor_id: Annotated[str | None, typer.Option("--factor-id")] = None,
+    active_only: Annotated[
+        bool,
+        typer.Option("--active-only", help="Only monitor factors used by active specs."),
+    ] = False,
+    no_notify: Annotated[
+        bool,
+        typer.Option("--no-notify", help="Do not dispatch decay alert notifications."),
+    ] = False,
+) -> None:
+    """Run one factor decay-monitor cycle."""
+    from open_composer.research.factor_decay import (
+        monitor_all_active_factors,
+        monitor_factor_decay,
+    )
+
+    try:
+        if factor_id:
+            results = [
+                monitor_factor_decay(
+                    factor_id,
+                    root=project_root(),
+                    dispatch_alert=not no_notify,
+                )
+            ]
+        else:
+            results = monitor_all_active_factors(
+                project_root(),
+                active_only=active_only,
+                dispatch_alert=not no_notify,
+            )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    table = Table(title=f"Factor Decay Monitor ({len(results)} factors)")
+    table.add_column("factor")
+    table.add_column("status")
+    table.add_column("3m IC", justify="right")
+    table.add_column("12m IR", justify="right")
+    table.add_column("alert")
+    for row in results:
+        status = str(row.get("status", "unknown"))
+        alert = "yes" if row.get("decay_alert") else "no"
+        table.add_row(
+            str(row.get("factor_id", "n/a")),
+            status,
+            _fmt_optional(row.get("rolling_3m_rank_ic")),
+            _fmt_optional(row.get("rolling_12m_ir")),
+            alert,
+        )
+    console.print(table)
+    console.print("artifacts: reports/factors/*/decay-monitor.jsonl")
+
+
+@factor_app.command("decay-report")
+def factor_decay_report_command(
+    days: Annotated[int, typer.Option("--days", help="Lookback window in calendar days.")] = 90,
+) -> None:
+    """Show recent factor decay-monitor history."""
+    from open_composer.research.factor_decay import build_decay_report
+
+    rows = build_decay_report(project_root(), days=days)
+    table = Table(title=f"Factor Decay Report ({days} days)")
+    table.add_column("factor")
+    table.add_column("checks", justify="right")
+    table.add_column("alerts", justify="right")
+    table.add_column("latest 3m IC", justify="right")
+    table.add_column("latest 12m IR", justify="right")
+    table.add_column("recommendation")
+    for row in rows:
+        table.add_row(
+            str(row.get("factor_id", "n/a")),
+            str(row.get("checks", 0)),
+            str(row.get("alerts", 0)),
+            _fmt_optional(row.get("latest_3m_rank_ic")),
+            _fmt_optional(row.get("latest_12m_ir")),
+            str(row.get("recommendation", "unknown")),
+        )
+    console.print(table)
+
+
+@factor_app.command("retire")
+def factor_retire_command(
+    factor_id: str,
+    reason: Annotated[str, typer.Option("--reason")] = "",
+) -> None:
+    """Mark a factor lineage artifact as retired."""
+    from open_composer.research.factor_decay import retire_factor
+
+    try:
+        payload = retire_factor(factor_id, reason=reason, root=project_root())
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[yellow]factor retired[/yellow] {factor_id}")
+    used = payload.get("used_in_specs", [])
+    if isinstance(used, list) and used:
+        console.print("affected specs:")
+        for item in used:
+            if isinstance(item, dict):
+                console.print(f"  - {item.get('spec_path')}")
+
+
+@factor_app.command("propose")
+def factor_propose_command(
+    thesis: str,
+    base_factors: Annotated[
+        list[str] | None,
+        typer.Option("--base-factor", help="Catalog factor id used for correlation screening."),
+    ] = None,
+    max_candidates: Annotated[int, typer.Option("--max-candidates")] = 5,
+    data_path: Annotated[str, typer.Option("--data-path")] = "data/sample/syn_daily.csv",
+    min_abs_rank_ic: Annotated[float, typer.Option("--min-abs-rank-ic")] = 0.01,
+    min_abs_ir: Annotated[float, typer.Option("--min-abs-ir")] = 0.0,
+    max_abs_correlation: Annotated[float, typer.Option("--max-abs-correlation")] = 0.70,
+    use_llm: Annotated[bool, typer.Option("--llm/--no-llm")] = False,
+) -> None:
+    """Propose research-only factor expressions without mutating the catalog."""
+    from open_composer.research.factor_propose import propose_factors
+
+    try:
+        payload = propose_factors(
+            thesis,
+            root=project_root(),
+            data_path=data_path,
+            base_factors=base_factors or [],
+            max_candidates=max_candidates,
+            min_abs_rank_ic=min_abs_rank_ic,
+            min_abs_ir=min_abs_ir,
+            max_abs_correlation=max_abs_correlation,
+            use_llm=use_llm,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]factor proposal written[/green] {payload['proposal_id']} "
+        f"status={payload['status']} pending={payload['pending_candidate_count']}"
+    )
+    console.print(f"json: {payload['path']}")
+
+
+@factor_app.command("approve")
+def factor_approve_command(
+    proposal_id: str,
+    reason: Annotated[str, typer.Option("--reason")] = "",
+) -> None:
+    """Approve a factor proposal artifact without editing factor_library.py."""
+    from open_composer.research.factor_propose import approve_factor_proposal
+
+    try:
+        payload = approve_factor_proposal(proposal_id, root=project_root(), reason=reason)
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]factor proposal approved[/green] {proposal_id}")
+    console.print(f"json: {payload['path']}")
+
+
+@factor_app.command("reject")
+def factor_reject_command(
+    proposal_id: str,
+    reason: Annotated[str, typer.Option("--reason")] = "",
+) -> None:
+    """Reject a factor proposal artifact without deleting evidence."""
+    from open_composer.research.factor_propose import reject_factor_proposal
+
+    try:
+        payload = reject_factor_proposal(proposal_id, root=project_root(), reason=reason)
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[yellow]factor proposal rejected[/yellow] {proposal_id}")
+    console.print(f"json: {payload['path']}")
+
+
 @research_app.command("auto")
 def research_auto_command(
     thesis: str,
@@ -2325,12 +2498,16 @@ def strategy_backtest_walk_forward(spec: Path) -> None:
 
 
 @strategy_app.command("explain")
-def strategy_explain(spec: Path, top_n: int = typer.Option(10, "--top-n")) -> None:
-    """Write a lightweight ML feature-importance explanation."""
+def strategy_explain(
+    spec: Path,
+    top_n: int = typer.Option(10, "--top-n"),
+    use_llm: bool = typer.Option(False, "--llm/--no-llm"),
+) -> None:
+    """Write a structured advisory ML explanation."""
     from open_composer.research.ml_backend.evaluation import explain_strategy_model
 
     try:
-        path = explain_strategy_model(spec, project_root(), top_n=top_n)
+        path = explain_strategy_model(spec, project_root(), top_n=top_n, use_llm=use_llm)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(f"[green]ML explanation written[/green] {path}")
@@ -5891,6 +6068,14 @@ def journal_add(
     find_signal(signal_id, project_root())
     entry = add_journal_entry(project_root(), signal_id, action, notes, outcome)
     console.print(f"[green]journal written[/green] {entry.id}")
+
+
+def _fmt_optional(value: object) -> str:
+    if value is None:
+        return "n/a"
+    if isinstance(value, int | float):
+        return f"{float(value):.4f}"
+    return str(value)
 
 
 def _resolve_output_path(root: Path, path: Path) -> Path:

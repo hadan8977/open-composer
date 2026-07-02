@@ -183,6 +183,11 @@ class DashboardHTTPRequestHandler(SimpleHTTPRequestHandler):
         if path == "/api/build/templates":
             self._send_json(build_templates_payload())
             return
+        if path.startswith("/api/factors/"):
+            parts = _api_parts(path)
+            if len(parts) == 3 and parts[2] == "decay":
+                self._handle_json_result(build_factor_decay_payload, parts[1])
+                return
         if path.startswith("/api/projects/"):
             parts = _api_parts(path)
             if len(parts) == 2:
@@ -782,6 +787,12 @@ def build_dashboard_environment_payload(
 def build_dashboard_catalog_payload(root: Path) -> dict[str, Any]:
     catalog = build_dashboard_catalog(root)
     return catalog.model_dump(mode="json")
+
+
+def build_factor_decay_payload(root: Path, factor_id: str) -> dict[str, Any]:
+    from open_composer.research.factor_decay import build_factor_decay_payload as _build
+
+    return _build(root, factor_id)
 
 
 BUILD_TEMPLATES: tuple[dict[str, str], ...] = (

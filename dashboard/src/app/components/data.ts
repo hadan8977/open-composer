@@ -259,6 +259,21 @@ export interface ResearchRun {
   dataAsOf: string | null;
 }
 
+export interface FactorCatalogEntry {
+  factorId: string;
+  family: string;
+  label: string;
+  output: string;
+  expressionAvailable: boolean;
+  latestDecayStatus: string;
+  latestDecayAlert: boolean;
+  latest3mRankIc: number | null;
+  latest12mIr: number | null;
+  alertCount: number;
+  usedInSpecCount: number;
+  retiredAt: string | null;
+}
+
 export interface DashboardSummaryView {
   catalogPath: string;
   generatedAt: string | null;
@@ -285,6 +300,8 @@ export interface DashboardSummaryView {
   researchRunCount: number;
   researchBlockedCount: number;
   researchWarningCount: number;
+  factorCount: number;
+  factorDecayAlertCount: number;
   projectCount: number;
   projectBlockedCount: number;
   projectIteratingCount: number;
@@ -342,6 +359,7 @@ interface DashboardCatalog {
   workflow_reports?: DashboardWorkflowReportRecord[];
   research_reports?: DashboardResearchReportRecord[];
   research_runs?: DashboardResearchRunRecord[];
+  factor_catalog?: DashboardFactorRecord[];
   readiness_report?: DashboardReadinessReportRecord | null;
   deployment_report?: DashboardDeploymentReportRecord | null;
 }
@@ -367,6 +385,8 @@ interface DashboardSummaryRecord {
   research_run_count?: number;
   research_blocked_count?: number;
   research_warning_count?: number;
+  factor_count?: number;
+  factor_decay_alert_count?: number;
   project_count?: number;
   project_blocked_count?: number;
   project_iterating_count?: number;
@@ -688,6 +708,21 @@ interface DashboardResearchRunRecord {
   json_path?: string | null;
 }
 
+interface DashboardFactorRecord {
+  factor_id?: string;
+  family?: string;
+  label?: string;
+  output?: string;
+  expression_available?: boolean;
+  latest_decay_status?: string;
+  latest_decay_alert?: boolean;
+  latest_3m_rank_ic?: number | null;
+  latest_12m_ir?: number | null;
+  alert_count?: number;
+  used_in_spec_count?: number;
+  retired_at?: string | null;
+}
+
 interface DashboardOperationalCheckRecord {
   name?: string;
   status?: "ok" | "warning" | "blocked";
@@ -727,6 +762,7 @@ let allVersions = asArray(catalog.versions);
 let allProjects = asArray(catalog.projects);
 let allPaperReadiness = asArray(catalog.paper_readiness_reports);
 let allResearchRuns = asArray(catalog.research_runs);
+let allFactors = asArray(catalog.factor_catalog);
 let versionById = new Map(
   allVersions.map((version) => [version.version_id, version]),
 );
@@ -746,6 +782,7 @@ export let paperOrders = buildPaperOrders();
 export let paperReadinessReports: PaperReadinessReport[] =
   buildPaperReadinessReports();
 export let researchRuns: ResearchRun[] = buildResearchRuns();
+export let factorCatalog: FactorCatalogEntry[] = buildFactorCatalog();
 
 export function applyDashboardCatalog(nextCatalog: DashboardCatalog): void {
   catalog = nextCatalog ?? {};
@@ -757,6 +794,7 @@ export function applyDashboardCatalog(nextCatalog: DashboardCatalog): void {
   allProjects = asArray(catalog.projects);
   allPaperReadiness = asArray(catalog.paper_readiness_reports);
   allResearchRuns = asArray(catalog.research_runs);
+  allFactors = asArray(catalog.factor_catalog);
   versionById = new Map(
     allVersions.map((version) => [version.version_id, version]),
   );
@@ -773,6 +811,7 @@ export function applyDashboardCatalog(nextCatalog: DashboardCatalog): void {
   paperOrders = buildPaperOrders();
   paperReadinessReports = buildPaperReadinessReports();
   researchRuns = buildResearchRuns();
+  factorCatalog = buildFactorCatalog();
   events = buildTimelineEvents();
   strategyGroups = buildStrategyGroups();
 
@@ -824,6 +863,10 @@ function buildDashboardSummary(): DashboardSummaryView {
     researchWarningCount:
       summaryRecord.research_warning_count ??
       allResearchRuns.filter((run) => run.status === "warning").length,
+    factorCount: summaryRecord.factor_count ?? allFactors.length,
+    factorDecayAlertCount:
+      summaryRecord.factor_decay_alert_count ??
+      allFactors.filter((factor) => factor.latest_decay_alert).length,
     projectCount: summaryRecord.project_count ?? allProjects.length,
     projectBlockedCount:
       summaryRecord.project_blocked_count ??
@@ -1362,6 +1405,32 @@ function buildResearchRuns(): ResearchRun[] {
             : null,
       };
     });
+}
+
+function buildFactorCatalog(): FactorCatalogEntry[] {
+  return allFactors
+    .slice()
+    .sort((left, right) => {
+      const alertDelta = Number(Boolean(right.latest_decay_alert)) - Number(Boolean(left.latest_decay_alert));
+      if (alertDelta !== 0) return alertDelta;
+      const familyDelta = String(left.family ?? "").localeCompare(String(right.family ?? ""));
+      if (familyDelta !== 0) return familyDelta;
+      return String(left.factor_id ?? "").localeCompare(String(right.factor_id ?? ""));
+    })
+    .map((factor) => ({
+      factorId: factor.factor_id ?? "unknown",
+      family: factor.family ?? "unknown",
+      label: factor.label ?? factor.factor_id ?? "unknown",
+      output: factor.output ?? "value",
+      expressionAvailable: Boolean(factor.expression_available),
+      latestDecayStatus: factor.latest_decay_status ?? "unmonitored",
+      latestDecayAlert: Boolean(factor.latest_decay_alert),
+      latest3mRankIc: factor.latest_3m_rank_ic ?? null,
+      latest12mIr: factor.latest_12m_ir ?? null,
+      alertCount: factor.alert_count ?? 0,
+      usedInSpecCount: factor.used_in_spec_count ?? 0,
+      retiredAt: factor.retired_at ?? null,
+    }));
 }
 
 function latestRunFor(strategyId: string): DashboardRunRecord | undefined {

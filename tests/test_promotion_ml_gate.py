@@ -5,7 +5,9 @@ from pathlib import Path
 
 import yaml
 
-from open_composer.research.promotion import build_promotion_report
+from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.research.kernel import GateResult
+from open_composer.research.promotion import _build_pass_summary, build_promotion_report
 from tests.test_ml_backend_training import _write_syn_ml_spec
 
 
@@ -20,7 +22,9 @@ def test_promotion_report_adds_ml_baseline_gate(sample_workspace: Path) -> None:
     )
 
     gate = next(item for item in result.checks if item.name == "ml_beats_linear_baseline")
+    overfit_gate = next(item for item in result.checks if item.name == "ml_overfit_risk")
     assert gate.status in {"ok", "warning", "blocked"}
+    assert overfit_gate.status in {"ok", "warning", "blocked"}
     comparison_path = (
         sample_workspace
         / "reports"
@@ -31,8 +35,19 @@ def test_promotion_report_adds_ml_baseline_gate(sample_workspace: Path) -> None:
     )
     assert comparison_path.exists()
     payload = json.loads(comparison_path.read_text(encoding="utf-8"))
+    assert payload["evaluation_window_bars"] == payload["ml"]["bars"]
+    assert payload["evaluation_window_bars"] == payload["baseline"]["bars"]
     assert payload["ml"]["signals"] >= 1
     assert payload["baseline"]["signals"] >= 1
+    overfit_path = (
+        sample_workspace
+        / "reports"
+        / "research"
+        / "ml"
+        / "syn_daily_ml_probe"
+        / "ml-overfit-risk.json"
+    )
+    assert overfit_path.exists()
 
 
 def test_ml_promotion_uses_stitched_oos_and_training_folds(sample_workspace: Path) -> None:
@@ -104,3 +119,23 @@ def test_non_ml_promotion_keeps_generic_oos_and_walk_forward(sample_workspace: P
     assert "evidence_kind" not in in_sample.details
     assert "evidence_kind" not in oos.details
     assert walk_forward.details["validation_policy"] == "sequential_walk_forward"
+
+
+def test_ml_baseline_gate_blocks_research_pass(sample_workspace: Path) -> None:
+    spec_path = _write_syn_ml_spec(sample_workspace)
+    spec = load_strategy_spec(spec_path)
+
+    summary = _build_pass_summary(
+        spec,
+        ready=False,
+        checks=[
+            GateResult("in_sample", "ok", "ok"),
+            GateResult("out_of_sample", "ok", "ok"),
+            GateResult("walk_forward", "ok", "ok"),
+            GateResult("ml_beats_linear_baseline", "blocked", "ML did not beat baseline"),
+        ],
+        root=sample_workspace,
+    )
+
+    assert summary["research_pass"] == "fail"
+    assert "ml_beats_linear_baseline" in summary["research_reason"]

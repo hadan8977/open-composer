@@ -19,6 +19,7 @@ from open_composer.models.dashboard import (
     DashboardDataComparison,
     DashboardDeploymentReport,
     DashboardDeploymentStep,
+    DashboardFactor,
     DashboardFeaturePacket,
     DashboardGroup,
     DashboardJournalEntry,
@@ -87,6 +88,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
     workflow_records = _build_workflow_records(base)
     research_records = _build_research_records(base)
     research_run_records = _build_research_run_records(base)
+    factor_catalog_records = _build_factor_catalog_records(base)
     readiness_report = _build_readiness_record(base)
     deployment_report = _build_deployment_record(base)
     project_records = _build_project_records(
@@ -115,6 +117,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         workflow_reports=workflow_records,
         research_reports=research_records,
         research_runs=research_run_records,
+        factor_catalog=factor_catalog_records,
         readiness_report=readiness_report,
         deployment_report=deployment_report,
         paper_readiness_reports=paper_readiness_records,
@@ -143,6 +146,7 @@ def build_dashboard_catalog(root: Path | None = None) -> DashboardCatalog:
         workflow_reports=workflow_records,
         research_reports=research_records,
         research_runs=research_run_records,
+        factor_catalog=factor_catalog_records,
         readiness_report=readiness_report,
         deployment_report=deployment_report,
     )
@@ -1424,6 +1428,37 @@ def _dashboard_evidence_item(item: ProjectEvidenceItem, base: Path) -> Dashboard
     )
 
 
+def _build_factor_catalog_records(base: Path) -> list[DashboardFactor]:
+    from open_composer.research.factor_library import list_factors
+
+    records: list[DashboardFactor] = []
+    for factor in list_factors():
+        factor_dir = base / "reports" / "factors" / factor.id
+        lineage = _read_json_mapping(factor_dir / "lineage.json")
+        decay_rows = _load_jsonl(factor_dir / "decay-monitor.jsonl")
+        latest = decay_rows[-1] if decay_rows else {}
+        used_in = lineage.get("used_in_specs", [])
+        used_count = len(used_in) if isinstance(used_in, list) else 0
+        records.append(
+            DashboardFactor(
+                factor_id=factor.id,
+                family=factor.family,
+                label=factor.label,
+                output=factor.output,
+                expression_available=factor.expression is not None,
+                source_card_ids=list(factor.source_card_ids),
+                latest_decay_status=str(latest.get("status") or "unmonitored"),
+                latest_decay_alert=bool(latest.get("decay_alert")),
+                latest_3m_rank_ic=_optional_float(latest.get("rolling_3m_rank_ic")),
+                latest_12m_ir=_optional_float(latest.get("rolling_12m_ir")),
+                alert_count=sum(1 for row in decay_rows if row.get("decay_alert")),
+                used_in_spec_count=used_count,
+                retired_at=str(lineage.get("retired_at")) if lineage.get("retired_at") else None,
+            )
+        )
+    return records
+
+
 def _load_project_artifact_state_record(base: Path, project: StrategyProject) -> dict[str, object]:
     path = base / "projects" / project.project_id / "artifact-state.json"
     raw = _read_json_mapping(path)
@@ -1922,6 +1957,7 @@ def _build_summary(
     workflow_reports: list[DashboardWorkflowReport],
     research_reports: list[DashboardResearchReport],
     research_runs: list[DashboardResearchRun],
+    factor_catalog: list[DashboardFactor],
     readiness_report: DashboardReadinessReport | None,
     deployment_report: DashboardDeploymentReport | None,
     paper_readiness_reports: list[DashboardPaperReadinessReport],
@@ -1986,6 +2022,8 @@ def _build_summary(
         research_run_count=len(research_runs),
         research_blocked_count=sum(1 for item in research_runs if item.status == "blocked"),
         research_warning_count=sum(1 for item in research_runs if item.status == "warning"),
+        factor_count=len(factor_catalog),
+        factor_decay_alert_count=sum(1 for item in factor_catalog if item.latest_decay_alert),
         project_count=len(projects),
         project_blocked_count=sum(1 for item in projects if item.state == "blocked"),
         project_iterating_count=sum(

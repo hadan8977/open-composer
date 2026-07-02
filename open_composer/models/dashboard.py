@@ -582,6 +582,23 @@ class DashboardDeploymentReport(DashboardDataModel):
 
 
 @dataclass(kw_only=True)
+class DashboardFactor(DashboardDataModel):
+    factor_id: str
+    family: str
+    label: str
+    output: str
+    expression_available: bool
+    source_card_ids: list[str] = field(default_factory=list)
+    latest_decay_status: str = "unmonitored"
+    latest_decay_alert: bool = False
+    latest_3m_rank_ic: float | None = None
+    latest_12m_ir: float | None = None
+    alert_count: int = 0
+    used_in_spec_count: int = 0
+    retired_at: str | None = None
+
+
+@dataclass(kw_only=True)
 class DashboardSummary(DashboardDataModel):
     source_root: str
     generated_at: datetime
@@ -604,6 +621,8 @@ class DashboardSummary(DashboardDataModel):
     research_run_count: int = 0
     research_blocked_count: int = 0
     research_warning_count: int = 0
+    factor_count: int = 0
+    factor_decay_alert_count: int = 0
     project_count: int = 0
     project_blocked_count: int = 0
     project_iterating_count: int = 0
@@ -681,5 +700,6 @@ class DashboardCatalog(DashboardDataModel):
     workflow_reports: list[DashboardWorkflowReport] = field(default_factory=list)
     research_reports: list[DashboardResearchReport] = field(default_factory=list)
     research_runs: list[DashboardResearchRun] = field(default_factory=list)
+    factor_catalog: list[DashboardFactor] = field(default_factory=list)
     readiness_report: DashboardReadinessReport | None = None
     deployment_report: DashboardDeploymentReport | None = None

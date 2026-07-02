@@ -7,6 +7,7 @@ import { Library } from "./components/library";
 import { ActivityView, ResearchView } from "./components/sections";
 import { StrategyDetail } from "./components/strategy-detail";
 import { BuildView } from "./components/build";
+import { FactorCatalogView } from "./components/factors";
 import { LiveView } from "./components/live";
 import { ProjectDetail, ProjectsView } from "./components/projects";
 import { StatusFooter } from "./components/footer";
@@ -102,6 +103,7 @@ export default function App() {
                 {tab === "catalog" && (
                   <Library onSelect={(id) => setSelectedStrategyId(id)} />
                 )}
+                {tab === "factors" && <FactorCatalogView />}
                 {tab === "settings" && <SettingsView />}
               </>
             )}

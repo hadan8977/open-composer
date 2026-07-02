@@ -6,6 +6,7 @@ import {
   FilePlus2,
   FlaskConical,
   ListChecks,
+  Sigma,
   SlidersHorizontal,
 } from "lucide-react";
 import logoMarkUrl from "../../../logo_optimized (2).svg";
@@ -20,6 +21,7 @@ export type NavKey =
   | "research"
   | "activity"
   | "catalog"
+  | "factors"
   | "settings";
 
 interface Props {
@@ -88,6 +90,13 @@ function navItems(): {
       icon: BookOpen,
       count: String(dashboardSummary.strategyCount),
       accent: "#0A0A0A",
+    },
+    {
+      key: "factors",
+      label: "Factors",
+      icon: Sigma,
+      count: String(dashboardSummary.factorCount),
+      accent: dashboardSummary.factorDecayAlertCount > 0 ? "#FF2D7A" : "#1FB85A",
     },
     {
       key: "settings",

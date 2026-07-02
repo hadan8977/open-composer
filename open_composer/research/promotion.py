@@ -30,7 +30,7 @@ from open_composer.research.metadata import (
     runtime_payload,
     search_space,
 )
-from open_composer.research.pbo import build_overfit_risk_report
+from open_composer.research.pbo import build_ml_overfit_risk_report, build_overfit_risk_report
 from open_composer.research.research_brief import validate_research_brief
 from open_composer.research.universe_audit import assess_universe_audit
 from open_composer.storage import write_json
@@ -253,6 +253,7 @@ def build_promotion_report(
     checks.append(_research_brief_check(spec_path, base))
     checks.append(_overfit_risk_check(spec_path, base))
     if spec.model is not None:
+        checks.append(_ml_overfit_risk_check(spec, ml_training, base))
         checks.append(_ml_baseline_check(spec_path, base))
 
     ready = all(check.status == "ok" for check in checks)
@@ -990,6 +991,39 @@ def _overfit_risk_check(spec_path: Path, root: Path) -> GateResult:
     )
 
 
+def _ml_overfit_risk_check(spec: StrategySpec, training: object, root: Path) -> GateResult:
+    result = build_ml_overfit_risk_report(spec, training, root)
+    details = {
+        "fold_count": result.trial_count,
+        "dsr_proxy": result.dsr_proxy,
+        "pbo_proxy": result.pbo_proxy,
+        "blockers": result.blockers,
+        "warnings": result.warnings,
+        "json_path": str(result.json_path) if result.json_path else None,
+        "report_path": str(result.report_path) if result.report_path else None,
+    }
+    if result.status == "blocked":
+        return GateResult(
+            name="ml_overfit_risk",
+            status="blocked",
+            message="ML fold-level overfit risk blocks promotion: " + ", ".join(result.blockers),
+            details=details,
+        )
+    if result.status == "warning":
+        return GateResult(
+            name="ml_overfit_risk",
+            status="warning",
+            message="ML fold-level overfit risk warnings: " + ", ".join(result.warnings),
+            details=details,
+        )
+    return GateResult(
+        name="ml_overfit_risk",
+        status="ok",
+        message="ML fold-level DSR/PBO proxy passed.",
+        details=details,
+    )
+
+
 def _ml_baseline_check(spec_path: Path, root: Path) -> GateResult:
     try:
         from open_composer.research.ml_backend.evaluation import compare_ml_to_baseline
@@ -1007,6 +1041,11 @@ def _ml_baseline_check(spec_path: Path, root: Path) -> GateResult:
         "ml": payload.get("ml"),
         "baseline": payload.get("baseline"),
         "fold_count": payload.get("fold_count"),
+        "status_reason": payload.get("status_reason"),
+        "oos_start_index": payload.get("oos_start_index"),
+        "oos_start_timestamp": payload.get("oos_start_timestamp"),
+        "oos_prediction_count": payload.get("oos_prediction_count"),
+        "evaluation_window_bars": payload.get("evaluation_window_bars"),
         "json_path": str(paths.comparison_json) if paths.comparison_json else None,
         "report_path": str(paths.comparison_md) if paths.comparison_md else None,
     }
@@ -1749,6 +1788,8 @@ def _build_pass_summary(
         "research_design",
         "research_brief",
         "overfit_risk",
+        "ml_overfit_risk",
+        "ml_beats_linear_baseline",
     }
     research_failures = sorted(name for name in research_gate_names if name in blocked)
     cost_grid_warning = _cost_grid_warning(spec, root)

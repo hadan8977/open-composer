@@ -35,6 +35,7 @@ CURRENT_DOCS = {
     "docs/plan-step-6-8-skill-and-research-workflow-hardening-2026-06-17.zh.md",
     "docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md",
     "docs/plan-step-7a-ml-training-backend-2026-06-30.zh.md",
+    "docs/plan-step-7-complete-ultracode-2026-07-02.zh.md",
 }
 
 REQUIRED_SKILLS = [
