@@ -3,8 +3,6 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-import yaml
-
 from open_composer.capabilities import load_registry
 from open_composer.config import ensure_dir, project_root
 from open_composer.expressions import ExpressionError, validate_expression
@@ -18,6 +16,7 @@ from open_composer.models.execution_backend import (
 from open_composer.models.strategy_spec import StrategySpec
 from open_composer.storage import write_json
 from open_composer.timeframes import supported_timeframes, timeframe_supported
+from open_composer.yaml_utils import safe_load_yaml
 
 
 def nautilus_trader_available() -> bool:
@@ -31,8 +30,22 @@ def build_nautilus_trader_plan(
     path = Path(spec_path)
     base = root or _infer_spec_root(path)
     spec = _load_strategy_for_plan(path)
-    registry = load_registry(base)
-    expression_errors = _expression_errors(spec, base)
+    return build_nautilus_trader_plan_for_spec(spec, path, root=base)
+
+
+def build_nautilus_trader_plan_for_spec(
+    spec: StrategySpec,
+    spec_path: Path | str,
+    root: Path | None = None,
+    *,
+    expression_errors: list[str] | None = None,
+) -> ExecutionBackendPlan:
+    path = Path(spec_path)
+    base = root or _infer_spec_root(path)
+    registry = load_registry(_registry_root(base))
+    expression_errors = (
+        expression_errors if expression_errors is not None else _expression_errors(spec, base)
+    )
     llm_feature_factors = _llm_feature_factors(spec)
     feature_packet_factors = _feature_packet_factors(spec)
     required_capabilities = list(spec.required_capabilities)
@@ -359,7 +372,7 @@ def _capability_issues(spec: StrategySpec, registry) -> list[str]:
 
 def _load_strategy_for_plan(path: Path) -> StrategySpec:
     with path.open("r", encoding="utf-8") as handle:
-        raw = yaml.safe_load(handle)
+        raw = safe_load_yaml(handle)
     if not isinstance(raw, dict):
         msg = f"{path} must contain a YAML mapping"
         raise ValueError(msg)
@@ -369,6 +382,17 @@ def _load_strategy_for_plan(path: Path) -> StrategySpec:
 def _infer_spec_root(path: Path) -> Path:
     if len(path.parents) >= 3 and path.parents[1].name == "strategy_specs":
         return path.parents[2]
+    parts = path.parts
+    if "strategy_versions" in parts:
+        idx = parts.index("strategy_versions")
+        if idx > 0:
+            return Path(*parts[:idx])
+    return project_root()
+
+
+def _registry_root(root: Path) -> Path:
+    if (root / "capabilities" / "registry.yaml").exists():
+        return root
     return project_root()
 
 

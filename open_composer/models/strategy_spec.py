@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Literal
 
-import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from open_composer.timeframes import StrategyTimeframe
+from open_composer.yaml_utils import safe_load_yaml
 
 
 class RuleBlock(BaseModel):
@@ -483,14 +483,16 @@ class StrategySpec(BaseModel):
         return [*self.entry.all, *self.entry.any, *self.exit.all, *self.exit.any]
 
 
-def load_strategy_spec(path: Path | str) -> StrategySpec:
+def load_strategy_spec(path: Path | str, *, validate: bool = True) -> StrategySpec:
     spec_path = Path(path)
     with spec_path.open("r", encoding="utf-8") as handle:
-        raw = yaml.safe_load(handle)
+        raw = safe_load_yaml(handle)
     if not isinstance(raw, dict):
         msg = f"{spec_path} must contain a YAML mapping"
         raise ValueError(msg)
     spec = StrategySpec.model_validate(raw)
+    if not validate:
+        return spec
 
     from open_composer.expressions import validate_expression
 

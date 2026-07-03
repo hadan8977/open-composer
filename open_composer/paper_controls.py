@@ -101,16 +101,23 @@ def paper_orders_blocked(root: Path | None = None) -> bool:
     return load_paper_kill_switch(root).enabled
 
 
-def build_paper_status(root: Path | None = None) -> PaperStatusSnapshot:
+def build_paper_status(
+    root: Path | None = None,
+    *,
+    active_paper_auto_strategies: list[str] | None = None,
+) -> PaperStatusSnapshot:
     base = root or project_root()
     kill_switch = load_paper_kill_switch(base)
-    active_paper_auto = [
-        item.name
-        for item in list_strategies(base)
-        if item.lifecycle == "active"
-        and item.execution_mode == "paper_auto"
-        and item.broker == "alpaca_paper"
-    ]
+    if active_paper_auto_strategies is None:
+        active_paper_auto = [
+            item.name
+            for item in list_strategies(base)
+            if item.lifecycle == "active"
+            and item.execution_mode == "paper_auto"
+            and item.broker == "alpaca_paper"
+        ]
+    else:
+        active_paper_auto = list(active_paper_auto_strategies)
     order_rows = _paper_order_rows(base)
     status_counts = Counter(
         _order_status_token(row.get("status")) or "unknown" for row in order_rows

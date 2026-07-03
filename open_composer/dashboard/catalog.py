@@ -50,13 +50,15 @@ from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.paper_controls import build_paper_status
 from open_composer.projects import build_project_from_strategy, list_projects, slugify
 from open_composer.storage import write_json
-from open_composer.strategy_capabilities import assess_strategy_capabilities
+from open_composer.strategy_capabilities import assess_strategy_capabilities_for_spec
 from open_composer.strategy_versions import load_strategy_versions, strategy_content_hash
+from open_composer.yaml_utils import safe_load_yaml
 
 LIFECYCLE_PRIORITY = {"active": 3, "approved": 2, "draft": 1, "retired": 0}
 MODEL_ROLE_ORDER = ("pure_quant", "quant_review", "quant_scan", "quant_orchestrator")
 RISK_ORDER = ("stable", "moderate", "high")
 RUN_KIND_ORDER = ("backtest", "scan", "paper", "unknown")
+MAX_DASHBOARD_UNKNOWN_RESEARCH_JSON_BYTES = 1_000_000
 
 
 @dataclass(frozen=True)
@@ -193,23 +195,27 @@ def _strategy_spec_paths(base: Path) -> list[Path]:
 
 def _build_version_records(base: Path, spec_paths: list[Path]) -> list[DashboardVersion]:
     grouped: dict[tuple[str, str], dict[str, Any]] = {}
+    capability_by_hash: dict[str, Any] = {}
     registered_versions = load_strategy_versions(base)
     registered_by_version = {
         (version.strategy_name, version.version_id): version for version in registered_versions
     }
     for path in spec_paths:
-        spec = load_strategy_spec(path)
+        spec = load_strategy_spec(path, validate=False)
         content_hash = strategy_content_hash(spec)
         version_id = f"ver_{content_hash[:12]}"
         registered = registered_by_version.get((spec.name, version_id))
         key = (spec.name, content_hash)
-        capability_report = assess_strategy_capabilities(path)
-        model_role, model_role_reasons = _infer_model_role(spec)
-        risk_tier, risk_reasons = _infer_risk_tier(spec)
         modified_at = _file_mtime(path)
-        raw = grouped.setdefault(
-            key,
-            {
+        raw = grouped.get(key)
+        if raw is None:
+            capability_report = capability_by_hash.get(content_hash)
+            if capability_report is None:
+                capability_report = assess_strategy_capabilities_for_spec(spec, path)
+                capability_by_hash[content_hash] = capability_report
+            model_role, model_role_reasons = _infer_model_role(spec)
+            risk_tier, risk_reasons = _infer_risk_tier(spec)
+            raw = {
                 "strategy_id": spec.name,
                 "strategy_name": spec.name,
                 "version_id": version_id,
@@ -250,10 +256,17 @@ def _build_version_records(base: Path, spec_paths: list[Path]) -> list[Dashboard
                 "risk_tier": risk_tier,
                 "risk_reasons": risk_reasons,
                 "required_capabilities": list(spec.required_capabilities),
-                "compatibility": [],
+                "compatibility": [
+                    DashboardCapabilityFinding(
+                        capability=finding.capability,
+                        status=finding.status,
+                        reasons=list(finding.reasons),
+                    )
+                    for finding in capability_report.findings
+                ],
                 "note": _spec_note(spec),
-            },
-        )
+            }
+            grouped[key] = raw
         raw["lifecycles"].append(spec.lifecycle)
         raw["source_paths"].append(_relpath(path, base))
         priority = LIFECYCLE_PRIORITY[spec.lifecycle]
@@ -266,14 +279,6 @@ def _build_version_records(base: Path, spec_paths: list[Path]) -> list[Dashboard
             raw["primary_path"] = _relpath(path, base)
         raw["modified_at"] = max(raw["modified_at"], modified_at)
         raw["first_seen_at"] = min(raw["first_seen_at"], modified_at)
-        raw["compatibility"] = [
-            DashboardCapabilityFinding(
-                capability=finding.capability,
-                status=finding.status,
-                reasons=list(finding.reasons),
-            )
-            for finding in capability_report.findings
-        ]
 
     for registered in registered_versions:
         key = (registered.strategy_name, registered.content_hash)
@@ -282,8 +287,11 @@ def _build_version_records(base: Path, spec_paths: list[Path]) -> list[Dashboard
         snapshot_path = base / registered.snapshot_path
         if not snapshot_path.exists():
             continue
-        spec = load_strategy_spec(snapshot_path)
-        capability_report = assess_strategy_capabilities(snapshot_path)
+        spec = load_strategy_spec(snapshot_path, validate=False)
+        capability_report = capability_by_hash.get(registered.content_hash)
+        if capability_report is None:
+            capability_report = assess_strategy_capabilities_for_spec(spec, snapshot_path)
+            capability_by_hash[registered.content_hash] = capability_report
         model_role, model_role_reasons = _infer_model_role(spec)
         risk_tier, risk_reasons = _infer_risk_tier(spec)
         grouped[key] = {
@@ -1085,49 +1093,17 @@ def _build_research_records(base: Path) -> list[DashboardResearchReport]:
     if not root.exists():
         return records
     for path in sorted(root.glob("*.json")):
+        kind = _research_kind_from_name(path.name)
+        if kind is None:
+            continue
+        if kind == "unknown" and _is_large_unknown_research_json(path):
+            continue
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             continue
         if not isinstance(raw, dict):
             continue
-        name = path.name
-        if name in {"index.json", "index.jsonl"}:
-            continue
-        if name.endswith("-universe-audit.json"):
-            continue
-        if name.endswith("-promotion.json"):
-            kind = "promotion"
-        elif name.endswith("-parameter-sweep.json"):
-            kind = "parameter_sweep"
-        elif name.endswith("-exposure-switch-research.json"):
-            kind = "exposure_switch"
-        elif name.endswith("-llm-exposure-switch.json"):
-            kind = "llm_exposure_switch"
-        elif name.endswith("-rotation-research.json"):
-            kind = "rotation"
-        elif name.endswith("-market-timing-research.json"):
-            kind = "market_timing"
-        elif name.endswith("-geometry-features.json"):
-            kind = "geometry_features"
-        elif (
-            name.endswith("-router-cost-stress.json")
-            or name.endswith("-router-data-evidence.json")
-            or name.endswith("-router-validation.json")
-        ):
-            kind = "router_evidence"
-        elif (
-            name.endswith("-pit-replay.json")
-            or name.endswith("-marginal-lift.json")
-            or name.endswith("-modality-robustness.json")
-        ):
-            kind = "alternative_data_evidence"
-        elif name.endswith("-borrow-cost-estimate.json") or name.endswith(
-            "-short-squeeze-stress.json"
-        ):
-            kind = "short_risk"
-        else:
-            kind = "unknown"
         status = str(raw.get("status", "warning"))
         if status not in {"ok", "warning", "blocked"}:
             status = "warning"
@@ -1221,6 +1197,11 @@ def _build_research_run_records(base: Path) -> list[DashboardResearchRun]:
     root = base / "reports" / "research"
     if root.exists():
         for path in sorted(root.glob("*.json")):
+            kind = _research_kind_from_name(path.name)
+            if kind is None:
+                continue
+            if kind == "unknown" and _is_large_unknown_research_json(path):
+                continue
             try:
                 raw = json.loads(path.read_text(encoding="utf-8"))
             except json.JSONDecodeError:
@@ -1245,6 +1226,47 @@ def _build_research_run_records(base: Path) -> list[DashboardResearchRun]:
         reverse=True,
     )
     return records
+
+
+def _research_kind_from_name(name: str) -> str | None:
+    if name == "index.json" or name.endswith("-universe-audit.json"):
+        return None
+    if name.endswith("-promotion.json"):
+        return "promotion"
+    if name.endswith("-parameter-sweep.json"):
+        return "parameter_sweep"
+    if name.endswith("-exposure-switch-research.json"):
+        return "exposure_switch"
+    if name.endswith("-llm-exposure-switch.json"):
+        return "llm_exposure_switch"
+    if name.endswith("-rotation-research.json"):
+        return "rotation"
+    if name.endswith("-market-timing-research.json"):
+        return "market_timing"
+    if name.endswith("-geometry-features.json"):
+        return "geometry_features"
+    if (
+        name.endswith("-router-cost-stress.json")
+        or name.endswith("-router-data-evidence.json")
+        or name.endswith("-router-validation.json")
+    ):
+        return "router_evidence"
+    if (
+        name.endswith("-pit-replay.json")
+        or name.endswith("-marginal-lift.json")
+        or name.endswith("-modality-robustness.json")
+    ):
+        return "alternative_data_evidence"
+    if name.endswith("-borrow-cost-estimate.json") or name.endswith("-short-squeeze-stress.json"):
+        return "short_risk"
+    return "unknown"
+
+
+def _is_large_unknown_research_json(path: Path) -> bool:
+    try:
+        return path.stat().st_size > MAX_DASHBOARD_UNKNOWN_RESEARCH_JSON_BYTES
+    except OSError:
+        return False
 
 
 def _research_run_record(raw: dict[str, Any]) -> DashboardResearchRun | None:
@@ -1969,7 +1991,16 @@ def _build_summary(
     backend_status_counts = Counter(strategy.backend_status for strategy in strategies)
     run_kind_counts = Counter(run.kind for run in runs)
     paper_readiness_counts = Counter(report.status for report in paper_readiness_reports)
-    paper_status = build_paper_status(base)
+    paper_status = build_paper_status(
+        base,
+        active_paper_auto_strategies=[
+            strategy.strategy_name
+            for strategy in strategies
+            if strategy.lifecycle == "active"
+            and strategy.execution_mode == "paper_auto"
+            and strategy.broker == "alpaca_paper"
+        ],
+    )
     compatibility_counts: dict[str, dict[str, int]] = {}
     capabilities_to_report = [
         "python_mvp_backtest",
@@ -2625,7 +2656,7 @@ def _read_yaml_mapping(path: Path) -> dict[str, object]:
     if not path.exists():
         return {}
     try:
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        raw = safe_load_yaml(path.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError):
         return {}
     return raw if isinstance(raw, dict) else {}

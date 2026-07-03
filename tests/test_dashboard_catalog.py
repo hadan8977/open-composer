@@ -302,6 +302,19 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     )
     geometry_catalog = build_dashboard_catalog(sample_workspace)
     assert any(report.kind == "geometry_features" for report in geometry_catalog.research_reports)
+    large_aux_path = sample_workspace / "reports" / "research" / "large-candidate-ledger.json"
+    large_aux_path.write_text(
+        '{"candidate_rows": [' + ",".join('"x"' for _ in range(300_000)) + "]}\n",
+        encoding="utf-8",
+    )
+    optimized_catalog = build_dashboard_catalog(sample_workspace)
+    assert (
+        optimized_catalog.summary.research_report_count
+        == geometry_catalog.summary.research_report_count
+    )
+    assert (
+        optimized_catalog.summary.research_run_count == geometry_catalog.summary.research_run_count
+    )
     assert catalog.research_reports[0].data_as_of == "2026-01-02T16:00:00+00:00"
     assert catalog.research_reports[0].data_feed == "iex"
     assert catalog.research_reports[0].data_source_mode == "cache"

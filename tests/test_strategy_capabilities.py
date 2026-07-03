@@ -147,8 +147,8 @@ def test_strategy_capability_relative_path_finds_router_authorization(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
-        "open_composer.strategy_capabilities.build_nautilus_trader_plan",
-        lambda _: ExecutionBackendPlan(
+        "open_composer.strategy_capabilities.build_nautilus_trader_plan_for_spec",
+        lambda *_args, **_kwargs: ExecutionBackendPlan(
             strategy_id="router",
             strategy_name="router",
             selected_backend="nautilus_trader",

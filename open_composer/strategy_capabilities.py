@@ -5,14 +5,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-import yaml
-
-from open_composer.adapters.execution.nautilus_trader import build_nautilus_trader_plan
+from open_composer.adapters.execution.nautilus_trader import build_nautilus_trader_plan_for_spec
 from open_composer.expressions import ExpressionError, validate_expression
 from open_composer.models.execution_backend import ExecutionBackendPlan
 from open_composer.models.strategy_spec import StrategySpec
 from open_composer.router_authorization import assess_router_order_authorization, is_router_strategy
 from open_composer.timeframes import supported_timeframes, timeframe_supported
+from open_composer.yaml_utils import safe_load_yaml
 
 CapabilityStatus = Literal["supported", "partial", "blocked", "unsupported"]
 
@@ -52,10 +51,16 @@ def assess_strategy_capabilities_for_spec(
     root = _root_for_spec_path(Path(spec_path))
     expression_inventory = _inventory_expressions(spec)
     expression_errors = _expression_errors(spec)
+    backend_plan = build_nautilus_trader_plan_for_spec(
+        spec,
+        spec_path,
+        root=root,
+        expression_errors=expression_errors,
+    )
     findings = [
         _python_mvp_backtest(spec, expression_errors),
         _tradingview_pine_strategy(spec, expression_errors),
-        _nautilus_trader_backend(spec_path),
+        _nautilus_trader_backend(backend_plan),
         _alpaca_paper_execution(spec, expression_errors, root),
         _llm_quant_workflow(spec),
     ]
@@ -65,14 +70,14 @@ def assess_strategy_capabilities_for_spec(
         findings=findings,
         expression_functions=sorted(expression_inventory.functions),
         expression_names=sorted(expression_inventory.names),
-        backend_plan=build_nautilus_trader_plan(spec_path),
+        backend_plan=backend_plan,
     )
 
 
 def _load_strategy_for_assessment(spec_path: Path | str) -> StrategySpec:
     path = Path(spec_path)
     with path.open("r", encoding="utf-8") as handle:
-        raw = yaml.safe_load(handle)
+        raw = safe_load_yaml(handle)
     if not isinstance(raw, dict):
         msg = f"{path} must contain a YAML mapping"
         raise ValueError(msg)
@@ -223,11 +228,14 @@ def _root_for_spec_path(spec_path: Path) -> Path:
         idx = parts.index("strategy_specs")
         if idx > 0:
             return Path(*parts[:idx])
+    if "strategy_versions" in parts:
+        idx = parts.index("strategy_versions")
+        if idx > 0:
+            return Path(*parts[:idx])
     return path.parent
 
 
-def _nautilus_trader_backend(spec_path: Path | str) -> CapabilityFinding:
-    plan = build_nautilus_trader_plan(spec_path)
+def _nautilus_trader_backend(plan: ExecutionBackendPlan) -> CapabilityFinding:
     status_map = {
         "supported": "supported",
         "partial": "partial",
