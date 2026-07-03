@@ -8,8 +8,14 @@ import pandas as pd
 
 from open_composer.models.strategy_spec import StrategySpec
 from open_composer.research.delayed_entry_overlay import DelayedEntryOverlay
+from open_composer.research.pdr_ml_gate import (
+    PDRMLGateConfig,
+    pdr_ml_gate_from_token,
+    pdr_ml_gate_should_release,
+)
 from open_composer.research.post_drawdown_reentry_router import (
     post_drawdown_reentry_effective_lookback,
+    post_drawdown_reentry_ml_release_snapshot,
     post_drawdown_reentry_params_from_label,
     post_drawdown_reentry_target_weight_snapshot,
 )
@@ -26,6 +32,7 @@ _LABEL_RE = re.compile(
     r"lb(?P<lookback>\d+)_"
     r"min(?P<minimum>[-0-9.]+)_"
     r"delay(?P<delay>\d+)_"
+    r"(?:(?P<mlgate>mlgate_h\d+_tm?\d+(?:p\d+)?_p\d+)_)?"
     r"base\[(?P<base>.+)\]$"
 )
 
@@ -40,14 +47,16 @@ class DefensiveTransitionOverlay:
     delay_minutes: int
     base_route_label: str
     covered_symbols: tuple[str, ...] = ("TQQQ", "QLD", "SOXL", "USD")
+    ml_gate: PDRMLGateConfig | None = None
 
     @property
     def label(self) -> str:
         base = self.base_route_label.replace("post_drawdown_reentry:", "pdr:")
+        gate = f"_{self.ml_gate.token}" if self.ml_gate is not None else ""
         return (
             f"defensive_overlay:{self.scope}_{self.replacement_symbol}_{self.condition}"
             f"_lb{self.lookback_days}_min{self.min_momentum_pct:g}"
-            f"_delay{self.delay_minutes}_base[{base}]"
+            f"_delay{self.delay_minutes}{gate}_base[{base}]"
         )
 
     @property
@@ -78,6 +87,11 @@ def defensive_transition_overlay_from_label(label: str) -> DefensiveTransitionOv
         min_momentum_pct=float(match.group("minimum")),
         delay_minutes=delay_minutes,
         base_route_label=_expand_base_label(match.group("base")),
+        ml_gate=(
+            pdr_ml_gate_from_token(match.group("mlgate"))
+            if match.group("mlgate") is not None
+            else None
+        ),
     )
 
 
@@ -100,22 +114,22 @@ def defensive_transition_overlay_target_weight_snapshot(
 ) -> TargetSnapshot:
     base_params = post_drawdown_reentry_params_from_label(overlay.base_route_label)
     base = post_drawdown_reentry_target_weight_snapshot(spec, dataset, base_params, index)
+    if (
+        overlay.ml_gate is not None
+        and base.state == "hard_stress_defensive"
+        and pdr_ml_gate_should_release(spec, dataset, overlay.ml_gate, index)
+    ):
+        released = post_drawdown_reentry_ml_release_snapshot(spec, dataset, base_params, index)
+        if not released.weights:
+            return base
+        if _condition_matches(dataset, overlay, index):
+            return _replace_snapshot_symbol(released, overlay.replacement_symbol, dataset)
+        return released
     if not base.weights or not _scope_matches(base.state, overlay.scope):
         return base
     if not _condition_matches(dataset, overlay, index):
         return base
-    replacement_symbol = overlay.replacement_symbol.upper()
-    if replacement_symbol not in dataset.symbols:
-        return base
-    weight = sum(float(value) for value in base.weights.values())
-    if weight <= 0:
-        return base
-    return replace(
-        base,
-        selected=[replacement_symbol],
-        weights={replacement_symbol: weight},
-        state=f"{base.state}_overlay_{replacement_symbol}",
-    )
+    return _replace_snapshot_symbol(base, overlay.replacement_symbol, dataset)
 
 
 def defensive_transition_overlay_summary(
@@ -133,6 +147,7 @@ def defensive_transition_overlay_summary(
         "delay_minutes": overlay.delay_minutes,
         "covered_symbols": list(overlay.covered_symbols),
         "base_route_label": overlay.base_route_label,
+        "ml_gate": overlay.ml_gate.to_payload() if overlay.ml_gate is not None else None,
         "status": "research_observation",
         "limits": [
             "changes target asset only in configured defensive or transition states",
@@ -165,6 +180,25 @@ def _scope_matches(state: str, scope: str) -> bool:
     if scope == "hard_and_transition":
         return state in HARD_STRESS_STATES or state in TRANSITION_STATES
     raise ValueError(f"unsupported defensive-transition scope: {scope}")
+
+
+def _replace_snapshot_symbol(
+    base: TargetSnapshot,
+    replacement_symbol: str,
+    dataset: RouterFrameDataset,
+) -> TargetSnapshot:
+    replacement = replacement_symbol.upper()
+    if replacement not in dataset.symbols:
+        return base
+    weight = sum(float(value) for value in base.weights.values())
+    if weight <= 0:
+        return base
+    return replace(
+        base,
+        selected=[replacement],
+        weights={replacement: weight},
+        state=f"{base.state}_overlay_{replacement}",
+    )
 
 
 def _features(

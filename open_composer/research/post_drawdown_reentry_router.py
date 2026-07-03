@@ -143,6 +143,36 @@ def post_drawdown_reentry_target_weight_snapshot(
     )
 
 
+def post_drawdown_reentry_ml_release_snapshot(
+    spec: StrategySpec,
+    dataset: RouterFrameDataset,
+    params: PostDrawdownReentryParams,
+    index: int,
+    *,
+    state: str = "hard_stress_defensive_ml_release",
+) -> TargetSnapshot:
+    features = _features(dataset)
+    asset = _transition_asset(params, features, index)
+    max_symbol_weight = min(
+        spec.portfolio.max_symbol_weight or spec.risk.max_position_weight,
+        spec.risk.max_position_weight,
+    )
+    gross_limit = spec.portfolio.gross_exposure_limit or 1.0
+    target_weight = max(0.0, min(1.0, max_symbol_weight, gross_limit))
+    weights = {asset: target_weight} if asset in dataset.symbols and target_weight > 0 else {}
+    return TargetSnapshot(
+        selected=list(weights),
+        weights=weights,
+        state=state,
+        qqq_trend_ok=_trend_ok(features, index),
+        qqq_momentum_ok=_safe(features["qqq_mom120"].iloc[index], default=-100.0) > 0,
+        qqq_drawdown_ok=(
+            _safe(features["qqq_dd20"].iloc[index], default=-100.0) > -params.hard_drawdown_pct
+        ),
+        leverage_drawdown_ok=not _early_deterioration_guard(params, features, index),
+    )
+
+
 def _route_decisions(
     dataset: RouterFrameDataset,
     params: PostDrawdownReentryParams,

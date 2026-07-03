@@ -1,0 +1,321 @@
+name: nasdaq_tqqq_pdr_router_mlgate_iter1
+description: >
+  Draft research variant of the post-drawdown Nasdaq ETF router with a bounded
+  LightGBM defensive-exit gate. The gate is allowed to act only when the base
+  route state is hard_stress_defensive; missing OOS ML evidence is fail-safe and
+  leaves the fixed route unchanged. This is research/manual-signal only and is
+  not paper_auto ready.
+timeframe: daily
+universe:
+  - QQQ
+  - TQQQ
+  - QLD
+  - SOXL
+  - USD
+  - SMH
+  - SOXX
+  - XLK
+  - IGV
+  - GLD
+  - BIL
+lifecycle: draft
+position_direction: long_only
+
+entry:
+  all:
+    - close > sma(close, 200) or close / lag(close, 120) - 1 > 0
+  any: []
+
+exit:
+  all: []
+  any:
+    - close < sma(close, 200) and close / lag(close, 120) - 1 < 0
+
+risk:
+  max_trades_per_day: 4
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: defensive_overlay:transition_TQQQ_replacement_mom_positive_lb20_min0_delay30_mlgate_h10_t2_p70_base[pdr:semi_light_harddd6_v0.65_breadth1_softQQQ_defGLD_rec104_mom60max20_ext35_cool5QLD_confirm5_melt6040x25_detdd8m10]
+
+costs:
+  commission_pct: 0.005
+  slippage_bps: 3.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: longbridge
+  symbol: QQQ
+  path: null
+  feed: null
+
+data_assumptions:
+  source: longbridge
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_replay_cache
+  caveat: >
+    Materialized Longbridge adjusted daily bars are research replay evidence
+    only. Baseline and gated variants must be compared on the same refreshed
+    data snapshot; this data profile is not paper-ready market evidence.
+
+factors:
+  qqq_trend_120_200:
+    source: expression
+    expression: close > sma(close, 200) or close / lag(close, 120) - 1 > 0
+    default: false
+    description: QQQ 200-day trend or 120-day momentum risk-on gate.
+  qqq_drawdown_20_60:
+    source: expression
+    expression: close / sma(close, 20) - 1
+    default: 0.0
+    description: Spec-valid proxy for QQQ drawdown state; exact router uses rolling highs in research artifact.
+  tqqq_drawdown_20_60:
+    source: expression
+    expression: close / sma(close, 20) - 1
+    default: 0.0
+    description: Spec-valid proxy for TQQQ drawdown state; exact router uses rolling highs in research artifact.
+  tqqq_momentum_60:
+    source: expression
+    expression: close / lag(close, 60) - 1
+    default: 0.0
+    description: TQQQ intermediate momentum cap for re-entry and deterioration.
+  tech_canary_breadth:
+    source: expression
+    expression: close / lag(close, 120) - 1
+    default: 0
+    description: Spec-valid proxy for technology canary breadth; exact route counts QQQ, XLK, IGV, SOXX, and SMH.
+  early_deterioration_downshift:
+    source: expression
+    expression: close / lag(close, 20) - 1 <= -0.08 and close / lag(close, 60) - 1 <= 0.10
+    default: false
+    description: Spec-valid proxy for the early deterioration downshift; exact route also checks QQQ drawdown.
+  delayed_offensive_entry_30m:
+    source: expression
+    expression: close > lag(close, 1)
+    default: false
+    description: >
+      Spec-valid marker for the execution overlay. Exact behavior is expressed
+      in target-weight time_rule rows, not in the daily factor expression.
+  transition_tqqq_momentum_overlay:
+    source: expression
+    expression: close / lag(close, 20) - 1 > 0
+    default: false
+    description: >
+      Spec-valid marker for replacing cooldown/confirmation transition exposure
+      with TQQQ when TQQQ 20-day momentum is positive. Exact behavior is expressed
+      by the defensive_overlay route wrapper.
+  llm_beta_regime_score:
+    source: feature_packet
+    path: reports/features/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive/llm_beta_regime_score/packets.jsonl
+    field: beta_regime_score
+    default: 0.0
+    description: >
+      Observation-only point-in-time LLM/web/macro beta-regime score for judging
+      whether recent market context supports offensive Nasdaq beta. This factor
+      is recorded and replayable, but it does not control route selection,
+      exposure, paper orders, or paper_auto until marginal-lift and
+      missing-modality robustness evidence pass.
+
+llm_review:
+  enabled: false
+  model: null
+
+notes:
+  intent: >
+    Preserve 100% gross exposure and current base route behavior while testing
+    whether delaying offensive sleeve buy/increase intents improves recent
+    execution quality and drawdown without relying on idle cash.
+  selected_route:
+    route_label: defensive_overlay:transition_TQQQ_replacement_mom_positive_lb20_min0_delay30_mlgate_h10_t2_p70_base[pdr:semi_light_harddd6_v0.65_breadth1_softQQQ_defGLD_rec104_mom60max20_ext35_cool5QLD_confirm5_melt6040x25_detdd8m10]
+    base_route_label: post_drawdown_reentry:semi_light_harddd6_v0.65_breadth1_softQQQ_defGLD_rec104_mom60max20_ext35_cool5QLD_confirm5_melt6040x25_detdd8m10
+    generated_at: "2026-07-03"
+    source_report: reports/research/control/pdr-router-fold-attribution-20260703.json
+    current_oos_start: null
+    current_oos_end: null
+    current_oos_annualized_return_pct: null
+    current_oos_total_return_pct: null
+    current_oos_sharpe_ratio: null
+    current_oos_max_drawdown_pct: null
+    current_oos_tqqq_buy_hold_total_return_pct: null
+    average_gross_exposure_pct: 100.0
+    workflow_pass: true
+    research_pass: false
+    walk_forward_pass: true
+    llm_contribution_pass: false
+    paper_ready_pass: false
+  pdr_ml_gate:
+    family: pdr_defensive_exit_ml_gate
+    selected_trial_token: mlgate_h10_t2_p70
+    decision_scope: hard_stress_defensive_only
+    fail_safe: missing_model_feature_prediction_or_inference_error_equals_baseline
+    feature_alignment: index-1
+    search_space:
+      horizon_bars:
+        - 10
+        - 20
+      threshold_return_pct:
+        - 0
+        - 2
+      probability_threshold:
+        - 0.6
+        - 0.7
+        - 0.8
+      candidate_count: 12
+    embargo_rule: embargo_bars >= horizon_bars
+  factor_library_ids:
+    - post_drawdown_reentry_state
+    - overextension_mean_reversion_guard
+    - post_stress_cooldown_confirmation
+    - melt_up_peak_risk_guard
+    - early_deterioration_downshift
+    - drawdown_guard_20_60
+    - tech_canary_breadth
+    - leveraged_etf_extension_guard
+    - overnight_intraday_return_split
+    - open_gap_delay_confirmation
+    - tqqq_delayed_entry_execution_overlay
+    - transition_tqqq_momentum_overlay
+    - overnight_first_half_hour_reversal_regime
+    - late_day_intraday_momentum_pressure
+  known_limits:
+    - Current route-selection evidence is strongest on the recent common window and remains multiple-tested.
+    - Longbridge materialized adjusted history is research replay evidence, not paper-ready evidence.
+    - Daily open and delayed minute prices come from separate materializations and need continued TCA review.
+    - The selected overlay came from a 936-candidate research search and needs backtest forensics.
+    - No live-money authorization exists; this remains paper/manual-signal only until lifecycle and paper gates pass.
+    - LLM/news/macro beta-regime evidence is now declared as an observation-only replay packet; llm_contribution_pass remains false until marginal-lift replay passes.
+  llm_beta_regime_overlay:
+    factor_name: llm_beta_regime_score
+    mode: observation_only
+    packet_path: reports/features/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive/llm_beta_regime_score/packets.jsonl
+    prompt_template_path: prompts/examples/llm_beta_regime_score.md
+    source_plan: reports/research/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive-llm-beta-regime-overlay-plan.md
+    current_allowed_use:
+      - dashboard_regime_panel
+      - manual_review_context
+      - research_replay_candidate
+    forbidden_until_research_pass:
+      - paper_order_resizing
+      - arbitrary_symbol_selection
+      - runtime_web_search_inside_order_loop
+      - paper_auto_gate_override
+    promotion_requirements:
+      - point_in_time_packet_complete
+      - pure_quant_baseline_comparison
+      - marginal_lift_evidence
+      - missing_modality_robustness
+      - fold_level_non_degradation
+  universe_audit:
+    explicit_fixed_universe: true
+    selection_timestamp: "2026-06-02T00:00:00Z"
+    delisting_policy: >
+      Fixed ETF and listed-instrument research universe selected before this
+      candidate rerun. It is not claimed to be historical Nasdaq index
+      membership, and no historical constituent backfill is used.
+
+research_design:
+  parameter_space:
+    base_route_label:
+      - post_drawdown_reentry:semi_light_harddd6_v0.65_breadth1_softQQQ_defGLD_rec104_mom60max20_ext35_cool5QLD_confirm5_melt6040x25_detdd8m10
+    defensive_overlay_scope:
+      - transition
+    replacement_symbol:
+      - TQQQ
+    replacement_condition:
+      - replacement_mom_positive
+    replacement_lookback_days:
+      - 20
+    replacement_min_momentum_pct:
+      - 0
+    delay_minutes:
+      - 30
+    pdr_ml_gate_horizon_bars:
+      - 10
+      - 20
+    pdr_ml_gate_threshold_return_pct:
+      - 0
+      - 2
+    pdr_ml_gate_probability_threshold:
+      - 0.6
+      - 0.7
+      - 0.8
+    covered_symbols:
+      - TQQQ-QLD-SOXL-USD
+  candidate_budget: 12
+  selection_objective: >
+    Test whether a defensive-exit ML gate can improve long-window walk-forward
+    robustness while preserving the base route's crisis protection. R.2 must
+    compare baseline and gated variants on the same Longbridge data snapshot and
+    keep this draft unpromoted if any acceptance gate fails.
+  anti_overfit_notes:
+    - The base route was discovered in a prior 936-candidate defensive/transition overlay search.
+    - This selected transition_TQQQ route came from a bounded 25-candidate fixed-live variant check.
+    - Fixed-live validation passes 3 of 4 chronological folds; fold 4 still lags TQQQ in a strong melt-up.
+  validation_plan:
+    - spec_validation
+    - target_weight_mapping
+    - harness_verify
+    - execution_reality
+    - backtest_forensics
+    - promotion_report
+    - paper_readiness
+
+required_capabilities:
+  - market.longbridge_bars
+  - market.alpaca_bars
+  - macro.fred_series
+  - news.gdelt
+
+execution_policy: null
+reality_model: null
+
+model:
+  kind: lightgbm_classifier
+  label:
+    type: forward_direction
+    horizon_bars: 10
+    threshold_pct: 2.0
+  features:
+    - qqq_trend_120_200
+    - qqq_drawdown_20_60
+    - tqqq_drawdown_20_60
+    - tqqq_momentum_60
+    - tech_canary_breadth
+    - transition_tqqq_momentum_overlay
+  training:
+    window_bars: 756
+    retrain_every_bars: 63
+    test_window_bars: 126
+    embargo_bars: 10
+    seed: 42
+  selection:
+    method: threshold
+    threshold: 0.7
+  hyperparameters:
+    num_leaves: 15
+    max_depth: 4
+    min_child_samples: 20
+    learning_rate: 0.05
+    n_estimators: 200
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_lambda: 1.0
+  baseline: none

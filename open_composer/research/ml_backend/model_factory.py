@@ -4,7 +4,7 @@ from typing import Any
 
 from open_composer.models.strategy_spec import StrategySpec
 
-_REGRESSOR_DEFAULTS: dict[str, Any] = {
+_LIGHTGBM_DEFAULTS: dict[str, Any] = {
     "num_leaves": 15,
     "max_depth": 4,
     "min_child_samples": 20,
@@ -29,8 +29,25 @@ def create_model(spec: StrategySpec):
         raise RuntimeError(
             "LightGBM is required for StrategySpec.model; run `uv sync` to install ML deps"
         ) from exc
-    params = {**_REGRESSOR_DEFAULTS, **spec.model.hyperparameters}
+    params = {**_LIGHTGBM_DEFAULTS, **spec.model.hyperparameters}
     params["random_state"] = spec.model.training.seed
     if spec.model.kind == "lightgbm_classifier":
         return LGBMClassifier(**params)
     return LGBMRegressor(**params)
+
+
+def create_lightgbm_classifier(
+    *,
+    seed: int = 42,
+    hyperparameters: dict[str, Any] | None = None,
+):
+    """Create the conservative classifier used by route-level research gates."""
+    try:
+        from lightgbm import LGBMClassifier
+    except ImportError as exc:  # pragma: no cover - exercised when dependency missing
+        raise RuntimeError(
+            "LightGBM is required for PDR ML gate training; run `uv sync` to install ML deps"
+        ) from exc
+    params = {**_LIGHTGBM_DEFAULTS, **(hyperparameters or {})}
+    params["random_state"] = seed
+    return LGBMClassifier(**params)
