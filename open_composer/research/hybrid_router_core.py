@@ -8,6 +8,25 @@ from typing import Literal
 
 from open_composer.models.strategy_spec import StrategySpec
 from open_composer.research import intraday_daily_rotation as _intraday
+from open_composer.research.defensive_transition_overlay import (
+    DefensiveTransitionOverlay,
+    defensive_transition_overlay_effective_lookback,
+    defensive_transition_overlay_from_label,
+    defensive_transition_overlay_target_weight_snapshot,
+    is_defensive_transition_overlay_label,
+)
+from open_composer.research.delayed_entry_overlay import (
+    DelayedEntryOverlay,
+    delayed_entry_overlay_from_label,
+    is_delayed_entry_label,
+)
+from open_composer.research.post_drawdown_reentry_router import (
+    PostDrawdownReentryParams,
+    is_post_drawdown_reentry_label,
+    post_drawdown_reentry_effective_lookback,
+    post_drawdown_reentry_params_from_label,
+    post_drawdown_reentry_target_weight_snapshot,
+)
 from open_composer.research.router_common import (
     RouterFrameDataset,
     RouterMetrics,
@@ -199,7 +218,21 @@ HybridRouterMetrics = RouterMetrics
 _DailyHybridDataset = RouterFrameDataset
 
 
-def hybrid_params_from_label(label: str) -> HybridRouterParams | BetaOverrideHybridParams:
+def hybrid_params_from_label(
+    label: str,
+) -> (
+    HybridRouterParams
+    | BetaOverrideHybridParams
+    | PostDrawdownReentryParams
+    | DefensiveTransitionOverlay
+    | DelayedEntryOverlay
+):
+    if is_defensive_transition_overlay_label(label):
+        return defensive_transition_overlay_from_label(label)
+    if is_post_drawdown_reentry_label(label):
+        return post_drawdown_reentry_params_from_label(label)
+    if is_delayed_entry_label(label):
+        return delayed_entry_overlay_from_label(label)
     if label.startswith("beta_override:"):
         match = re.fullmatch(
             r"beta_override:baseiter2_lb(?P<lb>\d+)_min(?P<min>[-0-9.]+)_"
@@ -737,9 +770,22 @@ def _load_daily_hybrid_dataset(
 def hybrid_target_weight_snapshot(
     spec: StrategySpec,
     dataset: _DailyHybridDataset,
-    params: HybridRouterParams | BetaOverrideHybridParams,
+    params: (
+        HybridRouterParams
+        | BetaOverrideHybridParams
+        | PostDrawdownReentryParams
+        | DefensiveTransitionOverlay
+        | DelayedEntryOverlay
+    ),
     index: int,
 ) -> TargetSnapshot:
+    if isinstance(params, DefensiveTransitionOverlay):
+        return defensive_transition_overlay_target_weight_snapshot(spec, dataset, params, index)
+    if isinstance(params, PostDrawdownReentryParams):
+        return post_drawdown_reentry_target_weight_snapshot(spec, dataset, params, index)
+    if isinstance(params, DelayedEntryOverlay):
+        base_params = hybrid_params_from_label(params.base_route_label)
+        return hybrid_target_weight_snapshot(spec, dataset, base_params, index)
     if isinstance(params, BetaOverrideHybridParams):
         return _beta_override_target_weight_snapshot(dataset, params, index)
     max_symbol_weight = min(
@@ -1228,7 +1274,13 @@ def _rolling_drawdown_ok(
 def _backtest_hybrid_params(
     spec: StrategySpec,
     dataset: _DailyHybridDataset,
-    params: HybridRouterParams | BetaOverrideHybridParams,
+    params: (
+        HybridRouterParams
+        | BetaOverrideHybridParams
+        | PostDrawdownReentryParams
+        | DefensiveTransitionOverlay
+        | DelayedEntryOverlay
+    ),
     *,
     start_index: int,
     end_index: int,
@@ -1245,5 +1297,19 @@ def _backtest_hybrid_params(
     )
 
 
-def _effective_lookback(params: HybridRouterParams) -> int:
+def _effective_lookback(
+    params: (
+        HybridRouterParams
+        | BetaOverrideHybridParams
+        | PostDrawdownReentryParams
+        | DefensiveTransitionOverlay
+        | DelayedEntryOverlay
+    ),
+) -> int:
+    if isinstance(params, DefensiveTransitionOverlay):
+        return defensive_transition_overlay_effective_lookback(params)
+    if isinstance(params, PostDrawdownReentryParams):
+        return post_drawdown_reentry_effective_lookback(params)
+    if isinstance(params, DelayedEntryOverlay):
+        return _effective_lookback(hybrid_params_from_label(params.base_route_label))
     return effective_lookback(params)

@@ -205,6 +205,7 @@ def _build_target_weight_rows(
         signal_session = dataset.dates[index - 1] if index > 0 else dataset.dates[index]
         snapshot = hybrid_target_weight_snapshot(spec, dataset, params, index)
         target_by_symbol = {symbol: snapshot.weights.get(symbol, 0.0) for symbol in dataset.symbols}
+        time_rule = _time_rule(params)
         for symbol in dataset.symbols:
             target = float(target_by_symbol[symbol])
             previous = float(previous_targets[symbol])
@@ -213,7 +214,7 @@ def _build_target_weight_rows(
                 "rebalance_id": f"{spec.name}:{rebalance_session}",
                 "rebalance_session": rebalance_session,
                 "signal_session": signal_session,
-                "time_rule": "regular_session_open",
+                "time_rule": time_rule,
                 "symbol": symbol,
                 "target_weight": target,
                 "selected": symbol in snapshot.selected,
@@ -230,7 +231,7 @@ def _build_target_weight_rows(
                     {
                         "rebalance_id": row["rebalance_id"],
                         "rebalance_session": rebalance_session,
-                        "time_rule": "regular_session_open",
+                        "time_rule": time_rule,
                         "symbol": symbol,
                         "from_weight": previous,
                         "to_weight": target,
@@ -243,6 +244,13 @@ def _build_target_weight_rows(
                 )
         previous_targets = target_by_symbol
     return target_rows, intents
+
+
+def _time_rule(params: object) -> str:
+    delayed = getattr(params, "delayed_entry_overlay", None)
+    if delayed is not None:
+        return str(delayed.time_rule)
+    return str(getattr(params, "time_rule", "regular_session_open"))
 
 
 def _parity_check(
