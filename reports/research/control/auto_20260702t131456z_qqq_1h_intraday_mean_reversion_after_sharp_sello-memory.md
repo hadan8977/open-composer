@@ -1,0 +1,6 @@
+# Research Memory: auto_20260702t131456z_qqq_1h_intraday_mean_reversion_after_sharp_sello
+- Objective: rank_ic_ir_stability_then_research_evidence
+- Fix first: promotion:execution_reality; promotion:execution_reality:Execution reality blocks promotion: at least one bar has very low dollar volu...
+- Data tier: research_strict
+- Next: clear blocked harness/research evidence before adding strategy complexity; run a bounded parameter sweep only after defining a small search space; treat overfit, sample, and promotion warnings as diagnostics during exploration; align next trial with researc...
+- Control: use evidence first, change <=2 variables, no global factor bans, warn not hard-block early diagnostics.

@@ -1,0 +1,11 @@
+# Research Memory: nasdaq_long_short_event_router_1m_sweep_002
+- Objective: Maximize walk-forward and OOS alpha versus equal-weight intraday exposure while keeping full-window drawdown below 20% where possible.
+- Current best: lb10_entry2_top1_open0_mom0_rv1_qprior_negative_reversal_maxopen0_maxmomnone score=28.54980702982337 params={'entry_after_bars': 2, 'lookback_days': 10, 'market_gate': 'qqq_prior_negative', 'max_opening_return_pct': 0.0, 'max_prior_momentum_pct': None, 'min_opening_return_pct': 0.0, 'min_prior_mo...
+- Fix first: promotion:strict_data; promotion:universe_audit; paper_readiness
+- Data tier: cached_live
+- Data blocker: Router promotion requires research_strict or paper_ready data; acquisition_tier=cached_live is not paper-ready
+- Preserve/test around: {'entry_after_bars': 2, 'lookback_days': 10, 'market_gate': 'qqq_prior_negative', 'max_opening_return_pct': 0.0, 'max_prior_momentum_pct': None, 'min_opening_return_pct': 0.0, 'min_prior_momentum_pct': 0.0, 'min_relat...
+- Next: rerun or cross-check the selected route on research_strict or paper_ready intraday data before more parameter optimization; replace cached 1m bars with a fresh strict pull or independent comparison; validate the IEX-derived result against full-market/SIP da...
+- Latest validation: lookback-only exploration is not enough. Longbridge briefly improved at lookback 5 with qqq_prior_negative, but Alpaca stayed negative across lookback 5/10/15 on the same gate. The 2024-2026 full-window Alpaca sweep keeps lookback 10 as the best candidate and leaves lookback 5 clearly negative.
+- Latest validation: entry_after_bars=1 and 3 both underperformed entry_after_bars=2 on the Alpaca full-window sweep. Keep the 2-bar entry timing for the current best route.
+- Control: use evidence first, change <=2 variables, no global factor bans, warn not hard-block early diagnostics.

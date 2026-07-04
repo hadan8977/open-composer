@@ -315,3 +315,52 @@ Decision:
 - Required before more 1h work: longer intraday history and execution modeling
   for partial fills / low-liquidity bars. This is a later data/harness task, not
   a strategy tweak for this loop.
+
+## Step 7.R PDR Router ML Gate Negative Result
+
+Artifact:
+
+`reports/research/control/pdr-router-ml-gate-eval-20260703.md`
+
+Spec:
+
+`strategy_specs/drafts/nasdaq_tqqq_pdr_router_mlgate_iter1.yaml`
+
+Result:
+
+- Lifecycle: draft only; not upgraded, not promoted, and active paper behavior
+  stayed unchanged.
+- Data: Longbridge materialized adjusted daily cache at
+  `data/research/longbridge_adjusted_daily/`, window `2012-01-03` through
+  `2026-05-22`.
+- Same-data baseline full window: total return `5643.76%`, Sharpe `1.014`,
+  MaxDD `-43.24%`.
+- Gated verdict: `ml_gate_beats_fixed_route=False`.
+- Failed hard gates: walk-forward wins `2/6` vs required `>=4/6`; Sharpe
+  `0.931` vs required `>=1.1`; MaxDD `-66.70%` worse than baseline `-43.24%`;
+  current OOS Sharpe `1.395` vs required `>=1.7` and total multiple `1.20`
+  vs required `>=1.5`.
+- Passed gates: annualized return `37.30%` vs required `>=33%`; q4_2018,
+  covid_crash, and calendar_2022 still beat TQQQ.
+- Crisis protection materially degraded despite that pass: q4_2018 moved from
+  `-16.01%` baseline to `-36.75%` gated.
+
+Mechanism diagnosis:
+
+- The cheap label, "future 10-day TQQQ return greater than +2%", detected
+  rebounds, not safe re-entry.
+- The model released during crash rebounds and during the 2022 slow bear market,
+  where staying in GLD was the route's main protection.
+- R.1 fail-safe discipline worked: non-hard-stress state or weight changes were
+  `0`; the negative result is from the intended `hard_stress_defensive` gate,
+  not route drift.
+
+Decision:
+
+- Archive the negative result as evidence.
+- Do not widen the 12-combination search space just because this variant failed.
+- Next ML attempt requires path-dependent labels and a regime/macro feature
+  capability assessment first.
+- Candidate labels should target safe leveraged re-entry, for example forward
+  TQQQ path MaxDD above a threshold plus non-negative terminal return, rather
+  than simple forward return.

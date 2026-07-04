@@ -63,7 +63,9 @@ def test_pdr_ml_gate_acceptance_requires_all_six_gates() -> None:
     assert rejected["failed_gates"] == ["full_window_sharpe_at_least_1_1"]
 
 
-def test_pdr_ml_gate_evaluation_writes_acceptance_report_when_artifacts_exist() -> None:
+def test_pdr_ml_gate_evaluation_writes_acceptance_report_when_artifacts_exist(
+    tmp_path: Path,
+) -> None:
     if not SPEC_PATH.exists() or not PREDICTION_PATH.exists():
         pytest.skip("local Step 7.R draft spec or R.1 prediction artifact is absent")
 
@@ -74,6 +76,7 @@ def test_pdr_ml_gate_evaluation_writes_acceptance_report_when_artifacts_exist() 
         start="2012-01-03",
         end="2026-05-22",
         report_date="test",
+        output_dir=tmp_path,
     )
 
     assert payload["report_type"] == "pdr_router_ml_gate_eval"

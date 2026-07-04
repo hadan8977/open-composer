@@ -1,0 +1,6 @@
+# Research Memory: nasdaq_tqqq_fixed_etf_router_daily_iter7
+- Objective: Seek the best PIT-safe fixed-ETF candidate; compare against TQQQ buy-hold and iter6, but do not promote if return, Sharpe, drawdown, and walk-forward evidenc...
+- Router: substate=observation_only latest=2026-05-21 orders=604
+- Data tier: paper_ready_live
+- Next: run a bounded parameter sweep only after defining a small search space; treat overfit, sample, and promotion warnings as diagnostics during exploration; move toward promotion diagnostics rather than broad exploration; align next trial with research design s...
+- Control: use evidence first, change <=2 variables, no global factor bans, warn not hard-block early diagnostics.

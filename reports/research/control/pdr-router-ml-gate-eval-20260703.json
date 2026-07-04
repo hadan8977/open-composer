@@ -1,0 +1,613 @@
+{
+  "acceptance_gate": {
+    "failed_gates": [
+      "wf_beats_tqqq_at_least_4_of_6",
+      "full_window_sharpe_at_least_1_1",
+      "full_window_maxdd_not_worse_than_baseline",
+      "current_oos_sharpe_and_total_gate"
+    ],
+    "gates": {
+      "crisis_windows_all_beat_tqqq": {
+        "actual": [
+          "q4_2018",
+          "covid_crash",
+          "calendar_2022"
+        ],
+        "passed": true,
+        "threshold": [
+          "q4_2018",
+          "covid_crash",
+          "calendar_2022"
+        ]
+      },
+      "current_oos_sharpe_and_total_gate": {
+        "actual": {
+          "sharpe_ratio": 1.3948899738322895,
+          "total_return_pct": 142.83763200882618,
+          "tqqq_total_return_pct": 119.5019553715206
+        },
+        "passed": false,
+        "threshold": {
+          "sharpe_ratio": 1.7,
+          "total_vs_tqqq_multiple": 1.5
+        }
+      },
+      "full_window_annualized_return_at_least_33": {
+        "actual": 37.29885204944983,
+        "passed": true,
+        "threshold": 33.0
+      },
+      "full_window_maxdd_not_worse_than_baseline": {
+        "actual": -66.69990636398592,
+        "baseline": -43.235845853286584,
+        "passed": false
+      },
+      "full_window_sharpe_at_least_1_1": {
+        "actual": 0.9314279989474998,
+        "passed": false,
+        "threshold": 1.1
+      },
+      "wf_beats_tqqq_at_least_4_of_6": {
+        "actual": 2,
+        "passed": false,
+        "threshold": 4
+      }
+    },
+    "ml_gate_beats_fixed_route": false,
+    "objective": "ml_gate_beats_fixed_route",
+    "passed": false
+  },
+  "artifact_paths": {
+    "json": "/root/codex-test/open-composer/reports/research/control/pdr-router-ml-gate-eval-20260703.json",
+    "markdown": "/root/codex-test/open-composer/reports/research/control/pdr-router-ml-gate-eval-20260703.md"
+  },
+  "attribution": {
+    "interpretation": "Gate changes should concentrate in hard_stress_defensive days; non-hard changes indicate unintended route drift.",
+    "ml_release_days": 374,
+    "ml_release_net_delta_arithmetic_pct_points": 62.72158501333821,
+    "non_hard_stress_state_or_weight_changes": 0
+  },
+  "baseline_route_label": "defensive_overlay:transition_TQQQ_replacement_mom_positive_lb20_min0_delay30_base[pdr:semi_light_harddd6_v0.65_breadth1_softQQQ_defGLD_rec104_mom60max20_ext35_cool5QLD_confirm5_melt6040x25_detdd8m10]",
+  "benchmark_family": {
+    "cash_proxy": {
+      "included_in_universe": true,
+      "symbol": "BIL"
+    },
+    "equal_weight_universe": {
+      "total_return_pct": 8978.267450091898
+    },
+    "ex_post_best_symbol": {
+      "symbol": "SOXL",
+      "total_return_pct": 39005.89297809889
+    },
+    "market_proxy": {
+      "symbol": "QQQ",
+      "total_return_pct": 1097.0525962023191
+    },
+    "same_symbol_buy_hold": {
+      "symbol": "TQQQ",
+      "total_return_pct": 13862.685202121824
+    },
+    "strategy_total_return_pct": 6594.611789456958
+  },
+  "data_profile": {
+    "acquisition_tier": "research_replay_cache",
+    "comparison_discipline": "baseline and gated are run on the same loaded dataset",
+    "data_as_of": "2026-05-21",
+    "paper_ready_evidence": false,
+    "provider": "longbridge",
+    "source_mode": "materialized_history_cache"
+  },
+  "gated_route_label": "defensive_overlay:transition_TQQQ_replacement_mom_positive_lb20_min0_delay30_mlgate_h10_t2_p70_base[pdr:semi_light_harddd6_v0.65_breadth1_softQQQ_defGLD_rec104_mom60max20_ext35_cool5QLD_confirm5_melt6040x25_detdd8m10]",
+  "generated_at": "2026-07-03T13:26:29.316902+00:00",
+  "pass_status": {
+    "llm_contribution_pass": false,
+    "paper_ready_blockers": [
+      "R.2 evaluation is research evidence only",
+      "active paper_auto specs are intentionally unchanged"
+    ],
+    "paper_ready_pass": false,
+    "research_pass": false,
+    "workflow_pass": true
+  },
+  "report_type": "pdr_router_ml_gate_eval",
+  "search_space": {
+    "candidate_count": 12,
+    "family": "pdr_defensive_exit_ml_gate",
+    "parameter_ranges": {
+      "horizon_bars": [
+        10,
+        20
+      ],
+      "probability_threshold": [
+        0.6,
+        0.7,
+        0.8
+      ],
+      "threshold_return_pct": [
+        0,
+        2
+      ]
+    }
+  },
+  "selected_prediction_artifact": "/root/codex-test/open-composer/reports/research/ml/nasdaq_tqqq_pdr_router_mlgate_iter1/pdr_mlgate_oos_predictions_h10_t2_p70.json",
+  "source_spec_path": "/root/codex-test/open-composer/strategy_specs/drafts/nasdaq_tqqq_pdr_router_mlgate_iter1.yaml",
+  "strategy_name": "nasdaq_tqqq_pdr_router_mlgate_iter1",
+  "trial_ledger_path": "/root/codex-test/open-composer/reports/research/ml/nasdaq_tqqq_pdr_router_mlgate_iter1/pdr_mlgate_trial_ledger.jsonl",
+  "walk_forward": [
+    {
+      "baseline": {
+        "annualized_return_pct": 33.91530594734815,
+        "benchmark_buy_hold_return_pct": 272.9650631059082,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 366.9225558816889,
+        "days": 560,
+        "end_date": "2015-03-31",
+        "equal_weight_buy_hold_return_pct": 114.37058787297013,
+        "market_buy_hold_return_pct": 63.14737018988406,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -26.040404698892715,
+        "round_trips": 126,
+        "sharpe_ratio": 1.0952884460067518,
+        "start_date": "2013-01-08",
+        "total_return_pct": 91.35725328957697,
+        "traded_days": 560
+      },
+      "end_date": "2015-03-31",
+      "gated": {
+        "annualized_return_pct": 33.91530594734815,
+        "benchmark_buy_hold_return_pct": 272.9650631059082,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 366.9225558816889,
+        "days": 560,
+        "end_date": "2015-03-31",
+        "equal_weight_buy_hold_return_pct": 114.37058787297013,
+        "market_buy_hold_return_pct": 63.14737018988406,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -26.040404698892715,
+        "round_trips": 126,
+        "sharpe_ratio": 1.0952884460067518,
+        "start_date": "2013-01-08",
+        "total_return_pct": 91.35725328957697,
+        "traded_days": 560
+      },
+      "gated_beats_tqqq": false,
+      "gated_total_vs_tqqq_multiple": 0.33468478438257543,
+      "name": "fold1",
+      "start_date": "2013-01-08"
+    },
+    {
+      "baseline": {
+        "annualized_return_pct": 14.993226776446257,
+        "benchmark_buy_hold_return_pct": 92.73084479371316,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 164.12884333821376,
+        "days": 557,
+        "end_date": "2017-06-27",
+        "equal_weight_buy_hold_return_pct": 58.1078001046822,
+        "market_buy_hold_return_pct": 33.83699492218479,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -29.553522566327462,
+        "round_trips": 130,
+        "sharpe_ratio": 0.6012828331140604,
+        "start_date": "2015-04-01",
+        "total_return_pct": 36.177374642956806,
+        "traded_days": 557
+      },
+      "end_date": "2017-06-27",
+      "gated": {
+        "annualized_return_pct": 17.70574740751978,
+        "benchmark_buy_hold_return_pct": 92.73084479371316,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 164.12884333821376,
+        "days": 557,
+        "end_date": "2017-06-27",
+        "equal_weight_buy_hold_return_pct": 58.1078001046822,
+        "market_buy_hold_return_pct": 33.83699492218479,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -41.137168260723335,
+        "round_trips": 138,
+        "sharpe_ratio": 0.6107483801685886,
+        "start_date": "2015-04-01",
+        "total_return_pct": 43.37892659662044,
+        "traded_days": 557
+      },
+      "gated_beats_tqqq": false,
+      "gated_total_vs_tqqq_multiple": 0.46779393300169075,
+      "name": "fold2",
+      "start_date": "2015-04-01"
+    },
+    {
+      "baseline": {
+        "annualized_return_pct": -6.364561948069314,
+        "benchmark_buy_hold_return_pct": 95.89006555723651,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 115.69230769230768,
+        "days": 557,
+        "end_date": "2019-09-17",
+        "equal_weight_buy_hold_return_pct": 58.16866442271387,
+        "market_buy_hold_return_pct": 41.36878747450585,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -39.576801766728686,
+        "round_trips": 121,
+        "sharpe_ratio": -0.029393637701347976,
+        "start_date": "2017-06-28",
+        "total_return_pct": -13.528323649274487,
+        "traded_days": 557
+      },
+      "end_date": "2019-09-17",
+      "gated": {
+        "annualized_return_pct": -0.419043438984501,
+        "benchmark_buy_hold_return_pct": 95.89006555723651,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 115.69230769230768,
+        "days": 557,
+        "end_date": "2019-09-17",
+        "equal_weight_buy_hold_return_pct": 58.16866442271387,
+        "market_buy_hold_return_pct": 41.36878747450585,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -46.38023334492834,
+        "round_trips": 135,
+        "sharpe_ratio": 0.20037947685300062,
+        "start_date": "2017-06-28",
+        "total_return_pct": -0.9238709419818081,
+        "traded_days": 557
+      },
+      "gated_beats_tqqq": false,
+      "gated_total_vs_tqqq_multiple": -0.009634688813830793,
+      "name": "fold3",
+      "start_date": "2017-06-28"
+    },
+    {
+      "baseline": {
+        "annualized_return_pct": 68.00677167120091,
+        "benchmark_buy_hold_return_pct": 373.59223300970876,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 411.49570490146533,
+        "days": 557,
+        "end_date": "2021-12-06",
+        "equal_weight_buy_hold_return_pct": 178.25849954612127,
+        "market_buy_hold_return_pct": 103.93819330083214,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -26.643448992724295,
+        "round_trips": 137,
+        "sharpe_ratio": 1.4305927890154013,
+        "start_date": "2019-09-18",
+        "total_return_pct": 214.80652903784247,
+        "traded_days": 557
+      },
+      "end_date": "2021-12-06",
+      "gated": {
+        "annualized_return_pct": 88.25274003800733,
+        "benchmark_buy_hold_return_pct": 373.59223300970876,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 411.49570490146533,
+        "days": 557,
+        "end_date": "2021-12-06",
+        "equal_weight_buy_hold_return_pct": 178.25849954612127,
+        "market_buy_hold_return_pct": 103.93819330083214,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -48.94947351560065,
+        "round_trips": 156,
+        "sharpe_ratio": 1.457082577065492,
+        "start_date": "2019-09-18",
+        "total_return_pct": 304.8233048405038,
+        "traded_days": 557
+      },
+      "gated_beats_tqqq": false,
+      "gated_total_vs_tqqq_multiple": 0.8159251662830532,
+      "name": "fold4",
+      "start_date": "2019-09-18"
+    },
+    {
+      "baseline": {
+        "annualized_return_pct": 47.92207667033621,
+        "benchmark_buy_hold_return_pct": -25.49436860953962,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "USD",
+        "best_symbol_buy_hold_pct": 55.805839969662486,
+        "days": 555,
+        "end_date": "2024-02-28",
+        "equal_weight_buy_hold_return_pct": 9.959054131242457,
+        "market_buy_hold_return_pct": 12.468444593419715,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -31.33529904140724,
+        "round_trips": 75,
+        "sharpe_ratio": 1.1948098776870422,
+        "start_date": "2021-12-07",
+        "total_return_pct": 136.85220379048707,
+        "traded_days": 555
+      },
+      "end_date": "2024-02-28",
+      "gated": {
+        "annualized_return_pct": 34.84231702273925,
+        "benchmark_buy_hold_return_pct": -25.49436860953962,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "USD",
+        "best_symbol_buy_hold_pct": 55.805839969662486,
+        "days": 555,
+        "end_date": "2024-02-28",
+        "equal_weight_buy_hold_return_pct": 9.959054131242457,
+        "market_buy_hold_return_pct": 12.468444593419715,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -60.824165892410086,
+        "round_trips": 124,
+        "sharpe_ratio": 0.8387258848256705,
+        "start_date": "2021-12-07",
+        "total_return_pct": 93.16425538024401,
+        "traded_days": 555
+      },
+      "gated_beats_tqqq": true,
+      "gated_total_vs_tqqq_multiple": -3.654307223964092,
+      "name": "fold5",
+      "start_date": "2021-12-07"
+    },
+    {
+      "baseline": {
+        "annualized_return_pct": 74.53969218069123,
+        "benchmark_buy_hold_return_pct": 160.83717751580386,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "USD",
+        "best_symbol_buy_hold_pct": 352.6748582230624,
+        "days": 556,
+        "end_date": "2026-05-20",
+        "equal_weight_buy_hold_return_pct": 141.0073043850757,
+        "market_buy_hold_return_pct": 64.74623151604295,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -32.64345314834778,
+        "round_trips": 140,
+        "sharpe_ratio": 1.55163523204445,
+        "start_date": "2024-02-29",
+        "total_return_pct": 241.74572360578327,
+        "traded_days": 556
+      },
+      "end_date": "2026-05-21",
+      "gated": {
+        "annualized_return_pct": 68.17097339331085,
+        "benchmark_buy_hold_return_pct": 160.83717751580386,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "USD",
+        "best_symbol_buy_hold_pct": 352.6748582230624,
+        "days": 556,
+        "end_date": "2026-05-20",
+        "equal_weight_buy_hold_return_pct": 141.0073043850757,
+        "market_buy_hold_return_pct": 64.74623151604295,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -50.027213328601775,
+        "round_trips": 150,
+        "sharpe_ratio": 1.307769046284288,
+        "start_date": "2024-02-29",
+        "total_return_pct": 214.83689700007736,
+        "traded_days": 556
+      },
+      "gated_beats_tqqq": true,
+      "gated_total_vs_tqqq_multiple": 1.3357415264202053,
+      "name": "fold6",
+      "start_date": "2024-02-29"
+    }
+  ],
+  "windows": {
+    "crisis": [
+      {
+        "baseline": {
+          "annualized_return_pct": -50.80185364271171,
+          "benchmark_buy_hold_return_pct": -50.0,
+          "benchmark_symbol": "TQQQ",
+          "best_symbol": "GLD",
+          "best_symbol_buy_hold_pct": 7.70462633451956,
+          "days": 62,
+          "end_date": "2018-12-28",
+          "equal_weight_buy_hold_return_pct": -22.286701871033454,
+          "market_buy_hold_return_pct": -17.88638027138112,
+          "market_symbol": "QQQ",
+          "max_drawdown_pct": -21.185401345902356,
+          "round_trips": 6,
+          "sharpe_ratio": -3.218502894534093,
+          "start_date": "2018-10-01",
+          "total_return_pct": -16.013475335393867,
+          "traded_days": 62
+        },
+        "end_date": "2018-12-28",
+        "gated": {
+          "annualized_return_pct": -84.46463757169062,
+          "benchmark_buy_hold_return_pct": -50.0,
+          "benchmark_symbol": "TQQQ",
+          "best_symbol": "GLD",
+          "best_symbol_buy_hold_pct": 7.70462633451956,
+          "days": 62,
+          "end_date": "2018-12-28",
+          "equal_weight_buy_hold_return_pct": -22.286701871033454,
+          "market_buy_hold_return_pct": -17.88638027138112,
+          "market_symbol": "QQQ",
+          "max_drawdown_pct": -43.998223211616725,
+          "round_trips": 13,
+          "sharpe_ratio": -2.8401177282156915,
+          "start_date": "2018-10-01",
+          "total_return_pct": -36.75307877764363,
+          "traded_days": 62
+        },
+        "gated_beats_tqqq": true,
+        "gated_total_vs_tqqq_multiple": 0.7350615755528725,
+        "name": "q4_2018",
+        "start_date": "2018-10-01"
+      },
+      {
+        "baseline": {
+          "annualized_return_pct": -78.61636603698962,
+          "benchmark_buy_hold_return_pct": -69.60178263369752,
+          "benchmark_symbol": "TQQQ",
+          "best_symbol": "BIL",
+          "best_symbol_buy_hold_pct": 0.28218013142635723,
+          "days": 23,
+          "end_date": "2020-03-20",
+          "equal_weight_buy_hold_return_pct": -38.21382232603198,
+          "market_buy_hold_return_pct": -27.690870473353492,
+          "market_symbol": "QQQ",
+          "max_drawdown_pct": -16.355835498634985,
+          "round_trips": 2,
+          "sharpe_ratio": -3.9554274457971044,
+          "start_date": "2020-02-19",
+          "total_return_pct": -13.132635417240103,
+          "traded_days": 23
+        },
+        "end_date": "2020-03-20",
+        "gated": {
+          "annualized_return_pct": -99.74175952157972,
+          "benchmark_buy_hold_return_pct": -69.60178263369752,
+          "benchmark_symbol": "TQQQ",
+          "best_symbol": "BIL",
+          "best_symbol_buy_hold_pct": 0.28218013142635723,
+          "days": 23,
+          "end_date": "2020-03-20",
+          "equal_weight_buy_hold_return_pct": -38.21382232603198,
+          "market_buy_hold_return_pct": -27.690870473353492,
+          "market_symbol": "QQQ",
+          "max_drawdown_pct": -48.94947351560067,
+          "round_trips": 10,
+          "sharpe_ratio": -5.537483841822325,
+          "start_date": "2020-02-19",
+          "total_return_pct": -41.95084927692261,
+          "traded_days": 23
+        },
+        "gated_beats_tqqq": true,
+        "gated_total_vs_tqqq_multiple": 0.6027266499437647,
+        "name": "covid_crash",
+        "start_date": "2020-02-19"
+      },
+      {
+        "baseline": {
+          "annualized_return_pct": -8.932845162162117,
+          "benchmark_buy_hold_return_pct": -79.27058058383571,
+          "benchmark_symbol": "TQQQ",
+          "best_symbol": "BIL",
+          "best_symbol_buy_hold_pct": 1.3848668545761056,
+          "days": 247,
+          "end_date": "2022-12-29",
+          "equal_weight_buy_hold_return_pct": -41.73814883858738,
+          "market_buy_hold_return_pct": -32.73732856598214,
+          "market_symbol": "QQQ",
+          "max_drawdown_pct": -21.25871167950788,
+          "round_trips": 11,
+          "sharpe_ratio": -0.4483336230023986,
+          "start_date": "2022-01-03",
+          "total_return_pct": -8.76361220569235,
+          "traded_days": 247
+        },
+        "end_date": "2022-12-29",
+        "gated": {
+          "annualized_return_pct": -38.04986321615562,
+          "benchmark_buy_hold_return_pct": -79.27058058383571,
+          "benchmark_symbol": "TQQQ",
+          "best_symbol": "BIL",
+          "best_symbol_buy_hold_pct": 1.3848668545761056,
+          "days": 247,
+          "end_date": "2022-12-29",
+          "equal_weight_buy_hold_return_pct": -41.73814883858738,
+          "market_buy_hold_return_pct": -32.73732856598214,
+          "market_symbol": "QQQ",
+          "max_drawdown_pct": -55.94286664757915,
+          "round_trips": 55,
+          "sharpe_ratio": -0.6662620001208414,
+          "start_date": "2022-01-03",
+          "total_return_pct": -37.45848244813651,
+          "traded_days": 247
+        },
+        "gated_beats_tqqq": true,
+        "gated_total_vs_tqqq_multiple": 0.47253952440175234,
+        "name": "calendar_2022",
+        "start_date": "2022-01-03"
+      }
+    ],
+    "current_oos": {
+      "baseline": {
+        "annualized_return_pct": 100.66174113730848,
+        "benchmark_buy_hold_return_pct": 119.5019553715206,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 471.14591920857373,
+        "days": 384,
+        "end_date": "2026-05-20",
+        "equal_weight_buy_hold_return_pct": 120.58042905285333,
+        "market_buy_hold_return_pct": 47.65928956821484,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -32.6434531483478,
+        "round_trips": 91,
+        "sharpe_ratio": 1.9025856869823636,
+        "start_date": "2024-11-04",
+        "total_return_pct": 189.00037212430277,
+        "traded_days": 384
+      },
+      "end_date": "2026-05-20",
+      "gated": {
+        "annualized_return_pct": 79.00436361130399,
+        "benchmark_buy_hold_return_pct": 119.5019553715206,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 471.14591920857373,
+        "days": 384,
+        "end_date": "2026-05-20",
+        "equal_weight_buy_hold_return_pct": 120.58042905285333,
+        "market_buy_hold_return_pct": 47.65928956821484,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -50.02721332860178,
+        "round_trips": 100,
+        "sharpe_ratio": 1.3948899738322895,
+        "start_date": "2024-11-04",
+        "total_return_pct": 142.83763200882618,
+        "traded_days": 384
+      },
+      "gated_beats_tqqq": true,
+      "gated_total_vs_tqqq_multiple": 1.195274433499913,
+      "name": "current_oos",
+      "start_date": "2024-11-04"
+    },
+    "full_window": {
+      "baseline": {
+        "annualized_return_pct": 35.722029270052545,
+        "benchmark_buy_hold_return_pct": 13862.685202121824,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 39005.89297809889,
+        "days": 3342,
+        "end_date": "2026-05-20",
+        "equal_weight_buy_hold_return_pct": 8978.267450091898,
+        "market_buy_hold_return_pct": 1097.0525962023191,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -43.235845853286584,
+        "round_trips": 726,
+        "sharpe_ratio": 1.01386996507296,
+        "start_date": "2013-01-08",
+        "total_return_pct": 5643.759336552829,
+        "traded_days": 3342
+      },
+      "end_date": "2026-05-20",
+      "gated": {
+        "annualized_return_pct": 37.29885204944983,
+        "benchmark_buy_hold_return_pct": 13862.685202121824,
+        "benchmark_symbol": "TQQQ",
+        "best_symbol": "SOXL",
+        "best_symbol_buy_hold_pct": 39005.89297809889,
+        "days": 3342,
+        "end_date": "2026-05-20",
+        "equal_weight_buy_hold_return_pct": 8978.267450091898,
+        "market_buy_hold_return_pct": 1097.0525962023191,
+        "market_symbol": "QQQ",
+        "max_drawdown_pct": -66.69990636398592,
+        "round_trips": 826,
+        "sharpe_ratio": 0.9314279989474998,
+        "start_date": "2013-01-08",
+        "total_return_pct": 6594.611789456958,
+        "traded_days": 3342
+      },
+      "start_date": "2013-01-08"
+    }
+  }
+}

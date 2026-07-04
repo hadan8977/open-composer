@@ -55,6 +55,7 @@ def evaluate_pdr_router_ml_gate(
     start: str = DEFAULT_START,
     end: str = DEFAULT_END,
     report_date: str | None = None,
+    output_dir: Path | None = None,
 ) -> dict[str, Any]:
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
@@ -109,7 +110,7 @@ def evaluate_pdr_router_ml_gate(
     acceptance = _acceptance_gate(full_baseline, full_gated, walk_forward, crisis, current_oos)
     generated_at = datetime.now(UTC).isoformat()
     stamp = report_date or datetime.now(UTC).strftime("%Y%m%d")
-    out_dir = ensure_dir(base / "reports" / "research" / "control")
+    out_dir = ensure_dir(output_dir or base / "reports" / "research" / "control")
     json_path = out_dir / f"pdr-router-ml-gate-eval-{stamp}.json"
     md_path = out_dir / f"pdr-router-ml-gate-eval-{stamp}.md"
     payload = {
