@@ -26,6 +26,7 @@ def main() -> None:
     parser.add_argument("--start", default=DEFAULT_START)
     parser.add_argument("--end", default=DEFAULT_END)
     parser.add_argument("--report-date", default=None)
+    parser.add_argument("--output-dir", default=None)
     args = parser.parse_args()
 
     root = project_root()
@@ -40,10 +41,13 @@ def main() -> None:
         start=args.start,
         end=args.end,
         report_date=args.report_date,
+        output_dir=Path(args.output_dir) if args.output_dir else None,
     )
     print(json.dumps(payload["acceptance_gate"], indent=2, sort_keys=True))
     print(f"json: {payload['artifact_paths']['json']}")
     print(f"markdown: {payload['artifact_paths']['markdown']}")
+    if not payload["acceptance_gate"]["ml_gate_beats_fixed_route"]:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

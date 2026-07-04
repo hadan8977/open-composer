@@ -13,22 +13,15 @@ from open_composer.adapters.data.longbridge import (
     _fetch_live_longbridge_bars,
 )
 from open_composer.config import ensure_dir, project_root
+from open_composer.research.research_cache_manifest import (
+    DEFAULT_LONGBRIDGE_SYMBOLS,
+    DEFAULT_RESEARCH_CACHE_DIR,
+    write_longbridge_research_cache_manifest,
+)
 from open_composer.storage import write_json
 
-DEFAULT_SYMBOLS = [
-    "QQQ",
-    "TQQQ",
-    "QLD",
-    "SOXL",
-    "USD",
-    "SMH",
-    "SOXX",
-    "XLK",
-    "IGV",
-    "GLD",
-    "BIL",
-]
-DEFAULT_OUTPUT_DIR = Path("data/research/longbridge_adjusted_daily")
+DEFAULT_SYMBOLS = DEFAULT_LONGBRIDGE_SYMBOLS
+DEFAULT_OUTPUT_DIR = DEFAULT_RESEARCH_CACHE_DIR
 DEFAULT_START_DATE = "2010-02-11"
 DEFAULT_END_DATE = "2026-05-22"
 
@@ -199,22 +192,50 @@ def main() -> None:
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Output directory.")
     parser.add_argument(
         "--manifest",
-        default="reports/research/control/longbridge-adjusted-refetch-manifest.json",
-        help="Manifest JSON output path.",
+        default=None,
+        help="Optional compatibility copy of the materialization manifest.",
+    )
+    parser.add_argument(
+        "--manifest-only",
+        action="store_true",
+        help="Write data/research cache manifest from existing CSVs without fetching.",
     )
     args = parser.parse_args()
     root = project_root()
+    symbols = _parse_symbols(args.symbols)
+    output_dir = Path(args.output_dir)
+    if args.manifest_only:
+        path = write_longbridge_research_cache_manifest(
+            root,
+            output_dir=output_dir,
+            symbols=symbols,
+            requested_start=args.start,
+            requested_end=args.end,
+        )
+        print(path)
+        return
     manifest = materialize_longbridge_history(
         root,
-        _parse_symbols(args.symbols),
+        symbols,
         start_date=args.start,
         end_date=args.end,
-        output_dir=Path(args.output_dir),
+        output_dir=output_dir,
     )
-    manifest_path = root / args.manifest
-    ensure_dir(manifest_path.parent)
-    write_json(manifest_path, manifest)
-    print(manifest_path)
+    data_manifest_path = write_longbridge_research_cache_manifest(
+        root,
+        output_dir=output_dir,
+        symbols=symbols,
+        requested_start=args.start,
+        requested_end=args.end,
+        source_rows=manifest["symbols"],
+    )
+    manifest["data_manifest_path"] = str(data_manifest_path)
+    if args.manifest:
+        manifest_path = root / args.manifest
+        ensure_dir(manifest_path.parent)
+        write_json(manifest_path, manifest)
+        print(manifest_path)
+    print(data_manifest_path)
 
 
 if __name__ == "__main__":

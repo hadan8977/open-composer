@@ -186,7 +186,39 @@ from open_composer.research import (
     write_strategy_dag_validation,
 )
 from open_composer.research.llm_exposure_switch import LLMExposureSwitchChoice
+from open_composer.research.pdr_attribution import (
+    DEFAULT_DATE_TAG as PDR_ATTRIBUTION_DEFAULT_DATE_TAG,
+)
+from open_composer.research.pdr_attribution import (
+    DEFAULT_END as PDR_ATTRIBUTION_DEFAULT_END,
+)
+from open_composer.research.pdr_attribution import (
+    DEFAULT_OUT_DIR as PDR_ATTRIBUTION_DEFAULT_OUT_DIR,
+)
+from open_composer.research.pdr_attribution import (
+    DEFAULT_SPEC_PATH as PDR_ATTRIBUTION_DEFAULT_SPEC_PATH,
+)
+from open_composer.research.pdr_attribution import (
+    DEFAULT_START as PDR_ATTRIBUTION_DEFAULT_START,
+)
+from open_composer.research.pdr_attribution import (
+    parse_fold_windows,
+    run_pdr_router_attribution,
+)
+from open_composer.research.pdr_ml_gate_evaluation import (
+    DEFAULT_END as PDR_ML_GATE_DEFAULT_END,
+)
+from open_composer.research.pdr_ml_gate_evaluation import (
+    DEFAULT_START as PDR_ML_GATE_DEFAULT_START,
+)
+from open_composer.research.pdr_ml_gate_evaluation import (
+    evaluate_pdr_router_ml_gate,
+)
 from open_composer.research.research_brief import init_research_brief, validate_research_brief
+from open_composer.research.research_cache_manifest import (
+    DEFAULT_RESEARCH_CACHE_DIR,
+    verify_longbridge_research_cache_manifest,
+)
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
 from open_composer.storage import find_signal
@@ -234,6 +266,9 @@ research_brief_app = typer.Typer(no_args_is_help=True)
 factor_app = typer.Typer(no_args_is_help=True)
 research_app = typer.Typer(no_args_is_help=True)
 console = Console()
+PDR_ML_GATE_DEFAULT_SPEC_PATH = Path(
+    "strategy_specs/drafts/nasdaq_tqqq_pdr_router_mlgate_iter1.yaml"
+)
 
 app.add_typer(spec_app, name="spec")
 app.add_typer(data_app, name="data")
@@ -2196,6 +2231,50 @@ def data_longbridge_check(
         f"{len(bars)} bars latest={latest_timestamp}",
     )
     console.print(table)
+
+
+@data_app.command("verify-research-cache")
+def data_verify_research_cache(
+    manifest: Annotated[
+        Path | None,
+        typer.Option(
+            "--manifest",
+            help=(
+                "Research cache manifest path; defaults to "
+                f"{DEFAULT_RESEARCH_CACHE_DIR / 'manifest.json'}."
+            ),
+        ),
+    ] = None,
+) -> None:
+    """Verify Longbridge adjusted research cache against its manifest."""
+    try:
+        report = verify_longbridge_research_cache_manifest(
+            project_root(),
+            manifest_path=manifest,
+        )
+    except (FileNotFoundError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        console.print(f"[red]research cache verification failed[/red] {exc}")
+        raise typer.Exit(1) from exc
+    status = "passed" if report["passed"] else "drift"
+    console.print(
+        f"[green]research cache {status}[/green] "
+        f"manifest={report['manifest_path']} checked={len(report['checked_symbols'])}"
+    )
+    if report["drift"]:
+        table = Table(title="Research Cache Drift")
+        table.add_column("Symbol")
+        table.add_column("Field")
+        table.add_column("Expected")
+        table.add_column("Actual")
+        for item in report["drift"]:
+            table.add_row(
+                str(item["symbol"]),
+                str(item["field"]),
+                str(item["expected"]),
+                str(item["actual"]),
+            )
+        console.print(table)
+        raise typer.Exit(1)
 
 
 @events_app.command("fetch")
@@ -4525,6 +4604,82 @@ def strategy_target_weights(
         f"status={status} rebalance_sessions={result.rebalance_sessions} "
         f"target_rows={result.target_weight_count} nonzero_targets={result.nonzero_target_rows}"
     )
+
+
+@strategy_app.command("router-attribution")
+def strategy_router_attribution(
+    spec: Annotated[Path, typer.Option("--spec")] = PDR_ATTRIBUTION_DEFAULT_SPEC_PATH,
+    label: str | None = typer.Option(None, "--label"),
+    data_source: str = typer.Option("longbridge", "--data-source"),
+    feed: str | None = typer.Option(None, "--feed"),
+    start: str = typer.Option(PDR_ATTRIBUTION_DEFAULT_START, "--start"),
+    end: str = typer.Option(PDR_ATTRIBUTION_DEFAULT_END, "--end"),
+    folds: str | None = typer.Option(
+        None,
+        "--folds",
+        help="Comma-separated name:start:end windows; defaults to the six long-window folds.",
+    ),
+    out_dir: Annotated[Path, typer.Option("--out-dir")] = PDR_ATTRIBUTION_DEFAULT_OUT_DIR,
+    date_tag: str = typer.Option(PDR_ATTRIBUTION_DEFAULT_DATE_TAG, "--date-tag"),
+) -> None:
+    """Attribute PDR router state and asset contributions by fold."""
+    if data_source not in {"longbridge", "alpaca", "sample"}:
+        raise typer.BadParameter("--data-source supports longbridge, alpaca, or sample")
+    try:
+        payload = run_pdr_router_attribution(
+            spec,
+            root=project_root(),
+            label=label,
+            data_source=data_source,
+            feed=feed,
+            start=start,
+            end=end,
+            folds=parse_fold_windows(folds),
+            out_dir=out_dir,
+            date_tag=date_tag,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]router attribution complete[/green] json={payload['artifact_paths']['json']}"
+    )
+    console.print(
+        f"markdown={payload['artifact_paths']['markdown']} "
+        f"golden={payload['artifact_paths']['golden_daily_decisions']}"
+    )
+
+
+@strategy_app.command("router-gate-eval")
+def strategy_router_gate_eval(
+    spec: Annotated[Path, typer.Option("--spec")] = PDR_ML_GATE_DEFAULT_SPEC_PATH,
+    data_source: str = typer.Option("longbridge", "--data-source"),
+    feed: str | None = typer.Option(None, "--feed"),
+    start: str = typer.Option(PDR_ML_GATE_DEFAULT_START, "--start"),
+    end: str = typer.Option(PDR_ML_GATE_DEFAULT_END, "--end"),
+    report_date: str | None = typer.Option(None, "--report-date"),
+    output_dir: Annotated[Path | None, typer.Option("--output-dir")] = None,
+) -> None:
+    """Evaluate baseline vs PDR ML-gated route on the same dataset."""
+    if data_source not in {"longbridge", "alpaca", "sample"}:
+        raise typer.BadParameter("--data-source supports longbridge, alpaca, or sample")
+    payload = evaluate_pdr_router_ml_gate(
+        spec if spec.is_absolute() else project_root() / spec,
+        root=project_root(),
+        data_source=data_source,
+        feed=feed,
+        start=start,
+        end=end,
+        report_date=report_date,
+        output_dir=output_dir,
+    )
+    accepted = payload["acceptance_gate"]["ml_gate_beats_fixed_route"]
+    console.print(
+        f"[green]router gate eval written[/green] accepted={accepted} "
+        f"json={payload['artifact_paths']['json']}"
+    )
+    console.print(f"markdown={payload['artifact_paths']['markdown']}")
+    if not accepted:
+        raise typer.Exit(1)
 
 
 @strategy_app.command("router-cost-stress")
