@@ -1,0 +1,19 @@
+{
+  "strategy_name": "nasdaq_tqqq_pdr_router_mlgate_iter2",
+  "lookahead_check": "pass",
+  "future_leak_check": "pass",
+  "overfit_risk": "high",
+  "multiple_testing_count": 8,
+  "pbo_proxy": 1.0,
+  "dsr_proxy": null,
+  "sample_data_caveats": [
+    "Longbridge materialized adjusted daily history is research replay cache evidence, not paper-ready market evidence.",
+    "The selected gate failed acceptance and remains draft-only; no promotion or paper behavior change is justified."
+  ],
+  "trade_count": 802,
+  "trading_days": 3342,
+  "capacity_assessment": "No capacity blocker for personal-size research was found from this artifact alone, but leveraged ETF open execution still requires execution-reality review before any paper or live promotion.",
+  "short_sample": false,
+  "conclusion": "warning",
+  "notes": "Trial ledger exists with exactly 8 path-survival ML-gate combinations. Features are index-1 PDR route features, labels use future path windows, and training uses purged+embargo OOS folds with embargo_bars equal to horizon_bars. The gated route failed five of six acceptance gates, including the tightened crisis-window protection gate, so this evidence is archived as a negative result."
+}

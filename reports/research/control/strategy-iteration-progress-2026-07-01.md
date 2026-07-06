@@ -364,3 +364,55 @@ Decision:
 - Candidate labels should target safe leveraged re-entry, for example forward
   TQQQ path MaxDD above a threshold plus non-negative terminal return, rather
   than simple forward return.
+
+## Step 7.T PDR Router Path-Survival ML Gate Negative Result
+
+Artifacts:
+
+- `reports/research/control/risk-on-ranked-rule-review-20260704.md`
+- `reports/research/control/pdr-router-ml-gate-eval-20260704.md`
+- `reports/research/ml/nasdaq_tqqq_pdr_router_mlgate_iter2/pdr_mlgate_trial_ledger.jsonl`
+
+Spec:
+
+`strategy_specs/drafts/nasdaq_tqqq_pdr_router_mlgate_iter2.yaml`
+
+Result:
+
+- Lifecycle: draft only; not upgraded, not promoted, and active paper behavior
+  stayed unchanged.
+- T.0 risk_on_ranked rule review concluded `evidence_insufficient`; no non-ML
+  ranked replacement was applied to the route.
+- T.1 trained exactly 8 bounded path-survival ML-gate combinations:
+  `horizon_bars={10,20}` x `max_drawdown_pct={8,12}` x
+  `probability_threshold={0.6,0.7}`.
+- T.2 verdict: `ml_gate_beats_fixed_route=False`.
+- Same-data baseline full window: total return `5643.76%`, Sharpe `1.014`,
+  MaxDD `-43.24%`.
+- Gated full window: total return `7441.82%`, Sharpe `0.982`, MaxDD `-47.61%`.
+- Failed hard gates: walk-forward wins `1/6` vs required `>=4/6`; Sharpe
+  `0.982` vs required `>=1.1`; MaxDD worse than same-data baseline; crisis
+  windows not worse than baseline; current OOS Sharpe/total gate.
+- Passed hard gate: annualized return `38.54%` vs required `>=33%`.
+
+Mechanism diagnosis:
+
+- The path-survival label improved full-window return but still released GLD
+  protection too often in crisis windows.
+- q4_2018 moved from `-16.01%` baseline to `-35.38%` gated; covid_crash moved
+  from `-13.13%` to `-28.51%`; calendar_2022 moved from `-8.76%` to `-15.36%`.
+- The tightened crisis gate caught the Step 7.R failure mode: the gated route
+  still beat TQQQ in all three crises, but materially degraded the fixed route's
+  defensive protection.
+- Fail-safe/isolation discipline worked: non-hard-stress state or weight changes
+  were `0`.
+
+Decision:
+
+- Archive the negative result as evidence.
+- Keep `nasdaq_tqqq_pdr_router_mlgate_iter2` as a draft research artifact only.
+- Do not widen the 8-combination search space, change features, or introduce
+  macro/FRED data in this round.
+- Before any future defensive-exit ML iteration, require a stronger hypothesis
+  for crisis-context discrimination and review whether the fixed route should
+  remain the champion without ML gating.

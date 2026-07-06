@@ -43,6 +43,7 @@ CRISIS_WINDOWS = (
     ("covid_crash", "2020-02-19", "2020-03-20"),
     ("calendar_2022", "2022-01-03", "2022-12-29"),
 )
+CRISIS_BASELINE_TOLERANCE_PCT_POINTS = 2.0
 CURRENT_OOS_START = "2024-11-04"
 
 
@@ -128,15 +129,7 @@ def evaluate_pdr_router_ml_gate(
             "paper_ready_evidence": False,
             "comparison_discipline": "baseline and gated are run on the same loaded dataset",
         },
-        "search_space": {
-            "family": PDR_ML_GATE_FAMILY,
-            "candidate_count": len(pdr_ml_gate_search_space()),
-            "parameter_ranges": {
-                "horizon_bars": [10, 20],
-                "threshold_return_pct": [0, 2],
-                "probability_threshold": [0.6, 0.7, 0.8],
-            },
-        },
+        "search_space": _search_space_payload(gated_params.ml_gate),
         "acceptance_gate": acceptance,
         "pass_status": {
             "workflow_pass": True,
@@ -144,7 +137,7 @@ def evaluate_pdr_router_ml_gate(
             "llm_contribution_pass": False,
             "paper_ready_pass": False,
             "paper_ready_blockers": [
-                "R.2 evaluation is research evidence only",
+                "7.T evaluation is research evidence only",
                 "active paper_auto specs are intentionally unchanged",
             ],
         },
@@ -171,6 +164,40 @@ def evaluate_pdr_router_ml_gate(
     }
     json_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     md_path.write_text(_render_markdown(payload), encoding="utf-8")
+    return payload
+
+
+def _search_space_payload(config: Any) -> dict[str, Any]:
+    search_space = pdr_ml_gate_search_space(label_kind=config.label_kind)
+    payload = {
+        "family": PDR_ML_GATE_FAMILY,
+        "label_kind": config.label_kind,
+        "selected_token": config.token,
+        "candidate_count": len(search_space),
+        "parameter_ranges": {
+            "horizon_bars": sorted({item.horizon_bars for item in search_space}),
+            "probability_threshold": sorted({item.probability_threshold for item in search_space}),
+        },
+    }
+    if config.label_kind == "path_survival":
+        payload["parameter_ranges"].update(
+            {
+                "max_drawdown_pct": sorted(
+                    {
+                        item.max_drawdown_pct
+                        for item in search_space
+                        if item.max_drawdown_pct is not None
+                    }
+                ),
+                "min_terminal_return_pct": sorted(
+                    {item.min_terminal_return_pct for item in search_space}
+                ),
+            }
+        )
+    else:
+        payload["parameter_ranges"]["threshold_return_pct"] = sorted(
+            {item.threshold_return_pct for item in search_space}
+        )
     return payload
 
 
@@ -227,6 +254,7 @@ def _acceptance_gate(
     wf_wins = sum(1 for row in walk_forward if row["gated_beats_tqqq"])
     current_gated = current_oos["gated"]
     current_tqqq = current_gated["benchmark_buy_hold_return_pct"]
+    crisis_checks = [_crisis_window_check(row) for row in crisis]
     gates = {
         "wf_beats_tqqq_at_least_4_of_6": {
             "passed": wf_wins >= 4,
@@ -248,10 +276,13 @@ def _acceptance_gate(
             "actual": gated.max_drawdown_pct,
             "baseline": baseline.max_drawdown_pct,
         },
-        "crisis_windows_all_beat_tqqq": {
-            "passed": all(row["gated_beats_tqqq"] for row in crisis),
-            "actual": [row["name"] for row in crisis if row["gated_beats_tqqq"]],
-            "threshold": [row["name"] for row in crisis],
+        "crisis_windows_not_worse_than_baseline": {
+            "passed": all(row["passed"] for row in crisis_checks),
+            "actual": crisis_checks,
+            "threshold": {
+                "baseline_tolerance_pct_points": CRISIS_BASELINE_TOLERANCE_PCT_POINTS,
+                "also_requires_gated_beats_tqqq": True,
+            },
         },
         "current_oos_sharpe_and_total_gate": {
             "passed": (
@@ -274,6 +305,34 @@ def _acceptance_gate(
         "gates": gates,
         "ml_gate_beats_fixed_route": passed,
         "failed_gates": failed,
+    }
+
+
+def _crisis_window_check(row: dict[str, Any]) -> dict[str, Any]:
+    baseline = row["baseline"]
+    gated = row["gated"]
+    total_floor = baseline["total_return_pct"] - CRISIS_BASELINE_TOLERANCE_PCT_POINTS
+    maxdd_floor = baseline["max_drawdown_pct"] - CRISIS_BASELINE_TOLERANCE_PCT_POINTS
+    total_ok = gated["total_return_pct"] >= total_floor
+    maxdd_ok = gated["max_drawdown_pct"] >= maxdd_floor
+    beats_tqqq = bool(row["gated_beats_tqqq"])
+    return {
+        "name": row["name"],
+        "passed": bool(total_ok and maxdd_ok and beats_tqqq),
+        "total_return_pct": {
+            "gated": gated["total_return_pct"],
+            "baseline": baseline["total_return_pct"],
+            "floor": total_floor,
+            "passed": bool(total_ok),
+        },
+        "max_drawdown_pct": {
+            "gated": gated["max_drawdown_pct"],
+            "baseline": baseline["max_drawdown_pct"],
+            "floor": maxdd_floor,
+            "passed": bool(maxdd_ok),
+        },
+        "gated_beats_tqqq": beats_tqqq,
+        "tqqq_buy_hold_return_pct": gated["benchmark_buy_hold_return_pct"],
     }
 
 
@@ -452,6 +511,38 @@ def _render_markdown(payload: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
+            "## Crisis Windows",
+            "",
+            (
+                "| window | baseline total % | gated total % | baseline max dd % | "
+                "gated max dd % | beats TQQQ |"
+            ),
+            "|---|---:|---:|---:|---:|---:|",
+        ]
+    )
+    for row in payload["windows"]["crisis"]:
+        baseline = row["baseline"]
+        gated = row["gated"]
+        lines.append(
+            f"| {row['name']} | {_fmt(baseline['total_return_pct'])} | "
+            f"{_fmt(gated['total_return_pct'])} | {_fmt(baseline['max_drawdown_pct'])} | "
+            f"{_fmt(gated['max_drawdown_pct'])} | `{row['gated_beats_tqqq']}` |"
+        )
+    current = payload["windows"]["current_oos"]
+    lines.extend(
+        [
+            "",
+            "## Current OOS",
+            "",
+            "| path | total % | sharpe | max dd % | TQQQ bh % |",
+            "|---|---:|---:|---:|---:|",
+            _short_metrics_row("baseline", current["baseline"]),
+            _short_metrics_row("gated", current["gated"]),
+        ]
+    )
+    lines.extend(
+        [
+            "",
             "## Attribution",
             "",
             f"- ML release days: `{payload['attribution']['ml_release_days']}`",
@@ -475,6 +566,13 @@ def _metrics_row(label: str, row: dict[str, Any]) -> str:
     return (
         f"| {label} | {_fmt(row['total_return_pct'])} | "
         f"{_fmt(row['annualized_return_pct'])} | {_fmt(row['sharpe_ratio'])} | "
+        f"{_fmt(row['max_drawdown_pct'])} | {_fmt(row['benchmark_buy_hold_return_pct'])} |"
+    )
+
+
+def _short_metrics_row(label: str, row: dict[str, Any]) -> str:
+    return (
+        f"| {label} | {_fmt(row['total_return_pct'])} | {_fmt(row['sharpe_ratio'])} | "
         f"{_fmt(row['max_drawdown_pct'])} | {_fmt(row['benchmark_buy_hold_return_pct'])} |"
     )
 
