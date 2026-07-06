@@ -369,9 +369,11 @@ class RealityModel(BaseModel):
 class MLLabel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    type: Literal["forward_return", "forward_direction"] = "forward_return"
+    type: Literal["forward_return", "forward_direction", "path_survival"] = "forward_return"
     horizon_bars: int = Field(default=5, ge=1, le=60)
     threshold_pct: float | None = None
+    max_drawdown_pct: float | None = Field(default=None, ge=0)
+    min_terminal_return_pct: float | None = None
 
 
 class MLTraining(BaseModel):

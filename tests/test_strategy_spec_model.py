@@ -45,6 +45,25 @@ def test_strategy_spec_accepts_optional_ml_model(sample_workspace: Path) -> None
     assert spec.model.features == ["rsi_14", "sma_fast"]
 
 
+def test_strategy_spec_accepts_path_survival_ml_label(sample_workspace: Path) -> None:
+    source = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    raw = _model_spec(source)
+    raw["model"]["label"] = {
+        "type": "path_survival",
+        "horizon_bars": 10,
+        "max_drawdown_pct": 8.0,
+        "min_terminal_return_pct": 0.0,
+    }
+    target = sample_workspace / "strategy_specs" / "drafts" / "path_survival_ml_label.yaml"
+    target.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    spec = load_strategy_spec(target)
+
+    assert spec.model is not None
+    assert spec.model.label.type == "path_survival"
+    assert spec.model.label.max_drawdown_pct == 8.0
+
+
 def test_strategy_spec_rejects_unknown_model_feature(sample_workspace: Path) -> None:
     source = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     raw = _model_spec(source)

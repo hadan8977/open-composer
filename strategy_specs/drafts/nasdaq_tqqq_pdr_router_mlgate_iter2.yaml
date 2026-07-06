@@ -1,0 +1,331 @@
+name: nasdaq_tqqq_pdr_router_mlgate_iter2
+description: >
+  Draft research variant of the post-drawdown Nasdaq ETF router with the second
+  bounded LightGBM defensive-exit gate. This round uses a path-survival label
+  so the model must learn whether leaving GLD for leveraged TQQQ is survivable,
+  not merely whether a short rebound occurs. This is research/manual-signal only
+  and is not paper_auto ready.
+timeframe: daily
+universe:
+  - QQQ
+  - TQQQ
+  - QLD
+  - SOXL
+  - USD
+  - SMH
+  - SOXX
+  - XLK
+  - IGV
+  - GLD
+  - BIL
+lifecycle: draft
+position_direction: long_only
+
+entry:
+  all:
+    - close > sma(close, 200) or close / lag(close, 120) - 1 > 0
+  any: []
+
+exit:
+  all: []
+  any:
+    - close < sma(close, 200) and close / lag(close, 120) - 1 < 0
+
+risk:
+  max_trades_per_day: 4
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: defensive_overlay:transition_TQQQ_replacement_mom_positive_lb20_min0_delay30_mlgate2_h10_dd8_p60_base[pdr:semi_light_harddd6_v0.65_breadth1_softQQQ_defGLD_rec104_mom60max20_ext35_cool5QLD_confirm5_melt6040x25_detdd8m10]
+
+costs:
+  commission_pct: 0.005
+  slippage_bps: 3.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: longbridge
+  symbol: QQQ
+  path: null
+  feed: null
+
+data_assumptions:
+  source: longbridge
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_replay_cache
+  caveat: >
+    Materialized Longbridge adjusted daily bars are research replay evidence
+    only. Baseline and gated variants must be compared on the same data
+    snapshot; this data profile is not paper-ready market evidence.
+
+factors:
+  qqq_trend_120_200:
+    source: expression
+    expression: close > sma(close, 200) or close / lag(close, 120) - 1 > 0
+    default: false
+    description: QQQ 200-day trend or 120-day momentum risk-on gate.
+  qqq_drawdown_20_60:
+    source: expression
+    expression: close / sma(close, 20) - 1
+    default: 0.0
+    description: Spec-valid proxy for QQQ drawdown state; exact router uses rolling highs in research artifact.
+  tqqq_drawdown_20_60:
+    source: expression
+    expression: close / sma(close, 20) - 1
+    default: 0.0
+    description: Spec-valid proxy for TQQQ drawdown state; exact router uses rolling highs in research artifact.
+  tqqq_momentum_60:
+    source: expression
+    expression: close / lag(close, 60) - 1
+    default: 0.0
+    description: TQQQ intermediate momentum cap for re-entry and deterioration.
+  tech_canary_breadth:
+    source: expression
+    expression: close / lag(close, 120) - 1
+    default: 0
+    description: Spec-valid proxy for technology canary breadth; exact route counts QQQ, XLK, IGV, SOXX, and SMH.
+  transition_tqqq_momentum_overlay:
+    source: expression
+    expression: close / lag(close, 20) - 1 > 0
+    default: false
+    description: >
+      Spec-valid marker for replacing cooldown/confirmation transition exposure
+      with TQQQ when TQQQ 20-day momentum is positive. Exact behavior is expressed
+      by the defensive_overlay route wrapper.
+  qqq_mom20:
+    source: expression
+    expression: close / lag(close, 20) - 1
+    default: 0.0
+    description: Spec-valid proxy for the PDR ML feature; training computes the exact QQQ index-1 feature in pdr_ml_gate.py.
+  qqq_mom60:
+    source: expression
+    expression: close / lag(close, 60) - 1
+    default: 0.0
+    description: Spec-valid proxy for the PDR ML feature; training computes the exact QQQ index-1 feature in pdr_ml_gate.py.
+  qqq_mom120:
+    source: expression
+    expression: close / lag(close, 120) - 1
+    default: 0.0
+    description: Spec-valid proxy for the PDR ML feature; training computes the exact QQQ index-1 feature in pdr_ml_gate.py.
+  qqq_vol60:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Spec-valid volatility proxy; training computes the exact QQQ 60-day volatility feature in pdr_ml_gate.py.
+  qqq_dd20:
+    source: expression
+    expression: close / sma(close, 20) - 1
+    default: 0.0
+    description: Spec-valid drawdown proxy; training computes the exact QQQ 20-day drawdown feature in pdr_ml_gate.py.
+  qqq_dd60:
+    source: expression
+    expression: close / sma(close, 60) - 1
+    default: 0.0
+    description: Spec-valid drawdown proxy; training computes the exact QQQ 60-day drawdown feature in pdr_ml_gate.py.
+  tqqq_mom20:
+    source: expression
+    expression: close / lag(close, 20) - 1
+    default: 0.0
+    description: Spec-valid proxy for the PDR ML feature; training computes the exact TQQQ index-1 feature in pdr_ml_gate.py.
+  tqqq_mom60:
+    source: expression
+    expression: close / lag(close, 60) - 1
+    default: 0.0
+    description: Spec-valid proxy for the PDR ML feature; training computes the exact TQQQ index-1 feature in pdr_ml_gate.py.
+  tqqq_mom120:
+    source: expression
+    expression: close / lag(close, 120) - 1
+    default: 0.0
+    description: Spec-valid proxy for the PDR ML feature; training computes the exact TQQQ index-1 feature in pdr_ml_gate.py.
+  tqqq_vol60:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Spec-valid volatility proxy; training computes the exact TQQQ 60-day volatility feature in pdr_ml_gate.py.
+  tqqq_dd20:
+    source: expression
+    expression: close / sma(close, 20) - 1
+    default: 0.0
+    description: Spec-valid drawdown proxy; training computes the exact TQQQ 20-day drawdown feature in pdr_ml_gate.py.
+  tqqq_dd60:
+    source: expression
+    expression: close / sma(close, 60) - 1
+    default: 0.0
+    description: Spec-valid drawdown proxy; training computes the exact TQQQ 60-day drawdown feature in pdr_ml_gate.py.
+  gld_mom20:
+    source: expression
+    expression: close / lag(close, 20) - 1
+    default: 0.0
+    description: Spec-valid proxy for the PDR ML feature; training computes the exact GLD index-1 feature in pdr_ml_gate.py.
+  gld_mom60:
+    source: expression
+    expression: close / lag(close, 60) - 1
+    default: 0.0
+    description: Spec-valid proxy for the PDR ML feature; training computes the exact GLD index-1 feature in pdr_ml_gate.py.
+  gld_mom120:
+    source: expression
+    expression: close / lag(close, 120) - 1
+    default: 0.0
+    description: Spec-valid proxy for the PDR ML feature; training computes the exact GLD index-1 feature in pdr_ml_gate.py.
+  gld_vol60:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Spec-valid volatility proxy; training computes the exact GLD 60-day volatility feature in pdr_ml_gate.py.
+  gld_dd20:
+    source: expression
+    expression: close / sma(close, 20) - 1
+    default: 0.0
+    description: Spec-valid drawdown proxy; training computes the exact GLD 20-day drawdown feature in pdr_ml_gate.py.
+  gld_dd60:
+    source: expression
+    expression: close / sma(close, 60) - 1
+    default: 0.0
+    description: Spec-valid drawdown proxy; training computes the exact GLD 60-day drawdown feature in pdr_ml_gate.py.
+  canary_breadth:
+    source: expression
+    expression: close / lag(close, 120) - 1
+    default: 0.0
+    description: Spec-valid proxy for technology canary breadth; training computes the exact multi-symbol index-1 feature in pdr_ml_gate.py.
+  vol_rank:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Spec-valid proxy for volatility rank; training computes the exact index-1 rank feature in pdr_ml_gate.py.
+
+llm_review:
+  enabled: false
+  model: null
+
+notes:
+  selected_route:
+    route_label: defensive_overlay:transition_TQQQ_replacement_mom_positive_lb20_min0_delay30_mlgate2_h10_dd8_p60_base[pdr:semi_light_harddd6_v0.65_breadth1_softQQQ_defGLD_rec104_mom60max20_ext35_cool5QLD_confirm5_melt6040x25_detdd8m10]
+    base_route_label: post_drawdown_reentry:semi_light_harddd6_v0.65_breadth1_softQQQ_defGLD_rec104_mom60max20_ext35_cool5QLD_confirm5_melt6040x25_detdd8m10
+    generated_at: "2026-07-04"
+    source_report: reports/research/control/next-iteration-readiness-20260703.md
+    workflow_pass: true
+    research_pass: false
+    llm_contribution_pass: false
+    paper_ready_pass: false
+  pdr_ml_gate:
+    family: pdr_defensive_exit_ml_gate
+    label_kind: path_survival
+    selected_trial_token: mlgate2_h10_dd8_p60
+    decision_scope: hard_stress_defensive_only
+    fail_safe: missing_model_feature_prediction_or_inference_error_equals_baseline
+    feature_alignment: index-1
+    search_space:
+      horizon_bars:
+        - 10
+        - 20
+      max_drawdown_pct:
+        - 8
+        - 12
+      min_terminal_return_pct:
+        - 0
+      probability_threshold:
+        - 0.6
+        - 0.7
+      candidate_count: 8
+    embargo_rule: embargo_bars >= horizon_bars
+  known_limits:
+    - This second-round gate uses only existing router features; it does not add FRED, macro, news, or breadth capabilities.
+    - Longbridge materialized adjusted history is research replay evidence, not paper-ready evidence.
+    - A positive result would still require benchmark-family, cost-sensitivity, data-source-sensitivity, and promotion review before any paper work.
+
+research_design:
+  parameter_space:
+    pdr_ml_gate_label_kind:
+      - path_survival
+    pdr_ml_gate_horizon_bars:
+      - 10
+      - 20
+    pdr_ml_gate_max_drawdown_pct:
+      - 8
+      - 12
+    pdr_ml_gate_min_terminal_return_pct:
+      - 0
+    pdr_ml_gate_probability_threshold:
+      - 0.6
+      - 0.7
+  candidate_budget: 8
+  selection_objective: >
+    Test whether a path-survival defensive-exit ML gate can preserve the fixed
+    route's crisis protection while improving walk-forward evidence.
+  validation_plan:
+    - same_data_baseline_vs_gated_evaluation
+    - tightened_crisis_window_gate
+    - negative_result_logging_if_any_gate_fails
+
+required_capabilities:
+  - market.longbridge_bars
+  - market.alpaca_bars
+
+execution_policy: null
+reality_model: null
+
+model:
+  kind: lightgbm_classifier
+  label:
+    type: path_survival
+    horizon_bars: 10
+    max_drawdown_pct: 8.0
+    min_terminal_return_pct: 0.0
+  features:
+    - qqq_mom20
+    - qqq_mom60
+    - qqq_mom120
+    - qqq_vol60
+    - qqq_dd20
+    - qqq_dd60
+    - tqqq_mom20
+    - tqqq_mom60
+    - tqqq_mom120
+    - tqqq_vol60
+    - tqqq_dd20
+    - tqqq_dd60
+    - gld_mom20
+    - gld_mom60
+    - gld_mom120
+    - gld_vol60
+    - gld_dd20
+    - gld_dd60
+    - canary_breadth
+    - vol_rank
+  training:
+    window_bars: 756
+    retrain_every_bars: 63
+    test_window_bars: 126
+    embargo_bars: 10
+    seed: 42
+  selection:
+    method: threshold
+    threshold: 0.6
+  hyperparameters:
+    num_leaves: 15
+    max_depth: 4
+    min_child_samples: 20
+    learning_rate: 0.05
+    n_estimators: 200
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_lambda: 1.0
+  baseline: none

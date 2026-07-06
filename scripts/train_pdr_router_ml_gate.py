@@ -21,9 +21,7 @@ DEFAULT_END = "2026-05-22"
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Train the bounded 12-trial PDR defensive-exit ML gate."
-    )
+    parser = argparse.ArgumentParser(description="Train the bounded PDR defensive-exit ML gate.")
     parser.add_argument("--spec", default=DEFAULT_SPEC)
     parser.add_argument(
         "--data-source", default="longbridge", choices=["longbridge", "alpaca", "sample"]
@@ -35,6 +33,11 @@ def main() -> None:
     parser.add_argument("--test-window-bars", type=int, default=126)
     parser.add_argument("--retrain-every-bars", type=int, default=63)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--label-kind",
+        default="terminal_return",
+        choices=["terminal_return", "path_survival"],
+    )
     args = parser.parse_args()
 
     root = project_root()
@@ -64,6 +67,7 @@ def main() -> None:
         test_window_bars=args.test_window_bars,
         retrain_every_bars=args.retrain_every_bars,
         seed=args.seed,
+        label_kind=args.label_kind,
     )
     print(json.dumps(summary, indent=2, sort_keys=True))
 

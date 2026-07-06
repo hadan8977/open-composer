@@ -12,6 +12,7 @@ from open_composer.research.hybrid_router_core import (
 )
 from open_composer.research.pdr_ml_gate import (
     PDRMLGateConfig,
+    build_pdr_ml_gate_label,
     pdr_ml_gate_from_token,
     pdr_ml_gate_search_space,
     register_pdr_ml_gate_predictions,
@@ -53,6 +54,64 @@ def test_pdr_ml_gate_label_roundtrip_and_search_space() -> None:
         0.7,
         0.8,
     }
+
+
+def test_pdr_ml_gate_path_survival_roundtrip_and_search_space() -> None:
+    config = pdr_ml_gate_from_token("mlgate2_h20_dd12_p70")
+
+    assert config == PDRMLGateConfig(
+        horizon_bars=20,
+        threshold_return_pct=0.0,
+        probability_threshold=0.7,
+        label_kind="path_survival",
+        max_drawdown_pct=12.0,
+        min_terminal_return_pct=0.0,
+    )
+    assert config.token == "mlgate2_h20_dd12_p70"
+    assert len(pdr_ml_gate_search_space(label_kind="path_survival")) == 8
+    assert {item.max_drawdown_pct for item in pdr_ml_gate_search_space("path_survival")} == {
+        8.0,
+        12.0,
+    }
+    assert {item.probability_threshold for item in pdr_ml_gate_search_space("path_survival")} == {
+        0.6,
+        0.7,
+    }
+
+
+def test_pdr_ml_gate_path_survival_label_uses_terminal_and_path_drawdown() -> None:
+    dataset = _fixture_dataset()
+    base = dataset.frame["TQQQ_open"].iloc[261]
+    dataset.frame.loc[261:266, "TQQQ_open"] = [
+        base,
+        base * 1.00,
+        base * 0.93,
+        base * 0.96,
+        base * 1.01,
+        base * 1.02,
+    ]
+    dataset.frame.loc[267:272, "TQQQ_open"] = [
+        base * 1.02,
+        base * 1.03,
+        base * 0.90,
+        base * 0.95,
+        base * 1.02,
+        base * 1.03,
+    ]
+    config = PDRMLGateConfig(
+        horizon_bars=5,
+        threshold_return_pct=0.0,
+        probability_threshold=0.6,
+        label_kind="path_survival",
+        max_drawdown_pct=8.0,
+        min_terminal_return_pct=0.0,
+    )
+
+    label = build_pdr_ml_gate_label(dataset, config)
+
+    assert label.iloc[260] == 1.0
+    assert label.iloc[266] == 0.0
+    assert label.iloc[-1] != label.iloc[-1]
 
 
 def test_pdr_ml_gate_rejects_embargo_shorter_than_horizon() -> None:
@@ -153,3 +212,31 @@ def test_pdr_ml_gate_training_writes_exactly_twelve_trial_ledger_rows(
     }
     for row in rows:
         assert row["purged_embargo"]["embargo_bars"] == row["purged_embargo"]["horizon_bars"]
+
+
+def test_pdr_ml_gate_path_survival_training_writes_exactly_eight_trial_ledger_rows(
+    sample_workspace: Path,
+) -> None:
+    spec = _spec()
+    dataset = _fixture_dataset()
+    summary = train_pdr_ml_gate_trials(
+        spec,
+        dataset,
+        post_drawdown_reentry_params_from_label(BASE_LABEL),
+        root=sample_workspace,
+        window_bars=260,
+        test_window_bars=30,
+        retrain_every_bars=30,
+        seed=7,
+        hyperparameters={"n_estimators": 5, "min_child_samples": 5},
+        label_kind="path_survival",
+    )
+    ledger_path = Path(summary["trial_ledger_path"])
+    rows = [json.loads(line) for line in ledger_path.read_text(encoding="utf-8").splitlines()]
+
+    assert len(rows) == 8
+    assert {row["config"]["label_kind"] for row in rows} == {"path_survival"}
+    assert {row["config"]["token"] for row in rows} == {
+        config.token for config in pdr_ml_gate_search_space("path_survival")
+    }
+    assert {row["positive_label_rate"] is None for row in rows} <= {False, True}

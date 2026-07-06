@@ -32,7 +32,7 @@ _LABEL_RE = re.compile(
     r"lb(?P<lookback>\d+)_"
     r"min(?P<minimum>[-0-9.]+)_"
     r"delay(?P<delay>\d+)_"
-    r"(?:(?P<mlgate>mlgate_h\d+_tm?\d+(?:p\d+)?_p\d+)_)?"
+    r"(?:(?P<mlgate>mlgate_h\d+_tm?\d+(?:p\d+)?_p\d+|mlgate2_h\d+_dd\d+(?:p\d+)?_p\d+)_)?"
     r"base\[(?P<base>.+)\]$"
 )
 

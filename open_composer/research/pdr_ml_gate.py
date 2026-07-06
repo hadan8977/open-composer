@@ -5,7 +5,7 @@ import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -25,7 +25,10 @@ from open_composer.research.router_common import RouterFrameDataset
 PDR_ML_GATE_FAMILY = "pdr_defensive_exit_ml_gate"
 PDR_ML_GATE_HORIZONS = (10, 20)
 PDR_ML_GATE_THRESHOLDS_PCT = (0.0, 2.0)
+PDR_ML_GATE_PATH_MAX_DRAWDOWNS_PCT = (8.0, 12.0)
 PDR_ML_GATE_PROBABILITY_THRESHOLDS = (0.6, 0.7, 0.8)
+PDR_ML_GATE_PATH_PROBABILITY_THRESHOLDS = (0.6, 0.7)
+PDRMLGateLabelKind = Literal["terminal_return", "path_survival"]
 PDR_ML_GATE_FEATURE_COLUMNS = (
     "qqq_mom20",
     "qqq_mom60",
@@ -52,6 +55,9 @@ PDR_ML_GATE_FEATURE_COLUMNS = (
 _TOKEN_RE = re.compile(
     r"^mlgate_h(?P<horizon>\d+)_t(?P<threshold>m?\d+(?:p\d+)?)_p(?P<probability>\d+)$"
 )
+_TOKEN2_RE = re.compile(
+    r"^mlgate2_h(?P<horizon>\d+)_dd(?P<drawdown>\d+(?:p\d+)?)_p(?P<probability>\d+)$"
+)
 
 
 @dataclass(frozen=True)
@@ -59,9 +65,20 @@ class PDRMLGateConfig:
     horizon_bars: int
     threshold_return_pct: float
     probability_threshold: float
+    label_kind: PDRMLGateLabelKind = "terminal_return"
+    max_drawdown_pct: float | None = None
+    min_terminal_return_pct: float = 0.0
 
     @property
     def token(self) -> str:
+        if self.label_kind == "path_survival":
+            if self.max_drawdown_pct is None:
+                raise ValueError("path_survival ML gate requires max_drawdown_pct")
+            return (
+                f"mlgate2_h{self.horizon_bars}"
+                f"_dd{_encode_number(self.max_drawdown_pct)}"
+                f"_p{int(round(self.probability_threshold * 100))}"
+            )
         return (
             f"mlgate_h{self.horizon_bars}"
             f"_t{_encode_number(self.threshold_return_pct)}"
@@ -70,6 +87,14 @@ class PDRMLGateConfig:
 
     @property
     def cache_key(self) -> str:
+        if self.label_kind == "path_survival":
+            if self.max_drawdown_pct is None:
+                raise ValueError("path_survival ML gate requires max_drawdown_pct")
+            return (
+                f"mlgate2_h{self.horizon_bars}"
+                f"_dd{_encode_number(self.max_drawdown_pct)}"
+                f"_p{int(round(self.probability_threshold * 100))}"
+            )
         return (
             f"h{self.horizon_bars}_t{_encode_number(self.threshold_return_pct)}"
             f"_p{int(round(self.probability_threshold * 100))}"
@@ -81,6 +106,9 @@ class PDRMLGateConfig:
             "horizon_bars": self.horizon_bars,
             "threshold_return_pct": self.threshold_return_pct,
             "probability_threshold": self.probability_threshold,
+            "label_kind": self.label_kind,
+            "max_drawdown_pct": self.max_drawdown_pct,
+            "min_terminal_return_pct": self.min_terminal_return_pct,
             "token": self.token,
             "cache_key": self.cache_key,
         }
@@ -88,25 +116,56 @@ class PDRMLGateConfig:
 
 def pdr_ml_gate_from_token(token: str) -> PDRMLGateConfig:
     match = _TOKEN_RE.fullmatch(token)
-    if match is None:
+    if match is not None:
+        config = PDRMLGateConfig(
+            horizon_bars=int(match.group("horizon")),
+            threshold_return_pct=_decode_number(match.group("threshold")),
+            probability_threshold=int(match.group("probability")) / 100,
+        )
+        if config not in pdr_ml_gate_search_space(label_kind="terminal_return"):
+            raise ValueError(f"PDR ML gate token is outside the bounded search space: {token}")
+        return config
+    match2 = _TOKEN2_RE.fullmatch(token)
+    if match2 is None:
         raise ValueError(f"unsupported PDR ML gate token: {token}")
     config = PDRMLGateConfig(
-        horizon_bars=int(match.group("horizon")),
-        threshold_return_pct=_decode_number(match.group("threshold")),
-        probability_threshold=int(match.group("probability")) / 100,
+        horizon_bars=int(match2.group("horizon")),
+        threshold_return_pct=0.0,
+        probability_threshold=int(match2.group("probability")) / 100,
+        label_kind="path_survival",
+        max_drawdown_pct=_decode_number(match2.group("drawdown")),
+        min_terminal_return_pct=0.0,
     )
-    if config not in pdr_ml_gate_search_space():
+    if config not in pdr_ml_gate_search_space(label_kind="path_survival"):
         raise ValueError(f"PDR ML gate token is outside the bounded search space: {token}")
     return config
 
 
-def pdr_ml_gate_search_space() -> tuple[PDRMLGateConfig, ...]:
-    return tuple(
-        PDRMLGateConfig(horizon, threshold, probability)
-        for horizon in PDR_ML_GATE_HORIZONS
-        for threshold in PDR_ML_GATE_THRESHOLDS_PCT
-        for probability in PDR_ML_GATE_PROBABILITY_THRESHOLDS
-    )
+def pdr_ml_gate_search_space(
+    label_kind: PDRMLGateLabelKind = "terminal_return",
+) -> tuple[PDRMLGateConfig, ...]:
+    if label_kind == "terminal_return":
+        return tuple(
+            PDRMLGateConfig(horizon, threshold, probability)
+            for horizon in PDR_ML_GATE_HORIZONS
+            for threshold in PDR_ML_GATE_THRESHOLDS_PCT
+            for probability in PDR_ML_GATE_PROBABILITY_THRESHOLDS
+        )
+    if label_kind == "path_survival":
+        return tuple(
+            PDRMLGateConfig(
+                horizon_bars=horizon,
+                threshold_return_pct=0.0,
+                probability_threshold=probability,
+                label_kind="path_survival",
+                max_drawdown_pct=drawdown,
+                min_terminal_return_pct=0.0,
+            )
+            for horizon in PDR_ML_GATE_HORIZONS
+            for drawdown in PDR_ML_GATE_PATH_MAX_DRAWDOWNS_PCT
+            for probability in PDR_ML_GATE_PATH_PROBABILITY_THRESHOLDS
+        )
+    raise ValueError(f"unsupported PDR ML gate label_kind={label_kind}")
 
 
 def validate_pdr_ml_gate_training_config(*, horizon_bars: int, embargo_bars: int) -> None:
@@ -217,6 +276,8 @@ def build_pdr_ml_gate_label(
     dataset: RouterFrameDataset,
     config: PDRMLGateConfig,
 ) -> pd.Series:
+    if config.label_kind == "path_survival":
+        return _build_path_survival_label(dataset, config)
     close = pdr_features(dataset)["close"][dataset.market_symbol]
     forward_return = close.shift(-config.horizon_bars) / close - 1.0
     threshold = config.threshold_return_pct / 100
@@ -236,6 +297,7 @@ def train_pdr_ml_gate_trials(
     retrain_every_bars: int = 63,
     seed: int = 42,
     hyperparameters: dict[str, Any] | None = None,
+    label_kind: PDRMLGateLabelKind = "terminal_return",
 ) -> dict[str, Any]:
     base = root or project_root()
     out_dir = ensure_dir(base / "reports" / "research" / "ml" / spec.name)
@@ -247,7 +309,8 @@ def train_pdr_ml_gate_trials(
     hard_stress_mask = states == "hard_stress_defensive"
     ledger_rows: list[dict[str, Any]] = []
     artifact_paths: list[str] = []
-    for trial_id, config in enumerate(pdr_ml_gate_search_space(), start=1):
+    search_space = pdr_ml_gate_search_space(label_kind=label_kind)
+    for trial_id, config in enumerate(search_space, start=1):
         trial = _train_single_trial(
             spec,
             dataset,
@@ -274,12 +337,20 @@ def train_pdr_ml_gate_trials(
         "report_type": "pdr_ml_gate_training",
         "strategy_name": spec.name,
         "family": PDR_ML_GATE_FAMILY,
+        "label_kind": label_kind,
         "trial_count": len(ledger_rows),
         "search_space": {
             "horizon_bars": list(PDR_ML_GATE_HORIZONS),
-            "threshold_return_pct": list(PDR_ML_GATE_THRESHOLDS_PCT),
-            "probability_threshold": list(PDR_ML_GATE_PROBABILITY_THRESHOLDS),
-            "candidate_count": len(pdr_ml_gate_search_space()),
+            "threshold_return_pct": (
+                list(PDR_ML_GATE_THRESHOLDS_PCT) if label_kind == "terminal_return" else [0.0]
+            ),
+            "max_drawdown_pct": (
+                list(PDR_ML_GATE_PATH_MAX_DRAWDOWNS_PCT) if label_kind == "path_survival" else []
+            ),
+            "probability_threshold": sorted(
+                {config.probability_threshold for config in search_space}
+            ),
+            "candidate_count": len(search_space),
         },
         "feature_alignment": "index-1",
         "decision_scope": "base route state == hard_stress_defensive",
@@ -313,6 +384,7 @@ def _train_single_trial(
         embargo_bars=embargo_bars,
     )
     label = build_pdr_ml_gate_label(dataset, config)
+    valid_labels = label.loc[hard_stress_mask].dropna()
     windows = ml_walk_forward_slices(
         feature_frame,
         window_bars=window_bars,
@@ -345,6 +417,7 @@ def _train_single_trial(
             windows=windows,
             folds=folds,
             predictions=predictions,
+            positive_label_rate=_positive_label_rate(valid_labels),
         )
         return {"ledger": ledger, "artifact_path": None}
     artifact_path = out_dir / f"pdr_mlgate_oos_predictions_{config.cache_key}.json"
@@ -352,6 +425,7 @@ def _train_single_trial(
         "report_type": "pdr_ml_gate_oos_predictions",
         "strategy_name": spec.name,
         "config": config.to_payload(),
+        "positive_label_rate": _positive_label_rate(valid_labels),
         "feature_columns": list(PDR_ML_GATE_FEATURE_COLUMNS),
         "feature_alignment": "index-1",
         "decision_scope": "base route state == hard_stress_defensive",
@@ -374,6 +448,7 @@ def _train_single_trial(
         folds=folds,
         predictions=predictions,
         artifact_path=artifact_path,
+        positive_label_rate=_positive_label_rate(valid_labels),
     )
     return {"ledger": ledger, "artifact_path": artifact_path}
 
@@ -498,6 +573,7 @@ def _trial_ledger_row(
     folds: list[dict[str, Any]],
     predictions: pd.Series,
     artifact_path: Path | None = None,
+    positive_label_rate: float | None = None,
 ) -> dict[str, Any]:
     valid_folds = [fold for fold in folds if fold.get("status") == "ok"]
     pred_count = int(predictions.notna().sum())
@@ -510,6 +586,7 @@ def _trial_ledger_row(
         "fold_count": len(valid_folds),
         "window_count": len(windows),
         "prediction_count": pred_count,
+        "positive_label_rate": positive_label_rate,
         "release_count": int((predictions.dropna() >= config.probability_threshold).sum()),
         "mean_test_rank_ic": _mean_or_none(
             [
@@ -558,12 +635,53 @@ def _prediction_cache_key(config: PDRMLGateConfig) -> str:
     return f"pdr_ml_gate_predictions:{config.cache_key}"
 
 
+def _build_path_survival_label(
+    dataset: RouterFrameDataset,
+    config: PDRMLGateConfig,
+) -> pd.Series:
+    if config.max_drawdown_pct is None:
+        raise ValueError("path_survival ML gate requires max_drawdown_pct")
+    open_prices = pd.to_numeric(
+        dataset.frame[f"{dataset.benchmark_symbol}_open"],
+        errors="coerce",
+    ).reset_index(drop=True)
+    values: list[float] = []
+    min_terminal = config.min_terminal_return_pct / 100
+    max_drawdown = config.max_drawdown_pct
+    for index in range(len(open_prices)):
+        start = index + 1
+        stop = index + config.horizon_bars
+        if stop >= len(open_prices):
+            values.append(float("nan"))
+            continue
+        window = open_prices.iloc[start : stop + 1]
+        if window.isna().any() or len(window) != config.horizon_bars:
+            values.append(float("nan"))
+            continue
+        returns = window.pct_change(fill_method=None).iloc[1:]
+        path = (1.0 + returns).cumprod()
+        path_with_origin = pd.concat(
+            [pd.Series([1.0], index=["origin"]), path.reset_index(drop=True)]
+        )
+        drawdown = (path_with_origin / path_with_origin.cummax() - 1.0).min() * 100
+        terminal = float(path.iloc[-1] - 1.0)
+        values.append(float(terminal >= min_terminal and drawdown >= -max_drawdown))
+    return pd.Series(values, index=pd.Index(dataset.dates, name="date_index"))
+
+
 def _finite_or_none(value: object) -> float | None:
     try:
         out = float(value)
     except (TypeError, ValueError):
         return None
     return out if math.isfinite(out) else None
+
+
+def _positive_label_rate(values: pd.Series) -> float | None:
+    clean = values.dropna()
+    if clean.empty:
+        return None
+    return float(clean.mean())
 
 
 def _rank_ic(prediction: pd.Series, label: pd.Series) -> float | None:
