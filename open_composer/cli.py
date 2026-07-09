@@ -126,6 +126,7 @@ from open_composer.paper_readiness import (
     assess_paper_strategy_readiness,
     write_paper_readiness_report,
 )
+from open_composer.paper_validation import write_paper_validation_report
 from open_composer.projects import (
     create_project,
     list_projects,
@@ -6246,6 +6247,23 @@ def paper_readiness(
     console.print(f"markdown={md_path}")
     if strict and report.status == "blocked":
         raise typer.Exit(1)
+
+
+@paper_app.command("validation-report")
+def paper_validation_report(
+    target_days: int = typer.Option(20, "--target-days", min=1),
+) -> None:
+    """Build the 20-trading-day paper workflow validation report."""
+    payload = write_paper_validation_report(root=project_root(), target_days=target_days)
+    console.print(
+        f"[green]paper validation report written[/green] "
+        f"progress={payload['progress_days']}/{payload['target_days']} "
+        f"pass={payload['paper_validation_pass']}"
+    )
+    console.print(f"json={payload['artifact_paths']['json']}")
+    console.print(f"markdown={payload['artifact_paths']['markdown']}")
+    if payload["paper_validation_pass"]:
+        console.print(f"final={payload['artifact_paths']['final_markdown']}")
 
 
 @paper_app.command("sync")

@@ -5,7 +5,9 @@ from pathlib import Path
 from open_composer.readiness import build_readiness_report, write_readiness_report
 
 
-def test_readiness_report_covers_deploy_surface(sample_workspace: Path) -> None:
+def test_readiness_report_covers_deploy_surface(sample_workspace: Path, monkeypatch) -> None:
+    monkeypatch.delenv("OPEN_COMPOSER_DASHBOARD_TOKEN", raising=False)
+    monkeypatch.delenv("OPEN_COMPOSER_DASHBOARD_AUTH_MODE", raising=False)
     report = build_readiness_report(sample_workspace)
     json_path, md_path = write_readiness_report(report, sample_workspace)
     checks = {check.name: check for check in report.checks}
