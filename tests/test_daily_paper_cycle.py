@@ -30,11 +30,14 @@ def test_daily_paper_cycle_success_writes_log_and_review_card(tmp_path: Path) ->
     assert payload["status"] == "ok"
     assert len(commands) == 4
     assert all("--allow-paper-orders" not in command for command in commands)
+    assert payload["artifact_paths"]["state_drift_status"] == "warning"
     card = tmp_path / "reports" / "paper" / "review_cards" / "20260709.md"
     assert card.exists()
     assert "50% Live Mapping" in card.read_text(encoding="utf-8")
     log_path = tmp_path / "reports" / "paper" / "daily_cycle" / "20260709.json"
-    assert json.loads(log_path.read_text(encoding="utf-8"))["status"] == "ok"
+    log = json.loads(log_path.read_text(encoding="utf-8"))
+    assert log["status"] == "ok"
+    assert [step["name"] for step in log["steps"]][-1] == "state_drift"
 
 
 def test_daily_paper_cycle_failure_stops_and_records_failed_step(tmp_path: Path) -> None:

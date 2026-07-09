@@ -247,6 +247,18 @@ from open_composer.research.route_cross_source import (
     evaluate_route_cross_source_validation,
     materialize_alt_daily_source,
 )
+from open_composer.research.router_replay_audit import (
+    DEFAULT_AUDIT_DATE as ROUTER_REPLAY_AUDIT_DEFAULT_DATE,
+)
+from open_composer.research.router_replay_audit import (
+    DEFAULT_BASELINE as ROUTER_REPLAY_AUDIT_DEFAULT_BASELINE,
+)
+from open_composer.research.router_replay_audit import (
+    DEFAULT_OUT_DIR as ROUTER_REPLAY_AUDIT_DEFAULT_OUT_DIR,
+)
+from open_composer.research.router_replay_audit import (
+    run_router_replay_audit,
+)
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
 from open_composer.storage import find_signal
@@ -4787,6 +4799,40 @@ def strategy_route_cross_source_validation(
     )
     console.print(f"json={payload['artifact_paths']['json']}")
     console.print(f"markdown={payload['artifact_paths']['markdown']}")
+
+
+@strategy_app.command("router-replay-audit")
+def strategy_router_replay_audit(
+    spec: Annotated[Path, typer.Option("--spec")] = PDR_ATTRIBUTION_DEFAULT_SPEC_PATH,
+    baseline: Annotated[
+        Path,
+        typer.Option("--baseline", help="Baseline PDR fold attribution JSON."),
+    ] = ROUTER_REPLAY_AUDIT_DEFAULT_BASELINE,
+    report_date: str = typer.Option(ROUTER_REPLAY_AUDIT_DEFAULT_DATE, "--report-date"),
+    output_dir: Annotated[Path, typer.Option("--output-dir")] = ROUTER_REPLAY_AUDIT_DEFAULT_OUT_DIR,
+    start: str = typer.Option(PDR_ATTRIBUTION_DEFAULT_START, "--start"),
+    end: str = typer.Option(PDR_ATTRIBUTION_DEFAULT_END, "--end"),
+) -> None:
+    """Replay the fixed PDR route on the current research cache and compare baseline."""
+    try:
+        payload = run_router_replay_audit(
+            root=project_root(),
+            spec_path=spec,
+            baseline_path=baseline,
+            report_date=report_date,
+            out_dir=output_dir,
+            start=start,
+            end=end,
+        )
+    except (FileNotFoundError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]router replay audit written[/green] "
+        f"status={payload['status']} json={payload['artifact_paths']['json']}"
+    )
+    console.print(f"markdown={payload['artifact_paths']['markdown']}")
+    if payload["status"] == "drift":
+        raise typer.Exit(1)
 
 
 @strategy_app.command("router-cost-stress")

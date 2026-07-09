@@ -12,6 +12,7 @@ from typing import Any
 
 from open_composer.config import ensure_dir, project_root
 from open_composer.notifications import safe_dispatch_notification
+from open_composer.paper_state_drift import write_state_drift_report
 
 DEFAULT_STRATEGY = (
     "nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate"
@@ -82,6 +83,8 @@ def run_daily_cycle(
     selected_oc_cmd = oc_cmd or ["uv", "run", "oc"]
     steps: list[CycleStep] = []
     artifacts: dict[str, str] = {"log": str(log_path)}
+    expected_state: str | None = None
+    drift_status: str | None = None
     for name, command in _step_commands(selected_oc_cmd, strategy, spec):
         step = _run_step(name, command, root, command_runner)
         steps.append(step)
@@ -109,8 +112,26 @@ def run_daily_cycle(
             artifacts["target_weights"] = str(target_path)
             artifacts["review_card"] = str(review_path)
             step.artifact_paths.extend([str(target_path), str(review_path)])
+            expected_state = str(card_payload["route_state"])
             if card_payload["action_required"]:
                 artifacts["action_required"] = "true"
+        if name == "paper_monitor" and expected_state:
+            drift = write_state_drift_report(
+                root=root,
+                cycle_date=cycle_date,
+                expected_state=expected_state,
+            )
+            drift_step = CycleStep(
+                name="state_drift",
+                started_at=drift["generated_at"],
+                ended_at=datetime.now(UTC).isoformat(),
+                exit_code=0,
+                artifact_paths=list(drift["artifact_paths"].values()),
+            )
+            steps.append(drift_step)
+            artifacts["state_drift"] = drift["artifact_paths"]["json"]
+            artifacts["state_drift_status"] = drift["status"]
+            drift_status = drift["status"]
     payload = _cycle_payload(
         cycle_date=cycle_date,
         started_at=started_at,
@@ -122,7 +143,9 @@ def run_daily_cycle(
     _write_json(log_path, payload)
     _notify_cycle(
         payload,
-        severity="warn" if artifacts.get("action_required") else "info",
+        severity="warn"
+        if artifacts.get("action_required") or drift_status == "warning"
+        else "info",
         root=root,
     )
     return payload
