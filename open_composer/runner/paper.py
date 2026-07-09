@@ -848,6 +848,17 @@ def _decide_signal(
             review_verdict=review_verdict,
             message=str(exc),
         )
+    except Exception as exc:
+        return PaperRunSignalResult(
+            signal_id=signal_id,
+            action=action,  # type: ignore[arg-type]
+            symbol=symbol,
+            price=price,
+            decision="order_error",
+            review_status=review_status,
+            review_verdict=review_verdict,
+            message=f"broker order submission failed: {exc}",
+        )
     return PaperRunSignalResult(
         signal_id=signal_id,
         action=action,  # type: ignore[arg-type]

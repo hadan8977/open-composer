@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +18,7 @@ def build_paper_validation_report(
 ) -> dict[str, Any]:
     base = root or project_root()
     logs = _load_cycle_logs(base)
-    evaluated = evaluate_validation_days(logs, target_days=target_days)
+    evaluated = evaluate_validation_days(logs, target_days=target_days, root=base)
     return {
         "report_type": "paper_validation_progress",
         "generated_at": datetime.now(UTC).isoformat(),
@@ -29,6 +29,7 @@ def build_paper_validation_report(
         "window_end": evaluated["window_end"],
         "consecutive_failures": evaluated["consecutive_failures"],
         "resets": evaluated["resets"],
+        "missing_remediations": evaluated["missing_remediations"],
         "days": evaluated["days"],
         "evidence_inputs": {
             "daily_cycle_dir": str(base / "reports" / "paper" / "daily_cycle"),
@@ -77,6 +78,7 @@ def evaluate_validation_days(
     logs: list[dict[str, Any]],
     *,
     target_days: int = TARGET_VALID_DAYS,
+    root: Path | None = None,
 ) -> dict[str, Any]:
     days = []
     window_pass_dates: list[str] = []
@@ -86,8 +88,14 @@ def evaluate_validation_days(
         if log.get("status") == "skipped":
             days.append(_day_row(log, counted=False, passed=None, reasons=["skipped"]))
             continue
-        passed, reasons = _day_pass(log)
-        days.append(_day_row(log, counted=True, passed=passed, reasons=reasons))
+        passed, reasons = validation_day_pass(log)
+        row = _day_row(log, counted=True, passed=passed, reasons=reasons)
+        if not passed and root is not None:
+            remediation_path = remediation_record_path(root, str(log.get("date")))
+            row["remediation_required"] = True
+            row["remediation_record_path"] = str(remediation_path)
+            row["remediation_recorded"] = remediation_path.exists()
+        days.append(row)
         if passed:
             window_pass_dates.append(str(log["date"]))
             consecutive_failures = 0
@@ -112,8 +120,89 @@ def evaluate_validation_days(
         else None,
         "consecutive_failures": consecutive_failures,
         "resets": resets,
+        "missing_remediations": [
+            row
+            for row in days
+            if row.get("remediation_required") and not row.get("remediation_recorded")
+        ],
         "days": days,
     }
+
+
+def remediation_record_path(root: Path, day: str | date) -> Path:
+    value = day.isoformat() if isinstance(day, date) else str(day)
+    compact = value.replace("-", "")
+    return root / "reports" / "paper" / "validation" / "remediations" / f"{compact}.md"
+
+
+def check_previous_trading_day_remediation(
+    *,
+    root: Path,
+    cycle_date: date,
+) -> dict[str, Any]:
+    previous = previous_trading_day(cycle_date)
+    log_path = root / "reports" / "paper" / "daily_cycle" / f"{previous:%Y%m%d}.json"
+    remediation_path = remediation_record_path(root, previous)
+    if not log_path.exists():
+        return {
+            "status": "ok",
+            "previous_trading_day": previous.isoformat(),
+            "message": "previous trading day cycle log is absent",
+            "log_path": str(log_path),
+            "remediation_record_path": str(remediation_path),
+        }
+    try:
+        log = json.loads(log_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return {
+            "status": "error",
+            "previous_trading_day": previous.isoformat(),
+            "message": "previous trading day cycle log is invalid JSON",
+            "error": str(exc),
+            "log_path": str(log_path),
+            "remediation_record_path": str(remediation_path),
+        }
+    if log.get("status") == "skipped":
+        return {
+            "status": "ok",
+            "previous_trading_day": previous.isoformat(),
+            "message": "previous trading day log was skipped",
+            "log_path": str(log_path),
+            "remediation_record_path": str(remediation_path),
+        }
+    passed, reasons = validation_day_pass(log)
+    if passed:
+        return {
+            "status": "ok",
+            "previous_trading_day": previous.isoformat(),
+            "message": "previous trading day passed validation",
+            "log_path": str(log_path),
+            "remediation_record_path": str(remediation_path),
+        }
+    if remediation_path.exists():
+        return {
+            "status": "ok",
+            "previous_trading_day": previous.isoformat(),
+            "message": "previous failed trading day has remediation record",
+            "reasons": reasons,
+            "log_path": str(log_path),
+            "remediation_record_path": str(remediation_path),
+        }
+    return {
+        "status": "error",
+        "previous_trading_day": previous.isoformat(),
+        "message": "previous failed trading day is missing remediation record",
+        "reasons": reasons,
+        "log_path": str(log_path),
+        "remediation_record_path": str(remediation_path),
+    }
+
+
+def previous_trading_day(value: date) -> date:
+    day = value - timedelta(days=1)
+    while day.weekday() >= 5:
+        day -= timedelta(days=1)
+    return day
 
 
 def render_paper_validation_markdown(payload: dict[str, Any]) -> str:
@@ -130,9 +219,14 @@ def render_paper_validation_markdown(payload: dict[str, Any]) -> str:
         "| --- | --- | --- | --- |",
     ]
     for row in payload["days"]:
+        remediation = ""
+        if row.get("remediation_required"):
+            remediation = " remediation=" + (
+                "recorded" if row.get("remediation_recorded") else "missing"
+            )
         lines.append(
             f"| {row['date']} | {row['counted']} | {row['passed']} | "
-            f"{', '.join(row['reasons']) or '-'} |"
+            f"{', '.join(row['reasons']) or '-'}{remediation} |"
         )
     lines.extend(
         [
@@ -146,7 +240,7 @@ def render_paper_validation_markdown(payload: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def _day_pass(log: dict[str, Any]) -> tuple[bool, list[str]]:
+def validation_day_pass(log: dict[str, Any]) -> tuple[bool, list[str]]:
     reasons: list[str] = []
     if log.get("status") != "ok":
         reasons.append(f"cycle_status_{log.get('status')}")
@@ -156,8 +250,8 @@ def _day_pass(log: dict[str, Any]) -> tuple[bool, list[str]]:
     artifacts = log.get("artifact_paths") or {}
     if artifacts.get("state_drift_status") == "warning":
         reasons.append("state_drift_warning")
-    if log.get("paper_order_authorization") is not False:
-        reasons.append("paper_order_authorization_unexpected")
+    if log.get("paper_order_authorization") not in {False, True}:
+        reasons.append("paper_order_authorization_invalid")
     return not reasons, reasons
 
 

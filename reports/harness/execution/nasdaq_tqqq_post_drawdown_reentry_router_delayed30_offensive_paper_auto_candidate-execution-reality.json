@@ -1,0 +1,55 @@
+{
+  "strategy_name": "nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate",
+  "policy_id": "loo_limit_nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate_v1",
+  "generated_at": "2026-07-09",
+  "slippage_scenarios": [
+    {
+      "name": "low",
+      "slippage_bps": 5.0,
+      "open_gap_pct": 0.2
+    },
+    {
+      "name": "medium",
+      "slippage_bps": 15.0,
+      "open_gap_pct": 0.8
+    },
+    {
+      "name": "high",
+      "slippage_bps": 35.0,
+      "open_gap_pct": 2.5
+    }
+  ],
+  "gap_stress": {
+    "max_adverse_gap_pct": 5.0,
+    "fill_model_gap_handling": "next_bar_open assumes fill at official open",
+    "recommended_gap_filter": "skip trade if abs(gap_pct) > threshold",
+    "scenarios": [
+      {
+        "name": "low",
+        "slippage_bps": 5.0,
+        "open_gap_pct": 0.2
+      },
+      {
+        "name": "medium",
+        "slippage_bps": 15.0,
+        "open_gap_pct": 0.8
+      },
+      {
+        "name": "high",
+        "slippage_bps": 35.0,
+        "open_gap_pct": 2.5
+      }
+    ]
+  },
+  "capacity_assessment": {
+    "max_position_weight": 1.0,
+    "max_trades_per_day": 4,
+    "notes": "Capacity is bounded by max_position_weight and max_trades_per_day. Estimated order size as %ADV must be reviewed before paper_auto."
+  },
+  "tca_reference_prices": [
+    "decision_price",
+    "official_open",
+    "arrival_price"
+  ],
+  "fill_model": "next_regular_open_with_policy"
+}

@@ -7,6 +7,8 @@
 - `uv run oc paper readiness nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate --strict` 通过
 - `uv run oc paper status` 显示 kill switch 未启用
 
+截至 2026-07-09，跨源重验的数据深度问题由用户延后处理；这不删除实盘前置项，实盘启动仍需用户逐项批准。
+
 ## 每日流程
 
 1. 开盘前读取通知与 `reports/paper/review_cards/YYYYMMDD.md`。
@@ -14,6 +16,8 @@
 3. 若有变化，按 review card 的 `50% live weight` 列人工下单；剩余仓位放 BIL 或现金。
 4. 成交后追加一行 `reports/live/manual_journal.jsonl`。
 5. 若 paper cycle、state drift、数据、对账任一项 warning/error 未解释，当天实盘不操作。
+
+Paper 验证循环默认先跑 readiness。若 router order authorization 工件存在、readiness 为 `status=ok`、execution substate 为 `order_authorized` 且 kill switch 清空，循环会向 Alpaca Paper 路径传递 `--allow-paper-orders`；否则保持 observation-only。任一 counted trading day 验证失败后，次日循环前必须存在 `reports/paper/validation/remediations/YYYYMMDD.md` 处置记录。
 
 `manual_journal.jsonl` 每行格式：
 

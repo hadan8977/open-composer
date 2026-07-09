@@ -141,11 +141,18 @@ def sync_paper_account(root: Path, client: Any | None = None) -> tuple[Path, Pat
 
 
 def _validate_paper_allowed(spec: StrategySpec, root: Path) -> None:
+    from open_composer.paper_readiness import assess_paper_strategy_readiness_for_spec
+
     if spec.lifecycle != "active":
         raise PaperOrderError("paper orders require an active StrategySpec")
     if spec.execution.mode != "paper_auto" or spec.execution.broker != "alpaca_paper":
         raise PaperOrderError(
             "paper orders require execution.mode=paper_auto and broker=alpaca_paper"
+        )
+    readiness = assess_paper_strategy_readiness_for_spec(spec, root)
+    if readiness.status != "ok" or readiness.execution_substate != "order_authorized":
+        raise PaperOrderError(
+            "paper orders require paper readiness status=ok and execution_substate=order_authorized"
         )
     if spec.position_direction in {"short_only", "long_short"}:
         raise PaperOrderError("short paper orders require separate short-readiness authorization")

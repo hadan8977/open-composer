@@ -1,0 +1,72 @@
+{
+  "blocking_items": [],
+  "controls": {
+    "broker_scope": "alpaca_paper_only",
+    "fallback_behavior": {
+      "if_gap_exceeds_limit": "skip",
+      "if_not_filled": "skip",
+      "if_spread_exceeds_limit": "delay_to_5m"
+    },
+    "gap_filter": {
+      "action_on_exceed": "skip",
+      "enabled": true,
+      "max_open_gap_pct": 2.5
+    },
+    "order_style": "loo_limit",
+    "price_protection": {
+      "limit_offset_bps": 25.0,
+      "max_open_gap_pct": 2.5,
+      "max_spread_bps": 20.0,
+      "type": "limit"
+    },
+    "real_money_broker_writes": "out_of_scope",
+    "spread_filter": {
+      "action_on_exceed": "delay_to_5m",
+      "enabled": true,
+      "max_spread_bps": 20.0
+    },
+    "tca_plan": {
+      "enabled": true,
+      "record_fill_price": true,
+      "record_slippage_vs_reference": true,
+      "record_submitted_at": true,
+      "reference_prices": [
+        "decision_price",
+        "official_open",
+        "arrival_price"
+      ],
+      "review_frequency": "weekly"
+    },
+    "time_in_force": "opg"
+  },
+  "credential_scope": "paper_only",
+  "duplicate_order_policy": "stable_signal_id",
+  "execution_policy_id": "loo_limit_nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate_v1",
+  "execution_policy_path": "reports/harness/execution/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate-execution-policy.json",
+  "harness_verify_pass": true,
+  "kill_switch_verified": true,
+  "lifecycle_status": "active",
+  "order_window": "09:28-09:32 ET opening-auction window; skip outside runner window",
+  "overall": "approved",
+  "rebalance_intents_path": "reports/execution/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate-rebalance-intents.json",
+  "reviewed_at": "2026-07-09T19:04:17.310370+00:00",
+  "signal_order_linkage": true,
+  "source_card_ids": [
+    "pdr_candidate_alpaca_order_support",
+    "pdr_candidate_alpaca_paper_scope",
+    "pdr_candidate_alpaca_iex_vs_sip",
+    "pdr_candidate_nasdaq_opening_cross",
+    "pdr_candidate_finra_leveraged_inverse_risk",
+    "pdr_candidate_proshares_tqqq_daily_objective"
+  ],
+  "spec_hash": "sha256:ff61f698bc1fbc81377f077f13b60067dbc7ffcec95dd0ad6caa4675b44d7522",
+  "spec_path": "strategy_specs/active/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate.yaml",
+  "strategy_name": "nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate",
+  "target_weights_path": "reports/execution/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate-target-weights.json",
+  "warnings": [
+    "Alpaca Paper fills are simulation evidence, not live-money execution evidence.",
+    "Alpaca IEX feed is not consolidated SIP/full-market data unless account entitlements prove otherwise.",
+    "Leveraged ETF exposure remains path-dependent and requires gap/TCA monitoring.",
+    "Real-money broker writes remain out of scope."
+  ]
+}

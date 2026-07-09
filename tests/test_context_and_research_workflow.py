@@ -79,6 +79,14 @@ def test_natural_language_to_context_to_paper_mock(sample_workspace: Path, monke
     def fake_submit(client, signal_arg, qty, client_order_id):
         return SimpleNamespace(id="paper_order_1", status="accepted")
 
+    import open_composer.paper_readiness as paper_readiness
+
+    monkeypatch.setattr(
+        paper_readiness,
+        "assess_paper_strategy_readiness_for_spec",
+        lambda spec, root: SimpleNamespace(status="ok", execution_substate="order_authorized"),
+    )
+
     class MockClient:
         def get_account(self) -> SimpleNamespace:
             return SimpleNamespace(equity="10000")

@@ -4,7 +4,9 @@ import json
 from pathlib import Path
 
 import yaml
+from typer.testing import CliRunner
 
+from open_composer.cli import app
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.paper_readiness import (
     assess_paper_strategy_readiness,
@@ -210,17 +212,16 @@ def test_paper_readiness_passes_for_live_cache_alpaca_strategy(
 
     report = assess_paper_strategy_readiness(active, sample_workspace)
 
-    assert report.ready is True
-    # paper_auto strategies activate harness risk domains; without harness artifacts
-    # the report surfaces a legacy_harness_review_required warning (migration mode).
-    assert report.status in {"ok", "warning"}
+    assert report.ready is False
+    assert report.status == "blocked"
     assert {check.name: check.status for check in report.checks}["data_source"] == "ok"
     assert {check.name: check.status for check in report.checks}["alpaca_env"] == "ok"
     assert {check.name: check.status for check in report.checks}["account_snapshot"] == "ok"
     assert {check.name: check.status for check in report.checks}["portfolio_risk"] == "ok"
-    assert report.gate_summary["paper_ready_pass"] is True
+    assert report.gate_summary["paper_ready_pass"] is False
     harness_check = {check.name: check for check in report.checks}.get("harness_artifacts")
     assert harness_check is not None, "harness_artifacts check must run for paper_auto specs"
+    assert harness_check.status == "blocked"
 
 
 def test_paper_readiness_requires_research_contract_and_new_promotion_checks(
@@ -640,6 +641,68 @@ def test_paper_readiness_router_can_be_order_authorized_with_artifact(
     assert report.gate_summary["execution_substate"] == "order_authorized"
 
 
+def test_router_authorization_cli_refuses_when_readiness_is_not_ok(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPEN_COMPOSER_ROOT", str(sample_workspace))
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    _write_beta_router_active(sample_workspace, "beta_router_cli_blocked")
+    _write_ready_promotion(sample_workspace, "beta_router_cli_blocked")
+
+    result = CliRunner().invoke(
+        app,
+        ["paper", "authorize-router", "beta_router_cli_blocked"],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code != 0
+    assert "harness_artifacts" in result.output
+    assert not (
+        sample_workspace
+        / "reports"
+        / "harness"
+        / "paper"
+        / "beta_router_cli_blocked-router-order-authorization.json"
+    ).exists()
+
+
+def test_router_authorization_cli_writes_alpaca_paper_only_artifact(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("OPEN_COMPOSER_ROOT", str(sample_workspace))
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    active = _write_beta_router_active(sample_workspace, "beta_router_cli_authorized")
+    _write_ready_promotion(sample_workspace, "beta_router_cli_authorized")
+    _write_router_harness_artifacts(sample_workspace, "beta_router_cli_authorized")
+    _write_paper_account_snapshot(sample_workspace)
+
+    result = CliRunner().invoke(
+        app,
+        ["paper", "authorize-router", "beta_router_cli_authorized"],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0, result.output
+    auth_path = (
+        sample_workspace
+        / "reports"
+        / "harness"
+        / "paper"
+        / "beta_router_cli_authorized-router-order-authorization.json"
+    )
+    payload = json.loads(auth_path.read_text(encoding="utf-8"))
+    assert payload["order_scope"] == "alpaca_paper_only"
+    report = assess_paper_strategy_readiness(active, sample_workspace)
+    assert report.status == "ok"
+    assert report.execution_substate == "order_authorized"
+
+
 def test_paper_readiness_sample_acquisition_tier_blocks_live_paper(
     sample_workspace: Path,
     monkeypatch,
@@ -673,6 +736,63 @@ def test_paper_readiness_sample_acquisition_tier_blocks_live_paper(
     assert report.execution_substate == "blocked"
     assert checks["data_source"].status == "blocked"
     assert "sample_smoke" in checks["data_source"].message
+
+
+def _write_beta_router_active(root: Path, strategy_name: str) -> Path:
+    raw = yaml.safe_load(
+        (root / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = strategy_name
+    raw["timeframe"] = "daily"
+    raw["universe"] = ["QQQ", "TQQQ", "SQQQ"]
+    raw["lifecycle"] = "active"
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["required_capabilities"] = ["market.alpaca_bars"]
+    raw["execution"] = {
+        **raw["execution"],
+        "backend": "nautilus_trader",
+        "mode": "paper_auto",
+        "broker": "alpaca_paper",
+    }
+    raw["notes"] = {
+        **raw.get("notes", {}),
+        "universe_audit": {
+            "point_in_time_membership": True,
+            "selection_timestamp": "2026-05-22T00:00:00Z",
+            "delisting_policy": "Fixed ETF route; no current equity-index membership backfill.",
+        },
+    }
+    raw["risk"]["max_position_weight"] = 1.0
+    raw["portfolio"] = {
+        "mode": "beta_exposure_router",
+        "max_symbols_per_day": 1,
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 1.0,
+        "same_day_flatten": False,
+        "selected_route_label": (
+            "beta:sma200_mom120_min0_vol20_maxvnone_dd120_maxddnone_"
+            "levsmanone_levmaxvnone_levdd60_levmaxddnone_"
+            "onTQQQ1_neuQQQ1_offCASH0_vtnone"
+        ),
+    }
+    active = root / "strategy_specs" / "active" / f"{strategy_name}.yaml"
+    active.parent.mkdir(parents=True, exist_ok=True)
+    active.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    return active
+
+
+def _write_paper_account_snapshot(root: Path) -> None:
+    account_path = root / "reports" / "paper" / "account.json"
+    account_path.parent.mkdir(parents=True, exist_ok=True)
+    account_path.write_text(
+        (
+            '{"generated_at":"2026-07-09T12:00:00Z","equity":10000,"cash":5000,'
+            '"buying_power":8000,"portfolio_value":10000,"status":"ACTIVE","paper":true}\n'
+        ),
+        encoding="utf-8",
+    )
 
 
 def _write_ready_promotion(root: Path, strategy_name: str) -> None:
@@ -718,8 +838,14 @@ def _write_ready_promotion(root: Path, strategy_name: str) -> None:
 def _write_router_harness_artifacts(root: Path, strategy_name: str) -> None:
     execution_dir = root / "reports" / "execution"
     research_dir = root / "reports" / "research"
+    harness_execution_dir = root / "reports" / "harness" / "execution"
+    paper_dir = root / "reports" / "harness" / "paper"
+    source_cards_dir = root / "reports" / "harness" / "source_cards"
     execution_dir.mkdir(parents=True, exist_ok=True)
     research_dir.mkdir(parents=True, exist_ok=True)
+    harness_execution_dir.mkdir(parents=True, exist_ok=True)
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    source_cards_dir.mkdir(parents=True, exist_ok=True)
     target_path = execution_dir / f"{strategy_name}-target-weights.json"
     intents_path = execution_dir / f"{strategy_name}-rebalance-intents.json"
     cost_path = research_dir / f"{strategy_name}-router-cost-stress.json"
@@ -795,6 +921,92 @@ def _write_router_harness_artifacts(root: Path, strategy_name: str) -> None:
                 "execution_substate": "observation_only",
                 "target_weights_path": str(target_path.relative_to(root)),
                 "rebalance_intents_path": str(intents_path.relative_to(root)),
+            }
+        ),
+        encoding="utf-8",
+    )
+    (source_cards_dir / f"{strategy_name}.jsonl").write_text(
+        json.dumps(
+            {
+                "claim_id": f"{strategy_name}:source-research",
+                "claim": (
+                    "Paper router execution relies on sourced broker, exchange, "
+                    "data, and leveraged ETF controls."
+                ),
+                "source_url": "https://docs.alpaca.markets/docs/trading/orders/",
+                "source_type": "broker_official_docs",
+                "accessed_at": "2026-07-09",
+                "applies_to": ["broker_specific", "paper_auto", "router_strategy"],
+                "impact_on_spec": (
+                    "Require execution policy, safety review, and router authorization "
+                    "before orders."
+                ),
+                "limitations": "Test fixture source card; production cards must cite current docs.",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (harness_execution_dir / f"{strategy_name}-execution-policy.json").write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "policy_id": f"loo_limit_{strategy_name}_v1",
+                "order_style": "loo_limit",
+                "time_in_force": "opg",
+                "price_protection": {"type": "limit", "limit_offset_bps": 25.0},
+                "gap_filter": {"enabled": True, "max_open_gap_pct": 2.5},
+                "spread_filter": {"enabled": True, "max_spread_bps": 20.0},
+                "participation_cap": {"max_adv_pct": 2.5},
+                "fallback_behavior": {"if_not_filled": "skip"},
+                "tca_plan": {"enabled": True},
+                "source_card_ids": [f"{strategy_name}:source-research"],
+                "alternatives_compared": ["loo_limit", "day_market"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (harness_execution_dir / f"{strategy_name}-execution-reality.json").write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "policy_id": f"loo_limit_{strategy_name}_v1",
+                "slippage_scenarios": [],
+                "gap_stress": {},
+                "capacity_assessment": {},
+                "tca_reference_prices": ["official_open"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (harness_execution_dir / f"{strategy_name}-gap-stress.json").write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "scenarios": [],
+                "max_adverse_gap_pct": 5.0,
+                "fill_model_gap_handling": "skip excessive gaps",
+                "recommended_gap_filter": "skip abs(open_gap_pct)>2.5",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (harness_execution_dir / f"{strategy_name}-leveraged-etf-risk.md").write_text(
+        "# Leveraged ETF Risk Note\n\nPath dependency and gap risk acknowledged.\n",
+        encoding="utf-8",
+    )
+    (paper_dir / f"{strategy_name}-paper-safety-review.json").write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "overall": "ok",
+                "blocking_items": [],
+                "lifecycle_status": "active",
+                "kill_switch_verified": True,
+                "order_window": "09:28-09:32 ET",
+                "duplicate_order_policy": "stable_signal_id",
+                "credential_scope": "paper_only",
+                "signal_order_linkage": True,
             }
         ),
         encoding="utf-8",

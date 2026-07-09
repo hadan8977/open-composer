@@ -2,18 +2,25 @@
   "artifact_paths": {
     "action_required": "true",
     "log": "/root/codex-test/open-composer/reports/paper/daily_cycle/20260709.json",
+    "paper_order_authorization_status": "order_authorized",
+    "previous_day_remediation_status": "ok",
     "review_card": "/root/codex-test/open-composer/reports/paper/review_cards/20260709.md",
-    "state_drift": "/root/codex-test/open-composer/reports/paper/state_drift/20260709.json",
-    "state_drift_status": "warning",
     "target_weights": "/root/codex-test/open-composer/reports/execution/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate-target-weights.json"
   },
   "date": "2026-07-09",
-  "ended_at": "2026-07-09T15:56:45.847174+00:00",
-  "failed_step": null,
-  "paper_order_authorization": false,
+  "ended_at": "2026-07-09T19:06:20.994558+00:00",
+  "failed_step": "paper_cycle",
+  "paper_order_authorization": true,
+  "previous_day_remediation_check": {
+    "log_path": "/root/codex-test/open-composer/reports/paper/daily_cycle/20260708.json",
+    "message": "previous trading day cycle log is absent",
+    "previous_trading_day": "2026-07-08",
+    "remediation_record_path": "/root/codex-test/open-composer/reports/paper/validation/remediations/20260708.md",
+    "status": "ok"
+  },
   "report_type": "daily_paper_cycle",
-  "started_at": "2026-07-09T15:55:42.238245+00:00",
-  "status": "ok",
+  "started_at": "2026-07-09T19:05:38.035785+00:00",
+  "status": "failed",
   "steps": [
     {
       "artifact_paths": [],
@@ -26,12 +33,12 @@
         "nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate",
         "--strict"
       ],
-      "ended_at": "2026-07-09T15:55:46.346376+00:00",
+      "ended_at": "2026-07-09T19:05:43.121383+00:00",
       "exit_code": 0,
       "name": "readiness",
-      "started_at": "2026-07-09T15:55:42.238358+00:00",
+      "started_at": "2026-07-09T19:05:39.027083+00:00",
       "stderr_tail": "",
-      "stdout_tail": "                                Paper Readiness:                                \nnasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidat\n                                       e                                        \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Check                      \u2503 Status  \u2503 Message                               \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 lifecycle                  \u2502 ok      \u2502 Strategy is active.                   \u2502\n\u2502 execution                  \u2502 ok      \u2502 Execution mode, broker, and backend   \u2502\n\u2502                            \u2502         \u2502 are paper-ready.                      \u2502\n\u2502 data_source                \u2502 ok      \u2502 Paper automation uses a live/cache    \u2502\n\u2502                            \u2502         \u2502 market data source.                   \u2502\n\u2502 universe_audit             \u2502 ok      \u2502 Universe audit passed.                \u2502\n\u2502 alpaca_env                 \u2502 ok      \u2502 Alpaca Paper environment is           \u2502\n\u2502                            \u2502         \u2502 configured.                           \u2502\n\u2502 kill_switch                \u2502 ok      \u2502 Paper kill switch is clear.           \u2502\n\u2502 account_snapshot           \u2502 ok      \u2502 Paper account snapshot is available.  \u2502\n\u2502 nautilus_backend           \u2502 ok      \u2502 NautilusTrader package is available.  \u2502\n\u2502 portfolio_routing          \u2502 ok      \u2502 hybrid_adaptive_router portfolio      \u2502\n\u2502                            \u2502         \u2502 routing is declared inside            \u2502\n\u2502                            \u2502         \u2502 StrategySpec.                         \u2502\n\u2502 portfolio_risk             \u2502 ok      \u2502 hybrid_adaptive_router gross exposure \u2502\n\u2502                            \u2502         \u2502 and concentration limits are          \u2502\n\u2502                            \u2502         \u2502 explicit.                             \u2502\n\u2502 feature_packets            \u2502 ok      \u2502 Feature packet bindings are           \u2502\n\u2502                            \u2502         \u2502 point-in-time complete.               \u2502\n\u2502 promotion_report           \u2502 ok      \u2502 Promotion report is present and ready \u2502\n\u2502                            \u2502         \u2502 for paper review.                     \u2502\n\u2502 harness_artifacts          \u2502 warning \u2502 Paper readiness                       \u2502\n\u2502                            \u2502         \u2502 legacy_harness_review_required for    \u2502\n\u2502                            \u2502         \u2502 harness artifacts:                    \u2502\n\u2502                            \u2502         \u2502 missing=['execution_policy',          \u2502\n\u2502                            \u2502         \u2502 'execution_reality_report',           \u2502\n\u2502                            \u2502         \u2502 'gap_stress_report',                  \u2502\n\u2502                            \u2502         \u2502 'leveraged_etf_risk_note',            \u2502\n\u2502                            \u2502         \u2502 'paper_safety_review',                \u2502\n\u2502                            \u2502         \u2502 'source_cards'], incomplete=-         \u2502\n\u2502 router_order_authorization \u2502 warning \u2502 Router order authorization artifact   \u2502\n\u2502                            \u2502         \u2502 is missing. Router remains            \u2502\n\u2502                            \u2502         \u2502 observation_only.                     \u2502\n\u2502 capability_report          \u2502 warning \u2502 router strategies may run             \u2502\n\u2502                            \u2502         \u2502 observation-only target-weight cycles \u2502\n\u2502                            \u2502         \u2502 before order authorization            \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nstatus=warning ready=yes\njson=/root/codex-test/open-composer/reports/paper/readiness/nasdaq_tqqq_post_dra\nwdown_reentry_router_delayed30_offensive_paper_auto_candidate.json\nmarkdown=/root/codex-test/open-composer/reports/paper/readiness/nasdaq_tqqq_post\n_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate.md\n"
+      "stdout_tail": "                                Paper Readiness:                                \nnasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidat\n                                       e                                        \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2513\n\u2503 Check                      \u2503 Status \u2503 Message                                \u2503\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2529\n\u2502 lifecycle                  \u2502 ok     \u2502 Strategy is active.                    \u2502\n\u2502 execution                  \u2502 ok     \u2502 Execution mode, broker, and backend    \u2502\n\u2502                            \u2502        \u2502 are paper-ready.                       \u2502\n\u2502 data_source                \u2502 ok     \u2502 Paper automation uses a live/cache     \u2502\n\u2502                            \u2502        \u2502 market data source.                    \u2502\n\u2502 universe_audit             \u2502 ok     \u2502 Universe audit passed.                 \u2502\n\u2502 alpaca_env                 \u2502 ok     \u2502 Alpaca Paper environment is            \u2502\n\u2502                            \u2502        \u2502 configured.                            \u2502\n\u2502 kill_switch                \u2502 ok     \u2502 Paper kill switch is clear.            \u2502\n\u2502 account_snapshot           \u2502 ok     \u2502 Paper account snapshot is available.   \u2502\n\u2502 nautilus_backend           \u2502 ok     \u2502 NautilusTrader package is available.   \u2502\n\u2502 portfolio_routing          \u2502 ok     \u2502 hybrid_adaptive_router portfolio       \u2502\n\u2502                            \u2502        \u2502 routing is declared inside             \u2502\n\u2502                            \u2502        \u2502 StrategySpec.                          \u2502\n\u2502 portfolio_risk             \u2502 ok     \u2502 hybrid_adaptive_router gross exposure  \u2502\n\u2502                            \u2502        \u2502 and concentration limits are explicit. \u2502\n\u2502 feature_packets            \u2502 ok     \u2502 Feature packet bindings are            \u2502\n\u2502                            \u2502        \u2502 point-in-time complete.                \u2502\n\u2502 promotion_report           \u2502 ok     \u2502 Promotion report is present and ready  \u2502\n\u2502                            \u2502        \u2502 for paper review.                      \u2502\n\u2502 harness_artifacts          \u2502 ok     \u2502 All 12 harness artifacts present for   \u2502\n\u2502                            \u2502        \u2502 domains ['daily_open_execution',       \u2502\n\u2502                            \u2502        \u2502 'leveraged_etf', 'paper_auto',         \u2502\n\u2502                            \u2502        \u2502 'broker_specific', 'router_strategy']. \u2502\n\u2502 router_order_authorization \u2502 ok     \u2502 Router order authorization is valid.   \u2502\n\u2502 capability_report          \u2502 ok     \u2502 active paper_auto Alpaca strategy can  \u2502\n\u2502                            \u2502        \u2502 submit paper orders with explicit      \u2502\n\u2502                            \u2502        \u2502 allow flag                             \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nstatus=ok ready=yes\njson=/root/codex-test/open-composer/reports/paper/readiness/nasdaq_tqqq_post_dra\nwdown_reentry_router_delayed30_offensive_paper_auto_candidate.json\nmarkdown=/root/codex-test/open-composer/reports/paper/readiness/nasdaq_tqqq_post\n_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate.md\n"
     },
     {
       "artifact_paths": [
@@ -49,10 +56,10 @@
         "alpaca",
         "--refresh-data"
       ],
-      "ended_at": "2026-07-09T15:56:06.231474+00:00",
+      "ended_at": "2026-07-09T19:06:05.320927+00:00",
       "exit_code": 0,
       "name": "target_weights",
-      "started_at": "2026-07-09T15:55:46.346409+00:00",
+      "started_at": "2026-07-09T19:05:43.121419+00:00",
       "stderr_tail": "",
       "stdout_tail": "target weights complete report: \n/root/codex-test/open-composer/reports/execution/nasdaq_tqqq_post_drawdown_reent\nry_router_delayed30_offensive_paper_auto_candidate-target-weights.md\nstatus=pass rebalance_sessions=1112 target_rows=12232 nonzero_targets=1112\n"
     },
@@ -68,43 +75,14 @@
         "--max-cycles",
         "1",
         "--interval-seconds",
-        "0"
+        "0",
+        "--allow-paper-orders"
       ],
-      "ended_at": "2026-07-09T15:56:17.239067+00:00",
-      "exit_code": 0,
+      "ended_at": "2026-07-09T19:06:20.994512+00:00",
+      "exit_code": 1,
       "name": "paper_cycle",
-      "started_at": "2026-07-09T15:56:06.439437+00:00",
-      "stderr_tail": "",
-      "stdout_tail": "paper cycle \npaper-nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_ca\nndidate-20260709T155610Z signals=1 \nreport=reports/runs/paper-nasdaq_tqqq_post_drawdown_reentry_router_delayed30_off\nensive_paper_auto_candidate-20260709T155610Z.md\nbackend plan: \n/root/codex-test/open-composer/reports/runs/nautilus_paper/paper-nasdaq_tqqq_pos\nt_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate-20260709T1556\n10Z.json\npaper readiness: \n/root/codex-test/open-composer/reports/paper/readiness/nasdaq_tqqq_post_drawdown\n_reentry_router_delayed30_offensive_paper_auto_candidate.json\nnote: Runner uses deterministic latest-bar scan.\nnote: Paper orders require active paper_auto strategy and explicit allow flag.\nnote: Live real-money broker writes are out of scope.\nnote: Paper readiness status=warning.\nnote: Nautilus paper runtime generated latest-bar signals before the Alpaca \nPaper safety gate.\nsig_bec7527e6914e6da exit TQQQ @ 75.93 decision=paper_orders_not_allowed \nreview=not_requested\n"
-    },
-    {
-      "artifact_paths": [],
-      "command": [
-        "uv",
-        "run",
-        "oc",
-        "paper",
-        "monitor",
-        "--sync-broker"
-      ],
-      "ended_at": "2026-07-09T15:56:45.846489+00:00",
-      "exit_code": 0,
-      "name": "paper_monitor",
-      "started_at": "2026-07-09T15:56:17.239101+00:00",
-      "stderr_tail": "",
-      "stdout_tail": "paper monitor refreshed reports/paper/monitor.md status=warning alerts=1 sync=ok\n"
-    },
-    {
-      "artifact_paths": [
-        "/root/codex-test/open-composer/reports/paper/state_drift/20260709.json",
-        "/root/codex-test/open-composer/reports/paper/state_drift/20260709.md"
-      ],
-      "command": [],
-      "ended_at": "2026-07-09T15:56:45.847153+00:00",
-      "exit_code": 0,
-      "name": "state_drift",
-      "started_at": "2026-07-09T15:56:45.846712+00:00",
-      "stderr_tail": "",
+      "started_at": "2026-07-09T19:06:05.520008+00:00",
+      "stderr_tail": "         \u2502\n\u2502   288                                                                        \u2502\n\u2502   289 def _client_positions(client: Any) -> list[Any]:                       \u2502\n\u2502                                                                              \u2502\n\u2502 /root/codex-test/open-composer/.venv/lib/python3.11/site-packages/alpaca/tra \u2502\n\u2502 ding/client.py:100 in submit_order                                           \u2502\n\u2502                                                                              \u2502\n\u2502    97 \u2502   \u2502   \u2502   alpaca.trading.models.Order: The resulting submitted       \u2502\n\u2502       order.                                                                 \u2502\n\u2502    98 \u2502   \u2502   \"\"\"                                                            \u2502\n\u2502    99 \u2502   \u2502   data = order_data.to_request_fields()                          \u2502\n\u2502 \u2771 100 \u2502   \u2502   response = self.post(\"/orders\", data)                          \u2502\n\u2502   101 \u2502   \u2502                                                                  \u2502\n\u2502   102 \u2502   \u2502   if self._use_raw_data:                                         \u2502\n\u2502   103 \u2502   \u2502   \u2502   return response                                            \u2502\n\u2502                                                                              \u2502\n\u2502 /root/codex-test/open-composer/.venv/lib/python3.11/site-packages/alpaca/com \u2502\n\u2502 mon/rest.py:240 in post                                                      \u2502\n\u2502                                                                              \u2502\n\u2502   237 \u2502   \u2502   Returns:                                                       \u2502\n\u2502   238 \u2502   \u2502   \u2502   dict: The response                                         \u2502\n\u2502   239 \u2502   \u2502   \"\"\"                                                            \u2502\n\u2502 \u2771 240 \u2502   \u2502   return self._request(\"POST\", path, data)                       \u2502\n\u2502   241 \u2502                                                                      \u2502\n\u2502   242 \u2502   def put(self, path: str, data: Optional[dict] = None) -> dict:     \u2502\n\u2502   243 \u2502   \u2502   \"\"\"Performs a single PUT request                               \u2502\n\u2502                                                                              \u2502\n\u2502 /root/codex-test/open-composer/.venv/lib/python3.11/site-packages/alpaca/com \u2502\n\u2502 mon/rest.py:131 in _request                                                  \u2502\n\u2502                                                                              \u2502\n\u2502   128 \u2502   \u2502                                                                  \u2502\n\u2502   129 \u2502   \u2502   while retry >= 0:                                              \u2502\n\u2502   130 \u2502   \u2502   \u2502   try:                                                       \u2502\n\u2502 \u2771 131 \u2502   \u2502   \u2502   \u2502   return self._one_request(method, url, opts, retry)     \u2502\n\u2502   132 \u2502   \u2502   \u2502   except RetryException:                                     \u2502\n\u2502   133 \u2502   \u2502   \u2502   \u2502   time.sleep(self._retry_wait)                           \u2502\n\u2502   134 \u2502   \u2502   \u2502   \u2502   retry -= 1                                             \u2502\n\u2502                                                                              \u2502\n\u2502 /root/codex-test/open-composer/.venv/lib/python3.11/site-packages/alpaca/com \u2502\n\u2502 mon/rest.py:207 in _one_request                                              \u2502\n\u2502                                                                              \u2502\n\u2502   204 \u2502   \u2502   \u2502   # raise API error for all other errors                     \u2502\n\u2502   205 \u2502   \u2502   \u2502   error = response.text                                      \u2502\n\u2502   206 \u2502   \u2502   \u2502                                                              \u2502\n\u2502 \u2771 207 \u2502   \u2502   \u2502   raise APIError(error, http_error)                          \u2502\n\u2502   208 \u2502   \u2502                                                                  \u2502\n\u2502   209 \u2502   \u2502   if response.text != \"\":                                        \u2502\n\u2502   210 \u2502   \u2502   \u2502   return response.json()                                     \u2502\n\u2570\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u256f\nAPIError: {\"code\":40310000,\"message\":\"opg orders must be submitted after 7:00pm \nand before 9:28am\"}\n",
       "stdout_tail": ""
     }
   ],

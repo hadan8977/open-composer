@@ -35,6 +35,79 @@ def _context_capable_spec(sample_workspace: Path) -> Path:
     return target
 
 
+def _write_paper_auto_harness_artifacts(root: Path, strategy_name: str) -> None:
+    execution_dir = root / "reports" / "harness" / "execution"
+    paper_dir = root / "reports" / "harness" / "paper"
+    source_dir = root / "reports" / "harness" / "source_cards"
+    execution_dir.mkdir(parents=True, exist_ok=True)
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    source_dir.mkdir(parents=True, exist_ok=True)
+    (source_dir / f"{strategy_name}.jsonl").write_text(
+        json.dumps(
+            {
+                "claim_id": f"{strategy_name}:source-research",
+                "claim": (
+                    "Paper order support and data assumptions are sourced for the test strategy."
+                ),
+                "source_url": "https://docs.alpaca.markets/docs/trading/orders/",
+                "source_type": "broker_official_docs",
+                "accessed_at": "2026-07-09",
+                "applies_to": ["paper_auto", "broker_specific"],
+                "impact_on_spec": "Allow paper runner tests to exercise order submission.",
+                "limitations": "Fixture card; production cards require current source review.",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (execution_dir / f"{strategy_name}-execution-policy.json").write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "policy_id": f"day_market_{strategy_name}_v1",
+                "order_style": "day_market",
+                "time_in_force": "day",
+                "price_protection": {"type": "none"},
+                "gap_filter": {"enabled": False},
+                "spread_filter": {"enabled": True},
+                "participation_cap": {"max_adv_pct": 2.5},
+                "fallback_behavior": {"if_rejected": "skip"},
+                "tca_plan": {"enabled": True},
+                "source_card_ids": [f"{strategy_name}:source-research"],
+                "alternatives_compared": ["day_market", "loo_limit"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (execution_dir / f"{strategy_name}-execution-reality.json").write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "policy_id": f"day_market_{strategy_name}_v1",
+                "slippage_scenarios": [],
+                "gap_stress": {},
+                "capacity_assessment": {},
+                "tca_reference_prices": ["arrival_price"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (paper_dir / f"{strategy_name}-paper-safety-review.json").write_text(
+        json.dumps(
+            {
+                "strategy_name": strategy_name,
+                "lifecycle_status": "active",
+                "kill_switch_verified": True,
+                "order_window": "regular session",
+                "duplicate_order_policy": "stable_signal_id",
+                "credential_scope": "paper_only",
+                "signal_order_linkage": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
 def test_strategy_lifecycle_approve_activate_disable(sample_workspace: Path) -> None:
     draft = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
 
@@ -278,6 +351,7 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
         + "\n",
         encoding="utf-8",
     )
+    _write_paper_auto_harness_artifacts(sample_workspace, "qqq_paper_ready_15m")
 
     def fake_scan(spec_path: Path, root: Path | None = None, refresh_data: bool = False):
         assert refresh_data is True

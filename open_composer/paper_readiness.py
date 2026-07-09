@@ -879,11 +879,14 @@ def _harness_artifacts_check(spec: StrategySpec, root: Path) -> PaperStrategyRea
     ]
 
     if missing or incomplete:
-        # Migration policy: existing strategies surface a warning (legacy_harness_review_required)
-        # rather than hard-blocking. Set OC_HARNESS_STRICT=1 to switch to blocked.
+        # Paper automation cannot be considered ready while required safety-chain
+        # artifacts are absent. Older non-paper flows can still surface the
+        # migration warning unless OC_HARNESS_STRICT is enabled.
         import os
 
         strict = os.environ.get("OC_HARNESS_STRICT", "0") == "1"
+        paper_auto = spec.execution.mode == "paper_auto"
+        strict = strict or paper_auto
         check_status: PaperReadinessStatus = "blocked" if strict else "warning"
         prefix = "blocked" if strict else "legacy_harness_review_required"
         return PaperStrategyReadinessCheck(

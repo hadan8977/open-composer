@@ -35,6 +35,7 @@ def test_paper_submit_is_idempotent(sample_workspace: Path, monkeypatch) -> None
     monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
     monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
     monkeypatch.setenv("ALPACA_PAPER", "true")
+    _mock_readiness_ok(monkeypatch)
     spec = load_strategy_spec(_active_paper_spec(sample_workspace))
     signal = Signal(
         id="sig_test",
@@ -77,6 +78,7 @@ def test_paper_submit_uses_opg_limit_execution_policy(
     monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
     monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
     monkeypatch.setenv("ALPACA_PAPER", "true")
+    _mock_readiness_ok(monkeypatch)
     spec = load_strategy_spec(_active_paper_spec(sample_workspace))
     policy_path = (
         sample_workspace
@@ -392,6 +394,7 @@ def test_paper_kill_switch_blocks_order_submission(sample_workspace: Path, monke
     monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
     monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
     monkeypatch.setenv("ALPACA_PAPER", "true")
+    _mock_readiness_ok(monkeypatch)
     spec = load_strategy_spec(_active_paper_spec(sample_workspace))
     signal = Signal(
         id="sig_blocked",
@@ -422,6 +425,40 @@ def test_paper_kill_switch_blocks_order_submission(sample_workspace: Path, monke
         assert "paper kill switch is enabled" in str(exc)
     else:
         raise AssertionError("paper order should be blocked by kill switch")
+
+
+def test_submit_paper_order_requires_readiness_ok(sample_workspace: Path, monkeypatch) -> None:
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    monkeypatch.setenv("ALPACA_PAPER", "true")
+    spec = load_strategy_spec(_active_paper_spec(sample_workspace))
+    signal = Signal(
+        id="sig_readiness_blocked",
+        run_id="run",
+        strategy_name=spec.name,
+        symbol=spec.primary_symbol,
+        timeframe=spec.timeframe,
+        timestamp="2026-01-02T15:45:00Z",
+        action="entry",
+        side="buy",
+        source="scan",
+        price=100.0,
+        conditions=[],
+        lifecycle="active",
+        execution_mode="paper_auto",
+        fill_assumption="next_bar_open",
+    )
+
+    class MockClient:
+        def get_account(self) -> SimpleNamespace:
+            return SimpleNamespace(equity="10000")
+
+    try:
+        alpaca_paper.submit_paper_order(signal, spec, sample_workspace, client=MockClient())
+    except alpaca_paper.PaperOrderError as exc:
+        assert "paper readiness status=ok" in str(exc)
+    else:
+        raise AssertionError("paper order should be blocked by readiness")
 
 
 def test_paper_status_snapshot_rebuilds_from_artifacts(sample_workspace: Path) -> None:
@@ -479,3 +516,13 @@ def test_trading_client_uses_configured_paper_base_url(monkeypatch) -> None:
     assert captured["secret_key"] == "secret"
     assert captured["paper"] is True
     assert captured["url_override"] == "https://paper-api.alpaca.markets"
+
+
+def _mock_readiness_ok(monkeypatch) -> None:
+    import open_composer.paper_readiness as paper_readiness
+
+    monkeypatch.setattr(
+        paper_readiness,
+        "assess_paper_strategy_readiness_for_spec",
+        lambda spec, root: SimpleNamespace(status="ok", execution_substate="order_authorized"),
+    )

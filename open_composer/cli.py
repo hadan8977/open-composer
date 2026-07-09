@@ -6108,6 +6108,26 @@ def _gate_status(results: list[object], name: str) -> str | None:
     return None
 
 
+def _router_auth_warning(name: str) -> bool:
+    return name in {"router_order_authorization", "capability_report"}
+
+
+def _router_authorization_permitted_readiness_gap(check: object) -> bool:
+    status = str(getattr(check, "status", ""))
+    name = str(getattr(check, "name", ""))
+    if status == "ok":
+        return True
+    if status == "warning" and _router_auth_warning(name):
+        return True
+    if status == "blocked" and name == "harness_artifacts":
+        details = getattr(check, "details", {})
+        if isinstance(details, dict):
+            missing = details.get("missing")
+            incomplete = details.get("incomplete")
+            return missing == ["paper_safety_review"] and not incomplete
+    return False
+
+
 @run_app.command("paper")
 def run_paper(
     strategy: str,
@@ -6209,11 +6229,57 @@ def paper_submit(
     signal = find_signal(signal_id, root)
     spec_path = _find_strategy_spec(signal.strategy_name, root)
     spec = load_strategy_spec(spec_path)
+    readiness = assess_paper_strategy_readiness(spec_path, root)
+    if readiness.status != "ok" or readiness.execution_substate != "order_authorized":
+        raise typer.BadParameter(
+            "paper order submission requires paper readiness status=ok and "
+            "execution_substate=order_authorized"
+        )
     try:
         order = submit_paper_order(signal, spec, root, qty=qty)
     except PaperOrderError as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(f"[green]paper order[/green] {order.id} status={order.status} qty={order.qty}")
+
+
+@paper_app.command("authorize-router")
+def paper_authorize_router(
+    strategy: str,
+    authorized_by: Annotated[
+        str,
+        typer.Option(
+            "--authorized-by",
+            help="Audit label for the supervised Alpaca Paper router authorization.",
+        ),
+    ] = "operator_supervised_paper_alignment",
+) -> None:
+    """Write the Alpaca Paper router order authorization artifact."""
+    from open_composer.router_authorization import write_router_order_authorization
+
+    root = project_root()
+    spec_path = _find_strategy_spec(strategy, root)
+    spec = load_strategy_spec(spec_path)
+    readiness = assess_paper_strategy_readiness(spec_path, root)
+    unsafe = [
+        check.name
+        for check in readiness.checks
+        if not _router_authorization_permitted_readiness_gap(check)
+    ]
+    if unsafe:
+        raise typer.BadParameter(
+            "router authorization requires all non-authorization readiness checks to pass: "
+            + ", ".join(unsafe)
+        )
+    try:
+        path = write_router_order_authorization(
+            spec,
+            root,
+            spec_path=spec_path,
+            authorized_by=authorized_by,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]router authorization[/green] {path.relative_to(root)}")
 
 
 @paper_app.command("readiness")

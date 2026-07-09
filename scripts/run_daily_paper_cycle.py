@@ -10,9 +10,14 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+
 from open_composer.config import ensure_dir, project_root
 from open_composer.notifications import safe_dispatch_notification
+from open_composer.paper_controls import load_paper_kill_switch
+from open_composer.paper_readiness import assess_paper_strategy_readiness
 from open_composer.paper_state_drift import write_state_drift_report
+from open_composer.paper_validation import check_previous_trading_day_remediation
 
 DEFAULT_STRATEGY = (
     "nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate"
@@ -38,9 +43,10 @@ class CycleStep:
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     root = args.root.resolve()
+    load_dotenv(root / ".env", override=False)
     cycle_date = date.fromisoformat(args.date) if args.date else datetime.now(UTC).date()
     if args.dry_run:
-        for step in planned_commands(args.strategy, args.spec):
+        for step in planned_commands(args.strategy, args.spec, root=root):
             print(" ".join(step))
         return 0
     result = run_daily_cycle(
@@ -63,6 +69,7 @@ def run_daily_cycle(
     command_runner=subprocess.run,
 ) -> dict[str, Any]:
     started_at = datetime.now(UTC).isoformat()
+    load_dotenv(root / ".env", override=False)
     log_path = root / "reports" / "paper" / "daily_cycle" / f"{cycle_date:%Y%m%d}.json"
     ensure_dir(log_path.parent)
     if not is_trading_day(cycle_date):
@@ -83,9 +90,25 @@ def run_daily_cycle(
     selected_oc_cmd = oc_cmd or ["uv", "run", "oc"]
     steps: list[CycleStep] = []
     artifacts: dict[str, str] = {"log": str(log_path)}
+    remediation_check = check_previous_trading_day_remediation(
+        root=root,
+        cycle_date=cycle_date,
+    )
+    artifacts["previous_day_remediation_status"] = str(remediation_check["status"])
+    if remediation_check["status"] == "error":
+        _notify_remediation_check(remediation_check, strategy=strategy, root=root)
+    paper_order_authorization = _paper_orders_allowed(root, strategy)
+    artifacts["paper_order_authorization_status"] = (
+        "order_authorized" if paper_order_authorization else "observation_only"
+    )
     expected_state: str | None = None
     drift_status: str | None = None
-    for name, command in _step_commands(selected_oc_cmd, strategy, spec):
+    for name, command in _step_commands(
+        selected_oc_cmd,
+        strategy,
+        spec,
+        allow_paper_orders=paper_order_authorization,
+    ):
         step = _run_step(name, command, root, command_runner)
         steps.append(step)
         if step.exit_code != 0:
@@ -96,6 +119,8 @@ def run_daily_cycle(
                 status="failed",
                 steps=steps,
                 artifacts=artifacts,
+                paper_order_authorization=paper_order_authorization,
+                remediation_check=remediation_check,
                 failed_step=name,
             )
             _write_json(log_path, payload)
@@ -108,6 +133,7 @@ def run_daily_cycle(
                 target_weights_path=target_path,
                 output_path=review_path,
                 cycle_date=cycle_date,
+                paper_order_authorization=paper_order_authorization,
             )
             artifacts["target_weights"] = str(target_path)
             artifacts["review_card"] = str(review_path)
@@ -120,6 +146,7 @@ def run_daily_cycle(
                 root=root,
                 cycle_date=cycle_date,
                 expected_state=expected_state,
+                target_weights_path=_target_weights_path(root, strategy),
             )
             drift_step = CycleStep(
                 name="state_drift",
@@ -139,6 +166,8 @@ def run_daily_cycle(
         status="ok",
         steps=steps,
         artifacts=artifacts,
+        paper_order_authorization=paper_order_authorization,
+        remediation_check=remediation_check,
     )
     _write_json(log_path, payload)
     _notify_cycle(
@@ -156,6 +185,7 @@ def write_review_card(
     target_weights_path: Path,
     output_path: Path,
     cycle_date: date,
+    paper_order_authorization: bool = False,
 ) -> dict[str, Any]:
     payload = json.loads(target_weights_path.read_text(encoding="utf-8"))
     rows = payload.get("target_weights") or []
@@ -205,6 +235,7 @@ def write_review_card(
         "live_cash_or_bil_weight": cash_weight,
         "action_required": action_required,
         "action": action_line,
+        "paper_order_authorization": paper_order_authorization,
         "rows": live_rows,
     }
     ensure_dir(output_path.parent)
@@ -227,11 +258,38 @@ def is_trading_day(value: date) -> bool:
     return value.weekday() < 5
 
 
-def planned_commands(strategy: str, spec: str) -> list[list[str]]:
-    return [command for _, command in _step_commands(["uv", "run", "oc"], strategy, spec)]
+def planned_commands(strategy: str, spec: str, *, root: Path | None = None) -> list[list[str]]:
+    allow_paper_orders = _paper_orders_allowed(root or project_root(), strategy)
+    return [
+        command
+        for _, command in _step_commands(
+            ["uv", "run", "oc"],
+            strategy,
+            spec,
+            allow_paper_orders=allow_paper_orders,
+        )
+    ]
 
 
-def _step_commands(oc_cmd: list[str], strategy: str, spec: str) -> list[tuple[str, list[str]]]:
+def _step_commands(
+    oc_cmd: list[str],
+    strategy: str,
+    spec: str,
+    *,
+    allow_paper_orders: bool,
+) -> list[tuple[str, list[str]]]:
+    paper_command = [
+        *oc_cmd,
+        "run",
+        "paper",
+        strategy,
+        "--max-cycles",
+        "1",
+        "--interval-seconds",
+        "0",
+    ]
+    if allow_paper_orders:
+        paper_command.append("--allow-paper-orders")
     return [
         ("readiness", [*oc_cmd, "paper", "readiness", strategy, "--strict"]),
         (
@@ -246,10 +304,7 @@ def _step_commands(oc_cmd: list[str], strategy: str, spec: str) -> list[tuple[st
                 "--refresh-data",
             ],
         ),
-        (
-            "paper_cycle",
-            [*oc_cmd, "run", "paper", strategy, "--max-cycles", "1", "--interval-seconds", "0"],
-        ),
+        ("paper_cycle", paper_command),
         ("paper_monitor", [*oc_cmd, "paper", "monitor", "--sync-broker"]),
     ]
 
@@ -272,6 +327,8 @@ def _cycle_payload(
     status: str,
     steps: list[CycleStep],
     artifacts: dict[str, str],
+    paper_order_authorization: bool,
+    remediation_check: dict[str, Any],
     failed_step: str | None = None,
 ) -> dict[str, Any]:
     return {
@@ -282,7 +339,8 @@ def _cycle_payload(
         "strategy": strategy,
         "status": status,
         "failed_step": failed_step,
-        "paper_order_authorization": False,
+        "paper_order_authorization": paper_order_authorization,
+        "previous_day_remediation_check": remediation_check,
         "steps": [asdict(step) for step in steps],
         "artifact_paths": artifacts,
     }
@@ -304,6 +362,42 @@ def _notify_cycle(payload: dict[str, Any], *, severity: str, root: Path) -> None
         },
         root=root,
     )
+
+
+def _notify_remediation_check(
+    payload: dict[str, Any],
+    *,
+    strategy: str,
+    root: Path,
+) -> None:
+    safe_dispatch_notification(
+        kind="system_alert",
+        severity="red",
+        title=(f"Paper validation remediation missing: {payload.get('previous_trading_day')}"),
+        body=(
+            f"strategy={strategy} message={payload.get('message')} "
+            f"remediation={payload.get('remediation_record_path')}"
+        ),
+        metadata={
+            "strategy": strategy,
+            "previous_trading_day": payload.get("previous_trading_day"),
+            "status": payload.get("status"),
+            "message": payload.get("message"),
+            "remediation_record_path": payload.get("remediation_record_path"),
+        },
+        root=root,
+    )
+
+
+def _paper_orders_allowed(root: Path, strategy: str) -> bool:
+    try:
+        readiness = assess_paper_strategy_readiness(strategy, root)
+    except Exception:
+        return False
+    if readiness.status != "ok" or readiness.execution_substate != "order_authorized":
+        return False
+    kill_switch = load_paper_kill_switch(root)
+    return not kill_switch.enabled
 
 
 def _render_review_card(payload: dict[str, Any]) -> str:
@@ -333,7 +427,12 @@ def _render_review_card(payload: dict[str, Any]) -> str:
             "",
             "## Safety",
             "",
-            "- Observation-only paper cycle; no `--allow-paper-orders` was passed.",
+            (
+                "- Alpaca Paper order authorization: `order_authorized`; "
+                "`--allow-paper-orders` may be passed by the daily cycle."
+                if payload["paper_order_authorization"]
+                else "- Observation-only paper cycle; no `--allow-paper-orders` was passed."
+            ),
             "- Live execution remains manual and must follow the runbook gates.",
             "",
         ]
