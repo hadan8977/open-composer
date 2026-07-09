@@ -40,6 +40,7 @@ CURRENT_DOCS = {
     "docs/plan-step-7s-product-consolidation-2026-07-03.zh.md",
     "docs/plan-step-7t-pdr-gate-round2-2026-07-04.zh.md",
     "docs/plan-step-8-go-live-readiness-2026-07-06.zh.md",
+    "docs/plan-step-9-autonomous-loop-momentum-2026-07-09.zh.md",
     "docs/runbook-live-manual-execution.zh.md",
 }
 
