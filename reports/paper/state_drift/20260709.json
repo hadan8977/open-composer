@@ -1,4 +1,5 @@
 {
+  "account_path": "/root/codex-test/open-composer/reports/paper/account.json",
   "actual_state": "risk_on_levered_proxy",
   "artifact_paths": {
     "json": "/root/codex-test/open-composer/reports/paper/state_drift/20260709.json",
@@ -6,16 +7,37 @@
   },
   "date": "2026-07-09",
   "expected_state": "defensive_gld_proxy",
-  "generated_at": "2026-07-09T15:56:45.846712+00:00",
+  "generated_at": "2026-07-09T23:08:10.930152+00:00",
   "message": "paper positions differ from expected route state",
   "positions": [
     {
-      "market_value": 776722.8915,
+      "market_value": 780240.661,
       "qty": 10235.0,
       "symbol": "TQQQ"
     }
   ],
   "positions_path": "/root/codex-test/open-composer/reports/paper/positions.json",
   "report_type": "paper_state_drift",
-  "status": "warning"
+  "status": "warning",
+  "target_weight_check": {
+    "message": "paper positions differ from latest target weights",
+    "mismatches": [
+      {
+        "actual_weight": 0.0,
+        "delta": -1.0,
+        "expected_weight": 1.0,
+        "symbol": "GLD"
+      },
+      {
+        "actual_weight": 0.76817,
+        "delta": 0.76817,
+        "expected_weight": 0.0,
+        "symbol": "TQQQ"
+      }
+    ],
+    "rebalance_session": "2026-07-08",
+    "status": "warning",
+    "target_weights_path": "/root/codex-test/open-composer/reports/execution/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate-target-weights.json",
+    "weight_tolerance": 0.05
+  }
 }

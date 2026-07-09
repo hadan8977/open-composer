@@ -8,7 +8,7 @@
 
 | date | counted | passed | reasons |
 | --- | --- | --- | --- |
-| 2026-07-09 | True | False | cycle_status_failed, step_failed_paper_cycle remediation=recorded |
+| 2026-07-09 | True | False | state_drift_warning remediation=recorded |
 
 ## Semantics
 
