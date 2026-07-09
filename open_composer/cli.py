@@ -219,6 +219,34 @@ from open_composer.research.research_cache_manifest import (
     DEFAULT_RESEARCH_CACHE_DIR,
     verify_longbridge_research_cache_manifest,
 )
+from open_composer.research.route_cross_source import (
+    DEFAULT_ALT_DIR as ROUTE_CROSS_SOURCE_DEFAULT_ALT_DIR,
+)
+from open_composer.research.route_cross_source import (
+    DEFAULT_ALT_FEED as ROUTE_CROSS_SOURCE_DEFAULT_ALT_FEED,
+)
+from open_composer.research.route_cross_source import (
+    DEFAULT_ALT_SOURCE as ROUTE_CROSS_SOURCE_DEFAULT_ALT_SOURCE,
+)
+from open_composer.research.route_cross_source import (
+    DEFAULT_END as ROUTE_CROSS_SOURCE_DEFAULT_END,
+)
+from open_composer.research.route_cross_source import (
+    DEFAULT_OUT_DIR as ROUTE_CROSS_SOURCE_DEFAULT_OUT_DIR,
+)
+from open_composer.research.route_cross_source import (
+    DEFAULT_REPORT_DATE as ROUTE_CROSS_SOURCE_DEFAULT_REPORT_DATE,
+)
+from open_composer.research.route_cross_source import (
+    DEFAULT_SPEC_PATH as ROUTE_CROSS_SOURCE_DEFAULT_SPEC_PATH,
+)
+from open_composer.research.route_cross_source import (
+    DEFAULT_START as ROUTE_CROSS_SOURCE_DEFAULT_START,
+)
+from open_composer.research.route_cross_source import (
+    evaluate_route_cross_source_validation,
+    materialize_alt_daily_source,
+)
 from open_composer.review.llm import review_signal_with_status
 from open_composer.runner.paper import PaperRunnerError, run_paper_loop
 from open_composer.storage import find_signal
@@ -2274,6 +2302,47 @@ def data_verify_research_cache(
                 str(item["actual"]),
             )
         console.print(table)
+        raise typer.Exit(1)
+
+
+@data_app.command("fetch-alt-daily")
+def data_fetch_alt_daily(
+    source: str = typer.Option(ROUTE_CROSS_SOURCE_DEFAULT_ALT_SOURCE, "--source"),
+    feed: str | None = typer.Option(ROUTE_CROSS_SOURCE_DEFAULT_ALT_FEED, "--feed"),
+    start: str = typer.Option(ROUTE_CROSS_SOURCE_DEFAULT_START, "--start"),
+    end: str = typer.Option(ROUTE_CROSS_SOURCE_DEFAULT_END, "--end"),
+    output_dir: Annotated[Path | None, typer.Option("--output-dir")] = None,
+    symbols: str | None = typer.Option(
+        None,
+        "--symbols",
+        help="Comma-separated symbols; defaults to the primary research cache manifest.",
+    ),
+    refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+) -> None:
+    """Materialize an alternate daily source for fixed-route cross-source replay."""
+    parsed_symbols = (
+        [item.strip().upper() for item in symbols.split(",") if item.strip()] if symbols else None
+    )
+    try:
+        manifest = materialize_alt_daily_source(
+            root=project_root(),
+            source=source,
+            feed=feed,
+            symbols=parsed_symbols,
+            start=start,
+            end=end,
+            output_dir=output_dir,
+            refresh_data=refresh_data,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    manifest_path = Path(manifest["output_dir"]) / "manifest.json"
+    console.print(
+        f"[green]alternate daily source materialized[/green] "
+        f"source={source} symbols={len(manifest['symbols'])} errors={len(manifest['errors'])}"
+    )
+    console.print(f"manifest={manifest_path}")
+    if manifest["errors"]:
         raise typer.Exit(1)
 
 
@@ -4680,6 +4749,44 @@ def strategy_router_gate_eval(
     console.print(f"markdown={payload['artifact_paths']['markdown']}")
     if not accepted:
         raise typer.Exit(1)
+
+
+@strategy_app.command("route-cross-source-validation")
+def strategy_route_cross_source_validation(
+    spec: Annotated[Path, typer.Option("--spec")] = ROUTE_CROSS_SOURCE_DEFAULT_SPEC_PATH,
+    alt_source: str = typer.Option(ROUTE_CROSS_SOURCE_DEFAULT_ALT_SOURCE, "--alt-source"),
+    alt_feed: str | None = typer.Option(ROUTE_CROSS_SOURCE_DEFAULT_ALT_FEED, "--alt-feed"),
+    alt_dir: Annotated[Path, typer.Option("--alt-dir")] = ROUTE_CROSS_SOURCE_DEFAULT_ALT_DIR,
+    start: str = typer.Option(ROUTE_CROSS_SOURCE_DEFAULT_START, "--start"),
+    end: str = typer.Option(ROUTE_CROSS_SOURCE_DEFAULT_END, "--end"),
+    report_date: str = typer.Option(
+        ROUTE_CROSS_SOURCE_DEFAULT_REPORT_DATE,
+        "--report-date",
+    ),
+    output_dir: Annotated[Path, typer.Option("--output-dir")] = ROUTE_CROSS_SOURCE_DEFAULT_OUT_DIR,
+) -> None:
+    """Replay the fixed PDR route on primary and alternate daily sources."""
+    try:
+        verify_longbridge_research_cache_manifest(project_root())
+        payload = evaluate_route_cross_source_validation(
+            root=project_root(),
+            spec_path=spec,
+            alt_source=alt_source,
+            alt_feed=alt_feed,
+            alt_dir=alt_dir,
+            start=start,
+            end=end,
+            report_date=report_date,
+            out_dir=output_dir,
+        )
+    except (FileNotFoundError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]route cross-source validation written[/green] "
+        f"status={payload['status']} pass={payload['route_cross_source_pass']}"
+    )
+    console.print(f"json={payload['artifact_paths']['json']}")
+    console.print(f"markdown={payload['artifact_paths']['markdown']}")
 
 
 @strategy_app.command("router-cost-stress")
