@@ -1,0 +1,88 @@
+name: us_mom_minute_p3_overnight_intraday_qr1
+description: Research-only QQQ overnight-context and intraday-confirmation matrix for Step 9.4 mom_minute_r1.
+timeframe: 30m
+universe:
+  - QQQ
+  - TQQQ
+lifecycle: draft
+
+entry:
+  all:
+    - close > open
+    - roc(close, 1) > 0
+
+exit:
+  any:
+    - close < open
+    - roc(close, 1) <= 0
+
+risk:
+  max_trades_per_day: 6
+  max_position_weight: 1.0
+  stop_loss_pct: 4.0
+  take_profit_pct: 12.0
+
+costs:
+  commission_pct: 0.0
+  slippage_bps: 3.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: alpaca
+  symbol: QQQ
+  path: data/research/alpaca_minute/qqq_30m_alpaca_iex.csv
+  feed: iex
+
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_replay_cache
+
+llm_review:
+  enabled: false
+
+required_capabilities:
+  - market.alpaca_bars
+
+notes:
+  intent: >
+    Research-only Step 9.4 path P3. Overnight context and first-bar
+    confirmation are evaluated by the dedicated mom_minute_r1 harness.
+  research_design:
+    iter_id: mom_minute_r1
+    data_timeframe: 30m_or_1h
+    signal_timeframe: 30m_or_1h
+    rebalance_frequency: daily_intraday
+    method_variants:
+      - overnight_threshold
+      - first_bar_confirmation
+      - same_day_flat
+    factor_variants:
+      - qqq_overnight_return
+      - qqq_first_bar_return
+    parameter_ranges:
+      timeframe: [30m, 1h]
+      overnight_threshold_pct: [0.0, 0.5, 1.0]
+      intraday_confirm: [none, first_bar_same_sign]
+      holding_mode: [same_day_flat]
+    benchmark_family:
+      - QQQ_buy_hold
+      - TQQQ_buy_hold
+      - SPY_market_proxy
+      - BIL_cash_proxy
+      - naive_overnight_intraday_split
+    candidate_cap: 12
+    objective: net_return_after_wave_9_2_costs
+  caveats:
+    - Research-only Alpaca/IEX minute cache; not SIP/full-market or paper-ready evidence.
+    - This draft is not used by active specs or paper automation.

@@ -30,7 +30,7 @@ P3 uses `12` combinations:
 - timeframe: `30m`, `1h`
 - overnight_threshold_pct: `0.0`, `0.5`, `1.0`
 - intraday_confirm: `none`, `first_bar_same_sign`
-- holding_mode: `same_day_flat`, `next_day_close`
+- holding_mode: `same_day_flat`
 
 ## Benchmark Family
 
@@ -38,3 +38,10 @@ Each surviving candidate must compare against QQQ buy-and-hold, TQQQ
 buy-and-hold, SPY market proxy, BIL cash proxy, and a naive same-timeframe
 momentum or overnight/intraday split baseline. Results remain research-only
 until strict data and execution evidence are separately upgraded.
+
+## Final Artifact References
+
+- Trial ledger: `reports/research/iterations/mom_minute_r1/trial-ledger.jsonl`
+- Evaluation JSON: `reports/research/iterations/mom_minute_r1/evaluation-report.json`
+- Evaluation markdown: `reports/research/iterations/mom_minute_r1/evaluation-report.md`
+- Backtest forensics: `reports/harness/forensics/us_minute_momentum-backtest-forensics.md`

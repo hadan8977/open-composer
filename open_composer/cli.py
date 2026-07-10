@@ -716,6 +716,35 @@ def research_compare_command() -> None:
     console.print(f"markdown: {md_path}")
 
 
+@research_app.command("mom-minute-r1")
+def research_mom_minute_r1_command(
+    report_date: Annotated[str | None, typer.Option("--report-date")] = None,
+    smoke: Annotated[
+        bool,
+        typer.Option("--smoke", help="Run a two-trial smoke matrix for tests."),
+    ] = False,
+) -> None:
+    """Run the bounded Step 9.4 mom_minute_r1 research matrix."""
+    from open_composer.research.mom_minute_round import run_mom_minute_round
+
+    kwargs: dict[str, Any] = {}
+    if smoke:
+        kwargs = {
+            "p1_timeframes": ["30m"],
+            "p1_lookbacks": [3],
+            "p1_exit_styles": ["ema_cross"],
+            "p3_timeframes": ["30m"],
+            "p3_overnight_thresholds_pct": [0.0],
+            "p3_intraday_confirms": ["none"],
+        }
+    result = run_mom_minute_round(project_root(), report_date=report_date, **kwargs)
+    console.print("[green]mom_minute_r1 evaluation written[/green]")
+    console.print(f"json: {result.evaluation_json_path}")
+    console.print(f"markdown: {result.evaluation_markdown_path}")
+    console.print(f"trial ledger: {result.trial_ledger_path}")
+    console.print(f"forensics: {result.forensics_markdown_path}")
+
+
 @research_iteration_app.command("init")
 def research_iteration_init_command(
     iter_id: str,

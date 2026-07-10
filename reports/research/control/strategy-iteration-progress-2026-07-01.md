@@ -424,3 +424,45 @@ Decision:
 - Before any future defensive-exit ML iteration, require a stronger hypothesis
   for crisis-context discrimination and review whether the fixed route should
   remain the champion without ML gating.
+
+## Step 9 mom_minute_r1 Non-ML Minute Momentum Round
+
+Artifacts:
+
+- `reports/research/iterations/mom_minute_r1/evaluation-report.md`
+- `reports/research/iterations/mom_minute_r1/trial-ledger.jsonl`
+- `reports/harness/forensics/us_minute_momentum-backtest-forensics.md`
+- Draft specs:
+  `strategy_specs/drafts/us_mom_minute_p1_time_series_qr1.yaml` and
+  `strategy_specs/drafts/us_mom_minute_p3_overnight_intraday_qr1.yaml`
+
+Result:
+
+- Lifecycle: draft/research only; no active spec, paper behavior, broker path, or
+  ML training changed.
+- Data: isolated Alpaca/IEX minute research materialization under
+  `data/research/alpaca_minute/`; evidence remains research-only and not
+  SIP/full-market paper-ready.
+- Search: exactly 28 fixed non-ML trials, P1 `16` and P3 `12`; no widened search.
+- Verdict: `acceptance_gate.passed=false`; failed gate =
+  `at_least_one_path_continue`.
+- P1 best: `mom_minute_r1_p1_008`, QQQ signal / TQQQ exposure, `30m`,
+  `lookback_bars=96`, `atr_trail`; total return `88.93%`, annualized `36.71%`,
+  Sharpe `1.33`, MaxDD `-20.86%`, entries `158`, x2-cost total `71.90%`.
+- P1 blocker: recent fold gate failed because the last fold was positive but did
+  not beat the naive baseline (`33.9957%` vs `34.9662%`).
+- P3 best: `mom_minute_r1_p3_024`, `1h`, overnight threshold `0.0%`,
+  first-bar same-sign confirmation, same-day flat; total return `19.03%`,
+  Sharpe `0.83`, MaxDD `-8.41%`, entries `138`.
+- P3 blockers: recent fold gate failed and BIL `1h` benchmark proxy was
+  incomplete.
+
+Decision:
+
+- P1: pivot, not continue. This is the first useful momentum lead, but it needs
+  a simpler lower-overfit follow-up that beats the naive baseline in recent
+  folds.
+- P2: stop/defer until broader ETF minute data is available.
+- P3: pivot/defer; do not expand before P1 is simplified.
+- ML and AI-information rounds: blocked for now. Training or news features before
+  a non-ML path survives would optimize a failed decision surface.

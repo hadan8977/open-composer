@@ -1,0 +1,23 @@
+{
+  "strategy_name": "us_mom_minute_p3_overnight_intraday_qr1",
+  "spec_path": "strategy_specs/drafts/us_mom_minute_p3_overnight_intraday_qr1.yaml",
+  "risk_domains": [
+    "leveraged_etf"
+  ],
+  "required_skills": [
+    "backtest-forensics",
+    "execution-reality-reviewer"
+  ],
+  "required_artifacts": [
+    "gap_stress_report",
+    "leveraged_etf_risk_note"
+  ],
+  "blocking_rules": [
+    {
+      "domain": "leveraged_etf",
+      "rule_id": "leveraged_etf_paper_auto_requires_stress",
+      "blocks": "paper_ready_pass",
+      "description": "paper_auto activation for a leveraged ETF strategy requires a completed gap_stress_report and leveraged_etf_risk_note.\n"
+    }
+  ]
+}
