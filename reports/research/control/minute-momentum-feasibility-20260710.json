@@ -1,0 +1,978 @@
+{
+  "cost_table_bps": {
+    "15m": {
+      "base": 4.0,
+      "stress_2x": 8.0,
+      "stress_4x": 16.0
+    },
+    "1h": {
+      "base": 2.0,
+      "stress_2x": 4.0,
+      "stress_4x": 8.0
+    },
+    "1m": {
+      "base": 8.0,
+      "stress_2x": 16.0,
+      "stress_4x": 32.0
+    },
+    "30m": {
+      "base": 3.0,
+      "stress_2x": 6.0,
+      "stress_4x": 12.0
+    },
+    "5m": {
+      "base": 6.0,
+      "stress_2x": 12.0,
+      "stress_4x": 24.0
+    }
+  },
+  "feed": "iex",
+  "fetch_missing": false,
+  "frequency_band_go_no_go": {
+    "high_frequency_1m_5m": {
+      "go": true,
+      "go_timeframes": [
+        "1m",
+        "5m"
+      ],
+      "timeframes": {
+        "1m": {
+          "error_symbols": 2,
+          "go": true,
+          "go_reason": "max_history_months>=18.0",
+          "max_history_months": 24.42,
+          "ok_symbols": 2,
+          "symbols_checked": 4
+        },
+        "5m": {
+          "error_symbols": 2,
+          "go": true,
+          "go_reason": "max_history_months>=18.0",
+          "max_history_months": 24.42,
+          "ok_symbols": 2,
+          "symbols_checked": 4
+        }
+      }
+    },
+    "lower_frequency_1h": {
+      "go": true,
+      "go_timeframes": [
+        "1h"
+      ],
+      "timeframes": {
+        "1h": {
+          "error_symbols": 18,
+          "go": true,
+          "go_reason": "max_history_months>=18.0",
+          "max_history_months": 24.42,
+          "ok_symbols": 2,
+          "symbols_checked": 20
+        }
+      }
+    },
+    "medium_frequency_15m_30m": {
+      "go": true,
+      "go_timeframes": [
+        "15m",
+        "30m"
+      ],
+      "timeframes": {
+        "15m": {
+          "error_symbols": 18,
+          "go": true,
+          "go_reason": "max_history_months>=18.0",
+          "max_history_months": 24.42,
+          "ok_symbols": 2,
+          "symbols_checked": 20
+        },
+        "30m": {
+          "error_symbols": 18,
+          "go": true,
+          "go_reason": "max_history_months>=18.0",
+          "max_history_months": 24.42,
+          "ok_symbols": 2,
+          "symbols_checked": 20
+        }
+      }
+    }
+  },
+  "generated_at": "2026-07-10T09:48:02.612370+00:00",
+  "iex_caveat": "Alpaca IEX minute bars are research evidence, not consolidated SIP/full-market paper-ready market evidence unless account entitlements prove otherwise.",
+  "min_history_months_required": 18.0,
+  "output_dir": "data/research/alpaca_minute",
+  "overnight_policy": "path-specific; first round must declare flat or hold explicitly",
+  "path_suitability": {
+    "P1_time_series_etf_momentum": {
+      "go": true,
+      "go_timeframes": [
+        "15m",
+        "30m",
+        "1h"
+      ],
+      "reason": "requires QQQ history on 15m/30m/1h"
+    },
+    "P2_cross_sectional_etf_rotation": {
+      "go": false,
+      "go_timeframes": [],
+      "reason": "requires at least 8 ETF symbols with >=18 months in the same timeframe"
+    },
+    "P3_overnight_intraday_decomposition": {
+      "go": true,
+      "go_timeframes": [
+        "30m",
+        "1h"
+      ],
+      "reason": "requires QQQ history on 30m/1h plus daily/overnight decomposition"
+    }
+  },
+  "provider": "alpaca",
+  "report_type": "minute_momentum_feasibility",
+  "representative_symbols_1m_5m": [
+    "QQQ",
+    "SPY",
+    "TQQQ",
+    "XLK",
+    "NVDA"
+  ],
+  "requested_end": null,
+  "requested_start": null,
+  "rows": [
+    {
+      "extended_hours_present": true,
+      "extended_hours_ratio": 0.053843,
+      "first_timestamp": "2024-05-16T12:30:00+00:00",
+      "go": true,
+      "go_reason": "history_months>=18.0",
+      "history_months": 24.42,
+      "last_timestamp": "2026-05-29T16:04:00+00:00",
+      "path": "data/research/alpaca_minute/qqq_1m_alpaca_iex.csv",
+      "records": 192058,
+      "rth_days": 509,
+      "rth_gap_rate": 0.084595,
+      "sha256": "65ce5e254a78577256c370d802b6fca5dfe78a6d6894535732cddd47c4218f02",
+      "source_mode": "cache_copy",
+      "status": "ok",
+      "symbol": "QQQ",
+      "timeframe": "1m",
+      "zero_volume_ratio": 0.0
+    },
+    {
+      "error": "missing Alpaca cache for SPY 1m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "SPY",
+      "timeframe": "1m"
+    },
+    {
+      "extended_hours_present": true,
+      "extended_hours_ratio": 0.076723,
+      "first_timestamp": "2024-05-16T12:30:00+00:00",
+      "go": true,
+      "go_reason": "history_months>=18.0",
+      "history_months": 24.42,
+      "last_timestamp": "2026-05-29T16:04:00+00:00",
+      "path": "data/research/alpaca_minute/tqqq_1m_alpaca_iex.csv",
+      "records": 186905,
+      "rth_days": 509,
+      "rth_gap_rate": 0.130699,
+      "sha256": "a561c0fe420153146435f700efbb255ed71adb85c2a16e0c2abf40b8de50b318",
+      "source_mode": "cache_copy",
+      "status": "ok",
+      "symbol": "TQQQ",
+      "timeframe": "1m",
+      "zero_volume_ratio": 0.0
+    },
+    {
+      "error": "missing Alpaca cache for XLK 1m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLK",
+      "timeframe": "1m"
+    },
+    {
+      "extended_hours_present": true,
+      "extended_hours_ratio": 0.130203,
+      "first_timestamp": "2024-05-16T12:30:00+00:00",
+      "go": true,
+      "go_reason": "history_months>=18.0",
+      "history_months": 24.42,
+      "last_timestamp": "2026-05-29T16:00:00+00:00",
+      "path": "data/research/alpaca_minute/qqq_5m_alpaca_iex.csv",
+      "records": 45237,
+      "rth_days": 509,
+      "rth_gap_rate": 0.008942,
+      "sha256": "bea95196ad4e91650ea331625b7370df6907564907e7c8f74593807eeadb36f1",
+      "source_mode": "cache_resampled_from_1m",
+      "status": "ok",
+      "symbol": "QQQ",
+      "timeframe": "5m",
+      "zero_volume_ratio": 0.0
+    },
+    {
+      "error": "missing Alpaca cache for SPY 5m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "SPY",
+      "timeframe": "5m"
+    },
+    {
+      "extended_hours_present": true,
+      "extended_hours_ratio": 0.154039,
+      "first_timestamp": "2024-05-16T12:30:00+00:00",
+      "go": true,
+      "go_reason": "history_months>=18.0",
+      "history_months": 24.42,
+      "last_timestamp": "2026-05-29T16:00:00+00:00",
+      "path": "data/research/alpaca_minute/tqqq_5m_alpaca_iex.csv",
+      "records": 46365,
+      "rth_days": 509,
+      "rth_gap_rate": 0.012065,
+      "sha256": "40d65e0f5f84ad164ce20902e57e1915edca7232691fe42521ab26b690e297ba",
+      "source_mode": "cache_resampled_from_1m",
+      "status": "ok",
+      "symbol": "TQQQ",
+      "timeframe": "5m",
+      "zero_volume_ratio": 0.0
+    },
+    {
+      "error": "missing Alpaca cache for XLK 5m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLK",
+      "timeframe": "5m"
+    },
+    {
+      "extended_hours_present": true,
+      "extended_hours_ratio": 0.194174,
+      "first_timestamp": "2024-05-16T12:30:00+00:00",
+      "go": true,
+      "go_reason": "history_months>=18.0",
+      "history_months": 24.42,
+      "last_timestamp": "2026-05-29T16:00:00+00:00",
+      "path": "data/research/alpaca_minute/qqq_15m_alpaca_iex.csv",
+      "records": 16305,
+      "rth_days": 509,
+      "rth_gap_rate": 0.007178,
+      "sha256": "e42e3ff45f93cf8c5d97a22e99e2af82b06db77fc7fcc056f2cea2717fcf127b",
+      "source_mode": "cache_resampled_from_1m",
+      "status": "ok",
+      "symbol": "QQQ",
+      "timeframe": "15m",
+      "zero_volume_ratio": 0.0
+    },
+    {
+      "error": "missing Alpaca cache for SPY 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "SPY",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for IWM 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "IWM",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for DIA 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "DIA",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLB 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLB",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLC 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLC",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLE 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLE",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLF 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLF",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLI 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLI",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLK 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLK",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLP 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLP",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLRE 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLRE",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLU 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLU",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLV 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLV",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for XLY 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLY",
+      "timeframe": "15m"
+    },
+    {
+      "extended_hours_present": true,
+      "extended_hours_ratio": 0.212521,
+      "first_timestamp": "2024-05-16T12:30:00+00:00",
+      "go": true,
+      "go_reason": "history_months>=18.0",
+      "history_months": 24.42,
+      "last_timestamp": "2026-05-29T16:00:00+00:00",
+      "path": "data/research/alpaca_minute/tqqq_15m_alpaca_iex.csv",
+      "records": 16676,
+      "rth_days": 509,
+      "rth_gap_rate": 0.007707,
+      "sha256": "78195aed6d63680cbbae95fefdd2167830f4b6bfa2486ec1df481b630c632e7f",
+      "source_mode": "cache_resampled_from_1m",
+      "status": "ok",
+      "symbol": "TQQQ",
+      "timeframe": "15m",
+      "zero_volume_ratio": 0.0
+    },
+    {
+      "error": "missing Alpaca cache for SQQQ 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "SQQQ",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for GLD 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "GLD",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for TLT 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "TLT",
+      "timeframe": "15m"
+    },
+    {
+      "error": "missing Alpaca cache for BIL 15m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "BIL",
+      "timeframe": "15m"
+    },
+    {
+      "extended_hours_present": true,
+      "extended_hours_ratio": 0.226914,
+      "first_timestamp": "2024-05-16T12:30:00+00:00",
+      "go": true,
+      "go_reason": "history_months>=18.0",
+      "history_months": 24.42,
+      "last_timestamp": "2026-05-29T16:00:00+00:00",
+      "path": "data/research/alpaca_minute/qqq_30m_alpaca_iex.csv",
+      "records": 8501,
+      "rth_days": 509,
+      "rth_gap_rate": 0.006801,
+      "sha256": "7fb4ca8809b4f813bf2e2cb29f6a2cc4b2117ee52cd2b6341d1e99b44305cbcc",
+      "source_mode": "cache_resampled_from_1m",
+      "status": "ok",
+      "symbol": "QQQ",
+      "timeframe": "30m",
+      "zero_volume_ratio": 0.0
+    },
+    {
+      "error": "missing Alpaca cache for SPY 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "SPY",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for IWM 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "IWM",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for DIA 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "DIA",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLB 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLB",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLC 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLC",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLE 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLE",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLF 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLF",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLI 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLI",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLK 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLK",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLP 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLP",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLRE 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLRE",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLU 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLU",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLV 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLV",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for XLY 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLY",
+      "timeframe": "30m"
+    },
+    {
+      "extended_hours_present": true,
+      "extended_hours_ratio": 0.239931,
+      "first_timestamp": "2024-05-16T12:30:00+00:00",
+      "go": true,
+      "go_reason": "history_months>=18.0",
+      "history_months": 24.42,
+      "last_timestamp": "2026-05-29T16:00:00+00:00",
+      "path": "data/research/alpaca_minute/tqqq_30m_alpaca_iex.csv",
+      "records": 8640,
+      "rth_days": 509,
+      "rth_gap_rate": 0.007556,
+      "sha256": "092d1cc9320656a55c90e9f095258d98f9d4e66e9027f47f63f8cabe7ae8a93c",
+      "source_mode": "cache_resampled_from_1m",
+      "status": "ok",
+      "symbol": "TQQQ",
+      "timeframe": "30m",
+      "zero_volume_ratio": 0.0
+    },
+    {
+      "error": "missing Alpaca cache for SQQQ 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "SQQQ",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for GLD 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "GLD",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for TLT 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "TLT",
+      "timeframe": "30m"
+    },
+    {
+      "error": "missing Alpaca cache for BIL 30m iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "BIL",
+      "timeframe": "30m"
+    },
+    {
+      "extended_hours_present": true,
+      "extended_hours_ratio": 0.316974,
+      "first_timestamp": "2024-05-16T12:00:00+00:00",
+      "go": true,
+      "go_reason": "history_months>=18.0",
+      "history_months": 24.42,
+      "last_timestamp": "2026-05-29T16:00:00+00:00",
+      "path": "data/research/alpaca_minute/qqq_1h_alpaca_iex.csv",
+      "records": 4442,
+      "rth_days": 509,
+      "rth_gap_rate": 0.006549,
+      "sha256": "dbdc5ca0545b6208ebce949d43d6517a34d3f57792be4e46e310ffd24ba8f0dd",
+      "source_mode": "cache_resampled_from_1m",
+      "status": "ok",
+      "symbol": "QQQ",
+      "timeframe": "1h",
+      "zero_volume_ratio": 0.0
+    },
+    {
+      "error": "missing Alpaca cache for SPY 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "SPY",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for IWM 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "IWM",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for DIA 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "DIA",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLB 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLB",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLC 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLC",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLE 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLE",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLF 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLF",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLI 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLI",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLK 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLK",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLP 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLP",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLRE 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLRE",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLU 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLU",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLV 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLV",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for XLY 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "XLY",
+      "timeframe": "1h"
+    },
+    {
+      "extended_hours_present": true,
+      "extended_hours_ratio": 0.323588,
+      "first_timestamp": "2024-05-16T12:00:00+00:00",
+      "go": true,
+      "go_reason": "history_months>=18.0",
+      "history_months": 24.42,
+      "last_timestamp": "2026-05-29T16:00:00+00:00",
+      "path": "data/research/alpaca_minute/tqqq_1h_alpaca_iex.csv",
+      "records": 4481,
+      "rth_days": 509,
+      "rth_gap_rate": 0.007531,
+      "sha256": "2a59b79da4e027827bce2f3cec5c01fc2d79af2f68befa8c95d00ee7037a90b7",
+      "source_mode": "cache_resampled_from_1m",
+      "status": "ok",
+      "symbol": "TQQQ",
+      "timeframe": "1h",
+      "zero_volume_ratio": 0.0
+    },
+    {
+      "error": "missing Alpaca cache for SQQQ 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "SQQQ",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for GLD 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "GLD",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for TLT 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "TLT",
+      "timeframe": "1h"
+    },
+    {
+      "error": "missing Alpaca cache for BIL 1h iex",
+      "go": false,
+      "go_reason": "data_unavailable",
+      "history_months": 0.0,
+      "records": 0,
+      "status": "error",
+      "symbol": "BIL",
+      "timeframe": "1h"
+    }
+  ],
+  "rth_only_assumption": true,
+  "source_mode": "isolated_research_materialization",
+  "static_stock_universe_caveat": "Any current large-cap stock subset is static and survivorship-prone; ETF paths are preferred for mom_minute_r1.",
+  "symbols": [
+    "QQQ",
+    "SPY",
+    "IWM",
+    "DIA",
+    "XLB",
+    "XLC",
+    "XLE",
+    "XLF",
+    "XLI",
+    "XLK",
+    "XLP",
+    "XLRE",
+    "XLU",
+    "XLV",
+    "XLY",
+    "TQQQ",
+    "SQQQ",
+    "GLD",
+    "TLT",
+    "BIL"
+  ],
+  "timeframe_summary": {
+    "15m": {
+      "error_symbols": 18,
+      "go": true,
+      "go_reason": "max_history_months>=18.0",
+      "max_history_months": 24.42,
+      "ok_symbols": 2,
+      "symbols_checked": 20
+    },
+    "1h": {
+      "error_symbols": 18,
+      "go": true,
+      "go_reason": "max_history_months>=18.0",
+      "max_history_months": 24.42,
+      "ok_symbols": 2,
+      "symbols_checked": 20
+    },
+    "1m": {
+      "error_symbols": 2,
+      "go": true,
+      "go_reason": "max_history_months>=18.0",
+      "max_history_months": 24.42,
+      "ok_symbols": 2,
+      "symbols_checked": 4
+    },
+    "30m": {
+      "error_symbols": 18,
+      "go": true,
+      "go_reason": "max_history_months>=18.0",
+      "max_history_months": 24.42,
+      "ok_symbols": 2,
+      "symbols_checked": 20
+    },
+    "5m": {
+      "error_symbols": 2,
+      "go": true,
+      "go_reason": "max_history_months>=18.0",
+      "max_history_months": 24.42,
+      "ok_symbols": 2,
+      "symbols_checked": 4
+    }
+  }
+}

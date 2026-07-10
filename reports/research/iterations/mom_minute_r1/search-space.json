@@ -1,13 +1,77 @@
 {
-  "cost_table_path": "",
-  "data_feasibility_path": "",
+  "cost_table_path": "reports/research/control/minute-momentum-feasibility-20260710.json",
+  "data_feasibility_path": "reports/research/control/minute-momentum-feasibility-20260710.md",
   "evaluation_report_paths": [],
   "iter_id": "mom_minute_r1",
-  "paths": [],
+  "paths": [
+    {
+      "benchmark_family": [
+        "QQQ_buy_hold",
+        "BIL_cash_proxy",
+        "SPY_market_proxy",
+        "TQQQ_buy_hold",
+        "naive_same_timeframe_momentum"
+      ],
+      "candidate_count": 16,
+      "hypothesis_refs": [
+        "H1"
+      ],
+      "name": "P1_time_series_etf_momentum",
+      "parameters": {
+        "exit_style": [
+          "ema_cross",
+          "atr_trail"
+        ],
+        "lookback_bars": [
+          12,
+          24,
+          48,
+          96
+        ],
+        "timeframe": [
+          "30m",
+          "1h"
+        ]
+      }
+    },
+    {
+      "benchmark_family": [
+        "QQQ_buy_hold",
+        "BIL_cash_proxy",
+        "SPY_market_proxy",
+        "TQQQ_buy_hold",
+        "naive_overnight_intraday_split"
+      ],
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "H2"
+      ],
+      "name": "P3_overnight_intraday_decomposition",
+      "parameters": {
+        "holding_mode": [
+          "same_day_flat",
+          "next_day_close"
+        ],
+        "intraday_confirm": [
+          "none",
+          "first_bar_same_sign"
+        ],
+        "overnight_threshold_pct": [
+          0.0,
+          0.5,
+          1.0
+        ],
+        "timeframe": [
+          "30m",
+          "1h"
+        ]
+      }
+    }
+  ],
   "schema_version": 1,
   "source_spec_path": null,
   "spec_hash": null,
   "strategy_name": "us_minute_momentum",
-  "total_candidate_budget": 80,
+  "total_candidate_budget": 28,
   "trial_ledger_paths": []
 }

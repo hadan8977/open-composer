@@ -779,6 +779,19 @@ def _parse_kv_pairs(raw: str) -> dict[str, Any]:
     return result
 
 
+def _csv_list(raw: str | None) -> list[str] | None:
+    if raw is None:
+        return None
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def _csv_upper(raw: str | None) -> list[str] | None:
+    values = _csv_list(raw)
+    if values is None:
+        return None
+    return [item.upper() for item in values]
+
+
 def _parse_scalar(raw: str) -> Any:
     lowered = raw.lower()
     if lowered == "true":
@@ -2366,6 +2379,56 @@ def data_verify_research_cache(
             )
         console.print(table)
         raise typer.Exit(1)
+
+
+@data_app.command("minute-momentum-feasibility")
+def data_minute_momentum_feasibility(
+    symbols: Annotated[
+        str | None,
+        typer.Option("--symbols", help="Comma-separated symbols; defaults to Step 9 ETF set."),
+    ] = None,
+    representative_symbols: Annotated[
+        str | None,
+        typer.Option(
+            "--representative-symbols",
+            help="Comma-separated representative symbols for 1m/5m sampling.",
+        ),
+    ] = None,
+    timeframes: Annotated[
+        str | None,
+        typer.Option(
+            "--timeframes", help="Comma-separated timeframes; defaults to 1m,5m,15m,30m,1h."
+        ),
+    ] = None,
+    start: Annotated[str | None, typer.Option("--start")] = None,
+    end: Annotated[str | None, typer.Option("--end")] = None,
+    feed: Annotated[str | None, typer.Option("--feed")] = None,
+    fetch_missing: Annotated[bool, typer.Option("--fetch-missing/--cache-only")] = False,
+    report_date: Annotated[str | None, typer.Option("--report-date")] = None,
+) -> None:
+    """Materialize isolated Alpaca minute-data feasibility artifacts."""
+    from open_composer.research.minute_momentum_feasibility import (
+        run_minute_momentum_feasibility,
+    )
+
+    try:
+        result = run_minute_momentum_feasibility(
+            project_root(),
+            symbols=_csv_upper(symbols),
+            representative_symbols=_csv_upper(representative_symbols),
+            timeframes=_csv_list(timeframes),
+            start=start,
+            end=end,
+            feed=feed,
+            fetch_missing=fetch_missing,
+            report_date=report_date,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]minute momentum feasibility written[/green]")
+    console.print(f"json: {result.json_path}")
+    console.print(f"markdown: {result.markdown_path}")
+    console.print(f"manifest: {result.manifest_path}")
 
 
 @data_app.command("fetch-alt-daily")
