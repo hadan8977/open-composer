@@ -1,12 +1,141 @@
 {
-  "candidate_matrix_revisions": [],
-  "hypothesis_links": [],
+  "candidate_matrix_revisions": [
+    {
+      "action": "keep",
+      "path": "P1_time_series_etf_momentum",
+      "reason": "Time-series momentum is a credible baseline family, and Wave 9.2 gives QQQ/TQQQ >=18 months of 30m/1h data. Keep the first round non-ML and cost-gated."
+    },
+    {
+      "action": "stop",
+      "path": "P2_cross_sectional_etf_rotation",
+      "reason": "Intraday cross-sectional research is relevant, but Wave 9.2 found fewer than eight ETF symbols with >=18 months of usable same-timeframe minute data. Running P2 now would mix data gaps with strategy evidence."
+    },
+    {
+      "action": "keep",
+      "path": "P3_overnight_intraday_decomposition",
+      "reason": "The overnight/intraday literature supports treating this as a separate hypothesis. Keep it bounded to QQQ 30m/1h with an explicit naive split baseline."
+    },
+    {
+      "action": "defer",
+      "path": "P4_volatility_adjusted_momentum",
+      "reason": "Volatility-managed momentum and crash evidence are important, but adding P4 as a separate round-1 search path would expand parameters before a base signal survives. Use it only as a follow-up design note."
+    }
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "H1",
+      "path": "P1_time_series_etf_momentum",
+      "source_claim_ids": [
+        "us_minute_momentum:time_series_momentum_baseline",
+        "us_minute_momentum:trading_costs_anomalies",
+        "us_minute_momentum:momentum_crash_risk"
+      ]
+    },
+    {
+      "hypothesis_id": "H2",
+      "path": "P3_overnight_intraday_decomposition",
+      "source_claim_ids": [
+        "us_minute_momentum:market_intraday_momentum_open_close",
+        "us_minute_momentum:overnight_intraday_decomposition",
+        "us_minute_momentum:trading_costs_anomalies"
+      ]
+    },
+    {
+      "hypothesis_id": "H3",
+      "path": "P2_cross_sectional_etf_rotation",
+      "source_claim_ids": [
+        "us_minute_momentum:intraday_cross_section_patterns",
+        "us_minute_momentum:alpaca_iex_feed_caveat"
+      ]
+    }
+  ],
   "iter_id": "mom_minute_r1",
   "objective": "US minute momentum round 1",
   "schema_version": 1,
   "source_spec_path": null,
-  "sources": [],
+  "sources": [
+    {
+      "credibility": "high",
+      "core_claim": "Time-series momentum is a documented cross-asset return pattern, but the canonical evidence is much lower frequency than minute ETF trading.",
+      "project_applicability": "Use as a baseline motivation for P1 only; require local minute-data, costs, and walk-forward gates before continuing.",
+      "published_or_updated_at": "2012",
+      "reflection": "The effect can decay or fail after costs at minute horizons; do not infer paper readiness from the paper.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2089463"
+    },
+    {
+      "credibility": "high",
+      "core_claim": "Early-day market returns can contain information about late-day market returns.",
+      "project_applicability": "Supports testing P3 with open/overnight information and RTH intraday confirmation.",
+      "published_or_updated_at": "2018",
+      "reflection": "Opening effects are sensitive to market structure, sample period, and transaction costs; require naive split baseline.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2440866"
+    },
+    {
+      "credibility": "high",
+      "core_claim": "Overnight and intraday expected returns can behave differently and should be decomposed instead of blended.",
+      "project_applicability": "Keep P3 separate from P1 with overnight-threshold and intraday-confirm parameters.",
+      "published_or_updated_at": "2019",
+      "reflection": "Decomposition evidence may be regime-dependent and can vanish after ETF spread/slippage.",
+      "source_type": "paper",
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X19300650"
+    },
+    {
+      "credibility": "high",
+      "core_claim": "Volatility-managed momentum can improve risk-adjusted performance in momentum research.",
+      "project_applicability": "Reserve volatility targeting/regime filtering for a second-round extension after a base P1/P3 signal survives.",
+      "published_or_updated_at": "2015",
+      "reflection": "Adding volatility controls now would enlarge the search and increase overfit risk before base evidence exists.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2041429"
+    },
+    {
+      "credibility": "high",
+      "core_claim": "Momentum strategies can experience crash regimes and sharp reversals.",
+      "project_applicability": "Require recent-fold positivity and drawdown/regime notes in 9.4 decision making.",
+      "published_or_updated_at": "2014",
+      "reflection": "Crash evidence is not minute-specific; use it as a risk-control requirement, not a claim that P1/P3 works.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/papers/w20439"
+    },
+    {
+      "credibility": "high",
+      "core_claim": "Intraday cross-sectional return patterns exist but require broad, clean intraday data and cost-aware implementation.",
+      "project_applicability": "Supports the concept of P2 but also supports stopping it when same-timeframe ETF coverage is inadequate.",
+      "published_or_updated_at": "2010",
+      "reflection": "Static current ETF lists and sparse local minute cache would confound P2 results.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1107590"
+    },
+    {
+      "credibility": "high",
+      "core_claim": "Trading costs can materially erode anomaly returns and must be part of strategy evaluation.",
+      "project_applicability": "Use Wave 9.2 base/x2/x4 bps assumptions in every 9.4 trial and stop cost-negative paths.",
+      "published_or_updated_at": "2018",
+      "reflection": "The paper is broader than QQQ minute trading, so actual fill evidence remains a later paper-stage requirement.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2294498"
+    },
+    {
+      "credibility": "high",
+      "core_claim": "Alpaca market data distinguishes feed entitlements such as IEX and SIP; feed choice affects market-data completeness.",
+      "project_applicability": "Label current Alpaca/IEX minute evidence as research-only and do not claim paper-ready full-market evidence.",
+      "published_or_updated_at": "accessed 2026-07-10",
+      "reflection": "Provider docs are living docs and must be rechecked before any paper/live execution decision.",
+      "source_type": "provider_official_docs",
+      "url": "https://docs.alpaca.markets/docs/market-data-faq"
+    }
+  ],
   "spec_hash": null,
   "strategy_name": "us_minute_momentum",
-  "topic_coverage": []
+  "topic_coverage": [
+    "intraday/minute-level time-series momentum and reversal",
+    "cross-sectional intraday momentum and same-timeframe coverage limits",
+    "overnight versus intraday return decomposition",
+    "volatility-managed momentum and momentum crash risk",
+    "opening/early-day market intraday momentum effects",
+    "transaction costs, spreads, and high-turnover anomaly implementation",
+    "Alpaca IEX feed caveat and research-only data status"
+  ]
 }
