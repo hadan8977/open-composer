@@ -92,6 +92,14 @@ Interpretation:
   2. add a promotion mode that evaluates ML OOS on the existing purged ML prediction stream instead of short slices that can be dominated by warm-up;
   3. then rerun a small gate-SMA search with a real trial ledger and forensics.
 
+## Step 9 Pivot - 2026-07-10
+
+- Decision: stop treating `nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate` as the target strategy for the current user objective.
+- Reason: the active PDR route is intentionally defensive and currently targets GLD (`defGLD`). That behavior is consistent with the route design, but it is too conservative for the user's requested performance-seeking momentum strategy.
+- Execution-chain status: Step 9.0 proved the Alpaca Paper path can reach `paper_order_submitted`, but account alignment remained blocked by an open/accepted order and state drift. This is retained as paper execution evidence, not as alpha evidence.
+- New target: rebuild around `mom_minute_r1`, a fresh US minute-momentum research iteration with external brief, minute-data feasibility, bounded non-ML search, benchmark family, cost stress, and a decision record.
+- Safety boundary: no active StrategySpec changes, no promotion, no paper readiness, and no live broker writes for the new momentum line until the iteration dossier and research evidence pass their gates.
+
 Current next action:
 
 - Keep the original candidate as the champion.

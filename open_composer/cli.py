@@ -306,6 +306,7 @@ agent_app = typer.Typer(no_args_is_help=True)
 research_brief_app = typer.Typer(no_args_is_help=True)
 factor_app = typer.Typer(no_args_is_help=True)
 research_app = typer.Typer(no_args_is_help=True)
+research_iteration_app = typer.Typer(no_args_is_help=True)
 console = Console()
 PDR_ML_GATE_DEFAULT_SPEC_PATH = Path(
     "strategy_specs/drafts/nasdaq_tqqq_pdr_router_mlgate_iter1.yaml"
@@ -335,6 +336,7 @@ app.add_typer(project_app, name="project")
 app.add_typer(agent_app, name="agent")
 app.add_typer(factor_app, name="factor")
 app.add_typer(research_app, name="research")
+research_app.add_typer(research_iteration_app, name="iteration")
 
 
 @app.callback()
@@ -712,6 +714,54 @@ def research_compare_command() -> None:
     console.print("[green]cross-thesis compare written[/green]")
     console.print(f"json: {json_path}")
     console.print(f"markdown: {md_path}")
+
+
+@research_iteration_app.command("init")
+def research_iteration_init_command(
+    iter_id: str,
+    overwrite: Annotated[bool, typer.Option("--overwrite")] = False,
+) -> None:
+    """Create a research iteration dossier skeleton."""
+    from open_composer.research.iteration_dossier import init_iteration_dossier
+
+    try:
+        paths = init_iteration_dossier(iter_id, project_root(), overwrite=overwrite)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]iteration dossier initialized[/green] {iter_id}")
+    console.print(f"root: {paths.root}")
+    console.print(f"external brief: {paths.external_brief_json}")
+    console.print(f"decision record: {paths.decision_record_md}")
+
+
+@research_iteration_app.command("validate")
+def research_iteration_validate_command(
+    iter_id: str,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+    stage: Annotated[
+        str,
+        typer.Option(
+            "--stage",
+            help="Validation stage: pre-backtest or final.",
+        ),
+    ] = "pre-backtest",
+) -> None:
+    """Validate a research iteration dossier before optimization."""
+    from open_composer.research.iteration_dossier import (
+        render_validation_markdown,
+        validate_iteration_dossier,
+    )
+
+    try:
+        result = validate_iteration_dossier(iter_id, project_root(), stage=stage)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if json_output:
+        sys.stdout.write(json.dumps(result.to_dict(project_root()), indent=2) + "\n")
+    else:
+        console.print(render_validation_markdown(result))
+    if not result.ok:
+        raise typer.Exit(1)
 
 
 def _parse_kv_pairs(raw: str) -> dict[str, Any]:

@@ -960,6 +960,18 @@ def _gate_summary(
         "execution_substate": execution_substate,
         "blocked_checks": blocked,
         "warning_checks": warning,
+        "paper_change_cadence": {
+            "status": "manual_review_required",
+            "policy": (
+                "paper-stage spec changes require a linked decision record and at least "
+                "10 trading days since the prior paper-stage change unless the change is "
+                "a documented risk-reduction kill-rule exception"
+            ),
+            "automation_limit": (
+                "current StrategyVersion metadata does not yet prove iteration_id, "
+                "decision_record_path, change_reason, or risk_reduction_only"
+            ),
+        },
     }
 
 
@@ -974,6 +986,10 @@ def _render_markdown(report: PaperStrategyReadinessReport) -> str:
         f"- Execution substate: `{report.execution_substate}`",
         "- Gate taxonomy: workflow_pass, research_pass, llm_contribution_pass, paper_ready_pass.",
         f"- Gate summary: `{report.gate_summary}`",
+        (
+            "- Paper change cadence: paper-stage spec changes require a linked decision "
+            "record and >=10 trading days unless a documented de-risk exception applies."
+        ),
         "- Safety note: paper readiness is a control gate for Alpaca Paper only, not live trading.",
         "",
         "## Checks",

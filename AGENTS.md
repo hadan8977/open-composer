@@ -14,6 +14,7 @@
 - Link journal entries and paper orders to signal IDs.
 - Choose data, event, macro, and news sources through `capabilities/registry.yaml`.
 - Run capability evaluation before adding a new required strategy capability.
+- Before any new strategy iteration or optimization round, run `oc research iteration validate <iter_id>`; if it fails, do not start research, backtests, promotion, or paper-stage spec changes for that round.
 - benchmark family evidence must include same-symbol buy-and-hold, equal-weight universe, market proxy, sector/theme proxy, cash proxy, and ex-post best symbol when available.
 - Separate workflow_pass, research_pass, llm_contribution_pass, and paper_ready_pass; do not promote a workflow pass as Alpha or paper readiness.
 - Sample, fixture, cache fallback, and trial/research-only data are not paper-ready market evidence.
