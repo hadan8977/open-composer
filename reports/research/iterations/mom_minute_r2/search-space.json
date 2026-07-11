@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_minute_r2",
+  "strategy_name": "us_mom_minute_p1_time_series_qr2",
+  "source_spec_path": "strategy_specs/drafts/us_mom_minute_p1_time_series_qr2.yaml",
+  "spec_hash": "1ba50604976b22d74183e8bccdc066d2c17f7321387484977ac39454ec2fa423",
+  "total_candidate_budget": 9,
+  "paths": [
+    {
+      "name": "P1_time_series_etf_momentum",
+      "hypothesis_refs": ["H1", "H2"],
+      "parameters": {
+        "timeframe": ["30m"],
+        "lookback_bars": [72, 96, 120],
+        "atr_filter_multiplier": [1.5, 2.0, 2.5]
+      },
+      "candidate_count": 9,
+      "benchmark_family": [
+        "QQQ_buy_hold",
+        "TQQQ_buy_hold",
+        "SPY_market_proxy",
+        "XLK_sector_theme_proxy",
+        "BIL_cash_proxy",
+        "equal_weight_universe",
+        "ex_post_best_symbol",
+        "naive_same_timeframe_momentum"
+      ]
+    }
+  ],
+  "trial_ledger_paths": [
+    "reports/research/iterations/mom_minute_r2/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/mom_minute_r2/evaluation-report.json",
+    "reports/research/iterations/mom_minute_r2/evaluation-report.md"
+  ],
+  "cost_table_path": "reports/research/control/minute-momentum-feasibility-20260710.json",
+  "data_feasibility_path": "reports/research/control/minute-momentum-feasibility-20260710.json"
+}
