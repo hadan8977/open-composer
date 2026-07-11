@@ -7,13 +7,74 @@ import pandas as pd
 from typer.testing import CliRunner
 
 from open_composer.cli import app
-from open_composer.research.mom_minute_round import run_mom_minute_round
+from open_composer.research.mom_minute_round import (
+    _align_signal_and_trade,
+    _benchmarks,
+    _load_research_frame,
+    _strategy_returns,
+    run_mom_minute_round,
+)
+
+
+def test_strategy_returns_execute_from_next_bar_open(sample_workspace: Path) -> None:
+    _write_symbol(sample_workspace, "qqq", "30m")
+    _write_symbol(sample_workspace, "tqqq", "30m", leverage=2.5)
+    signal = _load_research_frame(sample_workspace, "QQQ", "30m")
+    traded = _load_research_frame(sample_workspace, "TQQQ", "30m")
+    assert signal is not None and traded is not None
+    aligned = _align_signal_and_trade(signal, traded)
+    returns = _strategy_returns(
+        aligned,
+        pd.Series(1.0, index=aligned.index),
+        cost_bps=0.0,
+        allow_overnight=True,
+    )
+
+    expected = aligned.iloc[0]["next_execution_open"] / aligned.iloc[0]["execution_open"] - 1
+    assert returns.iloc[0] == expected
+    assert aligned.iloc[0]["execution_open"] == aligned.iloc[1]["trade_open"]
+
+
+def test_benchmarks_require_overlap_and_include_full_family(sample_workspace: Path) -> None:
+    for symbol, leverage in [
+        ("qqq", 1.0),
+        ("tqqq", 2.5),
+        ("spy", 0.8),
+        ("xlk", 1.1),
+        ("bil", 0.05),
+    ]:
+        _write_symbol(sample_workspace, symbol, "30m", leverage=leverage)
+    bundle = {
+        symbol: _load_research_frame(sample_workspace, symbol, "30m")
+        for symbol in ["QQQ", "TQQQ", "SPY", "XLK", "BIL"]
+    }
+    qqq = bundle["QQQ"]
+    assert qqq is not None
+    index = pd.DatetimeIndex(pd.to_datetime(qqq["timestamp"], utc=True)[:20])
+
+    benchmarks = _benchmarks(bundle, "30m", index)
+
+    assert all(
+        name in benchmarks
+        for name in [
+            "QQQ_buy_hold",
+            "TQQQ_buy_hold",
+            "SPY_market_proxy",
+            "XLK_sector_theme_proxy",
+            "BIL_cash_proxy",
+            "equal_weight_universe",
+            "ex_post_best_symbol",
+        ]
+    )
+    missing_index = pd.DatetimeIndex([pd.Timestamp("2030-01-01T14:30:00Z")])
+    assert _benchmarks(bundle, "30m", missing_index)["QQQ_buy_hold"]["available"] is False
 
 
 def test_mom_minute_round_writes_bounded_ledger(sample_workspace: Path) -> None:
     _write_symbol(sample_workspace, "qqq", "30m")
     _write_symbol(sample_workspace, "tqqq", "30m", leverage=2.5)
     _write_symbol(sample_workspace, "spy", "30m", leverage=0.8)
+    _write_symbol(sample_workspace, "xlk", "30m", leverage=1.1)
     _write_symbol(sample_workspace, "bil", "30m", leverage=0.05)
 
     result = run_mom_minute_round(
@@ -35,6 +96,8 @@ def test_mom_minute_round_writes_bounded_ledger(sample_workspace: Path) -> None:
     payload = json.loads(result.evaluation_json_path.read_text(encoding="utf-8"))
     assert payload["search_space"]["candidate_count"] == 2
     assert payload["paper_ready_pass"] is False
+    assert payload["trials"][0]["oos_evidence"] is False
+    assert payload["trials"][0]["folds"] == []
 
 
 def test_mom_minute_round_cli(sample_workspace: Path, monkeypatch) -> None:
@@ -42,6 +105,7 @@ def test_mom_minute_round_cli(sample_workspace: Path, monkeypatch) -> None:
     _write_symbol(sample_workspace, "qqq", "30m")
     _write_symbol(sample_workspace, "tqqq", "30m", leverage=2.5)
     _write_symbol(sample_workspace, "spy", "30m", leverage=0.8)
+    _write_symbol(sample_workspace, "xlk", "30m", leverage=1.1)
     _write_symbol(sample_workspace, "bil", "30m", leverage=0.05)
 
     result = CliRunner().invoke(

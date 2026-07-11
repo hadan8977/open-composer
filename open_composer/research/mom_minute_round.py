@@ -188,7 +188,7 @@ def _load_bundle(root: Path, timeframe: str) -> dict[str, pd.DataFrame | None]:
         raise ValueError(f"unsupported mom_minute_r1 timeframe: {timeframe}")
     return {
         symbol: _load_research_frame(root, symbol, timeframe)
-        for symbol in ["QQQ", "TQQQ", "SPY", "BIL"]
+        for symbol in ["QQQ", "TQQQ", "SPY", "XLK", "BIL"]
     }
 
 
@@ -375,8 +375,11 @@ def _align_signal_and_trade(signal: pd.DataFrame, traded: pd.DataFrame) -> pd.Da
         }
     )
     aligned = signal_cols.merge(trade_cols, on="timestamp", how="inner").sort_values("timestamp")
-    aligned["next_trade_return"] = aligned["trade_close"].shift(-1) / aligned["trade_close"] - 1
-    aligned["next_session_date"] = aligned["session_date"].shift(-1)
+    aligned["execution_open"] = aligned["trade_open"].shift(-1)
+    aligned["next_execution_open"] = aligned["trade_open"].shift(-2)
+    aligned["next_trade_return"] = aligned["next_execution_open"] / aligned["execution_open"] - 1
+    aligned["execution_session_date"] = aligned["session_date"].shift(-1)
+    aligned["next_session_date"] = aligned["session_date"].shift(-2)
     return aligned.dropna(subset=["next_trade_return"]).reset_index(drop=True)
 
 
@@ -425,7 +428,7 @@ def _strategy_returns(
 ) -> pd.Series:
     pos = position.reindex(frame.index).fillna(0.0).astype(float)
     if not allow_overnight:
-        same_session_next = frame["session_date"] == frame["next_session_date"]
+        same_session_next = frame["execution_session_date"] == frame["next_session_date"]
         pos = pos.where(same_session_next, 0.0)
     turnover = pos.diff().abs()
     if len(turnover):
@@ -462,7 +465,7 @@ def _trial_payload(
         _scale_cost_stress(candidate_returns, bundle, timeframe, params, stress_multiplier=4.0)
     )
     naive_metrics = _metrics(naive_returns)
-    folds = _folds(candidate_returns, naive_returns)
+    folds = _diagnostic_slices(candidate_returns, naive_returns)
     benchmark_complete = all(item.get("available") for item in benchmarks.values())
     recent_folds = folds[-2:] if len(folds) >= 2 else folds
     recent_gate = bool(
@@ -506,7 +509,9 @@ def _trial_payload(
         },
         "naive_baseline": naive_metrics,
         "benchmark_family": benchmarks,
-        "folds": folds,
+        "diagnostic_slices": folds,
+        "folds": [],
+        "oos_evidence": False,
         "quality_flags": rejection_reasons,
         "rejection_reason": ",".join(rejection_reasons) if rejection_reasons else None,
         "artifact_paths": {},
@@ -567,6 +572,7 @@ def _benchmarks(
         "QQQ_buy_hold": "QQQ",
         "TQQQ_buy_hold": "TQQQ",
         "SPY_market_proxy": "SPY",
+        "XLK_sector_theme_proxy": "XLK",
         "BIL_cash_proxy": "BIL",
     }
     result: dict[str, dict[str, Any]] = {}
@@ -575,10 +581,49 @@ def _benchmarks(
         if frame is None or frame.empty:
             result[label] = {"available": False, "reason": f"missing {symbol} {timeframe} data"}
             continue
-        returns = frame["close"].shift(-1) / frame["close"] - 1
+        returns = frame["open"].shift(-2) / frame["open"].shift(-1) - 1
         returns.index = pd.to_datetime(frame["timestamp"], utc=True)
-        aligned = returns.reindex(index).fillna(0.0)
-        result[label] = {"available": True, **_metrics(aligned)}
+        aligned = returns.reindex(index).dropna()
+        if aligned.empty:
+            result[label] = {
+                "available": False,
+                "reason": f"no overlapping {symbol} {timeframe} timestamps",
+            }
+            continue
+        result[label] = {
+            "available": True,
+            "coverage_ratio": round(len(aligned) / max(len(index), 1), 6),
+            **_metrics(aligned),
+        }
+
+    available_returns: dict[str, pd.Series] = {}
+    for symbol in ["QQQ", "TQQQ", "SPY", "XLK"]:
+        frame = bundle.get(symbol)
+        if frame is None or frame.empty:
+            continue
+        returns = frame["open"].shift(-2) / frame["open"].shift(-1) - 1
+        returns.index = pd.to_datetime(frame["timestamp"], utc=True)
+        available_returns[symbol] = returns.reindex(index)
+    universe = pd.DataFrame(available_returns).dropna(how="any")
+    if universe.empty:
+        reason = "no common benchmark timestamps"
+        result["equal_weight_universe"] = {"available": False, "reason": reason}
+        result["ex_post_best_symbol"] = {"available": False, "reason": reason}
+    else:
+        result["equal_weight_universe"] = {
+            "available": True,
+            "symbols": list(universe.columns),
+            **_metrics(universe.mean(axis=1)),
+        }
+        totals = {
+            symbol: _metrics(universe[symbol])["total_return_pct"] for symbol in universe.columns
+        }
+        best_symbol = max(totals, key=totals.get)
+        result["ex_post_best_symbol"] = {
+            "available": True,
+            "symbol": best_symbol,
+            **_metrics(universe[best_symbol]),
+        }
     return result
 
 
@@ -622,13 +667,16 @@ def _trading_years(returns: pd.Series) -> float:
     return max(calendar_years, len(returns) / (252 * 13))
 
 
-def _folds(candidate: pd.Series, naive: pd.Series, fold_count: int = 4) -> list[dict[str, Any]]:
+def _diagnostic_slices(
+    candidate: pd.Series, naive: pd.Series, slice_count: int = 4
+) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     candidate = candidate.dropna()
-    naive = naive.reindex(candidate.index).fillna(0.0)
+    naive = naive.reindex(candidate.index).dropna()
+    candidate = candidate.reindex(naive.index)
     if candidate.empty:
         return rows
-    indices = np.array_split(np.arange(len(candidate)), fold_count)
+    indices = np.array_split(np.arange(len(candidate)), slice_count)
     for fold_index, positions in enumerate(indices, start=1):
         if len(positions) == 0:
             continue
@@ -636,7 +684,8 @@ def _folds(candidate: pd.Series, naive: pd.Series, fold_count: int = 4) -> list[
         base = naive.iloc[positions]
         rows.append(
             {
-                "fold": fold_index,
+                "slice": fold_index,
+                "evidence_role": "diagnostic_only_not_oos",
                 "start": cand.index.min().isoformat(),
                 "end": cand.index.max().isoformat(),
                 "candidate_total_return_pct": _metrics(cand)["total_return_pct"],
@@ -756,8 +805,8 @@ def _write_forensics(
         trading_days = int(best["metrics"].get("trading_days", 0))
     forensics = {
         "strategy_name": STRATEGY_NAME,
-        "lookahead_check": "pass",
-        "future_leak_check": "pass",
+        "lookahead_check": "pass_next_open_alignment",
+        "future_leak_check": "not_applicable_non_ml",
         "overfit_risk": "medium" if len(trials) <= 30 else "high",
         "multiple_testing_count": len(trials),
         "pbo_proxy": None,
@@ -772,8 +821,8 @@ def _write_forensics(
         "short_sample": False,
         "conclusion": "warning",
         "notes": (
-            "The 28-trial non-ML minute round used fixed grids and index-shifted signals. "
-            "No candidate is promoted; benchmark/data caveats keep this at research-only status."
+            "Signals are decided at bar close and executed at the next bar open. "
+            "Chronological slices are diagnostic only, not walk-forward or OOS evidence."
         ),
     }
     json_path = root / FORENSICS_DIR / f"{STRATEGY_NAME}-backtest-forensics.json"
@@ -793,11 +842,11 @@ def _render_forensics_markdown(forensics: dict[str, Any], payload: dict[str, Any
         "",
         (
             f"- Lookahead: {forensics['lookahead_check']}. Signals are computed "
-            "from bar-close data and applied to the next bar return."
+            "at bar close and applied from the next bar open to the following bar open."
         ),
         (
-            f"- Future leak: {forensics['future_leak_check']}. No fitted model "
-            "or future-window feature is used."
+            f"- Future leak: {forensics['future_leak_check']}. No fitted model is used; "
+            "the slices in this report are diagnostic and are not called OOS."
         ),
         (
             f"- Multiple testing: {forensics['multiple_testing_count']} "

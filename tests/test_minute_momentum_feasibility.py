@@ -8,9 +8,39 @@ from typer.testing import CliRunner
 
 from open_composer.cli import app
 from open_composer.research.minute_momentum_feasibility import (
+    _resample_frame,
     compute_minute_quality,
     run_minute_momentum_feasibility,
 )
+
+
+def test_resample_frame_anchors_hour_bars_to_session_open() -> None:
+    timestamps = pd.date_range("2026-01-02T14:30:00Z", periods=13, freq="30min")
+    frame = pd.DataFrame(
+        {
+            "timestamp": timestamps,
+            "open": range(13),
+            "high": range(1, 14),
+            "low": range(13),
+            "close": range(1, 14),
+            "volume": [1] * 13,
+        }
+    )
+
+    result = _resample_frame(frame, "1h")
+
+    local = pd.to_datetime(result["timestamp"], utc=True).dt.tz_convert("America/New_York")
+    assert list(local.dt.strftime("%H:%M")) == [
+        "09:30",
+        "10:30",
+        "11:30",
+        "12:30",
+        "13:30",
+        "14:30",
+        "15:30",
+    ]
+    assert result.iloc[0]["open"] == 0
+    assert result.iloc[0]["close"] == 2
 
 
 def test_compute_minute_quality_detects_extended_hours_and_zero_volume() -> None:

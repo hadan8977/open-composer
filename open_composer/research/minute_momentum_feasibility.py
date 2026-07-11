@@ -316,16 +316,26 @@ def _resampled_local_cache(
 def _resample_frame(frame: pd.DataFrame, timeframe: str) -> pd.DataFrame:
     data = normalize_ohlcv(frame)
     data["timestamp"] = pd.to_datetime(data["timestamp"], utc=True)
-    indexed = data.sort_values("timestamp").set_index("timestamp")
-    rule = f"{TIMEFRAME_MINUTES[timeframe]}min"
-    resampled = indexed.resample(rule, label="left", closed="left").agg(
-        {
-            "open": "first",
-            "high": "max",
-            "low": "min",
-            "close": "last",
-            "volume": "sum",
-        }
+    local = data["timestamp"].dt.tz_convert("America/New_York")
+    session_time = local.dt.time
+    rth_mask = session_time.map(
+        lambda value: pd.Timestamp("09:30").time() <= value < pd.Timestamp("16:00").time()
+    )
+    data = data.loc[rth_mask].copy()
+    local = local.loc[rth_mask]
+    data["session_date"] = local.dt.date.astype(str).to_numpy()
+    data["minutes_from_open"] = (local.dt.hour * 60 + local.dt.minute - (9 * 60 + 30)).to_numpy()
+    target_minutes = TIMEFRAME_MINUTES[timeframe]
+    data["bucket"] = data["minutes_from_open"] // target_minutes
+    data = data.sort_values("timestamp")
+    grouped = data.groupby(["session_date", "bucket"], sort=True)
+    resampled = grouped.agg(
+        timestamp=("timestamp", "first"),
+        open=("open", "first"),
+        high=("high", "max"),
+        low=("low", "min"),
+        close=("close", "last"),
+        volume=("volume", "sum"),
     )
     return normalize_ohlcv(resampled.dropna().reset_index())
 
