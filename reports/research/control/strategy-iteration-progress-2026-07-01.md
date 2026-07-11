@@ -466,3 +466,20 @@ Decision:
 - P3: pivot/defer; do not expand before P1 is simplified.
 - ML and AI-information rounds: blocked for now. Training or news features before
   a non-ML path survives would optimize a failed decision surface.
+
+### 2026-07-11 Methodology Correction
+
+The Step 9.R UltraCode audit found that the original performance evidence is
+methodology-invalid. The bar-close signal was applied to a close-to-next-close
+return instead of the spec's next-bar-open fill, the four folds were ordinary
+post-selection slices rather than walk-forward OOS, and 1h aggregation was not
+anchored to the 09:30 US session open. The original artifacts remain historical,
+but the quoted metrics and path rankings are withdrawn from strategy selection,
+ML entry, promotion, and paper-readiness decisions.
+
+Superseding audit:
+`reports/research/control/mom-minute-r1-methodology-audit-20260711.md`.
+
+Decision: repair the harness, then run one fixed nine-combination P1-only round
+with development/validation selection and an untouched final lockbox. Do not
+expand the search or train ML if that round fails.
