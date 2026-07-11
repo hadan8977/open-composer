@@ -483,3 +483,33 @@ Superseding audit:
 Decision: repair the harness, then run one fixed nine-combination P1-only round
 with development/validation selection and an untouched final lockbox. Do not
 expand the search or train ML if that round fails.
+
+## Step 9.R mom_minute_r2 Methodology-Corrected Lockbox Round
+
+Artifacts:
+
+- `reports/research/iterations/mom_minute_r2/evaluation-report.md`
+- `reports/research/iterations/mom_minute_r2/trial-ledger.jsonl`
+- `reports/harness/forensics/us_minute_momentum_r2-backtest-forensics.md`
+- `reports/research/control/step-9-status-matrix-20260711.md`
+
+Result:
+
+- Search remained fixed at nine P1 combinations; no P3, ML, macro, news, or new
+  feature was added.
+- Selection used 305 development and 102 validation sessions. The final 102
+  sessions were not used for selection and opened once for the chosen trial.
+- Selected `mom_minute_r2_p1_003`: QQQ signal, TQQQ exposure, 30m, lookback 72,
+  rolling ATR filter multiplier 2.5, next-bar-open execution.
+- Lockbox: return `26.5356%`, Sharpe `1.8838`, MaxDD `-22.0490%`, two-times-cost
+  return `24.0192%`, 173 entries. All five pre-registered gates passed.
+- Important limitation: it lagged naive momentum (`39.7480%`) and TQQQ B&H
+  (`54.8109%`); IEX data and the 102-session lockbox remain short research-only
+  evidence.
+
+Decision:
+
+- Continue research with frozen parameters and new OOS/forward evidence.
+- Do not optimize against the current lockbox, start ML, promote, or enter paper.
+- Active specs, paper behavior, broker code, dependencies, and credentials were
+  unchanged.
