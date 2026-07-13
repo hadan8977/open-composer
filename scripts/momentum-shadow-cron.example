@@ -1,0 +1,4 @@
+# Run after each completed US regular-session 30-minute bar. Installation is manual.
+CRON_TZ=America/New_York
+5,35 10-15 * * 1-5 cd /path/to/open-composer && uv run python scripts/run_momentum_shadow_cycle.py --refresh
+5 16 * * 1-5 cd /path/to/open-composer && uv run python scripts/run_momentum_shadow_cycle.py --refresh

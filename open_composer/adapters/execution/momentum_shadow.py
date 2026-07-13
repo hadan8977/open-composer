@@ -286,6 +286,8 @@ def _append_forward_ledger(*, root, spec, target_rows, intents, observed_at, sta
                     "signal_timestamp": signal_at.isoformat(),
                     "effective_timestamp": effective_at.isoformat(),
                     "target_weight": row["target_weight"],
+                    "decision_price": row["decision_price"],
+                    "expected_execution_open": row["expected_execution_open"],
                     "order_required_intent": row["rebalance_id"] in intent_keys,
                     "paper_order_authorization": False,
                     "broker_writes": False,

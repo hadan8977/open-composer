@@ -4882,6 +4882,29 @@ def strategy_shadow_refresh_data(
         raise typer.Exit(code=1)
 
 
+@strategy_app.command("shadow-cycle")
+def strategy_shadow_cycle(
+    spec: Path,
+    as_of: str | None = typer.Option(None, "--as-of"),
+    refresh: bool = typer.Option(False, "--refresh"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Run one idempotent, broker-free momentum observation slot."""
+    from open_composer.research.momentum_observation_cycle import (
+        run_momentum_observation_cycle,
+    )
+
+    parsed_as_of = datetime.fromisoformat(as_of.replace("Z", "+00:00")) if as_of else None
+    result = run_momentum_observation_cycle(
+        spec,
+        project_root(),
+        as_of=parsed_as_of,
+        refresh=refresh,
+        dry_run=dry_run,
+    )
+    console.print(f"momentum shadow cycle status={result.status} receipt={result.receipt_path}")
+
+
 @strategy_app.command("router-attribution")
 def strategy_router_attribution(
     spec: Annotated[Path, typer.Option("--spec")] = PDR_ATTRIBUTION_DEFAULT_SPEC_PATH,
