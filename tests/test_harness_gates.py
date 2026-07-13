@@ -89,6 +89,23 @@ class TestGateRegistry:
         assert results[1].name == "expression_safety"
 
 
+def test_reference_backtest_does_not_run_single_symbol_for_momentum_router(
+    tmp_path: Path, repo_root: Path
+) -> None:
+    destination = tmp_path / "strategy_specs/drafts/us_mom_minute_p1_003_frozen.yaml"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    copyfile(
+        repo_root / "strategy_specs/drafts/us_mom_minute_p1_003_frozen.yaml",
+        destination,
+    )
+
+    result = run_gate("reference_backtest", destination, tmp_path)
+
+    assert result.status == "warning"
+    assert result.evidence["not_applicable"] is True
+    assert result.evidence["reason"] == "cross_symbol_signal_target_contract"
+
+
 class TestSpecValidationGate:
     def test_valid_spec_returns_ok(self, tmp_path: Path, spec_path: Path) -> None:
         result = run_gate("spec_validation", spec_path, tmp_path)

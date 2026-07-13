@@ -1,0 +1,39 @@
+{
+  "strategy_name": "us_mom_minute_p1_003_frozen",
+  "policy_id": "momentum_shadow_split_session_v1",
+  "order_style": "observation_only_split_session",
+  "time_in_force": "not_applicable_no_orders",
+  "price_protection": {
+    "opening_candidate": "LOO/OPG with sourced cutoff; not authorized",
+    "intraday_candidate": "marketable limit with timeout; not authorized"
+  },
+  "gap_filter": {
+    "status": "blocked_pending_data_quality",
+    "candidate_threshold_pct": 4.0,
+    "reason": "Local TQQQ history contains a -48.47% overnight outlier that must be diagnosed before calibrating a production threshold."
+  },
+  "spread_filter": {
+    "status": "blocked_pending_quote_capture",
+    "max_spread_bps": null
+  },
+  "participation_cap": {
+    "max_pct_conservative_volume": 1.0,
+    "status": "blocked_pending_account_notional_and_volume_capture"
+  },
+  "fallback_behavior": {
+    "opening": "No order. Record hypothetical MOO and LOO outcomes.",
+    "intraday": "No order. Record marketable-limit and passive-limit timeout outcomes.",
+    "missing_or_stale_data": "Block observation and preserve prior target only as historical state."
+  },
+  "tca_plan": {
+    "reference_prices": ["decision_price", "next_bar_open", "arrival_bid", "arrival_ask", "one_minute_vwap", "five_minute_vwap"],
+    "record_submitted_at": false,
+    "record_fill_price": false,
+    "record_slippage_vs_reference": true,
+    "review_frequency": "weekly_after_shadow_data_exists"
+  },
+  "source_card_ids": ["alpaca_opg_opening_auction_20260713", "alpaca_paper_limitations_20260713", "alpaca_market_data_iex_sip_20260713"],
+  "alternatives_compared": ["MOO/OPG", "LOO/OPG", "intraday_marketable_limit", "intraday_passive_limit_timeout"],
+  "authorization": false,
+  "broker_writes": false
+}

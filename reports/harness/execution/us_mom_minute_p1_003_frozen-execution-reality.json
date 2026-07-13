@@ -1,0 +1,30 @@
+{
+  "strategy_name": "us_mom_minute_p1_003_frozen",
+  "policy_id": "momentum_shadow_split_session_v1",
+  "status": "blocked",
+  "slippage_scenarios": [
+    {"name": "research_base", "slippage_bps": 3},
+    {"name": "low_stress", "slippage_bps": 6},
+    {"name": "medium_stress", "slippage_bps": 12},
+    {"name": "high_stress", "slippage_bps": 20}
+  ],
+  "gap_stress": {
+    "status": "blocked_pending_outlier_diagnosis",
+    "historical_abs_gap_percentiles": {"p50": 1.0677, "p90": 3.5518, "p95": 4.5936, "p99": 9.8969},
+    "historical_max_adverse_gap_pct": -48.4737,
+    "fixed_scenarios_pct": [-7, -4, -2, 2, 4, 7],
+    "fill_model_gap_handling": "Shadow records next aligned TQQQ open; it does not simulate auction queue or latency.",
+    "recommended_gap_filter": "Do not finalize until the -48.47% observation is traced to adjustment/data provenance."
+  },
+  "capacity_assessment": {
+    "status": "blocked_pending_notional_and_quote_volume",
+    "participation_cap_pct": 1.0,
+    "required_fields": ["account_notional", "target_shares", "arrival_volume", "opening_window_volume", "20d_median_adv"]
+  },
+  "tca_reference_prices": ["decision_price", "next_bar_open", "arrival_bid", "arrival_ask", "one_minute_vwap", "five_minute_vwap"],
+  "execution_segments": {
+    "opening_0930": {"alternatives": ["MOO/OPG", "LOO/OPG"], "authorized": false},
+    "intraday_30m": {"alternatives": ["marketable_limit", "passive_limit_timeout"], "authorized": false}
+  },
+  "blockers": ["shadow_observation_stale", "quote_and_fill_capture_missing", "capacity_inputs_missing", "gap_outlier_unresolved", "cross_source_replay_missing"]
+}

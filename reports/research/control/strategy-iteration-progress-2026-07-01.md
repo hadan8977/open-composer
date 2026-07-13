@@ -513,3 +513,22 @@ Decision:
 - Do not optimize against the current lockbox, start ML, promote, or enter paper.
 - Active specs, paper behavior, broker code, dependencies, and credentials were
   unchanged.
+
+## Step 9.O Frozen Momentum Shadow Observation
+
+- Frozen `mom_minute_r2_p1_003` as
+  `strategy_specs/drafts/us_mom_minute_p1_003_frozen.yaml`.
+- Added a QQQ-signal/TQQQ-target `momentum_signal_router` and an observation-only
+  `oc strategy shadow-observe` path with stable signal IDs, target weights,
+  rebalance intents, deterministic review cards, and no broker I/O.
+- Real local run produced 6,565 target rows and 345 historical state-change
+  signals, but correctly returned `blocked`: the latest effective bar is
+  2026-05-29 and was stale by 1,064.5 hours on 2026-07-13.
+- Common aligned history coverage is high, but IEX-only and partial timestamp
+  alignment remain warnings; no missing bar is filled forward.
+- Execution policy, gap stress, leveraged ETF risk, shadow duration, capacity,
+  cross-source, paper, and ML gates are recorded. The -48.47% local overnight
+  gap observation is a data-quality blocker requiring provenance diagnosis.
+
+Decision: begin fresh observation only after strict data is updated. Parameters
+remain frozen; no paper order or ML training is authorized.

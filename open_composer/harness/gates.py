@@ -253,6 +253,25 @@ def _research_capability_evaluation(spec_path: Path, root: Path) -> GateResult:
 
 @gate("reference_backtest")
 def _reference_backtest(spec_path: Path, root: Path) -> GateResult:
+    from open_composer.models.strategy_spec import load_strategy_spec
+
+    spec = load_strategy_spec(spec_path)
+    if spec.portfolio.mode == "momentum_signal_router":
+        observation_path = root / "reports/execution" / f"{spec.name}-execution-observation.json"
+        return GateResult(
+            name="reference_backtest",
+            status="warning",
+            message=(
+                "Generic single-symbol backtest is not applicable to momentum_signal_router; "
+                "use the frozen lockbox report and target-weight observation parity."
+            ),
+            evidence={
+                "not_applicable": True,
+                "reason": "cross_symbol_signal_target_contract",
+                "observation_path": str(observation_path),
+                "observation_exists": observation_path.exists(),
+            },
+        )
     from open_composer.engines.backtest_engine import run_backtest
 
     try:
