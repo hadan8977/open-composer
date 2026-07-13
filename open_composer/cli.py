@@ -759,6 +759,42 @@ def research_mom_minute_r2_command(
     console.print(f"trial ledger: {result.trial_ledger_path}")
 
 
+@research_app.command("momentum-ml-design")
+def research_momentum_ml_design_command(
+    spec: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+) -> None:
+    """Write the frozen momentum strategy's ML role and pre-training gates."""
+    from open_composer.research.momentum_ml_research import write_momentum_ml_design
+
+    try:
+        result = write_momentum_ml_design(spec, project_root())
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"momentum ML design decision={result.payload['decision']} "
+        f"training_authorized={result.payload['training_authorized']}"
+    )
+    console.print(f"json: {result.json_path}")
+    console.print(f"markdown: {result.markdown_path}")
+
+
+@research_app.command("momentum-ml-compare")
+def research_momentum_ml_compare_command(
+    spec: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+) -> None:
+    """Run broker-free OOS rule/logistic/LightGBM momentum challengers."""
+    from open_composer.research.momentum_ml_research import run_momentum_ml_comparison
+
+    try:
+        result = run_momentum_ml_comparison(spec, project_root())
+    except (RuntimeError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"momentum ML comparison status={result.payload['status']}")
+    console.print(f"json: {result.json_path}")
+    console.print(f"markdown: {result.markdown_path}")
+    console.print(f"trial ledger: {result.trial_ledger_path}")
+
+
 @research_iteration_app.command("init")
 def research_iteration_init_command(
     iter_id: str,

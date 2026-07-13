@@ -180,7 +180,7 @@ def advisory_prediction(
         probability = float(predictor(features))
         if not math.isfinite(probability):
             raise ValueError("non-finite prediction")
-        advisory_target = 1.0 if probability >= threshold else 0.0
+        advisory_target = baseline_target if probability >= threshold else 0.0
         return {
             "status": "advisory_available",
             "probability": probability,

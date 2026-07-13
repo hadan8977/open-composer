@@ -14,7 +14,6 @@ from open_composer.research.mom_minute_round import (
     BASE_COST_BPS,
     _align_signal_and_trade,
     _benchmarks,
-    _entry_count,
     _load_bundle,
     _metrics,
     _required_pair,
@@ -122,7 +121,11 @@ def run_mom_minute_lockbox(
             "x2_cost_metrics": x2_metrics,
             "naive_baseline": naive_metrics,
             "benchmark_family": benchmarks,
-            "trade_count": _entry_count(_position(aligned, **_signal_params(selected))),
+            "trade_count": _entry_count_in_split(
+                _position(aligned, **_signal_params(selected)),
+                aligned,
+                split["lockbox"],
+            ),
             "gates": gates,
             "passed": passed,
             "failed_gates": [name for name, passed_gate in gates.items() if not passed_gate],
@@ -195,6 +198,19 @@ def _slice(returns: pd.Series, split: dict[str, Any]) -> pd.Series:
     local_dates = returns.index.tz_convert("America/New_York").date.astype(str)
     mask = (local_dates >= split["start_session"]) & (local_dates <= split["end_session"])
     return returns.loc[mask]
+
+
+def _entry_count_in_split(
+    position: pd.Series,
+    frame: pd.DataFrame,
+    split: dict[str, Any],
+) -> int:
+    timestamps = pd.to_datetime(frame["timestamp"], utc=True)
+    local_dates = timestamps.dt.tz_convert("America/New_York").dt.date.astype(str)
+    mask = (local_dates >= split["start_session"]) & (local_dates <= split["end_session"])
+    pos = position.fillna(0.0).astype(float)
+    transitions = (pos > 0) & (pos.shift(1).fillna(0.0) <= 0)
+    return int((transitions & pd.Series(mask.to_numpy(), index=position.index)).sum())
 
 
 def _position(frame: pd.DataFrame, lookback_bars: int, atr_filter_multiplier: float) -> pd.Series:

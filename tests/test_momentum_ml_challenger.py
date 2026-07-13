@@ -84,7 +84,7 @@ def test_advisory_prediction_never_controls_execution_target() -> None:
         features=features,
         predictor=lambda values: 0.9,
     )
-    assert success["advisory_target"] == 1.0
+    assert success["advisory_target"] == 0.0
     assert success["execution_target"] == 0.0
     assert success["baseline_identical_execution"] is True
 
