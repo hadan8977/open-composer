@@ -13,7 +13,6 @@ from open_composer.config import ensure_dir, project_root
 from open_composer.research.mom_minute_round import (
     BASE_COST_BPS,
     _align_signal_and_trade,
-    _atr_pct,
     _benchmarks,
     _entry_count,
     _load_bundle,
@@ -21,6 +20,7 @@ from open_composer.research.mom_minute_round import (
     _required_pair,
     _strategy_returns,
 )
+from open_composer.research.momentum_signal_router import momentum_target_position
 from open_composer.storage import write_json
 
 ITER_ID = "mom_minute_r2"
@@ -198,13 +198,11 @@ def _slice(returns: pd.Series, split: dict[str, Any]) -> pd.Series:
 
 
 def _position(frame: pd.DataFrame, lookback_bars: int, atr_filter_multiplier: float) -> pd.Series:
-    close = frame["signal_close"]
-    momentum = close / close.shift(lookback_bars) - 1.0
-    atr_pct = _atr_pct(frame, lookback_bars)
-    threshold = close.rolling(lookback_bars, min_periods=lookback_bars).max() * (
-        1 - atr_filter_multiplier * atr_pct
+    return momentum_target_position(
+        frame,
+        lookback_bars=lookback_bars,
+        atr_filter_multiplier=atr_filter_multiplier,
     )
-    return ((momentum > 0) & (close > threshold)).astype(float)
 
 
 def _candidate_returns(

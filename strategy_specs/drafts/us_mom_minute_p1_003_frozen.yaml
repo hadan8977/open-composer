@@ -1,0 +1,90 @@
+name: us_mom_minute_p1_003_frozen
+description: Frozen observation-only QQQ-signal/TQQQ-target candidate selected by mom_minute_r2.
+timeframe: 30m
+universe:
+  - QQQ
+  - TQQQ
+lifecycle: draft
+
+entry:
+  all:
+    - roc(close, 72) > 0
+    - close > highest(close, 72) * (1 - 2.5 * atr(72) / close)
+
+exit:
+  any:
+    - roc(close, 72) <= 0
+    - close <= highest(close, 72) * (1 - 2.5 * atr(72) / close)
+
+risk:
+  max_trades_per_day: 13
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+
+portfolio:
+  mode: momentum_signal_router
+  max_symbols_per_day: 1
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: momentum:signalQQQ_targetTQQQ_tf30m_lookback72_atr2.5_weight1.0
+
+costs:
+  commission_pct: 0.0
+  slippage_bps: 3.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: alpaca
+  symbol: QQQ
+  path: data/research/alpaca_minute/qqq_30m_alpaca_iex.csv
+  feed: iex
+
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_replay_cache
+
+llm_review:
+  enabled: false
+
+required_capabilities:
+  - market.alpaca_bars
+
+notes:
+  intent: >
+    Frozen research candidate for observation-only target-weight generation.
+    QQQ provides the confirmed 30m close signal; TQQQ is the only target asset,
+    effective at the next aligned TQQQ bar open. This spec cannot submit orders.
+  research_design:
+    iter_id: mom_minute_r2
+    selected_trial_id: mom_minute_r2_p1_003
+    evaluation_path: reports/research/iterations/mom_minute_r2/evaluation-report.json
+    decision_record_path: reports/research/iterations/mom_minute_r2/decision-record.md
+    selection_used_lockbox: false
+    frozen_parameters:
+      signal_symbol: QQQ
+      target_symbol: TQQQ
+      timeframe: 30m
+      lookback_bars: 72
+      atr_filter_multiplier: 2.5
+      target_weight: 1.0
+    source_hashes:
+      QQQ: 7fb4ca8809b4f813bf2e2cb29f6a2cc4b2117ee52cd2b6341d1e99b44305cbcc
+      TQQQ: 092d1cc9320656a55c90e9f095258d98f9d4e66e9027f47f63f8cabe7ae8a93c
+  caveats:
+    - Research-only Alpaca IEX cache; not SIP/full-market evidence.
+    - The 102-session lockbox is short and trails naive momentum and TQQQ buy-and-hold.
+    - Parameters are frozen; shadow evidence must not be used to retune this spec.
