@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from shutil import copytree
 
+import pytest
 from typer.testing import CliRunner
 
 from open_composer.cli import app
@@ -52,6 +53,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/plan-step-9-autonomous-loop-momentum-2026-07-09.zh.md",
         "docs/plan-step-9r-momentum-validation-and-loop-hardening-2026-07-11.zh.md",
         "docs/plan-step-9o-momentum-shadow-observation-2026-07-13.zh.md",
+        "docs/plan-step-9f-final-momentum-product-loop-2026-07-13.zh.md",
         "docs/runbook-live-manual-execution.zh.md",
     ]:
         source = repo_root / new_doc
@@ -198,6 +200,42 @@ def test_repo_check_blocks_when_claude_skill_mirror_drifts(
     check = next(item for item in report.checks if item.name == "claude_parity")
     assert check.status == "blocked"
     assert "risk-reviewer" in str(check.details)
+
+
+@pytest.mark.parametrize(
+    "heading",
+    [
+        "# UltraCode Reviewer V2",
+        "## 1. Objective, Boundaries, Acceptance",
+        "## 2. Dependency Graph",
+        "## 3. Critical Path and Concurrency",
+        "## 4. Role Selection",
+        "## 5. Write Ownership",
+        "## 6. Agent Contract",
+        "## 7. Adversarial Review",
+        "## 8. Conflict Resolution",
+        "## 9. Evidence and Acceptance",
+        "## 10. Stop Conditions",
+    ],
+)
+def test_repo_check_blocks_when_ultracode_v2_contract_is_missing(
+    sample_workspace: Path,
+    repo_root: Path,
+    heading: str,
+) -> None:
+    _copy_repo_check_inputs(repo_root, sample_workspace)
+    skill = sample_workspace / ".agents/skills/ultracode-reviewer/SKILL.md"
+    skill.write_text(
+        skill.read_text(encoding="utf-8").replace(heading, "## Removed"),
+        encoding="utf-8",
+    )
+
+    report = build_repo_check_report(sample_workspace)
+
+    assert report.status == "blocked"
+    check = next(item for item in report.checks if item.name == "repo_skills")
+    assert check.status == "blocked"
+    assert heading in str(check.details)
 
 
 def test_repo_check_blocks_when_skill_manifest_path_is_missing(

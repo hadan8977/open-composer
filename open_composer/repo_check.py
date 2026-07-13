@@ -43,6 +43,7 @@ CURRENT_DOCS = {
     "docs/plan-step-9-autonomous-loop-momentum-2026-07-09.zh.md",
     "docs/plan-step-9r-momentum-validation-and-loop-hardening-2026-07-11.zh.md",
     "docs/plan-step-9o-momentum-shadow-observation-2026-07-13.zh.md",
+    "docs/plan-step-9f-final-momentum-product-loop-2026-07-13.zh.md",
     "docs/runbook-live-manual-execution.zh.md",
 }
 
@@ -413,7 +414,20 @@ def _repo_skills_check(root: Path) -> RepoConsistencyCheck:
             "promotion-report",
             "llm_contribution_pass",
         ],
-        "ultracode-reviewer": ["UltraCode-style", "sidecar", "P0 blockers", "StrategySpec"],
+        "ultracode-reviewer": [
+            "# UltraCode Reviewer V2",
+            "## 1. Objective, Boundaries, Acceptance",
+            "## 2. Dependency Graph",
+            "## 3. Critical Path and Concurrency",
+            "## 4. Role Selection",
+            "## 5. Write Ownership",
+            "## 6. Agent Contract",
+            "## 7. Adversarial Review",
+            "## 8. Conflict Resolution",
+            "## 9. Evidence and Acceptance",
+            "## 10. Stop Conditions",
+            "StrategySpec",
+        ],
         "weekly-reviewer": ["LLM contribution evidence", "paper readiness evidence"],
     }
     missing_anchors: dict[str, list[str]] = {}
