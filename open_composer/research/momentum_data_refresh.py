@@ -56,6 +56,7 @@ def refresh_momentum_research_data(
                 feed,
                 False,
             )
+            fetched = _regular_session_only(fetched)
             merged = _append_only_merge(old, fetched)
             _write_csv_preserving_prefix(path, old, merged, old_bytes)
             rows.append(
@@ -131,6 +132,19 @@ def _append_only_merge(old: pd.DataFrame, fetched: pd.DataFrame) -> pd.DataFrame
             raise ValueError(f"historical market data revision detected for {column}")
     appended = new.loc[new["timestamp"] > old["timestamp"].max()]
     return pd.concat([old, appended], ignore_index=True).reset_index(drop=True)
+
+
+def _regular_session_only(frame: pd.DataFrame) -> pd.DataFrame:
+    data = normalize_ohlcv(frame)
+    timestamps = pd.to_datetime(data["timestamp"], utc=True)
+    local = timestamps.dt.tz_convert("America/New_York")
+    minutes = local.dt.hour * 60 + local.dt.minute
+    rth = data.loc[(minutes >= 9 * 60 + 30) & (minutes < 16 * 60)].copy()
+    if len(rth) != len(data):
+        extended = len(data) - len(rth)
+        if rth.empty:
+            raise ValueError(f"provider payload contains only extended-hours bars: {extended}")
+    return rth.reset_index(drop=True)
 
 
 def _write_csv_preserving_prefix(

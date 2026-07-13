@@ -4905,6 +4905,80 @@ def strategy_shadow_cycle(
     console.print(f"momentum shadow cycle status={result.status} receipt={result.receipt_path}")
 
 
+@strategy_app.command("shadow-ml-preflight")
+def strategy_shadow_ml_preflight(
+    spec: Path,
+    search_combinations: int = typer.Option(12, "--search-combinations"),
+    purge_bars: int = typer.Option(72, "--purge-bars"),
+    embargo_bars: int = typer.Option(72, "--embargo-bars"),
+) -> None:
+    """Evaluate advisory ML challenger eligibility without training a model."""
+    from open_composer.research.momentum_ml_challenger import (
+        evaluate_momentum_ml_eligibility,
+    )
+
+    root = project_root()
+    ledger = root / "reports/shadow" / spec.stem / "forward-decisions.jsonl"
+    output = root / "reports/shadow" / spec.stem / "ml-eligibility.json"
+    try:
+        result = evaluate_momentum_ml_eligibility(
+            ledger,
+            output,
+            spec_path=spec,
+            search_combinations=search_combinations,
+            purge_bars=purge_bars,
+            embargo_bars=embargo_bars,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"momentum ML preflight status={result.status} report={result.path}")
+
+
+@strategy_app.command("shadow-status")
+def strategy_shadow_status(spec: Path) -> None:
+    """Write the consolidated momentum product, shadow, paper, and ML status."""
+    from open_composer.research.momentum_ml_challenger import write_momentum_product_status
+
+    root = project_root()
+    base = root / "reports/shadow" / spec.stem
+    output = base / "final-status.json"
+    payload = write_momentum_product_status(
+        base / "readiness.json", base / "ml-eligibility.json", output
+    )
+    console.print(
+        f"product_complete={payload['product_capability_complete']} "
+        f"shadow={payload['shadow_status']} ml_eligible={payload['ml_eligible']} "
+        f"paper_authorized={payload['paper_authorized']} report={output}"
+    )
+
+
+@strategy_app.command("shadow-resolve-remediation")
+def strategy_shadow_resolve_remediation(
+    spec: Path,
+    evidence: Annotated[Path, typer.Option("--evidence")],
+    slot: str = typer.Option(..., "--slot"),
+    resolved_by: str = typer.Option(..., "--resolved-by"),
+    reason: str = typer.Option(..., "--reason"),
+) -> None:
+    """Resolve a blocked shadow slot with identity, reason, and hashed evidence."""
+    from open_composer.research.momentum_observation_cycle import (
+        resolve_momentum_remediation,
+    )
+
+    try:
+        path = resolve_momentum_remediation(
+            project_root(),
+            spec.stem,
+            slot,
+            resolved_by=resolved_by,
+            reason=reason,
+            evidence_path=evidence,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"momentum remediation resolved: {path}")
+
+
 @strategy_app.command("router-attribution")
 def strategy_router_attribution(
     spec: Annotated[Path, typer.Option("--spec")] = PDR_ATTRIBUTION_DEFAULT_SPEC_PATH,

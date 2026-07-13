@@ -532,3 +532,17 @@ Decision:
 
 Decision: begin fresh observation only after strict data is updated. Parameters
 remain frozen; no paper order or ML training is authorized.
+
+## Step 9.F Final Momentum Product Loop
+
+- Upgraded UltraCode to a DAG-based V2 controller with explicit ownership,
+  adversarial review, evidence arbitration, and stop conditions.
+- Added strict append-only Alpaca/IEX materialization, immutable historical prefix
+  verification, `as_of` truncation, and an epoch-separated forward ledger.
+- Added an idempotent broker-free observation cycle, theoretical execution proxy,
+  remediation receipts, freshness-aware readiness, and a manual cron example.
+- Added an advisory-only ML challenger preflight and baseline-identical failure
+  contract. No model was trained and no execution target can be changed by ML.
+
+Final product verdict: capability complete; external certification remains blocked
+on future sessions, cross-source evidence, and explicitly authorized Paper fills.

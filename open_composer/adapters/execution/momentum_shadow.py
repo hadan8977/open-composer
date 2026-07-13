@@ -270,7 +270,11 @@ def _append_forward_ledger(*, root, spec, target_rows, intents, observed_at, sta
     intent_keys = {row["rebalance_id"] for row in intents}
     additions = []
     if not stale:
-        for row in target_rows:
+        decision_prices = pd.Series([float(row["decision_price"]) for row in target_rows])
+        returns = decision_prices.pct_change()
+        momentum = decision_prices.pct_change(72).shift(1)
+        volatility = returns.rolling(26, min_periods=13).std(ddof=0).shift(1)
+        for index, row in enumerate(target_rows):
             signal_at = pd.Timestamp(row["signal_session"])
             effective_at = pd.Timestamp(row["effective_timestamp"])
             if signal_at <= epoch or effective_at > observed_at:
@@ -288,6 +292,7 @@ def _append_forward_ledger(*, root, spec, target_rows, intents, observed_at, sta
                     "target_weight": row["target_weight"],
                     "decision_price": row["decision_price"],
                     "expected_execution_open": row["expected_execution_open"],
+                    "regime": _momentum_regime(momentum.iloc[index], volatility.iloc[index]),
                     "order_required_intent": row["rebalance_id"] in intent_keys,
                     "paper_order_authorization": False,
                     "broker_writes": False,
@@ -296,6 +301,14 @@ def _append_forward_ledger(*, root, spec, target_rows, intents, observed_at, sta
     if additions:
         append_jsonl(path, additions)
     return path
+
+
+def _momentum_regime(momentum: float, volatility: float) -> str:
+    if pd.isna(momentum) or pd.isna(volatility):
+        return "warmup"
+    if float(volatility) >= 0.006:
+        return "high_vol"
+    return "trend" if float(momentum) > 0 else "low_vol"
 
 
 def _timestamp_alignment(signal_frame, target_frame) -> dict[str, Any]:

@@ -43,6 +43,23 @@ def test_refresh_preserves_snapshot_when_provider_fails(tmp_path: Path) -> None:
         assert _path(tmp_path, symbol).read_bytes() == original
 
 
+def test_refresh_does_not_append_extended_hours_bars(tmp_path: Path) -> None:
+    _write_existing(tmp_path)
+
+    def extended_fetcher(*args, **kwargs):
+        frame = _fetcher_with_one_new_bar(*args, **kwargs)
+        extended = frame.iloc[-1].copy()
+        extended["timestamp"] = "2026-07-10T21:00:00+00:00"
+        return pd.concat([frame, pd.DataFrame([extended])], ignore_index=True)
+
+    result = refresh_momentum_research_data(tmp_path, fetcher=extended_fetcher)
+
+    assert result.status == "ok"
+    for symbol in ("QQQ", "TQQQ"):
+        timestamps = pd.to_datetime(pd.read_csv(_path(tmp_path, symbol))["timestamp"], utc=True)
+        assert pd.Timestamp("2026-07-10T21:00:00Z") not in set(timestamps)
+
+
 def _write_existing(root: Path) -> dict[str, bytes]:
     rows = [
         {
