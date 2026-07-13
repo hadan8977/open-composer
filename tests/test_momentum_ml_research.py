@@ -6,11 +6,13 @@ import pandas as pd
 from typer.testing import CliRunner
 
 from open_composer.cli import app
+from open_composer.research.mom_minute_round import BASE_COST_BPS, _strategy_returns
 from open_composer.research.momentum_ml_research import (
-    _eligible_windows,
+    EMBARGO_BARS,
+    _best_trial,
     _entry_events,
     _feature_frame,
-    _gate_position,
+    _nested_event_folds,
     _trial_definitions,
     write_momentum_ml_design,
 )
@@ -35,22 +37,18 @@ def test_entry_label_uses_aligned_future_tqqq_returns_after_cost() -> None:
     events = _entry_events(frame, position, _feature_frame(frame))
 
     assert len(events) == 1
-    path = frame["next_trade_return"].iloc[80:90]
-    expected = (1.0 + path).prod() - 1.0 - 0.0006
+    reference_position = pd.Series(0.0, index=frame.index)
+    reference_position.iloc[80:90] = 1.0
+    reference_returns = _strategy_returns(
+        frame,
+        reference_position,
+        cost_bps=BASE_COST_BPS["30m"],
+        allow_overnight=True,
+    ).iloc[80:91]
+    expected = (1.0 + reference_returns).prod() - 1.0
     assert events.iloc[0]["forward_net_return"] == expected
     assert events.iloc[0]["episode_bars"] == 10
     assert events.iloc[0]["label"] == int(expected > 0)
-
-
-def test_meta_gate_never_creates_entry_and_missing_decision_falls_back() -> None:
-    baseline = pd.Series([0.0, 1.0, 1.0, 0.0, 1.0, 1.0])
-    events = pd.DataFrame({"bar_index": [1], "label": [1]})
-    accepted = pd.Series([False], index=events.index)
-
-    gated = _gate_position(baseline, events, accepted, offset=0)
-
-    assert gated.tolist() == [0.0, 0.0, 0.0, 0.0, 1.0, 1.0]
-    assert (gated <= baseline).all()
 
 
 def test_strategy_specific_search_is_bounded() -> None:
@@ -63,45 +61,75 @@ def test_strategy_specific_search_is_bounded() -> None:
 
 
 def test_failed_or_partial_trial_cannot_be_selected() -> None:
-    from open_composer.research.momentum_ml_research import _best_trial
-
     rows = [
         {
             "model_family": "lightgbm_challenger",
             "failures": [{"fold": 1}],
             "oos_entry_coverage": 1.0,
-            "stitched_oos_metrics": {"total_return_pct": 100.0, "sharpe": 5.0},
+            "fold_count": 3,
+            "fold_wins_vs_rule": 3,
+            "validation_metrics": {"total_return_pct": 100.0, "episode_sharpe": 5.0},
         },
         {
             "model_family": "lightgbm_challenger",
             "failures": [],
             "oos_entry_coverage": 0.75,
-            "stitched_oos_metrics": {"total_return_pct": 90.0, "sharpe": 4.0},
+            "fold_count": 3,
+            "fold_wins_vs_rule": 3,
+            "validation_metrics": {"total_return_pct": 90.0, "episode_sharpe": 4.0},
         },
     ]
 
     assert _best_trial(rows, "lightgbm_challenger") is None
 
 
-def test_walk_forward_windows_do_not_split_active_episode() -> None:
-    frame = _aligned_frame(6500)
-    baseline = pd.Series(0.0, index=frame.index)
-    baseline.iloc[1290:1310] = 1.0
-    baseline.iloc[2600:2610] = 1.0
-    events = pd.DataFrame(
-        {
-            "bar_index": [100 + index * 40 for index in range(140)],
-            "label": [index % 2 for index in range(140)],
-        }
-    )
+def test_family_with_fewer_than_two_fold_wins_cannot_open_holdout() -> None:
+    row = {
+        "model_family": "lightgbm_challenger",
+        "failures": [],
+        "oos_entry_coverage": 1.0,
+        "fold_count": 3,
+        "fold_wins_vs_rule": 1,
+        "validation_metrics": {"total_return_pct": 10.0, "episode_sharpe": 1.0},
+    }
 
-    windows = _eligible_windows(frame, events, baseline)
+    assert _best_trial([row], "lightgbm_challenger") is None
 
-    assert all(
-        (window.test_start_idx == 0 or baseline.iloc[window.test_start_idx - 1] == 0)
-        and baseline.iloc[window.test_end_idx - 1] == 0
-        for window in windows
-    )
+
+def test_two_fold_wins_without_aggregate_improvement_cannot_open_holdout() -> None:
+    row = {
+        "model_family": "lightgbm_challenger",
+        "failures": [],
+        "oos_entry_coverage": 1.0,
+        "fold_count": 3,
+        "fold_wins_vs_rule": 2,
+        "information_ratio_vs_rule": -0.1,
+        "validation_metrics": {
+            "total_return_pct": 9.0,
+            "episode_sharpe": 0.9,
+            "max_drawdown_pct": -12.0,
+        },
+        "rule_validation_metrics": {
+            "total_return_pct": 10.0,
+            "episode_sharpe": 1.0,
+            "max_drawdown_pct": -10.0,
+        },
+    }
+
+    assert _best_trial([row], "lightgbm_challenger") is None
+
+
+def test_nested_folds_purge_by_actual_episode_end() -> None:
+    frame = _aligned_frame(509 * 13)
+    events = _synthetic_events(frame)
+
+    folds, holdout = _nested_event_folds(frame, events)
+
+    assert [len(fold["test"]) for fold in folds] == [30, 30, 23]
+    assert len(holdout) >= 30
+    for fold in folds:
+        test_start = int(fold["test"]["bar_index"].min())
+        assert (fold["train"]["exit_bar_index"] <= test_start - EMBARGO_BARS).all()
 
 
 def test_design_blocks_small_historical_sample(sample_workspace: Path) -> None:
@@ -141,7 +169,7 @@ def test_design_cli_accepts_repo_relative_spec(sample_workspace: Path, monkeypat
 def _aligned_frame(rows: int) -> pd.DataFrame:
     timestamp = pd.date_range("2025-01-02 14:30", periods=rows, freq="30min", tz="UTC")
     close = pd.Series([100.0 + index for index in range(rows)])
-    return pd.DataFrame(
+    frame = pd.DataFrame(
         {
             "timestamp": timestamp,
             "signal_open": close - 0.1,
@@ -153,6 +181,27 @@ def _aligned_frame(rows: int) -> pd.DataFrame:
             "next_trade_return": 0.001,
         }
     )
+    frame["session_date"] = [
+        (pd.Timestamp("2024-01-02") + pd.offsets.BDay(index // 13)).date().isoformat()
+        for index in range(rows)
+    ]
+    return frame
+
+
+def _synthetic_events(frame: pd.DataFrame) -> pd.DataFrame:
+    rows = []
+    for index in range(171):
+        bar_index = 80 + index * 38
+        rows.append(
+            {
+                "bar_index": bar_index,
+                "exit_bar_index": bar_index + 6,
+                "timestamp": pd.Timestamp(frame.iloc[bar_index]["timestamp"]).isoformat(),
+                "session_date": frame.iloc[bar_index]["session_date"],
+                "label": index % 3 == 0,
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 def _copy_spec(root: Path, repo_root: Path) -> Path:

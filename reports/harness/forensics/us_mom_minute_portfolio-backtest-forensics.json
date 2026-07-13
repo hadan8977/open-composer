@@ -1,0 +1,20 @@
+{
+  "strategy_name": "us_mom_minute_portfolio",
+  "lookahead_check": "pass",
+  "future_leak_check": "warning",
+  "overfit_risk": "high",
+  "multiple_testing_count": 6,
+  "pbo_proxy": null,
+  "dsr_proxy": null,
+  "sample_data_caveats": [
+    "R1, R2, and R3 were defined after the 102-session historical comparison window was visible, so their lockbox-labelled metrics are retrospective diagnostics.",
+    "M1 and M2 failed the ML validation gate and are diagnostic shadow sleeves only.",
+    "No fresh completed-session virtual Paper observation exists because local strict data ends on 2026-05-29."
+  ],
+  "trade_count": 0,
+  "trading_days": 0,
+  "capacity_assessment": "Broker-free virtual sleeves only. A single Alpaca Paper account cannot safely host six independent TQQQ position owners without netting and strategy-level accounting.",
+  "short_sample": true,
+  "conclusion": "warning",
+  "notes": "R0 is the frozen reference. R1-R3 and M1-M2 are bounded exploratory or diagnostic sleeves. Historical figures do not establish independent OOS Alpha. Forward virtual Paper uses exact completed-session checks, definition-bound epochs, an initial zero-return anchor, and incremental per-bar reference-engine returns and turnover costs."
+}

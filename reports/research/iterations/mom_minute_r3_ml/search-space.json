@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_minute_r3_ml",
+  "strategy_name": "us_mom_minute_p1_003_frozen",
+  "source_spec_path": "strategy_specs/drafts/us_mom_minute_p1_003_frozen.yaml",
+  "spec_hash": "6e781dd01a1ef215160913f39ea431f1094ed0d83d9a831fe789ff4a0b9b8dd0",
+  "total_candidate_budget": 8,
+  "paths": [
+    {"name":"regularized_logistic","hypothesis_refs":["H1"],"parameters":{"C":[0.1,1.0],"threshold":[0.5,0.6]},"candidate_count":4,"benchmark_family":["frozen_rule","TQQQ_buy_hold","QQQ_buy_hold","SPY_market_proxy","XLK_sector_theme_proxy","BIL_cash_proxy","equal_weight_universe","ex_post_best_symbol"]},
+    {"name":"lightgbm_challenger","hypothesis_refs":["H1","H2"],"parameters":{"num_leaves":[7,15],"threshold":[0.5,0.6]},"candidate_count":4,"benchmark_family":["frozen_rule","regularized_logistic","TQQQ_buy_hold","QQQ_buy_hold","SPY_market_proxy","XLK_sector_theme_proxy","BIL_cash_proxy","ex_post_best_symbol"]}
+  ],
+  "trial_ledger_paths": ["reports/research/iterations/mom_minute_r3_ml/trial-ledger.jsonl"],
+  "evaluation_report_paths": ["reports/research/iterations/mom_minute_r3_ml/model-comparison.json", "reports/research/iterations/mom_minute_r3_ml/model-comparison.md"]
+}

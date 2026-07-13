@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_minute_r3_ml",
+  "strategy_name": "us_mom_minute_p1_003_frozen",
+  "source_spec_path": "strategy_specs/drafts/us_mom_minute_p1_003_frozen.yaml",
+  "spec_hash": "6e781dd01a1ef215160913f39ea431f1094ed0d83d9a831fe789ff4a0b9b8dd0",
+  "objective": "Post-hoc remediation record for bounded entry meta-label models on the frozen momentum rule",
+  "sources": [
+    {"url":"https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2089463","published_or_updated_at":"2012","source_type":"paper","credibility":"high","core_claim":"Time-series momentum is documented at lower frequencies.","project_applicability":"Use only as motivation for the frozen rule, not proof for minute ML.","reflection":"Minute implementation, costs, and validation must be established locally."},
+    {"url":"https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2440866","published_or_updated_at":"2018","source_type":"paper","credibility":"high","core_claim":"Early-day returns may contain information about later returns.","project_applicability":"Supports testing lagged intraday features.","reflection":"Market-structure sensitivity makes strict chronological validation necessary."},
+    {"url":"https://www.sciencedirect.com/science/article/abs/pii/S0304405X19300650","published_or_updated_at":"2019","source_type":"paper","credibility":"high","core_claim":"Overnight and intraday expected returns can differ.","project_applicability":"Keep gap context distinct from direct entry prediction.","reflection":"This does not justify adding a wider feature set in the bounded round."},
+    {"url":"https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2041429","published_or_updated_at":"2015","source_type":"paper","credibility":"high","core_claim":"Volatility management can alter momentum risk-adjusted returns.","project_applicability":"Use lagged realized volatility as a diagnostic feature.","reflection":"A volatility feature may filter exposure without adding independent alpha."},
+    {"url":"https://www.nber.org/papers/w20439","published_or_updated_at":"2014","source_type":"paper","credibility":"high","core_claim":"Momentum can experience crash regimes and reversals.","project_applicability":"Require drawdown and regime-aware failure analysis.","reflection":"Crash evidence is not a license for unrestricted regime modeling."},
+    {"url":"https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1107590","published_or_updated_at":"2010","source_type":"paper","credibility":"high","core_claim":"Intraday cross-sectional patterns require broad clean data.","project_applicability":"Reject expansion into stock or ETF cross-section in this round.","reflection":"The current task is a single frozen-rule meta-label problem."},
+    {"url":"https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2294498","published_or_updated_at":"2018","source_type":"paper","credibility":"high","core_claim":"Trading costs materially erode anomaly returns.","project_applicability":"Label episodes with the same turnover-cost semantics as the reference engine.","reflection":"Observed fill evidence remains unavailable in historical research."},
+    {"url":"https://docs.alpaca.markets/docs/market-data-faq","published_or_updated_at":"accessed 2026-07-10","source_type":"provider_official_docs","credibility":"high","core_claim":"IEX and SIP feeds differ in completeness.","project_applicability":"Treat Alpaca IEX history as research-only evidence.","reflection":"Recheck entitlements before broker-stage decisions."}
+  ],
+  "topic_coverage": ["time-series momentum","intraday predictability","overnight context","volatility management","momentum crash risk","transaction costs","data-feed limitations"],
+  "candidate_matrix_revisions": [
+    {"path":"regularized_logistic","action":"diagnostic_shadow_only","reason":"Failed the preregistered two-of-three validation-fold gate."},
+    {"path":"lightgbm_challenger","action":"diagnostic_shadow_only","reason":"Failed the preregistered two-of-three validation-fold gate."},
+    {"path":"ml_family_holdout","action":"stop","reason":"A prior implementation opened it despite the failed gate; those results are invalidated."}
+  ],
+  "hypothesis_links": ["H1", "H2"]
+}

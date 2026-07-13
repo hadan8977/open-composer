@@ -795,6 +795,28 @@ def research_momentum_ml_compare_command(
     console.print(f"trial ledger: {result.trial_ledger_path}")
 
 
+@research_app.command("momentum-portfolio")
+def research_momentum_portfolio_command() -> None:
+    """Evaluate the bounded rule and ML momentum strategy portfolio."""
+    from open_composer.research.momentum_portfolio import run_momentum_strategy_portfolio
+
+    result = run_momentum_strategy_portfolio(project_root())
+    console.print(f"momentum portfolio sleeves={len(result.payload['portfolio'])}")
+    console.print(f"json: {result.json_path}")
+    console.print(f"markdown: {result.markdown_path}")
+
+
+@research_app.command("momentum-virtual-paper")
+def research_momentum_virtual_paper_command() -> None:
+    """Run isolated broker-free virtual paper sleeves for the momentum portfolio."""
+    from open_composer.research.momentum_portfolio import run_virtual_momentum_paper
+
+    result = run_virtual_momentum_paper(project_root())
+    console.print(f"momentum virtual paper status={result.payload['status']}")
+    console.print(f"json: {result.json_path}")
+    console.print(f"markdown: {result.markdown_path}")
+
+
 @research_iteration_app.command("init")
 def research_iteration_init_command(
     iter_id: str,

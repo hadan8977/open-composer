@@ -1,0 +1,504 @@
+{
+  "acceptance": {
+    "any_family_qualified_for_holdout": false,
+    "any_ml_family_holdout_pass": false,
+    "independent_lockbox_pass": false,
+    "negative_result_is_valid": true,
+    "selected_for_execution": false,
+    "selection_caveat": "Validation failed the preregistered 2/3 fold gate, so the holdout was not evaluated by this corrected run."
+  },
+  "design_path": "reports/research/iterations/mom_minute_r3_ml/ml-design.json",
+  "execution_behavior_changed": false,
+  "fold_count": 3,
+  "folds": [
+    {
+      "fold": 1,
+      "test_end": "2025-06-16T13:30:00+00:00",
+      "test_events": 30,
+      "test_start": "2025-03-17T18:30:00+00:00",
+      "train_events": 55
+    },
+    {
+      "fold": 2,
+      "test_end": "2025-09-17T19:00:00+00:00",
+      "test_events": 30,
+      "test_start": "2025-06-17T16:00:00+00:00",
+      "train_events": 84
+    },
+    {
+      "fold": 3,
+      "test_end": "2025-12-19T18:30:00+00:00",
+      "test_events": 23,
+      "test_start": "2025-09-29T13:30:00+00:00",
+      "train_events": 115
+    }
+  ],
+  "frozen_models": [
+    {
+      "feature_contract_hash": "7e8b0d6749f05c3f012b91d9dc2cf6519913d7d593295f43ca2730a5298112b3",
+      "model_family": "regularized_logistic",
+      "model_path": "reports/research/iterations/mom_minute_r3_ml/models/regularized_logistic.joblib",
+      "model_sha256": "1d40be541a087cd65e1f12b343a373ebddb1f8b3c6c57763324024365eac361b",
+      "qualified_for_holdout": false,
+      "random_seed": 77,
+      "source_contract_sha256": "0f443ac566255c73e92e1f64c126ca17fbfdcd06ed2c884c65177df00f3d99a3",
+      "spec_hash": "6e781dd01a1ef215160913f39ea431f1094ed0d83d9a831fe789ff4a0b9b8dd0",
+      "status": "diagnostic_shadow_only",
+      "threshold": 0.5,
+      "training_cutoff_bar": 5235,
+      "training_event_count": 138,
+      "training_event_hash": "c585d186cac10710b357f64cb65764219eea05c04fa3718af046fcfa9fe63281",
+      "trial_id": "logistic_c0.1_t0.5"
+    },
+    {
+      "feature_contract_hash": "7e8b0d6749f05c3f012b91d9dc2cf6519913d7d593295f43ca2730a5298112b3",
+      "model_family": "lightgbm_challenger",
+      "model_path": "reports/research/iterations/mom_minute_r3_ml/models/lightgbm_challenger.joblib",
+      "model_sha256": "2e8b48195cde966e179eeb6f4b782d715ff2b2d872225435c467c107721cc258",
+      "qualified_for_holdout": false,
+      "random_seed": 77,
+      "source_contract_sha256": "0f443ac566255c73e92e1f64c126ca17fbfdcd06ed2c884c65177df00f3d99a3",
+      "spec_hash": "6e781dd01a1ef215160913f39ea431f1094ed0d83d9a831fe789ff4a0b9b8dd0",
+      "status": "diagnostic_shadow_only",
+      "threshold": 0.5,
+      "training_cutoff_bar": 5235,
+      "training_event_count": 138,
+      "training_event_hash": "c585d186cac10710b357f64cb65764219eea05c04fa3718af046fcfa9fe63281",
+      "trial_id": "lightgbm_l7_t0.5"
+    }
+  ],
+  "generated_at": "2026-07-13T17:26:33.785605+00:00",
+  "independence_unit": "frozen_rule_entry_episode",
+  "iter_id": "mom_minute_r3_ml",
+  "limitations": [
+    "Alpaca IEX materialized history remains research-only evidence.",
+    "This comparison evaluates entry filtering only; it does not repair exit hysteresis or position sizing.",
+    "Frozen models are diagnostic shadow artifacts only and are not connected to paper orders or broker writes.",
+    "A previous implementation opened the reserved holdout despite failing the validation gate; those holdout results are invalidated and cannot be reused.",
+    "Entry episodes are the independent evaluation unit; overlapping bar labels are not counted as independent samples."
+  ],
+  "ml_family_holdout": {
+    "events_reserved": 33,
+    "opened_once": false,
+    "previous_holdout_invalidly_opened": true,
+    "previous_results_invalidated": true,
+    "reason": "no model family won at least two of three validation folds",
+    "rows": []
+  },
+  "paper_ready_pass": false,
+  "report_type": "momentum_strategy_specific_ml_comparison",
+  "research_pass": false,
+  "rule": {
+    "trial_id": "frozen_rule"
+  },
+  "status": "holdout_not_opened_keep_rule_champion",
+  "stitched_oos_entry_predictions": 83,
+  "training_scope": "offline_research_only",
+  "trials": [
+    {
+      "fold_count": 3,
+      "fold_wins_vs_rule": 1,
+      "folds": [
+        {
+          "challenger_total_return_pct": -8.6894,
+          "fold": 1,
+          "rule_total_return_pct": -9.8302
+        },
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 2,
+          "rule_total_return_pct": 3.1862
+        },
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 3,
+          "rule_total_return_pct": 9.4526
+        }
+      ],
+      "hyperparameters": {
+        "C": 0.1
+      },
+      "information_ratio_vs_rule": -0.5945,
+      "model_family": "regularized_logistic",
+      "oos_entry_coverage": 1.0,
+      "rule_validation_metrics": {
+        "acceptance_rate": 1.0,
+        "accepted_events": 83,
+        "brier_score": 0.60241,
+        "episode_sharpe": 0.1907,
+        "events": 83,
+        "max_drawdown_pct": -12.7211,
+        "roc_auc": 0.5,
+        "total_return_pct": 1.8378
+      },
+      "status": "validation_complete",
+      "threshold": 0.5,
+      "trial_id": "logistic_c0.1_t0.5",
+      "validation_metrics": {
+        "acceptance_rate": 0.0482,
+        "accepted_events": 4,
+        "brier_score": 0.261938,
+        "episode_sharpe": -1.6048,
+        "events": 83,
+        "max_drawdown_pct": -5.7063,
+        "roc_auc": 0.430909,
+        "total_return_pct": -8.6894
+      }
+    },
+    {
+      "fold_count": 3,
+      "fold_wins_vs_rule": 1,
+      "folds": [
+        {
+          "challenger_total_return_pct": -9.1607,
+          "fold": 1,
+          "rule_total_return_pct": -9.8302
+        },
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 2,
+          "rule_total_return_pct": 3.1862
+        },
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 3,
+          "rule_total_return_pct": 9.4526
+        }
+      ],
+      "hyperparameters": {
+        "C": 0.1
+      },
+      "information_ratio_vs_rule": -0.6175,
+      "model_family": "regularized_logistic",
+      "oos_entry_coverage": 1.0,
+      "rule_validation_metrics": {
+        "acceptance_rate": 1.0,
+        "accepted_events": 83,
+        "brier_score": 0.60241,
+        "episode_sharpe": 0.1907,
+        "events": 83,
+        "max_drawdown_pct": -12.7211,
+        "roc_auc": 0.5,
+        "total_return_pct": 1.8378
+      },
+      "status": "validation_complete",
+      "threshold": 0.6,
+      "trial_id": "logistic_c0.1_t0.6",
+      "validation_metrics": {
+        "acceptance_rate": 0.0361,
+        "accepted_events": 3,
+        "brier_score": 0.261938,
+        "episode_sharpe": -1.7087,
+        "events": 83,
+        "max_drawdown_pct": -5.7063,
+        "roc_auc": 0.430909,
+        "total_return_pct": -9.1607
+      }
+    },
+    {
+      "fold_count": 3,
+      "fold_wins_vs_rule": 1,
+      "folds": [
+        {
+          "challenger_total_return_pct": -9.1607,
+          "fold": 1,
+          "rule_total_return_pct": -9.8302
+        },
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 2,
+          "rule_total_return_pct": 3.1862
+        },
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 3,
+          "rule_total_return_pct": 9.4526
+        }
+      ],
+      "hyperparameters": {
+        "C": 1.0
+      },
+      "information_ratio_vs_rule": -0.6175,
+      "model_family": "regularized_logistic",
+      "oos_entry_coverage": 1.0,
+      "rule_validation_metrics": {
+        "acceptance_rate": 1.0,
+        "accepted_events": 83,
+        "brier_score": 0.60241,
+        "episode_sharpe": 0.1907,
+        "events": 83,
+        "max_drawdown_pct": -12.7211,
+        "roc_auc": 0.5,
+        "total_return_pct": 1.8378
+      },
+      "status": "validation_complete",
+      "threshold": 0.5,
+      "trial_id": "logistic_c1_t0.5",
+      "validation_metrics": {
+        "acceptance_rate": 0.0361,
+        "accepted_events": 3,
+        "brier_score": 0.286341,
+        "episode_sharpe": -1.7087,
+        "events": 83,
+        "max_drawdown_pct": -5.7063,
+        "roc_auc": 0.355152,
+        "total_return_pct": -9.1607
+      }
+    },
+    {
+      "fold_count": 3,
+      "fold_wins_vs_rule": 1,
+      "folds": [
+        {
+          "challenger_total_return_pct": -9.1607,
+          "fold": 1,
+          "rule_total_return_pct": -9.8302
+        },
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 2,
+          "rule_total_return_pct": 3.1862
+        },
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 3,
+          "rule_total_return_pct": 9.4526
+        }
+      ],
+      "hyperparameters": {
+        "C": 1.0
+      },
+      "information_ratio_vs_rule": -0.6175,
+      "model_family": "regularized_logistic",
+      "oos_entry_coverage": 1.0,
+      "rule_validation_metrics": {
+        "acceptance_rate": 1.0,
+        "accepted_events": 83,
+        "brier_score": 0.60241,
+        "episode_sharpe": 0.1907,
+        "events": 83,
+        "max_drawdown_pct": -12.7211,
+        "roc_auc": 0.5,
+        "total_return_pct": 1.8378
+      },
+      "status": "validation_complete",
+      "threshold": 0.6,
+      "trial_id": "logistic_c1_t0.6",
+      "validation_metrics": {
+        "acceptance_rate": 0.0361,
+        "accepted_events": 3,
+        "brier_score": 0.286341,
+        "episode_sharpe": -1.7087,
+        "events": 83,
+        "max_drawdown_pct": -5.7063,
+        "roc_auc": 0.355152,
+        "total_return_pct": -9.1607
+      }
+    },
+    {
+      "fold_count": 3,
+      "fold_wins_vs_rule": 1,
+      "folds": [
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 1,
+          "rule_total_return_pct": -9.8302
+        },
+        {
+          "challenger_total_return_pct": -0.2352,
+          "fold": 2,
+          "rule_total_return_pct": 3.1862
+        },
+        {
+          "challenger_total_return_pct": 7.846,
+          "fold": 3,
+          "rule_total_return_pct": 9.4526
+        }
+      ],
+      "hyperparameters": {
+        "max_depth": 3,
+        "num_leaves": 7
+      },
+      "information_ratio_vs_rule": 0.1584,
+      "model_family": "lightgbm_challenger",
+      "oos_entry_coverage": 1.0,
+      "rule_validation_metrics": {
+        "acceptance_rate": 1.0,
+        "accepted_events": 83,
+        "brier_score": 0.60241,
+        "episode_sharpe": 0.1907,
+        "events": 83,
+        "max_drawdown_pct": -12.7211,
+        "roc_auc": 0.5,
+        "total_return_pct": 1.8378
+      },
+      "status": "validation_complete",
+      "threshold": 0.5,
+      "trial_id": "lightgbm_l7_t0.5",
+      "validation_metrics": {
+        "acceptance_rate": 0.0843,
+        "accepted_events": 7,
+        "brier_score": 0.260442,
+        "episode_sharpe": 0.8036,
+        "events": 83,
+        "max_drawdown_pct": -1.7713,
+        "roc_auc": 0.493636,
+        "total_return_pct": 7.5923
+      }
+    },
+    {
+      "fold_count": 3,
+      "fold_wins_vs_rule": 1,
+      "folds": [
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 1,
+          "rule_total_return_pct": -9.8302
+        },
+        {
+          "challenger_total_return_pct": -0.2352,
+          "fold": 2,
+          "rule_total_return_pct": 3.1862
+        },
+        {
+          "challenger_total_return_pct": -0.1049,
+          "fold": 3,
+          "rule_total_return_pct": 9.4526
+        }
+      ],
+      "hyperparameters": {
+        "max_depth": 3,
+        "num_leaves": 7
+      },
+      "information_ratio_vs_rule": -0.2053,
+      "model_family": "lightgbm_challenger",
+      "oos_entry_coverage": 1.0,
+      "rule_validation_metrics": {
+        "acceptance_rate": 1.0,
+        "accepted_events": 83,
+        "brier_score": 0.60241,
+        "episode_sharpe": 0.1907,
+        "events": 83,
+        "max_drawdown_pct": -12.7211,
+        "roc_auc": 0.5,
+        "total_return_pct": 1.8378
+      },
+      "status": "validation_complete",
+      "threshold": 0.6,
+      "trial_id": "lightgbm_l7_t0.6",
+      "validation_metrics": {
+        "acceptance_rate": 0.0361,
+        "accepted_events": 3,
+        "brier_score": 0.260442,
+        "episode_sharpe": -0.2081,
+        "events": 83,
+        "max_drawdown_pct": -1.2182,
+        "roc_auc": 0.493636,
+        "total_return_pct": -0.3398
+      }
+    },
+    {
+      "fold_count": 3,
+      "fold_wins_vs_rule": 1,
+      "folds": [
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 1,
+          "rule_total_return_pct": -9.8302
+        },
+        {
+          "challenger_total_return_pct": -0.2352,
+          "fold": 2,
+          "rule_total_return_pct": 3.1862
+        },
+        {
+          "challenger_total_return_pct": 7.846,
+          "fold": 3,
+          "rule_total_return_pct": 9.4526
+        }
+      ],
+      "hyperparameters": {
+        "max_depth": 3,
+        "num_leaves": 15
+      },
+      "information_ratio_vs_rule": 0.1584,
+      "model_family": "lightgbm_challenger",
+      "oos_entry_coverage": 1.0,
+      "rule_validation_metrics": {
+        "acceptance_rate": 1.0,
+        "accepted_events": 83,
+        "brier_score": 0.60241,
+        "episode_sharpe": 0.1907,
+        "events": 83,
+        "max_drawdown_pct": -12.7211,
+        "roc_auc": 0.5,
+        "total_return_pct": 1.8378
+      },
+      "status": "validation_complete",
+      "threshold": 0.5,
+      "trial_id": "lightgbm_l15_t0.5",
+      "validation_metrics": {
+        "acceptance_rate": 0.0843,
+        "accepted_events": 7,
+        "brier_score": 0.260442,
+        "episode_sharpe": 0.8036,
+        "events": 83,
+        "max_drawdown_pct": -1.7713,
+        "roc_auc": 0.493636,
+        "total_return_pct": 7.5923
+      }
+    },
+    {
+      "fold_count": 3,
+      "fold_wins_vs_rule": 1,
+      "folds": [
+        {
+          "challenger_total_return_pct": 0.0,
+          "fold": 1,
+          "rule_total_return_pct": -9.8302
+        },
+        {
+          "challenger_total_return_pct": -0.2352,
+          "fold": 2,
+          "rule_total_return_pct": 3.1862
+        },
+        {
+          "challenger_total_return_pct": -0.1049,
+          "fold": 3,
+          "rule_total_return_pct": 9.4526
+        }
+      ],
+      "hyperparameters": {
+        "max_depth": 3,
+        "num_leaves": 15
+      },
+      "information_ratio_vs_rule": -0.2053,
+      "model_family": "lightgbm_challenger",
+      "oos_entry_coverage": 1.0,
+      "rule_validation_metrics": {
+        "acceptance_rate": 1.0,
+        "accepted_events": 83,
+        "brier_score": 0.60241,
+        "episode_sharpe": 0.1907,
+        "events": 83,
+        "max_drawdown_pct": -12.7211,
+        "roc_auc": 0.5,
+        "total_return_pct": 1.8378
+      },
+      "status": "validation_complete",
+      "threshold": 0.6,
+      "trial_id": "lightgbm_l15_t0.6",
+      "validation_metrics": {
+        "acceptance_rate": 0.0361,
+        "accepted_events": 3,
+        "brier_score": 0.260442,
+        "episode_sharpe": -0.2081,
+        "events": 83,
+        "max_drawdown_pct": -1.2182,
+        "roc_auc": 0.493636,
+        "total_return_pct": -0.3398
+      }
+    }
+  ],
+  "workflow_pass": true
+}

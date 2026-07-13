@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_minute_r4_portfolio",
+  "strategy_name": "us_mom_minute_p1_003_frozen",
+  "source_spec_path": "strategy_specs/drafts/us_mom_minute_p1_003_frozen.yaml",
+  "spec_hash": "6e781dd01a1ef215160913f39ea431f1094ed0d83d9a831fe789ff4a0b9b8dd0",
+  "objective": "Post-hoc remediation and bounded portfolio contract for rule and diagnostic ML momentum sleeves",
+  "sources": [
+    {"url":"https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2089463","published_or_updated_at":"2012","source_type":"paper","credibility":"high","core_claim":"Time-series momentum supports testing multiple bounded horizons.","project_applicability":"Motivates R0, R1, and the time-equivalent R3 horizon.","reflection":"R1-R3 reuse a visible historical window and are exploratory only."},
+    {"url":"https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2440866","published_or_updated_at":"2018","source_type":"paper","credibility":"high","core_claim":"Intraday timing effects can vary within the session.","project_applicability":"Supports separate 15m and 30m observations.","reflection":"Current evidence cannot establish execution quality."},
+    {"url":"https://www.sciencedirect.com/science/article/abs/pii/S0304405X19300650","published_or_updated_at":"2019","source_type":"paper","credibility":"high","core_claim":"Intraday and overnight returns should not be conflated.","project_applicability":"Keep explicit overnight holding semantics in each sleeve.","reflection":"This portfolio does not add an overnight prediction model."},
+    {"url":"https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2041429","published_or_updated_at":"2015","source_type":"paper","credibility":"high","core_claim":"Risk scaling can change momentum drawdown characteristics.","project_applicability":"Use R3 as a bounded risk-adjusted comparator, not a proven champion.","reflection":"No position-sizing ML is introduced."},
+    {"url":"https://www.nber.org/papers/w20439","published_or_updated_at":"2014","source_type":"paper","credibility":"high","core_claim":"Momentum can crash during sharp reversals.","project_applicability":"R2 tests bounded exit confirmation and minimum hold semantics.","reflection":"Hysteresis can also delay exits and increase losses."},
+    {"url":"https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1107590","published_or_updated_at":"2010","source_type":"paper","credibility":"high","core_claim":"Broad cross-sectional intraday strategies demand clean multi-symbol data.","project_applicability":"Keep this round to QQQ signal and TQQQ target.","reflection":"Do not expand to a stock basket."},
+    {"url":"https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2294498","published_or_updated_at":"2018","source_type":"paper","credibility":"high","core_claim":"Trading costs matter for high-turnover strategies.","project_applicability":"Charge turnover costs in historical and virtual Paper ledgers.","reflection":"Virtual costs are not observed fill TCA."},
+    {"url":"https://docs.alpaca.markets/docs/market-data-faq","published_or_updated_at":"accessed 2026-07-10","source_type":"provider_official_docs","credibility":"high","core_claim":"IEX feed coverage differs from SIP.","project_applicability":"Label all current data research-only and require a fresh completed session.","reflection":"No Alpaca multi-strategy orders are authorized."}
+  ],
+  "topic_coverage": ["momentum horizons","intraday timing","overnight semantics","risk adjustment","exit hysteresis","transaction costs","data freshness"],
+  "candidate_matrix_revisions": [
+    {"path":"R0","action":"keep","reason":"Frozen StrategySpec reference champion."},
+    {"path":"R1_R2_R3","action":"diagnostic_shadow","reason":"Bounded retrospective variants; historical window is not an untouched lockbox."},
+    {"path":"M1_M2","action":"diagnostic_shadow","reason":"Both model families failed the validation gate."}
+  ],
+  "hypothesis_links": ["H1", "H2", "H3"]
+}

@@ -1,0 +1,20 @@
+{
+  "strategy_name": "us_mom_minute_p1_003_frozen_ml_diagnostics",
+  "lookahead_check": "pass",
+  "future_leak_check": "pass",
+  "overfit_risk": "medium",
+  "multiple_testing_count": 8,
+  "pbo_proxy": null,
+  "dsr_proxy": null,
+  "sample_data_caveats": [
+    "Alpaca IEX minute bars are research-only rather than consolidated SIP evidence.",
+    "A prior implementation opened the reserved 102-session holdout despite failing the validation gate; those results are invalidated.",
+    "Both corrected model families win only one of three validation folds and are diagnostic shadow artifacts, not research-pass models."
+  ],
+  "trade_count": 138,
+  "trading_days": 407,
+  "capacity_assessment": "Models cannot create entries or submit orders. Any future TQQQ Paper use still requires spread, gap, ADV, and observed fill review.",
+  "short_sample": false,
+  "conclusion": "warning",
+  "notes": "Eight fixed Logistic and LightGBM trials use index-minus-one features, chronological expanding folds, episode-end purge, a 13-bar embargo, and reference-engine turnover costs. The corrected selection contract requires two fold wins, positive IR, aggregate return or Sharpe lift, and non-worse drawdown before holdout access. No family qualifies, so the holdout is not evaluated and the rule remains champion."
+}

@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -16,13 +18,11 @@ from sklearn.preprocessing import StandardScaler
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.ml_backend.model_factory import create_lightgbm_classifier
-from open_composer.research.ml_backend.windows import ml_walk_forward_slices
 from open_composer.research.mom_minute_lockbox import _position
 from open_composer.research.mom_minute_round import (
     BASE_COST_BPS,
     _align_signal_and_trade,
     _load_bundle,
-    _metrics,
     _required_pair,
     _strategy_returns,
 )
@@ -41,12 +41,13 @@ FEATURES = (
     "tqqq_gap_1_index_minus_1",
 )
 MAX_EPISODE_BARS = 120
-PURGE_BARS = MAX_EPISODE_BARS
-EMBARGO_BARS = MAX_EPISODE_BARS
+EMBARGO_BARS = 13
 SEARCH_CAP = 12
 MIN_ENTRY_EVENTS = 80
 MIN_CLASS_EVENTS = 20
-MIN_TEST_ENTRY_EVENTS = 30
+VALIDATION_EVENT_COUNTS = (30, 30, 23)
+INITIAL_TRAIN_EVENTS = 55
+HOLDOUT_SESSIONS = 102
 RANDOM_SEED = 77
 
 
@@ -74,8 +75,9 @@ def write_momentum_ml_design(
     spec, aligned, baseline_position = _load_frozen_candidate(spec_path, base)
     feature_frame = _feature_frame(aligned)
     events = _entry_events(aligned, baseline_position, feature_frame)
-    eligible_windows = _eligible_windows(aligned, events, baseline_position)
-    class_counts = events["label"].value_counts().to_dict() if not events.empty else {}
+    folds, _ = _nested_event_folds(aligned, events)
+    development = _development_events(aligned, events)
+    class_counts = development["label"].value_counts().to_dict() if not development.empty else {}
     gates = {
         "frozen_strategy_identity": {
             "actual": spec.name,
@@ -83,9 +85,9 @@ def write_momentum_ml_design(
             "passed": spec.name == EXPECTED_SPEC_NAME,
         },
         "entry_events": {
-            "actual": int(len(events)),
+            "actual": int(len(development)),
             "threshold": MIN_ENTRY_EVENTS,
-            "passed": len(events) >= MIN_ENTRY_EVENTS,
+            "passed": len(development) >= MIN_ENTRY_EVENTS,
         },
         "positive_events": {
             "actual": int(class_counts.get(1, 0)),
@@ -98,19 +100,31 @@ def write_momentum_ml_design(
             "passed": class_counts.get(0, 0) >= MIN_CLASS_EVENTS,
         },
         "feature_completeness": {
-            "actual": int(events[list(FEATURES)].dropna().shape[0]) if not events.empty else 0,
-            "threshold": int(len(events)),
-            "passed": bool(not events.empty and events[list(FEATURES)].notna().all(axis=None)),
+            "actual": (
+                int(development[list(FEATURES)].dropna().shape[0]) if not development.empty else 0
+            ),
+            "threshold": int(len(development)),
+            "passed": bool(
+                not development.empty and development[list(FEATURES)].notna().all(axis=None)
+            ),
         },
         "purge_and_embargo": {
-            "actual": {"purge_bars": PURGE_BARS, "embargo_bars": EMBARGO_BARS},
-            "threshold": MAX_EPISODE_BARS,
-            "passed": (PURGE_BARS >= MAX_EPISODE_BARS and EMBARGO_BARS >= MAX_EPISODE_BARS),
+            "actual": {
+                "method": "episode_end_before_test_start_minus_embargo",
+                "embargo_bars": EMBARGO_BARS,
+            },
+            "threshold": EMBARGO_BARS,
+            "passed": EMBARGO_BARS >= 13,
         },
         "valid_walk_forward_folds": {
-            "actual": len(eligible_windows),
-            "threshold": 4,
-            "passed": len(eligible_windows) >= 4,
+            "actual": len(folds),
+            "threshold": 3,
+            "passed": len(folds) == 3,
+        },
+        "ml_family_holdout": {
+            "actual": HOLDOUT_SESSIONS,
+            "threshold": HOLDOUT_SESSIONS,
+            "passed": len(dict.fromkeys(aligned["session_date"].tolist())) > HOLDOUT_SESSIONS,
         },
     }
     training_authorized = all(row["passed"] for row in gates.values())
@@ -159,7 +173,7 @@ def write_momentum_ml_design(
         "training_contract": {
             "models": ["frozen_rule", "regularized_logistic", "lightgbm_challenger"],
             "prediction_scope": "stitched_oos_only",
-            "purge_bars": PURGE_BARS,
+            "purge_method": "actual_episode_end",
             "embargo_bars": EMBARGO_BARS,
             "search_cap": SEARCH_CAP,
             "random_seed": RANDOM_SEED,
@@ -170,8 +184,8 @@ def write_momentum_ml_design(
                 "same stitched OOS bars for every challenger",
                 "positive information ratio versus the frozen rule",
                 "higher net return or Sharpe without worse max drawdown",
-                "at least three fold wins versus both rule and logistic before any "
-                "later shadow proposal",
+                "at least two of three validation fold wins before the ML-family holdout",
+                "the final ML-family holdout is opened once after model-family selection",
             ],
         },
         "gates": gates,
@@ -203,162 +217,90 @@ def run_momentum_ml_comparison(
         return MomentumMLComparisonResult(json_path, markdown_path, ledger_path, payload)
 
     _, aligned, baseline_position = _load_frozen_candidate(spec_path, base)
-    features = _feature_frame(aligned)
-    events = _entry_events(aligned, baseline_position, features)
-    windows = _eligible_windows(aligned, events, baseline_position)
+    events = _entry_events(aligned, baseline_position, _feature_frame(aligned))
+    folds, holdout = _nested_event_folds(aligned, events)
     trials = _trial_definitions()
-    trial_rows: list[dict[str, Any]] = []
-    stitched_positions: dict[str, pd.Series] = {
-        trial["trial_id"]: pd.Series(np.nan, index=aligned.index, dtype="float64")
-        for trial in trials
-    }
-    oos_event_predictions: dict[str, list[pd.DataFrame]] = {
-        trial["trial_id"]: [] for trial in trials
-    }
-    rule_position = pd.Series(np.nan, index=aligned.index, dtype="float64")
+    prediction_frames: dict[str, list[pd.DataFrame]] = {row["trial_id"]: [] for row in trials}
     fold_rows: list[dict[str, Any]] = []
-    prediction_rows = 0
-
-    for window in windows:
-        train = events.loc[
-            (events["bar_index"] >= window.train_start_idx)
-            & (events["bar_index"] < window.train_end_idx)
-        ]
-        test = events.loc[
-            (events["bar_index"] >= window.test_start_idx)
-            & (events["bar_index"] < window.test_end_idx)
-        ]
-        if (
-            len(train) < 30
-            or len(test) < MIN_TEST_ENTRY_EVENTS
-            or train["label"].nunique() < 2
-            or test["label"].nunique() < 2
-        ):
-            continue
-        test_slice = slice(window.test_start_idx, window.test_end_idx)
-        rule_position.iloc[test_slice] = baseline_position.iloc[test_slice]
-        X_train = train[list(FEATURES)]
-        y_train = train["label"].astype(int)
-        X_test = test[list(FEATURES)]
-        fold_predictions: dict[str, pd.Series] = {}
+    for fold in folds:
+        train = fold["train"]
+        test = fold["test"]
         for trial in trials:
             try:
                 estimator = _make_estimator(trial)
-                estimator.fit(X_train, y_train)
-                probabilities = pd.Series(
-                    estimator.predict_proba(X_test)[:, 1], index=test.index, dtype="float64"
+                estimator.fit(train[list(FEATURES)], train["label"].astype(int))
+                probability = estimator.predict_proba(test[list(FEATURES)])[:, 1]
+                prediction_frames[trial["trial_id"]].append(
+                    test[["bar_index", "exit_bar_index", "label", "forward_net_return"]].assign(
+                        fold=fold["fold"], probability=probability
+                    )
                 )
-            except Exception as exc:  # model failure is a recorded negative result
+            except Exception as exc:
                 trial.setdefault("failures", []).append(
-                    {"fold": window.fold, "error": f"{type(exc).__name__}: {exc}"}
+                    {"fold": fold["fold"], "error": f"{type(exc).__name__}: {exc}"}
                 )
-                stitched_positions[trial["trial_id"]].iloc[test_slice] = baseline_position.iloc[
-                    test_slice
-                ].to_numpy()
-                continue
-            accepted = probabilities >= float(trial["threshold"])
-            fold_predictions[trial["trial_id"]] = probabilities
-            oos_event_predictions[trial["trial_id"]].append(
-                test[["bar_index", "label"]].assign(probability=probabilities.to_numpy())
-            )
-            gated = _gate_position(
-                baseline_position.iloc[test_slice],
-                test,
-                accepted,
-                offset=window.test_start_idx,
-                initially_active=bool(
-                    window.test_start_idx > 0
-                    and baseline_position.iloc[window.test_start_idx - 1] > 0
-                ),
-            )
-            stitched_positions[trial["trial_id"]].iloc[test_slice] = gated.to_numpy()
-        prediction_rows += len(test)
         fold_rows.append(
-            _fold_summary(
-                aligned,
-                rule_position,
-                stitched_positions,
-                fold_predictions,
-                test,
-                window.test_start_idx,
-                window.test_end_idx,
-                window.fold,
-            )
+            {
+                "fold": fold["fold"],
+                "train_events": len(train),
+                "test_events": len(test),
+                "test_start": test["timestamp"].iloc[0],
+                "test_end": test["timestamp"].iloc[-1],
+            }
         )
 
-    valid_mask = rule_position.notna()
-    rule_returns = _strategy_returns(
-        aligned.loc[valid_mask].reset_index(drop=True),
-        rule_position.loc[valid_mask].reset_index(drop=True),
-        cost_bps=BASE_COST_BPS["30m"],
-        allow_overnight=True,
-    )
-    rule_metrics = _metrics(rule_returns)
-    for trial in trials:
-        trial_id = trial["trial_id"]
-        position = stitched_positions[trial_id].loc[valid_mask].reset_index(drop=True)
-        returns = _strategy_returns(
-            aligned.loc[valid_mask].reset_index(drop=True),
-            position,
-            cost_bps=BASE_COST_BPS["30m"],
-            allow_overnight=True,
+    trial_rows = [
+        _validation_trial_row(trial, prediction_frames[trial["trial_id"]]) for trial in trials
+    ]
+    qualified = {
+        family: _best_trial(trial_rows, family)
+        for family in ("regularized_logistic", "lightgbm_challenger")
+    }
+    diagnostic_selected = {
+        family: _diagnostic_best_trial(trial_rows, family)
+        for family in ("regularized_logistic", "lightgbm_challenger")
+    }
+    holdout_start_session = list(dict.fromkeys(aligned["session_date"].tolist()))[-HOLDOUT_SESSIONS]
+    holdout_start = int(aligned.index[aligned["session_date"] == holdout_start_session].min())
+    refit = events.loc[
+        (events["bar_index"] < holdout_start)
+        & (events["exit_bar_index"] <= holdout_start - EMBARGO_BARS)
+    ]
+    model_dir = output / "models"
+    ensure_dir(model_dir)
+    frozen_models: list[dict[str, Any]] = []
+    for family, winner in diagnostic_selected.items():
+        if winner is None:
+            continue
+        estimator = _make_estimator(winner)
+        estimator.fit(refit[list(FEATURES)], refit["label"].astype(int))
+        model_path = model_dir / f"{family}.joblib"
+        joblib.dump(estimator, model_path)
+        model_sha256 = _sha256_file(model_path)
+        frozen_models.append(
+            {
+                "model_family": family,
+                "trial_id": winner["trial_id"],
+                "threshold": winner["threshold"],
+                "model_path": str(model_path.relative_to(base)),
+                "model_sha256": model_sha256,
+                "status": "diagnostic_shadow_only",
+                "qualified_for_holdout": qualified[family] is not None,
+                "training_event_count": int(len(refit)),
+                "training_event_hash": _event_hash(refit),
+                "training_cutoff_bar": holdout_start - EMBARGO_BARS,
+                "feature_contract_hash": sha256("\n".join(FEATURES).encode()).hexdigest(),
+                "spec_hash": design.payload["spec_hash"],
+                "source_contract_sha256": design.payload["source_contract_sha256"],
+                "random_seed": RANDOM_SEED,
+            }
         )
-        metrics = _metrics(returns)
-        active = returns - rule_returns
-        information_ratio = _information_ratio(active)
-        relevant_folds = [fold for fold in fold_rows if trial_id in fold["challengers"]]
-        fold_wins = sum(
-            1
-            for fold in relevant_folds
-            if fold["challengers"][trial_id]["total_return_pct"] > fold["rule"]["total_return_pct"]
-        )
-        row = {
-            **trial,
-            "status": "failed_model_fallback" if trial.get("failures") else "diagnostic_only",
-            "stitched_oos_metrics": metrics,
-            "information_ratio_vs_rule": information_ratio,
-            "fold_wins_vs_rule": fold_wins,
-            "fold_count": len(relevant_folds),
-            "beats_rule_return": metrics["total_return_pct"] > rule_metrics["total_return_pct"],
-            "beats_rule_sharpe": metrics["sharpe"] > rule_metrics["sharpe"],
-            "maxdd_not_worse": metrics["max_drawdown_pct"] >= rule_metrics["max_drawdown_pct"],
-            "mean_oos_auc": _mean_fold_metric(relevant_folds, trial_id, "roc_auc"),
-            "non_overlap_oos_auc": _non_overlap_auc(oos_event_predictions[trial_id]),
-            "oos_prediction_count": sum(len(frame) for frame in oos_event_predictions[trial_id]),
-            "oos_entry_coverage": round(
-                sum(len(frame) for frame in oos_event_predictions[trial_id])
-                / max(prediction_rows, 1),
-                4,
-            ),
-            "worst_fold_return_delta_pct": _worst_fold_return_delta(relevant_folds, trial_id),
-        }
-        trial_rows.append(row)
-
-    logistic_best = _best_trial(trial_rows, "regularized_logistic")
-    lightgbm_best = _best_trial(trial_rows, "lightgbm_challenger")
-    ml_beats_rule_and_linear = bool(
-        lightgbm_best
-        and logistic_best
-        and lightgbm_best["stitched_oos_metrics"]["total_return_pct"]
-        > max(
-            rule_metrics["total_return_pct"],
-            logistic_best["stitched_oos_metrics"]["total_return_pct"],
-        )
-        and lightgbm_best["information_ratio_vs_rule"] > 0
-        and lightgbm_best["maxdd_not_worse"]
-        and lightgbm_best["fold_count"] >= 4
-        and lightgbm_best["fold_wins_vs_rule"] >= 3
-        and lightgbm_best["mean_oos_auc"] > 0.52
-        and lightgbm_best["non_overlap_oos_auc"] > 0.52
-        and lightgbm_best["worst_fold_return_delta_pct"] >= 0
-    )
+    any_family_qualified = any(row is not None for row in qualified.values())
     payload = {
         "report_type": "momentum_strategy_specific_ml_comparison",
         "iter_id": ITER_ID,
         "generated_at": datetime.now(UTC).isoformat(),
-        "status": "offline_challenger_promising_requires_lockbox"
-        if ml_beats_rule_and_linear
-        else "keep_rule_champion",
+        "status": "holdout_not_opened_keep_rule_champion",
         "workflow_pass": True,
         "research_pass": False,
         "paper_ready_pass": False,
@@ -366,28 +308,37 @@ def run_momentum_ml_comparison(
         "training_scope": "offline_research_only",
         "design_path": str(design.json_path.relative_to(base)),
         "fold_count": len(fold_rows),
-        "stitched_oos_entry_predictions": prediction_rows,
+        "stitched_oos_entry_predictions": sum(VALIDATION_EVENT_COUNTS),
         "independence_unit": "frozen_rule_entry_episode",
-        "rule": {"trial_id": "frozen_rule", "stitched_oos_metrics": rule_metrics},
+        "rule": {"trial_id": "frozen_rule"},
         "trials": trial_rows,
         "folds": fold_rows,
+        "ml_family_holdout": {
+            "opened_once": False,
+            "events_reserved": len(holdout),
+            "rows": [],
+            "reason": "no model family won at least two of three validation folds",
+            "previous_holdout_invalidly_opened": True,
+            "previous_results_invalidated": True,
+        },
+        "frozen_models": frozen_models,
         "acceptance": {
-            "ml_gate_beats_rule_and_linear": ml_beats_rule_and_linear,
+            "any_family_qualified_for_holdout": any_family_qualified,
+            "any_ml_family_holdout_pass": False,
             "independent_lockbox_pass": False,
             "selected_for_execution": False,
             "negative_result_is_valid": True,
-            "selection_caveat": (
-                "trial ranking uses the stitched OOS comparison and cannot authorize deployment "
-                "without a newly frozen forward shadow test"
-            ),
-            "failed_gates": _comparison_failed_gates(lightgbm_best, logistic_best),
+            "selection_caveat": "Validation failed the preregistered 2/3 fold gate, so the "
+            "holdout was not evaluated by this corrected run.",
         },
         "limitations": [
             "Alpaca IEX materialized history remains research-only evidence.",
             "This comparison evaluates entry filtering only; it does not repair exit "
             "hysteresis or position sizing.",
-            "No model artifact is connected to target weights, shadow decisions, "
-            "paper orders, or broker writes.",
+            "Frozen models are diagnostic shadow artifacts only and are not connected to "
+            "paper orders or broker writes.",
+            "A previous implementation opened the reserved holdout despite failing the "
+            "validation gate; those holdout results are invalidated and cannot be reused.",
             "Entry episodes are the independent evaluation unit; overlapping bar labels "
             "are not counted as independent samples.",
         ],
@@ -452,7 +403,6 @@ def _entry_events(
 ) -> pd.DataFrame:
     entry_mask = (baseline_position > 0) & (baseline_position.shift(1).fillna(0) <= 0)
     rows: list[dict[str, Any]] = []
-    round_trip_cost = BASE_COST_BPS["30m"] * 2 / 10000.0
     for bar_index in np.flatnonzero(entry_mask.to_numpy()):
         end = bar_index
         while end < len(baseline_position) and baseline_position.iloc[end] > 0:
@@ -463,11 +413,20 @@ def _entry_events(
         feature_row = features.iloc[bar_index]
         if feature_row.isna().any():
             continue
-        path = frame["next_trade_return"].iloc[bar_index:end].astype(float)
-        net_return = float((1.0 + path).prod() - 1.0 - round_trip_cost)
+        episode_position = pd.Series(0.0, index=frame.index)
+        episode_position.iloc[bar_index:end] = 1.0
+        episode_returns = _strategy_returns(
+            frame,
+            episode_position,
+            cost_bps=BASE_COST_BPS["30m"],
+            allow_overnight=True,
+        ).iloc[bar_index : end + 1]
+        net_return = float((1.0 + episode_returns).prod() - 1.0)
         row = {
             "bar_index": int(bar_index),
+            "exit_bar_index": int(end),
             "timestamp": pd.Timestamp(frame.iloc[bar_index]["timestamp"]).isoformat(),
+            "session_date": str(frame.iloc[bar_index]["session_date"]),
             "label": int(net_return > 0),
             "forward_net_return": net_return,
             "episode_bars": episode_bars,
@@ -477,43 +436,41 @@ def _entry_events(
     return pd.DataFrame(rows)
 
 
-def _eligible_windows(
+def _nested_event_folds(
     frame: pd.DataFrame,
     events: pd.DataFrame,
-    baseline_position: pd.Series,
-):
-    windows = ml_walk_forward_slices(
-        frame.assign(timestamp=pd.to_datetime(frame["timestamp"], utc=True)),
-        window_bars=1300,
-        test_window_bars=1300,
-        retrain_every_bars=1300,
-        horizon_bars=MAX_EPISODE_BARS,
-        embargo_bars=EMBARGO_BARS,
-    )
-    eligible = []
-    for window in windows:
-        starts_flat = (
-            window.test_start_idx == 0 or baseline_position.iloc[window.test_start_idx - 1] <= 0
+) -> tuple[list[dict[str, Any]], pd.DataFrame]:
+    sessions = list(dict.fromkeys(frame["session_date"].tolist()))
+    if len(sessions) <= HOLDOUT_SESSIONS:
+        return [], events.iloc[0:0].copy()
+    holdout_start_session = sessions[-HOLDOUT_SESSIONS]
+    holdout = events.loc[events["session_date"] >= holdout_start_session].copy()
+    development = events.loc[events["session_date"] < holdout_start_session].copy()
+    folds: list[dict[str, Any]] = []
+    train_count = INITIAL_TRAIN_EVENTS
+    for fold_number, test_count in enumerate(VALIDATION_EVENT_COUNTS, start=1):
+        raw_test = development.iloc[train_count : train_count + test_count].copy()
+        if len(raw_test) != test_count:
+            continue
+        test_start_bar = int(raw_test["bar_index"].min())
+        train = (
+            development.iloc[:train_count]
+            .loc[development.iloc[:train_count]["exit_bar_index"] <= test_start_bar - EMBARGO_BARS]
+            .copy()
         )
-        ends_flat = baseline_position.iloc[window.test_end_idx - 1] <= 0
-        train = events.loc[
-            (events["bar_index"] >= window.train_start_idx)
-            & (events["bar_index"] < window.train_end_idx)
-        ]
-        test = events.loc[
-            (events["bar_index"] >= window.test_start_idx)
-            & (events["bar_index"] < window.test_end_idx)
-        ]
-        if (
-            len(train) >= 30
-            and len(test) >= MIN_TEST_ENTRY_EVENTS
-            and train["label"].nunique() >= 2
-            and test["label"].nunique() >= 2
-            and starts_flat
-            and ends_flat
-        ):
-            eligible.append(window)
-    return eligible
+        if train["label"].nunique() < 2 or raw_test["label"].nunique() < 2:
+            continue
+        folds.append({"fold": fold_number, "train": train, "test": raw_test})
+        train_count += test_count
+    return folds, holdout
+
+
+def _development_events(frame: pd.DataFrame, events: pd.DataFrame) -> pd.DataFrame:
+    sessions = list(dict.fromkeys(frame["session_date"].tolist()))
+    if len(sessions) <= HOLDOUT_SESSIONS:
+        return events.iloc[0:0].copy()
+    holdout_start_session = sessions[-HOLDOUT_SESSIONS]
+    return events.loc[events["session_date"] < holdout_start_session].copy()
 
 
 def _trial_definitions() -> list[dict[str, Any]]:
@@ -563,84 +520,10 @@ def _make_estimator(trial: dict[str, Any]):
     )
 
 
-def _gate_position(
-    baseline_slice: pd.Series,
-    test_events: pd.DataFrame,
-    accepted: pd.Series,
-    *,
-    offset: int,
-    initially_active: bool = False,
-) -> pd.Series:
-    gated = pd.Series(0.0, index=baseline_slice.index, dtype="float64")
-    decisions = {
-        int(row.bar_index) - offset: bool(accepted.loc[index])
-        for index, row in test_events.iterrows()
-    }
-    active = initially_active
-    previous = 1.0 if initially_active else 0.0
-    for local_index, value in enumerate(baseline_slice.astype(float).to_numpy()):
-        if value > 0 and previous <= 0:
-            active = decisions.get(local_index, True)
-        if value <= 0:
-            active = False
-        gated.iloc[local_index] = value if active else 0.0
-        previous = value
-    return gated
-
-
-def _fold_summary(
-    frame: pd.DataFrame,
-    rule_position: pd.Series,
-    positions: dict[str, pd.Series],
-    probabilities: dict[str, pd.Series],
-    test_events: pd.DataFrame,
-    start: int,
-    end: int,
-    fold: int,
-) -> dict[str, Any]:
-    local_frame = frame.iloc[start:end].reset_index(drop=True)
-    rule_returns = _strategy_returns(
-        local_frame,
-        rule_position.iloc[start:end].reset_index(drop=True),
-        cost_bps=BASE_COST_BPS["30m"],
-        allow_overnight=True,
-    )
-    challengers: dict[str, Any] = {}
-    labels = test_events["label"].astype(int)
-    for trial_id, position in positions.items():
-        if trial_id not in probabilities:
-            continue
-        returns = _strategy_returns(
-            local_frame,
-            position.iloc[start:end].reset_index(drop=True),
-            cost_bps=BASE_COST_BPS["30m"],
-            allow_overnight=True,
-        )
-        probability = probabilities[trial_id]
-        challengers[trial_id] = {
-            **_metrics(returns),
-            "roc_auc": _safe_auc(labels, probability),
-            "brier_score": round(float(brier_score_loss(labels, probability)), 6),
-        }
-    return {
-        "fold": fold,
-        "entry_events": int(len(test_events)),
-        "rule": _metrics(rule_returns),
-        "challengers": challengers,
-    }
-
-
 def _safe_auc(labels: pd.Series, predictions: pd.Series) -> float | None:
     if labels.nunique() < 2:
         return None
     return round(float(roc_auc_score(labels, predictions)), 6)
-
-
-def _information_ratio(active_returns: pd.Series) -> float:
-    clean = active_returns.dropna().astype(float)
-    if clean.empty or float(clean.std(ddof=0)) <= 0:
-        return 0.0
-    return round(float(clean.mean() / clean.std(ddof=0) * np.sqrt(252 * 13)), 4)
 
 
 def _best_trial(rows: list[dict[str, Any]], family: str) -> dict[str, Any] | None:
@@ -650,73 +533,147 @@ def _best_trial(rows: list[dict[str, Any]], family: str) -> dict[str, Any] | Non
         if row["model_family"] == family
         and not row.get("failures")
         and row.get("oos_entry_coverage") == 1.0
+        and row.get("fold_count") == len(VALIDATION_EVENT_COUNTS)
+        and row.get("fold_wins_vs_rule", 0) >= 2
+        and row.get("information_ratio_vs_rule", 0.0) > 0
+        and (
+            row["validation_metrics"]["total_return_pct"]
+            > row["rule_validation_metrics"]["total_return_pct"]
+            or row["validation_metrics"]["episode_sharpe"]
+            > row["rule_validation_metrics"]["episode_sharpe"]
+        )
+        and row["validation_metrics"]["max_drawdown_pct"]
+        >= row["rule_validation_metrics"]["max_drawdown_pct"]
     ]
     return max(
         candidates,
         key=lambda row: (
-            row["stitched_oos_metrics"]["total_return_pct"],
-            row["stitched_oos_metrics"]["sharpe"],
+            row["fold_wins_vs_rule"],
+            row["validation_metrics"]["total_return_pct"],
+            row["validation_metrics"]["episode_sharpe"],
         ),
         default=None,
     )
 
 
-def _mean_fold_metric(
-    folds: list[dict[str, Any]],
-    trial_id: str,
-    metric: str,
-) -> float:
-    values = [
-        fold["challengers"][trial_id].get(metric)
-        for fold in folds
-        if fold["challengers"][trial_id].get(metric) is not None
+def _diagnostic_best_trial(rows: list[dict[str, Any]], family: str) -> dict[str, Any] | None:
+    candidates = [
+        row
+        for row in rows
+        if row["model_family"] == family
+        and not row.get("failures")
+        and row.get("oos_entry_coverage") == 1.0
+        and row.get("fold_count") == len(VALIDATION_EVENT_COUNTS)
     ]
-    return round(float(np.mean(values)), 4) if values else 0.0
-
-
-def _worst_fold_return_delta(folds: list[dict[str, Any]], trial_id: str) -> float:
-    deltas = [
-        fold["challengers"][trial_id]["total_return_pct"] - fold["rule"]["total_return_pct"]
-        for fold in folds
-    ]
-    return round(float(min(deltas)), 4) if deltas else 0.0
-
-
-def _non_overlap_auc(rows: list[pd.DataFrame]) -> float:
-    if not rows:
-        return 0.0
-    combined = pd.concat(rows, ignore_index=True).sort_values("bar_index")
-    selected_indices: list[int] = []
-    last_bar = -MAX_EPISODE_BARS
-    for index, row in combined.iterrows():
-        bar_index = int(row["bar_index"])
-        if bar_index - last_bar >= MAX_EPISODE_BARS:
-            selected_indices.append(index)
-            last_bar = bar_index
-    selected = combined.loc[selected_indices]
-    value = _safe_auc(selected["label"].astype(int), selected["probability"])
-    return float(value or 0.0)
-
-
-def _comparison_failed_gates(
-    lightgbm_best: dict[str, Any] | None,
-    logistic_best: dict[str, Any] | None,
-) -> list[str]:
-    if lightgbm_best is None or logistic_best is None:
-        return ["missing_model_family_result"]
-    checks = {
-        "four_valid_folds": lightgbm_best["fold_count"] >= 4,
-        "three_fold_wins": lightgbm_best["fold_wins_vs_rule"] >= 3,
-        "mean_auc_above_0_52": lightgbm_best["mean_oos_auc"] > 0.52,
-        "non_overlap_auc_above_0_52": lightgbm_best["non_overlap_oos_auc"] > 0.52,
-        "positive_ir": lightgbm_best["information_ratio_vs_rule"] > 0,
-        "worst_fold_not_worse": lightgbm_best["worst_fold_return_delta_pct"] >= 0,
-        "beats_logistic_return": (
-            lightgbm_best["stitched_oos_metrics"]["total_return_pct"]
-            > logistic_best["stitched_oos_metrics"]["total_return_pct"]
+    return max(
+        candidates,
+        key=lambda row: (
+            row["fold_wins_vs_rule"],
+            row["validation_metrics"]["total_return_pct"],
+            row["validation_metrics"]["episode_sharpe"],
         ),
+        default=None,
+    )
+
+
+def _sha256_file(path: Path) -> str:
+    digest = sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _event_hash(events: pd.DataFrame) -> str:
+    columns = ["bar_index", "exit_bar_index", "timestamp", "label"]
+    payload = events[columns].to_json(orient="records", date_format="iso")
+    return sha256(payload.encode()).hexdigest()
+
+
+def _validation_trial_row(
+    trial: dict[str, Any],
+    prediction_frames: list[pd.DataFrame],
+) -> dict[str, Any]:
+    if not prediction_frames:
+        return {
+            **trial,
+            "status": "failed_model_fallback",
+            "fold_count": 0,
+            "fold_wins_vs_rule": 0,
+            "oos_entry_coverage": 0.0,
+            "validation_metrics": {},
+        }
+    predictions = pd.concat(prediction_frames, ignore_index=True)
+    accepted = predictions["probability"] >= float(trial["threshold"])
+    metrics = _event_evaluation(predictions, predictions["probability"], accepted)
+    rule_metrics = _event_evaluation(
+        predictions,
+        pd.Series(1.0, index=predictions.index),
+        pd.Series(True, index=predictions.index),
+    )
+    accepted_returns = predictions["forward_net_return"].where(accepted.to_numpy(), 0.0)
+    active_returns = accepted_returns - predictions["forward_net_return"]
+    active_std = float(active_returns.std(ddof=0))
+    information_ratio = (
+        float(active_returns.mean() / active_std * np.sqrt(len(active_returns)))
+        if active_std > 0
+        else 0.0
+    )
+    fold_wins = 0
+    fold_rows = []
+    for fold, local in predictions.groupby("fold", sort=True):
+        local_accepted = local["probability"] >= float(trial["threshold"])
+        challenger = _event_evaluation(local, local["probability"], local_accepted)
+        rule = _event_evaluation(
+            local,
+            pd.Series(1.0, index=local.index),
+            pd.Series(True, index=local.index),
+        )
+        fold_wins += int(challenger["total_return_pct"] >= rule["total_return_pct"])
+        fold_rows.append(
+            {
+                "fold": int(fold),
+                "challenger_total_return_pct": challenger["total_return_pct"],
+                "rule_total_return_pct": rule["total_return_pct"],
+            }
+        )
+    return {
+        **trial,
+        "status": "failed_model_fallback" if trial.get("failures") else "validation_complete",
+        "fold_count": len(prediction_frames),
+        "fold_wins_vs_rule": fold_wins,
+        "oos_entry_coverage": round(len(predictions) / sum(VALIDATION_EVENT_COUNTS), 4),
+        "validation_metrics": metrics,
+        "rule_validation_metrics": rule_metrics,
+        "information_ratio_vs_rule": round(information_ratio, 4),
+        "folds": fold_rows,
     }
-    return [name for name, passed in checks.items() if not passed]
+
+
+def _event_evaluation(
+    events: pd.DataFrame,
+    probability: pd.Series,
+    accepted: pd.Series,
+) -> dict[str, Any]:
+    selected_returns = events["forward_net_return"].where(accepted.to_numpy(), 0.0).astype(float)
+    equity = (1.0 + selected_returns).cumprod()
+    total_return = float(equity.iloc[-1] - 1.0) if len(equity) else 0.0
+    std = float(selected_returns.std(ddof=0)) if len(selected_returns) else 0.0
+    sharpe = (
+        float(selected_returns.mean() / std * np.sqrt(len(selected_returns))) if std > 0 else 0.0
+    )
+    drawdown = equity / equity.cummax() - 1.0 if len(equity) else pd.Series([0.0])
+    labels = events["label"].astype(int)
+    return {
+        "events": int(len(events)),
+        "accepted_events": int(accepted.sum()),
+        "acceptance_rate": round(float(accepted.mean()), 4) if len(accepted) else 0.0,
+        "total_return_pct": round(total_return * 100, 4),
+        "episode_sharpe": round(sharpe, 4),
+        "max_drawdown_pct": round(float(drawdown.min()) * 100, 4),
+        "roc_auc": _safe_auc(labels, probability),
+        "brier_score": round(float(brier_score_loss(labels, probability)), 6),
+    }
 
 
 def _blocked_comparison(design: dict[str, Any]) -> dict[str, Any]:
@@ -733,7 +690,7 @@ def _blocked_comparison(design: dict[str, Any]) -> dict[str, Any]:
         "blockers": design["blockers"],
         "trials": [],
         "acceptance": {
-            "ml_gate_beats_rule_and_linear": False,
+            "any_ml_family_holdout_pass": False,
             "selected_for_execution": False,
             "negative_result_is_valid": True,
         },
@@ -779,26 +736,27 @@ def _render_comparison_markdown(payload: dict[str, Any]) -> str:
         f"- Execution behavior changed: `{payload['execution_behavior_changed']}`",
         "",
     ]
-    if "rule" in payload:
-        rule = payload["rule"]["stitched_oos_metrics"]
+    if payload.get("trials"):
         lines.extend(
             [
-                "| Trial | Family | Return % | Sharpe | MaxDD % | IR vs rule | Fold wins |",
-                "|---|---|---:|---:|---:|---:|---:|",
-                (
-                    f"| frozen_rule | rule | {rule['total_return_pct']} | "
-                    f"{rule['sharpe']} | {rule['max_drawdown_pct']} | 0 | - |"
-                ),
+                "| Trial | Family | Validation Return % | Episode Sharpe | AUC | Fold wins |",
+                "|---|---|---:|---:|---:|---:|",
             ]
         )
         for trial in payload["trials"]:
-            metrics = trial["stitched_oos_metrics"]
+            metrics = trial["validation_metrics"]
             lines.append(
                 f"| {trial['trial_id']} | {trial['model_family']} | "
                 f"{metrics['total_return_pct']} | "
-                f"{metrics['sharpe']} | {metrics['max_drawdown_pct']} | "
-                f"{trial['information_ratio_vs_rule']} | "
+                f"{metrics['episode_sharpe']} | {metrics['roc_auc']} | "
                 f"{trial['fold_wins_vs_rule']}/{trial['fold_count']} |"
+            )
+        lines.extend(["", "## ML-Family Holdout", ""])
+        for row in payload["ml_family_holdout"]["rows"]:
+            lines.append(
+                f"- `{row['model_family']}` `{row['trial_id']}`: "
+                f"passed=`{row['passed']}`, return=`{row['metrics']['total_return_pct']}%`, "
+                f"rule=`{row['rule_metrics']['total_return_pct']}%`"
             )
     else:
         lines.append("Training did not start because the strategy-specific preflight failed.")
