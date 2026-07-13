@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -17,11 +18,12 @@ from open_composer.research.mom_minute_round import (
     _align_signal_and_trade,
     _load_research_frame,
 )
+from open_composer.research.momentum_data_refresh import verify_frozen_prefix
 from open_composer.research.momentum_signal_router import (
     momentum_route_from_label,
     momentum_target_position,
 )
-from open_composer.storage import model_to_record, write_json
+from open_composer.storage import append_jsonl, model_to_record, write_json
 from open_composer.strategy_versions import strategy_content_hash
 
 
@@ -32,6 +34,7 @@ class MomentumShadowResult:
     signal_log_path: Path
     review_json_path: Path
     review_markdown_path: Path
+    forward_ledger_path: Path
     status: str
     latest_target_weight: float
     signal_count: int
@@ -56,11 +59,18 @@ def run_momentum_shadow_observation(
     if route.timeframe != spec.timeframe:
         raise ValueError("momentum route timeframe does not match StrategySpec")
 
+    now = pd.Timestamp(as_of or datetime.now(UTC))
+    if now.tzinfo is None:
+        now = now.tz_localize("UTC")
+    else:
+        now = now.tz_convert("UTC")
     signal_frame = _load_research_frame(root, route.signal_symbol, route.timeframe)
     target_frame = _load_research_frame(root, route.target_symbol, route.timeframe)
     if signal_frame is None or target_frame is None:
         raise ValueError("momentum shadow requires strict materialized signal and target data")
-    _require_expected_hashes(spec, signal_frame, target_frame, route)
+    _require_frozen_source_contract(spec, root, route)
+    signal_frame = signal_frame.loc[signal_frame["timestamp"] <= now].reset_index(drop=True)
+    target_frame = target_frame.loc[target_frame["timestamp"] <= now].reset_index(drop=True)
     alignment = _timestamp_alignment(signal_frame, target_frame)
     aligned = _align_signal_and_trade(signal_frame, target_frame)
     position = momentum_target_position(
@@ -78,11 +88,6 @@ def run_momentum_shadow_observation(
         spec_hash=spec_hash,
     )
     latest_effective = pd.to_datetime(target_rows[-1]["effective_timestamp"], utc=True)
-    now = pd.Timestamp(as_of or datetime.now(UTC))
-    if now.tzinfo is None:
-        now = now.tz_localize("UTC")
-    else:
-        now = now.tz_convert("UTC")
     age_hours = max((now - latest_effective).total_seconds() / 3600, 0.0)
     stale = age_hours > 24
     parity = {
@@ -125,6 +130,15 @@ def run_momentum_shadow_observation(
         "".join(json.dumps(model_to_record(signal), sort_keys=True) + "\n" for signal in signals),
         encoding="utf-8",
     )
+    forward_ledger_path = _append_forward_ledger(
+        root=root,
+        spec=spec,
+        target_rows=target_rows,
+        intents=intents,
+        observed_at=now,
+        stale=stale,
+        spec_hash=spec_hash,
+    )
     review_dir = root / "reports" / "shadow" / spec.name
     review_dir.mkdir(parents=True, exist_ok=True)
     review_json_path = review_dir / "latest-review-card.json"
@@ -146,6 +160,7 @@ def run_momentum_shadow_observation(
         signal_log_path=signal_log_path,
         review_json_path=review_json_path,
         review_markdown_path=review_markdown_path,
+        forward_ledger_path=forward_ledger_path,
         status=str(review["execution_substate"]),
         latest_target_weight=float(target_rows[-1]["target_weight"]),
         signal_count=len(signals),
@@ -224,16 +239,61 @@ def _build_rows(*, spec, route, frame, target, spec_hash):
     return target_rows, intents, signals
 
 
-def _require_expected_hashes(spec, signal_frame, target_frame, route) -> None:
+def _require_frozen_source_contract(spec, root: Path, route) -> None:
     design = spec.notes.research_design
-    expected = design.get("source_hashes", {}) if isinstance(design, dict) else {}
-    actual = {
-        route.signal_symbol: str(signal_frame["source_sha256"].iloc[0]),
-        route.target_symbol: str(target_frame["source_sha256"].iloc[0]),
-    }
-    for symbol, actual_hash in actual.items():
-        if expected.get(symbol) != actual_hash:
-            raise ValueError(f"frozen source hash mismatch for {symbol}")
+    contract = design.get("source_contract", {}) if isinstance(design, dict) else {}
+    encoded = json.dumps(contract, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    if hashlib.sha256(encoded).hexdigest() != design.get("source_contract_sha256"):
+        raise ValueError("frozen source contract hash mismatch")
+    if contract.get("provider") != "alpaca" or contract.get("feed") != "iex":
+        raise ValueError("invalid frozen momentum source identity")
+    symbols = contract.get("symbols", {})
+    for symbol in (route.signal_symbol, route.target_symbol):
+        symbol_contract = symbols.get(symbol)
+        if not isinstance(symbol_contract, dict):
+            raise ValueError(f"missing frozen source contract for {symbol}")
+        path = root / "data/research/alpaca_minute" / f"{symbol.lower()}_30m_alpaca_iex.csv"
+        verify_frozen_prefix(path, symbol_contract)
+
+
+def _append_forward_ledger(*, root, spec, target_rows, intents, observed_at, stale, spec_hash):
+    path = root / "reports/shadow" / spec.name / "forward-decisions.jsonl"
+    design = spec.notes.research_design
+    epoch = pd.Timestamp(design["forward_epoch_utc"])
+    existing: set[tuple[str, str, str]] = set()
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            existing.add((row["spec_hash"], row["signal_timestamp"], row["effective_timestamp"]))
+    intent_keys = {row["rebalance_id"] for row in intents}
+    additions = []
+    if not stale:
+        for row in target_rows:
+            signal_at = pd.Timestamp(row["signal_session"])
+            effective_at = pd.Timestamp(row["effective_timestamp"])
+            if signal_at <= epoch or effective_at > observed_at:
+                continue
+            key = (spec_hash, signal_at.isoformat(), effective_at.isoformat())
+            if key in existing:
+                continue
+            additions.append(
+                {
+                    "evidence_class": "forward_observation",
+                    "spec_hash": spec_hash,
+                    "observed_at": observed_at.isoformat(),
+                    "signal_timestamp": signal_at.isoformat(),
+                    "effective_timestamp": effective_at.isoformat(),
+                    "target_weight": row["target_weight"],
+                    "order_required_intent": row["rebalance_id"] in intent_keys,
+                    "paper_order_authorization": False,
+                    "broker_writes": False,
+                }
+            )
+    if additions:
+        append_jsonl(path, additions)
+    return path
 
 
 def _timestamp_alignment(signal_frame, target_frame) -> dict[str, Any]:

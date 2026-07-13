@@ -4864,7 +4864,22 @@ def strategy_shadow_observe(
     console.print(f"[green]shadow observation written[/green] status={result.status}")
     console.print(f"target weights: {result.target_weights_path}")
     console.print(f"review: {result.review_markdown_path}")
+    console.print(f"forward ledger: {result.forward_ledger_path}")
     console.print(f"signals: {result.signal_count}")
+
+
+@strategy_app.command("shadow-refresh-data")
+def strategy_shadow_refresh_data(
+    end: str | None = typer.Option(None, "--end"),
+) -> None:
+    """Strictly append Alpaca IEX QQQ/TQQQ data for the frozen shadow strategy."""
+    from open_composer.research.momentum_data_refresh import refresh_momentum_research_data
+
+    parsed_end = datetime.fromisoformat(end.replace("Z", "+00:00")) if end else None
+    result = refresh_momentum_research_data(project_root(), end=parsed_end)
+    console.print(f"momentum data refresh status={result.status} receipt={result.receipt_path}")
+    if result.status != "ok":
+        raise typer.Exit(code=1)
 
 
 @strategy_app.command("router-attribution")

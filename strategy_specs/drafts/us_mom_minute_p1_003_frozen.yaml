@@ -81,9 +81,27 @@ notes:
       lookback_bars: 72
       atr_filter_multiplier: 2.5
       target_weight: 1.0
-    source_hashes:
-      QQQ: 7fb4ca8809b4f813bf2e2cb29f6a2cc4b2117ee52cd2b6341d1e99b44305cbcc
-      TQQQ: 092d1cc9320656a55c90e9f095258d98f9d4e66e9027f47f63f8cabe7ae8a93c
+    forward_epoch_utc: '2026-07-13T00:00:00+00:00'
+    source_contract:
+      provider: alpaca
+      feed: iex
+      timeframe: 30m
+      timezone: UTC
+      schema: ohlcv_v1
+      symbols:
+        QQQ:
+          symbol: QQQ
+          prefix_rows: 8501
+          prefix_bytes: 525217
+          prefix_last_timestamp: '2026-05-29T16:00:00+00:00'
+          prefix_sha256: 7fb4ca8809b4f813bf2e2cb29f6a2cc4b2117ee52cd2b6341d1e99b44305cbcc
+        TQQQ:
+          symbol: TQQQ
+          prefix_rows: 8640
+          prefix_bytes: 503087
+          prefix_last_timestamp: '2026-05-29T16:00:00+00:00'
+          prefix_sha256: 092d1cc9320656a55c90e9f095258d98f9d4e66e9027f47f63f8cabe7ae8a93c
+    source_contract_sha256: 0f443ac566255c73e92e1f64c126ca17fbfdcd06ed2c884c65177df00f3d99a3
   caveats:
     - Research-only Alpaca IEX cache; not SIP/full-market evidence.
     - The 102-session lockbox is short and trails naive momentum and TQQQ buy-and-hold.
