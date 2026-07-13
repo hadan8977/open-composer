@@ -4844,6 +4844,29 @@ def strategy_target_weights(
     )
 
 
+@strategy_app.command("shadow-observe")
+def strategy_shadow_observe(
+    spec: Path,
+    as_of: str | None = typer.Option(None, "--as-of"),
+) -> None:
+    """Generate momentum target weights and review artifacts without broker I/O."""
+    from datetime import datetime
+
+    from open_composer.adapters.execution.momentum_shadow import (
+        run_momentum_shadow_observation,
+    )
+
+    try:
+        parsed_as_of = datetime.fromisoformat(as_of.replace("Z", "+00:00")) if as_of else None
+        result = run_momentum_shadow_observation(spec, project_root(), as_of=parsed_as_of)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]shadow observation written[/green] status={result.status}")
+    console.print(f"target weights: {result.target_weights_path}")
+    console.print(f"review: {result.review_markdown_path}")
+    console.print(f"signals: {result.signal_count}")
+
+
 @strategy_app.command("router-attribution")
 def strategy_router_attribution(
     spec: Annotated[Path, typer.Option("--spec")] = PDR_ATTRIBUTION_DEFAULT_SPEC_PATH,

@@ -376,6 +376,7 @@ def _align_signal_and_trade(signal: pd.DataFrame, traded: pd.DataFrame) -> pd.Da
     )
     aligned = signal_cols.merge(trade_cols, on="timestamp", how="inner").sort_values("timestamp")
     aligned["execution_open"] = aligned["trade_open"].shift(-1)
+    aligned["execution_timestamp"] = aligned["timestamp"].shift(-1)
     aligned["next_execution_open"] = aligned["trade_open"].shift(-2)
     aligned["next_trade_return"] = aligned["next_execution_open"] / aligned["execution_open"] - 1
     aligned["execution_session_date"] = aligned["session_date"].shift(-1)

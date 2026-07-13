@@ -33,6 +33,7 @@ def test_strategy_returns_execute_from_next_bar_open(sample_workspace: Path) -> 
     expected = aligned.iloc[0]["next_execution_open"] / aligned.iloc[0]["execution_open"] - 1
     assert returns.iloc[0] == expected
     assert aligned.iloc[0]["execution_open"] == aligned.iloc[1]["trade_open"]
+    assert aligned.iloc[0]["execution_timestamp"] == aligned.iloc[1]["timestamp"]
 
 
 def test_benchmarks_require_overlap_and_include_full_family(sample_workspace: Path) -> None:
