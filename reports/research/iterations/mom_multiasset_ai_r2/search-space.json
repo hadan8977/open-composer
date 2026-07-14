@@ -1,0 +1,21 @@
+{
+  "cost_table_path": "reports/research/iterations/mom_multiasset_r1/cost-table.json",
+  "data_feasibility_path": "reports/research/iterations/mom_multiasset_r1/universe-manifest.json",
+  "evaluation_report_paths": [
+    "reports/research/iterations/mom_multiasset_ai_r2/evaluation-report.json",
+    "reports/research/iterations/mom_multiasset_ai_r2/ai-contribution-evidence.json",
+    "reports/research/iterations/mom_multiasset_ml_r1/portfolio-evaluation.json"
+  ],
+  "iter_id": "mom_multiasset_ai_r2",
+  "paths": [
+    {"name":"A1_factor_ablation","hypothesis_refs":["AI-H1","AI-H2"],"parameters":{"feature_set":["core12","expanded_quant","ai_formula","all_selected"],"selection_count":[16,24]} ,"candidate_count":8,"benchmark_family":["P3_12_1_top5","equal_weight_frozen_universe","SPY","XLK","BIL","ex_post_best_symbol"]},
+    {"name":"A2_model_ranking","hypothesis_refs":["AI-H3"],"parameters":{"model":["elastic_net","lightgbm_regression","lightgbm_lambdarank","extra_trees"],"complexity":["low","medium"]},"candidate_count":8,"benchmark_family":["P3_12_1_top5","core12_matched_model","equal_weight_frozen_universe","SPY","BIL"]},
+    {"name":"A3_ensemble_roles","hypothesis_refs":["AI-H4"],"parameters":{"role":["rule_model_blend","model_rank_ensemble","disagreement_abstention","regime_switch"],"variant":["conservative","balanced"]},"candidate_count":8,"benchmark_family":["P3_12_1_top5","best_single_model","equal_weight_frozen_universe","SPY","BIL"]}
+  ],
+  "schema_version": 1,
+  "source_spec_path": null,
+  "spec_hash": null,
+  "strategy_name": "us_multiasset_momentum_ai",
+  "total_candidate_budget": 24,
+  "trial_ledger_paths": ["reports/research/iterations/mom_multiasset_ai_r2/trial-ledger.jsonl"]
+}

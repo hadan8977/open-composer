@@ -1,6 +1,10 @@
 {
   "data_as_of": "2026-07-13T04:00:00+00:00",
   "decisions": {
+    "ai_research_challengers": [
+      "A1",
+      "A2"
+    ],
     "diagnostic_deterministic": [
       "D4"
     ],
@@ -21,10 +25,11 @@
       "prediction_weighted_sizing"
     ]
   },
-  "generated_at": "2026-07-14T07:32:23.369747+00:00",
+  "generated_at": "2026-07-14T14:46:08.468908+00:00",
   "limitations": [
     "D2-D4 and M1-M2 use a current frozen stock universe; pre-freeze history is exploratory.",
     "M1 and M2 passed development folds but failed the deterministic lockbox comparison.",
+    "A1 and A2 passed historical development folds but failed the exposed historical challenge; they are forward diagnostic challengers only.",
     "All sleeves are file-based virtual paper observations and cannot submit broker orders."
   ],
   "llm_contribution_pass": false,
@@ -73,6 +78,18 @@
         "execution_reality": "reports/harness/execution/us_multiasset_stock_rank_hist_m2-execution-reality.json",
         "source_cards": "reports/harness/source_cards/us_multiasset_stock_rank_hist_m2.jsonl",
         "strategy_name": "us_multiasset_stock_rank_hist_m2"
+      },
+      {
+        "execution_policy": "reports/harness/execution/us_multiasset_ai_regime_a1-execution-policy.json",
+        "execution_reality": "reports/harness/execution/us_multiasset_ai_regime_a1-execution-reality.json",
+        "source_cards": "reports/harness/source_cards/us_multiasset_ai_regime_a1.jsonl",
+        "strategy_name": "us_multiasset_ai_regime_a1"
+      },
+      {
+        "execution_policy": "reports/harness/execution/us_multiasset_ai_agreement_a2-execution-policy.json",
+        "execution_reality": "reports/harness/execution/us_multiasset_ai_agreement_a2-execution-reality.json",
+        "source_cards": "reports/harness/source_cards/us_multiasset_ai_agreement_a2.jsonl",
+        "strategy_name": "us_multiasset_ai_agreement_a2"
       }
     ]
   },
@@ -255,6 +272,64 @@
       "target_weights_path": "reports/execution/us_multiasset_stock_rank_hist_m2-target-weights.json",
       "top_n": 5,
       "trial_id": "rank_hist_leaf15"
+    },
+    {
+      "broker_writes": false,
+      "component_trials": [
+        "lightgbm_lambdarank_ai_formula"
+      ],
+      "execution_observation_path": "reports/execution/us_multiasset_ai_regime_a1-execution-observation.json",
+      "gross_exposure": 1.0,
+      "kind": "ai_ensemble",
+      "parameter": 0.0,
+      "rebalance_session": "2026-07-13",
+      "role": "regime_switch",
+      "route_label": "multiasset:ai:regime_spy63_positive",
+      "signal_session": "2026-07-10",
+      "sleeve_id": "A1",
+      "spec_path": "strategy_specs/drafts/us_multiasset_ai_regime_a1.yaml",
+      "status": "ai_research_challenger_historical_challenge_failed",
+      "strategy_name": "us_multiasset_ai_regime_a1",
+      "target_weights": {
+        "BA": 0.2,
+        "CAT": 0.2,
+        "META": 0.2,
+        "TMO": 0.2,
+        "TSLA": 0.2
+      },
+      "target_weights_path": "reports/execution/us_multiasset_ai_regime_a1-target-weights.json",
+      "top_n": 5,
+      "trial_id": "regime_spy63_positive"
+    },
+    {
+      "broker_writes": false,
+      "component_trials": [
+        "lightgbm_lambdarank_ai_formula",
+        "extra_trees_expanded_quant",
+        "lightgbm_lambdarank_expanded_quant"
+      ],
+      "execution_observation_path": "reports/execution/us_multiasset_ai_agreement_a2-execution-observation.json",
+      "gross_exposure": 1.0,
+      "kind": "ai_ensemble",
+      "parameter": 3,
+      "rebalance_session": "2026-07-13",
+      "role": "disagreement_abstention",
+      "route_label": "multiasset:ai:abstain_overlap3",
+      "signal_session": "2026-07-10",
+      "sleeve_id": "A2",
+      "spec_path": "strategy_specs/drafts/us_multiasset_ai_agreement_a2.yaml",
+      "status": "ai_research_challenger_historical_challenge_failed",
+      "strategy_name": "us_multiasset_ai_agreement_a2",
+      "target_weights": {
+        "AMD": 0.2,
+        "CAT": 0.2,
+        "GOOGL": 0.2,
+        "INTC": 0.2,
+        "MU": 0.2
+      },
+      "target_weights_path": "reports/execution/us_multiasset_ai_agreement_a2-target-weights.json",
+      "top_n": 5,
+      "trial_id": "abstain_overlap3"
     }
   ],
   "workflow_pass": true

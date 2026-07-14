@@ -1,0 +1,26 @@
+{
+  "strategy_name": "us_multiasset_momentum_ai_r2",
+  "reviewed_at": "2026-07-14",
+  "lookahead_check": "pass",
+  "future_leak_check": "pass",
+  "index_alignment": "all price-volume inputs are shifted by one session and applied to the current open",
+  "purge_embargo": "21-bar label horizon plus 21-bar embargo in every chronological fold",
+  "factor_selection_scope": "rank-IC scoring and correlation pruning are recomputed from each fold training frame only",
+  "overfit_risk": "high",
+  "multiple_testing_count": 24,
+  "factor_candidate_count": 72,
+  "pbo_proxy": null,
+  "dsr_proxy": null,
+  "sample_data_caveats": [
+    "current-universe history is survivorship-biased before 2026-07-14",
+    "the six-date historical challenge is not a pristine lockbox"
+  ],
+  "trade_count": 35,
+  "trading_days": 865,
+  "capacity_assessment": "warning_pending_forward_opening_quotes_and_realized_turnover",
+  "short_sample": false,
+  "weekly_training_dates": 173,
+  "monthly_evaluation_dates": 35,
+  "conclusion": "warning",
+  "notes": "AI factors improved matched LambdaRank and ElasticNet models in development, but no standalone model or ensemble beat deterministic 12-1 in the exposed historical challenge. A1/A2 remain forward diagnostic challengers."
+}

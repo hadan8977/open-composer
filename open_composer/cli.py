@@ -3408,6 +3408,29 @@ def strategy_multiasset_momentum_portfolio() -> None:
         )
 
 
+@strategy_app.command("multiasset-momentum-ai")
+def strategy_multiasset_momentum_ai(
+    cost_bps: float = typer.Option(10.0, "--cost-bps", min=0.0, max=100.0),
+) -> None:
+    """Run the bounded AI-factor, ranking, and ensemble momentum round."""
+    from open_composer.research.multiasset_momentum_ai import run_multiasset_momentum_ai
+
+    result = run_multiasset_momentum_ai(project_root(), cost_bps=cost_bps)
+    payload = result.payload
+    console.print(f"[green]multiasset momentum AI complete[/green] report={result.report_path}")
+    console.print(
+        f"factors={payload['feature_contract']['feature_count']} "
+        f"candidates={payload['search_space']['candidate_count']} "
+        f"llm_contribution_pass={payload['llm_contribution_pass']}"
+    )
+    for row in payload["selected_forward_challengers"]:
+        console.print(
+            f"{row['trial_id']} development={row['development_qualified']} "
+            f"challenge={row['historical_challenge_pass']} "
+            f"status={row['virtual_paper_status']}"
+        )
+
+
 @strategy_app.command("llm-rotate-universe")
 def strategy_llm_rotate_universe(
     spec: Path,

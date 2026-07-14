@@ -32,6 +32,7 @@ from open_composer.storage import write_json
 
 SOURCE_ITER = Path("reports/research/iterations/mom_multiasset_r1")
 ML_ITER = Path("reports/research/iterations/mom_multiasset_ml_r1")
+AI_ITER = Path("reports/research/iterations/mom_multiasset_ai_r2")
 PORTFOLIO_PATH = ML_ITER / "portfolio-evaluation.json"
 PORTFOLIO_MD_PATH = ML_ITER / "portfolio-evaluation.md"
 
@@ -44,6 +45,8 @@ def write_multiasset_momentum_portfolio(root: Path | None = None) -> dict[str, A
     manifest = _load_json(manifest_path)
     evaluation = _load_json(evaluation_path)
     ml_report = _load_json(ml_path)
+    ai_path = base / AI_ITER / "evaluation-report.json"
+    ai_report = _load_json(ai_path) if ai_path.exists() else None
     stock_symbols = [str(symbol) for symbol in manifest["selected_symbols"]]
     sector_map = {
         str(row["symbol"]): str(row.get("sector") or "Unknown") for row in manifest["selected"]
@@ -96,6 +99,39 @@ def write_multiasset_momentum_portfolio(root: Path | None = None) -> dict[str, A
                 "top_n": 5,
             }
         )
+    if ai_report is not None:
+        trial_by_id = {str(row["trial_id"]): row for row in ai_report["development_trials"]}
+        challenge_by_id = {
+            str(row["trial_id"]): row for row in ai_report["historical_challenge"]["rows"]
+        }
+        for sleeve_id, trial_id, name in [
+            ("A1", "regime_spy63_positive", "us_multiasset_ai_regime_a1"),
+            ("A2", "abstain_overlap3", "us_multiasset_ai_agreement_a2"),
+        ]:
+            trial = trial_by_id.get(trial_id)
+            if trial is None or not trial["qualified"]:
+                continue
+            challenge_pass = bool(
+                challenge_by_id.get(trial_id, {}).get("beats_deterministic_baseline")
+            )
+            sleeve_definitions.append(
+                {
+                    "sleeve_id": sleeve_id,
+                    "strategy_name": name,
+                    "kind": "ai_ensemble",
+                    "status": (
+                        "ai_research_challenger_historical_challenge_pass"
+                        if challenge_pass
+                        else "ai_research_challenger_historical_challenge_failed"
+                    ),
+                    "trial_id": trial_id,
+                    "route_label": f"multiasset:ai:{trial_id}",
+                    "top_n": 5,
+                    "role": trial["role"],
+                    "parameter": trial.get("parameter"),
+                    "component_trials": trial["component_trials"],
+                }
+            )
     spec_paths = _write_specs(
         base,
         sleeve_definitions,
@@ -104,6 +140,18 @@ def write_multiasset_momentum_portfolio(root: Path | None = None) -> dict[str, A
         ml_report=ml_report,
     )
     latest_features = _build_panel_dataset(data, stock_symbols, sector_map)[1]
+    ai_latest_features = None
+    if ai_report is not None:
+        from open_composer.research.multiasset_momentum_ai import build_ai_factor_dataset
+
+        ai_latest_features = build_ai_factor_dataset(data, stock_symbols, sector_map)[1]
+    d2_definition = next(row for row in sleeve_definitions if row["sleeve_id"] == "D2")
+    d2_weights = _deterministic_latest_weights(
+        d2_definition,
+        data,
+        stock_symbols,
+        sector_map,
+    )[0]
     sleeve_rows = []
     for definition in sleeve_definitions:
         if definition["kind"] == "deterministic":
@@ -113,11 +161,22 @@ def write_multiasset_momentum_portfolio(root: Path | None = None) -> dict[str, A
                 stock_symbols,
                 sector_map,
             )
-        else:
+        elif definition["kind"] == "ml_ranking":
             weights, signal_session, rebalance_session = _ml_latest_weights(
                 base,
                 definition,
                 latest_features,
+                data,
+            )
+        else:
+            if ai_report is None or ai_latest_features is None:
+                raise ValueError("AI ensemble definition requires the AI evaluation report")
+            weights, signal_session, rebalance_session = _ai_latest_weights(
+                base,
+                definition,
+                ai_report,
+                ai_latest_features,
+                d2_weights,
                 data,
             )
         spec_path = spec_paths[str(definition["strategy_name"])]
@@ -170,6 +229,9 @@ def write_multiasset_momentum_portfolio(root: Path | None = None) -> dict[str, A
             "diagnostic_ml": [
                 row["sleeve_id"] for row in sleeve_rows if row["kind"] == "ml_ranking"
             ],
+            "ai_research_challengers": [
+                row["sleeve_id"] for row in sleeve_rows if row["kind"] == "ai_ensemble"
+            ],
             "rejected_ml_roles": [
                 "elastic_net_return_ranking",
                 "extra_trees_return_ranking",
@@ -184,6 +246,10 @@ def write_multiasset_momentum_portfolio(root: Path | None = None) -> dict[str, A
                 "is exploratory."
             ),
             "M1 and M2 passed development folds but failed the deterministic lockbox comparison.",
+            (
+                "A1 and A2 passed historical development folds but failed the exposed "
+                "historical challenge; they are forward diagnostic challengers only."
+            ),
             (
                 "All sleeves are file-based virtual paper observations and cannot submit "
                 "broker orders."
@@ -342,6 +408,10 @@ def _write_specs(
                     "universe_manifest_path": _relpath(manifest_path, root),
                     "universe_manifest_sha256": manifest_sha,
                     "ml_lockbox_pass_trials": ml_report["selection"]["lockbox_pass_trials"],
+                    "ai_component_trials": definition.get("component_trials", []),
+                    "ai_historical_challenge_pass": False
+                    if definition["kind"] == "ai_ensemble"
+                    else None,
                     "forward_epoch_utc": "2026-07-14T00:00:00+00:00",
                 },
                 "caveats": [
@@ -388,6 +458,55 @@ def _ml_latest_weights(
     work = latest_features[["symbol"]].copy()
     work["prediction"] = predictions
     selected = work.nlargest(int(definition["top_n"]), "prediction")["symbol"].tolist()
+    weights = {symbol: round(1 / len(selected), 8) for symbol in selected}
+    index = data["close"].index
+    return weights, index[-2].date().isoformat(), index[-1].date().isoformat()
+
+
+def _ai_latest_weights(
+    root: Path,
+    definition: dict[str, Any],
+    ai_report: dict[str, Any],
+    latest_features: pd.DataFrame,
+    baseline_weights: dict[str, float],
+    data: dict[str, Any],
+) -> tuple[dict[str, float], str, str]:
+    frozen = {str(row["trial_id"]): row for row in ai_report["frozen_models"]}
+    frames = []
+    for trial_id in definition["component_trials"]:
+        model_row = frozen.get(str(trial_id))
+        if model_row is None:
+            raise ValueError(f"missing frozen AI component model: {trial_id}")
+        bundle = joblib.load(root / str(model_row["model_path"]))
+        features = [str(name) for name in bundle["features"]]
+        fill_values = pd.Series(bundle["fill_values"])
+        predictions = bundle["model"].predict(latest_features[features].fillna(fill_values))
+        frame = latest_features[["symbol", "baseline_score"]].copy()
+        frame["prediction"] = predictions
+        frame["rank"] = frame["prediction"].rank(pct=True)
+        frames.append(frame)
+    selected: list[str]
+    if definition["role"] == "regime_switch":
+        spy_momentum = float(latest_features["market_spy_mom_63"].iloc[0])
+        selected = (
+            frames[0].nlargest(int(definition["top_n"]), "prediction")["symbol"].tolist()
+            if spy_momentum > 0
+            else list(baseline_weights)
+        )
+    elif definition["role"] == "disagreement_abstention":
+        selections = [
+            set(frame.nlargest(int(definition["top_n"]), "prediction")["symbol"])
+            for frame in frames
+        ]
+        overlap = len(set.intersection(*selections)) if selections else 0
+        if overlap >= int(definition["parameter"]):
+            average = frames[0][["symbol"]].copy()
+            average["rank"] = pd.concat([frame["rank"] for frame in frames], axis=1).mean(axis=1)
+            selected = average.nlargest(int(definition["top_n"]), "rank")["symbol"].tolist()
+        else:
+            selected = list(baseline_weights)
+    else:
+        raise ValueError(f"unsupported AI ensemble role: {definition['role']}")
     weights = {symbol: round(1 / len(selected), 8) for symbol in selected}
     index = data["close"].index
     return weights, index[-2].date().isoformat(), index[-1].date().isoformat()

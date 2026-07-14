@@ -3,12 +3,22 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import joblib
+import numpy as np
 import pandas as pd
 from typer.testing import CliRunner
 
 from open_composer.cli import app
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research import multiasset_momentum_portfolio as portfolio
+
+
+class _FixedPredictionModel:
+    def __init__(self, predictions: list[float]) -> None:
+        self.predictions = np.asarray(predictions, dtype=float)
+
+    def predict(self, frame: pd.DataFrame) -> np.ndarray:
+        return self.predictions[: len(frame)]
 
 
 def _manifest() -> dict[str, object]:
@@ -238,3 +248,65 @@ def test_target_weights_cli_uses_observation_only_multiasset_path(
 
     assert result.exit_code == 0, result.output
     assert "status=observation_only broker_writes=false" in result.output
+
+
+def test_ai_roles_switch_or_fallback_without_order_authority(tmp_path: Path) -> None:
+    symbols = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF"]
+    latest = pd.DataFrame(
+        {
+            "symbol": symbols,
+            "baseline_score": [6, 5, 4, 3, 2, 1],
+            "market_spy_mom_63": [0.1] * 6,
+            "feature": [0.1] * 6,
+        }
+    )
+    frozen = []
+    predictions = {
+        "model_a": [1, 2, 3, 4, 5, 6],
+        "model_b": [6, 5, 4, 3, 2, 1],
+        "model_c": [1, 6, 2, 5, 3, 4],
+    }
+    for trial_id, values in predictions.items():
+        path = tmp_path / f"{trial_id}.joblib"
+        joblib.dump(
+            {
+                "model": _FixedPredictionModel(values),
+                "features": ["feature"],
+                "fill_values": {"feature": 0.0},
+            },
+            path,
+        )
+        frozen.append({"trial_id": trial_id, "model_path": path.name})
+    report = {"frozen_models": frozen}
+    data = {"close": pd.DataFrame(index=pd.date_range("2026-07-11", periods=2, tz="UTC"))}
+    baseline = {symbol: 0.2 for symbol in symbols[:5]}
+
+    regime_weights, _, _ = portfolio._ai_latest_weights(
+        tmp_path,
+        {
+            "role": "regime_switch",
+            "component_trials": ["model_a"],
+            "top_n": 5,
+        },
+        report,
+        latest,
+        baseline,
+        data,
+    )
+    fallback_weights, _, _ = portfolio._ai_latest_weights(
+        tmp_path,
+        {
+            "role": "disagreement_abstention",
+            "component_trials": ["model_a", "model_b", "model_c"],
+            "parameter": 5,
+            "top_n": 5,
+        },
+        report,
+        latest,
+        baseline,
+        data,
+    )
+
+    assert set(regime_weights) == {"BBB", "CCC", "DDD", "EEE", "FFF"}
+    assert fallback_weights == baseline
+    assert sum(regime_weights.values()) == 1.0

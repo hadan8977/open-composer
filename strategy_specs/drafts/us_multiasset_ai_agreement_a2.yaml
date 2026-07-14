@@ -1,4 +1,4 @@
-name: us_multiasset_stock_rank_hist_m2
+name: us_multiasset_ai_agreement_a2
 description: Frozen multiasset momentum virtual-paper sleeve. Cross-sectional routing
   is observation-only.
 timeframe: daily
@@ -65,7 +65,7 @@ portfolio:
   max_symbol_weight: 0.2
   same_day_flatten: false
   duplicate_signal_policy: stable_signal_id
-  selected_route_label: multiasset:ml:rank_hist_leaf15:top5:equal
+  selected_route_label: multiasset:ai:abstain_overlap3
 costs:
   commission_pct: 0.0
   slippage_bps: 10.0
@@ -96,17 +96,20 @@ notes:
   intent: Isolated virtual-paper comparison; no broker writes.
   research_design:
     iter_id: mom_multiasset_ml_r1
-    sleeve_id: M2
-    status: lockbox_failed_diagnostic_shadow
-    trial_id: rank_hist_leaf15
-    route_label: multiasset:ml:rank_hist_leaf15:top5:equal
+    sleeve_id: A2
+    status: ai_research_challenger_historical_challenge_failed
+    trial_id: abstain_overlap3
+    route_label: multiasset:ai:abstain_overlap3
     params: {}
-    model_path: reports/research/iterations/mom_multiasset_ml_r1/models/rank_hist_leaf15.joblib
+    model_path: null
     universe_manifest_path: reports/research/iterations/mom_multiasset_r1/universe-manifest.json
     universe_manifest_sha256: d6f4680f55edf0c14d4e7e76b266fd7bd061294d1f2edd88d6e01e18f69575a8
     ml_lockbox_pass_trials: []
-    ai_component_trials: []
-    ai_historical_challenge_pass: null
+    ai_component_trials:
+    - lightgbm_lambdarank_ai_formula
+    - extra_trees_expanded_quant
+    - lightgbm_lambdarank_expanded_quant
+    ai_historical_challenge_pass: false
     forward_epoch_utc: '2026-07-14T00:00:00+00:00'
   caveats:
   - Current-universe history is survivorship-biased before the freeze date.

@@ -1,0 +1,31 @@
+{
+  "strategy_name": "us_multiasset_momentum_ai_r2",
+  "reviewed_at": "2026-07-14",
+  "capabilities": [
+    {
+      "capability_id": "market.longbridge_bars",
+      "kind": "market",
+      "status": "partial",
+      "strict_behavior": "research_replay_cache",
+      "paper_ready": false,
+      "notes": "Adjusted daily OHLCV supports deterministic replay, but the current 40-stock universe is not point-in-time before the 2026-07-14 freeze."
+    },
+    {
+      "capability_id": "offline_llm_factor_compiler",
+      "kind": "research_workflow",
+      "status": "ok",
+      "strict_behavior": "static_hashed_artifact_only",
+      "paper_ready": false,
+      "notes": "Codex produced static formula proposals with input and prompt hashes. No generated text or live LLM response enters prediction or routing."
+    }
+  ],
+  "feature_packet_pit_check": "pass",
+  "sample_data_caveats": [],
+  "ai_modality_evidence": "reports/research/iterations/mom_multiasset_ai_r2/ai-contribution-evidence.json",
+  "blockers": [
+    "historical stock membership is survivorship-biased before the freeze epoch",
+    "historical challenge was exposed by the previous round",
+    "formal AI contribution requires frozen forward evidence"
+  ],
+  "conclusion": "warning"
+}
