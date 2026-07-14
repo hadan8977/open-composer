@@ -1,0 +1,27 @@
+{
+  "broker_writes": false,
+  "compared_styles": [
+    {
+      "authorized": false,
+      "benefit": "highest fill probability",
+      "risk": "unbounded opening gap and spread",
+      "style": "DAY_market_at_open"
+    },
+    {
+      "authorized": false,
+      "benefit": "opening-auction price protection",
+      "risk": "missed fills and partial portfolio drift",
+      "style": "LOO_OPG_limit"
+    },
+    {
+      "authorized": false,
+      "benefit": "avoids the opening auction spike",
+      "risk": "tracking error against next-open research semantics",
+      "style": "delayed_open_5m_marketable_limit"
+    }
+  ],
+  "recommended_order_style": "price_protected_open_or_delayed_open_after_forward_tca",
+  "reviewed_at": "2026-07-14",
+  "status": "observation_only",
+  "strategy_name": "us_multiasset_momentum_portfolio"
+}

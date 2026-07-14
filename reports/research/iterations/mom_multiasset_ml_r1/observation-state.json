@@ -1,0 +1,45 @@
+{
+  "broker_writes": false,
+  "data_as_of": "2026-07-13T04:00:00+00:00",
+  "forward_epoch_utc": "2026-07-14T00:00:00+00:00",
+  "next_action": "append_only_forward_observation",
+  "report_type": "multiasset_momentum_observation_state",
+  "sleeves": [
+    {
+      "sleeve_id": "D1",
+      "status": "primary_deterministic",
+      "strategy_name": "us_multiasset_etf_trend_d1",
+      "target_weights_path": "reports/execution/us_multiasset_etf_trend_d1-target-weights.json"
+    },
+    {
+      "sleeve_id": "D2",
+      "status": "primary_deterministic_exploratory_history",
+      "strategy_name": "us_multiasset_stock_momentum_d2",
+      "target_weights_path": "reports/execution/us_multiasset_stock_momentum_d2-target-weights.json"
+    },
+    {
+      "sleeve_id": "D3",
+      "status": "diversification_deterministic_exploratory_history",
+      "strategy_name": "us_multiasset_stock_sector_relative_d3",
+      "target_weights_path": "reports/execution/us_multiasset_stock_sector_relative_d3-target-weights.json"
+    },
+    {
+      "sleeve_id": "D4",
+      "status": "diagnostic_deterministic",
+      "strategy_name": "us_multiasset_stock_trend_quality_d4",
+      "target_weights_path": "reports/execution/us_multiasset_stock_trend_quality_d4-target-weights.json"
+    },
+    {
+      "sleeve_id": "M1",
+      "status": "lockbox_failed_diagnostic_shadow",
+      "strategy_name": "us_multiasset_stock_rank_lgbm_m1",
+      "target_weights_path": "reports/execution/us_multiasset_stock_rank_lgbm_m1-target-weights.json"
+    },
+    {
+      "sleeve_id": "M2",
+      "status": "lockbox_failed_diagnostic_shadow",
+      "strategy_name": "us_multiasset_stock_rank_hist_m2",
+      "target_weights_path": "reports/execution/us_multiasset_stock_rank_hist_m2-target-weights.json"
+    }
+  ]
+}

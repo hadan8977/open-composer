@@ -1,0 +1,83 @@
+name: us_multiasset_etf_trend_d1
+description: Frozen multiasset momentum virtual-paper sleeve. Cross-sectional routing
+  is observation-only.
+timeframe: daily
+universe:
+- SPY
+- QQQ
+- IWM
+- DIA
+- XLK
+- SMH
+- GLD
+- TLT
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 8
+  max_position_weight: 0.5
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: cross_sectional_momentum
+  max_symbols_per_day: 2
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.5
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: multiasset:deterministic:p1_lb252_reb5_gate0
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: longbridge
+  symbol: SPY
+  feed: nasdaq_basic
+data_assumptions:
+  source: longbridge
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_replay_cache
+factors: {}
+llm_review:
+  enabled: false
+required_capabilities:
+- market.longbridge_bars
+notes:
+  intent: Isolated virtual-paper comparison; no broker writes.
+  research_design:
+    iter_id: mom_multiasset_ml_r1
+    sleeve_id: D1
+    status: primary_deterministic
+    trial_id: p1_lb252_reb5_gate0
+    route_label: multiasset:deterministic:p1_lb252_reb5_gate0
+    params:
+      absolute_gate: false
+      lookback: 252
+      rebalance_days: 5
+      top_n: 2
+    model_path: null
+    universe_manifest_path: reports/research/iterations/mom_multiasset_r1/universe-manifest.json
+    universe_manifest_sha256: d6f4680f55edf0c14d4e7e76b266fd7bd061294d1f2edd88d6e01e18f69575a8
+    ml_lockbox_pass_trials: []
+    forward_epoch_utc: '2026-07-14T00:00:00+00:00'
+  caveats:
+  - Current-universe history is survivorship-biased before the freeze date.
+  - This draft is observation-only and cannot submit broker orders.

@@ -1,0 +1,261 @@
+{
+  "data_as_of": "2026-07-13T04:00:00+00:00",
+  "decisions": {
+    "diagnostic_deterministic": [
+      "D4"
+    ],
+    "diagnostic_ml": [
+      "M1",
+      "M2"
+    ],
+    "primary_deterministic": [
+      "D1",
+      "D2",
+      "D3"
+    ],
+    "rejected_ml_roles": [
+      "elastic_net_return_ranking",
+      "extra_trees_return_ranking",
+      "downside_risk_logistic",
+      "downside_risk_lightgbm",
+      "prediction_weighted_sizing"
+    ]
+  },
+  "generated_at": "2026-07-14T07:32:23.369747+00:00",
+  "limitations": [
+    "D2-D4 and M1-M2 use a current frozen stock universe; pre-freeze history is exploratory.",
+    "M1 and M2 passed development folds but failed the deterministic lockbox comparison.",
+    "All sleeves are file-based virtual paper observations and cannot submit broker orders."
+  ],
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "report_type": "multiasset_momentum_virtual_paper_portfolio",
+  "research_pass": false,
+  "review_artifacts": {
+    "backtest_forensics": "reports/harness/forensics/us_multiasset_momentum_portfolio-backtest-forensics.json",
+    "capability_review": "reports/harness/data/us_multiasset_momentum_portfolio-capability-review.json",
+    "execution_policy": "reports/harness/execution/us_multiasset_momentum_portfolio-execution-policy.json",
+    "execution_reality": "reports/harness/execution/us_multiasset_momentum_portfolio-execution-reality.json",
+    "paper_safety_review": "reports/harness/paper/us_multiasset_momentum_portfolio-paper-safety-review.json",
+    "per_strategy_execution": [
+      {
+        "execution_policy": "reports/harness/execution/us_multiasset_etf_trend_d1-execution-policy.json",
+        "execution_reality": "reports/harness/execution/us_multiasset_etf_trend_d1-execution-reality.json",
+        "source_cards": "reports/harness/source_cards/us_multiasset_etf_trend_d1.jsonl",
+        "strategy_name": "us_multiasset_etf_trend_d1"
+      },
+      {
+        "execution_policy": "reports/harness/execution/us_multiasset_stock_momentum_d2-execution-policy.json",
+        "execution_reality": "reports/harness/execution/us_multiasset_stock_momentum_d2-execution-reality.json",
+        "source_cards": "reports/harness/source_cards/us_multiasset_stock_momentum_d2.jsonl",
+        "strategy_name": "us_multiasset_stock_momentum_d2"
+      },
+      {
+        "execution_policy": "reports/harness/execution/us_multiasset_stock_sector_relative_d3-execution-policy.json",
+        "execution_reality": "reports/harness/execution/us_multiasset_stock_sector_relative_d3-execution-reality.json",
+        "source_cards": "reports/harness/source_cards/us_multiasset_stock_sector_relative_d3.jsonl",
+        "strategy_name": "us_multiasset_stock_sector_relative_d3"
+      },
+      {
+        "execution_policy": "reports/harness/execution/us_multiasset_stock_trend_quality_d4-execution-policy.json",
+        "execution_reality": "reports/harness/execution/us_multiasset_stock_trend_quality_d4-execution-reality.json",
+        "source_cards": "reports/harness/source_cards/us_multiasset_stock_trend_quality_d4.jsonl",
+        "strategy_name": "us_multiasset_stock_trend_quality_d4"
+      },
+      {
+        "execution_policy": "reports/harness/execution/us_multiasset_stock_rank_lgbm_m1-execution-policy.json",
+        "execution_reality": "reports/harness/execution/us_multiasset_stock_rank_lgbm_m1-execution-reality.json",
+        "source_cards": "reports/harness/source_cards/us_multiasset_stock_rank_lgbm_m1.jsonl",
+        "strategy_name": "us_multiasset_stock_rank_lgbm_m1"
+      },
+      {
+        "execution_policy": "reports/harness/execution/us_multiasset_stock_rank_hist_m2-execution-policy.json",
+        "execution_reality": "reports/harness/execution/us_multiasset_stock_rank_hist_m2-execution-reality.json",
+        "source_cards": "reports/harness/source_cards/us_multiasset_stock_rank_hist_m2.jsonl",
+        "strategy_name": "us_multiasset_stock_rank_hist_m2"
+      }
+    ]
+  },
+  "simulation": {
+    "alpaca_orders": false,
+    "broker_writes": false,
+    "forward_epoch_utc": "2026-07-14T00:00:00+00:00",
+    "initial_capital_per_sleeve": 100000.0,
+    "mode": "isolated_virtual_paper_sleeves",
+    "retuning_from_forward_results": false
+  },
+  "sleeves": [
+    {
+      "broker_writes": false,
+      "execution_observation_path": "reports/execution/us_multiasset_etf_trend_d1-execution-observation.json",
+      "gross_exposure": 1.0,
+      "kind": "deterministic",
+      "params": {
+        "absolute_gate": false,
+        "lookback": 252,
+        "rebalance_days": 5,
+        "top_n": 2
+      },
+      "path": "P1_etf_absolute_relative",
+      "rebalance_session": "2026-07-13",
+      "route_label": "multiasset:deterministic:p1_lb252_reb5_gate0",
+      "signal_session": "2026-07-10",
+      "sleeve_id": "D1",
+      "spec_path": "strategy_specs/drafts/us_multiasset_etf_trend_d1.yaml",
+      "status": "primary_deterministic",
+      "strategy_name": "us_multiasset_etf_trend_d1",
+      "target_weights": {
+        "SMH": 0.5,
+        "XLK": 0.5
+      },
+      "target_weights_path": "reports/execution/us_multiasset_etf_trend_d1-target-weights.json",
+      "trial_id": "p1_lb252_reb5_gate0"
+    },
+    {
+      "broker_writes": false,
+      "execution_observation_path": "reports/execution/us_multiasset_stock_momentum_d2-execution-observation.json",
+      "gross_exposure": 1.0,
+      "kind": "deterministic",
+      "params": {
+        "rebalance_days": 21,
+        "score": "12_1",
+        "top_n": 5,
+        "volatility_adjusted": false
+      },
+      "path": "P3_stock_cross_sectional",
+      "rebalance_session": "2026-07-13",
+      "route_label": "multiasset:deterministic:p3_12_1_vol0_top5",
+      "signal_session": "2026-07-10",
+      "sleeve_id": "D2",
+      "spec_path": "strategy_specs/drafts/us_multiasset_stock_momentum_d2.yaml",
+      "status": "primary_deterministic_exploratory_history",
+      "strategy_name": "us_multiasset_stock_momentum_d2",
+      "target_weights": {
+        "AMD": 0.2,
+        "CAT": 0.2,
+        "GOOGL": 0.2,
+        "INTC": 0.2,
+        "MU": 0.2
+      },
+      "target_weights_path": "reports/execution/us_multiasset_stock_momentum_d2-target-weights.json",
+      "trial_id": "p3_12_1_vol0_top5"
+    },
+    {
+      "broker_writes": false,
+      "execution_observation_path": "reports/execution/us_multiasset_stock_sector_relative_d3-execution-observation.json",
+      "gross_exposure": 1.0,
+      "kind": "deterministic",
+      "params": {
+        "rebalance_days": 21,
+        "score": "sector_relative_126",
+        "sector_cap": 2,
+        "top_n": 10
+      },
+      "path": "P5_stock_residual_sector_relative",
+      "rebalance_session": "2026-07-13",
+      "route_label": "multiasset:deterministic:p5_sector_relative_126_top10_cap2",
+      "signal_session": "2026-07-10",
+      "sleeve_id": "D3",
+      "spec_path": "strategy_specs/drafts/us_multiasset_stock_sector_relative_d3.yaml",
+      "status": "diversification_deterministic_exploratory_history",
+      "strategy_name": "us_multiasset_stock_sector_relative_d3",
+      "target_weights": {
+        "C": 0.1,
+        "CAT": 0.1,
+        "COST": 0.1,
+        "CSCO": 0.1,
+        "INTC": 0.1,
+        "KO": 0.1,
+        "MRK": 0.1,
+        "MS": 0.1,
+        "MU": 0.1,
+        "UNH": 0.1
+      },
+      "target_weights_path": "reports/execution/us_multiasset_stock_sector_relative_d3-target-weights.json",
+      "trial_id": "p5_sector_relative_126_top10_cap2"
+    },
+    {
+      "broker_writes": false,
+      "execution_observation_path": "reports/execution/us_multiasset_stock_trend_quality_d4-execution-observation.json",
+      "gross_exposure": 1.0,
+      "kind": "deterministic",
+      "params": {
+        "downside_vol_penalty": false,
+        "rebalance_days": 21,
+        "score": "high_52w_plus_6m",
+        "top_n": 10
+      },
+      "path": "P4_stock_trend_quality",
+      "rebalance_session": "2026-07-13",
+      "route_label": "multiasset:deterministic:p4_high_52w_plus_6m_dvol0_top10",
+      "signal_session": "2026-07-10",
+      "sleeve_id": "D4",
+      "spec_path": "strategy_specs/drafts/us_multiasset_stock_trend_quality_d4.yaml",
+      "status": "diagnostic_deterministic",
+      "strategy_name": "us_multiasset_stock_trend_quality_d4",
+      "target_weights": {
+        "AMD": 0.1,
+        "C": 0.1,
+        "CAT": 0.1,
+        "GS": 0.1,
+        "INTC": 0.1,
+        "LIN": 0.1,
+        "MRK": 0.1,
+        "MS": 0.1,
+        "MU": 0.1,
+        "UNH": 0.1
+      },
+      "target_weights_path": "reports/execution/us_multiasset_stock_trend_quality_d4-target-weights.json",
+      "trial_id": "p4_high_52w_plus_6m_dvol0_top10"
+    },
+    {
+      "broker_writes": false,
+      "execution_observation_path": "reports/execution/us_multiasset_stock_rank_lgbm_m1-execution-observation.json",
+      "gross_exposure": 1.0,
+      "kind": "ml_ranking",
+      "model_path": "reports/research/iterations/mom_multiasset_ml_r1/models/rank_lgbm_l15.joblib",
+      "rebalance_session": "2026-07-13",
+      "route_label": "multiasset:ml:rank_lgbm_l15:top5:equal",
+      "signal_session": "2026-07-10",
+      "sleeve_id": "M1",
+      "spec_path": "strategy_specs/drafts/us_multiasset_stock_rank_lgbm_m1.yaml",
+      "status": "lockbox_failed_diagnostic_shadow",
+      "strategy_name": "us_multiasset_stock_rank_lgbm_m1",
+      "target_weights": {
+        "ANET": 0.2,
+        "CAT": 0.2,
+        "INTC": 0.2,
+        "MU": 0.2,
+        "TMO": 0.2
+      },
+      "target_weights_path": "reports/execution/us_multiasset_stock_rank_lgbm_m1-target-weights.json",
+      "top_n": 5,
+      "trial_id": "rank_lgbm_l15"
+    },
+    {
+      "broker_writes": false,
+      "execution_observation_path": "reports/execution/us_multiasset_stock_rank_hist_m2-execution-observation.json",
+      "gross_exposure": 1.0,
+      "kind": "ml_ranking",
+      "model_path": "reports/research/iterations/mom_multiasset_ml_r1/models/rank_hist_leaf15.joblib",
+      "rebalance_session": "2026-07-13",
+      "route_label": "multiasset:ml:rank_hist_leaf15:top5:equal",
+      "signal_session": "2026-07-10",
+      "sleeve_id": "M2",
+      "spec_path": "strategy_specs/drafts/us_multiasset_stock_rank_hist_m2.yaml",
+      "status": "lockbox_failed_diagnostic_shadow",
+      "strategy_name": "us_multiasset_stock_rank_hist_m2",
+      "target_weights": {
+        "CAT": 0.2,
+        "INTC": 0.2,
+        "MU": 0.2,
+        "TMO": 0.2,
+        "VZ": 0.2
+      },
+      "target_weights_path": "reports/execution/us_multiasset_stock_rank_hist_m2-target-weights.json",
+      "top_n": 5,
+      "trial_id": "rank_hist_leaf15"
+    }
+  ],
+  "workflow_pass": true
+}

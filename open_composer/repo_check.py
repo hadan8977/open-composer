@@ -44,6 +44,7 @@ CURRENT_DOCS = {
     "docs/plan-step-9r-momentum-validation-and-loop-hardening-2026-07-11.zh.md",
     "docs/plan-step-9o-momentum-shadow-observation-2026-07-13.zh.md",
     "docs/plan-step-9f-final-momentum-product-loop-2026-07-13.zh.md",
+    "docs/plan-step-9m-multiasset-momentum-lab-2026-07-14.zh.md",
     "docs/runbook-live-manual-execution.zh.md",
 }
 

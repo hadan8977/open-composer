@@ -1,0 +1,27 @@
+{
+  "candidate_matrix_revisions": [
+    "Use date-by-symbol panel samples instead of the 138 entry-episode design.",
+    "Compare linear, boosted-tree, random-forest and histogram-gradient ranking models on the same feature contract.",
+    "Separate return ranking from downside-risk classification and position sizing.",
+    "Do not expose symbol identity as a feature and require grouped chronological folds.",
+    "Only open the six-decision-date lockbox for model families passing three of four development folds."
+  ],
+  "hypothesis_links": ["ML-H1", "ML-H2", "ML-H3"],
+  "iter_id": "mom_multiasset_ml_r1",
+  "objective": "Test strategy-specific ranking, downside-risk and sizing ML roles for deterministic multiasset momentum survivors.",
+  "schema_version": 1,
+  "source_spec_path": null,
+  "sources": [
+    {"url":"https://academic.oup.com/rfs/article/33/5/2223/5758276","published_or_updated_at":"2020","source_type":"paper","credibility":"peer-reviewed Review of Financial Studies","core_claim":"Tree and neural models can capture nonlinear interactions in broad cross-sectional asset-pricing panels.","project_applicability":"Supports a linear baseline plus bounded nonlinear challengers on a date-by-stock panel.","reflection":"Large academic panels are much broader than the current 40-stock frozen universe."},
+    {"url":"https://github.com/microsoft/qlib","published_or_updated_at":"2026-07-14 accessed","source_type":"platform_docs","credibility":"widely used open-source quant platform","core_claim":"Alpha158 and LightGBM workflows provide reproducible price-volume feature and model baselines.","project_applicability":"Guides grouped market features and model comparison.","reflection":"Default splits and metrics must be replaced by Open Composer chronological and cost gates."},
+    {"url":"https://arxiv.org/abs/2505.14738","published_or_updated_at":"2025-05","source_type":"paper","credibility":"Microsoft Research preprint and open-source implementation","core_claim":"Research-development feedback can iteratively refine factors and models.","project_applicability":"LLM proposes and critiques bounded factor groups but does not trade.","reflection":"Automation increases multiple-testing risk without explicit ledgers."},
+    {"url":"https://openreview.net/forum?id=unBfxbCTpB","published_or_updated_at":"2026","source_type":"paper","credibility":"ICLR 2026 benchmark submission","core_claim":"LLM alpha mining requires robustness, efficiency and generalization evaluation.","project_applicability":"Requires factor deduplication, fold stability and lockbox discipline.","reflection":"Benchmark results do not validate this stock universe."},
+    {"url":"https://arxiv.org/abs/2203.15985","published_or_updated_at":"2022","source_type":"paper","credibility":"empirical meta-labeling study","core_claim":"Secondary models can filter or size a primary strategy, and their value depends on task and information design.","project_applicability":"Motivates a downside-risk overlay distinct from return ranking.","reflection":"The study does not prove that filtering improves this strategy."},
+    {"url":"https://www.nber.org/papers/w20439","published_or_updated_at":"2014","source_type":"working_paper","credibility":"NBER momentum-crash research","core_claim":"Momentum losses cluster in sharp reversal regimes.","project_applicability":"Defines the downside-risk label and drawdown objective.","reflection":"Long-short crash evidence may overstate the long-only portfolio's hedge need."},
+    {"url":"https://www.msci.com/indexes/documents/methodology/0_Momentum_Indexes_Methodology_20250522.pdf","published_or_updated_at":"2025-05-22","source_type":"industry_methodology","credibility":"production index methodology","core_claim":"Risk-adjusted multi-horizon momentum and turnover control are mature portfolio inputs.","project_applicability":"Defines the deterministic baseline the ML models must beat.","reflection":"The model may simply rediscover the deterministic score."},
+    {"url":"https://arxiv.org/abs/2603.15793","published_or_updated_at":"2026-03","source_type":"paper","credibility":"recent PIT and cost-aware preprint","core_claim":"Classic 12-1 performance may fail after modern costs.","project_applicability":"Requires net-of-cost and recent-fold model lift rather than headline gross return.","reflection":"Model complexity cannot be used to hide a decayed base anomaly."}
+  ],
+  "spec_hash": null,
+  "strategy_name": "us_multiasset_momentum_ml",
+  "topic_coverage": ["cross-sectional return ranking", "downside-risk classification", "position sizing", "feature ablation", "grouped chronological validation", "purge and embargo", "model calibration", "multiple-testing and lockbox governance"]
+}

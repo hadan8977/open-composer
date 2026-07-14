@@ -1,0 +1,19 @@
+{
+  "cost_table_path": "reports/research/iterations/mom_multiasset_r1/cost-table.json",
+  "data_feasibility_path": "reports/research/iterations/mom_multiasset_r1/universe-manifest.json",
+  "evaluation_report_paths": ["reports/research/iterations/mom_multiasset_r1/evaluation-report.json"],
+  "iter_id": "mom_multiasset_r1",
+  "paths": [
+    {"name":"P1_etf_absolute_relative","hypothesis_refs":["H1"],"parameters":{"lookback_days":[63,126,252],"rebalance_days":[5,21],"top_n":[1,2],"absolute_gate":["none","bil"]},"candidate_count":12,"benchmark_family":["equal_weight_universe","SPY","QQQ","BIL","ex_post_best_symbol"]},
+    {"name":"P2_sector_risk_adjusted","hypothesis_refs":["H2"],"parameters":{"momentum_blend":["6m","12m","6m_12m"],"volatility_adjusted":[true,false],"top_n":[2,3],"rebalance_days":[21]},"candidate_count":12,"benchmark_family":["equal_weight_sector_universe","SPY","XLK","BIL","ex_post_best_symbol"]},
+    {"name":"P3_stock_cross_sectional","hypothesis_refs":["H3"],"parameters":{"score":["6_1","12_1","6_12_blend"],"top_n":[5,10],"rebalance_days":[21],"volatility_adjusted":[true,false]},"candidate_count":12,"benchmark_family":["equal_weight_frozen_universe","SPY","sector_proxy","BIL","ex_post_best_symbol"]},
+    {"name":"P4_stock_trend_quality","hypothesis_refs":["H4"],"parameters":{"score":["high_52w","high_52w_plus_6m","trend_consistency"],"top_n":[5,10],"downside_vol_penalty":[true,false]},"candidate_count":12,"benchmark_family":["equal_weight_frozen_universe","SPY","sector_proxy","BIL","ex_post_best_symbol"]},
+    {"name":"P5_stock_residual_sector_relative","hypothesis_refs":["H5"],"parameters":{"score":["spy_residual_126","sector_relative_126","sector_relative_blend"],"top_n":[5,10],"sector_cap":[2,3]},"candidate_count":12,"benchmark_family":["equal_weight_frozen_universe","SPY","sector_proxy","BIL","ex_post_best_symbol"]}
+  ],
+  "schema_version": 1,
+  "source_spec_path": null,
+  "spec_hash": null,
+  "strategy_name": "us_multiasset_momentum_lab",
+  "total_candidate_budget": 60,
+  "trial_ledger_paths": ["reports/research/iterations/mom_multiasset_r1/trial-ledger.jsonl"]
+}

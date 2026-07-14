@@ -3327,6 +3327,87 @@ def strategy_rotate_universe(
     )
 
 
+@strategy_app.command("multiasset-momentum-universe")
+def strategy_multiasset_momentum_universe(
+    download_limit: int = typer.Option(60, "--download-limit", min=10, max=120),
+    final_limit: int = typer.Option(40, "--final-limit", min=10, max=80),
+    refresh: bool = typer.Option(True, "--refresh/--use-cache"),
+) -> None:
+    """Build a dated, quality-filtered stock and ETF momentum universe."""
+    from open_composer.research.multiasset_momentum import materialize_multiasset_universe
+
+    if final_limit > download_limit:
+        raise typer.BadParameter("--final-limit cannot exceed --download-limit")
+    result = materialize_multiasset_universe(
+        project_root(),
+        download_limit=download_limit,
+        final_limit=final_limit,
+        refresh=refresh,
+    )
+    console.print(
+        f"[green]multiasset universe materialized[/green] "
+        f"selected={len(result.selected_symbols)} manifest={result.manifest_path}"
+    )
+
+
+@strategy_app.command("multiasset-momentum-research")
+def strategy_multiasset_momentum_research(
+    cost_bps: float = typer.Option(10.0, "--cost-bps", min=0.0, max=100.0),
+) -> None:
+    """Run the bounded 60-candidate deterministic multiasset momentum round."""
+    from open_composer.research.multiasset_momentum import run_multiasset_momentum_research
+
+    result = run_multiasset_momentum_research(project_root(), cost_bps=cost_bps)
+    console.print(
+        f"[green]multiasset momentum research complete[/green] report={result.evaluation_path}"
+    )
+    for row in result.payload["selections"]:
+        metrics = row["metrics"]["out_of_sample"]
+        console.print(
+            f"{row['path']} {row['decision']} {row['trial_id']} "
+            f"oos_return={metrics['total_return_pct']:.2f}% "
+            f"oos_ir={metrics['information_ratio_vs_equal_weight']:.2f}"
+        )
+
+
+@strategy_app.command("multiasset-momentum-ml")
+def strategy_multiasset_momentum_ml(
+    cost_bps: float = typer.Option(10.0, "--cost-bps", min=0.0, max=100.0),
+) -> None:
+    """Run the bounded ranking, downside-risk, and sizing ML round."""
+    from open_composer.research.multiasset_momentum_ml import run_multiasset_momentum_ml
+
+    result = run_multiasset_momentum_ml(project_root(), cost_bps=cost_bps)
+    console.print(f"[green]multiasset momentum ML complete[/green] report={result.report_path}")
+    console.print(
+        f"qualified_ranking="
+        f"{','.join(result.payload['selection']['qualified_ranking_trials']) or 'none'} "
+        f"qualified_risk="
+        f"{','.join(result.payload['selection']['qualified_risk_trials']) or 'none'} "
+        f"lockbox_opened={result.payload['selection']['lockbox_opened']}"
+    )
+
+
+@strategy_app.command("multiasset-momentum-portfolio")
+def strategy_multiasset_momentum_portfolio() -> None:
+    """Materialize isolated virtual-paper sleeves without broker writes."""
+    from open_composer.research.multiasset_momentum_portfolio import (
+        write_multiasset_momentum_portfolio,
+    )
+
+    payload = write_multiasset_momentum_portfolio(project_root())
+    console.print(
+        "[green]multiasset momentum portfolio complete[/green] "
+        f"sleeves={len(payload['sleeves'])} "
+        f"broker_writes={payload['simulation']['broker_writes']}"
+    )
+    for row in payload["sleeves"]:
+        console.print(
+            f"{row['sleeve_id']} {row['strategy_name']} "
+            f"status={row['status']} gross={row['gross_exposure']:.2f}"
+        )
+
+
 @strategy_app.command("llm-rotate-universe")
 def strategy_llm_rotate_universe(
     spec: Path,
@@ -4889,6 +4970,21 @@ def strategy_target_weights(
                 refresh_data=refresh_data,
             )
             status = result.validation_status
+        elif spec_obj.portfolio.mode == "cross_sectional_momentum":
+            from open_composer.research.multiasset_momentum_portfolio import (
+                write_multiasset_target_weights_for_spec,
+            )
+
+            artifacts = write_multiasset_target_weights_for_spec(spec, project_root())
+            console.print(
+                "[green]target weights complete[/green] "
+                f"report: {artifacts['router_target_weights']}"
+            )
+            console.print(
+                "status=observation_only broker_writes=false "
+                f"observation={artifacts['router_execution_observation']}"
+            )
+            return
         else:
             raise typer.BadParameter(
                 f"strategy target-weights does not support portfolio.mode={spec_obj.portfolio.mode}"

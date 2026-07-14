@@ -1,0 +1,102 @@
+{
+  "strategy_name": "us_multiasset_stock_rank_lgbm_m1",
+  "policy_id": "opg_limit_us_multiasset_stock_rank_lgbm_m1_v1",
+  "generated_at": "2026-07-14",
+  "order_style": "opg_limit",
+  "time_in_force": "opg",
+  "price_protection": {
+    "type": "limit",
+    "limit_offset_bps": 25.0,
+    "max_open_gap_pct": 4.0,
+    "max_spread_bps": 20.0
+  },
+  "gap_filter": {
+    "enabled": true,
+    "max_open_gap_pct": 4.0,
+    "action_on_exceed": "skip"
+  },
+  "spread_filter": {
+    "enabled": true,
+    "max_spread_bps": 20.0,
+    "action_on_exceed": "delay_to_5m"
+  },
+  "participation_cap": {
+    "max_adv_pct": 2.5,
+    "max_open_bar_volume_pct": 10.0
+  },
+  "fallback_behavior": {
+    "if_not_filled": "skip",
+    "if_gap_exceeds_limit": "skip",
+    "if_spread_exceeds_limit": "delay_to_5m"
+  },
+  "tca_plan": {
+    "enabled": true,
+    "reference_prices": [
+      "decision_price",
+      "official_open",
+      "arrival_price"
+    ],
+    "record_submitted_at": true,
+    "record_fill_price": true,
+    "record_slippage_vs_reference": true,
+    "review_frequency": "weekly"
+  },
+  "source_card_ids": [
+    "us_multiasset_stock_rank_lgbm_m1:source-research",
+    "us_multiasset_stock_rank_lgbm_m1:nasdaq-opening-cross"
+  ],
+  "alternatives_compared": [
+    "opg_limit",
+    "day_market",
+    "loo_limit"
+  ],
+  "naked_market_justification": null,
+  "alternatives_detail": [
+    {
+      "order_style": "day_market",
+      "time_in_force": "day",
+      "description": "Immediate market order during regular session at first available price.",
+      "price_protection": "none",
+      "fill_certainty": "high",
+      "slippage_risk": "medium",
+      "when_to_prefer": "Highest liquidity, willing to accept opening volatility and spread."
+    },
+    {
+      "order_style": "opg_limit",
+      "time_in_force": "opg",
+      "description": "Limit-on-open routed to exchange opening auction.",
+      "price_protection": "limit_price",
+      "fill_certainty": "medium",
+      "slippage_risk": "low",
+      "when_to_prefer": "Price discovery via opening auction; avoids paying spread for first prints."
+    },
+    {
+      "order_style": "loo_limit",
+      "time_in_force": "opg",
+      "description": "Limit-on-open with explicit limit offset; cancel if not filled.",
+      "price_protection": "limit_offset_bps",
+      "fill_certainty": "low",
+      "slippage_risk": "low",
+      "when_to_prefer": "Strong price protection requirement; missed fill is acceptable."
+    },
+    {
+      "order_style": "delayed_open_5m",
+      "time_in_force": "day",
+      "description": "Wait 5 minutes after open before submitting market order.",
+      "price_protection": "gap_filter",
+      "fill_certainty": "high",
+      "slippage_risk": "low",
+      "when_to_prefer": "Reduces opening-auction volatility; loses opening-momentum signal."
+    },
+    {
+      "order_style": "twap",
+      "time_in_force": "day",
+      "description": "Time-weighted average over a 5-30 minute window after open.",
+      "price_protection": "participation_cap",
+      "fill_certainty": "high",
+      "slippage_risk": "low",
+      "when_to_prefer": "Large orders relative to ADV; controls market impact."
+    }
+  ],
+  "recommendation_rationale": "Recommended opg_limit (Limit-on-open routed to exchange opening auction.). Daily next-bar-open execution → opening-auction routing preferred."
+}

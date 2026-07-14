@@ -42,6 +42,7 @@ class PortfolioConfig(BaseModel):
         "beta_exposure_router",
         "core_beta_satellite_router",
         "momentum_signal_router",
+        "cross_sectional_momentum",
     ] = "single_symbol"
     max_symbols_per_day: int | None = Field(default=None, ge=1)
     gross_exposure_limit: float | None = Field(default=None, gt=0, le=1)
@@ -60,6 +61,7 @@ class PortfolioConfig(BaseModel):
                 "beta_exposure_router",
                 "core_beta_satellite_router",
                 "momentum_signal_router",
+                "cross_sectional_momentum",
             }
             and not self.selected_route_label
         ):

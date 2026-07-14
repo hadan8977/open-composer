@@ -73,12 +73,14 @@ OPEN_TO_OPEN_PORTFOLIO_MODES = {
     "hybrid_adaptive_router",
     "beta_exposure_router",
     "core_beta_satellite_router",
+    "cross_sectional_momentum",
 }
 ROUTED_PORTFOLIO_MODES = {
     "adaptive_intraday_internal_router",
     "hybrid_adaptive_router",
     "beta_exposure_router",
     "core_beta_satellite_router",
+    "cross_sectional_momentum",
 }
 
 
@@ -360,6 +362,10 @@ def _run_hybrid_paper_signal_cycle(
     if spec.portfolio.mode == "core_beta_satellite_router":
         raise PaperRunnerError(
             "core_beta_satellite_router runtime is observation_only; run target-weights first"
+        )
+    if spec.portfolio.mode == "cross_sectional_momentum":
+        raise PaperRunnerError(
+            "cross_sectional_momentum runtime is observation_only; run target-weights first"
         )
     params = hybrid_params_from_label(spec.portfolio.selected_route_label)
     dataset = _load_daily_hybrid_dataset(

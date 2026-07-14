@@ -20,6 +20,7 @@ ROUTER_MODES = {
     "hybrid_adaptive_router",
     "beta_exposure_router",
     "core_beta_satellite_router",
+    "cross_sectional_momentum",
 }
 
 

@@ -1,0 +1,39 @@
+{
+  "blockers": [
+    "draft observation-only specs",
+    "no broker authorization",
+    "no forward opening-auction TCA",
+    "current-universe survivorship caveat"
+  ],
+  "capacity_assessment": {
+    "initial_capital_per_sleeve": 100000.0,
+    "reason": "forward quote, spread, opening-window volume, and partial-fill evidence is not yet available",
+    "status": "warning",
+    "stock_universe_minimum_median_dollar_volume": 50000000
+  },
+  "reviewed_at": "2026-07-14",
+  "slippage_scenarios": [
+    {
+      "name": "low",
+      "open_gap_pct": 0.2,
+      "slippage_bps": 5
+    },
+    {
+      "name": "base",
+      "open_gap_pct": 0.8,
+      "slippage_bps": 10
+    },
+    {
+      "name": "high",
+      "open_gap_pct": 2.5,
+      "slippage_bps": 20
+    }
+  ],
+  "status": "blocked",
+  "strategy_name": "us_multiasset_momentum_portfolio",
+  "tca_plan": [
+    "record decision close, official open, arrival bid/ask, 5-minute VWAP, and fill status",
+    "compare target versus observed virtual fill weights per sleeve",
+    "do not authorize orders from this artifact"
+  ]
+}

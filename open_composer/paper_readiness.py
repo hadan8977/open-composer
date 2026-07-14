@@ -515,6 +515,7 @@ def _portfolio_routing_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
         "hybrid_adaptive_router",
         "beta_exposure_router",
         "core_beta_satellite_router",
+        "cross_sectional_momentum",
     }:
         missing: list[str] = []
         if not spec.portfolio.selected_route_label:
@@ -562,6 +563,7 @@ def _portfolio_risk_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
         "hybrid_adaptive_router",
         "beta_exposure_router",
         "core_beta_satellite_router",
+        "cross_sectional_momentum",
     }:
         gross_limit = portfolio.gross_exposure_limit or (
             (portfolio.max_symbols_per_day or 0)
