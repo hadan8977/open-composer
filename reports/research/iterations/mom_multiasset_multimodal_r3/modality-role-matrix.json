@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_multimodal_r3",
+  "generated_at": "2026-07-15T00:00:00Z",
+  "champion": "deterministic_12_1",
+  "roles": [
+    {"role": "return_ranking", "modalities": ["price", "volume", "sector", "day_night"], "method": "lightgbm_lambdarank", "status": "diagnostic", "fallback": "deterministic_12_1"},
+    {"role": "catalyst_confirmation", "modalities": ["sec_filing", "earnings_release", "news"], "method": "grounded_llm_features", "status": "blocked_historical_coverage", "fallback": "no_score_change"},
+    {"role": "false_momentum_veto", "modalities": ["sec_filing", "earnings_release", "news"], "method": "grounded_text_risk_features", "status": "blocked_historical_coverage", "fallback": "deterministic_12_1"},
+    {"role": "regime_meta_gate", "modalities": ["market", "model_disagreement"], "method": "train_only_threshold_gate", "status": "diagnostic_failed_3_of_4_gate", "fallback": "deterministic_12_1"},
+    {"role": "cost_aware_sizing", "modalities": ["quant_rank", "estimated_turnover"], "method": "shrink_to_champion", "status": "diagnostic_failed_3_of_4_gate", "fallback": "deterministic_equal_weight_top5"}
+  ],
+  "required_ablations": ["quant_only", "text_only", "quant_plus_text", "missing_text_fallback", "shuffled_text_placebo", "stale_text_placebo"],
+  "order_authority": false
+}

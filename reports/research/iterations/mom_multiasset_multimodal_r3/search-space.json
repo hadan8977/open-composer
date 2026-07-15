@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_multimodal_r3",
+  "strategy_name": "us_multiasset_stock_momentum_d2",
+  "source_spec_path": "strategy_specs/drafts/us_multiasset_stock_momentum_d2.yaml",
+  "spec_hash": "ceacaf52b9459e12bd2901fcdc6497c15fd336e0619e350148f4da1e77c194b5",
+  "total_candidate_budget": 24,
+  "paths": [
+    {
+      "name": "champion_and_text_ablations",
+      "candidate_count": 6,
+      "hypothesis_refs": ["MM-H1"],
+      "parameters": {"variant": ["deterministic_12_1", "quant_ranker", "text_only", "quant_plus_text", "shuffled_text", "stale_text"]},
+      "benchmark_family": ["same-symbol buy-and-hold", "equal-weight universe", "SPY", "XLK", "BIL", "ex-post best symbol"]
+    },
+    {
+      "name": "catalyst_and_risk_roles",
+      "candidate_count": 6,
+      "hypothesis_refs": ["MM-H1", "MM-H2"],
+      "parameters": {"role": ["catalyst_confirm", "false_momentum_veto", "text_risk_gate"], "strength": ["low", "high"]},
+      "benchmark_family": ["deterministic_12_1", "quant_ranker", "text_only", "SPY", "BIL", "equal-weight universe"]
+    },
+    {
+      "name": "regime_and_disagreement_meta",
+      "candidate_count": 6,
+      "hypothesis_refs": ["MM-H2"],
+      "parameters": {
+        "regime_threshold": ["train_median", "train_upper_quartile"],
+        "disagreement_threshold": ["train_median", "train_upper_quartile"],
+        "agreement_overlap_required": [3, 4]
+      },
+      "benchmark_family": ["always_champion", "always_ml", "SPY", "XLK", "BIL", "ex-post best symbol"]
+    },
+    {
+      "name": "cost_aware_shrinkage",
+      "candidate_count": 6,
+      "hypothesis_refs": ["MM-H3"],
+      "parameters": {"ml_weight": [0.25, 0.5, 0.75], "cost_bps": [10, 20]},
+      "benchmark_family": ["raw_top_k_ml", "deterministic_12_1", "equal-weight universe", "SPY", "BIL", "ex-post best symbol"]
+    }
+  ],
+  "trial_ledger_paths": ["reports/research/iterations/mom_multiasset_multimodal_r3/trial-ledger.jsonl"],
+  "evaluation_report_paths": [
+    "reports/research/iterations/mom_multiasset_multimodal_r3/evaluation-report.json",
+    "reports/research/iterations/mom_multiasset_multimodal_r3/multimodal-capability.json",
+    "reports/research/iterations/mom_multiasset_multimodal_r3/knowledge-assessment.json"
+  ],
+  "cost_table_path": "reports/research/iterations/mom_multiasset_multimodal_r3/cost-contract.json",
+  "data_feasibility_path": "reports/research/iterations/mom_multiasset_multimodal_r3/multimodal-capability.json",
+  "knowledge_contract": {
+    "assessment_path": "reports/research/iterations/mom_multiasset_multimodal_r3/knowledge-assessment.json",
+    "scout_path": "reports/research/iterations/mom_multiasset_multimodal_r3/knowledge-scout.json",
+    "model_reuse_decision_path": "reports/research/iterations/mom_multiasset_multimodal_r3/model-reuse-decision.json",
+    "modality_role_matrix_path": "reports/research/iterations/mom_multiasset_multimodal_r3/modality-role-matrix.json",
+    "required_visibility_partitions": ["public_literature", "train_only_empirical", "challenge_result", "forward_observation"],
+    "reuse_fresh_sources": true,
+    "refresh_stale_sources": true,
+    "require_new_or_refreshed_evidence": true
+  }
+}

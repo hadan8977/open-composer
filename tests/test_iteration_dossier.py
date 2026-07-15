@@ -137,6 +137,78 @@ def test_iteration_dossier_final_stage_requires_artifact_refs(sample_workspace: 
     assert "search_space_evaluation_report_paths_empty_final" in result.blocked
 
 
+def test_iteration_dossier_enforces_declared_knowledge_contract(
+    sample_workspace: Path,
+) -> None:
+    paths = init_iteration_dossier("mom_minute_r1", sample_workspace)
+    _write_complete_pre_backtest_payload(paths)
+    search = json.loads(paths.search_space_json.read_text(encoding="utf-8"))
+    artifact_root = paths.root
+    artifacts = {
+        "assessment_path": artifact_root / "knowledge-assessment.json",
+        "scout_path": artifact_root / "knowledge-scout.json",
+        "model_reuse_decision_path": artifact_root / "model-reuse-decision.json",
+        "modality_role_matrix_path": artifact_root / "modality-role-matrix.json",
+    }
+    for field_name, path in artifacts.items():
+        payload = {"status": "ok"} if field_name == "assessment_path" else {"rows": []}
+        path.write_text(json.dumps(payload), encoding="utf-8")
+    search["knowledge_contract"] = {
+        **{
+            field_name: path.relative_to(sample_workspace).as_posix()
+            for field_name, path in artifacts.items()
+        },
+        "required_visibility_partitions": [
+            "public_literature",
+            "train_only_empirical",
+            "challenge_result",
+            "forward_observation",
+        ],
+    }
+    paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
+
+    passed = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert passed.status == "ok"
+
+    artifacts["scout_path"].unlink()
+    blocked = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert "knowledge_contract_missing_artifact_scout_path" in blocked.blocked
+
+
+def test_iteration_dossier_blocks_non_ok_knowledge_assessment(
+    sample_workspace: Path,
+) -> None:
+    paths = init_iteration_dossier("mom_minute_r1", sample_workspace)
+    _write_complete_pre_backtest_payload(paths)
+    search = json.loads(paths.search_space_json.read_text(encoding="utf-8"))
+    fields = {}
+    for name in [
+        "assessment_path",
+        "scout_path",
+        "model_reuse_decision_path",
+        "modality_role_matrix_path",
+    ]:
+        path = paths.root / f"{name}.json"
+        path.write_text(
+            json.dumps({"status": "blocked"} if name == "assessment_path" else {}),
+            encoding="utf-8",
+        )
+        fields[name] = path.relative_to(sample_workspace).as_posix()
+    search["knowledge_contract"] = {
+        **fields,
+        "required_visibility_partitions": [
+            "public_literature",
+            "train_only_empirical",
+            "challenge_result",
+            "forward_observation",
+        ],
+    }
+    paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
+
+    result = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert "knowledge_contract_assessment_not_ok" in result.blocked
+
+
 def test_iteration_dossier_cli_init_and_validate(sample_workspace: Path, monkeypatch) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
     runner = CliRunner()

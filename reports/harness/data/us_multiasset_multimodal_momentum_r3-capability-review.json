@@ -1,0 +1,17 @@
+{
+  "strategy_name": "us_multiasset_multimodal_momentum_r3",
+  "reviewed_at": "2026-07-15",
+  "iteration_id": "mom_multiasset_multimodal_r3",
+  "capabilities": [
+    {"capability_id": "market.longbridge_bars", "status": "partial", "strict_behavior": "research_replay_cache", "paper_ready": false, "notes": "Real adjusted daily data, but the frozen current universe is survivorship-biased historically."},
+    {"capability_id": "events.sec_filings", "status": "blocked", "strict_behavior": "live_with_cache", "paper_ready": false, "notes": "Collector exists but SEC_USER_AGENT lacks a contact identity."},
+    {"capability_id": "earnings_call_transcripts", "status": "blocked", "strict_behavior": "unconfigured", "paper_ready": false, "notes": "No licensed transcript provider is registered."},
+    {"capability_id": "news.alpha_vantage", "status": "blocked", "strict_behavior": "fixture_only", "paper_ready": false, "notes": "API credential and measured historical coverage are absent."},
+    {"capability_id": "news.gdelt", "status": "partial", "strict_behavior": "forward_event_discovery", "paper_ready": false, "notes": "Historical coverage, entity resolution and duplicate behavior are unverified."},
+    {"capability_id": "llm.grounded_text_extraction", "status": "ok", "strict_behavior": "materialize_then_replay", "paper_ready": false, "notes": "Output requires source-grounded evidence spans and prompt/input/model hashes."}
+  ],
+  "point_in_time_contract_pass": true,
+  "historical_multimodal_training_authorized": false,
+  "formal_llm_evidence_epoch": "2026-07-15T00:00:00Z",
+  "verdict": "research_infrastructure_ready_external_data_blocked"
+}

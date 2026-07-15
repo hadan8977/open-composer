@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "provider": "arxiv_official_api",
+  "max_results_per_query": 5,
+  "queries": [
+    {
+      "query_id": "llm_quant",
+      "query": "cat:q-fin.ST AND all:\"large language model\"",
+      "topics": ["LLM finance", "text features", "research agents"]
+    },
+    {
+      "query_id": "momentum_ml",
+      "query": "cat:q-fin.PM AND all:momentum AND all:\"machine learning\"",
+      "topics": ["momentum", "machine learning", "portfolio management"]
+    },
+    {
+      "query_id": "earnings_text",
+      "query": "(cat:q-fin.ST OR cat:q-fin.PM) AND (all:\"earnings call\" OR all:\"SEC filing\")",
+      "topics": ["earnings calls", "SEC filings", "company events"]
+    },
+    {
+      "query_id": "financial_news",
+      "query": "cat:q-fin.ST AND all:\"financial news\" AND (all:LLM OR all:\"language model\")",
+      "topics": ["news", "LLM", "sentiment", "event risk"]
+    },
+    {
+      "query_id": "cost_aware_ml",
+      "query": "cat:q-fin.PM AND all:\"transaction costs\" AND all:\"machine learning\"",
+      "topics": ["transaction costs", "portfolio optimization", "turnover"]
+    },
+    {
+      "query_id": "continual_finance",
+      "query": "all:\"continual learning\" AND all:\"financial time series\"",
+      "topics": ["continual learning", "drift", "model memory"]
+    }
+  ]
+}

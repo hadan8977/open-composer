@@ -289,6 +289,53 @@ def _search_space_blockers(
                 blocked.append(f"search_space_{field_name}_{idx}_missing")
         if require_artifacts and not value:
             blocked.append(f"search_space_{field_name}_empty_final")
+    knowledge_contract = payload.get("knowledge_contract")
+    if knowledge_contract is not None:
+        blocked.extend(_knowledge_contract_blockers(knowledge_contract, root))
+    return blocked
+
+
+def _knowledge_contract_blockers(payload: Any, root: Path) -> list[str]:
+    if not isinstance(payload, dict):
+        return ["knowledge_contract_not_object"]
+    blocked: list[str] = []
+    required_paths = {
+        "assessment_path": "knowledge-assessment.json",
+        "scout_path": "knowledge-scout.json",
+        "model_reuse_decision_path": "model-reuse-decision.json",
+        "modality_role_matrix_path": "modality-role-matrix.json",
+    }
+    resolved: dict[str, Path] = {}
+    for field_name in required_paths:
+        raw = str(payload.get(field_name) or "").strip()
+        if not raw:
+            blocked.append(f"knowledge_contract_missing_{field_name}")
+            continue
+        path, error = _safe_repo_path(root, raw)
+        if error:
+            blocked.append(f"knowledge_contract_invalid_{field_name}:{error}")
+        elif not path.exists():
+            blocked.append(f"knowledge_contract_missing_artifact_{field_name}")
+        else:
+            resolved[field_name] = path
+    partitions = payload.get("required_visibility_partitions")
+    required_partitions = {
+        "public_literature",
+        "train_only_empirical",
+        "challenge_result",
+        "forward_observation",
+    }
+    if not isinstance(partitions, list) or not required_partitions.issubset(set(partitions)):
+        blocked.append("knowledge_contract_visibility_partitions_incomplete")
+    assessment_path = resolved.get("assessment_path")
+    if assessment_path is not None:
+        try:
+            assessment = json.loads(assessment_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            blocked.append("knowledge_contract_assessment_invalid_json")
+        else:
+            if assessment.get("status") != "ok":
+                blocked.append("knowledge_contract_assessment_not_ok")
     return blocked
 
 

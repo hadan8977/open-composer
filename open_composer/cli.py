@@ -307,6 +307,7 @@ research_brief_app = typer.Typer(no_args_is_help=True)
 factor_app = typer.Typer(no_args_is_help=True)
 research_app = typer.Typer(no_args_is_help=True)
 research_iteration_app = typer.Typer(no_args_is_help=True)
+research_knowledge_app = typer.Typer(no_args_is_help=True)
 console = Console()
 PDR_ML_GATE_DEFAULT_SPEC_PATH = Path(
     "strategy_specs/drafts/nasdaq_tqqq_pdr_router_mlgate_iter1.yaml"
@@ -337,6 +338,7 @@ app.add_typer(agent_app, name="agent")
 app.add_typer(factor_app, name="factor")
 app.add_typer(research_app, name="research")
 research_app.add_typer(research_iteration_app, name="iteration")
+research_app.add_typer(research_knowledge_app, name="knowledge")
 
 
 @app.callback()
@@ -817,6 +819,127 @@ def research_momentum_virtual_paper_command() -> None:
     console.print(f"markdown: {result.markdown_path}")
 
 
+@research_app.command("momentum-multimodal-capability")
+def research_momentum_multimodal_capability_command(
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Assess real PIT document, transcript, news, and LLM extraction readiness."""
+    from open_composer.research.momentum_multimodal import (
+        write_multimodal_capability_report,
+    )
+
+    payload = write_multimodal_capability_report(project_root())
+    if json_output:
+        sys.stdout.write(json.dumps(payload, indent=2) + "\n")
+        return
+    console.print(
+        f"multimodal capability status={payload['status']} "
+        f"historical_training={payload['historical_multimodal_training_authorized']} "
+        f"forward_collection={payload['forward_collection_authorized']}"
+    )
+    for provider in payload["providers"]:
+        console.print(
+            f"{provider['capability_id']} status={provider['status']} mode={provider['mode']}"
+        )
+
+
+@research_app.command("multiasset-momentum-multimodal")
+def research_multiasset_momentum_multimodal_command(
+    cost_bps: Annotated[float, typer.Option("--cost-bps", min=0, max=100)] = 10.0,
+) -> None:
+    """Run the preregistered 24-candidate multimodal momentum round."""
+    from open_composer.research.multiasset_momentum_multimodal import (
+        run_multiasset_multimodal_round,
+    )
+
+    try:
+        result = run_multiasset_multimodal_round(project_root(), cost_bps=cost_bps)
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"multimodal momentum candidates={result.payload['candidate_count']} "
+        f"completed={result.payload['completed_candidate_count']} "
+        f"skipped={result.payload['skipped_candidate_count']}"
+    )
+    console.print(
+        f"research_pass={result.payload['research_pass']} "
+        f"llm_contribution_pass={result.payload['llm_contribution_pass']}"
+    )
+    console.print(f"report: {result.report_path}")
+
+
+@research_app.command("momentum-multimodal-materialize")
+def research_momentum_multimodal_materialize_command(
+    input_path: Annotated[Path, typer.Option("--input", exists=True, dir_okay=False)],
+    output_path: Annotated[Path | None, typer.Option("--output")] = None,
+    backend: Annotated[str, typer.Option("--backend")] = "openai",
+    model: Annotated[str | None, typer.Option("--model")] = None,
+) -> None:
+    """Materialize grounded document features into replayable PIT packets."""
+    from open_composer.research.momentum_multimodal import (
+        materialize_multimodal_documents,
+    )
+
+    try:
+        result = materialize_multimodal_documents(
+            input_path,
+            project_root(),
+            output_path=output_path,
+            backend_name=backend,
+            model=model,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"multimodal materialization packets={result.packet_count} "
+        f"cache_hits={result.cache_hits} errors={result.errors}"
+    )
+    console.print(f"packets: {result.packets_path}")
+    console.print(f"run: {result.run_path}")
+    if result.errors:
+        raise typer.Exit(1)
+
+
+@research_app.command("momentum-sec-collect")
+def research_momentum_sec_collect_command(
+    symbols: Annotated[str, typer.Option("--symbols", help="Comma-separated stock symbols.")],
+    since: Annotated[str, typer.Option("--since")] = "2023-01-01",
+    max_per_symbol: Annotated[int, typer.Option("--max-per-symbol", min=1, max=100)] = 20,
+    user_agent: Annotated[
+        str | None,
+        typer.Option(
+            "--user-agent",
+            help=(
+                "SEC-compliant product identity with contact email or URL; "
+                "defaults to SEC_USER_AGENT."
+            ),
+        ),
+    ] = None,
+) -> None:
+    """Collect public SEC filing documents with acceptance-time provenance."""
+    from open_composer.research.momentum_multimodal import collect_sec_documents
+
+    selected = [item.strip().upper() for item in symbols.split(",") if item.strip()]
+    try:
+        result = collect_sec_documents(
+            selected,
+            project_root(),
+            user_agent=user_agent,
+            since=since,
+            max_per_symbol=max_per_symbol,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"SEC collection documents={result.document_count} "
+        f"cache_hits={result.cache_hits} errors={result.errors}"
+    )
+    console.print(f"documents: {result.documents_path}")
+    console.print(f"manifest: {result.manifest_path}")
+    if result.errors:
+        raise typer.Exit(1)
+
+
 @research_iteration_app.command("init")
 def research_iteration_init_command(
     iter_id: str,
@@ -862,6 +985,73 @@ def research_iteration_validate_command(
     else:
         console.print(render_validation_markdown(result))
     if not result.ok:
+        raise typer.Exit(1)
+
+
+@research_knowledge_app.command("build")
+def research_knowledge_build_command(
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Build the canonical source, empirical-result, and model memory index."""
+    from open_composer.research.knowledge_memory import build_knowledge_index
+
+    result = build_knowledge_index(project_root())
+    if json_output:
+        sys.stdout.write(json.dumps(result.payload, indent=2) + "\n")
+        return
+    console.print(
+        f"[green]knowledge index built[/green] sources={result.payload['source_count']} "
+        f"models={len(result.payload['model_memory'])}"
+    )
+    console.print(f"index: {result.index_path}")
+
+
+@research_knowledge_app.command("scout")
+def research_knowledge_scout_command(
+    iter_id: str,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Query preregistered literature topics and separate known from new candidates."""
+    from open_composer.research.knowledge_memory import scout_knowledge
+
+    try:
+        result = scout_knowledge(iter_id, project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if json_output:
+        sys.stdout.write(json.dumps(result.payload, indent=2) + "\n")
+        return
+    console.print(
+        f"[green]knowledge scout complete[/green] candidates={result.payload['candidate_count']} "
+        f"new={result.payload['new_candidate_count']} "
+        f"known={result.payload['already_known_count']}"
+    )
+    console.print(f"report: {result.report_path}")
+
+
+@research_knowledge_app.command("assess")
+def research_knowledge_assess_command(
+    iter_id: str,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Assess source reuse, freshness, novelty, and memory isolation for an iteration."""
+    from open_composer.research.knowledge_memory import assess_iteration_knowledge
+
+    try:
+        result = assess_iteration_knowledge(iter_id, project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if json_output:
+        sys.stdout.write(json.dumps(result.payload, indent=2) + "\n")
+    else:
+        console.print(
+            f"knowledge assessment status={result.payload['status']} "
+            f"new={result.payload['counts']['new']} "
+            f"reused={result.payload['counts']['reused']} "
+            f"refresh={result.payload['counts']['refresh_required']}"
+        )
+        console.print(f"report: {result.report_path}")
+    if result.payload["status"] != "ok":
         raise typer.Exit(1)
 
 

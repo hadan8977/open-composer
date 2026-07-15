@@ -93,6 +93,42 @@ source_requirements:
       - exchange_official_docs
       - industry_standard
 
+  ai_ml_method_research:
+    description: Current papers and official implementations used to choose AI/ML strategy roles.
+    must_browse: true
+    minimum_sources: 3
+    staleness_days: 180
+    preferred_source_types:
+      - paper
+      - platform_docs
+
+  company_filing_data:
+    description: Filing publication time, accession identity, document access, and revision rules.
+    must_browse: true
+    minimum_sources: 1
+    staleness_days: 30
+    preferred_source_types:
+      - regulatory_docs
+      - provider_official_docs
+
+  earnings_call_transcripts:
+    description: Transcript coverage, publication timestamps, licensing, and redistribution rights.
+    must_browse: true
+    minimum_sources: 1
+    staleness_days: 30
+    preferred_source_types:
+      - provider_official_docs
+      - industry_standard
+
+  news_feature_data:
+    description: News history, entity mapping, timestamps, revisions, and permitted feature use.
+    must_browse: true
+    minimum_sources: 2
+    staleness_days: 30
+    preferred_source_types:
+      - provider_official_docs
+      - industry_standard
+
 # Source types that are always acceptable without additional requirements.
 always_acceptable_source_types:
   - paper             # academic papers are stable references

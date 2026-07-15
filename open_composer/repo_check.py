@@ -46,6 +46,7 @@ CURRENT_DOCS = {
     "docs/plan-step-9f-final-momentum-product-loop-2026-07-13.zh.md",
     "docs/plan-step-9m-multiasset-momentum-lab-2026-07-14.zh.md",
     "docs/plan-step-9n-ai-factor-ml-expansion-2026-07-14.zh.md",
+    "docs/plan-step-9p-multimodal-momentum-memory-2026-07-15.zh.md",
     "docs/runbook-live-manual-execution.zh.md",
 }
 
@@ -330,6 +331,9 @@ def _agents_rules_check(root: Path) -> RepoConsistencyCheck:
         "paper_ready_pass",
         "Sample, fixture, cache fallback, and trial/research-only data",
         "visible_at",
+        "oc research knowledge assess",
+        "modality/role matrix",
+        "serialized estimator",
         "untrusted reader input",
         "Real-money broker write access is out of scope",
         "Run `uv run ruff format .`, `uv run ruff check .`, and `uv run pytest`",

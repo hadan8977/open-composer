@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_multimodal_r3",
+  "strategy_name": "us_multiasset_stock_momentum_d2",
+  "source_spec_path": "strategy_specs/drafts/us_multiasset_stock_momentum_d2.yaml",
+  "spec_hash": "ceacaf52b9459e12bd2901fcdc6497c15fd336e0619e350148f4da1e77c194b5",
+  "objective": "Test whether point-in-time company information and persistent research/model memory improve the frozen deterministic 12-1 stock-momentum champion without leaking future information or creating order authority.",
+  "sources": [
+    {
+      "url": "https://academic.oup.com/rfs/article/33/5/2223/5758276",
+      "published_or_updated_at": "2020",
+      "source_type": "paper",
+      "credibility": "peer-reviewed Review of Financial Studies",
+      "core_claim": "Nonlinear models can extract interactions among momentum, liquidity, volatility and other equity characteristics, but shallow models remain competitive in low-signal panels.",
+      "project_applicability": "Keep a strong linear/tree/ranker comparison and require matched feature ablations instead of assuming model complexity adds value.",
+      "reflection": "The paper uses a much broader point-in-time universe and longer history than this current-universe exploratory dataset."
+    },
+    {
+      "url": "https://arxiv.org/abs/2505.15155",
+      "published_or_updated_at": "2025",
+      "source_type": "paper",
+      "credibility": "public R&D-Agent(Q) research paper and implementation project",
+      "core_claim": "Quant research agents can alternate hypothesis generation, factor implementation and experiment feedback instead of treating factor and model search as isolated stages.",
+      "project_applicability": "Link source claims, factor proposals, empirical outcomes and next decisions in a persistent knowledge index.",
+      "reflection": "Agent-generated breadth still creates multiple-testing risk and does not replace strict OOS evaluation."
+    },
+    {
+      "url": "https://openreview.net/forum?id=unBfxbCTpB",
+      "published_or_updated_at": "2026",
+      "source_type": "paper",
+      "credibility": "OpenReview AlphaBench research benchmark",
+      "core_claim": "LLMs can generate executable alpha candidates more reliably than they can judge alpha quality without empirical feedback; diversity and OOS generalization need explicit evaluation.",
+      "project_applicability": "Use the LLM for bounded candidate and text-feature generation while the deterministic harness performs selection and records failures.",
+      "reflection": "Benchmark task performance is not evidence of tradable alpha in the Open Composer data environment."
+    },
+    {
+      "url": "https://arxiv.org/abs/2304.07619",
+      "published_or_updated_at": "2023",
+      "source_type": "paper",
+      "credibility": "academic working paper on LLM news interpretation and returns",
+      "core_claim": "Structured LLM interpretation of company news may contain short-horizon return information beyond simple sentiment labels.",
+      "project_applicability": "Test catalyst confirmation, false-momentum veto and text-only diagnostics using PIT packets.",
+      "reflection": "Historical LLM transformations can inherit model-training-time knowledge and must be grounded in quoted input spans and treated as retrospective."
+    },
+    {
+      "url": "https://arxiv.org/abs/1904.04912",
+      "published_or_updated_at": "2019",
+      "source_type": "paper",
+      "credibility": "published deep momentum research",
+      "core_claim": "Momentum systems can combine trend, volatility scaling and learned nonlinear temporal interactions.",
+      "project_applicability": "Supports separate return-ranking, downside-risk and regime roles rather than one monolithic buy/sell model.",
+      "reflection": "Futures evidence and deep sequence models do not directly validate a small long-only stock panel."
+    },
+    {
+      "url": "https://www.nber.org/papers/w20439",
+      "published_or_updated_at": "2014",
+      "source_type": "paper",
+      "credibility": "NBER momentum crash research",
+      "core_claim": "Momentum losses cluster in stressed reversal regimes and can be partly forecast with market-state information.",
+      "project_applicability": "Use regime and risk models to decide when ML may alter the champion instead of replacing the champion unconditionally.",
+      "reflection": "Long-short momentum crash results may overstate the risk for this long-only Top-K strategy."
+    },
+    {
+      "url": "https://academic.oup.com/rfs/advance-article/doi/10.1093/rfs/hhag050/8677182",
+      "published_or_updated_at": "2026",
+      "source_type": "paper",
+      "credibility": "peer-reviewed Review of Financial Studies advance article",
+      "core_claim": "Generative AI adoption in asset management is associated with value from processing firm-specific information.",
+      "project_applicability": "Prioritize company filings, earnings releases and catalyst extraction over more transformations of price alone.",
+      "reflection": "Institution-level adoption evidence is not a causal guarantee that one LLM feature improves this strategy."
+    },
+    {
+      "url": "https://academic.oup.com/rfs/advance-article/doi/10.1093/rfs/hhag042/8660474",
+      "published_or_updated_at": "2026",
+      "source_type": "paper",
+      "credibility": "peer-reviewed Review of Financial Studies advance article",
+      "core_claim": "Disagreement among machine predictions can contain cross-sectional information rather than serving only as a generic uncertainty warning.",
+      "project_applicability": "Evaluate model disagreement both as a feature and as an abstention/meta-gate input.",
+      "reflection": "Using disagreement after observing challenge results would overfit; thresholds must be selected in training folds."
+    },
+    {
+      "url": "https://academic.oup.com/rfs/advance-article/doi/10.1093/rfs/hhag036/8626980",
+      "published_or_updated_at": "2026",
+      "source_type": "paper",
+      "credibility": "peer-reviewed Review of Financial Studies advance article",
+      "core_claim": "Day and night return components can exhibit materially different momentum behavior.",
+      "project_applicability": "Split total momentum into intraday, overnight and gap components before asking ML to learn their interactions.",
+      "reflection": "The result needs direct replication on the selected universe and Longbridge bar conventions."
+    },
+    {
+      "url": "https://academic.oup.com/rfs/advance-article/doi/10.1093/rfs/hhag022/8524346",
+      "published_or_updated_at": "2026",
+      "source_type": "paper",
+      "credibility": "peer-reviewed Review of Financial Studies advance article",
+      "core_claim": "Prediction objectives that ignore implementation costs can select transient or expensive signals; portfolio construction should account for turnover and costs.",
+      "project_applicability": "Compare Top-K prediction with cost-aware shrinkage toward deterministic weights.",
+      "reflection": "Estimated costs are only proxies until forward execution observations accumulate."
+    },
+    {
+      "url": "https://www.sec.gov/search-filings/edgar-application-programming-interfaces",
+      "published_or_updated_at": "accessed 2026-07-15",
+      "source_type": "platform_docs",
+      "credibility": "official U.S. SEC EDGAR API documentation",
+      "core_claim": "SEC submissions and company facts are available as structured public endpoints with filing timestamps and accession identifiers.",
+      "project_applicability": "Use accession, acceptance/publication time and document hashes as the source of truth for filing PIT packets.",
+      "reflection": "SEC access policy and User-Agent requirements must be respected; filing metadata is not equivalent to licensed transcripts."
+    },
+    {
+      "url": "https://www.alphavantage.co/documentation/#news-sentiment",
+      "published_or_updated_at": "accessed 2026-07-15",
+      "source_type": "platform_docs",
+      "credibility": "official Alpha Vantage API documentation",
+      "core_claim": "The provider exposes timestamped ticker-aware news and sentiment fields subject to API plan coverage.",
+      "project_applicability": "Treat it as an optional registered news source and preserve provider timestamps and coverage warnings.",
+      "reflection": "The workspace currently lacks an Alpha Vantage key and cannot claim historical or paper-ready coverage."
+    },
+    {
+      "url": "https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/",
+      "published_or_updated_at": "accessed 2026-07-15",
+      "source_type": "platform_docs",
+      "credibility": "official GDELT project documentation",
+      "core_claim": "GDELT offers broad timestamped document search suitable for event discovery and narrative monitoring.",
+      "project_applicability": "Use GDELT for forward event discovery, with symbol/entity matching and duplicate controls before feature generation.",
+      "reflection": "Coverage, entity resolution and full historical retrieval are not sufficient by themselves for paper-ready company news evidence."
+    },
+    {
+      "url": "https://github.com/microsoft/qlib",
+      "published_or_updated_at": "accessed 2026-07-15",
+      "source_type": "platform_docs",
+      "credibility": "Microsoft open-source quantitative research platform",
+      "core_claim": "Reusable feature handlers, experiment records and model workflows help preserve research outputs across iterations.",
+      "project_applicability": "Store feature contracts, data snapshots, model hashes and experiment decisions rather than only final weights.",
+      "reflection": "Qlib patterns do not remove Open Composer's PIT, survivorship and broker-safety requirements."
+    }
+  ],
+  "topic_coverage": [
+    "cross-sectional machine learning",
+    "LLM company-news interpretation",
+    "SEC filing and earnings-event features",
+    "momentum crash and regime control",
+    "model disagreement and uncertainty",
+    "intraday versus overnight momentum",
+    "cost-aware portfolio construction",
+    "research-agent knowledge memory",
+    "source freshness and licensing",
+    "point-in-time replay and historical LLM backfill risk"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "path": "P0",
+      "decision": "keep",
+      "reason": "Freeze deterministic 12-1 as champion and require all ML/text variants to beat matched dates and costs."
+    },
+    {
+      "path": "P1",
+      "decision": "add",
+      "reason": "Add grounded SEC/news text features plus non-LLM event baselines and placebos."
+    },
+    {
+      "path": "P2",
+      "decision": "revise",
+      "reason": "Train role-specific rank, risk and meta models instead of adding unconstrained model families."
+    },
+    {
+      "path": "P3",
+      "decision": "add",
+      "reason": "Test cost-aware shrinkage and model disagreement while preserving exact deterministic fallback."
+    }
+  ],
+  "hypothesis_links": [
+    {"hypothesis_id": "MM-H1", "source_urls": ["https://arxiv.org/abs/2304.07619", "https://www.sec.gov/search-filings/edgar-application-programming-interfaces"]},
+    {"hypothesis_id": "MM-H2", "source_urls": ["https://academic.oup.com/rfs/advance-article/doi/10.1093/rfs/hhag042/8660474", "https://www.nber.org/papers/w20439"]},
+    {"hypothesis_id": "MM-H3", "source_urls": ["https://academic.oup.com/rfs/advance-article/doi/10.1093/rfs/hhag022/8524346"]},
+    {"hypothesis_id": "KM-H1", "source_urls": ["https://arxiv.org/abs/2505.15155", "https://github.com/microsoft/qlib"]}
+  ]
+}

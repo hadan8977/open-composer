@@ -15,6 +15,9 @@
 - Choose data, event, macro, and news sources through `capabilities/registry.yaml`.
 - Run capability evaluation before adding a new required strategy capability.
 - Before any new strategy iteration or optimization round, run `oc research iteration validate <iter_id>`; if it fails, do not start research, backtests, promotion, or paper-stage spec changes for that round.
+- Before an AI/ML or new-information-modality round, build the research knowledge index, run the iteration's versioned knowledge scout, and require `oc research knowledge assess <iter_id>` to pass. Reuse fresh prior claims, refresh stale or conflicting claims, and retain negative experiments so failed paths are not silently repeated.
+- Every AI/ML strategy round must declare a modality/role matrix covering factor generation, return ranking, risk prediction, regime/meta gating, sizing, uncertainty, and deterministic fallback as applicable. Run matched quant-only, modality-only, combined, missing-modality, and placebo ablations; explicitly justify roles that are not applicable.
+- Frozen model memory must include model, data, feature, prompt, validation, and status provenance. Reuse or retrain only with a recorded data, drift, calibration, or cadence reason; never treat a serialized estimator alone as durable knowledge.
 - benchmark family evidence must include same-symbol buy-and-hold, equal-weight universe, market proxy, sector/theme proxy, cash proxy, and ex-post best symbol when available.
 - Separate workflow_pass, research_pass, llm_contribution_pass, and paper_ready_pass; do not promote a workflow pass as Alpha or paper readiness.
 - Sample, fixture, cache fallback, and trial/research-only data are not paper-ready market evidence.

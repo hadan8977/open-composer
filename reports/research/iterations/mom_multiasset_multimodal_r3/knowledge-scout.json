@@ -1,0 +1,620 @@
+{
+  "already_known_count": 0,
+  "candidate_count": 23,
+  "candidates": [
+    {
+      "authors": [
+        "Yuqi Li",
+        "Siyuan Liu",
+        "Bingjun Liu"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2606.06823",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-06-05T01:56:28Z",
+      "query_ids": [
+        "llm_quant"
+      ],
+      "source_type": "paper",
+      "summary": "While deep learning has excelled in various domains, its application to sequential decision-making in finance remains challenging due to the low Signal-to-Noise Ratio (SNR) and non-stationarity of financial data. Leveraging the reasoning capabilities of Large Language Models (LLMs), we propose \\textbf{PandaAI}, a closed-loop neuro-symbolic LLM agent with market regime modeling and constrained alpha generation, which bridges general LLM reasoning with financial rigor and suppresses the financial toxicity of LLM-generated outputs. To bridge the gap between general linguistic capability and financial rigor, we fine-tune a domain-specific LLM. Furthermore, we integrate this LLM into a modular architecture and form a closed-loop system. Unlike traditional models that optimize isolated prediction metrics, \\textbf{PandaAI} is designed as a neuro-symbolic agent that navigates the complex, real-world financial environment with explicit risk awareness. Extensive experiments on CSI 300 stock data show that \\textbf{PandaAI} achieves a $18.2\\%$ higher Rank IC and $25.7\\%$ lower maximum drawdown than state-of-the-art time-series models. Our constrained LLM generation and dual-channel adaptation method provide a general paradigm for LLM deployment in high-stakes sequential decision-making scenarios.",
+      "title": "PandaAI: A Practical Agent CQ2 for Neuro-symbolic Data Analysis And Integrated Decision-Making in Quantitative Finance",
+      "topics": [
+        "LLM finance",
+        "text features",
+        "research agents"
+      ],
+      "url": "https://arxiv.org/abs/2606.06823v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Eugene Park"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2606.00061",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-05-19T18:10:07Z",
+      "query_ids": [
+        "llm_quant"
+      ],
+      "source_type": "paper",
+      "summary": "We study how frontier large language models (LLMs) behave as financial forecasters during boom-bust market cycles when made progressively aware of Soros's theory of reflexivity. Standard AI-assisted forecasting treats the market as an exogenous system. Reflexivity theory holds otherwise: prices shape fundamentals, and every forecaster is a participative agent in the loop it analyzes. We evaluate three frontier models - GPT5, Claude Sonnet 4.6, and Gemini 3 Pro - under four accumulating zero-shot conditions across two historically distinct episodes: the dot-com bubble (1996-2001) and the global financial crisis (2004-2009). The primary metric is directional forecasting accuracy; we also report the Sharpe ratio of an implied long/cash strategy to capture the risk-adjusted economic value of the forecasts. All inputs are anonymized and normalized to guard against memorization. We find that conditions incorporating reflexivity awareness improve forecasting accuracy differently across models and context windows, revealing that the same theoretical awareness can produce qualitatively different forecasting behavior across frontier LLMs.",
+      "title": "Reflexivity as Prompt: Does Awareness of Self-Reinforcing Market Dynamics Improve LLMs as Financial Market Forecasters?",
+      "topics": [
+        "LLM finance",
+        "text features",
+        "research agents"
+      ],
+      "url": "https://arxiv.org/abs/2606.00061v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Mingxuan Yi",
+        "Vidal Mehra",
+        "Jing Chen",
+        "John Cartlidge"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2605.30363",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-05-17T15:24:53Z",
+      "query_ids": [
+        "llm_quant"
+      ],
+      "source_type": "paper",
+      "summary": "Regime shifts in financial markets reorganise the joint dynamics of asset prices and macro variables, breaking any single-regime calibration. They are nonetheless difficult to detect reliably because the data signal is noisy and heavily multicollinear, while the contemporaneous text that announces them is unstructured. Standard regime shift detection methods rely solely on structured time-series data and ignore policy communications, even though these texts often signal shifts before they materialise in observed prices. We propose a text-enhanced regime shift detection pipeline that combines large language model (LLM) reasoning over central-bank communications with statistical validation on multivariate financial time series. The framework is detector-agnostic: text-proposed candidates are validated using a bootstrap likelihood-ratio test on a vector autoregression (VAR), while data-driven candidates from arbitrary regime detectors are ratified through a lenient LLM text check. We evaluate the framework on 2010-2024 FOMC minutes paired with a 14-variable U.S. Treasury and macroeconomic panel, using four interchangeable data-driven detectors. The proposed pipeline achieves F1 = 0.82 against a verified anchor list of monetary-policy regime shifts, with same-day modal detection latency and consistently stronger performance than pure data-driven baselines. The results demonstrate that combining unstructured policy text with statistical structural-break detection improves the robustness and interpretability of regime shift identification in financial markets.",
+      "title": "Enhancing Regime Shift Detection Using Unstructured Data: A Study on the Treasury Market",
+      "topics": [
+        "LLM finance",
+        "text features",
+        "research agents"
+      ],
+      "url": "https://arxiv.org/abs/2605.30363v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Kamil Kashif",
+        "Robert \u015alepaczuk"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2605.17307",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-05-17T07:50:37Z",
+      "query_ids": [
+        "cost_aware_ml"
+      ],
+      "source_type": "paper",
+      "summary": "This study develops and evaluates a deep reinforcement learning framework for dynamic portfolio allocation across global equity markets. The Soft Actor-Critic algorithm is used to learn continuous portfolio weights within a Markov Decision Process, incorporating transaction costs, turnover penalties, and diversification constraints into the reward function. Five model configurations are compared, varying in reward formulation, policy structure (flat versus hierarchical Dirichlet), portfolio constraints, and temporal encoder (LSTM versus Transformer), and evaluated via walk-forward optimization across sixteen out-of-sample folds spanning 2003-2026 on the Nasdaq-100, Nikkei 225, and Euro Stoxx 50. Results show that RL strategies achieve competitive risk-adjusted performance primarily in the Euro Stoxx 50, where statistically significant abnormal returns are observed, but the central hypothesis is only partially confirmed: no strategy achieves statistically significant excess returns relative to Buy and Hold under HAC-robust inference across all markets. Regime analysis reveals that RL adds the most value during periods of elevated uncertainty, while ensemble aggregation across markets improves risk-adjusted performance and confirms the benefits of geographic diversification.",
+      "title": "Deep Reinforcement Learning Framework for Diversified Portfolio Management Across Global Equity Markets",
+      "topics": [
+        "transaction costs",
+        "portfolio optimization",
+        "turnover"
+      ],
+      "url": "https://arxiv.org/abs/2605.17307v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Rahul Fernandes",
+        "Travis Desell"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2605.28853",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-05-16T22:30:15Z",
+      "query_ids": [
+        "cost_aware_ml"
+      ],
+      "source_type": "paper",
+      "summary": "Portfolio optimization in real-world financial markets is notoriously difficult due to non-stationarity, noisy data, and high transaction costs. Standard predict-then-optimize methods first forecast returns and then solve for weights, compounding prediction errors and often failing under regime shifts. We propose an end-to-end framework that directly optimizes differentiable surrogates of key financial metrics - Sharpe ratio, Omega ratio, Conditional Value-at-Risk (CVaR), and Risk Parity - allowing neural networks to learn portfolio weights via backpropagation. Our expanding-window walk-forward procedure, applied to 50 S&P 500 stocks from 2007 to 2023, incorporates realistic bid-ask spread costs and rebalances quarterly. On the challenging out-of-sample test period (2022-2023), the best model - an AttentionLSTM with the Omega-CVaR-RiskParity loss - achieves an annualized Sharpe of 0.29 and a total compounded return of +7.86%, while the S&P 500 delivers -4.52% total return and an annualized Sharpe of -0.02. This outperforms the S&P 500 by 12.38 percentage points (a relative improvement of over 270%), while keeping tail risk (CVaR) nearly unchanged. The framework consistently outperforms the equal-weight portfolio, S&P 500, and traditional methods (MVP, HRP, NCO), demonstrating that embedding financial objectives directly into model training yields robust, economically meaningful outperformance even in adverse market conditions.",
+      "title": "Financially Guided Deep Portfolio Optimization",
+      "topics": [
+        "transaction costs",
+        "portfolio optimization",
+        "turnover"
+      ],
+      "url": "https://arxiv.org/abs/2605.28853v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Yikuan Huang",
+        "Zheqi Fan",
+        "Kaiqi Hu",
+        "Yifan Ye"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2604.19476",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-04-21T13:59:30Z",
+      "query_ids": [
+        "llm_quant"
+      ],
+      "source_type": "paper",
+      "summary": "Text-based financial networks are increasingly used to study cross-stock return predictability. A common approach constructs links from similarities in firms' disclosure embeddings, but such networks often contain spurious edges because textual proximity does not necessarily imply economic connection. We propose a two-stage framework that first builds a sparse candidate graph from 10-K embeddings and then uses a large language model to classify and filter candidate edges according to their economic relations. The refined graph is used to aggregate pair-level mean-reversion signals into stock-level trading signals with relation-aware and distance-based weights. In a backtest on S&P 500 constituents from 2011 to 2019, LLM-based edge filtering improves the long-short Sharpe ratio from 0.742 to 0.820 and reduces maximum drawdown from $-$10.47% to $-$7.85%. These results suggest that LLM-based reasoning can improve the economic fidelity of text-derived financial networks and strengthen cross-stock predictability.",
+      "title": "Cross-Stock Predictability via LLM-Augmented Semantic Networks",
+      "topics": [
+        "LLM finance",
+        "text features",
+        "research agents"
+      ],
+      "url": "https://arxiv.org/abs/2604.19476v2",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Dhruvin Dungrani",
+        "Disha Dungrani"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2604.14619",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-04-16T04:59:36Z",
+      "query_ids": [
+        "earnings_text"
+      ],
+      "source_type": "paper",
+      "summary": "In computational paralinguistics, detecting cognitive load and deception from speech signals is a heavily researched domain. Recent efforts have attempted to apply these acoustic frameworks to corporate earnings calls to predict catastrophic stock market volatility. In this study, we empirically investigate the limits of acoustic feature extraction (pitch, jitter, and hesitation) when applied to highly trained speakers in in-the-wild teleconference environments. Utilizing a two-stream late-fusion architecture, we contrast an acoustic-based stream with a baseline Natural Language Processing (NLP) stream. The isolated NLP model achieved a recall of 66.25% for tail-risk downside events. Surprisingly, integrating acoustic features via late fusion significantly degraded performance, reducing recall to 47.08%. We identify this degradation as Acoustic Camouflage, where media-trained vocal regulation introduces contradictory noise that disrupts multimodal meta-learners. We present these findings as a boundary condition for speech processing applications in high-stakes financial forecasting.",
+      "title": "The Acoustic Camouflage Phenomenon: Re-evaluating Speech Features for Financial Risk Prediction",
+      "topics": [
+        "earnings calls",
+        "SEC filings",
+        "company events"
+      ],
+      "url": "https://arxiv.org/abs/2604.14619v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Olivia Zhang",
+        "Zhilin Zhang"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2605.05211",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-04-10T17:36:04Z",
+      "query_ids": [
+        "llm_quant",
+        "earnings_text",
+        "financial_news"
+      ],
+      "source_type": "paper",
+      "summary": "Large language models (LLMs) are increasingly deployed in quantitative finance for stock price forecasting. This review synthesizes recent applications of LLMs in this domain, including extracting sentiment from financial news and social media, analyzing financial reports and earnings-call transcripts, tokenizing or symbolizing stock price series, and constructing multi-agent trading systems. Particular attention is paid to practical pitfalls that are often understated in the literature, such as fragility in sentiment analysis, dataset and horizon design, performance evaluation metrics, data leakage, illiquidity premia, and limits of stock price predictability. Organized from a hedge-fund perspective, the review is intended to guide both academic researchers and hedge fund managers in integrating LLMs into real-world trading pipelines and in stress-testing their robustness under realistic market frictions.",
+      "title": "A Review of Large Language Models for Stock Price Forecasting from a Hedge-Fund Perspective",
+      "topics": [
+        "LLM finance",
+        "text features",
+        "research agents",
+        "earnings calls",
+        "SEC filings",
+        "company events",
+        "news",
+        "LLM",
+        "sentiment",
+        "event risk"
+      ],
+      "url": "https://arxiv.org/abs/2605.05211v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Pei-Jun Liao",
+        "Hung-Shin Lee",
+        "Yao-Fei Cheng",
+        "Li-Wei Chen",
+        "Hung-yi Lee",
+        "Hsin-Min Wang"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2603.19286",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-03-08T09:05:10Z",
+      "query_ids": [
+        "financial_news"
+      ],
+      "source_type": "paper",
+      "summary": "Predicting stock prices presents challenges in financial forecasting. While traditional approaches such as ARIMA and RNNs are prevalent, recent developments in Large Language Models (LLMs) offer alternative methodologies. This paper introduces an approach that integrates LLMs with daily financial news for stock price prediction. To address the challenge of processing news data and identifying relevant content, we utilize stock name embeddings within attention mechanisms. Specifically, we encode news articles using a pre-trained LLM and implement three attention-based pooling techniques -- self-attentive, cross-attentive, and position-aware self-attentive pooling -- to filter news based on stock relevance. The filtered news embeddings, combined with historical stock prices, serve as inputs to the prediction model. Unlike prior studies that focus on individual stocks, our method trains a single generalized model applicable across multiple stocks. Experimental results demonstrate a 7.11% reduction in Mean Absolute Error (MAE) compared to the baseline, indicating the utility of stock name embeddings for news filtering and price forecasting within a generalized framework.",
+      "title": "Generalized Stock Price Prediction for Multiple Stocks Combined with News Fusion",
+      "topics": [
+        "news",
+        "LLM",
+        "sentiment",
+        "event risk"
+      ],
+      "url": "https://arxiv.org/abs/2603.19286v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Szymon Lis",
+        "Robert \u015alepaczuk",
+        "Pawe\u0142 Sakowski"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2602.18912",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-02-21T17:31:02Z",
+      "query_ids": [
+        "momentum_ml",
+        "cost_aware_ml"
+      ],
+      "source_type": "paper",
+      "summary": "This paper investigates whether short-term market overreactions can be systematically predicted and monetized as momentum signals using high-frequency emotional information and modern machine learning methods. Focusing on Apple Inc. (AAPL), we construct a comprehensive intraday dataset that combines volatility normalized returns with transformer-based emotion features extracted from Twitter messages. Overreactions are defined as extreme return realizations relative to contemporaneous volatility and transaction costs and are modeled as a three-class prediction problem. We evaluate the performance of several nonlinear classifiers, including XGBoost, Random Forests, Deep Neural Networks, and Bidirectional LSTMs, across multiple intraday frequencies (1, 5, 10, and 15 minute data). Model outputs are translated into trading strategies and assessed using risk-adjusted performance measures and formal statistical tests. The results show that machine learning models significantly outperform benchmark overreaction rules at ultra short horizons, while classical behavioral momentum effects dominate at intermediate frequencies, particularly around 10 minutes. Explainability analysis based on SHAP reveals that volatility and negative emotions, especially fear and sadness, play a central role in driving predicted overreactions. Overall, the findings demonstrate that emotion-driven overreactions contain a predictable structure that can be exploited by machine learning models, offering new insights into the behavioral origins of intraday momentum and the interaction between sentiment, volatility, and algorithmic trading.",
+      "title": "Overreaction as an indicator for momentum in algorithmic trading: A Case of AAPL stocks",
+      "topics": [
+        "momentum",
+        "machine learning",
+        "portfolio management",
+        "transaction costs",
+        "portfolio optimization",
+        "turnover"
+      ],
+      "url": "https://arxiv.org/abs/2602.18912v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Amine Boukardagha"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2603.04441",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-02-21T00:33:16Z",
+      "query_ids": [
+        "cost_aware_ml"
+      ],
+      "source_type": "paper",
+      "summary": "We propose an explainable regime-aware portfolio construction framework based on a strictly causal Wasserstein Hidden Markov Model. The model combines rolling Gaussian HMM inference with predictive model-order selection and template-based identity tracking using the 2-Wasserstein distance between Gaussian components. This allows regime complexity to adapt dynamically while preserving stable economic interpretation. Regime probabilities are embedded into a transaction-cost-aware mean-variance optimization framework and evaluated on a diversified daily cross-asset universe. Relative to equal-weight and SPX buy-and-hold benchmarks, the Wasserstein HMM achieves materially higher risk-adjusted performance with Sharpe ratios of 2.18 versus 1.59 and 1.18 and substantially lower maximum drawdown of negative 5.43 percent versus negative 14.62 percent for SPX. During the early 2025 equity selloff labeled Liberation Day, the strategy dynamically reduced equity exposure and shifted toward defensive assets, mitigating peak-to-trough losses. Compared to a nonparametric KNN conditional-moment estimator using the same features and optimization layer, the parametric regime model produces materially lower turnover and smoother weight evolution. The results demonstrate that regime inference stability, particularly identity preservation and adaptive complexity control, is a first-order determinant of portfolio drawdown and implementation robustness in daily asset allocation.",
+      "title": "Explainable Regime Aware Investing",
+      "topics": [
+        "transaction costs",
+        "portfolio optimization",
+        "turnover"
+      ],
+      "url": "https://arxiv.org/abs/2603.04441v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Javier Mancilla",
+        "Theodoros D. Bouloumis",
+        "Frederic Goguikian"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2601.07792",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2026-01-12T18:04:33Z",
+      "query_ids": [
+        "momentum_ml"
+      ],
+      "source_type": "paper",
+      "summary": "Portfolio optimization under cardinality constraints transforms the classical Markowitz mean-variance problem from a convex quadratic problem into an NP-hard combinatorial optimization problem. This paper introduces a novel approach using THRML (Thermodynamic HypergRaphical Model Library), a JAX-based library for building and sampling probabilistic graphical models that reformulates index tracking as probabilistic inference on an Ising Hamiltonian. Unlike traditional methods that seek a single optimal solution, THRML samples from the Boltzmann distribution of high-quality portfolios using GPU-accelerated block Gibbs sampling, providing natural regularization against overfitting. We implement three key innovations: (1) dynamic coupling strength that scales inversely with market volatility (VIX), adapting diversification pressure to market regimes; (2) rebalanced bias weights prioritizing tracking quality over momentum for index replication; and (3) sector-aware post-processing ensuring institutional-grade diversification. Backtesting on a 100-stock S and P 500 universe from 2023 to 2025 demonstrates that THRML achieves 4.31 percent annualized tracking error versus 5.66 to 6.30 percent for baselines, while simultaneously generating 128.63 percent total return against the index total return of 79.61 percent. The Diebold-Mariano test confirms statistical significance with p less than 0.0001 across all comparisons. These results position energy-based models as a promising paradigm for portfolio construction, bridging statistical mechanics and quantitative finance.",
+      "title": "Non-Convex Portfolio Optimization via Energy-Based Models: A Comparative Analysis Using the Thermodynamic HypergRaphical Model Library (THRML) for Index Tracking",
+      "topics": [
+        "momentum",
+        "machine learning",
+        "portfolio management"
+      ],
+      "url": "https://arxiv.org/abs/2601.07792v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Jun Kevin",
+        "Pujianto Yugopuspito"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2511.17963",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2025-11-22T07:57:03Z",
+      "query_ids": [
+        "cost_aware_ml"
+      ],
+      "source_type": "paper",
+      "summary": "This paper introduces a hybrid framework for portfolio optimization that fuses Long Short-Term Memory (LSTM) forecasting with a Proximal Policy Optimization (PPO) reinforcement learning strategy. The proposed system leverages the predictive power of deep recurrent networks to capture temporal dependencies, while the PPO agent adaptively refines portfolio allocations in continuous action spaces, allowing the system to anticipate trends while adjusting dynamically to market shifts. Using multi-asset datasets covering U.S. and Indonesian equities, U.S. Treasuries, and major cryptocurrencies from January 2018 to December 2024, the model is evaluated against several baselines, including equal-weight, index-style, and single-model variants (LSTM-only and PPO-only). The framework's performance is benchmarked against equal-weighted, index-based, and single-model approaches (LSTM-only and PPO-only) using annualized return, volatility, Sharpe ratio, and maximum drawdown metrics, each adjusted for transaction costs. The results indicate that the hybrid architecture delivers higher returns and stronger resilience under non-stationary market regimes, suggesting its promise as a robust, AI-driven framework for dynamic portfolio optimization.",
+      "title": "Hybrid LSTM and PPO Networks for Dynamic Portfolio Optimization",
+      "topics": [
+        "transaction costs",
+        "portfolio optimization",
+        "turnover"
+      ],
+      "url": "https://arxiv.org/abs/2511.17963v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Jingfeng Pan",
+        "Jiahao Chen"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2508.20467",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2025-08-28T06:37:41Z",
+      "query_ids": [
+        "momentum_ml"
+      ],
+      "source_type": "paper",
+      "summary": "In the highly volatile and uncertain global financial markets, traditional quantitative trading models relying on statistical modeling or empirical rules often fail to adapt to dynamic market changes and black swan events due to rigid assumptions and limited generalization. To address these issues, this paper proposes QTMRL (Quantitative Trading Multi-Indicator Reinforcement Learning), an intelligent trading agent combining multi-dimensional technical indicators with reinforcement learning (RL) for adaptive and stable portfolio management. We first construct a comprehensive multi-indicator dataset using 23 years of S&P 500 daily OHLCV data (2000-2022) for 16 representative stocks across 5 sectors, enriching raw data with trend, volatility, and momentum indicators to capture holistic market dynamics. Then we design a lightweight RL framework based on the Advantage Actor-Critic (A2C) algorithm, including data processing, A2C algorithm, and trading agent modules to support policy learning and actionable trading decisions. Extensive experiments compare QTMRL with 9 baselines (e.g., ARIMA, LSTM, moving average strategies) across diverse market regimes, verifying its superiority in profitability, risk adjustment, and downside risk control. The code of QTMRL is publicly available at https://github.com/ChenJiahaoJNU/QTMRL.git",
+      "title": "QTMRL: An Agent for Quantitative Trading Decision-Making Based on Multi-Indicator Guided Reinforcement Learning",
+      "topics": [
+        "momentum",
+        "machine learning",
+        "portfolio management"
+      ],
+      "url": "https://arxiv.org/abs/2508.20467v2",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Kasymkhan Khubiev",
+        "Mikhail Semenov"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2503.08696",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2025-03-05T21:20:32Z",
+      "query_ids": [
+        "financial_news"
+      ],
+      "source_type": "paper",
+      "summary": "Classical asset price forecasting methods primarily rely on numerical data, such as price time series, trading volumes, limit order book data, and technical analysis indicators. However, the news flow plays a significant role in price formation, making the development of multimodal approaches that combine textual and numerical data for improved prediction accuracy highly relevant. This paper addresses the problem of forecasting financial asset prices using the multimodal approach that combines candlestick time series and textual news flow data. A unique dataset was collected for the study, which includes time series for 176 Russian stocks traded on the Moscow Exchange and 79,555 financial news articles in Russian. For processing textual data, pre-trained models RuBERT and Vikhr-Qwen2.5-0.5b-Instruct (a large language model) were used, while time series and vectorized text data were processed using an LSTM recurrent neural network. The experiments compared models based on a single modality (time series only) and two modalities, as well as various methods for aggregating text vector representations. Prediction quality was estimated using two key metrics: Accuracy (direction of price movement prediction: up or down) and Mean Absolute Percentage Error (MAPE), which measures the deviation of the predicted price from the true price. The experiments showed that incorporating textual modality reduced the MAPE value by 55%. The resulting multimodal dataset holds value for the further adaptation of language models in the financial sector. Future research directions include optimizing textual modality parameters, such as the time window, sentiment, and chronological order of news messages.",
+      "title": "Multimodal Stock Price Prediction: A Case Study of the Russian Securities Market",
+      "topics": [
+        "news",
+        "LLM",
+        "sentiment",
+        "event risk"
+      ],
+      "url": "https://arxiv.org/abs/2503.08696v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Ankur Sinha",
+        "Chaitanya Agarwal",
+        "Pekka Malo"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2502.18471",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2025-02-04T06:51:34Z",
+      "query_ids": [
+        "earnings_text",
+        "financial_news"
+      ],
+      "source_type": "paper",
+      "summary": "Large language models (LLMs) excel at generating human-like responses but often struggle with interactive tasks that require access to real-time information. This limitation poses challenges in finance, where models must access up-to-date information, such as recent news or price movements, to support decision-making. To address this, we introduce Financial Agent, a knowledge-grounding approach for LLMs to handle financial queries using real-time text and tabular data. Our contributions are threefold: First, we develop a Financial Context Dataset of over 50,000 financial queries paired with the required context. Second, we develop FinBloom 7B, a custom 7 billion parameter LLM, by fine-tuning Bloom 7B on 14 million financial news articles from Reuters and Deutsche Presse-Agentur (DPA), alongside a random sample of 25% from 12 million Securities and Exchange Commission (SEC) filings. Third, we fine-tune FinBloom 7B using the Financial Context Dataset to serve as a Financial Agent. This agent generates relevant financial context, enabling efficient real-time data retrieval to answer user queries. By reducing latency and eliminating the need for users to manually provide accurate data, our approach significantly enhances the capability of LLMs to handle dynamic financial tasks. Our proposed approach makes real-time financial decisions, algorithmic trading and other related tasks streamlined, and is valuable in contexts with high-velocity data flows.",
+      "title": "FinBloom: Knowledge Grounding Large Language Model with Real-time Financial Data",
+      "topics": [
+        "earnings calls",
+        "SEC filings",
+        "company events",
+        "news",
+        "LLM",
+        "sentiment",
+        "event risk"
+      ],
+      "url": "https://arxiv.org/abs/2502.18471v2",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "George Fatouros",
+        "Kostas Metaxas",
+        "John Soldatos",
+        "Manos Karathanassis"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2502.00415",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2025-02-01T12:33:23Z",
+      "query_ids": [
+        "earnings_text"
+      ],
+      "source_type": "paper",
+      "summary": "MarketSenseAI is a novel framework for holistic stock analysis which leverages Large Language Models (LLMs) to process financial news, historical prices, company fundamentals and the macroeconomic environment to support decision making in stock analysis and selection. In this paper, we present the latest advancements on MarketSenseAI, driven by rapid technological expansion in LLMs. Through a novel architecture combining Retrieval-Augmented Generation and LLM agents, the framework processes SEC filings and earnings calls, while enriching macroeconomic analysis through systematic processing of diverse institutional reports. We demonstrate a significant improvement in fundamental analysis accuracy over the previous version. Empirical evaluation on S\\&P 100 stocks over two years (2023-2024) shows MarketSenseAI achieving cumulative returns of 125.9% compared to the index return of 73.5%, while maintaining comparable risk profiles. Further validation on S\\&P 500 stocks during 2024 demonstrates the framework's scalability, delivering a 33.8% higher Sortino ratio than the market. This work marks a significant advancement in applying LLM technology to financial analysis, offering insights into the robustness of LLM-driven investment strategies.",
+      "title": "MarketSenseAI 2.0: Enhancing Stock Analysis through LLM Agents",
+      "topics": [
+        "earnings calls",
+        "SEC filings",
+        "company events"
+      ],
+      "url": "https://arxiv.org/abs/2502.00415v2",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Sumit Nawathe",
+        "Ravi Panguluri",
+        "James Zhang",
+        "Sashwat Venkatesh"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2412.17293",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2024-12-23T05:25:15Z",
+      "query_ids": [
+        "earnings_text"
+      ],
+      "source_type": "paper",
+      "summary": "We propose a reinforcement learning (RL) framework that leverages multimodal data including historical stock prices, sentiment analysis, and topic embeddings from news articles, to optimize trading strategies for SP100 stocks. Building upon recent advancements in financial reinforcement learning, we aim to enhance the state space representation by integrating financial sentiment data from SEC filings and news headlines and refining the reward function to better align with portfolio performance metrics. Our methodology includes deep reinforcement learning with state tensors comprising price data, sentiment scores, and news embeddings, processed through advanced feature extraction models like CNNs and RNNs. By benchmarking against traditional portfolio optimization techniques and advanced strategies, we demonstrate the efficacy of our approach in delivering superior portfolio performance. Empirical results showcase the potential of our agent to outperform standard benchmarks, especially when utilizing combined data sources under profit-based reward functions.",
+      "title": "Multimodal Deep Reinforcement Learning for Portfolio Optimization",
+      "topics": [
+        "earnings calls",
+        "SEC filings",
+        "company events"
+      ],
+      "url": "https://arxiv.org/abs/2412.17293v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Olamilekan Shobayo",
+        "Sidikat Adeyemi-Longe",
+        "Olusogo Popoola",
+        "Bayode Ogunleye"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2412.06837",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2024-12-07T05:20:31Z",
+      "query_ids": [
+        "financial_news"
+      ],
+      "source_type": "paper",
+      "summary": "This study explores the comparative performance of cutting-edge AI models, i.e., Finaance Bidirectional Encoder representations from Transsformers (FinBERT), Generatice Pre-trained Transformer GPT-4, and Logistic Regression, for sentiment analysis and stock index prediction using financial news and the NGX All-Share Index data label. By leveraging advanced natural language processing models like GPT-4 and FinBERT, alongside a traditional machine learning model, Logistic Regression, we aim to classify market sentiment, generate sentiment scores, and predict market price movements. This research highlights global AI advancements in stock markets, showcasing how state-of-the-art language models can contribute to understanding complex financial data. The models were assessed using metrics such as accuracy, precision, recall, F1 score, and ROC AUC. Results indicate that Logistic Regression outperformed the more computationally intensive FinBERT and predefined approach of versatile GPT-4, with an accuracy of 81.83% and a ROC AUC of 89.76%. The GPT-4 predefined approach exhibited a lower accuracy of 54.19% but demonstrated strong potential in handling complex data. FinBERT, while offering more sophisticated analysis, was resource-demanding and yielded a moderate performance. Hyperparameter optimization using Optuna and cross-validation techniques ensured the robustness of the models. This study highlights the strengths and limitations of the practical applications of AI approaches in stock market prediction and presents Logistic Regression as the most efficient model for this task, with FinBERT and GPT-4 representing emerging tools with potential for future exploration and innovation in AI-driven financial analytics",
+      "title": "Innovative Sentiment Analysis and Prediction of Stock Price Using FinBERT, GPT-4 and Logistic Regression: A Data-Driven Approach",
+      "topics": [
+        "news",
+        "LLM",
+        "sentiment",
+        "event risk"
+      ],
+      "url": "https://arxiv.org/abs/2412.06837v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Dragos Gorduza",
+        "Yaxuan Kong",
+        "Xiaowen Dong",
+        "Stefan Zohren"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2410.20597",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2024-10-27T21:11:59Z",
+      "query_ids": [
+        "momentum_ml"
+      ],
+      "source_type": "paper",
+      "summary": "We investigate the effectiveness of a momentum trading signal based on the coverage network of financial analysts. This signal builds on the key information-brokerage role financial sell-side analysts play in modern stock markets. The baskets of stocks covered by each analyst can be used to construct a network between firms whose edge weights represent the number of analysts jointly covering both firms. Although the link between financial analysts coverage and co-movement of firms' stock prices has been investigated in the literature, little effort has been made to systematically learn the most effective combination of signals from firms covered jointly by analysts in order to benefit from any spillover effect. To fill this gap, we build a trading strategy which leverages the analyst coverage network using a graph attention network. More specifically, our model learns to aggregate information from individual firm features and signals from neighbouring firms in a node-level forecasting task. We develop a portfolio based on those predictions which we demonstrate to exhibit an annualized returns of 29.44% and a Sharpe ratio of 4.06 substantially outperforming market baselines and existing graph machine learning based frameworks. We further investigate the performance and robustness of this strategy through extensive empirical analysis. Our paper represents one of the first attempts in using graph machine learning to extract actionable knowledge from the analyst coverage network for practical financial applications.",
+      "title": "Extracting Alpha from Financial Analyst Networks",
+      "topics": [
+        "momentum",
+        "machine learning",
+        "portfolio management"
+      ],
+      "url": "https://arxiv.org/abs/2410.20597v1",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Kieran Wood",
+        "Samuel Kessler",
+        "Stephen J. Roberts",
+        "Stefan Zohren"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2310.10500",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2023-10-16T15:20:12Z",
+      "query_ids": [
+        "momentum_ml"
+      ],
+      "source_type": "paper",
+      "summary": "Forecasting models for systematic trading strategies do not adapt quickly when financial market conditions rapidly change, as was seen in the advent of the COVID-19 pandemic in 2020, causing many forecasting models to take loss-making positions. To deal with such situations, we propose a novel time-series trend-following forecaster that can quickly adapt to new market conditions, referred to as regimes. We leverage recent developments from the deep learning community and use few-shot learning. We propose the Cross Attentive Time-Series Trend Network -- X-Trend -- which takes positions attending over a context set of financial time-series regimes. X-Trend transfers trends from similar patterns in the context set to make forecasts, then subsequently takes positions for a new distinct target regime. By quickly adapting to new financial regimes, X-Trend increases Sharpe ratio by 18.9% over a neural forecaster and 10-fold over a conventional Time-series Momentum strategy during the turbulent market period from 2018 to 2023. Our strategy recovers twice as quickly from the COVID-19 drawdown compared to the neural-forecaster. X-Trend can also take zero-shot positions on novel unseen financial assets obtaining a 5-fold Sharpe ratio increase versus a neural time-series trend forecaster over the same period. Furthermore, the cross-attention mechanism allows us to interpret the relationship between forecasts and patterns in the context set.",
+      "title": "Few-Shot Learning Patterns in Financial Time-Series for Trend-Following Strategies",
+      "topics": [
+        "momentum",
+        "machine learning",
+        "portfolio management"
+      ],
+      "url": "https://arxiv.org/abs/2310.10500v2",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Filippo Neri"
+      ],
+      "canonical_url": "https://arxiv.org/abs/2103.14079",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2021-03-22T07:48:31Z",
+      "query_ids": [
+        "continual_finance"
+      ],
+      "source_type": "paper",
+      "summary": "Concept drift detectors allow learning systems to maintain good accuracy on non-stationary data streams. Financial time series are an instance of non-stationary data streams whose concept drifts (market phases) are so important to affect investment decisions worldwide. This paper studies how concept drift detectors behave when applied to financial time series. General results are: a) concept drift detectors usually improve the runtime over continuous learning, b) their computational cost is usually a fraction of the learning and prediction steps of even basic learners, c) it is important to study concept drift detectors in combination with the learning systems they will operate with, and d) concept drift detectors can be directly applied to the time series of raw financial data and not only to the model's accuracy one. Moreover, the study introduces three simple concept drift detectors, tailored to financial time series, and shows that two of them can be at least as effective as the most sophisticated ones from the state of the art when applied to financial time series. Currently submitted to Pattern Recognition",
+      "title": "Domain Specific Concept Drift Detectors for Predicting Financial Time Series",
+      "topics": [
+        "continual learning",
+        "drift",
+        "model memory"
+      ],
+      "url": "https://arxiv.org/abs/2103.14079v3",
+      "validation_status": "candidate_unvalidated"
+    },
+    {
+      "authors": [
+        "Daniel Philps",
+        "Artur d'Avila Garcez",
+        "Tillman Weyde"
+      ],
+      "canonical_url": "https://arxiv.org/abs/1911.04489",
+      "existing_locations": [],
+      "knowledge_status": "new_candidate",
+      "published_at": "2019-11-11T18:57:37Z",
+      "query_ids": [
+        "continual_finance"
+      ],
+      "source_type": "paper",
+      "summary": "LSTMs promise much to financial time-series analysis, temporal and cross-sectional inference, but we find that they do not deliver in a real-world financial management task. We examine an alternative called Continual Learning (CL), a memory-augmented approach, which can provide transparent explanations, i.e. which memory did what and when. This work has implications for many financial applications including credit, time-varying fairness in decision making and more. We make three important new observations. Firstly, as well as being more explainable, time-series CL approaches outperform LSTMs as well as a simple sliding window learner using feed-forward neural networks (FFNN). Secondly, we show that CL based on a sliding window learner (FFNN) is more effective than CL based on a sequential learner (LSTM). Thirdly, we examine how real-world, time-series noise impacts several similarity approaches used in CL memory addressing. We provide these insights using an approach called Continual Learning Augmentation (CLA) tested on a complex real-world problem, emerging market equities investment decision making. CLA provides a test-bed as it can be based on different types of time-series learners, allowing testing of LSTM and FFNN learners side by side. CLA is also used to test several distance approaches used in a memory recall-gate: Euclidean distance (ED), dynamic time warping (DTW), auto-encoders (AE) and a novel hybrid approach, warp-AE. We find that ED under-performs DTW and AE but warp-AE shows the best overall performance in a real-world financial task.",
+      "title": "Making Good on LSTMs' Unfulfilled Promise",
+      "topics": [
+        "continual learning",
+        "drift",
+        "model memory"
+      ],
+      "url": "https://arxiv.org/abs/1911.04489v4",
+      "validation_status": "candidate_unvalidated"
+    }
+  ],
+  "contract": {
+    "effectiveness_requires_empirical_evidence": true,
+    "newest_is_effective": false,
+    "search_hit_is_validated_knowledge": false
+  },
+  "generated_at": "2026-07-15T08:38:32.555135+00:00",
+  "iter_id": "mom_multiasset_multimodal_r3",
+  "manifest_path": "reports/research/iterations/mom_multiasset_multimodal_r3/knowledge-scout-queries.json",
+  "new_candidate_count": 23,
+  "provider": "arxiv_official_api",
+  "query_manifest_sha256": "4b30bd7f5c85b12d158d11c5f0fcc108d4d48a5df720d84e7451010b487e68ba",
+  "query_results": [
+    {
+      "query": "cat:q-fin.ST AND all:\"large language model\"",
+      "query_id": "llm_quant",
+      "result_count": 5
+    },
+    {
+      "query": "cat:q-fin.PM AND all:momentum AND all:\"machine learning\"",
+      "query_id": "momentum_ml",
+      "result_count": 5
+    },
+    {
+      "query": "(cat:q-fin.ST OR cat:q-fin.PM) AND (all:\"earnings call\" OR all:\"SEC filing\")",
+      "query_id": "earnings_text",
+      "result_count": 5
+    },
+    {
+      "query": "cat:q-fin.ST AND all:\"financial news\" AND (all:LLM OR all:\"language model\")",
+      "query_id": "financial_news",
+      "result_count": 5
+    },
+    {
+      "query": "cat:q-fin.PM AND all:\"transaction costs\" AND all:\"machine learning\"",
+      "query_id": "cost_aware_ml",
+      "result_count": 5
+    },
+    {
+      "query": "all:\"continual learning\" AND all:\"financial time series\"",
+      "query_id": "continual_finance",
+      "result_count": 2
+    }
+  ],
+  "schema_version": 1
+}

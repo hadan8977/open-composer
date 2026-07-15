@@ -1,0 +1,97 @@
+{
+  "blockers": [
+    "SEC_USER_AGENT_missing_or_lacks_contact_identity",
+    "licensed_transcript_provider_not_registered",
+    "ALPHA_VANTAGE_API_KEY_missing",
+    "historical_coverage_and_entity_resolution_not_verified"
+  ],
+  "feature_packet": {
+    "dedupe_key_count": 0,
+    "duplicate_dedupe_keys": [],
+    "evidence_count": 0,
+    "evidence_fixture_paths": [],
+    "exists": false,
+    "first_timestamp": null,
+    "input_hashes": [],
+    "last_timestamp": null,
+    "missing_evidence_count": 0,
+    "missing_input_hash_count": 0,
+    "missing_model_count": 0,
+    "missing_prompt_hash_count": 0,
+    "models": [],
+    "point_in_time_status": "missing",
+    "prompt_hashes": [],
+    "record_count": 0,
+    "replay_warnings": [
+      "feature packet is missing on disk"
+    ],
+    "schema_versions": [],
+    "sources": [],
+    "symbols": []
+  },
+  "formal_evidence_epoch": "2026-07-15T00:00:00+00:00",
+  "forward_collection_authorized": true,
+  "generated_at": "2026-07-15T08:48:25.178461+00:00",
+  "historical_multimodal_training_authorized": false,
+  "iter_id": "mom_multiasset_multimodal_r3",
+  "missing_modality_behavior": "exact_deterministic_12_1_fallback",
+  "pit_contract_pass": true,
+  "providers": [
+    {
+      "blockers": [
+        "SEC_USER_AGENT_missing_or_lacks_contact_identity"
+      ],
+      "capability_id": "events.sec_filings",
+      "mode": "fixture_only",
+      "paper_ready": false,
+      "status": "blocked"
+    },
+    {
+      "blockers": [
+        "licensed_transcript_provider_not_registered"
+      ],
+      "capability_id": "earnings_call_transcripts",
+      "mode": "unconfigured",
+      "paper_ready": false,
+      "status": "blocked"
+    },
+    {
+      "blockers": [
+        "ALPHA_VANTAGE_API_KEY_missing"
+      ],
+      "capability_id": "news.alpha_vantage",
+      "mode": "fixture_only",
+      "paper_ready": false,
+      "status": "blocked"
+    },
+    {
+      "blockers": [
+        "historical_coverage_and_entity_resolution_not_verified"
+      ],
+      "capability_id": "news.gdelt",
+      "mode": "forward_event_discovery",
+      "paper_ready": false,
+      "status": "partial"
+    },
+    {
+      "blockers": [],
+      "capability_id": "llm.grounded_text_extraction",
+      "mode": "materialize_then_replay",
+      "paper_ready": false,
+      "status": "ready"
+    }
+  ],
+  "required_fields": [
+    "published_at",
+    "fetched_at",
+    "visible_at",
+    "source",
+    "input_hash",
+    "prompt_hash",
+    "dedupe_key",
+    "evidence_spans"
+  ],
+  "retrospective_llm_is_pristine_oos": false,
+  "schema_version": 1,
+  "status": "ready_with_external_blockers"
+}

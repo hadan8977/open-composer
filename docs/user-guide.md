@@ -103,6 +103,43 @@ candidate are labeled `llm_assisted_selection_only`; if an external gateway is
 unavailable, the acceptance gate stays failed. `--local-choice-label` records
 `codex_local_choice` and must select from prompt-visible candidates.
 
+### Persistent Research Knowledge
+
+AI/ML and new-modality rounds should reuse prior source, experiment, and model
+evidence before opening a new search:
+
+```bash
+uv run oc research knowledge build
+uv run oc research knowledge scout <iter-id>
+uv run oc research knowledge assess <iter-id>
+uv run oc research iteration validate <iter-id> --stage pre-backtest
+```
+
+The scout reads the iteration's versioned query manifest and separates known
+sources from new, unvalidated candidates. The assessment records reused,
+refreshed, duplicate, conflicting, and new evidence. Search hits do not become
+validated knowledge until strategy experiments support them.
+
+Knowledge is partitioned into public literature, train-only empirical results,
+challenge results, and forward observations. Candidate generation must not read
+challenge or forward verdicts. Frozen model memory includes model, data,
+feature, prompt, validation, and status provenance; a model is reused or
+retrained only with a recorded data, drift, calibration, or cadence reason.
+
+Multimodal strategies must also declare a role matrix and matched quant-only,
+modality-only, combined, missing-modality, shuffled, and stale-modality
+controls. Grounded document features are materialized before replay:
+
+```bash
+uv run oc research momentum-multimodal-capability
+uv run oc research momentum-sec-collect --symbols NVDA,AMD --since 2023-01-01
+uv run oc research momentum-multimodal-materialize --input <documents.jsonl>
+```
+
+SEC collection requires an explicit contact-bearing `SEC_USER_AGENT`. Missing
+provider credentials, transcript licenses, or real PIT history remain blockers;
+fixtures never authorize historical multimodal training.
+
 ## AI-Driven Auto Research
 
 Use `oc research auto` when you want the catalog workflow to turn a thesis into

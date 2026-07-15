@@ -1,0 +1,2332 @@
+{
+  "candidate_cap": 24,
+  "candidate_count": 24,
+  "capability_path": "reports/research/iterations/mom_multiasset_multimodal_r3/multimodal-capability.json",
+  "completed_candidate_count": 14,
+  "data_profile": {
+    "data_as_of": "2026-07-13T04:00:00+00:00",
+    "historical_challenge_reopened": false,
+    "provider": "longbridge",
+    "universe_status": "frozen_current_snapshot_exploratory_history"
+  },
+  "feature_contract": {
+    "all_day_night_features_index_minus_1": true,
+    "day_night_features": [
+      "intraday_mom_21_rank",
+      "intraday_mom_63_rank",
+      "overnight_mom_21_rank",
+      "overnight_mom_63_rank",
+      "day_night_spread_21_rank",
+      "day_night_agreement_63_rank"
+    ],
+    "embargo_bars": 21,
+    "label_horizon_bars": 21,
+    "symbol_identity_feature": false
+  },
+  "folds": [
+    {
+      "fold": 1,
+      "purge_embargo_gap": 21,
+      "test_start_position": 3654,
+      "train_end_position": 3612
+    },
+    {
+      "fold": 2,
+      "purge_embargo_gap": 21,
+      "test_start_position": 3738,
+      "train_end_position": 3696
+    },
+    {
+      "fold": 3,
+      "purge_embargo_gap": 21,
+      "test_start_position": 3822,
+      "train_end_position": 3780
+    },
+    {
+      "fold": 4,
+      "purge_embargo_gap": 21,
+      "test_start_position": 3906,
+      "train_end_position": 3864
+    }
+  ],
+  "frozen_quant_diagnostic": {
+    "latest_predictions": [
+      {
+        "baseline_rank": 0.925,
+        "baseline_score": 1.298951686073837,
+        "model_rank": 1.0,
+        "prediction": 0.8440708390780812,
+        "symbol": "CAT"
+      },
+      {
+        "baseline_rank": 1.0,
+        "baseline_score": 6.6669315984399065,
+        "model_rank": 0.975,
+        "prediction": 0.684856891958866,
+        "symbol": "MU"
+      },
+      {
+        "baseline_rank": 0.95,
+        "baseline_score": 2.4354815403511307,
+        "model_rank": 0.95,
+        "prediction": 0.6254842634446767,
+        "symbol": "AMD"
+      },
+      {
+        "baseline_rank": 0.975,
+        "baseline_score": 3.604095563139931,
+        "model_rank": 0.925,
+        "prediction": 0.41346668298882544,
+        "symbol": "INTC"
+      },
+      {
+        "baseline_rank": 0.6,
+        "baseline_score": 0.34067865350817894,
+        "model_rank": 0.9,
+        "prediction": 0.37458761728893786,
+        "symbol": "TSLA"
+      }
+    ],
+    "model_path": "reports/research/iterations/mom_multiasset_multimodal_r3/models/quant_ranker_daynight.joblib",
+    "selected_features": [
+      "beta_63_rank",
+      "realized_range_21_rank",
+      "vol_63_rank",
+      "downside_vol_63_rank",
+      "downside_vol_21_rank",
+      "vol_10_rank",
+      "mom_252_rank",
+      "idio_vol_63_rank",
+      "trend_consistency_252_rank",
+      "volume_volatility_21_rank",
+      "drawdown_recovery_63_rank",
+      "high_126_rank",
+      "ma_gap_200_rank",
+      "mom_126_skip21_rank",
+      "high_63_rank",
+      "mom_126_rank",
+      "amihud_63_rank",
+      "mom_5_rank",
+      "day_night_agreement_63_rank",
+      "trend_consistency_126_rank",
+      "price_volume_corr_63_rank",
+      "sector_relative_126_rank",
+      "ma_gap_20_rank",
+      "day_night_spread_21_rank"
+    ],
+    "status": "diagnostic_forward_observation_only"
+  },
+  "generated_at": "2026-07-15T09:08:44.260534+00:00",
+  "historical_multimodal_training_authorized": false,
+  "iter_id": "mom_multiasset_multimodal_r3",
+  "limitations": [
+    "Ten text-dependent candidates were counted and skipped, not replaced by fixtures.",
+    "Historical LLM contribution remains untested because real PIT coverage is absent.",
+    "The exposed historical challenge was not reopened for model selection.",
+    "The frozen current stock universe remains survivorship-biased before 2026-07-14."
+  ],
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "report_type": "multiasset_multimodal_momentum_evaluation",
+  "research_pass": false,
+  "run_id": "20260715T090834Z",
+  "schema_version": 1,
+  "selection": {
+    "best_development_score": 54.066199999999995,
+    "best_development_trial": "regime_train_median",
+    "formal_promotion": false,
+    "quant_ranker_qualified": false,
+    "reason": "real historical text coverage is unavailable and the prior challenge is not reopened; completed quant roles remain diagnostic"
+  },
+  "skipped_candidate_count": 10,
+  "trial_ledger_path": "reports/research/iterations/mom_multiasset_multimodal_r3/trial-ledger.jsonl",
+  "trials": [
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "fold_wins": 0,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          }
+        }
+      ],
+      "path": "champion_and_text_ablations",
+      "qualified": false,
+      "role": "frozen_champion",
+      "status": "validation_complete",
+      "trial_id": "deterministic_12_1"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 60.625,
+        "decision_dates": 16,
+        "mean_rank_ic": 0.091534,
+        "portfolio_sharpe": 0.970943,
+        "portfolio_total_return_pct": 35.6249,
+        "positive_decision_ratio": 0.625,
+        "rank_ic_ir": 0.991152
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "cost_stress_bps": {
+        "10": {
+          "average_one_way_turnover_pct": 60.625,
+          "decision_dates": 16,
+          "mean_rank_ic": 0.091534,
+          "portfolio_sharpe": 0.970943,
+          "portfolio_total_return_pct": 35.6249,
+          "positive_decision_ratio": 0.625,
+          "rank_ic_ir": 0.991152
+        },
+        "20": {
+          "average_one_way_turnover_pct": 60.625,
+          "decision_dates": 16,
+          "mean_rank_ic": 0.091534,
+          "portfolio_sharpe": 0.945404,
+          "portfolio_total_return_pct": 34.3493,
+          "positive_decision_ratio": 0.625,
+          "rank_ic_ir": 0.991152
+        },
+        "5": {
+          "average_one_way_turnover_pct": 60.625,
+          "decision_dates": 16,
+          "mean_rank_ic": 0.091534,
+          "portfolio_sharpe": 0.98369,
+          "portfolio_total_return_pct": 36.267,
+          "positive_decision_ratio": 0.625,
+          "rank_ic_ir": 0.991152
+        }
+      },
+      "dependency": "available",
+      "feature_set": "expanded_quant",
+      "fold_wins": 1,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 42.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.07364,
+            "portfolio_sharpe": 0.63369,
+            "portfolio_total_return_pct": 4.8439,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 0.737753
+          },
+          "purge_embargo_gap": 21,
+          "selected_features": [
+            "vol_63_rank",
+            "downside_vol_63_rank",
+            "beta_63_rank",
+            "realized_range_21_rank",
+            "downside_vol_21_rank",
+            "mom_252_rank",
+            "vol_10_rank",
+            "ma_gap_200_rank",
+            "mom_126_skip21_rank",
+            "trend_consistency_252_rank",
+            "volume_surprise_21_rank",
+            "drawdown_recovery_63_rank",
+            "day_night_agreement_63_rank",
+            "sector_relative_21_rank",
+            "volume_surprise_5_rank",
+            "overnight_mom_21_rank",
+            "mom_21_rank",
+            "trend_consistency_126_rank",
+            "intraday_mom_63_rank",
+            "volume_volatility_21_rank",
+            "skew_63_rank",
+            "ma_gap_20_rank",
+            "mom_10_rank",
+            "ma_gap_50_rank"
+          ],
+          "selection_evidence": {
+            "candidate_count": 56,
+            "method": "train_only_mean_rank_ic_then_correlation_prune",
+            "selected_count": 24,
+            "top_ic": [
+              {
+                "feature": "vol_63_rank",
+                "mean_rank_ic": 0.178313
+              },
+              {
+                "feature": "downside_vol_63_rank",
+                "mean_rank_ic": 0.174417
+              },
+              {
+                "feature": "beta_63_rank",
+                "mean_rank_ic": 0.166825
+              },
+              {
+                "feature": "vol_126_rank",
+                "mean_rank_ic": 0.158456
+              },
+              {
+                "feature": "realized_range_21_rank",
+                "mean_rank_ic": 0.158054
+              },
+              {
+                "feature": "idio_vol_63_rank",
+                "mean_rank_ic": 0.152328
+              },
+              {
+                "feature": "beta_126_rank",
+                "mean_rank_ic": 0.152248
+              },
+              {
+                "feature": "vol_21_rank",
+                "mean_rank_ic": 0.150962
+              },
+              {
+                "feature": "downside_vol_21_rank",
+                "mean_rank_ic": 0.139266
+              },
+              {
+                "feature": "mom_252_rank",
+                "mean_rank_ic": 0.135553
+              }
+            ]
+          },
+          "test_dates": 4,
+          "test_start_position": 3654,
+          "train_dates": 56,
+          "train_end_position": 3612,
+          "train_rows": 2240
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 52.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.231754,
+            "portfolio_sharpe": -2.093875,
+            "portfolio_total_return_pct": -20.6103,
+            "positive_decision_ratio": 0.25,
+            "rank_ic_ir": -2.593944
+          },
+          "purge_embargo_gap": 21,
+          "selected_features": [
+            "beta_63_rank",
+            "downside_vol_63_rank",
+            "vol_63_rank",
+            "vol_21_rank",
+            "downside_vol_21_rank",
+            "mom_252_rank",
+            "vol_10_rank",
+            "trend_consistency_252_rank",
+            "ma_gap_200_rank",
+            "intraday_mom_63_rank",
+            "mom_126_skip21_rank",
+            "volume_volatility_21_rank",
+            "mom_126_rank",
+            "volume_surprise_21_rank",
+            "day_night_spread_21_rank",
+            "high_126_rank",
+            "upside_downside_63_rank",
+            "volume_surprise_5_rank",
+            "high_63_rank",
+            "intraday_mom_21_rank",
+            "overnight_mom_21_rank",
+            "drawdown_recovery_63_rank",
+            "mom_5_rank",
+            "ma_gap_50_rank"
+          ],
+          "selection_evidence": {
+            "candidate_count": 56,
+            "method": "train_only_mean_rank_ic_then_correlation_prune",
+            "selected_count": 24,
+            "top_ic": [
+              {
+                "feature": "beta_63_rank",
+                "mean_rank_ic": 0.133159
+              },
+              {
+                "feature": "downside_vol_63_rank",
+                "mean_rank_ic": 0.129323
+              },
+              {
+                "feature": "beta_126_rank",
+                "mean_rank_ic": 0.128486
+              },
+              {
+                "feature": "vol_63_rank",
+                "mean_rank_ic": 0.127375
+              },
+              {
+                "feature": "vol_21_rank",
+                "mean_rank_ic": 0.123198
+              },
+              {
+                "feature": "realized_range_21_rank",
+                "mean_rank_ic": 0.120961
+              },
+              {
+                "feature": "downside_vol_21_rank",
+                "mean_rank_ic": 0.120682
+              },
+              {
+                "feature": "vol_126_rank",
+                "mean_rank_ic": 0.108544
+              },
+              {
+                "feature": "mom_252_rank",
+                "mean_rank_ic": 0.105883
+              },
+              {
+                "feature": "relative_spy_252_rank",
+                "mean_rank_ic": 0.105883
+              }
+            ]
+          },
+          "test_dates": 4,
+          "test_start_position": 3738,
+          "train_dates": 76,
+          "train_end_position": 3696,
+          "train_rows": 3040
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 72.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.396717,
+            "portfolio_sharpe": 9.350763,
+            "portfolio_total_return_pct": 37.054,
+            "positive_decision_ratio": 1.0,
+            "rank_ic_ir": 11.550042
+          },
+          "purge_embargo_gap": 21,
+          "selected_features": [
+            "vol_63_rank",
+            "downside_vol_21_rank",
+            "beta_63_rank",
+            "downside_vol_63_rank",
+            "vol_21_rank",
+            "mom_252_rank",
+            "vol_10_rank",
+            "trend_consistency_252_rank",
+            "volume_volatility_21_rank",
+            "intraday_mom_63_rank",
+            "mom_126_skip21_rank",
+            "day_night_spread_21_rank",
+            "ma_gap_200_rank",
+            "mom_126_rank",
+            "intraday_mom_21_rank",
+            "upside_downside_63_rank",
+            "overnight_mom_21_rank",
+            "high_126_rank",
+            "trend_consistency_126_rank",
+            "volume_surprise_21_rank",
+            "mom_5_rank",
+            "skew_63_rank",
+            "volume_surprise_5_rank",
+            "ma_gap_20_rank"
+          ],
+          "selection_evidence": {
+            "candidate_count": 56,
+            "method": "train_only_mean_rank_ic_then_correlation_prune",
+            "selected_count": 24,
+            "top_ic": [
+              {
+                "feature": "vol_63_rank",
+                "mean_rank_ic": 0.087252
+              },
+              {
+                "feature": "downside_vol_21_rank",
+                "mean_rank_ic": 0.084899
+              },
+              {
+                "feature": "beta_63_rank",
+                "mean_rank_ic": 0.083623
+              },
+              {
+                "feature": "downside_vol_63_rank",
+                "mean_rank_ic": 0.0834
+              },
+              {
+                "feature": "vol_21_rank",
+                "mean_rank_ic": 0.082806
+              },
+              {
+                "feature": "realized_range_21_rank",
+                "mean_rank_ic": 0.081105
+              },
+              {
+                "feature": "beta_126_rank",
+                "mean_rank_ic": 0.081096
+              },
+              {
+                "feature": "mom_252_rank",
+                "mean_rank_ic": 0.080976
+              },
+              {
+                "feature": "relative_spy_252_rank",
+                "mean_rank_ic": 0.080976
+              },
+              {
+                "feature": "mom_252_skip21_rank",
+                "mean_rank_ic": 0.077748
+              }
+            ]
+          },
+          "test_dates": 4,
+          "test_start_position": 3822,
+          "train_dates": 96,
+          "train_end_position": 3780,
+          "train_rows": 3840
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 52.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.127533,
+            "portfolio_sharpe": 2.593414,
+            "portfolio_total_return_pct": 18.9861,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 3.436717
+          },
+          "purge_embargo_gap": 21,
+          "selected_features": [
+            "beta_63_rank",
+            "vol_63_rank",
+            "vol_21_rank",
+            "downside_vol_63_rank",
+            "downside_vol_21_rank",
+            "vol_10_rank",
+            "mom_252_rank",
+            "intraday_mom_63_rank",
+            "volume_volatility_21_rank",
+            "idio_vol_63_rank",
+            "trend_consistency_252_rank",
+            "upside_downside_63_rank",
+            "skew_63_rank",
+            "high_126_rank",
+            "drawdown_recovery_63_rank",
+            "ma_gap_200_rank",
+            "mom_126_skip21_rank",
+            "high_63_rank",
+            "mom_126_rank",
+            "price_volume_corr_63_rank",
+            "mom_5_rank",
+            "ma_gap_100_rank",
+            "overnight_mom_63_rank",
+            "sector_relative_63_rank"
+          ],
+          "selection_evidence": {
+            "candidate_count": 56,
+            "method": "train_only_mean_rank_ic_then_correlation_prune",
+            "selected_count": 24,
+            "top_ic": [
+              {
+                "feature": "beta_63_rank",
+                "mean_rank_ic": 0.126488
+              },
+              {
+                "feature": "beta_126_rank",
+                "mean_rank_ic": 0.123218
+              },
+              {
+                "feature": "vol_63_rank",
+                "mean_rank_ic": 0.115695
+              },
+              {
+                "feature": "vol_21_rank",
+                "mean_rank_ic": 0.111948
+              },
+              {
+                "feature": "downside_vol_63_rank",
+                "mean_rank_ic": 0.110083
+              },
+              {
+                "feature": "realized_range_21_rank",
+                "mean_rank_ic": 0.10864
+              },
+              {
+                "feature": "downside_vol_21_rank",
+                "mean_rank_ic": 0.100322
+              },
+              {
+                "feature": "vol_126_rank",
+                "mean_rank_ic": 0.097946
+              },
+              {
+                "feature": "vol_10_rank",
+                "mean_rank_ic": 0.097627
+              },
+              {
+                "feature": "mom_252_rank",
+                "mean_rank_ic": 0.069515
+              }
+            ]
+          },
+          "test_dates": 4,
+          "test_start_position": 3906,
+          "train_dates": 116,
+          "train_end_position": 3864,
+          "train_rows": 4640
+        }
+      ],
+      "model_family": "lightgbm_lambdarank",
+      "path": "champion_and_text_ablations",
+      "qualified": false,
+      "status": "validation_complete",
+      "trial_id": "quant_ranker_daynight"
+    },
+    {
+      "candidate_counted": true,
+      "dependency": "historical_text",
+      "path": "champion_and_text_ablations",
+      "reason": "real_historical_multimodal_packets_not_authorized",
+      "status": "skipped_dependency",
+      "trial_id": "text_only"
+    },
+    {
+      "candidate_counted": true,
+      "dependency": "historical_text",
+      "path": "champion_and_text_ablations",
+      "reason": "real_historical_multimodal_packets_not_authorized",
+      "status": "skipped_dependency",
+      "trial_id": "quant_plus_text"
+    },
+    {
+      "candidate_counted": true,
+      "dependency": "historical_text",
+      "path": "champion_and_text_ablations",
+      "reason": "real_historical_multimodal_packets_not_authorized",
+      "status": "skipped_dependency",
+      "trial_id": "shuffled_text_placebo"
+    },
+    {
+      "candidate_counted": true,
+      "dependency": "historical_text",
+      "path": "champion_and_text_ablations",
+      "reason": "real_historical_multimodal_packets_not_authorized",
+      "status": "skipped_dependency",
+      "trial_id": "stale_text_placebo"
+    },
+    {
+      "candidate_counted": true,
+      "dependency": "historical_text",
+      "path": "catalyst_and_risk_roles",
+      "reason": "real_historical_multimodal_packets_not_authorized",
+      "status": "skipped_dependency",
+      "trial_id": "catalyst_confirm_low"
+    },
+    {
+      "candidate_counted": true,
+      "dependency": "historical_text",
+      "path": "catalyst_and_risk_roles",
+      "reason": "real_historical_multimodal_packets_not_authorized",
+      "status": "skipped_dependency",
+      "trial_id": "catalyst_confirm_high"
+    },
+    {
+      "candidate_counted": true,
+      "dependency": "historical_text",
+      "path": "catalyst_and_risk_roles",
+      "reason": "real_historical_multimodal_packets_not_authorized",
+      "status": "skipped_dependency",
+      "trial_id": "false_momentum_veto_low"
+    },
+    {
+      "candidate_counted": true,
+      "dependency": "historical_text",
+      "path": "catalyst_and_risk_roles",
+      "reason": "real_historical_multimodal_packets_not_authorized",
+      "status": "skipped_dependency",
+      "trial_id": "false_momentum_veto_high"
+    },
+    {
+      "candidate_counted": true,
+      "dependency": "historical_text",
+      "path": "catalyst_and_risk_roles",
+      "reason": "real_historical_multimodal_packets_not_authorized",
+      "status": "skipped_dependency",
+      "trial_id": "text_risk_gate_low"
+    },
+    {
+      "candidate_counted": true,
+      "dependency": "historical_text",
+      "path": "catalyst_and_risk_roles",
+      "reason": "real_historical_multimodal_packets_not_authorized",
+      "status": "skipped_dependency",
+      "trial_id": "text_risk_gate_high"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 59.375,
+        "decision_dates": 16,
+        "mean_rank_ic": 0.082317,
+        "portfolio_sharpe": 1.183617,
+        "portfolio_total_return_pct": 45.8345,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": 0.958719
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "fold_wins": 2,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 62.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.114587,
+            "portfolio_sharpe": 0.5731,
+            "portfolio_total_return_pct": 3.4747,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 1.844292
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 42.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.132364,
+            "portfolio_sharpe": -1.484787,
+            "portfolio_total_return_pct": -16.2325,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.9714
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 67.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.182833,
+            "portfolio_sharpe": 4.298847,
+            "portfolio_total_return_pct": 33.8312,
+            "positive_decision_ratio": 1.0,
+            "rank_ic_ir": 2.381003
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 67.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.164212,
+            "portfolio_sharpe": 3.542091,
+            "portfolio_total_return_pct": 25.7074,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 4.338091
+          }
+        }
+      ],
+      "path": "regime_and_disagreement_meta",
+      "qualified": false,
+      "status": "validation_complete",
+      "train_only_thresholds": [
+        {
+          "fold": 1,
+          "threshold": 0.06270759753470401
+        },
+        {
+          "fold": 2,
+          "threshold": 0.06098388918042019
+        },
+        {
+          "fold": 3,
+          "threshold": 0.056068516523384404
+        },
+        {
+          "fold": 4,
+          "threshold": 0.04914455492793368
+        }
+      ],
+      "trial_id": "regime_train_median"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 45.625,
+        "decision_dates": 16,
+        "mean_rank_ic": 0.046189,
+        "portfolio_sharpe": 1.26028,
+        "portfolio_total_return_pct": 48.3708,
+        "positive_decision_ratio": 0.75,
+        "rank_ic_ir": 0.522177
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "fold_wins": 2,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 52.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.004644,
+            "portfolio_sharpe": 2.276415,
+            "portfolio_total_return_pct": 22.2642,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.053691
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 72.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.184287,
+            "portfolio_sharpe": 5.690746,
+            "portfolio_total_return_pct": 31.402,
+            "positive_decision_ratio": 1.0,
+            "rank_ic_ir": 7.003681
+          }
+        }
+      ],
+      "path": "regime_and_disagreement_meta",
+      "qualified": false,
+      "status": "validation_complete",
+      "train_only_thresholds": [
+        {
+          "fold": 1,
+          "threshold": 0.10335312564912674
+        },
+        {
+          "fold": 2,
+          "threshold": 0.09936016992960894
+        },
+        {
+          "fold": 3,
+          "threshold": 0.09685522866254165
+        },
+        {
+          "fold": 4,
+          "threshold": 0.08458520326438457
+        }
+      ],
+      "trial_id": "regime_train_upper_quartile"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 48.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.031846,
+        "portfolio_sharpe": 0.659212,
+        "portfolio_total_return_pct": 20.7446,
+        "positive_decision_ratio": 0.625,
+        "rank_ic_ir": -0.342586
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "fold_wins": 0,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 52.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.072057,
+            "portfolio_sharpe": 1.19235,
+            "portfolio_total_return_pct": 8.3989,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.145175
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.127116,
+            "portfolio_sharpe": -1.564623,
+            "portfolio_total_return_pct": -17.0959,
+            "positive_decision_ratio": 0.25,
+            "rank_ic_ir": -0.873252
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 52.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.117829,
+            "portfolio_sharpe": 1.750633,
+            "portfolio_total_return_pct": 16.8722,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.452413
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 42.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.045506,
+            "portfolio_sharpe": 2.101221,
+            "portfolio_total_return_pct": 14.9937,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.515891
+          }
+        }
+      ],
+      "path": "regime_and_disagreement_meta",
+      "qualified": false,
+      "status": "validation_complete",
+      "train_only_thresholds": [
+        {
+          "fold": 1,
+          "threshold": 0.22499999999999998
+        },
+        {
+          "fold": 2,
+          "threshold": 0.20000000000000007
+        },
+        {
+          "fold": 3,
+          "threshold": 0.22499999999999998
+        },
+        {
+          "fold": 4,
+          "threshold": 0.22500000000000003
+        }
+      ],
+      "trial_id": "disagreement_train_median"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 49.375,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.010382,
+        "portfolio_sharpe": 0.560357,
+        "portfolio_total_return_pct": 16.6914,
+        "positive_decision_ratio": 0.5625,
+        "rank_ic_ir": -0.114901
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "fold_wins": 1,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.102393,
+            "portfolio_sharpe": 1.083664,
+            "portfolio_total_return_pct": 8.2886,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 1.315603
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 52.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.193601,
+            "portfolio_sharpe": -2.472987,
+            "portfolio_total_return_pct": -21.9428,
+            "positive_decision_ratio": 0.25,
+            "rank_ic_ir": -1.604858
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 62.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.02064,
+            "portfolio_sharpe": 3.072142,
+            "portfolio_total_return_pct": 26.9126,
+            "positive_decision_ratio": 1.0,
+            "rank_ic_ir": -0.279517
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 32.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.07032,
+            "portfolio_sharpe": 1.370669,
+            "portfolio_total_return_pct": 8.8267,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 0.74623
+          }
+        }
+      ],
+      "path": "regime_and_disagreement_meta",
+      "qualified": false,
+      "status": "validation_complete",
+      "train_only_thresholds": [
+        {
+          "fold": 1,
+          "threshold": 0.375
+        },
+        {
+          "fold": 2,
+          "threshold": 0.375
+        },
+        {
+          "fold": 3,
+          "threshold": 0.375
+        },
+        {
+          "fold": 4,
+          "threshold": 0.4
+        }
+      ],
+      "trial_id": "disagreement_train_upper_quartile"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 46.875,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.041006,
+        "portfolio_sharpe": 0.850981,
+        "portfolio_total_return_pct": 31.0378,
+        "positive_decision_ratio": 0.625,
+        "rank_ic_ir": -0.471937
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "fold_wins": 1,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.086585,
+            "portfolio_sharpe": 2.012203,
+            "portfolio_total_return_pct": 14.4408,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.335168
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 52.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.178471,
+            "portfolio_sharpe": -2.235802,
+            "portfolio_total_return_pct": -21.1328,
+            "positive_decision_ratio": 0.25,
+            "rank_ic_ir": -1.513468
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          }
+        }
+      ],
+      "path": "regime_and_disagreement_meta",
+      "qualified": false,
+      "status": "validation_complete",
+      "train_only_thresholds": [
+        {
+          "fold": 1,
+          "threshold": 3.0
+        },
+        {
+          "fold": 2,
+          "threshold": 3.0
+        },
+        {
+          "fold": 3,
+          "threshold": 3.0
+        },
+        {
+          "fold": 4,
+          "threshold": 3.0
+        }
+      ],
+      "trial_id": "agreement_overlap3"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.004339,
+        "portfolio_sharpe": 0.953211,
+        "portfolio_total_return_pct": 34.3657,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.051574
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "fold_wins": 1,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.020122,
+            "portfolio_sharpe": -1.585005,
+            "portfolio_total_return_pct": -16.5957,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.163086
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          }
+        }
+      ],
+      "path": "regime_and_disagreement_meta",
+      "qualified": false,
+      "status": "validation_complete",
+      "train_only_thresholds": [
+        {
+          "fold": 1,
+          "threshold": 4.0
+        },
+        {
+          "fold": 2,
+          "threshold": 4.0
+        },
+        {
+          "fold": 3,
+          "threshold": 4.0
+        },
+        {
+          "fold": 4,
+          "threshold": 4.0
+        }
+      ],
+      "trial_id": "agreement_overlap4"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": 0.003854,
+        "portfolio_sharpe": 0.834477,
+        "portfolio_total_return_pct": 26.8042,
+        "positive_decision_ratio": 0.625,
+        "rank_ic_ir": 0.0424
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "evaluation_cost_bps": 10,
+      "fold_wins": 0,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 22.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.069823,
+            "portfolio_sharpe": 0.837323,
+            "portfolio_total_return_pct": 5.5749,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 0.999682
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121742,
+            "portfolio_sharpe": -1.073434,
+            "portfolio_total_return_pct": -13.1021,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.819348
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 42.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.013372,
+            "portfolio_sharpe": 2.273932,
+            "portfolio_total_return_pct": 16.7946,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -0.200648
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.080705,
+            "portfolio_sharpe": 2.459349,
+            "portfolio_total_return_pct": 18.3105,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.965818
+          }
+        }
+      ],
+      "ml_weight": 0.25,
+      "path": "cost_aware_shrinkage",
+      "qualified": false,
+      "status": "validation_complete",
+      "trial_id": "shrink_025_cost10"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 40.625,
+        "decision_dates": 16,
+        "mean_rank_ic": 0.056203,
+        "portfolio_sharpe": 0.529312,
+        "portfolio_total_return_pct": 14.87,
+        "positive_decision_ratio": 0.5625,
+        "rank_ic_ir": 0.632705
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "evaluation_cost_bps": 10,
+      "fold_wins": 1,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.093743,
+            "portfolio_sharpe": 0.43331,
+            "portfolio_total_return_pct": 2.6253,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 1.14895
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.164207,
+            "portfolio_sharpe": -1.439887,
+            "portfolio_total_return_pct": -15.1074,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -1.201684
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.170558,
+            "portfolio_sharpe": 3.710369,
+            "portfolio_total_return_pct": 24.7123,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 3.17175
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 47.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.124716,
+            "portfolio_sharpe": 0.703436,
+            "portfolio_total_return_pct": 5.6938,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 2.049504
+          }
+        }
+      ],
+      "ml_weight": 0.5,
+      "path": "cost_aware_shrinkage",
+      "qualified": false,
+      "status": "validation_complete",
+      "trial_id": "shrink_050_cost10"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 48.125,
+        "decision_dates": 16,
+        "mean_rank_ic": 0.088464,
+        "portfolio_sharpe": 0.668758,
+        "portfolio_total_return_pct": 21.3212,
+        "positive_decision_ratio": 0.5625,
+        "rank_ic_ir": 0.961032
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.945246,
+        "portfolio_total_return_pct": 34.0913,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "evaluation_cost_bps": 10,
+      "fold_wins": 1,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.948693,
+            "portfolio_total_return_pct": 10.9257,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 32.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.087274,
+            "portfolio_sharpe": 0.263466,
+            "portfolio_total_return_pct": 1.5043,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 0.912683
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.588396,
+            "portfolio_total_return_pct": -16.7661,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 42.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.215565,
+            "portfolio_sharpe": -1.903457,
+            "portfolio_total_return_pct": -18.085,
+            "positive_decision_ratio": 0.25,
+            "rank_ic_ir": -1.943792
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.920877,
+            "portfolio_total_return_pct": 18.7749,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 77.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.341955,
+            "portfolio_sharpe": 9.421519,
+            "portfolio_total_return_pct": 36.605,
+            "positive_decision_ratio": 1.0,
+            "rank_ic_ir": 8.002617
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.471872,
+            "portfolio_total_return_pct": 22.2442,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 42.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.14019,
+            "portfolio_sharpe": 0.889724,
+            "portfolio_total_return_pct": 6.8022,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 3.759374
+          }
+        }
+      ],
+      "ml_weight": 0.75,
+      "path": "cost_aware_shrinkage",
+      "qualified": false,
+      "status": "validation_complete",
+      "trial_id": "shrink_075_cost10"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": 0.003854,
+        "portfolio_sharpe": 0.816343,
+        "portfolio_total_return_pct": 26.0434,
+        "positive_decision_ratio": 0.625,
+        "rank_ic_ir": 0.0424
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.928798,
+        "portfolio_total_return_pct": 33.294,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "evaluation_cost_bps": 20,
+      "fold_wins": 0,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.923574,
+            "portfolio_total_return_pct": 10.8046,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 22.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.069823,
+            "portfolio_sharpe": 0.824496,
+            "portfolio_total_return_pct": 5.4806,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 0.999682
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.604867,
+            "portfolio_total_return_pct": -16.894,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121742,
+            "portfolio_sharpe": -1.087059,
+            "portfolio_total_return_pct": -13.2366,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.819348
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.906885,
+            "portfolio_total_return_pct": 18.6056,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 42.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.013372,
+            "portfolio_sharpe": 2.251883,
+            "portfolio_total_return_pct": 16.6043,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -0.200648
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.448372,
+            "portfolio_total_return_pct": 21.979,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.080705,
+            "portfolio_sharpe": 2.425773,
+            "portfolio_total_return_pct": 18.0486,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.965818
+          }
+        }
+      ],
+      "ml_weight": 0.25,
+      "path": "cost_aware_shrinkage",
+      "qualified": false,
+      "status": "validation_complete",
+      "trial_id": "shrink_025_cost20"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 40.625,
+        "decision_dates": 16,
+        "mean_rank_ic": 0.056203,
+        "portfolio_sharpe": 0.510469,
+        "portfolio_total_return_pct": 14.1329,
+        "positive_decision_ratio": 0.5625,
+        "rank_ic_ir": 0.632705
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.928798,
+        "portfolio_total_return_pct": 33.294,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "evaluation_cost_bps": 20,
+      "fold_wins": 1,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.923574,
+            "portfolio_total_return_pct": 10.8046,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.093743,
+            "portfolio_sharpe": 0.417893,
+            "portfolio_total_return_pct": 2.5112,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 1.14895
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.604867,
+            "portfolio_total_return_pct": -16.894,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.164207,
+            "portfolio_sharpe": -1.455095,
+            "portfolio_total_return_pct": -15.2397,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -1.201684
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.906885,
+            "portfolio_total_return_pct": 18.6056,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.170558,
+            "portfolio_sharpe": 3.678693,
+            "portfolio_total_return_pct": 24.4423,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 3.17175
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.448372,
+            "portfolio_total_return_pct": 21.979,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 47.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.124716,
+            "portfolio_sharpe": 0.682712,
+            "portfolio_total_return_pct": 5.4949,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 2.049504
+          }
+        }
+      ],
+      "ml_weight": 0.5,
+      "path": "cost_aware_shrinkage",
+      "qualified": false,
+      "status": "validation_complete",
+      "trial_id": "shrink_050_cost20"
+    },
+    {
+      "aggregate": {
+        "average_one_way_turnover_pct": 48.125,
+        "decision_dates": 16,
+        "mean_rank_ic": 0.088464,
+        "portfolio_sharpe": 0.647877,
+        "portfolio_total_return_pct": 20.4085,
+        "positive_decision_ratio": 0.5625,
+        "rank_ic_ir": 0.961032
+      },
+      "baseline_aggregate": {
+        "average_one_way_turnover_pct": 38.125,
+        "decision_dates": 16,
+        "mean_rank_ic": -0.019078,
+        "portfolio_sharpe": 0.928798,
+        "portfolio_total_return_pct": 33.294,
+        "positive_decision_ratio": 0.6875,
+        "rank_ic_ir": -0.20344
+      },
+      "candidate_counted": true,
+      "dependency": "available",
+      "evaluation_cost_bps": 20,
+      "fold_wins": 1,
+      "folds": [
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 27.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.074906,
+            "portfolio_sharpe": 1.923574,
+            "portfolio_total_return_pct": 10.8046,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 1.268024
+          },
+          "fold": 1,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 32.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.087274,
+            "portfolio_sharpe": 0.249107,
+            "portfolio_total_return_pct": 1.3715,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 0.912683
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.079081,
+            "portfolio_sharpe": -1.604867,
+            "portfolio_total_return_pct": -16.894,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": -0.517926
+          },
+          "fold": 2,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 42.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.215565,
+            "portfolio_sharpe": -1.921923,
+            "portfolio_total_return_pct": -18.2309,
+            "positive_decision_ratio": 0.25,
+            "rank_ic_ir": -1.943792
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 37.5,
+            "decision_dates": 4,
+            "mean_rank_ic": -0.121435,
+            "portfolio_sharpe": 1.906885,
+            "portfolio_total_return_pct": 18.6056,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": -1.570987
+          },
+          "fold": 3,
+          "fold_win": true,
+          "model": {
+            "average_one_way_turnover_pct": 77.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.341955,
+            "portfolio_sharpe": 9.275536,
+            "portfolio_total_return_pct": 36.2117,
+            "positive_decision_ratio": 1.0,
+            "rank_ic_ir": 8.002617
+          }
+        },
+        {
+          "baseline": {
+            "average_one_way_turnover_pct": 57.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.049296,
+            "portfolio_sharpe": 2.448372,
+            "portfolio_total_return_pct": 21.979,
+            "positive_decision_ratio": 0.75,
+            "rank_ic_ir": 0.546762
+          },
+          "fold": 4,
+          "fold_win": false,
+          "model": {
+            "average_one_way_turnover_pct": 42.5,
+            "decision_dates": 4,
+            "mean_rank_ic": 0.14019,
+            "portfolio_sharpe": 0.869464,
+            "portfolio_total_return_pct": 6.6238,
+            "positive_decision_ratio": 0.5,
+            "rank_ic_ir": 3.759374
+          }
+        }
+      ],
+      "ml_weight": 0.75,
+      "path": "cost_aware_shrinkage",
+      "qualified": false,
+      "status": "validation_complete",
+      "trial_id": "shrink_075_cost20"
+    }
+  ],
+  "workflow_pass": true
+}
