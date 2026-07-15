@@ -1,5 +1,5 @@
 {
-  "duplicate_source_occurrences": 116,
+  "duplicate_source_occurrences": 137,
   "empirical_memory": [
     {
       "artifact_path": "reports/research/iterations/mom_minute_r1/decision-record.md",
@@ -27,7 +27,7 @@
       ],
       "iteration_id": "mom_minute_r2",
       "negative_result": false,
-      "visibility_partition": "train_only_empirical"
+      "visibility_partition": "challenge_result"
     },
     {
       "artifact_path": "reports/research/iterations/mom_minute_r3_ml/decision-record.md",
@@ -37,7 +37,7 @@
       ],
       "iteration_id": "mom_minute_r3_ml",
       "negative_result": false,
-      "visibility_partition": "train_only_empirical"
+      "visibility_partition": "challenge_result"
     },
     {
       "artifact_path": "reports/research/iterations/mom_minute_r4_portfolio/decision-record.md",
@@ -60,7 +60,7 @@
       ],
       "iteration_id": "mom_multiasset_ai_r2",
       "negative_result": true,
-      "visibility_partition": "train_only_empirical"
+      "visibility_partition": "challenge_result"
     },
     {
       "artifact_path": "reports/research/iterations/mom_multiasset_ml_r1/decision-record.md",
@@ -73,7 +73,7 @@
       ],
       "iteration_id": "mom_multiasset_ml_r1",
       "negative_result": true,
-      "visibility_partition": "train_only_empirical"
+      "visibility_partition": "forward_observation"
     },
     {
       "artifact_path": "reports/research/iterations/mom_multiasset_multimodal_r3/decision-record.md",
@@ -87,7 +87,7 @@
       ],
       "iteration_id": "mom_multiasset_multimodal_r3",
       "negative_result": true,
-      "visibility_partition": "train_only_empirical"
+      "visibility_partition": "challenge_result"
     },
     {
       "artifact_path": "reports/research/iterations/mom_multiasset_r1/decision-record.md",
@@ -102,6 +102,19 @@
       "iteration_id": "mom_multiasset_r1",
       "negative_result": true,
       "visibility_partition": "train_only_empirical"
+    },
+    {
+      "artifact_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/decision-record.md",
+      "artifact_sha256": "33d1ab86422f763ef5362c7ec959364dfdcc5fe07a7bf3a35895698149ca48b0",
+      "decisions": [
+        "continue",
+        "pending",
+        "pending",
+        "pending"
+      ],
+      "iteration_id": "mom_stock_intraday_codesign_q1",
+      "negative_result": false,
+      "visibility_partition": "challenge_result"
     },
     {
       "artifact_path": "reports/research/iterations/mom_minute_r1/evaluation-report.json",
@@ -144,7 +157,7 @@
       "negative_result": true,
       "paper_ready_pass": false,
       "research_pass": false,
-      "visibility_partition": "train_only_empirical",
+      "visibility_partition": "challenge_result",
       "workflow_pass": true
     },
     {
@@ -166,7 +179,7 @@
       "visibility_partition": "forward_observation"
     }
   ],
-  "generated_at": "2026-07-15T09:16:05.567204+00:00",
+  "generated_at": "2026-07-15T17:24:32.885533+00:00",
   "model_memory": [
     {
       "artifact_path": "reports/research/iterations/mom_minute_r3_ml/models/lightgbm_challenger.joblib",
@@ -286,51 +299,9 @@
     "serialized_model_reuse_requires_decision": true
   },
   "schema_version": 1,
-  "source_count": 56,
-  "source_occurrence_count": 172,
+  "source_count": 71,
+  "source_occurrence_count": 208,
   "sources": [
-    {
-      "canonical_url": "https:///reports/harness/source_cards/nasdaq_tqqq_fixed_etf_router_daily_iter9.jsonl",
-      "claim_fingerprints": [
-        "2628cab803c6db55e6e989fe8c6bfeb54e2d60b3437b4901398b3db5debde54f"
-      ],
-      "claims": [
-        "Iter9 relies on daily next-open execution, leveraged and inverse ETF exposure, Alpaca/Longbridge historical bars, and Alpaca Paper compatibility; these external assumptions require source-card evidence before promotion or paper readiness."
-      ],
-      "duplicate_count": 0,
-      "first_seen": "2026-05-30",
-      "last_verified": "2026-05-30",
-      "locations": [
-        "reports/harness/source_cards/nasdaq_tqqq_fixed_etf_router_daily_iter9.jsonl"
-      ],
-      "occurrence_count": 1,
-      "source_id": "fa3f3c9ee6ed78d798c958dfbca359beb8956892bf18eb18368fbb74122a4a27",
-      "source_types": [
-        "platform_docs"
-      ],
-      "stale": true
-    },
-    {
-      "canonical_url": "https:///reports/harness/source_cards/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate.jsonl",
-      "claim_fingerprints": [
-        "b3c9b4fb836f93c1f110e6911a4e78048d41ff8c62311f4d45b277ecb84d5050"
-      ],
-      "claims": [
-        "The paper-auto router depends on Alpaca Paper broker semantics, Alpaca market-data feed limits, NASDAQ opening execution structure, and leveraged ETF risk controls; these external assumptions must remain sourced before router order authorization."
-      ],
-      "duplicate_count": 0,
-      "first_seen": "2026-07-09",
-      "last_verified": "2026-07-09",
-      "locations": [
-        "reports/harness/source_cards/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate.jsonl"
-      ],
-      "occurrence_count": 1,
-      "source_id": "f86d548e125ed6313cc68973f6e3ebde308a267c97db268a5bd6ff729ac608e8",
-      "source_types": [
-        "platform_docs"
-      ],
-      "stale": false
-    },
     {
       "canonical_url": "https://academic.oup.com/rfs/advance-article/doi/10.1093/rfs/hhag022/8524346",
       "claim_fingerprints": [
@@ -350,7 +321,22 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk"
+      ],
+      "verification_statuses": [
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://academic.oup.com/rfs/advance-article/doi/10.1093/rfs/hhag036/8626980",
@@ -371,7 +357,22 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk"
+      ],
+      "verification_statuses": [
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://academic.oup.com/rfs/advance-article/doi/10.1093/rfs/hhag042/8660474",
@@ -392,7 +393,22 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk"
+      ],
+      "verification_statuses": [
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://academic.oup.com/rfs/advance-article/doi/10.1093/rfs/hhag050/8677182",
@@ -413,7 +429,22 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk"
+      ],
+      "verification_statuses": [
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://academic.oup.com/rfs/article/33/5/2223/5758276",
@@ -444,7 +475,42 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "ai_factor_research",
+        "cross_sectional_momentum_ml",
+        "formulaic alpha generation",
+        "cross-sectional learning to rank",
+        "factor redundancy and fold-local selection",
+        "momentum liquidity volatility interactions",
+        "regime-conditioned momentum",
+        "model uncertainty and abstention",
+        "AI factor marginal lift",
+        "missing-AI-factor robustness",
+        "survivorship and exposed-holdout governance",
+        "cross-sectional return ranking",
+        "downside-risk classification",
+        "position sizing",
+        "feature ablation",
+        "grouped chronological validation",
+        "purge and embargo",
+        "model calibration",
+        "multiple-testing and lockbox governance",
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://aclanthology.org/2024.findings-acl.248",
@@ -465,7 +531,15 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "llm_feature",
+        "sec_filings",
+        "feature_packets"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://api.nasdaq.com/api/screener/stocks?download=true&limit=25&offset=0&tableonly=true",
@@ -486,7 +560,60 @@
       "source_types": [
         "provider_official_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "universe_selection",
+        "data_provenance"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
+    },
+    {
+      "canonical_url": "https://arxiv.org/abs/1005.3535",
+      "claim_fingerprints": [
+        "3956611f2017c14fbdb8a0fe3c47df80fc9e1ac083c25a95836e034bb5c43a01",
+        "cf5959241fe902a5c3b8b35a1f1b2addc8c7da9e2517abaae54c5917f49a1a6e"
+      ],
+      "claims": [
+        "Intraday cross-sectional continuation in the literature is tied to recurring time-of-day intervals across days and should not be relabeled as generic same-day chasing.",
+        "Intraday cross-sectional continuation is time-slot-specific across days, not generic same-day chasing."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2026-07-15",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "82c265833a15ffbb78522fc7e6e187ebca655f6f02eae93483b8ccac338aa737",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "intraday_momentum",
+        "market_microstructure",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "intraday momentum"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/1601.00991",
@@ -507,7 +634,15 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "factor_library",
+        "factor_diversity",
+        "multiple_testing"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/1904.04912",
@@ -532,7 +667,34 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "ai_factor_research",
+        "cross_sectional_momentum_ml",
+        "formulaic alpha generation",
+        "cross-sectional learning to rank",
+        "factor redundancy and fold-local selection",
+        "momentum liquidity volatility interactions",
+        "regime-conditioned momentum",
+        "model uncertainty and abstention",
+        "AI factor marginal lift",
+        "missing-AI-factor robustness",
+        "survivorship and exposed-holdout governance",
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2002.08245",
@@ -554,7 +716,70 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "ai_factor_research",
+        "cross_sectional_momentum_ml",
+        "formulaic alpha generation",
+        "cross-sectional learning to rank",
+        "factor redundancy and fold-local selection",
+        "momentum liquidity volatility interactions",
+        "regime-conditioned momentum",
+        "model uncertainty and abstention",
+        "AI factor marginal lift",
+        "missing-AI-factor robustness",
+        "survivorship and exposed-holdout governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://arxiv.org/abs/2012.07149",
+      "claim_fingerprints": [
+        "07f79edc8edcb7afd3ce11f0b095c4e3880870b9d17210b0cf400383e24ceab8",
+        "438053219135553dd9830e79d13b367ee839ba59c529873e5be6659d9d5fbd0d"
+      ],
+      "claims": [
+        "Learning-to-rank objectives align cross-sectional stock selection with relative ordering more directly than independent return regression.",
+        "Grouped ranking objectives can align model training with cross-sectional selection."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2026-07-15",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "5d8c1690af9ca20ac8bc75a9b1eb7a6ef50f705ed568a8f26e4aab97595cd33f",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "learning_to_rank",
+        "cross_sectional_momentum_ml",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "cross sectional ml"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2203.15985",
@@ -578,7 +803,24 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "meta_labeling",
+        "position_sizing",
+        "ml_validation",
+        "cross-sectional return ranking",
+        "downside-risk classification",
+        "position sizing",
+        "feature ablation",
+        "grouped chronological validation",
+        "purge and embargo",
+        "model calibration",
+        "multiple-testing and lockbox governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2304.02201",
@@ -600,7 +842,24 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "ai_factor_research",
+        "cross_sectional_momentum_ml",
+        "formulaic alpha generation",
+        "cross-sectional learning to rank",
+        "factor redundancy and fold-local selection",
+        "momentum liquidity volatility interactions",
+        "regime-conditioned momentum",
+        "model uncertainty and abstention",
+        "AI factor marginal lift",
+        "missing-AI-factor robustness",
+        "survivorship and exposed-holdout governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2304.07619",
@@ -621,7 +880,22 @@
       "source_types": [
         "paper"
       ],
-      "stale": true
+      "stale": true,
+      "topics": [
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk"
+      ],
+      "verification_statuses": [
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2308.00016",
@@ -642,7 +916,61 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "llm_factor_research",
+        "factor_compilation"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
+    },
+    {
+      "canonical_url": "https://arxiv.org/abs/2309.17322",
+      "claim_fingerprints": [
+        "5f906960300a598db118b821a7662e89f7714011277b1262cc9b43e3cf4bc59b",
+        "c41061a6e27404c0b8022619455d2c7ef2a1834d13c42b27c581437682a577a0"
+      ],
+      "claims": [
+        "Historical news experiments with modern LLMs can be contaminated by model training-window knowledge and issuer identity, requiring anonymization and placebo controls.",
+        "Modern LLM historical-news tests can contain training-window and issuer-identity lookahead."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2023-09-29",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "7e2076b16e99107b8ed8efb72673c3dc30585acab300442fba3c13087a100474",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "llm_news_signal",
+        "lookahead_bias",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "llm leakage",
+        "news"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2505.14738",
@@ -676,31 +1004,109 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "llm_factor_research",
+        "research_orchestration",
+        "parameter_search",
+        "ai_factor_research",
+        "cross_sectional_momentum_ml",
+        "formulaic alpha generation",
+        "cross-sectional learning to rank",
+        "factor redundancy and fold-local selection",
+        "momentum liquidity volatility interactions",
+        "regime-conditioned momentum",
+        "model uncertainty and abstention",
+        "AI factor marginal lift",
+        "missing-AI-factor robustness",
+        "survivorship and exposed-holdout governance",
+        "cross-sectional return ranking",
+        "downside-risk classification",
+        "position sizing",
+        "feature ablation",
+        "grouped chronological validation",
+        "purge and embargo",
+        "model calibration",
+        "multiple-testing and lockbox governance",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2505.15155",
       "claim_fingerprints": [
         "26ded3e7b7edf4607704ad9bf80cce89fe02b78278320bae392d87badb95eee3",
-        "7a9012a2caf4608be343559b5561da81453eae110921e963df1a262f721e3ad9"
+        "2c7a3be0ae7fac649b5b552abbef6c22b6eee8c6755a6ebfffa3e412e5974655",
+        "7a9012a2caf4608be343559b5561da81453eae110921e963df1a262f721e3ad9",
+        "71191b94db5580f96ec5a0a032e715664e3e336d31c09929929b1e5cdc496c1d"
       ],
       "claims": [
         "R&D-Agent(Q) links hypothesis generation, factor implementation and empirical feedback in an iterative quant workflow.",
-        "Quant research agents can alternate hypothesis generation, factor implementation and experiment feedback instead of treating factor and model search as isolated stages."
+        "RD-Agent-Quant frames factor and model research as an iterative joint optimization loop with empirical feedback rather than isolated one-shot generation.",
+        "Quant research agents can alternate hypothesis generation, factor implementation and experiment feedback instead of treating factor and model search as isolated stages.",
+        "Factor and model research can be jointly iterated with explicit empirical feedback."
       ],
-      "duplicate_count": 1,
+      "duplicate_count": 3,
       "first_seen": "2025-01-01",
       "last_verified": "2026-07-15",
       "locations": [
         "reports/harness/source_cards/us_multiasset_multimodal_momentum_r3.jsonl",
-        "reports/research/iterations/mom_multiasset_multimodal_r3/external-brief.json"
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_multiasset_multimodal_r3/external-brief.json",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
       ],
-      "occurrence_count": 2,
+      "occurrence_count": 4,
       "source_id": "1be4ddc7bc57874a7a7863a30de44c4ea037d42a6921fe060a92b2086b84d856",
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "research_memory",
+        "ai_ml_method_research",
+        "research_orchestration",
+        "factor_model_codesign",
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "factor model codesign",
+        "research memory"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "source_verified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2603.15793",
@@ -727,7 +1133,32 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "cross_sectional_momentum",
+        "transaction_costs",
+        "decay_review",
+        "cross-sectional return ranking",
+        "downside-risk classification",
+        "position sizing",
+        "feature ablation",
+        "grouped chronological validation",
+        "purge and embargo",
+        "model calibration",
+        "multiple-testing and lockbox governance",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2604.14619",
@@ -748,7 +1179,14 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "earnings_call_transcripts",
+        "ai_ml_method_research"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2604.19476",
@@ -769,7 +1207,14 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "ai_ml_method_research",
+        "company_filing_data"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2605.30363",
@@ -790,7 +1235,14 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "ai_ml_method_research",
+        "regime_meta_gate"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://arxiv.org/abs/2606.00061",
@@ -811,7 +1263,42 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "ai_ml_method_research",
+        "regime_meta_gate"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
+    },
+    {
+      "canonical_url": "https://blog.gdeltproject.org/gdelt-2-0-our-global-world-in-realtime",
+      "claim_fingerprints": [
+        "ad8a6148fcfa5097a415736ef5bcdd50e9f8140ee3543d68dc1ac3fa4ed8e125"
+      ],
+      "claims": [
+        "GDELT updates event and mention data frequently and is suitable for discovery and coverage statistics, while linked article text is not automatically licensed for storage or training."
+      ],
+      "duplicate_count": 0,
+      "first_seen": "2026-07-15",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl"
+      ],
+      "occurrence_count": 1,
+      "source_id": "0bcc3488348bdd35560d316d9814ea5deb269721488ee48e5a81b89366f6ad3f",
+      "source_types": [
+        "provider_official_docs"
+      ],
+      "stale": false,
+      "topics": [
+        "news_feature_data",
+        "event_discovery"
+      ],
+      "verification_statuses": [
+        "source_verified"
+      ]
     },
     {
       "canonical_url": "https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts",
@@ -836,7 +1323,25 @@
         "provider_official_docs",
         "platform_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "news_feature_data",
+        "multimodal_momentum",
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://docs.alpaca.markets/docs/market-data-faq",
@@ -844,6 +1349,7 @@
         "4047681dff59cac1b0ebd2df681f9d4c4fa827dc2eb6c9f52c517bd8dc912bad",
         "31d38f66651330a0c65c88fc9c9ee3d254f6fd5e1311e79a6dac708fd8d6b741",
         "ab9c34589bff4b7d4447572d955479d0cde88d394e61e75cbd2f1d761b5233fd",
+        "0be35d3f7cf69425ecb36db7824e18f7a3baaae301f953155874d1d813023097",
         "4458877e5b85bded943498abff451652b05b625aae0fcf8668e038fdda76cd96",
         "4cda978d74cff68ae4d8606940291b8d9c27563adfbf2e0def6148fef86991b3",
         "15074ca4eaf95e9bc389d91be7e45f8155f4887c91418a055e99b5ee1e378a4c"
@@ -852,28 +1358,63 @@
         "Alpaca stock market data feed choice matters; IEX feed evidence is not equivalent to full consolidated SIP market evidence.",
         "Alpaca market-data feed choice matters; IEX evidence is not equivalent to consolidated SIP/full-market evidence unless account entitlements prove SIP access.",
         "Alpaca market data access distinguishes IEX and SIP/other feeds; IEX-only bars are acceptable for exploratory research but not paper-ready full-market evidence without entitlement confirmation.",
+        "Alpaca can omit bars when no eligible trade occurs, so a missing minute cannot be silently interpreted as zero return or a tradable observation.",
         "Alpaca market data distinguishes feed entitlements such as IEX and SIP; feed choice affects market-data completeness.",
         "IEX and SIP feeds differ in completeness.",
         "IEX feed coverage differs from SIP."
       ],
-      "duplicate_count": 6,
+      "duplicate_count": 7,
       "first_seen": "2026-05-30",
-      "last_verified": "2026-07-10",
+      "last_verified": "2026-07-15",
       "locations": [
         "reports/harness/source_cards/nasdaq_tqqq_fixed_etf_router_daily_iter9.jsonl",
         "reports/harness/source_cards/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate.jsonl",
         "reports/harness/source_cards/us_minute_momentum.jsonl",
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
         "reports/research/iterations/mom_minute_r1/external-brief.json",
         "reports/research/iterations/mom_minute_r2/external-brief.json",
         "reports/research/iterations/mom_minute_r3_ml/external-brief.json",
         "reports/research/iterations/mom_minute_r4_portfolio/external-brief.json"
       ],
-      "occurrence_count": 7,
+      "occurrence_count": 8,
       "source_id": "a95d547111a604e5a738fbc40a61405e5f170e91a8827103f8b1ae7467e742fd",
       "source_types": [
         "provider_official_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "data_provider_specs",
+        "alpaca_paper_execution",
+        "paper_auto",
+        "minute_momentum_research",
+        "intraday_market_data",
+        "gap_classification",
+        "intraday/minute-level time-series momentum and reversal",
+        "cross-sectional intraday momentum and same-timeframe coverage limits",
+        "overnight versus intraday return decomposition",
+        "volatility-managed momentum and momentum crash risk",
+        "opening/early-day market intraday momentum effects",
+        "transaction costs, spreads, and high-turnover anomaly implementation",
+        "Alpaca IEX feed caveat and research-only data status",
+        "time-series momentum",
+        "intraday predictability",
+        "overnight context",
+        "volatility management",
+        "momentum crash risk",
+        "transaction costs",
+        "data-feed limitations",
+        "momentum horizons",
+        "intraday timing",
+        "overnight semantics",
+        "risk adjustment",
+        "exit hysteresis",
+        "data freshness"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "source_verified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://docs.alpaca.markets/docs/orders-at-alpaca",
@@ -894,7 +1435,14 @@
       "source_types": [
         "broker_official_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "opening_execution",
+        "alpaca_paper_research"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://docs.alpaca.markets/docs/paper-trading",
@@ -918,7 +1466,16 @@
       "source_types": [
         "broker_official_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "paper_auto",
+        "paper_execution",
+        "fill_quality",
+        "data_capability"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://docs.alpaca.markets/docs/trading/orders",
@@ -942,7 +1499,63 @@
       "source_types": [
         "broker_official_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "daily_open_execution",
+        "broker_specific",
+        "paper_auto"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
+    },
+    {
+      "canonical_url": "https://docs.alpaca.markets/us/docs/historical-stock-data-1",
+      "claim_fingerprints": [
+        "5c04aad26f277f7228c6e720f7dcbaf60423560fa8b3798c2432b772c4b2122e",
+        "2b42efe12a5d4eed8d57c48962a38bb6d66ba0a216e2286c77165a9dc01eef5d"
+      ],
+      "claims": [
+        "Alpaca documents that IEX covers only a small share of US trading while SIP aggregates all US exchanges, so IEX minute bars are not full-market evidence.",
+        "IEX minute data is not consolidated US market coverage."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2026-07-15",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "a66c30411a0acfa7255d594dcf19531118f7b375dd749f2a855d406b840d0031",
+      "source_types": [
+        "provider_official_docs",
+        "platform_docs"
+      ],
+      "stale": false,
+      "topics": [
+        "intraday_market_data",
+        "iex_vs_sip",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "intraday data",
+        "IEX SIP"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://docs.alpaca.markets/us/docs/orders-at-alpaca",
@@ -982,7 +1595,465 @@
       "source_types": [
         "broker_official_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "daily_open_execution",
+        "broker_specific",
+        "paper_auto",
+        "leveraged_etf",
+        "future_paper_tca"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
+    },
+    {
+      "canonical_url": "https://docs.alpaca.markets/us/docs/paper-trading",
+      "claim_fingerprints": [
+        "91b7517a06a094473b030b815597f4344bdb74b0c0b16a4cfd505eb3c45f1f8b"
+      ],
+      "claims": [
+        "Alpaca Paper does not model market impact, information leakage, latency slippage, or queue position and therefore cannot replace execution-cost analysis."
+      ],
+      "duplicate_count": 0,
+      "first_seen": "2026-07-15",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl"
+      ],
+      "occurrence_count": 1,
+      "source_id": "c375d91e348d3dc18447d3e88c2eb5f36172413008b060bea45b9541337c9067",
+      "source_types": [
+        "broker_official_docs"
+      ],
+      "stale": false,
+      "topics": [
+        "paper_trading",
+        "execution_reality"
+      ],
+      "verification_statuses": [
+        "source_verified"
+      ]
+    },
+    {
+      "canonical_url": "https://doi.org/10.1016/j.jfineco.2015.12.002",
+      "claim_fingerprints": [
+        "960a0a2c35101d489e3c882c7973d4b378dfffe9e86e6501643490540a2c18d4",
+        "ccd0b5bdc3a82d037b6c41f702680a25a66d7a5a13af0240abcbbbb4337e3ffb"
+      ],
+      "claims": [
+        "Momentum losses cluster in stressed reversal regimes, so regime context and long-only risk limits are required comparisons rather than optional decoration.",
+        "Momentum crashes cluster in stressed reversal regimes."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2016-01-01",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "4b2ce1271bbc4834b3005ddd355b3fbf391be469e8238753eb8f4f155e3441f1",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "momentum_crash",
+        "regime_context",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "momentum crash",
+        "regime"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://doi.org/10.1016/j.jfineco.2018.05.009",
+      "claim_fingerprints": [
+        "2af90b04a4fc83d07b75d024b44da5bfabf2e76498f1337e344f87aecd441ae4",
+        "72f851deb72ff14f1548f51a68f901611c5075f3073308cb7f6c275da8e15b3d"
+      ],
+      "claims": [
+        "The first half-hour market return can predict the last half-hour return in selected conditions, but the result is primarily a market-level timing result rather than broad individual-stock continuation evidence.",
+        "First-half-hour market return can predict the last half-hour under selected conditions."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2018-01-01",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "d7daeb04a744171cd19dbd2e5a5bdec4f7ede85ec202b3f3e1c5648dcb5d2998",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "intraday_momentum",
+        "market_regime",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "intraday momentum",
+        "market context"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://doi.org/10.1016/j.jfineco.2019.03.011",
+      "claim_fingerprints": [
+        "0d62e538228bfb708b591dd16bda3938fcff0c5e9049288ef370ba0233f9000a",
+        "2a2f83eb7c0673fbd0d596b55bf7c872b1b89f73fdbb2a14cac792f2b3575be6"
+      ],
+      "claims": [
+        "Overnight and intraday returns exhibit distinct continuation and cross-period reversal behavior, requiring separate labels and accounting.",
+        "Overnight and intraday returns have distinct continuation and cross-period reversal patterns."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2019-01-01",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "8ee9b50643cc9645d4bee2e24be9ab711dc992435693b2fefa1892edb6ea850e",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "overnight_momentum",
+        "intraday_momentum",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "overnight momentum",
+        "intraday momentum"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://doi.org/10.1093/rfs/hhaa009",
+      "claim_fingerprints": [
+        "dd7e1c1f60d20d25a82478104611f22180b7fc0a7f3bd48f3759c5dc14f5b1c6",
+        "cd0f4633417eabfe8459d745ab1ddda1d7b69561f99f103101d94687153d1b84"
+      ],
+      "claims": [
+        "Nonlinear models can extract interactions among equity characteristics in broad panels, while shallow models remain important low-signal baselines.",
+        "Nonlinear models can exploit characteristic interactions, with shallow baselines remaining important."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2020-01-01",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "8eaedcf1bc64cc05b852638797b568d9cf5ff254b9c9cd881fbfc608c40b47f0",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "cross_sectional_momentum_ml",
+        "model_capacity",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "machine learning",
+        "model capacity"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://doi.org/10.1111/0022-1082.00146",
+      "claim_fingerprints": [
+        "456d204a46000e8fa1e4cb3e5430499378d50a039614e911d7095035264d0843",
+        "9ef896819451411431fc1aac0e15f5d7940f2e66c3252749545bb0faada78423"
+      ],
+      "claims": [
+        "Industry momentum explains a material share of individual-stock momentum, so raw, industry-neutral, and industry-rotation designs require matched comparison.",
+        "Industry momentum explains a material part of stock momentum."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2026-07-15",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "7094590e1edcb2f8c67cece29d925d7a3e8be6546425c867bf520154be2f4d73",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "industry_momentum",
+        "cross_sectional_momentum",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "industry momentum"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://doi.org/10.1111/j.1540-6261.1993.tb04702.x",
+      "claim_fingerprints": [
+        "c65c96c703c51b39f9ce75d377e121baab76102ce5bea78b080d59b111e5c230",
+        "d5cca1f235f0858127138eed95394a938e20e81fe28673c34f436edef6bf0b35"
+      ],
+      "claims": [
+        "Medium-horizon cross-sectional winner-minus-loser momentum is a mature empirical strategy family, while implementation must re-evaluate costs, delistings, and the long-only constraint.",
+        "Medium-horizon cross-sectional momentum is a mature empirical family."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2026-07-15",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "cc780a86f73798837002c0b0ab223889902f09b070841128fcc515cc2dca2f2f",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "cross_sectional_momentum",
+        "stock_universe",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "cross sectional momentum"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://doi.org/10.1111/jofi.12885",
+      "claim_fingerprints": [
+        "3a7bda922d86a78218739a239a37a4c5791e41cfe9225f53aaacdce14917215f",
+        "e32ea247aa43eab402f89b43719b483ae8cf491f1f5f11b79a23cd162dbfd05e"
+      ],
+      "claims": [
+        "Changes in filing language provide an established deterministic narrative-change baseline before testing LLM extraction.",
+        "Filing-language change is a strong deterministic narrative baseline."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2020-01-01",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "894d382926916548e83c2f964900d637308ca51972bba7469bb4f084e3082355",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "sec_filings",
+        "narrative_change",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "filings",
+        "narrative change"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://doi.org/10.1111/jofi.13225",
+      "claim_fingerprints": [
+        "adcf55abd6bb2ccc9e63f0e9dd8bfa2ff8653d638aaa2eb866cca2ef944fa800",
+        "50c10e7854c9bc591673d2d5a02073caa23bc975417d004b6b5d1233de04af2f"
+      ],
+      "claims": [
+        "Ignoring trading costs can change model rankings by favoring transient, high-turnover signals.",
+        "Ignoring implementation costs can reverse model rankings."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2023-01-01",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "d0b2e0729d51d8cd2175d10ddcb9628981a63a219f952c8c5170e7757c0d3c88",
+      "source_types": [
+        "paper"
+      ],
+      "stale": false,
+      "topics": [
+        "transaction_costs",
+        "model_selection",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "multiple testing"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://github.com/AI4Finance-Foundation/FinGPT",
+      "claim_fingerprints": [
+        "d877f346b04ed21ee69576d50c73b59695d878978e5a0cb37b0bcd5bf635998f",
+        "68a0618d09aba174c0614466623736cbb635ef5b84b181fc6c088e20821dfd47"
+      ],
+      "claims": [
+        "FinGPT provides financial sentiment and data-pipeline examples, but code licensing does not grant rights to third-party news or transcript content used by examples.",
+        "Financial sentiment and extraction tasks have reusable baselines, but code licenses do not grant news-content rights."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2026-07-15",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "c998e04bd4bf84f3b599f4f057e65595871562639d153a5a91d20a9bf1de0661",
+      "source_types": [
+        "platform_docs"
+      ],
+      "stale": false,
+      "topics": [
+        "llm_feature",
+        "news_licensing",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "financial NLP",
+        "news licensing"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://github.com/microsoft/qlib",
@@ -990,36 +2061,109 @@
         "fa7673b93bb4b3cd8b5fbfc49efc77542f1b1bc36afede71bb4cc7f86db355e6",
         "d62fd4ccb3f946ffd99aa0ce1bc318aaad3b68a2b12b7b43fce42907ad427d58",
         "6d33f52c8e2df2df69ed278ac9ae446f0cd22bb7a364684fb3308323b867bf19",
+        "15cc34b68a56a16eba5d8abadbe7d148a83ded7b3bf9ea82dff334fab93552b0",
         "127616aa50bca2f40a41d5ead5f68aa9c7bca9cc4c366e6c0d2427ffd2dfb203",
         "357a1536db72d4c17532307f8f59827a8b76ce75fc8c3a60a9f9d1d375e21f9a",
-        "c16b43a24796f6948a3a70048dadfcfca5b40365e56ed5cabd0ff2e8dcb9da0d"
+        "c16b43a24796f6948a3a70048dadfcfca5b40365e56ed5cabd0ff2e8dcb9da0d",
+        "90792428d53dfdcb2711907a815e6f92d097cfca7dc3ade06457bc6e570f4dab"
       ],
       "claims": [
         "Microsoft Qlib includes the Alpha158 handler as a broad, reproducible price-volume feature baseline, demonstrating that model comparison should be separated from the question of whether the information set is sufficiently rich.",
         "Qlib provides reproducible Alpha158/Alpha360 feature and model workflows across linear and tree models.",
         "Microsoft Qlib provides reproducible Alpha158 price-volume features and LightGBM workflow examples, separating broad feature construction from downstream model comparison.",
+        "Qlib provides reusable point-in-time data, experiment-record, model, and online workflow patterns relevant to durable quant research memory.",
         "Alpha158 and LightGBM workflows provide reproducible price-volume feature and model baselines.",
         "Reusable feature handlers, experiment records and model workflows help preserve research outputs across iterations.",
-        "Broad price-volume feature panels and reproducible LightGBM workflows are practical baselines."
+        "Broad price-volume feature panels and reproducible LightGBM workflows are practical baselines.",
+        "PIT data, experiment records and model workflow patterns can preserve reusable quant knowledge."
       ],
-      "duplicate_count": 6,
+      "duplicate_count": 8,
       "first_seen": "2026-07-14",
       "last_verified": "2026-07-15",
       "locations": [
         "reports/harness/source_cards/us_mom_minute_p1_003_frozen_ml_review.jsonl",
         "reports/harness/source_cards/us_multiasset_momentum_ai_r2.jsonl",
         "reports/harness/source_cards/us_multiasset_momentum_r1.jsonl",
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
         "reports/research/iterations/mom_multiasset_ai_r2/external-brief.json",
         "reports/research/iterations/mom_multiasset_ml_r1/external-brief.json",
         "reports/research/iterations/mom_multiasset_multimodal_r3/external-brief.json",
-        "reports/research/iterations/mom_multiasset_r1/external-brief.json"
+        "reports/research/iterations/mom_multiasset_r1/external-brief.json",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
       ],
-      "occurrence_count": 7,
+      "occurrence_count": 9,
       "source_id": "c750f525fc3dfb26b9af53282fd072c83f97b208a60a7d8e910cff1e7e750a3c",
       "source_types": [
         "platform_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "factor_library",
+        "ml_feature_baseline",
+        "model_comparison",
+        "ai_factor_research",
+        "cross_sectional_momentum_ml",
+        "ml_features",
+        "model_workflow",
+        "research_memory",
+        "point_in_time_data",
+        "ml_workflow",
+        "formulaic alpha generation",
+        "cross-sectional learning to rank",
+        "factor redundancy and fold-local selection",
+        "momentum liquidity volatility interactions",
+        "regime-conditioned momentum",
+        "model uncertainty and abstention",
+        "AI factor marginal lift",
+        "missing-AI-factor robustness",
+        "survivorship and exposed-holdout governance",
+        "cross-sectional return ranking",
+        "downside-risk classification",
+        "position sizing",
+        "feature ablation",
+        "grouped chronological validation",
+        "purge and embargo",
+        "model calibration",
+        "multiple-testing and lockbox governance",
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "PIT data",
+        "research memory"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "source_verified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.LGBMRanker.html",
@@ -1041,7 +2185,24 @@
       "source_types": [
         "platform_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "ai_factor_research",
+        "cross_sectional_momentum_ml",
+        "formulaic alpha generation",
+        "cross-sectional learning to rank",
+        "factor redundancy and fold-local selection",
+        "momentum liquidity volatility interactions",
+        "regime-conditioned momentum",
+        "model uncertainty and abstention",
+        "AI factor marginal lift",
+        "missing-AI-factor robustness",
+        "survivorship and exposed-holdout governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://onlinelibrary.wiley.com/doi/10.1111/j.1540-6261.2004.00695.x",
@@ -1065,7 +2226,23 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "stock_momentum",
+        "factor_design",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://open.longportapp.com/en/docs/quote/pull/candlestick",
@@ -1086,7 +2263,13 @@
       "source_types": [
         "provider_official_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "data_provider_specs"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://openreview.net/forum?id=unBfxbCTpB",
@@ -1126,7 +2309,55 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "llm_factor_research",
+        "backtest_methodology",
+        "multiple_testing",
+        "ai_factor_research",
+        "cross_sectional_momentum_ml",
+        "generalization",
+        "research_memory",
+        "formulaic alpha generation",
+        "cross-sectional learning to rank",
+        "factor redundancy and fold-local selection",
+        "momentum liquidity volatility interactions",
+        "regime-conditioned momentum",
+        "model uncertainty and abstention",
+        "AI factor marginal lift",
+        "missing-AI-factor robustness",
+        "survivorship and exposed-holdout governance",
+        "cross-sectional return ranking",
+        "downside-risk classification",
+        "position sizing",
+        "feature ablation",
+        "grouped chronological validation",
+        "purge and embargo",
+        "model calibration",
+        "multiple-testing and lockbox governance",
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1107590",
@@ -1157,7 +2388,35 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "minute_momentum_research",
+        "data_capability",
+        "intraday/minute-level time-series momentum and reversal",
+        "cross-sectional intraday momentum and same-timeframe coverage limits",
+        "overnight versus intraday return decomposition",
+        "volatility-managed momentum and momentum crash risk",
+        "opening/early-day market intraday momentum effects",
+        "transaction costs, spreads, and high-turnover anomaly implementation",
+        "Alpaca IEX feed caveat and research-only data status",
+        "time-series momentum",
+        "intraday predictability",
+        "overnight context",
+        "volatility management",
+        "momentum crash risk",
+        "transaction costs",
+        "data-feed limitations",
+        "momentum horizons",
+        "intraday timing",
+        "overnight semantics",
+        "risk adjustment",
+        "exit hysteresis",
+        "data freshness"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2041429",
@@ -1188,7 +2447,35 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "backtest_methodology",
+        "parameter_search",
+        "intraday/minute-level time-series momentum and reversal",
+        "cross-sectional intraday momentum and same-timeframe coverage limits",
+        "overnight versus intraday return decomposition",
+        "volatility-managed momentum and momentum crash risk",
+        "opening/early-day market intraday momentum effects",
+        "transaction costs, spreads, and high-turnover anomaly implementation",
+        "Alpaca IEX feed caveat and research-only data status",
+        "time-series momentum",
+        "intraday predictability",
+        "overnight context",
+        "volatility management",
+        "momentum crash risk",
+        "transaction costs",
+        "data-feed limitations",
+        "momentum horizons",
+        "intraday timing",
+        "overnight semantics",
+        "risk adjustment",
+        "exit hysteresis",
+        "data freshness"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2089463",
@@ -1222,7 +2509,37 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "router_strategy",
+        "parameter_search",
+        "backtest_methodology",
+        "minute_momentum_research",
+        "intraday/minute-level time-series momentum and reversal",
+        "cross-sectional intraday momentum and same-timeframe coverage limits",
+        "overnight versus intraday return decomposition",
+        "volatility-managed momentum and momentum crash risk",
+        "opening/early-day market intraday momentum effects",
+        "transaction costs, spreads, and high-turnover anomaly implementation",
+        "Alpaca IEX feed caveat and research-only data status",
+        "time-series momentum",
+        "intraday predictability",
+        "overnight context",
+        "volatility management",
+        "momentum crash risk",
+        "transaction costs",
+        "data-feed limitations",
+        "momentum horizons",
+        "intraday timing",
+        "overnight semantics",
+        "risk adjustment",
+        "exit hysteresis",
+        "data freshness"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2294498",
@@ -1253,7 +2570,35 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "backtest_methodology",
+        "execution_reality",
+        "intraday/minute-level time-series momentum and reversal",
+        "cross-sectional intraday momentum and same-timeframe coverage limits",
+        "overnight versus intraday return decomposition",
+        "volatility-managed momentum and momentum crash risk",
+        "opening/early-day market intraday momentum effects",
+        "transaction costs, spreads, and high-turnover anomaly implementation",
+        "Alpaca IEX feed caveat and research-only data status",
+        "time-series momentum",
+        "intraday predictability",
+        "overnight context",
+        "volatility management",
+        "momentum crash risk",
+        "transaction costs",
+        "data-feed limitations",
+        "momentum horizons",
+        "intraday timing",
+        "overnight semantics",
+        "risk adjustment",
+        "exit hysteresis",
+        "data freshness"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2440866",
@@ -1284,7 +2629,35 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "minute_momentum_research",
+        "backtest_methodology",
+        "intraday/minute-level time-series momentum and reversal",
+        "cross-sectional intraday momentum and same-timeframe coverage limits",
+        "overnight versus intraday return decomposition",
+        "volatility-managed momentum and momentum crash risk",
+        "opening/early-day market intraday momentum effects",
+        "transaction costs, spreads, and high-turnover anomaly implementation",
+        "Alpaca IEX feed caveat and research-only data status",
+        "time-series momentum",
+        "intraday predictability",
+        "overnight context",
+        "volatility management",
+        "momentum crash risk",
+        "transaction costs",
+        "data-feed limitations",
+        "momentum horizons",
+        "intraday timing",
+        "overnight semantics",
+        "risk adjustment",
+        "exit hysteresis",
+        "data freshness"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://www.alphavantage.co/documentation",
@@ -1309,7 +2682,73 @@
         "provider_official_docs",
         "platform_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "news_feature_data",
+        "multimodal_momentum",
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://www.crsp.org/research/crsp-us-stock-databases",
+      "claim_fingerprints": [
+        "92f84f762227a61efef92421ee7ed59465c70a152403bb3b18e9d32c60049b68",
+        "d13103e56e3cb51234bfff9e21cc52621c7ac6f2f1bf0ae623cb7c9d74ebff60"
+      ],
+      "claims": [
+        "A research-grade US equity database keeps active and inactive securities, permanent identifiers, corporate actions, and delisting information to control survivorship and identity bias.",
+        "Research-grade equity history includes inactive securities, permanent IDs, corporate actions and delistings."
+      ],
+      "duplicate_count": 1,
+      "first_seen": "2026-07-15",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
+      ],
+      "occurrence_count": 2,
+      "source_id": "b64412752b3c42e8efb5672d84ed1d070c04d80a988d1fcdcdf9860c068b26a5",
+      "source_types": [
+        "industry_standard",
+        "platform_docs"
+      ],
+      "stale": false,
+      "topics": [
+        "point_in_time_universe",
+        "delistings",
+        "corporate_actions",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "PIT universe"
+      ],
+      "verification_statuses": [
+        "source_verified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://www.finra.org/investors/insights/leveraged-and-inverse-etfs-specialized-products-extra-risks-buy-and-hold-investors",
@@ -1333,7 +2772,13 @@
       "source_types": [
         "regulatory_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "leveraged_etf"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-alerts/sec",
@@ -1357,7 +2802,13 @@
       "source_types": [
         "regulatory_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "leveraged_etf"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://www.jstor.org/stable/2328882",
@@ -1381,7 +2832,23 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "cross_sectional_momentum",
+        "stock_selection",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://www.msci.com/indexes/documents/methodology/0_Momentum_Indexes_Methodology_20250522.pdf",
@@ -1414,7 +2881,43 @@
         "industry_standard",
         "industry_methodology"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "ai_factor_research",
+        "cross_sectional_momentum_ml",
+        "stock_momentum",
+        "risk_adjustment",
+        "turnover_control",
+        "formulaic alpha generation",
+        "cross-sectional learning to rank",
+        "factor redundancy and fold-local selection",
+        "momentum liquidity volatility interactions",
+        "regime-conditioned momentum",
+        "model uncertainty and abstention",
+        "AI factor marginal lift",
+        "missing-AI-factor robustness",
+        "survivorship and exposed-holdout governance",
+        "cross-sectional return ranking",
+        "downside-risk classification",
+        "position sizing",
+        "feature ablation",
+        "grouped chronological validation",
+        "purge and embargo",
+        "model calibration",
+        "multiple-testing and lockbox governance",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://www.nasdaqtrader.com/Trader.aspx?id=openclose",
@@ -1438,7 +2941,14 @@
       "source_types": [
         "exchange_official_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "daily_open_execution",
+        "exchange_opening_auction"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://www.nasdaqtrader.com/trader.aspx?id=openclose",
@@ -1466,7 +2976,14 @@
       "source_types": [
         "exchange_official_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "daily_open_execution",
+        "opening_auction"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://www.nber.org/papers/w20439",
@@ -1517,7 +3034,77 @@
         "paper",
         "working_paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "backtest_methodology",
+        "risk_review",
+        "ai_factor_research",
+        "cross_sectional_momentum_ml",
+        "risk_regime",
+        "drawdown_risk",
+        "ml_overlay",
+        "regime_meta_gate",
+        "momentum_risk",
+        "intraday/minute-level time-series momentum and reversal",
+        "cross-sectional intraday momentum and same-timeframe coverage limits",
+        "overnight versus intraday return decomposition",
+        "volatility-managed momentum and momentum crash risk",
+        "opening/early-day market intraday momentum effects",
+        "transaction costs, spreads, and high-turnover anomaly implementation",
+        "Alpaca IEX feed caveat and research-only data status",
+        "time-series momentum",
+        "intraday predictability",
+        "overnight context",
+        "volatility management",
+        "momentum crash risk",
+        "transaction costs",
+        "data-feed limitations",
+        "momentum horizons",
+        "intraday timing",
+        "overnight semantics",
+        "risk adjustment",
+        "exit hysteresis",
+        "data freshness",
+        "formulaic alpha generation",
+        "cross-sectional learning to rank",
+        "factor redundancy and fold-local selection",
+        "momentum liquidity volatility interactions",
+        "regime-conditioned momentum",
+        "model uncertainty and abstention",
+        "AI factor marginal lift",
+        "missing-AI-factor robustness",
+        "survivorship and exposed-holdout governance",
+        "cross-sectional return ranking",
+        "downside-risk classification",
+        "position sizing",
+        "feature ablation",
+        "grouped chronological validation",
+        "purge and embargo",
+        "model calibration",
+        "multiple-testing and lockbox governance",
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://www.nber.org/papers/w22208",
@@ -1538,7 +3125,14 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "router_strategy",
+        "parameter_search"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://www.proshares.com/our-etfs/leveraged-and-inverse/sqqq",
@@ -1559,7 +3153,14 @@
       "source_types": [
         "industry_standard"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "leveraged_etf",
+        "router_strategy"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://www.proshares.com/our-etfs/leveraged-and-inverse/tqqq",
@@ -1583,7 +3184,14 @@
       "source_types": [
         "industry_standard"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "leveraged_etf",
+        "router_strategy"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://www.quantconnect.com/docs/v2/writing-algorithms/historical-data/universe-history",
@@ -1607,7 +3215,23 @@
       "source_types": [
         "platform_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "universe_selection",
+        "backtest_methodology",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X19300650",
@@ -1638,7 +3262,35 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "minute_momentum_research",
+        "backtest_methodology",
+        "intraday/minute-level time-series momentum and reversal",
+        "cross-sectional intraday momentum and same-timeframe coverage limits",
+        "overnight versus intraday return decomposition",
+        "volatility-managed momentum and momentum crash risk",
+        "opening/early-day market intraday momentum effects",
+        "transaction costs, spreads, and high-turnover anomaly implementation",
+        "Alpaca IEX feed caveat and research-only data status",
+        "time-series momentum",
+        "intraday predictability",
+        "overnight context",
+        "volatility management",
+        "momentum crash risk",
+        "transaction costs",
+        "data-feed limitations",
+        "momentum horizons",
+        "intraday timing",
+        "overnight semantics",
+        "risk adjustment",
+        "exit hysteresis",
+        "data freshness"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://www.sciencedirect.com/science/article/pii/S0304405X11002613",
@@ -1662,7 +3314,51 @@
       "source_types": [
         "paper"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "time_series_momentum",
+        "etf_rotation",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
+    },
+    {
+      "canonical_url": "https://www.sec.gov/about/developer-resources",
+      "claim_fingerprints": [
+        "da8aba95b20c014e29fabed7c2698b5cd16990a0478ce22ddc56bf453b315558"
+      ],
+      "claims": [
+        "SEC automated access requires a declared user agent and adherence to fair-access request limits."
+      ],
+      "duplicate_count": 0,
+      "first_seen": "2026-07-15",
+      "last_verified": "2026-07-15",
+      "locations": [
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl"
+      ],
+      "occurrence_count": 1,
+      "source_id": "9adcb84311014626842ce4f57699a9768ad14ad749f7770fd11bde61f6fc32b6",
+      "source_types": [
+        "regulatory_docs"
+      ],
+      "stale": false,
+      "topics": [
+        "company_filing_data",
+        "data_collection"
+      ],
+      "verification_statuses": [
+        "source_verified"
+      ]
     },
     {
       "canonical_url": "https://www.sec.gov/about/webmaster-frequently-asked-questions",
@@ -1683,32 +3379,78 @@
       "source_types": [
         "regulatory_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "company_filing_data"
+      ],
+      "verification_statuses": [
+        "unverified"
+      ]
     },
     {
       "canonical_url": "https://www.sec.gov/search-filings/edgar-application-programming-interfaces",
       "claim_fingerprints": [
         "4a11489f9500ff3d59a7fd0a9e7997d102fc7f286995babd452b61ca96f969e8",
-        "c50d4a1e3e2b3fe84558e62595a2d7054d821a41f9f0d0aee6ef1ae42f0a0cf1"
+        "969acf98b0a3e72ad614e84a6802964dc5da0de78341979925127f7a423a8a5e",
+        "c50d4a1e3e2b3fe84558e62595a2d7054d821a41f9f0d0aee6ef1ae42f0a0cf1",
+        "eedc4092fd3d5e7daaf044eb762962c76895d5c7b7d0bac981fec7e3c3f902a3"
       ],
       "claims": [
         "SEC submissions and filing documents expose accession identifiers and filing acceptance metadata suitable for PIT document packets.",
-        "SEC submissions and company facts are available as structured public endpoints with filing timestamps and accession identifiers."
+        "SEC submissions expose accession and acceptance metadata and are updated near real time, supporting immutable filing packets when fair-access identity is configured.",
+        "SEC submissions and company facts are available as structured public endpoints with filing timestamps and accession identifiers.",
+        "EDGAR exposes accession and acceptance metadata suitable for immutable filing packets."
       ],
-      "duplicate_count": 1,
+      "duplicate_count": 3,
       "first_seen": "2026-07-15",
       "last_verified": "2026-07-15",
       "locations": [
         "reports/harness/source_cards/us_multiasset_multimodal_momentum_r3.jsonl",
-        "reports/research/iterations/mom_multiasset_multimodal_r3/external-brief.json"
+        "reports/harness/source_cards/us_stock_intraday_momentum_codesign_q1.jsonl",
+        "reports/research/iterations/mom_multiasset_multimodal_r3/external-brief.json",
+        "reports/research/iterations/mom_stock_intraday_codesign_q1/external-brief.json"
       ],
-      "occurrence_count": 2,
+      "occurrence_count": 4,
       "source_id": "0f07369afb96d99f09b7172fe8ecb576cf309b866a374ff98df12e6eee80ef56",
       "source_types": [
         "regulatory_docs",
         "platform_docs"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "company_filing_data",
+        "multimodal_momentum",
+        "point_in_time",
+        "cross-sectional machine learning",
+        "LLM company-news interpretation",
+        "SEC filing and earnings-event features",
+        "momentum crash and regime control",
+        "model disagreement and uncertainty",
+        "intraday versus overnight momentum",
+        "cost-aware portfolio construction",
+        "research-agent knowledge memory",
+        "source freshness and licensing",
+        "point-in-time replay and historical LLM backfill risk",
+        "cross sectional stock momentum",
+        "industry neutral momentum",
+        "intraday time-slot momentum",
+        "overnight and intraday decomposition",
+        "volume conditioned momentum",
+        "learning to rank",
+        "downside quantile risk",
+        "regime context",
+        "cost aware portfolio",
+        "PIT universe and delistings",
+        "SEC and news revision semantics",
+        "LLM leakage and licensing",
+        "persistent research memory",
+        "SEC filing PIT"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "source_verified",
+        "legacy_external_brief"
+      ]
     },
     {
       "canonical_url": "https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-momentum-indices.pdf",
@@ -1733,7 +3475,23 @@
         "industry_standard",
         "industry_methodology"
       ],
-      "stale": false
+      "stale": false,
+      "topics": [
+        "stock_momentum",
+        "factor_design",
+        "ETF time-series momentum",
+        "sector ETF rotation",
+        "individual-stock cross-sectional momentum",
+        "52-week-high and residual momentum",
+        "universe survivorship and PIT controls",
+        "transaction costs and momentum decay",
+        "ML ranking and downside-risk roles",
+        "LLM factor research governance"
+      ],
+      "verification_statuses": [
+        "unverified",
+        "legacy_external_brief"
+      ]
     }
   ],
   "visibility_partitions": [

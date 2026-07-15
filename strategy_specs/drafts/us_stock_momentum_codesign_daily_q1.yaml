@@ -1,0 +1,79 @@
+name: us_stock_momentum_codesign_daily_q1
+description: Preregistered daily stock-momentum co-design family; research and isolated virtual observation only.
+timeframe: daily
+universe:
+  - AAPL
+  - AMD
+  - AMZN
+  - AVGO
+  - CAT
+  - COST
+  - GOOGL
+  - JPM
+  - LLY
+  - META
+  - MSFT
+  - MU
+  - NFLX
+  - NVDA
+  - TSLA
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+    - close > 0
+  any: []
+exit:
+  all: []
+  any:
+    - close <= 0
+risk:
+  max_trades_per_day: 20
+  max_position_weight: 0.2
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: cross_sectional_momentum
+  max_symbols_per_day: 10
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.2
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: codesign:daily:manifest_v1
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: longbridge
+  symbol: AAPL
+  feed: nasdaq_basic
+data_assumptions:
+  source: longbridge
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_replay_cache
+factors: {}
+llm_review:
+  enabled: false
+required_capabilities:
+  - market.longbridge_bars
+notes:
+  intent: Source spec for a bounded daily co-design research family; never submits orders.
+  research_design:
+    iter_id: mom_stock_intraday_codesign_q1
+    candidate_manifest_path: reports/research/iterations/mom_stock_intraday_codesign_q1/candidate-manifest.json
+    universe_contract_path: reports/research/iterations/mom_stock_intraday_codesign_q1/data-feasibility.json
+    status: preregistered_before_data_and_training
+  caveats:
+    - Current-universe history is exploratory before the frozen membership epoch.
+    - This spec is a family contract; selected candidate behavior is written only after Q.2.
+    - No broker write authority is present.

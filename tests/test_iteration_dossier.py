@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 from typer.testing import CliRunner
 
 from open_composer.cli import app
+from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.iteration_dossier import (
     init_iteration_dossier,
     validate_iteration_dossier,
 )
+from open_composer.strategy_versions import strategy_content_hash
 
 
 def test_iteration_dossier_init_writes_template_and_validate_blocks(
@@ -79,7 +82,7 @@ def test_iteration_dossier_validate_passes_complete_dossier(sample_workspace: Pa
                 "strategy_name": "us_minute_momentum",
                 "source_spec_path": None,
                 "spec_hash": None,
-                "total_candidate_budget": 32,
+                "total_candidate_budget": 20,
                 "paths": [
                     {
                         "name": "P1",
@@ -209,6 +212,67 @@ def test_iteration_dossier_blocks_non_ok_knowledge_assessment(
     assert "knowledge_contract_assessment_not_ok" in result.blocked
 
 
+def test_iteration_dossier_validates_machine_candidate_manifest(
+    sample_workspace: Path,
+) -> None:
+    paths = init_iteration_dossier("mom_minute_r1", sample_workspace)
+    _write_complete_pre_backtest_payload(paths)
+    search = json.loads(paths.search_space_json.read_text(encoding="utf-8"))
+    search["total_candidate_budget"] = 1
+    search["paths"][0]["candidate_count"] = 1
+    manifest_path = paths.root / "candidate-manifest.json"
+    search["candidate_manifest_path"] = manifest_path.relative_to(sample_workspace).as_posix()
+    paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
+    spec_path = "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    candidate = {
+        "candidate_id": "C01",
+        "path": "P1",
+        "role": "return_ranking",
+        "method": "linear_rank",
+        "ablation": "baseline",
+        "spec_path": spec_path,
+        "data_contract": "data",
+        "feature_contract": "features",
+        "label_contract": "label",
+        "validation_contract": "validation",
+        "cost_contract": "cost",
+        "benchmark_contract": "benchmark",
+        "fallback": "flat",
+    }
+    manifest = {
+        "schema_version": 1,
+        "iter_id": "mom_minute_r1",
+        "generated_before_backtest": True,
+        "candidate_count": 1,
+        "spec_hashes": {
+            spec_path: "6d7a0ed38e20e4929cd13f439193aa87bba3a65834a7805f64aef4bbe2cbbb46"
+        },
+        "contracts": {
+            "data": {"data": {}},
+            "features": {"features": {}},
+            "labels": {"label": {}},
+            "validation": {"validation": {}},
+            "costs": {"cost": {}},
+            "benchmarks": {"benchmark": []},
+        },
+        "candidates": [candidate],
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    spec = load_strategy_spec(sample_workspace / spec_path)
+    manifest["spec_hashes"][spec_path] = strategy_content_hash(spec)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    search["candidate_manifest_sha256"] = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
+
+    passed = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert passed.status == "ok"
+
+    manifest["candidates"][0]["label_contract"] = "missing"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    blocked = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert "candidate_manifest_sha256_mismatch" in blocked.blocked
+
+
 def test_iteration_dossier_cli_init_and_validate(sample_workspace: Path, monkeypatch) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
     runner = CliRunner()
@@ -282,7 +346,7 @@ def _write_complete_pre_backtest_payload(paths) -> None:
                 "strategy_name": "us_minute_momentum",
                 "source_spec_path": None,
                 "spec_hash": None,
-                "total_candidate_budget": 24,
+                "total_candidate_budget": 12,
                 "paths": [
                     {
                         "name": "P1",

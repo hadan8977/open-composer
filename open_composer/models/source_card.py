@@ -27,6 +27,7 @@ SourceType = Literal[
     "industry_standard",
     "unverified",
 ]
+VerificationStatus = Literal["source_verified", "unverified"]
 
 
 class SourceCard(BaseModel):
@@ -35,6 +36,10 @@ class SourceCard(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     claim_id: str = Field(min_length=1)
+    iteration_id: str | None = None
+    verification_status: VerificationStatus = "unverified"
+    verified_at: str | None = None
+    verification_method: str | None = None
     claim: str = Field(min_length=1)
     source_url: str = Field(min_length=1)
     source_type: SourceType
@@ -65,6 +70,14 @@ class SourceCard(BaseModel):
         if value is None:
             return None
         _dt.date.fromisoformat(value)
+        return value
+
+    @field_validator("verified_at")
+    @classmethod
+    def _validate_verified_at(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        _dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
         return value
 
 

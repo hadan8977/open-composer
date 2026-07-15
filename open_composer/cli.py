@@ -1055,6 +1055,30 @@ def research_knowledge_assess_command(
         raise typer.Exit(1)
 
 
+@research_knowledge_app.command("context")
+def research_knowledge_context_command(
+    iter_id: str,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Build a strategy-relevant packet from retained sources, failures, and models."""
+    from open_composer.research.knowledge_memory import build_iteration_knowledge_context
+
+    try:
+        result = build_iteration_knowledge_context(iter_id, project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if json_output:
+        sys.stdout.write(json.dumps(result.payload, indent=2) + "\n")
+        return
+    console.print(
+        f"[green]knowledge context built[/green] "
+        f"sources={len(result.payload['matched_sources'])} "
+        f"negative={len(result.payload['negative_empirical_memory'])} "
+        f"models={len(result.payload['model_memory'])}"
+    )
+    console.print(f"report: {result.report_path}")
+
+
 def _parse_kv_pairs(raw: str) -> dict[str, Any]:
     result: dict[str, Any] = {}
     if not raw.strip():

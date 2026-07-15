@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass, field
@@ -189,6 +190,11 @@ def _load_json(path: Path, blocked: list[str], label: str) -> dict[str, Any] | N
 
 def _external_brief_blockers(payload: dict[str, Any]) -> list[str]:
     blocked: list[str] = []
+    if int(payload.get("schema_version") or 1) >= 2:
+        if not payload.get("current_source_card_paths"):
+            blocked.append("external_brief_v2_missing_current_source_card_paths")
+        if not payload.get("source_evidence_bindings"):
+            blocked.append("external_brief_v2_missing_source_evidence_bindings")
     sources = payload.get("sources")
     if not isinstance(sources, list):
         return ["external_brief_sources_missing"]
@@ -272,6 +278,8 @@ def _search_space_blockers(
             if path.get(field_name) in (None, "", [], {}):
                 blocked.append(f"search_space_{name}_missing_{field_name}")
     budget = _int_or_none(payload.get("total_candidate_budget")) or total
+    if budget != total:
+        blocked.append(f"search_space_budget_total_mismatch:{budget}:{total}")
     if budget > 80:
         blocked.append(f"search_space_budget_gt_80:{budget}")
     if total > 80:
@@ -292,6 +300,132 @@ def _search_space_blockers(
     knowledge_contract = payload.get("knowledge_contract")
     if knowledge_contract is not None:
         blocked.extend(_knowledge_contract_blockers(knowledge_contract, root))
+    candidate_manifest_raw = str(payload.get("candidate_manifest_path") or "").strip()
+    if candidate_manifest_raw:
+        candidate_manifest_path, error = _safe_repo_path(root, candidate_manifest_raw)
+        if error:
+            blocked.append(f"candidate_manifest_invalid_path:{error}")
+        elif not candidate_manifest_path.exists():
+            blocked.append("candidate_manifest_missing")
+        else:
+            blocked.extend(
+                _candidate_manifest_blockers(
+                    candidate_manifest_path,
+                    payload,
+                    root,
+                    expected_total=total,
+                )
+            )
+    return blocked
+
+
+def _candidate_manifest_blockers(
+    manifest_path: Path,
+    search_space: dict[str, Any],
+    root: Path,
+    *,
+    expected_total: int,
+) -> list[str]:
+    blocked: list[str] = []
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ["candidate_manifest_invalid_json"]
+    if not isinstance(manifest, dict):
+        return ["candidate_manifest_not_object"]
+    expected_manifest_sha256 = str(search_space.get("candidate_manifest_sha256") or "")
+    actual_manifest_sha256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    if not expected_manifest_sha256:
+        blocked.append("candidate_manifest_sha256_missing")
+    elif expected_manifest_sha256 != actual_manifest_sha256:
+        blocked.append("candidate_manifest_sha256_mismatch")
+    if manifest.get("iter_id") != search_space.get("iter_id"):
+        blocked.append("candidate_manifest_iter_id_mismatch")
+    if manifest.get("generated_before_backtest") is not True:
+        blocked.append("candidate_manifest_not_preregistered")
+    candidates = manifest.get("candidates")
+    if not isinstance(candidates, list):
+        return [*blocked, "candidate_manifest_candidates_missing"]
+    if int(manifest.get("candidate_count") or -1) != len(candidates):
+        blocked.append("candidate_manifest_count_mismatch")
+    if len(candidates) != expected_total:
+        blocked.append(f"candidate_manifest_total_mismatch:{len(candidates)}:{expected_total}")
+    contracts = manifest.get("contracts")
+    if not isinstance(contracts, dict):
+        return [*blocked, "candidate_manifest_contracts_missing"]
+    spec_hashes = manifest.get("spec_hashes")
+    if not isinstance(spec_hashes, dict) or not spec_hashes:
+        blocked.append("candidate_manifest_spec_hashes_missing")
+        spec_hashes = {}
+    contract_map = {
+        "data_contract": "data",
+        "feature_contract": "features",
+        "label_contract": "labels",
+        "validation_contract": "validation",
+        "cost_contract": "costs",
+        "benchmark_contract": "benchmarks",
+    }
+    required_fields = {
+        "candidate_id",
+        "path",
+        "role",
+        "method",
+        "ablation",
+        "spec_path",
+        "fallback",
+        *contract_map,
+    }
+    candidate_ids: set[str] = set()
+    path_counts: dict[str, int] = {}
+    for index, candidate in enumerate(candidates):
+        if not isinstance(candidate, dict):
+            blocked.append(f"candidate_manifest_row_{index}_not_object")
+            continue
+        missing = sorted(field for field in required_fields if not candidate.get(field))
+        if missing:
+            blocked.append(f"candidate_manifest_row_{index}_missing:{','.join(missing)}")
+            continue
+        candidate_id = str(candidate["candidate_id"])
+        if candidate_id in candidate_ids:
+            blocked.append(f"candidate_manifest_duplicate_id:{candidate_id}")
+        candidate_ids.add(candidate_id)
+        path_name = str(candidate["path"])
+        path_counts[path_name] = path_counts.get(path_name, 0) + 1
+        for field_name, contract_group in contract_map.items():
+            group = contracts.get(contract_group)
+            if not isinstance(group, dict) or candidate[field_name] not in group:
+                blocked.append(
+                    f"candidate_manifest_{candidate_id}_unknown_{field_name}:"
+                    f"{candidate[field_name]}"
+                )
+        spec_path, error = _safe_repo_path(root, str(candidate["spec_path"]))
+        if error:
+            blocked.append(f"candidate_manifest_{candidate_id}_invalid_spec_path:{error}")
+        elif not spec_path.exists():
+            blocked.append(f"candidate_manifest_{candidate_id}_spec_missing")
+        else:
+            expected_spec_hash = str(spec_hashes.get(str(candidate["spec_path"])) or "")
+            if not expected_spec_hash:
+                blocked.append(f"candidate_manifest_{candidate_id}_spec_hash_missing")
+            else:
+                try:
+                    actual_spec_hash = strategy_content_hash(load_strategy_spec(spec_path))
+                except Exception as exc:
+                    blocked.append(f"candidate_manifest_{candidate_id}_spec_invalid:{exc}")
+                else:
+                    if expected_spec_hash != actual_spec_hash:
+                        blocked.append(f"candidate_manifest_{candidate_id}_spec_hash_mismatch")
+    expected_path_counts = {
+        str(row.get("name")): int(row.get("candidate_count") or 0)
+        for row in search_space.get("paths", [])
+        if isinstance(row, dict)
+    }
+    if path_counts != expected_path_counts:
+        blocked.append(
+            "candidate_manifest_path_counts_mismatch:"
+            f"{json.dumps(path_counts, sort_keys=True)}:"
+            f"{json.dumps(expected_path_counts, sort_keys=True)}"
+        )
     return blocked
 
 
@@ -382,12 +516,14 @@ def _write_json_if_needed(path: Path, payload: dict[str, Any], overwrite: bool) 
 
 def _external_brief_json_template(iter_id: str) -> dict[str, Any]:
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "iter_id": iter_id,
         "strategy_name": "us_minute_momentum",
         "source_spec_path": None,
         "spec_hash": None,
         "objective": "US minute momentum round 1",
+        "current_source_card_paths": [],
+        "source_evidence_bindings": [],
         "sources": [],
         "topic_coverage": [],
         "candidate_matrix_revisions": [],

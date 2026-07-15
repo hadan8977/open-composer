@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import json
 import re
 import urllib.parse
@@ -60,13 +61,38 @@ class KnowledgeAssessmentResult:
     payload: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class KnowledgeContextResult:
+    report_path: Path
+    payload: dict[str, Any]
+
+
 def canonical_source_url(value: str) -> str:
     raw = value.strip()
     if not raw:
         return ""
     parsed = urllib.parse.urlsplit(raw)
-    scheme = parsed.scheme.lower() or "https"
-    host = parsed.netloc.lower()
+    scheme = parsed.scheme.lower()
+    host = (parsed.hostname or "").lower().rstrip(".")
+    if scheme not in {"http", "https"} or not host:
+        return ""
+    if (
+        parsed.username
+        or parsed.password
+        or "." not in host
+        or host == "localhost"
+        or host.endswith((".localhost", ".local", ".nip.io", ".sslip.io", ".xip.io"))
+    ):
+        return ""
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        legacy_ipv4_labels = host.split(".")
+        if all(re.fullmatch(r"(?:0x[0-9a-f]+|[0-9]+)", label) for label in legacy_ipv4_labels):
+            return ""
+    else:
+        if not address.is_global:
+            return ""
     path = re.sub(r"/+$", "", parsed.path) or "/"
     if host in {"arxiv.org", "www.arxiv.org"}:
         host = "arxiv.org"
@@ -81,7 +107,8 @@ def canonical_source_url(value: str) -> str:
         if key.lower() not in TRACKING_QUERY_KEYS
     ]
     query = urllib.parse.urlencode(sorted(query_items))
-    return urllib.parse.urlunsplit((scheme, host, path, query, ""))
+    port = f":{parsed.port}" if parsed.port else ""
+    return urllib.parse.urlunsplit((scheme, f"{host}{port}", path, query, ""))
 
 
 def claim_fingerprint(value: str) -> str:
@@ -92,36 +119,7 @@ def claim_fingerprint(value: str) -> str:
 def build_knowledge_index(root: Path | None = None) -> KnowledgeBuildResult:
     base = root or project_root()
     source_rows = _collect_sources(base)
-    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for row in source_rows:
-        grouped[str(row["canonical_url"])].append(row)
-
-    sources = []
-    for canonical_url, rows in sorted(grouped.items()):
-        claims = _unique_strings(str(row.get("claim") or "") for row in rows)
-        locations = _unique_strings(str(row["location"]) for row in rows)
-        accessed = sorted(
-            value for value in (str(row.get("accessed_at") or "") for row in rows) if value
-        )
-        stale_rows = [row for row in rows if bool(row.get("stale"))]
-        sources.append(
-            {
-                "source_id": hashlib.sha256(canonical_url.encode("utf-8")).hexdigest(),
-                "canonical_url": canonical_url,
-                "source_types": _unique_strings(
-                    str(row.get("source_type") or "unverified") for row in rows
-                ),
-                "first_seen": accessed[0] if accessed else None,
-                "last_verified": accessed[-1] if accessed else None,
-                "occurrence_count": len(rows),
-                "duplicate_count": max(0, len(rows) - 1),
-                "claims": claims,
-                "claim_fingerprints": [claim_fingerprint(claim) for claim in claims],
-                "locations": locations,
-                "stale": bool(stale_rows) and len(stale_rows) == len(rows),
-            }
-        )
-
+    sources = _group_source_rows(source_rows)
     empirical = _collect_empirical_memory(base)
     models = _collect_model_memory(base)
     payload = {
@@ -146,6 +144,44 @@ def build_knowledge_index(root: Path | None = None) -> KnowledgeBuildResult:
     return KnowledgeBuildResult(index_path=path, payload=payload)
 
 
+def _group_source_rows(source_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in source_rows:
+        grouped[str(row["canonical_url"])].append(row)
+
+    sources = []
+    for canonical_url, rows in sorted(grouped.items()):
+        claims = _unique_strings(str(row.get("claim") or "") for row in rows)
+        locations = _unique_strings(str(row["location"]) for row in rows)
+        accessed = sorted(
+            value for value in (str(row.get("accessed_at") or "") for row in rows) if value
+        )
+        stale_rows = [row for row in rows if bool(row.get("stale"))]
+        sources.append(
+            {
+                "source_id": hashlib.sha256(canonical_url.encode("utf-8")).hexdigest(),
+                "canonical_url": canonical_url,
+                "source_types": _unique_strings(
+                    str(row.get("source_type") or "unverified") for row in rows
+                ),
+                "verification_statuses": _unique_strings(
+                    str(row.get("verification_status") or "legacy") for row in rows
+                ),
+                "first_seen": accessed[0] if accessed else None,
+                "last_verified": accessed[-1] if accessed else None,
+                "occurrence_count": len(rows),
+                "duplicate_count": max(0, len(rows) - 1),
+                "claims": claims,
+                "claim_fingerprints": [claim_fingerprint(claim) for claim in claims],
+                "topics": _unique_strings(topic for row in rows for topic in row.get("topics", [])),
+                "locations": locations,
+                "stale": bool(stale_rows) and len(stale_rows) == len(rows),
+            }
+        )
+
+    return sources
+
+
 def scout_knowledge(
     iter_id: str,
     root: Path | None = None,
@@ -158,14 +194,46 @@ def scout_knowledge(
     if not manifest_path.exists():
         raise FileNotFoundError(f"knowledge scout manifest missing: {manifest_path}")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    queries = manifest.get("queries")
-    if not isinstance(queries, list) or not queries:
-        raise ValueError("knowledge scout manifest requires non-empty queries")
+    queries = manifest.get("queries", [])
+    curated = manifest.get("curated_candidates", [])
+    if not isinstance(queries, list):
+        raise ValueError("knowledge scout queries must be a list")
+    if not isinstance(curated, list):
+        raise ValueError("knowledge scout curated_candidates must be a list")
+    if not queries and not curated:
+        raise ValueError("knowledge scout manifest requires queries or curated_candidates")
     max_results = int(manifest.get("max_results_per_query", 5))
     if max_results < 1 or max_results > 20:
         raise ValueError("max_results_per_query must be between 1 and 20")
-    index = build_knowledge_index(base).payload
-    known = {str(row["canonical_url"]): row for row in index["sources"]}
+    build_knowledge_index(base)
+    brief_path = iteration_dir / "external-brief.json"
+    brief = json.loads(brief_path.read_text(encoding="utf-8")) if brief_path.exists() else {}
+    current_locations = _current_source_card_locations(brief, iter_id, base)
+    current_locations.add(_relpath(brief_path, base))
+    prior_source_rows = [
+        row
+        for row in _collect_sources(base)
+        if str(row.get("location") or "") not in current_locations
+    ]
+    known = {str(row["canonical_url"]): row for row in _group_source_rows(prior_source_rows)}
+    baseline_payload = {
+        "schema_version": 1,
+        "iter_id": iter_id,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "excluded_current_locations": sorted(current_locations),
+        "source_count": len(known),
+        "sources": [
+            {
+                "source_id": row["source_id"],
+                "canonical_url": canonical_url,
+                "claim_fingerprints": row.get("claim_fingerprints", []),
+                "locations": row.get("locations", []),
+            }
+            for canonical_url, row in sorted(known.items())
+        ],
+    }
+    baseline_path = iteration_dir / "knowledge-baseline.json"
+    write_json(baseline_path, baseline_payload)
     fetch = fetcher or _fetch_arxiv
     candidates: dict[str, dict[str, Any]] = {}
     query_results = []
@@ -190,7 +258,12 @@ def scout_knowledge(
                     "query_ids": [],
                     "topics": [],
                     "knowledge_status": "already_known" if existing else "new_candidate",
-                    "validation_status": "candidate_unvalidated",
+                    "validation_status": (
+                        "source_verified_prior"
+                        if existing
+                        and "source_verified" in existing.get("verification_statuses", [])
+                        else "candidate_unvalidated"
+                    ),
                     "existing_locations": list(existing.get("locations", [])) if existing else [],
                 },
             )
@@ -198,6 +271,41 @@ def scout_knowledge(
             candidate["topics"] = _unique_strings(
                 [*candidate["topics"], *[str(x) for x in query_row.get("topics", [])]]
             )
+    for item in curated:
+        if not isinstance(item, dict):
+            raise ValueError("knowledge scout curated candidate rows must be objects")
+        canonical = canonical_source_url(str(item.get("url") or ""))
+        title = str(item.get("title") or "").strip()
+        if not canonical or not title:
+            raise ValueError("knowledge scout curated candidate requires an http(s) URL and title")
+        existing = known.get(canonical)
+        candidate = candidates.setdefault(
+            canonical,
+            {
+                "url": str(item["url"]),
+                "title": title,
+                "summary": str(item.get("summary") or "").strip(),
+                "published_at": str(item.get("published_at") or "").strip(),
+                "authors": [str(value) for value in item.get("authors", [])],
+                "source_type": str(item.get("source_type") or "unverified"),
+                "canonical_url": canonical,
+                "query_ids": [],
+                "topics": [],
+                "knowledge_status": "already_known" if existing else "new_candidate",
+                "validation_status": (
+                    "source_verified_prior"
+                    if existing and "source_verified" in existing.get("verification_statuses", [])
+                    else "candidate_unvalidated"
+                ),
+                "existing_locations": list(existing.get("locations", [])) if existing else [],
+            },
+        )
+        candidate["query_ids"] = _unique_strings(
+            [*candidate["query_ids"], str(item.get("discovery_id") or "curated_web")]
+        )
+        candidate["topics"] = _unique_strings(
+            [*candidate["topics"], *[str(value) for value in item.get("topics", [])]]
+        )
     rows = sorted(
         candidates.values(),
         key=lambda row: (str(row.get("published_at") or ""), str(row.get("title") or "")),
@@ -207,9 +315,11 @@ def scout_knowledge(
         "schema_version": 1,
         "iter_id": iter_id,
         "generated_at": datetime.now(UTC).isoformat(),
-        "provider": "arxiv_official_api",
+        "provider": "arxiv_official_api+curated_web_manifest" if curated else "arxiv_official_api",
         "manifest_path": _relpath(manifest_path, base),
         "query_manifest_sha256": _sha256_file(manifest_path),
+        "baseline_path": _relpath(baseline_path, base),
+        "baseline_sha256": _sha256_file(baseline_path),
         "query_results": query_results,
         "candidate_count": len(rows),
         "new_candidate_count": sum(row["knowledge_status"] == "new_candidate" for row in rows),
@@ -226,6 +336,132 @@ def scout_knowledge(
     return KnowledgeScoutResult(report_path=path, payload=payload)
 
 
+def build_iteration_knowledge_context(
+    iter_id: str,
+    root: Path | None = None,
+    *,
+    max_sources: int = 24,
+) -> KnowledgeContextResult:
+    base = root or project_root()
+    iteration_dir = base / ITERATION_ROOT / iter_id
+    brief_path = iteration_dir / "external-brief.json"
+    manifest_path = iteration_dir / "knowledge-scout-queries.json"
+    if not brief_path.exists():
+        raise FileNotFoundError(f"external brief missing: {brief_path}")
+    brief = json.loads(brief_path.read_text(encoding="utf-8"))
+    manifest = (
+        json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+    )
+    topics = _unique_strings(
+        [
+            *[str(value) for value in brief.get("topic_coverage", [])],
+            *[
+                str(value)
+                for row in manifest.get("queries", [])
+                if isinstance(row, dict)
+                for value in row.get("topics", [])
+            ],
+            *[
+                str(value)
+                for row in manifest.get("curated_candidates", [])
+                if isinstance(row, dict)
+                for value in row.get("topics", [])
+            ],
+        ]
+    )
+    topic_tokens = _search_tokens(" ".join(topics))
+    index = build_knowledge_index(base).payload
+    source_rows = []
+    for source in index["sources"]:
+        searchable = " ".join(
+            [
+                str(source.get("canonical_url") or ""),
+                *[str(value) for value in source.get("topics", [])],
+                *[str(value) for value in source.get("claims", [])],
+            ]
+        )
+        overlap = sorted(topic_tokens & _search_tokens(searchable))
+        if overlap:
+            source_rows.append({**source, "matched_tokens": overlap, "match_score": len(overlap)})
+    source_rows.sort(
+        key=lambda row: (int(row["match_score"]), not bool(row.get("stale"))),
+        reverse=True,
+    )
+    empirical = [
+        row
+        for row in index["empirical_memory"]
+        if row.get("visibility_partition") == "train_only_empirical"
+        and (
+            _search_tokens(str(row.get("iteration_id") or "")) & topic_tokens
+            or "mom" in str(row.get("iteration_id") or "").lower()
+        )
+    ]
+    models = []
+    for row in index["model_memory"]:
+        iteration_id = str(row.get("iteration_id") or "")
+        if not (
+            _search_tokens(" ".join([iteration_id, str(row.get("role") or "")])) & topic_tokens
+            or "mom" in iteration_id.lower()
+        ):
+            continue
+        models.append(
+            {
+                key: row.get(key)
+                for key in [
+                    "model_id",
+                    "iteration_id",
+                    "size_bytes",
+                    "role",
+                    "feature_contract_sha256",
+                    "training_data_sha256",
+                    "prompt_hash",
+                    "reuse_policy",
+                ]
+            }
+        )
+    restricted_empirical = [
+        row
+        for row in index["empirical_memory"]
+        if row.get("visibility_partition") in {"challenge_result", "forward_observation"}
+    ]
+    payload = {
+        "schema_version": 1,
+        "iter_id": iter_id,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "topics": topics,
+        "matched_sources": source_rows[:max_sources],
+        "negative_empirical_memory": [row for row in empirical if row.get("negative_result")],
+        "model_memory": models,
+        "restricted_memory_summary": {
+            "challenge_result_count": len(
+                {
+                    str(row.get("iteration_id") or "")
+                    for row in restricted_empirical
+                    if row.get("visibility_partition") == "challenge_result"
+                }
+            ),
+            "forward_observation_count": len(
+                {
+                    str(row.get("iteration_id") or "")
+                    for row in restricted_empirical
+                    if row.get("visibility_partition") == "forward_observation"
+                }
+            ),
+            "outcome_details_exposed": False,
+        },
+        "visibility_contract": index["partition_contract"],
+        "contract": {
+            "context_is_research_input_not_alpha": True,
+            "challenge_and_forward_results_excluded_from_candidate_generation": True,
+            "restricted_model_outcomes_redacted": True,
+            "stale_sources_require_refresh": True,
+        },
+    }
+    path = iteration_dir / "knowledge-context.json"
+    write_json(path, payload)
+    return KnowledgeContextResult(report_path=path, payload=payload)
+
+
 def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> KnowledgeAssessmentResult:
     base = root or project_root()
     iteration_dir = base / ITERATION_ROOT / iter_id
@@ -237,11 +473,14 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
     indexed = {str(row["canonical_url"]): row for row in index["sources"]}
     rows = []
     current_location = _relpath(brief_path, base)
+    current_source_locations = _current_source_card_locations(brief, iter_id, base)
     for source in brief.get("sources", []):
         canonical = canonical_source_url(str(source.get("url") or ""))
         indexed_row = indexed.get(canonical, {})
         prior_locations = [
-            path for path in indexed_row.get("locations", []) if path != current_location
+            path
+            for path in indexed_row.get("locations", [])
+            if path != current_location and path not in current_source_locations
         ]
         status = "reused" if prior_locations else "new"
         if indexed_row.get("stale"):
@@ -256,7 +495,7 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
             }
         )
     scout_path = iteration_dir / "knowledge-scout.json"
-    scout = json.loads(scout_path.read_text(encoding="utf-8")) if scout_path.exists() else {}
+    scout = _load_valid_scout(scout_path, iteration_dir, iter_id, base)
     counts = {
         status: sum(row["status"] == status for row in rows)
         for status in {"reused", "new", "refresh_required"}
@@ -281,6 +520,7 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
             "decisions": _model_reuse_rows(iter_id, index["model_memory"]),
         },
     )
+    context = build_iteration_knowledge_context(iter_id, base)
     payload = {
         "schema_version": 1,
         "iter_id": iter_id,
@@ -292,6 +532,7 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
         "scout_path": _relpath(scout_path, base) if scout else None,
         "scout_new_candidates": int(scout.get("new_candidate_count", 0)),
         "knowledge_index_path": _relpath(base / KNOWLEDGE_ROOT / "index.json", base),
+        "knowledge_context_path": _relpath(context.report_path, base),
         "visibility_contract": index["partition_contract"],
         "model_memory_count": len(index["model_memory"]),
         "model_reuse_decision_path": _relpath(model_reuse_path, base),
@@ -350,6 +591,8 @@ def _collect_sources(root: Path) -> list[dict[str, Any]]:
                     "source_type": card.source_type,
                     "accessed_at": card.accessed_at,
                     "claim": card.claim,
+                    "topics": list(card.applies_to),
+                    "verification_status": card.verification_status,
                     "stale": status.stale,
                     "location": _relpath(path, root),
                 }
@@ -360,6 +603,7 @@ def _collect_sources(root: Path) -> list[dict[str, Any]]:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
+        brief_topics = [str(value) for value in payload.get("topic_coverage", [])]
         for source in payload.get("sources", []):
             if not isinstance(source, dict):
                 continue
@@ -373,11 +617,112 @@ def _collect_sources(root: Path) -> list[dict[str, Any]]:
                     "source_type": str(source.get("source_type") or "unverified"),
                     "accessed_at": accessed,
                     "claim": str(source.get("core_claim") or ""),
+                    "topics": _unique_strings(
+                        [*brief_topics, *[str(value) for value in source.get("topics", [])]]
+                    ),
+                    "verification_status": "legacy_external_brief",
                     "stale": _source_is_stale(str(source.get("source_type") or ""), accessed),
                     "location": _relpath(path, root),
                 }
             )
     return rows
+
+
+def _current_source_card_locations(brief: dict[str, Any], iter_id: str, root: Path) -> set[str]:
+    if int(brief.get("schema_version") or 1) < 2:
+        return set()
+    locations: set[str] = set()
+    cards_by_id: dict[str, SourceCard] = {}
+    allowed_root = (root / "reports/harness/source_cards").resolve()
+    for raw in brief.get("current_source_card_paths", []):
+        path = (root / str(raw)).resolve()
+        try:
+            path.relative_to(allowed_root)
+        except ValueError as exc:
+            raise ValueError(f"current source card is outside source_cards: {raw}") from exc
+        if path.suffix != ".jsonl" or not path.exists():
+            raise ValueError(f"current source card missing or invalid: {raw}")
+        rows = _read_jsonl(path)
+        cards = [SourceCard.model_validate(row) for row in rows]
+        if not cards or any(card.iteration_id != iter_id for card in cards):
+            raise ValueError(f"current source card iteration mismatch: {raw}")
+        for card in cards:
+            if (
+                card.verification_status != "source_verified"
+                or not card.verified_at
+                or not card.verification_method
+            ):
+                raise ValueError(f"current source card is not source_verified: {card.claim_id}")
+            if card.claim_id in cards_by_id:
+                raise ValueError(f"duplicate current source claim_id: {card.claim_id}")
+            cards_by_id[card.claim_id] = card
+        locations.add(_relpath(path, root))
+    bindings = brief.get("source_evidence_bindings")
+    if not isinstance(bindings, list) or not bindings:
+        raise ValueError("schema v2 external brief requires source_evidence_bindings")
+    binding_by_url: dict[str, dict[str, Any]] = {}
+    for binding in bindings:
+        if not isinstance(binding, dict):
+            raise ValueError("source evidence bindings must be objects")
+        canonical = canonical_source_url(str(binding.get("canonical_url") or ""))
+        if not canonical or canonical in binding_by_url:
+            raise ValueError("source evidence binding has invalid or duplicate URL")
+        binding_by_url[canonical] = binding
+    brief_urls = []
+    for source in brief.get("sources", []):
+        canonical = canonical_source_url(str(source.get("url") or ""))
+        brief_urls.append(canonical)
+        binding = binding_by_url.get(canonical)
+        if binding is None:
+            raise ValueError(f"external brief source is not evidence-bound: {canonical}")
+        claim_id = str(binding.get("source_card_claim_id") or "")
+        card = cards_by_id.get(claim_id)
+        if card is None or canonical_source_url(card.source_url) != canonical:
+            raise ValueError(f"source evidence binding card mismatch: {canonical}")
+        if str(binding.get("claim_fingerprint") or "") != claim_fingerprint(card.claim):
+            raise ValueError(f"source evidence binding claim mismatch: {canonical}")
+        if str(binding.get("brief_claim_fingerprint") or "") != claim_fingerprint(
+            str(source.get("core_claim") or "")
+        ):
+            raise ValueError(f"source evidence binding brief claim mismatch: {canonical}")
+    if set(binding_by_url) != set(brief_urls):
+        raise ValueError("source evidence bindings do not match external brief sources")
+    return locations
+
+
+def _load_valid_scout(
+    scout_path: Path,
+    iteration_dir: Path,
+    iter_id: str,
+    root: Path,
+) -> dict[str, Any]:
+    if not scout_path.exists():
+        return {}
+    scout = json.loads(scout_path.read_text(encoding="utf-8"))
+    manifest_path = iteration_dir / "knowledge-scout-queries.json"
+    baseline_path = iteration_dir / "knowledge-baseline.json"
+    if scout.get("schema_version") != 1 or scout.get("iter_id") != iter_id:
+        raise ValueError("knowledge scout identity mismatch")
+    if not manifest_path.exists() or scout.get("query_manifest_sha256") != _sha256_file(
+        manifest_path
+    ):
+        raise ValueError("knowledge scout manifest hash mismatch")
+    if not baseline_path.exists() or scout.get("baseline_sha256") != _sha256_file(baseline_path):
+        raise ValueError("knowledge scout baseline hash mismatch")
+    candidates = scout.get("candidates")
+    if not isinstance(candidates, list) or int(scout.get("candidate_count", -1)) != len(candidates):
+        raise ValueError("knowledge scout candidate count mismatch")
+    for candidate in candidates:
+        if not isinstance(candidate, dict) or not canonical_source_url(
+            str(candidate.get("canonical_url") or "")
+        ):
+            raise ValueError("knowledge scout candidate is invalid")
+        if candidate.get("validation_status") not in {
+            "candidate_unvalidated",
+            "source_verified_prior",
+        }:
+            raise ValueError("knowledge scout candidate validation status is invalid")
+    return scout
 
 
 def _collect_empirical_memory(root: Path) -> list[dict[str, Any]]:
@@ -387,11 +732,12 @@ def _collect_empirical_memory(root: Path) -> list[dict[str, Any]]:
         text = path.read_text(encoding="utf-8")
         decisions = re.findall(r"Decision:\s*([^\n]+)", text, flags=re.IGNORECASE)
         normalized = [item.strip().lower() for item in decisions]
+        partition = _iteration_decision_partition(path.parent, text)
         rows.append(
             {
                 "iteration_id": path.parent.name,
                 "artifact_path": _relpath(path, root),
-                "visibility_partition": "train_only_empirical",
+                "visibility_partition": partition,
                 "decisions": normalized,
                 "negative_result": any(item in {"stop", "pivot"} for item in normalized)
                 or "research_pass=false" in text.lower(),
@@ -403,7 +749,7 @@ def _collect_empirical_memory(root: Path) -> list[dict[str, Any]]:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        has_challenge = any(key in payload for key in ("historical_challenge", "lockbox"))
+        has_challenge = _contains_key(payload, {"historical_challenge", "lockbox"})
         rows.append(
             {
                 "iteration_id": path.parent.name,
@@ -430,6 +776,50 @@ def _collect_empirical_memory(root: Path) -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+def _iteration_decision_partition(iteration_dir: Path, text: str) -> str:
+    provenance_path = iteration_dir / "memory-provenance.json"
+    declared_partition = ""
+    if provenance_path.exists():
+        try:
+            payload = json.loads(provenance_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = {}
+        declared_partition = str(payload.get("decision_record_visibility_partition") or "")
+    if (iteration_dir / "observation-state.json").exists():
+        return "forward_observation"
+    for report_path in [
+        iteration_dir / "evaluation-report.json",
+        iteration_dir / "model-comparison.json",
+    ]:
+        if not report_path.exists():
+            continue
+        try:
+            payload = json.loads(report_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if _contains_key(payload, {"historical_challenge", "lockbox"}):
+            return "challenge_result"
+    lowered = text.lower()
+    if "challenge" in lowered or "lockbox" in lowered:
+        return "challenge_result"
+    if "forward observation" in lowered or "forward-only" in lowered:
+        return "forward_observation"
+    if declared_partition in {"challenge_result", "forward_observation"}:
+        return declared_partition
+    return "train_only_empirical"
+
+
+def _contains_key(value: Any, keys: set[str]) -> bool:
+    if isinstance(value, dict):
+        normalized = {str(key).lower() for key in value}
+        if any(any(marker in key for marker in keys) for key in normalized):
+            return True
+        return any(_contains_key(item, keys) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_key(item, keys) for item in value)
+    return False
 
 
 def _collect_model_memory(root: Path) -> list[dict[str, Any]]:
@@ -569,6 +959,14 @@ def _unique_strings(values: Any) -> list[str]:
             seen.add(item)
             rows.append(item)
     return rows
+
+
+def _search_tokens(value: str) -> set[str]:
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]{3,}", value.lower())
+        if token not in {"and", "for", "from", "the", "with"}
+    }
 
 
 def _sha256_file(path: Path) -> str:

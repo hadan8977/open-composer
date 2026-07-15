@@ -1,0 +1,76 @@
+name: us_stock_momentum_codesign_intraday_q1
+description: Preregistered 15-minute stock-momentum family on research-only Alpaca IEX bars.
+timeframe: 15m
+universe:
+  - AAPL
+  - AMD
+  - AMZN
+  - AVGO
+  - GOOGL
+  - META
+  - MSFT
+  - NFLX
+  - NVDA
+  - TSLA
+  - SPY
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+    - close > 0
+  any: []
+exit:
+  all: []
+  any:
+    - close <= 0
+risk:
+  max_trades_per_day: 10
+  max_position_weight: 0.2
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: cross_sectional_momentum
+  max_symbols_per_day: 5
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.2
+  same_day_flatten: true
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: codesign:intraday:manifest_v1
+costs:
+  commission_pct: 0.0
+  slippage_bps: 8.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: AAPL
+  path: data/research/alpaca_minute/aapl_15m_alpaca_iex.csv
+  feed: iex
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_replay_cache
+factors: {}
+llm_review:
+  enabled: false
+required_capabilities:
+  - market.alpaca_bars
+notes:
+  intent: Independent intraday research family; not a faster overlay on the daily champion.
+  research_design:
+    iter_id: mom_stock_intraday_codesign_q1
+    candidate_manifest_path: reports/research/iterations/mom_stock_intraday_codesign_q1/candidate-manifest.json
+    data_feasibility_path: reports/research/iterations/mom_stock_intraday_codesign_q1/data-feasibility.json
+    status: preregistered_research_only_iex
+  caveats:
+    - Alpaca IEX bars are not consolidated SIP evidence.
+    - Missing intervals require explicit session-grid classification.
+    - No broker write authority is present.

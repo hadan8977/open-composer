@@ -57,6 +57,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/plan-step-9m-multiasset-momentum-lab-2026-07-14.zh.md",
         "docs/plan-step-9n-ai-factor-ml-expansion-2026-07-14.zh.md",
         "docs/plan-step-9p-multimodal-momentum-memory-2026-07-15.zh.md",
+        "docs/plan-step-9q-evidence-driven-momentum-codesign-2026-07-15.zh.md",
         "docs/runbook-live-manual-execution.zh.md",
     ]:
         source = repo_root / new_doc

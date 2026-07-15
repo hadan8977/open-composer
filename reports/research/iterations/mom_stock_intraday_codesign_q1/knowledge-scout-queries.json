@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_stock_intraday_codesign_q1",
+  "max_results_per_query": 5,
+  "queries": [
+    {"query_id":"stock_momentum_ml","query":"cat:q-fin.PM AND all:(momentum OR trend) AND all:(ranking OR machine learning)","topics":["cross sectional momentum","learning to rank","cost aware portfolio"]},
+    {"query_id":"intraday_stock_momentum","query":"cat:q-fin.TR AND all:intraday AND all:momentum","topics":["intraday momentum","market microstructure"]},
+    {"query_id":"financial_text_pit","query":"cat:q-fin.ST AND all:(filing OR earnings OR news) AND all:(language model OR text)","topics":["SEC filing PIT","LLM leakage","news"]},
+    {"query_id":"uncertainty_cost","query":"cat:q-fin.PM AND all:(quantile OR uncertainty) AND all:(portfolio OR transaction cost)","topics":["downside quantile risk","cost aware portfolio"]}
+  ],
+  "curated_candidates": [
+    {"discovery_id":"foundational_momentum","url":"https://doi.org/10.1111/j.1540-6261.1993.tb04702.x","title":"Returns to Buying Winners and Selling Losers","summary":"Foundational cross-sectional momentum evidence.","published_at":"1993","authors":["Narasimhan Jegadeesh","Sheridan Titman"],"source_type":"paper","topics":["cross sectional momentum"]},
+    {"discovery_id":"learning_to_rank","url":"https://arxiv.org/abs/2012.07149","title":"Building Cross-Sectional Systematic Strategies By Learning to Rank","summary":"Direct ranking objectives for cross-sectional selection.","published_at":"2020-12","authors":[],"source_type":"paper","topics":["learning to rank","cross sectional ml"]},
+    {"discovery_id":"intraday_periodicity","url":"https://arxiv.org/abs/1005.3535","title":"Intraday Patterns in the Cross-Section of Stock Returns","summary":"Time-of-day cross-sectional return continuation and reversal evidence.","published_at":"2010-05","authors":[],"source_type":"paper","topics":["intraday momentum"]},
+    {"discovery_id":"llm_leakage","url":"https://arxiv.org/abs/2309.17322","title":"Language Models and Financial Lookahead Bias","summary":"Historical-news LLM evaluation contamination warning.","published_at":"2023-09-29","authors":[],"source_type":"paper","topics":["LLM leakage","news"]},
+    {"discovery_id":"sec_official","url":"https://www.sec.gov/search-filings/edgar-application-programming-interfaces","title":"EDGAR Application Programming Interfaces","summary":"Official filing metadata and update semantics.","published_at":"accessed 2026-07-15","authors":["U.S. Securities and Exchange Commission"],"source_type":"regulatory_docs","topics":["SEC filing PIT"]},
+    {"discovery_id":"alpaca_intraday","url":"https://docs.alpaca.markets/us/docs/historical-stock-data-1","title":"Alpaca Historical Stock Data","summary":"IEX and SIP coverage differences.","published_at":"accessed 2026-07-15","authors":["Alpaca"],"source_type":"provider_official_docs","topics":["intraday data","IEX SIP"]},
+    {"discovery_id":"qlib_reference","url":"https://github.com/microsoft/qlib","title":"Microsoft Qlib","summary":"PIT data, experiment records, models, and online workflow patterns.","published_at":"accessed 2026-07-15","authors":["Microsoft"],"source_type":"platform_docs","topics":["PIT data","research memory"]},
+    {"discovery_id":"fingpt_boundary","url":"https://github.com/AI4Finance-Foundation/FinGPT","title":"FinGPT","summary":"Financial NLP task and data-pipeline examples with third-party content caveats.","published_at":"accessed 2026-07-15","authors":["AI4Finance Foundation"],"source_type":"platform_docs","topics":["financial NLP","news licensing"]},
+    {"discovery_id":"crsp_reference","url":"https://www.crsp.org/research/crsp-us-stock-databases/","title":"CRSP US Stock Databases","summary":"Active and inactive securities, permanent IDs, corporate actions, and delistings.","published_at":"accessed 2026-07-15","authors":["CRSP"],"source_type":"industry_standard","topics":["PIT universe","delistings"]}
+  ]
+}

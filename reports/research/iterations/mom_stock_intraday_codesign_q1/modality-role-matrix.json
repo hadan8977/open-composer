@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_stock_intraday_codesign_q1",
+  "roles": [
+    {"role":"factor_generation","modalities":["price","volume","industry","SEC filing","news"],"methods":["deterministic transforms","grounded LLM extraction"],"fallback":"price_volume_only"},
+    {"role":"return_ranking","modalities":["daily price-volume","intraday session features","industry context"],"methods":["linear rank","shallow regression","LambdaRank"],"fallback":"deterministic 12-1"},
+    {"role":"risk_prediction","modalities":["price","volume","market context"],"methods":["quantile regression","downside classifier"],"fallback":"fixed exposure and position caps"},
+    {"role":"regime_meta_context","modalities":["SPY trend","volatility","cross-sectional dispersion"],"methods":["fixed state","train-only change-point context"],"fallback":"unconditional model"},
+    {"role":"sizing","modalities":["rank","risk","turnover","cost"],"methods":["fixed cost-aware portfolio map","hybrid shrinkage"],"fallback":"equal-weight Top-K"},
+    {"role":"uncertainty","modalities":["model disagreement","calibration residuals"],"methods":["abstention","tail exposure cap"],"fallback":"deterministic weights"},
+    {"role":"event_confirmation","modalities":["SEC filing","earnings release","licensed news"],"methods":["document diff","structured LLM event packet"],"fallback":"no score change"}
+  ],
+  "required_ablations": ["deterministic","ml_native","hybrid","missing_modality","delayed_modality","shuffled_placebo","stale_placebo","issuer_anonymized"],
+  "order_authority": false
+}

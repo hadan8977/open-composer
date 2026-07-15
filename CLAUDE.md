@@ -8,6 +8,7 @@ Use the same project rules as Codex:
 - Create draft strategies first, then validate specs before generating Python, Pine, reports, tests, review cards, or paper automation artifacts.
 - Choose market, event, macro, and news sources through `capabilities/registry.yaml`; run capability evaluation before adding a new required strategy capability.
 - Every strategy design must include parameter ranges, method variants, factor variants, and a bounded search space.
+- New research rounds bind verified source cards to a schema-v2 brief and preregister every parameterized/model candidate in a machine-readable manifest before backtests or training.
 - Every backtest must produce a report; every signal must be logged before review or paper order submission.
 - Promotion must check benchmark family, out-of-sample evidence, walk-forward evidence, costs, data source sensitivity, and sample/fallback caveats.
 - Keep `workflow_pass`, `research_pass`, `llm_contribution_pass`, and `paper_ready_pass` separate.
