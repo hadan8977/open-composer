@@ -1,30 +1,151 @@
 {
-  "schema_version": 1,
-  "iter_id": "mom_stock_intraday_codesign_q1",
-  "strategy_name": "us_stock_momentum_codesign_daily_q1",
-  "source_spec_path": "strategy_specs/drafts/us_stock_momentum_codesign_daily_q1.yaml",
-  "spec_hash": "2a2fa73274f1a1aa03d54b4f617f0ed7132392da7fadc6d0b8a5bad4e590fc34",
-  "total_candidate_budget": 48,
   "candidate_manifest_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/candidate-manifest.json",
-  "candidate_manifest_sha256": "100b0c1c84e879d51a53197daf8e9378b6f7144fe62ca283a8e99417e19bd6be",
-  "paths": [
-    {"name":"deterministic_daily","candidate_count":12,"hypothesis_refs":["Q-H1"],"parameters":{"method_family":["12_1","industry_relative","volume_conditioned","turnover_buffered"],"implementation_variant":["base","risk_adjusted","low_turnover"]},"benchmark_family":["same-symbol buy-and-hold","equal-weight universe","SPY","XLK","BIL","ex-post best symbol"]},
-    {"name":"ml_native_daily","candidate_count":16,"hypothesis_refs":["Q-H2"],"parameters":{"model_role":["linear_rank","shallow_rank","downside_quantile","downside_classifier"],"portfolio_map":["rank_only","rank_risk_cost","hybrid_shrinkage","placebo"]},"benchmark_family":["deterministic 12-1","matched linear model","equal-weight universe","SPY","XLK","BIL","ex-post best symbol"]},
-    {"name":"intraday_independent","candidate_count":12,"hypothesis_refs":["Q-H3"],"parameters":{"task":["opening_continuation","opening_reversal","time_slot_continuation","overnight_intraday"],"method":["deterministic","linear_ml","shallow_tree"]},"benchmark_family":["same-symbol buy-and-hold","equal-weight universe","SPY","QQQ","BIL","naive matched intraday"]},
-    {"name":"event_llm","candidate_count":8,"hypothesis_refs":["Q-H4"],"parameters":{"ablation":["document_diff","text_only","quant_plus_text","missing_text","delayed_text","shuffled_text","stale_text","issuer_anonymized"]},"benchmark_family":["deterministic 12-1","quant-only ranker","document-diff baseline","equal-weight universe","SPY","BIL"]}
-  ],
-  "trial_ledger_paths": ["reports/research/iterations/mom_stock_intraday_codesign_q1/trial-ledger.jsonl"],
-  "evaluation_report_paths": ["reports/research/iterations/mom_stock_intraday_codesign_q1/evaluation-report.json","reports/research/iterations/mom_stock_intraday_codesign_q1/data-feasibility.json","reports/research/iterations/mom_stock_intraday_codesign_q1/knowledge-assessment.json"],
+  "candidate_manifest_sha256": "af8622b54d11b0000918e2b274f1b539ff3d562dccc4598ed2829445ccecab8c",
   "cost_table_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/cost-contract.json",
   "data_feasibility_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/data-feasibility.json",
+  "data_feasibility_sha256": "0993d1344c9a4276ecbbb72a6112027529cc99cecdb2c033173a47be5222c024",
+  "evaluation_report_paths": [
+    "reports/research/iterations/mom_stock_intraday_codesign_q1/evaluation-report.json",
+    "reports/research/iterations/mom_stock_intraday_codesign_q1/data-feasibility.json",
+    "reports/research/iterations/mom_stock_intraday_codesign_q1/knowledge-assessment.json"
+  ],
+  "iter_id": "mom_stock_intraday_codesign_q1",
   "knowledge_contract": {
     "assessment_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/knowledge-assessment.json",
-    "scout_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/knowledge-scout.json",
-    "model_reuse_decision_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/model-reuse-decision.json",
     "modality_role_matrix_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/modality-role-matrix.json",
-    "required_visibility_partitions": ["public_literature","train_only_empirical","challenge_result","forward_observation"],
-    "reuse_fresh_sources": true,
+    "model_reuse_decision_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/model-reuse-decision.json",
     "refresh_stale_sources": true,
-    "require_new_or_refreshed_evidence": true
-  }
+    "require_new_or_refreshed_evidence": true,
+    "required_visibility_partitions": [
+      "public_literature",
+      "train_only_empirical",
+      "challenge_result",
+      "forward_observation"
+    ],
+    "reuse_fresh_sources": true,
+    "scout_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/knowledge-scout.json"
+  },
+  "paths": [
+    {
+      "benchmark_family": [
+        "same-symbol buy-and-hold",
+        "equal-weight universe",
+        "SPY",
+        "XLK",
+        "BIL",
+        "ex-post best symbol"
+      ],
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "Q-H1"
+      ],
+      "name": "deterministic_daily",
+      "parameters": {
+        "implementation_variant": [
+          "base",
+          "risk_adjusted",
+          "low_turnover"
+        ],
+        "method_family": [
+          "12_1",
+          "industry_relative",
+          "volume_conditioned",
+          "turnover_buffered"
+        ]
+      }
+    },
+    {
+      "benchmark_family": [
+        "deterministic 12-1",
+        "matched linear model",
+        "equal-weight universe",
+        "SPY",
+        "XLK",
+        "BIL",
+        "ex-post best symbol"
+      ],
+      "candidate_count": 16,
+      "hypothesis_refs": [
+        "Q-H2"
+      ],
+      "name": "ml_native_daily",
+      "parameters": {
+        "model_role": [
+          "linear_rank",
+          "shallow_rank",
+          "downside_quantile",
+          "downside_classifier"
+        ],
+        "portfolio_map": [
+          "rank_only",
+          "rank_risk_cost",
+          "hybrid_shrinkage",
+          "placebo"
+        ]
+      }
+    },
+    {
+      "benchmark_family": [
+        "same-symbol buy-and-hold",
+        "equal-weight universe",
+        "SPY",
+        "QQQ",
+        "BIL",
+        "naive matched intraday"
+      ],
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "Q-H3"
+      ],
+      "name": "intraday_independent",
+      "parameters": {
+        "method": [
+          "deterministic",
+          "linear_ml",
+          "shallow_tree"
+        ],
+        "task": [
+          "opening_continuation",
+          "opening_reversal",
+          "time_slot_continuation",
+          "overnight_intraday"
+        ]
+      }
+    },
+    {
+      "benchmark_family": [
+        "deterministic 12-1",
+        "quant-only ranker",
+        "document-diff baseline",
+        "equal-weight universe",
+        "SPY",
+        "BIL"
+      ],
+      "candidate_count": 8,
+      "hypothesis_refs": [
+        "Q-H4"
+      ],
+      "name": "event_llm",
+      "parameters": {
+        "ablation": [
+          "document_diff",
+          "text_only",
+          "quant_plus_text",
+          "missing_text",
+          "delayed_text",
+          "shuffled_text",
+          "stale_text",
+          "issuer_anonymized"
+        ]
+      }
+    }
+  ],
+  "schema_version": 1,
+  "source_spec_path": "strategy_specs/drafts/us_stock_momentum_codesign_daily_q1.yaml",
+  "spec_hash": "2a2fa73274f1a1aa03d54b4f617f0ed7132392da7fadc6d0b8a5bad4e590fc34",
+  "strategy_name": "us_stock_momentum_codesign_daily_q1",
+  "total_candidate_budget": 48,
+  "trial_ledger_paths": [
+    "reports/research/iterations/mom_stock_intraday_codesign_q1/trial-ledger.jsonl"
+  ]
 }

@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from open_composer.config import ensure_dir
 from open_composer.context import build_signal_context
@@ -69,6 +69,18 @@ class FeaturePacketRow(BaseModel):
     def normalize_symbol(cls, value: str) -> str:
         return value.upper().strip()
 
+    @model_validator(mode="after")
+    def validate_point_in_time_order(self) -> FeaturePacketRow:
+        self.timestamp = _as_utc(self.timestamp)
+        self.published_at = _as_utc(self.published_at)
+        self.fetched_at = _as_utc(self.fetched_at)
+        self.visible_at = _as_utc(self.visible_at)
+        if self.fetched_at < self.published_at:
+            raise ValueError("fetched_at cannot precede published_at")
+        if self.visible_at < self.fetched_at:
+            raise ValueError("visible_at cannot precede fetched_at")
+        return self
+
 
 class FeaturePacketInspection(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -91,6 +103,7 @@ class FeaturePacketInspection(BaseModel):
     evidence_fixture_paths: list[str] = Field(default_factory=list)
     dedupe_key_count: int = 0
     duplicate_dedupe_keys: list[str] = Field(default_factory=list)
+    pit_order_violation_count: int = 0
     point_in_time_status: Literal["complete", "partial", "missing"] = "missing"
     replay_warnings: list[str] = Field(default_factory=list)
 
@@ -237,6 +250,8 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
     invalid_timestamps = 0
     seen_dedupe_keys: set[str] = set()
     duplicate_dedupe_keys: set[str] = set()
+    pit_order_violation_count = 0
+    invalid_pit_timestamp_count = 0
     for row in rows:
         if row.get("timestamp"):
             try:
@@ -248,6 +263,16 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
             if dedupe_key in seen_dedupe_keys:
                 duplicate_dedupe_keys.add(dedupe_key)
             seen_dedupe_keys.add(dedupe_key)
+        if all(row.get(field) for field in ("published_at", "fetched_at", "visible_at")):
+            try:
+                published_at = parse_datetime(str(row["published_at"]))
+                fetched_at = parse_datetime(str(row["fetched_at"]))
+                visible_at = parse_datetime(str(row["visible_at"]))
+            except FeaturePacketError:
+                invalid_pit_timestamp_count += 1
+            else:
+                if fetched_at < published_at or visible_at < fetched_at:
+                    pit_order_violation_count += 1
 
     key_sets = [set(row) for row in rows]
     has_timestamp = bool(rows) and all("timestamp" in keys for keys in key_sets)
@@ -291,8 +316,16 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
         warnings.append("published_at is missing for at least one row")
     if not has_fetched_at:
         warnings.append("fetched_at is missing for at least one row")
-    if not has_visible_at and not (has_published_at and has_fetched_at):
-        warnings.append("visible_at is missing and cannot be inferred for at least one row")
+    if not has_visible_at:
+        warnings.append("visible_at is missing for at least one row")
+    if invalid_pit_timestamp_count:
+        warnings.append(
+            f"{invalid_pit_timestamp_count} PIT timestamp value(s) are not ISO-8601 parseable"
+        )
+    if pit_order_violation_count:
+        warnings.append(
+            f"{pit_order_violation_count} row(s) violate published_at <= fetched_at <= visible_at"
+        )
     if not has_dedupe_key:
         warnings.append("dedupe_key is missing for at least one row")
     if not has_schema_version:
@@ -309,10 +342,12 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
         and not invalid_timestamps
         and has_published_at
         and has_fetched_at
-        and (has_visible_at or (has_published_at and has_fetched_at))
+        and has_visible_at
         and has_dedupe_key
         and has_schema_version
         and not duplicate_dedupe_keys
+        and not invalid_pit_timestamp_count
+        and not pit_order_violation_count
         and has_field
     ):
         point_in_time_status = "complete"
@@ -340,6 +375,7 @@ def inspect_feature_packet(path: Path, field: str | None = None) -> FeaturePacke
         evidence_fixture_paths=sorted(set(evidence_fixture_paths)),
         dedupe_key_count=len(_sorted_values(row.get("dedupe_key") for row in rows)),
         duplicate_dedupe_keys=sorted(duplicate_dedupe_keys),
+        pit_order_violation_count=pit_order_violation_count,
         point_in_time_status=point_in_time_status,
         replay_warnings=warnings,
     )
@@ -454,6 +490,12 @@ def _packet_has_dedupe_key(path: Path, dedupe_key: str) -> bool:
             if isinstance(raw, dict) and raw.get("dedupe_key") == dedupe_key:
                 return True
     return False
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
 _MISSING = object()

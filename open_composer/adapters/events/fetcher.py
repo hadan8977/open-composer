@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -87,7 +88,8 @@ def _load_fixture_events(path: Path) -> list[EventRecord]:
     with path.open("r", encoding="utf-8") as handle:
         for line in handle:
             if line.strip():
-                events.append(EventRecord.model_validate(json.loads(line)))
+                event = EventRecord.model_validate(json.loads(line))
+                events.append(event.model_copy(update={"acquisition_mode": "fixture_replay"}))
     return _dedupe_events(events)
 
 
@@ -123,13 +125,14 @@ def _destination_path(root: Path, kind: str, provider: str) -> Path:
 def _http_get_json(url: str, params: dict[str, Any] | None = None) -> dict[str, Any] | list[Any]:
     import httpx
 
-    headers = {"User-Agent": os.getenv("SEC_USER_AGENT", "open-composer/0.1")}
+    headers = {"User-Agent": _sec_user_agent()} if "sec.gov" in url else {}
     response = httpx.get(url, params=params, headers=headers, timeout=20)
     response.raise_for_status()
     return response.json()
 
 
 def _fetch_sec_filings(symbols: list[str]) -> list[EventRecord]:
+    _sec_user_agent()
     tickers_payload = _http_get_json("https://www.sec.gov/files/company_tickers.json")
     if not isinstance(tickers_payload, dict):
         return []
@@ -151,10 +154,17 @@ def _fetch_sec_filings(symbols: list[str]) -> list[EventRecord]:
         accession_numbers = filings.get("accessionNumber", [])[:10]
         filing_dates = filings.get("filingDate", [])[:10]
         primary_docs = filings.get("primaryDocument", [])[:10]
-        for form, accession, filing_date, primary_doc in zip(
-            forms, accession_numbers, filing_dates, primary_docs, strict=False
+        acceptance_datetimes = filings.get("acceptanceDateTime", [])[:10]
+        fetched_at = datetime.now(UTC)
+        for index, (form, accession, filing_date, primary_doc) in enumerate(
+            zip(forms, accession_numbers, filing_dates, primary_docs, strict=False)
         ):
-            published = datetime.fromisoformat(f"{filing_date}T21:00:00+00:00")
+            acceptance_raw = (
+                acceptance_datetimes[index] if index < len(acceptance_datetimes) else None
+            )
+            acceptance_at = _parse_optional_datetime(acceptance_raw)
+            published_at = acceptance_at or fetched_at
+            visible_at = max(published_at, fetched_at)
             accession_path = str(accession).replace("-", "")
             url = (
                 f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accession_path}/{primary_doc}"
@@ -164,8 +174,23 @@ def _fetch_sec_filings(symbols: list[str]) -> list[EventRecord]:
                     id=f"sec-{symbol.lower()}-{accession}",
                     source="sec",
                     symbol=symbol.upper(),
-                    published_at=published,
-                    fetched_at=datetime.now(UTC),
+                    published_at=published_at,
+                    fetched_at=fetched_at,
+                    visible_at=visible_at,
+                    first_seen_at=fetched_at,
+                    accepted_at=acceptance_at,
+                    revision="as_filed_accession",
+                    revision_id=str(accession),
+                    version_id=str(accession),
+                    rights="source_document_rights_unverified",
+                    rights_scope="public_access_reuse_unverified",
+                    availability_quality=(
+                        "fetch_time_with_official_acceptance"
+                        if acceptance_at is not None
+                        else "fetch_time_first_seen"
+                    ),
+                    availability_basis="collector_first_seen_and_sec_acceptance",
+                    acquisition_mode="live_api",
                     event_type=str(form),
                     title=f"{symbol.upper()} SEC filing {form}",
                     summary=f"SEC EDGAR filing {form} for {symbol.upper()} filed on {filing_date}.",
@@ -173,7 +198,12 @@ def _fetch_sec_filings(symbols: list[str]) -> list[EventRecord]:
                     sentiment="neutral",
                     relevance_score=0.75,
                     dedupe_key=f"sec:{symbol.upper()}:{accession}",
-                    raw={"accession": accession, "form": form, "filing_date": filing_date},
+                    raw={
+                        "accession": accession,
+                        "form": form,
+                        "filing_date": filing_date,
+                        "acceptance_datetime": acceptance_raw,
+                    },
                 )
             )
     return _dedupe_events(records)
@@ -197,19 +227,29 @@ def _fetch_fred_series(series_ids: list[str]) -> list[EventRecord]:
         )
         if not isinstance(payload, dict):
             continue
+        fetched_at = datetime.now(UTC)
         for observation in payload.get("observations", []):
             date_value = observation.get("date")
             value = observation.get("value")
             if not date_value or value in {None, "."}:
                 continue
-            published = datetime.fromisoformat(f"{date_value}T21:00:00+00:00")
             records.append(
                 EventRecord(
                     id=f"fred-{series_id}-{date_value}",
                     source="fred",
                     symbol=series_id,
-                    published_at=published,
-                    fetched_at=datetime.now(UTC),
+                    published_at=fetched_at,
+                    fetched_at=fetched_at,
+                    visible_at=fetched_at,
+                    first_seen_at=fetched_at,
+                    revision="latest_snapshot_non_vintage",
+                    revision_id="unknown_latest_snapshot",
+                    version_id="unknown_latest_snapshot",
+                    rights="underlying_series_terms_unverified",
+                    rights_scope="internal_replay_unverified",
+                    availability_quality="forward_only_fetch_time",
+                    availability_basis="collector_first_seen",
+                    acquisition_mode="live_api_forward_only",
                     event_type="macro_series_observation",
                     title=f"{series_id} observation",
                     summary=f"{series_id} observation value {value}.",
@@ -295,7 +335,8 @@ def _alpha_vantage_records_from_payload(
             continue
         published = datetime.strptime(time_published[:14], "%Y%m%dT%H%M%S").replace(tzinfo=UTC)
         ticker_sentiment = item.get("ticker_sentiment", [])
-        visible = _alpha_vantage_visible_at(item, published)
+        fetched_at = datetime.now(UTC)
+        visible = _alpha_vantage_visible_at(item, published, fetched_at)
         for symbol, relevance, sentiment in _alpha_vantage_symbol_rows(
             symbols,
             ticker_sentiment,
@@ -307,8 +348,21 @@ def _alpha_vantage_records_from_payload(
                     source="alpha_vantage",
                     symbol=symbol,
                     published_at=published,
-                    fetched_at=datetime.now(UTC),
+                    fetched_at=fetched_at,
                     visible_at=visible,
+                    first_seen_at=fetched_at,
+                    revision="provider_current_snapshot",
+                    revision_id="provider_current_snapshot",
+                    version_id=str(item.get("url") or time_published),
+                    rights="provider_and_original_source_terms_unverified",
+                    rights_scope="internal_model_input_unverified",
+                    availability_quality=(
+                        "provider_first_seen_timestamp"
+                        if visible != fetched_at
+                        else "fetch_time_first_seen"
+                    ),
+                    availability_basis="collector_first_seen",
+                    acquisition_mode="live_api",
                     event_type="news_sentiment",
                     title=str(item.get("title", "")),
                     summary=str(item.get("summary", "")),
@@ -339,13 +393,24 @@ def _fetch_gdelt_news(symbols: list[str]) -> list[EventRecord]:
         title = str(article.get("title", ""))
         url = str(article.get("url", ""))
         symbol = _first_symbol_in_text(symbols, f"{title} {article.get('sourcecountry', '')}")
+        fetched_at = datetime.now(UTC)
         records.append(
             EventRecord(
                 id=f"gdelt-{symbol.lower()}-{abs(hash(url or title))}",
                 source="gdelt",
                 symbol=symbol,
                 published_at=published,
-                fetched_at=datetime.now(UTC),
+                fetched_at=fetched_at,
+                visible_at=fetched_at,
+                first_seen_at=fetched_at,
+                revision="provider_current_snapshot",
+                revision_id="provider_current_snapshot",
+                version_id=url or title,
+                rights="linked_article_rights_unverified",
+                rights_scope="metadata_only_until_verified",
+                availability_quality="fetch_time_first_seen",
+                availability_basis="collector_first_seen",
+                acquisition_mode="live_api",
                 event_type="broad_news",
                 title=title,
                 summary=str(article.get("domain", "")),
@@ -418,21 +483,32 @@ def _normalize_sentiment(value: Any) -> str:
     return "unknown"
 
 
-def _alpha_vantage_visible_at(item: dict[str, Any], published: datetime) -> datetime:
-    visible_raw = (
-        item.get("visible_at")
-        or item.get("first_seen_at")
-        or item.get("published_at")
-        or item.get("time_published")
+def _alpha_vantage_visible_at(
+    item: dict[str, Any], published_at: datetime, fetched_at: datetime
+) -> datetime:
+    provider_visible_at = _parse_optional_datetime(
+        item.get("visible_at") or item.get("first_seen_at")
     )
-    if isinstance(visible_raw, str) and visible_raw:
-        try:
-            if len(visible_raw) >= 15 and visible_raw[:8].isdigit() and "T" in visible_raw:
-                return datetime.strptime(visible_raw[:14], "%Y%m%dT%H%M%S").replace(tzinfo=UTC)
-            return datetime.fromisoformat(visible_raw.replace("Z", "+00:00"))
-        except ValueError:
-            pass
-    return published
+    return max(published_at, fetched_at, provider_visible_at or fetched_at)
+
+
+def _sec_user_agent() -> str:
+    user_agent = os.getenv("SEC_USER_AGENT", "").strip()
+    if not user_agent or re.search(r"\S+@\S+\.\S+", user_agent) is None:
+        raise RuntimeError("SEC_USER_AGENT with a contact email is required for live SEC fetches")
+    return user_agent
+
+
+def _parse_optional_datetime(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        if len(value) >= 15 and value[:8].isdigit() and "T" in value:
+            return datetime.strptime(value[:14], "%Y%m%dT%H%M%S").replace(tzinfo=UTC)
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
 def _first_symbol_in_text(symbols: list[str], text: str) -> str:
@@ -451,18 +527,40 @@ def _parse_gdelt_datetime(value: str) -> datetime:
 
 
 def event_record_from_live_payload(source: str, symbol: str, payload: dict) -> EventRecord:
-    published = payload.get("published_at") or payload.get("time_published") or datetime.now(UTC)
+    fetched_at = datetime.now(UTC)
+    published = payload.get("published_at") or payload.get("time_published") or fetched_at
     if isinstance(published, str):
         published_at = datetime.fromisoformat(published.replace("Z", "+00:00"))
     else:
         published_at = published
+    provider_visible_at = _parse_optional_datetime(
+        payload.get("visible_at") or payload.get("first_seen_at")
+    )
+    accepted_at = _parse_optional_datetime(payload.get("accepted_at"))
+    visible_at = max(
+        value
+        for value in (published_at, fetched_at, provider_visible_at, accepted_at)
+        if value is not None
+    )
     title = str(payload.get("title", "untitled event"))
     return EventRecord(
         id=str(payload.get("id", f"{source}:{symbol}:{published_at.isoformat()}")),
         source=source,
         symbol=symbol,
         published_at=published_at,
-        fetched_at=datetime.now(UTC),
+        fetched_at=fetched_at,
+        visible_at=visible_at,
+        first_seen_at=fetched_at,
+        accepted_at=accepted_at,
+        vintage_at=_parse_optional_datetime(payload.get("vintage_at")),
+        revision=str(payload.get("revision", "unknown")),
+        revision_id=str(payload.get("revision_id", "unknown")),
+        version_id=str(payload.get("version_id", "unknown")),
+        rights=str(payload.get("rights", "unknown")),
+        rights_scope=str(payload.get("rights_scope", "unknown")),
+        availability_quality=str(payload.get("availability_quality", "fetch_time_first_seen")),
+        availability_basis=str(payload.get("availability_basis", "collector_first_seen")),
+        acquisition_mode=str(payload.get("acquisition_mode", "live_api")),
         event_type=str(payload.get("event_type", source)),
         title=title,
         summary=str(payload.get("summary", "")),

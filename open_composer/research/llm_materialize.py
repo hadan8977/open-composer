@@ -98,6 +98,7 @@ def materialize_factor(
                 continue
             cache_misses += 1
             try:
+                fetched_at = datetime.now(UTC)
                 output = llm.infer(
                     model=model,
                     prompt=prompt,
@@ -108,8 +109,8 @@ def materialize_factor(
                 packet = FeaturePacketRow(
                     timestamp=row["timestamp"],
                     published_at=row["timestamp"],
-                    fetched_at=datetime.now(UTC),
-                    visible_at=row["visible_at"],
+                    fetched_at=fetched_at,
+                    visible_at=max(row["visible_at"], fetched_at),
                     source=f"llm_materialize:{factor.input_view}",
                     symbol=symbol,
                     dedupe_key=key,
@@ -118,6 +119,10 @@ def materialize_factor(
                     model=model,
                     input_hash=input_hash,
                     prompt_hash=prompt_hash,
+                    acquisition_mode="retrospective_transform",
+                    availability_quality="collector_materialization_time",
+                    rights_scope="derived_market_data_unverified",
+                    revision_id=input_hash,
                     features=features,
                     evidence=FeaturePacketEvidence(
                         single_modality_baseline_metric="pending_promotion_quant_baseline",

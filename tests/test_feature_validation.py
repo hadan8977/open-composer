@@ -227,9 +227,41 @@ def test_feature_packet_validation_reports_invalid_timestamp(sample_workspace: P
         encoding="utf-8",
     )
 
-    packet = build_feature_packet_records(sample_workspace)[0]
+    packet = next(
+        item
+        for item in build_feature_packet_records(sample_workspace)
+        if item.path.endswith("bad_timestamp_features.jsonl")
+    )
 
     assert packet.point_in_time_status == "partial"
+
+
+def test_feature_packet_validation_rejects_impossible_pit_order(
+    sample_workspace: Path,
+) -> None:
+    feature_path = sample_workspace / "feature_logs" / "bad_pit_order_features.jsonl"
+    feature_path.write_text(
+        (
+            '{"timestamp":"2026-01-01T00:00:00Z",'
+            '"published_at":"2026-01-01T00:00:00Z",'
+            '"fetched_at":"2026-01-02T00:00:00Z",'
+            '"visible_at":"2026-01-01T00:00:00Z","source":"llm",'
+            '"symbol":"QQQ","dedupe_key":"llm:bad-order",'
+            '"schema_version":"1","features":{"score":0.8}}\n'
+        ),
+        encoding="utf-8",
+    )
+
+    packet = next(
+        item
+        for item in build_feature_packet_records(sample_workspace)
+        if item.path.endswith("bad_pit_order_features.jsonl")
+    )
+
+    assert packet.point_in_time_status == "partial"
+    assert any(
+        "published_at <= fetched_at <= visible_at" in warning for warning in packet.replay_warnings
+    )
 
 
 def test_llm_feature_materialization_schema_requires_prompt_contract(
@@ -310,11 +342,12 @@ def test_feature_packet_validation_reports_duplicate_dedupe_keys(
 
 
 def test_feature_packet_write_rejects_future_visible_at(tmp_path: Path) -> None:
+    future = datetime.now(UTC) + timedelta(days=1)
     packet = FeaturePacketRow(
-        timestamp=datetime(2099, 1, 1, tzinfo=UTC),
-        published_at=datetime(2099, 1, 1, tzinfo=UTC),
-        fetched_at=datetime(2099, 1, 1, tzinfo=UTC),
-        visible_at=datetime.now(UTC) + timedelta(days=1),
+        timestamp=future,
+        published_at=future,
+        fetched_at=future,
+        visible_at=future,
         source="llm",
         symbol="QQQ",
         dedupe_key="llm:future",

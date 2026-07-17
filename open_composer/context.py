@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 
 from open_composer.config import ensure_dir, project_root
@@ -36,7 +37,8 @@ def _context_from_records(
     eligible_events = [
         event
         for event in events
-        if event.symbol in {signal.symbol, "SPY", "QQQ"} and event.published_at <= signal.timestamp
+        if event.symbol in {signal.symbol, "SPY", "QQQ"}
+        and _event_visible_at(event) <= signal.timestamp
     ]
     eligible_news = [
         event
@@ -47,7 +49,7 @@ def _context_from_records(
         event
         for event in macro
         if event.symbol in {"FED", "DGS10", "FEDFUNDS", "CPIAUCSL", "UNRATE"}
-        and event.published_at <= signal.timestamp
+        and _event_visible_at(event) <= signal.timestamp
     ]
     return SignalContext(
         signal_id=signal.id,
@@ -55,14 +57,20 @@ def _context_from_records(
         events=_top_relevant(eligible_events, max_records),
         news=_top_relevant(eligible_news, max_records),
         macro=_top_relevant(eligible_macro, max_records),
-        notes=["Context excludes records published after the signal timestamp."],
+        notes=["Context excludes records not visible by the signal timestamp."],
     )
 
 
 def _top_relevant(records: list[EventRecord], max_records: int) -> list[EventRecord]:
     return sorted(
-        records, key=lambda item: (item.relevance_score, item.published_at), reverse=True
+        records, key=lambda item: (item.relevance_score, _event_visible_at(item)), reverse=True
     )[:max_records]
+
+
+def _event_visible_at(event: EventRecord) -> datetime:
+    if event.visible_at is not None:
+        return event.visible_at
+    return max(event.published_at, event.fetched_at)
 
 
 def _load_event_records(path: Path) -> list[EventRecord]:
@@ -97,7 +105,7 @@ def _load_fixture_context(root: Path, include_macro: bool) -> list[EventRecord]:
 def _dedupe(records: list[EventRecord]) -> list[EventRecord]:
     seen: set[str] = set()
     output: list[EventRecord] = []
-    for record in sorted(records, key=lambda item: item.published_at):
+    for record in sorted(records, key=_event_visible_at):
         if record.dedupe_key in seen:
             continue
         seen.add(record.dedupe_key)
@@ -133,7 +141,8 @@ def _format_events(records: list[EventRecord]) -> list[str]:
     if not records:
         return ["- None"]
     return [
-        f"- `{record.source}` {record.published_at.isoformat()} "
+        f"- `{record.source}` visible={_event_visible_at(record).isoformat()} "
+        f"published={record.published_at.isoformat()} "
         f"{record.symbol} {record.title} "
         f"({record.sentiment}, relevance={record.relevance_score:.2f})"
         for record in records

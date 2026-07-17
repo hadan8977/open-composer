@@ -1,0 +1,1824 @@
+{
+  "benchmark_evaluation_contract": {
+    "BIL_cash_proxy": "hold_100pct_BIL_no_turnover",
+    "SPY_market_proxy": "buy_at_first_fold_decision_hold_SPY_no_intermediate_rebalance",
+    "XLK_sector_proxy": "buy_at_first_fold_decision_hold_XLK_no_intermediate_rebalance",
+    "cost_scenarios_bps": [
+      10.0,
+      20.0,
+      40.0
+    ],
+    "deterministic_12_1": "D01_scores_rebalance_equal_weight_top5_each_decision_on_identical_fold",
+    "equal_weight_universe": "rebalance_equal_weight_selected62_each_decision_charge_realized_half_l1",
+    "ex_post_best_symbol_report_only": "choose_one_selected62_symbol_maximizing_open_at_last_outer_test_decision_plus_candidate_horizon_div_open_at_first_outer_test_decision_minus_1;symbol_ascending_tie_break;buy_at_first_fold_decision_and_hold_that_same_symbol_through_the_last_outer_test_horizon_open;selection_ineligible",
+    "fold_start_position": "100pct_BIL_then_charge_initial_one_way_turnover",
+    "same_symbol_buy_and_hold": "report_each_selected62_symbol_open_to_open_path_and_cross_symbol_median;buy_at_first_fold_decision_hold_without_intermediate_rebalance;selection_ineligible",
+    "terminal_turnover": "not_charged_positions_remain_held_at_fold_end",
+    "window": "same_outer_test_decision_dates_and_candidate_label_horizon"
+  },
+  "cost_application": "half_l1_one_way_turnover_including_BIL_cash_weight",
+  "fallback_contract": {
+    "candidate_status": "a_failed_candidate_remains_failed_and_fallback_returns_are_comparison_only",
+    "cycle_or_resolution_failure": "100pct_BIL_cash_proxy",
+    "empty_selection": "100pct_BIL_cash_proxy",
+    "equal_weight_cash": "100pct_BIL_cash_proxy",
+    "fixed_position_caps": "D01_top_five_on_the_identical_outer_fold_at_exactly_20pct_each;100pct_BIL_if_D01_is_unavailable",
+    "named_candidate": "use_the_already_completed_named_candidate_on_the_identical_outer_fold_and_cost_scenario;recursively_resolve_its_manifest_fallback_if_it_failed",
+    "recursion_guard": "candidate_id_visited_set",
+    "reject_if_not_null": "record_rejected_control_without_fit_and_use_100pct_BIL_for_comparison_only"
+  },
+  "fallback_precedence": [
+    "record_candidate_failure_without_overwriting_candidate_metrics",
+    "resolve_manifest_fallback_for_comparison_only_with_candidate_id_visited_set",
+    "use_100pct_BIL_on_cycle_resolution_failure_or_empty_selection"
+  ],
+  "feature_formulas": {
+    "cross_sectional_dispersion_21": "rolling_mean(cross_section_std(selected62_close.shift(1).pct_change()),21,min=15)",
+    "downside_vol_63_rank": "pct_rank(min(close.shift(1).pct_change(),0).rolling(63,min=40).std())",
+    "drawdown_63_rank": "pct_rank(close.shift(1)/rolling_max(close.shift(1),63,min=40)-1)",
+    "industry_relative_126_rank": "pct_rank(mom_126_raw-industry_mean(mom_126_raw))",
+    "industry_relative_63_rank": "pct_rank(mom_63_raw-industry_mean(mom_63_raw))",
+    "liquidity_rank": "pct_rank(rolling_median(close.shift(1)*volume.shift(1),60,min=40))",
+    "market_breadth_20": "mean(selected62_close.shift(1)>rolling_mean(selected62_close.shift(1),20,min=15))",
+    "mom_126_raw": "close.shift(1).pct_change(126)",
+    "mom_126_skip21_rank": "pct_rank(close.shift(22)/close.shift(127)-1)",
+    "mom_21_rank": "pct_rank(close.shift(1).pct_change(21))",
+    "mom_252_skip21_rank": "pct_rank(close.shift(22)/close.shift(253)-1)",
+    "mom_63_rank": "pct_rank(close.shift(1).pct_change(63))",
+    "mom_63_raw": "close.shift(1).pct_change(63)",
+    "price_volume_corr_21_rank": "pct_rank(rolling_corr(close.shift(1).pct_change(),volume.shift(1).pct_change(),21,min=15))",
+    "relative_spy_126_rank": "pct_rank(stock_return_126-spy_return_126)",
+    "relative_spy_252_skip21_rank": "pct_rank(stock_close.shift(22)/stock_close.shift(253)-spy_close.shift(22)/spy_close.shift(253))",
+    "spy_return_126": "spy_close.shift(1).pct_change(126)",
+    "spy_trend_126": "spy_close.shift(1).pct_change(126)",
+    "spy_vol_21": "spy_close.shift(1).pct_change().rolling(21,min=15).std()",
+    "stock_return_126": "close.shift(1).pct_change(126)",
+    "trend_consistency_252_rank": "pct_rank(rolling_mean(close.shift(1).pct_change()>0,252,min=180))",
+    "vol_21_rank": "pct_rank(close.shift(1).pct_change().rolling(21,min=15).std())",
+    "vol_21_raw": "close.shift(1).pct_change().rolling(21,min=15).std()",
+    "volume_surprise_21_63_rank": "pct_rank(rolling_mean(volume.shift(1),21,min=15)/rolling_mean(volume.shift(1),63,min=40))"
+  },
+  "forward_fill_allowed": false,
+  "high_low_dependent_candidates_allowed": false,
+  "iter_id": "mom_stock_intraday_codesign_q1",
+  "label_contract": {
+    "downside_21": "minimum_open_to_open_return_over_offsets_1_through_21",
+    "entry": "decision_session_open",
+    "exit": "horizon_session_open",
+    "five_day_excess": "symbol_open_to_open_return_minus_selected62_mean"
+  },
+  "missing_input_contract": {
+    "deterministic_derived_features": "missing_nonfinite_required_feature_for_any_selected62_symbol_skips_the_entire_decision",
+    "forward_fill_allowed": false,
+    "label_open_window": "require_finite_open_for_all_selected62_symbols_at_offsets_0_and_5_for_five_day_labels_or_every_offset_0_through_21_for_downside_labels;otherwise_exclude_the_entire_decision_from_labelled_training_and_evaluation_before_cross_sectional_label_formation;label_completeness_must_never_change_features_scores_or_weights",
+    "ml_derived_features": "missing_nonfinite_required_feature_is_imputed_from_the_active_stage_train_median_fit;inner_train_for_inner_selection_then_purged_full_outer_train_after_selection",
+    "primitive_rows": "missing_nonfinite_open_close_or_volume_for_any_selected62_symbol_skips_the_entire_decision_before_feature_computation",
+    "validation_order": [
+      "validate_exact_common_session_membership",
+      "validate_selected62_primitive_open_close_volume_rows",
+      "compute_one_bar_lagged_derived_features",
+      "apply_candidate_path_derived_feature_policy",
+      "validate_complete_selected62_future_open_label_window",
+      "materialize_labels_after_feature_eligibility"
+    ],
+    "zero_return_substitution_allowed": false
+  },
+  "model_selection_contract": {
+    "classification_metric": "brier_score_then_net_utility_at_10bps",
+    "feature_selection": "fixed_preregistered_feature_contract_only",
+    "imputation": "active_stage_train_median_only",
+    "inner_purge": "label_end_position<=inner_test_start_position-embargo_bars",
+    "inner_split": "sort_unique_outer_train_dates;inner_test=last_20pct_ceiling_minimum_4;inner_train=all_earlier_dates_subject_to_purge",
+    "inner_stage_fit": "fit_imputer_scaler_ordinal_or_relevance_bins_downside_label_thresholds_prediction_thresholds_and_regime_state_on_purged_inner_train_only;transform_inner_test_without_refit",
+    "label_derived_artifacts": "active_stage_train_labels_only",
+    "outer_purge": "label_end_position<=outer_test_start_position-embargo_bars",
+    "outer_split": "sort_unique_candidate_decision_dates;initial_train=floor(0.40*n)_minimum_8;split_remaining_dates_into_4_contiguous_array_split_blocks;each_fold_trains_on_all_earlier_dates_subject_to_purge",
+    "outer_stage_refit": "after_parameter_selection_refit_all_declared_preprocessing_label_bins_thresholds_and_regime_state_on_purged_full_outer_train_only;transform_outer_test_without_refit",
+    "outer_test_labels_never_used_for_parameter_or_threshold_selection": true,
+    "parameter_tie_break": "canonical_json_ascending",
+    "quantile_metric": "pinball_loss_alpha_0_1_then_net_utility_at_10bps",
+    "ranking_metric": "mean_rank_ic_then_net_return_at_10bps",
+    "scaling": "active_stage_train_standard_scaler_only_when_declared"
+  },
+  "panel_contract": {
+    "alignment": "exact_intersection_of_selected62_SPY_XLK_BIL_sessions",
+    "benchmark_binding_source": "daily-panel-manifest.benchmark_inputs",
+    "benchmark_symbols": [
+      "SPY",
+      "XLK",
+      "BIL"
+    ],
+    "breadth_and_dispersion_universe": "exact_62_selected_symbols",
+    "cross_sectional_rank_universe": "exact_62_selected_symbols",
+    "decision_origin_position": 252,
+    "duplicate_timestamp_policy": "reject",
+    "forward_epoch_use": "none_historical_diagnostic_only",
+    "minimum_common_sessions": 900,
+    "selected_symbol_source": "daily-panel-manifest.selected_symbols",
+    "share_class_policy": "treat_symbols_as_distinct_listings_no_issuer_aggregation",
+    "timestamp_order": "ascending_utc"
+  },
+  "primitive_field_allowlist": [
+    "open",
+    "close",
+    "volume"
+  ],
+  "ranking_contract": {
+    "incomplete_cross_section_action": "skip_entire_decision_and_record_reason",
+    "method": "average_percentile",
+    "minimum_symbols_per_decision": 62,
+    "selection_order": [
+      "score_desc",
+      "symbol_asc"
+    ]
+  },
+  "reproducibility_contract": {
+    "base_random_seed": 77,
+    "fold_initial_state": "100pct_BIL",
+    "model_threads": 1,
+    "numeric_sort_tie_break": "canonical_json_ascending",
+    "state_carry": "chronological_within_fold_only_reset_at_each_outer_fold"
+  },
+  "risk_context_regime_contract": {
+    "D11_usage": "exclude_train_only_regime_state_formula_candidate",
+    "M05_M08_usage": "include_default_train_only_state_as_one_model_feature",
+    "M09_M10_usage": "inherit_state_inside_declared_risk_parent_only",
+    "M13_usage": "override_with_fixed_spy_trend_vol_contract",
+    "M14_usage": "override_with_train_only_change_point_contract",
+    "default_train_only_risk_context_regime": "fit_global_medians_of_spy_trend_126_and_spy_vol_21_on_unique_active_stage_train_dates;state=2*(trend>train_median_trend)+1*(vol>train_median_vol);inner_train_fit_applies_unchanged_to_inner_test;purged_full_outer_train_refit_applies_unchanged_to_outer_test;no_regime_interactions"
+  },
+  "rows": [
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "0a587afadd009a31994ea540a75af825b83e0fa53b3541cbc77a4f3bf91b4d55",
+      "candidate_id": "D01",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_core",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "mom_12_1_top5",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "equal_weight_cash",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "mom_252_skip21_rank",
+      "task": "deterministic_rank",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "1d03c7044bb71146e788000d3742d077670245e75504a2ca1c21049269f5f9c3",
+      "candidate_id": "D02",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_core",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "mom_12_1_top10",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "mom_252_skip21_rank",
+      "task": "deterministic_rank",
+      "top_n": 10
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "aaf43c90a52dd529426509ce8e27e9377926c351dce0c0c0b73dc7c63a60c848",
+      "candidate_id": "D03",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "industry_relative_63_top5",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "industry_relative_63_rank",
+      "task": "deterministic_rank",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "4b4ea4687f129cfddf045c33aff64203262f2ba2278535394c372de8366a1578",
+      "candidate_id": "D04",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "industry_relative_126_top10",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "industry_relative_126_rank",
+      "task": "deterministic_rank",
+      "top_n": 10
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "050fe972ed44c802daa3741a76098e4c266b2f0d47b7a22434aad485cf8e8517",
+      "candidate_id": "D05",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "spy_relative_126_top5",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "relative_spy_126_rank",
+      "task": "deterministic_rank",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "f8d6268dfaecd1385e916d7fb2acfbdf758107909e7aee9ab42ab5c955dc63ae",
+      "candidate_id": "D06",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "spy_relative_252_skip21_top5",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "relative_spy_252_skip21_rank",
+      "task": "deterministic_rank",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "680707e4359adbacdbe52a899918294c575324971f3cfc5721606e00fcd85b41",
+      "candidate_id": "D07",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "volume_confirmed_momentum_top5",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "mom_126_skip21_rank_plus_volume_surprise_21_63_rank",
+      "score_formula": "0.7*mom_126_skip21_rank+0.3*volume_surprise_21_63_rank",
+      "task": "deterministic_rank",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "c684d0e72dabbb9e97033662be92e5f04febf55fb16da0e61a2e85d86d234fcd",
+      "candidate_id": "D08",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "low_volume_momentum_top5",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "mom_126_skip21_rank_minus_volume_surprise_21_63_rank",
+      "score_formula": "0.7*mom_126_skip21_rank-0.3*volume_surprise_21_63_rank",
+      "task": "deterministic_rank",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "4fdef1404fb464aa99a9b76de1c99bc065dd306e0ab232eaeed9127f43052d45",
+      "candidate_id": "D09",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_core",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "rank_buffer_2_top5",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "retain_previous_within_top_n_plus_buffer_then_equal_weight",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "rank_buffer": 2,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "mom_252_skip21_rank",
+      "task": "deterministic_buffered_rank",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "285da92a42a67720d5bc446b3fe29f26f276067158ca8c1d5c95520d3da174ea",
+      "candidate_id": "D10",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_core",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "rank_buffer_4_top5",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "retain_previous_within_top_n_plus_buffer_then_equal_weight",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "rank_buffer": 4,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "mom_252_skip21_rank",
+      "task": "deterministic_buffered_rank",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "b05820a6a2e027bcbd198a680f78cfa935d75daef2d30b0480fbc4bb8145cca5",
+      "candidate_id": "D11",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 21,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 21,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_risk_context",
+      "label_contract": "daily_downside_21d",
+      "label_horizon_bars": 21,
+      "method": "volatility_scaled_top5",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "select_top5_by_score;raw_weight=1/max(vol_21_raw,0.000001);normalize_positive_weights;100pct_BIL_if_empty",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "regime_state_policy": "excluded_formula_candidate",
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "mom_252_skip21_rank_div_vol_21_rank",
+      "score_formula": "mom_252_skip21_rank/max(vol_21_rank,0.000001)",
+      "task": "deterministic_risk_sizing",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "848ec028f5c0b57ccf390245ef2e1cc08c386934fec6c813acf1e8a9fb791476",
+      "candidate_id": "D12",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "skip_entire_decision",
+      "embargo_bars": 5,
+      "estimator": "formula",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "rank_ensemble_core_industry_volume",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;deterministic_derived_missing_skips_entire_decision",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "path": "deterministic_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "score": "core_industry_volume_rank_ensemble",
+      "score_components": {
+        "industry_relative_126_rank": 0.3,
+        "mom_252_skip21_rank": 0.4,
+        "trend_consistency_252_rank": 0.1,
+        "volume_surprise_21_63_rank": 0.2
+      },
+      "task": "deterministic_rank",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "0a6d81d84fa69cf6e7111119eb56aed9c8ebb25a950205447e7fdd62ad7e3121",
+      "candidate_id": "M01",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 5,
+      "estimator": "elastic_net",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "elastic_net_rank",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "parameter_grid": [
+        {
+          "alpha": 0.001,
+          "l1_ratio": 0.2,
+          "max_iter": 10000
+        },
+        {
+          "alpha": 0.01,
+          "l1_ratio": 0.2,
+          "max_iter": 10000
+        }
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "preprocessing": [
+        "train_median_imputer",
+        "train_standard_scaler"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "target": "forward_open_to_open_excess_5d",
+      "task": "return_ranking",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "62a5ca5f3f805b46fecad086a81d8f0edbb8aab2889341ae1301a9735ef86c8d",
+      "candidate_id": "M02",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 5,
+      "estimator": "ordinal_logistic",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "ordinal_logistic_rank",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "D01",
+      "ordinal_classes": 5,
+      "paper_ready_pass": false,
+      "parameter_grid": [
+        {
+          "C": 0.1,
+          "class_weight": "balanced",
+          "max_iter": 2000
+        },
+        {
+          "C": 1.0,
+          "class_weight": "balanced",
+          "max_iter": 2000
+        }
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "prediction_score": "class_probability_expected_value",
+      "preprocessing": [
+        "train_median_imputer",
+        "train_standard_scaler"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "target": "active_stage_train_quantile_class_of_forward_open_to_open_excess_5d",
+      "task": "return_ranking",
+      "top_n": 5,
+      "train_only_artifacts": [
+        "ordinal_bin_edges",
+        "imputer",
+        "scaler"
+      ]
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "8efa4f59a345311cf61ce16775329c7b4345b75691e0e946540e8c33572fc489",
+      "candidate_id": "M03",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 5,
+      "estimator": "lightgbm_regression_shallow",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "lightgbm_regression_shallow",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "parameter_grid": [
+        {
+          "colsample_bytree": 0.8,
+          "learning_rate": 0.03,
+          "max_depth": 3,
+          "min_child_samples": 30,
+          "n_estimators": 120,
+          "num_leaves": 7,
+          "objective": "regression_l2",
+          "reg_lambda": 1.0,
+          "subsample": 0.8
+        },
+        {
+          "colsample_bytree": 0.8,
+          "learning_rate": 0.03,
+          "max_depth": 5,
+          "min_child_samples": 30,
+          "n_estimators": 120,
+          "num_leaves": 15,
+          "objective": "regression_l2",
+          "reg_lambda": 1.0,
+          "subsample": 0.8
+        }
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "preprocessing": [
+        "train_median_imputer"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "target": "forward_open_to_open_excess_5d",
+      "task": "return_ranking",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "29b335a0a05f16adc5dfd78a43b0314b28c02cf6d93ec297a24ae93f3fabc811",
+      "candidate_id": "M04",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 5,
+      "estimator": "lightgbm_lambdarank_shallow",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "lightgbm_lambdarank_shallow",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "parameter_grid": [
+        {
+          "colsample_bytree": 0.8,
+          "learning_rate": 0.03,
+          "max_depth": 3,
+          "min_child_samples": 30,
+          "n_estimators": 120,
+          "num_leaves": 7,
+          "objective": "lambdarank",
+          "reg_lambda": 1.0,
+          "subsample": 0.8
+        },
+        {
+          "colsample_bytree": 0.8,
+          "learning_rate": 0.03,
+          "max_depth": 5,
+          "min_child_samples": 30,
+          "n_estimators": 120,
+          "num_leaves": 15,
+          "objective": "lambdarank",
+          "reg_lambda": 1.0,
+          "subsample": 0.8
+        }
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "preprocessing": [
+        "train_median_imputer"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "query_group_order": "decision_date_ascending_symbol_ascending",
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "target": "per_decision_date_forward_excess_relevance_0_to_4",
+      "task": "return_ranking",
+      "top_n": 5,
+      "train_only_artifacts": [
+        "relevance_bins",
+        "query_groups",
+        "imputer"
+      ]
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "1028a28102d2fd924c5da9f4252cc81ec161b392063a646f15ff5d2b5562973b",
+      "candidate_id": "M05",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 21,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 21,
+      "estimator": "hist_gradient_quantile_q10",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_risk_context",
+      "label_contract": "daily_downside_21d",
+      "label_horizon_bars": 21,
+      "method": "hist_gradient_quantile_q10",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "fixed_position_caps",
+      "paper_ready_pass": false,
+      "parameter_grid": [
+        {
+          "l2_regularization": 1.0,
+          "learning_rate": 0.04,
+          "loss": "quantile",
+          "max_iter": 120,
+          "max_leaf_nodes": 7,
+          "min_samples_leaf": 25,
+          "quantile": 0.1
+        },
+        {
+          "l2_regularization": 1.0,
+          "learning_rate": 0.04,
+          "loss": "quantile",
+          "max_iter": 120,
+          "max_leaf_nodes": 15,
+          "min_samples_leaf": 25,
+          "quantile": 0.1
+        }
+      ],
+      "parent_candidate_ids": [
+        "D01"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "D01_slot_weight_retained_when_accepted_remainder_to_BIL",
+      "preprocessing": [
+        "train_median_imputer"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "quantile_alpha": 0.1,
+      "regime_state_policy": "default_train_only_risk_context_regime",
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "risk_acceptance": "predicted_q10_above_global_q20_of_fitted_active_stage_train_row_predictions",
+      "risk_fallback": "BIL_cash_proxy",
+      "target": "forward_min_drawdown_21",
+      "task": "downside_quantile",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "a7c57b0939f1842a6611af0e0ec65694351469755d7d9b46ad58263aad57c372",
+      "candidate_id": "M06",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 21,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 21,
+      "estimator": "lightgbm_quantile_q10",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_risk_context",
+      "label_contract": "daily_downside_21d",
+      "label_horizon_bars": 21,
+      "method": "lightgbm_quantile_q10",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "fixed_position_caps",
+      "paper_ready_pass": false,
+      "parameter_grid": [
+        {
+          "colsample_bytree": 0.8,
+          "learning_rate": 0.03,
+          "max_depth": 3,
+          "min_child_samples": 30,
+          "n_estimators": 120,
+          "num_leaves": 7,
+          "objective": "quantile_alpha_0_1",
+          "reg_lambda": 1.0,
+          "subsample": 0.8
+        },
+        {
+          "colsample_bytree": 0.8,
+          "learning_rate": 0.03,
+          "max_depth": 5,
+          "min_child_samples": 30,
+          "n_estimators": 120,
+          "num_leaves": 15,
+          "objective": "quantile_alpha_0_1",
+          "reg_lambda": 1.0,
+          "subsample": 0.8
+        }
+      ],
+      "parent_candidate_ids": [
+        "D01"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "D01_slot_weight_retained_when_accepted_remainder_to_BIL",
+      "preprocessing": [
+        "train_median_imputer"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "quantile_alpha": 0.1,
+      "regime_state_policy": "default_train_only_risk_context_regime",
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "risk_acceptance": "predicted_q10_above_global_q20_of_fitted_active_stage_train_row_predictions",
+      "risk_fallback": "BIL_cash_proxy",
+      "target": "forward_min_drawdown_21",
+      "task": "downside_quantile",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "4c74bb8002fb903ecd68f36dbdde89c10e721c0c448426830472cb2e2d1d484e",
+      "candidate_id": "M07",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 21,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 21,
+      "estimator": "logistic_downside",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_risk_context",
+      "label_contract": "daily_downside_21d",
+      "label_horizon_bars": 21,
+      "method": "logistic_downside",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "fixed_position_caps",
+      "paper_ready_pass": false,
+      "parameter_grid": [
+        {
+          "C": 0.1,
+          "class_weight": "balanced",
+          "max_iter": 2000
+        },
+        {
+          "C": 1.0,
+          "class_weight": "balanced",
+          "max_iter": 2000
+        }
+      ],
+      "parent_candidate_ids": [
+        "D01"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "D01_slot_weight_retained_below_threshold_remainder_to_BIL",
+      "preprocessing": [
+        "train_median_imputer",
+        "train_standard_scaler"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "probability_threshold_grid": [
+        0.3,
+        0.5,
+        0.7
+      ],
+      "promotion_eligible": false,
+      "regime_state_policy": "default_train_only_risk_context_regime",
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "risk_fallback": "BIL_cash_proxy",
+      "target": "forward_min_drawdown_21_le_active_stage_train_q10",
+      "task": "downside_classification",
+      "top_n": 5,
+      "train_only_artifacts": [
+        "downside_threshold",
+        "imputer",
+        "scaler"
+      ]
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "5358bd131a4424941ec15bcbb7409ecfe31c696912b5aee0966191295a5b2f91",
+      "candidate_id": "M08",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 21,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 21,
+      "estimator": "lightgbm_downside_shallow",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_risk_context",
+      "label_contract": "daily_downside_21d",
+      "label_horizon_bars": 21,
+      "method": "lightgbm_downside_shallow",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "fixed_position_caps",
+      "paper_ready_pass": false,
+      "parameter_grid": [
+        {
+          "colsample_bytree": 0.8,
+          "learning_rate": 0.03,
+          "max_depth": 3,
+          "min_child_samples": 30,
+          "n_estimators": 120,
+          "num_leaves": 7,
+          "objective": "binary_logloss",
+          "reg_lambda": 1.0,
+          "subsample": 0.8
+        },
+        {
+          "colsample_bytree": 0.8,
+          "learning_rate": 0.03,
+          "max_depth": 5,
+          "min_child_samples": 30,
+          "n_estimators": 120,
+          "num_leaves": 15,
+          "objective": "binary_logloss",
+          "reg_lambda": 1.0,
+          "subsample": 0.8
+        }
+      ],
+      "parent_candidate_ids": [
+        "D01"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "D01_slot_weight_retained_below_threshold_remainder_to_BIL",
+      "preprocessing": [
+        "train_median_imputer"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "probability_threshold_grid": [
+        0.3,
+        0.5,
+        0.7
+      ],
+      "promotion_eligible": false,
+      "regime_state_policy": "default_train_only_risk_context_regime",
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "risk_fallback": "BIL_cash_proxy",
+      "target": "forward_min_drawdown_21_le_active_stage_train_q10",
+      "task": "downside_classification",
+      "top_n": 5,
+      "train_only_artifacts": [
+        "downside_threshold",
+        "imputer"
+      ]
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "blend_formula": "0.65*pct_rank(M01)+0.35*(1-pct_rank(M07_risk_probability))",
+      "candidate_binding_sha256": "942dbced66e0cd4fe373664057396fc142be60226dfe09d46eeacbdd3e67beae",
+      "candidate_id": "M09",
+      "composite_parent_training": {
+        "outer_fold_schedule": "composite_decision_dates_every_5_bars",
+        "parent_refit": "refit_both_parents_inside_each_composite_outer_fold",
+        "rank_parent_train_stride_bars": 5,
+        "risk_parent_train_anchor": "decision_origin_position_modulo_21_zero",
+        "risk_parent_train_stride_bars": 21,
+        "state_reuse": "none_no_asof_carry_no_native_schedule_intersection",
+        "test_prediction_schedule": "predict_both_parents_on_every_5_bar_composite_test_date"
+      },
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 21,
+      "estimator": "fixed_blend",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_risk_context",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "elastic_rank_plus_logistic_risk_cost",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "parent_candidate_ids": [
+        "M01",
+        "M07"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "select_top5_blend;raw_weight=max(blend,0)*clip(1-risk_probability,0,1);normalize_positive_weights_remainder_to_BIL",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "rank_buffer": 2,
+      "regime_state_policy": "inherited_from_M07_outer_train_fit",
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "task": "rank_risk_cost_sizing",
+      "top_n": 5,
+      "turnover_control": "retain_previous_within_top_n_plus_buffer",
+      "upstream_max_label_horizon_bars": 21
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "blend_formula": "0.65*pct_rank(M04)+0.35*pct_rank(M06_predicted_q10)",
+      "candidate_binding_sha256": "ea9582033dcd00910892ea6f8e1634a7248dc98a9fe50b9bf44296564cf54a60",
+      "candidate_id": "M10",
+      "composite_parent_training": {
+        "outer_fold_schedule": "composite_decision_dates_every_5_bars",
+        "parent_refit": "refit_both_parents_inside_each_composite_outer_fold",
+        "rank_parent_train_stride_bars": 5,
+        "risk_parent_train_anchor": "decision_origin_position_modulo_21_zero",
+        "risk_parent_train_stride_bars": 21,
+        "state_reuse": "none_no_asof_carry_no_native_schedule_intersection",
+        "test_prediction_schedule": "predict_both_parents_on_every_5_bar_composite_test_date"
+      },
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 21,
+      "estimator": "fixed_blend",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_risk_context",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "lambdarank_plus_quantile_cost",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "parent_candidate_ids": [
+        "M04",
+        "M06"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "select_top5_blend;raw_weight=max(blend,0)*pct_rank(predicted_q10);normalize_positive_weights_remainder_to_BIL",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "rank_buffer": 2,
+      "regime_state_policy": "inherited_from_M06_outer_train_fit",
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "task": "rank_risk_cost_sizing",
+      "top_n": 5,
+      "turnover_control": "retain_previous_within_top_n_plus_buffer",
+      "upstream_max_label_horizon_bars": 21
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "blend_formula": "0.75*pct_rank(D01)+0.25*pct_rank(M01)",
+      "candidate_binding_sha256": "4fc06e79b2183f97d137d84e7488d743f83d511072b447215c10da7f4e3de552",
+      "candidate_id": "M11",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 5,
+      "estimator": "fixed_blend",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "linear_rank_shrink_25pct",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "D01",
+      "model_weight": 0.25,
+      "paper_ready_pass": false,
+      "parent_candidate_ids": [
+        "D01",
+        "M01"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "task": "hybrid_shrinkage",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "blend_formula": "0.50*pct_rank(D01)+0.50*pct_rank(M04)",
+      "candidate_binding_sha256": "34c8a714e75ead88d097fc1e3ca1de3387b85120def00989431791855f485bae",
+      "candidate_id": "M12",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 5,
+      "estimator": "fixed_blend",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "lambdarank_shrink_50pct",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "D01",
+      "model_weight": 0.5,
+      "paper_ready_pass": false,
+      "parent_candidate_ids": [
+        "D01",
+        "M04"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "task": "hybrid_shrinkage",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "8c2e5c09dd900b0976c0237949162f6c858f92a4ad7bedabc297df9a06869890",
+      "candidate_id": "M13",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 5,
+      "estimator": "elastic_net",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_risk_context",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "elastic_rank_with_fixed_regime",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "M01",
+      "paper_ready_pass": false,
+      "parameter_grid": [
+        {
+          "alpha": 0.001,
+          "l1_ratio": 0.2,
+          "max_iter": 10000
+        },
+        {
+          "alpha": 0.01,
+          "l1_ratio": 0.2,
+          "max_iter": 10000
+        }
+      ],
+      "parent_candidate_ids": [
+        "M01"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "preprocessing": [
+        "train_median_imputer",
+        "train_standard_scaler"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "regime_formula": "2*(spy_trend_126>0)+1*(spy_vol_21>0.02)",
+      "regime_interactions": "multiply_each_daily_core_feature_by_regime_state",
+      "regime_method": "fixed_spy_trend_vol",
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "target": "forward_open_to_open_excess_5d",
+      "task": "regime_context_ranking",
+      "top_n": 5
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "8069f577d08a142ddadd8f76ae95927b2bf79bbcf30ce35ee2473bb95ec31b6c",
+      "candidate_id": "M14",
+      "change_point_algorithm": "active_stage_train_unique_dates_middle_20_to_80pct_split_minimizing_standardized_spy_trend_126_and_spy_vol_21_within_segment_sse",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 5,
+      "estimator": "lightgbm_lambdarank_shallow",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_risk_context",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "lambdarank_with_train_change_point",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "M04",
+      "paper_ready_pass": false,
+      "parameter_grid": [
+        {
+          "colsample_bytree": 0.8,
+          "learning_rate": 0.03,
+          "max_depth": 3,
+          "min_child_samples": 30,
+          "n_estimators": 120,
+          "num_leaves": 7,
+          "objective": "lambdarank",
+          "reg_lambda": 1.0,
+          "subsample": 0.8
+        },
+        {
+          "colsample_bytree": 0.8,
+          "learning_rate": 0.03,
+          "max_depth": 5,
+          "min_child_samples": 30,
+          "n_estimators": 120,
+          "num_leaves": 15,
+          "objective": "lambdarank",
+          "reg_lambda": 1.0,
+          "subsample": 0.8
+        }
+      ],
+      "parent_candidate_ids": [
+        "M04"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "preprocessing": [
+        "train_median_imputer"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "regime_assignment": "nearest_active_stage_train_segment_centroid",
+      "regime_interactions": "multiply_each_daily_core_feature_by_regime_state",
+      "regime_method": "train_only_change_point",
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "target": "per_decision_date_forward_excess_relevance_0_to_4",
+      "task": "regime_context_ranking",
+      "top_n": 5,
+      "train_only_artifacts": [
+        "change_point",
+        "regime_state",
+        "imputer"
+      ]
+    },
+    {
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "3890a8eec1939ebde72a6ebbe65fb70accfef126a58d66cab90da06722f614fe",
+      "candidate_id": "M15",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 5,
+      "estimator": "elastic_net_shuffled_training_labels",
+      "expected_control": "no_positive_oos_lift",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "fixed_parameters": {
+        "alpha": 0.001,
+        "l1_ratio": 0.2,
+        "max_iter": 10000
+      },
+      "fold_seed_formula": "77+outer_fold_number",
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "method": "shuffled_label_rank_placebo",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "D01",
+      "paper_ready_pass": false,
+      "parent_candidate_ids": [
+        "M01"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "preprocessing": [
+        "train_median_imputer",
+        "train_standard_scaler"
+      ],
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "promotion_eligible": false,
+      "random_seed": 77,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "selection_prohibited": true,
+      "shuffle_scope": "outer_train_rows_only_before_fit",
+      "target": "outer_train_only_permuted_forward_open_to_open_excess_5d",
+      "task": "negative_control",
+      "top_n": 5
+    },
+    {
+      "availability_audit": "reject_when_feature_timestamp_greater_than_decision_timestamp",
+      "benchmark_contract": "daily_full",
+      "candidate_binding_sha256": "f236d3b6fa45be3705971ef052cbc424d84de68fa034c7b9183daf3fc7471b47",
+      "candidate_id": "M16",
+      "cost_contract": "daily_cost_v1",
+      "cost_stress_one_way_bps": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "decision_stride_bars": 5,
+      "derived_feature_missing_policy": "active_stage_train_median_imputation",
+      "embargo_bars": 5,
+      "estimator": "future_label_shift_rejection_control",
+      "expected_control": "non_null_lift_requires_pipeline_rejection",
+      "feature_availability": "all_rolling_features_shifted_one_bar",
+      "feature_contract": "daily_industry_volume",
+      "fit_allowed": false,
+      "future_shift_bars": 5,
+      "label_contract": "daily_excess_5d",
+      "label_horizon_bars": 5,
+      "mandatory_outcome": "rejected_control",
+      "method": "future_label_shift_rejection_control",
+      "missing_input_policy": "primitive_missing_skips_entire_decision;ml_derived_missing_uses_active_stage_train_median_imputation",
+      "model_failure_fallback": "reject_if_not_null",
+      "paper_ready_pass": false,
+      "parent_candidate_ids": [
+        "M01"
+      ],
+      "path": "ml_native_daily",
+      "portfolio_fallback": "BIL_cash_proxy",
+      "portfolio_mapping": "equal_weight_top_n",
+      "primitive_fields": [
+        "open",
+        "close",
+        "volume"
+      ],
+      "primitive_missing_policy": "skip_entire_decision_if_any_selected62_open_close_volume_row_missing_no_fill",
+      "prohibited_feature": "forward_open_to_open_excess_5d_shifted_to_decision_row",
+      "promotion_eligible": false,
+      "required_benchmarks": [
+        "same_symbol_buy_and_hold",
+        "equal_weight_universe",
+        "SPY_market_proxy",
+        "XLK_sector_proxy",
+        "BIL_cash_proxy",
+        "ex_post_best_symbol_report_only",
+        "deterministic_12_1"
+      ],
+      "research_pass": false,
+      "selection_prohibited": true,
+      "task": "negative_control",
+      "top_n": 5
+    }
+  ],
+  "runnable_candidate_count": 28,
+  "runtime_entrypoint": "open_composer.research.stock_momentum_codesign_q2:run_stock_momentum_codesign_q2",
+  "schema_version": 2,
+  "scope": "historical_current_universe_diagnostic",
+  "survivorship_labelled": true,
+  "zero_return_substitution_allowed": false
+}

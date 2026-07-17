@@ -10,6 +10,7 @@ from typing import Any, Literal
 import yaml
 
 from open_composer.config import ensure_dir, project_root
+from open_composer.feature_packets import inspect_feature_packet
 from open_composer.models.dashboard import (
     DashboardAuditEvent,
     DashboardCapabilityFinding,
@@ -1856,15 +1857,6 @@ def build_feature_packet_records(base: Path | None = None) -> list[DashboardFeat
     for path in sorted((base / "feature_logs").glob("*.jsonl")):
         rows = _load_jsonl(path)
         dict_rows = [row for row in rows if isinstance(row, dict)]
-        timestamps: list[datetime] = []
-        invalid_timestamps = 0
-        for row in dict_rows:
-            if not row.get("timestamp"):
-                continue
-            try:
-                timestamps.append(_parse_datetime(str(row["timestamp"])))
-            except ValueError:
-                invalid_timestamps += 1
         field_names = sorted({key for row in dict_rows for key in row.keys() if key != "timestamp"})
         key_sets = [set(row) for row in dict_rows]
         has_timestamp = bool(dict_rows) and all("timestamp" in keys for keys in key_sets)
@@ -1873,59 +1865,22 @@ def build_feature_packet_records(base: Path | None = None) -> list[DashboardFeat
         has_visible_at = bool(dict_rows) and all("visible_at" in keys for keys in key_sets)
         has_dedupe_key = bool(dict_rows) and all("dedupe_key" in keys for keys in key_sets)
         has_schema_version = bool(dict_rows) and all("schema_version" in keys for keys in key_sets)
-        dedupe_keys = [str(row["dedupe_key"]) for row in dict_rows if row.get("dedupe_key")]
-        duplicate_dedupe_keys = sorted(
-            {dedupe_key for dedupe_key in dedupe_keys if dedupe_keys.count(dedupe_key) > 1}
-        )
-        warnings: list[str] = []
-        if not has_timestamp:
-            warnings.append("feature packet rows must include timestamp for replay")
-        if invalid_timestamps:
-            warnings.append(f"{invalid_timestamps} timestamp value(s) are not ISO-8601 parseable")
-        if not has_published_at:
-            warnings.append("published_at is missing for at least one row")
-        if not has_fetched_at:
-            warnings.append("fetched_at is missing for at least one row")
-        if not has_visible_at and not (has_published_at and has_fetched_at):
-            warnings.append("visible_at is missing and cannot be inferred for at least one row")
-        if not has_dedupe_key:
-            warnings.append("dedupe_key is missing for at least one row")
-        if not has_schema_version:
-            warnings.append("schema_version is missing for at least one row")
-        if duplicate_dedupe_keys:
-            warnings.append(
-                "duplicate dedupe_key value(s): " + ", ".join(duplicate_dedupe_keys[:5])
-            )
-        if (
-            has_timestamp
-            and not invalid_timestamps
-            and has_published_at
-            and has_fetched_at
-            and (has_visible_at or (has_published_at and has_fetched_at))
-            and has_dedupe_key
-            and has_schema_version
-            and not duplicate_dedupe_keys
-        ):
-            point_in_time_status = "complete"
-        elif has_timestamp:
-            point_in_time_status = "partial"
-        else:
-            point_in_time_status = "missing"
+        inspection = inspect_feature_packet(path)
         records.append(
             DashboardFeaturePacket(
                 path=_relpath(path, base),
-                record_count=len(rows),
+                record_count=inspection.record_count,
                 field_names=field_names,
-                first_timestamp=min(timestamps).isoformat() if timestamps else None,
-                last_timestamp=max(timestamps).isoformat() if timestamps else None,
+                first_timestamp=inspection.first_timestamp,
+                last_timestamp=inspection.last_timestamp,
                 has_timestamp=has_timestamp,
                 has_published_at=has_published_at,
                 has_fetched_at=has_fetched_at,
                 has_visible_at=has_visible_at,
                 has_dedupe_key=has_dedupe_key,
                 has_schema_version=has_schema_version,
-                point_in_time_status=point_in_time_status,
-                replay_warnings=warnings,
+                point_in_time_status=inspection.point_in_time_status,
+                replay_warnings=inspection.replay_warnings,
             )
         )
     return records

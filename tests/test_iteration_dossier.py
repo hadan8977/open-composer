@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from copy import deepcopy
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -9,8 +10,13 @@ from typer.testing import CliRunner
 from open_composer.cli import app
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.iteration_dossier import (
+    _q2_execution_map_blockers,
     init_iteration_dossier,
     validate_iteration_dossier,
+)
+from open_composer.research.stock_momentum_q2_contract import (
+    RUNNABLE_IDS,
+    build_q2_execution_map,
 )
 from open_composer.strategy_versions import strategy_content_hash
 
@@ -220,6 +226,7 @@ def test_iteration_dossier_validates_machine_candidate_manifest(
     search = json.loads(paths.search_space_json.read_text(encoding="utf-8"))
     search["total_candidate_budget"] = 1
     search["paths"][0]["candidate_count"] = 1
+    search["data_feasibility_path"] = "reports/research/control/mom-minute-data-feasibility.json"
     manifest_path = paths.root / "candidate-manifest.json"
     search["candidate_manifest_path"] = manifest_path.relative_to(sample_workspace).as_posix()
     paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
@@ -257,20 +264,284 @@ def test_iteration_dossier_validates_machine_candidate_manifest(
         },
         "candidates": [candidate],
     }
-    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    fixture_spec_path = sample_workspace / spec_path
+    fixture_spec_path.write_text(
+        fixture_spec_path.read_text(encoding="utf-8").replace(
+            "  research_design:\n",
+            "  research_design:\n"
+            "    iter_id: mom_minute_r1\n"
+            f"    candidate_manifest_path: {search['candidate_manifest_path']}\n"
+            f"    data_feasibility_path: {search['data_feasibility_path']}\n",
+            1,
+        ),
+        encoding="utf-8",
+    )
     spec = load_strategy_spec(sample_workspace / spec_path)
     manifest["spec_hashes"][spec_path] = strategy_content_hash(spec)
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     search["candidate_manifest_sha256"] = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
     paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
 
+    missing_prerequisites = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert "search_space_cost_table_path_missing" in missing_prerequisites.blocked
+    assert "search_space_data_feasibility_path_missing" in missing_prerequisites.blocked
+    feasibility = _write_candidate_feasibility(
+        sample_workspace,
+        paths,
+        search,
+        manifest,
+        authorized=False,
+    )
+    rejected = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert "search_space_data_feasibility_not_authorized" in rejected.blocked
+    feasibility["q2_diagnostic_execution_authorized"] = True
+    _write_candidate_feasibility(
+        sample_workspace,
+        paths,
+        search,
+        manifest,
+        payload=feasibility,
+    )
+
     passed = validate_iteration_dossier("mom_minute_r1", sample_workspace)
     assert passed.status == "ok"
+
+    feasibility["candidate_accounting"]["diagnostic_runnable_count"] = 0
+    _write_candidate_feasibility(
+        sample_workspace,
+        paths,
+        search,
+        manifest,
+        payload=feasibility,
+    )
+    accounting_blocked = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert any(
+        item.startswith("data_feasibility_accounting_diagnostic_runnable_count_mismatch")
+        for item in accounting_blocked.blocked
+    )
 
     manifest["candidates"][0]["label_contract"] = "missing"
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     blocked = validate_iteration_dossier("mom_minute_r1", sample_workspace)
     assert "candidate_manifest_sha256_mismatch" in blocked.blocked
+
+
+def test_iteration_dossier_blocks_malformed_feasibility_contract(
+    sample_workspace: Path,
+) -> None:
+    paths = init_iteration_dossier("mom_minute_r1", sample_workspace)
+    _write_complete_pre_backtest_payload(paths)
+    search = json.loads(paths.search_space_json.read_text(encoding="utf-8"))
+    search["total_candidate_budget"] = 1
+    search["paths"][0]["candidate_count"] = 1
+    search["data_feasibility_path"] = "reports/research/control/mom-minute-data-feasibility.json"
+    manifest_path = paths.root / "candidate-manifest.json"
+    search["candidate_manifest_path"] = manifest_path.relative_to(sample_workspace).as_posix()
+    spec_path = "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    fixture_spec_path = sample_workspace / spec_path
+    fixture_spec_path.write_text(
+        fixture_spec_path.read_text(encoding="utf-8").replace(
+            "  research_design:\n",
+            "  research_design:\n"
+            "    iter_id: mom_minute_r1\n"
+            f"    candidate_manifest_path: {search['candidate_manifest_path']}\n"
+            f"    data_feasibility_path: {search['data_feasibility_path']}\n",
+            1,
+        ),
+        encoding="utf-8",
+    )
+    manifest = _single_candidate_manifest(
+        spec_path,
+        strategy_content_hash(load_strategy_spec(fixture_spec_path)),
+    )
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    search["candidate_manifest_sha256"] = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    feasibility = _write_candidate_feasibility(
+        sample_workspace,
+        paths,
+        search,
+        manifest,
+    )
+
+    feasibility["q2_diagnostic_execution_authorized"] = "true"
+    feasibility["research_pass"] = True
+    feasibility["path_gates"]["P1"]["candidate_ids"] = ["WRONG"]
+    _write_candidate_feasibility(
+        sample_workspace,
+        paths,
+        search,
+        manifest,
+        payload=feasibility,
+    )
+    result = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+
+    assert "data_feasibility_q2_diagnostic_execution_authorized_not_boolean" in result.blocked
+    assert "search_space_data_feasibility_not_authorized" in result.blocked
+    assert "data_feasibility_diagnostic_scope_research_pass_must_be_false" in result.blocked
+    assert "data_feasibility_P1_candidate_ids_mismatch" in result.blocked
+
+    valid = _write_candidate_feasibility(
+        sample_workspace,
+        paths,
+        search,
+        manifest,
+    )
+    search["data_feasibility_sha256"] = "0" * 64
+    paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
+    hash_result = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert "data_feasibility_sha256_mismatch" in hash_result.blocked
+
+    valid = _write_candidate_feasibility(
+        sample_workspace,
+        paths,
+        search,
+        manifest,
+    )
+    valid["q2_authorization"]["rows"][0]["candidate_binding_sha256"] = "0" * 64
+    _write_candidate_feasibility(
+        sample_workspace,
+        paths,
+        search,
+        manifest,
+        payload=valid,
+    )
+    candidate_hash_result = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert any(
+        item.startswith("data_feasibility_q2_authorization_candidate_sha_mismatch")
+        for item in candidate_hash_result.blocked
+    )
+
+    valid = _write_candidate_feasibility(
+        sample_workspace,
+        paths,
+        search,
+        manifest,
+    )
+    valid["q2_authorization"]["rows"][0]["evidence_sha256"] = "0" * 64
+    _write_candidate_feasibility(
+        sample_workspace,
+        paths,
+        search,
+        manifest,
+        payload=valid,
+    )
+    evidence_hash_result = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert any(
+        item.startswith("data_feasibility_q2_authorization_evidence_sha_mismatch")
+        for item in evidence_hash_result.blocked
+    )
+
+    _write_candidate_feasibility(sample_workspace, paths, search, manifest)
+    fixture_spec_path.write_text(
+        fixture_spec_path.read_text(encoding="utf-8").replace(
+            f"data_feasibility_path: {search['data_feasibility_path']}",
+            "data_feasibility_path: reports/research/control/wrong.json",
+            1,
+        ),
+        encoding="utf-8",
+    )
+    manifest["spec_hashes"][spec_path] = strategy_content_hash(
+        load_strategy_spec(fixture_spec_path)
+    )
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    search["candidate_manifest_sha256"] = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
+    spec_binding_result = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert any(
+        item.startswith("candidate_manifest_spec_feasibility_path_mismatch")
+        for item in spec_binding_result.blocked
+    )
+
+
+def test_q2_execution_map_rejects_noncanonical_semantic_contracts(tmp_path: Path) -> None:
+    manifest_by_id = {
+        candidate_id: {
+            "candidate_id": candidate_id,
+            "path": "daily_deterministic" if candidate_id.startswith("D") else "daily_ml",
+            "method": f"method_{candidate_id.lower()}",
+            "feature_contract": "daily_price_volume_lag1",
+            "label_contract": (
+                "daily_downside_21d"
+                if candidate_id in {"D11", "M05", "M06", "M07", "M08"}
+                else "daily_rank_5d"
+            ),
+            "benchmark_contract": "daily_full_benchmark_family",
+            "fallback": "cash",
+        }
+        for candidate_id in RUNNABLE_IDS
+    }
+    canonical = build_q2_execution_map({"candidates": list(manifest_by_id.values())})
+
+    mutations = {
+        "score": lambda payload: payload["rows"][0].__setitem__("score", "future_return_rank"),
+        "feature_contract": lambda payload: payload["rows"][0].__setitem__(
+            "feature_contract", "unregistered_features"
+        ),
+        "label_contract": lambda payload: payload["rows"][0].__setitem__(
+            "label_contract", "future_label"
+        ),
+        "cost_contract": lambda payload: payload["rows"][0].__setitem__(
+            "cost_contract", "zero_cost"
+        ),
+        "benchmark_contract": lambda payload: payload["rows"][0].__setitem__(
+            "benchmark_contract", "incomplete_benchmarks"
+        ),
+        "primitive_fields": lambda payload: payload["rows"][0].__setitem__(
+            "primitive_fields", ["open", "high", "low", "close", "volume"]
+        ),
+        "row_safety_flag": lambda payload: payload["rows"][0].__setitem__(
+            "promotion_eligible", True
+        ),
+        "global_safety_flag": lambda payload: payload.__setitem__("forward_fill_allowed", True),
+    }
+    for mutation_name, mutate in mutations.items():
+        payload = deepcopy(canonical)
+        mutate(payload)
+        path = tmp_path / f"q2-execution-map-{mutation_name}.json"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+
+        blocked = _q2_execution_map_blockers(
+            path,
+            manifest_by_id,
+            set(RUNNABLE_IDS),
+            expected_iter_id="mom_stock_intraday_codesign_q1",
+        )
+
+        assert "q2_execution_map_canonical_contract_mismatch" in blocked, mutation_name
+
+
+def test_execution_commands_enforce_declared_iteration_gate(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    spec_path.write_text(
+        spec_path.read_text(encoding="utf-8").replace(
+            "  research_design:\n",
+            "  research_design:\n    iter_id: missing_iteration_round\n",
+            1,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    runner = CliRunner()
+
+    results = [
+        runner.invoke(app, ["backtest", str(spec_path)], catch_exceptions=False),
+        runner.invoke(
+            app,
+            ["strategy", "optimize", str(spec_path)],
+            catch_exceptions=False,
+        ),
+        runner.invoke(
+            app,
+            ["strategy", "parameter-sweep", str(spec_path)],
+            catch_exceptions=False,
+        ),
+    ]
+
+    assert all(result.exit_code != 0 for result in results)
+    assert all("iteration dossier blocked" in result.output for result in results)
 
 
 def test_iteration_dossier_cli_init_and_validate(sample_workspace: Path, monkeypatch) -> None:
@@ -299,6 +570,168 @@ def test_iteration_dossier_cli_init_and_validate(sample_workspace: Path, monkeyp
     )
     assert json_result.exit_code == 1
     assert json.loads(json_result.output)["status"] == "blocked"
+
+
+def _single_candidate_manifest(spec_path: str, spec_hash: str) -> dict:
+    return {
+        "schema_version": 1,
+        "iter_id": "mom_minute_r1",
+        "generated_before_backtest": True,
+        "candidate_count": 1,
+        "spec_hashes": {spec_path: spec_hash},
+        "contracts": {
+            "data": {"data": {}},
+            "features": {"features": {}},
+            "labels": {"label": {}},
+            "validation": {"validation": {}},
+            "costs": {"cost": {}},
+            "benchmarks": {"benchmark": []},
+        },
+        "candidates": [
+            {
+                "candidate_id": "C01",
+                "path": "P1",
+                "role": "return_ranking",
+                "method": "linear_rank",
+                "ablation": "baseline",
+                "spec_path": spec_path,
+                "data_contract": "data",
+                "feature_contract": "features",
+                "label_contract": "label",
+                "validation_contract": "validation",
+                "cost_contract": "cost",
+                "benchmark_contract": "benchmark",
+                "fallback": "flat",
+            }
+        ],
+    }
+
+
+def _write_candidate_feasibility(
+    root: Path,
+    paths,
+    search: dict,
+    manifest: dict,
+    *,
+    authorized: bool = True,
+    payload: dict | None = None,
+) -> dict:
+    cost_path = root / search["cost_table_path"]
+    cost_path.parent.mkdir(parents=True, exist_ok=True)
+    if not cost_path.exists():
+        cost_path.write_text("{}", encoding="utf-8")
+    artifact_paths = {
+        "parent_universe": paths.root / "parent-universe.json",
+        "daily_panel": paths.root / "daily-panel-manifest.json",
+        "intraday_panel": paths.root / "intraday-panel-manifest.json",
+        "cost_contract": cost_path,
+        "q2_execution_map": paths.root / "q2-execution-map.json",
+    }
+    for field_name, artifact_path in artifact_paths.items():
+        artifact_path.parent.mkdir(parents=True, exist_ok=True)
+        if field_name == "q2_execution_map":
+            execution_rows = []
+            for candidate in manifest["candidates"]:
+                execution_rows.append(
+                    {
+                        "candidate_id": candidate["candidate_id"],
+                        "path": candidate["path"],
+                        "method": candidate["method"],
+                        "candidate_binding_sha256": hashlib.sha256(
+                            json.dumps(
+                                candidate,
+                                sort_keys=True,
+                                separators=(",", ":"),
+                            ).encode()
+                        ).hexdigest(),
+                        "primitive_fields": ["open", "close", "volume"],
+                        "research_pass": False,
+                        "paper_ready_pass": False,
+                        "promotion_eligible": False,
+                        "required_benchmarks": ["ex_post_best_symbol_report_only"],
+                    }
+                )
+            artifact_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "iter_id": "mom_minute_r1",
+                        "scope": "historical_current_universe_diagnostic",
+                        "survivorship_labelled": True,
+                        "runnable_candidate_count": len(execution_rows),
+                        "primitive_field_allowlist": ["open", "close", "volume"],
+                        "high_low_dependent_candidates_allowed": False,
+                        "forward_fill_allowed": False,
+                        "zero_return_substitution_allowed": False,
+                        "rows": execution_rows,
+                    }
+                ),
+                encoding="utf-8",
+            )
+        elif not artifact_path.exists():
+            artifact_path.write_text("{}", encoding="utf-8")
+    if payload is None:
+        candidate_ids = [str(row["candidate_id"]) for row in manifest["candidates"]]
+        daily_evidence_path = artifact_paths["daily_panel"]
+        payload = {
+            "schema_version": 1,
+            "report_type": "test_data_feasibility",
+            "iter_id": "mom_minute_r1",
+            "workflow_pass": True,
+            "research_pass": False,
+            "llm_contribution_pass": False,
+            "paper_ready_pass": False,
+            "q2_diagnostic_execution_authorized": authorized,
+            "path_gates": {
+                "P1": {
+                    "q2_action": "run_diagnostic",
+                    "historical_diagnostic_go": True,
+                    "historical_research_qualified": False,
+                    "candidate_ids": candidate_ids,
+                }
+            },
+            "candidate_accounting": {
+                "frozen_candidate_count": len(candidate_ids),
+                "diagnostic_runnable_count": len(candidate_ids),
+                "dependency_skipped_count": 0,
+                "unresolved_count": 0,
+                "balanced": True,
+            },
+            "q2_authorization": {
+                "candidate_count": len(candidate_ids),
+                "rows": [
+                    {
+                        "candidate_id": str(candidate["candidate_id"]),
+                        "path": str(candidate["path"]),
+                        "action": "run_diagnostic",
+                        "reason_code": "test_diagnostic_gate",
+                        "candidate_binding_sha256": hashlib.sha256(
+                            json.dumps(
+                                candidate,
+                                sort_keys=True,
+                                separators=(",", ":"),
+                            ).encode()
+                        ).hexdigest(),
+                        "evidence_path": daily_evidence_path.relative_to(root).as_posix(),
+                        "evidence_sha256": hashlib.sha256(
+                            daily_evidence_path.read_bytes()
+                        ).hexdigest(),
+                    }
+                    for candidate in manifest["candidates"]
+                ],
+            },
+        }
+    for field_name, artifact_path in artifact_paths.items():
+        payload[field_name] = {
+            "path": artifact_path.relative_to(root).as_posix(),
+            "sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest(),
+        }
+    feasibility_path = root / search["data_feasibility_path"]
+    feasibility_path.parent.mkdir(parents=True, exist_ok=True)
+    feasibility_path.write_text(json.dumps(payload), encoding="utf-8")
+    search["data_feasibility_sha256"] = hashlib.sha256(feasibility_path.read_bytes()).hexdigest()
+    paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
+    return payload
 
 
 def _write_complete_pre_backtest_payload(paths) -> None:

@@ -1,0 +1,609 @@
+{
+  "candidate_accounting": {
+    "balanced": true,
+    "dependency_skipped_count": 20,
+    "diagnostic_runnable_count": 28,
+    "frozen_candidate_count": 48,
+    "unresolved_count": 0
+  },
+  "cost_contract": {
+    "path": "reports/research/iterations/mom_stock_intraday_codesign_q1/cost-contract.json",
+    "sha256": "bdc9adf4206b8b333e189d40452a67580f9e6e2a8f1c016f771e015eb9c20c16"
+  },
+  "daily_panel": {
+    "diagnostic_go": true,
+    "path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+    "runtime_common_timestamp_count": 967,
+    "runtime_last_timestamp": "2026-05-22T04:00:00+00:00",
+    "selected_count": 62,
+    "sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568"
+  },
+  "event_and_llm": {
+    "blockers": [
+      "immutable_historical_pit_corpus_missing",
+      "news_content_rights_unverified",
+      "historical_first_seen_timestamps_unavailable",
+      "fred_latest_vintage_is_not_alfred_replay",
+      "event_feature_ablation_evidence_missing"
+    ],
+    "credential_state": "not_assessed_by_cache_only_command",
+    "forward_collection_ready": false,
+    "historical_pit_training_ready": false,
+    "local_event_file_count": 0,
+    "required_packet_fields": [
+      "published_at",
+      "fetched_at",
+      "visible_at",
+      "first_seen_at",
+      "revision_id",
+      "version_id",
+      "rights_scope",
+      "availability_quality",
+      "acquisition_mode",
+      "source",
+      "input_hash",
+      "prompt_hash"
+    ]
+  },
+  "generated_at": "2026-07-17T16:58:30.265799+00:00",
+  "global_blockers": [
+    "historical_stock_membership_is_not_point_in_time",
+    "delisting_and_symbol_mapping_history_missing",
+    "provider_rights_not_verified",
+    "market_feeds_are_not_consolidated_sip",
+    "corporate_action_lineage_not_immutable",
+    "event_news_macro_pit_corpus_unavailable",
+    "benchmark_acquisition_manifest_lineage_incomplete",
+    "no_formal_forward_epoch_observations"
+  ],
+  "interpretation": "Q.2 may run only path_gates marked run_diagnostic on the frozen local data. Those results can reject designs but cannot establish research_pass or paper readiness.",
+  "intraday_panel": {
+    "panel_quality_go": false,
+    "path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+    "q2_diagnostic_go": false,
+    "selected_count": 10,
+    "sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991"
+  },
+  "iter_id": "mom_stock_intraday_codesign_q1",
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "parent_universe": {
+    "count": 894,
+    "historical_membership_pit": false,
+    "path": "reports/research/iterations/mom_stock_intraday_codesign_q1/parent-universe.json",
+    "sha256": "d9e099c69e2b5a2e531cf424bd7dba379f5f1e9b8ecc87ddfda1cb803f5c3751"
+  },
+  "path_gates": {
+    "deterministic_daily": {
+      "candidate_ids": [
+        "D01",
+        "D02",
+        "D03",
+        "D04",
+        "D05",
+        "D06",
+        "D07",
+        "D08",
+        "D09",
+        "D10",
+        "D11",
+        "D12"
+      ],
+      "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+      "historical_diagnostic_go": true,
+      "historical_research_qualified": false,
+      "q2_action": "run_diagnostic",
+      "reason": "Frozen local panel is sufficient for survivorship-labelled diagnostic rejection tests, but not positive research evidence."
+    },
+    "event_llm": {
+      "candidate_ids": [
+        "E01",
+        "E02",
+        "E03",
+        "E04",
+        "E05",
+        "E06",
+        "E07",
+        "E08"
+      ],
+      "evidence_path": null,
+      "historical_diagnostic_go": false,
+      "historical_research_qualified": false,
+      "q2_action": "dependency_skipped",
+      "reason": "No authorized immutable PIT document/news corpus is locally available."
+    },
+    "intraday_independent": {
+      "candidate_ids": [
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I06",
+        "I07",
+        "I08",
+        "I09",
+        "I10",
+        "I11",
+        "I12"
+      ],
+      "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+      "historical_diagnostic_go": false,
+      "historical_research_qualified": false,
+      "q2_action": "dependency_skipped",
+      "reason": "Q.2 is preregistered as a daily-only diagnostic wave; intraday candidates remain dependency-skipped even if a synthetic or future panel passes quality."
+    },
+    "ml_native_daily": {
+      "candidate_ids": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10",
+        "M11",
+        "M12",
+        "M13",
+        "M14",
+        "M15",
+        "M16"
+      ],
+      "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+      "historical_diagnostic_go": true,
+      "historical_research_qualified": false,
+      "q2_action": "run_diagnostic",
+      "reason": "Frozen local panel is sufficient for survivorship-labelled diagnostic rejection tests, but not positive research evidence."
+    }
+  },
+  "q2_authorization": {
+    "candidate_count": 48,
+    "rows": [
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "0a587afadd009a31994ea540a75af825b83e0fa53b3541cbc77a4f3bf91b4d55",
+        "candidate_id": "D01",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "1d03c7044bb71146e788000d3742d077670245e75504a2ca1c21049269f5f9c3",
+        "candidate_id": "D02",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "aaf43c90a52dd529426509ce8e27e9377926c351dce0c0c0b73dc7c63a60c848",
+        "candidate_id": "D03",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "4b4ea4687f129cfddf045c33aff64203262f2ba2278535394c372de8366a1578",
+        "candidate_id": "D04",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "050fe972ed44c802daa3741a76098e4c266b2f0d47b7a22434aad485cf8e8517",
+        "candidate_id": "D05",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "f8d6268dfaecd1385e916d7fb2acfbdf758107909e7aee9ab42ab5c955dc63ae",
+        "candidate_id": "D06",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "680707e4359adbacdbe52a899918294c575324971f3cfc5721606e00fcd85b41",
+        "candidate_id": "D07",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "c684d0e72dabbb9e97033662be92e5f04febf55fb16da0e61a2e85d86d234fcd",
+        "candidate_id": "D08",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "4fdef1404fb464aa99a9b76de1c99bc065dd306e0ab232eaeed9127f43052d45",
+        "candidate_id": "D09",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "285da92a42a67720d5bc446b3fe29f26f276067158ca8c1d5c95520d3da174ea",
+        "candidate_id": "D10",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "b05820a6a2e027bcbd198a680f78cfa935d75daef2d30b0480fbc4bb8145cca5",
+        "candidate_id": "D11",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "848ec028f5c0b57ccf390245ef2e1cc08c386934fec6c813acf1e8a9fb791476",
+        "candidate_id": "D12",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "deterministic_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "ed643d751e7500a81b26d87aa1bfe75b85ac20b750f061119c621007848cb636",
+        "candidate_id": "E01",
+        "evidence_path": null,
+        "evidence_sha256": null,
+        "path": "event_llm",
+        "reason_code": "event_pit_corpus_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "6a48e763b40aa67ae151a58bd0d496bbfb9015ca4b4d23f82030c29ac278e3e4",
+        "candidate_id": "E02",
+        "evidence_path": null,
+        "evidence_sha256": null,
+        "path": "event_llm",
+        "reason_code": "event_pit_corpus_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "da237670a2dd53a28fa2af14bb39393d1278357fb4219872da927caceab623f8",
+        "candidate_id": "E03",
+        "evidence_path": null,
+        "evidence_sha256": null,
+        "path": "event_llm",
+        "reason_code": "event_pit_corpus_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "a7ea57d711ce0ac02dccd9a1a2a0b38116994dfc777b6777ecd6f231684f7021",
+        "candidate_id": "E04",
+        "evidence_path": null,
+        "evidence_sha256": null,
+        "path": "event_llm",
+        "reason_code": "event_pit_corpus_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "a2483cd055d2adae938d2f847144f6d2c0bf8ae249b2aae20e3af60c79c8e344",
+        "candidate_id": "E05",
+        "evidence_path": null,
+        "evidence_sha256": null,
+        "path": "event_llm",
+        "reason_code": "event_pit_corpus_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "57a178409ff11af4ad4012db46a2a47aa543a688c0e0c0bbbf8b95c2587aadc2",
+        "candidate_id": "E06",
+        "evidence_path": null,
+        "evidence_sha256": null,
+        "path": "event_llm",
+        "reason_code": "event_pit_corpus_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "52f5b4936146eb927532ddce710451ad7140886f79dd6c15d9889c74826412e7",
+        "candidate_id": "E07",
+        "evidence_path": null,
+        "evidence_sha256": null,
+        "path": "event_llm",
+        "reason_code": "event_pit_corpus_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "be1252ac9ff7dac95cca8e761d97755177196a461749e8b11cbd88576ff69b62",
+        "candidate_id": "E08",
+        "evidence_path": null,
+        "evidence_sha256": null,
+        "path": "event_llm",
+        "reason_code": "event_pit_corpus_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "5ee93265fd573d4655fbe66da7de22574c4d39ad278aa892ec6d6d29f835d97a",
+        "candidate_id": "I01",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "571561eaba7a826b08a7494660d7c57a5e6764631169dccfad40250e06cd56ae",
+        "candidate_id": "I02",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "415b6f3c4a6bbe59c4a10d5bec10d34c0d88692f0454f2612339b2f2bfd61d69",
+        "candidate_id": "I03",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "bbf8ccbda981e62e12140d153bbcb860cbf307315578fa21c13e8672db199b13",
+        "candidate_id": "I04",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "99f810c12972c9ad721c80ae4f3a0fb99dfa2a12cb959c767f223352b62398fa",
+        "candidate_id": "I05",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "ced74335ead46336c595c330ecec90fc51fd4fd64b950fb131440fa1e40f8aef",
+        "candidate_id": "I06",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "4995873bebe2c10c2883e780e3557e416c63d7834a726b94e03777cc44576260",
+        "candidate_id": "I07",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "79c1acf98d7ec1cdedc2a78359f787ec732e7e8b83b9e538f02b6d9356081028",
+        "candidate_id": "I08",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "da4c1a858473ac8a5adce95c0329bbd53f3d826ed7f4105f1a8644e2cec6744b",
+        "candidate_id": "I09",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "acf73ef9471eb8a0eadee28ec6c3b28fcd602cca8a02d4a08a0efbd06fec1243",
+        "candidate_id": "I10",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "ba54eaebcfab62cbaf2ba7ae782bd6e34d9741c8d232db3bea5a3e829ce2d8d7",
+        "candidate_id": "I11",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "dependency_skipped",
+        "candidate_binding_sha256": "47a7eef51808828074a6be457177c9498bf96beb790b130389777a733cb4f6a7",
+        "candidate_id": "I12",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/intraday-panel-manifest.json",
+        "evidence_sha256": "c9d25b634d7b7f449902a7a09b2696161a748b2eb65f11e944548036ff1ef991",
+        "path": "intraday_independent",
+        "reason_code": "q2_daily_scope_dependency_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "0a6d81d84fa69cf6e7111119eb56aed9c8ebb25a950205447e7fdd62ad7e3121",
+        "candidate_id": "M01",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "62a5ca5f3f805b46fecad086a81d8f0edbb8aab2889341ae1301a9735ef86c8d",
+        "candidate_id": "M02",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "8efa4f59a345311cf61ce16775329c7b4345b75691e0e946540e8c33572fc489",
+        "candidate_id": "M03",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "29b335a0a05f16adc5dfd78a43b0314b28c02cf6d93ec297a24ae93f3fabc811",
+        "candidate_id": "M04",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "1028a28102d2fd924c5da9f4252cc81ec161b392063a646f15ff5d2b5562973b",
+        "candidate_id": "M05",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "a7c57b0939f1842a6611af0e0ec65694351469755d7d9b46ad58263aad57c372",
+        "candidate_id": "M06",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "4c74bb8002fb903ecd68f36dbdde89c10e721c0c448426830472cb2e2d1d484e",
+        "candidate_id": "M07",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "5358bd131a4424941ec15bcbb7409ecfe31c696912b5aee0966191295a5b2f91",
+        "candidate_id": "M08",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "942dbced66e0cd4fe373664057396fc142be60226dfe09d46eeacbdd3e67beae",
+        "candidate_id": "M09",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "ea9582033dcd00910892ea6f8e1634a7248dc98a9fe50b9bf44296564cf54a60",
+        "candidate_id": "M10",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "4fc06e79b2183f97d137d84e7488d743f83d511072b447215c10da7f4e3de552",
+        "candidate_id": "M11",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "34c8a714e75ead88d097fc1e3ca1de3387b85120def00989431791855f485bae",
+        "candidate_id": "M12",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "8c2e5c09dd900b0976c0237949162f6c858f92a4ad7bedabc297df9a06869890",
+        "candidate_id": "M13",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "8069f577d08a142ddadd8f76ae95927b2bf79bbcf30ce35ee2473bb95ec31b6c",
+        "candidate_id": "M14",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "3890a8eec1939ebde72a6ebbe65fb70accfef126a58d66cab90da06722f614fe",
+        "candidate_id": "M15",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      },
+      {
+        "action": "run_diagnostic",
+        "candidate_binding_sha256": "f236d3b6fa45be3705971ef052cbc424d84de68fa034c7b9183daf3fc7471b47",
+        "candidate_id": "M16",
+        "evidence_path": "reports/research/iterations/mom_stock_intraday_codesign_q1/daily-panel-manifest.json",
+        "evidence_sha256": "3c4c2dc98203f7e87460e5e174b562e1ee47d5162410a409762250be83273568",
+        "path": "ml_native_daily",
+        "reason_code": "daily_diagnostic_panel_gate"
+      }
+    ]
+  },
+  "q2_diagnostic_execution_authorized": true,
+  "q2_execution_map": {
+    "path": "reports/research/iterations/mom_stock_intraday_codesign_q1/q2-execution-map.json",
+    "sha256": "32d7db3a3c2f043e6cc6ed5961c86ca32fe3894893883e6426abda9a2b9f0853"
+  },
+  "report_type": "stock_intraday_momentum_data_feasibility",
+  "research_pass": false,
+  "schema_version": 1,
+  "status": "complete_with_external_blockers",
+  "workflow_pass": true
+}

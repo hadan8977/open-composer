@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from open_composer.adapters.events import fetch_capability_events, fetcher
@@ -20,6 +21,11 @@ def test_capability_registry_loads(sample_workspace: Path) -> None:
     )
     assert options.kind == "options_chain"
     assert options.status == "trial"
+    fred = next(
+        capability for capability in registry.capabilities if capability.id == "macro.fred_series"
+    )
+    assert fred.status == "trial"
+    assert fred.strict_behavior == "research_only"
 
 
 def test_capability_evaluation_passes_with_fixtures(sample_workspace: Path) -> None:
@@ -39,7 +45,13 @@ def test_event_fetch_replays_fixture_and_dedupes(sample_workspace: Path) -> None
     events = fetch_capability_events("sec", sample_workspace, ["QQQ"], offline=True)
     assert events
     assert all(event.source == "sec" for event in events)
-    assert list((sample_workspace / "data" / "raw" / "events" / "sec").glob("*.jsonl"))
+    assert all(event.acquisition_mode == "fixture_replay" for event in events)
+    persisted_paths = list((sample_workspace / "data" / "raw" / "events" / "sec").glob("*.jsonl"))
+    assert persisted_paths
+    persisted = [
+        json.loads(line) for line in persisted_paths[0].read_text().splitlines() if line.strip()
+    ]
+    assert all(record["acquisition_mode"] == "fixture_replay" for record in persisted)
 
 
 def test_alpha_vantage_live_fetch_expands_requested_ticker_sentiment(

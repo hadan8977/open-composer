@@ -302,6 +302,31 @@ def _search_space_blockers(
         blocked.extend(_knowledge_contract_blockers(knowledge_contract, root))
     candidate_manifest_raw = str(payload.get("candidate_manifest_path") or "").strip()
     if candidate_manifest_raw:
+        feasibility_payload: dict[str, Any] | None = None
+        feasibility_path: Path | None = None
+        for field_name in ["cost_table_path", "data_feasibility_path"]:
+            raw_path = str(payload.get(field_name) or "").strip()
+            if not raw_path:
+                blocked.append(f"search_space_missing_{field_name}")
+                continue
+            prerequisite_path, prerequisite_error = _safe_repo_path(root, raw_path)
+            if prerequisite_error:
+                blocked.append(f"search_space_{field_name}_invalid:{prerequisite_error}")
+                continue
+            if not prerequisite_path.exists():
+                blocked.append(f"search_space_{field_name}_missing")
+                continue
+            if field_name == "data_feasibility_path" and prerequisite_path.suffix == ".json":
+                try:
+                    feasibility = json.loads(prerequisite_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    blocked.append("search_space_data_feasibility_invalid_json")
+                else:
+                    if not isinstance(feasibility, dict):
+                        blocked.append("search_space_data_feasibility_not_object")
+                    else:
+                        feasibility_payload = feasibility
+                        feasibility_path = prerequisite_path
         candidate_manifest_path, error = _safe_repo_path(root, candidate_manifest_raw)
         if error:
             blocked.append(f"candidate_manifest_invalid_path:{error}")
@@ -314,6 +339,15 @@ def _search_space_blockers(
                     payload,
                     root,
                     expected_total=total,
+                )
+            )
+            blocked.extend(
+                _data_feasibility_blockers(
+                    feasibility_payload,
+                    feasibility_path,
+                    candidate_manifest_path,
+                    payload,
+                    root,
                 )
             )
     return blocked
@@ -377,6 +411,7 @@ def _candidate_manifest_blockers(
     }
     candidate_ids: set[str] = set()
     path_counts: dict[str, int] = {}
+    validated_spec_paths: set[str] = set()
     for index, candidate in enumerate(candidates):
         if not isinstance(candidate, dict):
             blocked.append(f"candidate_manifest_row_{index}_not_object")
@@ -404,17 +439,28 @@ def _candidate_manifest_blockers(
         elif not spec_path.exists():
             blocked.append(f"candidate_manifest_{candidate_id}_spec_missing")
         else:
-            expected_spec_hash = str(spec_hashes.get(str(candidate["spec_path"])) or "")
+            spec_reference = str(candidate["spec_path"])
+            expected_spec_hash = str(spec_hashes.get(spec_reference) or "")
             if not expected_spec_hash:
                 blocked.append(f"candidate_manifest_{candidate_id}_spec_hash_missing")
             else:
                 try:
-                    actual_spec_hash = strategy_content_hash(load_strategy_spec(spec_path))
+                    spec = load_strategy_spec(spec_path)
+                    actual_spec_hash = strategy_content_hash(spec)
                 except Exception as exc:
                     blocked.append(f"candidate_manifest_{candidate_id}_spec_invalid:{exc}")
                 else:
                     if expected_spec_hash != actual_spec_hash:
                         blocked.append(f"candidate_manifest_{candidate_id}_spec_hash_mismatch")
+                    if spec_reference not in validated_spec_paths:
+                        blocked.extend(
+                            _spec_iteration_binding_blockers(
+                                spec,
+                                spec_reference,
+                                search_space,
+                            )
+                        )
+                        validated_spec_paths.add(spec_reference)
     expected_path_counts = {
         str(row.get("name")): int(row.get("candidate_count") or 0)
         for row in search_space.get("paths", [])
@@ -426,6 +472,333 @@ def _candidate_manifest_blockers(
             f"{json.dumps(path_counts, sort_keys=True)}:"
             f"{json.dumps(expected_path_counts, sort_keys=True)}"
         )
+    return blocked
+
+
+def _spec_iteration_binding_blockers(
+    spec: Any,
+    spec_reference: str,
+    search_space: dict[str, Any],
+) -> list[str]:
+    blocked: list[str] = []
+    notes = spec.notes.model_dump(mode="json") if hasattr(spec.notes, "model_dump") else {}
+    research_design = notes.get("research_design") if isinstance(notes, dict) else None
+    if not isinstance(research_design, dict):
+        return [f"candidate_manifest_spec_binding_missing:{spec_reference}"]
+    if research_design.get("iter_id") != search_space.get("iter_id"):
+        blocked.append(f"candidate_manifest_spec_iter_id_mismatch:{spec_reference}")
+    if research_design.get("candidate_manifest_path") != search_space.get(
+        "candidate_manifest_path"
+    ):
+        blocked.append(f"candidate_manifest_spec_manifest_path_mismatch:{spec_reference}")
+    feasibility_binding = research_design.get("data_feasibility_path") or research_design.get(
+        "universe_contract_path"
+    )
+    if feasibility_binding != search_space.get("data_feasibility_path"):
+        blocked.append(f"candidate_manifest_spec_feasibility_path_mismatch:{spec_reference}")
+    return blocked
+
+
+def _data_feasibility_blockers(
+    payload: dict[str, Any] | None,
+    feasibility_path: Path | None,
+    manifest_path: Path,
+    search_space: dict[str, Any],
+    root: Path,
+) -> list[str]:
+    if payload is None or feasibility_path is None:
+        return ["search_space_data_feasibility_missing_or_invalid"]
+    blocked: list[str] = []
+    if not isinstance(payload.get("schema_version"), int):
+        blocked.append("data_feasibility_schema_version_invalid")
+    if not str(payload.get("report_type") or "").strip():
+        blocked.append("data_feasibility_report_type_missing")
+    if payload.get("iter_id") != search_space.get("iter_id"):
+        blocked.append("data_feasibility_iter_id_mismatch")
+    for field_name in [
+        "workflow_pass",
+        "research_pass",
+        "llm_contribution_pass",
+        "paper_ready_pass",
+        "q2_diagnostic_execution_authorized",
+    ]:
+        if not isinstance(payload.get(field_name), bool):
+            blocked.append(f"data_feasibility_{field_name}_not_boolean")
+    if payload.get("q2_diagnostic_execution_authorized") is not True:
+        blocked.append("search_space_data_feasibility_not_authorized")
+    if payload.get("workflow_pass") is not True:
+        blocked.append("data_feasibility_workflow_not_passed")
+    for field_name in ["research_pass", "llm_contribution_pass", "paper_ready_pass"]:
+        if payload.get(field_name) is not False:
+            blocked.append(f"data_feasibility_diagnostic_scope_{field_name}_must_be_false")
+
+    expected_feasibility_sha = str(search_space.get("data_feasibility_sha256") or "")
+    actual_feasibility_sha = hashlib.sha256(feasibility_path.read_bytes()).hexdigest()
+    if not expected_feasibility_sha:
+        blocked.append("data_feasibility_sha256_missing")
+    elif expected_feasibility_sha != actual_feasibility_sha:
+        blocked.append("data_feasibility_sha256_mismatch")
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return [*blocked, "data_feasibility_candidate_manifest_invalid_json"]
+    candidates = manifest.get("candidates") if isinstance(manifest, dict) else None
+    if not isinstance(candidates, list):
+        return [*blocked, "data_feasibility_candidate_manifest_candidates_missing"]
+    candidate_ids_by_path: dict[str, list[str]] = {}
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        path_name = str(candidate.get("path") or "")
+        candidate_id = str(candidate.get("candidate_id") or "")
+        if path_name and candidate_id:
+            candidate_ids_by_path.setdefault(path_name, []).append(candidate_id)
+
+    path_gates = payload.get("path_gates")
+    if not isinstance(path_gates, dict):
+        return [*blocked, "data_feasibility_path_gates_missing"]
+    if set(path_gates) != set(candidate_ids_by_path):
+        blocked.append("data_feasibility_path_gate_set_mismatch")
+    runnable_ids: list[str] = []
+    skipped_ids: list[str] = []
+    for path_name, candidate_ids in sorted(candidate_ids_by_path.items()):
+        gate = path_gates.get(path_name)
+        if not isinstance(gate, dict):
+            blocked.append(f"data_feasibility_{path_name}_gate_missing")
+            continue
+        action = gate.get("q2_action")
+        if action == "run_diagnostic":
+            runnable_ids.extend(candidate_ids)
+            if gate.get("historical_diagnostic_go") is not True:
+                blocked.append(f"data_feasibility_{path_name}_run_without_diagnostic_go")
+        elif action == "dependency_skipped":
+            skipped_ids.extend(candidate_ids)
+            if gate.get("historical_diagnostic_go") is not False:
+                blocked.append(f"data_feasibility_{path_name}_skip_with_diagnostic_go")
+        else:
+            blocked.append(f"data_feasibility_{path_name}_invalid_action")
+        if gate.get("historical_research_qualified") is not False:
+            blocked.append(f"data_feasibility_{path_name}_research_scope_not_false")
+        declared_ids = gate.get("candidate_ids")
+        if declared_ids is not None:
+            if not isinstance(declared_ids, list):
+                blocked.append(f"data_feasibility_{path_name}_candidate_ids_not_list")
+            elif sorted(map(str, declared_ids)) != sorted(candidate_ids):
+                blocked.append(f"data_feasibility_{path_name}_candidate_ids_mismatch")
+
+    event_ids = sorted(candidate_ids_by_path.get("event_llm", []))
+    event_gate = path_gates.get("event_llm")
+    if isinstance(event_gate, dict):
+        declared_event_ids = event_gate.get("candidate_ids")
+        if not isinstance(declared_event_ids, list):
+            blocked.append("data_feasibility_event_llm_candidate_ids_not_list")
+        elif sorted(map(str, declared_event_ids)) != event_ids:
+            blocked.append("data_feasibility_event_llm_candidate_ids_mismatch")
+    if payload.get("q2_diagnostic_execution_authorized") is True and not runnable_ids:
+        blocked.append("data_feasibility_authorized_without_runnable_candidates")
+
+    accounting = payload.get("candidate_accounting")
+    expected_accounting = {
+        "frozen_candidate_count": len(candidates),
+        "diagnostic_runnable_count": len(runnable_ids),
+        "dependency_skipped_count": len(skipped_ids),
+        "unresolved_count": 0,
+        "balanced": len(runnable_ids) + len(skipped_ids) == len(candidates),
+    }
+    if not isinstance(accounting, dict):
+        blocked.append("data_feasibility_candidate_accounting_missing")
+    else:
+        for field_name, expected in expected_accounting.items():
+            actual = accounting.get(field_name)
+            if isinstance(expected, bool):
+                matches = actual is expected
+            else:
+                matches = (
+                    isinstance(actual, int) and not isinstance(actual, bool) and actual == expected
+                )
+            if not matches:
+                blocked.append(
+                    f"data_feasibility_accounting_{field_name}_mismatch:{actual}:{expected}"
+                )
+
+    authorization = payload.get("q2_authorization")
+    authorization_rows = authorization.get("rows") if isinstance(authorization, dict) else None
+    if not isinstance(authorization_rows, list):
+        blocked.append("data_feasibility_q2_authorization_rows_missing")
+    else:
+        if authorization.get("candidate_count") != len(candidates):
+            blocked.append("data_feasibility_q2_authorization_count_mismatch")
+        authorization_by_id: dict[str, dict[str, Any]] = {}
+        for index, row in enumerate(authorization_rows):
+            if not isinstance(row, dict):
+                blocked.append(f"data_feasibility_q2_authorization_row_{index}_not_object")
+                continue
+            candidate_id = str(row.get("candidate_id") or "")
+            if not candidate_id:
+                blocked.append(f"data_feasibility_q2_authorization_row_{index}_id_missing")
+                continue
+            if candidate_id in authorization_by_id:
+                blocked.append(f"data_feasibility_q2_authorization_duplicate:{candidate_id}")
+            authorization_by_id[candidate_id] = row
+        manifest_by_id = {
+            str(candidate.get("candidate_id") or ""): candidate
+            for candidate in candidates
+            if isinstance(candidate, dict)
+        }
+        if set(authorization_by_id) != set(manifest_by_id):
+            blocked.append("data_feasibility_q2_authorization_id_set_mismatch")
+        for candidate_id, candidate in manifest_by_id.items():
+            row = authorization_by_id.get(candidate_id)
+            if row is None:
+                continue
+            path_name = str(candidate.get("path") or "")
+            gate = path_gates.get(path_name)
+            if row.get("path") != path_name:
+                blocked.append(f"data_feasibility_q2_authorization_path_mismatch:{candidate_id}")
+            if not isinstance(gate, dict) or row.get("action") != gate.get("q2_action"):
+                blocked.append(f"data_feasibility_q2_authorization_action_mismatch:{candidate_id}")
+            if not str(row.get("reason_code") or "").strip():
+                blocked.append(f"data_feasibility_q2_authorization_reason_missing:{candidate_id}")
+            canonical_sha = hashlib.sha256(
+                json.dumps(candidate, sort_keys=True, separators=(",", ":")).encode()
+            ).hexdigest()
+            if row.get("candidate_binding_sha256") != canonical_sha:
+                blocked.append(
+                    f"data_feasibility_q2_authorization_candidate_sha_mismatch:{candidate_id}"
+                )
+            evidence_raw = row.get("evidence_path")
+            if evidence_raw:
+                evidence_path, error = _safe_repo_path(root, str(evidence_raw))
+                if error or not evidence_path.exists():
+                    blocked.append(
+                        f"data_feasibility_q2_authorization_evidence_invalid:{candidate_id}"
+                    )
+                elif (
+                    row.get("evidence_sha256")
+                    != hashlib.sha256(evidence_path.read_bytes()).hexdigest()
+                ):
+                    blocked.append(
+                        f"data_feasibility_q2_authorization_evidence_sha_mismatch:{candidate_id}"
+                    )
+
+    resolved_references: dict[str, Path] = {}
+    for field_name in [
+        "parent_universe",
+        "daily_panel",
+        "intraday_panel",
+        "cost_contract",
+        "q2_execution_map",
+    ]:
+        reference = payload.get(field_name)
+        if not isinstance(reference, dict):
+            blocked.append(f"data_feasibility_{field_name}_reference_missing")
+            continue
+        reference_path, error = _safe_repo_path(root, str(reference.get("path") or ""))
+        if error:
+            blocked.append(f"data_feasibility_{field_name}_path_invalid:{error}")
+            continue
+        if not reference_path.exists():
+            blocked.append(f"data_feasibility_{field_name}_path_missing")
+            continue
+        resolved_references[field_name] = reference_path
+        expected_sha = str(reference.get("sha256") or "")
+        actual_sha = hashlib.sha256(reference_path.read_bytes()).hexdigest()
+        if not expected_sha:
+            blocked.append(f"data_feasibility_{field_name}_sha256_missing")
+        elif expected_sha != actual_sha:
+            blocked.append(f"data_feasibility_{field_name}_sha256_mismatch")
+    execution_map_path = resolved_references.get("q2_execution_map")
+    if execution_map_path is not None:
+        blocked.extend(
+            _q2_execution_map_blockers(
+                execution_map_path,
+                manifest_by_id,
+                set(runnable_ids),
+                expected_iter_id=str(search_space.get("iter_id") or ""),
+            )
+        )
+    return blocked
+
+
+def _q2_execution_map_blockers(
+    path: Path,
+    manifest_by_id: dict[str, dict[str, Any]],
+    runnable_ids: set[str],
+    *,
+    expected_iter_id: str,
+) -> list[str]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ["q2_execution_map_invalid_json"]
+    if not isinstance(payload, dict):
+        return ["q2_execution_map_not_object"]
+    blocked: list[str] = []
+    if expected_iter_id == "mom_stock_intraday_codesign_q1":
+        from open_composer.research.stock_momentum_q2_contract import (
+            build_q2_execution_map,
+        )
+
+        expected_payload = build_q2_execution_map({"candidates": list(manifest_by_id.values())})
+        if payload != expected_payload:
+            blocked.append("q2_execution_map_canonical_contract_mismatch")
+    if payload.get("iter_id") != expected_iter_id:
+        blocked.append("q2_execution_map_iter_id_mismatch")
+    if payload.get("scope") != "historical_current_universe_diagnostic":
+        blocked.append("q2_execution_map_scope_invalid")
+    if payload.get("survivorship_labelled") is not True:
+        blocked.append("q2_execution_map_survivorship_label_missing")
+    if payload.get("primitive_field_allowlist") != ["open", "close", "volume"]:
+        blocked.append("q2_execution_map_primitive_allowlist_invalid")
+    for field_name in [
+        "high_low_dependent_candidates_allowed",
+        "forward_fill_allowed",
+        "zero_return_substitution_allowed",
+    ]:
+        if payload.get(field_name) is not False:
+            blocked.append(f"q2_execution_map_{field_name}_must_be_false")
+    rows = payload.get("rows")
+    if not isinstance(rows, list):
+        return [*blocked, "q2_execution_map_rows_missing"]
+    if payload.get("runnable_candidate_count") != len(runnable_ids):
+        blocked.append("q2_execution_map_runnable_count_mismatch")
+    by_id: dict[str, dict[str, Any]] = {}
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            blocked.append(f"q2_execution_map_row_{index}_not_object")
+            continue
+        candidate_id = str(row.get("candidate_id") or "")
+        if not candidate_id:
+            blocked.append(f"q2_execution_map_row_{index}_id_missing")
+            continue
+        if candidate_id in by_id:
+            blocked.append(f"q2_execution_map_duplicate_id:{candidate_id}")
+        by_id[candidate_id] = row
+    if set(by_id) != runnable_ids:
+        blocked.append("q2_execution_map_id_set_mismatch")
+    for candidate_id, row in by_id.items():
+        candidate = manifest_by_id.get(candidate_id)
+        if candidate is None:
+            continue
+        if row.get("path") != candidate.get("path") or row.get("method") != candidate.get("method"):
+            blocked.append(f"q2_execution_map_candidate_identity_mismatch:{candidate_id}")
+        canonical_sha = hashlib.sha256(
+            json.dumps(candidate, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        if row.get("candidate_binding_sha256") != canonical_sha:
+            blocked.append(f"q2_execution_map_candidate_sha_mismatch:{candidate_id}")
+        if row.get("primitive_fields") != ["open", "close", "volume"]:
+            blocked.append(f"q2_execution_map_primitive_fields_invalid:{candidate_id}")
+        if row.get("research_pass") is not False:
+            blocked.append(f"q2_execution_map_research_pass_not_false:{candidate_id}")
+        if row.get("paper_ready_pass") is not False:
+            blocked.append(f"q2_execution_map_paper_pass_not_false:{candidate_id}")
+        if row.get("promotion_eligible") is not False:
+            blocked.append(f"q2_execution_map_promotion_eligible:{candidate_id}")
+        benchmarks = row.get("required_benchmarks")
+        if not isinstance(benchmarks, list) or "ex_post_best_symbol_report_only" not in benchmarks:
+            blocked.append(f"q2_execution_map_benchmarks_incomplete:{candidate_id}")
     return blocked
 
 

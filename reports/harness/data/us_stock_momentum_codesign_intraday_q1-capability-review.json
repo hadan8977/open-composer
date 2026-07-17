@@ -1,0 +1,21 @@
+{
+  "strategy_name": "us_stock_momentum_codesign_intraday_q1",
+  "reviewed_at": "2026-07-17",
+  "capabilities": [
+    {
+      "capability_id": "market.alpaca_bars",
+      "kind": "market",
+      "status": "blocked",
+      "strict_behavior": "fail_fast_for_unsupported_timeframes",
+      "paper_ready": false,
+      "notes": "The intraday diagnostic path is blocked: all ten source acquisition manifests drift and the post-exclusion common timestamp ratio is below one. IEX is also not SIP, and spread, impact, rights, and corporate-action lineage are unresolved."
+    }
+  ],
+  "feature_packet_pit_check": "warning",
+  "sample_data_caveats": [
+    "All ten source acquisition manifests are stale relative to their local 1-minute files; the Q.1 panel manifest freezes the observed content but cannot recover provider provenance.",
+    "Three detected split or action-discontinuity sessions would require exclusion; preceding sessions are retained to avoid future-aware sample deletion.",
+    "The worst retained symbol-level RTH gap rate is 1.6151 percent and remains diagnostic-only."
+  ],
+  "conclusion": "blocked"
+}

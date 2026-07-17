@@ -343,7 +343,8 @@ def test_feature_packet_factor_replays_nested_feature_fields(
     feature_path.write_text(
         (
             '{"timestamp":"2026-01-01T00:00:00Z","published_at":"2026-01-01T00:00:00Z",'
-            '"fetched_at":"2026-01-01T00:01:00Z","source":"alpha_vantage",'
+            '"fetched_at":"2026-01-01T00:01:00Z","visible_at":"2026-01-01T00:01:00Z",'
+            '"source":"alpha_vantage",'
             '"symbol":"QQQ","dedupe_key":"news:qqq:1","schema_version":"1",'
             '"features":{"event_risk_score":0.8}}\n'
         ),

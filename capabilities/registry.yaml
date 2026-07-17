@@ -92,19 +92,27 @@ capabilities:
     min_score: 0.9
     caveats:
       - filings are official but not equivalent to broad news coverage
+      - acceptanceDateTime is used when present; filings without it are visible only from collector fetch time
+      - filingDate is a calendar date, not a release timestamp, and is never converted to a synthetic intraday time
+      - live SEC requests require SEC_USER_AGENT with a contact email
+      - EDGAR public access does not establish reuse rights for issuer-authored filing content
 
   - id: macro.fred_series
     kind: macro
-    status: approved
+    status: trial
     provider: fred
     use_for: [macro_filter, weekly_review]
     reliability: high
     default_mode: live_with_cache
+    strict_behavior: research_only
     fixture: data/fixtures/capabilities/fred_macro.jsonl
     env: [FRED_API_KEY]
     min_score: 0.9
     caveats:
       - macro series are structured releases, not real-time breaking news
+      - observation dates are periods, not release timestamps; live records are forward-only from collector fetch time
+      - the current observations endpoint is a latest snapshot, is revision-prone, and supplies no historical vintage identity
+      - use and redistribution rights can vary by underlying FRED series and must be checked separately
 
   - id: news.alpha_vantage
     kind: news
@@ -118,6 +126,9 @@ capabilities:
     min_score: 0.75
     caveats:
       - free tier coverage and limits must be measured against the user's watchlist
+      - provider publication time does not prove collector availability; absent explicit first-seen metadata, visibility begins at fetch time
+      - historical news backfills without captured first-seen timestamps are not point-in-time replay evidence
+      - provider and original-source terms govern news-content use and redistribution
 
   - id: news.gdelt
     kind: news
@@ -130,6 +141,8 @@ capabilities:
     min_score: 0.7
     caveats:
       - broad coverage creates noise; use strict filters and dedupe
+      - historical provider timestamps do not prove collector availability; live records default to fetch-time visibility
+      - GDELT metadata access does not convey reuse rights for linked article content
 
   - id: options.trial_chain
     kind: options_chain

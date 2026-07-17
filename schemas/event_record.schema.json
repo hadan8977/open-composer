@@ -9,6 +9,36 @@
     "symbol": {"type": "string"},
     "published_at": {"type": "string", "format": "date-time"},
     "fetched_at": {"type": "string", "format": "date-time"},
+    "visible_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "First safely usable timestamp. Validation derives or requires at least max(published_at, fetched_at, first_seen_at, accepted_at)."
+    },
+    "first_seen_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "First time this collector observed the record; defaults to fetched_at for legacy inputs."
+    },
+    "accepted_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "default": null,
+      "description": "Provider acceptance timestamp, such as SEC acceptanceDateTime, when available."
+    },
+    "vintage_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "default": null,
+      "description": "Timestamp identifying the retrieved data vintage when the provider exposes current or revisable values."
+    },
+    "revision": {"type": "string", "default": "unknown"},
+    "revision_id": {"type": "string", "default": "unknown"},
+    "version_id": {"type": "string", "default": "unknown"},
+    "rights": {"type": "string", "default": "unknown"},
+    "rights_scope": {"type": "string", "default": "unknown"},
+    "availability_quality": {"type": "string", "default": "unknown"},
+    "availability_basis": {"type": "string", "default": "derived_safe_max"},
+    "acquisition_mode": {"type": "string", "default": "unknown"},
     "event_type": {"type": "string"},
     "title": {"type": "string"},
     "summary": {"type": "string"},

@@ -2746,6 +2746,46 @@ def data_minute_momentum_feasibility(
     console.print(f"manifest: {result.manifest_path}")
 
 
+@data_app.command("stock-momentum-feasibility")
+def data_stock_momentum_feasibility(
+    snapshot: Annotated[
+        Path | None,
+        typer.Option(
+            "--snapshot",
+            help="Existing current-universe Nasdaq snapshot; no network fetch is performed.",
+        ),
+    ] = None,
+    intraday_symbols: Annotated[
+        str | None,
+        typer.Option(
+            "--intraday-symbols",
+            help="Comma-separated frozen stock panel; defaults to the Q.1 ten-stock set.",
+        ),
+    ] = None,
+) -> None:
+    """Assess frozen stock daily/intraday caches without fixture fallback."""
+    from open_composer.research.stock_momentum_data_feasibility import (
+        run_stock_momentum_data_feasibility,
+    )
+
+    try:
+        result = run_stock_momentum_data_feasibility(
+            project_root(),
+            snapshot_path=snapshot,
+            intraday_symbols=_csv_upper(intraday_symbols),
+        )
+    except (FileNotFoundError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        console.print(f"[red]stock momentum feasibility failed[/red] {exc}")
+        raise typer.Exit(1) from exc
+    console.print(
+        f"[green]stock momentum feasibility written[/green] status={result.payload['status']}"
+    )
+    console.print(f"json: {result.json_path}")
+    console.print(f"markdown: {result.markdown_path}")
+    console.print(f"daily manifest: {result.daily_manifest_path}")
+    console.print(f"intraday manifest: {result.intraday_manifest_path}")
+
+
 @data_app.command("fetch-alt-daily")
 def data_fetch_alt_daily(
     source: str = typer.Option(ROUTE_CROSS_SOURCE_DEFAULT_ALT_SOURCE, "--source"),
@@ -2825,6 +2865,7 @@ def macro_fetch(
 @app.command()
 def backtest(spec: Path) -> None:
     """Run a deterministic backtest from a StrategySpec."""
+    _require_declared_iteration_gate(spec)
     artifacts = run_backtest(spec)
     console.print(
         f"[green]backtest complete[/green] {artifacts.run.run_id} "
@@ -2934,6 +2975,7 @@ def strategy_optimize(
     min_sharpe: float = typer.Option(0.0, "--min-sharpe"),
 ) -> None:
     """Generate candidate rule variants and select the best deterministic backtest result."""
+    _require_declared_iteration_gate(spec)
     result = optimize_strategy(spec, project_root(), min_return_pct, min_signals, min_sharpe)
     console.print(
         f"[green]optimized[/green] {result.best_spec_path} "
@@ -2972,6 +3014,7 @@ def strategy_parameter_sweep(
     ),
 ) -> None:
     """Run a bounded parameter grid over a StrategySpec and write ranked reports."""
+    _require_declared_iteration_gate(spec)
     try:
         parsed = sweep_parameters_from_spec(spec, project_root()) if from_spec else {}
         parsed.update(parse_sweep_parameters(params or []))
@@ -7142,6 +7185,24 @@ def journal_add(
     find_signal(signal_id, project_root())
     entry = add_journal_entry(project_root(), signal_id, action, notes, outcome)
     console.print(f"[green]journal written[/green] {entry.id}")
+
+
+def _require_declared_iteration_gate(spec_path: Path) -> None:
+    spec = load_strategy_spec(spec_path)
+    notes = spec.notes.model_dump(mode="json")
+    research_design = notes.get("research_design") if isinstance(notes, dict) else None
+    if not isinstance(research_design, dict):
+        return
+    iter_id = str(research_design.get("iter_id") or "").strip()
+    if not iter_id:
+        return
+    from open_composer.research.iteration_dossier import validate_iteration_dossier
+
+    result = validate_iteration_dossier(iter_id, project_root(), stage="pre-backtest")
+    if not result.ok:
+        raise typer.BadParameter(
+            f"iteration dossier blocked for {iter_id}: {', '.join(result.blocked)}"
+        )
 
 
 def _fmt_optional(value: object) -> str:

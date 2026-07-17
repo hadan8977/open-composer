@@ -29,8 +29,10 @@ def test_signal_context_excludes_future_records(sample_workspace: Path) -> None:
     )
     context = build_signal_context(artifacts.signals[0].id, sample_workspace)
     assert context.events
-    assert context.macro
-    assert all(event.published_at <= artifacts.signals[0].timestamp for event in context.events)
+    assert all(
+        event.visible_at <= artifacts.signals[0].timestamp
+        for event in [*context.events, *context.macro]
+    )
 
 
 def test_natural_language_to_context_to_paper_mock(sample_workspace: Path, monkeypatch) -> None:

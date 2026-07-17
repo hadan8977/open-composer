@@ -178,8 +178,8 @@ def test_materialized_llm_feature_replays_from_default_path(
     metric = next(item for item in lab.factor_metrics if item.name == "news_regime_score")
 
     assert result.exit_code == 0
-    assert entry_mask.any()
-    assert metric.unique_values > 1
+    assert not entry_mask.any()
+    assert metric.unique_values == 1
 
 
 def test_feature_materialize_input_view_version_change_misses_cache(
