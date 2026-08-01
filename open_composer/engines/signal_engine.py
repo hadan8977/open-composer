@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import math
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
 import pandas as pd
 
-from open_composer.expressions import evaluate_rule_block
+from open_composer.expressions import ExpressionError, evaluate_rule_block, required_history_bars
 from open_composer.models.signal import Signal, signal_id
 from open_composer.models.strategy_spec import StrategySpec
 
@@ -18,6 +19,7 @@ def signal_masks(
 ) -> tuple[pd.Series, pd.Series]:
     frame = frame.copy()
     frame.attrs.update({"strategy_name": spec.name})
+    _validate_signal_frame(spec, frame)
     entry = evaluate_rule_block(
         frame,
         spec.entry.all,
@@ -35,6 +37,48 @@ def signal_masks(
         symbol=spec.primary_symbol,
     )
     return entry, exit_
+
+
+def required_signal_history_bars(spec: StrategySpec) -> int:
+    inferred = required_history_bars(spec.all_expressions(), spec.factors)
+    declared = getattr(spec.data_assumptions, "minimum_complete_bars", None)
+    if declared is None:
+        return inferred
+    try:
+        return max(inferred, int(declared))
+    except (TypeError, ValueError) as exc:
+        raise ExpressionError("data_assumptions.minimum_complete_bars must be an integer") from exc
+
+
+def _validate_signal_frame(spec: StrategySpec, frame: pd.DataFrame) -> None:
+    required = required_signal_history_bars(spec)
+    if len(frame) < required:
+        message = (
+            f"strategy {spec.name} requires at least {required} complete bars; "
+            f"received {len(frame)}"
+        )
+        raise ExpressionError(message)
+    missing = [
+        column
+        for column in ["timestamp", "open", "high", "low", "close", "volume"]
+        if column not in frame
+    ]
+    if missing:
+        raise ExpressionError("signal frame missing required columns: " + ", ".join(missing))
+    recent = frame.tail(required)
+    timestamps = pd.to_datetime(recent["timestamp"], utc=True, errors="coerce")
+    if timestamps.isna().any() or timestamps.duplicated().any():
+        raise ExpressionError(
+            "signal frame has invalid or duplicate timestamps in required history"
+        )
+    numeric = recent[["open", "high", "low", "close", "volume"]].apply(
+        pd.to_numeric, errors="coerce"
+    )
+    if numeric.isna().any().any():
+        raise ExpressionError("signal frame has nonfinite required OHLCV values")
+    finite = numeric.map(lambda value: math.isfinite(float(value)))
+    if not finite.all().all():
+        raise ExpressionError("signal frame has nonfinite required OHLCV values")
 
 
 def build_signal(

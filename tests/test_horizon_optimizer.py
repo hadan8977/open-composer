@@ -62,6 +62,10 @@ def test_horizon_optimizer_compares_frequency_and_hold_profiles(
     assert result.selected_specs
     assert all(path.exists() for path in result.selected_specs)
     assert {"5m", "15m", "1h"}.issubset({timeframe for _, timeframe in calls})
+    assert len(result.rejections) == 2
+    assert all(item.timeframe == "1h" for item in result.rejections)
+    assert all(item.reason == "insufficient_history" for item in result.rejections)
     report = result.report_path.read_text(encoding="utf-8")
     assert "higher scan frequency" in report
     assert "lower turnover" in report
+    assert "Rejected Candidates" in report

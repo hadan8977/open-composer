@@ -20,17 +20,78 @@ class PaperOrderRecord(BaseModel):
     spec_hash: str | None = None
     strategy_backend: ExecutionBackend = "python_reference"
     execution_backend: ExecutionBackend = "python_reference"
+    execution_policy_id: str | None = None
+    execution_policy_hash: str | None = None
+    order_style: str | None = None
+    time_in_force: str | None = None
+    authorization_id: str | None = None
+    authorization_hash: str | None = None
+    authorization_kind: Literal["canary", "full"] | None = None
+    signal_record_hash: str | None = None
+    signal_log_path: str | None = None
+    order_intent_id: str | None = None
+    order_intent_hash: str | None = None
+    initial_broker_receipt_path: str | None = None
+    initial_broker_receipt_hash: str | None = None
+    broker_state_hash: str | None = None
     symbol: str
     side: Literal["buy", "sell"]
     qty: float
+    reference_price: float | None = None
+    estimated_notional: float | None = None
+    requested_target_weight: float | None = None
+    effective_target_weight: float | None = None
+    pretrade_position_qty: float | None = None
+    target_position_qty: float | None = None
+    canary_position_limit_usd: float | None = None
+    risk_effect: Literal["increase", "reduce"] | None = None
     status: str
     paper: bool = True
     submitted_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
+class PaperOrderIntent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    client_order_id: str
+    signal_id: str
+    signal_record_hash: str
+    signal_log_path: str
+    strategy_name: str
+    version_id: str
+    spec_hash: str
+    execution_policy_id: str
+    execution_policy_hash: str
+    order_style: str
+    time_in_force: str
+    authorization_id: str
+    authorization_hash: str
+    authorization_kind: Literal["canary", "full"] | None = None
+    symbol: str
+    side: Literal["buy", "sell"]
+    qty: float
+    reference_price: float | None = None
+    estimated_notional: float | None = None
+    requested_target_weight: float | None = None
+    effective_target_weight: float | None = None
+    pretrade_position_qty: float | None = None
+    target_position_qty: float | None = None
+    canary_position_limit_usd: float | None = None
+    risk_effect: Literal["increase", "reduce"] | None = None
+    reserved_at: datetime | None = None
+    paper: bool = True
+    state: Literal["prepared"] = "prepared"
+
+
 class PaperKillSwitch(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    control_version: Literal[2] = 2
+    sequence: int = 0
+    previous_event_hash: str | None = None
+    event_id: str = ""
     enabled: bool = False
     reason: str = ""
     updated_by: str = "system"
@@ -45,6 +106,7 @@ class PaperAccountSnapshot(BaseModel):
     cash: float | None = None
     buying_power: float | None = None
     portfolio_value: float | None = None
+    broker_account_id_hash: str | None = None
     status: str = ""
     paper: bool = True
 

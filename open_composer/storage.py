@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +10,14 @@ from pydantic import BaseModel
 
 from open_composer.config import ensure_dir, project_root
 from open_composer.json_utils import json_safe_payload
-from open_composer.models.signal import Signal
+from open_composer.models.signal import Signal, signal_record_hash
+
+
+@dataclass(frozen=True)
+class SignalRecordBinding:
+    signal: Signal
+    log_path: Path
+    record_hash: str
 
 
 def model_to_record(model: Any) -> dict:
@@ -51,8 +58,17 @@ def iter_signal_records(root: Path | None = None) -> Iterable[dict]:
 
 
 def find_signal(signal_id: str, root: Path | None = None) -> Signal:
+    return find_signal_record(signal_id, root).signal
+
+
+def find_signal_record(signal_id: str, root: Path | None = None) -> SignalRecordBinding:
     for record in iter_signal_records(root):
         if record.get("id") == signal_id:
-            record.pop("_log_path", None)
-            return Signal.model_validate(record)
+            path = Path(str(record.pop("_log_path")))
+            signal = Signal.model_validate(record)
+            return SignalRecordBinding(
+                signal=signal,
+                log_path=path,
+                record_hash=signal_record_hash(signal),
+            )
     raise FileNotFoundError(f"signal not found: {signal_id}")

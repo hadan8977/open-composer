@@ -24,6 +24,7 @@ class PaperRunSignalResult(BaseModel):
         "blocked_by_kill_switch",
         "blocked_by_readiness",
         "blocked_by_trade_window",
+        "no_target_change",
         "order_error",
     ]
     review_status: str = "not_requested"

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "generated_at": "2026-07-27T00:00:00Z",
+  "champion_reference": "R5D01_deterministic_12_1",
+  "roles": [
+    {"role":"factor_generation","modalities":["price","volume","frozen_llm_formula"],"candidates":["R5L01","R5C01","R5P01"],"method":"four_hash_bound_R2_formula_structures","status":"preregistered","fallback":"omit_formula_features_and_use_R5M01"},
+    {"role":"return_ranking","modalities":["price","volume","frozen_llm_formula"],"candidates":["R5D01","R5D02","R5M01","R5L01","R5C01","R5F01","R5P01"],"method":"deterministic_composite_or_fold_local_LightGBM","status":"preregistered","fallback":"R5D01"},
+    {"role":"risk_prediction","modalities":["price","path_risk"],"candidates":["R5M02"],"method":"fold_local_path_survival_classifier_with_calibration_gate","status":"preregistered","fallback":"R5M01_then_R5D01"},
+    {"role":"regime_meta_gate","modalities":[],"candidates":[],"method":"not_applicable","status":"excluded_to_avoid_repeating_failed_R2_R3_regime_search","fallback":"R5D01"},
+    {"role":"sizing","modalities":["rank"],"candidates":["R5D01","R5D02","R5M01","R5M02","R5L01","R5C01","R5F01","R5P01"],"method":"equal_weight_top3_only","status":"fixed_after_R1_sizing_failure","fallback":"BIL"},
+    {"role":"uncertainty","modalities":["calibrated_path_survival_probability"],"candidates":["R5M02"],"method":"abstain_unless_calibration_gate_passes","status":"preregistered","fallback":"no_risk_override"},
+    {"role":"deterministic_fallback","modalities":["price"],"candidates":["R5F01"],"method":"byte_identical_R5M01_targets_when_formula_modality_missing","status":"hard_gate","fallback":"R5D01_then_BIL"}
+  ],
+  "required_ablations": [
+    {"ablation":"quant_only_deterministic","candidate":"R5D01"},
+    {"ablation":"quant_only_trained","candidate":"R5M01"},
+    {"ablation":"formula_only","candidate":"R5L01"},
+    {"ablation":"quant_plus_formula","candidate":"R5C01"},
+    {"ablation":"missing_formula","candidate":"R5F01"},
+    {"ablation":"shuffled_formula_placebo","candidate":"R5P01"}
+  ],
+  "live_llm_inference": false,
+  "independent_llm_alpha_assumed": false,
+  "llm_contribution_pass_interpretation": "historical_incremental_contribution_from_frozen_formula_mappings_not_independent_llm_alpha",
+  "order_authority": false
+}

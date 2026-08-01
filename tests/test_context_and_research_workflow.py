@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from shutil import copyfile
-from types import SimpleNamespace
 
+import pytest
 import yaml
 
 from open_composer.adapters.broker import alpaca_paper
@@ -74,33 +74,16 @@ def test_natural_language_to_context_to_paper_mock(sample_workspace: Path, monke
     active_spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
     active_spec = load_strategy_spec(active_spec_path)
 
-    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
-    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
-    monkeypatch.setenv("ALPACA_PAPER", "true")
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("broker submission must remain unreachable without canary evidence")
 
-    def fake_submit(client, signal_arg, qty, client_order_id):
-        return SimpleNamespace(id="paper_order_1", status="accepted")
-
-    import open_composer.paper_readiness as paper_readiness
-
-    monkeypatch.setattr(
-        paper_readiness,
-        "assess_paper_strategy_readiness_for_spec",
-        lambda spec, root: SimpleNamespace(status="ok", execution_substate="order_authorized"),
-    )
-
-    class MockClient:
-        def get_account(self) -> SimpleNamespace:
-            return SimpleNamespace(equity="10000")
-
-    monkeypatch.setattr(alpaca_paper, "_submit_market_order", fake_submit)
-    order = alpaca_paper.submit_paper_order(
-        latest_signals[0], active_spec, sample_workspace, client=MockClient()
-    )
-    assert order.paper
-    assert order.client_order_id == f"oc-{latest_signals[0].id}"
-    assert order.version_id == latest_signals[0].version_id
-    assert order.spec_hash == latest_signals[0].spec_hash
+    monkeypatch.setattr(alpaca_paper, "_submit_market_order", fail_if_called)
+    with pytest.raises(
+        alpaca_paper.PaperOrderError,
+        match="explicit bounded canary authorization",
+    ):
+        alpaca_paper.submit_paper_order(latest_signals[0], active_spec, sample_workspace)
+    assert not (sample_workspace / "reports" / "paper" / "orders.jsonl").exists()
 
 
 def test_chinese_memory_storage_prompt_optimizes_and_scans(sample_workspace: Path) -> None:

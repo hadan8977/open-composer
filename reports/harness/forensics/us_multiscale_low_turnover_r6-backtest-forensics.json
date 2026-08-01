@@ -1,0 +1,93 @@
+{
+  "strategy_name": "us_multiscale_low_turnover_r6",
+  "iter_id": "mom_multiscale_low_turnover_r6",
+  "reviewed_at": "2026-07-19",
+  "lookahead_check": "warning",
+  "future_leak_check": "warning",
+  "overfit_risk": "high",
+  "multiple_testing_count": 10,
+  "pbo_proxy": 0.25,
+  "pbo_caveat": "Raw invalid-contract returns only; the four-fold proxy is not CSCV and has no acceptance authority.",
+  "dsr_proxy": {
+    "method": "raw invalid-contract normal-approximation proxy",
+    "expected_max_sharpe": 0.823793,
+    "observed_max_sharpe": 0.816568,
+    "observed_max_candidate_id": "D01",
+    "probability": 0.413054,
+    "threshold_preregistered": false,
+    "pass": false,
+    "metrics_authority": false
+  },
+  "negative_controls": {
+    "future_feature_rejection": "invalid_control",
+    "future_feature_reason": "The control raises directly and does not exercise the candidate feature path.",
+    "shuffled_score_placebo": "invalid_control",
+    "placebo_candidate_id": "N01",
+    "placebo_reason": "One shuffle and the deterministic parent both use invalid non-self-financing accounting."
+  },
+  "implementation_contract_findings": [
+    {
+      "severity": "blocked",
+      "code": "non_self_financing_constant_weight_accounting",
+      "evidence": "D02-D06, N01, and the equal-weight benchmark apply unchanged target weights to every return while charging turnover only on target changes. Holdings drift, rebalance trades, exposure, turnover, costs, and returns are invalid."
+    },
+    {
+      "severity": "blocked",
+      "code": "intraday_parent_schedule_mismatch",
+      "evidence": "D05 has 30 parent fill dates and D06 has 29 rebalance dates in the shared window; only 2025-12-22 overlaps. First dates are 2024-01-19 and 2024-01-02 respectively. D06 is not a matched timing ablation."
+    },
+    {
+      "severity": "blocked",
+      "code": "position_cap_not_enforced_for_D01_D04",
+      "evidence": "D01-D04 report maximum_symbol_weight=1.0 while the StrategySpec maximum is 0.4."
+    },
+    {
+      "severity": "blocked",
+      "code": "intraday_parent_benchmark_missing_same_window",
+      "evidence": "The preregistered D05_same_intraday_window benchmark is absent."
+    },
+    {
+      "severity": "warning",
+      "code": "terminal_execution_date_reported_one_session_early",
+      "evidence": "Raw return rows end 2026-07-16 while terminal liquidation is charged at the 2026-07-17 open."
+    },
+    {
+      "severity": "warning",
+      "code": "DSR_gate_not_declared_numerically_in_manifest",
+      "evidence": "The runner used a 0.95 DSR probability threshold that was not frozen in candidate-manifest.json."
+    }
+  ],
+  "sample_data_caveats": [
+    "The daily and intraday panels are real Alpaca IEX snapshots through 2026-07-17, not fixtures.",
+    "IEX is a limited single-exchange feed and has no SIP or official-open parity.",
+    "No event packets or event-factor returns were used.",
+    "The formal forward epoch starts 2026-07-20 and has zero observations."
+  ],
+  "trade_count": 0,
+  "raw_invalid_trade_count": 53,
+  "trading_days": 1233,
+  "short_sample": false,
+  "regime_diversity": "includes_2022_drawdown_and_2023_2026_recovery_but_only_about_five_evaluation_years",
+  "capacity_assessment": "Blocked. Portfolio accounting is invalid and consolidated ADV, auction volume, quotes, spreads, and matched fills are unavailable.",
+  "execution_semantics": {
+    "signal": "complete daily close",
+    "historical_entry": "next strict-common-session IEX daily open",
+    "intraday_overlay_decision": "10:30 ET after two completed 30-minute bars",
+    "costs_one_way_bps": [5, 10, 20],
+    "price_forward_fill": false,
+    "zero_return_substitution": false
+  },
+  "economic_review": {
+    "metrics_authority": false,
+    "raw_candidate_id": "D05",
+    "raw_total_return_pct_at_10bps_one_way": 22.365986,
+    "raw_sharpe_at_10bps": 0.43113,
+    "assessment": "These values are retained only to audit the failed R6 implementation and are not strategy-performance evidence."
+  },
+  "implementation_binding": {
+    "path": "open_composer/research/multiscale_low_turnover_r6.py",
+    "sha256": "f6efcdc0fa4930e14c1155b7ed9bcce4a0788c29d273db4f71e2e791f138ae95"
+  },
+  "conclusion": "blocked",
+  "notes": "R6 has no contract-valid candidate, benchmark comparison, placebo result, or intraday lift estimate. Preserve all raw outputs as audit-only negative evidence and move corrected accounting and contracts to a separately preregistered R7."
+}

@@ -206,7 +206,12 @@ def build_nautilus_paper_plan(
     custom_data_bindings = _custom_data_bindings(spec, base)
     reasons = list(compatibility.reasons)
     status = compatibility.status
-    selected_backend = "nautilus_paper"
+    selected_backend = "python_reference"
+    status = "partial"
+    reasons.append(
+        "The paper runner currently evaluates signals with the Python reference path; "
+        "no Nautilus live strategy node is started."
+    )
 
     if spec.execution.mode != "paper_auto":
         reasons.append("Nautilus paper runtime requires execution.mode=paper_auto")
@@ -241,12 +246,7 @@ def build_nautilus_paper_plan(
     ):
         status = "partial"
         reasons.append("one or more Nautilus paper custom data bindings are not PIT-complete")
-    if selected_backend == "nautilus_paper":
-        reasons.append(
-            "Nautilus paper runtime emits latest-bar signals and delegates paper orders to "
-            "the Alpaca Paper safety gate."
-        )
-    elif status == "supported":
+    if status == "supported":
         status = "partial"
 
     return NautilusPaperPlan(

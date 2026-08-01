@@ -1,0 +1,67 @@
+{
+  "strategy_name": "us_multiscale_event_momentum_r5",
+  "iter_id": "mom_multiscale_event_r5",
+  "reviewed_at": "2026-07-18",
+  "policy_id": "intraday_observation_only_us_multiscale_event_momentum_r5_v1",
+  "execution_authorized": false,
+  "slippage_scenarios": [
+    {"name": "low", "one_way_bps": 5, "round_trip_bps": 10},
+    {"name": "medium", "one_way_bps": 10, "round_trip_bps": 20},
+    {"name": "high", "one_way_bps": 20, "round_trip_bps": 40}
+  ],
+  "historical_cost_scenarios": [
+    {"name": "low", "one_way_bps": 5, "round_trip_bps": 10},
+    {"name": "medium", "one_way_bps": 10, "round_trip_bps": 20},
+    {"name": "high", "one_way_bps": 20, "round_trip_bps": 40}
+  ],
+  "diagnostic_leader": {
+    "candidate_id": "D07",
+    "average_gross_trade_return_bps": 3.214104,
+    "average_net_trade_return_bps_low_cost": -6.785896,
+    "total_return_pct_low_cost": -10.936543,
+    "total_return_pct_medium_cost": -23.968658,
+    "total_return_pct_high_cost": -44.617557
+  },
+  "data_reality": {
+    "feed": "Alpaca Basic IEX",
+    "consolidated_SIP": false,
+    "quoted_spread_available": false,
+    "arrival_quote_available": false,
+    "official_close_available": false,
+    "matched_order_fills_available": false
+  },
+  "fill_model_review": {
+    "status": "blocked",
+    "issue": "The signal bar completes at the same 10:30 boundary used as the historical next-bar open. Processing and routing latency are unmodelled.",
+    "required_challenges": [
+      "first_tradable_quote_after_signal_delivery",
+      "11:00_delayed_entry",
+      "five_minute_TWAP",
+      "15:30_exit_and_close_auction_replay"
+    ]
+  },
+  "gap_stress": {
+    "status": "blocked_without_consolidated_quotes",
+    "scenarios": ["normal_boundary", "fast_adverse_move", "halt_or_stale_quote"],
+    "historical_open_assumption_accepted_for_paper": false
+  },
+  "capacity_assessment": "blocked_without_notional_consolidated_volume_and_quotes",
+  "tca_reference_prices": [
+    "signal_bar_close",
+    "historical_10:30_open",
+    "arrival_bid_ask_mid",
+    "volume_weighted_fill",
+    "15:30_reference",
+    "official_close"
+  ],
+  "paper_simulation_value": "Order lifecycle and logging only; Alpaca paper omits market impact, queue position, latency slippage, price improvement, fees, and dividends.",
+  "conclusion": "blocked",
+  "blockers": [
+    "negative_net_edge_at_minimum_cost",
+    "same_boundary_latency_not_modelled",
+    "IEX_to_SIP_parity_missing",
+    "spread_and_arrival_quote_history_missing",
+    "matched_TCA_missing",
+    "portfolio_notional_and_capacity_missing"
+  ]
+}

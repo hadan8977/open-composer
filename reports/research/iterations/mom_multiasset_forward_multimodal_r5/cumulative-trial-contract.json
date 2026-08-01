@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "count_status": "known_lower_bound_with_preregistered_governance_stress",
+  "prior_lower_bound": 8007,
+  "prior_components": ["R8 lower bound 8002", "R9 four frozen candidates", "R10 one fixed forward hypothesis"],
+  "source_bindings": [
+    {
+      "path": "reports/research/iterations/mom_spy_dual_trend_core_r8/cumulative-trial-contract.json",
+      "sha256": "450624f947672178d8099f59d76df57031bfc836cb67311ece37645b65569453",
+      "count_after_artifact": 8002
+    },
+    {
+      "path": "reports/research/iterations/mom_etf_structural_family_r9/cumulative-trial-contract.json",
+      "sha256": "4a9ed081c33882a82f0b16a37ef03b9b468f85b39ec30dc1f6277700509935f6",
+      "count_after_artifact": 8006
+    },
+    {
+      "path": "reports/research/iterations/mom_etf_core_diversifier_forward_r10/fixed-candidate-contract.json",
+      "sha256": "e61fe047667a7b14e4bb7db50366482b2c823c19e831bdb32db2353012a4867e",
+      "count_after_artifact": 8007
+    }
+  ],
+  "current_frozen_candidates": 8,
+  "cumulative_trial_count_lower_bound": 8015,
+  "count_rule": "Every deployment-affecting candidate, formula set, model configuration, fallback, cost-selection variant, and placebo counts once when first evaluated.",
+  "excluded_from_count": ["pure report formatting", "deterministic rerun of identical bytes"],
+  "unrecorded_trial_uncertainty_multiplier": 12.5,
+  "unrecorded_trial_governance_allowance": 91985,
+  "dsr_trial_count": 100000,
+  "dsr_trial_count_policy": "Promotion uses the preregistered 100000-trial governance stress count, not the known 8015 lower bound. Discovery of evidence above 100000 blocks publication and requires a new iteration.",
+  "dsr_sensitivity_trial_counts": [8015, 10000, 50000, 100000],
+  "pbo_family_candidates": ["R5D01", "R5D02", "R5M01", "R5M02", "R5L01", "R5C01"],
+  "pbo_diagnostic_controls": ["R5F01", "R5P01"],
+  "limitations": "8015 is a known lower bound, not an exact or conservative DSR N. The 100000 governance value is a preregistered stress assumption and must not be described as an independently proven historical upper bound."
+}

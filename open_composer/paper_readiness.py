@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import math
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
@@ -16,21 +18,26 @@ from open_composer.config import (
     ensure_dir,
     project_root,
 )
+from open_composer.execution_policy import resolve_execution_policy
 from open_composer.feature_packets import (
     feature_packet_path_for_factor,
     feature_packet_path_label,
     inspect_feature_packet,
 )
-from open_composer.models.paper import PaperAccountSnapshot, PaperKillSwitch
+from open_composer.models.paper import PaperAccountSnapshot
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
-from open_composer.router_authorization import (
-    assess_router_order_authorization,
-    is_router_strategy,
+from open_composer.paper_authorization import (
+    assess_paper_canary_authorization,
+    assess_paper_order_authorization,
 )
+from open_composer.paper_freshness import PAPER_SNAPSHOT_STALE_SECONDS
+from open_composer.paper_tca import PaperTCAValidationError, build_paper_tca_report
+from open_composer.paper_validation import build_paper_validation_report
 from open_composer.storage import write_json
 from open_composer.strategy_capabilities import (
     assess_strategy_capabilities_for_spec,
 )
+from open_composer.strategy_versions import strategy_content_hash
 from open_composer.timeframes import require_paper_ready_timeframe
 
 PaperReadinessStatus = Literal["ok", "warning", "blocked"]
@@ -54,7 +61,9 @@ class PaperStrategyReadinessReport(BaseModel):
     strategy_path: str | None = None
     status: PaperReadinessStatus
     ready: bool
-    execution_substate: Literal["blocked", "observation_only", "order_authorized"] = "blocked"
+    execution_substate: Literal[
+        "blocked", "observation_only", "canary_authorized", "order_authorized"
+    ] = "blocked"
     gate_summary: dict[str, object] = Field(default_factory=dict)
     checks: list[PaperStrategyReadinessCheck] = Field(default_factory=list)
     report_json_path: str | None = None
@@ -96,24 +105,28 @@ def assess_paper_strategy_readiness_for_spec(
         _alpaca_env_check(spec),
         _kill_switch_check(base),
         _account_snapshot_check(base),
+        _positions_snapshot_check(base),
         _backend_check(spec),
         _portfolio_routing_check(spec),
         _portfolio_risk_check(spec),
         _feature_packet_binding_check(spec, base),
         _promotion_report_check(spec, base, spec_path),
         _harness_artifacts_check(spec, base),
+        _paper_validation_check(spec, base),
+        _paper_tca_check(spec, base),
+        _canary_authorization_check(spec, base),
+        _order_authorization_check(spec, base),
     ]
-    if is_router_strategy(spec):
-        checks.append(_router_order_authorization_check(spec, base))
     if spec_path is not None and spec_path.exists():
         checks.append(_capability_check(spec, spec_path))
     status = _overall_status(checks)
     execution_substate = _execution_substate(spec, checks, status)
+    ready = status == "ok" and execution_substate == "order_authorized"
     return PaperStrategyReadinessReport(
         strategy_name=spec.name,
         strategy_path=_relpath(spec_path, base) if spec_path else None,
         status=status,
-        ready=status != "blocked",
+        ready=ready,
         execution_substate=execution_substate,
         gate_summary=_gate_summary(checks, status, execution_substate),
         checks=checks,
@@ -142,8 +155,11 @@ def write_paper_readiness_report(
 def format_paper_readiness_blockers(report: PaperStrategyReadinessReport) -> str:
     if report.ready:
         return "paper strategy readiness passed"
-    blockers = "; ".join(f"{check.name}: {check.message}" for check in report.blocking_checks)
-    return f"paper strategy readiness blocked: {blockers}"
+    failed = report.blocking_checks or [
+        check for check in report.checks if check.status == "warning"
+    ]
+    details = "; ".join(f"{check.name}: {check.message}" for check in failed)
+    return f"paper strategy readiness not order-authorized: {details}"
 
 
 def _lifecycle_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
@@ -225,26 +241,206 @@ def _execution_substate(
     spec: StrategySpec,
     checks: list[PaperStrategyReadinessCheck],
     status: PaperReadinessStatus,
-) -> Literal["blocked", "observation_only", "order_authorized"]:
+) -> Literal["blocked", "observation_only", "canary_authorized", "order_authorized"]:
     if spec.position_direction in {"short_only", "long_short"} and status == "blocked":
         return "blocked"
     if spec.position_direction in {"short_only", "long_short"}:
         short_check = next((check for check in checks if check.name == "harness_artifacts"), None)
         if short_check is None or short_check.status != "ok":
             return "blocked"
-    if is_router_strategy(spec):
-        if status == "blocked":
-            return "blocked"
-        router_auth = next(
-            (check for check in checks if check.name == "router_order_authorization"),
-            None,
-        )
-        return (
-            "order_authorized" if router_auth and router_auth.status == "ok" else "observation_only"
-        )
     if status == "blocked":
         return "blocked"
-    return "order_authorized"
+    authorization = next(
+        (check for check in checks if check.name == "order_authorization"),
+        None,
+    )
+    if status == "ok" and authorization and authorization.status == "ok":
+        return "order_authorized"
+    canary = next((check for check in checks if check.name == "canary_authorization"), None)
+    permitted_canary_warnings = {
+        "matched_paper_tca",
+        "order_authorization",
+        "paper_validation",
+    }
+    non_canary_gaps = [
+        check.name
+        for check in checks
+        if check.status != "ok"
+        and check.name not in permitted_canary_warnings
+        and not _authorization_only_capability_warning(check)
+    ]
+    if canary is not None and canary.details.get("authorized") is True and not non_canary_gaps:
+        return "canary_authorized"
+    return "observation_only"
+
+
+def _authorization_only_capability_warning(check: PaperStrategyReadinessCheck) -> bool:
+    return (
+        check.name == "capability_report"
+        and check.status == "warning"
+        and check.details.get("capability") == "alpaca_paper_execution"
+        and check.details.get("status") == "partial"
+        and check.message
+        == (
+            "router strategies may run observation-only target-weight cycles before "
+            "order authorization"
+        )
+    )
+
+
+def _paper_validation_check(
+    spec: StrategySpec,
+    root: Path,
+) -> PaperStrategyReadinessCheck:
+    try:
+        policy = resolve_execution_policy(spec, root)
+    except ValueError as exc:
+        return PaperStrategyReadinessCheck(
+            name="paper_validation",
+            status="blocked",
+            message=str(exc),
+        )
+    notes = spec.notes.model_dump(mode="json")
+    not_before = notes.get("paper_validation_start")
+    raw_target_days = notes.get("minimum_bound_forward_sessions", 20)
+    target_days = (
+        raw_target_days
+        if isinstance(raw_target_days, int) and not isinstance(raw_target_days, bool)
+        else 20
+    )
+    payload = build_paper_validation_report(
+        root=root,
+        target_days=target_days,
+        strategy_name=spec.name,
+        spec_hash=strategy_content_hash(spec),
+        execution_policy_id=policy.policy_id if policy else None,
+        execution_policy_hash=policy.content_hash if policy else None,
+        not_before=str(not_before) if not_before else None,
+    )
+    details = {
+        "progress_days": payload["progress_days"],
+        "target_days": payload["target_days"],
+        "window_start": payload["window_start"],
+        "window_end": payload["window_end"],
+        "binding": payload["binding"],
+        "excluded_log_count": len(payload["excluded_logs"]),
+        "forward_observation_progress_days": payload["forward_observation_progress_days"],
+        "forward_observation_pass": payload["forward_observation_pass"],
+    }
+    if payload["paper_validation_pass"]:
+        return PaperStrategyReadinessCheck(
+            name="paper_validation",
+            status="ok",
+            message=(
+                f"Strategy-specific {payload['target_days']}-trading-day paper workflow "
+                "validation passed."
+            ),
+            details=details,
+        )
+    return PaperStrategyReadinessCheck(
+        name="paper_validation",
+        status="warning",
+        message=(
+            "Strategy-specific paper workflow validation is incomplete: "
+            f"{payload['progress_days']}/{payload['target_days']} trading days."
+        ),
+        details=details,
+        suggested_actions=[
+            f"uv run oc paper validation-report --strategy {spec.name} "
+            f"--target-days {payload['target_days']}"
+        ],
+    )
+
+
+def _paper_tca_check(
+    spec: StrategySpec,
+    root: Path,
+) -> PaperStrategyReadinessCheck:
+    notes = spec.notes.model_dump(mode="json")
+    raw_minimum = notes.get("minimum_matched_tca_observations")
+    if raw_minimum is None:
+        return PaperStrategyReadinessCheck(
+            name="matched_paper_tca",
+            status="warning",
+            message="Paper automation requires at least 30 matched TCA observations.",
+            details={"required": True, "minimum_observations": 30},
+        )
+    if isinstance(raw_minimum, bool) or not isinstance(raw_minimum, int) or raw_minimum < 30:
+        return PaperStrategyReadinessCheck(
+            name="matched_paper_tca",
+            status="blocked",
+            message="minimum_matched_tca_observations must be an integer of at least 30.",
+        )
+    try:
+        policy = resolve_execution_policy(spec, root)
+    except ValueError as exc:
+        return PaperStrategyReadinessCheck(
+            name="matched_paper_tca",
+            status="blocked",
+            message=str(exc),
+        )
+    if policy is None:
+        return PaperStrategyReadinessCheck(
+            name="matched_paper_tca",
+            status="blocked",
+            message="Matched paper TCA requires a bound execution policy.",
+        )
+    epoch_value = notes.get("paper_validation_start")
+    if not epoch_value:
+        return PaperStrategyReadinessCheck(
+            name="matched_paper_tca",
+            status="blocked",
+            message="Matched paper TCA requires notes.paper_validation_start.",
+        )
+    epoch = str(epoch_value)
+    if "T" not in epoch:
+        epoch += "T00:00:00+00:00"
+    try:
+        payload = build_paper_tca_report(
+            root=root,
+            strategy_name=spec.name,
+            spec_hash=strategy_content_hash(spec),
+            execution_policy_id=policy.policy_id,
+            execution_policy_hash=policy.content_hash,
+            epoch=epoch,
+            minimum_observations=raw_minimum,
+        )
+    except PaperTCAValidationError as exc:
+        return PaperStrategyReadinessCheck(
+            name="matched_paper_tca",
+            status="blocked",
+            message=str(exc),
+        )
+    details = {
+        "valid_observation_count": payload["valid_observation_count"],
+        "excluded_observation_count": payload["excluded_observation_count"],
+        "minimum_observations": payload["minimum_observations"],
+        "epoch": payload["epoch"],
+        "binding": payload["binding"],
+        "distinct_session_count": payload["distinct_session_count"],
+        "minimum_distinct_sessions": payload["minimum_distinct_sessions"],
+        "eligible_filled_order_count": payload["eligible_filled_order_count"],
+        "quality_checks": payload["quality_checks"],
+        "quality_thresholds": payload["quality_thresholds"],
+        "local_hash_authenticity_caveat": payload["local_hash_authenticity_caveat"],
+    }
+    if payload["matched_paper_tca_pass"]:
+        return PaperStrategyReadinessCheck(
+            name="matched_paper_tca",
+            status="ok",
+            message="Strategy-specific matched Alpaca Paper TCA threshold passed.",
+            details=details,
+        )
+    return PaperStrategyReadinessCheck(
+        name="matched_paper_tca",
+        status="warning",
+        message=(
+            "Matched paper TCA is incomplete: "
+            f"{payload['valid_observation_count']}/{payload['minimum_observations']} fills."
+        ),
+        details=details,
+        suggested_actions=[f"uv run oc paper tca-report --strategy {spec.name}"],
+    )
 
 
 def _data_source_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
@@ -310,30 +506,68 @@ def _data_source_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
     )
 
 
-def _router_order_authorization_check(
+def _canary_authorization_check(
     spec: StrategySpec,
     root: Path,
 ) -> PaperStrategyReadinessCheck:
-    status = assess_router_order_authorization(spec, root)
-    details = {"path": _relpath(status.path, root), **status.details}
+    full = assess_paper_order_authorization(spec, root)
+    if full.authorized:
+        return PaperStrategyReadinessCheck(
+            name="canary_authorization",
+            status="ok",
+            message="Full paper authorization supersedes the bounded canary phase.",
+            details={"authorized": False, "superseded_by_full": True},
+        )
+    status = assess_paper_canary_authorization(spec, root)
+    details = {
+        "authorized": status.authorized,
+        "path": _relpath(status.path, root),
+        **status.details,
+    }
     if status.authorized:
         return PaperStrategyReadinessCheck(
-            name="router_order_authorization",
+            name="canary_authorization",
             status="ok",
             message=status.message,
             details=details,
         )
     return PaperStrategyReadinessCheck(
-        name="router_order_authorization",
-        status="warning",
-        message=status.message + " Router remains observation_only.",
+        name="canary_authorization",
+        status="ok",
+        message="No valid bounded paper canary authorization is active.",
         details=details,
         suggested_actions=[
             (
-                "Write reports/harness/paper/"
-                f"{spec.name}-router-order-authorization.json after PIT, promotion, "
-                "harness verify, and paper safety review pass."
+                f"uv run oc paper authorize-canary {spec.name} --confirm-paper-only "
+                "--confirm-canary-risk --authorized-by <operator>"
             )
+        ],
+    )
+
+
+def _order_authorization_check(
+    spec: StrategySpec,
+    root: Path,
+) -> PaperStrategyReadinessCheck:
+    status = assess_paper_order_authorization(spec, root)
+    details = {"path": _relpath(status.path, root), **status.details}
+    if status.authorized:
+        return PaperStrategyReadinessCheck(
+            name="order_authorization",
+            status="ok",
+            message=status.message,
+            details=details,
+        )
+    return PaperStrategyReadinessCheck(
+        name="order_authorization",
+        status="warning",
+        message=status.message + " Strategy remains observation_only.",
+        details=details,
+        suggested_actions=[
+            (
+                f"uv run oc paper authorize-canary {spec.name} --confirm-paper-only "
+                "--confirm-canary-risk --authorized-by <operator>"
+            ),
         ],
     )
 
@@ -436,7 +670,31 @@ def _alpaca_env_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
 
 
 def _kill_switch_check(root: Path) -> PaperStrategyReadinessCheck:
-    kill_switch = _load_kill_switch(root)
+    from open_composer.paper_controls import load_paper_kill_switch
+
+    path = root / "reports" / "paper" / "kill_switch.json"
+    try:
+        kill_switch = load_paper_kill_switch(root, require_control_file=True)
+    except FileNotFoundError:
+        return PaperStrategyReadinessCheck(
+            name="kill_switch",
+            status="blocked",
+            message="Paper kill-switch control file is missing; submissions fail closed.",
+            details={"path": _relpath(path, root), "control_file_present": False},
+            suggested_actions=[
+                'uv run oc paper kill-switch --disable --reason "initialize paper control"'
+            ],
+        )
+    except (OSError, ValueError) as exc:
+        return PaperStrategyReadinessCheck(
+            name="kill_switch",
+            status="blocked",
+            message="Paper kill-switch control file is invalid; submissions fail closed.",
+            details={"path": _relpath(path, root), "error": str(exc)},
+            suggested_actions=[
+                'uv run oc paper kill-switch --disable --reason "repair paper control"'
+            ],
+        )
     if kill_switch.enabled:
         return PaperStrategyReadinessCheck(
             name="kill_switch",
@@ -458,6 +716,7 @@ def _kill_switch_check(root: Path) -> PaperStrategyReadinessCheck:
 
 
 def _account_snapshot_check(root: Path) -> PaperStrategyReadinessCheck:
+    path = root / "reports" / "paper" / "account.json"
     account = _load_account_snapshot(root)
     if account is None:
         return PaperStrategyReadinessCheck(
@@ -465,6 +724,40 @@ def _account_snapshot_check(root: Path) -> PaperStrategyReadinessCheck:
             status="warning",
             message="No paper account snapshot found; run oc paper sync-account before automation.",
             details={"path": "reports/paper/account.json"},
+            suggested_actions=["uv run oc paper sync-account"],
+        )
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        raw = {}
+    age_seconds = (datetime.now(UTC) - account.generated_at.astimezone(UTC)).total_seconds()
+    values = [account.equity, account.cash, account.buying_power, account.portfolio_value]
+    invalid = (
+        not isinstance(raw, dict)
+        or not raw.get("generated_at")
+        or account.paper is not True
+        or str(account.status).upper() != "ACTIVE"
+        or account.equity is None
+        or account.equity <= 0
+        or account.cash is None
+        or account.buying_power is None
+        or account.portfolio_value is None
+        or any(value is not None and not math.isfinite(value) for value in values)
+        or age_seconds < 0
+        or age_seconds > PAPER_SNAPSHOT_STALE_SECONDS
+    )
+    if invalid:
+        return PaperStrategyReadinessCheck(
+            name="account_snapshot",
+            status="blocked",
+            message="Paper account snapshot is stale or invalid.",
+            details={
+                "path": _relpath(path, root),
+                "generated_at": account.generated_at.isoformat(),
+                "age_seconds": age_seconds,
+                "paper": account.paper,
+                "account_status": account.status,
+            },
             suggested_actions=["uv run oc paper sync-account"],
         )
     return PaperStrategyReadinessCheck(
@@ -476,6 +769,82 @@ def _account_snapshot_check(root: Path) -> PaperStrategyReadinessCheck:
             "equity": account.equity,
             "cash": account.cash,
             "buying_power": account.buying_power,
+            "age_seconds": age_seconds,
+        },
+    )
+
+
+def _positions_snapshot_check(root: Path) -> PaperStrategyReadinessCheck:
+    path = root / "reports" / "paper" / "positions.json"
+    if not path.is_file():
+        return PaperStrategyReadinessCheck(
+            name="positions_snapshot",
+            status="warning",
+            message="No paper positions snapshot found; run oc paper sync-account.",
+            details={"path": _relpath(path, root)},
+            suggested_actions=["uv run oc paper sync-account"],
+        )
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        generated_at = datetime.fromisoformat(
+            str(raw.get("generated_at", "")).replace("Z", "+00:00")
+        )
+        positions = raw.get("positions")
+    except (AttributeError, json.JSONDecodeError, ValueError):
+        raw = {}
+        generated_at = None
+        positions = None
+    if generated_at is not None:
+        if generated_at.tzinfo is None:
+            generated_at = generated_at.replace(tzinfo=UTC)
+        generated_at = generated_at.astimezone(UTC)
+    age_seconds = (
+        (datetime.now(UTC) - generated_at).total_seconds() if generated_at is not None else None
+    )
+    invalid_rows = []
+    if isinstance(positions, list):
+        for index, row in enumerate(positions):
+            if not isinstance(row, dict) or row.get("paper") is not True:
+                invalid_rows.append(index)
+                continue
+            try:
+                quantity = float(row.get("qty"))
+            except (TypeError, ValueError):
+                invalid_rows.append(index)
+                continue
+            if not math.isfinite(quantity):
+                invalid_rows.append(index)
+    invalid = (
+        generated_at is None
+        or not isinstance(positions, list)
+        or raw.get("paper") is not True
+        or age_seconds is None
+        or age_seconds < 0
+        or age_seconds > PAPER_SNAPSHOT_STALE_SECONDS
+        or bool(invalid_rows)
+    )
+    if invalid:
+        return PaperStrategyReadinessCheck(
+            name="positions_snapshot",
+            status="blocked",
+            message="Paper positions snapshot is stale or invalid.",
+            details={
+                "path": _relpath(path, root),
+                "generated_at": generated_at.isoformat() if generated_at else None,
+                "age_seconds": age_seconds,
+                "invalid_rows": invalid_rows,
+            },
+            suggested_actions=["uv run oc paper sync-account"],
+        )
+    return PaperStrategyReadinessCheck(
+        name="positions_snapshot",
+        status="ok",
+        message="Paper positions snapshot is current.",
+        details={
+            "path": _relpath(path, root),
+            "generated_at": generated_at.isoformat(),
+            "age_seconds": age_seconds,
+            "position_count": len(positions),
         },
     )
 
@@ -780,6 +1149,14 @@ def _promotion_report_check(
         benchmark_family=benchmark_family,
         research_manifest=research_manifest,
     )
+    missing_requirements.extend(
+        _promotion_binding_missing_requirements(
+            spec=spec,
+            root=root,
+            raw=raw,
+            research_manifest=research_manifest,
+        )
+    )
     if not missing_requirements:
         return PaperStrategyReadinessCheck(
             name="promotion_report",
@@ -841,6 +1218,67 @@ def _promotion_missing_requirements(
         missing.append("research contract path is missing")
     if benchmark_family.get("complete") is not True:
         missing.append("benchmark_family.complete is not true")
+    return missing
+
+
+def _promotion_binding_missing_requirements(
+    *,
+    spec: StrategySpec,
+    root: Path,
+    raw: dict[str, object],
+    research_manifest: dict[str, object],
+) -> list[str]:
+    missing: list[str] = []
+    expected_spec_hash = strategy_content_hash(spec)
+    if raw.get("strategy_name") != spec.name:
+        missing.append("promotion strategy_name does not match current StrategySpec")
+    if _normalize_hash(research_manifest.get("spec_hash")) != expected_spec_hash:
+        missing.append("promotion spec_hash does not match current StrategySpec")
+
+    contract_ref = research_manifest.get("research_contract_path")
+    contract_hash = _normalize_hash(research_manifest.get("research_contract_hash"))
+    if not isinstance(contract_ref, str) or not contract_ref:
+        missing.append("research contract path is missing")
+    else:
+        contract_path = _resolve_path(root, contract_ref)
+        if not contract_path.is_file():
+            missing.append("research contract file is missing")
+        elif not contract_hash or contract_hash != _sha256_file(contract_path):
+            missing.append("research contract hash is missing or stale")
+
+    data_path_value = next(
+        (
+            research_manifest.get(name)
+            for name in (
+                "data_snapshot_manifest_path",
+                "data_snapshot_binding_path",
+                "data_manifest_path",
+            )
+            if isinstance(research_manifest.get(name), str) and research_manifest.get(name)
+        ),
+        None,
+    )
+    data_hash = next(
+        (
+            _normalize_hash(research_manifest.get(name))
+            for name in (
+                "data_snapshot_manifest_hash",
+                "data_snapshot_binding_hash",
+                "data_manifest_hash",
+                "data_path_hash",
+            )
+            if _normalize_hash(research_manifest.get(name))
+        ),
+        "",
+    )
+    if not isinstance(data_path_value, str):
+        missing.append("immutable data manifest path is missing")
+    else:
+        data_path = _resolve_path(root, data_path_value)
+        if not data_path.is_file():
+            missing.append("immutable data manifest file is missing")
+        elif not data_hash or data_hash != _sha256_file(data_path):
+            missing.append("immutable data manifest hash is missing or stale")
     return missing
 
 
@@ -956,9 +1394,12 @@ def _gate_summary(
     warning = [check.name for check in checks if check.status == "warning"]
     return {
         "workflow_pass": "lifecycle" not in blocked and "execution" not in blocked,
-        "research_pass": "promotion_report" not in blocked,
+        "research_pass": any(
+            check.name == "promotion_report" and check.status == "ok" for check in checks
+        ),
         "llm_contribution_pass": None,
-        "paper_ready_pass": status != "blocked",
+        "paper_canary_pass": execution_substate == "canary_authorized",
+        "paper_ready_pass": status == "ok" and execution_substate == "order_authorized",
         "execution_substate": execution_substate,
         "blocked_checks": blocked,
         "warning_checks": warning,
@@ -1011,13 +1452,6 @@ def _render_markdown(report: PaperStrategyReadinessReport) -> str:
     return "\n".join(lines)
 
 
-def _load_kill_switch(root: Path) -> PaperKillSwitch:
-    path = root / "reports" / "paper" / "kill_switch.json"
-    if not path.exists():
-        return PaperKillSwitch()
-    return PaperKillSwitch.model_validate_json(path.read_text(encoding="utf-8"))
-
-
 def _load_account_snapshot(root: Path) -> PaperAccountSnapshot | None:
     path = root / "reports" / "paper" / "account.json"
     if not path.exists():
@@ -1030,6 +1464,18 @@ def _resolve_path(root: Path, value: str) -> Path:
     if path.is_absolute():
         return path
     return root / path
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _normalize_hash(value: object) -> str:
+    return str(value or "").removeprefix("sha256:").strip()
 
 
 def _relpath(path: Path | None, base: Path) -> str | None:

@@ -1,0 +1,29 @@
+{
+  "strategy_name": "us_etf_core_diversifier_forward_r10",
+  "reviewed_at": "2026-07-19",
+  "lifecycle_status": "draft",
+  "harness_verify_pass": true,
+  "kill_switch_verified": true,
+  "order_window": "not authorized; planned protected OPG submission before 09:28 ET only after a separate paper-only canary approval",
+  "duplicate_order_policy": "stable signal and intent identity; reject duplicate or open same-symbol orders",
+  "credential_scope": "paper_only_required_not_inspected",
+  "signal_order_linkage": false,
+  "execution_policy_id": "etf_core_diversifier_opg_limit_r10_v1",
+  "source_card_ids": [
+    "r9_alpaca_opg_semantics",
+    "r9_alpaca_opg_cutoff",
+    "r9_alpaca_paper_limitations",
+    "r9_nasdaq_opening_cross"
+  ],
+  "overall": "blocked",
+  "blocking_items": [
+    "strategy lifecycle is draft, not paper_ready or active",
+    "execution.mode is manual_signal and execution.broker is none",
+    "R10 has zero of twenty required bound forward sessions",
+    "R10 has zero of thirty required matched Alpaca Paper TCA observations",
+    "research_pass and paper_ready_pass are false and no promotion report authorizes paper execution",
+    "the ETF structural runtime is broker-free observation only and has no position-aware paper order path",
+    "paper-only credential scope and account identity have not been inspected",
+    "signal/order linkage cannot be verified before an explicitly bounded canary path exists"
+  ]
+}

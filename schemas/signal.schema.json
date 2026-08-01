@@ -2,16 +2,35 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Signal",
   "type": "object",
-  "required": ["id", "strategy_name", "symbol", "timeframe", "timestamp", "action", "side", "price"],
+  "additionalProperties": false,
+  "required": [
+    "id", "run_id", "strategy_name", "strategy_id", "version_id", "spec_hash",
+    "strategy_backend", "execution_backend", "symbol", "timeframe", "timestamp",
+    "action", "side", "source", "price", "qty", "target_weight", "conditions",
+    "lifecycle", "execution_mode", "fill_assumption", "created_at"
+  ],
   "properties": {
-    "id": {"type": "string"},
-    "run_id": {"type": "string"},
-    "strategy_name": {"type": "string"},
-    "symbol": {"type": "string"},
-    "timeframe": {"type": "string"},
-    "timestamp": {"type": "string"},
+    "id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "strategy_name": {"type": "string", "minLength": 1},
+    "strategy_id": {"type": "string", "minLength": 1},
+    "version_id": {"type": "string", "pattern": "^ver_[0-9a-f]{12}$"},
+    "spec_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "strategy_backend": {"type": "string"},
+    "execution_backend": {"type": "string"},
+    "symbol": {"type": "string", "minLength": 1},
+    "timeframe": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
     "action": {"enum": ["entry", "exit"]},
     "side": {"enum": ["buy", "sell"]},
-    "price": {"type": "number"}
+    "source": {"type": "string", "minLength": 1},
+    "price": {"type": "number", "exclusiveMinimum": 0},
+    "qty": {"type": ["number", "null"], "exclusiveMinimum": 0},
+    "target_weight": {"type": ["number", "null"], "minimum": 0},
+    "conditions": {"type": "array", "items": {"type": "string"}},
+    "lifecycle": {"type": "string", "minLength": 1},
+    "execution_mode": {"type": "string", "minLength": 1},
+    "fill_assumption": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"}
   }
 }

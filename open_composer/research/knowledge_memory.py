@@ -312,9 +312,11 @@ def scout_knowledge(
         reverse=True,
     )
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "iter_id": iter_id,
         "generated_at": datetime.now(UTC).isoformat(),
+        "external_brief_path": _relpath(brief_path, base),
+        "external_brief_sha256": _sha256_file(brief_path),
         "provider": "arxiv_official_api+curated_web_manifest" if curated else "arxiv_official_api",
         "manifest_path": _relpath(manifest_path, base),
         "query_manifest_sha256": _sha256_file(manifest_path),
@@ -525,6 +527,8 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
         "schema_version": 1,
         "iter_id": iter_id,
         "generated_at": datetime.now(UTC).isoformat(),
+        "external_brief_path": _relpath(brief_path, base),
+        "external_brief_sha256": _sha256_file(brief_path),
         "status": "blocked" if blocked else "ok",
         "blocked": blocked,
         "counts": counts,
@@ -660,32 +664,44 @@ def _current_source_card_locations(brief: dict[str, Any], iter_id: str, root: Pa
     bindings = brief.get("source_evidence_bindings")
     if not isinstance(bindings, list) or not bindings:
         raise ValueError("schema v2 external brief requires source_evidence_bindings")
-    binding_by_url: dict[str, dict[str, Any]] = {}
-    for binding in bindings:
+    bindings_by_url: dict[str, list[tuple[int, dict[str, Any]]]] = {}
+    binding_keys: set[tuple[str, str]] = set()
+    for index, binding in enumerate(bindings):
         if not isinstance(binding, dict):
             raise ValueError("source evidence bindings must be objects")
         canonical = canonical_source_url(str(binding.get("canonical_url") or ""))
-        if not canonical or canonical in binding_by_url:
-            raise ValueError("source evidence binding has invalid or duplicate URL")
-        binding_by_url[canonical] = binding
-    brief_urls = []
+        claim_id = str(binding.get("source_card_claim_id") or "")
+        key = (canonical, claim_id)
+        if not canonical or not claim_id or key in binding_keys:
+            raise ValueError("source evidence binding has invalid or duplicate claim key")
+        binding_keys.add(key)
+        bindings_by_url.setdefault(canonical, []).append((index, binding))
+    consumed_bindings: set[int] = set()
     for source in brief.get("sources", []):
         canonical = canonical_source_url(str(source.get("url") or ""))
-        brief_urls.append(canonical)
-        binding = binding_by_url.get(canonical)
-        if binding is None:
+        candidates = bindings_by_url.get(canonical, [])
+        if not candidates:
             raise ValueError(f"external brief source is not evidence-bound: {canonical}")
+        source_fingerprint = claim_fingerprint(str(source.get("core_claim") or ""))
+        matches = [
+            (index, binding)
+            for index, binding in candidates
+            if str(binding.get("brief_claim_fingerprint") or "") == source_fingerprint
+            and index not in consumed_bindings
+        ]
+        if len(matches) != 1:
+            raise ValueError(f"source evidence binding brief claim mismatch: {canonical}")
+        binding_index, binding = matches[0]
+        consumed_bindings.add(binding_index)
         claim_id = str(binding.get("source_card_claim_id") or "")
         card = cards_by_id.get(claim_id)
         if card is None or canonical_source_url(card.source_url) != canonical:
             raise ValueError(f"source evidence binding card mismatch: {canonical}")
         if str(binding.get("claim_fingerprint") or "") != claim_fingerprint(card.claim):
             raise ValueError(f"source evidence binding claim mismatch: {canonical}")
-        if str(binding.get("brief_claim_fingerprint") or "") != claim_fingerprint(
-            str(source.get("core_claim") or "")
-        ):
+        if str(binding.get("brief_claim_fingerprint") or "") != source_fingerprint:
             raise ValueError(f"source evidence binding brief claim mismatch: {canonical}")
-    if set(binding_by_url) != set(brief_urls):
+    if len(consumed_bindings) != len(bindings):
         raise ValueError("source evidence bindings do not match external brief sources")
     return locations
 
@@ -701,8 +717,17 @@ def _load_valid_scout(
     scout = json.loads(scout_path.read_text(encoding="utf-8"))
     manifest_path = iteration_dir / "knowledge-scout-queries.json"
     baseline_path = iteration_dir / "knowledge-baseline.json"
-    if scout.get("schema_version") != 1 or scout.get("iter_id") != iter_id:
+    schema_version = scout.get("schema_version")
+    if schema_version not in {1, 2} or scout.get("iter_id") != iter_id:
         raise ValueError("knowledge scout identity mismatch")
+    if schema_version == 2:
+        brief_path = iteration_dir / "external-brief.json"
+        if scout.get("external_brief_path") != _relpath(brief_path, root):
+            raise ValueError("knowledge scout external brief path mismatch")
+        if not brief_path.exists() or scout.get("external_brief_sha256") != _sha256_file(
+            brief_path
+        ):
+            raise ValueError("knowledge scout external brief hash mismatch")
     if not manifest_path.exists() or scout.get("query_manifest_sha256") != _sha256_file(
         manifest_path
     ):

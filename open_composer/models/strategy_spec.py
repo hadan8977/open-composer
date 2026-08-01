@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Any, Literal
 
@@ -32,6 +33,154 @@ class RiskConfig(BaseModel):
     take_profit_pct: float | None = Field(default=None, gt=0)
 
 
+class ETFTrendRule(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    fast_sma_sessions: int = Field(default=126, ge=2)
+    slow_sma_sessions: int = Field(default=252, ge=2)
+    momentum_sessions: int = Field(default=252, ge=2)
+    required_positive_votes: int = Field(default=2, ge=1, le=3)
+
+
+class ETFSectorRelativeRule(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    symbols: list[str] = Field(min_length=1)
+    fast_momentum_sessions: int = Field(default=126, ge=2)
+    slow_momentum_sessions: int = Field(default=252, ge=2)
+    trend_sma_sessions: int = Field(default=210, ge=2)
+    benchmark_symbol: str = "SPY"
+    score_method: Literal["equal_weight_mean_relative_return"] = "equal_weight_mean_relative_return"
+    weighting: Literal["equal_weight"] = "equal_weight"
+    top_n: int = Field(default=2, ge=1)
+    hold_rank: int = Field(default=4, ge=1)
+    hold_buffer_policy: Literal["retain_through_hold_rank_then_fill_top_n"] = (
+        "retain_through_hold_rank_then_fill_top_n"
+    )
+    tie_break: Literal["symbol_ascending"] = "symbol_ascending"
+
+    @field_validator("symbols")
+    @classmethod
+    def normalize_symbols(cls, value: list[str]) -> list[str]:
+        normalized = [symbol.upper().strip() for symbol in value]
+        if any(not symbol for symbol in normalized):
+            raise ValueError("sector_relative.symbols cannot contain blanks")
+        if len(normalized) != len(set(normalized)):
+            raise ValueError("sector_relative.symbols must be unique")
+        return normalized
+
+    @field_validator("benchmark_symbol")
+    @classmethod
+    def normalize_benchmark_symbol(cls, value: str) -> str:
+        normalized = value.upper().strip()
+        if not normalized:
+            raise ValueError("sector_relative.benchmark_symbol cannot be blank")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_hold_rank(self) -> ETFSectorRelativeRule:
+        if self.hold_rank < self.top_n:
+            raise ValueError("sector_relative.hold_rank must be >= top_n")
+        return self
+
+
+class ETFStructuralRiskOverlay(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    volatility_lookback_sessions: int = Field(default=63, ge=2)
+    volatility_reference_symbol: str = "SPY"
+    volatility_measure: Literal["annualized_close_to_close"] = "annualized_close_to_close"
+    annualization_sessions: int = Field(default=252, ge=2)
+    medium_volatility_threshold: float = Field(default=0.18, gt=0)
+    high_volatility_threshold: float = Field(default=0.25, gt=0)
+    medium_exposure_scale: float = Field(default=0.75, gt=0, le=1)
+    high_exposure_scale: float = Field(default=0.5, gt=0, le=1)
+    volatility_scope: Literal["all_non_reserve_sleeves"] = "all_non_reserve_sleeves"
+    drawdown_lookback_sessions: int = Field(default=63, ge=2)
+    drawdown_reference_symbol: str = "SPY"
+    drawdown_trigger: float = Field(default=-0.10, ge=-1, lt=0)
+    drawdown_exposure_scale: float = Field(default=0.5, gt=0, le=1)
+    drawdown_scope: Literal["equity_sleeves"] = "equity_sleeves"
+    recovery_sma_sessions: int = Field(default=126, ge=2)
+    recovery_rule: Literal["reference_close_above_sma"] = "reference_close_above_sma"
+
+    @field_validator("volatility_reference_symbol", "drawdown_reference_symbol")
+    @classmethod
+    def normalize_reference_symbol(cls, value: str) -> str:
+        normalized = value.upper().strip()
+        if not normalized:
+            raise ValueError("risk overlay reference symbols cannot be blank")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_threshold_order(self) -> ETFStructuralRiskOverlay:
+        if self.high_volatility_threshold <= self.medium_volatility_threshold:
+            raise ValueError("high volatility threshold must exceed medium threshold")
+        if self.high_exposure_scale > self.medium_exposure_scale:
+            raise ValueError("high-volatility scale cannot exceed medium-volatility scale")
+        return self
+
+
+class ETFStructuralFamilyConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_id: str
+    rebalance_frequency: Literal["calendar_month_end"] = "calendar_month_end"
+    decision_anchor: Literal["last_session_close"] = "last_session_close"
+    execution_anchor: Literal["next_session_open"] = "next_session_open"
+    core_symbol: str = "SPY"
+    reserve_symbol: str = "BIL"
+    diversifier_symbols: list[str] = Field(default_factory=lambda: ["GLD", "IEF"])
+    diversifier_weighting: Literal["equal_weight"] = "equal_weight"
+    enabled_sleeves: list[Literal["core", "diversifiers", "sectors"]] = Field(min_length=1)
+    core_budget: float = Field(default=0.4, ge=0, le=1)
+    diversifier_budget: float = Field(default=0.0, ge=0, le=1)
+    sector_budget: float = Field(default=0.0, ge=0, le=1)
+    core_trend: ETFTrendRule = Field(default_factory=ETFTrendRule)
+    diversifier_trend: ETFTrendRule = Field(default_factory=ETFTrendRule)
+    sector_relative: ETFSectorRelativeRule
+    risk_overlay: ETFStructuralRiskOverlay | None = None
+    reserve_receives_unallocated: bool = True
+    natural_weight_drift_between_rebalances: bool = True
+
+    @field_validator("core_symbol", "reserve_symbol")
+    @classmethod
+    def normalize_single_symbol(cls, value: str) -> str:
+        normalized = value.upper().strip()
+        if not normalized:
+            raise ValueError("ETF structural symbols cannot be blank")
+        return normalized
+
+    @field_validator("diversifier_symbols")
+    @classmethod
+    def normalize_diversifier_symbols(cls, value: list[str]) -> list[str]:
+        normalized = [symbol.upper().strip() for symbol in value]
+        if any(not symbol for symbol in normalized):
+            raise ValueError("diversifier_symbols cannot contain blanks")
+        if len(normalized) != len(set(normalized)):
+            raise ValueError("diversifier_symbols must be unique")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_sleeves_and_budgets(self) -> ETFStructuralFamilyConfig:
+        budget = self.core_budget + self.diversifier_budget + self.sector_budget
+        if budget > 1 + 1e-12:
+            raise ValueError("ETF structural sleeve budgets cannot exceed 1.0")
+        expected_positive = {
+            "core": ("core_budget", self.core_budget),
+            "diversifiers": ("diversifier_budget", self.diversifier_budget),
+            "sectors": ("sector_budget", self.sector_budget),
+        }
+        for sleeve, (field_name, sleeve_budget) in expected_positive.items():
+            if (sleeve in self.enabled_sleeves) != (sleeve_budget > 0):
+                raise ValueError(f"enabled_sleeves and {field_name} are inconsistent")
+        if "diversifiers" in self.enabled_sleeves and not self.diversifier_symbols:
+            raise ValueError("diversifier sleeve requires diversifier_symbols")
+        if self.core_symbol == self.reserve_symbol:
+            raise ValueError("core_symbol and reserve_symbol must differ")
+        return self
+
+
 class PortfolioConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -43,6 +192,7 @@ class PortfolioConfig(BaseModel):
         "core_beta_satellite_router",
         "momentum_signal_router",
         "cross_sectional_momentum",
+        "etf_structural_family",
     ] = "single_symbol"
     max_symbols_per_day: int | None = Field(default=None, ge=1)
     gross_exposure_limit: float | None = Field(default=None, gt=0, le=1)
@@ -50,6 +200,16 @@ class PortfolioConfig(BaseModel):
     same_day_flatten: bool = False
     duplicate_signal_policy: Literal["stable_signal_id", "allow_duplicates"] = "stable_signal_id"
     selected_route_label: str | None = None
+    cross_sectional_execution_profile: Literal[
+        "generic",
+        "monthly_equal_weight_bil_reserve",
+    ] = "generic"
+    position_weight_enforcement: Literal["entry_only", "continuous"] = "entry_only"
+    rebalance_schedule: Literal["every_bar", "calendar_month_end"] = "every_bar"
+    weighting: Literal["engine_default", "equal_weight"] = "engine_default"
+    reserve_symbol: str | None = None
+    reserve_exempt_from_max_symbol_weight: bool = False
+    etf_structural: ETFStructuralFamilyConfig | None = None
 
     @model_validator(mode="after")
     def require_router_route(self) -> PortfolioConfig:
@@ -67,6 +227,44 @@ class PortfolioConfig(BaseModel):
         ):
             msg = f"{self.mode} portfolio mode requires selected_route_label"
             raise ValueError(msg)
+        if self.mode == "etf_structural_family" and self.etf_structural is None:
+            raise ValueError("etf_structural_family mode requires portfolio.etf_structural")
+        if self.mode != "etf_structural_family" and self.etf_structural is not None:
+            raise ValueError("portfolio.etf_structural requires mode=etf_structural_family")
+        if self.cross_sectional_execution_profile == "monthly_equal_weight_bil_reserve":
+            required_fields = {
+                "mode",
+                "position_weight_enforcement",
+                "rebalance_schedule",
+                "weighting",
+                "reserve_symbol",
+                "reserve_exempt_from_max_symbol_weight",
+            }
+            missing_fields = sorted(required_fields - self.model_fields_set)
+            expected = {
+                "mode": self.mode == "cross_sectional_momentum",
+                "position_weight_enforcement": self.position_weight_enforcement == "entry_only",
+                "rebalance_schedule": self.rebalance_schedule == "calendar_month_end",
+                "weighting": self.weighting == "equal_weight",
+                "reserve_symbol": self.reserve_symbol == "BIL",
+                "reserve_exempt_from_max_symbol_weight": (
+                    self.reserve_exempt_from_max_symbol_weight is True
+                ),
+            }
+            failed = [
+                *[f"missing:{name}" for name in missing_fields],
+                *sorted(name for name, passed in expected.items() if not passed),
+            ]
+            if failed:
+                raise ValueError(
+                    "monthly_equal_weight_bil_reserve execution profile mismatch: "
+                    + ", ".join(failed)
+                )
+        elif (
+            self.mode != "cross_sectional_momentum"
+            and self.cross_sectional_execution_profile != "generic"
+        ):
+            raise ValueError("cross-sectional execution profiles require cross_sectional_momentum")
         return self
 
 
@@ -162,6 +360,55 @@ class LLMFactorCachePolicy(BaseModel):
     )
 
 
+class CrossSectionalRankTransformParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    transform: Literal["weighted_sum_of_component_cross_sectional_percentile_ranks"]
+    rank_method: Literal["percentile_rank_by_decision_session"]
+    full_sample_fit: Literal[False]
+    components: list[str] = Field(min_length=1)
+    coefficients: list[float] = Field(min_length=1)
+    population: Literal["rankable_symbols_with_finite_history"]
+    rank_ascending: Literal[True]
+    tie_break: Literal["symbol_ascending"]
+    apply_at: Literal["decision_close"]
+    placebo_operation: Literal["per_decision_session_symbol_permutation"] | None = None
+    placebo_seed: int | None = None
+    placebo_mapping: Literal["same_permutation_for_all_formula_columns"] | None = None
+
+    @field_validator("components")
+    @classmethod
+    def validate_components(cls, value: list[str]) -> list[str]:
+        normalized = [component.strip() for component in value]
+        if any(not component for component in normalized):
+            raise ValueError("cross-sectional transform components cannot be blank")
+        if len(normalized) != len(set(normalized)):
+            raise ValueError("cross-sectional transform components must be unique")
+        return normalized
+
+    @field_validator("coefficients")
+    @classmethod
+    def validate_coefficients(cls, value: list[float]) -> list[float]:
+        if any(not math.isfinite(float(coefficient)) for coefficient in value):
+            raise ValueError("cross-sectional transform coefficients must be finite")
+        return value
+
+    @model_validator(mode="after")
+    def validate_lengths_and_placebo(self) -> CrossSectionalRankTransformParams:
+        if len(self.components) != len(self.coefficients):
+            raise ValueError("cross-sectional transform components and coefficients must align")
+        placebo_values = (
+            self.placebo_operation,
+            self.placebo_seed,
+            self.placebo_mapping,
+        )
+        if any(value is not None for value in placebo_values) and not all(
+            value is not None for value in placebo_values
+        ):
+            raise ValueError("placebo transform metadata must be complete or absent")
+        return self
+
+
 class FactorConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -182,6 +429,11 @@ class FactorConfig(BaseModel):
 
     @model_validator(mode="after")
     def require_factor_source_fields(self) -> FactorConfig:
+        if "transform" in self.params:
+            self.params = CrossSectionalRankTransformParams.model_validate(self.params).model_dump(
+                mode="json",
+                exclude_none=True,
+            )
         if self.source == "expression" and not self.expression:
             msg = "expression factors require expression"
             raise ValueError(msg)
@@ -242,6 +494,16 @@ class NotesConfig(BaseModel):
 class ResearchDesign(BaseModel):
     model_config = ConfigDict(extra="allow")
 
+    iter_id: str | None = Field(default=None, pattern=r"^[a-z0-9][a-z0-9_-]{2,80}$")
+    candidate_manifest_path: str | None = None
+    data_feasibility_path: str | None = None
+    universe_contract_path: str | None = None
+    data_contract_path: str | None = None
+    holdout_contract_path: str | None = None
+    cost_contract_path: str | None = None
+    cumulative_trial_contract_path: str | None = None
+    source_cards_path: str | None = None
+    preregistration_lock_path: str | None = None
     parameter_space: dict[str, list[float | int | str | bool | None]] = Field(default_factory=dict)
     candidate_budget: int | None = Field(default=None, ge=1)
     selection_objective: str = ""
@@ -479,6 +741,43 @@ class StrategySpec(BaseModel):
         if missing:
             msg = "model.features must reference declared spec factors: " + ", ".join(missing)
             raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def validate_etf_structural_family(self) -> StrategySpec:
+        config = self.portfolio.etf_structural
+        if config is None:
+            return self
+        if self.timeframe != "daily":
+            raise ValueError("etf_structural_family requires timeframe=daily")
+        if self.position_direction != "long_only":
+            raise ValueError("etf_structural_family requires position_direction=long_only")
+        universe = set(self.universe)
+        required_symbols = {
+            config.core_symbol,
+            config.reserve_symbol,
+            config.sector_relative.benchmark_symbol,
+            *config.diversifier_symbols,
+            *config.sector_relative.symbols,
+        }
+        if config.risk_overlay is not None:
+            required_symbols.update(
+                {
+                    config.risk_overlay.volatility_reference_symbol,
+                    config.risk_overlay.drawdown_reference_symbol,
+                }
+            )
+        missing = sorted(required_symbols - universe)
+        if missing:
+            raise ValueError(
+                "portfolio.etf_structural symbols must be in universe: " + ", ".join(missing)
+            )
+        if config.core_symbol in config.sector_relative.symbols:
+            raise ValueError("core_symbol cannot also be a sector candidate")
+        if config.reserve_symbol in config.sector_relative.symbols:
+            raise ValueError("reserve_symbol cannot also be a sector candidate")
+        if set(config.diversifier_symbols) & set(config.sector_relative.symbols):
+            raise ValueError("diversifier and sector symbol sets must be disjoint")
         return self
 
     @property

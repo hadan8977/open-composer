@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+import stat
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
@@ -14,7 +16,7 @@ from open_composer.adapters.execution.router_target_weights import (
     write_router_execution_artifacts,
 )
 from open_composer.config import ensure_dir, project_root
-from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.multiasset_momentum import (
     ALL_ETF_SYMBOLS,
     ETF_TREND_UNIVERSE,
@@ -29,12 +31,174 @@ from open_composer.research.multiasset_momentum_ml import (
     _predict,
 )
 from open_composer.storage import write_json
+from open_composer.strategy_versions import strategy_content_hash
 
 SOURCE_ITER = Path("reports/research/iterations/mom_multiasset_r1")
 ML_ITER = Path("reports/research/iterations/mom_multiasset_ml_r1")
 AI_ITER = Path("reports/research/iterations/mom_multiasset_ai_r2")
 PORTFOLIO_PATH = ML_ITER / "portfolio-evaluation.json"
 PORTFOLIO_MD_PATH = ML_ITER / "portfolio-evaluation.md"
+LEGACY_MULTIASSET_MOMENTUM_SPEC_BINDINGS = {
+    "us_multiasset_ai_agreement_a2": (
+        Path("strategy_specs/drafts/us_multiasset_ai_agreement_a2.yaml"),
+        "920511777791306a1c94a3c3439d641b5b2e8f08a492c37f277c71962317681b",
+    ),
+    "us_multiasset_ai_regime_a1": (
+        Path("strategy_specs/drafts/us_multiasset_ai_regime_a1.yaml"),
+        "2fd8d0ac5cddccdfce0f13c398086845a6a685645ee0b9a1176bd9baf3e886d7",
+    ),
+    "us_multiasset_etf_trend_d1": (
+        Path("strategy_specs/drafts/us_multiasset_etf_trend_d1.yaml"),
+        "95cf8f6ddbfc5756c44f8fd1ef096371db7911910785670b79655e9cd2431d44",
+    ),
+    "us_multiasset_stock_momentum_d2": (
+        Path("strategy_specs/drafts/us_multiasset_stock_momentum_d2.yaml"),
+        "872a1488043c961d99e31261f46425a7c2c3b7b91eb8330393522b5637c321be",
+    ),
+    "us_multiasset_stock_rank_hist_m2": (
+        Path("strategy_specs/drafts/us_multiasset_stock_rank_hist_m2.yaml"),
+        "69c6dcfc06297fcbd03d41945cd235b37ece339c08a9983341bbb579d6188a7e",
+    ),
+    "us_multiasset_stock_rank_lgbm_m1": (
+        Path("strategy_specs/drafts/us_multiasset_stock_rank_lgbm_m1.yaml"),
+        "2efdef266d059c1bca5b41054c921b4e2e1c2d9d16ed6af9756b584904b27cb4",
+    ),
+    "us_multiasset_stock_sector_relative_d3": (
+        Path("strategy_specs/drafts/us_multiasset_stock_sector_relative_d3.yaml"),
+        "06545fc76325c1eaac62f9d888dc6267d9135a6bf102cf8bae04831429fbbc35",
+    ),
+    "us_multiasset_stock_trend_quality_d4": (
+        Path("strategy_specs/drafts/us_multiasset_stock_trend_quality_d4.yaml"),
+        "ad8643d0badc2891805f2286438c232f87332ddf078119fa3a3eba0df9c6431b",
+    ),
+}
+LEGACY_MULTIASSET_MOMENTUM_STRATEGY_NAMES = frozenset(LEGACY_MULTIASSET_MOMENTUM_SPEC_BINDINGS)
+
+
+def require_legacy_multiasset_momentum_spec_binding(
+    spec_path: Path,
+    root: Path,
+    spec: StrategySpec,
+) -> Path:
+    base = root.resolve()
+    canonical_path, canonical_spec = _load_frozen_legacy_spec(
+        spec_path,
+        base,
+        expected_name=spec.name,
+    )
+    if strategy_content_hash(spec) != strategy_content_hash(canonical_spec):
+        raise ValueError("legacy multiasset requested StrategySpec differs from canonical bytes")
+    return canonical_path
+
+
+def _load_frozen_legacy_spec(
+    spec_path: Path,
+    root: Path,
+    *,
+    expected_name: str | None = None,
+) -> tuple[Path, StrategySpec]:
+    base = root.resolve()
+    requested = Path(
+        os.path.abspath(os.fspath(spec_path if spec_path.is_absolute() else base / spec_path))
+    )
+    selected_name = expected_name
+    if selected_name is None:
+        selected_name = next(
+            (
+                name
+                for name, (relative, _semantic_hash) in (
+                    LEGACY_MULTIASSET_MOMENTUM_SPEC_BINDINGS.items()
+                )
+                if requested == base / relative
+            ),
+            None,
+        )
+    binding = LEGACY_MULTIASSET_MOMENTUM_SPEC_BINDINGS.get(str(selected_name or ""))
+    if binding is None:
+        raise ValueError("legacy multiasset strategy name is not frozen")
+    relative_path, expected_semantic_sha256 = binding
+    expected_path = base / relative_path
+    if requested != expected_path:
+        raise ValueError("legacy multiasset canonical StrategySpec path mismatch")
+
+    contents = _read_regular_bytes_beneath_root(
+        base,
+        relative_path,
+        label="legacy multiasset canonical StrategySpec",
+    )
+    try:
+        payload = yaml.safe_load(contents.decode("utf-8"))
+        canonical_spec = StrategySpec.model_validate(payload)
+    except (UnicodeDecodeError, ValueError, yaml.YAMLError) as exc:
+        raise ValueError("legacy multiasset canonical StrategySpec is invalid") from exc
+    if canonical_spec.name != selected_name:
+        raise ValueError("legacy multiasset canonical StrategySpec identity mismatch")
+    design = canonical_spec.research_design
+    legacy_design = (
+        design.model_dump(mode="json")
+        if design is not None
+        else canonical_spec.notes.model_dump(mode="json").get("research_design")
+    )
+    iter_id = legacy_design.get("iter_id") if isinstance(legacy_design, dict) else None
+    if iter_id != "mom_multiasset_ml_r1":
+        raise ValueError("legacy multiasset iteration identity is not frozen")
+    if strategy_content_hash(canonical_spec) != expected_semantic_sha256:
+        raise ValueError("legacy multiasset frozen StrategySpec semantic hash mismatch")
+    return expected_path, canonical_spec
+
+
+def _read_regular_bytes_beneath_root(
+    root: Path,
+    relative_path: Path,
+    *,
+    label: str,
+) -> bytes:
+    if relative_path.is_absolute() or not relative_path.parts or ".." in relative_path.parts:
+        raise ValueError(f"{label} path is unsafe")
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
+    directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | nofollow
+    directory_fd = os.open(root, directory_flags)
+    opened_directories: list[int] = [directory_fd]
+    file_fd: int | None = None
+    try:
+        for component in relative_path.parts[:-1]:
+            try:
+                next_fd = os.open(component, directory_flags, dir_fd=directory_fd)
+            except OSError as exc:
+                raise ValueError(f"{label} has a missing or symlinked ancestor") from exc
+            opened_directories.append(next_fd)
+            directory_fd = next_fd
+        try:
+            file_fd = os.open(
+                relative_path.parts[-1],
+                os.O_RDONLY | nofollow,
+                dir_fd=directory_fd,
+            )
+        except OSError as exc:
+            raise ValueError(f"{label} is missing or symlinked") from exc
+        before = os.fstat(file_fd)
+        if not stat.S_ISREG(before.st_mode):
+            raise ValueError(f"{label} is not a regular file")
+        chunks: list[bytes] = []
+        while chunk := os.read(file_fd, 1024 * 1024):
+            chunks.append(chunk)
+        after = os.fstat(file_fd)
+        if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
+            after.st_dev,
+            after.st_ino,
+            after.st_size,
+            after.st_mtime_ns,
+        ):
+            raise ValueError(f"{label} changed while being read")
+        contents = b"".join(chunks)
+        if len(contents) != before.st_size:
+            raise ValueError(f"{label} changed while being read")
+        return contents
+    finally:
+        if file_fd is not None:
+            os.close(file_fd)
+        for descriptor in reversed(opened_directories):
+            os.close(descriptor)
 
 
 def write_multiasset_momentum_portfolio(root: Path | None = None) -> dict[str, Any]:
@@ -294,16 +458,66 @@ def write_multiasset_target_weights_for_spec(
     spec_path: Path,
     root: Path | None = None,
 ) -> dict[str, Path]:
-    base = root or project_root()
-    payload = write_multiasset_momentum_portfolio(base)
-    spec = load_strategy_spec(spec_path)
+    base = (root or project_root()).resolve()
+    _canonical_path, spec = _load_frozen_legacy_spec(spec_path, base)
+    payload = _read_json_beneath_root(
+        base,
+        PORTFOLIO_PATH,
+        label="legacy multiasset portfolio evaluation",
+    )
     sleeve = next((row for row in payload["sleeves"] if row["strategy_name"] == spec.name), None)
     if sleeve is None:
         raise ValueError(f"strategy {spec.name} is not in the multiasset portfolio")
+    target_relative = Path(str(sleeve.get("target_weights_path") or ""))
+    observation_relative = Path(str(sleeve.get("execution_observation_path") or ""))
+    expected_target = Path("reports/execution") / f"{spec.name}-target-weights.json"
+    expected_observation = Path("reports/execution") / f"{spec.name}-execution-observation.json"
+    if target_relative != expected_target or observation_relative != expected_observation:
+        raise ValueError("legacy multiasset portfolio artifact paths are not canonical")
+    target = _read_json_beneath_root(
+        base,
+        target_relative,
+        label="legacy multiasset target weights",
+    )
+    observation = _read_json_beneath_root(
+        base,
+        observation_relative,
+        label="legacy multiasset execution observation",
+    )
+    expected_spec_path = LEGACY_MULTIASSET_MOMENTUM_SPEC_BINDINGS[spec.name][0].as_posix()
+    if (
+        target.get("strategy_name") != spec.name
+        or target.get("source_spec_path") != expected_spec_path
+        or target.get("portfolio_mode") != "cross_sectional_momentum"
+        or target.get("summary", {}).get("broker_writes") is not False
+    ):
+        raise ValueError("legacy multiasset target-weight artifact identity is invalid")
+    if (
+        observation.get("strategy_name") != spec.name
+        or observation.get("source_spec_path") != expected_spec_path
+        or observation.get("execution_substate") != "observation_only"
+        or observation.get("blockers")
+        or observation.get("target_weights_path") != target_relative.as_posix()
+    ):
+        raise ValueError("legacy multiasset execution observation is invalid")
+    _final_path, final_spec = _load_frozen_legacy_spec(spec_path, base)
+    if strategy_content_hash(final_spec) != strategy_content_hash(spec):
+        raise ValueError("legacy multiasset StrategySpec changed during artifact validation")
     return {
-        "router_target_weights": base / str(sleeve["target_weights_path"]),
-        "router_execution_observation": base / str(sleeve["execution_observation_path"]),
+        "router_target_weights": base / target_relative,
+        "router_execution_observation": base / observation_relative,
     }
+
+
+def _read_json_beneath_root(root: Path, relative_path: Path, *, label: str) -> dict[str, Any]:
+    contents = _read_regular_bytes_beneath_root(root, relative_path, label=label)
+    try:
+        payload = json.loads(contents)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"{label} is invalid JSON") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"{label} must be a JSON object")
+    return payload
 
 
 def _deterministic_definition(

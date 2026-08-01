@@ -1,0 +1,58 @@
+{
+  "strategy_name": "us_multiscale_event_momentum_r5",
+  "iter_id": "mom_multiscale_event_r5",
+  "reviewed_at": "2026-07-18",
+  "lookahead_check": "pass",
+  "future_leak_check": "pass",
+  "overfit_risk": "high",
+  "multiple_testing_count": 15,
+  "pbo_proxy": 0.0,
+  "pbo_caveat": "The rank proxy is based on only four chronological slices and all selectable candidates lose money; stable relative rank is not economic validity.",
+  "dsr_proxy": {
+    "method": "expected maximum Sharpe proxy across nine deterministic candidates",
+    "expected_max_sharpe": 1.94253,
+    "observed_max_sharpe": -0.594114,
+    "observed_max_candidate_id": "D07",
+    "pass": false
+  },
+  "negative_controls": {
+    "future_feature_rejection": "pass",
+    "shuffled_score_placebo": "fail",
+    "placebo_candidate_id": "N01",
+    "placebo_sharpe_lift": 0.727471,
+    "placebo_total_return_lift": 0.050129,
+    "interpretation": "The shuffled score materially beat D08, so the ensemble ranking is not distinguishable from date-randomized cross-sectional exposure."
+  },
+  "sample_data_caveats": [
+    "The 468-session diagnostic uses a current ten-stock basket and is survivorship-labelled.",
+    "Alpaca Basic is IEX-only and can differ from consolidated prices and volume.",
+    "No historical event packets, transcript data, or event-factor returns were used.",
+    "The formal forward epoch starts 2026-07-20 and has zero observations."
+  ],
+  "trade_count": 158,
+  "trading_days": 468,
+  "short_sample": false,
+  "regime_diversity": "insufficient_for_durable_claim",
+  "capacity_assessment": "Blocked. Portfolio notional, consolidated slot volume, quotes, spreads, and matched fills are unavailable.",
+  "execution_semantics": {
+    "first_hour_feature": "09:30 open to close of the 10:00-labelled 30m bar",
+    "decision_boundary": "10:30 ET after the completed signal bar",
+    "historical_entry": "10:30 ET next 30m bar open",
+    "same_boundary_processing_latency_modelled": false,
+    "costs_one_way_bps": [5, 10, 20],
+    "price_forward_fill": false,
+    "zero_return_substitution": false
+  },
+  "economic_review": {
+    "candidate_id": "D07",
+    "average_gross_trade_return_bps": 3.214104,
+    "minimum_modelled_round_trip_cost_bps": 10.0,
+    "total_return_pct_at_5bps_one_way": -10.936543,
+    "sharpe_at_5bps_one_way": -0.594114,
+    "max_drawdown_pct": -14.053301,
+    "positive_fold_count": 0,
+    "assessment": "The best gross edge is smaller than the minimum stylized round-trip cost and every fold is negative after cost."
+  },
+  "conclusion": "blocked",
+  "notes": "The implementation is deterministic and leak controls passed, but economic performance, placebo, event-data, source-parity, and execution evidence all fail promotion."
+}

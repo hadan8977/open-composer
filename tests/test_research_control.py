@@ -132,20 +132,19 @@ def test_research_control_prioritizes_router_strict_data_blocker(
 def test_parameter_sweep_cli_refreshes_research_control_memory(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
-    init_research_brief(
-        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
-        sample_workspace,
-        search_budget=2,
-    )
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    preregister_iteration_dossier(spec_path, candidate_count=2)
+    init_research_brief(spec_path, sample_workspace, search_budget=2)
 
     result = CliRunner().invoke(
         app,
         [
             "strategy",
             "parameter-sweep",
-            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
+            str(spec_path),
             "--param",
             "risk.take_profit_pct=1.5,2.0",
             "--max-candidates",

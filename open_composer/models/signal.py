@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from datetime import UTC, datetime
 from typing import Literal
 
@@ -40,3 +41,14 @@ def signal_id(strategy_name: str, symbol: str, timestamp: datetime, action: str)
     raw = f"{strategy_name}|{symbol}|{timestamp.isoformat()}|{action}"
     digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
     return f"sig_{digest}"
+
+
+def signal_record_hash(signal: Signal | dict[str, object]) -> str:
+    payload = signal.model_dump(mode="json") if isinstance(signal, Signal) else signal
+    canonical = json.dumps(
+        payload,
+        ensure_ascii=True,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

@@ -1,0 +1,42 @@
+{
+  "strategy_name": "us_robust_momentum_ensemble_r4",
+  "iter_id": "mom_robust_momentum_r4",
+  "reviewed_at": "2026-07-18",
+  "capabilities": [
+    {
+      "capability_id": "market.longbridge_bars",
+      "kind": "market",
+      "status": "partial",
+      "registry_status": "trial",
+      "strict_behavior": "fail_fast_for_unsupported_timeframes",
+      "supported_timeframe": true,
+      "paper_ready": false,
+      "notes": "Daily timeframe is supported, but the selected acquisition tier is research_replay_cache, US data is Nasdaq Basic rather than SIP, ordinary history is limited to 1,000 bars, and adjustment lineage is not independently reconciled."
+    }
+  ],
+  "feature_packet_pit_check": "pass_not_applicable",
+  "llm_news_event_macro_features": [],
+  "sample_data_caveats": [
+    "Capability fixture hygiene passed but fixture rows are not used as performance evidence.",
+    "The actual strategy input is a frozen research cache and is not paper-ready evidence.",
+    "Current stock membership is not point-in-time historical membership.",
+    "Inactive securities, delisting returns, and corporate-action provenance are missing."
+  ],
+  "data_source_checks": {
+    "exact_common_sessions": 1000,
+    "common_first_session": "2022-07-18",
+    "common_last_session": "2026-07-13",
+    "formal_forward_observations": 0,
+    "forward_fill": false,
+    "zero_return_substitution": false,
+    "independent_source_pass": false
+  },
+  "conclusion": "blocked",
+  "blockers": [
+    "point_in_time_universe_missing",
+    "inactive_security_and_delisting_returns_missing",
+    "corporate_action_lineage_missing",
+    "cross_source_validation_missing_required_crisis_windows",
+    "official_open_or_SIP_comparison_missing"
+  ]
+}

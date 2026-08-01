@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "objective_id": "dynamic-theme-alpha-reset-20260801",
+  "iteration_id": "mom_dynamic_theme_chain_r8",
+  "status": "proposed_pre_iteration",
+  "created_at": "2026-08-01T14:05:50Z",
+  "strategy_family": "short_horizon_dynamic_theme_and_industry_chain",
+  "primary_objective": "Approach matched-window TQQQ CAGR after costs while materially reducing TQQQ drawdown and avoiding a static sector taxonomy.",
+  "return_targets": {
+    "net_cagr_minimum_pct": 25.0,
+    "matched_tqqq_cagr_capture_minimum": 0.85,
+    "threshold_rule": "pass the higher of the absolute CAGR floor and the matched-TQQQ capture floor",
+    "qqq_excess_cagr_minimum_percentage_points": 8.0
+  },
+  "risk_targets": {
+    "maximum_drawdown_floor_pct": -55.0,
+    "annualized_sharpe_minimum": 1.0,
+    "mar_ratio_minimum": 0.5,
+    "tqqq_upside_capture_minimum": 0.85,
+    "tqqq_downside_capture_maximum": 0.75,
+    "leveraged_etf_weight_maximum": 0.75,
+    "long_only_gross_exposure_maximum": 1.0
+  },
+  "robustness_targets": {
+    "chronological_fold_count": 4,
+    "minimum_positive_lift_folds": 3,
+    "pbo_maximum": 0.4,
+    "deflated_sharpe_probability_minimum": 0.75,
+    "cost_views_bps": [10, 20, 40],
+    "primary_cost_view_bps": 20,
+    "benchmark_family": [
+      "matched_tqqq_buy_and_hold",
+      "matched_qqq_buy_and_hold",
+      "equal_weight_dynamic_universe",
+      "market_proxy",
+      "theme_proxy",
+      "cash_proxy",
+      "ex_post_best_symbol_report_only"
+    ]
+  },
+  "cadence": {
+    "signal_update": "daily",
+    "scheduled_rebalance": "two_or_three_times_per_week",
+    "event_or_threshold_rebalance": true,
+    "target_holding_sessions_minimum": 3,
+    "target_holding_sessions_maximum": 20,
+    "intraday_timing_overlay": "challenge_only_after_daily_candidate_passes"
+  },
+  "theme_definition": {
+    "fixed_gics_as_primary_grouping": false,
+    "graph_layers": [
+      "market_and_sector_residual_return_correlation",
+      "rolling_price_volume_comovement_and_dispersion",
+      "sec_product_description_similarity",
+      "verified_customer_supplier_links",
+      "pit_news_comentions_and_narrative_acceleration",
+      "theme_breadth_leadership_and_crowding"
+    ],
+    "seed_topics_not_permanent_winners": [
+      "ai_compute_memory_networking_cooling_power_data_centers",
+      "industrial_and_service_robotics_components_and_applications"
+    ]
+  },
+  "candidate_manifest_roles": [
+    {"candidate_id": "R8D01", "role": "deterministic_dynamic_theme_graph_router", "model_training": false},
+    {"candidate_id": "R8D02", "role": "deterministic_price_volume_only_control", "model_training": false},
+    {"candidate_id": "R8M01", "role": "fold_local_ml_cross_sectional_return_ranker", "model_training": true},
+    {"candidate_id": "R8M02", "role": "fold_local_ml_path_risk_and_exit_gate", "model_training": true},
+    {"candidate_id": "R8L01", "role": "llm_structured_pit_theme_and_narrative_factor", "model_training": false},
+    {"candidate_id": "R8C01", "role": "combined_ml_and_llm_factor_router", "model_training": true},
+    {"candidate_id": "R8F01", "role": "exact_missing_text_fallback_control", "model_training": true},
+    {"candidate_id": "R8P01", "role": "shuffled_theme_and_llm_placebo", "model_training": true}
+  ],
+  "search_budget": {
+    "counted_candidate_roles": 8,
+    "maximum_total_counted_configurations": 48,
+    "selection_metric": "fold_aggregated_net_cagr_subject_to_drawdown_and_robustness_gates",
+    "no_post_result_threshold_changes": true
+  },
+  "data_policy": {
+    "price_volume": "pit_adjusted_and_delisting_aware",
+    "sec_filings": "acceptance_time_bound_immutable_packets",
+    "historical_news": "blocked_until_first_seen_revision_timestamp_and_rights_contracts_pass",
+    "forward_news": "allowed_as_observation_only_after_pit_packet_validation",
+    "llm_packet_required_fields": [
+      "visible_at",
+      "published_at",
+      "fetched_at",
+      "source",
+      "input_hash",
+      "prompt_hash",
+      "model_id",
+      "structured_output_hash"
+    ]
+  },
+  "efficiency_boundary": {
+    "reuse": [
+      "aggressive_theme_router_accounting_and_walk_forward",
+      "existing_factor_catalog_and_factor_lab",
+      "existing_candidate_manifest_and_dossier_validator",
+      "existing_target_weight_snapshot_and_paper_canary_path"
+    ],
+    "do_not_start": [
+      "new_broker_or_authorization_framework",
+      "new_full_execution_engine",
+      "unbounded_factor_generation",
+      "live_llm_order_routing",
+      "new_paper_safety_audit_before_research_pass"
+    ]
+  },
+  "start_gate": {
+    "iteration_contracts_required": true,
+    "knowledge_build_scout_assess_required": true,
+    "command_required_before_backtest": "uv run oc research iteration validate mom_dynamic_theme_chain_r8 --stage pre-backtest",
+    "backtest_or_training_started": false
+  }
+}

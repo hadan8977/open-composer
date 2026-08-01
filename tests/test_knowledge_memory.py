@@ -82,6 +82,10 @@ def test_scout_marks_known_and_new_candidates(tmp_path: Path) -> None:
     )
     iteration = tmp_path / "reports/research/iterations/round_two"
     iteration.mkdir(parents=True)
+    (iteration / "external-brief.json").write_text(
+        json.dumps({"sources": []}),
+        encoding="utf-8",
+    )
     (iteration / "knowledge-scout-queries.json").write_text(
         json.dumps(
             {
@@ -111,6 +115,10 @@ def test_scout_merges_curated_web_candidates_without_treating_them_as_validated(
 ) -> None:
     iteration = tmp_path / "reports/research/iterations/round_curated"
     iteration.mkdir(parents=True)
+    (iteration / "external-brief.json").write_text(
+        json.dumps({"sources": []}),
+        encoding="utf-8",
+    )
     (iteration / "knowledge-scout-queries.json").write_text(
         json.dumps(
             {
@@ -199,6 +207,82 @@ def test_scout_rebuilds_prior_verification_after_excluding_current_cards(
     assert result.payload["candidates"][0]["validation_status"] == "candidate_unvalidated"
 
 
+def test_scout_allows_distinct_claim_bindings_for_one_source_url(tmp_path: Path) -> None:
+    cards_root = tmp_path / "reports/harness/source_cards"
+    cards_root.mkdir(parents=True)
+    url = "https://example.com/official-orders"
+    cards = []
+    sources = []
+    bindings = []
+    for claim_id, claim in [
+        ("semantics", "OPG is an auction order."),
+        ("cutoff", "OPG has a cutoff."),
+    ]:
+        cards.append(
+            {
+                **_source_card(claim_id, url),
+                "claim": claim,
+                "iteration_id": "round_shared_url",
+                "verification_status": "source_verified",
+                "verified_at": "2026-07-19T00:00:00Z",
+                "verification_method": "test_fixture",
+            }
+        )
+        source = {**_brief_source(url), "core_claim": claim}
+        sources.append(source)
+        bindings.append(
+            {
+                "canonical_url": url,
+                "source_card_claim_id": claim_id,
+                "claim_fingerprint": claim_fingerprint(claim),
+                "brief_claim_fingerprint": claim_fingerprint(claim),
+            }
+        )
+    (cards_root / "current.jsonl").write_text(
+        "\n".join(json.dumps(card) for card in cards) + "\n",
+        encoding="utf-8",
+    )
+    iteration = tmp_path / "reports/research/iterations/round_shared_url"
+    iteration.mkdir(parents=True)
+    (iteration / "external-brief.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "current_source_card_paths": ["reports/harness/source_cards/current.jsonl"],
+                "source_evidence_bindings": bindings,
+                "sources": sources,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (iteration / "knowledge-scout-queries.json").write_text(
+        json.dumps(
+            {
+                "queries": [],
+                "curated_candidates": [
+                    {"url": url, "title": "Official orders", "source_type": "platform_docs"}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = scout_knowledge("round_shared_url", tmp_path)
+
+    assert result.payload["candidate_count"] == 1
+    assert result.payload["schema_version"] == 2
+    brief_path = iteration / "external-brief.json"
+    tampered = json.loads(brief_path.read_text(encoding="utf-8"))
+    tampered["objective"] = "changed after scout"
+    brief_path.write_text(json.dumps(tampered), encoding="utf-8")
+    try:
+        assess_iteration_knowledge("round_shared_url", tmp_path)
+    except ValueError as exc:
+        assert "external brief hash mismatch" in str(exc)
+    else:
+        raise AssertionError("schema-v2 scout must remain bound to the external brief")
+
+
 def test_assessment_requires_scout_and_reports_reuse_novelty(tmp_path: Path) -> None:
     prior = tmp_path / "reports/harness/source_cards/strategy.jsonl"
     prior.parent.mkdir(parents=True)
@@ -226,6 +310,8 @@ def test_assessment_requires_scout_and_reports_reuse_novelty(tmp_path: Path) -> 
     assert passed.payload["status"] == "ok"
     assert passed.payload["counts"]["reused"] == 1
     assert passed.payload["counts"]["new"] == 7
+    assert passed.payload["external_brief_path"].endswith("external-brief.json")
+    assert passed.payload["external_brief_sha256"]
 
 
 def test_assessment_rejects_scout_with_stale_manifest_hash(tmp_path: Path) -> None:

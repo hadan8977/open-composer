@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "strategy_name": "us_multiasset_forward_mm_r5_d01",
+  "source_spec_path": "strategy_specs/drafts/us_multiasset_forward_mm_r5_d01.yaml",
+  "spec_hash": "045080dced45dac5828a3ca72498e40a221a42a91ba82f6f3d803529c3e7990b",
+  "objective": "Evaluate one matched liquid-ETF family spanning deterministic rules, fold-local trained models, frozen LLM-derived formula factors, combined models, exact missing-modality fallback, and a shuffled placebo; historical evidence is transfer evidence and formal advancement requires a new forward epoch.",
+  "current_source_card_paths": [
+    "reports/harness/source_cards/us_multiasset_forward_multimodal_r5.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {"canonical_url":"https://academic.oup.com/rfs/article/33/5/2223/5758276","source_card_claim_id":"mm-r3-gkx","claim_fingerprint":"e3326805808729f7734375674740623d8cbf50512b17b653ba2bc8c333eb71f2","brief_claim_fingerprint":"e3326805808729f7734375674740623d8cbf50512b17b653ba2bc8c333eb71f2"},
+    {"canonical_url":"https://www.nber.org/papers/w20439","source_card_claim_id":"mm-r3-momentum-crashes","claim_fingerprint":"1b33dbab2d7a831a68290f8e8facfafe231a868fff1ad3e7df7ae031de6c2ee8","brief_claim_fingerprint":"1b33dbab2d7a831a68290f8e8facfafe231a868fff1ad3e7df7ae031de6c2ee8"},
+    {"canonical_url":"https://arxiv.org/abs/2505.15155","source_card_claim_id":"mm-r3-rd-agent","claim_fingerprint":"26ded3e7b7edf4607704ad9bf80cce89fe02b78278320bae392d87badb95eee3","brief_claim_fingerprint":"26ded3e7b7edf4607704ad9bf80cce89fe02b78278320bae392d87badb95eee3"},
+    {"canonical_url":"https://openreview.net/forum?id=unBfxbCTpB","source_card_claim_id":"mm-r3-alphabench","claim_fingerprint":"0ae9679a1d3328a71fac4c0e24f65ac1c25ef766feef4ffae14307d7069ac5a3","brief_claim_fingerprint":"0ae9679a1d3328a71fac4c0e24f65ac1c25ef766feef4ffae14307d7069ac5a3"},
+    {"canonical_url":"https://arxiv.org/abs/2605.30363","source_card_claim_id":"mm-r3-text-regime-detection","claim_fingerprint":"8b58bb4421be1b5156e822c163933353779c00eb59e71b88591013fa1c13ea0d","brief_claim_fingerprint":"8b58bb4421be1b5156e822c163933353779c00eb59e71b88591013fa1c13ea0d"},
+    {"canonical_url":"https://www.sec.gov/search-filings/edgar-application-programming-interfaces","source_card_claim_id":"mm-r3-sec-api","claim_fingerprint":"4a11489f9500ff3d59a7fd0a9e7997d102fc7f286995babd452b61ca96f969e8","brief_claim_fingerprint":"4a11489f9500ff3d59a7fd0a9e7997d102fc7f286995babd452b61ca96f969e8"},
+    {"canonical_url":"https://docs.alpaca.markets/us/docs/historical-stock-data-1","source_card_claim_id":"r9_alpaca_sip_vs_iex","claim_fingerprint":"e29223492c252ce61ec367e40098f9007f144c7dac9d1a2e18ea6a31a77a0c87","brief_claim_fingerprint":"e29223492c252ce61ec367e40098f9007f144c7dac9d1a2e18ea6a31a77a0c87"},
+    {"canonical_url":"https://docs.alpaca.markets/docs/trading/orders","source_card_claim_id":"r9_alpaca_opg_semantics","claim_fingerprint":"d0717f332b66a029b518da94da0465bcd259805a8b84250343abde9f3f231867","brief_claim_fingerprint":"d0717f332b66a029b518da94da0465bcd259805a8b84250343abde9f3f231867"},
+    {"canonical_url":"https://docs.alpaca.markets/docs/paper-trading","source_card_claim_id":"r9_alpaca_paper_limitations","claim_fingerprint":"919eee5e30b8a36661387aeefcc28b59fde42bb4a08e44e0652e0d87d00bef7b","brief_claim_fingerprint":"919eee5e30b8a36661387aeefcc28b59fde42bb4a08e44e0652e0d87d00bef7b"},
+    {"canonical_url":"https://arxiv.org/abs/2607.16229","source_card_claim_id":"r5-finbench-time-gated-calibration","claim_fingerprint":"1f76806690046d0363ce21933f5e2eb7a23ec506e03e682682fe5e5840c68978","brief_claim_fingerprint":"1f76806690046d0363ce21933f5e2eb7a23ec506e03e682682fe5e5840c68978"},
+    {"canonical_url":"https://arxiv.org/abs/2606.22719","source_card_claim_id":"r5-leakage-aware-matched-baseline","claim_fingerprint":"b845c66809d49ac1dd787b318b17f978adc74eba7e1cc7e876cf5d9c08d22bd8","brief_claim_fingerprint":"b845c66809d49ac1dd787b318b17f978adc74eba7e1cc7e876cf5d9c08d22bd8"}
+  ],
+  "sources": [
+    {"url":"https://academic.oup.com/rfs/article/33/5/2223/5758276","published_or_updated_at":"accessed 2026-07-15","source_type":"paper","credibility":"peer-reviewed Review of Financial Studies article","core_claim":"Nonlinear asset-pricing models can extract interactions among momentum, liquidity and volatility, while shallow models remain competitive in low-signal panels.","project_applicability":"Retain deterministic and shallow-tree comparisons with fold-local fitting.","reflection":"The paper uses a broader PIT universe and longer history than this fixed ETF panel."},
+    {"url":"https://www.nber.org/papers/w20439","published_or_updated_at":"accessed 2026-07-15","source_type":"paper","credibility":"NBER primary working-paper page","core_claim":"Momentum losses cluster in stressed reversal regimes, motivating a separate state/risk role rather than unconditional model replacement.","project_applicability":"Evaluate a separately calibrated path-survival gate with exact deterministic fallback.","reflection":"Long-short crash evidence may overstate risk for a long-only ETF portfolio."},
+    {"url":"https://arxiv.org/abs/2505.15155","published_or_updated_at":"accessed 2026-07-15","source_type":"paper","credibility":"public research paper and implementation project","core_claim":"R&D-Agent(Q) links hypothesis generation, factor implementation and empirical feedback in an iterative quant workflow.","project_applicability":"Persist source, formula, candidate, model, trial and decision bindings.","reflection":"Agent breadth raises multiple-testing risk without a frozen candidate budget."},
+    {"url":"https://openreview.net/forum?id=unBfxbCTpB","published_or_updated_at":"accessed 2026-07-15","source_type":"paper","credibility":"OpenReview research benchmark","core_claim":"AlphaBench emphasizes executable alpha generation, empirical evaluation, diversity and OOS generalization rather than trusting LLM self-evaluation.","project_applicability":"Subject LLM-derived formulas to matched ablations, missing-modality fallback and a shuffled placebo.","reflection":"Benchmark performance is not ETF alpha evidence."},
+    {"url":"https://arxiv.org/abs/2605.30363","published_or_updated_at":"accessed 2026-07-15","source_type":"paper","credibility":"public working paper","core_claim":"A recent working paper combines text-proposed regime candidates with statistical validation rather than accepting LLM regime labels directly.","project_applicability":"Validate every LLM-proposed factor with market data and keep live LLM routing disabled.","reflection":"The Treasury study does not establish ETF momentum lift."},
+    {"url":"https://www.sec.gov/search-filings/edgar-application-programming-interfaces","published_or_updated_at":"accessed 2026-07-15","source_type":"regulatory_docs","credibility":"official SEC documentation","core_claim":"SEC submissions and filing documents expose accession identifiers and filing acceptance metadata suitable for PIT document packets.","project_applicability":"Exclude live filing/news factors from R5 because immutable PIT packets are not part of this round.","reflection":"R5 uses no filing text and makes no text-alpha claim."},
+    {"url":"https://docs.alpaca.markets/us/docs/historical-stock-data-1","published_or_updated_at":"accessed 2026-07-19","source_type":"provider_official_docs","credibility":"official provider documentation","core_claim":"Alpaca documents IEX as a single U.S. exchange representing about 2.5% of market volume and SIP as consolidated data covering all U.S. exchanges.","project_applicability":"Freeze SIP for every candidate and reject feed fallback.","reflection":"Feed breadth does not prove immutable or auction-accurate history."},
+    {"url":"https://docs.alpaca.markets/docs/trading/orders/","published_or_updated_at":"accessed 2026-07-19","source_type":"broker_official_docs","credibility":"official broker documentation","core_claim":"Alpaca documents that opg with a market or limit order creates MOO or LOO interest eligible only for the opening auction.","project_applicability":"Use one protected OPG policy and explicit skip outcomes.","reflection":"Order eligibility does not establish fill quality or simulator fidelity."},
+    {"url":"https://docs.alpaca.markets/docs/paper-trading/","published_or_updated_at":"accessed 2026-07-19","source_type":"broker_official_docs","credibility":"official broker documentation","core_claim":"Alpaca states that paper trading is a simulation and does not account for market impact, information leakage, latency slippage, non-marketable limit-order queue position, price improvement, regulatory fees, or dividends.","project_applicability":"Use Paper for controls and matched simulated-fill TCA only.","reflection":"A paper pass is not live alpha or capacity evidence."},
+    {"url":"https://arxiv.org/abs/2607.16229","published_or_updated_at":"accessed 2026-07-27","source_type":"paper","credibility":"new arXiv methodology paper discovered by the preregistered scout","core_claim":"FinBench specifies strictly time-gated financial forecasts and uses Brier skill against hard baselines to evaluate probabilistic calibration.","project_applicability":"Require M02 to beat a base-rate Brier score within chronological folds.","reflection":"Its one-day, three-ticker pilot is too small to support a strategy-performance claim."},
+    {"url":"https://arxiv.org/abs/2606.22719","published_or_updated_at":"accessed 2026-07-28","source_type":"paper","credibility":"arXiv official abstract page reviewed against the current source card","core_claim":"The paper evaluates an LLM factor-ranking pipeline using only decision-time information and finds that a matched kNN macro-analog baseline recovers a comparable median rank IC.","project_applicability":"Keep formula inputs PIT-safe and require matched quant-only and placebo comparisons before any LLM contribution claim.","reflection":"The study covers 36 months and seven style factors; its bootstrap confidence interval includes zero and it does not validate the R5 ETF formulas."}
+  ],
+  "topic_coverage": [
+    "deterministic ETF momentum",
+    "cross-sectional machine learning",
+    "momentum crash and path-survival gating",
+    "LLM-derived static factor generation",
+    "missing-modality fallback",
+    "placebo and multiple-testing control",
+    "SIP market-data provenance",
+    "opening-auction execution",
+    "paper-simulator limitations",
+    "time-gated probability calibration"
+  ],
+  "candidate_matrix_revisions": [
+    "Use a fixed 14-ETF universe to avoid the prior current-stock-universe survivorship blocker.",
+    "Freeze exactly eight roles before evaluation: D01, D02, M01, M02, L01, C01, F01 and P01.",
+    "Transfer four R2 LLM-derived formulas unchanged; no historical formula search and no live LLM inference.",
+    "Require exact F01-to-M01 target identity and require C01 lift to exceed the seeded P01 placebo.",
+    "Treat history through 2026-07-17 as transfer evidence and require a new 2026-07-30 forward epoch before canary eligibility.",
+    "Use the new FinBench scout evidence only to confirm the already-frozen M02 Brier/base-rate gate; do not add a candidate or threshold.",
+    "Use the leakage-aware LLM ranking paper only to reinforce PIT and matched-baseline controls; do not add a formula, candidate or threshold."
+  ],
+  "hypothesis_links": ["R5-H1", "R5-H2", "R5-H3", "R5-H4"]
+}

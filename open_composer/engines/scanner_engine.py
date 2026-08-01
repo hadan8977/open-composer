@@ -42,6 +42,11 @@ def run_scan(
                 float(latest["close"]),
                 version_id=version.version_id,
                 spec_hash=version.content_hash,
+                target_weight=(
+                    spec.risk.max_position_weight
+                    if spec.portfolio.mode == "single_symbol"
+                    else None
+                ),
             )
         )
     elif bool(exit_mask.iloc[-1]):
@@ -55,6 +60,7 @@ def run_scan(
                 float(latest["close"]),
                 version_id=version.version_id,
                 spec_hash=version.content_hash,
+                target_weight=0.0 if spec.portfolio.mode == "single_symbol" else None,
             )
         )
 

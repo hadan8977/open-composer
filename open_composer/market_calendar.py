@@ -17,6 +17,13 @@ def us_equity_session_close(day: date) -> time | None:
     return time(13, 0) if day in _early_closes(day.year) else time(16, 0)
 
 
+def next_us_equity_session(day: date) -> date:
+    candidate = day + timedelta(days=1)
+    while us_equity_session_close(candidate) is None:
+        candidate += timedelta(days=1)
+    return candidate
+
+
 def expected_rth_bar_closes(day: date, timeframe_minutes: int = 30) -> set[pd.Timestamp]:
     _validate_timeframe_minutes(timeframe_minutes)
     close = us_equity_session_close(day)
@@ -293,18 +300,30 @@ def _validate_timeframe_minutes(timeframe_minutes: int) -> None:
 
 
 def _holidays(year: int) -> set[date]:
-    return {
+    regular_holidays = {
         _observed(date(year, 1, 1)),
         _nth_weekday(year, 1, 0, 3),
         _nth_weekday(year, 2, 0, 3),
         _good_friday(year),
         _last_weekday(year, 5, 0),
-        _observed(date(year, 6, 19)),
         _observed(date(year, 7, 4)),
         _nth_weekday(year, 9, 0, 1),
         _nth_weekday(year, 11, 3, 4),
         _observed(date(year, 12, 25)),
     }
+    if year >= 2022:
+        regular_holidays.add(_observed(date(year, 6, 19)))
+    return regular_holidays | _special_closures(year)
+
+
+def _special_closures(year: int) -> set[date]:
+    closures = {
+        # National Day of Mourning for former President George H. W. Bush.
+        date(2018, 12, 5),
+        # National Day of Mourning for former President Jimmy Carter.
+        date(2025, 1, 9),
+    }
+    return {day for day in closures if day.year == year}
 
 
 def _early_closes(year: int) -> set[date]:

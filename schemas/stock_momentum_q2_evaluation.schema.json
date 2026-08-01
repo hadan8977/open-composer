@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StockMomentumQ2Evaluation",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "iter_id",
+    "scope",
+    "survivorship_labelled",
+    "accounting",
+    "ledger",
+    "inputs",
+    "selected_candidate_ids",
+    "research_pass",
+    "llm_contribution_pass",
+    "paper_ready_pass",
+    "promotion_eligible",
+    "safety"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "iter_id": {"const": "mom_stock_intraday_codesign_q1"},
+    "scope": {"const": "historical_current_universe_diagnostic"},
+    "survivorship_labelled": {"const": true},
+    "accounting": {
+      "type": "object",
+      "required": [
+        "frozen_candidate_count",
+        "diagnostic_runnable_count",
+        "dependency_skipped_count",
+        "unresolved_count",
+        "balanced"
+      ],
+      "properties": {
+        "frozen_candidate_count": {"const": 48},
+        "diagnostic_runnable_count": {"const": 28},
+        "dependency_skipped_count": {"const": 20},
+        "unresolved_count": {"const": 0},
+        "balanced": {"const": true}
+      }
+    },
+    "ledger": {
+      "type": "object",
+      "required": ["path", "sha256", "row_count"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "row_count": {"const": 48}
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "required": ["manifest_sha256", "data_feasibility_sha256", "code_sha256"],
+      "properties": {
+        "manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "data_feasibility_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "code_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "selected_candidate_ids": {"type": "array", "maxItems": 0},
+    "research_pass": {"const": false},
+    "llm_contribution_pass": {"const": false},
+    "paper_ready_pass": {"const": false},
+    "promotion_eligible": {"const": false},
+    "safety": {
+      "type": "object",
+      "required": ["no_selected_candidates", "no_fixture_inputs", "no_promotion"],
+      "properties": {
+        "no_selected_candidates": {"const": true},
+        "no_fixture_inputs": {"const": true},
+        "no_promotion": {"const": true}
+      }
+    }
+  }
+}

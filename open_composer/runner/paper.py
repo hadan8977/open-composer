@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 
 from open_composer.adapters.broker.alpaca_paper import (
     PaperOrderError,
+    PaperTargetSatisfiedError,
     _trading_client,
     submit_paper_order,
     sync_paper_account,
@@ -68,7 +69,7 @@ OPEN_ORDER_STATUSES = {
 }
 RECENT_OPEN_ORDER_SECONDS = 36 * 60 * 60
 OPEN_TO_OPEN_ORDER_WINDOW_START = (9, 20)
-OPEN_TO_OPEN_ORDER_WINDOW_END = (9, 30)
+OPEN_TO_OPEN_ORDER_WINDOW_END = (9, 27)
 OPEN_TO_OPEN_PORTFOLIO_MODES = {
     "hybrid_adaptive_router",
     "beta_exposure_router",
@@ -96,9 +97,9 @@ def run_paper_cycle(
     spec_path = resolve_strategy_path(spec_ref, base)
     spec = load_strategy_spec(spec_path)
     _validate_runtime_spec(spec)
+    version = register_strategy_version(spec_path, base, created_by="paper_runner")
     readiness = assess_paper_strategy_readiness(spec_path, base)
     readiness_path, _ = write_paper_readiness_report(readiness, base)
-    version = register_strategy_version(spec_path, base, created_by="paper_runner")
 
     cycle = PaperRunCycle(
         run_id=run_id(f"paper-{spec.name}"),
@@ -117,7 +118,7 @@ def run_paper_cycle(
             f"Paper readiness status={readiness.status}.",
         ],
     )
-    if not readiness.ready:
+    if not readiness.ready and readiness.execution_substate != "canary_authorized":
         cycle.notes.append(format_paper_readiness_blockers(readiness))
     signals: list[Signal]
     if spec.execution.backend == "nautilus_trader":
@@ -131,41 +132,29 @@ def run_paper_cycle(
         )
         write_nautilus_paper_plan(plan_path, plan)
         cycle.backend_plan_path = str(plan_path)
-        cycle.execution_backend = plan.selected_backend
+        cycle.execution_backend = "python_reference"
         cycle.notes.append(
-            "Nautilus paper runtime generated latest-bar signals before the Alpaca Paper "
-            "safety gate."
-            if plan.selected_backend == "nautilus_paper"
-            else (
-                "Nautilus paper runtime fell back to the Python reference scan because the "
-                "paper plan is not executable."
-            )
+            "The Nautilus paper plan is an intended-backend artifact; latest-bar signals "
+            "were evaluated by the Python reference path."
         )
-        if plan.selected_backend == "nautilus_paper":
-            if spec.portfolio.mode in ROUTED_PORTFOLIO_MODES:
-                signals = _run_routed_paper_signal_cycle(
-                    spec_path,
-                    spec,
-                    base,
-                    run_id_value=cycle.run_id,
-                    version_id=version.version_id,
-                    spec_hash=version.content_hash,
-                    client=client,
-                    refresh_data=spec.data.source in {"alpaca", "longbridge"},
-                )
-            else:
-                signals = _run_nautilus_paper_signal_cycle(
-                    spec,
-                    base,
-                    run_id_value=cycle.run_id,
-                    version_id=version.version_id,
-                    spec_hash=version.content_hash,
-                    refresh_data=spec.data.source in {"alpaca", "longbridge"},
-                )
-        else:
-            signals = run_scan(
+        if spec.portfolio.mode in ROUTED_PORTFOLIO_MODES:
+            signals = _run_routed_paper_signal_cycle(
                 spec_path,
-                root=base,
+                spec,
+                base,
+                run_id_value=cycle.run_id,
+                version_id=version.version_id,
+                spec_hash=version.content_hash,
+                client=client,
+                refresh_data=spec.data.source in {"alpaca", "longbridge"},
+            )
+        else:
+            signals = _run_nautilus_paper_signal_cycle(
+                spec,
+                base,
+                run_id_value=cycle.run_id,
+                version_id=version.version_id,
+                spec_hash=version.content_hash,
                 refresh_data=spec.data.source in {"alpaca", "longbridge"},
             )
     else:
@@ -270,7 +259,12 @@ def _run_nautilus_paper_signal_cycle(
                 float(latest["close"]),
                 version_id=version_id,
                 spec_hash=spec_hash,
-                execution_backend="nautilus_paper",
+                execution_backend="python_reference",
+                target_weight=(
+                    spec.risk.max_position_weight
+                    if spec.portfolio.mode == "single_symbol"
+                    else None
+                ),
             )
         )
     elif bool(exit_mask.iloc[-1]):
@@ -284,7 +278,8 @@ def _run_nautilus_paper_signal_cycle(
                 float(latest["close"]),
                 version_id=version_id,
                 spec_hash=spec_hash,
-                execution_backend="nautilus_paper",
+                execution_backend="python_reference",
+                target_weight=0.0 if spec.portfolio.mode == "single_symbol" else None,
             )
         )
 
@@ -298,7 +293,7 @@ def _run_nautilus_paper_signal_cycle(
         signals,
         version_id=version_id,
         spec_hash=spec_hash,
-        execution_backend="nautilus_paper",
+        execution_backend="python_reference",
         root=root,
     )
     return signals
@@ -430,7 +425,7 @@ def _run_hybrid_paper_signal_cycle(
                 price,
                 version_id=version_id,
                 spec_hash=spec_hash,
-                execution_backend="nautilus_paper",
+                execution_backend="python_reference",
                 symbol=symbol,
                 conditions=conditions,
                 qty=abs(delta_qty),
@@ -448,7 +443,7 @@ def _run_hybrid_paper_signal_cycle(
         signals,
         version_id=version_id,
         spec_hash=spec_hash,
-        execution_backend="nautilus_paper",
+        execution_backend="python_reference",
         root=root,
     )
     return signals
@@ -539,7 +534,7 @@ def _run_adaptive_intraday_paper_signal_cycle(
                 price,
                 version_id=version_id,
                 spec_hash=spec_hash,
-                execution_backend="nautilus_paper",
+                execution_backend="python_reference",
                 symbol=symbol,
                 conditions=conditions,
                 qty=abs(delta_qty),
@@ -557,7 +552,7 @@ def _run_adaptive_intraday_paper_signal_cycle(
         signals,
         version_id=version_id,
         spec_hash=spec_hash,
-        execution_backend="nautilus_paper",
+        execution_backend="python_reference",
         root=root,
     )
     return signals
@@ -669,7 +664,7 @@ def _run_beta_router_paper_signal_cycle(
                 price,
                 version_id=version_id,
                 spec_hash=spec_hash,
-                execution_backend="nautilus_paper",
+                execution_backend="python_reference",
                 symbol=symbol,
                 conditions=conditions,
                 qty=abs(delta_qty),
@@ -687,7 +682,7 @@ def _run_beta_router_paper_signal_cycle(
         signals,
         version_id=version_id,
         spec_hash=spec_hash,
-        execution_backend="nautilus_paper",
+        execution_backend="python_reference",
         root=root,
     )
     return signals
@@ -781,7 +776,19 @@ def _decide_signal(
                 "paper runtime generated an observation signal; broker orders are not authorized"
             ),
         )
-    kill_switch = load_paper_kill_switch(root)
+    try:
+        kill_switch = load_paper_kill_switch(root, require_control_file=True)
+    except (OSError, ValueError):
+        return PaperRunSignalResult(
+            signal_id=signal_id,
+            action=action,  # type: ignore[arg-type]
+            symbol=symbol,
+            price=price,
+            decision="blocked_by_kill_switch",
+            review_status=review_status,
+            review_verdict=review_verdict,
+            message="paper kill-switch control file is missing or invalid",
+        )
     if kill_switch.enabled:
         return PaperRunSignalResult(
             signal_id=signal_id,
@@ -794,7 +801,7 @@ def _decide_signal(
             message="paper kill switch is enabled"
             + (f": {kill_switch.reason}" if kill_switch.reason else ""),
         )
-    if not readiness.ready:
+    if not readiness.ready and readiness.execution_substate != "canary_authorized":
         return PaperRunSignalResult(
             signal_id=signal_id,
             action=action,  # type: ignore[arg-type]
@@ -841,7 +848,18 @@ def _decide_signal(
             spec,
             root,
             client=client,
-            qty=getattr(signal, "qty", None),
+            qty=None if signal.target_weight is not None else getattr(signal, "qty", None),
+        )
+    except PaperTargetSatisfiedError:
+        return PaperRunSignalResult(
+            signal_id=signal_id,
+            action=action,  # type: ignore[arg-type]
+            symbol=symbol,
+            price=price,
+            decision="no_target_change",
+            review_status=review_status,
+            review_verdict=review_verdict,
+            message="broker position or pending order already satisfies the target state",
         )
     except PaperOrderError as exc:
         return PaperRunSignalResult(

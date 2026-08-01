@@ -209,10 +209,7 @@ def test_execution_artifacts_never_require_orders(tmp_path: Path) -> None:
     assert observation["execution_substate"] == "observation_only"
 
 
-def test_target_weights_cli_uses_observation_only_multiasset_path(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
+def test_target_weights_cli_rejects_unregistered_multiasset_identity(tmp_path: Path) -> None:
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_text("{}", encoding="utf-8")
     definition = {
@@ -231,23 +228,10 @@ def test_target_weights_cli_uses_observation_only_multiasset_path(
         manifest_path=manifest_path,
         ml_report={"selection": {"lockbox_pass_trials": []}},
     )["us_multiasset_cli_d1"]
-    target = tmp_path / "target.json"
-    observation = tmp_path / "observation.json"
-    target.write_text("{}", encoding="utf-8")
-    observation.write_text("{}", encoding="utf-8")
-    monkeypatch.setattr(
-        portfolio,
-        "write_multiasset_target_weights_for_spec",
-        lambda *_args, **_kwargs: {
-            "router_target_weights": target,
-            "router_execution_observation": observation,
-        },
-    )
-
     result = CliRunner().invoke(app, ["strategy", "target-weights", str(spec_path)])
 
-    assert result.exit_code == 0, result.output
-    assert "status=observation_only broker_writes=false" in result.output
+    assert result.exit_code == 2, result.output
+    assert "unsupported cross_sectional_momentum strategy identity" in result.output
 
 
 def test_ai_roles_switch_or_fallback_without_order_authority(tmp_path: Path) -> None:

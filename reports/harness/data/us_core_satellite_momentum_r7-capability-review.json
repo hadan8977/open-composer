@@ -1,0 +1,83 @@
+{
+  "strategy_name": "us_core_satellite_momentum_r7",
+  "iter_id": "mom_core_satellite_r7",
+  "reviewed_at": "2026-07-19",
+  "capabilities": [
+    {
+      "capability_id": "market.alpaca_bars",
+      "kind": "market",
+      "status": "partial",
+      "strict_behavior": "strict_live_snapshot_no_fallback",
+      "paper_ready": false,
+      "notes": "Real Adjustment.ALL Alpaca Basic IEX daily and 30-minute files reach 2026-07-17 and are hash-bound. IEX is not SIP, NBBO, or official primary-auction evidence."
+    },
+    {
+      "capability_id": "events.sec_filings",
+      "kind": "event",
+      "status": "blocked",
+      "strict_behavior": "live_with_cache",
+      "paper_ready": false,
+      "notes": "The registry and strict packet schema exist, but no real historical or formal-forward PIT packets have been collected and replayed."
+    },
+    {
+      "capability_id": "news.alpha_vantage",
+      "kind": "news",
+      "status": "blocked",
+      "strict_behavior": "trial_live_with_cache",
+      "paper_ready": false,
+      "notes": "Historical first-seen timestamps, issuer mapping, deduplication, watchlist coverage, redistribution rights, and collection latency remain unverified."
+    },
+    {
+      "capability_id": "earnings_call_transcript_or_audio",
+      "kind": "event",
+      "status": "unsupported",
+      "strict_behavior": "unregistered_or_unlicensed",
+      "paper_ready": false,
+      "notes": "No licensed local capability with replayable publication, revision, and collector timestamps is registered."
+    }
+  ],
+  "feature_packet_schema_path": "schemas/core_satellite_r7_feature_packet.schema.json",
+  "feature_packet_pit_check": "schema_pass_runtime_blocked_no_packets",
+  "event_to_instrument_mapping": {
+    "status": "blocked",
+    "reason": "Issuer-level filings, earnings, news, and calls have no effective-dated constituent-weight mapping into the traded sector ETFs.",
+    "allowed_next_designs": [
+      "separate_point_in_time_stock_event_sleeve",
+      "effective_dated_ETF_constituent_aggregation_with_weight_and_identity_provenance"
+    ]
+  },
+  "sample_data_caveats": [
+    "Capability fixtures are workflow checks and were not used as strategy evidence.",
+    "Strict-live IEX files are diagnostic market evidence, not consolidated execution evidence.",
+    "No event fixture, cache fallback, retrospective packet, or LLM output was treated as PIT history."
+  ],
+  "data_source_checks": {
+    "daily_strict_common_sessions": 1487,
+    "intraday_strict_common_sessions": 603,
+    "latest_session": "2026-07-17",
+    "formal_forward_observations": 0,
+    "adjustment": "all",
+    "forward_fill": false,
+    "zero_return_substitution": false,
+    "independent_source_pass": false
+  },
+  "local_provider_presence_check": {
+    "checked_at": "2026-07-19",
+    "values_read": false,
+    "alpaca_credentials": "set",
+    "alpaca_data_feed": "iex",
+    "openai_api_key": "set_but_no_grounded_packets",
+    "alpha_vantage_api_key": "missing",
+    "sec_user_agent": "missing_or_invalid_contact"
+  },
+  "conclusion": "blocked",
+  "blockers": [
+    "IEX_to_SIP_or_independent_price_parity_missing",
+    "official_open_and_arrival_price_evidence_missing",
+    "historical_and_forward_event_PIT_packets_missing",
+    "issuer_event_to_traded_ETF_mapping_missing",
+    "news_provider_coverage_rights_and_latency_unverified",
+    "licensed_call_data_capability_missing",
+    "formal_forward_observations_missing"
+  ]
+}

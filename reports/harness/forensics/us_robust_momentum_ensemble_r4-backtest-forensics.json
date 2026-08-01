@@ -1,0 +1,65 @@
+{
+  "strategy_name": "us_robust_momentum_ensemble_r4",
+  "iter_id": "mom_robust_momentum_r4",
+  "reviewed_at": "2026-07-18",
+  "lookahead_check": "pass",
+  "future_leak_check": "pass",
+  "overfit_risk": "high",
+  "multiple_testing_count": 15,
+  "pbo_proxy": 0.166667,
+  "pbo_caveat": "Only four outer folds produce six complementary splits; this is a coarse diagnostic, not a stable PBO estimate.",
+  "dsr_proxy": {
+    "method": "expected maximum Sharpe proxy across 13 selectable candidates",
+    "expected_max_sharpe": 2.52499,
+    "observed_max_sharpe": 2.277608,
+    "observed_max_candidate_id": "D06",
+    "pass": false
+  },
+  "negative_controls": {
+    "future_feature_rejection": "pass",
+    "shuffled_label_placebo": "fail",
+    "placebo_candidate_id": "N01",
+    "placebo_sharpe": 2.726463,
+    "deterministic_parent_sharpe": 2.258632,
+    "interpretation": "Randomized training labels produced material OOS lift through exposure gating, so no ML result is distinguishable from a risk-randomization effect."
+  },
+  "sample_data_caveats": [
+    "Longbridge research replay cache is limited to 1,000 common daily sessions.",
+    "The stock universe is a current frozen snapshot and excludes historical inactive securities.",
+    "Terminal delisting returns, permanent identifiers, and versioned corporate-action lineage are absent.",
+    "Adjusted Nasdaq Basic bars are not consolidated SIP or official opening-auction evidence.",
+    "The OOS period contains 370 sessions from 2024-12-18 through 2026-06-11, but only one short recent regime sequence.",
+    "The formal forward epoch begins 2026-07-20 and currently has zero observations."
+  ],
+  "trade_count": 74,
+  "trading_days": 370,
+  "full_common_trading_days": 1000,
+  "short_sample": false,
+  "regime_diversity": "insufficient_for_durable_claim",
+  "capacity_assessment": "Blocked. Asset weights are capped at 15%, but no portfolio notional, official-open volume, quoted spread, or matched order ledger exists; percentage-of-ADV capacity cannot be validated.",
+  "execution_semantics": {
+    "signal": "close_t_or_earlier",
+    "fill": "next_observed_open",
+    "return": "open_t_plus_1_to_open_t_plus_2",
+    "weight_drift": "asset weights drift between decisions",
+    "costs_one_way_bps": [10, 20, 40],
+    "price_forward_fill": false,
+    "zero_return_substitution": false
+  },
+  "leader_review": {
+    "candidate_id": "D06",
+    "total_return_pct": 45.564988,
+    "annualized_return_pct": 29.138277,
+    "sharpe": 2.277608,
+    "max_drawdown_pct": -11.188328,
+    "average_one_way_turnover_pct": 11.90905,
+    "first_fold_total_return_pct": -0.854521,
+    "forty_bps_total_return_pct": 41.760526,
+    "equal_sleeve_return_pct": 67.383186,
+    "equal_sleeve_sharpe": 2.154076,
+    "equal_sleeve_max_drawdown_pct": -15.230455,
+    "assessment": "D06 trades substantial return for a modest Sharpe and drawdown improvement; it did not satisfy the preregistered fold-return acceptance rule."
+  },
+  "conclusion": "blocked",
+  "notes": "Workflow semantics passed, but the shuffled-label control, DSR proxy, current-universe provenance, short history, and missing execution evidence block research promotion and paper readiness."
+}

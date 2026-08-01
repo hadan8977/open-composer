@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "manifest_type": "generic_candidate_family_v1",
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "generated_before_backtest": true,
+  "candidate_count": 8,
+  "spec_hashes": {
+    "strategy_specs/drafts/us_multiasset_forward_mm_r5_d01.yaml": "045080dced45dac5828a3ca72498e40a221a42a91ba82f6f3d803529c3e7990b",
+    "strategy_specs/drafts/us_multiasset_forward_mm_r5_d02.yaml": "bad25922508ee0d8ea2c5d254aa5110191df962f4a0ada95910a915e5bee5e5a",
+    "strategy_specs/drafts/us_multiasset_forward_mm_r5_m01.yaml": "9cdb03225b6d2b20f69e6f3f3d17234552411fb7b45badf716bf725bf1c13cb8",
+    "strategy_specs/drafts/us_multiasset_forward_mm_r5_m02.yaml": "0ec5e2a9215f2df4cffb37adbc4018ead4a070137864210a26a57557647f0243",
+    "strategy_specs/drafts/us_multiasset_forward_mm_r5_l01.yaml": "e7cb26fa703d87e5e6717cd650ceb4c535ddadb0df2144502cf5d2626a2204fb",
+    "strategy_specs/drafts/us_multiasset_forward_mm_r5_c01.yaml": "ed6a692e5fffa46fbb41dfdd6299774ef509d8989c8332052198739bd3a018cd",
+    "strategy_specs/drafts/us_multiasset_forward_mm_r5_f01.yaml": "89fef45bec35292c4455554b41feaad0f9ed0477aaedbc4db34c33761aa5635a",
+    "strategy_specs/drafts/us_multiasset_forward_mm_r5_p01.yaml": "676cc8fc951dd698c92f3622fe182ec0dc94224ec5d20d23d87f37d8c7d238b8"
+  },
+  "contracts": {
+    "data": {
+      "daily_sip_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/data-contract.json","sha256":"92d009be36fc17a83649e0910ecd299c768592ae78413f86f45bbbdf51f9ad67"}
+    },
+    "features": {
+      "deterministic_12_1_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/feature-contract.json","sha256":"f9afc84ed2957c54f5b1002e44eafe9be6c440cff584b6ec53c06f5c188ecf0d"},
+      "deterministic_6_1_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/feature-contract.json","sha256":"f9afc84ed2957c54f5b1002e44eafe9be6c440cff584b6ec53c06f5c188ecf0d"},
+      "core_quant_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/feature-contract.json","sha256":"f9afc84ed2957c54f5b1002e44eafe9be6c440cff584b6ec53c06f5c188ecf0d"},
+      "llm_formula_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/feature-contract.json","sha256":"f9afc84ed2957c54f5b1002e44eafe9be6c440cff584b6ec53c06f5c188ecf0d"},
+      "core_plus_llm_formula_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/feature-contract.json","sha256":"f9afc84ed2957c54f5b1002e44eafe9be6c440cff584b6ec53c06f5c188ecf0d"},
+      "llm_formula_placebo_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/feature-contract.json","sha256":"f9afc84ed2957c54f5b1002e44eafe9be6c440cff584b6ec53c06f5c188ecf0d"}
+    },
+    "labels": {
+      "monthly_open_return_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/label-contract.json","sha256":"82a178f12524e6ef13703da01ad4299f23a18f96416aedf628a3ddb93e1fe71e"},
+      "path_survival_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/label-contract.json","sha256":"82a178f12524e6ef13703da01ad4299f23a18f96416aedf628a3ddb93e1fe71e"}
+    },
+    "validation": {
+      "matched_family_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/validation-contract.json","sha256":"db5a1452470cc7d7a4baa088b78ccad9117e75d4f1cb539940d5e27f60750a79"},
+      "exact_fallback_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/validation-contract.json","sha256":"db5a1452470cc7d7a4baa088b78ccad9117e75d4f1cb539940d5e27f60750a79"},
+      "placebo_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/validation-contract.json","sha256":"db5a1452470cc7d7a4baa088b78ccad9117e75d4f1cb539940d5e27f60750a79"}
+    },
+    "costs": {
+      "opg_10_20_35_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/cost-contract.json","sha256":"869406d8634f8405741ee8e2790f88a75d509ef44446cf5da76ed78f39ff6750"}
+    },
+    "benchmarks": {
+      "complete_etf_family_v1": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/benchmark-contract.json","sha256":"3bb0cdd4e6e1812bfdbfb9d9d50eb571ecbb83e773b21a382d49221ad897ff1e"}
+    }
+  },
+  "candidates": [
+    {"candidate_id":"R5D01","path":"deterministic","role":"deterministic_core_baseline","method":"12_1_top3_equal_weight","ablation":"quant_only_deterministic","spec_path":"strategy_specs/drafts/us_multiasset_forward_mm_r5_d01.yaml","fallback":"BIL","data_contract":"daily_sip_v1","feature_contract":"deterministic_12_1_v1","label_contract":"monthly_open_return_v1","validation_contract":"matched_family_v1","cost_contract":"opg_10_20_35_v1","benchmark_contract":"complete_etf_family_v1","promotion_eligible":true},
+    {"candidate_id":"R5D02","path":"deterministic","role":"deterministic_diversification_control","method":"6_1_trend_top3_equal_weight","ablation":"quant_only_alternative","spec_path":"strategy_specs/drafts/us_multiasset_forward_mm_r5_d02.yaml","fallback":"R5D01","data_contract":"daily_sip_v1","feature_contract":"deterministic_6_1_v1","label_contract":"monthly_open_return_v1","validation_contract":"matched_family_v1","cost_contract":"opg_10_20_35_v1","benchmark_contract":"complete_etf_family_v1","promotion_eligible":true},
+    {"candidate_id":"R5M01","path":"trained_ml","role":"trained_return_ranker","method":"fold_local_lightgbm_core_features","ablation":"quant_only_trained","spec_path":"strategy_specs/drafts/us_multiasset_forward_mm_r5_m01.yaml","fallback":"R5D01","data_contract":"daily_sip_v1","feature_contract":"core_quant_v1","label_contract":"monthly_open_return_v1","validation_contract":"matched_family_v1","cost_contract":"opg_10_20_35_v1","benchmark_contract":"complete_etf_family_v1","promotion_eligible":true},
+    {"candidate_id":"R5M02","path":"trained_ml","role":"trained_risk_rejection_gate","method":"fold_local_lightgbm_path_survival","ablation":"risk_gate","spec_path":"strategy_specs/drafts/us_multiasset_forward_mm_r5_m02.yaml","fallback":"R5M01_then_R5D01","data_contract":"daily_sip_v1","feature_contract":"core_quant_v1","label_contract":"path_survival_v1","validation_contract":"matched_family_v1","cost_contract":"opg_10_20_35_v1","benchmark_contract":"complete_etf_family_v1","promotion_eligible":true},
+    {"candidate_id":"R5L01","path":"llm_formula","role":"llm_derived_formula_only","method":"deterministic_equal_formula_composite","ablation":"formula_only","spec_path":"strategy_specs/drafts/us_multiasset_forward_mm_r5_l01.yaml","fallback":"R5D01","data_contract":"daily_sip_v1","feature_contract":"llm_formula_v1","label_contract":"monthly_open_return_v1","validation_contract":"matched_family_v1","cost_contract":"opg_10_20_35_v1","benchmark_contract":"complete_etf_family_v1","promotion_eligible":true},
+    {"candidate_id":"R5C01","path":"combined","role":"combined_ml_and_llm_formula","method":"fold_local_lightgbm_core_plus_llm_formulas","ablation":"quant_plus_formula","spec_path":"strategy_specs/drafts/us_multiasset_forward_mm_r5_c01.yaml","fallback":"R5M01_then_R5D01","data_contract":"daily_sip_v1","feature_contract":"core_plus_llm_formula_v1","label_contract":"monthly_open_return_v1","validation_contract":"matched_family_v1","cost_contract":"opg_10_20_35_v1","benchmark_contract":"complete_etf_family_v1","promotion_eligible":true},
+    {"candidate_id":"R5F01","path":"missing_modality","role":"missing_formula_ablation_selection_prohibited","method":"exact_M01_without_formula_inputs","ablation":"missing_formula","spec_path":"strategy_specs/drafts/us_multiasset_forward_mm_r5_f01.yaml","fallback":"R5M01_then_R5D01","data_contract":"daily_sip_v1","feature_contract":"core_quant_v1","label_contract":"monthly_open_return_v1","validation_contract":"exact_fallback_v1","cost_contract":"opg_10_20_35_v1","benchmark_contract":"complete_etf_family_v1","promotion_eligible":false},
+    {"candidate_id":"R5P01","path":"placebo","role":"shuffled_formula_placebo_selection_prohibited","method":"C01_with_symbol_formula_permutation_seed_4199","ablation":"shuffled_formula_placebo","spec_path":"strategy_specs/drafts/us_multiasset_forward_mm_r5_p01.yaml","fallback":"R5M01_then_R5D01","data_contract":"daily_sip_v1","feature_contract":"llm_formula_placebo_v1","label_contract":"monthly_open_return_v1","validation_contract":"placebo_v1","cost_contract":"opg_10_20_35_v1","benchmark_contract":"complete_etf_family_v1","promotion_eligible":false}
+  ]
+}

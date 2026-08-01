@@ -1,0 +1,86 @@
+{
+  "strategy_name": "us_robust_momentum_ensemble_r4",
+  "iter_id": "mom_robust_momentum_r4",
+  "policy_id": "loo_opg_observation_only_us_robust_momentum_r4_v1",
+  "generated_at": "2026-07-18",
+  "execution_authorized": false,
+  "order_style": "limit_on_open_opg",
+  "time_in_force": "opg",
+  "price_protection": {
+    "type": "limit_relative_to_decision_close",
+    "maximum_adverse_gap_pct": 2.5,
+    "marketability_buffer_bps": 20,
+    "live_parameters_require_tca": true
+  },
+  "gap_filter": {
+    "enabled": true,
+    "max_absolute_gap_pct": 2.5,
+    "action_on_exceed": "skip_and_hold_prior_weights"
+  },
+  "spread_filter": {
+    "enabled": true,
+    "max_spread_bps": 20,
+    "action_on_exceed": "skip_and_hold_prior_weights"
+  },
+  "participation_cap": {
+    "max_adv_pct": 0.1,
+    "max_official_open_volume_pct": 1.0,
+    "status": "unverified_without_notional_and_auction_volume"
+  },
+  "fallback_behavior": {
+    "if_not_filled": "cancel_and_hold_prior_weights",
+    "if_late_for_opg": "reject_cycle",
+    "if_gap_exceeds_limit": "skip_and_hold_prior_weights",
+    "if_official_open_delayed": "wait_for_official_open_or_skip",
+    "market_order_fallback": false
+  },
+  "tca_plan": {
+    "enabled": true,
+    "reference_prices": ["decision_close", "official_primary_exchange_open", "arrival_price", "fill_price"],
+    "record_decided_at": true,
+    "record_submitted_at": true,
+    "record_accepted_at": true,
+    "record_official_open_at": true,
+    "record_fill_price": true,
+    "record_slippage_vs_reference": true,
+    "metrics": ["fill_rate", "implementation_shortfall", "effective_spread", "realized_spread", "adverse_movement"],
+    "review_frequency": "weekly"
+  },
+  "source_card_ids": [
+    "alpaca_opg_moo_loo_support",
+    "nasdaq_opening_cross_mechanics",
+    "nyse_open_not_fixed_0930",
+    "alpaca_paper_execution_omissions",
+    "finra_best_execution_factors",
+    "rule605_execution_quality_metrics"
+  ],
+  "alternatives_compared": ["market_on_open_opg", "limit_on_open_opg", "delayed_open_5m_limit"],
+  "alternatives_detail": [
+    {
+      "order_style": "market_on_open_opg",
+      "price_protection": "none",
+      "fill_certainty": "high_if_accepted",
+      "slippage_risk": "high_on_gaps",
+      "complexity": "medium",
+      "decision": "challenge_only"
+    },
+    {
+      "order_style": "limit_on_open_opg",
+      "price_protection": "explicit_limit",
+      "fill_certainty": "medium",
+      "slippage_risk": "bounded_but_missed_fill_risk",
+      "complexity": "medium",
+      "decision": "future_tca_reference"
+    },
+    {
+      "order_style": "delayed_open_5m_limit",
+      "price_protection": "arrival_limit_and_spread_filter",
+      "fill_certainty": "medium",
+      "slippage_risk": "lower_auction_risk_but_signal_delay",
+      "complexity": "high",
+      "decision": "future_tca_challenger"
+    }
+  ],
+  "recommendation_rationale": "No order path is authorized. If a later paper experiment passes every data and safety gate, compare LOO/OPG against MOO/OPG and delayed-open limits using matched signals; use skip-and-hold rather than an unbounded market fallback.",
+  "naked_market_justification": null
+}

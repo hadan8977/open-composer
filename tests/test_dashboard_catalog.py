@@ -277,7 +277,8 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.summary.context_count == 1
     assert catalog.summary.journal_count == 1
     assert catalog.summary.order_count == 1
-    assert catalog.summary.audit_count == 2
+    assert catalog.summary.audit_count == 3
+    assert any(event.kind == "paper_kill_switch" for event in catalog.audits)
     assert catalog.summary.data_comparison_count == 1
     assert catalog.summary.feature_packet_count == 1
     assert catalog.summary.workflow_report_count == 1

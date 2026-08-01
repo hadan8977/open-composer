@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StockMomentumQ2TrialLedger",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "iter_id",
+    "scope",
+    "survivorship_labelled",
+    "candidate_count",
+    "research_pass",
+    "llm_contribution_pass",
+    "paper_ready_pass",
+    "promotion_eligible",
+    "rows"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "iter_id": {"const": "mom_stock_intraday_codesign_q1"},
+    "scope": {"const": "historical_current_universe_diagnostic"},
+    "survivorship_labelled": {"const": true},
+    "candidate_count": {"type": "integer", "minimum": 0},
+    "research_pass": {"const": false},
+    "llm_contribution_pass": {"const": false},
+    "paper_ready_pass": {"const": false},
+    "promotion_eligible": {"const": false},
+    "rows": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/trial_row"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "trial_row": {
+      "type": "object",
+      "required": [
+        "candidate_id",
+        "action",
+        "status",
+        "scope",
+        "survivorship_labelled",
+        "research_pass",
+        "llm_contribution_pass",
+        "paper_ready_pass",
+        "promotion_eligible",
+        "input_hashes",
+        "folds",
+        "metrics",
+        "benchmarks"
+      ],
+      "properties": {
+        "candidate_id": {"type": "string", "pattern": "^[DMEI][0-9]{2}$"},
+        "action": {"enum": ["run_diagnostic", "dependency_skipped"]},
+        "status": {"enum": ["completed", "failed", "rejected", "dependency_skipped"]},
+        "scope": {"const": "historical_current_universe_diagnostic"},
+        "survivorship_labelled": {"const": true},
+        "research_pass": {"const": false},
+        "llm_contribution_pass": {"const": false},
+        "paper_ready_pass": {"const": false},
+        "promotion_eligible": {"const": false},
+        "input_hashes": {
+          "type": "object",
+          "required": [
+            "candidate_binding_sha256",
+            "manifest_sha256",
+            "spec_sha256",
+            "data_sha256",
+            "code_sha256"
+          ],
+          "properties": {
+            "candidate_binding_sha256": {"$ref": "#/$defs/sha256"},
+            "manifest_sha256": {"$ref": "#/$defs/sha256"},
+            "spec_sha256": {"$ref": "#/$defs/sha256"},
+            "data_sha256": {"$ref": "#/$defs/sha256"},
+            "code_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "folds": {"type": ["array", "null"]},
+        "metrics": {"type": ["object", "null"]},
+        "benchmarks": {"type": ["object", "null"]},
+        "dependency_reason": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

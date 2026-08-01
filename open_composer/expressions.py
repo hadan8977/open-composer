@@ -182,6 +182,8 @@ def validate_expression(
     factors: Mapping[str, Any] | None = None,
     root: Path | None = None,
 ) -> None:
+    factor_map = factors or {}
+    referenced = _referenced_factor_names(expression, factor_map)
     dummy = pd.DataFrame(
         {
             "timestamp": pd.date_range("2026-01-01", periods=40, freq="15min", tz="UTC"),
@@ -192,8 +194,118 @@ def validate_expression(
             "volume": range(1_000, 1_040),
         }
     )
-    frame = prepare_factor_frame(dummy, factors or {}, root=root)
+    frame = prepare_factor_frame(
+        dummy,
+        {name: factor_map[name] for name in referenced},
+        root=root,
+    )
     evaluate_expression(expression, frame)
+
+
+def _referenced_factor_names(
+    expression: str,
+    factors: Mapping[str, Any],
+) -> set[str]:
+    """Return the transitive factor dependencies used by one rule expression."""
+    assert_expression_safe(expression)
+    pending = [
+        node.id
+        for node in ast.walk(ast.parse(expression, mode="eval"))
+        if isinstance(node, ast.Name) and node.id in factors
+    ]
+    referenced: set[str] = set()
+    while pending:
+        name = pending.pop()
+        if name in referenced:
+            continue
+        referenced.add(name)
+        factor_expression = getattr(factors[name], "expression", None)
+        if not factor_expression:
+            continue
+        assert_expression_safe(str(factor_expression))
+        pending.extend(
+            node.id
+            for node in ast.walk(ast.parse(str(factor_expression), mode="eval"))
+            if isinstance(node, ast.Name) and node.id in factors and node.id not in referenced
+        )
+    return referenced
+
+
+def required_history_bars(
+    expressions: list[str],
+    factors: Mapping[str, Any] | None = None,
+) -> int:
+    """Return the minimum rows needed to evaluate the latest expression value."""
+    factor_map = factors or {}
+    required = 1
+    for expression in expressions:
+        assert_expression_safe(expression)
+        parsed = ast.parse(expression, mode="eval")
+        required = max(required, _required_history_node(parsed, factor_map, set()))
+    return required
+
+
+def _required_history_node(
+    node: ast.AST,
+    factors: Mapping[str, Any],
+    resolving: set[str],
+) -> int:
+    if isinstance(node, ast.Expression):
+        return _required_history_node(node.body, factors, resolving)
+    if isinstance(node, ast.Name):
+        factor = factors.get(node.id)
+        expression = getattr(factor, "expression", None) if factor is not None else None
+        if not expression or node.id in resolving:
+            return 1
+        parsed = ast.parse(str(expression), mode="eval")
+        return _required_history_node(parsed, factors, {*resolving, node.id})
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+        name = node.func.id
+        child_required = max(
+            (_required_history_node(arg, factors, resolving) for arg in node.args),
+            default=1,
+        )
+        windows = [
+            arg.value
+            for arg in node.args
+            if isinstance(arg, ast.Constant)
+            and isinstance(arg.value, int)
+            and not isinstance(arg.value, bool)
+            and arg.value > 0
+        ]
+        if name in {"lag", "roc"} and windows:
+            return child_required + int(windows[-1])
+        if (
+            name
+            in {
+                "sma",
+                "ema",
+                "rsi",
+                "rsi_simple",
+                "highest",
+                "lowest",
+                "stddev",
+                "zscore",
+                "bollinger_mid",
+                "bollinger_upper",
+                "bollinger_lower",
+            }
+            and windows
+        ):
+            return child_required + int(windows[-1]) - 1
+        if name == "atr" and windows:
+            return int(windows[-1]) + 1
+        if name == "macd" and len(windows) >= 2:
+            return child_required + max(int(windows[0]), int(windows[1])) - 1
+        if name in {"macd_signal", "macd_hist"} and len(windows) >= 3:
+            return child_required + max(int(windows[0]), int(windows[1])) + int(windows[2]) - 2
+        if name in CROSS_FUNCTIONS:
+            return child_required + 1
+        return child_required
+    children = list(ast.iter_child_nodes(node))
+    if not children:
+        return 1
+    return max(_required_history_node(child, factors, resolving) for child in children)
 
 
 def evaluate_expression(expression: str, frame: pd.DataFrame) -> pd.Series:
@@ -232,6 +344,16 @@ def prepare_factor_frame(
             source = getattr(factor, "source", "expression")
             try:
                 if source in {"expression", "factor_library"}:
+                    params = getattr(factor, "params", {}) or {}
+                    transform = params.get("transform")
+                    if transform == ("weighted_sum_of_component_cross_sectional_percentile_ranks"):
+                        raise ExpressionError(
+                            f"factor {name} requires a panel-aware cross-sectional transform"
+                        )
+                    if transform is not None:
+                        raise ExpressionError(
+                            f"factor {name} declares unsupported transform: {transform}"
+                        )
                     expression = getattr(factor, "expression", None)
                     if not expression:
                         raise ExpressionError(f"factor {name} missing expression")

@@ -1,0 +1,20 @@
+[Unit]
+Description=Open Composer R7 broker-free forward observation
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/root/codex-test/open-composer/.env
+ConditionPathExists=/root/codex-test/open-composer/reports/research/iterations/mom_multiasset_paper_control_r7/lock-set/lock-anchor.json
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/root/codex-test/open-composer
+EnvironmentFile=/root/codex-test/open-composer/.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/root/codex-test/open-composer/.venv/bin/python /root/codex-test/open-composer/scripts/run_r7_forward_observation.py
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+UMask=0077
+

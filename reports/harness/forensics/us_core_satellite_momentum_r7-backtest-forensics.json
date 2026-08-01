@@ -1,0 +1,120 @@
+{
+  "strategy_name": "us_core_satellite_momentum_r7",
+  "iter_id": "mom_core_satellite_r7",
+  "reviewed_at": "2026-07-19",
+  "lookahead_check": "pass",
+  "future_leak_check": "pass",
+  "overfit_risk": "high",
+  "multiple_testing_count": 5,
+  "multiple_testing_scope": "R7_selectable_candidates_only",
+  "cumulative_project_trial_count": "not_reconstructed_blocking",
+  "pbo_proxy": 0.0,
+  "pbo_caveat": "Four leave-one-chronological-fold-out selections are not CSCV, depend on ambiguous fold cost boundaries, and have no promotion authority. With 0 failures in 4, the one-sided 95 percent binomial upper bound is about 0.527, above the 0.25 gate.",
+  "pbo_one_sided_95pct_upper_bound": 0.527129,
+  "dsr_proxy": {
+    "method": "iteration_local_non_normal_DSR_probability",
+    "selected_candidate_id": "D01",
+    "selected_sharpe": 1.162353,
+    "expected_max_sharpe": 1.070721,
+    "probability": 0.57848,
+    "threshold_preregistered": 0.95,
+    "pass": false,
+    "cumulative_multiple_testing_included": false
+  },
+  "negative_controls": {
+    "future_packet_rejection": "pass_validator_control_only",
+    "shuffled_score_placebo": "fail",
+    "placebo_parent_candidate_id": "D02",
+    "parent_sharpe": 0.361477,
+    "placebo_sharpe_95th_percentile": 0.530262,
+    "empirical_exceedance_p": 0.316832
+  },
+  "implementation_contract_findings": [
+    {
+      "severity": "blocked",
+      "code": "fold_boundary_net_cost_semantics_not_preregistered",
+      "evidence": "Entry cost appears in fold 1 and lifecycle liquidation cost only in fold 4. The manifest does not declare continuous-segment versus independent-fold accounting, invalidating positive-fold and PBO gate authority."
+    },
+    {
+      "severity": "blocked",
+      "code": "strategy_spec_position_cap_semantics_conflict",
+      "evidence": "StrategySpec declares max_position_weight=0.4, while the manifest allows drift above 0.4 and several candidates report drifted maxima above that level."
+    },
+    {
+      "severity": "blocked",
+      "code": "D06_not_execution_time_only_ablation",
+      "evidence": "D06 delays to 10:30 and filters target increases, reducing exposure and turnover. Its 0.219803 Sharpe difference from D04_same_intraday_window is not attributable to execution timing alone."
+    },
+    {
+      "severity": "blocked",
+      "code": "D06_exact_parent_mask_claim_false",
+      "evidence": "The paired path excludes D04's 2024-07-22 execution because that session is not intraday-complete, calls the remaining 29 dates exact, and starts from cash rather than carried D04 state."
+    },
+    {
+      "severity": "blocked",
+      "code": "pbo_and_permutation_gate_semantics_invalid",
+      "evidence": "PBO tie handling can pass an all-tied family, and 0/4 paths cannot establish PBO <= 0.25. N01 gates on an interpolated percentile rather than its computed plus-one Monte Carlo p-value."
+    },
+    {
+      "severity": "blocked",
+      "code": "benchmark_gate_subset_not_frozen",
+      "evidence": "Candidate parity uses max(SPY, equal-weight sectors), but this subset and exclusion rule are absent from the preregistered benchmark family contract."
+    },
+    {
+      "severity": "blocked",
+      "code": "strategy_spec_backend_parity_missing",
+      "evidence": "The YAML entry and exit rules do not encode the custom core, satellite, sizing, schedule, or first-hour target logic. Generic promotion and execution backends would evaluate a different primary-symbol strategy."
+    },
+    {
+      "severity": "warning",
+      "code": "nonfinite_simulator_state_not_fail_closed",
+      "evidence": "Synthetic NaN input can silently disappear through pandas sum. Bound source loading rejects non-finite OHLCV, so stored-result impact was not demonstrated."
+    }
+  ],
+  "sample_data_caveats": [
+    "The panels are real Alpaca Basic IEX snapshots through 2026-07-17, not fixtures.",
+    "IEX is a single-exchange feed without SIP, NBBO, or official-open parity.",
+    "The fixed current ETF universe is survivorship-labelled.",
+    "No real SEC, news, earnings, or call packet entered any candidate.",
+    "The formal-forward epoch starts 2026-07-20 and has zero observations."
+  ],
+  "trade_count": 0,
+  "raw_audit_rebalance_day_counts": {
+    "D01": 49,
+    "D02": 59,
+    "D03": 59,
+    "D04": 59,
+    "D05": 52,
+    "D06": 29
+  },
+  "trading_days": 1233,
+  "short_sample": false,
+  "regime_diversity": "includes_2022_drawdown_and_2023_2026_recovery_but_only_about_five_evaluation_years",
+  "capacity_assessment": "Blocked without portfolio notional, consolidated ADV, auction volume, quotes, spreads, and matched fills.",
+  "execution_semantics": {
+    "daily_signal": "complete close",
+    "daily_historical_entry": "next strict-common-session IEX daily open",
+    "intraday_overlay_decision": "10:30 ET after two completed 30-minute bars",
+    "costs_one_way_bps": [
+      5,
+      10,
+      20
+    ],
+    "price_forward_fill": false,
+    "zero_return_substitution": false
+  },
+  "economic_review": {
+    "metrics_authority": false,
+    "raw_D01_total_return_pct_at_10bps": 29.012638,
+    "raw_D01_sharpe_at_10bps": 1.162353,
+    "raw_D05_total_return_pct_at_10bps": 40.145341,
+    "raw_D05_sharpe_at_10bps": 0.894119,
+    "assessment": "Aggregate values remain useful for auditing the frozen formulas, but no R7 candidate gate or promotion claim is valid."
+  },
+  "implementation_binding": {
+    "path": "open_composer/research/core_satellite_r7.py",
+    "sha256": "18a4a104c8e615bdf2f1f419d86930399f380145a0765238cd3a65a90199abd5"
+  },
+  "conclusion": "blocked",
+  "notes": "The original no-selection decision is retained. R7 must not be repaired in place or retuned; contract corrections belong to a separately preregistered iteration."
+}

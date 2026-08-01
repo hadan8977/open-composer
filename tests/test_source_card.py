@@ -268,6 +268,26 @@ def test_research_brief_requires_source_cards_for_method_families(
     assert ok.ok
 
 
+def test_research_brief_does_not_treat_inverse_volatility_as_inverse_etf(
+    sample_workspace: Path,
+) -> None:
+    fixture = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "volatility_allocator.yaml"
+    raw = yaml.safe_load(fixture.read_text(encoding="utf-8"))
+    raw["name"] = "volatility_allocator"
+    raw["notes"]["research_design"]["method_variants"] = [
+        "inverse_volatility_63",
+        "volatility_budget",
+    ]
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    json_path, _ = init_research_brief(spec_path, sample_workspace, overwrite=True)
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+
+    assert payload["method_families"] == []
+    assert payload["source_cards_required"] == []
+
+
 def test_research_brief_accepts_short_selling_source_card_alias(
     sample_workspace: Path,
 ) -> None:

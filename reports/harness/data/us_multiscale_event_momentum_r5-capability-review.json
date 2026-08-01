@@ -1,0 +1,72 @@
+{
+  "strategy_name": "us_multiscale_event_momentum_r5",
+  "iter_id": "mom_multiscale_event_r5",
+  "reviewed_at": "2026-07-18",
+  "capabilities": [
+    {
+      "capability_id": "market.alpaca_bars",
+      "kind": "market",
+      "status": "partial",
+      "strict_behavior": "fail_fast_for_unsupported_timeframes",
+      "paper_ready": false,
+      "notes": "The 15m and 30m caches are sufficient for a strict local diagnostic, but Alpaca Basic is IEX-only and no consolidated-data or official-print parity has been measured."
+    },
+    {
+      "capability_id": "events.sec_filings",
+      "kind": "event",
+      "status": "blocked",
+      "strict_behavior": "live_with_cache",
+      "paper_ready": false,
+      "notes": "The registry and packet schema exist, but no real historical PIT packets are present and live collection requires a user-supplied compliant SEC_USER_AGENT."
+    },
+    {
+      "capability_id": "news.alpha_vantage",
+      "kind": "news",
+      "status": "blocked",
+      "strict_behavior": "live_with_cache",
+      "paper_ready": false,
+      "notes": "The provider is trial status, credentials are not configured, and watchlist coverage, first-seen latency, rights, and deduplication have not been measured."
+    },
+    {
+      "capability_id": "news.gdelt",
+      "kind": "news",
+      "status": "partial",
+      "strict_behavior": "live_with_cache",
+      "paper_ready": false,
+      "notes": "GDELT is forward metadata discovery only; the 2026-07-18 live probe returned HTTP 429 with zero records, and ticker/entity precision, duplicates, rights, and latency remain unqualified."
+    },
+    {
+      "capability_id": "earnings_call_transcript_or_audio",
+      "kind": "event",
+      "status": "unsupported",
+      "strict_behavior": "unregistered",
+      "paper_ready": false,
+      "notes": "No licensed transcript or audio provider is registered, so call factors are outside the counted R5 candidates."
+    }
+  ],
+  "feature_packet_schema_path": "schemas/multiscale_event_r5_feature_packet.schema.json",
+  "feature_packet_pit_check": "warning",
+  "sample_data_caveats": [
+    "Capability fixtures passed registry hygiene but were not used as strategy evidence.",
+    "The actual OHLCV inputs are research replay caches and not paper-ready evidence.",
+    "No event fixture, retrospective text extraction, or cache fallback was treated as PIT history."
+  ],
+  "data_source_checks": {
+    "selected_symbols": 22,
+    "exact_common_sessions": 488,
+    "diagnostic_sessions": 468,
+    "formal_forward_observations": 0,
+    "forward_fill": false,
+    "zero_return_substitution": false,
+    "independent_source_pass": false
+  },
+  "conclusion": "blocked",
+  "blockers": [
+    "consolidated_intraday_parity_missing",
+    "historical_event_PIT_packets_missing",
+    "event_provider_coverage_and_rights_unverified",
+    "gdelt_live_probe_rate_limited",
+    "licensed_call_data_provider_missing",
+    "formal_forward_observations_missing"
+  ]
+}

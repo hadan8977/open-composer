@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "report_type": "multiasset_forward_multimodal_pre_evaluation_stop",
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "decision": "stop_r5_before_freeze_or_evaluation",
+  "recorded_at": "2026-07-31T12:15:11Z",
+  "price_data_read_for_this_decision": false,
+  "historical_evaluation_run": false,
+  "candidate_selected": false,
+  "forward_credit_authorized": false,
+  "paper_order_authorized": false,
+  "status": {
+    "workflow_pass": false,
+    "research_pass": false,
+    "llm_contribution_pass": false,
+    "paper_ready_pass": false
+  },
+  "reviewed_runner": {
+    "path": "open_composer/research/multiasset_forward_multimodal_r5.py",
+    "sha256": "5bfdc5ca3c88dfc11df3452ef910076b69b495f1149d5a2ac6f7bdddf99fe8c8"
+  },
+  "frozen_validation_contract": {
+    "path": "reports/research/iterations/mom_multiasset_forward_multimodal_r5/validation-contract.json",
+    "sha256": "db5a1452470cc7d7a4baa088b78ccad9117e75d4f1cb539940d5e27f60750a79"
+  },
+  "blocking_findings": [
+    {
+      "finding_id": "R5-PBO-ID-TIE",
+      "severity": "P1",
+      "summary": "PBO selection and OOS rank ties depend on candidate IDs, so label renaming can change the promotion gate.",
+      "successor_requirement": "Use candidate-ID-invariant top-tie handling and OOS midranks with label-permutation tests."
+    },
+    {
+      "finding_id": "R5-DSR-PSEUDO-HAC",
+      "severity": "P1",
+      "summary": "The HAC overlay changes an effective session count from raw-return autocorrelation but does not estimate the Sharpe influence-series long-run variance.",
+      "successor_requirement": "Use a Bartlett/Newey-West long-run variance of the Sharpe influence series and gate on the minimum of IID and full-HAC probabilities."
+    },
+    {
+      "finding_id": "R5-M02-RISK-BENEFIT",
+      "severity": "P1",
+      "summary": "R5M02 can pass without relative drawdown improvement, exposure-matched return noninferiority, or bounded opportunity cost versus R5M01.",
+      "successor_requirement": "Preregister and independently recompute all three relative risk-benefit gates."
+    },
+    {
+      "finding_id": "R5-CORPORATE-ACTION-RECONCILIATION",
+      "severity": "P1",
+      "summary": "The historical panel relies on provider adjustment=all without hash-bound raw/split/dividend reconciliation.",
+      "successor_requirement": "Bind provider panels and publish a deterministic split/dividend/all reconciliation before evaluation."
+    }
+  ],
+  "successor_policy": {
+    "new_iteration_required": true,
+    "reuse_r5_result_artifacts": false,
+    "reuse_r5_forward_credit": false,
+    "candidate_count_starts_at": 8,
+    "forward_count_starts_at": 0,
+    "backfill_allowed": false
+  }
+}

@@ -14,6 +14,7 @@ source-card-backed broker support and stress evidence.
 from __future__ import annotations
 
 import datetime as _dt
+import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -210,43 +211,62 @@ def generate_execution_policy_artifacts(
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
     context = detect_context(spec)
-    recommended = recommend_alternative(context)
-    alternatives = [
-        a.order_style for a in DEFAULT_ALTERNATIVES if a.order_style != recommended.order_style
-    ][:2]
+    recommended = _recommended_for_spec(spec, context)
+    alternatives = (
+        list(spec.execution_policy.alternatives_compared)
+        if spec.execution_policy is not None
+        else [
+            a.order_style for a in DEFAULT_ALTERNATIVES if a.order_style != recommended.order_style
+        ][:2]
+    )
 
-    policy_id = f"{recommended.order_style}_{spec.name}_v1"
+    policy_id = (
+        spec.execution_policy.policy_id
+        if spec.execution_policy is not None
+        else f"{recommended.order_style}_{spec.name}_v1"
+    )
     today = _dt.date.today().isoformat()
-
-    policy_payload: dict[str, object] = {
-        "strategy_name": spec.name,
-        "policy_id": policy_id,
-        "generated_at": today,
-        "order_style": recommended.order_style,
-        "time_in_force": recommended.time_in_force,
-        "price_protection": _price_protection_payload(recommended, context),
-        "gap_filter": _gap_filter_payload(context),
-        "spread_filter": _spread_filter_payload(),
-        "participation_cap": _participation_cap_payload(context),
-        "fallback_behavior": _fallback_behavior_payload(),
-        "tca_plan": default_tca_plan(),
-        "source_card_ids": list(source_card_ids or []),
-        "alternatives_compared": [recommended.order_style, *alternatives],
-        "naked_market_justification": _naked_market_justification(recommended, context),
-        "alternatives_detail": [asdict(a) for a in DEFAULT_ALTERNATIVES],
-        "recommendation_rationale": _rationale(recommended, context),
-    }
-
-    reality_payload: dict[str, object] = {
-        "strategy_name": spec.name,
-        "policy_id": policy_id,
-        "generated_at": today,
-        "slippage_scenarios": default_slippage_scenarios(),
-        "gap_stress": _gap_stress_payload(context),
-        "capacity_assessment": _capacity_assessment_payload(spec),
-        "tca_reference_prices": default_tca_plan()["reference_prices"],
-        "fill_model": _fill_model_for(recommended),
-    }
+    if spec.execution_policy is not None:
+        policy_payload = _inline_policy_payload(
+            spec,
+            recommended,
+            generated_at=today,
+            requested_source_card_ids=source_card_ids,
+        )
+        reality_payload = _inline_reality_payload(
+            spec,
+            recommended,
+            generated_at=today,
+        )
+    else:
+        policy_payload = {
+            "strategy_name": spec.name,
+            "policy_id": policy_id,
+            "generated_at": today,
+            "order_style": recommended.order_style,
+            "time_in_force": recommended.time_in_force,
+            "price_protection": _price_protection_payload(recommended, context),
+            "gap_filter": _gap_filter_payload(context),
+            "spread_filter": _spread_filter_payload(),
+            "participation_cap": _participation_cap_payload(context),
+            "fallback_behavior": _fallback_behavior_payload(),
+            "tca_plan": default_tca_plan(),
+            "source_card_ids": list(source_card_ids or []),
+            "alternatives_compared": [recommended.order_style, *alternatives],
+            "naked_market_justification": _naked_market_justification(recommended, context),
+            "alternatives_detail": [asdict(a) for a in DEFAULT_ALTERNATIVES],
+            "recommendation_rationale": _rationale(recommended, context),
+        }
+        reality_payload = {
+            "strategy_name": spec.name,
+            "policy_id": policy_id,
+            "generated_at": today,
+            "slippage_scenarios": default_slippage_scenarios(),
+            "gap_stress": _gap_stress_payload(context),
+            "capacity_assessment": _capacity_assessment_payload(spec),
+            "tca_reference_prices": default_tca_plan()["reference_prices"],
+            "fill_model": _fill_model_for(recommended),
+        }
 
     policy_path = base / "reports" / "harness" / "execution" / f"{spec.name}-execution-policy.json"
     reality_path = (
@@ -273,6 +293,148 @@ def generate_execution_policy_artifacts(
         recommended_order_style=recommended.order_style,
         alternatives=alternatives,
     )
+
+
+def _recommended_for_spec(
+    spec: StrategySpec,
+    context: RecommendationContext,
+) -> ExecutionAlternative:
+    if spec.execution_policy is None:
+        return recommend_alternative(context)
+    style = spec.execution_policy.order_style
+    match = next((item for item in DEFAULT_ALTERNATIVES if item.order_style == style), None)
+    if match is not None:
+        return ExecutionAlternative(
+            order_style=style,
+            time_in_force=spec.execution_policy.time_in_force,
+            description=match.description,
+            price_protection=match.price_protection,
+            fill_certainty=match.fill_certainty,
+            slippage_risk=match.slippage_risk,
+            when_to_prefer=match.when_to_prefer,
+        )
+    return ExecutionAlternative(
+        order_style=style,
+        time_in_force=spec.execution_policy.time_in_force,
+        description="Explicit StrategySpec execution policy.",
+        price_protection="as_declared_in_strategy_spec",
+        fill_certainty="medium",
+        slippage_risk="medium",
+        when_to_prefer="When the frozen StrategySpec contract selects this method.",
+    )
+
+
+def _inline_policy_payload(
+    spec: StrategySpec,
+    recommended: ExecutionAlternative,
+    *,
+    generated_at: str,
+    requested_source_card_ids: list[str] | None,
+) -> dict[str, object]:
+    policy = spec.execution_policy
+    if policy is None:
+        raise AssertionError("inline execution policy is missing")
+    inline_source_ids = list(policy.source_card_ids)
+    if requested_source_card_ids is not None and list(requested_source_card_ids) != (
+        inline_source_ids
+    ):
+        raise ValueError(
+            "source_card_ids must match the inline StrategySpec execution_policy exactly"
+        )
+    protection = policy.price_protection.model_dump(mode="json")
+    fallback = policy.fallback_behavior.model_dump(mode="json")
+    tca = policy.tca.model_dump(mode="json")
+    canonical = policy.model_dump(mode="json")
+    canonical_hash = hashlib.sha256(
+        json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return {
+        "strategy_name": spec.name,
+        "policy_id": policy.policy_id,
+        "generated_at": generated_at,
+        "generated_from_inline_strategy_spec": True,
+        "inline_policy_sha256": canonical_hash,
+        "order_style": policy.order_style,
+        "time_in_force": policy.time_in_force,
+        "price_protection": {
+            "type": "none" if all(value is None for value in protection.values()) else "limit",
+            **protection,
+        },
+        "gap_filter": {
+            "enabled": protection["max_open_gap_pct"] is not None,
+            "max_open_gap_pct": protection["max_open_gap_pct"],
+            "action_on_exceed": fallback["if_gap_exceeds_limit"],
+        },
+        "spread_filter": {
+            "enabled": protection["max_spread_bps"] is not None,
+            "max_spread_bps": protection["max_spread_bps"],
+            "action_on_exceed": fallback["if_spread_exceeds_limit"],
+        },
+        "participation_cap": policy.participation_cap.model_dump(mode="json"),
+        "fallback_behavior": fallback,
+        "tca_plan": {
+            "enabled": tca["enabled"],
+            "reference_prices": tca["compare_to"],
+            "record_submitted_at": tca["record_submitted_at"],
+            "record_fill_price": tca["record_fill_price"],
+            "record_slippage_vs_reference": bool(tca["record_fill_price"] and tca["compare_to"]),
+            "review_frequency": tca["review_frequency"],
+        },
+        "source_card_ids": inline_source_ids,
+        "alternatives_compared": list(policy.alternatives_compared),
+        "naked_market_justification": policy.naked_market_justification,
+        "alternatives_detail": [asdict(item) for item in DEFAULT_ALTERNATIVES],
+        "recommendation_rationale": (
+            "Generated from the frozen inline StrategySpec execution_policy; "
+            + _rationale(recommended, detect_context(spec))
+        ),
+    }
+
+
+def _inline_reality_payload(
+    spec: StrategySpec,
+    recommended: ExecutionAlternative,
+    *,
+    generated_at: str,
+) -> dict[str, object]:
+    policy = spec.execution_policy
+    if policy is None:
+        raise AssertionError("inline execution policy is missing")
+    scenarios = (
+        [item.model_dump(mode="json") for item in spec.reality_model.stress_scenarios]
+        if spec.reality_model is not None and spec.reality_model.stress_scenarios
+        else default_slippage_scenarios()
+    )
+    protection = policy.price_protection
+    max_gap = protection.max_open_gap_pct
+    return {
+        "strategy_name": spec.name,
+        "policy_id": policy.policy_id,
+        "generated_at": generated_at,
+        "generated_from_inline_strategy_spec": True,
+        "slippage_scenarios": scenarios,
+        "gap_stress": {
+            "max_adverse_gap_pct": max_gap,
+            "fill_model_gap_handling": (
+                spec.reality_model.fill_model
+                if spec.reality_model is not None
+                else _fill_model_for(recommended)
+            ),
+            "recommended_gap_filter": (
+                f"{policy.fallback_behavior.if_gap_exceeds_limit} when abs(gap_pct) > {max_gap}"
+                if max_gap is not None
+                else "no frozen gap threshold"
+            ),
+            "scenarios": scenarios,
+        },
+        "capacity_assessment": _capacity_assessment_payload(spec),
+        "tca_reference_prices": list(policy.tca.compare_to),
+        "fill_model": (
+            spec.reality_model.fill_model
+            if spec.reality_model is not None
+            else _fill_model_for(recommended)
+        ),
+    }
 
 
 def _write_leveraged_etf_artifacts(

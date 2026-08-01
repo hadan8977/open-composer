@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "common_window_required": true,
+  "same_cost_engine_required": true,
+  "benchmarks": [
+    {"benchmark_id":"same_symbol_buy_hold_SPY","definition":"100_percent_SPY"},
+    {"benchmark_id":"equal_weight_universe","definition":"equal_weight_13_rankable_ETFs_monthly"},
+    {"benchmark_id":"market_proxy","definition":"100_percent_SPY"},
+    {"benchmark_id":"sector_theme_proxy","definition":"equal_weight_XLB_XLE_XLF_XLI_XLK_XLP_XLU_XLV_XLY_monthly"},
+    {"benchmark_id":"balanced_proxy","definition":"60_percent_SPY_40_percent_IEF_monthly"},
+    {"benchmark_id":"cash_proxy","definition":"100_percent_BIL"},
+    {"benchmark_id":"ex_post_best_symbol_report_only","definition":"best_single_symbol_after_results","promotion_gate":false}
+  ],
+  "sharpe_definition": "mean_daily_net_return_divided_by_sample_std_ddof1_times_sqrt252",
+  "risk_free_treatment": "report_raw_and_BIL_excess_Sharpe_separately",
+  "promotion_comparison": "risk_strategy_is_not_required_to_beat_raw_BIL_Sharpe",
+  "promotion_gates": {
+    "scope": "aggregate_common_window",
+    "cost_view": "primary_10bps",
+    "metric": "annualized_sharpe",
+    "comparison": "candidate_greater_than_or_equal_to_each_required_benchmark",
+    "required_benchmark_ids": ["market_proxy", "equal_weight_universe", "sector_theme_proxy", "balanced_proxy"],
+    "minimum_delta": 0.0,
+    "same_symbol_buy_hold_SPY_is_identity_duplicate_of_market_proxy": true,
+    "cash_proxy_raw_sharpe_is_report_only": true,
+    "ex_post_best_symbol_is_report_only": true
+  },
+  "date_source": "intersection_of_complete_snapshot_sessions"
+}

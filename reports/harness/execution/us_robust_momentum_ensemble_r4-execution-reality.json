@@ -1,0 +1,34 @@
+{
+  "strategy_name": "us_robust_momentum_ensemble_r4",
+  "iter_id": "mom_robust_momentum_r4",
+  "policy_id": "loo_opg_observation_only_us_robust_momentum_r4_v1",
+  "generated_at": "2026-07-18",
+  "execution_authorized": false,
+  "slippage_scenarios": [
+    {"name": "base", "slippage_bps": 10, "open_gap_pct": 0.5, "D06_total_return_pct": 45.564988},
+    {"name": "stress", "slippage_bps": 20, "open_gap_pct": 1.5, "D06_total_return_pct": 44.28609},
+    {"name": "severe", "slippage_bps": 40, "open_gap_pct": 3.0, "D06_total_return_pct": 41.760526}
+  ],
+  "gap_stress": {
+    "max_adverse_gap_pct": 3.0,
+    "fill_model_gap_handling": "Backtest uses the next provider bar open and does not model auction queue, delayed official opens, partial fills, or limit misses.",
+    "recommended_gap_filter": "Skip and hold prior weights when absolute gap exceeds 2.5%; validate threshold only with matched official-open TCA.",
+    "status": "blocked_without_official_open_data"
+  },
+  "capacity_assessment": {
+    "max_symbol_weight": 0.15,
+    "max_adv_pct_policy": 0.1,
+    "max_official_open_volume_pct_policy": 1.0,
+    "portfolio_notional": null,
+    "status": "blocked",
+    "notes": "No portfolio notional, official-open volume, quoted spread, or matched order ledger exists."
+  },
+  "tca_reference_prices": ["decision_close", "official_primary_exchange_open", "arrival_price", "fill_price"],
+  "fill_model": "next_provider_open_diagnostic_only",
+  "paper_simulator_limitations": [
+    "Alpaca Paper omits market impact, latency slippage, queue position, price improvement, fees, and dividends.",
+    "Nasdaq and NYSE official opens can differ from generic bar timestamps and can be delayed by symbol.",
+    "A paper order lifecycle pass would not validate live net return or capacity."
+  ],
+  "conclusion": "blocked"
+}

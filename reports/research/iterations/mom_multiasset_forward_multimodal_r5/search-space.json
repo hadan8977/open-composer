@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "strategy_name": "us_multiasset_forward_mm_r5_d01",
+  "source_spec_path": "strategy_specs/drafts/us_multiasset_forward_mm_r5_d01.yaml",
+  "spec_hash": "045080dced45dac5828a3ca72498e40a221a42a91ba82f6f3d803529c3e7990b",
+  "objective": "Evaluate eight frozen deterministic, trained-model, LLM-formula and control candidates under one matched contract.",
+  "total_candidate_budget": 8,
+  "paths": [
+    {"name":"deterministic","candidate_count":2,"hypothesis_refs":["R5-H1"],"parameters":{"candidate_ids":["R5D01","R5D02"],"top_n":3,"weighting":"equal"},"benchmark_family":["same_symbol_buy_hold_SPY","equal_weight_universe","balanced_proxy","cash_proxy","ex_post_best_symbol_report_only"]},
+    {"name":"trained_ml","candidate_count":2,"hypothesis_refs":["R5-H2","R5-H4"],"parameters":{"candidate_ids":["R5M01","R5M02"],"model_family":"LightGBM","hyperparameter_search":false},"benchmark_family":["R5D01","same_symbol_buy_hold_SPY","balanced_proxy","cash_proxy"]},
+    {"name":"llm_formula","candidate_count":1,"hypothesis_refs":["R5-H3"],"parameters":{"candidate_ids":["R5L01"],"formula_count":4,"live_llm_inference":false},"benchmark_family":["R5D01","R5M01","balanced_proxy","cash_proxy"]},
+    {"name":"combined","candidate_count":1,"hypothesis_refs":["R5-H2","R5-H3"],"parameters":{"candidate_ids":["R5C01"],"matched_model":"R5M01","formula_set":"frozen_R2_transfer_v1","contribution_gate":"paired_TRANSFER_21_session_non_circular_moving_block_bootstrap"},"benchmark_family":["R5D01","R5M01","R5P01","balanced_proxy"]},
+    {"name":"missing_modality","candidate_count":1,"hypothesis_refs":["R5-H5"],"parameters":{"candidate_ids":["R5F01"],"expected_identity":"R5M01"},"benchmark_family":["R5M01"]},
+    {"name":"placebo","candidate_count":1,"hypothesis_refs":["R5-H3","R5-H5"],"parameters":{"candidate_ids":["R5P01"],"permutation_seed":4199,"promotion_eligible":false},"benchmark_family":["R5C01","R5M01"]}
+  ],
+  "candidate_manifest_path": "reports/research/iterations/mom_multiasset_forward_multimodal_r5/candidate-manifest.json",
+  "candidate_manifest_sha256": "157dcfd6e779a242c089d50504eee9d2ef429d5ff3a3adc0cfa9aa75b8f1a367",
+  "candidate_manifest_contract": "generic_candidate_family_v1",
+  "cost_table_path": "reports/research/iterations/mom_multiasset_forward_multimodal_r5/cost-contract.json",
+  "data_feasibility_path": "reports/research/iterations/mom_multiasset_forward_multimodal_r5/data-feasibility.json",
+  "data_feasibility_sha256": "343cad7ccc01c346aec4bcbb6f2ebd5a6368a1e91875c74395f86b6476d44480",
+  "trial_ledger_paths": ["reports/research/iterations/mom_multiasset_forward_multimodal_r5/evaluation-run/trial-ledger.jsonl"],
+  "evaluation_report_paths": ["reports/research/iterations/mom_multiasset_forward_multimodal_r5/evaluation-run/evaluation-report.json"],
+  "knowledge_contract": {
+    "assessment_path": "reports/research/iterations/mom_multiasset_forward_multimodal_r5/knowledge-assessment.json",
+    "scout_path": "reports/research/iterations/mom_multiasset_forward_multimodal_r5/knowledge-scout.json",
+    "model_reuse_decision_path": "reports/research/iterations/mom_multiasset_forward_multimodal_r5/model-reuse-decision.json",
+    "modality_role_matrix_path": "reports/research/iterations/mom_multiasset_forward_multimodal_r5/modality-role-matrix.json",
+    "required_visibility_partitions": ["public_literature","train_only_empirical","challenge_result","forward_observation"]
+  },
+  "selection_rules": [
+    "No candidate, feature, model, threshold, formula or seed may be added after evaluation begins.",
+    "P01 and F01 are controls and cannot be selected.",
+    "llm_contribution_pass means only historical incremental contribution from frozen formula mappings and never independent LLM Alpha.",
+    "Historical transfer evidence cannot by itself produce paper_ready_pass.",
+    "Any implementation or contract change after the lock creates a new epoch and zero forward count."
+  ]
+}

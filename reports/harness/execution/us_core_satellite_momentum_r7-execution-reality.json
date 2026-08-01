@@ -1,0 +1,118 @@
+{
+  "strategy_name": "us_core_satellite_momentum_r7",
+  "iter_id": "mom_core_satellite_r7",
+  "reviewed_at": "2026-07-19",
+  "policy_id": "observation_only_us_core_satellite_momentum_r7_v1",
+  "execution_authorized": false,
+  "slippage_scenarios": [
+    {
+      "name": "low",
+      "one_way_bps": 5,
+      "open_gap_pct": 0.2
+    },
+    {
+      "name": "medium",
+      "one_way_bps": 10,
+      "open_gap_pct": 0.8
+    },
+    {
+      "name": "high",
+      "one_way_bps": 20,
+      "open_gap_pct": 2.5
+    }
+  ],
+  "diagnostic_results_at_10bps": [
+    {
+      "candidate_id": "D01",
+      "total_return_pct": 29.012638,
+      "sharpe": 1.162353,
+      "max_drawdown_pct": -4.415785,
+      "individual_economic_gate_pass": true,
+      "family_gate_pass": false
+    },
+    {
+      "candidate_id": "D05",
+      "total_return_pct": 40.145341,
+      "sharpe": 0.894119,
+      "max_drawdown_pct": -11.112846,
+      "individual_economic_gate_pass": true,
+      "family_gate_pass": false
+    },
+    {
+      "candidate_id": "D06",
+      "total_return_pct": 30.841917,
+      "sharpe": 1.217261,
+      "max_drawdown_pct": -9.373835,
+      "selection_prohibited": true,
+      "same_window_parent_sharpe": 0.997458,
+      "pair_scope": "fresh_cash_29_date_intraday_complete_modified_path"
+    }
+  ],
+  "data_reality": {
+    "feed": "Alpaca Basic IEX",
+    "latest_session": "2026-07-17",
+    "consolidated_SIP": false,
+    "official_primary_open_available": false,
+    "quoted_spread_available": false,
+    "arrival_quote_available": false,
+    "matched_order_fills_available": false
+  },
+  "fill_model_review": {
+    "status": "blocked",
+    "issues": [
+      "IEX daily open is not the primary official auction price",
+      "The paired intraday path drops D04's 2024-07-22 execution and does not carry pre-window D04 state",
+      "D06 uses a 10:30 IEX bar boundary without processing or routing latency",
+      "queue position, partial fills, market impact, fees, and dividends are absent from Alpaca paper simulation"
+    ],
+    "required_challenges": [
+      "MOO_and_marketable_LOO_against_official_open",
+      "first_tradable_arrival_quote",
+      "10:30_delayed_limit",
+      "short_TWAP",
+      "missed_fill_and_partial_fill_replay"
+    ]
+  },
+  "gap_stress": {
+    "status": "blocked_without_consolidated_quotes",
+    "scenarios": [
+      {
+        "name": "low",
+        "open_gap_pct": 0.2
+      },
+      {
+        "name": "medium",
+        "open_gap_pct": 0.8
+      },
+      {
+        "name": "high",
+        "open_gap_pct": 2.5
+      }
+    ],
+    "historical_open_assumption_accepted_for_paper": false,
+    "recommended_gap_filter": "calibrate_only_from_SIP_quotes_and_matched_paper_observations"
+  },
+  "capacity_assessment": "blocked_without_portfolio_notional_consolidated_ADV_auction_volume_quotes_and_fills",
+  "tca_reference_prices": [
+    "decision_close",
+    "official_primary_open",
+    "SIP_open",
+    "IEX_daily_open",
+    "arrival_bid_ask_mid",
+    "first_fill",
+    "volume_weighted_fill",
+    "10:30_reference",
+    "next_open_mark"
+  ],
+  "paper_simulation_value": "Order lifecycle and logging only; it cannot validate live auction slippage, capacity, or net returns.",
+  "conclusion": "blocked",
+  "blockers": [
+    "R7_complete_historical_family_gate_failed",
+    "D06_exact_parent_mask_contract_failed",
+    "formal_forward_observations_missing",
+    "IEX_to_SIP_and_official_open_parity_missing",
+    "same_boundary_processing_and_routing_latency_not_modelled",
+    "spread_arrival_quote_and_matched_TCA_missing",
+    "portfolio_notional_and_capacity_missing"
+  ]
+}

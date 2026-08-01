@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PaperBrokerOrderReceipt",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "receipt_version",
+    "receipt_source",
+    "receipt_id",
+    "state_sha256",
+    "immutable",
+    "captured_at",
+    "observed_at",
+    "paper",
+    "broker",
+    "order_id",
+    "client_order_id",
+    "symbol",
+    "side",
+    "qty",
+    "status",
+    "broker_order",
+    "broker_order_sha256",
+    "local_order_binding_status",
+    "sequence",
+    "previous_state_sha256",
+    "previous_receipt_sha256"
+  ],
+  "properties": {
+    "receipt_version": {"const": 1},
+    "receipt_source": {"const": "alpaca_paper_sync"},
+    "receipt_id": {"type": "string", "pattern": "^receipt_[0-9a-f]{24}$"},
+    "state_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "immutable": {"const": true},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "paper": {"const": true},
+    "broker": {"const": "alpaca_paper"},
+    "broker_account_id_hash": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "order_id": {"type": "string", "minLength": 1},
+    "client_order_id": {"type": "string"},
+    "symbol": {"type": "string", "minLength": 1},
+    "side": {"enum": ["buy", "sell"]},
+    "qty": {"type": "number", "minimum": 0},
+    "status": {"type": "string", "minLength": 1},
+    "submitted_at": {"type": ["string", "null"], "format": "date-time"},
+    "accepted_at": {"type": ["string", "null"], "format": "date-time"},
+    "filled_at": {"type": ["string", "null"], "format": "date-time"},
+    "fill_price": {"type": ["number", "null"], "exclusiveMinimum": 0},
+    "fill_id": {"type": "string", "minLength": 1},
+    "fill_id_source": {
+      "enum": ["alpaca_broker_fill_activity", "derived_from_broker_order_aggregate"]
+    },
+    "broker_order": {"type": "object"},
+    "broker_order_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "local_order_binding_status": {"enum": ["matched", "prepared", "unmatched"]},
+    "sequence": {"type": "integer", "minimum": 1},
+    "previous_state_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "previous_receipt_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "local_order_record": {"type": ["object", "null"]},
+    "local_order_record_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

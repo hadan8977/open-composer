@@ -9,6 +9,7 @@ import yaml
 from open_composer.adapters.data import fetch_ohlcv
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
+from open_composer.engines.signal_engine import required_signal_history_bars
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 
 
@@ -25,11 +26,23 @@ class HorizonSelection:
 
 
 @dataclass(frozen=True)
+class HorizonRejection:
+    symbol: str
+    profile: str
+    spec_name: str
+    timeframe: str
+    bars: int
+    required_bars: int
+    reason: str
+
+
+@dataclass(frozen=True)
 class HorizonOptimizationResult:
     report_path: Path
     selected_specs: list[Path]
     selections: list[HorizonSelection]
     candidates: list[HorizonSelection]
+    rejections: list[HorizonRejection]
 
 
 def optimize_strategy_horizons(
@@ -49,6 +62,7 @@ def optimize_strategy_horizons(
     universe = [item.upper() for item in (symbols or source.universe)]
     selected: list[HorizonSelection] = []
     candidates: list[HorizonSelection] = []
+    rejections: list[HorizonRejection] = []
     selected_paths: list[Path] = []
     selected_feed = feed or data_feed()
 
@@ -67,6 +81,20 @@ def optimize_strategy_horizons(
                 feed=candidate.data.feed or selected_feed,
                 use_cache=not refresh_data,
             )
+            required_bars = required_signal_history_bars(candidate)
+            if len(frame) < required_bars:
+                rejections.append(
+                    HorizonRejection(
+                        symbol=symbol,
+                        profile=str(candidate.notes.model_extra.get("horizon_profile", "")),
+                        spec_name=candidate.name,
+                        timeframe=candidate.timeframe,
+                        bars=len(frame),
+                        required_bars=required_bars,
+                        reason="insufficient_history",
+                    )
+                )
+                continue
             artifacts = backtest_frame(
                 candidate,
                 frame,
@@ -91,6 +119,8 @@ def optimize_strategy_horizons(
                     end_time=frame["timestamp"].iloc[-1].isoformat(),
                 )
             )
+        if not scored:
+            raise ValueError(f"no feasible horizon candidates for {symbol}")
         scored.sort(key=lambda item: item.score, reverse=True)
         winner = scored[0]
         selected.append(winner)
@@ -105,12 +135,13 @@ def optimize_strategy_horizons(
         source,
         selected,
         candidates,
+        rejections,
         min_return_pct=min_return_pct,
         min_sharpe=min_sharpe,
         min_trades=min_trades,
         max_preferred_trades=max_preferred_trades,
     )
-    return HorizonOptimizationResult(report_path, selected_paths, selected, candidates)
+    return HorizonOptimizationResult(report_path, selected_paths, selected, candidates, rejections)
 
 
 def _horizon_candidate_specs(
@@ -368,6 +399,7 @@ def _write_horizon_report(
     source: StrategySpec,
     selected: list[HorizonSelection],
     candidates: list[HorizonSelection],
+    rejections: list[HorizonRejection],
     min_return_pct: float,
     min_sharpe: float,
     min_trades: int,
@@ -427,6 +459,16 @@ def _write_horizon_report(
             f"annualized={annualized} sharpe={sharpe} "
             f"signals={run.signals} trades={run.trades} bars={item.bars} score={item.score:.2f}"
         )
+    lines.extend(["", "## Rejected Candidates", ""])
+    if rejections:
+        for item in rejections:
+            lines.append(
+                f"- `{item.spec_name}` {item.symbol} profile={item.profile} "
+                f"timeframe={item.timeframe} reason={item.reason} "
+                f"bars={item.bars} required_bars={item.required_bars}"
+            )
+    else:
+        lines.append("- none")
     lines.extend(
         [
             "",

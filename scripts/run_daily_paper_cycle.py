@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -13,11 +17,15 @@ from typing import Any
 from dotenv import load_dotenv
 
 from open_composer.config import ensure_dir, project_root
+from open_composer.execution_policy import resolve_execution_policy
+from open_composer.market_calendar import us_equity_session_close
+from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.notifications import safe_dispatch_notification
 from open_composer.paper_controls import load_paper_kill_switch
 from open_composer.paper_readiness import assess_paper_strategy_readiness
 from open_composer.paper_state_drift import write_state_drift_report
 from open_composer.paper_validation import check_previous_trading_day_remediation
+from open_composer.strategy_versions import strategy_content_hash
 
 DEFAULT_STRATEGY = (
     "nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate"
@@ -70,8 +78,9 @@ def run_daily_cycle(
 ) -> dict[str, Any]:
     started_at = datetime.now(UTC).isoformat()
     load_dotenv(root / ".env", override=False)
-    log_path = root / "reports" / "paper" / "daily_cycle" / f"{cycle_date:%Y%m%d}.json"
+    log_path = root / "reports" / "paper" / "daily_cycle" / f"{strategy}-{cycle_date:%Y%m%d}.json"
     ensure_dir(log_path.parent)
+    binding = _cycle_binding(root, strategy, spec)
     if not is_trading_day(cycle_date):
         payload = {
             "report_type": "daily_paper_cycle",
@@ -79,6 +88,7 @@ def run_daily_cycle(
             "started_at": started_at,
             "ended_at": datetime.now(UTC).isoformat(),
             "strategy": strategy,
+            **binding,
             "status": "skipped",
             "skip_reason": "non_trading_day_weekend",
             "steps": [],
@@ -93,14 +103,35 @@ def run_daily_cycle(
     remediation_check = check_previous_trading_day_remediation(
         root=root,
         cycle_date=cycle_date,
+        strategy_name=strategy,
     )
     artifacts["previous_day_remediation_status"] = str(remediation_check["status"])
     if remediation_check["status"] == "error":
         _notify_remediation_check(remediation_check, strategy=strategy, root=root)
-    paper_order_authorization = _paper_orders_allowed(root, strategy)
-    artifacts["paper_order_authorization_status"] = (
-        "order_authorized" if paper_order_authorization else "observation_only"
-    )
+        payload = _cycle_payload(
+            root=root,
+            cycle_date=cycle_date,
+            started_at=started_at,
+            strategy=strategy,
+            status="failed",
+            steps=steps,
+            artifacts=artifacts,
+            paper_order_authorization=False,
+            remediation_check=remediation_check,
+            binding=binding,
+            failed_step="previous_day_remediation",
+        )
+        _write_json(log_path, payload)
+        _notify_cycle(payload, severity="red", root=root)
+        return payload
+    authorization_substate, authorization_path = _paper_order_authorization_state(root, strategy)
+    paper_order_authorization = authorization_substate in {
+        "canary_authorized",
+        "order_authorized",
+    }
+    artifacts["paper_order_authorization_status"] = authorization_substate
+    if authorization_path is not None:
+        artifacts["paper_authorization"] = str(authorization_path)
     expected_state: str | None = None
     drift_status: str | None = None
     for name, command in _step_commands(
@@ -110,9 +141,28 @@ def run_daily_cycle(
         allow_paper_orders=paper_order_authorization,
     ):
         step = _run_step(name, command, root, command_runner)
+        if name == "paper_cycle" and paper_order_authorization and step.exit_code == 0:
+            paper_cycle_path, paper_cycle_reasons = _capture_paper_cycle_evidence(
+                root=root,
+                step=step,
+                strategy=strategy,
+                cycle_date=cycle_date,
+                binding=binding,
+            )
+            if paper_cycle_path is not None:
+                artifacts["paper_cycle"] = str(paper_cycle_path)
+            if paper_cycle_reasons:
+                step.exit_code = 1
+                step.stderr_tail = ", ".join(paper_cycle_reasons)
+        if name == "paper_monitor" and paper_order_authorization and step.exit_code == 0:
+            broker_reasons = _authorized_broker_evidence_reasons(root, strategy)
+            if broker_reasons:
+                step.exit_code = 1
+                step.stderr_tail = ", ".join(broker_reasons)
         steps.append(step)
         if step.exit_code != 0:
             payload = _cycle_payload(
+                root=root,
                 cycle_date=cycle_date,
                 started_at=started_at,
                 strategy=strategy,
@@ -121,6 +171,7 @@ def run_daily_cycle(
                 artifacts=artifacts,
                 paper_order_authorization=paper_order_authorization,
                 remediation_check=remediation_check,
+                binding=binding,
                 failed_step=name,
             )
             _write_json(log_path, payload)
@@ -136,8 +187,11 @@ def run_daily_cycle(
                 paper_order_authorization=paper_order_authorization,
             )
             artifacts["target_weights"] = str(target_path)
-            artifacts["review_card"] = str(review_path)
-            step.artifact_paths.extend([str(target_path), str(review_path)])
+            review_json_path = review_path.with_suffix(".json")
+            _write_json(review_json_path, card_payload)
+            artifacts["review_card"] = str(review_json_path)
+            artifacts["review_card_markdown"] = str(review_path)
+            step.artifact_paths.extend([str(target_path), str(review_json_path), str(review_path)])
             expected_state = str(card_payload["route_state"])
             if card_payload["action_required"]:
                 artifacts["action_required"] = "true"
@@ -160,6 +214,7 @@ def run_daily_cycle(
             artifacts["state_drift_status"] = drift["status"]
             drift_status = drift["status"]
     payload = _cycle_payload(
+        root=root,
         cycle_date=cycle_date,
         started_at=started_at,
         strategy=strategy,
@@ -168,6 +223,7 @@ def run_daily_cycle(
         artifacts=artifacts,
         paper_order_authorization=paper_order_authorization,
         remediation_check=remediation_check,
+        binding=binding,
     )
     _write_json(log_path, payload)
     _notify_cycle(
@@ -207,7 +263,7 @@ def write_review_card(
     for row in latest_rows:
         symbol = str(row["symbol"])
         target = float(row.get("target_weight") or 0.0)
-        mapped = round(target * 0.5, 6)
+        mapped = round(target, 6)
         previous = previous_by_symbol.get(symbol, 0.0)
         delta = round(target - previous, 6)
         if abs(delta) > 1e-9:
@@ -216,13 +272,13 @@ def write_review_card(
             {
                 "symbol": symbol,
                 "target_weight": target,
-                "live_50pct_weight": mapped,
+                "paper_target_weight": mapped,
                 "previous_weight": previous,
                 "delta_weight": delta,
                 "selected": bool(row.get("selected")),
             }
         )
-    cash_weight = round(1.0 - sum(item["live_50pct_weight"] for item in live_rows), 6)
+    cash_weight = round(1.0 - sum(item["paper_target_weight"] for item in live_rows), 6)
     route_state = infer_route_state(selected)
     action_line = _action_line(live_rows, cash_weight) if action_required else "No operation."
     card_payload = {
@@ -255,7 +311,7 @@ def infer_route_state(selected_rows: list[dict[str, Any]]) -> str:
 
 
 def is_trading_day(value: date) -> bool:
-    return value.weekday() < 5
+    return us_equity_session_close(value) is not None
 
 
 def planned_commands(strategy: str, spec: str, *, root: Path | None = None) -> list[list[str]]:
@@ -291,7 +347,7 @@ def _step_commands(
     if allow_paper_orders:
         paper_command.append("--allow-paper-orders")
     return [
-        ("readiness", [*oc_cmd, "paper", "readiness", strategy, "--strict"]),
+        ("readiness", [*oc_cmd, "paper", "readiness", strategy]),
         (
             "target_weights",
             [
@@ -321,6 +377,7 @@ def _run_step(name: str, command: list[str], root: Path, command_runner) -> Cycl
 
 def _cycle_payload(
     *,
+    root: Path,
     cycle_date: date,
     started_at: str,
     strategy: str,
@@ -329,21 +386,260 @@ def _cycle_payload(
     artifacts: dict[str, str],
     paper_order_authorization: bool,
     remediation_check: dict[str, Any],
+    binding: dict[str, str | None],
     failed_step: str | None = None,
 ) -> dict[str, Any]:
     return {
         "report_type": "daily_paper_cycle",
+        "cycle_receipt_version": 3,
         "date": cycle_date.isoformat(),
         "started_at": started_at,
         "ended_at": datetime.now(UTC).isoformat(),
         "strategy": strategy,
+        **binding,
         "status": status,
         "failed_step": failed_step,
         "paper_order_authorization": paper_order_authorization,
+        "paper_authorization_substate": artifacts.get(
+            "paper_order_authorization_status", "observation_only"
+        ),
         "previous_day_remediation_check": remediation_check,
         "steps": [asdict(step) for step in steps],
         "artifact_paths": artifacts,
+        "evidence_bindings": _artifact_bindings(
+            root,
+            artifacts,
+            strategy=strategy,
+            cycle_date=cycle_date,
+            require_broker=paper_order_authorization,
+        ),
     }
+
+
+def _artifact_bindings(
+    root: Path,
+    artifacts: dict[str, str],
+    *,
+    strategy: str,
+    cycle_date: date,
+    require_broker: bool,
+) -> list[dict[str, Any]]:
+    sources: dict[str, str | Path | None] = {
+        "target_weights": artifacts.get("target_weights"),
+        "review_card": artifacts.get("review_card"),
+        "state_drift": artifacts.get("state_drift"),
+    }
+    if require_broker:
+        sources.update(
+            {
+                "paper_readiness": root / "reports" / "paper" / "readiness" / f"{strategy}.json",
+                "broker_sync": root / "reports" / "paper" / "sync.jsonl",
+                "broker_sync_receipt": root
+                / "reports"
+                / "paper"
+                / "broker_receipts"
+                / "latest-sync.json",
+                "paper_authorization": artifacts.get("paper_authorization"),
+                "account_snapshot": root / "reports" / "paper" / "account.json",
+                "positions_snapshot": root / "reports" / "paper" / "positions.json",
+                "paper_monitor": root / "reports" / "paper" / "monitor.json",
+                "paper_cycle": artifacts.get("paper_cycle"),
+            }
+        )
+    bindings = []
+    base = root.resolve()
+    evidence_dir = (
+        root
+        / "reports"
+        / "paper"
+        / "daily_cycle"
+        / "evidence"
+        / strategy
+        / cycle_date.strftime("%Y%m%d")
+    )
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    for role, value in sources.items():
+        if not value:
+            continue
+        path = Path(value)
+        if not path.is_absolute():
+            path = root / path
+        try:
+            resolved = path.resolve(strict=True)
+            relative = resolved.relative_to(base)
+        except (FileNotFoundError, ValueError):
+            continue
+        if not resolved.is_file():
+            continue
+        suffix = "".join(resolved.suffixes) or ".bin"
+        snapshot = evidence_dir / f"{role}{suffix}"
+        if snapshot.exists():
+            if (
+                hashlib.sha256(snapshot.read_bytes()).hexdigest()
+                != hashlib.sha256(resolved.read_bytes()).hexdigest()
+            ):
+                raise ValueError(f"immutable cycle evidence already differs for {role}")
+        else:
+            shutil.copyfile(resolved, snapshot)
+        resolved = snapshot.resolve(strict=True)
+        relative = resolved.relative_to(base)
+        bindings.append(
+            {
+                "role": role,
+                "path": relative.as_posix(),
+                "sha256": hashlib.sha256(resolved.read_bytes()).hexdigest(),
+                "size_bytes": resolved.stat().st_size,
+            }
+        )
+    return bindings
+
+
+def _authorized_broker_evidence_reasons(root: Path, strategy: str) -> list[str]:
+    paths = {
+        "paper_readiness": root / "reports" / "paper" / "readiness" / f"{strategy}.json",
+        "broker_sync": root / "reports" / "paper" / "sync.jsonl",
+        "account_snapshot": root / "reports" / "paper" / "account.json",
+        "positions_snapshot": root / "reports" / "paper" / "positions.json",
+        "paper_monitor": root / "reports" / "paper" / "monitor.json",
+        "broker_sync_receipt": root / "reports" / "paper" / "broker_receipts" / "latest-sync.json",
+    }
+    reasons = [f"{role}_missing" for role, path in paths.items() if not path.is_file()]
+    if reasons:
+        return reasons
+    try:
+        readiness = json.loads(paths["paper_readiness"].read_text(encoding="utf-8"))
+        monitor = json.loads(paths["paper_monitor"].read_text(encoding="utf-8"))
+        account = json.loads(paths["account_snapshot"].read_text(encoding="utf-8"))
+        positions = json.loads(paths["positions_snapshot"].read_text(encoding="utf-8"))
+        sync_receipt = json.loads(paths["broker_sync_receipt"].read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return ["authorized_broker_evidence_invalid_json"]
+    readiness_pair = (readiness.get("status"), readiness.get("execution_substate"))
+    if readiness_pair not in {
+        ("ok", "order_authorized"),
+        ("warning", "canary_authorized"),
+    }:
+        reasons.append("paper_readiness_not_order_authorized")
+    if (
+        monitor.get("sync_broker") is not True
+        or monitor.get("sync_status") != "ok"
+        or monitor.get("status") == "error"
+    ):
+        reasons.append("paper_monitor_not_synced")
+    if account.get("paper") is not True:
+        reasons.append("paper_account_not_paper")
+    if (
+        sync_receipt.get("receipt_version") != 1
+        or sync_receipt.get("receipt_source") != "alpaca_paper_sync"
+        or sync_receipt.get("paper") is not True
+        or not sync_receipt.get("broker_account_id_hash")
+        or sync_receipt.get("broker_account_id_hash") != account.get("broker_account_id_hash")
+    ):
+        reasons.append("broker_sync_receipt_invalid")
+    if positions.get("paper") is not True or not isinstance(positions.get("positions"), list):
+        reasons.append("paper_positions_invalid")
+    return reasons
+
+
+def _cycle_binding(root: Path, strategy: str, spec_ref: str) -> dict[str, str | None]:
+    path = Path(spec_ref)
+    if not path.is_absolute():
+        path = root / path
+    if not path.exists():
+        return {
+            "spec_hash": None,
+            "active_spec_hash": None,
+            "active_spec_path": None,
+            "execution_policy_id": None,
+            "execution_policy_hash": None,
+        }
+    spec = load_strategy_spec(path)
+    if spec.name != strategy:
+        raise ValueError(
+            f"daily cycle strategy={strategy} does not match StrategySpec name={spec.name}"
+        )
+    active_path = root / "strategy_specs" / "active" / f"{strategy}.yaml"
+    if not active_path.is_file():
+        raise ValueError(f"daily cycle requires active StrategySpec: {active_path}")
+    active_spec = load_strategy_spec(active_path)
+    supplied_hash = strategy_content_hash(spec)
+    active_hash = strategy_content_hash(active_spec)
+    if active_spec.name != strategy:
+        raise ValueError(
+            f"active StrategySpec name={active_spec.name} does not match daily strategy={strategy}"
+        )
+    if supplied_hash != active_hash:
+        raise ValueError(
+            "daily cycle supplied StrategySpec hash does not match the active deployment"
+        )
+    policy = resolve_execution_policy(active_spec, root)
+    return {
+        "spec_hash": active_hash,
+        "active_spec_hash": active_hash,
+        "active_spec_path": str(active_path.relative_to(root)),
+        "execution_policy_id": policy.policy_id if policy else None,
+        "execution_policy_hash": policy.content_hash if policy else None,
+    }
+
+
+def _capture_paper_cycle_evidence(
+    *,
+    root: Path,
+    step: CycleStep,
+    strategy: str,
+    cycle_date: date,
+    binding: dict[str, str | None],
+) -> tuple[Path | None, list[str]]:
+    match = re.search(r"\bpaper cycle\s+([A-Za-z0-9_-]+)", step.stdout_tail)
+    if match is None:
+        return None, ["paper_cycle_run_id_missing"]
+    run_id = match.group(1)
+    cycles_path = root / "reports" / "runs" / "paper_cycles.jsonl"
+    if not cycles_path.is_file():
+        return None, ["paper_cycle_artifact_missing"]
+    try:
+        rows = [
+            json.loads(line)
+            for line in cycles_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None, ["paper_cycle_artifact_invalid"]
+    row = next(
+        (
+            item
+            for item in reversed(rows)
+            if isinstance(item, dict) and item.get("run_id") == run_id
+        ),
+        None,
+    )
+    if row is None:
+        return None, ["paper_cycle_run_artifact_missing"]
+    reasons: list[str] = []
+    if row.get("strategy_name") != strategy:
+        reasons.append("paper_cycle_strategy_mismatch")
+    expected_hash = binding.get("spec_hash")
+    if expected_hash is not None and row.get("spec_hash") != expected_hash:
+        reasons.append("paper_cycle_spec_hash_mismatch")
+    signals = row.get("signals")
+    if not isinstance(signals, list):
+        reasons.append("paper_cycle_signals_invalid")
+    elif any(
+        isinstance(signal, dict) and signal.get("decision") == "order_error" for signal in signals
+    ):
+        reasons.append("paper_cycle_order_error")
+    output_path = (
+        root
+        / "reports"
+        / "paper"
+        / "daily_cycle"
+        / "runner_cycles"
+        / strategy
+        / cycle_date.strftime("%Y%m%d")
+        / f"{run_id}.json"
+    )
+    _write_json(output_path, row)
+    return output_path, reasons
 
 
 def _notify_cycle(payload: dict[str, Any], *, severity: str, root: Path) -> None:
@@ -390,14 +686,37 @@ def _notify_remediation_check(
 
 
 def _paper_orders_allowed(root: Path, strategy: str) -> bool:
+    substate, _ = _paper_order_authorization_state(root, strategy)
+    return substate in {"canary_authorized", "order_authorized"}
+
+
+def _paper_order_authorization_state(
+    root: Path,
+    strategy: str,
+) -> tuple[str, Path | None]:
     try:
         readiness = assess_paper_strategy_readiness(strategy, root)
     except Exception:
-        return False
-    if readiness.status != "ok" or readiness.execution_substate != "order_authorized":
-        return False
+        return "observation_only", None
+    valid = (readiness.status == "ok" and readiness.execution_substate == "order_authorized") or (
+        readiness.status == "warning" and readiness.execution_substate == "canary_authorized"
+    )
+    if not valid:
+        return readiness.execution_substate, None
     kill_switch = load_paper_kill_switch(root)
-    return not kill_switch.enabled
+    if kill_switch.enabled:
+        return "blocked", None
+    check_name = (
+        "canary_authorization"
+        if readiness.execution_substate == "canary_authorized"
+        else "order_authorization"
+    )
+    check = next((item for item in readiness.checks if item.name == check_name), None)
+    path_value = check.details.get("path") if check is not None else None
+    path = Path(str(path_value)) if path_value else None
+    if path is not None and not path.is_absolute():
+        path = root / path
+    return readiness.execution_substate, path
 
 
 def _render_review_card(payload: dict[str, Any]) -> str:
@@ -410,15 +729,15 @@ def _render_review_card(payload: dict[str, Any]) -> str:
         f"- Route state: `{payload['route_state']}`",
         f"- Action: {payload['action']}",
         "",
-        "## 50% Live Mapping",
+        "## Paper Target Mapping",
         "",
-        "| symbol | target weight | 50% live weight | previous | delta | selected |",
+        "| symbol | target weight | paper target | previous | delta | selected |",
         "| --- | --- | --- | --- | --- | --- |",
     ]
     for row in payload["rows"]:
         lines.append(
             f"| {row['symbol']} | {row['target_weight']:.4f} | "
-            f"{row['live_50pct_weight']:.4f} | {row['previous_weight']:.4f} | "
+            f"{row['paper_target_weight']:.4f} | {row['previous_weight']:.4f} | "
             f"{row['delta_weight']:.4f} | {row['selected']} |"
         )
     lines.extend(
@@ -442,11 +761,11 @@ def _render_review_card(payload: dict[str, Any]) -> str:
 
 def _action_line(rows: list[dict[str, Any]], cash_weight: float) -> str:
     selected = [
-        f"{row['symbol']} {row['live_50pct_weight']:.2%}"
+        f"{row['symbol']} {row['paper_target_weight']:.2%}"
         for row in rows
-        if row["live_50pct_weight"] > 0
+        if row["paper_target_weight"] > 0
     ]
-    return f"Manual live target: {', '.join(selected) or 'none'}; BIL/cash {cash_weight:.2%}."
+    return f"Paper target: {', '.join(selected) or 'none'}; BIL/cash {cash_weight:.2%}."
 
 
 def _previous_session(sessions: list[str], latest_session: str | None) -> str | None:
@@ -462,7 +781,19 @@ def _target_weights_path(root: Path, strategy: str) -> Path:
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     ensure_dir(path.parent)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    encoded = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        delete=False,
+    ) as handle:
+        temporary = Path(handle.name)
+        handle.write(encoded)
+        handle.flush()
+    temporary.replace(path)
 
 
 def _tail(value: str, limit: int = 4000) -> str:

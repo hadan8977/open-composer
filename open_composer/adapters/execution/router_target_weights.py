@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -66,6 +67,8 @@ def write_router_execution_artifacts(
     mapping_summary: dict[str, object],
     acquisition_tier: str,
     parity_check: dict[str, object] | None = None,
+    target_backend: str = "nautilus_trader",
+    generated_at: datetime | None = None,
 ) -> dict[str, Path]:
     execution_dir = ensure_dir(root / "reports" / "execution")
     target_path = execution_dir / f"{spec.name}-target-weights.json"
@@ -83,7 +86,9 @@ def write_router_execution_artifacts(
     ]
     summary = _summary(normalized_targets, normalized_intents) | dict(mapping_summary)
     source_spec_path = _relpath(spec_path, root)
+    generated_at_fields = {"generated_at": generated_at} if generated_at is not None else {}
     target_snapshot = TargetWeightSnapshot(
+        **generated_at_fields,
         strategy_name=spec.name,
         source_spec_path=source_spec_path,
         portfolio_mode=spec.portfolio.mode,
@@ -93,12 +98,14 @@ def write_router_execution_artifacts(
         acquisition_tier=acquisition_tier,
         target_weights=normalized_targets,
         summary=summary,
+        target_backend=target_backend,
         safety_note=(
             "Router target weights are observation/control artifacts. They do not submit "
             "broker orders or authorize paper_auto execution."
         ),
     )
     intent_snapshot = RebalanceIntentSnapshot(
+        **generated_at_fields,
         strategy_name=spec.name,
         source_spec_path=source_spec_path,
         portfolio_mode=spec.portfolio.mode,
@@ -126,6 +133,7 @@ def write_router_execution_artifacts(
     blockers = list(validation.get("blockers", []))
     warnings = list(validation.get("warnings", [])) + list(data_evidence.get("warnings", []))
     observation = RouterExecutionObservation(
+        **generated_at_fields,
         strategy_name=spec.name,
         source_spec_path=source_spec_path,
         portfolio_mode=spec.portfolio.mode,

@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "decision_lag": "all rolling inputs end at decision close; targets first apply at the next session open",
+  "cross_sectional_transform": {
+    "method": "percentile_rank_by_decision_session",
+    "population": "rankable_symbols_with_finite_history",
+    "ascending": true,
+    "tie_break": "symbol_ascending",
+    "full_sample_fit": false
+  },
+  "core_features": {
+    "mom_21": "close_t / close_t-21 - 1",
+    "mom_63": "close_t / close_t-63 - 1",
+    "mom_126_skip21": "close_t-21 / close_t-126 - 1",
+    "mom_252_skip21": "close_t-21 / close_t-252 - 1",
+    "trend_gap_126": "close_t / sma_126_t - 1",
+    "vol_21": "population_std(daily_return,21)",
+    "drawdown_63": "close_t / rolling_high_63_t - 1"
+  },
+  "llm_formula_provenance": {
+    "source_iteration": "mom_multiasset_ai_r2",
+    "source_path": "reports/research/iterations/mom_multiasset_ai_r2/factor-proposals.json",
+    "source_sha256": "ebd5ecdfe08f15fefa43db2e963e5dbbe22bd1919500944fce0750c6355f4447",
+    "generated_by": "codex_offline_research_compiler",
+    "input_hash": "7696685d49d88679a2c922e10824ec205ee21b71b00caab7a0976f5e75088e25",
+    "prompt_hash": "048d43642e4ec0ba9b17514f4da24140836655996c788ec67db0ae1b2804c99f",
+    "live_llm_inference": false,
+    "formula_search_in_r5": false,
+    "selected_source_factor_names": {
+      "llm_momentum_quality": "ai_momentum_quality",
+      "llm_volume_confirmed_trend": "ai_volume_confirmed_trend",
+      "llm_rebound_trap": "ai_rebound_trap",
+      "llm_crowding_risk": "ai_crowding_risk"
+    }
+  },
+  "llm_formula_features": {
+    "llm_momentum_quality": "rank(mom_126_skip21) + rank(high_gap_252) - rank(vol_63)",
+    "llm_volume_confirmed_trend": "rank(mom_63) + rank(volume_surprise_21) + rank(ma_gap_50)",
+    "llm_rebound_trap": "rank(mom_21) - rank(mom_126_skip21) - rank(drawdown_63)",
+    "llm_crowding_risk": "rank(mom_21) + rank(volume_surprise_5) + rank(high_gap_63) - rank(mom_252_skip21)"
+  },
+  "candidate_feature_sets": {
+    "R5D01": ["mom_252_skip21"],
+    "R5D02": ["mom_126_skip21", "trend_gap_252"],
+    "R5M01": ["mom_21", "mom_63", "mom_126_skip21", "mom_252_skip21", "trend_gap_126", "vol_21", "drawdown_63"],
+    "R5M02": ["mom_21", "mom_63", "mom_126_skip21", "mom_252_skip21", "trend_gap_126", "vol_21", "drawdown_63"],
+    "R5L01": ["llm_momentum_quality", "llm_volume_confirmed_trend", "llm_rebound_trap", "llm_crowding_risk"],
+    "R5C01": ["mom_21", "mom_63", "mom_126_skip21", "mom_252_skip21", "trend_gap_126", "vol_21", "drawdown_63", "llm_momentum_quality", "llm_volume_confirmed_trend", "llm_rebound_trap", "llm_crowding_risk"],
+    "R5F01": ["mom_21", "mom_63", "mom_126_skip21", "mom_252_skip21", "trend_gap_126", "vol_21", "drawdown_63"],
+    "R5P01": ["mom_21", "mom_63", "mom_126_skip21", "mom_252_skip21", "trend_gap_126", "vol_21", "drawdown_63", "llm_momentum_quality", "llm_volume_confirmed_trend", "llm_rebound_trap", "llm_crowding_risk"]
+  },
+  "missing_modality_contract": "R5F01 must produce byte-identical target rows to R5M01 on every session",
+  "placebo_contract": "R5P01 uses a deterministic per-session symbol permutation with seed 4199 and is selection prohibited",
+  "target_construction": {
+    "decision_schedule": "calendar_month_end_regular_close",
+    "execution_schedule": "immediate_next_regular_session_open",
+    "top_n": 3,
+    "selected_weight": 0.3333333333333333,
+    "reserve_symbol": "BIL",
+    "reserve_exempt_from_risk_asset_weight_cap": true,
+    "R5D01": "top3_mom_252_skip21_else_BIL",
+    "R5D02": "top3_mom_126_skip21_among_positive_trend_gap_252_else_exact_R5D01_if_fewer_than_3",
+    "R5M01": "top3_fold_local_return_predictions_else_exact_R5D01_on_model_failure",
+    "R5M02": "top3_R5M01_ranked_symbols_with_path_survival_probability_at_least_0.55_else_exact_R5M01_if_fewer_than_3_or_model_failure",
+    "R5L01": "top3_arithmetic_mean_of_four_frozen_formula_values_else_exact_R5D01_on_nonfinite_formula",
+    "R5C01": "top3_fold_local_core_plus_formula_return_predictions_else_exact_R5M01_on_model_failure",
+    "R5F01": "exact_R5M01_target_copy_without_independent_model_fit",
+    "R5P01": "top3_fold_local_core_plus_jointly_permuted_formula_return_predictions_else_exact_R5M01_on_model_failure",
+    "unexpected_model_fallback_effect": "candidate_role_gate_fails"
+  },
+  "model_fitting": {
+    "schedule": "refit_at_each_month_end_prediction_decision",
+    "training_rows": "monthly_symbol_rows_only",
+    "maximum_trailing_window_sessions": 756,
+    "label_terminal_embargo_sessions": 21,
+    "require_label_terminal_strictly_before_or_at_embargo_cutoff": true,
+    "feature_selection": "none",
+    "candidate_specific_hyperparameters_source": "StrategySpec.model",
+    "subsample_frequency": 1,
+    "resolved_estimator_parameters_recorded": true,
+    "per_symbol_predictions_recorded": true,
+    "fitted_booster_text_sha256_recorded": true,
+    "pbo_refit": false
+  },
+  "formula_composition": {
+    "component_transform": "cross_sectional_percentile_rank_method_first_after_symbol_ascending_sort",
+    "formula_only_composite": "arithmetic_mean_of_four_formula_values",
+    "placebo_algorithm": "for_each_decision_sort_source_symbols_ascending_sort_destinations_by_sha256_of_seed_pipe_ISO_date_pipe_symbol_then_assign_all_formula_columns_jointly",
+    "placebo_seed": 4199
+  }
+}

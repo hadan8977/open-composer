@@ -21,7 +21,7 @@ def test_cache_inventory_separates_cleanable_and_protected_reports(
 
     reports = inventory["reports"]
     assert reports.cleanable_files == 1
-    assert reports.protected_files == 1
+    assert reports.protected_files == 6
     assert reports.cleanable_bytes == generated.stat().st_size
 
 
@@ -34,6 +34,8 @@ def test_cache_clean_defaults_to_data_cache_and_reports_only(sample_workspace: P
     signal_file.write_text("{}\n", encoding="utf-8")
     protected = sample_workspace / "reports" / "research" / "intraday-product-reflection.md"
     protected.write_text("tracked example\n", encoding="utf-8")
+    paper_control = sample_workspace / "reports" / "paper" / "kill_switch.json"
+    notification_log = sample_workspace / "reports" / "notifications" / "log.jsonl"
 
     selected = resolve_clean_target_keys()
     dry_run = clean_cache_targets(sample_workspace, selected, dry_run=True)
@@ -43,6 +45,8 @@ def test_cache_clean_defaults_to_data_cache_and_reports_only(sample_workspace: P
     assert report_file.exists()
     assert signal_file.exists()
     assert protected.exists()
+    assert paper_control.exists()
+    assert notification_log.exists()
 
     applied = clean_cache_targets(sample_workspace, selected, dry_run=False)
 
@@ -51,6 +55,9 @@ def test_cache_clean_defaults_to_data_cache_and_reports_only(sample_workspace: P
     assert not report_file.exists()
     assert signal_file.exists()
     assert protected.exists()
+    assert paper_control.exists()
+    assert notification_log.exists()
+    assert applied.protected_files == 6
 
 
 def test_cache_clean_all_runtime_includes_evidence_logs(sample_workspace: Path) -> None:

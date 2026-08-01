@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "decision_frequency": "calendar_month_end",
+  "return_label": {
+    "candidate": "R5M01_and_R5C01_and_R5P01",
+    "definition": "open_of_next_session_to_open_21_sessions_later_total_adjusted_return",
+    "horizon_sessions": 21,
+    "first_available_after": "terminal_open",
+    "purge_sessions": 21,
+    "embargo_sessions": 21
+  },
+  "path_survival_label": {
+    "candidate": "R5M02",
+    "entry": "open_of_next_session",
+    "terminal": "open_21_sessions_later",
+    "positive_if": "terminal_return_ge_0_and_max_open_path_drawdown_le_8_percent",
+    "horizon_sessions": 21,
+    "first_available_after": "terminal_open",
+    "purge_sessions": 21,
+    "embargo_sessions": 21
+  },
+  "point_in_time_rules": {
+    "label_used_before_first_available": false,
+    "random_split_allowed": false,
+    "overlapping_labels_across_fold_boundary_allowed": false,
+    "terminal_price_substitution_allowed": false
+  }
+}

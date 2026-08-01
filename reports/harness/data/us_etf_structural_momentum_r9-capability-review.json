@@ -1,0 +1,25 @@
+{
+  "strategy_name": "us_etf_structural_momentum_r9",
+  "reviewed_at": "2026-07-19",
+  "capabilities": [
+    {
+      "capability_id": "market.alpaca_bars",
+      "kind": "market",
+      "status": "ok",
+      "strict_behavior": "fail_fast_for_unsupported_timeframes",
+      "paper_ready": false,
+      "notes": "R9 used a verified immutable Alpaca SIP daily bundle through 2026-07-17 with adjustment=all and no fallback. The frozen research bundle is valid historical workflow evidence, not a current live-paper feed or official-opening-auction/TCA feed."
+    }
+  ],
+  "feature_packet_pit_check": "not_applicable",
+  "sample_data_caveats": [],
+  "market_data_limitations": [
+    "The current bundle is locally immutable but ignored by Git and lacks a configured durable artifact store.",
+    "Alpaca SIP bars do not prove every primary-exchange official opening-auction price.",
+    "No realized paper-fill, spread, queue, or market-impact evidence is present."
+  ],
+  "workflow_pass": true,
+  "research_pass": false,
+  "paper_ready_pass": false,
+  "conclusion": "warning"
+}

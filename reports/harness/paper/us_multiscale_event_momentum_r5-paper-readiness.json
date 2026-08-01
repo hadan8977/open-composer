@@ -1,0 +1,429 @@
+{
+  "checks": [
+    {
+      "details": {
+        "lifecycle": "draft"
+      },
+      "message": "Paper automation requires lifecycle=active.",
+      "name": "lifecycle",
+      "status": "blocked",
+      "suggested_actions": [
+        "uv run oc strategy approve us_multiscale_event_momentum_r5",
+        "uv run oc strategy activate us_multiscale_event_momentum_r5 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness"
+      ]
+    },
+    {
+      "details": {
+        "backend": "python_reference",
+        "broker": "none",
+        "mode": "manual_signal"
+      },
+      "message": "execution.mode must be paper_auto; execution.broker must be alpaca_paper",
+      "name": "execution",
+      "status": "blocked",
+      "suggested_actions": [
+        "uv run oc strategy activate us_multiscale_event_momentum_r5 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness"
+      ]
+    },
+    {
+      "details": {
+        "data_mode": "paper_ready",
+        "source": "alpaca",
+        "symbol": "SPY",
+        "timeframe": "30m"
+      },
+      "message": "Paper automation uses a live/cache market data source.",
+      "name": "data_source",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "findings": [
+          {
+            "code": "current_symbol_universe_bias",
+            "evidence": {
+              "metadata": {},
+              "symbols": [
+                "AAPL",
+                "AMD",
+                "AMZN",
+                "AVGO",
+                "GOOGL",
+                "META",
+                "MSFT",
+                "NFLX",
+                "NVDA",
+                "SPY",
+                "TSLA",
+                "XLB",
+                "XLC",
+                "XLE",
+                "XLF",
+                "XLI",
+                "XLK",
+                "XLP",
+                "XLRE",
+                "XLU",
+                "XLV",
+                "XLY"
+              ]
+            },
+            "message": "Multi-symbol universes need point-in-time membership evidence before research_pass; a static current-symbol list can leak survivorship.",
+            "severity": "blocked"
+          },
+          {
+            "code": "missing_universe_selection_timestamp",
+            "evidence": {
+              "metadata": {},
+              "symbols": [
+                "AAPL",
+                "AMD",
+                "AMZN",
+                "AVGO",
+                "GOOGL",
+                "META",
+                "MSFT",
+                "NFLX",
+                "NVDA",
+                "SPY",
+                "TSLA",
+                "XLB",
+                "XLC",
+                "XLE",
+                "XLF",
+                "XLI",
+                "XLK",
+                "XLP",
+                "XLRE",
+                "XLU",
+                "XLV",
+                "XLY"
+              ]
+            },
+            "message": "Universe selection should record when the symbol list became known to avoid current-list backfills.",
+            "severity": "warning"
+          },
+          {
+            "code": "missing_delisting_policy",
+            "evidence": {
+              "metadata": {},
+              "symbols": [
+                "AAPL",
+                "AMD",
+                "AMZN",
+                "AVGO",
+                "GOOGL",
+                "META",
+                "MSFT",
+                "NFLX",
+                "NVDA",
+                "SPY",
+                "TSLA",
+                "XLB",
+                "XLC",
+                "XLE",
+                "XLF",
+                "XLI",
+                "XLK",
+                "XLP",
+                "XLRE",
+                "XLU",
+                "XLV",
+                "XLY"
+              ]
+            },
+            "message": "Universe audit did not find a delisting policy; scans may overstate historical opportunity if failed or delisted names are absent.",
+            "severity": "warning"
+          }
+        ],
+        "json_path": "reports/research/us_multiscale_event_momentum_r5-universe-audit.json",
+        "report_path": "reports/research/us_multiscale_event_momentum_r5-universe-audit.md",
+        "status": "blocked"
+      },
+      "message": "Paper automation requires point-in-time universe membership or explicit fixed-universe evidence.",
+      "name": "universe_audit",
+      "status": "blocked",
+      "suggested_actions": [
+        "Add notes.universe_audit point_in_time_membership evidence, or reduce the strategy to an explicitly fixed instrument universe before paper_auto."
+      ]
+    },
+    {
+      "details": {
+        "broker": "none"
+      },
+      "message": "Paper readiness currently targets broker=alpaca_paper.",
+      "name": "alpaca_env",
+      "status": "blocked",
+      "suggested_actions": [
+        "uv run oc strategy activate us_multiscale_event_momentum_r5 --paper-auto --allow-paper-auto --data-source alpaca --enforce-paper-readiness"
+      ]
+    },
+    {
+      "details": {},
+      "message": "Paper kill switch is clear.",
+      "name": "kill_switch",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "buying_power": 1722131.14,
+        "cash": 235472.62,
+        "equity": 1015713.28,
+        "generated_at": "2026-07-09T23:07:39.301258+00:00"
+      },
+      "message": "Paper account snapshot is available.",
+      "name": "account_snapshot",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "backend": "python_reference",
+        "nautilus_installed": true
+      },
+      "message": "NautilusTrader package is available.",
+      "name": "nautilus_backend",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "duplicate_signal_policy": "stable_signal_id",
+        "gross_exposure_limit": 1.0,
+        "max_symbol_weight": 0.4,
+        "max_symbols_per_day": 3,
+        "mode": "cross_sectional_momentum",
+        "same_day_flatten": true,
+        "selected_route_label": "multiscale-event-r5:family-preregistered",
+        "universe": [
+          "SPY",
+          "XLB",
+          "XLC",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLRE",
+          "XLU",
+          "XLV",
+          "XLY",
+          "AAPL",
+          "AMD",
+          "AMZN",
+          "AVGO",
+          "GOOGL",
+          "META",
+          "MSFT",
+          "NFLX",
+          "NVDA",
+          "TSLA"
+        ]
+      },
+      "message": "cross_sectional_momentum portfolio routing is declared inside StrategySpec.",
+      "name": "portfolio_routing",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "borrow_short_caveat": "long-only paper routing; borrow is out of scope",
+        "duplicate_signal_policy": "stable_signal_id",
+        "effective_weight_note": "gross limit is tighter than max_symbols_per_day * max_symbol_weight; scanner will equalize down to the gross limit",
+        "gross_exposure_limit_pct": 100.0,
+        "max_symbols_per_day": 3,
+        "mode": "cross_sectional_momentum",
+        "same_day_flatten": true,
+        "sector_concentration": "bounded_by_max_symbols_and_weight; sector map not registered",
+        "single_name_weight_limit_pct": 40.0,
+        "universe": [
+          "SPY",
+          "XLB",
+          "XLC",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLRE",
+          "XLU",
+          "XLV",
+          "XLY",
+          "AAPL",
+          "AMD",
+          "AMZN",
+          "AVGO",
+          "GOOGL",
+          "META",
+          "MSFT",
+          "NFLX",
+          "NVDA",
+          "TSLA"
+        ]
+      },
+      "message": "cross_sectional_momentum gross exposure and concentration limits are explicit.",
+      "name": "portfolio_risk",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "inspected": [
+          {
+            "evidence_count": 0,
+            "factor": "filing_catalyst_score",
+            "field": "catalyst_strength",
+            "missing_evidence_count": 0,
+            "path": "reports/features/us_multiscale_event_momentum_r5/filing_catalyst_score/packets.jsonl",
+            "status": "missing",
+            "warnings": [
+              "feature packet is missing on disk"
+            ]
+          },
+          {
+            "evidence_count": 0,
+            "factor": "filing_risk_score",
+            "field": "risk_event_score",
+            "missing_evidence_count": 0,
+            "path": "reports/features/us_multiscale_event_momentum_r5/filing_risk_score/packets.jsonl",
+            "status": "missing",
+            "warnings": [
+              "feature packet is missing on disk"
+            ]
+          },
+          {
+            "evidence_count": 0,
+            "factor": "news_catalyst_score",
+            "field": "catalyst_strength",
+            "missing_evidence_count": 0,
+            "path": "reports/features/us_multiscale_event_momentum_r5/news_catalyst_score/packets.jsonl",
+            "status": "missing",
+            "warnings": [
+              "feature packet is missing on disk"
+            ]
+          }
+        ],
+        "missing": [
+          "filing_catalyst_score: packet not found at reports/features/us_multiscale_event_momentum_r5/filing_catalyst_score/packets.jsonl",
+          "filing_risk_score: packet not found at reports/features/us_multiscale_event_momentum_r5/filing_risk_score/packets.jsonl",
+          "news_catalyst_score: packet not found at reports/features/us_multiscale_event_momentum_r5/news_catalyst_score/packets.jsonl"
+        ]
+      },
+      "message": "Paper feature factors require saved replay packets: filing_catalyst_score: packet not found at reports/features/us_multiscale_event_momentum_r5/filing_catalyst_score/packets.jsonl; filing_risk_score: packet not found at reports/features/us_multiscale_event_momentum_r5/filing_risk_score/packets.jsonl; news_catalyst_score: packet not found at reports/features/us_multiscale_event_momentum_r5/news_catalyst_score/packets.jsonl",
+      "name": "feature_packets",
+      "status": "blocked",
+      "suggested_actions": [
+        "Write point-in-time packets with uv run oc feature write or uv run oc feature from-context."
+      ]
+    },
+    {
+      "details": {
+        "benchmark_family_complete": true,
+        "gate_summary": {
+          "formal_forward_observation_count": 0,
+          "llm_contribution_pass": false,
+          "paper_ready_pass": false,
+          "research_pass": false,
+          "workflow_pass": true
+        },
+        "missing_requirements": [
+          "ready=false",
+          "status=blocked",
+          "gate_summary.paper_ready_pass is not true",
+          "strict_data check is not ok",
+          "feature_packets check is not ok",
+          "benchmark_family check is not ok",
+          "factor_lab check is not ok",
+          "execution_reality check is not ok",
+          "alternative_data check is not ok",
+          "research contract path is missing"
+        ],
+        "path": "/root/codex-test/open-composer/reports/research/us_multiscale_event_momentum_r5-promotion.json",
+        "ready": false,
+        "status": "blocked"
+      },
+      "message": "Promotion report is present but not ready for paper: ready=false; status=blocked; gate_summary.paper_ready_pass is not true; strict_data check is not ok; feature_packets check is not ok; benchmark_family check is not ok; factor_lab check is not ok; execution_reality check is not ok; alternative_data check is not ok; research contract path is missing",
+      "name": "promotion_report",
+      "status": "blocked",
+      "suggested_actions": [
+        "uv run oc strategy promotion-report strategy_specs/drafts/us_multiscale_event_momentum_r5.yaml"
+      ]
+    },
+    {
+      "details": {
+        "required_artifacts": [
+          "capability_review",
+          "feature_packet_schema",
+          "marginal_lift_report",
+          "missing_modality_robustness_report",
+          "pit_replay_evidence"
+        ],
+        "risk_domains": [
+          "llm_or_news_signal"
+        ]
+      },
+      "message": "All 5 harness artifacts present for domains ['llm_or_news_signal'].",
+      "name": "harness_artifacts",
+      "status": "ok",
+      "suggested_actions": []
+    },
+    {
+      "details": {
+        "path": "reports/harness/paper/us_multiscale_event_momentum_r5-router-order-authorization.json",
+        "portfolio_mode": "cross_sectional_momentum"
+      },
+      "message": "Router order authorization artifact is missing. Router remains observation_only.",
+      "name": "router_order_authorization",
+      "status": "warning",
+      "suggested_actions": [
+        "Write reports/harness/paper/us_multiscale_event_momentum_r5-router-order-authorization.json after PIT, promotion, harness verify, and paper safety review pass."
+      ]
+    },
+    {
+      "details": {
+        "capability": "alpaca_paper_execution",
+        "status": "blocked"
+      },
+      "message": "strategy must be promoted to lifecycle=active; execution.mode must be paper_auto; execution.broker must be alpaca_paper",
+      "name": "capability_report",
+      "status": "blocked",
+      "suggested_actions": [
+        "uv run oc spec capabilities strategy_specs/drafts/us_multiscale_event_momentum_r5.yaml"
+      ]
+    }
+  ],
+  "execution_substate": "blocked",
+  "gate_summary": {
+    "blocked_checks": [
+      "lifecycle",
+      "execution",
+      "universe_audit",
+      "alpaca_env",
+      "feature_packets",
+      "promotion_report",
+      "capability_report"
+    ],
+    "execution_substate": "blocked",
+    "llm_contribution_pass": null,
+    "paper_change_cadence": {
+      "automation_limit": "current StrategyVersion metadata does not yet prove iteration_id, decision_record_path, change_reason, or risk_reduction_only",
+      "policy": "paper-stage spec changes require a linked decision record and at least 10 trading days since the prior paper-stage change unless the change is a documented risk-reduction kill-rule exception",
+      "status": "manual_review_required"
+    },
+    "paper_ready_pass": false,
+    "research_pass": false,
+    "warning_checks": [
+      "router_order_authorization"
+    ],
+    "workflow_pass": false
+  },
+  "generated_at": "2026-07-18T18:00:01.875142Z",
+  "ready": false,
+  "report_json_path": "reports/harness/paper/us_multiscale_event_momentum_r5-paper-readiness.json",
+  "report_markdown_path": "reports/harness/paper/us_multiscale_event_momentum_r5-paper-readiness.md",
+  "status": "blocked",
+  "strategy_name": "us_multiscale_event_momentum_r5",
+  "strategy_path": "strategy_specs/drafts/us_multiscale_event_momentum_r5.yaml"
+}

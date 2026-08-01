@@ -1,0 +1,49 @@
+{
+  "strategy_name": "us_etf_structural_momentum_r9",
+  "iter_id": "mom_etf_structural_family_r9",
+  "reviewed_at": "2026-07-19",
+  "lookahead_check": "pass",
+  "future_leak_check": "pass",
+  "overfit_risk": "high",
+  "multiple_testing_count": 8006,
+  "multiple_testing_count_status": "lower_bound_not_exhaustively_reconciled",
+  "pbo_proxy": 0.0,
+  "pbo_interpretation": "family_diagnostic_only_not_R9D04_gate; all six partitions selected non-promotable R9D02; 0/6 has a one-sided 95% upper bound near 0.393",
+  "dsr_proxy": 0.2077324972270485,
+  "dsr_threshold": 0.95,
+  "sample_data_caveats": [],
+  "trade_count": 115,
+  "trade_count_semantics": "aggregate R9D04 cost events including terminal liquidation, not round-trip trades",
+  "trading_days": 2376,
+  "evaluation_window": {
+    "start": "2017-02-01",
+    "end": "2026-07-17"
+  },
+  "data_evidence": {
+    "provider": "alpaca",
+    "feed": "sip",
+    "adjustment": "all",
+    "fallback_used": false,
+    "complete_daily_sessions": 2649,
+    "latest_session": "2026-07-17"
+  },
+  "capacity_assessment": "blocked_pending_forward opening-auction volume, spread, order-size, and matched fill evidence; no ADV-based paper authorization is supported by R9",
+  "short_sample": false,
+  "benchmark_finding": "The frozen BIL raw-Sharpe hurdle is arithmetically reproducible but methodologically unsuitable as a risky-strategy Sharpe hurdle. It is not changed after results, so the frozen failure stands.",
+  "accounting_findings": [
+    "Reported annualized turnover uses half-L1 convention and understates executed one-way cash-boundary notional.",
+    "The simulator applies a pre-cost wealth haircut and is not an exact self-financing transaction solver.",
+    "Published ledgers do not provide event-level aggregate-versus-independent-fold cost reconciliation."
+  ],
+  "artifact_findings": [
+    "R9 evidence, data, and specs are ignored by Git and are not durable from repository history alone.",
+    "The final output set has no immutable self-binding receipt or atomic multi-file publication.",
+    "The intraday same-target claim hashes one shared in-memory target object and does not independently bind both arms to candidate and ledger identities."
+  ],
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "conclusion": "blocked",
+  "notes": "R9 remains stopped. R9D02 is selection-prohibited historical challenge evidence and may only motivate a separately preregistered forward-only hypothesis."
+}

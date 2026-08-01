@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "provider": "alpaca",
+  "endpoint_family": "v2_stocks_bars",
+  "timeframe": "daily",
+  "feed": "sip",
+  "adjustment": "all",
+  "session_scope": "regular",
+  "snapshot_manifest_path": "data/research/alpaca_etf_structural_r9/snapshot-manifest.json",
+  "snapshot_manifest_sha256": "6d179f9af5437be920fa66a4e431ceafbf46c8d2548aabef506472cffe90b34f",
+  "bound_parent_snapshot_path": "reports/research/iterations/mom_etf_structural_family_r9/data-snapshot-binding.json",
+  "bound_parent_snapshot_sha256": "1cd541740615bf9f6795be4a688235afa5f9c122c688c65c9b4460f24ddf47d3",
+  "universe": ["BIL", "GLD", "IEF", "QQQ", "SPY", "XLB", "XLE", "XLF", "XLI", "XLK", "XLP", "XLU", "XLV", "XLY"],
+  "rankable_symbols": ["GLD", "IEF", "QQQ", "SPY", "XLB", "XLE", "XLF", "XLI", "XLK", "XLP", "XLU", "XLV", "XLY"],
+  "reserve_symbol": "BIL",
+  "common_window": {"start_session": "2017-02-01", "end_session": "2026-07-17"},
+  "decision_schedule": "calendar_month_end_regular_close",
+  "execution_schedule": "immediate_next_regular_session_open",
+  "primitive_fields": ["open", "high", "low", "close", "volume"],
+  "feature_visibility": "decision_session_close_or_earlier",
+  "strict_rules": {
+    "all_symbols_share_complete_sessions": true,
+    "forward_fill_allowed": false,
+    "zero_return_substitution_allowed": false,
+    "nonfinite_action": "fail_closed",
+    "feed_fallback_allowed": false,
+    "future_snapshot_allowed": false
+  },
+  "evidence_scope": "historical_transfer_and_implementation_evidence_only",
+  "limitations": [
+    "The fixed ETF universe and full historical period were visible to prior rounds.",
+    "Historical R5 results are not a pristine final promotion holdout.",
+    "Forward evidence starts only after a new implementation lock and epoch."
+  ]
+}

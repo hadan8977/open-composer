@@ -1,0 +1,34 @@
+{
+  "schema_version": 2,
+  "plan_contract": "harness_plan_v2",
+  "strategy_name": "us_multiasset_forward_mm_r5_p01",
+  "spec_path": "strategy_specs/drafts/us_multiasset_forward_mm_r5_p01.yaml",
+  "spec_file_sha256": "ff4a7253211df4a1b4d5194c157f04fd5906c6757d7e591cdccaae3201dbdd45",
+  "spec_semantic_sha256": "676cc8fc951dd698c92f3622fe182ec0dc94224ec5d20d23d87f37d8c7d238b8",
+  "risk_domains": [
+    "daily_open_execution"
+  ],
+  "required_skills": [
+    "execution-reality-reviewer",
+    "source-researcher"
+  ],
+  "required_artifacts": [
+    "execution_policy",
+    "execution_reality_report",
+    "source_cards"
+  ],
+  "blocking_rules": [
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "naked_market_order_must_be_justified",
+      "blocks": "research_pass",
+      "description": "A DAY market order without price protection requires a written justification in execution_policy explaining why the risk is acceptable.\n"
+    },
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "compare_at_least_two_execution_methods",
+      "blocks": "research_pass",
+      "description": "Execution policy must compare at least two order styles (e.g. DAY market vs. MOO/OPG vs. LOO/OPG).\n"
+    }
+  ]
+}

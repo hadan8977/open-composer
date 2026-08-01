@@ -1,0 +1,21 @@
+{
+  "strategy_name": "us_multiscale_low_turnover_r6",
+  "iter_id": "mom_multiscale_low_turnover_r6",
+  "reviewed_at": "2026-07-19",
+  "capabilities": [
+    {"capability_id": "market.alpaca_bars", "kind": "market", "status": "partial", "strict_behavior": "strict_live_snapshot_no_fallback", "paper_ready": false, "notes": "The Adjustment.ALL daily and 30m files are real strict-live Alpaca Basic IEX data through 2026-07-17, with explicit hashes and complete-session sets. IEX is not SIP or official-auction evidence."},
+    {"capability_id": "events.sec_filings", "kind": "event", "status": "blocked", "strict_behavior": "live_with_cache", "paper_ready": false, "notes": "The registry and packet schema exist, but no real historical or forward PIT packet exists and collection requires a compliant user-supplied SEC_USER_AGENT."},
+    {"capability_id": "news.alpha_vantage", "kind": "news", "status": "blocked", "strict_behavior": "live_with_cache", "paper_ready": false, "notes": "Registry fixtures pass hygiene, but credentials, archive rights, first-seen latency, issuer mapping, deduplication, watchlist coverage, and transcript publication timestamps are unverified."},
+    {"capability_id": "earnings_call_transcript_or_audio", "kind": "event", "status": "unsupported", "strict_behavior": "unregistered_or_unlicensed", "paper_ready": false, "notes": "Provider documentation describes a transcript archive, but no licensed and timestamp-qualified local capability is registered."}
+  ],
+  "feature_packet_schema_path": "schemas/multiscale_low_turnover_r6_feature_packet.schema.json",
+  "feature_packet_pit_check": "warning",
+  "sample_data_caveats": [
+    "Capability fixtures passed registry hygiene but were not used as market or event evidence.",
+    "Strict-live IEX files are research evidence, not consolidated execution evidence.",
+    "No event fixture, cache fallback, or retrospective LLM output was treated as PIT history."
+  ],
+  "data_source_checks": {"daily_strict_common_sessions": 1487, "intraday_strict_common_sessions": 603, "latest_session": "2026-07-17", "formal_forward_observations": 0, "adjustment": "all", "forward_fill": false, "zero_return_substitution": false, "independent_source_pass": false},
+  "conclusion": "blocked",
+  "blockers": ["IEX_to_SIP_or_independent_parity_missing", "official_open_and_arrival_price_evidence_missing", "historical_and_forward_event_PIT_packets_missing", "event_provider_coverage_rights_and_latency_unverified", "licensed_call_data_capability_missing", "formal_forward_observations_missing"]
+}

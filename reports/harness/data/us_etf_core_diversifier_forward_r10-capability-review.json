@@ -1,0 +1,25 @@
+{
+  "strategy_name": "us_etf_core_diversifier_forward_r10",
+  "reviewed_at": "2026-07-19",
+  "capabilities": [
+    {
+      "capability_id": "market.alpaca_bars",
+      "kind": "market",
+      "status": "ok",
+      "strict_behavior": "fail_fast_for_unsupported_timeframes",
+      "paper_ready": false,
+      "notes": "R10 has a hash-bound Alpaca SIP daily baseline through 2026-07-17 and a broker-free target observation path. That frozen historical bundle is warmup evidence only; no post-epoch session, current broker snapshot, official auction mark, or paper fill has been collected."
+    }
+  ],
+  "feature_packet_pit_check": "not_applicable",
+  "sample_data_caveats": [],
+  "market_data_limitations": [
+    "The baseline bundle is locally immutable but is ignored by Git and has no configured durable artifact store.",
+    "Forward observation begins on 2026-07-20; the current bundle ends on 2026-07-17 and contributes zero forward sessions.",
+    "Alpaca SIP bars do not by themselves attest primary-exchange official opening-auction prices or broker fills."
+  ],
+  "workflow_pass": true,
+  "research_pass": false,
+  "paper_ready_pass": false,
+  "conclusion": "warning"
+}

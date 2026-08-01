@@ -1,0 +1,127 @@
+name: us_multiasset_forward_mm_r5_d01
+description: Preregistered deterministic 12-1 ETF momentum baseline for the R5 multimodal family.
+timeframe: daily
+universe: [BIL, GLD, IEF, QQQ, SPY, XLB, XLE, XLF, XLI, XLK, XLP, XLU, XLV, XLY]
+lifecycle: draft
+position_direction: long_only
+entry:
+  all: [close > 0]
+  any: []
+exit:
+  all: []
+  any: [close <= 0]
+risk:
+  max_trades_per_day: 6
+  max_position_weight: 0.34
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: cross_sectional_momentum
+  cross_sectional_execution_profile: monthly_equal_weight_bil_reserve
+  max_symbols_per_day: 3
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.34
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: mm_r5:D01:deterministic_12_1_top3
+  position_weight_enforcement: entry_only
+  rebalance_schedule: calendar_month_end
+  weighting: equal_weight
+  reserve_symbol: BIL
+  reserve_exempt_from_max_symbol_weight: true
+costs: &costs
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution: &execution
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+execution_policy: &execution_policy
+  policy_id: multiasset_mm_r5_opg_limit_v1
+  order_style: opg_limit
+  time_in_force: opg
+  price_protection:
+    limit_offset_bps: 20.0
+    max_open_gap_pct: 2.5
+    max_spread_bps: 15.0
+  participation_cap:
+    max_adv_pct: 0.01
+    max_open_bar_volume_pct: 0.1
+  fallback_behavior:
+    if_not_filled: skip
+    if_gap_exceeds_limit: skip
+    if_spread_exceeds_limit: skip
+  tca:
+    enabled: true
+    compare_to: [decision_price, official_open, arrival_price, vwap]
+    record_submitted_at: true
+    record_fill_price: true
+    review_frequency: weekly
+  alternatives_compared: [moo_market, opg_limit, delayed_open_30m_shadow]
+  source_card_ids: [r9_alpaca_opg_semantics, r9_alpaca_paper_limitations]
+reality_model: &reality_model
+  fill_model: next_regular_open_with_policy
+  slippage_model: stress_bps_by_volatility_and_participation
+  stress_scenarios:
+    - {name: primary, slippage_bps: 10.0, open_gap_pct: 0.5}
+    - {name: stress, slippage_bps: 20.0, open_gap_pct: 1.5}
+    - {name: severe_report_only, slippage_bps: 35.0, open_gap_pct: 2.5}
+data: &data
+  source: alpaca
+  symbol: SPY
+  path: data/research/alpaca_etf_structural_r9
+  feed: sip
+data_assumptions: &data_assumptions
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  immutable_snapshot_required: true
+  snapshot_manifest_path: data/research/alpaca_etf_structural_r9/snapshot-manifest.json
+  adjustment: all
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+factors:
+  momentum_12_1:
+    source: expression
+    expression: lag(close, 21) / lag(close, 252) - 1
+    default: 0.0
+    description: Frozen 12-1 momentum score used by the deterministic baseline.
+llm_review: {enabled: false}
+required_capabilities: [market.alpaca_bars]
+research_design: &research_design
+  iter_id: mom_multiasset_forward_multimodal_r5
+  candidate_manifest_path: reports/research/iterations/mom_multiasset_forward_multimodal_r5/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/mom_multiasset_forward_multimodal_r5/data-feasibility.json
+  data_contract_path: reports/research/iterations/mom_multiasset_forward_multimodal_r5/data-contract.json
+  holdout_contract_path: reports/research/iterations/mom_multiasset_forward_multimodal_r5/holdout-contract.json
+  cost_contract_path: reports/research/iterations/mom_multiasset_forward_multimodal_r5/cost-contract.json
+  cumulative_trial_contract_path: reports/research/iterations/mom_multiasset_forward_multimodal_r5/cumulative-trial-contract.json
+  source_cards_path: reports/harness/source_cards/us_multiasset_forward_multimodal_r5.jsonl
+  preregistration_lock_path: reports/research/iterations/mom_multiasset_forward_multimodal_r5/lock-set/preregistration-lock.json
+  parameter_space:
+    candidate_id: [R5D01]
+    parameter_search: [false]
+  candidate_budget: 8
+  selection_objective: Qualify a bounded family under matched chronological validation and forward evidence.
+  anti_overfit_notes:
+    - All eight candidate roles and fallbacks are frozen before evaluation.
+    - Historical results through 2026-07-17 are not a pristine final promotion holdout.
+  validation_plan: [four_chronological_folds, eight_chronological_pbo_blocks, minimum_20_valid_cscv_partitions, globally_exposed_transfer_holdout, twenty_forward_sessions, matched_paper_tca]
+notes:
+  candidate_id: R5D01
+  candidate_role: deterministic_core_baseline
+  method: deterministic_12_1_top3_equal_weight
+  fallback_candidate_id: BIL
+  forward_epoch_utc: '2026-07-30T00:00:00-04:00'
+  minimum_bound_forward_sessions: 20
+  minimum_matched_tca_observations: 30
+  order_authority: false
+  broker_writes: false

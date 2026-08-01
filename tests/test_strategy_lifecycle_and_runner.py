@@ -1,27 +1,36 @@
 from __future__ import annotations
 
+import hashlib
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
 import yaml
 
+import open_composer.paper_readiness as paper_readiness
 from open_composer.adapters.broker import alpaca_paper
 from open_composer.dashboard import build_dashboard_catalog
 from open_composer.engines.signal_engine import build_signal
+from open_composer.execution_policy import resolve_execution_policy
+from open_composer.market_calendar import next_us_equity_session
 from open_composer.models.paper import PaperOrderRecord
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.paper_controls import clear_paper_kill_switch, enable_paper_kill_switch
 from open_composer.runner.paper import (
     PaperRunnerError,
+    _decide_signal,
     _paper_order_window_allows,
     _run_adaptive_intraday_paper_signal_cycle,
     run_paper_cycle,
 )
 from open_composer.storage import append_jsonl
 from open_composer.strategy_lifecycle import activate_strategy, approve_strategy, disable_strategy
-from open_composer.strategy_versions import load_strategy_versions
+from open_composer.strategy_versions import (
+    load_strategy_versions,
+    strategy_content_hash,
+    strategy_version_id,
+)
 
 
 def _context_capable_spec(sample_workspace: Path) -> Path:
@@ -75,6 +84,7 @@ def _write_paper_auto_harness_artifacts(root: Path, strategy_name: str) -> None:
                 "tca_plan": {"enabled": True},
                 "source_card_ids": [f"{strategy_name}:source-research"],
                 "alternatives_compared": ["day_market", "loo_limit"],
+                "naked_market_justification": "Fixture uses a liquid paper-only test symbol.",
             }
         ),
         encoding="utf-8",
@@ -92,18 +102,36 @@ def _write_paper_auto_harness_artifacts(root: Path, strategy_name: str) -> None:
         ),
         encoding="utf-8",
     )
+    spec = load_strategy_spec(root / "strategy_specs" / "active" / f"{strategy_name}.yaml")
+    policy = resolve_execution_policy(spec, root)
+    promotion_path = root / "reports" / "research" / f"{strategy_name}-promotion.json"
+    promotion = json.loads(promotion_path.read_text(encoding="utf-8"))
     (paper_dir / f"{strategy_name}-paper-safety-review.json").write_text(
         json.dumps(
             {
                 "strategy_name": strategy_name,
                 "lifecycle_status": "active",
+                "harness_verify_pass": True,
                 "kill_switch_verified": True,
                 "order_window": "regular session",
                 "duplicate_order_policy": "stable_signal_id",
                 "credential_scope": "paper_only",
                 "signal_order_linkage": True,
+                "spec_hash": strategy_content_hash(spec),
+                "execution_policy_id": policy.policy_id if policy else None,
+                "execution_policy_hash": policy.content_hash if policy else None,
+                "promotion_report_hash": _sha256_file(promotion_path),
+                "data_manifest_hash": promotion["research_manifest"]["data_manifest_hash"],
+                "overall": "approved",
+                "blocking_items": [],
             }
         ),
+        encoding="utf-8",
+    )
+    verify_dir = root / "reports" / "harness" / "verify"
+    verify_dir.mkdir(parents=True, exist_ok=True)
+    (verify_dir / f"{strategy_name}.json").write_text(
+        json.dumps({"strategy_name": strategy_name, "overall": "ok"}),
         encoding="utf-8",
     )
 
@@ -175,11 +203,11 @@ def test_paper_runner_preview_then_blocks_unready_auto_submit(
     assert preview.version_id is not None
     assert preview.spec_hash is not None
     assert preview.strategy_backend == "nautilus_trader"
-    assert preview.execution_backend == "nautilus_paper"
+    assert preview.execution_backend == "python_reference"
     assert preview.backend_plan_path
     assert preview.paper_readiness_report_path
     assert any(
-        "Nautilus paper runtime generated latest-bar signals" in note for note in preview.notes
+        "signals were evaluated by the Python reference path" in note for note in preview.notes
     )
     assert any("Paper readiness status=blocked" in note for note in preview.notes)
     paper_plan_path = Path(preview.backend_plan_path)
@@ -189,13 +217,13 @@ def test_paper_runner_preview_then_blocks_unready_auto_submit(
     assert dashboard_paper_run.version_id == preview.version_id
     assert dashboard_paper_run.spec_hash == preview.spec_hash
     assert dashboard_paper_run.strategy_backend == "nautilus_trader"
-    assert dashboard_paper_run.execution_backend == "nautilus_paper"
+    assert dashboard_paper_run.execution_backend == "python_reference"
     assert dashboard_paper_run.backend_plan_path == preview.backend_plan_path
     assert dashboard_paper_run.paper_readiness_report_path == preview.paper_readiness_report_path
     assert dashboard_paper_run.signals == len(preview.signals)
     assert paper_plan_path.exists()
     assert paper_plan["target_backend"] == "nautilus_paper"
-    assert paper_plan["selected_backend"] == "nautilus_paper"
+    assert paper_plan["selected_backend"] == "python_reference"
     assert paper_plan["version_id"] == preview.version_id
     assert paper_plan["spec_hash"] == preview.spec_hash
     assert paper_readiness_path.exists()
@@ -204,7 +232,7 @@ def test_paper_runner_preview_then_blocks_unready_auto_submit(
     assert paper_signal_log.exists()
     assert paper_scan_report.exists()
     paper_signal = json.loads(paper_signal_log.read_text(encoding="utf-8").splitlines()[0])
-    assert paper_signal["execution_backend"] == "nautilus_paper"
+    assert paper_signal["execution_backend"] == "python_reference"
     assert paper_signal["version_id"] == preview.version_id
     assert paper_signal["spec_hash"] == preview.spec_hash
     assert not (sample_workspace / "reports" / "paper" / "orders.jsonl").exists()
@@ -238,7 +266,7 @@ def test_paper_runner_preview_then_blocks_unready_auto_submit(
     assert submitted.signals[0].decision == "blocked_by_readiness"
     assert "data_source" in submitted.signals[0].message
     assert submitted.strategy_backend == "nautilus_trader"
-    assert submitted.execution_backend == "nautilus_paper"
+    assert submitted.execution_backend == "python_reference"
     assert repeated.signals[0].decision == "blocked_by_readiness"
     assert calls["count"] == 0
     assert not (sample_workspace / "reports" / "paper" / "orders.jsonl").exists()
@@ -264,19 +292,13 @@ def test_manual_signal_runner_never_submits_even_with_allow(sample_workspace: Pa
     assert not (sample_workspace / "reports" / "paper" / "orders.jsonl").exists()
 
 
-def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monkeypatch) -> None:
+def test_paper_runner_submits_when_canary_readiness_passes(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
     monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
     monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
     monkeypatch.setenv("ALPACA_PAPER", "true")
-    account_path = sample_workspace / "reports" / "paper" / "account.json"
-    account_path.parent.mkdir(parents=True, exist_ok=True)
-    account_path.write_text(
-        (
-            '{"generated_at":"2026-05-12T12:00:00Z","equity":10000,"cash":5000,'
-            '"buying_power":8000,"portfolio_value":10000,"status":"ACTIVE","paper":true}\n'
-        ),
-        encoding="utf-8",
-    )
     draft = sample_workspace / "strategy_specs" / "drafts" / "qqq_paper_ready_15m.yaml"
     raw = yaml.safe_load(
         (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
@@ -294,6 +316,19 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
         data_source="alpaca",
     )
     spec = load_strategy_spec(active)
+    _write_current_paper_snapshots(sample_workspace)
+    contract_path = (
+        sample_workspace / "reports" / "research" / "qqq_paper_ready_15m-research-contract.json"
+    )
+    data_manifest_path = (
+        sample_workspace / "reports" / "research" / "qqq_paper_ready_15m-data-manifest.json"
+    )
+    contract_path.parent.mkdir(parents=True, exist_ok=True)
+    contract_path.write_text('{"strategy_name":"qqq_paper_ready_15m"}\n', encoding="utf-8")
+    data_manifest_path.write_text(
+        '{"strategy_name":"qqq_paper_ready_15m","immutable":true}\n',
+        encoding="utf-8",
+    )
     promotion_path = (
         sample_workspace / "reports" / "research" / "qqq_paper_ready_15m-promotion.json"
     )
@@ -342,9 +377,11 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
                 ],
                 "benchmark_family": {"complete": True, "missing": [], "benchmarks": {}},
                 "research_manifest": {
-                    "research_contract_path": (
-                        "reports/research/qqq_paper_ready_15m-research-contract.json"
-                    )
+                    "spec_hash": strategy_content_hash(spec),
+                    "research_contract_path": str(contract_path.relative_to(sample_workspace)),
+                    "research_contract_hash": _sha256_file(contract_path),
+                    "data_manifest_path": str(data_manifest_path.relative_to(sample_workspace)),
+                    "data_manifest_hash": _sha256_file(data_manifest_path),
                 },
             }
         )
@@ -352,22 +389,52 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
         encoding="utf-8",
     )
     _write_paper_auto_harness_artifacts(sample_workspace, "qqq_paper_ready_15m")
+    _write_paper_validation_days(sample_workspace, active)
+    monkeypatch.setattr(
+        paper_readiness,
+        "_paper_tca_check",
+        lambda _spec, _root: paper_readiness.PaperStrategyReadinessCheck(
+            name="matched_paper_tca",
+            status="ok",
+            message="Verified TCA fixture.",
+            details={"valid_observation_count": 30, "distinct_session_count": 10},
+        ),
+    )
+    canary_readiness = paper_readiness.PaperStrategyReadinessReport(
+        strategy_name=spec.name,
+        status="warning",
+        ready=False,
+        execution_substate="canary_authorized",
+    )
+    monkeypatch.setattr(
+        "open_composer.runner.paper.assess_paper_strategy_readiness",
+        lambda _spec, _root: canary_readiness,
+    )
 
-    def fake_scan(spec_path: Path, root: Path | None = None, refresh_data: bool = False):
+    def fake_scan(
+        spec_path: Path,
+        root: Path | None = None,
+        refresh_data: bool = False,
+        **_kwargs,
+    ):
         assert refresh_data is True
         base = root or sample_workspace
         signal = build_signal(
             spec,
             "scan-ready",
-            datetime(2026, 5, 12, 15, 45, tzinfo=UTC),
+            datetime.now(UTC),
             "entry",
             "scan",
             100.0,
+            version_id=strategy_version_id(spec),
+            spec_hash=strategy_content_hash(spec),
+            target_weight=spec.risk.max_position_weight,
         )
         append_jsonl(base / "signal_logs" / "scan-ready.jsonl", [signal])
         return [signal]
 
     def fake_submit(signal, spec_arg, root, client=None, qty=None):
+        assert qty is None
         return PaperOrderRecord(
             id="order_ready",
             signal_id=signal.id,
@@ -380,7 +447,7 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
             status="accepted",
         )
 
-    monkeypatch.setattr("open_composer.runner.paper.run_scan", fake_scan)
+    monkeypatch.setattr("open_composer.runner.paper._run_nautilus_paper_signal_cycle", fake_scan)
     monkeypatch.setattr("open_composer.runner.paper.submit_paper_order", fake_submit)
 
     cycle = run_paper_cycle(
@@ -392,6 +459,228 @@ def test_paper_runner_submits_when_readiness_passes(sample_workspace: Path, monk
 
     assert cycle.signals[0].decision == "paper_order_submitted"
     assert cycle.signals[0].order_id == "order_ready"
+
+
+def test_canary_runner_allows_warning_substate_without_quantity_override(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    active = activate_strategy(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        sample_workspace,
+        paper_auto=True,
+        allow_paper_auto=True,
+        data_source="alpaca",
+    )
+    spec = load_strategy_spec(active)
+    signal = build_signal(
+        spec,
+        "canary-run",
+        datetime.now(UTC),
+        "entry",
+        "test",
+        100.0,
+        version_id=strategy_version_id(spec),
+        spec_hash=strategy_content_hash(spec),
+        target_weight=spec.risk.max_position_weight,
+    )
+    append_jsonl(sample_workspace / "signal_logs" / "canary-run.jsonl", [signal])
+    clear_paper_kill_switch(sample_workspace, updated_by="test")
+    readiness = paper_readiness.PaperStrategyReadinessReport(
+        strategy_name=spec.name,
+        status="warning",
+        ready=False,
+        execution_substate="canary_authorized",
+    )
+    captured: dict[str, object] = {}
+
+    def fake_submit(signal_arg, spec_arg, root, client=None, qty=None):
+        captured.update(
+            {
+                "signal": signal_arg,
+                "spec": spec_arg,
+                "root": root,
+                "client": client,
+                "qty": qty,
+            }
+        )
+        return PaperOrderRecord(
+            id="canary-order",
+            signal_id=signal_arg.id,
+            client_order_id=f"oc-{signal_arg.id}",
+            strategy_name=spec_arg.name,
+            symbol=signal_arg.symbol,
+            side=signal_arg.side,
+            qty=1,
+            status="accepted",
+        )
+
+    monkeypatch.setattr("open_composer.runner.paper._paper_order_window_allows", lambda _spec: True)
+    monkeypatch.setattr("open_composer.runner.paper.submit_paper_order", fake_submit)
+
+    result = _decide_signal(
+        signal_id=signal.id,
+        action=signal.action,
+        symbol=signal.symbol,
+        price=signal.price,
+        spec=spec,
+        allow_paper_orders=True,
+        require_review_consider=False,
+        review_result=None,
+        readiness=readiness,
+        root=sample_workspace,
+        client=object(),
+    )
+
+    assert result.decision == "paper_order_submitted"
+    assert captured["qty"] is None
+
+
+def _write_paper_validation_days(root: Path, spec_path: Path, count: int = 20) -> None:
+    spec = load_strategy_spec(spec_path)
+    policy = resolve_execution_policy(spec, root)
+    log_dir = root / "reports" / "paper" / "daily_cycle"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    day = date(2026, 6, 1)
+    for _ in range(count):
+        started_at = datetime(day.year, day.month, day.day, 14, tzinfo=UTC)
+        account_hash = hashlib.sha256(b"paper-account-test").hexdigest()
+        authorization = {
+            "strategy_name": spec.name,
+            "spec_hash": strategy_content_hash(spec),
+            "execution_policy_id": policy.policy_id if policy else None,
+            "execution_policy_hash": policy.content_hash if policy else None,
+            "authorization_kind": "full",
+            "execution_substate": "order_authorized",
+            "authorized": True,
+            "authorized_at": started_at.isoformat(),
+            "authorized_by": "test_operator",
+            "order_scope": "alpaca_paper_only",
+            "real_money_broker_writes": "out_of_scope",
+        }
+        authorization["authorization_id"] = (
+            "auth_"
+            + hashlib.sha256(
+                json.dumps(
+                    authorization,
+                    ensure_ascii=True,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest()[:16]
+        )
+        evidence = {
+            "target_weights": {"strategy_name": spec.name, "target_weights": []},
+            "review_card": {"strategy": spec.name, "date": day.isoformat()},
+            "state_drift": {
+                "report_type": "paper_state_drift",
+                "date": day.isoformat(),
+                "status": "ok",
+            },
+            "paper_readiness": {
+                "strategy_name": spec.name,
+                "status": "ok",
+                "execution_substate": "order_authorized",
+            },
+            "broker_sync": {"paper": True, "orders": []},
+            "broker_sync_receipt": {
+                "receipt_version": 1,
+                "receipt_source": "alpaca_paper_sync",
+                "paper": True,
+                "broker_account_id_hash": account_hash,
+            },
+            "paper_authorization": authorization,
+            "account_snapshot": {
+                "paper": True,
+                "broker_account_id_hash": account_hash,
+            },
+            "positions_snapshot": {"paper": True, "positions": []},
+            "paper_monitor": {
+                "status": "ok",
+                "sync_broker": True,
+                "sync_status": "ok",
+            },
+            "paper_cycle": {
+                "run_id": f"paper-{day:%Y%m%d}",
+                "strategy_name": spec.name,
+                "spec_hash": strategy_content_hash(spec),
+                "signals": [],
+            },
+        }
+        bindings = []
+        for role, evidence_payload in evidence.items():
+            evidence_path = root / "paper_evidence" / f"{spec.name}-{day:%Y%m%d}-{role}.json"
+            evidence_path.parent.mkdir(parents=True, exist_ok=True)
+            evidence_path.write_text(
+                json.dumps(evidence_payload, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            bindings.append(
+                {
+                    "role": role,
+                    "path": evidence_path.relative_to(root).as_posix(),
+                    "sha256": _sha256_file(evidence_path),
+                    "size_bytes": evidence_path.stat().st_size,
+                }
+            )
+        payload = {
+            "report_type": "daily_paper_cycle",
+            "cycle_receipt_version": 3,
+            "date": day.isoformat(),
+            "started_at": started_at.isoformat(),
+            "ended_at": (started_at + timedelta(minutes=5)).isoformat(),
+            "strategy": spec.name,
+            "spec_hash": strategy_content_hash(spec),
+            "active_spec_hash": strategy_content_hash(spec),
+            "active_spec_path": f"strategy_specs/active/{spec.name}.yaml",
+            "execution_policy_id": policy.policy_id if policy else None,
+            "execution_policy_hash": policy.content_hash if policy else None,
+            "status": "ok",
+            "paper_order_authorization": True,
+            "paper_authorization_substate": "order_authorized",
+            "previous_day_remediation_check": {"status": "ok"},
+            "steps": [
+                {"name": "readiness", "exit_code": 0},
+                {"name": "target_weights", "exit_code": 0},
+                {"name": "paper_cycle", "exit_code": 0},
+                {"name": "paper_monitor", "exit_code": 0},
+                {"name": "state_drift", "exit_code": 0},
+            ],
+            "artifact_paths": {},
+            "evidence_bindings": bindings,
+        }
+        path = log_dir / f"{spec.name}-{day:%Y%m%d}.json"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        day = next_us_equity_session(day)
+
+
+def _write_current_paper_snapshots(root: Path) -> None:
+    generated_at = datetime.now(UTC).isoformat()
+    paper_dir = root / "reports" / "paper"
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    (paper_dir / "account.json").write_text(
+        json.dumps(
+            {
+                "generated_at": generated_at,
+                "equity": 10000,
+                "cash": 5000,
+                "buying_power": 8000,
+                "portfolio_value": 10000,
+                "broker_account_id_hash": hashlib.sha256(b"paper-account-test").hexdigest(),
+                "status": "ACTIVE",
+                "paper": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (paper_dir / "positions.json").write_text(
+        json.dumps({"generated_at": generated_at, "paper": True, "positions": []}),
+        encoding="utf-8",
+    )
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def test_hybrid_open_to_open_paper_orders_require_open_window(sample_workspace: Path) -> None:
@@ -513,7 +802,7 @@ def test_adaptive_intraday_paper_cycle_exits_stale_position(
     assert signals[0].side == "sell"
     assert signals[0].qty == 10
     assert signals[0].target_weight == 0.0
-    assert signals[0].execution_backend == "nautilus_paper"
+    assert signals[0].execution_backend == "python_reference"
 
 
 def test_beta_router_paper_orders_require_open_window(sample_workspace: Path) -> None:

@@ -18,6 +18,13 @@ def load_ohlcv_for_spec(spec: StrategySpec, root: Path, refresh: bool = False) -
     if spec.data.source == "sample":
         return load_sample_ohlcv(root, spec)
     if spec.data.source == "alpaca":
+        assumptions = spec.data_assumptions.model_dump(mode="json")
+        if assumptions.get("immutable_snapshot_required") is True:
+            from open_composer.adapters.data.alpaca_snapshot import (
+                load_immutable_alpaca_snapshot,
+            )
+
+            return load_immutable_alpaca_snapshot(spec, root)
         return fetch_ohlcv(
             root=root,
             symbol=spec.primary_symbol,

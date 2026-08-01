@@ -21,6 +21,11 @@ PRESERVED_RUNTIME_RELPATHS = frozenset(
     }
 )
 
+PRESERVED_RUNTIME_PREFIXES = (
+    "reports/notifications",
+    "reports/paper",
+)
+
 
 @dataclass(frozen=True)
 class CacheTarget:
@@ -425,7 +430,10 @@ def _cleanable_target(key: str) -> CacheTarget:
 
 
 def _is_protected(path: Path, root: Path, tracked: set[str]) -> bool:
-    return _relpath(path, root) in tracked
+    relpath = _relpath(path, root)
+    return relpath in tracked or any(
+        _path_is_relative_to(Path(relpath), Path(prefix)) for prefix in PRESERVED_RUNTIME_PREFIXES
+    )
 
 
 def _relpath(path: Path, root: Path) -> str:

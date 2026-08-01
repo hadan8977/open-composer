@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import os
+import stat
+import tempfile
 import time
 from collections import Counter
 from datetime import UTC, datetime
@@ -19,6 +23,7 @@ from open_composer.models.paper import (
     PaperStatusSnapshot,
 )
 from open_composer.notifications import safe_dispatch_notification
+from open_composer.paper_lock import paper_control_lock
 from open_composer.storage import append_jsonl, write_json
 from open_composer.strategy_lifecycle import list_strategies
 
@@ -31,13 +36,29 @@ OPEN_ORDER_STATUSES = {
     "submitted",
 }
 PAPER_SNAPSHOT_STALE_SECONDS = 15 * 60
+KILL_SWITCH_CONTROL_VERSION = 2
 
 
-def load_paper_kill_switch(root: Path | None = None) -> PaperKillSwitch:
-    path = _kill_switch_path(root or project_root())
-    if not path.exists():
+def load_paper_kill_switch(
+    root: Path | None = None,
+    *,
+    require_control_file: bool = False,
+) -> PaperKillSwitch:
+    base = root or project_root()
+    path = _kill_switch_path(base)
+    try:
+        payload = _read_unaliased_json(path, base)
+    except FileNotFoundError:
+        if require_control_file:
+            raise
         return PaperKillSwitch()
-    return PaperKillSwitch.model_validate_json(path.read_text(encoding="utf-8"))
+    history = _read_kill_switch_history(base)
+    if not history:
+        raise ValueError("paper kill-switch immutable history is missing")
+    state = _validate_kill_switch_payload(payload)
+    if state.model_dump(mode="json") != history[-1].model_dump(mode="json"):
+        raise ValueError("paper kill-switch pointer is not the latest immutable event")
+    return state
 
 
 def set_paper_kill_switch(
@@ -48,16 +69,34 @@ def set_paper_kill_switch(
     updated_by: str = "system",
 ) -> PaperKillSwitch:
     base = root or project_root()
-    state = PaperKillSwitch(
-        enabled=enabled,
-        reason=reason.strip(),
-        updated_by=updated_by,
-        updated_at=datetime.now(UTC),
-    )
-    path = _kill_switch_path(base)
-    ensure_dir(path.parent)
-    write_json(path, state)
-    append_jsonl(base / "reports" / "paper" / "kill_switch_events.jsonl", [state])
+    with paper_control_lock(base):
+        history = _read_kill_switch_history(base)
+        previous = history[-1] if history else None
+        sequence = previous.sequence + 1 if previous is not None else 1
+        previous_hash = (
+            _canonical_hash(previous.model_dump(mode="json")) if previous is not None else None
+        )
+        updated_at = datetime.now(UTC).isoformat()
+        body = {
+            "control_version": KILL_SWITCH_CONTROL_VERSION,
+            "sequence": sequence,
+            "previous_event_hash": previous_hash,
+            "enabled": enabled,
+            "reason": reason.strip(),
+            "updated_by": updated_by,
+            "updated_at": updated_at,
+        }
+        state = PaperKillSwitch(**body)
+        canonical_body = state.model_dump(mode="json")
+        canonical_body.pop("event_id")
+        state = state.model_copy(
+            update={"event_id": "kill_" + _canonical_hash(canonical_body)[:16]}
+        )
+        path = _kill_switch_path(base)
+        ensure_dir(path.parent)
+        _write_immutable_kill_switch_event(base, state)
+        _atomic_write_control(path, state.model_dump(mode="json"))
+        append_jsonl(base / "reports" / "paper" / "kill_switch_events.jsonl", [state])
     safe_dispatch_notification(
         kind="kill_switch",
         severity="red",
@@ -67,6 +106,165 @@ def set_paper_kill_switch(
         root=base,
     )
     return state
+
+
+def _kill_switch_history_dir(root: Path) -> Path:
+    return root / "reports" / "paper" / "control_history" / "kill_switch"
+
+
+def _read_kill_switch_history(root: Path) -> list[PaperKillSwitch]:
+    directory = _kill_switch_history_dir(root)
+    if not directory.exists():
+        return []
+    if directory.is_symlink() or not directory.is_dir():
+        raise ValueError("paper kill-switch history directory is invalid")
+    states: list[PaperKillSwitch] = []
+    for path in sorted(directory.glob("*.json")):
+        payload = _read_unaliased_json(path, root)
+        state = _validate_kill_switch_payload(payload)
+        if path.name != f"{state.event_id}.json":
+            raise ValueError("paper kill-switch history path does not match its event id")
+        states.append(state)
+    states.sort(key=lambda item: item.sequence)
+    if [item.sequence for item in states] != list(range(1, len(states) + 1)):
+        raise ValueError("paper kill-switch history sequence is not contiguous")
+    previous: PaperKillSwitch | None = None
+    for state in states:
+        expected_hash = (
+            _canonical_hash(previous.model_dump(mode="json")) if previous is not None else None
+        )
+        if state.previous_event_hash != expected_hash:
+            raise ValueError("paper kill-switch history previous hash mismatch")
+        previous = state
+    return states
+
+
+def _validate_kill_switch_payload(payload: object) -> PaperKillSwitch:
+    if not isinstance(payload, dict):
+        raise ValueError("paper kill-switch control must be a JSON object")
+    required = set(PaperKillSwitch.model_fields)
+    if set(payload) != required:
+        raise ValueError("paper kill-switch control fields are incomplete")
+    state = PaperKillSwitch.model_validate(payload)
+    if state.control_version != KILL_SWITCH_CONTROL_VERSION or state.sequence < 1:
+        raise ValueError("paper kill-switch control version or sequence is invalid")
+    body = state.model_dump(mode="json")
+    event_id = body.pop("event_id")
+    if event_id != "kill_" + _canonical_hash(body)[:16]:
+        raise ValueError("paper kill-switch event id is invalid")
+    if state.sequence == 1 and state.previous_event_hash is not None:
+        raise ValueError("paper kill-switch initial event has an invalid predecessor")
+    if state.sequence > 1 and not _is_sha256(state.previous_event_hash):
+        raise ValueError("paper kill-switch predecessor hash is invalid")
+    return state
+
+
+def _write_immutable_kill_switch_event(root: Path, state: PaperKillSwitch) -> Path:
+    directory = _kill_switch_history_dir(root)
+    ensure_dir(directory)
+    if directory.is_symlink():
+        raise ValueError("paper kill-switch history directory cannot be a symlink")
+    path = directory / f"{state.event_id}.json"
+    encoded = _encoded_json(state.model_dump(mode="json"))
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o400)
+    except FileExistsError:
+        existing = _read_unaliased_json(path, root)
+        if existing != state.model_dump(mode="json"):
+            raise ValueError("paper kill-switch immutable event already differs") from None
+        return path
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except Exception:
+        path.unlink(missing_ok=True)
+        raise
+    _fsync_directory(directory)
+    return path
+
+
+def _atomic_write_control(path: Path, payload: dict[str, object]) -> None:
+    ensure_dir(path.parent)
+    encoded = _encoded_json(payload)
+    with tempfile.NamedTemporaryFile(
+        mode="wb",
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        delete=False,
+    ) as handle:
+        temporary = Path(handle.name)
+        handle.write(encoded)
+        handle.flush()
+        os.fsync(handle.fileno())
+    try:
+        os.chmod(temporary, 0o400)
+        os.replace(temporary, path)
+        _fsync_directory(path.parent)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _read_unaliased_json(path: Path, root: Path) -> dict[str, object]:
+    _require_unaliased_path(path, root)
+    flags = os.O_RDONLY | os.O_NOFOLLOW
+    fd = os.open(path, flags)
+    try:
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise ValueError("paper control artifact must be an unaliased regular file")
+        with os.fdopen(fd, "r", encoding="utf-8") as handle:
+            fd = -1
+            payload = json.load(handle)
+    finally:
+        if fd >= 0:
+            os.close(fd)
+    if not isinstance(payload, dict):
+        raise ValueError("paper control artifact must be a JSON object")
+    return payload
+
+
+def _require_unaliased_path(path: Path, root: Path) -> None:
+    absolute_root = root.absolute()
+    absolute_path = path.absolute()
+    try:
+        relative = absolute_path.relative_to(absolute_root)
+    except ValueError as exc:
+        raise ValueError("paper control artifact escapes the project root") from exc
+    current = absolute_root
+    if current.is_symlink():
+        raise ValueError("project root cannot be a symlink for paper controls")
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError("paper control artifact path cannot contain symlinks")
+
+
+def _canonical_hash(payload: object) -> str:
+    encoded = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _is_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def _encoded_json(payload: object) -> bytes:
+    return (json.dumps(payload, indent=2, sort_keys=True, default=str) + "\n").encode("utf-8")
+
+
+def _fsync_directory(path: Path) -> None:
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
 
 
 def enable_paper_kill_switch(
@@ -98,7 +296,10 @@ def clear_paper_kill_switch(
 
 
 def paper_orders_blocked(root: Path | None = None) -> bool:
-    return load_paper_kill_switch(root).enabled
+    try:
+        return load_paper_kill_switch(root, require_control_file=True).enabled
+    except (OSError, ValueError):
+        return True
 
 
 def build_paper_status(

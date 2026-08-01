@@ -1,0 +1,57 @@
+{
+  "strategy_name": "us_multiasset_forward_mm_r5_l01",
+  "policy_id": "multiasset_mm_r5_opg_limit_v1",
+  "generated_at": "2026-07-30",
+  "generated_from_inline_strategy_spec": true,
+  "slippage_scenarios": [
+    {
+      "name": "primary",
+      "slippage_bps": 10.0,
+      "open_gap_pct": 0.5
+    },
+    {
+      "name": "stress",
+      "slippage_bps": 20.0,
+      "open_gap_pct": 1.5
+    },
+    {
+      "name": "severe_report_only",
+      "slippage_bps": 35.0,
+      "open_gap_pct": 2.5
+    }
+  ],
+  "gap_stress": {
+    "max_adverse_gap_pct": 2.5,
+    "fill_model_gap_handling": "next_regular_open_with_policy",
+    "recommended_gap_filter": "skip when abs(gap_pct) > 2.5",
+    "scenarios": [
+      {
+        "name": "primary",
+        "slippage_bps": 10.0,
+        "open_gap_pct": 0.5
+      },
+      {
+        "name": "stress",
+        "slippage_bps": 20.0,
+        "open_gap_pct": 1.5
+      },
+      {
+        "name": "severe_report_only",
+        "slippage_bps": 35.0,
+        "open_gap_pct": 2.5
+      }
+    ]
+  },
+  "capacity_assessment": {
+    "max_position_weight": 0.34,
+    "max_trades_per_day": 6,
+    "notes": "Capacity is bounded by max_position_weight and max_trades_per_day. Estimated order size as %ADV must be reviewed before paper_auto."
+  },
+  "tca_reference_prices": [
+    "decision_price",
+    "official_open",
+    "arrival_price",
+    "vwap"
+  ],
+  "fill_model": "next_regular_open_with_policy"
+}

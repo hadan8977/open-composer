@@ -14,6 +14,10 @@ from open_composer.market_calendar import (
 
 def test_us_equity_calendar_handles_holidays_early_close_and_dst() -> None:
     assert us_equity_session_close(date(2026, 7, 3)) is None
+    assert us_equity_session_close(date(2025, 1, 9)) is None
+    assert us_equity_session_close(date(2018, 12, 5)) is None
+    assert us_equity_session_close(date(2021, 6, 18)) is not None
+    assert us_equity_session_close(date(2022, 6, 20)) is None
     assert len(expected_rth_bar_closes(date(2026, 11, 27))) == 6
     winter = min(expected_rth_bar_closes(date(2026, 1, 6)))
     summer = min(expected_rth_bar_closes(date(2026, 7, 2)))

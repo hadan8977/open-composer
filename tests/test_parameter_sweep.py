@@ -232,13 +232,15 @@ def test_parameter_sweep_random_respects_budget_seed_and_records_optimizer(
     assert trial["seed"] == 7
 
 
-def test_parameter_sweep_cli_writes_reports(sample_workspace: Path, monkeypatch) -> None:
+def test_parameter_sweep_cli_writes_reports(
+    sample_workspace: Path,
+    monkeypatch,
+    preregister_iteration_dossier,
+) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
-    init_research_brief(
-        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
-        sample_workspace,
-        search_budget=4,
-    )
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    preregister_iteration_dossier(spec_path, candidate_count=4)
+    init_research_brief(spec_path, sample_workspace, search_budget=4)
     runner = CliRunner()
 
     result = runner.invoke(
@@ -246,7 +248,7 @@ def test_parameter_sweep_cli_writes_reports(sample_workspace: Path, monkeypatch)
         [
             "strategy",
             "parameter-sweep",
-            str(sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"),
+            str(spec_path),
             "--param",
             "risk.take_profit_pct=1.5,2.0",
             "--param",
@@ -298,6 +300,7 @@ def test_search_space_reads_top_level_research_design(sample_workspace: Path) ->
 def test_parameter_sweep_from_spec_uses_research_design(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
@@ -308,6 +311,7 @@ def test_parameter_sweep_from_spec_uses_research_design(
         "selection_objective": "test_top_level_design",
     }
     spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    preregister_iteration_dossier(spec_path, candidate_count=3)
     init_research_brief(spec_path, sample_workspace, search_budget=3)
 
     assert sweep_parameters_from_spec(spec_path, sample_workspace)["risk.stop_loss_pct"] == [

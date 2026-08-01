@@ -1,0 +1,38 @@
+{
+  "strategy_name": "us_multiscale_low_turnover_r6",
+  "iter_id": "mom_multiscale_low_turnover_r6",
+  "policy_id": "observation_only_us_multiscale_low_turnover_r6_v1",
+  "generated_at": "2026-07-19",
+  "execution_authorized": false,
+  "order_style": "none_observation_only",
+  "time_in_force": "not_applicable_until_research_and_TCA_pass",
+  "historical_fill_assumptions": ["prior_close_signal_then_next_IEX_daily_open", "D06_only_prior_close_plus_first_hour_then_10:30_IEX_bar_open"],
+  "price_protection": {"required": true, "future_reference": "arrival_quote_relative_limit", "live_parameters_authorized": false},
+  "gap_filter": {"status": "not_calibrated", "action": "block_order_path"},
+  "spread_filter": {"status": "not_calibrated", "action": "block_order_path"},
+  "participation_cap": {"status": "blocked_without_notional_consolidated_volume_and_auction_volume", "maximum_pct": null},
+  "fallback_behavior": {"market_order_fallback": false, "missing_or_stale_quote": "skip", "late_signal": "skip", "partial_fill": "cancel_remainder_at_window_end", "duplicate_signal": "reject_same_deterministic_client_order_id"},
+  "alternatives_compared": ["MOO_OPG", "marketable_LOO_OPG", "delayed_10:30_marketable_limit", "short_TWAP_with_limit"],
+  "alternatives_detail": [
+    {"order_style": "MOO_OPG", "price_protection": "none", "fill_certainty": "high_if_eligible_and_timely", "slippage_risk": "high_on_gap_or_auction_imbalance", "complexity": "medium", "decision": "TCA_challenger_only"},
+    {"order_style": "marketable_LOO_OPG", "price_protection": "explicit_limit", "fill_certainty": "medium", "slippage_risk": "bounded_price_with_missed_fill_risk", "complexity": "medium", "decision": "preferred_future_auction_challenger"},
+    {"order_style": "delayed_10:30_marketable_limit", "price_protection": "arrival_quote_limit", "fill_certainty": "medium", "slippage_risk": "avoids_opening_auction_but_adds_signal_decay", "complexity": "low", "decision": "required_D06_and_execution_challenger"},
+    {"order_style": "short_TWAP_with_limit", "price_protection": "limit_and_participation_controls", "fill_certainty": "medium_high", "slippage_risk": "reduces_point_price_dependency_but_adds_path_risk", "complexity": "high", "decision": "capacity_challenger_only"}
+  ],
+  "risk_controls": {"maximum_position_weight": 0.4, "maximum_positions": 3, "same_day_flatten": false, "market_order_fallback": false, "skip_on_stale_or_missing_quote": true, "duplicate_order_policy": "deterministic_client_order_id_then_reconcile_before_retry"},
+  "tca_plan": {
+    "enabled": true,
+    "reference_prices": ["decision_close", "official_primary_open", "IEX_daily_open", "arrival_bid_ask_mid", "first_fill", "volume_weighted_fill", "10:30_reference", "next_open_mark"],
+    "record_decided_at": true,
+    "record_submitted_at": true,
+    "record_accepted_at": true,
+    "record_first_fill_at": true,
+    "record_fill_price": true,
+    "record_slippage_vs_reference": true,
+    "metrics": ["fill_rate", "implementation_shortfall", "effective_spread", "realized_spread", "adverse_movement", "participation_rate", "MOO_vs_LOO_vs_delayed_shortfall"],
+    "review_frequency": "weekly"
+  },
+  "source_card_ids": ["r6_nyse_arca_auction_timeline", "r6_nasdaq_opening_cross_timeline", "r6_alpaca_opg_constraints", "r6_alpaca_paper_model_omissions", "r6_finra_execution_quality_factors", "r6_rule605_tca_measurements"],
+  "recommendation_rationale": "No order path is authorized because R6 fails the historical and DSR gates, violates position-cap contracts in several candidates, and has no consolidated arrival/fill ledger.",
+  "naked_market_justification": null
+}

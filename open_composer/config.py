@@ -90,7 +90,7 @@ def _codex_responses_base_url() -> str | None:
 
 
 def alpaca_paper_enabled() -> bool:
-    return os.getenv("ALPACA_PAPER", "true").strip().lower() == "true"
+    return os.getenv("ALPACA_PAPER", "false").strip().lower() == "true"
 
 
 def alpaca_api_key_id() -> str | None:

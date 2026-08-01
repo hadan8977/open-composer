@@ -281,11 +281,15 @@ def _method_families(spec: StrategySpec) -> list[str]:
     if isinstance(legacy, dict):
         for item in legacy.get("method_variants", []) or []:
             text = str(item).lower()
+            normalized = text.replace("-", "_").replace(" ", "_")
             if "short" in text:
                 families.add("shorting")
-            if "inverse" in text or "sqqq" in text:
+            if "inverse_etf" in normalized or any(
+                symbol.lower() in normalized
+                for symbol in ["sqqq", "soxs", "tecs", "spxu", "fngd", "labd", "uvxy"]
+            ):
                 families.add("inverse_etf")
-            if "vix" in text or "vol" in text:
+            if "vix" in normalized or "volatility_etp" in normalized or "uvxy" in normalized:
                 families.add("vix")
     return sorted(families)
 

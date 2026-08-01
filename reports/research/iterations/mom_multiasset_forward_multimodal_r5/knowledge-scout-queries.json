@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "provider": "curated_arxiv_official_page_after_api_timeout",
+  "generated_before_scout": true,
+  "max_results_per_query": 5,
+  "queries": [],
+  "deferred_queries": [
+    {
+      "query_id": "etf_momentum_ml",
+      "query": "(cat:q-fin.PM OR cat:q-fin.ST) AND all:ETF AND all:momentum AND all:\"machine learning\"",
+      "topics": ["ETF momentum", "machine learning", "cross-sectional ranking"]
+    },
+    {
+      "query_id": "cross_sectional_momentum_ml",
+      "query": "cat:q-fin.PM AND all:\"cross-sectional momentum\" AND all:\"machine learning\"",
+      "topics": ["cross-sectional momentum", "ranking", "walk-forward validation"]
+    },
+    {
+      "query_id": "llm_alpha_generation",
+      "query": "cat:q-fin.ST AND (all:\"large language model\" OR all:LLM) AND (all:factor OR all:alpha)",
+      "topics": ["LLM factor generation", "formula features", "empirical validation"]
+    },
+    {
+      "query_id": "calibrated_financial_risk",
+      "query": "(cat:q-fin.RM OR cat:q-fin.PM) AND all:calibration AND all:\"machine learning\"",
+      "topics": ["probability calibration", "risk rejection", "Brier score"]
+    },
+    {
+      "query_id": "cost_and_placebo_controls",
+      "query": "cat:q-fin.PM AND (all:\"transaction costs\" OR all:placebo) AND all:\"machine learning\"",
+      "topics": ["transaction costs", "placebo controls", "multiple testing"]
+    }
+  ],
+  "network_query_deferral": {
+    "attempted_at": "2026-07-28T16:56:00Z",
+    "reason": "export_arxiv_org_api_timed_out_without_response",
+    "candidate_or_gate_change_authorized": false
+  },
+  "curated_candidates": [
+    {
+      "discovery_id": "r5-leakage-aware-matched-baseline",
+      "url": "https://arxiv.org/abs/2606.22719",
+      "title": "Leakage-Aware Benchmarking of LLM Forecasting: Real-Time Nowcasts as the Decision-Time Input for Macro Factor Ranking",
+      "summary": "A decision-time constrained LLM factor-ranking study reports that a matched kNN macro-analog baseline recovers a comparable median rank IC; the mean IC remains statistically underpowered with a bootstrap confidence interval that includes zero.",
+      "published_at": "2026-06-21T00:00:00Z",
+      "authors": ["Mao Guan", "Qian Chen"],
+      "source_type": "paper",
+      "topics": ["point-in-time validation", "LLM factor generation", "matched non-LLM baseline"]
+    }
+  ]
+}

@@ -205,6 +205,47 @@ class TestRecommendAlternative:
 
 
 class TestGenerateExecutionPolicyArtifacts:
+    def test_inline_strategy_policy_is_source_of_truth(self, minimal_workspace: Path) -> None:
+        spec_path = minimal_workspace / "inline_policy.yaml"
+        spec_path.write_text(_inline_policy_spec(), encoding="utf-8")
+
+        result = generate_execution_policy_artifacts(
+            spec_path=spec_path,
+            root=minimal_workspace,
+            overwrite=True,
+        )
+
+        policy = json.loads(result.policy_path.read_text(encoding="utf-8"))
+        assert policy["generated_from_inline_strategy_spec"] is True
+        assert policy["policy_id"] == "inline-opg-v1"
+        assert policy["price_protection"]["limit_offset_bps"] == 20.0
+        assert policy["gap_filter"]["max_open_gap_pct"] == 2.5
+        assert policy["spread_filter"] == {
+            "enabled": True,
+            "max_spread_bps": 15.0,
+            "action_on_exceed": "skip",
+        }
+        assert policy["participation_cap"]["max_adv_pct"] == 0.01
+        assert policy["fallback_behavior"]["if_spread_exceeds_limit"] == "skip"
+        assert policy["tca_plan"]["reference_prices"] == [
+            "decision_price",
+            "official_open",
+            "arrival_price",
+            "vwap",
+        ]
+
+    def test_inline_policy_rejects_source_card_override(self, minimal_workspace: Path) -> None:
+        spec_path = minimal_workspace / "inline_policy.yaml"
+        spec_path.write_text(_inline_policy_spec(), encoding="utf-8")
+
+        with pytest.raises(ValueError, match="must match the inline StrategySpec"):
+            generate_execution_policy_artifacts(
+                spec_path=spec_path,
+                root=minimal_workspace,
+                overwrite=True,
+                source_card_ids=["different-card"],
+            )
+
     def test_generates_required_artifacts(self, minimal_workspace: Path) -> None:
         spec_path = (
             minimal_workspace / "strategies" / "fixture_pullback_15m" / "fixture_pullback_15m.yaml"
@@ -292,3 +333,55 @@ class TestGenerateExecutionPolicyArtifacts:
         assert len(reality["slippage_scenarios"]) >= 2
         for scenario in reality["slippage_scenarios"]:
             assert "slippage_bps" in scenario
+
+
+def _inline_policy_spec() -> str:
+    return """
+name: inline_policy_test
+description: Inline policy must remain the source of truth.
+timeframe: daily
+universe: [SPY]
+lifecycle: draft
+entry:
+  all: ["close > sma(close, 20)"]
+exit:
+  all: ["close <= sma(close, 20)"]
+risk:
+  max_trades_per_day: 1
+  max_position_weight: 0.4
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+execution_policy:
+  policy_id: inline-opg-v1
+  order_style: opg_limit
+  time_in_force: opg
+  price_protection:
+    limit_offset_bps: 20
+    max_open_gap_pct: 2.5
+    max_spread_bps: 15
+  participation_cap:
+    max_adv_pct: 0.01
+    max_open_bar_volume_pct: 0.1
+  fallback_behavior:
+    if_not_filled: skip
+    if_gap_exceeds_limit: skip
+    if_spread_exceeds_limit: skip
+  tca:
+    enabled: true
+    compare_to: [decision_price, official_open, arrival_price, vwap]
+    record_submitted_at: true
+    record_fill_price: true
+    review_frequency: weekly
+  alternatives_compared: [moo_market, opg_limit, delayed_open_30m_shadow]
+  source_card_ids: [inline-card]
+reality_model:
+  fill_model: next_regular_open_with_policy
+  slippage_model: stress_bps_by_volatility_and_participation
+  stress_scenarios:
+    - {name: primary, slippage_bps: 10, open_gap_pct: 0.5}
+    - {name: stress, slippage_bps: 20, open_gap_pct: 1.5}
+"""

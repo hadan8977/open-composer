@@ -1173,7 +1173,7 @@ def doctor(
                 optional_env_status("ALPACA_API_SECRET_KEY"),
                 "optional for Alpaca",
             ),
-            ("ALPACA_PAPER", os.getenv("ALPACA_PAPER", "true"), "must remain true for orders"),
+            ("ALPACA_PAPER", os.getenv("ALPACA_PAPER", "false"), "must be true for paper orders"),
             ("ALPACA_API_BASE_URL", alpaca_api_base_url(), "paper trading endpoint"),
             ("ALPACA_DATA_FEED", data_feed(), "default feed"),
             (
@@ -2746,6 +2746,42 @@ def data_minute_momentum_feasibility(
     console.print(f"manifest: {result.manifest_path}")
 
 
+@data_app.command("freeze-alpaca-contract")
+def data_freeze_alpaca_contract(contract: Path) -> None:
+    """Materialize a fail-closed immutable Alpaca SIP snapshot contract."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.adapters.data.alpaca_snapshot import (
+        materialize_alpaca_contract_snapshot,
+    )
+
+    try:
+        manifest = materialize_alpaca_contract_snapshot(
+            project_root(),
+            contract,
+        )
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[green]immutable Alpaca snapshot frozen[/green] manifest={manifest}")
+
+
+@data_app.command("verify-alpaca-snapshot")
+def data_verify_alpaca_snapshot(manifest: Path) -> None:
+    """Verify an immutable Alpaca snapshot and every bound normalized/raw hash."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.adapters.data.alpaca_snapshot import (
+        verify_alpaca_contract_snapshot,
+    )
+
+    try:
+        payload = verify_alpaca_contract_snapshot(project_root(), manifest)
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]immutable Alpaca snapshot verified[/green] "
+        f"requests={payload['request_count']} manifest={manifest}"
+    )
+
+
 @data_app.command("stock-momentum-feasibility")
 def data_stock_momentum_feasibility(
     snapshot: Annotated[
@@ -3686,6 +3722,369 @@ def strategy_multiasset_momentum_ai(
             f"challenge={row['historical_challenge_pass']} "
             f"status={row['virtual_paper_status']}"
         )
+
+
+@strategy_app.command("robust-momentum-r4-prepare")
+def strategy_robust_momentum_r4_prepare() -> None:
+    """Freeze and audit the local diagnostic inputs for robust momentum R4."""
+    from open_composer.research.robust_momentum_r4 import (
+        prepare_robust_momentum_inputs,
+    )
+
+    try:
+        payload = prepare_robust_momentum_inputs(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]robust momentum R4 inputs frozen[/green] "
+        f"symbols={payload['selected_symbol_count']} "
+        f"sessions={payload['exact_common_session_count']} "
+        f"authorized={payload['diagnostic_execution_authorized']}"
+    )
+    feasibility_path = (
+        project_root() / "reports/research/iterations/mom_robust_momentum_r4/data-feasibility.json"
+    )
+    console.print(f"data feasibility: {feasibility_path}")
+
+
+@strategy_app.command("robust-momentum-r4-diagnostics")
+def strategy_robust_momentum_r4_diagnostics() -> None:
+    """Run the preregistered robust momentum R4 diagnostic family."""
+    from open_composer.research.robust_momentum_r4 import (
+        run_robust_momentum_r4,
+    )
+
+    try:
+        result = run_robust_momentum_r4(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    leader = result.payload["diagnostic_leader"]
+    console.print(
+        "[green]robust momentum R4 diagnostics complete[/green] "
+        f"leader={leader['candidate_id']} "
+        f"research_pass={result.payload['research_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"trial ledger: {result.trial_ledger_path}")
+
+
+@strategy_app.command("spy-dual-trend-r8-evaluate")
+def strategy_spy_dual_trend_r8_evaluate() -> None:
+    """Run the single immutable R8 historical robustness evaluation."""
+    from open_composer.research.spy_dual_trend_r8 import run_spy_dual_trend_r8
+
+    try:
+        result = run_spy_dual_trend_r8(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]SPY dual-trend R8 evaluation complete[/green] "
+        f"decision={result.payload['decision']} "
+        f"historical_pass={result.payload['historical_robustness_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"trial ledger: {result.trial_ledger_path}")
+
+
+@strategy_app.command("etf-structural-r9-evaluate")
+def strategy_etf_structural_r9_evaluate() -> None:
+    """Run the preregistered four-candidate R9 ETF structural evaluation."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.research.etf_structural_r9 import run_etf_structural_r9
+
+    try:
+        result = run_etf_structural_r9(project_root())
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]ETF structural R9 evaluation complete[/green] "
+        f"decision={result.payload['decision']} "
+        f"research_pass={result.payload['research_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"trial ledger: {result.trial_ledger_path}")
+
+
+@strategy_app.command("multiasset-forward-mm-r4-evaluate")
+def strategy_multiasset_forward_mm_r4_evaluate(
+    lock_anchor_sha256: Annotated[
+        str,
+        typer.Option(
+            "--lock-anchor-sha256",
+            help="Operator-recorded SHA-256 printed by the R4 freeze command.",
+        ),
+    ],
+) -> None:
+    """Run the locked eight-candidate R4 multimodal ETF evaluation once."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.research.multiasset_forward_multimodal_r4 import (
+        run_multiasset_forward_multimodal_r4,
+    )
+
+    try:
+        result = run_multiasset_forward_multimodal_r4(
+            project_root(),
+            expected_lock_anchor_sha256=lock_anchor_sha256,
+        )
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]multiasset forward multimodal R4 evaluation complete[/green] "
+        f"decision={result.payload['decision']} "
+        f"research_pass={result.payload['research_pass']} "
+        f"llm_contribution_pass={result.payload['llm_contribution_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"receipt: {result.receipt_path}")
+
+
+@strategy_app.command("multiasset-forward-mm-r4-freeze")
+def strategy_multiasset_forward_mm_r4_freeze() -> None:
+    """Freeze R4 contracts and runner bytes before the first price evaluation."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.research.multiasset_forward_multimodal_r4 import (
+        freeze_multiasset_forward_multimodal_r4,
+    )
+
+    try:
+        result = freeze_multiasset_forward_multimodal_r4(project_root())
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]multiasset forward multimodal R4 locked[/green]")
+    console.print(f"preregistration lock: {result.preregistration_lock_path}")
+    console.print(f"runner lock: {result.runner_lock_path}")
+    console.print(f"lock anchor: {result.lock_anchor_path}")
+    console.print(f"operator lock anchor sha256: {result.lock_anchor_sha256}")
+
+
+@strategy_app.command("multiasset-forward-mm-r5-evaluate")
+def strategy_multiasset_forward_mm_r5_evaluate(
+    lock_anchor_sha256: Annotated[
+        str,
+        typer.Option(
+            "--lock-anchor-sha256",
+            help="Operator-recorded SHA-256 printed by the R5 freeze command.",
+        ),
+    ],
+    custody_dir: Annotated[
+        Path,
+        typer.Option(
+            "--custody-dir",
+            help="Absolute operator-controlled custody directory outside the worktree.",
+        ),
+    ],
+) -> None:
+    """Run the locked eight-candidate R5 multimodal ETF evaluation once."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.research.multiasset_forward_multimodal_r5 import (
+        run_multiasset_forward_multimodal_r5,
+    )
+
+    try:
+        result = run_multiasset_forward_multimodal_r5(
+            project_root(),
+            expected_lock_anchor_sha256=lock_anchor_sha256,
+            custody_dir=custody_dir,
+        )
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]multiasset forward multimodal R5 evaluation complete[/green] "
+        f"decision={result.payload['decision']} "
+        f"research_pass={result.payload['research_pass']} "
+        f"llm_contribution_pass={result.payload['llm_contribution_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"receipt: {result.receipt_path}")
+    console.print(f"evaluation anchor: {result.evaluation_anchor_path}")
+    console.print(f"evaluation anchor file sha256: {result.evaluation_anchor_sha256}")
+    console.print(f"operator evaluation anchor sha256: {result.operator_evaluation_anchor_sha256}")
+    console.print(f"external custody receipt: {result.custody_receipt_path}")
+    console.print(f"external custody receipt sha256: {result.custody_receipt_sha256}")
+
+
+@strategy_app.command("multiasset-forward-mm-r6-freeze")
+def strategy_multiasset_forward_mm_r6_freeze() -> None:
+    """Freeze R6 contracts and implementation before the one-shot evaluation."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.research.multiasset_forward_multimodal_r6 import (
+        freeze_multiasset_forward_multimodal_r6,
+    )
+
+    try:
+        result = freeze_multiasset_forward_multimodal_r6(project_root())
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]multiasset forward multimodal R6 locked[/green]")
+    console.print(f"preregistration lock: {result.preregistration_lock_path}")
+    console.print(f"lock anchor: {result.lock_anchor_path}")
+    console.print(f"operator lock anchor sha256: {result.lock_anchor_sha256}")
+
+
+@strategy_app.command("multiasset-forward-mm-r6-evaluate")
+def strategy_multiasset_forward_mm_r6_evaluate(
+    lock_anchor_sha256: Annotated[
+        str,
+        typer.Option(
+            "--lock-anchor-sha256",
+            help="Operator-recorded SHA-256 printed by the R6 freeze command.",
+        ),
+    ],
+) -> None:
+    """Run the locked eight-candidate R6 multimodal ETF evaluation once."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.research.multiasset_forward_multimodal_r6 import (
+        run_multiasset_forward_multimodal_r6,
+    )
+
+    try:
+        result = run_multiasset_forward_multimodal_r6(
+            project_root(),
+            expected_lock_anchor_sha256=lock_anchor_sha256,
+        )
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]multiasset forward multimodal R6 evaluation complete[/green] "
+        f"decision={result.payload['decision']} "
+        f"research_pass={result.payload['research_pass']} "
+        f"llm_contribution_pass={result.payload['llm_contribution_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"receipt: {result.receipt_path}")
+
+
+@strategy_app.command("multiasset-forward-mm-r5-freeze")
+def strategy_multiasset_forward_mm_r5_freeze(
+    custody_dir: Annotated[
+        Path,
+        typer.Option(
+            "--custody-dir",
+            help="Absolute operator-controlled custody directory outside the worktree.",
+        ),
+    ],
+) -> None:
+    """Freeze R5 contracts and runner bytes before the first price evaluation."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.research.multiasset_forward_multimodal_r5 import (
+        freeze_multiasset_forward_multimodal_r5,
+    )
+
+    try:
+        result = freeze_multiasset_forward_multimodal_r5(
+            project_root(),
+            custody_dir=custody_dir,
+        )
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]multiasset forward multimodal R5 locked[/green]")
+    console.print(f"preregistration lock: {result.preregistration_lock_path}")
+    console.print(f"runner lock: {result.runner_lock_path}")
+    console.print(f"lock anchor: {result.lock_anchor_path}")
+    console.print(f"operator lock anchor sha256: {result.lock_anchor_sha256}")
+    console.print(f"external custody receipt: {result.custody_receipt_path}")
+    console.print(f"external custody receipt sha256: {result.custody_receipt_sha256}")
+
+
+@strategy_app.command("multiasset-forward-mm-r5-finalize")
+def strategy_multiasset_forward_mm_r5_finalize(
+    lock_anchor_sha256: Annotated[
+        str,
+        typer.Option(
+            "--lock-anchor-sha256",
+            help="Operator-recorded SHA-256 printed by the R5 freeze command.",
+        ),
+    ],
+    custody_dir: Annotated[
+        Path,
+        typer.Option(
+            "--custody-dir",
+            help="Absolute operator-controlled custody directory outside the worktree.",
+        ),
+    ],
+) -> None:
+    """Recover publication of a sealed R5 evaluation without recomputing prices."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.research.multiasset_forward_multimodal_r5 import (
+        finalize_multiasset_forward_multimodal_r5,
+    )
+
+    try:
+        result = finalize_multiasset_forward_multimodal_r5(
+            project_root(),
+            expected_lock_anchor_sha256=lock_anchor_sha256,
+            custody_dir=custody_dir,
+        )
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]multiasset forward multimodal R5 publication finalized[/green]")
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"receipt: {result.receipt_path}")
+    console.print(f"evaluation anchor: {result.evaluation_anchor_path}")
+    console.print(f"external custody receipt: {result.custody_receipt_path}")
+    console.print(f"external custody receipt sha256: {result.custody_receipt_sha256}")
+
+
+@strategy_app.command("multiasset-forward-mm-r5-state")
+def strategy_multiasset_forward_mm_r5_state() -> None:
+    """Classify the R5 one-shot state without reading market prices."""
+    from open_composer.research.multiasset_forward_multimodal_r5 import (
+        classify_multiasset_forward_multimodal_r5_state,
+    )
+
+    console.print_json(data=classify_multiasset_forward_multimodal_r5_state(project_root()))
+
+
+@strategy_app.command("multiscale-event-r5-prepare")
+def strategy_multiscale_event_r5_prepare() -> None:
+    """Freeze and audit the local multiscale event R5 diagnostic inputs."""
+    from open_composer.research.multiscale_event_r5 import (
+        prepare_multiscale_event_inputs,
+    )
+
+    try:
+        payload = prepare_multiscale_event_inputs(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]multiscale event R5 inputs frozen[/green] "
+        f"symbols={payload['selected_symbol_count']} "
+        f"shared_sessions={payload['exact_common_session_count']} "
+        f"authorized={payload['diagnostic_execution_authorized']}"
+    )
+    console.print(
+        "data feasibility: "
+        + str(
+            project_root()
+            / "reports/research/iterations/mom_multiscale_event_r5/data-feasibility.json"
+        )
+    )
+
+
+@strategy_app.command("multiscale-event-r5-diagnostics")
+def strategy_multiscale_event_r5_diagnostics() -> None:
+    """Run the preregistered multiscale event R5 diagnostic family."""
+    from open_composer.research.multiscale_event_r5 import run_multiscale_event_r5
+
+    try:
+        result = run_multiscale_event_r5(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    leader = result.payload["diagnostic_leader"]
+    console.print(
+        "[green]multiscale event R5 diagnostics complete[/green] "
+        f"leader={leader['candidate_id']} "
+        f"research_pass={result.payload['research_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"trial ledger: {result.trial_ledger_path}")
 
 
 @strategy_app.command("llm-rotate-universe")
@@ -5196,8 +5595,17 @@ def strategy_target_weights(
     end: str | None = typer.Option(None, "--end"),
     selected_route_label: str | None = typer.Option(None, "--selected-route-label"),
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
+    snapshot_manifest: Annotated[Path | None, typer.Option("--snapshot-manifest")] = None,
+    custody_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "--custody-dir",
+            help="Absolute operator-controlled custody directory outside the worktree.",
+        ),
+    ] = None,
+    as_of: str | None = typer.Option(None, "--as-of"),
 ) -> None:
-    """Generate router target weights, rebalance intents, and observation artifacts."""
+    """Generate target weights, rebalance intents, and observation artifacts."""
     spec_obj = load_strategy_spec(spec)
     parsed_symbols = (
         [item.strip().upper() for item in symbols.split(",") if item.strip()] if symbols else None
@@ -5251,11 +5659,136 @@ def strategy_target_weights(
             )
             status = result.validation_status
         elif spec_obj.portfolio.mode == "cross_sectional_momentum":
+            design = spec_obj.research_design
+            if design is not None and design.iter_id == "mom_multiasset_paper_control_r7":
+                from open_composer.adapters.execution.multiasset_paper_control_r7_target_weights import (  # noqa: E501
+                    run_multiasset_paper_control_r7_target_weight_mapping,
+                )
+
+                if snapshot_manifest is None:
+                    raise typer.BadParameter(
+                        "R7 target mapping requires --snapshot-manifest from the current "
+                        "immutable Alpaca SIP snapshot"
+                    )
+                if (
+                    parsed_symbols is not None
+                    or start is not None
+                    or end is not None
+                    or selected_route_label is not None
+                    or refresh_data
+                    or data_source != "alpaca"
+                    or custody_dir is not None
+                ):
+                    raise typer.BadParameter(
+                        "R7 target mapping forbids ad hoc symbols, date ranges, route "
+                        "overrides, refresh-data, custody overrides, and non-Alpaca sources"
+                    )
+                parsed_as_of = (
+                    datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+                    if as_of
+                    else datetime.now(UTC)
+                )
+                result = run_multiasset_paper_control_r7_target_weight_mapping(
+                    spec,
+                    project_root(),
+                    snapshot_manifest_path=snapshot_manifest,
+                    as_of=parsed_as_of,
+                )
+                console.print(
+                    "[green]R7 family observation targets complete[/green] "
+                    f"report: {result.report_path}"
+                )
+                console.print(
+                    "status=observation_only broker_writes=false candidates=8 "
+                    f"session={result.market_session} "
+                    f"forward_sessions={result.valid_session_count}/20 "
+                    f"forward_pass={str(result.forward_observation_pass).lower()}"
+                )
+                return
+            if design is not None and design.iter_id == "mom_multiasset_forward_multimodal_r5":
+                from open_composer.adapters.execution.multiasset_forward_multimodal_r5_target_weights import (  # noqa: E501
+                    run_multiasset_forward_multimodal_r5_target_weight_mapping,
+                )
+
+                if snapshot_manifest is None:
+                    raise typer.BadParameter(
+                        "R5 target mapping requires --snapshot-manifest from a fresh immutable "
+                        "Alpaca SIP snapshot"
+                    )
+                if custody_dir is None:
+                    raise typer.BadParameter(
+                        "R5 target mapping requires --custody-dir for the external lock and "
+                        "evaluation receipts"
+                    )
+                if (
+                    parsed_symbols is not None
+                    or start is not None
+                    or end is not None
+                    or selected_route_label is not None
+                    or refresh_data
+                    or data_source != "alpaca"
+                ):
+                    raise typer.BadParameter(
+                        "R5 target mapping forbids ad hoc symbols, date ranges, route overrides, "
+                        "refresh-data, and non-Alpaca sources"
+                    )
+                notes = spec_obj.notes.model_dump(mode="json")
+                candidate_id = str(notes.get("candidate_id") or "")
+                parsed_as_of = (
+                    datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+                    if as_of
+                    else datetime.now(UTC)
+                )
+                result = run_multiasset_forward_multimodal_r5_target_weight_mapping(
+                    spec,
+                    project_root(),
+                    candidate_id=candidate_id,
+                    snapshot_manifest_path=snapshot_manifest,
+                    custody_dir=custody_dir,
+                    as_of=parsed_as_of,
+                )
+                console.print(
+                    f"[green]R5 observation target complete[/green] report: {result.report_path}"
+                )
+                console.print(
+                    "status=observation_only broker_writes=false "
+                    f"candidate={result.candidate_id} session={result.market_session} "
+                    f"forward_pass={str(result.forward_observation_pass).lower()}"
+                )
+                return
             from open_composer.research.multiasset_momentum_portfolio import (
+                LEGACY_MULTIASSET_MOMENTUM_STRATEGY_NAMES,
+                require_legacy_multiasset_momentum_spec_binding,
                 write_multiasset_target_weights_for_spec,
             )
 
-            artifacts = write_multiasset_target_weights_for_spec(spec, project_root())
+            legacy_design = (
+                design.model_dump(mode="json")
+                if design is not None
+                else spec_obj.notes.model_dump(mode="json").get("research_design")
+            )
+            legacy_iter_id = (
+                legacy_design.get("iter_id") if isinstance(legacy_design, dict) else None
+            )
+            if (
+                legacy_iter_id != "mom_multiasset_ml_r1"
+                or spec_obj.name not in LEGACY_MULTIASSET_MOMENTUM_STRATEGY_NAMES
+            ):
+                raise typer.BadParameter(
+                    "unsupported cross_sectional_momentum strategy identity; no legacy "
+                    "target mapper fallback is allowed"
+                )
+
+            root = project_root()
+            canonical_legacy_spec = require_legacy_multiasset_momentum_spec_binding(
+                spec,
+                root,
+                spec_obj,
+            )
+            artifacts = write_multiasset_target_weights_for_spec(
+                canonical_legacy_spec,
+                root,
+            )
             console.print(
                 "[green]target weights complete[/green] "
                 f"report: {artifacts['router_target_weights']}"
@@ -5265,6 +5798,31 @@ def strategy_target_weights(
                 f"observation={artifacts['router_execution_observation']}"
             )
             return
+        elif spec_obj.portfolio.mode == "single_symbol":
+            from open_composer.adapters.execution.single_symbol_target_weights import (
+                run_single_symbol_target_weight_mapping,
+            )
+
+            result = run_single_symbol_target_weight_mapping(
+                spec,
+                project_root(),
+                data_source=data_source,
+                refresh_data=refresh_data,
+            )
+            status = result.parity_status
+        elif spec_obj.portfolio.mode == "etf_structural_family":
+            from open_composer.adapters.execution.etf_structural_target_weights import (
+                run_etf_structural_target_weight_mapping,
+            )
+
+            parsed_as_of = datetime.fromisoformat(as_of.replace("Z", "+00:00")) if as_of else None
+            result = run_etf_structural_target_weight_mapping(
+                spec,
+                project_root(),
+                snapshot_manifest_path=snapshot_manifest,
+                as_of=parsed_as_of,
+            )
+            status = result.parity_status
         else:
             raise typer.BadParameter(
                 f"strategy target-weights does not support portfolio.mode={spec_obj.portfolio.mode}"
@@ -6451,6 +7009,7 @@ def harness_plan(
     Reads harness/risk_domains.yaml and harness/skill_manifest.yaml — no backtest runs.
     Writes reports/harness/plans/{strategy}.json and .md when --output is set.
     """
+    import hashlib
     import json
 
     from open_composer.harness.policy import (
@@ -6460,9 +7019,16 @@ def harness_plan(
         required_skills_for_domains,
     )
     from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.strategy_versions import strategy_content_hash
 
     root = project_root()
     spec_obj = load_strategy_spec(spec)
+    spec_path = spec.resolve()
+    try:
+        canonical_spec_path = spec_path.relative_to(root.resolve()).as_posix()
+    except ValueError:
+        canonical_spec_path = str(spec_path)
+    spec_bytes = spec_path.read_bytes()
     active_domains = detect_risk_domains(spec_obj, root)
     artifacts = sorted(required_artifacts_for_domains(active_domains))
     skills = sorted(required_skills_for_domains(active_domains))
@@ -6494,8 +7060,12 @@ def harness_plan(
             console.print(f"  • [{r.blocks}] {r.rule_id}")
 
     plan = {
+        "schema_version": 2,
+        "plan_contract": "harness_plan_v2",
         "strategy_name": spec_obj.name,
-        "spec_path": str(spec),
+        "spec_path": canonical_spec_path,
+        "spec_file_sha256": hashlib.sha256(spec_bytes).hexdigest(),
+        "spec_semantic_sha256": strategy_content_hash(spec_obj),
         "risk_domains": active_domains,
         "required_skills": skills,
         "required_artifacts": artifacts,
@@ -6557,6 +7127,7 @@ def harness_verify(
     Exits with code 1 when any required artifact is missing or fails schema check.
     Writes reports/harness/verify/{strategy}.json.
     """
+    import hashlib
     import json
 
     from open_composer.harness.policy import (
@@ -6565,9 +7136,16 @@ def harness_verify(
         required_artifacts_for_domains,
     )
     from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.strategy_versions import strategy_content_hash
 
     root = project_root()
     spec_obj = load_strategy_spec(spec)
+    spec_path = spec.resolve()
+    try:
+        canonical_spec_path = spec_path.relative_to(root.resolve()).as_posix()
+    except ValueError:
+        canonical_spec_path = str(spec_path)
+    spec_bytes = spec_path.read_bytes()
     active_domains = detect_risk_domains(spec_obj, root)
     required = sorted(required_artifacts_for_domains(active_domains))
 
@@ -6595,18 +7173,50 @@ def harness_verify(
 
     verify_dir = root / "reports" / "harness" / "verify"
     verify_dir.mkdir(parents=True, exist_ok=True)
+
+    def file_binding(path: Path) -> dict[str, object] | None:
+        if path.is_symlink() or not path.is_file():
+            return None
+        content = path.read_bytes()
+        try:
+            relative = path.resolve().relative_to(root.resolve()).as_posix()
+        except ValueError:
+            relative = str(path.resolve())
+        return {
+            "path": relative,
+            "sha256": hashlib.sha256(content).hexdigest(),
+            "size_bytes": len(content),
+        }
+
+    plan_path = root / "reports" / "harness" / "plans" / f"{spec_obj.name}.json"
+    config_paths = {
+        "risk_domains": root / "harness" / "risk_domains.yaml",
+        "artifact_contracts": root / "harness" / "artifact_contracts.yaml",
+    }
     result = {
+        "schema_version": 2,
+        "verification_contract": "harness_verify_v2",
         "strategy_name": spec_obj.name,
+        "spec_path": canonical_spec_path,
+        "spec_file_sha256": hashlib.sha256(spec_bytes).hexdigest(),
+        "spec_semantic_sha256": strategy_content_hash(spec_obj),
         "stage": stage,
         "risk_domains": active_domains,
         "required_artifacts": required,
+        "plan_binding": file_binding(plan_path),
+        "config_bindings": {name: file_binding(path) for name, path in config_paths.items()},
         "artifacts": [
             {
                 "name": s.name,
                 "present": s.present,
                 "schema_ok": s.schema_ok,
                 "missing_fields": s.missing_fields,
-                "path": str(s.path),
+                "path": (
+                    s.path.resolve().relative_to(root.resolve()).as_posix()
+                    if s.path.is_relative_to(root.resolve())
+                    else str(s.path.resolve())
+                ),
+                "binding": file_binding(s.path),
             }
             for s in statuses
         ],
@@ -6833,24 +7443,22 @@ def _gate_status(results: list[object], name: str) -> str | None:
     return None
 
 
-def _router_auth_warning(name: str) -> bool:
-    return name in {"router_order_authorization", "capability_report"}
-
-
-def _router_authorization_permitted_readiness_gap(check: object) -> bool:
+def _paper_authorization_permitted_readiness_gap(check: object) -> bool:
     status = str(getattr(check, "status", ""))
     name = str(getattr(check, "name", ""))
     if status == "ok":
         return True
-    if status == "warning" and _router_auth_warning(name):
+    if status == "warning" and name == "order_authorization":
         return True
-    if status == "blocked" and name == "harness_artifacts":
-        details = getattr(check, "details", {})
-        if isinstance(details, dict):
-            missing = details.get("missing")
-            incomplete = details.get("incomplete")
-            return missing == ["paper_safety_review"] and not incomplete
-    return False
+    return (
+        status == "warning"
+        and name == "capability_report"
+        and str(getattr(check, "message", ""))
+        == (
+            "router strategies may run observation-only target-weight cycles before "
+            "order authorization"
+        )
+    )
 
 
 @run_app.command("paper")
@@ -6955,11 +7563,11 @@ def paper_submit(
     spec_path = _find_strategy_spec(signal.strategy_name, root)
     spec = load_strategy_spec(spec_path)
     readiness = assess_paper_strategy_readiness(spec_path, root)
-    if readiness.status != "ok" or readiness.execution_substate != "order_authorized":
-        raise typer.BadParameter(
-            "paper order submission requires paper readiness status=ok and "
-            "execution_substate=order_authorized"
-        )
+    authorized_state = (
+        readiness.status == "ok" and readiness.execution_substate == "order_authorized"
+    ) or (readiness.status == "warning" and readiness.execution_substate == "canary_authorized")
+    if not authorized_state:
+        raise typer.BadParameter("paper order submission requires a bounded canary authorization")
     try:
         order = submit_paper_order(signal, spec, root, qty=qty)
     except PaperOrderError as exc:
@@ -6967,44 +7575,115 @@ def paper_submit(
     console.print(f"[green]paper order[/green] {order.id} status={order.status} qty={order.qty}")
 
 
+def _authorize_paper_strategy(
+    strategy: str,
+    authorized_by: str,
+    confirm_paper_only: bool,
+) -> Path:
+    from open_composer.paper_authorization import FULL_AUTHORIZATION_DISABLED_MESSAGE
+
+    raise typer.BadParameter(FULL_AUTHORIZATION_DISABLED_MESSAGE)
+
+
+@paper_app.command("authorize")
+def paper_authorize(
+    strategy: str,
+    authorized_by: Annotated[
+        str,
+        typer.Option("--authorized-by", help="Audit identity for explicit paper authorization."),
+    ],
+    confirm_paper_only: Annotated[
+        bool,
+        typer.Option(
+            "--confirm-paper-only",
+            help="Confirm Alpaca Paper scope; this never authorizes real-money writes.",
+        ),
+    ] = False,
+) -> None:
+    """Authorize one current StrategySpec for audited Alpaca Paper orders."""
+    path = _authorize_paper_strategy(strategy, authorized_by, confirm_paper_only)
+    console.print(f"[green]paper authorization[/green] {path.relative_to(project_root())}")
+
+
 @paper_app.command("authorize-router")
 def paper_authorize_router(
     strategy: str,
     authorized_by: Annotated[
         str,
-        typer.Option(
-            "--authorized-by",
-            help="Audit label for the supervised Alpaca Paper router authorization.",
-        ),
-    ] = "operator_supervised_paper_alignment",
+        typer.Option("--authorized-by", help="Audit identity for explicit paper authorization."),
+    ],
+    confirm_paper_only: Annotated[
+        bool,
+        typer.Option("--confirm-paper-only"),
+    ] = False,
 ) -> None:
-    """Write the Alpaca Paper router order authorization artifact."""
-    from open_composer.router_authorization import write_router_order_authorization
+    """Compatibility alias for router paper authorization."""
+    path = _authorize_paper_strategy(strategy, authorized_by, confirm_paper_only)
+    console.print(f"[green]router authorization[/green] {path.relative_to(project_root())}")
+
+
+@paper_app.command("authorize-canary")
+def paper_authorize_canary(
+    strategy: str,
+    authorized_by: Annotated[str, typer.Option("--authorized-by")],
+    confirm_paper_only: Annotated[bool, typer.Option("--confirm-paper-only")] = False,
+    confirm_canary_risk: Annotated[bool, typer.Option("--confirm-canary-risk")] = False,
+    duration_days: Annotated[int, typer.Option("--duration-days")] = 14,
+    max_order_notional: Annotated[float, typer.Option("--max-order-notional", min=0.01)] = 1000.0,
+    max_session_notional: Annotated[
+        float, typer.Option("--max-session-notional", min=0.01)
+    ] = 2500.0,
+    max_total_notional: Annotated[float, typer.Option("--max-total-notional", min=0.01)] = 8000.0,
+    max_orders_per_session: Annotated[int, typer.Option("--max-orders-per-session", min=1)] = 4,
+    max_total_orders: Annotated[int, typer.Option("--max-total-orders", min=1)] = 12,
+) -> None:
+    """Authorize a capped, expiring Alpaca Paper canary; never full readiness."""
+    from open_composer.paper_authorization import write_paper_canary_authorization
 
     root = project_root()
     spec_path = _find_strategy_spec(strategy, root)
     spec = load_strategy_spec(spec_path)
-    readiness = assess_paper_strategy_readiness(spec_path, root)
-    unsafe = [
-        check.name
-        for check in readiness.checks
-        if not _router_authorization_permitted_readiness_gap(check)
-    ]
-    if unsafe:
-        raise typer.BadParameter(
-            "router authorization requires all non-authorization readiness checks to pass: "
-            + ", ".join(unsafe)
-        )
     try:
-        path = write_router_order_authorization(
+        path = write_paper_canary_authorization(
             spec,
             root,
-            spec_path=spec_path,
             authorized_by=authorized_by,
+            confirm_paper_only=confirm_paper_only,
+            confirm_canary_risk=confirm_canary_risk,
+            duration_days=duration_days,
+            max_order_notional=max_order_notional,
+            max_session_notional=max_session_notional,
+            max_total_notional=max_total_notional,
+            max_orders_per_session=max_orders_per_session,
+            max_total_orders=max_total_orders,
         )
     except (FileNotFoundError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
-    console.print(f"[green]router authorization[/green] {path.relative_to(root)}")
+    console.print(f"[yellow]bounded paper canary authorization[/yellow] {path.relative_to(root)}")
+    console.print("paper_ready_pass=false; real-money writes remain out of scope")
+
+
+@paper_app.command("revoke-canary")
+def paper_revoke_canary(
+    strategy: str,
+    revoked_by: Annotated[str, typer.Option("--revoked-by")],
+    reason: Annotated[str, typer.Option("--reason")],
+) -> None:
+    """Revoke the current bounded Alpaca Paper canary authorization."""
+    from open_composer.paper_authorization import write_paper_canary_revocation
+
+    root = project_root()
+    spec = load_strategy_spec(_find_strategy_spec(strategy, root))
+    try:
+        path = write_paper_canary_revocation(
+            spec,
+            root,
+            revoked_by=revoked_by,
+            reason=reason,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"[yellow]paper canary revoked[/yellow] {path.relative_to(root)}")
 
 
 @paper_app.command("readiness")
@@ -7036,16 +7715,47 @@ def paper_readiness(
     console.print(f"status={report.status} ready={'yes' if report.ready else 'no'}")
     console.print(f"json={json_path}")
     console.print(f"markdown={md_path}")
-    if strict and report.status == "blocked":
+    if strict and not report.ready:
         raise typer.Exit(1)
 
 
 @paper_app.command("validation-report")
 def paper_validation_report(
     target_days: int = typer.Option(20, "--target-days", min=1),
+    strategy: str | None = typer.Option(None, "--strategy"),
 ) -> None:
     """Build the 20-trading-day paper workflow validation report."""
-    payload = write_paper_validation_report(root=project_root(), target_days=target_days)
+    root = project_root()
+    strategy_name = strategy
+    spec_hash = None
+    execution_policy_id = None
+    execution_policy_hash = None
+    not_before = None
+    if strategy is not None:
+        from open_composer.execution_policy import resolve_execution_policy
+        from open_composer.strategy_versions import strategy_content_hash
+
+        try:
+            spec_obj = load_strategy_spec(resolve_strategy_path(strategy, root))
+            policy = resolve_execution_policy(spec_obj, root)
+        except (FileNotFoundError, ValueError) as exc:
+            raise typer.BadParameter(str(exc)) from exc
+        strategy_name = spec_obj.name
+        spec_hash = strategy_content_hash(spec_obj)
+        execution_policy_id = policy.policy_id if policy else None
+        execution_policy_hash = policy.content_hash if policy else None
+        notes = spec_obj.notes.model_dump(mode="json")
+        not_before_value = notes.get("paper_validation_start")
+        not_before = str(not_before_value) if not_before_value else None
+    payload = write_paper_validation_report(
+        root=root,
+        target_days=target_days,
+        strategy_name=strategy_name,
+        spec_hash=spec_hash,
+        execution_policy_id=execution_policy_id,
+        execution_policy_hash=execution_policy_hash,
+        not_before=not_before,
+    )
     console.print(
         f"[green]paper validation report written[/green] "
         f"progress={payload['progress_days']}/{payload['target_days']} "
@@ -7055,6 +7765,84 @@ def paper_validation_report(
     console.print(f"markdown={payload['artifact_paths']['markdown']}")
     if payload["paper_validation_pass"]:
         console.print(f"final={payload['artifact_paths']['final_markdown']}")
+
+
+def _paper_tca_binding(strategy: str):
+    from open_composer.execution_policy import resolve_execution_policy
+    from open_composer.strategy_versions import strategy_content_hash
+
+    root = project_root()
+    spec = load_strategy_spec(resolve_strategy_path(strategy, root))
+    policy = resolve_execution_policy(spec, root)
+    if policy is None:
+        raise typer.BadParameter("matched paper TCA requires a bound execution policy")
+    notes = spec.notes.model_dump(mode="json")
+    epoch = str(notes.get("paper_validation_start") or "")
+    if not epoch:
+        raise typer.BadParameter("matched paper TCA requires notes.paper_validation_start")
+    if "T" not in epoch:
+        epoch += "T00:00:00+00:00"
+    minimum = notes.get("minimum_matched_tca_observations", 30)
+    if isinstance(minimum, bool) or not isinstance(minimum, int) or minimum < 1:
+        raise typer.BadParameter("minimum_matched_tca_observations must be positive")
+    return root, spec, policy, strategy_content_hash(spec), epoch, minimum
+
+
+@paper_app.command("tca-ingest")
+def paper_tca_ingest(
+    packet: Path,
+    strategy: str = typer.Option(..., "--strategy"),
+) -> None:
+    """Ingest one hash-bound matched Alpaca Paper fill TCA packet."""
+    from open_composer.paper_tca import PaperTCAValidationError, ingest_paper_tca_observation
+
+    root, spec, policy, spec_hash, _, _ = _paper_tca_binding(strategy)
+    source = packet if packet.is_absolute() else root / packet
+    try:
+        payload = json.loads(source.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("TCA packet must contain a JSON object")
+        result = ingest_paper_tca_observation(
+            payload,
+            root=root,
+            strategy_name=spec.name,
+            spec_hash=spec_hash,
+            execution_policy_id=policy.policy_id,
+            execution_policy_hash=policy.content_hash,
+        )
+    except (OSError, json.JSONDecodeError, ValueError, PaperTCAValidationError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]paper TCA observation[/green] id={result.observation_id} "
+        f"appended={result.appended} ledger={result.ledger_path}"
+    )
+
+
+@paper_app.command("tca-report")
+def paper_tca_report(
+    strategy: str = typer.Option(..., "--strategy"),
+) -> None:
+    """Validate the strategy-bound matched Alpaca Paper fill TCA threshold."""
+    from open_composer.paper_tca import PaperTCAValidationError, write_paper_tca_report
+
+    root, spec, policy, spec_hash, epoch, minimum = _paper_tca_binding(strategy)
+    try:
+        payload = write_paper_tca_report(
+            root=root,
+            strategy_name=spec.name,
+            spec_hash=spec_hash,
+            execution_policy_id=policy.policy_id,
+            execution_policy_hash=policy.content_hash,
+            epoch=epoch,
+            minimum_observations=minimum,
+        )
+    except PaperTCAValidationError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        f"[green]paper TCA report[/green] "
+        f"valid={payload['valid_observation_count']}/{payload['minimum_observations']} "
+        f"pass={payload['matched_paper_tca_pass']} report={payload['report_path']}"
+    )
 
 
 @paper_app.command("sync")
@@ -7189,13 +7977,20 @@ def journal_add(
 
 def _require_declared_iteration_gate(spec_path: Path) -> None:
     spec = load_strategy_spec(spec_path)
-    notes = spec.notes.model_dump(mode="json")
-    research_design = notes.get("research_design") if isinstance(notes, dict) else None
-    if not isinstance(research_design, dict):
+    from open_composer.research.design_contract import (
+        research_design_mapping,
+        research_design_requires_iteration_gate,
+    )
+
+    try:
+        research_design = research_design_mapping(spec)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if not research_design_requires_iteration_gate(research_design):
         return
     iter_id = str(research_design.get("iter_id") or "").strip()
     if not iter_id:
-        return
+        raise typer.BadParameter("research_design requires iter_id before execution")
     from open_composer.research.iteration_dossier import validate_iteration_dossier
 
     result = validate_iteration_dossier(iter_id, project_root(), stage="pre-backtest")

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "report_type": "generic_candidate_family_data_feasibility",
+  "iter_id": "mom_multiasset_forward_multimodal_r5",
+  "generated_before_evaluation": true,
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "authorization_scope": "matched_transfer_evaluation_only_not_promotion_or_order_authority",
+  "path_gates": {
+    "deterministic": {"action":"evaluate","historical_evaluation_go":true,"candidate_ids":["R5D01","R5D02"],"reason":"Daily SIP OHLCV covers every required deterministic feature."},
+    "trained_ml": {"action":"evaluate","historical_evaluation_go":true,"candidate_ids":["R5M01","R5M02"],"reason":"Daily SIP panel supports fold-local core features and 21-session labels."},
+    "llm_formula": {"action":"evaluate","historical_evaluation_go":true,"candidate_ids":["R5L01"],"reason":"Only frozen static formulas over current OHLCV are used; no historical text inference is required."},
+    "combined": {"action":"evaluate","historical_evaluation_go":true,"candidate_ids":["R5C01"],"reason":"Core and static formula features share the same point-in-time panel."},
+    "missing_modality": {"action":"evaluate","historical_evaluation_go":true,"candidate_ids":["R5F01"],"reason":"Required exact identity control uses the M01 feature and model contract."},
+    "placebo": {"action":"evaluate","historical_evaluation_go":true,"candidate_ids":["R5P01"],"reason":"Deterministic symbol permutation is computable without additional data."}
+  },
+  "candidate_accounting": {
+    "frozen_candidate_count": 8,
+    "evaluation_authorized_count": 8,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 8,
+    "rows": [
+      {"candidate_id":"R5D01","path":"deterministic","action":"evaluate","reason_code":"daily_sip_features_available","candidate_binding_sha256":"caf52b7de99d5198d2e5529cefdefc815749e44c96c5f7ff1063ff1d03ef3654"},
+      {"candidate_id":"R5D02","path":"deterministic","action":"evaluate","reason_code":"daily_sip_features_available","candidate_binding_sha256":"62e13890d7f7c54c457c51fc8e9f30f225048ef66276e22352d9a5e34775fb2f"},
+      {"candidate_id":"R5M01","path":"trained_ml","action":"evaluate","reason_code":"fold_local_label_and_features_available","candidate_binding_sha256":"4fa660137e1dc808c018ef66df7cfbd1cfe0acbf96d2282d14b4e215d654f7a1"},
+      {"candidate_id":"R5M02","path":"trained_ml","action":"evaluate","reason_code":"path_survival_label_available","candidate_binding_sha256":"67e6c61fae6afd86b27f87c5ef3c0465a3d82871da7d3fdc5cc5937a1331d8b4"},
+      {"candidate_id":"R5L01","path":"llm_formula","action":"evaluate","reason_code":"static_formula_no_text_dependency","candidate_binding_sha256":"2156ee245ca28e6838fcd5dae40bea533ba2f2d980a1a9cf61c96b020c7d0bc0"},
+      {"candidate_id":"R5C01","path":"combined","action":"evaluate","reason_code":"matched_static_formula_and_core_features","candidate_binding_sha256":"e2004bc11a6975ff3fd9c74fbead6dbb45a8308b9c06780e8f03bae206455282"},
+      {"candidate_id":"R5F01","path":"missing_modality","action":"evaluate","reason_code":"exact_fallback_control","candidate_binding_sha256":"d783917a700dc400e049d3124bb4379c005fb3cd1ec8300284c4be05312992ac"},
+      {"candidate_id":"R5P01","path":"placebo","action":"evaluate","reason_code":"deterministic_placebo_control","candidate_binding_sha256":"452ba0daf6a7fa5d198b53e965c823ded06c7c6040cb379597f4ec1a73d3cceb"}
+    ]
+  },
+  "required_reference_names": [
+    "snapshot_manifest",
+    "data_contract",
+    "feature_contract",
+    "label_contract",
+    "validation_contract",
+    "cost_contract",
+    "benchmark_contract",
+    "holdout_contract",
+    "cumulative_trial_contract",
+    "modality_role_matrix",
+    "model_reuse_decision",
+    "source_cards"
+  ],
+  "required_references": {
+    "snapshot_manifest": {"path":"data/research/alpaca_etf_structural_r9/snapshot-manifest.json","sha256":"6d179f9af5437be920fa66a4e431ceafbf46c8d2548aabef506472cffe90b34f"},
+    "data_contract": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/data-contract.json","sha256":"92d009be36fc17a83649e0910ecd299c768592ae78413f86f45bbbdf51f9ad67"},
+    "feature_contract": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/feature-contract.json","sha256":"f9afc84ed2957c54f5b1002e44eafe9be6c440cff584b6ec53c06f5c188ecf0d"},
+    "label_contract": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/label-contract.json","sha256":"82a178f12524e6ef13703da01ad4299f23a18f96416aedf628a3ddb93e1fe71e"},
+    "validation_contract": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/validation-contract.json","sha256":"db5a1452470cc7d7a4baa088b78ccad9117e75d4f1cb539940d5e27f60750a79"},
+    "cost_contract": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/cost-contract.json","sha256":"869406d8634f8405741ee8e2790f88a75d509ef44446cf5da76ed78f39ff6750"},
+    "benchmark_contract": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/benchmark-contract.json","sha256":"3bb0cdd4e6e1812bfdbfb9d9d50eb571ecbb83e773b21a382d49221ad897ff1e"},
+    "holdout_contract": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/holdout-contract.json","sha256":"1562210561a4baea1f5172b224c121f31a3c1f3b13f536615a1c8681e82df273"},
+    "cumulative_trial_contract": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/cumulative-trial-contract.json","sha256":"2c00ee7b3b120f26e385221123811a8b54d7af3915172b4ae0ef474fc823aefd"},
+    "modality_role_matrix": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/modality-role-matrix.json","sha256":"b6600488b4c81cab49aed05189512093d85d08cfd746eb912337bbbbc2e082e2"},
+    "model_reuse_decision": {"path":"reports/research/iterations/mom_multiasset_forward_multimodal_r5/model-reuse-decision.json","sha256":"23d296dd0983a4080d276b514dc75149b51f80c06579b2f2701e1c27b66b51db"},
+    "source_cards": {"path":"reports/harness/source_cards/us_multiasset_forward_multimodal_r5.jsonl","sha256":"eb5aeeaef4863499a62d552aac5688697e7064c922eb76596bcdaea8d0e69a5e"}
+  },
+  "limitations": [
+    "Historical evaluation is authorized only as matched transfer evidence.",
+    "No candidate receives research or paper-ready status from feasibility alone.",
+    "No live text or LLM inference is authorized.",
+    "Any later llm_contribution_pass means only historical incremental contribution from frozen formula mappings, never independent LLM Alpha."
+  ]
+}
