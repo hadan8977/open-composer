@@ -304,6 +304,32 @@ def artifact_path(artifact_name: str, strategy_name: str) -> Path:
     return Path(rel)
 
 
+def declared_artifact_binding(
+    artifact_name: str, spec: object, root: Path
+) -> tuple[Path | None, list[str] | None]:
+    """Return an explicit StrategySpec artifact binding when one is declared.
+
+    A shared source-card file is valid only when the spec declares both its
+    repository-relative path and the exact claim IDs it expects. Other artifact
+    types retain their contract-template resolution.
+    """
+    if artifact_name != "source_cards":
+        return None, None
+    design = getattr(spec, "research_design", None)
+    declared = getattr(design, "source_cards_path", None) if design else None
+    if not declared:
+        return None, None
+    path = Path(str(declared))
+    if not path.is_absolute():
+        path = root / path
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError as exc:
+        raise ValueError("declared source-card path leaves the repository root") from exc
+    claims = list(getattr(design, "source_card_claim_ids", []) or [])
+    return path, claims
+
+
 @dataclass
 class ArtifactStatus:
     name: str
@@ -314,8 +340,20 @@ class ArtifactStatus:
     missing_fields: list[str] = field(default_factory=list)
 
 
-def check_artifact(artifact_name: str, strategy_name: str, root: Path) -> ArtifactStatus:
-    """Check whether an artifact file exists and contains required fields."""
+def check_artifact(
+    artifact_name: str,
+    strategy_name: str,
+    root: Path,
+    *,
+    artifact_path_override: Path | None = None,
+    required_claim_ids_override: list[str] | None = None,
+) -> ArtifactStatus:
+    """Check an artifact, optionally using a spec-declared, bound path.
+
+    Family-level research rounds can share one immutable source-card set across
+    candidates. Callers must pass the declared path and claim IDs explicitly;
+    the legacy strategy-name path remains the default for all other rounds.
+    """
     import json
 
     contracts = load_artifact_contracts()
@@ -329,7 +367,25 @@ def check_artifact(artifact_name: str, strategy_name: str, root: Path) -> Artifa
             missing_fields=["(contract not found)"],
         )
     contract = contracts[artifact_name]
-    path = root / artifact_path(artifact_name, strategy_name)
+    path = artifact_path_override or (root / artifact_path(artifact_name, strategy_name))
+    required_claim_ids = (
+        contract.required_claim_ids
+        if required_claim_ids_override is None
+        else required_claim_ids_override
+    )
+    if (
+        artifact_path_override is not None
+        and artifact_name == "source_cards"
+        and not required_claim_ids
+    ):
+        return ArtifactStatus(
+            name=artifact_name,
+            required=True,
+            path=path,
+            present=path.exists(),
+            schema_ok=False,
+            missing_fields=["source_card_claim_ids"],
+        )
     if not path.exists():
         return ArtifactStatus(
             name=artifact_name,
@@ -341,7 +397,7 @@ def check_artifact(artifact_name: str, strategy_name: str, root: Path) -> Artifa
         )
 
     missing: list[str] = []
-    if contract.required_fields or contract.required_claim_ids:
+    if contract.required_fields or required_claim_ids:
         try:
             if contract.format == "jsonl":
                 lines = [
@@ -351,14 +407,14 @@ def check_artifact(artifact_name: str, strategy_name: str, root: Path) -> Artifa
                 ]
                 if not lines:
                     missing = contract.required_fields + _format_required_claim_ids(
-                        contract.required_claim_ids,
+                        required_claim_ids,
                         strategy_name,
                     )
                 else:
                     rows = [json.loads(line) for line in lines]
                     missing = _missing_jsonl_contract_fields(
                         contract.required_fields,
-                        contract.required_claim_ids,
+                        required_claim_ids,
                         rows,
                         strategy_name,
                     )

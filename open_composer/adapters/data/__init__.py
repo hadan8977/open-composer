@@ -20,6 +20,12 @@ def load_ohlcv_for_spec(spec: StrategySpec, root: Path, refresh: bool = False) -
     if spec.data.source == "alpaca":
         assumptions = spec.data_assumptions.model_dump(mode="json")
         if assumptions.get("immutable_snapshot_required") is True:
+            if spec.data.path and Path(spec.data.path).name == "snapshot-manifest.json":
+                from open_composer.adapters.data.alpaca_snapshot_bundle import (
+                    load_immutable_alpaca_snapshot_bundle,
+                )
+
+                return load_immutable_alpaca_snapshot_bundle(spec, root)
             from open_composer.adapters.data.alpaca_snapshot import (
                 load_immutable_alpaca_snapshot,
             )
@@ -34,6 +40,7 @@ def load_ohlcv_for_spec(spec: StrategySpec, root: Path, refresh: bool = False) -
             source="alpaca",
             feed=spec.data.feed or data_feed(),
             use_cache=not refresh,
+            adjustment="all" if spec.data_assumptions.adjusted else "raw",
         )
     if spec.data.source == "longbridge":
         return fetch_ohlcv(
@@ -59,6 +66,7 @@ def fetch_ohlcv(
     feed: str | None = None,
     use_cache: bool = True,
     allow_fallback: bool = True,
+    adjustment: str | None = None,
 ) -> pd.DataFrame:
     if source == "alpaca":
         require_timeframe_supported("alpaca", timeframe)
@@ -71,6 +79,7 @@ def fetch_ohlcv(
                 end=end,
                 feed=feed or data_feed(),
                 use_cache=use_cache,
+                adjustment=adjustment,
             )
         except Exception:
             if not allow_fallback:

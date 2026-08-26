@@ -6,7 +6,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any
 
-from open_composer.models.strategy_spec import StrategySpec
+from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.contracts import write_research_contract
 from open_composer.research.kernel import GateResult, ResearchArtifactWriter, ResearchRunIndexRecord
 from open_composer.research.metadata import research_run_manifest, runtime_payload, search_space
@@ -23,6 +23,8 @@ from open_composer.research.promotion import (
     _promotion_pass_fields,
     _relpath,
     _research_design_check,
+    _sha256_file,
+    _write_promotion_data_manifest,
 )
 from open_composer.research.universe_audit import assess_universe_audit
 from open_composer.storage import write_json
@@ -71,6 +73,61 @@ ROUTER_PROMOTION_CONFIGS: dict[str, RouterPromotionConfig] = {
 }
 
 
+def _router_evidence_source(
+    spec: StrategySpec,
+    root: Path,
+) -> tuple[str, Path | None, StrategySpec]:
+    source_name_value = spec.notes.model_dump(mode="json").get("paper_candidate_source")
+    if source_name_value in {None, ""}:
+        return spec.name, None, spec
+
+    source_name = str(source_name_value)
+    if not source_name or not all(
+        character.isascii() and (character.isalnum() or character in {"_", "-"})
+        for character in source_name
+    ):
+        raise ValueError("notes.paper_candidate_source must be a strategy name")
+    if source_name == spec.name:
+        raise ValueError("notes.paper_candidate_source cannot reference the candidate itself")
+
+    source_path = next(
+        (
+            path
+            for directory in ("active", "approved", "drafts")
+            if (path := root / "strategy_specs" / directory / f"{source_name}.yaml").is_file()
+        ),
+        None,
+    )
+    if source_path is None:
+        raise FileNotFoundError(f"paper candidate source StrategySpec not found: {source_name}")
+    source_spec = load_strategy_spec(source_path)
+    if source_spec.name != source_name:
+        raise ValueError("paper candidate source path does not match its StrategySpec name")
+
+    parity_fields = (
+        "timeframe",
+        "universe",
+        "position_direction",
+        "entry",
+        "exit",
+        "risk",
+        "costs",
+        "factors",
+    )
+    mismatches = [
+        field_name
+        for field_name in parity_fields
+        if getattr(spec, field_name) != getattr(source_spec, field_name)
+    ]
+    if spec.portfolio.mode != source_spec.portfolio.mode:
+        mismatches.append("portfolio.mode")
+    if mismatches:
+        raise ValueError(
+            "paper candidate differs from its source research semantics: " + ", ".join(mismatches)
+        )
+    return source_name, source_path, source_spec
+
+
 def build_router_promotion_report(
     *,
     spec_path: Path,
@@ -87,13 +144,14 @@ def build_router_promotion_report(
         raise ValueError(msg)
 
     started = started_at if started_at is not None else perf_counter()
-    research_path = root / "reports" / "research" / f"{spec.name}-{config.research_suffix}.json"
+    evidence_name, evidence_spec_path, evidence_spec = _router_evidence_source(spec, root)
+    research_path = root / "reports" / "research" / f"{evidence_name}-{config.research_suffix}.json"
     report_path = root / "reports" / "research" / f"{spec.name}-promotion.md"
     json_path = root / "reports" / "research" / f"{spec.name}-promotion.json"
     contract_path = write_research_contract(spec_path, root)
     research_payload = _load_optional_json(research_path)
     llm_path = (
-        root / "reports" / "research" / f"{spec.name}-{config.llm_suffix}.json"
+        root / "reports" / "research" / f"{evidence_name}-{config.llm_suffix}.json"
         if config.llm_suffix
         else None
     )
@@ -127,6 +185,7 @@ def build_router_promotion_report(
         target_weights_payload=target_weights_payload,
         llm_path=llm_path,
         llm_payload=llm_payload,
+        evidence_strategy_name=evidence_name,
     )
     ready = all(check.status == "ok" for check in checks)
     status: PromotionStatus = (
@@ -176,8 +235,46 @@ def build_router_promotion_report(
     manifest[config.research_manifest_key] = (
         _relpath(research_path, root) if research_payload else None
     )
+    if evidence_name != spec.name:
+        manifest["paper_candidate_source"] = evidence_name
+        manifest["paper_candidate_source_spec_path"] = _relpath(evidence_spec_path, root)
+        manifest["paper_candidate_source_spec_hash"] = strategy_content_hash(evidence_spec)
+        manifest["paper_candidate_source_research_hash"] = (
+            _sha256_file(research_path) if research_payload else None
+        )
     if config.llm_manifest_key and llm_path:
         manifest[config.llm_manifest_key] = _relpath(llm_path, root) if llm_payload else None
+    data_manifest_path = _write_promotion_data_manifest(
+        root=root,
+        path=root / "reports" / "research" / f"{spec.name}-data-manifest.json",
+        spec_path=spec_path,
+        spec=spec,
+        report_mode=config.report_mode,
+        data_profile=data_profile,
+        source_artifacts={
+            "research_contract": contract_path,
+            "router_research": research_path,
+            "router_target_weights": target_weights_path,
+            "llm_router": llm_path,
+            "paper_candidate_source_spec": evidence_spec_path,
+            "router_factor_lab": (
+                root / "reports" / "research" / f"{evidence_name}-factor-lab.json"
+            ),
+            "router_factor_attribution": (
+                root / "reports" / "research" / f"{evidence_name}-hybrid-factor-attribution.json"
+                if spec.portfolio.mode == "hybrid_adaptive_router"
+                else None
+            ),
+        },
+        extra={
+            "selected_route_label": spec.portfolio.selected_route_label,
+            "selected_route": selected_route,
+            "benchmark_family": benchmark_family,
+        },
+    )
+    manifest["research_contract_hash"] = _sha256_file(contract_path)
+    manifest["data_manifest_path"] = _relpath(data_manifest_path, root)
+    manifest["data_manifest_hash"] = _sha256_file(data_manifest_path)
 
     index_record = ResearchRunIndexRecord(
         run_id=f"promotion-{spec.name}-{strategy_content_hash(spec)[:12]}",
@@ -269,6 +366,7 @@ def _router_checks(
     target_weights_payload: dict[str, Any] | None,
     llm_path: Path | None,
     llm_payload: dict[str, Any] | None,
+    evidence_strategy_name: str,
 ) -> list[GateResult]:
     checks: list[GateResult] = [
         _research_check(config, research_path, research_payload, acceptance_gate),
@@ -277,7 +375,7 @@ def _router_checks(
         _strict_data_check(spec, data_profile),
         _universe_audit_check(spec, root),
         _feature_packet_check(spec, root),
-        _factor_lab_check(spec, root),
+        _factor_lab_check(spec, root, evidence_strategy_name=evidence_strategy_name),
         _alternative_data_check(spec, data_profile),
         _llm_contribution_check(config, spec, llm_path, llm_payload),
         _execution_check(config, spec, target_weights_path, target_weights_payload),
@@ -489,11 +587,17 @@ def _universe_audit_check(spec: StrategySpec, root: Path) -> GateResult:
     )
 
 
-def _factor_lab_check(spec: StrategySpec, root: Path) -> GateResult:
-    factor_lab_path = root / "reports" / "research" / f"{spec.name}-factor-lab.json"
+def _factor_lab_check(
+    spec: StrategySpec,
+    root: Path,
+    *,
+    evidence_strategy_name: str | None = None,
+) -> GateResult:
+    evidence_name = evidence_strategy_name or spec.name
+    factor_lab_path = root / "reports" / "research" / f"{evidence_name}-factor-lab.json"
     factor_lab_payload = _load_optional_json(factor_lab_path)
     attribution_path = (
-        root / "reports" / "research" / f"{spec.name}-hybrid-factor-attribution.json"
+        root / "reports" / "research" / f"{evidence_name}-hybrid-factor-attribution.json"
         if spec.portfolio.mode == "hybrid_adaptive_router"
         else None
     )

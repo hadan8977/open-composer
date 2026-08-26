@@ -1,0 +1,52 @@
+{
+  "blockers": [],
+  "capabilities": [
+    {
+      "capability_id": "market.alpaca_bars",
+      "kind": "market",
+      "notes": "The immutable Alpaca SIP daily snapshot is eligible for this historical research evaluation, but its historical quality report explicitly does not authorize Paper use.",
+      "paper_ready": false,
+      "status": "ok",
+      "strict_behavior": "fail_fast_for_unsupported_timeframes"
+    }
+  ],
+  "conclusion": "pass",
+  "fallback_check": {
+    "broker_writes": false,
+    "mode": "exact_S1M01_target_identity_missing_modality_control",
+    "order_authority": false,
+    "semantic_stock_budget": 0.0
+  },
+  "feature_packet_evidence": {
+    "counted_forward_packet_count": 0,
+    "factor_field": null,
+    "factor_source": null,
+    "historical_packet_count": 0,
+    "live_call_inside_historical_evaluation": false,
+    "packet_path": null,
+    "prompt_path": "prompts/pit_semantic_theme_r24_factor_v1.txt",
+    "prompt_sha256": "601b24d287a5ec0f3ac3ce05730062b7362b028ff2278832d552bac6d5dd00fd",
+    "required_fields": [
+      "visible_at",
+      "published_at",
+      "fetched_at",
+      "source",
+      "input_hash",
+      "prompt_hash"
+    ],
+    "schema_path": "schemas/high_beta_sleeve_ensemble_r1_feature_packet.schema.json",
+    "schema_sha256": "9fe9e86a6d7d822e0876e98ed158665ba93091dde290f52f6cfbe3dab0c22b09"
+  },
+  "feature_packet_pit_check": "pass_not_applicable_missing_modality_control",
+  "historical_semantic_alpha_authorized": false,
+  "iter_id": "mom_high_beta_sleeve_ensemble_r1",
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "reviewed_at": "2026-08-13",
+  "sample_data_caveats": [
+    "news.alpaca fixture data validates shape only and is not research or Paper evidence",
+    "retrospective news downloads and cache fallback do not establish local first-seen visibility",
+    "the historical SIP snapshot is research evidence only and is not Paper authorization"
+  ],
+  "strategy_name": "us_high_beta_sleeve_ensemble_r1_f01"
+}

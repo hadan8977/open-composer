@@ -1,0 +1,222 @@
+{
+  "schema_version": 2,
+  "verification_contract": "harness_verify_v2",
+  "strategy_name": "us_vix_term_structure_overlay_r1_d02",
+  "spec_path": "strategy_specs/drafts/us_vix_term_structure_overlay_r1_d02.yaml",
+  "spec_file_sha256": "d8a9726e8f935d0748de69f83ceaa3840dc7c3350d0178f7f673f71f85948f28",
+  "spec_semantic_sha256": "99efe36471cca738c5a36131437cef9f43c48759365c70df8cc44af729068ec1",
+  "stage": "research",
+  "risk_domains": [
+    "daily_open_execution",
+    "leveraged_etf",
+    "router_strategy"
+  ],
+  "required_artifacts": [
+    "execution_policy",
+    "execution_reality_report",
+    "gap_stress_report",
+    "leveraged_etf_risk_note",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "source_cards"
+  ],
+  "artifact_path_overrides": {
+    "source_cards": {
+      "path": "reports/harness/source_cards/us_vix_term_structure_overlay_r1.jsonl",
+      "required_claim_ids": [
+        "vix_r1_cboe_vix3m_term_structure",
+        "vix_r1_cboe_paired_history",
+        "vix_r1_cboe_vix_methodology",
+        "vix_r1_vixy_is_futures_not_spot",
+        "vix_r1_alpaca_market_data_scope",
+        "vix_r1_tqqq_daily_target_path_risk",
+        "vix_r1_vix_basis_paper",
+        "vix_r1_vix_term_structure_paper",
+        "vix_r1_vix_futures_signals_paper",
+        "vix_r1_volatility_managed_portfolios",
+        "vix_r1_model_comparison_with_costs",
+        "vix_r1_deflated_sharpe_method",
+        "vix_r1_probability_backtest_overfitting_method"
+      ]
+    }
+  },
+  "plan_binding": {
+    "path": "reports/harness/plans/us_vix_term_structure_overlay_r1_d02.json",
+    "sha256": "7ce5b298351a9a49e6992eb902f40b51488167f10e7f8456b360ec1b2a302732",
+    "size_bytes": 2426
+  },
+  "config_bindings": {
+    "risk_domains": {
+      "path": "harness/risk_domains.yaml",
+      "sha256": "d0bd4d8e5368de57a8063fd2a973c897063a127b153c739e96787e29cde8f3c9",
+      "size_bytes": 13714
+    },
+    "artifact_contracts": {
+      "path": "harness/artifact_contracts.yaml",
+      "sha256": "97716bc4789e65c586d6d69b382273673baee1b4ded74e539575cafe5eebdf3c",
+      "size_bytes": 14710
+    }
+  },
+  "artifacts": [
+    {
+      "name": "execution_policy",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "order_style",
+        "time_in_force",
+        "price_protection",
+        "gap_filter",
+        "spread_filter",
+        "participation_cap",
+        "fallback_behavior",
+        "tca_plan",
+        "source_card_ids",
+        "alternatives_compared"
+      ],
+      "path": "reports/harness/execution/us_vix_term_structure_overlay_r1_d02-execution-policy.json",
+      "binding": null
+    },
+    {
+      "name": "execution_reality_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "slippage_scenarios",
+        "gap_stress",
+        "capacity_assessment",
+        "tca_reference_prices"
+      ],
+      "path": "reports/harness/execution/us_vix_term_structure_overlay_r1_d02-execution-reality.json",
+      "binding": null
+    },
+    {
+      "name": "gap_stress_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "scenarios",
+        "max_adverse_gap_pct",
+        "fill_model_gap_handling",
+        "recommended_gap_filter"
+      ],
+      "path": "reports/harness/execution/us_vix_term_structure_overlay_r1_d02-gap-stress.json",
+      "binding": null
+    },
+    {
+      "name": "leveraged_etf_risk_note",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [],
+      "path": "reports/harness/execution/us_vix_term_structure_overlay_r1_d02-leveraged-etf-risk.md",
+      "binding": null
+    },
+    {
+      "name": "router_cost_stress",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "scenarios",
+        "recommendation"
+      ],
+      "path": "reports/research/us_vix_term_structure_overlay_r1_d02-router-cost-stress.json",
+      "binding": null
+    },
+    {
+      "name": "router_data_evidence",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "data_source",
+        "acquisition_tier",
+        "data_profile"
+      ],
+      "path": "reports/research/us_vix_term_structure_overlay_r1_d02-router-data-evidence.json",
+      "binding": null
+    },
+    {
+      "name": "router_execution_observation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "execution_substate",
+        "target_weights_path",
+        "rebalance_intents_path"
+      ],
+      "path": "reports/execution/us_vix_term_structure_overlay_r1_d02-execution-observation.json",
+      "binding": null
+    },
+    {
+      "name": "router_rebalance_intents",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "intents",
+        "summary",
+        "execution_substate"
+      ],
+      "path": "reports/execution/us_vix_term_structure_overlay_r1_d02-rebalance-intents.json",
+      "binding": null
+    },
+    {
+      "name": "router_target_weights",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "target_weights",
+        "summary",
+        "acquisition_tier"
+      ],
+      "path": "reports/execution/us_vix_term_structure_overlay_r1_d02-target-weights.json",
+      "binding": null
+    },
+    {
+      "name": "router_validation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "portfolio_mode",
+        "summary",
+        "blockers"
+      ],
+      "path": "reports/research/us_vix_term_structure_overlay_r1_d02-router-validation.json",
+      "binding": null
+    },
+    {
+      "name": "source_cards",
+      "present": true,
+      "schema_ok": true,
+      "missing_fields": [],
+      "path": "reports/harness/source_cards/us_vix_term_structure_overlay_r1.jsonl",
+      "binding": {
+        "path": "reports/harness/source_cards/us_vix_term_structure_overlay_r1.jsonl",
+        "sha256": "4767fd1a9b6391a19d7b14948a3a7b3a7d096bf7cca4460a8994d334a87578b1",
+        "size_bytes": 13623
+      }
+    }
+  ],
+  "overall": "blocked"
+}

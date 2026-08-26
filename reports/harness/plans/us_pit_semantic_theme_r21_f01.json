@@ -1,0 +1,44 @@
+{
+  "schema_version": 2,
+  "plan_contract": "harness_plan_v2",
+  "strategy_name": "us_pit_semantic_theme_r21_f01",
+  "spec_path": "strategy_specs/drafts/us_pit_semantic_theme_r21_f01.yaml",
+  "spec_file_sha256": "a9a7a8a0d852a0f96a6cc87df14be938999591859b9300f7378a29f98cd7512e",
+  "spec_semantic_sha256": "17790394a67823852e595e1e19648b9a10160448ca0c3f468b3bc938f098b487",
+  "risk_domains": [
+    "daily_open_execution",
+    "leveraged_etf"
+  ],
+  "required_skills": [
+    "backtest-forensics",
+    "execution-reality-reviewer",
+    "source-researcher"
+  ],
+  "required_artifacts": [
+    "execution_policy",
+    "execution_reality_report",
+    "gap_stress_report",
+    "leveraged_etf_risk_note",
+    "source_cards"
+  ],
+  "blocking_rules": [
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "naked_market_order_must_be_justified",
+      "blocks": "research_pass",
+      "description": "A DAY market order without price protection requires a written justification in execution_policy explaining why the risk is acceptable.\n"
+    },
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "compare_at_least_two_execution_methods",
+      "blocks": "research_pass",
+      "description": "Execution policy must compare at least two order styles (e.g. DAY market vs. MOO/OPG vs. LOO/OPG).\n"
+    },
+    {
+      "domain": "leveraged_etf",
+      "rule_id": "leveraged_etf_paper_auto_requires_stress",
+      "blocks": "paper_ready_pass",
+      "description": "paper_auto activation for a leveraged ETF strategy requires a completed gap_stress_report and leveraged_etf_risk_note.\n"
+    }
+  ]
+}

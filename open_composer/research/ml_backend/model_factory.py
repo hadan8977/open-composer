@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+
 from open_composer.models.strategy_spec import StrategySpec
 
 _LIGHTGBM_DEFAULTS: dict[str, Any] = {
@@ -20,9 +24,23 @@ _LIGHTGBM_DEFAULTS: dict[str, Any] = {
 
 
 def create_model(spec: StrategySpec):
-    """Create a conservative LightGBM estimator for small financial samples."""
+    """Create the estimator declared by the StrategySpec."""
     if spec.model is None:
         raise ValueError("create_model requires spec.model")
+    kind = spec.model.kind
+    if kind == "ridge_regressor":
+        params = {"alpha": 1.0, "fit_intercept": True, **spec.model.hyperparameters}
+        return Pipeline([("scale", StandardScaler()), ("model", Ridge(**params))])
+    if kind == "logistic_regression_classifier":
+        params = {
+            "C": 1.0,
+            "penalty": "l2",
+            "solver": "lbfgs",
+            "max_iter": 1000,
+            "random_state": spec.model.training.seed,
+            **spec.model.hyperparameters,
+        }
+        return Pipeline([("scale", StandardScaler()), ("model", LogisticRegression(**params))])
     try:
         from lightgbm import LGBMClassifier, LGBMRegressor
     except ImportError as exc:  # pragma: no cover - exercised when dependency missing
@@ -31,9 +49,15 @@ def create_model(spec: StrategySpec):
         ) from exc
     params = {**_LIGHTGBM_DEFAULTS, **spec.model.hyperparameters}
     params["random_state"] = spec.model.training.seed
-    if spec.model.kind == "lightgbm_classifier":
+    if kind == "lightgbm_classifier":
         return LGBMClassifier(**params)
-    return LGBMRegressor(**params)
+    if kind == "lightgbm_regressor":
+        return LGBMRegressor(**params)
+    raise ValueError(f"unsupported model kind: {kind}")
+
+
+def is_classifier_model(spec: StrategySpec) -> bool:
+    return bool(spec.model and spec.model.kind.endswith("_classifier"))
 
 
 def create_lightgbm_classifier(

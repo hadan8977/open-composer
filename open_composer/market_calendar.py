@@ -17,6 +17,23 @@ def us_equity_session_close(day: date) -> time | None:
     return time(13, 0) if day in _early_closes(day.year) else time(16, 0)
 
 
+def us_equity_session_dates(start: date, end: date) -> tuple[date, ...]:
+    """Return exchange session dates for the inclusive calendar-date interval."""
+    if not isinstance(start, date) or isinstance(start, datetime):
+        raise TypeError("start must be a date")
+    if not isinstance(end, date) or isinstance(end, datetime):
+        raise TypeError("end must be a date")
+    if start > end:
+        raise ValueError("start must be on or before end")
+    sessions: list[date] = []
+    day = start
+    while day <= end:
+        if us_equity_session_close(day) is not None:
+            sessions.append(day)
+        day += timedelta(days=1)
+    return tuple(sessions)
+
+
 def next_us_equity_session(day: date) -> date:
     candidate = day + timedelta(days=1)
     while us_equity_session_close(candidate) is None:

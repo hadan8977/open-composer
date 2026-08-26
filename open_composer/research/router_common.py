@@ -164,18 +164,24 @@ def load_daily_dataset(
     profiles: list[dict[str, Any]] = []
     selected_feed = feed or spec.data.feed or data_feed()
     selected_fetcher = fetcher or fetch_ohlcv
+    data_assumptions = getattr(spec, "data_assumptions", None)
+    adjusted = bool(getattr(data_assumptions, "adjusted", True))
+    selected_adjustment = ("all" if adjusted else "raw") if data_source == "alpaca" else None
     for symbol in required:
-        frame = selected_fetcher(
-            root=root,
-            symbol=symbol,
-            timeframe="daily",
-            start=parse_timestamp(start),
-            end=parse_timestamp(end),
-            source=data_source,
-            feed=selected_feed,
-            use_cache=not refresh_data,
-            allow_fallback=False,
-        )
+        fetch_kwargs = {
+            "root": root,
+            "symbol": symbol,
+            "timeframe": "daily",
+            "start": parse_timestamp(start),
+            "end": parse_timestamp(end),
+            "source": data_source,
+            "feed": selected_feed,
+            "use_cache": not refresh_data,
+            "allow_fallback": False,
+        }
+        if selected_adjustment is not None:
+            fetch_kwargs["adjustment"] = selected_adjustment
+        frame = selected_fetcher(**fetch_kwargs)
         data = frame.copy()
         data["timestamp"] = pd.to_datetime(data["timestamp"], utc=True)
         data["date"] = data["timestamp"].dt.date.astype(str)
@@ -720,6 +726,7 @@ def split_for_oos(frame_len: int, ratio: float, params_grid: list[Any]) -> int:
 
 
 def effective_lookback(params: Any) -> int:
+    base_params = getattr(params, "base_params", None)
     values = [
         getattr(params, "momentum_lookback_days", 0),
         getattr(params, "trend_sma_days", 0) or 0,
@@ -741,6 +748,8 @@ def effective_lookback(params: Any) -> int:
         getattr(params, "market_momentum_days", 0) or 0,
         getattr(params, "signal_momentum_days", 0) or 0,
     ]
+    if base_params is not None:
+        values.append(effective_lookback(base_params))
     return max(int(value) for value in values if value is not None)
 
 

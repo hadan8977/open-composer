@@ -13,6 +13,7 @@ from open_composer.paper_readiness import assess_paper_strategy_readiness_for_sp
 from open_composer.research.alt_data_quality import build_alternative_data_quality_report
 from open_composer.research.contracts import build_research_contract
 from open_composer.research.factor_lab import run_factor_lab
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 from open_composer.research.kernel import (
     EvaluationBundle,
     GateResult,
@@ -46,6 +47,7 @@ def build_strategy_research_report(
 ) -> StrategyResearchReportResult:
     started_at = perf_counter()
     base = root or project_root()
+    require_iteration_execution_gate(spec_path, base, enforce_unbound_design=True)
     writer = ResearchArtifactWriter(base)
     spec = load_strategy_spec(spec_path)
     contract = build_research_contract(spec_path, base)

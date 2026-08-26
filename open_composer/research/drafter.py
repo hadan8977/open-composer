@@ -111,6 +111,13 @@ def _with_standard_research_design(spec: StrategySpec) -> StrategySpec:
         candidate_budget=candidate_budget,
         selection_objective=selection_objective,
         validation_plan=validation_plan,
+        workflow_only_ungated_draft=(
+            spec.lifecycle == "draft"
+            and spec.data.source == "sample"
+            and spec.execution.mode == "manual_signal"
+            and spec.execution.broker == "none"
+            and spec.model is None
+        ),
     )
     return StrategySpec.model_validate(raw)
 
@@ -158,8 +165,10 @@ def _standard_research_design(
     candidate_budget: int,
     selection_objective: str,
     validation_plan: list[str] | None = None,
+    workflow_only_ungated_draft: bool,
 ) -> dict[str, object]:
     return {
+        "workflow_only_ungated_draft": workflow_only_ungated_draft,
         "parameter_space": parameter_space,
         "candidate_budget": candidate_budget,
         "selection_objective": selection_objective,
@@ -282,6 +291,7 @@ def _deterministic_draft(idea: str) -> StrategySpec:
                 },
                 candidate_budget=200,
                 selection_objective="alpha_vs_benchmark_family_after_costs",
+                workflow_only_ungated_draft=True,
             ),
             "notes": {
                 "intent": (
@@ -394,6 +404,7 @@ def _breakout_draft(idea: str) -> StrategySpec:
                 },
                 candidate_budget=120,
                 selection_objective="risk_adjusted_alpha_after_costs",
+                workflow_only_ungated_draft=True,
             ),
             "notes": {
                 "intent": (
@@ -482,6 +493,7 @@ def _memory_storage_draft(idea: str) -> StrategySpec:
                 },
                 candidate_budget=200,
                 selection_objective="theme_proxy_alpha_after_costs",
+                workflow_only_ungated_draft=True,
             ),
             "notes": {
                 "intent": (

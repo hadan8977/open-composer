@@ -11,6 +11,7 @@ from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.paper_readiness import assess_paper_strategy_readiness_for_spec
 from open_composer.research.contracts import build_research_contract
 from open_composer.research.control import ResearchControlResult, update_research_control
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 from open_composer.research.metadata import workspace_relative_path
 from open_composer.research.promotion import build_promotion_report
 from open_composer.research.research_brief import validate_research_brief
@@ -43,6 +44,7 @@ def build_strategy_evidence(
     refresh_data: bool = False,
 ) -> StrategyEvidenceResult:
     base = root or project_root()
+    require_iteration_execution_gate(spec_path, base, enforce_unbound_design=True)
     spec = load_strategy_spec(spec_path)
     if _has_optimized_research_design(spec):
         brief = validate_research_brief(spec_path, base, require_for_optimization=True)
@@ -89,6 +91,7 @@ def build_lightweight_router_evidence_report(
     """
 
     base = root or project_root()
+    require_iteration_execution_gate(spec_path, base, enforce_unbound_design=True)
     spec = load_strategy_spec(spec_path)
     contract = build_research_contract(spec_path, base)
     contract_path = base / "reports" / "research" / f"{spec.name}-research-contract.json"

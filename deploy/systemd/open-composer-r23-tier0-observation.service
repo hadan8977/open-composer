@@ -1,0 +1,20 @@
+[Unit]
+Description=Open Composer R23 broker-free dynamic-theme Tier 0 observation
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/root/codex-test/open-composer/.env
+ConditionPathExists=/root/codex-test/open-composer/reports/research/iterations/mom_pit_semantic_theme_r23/forward/epoch-lock.json
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/root/codex-test/open-composer
+EnvironmentFile=/root/codex-test/open-composer/.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/root/codex-test/open-composer/.venv/bin/oc strategy pit-semantic-theme-r23-forward-observe
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+UMask=0077
+

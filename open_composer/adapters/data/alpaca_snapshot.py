@@ -56,9 +56,21 @@ LEGACY_PROVENANCE_ARCHIVES = {
     (
         "collector",
         COLLECTOR_PATH.as_posix(),
+        "7c2c15cd83a7230d6c6f37f5d336dc236f93acb0aa0a73f47ff3bb6ca240d89b",
+    ): PROVENANCE_ARCHIVE_ROOT
+    / "alpaca_snapshot-7c2c15cd83a7230d6c6f37f5d336dc236f93acb0aa0a73f47ff3bb6ca240d89b.source",
+    (
+        "collector",
+        COLLECTOR_PATH.as_posix(),
         "d1e5868ea65760ff80e99f5a4ff218c1ad1651bdc0c634113c2b065f6bb6cf9d",
     ): PROVENANCE_ARCHIVE_ROOT
     / "alpaca_snapshot-d1e5868ea65760ff80e99f5a4ff218c1ad1651bdc0c634113c2b065f6bb6cf9d.source",
+    (
+        "calendar",
+        CALENDAR_PATH.as_posix(),
+        "7146e57dc41935b1b669da86b4ad04d21500bbff042c1794db9d059c2aad1e6a",
+    ): PROVENANCE_ARCHIVE_ROOT
+    / "market_calendar-7146e57dc41935b1b669da86b4ad04d21500bbff042c1794db9d059c2aad1e6a.source",
 }
 SYMBOL_ASOF_SEMANTICS = "symbol_mapping_only_not_historical_data_vintage"
 SPIN_OFF_SUPPORT = "provider_all_composite_only_no_independent_decomposition"
@@ -654,9 +666,11 @@ def load_immutable_alpaca_snapshot(spec: StrategySpec, root: Path) -> pd.DataFra
     for column in ["open", "high", "low", "close", "volume"]:
         if not frame[column].map(lambda value: math.isfinite(float(value))).all():
             raise AlpacaDataError(f"immutable Alpaca snapshot has nonfinite {column}")
-    first = frame["timestamp"].iloc[0].isoformat()
-    last = frame["timestamp"].iloc[-1].isoformat()
-    if manifest.get("first_timestamp") != first or manifest.get("last_timestamp") != last:
+    first = frame["timestamp"].iloc[0].to_pydatetime().astimezone(UTC)
+    last = frame["timestamp"].iloc[-1].to_pydatetime().astimezone(UTC)
+    if first != _parse_utc(str(manifest.get("first_timestamp") or "")) or last != _parse_utc(
+        str(manifest.get("last_timestamp") or "")
+    ):
         raise AlpacaDataError("immutable Alpaca snapshot timestamp bounds mismatch")
     quality = manifest.get("quality")
     if not isinstance(quality, dict) or quality.get("status") != "complete":

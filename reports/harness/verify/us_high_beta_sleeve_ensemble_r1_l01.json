@@ -1,0 +1,283 @@
+{
+  "schema_version": 2,
+  "verification_contract": "harness_verify_v2",
+  "strategy_name": "us_high_beta_sleeve_ensemble_r1_l01",
+  "spec_path": "strategy_specs/drafts/us_high_beta_sleeve_ensemble_r1_l01.yaml",
+  "spec_file_sha256": "29f9f6c8e7eeaee1d6ece872677822e53ee5157452e97d3934f1ce0751e6be4e",
+  "spec_semantic_sha256": "b96347dc3cd26cd803de9c2ecb6e18f7096adf8a168847077c0dce0fed688f83",
+  "stage": "research",
+  "risk_domains": [
+    "daily_open_execution",
+    "leveraged_etf",
+    "llm_or_news_signal",
+    "router_strategy"
+  ],
+  "required_artifacts": [
+    "capability_review",
+    "execution_policy",
+    "execution_reality_report",
+    "feature_packet_schema",
+    "gap_stress_report",
+    "leveraged_etf_risk_note",
+    "marginal_lift_report",
+    "missing_modality_robustness_report",
+    "pit_replay_evidence",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "source_cards"
+  ],
+  "plan_binding": {
+    "path": "reports/harness/plans/us_high_beta_sleeve_ensemble_r1_l01.json",
+    "sha256": "9f820c81be5cc3cf5388919896ecb78e5da83de017df4029c1f4d830881e99e6",
+    "size_bytes": 3214
+  },
+  "config_bindings": {
+    "risk_domains": {
+      "path": "harness/risk_domains.yaml",
+      "sha256": "d0bd4d8e5368de57a8063fd2a973c897063a127b153c739e96787e29cde8f3c9",
+      "size_bytes": 13714
+    },
+    "artifact_contracts": {
+      "path": "harness/artifact_contracts.yaml",
+      "sha256": "97716bc4789e65c586d6d69b382273673baee1b4ded74e539575cafe5eebdf3c",
+      "size_bytes": 14710
+    }
+  },
+  "artifacts": [
+    {
+      "name": "capability_review",
+      "present": true,
+      "schema_ok": true,
+      "missing_fields": [],
+      "path": "reports/harness/data/us_high_beta_sleeve_ensemble_r1_l01-capability-review.json",
+      "binding": {
+        "path": "reports/harness/data/us_high_beta_sleeve_ensemble_r1_l01-capability-review.json",
+        "sha256": "8a6346ea1cb4a1ea7c685c4b37d4c88f54fdad941e5bb82c733ab20f388450ff",
+        "size_bytes": 2708
+      }
+    },
+    {
+      "name": "execution_policy",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "order_style",
+        "time_in_force",
+        "price_protection",
+        "gap_filter",
+        "spread_filter",
+        "participation_cap",
+        "fallback_behavior",
+        "tca_plan",
+        "source_card_ids",
+        "alternatives_compared"
+      ],
+      "path": "reports/harness/execution/us_high_beta_sleeve_ensemble_r1_l01-execution-policy.json",
+      "binding": null
+    },
+    {
+      "name": "execution_reality_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "slippage_scenarios",
+        "gap_stress",
+        "capacity_assessment",
+        "tca_reference_prices"
+      ],
+      "path": "reports/harness/execution/us_high_beta_sleeve_ensemble_r1_l01-execution-reality.json",
+      "binding": null
+    },
+    {
+      "name": "feature_packet_schema",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "packet_kind",
+        "visible_at",
+        "published_at",
+        "fetched_at",
+        "source",
+        "input_hash",
+        "prompt_hash",
+        "fields"
+      ],
+      "path": "reports/research/us_high_beta_sleeve_ensemble_r1_l01-feature-packet-schema.json",
+      "binding": null
+    },
+    {
+      "name": "gap_stress_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "scenarios",
+        "max_adverse_gap_pct",
+        "fill_model_gap_handling",
+        "recommended_gap_filter"
+      ],
+      "path": "reports/harness/execution/us_high_beta_sleeve_ensemble_r1_l01-gap-stress.json",
+      "binding": null
+    },
+    {
+      "name": "leveraged_etf_risk_note",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [],
+      "path": "reports/harness/execution/us_high_beta_sleeve_ensemble_r1_l01-leveraged-etf-risk.md",
+      "binding": null
+    },
+    {
+      "name": "marginal_lift_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "baseline_sharpe",
+        "with_signal_sharpe",
+        "lift_pct",
+        "robustness_check"
+      ],
+      "path": "reports/research/us_high_beta_sleeve_ensemble_r1_l01-marginal-lift.json",
+      "binding": null
+    },
+    {
+      "name": "missing_modality_robustness_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "degradation_mode",
+        "fallback_behavior",
+        "performance_impact"
+      ],
+      "path": "reports/research/us_high_beta_sleeve_ensemble_r1_l01-modality-robustness.json",
+      "binding": null
+    },
+    {
+      "name": "pit_replay_evidence",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "replay_method",
+        "pit_fields_verified",
+        "live_call_prohibited"
+      ],
+      "path": "reports/research/us_high_beta_sleeve_ensemble_r1_l01-pit-replay.json",
+      "binding": null
+    },
+    {
+      "name": "router_cost_stress",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "scenarios",
+        "recommendation"
+      ],
+      "path": "reports/research/us_high_beta_sleeve_ensemble_r1_l01-router-cost-stress.json",
+      "binding": null
+    },
+    {
+      "name": "router_data_evidence",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "data_source",
+        "acquisition_tier",
+        "data_profile"
+      ],
+      "path": "reports/research/us_high_beta_sleeve_ensemble_r1_l01-router-data-evidence.json",
+      "binding": null
+    },
+    {
+      "name": "router_execution_observation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "execution_substate",
+        "target_weights_path",
+        "rebalance_intents_path"
+      ],
+      "path": "reports/execution/us_high_beta_sleeve_ensemble_r1_l01-execution-observation.json",
+      "binding": null
+    },
+    {
+      "name": "router_rebalance_intents",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "intents",
+        "summary",
+        "execution_substate"
+      ],
+      "path": "reports/execution/us_high_beta_sleeve_ensemble_r1_l01-rebalance-intents.json",
+      "binding": null
+    },
+    {
+      "name": "router_target_weights",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "target_weights",
+        "summary",
+        "acquisition_tier"
+      ],
+      "path": "reports/execution/us_high_beta_sleeve_ensemble_r1_l01-target-weights.json",
+      "binding": null
+    },
+    {
+      "name": "router_validation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "portfolio_mode",
+        "summary",
+        "blockers"
+      ],
+      "path": "reports/research/us_high_beta_sleeve_ensemble_r1_l01-router-validation.json",
+      "binding": null
+    },
+    {
+      "name": "source_cards",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "claim_id",
+        "claim",
+        "source_url",
+        "source_type",
+        "accessed_at",
+        "applies_to",
+        "impact_on_spec",
+        "limitations"
+      ],
+      "path": "reports/harness/source_cards/us_high_beta_sleeve_ensemble_r1_l01.jsonl",
+      "binding": null
+    }
+  ],
+  "overall": "blocked"
+}

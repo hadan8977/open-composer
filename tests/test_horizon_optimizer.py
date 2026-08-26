@@ -37,6 +37,7 @@ def test_strategy_spec_accepts_5m_timeframe(repo_root: Path) -> None:
 def test_horizon_optimizer_compares_frequency_and_hold_profiles(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     sample = pd.read_csv(sample_workspace / "data" / "sample" / "qqq_15m.csv")
     calls: list[tuple[str, str]] = []
@@ -51,8 +52,10 @@ def test_horizon_optimizer_compares_frequency_and_hold_profiles(
         return normalize_ohlcv(frame)
 
     monkeypatch.setattr("open_composer.research.horizon_optimizer.fetch_ohlcv", fake_fetch_ohlcv)
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    preregister_iteration_dossier(spec_path, candidate_count=7)
     result = optimize_strategy_horizons(
-        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        spec_path,
         sample_workspace,
         symbols=["AAA"],
         refresh_data=False,

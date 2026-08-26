@@ -11,6 +11,7 @@ from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
 from open_composer.engines.signal_engine import required_signal_history_bars
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 
 
 @dataclass(frozen=True)
@@ -58,6 +59,12 @@ def optimize_strategy_horizons(
     refresh_data: bool = True,
 ) -> HorizonOptimizationResult:
     base = root or project_root()
+    require_iteration_execution_gate(
+        spec_path,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=True,
+    )
     source = load_strategy_spec(spec_path)
     universe = [item.upper() for item in (symbols or source.universe)]
     selected: list[HorizonSelection] = []
@@ -98,6 +105,7 @@ def optimize_strategy_horizons(
             artifacts = backtest_frame(
                 candidate,
                 frame,
+                root=base,
                 run_id_value=f"horizon-{candidate.name}",
             )
             score = _score_horizon_candidate(

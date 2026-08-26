@@ -9,6 +9,7 @@ from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 
 
 @dataclass
@@ -28,11 +29,22 @@ def optimize_strategy(
     min_sharpe: float = 0.0,
 ) -> OptimizationResult:
     base = root or project_root()
+    require_iteration_execution_gate(
+        spec_path,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=True,
+    )
     spec = load_strategy_spec(spec_path)
     frame = load_ohlcv_for_spec(spec, base)
     candidates = []
     for candidate in _candidate_specs(spec):
-        artifacts = backtest_frame(candidate, frame, run_id_value=f"opt-{candidate.name}")
+        artifacts = backtest_frame(
+            candidate,
+            frame,
+            root=base,
+            run_id_value=f"opt-{candidate.name}",
+        )
         score = _score_candidate(artifacts, min_return_pct, min_signals, min_sharpe)
         candidates.append((candidate, artifacts, score))
     candidates.sort(key=lambda item: item[2], reverse=True)

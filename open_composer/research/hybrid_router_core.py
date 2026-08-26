@@ -214,6 +214,34 @@ class BetaOverrideHybridParams:
         return label
 
 
+@dataclass(frozen=True)
+class EquityRiskManagedHybridParams:
+    base_label: str
+    base_params: HybridRouterParams | BetaOverrideHybridParams
+    trigger_drawdown_pct: float
+    recovery_drawdown_pct: float
+    risk_scale: float
+    defensive_symbol: str
+    defensive_redeploy: float
+    min_throttle_days: int
+
+    @property
+    def holding_mode(self) -> HoldingMode:
+        return self.base_params.holding_mode
+
+    @property
+    def label(self) -> str:
+        return (
+            "equity_risk_manager:"
+            f"trig{self.trigger_drawdown_pct:g}_"
+            f"recover{self.recovery_drawdown_pct:g}_"
+            f"scale{self.risk_scale:g}_"
+            f"def{self.defensive_symbol.upper()}w{self.defensive_redeploy:g}_"
+            f"mindays{self.min_throttle_days}"
+            f"__base__{self.base_label}"
+        )
+
+
 HybridRouterMetrics = RouterMetrics
 _DailyHybridDataset = RouterFrameDataset
 
@@ -223,6 +251,7 @@ def hybrid_params_from_label(
 ) -> (
     HybridRouterParams
     | BetaOverrideHybridParams
+    | EquityRiskManagedHybridParams
     | PostDrawdownReentryParams
     | DefensiveTransitionOverlay
     | DelayedEntryOverlay
@@ -233,6 +262,47 @@ def hybrid_params_from_label(
         return post_drawdown_reentry_params_from_label(label)
     if is_delayed_entry_label(label):
         return delayed_entry_overlay_from_label(label)
+    if label.startswith("equity_risk_manager:"):
+        try:
+            manager_label, base_label = label.split("__base__", 1)
+        except ValueError as exc:
+            raise ValueError(f"unsupported equity risk manager route label: {label}") from exc
+        match = re.fullmatch(
+            r"equity_risk_manager:trig(?P<trigger>[-0-9.]+)_"
+            r"recover(?P<recover>[-0-9.]+)_"
+            r"scale(?P<scale>[-0-9.]+)_"
+            r"def(?P<defensive>[A-Z0-9]+)w(?P<redeploy>[-0-9.]+)_"
+            r"mindays(?P<mindays>\d+)",
+            manager_label,
+        )
+        if match is None or base_label.startswith("equity_risk_manager:"):
+            raise ValueError(f"unsupported equity risk manager route label: {label}")
+        base_params = hybrid_params_from_label(base_label)
+        if not isinstance(base_params, (HybridRouterParams, BetaOverrideHybridParams)):
+            raise ValueError("equity risk manager requires a direct hybrid base route")
+        trigger = float(match.group("trigger"))
+        recovery = float(match.group("recover"))
+        risk_scale = float(match.group("scale"))
+        redeploy = float(match.group("redeploy"))
+        min_days = int(match.group("mindays"))
+        if trigger <= 0 or recovery < 0 or recovery >= trigger:
+            raise ValueError("equity risk manager requires 0 <= recovery < trigger")
+        if not 0 <= risk_scale <= 1:
+            raise ValueError("equity risk manager risk scale must be between 0 and 1")
+        if not 0 <= redeploy <= 1:
+            raise ValueError("equity risk manager defensive redeploy must be between 0 and 1")
+        if min_days < 1:
+            raise ValueError("equity risk manager minimum throttle days must be positive")
+        return EquityRiskManagedHybridParams(
+            base_label=base_label,
+            base_params=base_params,
+            trigger_drawdown_pct=trigger,
+            recovery_drawdown_pct=recovery,
+            risk_scale=risk_scale,
+            defensive_symbol=match.group("defensive").upper(),
+            defensive_redeploy=redeploy,
+            min_throttle_days=min_days,
+        )
     if label.startswith("beta_override:"):
         match = re.fullmatch(
             r"beta_override:baseiter2_lb(?P<lb>\d+)_min(?P<min>[-0-9.]+)_"
@@ -773,6 +843,7 @@ def hybrid_target_weight_snapshot(
     params: (
         HybridRouterParams
         | BetaOverrideHybridParams
+        | EquityRiskManagedHybridParams
         | PostDrawdownReentryParams
         | DefensiveTransitionOverlay
         | DelayedEntryOverlay
@@ -786,6 +857,8 @@ def hybrid_target_weight_snapshot(
     if isinstance(params, DelayedEntryOverlay):
         base_params = hybrid_params_from_label(params.base_route_label)
         return hybrid_target_weight_snapshot(spec, dataset, base_params, index)
+    if isinstance(params, EquityRiskManagedHybridParams):
+        return _equity_risk_managed_target_weight_snapshot(spec, dataset, params, index)
     if isinstance(params, BetaOverrideHybridParams):
         return _beta_override_target_weight_snapshot(dataset, params, index)
     max_symbol_weight = min(
@@ -820,6 +893,184 @@ def hybrid_target_weight_snapshot(
     per_symbol = min(max_symbol_weight, effective_gross / len(selected))
     weights = {symbol: per_symbol for symbol in selected if per_symbol > 0}
     return TargetSnapshot(list(weights), weights, vol_scale, regime_scale, mdd_scale)
+
+
+_EQUITY_RISK_ASSETS = {"TQQQ", "QLD", "SOXL", "TECL", "USD", "ROM"}
+
+
+def _equity_risk_managed_target_weight_snapshot(
+    spec: StrategySpec,
+    dataset: _DailyHybridDataset,
+    params: EquityRiskManagedHybridParams,
+    index: int,
+) -> TargetSnapshot:
+    base = hybrid_target_weight_snapshot(spec, dataset, params.base_params, index)
+    throttled, _, _ = _equity_risk_manager_state(spec, dataset, params, index)
+    weights = dict(base.weights)
+    if throttled:
+        if params.defensive_symbol not in dataset.symbols:
+            raise ValueError(
+                "equity risk manager defensive symbol is absent from the dataset: "
+                f"{params.defensive_symbol}"
+            )
+        weights = _apply_equity_risk_manager_weights(weights, params)
+    weights = {symbol: weight for symbol, weight in weights.items() if weight > 1e-12}
+    gross = sum(abs(weight) for weight in weights.values())
+    gross_limit = max(spec.portfolio.gross_exposure_limit or 1.0, 0.0)
+    if gross_limit and gross > gross_limit:
+        weights = {symbol: weight * gross_limit / gross for symbol, weight in weights.items()}
+    return TargetSnapshot(
+        selected=list(weights),
+        weights=weights,
+        volatility_scale=base.volatility_scale,
+        market_regime_scale=base.market_regime_scale,
+        market_drawdown_scale=base.market_drawdown_scale,
+        state="equity_throttle" if throttled else f"equity_pass:{base.state}",
+        qqq_trend_ok=base.qqq_trend_ok,
+        qqq_momentum_ok=base.qqq_momentum_ok,
+        qqq_drawdown_ok=base.qqq_drawdown_ok,
+        leverage_trend_ok=base.leverage_trend_ok,
+        leverage_volatility_ok=base.leverage_volatility_ok,
+        leverage_drawdown_ok=base.leverage_drawdown_ok,
+        core_gross=base.core_gross,
+        satellite_gross=base.satellite_gross,
+        satellite_scale=base.satellite_scale,
+        theme_gate_ok=base.theme_gate_ok,
+    )
+
+
+def _apply_equity_risk_manager_weights(
+    weights: dict[str, float],
+    params: EquityRiskManagedHybridParams,
+) -> dict[str, float]:
+    managed = dict(weights)
+    freed = 0.0
+    for symbol, weight in list(managed.items()):
+        if symbol.upper() not in _EQUITY_RISK_ASSETS:
+            continue
+        scaled = weight * params.risk_scale
+        freed += abs(weight - scaled)
+        managed[symbol] = scaled
+    if params.defensive_redeploy > 0 and freed > 0:
+        defensive = params.defensive_symbol.upper()
+        managed[defensive] = managed.get(defensive, 0.0) + freed * params.defensive_redeploy
+    return managed
+
+
+def _equity_risk_manager_state(
+    spec: StrategySpec,
+    dataset: _DailyHybridDataset,
+    params: EquityRiskManagedHybridParams,
+    index: int,
+) -> tuple[bool, float, int]:
+    cache_key = (
+        "equity_risk_manager_state",
+        params.label,
+        spec.costs.commission_pct,
+        spec.costs.slippage_bps,
+        spec.portfolio.gross_exposure_limit,
+    )
+    cached = dataset.runtime_cache.get(cache_key)
+    if cached is None:
+        cached = _build_equity_risk_manager_state_cache(spec, dataset, params)
+        dataset.runtime_cache[cache_key] = cached
+    if index in cached:
+        return cached[index]
+    available = [key for key in cached if key <= index]
+    if not available:
+        return False, 0.0, 0
+    return cached[max(available)]
+
+
+def _build_equity_risk_manager_state_cache(
+    spec: StrategySpec,
+    dataset: _DailyHybridDataset,
+    params: EquityRiskManagedHybridParams,
+) -> dict[int, tuple[bool, float, int]]:
+    start_index = _effective_lookback(params.base_params) + 1
+    end_index = len(dataset.dates) - 1
+    cost_rate = spec.costs.commission_pct / 100 + spec.costs.slippage_bps / 10_000
+    equity = 1.0
+    peak = 1.0
+    throttled = False
+    throttle_days = 0
+    previous_weights: dict[str, float] = {}
+    states: dict[int, tuple[bool, float, int]] = {}
+    for route_index in range(start_index, end_index):
+        drawdown_pct = (equity / peak - 1) * 100 if peak > 0 else 0.0
+        throttled, throttle_days = _next_equity_throttle_state(
+            throttled,
+            throttle_days,
+            drawdown_pct,
+            params,
+        )
+        states[route_index] = (throttled, drawdown_pct, throttle_days)
+        base = hybrid_target_weight_snapshot(spec, dataset, params.base_params, route_index)
+        weights = dict(base.weights)
+        if throttled:
+            if params.defensive_symbol not in dataset.symbols:
+                raise ValueError(
+                    "equity risk manager defensive symbol is absent from the dataset: "
+                    f"{params.defensive_symbol}"
+                )
+            weights = _apply_equity_risk_manager_weights(weights, params)
+            throttle_days += 1
+        gross = sum(abs(weight) for weight in weights.values())
+        gross_limit = max(spec.portfolio.gross_exposure_limit or 1.0, 0.0)
+        if gross_limit and gross > gross_limit:
+            weights = {symbol: weight * gross_limit / gross for symbol, weight in weights.items()}
+        daily_return = _equity_managed_daily_return(dataset, route_index, weights)
+        daily_return -= _weight_turnover(weights, previous_weights) * cost_rate
+        equity *= 1 + daily_return
+        peak = max(peak, equity)
+        previous_weights = weights
+    drawdown_pct = (equity / peak - 1) * 100 if peak > 0 else 0.0
+    throttled, throttle_days = _next_equity_throttle_state(
+        throttled,
+        throttle_days,
+        drawdown_pct,
+        params,
+    )
+    states[len(dataset.dates)] = (throttled, drawdown_pct, throttle_days)
+    return states
+
+
+def _next_equity_throttle_state(
+    throttled: bool,
+    throttle_days: int,
+    drawdown_pct: float,
+    params: EquityRiskManagedHybridParams,
+) -> tuple[bool, int]:
+    if not throttled and drawdown_pct <= -abs(params.trigger_drawdown_pct):
+        return True, 0
+    if (
+        throttled
+        and throttle_days >= params.min_throttle_days
+        and drawdown_pct >= -abs(params.recovery_drawdown_pct)
+    ):
+        return False, throttle_days
+    return throttled, throttle_days
+
+
+def _equity_managed_daily_return(
+    dataset: _DailyHybridDataset,
+    index: int,
+    weights: dict[str, float],
+) -> float:
+    if index + 1 >= len(dataset.frame):
+        return 0.0
+    total = 0.0
+    for symbol, weight in weights.items():
+        open_now = float(dataset.frame[f"{symbol}_open"].iloc[index])
+        open_next = float(dataset.frame[f"{symbol}_open"].iloc[index + 1])
+        if open_now > 0 and open_next > 0:
+            total += weight * (open_next / open_now - 1)
+    return total
+
+
+def _weight_turnover(current: dict[str, float], previous: dict[str, float]) -> float:
+    symbols = set(current) | set(previous)
+    return sum(abs(current.get(symbol, 0.0) - previous.get(symbol, 0.0)) for symbol in symbols)
 
 
 def _hybrid_selected_symbols(
@@ -1277,6 +1528,7 @@ def _backtest_hybrid_params(
     params: (
         HybridRouterParams
         | BetaOverrideHybridParams
+        | EquityRiskManagedHybridParams
         | PostDrawdownReentryParams
         | DefensiveTransitionOverlay
         | DelayedEntryOverlay
@@ -1301,6 +1553,7 @@ def _effective_lookback(
     params: (
         HybridRouterParams
         | BetaOverrideHybridParams
+        | EquityRiskManagedHybridParams
         | PostDrawdownReentryParams
         | DefensiveTransitionOverlay
         | DelayedEntryOverlay
@@ -1312,4 +1565,6 @@ def _effective_lookback(
         return post_drawdown_reentry_effective_lookback(params)
     if isinstance(params, DelayedEntryOverlay):
         return _effective_lookback(hybrid_params_from_label(params.base_route_label))
+    if isinstance(params, EquityRiskManagedHybridParams):
+        return _effective_lookback(params.base_params)
     return effective_lookback(params)

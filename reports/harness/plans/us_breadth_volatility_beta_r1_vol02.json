@@ -1,0 +1,63 @@
+{
+  "schema_version": 2,
+  "plan_contract": "harness_plan_v2",
+  "strategy_name": "us_breadth_volatility_beta_r1_vol02",
+  "spec_path": "strategy_specs/drafts/us_breadth_volatility_beta_r1_vol02.yaml",
+  "spec_file_sha256": "33add1a7fe55581b448f2a2aed56ca5dafb8583af0495c63a5e95bd0b67c0a51",
+  "spec_semantic_sha256": "67c761c81f85687e1dffb439022443676ebce98098b4da4cc3d2bb0c8b382fc1",
+  "risk_domains": [
+    "daily_open_execution",
+    "leveraged_etf",
+    "router_strategy"
+  ],
+  "required_skills": [
+    "backtest-forensics",
+    "execution-reality-reviewer",
+    "source-researcher"
+  ],
+  "required_artifacts": [
+    "execution_policy",
+    "execution_reality_report",
+    "gap_stress_report",
+    "leveraged_etf_risk_note",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "source_cards"
+  ],
+  "blocking_rules": [
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "naked_market_order_must_be_justified",
+      "blocks": "research_pass",
+      "description": "A DAY market order without price protection requires a written justification in execution_policy explaining why the risk is acceptable.\n"
+    },
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "compare_at_least_two_execution_methods",
+      "blocks": "research_pass",
+      "description": "Execution policy must compare at least two order styles (e.g. DAY market vs. MOO/OPG vs. LOO/OPG).\n"
+    },
+    {
+      "domain": "leveraged_etf",
+      "rule_id": "leveraged_etf_paper_auto_requires_stress",
+      "blocks": "paper_ready_pass",
+      "description": "paper_auto activation for a leveraged ETF strategy requires a completed gap_stress_report and leveraged_etf_risk_note.\n"
+    },
+    {
+      "domain": "router_strategy",
+      "rule_id": "router_requires_target_weight_observation",
+      "blocks": "research_pass",
+      "description": "Router strategy promotion requires target weights, rebalance intents, cost stress, data evidence, and validation artifacts.\n"
+    },
+    {
+      "domain": "router_strategy",
+      "rule_id": "router_order_authorization_requires_readiness",
+      "blocks": "paper_ready_pass",
+      "description": "Router execution can remain observation_only before paper order authorization; broker orders require paper readiness and safety artifacts.\n"
+    }
+  ]
+}

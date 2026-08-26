@@ -3,11 +3,13 @@ from __future__ import annotations
 from datetime import date
 
 import pandas as pd
+import pytest
 
 from open_composer.market_calendar import (
     expected_rth_bar_closes,
     expected_us_equity_rth_bar_starts,
     us_equity_session_close,
+    us_equity_session_dates,
     validate_us_equity_bar_grid,
 )
 
@@ -23,6 +25,26 @@ def test_us_equity_calendar_handles_holidays_early_close_and_dst() -> None:
     summer = min(expected_rth_bar_closes(date(2026, 7, 2)))
     assert winter.hour == 15
     assert summer.hour == 14
+
+
+def test_us_equity_session_dates_use_exchange_sessions_not_business_days() -> None:
+    sessions = us_equity_session_dates(date(2018, 11, 22), date(2018, 12, 6))
+
+    assert date(2018, 11, 22) not in sessions
+    assert date(2018, 11, 23) in sessions
+    assert date(2018, 12, 5) not in sessions
+    assert date(2018, 12, 6) in sessions
+    assert date(2021, 12, 31) in us_equity_session_dates(date(2021, 12, 31), date(2022, 1, 3))
+    assert date(2023, 4, 7) not in us_equity_session_dates(date(2023, 4, 6), date(2023, 4, 10))
+    assert date(2022, 6, 20) not in us_equity_session_dates(date(2022, 6, 17), date(2022, 6, 21))
+
+
+def test_us_equity_session_dates_reject_invalid_bounds_and_datetime_values() -> None:
+    with pytest.raises(ValueError, match="start must be on or before end"):
+        us_equity_session_dates(date(2023, 1, 2), date(2023, 1, 1))
+
+    with pytest.raises(TypeError, match="start must be a date"):
+        us_equity_session_dates(pd.Timestamp("2023-01-01"), date(2023, 1, 2))
 
 
 def test_us_equity_calendar_expected_slots_detect_missing_and_duplicate_bars() -> None:

@@ -731,12 +731,13 @@ def _account_snapshot_check(root: Path) -> PaperStrategyReadinessCheck:
     except json.JSONDecodeError:
         raw = {}
     age_seconds = (datetime.now(UTC) - account.generated_at.astimezone(UTC)).total_seconds()
+    account_status = str(account.status).rsplit(".", 1)[-1].upper()
     values = [account.equity, account.cash, account.buying_power, account.portfolio_value]
     invalid = (
         not isinstance(raw, dict)
         or not raw.get("generated_at")
         or account.paper is not True
-        or str(account.status).upper() != "ACTIVE"
+        or account_status != "ACTIVE"
         or account.equity is None
         or account.equity <= 0
         or account.cash is None

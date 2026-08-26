@@ -15,6 +15,7 @@ from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
 from open_composer.json_utils import json_safe_sorted_values
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 from open_composer.research.metadata import (
     estimate_grid_research_cost,
     frame_data_profile,
@@ -117,6 +118,12 @@ def run_market_timing_research(
     stages: dict[str, float] = {}
     stage_started = perf_counter()
     base = root or project_root()
+    require_iteration_execution_gate(
+        spec_path,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=True,
+    )
     source = load_strategy_spec(spec_path)
     selected_symbol = (symbol or source.primary_symbol).upper()
     selected_feed = feed or source.data.feed or data_feed()

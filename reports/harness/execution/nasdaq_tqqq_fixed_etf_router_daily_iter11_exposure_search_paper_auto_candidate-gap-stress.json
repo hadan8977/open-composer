@@ -1,0 +1,31 @@
+{
+  "strategy_name": "nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate",
+  "scenarios": [
+    {
+      "name": "low",
+      "slippage_bps": 5.0,
+      "open_gap_pct": 0.2
+    },
+    {
+      "name": "medium",
+      "slippage_bps": 15.0,
+      "open_gap_pct": 0.8
+    },
+    {
+      "name": "high",
+      "slippage_bps": 35.0,
+      "open_gap_pct": 2.5
+    }
+  ],
+  "max_adverse_gap_pct": 5.0,
+  "fill_model_gap_handling": "next_bar_open assumption fills at official open price; a >2.5% adverse gap is treated as an execution failure.",
+  "recommended_gap_filter": "skip trade if abs(open_gap_pct) > 2.5",
+  "leveraged_symbols": [
+    "TQQQ",
+    "SQQQ",
+    "SOXL",
+    "SOXS",
+    "TECL",
+    "TECS"
+  ]
+}

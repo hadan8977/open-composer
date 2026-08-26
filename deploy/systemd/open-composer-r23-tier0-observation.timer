@@ -1,0 +1,15 @@
+[Unit]
+Description=Collect locked R23 dynamic-theme Tier 0 observations after each US session
+
+[Timer]
+OnCalendar=Tue..Sat *-*-* 04:20:00 UTC
+OnCalendar=Tue..Sat *-*-* 04:40:00 UTC
+OnCalendar=Tue..Sat *-*-* 05:00:00 UTC
+Persistent=true
+RandomizedDelaySec=0
+AccuracySec=1min
+Unit=open-composer-r23-tier0-observation.service
+
+[Install]
+WantedBy=timers.target
+

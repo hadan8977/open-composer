@@ -11,6 +11,7 @@ from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import ensure_dir, project_root
 from open_composer.expressions import prepare_factor_frame
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 from open_composer.research.metadata import frame_data_profile, runtime_payload
 from open_composer.storage import write_json
 
@@ -70,6 +71,12 @@ def run_factor_lab(
         selected_horizons = [forward_bars]
 
     base = root or project_root()
+    require_iteration_execution_gate(
+        spec_path,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=True,
+    )
     spec = load_strategy_spec(spec_path)
     frame = load_ohlcv_for_spec(spec, base, refresh=refresh_data)
     frame.attrs.update({"strategy_name": spec.name})

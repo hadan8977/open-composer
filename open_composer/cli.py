@@ -306,6 +306,7 @@ agent_app = typer.Typer(no_args_is_help=True)
 research_brief_app = typer.Typer(no_args_is_help=True)
 factor_app = typer.Typer(no_args_is_help=True)
 research_app = typer.Typer(no_args_is_help=True)
+research_campaign_app = typer.Typer(no_args_is_help=True)
 research_iteration_app = typer.Typer(no_args_is_help=True)
 research_knowledge_app = typer.Typer(no_args_is_help=True)
 console = Console()
@@ -337,6 +338,7 @@ app.add_typer(project_app, name="project")
 app.add_typer(agent_app, name="agent")
 app.add_typer(factor_app, name="factor")
 app.add_typer(research_app, name="research")
+research_app.add_typer(research_campaign_app, name="campaign")
 research_app.add_typer(research_iteration_app, name="iteration")
 research_app.add_typer(research_knowledge_app, name="knowledge")
 
@@ -985,6 +987,236 @@ def research_iteration_validate_command(
     else:
         console.print(render_validation_markdown(result))
     if not result.ok:
+        raise typer.Exit(1)
+
+
+@research_campaign_app.command("validate")
+def research_campaign_validate_command(
+    campaign_id: str,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+    stage: Annotated[
+        str,
+        typer.Option(
+            "--stage",
+            help="Validation stage: pre-discovery, pre-oos, or final.",
+        ),
+    ] = "pre-discovery",
+) -> None:
+    """Validate a research campaign before candidate generation or selection."""
+    from open_composer.research.campaign import validate_campaign_contract
+
+    try:
+        result = validate_campaign_contract(campaign_id, project_root(), stage=stage)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if json_output:
+        sys.stdout.write(json.dumps(result.to_dict(), indent=2) + "\n")
+    else:
+        console.print(
+            f"campaign={result.campaign_id} stage={result.stage} status={result.status} "
+            f"branches={result.counts.branches} budget={result.counts.candidate_budget}"
+        )
+        for blocker in result.blocked:
+            console.print(f"[red]blocked[/red] {blocker}")
+    if not result.ok:
+        raise typer.Exit(1)
+
+
+@research_campaign_app.command("status")
+def research_campaign_status_command(
+    campaign_id: str,
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Show campaign readiness using stage gates and materialized artifact state."""
+    import hashlib
+
+    from open_composer.research.campaign import (
+        campaign_contract_path,
+        load_campaign_contract,
+        validate_campaign_contract,
+    )
+
+    root = project_root()
+    validation = validate_campaign_contract(campaign_id, root, stage="pre-discovery")
+    contract_path = campaign_contract_path(campaign_id, root)
+    campaign_root = contract_path.parent
+    stage_validations = {"pre-discovery": validation}
+    contract = None
+    if validation.ok:
+        contract = load_campaign_contract(campaign_id, root)
+        stage_validations.update(
+            {
+                stage: validate_campaign_contract(campaign_id, root, stage=stage)
+                for stage in ("pre-oos", "final")
+            }
+        )
+    artifact_paths = {
+        "qd_archive": campaign_root / "qd-archive.json",
+        "allocation_ledger": campaign_root / "allocation-ledger.jsonl",
+    }
+    invalid_references: dict[str, str] = {}
+    if contract is not None and contract.promotion_evidence is not None:
+        evidence_references = {
+            "promotion_cohort": contract.promotion_evidence.promotion_cohort_ref,
+            "pre_oos_seal": contract.promotion_evidence.pre_oos_seal_ref,
+            "common_return_matrix": contract.promotion_evidence.common_return_matrix_ref,
+            "statistical_family_gates": contract.promotion_evidence.statistical_family_gate_ref,
+            "candidate_promotion_gates": contract.promotion_evidence.candidate_promotion_gate_ref,
+        }
+        for name, reference in evidence_references.items():
+            raw = Path(reference)
+            if raw.is_absolute():
+                invalid_references[name] = "absolute_path_not_allowed"
+                artifact_paths[name] = raw
+                continue
+            candidate = (campaign_root / raw).resolve()
+            try:
+                candidate.relative_to(campaign_root.resolve())
+            except ValueError:
+                invalid_references[name] = "path_escapes_campaign_directory"
+                artifact_paths[name] = candidate
+                continue
+            artifact_paths[name] = candidate
+    artifacts: dict[str, dict[str, Any]] = {}
+    artifact_invalid = False
+    for name, path in artifact_paths.items():
+        try:
+            relative = path.relative_to(root).as_posix()
+        except ValueError:
+            relative = str(path)
+        if name in invalid_references:
+            artifacts[name] = {
+                "path": relative,
+                "exists": False,
+                "is_symlink": False,
+                "reference_error": invalid_references[name],
+                "validation_status": "blocked",
+            }
+            artifact_invalid = True
+            continue
+        is_symlink = path.is_symlink()
+        exists = path.is_file() and not is_symlink
+        state: dict[str, Any] = {
+            "path": relative,
+            "exists": exists,
+            "is_symlink": is_symlink,
+        }
+        if is_symlink:
+            state["validation_status"] = "blocked"
+            state["validation_errors"] = ["symlink_not_allowed"]
+            artifact_invalid = True
+        elif exists:
+            try:
+                if path.suffix == ".jsonl":
+                    rows = [
+                        json.loads(line)
+                        for line in path.read_text(encoding="utf-8").splitlines()
+                        if line.strip()
+                    ]
+                    state["record_count"] = len(rows)
+                else:
+                    payload = json.loads(path.read_text(encoding="utf-8"))
+                    state["record_count"] = (
+                        len(payload.get("elites", [])) if isinstance(payload, dict) else None
+                    )
+                state["valid_json"] = True
+                state["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+            except (OSError, json.JSONDecodeError):
+                state["valid_json"] = False
+                state["validation_status"] = "blocked"
+                state["validation_errors"] = ["invalid_json"]
+                artifact_invalid = True
+        else:
+            state["validation_status"] = "absent"
+        artifacts[name] = state
+    child_iteration_ids: list[str] = []
+    if contract is not None:
+        child_iteration_ids = list(contract.child_iteration_ids)
+
+    selection_names = (
+        "qd_archive",
+        "allocation_ledger",
+        "promotion_cohort",
+        "pre_oos_seal",
+    )
+    selection_materialized = any(artifacts[name]["exists"] for name in selection_names)
+    promotion_names = (
+        "common_return_matrix",
+        "statistical_family_gates",
+        "candidate_promotion_gates",
+    )
+    promotion_materialized = any(
+        artifacts.get(name, {}).get("exists", False) for name in promotion_names
+    )
+    pre_oos = stage_validations.get("pre-oos")
+    final = stage_validations.get("final")
+    if not validation.ok or artifact_invalid:
+        phase = "blocked"
+    elif final is not None and final.ok:
+        phase = "final_pass"
+    elif pre_oos is not None and pre_oos.ok:
+        phase = "final_failed"
+    elif promotion_materialized:
+        phase = "pre_oos_blocked"
+    elif selection_materialized:
+        phase = "discovery_active"
+    else:
+        phase = "pre_discovery_ready"
+
+    stage_validated = pre_oos is not None and pre_oos.ok
+    if not selection_materialized:
+        selection_evidence_status = "not_materialized"
+        frozen_oos_influences_selection: bool | None = False
+    elif stage_validated:
+        selection_evidence_status = "validated_development_only"
+        frozen_oos_influences_selection = False
+    else:
+        stage_blockers = [
+            blocker for report in stage_validations.values() for blocker in report.blocked
+        ]
+        visibility_violation = any(
+            "forbidden_visibility" in blocker
+            or "selection_partition_not_development" in blocker
+            or "protected_partition_exposed_to_exploration" in blocker
+            for blocker in stage_blockers
+        )
+        selection_evidence_status = (
+            "protected_partition_violation" if visibility_violation else "unverified_active"
+        )
+        frozen_oos_influences_selection = True if visibility_violation else None
+
+    for name, state in artifacts.items():
+        if state.get("validation_status") in {"blocked", "absent"}:
+            continue
+        if name in selection_names and stage_validated:
+            state["validation_status"] = "validated"
+            state["validated_by_stage"] = "pre-oos"
+        elif name in promotion_names and final is not None and final.ok:
+            state["validation_status"] = "validated"
+            state["validated_by_stage"] = "final"
+        else:
+            state["validation_status"] = "unverified"
+    payload = {
+        "campaign_id": campaign_id,
+        "phase": phase,
+        "validation": validation.to_dict(),
+        "stage_validations": {
+            stage: report.to_dict() for stage, report in stage_validations.items()
+        },
+        "child_iteration_ids": child_iteration_ids,
+        "artifacts": artifacts,
+        "selection_visibility": "development_only",
+        "selection_evidence_status": selection_evidence_status,
+        "frozen_oos_influences_selection": frozen_oos_influences_selection,
+    }
+    if json_output:
+        sys.stdout.write(json.dumps(payload, indent=2) + "\n")
+    else:
+        console.print(
+            f"campaign={campaign_id} phase={phase} branches={validation.counts.branches} "
+            f"budget={validation.counts.candidate_budget}"
+        )
+    if phase == "blocked":
         raise typer.Exit(1)
 
 
@@ -3117,6 +3349,7 @@ def strategy_factor_lab(
     quantiles: int = typer.Option(5, "--quantiles"),
 ) -> None:
     """Run a lightweight factor diagnostic report for a StrategySpec."""
+    _require_declared_iteration_gate(spec)
     result = run_factor_lab(
         spec,
         project_root(),
@@ -3134,6 +3367,7 @@ def strategy_factor_lab(
 @strategy_app.command("train")
 def strategy_train(spec: Path) -> None:
     """Train a StrategySpec.model using purged walk-forward OOS folds."""
+    _require_declared_iteration_gate(spec)
     from open_composer.research.ml_backend.evaluation import train_strategy_model
 
     try:
@@ -3151,6 +3385,7 @@ def strategy_train(spec: Path) -> None:
 @strategy_app.command("backtest-walk-forward")
 def strategy_backtest_walk_forward(spec: Path) -> None:
     """Backtest ML OOS predictions and compare with the linear baseline."""
+    _require_declared_iteration_gate(spec)
     from open_composer.research.ml_backend.evaluation import compare_ml_to_baseline
 
     try:
@@ -3210,6 +3445,7 @@ def strategy_evidence(spec: Path) -> None:
 
 
 def _print_strategy_evidence(spec: Path) -> None:
+    _require_declared_iteration_gate(spec)
     result = build_strategy_evidence(spec, project_root())
     console.print(f"[green]strategy evidence complete[/green] status={result.status}")
     console.print(f"contract: {result.research_report.contract_path}")
@@ -3291,6 +3527,7 @@ def strategy_promotion_report(
     ] = False,
 ) -> None:
     """Build a promotion gate report with OOS, walk-forward, and cost sensitivity evidence."""
+    _require_declared_iteration_gate(spec)
     result = build_promotion_report(
         spec,
         project_root(),
@@ -3475,6 +3712,7 @@ def strategy_optimize_universe(
     refresh_data: bool = typer.Option(True, "--refresh-data/--use-cache"),
 ) -> None:
     """Optimize one strategy family across a symbol universe."""
+    _require_declared_iteration_gate(spec)
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     result = optimize_strategy_universe(
@@ -3509,6 +3747,7 @@ def strategy_optimize_horizons(
     refresh_data: bool = typer.Option(True, "--refresh-data/--use-cache"),
 ) -> None:
     """Compare 5m scan speed, 15m lower-turnover, and 1h trend-hold variants."""
+    _require_declared_iteration_gate(spec)
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     result = optimize_strategy_horizons(
@@ -3578,6 +3817,7 @@ def strategy_rotate_universe(
     ),
 ) -> None:
     """Research a point-in-time momentum rotation grid across a symbol universe."""
+    _require_declared_iteration_gate(spec)
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     objective_key = _rotation_objective(objective)
@@ -3806,6 +4046,381 @@ def strategy_etf_structural_r9_evaluate() -> None:
     )
     console.print(f"report: {result.evaluation_path}")
     console.print(f"trial ledger: {result.trial_ledger_path}")
+
+
+@strategy_app.command("dynamic-theme-r8-freeze")
+def strategy_dynamic_theme_r8_freeze() -> None:
+    """Lock the R8 strategy family and runner before the first R8 price read."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.research.dynamic_theme_chain_r8 import (
+        freeze_dynamic_theme_chain_r8,
+    )
+
+    try:
+        result = freeze_dynamic_theme_chain_r8(project_root())
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]dynamic-theme R8 preregistration and runner locked[/green]")
+    console.print(f"preregistration lock: {result.preregistration_lock_path}")
+    console.print(f"runner lock: {result.runner_lock_path}")
+
+
+@strategy_app.command("dynamic-theme-r8-evaluate")
+def strategy_dynamic_theme_r8_evaluate() -> None:
+    """Run the locked deterministic R8D01 and R8D02 evaluation once."""
+    from open_composer.adapters.data.alpaca import AlpacaDataError
+    from open_composer.research.dynamic_theme_chain_r8 import run_dynamic_theme_chain_r8
+
+    try:
+        result = run_dynamic_theme_chain_r8(project_root())
+    except (FileNotFoundError, ValueError, AlpacaDataError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]dynamic-theme R8 deterministic evaluation complete[/green] "
+        f"decision={result.payload['decision']} "
+        f"research_pass={result.payload['research_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"trial ledger: {result.trial_ledger_path}")
+
+
+@strategy_app.command("dynamic-theme-r8-ml-freeze")
+def strategy_dynamic_theme_r8_ml_freeze() -> None:
+    """Lock the R8 Stage E model implementation before the first model fit."""
+    from open_composer.research.dynamic_theme_chain_r8_ml import (
+        freeze_dynamic_theme_chain_r8_stage_e,
+    )
+
+    try:
+        result = freeze_dynamic_theme_chain_r8_stage_e(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]dynamic-theme R8 Stage E training implementation locked[/green]")
+    console.print(f"training lock: {result.lock_path}")
+
+
+@strategy_app.command("dynamic-theme-r8-ml-evaluate")
+def strategy_dynamic_theme_r8_ml_evaluate() -> None:
+    """Run the one-shot fold-local R8M01 and R8M02 evaluation."""
+    from open_composer.research.dynamic_theme_chain_r8_ml import (
+        run_dynamic_theme_chain_r8_stage_e,
+    )
+
+    try:
+        result = run_dynamic_theme_chain_r8_stage_e(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]dynamic-theme R8 Stage E evaluation complete[/green] "
+        f"decision={result.payload['decision']} "
+        f"research_pass={result.payload['research_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"trial ledger: {result.trial_ledger_path}")
+
+
+@strategy_app.command("pit-semantic-theme-r11-freeze")
+def strategy_pit_semantic_theme_r11_freeze() -> None:
+    """Freeze the R11 IEX snapshot and model implementation before historical fitting."""
+    from open_composer.research.pit_semantic_theme_r11 import (
+        freeze_pit_semantic_theme_r11,
+    )
+
+    try:
+        result = freeze_pit_semantic_theme_r11(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]PIT semantic-theme R11 historical inputs locked[/green]")
+    console.print(f"snapshot manifest: {result.snapshot_manifest_path}")
+    console.print(f"evaluation lock: {result.lock_path}")
+
+
+@strategy_app.command("pit-semantic-theme-r11-evaluate")
+def strategy_pit_semantic_theme_r11_evaluate() -> None:
+    """Run the one-shot fold-local R11 price-path evaluation."""
+    from open_composer.research.pit_semantic_theme_r11 import (
+        run_pit_semantic_theme_r11,
+    )
+
+    try:
+        result = run_pit_semantic_theme_r11(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]PIT semantic-theme R11 historical evaluation complete[/green] "
+        f"decision={result.payload['decision']} "
+        f"research_pass={result.payload['research_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"trial ledger: {result.trial_ledger_path}")
+
+
+@strategy_app.command("pit-semantic-theme-r12-freeze")
+def strategy_pit_semantic_theme_r12_freeze() -> None:
+    """Lock clean SIP inputs and R12 model implementations before fitting."""
+    from open_composer.research.pit_semantic_theme_r12 import (
+        freeze_pit_semantic_theme_r12,
+    )
+
+    try:
+        result = freeze_pit_semantic_theme_r12(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]PIT semantic-theme R12 historical inputs locked[/green]")
+    console.print(f"snapshot manifest: {result.snapshot_manifest_path}")
+    console.print(f"quality report: {result.quality_report_path}")
+    console.print(f"evaluation lock: {result.lock_path}")
+
+
+@strategy_app.command("pit-semantic-theme-r12-evaluate")
+def strategy_pit_semantic_theme_r12_evaluate() -> None:
+    """Run the one-shot clean-price Ridge versus LightGBM R12 evaluation."""
+    from open_composer.research.pit_semantic_theme_r12 import (
+        run_pit_semantic_theme_r12,
+    )
+
+    try:
+        result = run_pit_semantic_theme_r12(project_root())
+    except (FileNotFoundError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]PIT semantic-theme R12 historical evaluation complete[/green] "
+        f"decision={result.payload['decision']} "
+        f"development_gate_pass={result.payload['development_gate_pass']} "
+        f"paper_ready_pass={result.payload['paper_ready_pass']}"
+    )
+    console.print(f"report: {result.evaluation_path}")
+    console.print(f"trial ledger: {result.trial_ledger_path}")
+
+
+@strategy_app.command("pit-semantic-theme-r12-forward-freeze")
+def strategy_pit_semantic_theme_r12_forward_freeze() -> None:
+    """Lock the forward news/theme implementation before first live collection."""
+    from open_composer.research.pit_semantic_theme_forward import (
+        freeze_pit_semantic_theme_forward,
+    )
+
+    try:
+        result = freeze_pit_semantic_theme_forward(project_root())
+    except (FileNotFoundError, OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]PIT semantic-theme R12 forward epoch locked[/green]")
+    console.print(f"epoch: {result.epoch_id}")
+    console.print(f"lock: {result.lock_path}")
+    console.print(f"lock sha256: {result.lock_sha256}")
+    console.print("observation_only=true broker_writes=false")
+
+
+@strategy_app.command("pit-semantic-theme-r12-forward-observe")
+def strategy_pit_semantic_theme_r12_forward_observe(
+    backend: str = typer.Option("openai", "--backend"),
+    model: str | None = typer.Option(None, "--model"),
+    news_limit: int = typer.Option(50, "--news-limit", min=1, max=1000),
+    feed: str = typer.Option("iex", "--feed"),
+    refresh_prices: bool = typer.Option(
+        True,
+        "--refresh-prices/--use-price-cache",
+    ),
+) -> None:
+    """Collect one locked, forward-only dynamic-theme observation."""
+    import httpx
+
+    from open_composer.research.pit_semantic_theme_forward import (
+        observe_pit_semantic_theme_forward,
+    )
+
+    try:
+        result = observe_pit_semantic_theme_forward(
+            project_root(),
+            backend_name=backend,
+            model=model,
+            news_limit=news_limit,
+            feed=feed,
+            refresh_prices=refresh_prices,
+        )
+    except (FileNotFoundError, OSError, RuntimeError, ValueError, httpx.HTTPError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]PIT semantic-theme R12 forward observation complete[/green] "
+        f"status={result.status} epoch={result.epoch_id}"
+    )
+    console.print(
+        f"source_packets={result.source_packet_count} "
+        f"themes={result.selected_theme_count} llm_factors={result.llm_factor_count}"
+    )
+    if result.observation_path is not None:
+        console.print(f"observation: {result.observation_path}")
+    if result.receipt_path is not None:
+        console.print(f"receipt: {result.receipt_path}")
+    console.print("observation_only=true broker_writes=false")
+
+
+@strategy_app.command("pit-semantic-theme-r12-forward-retry-llm")
+def strategy_pit_semantic_theme_r12_forward_retry_llm(
+    backend: str = typer.Option("openai", "--backend"),
+    model: str | None = typer.Option(None, "--model"),
+    max_packets: int = typer.Option(8, "--max-packets", min=1, max=100),
+) -> None:
+    """Retry LLM factors for immutable source packets without new session credit."""
+    import httpx
+
+    from open_composer.research.pit_semantic_theme_forward import (
+        retry_pit_semantic_theme_forward_llm,
+    )
+
+    try:
+        result = retry_pit_semantic_theme_forward_llm(
+            project_root(),
+            backend_name=backend,
+            model=model,
+            max_packets=max_packets,
+        )
+    except (FileNotFoundError, OSError, RuntimeError, ValueError, httpx.HTTPError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]PIT semantic-theme R12 LLM retry complete[/green] "
+        f"status={result.status} epoch={result.epoch_id}"
+    )
+    console.print(
+        f"attempted_packets={result.attempted_packet_count} "
+        f"valid_factors={result.valid_factor_count} forward_session_credit=false"
+    )
+    if result.retry_path is not None:
+        console.print(f"retry: {result.retry_path}")
+    if result.receipt_path is not None:
+        console.print(f"receipt: {result.receipt_path}")
+    console.print("observation_only=true broker_writes=false")
+
+
+@strategy_app.command("pit-semantic-theme-r22-forward-freeze")
+def strategy_pit_semantic_theme_r22_forward_freeze() -> None:
+    """Lock the R22 eight-role Tier 0 implementation before current observations."""
+    from open_composer.research.pit_semantic_theme_r22_forward import (
+        freeze_pit_semantic_theme_r22_forward,
+    )
+
+    try:
+        result = freeze_pit_semantic_theme_r22_forward(project_root())
+    except (FileNotFoundError, OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]PIT semantic-theme R22 forward epoch locked[/green]")
+    console.print(f"epoch: {result.epoch_id}")
+    console.print(f"anchor session: {result.anchor_session}")
+    console.print(f"lock: {result.lock_path}")
+    console.print(f"lock sha256: {result.lock_sha256}")
+    console.print("observation_only=true broker_writes=false")
+
+
+@strategy_app.command("pit-semantic-theme-r22-forward-observe")
+def strategy_pit_semantic_theme_r22_forward_observe(
+    backend: str = typer.Option("openai", "--backend"),
+    model: str | None = typer.Option(None, "--model"),
+    news_limit: int = typer.Option(50, "--news-limit", min=1, max=1000),
+    collect_news: bool = typer.Option(True, "--collect-news/--skip-news"),
+    feed: str = typer.Option("iex", "--feed"),
+    refresh_prices: bool = typer.Option(
+        True,
+        "--refresh-prices/--use-price-cache",
+    ),
+) -> None:
+    """Publish one locked R22 eight-role Tier 0 observation without orders."""
+    import httpx
+
+    from open_composer.research.pit_semantic_theme_r22_forward import (
+        observe_pit_semantic_theme_r22_forward,
+    )
+
+    try:
+        result = observe_pit_semantic_theme_r22_forward(
+            project_root(),
+            backend_name=backend,
+            model=model,
+            news_limit=news_limit,
+            collect_news=collect_news,
+            feed=feed,
+            refresh_prices=refresh_prices,
+        )
+    except (FileNotFoundError, OSError, RuntimeError, ValueError, httpx.HTTPError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]PIT semantic-theme R22 Tier 0 observation complete[/green] "
+        f"status={result.status} epoch={result.epoch_id} "
+        f"decision={result.decision_session} action={result.action_session}"
+    )
+    console.print(
+        f"candidates={result.candidate_count} "
+        f"counted_forward_session={str(result.counted_forward_session).lower()}"
+    )
+    console.print(f"observation: {result.observation_path}")
+    console.print(f"receipt: {result.receipt_path}")
+    console.print("observation_only=true broker_writes=false")
+
+
+@strategy_app.command("pit-semantic-theme-r23-forward-freeze")
+def strategy_pit_semantic_theme_r23_forward_freeze() -> None:
+    """Lock the R23 dynamic-theme Tier 0 implementation before observations."""
+    from open_composer.research.pit_semantic_theme_r23_forward import (
+        freeze_pit_semantic_theme_r23_forward,
+    )
+
+    try:
+        result = freeze_pit_semantic_theme_r23_forward(project_root())
+    except (FileNotFoundError, OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print("[green]PIT semantic-theme R23 forward epoch locked[/green]")
+    console.print(f"epoch: {result.epoch_id}")
+    console.print(f"anchor session: {result.anchor_session}")
+    console.print(f"lock: {result.lock_path}")
+    console.print(f"lock sha256: {result.lock_sha256}")
+    console.print("observation_only=true broker_writes=false")
+
+
+@strategy_app.command("pit-semantic-theme-r23-forward-observe")
+def strategy_pit_semantic_theme_r23_forward_observe(
+    backend: str = typer.Option("openai", "--backend"),
+    model: str | None = typer.Option(None, "--model"),
+    news_limit: int = typer.Option(50, "--news-limit", min=1, max=1000),
+    collect_news: bool = typer.Option(True, "--collect-news/--skip-news"),
+    feed: str = typer.Option("iex", "--feed"),
+    refresh_prices: bool = typer.Option(
+        True,
+        "--refresh-prices/--use-price-cache",
+    ),
+) -> None:
+    """Publish one locked R23 dynamic-theme Tier 0 observation without orders."""
+    import httpx
+
+    from open_composer.research.pit_semantic_theme_r23_forward import (
+        observe_pit_semantic_theme_r23_forward,
+    )
+
+    try:
+        result = observe_pit_semantic_theme_r23_forward(
+            project_root(),
+            backend_name=backend,
+            model=model,
+            news_limit=news_limit,
+            collect_news=collect_news,
+            feed=feed,
+            refresh_prices=refresh_prices,
+        )
+    except (FileNotFoundError, OSError, RuntimeError, ValueError, httpx.HTTPError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(
+        "[green]PIT semantic-theme R23 Tier 0 observation complete[/green] "
+        f"status={result.status} epoch={result.epoch_id} "
+        f"decision={result.decision_session} action={result.action_session}"
+    )
+    console.print(
+        f"candidates={result.candidate_count} "
+        f"counted_forward_session={str(result.counted_forward_session).lower()}"
+    )
+    console.print(f"observation: {result.observation_path}")
+    console.print(f"receipt: {result.receipt_path}")
+    console.print("observation_only=true broker_writes=false")
 
 
 @strategy_app.command("multiasset-forward-mm-r4-evaluate")
@@ -6330,6 +6945,7 @@ def strategy_market_time(
     write_best_spec: bool = typer.Option(True, "--write-best-spec/--no-write-best-spec"),
 ) -> None:
     """Research same-symbol timing grids against buy-and-hold."""
+    _require_declared_iteration_gate(spec)
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     result = run_market_timing_research(
@@ -7132,6 +7748,7 @@ def harness_verify(
 
     from open_composer.harness.policy import (
         check_artifact,
+        declared_artifact_binding,
         detect_risk_domains,
         required_artifacts_for_domains,
     )
@@ -7152,7 +7769,25 @@ def harness_verify(
     console.print(f"[bold]harness verify[/bold] strategy={spec_obj.name!r} stage={stage!r}")
     console.print("")
 
-    statuses = [check_artifact(a, spec_obj.name, root) for a in required]
+    statuses = []
+    artifact_overrides: dict[str, tuple[Path, list[str]]] = {}
+    try:
+        declared_path, declared_claims = declared_artifact_binding("source_cards", spec_obj, root)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if declared_path is not None:
+        artifact_overrides["source_cards"] = (declared_path, declared_claims or [])
+    for artifact_name in required:
+        override = artifact_overrides.get(artifact_name)
+        statuses.append(
+            check_artifact(
+                artifact_name,
+                spec_obj.name,
+                root,
+                artifact_path_override=override[0] if override else None,
+                required_claim_ids_override=override[1] if override else None,
+            )
+        )
     blocked = [s for s in statuses if not s.present or not s.schema_ok]
     warnings: list = []
 
@@ -7203,6 +7838,10 @@ def harness_verify(
         "stage": stage,
         "risk_domains": active_domains,
         "required_artifacts": required,
+        "artifact_path_overrides": {
+            name: {"path": path.relative_to(root).as_posix(), "required_claim_ids": claims}
+            for name, (path, claims) in artifact_overrides.items()
+        },
         "plan_binding": file_binding(plan_path),
         "config_bindings": {name: file_binding(path) for name, path in config_paths.items()},
         "artifacts": [
@@ -7976,28 +8615,16 @@ def journal_add(
 
 
 def _require_declared_iteration_gate(spec_path: Path) -> None:
-    spec = load_strategy_spec(spec_path)
-    from open_composer.research.design_contract import (
-        research_design_mapping,
-        research_design_requires_iteration_gate,
-    )
-
     try:
-        research_design = research_design_mapping(spec)
+        from open_composer.research.iteration_dossier import require_iteration_execution_gate
+
+        require_iteration_execution_gate(
+            spec_path,
+            project_root(),
+            enforce_unbound_design=True,
+        )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    if not research_design_requires_iteration_gate(research_design):
-        return
-    iter_id = str(research_design.get("iter_id") or "").strip()
-    if not iter_id:
-        raise typer.BadParameter("research_design requires iter_id before execution")
-    from open_composer.research.iteration_dossier import validate_iteration_dossier
-
-    result = validate_iteration_dossier(iter_id, project_root(), stage="pre-backtest")
-    if not result.ok:
-        raise typer.BadParameter(
-            f"iteration dossier blocked for {iter_id}: {', '.join(result.blocked)}"
-        )
 
 
 def _fmt_optional(value: object) -> str:

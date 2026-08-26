@@ -33,7 +33,7 @@ from open_composer.harness.policy import (
     required_skills_for_domains,
 )
 from open_composer.market_calendar import NEW_YORK, us_equity_session_close
-from open_composer.models.strategy_spec import StrategySpec
+from open_composer.models.strategy_spec import MLModelConfig, StrategySpec
 from open_composer.research.evidence_custody import (
     ExternalCustodyRecord,
     verify_external_custody_record,
@@ -440,6 +440,10 @@ R5_MODEL_SPEC_CONTRACT["R5F01"] = {
 R5_MODEL_SPEC_CONTRACT["R5P01"] = {
     **R5_MODEL_SPEC_CONTRACT["R5M01"],
     "features": list(R5_DECLARED_FEATURE_CONTRACT["R5P01"]),
+}
+R5_MODEL_SPEC_CONTRACT = {
+    candidate_id: MLModelConfig.model_validate(payload).model_dump(mode="json")
+    for candidate_id, payload in R5_MODEL_SPEC_CONTRACT.items()
 }
 R5_RUNTIME_CONTRACT_FILENAMES = {
     "benchmark": "benchmark-contract.json",
@@ -2998,6 +3002,9 @@ def _validate_r5_harness_evidence(
         if policy is None or reality_model is None:
             raise ValueError(f"R5 harness inline execution contracts are missing: {candidate_id}")
         policy_model = policy.model_dump(mode="json")
+        for field in ("historical_execution_contract", "future_order_contract"):
+            if field not in policy.model_fields_set:
+                policy_model.pop(field, None)
         inline_policy_sha256 = hashlib.sha256(
             json.dumps(policy_model, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()

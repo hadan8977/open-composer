@@ -16,9 +16,11 @@ def cache_manifest_path(
     timeframe: str,
     provider: str,
     feed: str | None = None,
+    adjustment: str | None = None,
 ) -> Path:
     feed_part = f"_{_slug(feed)}" if feed else ""
-    name = f"{symbol.lower()}_{timeframe}_{provider}{feed_part}.json"
+    adjustment_part = f"_{_slug(adjustment)}" if adjustment else ""
+    name = f"{symbol.lower()}_{timeframe}_{provider}{feed_part}{adjustment_part}.json"
     return root / "data" / "cache" / "manifests" / name
 
 
@@ -31,6 +33,7 @@ def write_ohlcv_manifest(
     cache_path: Path,
     frame: pd.DataFrame,
     feed: str | None = None,
+    adjustment: str | None = None,
     requested_start: datetime | None = None,
     requested_end: datetime | None = None,
     source_mode: str,
@@ -43,6 +46,7 @@ def write_ohlcv_manifest(
     manifest = {
         "provider": provider,
         "feed": feed,
+        "adjustment": adjustment,
         "symbol": symbol.upper(),
         "timeframe": timeframe,
         "records": int(len(frame)),
@@ -56,7 +60,7 @@ def write_ohlcv_manifest(
         "request_params": request_params or {},
         "caveats": caveats or [],
     }
-    path = cache_manifest_path(root, symbol, timeframe, provider, feed)
+    path = cache_manifest_path(root, symbol, timeframe, provider, feed, adjustment)
     ensure_dir(path.parent)
     return write_json(path, manifest)
 

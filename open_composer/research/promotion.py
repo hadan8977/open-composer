@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import mean
 from time import perf_counter
-from typing import Literal
+from typing import Any, Literal
 
 from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import ensure_dir, project_root
@@ -22,6 +23,7 @@ from open_composer.research.alt_data_quality import build_alternative_data_quali
 from open_composer.research.blind_test import load_blind_test_report
 from open_composer.research.contracts import write_research_contract
 from open_composer.research.factor_lab import run_factor_lab
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 from open_composer.research.kernel import GateResult, ResearchArtifactWriter, ResearchRunIndexRecord
 from open_composer.research.metadata import (
     data_acquisition_tier,
@@ -131,6 +133,12 @@ def build_promotion_report(
 ) -> PromotionReport:
     started_at = perf_counter()
     base = root or project_root()
+    require_iteration_execution_gate(
+        spec_path,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=True,
+    )
     writer = ResearchArtifactWriter(base)
     spec = load_strategy_spec(spec_path)
     if spec.portfolio.mode in ROUTER_PROMOTION_MODES:
@@ -288,6 +296,27 @@ def build_promotion_report(
     manifest["research_contract_path"] = str(contract_path.relative_to(base))
     manifest["factor_lab_path"] = str(factor_lab_result.json_path.relative_to(base))
     manifest["alt_data_quality_path"] = str(alt_data_result.json_path.relative_to(base))
+    data_manifest_path = _write_promotion_data_manifest(
+        root=base,
+        path=base / "reports" / "research" / f"{spec.name}-data-manifest.json",
+        spec_path=spec_path,
+        spec=spec,
+        report_mode="promotion_gate",
+        data_profile=data_profile,
+        source_artifacts={
+            "research_contract": contract_path,
+            "factor_lab": factor_lab_result.json_path,
+            "alternative_data_quality": alt_data_result.json_path,
+            "full_window_report": full.run.report_path,
+        },
+        extra={
+            "data_comparisons": comparison_rows,
+            "benchmark_family_complete": bool(benchmark_family.get("complete")),
+        },
+    )
+    manifest["research_contract_hash"] = _sha256_file(contract_path)
+    manifest["data_manifest_path"] = str(data_manifest_path.relative_to(base))
+    manifest["data_manifest_hash"] = _sha256_file(data_manifest_path)
     gate_summary = _gate_summary(spec, ready, checks, benchmark_family)
     index_record = ResearchRunIndexRecord(
         run_id=f"promotion-{spec.name}-{strategy_content_hash(spec)[:12]}",
@@ -2008,3 +2037,62 @@ def _relpath(path: Path | str, base: Path) -> str:
         return candidate.relative_to(base).as_posix()
     except ValueError:
         return candidate.as_posix()
+
+
+def _write_promotion_data_manifest(
+    *,
+    root: Path,
+    path: Path,
+    spec_path: Path,
+    spec: StrategySpec,
+    report_mode: str,
+    data_profile: dict[str, object],
+    source_artifacts: dict[str, Path | str | None],
+    extra: dict[str, object] | None = None,
+) -> Path:
+    payload: dict[str, Any] = {
+        "schema_version": "open_composer.promotion_data_manifest.v1",
+        "immutable": True,
+        "strategy_name": spec.name,
+        "spec_hash": strategy_content_hash(spec),
+        "source_spec_path": _relpath(spec_path, root),
+        "report_mode": report_mode,
+        "timeframe": spec.timeframe,
+        "universe": list(spec.universe),
+        "data": {
+            "source": spec.data.source,
+            "symbol": spec.data.symbol,
+            "feed": spec.data.feed,
+            "path": spec.data.path,
+        },
+        "data_profile": data_profile,
+        "data_path_binding": _artifact_binding(data_profile.get("path"), root),
+        "source_artifacts": {
+            name: binding
+            for name, path_value in source_artifacts.items()
+            if (binding := _artifact_binding(path_value, root)) is not None
+        },
+    }
+    if extra:
+        payload["extra"] = extra
+    return write_json(path, payload)
+
+
+def _artifact_binding(path_value: object, root: Path) -> dict[str, object] | None:
+    if path_value is None or path_value == "":
+        return None
+    candidate = Path(str(path_value))
+    resolved = candidate if candidate.is_absolute() else root / candidate
+    return {
+        "path": _relpath(resolved, root),
+        "exists": resolved.is_file(),
+        "sha256": _sha256_file(resolved) if resolved.is_file() else None,
+    }
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()

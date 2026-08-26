@@ -56,6 +56,43 @@ def test_paper_validation_accepts_bound_active_canary_broker_day(tmp_path: Path)
     assert result["days"][0]["reasons"] == []
 
 
+def test_broker_free_forward_observation_accepts_bound_state_drift_warning(
+    tmp_path: Path,
+) -> None:
+    log = _with_evidence(tmp_path, _log("2026-07-01"), drift_status="warning")
+    log["artifact_paths"]["state_drift_status"] = "warning"
+
+    result = evaluate_validation_days(
+        [log],
+        root=tmp_path,
+        as_of=datetime(2026, 7, 1, 23, tzinfo=UTC),
+        require_order_authorized=False,
+    )
+
+    assert result["progress_days"] == 1
+    assert result["days"][0]["reasons"] == []
+
+
+def test_order_authorized_validation_rejects_bound_state_drift_warning(
+    tmp_path: Path,
+) -> None:
+    log = _log("2026-07-01", paper_order_authorization=True)
+    log["paper_authorization_substate"] = "canary_authorized"
+    log = _with_evidence(tmp_path, log, drift_status="warning")
+    log["artifact_paths"]["state_drift_status"] = "warning"
+
+    result = evaluate_validation_days(
+        [log],
+        root=tmp_path,
+        as_of=datetime(2026, 7, 1, 23, tzinfo=UTC),
+        require_order_authorized=True,
+    )
+
+    assert result["progress_days"] == 0
+    assert "state_drift_warning" in result["days"][0]["reasons"]
+    assert "state_drift_evidence_not_ok" in result["days"][0]["reasons"]
+
+
 def test_failed_day_with_remediation_is_recorded_without_missing_flag(tmp_path: Path) -> None:
     path = remediation_record_path(tmp_path, "2026-07-01")
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -289,7 +326,13 @@ def _log(date: str, *, status: str = "ok", paper_order_authorization: bool = Fal
     }
 
 
-def _with_evidence(root: Path, log: dict, *, suffix: str = "") -> dict:
+def _with_evidence(
+    root: Path,
+    log: dict,
+    *,
+    suffix: str = "",
+    drift_status: str = "ok",
+) -> dict:
     bindings = []
     payloads = {
         "target_weights": {
@@ -303,7 +346,7 @@ def _with_evidence(root: Path, log: dict, *, suffix: str = "") -> dict:
         "state_drift": {
             "report_type": "paper_state_drift",
             "date": log["date"],
-            "status": "ok",
+            "status": drift_status,
         },
     }
     if log.get("paper_order_authorization") is True:

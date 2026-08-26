@@ -1345,6 +1345,103 @@ def test_paper_sync_writes_idempotent_immutable_filled_receipt(
     assert len(index.read_text(encoding="utf-8").splitlines()) == 1
 
 
+def test_paper_sync_preserves_legacy_order_as_unmatched_receipt(
+    sample_workspace: Path,
+) -> None:
+    submitted_at = datetime(2026, 7, 9, 13, 27, tzinfo=UTC)
+    legacy = PaperOrderRecord(
+        id="order_legacy",
+        signal_id="sig_legacy",
+        client_order_id="oc-sig_legacy",
+        strategy_name="fixture_pullback_15m",
+        symbol="QQQ",
+        side="sell",
+        qty=2,
+        status="accepted",
+        submitted_at=submitted_at,
+    )
+    append_jsonl(sample_workspace / "reports" / "paper" / "orders.jsonl", [legacy])
+
+    class MockClient:
+        def get_account(self) -> SimpleNamespace:
+            return SimpleNamespace(id="paper-account-test")
+
+        def get_orders(self, filter=None) -> list[SimpleNamespace]:
+            return [
+                SimpleNamespace(
+                    id="order_legacy",
+                    client_order_id="oc-sig_legacy",
+                    symbol="QQQ",
+                    side="sell",
+                    qty="2",
+                    filled_qty="0",
+                    status="accepted",
+                    order_type="limit",
+                    time_in_force="opg",
+                    limit_price="500",
+                    submitted_at=submitted_at,
+                    accepted_at=submitted_at,
+                )
+            ]
+
+    path = alpaca_paper.sync_paper_orders(
+        sample_workspace,
+        client=_verified_test_client(MockClient()),
+    )
+    row = json.loads(path.read_text(encoding="utf-8").splitlines()[-1])
+    assert row["local_order_binding_status"] == "unmatched"
+    latest = json.loads(
+        (sample_workspace / "reports" / "paper" / "broker_receipts" / "latest-sync.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    receipt = json.loads((sample_workspace / latest["order_receipts"][0]["path"]).read_text())
+    assert receipt["local_order_binding_status"] == "unmatched"
+    assert receipt["local_order_record"]["client_order_id"] == "oc-sig_legacy"
+
+
+def test_paper_sync_rejects_incomplete_current_execution_metadata(
+    sample_workspace: Path,
+) -> None:
+    local = PaperOrderRecord(
+        id="order_incomplete",
+        signal_id="sig_incomplete",
+        client_order_id="oc-sig_incomplete",
+        strategy_name="fixture_pullback_15m",
+        execution_policy_id="opg_limit_v1",
+        symbol="QQQ",
+        side="buy",
+        qty=1,
+        status="accepted",
+    )
+    append_jsonl(sample_workspace / "reports" / "paper" / "orders.jsonl", [local])
+
+    class MockClient:
+        def get_account(self) -> SimpleNamespace:
+            return SimpleNamespace(id="paper-account-test")
+
+        def get_orders(self, filter=None) -> list[SimpleNamespace]:
+            return [
+                SimpleNamespace(
+                    id="order_incomplete",
+                    client_order_id="oc-sig_incomplete",
+                    symbol="QQQ",
+                    side="buy",
+                    qty="1",
+                    filled_qty="0",
+                    status="accepted",
+                    order_type="limit",
+                    time_in_force="opg",
+                )
+            ]
+
+    with pytest.raises(alpaca_paper.PaperOrderError, match="local_execution_style"):
+        alpaca_paper.sync_paper_orders(
+            sample_workspace,
+            client=_verified_test_client(MockClient()),
+        )
+
+
 def test_paper_sync_rejects_broker_snapshot_omitting_local_order(
     sample_workspace: Path,
 ) -> None:

@@ -1,0 +1,56 @@
+{
+  "schema_version": 2,
+  "plan_contract": "harness_plan_v2",
+  "strategy_name": "nasdaq_long_short_event_router_1m_sweep_001",
+  "spec_path": "strategy_specs/drafts/nasdaq_long_short_event_router_1m_sweep_001.yaml",
+  "spec_file_sha256": "dd45c9152d145ac2ab97aa6066a45fb2119c91b9a93a7e88267504e3b2e5b025",
+  "spec_semantic_sha256": "799dad6af6893a41c73b818ddbde72dd6c6c1f188aea5c86a9d35a0b00782a8a",
+  "risk_domains": [
+    "router_strategy",
+    "short_selling"
+  ],
+  "required_skills": [
+    "backtest-forensics",
+    "execution-reality-reviewer",
+    "source-researcher"
+  ],
+  "required_artifacts": [
+    "borrow_cost_estimate",
+    "ex_dividend_risk_note",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "short_exposure_policy",
+    "short_sale_source_cards",
+    "short_squeeze_stress"
+  ],
+  "blocking_rules": [
+    {
+      "domain": "router_strategy",
+      "rule_id": "router_requires_target_weight_observation",
+      "blocks": "research_pass",
+      "description": "Router strategy promotion requires target weights, rebalance intents, cost stress, data evidence, and validation artifacts.\n"
+    },
+    {
+      "domain": "router_strategy",
+      "rule_id": "router_order_authorization_requires_readiness",
+      "blocks": "paper_ready_pass",
+      "description": "Router execution can remain observation_only before paper order authorization; broker orders require paper readiness and safety artifacts.\n"
+    },
+    {
+      "domain": "short_selling",
+      "rule_id": "short_requires_borrow_and_rule_evidence",
+      "blocks": "research_pass",
+      "description": "Short-selling research pass requires broker/rule source cards and borrow/shortable evidence.\n"
+    },
+    {
+      "domain": "short_selling",
+      "rule_id": "short_paper_ready_requires_squeeze_and_dividend_stress",
+      "blocks": "paper_ready_pass",
+      "description": "Paper readiness for short exposure requires squeeze stress and ex-dividend risk review.\n"
+    }
+  ]
+}

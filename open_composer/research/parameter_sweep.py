@@ -19,6 +19,7 @@ from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_fr
 from open_composer.expressions import validate_expression
 from open_composer.json_utils import json_safe_payload
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 from open_composer.research.kernel import ResearchArtifactWriter
 from open_composer.research.kernel.candidates import CandidateScore, CandidateSet, CandidateSpec
 from open_composer.research.kernel.trials import TrialLedger, TrialRecord
@@ -119,6 +120,12 @@ def run_parameter_sweep(
 ) -> ParameterSweepResult:
     started_at = perf_counter()
     base = root or project_root()
+    require_iteration_execution_gate(
+        spec_path,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=True,
+    )
     writer = ResearchArtifactWriter(base)
     source = load_strategy_spec(spec_path)
     if not parameters:

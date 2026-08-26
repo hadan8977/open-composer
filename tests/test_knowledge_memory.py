@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import json
+from datetime import date
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -71,6 +73,74 @@ def test_build_knowledge_index_deduplicates_and_retains_negative_results(
     assert result.payload["empirical_memory"][0]["negative_result"] is True
     assert result.payload["model_memory"][0]["reuse_policy"].startswith("frozen_inference")
     assert tuple(result.payload["visibility_partitions"]) == VISIBILITY_PARTITIONS
+
+
+def test_knowledge_index_uses_only_receipt_verified_final_decision(tmp_path: Path) -> None:
+    iteration = tmp_path / "reports/research/iterations/round_final"
+    evaluation_dir = iteration / "evaluation-run"
+    evaluation_dir.mkdir(parents=True)
+    root_decision = iteration / "decision-record.md"
+    final_decision = evaluation_dir / "decision-record.md"
+    evaluation = evaluation_dir / "evaluation-report.json"
+    trial_ledger = evaluation_dir / "trial-ledger.jsonl"
+    root_decision.write_text("# Decision Record\n\n- Decision: pending\n", encoding="utf-8")
+    final_decision.write_text(
+        "# Decision Record\n\n- Decision: stop\n- Reason: historical challenge failed.\n",
+        encoding="utf-8",
+    )
+    evaluation.write_text(
+        json.dumps(
+            {
+                "decision": "stop",
+                "historical_challenge": True,
+                "workflow_pass": True,
+                "research_pass": False,
+                "llm_contribution_pass": False,
+                "paper_ready_pass": False,
+            }
+        ),
+        encoding="utf-8",
+    )
+    trial_ledger.write_text('{"candidate_id":"D01"}\n', encoding="utf-8")
+
+    def binding(path: Path) -> dict[str, object]:
+        raw = path.read_bytes()
+        return {
+            "path": str(path.relative_to(tmp_path)),
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "size_bytes": len(raw),
+        }
+
+    receipt = {
+        "schema_version": 1,
+        "iter_id": "round_final",
+        "evidence_publication_status": "complete",
+        "decision": "stop",
+        "workflow_pass": True,
+        "research_pass": False,
+        "llm_contribution_pass": False,
+        "paper_ready_pass": False,
+        "children": {
+            "decision_record": binding(final_decision),
+            "evaluation": binding(evaluation),
+            "trial_ledger": binding(trial_ledger),
+        },
+    }
+    (evaluation_dir / "evaluation-receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
+
+    verified = build_knowledge_index(tmp_path).payload["empirical_memory"]
+
+    assert len(verified) == 1
+    assert verified[0]["artifact_path"].endswith("evaluation-run/decision-record.md")
+    assert verified[0]["visibility_partition"] == "challenge_result"
+    assert verified[0]["negative_result"] is True
+
+    final_decision.write_text("# Decision Record\n\n- Decision: pivot\n", encoding="utf-8")
+    after_tamper = build_knowledge_index(tmp_path).payload["empirical_memory"]
+
+    assert len(after_tamper) == 1
+    assert after_tamper[0]["artifact_path"].endswith("round_final/decision-record.md")
+    assert after_tamper[0]["negative_result"] is False
 
 
 def test_scout_marks_known_and_new_candidates(tmp_path: Path) -> None:
@@ -428,6 +498,80 @@ def test_assessment_rejects_unbound_current_source_card_path(tmp_path: Path) -> 
         raise AssertionError("unbound current source cards must not be excluded as prior evidence")
 
 
+def test_assessment_allows_fully_bound_zero_economic_change_repair_to_reuse_parent_evidence(
+    tmp_path: Path,
+) -> None:
+    iteration, _parent, _repair_contract = _write_pure_implementation_repair_fixture(tmp_path)
+
+    result = assess_iteration_knowledge(iteration.name, tmp_path)
+
+    assert result.payload["status"] == "ok"
+    assert result.payload["counts"] == {"reused": 8, "new": 0, "refresh_required": 0}
+    exception = result.payload["novelty_policy"]["pure_implementation_repair_reuse"]
+    assert exception["applied"] is True
+    assert exception["source_iteration_id"] == "round_parent"
+    assert exception["candidate_count"] == 8
+    assert exception["incremental_economic_trial_count"] == 0
+
+
+def test_assessment_keeps_new_or_refresh_gate_for_nonrepair_reuse(tmp_path: Path) -> None:
+    iteration, _parent, _repair_contract = _write_pure_implementation_repair_fixture(tmp_path)
+    manifest_path = iteration / "candidate-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["implementation_repair_only"] = False
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    result = assess_iteration_knowledge(iteration.name, tmp_path)
+
+    assert result.payload["status"] == "blocked"
+    assert "knowledge_no_new_or_refresh_evidence" in result.payload["blocked"]
+    assert result.payload["novelty_policy"]["pure_implementation_repair_reuse"] is None
+
+
+def test_assessment_rejects_invalid_implementation_repair_reuse_contract(tmp_path: Path) -> None:
+    iteration, parent, _repair_contract = _write_pure_implementation_repair_fixture(tmp_path)
+    manifest_path = iteration / "candidate-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["contracts"]["governance"]["repair_v1"]["sha256"] = "0" * 64
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    (parent / "knowledge-assessment.json").write_text(
+        json.dumps({"iter_id": parent.name, "status": "blocked"}), encoding="utf-8"
+    )
+
+    result = assess_iteration_knowledge(iteration.name, tmp_path)
+
+    assert result.payload["status"] == "blocked"
+    assert "knowledge_no_new_or_refresh_evidence" in result.payload["blocked"]
+    assert any(
+        blocker.startswith("knowledge_implementation_repair_reuse_contract_invalid:")
+        and "governance_binding:repair_v1:hash_mismatch" in blocker
+        and "parent_knowledge_assessment" in blocker
+        for blocker in result.payload["blocked"]
+    )
+
+
+def test_assessment_rejects_non_object_economic_equivalence_row(tmp_path: Path) -> None:
+    iteration, _parent, repair_contract_path = _write_pure_implementation_repair_fixture(tmp_path)
+    repair_contract = json.loads(repair_contract_path.read_text(encoding="utf-8"))
+    repair_contract["economic_spec_equivalence"][0] = "invalid"
+    repair_contract_path.write_text(json.dumps(repair_contract), encoding="utf-8")
+    manifest_path = iteration / "candidate-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    repair_binding = manifest["contracts"]["governance"]["repair_v1"]
+    repair_binding["sha256"] = hashlib.sha256(repair_contract_path.read_bytes()).hexdigest()
+    repair_binding["size_bytes"] = repair_contract_path.stat().st_size
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    result = assess_iteration_knowledge(iteration.name, tmp_path)
+
+    assert result.payload["status"] == "blocked"
+    assert "knowledge_no_new_or_refresh_evidence" in result.payload["blocked"]
+    assert any(
+        "implementation_repair_economic_identity" in blocker
+        for blocker in result.payload["blocked"]
+    )
+
+
 def test_knowledge_cli_build_and_assess(tmp_path: Path, monkeypatch) -> None:
     iteration = tmp_path / "reports/research/iterations/round_four"
     iteration.mkdir(parents=True)
@@ -536,7 +680,7 @@ def _source_card(claim_id: str, url: str) -> dict[str, object]:
 def _brief_source(url: str) -> dict[str, str]:
     return {
         "url": url,
-        "published_or_updated_at": "accessed 2026-07-15",
+        "published_or_updated_at": f"accessed {date.today().isoformat()}",
         "source_type": "platform_docs",
         "credibility": "test",
         "core_claim": f"Claim for {url}",
@@ -546,8 +690,6 @@ def _brief_source(url: str) -> dict[str, str]:
 
 
 def _write_valid_scout(iteration: Path, iter_id: str, *, new_candidate_count: int) -> None:
-    import hashlib
-
     manifest = iteration / "knowledge-scout-queries.json"
     manifest.write_text(
         json.dumps({"queries": [{"query_id": "q", "query": "all:test"}]}),
@@ -576,6 +718,122 @@ def _write_valid_scout(iteration: Path, iter_id: str, *, new_candidate_count: in
         ),
         encoding="utf-8",
     )
+
+
+def _write_pure_implementation_repair_fixture(
+    root: Path,
+) -> tuple[Path, Path, Path]:
+    prior_cards = root / "reports/harness/source_cards/prior.jsonl"
+    prior_cards.parent.mkdir(parents=True)
+    urls = [f"https://example.com/reused-{index}" for index in range(8)]
+    prior_cards.write_text(
+        "\n".join(json.dumps(_source_card(str(index), url)) for index, url in enumerate(urls))
+        + "\n",
+        encoding="utf-8",
+    )
+
+    iterations = root / "reports/research/iterations"
+    parent = iterations / "round_parent"
+    iteration = iterations / "round_repair"
+    parent.mkdir(parents=True)
+    iteration.mkdir(parents=True)
+    (parent / "knowledge-assessment.json").write_text(
+        json.dumps({"iter_id": parent.name, "status": "ok"}), encoding="utf-8"
+    )
+    source_lock = parent / "lock-set/historical-evaluation-lock.json"
+    source_lock.parent.mkdir()
+    source_lock.write_text(json.dumps({"iter_id": parent.name}), encoding="utf-8")
+    (iteration / "external-brief.json").write_text(
+        json.dumps({"sources": [_brief_source(url) for url in urls]}), encoding="utf-8"
+    )
+    _write_valid_scout(iteration, iteration.name, new_candidate_count=1)
+
+    def binding(path: Path) -> dict[str, object]:
+        return {
+            "path": path.relative_to(root).as_posix(),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "size_bytes": path.stat().st_size,
+        }
+
+    source_lock_binding = binding(source_lock)
+    parent_audit = iteration / "parent-failure-audit.json"
+    parent_audit.write_text(
+        json.dumps(
+            {
+                "contract_id": "parent_audit_v1",
+                "source_iteration_id": parent.name,
+                "source_lock": source_lock_binding,
+                "parameter_changes_from_outcomes": False,
+                "paper_or_broker_activity": False,
+                "failure": {
+                    "selectable_candidate_returns_computed": False,
+                    "selectable_candidate_metrics_computed": False,
+                    "selection_performed": False,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    candidate_ids = [f"C{index:02d}" for index in range(8)]
+    repair_contract = iteration / "implementation-repair-contract.json"
+    repair_contract.write_text(
+        json.dumps(
+            {
+                "contract_id": "repair_v1",
+                "iter_id": iteration.name,
+                "source_iteration_id": parent.name,
+                "generated_before_repair_evaluation": True,
+                "new_economic_candidate_count": 0,
+                "manifest_candidate_count": len(candidate_ids),
+                "effective_trial_count": 100,
+                "parent_failure_audit": binding(parent_audit),
+                "source_lock": source_lock_binding,
+                "forbidden_changes": [
+                    "universe",
+                    "data",
+                    "features",
+                    "labels",
+                    "models",
+                    "seeds",
+                    "fallbacks",
+                    "folds",
+                    "costs",
+                    "benchmarks",
+                    "economic_parameters",
+                ],
+                "economic_spec_equivalence": [
+                    {"candidate_id": candidate_id, "economic_projection_equal": True}
+                    for candidate_id in candidate_ids
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    manifest = {
+        "iter_id": iteration.name,
+        "source_iteration_id": parent.name,
+        "implementation_repair_only": True,
+        "incremental_economic_trial_count": 0,
+        "single_new_hypothesis": "none_pure_implementation_repair",
+        "candidate_count": len(candidate_ids),
+        "candidates": [
+            {
+                "candidate_id": candidate_id,
+                "implementation_repair_only": True,
+                "effective_trial_increment": 0,
+                "source_trial_id": f"{parent.name}:{candidate_id}",
+            }
+            for candidate_id in candidate_ids
+        ],
+        "contracts": {
+            "governance": {
+                "parent_audit_v1": binding(parent_audit),
+                "repair_v1": binding(repair_contract),
+            }
+        },
+    }
+    (iteration / "candidate-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return iteration, parent, repair_contract
 
 
 def _atom_feed() -> str:

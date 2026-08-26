@@ -6,17 +6,64 @@ import math
 import re
 import stat
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
 from open_composer.config import ensure_dir, project_root
-from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.storage import write_json
 from open_composer.strategy_versions import strategy_content_hash
 
 ITER_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{2,80}$")
 ITERATION_ROOT = Path("reports/research/iterations")
+# Frozen migration inventory. Any iteration not present here must use schema v3
+# and bind a canonical campaign, regardless of its self-declared timestamp.
+LEGACY_UNBOUND_ITERATION_IDS = frozenset(
+    {
+        "mom_core_satellite_r7",
+        "mom_dynamic_theme_chain_r8",
+        "mom_dynamic_theme_stock_r9",
+        "mom_etf_core_diversifier_forward_r10",
+        "mom_etf_structural_family_r9",
+        "mom_event_seeded_theme_stock_r10",
+        "mom_high_beta_sleeve_ensemble_r1",
+        "mom_minute_r1",
+        "mom_minute_r2",
+        "mom_minute_r3_ml",
+        "mom_minute_r4_portfolio",
+        "mom_multiasset_ai_r2",
+        "mom_multiasset_forward_multimodal_r4",
+        "mom_multiasset_forward_multimodal_r5",
+        "mom_multiasset_forward_multimodal_r6",
+        "mom_multiasset_ml_r1",
+        "mom_multiasset_multimodal_r3",
+        "mom_multiasset_paper_control_r7",
+        "mom_multiasset_r1",
+        "mom_multiscale_event_r5",
+        "mom_multiscale_low_turnover_r6",
+        "mom_pit_semantic_theme_r11",
+        "mom_pit_semantic_theme_r12",
+        "mom_pit_semantic_theme_r13",
+        "mom_pit_semantic_theme_r14",
+        "mom_pit_semantic_theme_r15",
+        "mom_pit_semantic_theme_r16",
+        "mom_pit_semantic_theme_r17",
+        "mom_pit_semantic_theme_r18",
+        "mom_pit_semantic_theme_r19",
+        "mom_pit_semantic_theme_r20",
+        "mom_pit_semantic_theme_r21",
+        "mom_pit_semantic_theme_r22",
+        "mom_pit_semantic_theme_r23",
+        "mom_pit_semantic_theme_r24",
+        "mom_robust_momentum_r4",
+        "mom_spy_dual_trend_core_r8",
+        "mom_stock_intraday_codesign_q1",
+        "mom_vix_term_structure_overlay_r1",
+        "mom_vix_term_structure_overlay_r1_implfix1",
+        "nasdaq_lse_router_paper_r1",
+    }
+)
 REQUIRED_SOURCE_FIELDS = {
     "url",
     "published_or_updated_at",
@@ -237,6 +284,72 @@ def validate_iteration_dossier(
     )
 
 
+def require_iteration_execution_gate(
+    spec_source: StrategySpec | str | Path,
+    root: Path | None = None,
+    *,
+    enforce_unbound_design: bool = False,
+    require_registered_iteration: bool = False,
+) -> IterationDossierValidation | None:
+    """Fail closed for execution that is or must be bound to an iteration."""
+    from open_composer.research.design_contract import (
+        research_design_mapping,
+        research_design_requires_iteration_gate,
+    )
+
+    spec = (
+        spec_source
+        if isinstance(spec_source, StrategySpec)
+        else load_strategy_spec(Path(spec_source))
+    )
+    design = research_design_mapping(spec)
+    if not research_design_requires_iteration_gate(design):
+        if require_registered_iteration:
+            raise ValueError("research execution requires iter_id before execution")
+        if enforce_unbound_design and _spec_requires_registered_iteration(spec):
+            raise ValueError("strategy execution requires iter_id before execution")
+        return None
+    iter_id = str(design.get("iter_id") or "").strip()
+    campaign_bound = bool(str(design.get("campaign_contract_path") or "").strip())
+    if not iter_id:
+        if _is_workflow_only_ungated_draft(spec, design):
+            return None
+        if campaign_bound or enforce_unbound_design or require_registered_iteration:
+            raise ValueError("research_design requires iter_id before execution")
+        return None
+    result = validate_iteration_dossier(iter_id, root or project_root(), stage="pre-backtest")
+    if not result.ok:
+        raise ValueError(f"iteration dossier blocked for {iter_id}: {', '.join(result.blocked)}")
+    return result
+
+
+def _spec_requires_registered_iteration(spec: StrategySpec) -> bool:
+    return bool(
+        spec.lifecycle != "draft"
+        or spec.execution.mode == "paper_auto"
+        or spec.execution.broker != "none"
+        or spec.model is not None
+    )
+
+
+def _is_workflow_only_ungated_draft(
+    spec: StrategySpec,
+    design: dict[str, Any],
+) -> bool:
+    """Allow only local sample smoke drafts to run before iteration registration."""
+    from open_composer.research.design_contract import research_design_has_bindings
+
+    return bool(
+        design.get("workflow_only_ungated_draft") is True
+        and spec.lifecycle == "draft"
+        and spec.data.source == "sample"
+        and spec.execution.mode == "manual_signal"
+        and spec.execution.broker == "none"
+        and spec.model is None
+        and not research_design_has_bindings(design)
+    )
+
+
 def _q2_output_artifact_blockers(root: Path) -> list[str]:
     try:
         from open_composer.research.stock_momentum_codesign_q2 import (
@@ -409,7 +522,17 @@ def _search_space_blockers(
     knowledge_contract = payload.get("knowledge_contract")
     if knowledge_contract is not None:
         blocked.extend(_knowledge_contract_blockers(knowledge_contract, root))
+    blocked.extend(
+        _campaign_contract_blockers(
+            payload,
+            root,
+            stage="pre-discovery",
+        )
+    )
     candidate_manifest_raw = str(payload.get("candidate_manifest_path") or "").strip()
+    campaign_bound = bool(str(payload.get("campaign_contract_path") or "").strip())
+    if campaign_bound and not candidate_manifest_raw:
+        blocked.append("campaign_contract_child_candidate_manifest_missing")
     if candidate_manifest_raw:
         feasibility_payload: dict[str, Any] | None = None
         feasibility_path: Path | None = None
@@ -462,6 +585,633 @@ def _search_space_blockers(
     return blocked
 
 
+def _campaign_contract_blockers(
+    payload: dict[str, Any],
+    root: Path,
+    *,
+    stage: str,
+) -> list[str]:
+    raw_path = str(payload.get("campaign_contract_path") or "").strip()
+    declared_id = str(payload.get("campaign_id") or "").strip()
+    declared_sha256 = str(payload.get("campaign_contract_sha256") or "").strip()
+    iter_id = str(payload.get("iter_id") or "").strip()
+    registered_campaign_ids = _registered_campaign_ids_for_child(root, iter_id)
+    requirement_blockers = _campaign_requirement_blockers(
+        payload,
+        registered_campaign_ids=registered_campaign_ids,
+        campaign_bound=bool(raw_path),
+    )
+    if not raw_path:
+        blocked = list(requirement_blockers)
+        if declared_id:
+            blocked.append("campaign_id_without_contract_path")
+        if declared_sha256:
+            blocked.append("campaign_contract_sha256_without_path")
+        return blocked
+
+    blocked = list(requirement_blockers)
+    if not declared_id:
+        blocked.append("campaign_id_missing")
+    if not declared_sha256:
+        blocked.append("campaign_contract_sha256_missing")
+    contract_path, error = _safe_repo_path(root, raw_path)
+    if error:
+        return [*blocked, f"campaign_contract_invalid_path:{error}"]
+    if not contract_path.is_file():
+        return [*blocked, "campaign_contract_missing"]
+    actual_sha256 = hashlib.sha256(contract_path.read_bytes()).hexdigest()
+    if declared_sha256 and declared_sha256 != actual_sha256:
+        blocked.append("campaign_contract_sha256_mismatch")
+
+    from open_composer.research.campaign import (
+        load_campaign_contract,
+        validate_campaign_contract,
+    )
+
+    validation = validate_campaign_contract(contract_path, root, stage=stage)
+    blocked.extend(f"campaign_contract_{item}" for item in validation.blocked)
+    try:
+        contract = load_campaign_contract(contract_path, root)
+    except (OSError, ValueError):
+        return blocked
+    canonical_contract_path = (
+        root
+        / "reports/research/campaigns"
+        / contract.campaign_id
+        / "research-campaign-contract.json"
+    ).resolve()
+    if contract_path.resolve() != canonical_contract_path:
+        blocked.append("campaign_contract_noncanonical_path")
+    if registered_campaign_ids and contract.campaign_id not in registered_campaign_ids:
+        blocked.append(
+            "campaign_contract_registered_child_identity_mismatch:"
+            + ",".join(registered_campaign_ids)
+            + f":{contract.campaign_id}"
+        )
+    if declared_id and contract.campaign_id != declared_id:
+        blocked.append("campaign_contract_id_mismatch")
+    iteration_id = iter_id
+    if iteration_id not in contract.child_iteration_ids:
+        blocked.append(f"campaign_contract_child_iteration_missing:{iteration_id}")
+    assigned_candidates = [
+        item for item in contract.candidate_blueprints if item.child_iteration_id == iteration_id
+    ]
+    iteration_budget = _int_or_none(payload.get("total_candidate_budget"))
+    if iteration_budget != len(assigned_candidates):
+        blocked.append(
+            "campaign_contract_child_candidate_budget_mismatch:"
+            f"{iteration_id}:{iteration_budget}:{len(assigned_candidates)}"
+        )
+    candidate_manifest_raw = str(payload.get("candidate_manifest_path") or "").strip()
+    if not candidate_manifest_raw:
+        blocked.append("campaign_contract_child_candidate_manifest_missing")
+    else:
+        candidate_manifest_path, manifest_error = _safe_repo_path(root, candidate_manifest_raw)
+        if manifest_error is None and candidate_manifest_path.is_file():
+            try:
+                manifest = json.loads(candidate_manifest_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                pass
+            else:
+                rows = manifest.get("candidates") if isinstance(manifest, dict) else None
+                if isinstance(rows, list):
+                    actual_ids = [
+                        str(row.get("candidate_id") or "") for row in rows if isinstance(row, dict)
+                    ]
+                    expected_ids = [item.candidate_id for item in assigned_candidates]
+                    if actual_ids != expected_ids:
+                        blocked.append(
+                            f"campaign_contract_child_candidate_inventory_mismatch:{iteration_id}"
+                        )
+                    expected_by_id = {item.candidate_id: item for item in assigned_candidates}
+                    hypotheses_by_id = {item.hypothesis_id: item for item in contract.hypotheses}
+                    for index, row in enumerate(rows):
+                        if not isinstance(row, dict):
+                            continue
+                        candidate_id = str(row.get("candidate_id") or "")
+                        expected = expected_by_id.get(candidate_id)
+                        if expected is None:
+                            continue
+                        expected_bindings = {
+                            "campaign_id": contract.campaign_id,
+                            "hypothesis_id": expected.hypothesis_id,
+                            "branch_id": expected.branch_id,
+                            "child_iteration_id": expected.child_iteration_id,
+                            "promotion_eligible": expected.promotion_eligible,
+                            "quality_metric": contract.qd_archive.quality_metric,
+                        }
+                        for field_name, expected_value in expected_bindings.items():
+                            if row.get(field_name) != expected_value:
+                                blocked.append(
+                                    "campaign_contract_candidate_binding_mismatch:"
+                                    f"{candidate_id or index}:{field_name}"
+                                )
+                        for field_name in (
+                            "universe_contract_sha256",
+                            "development_partition_contract_sha256",
+                        ):
+                            value = str(row.get(field_name) or "")
+                            if re.fullmatch(r"[0-9a-f]{64}", value) is None:
+                                blocked.append(
+                                    "campaign_contract_candidate_evidence_identity_invalid:"
+                                    f"{candidate_id or index}:{field_name}"
+                                )
+                        blocked.extend(
+                            _campaign_candidate_file_binding_blockers(
+                                row,
+                                candidate_id=candidate_id or str(index),
+                                root=root,
+                                expected_development_partition_id=(
+                                    contract.qd_archive.quality_partition_id
+                                ),
+                                expected_campaign_id=contract.campaign_id,
+                                expected_candidate=expected,
+                                expected_hypothesis=hypotheses_by_id[expected.hypothesis_id],
+                                expected_data_feasibility_path=str(
+                                    payload.get("data_feasibility_path") or ""
+                                ),
+                            )
+                        )
+    return blocked
+
+
+def _campaign_requirement_blockers(
+    payload: dict[str, Any],
+    *,
+    registered_campaign_ids: list[str],
+    campaign_bound: bool,
+) -> list[str]:
+    blocked: list[str] = []
+    schema_version = _int_or_none(payload.get("schema_version")) or 1
+    iter_id = str(payload.get("iter_id") or "").strip()
+    legacy_unbound = iter_id in LEGACY_UNBOUND_ITERATION_IDS
+    created_at: datetime | None = None
+    created_at_raw = payload.get("created_at")
+    if not legacy_unbound and schema_version < 3:
+        blocked.append("campaign_governance_schema_version_invalid_for_new_iteration")
+    if schema_version >= 3:
+        if not isinstance(created_at_raw, str) or not created_at_raw.strip():
+            blocked.append("campaign_governance_created_at_missing")
+        else:
+            try:
+                created_at = datetime.fromisoformat(created_at_raw.replace("Z", "+00:00"))
+            except ValueError:
+                blocked.append("campaign_governance_created_at_invalid")
+            else:
+                if created_at.tzinfo is None:
+                    blocked.append("campaign_governance_created_at_timezone_missing")
+                else:
+                    created_at = created_at.astimezone(UTC)
+    if len(registered_campaign_ids) > 1:
+        blocked.append(
+            "campaign_contract_child_registered_multiple:" + ",".join(registered_campaign_ids)
+        )
+    if registered_campaign_ids and not campaign_bound:
+        blocked.append(
+            "campaign_contract_binding_missing_for_registered_child:" + registered_campaign_ids[0]
+        )
+    if not legacy_unbound and not campaign_bound:
+        blocked.append("campaign_contract_required_for_new_iteration")
+    return blocked
+
+
+def _registered_campaign_ids_for_child(root: Path, iter_id: str) -> list[str]:
+    if not iter_id:
+        return []
+    campaign_root = root / "reports/research/campaigns"
+    if not campaign_root.is_dir() or campaign_root.is_symlink():
+        return []
+    result: list[str] = []
+    for path in sorted(campaign_root.glob("*/research-campaign-contract.json")):
+        if path.is_symlink() or not path.is_file():
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        children = payload.get("child_iteration_ids") if isinstance(payload, dict) else None
+        campaign_id = payload.get("campaign_id") if isinstance(payload, dict) else None
+        if (
+            isinstance(children, list)
+            and iter_id in children
+            and isinstance(campaign_id, str)
+            and campaign_id
+        ):
+            result.append(campaign_id)
+    return sorted(set(result))
+
+
+def _campaign_candidate_file_binding_blockers(
+    row: dict[str, Any],
+    *,
+    candidate_id: str,
+    root: Path,
+    expected_development_partition_id: str,
+    expected_campaign_id: str,
+    expected_candidate: Any,
+    expected_hypothesis: Any,
+    expected_data_feasibility_path: str,
+) -> list[str]:
+    blocked: list[str] = []
+    bindings = (
+        ("universe_contract_path", "universe_contract_sha256"),
+        (
+            "development_partition_contract_path",
+            "development_partition_contract_sha256",
+        ),
+    )
+    for path_field, sha_field in bindings:
+        raw_path = str(row.get(path_field) or "").strip()
+        if not raw_path:
+            blocked.append(
+                f"campaign_contract_candidate_evidence_path_missing:{candidate_id}:{path_field}"
+            )
+            continue
+        path, error = _safe_repo_path(root, raw_path)
+        if error:
+            blocked.append(
+                f"campaign_contract_candidate_evidence_path_invalid:"
+                f"{candidate_id}:{path_field}:{error}"
+            )
+            continue
+        if not path.is_file() or path.is_symlink():
+            blocked.append(
+                f"campaign_contract_candidate_evidence_file_missing:{candidate_id}:{path_field}"
+            )
+            continue
+        expected_sha256 = str(row.get(sha_field) or "")
+        actual_sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
+        if expected_sha256 != actual_sha256:
+            blocked.append(
+                f"campaign_contract_candidate_evidence_sha256_mismatch:{candidate_id}:{sha_field}"
+            )
+        if path_field == "universe_contract_path":
+            blocked.extend(
+                _campaign_universe_contract_blockers(
+                    path,
+                    candidate_id=candidate_id,
+                    root=root,
+                    expected_campaign_id=expected_campaign_id,
+                    expected_candidate=expected_candidate,
+                    expected_hypothesis=expected_hypothesis,
+                    expected_data_feasibility_path=expected_data_feasibility_path,
+                )
+            )
+            continue
+        if path_field != "development_partition_contract_path":
+            continue
+        try:
+            partition = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            blocked.append(
+                f"campaign_contract_candidate_development_partition_invalid_json:{candidate_id}"
+            )
+            continue
+        if not isinstance(partition, dict):
+            blocked.append(
+                f"campaign_contract_candidate_development_partition_not_object:{candidate_id}"
+            )
+            continue
+        if partition.get("partition_id") != expected_development_partition_id:
+            blocked.append(
+                f"campaign_contract_candidate_development_partition_id_mismatch:{candidate_id}"
+            )
+        if partition.get("kind") != "development":
+            blocked.append(
+                f"campaign_contract_candidate_development_partition_kind_mismatch:{candidate_id}"
+            )
+    return blocked
+
+
+def _campaign_universe_contract_blockers(
+    path: Path,
+    *,
+    candidate_id: str,
+    root: Path,
+    expected_campaign_id: str,
+    expected_candidate: Any,
+    expected_hypothesis: Any,
+    expected_data_feasibility_path: str,
+) -> list[str]:
+    prefix = f"campaign_contract_candidate_universe_contract:{candidate_id}"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return [f"{prefix}:invalid_json"]
+    if not isinstance(payload, dict):
+        return [f"{prefix}:not_object"]
+
+    blocked: list[str] = []
+    expected_fields = {
+        "schema_version": 1,
+        "campaign_id": expected_campaign_id,
+        "child_iteration_id": expected_candidate.child_iteration_id,
+        "hypothesis_id": expected_candidate.hypothesis_id,
+        "universe_selection": expected_hypothesis.universe_selection,
+        "promotion_eligible": expected_candidate.promotion_eligible,
+    }
+    for field_name, expected_value in expected_fields.items():
+        if payload.get(field_name) != expected_value:
+            blocked.append(f"{prefix}:{field_name}_mismatch")
+
+    status = payload.get("contract_status")
+    if status not in {"ready", "dependency_skipped"}:
+        blocked.append(f"{prefix}:contract_status_invalid")
+        return blocked
+
+    capability_ids = payload.get("capability_ids")
+    if (
+        not isinstance(capability_ids, list)
+        or not capability_ids
+        or any(not isinstance(item, str) or not item.strip() for item in capability_ids)
+        or len(capability_ids) != len(set(capability_ids))
+    ):
+        blocked.append(f"{prefix}:capability_ids_invalid")
+        capability_ids = []
+    elif status == "ready":
+        blocked.extend(
+            _campaign_ready_capability_blockers(
+                capability_ids,
+                root=root,
+                prefix=prefix,
+                require_point_in_time=(expected_hypothesis.universe_selection == "point_in_time"),
+            )
+        )
+
+    feasibility = payload.get("data_feasibility_binding")
+    if not isinstance(feasibility, dict):
+        blocked.append(f"{prefix}:data_feasibility_binding_missing")
+    elif not expected_data_feasibility_path:
+        blocked.append(f"{prefix}:expected_data_feasibility_path_missing")
+    else:
+        if feasibility.get("path") != expected_data_feasibility_path:
+            blocked.append(f"{prefix}:data_feasibility_path_mismatch")
+        feasibility_path, error = _safe_repo_path(root, expected_data_feasibility_path)
+        if error or not feasibility_path.is_file() or feasibility_path.is_symlink():
+            blocked.append(f"{prefix}:data_feasibility_file_missing")
+        else:
+            actual_sha256 = hashlib.sha256(feasibility_path.read_bytes()).hexdigest()
+            if feasibility.get("sha256") != actual_sha256:
+                blocked.append(f"{prefix}:data_feasibility_sha256_mismatch")
+            blocked.extend(
+                _campaign_data_feasibility_semantic_blockers(
+                    feasibility_path,
+                    expected_iter_id=expected_candidate.child_iteration_id,
+                    expected_capability_ids=capability_ids,
+                    expected_status=status,
+                    prefix=prefix,
+                )
+            )
+    if status == "dependency_skipped":
+        dependency_blockers = payload.get("blockers")
+        if (
+            not isinstance(dependency_blockers, list)
+            or not dependency_blockers
+            or any(not isinstance(item, str) or not item.strip() for item in dependency_blockers)
+        ):
+            blocked.append(f"{prefix}:dependency_blockers_invalid")
+        return blocked
+
+    definition = payload.get("universe_definition")
+    if not isinstance(definition, dict):
+        blocked.append(f"{prefix}:universe_definition_missing")
+        return blocked
+    expected_mode = {
+        "point_in_time": "point_in_time_membership",
+        "fixed_long_lived": "fixed_long_lived_symbols",
+        "cross_asset": "fixed_cross_asset_symbols",
+        "static_hotspot_control": "static_hotspot_control",
+    }[expected_hypothesis.universe_selection]
+    if definition.get("membership_mode") != expected_mode:
+        blocked.append(f"{prefix}:membership_mode_mismatch")
+
+    if expected_hypothesis.universe_selection == "point_in_time":
+        required = (
+            "membership_artifact_path",
+            "membership_artifact_sha256",
+            "permanent_security_id_field",
+            "membership_valid_from_field",
+            "membership_valid_to_field",
+            "delisting_return_field",
+            "corporate_action_policy",
+            "liquidity_visible_at_field",
+        )
+        for field_name in required:
+            if not definition.get(field_name):
+                blocked.append(f"{prefix}:point_in_time_{field_name}_missing")
+        membership_raw = str(definition.get("membership_artifact_path") or "")
+        membership_path, error = _safe_repo_path(root, membership_raw)
+        if error or not membership_path.is_file() or membership_path.is_symlink():
+            blocked.append(f"{prefix}:point_in_time_membership_artifact_missing")
+        elif (
+            definition.get("membership_artifact_sha256")
+            != hashlib.sha256(membership_path.read_bytes()).hexdigest()
+        ):
+            blocked.append(f"{prefix}:point_in_time_membership_sha256_mismatch")
+        else:
+            blocked.extend(
+                _campaign_pit_membership_blockers(
+                    membership_path,
+                    definition=definition,
+                    prefix=prefix,
+                )
+            )
+    else:
+        symbols = definition.get("symbols")
+        minimum_symbols = (
+            1 if expected_hypothesis.universe_selection == "static_hotspot_control" else 2
+        )
+        if (
+            not isinstance(symbols, list)
+            or len(symbols) < minimum_symbols
+            or any(not isinstance(item, str) or not item.strip() for item in symbols)
+            or len(symbols) != len(set(symbols))
+        ):
+            blocked.append(f"{prefix}:symbols_invalid")
+        if not str(definition.get("selection_rule") or "").strip():
+            blocked.append(f"{prefix}:selection_rule_missing")
+        frozen_at = definition.get("selection_frozen_at")
+        if not isinstance(frozen_at, str):
+            blocked.append(f"{prefix}:selection_frozen_at_missing")
+        else:
+            try:
+                parsed = datetime.fromisoformat(frozen_at.replace("Z", "+00:00"))
+            except ValueError:
+                blocked.append(f"{prefix}:selection_frozen_at_invalid")
+            else:
+                if parsed.tzinfo is None:
+                    blocked.append(f"{prefix}:selection_frozen_at_timezone_missing")
+    return blocked
+
+
+def _campaign_ready_capability_blockers(
+    capability_ids: list[str],
+    *,
+    root: Path,
+    prefix: str,
+    require_point_in_time: bool,
+) -> list[str]:
+    from open_composer.capabilities.registry import load_registry
+
+    try:
+        registry = load_registry(root)
+    except (OSError, ValueError):
+        return [f"{prefix}:capability_registry_invalid"]
+    by_id = {item.id: item for item in registry.capabilities}
+    blocked: list[str] = []
+    unknown = sorted(set(capability_ids) - set(by_id))
+    if unknown:
+        blocked.append(f"{prefix}:capability_ids_unregistered:{','.join(unknown)}")
+    ineligible = sorted(
+        capability_id
+        for capability_id in capability_ids
+        if capability_id in by_id and by_id[capability_id].status not in {"approved", "trial"}
+    )
+    if ineligible:
+        blocked.append(f"{prefix}:capability_ids_not_research_ready:{','.join(ineligible)}")
+    if require_point_in_time and not any(
+        capability_id in by_id and "point_in_time_universe" in by_id[capability_id].use_for
+        for capability_id in capability_ids
+    ):
+        blocked.append(f"{prefix}:point_in_time_capability_missing")
+    return blocked
+
+
+def _campaign_data_feasibility_semantic_blockers(
+    path: Path,
+    *,
+    expected_iter_id: str,
+    expected_capability_ids: list[str],
+    expected_status: str,
+    prefix: str,
+) -> list[str]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return [f"{prefix}:data_feasibility_invalid_json"]
+    if not isinstance(payload, dict):
+        return [f"{prefix}:data_feasibility_not_object"]
+    blocked: list[str] = []
+    if _int_or_none(payload.get("schema_version")) != 1:
+        blocked.append(f"{prefix}:data_feasibility_schema_version_mismatch")
+    if payload.get("iter_id") != expected_iter_id:
+        blocked.append(f"{prefix}:data_feasibility_iter_id_mismatch")
+    campaign_universe = payload.get("campaign_universe")
+    if not isinstance(campaign_universe, dict):
+        blocked.append(f"{prefix}:data_feasibility_campaign_universe_missing")
+        return blocked
+    if campaign_universe.get("status") != expected_status:
+        blocked.append(f"{prefix}:data_feasibility_campaign_universe_status_mismatch")
+    declared_capabilities = campaign_universe.get("capability_ids")
+    if not isinstance(declared_capabilities, list) or sorted(declared_capabilities) != sorted(
+        expected_capability_ids
+    ):
+        blocked.append(f"{prefix}:data_feasibility_campaign_capabilities_mismatch")
+    return blocked
+
+
+def _campaign_pit_membership_blockers(
+    path: Path,
+    *,
+    definition: dict[str, Any],
+    prefix: str,
+) -> list[str]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return [f"{prefix}:point_in_time_membership_invalid_json"]
+    if not isinstance(payload, dict):
+        return [f"{prefix}:point_in_time_membership_not_object"]
+    blocked: list[str] = []
+    if _int_or_none(payload.get("schema_version")) != 1:
+        blocked.append(f"{prefix}:point_in_time_membership_schema_version_mismatch")
+    if not str(payload.get("source") or "").strip():
+        blocked.append(f"{prefix}:point_in_time_membership_source_missing")
+    if not _is_aware_datetime(payload.get("fetched_at")):
+        blocked.append(f"{prefix}:point_in_time_membership_fetched_at_invalid")
+    if definition.get("corporate_action_policy") not in {
+        "point_in_time_split_dividend_adjusted_with_delisting_returns",
+        "raw_prices_with_explicit_corporate_action_events",
+    }:
+        blocked.append(f"{prefix}:point_in_time_corporate_action_policy_invalid")
+
+    rows = payload.get("memberships")
+    if not isinstance(rows, list) or not rows:
+        blocked.append(f"{prefix}:point_in_time_membership_rows_missing")
+        return blocked
+    permanent_id = str(definition["permanent_security_id_field"])
+    valid_from = str(definition["membership_valid_from_field"])
+    valid_to = str(definition["membership_valid_to_field"])
+    delisting_return = str(definition["delisting_return_field"])
+    liquidity_visible_at = str(definition["liquidity_visible_at_field"])
+    required_fields = {
+        permanent_id,
+        valid_from,
+        valid_to,
+        delisting_return,
+        liquidity_visible_at,
+    }
+    seen: set[tuple[str, str]] = set()
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            blocked.append(f"{prefix}:point_in_time_membership_row_not_object:{index}")
+            continue
+        missing = sorted(required_fields - set(row))
+        if missing:
+            blocked.append(
+                f"{prefix}:point_in_time_membership_row_fields_missing:{index}:{','.join(missing)}"
+            )
+            continue
+        security_id = str(row.get(permanent_id) or "").strip()
+        start = _parse_date(row.get(valid_from))
+        end_value = row.get(valid_to)
+        end_missing = end_value is None or end_value == ""
+        end = None if end_missing else _parse_date(end_value)
+        if not security_id or start is None:
+            blocked.append(f"{prefix}:point_in_time_membership_row_identity_invalid:{index}")
+            continue
+        if not end_missing and end is None:
+            blocked.append(f"{prefix}:point_in_time_membership_row_valid_to_invalid:{index}")
+        elif end is not None and end < start:
+            blocked.append(f"{prefix}:point_in_time_membership_row_interval_invalid:{index}")
+        if not _is_aware_datetime(row.get(liquidity_visible_at)):
+            blocked.append(f"{prefix}:point_in_time_membership_row_visible_at_invalid:{index}")
+        delisting_value = row.get(delisting_return)
+        if delisting_value is not None:
+            try:
+                numeric_delisting = float(delisting_value)
+            except (TypeError, ValueError):
+                numeric_delisting = math.nan
+            if not math.isfinite(numeric_delisting):
+                blocked.append(
+                    f"{prefix}:point_in_time_membership_row_delisting_return_invalid:{index}"
+                )
+        identity = (security_id, str(row.get(valid_from)))
+        if identity in seen:
+            blocked.append(f"{prefix}:point_in_time_membership_row_duplicate:{index}")
+        seen.add(identity)
+    return blocked
+
+
+def _is_aware_datetime(value: Any) -> bool:
+    if not isinstance(value, str) or not value.strip():
+        return False
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return parsed.tzinfo is not None
+
+
+def _parse_date(value: Any) -> date | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).date()
+    except ValueError:
+        return None
+
+
 def _final_artifact_exists(
     artifact_path: Path,
     *,
@@ -477,6 +1227,205 @@ def _final_artifact_exists(
         else:
             candidate = staged_evaluation_dir / relative
     return not candidate.is_symlink() and candidate.is_file()
+
+
+def _canonical_payload_sha256(payload: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+def _candidate_policy_contract_rows(
+    contracts: dict[str, Any],
+    root: Path,
+    *,
+    expected_iter_id: str,
+) -> tuple[dict[str, dict[str, dict[str, Any]]], list[str]]:
+    blocked: list[str] = []
+    result: dict[str, dict[str, dict[str, Any]]] = {}
+    group = contracts.get("candidate_policies")
+    if not isinstance(group, dict) or not group:
+        return result, ["candidate_manifest_candidate_policy_contracts_missing"]
+    for contract_id, binding in group.items():
+        label = str(contract_id)
+        if not isinstance(binding, dict):
+            blocked.append(f"candidate_manifest_candidate_policy_{label}_binding_not_object")
+            continue
+        path, error = _safe_repo_path(root, str(binding.get("path") or ""))
+        if error:
+            blocked.append(f"candidate_manifest_candidate_policy_{label}_path_invalid:{error}")
+            continue
+        if (root / str(binding.get("path") or "")).is_symlink() or not path.is_file():
+            blocked.append(f"candidate_manifest_candidate_policy_{label}_path_missing")
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            blocked.append(f"candidate_manifest_candidate_policy_{label}_invalid_json")
+            continue
+        if not isinstance(payload, dict):
+            blocked.append(f"candidate_manifest_candidate_policy_{label}_not_object")
+            continue
+        if payload.get("contract_id") != contract_id:
+            blocked.append(f"candidate_manifest_candidate_policy_{label}_contract_id_mismatch")
+        if payload.get("iter_id") != expected_iter_id:
+            blocked.append(f"candidate_manifest_candidate_policy_{label}_iter_id_mismatch")
+        if payload.get("generated_before_backtest") is not True:
+            blocked.append(f"candidate_manifest_candidate_policy_{label}_not_preregistered")
+        rows = payload.get("policies")
+        if not isinstance(rows, list):
+            blocked.append(f"candidate_manifest_candidate_policy_{label}_rows_missing")
+            continue
+        if payload.get("policy_count") != len(rows):
+            blocked.append(f"candidate_manifest_candidate_policy_{label}_count_mismatch")
+        by_id: dict[str, dict[str, Any]] = {}
+        for index, row in enumerate(rows):
+            if not isinstance(row, dict):
+                blocked.append(
+                    f"candidate_manifest_candidate_policy_{label}_row_{index}_not_object"
+                )
+                continue
+            candidate_id = str(row.get("candidate_id") or "")
+            if not candidate_id:
+                blocked.append(
+                    f"candidate_manifest_candidate_policy_{label}_row_{index}_id_missing"
+                )
+                continue
+            if candidate_id in by_id:
+                blocked.append(
+                    f"candidate_manifest_candidate_policy_{label}_duplicate:{candidate_id}"
+                )
+                continue
+            policy = row.get("policy")
+            if not isinstance(policy, dict) or not policy:
+                blocked.append(
+                    f"candidate_manifest_candidate_policy_{label}_{candidate_id}_policy_missing"
+                )
+                continue
+            actual_policy_sha256 = _canonical_payload_sha256(policy)
+            declared_policy_sha256 = str(row.get("policy_sha256") or "")
+            if declared_policy_sha256 != actual_policy_sha256:
+                blocked.append(
+                    f"candidate_manifest_candidate_policy_{label}_{candidate_id}_sha256_mismatch"
+                )
+            by_id[candidate_id] = row
+        result[label] = by_id
+    return result, blocked
+
+
+def _spec_candidate_policy_blockers(
+    spec: Any,
+    *,
+    candidate_id: str,
+    expected_policy_sha256: str,
+) -> list[str]:
+    blocked: list[str] = []
+    notes = spec.notes.model_dump(mode="json")
+    if notes.get("candidate_id") != candidate_id:
+        blocked.append(f"candidate_manifest_{candidate_id}_spec_candidate_id_mismatch")
+    policy = notes.get("candidate_policy")
+    if not isinstance(policy, dict) or not policy:
+        blocked.append(f"candidate_manifest_{candidate_id}_spec_candidate_policy_missing")
+        return blocked
+    actual_policy_sha256 = _canonical_payload_sha256(policy)
+    if expected_policy_sha256 and actual_policy_sha256 != expected_policy_sha256:
+        blocked.append(f"candidate_manifest_{candidate_id}_spec_candidate_policy_mismatch")
+    declared_policy_sha256 = str(notes.get("candidate_policy_sha256") or "")
+    if declared_policy_sha256 != actual_policy_sha256:
+        blocked.append(f"candidate_manifest_{candidate_id}_spec_candidate_policy_sha256_mismatch")
+    return blocked
+
+
+def _phase_one_preregistration_lock_blockers(
+    root: Path,
+    *,
+    manifest_path: Path,
+    search_space: dict[str, Any],
+    candidates: list[Any],
+) -> list[str]:
+    blocked: list[str] = []
+    lock_path = manifest_path.with_name("phase-one-preregistration-lock.json")
+    try:
+        lock_reference = lock_path.relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return ["candidate_manifest_phase_one_lock_outside_repo"]
+    unresolved_lock = root / lock_reference
+    if unresolved_lock.is_symlink() or not lock_path.is_file():
+        return ["candidate_manifest_phase_one_lock_missing"]
+    try:
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ["candidate_manifest_phase_one_lock_invalid_json"]
+    if not isinstance(lock, dict):
+        return ["candidate_manifest_phase_one_lock_not_object"]
+
+    expected_iter_id = str(search_space.get("iter_id") or "")
+    expected_campaign_id = str(search_space.get("campaign_id") or "")
+    if lock.get("iter_id") != expected_iter_id:
+        blocked.append("candidate_manifest_phase_one_lock_iter_id_mismatch")
+    if expected_campaign_id and lock.get("campaign_id") != expected_campaign_id:
+        blocked.append("candidate_manifest_phase_one_lock_campaign_id_mismatch")
+    for field_name in (
+        "generated_before_backtest",
+        "generated_before_model_training",
+    ):
+        if lock.get(field_name) is not True:
+            blocked.append(f"candidate_manifest_phase_one_lock_{field_name}_invalid")
+    for field_name in ("frozen_oos_read_authorized", "broker_writes"):
+        if lock.get(field_name) is not False:
+            blocked.append(f"candidate_manifest_phase_one_lock_{field_name}_invalid")
+
+    candidate_rows = [row for row in candidates if isinstance(row, dict)]
+    expected_ids = [str(row.get("candidate_id") or "") for row in candidate_rows]
+    if lock.get("candidate_ids") != expected_ids:
+        blocked.append("candidate_manifest_phase_one_lock_candidate_inventory_mismatch")
+    expected_policy_sha256 = {
+        str(row.get("candidate_id") or ""): str(row.get("candidate_policy_sha256") or "")
+        for row in candidate_rows
+    }
+    if lock.get("candidate_policy_sha256") != expected_policy_sha256:
+        blocked.append("candidate_manifest_phase_one_lock_candidate_policy_sha256_mismatch")
+
+    inventory = lock.get("immutable_inventory")
+    if not isinstance(inventory, dict) or not inventory:
+        return [*blocked, "candidate_manifest_phase_one_lock_inventory_missing"]
+    for name, binding in inventory.items():
+        if not isinstance(binding, dict):
+            blocked.append(f"candidate_manifest_phase_one_lock_{name}_binding_not_object")
+            continue
+        raw_path = str(binding.get("path") or "")
+        path, error = _safe_repo_path(root, raw_path)
+        if error:
+            blocked.append(f"candidate_manifest_phase_one_lock_{name}_path_invalid:{error}")
+            continue
+        if (root / raw_path).is_symlink() or not path.is_file():
+            blocked.append(f"candidate_manifest_phase_one_lock_{name}_path_missing")
+            continue
+        expected_hash = str(binding.get("sha256") or "")
+        actual_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+        if expected_hash != actual_hash:
+            blocked.append(f"candidate_manifest_phase_one_lock_{name}_sha256_mismatch")
+
+    search_contracts = search_space.get("contracts")
+    expected_policy_path = (
+        str(search_contracts.get("candidate_policy") or "")
+        if isinstance(search_contracts, dict)
+        else ""
+    )
+    mandatory_paths = {"candidate_policy_contract": expected_policy_path}
+    campaign_path = str(search_space.get("campaign_contract_path") or "")
+    if campaign_path:
+        mandatory_paths["campaign_contract"] = campaign_path
+    for row in candidate_rows:
+        candidate_id = str(row.get("candidate_id") or "")
+        mandatory_paths[f"spec_{candidate_id}"] = str(row.get("spec_path") or "")
+    for name, expected_path in mandatory_paths.items():
+        binding = inventory.get(name)
+        if not isinstance(binding, dict):
+            blocked.append(f"candidate_manifest_phase_one_lock_{name}_binding_missing")
+        elif binding.get("path") != expected_path:
+            blocked.append(f"candidate_manifest_phase_one_lock_{name}_path_mismatch")
+    return blocked
 
 
 def _candidate_manifest_blockers(
@@ -513,6 +1462,13 @@ def _candidate_manifest_blockers(
     contracts = manifest.get("contracts")
     if not isinstance(contracts, dict):
         return [*blocked, "candidate_manifest_contracts_missing"]
+    search_contracts = search_space.get("contracts")
+    search_policy_path = (
+        str(search_contracts.get("candidate_policy") or "").strip()
+        if isinstance(search_contracts, dict)
+        else ""
+    )
+    policy_bound = bool(search_policy_path) or isinstance(contracts.get("candidate_policies"), dict)
     manifest_contract = str(search_space.get("candidate_manifest_contract") or "")
     if manifest_contract:
         if manifest.get("manifest_type") != manifest_contract:
@@ -531,6 +1487,8 @@ def _candidate_manifest_blockers(
         "cost_contract": "costs",
         "benchmark_contract": "benchmarks",
     }
+    if policy_bound:
+        contract_map["candidate_policy_contract"] = "candidate_policies"
     required_fields = {
         "candidate_id",
         "path",
@@ -541,6 +1499,16 @@ def _candidate_manifest_blockers(
         "fallback",
         *contract_map,
     }
+    if policy_bound:
+        required_fields.add("candidate_policy_sha256")
+    policy_rows_by_contract: dict[str, dict[str, dict[str, Any]]] = {}
+    if policy_bound:
+        policy_rows_by_contract, policy_blocked = _candidate_policy_contract_rows(
+            contracts,
+            root,
+            expected_iter_id=str(search_space.get("iter_id") or ""),
+        )
+        blocked.extend(policy_blocked)
     candidate_ids: set[str] = set()
     path_counts: dict[str, int] = {}
     validated_spec_paths: set[str] = set()
@@ -564,6 +1532,31 @@ def _candidate_manifest_blockers(
                 blocked.append(
                     f"candidate_manifest_{candidate_id}_unknown_{field_name}:"
                     f"{candidate[field_name]}"
+                )
+        expected_policy_sha256 = ""
+        if policy_bound:
+            policy_contract_id = str(candidate.get("candidate_policy_contract") or "")
+            policy_row = policy_rows_by_contract.get(policy_contract_id, {}).get(candidate_id)
+            if policy_row is None:
+                blocked.append(
+                    f"candidate_manifest_{candidate_id}_candidate_policy_missing_from_contract"
+                )
+            else:
+                expected_policy_sha256 = str(policy_row.get("policy_sha256") or "")
+                if candidate.get("method") != policy_row.get("method_variant"):
+                    blocked.append(
+                        f"candidate_manifest_{candidate_id}_candidate_policy_method_mismatch"
+                    )
+                if candidate.get("ablation") != policy_row.get("factor_variant"):
+                    blocked.append(
+                        f"candidate_manifest_{candidate_id}_candidate_policy_factor_mismatch"
+                    )
+            declared_policy_sha256 = str(candidate.get("candidate_policy_sha256") or "")
+            if re.fullmatch(r"[0-9a-f]{64}", declared_policy_sha256) is None:
+                blocked.append(f"candidate_manifest_{candidate_id}_candidate_policy_sha256_invalid")
+            elif expected_policy_sha256 and declared_policy_sha256 != expected_policy_sha256:
+                blocked.append(
+                    f"candidate_manifest_{candidate_id}_candidate_policy_sha256_mismatch"
                 )
         spec_path, error = _safe_repo_path(root, str(candidate["spec_path"]))
         if error:
@@ -593,6 +1586,14 @@ def _candidate_manifest_blockers(
                             )
                         )
                         validated_spec_paths.add(spec_reference)
+                    if policy_bound:
+                        blocked.extend(
+                            _spec_candidate_policy_blockers(
+                                spec,
+                                candidate_id=candidate_id,
+                                expected_policy_sha256=expected_policy_sha256,
+                            )
+                        )
     expected_path_counts = {
         str(row.get("name")): int(row.get("candidate_count") or 0)
         for row in search_space.get("paths", [])
@@ -603,6 +1604,15 @@ def _candidate_manifest_blockers(
             "candidate_manifest_path_counts_mismatch:"
             f"{json.dumps(path_counts, sort_keys=True)}:"
             f"{json.dumps(expected_path_counts, sort_keys=True)}"
+        )
+    if policy_bound:
+        blocked.extend(
+            _phase_one_preregistration_lock_blockers(
+                root,
+                manifest_path=manifest_path,
+                search_space=search_space,
+                candidates=candidates,
+            )
         )
     return blocked
 
@@ -627,11 +1637,30 @@ def _spec_iteration_binding_blockers(
         "candidate_manifest_path"
     ):
         blocked.append(f"candidate_manifest_spec_manifest_path_mismatch:{spec_reference}")
+    if research_design.get("campaign_contract_path") != search_space.get("campaign_contract_path"):
+        blocked.append(f"candidate_manifest_spec_campaign_path_mismatch:{spec_reference}")
     feasibility_binding = research_design.get("data_feasibility_path") or research_design.get(
         "universe_contract_path"
     )
     if feasibility_binding != search_space.get("data_feasibility_path"):
         blocked.append(f"candidate_manifest_spec_feasibility_path_mismatch:{spec_reference}")
+    contracts = search_space.get("contracts")
+    expected_policy_path = (
+        str(contracts.get("candidate_policy") or "") if isinstance(contracts, dict) else ""
+    )
+    if expected_policy_path:
+        if research_design.get("candidate_policy_contract_path") != expected_policy_path:
+            blocked.append(
+                f"candidate_manifest_spec_candidate_policy_path_mismatch:{spec_reference}"
+            )
+        manifest_reference = str(search_space.get("candidate_manifest_path") or "")
+        expected_lock_path = (
+            Path(manifest_reference).with_name("phase-one-preregistration-lock.json").as_posix()
+            if manifest_reference
+            else ""
+        )
+        if research_design.get("preregistration_lock_path") != expected_lock_path:
+            blocked.append(f"candidate_manifest_spec_phase_one_lock_path_mismatch:{spec_reference}")
     return blocked
 
 
@@ -641,7 +1670,10 @@ def _generic_manifest_contract_blockers(
 ) -> list[str]:
     blocked: list[str] = []
     checked_validation_paths: set[Path] = set()
-    for group_name in ["data", "features", "labels", "validation", "costs", "benchmarks"]:
+    group_names = ["data", "features", "labels", "validation", "costs", "benchmarks"]
+    if "candidate_policies" in contracts:
+        group_names.append("candidate_policies")
+    for group_name in group_names:
         group = contracts.get(group_name)
         if not isinstance(group, dict) or not group:
             blocked.append(f"candidate_manifest_generic_{group_name}_contracts_missing")
@@ -934,9 +1966,7 @@ def _generic_data_feasibility_blockers(
                 blocked.append(
                     f"data_feasibility_candidate_authorization_reason_missing:{candidate_id}"
                 )
-            canonical_hash = hashlib.sha256(
-                json.dumps(candidate, sort_keys=True, separators=(",", ":")).encode()
-            ).hexdigest()
+            canonical_hash = candidate_authorization_binding_sha256(candidate)
             if row.get("candidate_binding_sha256") != canonical_hash:
                 blocked.append(
                     f"data_feasibility_candidate_authorization_sha_mismatch:{candidate_id}"
@@ -969,6 +1999,17 @@ def _generic_data_feasibility_blockers(
             elif expected_hash != actual_hash:
                 blocked.append(f"data_feasibility_{reference_name}_sha256_mismatch")
     return blocked
+
+
+def candidate_authorization_binding_sha256(candidate: dict[str, Any]) -> str:
+    """Hash preregistered candidate semantics without circular evidence digests."""
+    binding = dict(candidate)
+    if str(binding.get("campaign_id") or "").strip():
+        binding.pop("universe_contract_sha256", None)
+        binding.pop("development_partition_contract_sha256", None)
+    return hashlib.sha256(
+        json.dumps(binding, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 def _data_feasibility_blockers(
@@ -2161,7 +3202,8 @@ def _external_brief_json_template(iter_id: str) -> dict[str, Any]:
 
 def _search_space_json_template(iter_id: str) -> dict[str, Any]:
     return {
-        "schema_version": 1,
+        "schema_version": 3,
+        "created_at": datetime.now(UTC).isoformat(),
         "iter_id": iter_id,
         "strategy_name": "us_minute_momentum",
         "source_spec_path": None,

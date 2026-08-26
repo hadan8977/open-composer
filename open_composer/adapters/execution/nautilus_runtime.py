@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import re
 from dataclasses import dataclass, field
@@ -8,7 +7,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from hashlib import sha1
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 from nautilus_trader.backtest.config import (
@@ -46,7 +45,10 @@ from open_composer.analytics import (
 from open_composer.analytics.benchmark import build_buy_hold_benchmark
 from open_composer.analytics.data_sanity import evaluate_backtest_data_sanity
 from open_composer.engines.signal_engine import build_signal
-from open_composer.expressions import evaluate_rule_block
+from open_composer.expressions import (
+    _load_feature_packet_records,
+    evaluate_rule_block,
+)
 from open_composer.models.backtest import BacktestRun, Trade
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec
@@ -173,6 +175,7 @@ class OpenComposerFeatureData(Data):
         "source": str,
         "field": str,
         "value": float,
+        "source_fetched_at_ns": int,
     }
 
 
@@ -381,7 +384,12 @@ def run_nautilus_backtest(
         catalog_root.mkdir(parents=True, exist_ok=True)
         catalog = ParquetDataCatalog.from_uri(catalog_root.resolve().as_uri())
         bars = _build_bars(frame, bar_type, instrument)
-        feature_data = _build_feature_data(spec, root, instrument.id)
+        feature_data = _build_feature_data(
+            spec,
+            root,
+            instrument.id,
+            decision_timestamps=frame["timestamp"],
+        )
         _ensure_catalog_write_dirs(catalog_root, bars, feature_data)
         catalog.write_data([instrument])
         _catalog_write_data(catalog, bars)
@@ -617,67 +625,38 @@ def _build_feature_data(
     spec: StrategySpec,
     root: Path,
     instrument_id: InstrumentId,
+    *,
+    decision_timestamps: Any | None = None,
 ) -> list[OpenComposerFeatureData]:
     rows: list[OpenComposerFeatureData] = []
     for factor_name, factor in spec.factors.items():
         if factor.source not in {"llm_feature", "feature_packet"}:
             continue
-        if not factor.path or not factor.field:
-            continue
-        path = Path(factor.path)
-        if not path.is_absolute():
-            path = root / path
-        if not path.exists():
-            continue
-        with path.open("r", encoding="utf-8") as handle:
-            for line in handle:
-                if not line.strip():
-                    continue
-                raw = json.loads(line)
-                if not isinstance(raw, dict):
-                    continue
-                packet_symbol = str(raw.get("symbol", "")).upper()
-                if packet_symbol and packet_symbol not in {spec.primary_symbol.upper(), "*"}:
-                    continue
-                value = _feature_packet_value(raw, factor.field)
-                if value is None or "timestamp" not in raw:
-                    continue
-                numeric_value = _numeric_feature_value(value)
-                if numeric_value is None:
-                    continue
-                timestamp = pd.Timestamp(raw["timestamp"])
-                ts_event = _timestamp_nanos(timestamp)
-                fetched_at = raw.get("fetched_at") or raw.get("published_at") or raw["timestamp"]
-                ts_init = _timestamp_nanos(pd.Timestamp(cast(str, fetched_at)))
-                rows.append(
-                    OpenComposerFeatureData(
-                        instrument_id=instrument_id,
-                        factor_name=factor_name,
-                        source=factor.source,
-                        field=factor.field,
-                        value=numeric_value,
-                        ts_event=ts_event,
-                        ts_init=ts_init,
-                    )
+        records = _load_feature_packet_records(
+            factor_name,
+            factor,
+            root=root,
+            source_label=factor.source,
+            symbol=spec.primary_symbol,
+            require_feature_symbol=False,
+            strategy_name=spec.name,
+            decision_timestamps=decision_timestamps,
+        )
+        for record in records:
+            replay_timestamp = _timestamp_nanos(record.visible_at)
+            rows.append(
+                OpenComposerFeatureData(
+                    instrument_id=instrument_id,
+                    factor_name=factor_name,
+                    source=factor.source,
+                    field=factor.field,
+                    value=record.value,
+                    source_fetched_at_ns=_timestamp_nanos(record.fetched_at),
+                    ts_event=replay_timestamp,
+                    ts_init=replay_timestamp,
                 )
-    return sorted(rows, key=lambda item: (item.ts_event, item.factor_name))
-
-
-def _feature_packet_value(raw: dict[str, Any], field: str) -> Any:
-    if field in raw:
-        return raw[field]
-    features = raw.get("features")
-    if isinstance(features, dict) and field in features:
-        return features[field]
-    return None
-
-
-def _numeric_feature_value(value: Any) -> float | None:
-    if isinstance(value, bool):
-        return 1.0 if value else 0.0
-    if isinstance(value, int | float):
-        return float(value)
-    return None
+            )
+    return sorted(rows, key=lambda item: (item.ts_init, item.factor_name))
 
 
 def _timestamp_nanos(timestamp: pd.Timestamp) -> int:

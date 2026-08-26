@@ -29,7 +29,12 @@
     "required_capabilities": {"type": "array", "items": {"type": "string"}},
     "execution_policy": {"type": ["object", "null"]},
     "reality_model": {"type": ["object", "null"]},
-    "model": {"type": ["object", "null"]}
+    "model": {
+      "anyOf": [
+        {"$ref": "#/$defs/mlModelConfig"},
+        {"type": "null"}
+      ]
+    }
   },
   "$defs": {
     "ruleBlock": {
@@ -44,7 +49,10 @@
       "additionalProperties": true,
       "properties": {
         "iter_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{2,80}$"},
+        "workflow_only_ungated_draft": {"type": "boolean"},
+        "campaign_contract_path": {"type": "string"},
         "candidate_manifest_path": {"type": "string"},
+        "candidate_policy_contract_path": {"type": "string"},
         "data_feasibility_path": {"type": "string"},
         "universe_contract_path": {"type": "string"},
         "data_contract_path": {"type": "string"},
@@ -52,6 +60,7 @@
         "cost_contract_path": {"type": "string"},
         "cumulative_trial_contract_path": {"type": "string"},
         "source_cards_path": {"type": "string"},
+        "source_card_claim_ids": {"type": "array", "items": {"type": "string"}},
         "preregistration_lock_path": {"type": "string"},
         "parameter_space": {
           "type": "object",
@@ -61,6 +70,203 @@
         "selection_objective": {"type": "string"},
         "anti_overfit_notes": {"type": "array", "items": {"type": "string"}},
         "validation_plan": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "mlLabel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "forward_return",
+            "forward_direction",
+            "path_survival",
+            "net_incremental_policy_value"
+          ]
+        },
+        "horizon_bars": {"type": ["integer", "null"], "minimum": 1, "maximum": 60},
+        "horizon_mode": {"enum": ["fixed_bars", "next_scheduled_review_open"]},
+        "review_schedule": {"type": ["string", "null"], "enum": ["calendar_month_end", null]},
+        "maximum_horizon_bars": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 60
+        },
+        "threshold_pct": {"type": ["number", "null"]},
+        "max_drawdown_pct": {"type": ["number", "null"], "minimum": 0},
+        "min_terminal_return_pct": {"type": ["number", "null"]},
+        "path_drawdown_reference": {
+          "type": ["string", "null"],
+          "enum": ["start_open", "running_open_peak", null]
+        },
+        "baseline_policy": {"type": ["string", "null"]},
+        "alternative_policy": {"type": ["string", "null"]},
+        "value_measure": {"type": ["string", "null"], "enum": ["log_wealth_ratio", null]},
+        "one_way_cost_bps": {"type": ["number", "null"], "minimum": 0},
+        "terminal_rejoin_cost_included": {"type": ["boolean", "null"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"horizon_mode": {"const": "next_scheduled_review_open"}}},
+          "then": {
+            "required": ["review_schedule", "horizon_bars", "maximum_horizon_bars"],
+            "properties": {"horizon_bars": {"const": null}}
+          }
+        },
+        {
+          "if": {"properties": {"type": {"const": "net_incremental_policy_value"}}},
+          "then": {
+            "required": [
+              "horizon_mode",
+              "baseline_policy",
+              "alternative_policy",
+              "value_measure",
+              "one_way_cost_bps",
+              "terminal_rejoin_cost_included"
+            ],
+            "properties": {"horizon_mode": {"const": "next_scheduled_review_open"}}
+          }
+        }
+      ]
+    },
+    "mlTraining": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "window_bars": {"type": "integer", "minimum": 120},
+        "retrain_every_bars": {"type": ["integer", "null"], "minimum": 5},
+        "retrain_schedule": {"enum": ["fixed_bars", "calendar_month_end"]},
+        "test_window_bars": {"type": "integer", "minimum": 21},
+        "purge_bars": {"type": ["integer", "null"], "minimum": 0},
+        "embargo_bars": {"type": "integer", "minimum": 0},
+        "seed": {"type": "integer"}
+      }
+    },
+    "mlSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "method": {"enum": ["threshold", "top_quantile"]},
+        "threshold": {"type": ["number", "null"]},
+        "quantile": {"type": ["number", "null"], "exclusiveMinimum": 0, "exclusiveMaximum": 1},
+        "operator": {
+          "enum": [
+            "greater_than_or_equal",
+            "less_than_or_equal",
+            "lower_bound_strictly_greater_than"
+          ]
+        }
+      }
+    },
+    "mlAbstention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "calibration_method",
+        "calibration_fraction",
+        "minimum_fit_rows",
+        "minimum_calibration_rows",
+        "fallback_candidate_id",
+        "insufficient_data_action"
+      ],
+      "properties": {
+        "calibration_method": {
+          "enum": [
+            "chronological_split_conformal_lower_bound",
+            "chronological_platt_scaling"
+          ]
+        },
+        "calibration_fraction": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 0.5},
+        "minimum_fit_rows": {"type": "integer", "minimum": 1},
+        "minimum_calibration_rows": {"type": "integer", "minimum": 1},
+        "minimum_positive_class_rows": {"type": ["integer", "null"], "minimum": 1},
+        "minimum_negative_class_rows": {"type": ["integer", "null"], "minimum": 1},
+        "minimum_calibration_positive_class_rows": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "minimum_calibration_negative_class_rows": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        },
+        "target_coverage": {"type": ["number", "null"], "exclusiveMinimum": 0, "exclusiveMaximum": 1},
+        "quantile_method": {"type": ["string", "null"], "enum": ["higher", null]},
+        "calibrator": {
+          "anyOf": [
+            {"$ref": "#/$defs/mlProbabilityCalibrator"},
+            {"type": "null"}
+          ]
+        },
+        "fallback_candidate_id": {"type": "string", "minLength": 1},
+        "insufficient_data_action": {"const": "exact_target_identity_fallback"}
+      }
+    },
+    "mlProbabilityCalibrator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "C", "max_iter"],
+      "properties": {
+        "kind": {"const": "logistic_regression"},
+        "C": {"type": "number", "exclusiveMinimum": 0},
+        "penalty": {"const": "l2"},
+        "solver": {"const": "lbfgs"},
+        "max_iter": {"type": "integer", "minimum": 1},
+        "use_training_seed": {"type": "boolean"}
+      }
+    },
+    "mlPolicyAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "apply_at", "hold_until"],
+      "properties": {
+        "kind": {"enum": ["invert_tactical_sleeve", "shift_portfolio_weight"]},
+        "source_symbol": {"type": ["string", "null"]},
+        "destination_symbol": {"type": ["string", "null"]},
+        "portfolio_weight_delta": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "apply_at": {"const": "next_regular_session_open"},
+        "hold_until": {"const": "next_scheduled_review_open"}
+      }
+    },
+    "mlModelConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["features"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "lightgbm_regressor",
+            "lightgbm_classifier",
+            "ridge_regressor",
+            "logistic_regression_classifier"
+          ]
+        },
+        "label": {"$ref": "#/$defs/mlLabel"},
+        "features": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 1
+        },
+        "training": {"$ref": "#/$defs/mlTraining"},
+        "selection": {"$ref": "#/$defs/mlSelection"},
+        "abstention": {
+          "anyOf": [
+            {"$ref": "#/$defs/mlAbstention"},
+            {"type": "null"}
+          ]
+        },
+        "action": {
+          "anyOf": [
+            {"$ref": "#/$defs/mlPolicyAction"},
+            {"type": "null"}
+          ]
+        },
+        "preprocessing": {"const": "standard_scaler"},
+        "hyperparameters": {"type": "object"},
+        "baseline": {"enum": ["linear_composite", "none"]}
       }
     },
     "portfolioConfig": {
@@ -90,6 +296,34 @@
               "position_weight_enforcement": {"const": "entry_only"},
               "rebalance_schedule": {"const": "calendar_month_end"},
               "weighting": {"const": "equal_weight"},
+              "reserve_symbol": {"const": "BIL"},
+              "reserve_exempt_from_max_symbol_weight": {"const": true}
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["cross_sectional_execution_profile"],
+            "properties": {
+              "cross_sectional_execution_profile": {
+                "const": "dynamic_theme_mwf_bil_reserve"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "mode",
+              "position_weight_enforcement",
+              "rebalance_schedule",
+              "weighting",
+              "reserve_symbol",
+              "reserve_exempt_from_max_symbol_weight"
+            ],
+            "properties": {
+              "mode": {"const": "cross_sectional_momentum"},
+              "position_weight_enforcement": {"const": "entry_only"},
+              "rebalance_schedule": {"const": "monday_wednesday_friday"},
+              "weighting": {"const": "risk_budgeted_score"},
               "reserve_symbol": {"const": "BIL"},
               "reserve_exempt_from_max_symbol_weight": {"const": true}
             }
@@ -124,11 +358,17 @@
         "duplicate_signal_policy": {"enum": ["stable_signal_id", "allow_duplicates"]},
         "selected_route_label": {"type": ["string", "null"]},
         "cross_sectional_execution_profile": {
-          "enum": ["generic", "monthly_equal_weight_bil_reserve"]
+          "enum": [
+            "generic",
+            "monthly_equal_weight_bil_reserve",
+            "dynamic_theme_mwf_bil_reserve"
+          ]
         },
         "position_weight_enforcement": {"enum": ["entry_only", "continuous"]},
-        "rebalance_schedule": {"enum": ["every_bar", "calendar_month_end"]},
-        "weighting": {"enum": ["engine_default", "equal_weight"]},
+        "rebalance_schedule": {
+          "enum": ["every_bar", "calendar_month_end", "monday_wednesday_friday"]
+        },
+        "weighting": {"enum": ["engine_default", "equal_weight", "risk_budgeted_score"]},
         "reserve_symbol": {"type": ["string", "null"]},
         "reserve_exempt_from_max_symbol_weight": {"type": "boolean"},
         "etf_structural": {

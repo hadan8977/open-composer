@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.adapters.data.alpaca import AlpacaDataError
 from open_composer.adapters.data.alpaca_snapshot import (
     ALL_ADJUSTMENT_RISK,
@@ -325,6 +326,49 @@ def test_immutable_alpaca_strategy_loader_never_falls_back(tmp_path: Path) -> No
 
     with pytest.raises(AlpacaDataError, match="snapshot is missing"):
         load_immutable_alpaca_snapshot(spec, tmp_path)
+
+
+def test_generic_loader_resolves_verified_snapshot_bundle_item(tmp_path: Path) -> None:
+    contract = _write_contract(tmp_path)
+    manifest_path = materialize_alpaca_contract_snapshot(
+        tmp_path,
+        contract,
+        client=MockPageClient(_complete_daily_responses(100.0, 200.0, 300.0, 400.0)),
+        retrieved_at=datetime(2026, 1, 6, tzinfo=UTC),
+    )
+    spec = _immutable_spec(manifest_path.relative_to(tmp_path).as_posix())
+
+    loaded = load_ohlcv_for_spec(spec, tmp_path)
+
+    assert loaded["open"].tolist() == [400.0, 401.0]
+    assert loaded.attrs["data_source_mode"] == "immutable_research_snapshot_bundle"
+    assert loaded.attrs["data_bundle_item_identity"] == {
+        "symbol": "SPY",
+        "timeframe": "daily",
+        "feed": "sip",
+        "adjustment": "all",
+        "session_scope": "regular",
+    }
+    assert loaded.attrs["data_bundle_manifest_path"] == str(manifest_path.resolve())
+
+
+def test_generic_bundle_loader_fails_closed_for_missing_identity(tmp_path: Path) -> None:
+    contract = _write_contract(tmp_path)
+    manifest_path = materialize_alpaca_contract_snapshot(
+        tmp_path,
+        contract,
+        client=MockPageClient(_complete_daily_responses(100.0, 200.0, 300.0, 400.0)),
+        retrieved_at=datetime(2026, 1, 6, tzinfo=UTC),
+    )
+    payload = _immutable_spec(manifest_path.relative_to(tmp_path).as_posix()).model_dump(
+        mode="python"
+    )
+    payload["data"]["symbol"] = "QQQ"
+    payload["universe"] = ["QQQ"]
+    spec = StrategySpec.model_validate(payload)
+
+    with pytest.raises(AlpacaDataError, match="exactly one matching item"):
+        load_ohlcv_for_spec(spec, tmp_path)
 
 
 def _write_contract(root: Path) -> Path:

@@ -49,6 +49,29 @@ capabilities:
       - historical candlestick requests are limited to 1000 bars per request
       - minute history range and quote card permissions must be verified against the account
 
+  - id: market.cboe_volatility_indices
+    kind: market
+    status: trial
+    provider: cboe_global_indices
+    use_for: [volatility_term_structure, regime_filter, backtest]
+    reliability: high
+    default_mode: live_with_cache
+    supported_timeframes: [daily]
+    paper_ready_timeframes: []
+    strict_behavior: research_only
+    data_shape: paired_eod_index_v1
+    fixture: data/fixtures/capabilities/cboe_vix_term_structure_daily.csv
+    min_score: 0.95
+    source_urls:
+      VIX: https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv
+      VIX3M: https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX3M_History.csv
+    caveats:
+      - the fixture validates daily index shape only and is not market or research evidence
+      - historical fetched_at is the actual snapshot retrieval time and is not a historical first-seen timestamp
+      - completed index observations are conservatively visible only at the next US equity regular open
+      - VIX and VIX3M are non-tradable index levels and cannot be submitted as broker order symbols
+      - paper readiness requires live collection latency, immutable snapshot, and fail-closed missing-row verification
+
   - id: market.memory_storage_sample
     kind: market
     status: approved
@@ -114,6 +137,26 @@ capabilities:
       - the current observations endpoint is a latest snapshot, is revision-prone, and supplies no historical vintage identity
       - use and redistribution rights can vary by underlying FRED series and must be checked separately
 
+  - id: macro.cftc_cot
+    kind: macro
+    status: trial
+    provider: cftc
+    use_for: [institutional_positioning, regime_filter, weekly_research]
+    reliability: high
+    default_mode: live_with_cache
+    strict_behavior: research_only
+    supported_timeframes: [daily, weekly]
+    paper_ready_timeframes: []
+    fixture: data/fixtures/capabilities/cftc_cot.jsonl
+    min_score: 0.9
+    caveats:
+      - the fixture validates packet shape only and is not market or research evidence
+      - COT reports are weekly aggregate positions, not futures prices, carry, or direct trade recommendations
+      - reports before 2022-09-13 use a conservative 14-day visibility lag because PRE migration timestamps do not prove original publication time
+      - the 2018-2019 federal shutdown backlog is excluded instead of assigning inferred publication dates
+      - native PRE rows use official created_at and updated_at system timestamps, including delayed publications
+      - paper readiness requires an immutable official snapshot, marginal-lift and placebo evidence, and fail-closed missing-packet behavior
+
   - id: news.alpha_vantage
     kind: news
     status: trial
@@ -143,6 +186,24 @@ capabilities:
       - broad coverage creates noise; use strict filters and dedupe
       - historical provider timestamps do not prove collector availability; live records default to fetch-time visibility
       - GDELT metadata access does not convey reuse rights for linked article content
+
+  - id: news.alpaca
+    kind: news
+    status: trial
+    provider: alpaca
+    use_for: [forward_theme_detection, structured_llm_factor, signal_review]
+    reliability: medium
+    default_mode: live_with_cache
+    strict_behavior: forward_only_fail_closed
+    fixture: data/fixtures/capabilities/alpaca_news.jsonl
+    env: [ALPACA_API_KEY_ID, ALPACA_API_SECRET_KEY]
+    min_score: 0.9
+    caveats:
+      - the fixture validates packet shape only and is not market or research evidence
+      - historical provider timestamps do not prove local first-seen time; strategy visibility begins no earlier than collector fetch time
+      - historical downloads before the R11 collector epoch cannot support historical or forward LLM alpha
+      - provider and original-publisher terms govern content use and redistribution
+      - paper readiness requires measured live coverage, deduplication, revision handling, and fail-closed missing-packet behavior
 
   - id: options.trial_chain
     kind: options_chain

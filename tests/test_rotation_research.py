@@ -14,6 +14,7 @@ from open_composer.research.rotation import run_rotation_research
 def test_rotation_research_uses_point_in_time_universe_grid(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     sample = normalize_ohlcv(pd.read_csv(sample_workspace / "data" / "sample" / "qqq_15m.csv"))
     sample["timestamp"] = pd.date_range("2024-01-01", periods=len(sample), freq="D", tz="UTC")
@@ -54,6 +55,7 @@ def test_rotation_research_uses_point_in_time_universe_grid(
         ),
         encoding="utf-8",
     )
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     result = run_rotation_research(
         spec_path,
@@ -94,6 +96,7 @@ def test_rotation_research_uses_point_in_time_universe_grid(
 def test_rotation_research_walk_forward_top_k_reduces_reported_cost(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     sample = normalize_ohlcv(pd.read_csv(sample_workspace / "data" / "sample" / "qqq_15m.csv"))
     sample["timestamp"] = pd.date_range("2024-01-01", periods=len(sample), freq="D", tz="UTC")
@@ -126,6 +129,7 @@ def test_rotation_research_walk_forward_top_k_reduces_reported_cost(
         ),
         encoding="utf-8",
     )
+    preregister_iteration_dossier(spec_path, candidate_count=2)
 
     result = run_rotation_research(
         spec_path,
@@ -150,6 +154,7 @@ def test_rotation_research_walk_forward_top_k_reduces_reported_cost(
 def test_rotation_research_can_prioritize_primary_buy_hold_alpha(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     timestamps = pd.date_range("2024-01-01", periods=30, freq="D", tz="UTC")
     base = pd.DataFrame(
@@ -196,6 +201,7 @@ def test_rotation_research_can_prioritize_primary_buy_hold_alpha(
         ),
         encoding="utf-8",
     )
+    preregister_iteration_dossier(spec_path, candidate_count=2)
 
     result = run_rotation_research(
         spec_path,
@@ -226,6 +232,7 @@ def test_rotation_research_can_prioritize_primary_buy_hold_alpha(
 def test_rotation_research_can_anchor_primary_symbol(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     timestamps = pd.date_range("2024-01-01", periods=24, freq="D", tz="UTC")
     base = pd.DataFrame(
@@ -271,6 +278,7 @@ def test_rotation_research_can_anchor_primary_symbol(
         ),
         encoding="utf-8",
     )
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     result = run_rotation_research(
         spec_path,
@@ -294,6 +302,7 @@ def test_rotation_research_can_anchor_primary_symbol(
 def test_rotation_research_accepts_intraday_timeframe(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     sample = normalize_ohlcv(pd.read_csv(sample_workspace / "data" / "sample" / "qqq_15m.csv"))
 
@@ -325,6 +334,7 @@ def test_rotation_research_accepts_intraday_timeframe(
         ),
         encoding="utf-8",
     )
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     result = run_rotation_research(
         spec_path,
@@ -343,6 +353,7 @@ def test_rotation_research_accepts_intraday_timeframe(
 def test_rotation_research_requires_explicit_feature_gate_for_llm_factors(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     sample = normalize_ohlcv(pd.read_csv(sample_workspace / "data" / "sample" / "qqq_15m.csv"))
     sample["timestamp"] = pd.date_range("2024-01-01", periods=len(sample), freq="D", tz="UTC")
@@ -383,6 +394,7 @@ def test_rotation_research_requires_explicit_feature_gate_for_llm_factors(
         ),
         encoding="utf-8",
     )
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     with pytest.raises(ValueError, match="--feature-gate"):
         run_rotation_research(
@@ -400,6 +412,7 @@ def test_rotation_research_requires_explicit_feature_gate_for_llm_factors(
 def test_rotation_research_feature_gate_uses_symbol_specific_packets(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     sample = normalize_ohlcv(pd.read_csv(sample_workspace / "data" / "sample" / "qqq_15m.csv"))
     sample = sample.head(12).copy()
@@ -473,6 +486,7 @@ def test_rotation_research_feature_gate_uses_symbol_specific_packets(
         ),
         encoding="utf-8",
     )
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     result = run_rotation_research(
         spec_path,

@@ -124,7 +124,7 @@ def test_backtest_flags_execution_reality_for_low_liquidity() -> None:
                 "fill_assumption": "next_bar_open",
                 "broker": "none",
             },
-            "data": {"source": "alpaca", "symbol": "AAA", "feed": "iex"},
+            "data": {"source": "sample", "symbol": "AAA"},
         }
     )
 
@@ -164,7 +164,7 @@ def test_backtest_oos_warmup_can_trigger_first_evaluation_open_entry() -> None:
                 "fill_assumption": "next_bar_open",
                 "broker": "none",
             },
-            "data": {"source": "alpaca", "symbol": "AAA", "feed": "iex"},
+            "data": {"source": "sample", "symbol": "AAA"},
         }
     )
 
@@ -205,7 +205,7 @@ def test_backtest_supports_short_only_direction() -> None:
                 "fill_assumption": "next_bar_open",
                 "broker": "none",
             },
-            "data": {"source": "alpaca", "symbol": "AAA", "feed": "iex"},
+            "data": {"source": "sample", "symbol": "AAA"},
         }
     )
 
@@ -247,7 +247,7 @@ def test_backtest_supports_long_short_direction_flips() -> None:
                 "fill_assumption": "next_bar_open",
                 "broker": "none",
             },
-            "data": {"source": "alpaca", "symbol": "AAA", "feed": "iex"},
+            "data": {"source": "sample", "symbol": "AAA"},
         }
     )
 

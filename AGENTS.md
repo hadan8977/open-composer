@@ -25,6 +25,25 @@
 - Sample, fixture, cache fallback, and trial/research-only data are not paper-ready market evidence.
 - Prefer NautilusTrader for event-driven execution parity; keep the in-repo Python engine as the deterministic reference and smoke test.
 
+## Breadth Campaign Governance
+- For every new strategy-family discovery or optimization campaign first created after 2026-08-15, create a strict `reports/research/campaigns/<campaign_id>/research-campaign-contract.json` before candidate generation, factor evaluation, training, backtesting, pruning, or resource allocation. Run `oc research campaign validate <campaign_id> --stage pre-discovery`; a non-`ok` result blocks all child research.
+- Preregister an economic hypothesis tree, exact candidate inventory, branch quotas, child iteration identities, visibility partitions, cumulative trial exposure, QD quality identity, deterministic tie-break, and family-statistics policy. Every child candidate manifest must bind the campaign, hypothesis, branch, child iteration, promotion eligibility, PIT universe SHA, development partition SHA, and quality metric.
+- Start breadth-first with economically distinct deterministic mechanisms. Use one fixed, bounded candidate set per branch and a development-only QD archive so a single familiar mechanism cannot consume the whole budget. Do not introduce genetic mutation or ML merely to increase search volume.
+- Static current winners, current themes, or current constituents may appear only as explicitly non-promotable controls. Stock selection candidates must rebuild eligibility at every historical decision date from point-in-time membership, permanent security identity, delisting returns, corporate actions, and then-visible liquidity. Missing PIT capability means `dependency_skipped`, never a current-universe substitute.
+- Candidate generation, factor evaluation, deterministic backtests, model training, model inference, pruning, resource allocation, and archive updates may read only declared development partitions. Frozen OOS, challenge, and forward partitions may not influence those operations.
+- Seal the development QD archive and SHA-256 allocation-ledger head before frozen OOS. `pre-oos` and `final` validation must dereference and verify the promotion cohort, actual common continuous terminal-free return matrix, exact candidate inventory, full effective trial count, and DSR/PBO/SPA evidence; evidence path strings alone never pass.
+- Every newly frozen selectable candidate uses the 20 bps daily continuous terminal-free OOS Sharpe-excess-BIL gate with strict operator `> 1.0`, unless the user changes it before the first training or backtest. One frozen OOS evaluation is allowed; a failed branch is sealed and the next work moves to a genuinely independent hypothesis rather than nearby post-OOS tuning.
+- Open a separate strategy-group combination iteration only after at least two empirically low-correlation mechanisms independently pass. Preregister only a small transparent set of combination methods such as equal weight, inverse volatility, and capped risk parity.
+- Permit ML only after a deterministic branch demonstrates signal. ML must beat the matched deterministic and price-only baselines after costs and pass calibration, coverage, exact fallback, missing-modality, and placebo gates before receiving complexity credit.
+
+## Progress Reporting
+- When the user asks for strategy progress, optimization progress, current strategy status, or equivalent wording such as `现在进展怎样`, `优化迭代怎么样了`, or `策略现在咋样了`, follow `docs/strategy-optimization-progress-report-template.zh.md`.
+- Recompute cumulative counts from current artifacts. Separate iteration directories, manifest-backed rounds, preregistered candidates, unique trial-ledger rows, explicitly skipped or invalid rows, evaluation reports, unique persisted model IDs, and unpersisted training exposure. Never combine these into one ambiguous attempt count.
+- Report the as-of timestamp, counting scope, evidence paths, current-round delta, performance against every frozen gate, knowledge/factor/data inventory, ML incremental-value evidence, blockers, and the next falsifiable action.
+- If the current round has no valid evaluation report, show current performance as `N/A` and explain why; never substitute a prior strategy's metrics as the current result.
+- For strategy iterations first frozen after 2026-08-15, every selectable promotion candidate must have primary-cost continuous terminal-free OOS annualized Sharpe strictly greater than `1.0`. Freeze the exact metric identity and operator before training or backtesting. Do not retrofit this threshold into an already locked iteration.
+- Keep `workflow_pass`, `research_pass`, `llm_contribution_pass`, `ml_contribution_pass`, and `paper_ready_pass` separate, and state explicitly whether simulation or broker activity has started.
+
 ## Safety
 - Real-money broker write access is out of scope for this MVP.
 - Alpaca Paper orders require explicit command confirmation and active `paper_auto` specs.

@@ -8,7 +8,7 @@ import pandas as pd
 
 from open_composer.models.strategy_spec import StrategySpec
 from open_composer.research.ml_backend.feature_pipeline import build_feature_matrix, build_label
-from open_composer.research.ml_backend.model_factory import create_model
+from open_composer.research.ml_backend.model_factory import create_model, is_classifier_model
 from open_composer.research.ml_backend.windows import MLWindowSlice, ml_walk_forward_slices
 
 
@@ -105,21 +105,14 @@ def _fit_predict_fold(
     train_label = train_joined["__label__"]
     test_features = test_joined.drop(columns=["__label__"])
     test_label = test_joined["__label__"]
-    if spec.model and spec.model.kind == "lightgbm_classifier":
+    if is_classifier_model(spec):
         train_label = train_label.round().astype(int)
         test_label = test_label.round().astype(int)
     estimator.fit(train_features, train_label)
     train_pred = _predict(estimator, train_features, spec)
     test_pred = _predict(estimator, test_features, spec)
     predictions.loc[test_joined.index] = test_pred
-    importance = {
-        feature: float(value)
-        for feature, value in zip(
-            list(train_features.columns),
-            getattr(estimator, "feature_importances_", [0.0] * len(train_features.columns)),
-            strict=True,
-        )
-    }
+    importance = _feature_importance(estimator, list(train_features.columns))
     return FoldResult(
         fold=window.fold,
         train_rows=int(len(train_joined)),
@@ -135,11 +128,7 @@ def _fit_predict_fold(
 
 
 def _predict(estimator: Any, features: pd.DataFrame, spec: StrategySpec) -> pd.Series:
-    if (
-        spec.model
-        and spec.model.kind == "lightgbm_classifier"
-        and hasattr(estimator, "predict_proba")
-    ):
+    if is_classifier_model(spec) and hasattr(estimator, "predict_proba"):
         raw = estimator.predict_proba(features)[:, 1]
     else:
         raw = estimator.predict(features)
@@ -154,6 +143,18 @@ def _rank_ic(prediction: pd.Series, label: pd.Series) -> float | None:
         return None
     value = joined["prediction"].rank().corr(joined["label"].rank())
     return None if pd.isna(value) else float(value)
+
+
+def _feature_importance(estimator: Any, features: list[str]) -> dict[str, float]:
+    values = getattr(estimator, "feature_importances_", None)
+    if values is None and hasattr(estimator, "named_steps"):
+        fitted = estimator.named_steps.get("model")
+        coefficients = getattr(fitted, "coef_", None)
+        if coefficients is not None:
+            values = abs(coefficients[0] if getattr(coefficients, "ndim", 1) > 1 else coefficients)
+    if values is None:
+        values = [0.0] * len(features)
+    return {feature: float(value) for feature, value in zip(features, values, strict=True)}
 
 
 def _mean_importances(rows: list[dict[str, float]]) -> dict[str, float]:

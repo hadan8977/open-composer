@@ -11,6 +11,7 @@ import yaml
 from scripts.run_daily_paper_cycle import (
     DEFAULT_STRATEGY,
     _cycle_binding,
+    infer_route_state,
     main,
     run_daily_cycle,
 )
@@ -55,6 +56,11 @@ def test_daily_paper_cycle_success_writes_log_and_review_card(tmp_path: Path) ->
         "state_drift",
     }
     assert [step["name"] for step in log["steps"]][-1] == "state_drift"
+
+
+def test_daily_cycle_classifies_all_long_leveraged_routes() -> None:
+    for symbol in ("TQQQ", "QLD", "SOXL", "TECL", "ROM", "USD"):
+        assert infer_route_state([{"symbol": symbol}]) == "risk_on_levered_proxy"
 
 
 def test_daily_cycle_passes_allow_paper_orders_when_router_authorized(

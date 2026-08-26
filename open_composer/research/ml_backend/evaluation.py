@@ -9,6 +9,7 @@ from open_composer.adapters.data import load_ohlcv_for_spec
 from open_composer.config import ensure_dir, project_root
 from open_composer.engines.backtest_engine import backtest_frame
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 from open_composer.research.ml_backend.training import MLTrainingRun, run_rolling_training
 
 
@@ -24,6 +25,12 @@ def train_strategy_model(
     spec_path: Path, root: Path | None = None
 ) -> tuple[MLTrainingRun, MLArtifactPaths]:
     base = root or project_root()
+    require_iteration_execution_gate(
+        spec_path,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=True,
+    )
     spec = load_strategy_spec(spec_path)
     if spec.model is None:
         raise ValueError("strategy train requires StrategySpec.model")
@@ -41,6 +48,12 @@ def compare_ml_to_baseline(
     spec_path: Path, root: Path | None = None
 ) -> tuple[dict[str, Any], MLArtifactPaths]:
     base = root or project_root()
+    require_iteration_execution_gate(
+        spec_path,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=True,
+    )
     spec = load_strategy_spec(spec_path)
     if spec.model is None:
         raise ValueError("ML comparison requires StrategySpec.model")

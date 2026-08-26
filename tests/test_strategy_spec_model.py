@@ -45,6 +45,32 @@ def test_strategy_spec_accepts_optional_ml_model(sample_workspace: Path) -> None
     assert spec.model.features == ["rsi_14", "sma_fast"]
 
 
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "lightgbm_regressor",
+        "lightgbm_classifier",
+        "ridge_regressor",
+        "logistic_regression_classifier",
+    ],
+)
+def test_strategy_spec_accepts_registered_model_kinds(
+    sample_workspace: Path,
+    kind: str,
+) -> None:
+    source = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    raw = _model_spec(source)
+    raw["name"] = f"fixture_{kind}"
+    raw["model"]["kind"] = kind
+    target = sample_workspace / "strategy_specs" / "drafts" / f"fixture_{kind}.yaml"
+    target.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    spec = load_strategy_spec(target)
+
+    assert spec.model is not None
+    assert spec.model.kind == kind
+
+
 def test_strategy_spec_accepts_path_survival_ml_label(sample_workspace: Path) -> None:
     source = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     raw = _model_spec(source)

@@ -1,0 +1,85 @@
+{
+  "schema_version": 2,
+  "plan_contract": "harness_plan_v2",
+  "strategy_name": "nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate",
+  "spec_path": "strategy_specs/active/nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate.yaml",
+  "spec_file_sha256": "ac682a4cac9de646aea3a6ad73d5968a50e183690d51c1610b07c5ef8db22c33",
+  "spec_semantic_sha256": "3c58b27f4fc8abd7d32ed116a133749f87c9c2da7c8f74e92ecfaeb7314820a8",
+  "risk_domains": [
+    "daily_open_execution",
+    "leveraged_etf",
+    "paper_auto",
+    "broker_specific",
+    "router_strategy"
+  ],
+  "required_skills": [
+    "backtest-forensics",
+    "execution-reality-reviewer",
+    "paper-auto-safety-reviewer",
+    "source-researcher"
+  ],
+  "required_artifacts": [
+    "execution_policy",
+    "execution_reality_report",
+    "gap_stress_report",
+    "leveraged_etf_risk_note",
+    "paper_safety_review",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "source_cards"
+  ],
+  "blocking_rules": [
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "naked_market_order_must_be_justified",
+      "blocks": "research_pass",
+      "description": "A DAY market order without price protection requires a written justification in execution_policy explaining why the risk is acceptable.\n"
+    },
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "compare_at_least_two_execution_methods",
+      "blocks": "research_pass",
+      "description": "Execution policy must compare at least two order styles (e.g. DAY market vs. MOO/OPG vs. LOO/OPG).\n"
+    },
+    {
+      "domain": "leveraged_etf",
+      "rule_id": "leveraged_etf_paper_auto_requires_stress",
+      "blocks": "paper_ready_pass",
+      "description": "paper_auto activation for a leveraged ETF strategy requires a completed gap_stress_report and leveraged_etf_risk_note.\n"
+    },
+    {
+      "domain": "paper_auto",
+      "rule_id": "paper_auto_requires_harness_verify",
+      "blocks": "paper_ready_pass",
+      "description": "paper_auto activation is blocked until oc harness verify passes for this spec. The verify output must be present in reports/harness/verify/.\n"
+    },
+    {
+      "domain": "paper_auto",
+      "rule_id": "paper_order_must_link_signal",
+      "blocks": "paper_ready_pass",
+      "description": "Every paper order must record signal_id, spec_version, spec_hash, and execution_policy_id for audit traceability.\n"
+    },
+    {
+      "domain": "broker_specific",
+      "rule_id": "broker_order_type_must_be_sourced",
+      "blocks": "research_pass",
+      "description": "Any order type or time_in_force value used in execution_policy must have a corresponding source card pointing to official broker docs.\n"
+    },
+    {
+      "domain": "router_strategy",
+      "rule_id": "router_requires_target_weight_observation",
+      "blocks": "research_pass",
+      "description": "Router strategy promotion requires target weights, rebalance intents, cost stress, data evidence, and validation artifacts.\n"
+    },
+    {
+      "domain": "router_strategy",
+      "rule_id": "router_order_authorization_requires_readiness",
+      "blocks": "paper_ready_pass",
+      "description": "Router execution can remain observation_only before paper order authorization; broker orders require paper readiness and safety artifacts.\n"
+    }
+  ]
+}

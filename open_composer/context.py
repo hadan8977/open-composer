@@ -48,7 +48,17 @@ def _context_from_records(
     eligible_macro = [
         event
         for event in macro
-        if event.symbol in {"FED", "DGS10", "FEDFUNDS", "CPIAUCSL", "UNRATE"}
+        if event.symbol
+        in {
+            "FED",
+            "DGS10",
+            "FEDFUNDS",
+            "CPIAUCSL",
+            "UNRATE",
+            "NQ_COT",
+            "ES_COT",
+            "VX_COT",
+        }
         and _event_visible_at(event) <= signal.timestamp
     ]
     return SignalContext(

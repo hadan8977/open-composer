@@ -1,0 +1,61 @@
+{
+  "strategy_name": "nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate",
+  "reviewed_at": "2026-08-05T03:41:04Z",
+  "lifecycle_status": "draft",
+  "harness_verify_pass": true,
+  "kill_switch_verified": true,
+  "order_window": "LOO/OPG submission before 09:28 ET only; skip outside the runner window; no orders are currently authorized",
+  "duplicate_order_policy": "stable_signal_id; reject a matching open order or same-session submitted intent",
+  "credential_scope": "alpaca_paper_only; real-money broker writes are out of scope",
+  "signal_order_linkage": true,
+  "execution_policy_id": "loo_limit_nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate_v1",
+  "source_card_ids": [
+    "nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate:source-research",
+    "iter11_candidate_alpaca_opg_loo_20260805",
+    "iter11_candidate_alpaca_opg_cutoff_20260805",
+    "iter11_candidate_alpaca_paper_scope_20260805",
+    "iter11_candidate_nasdaq_opening_cross_20260805",
+    "iter11_candidate_alpaca_iex_sip_20260805",
+    "iter11_candidate_longbridge_candles_20260805",
+    "iter11_candidate_proshares_tqqq_daily_3x_20260805"
+  ],
+  "spec_path": "strategy_specs/drafts/nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate.yaml",
+  "spec_hash": "sha256:1dff54f8ce513d3b37d70339b94baee708e2986704c1bf9512e6f8c829c6211d",
+  "target_weights_path": "reports/execution/nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate-target-weights.json",
+  "rebalance_intents_path": "reports/execution/nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate-rebalance-intents.json",
+  "execution_policy_path": "reports/harness/execution/nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate-execution-policy.json",
+  "account_snapshot_path": "reports/paper/account.json",
+  "positions_snapshot_path": "reports/paper/positions.json",
+  "controls": {
+    "real_money_broker_writes": "out_of_scope",
+    "broker_scope": "alpaca_paper_only",
+    "order_style": "loo_limit",
+    "time_in_force": "opg",
+    "limit_offset_bps": 25.0,
+    "max_open_gap_pct": 2.5,
+    "max_spread_bps": 20.0,
+    "max_canary_order_notional_usd": 1000.0,
+    "if_not_filled": "skip",
+    "tca_reference_prices": [
+      "decision_price",
+      "official_open",
+      "arrival_price"
+    ]
+  },
+  "warnings": [
+    "Alpaca Paper fills are simulation evidence, not live-money execution evidence.",
+    "Alpaca IEX is not consolidated SIP/full-market evidence unless account entitlements prove otherwise.",
+    "Leveraged ETF exposure is path-dependent and requires ongoing gap and TCA monitoring."
+  ],
+  "observation_ready": true,
+  "order_submission_status": "not_authorized",
+  "overall": "blocked",
+  "blocking_items": [
+    "strategy lifecycle is draft, not active",
+    "promotion report bindings are stale or incomplete for the current StrategySpec",
+    "paper kill switch is enabled",
+    "account and positions snapshots must be refreshed immediately before any canary authorization",
+    "the existing 10,235-share TQQQ Paper position requires an explicit operator disposition and must not be modified automatically",
+    "no bounded canary authorization or explicit paper-order confirmation is active"
+  ]
+}

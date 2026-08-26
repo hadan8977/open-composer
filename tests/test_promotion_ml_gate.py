@@ -11,8 +11,12 @@ from open_composer.research.promotion import _build_pass_summary, build_promotio
 from tests.test_ml_backend_training import _write_syn_ml_spec
 
 
-def test_promotion_report_adds_ml_baseline_gate(sample_workspace: Path) -> None:
+def test_promotion_report_adds_ml_baseline_gate(
+    sample_workspace: Path,
+    preregister_iteration_dossier,
+) -> None:
     spec_path = _write_syn_ml_spec(sample_workspace)
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     result = build_promotion_report(
         spec_path,
@@ -50,8 +54,12 @@ def test_promotion_report_adds_ml_baseline_gate(sample_workspace: Path) -> None:
     assert overfit_path.exists()
 
 
-def test_ml_promotion_uses_stitched_oos_and_training_folds(sample_workspace: Path) -> None:
+def test_ml_promotion_uses_stitched_oos_and_training_folds(
+    sample_workspace: Path,
+    preregister_iteration_dossier,
+) -> None:
     spec_path = _write_syn_ml_spec(sample_workspace)
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     result = build_promotion_report(
         spec_path,
@@ -77,12 +85,16 @@ def test_ml_promotion_uses_stitched_oos_and_training_folds(sample_workspace: Pat
     assert walk_forward.details["folds"]
 
 
-def test_ml_promotion_blocks_without_training_folds(sample_workspace: Path) -> None:
+def test_ml_promotion_blocks_without_training_folds(
+    sample_workspace: Path,
+    preregister_iteration_dossier,
+) -> None:
     spec_path = _write_syn_ml_spec(sample_workspace)
     raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
     raw["model"]["training"]["window_bars"] = 10_000
     raw["model"]["training"]["test_window_bars"] = 5_000
     spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     result = build_promotion_report(
         spec_path,
@@ -102,8 +114,12 @@ def test_ml_promotion_blocks_without_training_folds(sample_workspace: Path) -> N
     assert walk_forward.details["prediction_count"] == 0
 
 
-def test_non_ml_promotion_keeps_generic_oos_and_walk_forward(sample_workspace: Path) -> None:
+def test_non_ml_promotion_keeps_generic_oos_and_walk_forward(
+    sample_workspace: Path,
+    preregister_iteration_dossier,
+) -> None:
     spec_path = _write_syn_ml_spec(sample_workspace, model=False)
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     result = build_promotion_report(
         spec_path,

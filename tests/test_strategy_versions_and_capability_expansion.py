@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from open_composer.compiler.spec_to_pine import compile_pine_strategy
 from open_composer.dashboard import build_dashboard_catalog
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
-from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.models.strategy_spec import ResearchDesign, load_strategy_spec
 from open_composer.research import draft_strategy_from_idea
 from open_composer.strategy_capabilities import assess_strategy_capabilities
 from open_composer.strategy_lifecycle import activate_strategy
@@ -19,7 +20,66 @@ from open_composer.strategy_versions import (
     load_strategy_versions,
     register_strategy_version,
     rollback_strategy_version,
+    strategy_content_hash,
 )
+
+
+def test_optional_campaign_binding_preserves_legacy_content_hash(
+    sample_workspace: Path,
+) -> None:
+    spec = load_strategy_spec(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    )
+    spec = spec.model_copy(
+        update={
+            "research_design": ResearchDesign(
+                parameter_space={"entry.lookback": [20, 30]},
+            )
+        }
+    )
+    payload = spec.model_dump(mode="json")
+    assert payload["research_design"]["campaign_contract_path"] is None
+    assert payload["research_design"]["candidate_policy_contract_path"] is None
+    assert payload["research_design"]["workflow_only_ungated_draft"] is False
+    payload["research_design"].pop("workflow_only_ungated_draft")
+    payload["research_design"].pop("campaign_contract_path")
+    payload["research_design"].pop("candidate_policy_contract_path")
+    payload["research_design"].pop("source_card_claim_ids")
+    expected = hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+
+    assert strategy_content_hash(spec) == expected
+
+    bound = spec.model_copy(
+        update={
+            "research_design": ResearchDesign(
+                iter_id="campaign_hash_r1",
+                campaign_contract_path=(
+                    "reports/research/campaigns/campaign_hash_r1/research-campaign-contract.json"
+                ),
+                parameter_space={"entry.lookback": [20, 30]},
+            )
+        }
+    )
+    assert strategy_content_hash(bound) != expected
+
+    candidate_policy_bound = spec.model_copy(
+        update={
+            "research_design": ResearchDesign(
+                candidate_policy_contract_path=(
+                    "reports/research/iterations/campaign_hash_r1/candidate-policy-contract.json"
+                ),
+                parameter_space={"entry.lookback": [20, 30]},
+            )
+        }
+    )
+    assert strategy_content_hash(candidate_policy_bound) != expected
 
 
 def test_strategy_version_registry_snapshots_specs_and_binds_runs(
@@ -50,13 +110,16 @@ def test_strategy_version_registry_snapshots_specs_and_binds_runs(
 def test_nautilus_backtest_plan_is_written_for_nautilus_backend(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     monkeypatch.setattr(
         "open_composer.adapters.execution.nautilus_trader.nautilus_trader_available",
         lambda: True,
     )
+    draft_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    preregister_iteration_dossier(draft_path, candidate_count=1)
     active_path = activate_strategy(
-        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        draft_path,
         sample_workspace,
         paper_auto=True,
         allow_paper_auto=True,
@@ -177,6 +240,7 @@ def test_breakout_strategy_generation_uses_expanded_factors_and_catalog(
 def test_generated_strategy_can_run_real_nautilus_backtest(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     idea = "Create a QQQ 15m breakout strategy with volume expansion and volatility filter."
     monkeypatch.setattr(
@@ -191,6 +255,7 @@ def test_generated_strategy_can_run_real_nautilus_backtest(
         paper_auto=True,
         allow_paper_auto=True,
     )
+    preregister_iteration_dossier(active_path, candidate_count=1)
     artifacts = run_backtest(active_path, root=sample_workspace)
     catalog = build_dashboard_catalog(sample_workspace)
 

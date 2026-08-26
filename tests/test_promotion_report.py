@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -128,6 +129,24 @@ def test_strategy_promotion_report_writes_promotion_artifacts(
     assert payload["research_manifest"]["trial_count"] >= 1
     assert payload["research_manifest"]["spec_hash"]
     assert payload["research_manifest"]["research_contract_path"]
+    contract_path = sample_workspace / payload["research_manifest"]["research_contract_path"]
+    data_manifest_path = sample_workspace / payload["research_manifest"]["data_manifest_path"]
+    assert (
+        payload["research_manifest"]["research_contract_hash"]
+        == hashlib.sha256(contract_path.read_bytes()).hexdigest()
+    )
+    assert data_manifest_path.exists()
+    assert (
+        payload["research_manifest"]["data_manifest_hash"]
+        == hashlib.sha256(data_manifest_path.read_bytes()).hexdigest()
+    )
+    data_manifest = json.loads(data_manifest_path.read_text(encoding="utf-8"))
+    assert data_manifest["immutable"] is True
+    assert data_manifest["strategy_name"] == "fixture_pullback_15m"
+    assert (
+        data_manifest["source_artifacts"]["research_contract"]["sha256"]
+        == payload["research_manifest"]["research_contract_hash"]
+    )
     assert payload["research_manifest"]["factor_lab_path"]
     assert payload["research_manifest"]["alt_data_quality_path"]
     assert payload["research_run_index_record"]["kind"] == "promotion"
@@ -290,6 +309,7 @@ def test_promotion_report_marks_llm_contribution_not_applicable(
 def test_adaptive_router_promotion_report_uses_router_research_artifacts(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "adaptive_router_promotion.yaml"
     selected_label = (
@@ -324,6 +344,7 @@ def test_adaptive_router_promotion_report_uses_router_research_artifacts(
         }
     }
     spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     research_json = (
         sample_workspace
@@ -484,12 +505,31 @@ def test_adaptive_router_promotion_report_uses_router_research_artifacts(
     assert payload["research_manifest"]["adaptive_router_research_path"].endswith(
         "adaptive_router_promotion-adaptive-intraday-router.json"
     )
+    contract_path = sample_workspace / payload["research_manifest"]["research_contract_path"]
+    data_manifest_path = sample_workspace / payload["research_manifest"]["data_manifest_path"]
+    assert (
+        payload["research_manifest"]["research_contract_hash"]
+        == hashlib.sha256(contract_path.read_bytes()).hexdigest()
+    )
+    assert data_manifest_path.exists()
+    assert (
+        payload["research_manifest"]["data_manifest_hash"]
+        == hashlib.sha256(data_manifest_path.read_bytes()).hexdigest()
+    )
+    data_manifest = json.loads(data_manifest_path.read_text(encoding="utf-8"))
+    assert data_manifest["immutable"] is True
+    assert data_manifest["report_mode"] == "adaptive_intraday_router_promotion"
+    assert (
+        data_manifest["source_artifacts"]["router_research"]["sha256"]
+        == hashlib.sha256(research_json.read_bytes()).hexdigest()
+    )
     assert "adaptive_intraday_router_promotion" in report_path.read_text(encoding="utf-8")
 
 
 def test_adaptive_router_promotion_selects_intraday_candidate_by_generated_label(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "adaptive_router_label.yaml"
     selected_label = "open_momentum:lb3_entry1_top1_open0_mom0_rv0.8_qopen_positive"
@@ -511,6 +551,7 @@ def test_adaptive_router_promotion_selects_intraday_candidate_by_generated_label
         "selected_route_label": selected_label,
     }
     spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     research_json = (
         sample_workspace
@@ -601,6 +642,7 @@ def test_adaptive_router_promotion_selects_intraday_candidate_by_generated_label
 def test_adaptive_router_promotion_treats_llm_feature_as_llm_related(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "adaptive_router_llm_feature.yaml"
     raw = yaml.safe_load(
@@ -639,6 +681,7 @@ def test_adaptive_router_promotion_treats_llm_feature_as_llm_related(
         }
     }
     spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     research_json = (
         sample_workspace
@@ -730,6 +773,7 @@ def test_adaptive_router_promotion_treats_llm_feature_as_llm_related(
 def test_hybrid_router_promotion_report_uses_hybrid_research_artifacts(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "hybrid_router_promotion.yaml"
     selected_label = "open_to_open:lb20_top1_qsm100_min5_w1"
@@ -761,6 +805,7 @@ def test_hybrid_router_promotion_report_uses_hybrid_research_artifacts(
         }
     }
     spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     research_json = (
         sample_workspace
@@ -944,10 +989,60 @@ def test_hybrid_router_promotion_report_uses_hybrid_research_artifacts(
     )
     assert "hybrid_adaptive_router_promotion" in report_path.read_text(encoding="utf-8")
 
+    candidate_raw = yaml.safe_load(yaml.safe_dump(raw))
+    candidate_name = "hybrid_router_promotion_paper_auto_candidate"
+    candidate_raw["name"] = candidate_name
+    candidate_raw["notes"] = {
+        **(candidate_raw.get("notes") or {}),
+        "paper_candidate_source": "hybrid_router_promotion",
+    }
+    candidate_path = sample_workspace / "strategy_specs" / "drafts" / f"{candidate_name}.yaml"
+    candidate_path.write_text(yaml.safe_dump(candidate_raw), encoding="utf-8")
+    preregister_iteration_dossier(candidate_path, candidate_count=1)
+    candidate_target_path = (
+        sample_workspace / "reports" / "execution" / f"{candidate_name}-target-weights.json"
+    )
+    candidate_target_path.write_bytes(execution_json.read_bytes())
+
+    candidate_result = CliRunner().invoke(
+        app,
+        ["strategy", "promotion-report", str(candidate_path)],
+        catch_exceptions=False,
+    )
+
+    assert candidate_result.exit_code == 0
+    candidate_payload = json.loads(
+        (sample_workspace / "reports" / "research" / f"{candidate_name}-promotion.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    candidate_manifest = candidate_payload["research_manifest"]
+    assert candidate_payload["selected_route"]["params"]["market_sma_days"] == 100
+    assert candidate_manifest["paper_candidate_source"] == "hybrid_router_promotion"
+    assert candidate_manifest["hybrid_router_research_path"].endswith(
+        "hybrid_router_promotion-hybrid-adaptive-router.json"
+    )
+    assert candidate_manifest["paper_candidate_source_spec_hash"]
+    assert (
+        candidate_manifest["paper_candidate_source_research_hash"]
+        == hashlib.sha256(research_json.read_bytes()).hexdigest()
+    )
+    candidate_data_manifest = json.loads(
+        (sample_workspace / candidate_manifest["data_manifest_path"]).read_text(encoding="utf-8")
+    )
+    assert candidate_data_manifest["source_artifacts"]["paper_candidate_source_spec"][
+        "path"
+    ].endswith("strategy_specs/drafts/hybrid_router_promotion.yaml")
+    assert (
+        candidate_data_manifest["source_artifacts"]["router_research"]["sha256"]
+        == hashlib.sha256(research_json.read_bytes()).hexdigest()
+    )
+
 
 def test_beta_router_promotion_report_uses_beta_research_artifacts(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "beta_router_promotion.yaml"
     selected_label = (
@@ -976,6 +1071,7 @@ def test_beta_router_promotion_report_uses_beta_research_artifacts(
     }
     raw["factors"] = {}
     spec_path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     research_json = (
         sample_workspace

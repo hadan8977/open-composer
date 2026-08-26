@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -11,6 +12,7 @@ from open_composer.adapters.execution.router_target_weights import (
     write_router_execution_artifacts,
 )
 from open_composer.config import data_feed, ensure_dir, project_root
+from open_composer.market_calendar import next_us_equity_session
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.hybrid_router_core import (
     HybridRouterMetrics,
@@ -90,7 +92,10 @@ def run_hybrid_target_weight_mapping(
         dataset=dataset,
         params=params,
         start_index=start_index,
-        end_index=end_index,
+        reference_end_index=end_index,
+        target_end_index=(
+            len(dataset.frame) + 1 if params.holding_mode == "open_to_open" else len(dataset.frame)
+        ),
     )
     parity = _parity_check(
         spec=spec,
@@ -140,6 +145,17 @@ def run_hybrid_target_weight_mapping(
         "reference_metrics": reference.__dict__,
         "summary": {
             "rebalance_sessions": len({row["rebalance_session"] for row in target_rows}),
+            "reference_rebalance_sessions": len(
+                {
+                    row["rebalance_session"]
+                    for row in target_rows
+                    if bool(row["reference_evaluable"])
+                }
+            ),
+            "latest_actionable_session": max(
+                (str(row["rebalance_session"]) for row in target_rows),
+                default=None,
+            ),
             "target_weight_rows": len(target_rows),
             "nonzero_target_rows": sum(float(row["target_weight"]) > 0 for row in target_rows),
             "rebalance_intents": len(rebalance_intents),
@@ -195,14 +211,14 @@ def _build_target_weight_rows(
     dataset,
     params,
     start_index: int,
-    end_index: int,
+    reference_end_index: int,
+    target_end_index: int,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     target_rows: list[dict[str, object]] = []
     intents: list[dict[str, object]] = []
     previous_targets = {symbol: 0.0 for symbol in dataset.symbols}
-    for index in range(start_index, end_index):
-        rebalance_session = dataset.dates[index]
-        signal_session = dataset.dates[index - 1] if index > 0 else dataset.dates[index]
+    for index in range(start_index, target_end_index):
+        signal_session, rebalance_session = _target_sessions(dataset.dates, index)
         snapshot = hybrid_target_weight_snapshot(spec, dataset, params, index)
         target_by_symbol = {symbol: snapshot.weights.get(symbol, 0.0) for symbol in dataset.symbols}
         time_rule = _time_rule(params)
@@ -223,6 +239,8 @@ def _build_target_weight_rows(
                 "volatility_scale": snapshot.volatility_scale,
                 "market_regime_scale": snapshot.market_regime_scale,
                 "market_drawdown_scale": snapshot.market_drawdown_scale,
+                "state": snapshot.state,
+                "reference_evaluable": index < reference_end_index,
                 "source": "hybrid_python_reference",
             }
             target_rows.append(row)
@@ -240,6 +258,7 @@ def _build_target_weight_rows(
                         "intent_type": "set_target_weight",
                         "requires_order": abs(delta) > 1e-12,
                         "reference_daily_roll": params.holding_mode == "open_to_open",
+                        "reference_evaluable": index < reference_end_index,
                     }
                 )
         previous_targets = target_by_symbol
@@ -253,6 +272,16 @@ def _time_rule(params: object) -> str:
     return str(getattr(params, "time_rule", "regular_session_open"))
 
 
+def _target_sessions(dates: list[str], index: int) -> tuple[str, str]:
+    if not dates or index < 1 or index > len(dates):
+        raise ValueError(f"target index {index} is outside the available session range")
+    signal_session = dates[index - 1]
+    if index < len(dates):
+        return signal_session, dates[index]
+    next_session = next_us_equity_session(date.fromisoformat(signal_session)).isoformat()
+    return signal_session, next_session
+
+
 def _parity_check(
     *,
     spec: StrategySpec,
@@ -262,19 +291,25 @@ def _parity_check(
 ) -> dict[str, object]:
     blockers: list[str] = []
     warnings: list[str] = []
-    sessions = sorted({str(row["rebalance_session"]) for row in target_rows})
+    reference_rows = [row for row in target_rows if bool(row.get("reference_evaluable", True))]
+    reference_intents = [
+        row for row in rebalance_intents if bool(row.get("reference_evaluable", True))
+    ]
+    sessions = sorted({str(row["rebalance_session"]) for row in reference_rows})
     selected_sessions = {
-        str(row["rebalance_session"]) for row in target_rows if float(row["target_weight"]) > 0
+        str(row["rebalance_session"]) for row in reference_rows if float(row["target_weight"]) > 0
     }
-    nonzero_target_rows = sum(float(row["target_weight"]) > 0 for row in target_rows)
-    order_required_intents = sum(bool(row["requires_order"]) for row in rebalance_intents)
+    nonzero_target_rows = sum(float(row["target_weight"]) > 0 for row in reference_rows)
+    order_required_intents = sum(bool(row["requires_order"]) for row in reference_intents)
     order_required_sessions = len(
-        {str(row["rebalance_session"]) for row in rebalance_intents if row["requires_order"]}
+        {str(row["rebalance_session"]) for row in reference_intents if row["requires_order"]}
     )
     gross_limit = spec.portfolio.gross_exposure_limit or 1.0
     max_symbol_weight = spec.portfolio.max_symbol_weight or spec.risk.max_position_weight
-    max_gross = max((_gross_for_session(target_rows, session) for session in sessions), default=0.0)
-    max_weight = max((float(row["target_weight"]) for row in target_rows), default=0.0)
+    max_gross = max(
+        (_gross_for_session(reference_rows, session) for session in sessions), default=0.0
+    )
+    max_weight = max((float(row["target_weight"]) for row in reference_rows), default=0.0)
     if len(selected_sessions) != reference.traded_days:
         blockers.append(
             f"selected_sessions={len(selected_sessions)} does not match "

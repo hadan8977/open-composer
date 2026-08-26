@@ -10,6 +10,7 @@ from open_composer.adapters.data import fetch_ohlcv
 from open_composer.config import data_feed, ensure_dir, project_root
 from open_composer.engines.backtest_engine import BacktestArtifacts, backtest_frame
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 from open_composer.research.optimizer import _candidate_specs
 
 
@@ -41,6 +42,12 @@ def optimize_strategy_universe(
     refresh_data: bool = True,
 ) -> UniverseOptimizationResult:
     base = root or project_root()
+    require_iteration_execution_gate(
+        spec_path,
+        base,
+        enforce_unbound_design=True,
+        require_registered_iteration=True,
+    )
     source_spec = load_strategy_spec(spec_path)
     universe = [item.upper() for item in (symbols or source_spec.universe)]
     selected: list[UniverseSelection] = []
@@ -61,7 +68,12 @@ def optimize_strategy_universe(
         )
         scored: list[UniverseSelection] = []
         for candidate in _candidate_specs(candidate_base):
-            artifacts = backtest_frame(candidate, frame, run_id_value=f"universe-{candidate.name}")
+            artifacts = backtest_frame(
+                candidate,
+                frame,
+                root=base,
+                run_id_value=f"universe-{candidate.name}",
+            )
             score = _score_universe_candidate(artifacts, min_return_pct, min_signals, max_trades)
             scored.append(
                 UniverseSelection(

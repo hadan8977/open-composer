@@ -16,6 +16,10 @@ from typing import Any
 
 from open_composer.config import ensure_dir, project_root
 from open_composer.models.source_card import SourceCard, check_source_card
+from open_composer.research.iteration_dossier import (
+    _final_evaluation_receipt_blockers,
+    iteration_dossier_paths,
+)
 from open_composer.storage import write_json
 
 KNOWLEDGE_ROOT = Path("reports/research/knowledge")
@@ -502,13 +506,19 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
         status: sum(row["status"] == status for row in rows)
         for status in {"reused", "new", "refresh_required"}
     }
+    repair_reuse_evidence, repair_reuse_blockers = _implementation_repair_reuse_evidence(
+        iter_id,
+        iteration_dir,
+        base,
+    )
     blocked = []
     if len(rows) < 8:
         blocked.append("knowledge_sources_lt_8")
     if not all(partition in index["visibility_partitions"] for partition in VISIBILITY_PARTITIONS):
         blocked.append("knowledge_visibility_partitions_incomplete")
-    if counts["new"] + counts["refresh_required"] < 1:
+    if counts["new"] + counts["refresh_required"] < 1 and repair_reuse_evidence is None:
         blocked.append("knowledge_no_new_or_refresh_evidence")
+    blocked.extend(repair_reuse_blockers)
     if not scout:
         blocked.append("knowledge_scout_missing")
     model_reuse_path = iteration_dir / "model-reuse-decision.json"
@@ -532,6 +542,10 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
         "status": "blocked" if blocked else "ok",
         "blocked": blocked,
         "counts": counts,
+        "novelty_policy": {
+            "default_requires_new_or_refresh_evidence": True,
+            "pure_implementation_repair_reuse": repair_reuse_evidence,
+        },
         "source_assessment": rows,
         "scout_path": _relpath(scout_path, base) if scout else None,
         "scout_new_candidates": int(scout.get("new_candidate_count", 0)),
@@ -547,6 +561,229 @@ def assess_iteration_knowledge(iter_id: str, root: Path | None = None) -> Knowle
     path = iteration_dir / "knowledge-assessment.json"
     write_json(path, payload)
     return KnowledgeAssessmentResult(report_path=path, payload=payload)
+
+
+def _implementation_repair_reuse_evidence(
+    iter_id: str,
+    iteration_dir: Path,
+    root: Path,
+) -> tuple[dict[str, Any] | None, list[str]]:
+    manifest_path = iteration_dir / "candidate-manifest.json"
+    if not manifest_path.is_file():
+        return None, []
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None, []
+    if not isinstance(manifest, dict) or manifest.get("implementation_repair_only") is not True:
+        return None, []
+
+    failures: list[str] = []
+    source_iteration_id = str(manifest.get("source_iteration_id") or "")
+    candidates = manifest.get("candidates")
+    if (
+        manifest.get("iter_id") != iter_id
+        or not source_iteration_id
+        or source_iteration_id == iter_id
+        or manifest.get("incremental_economic_trial_count") != 0
+        or not str(manifest.get("single_new_hypothesis") or "").startswith("none_")
+        or not isinstance(candidates, list)
+        or not candidates
+        or manifest.get("candidate_count") != len(candidates)
+    ):
+        failures.append("manifest_identity")
+        candidates = candidates if isinstance(candidates, list) else []
+    for candidate in candidates:
+        candidate_id = (
+            str(candidate.get("candidate_id") or "") if isinstance(candidate, dict) else ""
+        )
+        if (
+            not candidate_id
+            or candidate.get("implementation_repair_only") is not True
+            or candidate.get("effective_trial_increment") != 0
+            or candidate.get("source_trial_id") != f"{source_iteration_id}:{candidate_id}"
+        ):
+            failures.append("candidate_trial_identity")
+            break
+
+    governance = manifest.get("contracts", {}).get("governance")
+    bound_contracts: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+    if not isinstance(governance, dict) or len(governance) < 2:
+        failures.append("governance_bindings")
+    else:
+        for contract_id, binding in governance.items():
+            payload, error = _load_bound_json(root, binding)
+            if error or payload is None or payload.get("contract_id") != contract_id:
+                failures.append(f"governance_binding:{contract_id}:{error or 'identity'}")
+                continue
+            bound_contracts[str(contract_id)] = (binding, payload)
+
+    repair_rows = [
+        (contract_id, binding, payload)
+        for contract_id, (binding, payload) in bound_contracts.items()
+        if payload.get("generated_before_repair_evaluation") is True
+        and payload.get("new_economic_candidate_count") == 0
+    ]
+    repair_binding: dict[str, Any] | None = None
+    repair_contract: dict[str, Any] | None = None
+    if len(repair_rows) != 1:
+        failures.append("implementation_repair_contract")
+    else:
+        _repair_id, repair_binding, repair_contract = repair_rows[0]
+
+    parent_audit_binding: dict[str, Any] | None = None
+    source_lock_binding: dict[str, Any] | None = None
+    effective_trial_count: int | None = None
+    if repair_contract is not None:
+        parent_audit_binding = repair_contract.get("parent_failure_audit")
+        source_lock_binding = repair_contract.get("source_lock")
+        equivalence = repair_contract.get("economic_spec_equivalence")
+        forbidden = set(map(str, repair_contract.get("forbidden_changes") or []))
+        required_forbidden = {
+            "universe",
+            "data",
+            "features",
+            "labels",
+            "models",
+            "seeds",
+            "fallbacks",
+            "folds",
+            "costs",
+            "benchmarks",
+            "economic_parameters",
+        }
+        effective_trial_count = repair_contract.get("effective_trial_count")
+        if (
+            repair_contract.get("iter_id") != iter_id
+            or repair_contract.get("source_iteration_id") != source_iteration_id
+            or repair_contract.get("manifest_candidate_count") != len(candidates)
+            or not isinstance(effective_trial_count, int)
+            or isinstance(effective_trial_count, bool)
+            or effective_trial_count < len(candidates)
+            or not isinstance(equivalence, list)
+            or [row.get("candidate_id") for row in equivalence if isinstance(row, dict)]
+            != [row.get("candidate_id") for row in candidates if isinstance(row, dict)]
+            or any(
+                not isinstance(row, dict) or row.get("economic_projection_equal") is not True
+                for row in equivalence
+            )
+            or not required_forbidden.issubset(forbidden)
+        ):
+            failures.append("implementation_repair_economic_identity")
+
+    parent_audit: dict[str, Any] | None = None
+    audit_error = "missing"
+    if isinstance(parent_audit_binding, dict):
+        parent_audit, audit_error = _load_bound_json(root, parent_audit_binding)
+    if parent_audit is None:
+        failures.append(f"parent_failure_audit:{audit_error}")
+    else:
+        audit_is_governance_bound = any(
+            binding == parent_audit_binding and payload == parent_audit
+            for binding, payload in bound_contracts.values()
+        )
+        failure = parent_audit.get("failure", {})
+        if (
+            not audit_is_governance_bound
+            or parent_audit.get("source_iteration_id") != source_iteration_id
+            or parent_audit.get("source_lock") != source_lock_binding
+            or parent_audit.get("parameter_changes_from_outcomes") is not False
+            or parent_audit.get("paper_or_broker_activity") is not False
+            or failure.get("selectable_candidate_returns_computed") is not False
+            or failure.get("selectable_candidate_metrics_computed") is not False
+            or failure.get("selection_performed") is not False
+        ):
+            failures.append("parent_failure_identity")
+
+    source_lock: dict[str, Any] | None = None
+    lock_error = "missing"
+    if isinstance(source_lock_binding, dict):
+        source_lock, lock_error = _load_bound_json(root, source_lock_binding)
+    if source_lock is None or source_lock.get("iter_id") != source_iteration_id:
+        failures.append(f"source_lock:{lock_error if source_lock is None else 'identity'}")
+
+    parent_assessment_path = (
+        root / ITERATION_ROOT / source_iteration_id / "knowledge-assessment.json"
+    )
+    try:
+        parent_assessment = json.loads(parent_assessment_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        parent_assessment = None
+    if (
+        not isinstance(parent_assessment, dict)
+        or parent_assessment.get("iter_id") != source_iteration_id
+        or parent_assessment.get("status") != "ok"
+    ):
+        failures.append("parent_knowledge_assessment")
+
+    if failures:
+        return None, [
+            "knowledge_implementation_repair_reuse_contract_invalid:"
+            + ",".join(sorted(set(failures)))
+        ]
+    assert repair_binding is not None
+    assert parent_audit_binding is not None
+    assert source_lock_binding is not None
+    return (
+        {
+            "applied": True,
+            "reason": "zero-economic-change implementation repair reuses fresh parent evidence",
+            "source_iteration_id": source_iteration_id,
+            "candidate_count": len(candidates),
+            "incremental_economic_trial_count": 0,
+            "effective_trial_count": effective_trial_count,
+            "implementation_repair_contract": repair_binding,
+            "parent_failure_audit": parent_audit_binding,
+            "source_lock": source_lock_binding,
+            "parent_knowledge_assessment": {
+                "path": _relpath(parent_assessment_path, root),
+                "sha256": _sha256_file(parent_assessment_path),
+            },
+        },
+        [],
+    )
+
+
+def _load_bound_json(
+    root: Path,
+    binding: Any,
+) -> tuple[dict[str, Any] | None, str | None]:
+    if not isinstance(binding, dict):
+        return None, "not_object"
+    relative = str(binding.get("path") or "")
+    expected_hash = str(binding.get("sha256") or "")
+    expected_size = binding.get("size_bytes")
+    if (
+        not relative
+        or not expected_hash
+        or not isinstance(expected_size, int)
+        or isinstance(expected_size, bool)
+        or expected_size < 0
+    ):
+        return None, "identity_missing"
+    base = root.resolve()
+    candidate = base / relative
+    cursor = candidate
+    while cursor != base and cursor != cursor.parent:
+        if cursor.is_symlink():
+            return None, "symlink"
+        cursor = cursor.parent
+    try:
+        path = candidate.resolve(strict=True)
+        path.relative_to(base)
+    except (FileNotFoundError, ValueError):
+        return None, "path_invalid"
+    if not path.is_file() or _sha256_file(path) != expected_hash:
+        return None, "hash_mismatch"
+    if path.stat().st_size != expected_size:
+        return None, "size_mismatch"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None, "json_invalid"
+    if not isinstance(payload, dict):
+        return None, "not_object"
+    return payload, None
 
 
 def _model_reuse_rows(iter_id: str, models: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -753,14 +990,20 @@ def _load_valid_scout(
 def _collect_empirical_memory(root: Path) -> list[dict[str, Any]]:
     rows = []
     iterations_root = root / ITERATION_ROOT
-    for path in sorted(iterations_root.glob("*/decision-record.md")):
+    for root_decision_path in sorted(iterations_root.glob("*/decision-record.md")):
+        iteration_dir = root_decision_path.parent
+        path = _authoritative_decision_record(iteration_dir, root) or root_decision_path
         text = path.read_text(encoding="utf-8")
         decisions = re.findall(r"Decision:\s*([^\n]+)", text, flags=re.IGNORECASE)
         normalized = [item.strip().lower() for item in decisions]
-        partition = _iteration_decision_partition(path.parent, text)
+        partition = _iteration_decision_partition(
+            iteration_dir,
+            text,
+            evidence_dir=path.parent,
+        )
         rows.append(
             {
-                "iteration_id": path.parent.name,
+                "iteration_id": iteration_dir.name,
                 "artifact_path": _relpath(path, root),
                 "visibility_partition": partition,
                 "decisions": normalized,
@@ -803,7 +1046,23 @@ def _collect_empirical_memory(root: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def _iteration_decision_partition(iteration_dir: Path, text: str) -> str:
+def _authoritative_decision_record(iteration_dir: Path, root: Path) -> Path | None:
+    receipt_path = iteration_dir / "evaluation-run/evaluation-receipt.json"
+    if not receipt_path.is_file() or receipt_path.is_symlink():
+        return None
+    paths = iteration_dossier_paths(iteration_dir.name, root)
+    blockers, authoritative = _final_evaluation_receipt_blockers(paths, root)
+    if blockers:
+        return None
+    return authoritative
+
+
+def _iteration_decision_partition(
+    iteration_dir: Path,
+    text: str,
+    *,
+    evidence_dir: Path | None = None,
+) -> str:
     provenance_path = iteration_dir / "memory-provenance.json"
     declared_partition = ""
     if provenance_path.exists():
@@ -814,9 +1073,10 @@ def _iteration_decision_partition(iteration_dir: Path, text: str) -> str:
         declared_partition = str(payload.get("decision_record_visibility_partition") or "")
     if (iteration_dir / "observation-state.json").exists():
         return "forward_observation"
+    report_root = evidence_dir or iteration_dir
     for report_path in [
-        iteration_dir / "evaluation-report.json",
-        iteration_dir / "model-comparison.json",
+        report_root / "evaluation-report.json",
+        report_root / "model-comparison.json",
     ]:
         if not report_path.exists():
             continue

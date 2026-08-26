@@ -1,0 +1,54 @@
+{
+  "schema_version": 2,
+  "plan_contract": "harness_plan_v2",
+  "strategy_name": "us_breadth_cross_session_r1_ses02",
+  "spec_path": "strategy_specs/drafts/us_breadth_cross_session_r1_ses02.yaml",
+  "spec_file_sha256": "1d2d0b301af08bed0b22470a654b479a6422c28309df746a7e9ef6578e654c77",
+  "spec_semantic_sha256": "89a9c2737e4ca5e488d6f5d8a6bff414e1e7e5177abb2f1e63c71651bbcdf633",
+  "risk_domains": [
+    "daily_open_execution",
+    "router_strategy"
+  ],
+  "required_skills": [
+    "backtest-forensics",
+    "execution-reality-reviewer",
+    "source-researcher"
+  ],
+  "required_artifacts": [
+    "execution_policy",
+    "execution_reality_report",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "source_cards"
+  ],
+  "blocking_rules": [
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "naked_market_order_must_be_justified",
+      "blocks": "research_pass",
+      "description": "A DAY market order without price protection requires a written justification in execution_policy explaining why the risk is acceptable.\n"
+    },
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "compare_at_least_two_execution_methods",
+      "blocks": "research_pass",
+      "description": "Execution policy must compare at least two order styles (e.g. DAY market vs. MOO/OPG vs. LOO/OPG).\n"
+    },
+    {
+      "domain": "router_strategy",
+      "rule_id": "router_requires_target_weight_observation",
+      "blocks": "research_pass",
+      "description": "Router strategy promotion requires target weights, rebalance intents, cost stress, data evidence, and validation artifacts.\n"
+    },
+    {
+      "domain": "router_strategy",
+      "rule_id": "router_order_authorization_requires_readiness",
+      "blocks": "paper_ready_pass",
+      "description": "Router execution can remain observation_only before paper order authorization; broker orders require paper readiness and safety artifacts.\n"
+    }
+  ]
+}

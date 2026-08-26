@@ -422,14 +422,16 @@ def sync_paper_orders(root: Path, client: Any | None = None) -> Path:
         _validate_normalized_broker_order(normalized)
         broker_client_ids.add(str(normalized["client_order_id"]))
         local_order = local_orders.get(str(normalized["client_order_id"]))
+        local_binding_status = "unmatched"
         if local_order is not None:
-            _validate_broker_local_order_match(normalized, local_order)
+            local_binding_status = _validate_broker_local_order_match(normalized, local_order)
         receipt_path = _write_immutable_broker_receipt(
             root,
             normalized,
             local_order,
             broker_account_hash=account_hash,
             captured_at=captured_at,
+            local_binding_status=local_binding_status,
         )
         receipt_ref = {
             "order_id": normalized["id"],
@@ -445,6 +447,7 @@ def sync_paper_orders(root: Path, client: Any | None = None) -> Path:
                 "broker_account_id_hash": account_hash,
                 "broker_receipt_path": receipt_ref["path"],
                 "broker_receipt_sha256": receipt_ref["sha256"],
+                "local_order_binding_status": local_binding_status,
                 "paper": True,
             }
         )
@@ -1607,7 +1610,7 @@ def _validate_normalized_broker_order(order: dict[str, Any]) -> None:
 def _validate_broker_local_order_match(
     broker_order: dict[str, Any],
     local_order: PaperOrderRecord,
-) -> None:
+) -> Literal["matched", "unmatched"]:
     expected = {
         "id": local_order.id,
         "client_order_id": local_order.client_order_id,
@@ -1621,8 +1624,10 @@ def _validate_broker_local_order_match(
     ]
     if abs(float(broker_order["qty"]) - float(local_order.qty)) > 1e-9:
         mismatches.append("qty")
+    legacy_execution_metadata = _is_legacy_local_order_record(local_order)
     if not local_order.order_style or not local_order.time_in_force:
-        mismatches.append("local_execution_style")
+        if not legacy_execution_metadata:
+            mismatches.append("local_execution_style")
     else:
         if broker_order.get("order_type") != _broker_order_type(local_order.order_style):
             mismatches.append("order_type")
@@ -1633,6 +1638,23 @@ def _validate_broker_local_order_match(
             "broker order does not match the immutable local order: "
             + ", ".join(sorted(set(mismatches)))
         )
+    return "unmatched" if legacy_execution_metadata else "matched"
+
+
+def _is_legacy_local_order_record(local_order: PaperOrderRecord) -> bool:
+    return (
+        local_order.order_style is None
+        and local_order.time_in_force is None
+        and local_order.execution_policy_id is None
+        and local_order.execution_policy_hash is None
+        and local_order.authorization_id is None
+        and local_order.authorization_hash is None
+        and local_order.authorization_kind is None
+        and local_order.signal_record_hash is None
+        and local_order.signal_log_path is None
+        and local_order.order_intent_id is None
+        and local_order.order_intent_hash is None
+    )
 
 
 def _broker_order_type(order_style: str) -> str:

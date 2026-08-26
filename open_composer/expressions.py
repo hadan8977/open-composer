@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import ast
 import json
-from collections.abc import Mapping
+import math
+from bisect import bisect_right
+from collections.abc import Iterator, Mapping
+from dataclasses import dataclass
+from datetime import date
 from functools import reduce
 from operator import and_, or_
 from pathlib import Path
@@ -31,6 +35,7 @@ from open_composer.indicators import (
     stddev,
     zscore,
 )
+from open_composer.market_calendar import NEW_YORK
 
 OHLCV_NAMES = {"open", "high", "low", "close", "volume"}
 SERIES_WINDOW_FUNCTIONS = {
@@ -194,9 +199,19 @@ def validate_expression(
             "volume": range(1_000, 1_040),
         }
     )
+    executable_factors: dict[str, Any] = {}
+    for name in referenced:
+        factor = factor_map[name]
+        if getattr(factor, "source", "expression") in {"llm_feature", "feature_packet"}:
+            # Spec validation is static. External packets may legitimately be
+            # materialized only after the spec has loaded; runtime evaluation
+            # still resolves the real packet and fails closed when it is invalid.
+            dummy[name] = getattr(factor, "default", 0.0)
+        else:
+            executable_factors[name] = factor
     frame = prepare_factor_frame(
         dummy,
-        {name: factor_map[name] for name in referenced},
+        executable_factors,
         root=root,
     )
     evaluate_expression(expression, frame)
@@ -637,60 +652,26 @@ def _load_feature_packet(
     require_feature_symbol: bool,
 ) -> pd.Series:
     default = getattr(factor, "default", 0.0)
-    field = getattr(factor, "field", None)
-    path_value = getattr(factor, "path", None)
-    if not field:
-        raise ExpressionError(f"{source_label} factor {name} missing field")
-    if not path_value:
-        strategy_name = frame.attrs.get("strategy_name")
-        if source_label == "llm_feature" and strategy_name and root is not None:
-            path_value = f"reports/features/{strategy_name}/{name}/packets.jsonl"
-        else:
-            return pd.Series([default] * len(frame), index=frame.index)
-    path = Path(path_value)
-    if not path.is_absolute() and root is not None:
-        path = root / path
-    if not path.exists():
-        return pd.Series([default] * len(frame), index=frame.index)
     if "timestamp" not in frame.columns:
         raise ExpressionError(f"{source_label} factors require timestamp column")
 
-    records: list[tuple[pd.Timestamp, Any]] = []
-    with path.open("r", encoding="utf-8") as handle:
-        for line in handle:
-            if not line.strip():
-                continue
-            raw = json.loads(line)
-            if not isinstance(raw, Mapping):
-                continue
-            packet_symbol = str(raw.get("symbol", "")).upper()
-            if symbol and packet_symbol not in {symbol.upper(), "*"}:
-                if not packet_symbol and not require_feature_symbol:
-                    pass
-                else:
-                    continue
-            value = _feature_packet_value(raw, field)
-            if value is _MISSING or "timestamp" not in raw:
-                continue
-            visible_at = _feature_packet_visible_at(raw)
-            if visible_at is None:
-                continue
-            records.append((pd.Timestamp(visible_at), value))
-    if not records:
-        return pd.Series([default] * len(frame), index=frame.index)
-
-    records.sort(key=lambda item: item[0])
+    timestamps = pd.to_datetime(frame["timestamp"], utc=True, errors="raise")
+    records = _load_feature_packet_records(
+        name,
+        factor,
+        root=root,
+        source_label=source_label,
+        symbol=symbol,
+        require_feature_symbol=require_feature_symbol,
+        strategy_name=frame.attrs.get("strategy_name"),
+        decision_timestamps=timestamps,
+    )
     values: list[Any] = []
     cursor = 0
     current = default
-    timestamps = pd.to_datetime(frame["timestamp"], utc=True)
-    normalized_records = [
-        (timestamp.tz_convert("UTC") if timestamp.tzinfo else timestamp.tz_localize("UTC"), value)
-        for timestamp, value in records
-    ]
     for timestamp in timestamps:
-        while cursor < len(normalized_records) and normalized_records[cursor][0] <= timestamp:
-            current = normalized_records[cursor][1]
+        while cursor < len(records) and records[cursor].visible_at <= timestamp:
+            current = records[cursor].value
             cursor += 1
         values.append(current)
     return pd.Series(values, index=frame.index)
@@ -699,16 +680,257 @@ def _load_feature_packet(
 _MISSING = object()
 
 
-def _feature_packet_visible_at(raw: Mapping[str, Any]) -> Any | None:
-    if raw.get("visible_at"):
-        return raw["visible_at"]
-    published_at = raw.get("published_at")
-    fetched_at = raw.get("fetched_at")
-    if published_at and fetched_at:
-        published = pd.Timestamp(published_at)
-        fetched = pd.Timestamp(fetched_at)
-        return max(published, fetched)
-    return None
+@dataclass(frozen=True)
+class FeaturePacketRecord:
+    value: float
+    visible_at: pd.Timestamp
+    fetched_at: pd.Timestamp
+
+
+def _load_feature_packet_records(
+    name: str,
+    factor: Any,
+    *,
+    root: Path | None,
+    source_label: str,
+    symbol: str | None,
+    require_feature_symbol: bool,
+    strategy_name: str | None = None,
+    decision_timestamps: Any | None = None,
+) -> list[FeaturePacketRecord]:
+    field = getattr(factor, "field", None)
+    if not field:
+        raise ExpressionError(f"{source_label} factor {name} missing field")
+    path = _resolve_feature_packet_path(
+        name,
+        factor,
+        root=root,
+        source_label=source_label,
+        strategy_name=strategy_name,
+    )
+
+    records: list[FeaturePacketRecord] = []
+    row_count = 0
+    previous_visible_at: pd.Timestamp | None = None
+    for raw, context in _iter_feature_packet_rows(path):
+        row_count += 1
+        packet_symbol = _feature_packet_symbol(raw, context=context)
+        if require_feature_symbol and not packet_symbol:
+            raise ExpressionError(f"{context} is missing required symbol")
+        if symbol and packet_symbol not in {symbol.upper(), "*", ""}:
+            continue
+        visible_at = _feature_packet_effective_visible_at(raw, context=context)
+        if previous_visible_at is not None:
+            if visible_at == previous_visible_at:
+                raise ExpressionError(f"{context} duplicates visible_at {visible_at.isoformat()}")
+            if visible_at < previous_visible_at:
+                raise ExpressionError(f"{context} is out of visible_at order")
+        previous_visible_at = visible_at
+        records.append(
+            FeaturePacketRecord(
+                value=_feature_packet_numeric_value(raw, field, context=context),
+                visible_at=visible_at,
+                fetched_at=_feature_packet_fetched_at(raw, context=context),
+            )
+        )
+    if row_count == 0:
+        raise ExpressionError(f"{source_label} factor {name} packet {path} is empty")
+    if not records:
+        target = symbol.upper() if symbol else "requested stream"
+        raise ExpressionError(
+            f"{source_label} factor {name} packet {path} has no records matching {target}"
+        )
+    _validate_feature_packet_contract(
+        name,
+        factor,
+        records,
+        source_label=source_label,
+        decision_timestamps=decision_timestamps,
+    )
+    return records
+
+
+def _resolve_feature_packet_path(
+    name: str,
+    factor: Any,
+    *,
+    root: Path | None,
+    source_label: str,
+    strategy_name: str | None,
+) -> Path:
+    path_value = getattr(factor, "path", None)
+    if not path_value and source_label == "llm_feature" and strategy_name and root is not None:
+        path_value = f"reports/features/{strategy_name}/{name}/packets.jsonl"
+    if not path_value:
+        raise ExpressionError(f"{source_label} factor {name} missing packet path")
+    path = Path(path_value)
+    if not path.is_absolute() and root is not None:
+        path = root / path
+    if not path.is_file():
+        raise ExpressionError(f"{source_label} factor {name} packet does not exist: {path}")
+    return path
+
+
+def _validate_feature_packet_contract(
+    name: str,
+    factor: Any,
+    records: list[FeaturePacketRecord],
+    *,
+    source_label: str,
+    decision_timestamps: Any | None,
+) -> None:
+    params = getattr(factor, "params", {}) or {}
+    availability_field = params.get("availability_field")
+    if availability_field not in {None, "visible_at"}:
+        raise ExpressionError(
+            f"{source_label} factor {name} must use visible_at availability, "
+            f"got {availability_field!r}"
+        )
+    forward_fill_allowed = params.get("forward_fill_allowed")
+    if forward_fill_allowed is not None and not isinstance(forward_fill_allowed, bool):
+        raise ExpressionError(f"{source_label} factor {name} has invalid forward_fill_allowed")
+    max_age_sessions = params.get("max_age_sessions")
+    if max_age_sessions is not None and (
+        isinstance(max_age_sessions, bool)
+        or not isinstance(max_age_sessions, int)
+        or max_age_sessions < 0
+    ):
+        raise ExpressionError(f"{source_label} factor {name} has invalid max_age_sessions")
+    if decision_timestamps is None:
+        return
+    timestamps = pd.to_datetime(decision_timestamps, utc=True, errors="raise")
+    session_dates = sorted(
+        {pd.Timestamp(timestamp).tz_convert(NEW_YORK).date() for timestamp in timestamps}
+    )
+    if forward_fill_allowed is False:
+        packet_session_dates = {record.visible_at.tz_convert(NEW_YORK).date() for record in records}
+        first_packet_session = min(packet_session_dates)
+        last_packet_session = max(packet_session_dates)
+        missing_sessions = [
+            session
+            for session in session_dates
+            if first_packet_session <= session <= last_packet_session
+            and session not in packet_session_dates
+        ]
+        if missing_sessions:
+            raise ExpressionError(
+                f"{source_label} factor {name} has a missing session "
+                f"{missing_sessions[0].isoformat()}"
+            )
+    if max_age_sessions is None:
+        return
+    cursor = 0
+    current: FeaturePacketRecord | None = None
+    for timestamp in timestamps:
+        while cursor < len(records) and records[cursor].visible_at <= timestamp:
+            current = records[cursor]
+            cursor += 1
+        if current is None:
+            continue
+        age = _observed_session_age(
+            current.visible_at,
+            pd.Timestamp(timestamp),
+            session_dates,
+        )
+        if age > max_age_sessions:
+            raise ExpressionError(
+                f"{source_label} factor {name} packet is stale at "
+                f"{pd.Timestamp(timestamp).isoformat()}: age {age} sessions exceeds "
+                f"max_age_sessions={max_age_sessions}"
+            )
+
+
+def _observed_session_age(
+    visible_at: pd.Timestamp,
+    decision_at: pd.Timestamp,
+    session_dates: list[date],
+) -> int:
+    if decision_at < visible_at:
+        return 0
+    start = visible_at.tz_convert(NEW_YORK).date()
+    end = decision_at.tz_convert(NEW_YORK).date()
+    return bisect_right(session_dates, end) - bisect_right(session_dates, start)
+
+
+def _iter_feature_packet_rows(path: Path) -> Iterator[tuple[Mapping[str, Any], str]]:
+    with path.open("r", encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, start=1):
+            if not line.strip():
+                continue
+            context = f"feature packet {path} line {line_number}"
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ExpressionError(f"{context} is not valid JSON") from exc
+            if not isinstance(raw, Mapping):
+                raise ExpressionError(f"{context} must be a JSON object")
+            yield raw, context
+
+
+def _feature_packet_symbol(raw: Mapping[str, Any], *, context: str) -> str:
+    if "symbol" not in raw or raw["symbol"] is None:
+        return ""
+    value = raw["symbol"]
+    if not isinstance(value, str):
+        raise ExpressionError(f"{context} has invalid symbol")
+    return value.strip().upper()
+
+
+def _feature_packet_effective_visible_at(
+    raw: Mapping[str, Any],
+    *,
+    context: str,
+) -> pd.Timestamp:
+    if "visible_at" in raw:
+        return _feature_packet_timestamp(raw["visible_at"], field="visible_at", context=context)
+    if "published_at" not in raw or "fetched_at" not in raw:
+        raise ExpressionError(
+            f"{context} is missing visible_at and published_at/fetched_at fallback"
+        )
+    published_at = _feature_packet_timestamp(
+        raw["published_at"], field="published_at", context=context
+    )
+    fetched_at = _feature_packet_timestamp(raw["fetched_at"], field="fetched_at", context=context)
+    return max(published_at, fetched_at)
+
+
+def _feature_packet_fetched_at(raw: Mapping[str, Any], *, context: str) -> pd.Timestamp:
+    if "fetched_at" not in raw:
+        raise ExpressionError(f"{context} is missing fetched_at")
+    return _feature_packet_timestamp(raw["fetched_at"], field="fetched_at", context=context)
+
+
+def _feature_packet_timestamp(value: Any, *, field: str, context: str) -> pd.Timestamp:
+    if value is None or isinstance(value, bool | int | float | Mapping | list | tuple):
+        raise ExpressionError(f"{context} has invalid {field}")
+    try:
+        timestamp = pd.Timestamp(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ExpressionError(f"{context} has invalid {field}") from exc
+    if pd.isna(timestamp):
+        raise ExpressionError(f"{context} has invalid {field}")
+    if timestamp.tzinfo is None:
+        return timestamp.tz_localize("UTC")
+    return timestamp.tz_convert("UTC")
+
+
+def _feature_packet_numeric_value(
+    raw: Mapping[str, Any],
+    field: str,
+    *,
+    context: str,
+) -> float:
+    value = _feature_packet_value(raw, field)
+    if value is _MISSING:
+        raise ExpressionError(f"{context} is missing field {field!r}")
+    if isinstance(value, bool):
+        return float(value)
+    if not isinstance(value, int | float):
+        raise ExpressionError(f"{context} field {field!r} must be a finite numeric value")
+    numeric = float(value)
+    if not math.isfinite(numeric):
+        raise ExpressionError(f"{context} field {field!r} must be a finite numeric value")
+    return numeric
 
 
 def _feature_packet_value(raw: Mapping[str, Any], field: str) -> Any:

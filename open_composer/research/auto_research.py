@@ -129,10 +129,13 @@ def run_auto_research(
         raise ValueError("universe must include at least one symbol")
     if max_factors < 1:
         raise ValueError("max_factors must be at least 1")
+    if data_source != "sample":
+        raise ValueError(
+            "market-data auto research requires a preregistered iteration workflow; "
+            "use sample data for workflow-only smoke"
+        )
 
     run_id = _make_run_id(thesis)
-    run_dir = ensure_dir(base / "reports" / "research" / "auto" / run_id)
-    (run_dir / "thesis.md").write_text(thesis.rstrip() + "\n", encoding="utf-8")
     fallback_message: str | None = None
     available, reason = _check_data_source_available(data_source)
     if not available:
@@ -141,6 +144,9 @@ def run_auto_research(
         )
         data_source = "sample"
         data_path = data_path or _sample_data_path_for_symbol(symbols[0], base)
+    run_dir = ensure_dir(base / "reports" / "research" / "auto" / run_id)
+    (run_dir / "thesis.md").write_text(thesis.rstrip() + "\n", encoding="utf-8")
+    if fallback_message:
         (run_dir / "data_source_fallback.txt").write_text(fallback_message + "\n", encoding="utf-8")
 
     candidates = (
@@ -740,6 +746,7 @@ def _draft_spec(
             "signal_construction": signal_construction,
         },
         "research_design": {
+            "workflow_only_ungated_draft": data_source == "sample" and model_kind is None,
             "parameter_space": parameter_space,
             "candidate_budget": max(1, min(150, len(parameter_space) * 3 or len(selected))),
             "selection_objective": "rank_ic_ir_stability_then_research_evidence",
@@ -927,6 +934,16 @@ def _mini_spec_path(
             }
         },
         "llm_review": {"enabled": False},
+        "research_design": {
+            "workflow_only_ungated_draft": data_source == "sample",
+            "parameter_space": {"factor_id": [factor.id]},
+            "candidate_budget": 1,
+            "selection_objective": "single_factor_rank_ic_workflow_smoke",
+            "anti_overfit_notes": [
+                "This mini spec is workflow-only and cannot support promotion or paper readiness."
+            ],
+            "validation_plan": ["single_factor_ic_smoke"],
+        },
         "notes": {
             "intent": f"Single-factor IC screen for {factor.id}",
             "open_questions": [],

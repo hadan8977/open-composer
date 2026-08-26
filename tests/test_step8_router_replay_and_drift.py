@@ -34,6 +34,13 @@ def test_state_drift_infers_actual_state_and_warns_on_mismatch(tmp_path: Path) -
     assert report["actual_state"] == "risk_on_levered_proxy"
 
 
+def test_state_drift_classifies_all_long_leveraged_positions() -> None:
+    for symbol in ("TQQQ", "QLD", "SOXL", "TECL", "ROM", "USD"):
+        assert infer_actual_state_from_positions([{"symbol": symbol, "qty": 1}]) == (
+            "risk_on_levered_proxy"
+        )
+
+
 def test_state_drift_detects_symbol_mismatch_within_same_risk_bucket(tmp_path: Path) -> None:
     positions = tmp_path / "positions.json"
     positions.write_text(

@@ -30,6 +30,7 @@ from open_composer.models.backtest import BacktestRun, Trade
 from open_composer.models.signal import Signal
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.reports.writer import write_backend_parity_report, write_backtest_report
+from open_composer.research.iteration_dossier import require_iteration_execution_gate
 from open_composer.storage import append_jsonl
 from open_composer.strategy_versions import register_strategy_version
 
@@ -49,6 +50,7 @@ def run_backtest(
     refresh_data: bool = False,
 ) -> BacktestArtifacts:
     base = root or project_root()
+    require_iteration_execution_gate(spec_path, base, enforce_unbound_design=True)
     spec = load_strategy_spec(spec_path)
     version = register_strategy_version(spec_path, base, created_by="backtest")
     current_run_id = run_id(spec.name)
@@ -157,6 +159,11 @@ def backtest_frame(
     execution_backend: str = "python_reference",
     evaluation_start_index: int = 0,
 ) -> BacktestArtifacts:
+    require_iteration_execution_gate(
+        spec,
+        root or project_root(),
+        enforce_unbound_design=True,
+    )
     frame = frame.copy()
     frame.attrs.update({"strategy_name": spec.name})
     entry_mask, exit_mask = _entry_exit_masks(spec, frame, root=root)

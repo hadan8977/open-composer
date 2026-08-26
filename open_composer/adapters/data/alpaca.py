@@ -15,6 +15,9 @@ class AlpacaDataError(RuntimeError):
     pass
 
 
+SUPPORTED_ADJUSTMENTS = {"raw", "split", "dividend", "all"}
+
+
 def fetch_alpaca_bars(
     root: Path,
     symbol: str,
@@ -23,38 +26,62 @@ def fetch_alpaca_bars(
     end: datetime | None,
     feed: str,
     use_cache: bool = True,
+    adjustment: str | None = None,
 ) -> pd.DataFrame:
-    cache_path = root / "data" / "cache" / f"{symbol.lower()}_{timeframe}_{feed}.csv"
+    selected_adjustment = _normalize_adjustment(adjustment)
+    cache_path = _alpaca_cache_path(
+        root,
+        symbol,
+        timeframe,
+        feed,
+        selected_adjustment,
+    )
     cached = normalize_ohlcv(pd.read_csv(cache_path)) if cache_path.exists() else None
     if use_cache and cached is not None:
         if _cache_covers_window(cached, start, end):
             frame = _filter_cached_frame(cached, start, end)
-            _annotate_frame(frame, feed, "cache", cache_path)
+            _annotate_frame(frame, feed, "cache", cache_path, selected_adjustment)
             write_ohlcv_manifest(
                 root,
                 provider="alpaca",
                 feed=feed,
                 symbol=symbol,
                 timeframe=timeframe,
+                adjustment=selected_adjustment,
                 cache_path=cache_path,
                 frame=frame,
                 requested_start=start,
                 requested_end=end,
                 source_mode="cache",
-                caveats=_alpaca_caveats(feed),
+                caveats=_alpaca_caveats(feed, selected_adjustment),
             )
             return frame
     if use_cache:
-        resampled = _resampled_cache(root, symbol, timeframe, start, end, feed)
+        resampled = _resampled_cache(
+            root,
+            symbol,
+            timeframe,
+            start,
+            end,
+            feed,
+            selected_adjustment,
+        )
         if resampled is not None:
             frame, source_path = resampled
-            _annotate_frame(frame, feed, "cache_resampled", source_path)
+            _annotate_frame(
+                frame,
+                feed,
+                "cache_resampled",
+                source_path,
+                selected_adjustment,
+            )
             write_ohlcv_manifest(
                 root,
                 provider="alpaca",
                 feed=feed,
                 symbol=symbol,
                 timeframe=timeframe,
+                adjustment=selected_adjustment,
                 cache_path=source_path,
                 frame=frame,
                 requested_start=start,
@@ -62,7 +89,7 @@ def fetch_alpaca_bars(
                 source_mode="cache_resampled",
                 request_params={"resampled_from": source_path.name},
                 caveats=[
-                    *_alpaca_caveats(feed),
+                    *_alpaca_caveats(feed, selected_adjustment),
                     (
                         "Daily bars were resampled from local intraday cache because the "
                         "requested daily cache window was unavailable."
@@ -83,6 +110,7 @@ def fetch_alpaca_bars(
         start=_request_start(start, end, cached),
         end=end or datetime.now(UTC),
         feed=feed,
+        adjustment=_alpaca_adjustment(selected_adjustment),
     )
     client = StockHistoricalDataClient(
         api_key=alpaca_api_key_id(),
@@ -93,7 +121,7 @@ def fetch_alpaca_bars(
     if cached is not None:
         frame = _merge_cached_and_fetched(cached, frame)
     frame = _filter_cached_frame(frame, start, end)
-    _annotate_frame(frame, feed, "live_fetch", cache_path)
+    _annotate_frame(frame, feed, "live_fetch", cache_path, selected_adjustment)
     ensure_dir(cache_path.parent)
     frame.to_csv(cache_path, index=False)
     write_ohlcv_manifest(
@@ -102,12 +130,13 @@ def fetch_alpaca_bars(
         feed=feed,
         symbol=symbol,
         timeframe=timeframe,
+        adjustment=selected_adjustment,
         cache_path=cache_path,
         frame=frame,
         requested_start=start,
         requested_end=end,
         source_mode="live_fetch",
-        caveats=_alpaca_caveats(feed),
+        caveats=_alpaca_caveats(feed, selected_adjustment),
     )
     return frame
 
@@ -138,13 +167,20 @@ def _merge_cached_and_fetched(cached: pd.DataFrame, fetched: pd.DataFrame) -> pd
     return normalize_ohlcv(merged)
 
 
-def _annotate_frame(frame: pd.DataFrame, feed: str, source_mode: str, path: Path) -> None:
+def _annotate_frame(
+    frame: pd.DataFrame,
+    feed: str,
+    source_mode: str,
+    path: Path,
+    adjustment: str | None,
+) -> None:
     frame.attrs.update(
         {
             "data_source_provider": "alpaca",
             "data_source_mode": source_mode,
             "data_source_feed": feed,
             "data_source_path": str(path),
+            "data_source_adjustment": adjustment,
         }
     )
 
@@ -169,11 +205,18 @@ def _resampled_cache(
     start: datetime | None,
     end: datetime | None,
     feed: str,
+    adjustment: str | None,
 ) -> tuple[pd.DataFrame, Path] | None:
     if timeframe != "daily":
         return None
     for source_timeframe in ("15m", "5m", "1m"):
-        source_path = root / "data" / "cache" / f"{symbol.lower()}_{source_timeframe}_{feed}.csv"
+        source_path = _alpaca_cache_path(
+            root,
+            symbol,
+            source_timeframe,
+            feed,
+            adjustment,
+        )
         if not source_path.exists():
             continue
         source = normalize_ohlcv(pd.read_csv(source_path))
@@ -263,6 +306,34 @@ def _alpaca_timeframe(timeframe: str) -> Any:
     return mapping[timeframe]
 
 
+def _alpaca_adjustment(adjustment: str | None) -> Any:
+    if adjustment is None:
+        return None
+    from alpaca.data.enums import Adjustment
+
+    return Adjustment(adjustment)
+
+
+def _normalize_adjustment(adjustment: str | None) -> str | None:
+    if adjustment is None:
+        return None
+    normalized = adjustment.strip().lower()
+    if normalized not in SUPPORTED_ADJUSTMENTS:
+        raise AlpacaDataError(f"unsupported Alpaca adjustment: {adjustment}")
+    return normalized
+
+
+def _alpaca_cache_path(
+    root: Path,
+    symbol: str,
+    timeframe: str,
+    feed: str,
+    adjustment: str | None,
+) -> Path:
+    adjustment_part = f"_{adjustment}" if adjustment else ""
+    return root / "data" / "cache" / f"{symbol.lower()}_{timeframe}_{feed}{adjustment_part}.csv"
+
+
 def _bars_to_frame(response: Any, symbol: str) -> pd.DataFrame:
     if hasattr(response, "df"):
         frame = response.df.reset_index()
@@ -292,7 +363,18 @@ def _bars_to_frame(response: Any, symbol: str) -> pd.DataFrame:
     return normalize_ohlcv(pd.DataFrame(records))
 
 
-def _alpaca_caveats(feed: str) -> list[str]:
+def _alpaca_caveats(feed: str, adjustment: str | None = None) -> list[str]:
+    adjustment_caveat = (
+        [f"Alpaca bars were explicitly requested with adjustment={adjustment}"]
+        if adjustment
+        else ["Alpaca provider-default adjustment mode was used"]
+    )
     if feed.lower() == "iex":
-        return ["Alpaca free IEX feed is not consolidated full-market SIP data"]
-    return [f"Alpaca feed {feed} permissions and coverage must be verified"]
+        return [
+            "Alpaca free IEX feed is not consolidated full-market SIP data",
+            *adjustment_caveat,
+        ]
+    return [
+        f"Alpaca feed {feed} permissions and coverage must be verified",
+        *adjustment_caveat,
+    ]

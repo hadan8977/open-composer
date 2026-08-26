@@ -7,7 +7,12 @@ import pytest
 import yaml
 
 from open_composer.compiler.spec_to_pine import render_pine_strategy
-from open_composer.expressions import ExpressionError, evaluate_expression, prepare_factor_frame
+from open_composer.expressions import (
+    ExpressionError,
+    evaluate_expression,
+    prepare_factor_frame,
+    validate_expression,
+)
 from open_composer.indicators import (
     atr,
     bollinger_lower,
@@ -164,6 +169,30 @@ def test_expression_rejects_unknown_name() -> None:
     )
     with pytest.raises(ExpressionError):
         evaluate_expression("adj_close > close", frame)
+
+
+def test_static_validation_does_not_require_future_feature_packet(tmp_path: Path) -> None:
+    factor = FactorConfig(
+        source="feature_packet",
+        path="features/not-materialized-yet.jsonl",
+        field="score",
+        default=0.0,
+    )
+
+    validate_expression("external_score > -1", {"external_score": factor}, root=tmp_path)
+
+    frame = pd.DataFrame(
+        {
+            "timestamp": pd.to_datetime(["2026-01-02T00:00:00Z"]),
+            "open": [1.0],
+            "high": [1.0],
+            "low": [1.0],
+            "close": [1.0],
+            "volume": [1.0],
+        }
+    )
+    with pytest.raises(ExpressionError, match="packet does not exist"):
+        prepare_factor_frame(frame, {"external_score": factor}, root=tmp_path)
 
 
 def test_feature_packet_replay_uses_published_at_visibility(tmp_path: Path) -> None:

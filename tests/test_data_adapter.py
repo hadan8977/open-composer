@@ -5,9 +5,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
 
+import pandas as pd
+
 from open_composer.adapters.data import fetch_ohlcv, load_ohlcv_for_spec
-from open_composer.adapters.data.alpaca import fetch_alpaca_bars
+from open_composer.adapters.data.alpaca import AlpacaDataError, fetch_alpaca_bars
 from open_composer.models.strategy_spec import StrategySpec
+from open_composer.research.router_common import load_daily_dataset
 
 
 def test_alpaca_fetch_uses_cache_without_credentials(sample_workspace: Path) -> None:
@@ -172,6 +175,135 @@ def test_alpaca_fetch_can_refresh_with_credentials(sample_workspace: Path, monke
     assert captured["api_key"] == "key"
     assert captured["secret_key"] == "secret"
     assert frame["close"].iloc[-1] == 2
+
+
+def test_alpaca_fetch_binds_adjustment_to_request_cache_and_manifest(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    from alpaca.data.enums import Adjustment
+
+    monkeypatch.setenv("ALPACA_API_KEY_ID", "key")
+    monkeypatch.setenv("ALPACA_API_SECRET_KEY", "secret")
+    captured = {}
+
+    class MockClient:
+        def __init__(self, **kwargs) -> None:
+            pass
+
+        def get_stock_bars(self, request) -> SimpleNamespace:
+            captured["adjustment"] = request.adjustment
+            return SimpleNamespace(
+                df=SimpleNamespace(
+                    reset_index=lambda: pd.DataFrame(
+                        [
+                            {
+                                "symbol": "SOXS",
+                                "timestamp": "2026-01-02T05:00:00Z",
+                                "open": 40,
+                                "high": 42,
+                                "low": 39,
+                                "close": 41,
+                                "volume": 100,
+                            }
+                        ]
+                    )
+                )
+            )
+
+    monkeypatch.setattr("alpaca.data.historical.StockHistoricalDataClient", MockClient)
+
+    frame = fetch_alpaca_bars(
+        sample_workspace,
+        "SOXS",
+        "daily",
+        None,
+        None,
+        "iex",
+        use_cache=False,
+        adjustment="all",
+    )
+
+    assert captured["adjustment"] == Adjustment.ALL
+    assert frame.attrs["data_source_adjustment"] == "all"
+    assert (sample_workspace / "data" / "cache" / "soxs_daily_iex_all.csv").is_file()
+    manifest = sample_workspace / "data" / "cache" / "manifests" / "soxs_daily_alpaca_iex_all.json"
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    assert payload["adjustment"] == "all"
+    assert payload["cache_path"].endswith("soxs_daily_iex_all.csv")
+
+
+def test_alpaca_fetch_rejects_unknown_adjustment(sample_workspace: Path) -> None:
+    try:
+        fetch_alpaca_bars(
+            sample_workspace,
+            "QQQ",
+            "daily",
+            None,
+            None,
+            "iex",
+            adjustment="total_return_guess",
+        )
+    except AlpacaDataError as exc:
+        assert "unsupported Alpaca adjustment" in str(exc)
+    else:
+        raise AssertionError("unknown Alpaca adjustment unexpectedly accepted")
+
+
+def test_daily_router_requests_all_adjusted_alpaca_bars(sample_workspace: Path) -> None:
+    calls: list[dict] = []
+    timestamps = pd.date_range("2026-01-02", periods=40, freq="B", tz="UTC")
+
+    def fake_fetcher(**kwargs):
+        calls.append(kwargs)
+        frame = pd.DataFrame(
+            {
+                "timestamp": timestamps,
+                "open": range(100, 140),
+                "high": range(101, 141),
+                "low": range(99, 139),
+                "close": range(100, 140),
+                "volume": [1000] * 40,
+            }
+        )
+        frame.attrs.update(
+            {
+                "data_source_provider": "alpaca",
+                "data_source_feed": "iex",
+                "data_source_mode": "live_fetch",
+                "data_source_adjustment": kwargs["adjustment"],
+            }
+        )
+        return frame
+
+    spec = StrategySpec(
+        name="adjusted_daily_router",
+        description="Verify daily router adjustment binding.",
+        timeframe="daily",
+        universe=["QQQ", "TQQQ"],
+        lifecycle="draft",
+        entry={"all": ["close > ema(close, 5)"]},
+        exit={"any": ["close < ema(close, 5)"]},
+        risk={"max_trades_per_day": 1},
+        execution={"mode": "manual_signal", "broker": "none"},
+        data={"source": "alpaca", "symbol": "QQQ", "feed": "iex"},
+        data_assumptions={"source": "alpaca", "adjusted": True},
+    )
+
+    dataset = load_daily_dataset(
+        spec=spec,
+        root=sample_workspace,
+        symbols=spec.universe,
+        data_source="alpaca",
+        feed="iex",
+        start=None,
+        end=None,
+        fetcher=fake_fetcher,
+    )
+
+    assert calls
+    assert {call["adjustment"] for call in calls} == {"all"}
+    assert dataset.data_profile["adjustment"] == "all"
 
 
 def test_fetch_ohlcv_uses_local_fallback_without_credentials(

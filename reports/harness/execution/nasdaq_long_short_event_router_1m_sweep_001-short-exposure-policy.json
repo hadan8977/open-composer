@@ -1,0 +1,26 @@
+{
+  "broker_order_authorization": "blocked",
+  "manual_signal_policy": "observation_only",
+  "max_gross_short_exposure": 0.0,
+  "paper_auto_default": "blocked",
+  "position_direction": "long_short",
+  "requires": [
+    "current broker shortability or easy-to-borrow evidence for every symbol",
+    "account-specific borrow availability or locate workflow evidence",
+    "symbol-level borrow cost estimate before sizing any short leg",
+    "ex-dividend and corporate-action risk review for every short candidate",
+    "short-squeeze and gap stress limits wired into paper order policy",
+    "paper-auto safety review before any broker short order path is enabled"
+  ],
+  "research_observation_limits": {
+    "max_single_name_short_weight": 0.08,
+    "max_watchlist_gross_short_weight": 0.32,
+    "target_weight_mapping_only": true
+  },
+  "source_card_ids": [
+    "nasdaq_long_short_event_router_1m_sweep_001:short-paper-broker-verification-required",
+    "nasdaq_lse_sec_reg_sho_short_sale_20260804",
+    "nasdaq_lse_alpaca_order_support_20260804"
+  ],
+  "strategy_name": "nasdaq_long_short_event_router_1m_sweep_001"
+}

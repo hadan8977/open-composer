@@ -4,6 +4,8 @@
   "iteration_id": "mom_dynamic_theme_chain_r8",
   "status": "proposed_pre_iteration",
   "created_at": "2026-08-01T14:05:50Z",
+  "amended_at": "2026-08-04T06:27:33Z",
+  "amendment_reason": "Freeze the pre-backtest Tier 0 reserve gate accepted in the execution plan before any R8 price parse or model training.",
   "strategy_family": "short_horizon_dynamic_theme_and_industry_chain",
   "primary_objective": "Approach matched-window TQQQ CAGR after costs while materially reducing TQQQ drawdown and avoiding a static sector taxonomy.",
   "return_targets": {
@@ -11,6 +13,17 @@
     "matched_tqqq_cagr_capture_minimum": 0.85,
     "threshold_rule": "pass the higher of the absolute CAGR floor and the matched-TQQQ capture floor",
     "qqq_excess_cagr_minimum_percentage_points": 8.0
+  },
+  "tier0_reserve_targets": {
+    "purpose": "broker_free_observation_only_not_research_promotion",
+    "net_cagr_minimum_pct": 20.0,
+    "qqq_excess_cagr_minimum_percentage_points": 4.0,
+    "mar_ratio_minimum": 0.6,
+    "primary_cost_view_bps": 20,
+    "net_return_after_primary_cost_must_be_positive": true,
+    "methodology_blockers_must_be_empty": true,
+    "does_not_change_research_pass": true,
+    "frozen_before_first_r8_price_parse_or_model_training": true
   },
   "risk_targets": {
     "maximum_drawdown_floor_pct": -55.0,

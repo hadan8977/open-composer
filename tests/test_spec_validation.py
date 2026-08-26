@@ -7,7 +7,12 @@ import pytest
 import yaml
 
 from open_composer.expressions import ExpressionError
-from open_composer.models.strategy_spec import FactorConfig, StrategySpec, load_strategy_spec
+from open_composer.models.strategy_spec import (
+    FactorConfig,
+    PortfolioConfig,
+    StrategySpec,
+    load_strategy_spec,
+)
 
 
 def _fixture_spec(repo_root: Path) -> Path:
@@ -156,7 +161,28 @@ def test_static_schema_defines_etf_structural_contract(repo_root: Path) -> None:
         "const": "calendar_month_end"
     }
     assert profile_rule["then"]["properties"]["reserve_symbol"] == {"const": "BIL"}
+    dynamic_profile_rule = portfolio["allOf"][1]
+    assert dynamic_profile_rule["then"]["properties"]["rebalance_schedule"] == {
+        "const": "monday_wednesday_friday"
+    }
+    assert dynamic_profile_rule["then"]["properties"]["weighting"] == {
+        "const": "risk_budgeted_score"
+    }
     assert family["properties"]["sector_relative"]["$ref"].endswith("etfSectorRelativeRule")
+
+
+def test_dynamic_theme_profile_rejects_schedule_drift() -> None:
+    with pytest.raises(ValueError, match="dynamic_theme_mwf_bil_reserve"):
+        PortfolioConfig(
+            mode="cross_sectional_momentum",
+            selected_route_label="r8:D01",
+            cross_sectional_execution_profile="dynamic_theme_mwf_bil_reserve",
+            position_weight_enforcement="entry_only",
+            rebalance_schedule="every_bar",
+            weighting="risk_budgeted_score",
+            reserve_symbol="BIL",
+            reserve_exempt_from_max_symbol_weight=True,
+        )
 
 
 def test_static_schema_matches_factor_config_extension_fields(repo_root: Path) -> None:

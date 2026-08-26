@@ -25,6 +25,8 @@ def test_factor_library_ids_are_unique_and_include_core_router_factors() -> None
     assert "risk_on_recovery_boost" in ids
     assert "strong_risk_on_state" in ids
     assert "core_beta_sleeve" in ids
+    assert "vix_vix3m_term_structure_state" in ids
+    assert "fixed_anchor_monthly_trend_sleeve" in ids
     assert "leadership_satellite_rank" in ids
     assert "stress_only_defensive_sleeve" in ids
     assert "post_drawdown_reentry_state" in ids
@@ -125,6 +127,14 @@ def test_factor_library_definitions_have_parameters_and_source_cards() -> None:
 
     assert pre_fomc.family == "event_calendar"
     assert "point-in-time" in " ".join(pre_fomc.implementation_notes)
+
+    vix_term = get_factor_definition("vix_vix3m_term_structure_state")
+
+    assert vix_term.family == "implied_volatility_term_structure"
+    assert vix_term.expression is None
+    assert vix_term.default_parameter_space["risk_on_ratio_max"] == [0.92, 0.95, 0.98]
+    assert "visible_at" in vix_term.inputs
+    assert "forward fill" in " ".join(vix_term.implementation_notes)
 
 
 def test_factor_library_catalog_meets_step6_size_and_expression_targets() -> None:

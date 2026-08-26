@@ -1,0 +1,64 @@
+{
+  "blockers": [
+    "no counted forward semantic packets",
+    "news.alpaca live coverage, deduplication, revision handling, and latency are not measured",
+    "marginal lift and missing-modality robustness have no forward observation evidence"
+  ],
+  "capabilities": [
+    {
+      "capability_id": "market.alpaca_bars",
+      "kind": "market",
+      "notes": "The immutable Alpaca SIP daily snapshot is eligible for this historical research evaluation, but its historical quality report explicitly does not authorize Paper use.",
+      "paper_ready": false,
+      "status": "ok",
+      "strict_behavior": "fail_fast_for_unsupported_timeframes"
+    },
+    {
+      "capability_id": "news.alpaca",
+      "kind": "news",
+      "notes": "The registered capability is trial and forward-only. The fixture checks packet shape only; no fixture, retrospective download, or cache fallback receives historical Alpha or Paper-readiness credit.",
+      "paper_ready": false,
+      "status": "partial",
+      "strict_behavior": "forward_only_fail_closed"
+    }
+  ],
+  "conclusion": "warning",
+  "fallback_check": {
+    "broker_writes": false,
+    "mode": "exact_zero_capital_quant_fallback_when_packet_missing",
+    "order_authority": false,
+    "semantic_stock_budget": 0.0
+  },
+  "feature_packet_evidence": {
+    "counted_forward_packet_count": 0,
+    "factor_field": "direction",
+    "factor_source": "llm_feature",
+    "historical_packet_count": 0,
+    "live_call_inside_historical_evaluation": false,
+    "packet_path": "data/forward/high_beta_sleeve_ensemble_r1/semantic-observations.jsonl",
+    "prompt_path": "prompts/pit_semantic_theme_r24_factor_v1.txt",
+    "prompt_sha256": "601b24d287a5ec0f3ac3ce05730062b7362b028ff2278832d552bac6d5dd00fd",
+    "required_fields": [
+      "visible_at",
+      "published_at",
+      "fetched_at",
+      "source",
+      "input_hash",
+      "prompt_hash"
+    ],
+    "schema_path": "schemas/high_beta_sleeve_ensemble_r1_feature_packet.schema.json",
+    "schema_sha256": "9fe9e86a6d7d822e0876e98ed158665ba93091dde290f52f6cfbe3dab0c22b09"
+  },
+  "feature_packet_pit_check": "schema_pass_no_counted_forward_packets",
+  "historical_semantic_alpha_authorized": false,
+  "iter_id": "mom_high_beta_sleeve_ensemble_r1",
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "reviewed_at": "2026-08-13",
+  "sample_data_caveats": [
+    "news.alpaca fixture data validates shape only and is not research or Paper evidence",
+    "retrospective news downloads and cache fallback do not establish local first-seen visibility",
+    "the historical SIP snapshot is research evidence only and is not Paper authorization"
+  ],
+  "strategy_name": "us_high_beta_sleeve_ensemble_r1_l01"
+}

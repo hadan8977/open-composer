@@ -31,13 +31,93 @@ class StrategyRollbackResult:
 
 
 def strategy_content_hash(spec: StrategySpec) -> str:
+    payload_data = spec.model_dump(mode="json")
+    _remove_unset_schema_extensions(spec, payload_data)
     payload = json.dumps(
-        spec.model_dump(mode="json"),
+        payload_data,
         ensure_ascii=True,
         sort_keys=True,
         separators=(",", ":"),
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _remove_unset_schema_extensions(spec: StrategySpec, payload: dict[str, object]) -> None:
+    """Keep frozen hashes stable when optional fields are added to the schema."""
+
+    def drop_unset(model: object, target: object, fields: tuple[str, ...]) -> None:
+        if model is None or not isinstance(target, dict):
+            return
+        fields_set = getattr(model, "model_fields_set", set())
+        for field in fields:
+            if field not in fields_set:
+                target.pop(field, None)
+
+    drop_unset(
+        spec.research_design,
+        payload.get("research_design"),
+        (
+            "workflow_only_ungated_draft",
+            "campaign_contract_path",
+            "candidate_policy_contract_path",
+            "source_card_claim_ids",
+        ),
+    )
+    drop_unset(
+        spec.execution_policy,
+        payload.get("execution_policy"),
+        ("historical_execution_contract", "future_order_contract"),
+    )
+    if spec.model is None:
+        return
+    model_payload = payload.get("model")
+    model_extension_fields = {"abstention", "action", "preprocessing"}
+    if model_extension_fields & spec.model.model_fields_set:
+        return
+    drop_unset(spec.model, model_payload, ("abstention", "action", "preprocessing"))
+    if not isinstance(model_payload, dict):
+        return
+    drop_unset(
+        spec.model.label,
+        model_payload.get("label"),
+        (
+            "horizon_mode",
+            "review_schedule",
+            "maximum_horizon_bars",
+            "path_drawdown_reference",
+            "baseline_policy",
+            "alternative_policy",
+            "value_measure",
+            "one_way_cost_bps",
+            "terminal_rejoin_cost_included",
+        ),
+    )
+    drop_unset(
+        spec.model.training,
+        model_payload.get("training"),
+        ("retrain_schedule", "purge_bars"),
+    )
+    drop_unset(spec.model.selection, model_payload.get("selection"), ("operator",))
+    if spec.model.abstention is not None:
+        drop_unset(
+            spec.model.abstention,
+            model_payload.get("abstention"),
+            (
+                "minimum_positive_class_rows",
+                "minimum_negative_class_rows",
+                "minimum_calibration_positive_class_rows",
+                "minimum_calibration_negative_class_rows",
+                "target_coverage",
+                "quantile_method",
+                "calibrator",
+            ),
+        )
+    if spec.model.action is not None:
+        drop_unset(
+            spec.model.action,
+            model_payload.get("action"),
+            ("source_symbol", "destination_symbol", "portfolio_weight_delta"),
+        )
 
 
 def strategy_version_id(spec: StrategySpec) -> str:

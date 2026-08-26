@@ -203,10 +203,15 @@ class PortfolioConfig(BaseModel):
     cross_sectional_execution_profile: Literal[
         "generic",
         "monthly_equal_weight_bil_reserve",
+        "dynamic_theme_mwf_bil_reserve",
     ] = "generic"
     position_weight_enforcement: Literal["entry_only", "continuous"] = "entry_only"
-    rebalance_schedule: Literal["every_bar", "calendar_month_end"] = "every_bar"
-    weighting: Literal["engine_default", "equal_weight"] = "engine_default"
+    rebalance_schedule: Literal[
+        "every_bar",
+        "calendar_month_end",
+        "monday_wednesday_friday",
+    ] = "every_bar"
+    weighting: Literal["engine_default", "equal_weight", "risk_budgeted_score"] = "engine_default"
     reserve_symbol: str | None = None
     reserve_exempt_from_max_symbol_weight: bool = False
     etf_structural: ETFStructuralFamilyConfig | None = None
@@ -259,6 +264,34 @@ class PortfolioConfig(BaseModel):
                 raise ValueError(
                     "monthly_equal_weight_bil_reserve execution profile mismatch: "
                     + ", ".join(failed)
+                )
+        elif self.cross_sectional_execution_profile == "dynamic_theme_mwf_bil_reserve":
+            required_fields = {
+                "mode",
+                "position_weight_enforcement",
+                "rebalance_schedule",
+                "weighting",
+                "reserve_symbol",
+                "reserve_exempt_from_max_symbol_weight",
+            }
+            missing_fields = sorted(required_fields - self.model_fields_set)
+            expected = {
+                "mode": self.mode == "cross_sectional_momentum",
+                "position_weight_enforcement": self.position_weight_enforcement == "entry_only",
+                "rebalance_schedule": self.rebalance_schedule == "monday_wednesday_friday",
+                "weighting": self.weighting == "risk_budgeted_score",
+                "reserve_symbol": self.reserve_symbol == "BIL",
+                "reserve_exempt_from_max_symbol_weight": (
+                    self.reserve_exempt_from_max_symbol_weight is True
+                ),
+            }
+            failed = [
+                *[f"missing:{name}" for name in missing_fields],
+                *sorted(name for name, passed in expected.items() if not passed),
+            ]
+            if failed:
+                raise ValueError(
+                    "dynamic_theme_mwf_bil_reserve execution profile mismatch: " + ", ".join(failed)
                 )
         elif (
             self.mode != "cross_sectional_momentum"
@@ -495,7 +528,10 @@ class ResearchDesign(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     iter_id: str | None = Field(default=None, pattern=r"^[a-z0-9][a-z0-9_-]{2,80}$")
+    workflow_only_ungated_draft: bool = False
+    campaign_contract_path: str | None = None
     candidate_manifest_path: str | None = None
+    candidate_policy_contract_path: str | None = None
     data_feasibility_path: str | None = None
     universe_contract_path: str | None = None
     data_contract_path: str | None = None
@@ -503,6 +539,7 @@ class ResearchDesign(BaseModel):
     cost_contract_path: str | None = None
     cumulative_trial_contract_path: str | None = None
     source_cards_path: str | None = None
+    source_card_claim_ids: list[str] = Field(default_factory=list)
     preregistration_lock_path: str | None = None
     parameter_space: dict[str, list[float | int | str | bool | None]] = Field(default_factory=dict)
     candidate_budget: int | None = Field(default=None, ge=1)
@@ -541,6 +578,30 @@ class FallbackBehavior(BaseModel):
     if_not_filled: Literal["skip", "retry_5m", "retry_15m", "delay_to_close"] = "skip"
     if_gap_exceeds_limit: Literal["skip", "delay_to_5m", "delay_to_15m"] = "skip"
     if_spread_exceeds_limit: Literal["skip", "delay_to_5m", "delay_to_15m"] = "skip"
+
+
+class HistoricalExecutionContract(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal["guaranteed_next_regular_open_cost_stress"]
+    equivalent_to_future_order_policy: Literal[False]
+    paper_readiness_credit: Literal[False]
+
+
+class FutureOrderContract(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    order_style: Literal["opg_limit"]
+    submission_cutoff_et: str = Field(pattern=r"^\d{2}:\d{2}:\d{2}$")
+    limit_reference: Literal["prior_regular_close"]
+    buy_limit_offset_bps: float = Field(ge=0)
+    sell_limit_offset_bps: float = Field(ge=0)
+    gap_reference: Literal["prior_regular_close"]
+    unfilled_target_policy: Literal["retain_actual_holdings_until_next_scheduled_review"]
+    partial_fill_policy: Literal["cancel_remainder_and_reconcile_actual_weights"]
+    paired_leg_policy: Literal["no_unhedged_second_leg_after_first_leg_rejection"]
+    retry_policy: Literal["none"]
+    duplicate_order_policy: Literal["stable_signal_id"]
 
 
 class TCAPlan(BaseModel):
@@ -583,6 +644,8 @@ class ExecutionPolicy(BaseModel):
     alternatives_compared: list[str] = Field(default_factory=list, min_length=0)
     source_card_ids: list[str] = Field(default_factory=list)
     naked_market_justification: str | None = None
+    historical_execution_contract: HistoricalExecutionContract | None = None
+    future_order_contract: FutureOrderContract | None = None
 
     @model_validator(mode="after")
     def require_justification_for_naked_market(self) -> ExecutionPolicy:
@@ -635,21 +698,82 @@ class RealityModel(BaseModel):
 class MLLabel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    type: Literal["forward_return", "forward_direction", "path_survival"] = "forward_return"
-    horizon_bars: int = Field(default=5, ge=1, le=60)
+    type: Literal[
+        "forward_return",
+        "forward_direction",
+        "path_survival",
+        "net_incremental_policy_value",
+    ] = "forward_return"
+    horizon_bars: int | None = Field(default=5, ge=1, le=60)
+    horizon_mode: Literal["fixed_bars", "next_scheduled_review_open"] = "fixed_bars"
+    review_schedule: Literal["calendar_month_end"] | None = None
+    maximum_horizon_bars: int | None = Field(default=None, ge=1, le=60)
     threshold_pct: float | None = None
     max_drawdown_pct: float | None = Field(default=None, ge=0)
     min_terminal_return_pct: float | None = None
+    path_drawdown_reference: Literal["start_open", "running_open_peak"] | None = None
+    baseline_policy: str | None = None
+    alternative_policy: str | None = None
+    value_measure: Literal["log_wealth_ratio"] | None = None
+    one_way_cost_bps: float | None = Field(default=None, ge=0)
+    terminal_rejoin_cost_included: bool | None = None
+
+    @model_validator(mode="after")
+    def validate_horizon_and_policy_value(self) -> MLLabel:
+        if self.horizon_mode == "fixed_bars" and self.horizon_bars is None:
+            raise ValueError("fixed_bars ML labels require horizon_bars")
+        if self.horizon_mode == "next_scheduled_review_open":
+            if (
+                self.horizon_bars is not None
+                or self.review_schedule is None
+                or self.maximum_horizon_bars is None
+            ):
+                raise ValueError(
+                    "next_scheduled_review_open labels require review_schedule and "
+                    "maximum_horizon_bars with horizon_bars=null"
+                )
+        elif self.maximum_horizon_bars is not None:
+            raise ValueError("fixed_bars ML labels must not set maximum_horizon_bars")
+        if self.type == "net_incremental_policy_value":
+            required = (
+                self.baseline_policy,
+                self.alternative_policy,
+                self.value_measure,
+                self.one_way_cost_bps,
+                self.terminal_rejoin_cost_included,
+            )
+            if self.horizon_mode != "next_scheduled_review_open" or any(
+                value is None for value in required
+            ):
+                raise ValueError(
+                    "net_incremental_policy_value requires scheduled horizon, policies, "
+                    "value_measure, costs, and terminal rejoin semantics"
+                )
+        return self
 
 
 class MLTraining(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     window_bars: int = Field(default=378, ge=120)
-    retrain_every_bars: int = Field(default=21, ge=5)
+    retrain_every_bars: int | None = Field(default=21, ge=5)
+    retrain_schedule: Literal["fixed_bars", "calendar_month_end"] = "fixed_bars"
     test_window_bars: int = Field(default=63, ge=21)
+    purge_bars: int | None = Field(default=None, ge=0)
     embargo_bars: int = Field(default=5, ge=0)
     seed: int = 42
+
+    @model_validator(mode="after")
+    def validate_retrain_schedule(self) -> MLTraining:
+        if self.retrain_schedule == "fixed_bars" and self.retrain_every_bars is None:
+            raise ValueError("fixed_bars training requires retrain_every_bars")
+        if self.retrain_schedule == "calendar_month_end":
+            if self.retrain_every_bars is not None or self.purge_bars is None:
+                raise ValueError(
+                    "calendar_month_end training requires retrain_every_bars=null and "
+                    "an explicit purge_bars"
+                )
+        return self
 
 
 class MLSelection(BaseModel):
@@ -658,6 +782,11 @@ class MLSelection(BaseModel):
     method: Literal["threshold", "top_quantile"] = "threshold"
     threshold: float | None = None
     quantile: float | None = Field(default=None, gt=0, lt=1)
+    operator: Literal[
+        "greater_than_or_equal",
+        "less_than_or_equal",
+        "lower_bound_strictly_greater_than",
+    ] = "greater_than_or_equal"
 
     @model_validator(mode="after")
     def require_selection_value(self) -> MLSelection:
@@ -669,14 +798,99 @@ class MLSelection(BaseModel):
         return self
 
 
+class MLProbabilityCalibratorConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal["logistic_regression"]
+    C: float = Field(gt=0)
+    penalty: Literal["l2"] = "l2"
+    solver: Literal["lbfgs"] = "lbfgs"
+    max_iter: int = Field(ge=1)
+    use_training_seed: bool = True
+
+
+class MLAbstentionConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    calibration_method: Literal[
+        "chronological_split_conformal_lower_bound",
+        "chronological_platt_scaling",
+    ]
+    calibration_fraction: float = Field(gt=0, lt=0.5)
+    minimum_fit_rows: int = Field(ge=1)
+    minimum_calibration_rows: int = Field(ge=1)
+    minimum_positive_class_rows: int | None = Field(default=None, ge=1)
+    minimum_negative_class_rows: int | None = Field(default=None, ge=1)
+    minimum_calibration_positive_class_rows: int | None = Field(default=None, ge=1)
+    minimum_calibration_negative_class_rows: int | None = Field(default=None, ge=1)
+    target_coverage: float | None = Field(default=None, gt=0, lt=1)
+    quantile_method: Literal["higher"] | None = None
+    calibrator: MLProbabilityCalibratorConfig | None = None
+    fallback_candidate_id: str = Field(min_length=1)
+    insufficient_data_action: Literal["exact_target_identity_fallback"]
+
+    @model_validator(mode="after")
+    def validate_calibration_contract(self) -> MLAbstentionConfig:
+        conformal = self.calibration_method == "chronological_split_conformal_lower_bound"
+        if conformal != (self.target_coverage is not None and self.quantile_method is not None):
+            raise ValueError(
+                "split conformal abstention requires target_coverage and quantile_method; "
+                "other calibration methods must omit them"
+            )
+        if conformal == (self.calibrator is not None):
+            raise ValueError(
+                "Platt calibration requires a calibrator contract; conformal calibration "
+                "must not declare one"
+            )
+        class_minima = (
+            self.minimum_positive_class_rows,
+            self.minimum_negative_class_rows,
+            self.minimum_calibration_positive_class_rows,
+            self.minimum_calibration_negative_class_rows,
+        )
+        if self.calibration_method == "chronological_platt_scaling" and any(
+            value is None for value in class_minima
+        ):
+            raise ValueError("Platt calibration requires positive and negative class minima")
+        return self
+
+
+class MLPolicyAction(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    kind: Literal["invert_tactical_sleeve", "shift_portfolio_weight"]
+    source_symbol: str | None = None
+    destination_symbol: str | None = None
+    portfolio_weight_delta: float | None = Field(default=None, gt=0, le=1)
+    apply_at: Literal["next_regular_session_open"]
+    hold_until: Literal["next_scheduled_review_open"]
+
+    @model_validator(mode="after")
+    def validate_weight_shift(self) -> MLPolicyAction:
+        fields = (self.source_symbol, self.destination_symbol, self.portfolio_weight_delta)
+        if self.kind == "shift_portfolio_weight" and any(value is None for value in fields):
+            raise ValueError("shift_portfolio_weight requires symbols and portfolio_weight_delta")
+        if self.kind == "invert_tactical_sleeve" and any(value is not None for value in fields):
+            raise ValueError("invert_tactical_sleeve must not declare fixed weight-shift fields")
+        return self
+
+
 class MLModelConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    kind: Literal["lightgbm_regressor", "lightgbm_classifier"] = "lightgbm_regressor"
+    kind: Literal[
+        "lightgbm_regressor",
+        "lightgbm_classifier",
+        "ridge_regressor",
+        "logistic_regression_classifier",
+    ] = "lightgbm_regressor"
     label: MLLabel = Field(default_factory=MLLabel)
     features: list[str] = Field(min_length=1)
     training: MLTraining = Field(default_factory=MLTraining)
     selection: MLSelection = Field(default_factory=MLSelection)
+    abstention: MLAbstentionConfig | None = None
+    action: MLPolicyAction | None = None
+    preprocessing: Literal["standard_scaler"] = "standard_scaler"
     hyperparameters: dict[str, Any] = Field(default_factory=dict)
     baseline: Literal["linear_composite", "none"] = "linear_composite"
 

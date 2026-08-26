@@ -84,6 +84,7 @@ def frame_data_profile(
     feed_value = attrs.get("data_source_feed") or feed
     source_mode_value = attrs.get("data_source_mode") or source_mode
     path_value = attrs.get("data_source_path") or path
+    adjustment_value = attrs.get("data_source_adjustment")
     acquisition_tier = data_acquisition_tier(
         data_source=str(provider_value or ""),
         source_mode=str(source_mode_value or ""),
@@ -101,6 +102,7 @@ def frame_data_profile(
         "timeframe": timeframe,
         "provider": provider_value,
         "feed": feed_value,
+        "adjustment": adjustment_value,
         "source_mode": source_mode_value,
         "path": str(path_value) if path_value is not None else None,
         "records": int(len(frame)),
@@ -124,12 +126,17 @@ def combined_data_profile(profiles: list[dict[str, Any]]) -> dict[str, Any]:
     providers = sorted({str(item.get("provider")) for item in profiles if item.get("provider")})
     feeds = sorted({str(item.get("feed")) for item in profiles if item.get("feed")})
     modes = sorted({str(item.get("source_mode")) for item in profiles if item.get("source_mode")})
+    adjustments = sorted(
+        {str(item.get("adjustment")) for item in profiles if item.get("adjustment")}
+    )
     return {
         "symbols": [item.get("symbol") for item in profiles if item.get("symbol")],
         "provider": providers[0] if len(providers) == 1 else None,
         "providers": providers,
         "feed": feeds[0] if len(feeds) == 1 else None,
         "feeds": feeds,
+        "adjustment": adjustments[0] if len(adjustments) == 1 else None,
+        "adjustments": adjustments,
         "source_mode": modes[0] if len(modes) == 1 else None,
         "source_modes": modes,
         "records": sum(int(item.get("records", 0) or 0) for item in profiles),

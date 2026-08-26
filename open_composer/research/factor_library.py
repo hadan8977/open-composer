@@ -266,6 +266,101 @@ TACTICAL_ROUTER_FACTOR_LIBRARY: tuple[FactorDefinition, ...] = (
         ],
     ),
     FactorDefinition(
+        id="vix_vix3m_term_structure_state",
+        family="implied_volatility_term_structure",
+        label="VIX/VIX3M term-structure state",
+        description=(
+            "Uses the paired Cboe one-month and three-month SPX implied-volatility "
+            "indices to classify contango, transition, backwardation, and crisis states "
+            "for a separately traded long-only ETF exposure ladder."
+        ),
+        inputs=[
+            "vix_close",
+            "vix3m_close",
+            "visible_at",
+            "source",
+            "input_hash",
+        ],
+        output="volatility_term_structure_state",
+        default_parameter_space={
+            "risk_on_ratio_max": [0.92, 0.95, 0.98],
+            "stress_ratio_min": [1.00, 1.03, 1.06],
+            "crisis_vix_min": [35.0, 40.0, 45.0],
+            "exit_confirmation_sessions": [1, 2, 3],
+        },
+        expression=None,
+        source_card_ids=[
+            "vix_r1_cboe_vix3m_term_structure",
+            "vix_r1_vix_term_structure_paper",
+        ],
+        implementation_notes=[
+            (
+                "This is an external paired-index packet factor, not an OHLCV expression; "
+                "research runners must join only rows whose visible_at is no later than "
+                "the next-open decision timestamp."
+            ),
+            (
+                "Require same-date VIX and VIX3M legs, reject forward fill, and fail closed "
+                "on missing, stale, duplicate, or nonfinite observations."
+            ),
+            (
+                "The indices are not tradable. Map states only to separately validated "
+                "long-only ETF targets such as TQQQ, QQQ, and BIL."
+            ),
+        ],
+        risk_notes=[
+            (
+                "Historical Cboe downloads establish research replay, not historical "
+                "first-seen time or paper-ready collection latency."
+            ),
+            (
+                "VIX/VIX3M state can reverse around gaps; next-open execution and protected "
+                "order behavior require separate parity and TCA evidence."
+            ),
+        ],
+    ),
+    FactorDefinition(
+        id="fixed_anchor_monthly_trend_sleeve",
+        family="portfolio_construction",
+        label="Fixed anchor plus monthly trend sleeve",
+        description=(
+            "Keeps a fixed leveraged-ETF anchor invested while a separate tactical sleeve "
+            "switches between the leveraged ETF and a declared defensive asset at the final "
+            "completed session of each month using the underlying index trend."
+        ),
+        inputs=["underlying_close", "portfolio_weights", "review_calendar"],
+        output="anchor_and_tactical_target_weights",
+        default_parameter_space={
+            "anchor_weight_pct": [40.0, 50.0, 60.0],
+            "trend_sma_sessions": [200],
+            "risk_on_assets": [["TQQQ"]],
+            "risk_off_assets": [["BIL"]],
+            "review_schedule": ["calendar_month_end"],
+        },
+        source_card_ids=[
+            "hbs_r1_time_series_momentum_paper",
+            "hbs_r1_tqqq_daily_target_and_path_risk",
+        ],
+        implementation_notes=[
+            (
+                "Confirm the underlying index at the completed close and trade at the "
+                "next regular open."
+            ),
+            (
+                "The trend gate changes only the tactical sleeve; it never silently "
+                "removes the fixed anchor."
+            ),
+            "Hold units between reviews so actual weights drift until the next scheduled target.",
+        ],
+        risk_notes=[
+            (
+                "A persistent leveraged anchor retains gap and path-dependency risk "
+                "during failed trends."
+            ),
+            "A monthly trend review can miss fast breaks and early rebound sessions.",
+        ],
+    ),
+    FactorDefinition(
         id="leadership_satellite_rank",
         family="relative_strength",
         label="Leadership satellite rank",

@@ -73,6 +73,7 @@ def test_strategy_research_report_writes_default_contract_pipeline(
 def test_strategy_evidence_uses_lightweight_router_report(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     fixture = sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     spec_path = sample_workspace / "strategy_specs" / "drafts" / "router_fixture.yaml"
@@ -94,6 +95,7 @@ def test_strategy_evidence_uses_lightweight_router_report(
         ),
     }
     spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     def fail_generic_report(*args, **kwargs):
         raise AssertionError("generic research report should be skipped for router specs")

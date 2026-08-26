@@ -255,6 +255,27 @@ def test_paper_readiness_passes_for_live_cache_alpaca_strategy(
     assert harness_check.status == "blocked"
 
 
+def test_paper_readiness_accepts_broker_enum_account_status(
+    sample_workspace: Path,
+) -> None:
+    _write_paper_account_snapshot(sample_workspace)
+    account_path = sample_workspace / "reports" / "paper" / "account.json"
+    account_path.write_text(
+        account_path.read_text(encoding="utf-8").replace(
+            '"status": "ACTIVE"', '"status": "AccountStatus.ACTIVE"'
+        ),
+        encoding="utf-8",
+    )
+
+    report = assess_paper_strategy_readiness(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml",
+        sample_workspace,
+    )
+    check = next(item for item in report.checks if item.name == "account_snapshot")
+
+    assert check.status == "ok"
+
+
 def test_paper_readiness_requires_research_contract_and_new_promotion_checks(
     sample_workspace: Path,
     monkeypatch,
@@ -666,13 +687,21 @@ def test_bounded_canary_is_orderable_without_claiming_full_readiness(
     active_payload = yaml.safe_load(active.read_text(encoding="utf-8"))
     active_payload["notes"] = {
         **active_payload.get("notes", {}),
-        "minimum_bound_forward_sessions": 1,
+        "minimum_bound_forward_sessions": 20,
+        "minimum_canary_forward_sessions": 1,
         "paper_validation_start": "2026-07-01",
     }
     active.write_text(yaml.safe_dump(active_payload), encoding="utf-8")
     _write_ready_promotion(sample_workspace, "beta_router_canary")
     _write_router_harness_artifacts(sample_workspace, "beta_router_canary")
     _write_paper_account_snapshot(sample_workspace)
+    account_path = sample_workspace / "reports" / "paper" / "account.json"
+    account_path.write_text(
+        account_path.read_text(encoding="utf-8").replace(
+            '"status": "ACTIVE"', '"status": "AccountStatus.ACTIVE"'
+        ),
+        encoding="utf-8",
+    )
     _write_empty_broker_sync(sample_workspace)
     clear_paper_kill_switch(sample_workspace, updated_by="test")
     _write_forward_observation_day(sample_workspace, active, date(2026, 7, 1))
@@ -697,6 +726,9 @@ def test_bounded_canary_is_orderable_without_claiming_full_readiness(
     report = assess_paper_strategy_readiness(active, sample_workspace)
     assert authorization_path.is_file()
     authorization_payload = json.loads(authorization_path.read_text(encoding="utf-8"))
+    assert authorization_payload["canary_forward_sessions_required"] == 1
+    assert authorization_payload["forward_sessions_observed"] == 1
+    assert authorization_payload["full_forward_sessions_required"] == 20
     authorization_archive = paper_authorization_archive_path(
         sample_workspace,
         spec,
@@ -712,6 +744,9 @@ def test_bounded_canary_is_orderable_without_claiming_full_readiness(
     assert report.status == "warning"
     assert report.execution_substate == "canary_authorized"
     assert report.ready is False
+    paper_validation = next(check for check in report.checks if check.name == "paper_validation")
+    assert paper_validation.details["forward_observation_progress_days"] == 1
+    assert paper_validation.details["forward_observation_pass"] is False
     assert report.gate_summary["paper_canary_pass"] is True
     assert report.gate_summary["paper_ready_pass"] is False
 
@@ -763,6 +798,27 @@ def test_bounded_canary_is_orderable_without_claiming_full_readiness(
     rolled_back = assess_paper_canary_authorization(spec, sample_workspace)
     assert rolled_back.authorized is False
     assert "authorization_superseded" in rolled_back.details["mismatches"]
+
+
+def test_canary_forward_threshold_requires_an_explicit_lower_bound(
+    sample_workspace: Path,
+) -> None:
+    spec = load_strategy_spec(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    )
+    raw = spec.model_dump(mode="json")
+    raw["notes"] = {**raw["notes"], "minimum_bound_forward_sessions": 20}
+    full_threshold = StrategySpec.model_validate(raw)
+    assert paper_authorization._canary_forward_session_requirement(full_threshold) == 20
+
+    raw["notes"]["minimum_canary_forward_sessions"] = 1
+    bounded_canary = StrategySpec.model_validate(raw)
+    assert paper_authorization._canary_forward_session_requirement(bounded_canary) == 1
+
+    raw["notes"]["minimum_canary_forward_sessions"] = 21
+    invalid = StrategySpec.model_validate(raw)
+    with pytest.raises(ValueError, match="cannot exceed"):
+        paper_authorization._canary_forward_session_requirement(invalid)
 
 
 def test_canary_authorization_cli_help_smoke() -> None:

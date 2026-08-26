@@ -368,6 +368,7 @@ def _harness_artifacts(spec_path: Path, root: Path) -> GateResult:
     from open_composer.harness.policy import (
         blocking_rules_for_domains,
         check_artifact,
+        declared_artifact_binding,
         detect_risk_domains,
         required_artifacts_for_domains,
     )
@@ -391,7 +392,30 @@ def _harness_artifacts(spec_path: Path, root: Path) -> GateResult:
             evidence={"risk_domains": active, "required_artifacts": []},
         )
 
-    statuses = [check_artifact(name, spec.name, root) for name in required]
+    artifact_overrides: dict[str, tuple[Path, list[str]]] = {}
+    try:
+        declared_path, declared_claims = declared_artifact_binding("source_cards", spec, root)
+    except ValueError as exc:
+        return GateResult(
+            name="harness_artifacts",
+            status="blocked",
+            message=f"Invalid declared source-card binding: {exc}",
+        )
+    if declared_path is not None:
+        artifact_overrides["source_cards"] = (declared_path, declared_claims or [])
+
+    statuses = [
+        check_artifact(
+            name,
+            spec.name,
+            root,
+            artifact_path_override=artifact_overrides.get(name, (None, []))[0],
+            required_claim_ids_override=(
+                artifact_overrides[name][1] if name in artifact_overrides else None
+            ),
+        )
+        for name in required
+    ]
     missing = [s.name for s in statuses if not s.present]
     incomplete = [s.name for s in statuses if s.present and not s.schema_ok]
     rules = blocking_rules_for_domains(active)
@@ -408,6 +432,13 @@ def _harness_artifacts(spec_path: Path, root: Path) -> GateResult:
             evidence={
                 "risk_domains": active,
                 "required_artifacts": required,
+                "artifact_path_overrides": {
+                    name: {
+                        "path": str(path),
+                        "required_claim_ids": claims,
+                    }
+                    for name, (path, claims) in artifact_overrides.items()
+                },
                 "missing": missing,
                 "incomplete": incomplete,
                 "blocking_rules": rule_ids,
@@ -420,6 +451,13 @@ def _harness_artifacts(spec_path: Path, root: Path) -> GateResult:
         evidence={
             "risk_domains": active,
             "required_artifacts": required,
+            "artifact_path_overrides": {
+                name: {
+                    "path": str(path),
+                    "required_claim_ids": claims,
+                }
+                for name, (path, claims) in artifact_overrides.items()
+            },
             "blocking_rules": rule_ids,
         },
     )

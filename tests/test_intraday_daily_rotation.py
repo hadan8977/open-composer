@@ -1868,6 +1868,24 @@ def test_hybrid_target_weight_mapping_matches_python_reference(
     assert payload["summary"]["max_gross_exposure"] <= 1.0
     assert {"symbol", "target_weight", "rebalance_session"} <= set(payload["target_weights"][0])
     assert payload["rebalance_intents"]
+    latest_session = max(row["rebalance_session"] for row in payload["target_weights"])
+    latest_rows = [
+        row for row in payload["target_weights"] if row["rebalance_session"] == latest_session
+    ]
+    assert {row["signal_session"] for row in latest_rows} == {
+        payload["data_profile"]["last_timestamp"][:10]
+    }
+    assert all(row["reference_evaluable"] is False for row in latest_rows)
+    observation_path = (
+        sample_workspace / payload["router_execution_artifacts"]["router_execution_observation"]
+    )
+    observation = json.loads(observation_path.read_text(encoding="utf-8"))
+    expected_latest_orders = sum(
+        row["requires_order"]
+        for row in payload["rebalance_intents"]
+        if row["rebalance_session"] == latest_session
+    )
+    assert observation["latest_order_required_intents"] == expected_latest_orders
 
 
 def test_llm_adaptive_intraday_router_can_select_non_top_route(

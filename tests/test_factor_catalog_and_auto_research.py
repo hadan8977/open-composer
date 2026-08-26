@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 from typer.testing import CliRunner
 
 from open_composer.cli import app
@@ -38,7 +39,7 @@ def test_factor_cli_catalog_status_and_use_in(sample_workspace: Path, monkeypatc
     runner = CliRunner()
     status = runner.invoke(app, ["factor", "catalog-status", "--strict"], catch_exceptions=False)
     assert status.exit_code == 0
-    assert "catalog size: 82" in status.output
+    assert "catalog size: 84" in status.output
     assert "errors: 0" in status.output
 
     result = runner.invoke(
@@ -72,6 +73,26 @@ def test_keyword_heuristic_selects_expected_families() -> None:
 
     assert "trend_momentum" in {factor.family for factor in trend}
     assert any("drawdown" in factor.id or factor.family == "risk_regime" for factor in drawdown)
+
+
+def test_auto_research_blocks_market_data_without_iteration_workflow(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "open_composer.research.auto_research._check_data_source_available",
+        lambda source: (True, "available"),
+    )
+
+    with pytest.raises(ValueError, match="preregistered iteration workflow"):
+        run_auto_research(
+            "Trend thesis on QQQ daily.",
+            ["QQQ"],
+            data_source="alpaca",
+            root=sample_workspace,
+        )
+
+    assert not (sample_workspace / "reports/research/auto").exists()
 
 
 def test_auto_research_writes_spec_report_and_lineage(
@@ -331,46 +352,19 @@ def test_auto_research_zero_cost_smoke_is_explicit(
     assert "- Zero-cost smoke: `True`" in result.report_path.read_text(encoding="utf-8")
 
 
-def test_auto_research_defaults_to_alpaca_and_falls_back_without_credentials(
+def test_auto_research_rejects_unavailable_market_source_before_writing_artifacts(
     sample_workspace: Path,
     monkeypatch,
 ) -> None:
-    metric = SimpleNamespace(
-        rank_ic=0.08,
-        ir=0.64,
-        rolling_rank_ic_mean=0.04,
-        stability_score=0.75,
-        coverage_pct=96.0,
-        observations=250,
-        top_bottom_spread_pct=1.2,
-        flags=[],
-    )
-
-    def fake_factor_lab(spec_path: Path, root: Path, **kwargs):  # noqa: ARG001
-        return SimpleNamespace(
-            status="ok",
-            factor_metrics=[metric],
-            json_path=sample_workspace / "reports" / "research" / f"{spec_path.stem}.json",
-        )
-
-    def fake_evidence(spec_path: Path, root: Path):  # noqa: ARG001
-        return SimpleNamespace(status="warning")
-
     monkeypatch.delenv("ALPACA_API_KEY_ID", raising=False)
     monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
-    monkeypatch.setattr("open_composer.research.auto_research.run_factor_lab", fake_factor_lab)
-    monkeypatch.setattr("open_composer.research.evidence.build_strategy_evidence", fake_evidence)
 
-    result = run_auto_research(
-        "Trend thesis on QQQ daily.",
-        ["QQQ"],
-        max_factors=2,
-        root=sample_workspace,
-    )
+    with pytest.raises(ValueError, match="preregistered iteration workflow"):
+        run_auto_research(
+            "Trend thesis on QQQ daily.",
+            ["QQQ"],
+            max_factors=2,
+            root=sample_workspace,
+        )
 
-    assert result.fallback_message
-    assert "falling back to sample" in result.fallback_message
-    assert (result.report_path.parent / "data_source_fallback.txt").exists()
-    spec = load_strategy_spec(result.spec_path)
-    assert spec.data.source == "sample"
-    assert spec.data.path == "data/sample/syn_daily.csv"
+    assert not (sample_workspace / "reports/research/auto").exists()

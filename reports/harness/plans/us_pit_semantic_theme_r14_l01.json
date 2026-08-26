@@ -1,0 +1,63 @@
+{
+  "schema_version": 2,
+  "plan_contract": "harness_plan_v2",
+  "strategy_name": "us_pit_semantic_theme_r14_l01",
+  "spec_path": "strategy_specs/drafts/us_pit_semantic_theme_r14_l01.yaml",
+  "spec_file_sha256": "1d5d7375555049817658a0ddc09698d695251785fe99a5c70e0d8ea6a39c79fe",
+  "spec_semantic_sha256": "f9476f476a7414b7b144e42e31a56538c84dda152f2a040cad6bf1306b06232e",
+  "risk_domains": [
+    "daily_open_execution",
+    "leveraged_etf",
+    "llm_or_news_signal"
+  ],
+  "required_skills": [
+    "backtest-forensics",
+    "data-capability-reviewer",
+    "execution-reality-reviewer",
+    "source-researcher"
+  ],
+  "required_artifacts": [
+    "capability_review",
+    "execution_policy",
+    "execution_reality_report",
+    "feature_packet_schema",
+    "gap_stress_report",
+    "leveraged_etf_risk_note",
+    "marginal_lift_report",
+    "missing_modality_robustness_report",
+    "pit_replay_evidence",
+    "source_cards"
+  ],
+  "blocking_rules": [
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "naked_market_order_must_be_justified",
+      "blocks": "research_pass",
+      "description": "A DAY market order without price protection requires a written justification in execution_policy explaining why the risk is acceptable.\n"
+    },
+    {
+      "domain": "daily_open_execution",
+      "rule_id": "compare_at_least_two_execution_methods",
+      "blocks": "research_pass",
+      "description": "Execution policy must compare at least two order styles (e.g. DAY market vs. MOO/OPG vs. LOO/OPG).\n"
+    },
+    {
+      "domain": "leveraged_etf",
+      "rule_id": "leveraged_etf_paper_auto_requires_stress",
+      "blocks": "paper_ready_pass",
+      "description": "paper_auto activation for a leveraged ETF strategy requires a completed gap_stress_report and leveraged_etf_risk_note.\n"
+    },
+    {
+      "domain": "llm_or_news_signal",
+      "rule_id": "no_live_llm_call_inside_backtest",
+      "blocks": "research_pass",
+      "description": "LLM and news calls must be replayed from PIT packets during backtest; live API calls inside the backtest loop are prohibited.\n"
+    },
+    {
+      "domain": "llm_or_news_signal",
+      "rule_id": "llm_alpha_requires_quant_baseline",
+      "blocks": "research_pass",
+      "description": "An LLM or news-driven strategy must include a deterministic (non-LLM) baseline and a marginal_lift_report showing additive value.\n"
+    }
+  ]
+}

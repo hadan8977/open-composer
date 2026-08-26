@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import pandas as pd
@@ -42,7 +43,12 @@ def _evaluate_capability(root: Path, capability: Capability) -> CapabilityEvalua
             issues=[f"fixture missing: {capability.fixture}"],
         )
 
-    if capability.kind == "market":
+    data_shape = str((capability.model_extra or {}).get("data_shape") or "")
+    if capability.kind == "market" and data_shape == "paired_eod_index_v1":
+        records, paired_score_parts, paired_issues = _evaluate_paired_index_fixture(path)
+        score_parts.extend(paired_score_parts)
+        issues.extend(paired_issues)
+    elif capability.kind == "market":
         try:
             frame = normalize_ohlcv(pd.read_csv(path))
             records = len(frame)
@@ -85,6 +91,57 @@ def _evaluate_capability(root: Path, capability: Capability) -> CapabilityEvalua
         passed=passed,
         issues=issues,
     )
+
+
+def _evaluate_paired_index_fixture(path: Path) -> tuple[int, list[float], list[str]]:
+    required = {
+        "timestamp",
+        "vix_open",
+        "vix_high",
+        "vix_low",
+        "vix_close",
+        "vix3m_open",
+        "vix3m_high",
+        "vix3m_low",
+        "vix3m_close",
+    }
+    issues: list[str] = []
+    try:
+        frame = pd.read_csv(path)
+        missing = sorted(required - set(frame.columns))
+        if missing:
+            return 0, [0.0, 0.0, 0.0], ["missing columns: " + ", ".join(missing)]
+        timestamps = pd.to_datetime(frame["timestamp"], utc=True, errors="raise")
+        numeric = frame[sorted(required - {"timestamp"})].apply(pd.to_numeric, errors="raise")
+        finite_positive = all(
+            math.isfinite(float(value)) and float(value) > 0 for value in numeric.to_numpy().ravel()
+        )
+        valid_ohlc = finite_positive and all(
+            (
+                numeric[f"{prefix}_high"]
+                >= numeric[[f"{prefix}_open", f"{prefix}_low", f"{prefix}_close"]].max(axis=1)
+            ).all()
+            and (
+                numeric[f"{prefix}_low"]
+                <= numeric[[f"{prefix}_open", f"{prefix}_high", f"{prefix}_close"]].min(axis=1)
+            ).all()
+            for prefix in ("vix", "vix3m")
+        )
+        unique_monotonic = timestamps.is_monotonic_increasing and not timestamps.duplicated().any()
+        records = len(frame)
+        if not finite_positive:
+            issues.append("paired index OHLC contains non-finite or non-positive values")
+        if finite_positive and not valid_ohlc:
+            issues.append("paired index OHLC bounds are invalid")
+        if not unique_monotonic:
+            issues.append("paired index timestamps must be unique and monotonic")
+        return (
+            records,
+            [1.0 if records >= 5 else 0.5, float(unique_monotonic), float(valid_ohlc)],
+            issues,
+        )
+    except Exception as exc:
+        return 0, [0.0, 0.0, 0.0], [str(exc)]
 
 
 def _evaluate_event_fixture(path: Path) -> tuple[int, float, list[str]]:

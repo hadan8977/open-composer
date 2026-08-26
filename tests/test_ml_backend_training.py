@@ -11,7 +11,12 @@ from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.ml_backend.training import run_rolling_training
 
 
-def _write_syn_ml_spec(sample_workspace: Path, *, model: bool = True) -> Path:
+def _write_syn_ml_spec(
+    sample_workspace: Path,
+    *,
+    model: bool = True,
+    model_kind: str = "lightgbm_regressor",
+) -> Path:
     raw = {
         "name": "syn_daily_ml_probe" if model else "syn_daily_rule_probe",
         "description": "ML probe spec",
@@ -40,7 +45,7 @@ def _write_syn_ml_spec(sample_workspace: Path, *, model: bool = True) -> Path:
     }
     if model:
         raw["model"] = {
-            "kind": "lightgbm_regressor",
+            "kind": model_kind,
             "features": ["momentum_20", "sma_ratio_20", "vol_20"],
             "label": {"type": "forward_return", "horizon_bars": 5},
             "training": {
@@ -51,7 +56,11 @@ def _write_syn_ml_spec(sample_workspace: Path, *, model: bool = True) -> Path:
                 "seed": 11,
             },
             "selection": {"method": "threshold", "threshold": 0.0},
-            "hyperparameters": {"n_estimators": 30, "min_child_samples": 10},
+            "hyperparameters": (
+                {"n_estimators": 30, "min_child_samples": 10}
+                if model_kind == "lightgbm_regressor"
+                else {"alpha": 1.0}
+            ),
         }
     path = sample_workspace / "strategy_specs" / "drafts" / f"{raw['name']}.yaml"
     path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
@@ -75,8 +84,29 @@ def test_rolling_training_writes_oos_predictions_and_is_deterministic(
         assert fold.train_end_idx <= fold.test_start_idx - 10
 
 
-def test_backtest_frame_uses_ml_branch(sample_workspace: Path) -> None:
+def test_ridge_rolling_training_is_first_class_and_deterministic(
+    sample_workspace: Path,
+) -> None:
+    spec_path = _write_syn_ml_spec(sample_workspace, model_kind="ridge_regressor")
+    spec = load_strategy_spec(spec_path)
+    frame = load_ohlcv_for_spec(spec, sample_workspace)
+
+    first = run_rolling_training(spec, frame, sample_workspace)
+    second = run_rolling_training(spec, frame, sample_workspace)
+
+    assert spec.model is not None
+    assert spec.model.kind == "ridge_regressor"
+    assert len(first.folds) > 1
+    assert any(value > 0.0 for value in first.feature_importance_mean.values())
+    pd.testing.assert_series_equal(first.full_predictions, second.full_predictions)
+
+
+def test_backtest_frame_uses_ml_branch(
+    sample_workspace: Path,
+    preregister_iteration_dossier,
+) -> None:
     spec_path = _write_syn_ml_spec(sample_workspace)
+    preregister_iteration_dossier(spec_path, candidate_count=1)
     spec = load_strategy_spec(spec_path)
     frame = load_ohlcv_for_spec(spec, sample_workspace)
 

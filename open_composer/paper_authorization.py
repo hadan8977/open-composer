@@ -430,6 +430,7 @@ def assess_paper_canary_authorization(
         "authorized_at",
         "authorized_by",
         "broker_account_id_hash",
+        "canary_forward_sessions_required",
         "canary_safety_review_hash",
         "canary_safety_review_path",
         "data_manifest_hash",
@@ -450,6 +451,8 @@ def assess_paper_canary_authorization(
         "promotion_report_path",
         "research_contract_hash",
         "research_contract_path",
+        "forward_sessions_observed",
+        "full_forward_sessions_required",
         "spec_hash",
         "strategy_name",
         "version_id",
@@ -483,6 +486,8 @@ def assess_paper_canary_authorization(
         "order_scope": "alpaca_paper_only",
         "real_money_broker_writes": "out_of_scope",
         "allowed_symbols": sorted(spec.universe),
+        "canary_forward_sessions_required": _canary_forward_session_requirement(spec),
+        "full_forward_sessions_required": _full_forward_session_requirement(spec),
     }
     for field_name, value in expected.items():
         actual = payload.get(field_name)
@@ -499,6 +504,12 @@ def assess_paper_canary_authorization(
         or int(payload["authorization_sequence"]) < 1
     ):
         mismatches.append("authorization_sequence")
+    if (
+        isinstance(payload.get("forward_sessions_observed"), bool)
+        or not isinstance(payload.get("forward_sessions_observed"), int)
+        or int(payload["forward_sessions_observed"]) < _canary_forward_session_requirement(spec)
+    ):
+        mismatches.append("forward_sessions_observed")
     without_id = {key: value for key, value in payload.items() if key != "authorization_id"}
     if payload.get("authorization_id") != "auth_" + _canonical_hash(without_id)[:16]:
         mismatches.append("authorization_id")
@@ -576,7 +587,7 @@ def assess_paper_canary_authorization(
             if (
                 account.get("paper") is not True
                 or account.get("broker_account_id_hash") != payload["broker_account_id_hash"]
-                or str(account.get("status") or "").upper() != "ACTIVE"
+                or _account_status_name(account.get("status")) != "ACTIVE"
             ):
                 mismatches.append("paper_account_snapshot.binding")
             if positions.get("paper") is not True or not isinstance(
@@ -713,28 +724,20 @@ def _write_paper_canary_authorization_locked(
         raise ValueError(
             "paper canary requires every non-bootstrap readiness check: " + ", ".join(unsafe)
         )
-    notes = spec.notes.model_dump(mode="json")
-    minimum_forward = notes.get("minimum_bound_forward_sessions")
-    if (
-        isinstance(minimum_forward, bool)
-        or not isinstance(minimum_forward, int)
-        or minimum_forward < 1
-    ):
-        raise ValueError(
-            "paper canary requires notes.minimum_bound_forward_sessions as a positive integer"
-        )
+    full_forward_sessions = _full_forward_session_requirement(spec)
+    canary_forward_sessions = _canary_forward_session_requirement(spec)
     validation_check = next(
         (check for check in readiness.checks if check.name == "paper_validation"),
         None,
     )
-    if (
-        validation_check is None
-        or validation_check.details.get("forward_observation_pass") is not True
-        or int(validation_check.details.get("forward_observation_progress_days") or 0)
-        < minimum_forward
-    ):
+    observed_forward_sessions = (
+        int(validation_check.details.get("forward_observation_progress_days") or 0)
+        if validation_check is not None
+        else 0
+    )
+    if validation_check is None or observed_forward_sessions < canary_forward_sessions:
         raise ValueError(
-            "paper canary requires the bound broker-free forward observation threshold to pass"
+            "paper canary requires its bound broker-free forward observation threshold to pass"
         )
 
     policy = require_orderable_execution_policy(spec, root)
@@ -783,7 +786,7 @@ def _write_paper_canary_authorization_locked(
     if (
         not account_id_hash
         or account.get("paper") is not True
-        or str(account.get("status") or "").upper() != "ACTIVE"
+        or _account_status_name(account.get("status")) != "ACTIVE"
     ):
         raise ValueError("paper account snapshot must bind an active Alpaca Paper account id")
     if positions.get("paper") is not True or not isinstance(positions.get("positions"), list):
@@ -844,6 +847,9 @@ def _write_paper_canary_authorization_locked(
         "broker_account_id_hash": account_id_hash,
         "exclusive_account_writer": "open_composer_only",
         "allowed_symbols": sorted(spec.universe),
+        "canary_forward_sessions_required": canary_forward_sessions,
+        "forward_sessions_observed": observed_forward_sessions,
+        "full_forward_sessions_required": full_forward_sessions,
         "limits": limits,
         "order_scope": "alpaca_paper_only",
         "real_money_broker_writes": "out_of_scope",
@@ -1448,6 +1454,36 @@ def _canary_limit_mismatches(limits: Any, spec: StrategySpec) -> list[str]:
     ):
         mismatches.append("max_total_orders_below_session")
     return sorted(set(mismatches))
+
+
+def _full_forward_session_requirement(spec: StrategySpec) -> int:
+    notes = spec.notes.model_dump(mode="json")
+    value = notes.get("minimum_bound_forward_sessions")
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(
+            "paper canary requires notes.minimum_bound_forward_sessions as a positive integer"
+        )
+    return value
+
+
+def _canary_forward_session_requirement(spec: StrategySpec) -> int:
+    notes = spec.notes.model_dump(mode="json")
+    full_requirement = _full_forward_session_requirement(spec)
+    value = notes.get("minimum_canary_forward_sessions", full_requirement)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(
+            "paper canary requires notes.minimum_canary_forward_sessions as a positive integer"
+        )
+    if value > full_requirement:
+        raise ValueError(
+            "notes.minimum_canary_forward_sessions cannot exceed "
+            "notes.minimum_bound_forward_sessions"
+        )
+    return value
+
+
+def _account_status_name(value: Any) -> str:
+    return str(value or "").rsplit(".", 1)[-1].upper()
 
 
 def _freeze_authorization_evidence(

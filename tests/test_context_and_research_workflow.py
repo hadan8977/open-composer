@@ -169,11 +169,12 @@ def test_alternative_data_evidence_marks_non_trading_llm_as_advisory(
 def test_alpaca_cache_strategy_meets_target_thresholds(
     sample_workspace: Path,
     repo_root: Path,
+    preregister_iteration_dossier,
 ) -> None:
     spec_path = (
         sample_workspace / "strategy_specs" / "drafts" / "fixture_mu_breakout_volume_15m.yaml"
     )
-    cache_path = sample_workspace / "data" / "cache" / "mu_15m_iex.csv"
+    cache_path = sample_workspace / "data" / "cache" / "mu_15m_iex_all.csv"
     copyfile(
         repo_root
         / "tests"
@@ -193,6 +194,7 @@ def test_alpaca_cache_strategy_meets_target_thresholds(
         "feed": "iex",
     }
     spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    preregister_iteration_dossier(spec_path, candidate_count=9)
 
     result = optimize_strategy(
         spec_path,

@@ -8,7 +8,7 @@ from typing import Any
 from open_composer.config import ensure_dir, project_root
 from open_composer.storage import write_json
 
-LEVERAGED_RISK_ON = {"TQQQ", "QLD", "SOXL", "USD"}
+LEVERAGED_RISK_ON = {"TQQQ", "QLD", "SOXL", "TECL", "ROM", "USD"}
 
 
 def infer_actual_state_from_positions(positions: list[dict[str, Any]]) -> str:

@@ -7,20 +7,29 @@ from copy import deepcopy
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 
+import pytest
 import yaml
 from typer.testing import CliRunner
 
 from open_composer.cli import app
 from open_composer.models.strategy_spec import load_strategy_spec
+from open_composer.research.design_contract import (
+    RESEARCH_DESIGN_BINDING_FIELDS,
+    research_design_mapping,
+)
 from open_composer.research.iteration_dossier import (
+    _campaign_contract_blockers,
+    _campaign_universe_contract_blockers,
     _candidate_manifest_blockers,
     _data_feasibility_blockers,
     _final_evaluation_receipt_blockers,
     _generic_validation_contract_blockers,
     _q2_execution_map_blockers,
     _spec_iteration_binding_blockers,
+    candidate_authorization_binding_sha256,
     init_iteration_dossier,
     iteration_dossier_paths,
+    require_iteration_execution_gate,
     validate_iteration_dossier,
 )
 from open_composer.research.stock_momentum_q2_contract import (
@@ -28,6 +37,35 @@ from open_composer.research.stock_momentum_q2_contract import (
     build_q2_execution_map,
 )
 from open_composer.strategy_versions import strategy_content_hash
+
+EXPECTED_RESEARCH_DESIGN_BINDING_FIELDS = frozenset(
+    {
+        "campaign_contract_path",
+        "candidate_manifest_path",
+        "candidate_policy_contract_path",
+        "cost_contract_path",
+        "cumulative_trial_contract_path",
+        "data_contract_path",
+        "data_feasibility_path",
+        "holdout_contract_path",
+        "iter_id",
+        "knowledge_contract",
+        "preregistration_lock_path",
+        "source_card_claim_ids",
+        "source_cards_path",
+        "universe_contract_path",
+    }
+)
+
+
+def _research_binding_value(binding_field: str, variant: str = "primary") -> object:
+    if binding_field == "knowledge_contract":
+        return {"assessment_path": f"reports/research/knowledge/{variant}-assessment.json"}
+    if binding_field == "source_card_claim_ids":
+        return [f"claim-{variant}"]
+    if binding_field == "iter_id":
+        return f"missing_{variant}_iteration"
+    return f"reports/research/contracts/{variant}-{binding_field}.json"
 
 
 def test_iteration_dossier_init_writes_template_and_validate_blocks(
@@ -39,6 +77,9 @@ def test_iteration_dossier_init_writes_template_and_validate_blocks(
     assert paths.hypotheses_md.exists()
     assert paths.search_space_json.exists()
     assert paths.decision_record_md.exists()
+    search = json.loads(paths.search_space_json.read_text(encoding="utf-8"))
+    assert search["schema_version"] == 3
+    assert search["created_at"].endswith("+00:00")
 
     result = validate_iteration_dossier("mom_minute_r1", sample_workspace)
 
@@ -88,6 +129,28 @@ def test_generic_validation_contract_requires_directional_cscv(tmp_path: Path) -
     blockers = _generic_validation_contract_blockers(path)
     assert "candidate_manifest_generic_validation_pbo_partition_symmetry_invalid" in blockers
     assert "candidate_manifest_generic_validation_pbo_partition_count_invalid" in blockers
+
+
+def test_campaign_candidate_authorization_hash_avoids_evidence_digest_cycle() -> None:
+    candidate = {
+        "candidate_id": "C01",
+        "campaign_id": "campaign_gate_r1",
+        "method": "deterministic_trend",
+        "universe_contract_path": "reports/research/iterations/c01/universe-contract.json",
+        "universe_contract_sha256": "a" * 64,
+        "development_partition_contract_path": (
+            "reports/research/iterations/c01/development-partition-contract.json"
+        ),
+        "development_partition_contract_sha256": "b" * 64,
+    }
+    original = candidate_authorization_binding_sha256(candidate)
+
+    candidate["universe_contract_sha256"] = "c" * 64
+    candidate["development_partition_contract_sha256"] = "d" * 64
+    assert candidate_authorization_binding_sha256(candidate) == original
+
+    candidate["method"] = "deterministic_reversal"
+    assert candidate_authorization_binding_sha256(candidate) != original
 
 
 def test_iteration_dossier_validate_passes_complete_dossier(sample_workspace: Path) -> None:
@@ -172,6 +235,432 @@ def test_iteration_dossier_validate_passes_complete_dossier(sample_workspace: Pa
 
     assert result.status == "ok"
     assert result.blocked == []
+
+
+def test_iteration_dossier_requires_manifest_for_bound_campaign_before_backtest(
+    sample_workspace: Path,
+) -> None:
+    paths = init_iteration_dossier("mom_minute_r1", sample_workspace)
+    _write_complete_pre_backtest_payload(paths)
+    campaign_path = (
+        sample_workspace
+        / "reports/research/campaigns/campaign_gate_r1/research-campaign-contract.json"
+    )
+    campaign_path.parent.mkdir(parents=True)
+    campaign = _minimal_campaign_contract(child_iteration_ids=["mom_minute_r1"])
+    campaign_path.write_text(json.dumps(campaign), encoding="utf-8")
+    search = json.loads(paths.search_space_json.read_text(encoding="utf-8"))
+    search["campaign_id"] = "campaign_gate_r1"
+    search["campaign_contract_path"] = campaign_path.relative_to(sample_workspace).as_posix()
+    search["campaign_contract_sha256"] = hashlib.sha256(campaign_path.read_bytes()).hexdigest()
+    paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
+
+    missing_manifest = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+    assert "campaign_contract_child_candidate_manifest_missing" in missing_manifest.blocked
+
+    campaign["child_iteration_ids"] = ["another_iteration"]
+    campaign_path.write_text(json.dumps(campaign), encoding="utf-8")
+    search["campaign_contract_sha256"] = hashlib.sha256(campaign_path.read_bytes()).hexdigest()
+    paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
+    blocked = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+
+    assert "campaign_contract_child_iteration_missing:mom_minute_r1" in blocked.blocked
+
+
+@pytest.mark.parametrize(
+    ("sha_field", "expected_blocker"),
+    [
+        (
+            "universe_contract_sha256",
+            "campaign_contract_candidate_evidence_sha256_mismatch:C01:universe_contract_sha256",
+        ),
+        (
+            "development_partition_contract_sha256",
+            "campaign_contract_candidate_evidence_sha256_mismatch:"
+            "C01:development_partition_contract_sha256",
+        ),
+    ],
+)
+def test_campaign_candidate_evidence_sha256_binds_real_contract_files(
+    sample_workspace: Path,
+    sha_field: str,
+    expected_blocker: str,
+) -> None:
+    campaign = _minimal_campaign_contract(child_iteration_ids=["mom_minute_r1"])
+    campaign_path = (
+        sample_workspace
+        / "reports/research/campaigns/campaign_gate_r1/research-campaign-contract.json"
+    )
+    campaign_path.parent.mkdir(parents=True)
+    campaign_path.write_text(json.dumps(campaign), encoding="utf-8")
+    iteration_root = sample_workspace / "reports/research/iterations/mom_minute_r1"
+    iteration_root.mkdir(parents=True)
+    feasibility_path = iteration_root / "data-feasibility.json"
+    feasibility_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "iter_id": "mom_minute_r1",
+                "campaign_universe": {
+                    "status": "ready",
+                    "capability_ids": ["market.alpaca_bars"],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    universe_path = iteration_root / "universe-contract.json"
+    universe_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "campaign_id": campaign["campaign_id"],
+                "child_iteration_id": "mom_minute_r1",
+                "hypothesis_id": "H1",
+                "universe_selection": "fixed_long_lived",
+                "promotion_eligible": True,
+                "contract_status": "ready",
+                "capability_ids": ["market.alpaca_bars"],
+                "data_feasibility_binding": {
+                    "path": feasibility_path.relative_to(sample_workspace).as_posix(),
+                    "sha256": hashlib.sha256(feasibility_path.read_bytes()).hexdigest(),
+                },
+                "universe_definition": {
+                    "membership_mode": "fixed_long_lived_symbols",
+                    "symbols": ["SPY", "BIL"],
+                    "selection_rule": "predeclared_long_lived_fixture_symbols",
+                    "selection_frozen_at": "2026-08-15T17:00:00Z",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    partition_path = iteration_root / "development-partition-contract.json"
+    partition_path.write_text(
+        json.dumps({"partition_id": "development", "kind": "development"}),
+        encoding="utf-8",
+    )
+    candidate_rows = [
+        {
+            "candidate_id": candidate["candidate_id"],
+            "campaign_id": campaign["campaign_id"],
+            "hypothesis_id": candidate["hypothesis_id"],
+            "branch_id": candidate["branch_id"],
+            "child_iteration_id": candidate["child_iteration_id"],
+            "promotion_eligible": candidate["promotion_eligible"],
+            "quality_metric": campaign["qd_archive"]["quality_metric"],
+            "universe_contract_path": universe_path.relative_to(sample_workspace).as_posix(),
+            "universe_contract_sha256": hashlib.sha256(universe_path.read_bytes()).hexdigest(),
+            "development_partition_contract_path": (
+                partition_path.relative_to(sample_workspace).as_posix()
+            ),
+            "development_partition_contract_sha256": hashlib.sha256(
+                partition_path.read_bytes()
+            ).hexdigest(),
+        }
+        for candidate in campaign["candidate_blueprints"]
+    ]
+    manifest_path = iteration_root / "candidate-manifest.json"
+    manifest_path.write_text(json.dumps({"candidates": candidate_rows}), encoding="utf-8")
+    search = {
+        "iter_id": "mom_minute_r1",
+        "campaign_id": campaign["campaign_id"],
+        "campaign_contract_path": campaign_path.relative_to(sample_workspace).as_posix(),
+        "campaign_contract_sha256": hashlib.sha256(campaign_path.read_bytes()).hexdigest(),
+        "candidate_manifest_path": manifest_path.relative_to(sample_workspace).as_posix(),
+        "data_feasibility_path": feasibility_path.relative_to(sample_workspace).as_posix(),
+        "total_candidate_budget": len(candidate_rows),
+    }
+
+    assert (
+        _campaign_contract_blockers(
+            search,
+            sample_workspace,
+            stage="pre-discovery",
+        )
+        == []
+    )
+
+    candidate_rows[0][sha_field] = "a" * 64
+    manifest_path.write_text(json.dumps({"candidates": candidate_rows}), encoding="utf-8")
+    blocked = _campaign_contract_blockers(
+        search,
+        sample_workspace,
+        stage="pre-discovery",
+    )
+    assert expected_blocker in blocked
+
+    bound_path = universe_path if sha_field == "universe_contract_sha256" else partition_path
+    candidate_rows[0][sha_field] = hashlib.sha256(bound_path.read_bytes()).hexdigest()
+    universe_path.write_bytes(partition_path.read_bytes())
+    candidate_rows[0]["universe_contract_sha256"] = hashlib.sha256(
+        universe_path.read_bytes()
+    ).hexdigest()
+    manifest_path.write_text(json.dumps({"candidates": candidate_rows}), encoding="utf-8")
+    semantic_blocked = _campaign_contract_blockers(
+        search,
+        sample_workspace,
+        stage="pre-discovery",
+    )
+    assert "campaign_contract_candidate_universe_contract:C01:schema_version_mismatch" in (
+        semantic_blocked
+    )
+
+
+def test_new_and_registered_child_iterations_cannot_omit_campaign_binding(
+    sample_workspace: Path,
+) -> None:
+    post_cutoff = {
+        "schema_version": 3,
+        "created_at": "2026-08-16T00:00:00Z",
+        "iter_id": "brand_new_after_cutoff",
+    }
+    assert "campaign_contract_required_for_new_iteration" in _campaign_contract_blockers(
+        post_cutoff,
+        sample_workspace,
+        stage="pre-discovery",
+    )
+    downgraded = {
+        "schema_version": 1,
+        "iter_id": "brand_new_after_cutoff",
+    }
+    downgraded_blockers = _campaign_contract_blockers(
+        downgraded,
+        sample_workspace,
+        stage="pre-discovery",
+    )
+    assert "campaign_governance_schema_version_invalid_for_new_iteration" in downgraded_blockers
+    assert "campaign_contract_required_for_new_iteration" in downgraded_blockers
+    backdated = {
+        "schema_version": 3,
+        "created_at": "2026-08-14T00:00:00Z",
+        "iter_id": "brand_new_after_cutoff",
+    }
+    assert "campaign_contract_required_for_new_iteration" in _campaign_contract_blockers(
+        backdated,
+        sample_workspace,
+        stage="pre-discovery",
+    )
+
+    campaign = _minimal_campaign_contract(child_iteration_ids=["registered_child_r1"])
+    campaign_path = (
+        sample_workspace
+        / "reports/research/campaigns/campaign_gate_r1/research-campaign-contract.json"
+    )
+    campaign_path.parent.mkdir(parents=True)
+    campaign_path.write_text(json.dumps(campaign), encoding="utf-8")
+    registered = {
+        "schema_version": 1,
+        "iter_id": "registered_child_r1",
+    }
+    blockers = _campaign_contract_blockers(
+        registered,
+        sample_workspace,
+        stage="pre-discovery",
+    )
+    assert "campaign_contract_binding_missing_for_registered_child:campaign_gate_r1" in blockers
+
+
+def test_registered_child_rejects_shadow_campaign_binding(sample_workspace: Path) -> None:
+    campaign = _minimal_campaign_contract(child_iteration_ids=["registered_child_r1"])
+    campaign_path = (
+        sample_workspace
+        / "reports/research/campaigns/campaign_gate_r1/research-campaign-contract.json"
+    )
+    campaign_path.parent.mkdir(parents=True)
+    campaign_path.write_text(json.dumps(campaign), encoding="utf-8")
+
+    shadow = deepcopy(campaign)
+    shadow["campaign_id"] = "shadow_campaign_r1"
+    shadow_path = sample_workspace / "reports/research/iterations/shadow-campaign.json"
+    shadow_path.parent.mkdir(parents=True)
+    shadow_path.write_text(json.dumps(shadow), encoding="utf-8")
+    payload = {
+        "schema_version": 3,
+        "created_at": "2026-08-16T00:00:00Z",
+        "iter_id": "registered_child_r1",
+        "campaign_id": "shadow_campaign_r1",
+        "campaign_contract_path": shadow_path.relative_to(sample_workspace).as_posix(),
+        "campaign_contract_sha256": hashlib.sha256(shadow_path.read_bytes()).hexdigest(),
+        "total_candidate_budget": 3,
+    }
+
+    blockers = _campaign_contract_blockers(
+        payload,
+        sample_workspace,
+        stage="pre-discovery",
+    )
+
+    assert "campaign_contract_noncanonical_path" in blockers
+    assert (
+        "campaign_contract_registered_child_identity_mismatch:campaign_gate_r1:shadow_campaign_r1"
+    ) in blockers
+
+
+def test_pit_universe_requires_registered_capability_and_structured_membership(
+    sample_workspace: Path,
+) -> None:
+    registry_path = sample_workspace / "capabilities/registry.yaml"
+    registry = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    alpaca = next(item for item in registry["capabilities"] if item["id"] == "market.alpaca_bars")
+    alpaca["use_for"] = [*alpaca["use_for"], "point_in_time_universe"]
+    registry_path.write_text(yaml.safe_dump(registry, sort_keys=False), encoding="utf-8")
+
+    iteration_root = sample_workspace / "reports/research/iterations/mom_breadth_pit_xsmom_r1"
+    iteration_root.mkdir(parents=True)
+    feasibility_path = iteration_root / "data-feasibility.json"
+    feasibility = {
+        "schema_version": 1,
+        "iter_id": "mom_breadth_pit_xsmom_r1",
+        "campaign_universe": {
+            "status": "ready",
+            "capability_ids": ["market.alpaca_bars"],
+        },
+    }
+    feasibility_path.write_text(json.dumps(feasibility), encoding="utf-8")
+    membership_path = iteration_root / "pit-membership.json"
+    membership = {
+        "schema_version": 1,
+        "source": "licensed_pit_security_master",
+        "fetched_at": "2026-08-15T12:00:00Z",
+        "memberships": [
+            {
+                "security_id": "sec-001",
+                "valid_from": "2020-01-01",
+                "valid_to": None,
+                "delisting_return": None,
+                "liquidity_visible_at": "2019-12-31T21:00:00Z",
+            }
+        ],
+    }
+    membership_path.write_text(json.dumps(membership), encoding="utf-8")
+    universe_path = iteration_root / "universe-contract.json"
+    universe = {
+        "schema_version": 1,
+        "campaign_id": "mom_breadth_qd_r1",
+        "child_iteration_id": "mom_breadth_pit_xsmom_r1",
+        "hypothesis_id": "H1_PIT_XSMOM",
+        "universe_selection": "point_in_time",
+        "promotion_eligible": True,
+        "contract_status": "ready",
+        "capability_ids": ["market.alpaca_bars"],
+        "data_feasibility_binding": {
+            "path": feasibility_path.relative_to(sample_workspace).as_posix(),
+            "sha256": hashlib.sha256(feasibility_path.read_bytes()).hexdigest(),
+        },
+        "universe_definition": {
+            "membership_mode": "point_in_time_membership",
+            "membership_artifact_path": membership_path.relative_to(sample_workspace).as_posix(),
+            "membership_artifact_sha256": hashlib.sha256(membership_path.read_bytes()).hexdigest(),
+            "permanent_security_id_field": "security_id",
+            "membership_valid_from_field": "valid_from",
+            "membership_valid_to_field": "valid_to",
+            "delisting_return_field": "delisting_return",
+            "corporate_action_policy": (
+                "point_in_time_split_dividend_adjusted_with_delisting_returns"
+            ),
+            "liquidity_visible_at_field": "liquidity_visible_at",
+        },
+    }
+    universe_path.write_text(json.dumps(universe), encoding="utf-8")
+    candidate = SimpleNamespace(
+        child_iteration_id="mom_breadth_pit_xsmom_r1",
+        hypothesis_id="H1_PIT_XSMOM",
+        promotion_eligible=True,
+    )
+    hypothesis = SimpleNamespace(universe_selection="point_in_time")
+
+    assert (
+        _campaign_universe_contract_blockers(
+            universe_path,
+            candidate_id="PIT01",
+            root=sample_workspace,
+            expected_campaign_id="mom_breadth_qd_r1",
+            expected_candidate=candidate,
+            expected_hypothesis=hypothesis,
+            expected_data_feasibility_path=(
+                feasibility_path.relative_to(sample_workspace).as_posix()
+            ),
+        )
+        == []
+    )
+
+    universe["capability_ids"] = ["not.registered.pit_capability"]
+    feasibility["campaign_universe"]["capability_ids"] = ["not.registered.pit_capability"]
+    feasibility_path.write_text(json.dumps(feasibility), encoding="utf-8")
+    universe["data_feasibility_binding"]["sha256"] = hashlib.sha256(
+        feasibility_path.read_bytes()
+    ).hexdigest()
+    membership_path.write_text("this is not a membership table", encoding="utf-8")
+    universe["universe_definition"]["membership_artifact_sha256"] = hashlib.sha256(
+        membership_path.read_bytes()
+    ).hexdigest()
+    universe_path.write_text(json.dumps(universe), encoding="utf-8")
+
+    blockers = _campaign_universe_contract_blockers(
+        universe_path,
+        candidate_id="PIT01",
+        root=sample_workspace,
+        expected_campaign_id="mom_breadth_qd_r1",
+        expected_candidate=candidate,
+        expected_hypothesis=hypothesis,
+        expected_data_feasibility_path=feasibility_path.relative_to(sample_workspace).as_posix(),
+    )
+    assert (
+        "campaign_contract_candidate_universe_contract:PIT01:"
+        "capability_ids_unregistered:not.registered.pit_capability"
+    ) in blockers
+    assert (
+        "campaign_contract_candidate_universe_contract:PIT01:point_in_time_membership_invalid_json"
+    ) in blockers
+
+    feasibility_path.write_text("{}", encoding="utf-8")
+    universe["data_feasibility_binding"]["sha256"] = hashlib.sha256(
+        feasibility_path.read_bytes()
+    ).hexdigest()
+    universe_path.write_text(json.dumps(universe), encoding="utf-8")
+    feasibility_blockers = _campaign_universe_contract_blockers(
+        universe_path,
+        candidate_id="PIT01",
+        root=sample_workspace,
+        expected_campaign_id="mom_breadth_qd_r1",
+        expected_candidate=candidate,
+        expected_hypothesis=hypothesis,
+        expected_data_feasibility_path=feasibility_path.relative_to(sample_workspace).as_posix(),
+    )
+    assert (
+        "campaign_contract_candidate_universe_contract:PIT01:"
+        "data_feasibility_schema_version_mismatch"
+    ) in feasibility_blockers
+
+
+def test_iteration_dossier_rejects_child_candidate_budget_above_campaign_allocation(
+    sample_workspace: Path,
+) -> None:
+    paths = init_iteration_dossier("mom_minute_r1", sample_workspace)
+    _write_complete_pre_backtest_payload(paths)
+    campaign_path = (
+        sample_workspace
+        / "reports/research/campaigns/campaign_gate_r1/research-campaign-contract.json"
+    )
+    campaign_path.parent.mkdir(parents=True)
+    campaign = _minimal_campaign_contract(child_iteration_ids=["mom_minute_r1"])
+    campaign["candidate_blueprints"] = campaign["candidate_blueprints"][:2]
+    campaign["branch_quotas"][0].update({"min_candidates": 2, "max_candidates": 2})
+    campaign["exposure_budgets"] = {
+        "candidate_budget": 2,
+        "cumulative_trial_exposure_budget": 2,
+    }
+    campaign_path.write_text(json.dumps(campaign), encoding="utf-8")
+    search = json.loads(paths.search_space_json.read_text(encoding="utf-8"))
+    search["campaign_id"] = "campaign_gate_r1"
+    search["campaign_contract_path"] = campaign_path.relative_to(sample_workspace).as_posix()
+    search["campaign_contract_sha256"] = hashlib.sha256(campaign_path.read_bytes()).hexdigest()
+    paths.search_space_json.write_text(json.dumps(search), encoding="utf-8")
+
+    result = validate_iteration_dossier("mom_minute_r1", sample_workspace)
+
+    assert "campaign_contract_child_candidate_budget_mismatch:mom_minute_r1:12:2" in result.blocked
 
 
 def test_iteration_dossier_blocks_payload_iter_id_mismatch(sample_workspace: Path) -> None:
@@ -1142,6 +1631,204 @@ def test_execution_commands_block_top_level_search_without_iter_id(
         "parameter_space": {"risk.max_position_weight": [0.25, 0.5]},
         "candidate_budget": 2,
     }
+    raw["notes"].pop("research_design", None)
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+
+    result = CliRunner().invoke(
+        app,
+        ["backtest", str(spec_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code != 0
+    assert "research_design requires iter_id" in result.output
+
+
+@pytest.mark.parametrize(
+    "research_design",
+    [None, {"workflow_only_ungated_draft": True}],
+)
+def test_active_market_strategy_cannot_execute_without_iteration(
+    sample_workspace: Path,
+    research_design: dict[str, object] | None,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw["lifecycle"] = "active"
+    raw["execution"]["mode"] = "paper_auto"
+    raw["execution"]["broker"] = "alpaca_paper"
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["data_assumptions"]["source"] = "alpaca"
+    raw["notes"].pop("research_design", None)
+    if research_design is None:
+        raw.pop("research_design", None)
+    else:
+        raw["research_design"] = research_design
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="requires iter_id"):
+        require_iteration_execution_gate(
+            spec_path,
+            sample_workspace,
+            enforce_unbound_design=True,
+        )
+
+
+@pytest.mark.parametrize(
+    "legacy_design",
+    [
+        {"workflow_only_ungated_draft": True},
+        {
+            "parameter_space": {"risk.max_position_weight": [0.25, 0.5]},
+            "candidate_budget": 2,
+        },
+    ],
+)
+def test_active_market_strategy_cannot_bypass_gate_through_legacy_notes(
+    sample_workspace: Path,
+    legacy_design: dict[str, object],
+) -> None:
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw["lifecycle"] = "active"
+    raw["execution"]["mode"] = "paper_auto"
+    raw["execution"]["broker"] = "alpaca_paper"
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["data_assumptions"]["source"] = "alpaca"
+    raw.pop("research_design", None)
+    raw["notes"]["research_design"] = legacy_design
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="requires iter_id"):
+        require_iteration_execution_gate(
+            spec_path,
+            sample_workspace,
+            enforce_unbound_design=True,
+        )
+
+
+def test_workflow_only_sample_draft_can_run_without_iteration(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw["research_design"] = {
+        "workflow_only_ungated_draft": True,
+        "parameter_space": {"risk.max_position_weight": [0.25, 0.5]},
+        "candidate_budget": 2,
+    }
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
+    monkeypatch.chdir(sample_workspace)
+
+    result = CliRunner().invoke(
+        app,
+        ["backtest", str(spec_path)],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0
+
+
+def test_research_design_binding_inventory_matches_independent_contract() -> None:
+    assert RESEARCH_DESIGN_BINDING_FIELDS == EXPECTED_RESEARCH_DESIGN_BINDING_FIELDS
+
+
+@pytest.mark.parametrize("binding_field", sorted(EXPECTED_RESEARCH_DESIGN_BINDING_FIELDS))
+def test_workflow_only_sample_draft_cannot_carry_iteration_bindings(
+    sample_workspace: Path,
+    binding_field: str,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw["notes"].pop("research_design", None)
+    raw["research_design"] = {
+        "workflow_only_ungated_draft": True,
+        binding_field: _research_binding_value(binding_field),
+    }
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        require_iteration_execution_gate(
+            spec_path,
+            sample_workspace,
+            enforce_unbound_design=True,
+            require_registered_iteration=True,
+        )
+
+
+@pytest.mark.parametrize("binding_field", sorted(EXPECTED_RESEARCH_DESIGN_BINDING_FIELDS))
+def test_legacy_workflow_only_sample_draft_cannot_carry_iteration_bindings(
+    sample_workspace: Path,
+    binding_field: str,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw.pop("research_design", None)
+    raw["notes"]["research_design"] = {
+        "workflow_only_ungated_draft": True,
+        binding_field: _research_binding_value(binding_field),
+    }
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        require_iteration_execution_gate(
+            spec_path,
+            sample_workspace,
+            enforce_unbound_design=True,
+            require_registered_iteration=True,
+        )
+
+
+@pytest.mark.parametrize("binding_field", sorted(EXPECTED_RESEARCH_DESIGN_BINDING_FIELDS))
+def test_top_level_and_legacy_research_binding_conflicts_fail_closed(
+    sample_workspace: Path,
+    binding_field: str,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw["research_design"] = {binding_field: _research_binding_value(binding_field, "top")}
+    raw["notes"]["research_design"] = {
+        binding_field: _research_binding_value(binding_field, "legacy")
+    }
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="conflicting top-level and notes.research_design"):
+        require_iteration_execution_gate(spec_path, sample_workspace)
+
+
+@pytest.mark.parametrize("binding_field", sorted(EXPECTED_RESEARCH_DESIGN_BINDING_FIELDS))
+def test_identical_top_level_and_legacy_research_bindings_merge(
+    sample_workspace: Path,
+    binding_field: str,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    binding_value = _research_binding_value(binding_field)
+    raw["research_design"] = {binding_field: binding_value}
+    raw["notes"]["research_design"] = {binding_field: binding_value}
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    merged = research_design_mapping(load_strategy_spec(spec_path))
+
+    assert merged[binding_field] == binding_value
+
+
+def test_workflow_only_draft_cannot_bypass_gate_for_market_data(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw["research_design"] = {
+        "workflow_only_ungated_draft": True,
+        "parameter_space": {"risk.max_position_weight": [0.25, 0.5]},
+        "candidate_budget": 2,
+    }
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["data_assumptions"]["source"] = "alpaca"
     spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
 
@@ -1330,6 +2017,212 @@ def test_generic_candidate_family_does_not_require_q2_diagnostic_contracts(
     )
 
     assert blocked == []
+
+
+def test_policy_bound_manifest_rejects_policy_spec_and_phase_lock_drift(
+    sample_workspace: Path,
+) -> None:
+    iter_id = "mom_breadth_policy_gate_r1"
+    iteration_root = sample_workspace / "reports" / "research" / "iterations" / iter_id
+    iteration_root.mkdir(parents=True, exist_ok=True)
+    manifest_rel = f"reports/research/iterations/{iter_id}/candidate-manifest.json"
+    feasibility_rel = f"reports/research/iterations/{iter_id}/data-feasibility.json"
+    policy_rel = f"reports/research/iterations/{iter_id}/candidate-policy-contract.json"
+    lock_rel = f"reports/research/iterations/{iter_id}/phase-one-preregistration-lock.json"
+
+    policy = {
+        "schema_version": 1,
+        "policy_type": "absolute_trend_allocation",
+        "feature_lag_sessions": 1,
+        "fallback_symbol": "BIL",
+    }
+    policy_sha256 = hashlib.sha256(
+        json.dumps(policy, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    policy_contract_id = f"{iter_id}_candidate_policies_v1"
+    policy_path = sample_workspace / policy_rel
+    policy_contract = {
+        "schema_version": 1,
+        "contract_id": policy_contract_id,
+        "iter_id": iter_id,
+        "generated_before_backtest": True,
+        "policy_count": 1,
+        "policies": [
+            {
+                "candidate_id": "TSM01",
+                "method_variant": "monthly_absolute_trend_equal_risk",
+                "factor_variant": "252_session_total_return_sign",
+                "policy": policy,
+                "policy_sha256": policy_sha256,
+            }
+        ],
+    }
+    policy_path.write_text(json.dumps(policy_contract), encoding="utf-8")
+
+    spec_path = sample_workspace / "strategy_specs" / "drafts" / "breadth_tsm01.yaml"
+    raw = yaml.safe_load(
+        (sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    raw["name"] = "breadth_tsm01"
+    raw["research_design"] = {
+        "iter_id": iter_id,
+        "candidate_manifest_path": manifest_rel,
+        "candidate_policy_contract_path": policy_rel,
+        "data_feasibility_path": feasibility_rel,
+        "preregistration_lock_path": lock_rel,
+    }
+    raw["notes"].update(
+        {
+            "candidate_id": "TSM01",
+            "candidate_policy": policy,
+            "candidate_policy_sha256": policy_sha256,
+        }
+    )
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    spec_rel = spec_path.relative_to(sample_workspace).as_posix()
+
+    contract_bindings: dict[str, dict[str, dict[str, str]]] = {}
+    for group, contract_id in {
+        "data": "data-contract",
+        "features": "feature-contract",
+        "labels": "label-contract",
+        "validation": "validation-contract",
+        "costs": "cost-contract",
+        "benchmarks": "benchmark-contract",
+    }.items():
+        path = iteration_root / f"{contract_id}.json"
+        path.write_text(json.dumps({"contract_id": contract_id}), encoding="utf-8")
+        contract_bindings[group] = {
+            contract_id: {
+                "path": path.relative_to(sample_workspace).as_posix(),
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+        }
+    contract_bindings["candidate_policies"] = {
+        policy_contract_id: {
+            "path": policy_rel,
+            "sha256": hashlib.sha256(policy_path.read_bytes()).hexdigest(),
+        }
+    }
+    candidate = {
+        "candidate_id": "TSM01",
+        "path": "cross_asset_time_series_trend",
+        "role": "deterministic_mechanism_candidate",
+        "method": "monthly_absolute_trend_equal_risk",
+        "ablation": "252_session_total_return_sign",
+        "spec_path": spec_rel,
+        "fallback": "BIL",
+        "data_contract": "data-contract",
+        "feature_contract": "feature-contract",
+        "label_contract": "label-contract",
+        "validation_contract": "validation-contract",
+        "cost_contract": "cost-contract",
+        "benchmark_contract": "benchmark-contract",
+        "candidate_policy_contract": policy_contract_id,
+        "candidate_policy_sha256": policy_sha256,
+    }
+    manifest = {
+        "schema_version": 2,
+        "manifest_type": "generic_candidate_family_v1",
+        "iter_id": iter_id,
+        "generated_before_backtest": True,
+        "candidate_count": 1,
+        "spec_hashes": {spec_rel: strategy_content_hash(load_strategy_spec(spec_path))},
+        "contracts": contract_bindings,
+        "candidates": [candidate],
+    }
+    manifest_path = sample_workspace / manifest_rel
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    lock_path = sample_workspace / lock_rel
+    lock = {
+        "schema_version": 1,
+        "iter_id": iter_id,
+        "generated_before_backtest": True,
+        "generated_before_model_training": True,
+        "candidate_ids": ["TSM01"],
+        "candidate_policy_sha256": {"TSM01": policy_sha256},
+        "immutable_inventory": {
+            "candidate_policy_contract": {
+                "path": policy_rel,
+                "sha256": hashlib.sha256(policy_path.read_bytes()).hexdigest(),
+            },
+            "spec_TSM01": {
+                "path": spec_rel,
+                "sha256": hashlib.sha256(spec_path.read_bytes()).hexdigest(),
+            },
+        },
+        "frozen_oos_read_authorized": False,
+        "broker_writes": False,
+    }
+    lock_path.write_text(json.dumps(lock), encoding="utf-8")
+    search = {
+        "iter_id": iter_id,
+        "candidate_manifest_path": manifest_rel,
+        "candidate_manifest_contract": "generic_candidate_family_v1",
+        "candidate_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        "data_feasibility_path": feasibility_rel,
+        "contracts": {"candidate_policy": policy_rel},
+        "paths": [{"name": "cross_asset_time_series_trend", "candidate_count": 1}],
+    }
+
+    assert (
+        _candidate_manifest_blockers(
+            manifest_path,
+            search,
+            sample_workspace,
+            expected_total=1,
+        )
+        == []
+    )
+
+    original_policy_bytes = policy_path.read_bytes()
+    tampered_policy = deepcopy(policy_contract)
+    tampered_policy["policies"][0]["policy"]["feature_lag_sessions"] = 0
+    policy_path.write_text(json.dumps(tampered_policy), encoding="utf-8")
+    policy_drift = _candidate_manifest_blockers(
+        manifest_path,
+        search,
+        sample_workspace,
+        expected_total=1,
+    )
+    assert any(item.endswith("TSM01_sha256_mismatch") for item in policy_drift)
+    assert "candidate_manifest_phase_one_lock_candidate_policy_contract_sha256_mismatch" in (
+        policy_drift
+    )
+    policy_path.write_bytes(original_policy_bytes)
+
+    original_spec_bytes = spec_path.read_bytes()
+    tampered_spec = yaml.safe_load(original_spec_bytes)
+    tampered_spec["notes"]["candidate_policy"]["feature_lag_sessions"] = 0
+    spec_path.write_text(yaml.safe_dump(tampered_spec, sort_keys=False), encoding="utf-8")
+    manifest["spec_hashes"][spec_rel] = strategy_content_hash(load_strategy_spec(spec_path))
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    search["candidate_manifest_sha256"] = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    spec_drift = _candidate_manifest_blockers(
+        manifest_path,
+        search,
+        sample_workspace,
+        expected_total=1,
+    )
+    assert "candidate_manifest_TSM01_spec_candidate_policy_mismatch" in spec_drift
+    assert "candidate_manifest_phase_one_lock_spec_TSM01_sha256_mismatch" in spec_drift
+    spec_path.write_bytes(original_spec_bytes)
+    manifest["spec_hashes"][spec_rel] = strategy_content_hash(load_strategy_spec(spec_path))
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    search["candidate_manifest_sha256"] = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+
+    tampered_lock = deepcopy(lock)
+    tampered_lock["candidate_policy_sha256"]["TSM01"] = "0" * 64
+    lock_path.write_text(json.dumps(tampered_lock), encoding="utf-8")
+    lock_drift = _candidate_manifest_blockers(
+        manifest_path,
+        search,
+        sample_workspace,
+        expected_total=1,
+    )
+    assert "candidate_manifest_phase_one_lock_candidate_policy_sha256_mismatch" in lock_drift
 
 
 def test_iteration_dossier_cli_init_and_validate(sample_workspace: Path, monkeypatch) -> None:
@@ -1871,6 +2764,157 @@ def _write_r4_final_receipt_fixture(root: Path):
 
 def _write_r5_final_receipt_fixture(root: Path):
     return _write_multimodal_final_receipt_fixture(root, round_number=5)
+
+
+def _minimal_campaign_contract(*, child_iteration_ids: list[str]) -> dict:
+    descriptor = {
+        "economic_mechanism": "Cross-asset trend persistence",
+        "universe_or_asset_class": "Long-lived US ETFs",
+        "horizon": "One to twelve months",
+        "data_modality": "Lagged daily prices and volume",
+        "portfolio_construction": "Volatility-scaled long-only allocation",
+        "execution_style": "Scheduled next-open rebalance with cost stress",
+        "universe_selection": "fixed_long_lived",
+        "role": "research",
+    }
+    return {
+        "schema_version": 1,
+        "campaign_id": "campaign_gate_r1",
+        "created_at": "2026-08-15T17:00:00Z",
+        "title": "Iteration campaign gate fixture",
+        "objective": "Prove campaign identity is bound before any child backtest.",
+        "parent_iteration_ids": ["prior_iteration"],
+        "child_iteration_ids": child_iteration_ids,
+        "root_hypothesis_id": "H0",
+        "hypotheses": [
+            {
+                "hypothesis_id": "H0",
+                "parent_hypothesis_id": None,
+                **descriptor,
+                "promotion_eligible": False,
+            },
+            {
+                "hypothesis_id": "H1",
+                "parent_hypothesis_id": "H0",
+                **descriptor,
+                "promotion_eligible": True,
+            },
+        ],
+        "branch_quotas": [
+            {
+                "branch_id": "B1",
+                "hypothesis_id": "H1",
+                "min_candidates": 12,
+                "max_candidates": 12,
+            }
+        ],
+        "candidate_blueprints": [
+            {
+                "candidate_id": f"C{index:02d}",
+                "hypothesis_id": "H1",
+                "branch_id": "B1",
+                "child_iteration_id": child_iteration_ids[0],
+                "method_variant": f"method_{index}",
+                "factor_variant": f"factor_{index}",
+                "archive_descriptors": {
+                    "economic_mechanism": "trend",
+                    "horizon": f"horizon_{index}",
+                },
+                "model_training": False,
+                "promotion_eligible": True,
+            }
+            for index in range(1, 13)
+        ],
+        "visibility_partitions": [
+            {
+                "partition_id": "train",
+                "kind": "development",
+                "allowed_operations": ["candidate_generation", "model_training"],
+            },
+            {
+                "partition_id": "development",
+                "kind": "development",
+                "allowed_operations": [
+                    "candidate_pruning",
+                    "resource_allocation",
+                    "archive_update",
+                ],
+            },
+            {
+                "partition_id": "frozen_oos",
+                "kind": "frozen_oos",
+                "allowed_operations": ["promotion_evaluation", "reporting"],
+            },
+        ],
+        "exposure_budgets": {
+            "candidate_budget": 12,
+            "cumulative_trial_exposure_budget": 12,
+        },
+        "exploration_policy": {
+            "generation_mode": "enumerated_candidates",
+            "mutation_mode": "none",
+        },
+        "qd_archive": {
+            "cell_key_fields": ["economic_mechanism", "horizon"],
+            "quality_metric": "development_cost_stressed_sharpe",
+            "quality_direction": "maximize",
+            "quality_partition_id": "development",
+            "tie_break_rules": [{"field": "candidate_id", "direction": "ascending"}],
+            "max_elites_per_cell": 1,
+        },
+        "statistical_family_policy": {
+            "primary_sharpe_minimum": 1.0,
+            "primary_sharpe_operator": ">",
+            "advancing_pair_correlation": {
+                "method": "pearson",
+                "return_stream": (
+                    "development_validation_continuous_daily_primary_20bps_terminal_free"
+                ),
+                "absolute_maximum": 0.70,
+                "operator": "<=",
+                "minimum_passing_pair_count": 1,
+            },
+            "dsr_minimum": 0.75,
+            "pbo_maximum": 0.4,
+            "spa_p_value_maximum": 0.05,
+            "dsr_hac_lag": 21,
+            "pbo_block_count": 8,
+            "pbo_in_sample_block_count": 4,
+            "spa_block_length": 21,
+            "spa_resample_count": 2000,
+            "spa_seed": 4201,
+        },
+        "candidate_promotion_policy": {
+            "primary_cost_bps": 20,
+            "stress_cost_bps": 40,
+            "annualization_sessions": 252,
+            "cagr_minimum": 0.45,
+            "cagr_excess_qqq_minimum": 0.08,
+            "tqqq_cagr_capture_minimum": 0.85,
+            "tqqq_upside_capture_minimum": 0.85,
+            "tqqq_downside_capture_maximum": 0.9,
+            "max_drawdown_minimum": -0.65,
+            "mar_minimum": 0.4,
+            "chronological_fold_count": 4,
+            "minimum_positive_folds": 3,
+            "development_partition_id": "development",
+            "development_fold_ids": ["D1", "D2", "D3", "D4"],
+            "stress_total_return_minimum": 0.0,
+            "stress_total_return_operator": ">",
+            "required_benchmark_roles": [
+                "same_symbol_buy_and_hold",
+                "equal_weight_universe",
+                "market_proxy",
+                "growth_proxy",
+                "sector_theme_proxy",
+                "cash_proxy",
+                "leveraged_growth_proxy",
+                "ex_post_best_symbol",
+            ],
+        },
+        "expensive_resource_rungs": [],
+        "promotion_evidence": None,
+    }
 
 
 def _write_complete_pre_backtest_payload(paths) -> None:

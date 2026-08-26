@@ -91,4 +91,6 @@ def test_draft_spec_produces_signals_on_synthetic_data(sample_workspace: Path) -
     frame = load_ohlcv_for_spec(spec, sample_workspace)
     artifacts = backtest_frame(spec, frame, root=sample_workspace, run_id_value="t_signals")
 
+    assert spec.research_design is not None
+    assert spec.research_design.workflow_only_ungated_draft is True
     assert artifacts.run.signals >= 5

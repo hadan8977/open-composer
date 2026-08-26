@@ -145,7 +145,7 @@ def write_router_execution_artifacts(
         data_evidence_path=_relpath(data_evidence_path, root),
         validation_path=_relpath(validation_path, root),
         latest_rebalance_session=_latest_session(normalized_targets),
-        latest_order_required_intents=int(summary.get("order_required_intents") or 0),
+        latest_order_required_intents=_latest_order_required_intents(normalized_intents),
         blockers=blockers,
         warnings=warnings,
         safety_note=(
@@ -288,6 +288,18 @@ def _data_evidence_payload(
 def _latest_session(target_rows: list[dict[str, Any]]) -> str | None:
     sessions = sorted(str(row["rebalance_session"]) for row in target_rows)
     return sessions[-1] if sessions else None
+
+
+def _latest_order_required_intents(intents: list[dict[str, Any]]) -> int:
+    sessions = [str(row["rebalance_session"]) for row in intents]
+    if not sessions:
+        return 0
+    latest = max(sessions)
+    return sum(
+        bool(row.get("requires_order"))
+        for row in intents
+        if str(row["rebalance_session"]) == latest
+    )
 
 
 def _relpath(path: Path, base: Path) -> str:

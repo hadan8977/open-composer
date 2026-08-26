@@ -92,6 +92,10 @@ def build_paper_validation_report(
                 "paper_validation_pass."
             ),
             (
+                "Broker-free forward observation records account state drift as evidence, "
+                "but a drift warning blocks only order-authorized paper validation."
+            ),
+            (
                 "paper_validation_pass requires a bounded canary or full order authorization "
                 "plus broker, account, position, readiness, and monitor evidence."
             ),
@@ -418,7 +422,7 @@ def validation_day_pass(
         if step.get("exit_code") not in {0, None}:
             reasons.append(f"step_failed_{step.get('name')}")
     artifacts = log.get("artifact_paths") or {}
-    if artifacts.get("state_drift_status") == "warning":
+    if require_order_authorized and artifacts.get("state_drift_status") == "warning":
         reasons.append("state_drift_warning")
     if log.get("paper_order_authorization") not in {False, True}:
         reasons.append("paper_order_authorization_invalid")
@@ -548,11 +552,13 @@ def _evidence_semantic_reasons(
     if review is None or review.get("strategy") != strategy or review.get("date") != day:
         reasons.append("review_card_identity_mismatch")
     drift = payloads.get("state_drift")
+    drift_status = drift.get("status") if drift is not None else None
     if (
         drift is None
         or drift.get("report_type") != "paper_state_drift"
         or drift.get("date") != day
-        or drift.get("status") != "ok"
+        or drift_status not in {"ok", "warning"}
+        or (require_order_authorized and drift_status != "ok")
     ):
         reasons.append("state_drift_evidence_not_ok")
     if not require_order_authorized:

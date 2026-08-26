@@ -18,10 +18,17 @@ SOURCE_TO_CAPABILITY = {
     "sec_filings": "events.sec_filings",
     "fred": "macro.fred_series",
     "fred_series": "macro.fred_series",
+    "cftc": "macro.cftc_cot",
+    "cftc_cot": "macro.cftc_cot",
     "alpha_vantage": "news.alpha_vantage",
     "alpha_vantage_news": "news.alpha_vantage",
     "gdelt": "news.gdelt",
+    "alpaca": "news.alpaca",
+    "alpaca_news": "news.alpaca",
 }
+
+ALPACA_NEWS_PAGE_LIMIT = 50
+ALPACA_NEWS_TOTAL_LIMIT = 1_000
 
 
 def fetch_capability_events(
@@ -49,6 +56,8 @@ def fetch_capability_events(
             sort=sort,
         )
     )
+    if not offline and capability.id == "news.alpaca":
+        events = _preserve_alpaca_news_first_seen(base, events)
     selected = _filter_symbols(events, symbols)
     destination = _destination_path(base, capability.kind, capability.provider)
     append_jsonl(destination, selected)
@@ -65,11 +74,20 @@ def _fetch_live_events(
     time_to: str | None = None,
     sort: str | None = None,
 ) -> list[EventRecord]:
-    selected_symbols = symbols or ["QQQ"]
+    if capability.id == "news.alpaca":
+        selected_symbols = symbols or []
+    elif capability.id == "macro.cftc_cot":
+        selected_symbols = symbols or ["NQ_COT"]
+    else:
+        selected_symbols = symbols or ["QQQ"]
     if capability.id == "events.sec_filings":
         return _fetch_sec_filings(selected_symbols)
     if capability.id == "macro.fred_series":
         return _fetch_fred_series(["DGS10", "FEDFUNDS"])
+    if capability.id == "macro.cftc_cot":
+        from open_composer.adapters.events.cftc import fetch_cftc_tff_events
+
+        return fetch_cftc_tff_events(contracts=selected_symbols)
     if capability.id == "news.alpha_vantage":
         return _fetch_alpha_vantage_news(
             selected_symbols,
@@ -80,6 +98,14 @@ def _fetch_live_events(
         )
     if capability.id == "news.gdelt":
         return _fetch_gdelt_news(selected_symbols)
+    if capability.id == "news.alpaca":
+        return _fetch_alpaca_news(
+            selected_symbols,
+            limit=limit,
+            time_from=time_from,
+            time_to=time_to,
+            sort=sort,
+        )
     raise NotImplementedError(f"live fetch is not implemented for {capability.id}")
 
 
@@ -97,7 +123,16 @@ def _filter_symbols(events: list[EventRecord], symbols: list[str] | None) -> lis
     if not symbols:
         return events
     selected = {symbol.upper() for symbol in symbols}
-    macro_symbols = {"FED", "DGS10", "FEDFUNDS", "CPIAUCSL", "UNRATE"}
+    macro_symbols = {
+        "FED",
+        "DGS10",
+        "FEDFUNDS",
+        "CPIAUCSL",
+        "UNRATE",
+        "NQ_COT",
+        "ES_COT",
+        "VX_COT",
+    }
     return [event for event in events if event.symbol in selected or event.symbol in macro_symbols]
 
 
@@ -110,6 +145,51 @@ def _dedupe_events(events: list[EventRecord]) -> list[EventRecord]:
         seen.add(event.dedupe_key)
         output.append(event)
     return output
+
+
+def _preserve_alpaca_news_first_seen(
+    root: Path,
+    events: list[EventRecord],
+) -> list[EventRecord]:
+    keys = {event.dedupe_key for event in events}
+    if not keys:
+        return events
+
+    earliest: dict[str, EventRecord] = {}
+    source_dir = root / "data/raw/events/alpaca"
+    for path in sorted(source_dir.glob("*.jsonl")):
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                payload = json.loads(line)
+                dedupe_key = str(payload.get("dedupe_key") or "")
+                if dedupe_key not in keys:
+                    continue
+                stored = EventRecord.model_validate(payload)
+                prior = earliest.get(dedupe_key)
+                if prior is None or stored.first_seen_at < prior.first_seen_at:
+                    earliest[dedupe_key] = stored
+
+    normalized: list[EventRecord] = []
+    for event in events:
+        prior = earliest.get(event.dedupe_key)
+        if prior is None:
+            normalized.append(event)
+            continue
+        payload = event.model_dump(mode="python")
+        raw = dict(event.raw)
+        raw["last_refetched_at"] = event.fetched_at.isoformat()
+        payload.update(
+            {
+                "fetched_at": prior.fetched_at,
+                "first_seen_at": prior.first_seen_at,
+                "visible_at": prior.visible_at,
+                "raw": raw,
+            }
+        )
+        normalized.append(EventRecord.model_validate(payload))
+    return normalized
 
 
 def _destination_path(root: Path, kind: str, provider: str) -> Path:
@@ -422,6 +502,172 @@ def _fetch_gdelt_news(symbols: list[str]) -> list[EventRecord]:
             )
         )
     return _dedupe_events(records)
+
+
+def _fetch_alpaca_news(
+    symbols: list[str],
+    *,
+    limit: int | None = None,
+    time_from: str | None = None,
+    time_to: str | None = None,
+    sort: str | None = None,
+) -> list[EventRecord]:
+    article_limit = limit or ALPACA_NEWS_PAGE_LIMIT
+    if not 1 <= article_limit <= ALPACA_NEWS_TOTAL_LIMIT:
+        raise ValueError(f"Alpaca news limit must be between 1 and {ALPACA_NEWS_TOTAL_LIMIT}")
+    sort_order = (sort or "DESC").upper()
+    if sort_order not in {"ASC", "DESC"}:
+        raise ValueError("Alpaca news sort must be ASC or DESC")
+
+    records: list[EventRecord] = []
+    fetched_articles = 0
+    page_token: str | None = None
+    seen_tokens: set[str] = set()
+    while fetched_articles < article_limit:
+        page_size = min(ALPACA_NEWS_PAGE_LIMIT, article_limit - fetched_articles)
+        payload, fetched_at = _fetch_alpaca_news_page(
+            symbols=symbols,
+            limit=page_size,
+            time_from=time_from,
+            time_to=time_to,
+            sort=sort_order,
+            page_token=page_token,
+        )
+        articles = payload.get("news", [])
+        if not isinstance(articles, list):
+            raise RuntimeError("Alpaca news response has invalid news payload")
+        records.extend(
+            _alpaca_news_records_from_payload(
+                payload,
+                requested_symbols=symbols,
+                fetched_at=fetched_at,
+            )
+        )
+        fetched_articles += len(articles)
+        next_token = payload.get("next_page_token")
+        if not articles or not isinstance(next_token, str) or not next_token:
+            break
+        if next_token in seen_tokens:
+            raise RuntimeError("Alpaca news pagination repeated a page token")
+        seen_tokens.add(next_token)
+        page_token = next_token
+    return _dedupe_events(records)
+
+
+def _fetch_alpaca_news_page(
+    *,
+    symbols: list[str],
+    limit: int,
+    time_from: str | None,
+    time_to: str | None,
+    sort: str,
+    page_token: str | None,
+) -> tuple[dict[str, Any], datetime]:
+    import httpx
+
+    api_key = os.getenv("ALPACA_API_KEY_ID", "").strip()
+    secret_key = os.getenv("ALPACA_API_SECRET_KEY", "").strip()
+    if not api_key or not secret_key:
+        raise RuntimeError("Alpaca API credentials are required for live Alpaca news fetch")
+    params: dict[str, Any] = {
+        "limit": limit,
+        "sort": sort,
+        "include_content": False,
+    }
+    if symbols:
+        params["symbols"] = ",".join(sorted(set(symbol.upper() for symbol in symbols)))
+    if time_from:
+        params["start"] = time_from
+    if time_to:
+        params["end"] = time_to
+    if page_token:
+        params["page_token"] = page_token
+    response = httpx.get(
+        "https://data.alpaca.markets/v1beta1/news",
+        params=params,
+        headers={
+            "APCA-API-KEY-ID": api_key,
+            "APCA-API-SECRET-KEY": secret_key,
+        },
+        timeout=30,
+    )
+    fetched_at = datetime.now(UTC)
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise RuntimeError("Alpaca news response must be a JSON object")
+    return payload, fetched_at
+
+
+def _alpaca_news_records_from_payload(
+    payload: dict[str, Any],
+    *,
+    requested_symbols: list[str],
+    fetched_at: datetime,
+) -> list[EventRecord]:
+    requested = {symbol.upper() for symbol in requested_symbols}
+    records: list[EventRecord] = []
+    for article in payload.get("news", []):
+        if not isinstance(article, dict):
+            continue
+        provider_id = str(article.get("id", "")).strip()
+        published_at = _parse_optional_datetime(article.get("created_at"))
+        if not provider_id or published_at is None:
+            continue
+        updated_at = _parse_optional_datetime(article.get("updated_at")) or published_at
+        article_symbols = sorted(
+            {
+                str(symbol).upper().strip()
+                for symbol in article.get("symbols", [])
+                if isinstance(symbol, str) and symbol.strip()
+            }
+        )
+        selected_symbols = (
+            [symbol for symbol in article_symbols if symbol in requested]
+            if requested
+            else article_symbols
+        )
+        if not selected_symbols and not requested:
+            selected_symbols = ["MARKET"]
+        version_id = f"{provider_id}:{updated_at.isoformat()}"
+        metadata = {
+            "provider_id": provider_id,
+            "provider_created_at": published_at.isoformat(),
+            "provider_updated_at": updated_at.isoformat(),
+            "provider_source": str(article.get("source", "")),
+            "provider_symbols": article_symbols,
+            "author": str(article.get("author", "")),
+            "content_requested": False,
+        }
+        for symbol in selected_symbols:
+            records.append(
+                EventRecord(
+                    id=f"alpaca-news-{provider_id}-{symbol.lower()}-{updated_at.timestamp():.0f}",
+                    source="alpaca_news",
+                    symbol=symbol,
+                    published_at=published_at,
+                    fetched_at=fetched_at,
+                    visible_at=max(published_at, fetched_at),
+                    first_seen_at=fetched_at,
+                    revision="provider_current_version",
+                    revision_id=updated_at.isoformat(),
+                    version_id=version_id,
+                    rights="provider_and_original_publisher_terms_apply",
+                    rights_scope="internal_forward_feature_research_only",
+                    availability_quality="collector_fetch_time_first_seen",
+                    availability_basis="local_collector_first_seen_not_provider_created_at",
+                    acquisition_mode="live_api_forward_only",
+                    event_type="company_news",
+                    title=str(article.get("headline", "")),
+                    summary=str(article.get("summary", "")),
+                    url=str(article.get("url", "")),
+                    sentiment="unknown",
+                    relevance_score=1.0 if symbol != "MARKET" else 0.5,
+                    dedupe_key=f"alpaca_news:{version_id}:{symbol}",
+                    raw=metadata,
+                )
+            )
+    return records
 
 
 def _best_news_symbol(symbols: list[str], ticker_sentiment: list[dict[str, Any]]) -> str:

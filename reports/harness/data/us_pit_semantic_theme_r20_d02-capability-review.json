@@ -1,0 +1,62 @@
+{
+  "blockers": [
+    "new R20 forward epoch has no counted live semantic sessions",
+    "news.alpaca live coverage and revision handling are not yet paper-qualified",
+    "SEC live collection requires a valid contact-form SEC_USER_AGENT"
+  ],
+  "capabilities": [
+    {
+      "capability_id": "market.alpaca_bars",
+      "kind": "market",
+      "notes": "Daily bars are supported; R20 historical research binds an immutable SIP snapshot and does not use fixture fallback.",
+      "paper_ready": true,
+      "status": "ok",
+      "strict_behavior": "fail_fast_for_unsupported_timeframes"
+    },
+    {
+      "capability_id": "events.sec_filings",
+      "kind": "event",
+      "notes": "Official SEC packets are forward-only. Live collection requires a valid contact-form SEC_USER_AGENT and measured coverage.",
+      "paper_ready": false,
+      "status": "partial",
+      "strict_behavior": "forward_visibility_from_acceptance_or_fetch_time"
+    },
+    {
+      "capability_id": "news.alpaca",
+      "kind": "news",
+      "notes": "The registry capability is trial. Fixture records validate shape only; historical downloads do not establish local first-seen time.",
+      "paper_ready": false,
+      "status": "partial",
+      "strict_behavior": "forward_only_fail_closed"
+    }
+  ],
+  "conclusion": "warning",
+  "feature_packet_evidence": {
+    "semantic_materialization_fields": [
+      "prompt_hash",
+      "model",
+      "model_parameters_hash",
+      "structured_output_hash"
+    ],
+    "semantic_runtime_path": "open_composer/research/pit_semantic_theme_forward.py",
+    "semantic_runtime_sha256": "c81f04c59bc1a3a49c3adf1c726bbd77c73a8b41a660c31729c2fac1544f0e22",
+    "source_fields": [
+      "published_at",
+      "fetched_at",
+      "first_seen_at",
+      "visible_at",
+      "source",
+      "input_hash"
+    ],
+    "source_packet_schema_path": "schemas/pit_semantic_theme_forward_packet.schema.json",
+    "source_packet_schema_sha256": "67111b0aeecd4c10ddf2c39b0b0d2dc638cc651d74fd400240388613aa7c15bb"
+  },
+  "feature_packet_pit_check": "pass",
+  "historical_semantic_alpha_authorized": false,
+  "reviewed_at": "2026-08-05",
+  "sample_data_caveats": [
+    "news.alpaca and SEC fixtures are contract tests, not research or paper evidence"
+  ],
+  "semantic_stock_budget": 0.0,
+  "strategy_name": "us_pit_semantic_theme_r20_d02"
+}

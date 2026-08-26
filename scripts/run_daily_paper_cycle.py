@@ -23,7 +23,7 @@ from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.notifications import safe_dispatch_notification
 from open_composer.paper_controls import load_paper_kill_switch
 from open_composer.paper_readiness import assess_paper_strategy_readiness
-from open_composer.paper_state_drift import write_state_drift_report
+from open_composer.paper_state_drift import LEVERAGED_RISK_ON, write_state_drift_report
 from open_composer.paper_validation import check_previous_trading_day_remediation
 from open_composer.strategy_versions import strategy_content_hash
 
@@ -305,7 +305,7 @@ def infer_route_state(selected_rows: list[dict[str, Any]]) -> str:
         return "defensive_gld_proxy"
     if "BIL" in symbols:
         return "cash_or_bil_proxy"
-    if any(symbol in {"TQQQ", "QLD", "SOXL", "USD"} for symbol in symbols):
+    if any(symbol in LEVERAGED_RISK_ON for symbol in symbols):
         return "risk_on_levered_proxy"
     return "unclassified_" + "_".join(symbols) if symbols else "flat"
 

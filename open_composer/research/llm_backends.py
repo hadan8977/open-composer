@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 from typing import Any, Protocol
 
-from open_composer.config import default_openai_model, openai_api_key
+from open_composer.config import default_openai_model, openai_api_key, openai_base_url
 
 
 class LLMBackend(Protocol):
@@ -67,7 +67,10 @@ class OpenAIBackend:
             from openai import OpenAI
         except ImportError as exc:  # pragma: no cover - optional dependency
             raise RuntimeError("openai package is required for openai backend") from exc
-        client = OpenAI()
+        client_options: dict[str, Any] = {"api_key": openai_api_key()}
+        if base_url := openai_base_url():
+            client_options["base_url"] = base_url
+        client = OpenAI(**client_options)
         response = client.responses.create(
             model=model or default_openai_model(),
             input=[

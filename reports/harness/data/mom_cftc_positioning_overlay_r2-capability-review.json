@@ -1,0 +1,43 @@
+{
+  "strategy_name": "mom_cftc_positioning_overlay_r2",
+  "reviewed_at": "2026-08-13",
+  "capabilities": [
+    {
+      "capability_id": "market.alpaca_bars",
+      "kind": "market",
+      "status": "ok",
+      "strict_behavior": "fail_fast_for_unsupported_timeframes",
+      "paper_ready": true,
+      "notes": "Existing immutable Alpaca SIP daily snapshot remains the price source; no new price data was downloaded in this capability review."
+    },
+    {
+      "capability_id": "macro.cftc_cot",
+      "kind": "macro",
+      "status": "partial",
+      "strict_behavior": "research_only",
+      "paper_ready": false,
+      "notes": "Official immutable NQ TFF snapshot has 483 replay-eligible weekly records. Native PRE rows use created_at/updated_at; legacy rows use a 14-day conservative lag and exclude the 2018-2019 shutdown backlog."
+    }
+  ],
+  "feature_packet_pit_check": "warning",
+  "pit_fields": {
+    "visible_at": "present",
+    "published_at": "present",
+    "fetched_at": "present_as_historical_replay_availability",
+    "collector_retrieved_at": "present_separately",
+    "source": "present",
+    "input_hash": "present",
+    "prompt_hash": "present_as_deterministic_transform_hash"
+  },
+  "sample_data_caveats": [
+    "data/fixtures/capabilities/cftc_cot.jsonl validates shape only and cannot support research or Paper claims"
+  ],
+  "quality_report_path": "reports/research/data-quality/cftc-tff-nq-20170201-20260803-quality.json",
+  "snapshot_manifest_path": "data/research/cftc_tff_nq_20170201_20260803_20260813/snapshot-manifest.json",
+  "conclusion": "warning",
+  "promotion_blockers": [
+    "CFTC marginal lift and missing-modality robustness have not been tested",
+    "legacy visibility is conservative rather than row-level official",
+    "current official snapshot revision sensitivity remains untested"
+  ]
+}

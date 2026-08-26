@@ -4,15 +4,47 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 import yaml
 
 from open_composer.adapters.data.sample import normalize_ohlcv
 from open_composer.research.market_timing import run_market_timing_research
 
 
+def test_market_timing_research_rejects_unregistered_iteration_before_data_load(
+    sample_workspace: Path,
+    monkeypatch,
+) -> None:
+    spec_path = sample_workspace / "strategy_specs/drafts/fixture_pullback_15m.yaml"
+    raw = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    raw["data"] = {"source": "alpaca", "symbol": "QQQ", "feed": "iex"}
+    raw["data_assumptions"]["source"] = "alpaca"
+    raw.pop("research_design", None)
+    raw["notes"].pop("research_design", None)
+    spec_path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    data_load_attempted = False
+
+    def fail_if_data_is_loaded(**kwargs):
+        del kwargs
+        nonlocal data_load_attempted
+        data_load_attempted = True
+        raise AssertionError("data must not load before iteration validation")
+
+    monkeypatch.setattr(
+        "open_composer.research.market_timing.fetch_ohlcv",
+        fail_if_data_is_loaded,
+    )
+
+    with pytest.raises(ValueError, match="requires iter_id"):
+        run_market_timing_research(spec_path, sample_workspace)
+
+    assert data_load_attempted is False
+
+
 def test_market_timing_research_reports_primary_buy_hold_alpha(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     timestamps = pd.date_range("2024-01-01", periods=80, freq="D", tz="UTC")
     close = (
@@ -59,6 +91,7 @@ def test_market_timing_research_reports_primary_buy_hold_alpha(
         ),
         encoding="utf-8",
     )
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     result = run_market_timing_research(
         spec_path,
@@ -110,6 +143,7 @@ def test_market_timing_research_reports_primary_buy_hold_alpha(
 def test_market_timing_research_walk_forward_top_k_reduces_reported_cost(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     timestamps = pd.date_range("2024-01-01", periods=80, freq="D", tz="UTC")
     close = [100 + index * 0.5 for index in range(80)]
@@ -152,6 +186,7 @@ def test_market_timing_research_walk_forward_top_k_reduces_reported_cost(
         ),
         encoding="utf-8",
     )
+    preregister_iteration_dossier(spec_path, candidate_count=2)
 
     result = run_market_timing_research(
         spec_path,
@@ -181,6 +216,7 @@ def test_market_timing_research_walk_forward_top_k_reduces_reported_cost(
 def test_market_timing_research_supports_risk_control_hold_profile(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     timestamps = pd.date_range("2024-01-01", periods=50, freq="D", tz="UTC")
     close = [100 + index for index in range(50)]
@@ -223,6 +259,7 @@ def test_market_timing_research_supports_risk_control_hold_profile(
         ),
         encoding="utf-8",
     )
+    preregister_iteration_dossier(spec_path, candidate_count=1)
 
     result = run_market_timing_research(
         spec_path,

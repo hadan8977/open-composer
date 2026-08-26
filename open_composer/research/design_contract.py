@@ -4,21 +4,33 @@ from typing import Any
 
 from open_composer.models.strategy_spec import StrategySpec
 
-_BINDING_FIELDS = {
-    "candidate_manifest_path",
-    "data_feasibility_path",
-    "iter_id",
-    "knowledge_contract",
-    "universe_contract_path",
-}
+RESEARCH_DESIGN_BINDING_FIELDS = frozenset(
+    {
+        "campaign_contract_path",
+        "candidate_manifest_path",
+        "candidate_policy_contract_path",
+        "cost_contract_path",
+        "cumulative_trial_contract_path",
+        "data_contract_path",
+        "data_feasibility_path",
+        "holdout_contract_path",
+        "iter_id",
+        "knowledge_contract",
+        "preregistration_lock_path",
+        "source_card_claim_ids",
+        "source_cards_path",
+        "universe_contract_path",
+    }
+)
 
-_ITERATION_FIELDS = _BINDING_FIELDS | {
+_ITERATION_FIELDS = RESEARCH_DESIGN_BINDING_FIELDS | {
     "candidate_budget",
     "factor_variants",
     "method_variants",
     "parameter_ranges",
     "parameter_space",
     "universe_variants",
+    "workflow_only_ungated_draft",
 }
 
 
@@ -35,7 +47,7 @@ def research_design_mapping(spec: StrategySpec) -> dict[str, Any]:
 
     conflicts = sorted(
         field
-        for field in _BINDING_FIELDS
+        for field in RESEARCH_DESIGN_BINDING_FIELDS
         if _meaningful(top_level.get(field))
         and _meaningful(legacy.get(field))
         and top_level[field] != legacy[field]
@@ -44,11 +56,19 @@ def research_design_mapping(spec: StrategySpec) -> dict[str, Any]:
         raise ValueError(
             "conflicting top-level and notes.research_design bindings: " + ", ".join(conflicts)
         )
-    return {**legacy, **top_level}
+    merged = {**legacy, **top_level}
+    for field in RESEARCH_DESIGN_BINDING_FIELDS:
+        if not _meaningful(top_level.get(field)) and _meaningful(legacy.get(field)):
+            merged[field] = legacy[field]
+    return merged
 
 
 def research_design_requires_iteration_gate(design: dict[str, Any]) -> bool:
     return any(_meaningful(design.get(field)) for field in _ITERATION_FIELDS)
+
+
+def research_design_has_bindings(design: dict[str, Any]) -> bool:
+    return any(_meaningful(design.get(field)) for field in RESEARCH_DESIGN_BINDING_FIELDS)
 
 
 def _meaningful(value: Any) -> bool:

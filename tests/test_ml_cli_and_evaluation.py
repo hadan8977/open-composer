@@ -13,9 +13,11 @@ from tests.test_ml_backend_training import _write_syn_ml_spec
 def test_strategy_train_cli_writes_ml_training_report(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     monkeypatch.chdir(sample_workspace)
     spec_path = _write_syn_ml_spec(sample_workspace)
+    preregister_iteration_dossier(spec_path, candidate_count=1)
     runner = CliRunner()
 
     result = runner.invoke(app, ["strategy", "train", str(spec_path)])
@@ -33,9 +35,11 @@ def test_strategy_train_cli_writes_ml_training_report(
 def test_strategy_backtest_walk_forward_cli_writes_comparison(
     sample_workspace: Path,
     monkeypatch,
+    preregister_iteration_dossier,
 ) -> None:
     monkeypatch.chdir(sample_workspace)
     spec_path = _write_syn_ml_spec(sample_workspace)
+    preregister_iteration_dossier(spec_path, candidate_count=1)
     runner = CliRunner()
 
     result = runner.invoke(app, ["strategy", "backtest-walk-forward", str(spec_path)])
@@ -60,9 +64,14 @@ def test_strategy_backtest_walk_forward_cli_writes_comparison(
     assert payload["baseline"]["signals"] >= 1
 
 
-def test_strategy_train_cli_rejects_non_model_spec(sample_workspace: Path, monkeypatch) -> None:
+def test_strategy_train_cli_rejects_non_model_spec(
+    sample_workspace: Path,
+    monkeypatch,
+    preregister_iteration_dossier,
+) -> None:
     monkeypatch.chdir(sample_workspace)
     spec_path = _write_syn_ml_spec(sample_workspace, model=False)
+    preregister_iteration_dossier(spec_path, candidate_count=1)
     runner = CliRunner()
 
     result = runner.invoke(app, ["strategy", "train", str(spec_path)])
