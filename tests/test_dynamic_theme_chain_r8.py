@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from open_composer.adapters.data.alpaca_snapshot import (
     AlpacaSnapshotContract,
@@ -205,6 +206,7 @@ def test_cscv_pbo_is_candidate_id_invariant_for_identical_streams() -> None:
     assert 0.0 <= dsr["probability"] <= 1.0
 
 
+@pytest.mark.slow
 def test_full_deterministic_evaluation_pipeline_on_synthetic_panel(
     tmp_path: Path,
     repo_root: Path,

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from open_composer.research.pit_semantic_theme_r11 import (
     M01_FEATURES,
@@ -60,6 +61,7 @@ def test_r12_folds_are_four_nonoverlapping_full_year_windows() -> None:
     assert folds[-1]["test_end"] == "2025-07-31"
 
 
+@pytest.mark.slow
 def test_r12_fold_local_fit_uses_only_embargo_safe_labels() -> None:
     panel = load_r12_price_panel(ROOT)
     specs = load_and_validate_r12_specs(ROOT)

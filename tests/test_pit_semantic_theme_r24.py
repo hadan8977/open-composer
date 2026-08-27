@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import open_composer.research.pit_semantic_theme_r24 as r24
 from open_composer.research.pit_semantic_theme_r11 import UNIVERSE, R11PricePanel
@@ -251,6 +252,7 @@ def test_r24_folds_are_four_nonoverlapping_embargoed_full_year_windows() -> None
     assert folds[-1]["test_end"] == "2025-07-31"
 
 
+@pytest.mark.slow
 def test_r24_features_policy_value_labels_and_embargo_use_registered_timing() -> None:
     panel = load_r24_price_panel(ROOT)
     specs = load_and_validate_r24_specs(ROOT)
@@ -476,6 +478,7 @@ def test_r24_usd_pressure_latches_until_fast_price_recovery() -> None:
     assert (active, transition) == (False, "released")
 
 
+@pytest.mark.slow
 def test_r24_pressure_recovery_uses_fast_prices_without_slow_breadth() -> None:
     dataset = build_r24_feature_dataset(load_r24_price_panel(ROOT))
     fast_price = (dataset["qqq_trend_gap_50"] > 0.0) & (

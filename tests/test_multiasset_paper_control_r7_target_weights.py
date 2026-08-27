@@ -54,6 +54,7 @@ def baseline_computation() -> R7FamilyComputation:
     )
 
 
+@pytest.mark.slow
 def test_r7_family_computes_all_fixed_roles_on_one_snapshot(
     baseline_computation: R7FamilyComputation,
 ) -> None:

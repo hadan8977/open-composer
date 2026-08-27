@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.dynamic_theme_chain_r8 import (
@@ -43,6 +44,7 @@ def test_r8_stage_e_specs_match_locked_model_contract(repo_root: Path) -> None:
     assert specs["R8M02"].model.selection.threshold == 0.58
 
 
+@pytest.mark.slow
 def test_r8_stage_e_features_use_decision_time_only() -> None:
     panel = _synthetic_ml_panel(session_count=180)
     dataset = build_r8_ml_dataset(panel)
@@ -70,6 +72,7 @@ def test_r8_stage_e_features_use_decision_time_only() -> None:
     )
 
 
+@pytest.mark.slow
 def test_r8_stage_e_training_rows_enforce_window_and_embargo(repo_root: Path) -> None:
     panel = _synthetic_ml_panel(session_count=940)
     dataset = build_r8_ml_dataset(panel)
@@ -114,6 +117,7 @@ def test_r8_stage_e_risk_budget_and_survival_gate_conserve_capital() -> None:
     assert gated["BIL"] > target["BIL"]
 
 
+@pytest.mark.slow
 def test_r8_stage_e_model_family_is_hash_bound_and_deterministic(repo_root: Path) -> None:
     panel = _synthetic_ml_panel(session_count=940)
     dataset = build_r8_ml_dataset(panel)
@@ -152,6 +156,7 @@ def test_r8_stage_e_model_family_is_hash_bound_and_deterministic(repo_root: Path
     )
 
 
+@pytest.mark.slow
 def test_r8_stage_e_segment_builds_mwf_targets_without_broker_writes(
     repo_root: Path,
 ) -> None:
@@ -192,6 +197,7 @@ def test_r8_stage_e_segment_builds_mwf_targets_without_broker_writes(
     assert all(row["fallback_applied"] is False for row in result.target_records)
 
 
+@pytest.mark.slow
 def test_r8_stage_e_evaluation_publishes_complete_broker_free_report(
     tmp_path: Path, repo_root: Path, monkeypatch
 ) -> None:

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 import yaml
 
 from open_composer.adapters.data.sample import normalize_ohlcv
@@ -14,6 +15,7 @@ from open_composer.research.core_beta_satellite_router import (
 )
 
 
+@pytest.mark.slow
 def test_core_beta_satellite_router_reports_ablation_and_pit_timing(
     sample_workspace: Path,
     monkeypatch,

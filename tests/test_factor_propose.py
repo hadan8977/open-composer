@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from typer.testing import CliRunner
 
 from open_composer.cli import app
@@ -100,6 +101,7 @@ def test_factor_proposal_approve_and_reject_update_artifacts(sample_workspace: P
     assert ledger.exists()
 
 
+@pytest.mark.slow
 def test_factor_propose_cli(sample_workspace: Path, monkeypatch) -> None:
     monkeypatch.chdir(sample_workspace)
     result = CliRunner().invoke(

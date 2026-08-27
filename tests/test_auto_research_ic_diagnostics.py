@@ -5,9 +5,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from open_composer.research.auto_research import run_auto_research
 
 
+@pytest.mark.slow
 def test_overnight_factors_produce_ic_or_diagnosis(repo_root: Path) -> None:
     result = run_auto_research(
         thesis="Overnight thesis: exploit overnight gap behavior on SYN daily bars.",

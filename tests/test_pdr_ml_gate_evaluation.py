@@ -116,6 +116,7 @@ def test_pdr_ml_gate_crisis_gate_requires_not_worse_than_baseline() -> None:
     assert crisis_gate["actual"][0]["total_return_pct"]["passed"] is False
 
 
+@pytest.mark.slow
 def test_pdr_ml_gate_evaluation_writes_acceptance_report_when_artifacts_exist(
     tmp_path: Path,
 ) -> None:

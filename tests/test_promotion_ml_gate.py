@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 import yaml
 
 from open_composer.models.strategy_spec import load_strategy_spec
@@ -11,6 +12,7 @@ from open_composer.research.promotion import _build_pass_summary, build_promotio
 from tests.test_ml_backend_training import _write_syn_ml_spec
 
 
+@pytest.mark.slow
 def test_promotion_report_adds_ml_baseline_gate(
     sample_workspace: Path,
     preregister_iteration_dossier,
@@ -54,6 +56,7 @@ def test_promotion_report_adds_ml_baseline_gate(
     assert overfit_path.exists()
 
 
+@pytest.mark.slow
 def test_ml_promotion_uses_stitched_oos_and_training_folds(
     sample_workspace: Path,
     preregister_iteration_dossier,
@@ -85,6 +88,7 @@ def test_ml_promotion_uses_stitched_oos_and_training_folds(
     assert walk_forward.details["folds"]
 
 
+@pytest.mark.slow
 def test_ml_promotion_blocks_without_training_folds(
     sample_workspace: Path,
     preregister_iteration_dossier,
@@ -114,6 +118,7 @@ def test_ml_promotion_blocks_without_training_folds(
     assert walk_forward.details["prediction_count"] == 0
 
 
+@pytest.mark.slow
 def test_non_ml_promotion_keeps_generic_oos_and_walk_forward(
     sample_workspace: Path,
     preregister_iteration_dossier,

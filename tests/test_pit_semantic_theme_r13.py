@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pandas as pd
+import pytest
 
 import open_composer.research.pit_semantic_theme_r13 as r13
 from open_composer.research.pit_semantic_theme_r11 import UNIVERSE, R11PricePanel
@@ -111,6 +112,7 @@ def test_r13_folds_are_four_nonoverlapping_full_year_windows() -> None:
     assert folds[-1]["test_end"] == "2025-07-31"
 
 
+@pytest.mark.slow
 def test_r13_features_labels_and_embargo_use_the_registered_timing() -> None:
     panel = load_r13_price_panel(ROOT)
     specs = load_and_validate_r13_specs(ROOT)

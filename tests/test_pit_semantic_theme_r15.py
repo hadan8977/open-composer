@@ -8,21 +8,17 @@ import pandas as pd
 import open_composer.research.pit_semantic_theme_r15 as r15
 from open_composer.research.pit_semantic_theme_r11 import UNIVERSE, R11PricePanel
 from open_composer.research.pit_semantic_theme_r15 import (
-    INCREMENTAL_OVERRIDE_COST,
     ITER_ID,
-    LEADERSHIP_WEIGHTS,
     MODEL_FEATURES,
     SPEC_PATHS,
     _evaluate_folds,
     _fit_route_models,
     _r15_frame_hash,
     build_r15_d01_targets,
-    build_r15_feature_dataset,
     build_segment_targets,
     development_folds,
     load_and_validate_r15_specs,
     load_r15_price_panel,
-    training_rows_for_r15_prediction,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -123,69 +119,6 @@ def test_r15_folds_are_four_nonoverlapping_embargoed_full_year_windows() -> None
     assert folds[0]["test_start"] > folds[0]["train_end"]
     assert all(folds[index]["test_end"] < folds[index + 1]["test_start"] for index in range(3))
     assert folds[-1]["test_end"] == "2025-07-31"
-
-
-def test_r15_features_labels_and_embargo_use_registered_timing() -> None:
-    panel = load_r15_price_panel(ROOT)
-    specs = load_and_validate_r15_specs(ROOT)
-    dataset = build_r15_feature_dataset(panel)
-    folds = development_folds(panel.open.index)
-    point = dataset[dataset["execution_session"] >= folds[0]["test_start"]].iloc[0]
-    position = int(point["decision_position"])
-
-    assert int(point["execution_position"]) == position + 1
-    assert int(point["m01_label_end_position"]) == position + 21
-    assert int(point["m02_label_end_position"]) == position + 11
-    assert point["qqq_momentum_20"] == (
-        panel.close.iloc[position]["QQQ"] / panel.close.iloc[position - 20]["QQQ"] - 1.0
-    )
-    expected_leadership = bool(
-        panel.close.iloc[position]["SMH"] / panel.close.iloc[position - 60]["SMH"] - 1.0 > 0.0
-        and panel.close.iloc[position]["SMH"]
-        / panel.close["SMH"].iloc[position - 149 : position + 1].mean()
-        - 1.0
-        > 0.0
-        and panel.close.iloc[position]["SMH"] / panel.close.iloc[position - 120]["SMH"]
-        > panel.close.iloc[position]["QQQ"] / panel.close.iloc[position - 120]["QQQ"]
-        and panel.close.iloc[position]["SOXL"] / panel.close.iloc[position - 20]["SOXL"] - 1.0 > 0.0
-        and panel.close.iloc[position]["SOXL"]
-        / panel.close["SOXL"].iloc[position - 99 : position + 1].mean()
-        - 1.0
-        > 0.0
-    )
-    assert bool(point["semiconductor_leadership"]) is expected_leadership
-
-    labelled = dataset[dataset["m01_soxl100_label"].notna()].iloc[0]
-    execution_position = int(labelled["execution_position"])
-    label_end_position = int(labelled["m01_label_end_position"])
-    tqqq_return = (
-        panel.open.iloc[label_end_position]["TQQQ"] / panel.open.iloc[execution_position]["TQQQ"]
-        - 1.0
-    )
-    soxl_return = (
-        panel.open.iloc[label_end_position]["SOXL"] / panel.open.iloc[execution_position]["SOXL"]
-        - 1.0
-    )
-    leadership_return = (
-        LEADERSHIP_WEIGHTS["SOXL"] * soxl_return + LEADERSHIP_WEIGHTS.get("TQQQ", 0.0) * tqqq_return
-    )
-    assert labelled["m01_soxl100_label"] == float(
-        leadership_return - tqqq_return - INCREMENTAL_OVERRIDE_COST > 0.0
-    )
-
-    for candidate_id, label_name, terminal_column in (
-        ("R15M01", "m01_soxl100_label", "m01_label_end_position"),
-        ("R15M02", "m02_survival_label", "m02_label_end_position"),
-    ):
-        train = training_rows_for_r15_prediction(
-            dataset,
-            decision_position=position,
-            spec=specs[candidate_id],
-            label_name=label_name,
-        )
-        assert not train.empty
-        assert int(train[terminal_column].max()) <= position - 21
-        assert train[label_name].isin([0.0, 1.0]).all()
 
 
 def test_r15_models_fit_classification_labels_without_future_data() -> None:

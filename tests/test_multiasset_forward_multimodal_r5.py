@@ -960,6 +960,7 @@ def test_non_circular_moving_blocks_are_shared_bounded_and_deterministic() -> No
             assert np.all(np.diff(block, axis=1) == 1)
 
 
+@pytest.mark.slow
 def test_paired_transfer_bootstrap_is_deterministic_and_uses_sharpe_differences(
     repo_root: Path,
 ) -> None:
@@ -1244,6 +1245,7 @@ def test_every_runtime_contract_is_in_the_preregistration_lock_inventory() -> No
     assert set(R5_RUNTIME_CONTRACT_FILENAMES.values()).issubset(R5_LOCK_ITERATION_FILENAMES)
 
 
+@pytest.mark.slow
 def test_runner_lock_inventory_is_a_verified_local_dependency_closure(repo_root: Path) -> None:
     inventory = _r5_runner_relative_paths(repo_root)
     inventory_set = set(inventory)
@@ -2385,6 +2387,7 @@ def test_m02_copies_m01_when_upstream_ranker_falls_back(
     assert m02_row["unexpected_model_fallback"] is True
 
 
+@pytest.mark.slow
 def test_locked_mark_replay_rejects_coordinated_cost_event_deletion(
     repo_root: Path,
 ) -> None:
@@ -2796,6 +2799,7 @@ def test_canonical_target_identity_excludes_candidate_metadata() -> None:
     assert canonical_target_hash(targets) == canonical_target_hash(copied)
 
 
+@pytest.mark.slow
 def test_feature_ledger_is_replayed_from_locked_ohlcv_and_specs(repo_root: Path) -> None:
     sessions = pd.bdate_range("2020-01-02", periods=340)
     position = np.arange(len(sessions), dtype=float)
@@ -2859,6 +2863,7 @@ def test_feature_ledger_is_replayed_from_locked_ohlcv_and_specs(repo_root: Path)
         _replay_staged_feature_ledger(panel, mutated, specs)
 
 
+@pytest.mark.slow
 def test_synthetic_segment_fits_all_model_roles_without_future_rows(repo_root: Path) -> None:
     decision_dates = pd.date_range("2018-02-28", periods=48, freq="ME")
     rows = []

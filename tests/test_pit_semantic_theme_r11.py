@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.research.pit_semantic_theme_r11 import (
@@ -88,6 +89,7 @@ def test_r11_feature_dataset_uses_decision_close_and_future_open_labels() -> Non
     assert np.isfinite(dataset.loc[:, list(M01_FEATURES)].to_numpy(dtype=float)).all()
 
 
+@pytest.mark.slow
 def test_r11_training_rows_enforce_ten_session_embargo_after_label_end() -> None:
     specs = _specs()
     dataset = build_price_feature_dataset(_panel(900))

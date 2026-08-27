@@ -22,6 +22,13 @@ from open_composer.strategy_versions import strategy_content_hash
 _PATH_PREFIX_PATTERN = re.compile(r"(reports|strategy_specs|signal_logs|data|\.codex|\.agents)\\")
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers",
+        "slow: full-round replay/training-heavy tests, run via `make test-full` / `make verify`.",
+    )
+
+
 def assert_no_windows_paths(payload: object) -> None:
     """Recursively assert serialized artifact paths use POSIX separators."""
     if isinstance(payload, dict):

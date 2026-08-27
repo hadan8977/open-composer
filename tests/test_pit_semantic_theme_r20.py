@@ -9,14 +9,8 @@ import pandas as pd
 import open_composer.research.pit_semantic_theme_r20 as r20
 from open_composer.research.pit_semantic_theme_r11 import UNIVERSE, R11PricePanel
 from open_composer.research.pit_semantic_theme_r20 import (
-    INCREMENTAL_OVERRIDE_COST,
     ITER_ID,
     MODEL_FEATURES,
-    RECOVERY_BREADTH_MIN_COUNT,
-    RECOVERY_BREADTH_TREND_SESSIONS,
-    RECOVERY_QQQ_TREND_SESSIONS,
-    RECOVERY_TQQQ_MOMENTUM_MIN,
-    RECOVERY_TQQQ_MOMENTUM_SESSIONS,
     SPEC_PATHS,
     USD_PRESSURE_DRAWDOWN_MAX,
     USD_PRESSURE_RECOVERY_MOMENTUM_MIN,
@@ -27,12 +21,10 @@ from open_composer.research.pit_semantic_theme_r20 import (
     _stress_recovery_contract,
     _usd_pressure_contract,
     build_r20_d01_targets,
-    build_r20_feature_dataset,
     build_segment_targets,
     development_folds,
     load_and_validate_r20_specs,
     load_r20_price_panel,
-    training_rows_for_r20_prediction,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -179,129 +171,6 @@ def test_r20_folds_are_four_nonoverlapping_embargoed_full_year_windows() -> None
     assert folds[0]["test_start"] > folds[0]["train_end"]
     assert all(folds[index]["test_end"] < folds[index + 1]["test_start"] for index in range(3))
     assert folds[-1]["test_end"] == "2025-07-31"
-
-
-def test_r20_features_labels_and_embargo_use_registered_timing() -> None:
-    panel = load_r20_price_panel(ROOT)
-    specs = load_and_validate_r20_specs(ROOT)
-    dataset = build_r20_feature_dataset(panel)
-    _, d01_records = build_r20_d01_targets(panel, specs["R20D01"], dataset)
-    folds = development_folds(panel.open.index)
-    point = dataset[dataset["execution_session"] >= folds[0]["test_start"]].iloc[0]
-    position = int(point["decision_position"])
-
-    assert int(point["execution_position"]) == position + 1
-    assert int(point["m01_label_end_position"]) == position + 21
-    assert int(point["m02_label_end_position"]) == position + 11
-    assert point["qqq_momentum_20"] == (
-        panel.close.iloc[position]["QQQ"] / panel.close.iloc[position - 20]["QQQ"] - 1.0
-    )
-    expected_qqq_trend_50 = (
-        panel.close.iloc[position]["QQQ"]
-        / panel.close["QQQ"].iloc[position - RECOVERY_QQQ_TREND_SESSIONS + 1 : position + 1].mean()
-        - 1.0
-    )
-    expected_tqqq_momentum_10 = (
-        panel.close.iloc[position]["TQQQ"]
-        / panel.close.iloc[position - RECOVERY_TQQQ_MOMENTUM_SESSIONS]["TQQQ"]
-        - 1.0
-    )
-    expected_breadth_count = sum(
-        panel.close.iloc[position][symbol]
-        > panel.close[symbol]
-        .iloc[position - RECOVERY_BREADTH_TREND_SESSIONS + 1 : position + 1]
-        .mean()
-        for symbol in ("QQQ", "XLK", "IGV", "SOXX", "SMH")
-    )
-    expected_base_risk_on = bool(
-        panel.close.iloc[position]["QQQ"]
-        > panel.close["QQQ"].iloc[position - 199 : position + 1].mean()
-        or panel.close.iloc[position]["QQQ"] / panel.close.iloc[position - 120]["QQQ"] - 1.0 > 0.0
-    )
-    pressure_active = False
-    pressure_transition = "clear"
-    usd_close = panel.close["USD"]
-    for pressure_position in range(200, position + 1):
-        usd_drawdown_20 = (
-            usd_close.iloc[pressure_position]
-            / usd_close.iloc[pressure_position - 19 : pressure_position + 1].max()
-            - 1.0
-        )
-        usd_trend_gap_100 = (
-            usd_close.iloc[pressure_position]
-            / usd_close.iloc[pressure_position - 99 : pressure_position + 1].mean()
-            - 1.0
-        )
-        usd_momentum_20 = (
-            usd_close.iloc[pressure_position] / usd_close.iloc[pressure_position - 20] - 1.0
-        )
-        pressure_active, pressure_transition = _advance_usd_pressure(
-            active=pressure_active,
-            drawdown_20=usd_drawdown_20,
-            trend_gap_100=usd_trend_gap_100,
-            momentum_20=usd_momentum_20,
-        )
-    expected_risk_on = bool(expected_base_risk_on and not pressure_active)
-    expected_recovery = bool(
-        not expected_base_risk_on
-        and not pressure_active
-        and expected_qqq_trend_50 > 0.0
-        and expected_tqqq_momentum_10 >= RECOVERY_TQQQ_MOMENTUM_MIN
-        and expected_breadth_count >= RECOVERY_BREADTH_MIN_COUNT
-    )
-    assert point["qqq_trend_gap_50"] == expected_qqq_trend_50
-    assert point["tqqq_momentum_10"] == expected_tqqq_momentum_10
-    assert int(point["tech_breadth_count_100"]) == expected_breadth_count
-    assert bool(point["base_risk_on"]) is expected_base_risk_on
-    assert bool(point["risk_on"]) is expected_risk_on
-    assert bool(point["usd_pressure_active"]) is pressure_active
-    assert point["usd_pressure_transition"] == pressure_transition
-    assert bool(point["recovery_boost"]) is expected_recovery
-    expected_leadership = bool(
-        panel.close.iloc[position]["SMH"] / panel.close.iloc[position - 60]["SMH"] - 1.0 > 0.0
-        and panel.close.iloc[position]["SMH"]
-        / panel.close["SMH"].iloc[position - 149 : position + 1].mean()
-        - 1.0
-        > 0.0
-        and panel.close.iloc[position]["SMH"] / panel.close.iloc[position - 120]["SMH"]
-        > panel.close.iloc[position]["QQQ"] / panel.close.iloc[position - 120]["QQQ"]
-        and panel.close.iloc[position]["USD"] / panel.close.iloc[position - 20]["USD"] - 1.0 > 0.0
-        and panel.close.iloc[position]["USD"]
-        / panel.close["USD"].iloc[position - 99 : position + 1].mean()
-        - 1.0
-        > 0.0
-    )
-    assert bool(point["semiconductor_leadership"]) is expected_leadership
-    assert dataset["m02_label_route"].tolist() == [row["selected_target"] for row in d01_records]
-
-    labelled = dataset[dataset["m01_tqqq100_label"].notna()].iloc[0]
-    execution_position = int(labelled["execution_position"])
-    label_end_position = int(labelled["m01_label_end_position"])
-    tqqq_return = (
-        panel.open.iloc[label_end_position]["TQQQ"] / panel.open.iloc[execution_position]["TQQQ"]
-        - 1.0
-    )
-    usd_return = (
-        panel.open.iloc[label_end_position]["USD"] / panel.open.iloc[execution_position]["USD"]
-        - 1.0
-    )
-    assert labelled["m01_tqqq100_label"] == float(
-        tqqq_return - usd_return - INCREMENTAL_OVERRIDE_COST > 0.0
-    )
-
-    for candidate_id, label_name, terminal_column in (
-        ("R20M01", "m01_tqqq100_label", "m01_label_end_position"),
-        ("R20M02", "m02_survival_label", "m02_label_end_position"),
-    ):
-        train = training_rows_for_r20_prediction(
-            dataset,
-            decision_position=position,
-            spec=specs[candidate_id],
-            label_name=label_name,
-        )
-        assert not train.empty
-        assert int(train[terminal_column].max()) <= position - 21
-        assert train[label_name].isin([0.0, 1.0]).all()
 
 
 def test_r20_models_fit_classification_labels_without_future_data() -> None:

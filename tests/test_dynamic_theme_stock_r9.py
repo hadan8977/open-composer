@@ -80,6 +80,7 @@ def test_mutual_knn_components_separates_unrelated_cohorts() -> None:
     assert components == (("A", "B", "C"), ("D", "E", "F"))
 
 
+@pytest.mark.slow
 def test_r9_d01_changes_theme_and_respects_decision_time_membership(r9_inputs) -> None:
     records = r9_inputs["records"]
     early_theme = set(r9_inputs["early_theme"])

@@ -3,11 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from open_composer.adapters.data.sample import normalize_ohlcv
 from open_composer.research.universe_optimizer import optimize_strategy_universe
 
 
+@pytest.mark.slow
 def test_universe_optimizer_writes_per_symbol_specs(
     sample_workspace: Path,
     monkeypatch,

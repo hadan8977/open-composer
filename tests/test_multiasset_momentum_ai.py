@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from open_composer.research import multiasset_momentum_ai as ai
 
@@ -38,6 +39,7 @@ def _synthetic_data(
     )
 
 
+@pytest.mark.slow
 def test_ai_factor_dataset_is_index_minus_one_and_has_broad_groups() -> None:
     data, symbols, sectors = _synthetic_data()
     frame, latest, groups = ai.build_ai_factor_dataset(data, symbols, sectors)
@@ -78,6 +80,7 @@ def test_ai_folds_enforce_full_label_purge_and_embargo() -> None:
         assert fold["test"]["is_monthly_eval"].all()
 
 
+@pytest.mark.slow
 def test_factor_selection_uses_training_frame_only_and_prunes_redundancy() -> None:
     data, symbols, sectors = _synthetic_data()
     frame, _, groups = ai.build_ai_factor_dataset(data, symbols, sectors)

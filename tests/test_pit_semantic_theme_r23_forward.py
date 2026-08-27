@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import pytest
 
 from open_composer.models.event import EventRecord
 from open_composer.research.pit_semantic_theme_r11 import UNIVERSE
@@ -175,6 +176,7 @@ def _semantic_price_frames(
     return frames
 
 
+@pytest.mark.slow
 def test_forward_features_match_locked_r23_decision_features_without_labels() -> None:
     panel = load_r22_price_panel(ROOT)
     historical = build_r22_feature_dataset(panel)
@@ -208,6 +210,7 @@ def test_forward_features_match_locked_r23_decision_features_without_labels() ->
     assert "m02_survival_label" not in forward
 
 
+@pytest.mark.slow
 def test_forward_targets_cover_all_roles_and_preserve_exact_fallbacks() -> None:
     panel = load_r22_price_panel(ROOT)
     targets, diagnostics = build_r23_forward_role_targets(
@@ -452,6 +455,7 @@ def test_forward_account_reconciliation_and_intents_never_authorize_orders(
     assert all(row["order_authorized"] is False for row in intents["rebalance_intents"])
 
 
+@pytest.mark.slow
 def test_offline_end_to_end_freeze_publish_receipt_and_idempotent_retry(
     tmp_path: Path,
 ) -> None:

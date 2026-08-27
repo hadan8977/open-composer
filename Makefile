@@ -7,7 +7,7 @@ PAPER_STRATEGY ?= qqq_pullback_15m
 VPS_DEPLOY_ARGS ?=
 VPS_STOP_ARGS ?=
 
-.PHONY: start bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync vps-plan vps-deploy vps-stop verify
+.PHONY: start bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test test-fast test-full lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync vps-plan vps-deploy vps-stop verify
 
 start:
 	./scripts/setup-local.sh
@@ -36,6 +36,12 @@ agent-parity:
 
 test:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run pytest
+
+test-fast:
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run --with pytest-xdist pytest -n 2
+
+test-full:
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run --with pytest-xdist pytest -m "" -n 2
 
 lint:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run ruff check .
@@ -104,4 +110,4 @@ vps-deploy:
 vps-stop:
 	./scripts/stop-remote-dashboard.sh $(VPS_STOP_ARGS)
 
-verify: check repo-check capability-test agent-parity deploy-prepare dashboard-check feature-validate readiness
+verify: format lint test-full repo-check capability-test agent-parity deploy-prepare dashboard-check feature-validate readiness

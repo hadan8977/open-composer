@@ -162,6 +162,7 @@ def test_paper_tca_report_excludes_stale_observations(tmp_path: Path) -> None:
     assert report["paper_tca_pass"] is False
 
 
+@pytest.mark.slow
 def test_paper_tca_report_passes_with_thirty_bound_observations(tmp_path: Path) -> None:
     epoch = datetime(2026, 7, 20, 13, tzinfo=UTC)
     sessions = _sessions(date(2026, 7, 20), count=10)

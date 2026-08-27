@@ -92,6 +92,7 @@ def reference_computations() -> dict[str, adapter.R5TargetComputation]:
     }
 
 
+@pytest.mark.slow
 def test_reference_mapping_uses_frozen_d01_and_model_paths(
     reference_computations: dict[str, adapter.R5TargetComputation],
 ) -> None:
@@ -792,6 +793,7 @@ def test_observation_binds_every_immutable_router_artifact_path(
     assert "execution_observation_payload_mismatch" in reasons
 
 
+@pytest.mark.slow
 def test_twenty_contiguous_receipts_pass_but_remain_non_orderable(
     tmp_path: Path,
     repo_root: Path,
