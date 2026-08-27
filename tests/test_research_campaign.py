@@ -16,6 +16,7 @@ from open_composer.cli import app
 from open_composer.models.strategy_spec import ResearchDesign
 from open_composer.research.campaign import (
     CAMPAIGN_FILENAME,
+    QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD,
     ResearchCampaignContract,
     campaign_contract_path,
     effective_trial_count_from_ledger,
@@ -197,11 +198,9 @@ def _passing_contract() -> dict[str, Any]:
             "primary_cost_bps": 20,
             "stress_cost_bps": 40,
             "annualization_sessions": 252,
-            "cagr_minimum": 0.45,
             "cagr_excess_qqq_minimum": 0.08,
-            "tqqq_cagr_capture_minimum": 0.85,
-            "tqqq_upside_capture_minimum": 0.85,
-            "tqqq_downside_capture_maximum": 0.90,
+            "qqq_capture_ratio_minimum": 1.0,
+            "qqq_downside_capture_maximum": 1.5,
             "max_drawdown_minimum": -0.65,
             "mar_minimum": 0.4,
             "chronological_fold_count": 4,
@@ -519,21 +518,23 @@ def _write_promotion_evidence(
             development_fold_returns=development_fold_returns[candidate_id],
             annualization_sessions=promotion_policy["annualization_sessions"],
         )
+        if abs(recomputed["qqq_correlation"]) <= QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD:
+            qqq_capture_ratio_pass = True
+            qqq_downside_capture_pass = True
+        else:
+            qqq_capture_ratio_pass = (
+                recomputed["qqq_capture_ratio"] >= promotion_policy["qqq_capture_ratio_minimum"]
+            )
+            qqq_downside_capture_pass = (
+                recomputed["qqq_downside_capture"]
+                <= promotion_policy["qqq_downside_capture_maximum"]
+            )
         passed_gates = {
-            "cagr": recomputed["cagr"] >= promotion_policy["cagr_minimum"],
             "cagr_excess_qqq": (
                 recomputed["cagr_excess_qqq"] >= promotion_policy["cagr_excess_qqq_minimum"]
             ),
-            "tqqq_cagr_capture": (
-                recomputed["tqqq_cagr_capture"] >= promotion_policy["tqqq_cagr_capture_minimum"]
-            ),
-            "tqqq_upside_capture": (
-                recomputed["tqqq_upside_capture"] >= promotion_policy["tqqq_upside_capture_minimum"]
-            ),
-            "tqqq_downside_capture": (
-                recomputed["tqqq_downside_capture"]
-                <= promotion_policy["tqqq_downside_capture_maximum"]
-            ),
+            "qqq_capture_ratio": qqq_capture_ratio_pass,
+            "qqq_downside_capture": qqq_downside_capture_pass,
             "max_drawdown": (
                 recomputed["max_drawdown"] >= promotion_policy["max_drawdown_minimum"]
             ),
@@ -1160,11 +1161,9 @@ def test_final_recomputes_candidate_promotion_metrics(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("policy_field", "threshold", "gate_name"),
     [
-        ("cagr_minimum", 10.0, "cagr"),
         ("cagr_excess_qqq_minimum", 10.0, "cagr_excess_qqq"),
-        ("tqqq_cagr_capture_minimum", 10.0, "tqqq_cagr_capture"),
-        ("tqqq_upside_capture_minimum", 10.0, "tqqq_upside_capture"),
-        ("tqqq_downside_capture_maximum", -10.0, "tqqq_downside_capture"),
+        ("qqq_capture_ratio_minimum", 1000.0, "qqq_capture_ratio"),
+        ("qqq_downside_capture_maximum", -1000.0, "qqq_downside_capture"),
         ("max_drawdown_minimum", 0.0, "max_drawdown"),
         ("mar_minimum", 1000.0, "mar"),
     ],

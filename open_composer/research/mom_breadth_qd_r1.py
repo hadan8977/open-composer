@@ -24,6 +24,9 @@ from open_composer.research.campaign import (
     recompute_candidate_promotion_metrics,
     validate_campaign_contract,
 )
+from open_composer.research.campaign import (
+    _qqq_capture_gate_passes as _campaign_qqq_capture_gate_passes,
+)
 from open_composer.research.campaign_statistics import (
     annualized_sharpe,
     deflated_sharpe_probability,
@@ -1631,17 +1634,15 @@ def _promotion_passes(
     family_policy = contract.statistical_family_policy
     if family_policy.primary_sharpe_operator != ">":
         raise ValueError("unsupported primary Sharpe operator")
+    qqq_capture_ratio_pass, qqq_downside_capture_pass = _campaign_qqq_capture_gate_passes(
+        metrics, policy
+    )
     return {
         "sharpe_excess_bil": sharpe > family_policy.primary_sharpe_minimum,
         "dsr_probability": dsr_probability >= family_policy.dsr_minimum,
-        "cagr": float(metrics["cagr"]) >= policy.cagr_minimum,
         "cagr_excess_qqq": float(metrics["cagr_excess_qqq"]) >= policy.cagr_excess_qqq_minimum,
-        "tqqq_cagr_capture": float(metrics["tqqq_cagr_capture"])
-        >= policy.tqqq_cagr_capture_minimum,
-        "tqqq_upside_capture": float(metrics["tqqq_upside_capture"])
-        >= policy.tqqq_upside_capture_minimum,
-        "tqqq_downside_capture": float(metrics["tqqq_downside_capture"])
-        <= policy.tqqq_downside_capture_maximum,
+        "qqq_capture_ratio": qqq_capture_ratio_pass,
+        "qqq_downside_capture": qqq_downside_capture_pass,
         "max_drawdown": float(metrics["max_drawdown"]) >= policy.max_drawdown_minimum,
         "mar": float(metrics["mar"]) >= policy.mar_minimum,
         "positive_fold_count": int(metrics["positive_fold_count"]) >= policy.minimum_positive_folds,

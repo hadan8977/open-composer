@@ -1194,18 +1194,13 @@ def _validation_contract(
                 "operator": family["primary_sharpe_operator"],
                 "threshold": family["primary_sharpe_minimum"],
             },
-            "cagr": {"operator": ">=", "threshold": promotion["cagr_minimum"]},
-            "tqqq_cagr_capture": {
+            "qqq_capture_ratio": {
                 "operator": ">=",
-                "threshold": promotion["tqqq_cagr_capture_minimum"],
+                "threshold": promotion["qqq_capture_ratio_minimum"],
             },
-            "tqqq_upside_capture": {
-                "operator": ">=",
-                "threshold": promotion["tqqq_upside_capture_minimum"],
-            },
-            "tqqq_downside_capture": {
+            "qqq_downside_capture": {
                 "operator": "<=",
-                "threshold": promotion["tqqq_downside_capture_maximum"],
+                "threshold": promotion["qqq_downside_capture_maximum"],
             },
             "cagr_excess_qqq": {
                 "operator": ">=",

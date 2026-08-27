@@ -26,6 +26,17 @@ CAMPAIGN_STAGES = {"pre-discovery", "pre-oos", "final"}
 # field but is intentionally excluded from the family-scoped count below.
 MAX_FAMILY_EFFECTIVE_TRIAL_COUNT = 32
 
+# A candidate whose absolute correlation to QQQ is at or below this
+# threshold is economically orthogonal: its up/downside capture ratio
+# relative to QQQ is not a meaningful pass/fail signal (a genuinely
+# uncorrelated strategy's capture ratio is dominated by noise, not skill),
+# so the capture-ratio gates become diagnostics instead of blockers.
+QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD = 0.3
+
+# Finite stand-in for "no measurable QQQ-downside participation" in the
+# capture ratio (an unambiguous pass); CampaignModel forbids inf/nan.
+_UNMEASURABLE_DOWNSIDE_CAPTURE_RATIO = 1.0e6
+
 Identifier = Annotated[
     str,
     StringConstraints(
@@ -86,11 +97,9 @@ _REQUIRED_BENCHMARK_ROLES = {
     "ex_post_best_symbol",
 }
 _CANDIDATE_PROMOTION_GATE_NAMES = {
-    "cagr",
     "cagr_excess_qqq",
-    "tqqq_cagr_capture",
-    "tqqq_upside_capture",
-    "tqqq_downside_capture",
+    "qqq_capture_ratio",
+    "qqq_downside_capture",
     "max_drawdown",
     "mar",
     "positive_fold_count",
@@ -273,11 +282,9 @@ class CampaignCandidatePromotionPolicy(CampaignModel):
     primary_cost_bps: int = Field(ge=0)
     stress_cost_bps: int = Field(ge=0)
     annualization_sessions: int = Field(ge=1)
-    cagr_minimum: float
     cagr_excess_qqq_minimum: float
-    tqqq_cagr_capture_minimum: float
-    tqqq_upside_capture_minimum: float
-    tqqq_downside_capture_maximum: float
+    qqq_capture_ratio_minimum: float
+    qqq_downside_capture_maximum: float
     max_drawdown_minimum: float
     mar_minimum: float
     chronological_fold_count: int = Field(ge=2)
@@ -292,9 +299,15 @@ class CampaignCandidatePromotionPolicy(CampaignModel):
 class CampaignCandidatePromotionMetrics(CampaignModel):
     cagr: float
     cagr_excess_qqq: float
+    # Diagnostic only, not gated -- see A4 in
+    # docs/plan-gate-recalibration-and-research-velocity-2026-08-26.zh.md.
     tqqq_cagr_capture: float
     tqqq_upside_capture: float
     tqqq_downside_capture: float
+    qqq_upside_capture: float
+    qqq_downside_capture: float
+    qqq_capture_ratio: float
+    qqq_correlation: float
     max_drawdown: float
     mar: float
     positive_fold_count: int = Field(ge=0)
@@ -1395,9 +1408,27 @@ def recompute_candidate_promotion_metrics(
     max_drawdown = _maximum_drawdown(candidate_returns)
     if max_drawdown >= 0.0:
         raise ValueError("candidate max drawdown must be negative for finite MAR")
+    qqq_upside_capture = _conditional_capture(candidate_returns, qqq_returns, positive=True)
+    qqq_downside_capture = _conditional_capture(candidate_returns, qqq_returns, positive=False)
+    # A candidate that captured ~none of QQQ's downside is an unambiguous pass
+    # on the ratio gate, not an error -- guard the division instead of
+    # requiring every candidate to have nonzero downside participation.
+    # ``allow_inf_nan=False`` on CampaignModel forbids inf/nan, so a large
+    # finite sentinel stands in for "no measurable downside participation".
+    if math.isclose(qqq_downside_capture, 0.0, rel_tol=0.0, abs_tol=1e-12):
+        qqq_capture_ratio = (
+            _UNMEASURABLE_DOWNSIDE_CAPTURE_RATIO if qqq_upside_capture > 0.0 else 0.0
+        )
+    else:
+        qqq_capture_ratio = qqq_upside_capture / qqq_downside_capture
     return {
         "cagr": cagr,
         "cagr_excess_qqq": cagr - qqq_cagr,
+        # Diagnostic only (see A4 in docs/plan-gate-recalibration-and-research-
+        # velocity-2026-08-26.zh.md): TQQQ is not a viable promotion benchmark
+        # on its own -- it can have negative CAGR over multi-year windows, so
+        # "captured X% of TQQQ's upside" is not meaningful for an orthogonal
+        # strategy. Kept for backward-looking comparability, never gated.
         "tqqq_cagr_capture": cagr / tqqq_cagr,
         "tqqq_upside_capture": _conditional_capture(
             candidate_returns,
@@ -1409,6 +1440,10 @@ def recompute_candidate_promotion_metrics(
             tqqq_returns,
             positive=False,
         ),
+        "qqq_upside_capture": qqq_upside_capture,
+        "qqq_downside_capture": qqq_downside_capture,
+        "qqq_capture_ratio": qqq_capture_ratio,
+        "qqq_correlation": _pearson_correlation(candidate_returns, qqq_returns),
         "max_drawdown": max_drawdown,
         "mar": cagr / abs(max_drawdown),
         "positive_fold_count": sum(
@@ -1569,22 +1604,34 @@ def _candidate_promotion_gate_blockers(
     return blocked
 
 
+def _qqq_capture_gate_passes(
+    metrics: Mapping[str, float | int],
+    policy: CampaignCandidatePromotionPolicy,
+) -> tuple[bool, bool]:
+    """Return (qqq_capture_ratio_pass, qqq_downside_capture_pass).
+
+    A candidate whose absolute correlation to QQQ is at or below
+    :data:`QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD` is economically
+    orthogonal to it; its capture ratio versus QQQ is noise, not a
+    meaningful promotion signal, so both capture gates trivially pass and
+    the metrics are reported for diagnosis only.
+    """
+    if abs(float(metrics["qqq_correlation"])) <= QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD:
+        return True, True
+    ratio_pass = float(metrics["qqq_capture_ratio"]) >= policy.qqq_capture_ratio_minimum
+    downside_pass = float(metrics["qqq_downside_capture"]) <= policy.qqq_downside_capture_maximum
+    return ratio_pass, downside_pass
+
+
 def _candidate_promotion_passes(
     metrics: Mapping[str, float | int],
     policy: CampaignCandidatePromotionPolicy,
 ) -> dict[str, bool]:
+    qqq_capture_ratio_pass, qqq_downside_capture_pass = _qqq_capture_gate_passes(metrics, policy)
     return {
-        "cagr": float(metrics["cagr"]) >= policy.cagr_minimum,
         "cagr_excess_qqq": (float(metrics["cagr_excess_qqq"]) >= policy.cagr_excess_qqq_minimum),
-        "tqqq_cagr_capture": (
-            float(metrics["tqqq_cagr_capture"]) >= policy.tqqq_cagr_capture_minimum
-        ),
-        "tqqq_upside_capture": (
-            float(metrics["tqqq_upside_capture"]) >= policy.tqqq_upside_capture_minimum
-        ),
-        "tqqq_downside_capture": (
-            float(metrics["tqqq_downside_capture"]) <= policy.tqqq_downside_capture_maximum
-        ),
+        "qqq_capture_ratio": qqq_capture_ratio_pass,
+        "qqq_downside_capture": qqq_downside_capture_pass,
         "max_drawdown": float(metrics["max_drawdown"]) >= policy.max_drawdown_minimum,
         "mar": float(metrics["mar"]) >= policy.mar_minimum,
         "positive_fold_count": (
@@ -1640,6 +1687,26 @@ def _conditional_capture(
     if math.isclose(benchmark_compound, 0.0, rel_tol=0.0, abs_tol=1e-15):
         raise ValueError("conditional capture benchmark denominator is zero")
     return candidate_compound / benchmark_compound
+
+
+def _pearson_correlation(left: list[float], right: list[float]) -> float:
+    if len(left) != len(right):
+        raise ValueError("correlation series must have equal length")
+    if len(left) < 2:
+        raise ValueError("correlation requires at least two observations")
+    n = len(left)
+    mean_left = math.fsum(left) / n
+    mean_right = math.fsum(right) / n
+    centered_left = [value - mean_left for value in left]
+    centered_right = [value - mean_right for value in right]
+    covariance = math.fsum(a * b for a, b in zip(centered_left, centered_right, strict=True))
+    variance_left = math.fsum(a * a for a in centered_left)
+    variance_right = math.fsum(b * b for b in centered_right)
+    denominator = math.sqrt(variance_left * variance_right)
+    if math.isclose(denominator, 0.0, rel_tol=0.0, abs_tol=1e-15):
+        raise ValueError("correlation is undefined for a zero-variance return series")
+    correlation = covariance / denominator
+    return max(-1.0, min(1.0, correlation))
 
 
 def _comparison_passes(value: float, threshold: float, operator: str) -> bool:
