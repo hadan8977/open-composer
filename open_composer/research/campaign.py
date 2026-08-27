@@ -18,6 +18,14 @@ CAMPAIGN_FILENAME = "research-campaign-contract.json"
 CAMPAIGN_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{2,96}$")
 CAMPAIGN_STAGES = {"pre-discovery", "pre-oos", "final"}
 
+# Statistical family DSR/PBO/SPA trial counting is scoped to the current
+# economic-mechanism family only (see docs/plan-gate-recalibration-and-research-
+# velocity-2026-08-26.zh.md Work Item A1). Unrelated historical searches from
+# earlier, unconnected hypotheses must not inflate this campaign's multiple-
+# testing penalty; ``prior_effective_trial_count`` remains a lifetime diagnostic
+# field but is intentionally excluded from the family-scoped count below.
+MAX_FAMILY_EFFECTIVE_TRIAL_COUNT = 32
+
 Identifier = Annotated[
     str,
     StringConstraints(
@@ -1096,7 +1104,7 @@ def _pre_oos_seal_blockers(
         if seal.candidate_inventory_sha256 != ledger.candidate_inventory_sha256:
             blocked.append("pre_oos_seal_candidate_inventory_sha256_mismatch")
         try:
-            effective_trial_count = effective_trial_count_from_ledger(contract, ledger)
+            effective_trial_count = family_effective_trial_count_from_ledger(contract, ledger)
         except ValueError as exc:
             blocked.append(f"pre_oos_seal_trial_accounting_invalid:{exc}")
             return blocked
@@ -1106,7 +1114,11 @@ def _pre_oos_seal_blockers(
                 f"{seal.effective_trial_count}:{effective_trial_count}"
             )
         prior = contract.exposure_budgets.prior_effective_trial_count
-        incremental = effective_trial_count - prior
+        # ``effective_trial_count`` is now already family-scoped (excludes
+        # ``prior``), so the incremental figure recorded on the seal is just
+        # that same value; ``prior`` is tracked on the seal purely as a
+        # lifetime diagnostic, not added into the DSR/PBO/SPA trial count.
+        incremental = effective_trial_count
         if prior > 0 and seal.prior_effective_trial_count is None:
             blocked.append("pre_oos_seal_prior_effective_trial_count_missing")
         elif (
@@ -1235,9 +1247,15 @@ def _statistical_family_gate_blockers(
         blocked.append("statistical_family_gates_candidate_sharpe_inventory_mismatch")
     if gates.common_return_matrix_sha256 != matrix_sha256:
         blocked.append("statistical_family_gates_common_return_matrix_sha256_mismatch")
-    prior = contract.exposure_budgets.prior_effective_trial_count
-    minimum_trial_count = prior + contract.exposure_budgets.candidate_budget
-    maximum_trial_count = prior + contract.exposure_budgets.cumulative_trial_exposure_budget
+    # Family-scoped: this campaign's own trial count is bounded by its own
+    # candidate/exposure budgets and the hard cross-campaign cap, never by
+    # ``prior_effective_trial_count`` (lifetime diagnostic only, see A1 in
+    # docs/plan-gate-recalibration-and-research-velocity-2026-08-26.zh.md).
+    minimum_trial_count = contract.exposure_budgets.candidate_budget
+    maximum_trial_count = min(
+        contract.exposure_budgets.cumulative_trial_exposure_budget,
+        MAX_FAMILY_EFFECTIVE_TRIAL_COUNT,
+    )
     if gates.effective_trial_count < minimum_trial_count:
         blocked.append(
             "statistical_family_gates_trial_count_below_candidate_budget:"
@@ -1919,6 +1937,28 @@ def effective_trial_count_from_ledger(
     return contract.exposure_budgets.prior_effective_trial_count + (
         incremental_effective_trial_count_from_ledger(contract, ledger)
     )
+
+
+def family_effective_trial_count_from_ledger(
+    contract: ResearchCampaignContract,
+    ledger: Any,
+) -> int:
+    """Return this campaign family's own DSR/PBO/SPA trial count.
+
+    Unlike :func:`effective_trial_count_from_ledger`, this intentionally
+    excludes ``exposure_budgets.prior_effective_trial_count`` (the lifetime,
+    cross-campaign multiple-testing exposure carried only for audit purposes)
+    and enforces a hard cap of :data:`MAX_FAMILY_EFFECTIVE_TRIAL_COUNT`. A
+    campaign that needs more candidates than this cap must seal the family and
+    open an independent one rather than keep growing its own trial count.
+    """
+    incremental = incremental_effective_trial_count_from_ledger(contract, ledger)
+    if incremental > MAX_FAMILY_EFFECTIVE_TRIAL_COUNT:
+        raise ValueError(
+            "family effective trial count exceeds the hard cap: "
+            f"{incremental}>{MAX_FAMILY_EFFECTIVE_TRIAL_COUNT}"
+        )
+    return incremental
 
 
 def _coerce_contract(

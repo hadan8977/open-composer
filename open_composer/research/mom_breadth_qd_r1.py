@@ -244,6 +244,40 @@ RECOVERY_AMENDMENT_REASON = (
     "any research result."
 )
 
+# Second, separate amendment: this campaign is permanently sealed with a
+# preserved negative development result (0 advancing candidates; see
+# docs/plan-gate-recalibration-and-research-velocity-2026-08-26.zh.md). It
+# will never be reopened, resimulated, or read against frozen OOS/challenge/
+# forward data under any circumstance. That makes it safe -- and, since its
+# own frozen implementation files are shared modules used by all campaigns
+# going forward, necessary -- to acknowledge the one-time, deliberately
+# authorized recalibration of the shared gate/promotion-policy implementation
+# below. Unlike the first amendment, this one *is* a policy change; it is
+# authorized explicitly because it changes the rules for future campaigns,
+# not because it revisits this campaign's already-sealed result.
+GATE_RECALIBRATION_DRIFT_BLOCKERS = (
+    "candidate_manifest_phase_one_lock_campaign_implementation_sha256_mismatch",
+)
+GATE_RECALIBRATION_AUTHORIZED_CHANGES = (
+    "recalibrate_family_scoped_dsr_trial_count_and_promotion_gate_thresholds",
+    "replace_absolute_cagr_and_tqqq_capture_gates_with_qqq_relative_equivalents",
+    "split_paper_entry_and_live_entry_promotion_gate_tiers",
+)
+GATE_RECALIBRATION_FORBIDDEN_CHANGES = (
+    "reopening_this_sealed_campaigns_development_result",
+    "candidate_simulation_or_new_trial_exposure_for_this_campaign",
+    "model_training_or_inference_for_this_campaign",
+    "frozen_OOS_challenge_or_forward_read_for_this_campaign",
+    "staged_evidence_or_preregistration_mutation_for_this_campaign",
+    "simulation_paper_or_broker_activity_for_this_campaign",
+)
+GATE_RECALIBRATION_REASON = (
+    "Recalibrate the shared campaign gate/promotion-policy implementation and this "
+    "already-dead campaign's own recorded policy so both stay loadable and internally "
+    "consistent under the new methodology, without reopening or resimulating this "
+    "campaign's sealed, negative development result."
+)
+
 
 @dataclass(frozen=True)
 class PricePanel:
@@ -529,8 +563,12 @@ def _validate_recovery_iteration_dossier_gate(
 ) -> None:
     """Allow only the implementation drift authorized by the recovery amendment."""
     validation = validate_iteration_dossier(iter_id, root, stage="pre-backtest")
+    # Phase-one-lock mismatch codes sort alphabetically within
+    # ``validation.blocked`` (they come from one sub-validator iterating the
+    # lock's immutable inventory in key order); sort the authorized union to
+    # match regardless of which specific files drifted under which amendment.
     expected = [
-        *RECOVERY_IMPLEMENTATION_DRIFT_BLOCKERS,
+        *sorted({*RECOVERY_IMPLEMENTATION_DRIFT_BLOCKERS, *GATE_RECALIBRATION_DRIFT_BLOCKERS}),
         *(["search_space_data_feasibility_not_authorized"] if dependency_skipped else []),
     ]
     if validation.status != "blocked" or validation.blocked != expected or validation.warnings:

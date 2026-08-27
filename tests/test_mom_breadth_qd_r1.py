@@ -2607,7 +2607,12 @@ def test_recovery_iteration_dossier_gate_allows_only_amendment_implementation_dr
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     expected_blockers = [
-        *breadth_runner.RECOVERY_IMPLEMENTATION_DRIFT_BLOCKERS,
+        *sorted(
+            {
+                *breadth_runner.RECOVERY_IMPLEMENTATION_DRIFT_BLOCKERS,
+                *breadth_runner.GATE_RECALIBRATION_DRIFT_BLOCKERS,
+            }
+        ),
         *(["search_space_data_feasibility_not_authorized"] if dependency_skipped else []),
     ]
     monkeypatch.setattr(

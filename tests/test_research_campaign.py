@@ -19,6 +19,7 @@ from open_composer.research.campaign import (
     ResearchCampaignContract,
     campaign_contract_path,
     effective_trial_count_from_ledger,
+    family_effective_trial_count_from_ledger,
     load_campaign_contract,
     recompute_candidate_promotion_metrics,
     validate_campaign_contract,
@@ -361,7 +362,10 @@ def _write_promotion_evidence(
         json.dumps(cohort_payload), encoding="utf-8"
     )
     cohort_path = artifact_dir / "promotion-cohort.json"
-    effective_trial_count = effective_trial_count_from_ledger(contract, ledger)
+    # Family-scoped: excludes ``prior_effective_trial_count`` from the
+    # DSR/PBO/SPA trial count (see campaign.py Work Item A1); the seal's
+    # incremental figure is therefore just the family count itself.
+    effective_trial_count = family_effective_trial_count_from_ledger(contract, ledger)
     prior_effective_trial_count = contract.exposure_budgets.prior_effective_trial_count
     seal_payload = {
         "schema_version": 1,
@@ -374,7 +378,7 @@ def _write_promotion_evidence(
         "effective_trial_count": effective_trial_count,
         "frozen_oos_read_at_seal": False,
         "prior_effective_trial_count": prior_effective_trial_count,
-        "incremental_effective_trial_count": (effective_trial_count - prior_effective_trial_count),
+        "incremental_effective_trial_count": effective_trial_count,
     }
     seal_path = artifact_dir / "pre-oos-seal.json"
     seal_path.write_text(json.dumps(seal_payload), encoding="utf-8")
@@ -801,7 +805,9 @@ def test_mom_breadth_generator_has_one_four_way_trial_accounting_identity(
     }
 
 
-def test_pre_oos_seal_carries_prior_and_incremental_trial_identity(tmp_path: Path) -> None:
+def test_pre_oos_seal_trial_identity_is_family_scoped_not_prior_inclusive(
+    tmp_path: Path,
+) -> None:
     payload = _passing_contract()
     payload["exposure_budgets"]["prior_effective_trial_count"] = 8147
     path = campaign_contract_path(payload["campaign_id"], tmp_path)
@@ -812,25 +818,29 @@ def test_pre_oos_seal_carries_prior_and_incremental_trial_identity(tmp_path: Pat
     assert validate_campaign_contract(path, tmp_path, stage="pre-oos").status == "ok"
     seal_path = path.parent / "artifacts/pre-oos-seal.json"
     seal = json.loads(seal_path.read_text(encoding="utf-8"))
+    # ``prior_effective_trial_count`` is carried on the seal purely as a
+    # lifetime diagnostic; it must not be added into the DSR/PBO/SPA trial
+    # count, so ``effective_trial_count`` and ``incremental_effective_trial_
+    # count`` both equal this family's own 18 candidate trials, not 8147+18.
     assert seal["prior_effective_trial_count"] == 8147
     assert seal["incremental_effective_trial_count"] == 18
-    assert seal["effective_trial_count"] == 8165
+    assert seal["effective_trial_count"] == 18
 
     seal["effective_trial_count"] = payload["exposure_budgets"]["cumulative_trial_exposure_budget"]
     seal_path.write_text(json.dumps(seal), encoding="utf-8")
     report = validate_campaign_contract(path, tmp_path, stage="pre-oos")
 
-    assert "pre_oos_seal_effective_trial_count_mismatch:54:8165" in report.blocked
+    assert "pre_oos_seal_effective_trial_count_mismatch:54:18" in report.blocked
 
 
 @pytest.mark.parametrize(
     ("effective_trial_count", "expected_prefix"),
     [
-        (54, "statistical_family_gates_trial_count_below_candidate_budget:54:8165"),
-        (8202, "statistical_family_gates_trial_count_above_exposure_budget:8202:8201"),
+        (17, "statistical_family_gates_trial_count_below_candidate_budget:17:18"),
+        (33, "statistical_family_gates_trial_count_above_exposure_budget:33:32"),
     ],
 )
-def test_final_trial_gate_bounds_include_prior_exposure(
+def test_final_trial_gate_bounds_are_family_scoped_not_prior_inclusive(
     tmp_path: Path,
     effective_trial_count: int,
     expected_prefix: str,
