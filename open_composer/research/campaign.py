@@ -356,6 +356,12 @@ class CampaignStatisticalFamilyPolicy(CampaignModel):
     spa_block_length: Literal[21]
     spa_resample_count: Literal[2000]
     spa_seed: Literal[4201]
+    # Defaults to the strictest interpretation so contracts written before this
+    # field existed keep requiring everything (see A6 in docs/plan-gate-
+    # recalibration-and-research-velocity-2026-08-26.zh.md). "paper_entry"
+    # keeps DSR/Sharpe as hard gates but demotes PBO/SPA/advancing-pair
+    # correlation to diagnostics; "live_entry" requires all of them.
+    promotion_stage: Literal["paper_entry", "live_entry"] = "live_entry"
 
 
 class ResearchCampaignContract(CampaignModel):
@@ -1300,8 +1306,15 @@ def _statistical_family_gate_blockers(
     if not gates.all_candidate_sharpe_values_defined:
         blocked.append("statistical_family_gate_candidate_sharpe_undefined")
     blocked.extend(_recomputed_statistical_gate_blockers(contract, matrix, gates))
+    # A6: at paper_entry, DSR stays a hard gate but PBO/SPA are diagnostics
+    # only (still computed and recorded, just not blocking); live_entry
+    # requires all three. See docs/plan-gate-recalibration-and-research-
+    # velocity-2026-08-26.zh.md Work Item A6.
+    required_statistical_gates = (
+        ("dsr",) if policy.promotion_stage == "paper_entry" else ("dsr", "pbo", "spa")
+    )
     if not gates.family_gate_pass or not all(
-        getattr(gates, name).passed for name in ("dsr", "pbo", "spa")
+        getattr(gates, name).passed for name in required_statistical_gates
     ):
         blocked.append("statistical_family_gate_failed")
     failed_sharpe = sorted(
@@ -1314,7 +1327,7 @@ def _statistical_family_gate_blockers(
     expected_family_pass = (
         not failed_sharpe
         and gates.all_candidate_sharpe_values_defined
-        and all(getattr(gates, name).passed for name in ("dsr", "pbo", "spa"))
+        and all(getattr(gates, name).passed for name in required_statistical_gates)
     )
     if gates.family_gate_pass != expected_family_pass:
         blocked.append("statistical_family_gate_family_pass_flag_inconsistent")

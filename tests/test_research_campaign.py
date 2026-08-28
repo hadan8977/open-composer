@@ -471,7 +471,11 @@ def _write_promotion_evidence(
                     "operator": "<=",
                     "passed": spa_pass,
                 },
-                "family_gate_pass": sharpe_pass and dsr_pass and pbo_pass and spa_pass,
+                "family_gate_pass": (
+                    sharpe_pass and dsr_pass
+                    if policy.get("promotion_stage") == "paper_entry"
+                    else sharpe_pass and dsr_pass and pbo_pass and spa_pass
+                ),
             }
         ),
         encoding="utf-8",
@@ -1140,6 +1144,32 @@ def test_final_validation_enforces_strict_primary_sharpe_gate(tmp_path: Path) ->
     report = validate_campaign_contract(path, tmp_path, stage="final")
 
     assert "statistical_family_primary_sharpe_gate_failed:H1C01" in report.blocked
+
+
+@pytest.mark.parametrize(
+    ("promotion_stage", "expect_family_gate_failed"),
+    [("live_entry", True), ("paper_entry", False)],
+)
+def test_paper_entry_stage_demotes_pbo_and_spa_to_diagnostics(
+    tmp_path: Path,
+    promotion_stage: str,
+    expect_family_gate_failed: bool,
+) -> None:
+    payload = _passing_contract()
+    # Make PBO/SPA fail on any real computed value; DSR and Sharpe stay
+    # satisfiable so this isolates A6's stage-conditional PBO/SPA gating.
+    payload["statistical_family_policy"]["pbo_maximum"] = 0.0
+    payload["statistical_family_policy"]["spa_p_value_maximum"] = 1e-9
+    payload["statistical_family_policy"]["promotion_stage"] = promotion_stage
+    path = campaign_contract_path(payload["campaign_id"], tmp_path)
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    _write_promotion_evidence(path, payload)
+
+    report = validate_campaign_contract(path, tmp_path, stage="final")
+
+    assert ("statistical_family_gate_failed" in report.blocked) is expect_family_gate_failed
+    assert "statistical_family_gate_family_pass_flag_inconsistent" not in report.blocked
 
 
 def test_final_recomputes_candidate_promotion_metrics(tmp_path: Path) -> None:
