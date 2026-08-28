@@ -1432,8 +1432,14 @@ def recompute_candidate_promotion_metrics(
     cagr = _annualized_compound_return(candidate_returns, annualization_sessions)
     qqq_cagr = _annualized_compound_return(qqq_returns, annualization_sessions)
     tqqq_cagr = _annualized_compound_return(tqqq_returns, annualization_sessions)
+    # tqqq_cagr_capture is diagnostic only (A4): TQQQ can have negative CAGR
+    # over real multi-year windows (e.g. -6.5% 2020-2026), in which case
+    # "capture" is undefined -- report a sentinel instead of raising, since
+    # this no longer gates anything.
     if tqqq_cagr <= 0.0:
-        raise ValueError("TQQQ CAGR must be positive for CAGR capture")
+        tqqq_cagr_capture = _UNMEASURABLE_DOWNSIDE_CAPTURE_RATIO if cagr > 0.0 else 0.0
+    else:
+        tqqq_cagr_capture = cagr / tqqq_cagr
     max_drawdown = _maximum_drawdown(candidate_returns)
     if max_drawdown >= 0.0:
         raise ValueError("candidate max drawdown must be negative for finite MAR")
@@ -1458,7 +1464,7 @@ def recompute_candidate_promotion_metrics(
         # on its own -- it can have negative CAGR over multi-year windows, so
         # "captured X% of TQQQ's upside" is not meaningful for an orthogonal
         # strategy. Kept for backward-looking comparability, never gated.
-        "tqqq_cagr_capture": cagr / tqqq_cagr,
+        "tqqq_cagr_capture": tqqq_cagr_capture,
         "tqqq_upside_capture": _conditional_capture(
             candidate_returns,
             tqqq_returns,
