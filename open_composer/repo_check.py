@@ -53,6 +53,7 @@ CURRENT_DOCS = {
     "docs/strategy-optimization-progress-log.zh.md",
     "docs/strategy-optimization-progress-report-template.zh.md",
     "docs/plan-gate-recalibration-and-research-velocity-2026-08-26.zh.md",
+    "docs/plan-kernel-extraction-and-auto-research-real-data-2026-08-28.zh.md",
 }
 
 REQUIRED_SKILLS = [

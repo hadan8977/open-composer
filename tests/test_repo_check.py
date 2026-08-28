@@ -63,6 +63,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/strategy-optimization-progress-log.zh.md",
         "docs/strategy-optimization-progress-report-template.zh.md",
         "docs/plan-gate-recalibration-and-research-velocity-2026-08-26.zh.md",
+        "docs/plan-kernel-extraction-and-auto-research-real-data-2026-08-28.zh.md",
     ]:
         source = repo_root / new_doc
         destination = target / new_doc
