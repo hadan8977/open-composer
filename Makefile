@@ -41,7 +41,7 @@ test-fast:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run --with pytest-xdist pytest -n 2
 
 test-full:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run --with pytest-xdist pytest -m "" -n 2
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run --with pytest-xdist pytest --runslow -n 2
 
 lint:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run ruff check .

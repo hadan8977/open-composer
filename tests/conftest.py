@@ -22,11 +22,36 @@ from open_composer.strategy_versions import strategy_content_hash
 _PATH_PREFIX_PATTERN = re.compile(r"(reports|strategy_specs|signal_logs|data|\.codex|\.agents)\\")
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--runslow",
+        action="store_true",
+        default=False,
+        help="also run tests marked `slow` (full-round replay/training-heavy).",
+    )
+
+
 def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line(
         "markers",
         "slow: full-round replay/training-heavy tests, run via `make test-full` / `make verify`.",
     )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Skip `slow` tests by default so the day-to-day suite stays a few minutes.
+
+    ``pyproject.toml`` is hash-pinned by a sealed campaign's preregistration lock,
+    so the default exclusion lives here instead of in ``addopts``. Opt back in with
+    ``--runslow`` (what ``make test-full`` and ``make verify`` use) or by selecting
+    them explicitly with ``-m``.
+    """
+    if config.getoption("--runslow") or config.getoption("-m"):
+        return
+    skip_slow = pytest.mark.skip(reason="slow: run with --runslow / `make test-full`")
+    for item in items:
+        if "slow" in item.keywords:
+            item.add_marker(skip_slow)
 
 
 def assert_no_windows_paths(payload: object) -> None:
