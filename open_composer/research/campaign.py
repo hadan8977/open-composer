@@ -33,6 +33,13 @@ MAX_FAMILY_EFFECTIVE_TRIAL_COUNT = 32
 # so the capture-ratio gates become diagnostics instead of blockers.
 QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD = 0.3
 
+# A2: DSR/PBO/SPA must be computed on a stitched, multi-year rolling-origin
+# out-of-sample stream (see open_composer.research.kernel.rolling_origin),
+# never on an in-sample development window. Below this many rows the
+# multiple-testing correction has too little data to mean anything, so the
+# family gate cannot pass regardless of the computed statistics.
+MIN_DSR_STREAM_ROWS = 1000
+
 # Finite stand-in for "no measurable QQQ-downside participation" in the
 # capture ratio (an unambiguous pass); CampaignModel forbids inf/nan.
 _UNMEASURABLE_DOWNSIDE_CAPTURE_RATIO = 1.0e6
@@ -1291,6 +1298,14 @@ def _statistical_family_gate_blockers(
             "statistical_family_gates_trial_count_pre_oos_seal_mismatch:"
             f"{gates.effective_trial_count}:{expected_trial_count}"
         )
+    # matrix.return_stream_identity.continuous_across_folds is Literal[True], so
+    # Pydantic already rejects any non-stitched stream at construction time; the
+    # remaining, genuinely-checkable requirement is that it be long enough.
+    if len(matrix.dates) < MIN_DSR_STREAM_ROWS:
+        blocked.append(
+            "statistical_family_gates_stitched_stream_too_short:"
+            f"{len(matrix.dates)}:{MIN_DSR_STREAM_ROWS}"
+        )
     policy = contract.statistical_family_policy
     expected = {
         "dsr": (policy.dsr_minimum, ">="),
@@ -1327,6 +1342,7 @@ def _statistical_family_gate_blockers(
     expected_family_pass = (
         not failed_sharpe
         and gates.all_candidate_sharpe_values_defined
+        and len(matrix.dates) >= MIN_DSR_STREAM_ROWS
         and all(getattr(gates, name).passed for name in required_statistical_gates)
     )
     if gates.family_gate_pass != expected_family_pass:

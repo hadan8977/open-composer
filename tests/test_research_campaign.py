@@ -16,6 +16,7 @@ from open_composer.cli import app
 from open_composer.models.strategy_spec import ResearchDesign
 from open_composer.research.campaign import (
     CAMPAIGN_FILENAME,
+    MIN_DSR_STREAM_ROWS,
     QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD,
     ResearchCampaignContract,
     campaign_contract_path,
@@ -276,6 +277,7 @@ def _write_promotion_evidence(
     payload: dict[str, Any],
     *,
     include_final: bool = True,
+    observation_count: int = 1040,
 ) -> None:
     campaign_dir = path.parent
     artifact_dir = campaign_dir / "artifacts"
@@ -385,7 +387,6 @@ def _write_promotion_evidence(
         return
 
     seal_sha256 = hashlib.sha256(seal_path.read_bytes()).hexdigest()
-    observation_count = 256
     dates = [
         (date(2024, 1, 1) + timedelta(days=index)).isoformat() for index in range(observation_count)
     ]
@@ -472,9 +473,12 @@ def _write_promotion_evidence(
                     "passed": spa_pass,
                 },
                 "family_gate_pass": (
-                    sharpe_pass and dsr_pass
-                    if policy.get("promotion_stage") == "paper_entry"
-                    else sharpe_pass and dsr_pass and pbo_pass and spa_pass
+                    len(dates) >= MIN_DSR_STREAM_ROWS
+                    and (
+                        sharpe_pass and dsr_pass
+                        if policy.get("promotion_stage") == "paper_entry"
+                        else sharpe_pass and dsr_pass and pbo_pass and spa_pass
+                    )
                 ),
             }
         ),
@@ -1169,6 +1173,23 @@ def test_paper_entry_stage_demotes_pbo_and_spa_to_diagnostics(
     report = validate_campaign_contract(path, tmp_path, stage="final")
 
     assert ("statistical_family_gate_failed" in report.blocked) is expect_family_gate_failed
+    assert "statistical_family_gate_family_pass_flag_inconsistent" not in report.blocked
+
+
+def test_final_blocks_dsr_below_the_minimum_stitched_oos_row_count(tmp_path: Path) -> None:
+    payload = _passing_contract()
+    path = campaign_contract_path(payload["campaign_id"], tmp_path)
+    path.parent.mkdir(parents=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    short_count = MIN_DSR_STREAM_ROWS - 1
+    _write_promotion_evidence(path, payload, observation_count=short_count)
+
+    report = validate_campaign_contract(path, tmp_path, stage="final")
+
+    assert (
+        f"statistical_family_gates_stitched_stream_too_short:{short_count}:{MIN_DSR_STREAM_ROWS}"
+        in report.blocked
+    )
     assert "statistical_family_gate_family_pass_flag_inconsistent" not in report.blocked
 
 
