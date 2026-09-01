@@ -4,7 +4,7 @@ import hashlib
 import json
 import math
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -12,6 +12,11 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
 
 from open_composer.config import project_root
+from open_composer.research.kernel.effective_trials import (
+    DEFAULT_CORRELATION_THRESHOLD,
+    EffectiveTrialsReport,
+    effective_independent_trials,
+)
 
 CAMPAIGN_ROOT = Path("reports/research/campaigns")
 CAMPAIGN_FILENAME = "research-campaign-contract.json"
@@ -24,7 +29,24 @@ CAMPAIGN_STAGES = {"pre-discovery", "pre-oos", "final"}
 # earlier, unconnected hypotheses must not inflate this campaign's multiple-
 # testing penalty; ``prior_effective_trial_count`` remains a lifetime diagnostic
 # field but is intentionally excluded from the family-scoped count below.
+#
+# P1a (docs/plan-sip-migration-and-wide-search-2026-09-01.zh.md §4): this cap
+# now bounds the number of *effective independent trials* -- i.e. the number of
+# clusters the candidate return streams collapse into -- not the raw number of
+# backtests. A campaign that declares
+# ``exposure_budgets.effective_trial_counting = "return_stream_clusters"`` may
+# run hundreds of candidates as long as they cluster into at most this many
+# behaviours; a campaign that keeps the legacy ``"candidate_count"`` mode is
+# still capped on the raw ledger count. Wide search is paid for with an honest
+# effective N, never with a looser gate.
 MAX_FAMILY_EFFECTIVE_TRIAL_COUNT = 32
+
+# Floor for the clustering correlation threshold recorded on the statistical
+# family gate artifact. A lower threshold merges more candidates into a single
+# cluster and therefore shrinks the DSR trial count, so the threshold is the
+# obvious place to manufacture a passing gate; callers may go stricter (higher)
+# but never looser.
+MIN_EFFECTIVE_TRIAL_CORRELATION_THRESHOLD = DEFAULT_CORRELATION_THRESHOLD
 
 # A candidate whose absolute correlation to QQQ is at or below this
 # threshold is economically orthogonal: its up/downside capture ratio
@@ -175,6 +197,16 @@ class CampaignExposureBudgets(CampaignModel):
     # incremental allocation ledger.  Historical multiple-testing exposure is
     # carried separately so it cannot be mistaken for a resource budget.
     prior_effective_trial_count: int = Field(default=0, ge=0)
+    # P1a: ``candidate_count`` (default, and what every sealed campaign uses)
+    # caps the raw ledger trial count at MAX_FAMILY_EFFECTIVE_TRIAL_COUNT.
+    # ``return_stream_clusters`` moves that cap onto the clustered effective N
+    # recorded on the statistical family gate, which is what makes a wide
+    # search legitimate: the raw candidate count is then bounded only by
+    # ``cumulative_trial_exposure_budget``. Opting in must be preregistered on
+    # the (hash-sealed) contract, never decided after the returns are known.
+    effective_trial_counting: Literal["candidate_count", "return_stream_clusters"] = (
+        "candidate_count"
+    )
 
 
 class CampaignExplorationPolicy(CampaignModel):
@@ -270,12 +302,39 @@ class CampaignStatisticalGate(CampaignModel):
     passed: bool
 
 
+class CampaignTrialCluster(CampaignModel):
+    cluster_id: NonEmptyStr
+    members: list[Identifier] = Field(min_length=1)
+
+
+class CampaignEffectiveTrialClustering(CampaignModel):
+    """Return-stream clustering evidence behind the DSR trial count (P1a).
+
+    ``candidate_returns`` carries every candidate the family actually ran, on
+    the same time axis as the sealed common return matrix, so the cluster count
+    can be recomputed from scratch during validation instead of being trusted.
+    """
+
+    schema_version: Literal[1]
+    method: Literal["hierarchical"]
+    correlation_threshold: float = Field(gt=0.0, lt=1.0)
+    #: How many backtests were run; the audit denominator.
+    raw_candidate_count: int = Field(ge=2)
+    #: Cluster count; this is the number fed to the DSR as its trial count.
+    effective_n: int = Field(ge=1)
+    #: ``effective_n / raw_candidate_count`` -- genuine breadth vs duplicates.
+    breadth_ratio: float = Field(gt=0.0, le=1.0)
+    clusters: list[CampaignTrialCluster] = Field(min_length=1)
+    candidate_returns: dict[Identifier, list[float]] = Field(min_length=2)
+
+
 class CampaignStatisticalFamilyGates(CampaignModel):
     schema_version: Literal[1]
     campaign_id: Identifier
     candidate_ids: list[Identifier] = Field(min_length=1)
     pre_oos_seal_sha256: Sha256
     common_return_matrix_sha256: Sha256
+    #: Raw trial count bound to the allocation ledger and the pre-OOS seal.
     effective_trial_count: int = Field(ge=1)
     all_candidate_sharpe_values_defined: bool
     candidate_sharpe_excess_bil: dict[Identifier, float]
@@ -283,6 +342,11 @@ class CampaignStatisticalFamilyGates(CampaignModel):
     pbo: CampaignStatisticalGate
     spa: CampaignStatisticalGate
     family_gate_pass: bool
+    # Optional so every already-sealed campaign keeps validating unchanged.
+    # When present it is authoritative: ``effective_n`` replaces
+    # ``effective_trial_count`` as the DSR trial count, and both numbers stay on
+    # the artifact so their ratio is the audit trail for manufactured breadth.
+    effective_trial_clustering: CampaignEffectiveTrialClustering | None = None
 
 
 class CampaignCandidatePromotionPolicy(CampaignModel):
@@ -1277,11 +1341,14 @@ def _statistical_family_gate_blockers(
     # candidate/exposure budgets and the hard cross-campaign cap, never by
     # ``prior_effective_trial_count`` (lifetime diagnostic only, see A1 in
     # docs/plan-gate-recalibration-and-research-velocity-2026-08-26.zh.md).
+    # P1a: under ``return_stream_clusters`` the hard cap moves off the raw
+    # candidate count and onto the clustered effective N below, so the raw count
+    # is bounded only by the campaign's own preregistered exposure budget.
+    counting_mode = contract.exposure_budgets.effective_trial_counting
     minimum_trial_count = contract.exposure_budgets.candidate_budget
-    maximum_trial_count = min(
-        contract.exposure_budgets.cumulative_trial_exposure_budget,
-        MAX_FAMILY_EFFECTIVE_TRIAL_COUNT,
-    )
+    maximum_trial_count = contract.exposure_budgets.cumulative_trial_exposure_budget
+    if counting_mode == "candidate_count":
+        maximum_trial_count = min(maximum_trial_count, MAX_FAMILY_EFFECTIVE_TRIAL_COUNT)
     if gates.effective_trial_count < minimum_trial_count:
         blocked.append(
             "statistical_family_gates_trial_count_below_candidate_budget:"
@@ -1306,6 +1373,26 @@ def _statistical_family_gate_blockers(
             "statistical_family_gates_stitched_stream_too_short:"
             f"{len(matrix.dates)}:{MIN_DSR_STREAM_ROWS}"
         )
+    clustering = gates.effective_trial_clustering
+    if clustering is None:
+        if counting_mode == "return_stream_clusters":
+            blocked.append("statistical_family_effective_trial_clustering_missing")
+        dsr_trial_count = gates.effective_trial_count
+    elif counting_mode != "return_stream_clusters":
+        # Cluster accounting has to be committed to *before* the returns are
+        # known, otherwise a family that missed the DSR on its raw ledger count
+        # could attach a clustering block afterwards and collapse its trial
+        # count until it passes. The counting mode lives on the hash-sealed
+        # contract precisely so that choice is preregistered, so a block that
+        # shows up without it is rejected and never feeds the DSR.
+        blocked.append("statistical_family_effective_trial_clustering_not_preregistered")
+        dsr_trial_count = gates.effective_trial_count
+    else:
+        blocked.extend(_effective_trial_clustering_blockers(contract, matrix, gates, clustering))
+        # The artifact's own ``effective_n`` is what the DSR is recomputed
+        # against; the blockers above are what prove that number is the honest
+        # cluster count rather than a convenient one.
+        dsr_trial_count = clustering.effective_n
     policy = contract.statistical_family_policy
     expected = {
         "dsr": (policy.dsr_minimum, ">="),
@@ -1320,7 +1407,14 @@ def _statistical_family_gate_blockers(
             blocked.append(f"statistical_family_gate_pass_flag_inconsistent:{name}")
     if not gates.all_candidate_sharpe_values_defined:
         blocked.append("statistical_family_gate_candidate_sharpe_undefined")
-    blocked.extend(_recomputed_statistical_gate_blockers(contract, matrix, gates))
+    blocked.extend(
+        _recomputed_statistical_gate_blockers(
+            contract,
+            matrix,
+            gates,
+            dsr_trial_count=dsr_trial_count,
+        )
+    )
     # A6: at paper_entry, DSR stays a hard gate but PBO/SPA are diagnostics
     # only (still computed and recorded, just not blocking); live_entry
     # requires all three. See docs/plan-gate-recalibration-and-research-
@@ -1350,10 +1444,121 @@ def _statistical_family_gate_blockers(
     return blocked
 
 
+def _effective_trial_clustering_blockers(
+    contract: ResearchCampaignContract,
+    matrix: CampaignCommonReturnMatrix,
+    gates: CampaignStatisticalFamilyGates,
+    clustering: CampaignEffectiveTrialClustering,
+) -> list[str]:
+    """Prove the recorded effective N is the honest cluster count (P1a).
+
+    Everything here exists to close a specific way of manufacturing a small
+    ``effective_n``: clustering a hand-picked subset, clustering invented
+    streams, clustering streams that are not the ones the sealed matrix scored,
+    or simply lowering the correlation threshold until everything merges.
+    Padding the family with *extra* streams is deliberately not blocked -- it
+    can only raise the cluster count, which tightens the DSR.
+    """
+    prefix = "statistical_family_effective_trial_clustering"
+    blocked: list[str] = []
+
+    if clustering.correlation_threshold < MIN_EFFECTIVE_TRIAL_CORRELATION_THRESHOLD:
+        blocked.append(
+            f"{prefix}_correlation_threshold_below_floor:"
+            f"{clustering.correlation_threshold}:{MIN_EFFECTIVE_TRIAL_CORRELATION_THRESHOLD}"
+        )
+
+    clustered_ids = set(clustering.candidate_returns)
+    preregistered_ids = {item.candidate_id for item in contract.candidate_blueprints}
+    unknown = sorted(clustered_ids - preregistered_ids)
+    if unknown:
+        blocked.append(f"{prefix}_unpreregistered_candidates:{','.join(unknown)}")
+    missing_cohort = sorted(set(matrix.candidate_ids) - clustered_ids)
+    if missing_cohort:
+        blocked.append(f"{prefix}_cohort_not_clustered:{','.join(missing_cohort)}")
+
+    if clustering.raw_candidate_count != len(clustered_ids):
+        blocked.append(
+            f"{prefix}_raw_candidate_count_mismatch:"
+            f"{clustering.raw_candidate_count}:{len(clustered_ids)}"
+        )
+    if clustering.raw_candidate_count < gates.effective_trial_count:
+        blocked.append(
+            f"{prefix}_raw_candidate_count_below_trial_count:"
+            f"{clustering.raw_candidate_count}:{gates.effective_trial_count}"
+        )
+    if clustering.effective_n > clustering.raw_candidate_count:
+        blocked.append(
+            f"{prefix}_effective_n_above_raw_candidate_count:"
+            f"{clustering.effective_n}:{clustering.raw_candidate_count}"
+        )
+    if clustering.effective_n > MAX_FAMILY_EFFECTIVE_TRIAL_COUNT:
+        blocked.append(
+            f"{prefix}_effective_n_above_cap:"
+            f"{clustering.effective_n}:{MAX_FAMILY_EFFECTIVE_TRIAL_COUNT}"
+        )
+
+    ragged = sorted(
+        candidate_id
+        for candidate_id, stream in clustering.candidate_returns.items()
+        if len(stream) != len(matrix.dates)
+    )
+    if ragged:
+        blocked.append(f"{prefix}_return_stream_length_mismatch:{','.join(ragged)}")
+
+    # The cohort's streams are sha256-bound to the seal through the common
+    # return matrix, so requiring an exact match anchors the clustered family to
+    # evidence that cannot be edited after the fact.
+    for candidate_id in matrix.candidate_ids:
+        clustered_stream = clustering.candidate_returns.get(candidate_id)
+        matrix_stream = matrix.returns.get(candidate_id)
+        if clustered_stream is None or matrix_stream is None:
+            continue
+        if len(clustered_stream) != len(matrix_stream) or any(
+            not math.isclose(left, right, rel_tol=1e-12, abs_tol=1e-15)
+            for left, right in zip(clustered_stream, matrix_stream, strict=True)
+        ):
+            blocked.append(f"{prefix}_cohort_return_stream_mismatch:{candidate_id}")
+
+    if ragged:
+        return blocked
+
+    try:
+        recomputed = effective_independent_trials(
+            clustering.candidate_returns,
+            method=clustering.method,
+            correlation_threshold=clustering.correlation_threshold,
+        )
+    except (TypeError, ValueError) as exc:
+        blocked.append(f"{prefix}_recomputation_failed:{type(exc).__name__}:{exc}")
+        return blocked
+
+    if recomputed.effective_n != clustering.effective_n:
+        blocked.append(
+            f"{prefix}_effective_n_mismatch:{clustering.effective_n}:{recomputed.effective_n}"
+        )
+    if not math.isclose(
+        clustering.breadth_ratio,
+        recomputed.breadth_ratio,
+        rel_tol=1e-9,
+        abs_tol=1e-12,
+    ):
+        blocked.append(
+            f"{prefix}_breadth_ratio_mismatch:{clustering.breadth_ratio}:{recomputed.breadth_ratio}"
+        )
+    reported_partition = {frozenset(cluster.members) for cluster in clustering.clusters}
+    recomputed_partition = {frozenset(cluster.members) for cluster in recomputed.clusters}
+    if reported_partition != recomputed_partition:
+        blocked.append(f"{prefix}_cluster_membership_mismatch")
+    return blocked
+
+
 def _recomputed_statistical_gate_blockers(
     contract: ResearchCampaignContract,
     matrix: CampaignCommonReturnMatrix,
     gates: CampaignStatisticalFamilyGates,
+    *,
+    dsr_trial_count: int,
 ) -> list[str]:
     from open_composer.research.campaign_statistics import recompute_campaign_statistics
 
@@ -1363,7 +1568,7 @@ def _recomputed_statistical_gate_blockers(
             candidate_ids=matrix.candidate_ids,
             candidate_returns=matrix.returns,
             benchmark_returns=matrix.benchmark_returns,
-            effective_trial_count=gates.effective_trial_count,
+            effective_trial_count=dsr_trial_count,
             dsr_hac_lag=policy.dsr_hac_lag,
             pbo_block_count=policy.pbo_block_count,
             pbo_in_sample_block_count=policy.pbo_in_sample_block_count,
@@ -2049,18 +2254,65 @@ def family_effective_trial_count_from_ledger(
 
     Unlike :func:`effective_trial_count_from_ledger`, this intentionally
     excludes ``exposure_budgets.prior_effective_trial_count`` (the lifetime,
-    cross-campaign multiple-testing exposure carried only for audit purposes)
-    and enforces a hard cap of :data:`MAX_FAMILY_EFFECTIVE_TRIAL_COUNT`. A
-    campaign that needs more candidates than this cap must seal the family and
-    open an independent one rather than keep growing its own trial count.
+    cross-campaign multiple-testing exposure carried only for audit purposes).
+
+    Under the default ``candidate_count`` counting mode this enforces a hard cap
+    of :data:`MAX_FAMILY_EFFECTIVE_TRIAL_COUNT` on the raw ledger count, so a
+    campaign that needs more candidates must seal the family and open an
+    independent one. Under ``return_stream_clusters`` (P1a) the cap instead
+    applies to the clustered effective N -- see
+    :func:`family_effective_trial_count_from_returns` -- and the raw count here
+    stays bounded only by ``cumulative_trial_exposure_budget``.
     """
     incremental = incremental_effective_trial_count_from_ledger(contract, ledger)
-    if incremental > MAX_FAMILY_EFFECTIVE_TRIAL_COUNT:
+    if (
+        contract.exposure_budgets.effective_trial_counting == "candidate_count"
+        and incremental > MAX_FAMILY_EFFECTIVE_TRIAL_COUNT
+    ):
         raise ValueError(
             "family effective trial count exceeds the hard cap: "
             f"{incremental}>{MAX_FAMILY_EFFECTIVE_TRIAL_COUNT}"
         )
     return incremental
+
+
+def family_effective_trial_count_from_returns(
+    candidate_returns: Mapping[str, Sequence[float]],
+    *,
+    correlation_threshold: float = DEFAULT_CORRELATION_THRESHOLD,
+) -> EffectiveTrialsReport:
+    """Return the clustered effective N for a family, enforcing the cluster cap.
+
+    This is the number that belongs in the DSR's ``trial_count``: near-identical
+    parameter variants collapse into one cluster and therefore count once. The
+    returned report also carries ``raw_candidate_count`` and ``breadth_ratio``,
+    which together are the audit trail for whether a wide search explored real
+    breadth or manufactured it.
+
+    Raises:
+        ValueError: if the family clusters into more than
+            :data:`MAX_FAMILY_EFFECTIVE_TRIAL_COUNT` genuinely independent
+            behaviours, or if ``correlation_threshold`` is below
+            :data:`MIN_EFFECTIVE_TRIAL_CORRELATION_THRESHOLD` (a lower threshold
+            merges unrelated candidates and would understate the trial count).
+    """
+    if correlation_threshold < MIN_EFFECTIVE_TRIAL_CORRELATION_THRESHOLD:
+        raise ValueError(
+            "effective trial correlation threshold is below the floor: "
+            f"{correlation_threshold}<{MIN_EFFECTIVE_TRIAL_CORRELATION_THRESHOLD}"
+        )
+    report = effective_independent_trials(
+        candidate_returns,
+        correlation_threshold=correlation_threshold,
+    )
+    if report.effective_n > MAX_FAMILY_EFFECTIVE_TRIAL_COUNT:
+        raise ValueError(
+            "family effective independent trial count exceeds the hard cap: "
+            f"{report.effective_n}>{MAX_FAMILY_EFFECTIVE_TRIAL_COUNT} "
+            f"(raw_candidate_count={report.raw_candidate_count}, "
+            f"breadth_ratio={report.breadth_ratio:.4f})"
+        )
+    return report
 
 
 def _coerce_contract(

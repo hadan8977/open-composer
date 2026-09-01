@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pandas as pd
 import pytest
 
+from open_composer.adapters.data.sip_parquet import default_sip_root, load_sip_bars
 from open_composer.research.kernel.rolling_origin import (
     returns_from_ohlcv,
     rolling_origin_folds,
 )
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 def _synthetic_returns(*, years: list[int], first_day: str = "01-01") -> pd.Series:
@@ -107,8 +104,20 @@ def test_returns_from_ohlcv_computes_simple_returns_sorted_by_time() -> None:
     assert returns.iloc[1] == pytest.approx(1.0 / 101.0)
 
 
+@pytest.mark.skipif(
+    not (default_sip_root() / "daily").is_dir(),
+    reason="local SIP daily archive (data/sip/daily) is not present",
+)
 def test_end_to_end_stitched_oos_row_count_matches_real_qqq_window() -> None:
-    frame = pd.read_csv(ROOT / "data" / "cache" / "qqq_daily_iex.csv")
+    # Ported off the retired IEX cache onto the SIP consolidated tape. The end is
+    # pinned one day past the last fetched session so the stitched stream stays
+    # reproducible as the archive grows. Measured on the 2016-01-04..2026-08-31
+    # SIP daily tape: 2680 bars, 2679 return rows, stitched OOS (test years
+    # 2022-2026) = 1169 rows. The retired IEX cache gave 1150 over the same
+    # test years, the gap being IEX cache staleness (last bar 2026-08-04).
+    frame = load_sip_bars("QQQ", frequency="daily", end="2026-09-01")
+    assert frame.attrs["data_source_mode"] == "sip_parquet"
+    assert frame.attrs["acquisition_tier"] == "research_strict"
     returns = returns_from_ohlcv(frame)
     folds, stitched = rolling_origin_folds(returns, fold_count=5)
     assert len(folds) == 5

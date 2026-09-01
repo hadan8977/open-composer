@@ -28,6 +28,10 @@ from open_composer.research.campaign import (
 )
 from open_composer.research.campaign_statistics import recompute_campaign_statistics
 from open_composer.research.design_contract import research_design_requires_iteration_gate
+from open_composer.research.kernel.effective_trials import (
+    DEFAULT_CORRELATION_THRESHOLD,
+    effective_independent_trials,
+)
 from open_composer.research.quality_diversity import (
     QualityDiversityCandidate,
     append_allocation_entry,
@@ -278,7 +282,16 @@ def _write_promotion_evidence(
     *,
     include_final: bool = True,
     observation_count: int = 1040,
+    effective_trial_clustering_returns: dict[str, list[float]] | None = None,
 ) -> None:
+    """Materialize a full promotion evidence chain for one campaign contract.
+
+    ``effective_trial_clustering_returns`` opts the fixture into P1a return-stream
+    clustering: the supplied streams (plus the cohort's own, which always win so
+    the clustered family stays bound to the sealed common return matrix) are
+    clustered, the resulting cluster count becomes the DSR trial count, and the
+    clustering evidence is attached to the statistical family gate artifact.
+    """
     campaign_dir = path.parent
     artifact_dir = campaign_dir / "artifacts"
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -424,11 +437,33 @@ def _write_promotion_evidence(
     }
     matrix_path.write_text(json.dumps(matrix_payload), encoding="utf-8")
     policy = payload["statistical_family_policy"]
+    clustering_payload: dict[str, Any] | None = None
+    dsr_trial_count = effective_trial_count
+    if effective_trial_clustering_returns is not None:
+        clustered_returns = {**effective_trial_clustering_returns, **candidate_returns}
+        clustering_report = effective_independent_trials(
+            clustered_returns,
+            correlation_threshold=DEFAULT_CORRELATION_THRESHOLD,
+        )
+        clustering_payload = {
+            "schema_version": 1,
+            "method": "hierarchical",
+            "correlation_threshold": clustering_report.correlation_threshold,
+            "raw_candidate_count": clustering_report.raw_candidate_count,
+            "effective_n": clustering_report.effective_n,
+            "breadth_ratio": clustering_report.breadth_ratio,
+            "clusters": [
+                {"cluster_id": cluster.cluster_id, "members": list(cluster.members)}
+                for cluster in clustering_report.clusters
+            ],
+            "candidate_returns": clustered_returns,
+        }
+        dsr_trial_count = clustering_report.effective_n
     stats = recompute_campaign_statistics(
         candidate_ids=cohort_ids,
         candidate_returns=candidate_returns,
         benchmark_returns=benchmark_returns,
-        effective_trial_count=effective_trial_count,
+        effective_trial_count=dsr_trial_count,
         dsr_hac_lag=policy["dsr_hac_lag"],
         pbo_block_count=policy["pbo_block_count"],
         pbo_in_sample_block_count=policy["pbo_in_sample_block_count"],
@@ -479,6 +514,11 @@ def _write_promotion_evidence(
                         if policy.get("promotion_stage") == "paper_entry"
                         else sharpe_pass and dsr_pass and pbo_pass and spa_pass
                     )
+                ),
+                **(
+                    {"effective_trial_clustering": clustering_payload}
+                    if clustering_payload is not None
+                    else {}
                 ),
             }
         ),
