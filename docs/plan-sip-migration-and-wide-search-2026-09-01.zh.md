@@ -163,20 +163,33 @@ strategy_specs/drafts/us_breadth_*.yaml   （全部 16 个）
 
 **必须写测试**：加载器能正确按时间范围切片、缺失 symbol 报错清晰、不同频率不混用。
 
-### 3.4 工作项 D3：清理旧 IEX 资产
+### 3.4 工作项 D3：清理旧 IEX 资产（**已完成，且计划原文的判断是错的**）
 
-用户明确要求删除。**先归档到 Drive，再删本地**（可逆）。用 gdrive MCP 工具
-（`drive_upload` 异步返回 job_id，用 `drive_job` 轮询）。
+执行于 2026-09-01。**实测推翻了本节原来的两条假设**，记录如下以免重蹈：
 
-1. 归档 `data/cache/*iex*.csv` → 已完成（`datasets/legacy-iex-cache`），直接删本地即可。
-2. 归档 `data/research/`（326MB，多为 IEX 时代快照）→ Drive `datasets/legacy-iex-research`，再删本地。
-3. **保留**：`reports/research/knowledge/`、`reports/harness/source_cards/`、`knowledge/`（知识库，用户要求留）。
-4. **不要动** `reports/research/iterations/mom_breadth_*/` 和 `reports/research/campaigns/mom_breadth_qd_r1/`
-   （封存 campaign，动了会打挂测试）。
+**假设 1（错）**：「归档 `data/research/`（326MB，多为 IEX 时代快照）→ 再删本地」。
+实测 `data/research/` 的 1962 个文件里 **688 个是 SIP、只有 119 个是 IEX**，
+其余 1144 个是 manifest / 回执 / 交易日历等衍生物。它**不是** IEX 时代快照。
 
-**已实测**：删掉全部 149 个 IEX 缓存文件后，35 个引用 IEX 的测试文件里**只有 1 个失败**——
-`tests/test_kernel_rolling_origin.py::test_end_to_end_stitched_oos_row_count_matches_real_qqq_window`
-（它读 `data/cache/qqq_daily_iex.csv`）。**把这个测试改成读 SIP parquet**，其余不受影响。
+**假设 2（错）**：「删掉后只有 1 个测试失败」。实测**删掉 `data/research/` 会打挂 24 个测试、
+跨 13 个文件**（`test_pit_semantic_theme_r12..r24`、`test_paper_audit_contracts`），
+因为它是这些测试的实时依赖数据，不是快照。
+
+**最终结论**：
+- `data/cache/*iex*`（149 CSV + 151 manifest = 300 文件，约 180MB）→ **已删除，零新增失败**。
+- `data/research/`（1962 文件）→ **保留**。不是 IEX 资产，且是测试依赖。
+
+**归档（删除前完成，可逆）**：
+- `datasets/legacy-iex-cache`（149 CSV）
+- `datasets/legacy-iex-cache-manifests`（151 JSON）——**原归档遗漏了这 151 个文件，已补传**
+- `datasets/legacy-iex-research`（1962 文件，逐文件 md5 校验一致）
+
+**方法论**：删除前先 `mv` 到 `/tmp` 再跑全量测试，确认失败数不变才真删。
+本次正是靠这一步避免了不可逆的数据丢失。
+
+> 这次清理还意外挖出一个**远比清理本身重要的缺陷**：旧 IEX 缓存是以 `adjustment=raw`
+> 抓的，杠杆 ETF 里混入了 6 处幻影拆股暴跌，现金腿收益记成 0。
+> 详见 `docs/finding-iex-cache-price-adjustment-defect-2026-09-01.zh.md`。
 
 ---
 
@@ -322,6 +335,29 @@ generation, parent_id  # 谱系，用于审计
 ```
 
 ---
+
+### 6.5 机器吞吐预算（实测，不是估算）
+
+在 2026-09-01 于本机实测 `load_sip_bars`，搜索循环必须按这些数字设计，
+否则会重蹈 `pytest -n auto` 把机器 OOM 的覆辙。
+
+| 场景 | 耗时 | 峰值 RSS |
+|---|---:|---:|
+| 日线 1 只 × 11 年（冷，首次建分片索引） | 15.2s | 0.14 GB |
+| 日线 5 只 × 11 年（热） | 1.0s | 0.16 GB |
+| 分钟 1 只 × 1 季度（冷，扫 3672 个分片页脚） | 47.1s | 0.26 GB |
+| 分钟 1 只 × 1 季度（热） | 1.0s | 0.38 GB |
+| 分钟 10 只 × 1 季度（热，43 万行） | 5.7s | **0.97 GB** |
+
+三条由此得出的硬约束：
+
+1. **分片索引缓存只在进程内**（`_SYMBOL_RANGE_CACHE`）。每个新进程都要重付冷启动代价——
+   日线 15s，分钟 47s。搜索循环必须**跑在一个长驻进程里**，不要每个候选起一个子进程。
+2. **分钟线内存是真正的天花板**：10 只 × 1 季度就吃掉 1GB。本机可用内存约 1.8GB，
+   且后台还有抓取进程。**10 只 × 1 年（约 170 万行）会 OOM。**
+   分钟级搜索必须按时间分块流式处理，或把标的池压到 ≤10 只。
+3. **日线几乎免费**（全市场 11 年才 543MB）。**P2a 的参数搜索先全部在日线上做**，
+   只有已经过门槛的候选才值得付分钟线的代价。
 
 ## 7. 工作项 F：自动循环接入真实数据
 

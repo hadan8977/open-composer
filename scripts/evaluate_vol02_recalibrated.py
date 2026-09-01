@@ -1,17 +1,28 @@
-"""Re-evaluate candidate VOL02 (discrete_beta_ladder_to_volatility_target) on
-real market data through the new gate-recalibration methodology, using the
-kernel's anchored rolling-origin walk-forward split (Work Items A2/B) instead
-of a single frozen 2021-2023 development window.
+"""Re-evaluate candidate VOL02 (discrete_beta_ladder_to_volatility_target) through
+the mechanism-evaluation harness (``open_composer.research.kernel.mechanism_eval``,
+Work Item P1b), on real SIP daily bars via ``open_composer.adapters.data.sip_parquet``.
+
+This is a thin caller: everything mechanism-agnostic (rolling-origin folds, gate
+recomputation, DSR, effective-trials clustering, report shape) lives in the
+harness. This script supplies only VOL02's decision rule, its one preregistered
+parameter vector, and the CLI.
 
 VOL02's decision rule and parameters are read verbatim from
 reports/research/iterations/mom_breadth_volatility_beta_r1/candidate-policy-contract.json
 (mom_breadth_qd_r1.py's own discrete_beta_ladder branch); this script
-reimplements only that pure, weekly-rebalance rule against
-data/cache/{qqq,tqqq,qld,bil}_daily_iex.csv, deliberately bypassing
+reimplements only that pure, weekly-rebalance rule, deliberately bypassing
 mom_breadth_qd_r1.py's runner and its sealed phase-one preregistration lock
 (see docs/plan-gate-recalibration-and-research-velocity-2026-08-26.zh.md
 Work Item C revision, section 9.4) so recalibration doesn't touch or need to
 be consistent with that campaign's frozen, already-negative record.
+
+Data source: this run reads SIP daily bars (data/sip/daily/), not the retired
+IEX cache (data/cache/) the original recalibration used -- the user's SIP
+migration decision (docs/plan-sip-migration-and-wide-search-2026-09-01.zh.md
+section 2.1) deprecates IEX outright. Absolute numbers therefore differ from
+the earlier IEX-based run; what P1b's extraction must preserve is behavior,
+i.e. that this harness-based path and a direct, unrefactored call of the same
+primitives agree bit for bit (see tests/test_mechanism_eval.py).
 
 Per the user's decision: the gate uses the full rolling-origin window (more
 statistical power); 2024-2026 performance is reported separately as its own
@@ -22,86 +33,49 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
-import numpy as np
 import pandas as pd
 
-from open_composer.research.campaign import (
-    QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD,
-    recompute_candidate_promotion_metrics,
+from open_composer.adapters.data.sip_parquet import load_sip_bars
+from open_composer.research.kernel.mechanism_eval import (
+    DEFAULT_PROMOTION_GATES,
+    Mechanism,
+    evaluate_family,
+    expand_mechanism,
+    recent_window_diagnostic,
 )
-from open_composer.research.campaign_statistics import (
-    annualized_sharpe,
-    deflated_sharpe_probability,
-)
-from open_composer.research.kernel.rolling_origin import (
-    returns_from_ohlcv,
-    rolling_origin_folds,
-)
+from open_composer.research.kernel.rolling_origin import returns_from_ohlcv
+from open_composer.storage import write_json
 
 ROOT = Path(__file__).resolve().parents[1]
-CACHE = ROOT / "data" / "cache"
-OUTPUT_PATH = (
-    ROOT
-    / "reports"
-    / "research"
-    / "campaigns"
-    / "mom_breadth_qd_r1"
-    / "VOL02-recalibrated-evaluation.json"
-)
+OUTPUT_PATH = ROOT / "reports" / "research" / "recalibrated" / "vol02-recalibrated-evaluation.json"
+
+SYMBOLS = ("QQQ", "TQQQ", "QLD", "BIL")
+FALLBACK_SYMBOL = "BIL"
+PRIMARY_COST_BPS = 20.0
+STRESS_COST_BPS = 40.0
+FOLD_COUNT = 5
+DSR_TRIAL_COUNT = 32
+DSR_HAC_LAG = 21
 
 # Verbatim from candidate-policy-contract.json's VOL02 entry.
-SIGNAL_PARAMETERS = {
+SIGNAL_PARAMETERS: dict[str, Any] = {
     "annualization_sessions": 252,
     "otherwise": "QQQ",
     "qld_when_annualized_vol_lte": 0.2,
     "risk_off_when_trend_gap_200_lte": 0.0,
     "tqqq_when_annualized_vol_lte": 0.12,
 }
-FALLBACK_SYMBOL = "BIL"
-PRIMARY_COST_BPS = 20
-STRESS_COST_BPS = 40
-FOLD_COUNT = 5
-
-# Paper-tier target gates (plan section 4).
-PAPER_GATES = {
-    "cagr_excess_qqq_minimum": 0.05,
-    "sharpe_excess_bil_minimum": 1.00,
-    "dsr_minimum": 0.50,
-    "max_drawdown_minimum": -0.65,
-    "mar_minimum": 0.60,
-    "minimum_positive_fold_fraction": 3 / 5,
-    "qqq_capture_ratio_minimum": 1.0,
-    "qqq_downside_capture_maximum": 1.0,
-}
-DSR_TRIAL_COUNT = 32
-DSR_HAC_LAG = 21
-MIN_DSR_STREAM_ROWS = 1000
-
-
-def _load_close(symbol: str) -> pd.Series:
-    frame = pd.read_csv(CACHE / f"{symbol.lower()}_daily_iex.csv", parse_dates=["timestamp"])
-    frame = frame.sort_values("timestamp").drop_duplicates(subset="timestamp")
-    close = pd.to_numeric(frame["close"], errors="raise")
-    close.index = pd.DatetimeIndex(frame["timestamp"])
-    return close
-
-
-def _load_open(symbol: str) -> pd.Series:
-    frame = pd.read_csv(CACHE / f"{symbol.lower()}_daily_iex.csv", parse_dates=["timestamp"])
-    frame = frame.sort_values("timestamp").drop_duplicates(subset="timestamp")
-    open_ = pd.to_numeric(frame["open"], errors="raise")
-    open_.index = pd.DatetimeIndex(frame["timestamp"])
-    return open_
 
 
 def _is_week_end(decision: pd.Timestamp, execution: pd.Timestamp) -> bool:
     return tuple(decision.isocalendar()[:2]) != tuple(execution.isocalendar()[:2])
 
 
-def _select_sleeve(trend: float, annualized_vol: float) -> str:
-    params = SIGNAL_PARAMETERS
+def _select_sleeve(trend: float, annualized_vol: float, params: Mapping[str, Any]) -> str:
     if not math.isfinite(trend) or trend <= params["risk_off_when_trend_gap_200_lte"]:
         return "BIL"
     if annualized_vol <= params["tqqq_when_annualized_vol_lte"]:
@@ -111,8 +85,18 @@ def _select_sleeve(trend: float, annualized_vol: float) -> str:
     return str(params["otherwise"])
 
 
-def simulate_vol02(closes: dict[str, pd.Series], opens: dict[str, pd.Series]) -> pd.Series:
-    """Reimplement the discrete_beta_ladder rule and return daily portfolio returns."""
+def simulate_vol02(
+    closes: dict[str, pd.Series],
+    opens: dict[str, pd.Series],
+    params: Mapping[str, Any],
+) -> pd.Series:
+    """Reimplement the discrete_beta_ladder rule and return daily portfolio returns.
+
+    ``params`` carries the preregistered decision thresholds plus ``cost_bps``,
+    the per-switch round-trip transaction cost assumption -- the mechanism's
+    signal function is called once at ``PRIMARY_COST_BPS`` and once at
+    ``STRESS_COST_BPS`` by the harness (see ``Mechanism.stress_signal_fn``).
+    """
     common_index = closes["QQQ"].index
     for symbol in ("TQQQ", "QLD", "BIL"):
         common_index = common_index.intersection(closes[symbol].index)
@@ -122,7 +106,7 @@ def simulate_vol02(closes: dict[str, pd.Series], opens: dict[str, pd.Series]) ->
     qqq_return = qqq_close.pct_change()
     trend_gap_200 = qqq_close / qqq_close.rolling(200, min_periods=200).mean() - 1.0
     realized_vol_20 = qqq_return.rolling(20, min_periods=20).std(ddof=1) * math.sqrt(
-        SIGNAL_PARAMETERS["annualization_sessions"]
+        params["annualization_sessions"]
     )
     # feature_lag_sessions=1: the feature "as of" session T is the value computed
     # through T-1's close, a one-day PIT safety buffer.
@@ -143,6 +127,7 @@ def simulate_vol02(closes: dict[str, pd.Series], opens: dict[str, pd.Series]) ->
     returns: list[float] = []
     return_dates: list[pd.Timestamp] = []
     pending_switch_to: str | None = None
+    cost_bps = float(params["cost_bps"])
 
     for i in range(start_index, len(dates) - 1):
         decision = dates[i]
@@ -151,7 +136,7 @@ def simulate_vol02(closes: dict[str, pd.Series], opens: dict[str, pd.Series]) ->
             trend = float(trend_gap_200.loc[decision])
             vol = float(realized_vol_20.loc[decision])
             if math.isfinite(trend) and math.isfinite(vol):
-                pending_switch_to = _select_sleeve(trend, vol)
+                pending_switch_to = _select_sleeve(trend, vol, params)
 
         target_sleeve = pending_switch_to if pending_switch_to is not None else current_sleeve
         switched = target_sleeve != current_sleeve
@@ -162,7 +147,7 @@ def simulate_vol02(closes: dict[str, pd.Series], opens: dict[str, pd.Series]) ->
                 / sleeve_opens[target_sleeve].loc[execution]
                 - 1.0
             )
-            day_return -= (PRIMARY_COST_BPS / 10_000.0) * 2.0
+            day_return -= (cost_bps / 10_000.0) * 2.0
             current_sleeve = target_sleeve
         else:
             day_return = float(
@@ -174,165 +159,101 @@ def simulate_vol02(closes: dict[str, pd.Series], opens: dict[str, pd.Series]) ->
         return_dates.append(execution)
 
     series = pd.Series(returns, index=pd.DatetimeIndex(return_dates), name="VOL02")
-    if series.isna().any() or not np.isfinite(series.to_numpy()).all():
+    if series.isna().any():
         raise ValueError("VOL02 reconstructed return series contains non-finite values")
     return series
 
 
-def _stress_returns(closes: dict[str, pd.Series], opens: dict[str, pd.Series]) -> pd.Series:
-    """Same simulation at the 40bps stress cost, for the stress_total_return metric."""
-    global PRIMARY_COST_BPS
-    original = PRIMARY_COST_BPS
-    PRIMARY_COST_BPS = STRESS_COST_BPS
-    try:
-        return simulate_vol02(closes, opens)
-    finally:
-        PRIMARY_COST_BPS = original
-
-
-def _annualized_cagr(returns: pd.Series) -> float:
-    compounded = float(np.prod(1.0 + returns.to_numpy())) - 1.0
-    years = len(returns) / 252.0
-    return (1.0 + compounded) ** (1.0 / years) - 1.0
-
-
-def _max_drawdown(returns: pd.Series) -> float:
-    wealth = (1.0 + returns).cumprod()
-    peak = wealth.cummax()
-    return float((wealth / peak - 1.0).min())
+def _load_price_bundles() -> tuple[
+    dict[str, pd.Series], dict[str, pd.Series], dict[str, pd.Series]
+]:
+    """Load SIP daily bars for every VOL02 symbol: close, open, and full-history returns."""
+    frame = load_sip_bars(SYMBOLS, frequency="daily")
+    closes: dict[str, pd.Series] = {}
+    opens: dict[str, pd.Series] = {}
+    benchmark_returns: dict[str, pd.Series] = {}
+    for symbol in SYMBOLS:
+        rows = frame.loc[frame["symbol"] == symbol].sort_values("timestamp")
+        index = pd.DatetimeIndex(rows["timestamp"])
+        closes[symbol] = pd.Series(
+            pd.to_numeric(rows["close"], errors="raise").to_numpy(), index=index, name=symbol
+        )
+        opens[symbol] = pd.Series(
+            pd.to_numeric(rows["open"], errors="raise").to_numpy(), index=index, name=symbol
+        )
+        benchmark_returns[symbol] = returns_from_ohlcv(rows)
+    return closes, opens, benchmark_returns
 
 
 def main() -> None:
-    closes = {symbol: _load_close(symbol) for symbol in ("QQQ", "TQQQ", "QLD", "BIL")}
-    opens = {symbol: _load_open(symbol) for symbol in ("QQQ", "TQQQ", "QLD", "BIL")}
+    closes, opens, benchmark_returns = _load_price_bundles()
 
-    vol02_returns = simulate_vol02(closes, opens)
-    vol02_stress_returns = _stress_returns(closes, opens)
-
-    qqq_returns_full = returns_from_ohlcv(pd.read_csv(CACHE / "qqq_daily_iex.csv")).reindex(
-        vol02_returns.index
+    mechanism = Mechanism(
+        family="VOL02",
+        signal_fn=lambda params: simulate_vol02(closes, opens, params),
+        stress_signal_fn=lambda params: simulate_vol02(
+            closes, opens, {**params, "cost_bps": STRESS_COST_BPS}
+        ),
+        param_space=[{**SIGNAL_PARAMETERS, "cost_bps": PRIMARY_COST_BPS}],
     )
-    tqqq_returns_full = returns_from_ohlcv(pd.read_csv(CACHE / "tqqq_daily_iex.csv")).reindex(
-        vol02_returns.index
-    )
-    bil_returns_full = returns_from_ohlcv(pd.read_csv(CACHE / "bil_daily_iex.csv")).reindex(
-        vol02_returns.index
-    )
-
-    folds, stitched_vol02 = rolling_origin_folds(vol02_returns, fold_count=FOLD_COUNT)
-    stitched_index = stitched_vol02.index
-    stitched_qqq = qqq_returns_full.reindex(stitched_index)
-    stitched_tqqq = tqqq_returns_full.reindex(stitched_index)
-    stitched_bil = bil_returns_full.reindex(stitched_index)
-    stitched_stress = vol02_stress_returns.reindex(stitched_index)
-    if stitched_qqq.isna().any() or stitched_tqqq.isna().any() or stitched_bil.isna().any():
-        raise ValueError("benchmark alignment produced missing rows in the stitched window")
-
-    fold_returns = [
-        stitched_vol02.loc[
-            pd.Timestamp(fold.train.test_start) : pd.Timestamp(fold.train.test_end)
-        ].tolist()
-        for fold in folds
-    ]
-
-    metrics = recompute_candidate_promotion_metrics(
-        candidate_returns=stitched_vol02.tolist(),
-        qqq_returns=stitched_qqq.tolist(),
-        tqqq_returns=stitched_tqqq.tolist(),
-        stress_returns=stitched_stress.tolist(),
-        development_fold_returns=fold_returns,
+    candidates = expand_mechanism(mechanism, fold_count=FOLD_COUNT)
+    family = evaluate_family(
+        candidates,
+        qqq_returns=benchmark_returns["QQQ"],
+        tqqq_returns=benchmark_returns["TQQQ"],
+        bil_returns=benchmark_returns["BIL"],
         annualization_sessions=SIGNAL_PARAMETERS["annualization_sessions"],
+        dsr_trial_count=DSR_TRIAL_COUNT,
+        dsr_hac_lag=DSR_HAC_LAG,
     )
+    (verdict,) = family.candidates
+    candidate = verdict.candidate
+    stitched_index = pd.DatetimeIndex(candidate.oos_dates)
+    stitched_vol02 = pd.Series(candidate.oos_return_stream, index=stitched_index)
 
-    excess_bil = (stitched_vol02 - stitched_bil).to_numpy()
-    sharpe_excess_bil = annualized_sharpe(excess_bil)
-    dsr_probability = deflated_sharpe_probability(
-        excess_bil, trial_count=DSR_TRIAL_COUNT, hac_lag=DSR_HAC_LAG
+    # 2024-2026-only diagnostic (not gated -- see user decision above).
+    recent_diagnostic = recent_window_diagnostic(
+        stitched_vol02, benchmark_returns["QQQ"], start="2024-01-01"
     )
-    positive_fold_fraction = metrics["positive_fold_count"] / len(fold_returns)
-
-    orthogonal = abs(metrics["qqq_correlation"]) <= QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD
-    gate_results = {
-        "cagr_excess_qqq": metrics["cagr_excess_qqq"] >= PAPER_GATES["cagr_excess_qqq_minimum"],
-        "sharpe_excess_bil": sharpe_excess_bil > PAPER_GATES["sharpe_excess_bil_minimum"],
-        "dsr_probability": (
-            dsr_probability >= PAPER_GATES["dsr_minimum"]
-            and len(stitched_vol02) >= MIN_DSR_STREAM_ROWS
-        ),
-        "max_drawdown": metrics["max_drawdown"] >= PAPER_GATES["max_drawdown_minimum"],
-        "mar": metrics["mar"] >= PAPER_GATES["mar_minimum"],
-        "positive_fold_fraction": positive_fold_fraction
-        >= PAPER_GATES["minimum_positive_fold_fraction"],
-        "qqq_capture_ratio": (
-            True
-            if orthogonal
-            else metrics["qqq_capture_ratio"] >= PAPER_GATES["qqq_capture_ratio_minimum"]
-        ),
-        "qqq_downside_capture": (
-            True
-            if orthogonal
-            else metrics["qqq_downside_capture"] <= PAPER_GATES["qqq_downside_capture_maximum"]
-        ),
-    }
-    all_paper_gates_pass = all(gate_results.values())
-
-    # 2024-2026-only diagnostic (not gated -- see user decision in section 9 of the plan).
-    recent = vol02_returns.loc[vol02_returns.index >= pd.Timestamp("2024-01-01", tz="UTC")]
-    recent_qqq = qqq_returns_full.reindex(recent.index).combine_first(
-        returns_from_ohlcv(pd.read_csv(CACHE / "qqq_daily_iex.csv")).reindex(recent.index)
-    )
-    recent_diagnostic = {
-        "row_count": int(len(recent)),
-        "start": recent.index.min().date().isoformat() if len(recent) else None,
-        "end": recent.index.max().date().isoformat() if len(recent) else None,
-        "cagr": _annualized_cagr(recent) if len(recent) > 5 else None,
-        "sharpe": annualized_sharpe(recent.to_numpy()) if len(recent) > 5 else None,
-        "max_drawdown": _max_drawdown(recent) if len(recent) > 5 else None,
-        "qqq_cagr": _annualized_cagr(recent_qqq.dropna())
-        if recent_qqq.dropna().shape[0] > 5
-        else None,
-    }
 
     report = {
-        "candidate_id": "VOL02",
+        "candidate_id": candidate.candidate_id,
+        "mechanism_family": candidate.mechanism_family,
+        "param_vector": candidate.param_vector,
+        "generation": candidate.generation,
+        "parent_id": candidate.parent_id,
         "method": "discrete_beta_ladder_to_volatility_target",
-        "evaluation_methodology": "gate_recalibration_2026_08_26_rolling_origin",
+        "evaluation_methodology": "mechanism_eval_harness_p1b_sip",
         "note": (
-            "Independent reimplementation of the candidate-policy-contract.json rule "
-            "against real market data, bypassing mom_breadth_qd_r1.py's sealed runner. "
-            "Not a byte-identical replay of the original signal log; small feature/timing "
-            "conventions may differ. Historical retuning was NOT performed -- the rule "
-            "and its parameters are used exactly as originally preregistered."
+            "Independent reimplementation of the candidate-policy-contract.json rule, "
+            "bypassing mom_breadth_qd_r1.py's sealed runner, run through the P1b "
+            "mechanism-evaluation harness against real SIP daily bars. Not a byte-"
+            "identical replay of the original signal log; small feature/timing "
+            "conventions may differ. Historical retuning was NOT performed -- the "
+            "rule and its parameters are used exactly as originally preregistered."
         ),
         "fold_count": FOLD_COUNT,
         "family_effective_trial_count": DSR_TRIAL_COUNT,
         "dsr_hac_lag": DSR_HAC_LAG,
-        "stitched_oos_row_count": int(len(stitched_vol02)),
-        "stitched_oos_start": stitched_vol02.index.min().date().isoformat(),
-        "stitched_oos_end": stitched_vol02.index.max().date().isoformat(),
-        "fold_test_windows": [
-            {
-                "fold": fold.fold,
-                "test_start": fold.train.test_start,
-                "test_end": fold.train.test_end,
-            }
-            for fold in folds
-        ],
-        "metrics": {k: (float(v) if isinstance(v, int | float) else v) for k, v in metrics.items()},
-        "sharpe_excess_bil": float(sharpe_excess_bil),
-        "dsr_probability": float(dsr_probability),
-        "positive_fold_count": int(metrics["positive_fold_count"]),
-        "positive_fold_fraction": float(positive_fold_fraction),
-        "qqq_correlation": float(metrics["qqq_correlation"]),
-        "orthogonal_to_qqq": bool(orthogonal),
-        "paper_tier_gates": PAPER_GATES,
-        "paper_tier_gate_results": gate_results,
-        "all_paper_gates_pass": bool(all_paper_gates_pass),
+        "stitched_oos_row_count": len(candidate.oos_return_stream),
+        "stitched_oos_start": candidate.oos_dates[0],
+        "stitched_oos_end": candidate.oos_dates[-1],
+        "metrics": verdict.metrics,
+        "sharpe_excess_bil": verdict.sharpe_excess_bil,
+        "dsr_probability": verdict.dsr_probability,
+        "positive_fold_count": verdict.metrics["positive_fold_count"],
+        "positive_fold_fraction": verdict.positive_fold_fraction,
+        "qqq_correlation": verdict.metrics["qqq_correlation"],
+        "orthogonal_to_qqq": verdict.orthogonal_to_qqq,
+        "paper_tier_gates": DEFAULT_PROMOTION_GATES,
+        "paper_tier_gate_results": verdict.gate_results,
+        "all_paper_gates_pass": verdict.all_gates_pass,
         "recent_2024_2026_diagnostic": recent_diagnostic,
+        "raw_candidate_count": family.raw_candidate_count,
+        "effective_n": family.effective_n,
+        "breadth_ratio": family.breadth_ratio,
     }
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
+    write_json(OUTPUT_PATH, report)
     print(json.dumps(report, indent=2, sort_keys=True))
     print(f"\nWritten to {OUTPUT_PATH}")
 

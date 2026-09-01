@@ -11,6 +11,18 @@ from open_composer.research.kernel.effective_trials import (
     effective_independent_trials,
 )
 from open_composer.research.kernel.gates import GateResult, GateStatus
+from open_composer.research.kernel.mechanism_eval import (
+    Candidate,
+    CandidateVerdict,
+    FamilyVerdict,
+    Mechanism,
+    annualized_cagr,
+    evaluate_candidate,
+    evaluate_family,
+    expand_mechanism,
+    max_drawdown,
+    recent_window_diagnostic,
+)
 from open_composer.research.kernel.metrics import EvaluationBundle, MetricSummary
 from open_composer.research.kernel.rolling_origin import (
     DEFAULT_EMBARGO_BARS,
@@ -33,16 +45,20 @@ from open_composer.research.kernel.workflow import (
 )
 
 __all__ = [
+    "Candidate",
     "CandidateScore",
     "CandidateSet",
     "CandidateSpec",
+    "CandidateVerdict",
     "DEFAULT_CORRELATION_THRESHOLD",
     "DEFAULT_EMBARGO_BARS",
     "DEFAULT_FOLD_COUNT",
     "EffectiveTrialsReport",
     "EvaluationBundle",
+    "FamilyVerdict",
     "GateResult",
     "GateStatus",
+    "Mechanism",
     "MetricSummary",
     "PurgedEmbargoConfig",
     "ResearchArtifactWriter",
@@ -54,9 +70,15 @@ __all__ = [
     "TrialLedger",
     "TrialRecord",
     "WalkForwardSlice",
+    "annualized_cagr",
     "append_research_run_index",
     "build_default_research_brief",
     "effective_independent_trials",
+    "evaluate_candidate",
+    "evaluate_family",
+    "expand_mechanism",
+    "max_drawdown",
+    "recent_window_diagnostic",
     "research_report_paths",
     "returns_from_ohlcv",
     "rolling_origin_folds",
