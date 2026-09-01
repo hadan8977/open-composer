@@ -60,7 +60,10 @@ from open_composer.research.campaign import MAX_FAMILY_EFFECTIVE_TRIAL_COUNT
 from open_composer.research.campaign_statistics import annualized_sharpe
 from open_composer.research.kernel.behavioral_descriptors import behavioral_descriptors
 from open_composer.research.kernel.datamodel import ResearchDataModel
-from open_composer.research.kernel.effective_trials import DEFAULT_CORRELATION_THRESHOLD
+from open_composer.research.kernel.effective_trials import (
+    DEFAULT_CORRELATION_THRESHOLD,
+    effective_independent_trials,
+)
 from open_composer.research.kernel.mechanism_eval import Candidate, FamilyVerdict, evaluate_family
 from open_composer.research.quality_diversity import (
     QualityDiversityArchive,
@@ -314,6 +317,10 @@ class LayeredSearchVerdict(ResearchDataModel):
     layer2_elite_count: int
     max_effective_n: int
     effective_n_gate_passed: bool
+    #: Effective independent trials across EVERY evaluated candidate, not
+    #: just the gated elites. This is what the DSR is charged for.
+    search_effective_n: int
+    dsr_trial_count: int
     qd_archive: QualityDiversityArchive
     family_verdict: FamilyVerdict | None = None
 
@@ -361,6 +368,8 @@ def run_layered_search(
             layer2_elite_count=0,
             max_effective_n=max_effective_n,
             effective_n_gate_passed=False,
+            search_effective_n=0,
+            dsr_trial_count=0,
             qd_archive=_empty_archive_placeholder(campaign_id),
             family_verdict=None,
         )
@@ -385,11 +394,24 @@ def run_layered_search(
             layer2_elite_count=len(elite_candidates),
             max_effective_n=max_effective_n,
             effective_n_gate_passed=False,
+            search_effective_n=0,
+            dsr_trial_count=0,
             qd_archive=archive,
             family_verdict=probe,
         )
 
-    calibrated_trial_count = max(probe.effective_n, _MIN_DSR_TRIAL_COUNT)
+    # The DSR trial count must reflect the whole search, not the survivors.
+    # Clustering only the elites is exactly the "hand-picked subset" that
+    # campaign.py's _effective_trial_clustering_blockers exists to reject: 60
+    # candidates screened down to 5 and then clustered to 3 would charge the
+    # DSR for 3 trials while the selection bias came from 60. Cluster every
+    # candidate that was actually evaluated, and take the larger of that and
+    # the elite-level count so this can only ever tighten the gate.
+    search_trials = effective_independent_trials(
+        {candidate.candidate_id: candidate.oos_return_stream for candidate in candidates},
+        correlation_threshold=correlation_threshold,
+    )
+    calibrated_trial_count = max(search_trials.effective_n, probe.effective_n, _MIN_DSR_TRIAL_COUNT)
     final = evaluate_family(
         elite_candidates,
         correlation_threshold=correlation_threshold,
@@ -402,6 +424,8 @@ def run_layered_search(
         layer2_elite_count=len(elite_candidates),
         max_effective_n=max_effective_n,
         effective_n_gate_passed=True,
+        search_effective_n=search_trials.effective_n,
+        dsr_trial_count=calibrated_trial_count,
         qd_archive=archive,
         family_verdict=final,
     )

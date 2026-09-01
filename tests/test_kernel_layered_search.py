@@ -463,3 +463,49 @@ def test_widened_probe_window_does_not_flag_legitimate_causal_transforms() -> No
     assert_causal_transform(lambda s: s.shift(1).rolling(5, min_periods=5).mean(), raw)
     assert_causal_transform(lambda s: s.shift(1).ewm(span=10, adjust=False).mean(), raw)
     assert_causal_transform(lambda s: s.shift(1).rolling(60, min_periods=60).std(), raw)
+
+
+# ---------------------------------------------------------------------------
+# The DSR must be charged for the whole search, not for the survivors
+# ---------------------------------------------------------------------------
+
+
+def test_dsr_trial_count_reflects_every_candidate_not_just_the_elites() -> None:
+    """Regression: clustering only the gated elites understates the trial count.
+
+    ``campaign.py``'s ``_effective_trial_clustering_blockers`` rejects exactly
+    this on the campaign path -- clustering a hand-picked subset. The kernel
+    search screens many candidates down to a few elites, so charging the DSR
+    for the elite-level cluster count would price in the diversity of the
+    survivors while ignoring the selection pressure of the whole search.
+    """
+    candidates = [
+        _make_candidate(f"fam_a-{i:03d}", seed=300 + i, mechanism_family="fam_a") for i in range(6)
+    ] + [
+        _make_candidate(f"fam_b-{i:03d}", seed=400 + i, mechanism_family="fam_b") for i in range(6)
+    ]
+    dates = candidates[0].oos_dates
+    all_dates = sorted({*candidates[0].development_dates, *dates})
+    index = pd.DatetimeIndex(all_dates)
+    rng = np.random.default_rng(4242)
+    qqq = pd.Series(rng.normal(0.0004, 0.01, len(all_dates)), index=index)
+    tqqq = pd.Series(rng.normal(0.0008, 0.03, len(all_dates)), index=index)
+    bil = pd.Series(rng.normal(0.00005, 0.0002, len(all_dates)), index=index)
+
+    verdict = run_layered_search(
+        candidates,
+        benchmark_returns=qqq,
+        campaign_id="dsr-trial-count-test",
+        qqq_returns=qqq,
+        tqqq_returns=tqqq,
+        bil_returns=bil,
+        min_dsr_stream_rows=1,
+    )
+    assert verdict.effective_n_gate_passed
+    assert verdict.family_verdict is not None
+    # Fewer elites survive than candidates searched, so the search-wide count
+    # is the larger one and is what the DSR is charged for.
+    assert verdict.layer2_elite_count < verdict.raw_candidate_count
+    assert verdict.search_effective_n >= verdict.family_verdict.effective_n
+    assert verdict.dsr_trial_count >= verdict.search_effective_n
+    assert verdict.dsr_trial_count >= verdict.family_verdict.effective_n

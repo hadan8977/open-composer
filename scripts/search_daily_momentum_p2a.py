@@ -33,6 +33,31 @@ Per plan section 6.5, everything here runs daily-only, in one long-lived
 process, against a small fixed symbol universe (QQQ/BIL/TQQQ) -- daily bars
 for the whole market history are ~500MB, nothing like the ~1GB-per-10-symbols
 -per-quarter minute-bar cost that this run must not incur.
+
+Headline result: nested (anchored) walk-forward, not the global split
+----------------------------------------------------------------------
+The Generation 0/1 -> ``run_layered_search`` pipeline above selects **one**
+parameter vector globally: every candidate is ranked once on a single
+development partition and the winner(s) are then scored on a single stitched
+out-of-sample stream. That is methodologically weaker than re-selecting the
+parameter vector inside every walk-forward fold (see
+``open_composer.research.kernel.nested_walk_forward`` module docstring for
+the full argument): the global split never lets selection see recent data,
+and it validates a frozen parameter vector nobody would actually deploy
+unchanged for five years, rather than the periodically-re-optimising
+*procedure* that is the honest object of study.
+
+This script therefore also runs ``run_nested_walk_forward`` over the exact
+same Generation 0 grid, and that nested result -- not the global-split
+result above -- is the headline: it is printed first and is the primary
+promotion signal. The Generation 0/1/``run_layered_search`` path is kept
+running (it is inexpensive once the price data is loaded, and the QD-archive
+budgeting/breadth-ratio accounting it exercises is still useful evidence
+about the search pipeline) but is reported under ``global_split_reference``
+in the output JSON, clearly demoted to a secondary/comparison figure -- not
+because it is expected to become the deciding number, but because keeping it
+gives an honest before/after comparison of the two selection procedures on
+identical data.
 """
 
 from __future__ import annotations
@@ -56,6 +81,10 @@ from open_composer.research.kernel.layered_search import (
     select_layer1_survivors,
 )
 from open_composer.research.kernel.mechanism_eval import Candidate, Mechanism, expand_mechanism
+from open_composer.research.kernel.nested_walk_forward import (
+    NestedWalkForwardResult,
+    run_nested_walk_forward,
+)
 from open_composer.research.kernel.parameter_search import (
     ParameterSpace,
     ParameterSpec,
@@ -213,6 +242,37 @@ def main() -> None:
 
     # --- Generation 0: bounded grid -----------------------------------------
     grid_result = bounded_grid(PARAMETER_SPACE, max_points=GRID_MAX_POINTS, seed=GRID_SEED)
+
+    # --- HEADLINE: nested (anchored) walk-forward over the Generation 0 grid.
+    # See module docstring and open_composer.research.kernel.
+    # nested_walk_forward's module docstring: this re-selects the parameter
+    # vector inside every rolling_origin_folds fold using only that fold's
+    # training window, and evaluates the winner only on that fold's own
+    # (never-before-read-during-selection) test window. This is what is
+    # actually deployed -- a periodically re-optimising procedure -- not a
+    # single parameter vector frozen on stale data, so this result, not the
+    # Generation 0/1 global-split result below, is the primary promotion
+    # signal from this script.
+    nested_param_space = [{**point, "cost_bps": PRIMARY_COST_BPS} for point in grid_result.points]
+    nested_result: NestedWalkForwardResult = run_nested_walk_forward(
+        nested_param_space,
+        mechanism_family=MECHANISM_FAMILY,
+        signal_fn=lambda params: simulate_momentum(closes, opens, params),
+        stress_signal_fn=lambda params: simulate_momentum(
+            closes, opens, {**params, "cost_bps": STRESS_COST_BPS}
+        ),
+        benchmark_returns=benchmark_returns["QQQ"],
+        qqq_returns=benchmark_returns["QQQ"],
+        tqqq_returns=benchmark_returns["TQQQ"],
+        bil_returns=benchmark_returns["BIL"],
+        campaign_id=f"{CAMPAIGN_ID}-nested",
+        fold_count=FOLD_COUNT,
+        annualization_sessions=252,
+    )
+
+    # --- Reference only: the Generation 0/1 global-split pipeline below is
+    # kept running for comparison (see module docstring) but is no longer
+    # the script's headline result.
     gen0_mechanism = Mechanism(
         family=MECHANISM_FAMILY,
         signal_fn=lambda params: simulate_momentum(closes, opens, params),
@@ -313,82 +373,165 @@ def main() -> None:
             "subsampled": grid_result.subsampled,
             "seed": grid_result.seed,
         },
-        "generation0_candidate_count": len(gen0_candidates),
-        "generation0_layer1_survivor_count": len(gen0_survivors),
-        "generation0_layer2_elite_count": gen0_archive.elite_count,
-        "generation1_mutants_per_elite": MUTANTS_PER_ELITE,
-        "generation1_mutation_rate": MUTATION_RATE,
-        "generation1_candidate_count": len(gen1_candidates),
-        "raw_candidate_count": verdict.raw_candidate_count,
-        "layer1_survivor_count": verdict.layer1_survivor_count,
-        "layer2_elite_count": verdict.layer2_elite_count,
-        "max_effective_n": verdict.max_effective_n,
-        "effective_n_gate_passed": verdict.effective_n_gate_passed,
-        "effective_n": family_verdict.effective_n if family_verdict is not None else None,
-        # Two different denominators, both meaningful, and reporting only one
-        # of them is how a search quietly overstates its honesty. The gate-level
-        # ratio says how distinct the elites we actually gated were; the
-        # discovery-level ratio says what the whole search cost in backtests per
-        # independent trial. ``breadth_ratio`` keeps P1a's gate-level meaning.
-        "breadth_ratio": family_verdict.breadth_ratio if family_verdict is not None else None,
-        "breadth_ratio_denominator": (
-            family_verdict.raw_candidate_count if family_verdict is not None else None
-        ),
-        "breadth_ratio_vs_discovery": (
-            family_verdict.effective_n / verdict.raw_candidate_count
-            if family_verdict is not None and verdict.raw_candidate_count
-            else None
-        ),
-        "qd_archive_cell_occupancy": [
-            {
-                "cell_id": elite.cell_id,
-                "cell_descriptors": elite.cell_descriptors,
-                "candidate_id": elite.candidate.candidate_id,
-                "param_vector": candidates_by_id[elite.candidate.candidate_id].param_vector,
-                "generation": candidates_by_id[elite.candidate.candidate_id].generation,
-                "parent_id": candidates_by_id[elite.candidate.candidate_id].parent_id,
-                "quality": elite.candidate.quality,
-            }
-            for elite in verdict.qd_archive.elites
-        ],
-        "per_candidate_gate_results": [
-            {
-                "candidate_id": cv.candidate.candidate_id,
-                "param_vector": cv.candidate.param_vector,
-                "generation": cv.candidate.generation,
-                "parent_id": cv.candidate.parent_id,
-                "dsr_probability": cv.dsr_probability,
-                "sharpe_excess_bil": cv.sharpe_excess_bil,
-                "positive_fold_fraction": cv.positive_fold_fraction,
-                "qqq_correlation": cv.metrics["qqq_correlation"],
-                "cagr_excess_qqq": cv.metrics["cagr_excess_qqq"],
-                "max_drawdown": cv.metrics["max_drawdown"],
-                "mar": cv.metrics["mar"],
-                "gate_results": cv.gate_results,
-                "all_gates_pass": cv.all_gates_pass,
-            }
-            for cv in candidate_verdicts
-        ],
-        "per_gate_pass_count": per_gate_pass_count,
-        "candidates_passing_all_gates": sum(1 for cv in candidate_verdicts if cv.all_gates_pass),
-        "candidates_evaluated_at_gate": len(candidate_verdicts),
+        # --- Headline: nested (anchored) walk-forward. See module docstring.
+        "nested_walk_forward": {
+            "campaign_id": f"{CAMPAIGN_ID}-nested",
+            "candidate_count": len(nested_param_space),
+            "fold_count": nested_result.fold_count,
+            "embargo_bars": nested_result.embargo_bars,
+            "folds": [
+                {
+                    "fold": fold.fold,
+                    "train_start": fold.train_start,
+                    "train_end": fold.train_end,
+                    "test_start": fold.test_start,
+                    "test_end": fold.test_end,
+                    "candidates_scored": fold.candidates_scored,
+                    "selected_candidate_id": fold.selected_candidate_id,
+                    "selected_param_vector": fold.selected_param_vector,
+                    "selected_training_score": fold.selected_training_score,
+                    "test_row_count": len(fold.test_returns),
+                }
+                for fold in nested_result.folds
+            ],
+            "parameter_stability": nested_result.parameter_stability.model_dump(),
+            "procedure_oos_row_count": len(nested_result.procedure_candidate.oos_return_stream),
+            "procedure_metrics": nested_result.procedure_verdict.metrics,
+            "procedure_dsr_probability": nested_result.procedure_verdict.dsr_probability,
+            "procedure_sharpe_excess_bil": nested_result.procedure_verdict.sharpe_excess_bil,
+            "procedure_positive_fold_fraction": (
+                nested_result.procedure_verdict.positive_fold_fraction
+            ),
+            "procedure_orthogonal_to_qqq": nested_result.procedure_verdict.orthogonal_to_qqq,
+            "procedure_gate_results": nested_result.procedure_verdict.gate_results,
+            "procedure_all_gates_pass": nested_result.procedure_verdict.all_gates_pass,
+        },
+        # --- Reference only (see module docstring): the Generation 0/1
+        # global-split pipeline, kept for before/after comparison on
+        # identical data. This is no longer the script's headline result.
+        "global_split_reference": {
+            "generation0_candidate_count": len(gen0_candidates),
+            "generation0_layer1_survivor_count": len(gen0_survivors),
+            "generation0_layer2_elite_count": gen0_archive.elite_count,
+            "generation1_mutants_per_elite": MUTANTS_PER_ELITE,
+            "generation1_mutation_rate": MUTATION_RATE,
+            "generation1_candidate_count": len(gen1_candidates),
+            "raw_candidate_count": verdict.raw_candidate_count,
+            "layer1_survivor_count": verdict.layer1_survivor_count,
+            "layer2_elite_count": verdict.layer2_elite_count,
+            "max_effective_n": verdict.max_effective_n,
+            "effective_n_gate_passed": verdict.effective_n_gate_passed,
+            # Charged to the DSR: the whole search, not the surviving elites.
+            "search_effective_n": verdict.search_effective_n,
+            "dsr_trial_count": verdict.dsr_trial_count,
+            "effective_n": family_verdict.effective_n if family_verdict is not None else None,
+            # Two different denominators, both meaningful, and reporting only
+            # one of them is how a search quietly overstates its honesty. The
+            # gate-level ratio says how distinct the elites we actually gated
+            # were; the discovery-level ratio says what the whole search cost
+            # in backtests per independent trial. ``breadth_ratio`` keeps
+            # P1a's gate-level meaning.
+            "breadth_ratio": family_verdict.breadth_ratio if family_verdict is not None else None,
+            "breadth_ratio_denominator": (
+                family_verdict.raw_candidate_count if family_verdict is not None else None
+            ),
+            "breadth_ratio_vs_discovery": (
+                family_verdict.effective_n / verdict.raw_candidate_count
+                if family_verdict is not None and verdict.raw_candidate_count
+                else None
+            ),
+            "qd_archive_cell_occupancy": [
+                {
+                    "cell_id": elite.cell_id,
+                    "cell_descriptors": elite.cell_descriptors,
+                    "candidate_id": elite.candidate.candidate_id,
+                    "param_vector": candidates_by_id[elite.candidate.candidate_id].param_vector,
+                    "generation": candidates_by_id[elite.candidate.candidate_id].generation,
+                    "parent_id": candidates_by_id[elite.candidate.candidate_id].parent_id,
+                    "quality": elite.candidate.quality,
+                }
+                for elite in verdict.qd_archive.elites
+            ],
+            "per_candidate_gate_results": [
+                {
+                    "candidate_id": cv.candidate.candidate_id,
+                    "param_vector": cv.candidate.param_vector,
+                    "generation": cv.candidate.generation,
+                    "parent_id": cv.candidate.parent_id,
+                    "dsr_probability": cv.dsr_probability,
+                    "sharpe_excess_bil": cv.sharpe_excess_bil,
+                    "positive_fold_fraction": cv.positive_fold_fraction,
+                    "qqq_correlation": cv.metrics["qqq_correlation"],
+                    "cagr_excess_qqq": cv.metrics["cagr_excess_qqq"],
+                    "max_drawdown": cv.metrics["max_drawdown"],
+                    "mar": cv.metrics["mar"],
+                    "gate_results": cv.gate_results,
+                    "all_gates_pass": cv.all_gates_pass,
+                }
+                for cv in candidate_verdicts
+            ],
+            "per_gate_pass_count": per_gate_pass_count,
+            "candidates_passing_all_gates": sum(
+                1 for cv in candidate_verdicts if cv.all_gates_pass
+            ),
+            "candidates_evaluated_at_gate": len(candidate_verdicts),
+        },
     }
     write_json(OUTPUT_PATH, report)
-    print(f"raw_candidate_count={report['raw_candidate_count']}")
-    print(f"layer1_survivor_count={report['layer1_survivor_count']}")
-    print(f"layer2_elite_count={report['layer2_elite_count']}")
-    print(f"effective_n={report['effective_n']}")
+
+    nested_report = report["nested_walk_forward"]
+    print("=== HEADLINE: nested (anchored) walk-forward procedure ===")
     print(
-        f"breadth_ratio={report['breadth_ratio']} "
-        f"(= effective_n / {report['breadth_ratio_denominator']} gated elites)"
+        f"fold_count={nested_report['fold_count']}  "
+        f"embargo_bars={nested_report['embargo_bars']}  "
+        f"candidate_count={nested_report['candidate_count']}"
+    )
+    for fold in nested_report["folds"]:
+        print(
+            f"  fold {fold['fold']}: test=[{fold['test_start']}..{fold['test_end']}] "
+            f"selected={fold['selected_param_vector']} "
+            f"training_score={fold['selected_training_score']:.4f} "
+            f"candidates_scored={fold['candidates_scored']} "
+            f"test_rows={fold['test_row_count']}"
+        )
+    stability = nested_report["parameter_stability"]
+    print(
+        f"parameter_stability: {stability['distinct_selected_vector_count']} distinct "
+        f"selected vector(s) across {stability['fold_count']} fold(s)"
+    )
+    for churn in stability["per_parameter_churn"]:
+        print(
+            f"  churn[{churn['parameter_name']}]: {churn['change_count']}/"
+            f"{churn['total_transitions']} fold-to-fold transitions changed "
+            f"(rate={churn['churn_rate']:.2f})"
+        )
+    print(f"procedure_oos_row_count={nested_report['procedure_oos_row_count']}")
+    print(f"procedure_dsr_probability={nested_report['procedure_dsr_probability']:.4f}")
+    print(f"procedure_sharpe_excess_bil={nested_report['procedure_sharpe_excess_bil']:.4f}")
+    print(
+        f"procedure_positive_fold_fraction={nested_report['procedure_positive_fold_fraction']:.4f}"
+    )
+    print(f"procedure_gate_results={nested_report['procedure_gate_results']}")
+    print(f"procedure_all_gates_pass={nested_report['procedure_all_gates_pass']}")
+
+    print("\n=== Reference only: Generation 0/1 global-split + run_layered_search ===")
+    ref = report["global_split_reference"]
+    print(f"raw_candidate_count={ref['raw_candidate_count']}")
+    print(f"layer1_survivor_count={ref['layer1_survivor_count']}")
+    print(f"layer2_elite_count={ref['layer2_elite_count']}")
+    print(f"effective_n={ref['effective_n']}")
+    print(
+        f"breadth_ratio={ref['breadth_ratio']} "
+        f"(= effective_n / {ref['breadth_ratio_denominator']} gated elites)"
     )
     print(
-        f"breadth_ratio_vs_discovery={report['breadth_ratio_vs_discovery']} "
-        f"(= effective_n / {report['raw_candidate_count']} candidates searched)"
+        f"breadth_ratio_vs_discovery={ref['breadth_ratio_vs_discovery']} "
+        f"(= effective_n / {ref['raw_candidate_count']} candidates searched)"
     )
-    print(f"effective_n_gate_passed={report['effective_n_gate_passed']}")
+    print(f"effective_n_gate_passed={ref['effective_n_gate_passed']}")
     print(
-        f"candidates_passing_all_gates={report['candidates_passing_all_gates']}/{report['candidates_evaluated_at_gate']}"
+        f"candidates_passing_all_gates={ref['candidates_passing_all_gates']}"
+        f"/{ref['candidates_evaluated_at_gate']}"
     )
     print(f"\nWritten to {OUTPUT_PATH}")
 

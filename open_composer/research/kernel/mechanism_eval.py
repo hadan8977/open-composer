@@ -38,6 +38,7 @@ import numpy as np
 import pandas as pd
 
 from open_composer.research.campaign import (
+    MIN_DSR_STREAM_ROWS,
     QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD,
     recompute_candidate_promotion_metrics,
 )
@@ -65,6 +66,14 @@ SignalFn = Callable[[Mapping[str, Any]], pd.Series]
 
 #: Paper-tier promotion gates (see plan section 4). Mechanism-agnostic: every
 #: candidate from every mechanism is judged against the same thresholds.
+#:
+#: **These are development defaults, not a promotion authority.** On the campaign
+#: path the same thresholds are fields of a hash-sealed, preregistered contract
+#: (``CampaignCandidatePromotionPolicy`` in ``campaign.py``), committed before any
+#: result is visible. A plain module-level dict has no such protection -- anyone
+#: can edit it after seeing a verdict. So every :class:`CandidateVerdict` records
+#: ``gates_provenance``, and any real promotion decision must pass its
+#: preregistered thresholds in explicitly rather than inherit these.
 DEFAULT_PROMOTION_GATES: dict[str, float] = {
     "cagr_excess_qqq_minimum": 0.05,
     "sharpe_excess_bil_minimum": 1.00,
@@ -77,7 +86,8 @@ DEFAULT_PROMOTION_GATES: dict[str, float] = {
 }
 DEFAULT_DSR_TRIAL_COUNT = 32
 DEFAULT_DSR_HAC_LAG = 21
-DEFAULT_MIN_DSR_STREAM_ROWS = 1000
+#: Imported rather than redeclared: two copies of a gate constant drift.
+DEFAULT_MIN_DSR_STREAM_ROWS = MIN_DSR_STREAM_ROWS
 
 
 @dataclass(frozen=True)
@@ -155,6 +165,11 @@ class CandidateVerdict(ResearchDataModel):
     orthogonal_to_qqq: bool
     gate_results: dict[str, bool]
     all_gates_pass: bool
+    #: ``"preregistered"`` when the caller supplied thresholds explicitly,
+    #: ``"kernel_defaults"`` when it inherited :data:`DEFAULT_PROMOTION_GATES`.
+    #: A verdict carrying ``"kernel_defaults"`` is a research signal, not a
+    #: promotion authority -- see that constant's note.
+    gates_provenance: str = "kernel_defaults"
 
 
 @dataclass(frozen=True)
@@ -270,6 +285,7 @@ def evaluate_candidate(
     lengths -- is judged against the exact same benchmark dates it traded.
     """
     thresholds = dict(gates) if gates is not None else DEFAULT_PROMOTION_GATES
+    gates_provenance = "preregistered" if gates is not None else "kernel_defaults"
     index = pd.DatetimeIndex(candidate.oos_dates)
     stitched = pd.Series(candidate.oos_return_stream, index=index)
     aligned_qqq = qqq_returns.reindex(index)
@@ -330,6 +346,7 @@ def evaluate_candidate(
         orthogonal_to_qqq=bool(orthogonal),
         gate_results=gate_results,
         all_gates_pass=bool(all(gate_results.values())),
+        gates_provenance=gates_provenance,
     )
 
 
