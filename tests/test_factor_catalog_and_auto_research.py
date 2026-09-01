@@ -84,11 +84,28 @@ def test_auto_research_blocks_market_data_without_iteration_workflow(
         lambda source: (True, "available"),
     )
 
-    with pytest.raises(ValueError, match="preregistered iteration workflow"):
+    # Work Item F opened real data to the SIP archive under preregistration and
+    # closed the provider feeds for good: they carry no pinned adjustment
+    # provenance, which is what produced the unadjusted-split defect recorded in
+    # docs/finding-iex-cache-price-adjustment-defect-2026-09-01.zh.md. The
+    # refusal, and the fact that it happens before any artifact is written, are
+    # what this test protects.
+    with pytest.raises(ValueError, match="accepts sip_parquet or sample"):
         run_auto_research(
             "Trend thesis on QQQ daily.",
             ["QQQ"],
             data_source="alpaca",
+            root=sample_workspace,
+        )
+
+    assert not (sample_workspace / "reports/research/auto").exists()
+
+    # And the SIP archive itself is admissible only with a validated iteration.
+    with pytest.raises(ValueError, match="requires iteration_id"):
+        run_auto_research(
+            "Trend thesis on QQQ daily.",
+            ["QQQ"],
+            data_source="sip_parquet",
             root=sample_workspace,
         )
 
@@ -359,7 +376,7 @@ def test_auto_research_rejects_unavailable_market_source_before_writing_artifact
     monkeypatch.delenv("ALPACA_API_KEY_ID", raising=False)
     monkeypatch.delenv("ALPACA_API_SECRET_KEY", raising=False)
 
-    with pytest.raises(ValueError, match="preregistered iteration workflow"):
+    with pytest.raises(ValueError, match="accepts sip_parquet or sample"):
         run_auto_research(
             "Trend thesis on QQQ daily.",
             ["QQQ"],

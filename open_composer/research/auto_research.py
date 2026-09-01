@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -109,6 +110,70 @@ _AUTO_RESEARCH_SCHEMA_VERSION = "2"
 _DEFAULT_COMMISSION_PCT = 0.05
 
 
+#: Work Item F. Real market data was previously refused outright, because an
+#: automated loop pointed at real prices with no preregistration is a machine for
+#: manufacturing false discoveries. It is now allowed under three conditions that
+#: together restore what the campaign path enforces by contract:
+#:
+#: 1. a registered, validated iteration dossier -- the hypothesis and search space
+#:    are committed before any result exists;
+#: 2. the SIP parquet archive as the source, so the feed and its ``adjustment=all``
+#:    provenance are pinned (``capabilities/registry.yaml`` is hash-sealed and
+#:    cannot carry a new entry, see the plan's section 7);
+#: 3. a bounded search, measured as P1a's clustered effective trial count rather
+#:    than a raw candidate count.
+#:
+#: Anything short of all three keeps the original refusal.
+REAL_DATA_SOURCES = ("sip_parquet",)
+
+
+def _require_real_data_authorization(
+    data_source: str,
+    iteration_id: str | None,
+    root: Path,
+) -> None:
+    """Fail closed unless real-data auto research is fully preregistered."""
+    from open_composer.research.iteration_dossier import validate_iteration_dossier
+
+    if data_source not in REAL_DATA_SOURCES:
+        raise ValueError(
+            f"market-data auto research accepts {', '.join(REAL_DATA_SOURCES)} or sample; "
+            f"got {data_source!r}. The legacy provider feeds are not reachable from this "
+            "path -- they carry no pinned adjustment provenance."
+        )
+    if not iteration_id:
+        raise ValueError(
+            "real-data auto research requires iteration_id naming a registered, "
+            "validated iteration dossier; use sample data for workflow-only smoke"
+        )
+    validation = validate_iteration_dossier(iteration_id, root)
+    if not validation.ok:
+        raise ValueError(
+            f"iteration {iteration_id} is not execution-ready "
+            f"({validation.status}): {', '.join(validation.blocked) or 'no detail'}"
+        )
+
+
+def _require_bounded_search(candidate_returns: Mapping[str, Sequence[float]]) -> int:
+    """Return the clustered effective trial count, refusing an unbounded search.
+
+    The budget constrains P1a's *cluster* count, not the raw candidate count:
+    500 near-duplicate candidates are a handful of real trials, and 33 genuinely
+    independent ones are over budget however few they look.
+    """
+    from open_composer.research.campaign import MAX_FAMILY_EFFECTIVE_TRIAL_COUNT
+    from open_composer.research.kernel.effective_trials import effective_independent_trials
+
+    report = effective_independent_trials(candidate_returns)
+    if report.effective_n > MAX_FAMILY_EFFECTIVE_TRIAL_COUNT:
+        raise ValueError(
+            f"search explored {report.effective_n} effective independent trials, "
+            f"over the family budget of {MAX_FAMILY_EFFECTIVE_TRIAL_COUNT} "
+            f"(raw candidates: {report.raw_candidate_count})"
+        )
+    return report.effective_n
+
+
 def run_auto_research(
     thesis: str,
     universe: list[str],
@@ -121,6 +186,7 @@ def run_auto_research(
     refresh_data: bool = False,
     zero_cost_smoke: bool = False,
     model_kind: str | None = None,
+    iteration_id: str | None = None,
     root: Path | None = None,
 ) -> AutoResearchResult:
     base = root or project_root()
@@ -130,10 +196,7 @@ def run_auto_research(
     if max_factors < 1:
         raise ValueError("max_factors must be at least 1")
     if data_source != "sample":
-        raise ValueError(
-            "market-data auto research requires a preregistered iteration workflow; "
-            "use sample data for workflow-only smoke"
-        )
+        _require_real_data_authorization(data_source, iteration_id, base)
 
     run_id = _make_run_id(thesis)
     fallback_message: str | None = None
