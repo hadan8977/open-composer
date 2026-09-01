@@ -8,6 +8,7 @@ superset of IEX, so nothing here should ever be mixed with the legacy IEX cache.
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -20,7 +21,11 @@ from dotenv import load_dotenv
 
 LOG = logging.getLogger("fetch_sip")
 DEFAULT_OUT = Path("data/sip")
-BATCH_SIZE = 40
+# Minute bars are fetched one calendar month at a time in small symbol
+# batches: a 40-symbol x 1-year minute request materialises >1.5M pandas
+# rows at once, which drove this 3.8GB box 1.8GB into swap and stalled the
+# fetch for 30 minutes. Month-sharding caps peak memory hard.
+BATCH_SIZE = 12
 # Alpaca rejects SIP queries reaching into the last ~15 minutes without a
 # real-time SIP subscription; 16 gives a small safety margin.
 SIP_RECENT_EMBARGO_MINUTES = 16
@@ -96,8 +101,17 @@ def _fetch_batch(data_client, symbols: list[str], start: datetime, end: datetime
     return None
 
 
-def shard_path(out: Path, kind: str, year: int, shard: int) -> Path:
-    return out / kind / str(year) / f"shard-{shard:04d}.parquet"
+def shard_path(out: Path, kind: str, year: int, shard: int, month: int | None = None) -> Path:
+    if month is None:
+        return out / kind / str(year) / f"shard-{shard:04d}.parquet"
+    return out / kind / str(year) / f"{month:02d}" / f"shard-{shard:04d}.parquet"
+
+
+def shard_is_done(out: Path, kind: str, year: int, shard: int, months: list[int]) -> bool:
+    """A shard counts as done as a whole-year file (legacy layout) or all months."""
+    if shard_path(out, kind, year, shard).exists():
+        return True
+    return all(shard_path(out, kind, year, shard, m).exists() for m in months)
 
 
 def run(
@@ -113,38 +127,76 @@ def run(
     symbols = load_universe(trading_client, limit=limit)
     LOG.info("universe: %d tradable symbols", len(symbols))
     batches = [symbols[i : i + BATCH_SIZE] for i in range(0, len(symbols), BATCH_SIZE)]
+    # Daily bars are ~390x smaller per symbol-year, so they stay whole-year;
+    # minute bars are sharded per month to bound peak memory.
+    months = list(range(1, 13)) if kind == "minute" else [None]
 
     total_rows = 0
     started = time.time()
     for year in range(start_year, end_year + 1):
-        year_start = datetime(year, 1, 1, tzinfo=UTC)
-        year_end = datetime(year + 1, 1, 1, tzinfo=UTC)
         for shard, batch in enumerate(batches):
-            destination = shard_path(out, kind, year, shard)
-            if resume and destination.exists():
+            if resume and shard_is_done(out, kind, year, shard, [m for m in months if m]):
                 continue
-            frame = _fetch_batch(data_client, batch, year_start, year_end, kind)
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            if frame is None or frame.empty:
-                # Persist an empty marker so resume does not retry a genuinely empty shard.
-                pd.DataFrame(columns=["symbol", "timestamp"]).to_parquet(
-                    destination, compression="zstd"
-                )
-                continue
-            frame.reset_index().to_parquet(destination, compression="zstd", index=False)
-            total_rows += len(frame)
-            elapsed = time.time() - started
+            for month in months:
+                destination = shard_path(out, kind, year, shard, month)
+                if resume and destination.exists():
+                    continue
+                if month is None:
+                    window_start = datetime(year, 1, 1, tzinfo=UTC)
+                    window_end = datetime(year + 1, 1, 1, tzinfo=UTC)
+                else:
+                    window_start = datetime(year, month, 1, tzinfo=UTC)
+                    window_end = (
+                        datetime(year + 1, 1, 1, tzinfo=UTC)
+                        if month == 12
+                        else datetime(year, month + 1, 1, tzinfo=UTC)
+                    )
+                if window_start >= _sip_safe_end(window_end):
+                    continue
+                frame = _fetch_batch(data_client, batch, window_start, window_end, kind)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                if frame is None or frame.empty:
+                    # Empty marker so resume does not retry a genuinely empty window.
+                    pd.DataFrame(columns=["symbol", "timestamp"]).to_parquet(
+                        destination, compression="zstd"
+                    )
+                    continue
+                rows = len(frame)
+                frame.reset_index().to_parquet(destination, compression="zstd", index=False)
+                del frame  # release before the next window; this box has 3.8GB
+                total_rows += rows
+            elapsed = (time.time() - started) / 60
             LOG.info(
-                "%s %d shard %d/%d  rows=%s  cumulative=%s  elapsed=%.1fmin",
+                "%s %d shard %d/%d  cumulative=%s  elapsed=%.1fmin",
                 kind,
                 year,
                 shard + 1,
                 len(batches),
-                f"{len(frame):,}",
                 f"{total_rows:,}",
-                elapsed / 60,
+                elapsed,
             )
-    LOG.info("done: %s rows in %.1f min", f"{total_rows:,}", (time.time() - started) / 60)
+    marker = out / kind / f"_COMPLETE_{start_year}_{end_year}.json"
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(
+        json.dumps(
+            {
+                "kind": kind,
+                "start_year": start_year,
+                "end_year": end_year,
+                "symbols": len(symbols),
+                "shards_per_year": len(batches),
+                "total_rows": total_rows,
+                "finished_at": datetime.now(UTC).isoformat(),
+                "elapsed_min": round((time.time() - started) / 60, 1),
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    LOG.info(
+        "done: %s rows in %.1f min -> %s", f"{total_rows:,}", (time.time() - started) / 60, marker
+    )
     return 0
 
 
