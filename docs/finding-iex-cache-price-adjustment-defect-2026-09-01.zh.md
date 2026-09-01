@@ -114,6 +114,55 @@ bil_daily_iex.csv   adjustment=(缺失 -> raw)   records=1499
 一个是数学上不可能通过的 DSR 门槛（N=8195），一个是本文档的数据缺陷。
 两者叠加，而不是其中之一。
 
+### 6.1 对当前 paper / 待上实盘策略的影响（**这是最要紧的部分**）
+
+`strategy_specs/active/` 下的两个策略，universe 全部是杠杆/高贝塔 ETF：
+
+```
+nasdaq_tqqq_fixed_etf_router_daily_iter11_exposure_search_paper_auto_candidate
+    QQQ TQQQ SQQQ QLD PSQ SMH
+nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate
+    QQQ TQQQ QLD SOXL USD SMH
+```
+
+这两个 universe 在旧 IEX 缓存里的单日跳变 >30% 的记录，与 SIP 对照：
+
+| 标的 | IEX 处数 | SIP 处数 | IEX 里的荒谬值 |
+|---|---:|---:|---|
+| QQQ | 0 | 0 | — |
+| TQQQ | 4 | 1 | -49% / -54% / -53% |
+| SQQQ | 5 | 1 | **+386% / +439% / +376% / +435%** |
+| QLD | 3 | 0 | -49% / -50% / -52% |
+| PSQ | 1 | 0 | **+403%** |
+| SMH | 1 | 0 | -49% |
+| SOXL | 4 | 3 | **-94%** |
+| USD | 8 | 1 | -75% / -48% / -54% |
+| **合计** | **26** | **6** | |
+
+SIP 剩下的 6 处**全部是真实且跨标的自洽的行情**：2025-04-09 当天
+TQQQ +35% / SQQQ **-35%**（反向 ETF 符号相反，正确）/ SOXL +55% / USD +36%，
+外加 SOXL 的 2022-11-10 +31% 和 2026-06-05 -31%。
+
+**即 20 处虚假跳变在正确复权下全部消失。** 其中 2022-01-13 和 2025-11-20
+是多标的同日事件——路由器在同一天会在一条腿上看到腰斩、另一条腿上看到暴涨。
+
+**证据链已确认**：该策略的 `paper-safety-review.json` 挂着
+`pdr_candidate_alpaca_iex_vs_sip` 这张 source card，并带有警告
+「Alpaca IEX feed is not consolidated SIP/full-market data」。
+**但那条警告说的是"覆盖度"，不是"复权口径"。** 两者是不同量级的问题：
+覆盖度不足是噪声；未复权是**凭空捏造的交易日**。现有 source card 体系里
+没有任何一张检查过 `adjustment` 参数——这是治理上的真实缺口。
+
+**当前运行状态**：kill switch 自 2026-08-05 起为 `enabled`
+（原因 `unresolved TQQQ open order and strategy state drift`），
+因此没有自动单在流转。**这一点是保护性的，不是巧合下的侥幸，但也不能当作已解决。**
+
+**结论**：Step 8 的上实盘计划（人工下单、20 日验证、50% 仓位）
+所依赖的策略证据，是在含有 20 处虚假价格跳变的数据上建立的。
+**这些证据必须在 SIP 上重新建立后才谈上实盘**，不能沿用。
+
+---
+
 ---
 
 ## 7. 这个发现**不**能推出什么
