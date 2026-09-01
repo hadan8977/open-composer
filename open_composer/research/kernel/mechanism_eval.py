@@ -117,7 +117,29 @@ class Candidate(ResearchDataModel):
     generation: int = 0
     parent_id: str | None = None
     oos_dates: list[str] = field(default_factory=list)
-    development_fold_returns: list[list[float]] = field(default_factory=list)
+    #: Per-fold slices of ``oos_return_stream`` -- i.e. each fold's TEST window.
+    #: Flattened, this is exactly ``oos_return_stream``. It is the right input
+    #: for the ``positive_fold_fraction`` gate ("how many out-of-sample folds
+    #: were positive") and it must never be used to select between candidates.
+    #: It was previously named ``development_fold_returns``, which read like
+    #: in-sample data and invited exactly that misuse.
+    oos_fold_returns: list[list[float]] = field(default_factory=list)
+    #: The contamination-free development partition: returns strictly before
+    #: the FIRST fold's test window, with the embargo already applied. This is
+    #: the only stream a selection layer may look at.
+    #:
+    #: Per-fold training windows would be the obvious choice and are the wrong
+    #: one. They are anchored and expanding, so fold 5's training window
+    #: contains folds 1-4's *test* windows. That is correct for walk-forward
+    #: fitting -- by the time fold 5 trains, those years really are history --
+    #: but it is contamination for *selection*: ranking candidates on data that
+    #: overlaps the out-of-sample stream makes the ranking mechanically
+    #: correlated with the score the gate is about to compute. Only the region
+    #: that is never a test window is safe, and that is this one.
+    development_returns: list[float] = field(default_factory=list)
+    #: Calendar index for :attr:`development_returns`. Disjoint from
+    #: ``oos_dates`` by construction.
+    development_dates: list[str] = field(default_factory=list)
     stress_return_stream: list[float] = field(default_factory=list)
 
 
@@ -177,12 +199,29 @@ def expand_mechanism(
         folds, stitched = rolling_origin_folds(
             raw_returns, fold_count=fold_count, embargo_bars=embargo_bars
         )
-        fold_returns = [
+        oos_fold_returns = [
             stitched.loc[
                 pd.Timestamp(fold.train.test_start) : pd.Timestamp(fold.train.test_end)
             ].tolist()
             for fold in folds
         ]
+        # Sliced from the RAW series, not from ``stitched``: the training window
+        # is by construction disjoint from every test window, so it cannot be
+        # recovered from the stitched out-of-sample stream at all.
+        # The first fold's training window is exactly the region that is never
+        # any fold's test window, because the folds' test windows run forward
+        # in time from it. Its end already has the embargo applied.
+        development_slice = raw_returns.loc[
+            pd.Timestamp(folds[0].train.train_start) : pd.Timestamp(folds[0].train.train_end)
+        ]
+        development_returns = development_slice.tolist()
+        development_dates = [timestamp.isoformat() for timestamp in development_slice.index]
+        overlap = set(development_dates) & {timestamp.isoformat() for timestamp in stitched.index}
+        if overlap:
+            raise ValueError(
+                f"{mechanism.family}[{index}]: development partition overlaps the "
+                f"out-of-sample stream on {len(overlap)} date(s)"
+            )
 
         stress_fn = mechanism.stress_signal_fn or mechanism.signal_fn
         stress_raw = stress_fn(params)
@@ -202,7 +241,9 @@ def expand_mechanism(
                 generation=generation,
                 parent_id=parent_id,
                 oos_dates=[timestamp.isoformat() for timestamp in stitched.index],
-                development_fold_returns=fold_returns,
+                oos_fold_returns=oos_fold_returns,
+                development_returns=development_returns,
+                development_dates=development_dates,
                 stress_return_stream=[float(value) for value in stress_stream.tolist()],
             )
         )
@@ -244,7 +285,7 @@ def evaluate_candidate(
         qqq_returns=aligned_qqq.tolist(),
         tqqq_returns=aligned_tqqq.tolist(),
         stress_returns=candidate.stress_return_stream,
-        development_fold_returns=candidate.development_fold_returns,
+        development_fold_returns=candidate.oos_fold_returns,
         annualization_sessions=annualization_sessions,
     )
     excess_bil = (stitched - aligned_bil).to_numpy()
@@ -252,9 +293,7 @@ def evaluate_candidate(
     dsr_probability = deflated_sharpe_probability(
         excess_bil, trial_count=dsr_trial_count, hac_lag=dsr_hac_lag
     )
-    positive_fold_fraction = metrics["positive_fold_count"] / len(
-        candidate.development_fold_returns
-    )
+    positive_fold_fraction = metrics["positive_fold_count"] / len(candidate.oos_fold_returns)
 
     orthogonal = abs(metrics["qqq_correlation"]) <= QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD
     gate_results = {

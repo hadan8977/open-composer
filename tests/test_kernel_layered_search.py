@@ -11,7 +11,7 @@ gate) may. These tests prove that three independent ways:
 2. A "tripwire" candidate whose ``oos_return_stream``/``stress_return_stream``
    raise on access is run through the full Layer 1/2 path; no exception
    means those fields were never read.
-3. Two candidates identical in ``development_fold_returns`` but with wildly
+3. Two candidates identical in ``development_returns`` but with wildly
    different (poisoned) ``oos_return_stream`` content produce byte-identical
    Layer 1 quality scores and Layer 2 descriptors.
 """
@@ -62,7 +62,10 @@ def _make_candidate(
     rng = np.random.default_rng(seed)
     folds = [rng.normal(0.0006, 0.01, n_per_fold).tolist() for _ in range(fold_count)]
     flattened = [value for fold in folds for value in fold]
-    dates = _dates(len(flattened))
+    # Development and OOS are disjoint calendars, as expand_mechanism enforces.
+    all_dates = _dates(len(flattened) * 2)
+    development_dates = all_dates[: len(flattened)]
+    dates = all_dates[len(flattened) :]
     oos = oos_override if oos_override is not None else flattened
     return Candidate(
         candidate_id=candidate_id,
@@ -70,13 +73,17 @@ def _make_candidate(
         param_vector={"seed": seed},
         oos_return_stream=oos,
         oos_dates=dates,
-        development_fold_returns=folds,
+        oos_fold_returns=folds,
+        development_returns=flattened,
+        development_dates=development_dates,
         stress_return_stream=oos,
     )
 
 
 def _benchmark_for(candidate: Candidate, *, seed: int = 7) -> pd.Series:
-    dates = candidate.oos_dates
+    # Must span both calendars: selection reads the development window, the
+    # gate reads the out-of-sample window, and they are disjoint.
+    dates = sorted({*candidate.development_dates, *candidate.oos_dates})
     index = pd.DatetimeIndex(dates)
     values = np.random.default_rng(seed).normal(0.0003, 0.008, len(dates))
     return pd.Series(values, index=index)
@@ -98,7 +105,8 @@ class _TripwireCandidate:
         param_vector: dict,
         generation: int,
         parent_id: str | None,
-        development_fold_returns: list[list[float]],
+        development_returns: list[float],
+        development_dates: list[str],
         oos_dates: list[str],
     ) -> None:
         self.candidate_id = candidate_id
@@ -106,7 +114,8 @@ class _TripwireCandidate:
         self.param_vector = param_vector
         self.generation = generation
         self.parent_id = parent_id
-        self.development_fold_returns = development_fold_returns
+        self.development_returns = development_returns
+        self.development_dates = development_dates
         self._oos_dates = oos_dates
 
     @property
@@ -147,7 +156,8 @@ def test_layer1_layer2_path_never_reads_oos_fields_even_when_offered() -> None:
         param_vector={},
         generation=0,
         parent_id=None,
-        development_fold_returns=folds,
+        development_returns=[v for fold in folds for v in fold],
+        development_dates=_dates(sum(len(f) for f in folds)),
         oos_dates=dates,
     )
 
@@ -168,13 +178,13 @@ def test_layer1_and_layer2_outputs_are_invariant_to_oos_return_stream_content() 
     poisoned = [999.0] * len(candidate_a.oos_return_stream)
     candidate_b = _make_candidate("cand-a", seed=1, oos_override=poisoned)
 
-    assert candidate_a.development_fold_returns == candidate_b.development_fold_returns
+    assert candidate_a.development_returns == candidate_b.development_returns
     assert candidate_a.oos_return_stream != candidate_b.oos_return_stream
 
     benchmark = _benchmark_for(candidate_a)
     view_a = development_view(candidate_a, benchmark)
     view_b = development_view(candidate_b, benchmark)
-    assert view_a.development_fold_returns == view_b.development_fold_returns
+    assert view_a.development_returns == view_b.development_returns
     assert development_quality(view_a) == development_quality(view_b)
 
     descriptors_a = behavioral_descriptors(
@@ -200,7 +210,8 @@ def test_select_layer1_survivors_drops_degenerate_candidates() -> None:
         param_vector={},
         oos_return_stream=[0.0] * 120,
         oos_dates=_dates(120),
-        development_fold_returns=degenerate_folds,
+        development_returns=[v for fold in degenerate_folds for v in fold],
+        development_dates=_dates(sum(len(f) for f in degenerate_folds)),
         stress_return_stream=[0.0] * 120,
     )
     benchmark_good = _benchmark_for(good)
@@ -266,7 +277,8 @@ def test_run_layered_search_handles_zero_layer1_survivors() -> None:
         param_vector={},
         oos_return_stream=flat,
         oos_dates=dates,
-        development_fold_returns=[flat],
+        development_returns=list(flat),
+        development_dates=_dates(len(flat)),
         stress_return_stream=flat,
     )
     benchmark = pd.Series(np.random.default_rng(50).normal(0.0002, 0.01, n), index=index)
@@ -296,11 +308,14 @@ def test_run_layered_search_end_to_end() -> None:
     dates = candidates[0].oos_dates
     for candidate in candidates[1:]:
         assert candidate.oos_dates == dates
-    index = pd.DatetimeIndex(dates)
+    # Benchmarks must span the development calendar as well: selection reads
+    # the development window and the gate reads the disjoint OOS window.
+    all_dates = sorted({*candidates[0].development_dates, *dates})
+    index = pd.DatetimeIndex(all_dates)
     rng = np.random.default_rng(999)
-    qqq = pd.Series(rng.normal(0.0004, 0.01, len(dates)), index=index)
-    tqqq = pd.Series(rng.normal(0.0008, 0.03, len(dates)), index=index)
-    bil = pd.Series(rng.normal(0.00005, 0.0002, len(dates)), index=index)
+    qqq = pd.Series(rng.normal(0.0004, 0.01, len(all_dates)), index=index)
+    tqqq = pd.Series(rng.normal(0.0008, 0.03, len(all_dates)), index=index)
+    bil = pd.Series(rng.normal(0.00005, 0.0002, len(all_dates)), index=index)
 
     verdict = run_layered_search(
         candidates,

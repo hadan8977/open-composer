@@ -69,7 +69,12 @@ def test_expand_mechanism_assigns_identity_and_lineage_fields() -> None:
         assert candidate.parent_id == "parent-xyz"
         assert len(candidate.oos_return_stream) > 0
         assert len(candidate.oos_dates) == len(candidate.oos_return_stream)
-        assert len(candidate.development_fold_returns) == 2
+        assert len(candidate.oos_fold_returns) == 2
+        # The development partition is a real hold-out, not a relabelled slice
+        # of the out-of-sample stream.
+        assert candidate.development_returns
+        assert not set(candidate.development_dates) & set(candidate.oos_dates)
+        assert candidate.development_dates[-1] < candidate.oos_dates[0]
         assert len(candidate.stress_return_stream) == len(candidate.oos_return_stream)
 
 

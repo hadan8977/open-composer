@@ -101,45 +101,35 @@ class DevelopmentView(ResearchDataModel):
     param_vector: dict[str, Any]
     generation: int
     parent_id: str | None
-    development_fold_returns: list[list[float]]
-    development_benchmark_returns: list[list[float]]
+    development_returns: list[float]
+    development_benchmark_returns: list[float]
 
     @property
     def flattened_returns(self) -> list[float]:
-        return [value for fold in self.development_fold_returns for value in fold]
+        return list(self.development_returns)
 
     @property
     def flattened_benchmark_returns(self) -> list[float]:
-        return [value for fold in self.development_benchmark_returns for value in fold]
+        return list(self.development_benchmark_returns)
 
 
 def development_view(candidate: Candidate, benchmark_returns: pd.Series) -> DevelopmentView:
     """Build the Layer 1/2-safe view of ``candidate``.
 
-    ``candidate.oos_dates`` is read here only as a *calendar index* -- to
-    align ``benchmark_returns`` onto each development fold -- never as
-    return data. A trading-calendar date carries no outcome information, so
-    reading it is not a leak. ``candidate.oos_return_stream`` and
-    ``candidate.stress_return_stream`` are never read by this function.
+    Everything here is aligned on ``candidate.development_dates`` -- the
+    region strictly before the first fold's test window, which
+    ``expand_mechanism`` asserts is disjoint from the out-of-sample stream.
+    ``oos_return_stream``, ``oos_fold_returns``, ``stress_return_stream``
+    and ``oos_dates`` are never read.
     """
-    fold_lengths = [len(fold) for fold in candidate.development_fold_returns]
-    dates = pd.DatetimeIndex(candidate.oos_dates)
-    if sum(fold_lengths) != len(dates):
-        raise ValueError(
-            f"{candidate.candidate_id}: development folds do not cover the candidate's date index"
-        )
-    aligned_benchmark = benchmark_returns.reindex(dates)
-    if aligned_benchmark.isna().any():
+    if len(candidate.development_dates) != len(candidate.development_returns):
+        raise ValueError(f"{candidate.candidate_id}: development dates/returns disagree")
+    aligned = benchmark_returns.reindex(pd.DatetimeIndex(candidate.development_dates))
+    if aligned.isna().any():
         raise ValueError(
             f"{candidate.candidate_id}: benchmark is missing a development-window date"
         )
-    benchmark_values = aligned_benchmark.tolist()
-
-    fold_benchmarks: list[list[float]] = []
-    cursor = 0
-    for length in fold_lengths:
-        fold_benchmarks.append(benchmark_values[cursor : cursor + length])
-        cursor += length
+    development_benchmark = aligned.tolist()
 
     return DevelopmentView(
         candidate_id=candidate.candidate_id,
@@ -147,8 +137,8 @@ def development_view(candidate: Candidate, benchmark_returns: pd.Series) -> Deve
         param_vector=dict(candidate.param_vector),
         generation=candidate.generation,
         parent_id=candidate.parent_id,
-        development_fold_returns=[list(fold) for fold in candidate.development_fold_returns],
-        development_benchmark_returns=fold_benchmarks,
+        development_returns=list(candidate.development_returns),
+        development_benchmark_returns=development_benchmark,
     )
 
 
@@ -214,7 +204,7 @@ def build_layer2_qd_candidates(
 ) -> list[QualityDiversityCandidate]:
     """Turn Layer 1 survivors into ``quality_diversity.py``'s candidate shape.
 
-    Descriptors are computed exclusively from ``development_fold_returns``
+    Descriptors are computed exclusively from ``development_returns``
     (via ``DevelopmentView.flattened_returns``/``flattened_benchmark_returns``)
     -- Layer 2 never sees ``oos_return_stream``, structurally, for the same
     reason Layer 1 does not (see module docstring).
@@ -230,7 +220,7 @@ def build_layer2_qd_candidates(
         }
         metrics_payload = {
             "candidate_id": view.candidate_id,
-            "development_fold_returns": view.development_fold_returns,
+            "development_returns": view.development_returns,
             "quality": qualities[view.candidate_id],
             "descriptors": descriptors,
         }
