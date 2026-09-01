@@ -56,6 +56,7 @@ CURRENT_DOCS = {
     "docs/plan-kernel-extraction-and-auto-research-real-data-2026-08-28.zh.md",
     "docs/plan-sip-migration-and-wide-search-2026-09-01.zh.md",
     "docs/finding-iex-cache-price-adjustment-defect-2026-09-01.zh.md",
+    "docs/review-kernel-search-2026-09-01.zh.md",
 }
 
 REQUIRED_SKILLS = [
