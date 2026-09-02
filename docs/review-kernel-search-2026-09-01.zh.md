@@ -157,13 +157,42 @@ Harvey & Liu 的因子识别协议）的共同要求是**先声明再看结果**
 已为两个现有归档补写布局文件。实测：minute（batch_size=12，与当前一致）放行，
 所以正在跑的回补重启不受影响；daily（batch_size=40）被正确拒绝。
 
-### 3.3 GP 的结构演化仍是全局的
+### 3.3 GP 的结构演化仍是全局的（**已修复，并因此暴露一个更重要的结果**）
 
-`expression_tree_search` 在开发分区（2016-2021）上演化出精英池，
+原问题：`expression_tree_search` 在开发分区（2016-2021）上演化出精英池，
 之后只有"在池子里选哪一个"是逐折的。**表达式的结构仍冻结在 2016-2021 的数据上**——
-就是 §1.1 的问题上移了一层。无泄露（演化从未见过任何测试窗口），但适应性受限。
+就是 §1.1 的问题上移了一层。
 
-代价：每折重新演化是 5 倍算力。这是权衡，不是缺陷，但必须记录。
+修复：`run_nested_expression_gp_search` 逐折**重新演化**，
+每折只用 `[train_start_k, train_end_k]`，折种子由基种子确定性派生。
+关键实现细节：**切的是 OHLCV frame 本身**，不只是日期边界——
+因为 `validate_expression_is_causal` 直接读 frame 参数，不看边界。
+
+独立验证（逐折只毒该折自己的测试窗口）：
+
+```
+fold1: 只毒 2023-01-02..2023-12-29 -> 演化报告逐字段相同=True  精英相同=True
+fold2: 只毒 2024-01-01..2024-12-31 -> 演化报告逐字段相同=True  精英相同=True
+fold3: 只毒 2025-01-01..2025-03-14 -> 演化报告逐字段相同=True  精英相同=True
+```
+
+**这个修复暴露出的结果比修复本身重要。** 逐折演化后：
+
+```
+fold1 test 2022: gt(roll_mean_5(gt(oc_gap, -0.02)), roll_std_10(-0.2))
+fold2 test 2023: add(0.1, neg(ret5))
+fold3 test 2024: max2(max2(volchg5, abs(oc_gap)), neg(sign(ret20)))
+fold4 test 2025: roll_std_10(gt(max2(0.1, hl_range), roll_mean_5(-0.1)))
+fold5 test 2026: gt(mul(add(ret20, ret5), neg(-0.2)), -0.05)
+
+churn_rate = 1.00  (5/5 结构全不同)
+```
+
+**每一年演化出的获胜公式毫无共同结构，这是 GP 在拟合噪声的直接证据。**
+旧的全局演化把这件事藏住了——它报 churn 0.25，只是因为池子被冻结、没得可换。
+
+试验计量同步收紧：633 个去重表达式 → `search_effective_n=168` → DSR 按 168 收费
+（旧口径 44）。DSR 概率 0.034，8 门槛过 3。
 
 ### 3.4 "模仿现金"的退化候选（**已修复**）
 
@@ -197,8 +226,14 @@ GP 很容易演化出常数信号的公式，正是这个形态。P2b 在自己�
 正交候选的报告现在是"8 项结果，其中 6 项真正被检验"，而不是"8/8 通过"。
 **按构造通过不是证据**，报告不该读起来比证据更强。
 
-### 3.6 归置与文档
-- `parameter_search.py` 放在 `kernel/`，而仓库已有 `research/optimizers/` 包。
+### 3.6 归置与文档（**已处理，但改了修法**）
+
+- `parameter_search.py` 的归置：**重新评估后没有移动文件**。
+  `optimizers/` 服务的是 StrategySpec 层（配合 `parameter_sweep.py`，写产物、过迭代闸门），
+  `kernel/parameter_search.py` 服务的是 kernel 层（纯参数字典，无 spec 无产物）。
+  把 kernel 模块搬进 `optimizers/` 只会加深耦合混淆。
+  真正的病根是**可发现性**——有人找参数搜索时先撞见 `optimizers/`，不知道 kernel 里那个，
+  于是重复造轮子。所以改为**双向交叉引用**：两处文档都写明分层差异和"不要加第三个"。
 - `spec.data.source` 是 `Literal["sample","alpaca","longbridge"]` 且在禁改文件里，
   `sip_parquet` 无法成为合法取值。溯源走 `frame.attrs` + `DataAssumptions.source`，
   **没有误报**，但运行时 spec 块叫不出它读的归档名字。

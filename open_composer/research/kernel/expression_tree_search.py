@@ -52,12 +52,57 @@ Determinism: every random draw in this module goes through the single
 in a fixed, seed-independent order of operations -- no module-level RNG
 state, no wall-clock, no unseeded ``random`` calls. The same seed always
 reproduces the same sequence of populations and the same final report.
+
+Per-fold evolution (review item 3.3)
+-------------------------------------------------------------------------
+A single global call to :func:`run_expression_gp_search` -- evolve once on
+2016-2021, then only *re-select* among the frozen result per fold -- has
+the same defect ``nested_walk_forward.py``'s module docstring describes for
+a fixed parameter vector, one level up: the expression *structures* are
+frozen on the earliest data and never get to adapt to a later regime, even
+though which of them wins each fold's selection does. It is not a leak
+(evolution never reads a fold's own test window either way), but it is a
+capacity limitation worth removing when the compute budget allows it.
+
+:func:`run_nested_expression_gp_search` is the fix: it calls
+:func:`run_expression_gp_search` once per ``rolling_origin_folds`` fold,
+each time bounded to *that fold's own* ``[train_start, train_end]`` --
+never that fold's test window, never a later fold's training window. Two
+things make that bound real rather than nominal, both required because
+``validate_expression_is_causal``/``validate_expression_is_informative``
+(called from ``run_expression_gp_search._try_admit``) read the ``frame``
+argument directly, independent of the ``development_start``/
+``development_end`` bounds that gate the *fitness* computation:
+
+1. ``development_start``/``development_end`` are fold k's own
+   ``train_start``/``train_end`` -- unchanged mechanism, now called with a
+   different window per fold instead of once with the global development
+   window.
+2. ``frame`` itself is sliced to ``frame.loc[:train_end_k]`` before being
+   passed in -- not just windowed for fitness purposes. Because
+   ``rolling_origin_folds`` folds are anchored (every fold's training
+   window starts at the dataset's earliest observation), this slice is
+   exactly "every row fold k's evolution is entitled to see", for the
+   admission checks and the fitness computation alike. Without this, a
+   formula's causal/informativeness admission (in, or rejected) could
+   depend on OHLCV rows in a *later* fold's test window purely because
+   ``frame`` happened to still contain them, even though no such row would
+   ever influence that formula's fitness score.
+
+Every fold's own ``run_expression_gp_search`` call returns its own
+``all_individuals`` dict; these are merged (not concatenated) across folds,
+because :func:`expression_id` is a content hash of the formula string, so
+an identical expression independently rediscovered by two folds' separate
+evolutions is one distinct trial, not two -- exactly what plan section 6.2
+and review item 3.3's trial-accounting rule ("deduplicated by formula")
+require of the caller (``scripts/search_expression_trees_p2b.py``) when it
+computes the final DSR trial count over the union.
 """
 
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -88,6 +133,7 @@ from open_composer.research.kernel.layered_search import (
     development_quality,
     select_layer1_survivors,
 )
+from open_composer.research.kernel.windows import WalkForwardSlice
 
 DEFAULT_POPULATION_SIZE = 30
 DEFAULT_GENERATION_COUNT = 6
@@ -559,3 +605,124 @@ def run_expression_gp_search(
         final_elite_formulas=[formula_string(all_individuals[eid]) for eid in elite_ids],
     )
     return report, all_individuals, elite_ids
+
+
+# ---------------------------------------------------------------------------
+# Per-fold evolution (review item 3.3): a fresh run_expression_gp_search
+# call per rolling_origin_folds fold, each bounded to that fold's own
+# training window -- see the "Per-fold evolution" section of the module
+# docstring for why bounding requires slicing ``frame`` itself, not just
+# passing a different development_start/development_end per fold.
+# ---------------------------------------------------------------------------
+
+
+def derive_fold_seed(base_seed: int, fold_number: int) -> int:
+    """A deterministic, fold-specific seed derived from ``base_seed``.
+
+    ``(base_seed, fold_number)`` always maps to the same output, both
+    within one run and across separate runs -- required by the task's
+    determinism rule ("same seed => byte-identical output, including
+    per-fold"). This is a pure function of its two integer inputs only (no
+    wall-clock, no module-level state), and distinct ``fold_number`` values
+    give effectively-independent seeds (SHA-256 truncated to 64 bits, so
+    collisions across the handful of folds any real run uses are not a
+    practical concern).
+    """
+    digest = hashlib.sha256(f"{base_seed}-fold-{fold_number}".encode()).hexdigest()
+    return int(digest[:16], 16)
+
+
+@dataclass(frozen=True)
+class FoldGpResult(ResearchDataModel):
+    """One fold's own, from-scratch GP evolution.
+
+    Bred and selected using only that fold's own
+    ``[train_start, train_end]`` window -- never that fold's own test
+    window, never a later fold's training window. ``report`` is that fold's
+    full :class:`GpSearchResult` (generations, rejection counts, and its own
+    ``total_individuals_evaluated`` -- the per-fold expression-count the
+    task's report asks for); ``elite_expression_ids`` is the pool this fold
+    hands to ``nested_walk_forward.run_nested_walk_forward`` for selection
+    on this fold's training window and evaluation on this fold's test
+    window.
+    """
+
+    fold: int
+    seed: int
+    train_start: str
+    train_end: str
+    report: GpSearchResult
+    elite_expression_ids: list[str] = field(default_factory=list)
+
+
+def run_nested_expression_gp_search(
+    frame: pd.DataFrame,
+    *,
+    raw_signal_fn: Callable[[ExpressionNode], pd.Series],
+    benchmark_returns: pd.Series,
+    folds: Sequence[WalkForwardSlice],
+    base_seed: int,
+    population_size: int = DEFAULT_POPULATION_SIZE,
+    generation_count: int = DEFAULT_GENERATION_COUNT,
+    elite_carry: int = DEFAULT_ELITE_CARRY,
+) -> tuple[list[FoldGpResult], dict[str, ExpressionNode]]:
+    """Evolve one fresh GP population per fold in ``folds``.
+
+    For fold k: derive that fold's seed via :func:`derive_fold_seed`, slice
+    ``frame`` down to ``frame.loc[:train_end_k]`` (see module docstring --
+    this, not just the ``development_start``/``development_end`` bounds, is
+    what keeps fold k's evolution structurally blind to fold k's own test
+    window and to every later fold's training/test window), and call
+    :func:`run_expression_gp_search` with ``development_start``/
+    ``development_end`` set to fold k's own ``train_start``/``train_end``.
+
+    Returns ``(fold_results, all_individuals)``:
+
+    * ``fold_results`` -- one :class:`FoldGpResult` per fold, in the same
+      order as ``folds``.
+    * ``all_individuals`` -- every distinct (by formula) expression *any*
+      fold's evolution ever constructed and admitted, merged across every
+      fold. Because :func:`expression_id` is a content hash, merging (via
+      ``dict.update``) is exactly "deduplicate by formula": an expression
+      independently rediscovered by two folds' separate evolutions appears
+      once. This is what the caller must cluster to compute the DSR trial
+      count charged to the whole per-fold search (review item 3.3's trial
+      accounting rule) -- not just one fold's population, and not just the
+      final winners.
+
+    Raises ``ValueError`` if ``folds`` is empty, or propagates whatever
+    ``run_expression_gp_search`` itself raises for a given fold (e.g. every
+    candidate degenerate on that fold's training window).
+    """
+    if not folds:
+        raise ValueError("folds must not be empty")
+
+    all_individuals: dict[str, ExpressionNode] = {}
+    fold_results: list[FoldGpResult] = []
+    for fold in folds:
+        seed = derive_fold_seed(base_seed, fold.fold)
+        train_end_ts = pd.Timestamp(fold.train.train_end)
+        fold_frame = frame.loc[:train_end_ts]
+        report, individuals, elite_ids = run_expression_gp_search(
+            fold_frame,
+            raw_signal_fn=raw_signal_fn,
+            benchmark_returns=benchmark_returns,
+            development_start=fold.train.train_start,
+            development_end=fold.train.train_end,
+            seed=seed,
+            population_size=population_size,
+            generation_count=generation_count,
+            elite_carry=elite_carry,
+        )
+        all_individuals.update(individuals)
+        fold_results.append(
+            FoldGpResult(
+                fold=fold.fold,
+                seed=seed,
+                train_start=fold.train.train_start,
+                train_end=fold.train.train_end,
+                report=report,
+                elite_expression_ids=list(elite_ids),
+            )
+        )
+    return fold_results, all_individuals

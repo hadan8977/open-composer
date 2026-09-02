@@ -11,34 +11,45 @@ Per plan section 6.2, effective alphas are extremely sparse and finding
 nothing is the expected, correct outcome -- this script does not relax any
 gate if the run comes back empty, and says so plainly if it does.
 
-Pipeline (plan sections 6.1/6.4/6.5)
--------------------------------------
+Pipeline (plan sections 6.1/6.4/6.5, per-fold evolution per review item 3.3)
+-----------------------------------------------------------------------------
 1. Load QQQ/BIL/TQQQ real SIP daily bars (cheap: ~500MB for the whole
    market's 11-year history per the plan's own throughput budget, section
    6.5) and build the OHLCV frame the expression grammar reads from.
-2. Layer 1 discovery: :func:`expression_tree_search.run_expression_gp_search`
-   evolves several generations of expression trees, selecting parents each
-   generation via ``layered_search``'s development-only quality (Layer 1)
-   and QD archive (Layer 2) -- never touching any fold's test window. Every
-   generated expression is causality-checked
+2. Layer 1 discovery, re-run from scratch per fold:
+   :func:`expression_tree_search.run_nested_expression_gp_search` evolves a
+   *fresh* population per ``rolling_origin_folds`` fold, each one bounded to
+   that fold's own ``[train_start, train_end]`` window -- not the single
+   2016-2021 development partition every fold used to share. Review item 3.3
+   named that sharing as the residual defect after Work Item P1a's fix: a
+   fixed *parameter vector* deployed across every fold was fixed one level
+   too high; a fixed *expression-structure pool* evolved once and then only
+   re-selected among per fold was the same defect one level higher still.
+   Every generated expression is causality-checked
    (``expression_trees.validate_expression_is_causal``) before it can enter
-   the population; a failure is rejected, not warned about.
-3. HEADLINE: the final generation's Layer-2 elites become the ``param_space``
-   for ``nested_walk_forward.run_nested_walk_forward`` -- the correct entry
-   point per the task spec, NOT ``layered_search.run_layered_search``'s
-   deprecated global split. Each fold re-selects its own winner from that
-   pool using only that fold's own training window, then is scored only on
-   that fold's own (never-before-read-during-selection) test window.
+   a population; a failure is rejected, not warned about.
+3. HEADLINE: each fold's own elite pool becomes *that fold's* candidate pool
+   for ``nested_walk_forward.run_nested_walk_forward``, via the driver's
+   ``param_space_for_fold`` extension -- the correct entry point per the
+   task spec, NOT ``layered_search.run_layered_search``'s deprecated global
+   split. Each fold re-selects its own winner from *its own* pool using only
+   that fold's own training window, then is scored only on that fold's own
+   (never-before-read-during-selection-or-evolution) test window.
 4. The DSR trial count charged to the final gate reflects the WHOLE
-   search -- every expression the GP loop ever evaluated, not just the
-   elites that made it into ``param_space`` -- via
+   per-fold search -- every expression *any* fold's evolution ever
+   evaluated, deduplicated by formula (content-addressed
+   ``expression_tree_search.expression_id``), not just the elites that made
+   it into a fold's pool and not just one fold's population -- via
    ``effective_trials.effective_independent_trials`` clustered on the same
    out-of-sample calendar the procedure's own stitched stream spans.
-5. The report includes, per fold, which expression won and its formula;
-   expression stability across folds (the GP analogue of parameter churn:
-   reused verbatim from ``nested_walk_forward.ParameterStability``, because
-   the tracked "parameter" here *is* the expression identity); the full
-   trial accounting; and the gate outcome.
+5. The report includes, per fold: which expression won, its formula, and
+   that fold's own GP evolution summary (population/generation counts,
+   rejection counts, how many distinct expressions that fold alone
+   evaluated); expression stability across folds (the GP analogue of
+   parameter churn: reused verbatim from
+   ``nested_walk_forward.ParameterStability``, because the tracked
+   "parameter" here *is* the expression identity); the full trial
+   accounting; and the gate outcome.
 """
 
 from __future__ import annotations
@@ -57,7 +68,8 @@ from open_composer.research.kernel.expression_tree_search import (
     DEFAULT_ELITE_CARRY,
     DEFAULT_GENERATION_COUNT,
     DEFAULT_POPULATION_SIZE,
-    run_expression_gp_search,
+    FoldGpResult,
+    run_nested_expression_gp_search,
 )
 from open_composer.research.kernel.expression_trees import ExpressionNode, evaluate, formula_string
 from open_composer.research.kernel.gate_contract import load_preregistered_gates
@@ -66,6 +78,7 @@ from open_composer.research.kernel.nested_walk_forward import (
     run_nested_walk_forward,
 )
 from open_composer.research.kernel.rolling_origin import returns_from_ohlcv, rolling_origin_folds
+from open_composer.research.kernel.windows import WalkForwardSlice
 from open_composer.storage import write_json
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,7 +92,10 @@ STRESS_COST_BPS = 40.0
 FOLD_COUNT = 5
 EMBARGO_BARS = 5
 
-GP_SEED = 20260901
+#: The base seed every fold's own seed is deterministically derived from
+#: (``expression_tree_search.derive_fold_seed``) -- not used to seed any RNG
+#: directly itself.
+GP_BASE_SEED = 20260901
 #: Thresholds must predate the result, so they come from a git-committed
 #: contract rather than from a dict this script could edit afterwards.
 GATE_CONTRACT_PATH = "config/promotion/kernel-paper-tier-gates.json"
@@ -215,35 +231,44 @@ def main() -> None:
     def stress_signal_fn(tree: ExpressionNode) -> pd.Series:
         return _simulate_expression_signal(tree, frame, closes, opens, cost_bps=STRESS_COST_BPS)
 
-    # The development partition: the region strictly before fold 1's test
-    # window, same definition ``mechanism_eval.expand_mechanism`` uses for
-    # ``Candidate.development_returns`` -- the only region Layer 1/2 (the GP
-    # evolutionary loop) is structurally permitted to look at.
     folds, stitched_benchmark = rolling_origin_folds(
         benchmark_returns["QQQ"], fold_count=FOLD_COUNT, embargo_bars=EMBARGO_BARS
     )
-    development_start = folds[0].train.train_start
-    development_end = folds[0].train.train_end
 
-    gp_report, all_individuals, final_elite_ids = run_expression_gp_search(
+    # --- Per-fold GP evolution (review item 3.3) ----------------------------
+    # A fresh evolution per fold, each one bounded to that fold's own
+    # [train_start, train_end] -- not the single global 2016-2021 partition
+    # every fold used to share. See run_nested_expression_gp_search's
+    # docstring for why bounding the OHLCV frame itself (not just the
+    # development_start/development_end bounds) is required to keep the
+    # causal/informativeness admission checks -- not just the fitness
+    # computation -- structurally blind to each fold's own test window and
+    # to every later fold's data.
+    fold_gp_results: list[FoldGpResult]
+    fold_gp_results, all_individuals = run_nested_expression_gp_search(
         frame,
         raw_signal_fn=raw_signal_fn,
         benchmark_returns=benchmark_returns["QQQ"],
-        development_start=development_start,
-        development_end=development_end,
-        seed=GP_SEED,
+        folds=folds,
+        base_seed=GP_BASE_SEED,
         population_size=DEFAULT_POPULATION_SIZE,
         generation_count=DEFAULT_GENERATION_COUNT,
         elite_carry=DEFAULT_ELITE_CARRY,
     )
+    elite_ids_by_fold: dict[int, list[str]] = {
+        result.fold: result.elite_expression_ids for result in fold_gp_results
+    }
 
-    # --- DSR trial accounting: charge the whole search, not the elites -----
-    # (plan section 6.2). Cluster EVERY individual the GP loop ever
-    # constructed, aligned onto a calendar every one of them actually
-    # covers -- the intersection of each individual's own index restricted
-    # to the stitched out-of-sample span, so no candidate is excluded for a
-    # structural reason (e.g. the very last bar, which no mechanism here can
-    # ever produce a forward return for) rather than a real coverage gap.
+    # --- DSR trial accounting: charge the WHOLE per-fold search -------------
+    # (plan section 6.2; review item 3.3's trial-accounting rule). Cluster
+    # EVERY individual ANY fold's evolution ever constructed and admitted,
+    # merged/deduplicated by formula (run_nested_expression_gp_search already
+    # merges via expression_id's content hash), aligned onto a calendar
+    # every one of them actually covers -- the intersection of each
+    # individual's own index restricted to the stitched out-of-sample span,
+    # so no candidate is excluded for a structural reason (e.g. the very
+    # last bar, which no mechanism here can ever produce a forward return
+    # for) rather than a real coverage gap.
     #
     # A small number of individuals are expected to be genuinely degenerate
     # (e.g. ``roll_zscore_20`` over a zero-variance constant branch produces
@@ -284,22 +309,33 @@ def main() -> None:
     search_trials = effective_independent_trials(
         aligned_returns, correlation_threshold=DEFAULT_CORRELATION_THRESHOLD
     )
+    # The "elite pool" for trial-accounting purposes is now the union of
+    # every fold's own elite pool -- each fold hands its own pool to
+    # run_nested_walk_forward, so the union is the full set of expressions
+    # that ever actually reached out-of-sample selection anywhere in the
+    # procedure.
+    elite_union_ids = sorted({eid for ids in elite_ids_by_fold.values() for eid in ids})
     elite_aligned = {
-        expression_id: aligned_returns[expression_id] for expression_id in final_elite_ids
+        expression_id: aligned_returns[expression_id]
+        for expression_id in elite_union_ids
+        if expression_id in aligned_returns
     }
     elite_trials = effective_independent_trials(
         elite_aligned, correlation_threshold=DEFAULT_CORRELATION_THRESHOLD
     )
     # Take the larger of "clustered over everything evaluated" and
-    # "clustered over the gated elites" -- same reasoning as
-    # ``layered_search.run_layered_search``'s own calibration: this can only
-    # ever tighten the multiple-testing correction, never loosen it.
+    # "clustered over the union of every fold's gated elites" -- same
+    # reasoning as ``layered_search.run_layered_search``'s own calibration:
+    # this can only ever tighten the multiple-testing correction, never
+    # loosen it.
     dsr_trial_count = max(search_trials.effective_n, elite_trials.effective_n, _MIN_DSR_TRIAL_COUNT)
 
-    # --- HEADLINE: nested (anchored) walk-forward over the GP elites -------
-    param_space = [{"expression_id": expression_id} for expression_id in final_elite_ids]
+    # --- HEADLINE: nested (anchored) walk-forward, one pool per fold -------
+    def param_space_for_fold(fold: WalkForwardSlice) -> list[dict[str, Any]]:
+        return [{"expression_id": expression_id} for expression_id in elite_ids_by_fold[fold.fold]]
+
     nested_result: NestedWalkForwardResult = run_nested_walk_forward(
-        param_space,
+        param_space_for_fold=param_space_for_fold,
         mechanism_family=MECHANISM_FAMILY,
         signal_fn=lambda params: raw_by_id[params["expression_id"]],
         stress_signal_fn=lambda params: stress_signal_fn(all_individuals[params["expression_id"]]),
@@ -316,8 +352,8 @@ def main() -> None:
     )
 
     # ``selected_candidate_id`` is run_nested_walk_forward's own positional
-    # id ("{mechanism_family}-{index:03d}"); the actual expression identity
-    # -- and hence its formula -- lives in ``selected_param_vector``.
+    # id ("{mechanism_family}-fold{fold:02d}-{index:03d}"); the actual
+    # expression identity is inside ``selected_param_vector``.
     fold_reports = []
     for fold in nested_result.folds:
         winner_expression_id = fold.selected_param_vector["expression_id"]
@@ -344,21 +380,42 @@ def main() -> None:
         {formula_string(all_individuals[eid]) for eid in expression_churn.values_by_fold}
     )
 
+    gp_search_by_fold = [
+        {
+            "fold": result.fold,
+            "seed": result.seed,
+            "train_start": result.train_start,
+            "train_end": result.train_end,
+            "population_size": result.report.population_size,
+            "generation_count": result.report.generation_count,
+            "elite_carry": result.report.elite_carry,
+            "total_individuals_evaluated": result.report.total_individuals_evaluated,
+            "rejected_lookahead_count": result.report.rejected_lookahead_count,
+            "rejected_degenerate_count": result.report.rejected_degenerate_count,
+            "elite_pool_size": len(result.elite_expression_ids),
+            "elite_formulas": [
+                formula_string(all_individuals[eid]) for eid in result.elite_expression_ids
+            ],
+        }
+        for result in fold_gp_results
+    ]
+
     report: dict[str, Any] = {
         "mechanism_family": MECHANISM_FAMILY,
         "campaign_id": CAMPAIGN_ID,
         "fold_count": FOLD_COUNT,
         "primary_cost_bps": PRIMARY_COST_BPS,
         "stress_cost_bps": STRESS_COST_BPS,
-        "gp_search": gp_report.model_dump(),
-        "final_elite_pool_size": len(final_elite_ids),
-        "final_elite_formulas": [formula_string(all_individuals[eid]) for eid in final_elite_ids],
+        "gp_base_seed": GP_BASE_SEED,
+        "gp_search_by_fold": gp_search_by_fold,
+        "total_distinct_expressions_evaluated": len(all_individuals),
         "trial_accounting": {
             "total_individuals_evaluated": len(all_individuals),
             "degenerate_expression_count": len(degenerate_expression_ids),
             "clustered_individual_count": len(coverable_ids),
             "search_effective_n": search_trials.effective_n,
             "search_breadth_ratio": search_trials.breadth_ratio,
+            "elite_union_pool_size": len(elite_union_ids),
             "elite_pool_effective_n": elite_trials.effective_n,
             "elite_pool_breadth_ratio": elite_trials.breadth_ratio,
             "dsr_trial_count_used": dsr_trial_count,
@@ -369,7 +426,11 @@ def main() -> None:
             # Expression stability across folds -- the GP analogue of
             # parameter churn: if every fold selects a structurally
             # different formula, that is strong evidence the search is
-            # fitting noise, not finding a stable edge.
+            # fitting noise, not finding a stable edge. This is far more
+            # informative now than under the old global-evolution design:
+            # a different winning formula per fold could previously only
+            # come from *re-selecting* among a frozen pool, whereas now each
+            # fold's whole pool is independently re-discovered.
             "expression_stability": {
                 "fold_count": stability.fold_count,
                 "distinct_expressions_selected": len(distinct_formulas_selected),
@@ -397,25 +458,18 @@ def main() -> None:
     }
     write_json(OUTPUT_PATH, report)
 
-    print("=== Work Item P2b: expression-tree GP search ===")
-    print(
-        f"development_window=[{development_start}, {development_end}]  "
-        f"seed={GP_SEED}  population_size={DEFAULT_POPULATION_SIZE}  "
-        f"generation_count={DEFAULT_GENERATION_COUNT}"
-    )
-    for generation in gp_report.generations:
+    print("=== Work Item P2b: expression-tree GP search (per-fold evolution, review item 3.3) ===")
+    print(f"base_seed={GP_BASE_SEED}  fold_count={FOLD_COUNT}  embargo_bars={EMBARGO_BARS}")
+    for fold_result in fold_gp_results:
         print(
-            f"  generation {generation.generation}: population={generation.population_size} "
-            f"layer1_survivors={generation.layer1_survivor_count} "
-            f"layer2_elites={generation.layer2_elite_count}"
+            f"  fold {fold_result.fold}: seed={fold_result.seed} "
+            f"train=[{fold_result.train_start}..{fold_result.train_end}] "
+            f"individuals_evaluated={fold_result.report.total_individuals_evaluated} "
+            f"elites={len(fold_result.elite_expression_ids)}"
         )
-    print(f"total_individuals_evaluated={len(all_individuals)}")
-    print(f"rejected_lookahead_count={gp_report.rejected_lookahead_count}")
-    print(f"final_elite_pool_size={len(final_elite_ids)}")
-    for formula in report["final_elite_formulas"]:
-        print(f"  elite: {formula}")
+    print(f"total_distinct_expressions_evaluated={len(all_individuals)}")
 
-    print("\n=== Trial accounting (plan section 6.2: charge the whole search) ===")
+    print("\n=== Trial accounting (plan section 6.2 / review item 3.3: charge every fold) ===")
     print(
         f"total_individuals_evaluated={len(all_individuals)}  "
         f"degenerate_expression_count={len(degenerate_expression_ids)}  "
@@ -428,7 +482,8 @@ def main() -> None:
     )
     print(
         f"elite_pool_effective_n={elite_trials.effective_n} "
-        f"(breadth_ratio={elite_trials.breadth_ratio:.4f} over {len(final_elite_ids)} elites)"
+        f"(breadth_ratio={elite_trials.breadth_ratio:.4f} over {len(elite_union_ids)} "
+        "union-of-fold-elites)"
     )
     print(f"dsr_trial_count_used={dsr_trial_count}")
 

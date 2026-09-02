@@ -297,6 +297,163 @@ def test_run_nested_walk_forward_raises_when_every_candidate_is_degenerate() -> 
 
 
 # ---------------------------------------------------------------------------
+# param_space_for_fold: per-fold candidate pools (review item 3.3).
+#
+# The backward-compatible extension this module's docstring describes:
+# exactly one of param_space / param_space_for_fold must be given, and when
+# the pool itself is a function of the fold (e.g. a from-scratch GP
+# evolution per fold -- see expression_tree_search.run_nested_expression_gp_search
+# and its own tests), the callable shape is what lets the caller express
+# that without forking this driver.
+# ---------------------------------------------------------------------------
+
+
+def test_run_nested_walk_forward_rejects_both_param_space_and_callback() -> None:
+    benchmark = _benchmark_series()
+    qqq, tqqq, bil = _benchmark_family(benchmark.index)
+    with pytest.raises(ValueError, match="exactly one"):
+        run_nested_walk_forward(
+            PARAM_SPACE,
+            mechanism_family="TEST",
+            signal_fn=lambda params: benchmark,
+            benchmark_returns=benchmark,
+            qqq_returns=qqq,
+            tqqq_returns=tqqq,
+            bil_returns=bil,
+            campaign_id="both",
+            param_space_for_fold=lambda fold: PARAM_SPACE,
+        )
+
+
+def test_run_nested_walk_forward_rejects_neither_param_space_nor_callback() -> None:
+    benchmark = _benchmark_series()
+    qqq, tqqq, bil = _benchmark_family(benchmark.index)
+    with pytest.raises(ValueError, match="exactly one"):
+        run_nested_walk_forward(
+            mechanism_family="TEST",
+            signal_fn=lambda params: benchmark,
+            benchmark_returns=benchmark,
+            qqq_returns=qqq,
+            tqqq_returns=tqqq,
+            bil_returns=bil,
+            campaign_id="neither",
+        )
+
+
+def test_run_nested_walk_forward_rejects_an_empty_per_fold_pool() -> None:
+    benchmark = _benchmark_series()
+    qqq, tqqq, bil = _benchmark_family(benchmark.index)
+    with pytest.raises(ValueError, match="empty pool"):
+        run_nested_walk_forward(
+            mechanism_family="TEST",
+            signal_fn=lambda params: benchmark,
+            benchmark_returns=benchmark,
+            qqq_returns=qqq,
+            tqqq_returns=tqqq,
+            bil_returns=bil,
+            campaign_id="empty-per-fold",
+            fold_count=FOLD_COUNT,
+            embargo_bars=EMBARGO_BARS,
+            param_space_for_fold=lambda fold: [],
+        )
+
+
+def test_run_nested_walk_forward_allows_the_same_per_fold_pool_every_fold() -> None:
+    """The per-fold callback is allowed to return an identical pool every
+    fold (candidate ids are namespaced by fold number internally, so this
+    cannot collide) -- the degenerate case of ``param_space_for_fold``,
+    included for completeness alongside the "different pool every fold"
+    case below.
+    """
+    benchmark = _benchmark_series()
+    variants = _variant_series(benchmark.index)
+    qqq, tqqq, bil = _benchmark_family(benchmark.index)
+    result = run_nested_walk_forward(
+        mechanism_family="TEST_SAME_POOL",
+        signal_fn=_make_signal_fn(variants),
+        benchmark_returns=benchmark,
+        qqq_returns=qqq,
+        tqqq_returns=tqqq,
+        bil_returns=bil,
+        campaign_id="same-pool-every-fold",
+        fold_count=FOLD_COUNT,
+        embargo_bars=EMBARGO_BARS,
+        param_space_for_fold=lambda fold: PARAM_SPACE,
+    )
+    assert result.fold_count == FOLD_COUNT
+    for fold_result in result.folds:
+        assert fold_result.candidates_scored == len(PARAM_SPACE)
+
+
+def test_run_nested_walk_forward_with_per_fold_param_space_uses_a_different_pool_each_fold() -> (
+    None
+):
+    """The core capability review item 3.3 asks for: the candidate *pool*,
+    not just which candidate wins, can be a function of the fold -- the
+    shape a per-fold GP elite archive has in practice.
+    """
+    benchmark = _benchmark_series()
+    variants = _variant_series(benchmark.index)
+    folds, _stitched = rolling_origin_folds(
+        benchmark, fold_count=FOLD_COUNT, embargo_bars=EMBARGO_BARS
+    )
+
+    def fold_pool(fold) -> list[dict[str, object]]:
+        base = (fold.fold - 1) % len(variants)
+        other = (base + 1) % len(variants)
+        return [{"variant": base}, {"variant": other}]
+
+    qqq, tqqq, bil = _benchmark_family(benchmark.index)
+    result = run_nested_walk_forward(
+        mechanism_family="TEST_PER_FOLD",
+        signal_fn=_make_signal_fn(variants),
+        benchmark_returns=benchmark,
+        qqq_returns=qqq,
+        tqqq_returns=tqqq,
+        bil_returns=bil,
+        campaign_id="per-fold-pool",
+        fold_count=FOLD_COUNT,
+        embargo_bars=EMBARGO_BARS,
+        param_space_for_fold=fold_pool,
+    )
+
+    assert result.fold_count == FOLD_COUNT
+    for fold_result, fold in zip(result.folds, folds, strict=True):
+        assert fold_result.candidates_scored == 2
+        base = (fold.fold - 1) % len(variants)
+        other = (base + 1) % len(variants)
+        assert fold_result.selected_param_vector["variant"] in {base, other}
+
+
+def test_run_nested_walk_forward_with_per_fold_param_space_is_deterministic() -> None:
+    benchmark = _benchmark_series()
+    variants = _variant_series(benchmark.index)
+    qqq, tqqq, bil = _benchmark_family(benchmark.index)
+
+    def fold_pool(fold) -> list[dict[str, object]]:
+        base = (fold.fold - 1) % len(variants)
+        return [{"variant": base}, {"variant": (base + 1) % len(variants)}]
+
+    def _run_per_fold(campaign_id: str) -> NestedWalkForwardResult:
+        return run_nested_walk_forward(
+            mechanism_family="TEST_PER_FOLD_DET",
+            signal_fn=_make_signal_fn(variants),
+            benchmark_returns=benchmark,
+            qqq_returns=qqq,
+            tqqq_returns=tqqq,
+            bil_returns=bil,
+            campaign_id=campaign_id,
+            fold_count=FOLD_COUNT,
+            embargo_bars=EMBARGO_BARS,
+            param_space_for_fold=fold_pool,
+        )
+
+    first = _run_per_fold("det-per-fold")
+    second = _run_per_fold("det-per-fold")
+    assert first.model_dump() == second.model_dump()
+
+
+# ---------------------------------------------------------------------------
 # The correctness rule: a fold's own test window is unreadable during its
 # own selection.
 # ---------------------------------------------------------------------------

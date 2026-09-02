@@ -55,6 +55,42 @@ once, because ``rolling_origin_folds``'s anchored/expanding design means a
 *earlier* fold's test window once it is history; poisoning every fold
 simultaneously would conflate that intended behaviour with an actual leak.)
 
+Per-fold candidate pools (review item 3.3)
+-------------------------------------------------------------------------
+The design above still has one global object: ``param_space`` itself is a
+single, fixed list handed in once and reused, unchanged, by every fold --
+fine when the candidate *parameterization* means the same thing regardless
+of which fold is selecting (e.g. a grid of lookback windows), but wrong
+whenever the candidate *pool* should itself be a function of the fold. Work
+Item P2b's GP expression search is exactly that case: evolving the elite
+pool once on 2016-2021 and then only re-selecting among those frozen
+expressions per fold is the same defect as the original all-global design,
+one level up -- the expression *structures* never get to adapt to a later
+regime, even though the selection among them does.
+
+``param_space_for_fold`` is the backward-compatible extension for that:  a
+callable ``WalkForwardSlice -> Sequence[Mapping[str, Any]]`` that is invoked
+once per fold, with that fold's own ``WalkForwardSlice`` (train/test bounds
+included), to produce that fold's own candidate pool. Exactly one of
+``param_space``/``param_space_for_fold`` must be given. Everything
+downstream of "the fold's own candidate pool and its training-window
+views" -- Layer 1/2 selection, winner pick, test-window evaluation,
+stitching, parameter/expression stability, the final gate battery -- is
+identical between the two call shapes; only *where the pool comes from* for
+each fold changes. This was an extension of the existing driver, not a
+fork: the pre-existing ``param_space`` code path computes the exact same
+numbers in the exact same order as before this change (verified by
+``test_run_nested_walk_forward_is_deterministic`` and the other pre-existing
+tests in ``test_kernel_nested_walk_forward.py``, unmodified and still
+passing), so every existing caller's output is unaffected.
+
+For the GP case specifically (``scripts/search_expression_trees_p2b.py``),
+the caller is expected to run a *fresh* GP evolution per fold (see
+``expression_tree_search.run_nested_expression_gp_search``), each one
+bounded to that fold's own ``[train_start, train_end]`` -- so
+``param_space_for_fold`` for fold k just looks up fold k's own elite pool
+from a dict computed ahead of time, it does not itself run the evolution.
+
 Reused, not reimplemented, per the same discipline as ``layered_search.py``:
 
 * the purge+embargo anchored fold split is ``rolling_origin.rolling_origin_folds``;
@@ -101,6 +137,7 @@ from open_composer.research.kernel.rolling_origin import (
     DEFAULT_FOLD_COUNT,
     rolling_origin_folds,
 )
+from open_composer.research.kernel.windows import WalkForwardSlice
 from open_composer.research.quality_diversity import QualityDiversityElite
 
 
@@ -245,7 +282,7 @@ def _parameter_stability(selected_vectors: Sequence[dict[str, Any]]) -> Paramete
 
 
 def run_nested_walk_forward(
-    param_space: Sequence[Mapping[str, Any]],
+    param_space: Sequence[Mapping[str, Any]] | None = None,
     *,
     mechanism_family: str,
     signal_fn: SignalFn,
@@ -263,51 +300,70 @@ def run_nested_walk_forward(
     dsr_trial_count: int = DEFAULT_DSR_TRIAL_COUNT,
     dsr_hac_lag: int = DEFAULT_DSR_HAC_LAG,
     min_dsr_stream_rows: int = DEFAULT_MIN_DSR_STREAM_ROWS,
+    param_space_for_fold: Callable[[WalkForwardSlice], Sequence[Mapping[str, Any]]] | None = None,
 ) -> NestedWalkForwardResult:
-    """Run the nested (anchored) walk-forward procedure over ``param_space``.
+    """Run the nested (anchored) walk-forward procedure.
 
-    For every ``rolling_origin_folds`` fold: score every point in
-    ``param_space`` (via ``signal_fn``) using only that fold's training
-    window, run the Layer 1 -> Layer 2 selection loop on that training-only
-    view, pick the winner, then evaluate the winner's own signal on that
-    fold's test window -- a window the selection step never read. The
-    stitched, chronological concatenation of every fold's winner's
-    test-window returns is scored once, as a single :class:`Candidate`
-    ("the procedure"), against the full paper-tier gate battery.
+    For every ``rolling_origin_folds`` fold: score every point in that
+    fold's candidate pool (via ``signal_fn``) using only that fold's
+    training window, run the Layer 1 -> Layer 2 selection loop on that
+    training-only view, pick the winner, then evaluate the winner's own
+    signal on that fold's test window -- a window the selection step never
+    read. The stitched, chronological concatenation of every fold's
+    winner's test-window returns is scored once, as a single
+    :class:`Candidate` ("the procedure"), against the full paper-tier gate
+    battery.
 
     ``benchmark_returns`` supplies both the calendar ``rolling_origin_folds``
     splits into folds (it should be the longest, most complete return series
     available, e.g. the underlying benchmark/market series) and the paired
     series ``behavioral_descriptors`` needs for each candidate's Layer 2 cell.
-    Every candidate in ``param_space`` is folded against these *same* fold
-    boundaries, which is what makes "the fold's winner" comparable across the
-    whole grid even though different parameter vectors (e.g. different
-    lookbacks) can have different warm-up lengths and therefore different
-    native start dates.
+
+    Exactly one of ``param_space`` / ``param_space_for_fold`` must be given
+    (see the module docstring, "Per-fold candidate pools"):
+
+    * ``param_space``: a single, fold-independent pool, applied identically
+      to every fold. Every candidate is folded against the *same* fold
+      boundaries, which is what makes "the fold's winner" comparable across
+      the whole grid even though different parameter vectors (e.g.
+      different lookbacks) can have different warm-up lengths and therefore
+      different native start dates.
+    * ``param_space_for_fold``: a callable invoked once per fold with that
+      fold's own ``WalkForwardSlice``, returning that fold's own candidate
+      pool -- for when the pool itself must be a function of the fold (e.g.
+      a GP evolution re-run from scratch on each fold's training window).
 
     Raises ``ValueError`` if any fold has zero Layer 1 survivors (every
     candidate degenerate on that fold's training window) or if the winner's
     signal has no observations in the fold's test window.
     """
-    if not param_space:
-        raise ValueError("param_space must declare at least one point")
+    if (param_space is None) == (param_space_for_fold is None):
+        raise ValueError("exactly one of param_space or param_space_for_fold must be given")
     if not mechanism_family.strip():
         raise ValueError("mechanism_family must be a non-empty string")
     _require_return_series(benchmark_returns, label="benchmark_returns")
 
-    candidate_ids = [f"{mechanism_family}-{index:03d}" for index in range(len(param_space))]
-    if len(set(candidate_ids)) != len(candidate_ids):
-        raise ValueError("param_space produced duplicate candidate ids")
-    params_by_id = dict(zip(candidate_ids, param_space, strict=True))
-
-    # Computed once: signal_fn is a pure function of the parameter vector, not
-    # of the fold, so the full-history raw series is reused (sliced per fold)
-    # rather than recomputed fold by fold.
-    raw_returns_by_id: dict[str, pd.Series] = {}
-    for candidate_id, params in params_by_id.items():
-        raw = signal_fn(params)
-        _require_return_series(raw, label=f"{candidate_id} signal")
-        raw_returns_by_id[candidate_id] = raw
+    # Fixed-pool path only: computed once outside the fold loop, because
+    # signal_fn is a pure function of the parameter vector, not of the fold,
+    # so the full-history raw series can be reused (sliced per fold) rather
+    # than recomputed fold by fold. The per-fold path cannot precompute this
+    # -- a different fold can have a different pool entirely -- so it is
+    # computed inside the loop instead (see below).
+    static_params_by_id: dict[str, Mapping[str, Any]] | None = None
+    static_raw_returns_by_id: dict[str, pd.Series] | None = None
+    if param_space_for_fold is None:
+        assert param_space is not None  # guaranteed by the mutual-exclusion check above
+        if not param_space:
+            raise ValueError("param_space must declare at least one point")
+        candidate_ids = [f"{mechanism_family}-{index:03d}" for index in range(len(param_space))]
+        if len(set(candidate_ids)) != len(candidate_ids):
+            raise ValueError("param_space produced duplicate candidate ids")
+        static_params_by_id = dict(zip(candidate_ids, param_space, strict=True))
+        static_raw_returns_by_id = {}
+        for candidate_id, params in static_params_by_id.items():
+            raw = signal_fn(params)
+            _require_return_series(raw, label=f"{candidate_id} signal")
+            static_raw_returns_by_id[candidate_id] = raw
 
     folds, _stitched_calendar = rolling_origin_folds(
         benchmark_returns, fold_count=fold_count, embargo_bars=embargo_bars
@@ -319,6 +375,27 @@ def run_nested_walk_forward(
     for fold in folds:
         train_start, train_end = fold.train.train_start, fold.train.train_end
         test_start, test_end = fold.train.test_start, fold.train.test_end
+
+        if static_params_by_id is not None:
+            params_by_id: dict[str, Mapping[str, Any]] = static_params_by_id
+            raw_returns_by_id: dict[str, pd.Series] = static_raw_returns_by_id  # type: ignore[assignment]
+        else:
+            assert param_space_for_fold is not None
+            fold_pool = param_space_for_fold(fold)
+            if not fold_pool:
+                raise ValueError(f"fold {fold.fold}: param_space_for_fold returned an empty pool")
+            fold_candidate_ids = [
+                f"{mechanism_family}-fold{fold.fold:02d}-{index:03d}"
+                for index in range(len(fold_pool))
+            ]
+            if len(set(fold_candidate_ids)) != len(fold_candidate_ids):
+                raise ValueError(f"fold {fold.fold}: param_space_for_fold produced duplicate ids")
+            params_by_id = dict(zip(fold_candidate_ids, fold_pool, strict=True))
+            raw_returns_by_id = {}
+            for candidate_id, params in params_by_id.items():
+                raw = signal_fn(params)
+                _require_return_series(raw, label=f"{candidate_id} signal")
+                raw_returns_by_id[candidate_id] = raw
 
         views: list[DevelopmentView] = []
         for candidate_id, params in params_by_id.items():
@@ -377,7 +454,7 @@ def run_nested_walk_forward(
                 train_end=train_end,
                 test_start=test_start,
                 test_end=test_end,
-                candidates_scored=len(param_space),
+                candidates_scored=len(params_by_id),
                 selected_candidate_id=winner_id,
                 selected_param_vector=dict(winner_params),
                 selected_training_score=float(qualities[winner_id]),

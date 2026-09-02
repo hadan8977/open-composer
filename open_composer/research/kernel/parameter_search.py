@@ -23,6 +23,14 @@ Determinism: every seeded call here uses a fresh ``numpy.random.default_rng``
 (or ``random.Random``) seeded exactly by the caller-supplied ``seed`` -- no
 module-level RNG state, no wall-clock, no ``Math.random``-style ambient
 randomness. The same seed always produces the same output.
+
+Layer note: this is the **kernel-level** parameter search -- declared-domain
+grids and bounded mutation over plain parameter mappings, no StrategySpec and no
+artifacts. The **spec-level** equivalent is
+:mod:`open_composer.research.parameter_sweep` together with
+:mod:`open_composer.research.optimizers`, which sweeps values declared in a spec
+file and enforces the iteration execution gate. They are not interchangeable and
+neither should be reimplemented in terms of the other.
 """
 
 from __future__ import annotations
