@@ -71,6 +71,7 @@ from typing import Any
 import pandas as pd
 
 from open_composer.adapters.data.sip_parquet import load_sip_bars
+from open_composer.research.kernel.gate_contract import load_preregistered_gates
 from open_composer.research.kernel.layered_search import (
     assert_causal_transform as _assert_causal_transform,
 )
@@ -121,6 +122,9 @@ GRID_SEED = 20260901
 
 MUTANTS_PER_ELITE = 5
 MUTATION_RATE = 0.5
+#: Thresholds must predate the result, so they come from a git-committed
+#: contract rather than from a dict this script could edit afterwards.
+GATE_CONTRACT_PATH = "config/promotion/kernel-paper-tier-gates.json"
 CAMPAIGN_ID = "p2a-daily-momentum-2026-09-01"
 
 
@@ -266,6 +270,7 @@ def main() -> None:
         tqqq_returns=benchmark_returns["TQQQ"],
         bil_returns=benchmark_returns["BIL"],
         campaign_id=f"{CAMPAIGN_ID}-nested",
+        gates=load_preregistered_gates(GATE_CONTRACT_PATH),
         fold_count=FOLD_COUNT,
         annualization_sessions=252,
     )
@@ -405,6 +410,11 @@ def main() -> None:
             "procedure_orthogonal_to_qqq": nested_result.procedure_verdict.orthogonal_to_qqq,
             "procedure_gate_results": nested_result.procedure_verdict.gate_results,
             "procedure_all_gates_pass": nested_result.procedure_verdict.all_gates_pass,
+            # Passing every gate is necessary and not sufficient: eligibility
+            # also requires the bar to have been committed in advance.
+            "procedure_promotion_eligible": nested_result.procedure_verdict.promotion_eligible,
+            "gates_provenance": nested_result.procedure_verdict.gates_provenance,
+            "gate_contract": nested_result.procedure_verdict.gate_contract,
         },
         # --- Reference only (see module docstring): the Generation 0/1
         # global-split pipeline, kept for before/after comparison on

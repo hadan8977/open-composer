@@ -1,7 +1,7 @@
 # Review：2026-09-01 kernel 搜索工作的自查
 
 日期：`2026-09-01`
-范围：提交 `38aeb35`..`6e3a856`（P1a / D2 / D3 / P1b / P2a / P2b / F + 保留策略）
+范围：提交 `38aeb35`..`HEAD`（P1a / D2 / D3 / P1b / P2a / P2b / F + 保留策略）
 触发原因：用户指出"以前不是按固定参数做的"，并要求排查同类、潜在、以及做错的问题。
 
 ---
@@ -76,14 +76,14 @@ fold1-4 的测试年，实测重叠 1039 天。
 
 修复：两个分母都明确命名（`breadth_ratio` / `breadth_ratio_vs_discovery`）。
 
-### 1.6 硬编码门槛绕过预注册（仅部分修复）
+### 1.6 硬编码门槛绕过预注册
 
 `campaign.py` 的阈值是**哈希封存合同的字段**，`mechanism_eval.py` 把一组数字写死在
 module dict 里。任何人看到裁定后都能改它。
 
 已做：裁定携带 `gates_provenance`，`MIN_DSR_STREAM_ROWS` 改为从 campaign 导入（消除双份常量）。
 
-**未做**：kernel 依然在预注册体系之外。这是标记，不是根治。**见 §3.1。**
+随后**已根治**：门槛改为必须来自 git 已提交的合同，见 §3.1。
 
 ---
 
@@ -107,14 +107,36 @@ module dict 里。任何人看到裁定后都能改它。
 
 ## 3. 未修复 / 需要决策的问题
 
-### 3.1 kernel 整体在预注册体系之外（最重要）
+### 3.1 kernel 整体在预注册体系之外（**已修复，2026-09-01**）
 
-campaign 路径的保护是**合同 + 哈希封存 + 五道聚类防线**。
-kernel 路径的保护是**代码里的常量**。本轮 §1.2 和 §1.6 都是这个结构性差距的症状，
-不是孤立 bug。**只要 kernel 还能在看到结果之后改门槛，同类问题还会再出现。**
+原问题：campaign 路径的保护是**合同 + 哈希封存 + 五道聚类防线**，
+kernel 路径的保护只是**代码里的常量**。§1.2 和 §1.6 都是这个结构性差距的症状。
 
-建议：kernel 搜索的任何晋级用裁定，必须由预注册合同提供阈值，
-`gates_provenance != "preregistered"` 时不得进入晋级流程。
+修复方式参照主流做法——回测过拟合文献（Bailey & López de Prado 的 DSR、
+Harvey & Liu 的因子识别协议）的共同要求是**先声明再看结果**；
+工程上对应的是 config-as-code + 哈希。这里落地为：
+
+`open_composer/research/kernel/gate_contract.py` 要求门槛来自一个 JSON 文件，且：
+- 必须**被 git 跟踪**；
+- 必须**没有未提交的改动**；
+- 裁定记录该文件的 **git blob SHA-1 与内容 SHA-256**。
+
+看到结果之后改阈值，要么在加载时因工作区脏被拒，要么留下一条可审查的 commit diff。
+这挡不住蓄意作弊（没有任何机制能），但**让它必须留下痕迹**——预注册在别处买到的也正是这个。
+
+新增 `CandidateVerdict.promotion_eligible`：**通过全部门槛是必要不充分条件**，
+阈值非预注册时恒为 `False`。实测判别性：
+
+```
+同一候选、同样数值、三种来源:
+  默认门槛          all_gates_pass=True  promotion_eligible=False
+  预注册合同        all_gates_pass=True  promotion_eligible=True
+  裸 dict(同样数值)  all_gates_pass=True  promotion_eligible=False
+```
+
+**把同样的数字内联传进去拿不到晋级资格。** 合同：
+`config/promotion/kernel-paper-tier-gates.json`（先于读取它的代码单独提交，
+阈值沿用 Work Item A 的重校准值，未做任何改动）。
 
 ### 3.2 抓取续传有静默数据缺口的隐患
 

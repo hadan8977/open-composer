@@ -52,6 +52,7 @@ from open_composer.research.kernel.effective_trials import (
     EffectiveTrialsReport,
     effective_independent_trials,
 )
+from open_composer.research.kernel.gate_contract import PreregisteredGates
 from open_composer.research.kernel.rolling_origin import (
     DEFAULT_EMBARGO_BARS,
     DEFAULT_FOLD_COUNT,
@@ -165,11 +166,24 @@ class CandidateVerdict(ResearchDataModel):
     orthogonal_to_qqq: bool
     gate_results: dict[str, bool]
     all_gates_pass: bool
-    #: ``"preregistered"`` when the caller supplied thresholds explicitly,
+    #: ``"preregistered"`` when the thresholds came from a git-committed
+    #: :class:`~open_composer.research.kernel.gate_contract.PreregisteredGates`,
+    #: ``"explicit"`` for a bare mapping passed in by a caller, and
     #: ``"kernel_defaults"`` when it inherited :data:`DEFAULT_PROMOTION_GATES`.
-    #: A verdict carrying ``"kernel_defaults"`` is a research signal, not a
-    #: promotion authority -- see that constant's note.
     gates_provenance: str = "kernel_defaults"
+    #: Where the preregistered thresholds came from, when they were.
+    gate_contract: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def promotion_eligible(self) -> bool:
+        """Passing every gate is necessary for promotion, and not sufficient.
+
+        A verdict whose thresholds were not preregistered proves only that the
+        candidate cleared a bar; it cannot show the bar predated the result. That
+        is a research signal, never a promotion authority, so this stays False
+        for it however good the numbers look.
+        """
+        return self.all_gates_pass and self.gates_provenance == "preregistered"
 
 
 @dataclass(frozen=True)
@@ -272,7 +286,7 @@ def evaluate_candidate(
     tqqq_returns: pd.Series,
     bil_returns: pd.Series,
     annualization_sessions: int = 252,
-    gates: Mapping[str, float] | None = None,
+    gates: Mapping[str, float] | PreregisteredGates | None = None,
     dsr_trial_count: int = DEFAULT_DSR_TRIAL_COUNT,
     dsr_hac_lag: int = DEFAULT_DSR_HAC_LAG,
     min_dsr_stream_rows: int = DEFAULT_MIN_DSR_STREAM_ROWS,
@@ -284,8 +298,18 @@ def evaluate_candidate(
     every candidate -- even ones from mechanisms with different warm-up
     lengths -- is judged against the exact same benchmark dates it traded.
     """
-    thresholds = dict(gates) if gates is not None else DEFAULT_PROMOTION_GATES
-    gates_provenance = "preregistered" if gates is not None else "kernel_defaults"
+    if isinstance(gates, PreregisteredGates):
+        thresholds = dict(gates.values)
+        gates_provenance = "preregistered"
+        gate_contract = gates.as_provenance()
+    elif gates is not None:
+        thresholds = dict(gates)
+        gates_provenance = "explicit"
+        gate_contract = {}
+    else:
+        thresholds = DEFAULT_PROMOTION_GATES
+        gates_provenance = "kernel_defaults"
+        gate_contract = {}
     index = pd.DatetimeIndex(candidate.oos_dates)
     stitched = pd.Series(candidate.oos_return_stream, index=index)
     aligned_qqq = qqq_returns.reindex(index)
@@ -347,6 +371,7 @@ def evaluate_candidate(
         gate_results=gate_results,
         all_gates_pass=bool(all(gate_results.values())),
         gates_provenance=gates_provenance,
+        gate_contract=gate_contract,
     )
 
 

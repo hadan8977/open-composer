@@ -80,6 +80,7 @@ from typing import Any
 import pandas as pd
 
 from open_composer.research.kernel.datamodel import ResearchDataModel
+from open_composer.research.kernel.gate_contract import PreregisteredGates
 from open_composer.research.kernel.layered_search import (
     DevelopmentView,
     build_layer2_archive,
@@ -258,7 +259,7 @@ def run_nested_walk_forward(
     embargo_bars: int = DEFAULT_EMBARGO_BARS,
     quality_fn: Callable[[DevelopmentView], float] = development_quality,
     annualization_sessions: int = 252,
-    gates: Mapping[str, float] | None = None,
+    gates: Mapping[str, float] | PreregisteredGates | None = None,
     dsr_trial_count: int = DEFAULT_DSR_TRIAL_COUNT,
     dsr_hac_lag: int = DEFAULT_DSR_HAC_LAG,
     min_dsr_stream_rows: int = DEFAULT_MIN_DSR_STREAM_ROWS,
