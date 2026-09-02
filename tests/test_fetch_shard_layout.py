@@ -78,3 +78,41 @@ def test_the_live_archives_declare_their_layouts() -> None:
         recorded = json.loads(layout_path(root, kind).read_text(encoding="utf-8"))
         assert recorded["batch_size"] > 0
         assert recorded["universe_size"] > 0
+
+
+# ---------------------------------------------------------------------------
+# The archive must keep updating after the backfill finishes
+# ---------------------------------------------------------------------------
+
+
+def test_recent_windows_are_refetched_even_when_their_shard_exists() -> None:
+    """Resume skips existing shards, which freezes the archive on completion day.
+
+    The shard covering the current month was written from a partial month; the
+    shard covering the current year from a partial year. Skipping them forever
+    means every later backtest runs on prices that quietly recede into the past,
+    with nothing reporting it -- the retired IEX cache stopped at 2026-08-04
+    exactly this way.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    from fetch_sip_universe import window_is_stale
+
+    now = datetime(2026, 9, 2, tzinfo=UTC)
+    current_month_end = datetime(2026, 10, 1, tzinfo=UTC)
+    long_settled_end = datetime(2024, 1, 1, tzinfo=UTC)
+
+    assert window_is_stale(current_month_end, refresh_recent_days=45, now=now)
+    assert not window_is_stale(long_settled_end, refresh_recent_days=45, now=now)
+    # The boundary is inclusive, so a window ending exactly at the cutoff refreshes.
+    assert window_is_stale(now - timedelta(days=45), refresh_recent_days=45, now=now)
+    assert not window_is_stale(now - timedelta(days=46), refresh_recent_days=45, now=now)
+
+
+def test_refresh_can_be_disabled_for_a_pure_backfill() -> None:
+    from datetime import UTC, datetime
+
+    from fetch_sip_universe import window_is_stale
+
+    now = datetime(2026, 9, 2, tzinfo=UTC)
+    assert not window_is_stale(now, refresh_recent_days=0, now=now)

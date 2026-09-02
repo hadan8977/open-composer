@@ -30,6 +30,17 @@ BATCH_SIZE = 12
 # real-time SIP subscription; 16 gives a small safety margin.
 SIP_RECENT_EMBARGO_MINUTES = 16
 MAX_RETRIES = 5
+#: Windows ending within this many days of now are always re-fetched, even when
+#: their shard already exists.
+#:
+#: Resume skips any shard file that is present, which is right for a backfill and
+#: wrong forever after: the shard covering the current month was written from a
+#: partial month, and the shard covering the current year was written from a
+#: partial year. Without this, the archive freezes on the day the backfill
+#: finished and every later backtest silently runs on stale prices while getting
+#: staler. That is not hypothetical -- the retired IEX cache stopped at
+#: 2026-08-04 and nothing reported it.
+DEFAULT_REFRESH_RECENT_DAYS = 45
 
 
 def _clients():
@@ -107,6 +118,13 @@ def shard_path(out: Path, kind: str, year: int, shard: int, month: int | None = 
     return out / kind / str(year) / f"{month:02d}" / f"shard-{shard:04d}.parquet"
 
 
+def window_is_stale(window_end: datetime, *, refresh_recent_days: int, now: datetime) -> bool:
+    """True when ``window_end`` is recent enough that its shard may be incomplete."""
+    if refresh_recent_days <= 0:
+        return False
+    return window_end >= now - timedelta(days=refresh_recent_days)
+
+
 def shard_is_done(out: Path, kind: str, year: int, shard: int, months: list[int]) -> bool:
     """A shard counts as done as a whole-year file (legacy layout) or all months."""
     if shard_path(out, kind, year, shard).exists():
@@ -169,6 +187,7 @@ def run(
     out: Path,
     limit: int | None,
     resume: bool,
+    refresh_recent_days: int = DEFAULT_REFRESH_RECENT_DAYS,
 ) -> int:
     trading_client, data_client = _clients()
     symbols = load_universe(trading_client, limit=limit)
@@ -184,12 +203,18 @@ def run(
     started = time.time()
     for year in range(start_year, end_year + 1):
         for shard, batch in enumerate(batches):
-            if resume and shard_is_done(out, kind, year, shard, [m for m in months if m]):
+            year_end = datetime(year + 1, 1, 1, tzinfo=UTC)
+            shard_may_be_stale = window_is_stale(
+                year_end, refresh_recent_days=refresh_recent_days, now=datetime.now(UTC)
+            )
+            if (
+                resume
+                and not shard_may_be_stale
+                and shard_is_done(out, kind, year, shard, [m for m in months if m])
+            ):
                 continue
             for month in months:
                 destination = shard_path(out, kind, year, shard, month)
-                if resume and destination.exists():
-                    continue
                 if month is None:
                     window_start = datetime(year, 1, 1, tzinfo=UTC)
                     window_end = datetime(year + 1, 1, 1, tzinfo=UTC)
@@ -201,6 +226,11 @@ def run(
                         else datetime(year, month + 1, 1, tzinfo=UTC)
                     )
                 if window_start >= _sip_safe_end(window_end):
+                    continue
+                stale = window_is_stale(
+                    window_end, refresh_recent_days=refresh_recent_days, now=datetime.now(UTC)
+                )
+                if resume and destination.exists() and not stale:
                     continue
                 frame = _fetch_batch(data_client, batch, window_start, window_end, kind)
                 destination.parent.mkdir(parents=True, exist_ok=True)
@@ -258,6 +288,15 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     parser.add_argument("--limit", type=int, default=None, help="Only the first N symbols.")
     parser.add_argument("--no-resume", action="store_true")
+    parser.add_argument(
+        "--refresh-recent-days",
+        type=int,
+        default=DEFAULT_REFRESH_RECENT_DAYS,
+        help=(
+            "Always re-fetch windows ending within this many days, so the trailing "
+            "partial month/year is topped up instead of skipped. 0 disables."
+        ),
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -273,6 +312,7 @@ def main() -> int:
         out=args.out,
         limit=args.limit,
         resume=not args.no_resume,
+        refresh_recent_days=args.refresh_recent_days,
     )
 
 
