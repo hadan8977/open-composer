@@ -173,6 +173,19 @@ class CandidateVerdict(ResearchDataModel):
     gates_provenance: str = "kernel_defaults"
     #: Where the preregistered thresholds came from, when they were.
     gate_contract: dict[str, str] = field(default_factory=dict)
+    #: Gates that were not evaluated on their merits because they are
+    #: meaningless for this candidate. Today that is the pair of QQQ-capture
+    #: gates for a candidate uncorrelated with QQQ: a capture ratio against an
+    #: index you do not track is noise, so ``campaign.py`` passes them by
+    #: construction. Passing by construction is not evidence, and a report that
+    #: says "8 of 8" without saying which two were never really tested reads
+    #: stronger than the evidence is. Listing them keeps the count honest.
+    gates_not_applicable: tuple[str, ...] = ()
+
+    @property
+    def evaluated_gate_count(self) -> int:
+        """Gates actually tested on their merits, i.e. excluding the N/A ones."""
+        return len(self.gate_results) - len(self.gates_not_applicable)
 
     @property
     def promotion_eligible(self) -> bool:
@@ -336,6 +349,10 @@ def evaluate_candidate(
     positive_fold_fraction = metrics["positive_fold_count"] / len(candidate.oos_fold_returns)
 
     orthogonal = abs(metrics["qqq_correlation"]) <= QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD
+    # _qqq_capture_gate_passes returns (True, True) for an orthogonal candidate
+    # rather than evaluating the ratios. Record which gates that covers so the
+    # pass count cannot quietly overstate how much was actually tested.
+    gates_not_applicable = ("qqq_capture_ratio", "qqq_downside_capture") if orthogonal else ()
     gate_results = {
         "cagr_excess_qqq": metrics["cagr_excess_qqq"] >= thresholds["cagr_excess_qqq_minimum"],
         "sharpe_excess_bil": sharpe_excess_bil > thresholds["sharpe_excess_bil_minimum"],
@@ -372,6 +389,7 @@ def evaluate_candidate(
         all_gates_pass=bool(all(gate_results.values())),
         gates_provenance=gates_provenance,
         gate_contract=gate_contract,
+        gates_not_applicable=gates_not_applicable,
     )
 
 

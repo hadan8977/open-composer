@@ -114,6 +114,53 @@ def shard_is_done(out: Path, kind: str, year: int, shard: int, months: list[int]
     return all(shard_path(out, kind, year, shard, m).exists() for m in months)
 
 
+def layout_path(out: Path, kind: str) -> Path:
+    return out / kind / "_LAYOUT.json"
+
+
+def assert_resumable_layout(out: Path, kind: str, *, batch_size: int, universe_size: int) -> None:
+    """Refuse to resume into a shard numbering that means something else.
+
+    Shard *N* is ``symbols[N * BATCH_SIZE : (N + 1) * BATCH_SIZE]``, so the shard
+    index only identifies a set of symbols relative to the batch size that wrote
+    it. This bit us for real: an earlier minute run used BATCH_SIZE=40 and got to
+    shard 316 (VSS..VUSE, 94% through the alphabet); the resumed run used
+    BATCH_SIZE=12 and treated shard 317 as EP.PRC..EPM, 28% through. Resume
+    skipped nothing it should have and coverage survived only because the new
+    numbering happened to start *earlier* in the alphabet than the old one ended.
+    Had the batch size gone the other way, every symbol between the two points
+    would have been silently missing, and nothing would have reported it.
+
+    So the layout is recorded next to the shards, and a mismatch is fatal rather
+    than silent. Deliberately not auto-migrated: re-deriving which existing shard
+    holds which symbols is exactly the kind of guess that produces a quiet gap.
+    """
+    path = layout_path(out, kind)
+    recorded = {"batch_size": batch_size, "universe_size": universe_size}
+    if not path.exists():
+        has_shards = (
+            any((out / kind).glob("**/shard-*.parquet")) if (out / kind).is_dir() else False
+        )
+        if has_shards:
+            raise SystemExit(
+                f"{out / kind} already holds shards but no {path.name}; their batch size is "
+                "unknown, so resuming could silently skip symbols. Record the layout by hand "
+                "or re-fetch into a clean directory."
+            )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(recorded, indent=2) + "\n", encoding="utf-8")
+        return
+    existing = json.loads(path.read_text(encoding="utf-8"))
+    drift = {k: (existing.get(k), v) for k, v in recorded.items() if existing.get(k) != v}
+    if drift:
+        detail = ", ".join(f"{k}: recorded {was}, now {now}" for k, (was, now) in drift.items())
+        raise SystemExit(
+            f"shard layout changed since this archive was written ({detail}). Shard N means a "
+            "different set of symbols under the new layout, so resuming would leave a silent "
+            "gap. Finish with the recorded layout, or fetch into a clean directory."
+        )
+
+
 def run(
     *,
     kind: str,
@@ -126,6 +173,8 @@ def run(
     trading_client, data_client = _clients()
     symbols = load_universe(trading_client, limit=limit)
     LOG.info("universe: %d tradable symbols", len(symbols))
+    if resume:
+        assert_resumable_layout(out, kind, batch_size=BATCH_SIZE, universe_size=len(symbols))
     batches = [symbols[i : i + BATCH_SIZE] for i in range(0, len(symbols), BATCH_SIZE)]
     # Daily bars are ~390x smaller per symbol-year, so they stay whole-year;
     # minute bars are sharded per month to bound peak memory.
@@ -181,6 +230,7 @@ def run(
         json.dumps(
             {
                 "kind": kind,
+                "batch_size": BATCH_SIZE,
                 "start_year": start_year,
                 "end_year": end_year,
                 "symbols": len(symbols),

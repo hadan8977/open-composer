@@ -29,6 +29,7 @@ from open_composer.research.campaign import MAX_FAMILY_EFFECTIVE_TRIAL_COUNT
 from open_composer.research.kernel.behavioral_descriptors import behavioral_descriptors
 from open_composer.research.kernel.layered_search import (
     LAYER2_DESCRIPTOR_NAMES,
+    MIN_DEVELOPMENT_ANNUALIZED_VOLATILITY,
     DevelopmentView,
     LookaheadError,
     assert_causal_transform,
@@ -509,3 +510,59 @@ def test_dsr_trial_count_reflects_every_candidate_not_just_the_elites() -> None:
     assert verdict.search_effective_n >= verdict.family_verdict.effective_n
     assert verdict.dsr_trial_count >= verdict.search_effective_n
     assert verdict.dsr_trial_count >= verdict.family_verdict.effective_n
+
+
+# ---------------------------------------------------------------------------
+# Raw Sharpe rewards standing still; cash impersonators must not win Layer 1
+# ---------------------------------------------------------------------------
+
+
+def _view_of(returns) -> DevelopmentView:
+    values = [float(value) for value in returns]
+    return DevelopmentView(
+        candidate_id="c",
+        mechanism_family="f",
+        param_vector={},
+        generation=0,
+        parent_id=None,
+        development_returns=values,
+        development_benchmark_returns=[0.0] * len(values),
+    )
+
+
+def test_a_cash_impersonator_cannot_win_layer_one() -> None:
+    """A constant signal means always holding one sleeve; if that sleeve is cash,
+    raw Sharpe divides a small positive drift by a near-zero denominator and the
+    candidate dominates on nothing at all. The expression-tree search evolved
+    exactly these, so the floor lives in the shared quality function rather than
+    in one caller's admission gate.
+    """
+    rng = np.random.default_rng(1)
+    cash = rng.normal(0.00018, 0.00012, 1500)
+    assert development_quality(_view_of(cash)) == float("-inf")
+
+
+def test_a_genuinely_defensive_candidate_is_not_penalised() -> None:
+    """The distinction that matters: rotating into T-bills during drawdowns is
+    the behaviour this project wants, and must not be confused with being cash.
+    """
+    rng = np.random.default_rng(1)
+    defensive = 0.8 * rng.normal(0.00018, 0.00012, 1500) + 0.2 * rng.normal(0.0004, 0.011, 1500)
+    quality = development_quality(_view_of(defensive))
+    assert math.isfinite(quality)
+    assert quality > 0.0
+
+
+def test_an_ordinary_equity_candidate_is_scored_normally() -> None:
+    rng = np.random.default_rng(1)
+    assert math.isfinite(development_quality(_view_of(rng.normal(0.0004, 0.011, 1500))))
+
+
+def test_the_volatility_floor_sits_between_cash_and_anything_tradeable() -> None:
+    # BIL runs 0.2-0.5% annualized; a portfolio 20% exposed to QQQ clears 4%.
+    assert 0.005 < MIN_DEVELOPMENT_ANNUALIZED_VOLATILITY < 0.02
+
+
+def test_non_finite_and_too_short_development_returns_score_minus_inf() -> None:
+    assert development_quality(_view_of([0.01])) == float("-inf")
+    assert development_quality(_view_of([0.01, float("nan"), 0.02])) == float("-inf")

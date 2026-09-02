@@ -145,15 +145,41 @@ def development_view(candidate: Candidate, benchmark_returns: pd.Series) -> Deve
     )
 
 
+#: Below this annualized volatility a candidate is not a strategy, it is cash.
+#:
+#: Raw Sharpe rewards low variance, so a candidate that barely moves scores
+#: spectacularly: hold T-bills and you get a small positive drift divided by a
+#: near-zero denominator. The expression-tree search hit this for real -- GP
+#: readily evolves formulas that reduce to a constant signal, which means always
+#: holding the same sleeve, and those individuals dominated Layer 1 on Sharpe
+#: alone. Rejecting them at one search's own admission gate fixed that search and
+#: left every other caller exposed, so the floor belongs here, in the shared
+#: quality function.
+#:
+#: 1% annualized is deliberately far below anything tradeable and far above cash:
+#: BIL runs about 0.2-0.5%, while a portfolio only 20% exposed to QQQ still clears
+#: 4%. It excludes cash impersonators without touching genuinely defensive
+#: candidates, which is the distinction that matters -- a strategy that rotates
+#: into T-bills during drawdowns is exactly what this project is looking for.
+#: Sessions per year used to annualize the volatility floor above.
+TRADING_DAYS_PER_YEAR = 252
+MIN_DEVELOPMENT_ANNUALIZED_VOLATILITY = 0.01
+
+
 def development_quality(view: DevelopmentView) -> float:
     """Layer 1's quality score: annualized Sharpe over the development returns only.
 
-    Returns ``-inf`` (never raises) for a degenerate candidate -- too few
-    rows, non-finite values, or zero variance -- so degenerate candidates
-    simply sort to the bottom and get filtered out by
-    :func:`select_layer1_survivors` instead of aborting the whole run.
+    Returns ``-inf`` (never raises) for a candidate that cannot be scored on its
+    merits -- too few rows, non-finite values, zero variance, or volatility below
+    :data:`MIN_DEVELOPMENT_ANNUALIZED_VOLATILITY` -- so it sorts to the bottom and
+    :func:`select_layer1_survivors` drops it, instead of aborting the whole run.
     """
     flattened = np.asarray(view.flattened_returns, dtype=float)
+    if flattened.size < 2 or not np.all(np.isfinite(flattened)):
+        return float("-inf")
+    annualized_volatility = float(np.std(flattened, ddof=1)) * math.sqrt(TRADING_DAYS_PER_YEAR)
+    if annualized_volatility < MIN_DEVELOPMENT_ANNUALIZED_VOLATILITY:
+        return float("-inf")
     try:
         return float(annualized_sharpe(flattened))
     except ValueError:

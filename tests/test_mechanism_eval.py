@@ -295,3 +295,58 @@ def test_vol02_harness_matches_manual_primitive_pipeline() -> None:
     assert harness_verdict.positive_fold_fraction == pytest.approx(
         manual_metrics["positive_fold_count"] / len(fold_returns)
     )
+
+
+# ---------------------------------------------------------------------------
+# Gates that pass by construction must not inflate the pass count
+# ---------------------------------------------------------------------------
+
+
+def _uncorrelated_candidate_verdict(*, correlated: bool):
+    """Evaluate one candidate against a QQQ it does or does not track."""
+    import numpy as np
+
+    from open_composer.research.kernel.mechanism_eval import (
+        Mechanism,
+        evaluate_candidate,
+        expand_mechanism,
+    )
+
+    index = pd.date_range("2016-01-04", periods=2600, freq="B")
+    rng = np.random.default_rng(17)
+    own = pd.Series(rng.normal(0.0006, 0.010, len(index)), index=index)
+    qqq = own * 1.2 if correlated else pd.Series(rng.normal(0.0004, 0.010, len(index)), index=index)
+    candidate = expand_mechanism(
+        Mechanism(family="ORTH", signal_fn=lambda _p: own, param_space=[{}])
+    )[0]
+    return evaluate_candidate(
+        candidate,
+        qqq_returns=qqq,
+        tqqq_returns=pd.Series(rng.normal(0.0008, 0.030, len(index)), index=index),
+        bil_returns=pd.Series(rng.normal(0.00003, 0.0002, len(index)), index=index),
+        min_dsr_stream_rows=10,
+    )
+
+
+def test_capture_gates_are_marked_not_applicable_when_orthogonal_to_qqq() -> None:
+    """A capture ratio against an index you do not track is noise, not evidence.
+
+    campaign.py passes both QQQ-capture gates by construction for an orthogonal
+    candidate, which is the right call -- but a report saying "8 of 8 passed"
+    without saying that two were never tested reads stronger than the evidence.
+    """
+    verdict = _uncorrelated_candidate_verdict(correlated=False)
+    assert verdict.orthogonal_to_qqq
+    assert verdict.gates_not_applicable == ("qqq_capture_ratio", "qqq_downside_capture")
+    assert verdict.gate_results["qqq_capture_ratio"] is True
+    assert verdict.gate_results["qqq_downside_capture"] is True
+    # Eight gate results, six of which were actually tested.
+    assert len(verdict.gate_results) == 8
+    assert verdict.evaluated_gate_count == 6
+
+
+def test_capture_gates_are_evaluated_when_the_candidate_tracks_qqq() -> None:
+    verdict = _uncorrelated_candidate_verdict(correlated=True)
+    assert not verdict.orthogonal_to_qqq
+    assert verdict.gates_not_applicable == ()
+    assert verdict.evaluated_gate_count == 8
