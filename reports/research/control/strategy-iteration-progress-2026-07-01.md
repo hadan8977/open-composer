@@ -546,3 +546,92 @@ remain frozen; no paper order or ML training is authorized.
 
 Final product verdict: capability complete; external certification remains blocked
 on future sessions, cross-source evidence, and explicitly authorized Paper fills.
+
+## goal-first W3: Champion Route Re-evaluated on Clean SIP Data
+
+Context: `docs/finding-iex-cache-price-adjustment-defect-2026-09-01.zh.md` section
+6.1 found the retired IEX cache backing
+`nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate`
+carried 20 phantom single-day jumps over 30% across its 11-symbol universe
+(unadjusted leveraged-ETF splits). The spec's own `data_assumptions.adjusted`
+is `false`. This wave replayed the frozen route -- same
+`selected_route_label`, same `spec.costs`, no search, no retuning -- on the
+full SIP daily archive (`adjustment=all`) through
+`scripts/evaluate_champion_route_sip.py`, using the
+`open_composer.research.kernel.mechanism_eval` P1b harness so the verdict is
+judged by the same git-committed
+`config/promotion/kernel-paper-tier-gates.json` contract a kernel-search
+candidate would be.
+
+Artifacts:
+
+- `reports/research/control/champion-route-sip-revalidation-2026-09.json`
+- `reports/research/control/champion-route-sip-revalidation-2026-09.md`
+
+Result:
+
+- Full history 2016-01-04 .. 2026-08-31 across all 11 universe symbols is
+  available on SIP (2680 common daily sessions); the route's 252-session
+  effective lookback leaves a 2017-01-03 .. 2026-08-28 usable window (2427
+  sessions).
+- **7 of 8 paper-tier gates pass** on the 5-year rolling-origin OOS stream
+  (2022-01-03 .. 2026-08-28, 1168 sessions, 4/5 positive folds): CAGR excess
+  QQQ +34.3pp, Sharpe-excess-BIL 1.086 (> 1.0 required), DSR probability
+  0.5006 (>= 0.50 required -- passes, but by 0.06 percentage points), MaxDD
+  -35.6% (>= -65% required), MAR 1.36, QQQ downside capture 0.985 (<= 1.0
+  required).
+- **`qqq_capture_ratio` fails**: 0.506 vs `>= 1.0` required (QQQ upside
+  capture 0.499 / QQQ downside capture 0.985). The route is barely
+  defensive on QQQ drawdowns (0.985 downside capture is nearly 1:1 with QQQ)
+  while giving up roughly half of QQQ's upside -- a materially worse
+  risk/reward shape than the headline absolute-return numbers suggest.
+  `qqq_correlation=0.309`, just above the 0.30 orthogonality threshold, so
+  this gate is evaluated on its merits rather than exempted.
+- **Because one gate fails, `all_gates_pass=False` and
+  `promotion_eligible=False`.** No parameter was adjusted to try to clear it,
+  per the plan's explicit prohibition.
+- **Post-selection collapse**: the 37 sessions since 2026-07-09 (when this
+  route's current-OOS evidence was last certified, per Step 7.R) show CAGR
+  -58.6% (annualized from a short, noisy window -- treat the sign and
+  magnitude as a warning, not a precise rate), Sharpe -2.34, MaxDD -12.1%,
+  while QQQ returned +4.9% CAGR over the same span. The spec's own recorded
+  `current_oos_annualized_return_pct: 246.7` has not held up going forward.
+- Side-by-side against the retired IEX-era fixed-route baseline
+  (`reports/research/control/pdr-router-ml-gate-eval-20260703.json`,
+  `windows.full_window.baseline`, 2013-01-08 .. 2026-05-20, 3342 sessions):
+
+  | Metric | IEX baseline (2013-2026) | SIP full window (2017-2026) |
+  |---|---:|---:|
+  | Sharpe | 1.014 | 1.033 |
+  | Max drawdown | -43.24% | -42.55% |
+  | Annualized return | 35.72% | 38.47% |
+
+  The base deterministic route's shape survived the IEX-to-SIP data
+  correction with only small numeric shifts -- unlike the ML-gate overlay
+  work in Step 7.R/7.T, where the same data correction produced large
+  divergences. This is evidence the underlying route logic itself, as
+  opposed to any overlay on top of it, is not an artifact of the IEX defect.
+  Crisis-window shapes are likewise close (q4_2018 Sharpe -3.10 vs -3.22
+  IEX-baseline; covid_crash Sharpe -1.33 vs -3.96; calendar_2022 Sharpe
+  -0.78 vs -0.45, the one window with a larger gap).
+
+Decision:
+
+- **Not promotion-eligible on clean data.** The candidate does not clear
+  the preregistered bar as-is; this is a genuine negative result, not an
+  artifact of the now-corrected data defect.
+- **Do not retune or search around this route to force the capture-ratio
+  gate to pass.** Per the plan's hard rule and this project's own repeated
+  post-mortem lesson, a threshold cleared by adjustment after seeing the
+  result is not a preregistered pass.
+- The active spec's `lifecycle: active` state and
+  `scripts/run_daily_paper_cycle.py`'s default strategy were **not
+  changed** by this wave -- that is a product-level decision (does the
+  paper/live pipeline keep pointing at a non-promotion-eligible candidate,
+  switch to observation-only, or point at a different candidate) left to
+  the goal-first conclusion document, not something a data-correction
+  re-evaluation should decide unilaterally.
+- The post-selection collapse is the more urgent finding for anyone using
+  this candidate's live review cards: the numbers backing its "keep
+  running" case are stale by two months and have since gone sharply
+  negative.

@@ -1537,6 +1537,7 @@ def _backtest_hybrid_params(
     start_index: int,
     end_index: int,
     start_equity: float = 100_000.0,
+    capture_returns: bool = False,
 ) -> HybridRouterMetrics:
     return backtest_router_params(
         spec,
@@ -1546,6 +1547,7 @@ def _backtest_hybrid_params(
         start_index=start_index,
         end_index=end_index,
         start_equity=start_equity,
+        capture_returns=capture_returns,
     )
 
 

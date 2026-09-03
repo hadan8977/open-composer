@@ -26,11 +26,15 @@
 状态：done  commit: (pending)
 
 ## W3 冠军路由
-- [ ] SIP 重放  路径：
-- [ ] 裁定脚本 + json  路径：  promotion_eligible=
-- [ ] 与 IEX 并排表  路径：
-- [ ] 晋级证据链（若通过）/ 负结果记录（若未通过）  路径：
-状态：todo  commit:
+- [x] 铺垫：`open_composer/research/router_common.py` `RouterMetrics` 新增可选字段 `daily_returns`（默认 `()`，仅 `capture_returns=True` 时填充，避免 `route_cross_source.py` 现有 `asdict()` 报告膨胀）；`backtest_router_params`/`hybrid_router_core._backtest_hybrid_params` 新增 `capture_returns` 透传参数。零行为变更（15 处既有调用点未传新参数）。全部路由相关测试通过（`test_router_common.py` 等 9 个文件）。
+- [x] SIP 重放：`scripts/evaluate_champion_route_sip.py`（新脚本，模板 `evaluate_vol02_recalibrated.py`）。冠军 spec 的 `selected_route_label` 原样解析（`hybrid_params_from_label`，`effective_lookback=252`），`spec.costs` 原样使用，**不搜索不改参数**。数据：SIP 全 11 标的 2016-01-04~2026-08-31（2680 公共交易日），扣除 252 日预热后可用窗口 2017-01-03~2026-08-28（2427 日）。**踩坑并修复**：路由器管线的 `dataset.dates` 是去掉时区的纯日期字符串，而 `rolling_origin.returns_from_ohlcv` 保留 SIP 原始带时区时间戳，两者 reindex 对不上导致全部 benchmark 行 missing；改为按路由器同款 `.dt.date.astype(str)` 口径构造 benchmark 收益序列。
+- [x] 裁定脚本 + json：`reports/research/control/champion-route-sip-revalidation-2026-09.json`。门槛来自 `config/promotion/kernel-paper-tier-gates.json`（git blob `28e4196a`），`dsr_trial_count=32`（该路由的真实搜索历史 936+25 候选发生在 SIP 迁移前、无可聚类收益流留存，按计划"找不到就保守取 32"处理，已在报告 note 里写明不是"只试了 1 次"的主张）。**结果：8 门过 7，`promotion_eligible=False`**——`qqq_capture_ratio=0.506 < 1.0` 未过（qqq_upside_capture=0.499 / qqq_downside_capture=0.985，即对 QQQ 回撤几乎不防御但放弃了一半上涨）；DSR=0.5006（压线通过，高于门槛仅 0.0006）；Sharpe-excess-BIL=1.086；MaxDD=-35.6%；4/5 折为正。**选择后窗口崩溃**：2026-07-09 至今 37 个交易日，CAGR -58.6%（annualized from a short window, 读符号不读精度）、Sharpe -2.34，同期 QQQ +4.9%——spec 里记录的 `current_oos_annualized_return_pct: 246.7` 未能延续。**未做任何调参去凑过第 8 个门**。
+- [x] 与 IEX 时代记录并排：对照 `pdr-router-ml-gate-eval-20260703.json` 的 `windows.full_window.baseline`（2013-2026，3342 日）——Sharpe 1.014 vs SIP 1.033、MaxDD -43.24% vs -42.55%、年化 35.72% vs 38.47%，**基础确定性路由的形态在 IEX→SIP 数据订正后基本保持**（不像 7.R/7.T 里 ML 门覆盖层在同样订正下发生的大幅背离）；三个危机窗口 Sharpe 对照也接近（q4_2018 -3.22→-3.10，covid -3.96→-1.33，2022 -0.45→-0.78，2022 差距最大）。完整表格见 `champion-route-sip-revalidation-2026-09.md`。
+- [x] 负结果记录（未通过，按计划分支）：追加到 `reports/research/control/strategy-iteration-progress-2026-07-01.md`（新增 "goal-first W3" 章节）。**未触碰** `strategy_specs/active/*.yaml` 的 `lifecycle` 字段，也未改 `run_daily_paper_cycle.py` 的默认策略——这是产品层决策（是否让 paper/live 管线继续指向一个不满足晋级条件的候选），留给结论文档，不由数据订正类工作单方面决定。
+- [x] 全量回归：`uv run pytest -q -n 2` 11 个失败，全部且仅来自 `test_mom_breadth_qd_r1.py`；`oc repo check --strict` = ok。
+状态：done  commit: (pending)
+
+**Q1 答案（供结论文档直接引用）**：冠军路由在干净 SIP 数据上不能直接进模拟盘验证——7/8 门通过但 `promotion_eligible=False`，且选择后 37 个交易日实盘参考数字已大幅转负。基础路由结构本身经受住了数据订正（形态稳定），问题不在数据缺陷，是这个特定路由的风险收益形态（几乎不防御下跌但放弃一半上涨）加上近期真实衰退。
 
 ## W4 日内动量
 - [ ] resample.py + 测试

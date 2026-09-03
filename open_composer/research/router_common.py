@@ -76,6 +76,11 @@ class RouterMetrics:
     market_regime_scaled_days: int = 0
     volatility_scaled_days: int = 0
     market_drawdown_brake_days: int = 0
+    #: Per-day strategy returns (post-cost), only populated when the caller passes
+    #: capture_returns=True. Empty by default so existing asdict() report payloads
+    #: (e.g. route_cross_source._metrics_payload) do not balloon with a full daily
+    #: series nobody asked for; gate/DSR evaluation opts in explicitly.
+    daily_returns: tuple[float, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -528,6 +533,7 @@ def backtest_router_params(
     start_index: int,
     end_index: int,
     start_equity: float = 100_000.0,
+    capture_returns: bool = False,
 ) -> RouterMetrics:
     lookback = effective_lookback(params)
     start_index = max(start_index, lookback)
@@ -632,6 +638,7 @@ def backtest_router_params(
         market_regime_scaled_days=regime_scaled,
         volatility_scaled_days=vol_scaled,
         market_drawdown_brake_days=drawdown_scaled,
+        daily_returns=tuple(returns) if capture_returns else (),
     )
 
 
