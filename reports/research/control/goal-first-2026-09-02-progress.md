@@ -60,10 +60,12 @@
 状态：todo  commit:
 
 ## W7 执行现实 + source cards
-- [ ] 三笔出场单分析  路径：
-- [ ] OPG 不可用时的改动清单
-- [ ] 4 张 source card
-状态：todo  commit:
+- [x] 出场单分析（实为 4 笔，不是计划估计的 3 笔——补上了 2026-06-01 SOXL 买单）：`reports/execution/goal-first-w7-execution-reality-2026-09.md`。全账本 `oc-` 前缀订单：OPG 限价单 4 笔 4 笔未成交，day 市价单 6 笔 6 笔成交，无中间态。逐笔核对开盘价与限价关系后发现**4 笔里有 2 笔的价格关系本该允许成交**（SOXL 买单限价 224.63 vs 实际开盘 217.26；TQQQ 卖单限价 87.05 vs 实际开盘 87.48），不能单纯用"没到价"解释。`accepted_at` 字段全账本（含全部成交单）恒为 null，是采集缺口不是信号，已在文档里明确排除误读。**未下任何测试单**（用户 2026-09-02 决定：等策略要接入时再处理）。
+- [x] OPG 不可用时的改动清单：`paper_authorization.py` 的 `CANARY_ALLOWED_ORDER_STYLES = {"opg_limit","loo_limit"}` 与任何解析出 `opg` TIF 的 `execution_policy.order_style` 都需要非 OPG 默认——`loo_limit` 单独用，或 `day_market` 配 `naked_market_justification`（`StrategySpec.execution_policy` 字段，`strategy_spec.py` 校验器已支持）；账本里唯一有真实成交证据的就是 day 市价单。
+- [x] 4 张 source card：`reports/harness/source_cards/goal_first_w7.jsonl`（Zarattini/Aziz/Barbon、Maróy、What survives honest evaluation、When Alpha Disappears），全部 `source_verified`，各带 `impact_on_spec`。
+状态：done  commit: (pending)
+
+**Q6 答案（供结论文档直接引用）**：实盘执行假设**不能确认也不能排除**——4 笔 OPG 限价单历史 0 成交，其中 2 笔按价格本该成交却没成交，与 6 笔 day 市价单 100% 成交形成对比，但 4 个数据点不足以下定论，账本里也没有能区分"被拒绝"与"进了竞价没成交"的字段。需要一笔真实测试单才能有确定答案，按用户决定推迟到有策略要接入时。产品层面已有现成的非 OPG 退路（`loo_limit`/`day_market`+理由字段），一旦确认 OPG 不可用可以直接切换。
 
 ## W8 基线
 - [ ] make verify  耗时：
