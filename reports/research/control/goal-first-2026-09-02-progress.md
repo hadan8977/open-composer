@@ -43,11 +43,15 @@
 状态：todo  commit:
 
 ## W5 产品主路径
-- [ ] dossier validate ok  iteration:
-- [ ] research auto 完成  run_dir:
-- [ ] evidence / promotion / harness / readiness  blocker 列表：
-- [ ] ML smoke  报告：
-状态：todo  commit:
+- [x] `oc research iteration init goal_first_w5_qqq_momentum`：真实填写全部 6 个文件——外部简报 8 个来源（7 篇论文，本 session 内实际检索/抓取过，均带 `source_verified` 溯源卡 `reports/harness/source_cards/goal_first_w5_qqq_momentum.jsonl`）、假设、6 组合搜索空间（趋势回看 {100,150,200}×波动率门 {无,realized_vol≤中位数}）、决策记录。**首次校验**（`--stage pre-backtest`）暴露 10 个 blocker（campaign 合同缺失 + 4 个 markdown 仍是模板/缺锚点关键词 + hypotheses/decision-record 缺 4 个必需小节各自的关键词）；补全 markdown 内容后**收敛到唯一一个结构性 blocker**：`campaign_contract_required_for_new_iteration`。
+- [x] **核心发现（Q5 主答案）**：2026-08-15 后创建的**任何**新 iteration（不只是"广度 campaign"）都被 `_campaign_requirement_blockers` 强制要求绑定一份完整的 `research-campaign-contract.json`（参考 `reports/research/campaigns/mom_independent_mechanisms_qd_r2/`，388 行：hypothesis tree、branch_quotas、candidate_blueprints、visibility_partitions、exposure_budgets、exploration_policy、qd_archive、statistical_family_policy、candidate_promotion_policy、expensive_resource_rungs），**没有单候选/无搜索场景的轻量通道**。6-file dossier 本身可在约 30-45 分钟内写对（已证明），campaign 合同的量级明显更大——未实际搭建（时间盒决策：已证明"必须要"，再搭一份不增加新信息）。
+- [x] `research auto`/`evidence`/`promotion-report`/`strategy train`：**全部**在 `research_design_requires_iteration_gate` → `require_iteration_execution_gate` 处硬性要求已验证通过的 `iter_id`（`open_composer/research/factor_lab.py:74` 是 `oc strategy evidence` 链路里第一个触发点，`cli.py:_require_declared_iteration_gate` 是 `oc strategy train` 用的同一个函数）——由于本迭代卡在 campaign 合同，这条链路在 `run_factor_lab` 这一步就終止，`ValueError: research execution requires iter_id before execution`。**未改代码绕过**。
+- [x] `oc harness plan`：**不需要** iteration 门（纯声明式，从 spec 字段推导风险域）。对 `sip_smoke_qqq_daily` 成功产出计划：检测到 `daily_open_execution` 风险域，需要 `execution-reality-reviewer`/`source-researcher` 两个技能，需要 `execution_policy`/`execution_reality_report`/`source_cards` 三个产物，两条阻断规则（裸市价单需理由、至少比较两种执行方式）。
+- [x] `oc paper readiness sip_smoke_qqq_daily`：**同样不需要** iteration 门（独立评估路径）。`status=blocked`，完整给出缺口清单：`promotion_report`（依赖上面卡住的链路）、`harness_artifacts`（缺 execution_policy/execution_reality_report/source_cards）、`paper_validation`（0/20 天）、`matched_paper_tca`（需要≥30 条观测）、`capability_report`（这份 draft spec 本就不是 `lifecycle=active`+`paper_auto`，符合预期）。
+- [ ] ML smoke：未实跑（`oc strategy train` 用同一 `_require_declared_iteration_gate`，会在同一处失败，已通过代码确认不需要重复实证）。
+状态：done（诊断目标已达成，未强行搭建 campaign 合同）  commit: (pending)
+
+**Q5 答案（供结论文档直接引用）**：产品主路径能端到端跑通到"声明式检查"（harness plan、paper readiness 都能独立运行并给出结构化缺口清单），但**任何真正的研究计算**（factor_lab 的 rank IC、promotion-report、ML 训练）都卡在同一道闸门——`iteration_id` 必须先通过校验，而校验又强制要求一份完整的 campaign 合同，没有单候选轻量路径。这是本周"必须改的产品清单"里最靠前的一条：要么给单候选场景加一条轻量迭代路径，要么接受每个新想法第一步就要写一份 388 行的 campaign 合同。
 
 ## W6 横截面时间盒
 - [ ] DuckDB 三条查询  耗时/RSS：
