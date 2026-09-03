@@ -24,9 +24,11 @@ docs/plan-goal-first-verification-2026-09-02.zh.md Wave W3). The crisis
 windows are imported from route_cross_source.CRISIS_WINDOWS rather than
 redeclared, since that is where they already live in this repository.
 
-No search, no retuning: this script takes no CLI parameters that could change
-the route's behavior. The route parameters and costs are read verbatim from
-the frozen spec's selected_route_label and costs block.
+No search, no retuning: the only CLI parameter this script accepts is
+--route-label, which selects between labels the spec's own recorded lineage
+already names (e.g. notes.selected_route.base_route_label, the pre-overlay
+route the active label wraps) -- never a new or swept value. Route parameters
+and costs are otherwise read verbatim from the frozen spec's costs block.
 
 Gates come from the git-committed config/promotion/kernel-paper-tier-gates.json
 contract (see open_composer.research.kernel.gate_contract), so a pass here
@@ -37,6 +39,7 @@ seeing this result.
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
@@ -70,9 +73,8 @@ SPEC_PATH = (
     / "active"
     / "nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate.yaml"
 )
-OUTPUT_PATH = (
-    ROOT / "reports" / "research" / "control" / "champion-route-sip-revalidation-2026-09.json"
-)
+OUTPUT_DIR = ROOT / "reports" / "research" / "control"
+OUTPUT_STEM = "champion-route-sip-revalidation-2026-09"
 GATE_CONTRACT_PATH = ROOT / "config" / "promotion" / "kernel-paper-tier-gates.json"
 
 DATA_START = "2016-01-01"
@@ -176,9 +178,32 @@ def _bounded_window_diagnostic(
     }
 
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--route-label",
+        default=None,
+        help=(
+            "Override the route label to evaluate. Must be a label the spec's own "
+            "recorded lineage already names (e.g. notes.selected_route."
+            "base_route_label) -- this is for checking an already-defined prior "
+            "candidate, not for sweeping a new one. Defaults to "
+            "spec.portfolio.selected_route_label."
+        ),
+    )
+    parser.add_argument(
+        "--output-suffix",
+        default="",
+        help="Appended to the output filename stem, so an override run does not "
+        "overwrite the frozen spec's own evaluation.",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = _parse_args()
     spec = load_strategy_spec(SPEC_PATH)
-    label = spec.portfolio.selected_route_label
+    label = args.route_label or spec.portfolio.selected_route_label
     if not label:
         raise ValueError(f"{SPEC_PATH} has no selected_route_label")
     params = hybrid_params_from_label(label)
@@ -303,9 +328,10 @@ def main() -> None:
         "effective_n": family.effective_n,
         "breadth_ratio": family.breadth_ratio,
     }
-    write_json(OUTPUT_PATH, report)
+    output_path = OUTPUT_DIR / f"{OUTPUT_STEM}{args.output_suffix}.json"
+    write_json(output_path, report)
     print(json.dumps(report, indent=2, sort_keys=True, default=str))
-    print(f"\nWritten to {OUTPUT_PATH}")
+    print(f"\nWritten to {output_path}")
 
 
 if __name__ == "__main__":

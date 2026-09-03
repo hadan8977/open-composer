@@ -635,3 +635,26 @@ Decision:
   this candidate's live review cards: the numbers backing its "keep
   running" case are stale by two months and have since gone sharply
   negative.
+
+## goal-first W9 addendum: Base Route (No Overlay) Also Fails
+
+Before concluding no candidate is ready this week, checked whether the champion's
+pre-overlay base route -- `post_drawdown_reentry:semi_light_harddd6_v0.65_breadth1_
+softQQQ_defGLD_rec104_mom60max20_ext35_cool5QLD_confirm5_melt6040x25_detdd8m10`,
+named in the active spec's own `notes.selected_route.base_route_label` -- clears
+the gate the overlay-wrapped version failed. This is checking an already-defined
+prior candidate from the spec's own recorded lineage, not a new search.
+
+Result (`reports/research/control/champion-route-sip-revalidation-2026-09_base_route_no_overlay.json`):
+**also not promotion-eligible, and worse on the failing gate.** `qqq_capture_ratio`
+drops to 0.299 (vs 0.506 for the overlay-wrapped version) -- `qqq_upside_capture`
+0.291 vs 0.973 `qqq_downside_capture`. The `defensive_overlay:transition_TQQQ_
+replacement` wrapper was adding upside participation, not costing it; removing it
+makes the risk/reward shape worse, not better.
+
+This closes off the "maybe a known nearby variant passes" question decisively:
+both the wrapped and unwrapped versions of this mechanism family fail the same
+gate for the same structural reason (downside capture near 1.0, i.e. barely
+defensive, while upside capture is well under 1.0). No further variant of this
+specific route was checked -- doing so would cross from "checking a named prior
+candidate" into "searching," which is out of scope for this wave.
