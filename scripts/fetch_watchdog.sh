@@ -5,17 +5,17 @@
 # The fetcher is resumable (it skips shards already on disk), so a restart is
 # always safe and never re-downloads finished work.
 #
-# usage: fetch_watchdog.sh <kind> <start_year> <end_year> <logfile>
+# usage: fetch_watchdog.sh <kind> <start_year> <end_year> <logfile> [out_dir=data/sip]
 set -uo pipefail
-KIND="$1"; START="$2"; END="$3"; LOG="$4"
+KIND="$1"; START="$2"; END="$3"; LOG="$4"; OUT="${5:-data/sip}"
 cd /root/codex-test/open-composer
 export PATH="$HOME/.local/bin:$PATH"
 export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 
-MARKER="data/sip/${KIND}/_COMPLETE_${START}_${END}.json"
+MARKER="${OUT}/${KIND}/_COMPLETE_${START}_${END}.json"
 STALL_SECONDS=900          # no new parquet in 15 min => treat as stalled
 MEM_FLOOR_MB=250           # pause rather than push the box into swap death
-PATTERN="fetch_sip_universe.py --kind ${KIND} --start-year ${START}"
+PATTERN="python scripts/fetch_sip_universe.py --kind ${KIND} --start-year ${START}"  # anchored on the interpreter so a shell whose command line merely mentions the script is not mistaken for the fetcher
 
 log() { echo "[watchdog $(date '+%H:%M:%S')] $*" >> "$LOG"; }
 
@@ -33,11 +33,11 @@ while true; do
     fi
     log "fetcher not running -> starting ${KIND} ${START}-${END}"
     nohup uv run python scripts/fetch_sip_universe.py \
-      --kind "$KIND" --start-year "$START" --end-year "$END" --out data/sip >> "$LOG" 2>&1 &
+      --kind "$KIND" --start-year "$START" --end-year "$END" --out "$OUT" >> "$LOG" 2>&1 &
     sleep 60; continue
   fi
 
-  newest=$(find "data/sip/${KIND}" -name '*.parquet' -printf '%T@\n' 2>/dev/null | sort -rn | head -1)
+  newest=$(find "${OUT}/${KIND}" -name '*.parquet' -printf '%T@\n' 2>/dev/null | sort -rn | head -1)
   if [ -n "$newest" ]; then
     age=$(( $(date +%s) - ${newest%.*} ))
     if [ "$age" -gt "$STALL_SECONDS" ]; then
