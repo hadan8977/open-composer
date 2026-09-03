@@ -59,10 +59,15 @@
 **Q5 答案（供结论文档直接引用）**：产品主路径能端到端跑通到"声明式检查"（harness plan、paper readiness 都能独立运行并给出结构化缺口清单），但**任何真正的研究计算**（factor_lab 的 rank IC、promotion-report、ML 训练）都卡在同一道闸门——`iteration_id` 必须先通过校验，而校验又强制要求一份完整的 campaign 合同，没有单候选轻量路径。这是本周"必须改的产品清单"里最靠前的一条：要么给单候选场景加一条轻量迭代路径，要么接受每个新想法第一步就要写一份 388 行的 campaign 合同。
 
 ## W6 横截面时间盒
-- [ ] DuckDB 三条查询  耗时/RSS：
-- [ ] 移除名单抓取  数量：
-- [ ] 偏差量级  CAGR 差：  Sharpe 差：
-状态：todo  commit:
+- [x] DuckDB 三条查询：`scripts/duckdb_cross_sectional_feasibility.py`。(a) 全市场单日横截面 0.6s/291MB；(b) 单标的 10 年历史 0.3s/293MB；(c) 12-1 横截面动量月度组合（674,753 行面板，115 个月）21-25s/**1,164-1,180MB**——**时间达标，内存超预算 14-18%**（预算 1GB）。内存主因是 DuckDB 自己的窗口函数（全市场 `LAG() OVER PARTITION BY symbol`）执行内存，不是最终 pandas 结果（float32/category 降型只省了 <1%）。按计划预设的判定规则（>1GB→本机不做横截面），这是**超预算**，不是"差一点点"可以四舍五入忽略的。
+- [x] **过程中发现并修复一个方法论 bug（不是崩溃，是悄悄产出错误结果）**：第一版按精确 `trade_date` 分组当作"月末"，但 `rank_in_month` 是逐标的独立选"该月最后一行"——一个月中退市的标的最后一行早于健康标的的真实月末，导致 115 个真实月份被打散成几百个近似重复日期，`month[i]→month[i+1]` 相邻性假设失效，**backtest 悄悄退化成只有 7 个可用月**（应有 115 个），产出一个看似"完成了"但毫无意义的结果（CAGR 0.16%，Sharpe 0.05）。改按 `to_period("M")` 分组后恢复到 115 个月、CAGR 8.06%、Sharpe 0.473——**这是产物必须核对数字是否合理、不能只看"跑完了没报错"的又一例证**。
+- [x] 移除名单抓取：`fja05680/sp500` GitHub 仓库的 `sp500_ticker_start_end.csv`（1260 行，通过 GitHub API 先列目录再取真实文件名，未猜测 URL）——247 个 2016 年以来从标普 500 除名的 ticker（与计划估计的"约 250 个"几乎吻合）。`scripts/fetch_symbol_list.py`（复用 `fetch_sip_universe._fetch_batch`，未重造抓取逻辑）拉到 457,428 行日线，写入 `data/sip-delisted/`（已加入 `.gitignore`，未写进 `data/sip/`）。
+- [x] **第二个 bug（方法论，导致脚本崩溃）**："从标普 500 除名"≠"不再交易"——247 个里有 **114 个至今仍在 Alpaca 现存交易宇宙里**（如 AAL、DOW、EMC，只是因规模/相关性被移出指数，公司仍在正常交易）。天真地把全部 247 个的抓取历史并入"ACTIVE+移除"对照宇宙，会给这 114 个重叠标的在重叠月份产出重复的 `(symbol, month)` 索引，导致价格查找从标量退化成 Series，脚本崩溃（`TypeError: cannot convert the series to <class 'float'>`）。修复：先查一次 ACTIVE 归档的全量 distinct symbol，把仍在交易的 114 个从"移除名单补充数据"里剔除，只保留**真正消失的 133 个**。
+- [x] 偏差量级：`scripts/duckdb_survivorship_bias_comparison.py`。ACTIVE-only 与 ACTIVE+133 个真退市标的（各自截断到标普成分身份的真实 `end_date`，避免 ticker 回收污染）的 12-1 动量结果几乎无差：**CAGR 差 -0.06pp、Sharpe 差 -0.002**，远低于计划判定阈值（2pp / 0.2）——**`survivorship_bias_material=False`**。经济解释：多头、只挑"过去 12 个月赢家"的动量策略结构性地避开即将退市的输家（那些标的动量通常深度为负，本来就进不了"赢家十分位"），这与文献里"幸存者偏差对动量因子的影响远小于对价值/买入并持有指数"的共识一致——**这是该因子族特有的结论，不能推广到其他因子**。
+- [x] 报告：`reports/research/control/goal-first-w6-cross-sectional-feasibility-2026-09.md`（整合两个 JSON 证据）。
+状态：done  commit: (pending)
+
+**Q4 答案（供结论文档直接引用）**：横截面研究在本机上**耗时完全没问题**，但朴素实现的全市场月度横截面面板**内存超出预算 14-18%**（1.16-1.18GB vs 1GB 预算），不是"轻松可做"，需要工程改造（先做流动性过滤缩小宇宙，或调低 DuckDB memory_limit 接受更慢的落盘执行）才能常规化。**幸存者偏差对动量类选股策略而言量级很小（不构成材料性影响）**，这意味着差距分析里"横截面工作必须先等完整幸存者偏差修复"的排序需要按因子族区分：动量族可以用"ACTIVE+移除名单"的廉价修复先行，但不能推广到其他因子（如价值、低波动）。
 
 ## W7 执行现实 + source cards
 - [x] 出场单分析（实为 4 笔，不是计划估计的 3 笔——补上了 2026-06-01 SOXL 买单）：`reports/research/control/goal-first-w7-execution-reality-2026-09.md`。全账本 `oc-` 前缀订单：OPG 限价单 4 笔 4 笔未成交，day 市价单 6 笔 6 笔成交，无中间态。逐笔核对开盘价与限价关系后发现**4 笔里有 2 笔的价格关系本该允许成交**（SOXL 买单限价 224.63 vs 实际开盘 217.26；TQQQ 卖单限价 87.05 vs 实际开盘 87.48），不能单纯用"没到价"解释。`accepted_at` 字段全账本（含全部成交单）恒为 null，是采集缺口不是信号，已在文档里明确排除误读。**未下任何测试单**（用户 2026-09-02 决定：等策略要接入时再处理）。
