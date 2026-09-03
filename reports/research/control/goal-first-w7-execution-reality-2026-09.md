@@ -63,8 +63,11 @@ it, not just a fallback.
 
 ## Disposition
 
-Recorded as an open question for the goal-first conclusion, not resolved here.
-Recommend: when a candidate is ready to connect (per the user's own gating
-decision), the very first canary order should deliberately be a small OPG limit
-test, specifically to resolve this before it blocks a real exit the way it did
-for the champion's stranded TQQQ position.
+**Resolved 2026-09-03 by the user: OPG orders are usable on the account that
+will be connected going forward.** The 0-for-4 pattern above is not explained
+by an account-level OPG restriction, per the user. The stranded position and
+the four non-fills documented here belong to the paper account being retired
+alongside the champion route (see the goal-first conclusion, section on the
+2026-09-03 decisions) rather than to the new account a future candidate will
+connect through, so this analysis is retained as a historical record, not as
+a live blocker for the next candidate.

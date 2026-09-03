@@ -71,6 +71,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/capability-gap-analysis-2026-09-02.zh.md",
         "docs/plan-goal-first-verification-2026-09-02.zh.md",
         "docs/conclusion-goal-first-2026-09-03.zh.md",
+        "docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md",
     ]:
         source = repo_root / new_doc
         destination = target / new_doc
