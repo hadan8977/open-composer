@@ -37,10 +37,15 @@
 **Q1 答案（供结论文档直接引用）**：冠军路由在干净 SIP 数据上不能直接进模拟盘验证——7/8 门通过但 `promotion_eligible=False`，且选择后 37 个交易日实盘参考数字已大幅转负。基础路由结构本身经受住了数据订正（形态稳定），问题不在数据缺陷，是这个特定路由的风险收益形态（几乎不防御下跌但放弃一半上涨）加上近期真实衰退。
 
 ## W4 日内动量
-- [ ] resample.py + 测试
-- [ ] 机制模板
-- [ ] 嵌套前推裁定  路径：  peak RSS：  耗时：
-状态：todo  commit:
+- [x] `open_composer/research/kernel/resample.py`：RTH-only、成交量加权 VWAP、以 09:30 为锚（用现有 `market_calendar.expected_us_equity_rth_bar_starts`/`validate_us_equity_bar_grid`，未重造覆盖率校验）、半日市正确截断、覆盖率下限（默认 80%，低于则整桶丢弃不填补）、拒绝 daily 目标频率。10 个测试（`tests/test_kernel_resample.py`）覆盖盘前盘后剔除、VWAP 与算术平均对照、半日市、覆盖率丢弃、DST（11 月标准时 vs 8 月夏令时）。全部通过，且用真实 QQQ 分钟数据人工核对过 VWAP 精确匹配。
+- [x] 机制模板：`open_composer/research/kernel/mechanisms/intraday_momentum_etf.py`（Zarattini/Aziz/Barbon 波动率缩放噪声带突破，Maróy 出场规则警示已体现为"每个参数向量都记为同一机制族"）。18 组合（噪声系数{0.5,1,1.5}×回看{10,14,20}×止损{开,关}）。6 个测试覆盖预热期排除、无交易日记为 0（不是省略——省略会压缩年化的天数分母）、因果性（未来数据不泄露到更早的判定）、止损优于持有到收盘。
+- [x] 嵌套前推裁定：`scripts/search_intraday_momentum_etf.py`。**过程中独立发现并修复 3 个问题**（详见 `reports/research/control/goal-first-w4-intraday-momentum-2026-09.md`）：(1) 与 W3 完全同类的时区/日期索引不匹配 bug 独立复现一次——机制自己的按日收益索引与 benchmark 的日线索引表示法不一致；**没有原地再修一次，而是抽成共享函数** `open_composer/research/kernel/benchmark_returns.py::daily_returns_on_naive_dates`，W3 脚本同步重构复用（重跑 W3 脚本验证：产物 JSON 逐字节 diff 为空，行为零变化）；(2) 日线与分钟线两个 SIP 归档刷新不同步（分钟已到 2026-09-01，日线还在 2026-08-31），在 benchmark 覆盖边界之外的信号日期需要裁掉，加了"裁到 benchmark 实际覆盖范围"的通用处理。
+- [x] **实测**：SPY+QQQ 各 3.5 年 5 分钟线（每标的约 71,160 根 bar，源自全市场分钟归档逐年加载+立即重采样+丢弃原始数据），**峰值 RSS 581MB**（预算 1GB 以内）；受后台 2016-2022 分钟抓取的磁盘 I/O 争用影响，单次全量运行约 15 分钟（计算本身很快，主要耗在磁盘竞争）。
+- [x] **结果：两个标的均为干净负结果**。18 组合聚成有效 N=3（breadth_ratio=0.167，确认大部分组合是同一机制的相关变体）。QQQ 最优组合 Sharpe-excess-BIL=-0.466，DSR=0.083，8 门过 3；SPY 最优 Sharpe-excess-BIL=-0.914，DSR=0.064，8 门过 3。36 个候选（18×2 标的）**0 个 promotion_eligible**。两者的 QQQ/TQQQ 上行捕获都接近 0（0.001-0.012），符合"低频触发、大部分时间打平、偶尔白付一次成本"的形态，不是真正捕获了日内延续。**未做任何调参**。
+- [x] 全量回归：新增 19 个测试全部通过（resample 10 + mechanism 6 + benchmark_returns 3）；`uv run pytest -q -n 2` 仍然 11 个失败全部且仅来自 `test_mom_breadth_qd_r1.py`；`oc repo check --strict` = ok。
+状态：done  commit: (pending)
+
+**Q3 答案（供结论文档直接引用）**：分钟线单 ETF 日内动量在本机**计算上完全可行**（581MB，远低于 1GB 预算，~15 分钟单次全量评估）。**成本后无信号**——SPY 与 QQQ 的最优组合 Sharpe-excess-BIL 均为负，DSR 远低于门槛，8 门只过 3，0 个候选可晋级，且效应量不是"差一点"（Sharpe 明显为负）。这不代表日内动量整体不可行，只说明这个具体简化规则、这两个标的、这 3.5 年窗口没有找到信号；文献本身（What survives honest evaluation）就预期有效 alpha 极度稀疏，这不是放松门槛的理由。
 
 ## W5 产品主路径
 - [x] `oc research iteration init goal_first_w5_qqq_momentum`：真实填写全部 6 个文件——外部简报 8 个来源（7 篇论文，本 session 内实际检索/抓取过，均带 `source_verified` 溯源卡 `reports/harness/source_cards/goal_first_w5_qqq_momentum.jsonl`）、假设、6 组合搜索空间（趋势回看 {100,150,200}×波动率门 {无,realized_vol≤中位数}）、决策记录。**首次校验**（`--stage pre-backtest`）暴露 10 个 blocker（campaign 合同缺失 + 4 个 markdown 仍是模板/缺锚点关键词 + hypotheses/decision-record 缺 4 个必需小节各自的关键词）；补全 markdown 内容后**收敛到唯一一个结构性 blocker**：`campaign_contract_required_for_new_iteration`。

@@ -42,7 +42,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from open_composer.adapters.data.sip_parquet import load_sip_bars
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
 from open_composer.research.campaign_statistics import annualized_sharpe
 from open_composer.research.hybrid_router_core import (
@@ -51,6 +50,7 @@ from open_composer.research.hybrid_router_core import (
     _load_daily_hybrid_dataset,
     hybrid_params_from_label,
 )
+from open_composer.research.kernel.benchmark_returns import daily_returns_on_naive_dates
 from open_composer.research.kernel.gate_contract import load_preregistered_gates
 from open_composer.research.kernel.mechanism_eval import (
     Mechanism,
@@ -91,34 +91,6 @@ STRESS_SLIPPAGE_BPS = 40.0
 #: current numbers visible; used as the "does it still work since it was
 #: selected" diagnostic start, per the plan.
 POST_SELECTION_START = "2026-07-09"
-
-
-def _benchmark_returns_on_router_dates(frame: pd.DataFrame, symbol: str) -> pd.Series:
-    """Daily returns indexed the same way router_common.load_daily_dataset builds
-    ``dataset.dates``: SIP timestamps collapsed to plain calendar-date strings,
-    then parsed as naive midnight Timestamps.
-
-    Router-produced return series (via ``_route_daily_returns`` below) are
-    indexed from ``dataset.dates`` directly, which are plain "YYYY-MM-DD"
-    strings -- the router pipeline drops SIP's tz-aware time-of-day component
-    when it intersects sessions across symbols. A benchmark series built the
-    "obvious" way (``rolling_origin.returns_from_ohlcv``, which keeps the raw
-    tz-aware timestamp) has a different index type for the same calendar day,
-    so ``Series.reindex`` cannot match them and every row comes back missing.
-    """
-    rows = frame.loc[frame["symbol"] == symbol].copy()
-    rows["timestamp"] = pd.to_datetime(rows["timestamp"], utc=True)
-    rows = rows.sort_values("timestamp")
-    rows["date"] = rows["timestamp"].dt.date.astype(str)
-    rows = rows.drop_duplicates("date", keep="last")
-    prices = pd.Series(
-        pd.to_numeric(rows["close"], errors="raise").to_numpy(),
-        index=pd.DatetimeIndex(rows["date"]),
-        name=symbol,
-    )
-    returns = prices.pct_change(fill_method=None).dropna()
-    returns.name = symbol
-    return returns
 
 
 def _route_daily_returns(
@@ -224,9 +196,8 @@ def main() -> None:
         refresh_data=False,
     )
 
-    benchmark_frame = load_sip_bars(("QQQ", "TQQQ", "BIL"), frequency="daily", start=DATA_START)
     benchmark_returns: dict[str, pd.Series] = {
-        symbol: _benchmark_returns_on_router_dates(benchmark_frame, symbol)
+        symbol: daily_returns_on_naive_dates(symbol, start=DATA_START)
         for symbol in ("QQQ", "TQQQ", "BIL")
     }
 
