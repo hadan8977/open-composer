@@ -23,7 +23,7 @@
 | 5 | 双时间 / PIT | ❌ | 每条记录应带 `event_time` + `knowledge_time`。宏观与财报会被大幅修订（FRED vs **ALFRED** 是典型对照）。FRED API 的 `realtime_start/realtime_end/vintage_dates` 参数即 ALFRED 口径，同一 key，无需新供应商 |
 | 6 | ticker 被回收 | ❌ | 需永久证券标识（PERMNO / FIGI）。退市公司的 ticker 会被重新分配给别的公司。Alpaca bars 端点的 `asof` 参数可按日期解析同一实体的改名（仓库未用）；Databento `instrument_id` 是主流做法 |
 | 7 | 指数 / 宇宙成分历史 | ❌ | "2019-06 当时的标普成分股"，任何横截面策略的前提 |
-| 8 | 数据源与复权口径未钉死 | ✅ | `frame.attrs` 固定记录 feed 与 adjustment；provider feed 已在 `auto_research` 永久关闭 |
+| 8 | 数据源与复权口径未钉死 | ✅ | `frame.attrs` 固定记录 feed 与 adjustment；provider feed 已在 `auto_research` 永久关闭。**2026-09-03 补充**：spec 级接入 SIP 走 `data.source: alpaca` + `data.path: data/sip/daily`（`source` 的 Literal 集合不含 `sip_parquet`，不能改 `strategy_spec.py`），`load_ohlcv_for_spec` / `fetch_ohlcv` / `load_daily_dataset` 三处均已支持，`frame.attrs["data_source_mode"]="sip_parquet"` 全程透传到回测报告 |
 
 ## 二、时间与重采样
 

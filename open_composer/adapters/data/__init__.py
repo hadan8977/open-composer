@@ -9,9 +9,17 @@ from open_composer.adapters.data.alpaca import fetch_alpaca_bars
 from open_composer.adapters.data.longbridge import fetch_longbridge_bars, normalize_longbridge_feed
 from open_composer.adapters.data.provenance import write_ohlcv_manifest
 from open_composer.adapters.data.sample import load_sample_ohlcv, normalize_ohlcv
+from open_composer.adapters.data.sip_parquet import load_sip_bars
 from open_composer.config import data_feed
 from open_composer.models.strategy_spec import StrategySpec
 from open_composer.timeframes import require_timeframe_supported
+
+#: The local SIP archive under data/sip/ is not a capabilities/registry.yaml
+#: provider (the SIP migration plan deliberately keeps it out of the registry so
+#: that file stays untouched); a StrategySpec still declares source="alpaca"
+#: (the only Literal the model allows) and opts into this loader purely by
+#: pointing data.path at the archive root.
+SIP_ARCHIVE_PATH_PREFIX = "data/sip/"
 
 
 def load_ohlcv_for_spec(spec: StrategySpec, root: Path, refresh: bool = False) -> pd.DataFrame:
@@ -31,6 +39,15 @@ def load_ohlcv_for_spec(spec: StrategySpec, root: Path, refresh: bool = False) -
             )
 
             return load_immutable_alpaca_snapshot(spec, root)
+        if spec.data.path and spec.data.path.startswith(SIP_ARCHIVE_PATH_PREFIX):
+            return fetch_ohlcv(
+                root=root,
+                symbol=spec.primary_symbol,
+                timeframe=spec.timeframe,
+                start=None,
+                end=None,
+                source="sip_parquet",
+            )
         return fetch_ohlcv(
             root=root,
             symbol=spec.primary_symbol,
@@ -103,6 +120,22 @@ def fetch_ohlcv(
             if not allow_fallback:
                 raise
             return _fallback_ohlcv(root, symbol, timeframe, source, selected_feed)
+    if source == "sip_parquet":
+        require_timeframe_supported("sip_parquet", timeframe)
+        # No fallback path: the archive is the research-strict ground truth, so a
+        # miss (missing symbol, unfetched date range) must surface as an error
+        # rather than silently degrade to sample/fixture evidence.
+        frame = load_sip_bars(
+            symbol,
+            frequency=timeframe,
+            start=start,
+            end=end,
+            root=Path(root) / "data" / "sip",
+        )
+        attrs = dict(frame.attrs)
+        frame = frame.drop(columns=["symbol"]).reset_index(drop=True)
+        frame.attrs.update(attrs)
+        return frame
     raise ValueError(f"unsupported data source: {source}")
 
 

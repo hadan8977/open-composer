@@ -41,6 +41,13 @@ def test_data_acquisition_tier_separates_fresh_pull_from_cache() -> None:
         )
         == "sample_smoke"
     )
+    assert (
+        data_acquisition_tier(
+            data_source="alpaca",
+            source_mode="sip_parquet",
+        )
+        == "research_strict"
+    )
 
 
 def test_frame_data_profile_includes_acquisition_tier() -> None:

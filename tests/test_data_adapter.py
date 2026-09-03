@@ -402,3 +402,108 @@ def test_load_ohlcv_for_alpaca_spec_uses_local_fallback_without_credentials(
 
     assert len(frame) > 0
     assert frame["timestamp"].iloc[0].tzinfo is not None
+
+
+def _write_sip_daily_shard(sip_root: Path, year: int, rows: pd.DataFrame) -> None:
+    path = sip_root / "daily" / str(year) / "shard-0000.parquet"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rows.to_parquet(path, compression="zstd", index=False)
+
+
+def _sip_bars(symbol: str, timestamps: pd.DatetimeIndex, *, base: float = 100.0) -> pd.DataFrame:
+    count = len(timestamps)
+    return pd.DataFrame(
+        {
+            "symbol": [symbol] * count,
+            "timestamp": timestamps,
+            "open": [base + index for index in range(count)],
+            "high": [base + index + 1.0 for index in range(count)],
+            "low": [base + index - 1.0 for index in range(count)],
+            "close": [base + index + 0.5 for index in range(count)],
+            "volume": [1000.0 + index for index in range(count)],
+            "trade_count": [10.0 + index for index in range(count)],
+            "vwap": [base + index + 0.25 for index in range(count)],
+        }
+    )
+
+
+def test_fetch_ohlcv_sip_parquet_returns_single_symbol_frame_with_provenance(
+    sample_workspace: Path,
+) -> None:
+    from open_composer.adapters.data.sip_parquet import clear_sip_index_cache
+
+    clear_sip_index_cache()
+    sip_root = sample_workspace / "data" / "sip"
+    timestamps = pd.bdate_range("2023-01-02", "2023-01-31", tz="UTC")
+    _write_sip_daily_shard(sip_root, 2023, _sip_bars("QQQ", timestamps, base=300.0))
+
+    frame = fetch_ohlcv(
+        root=sample_workspace,
+        symbol="QQQ",
+        timeframe="daily",
+        start=None,
+        end=None,
+        source="sip_parquet",
+    )
+
+    assert "symbol" not in frame.columns
+    assert list(frame.columns) == [
+        "timestamp",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "trade_count",
+        "vwap",
+    ]
+    assert len(frame) == len(timestamps)
+    assert frame.attrs["data_source_mode"] == "sip_parquet"
+    assert frame.attrs["data_source_adjustment"] == "all"
+    assert frame.attrs["acquisition_tier"] == "research_strict"
+    clear_sip_index_cache()
+
+
+def test_fetch_ohlcv_sip_parquet_rejects_non_daily_timeframe(sample_workspace: Path) -> None:
+    try:
+        fetch_ohlcv(
+            root=sample_workspace,
+            symbol="QQQ",
+            timeframe="1m",
+            start=None,
+            end=None,
+            source="sip_parquet",
+        )
+        raise AssertionError("expected ValueError for an unsupported sip_parquet timeframe")
+    except ValueError as exc:
+        assert "sip_parquet" in str(exc)
+
+
+def test_load_ohlcv_for_spec_dispatches_to_sip_parquet_via_data_path(
+    sample_workspace: Path,
+) -> None:
+    from open_composer.adapters.data.sip_parquet import clear_sip_index_cache
+
+    clear_sip_index_cache()
+    sip_root = sample_workspace / "data" / "sip"
+    timestamps = pd.bdate_range("2024-01-01", "2024-01-31", tz="UTC")
+    _write_sip_daily_shard(sip_root, 2024, _sip_bars("QQQ", timestamps, base=400.0))
+
+    spec = StrategySpec(
+        name="sip_path_dispatch",
+        description="SIP data.path dispatch coverage",
+        timeframe="daily",
+        universe=["QQQ"],
+        lifecycle="draft",
+        entry={"all": ["close > ema(close, 5)"]},
+        exit={"any": ["close < ema(close, 5)"]},
+        risk={"max_trades_per_day": 1},
+        execution={"mode": "manual_signal", "broker": "none"},
+        data={"source": "alpaca", "symbol": "QQQ", "path": "data/sip/daily"},
+    )
+
+    frame = load_ohlcv_for_spec(spec, sample_workspace)
+
+    assert len(frame) == len(timestamps)
+    assert frame.attrs["data_source_mode"] == "sip_parquet"
+    clear_sip_index_cache()

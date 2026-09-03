@@ -167,7 +167,7 @@ def data_acquisition_tier(
         return "sample_smoke"
     if "fixture" in mode or "fallback" in mode:
         return "fixture_replay"
-    if strict_live or mode == "live_fetch":
+    if strict_live or mode in {"live_fetch", "sip_parquet"}:
         return "research_strict"
     if mode in {"cache", "cache_resampled", "materialized_history_cache"}:
         return "research_replay_cache"

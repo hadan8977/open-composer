@@ -17,10 +17,13 @@
 状态：done  commit: (pending — see below)
 
 ## W2 SIP 接入
-- [ ] router_common sip_parquet 分支 + 测试
-- [ ] load_ohlcv_for_spec data.path 分支 + 测试
-- [ ] backtest 报告 provenance=sip_parquet  路径：
-状态：todo  commit:
+- [x] `fetch_ohlcv` 新增 `source="sip_parquet"` 分支（`open_composer/adapters/data/__init__.py`），调用 `load_sip_bars(root=Path(root)/"data"/"sip")`（显式线程化 root，非硬编码 `default_sip_root()`，可测试隔离）；无 fallback（研究强证据，miss 必须报错不能静默降级）；`timeframes.py` 新增 `TIMEFRAME_SUPPORT["sip_parquet"]`（`supported=("daily",)`，`paper_ready=()`，故意不进 `capabilities/registry.yaml`）。**发现并修复一个真实分类 bug**：`open_composer/research/metadata.py:data_acquisition_tier` 按 `source_mode` 查表分类，不认识 `"sip_parquet"`，会落到默认分支 `research_cross_check`，与 loader 自己在 `frame.attrs` 里标的 `research_strict` 矛盾；已修复为识别 `{"live_fetch","sip_parquet"}`。
+- [x] `load_ohlcv_for_spec`：`spec.data.source=="alpaca"` 且 `spec.data.path` 以 `data/sip/` 开头时分流到 `sip_parquet`（`strategy_spec.py` 的 `source` Literal 不含 `sip_parquet`，未改该禁改文件）。`load_daily_dataset`（`router_common.py`）**无需改动**——它唯一的数据源专属逻辑是 adjustment 三元式，对非 `alpaca` 恒为 `None`，SIP 的 `adjustment=all` 已烘焙进archive，天然兼容；已用真实 SIP 数据（QQQ+TQQQ, 2026-06~08）验证 `load_daily_dataset(data_source="sip_parquet")` 端到端可用（63 行、`acquisition_tier=research_strict`）。
+- [x] 测试：`tests/test_data_adapter.py` 新增 3 个（`fetch_ohlcv` schema+provenance、非 daily timeframe 拒绝、`load_ohlcv_for_spec` 经 `data.path` 分流），用 `sample_workspace` 隔离 + 合成 parquet shard（不依赖真实 29GB 归档）；`tests/test_data_evidence_tiers.py` 新增 1 个（`sip_parquet` → `research_strict`）。全部通过。
+- [x] backtest 报告 provenance=sip_parquet 路径：`reports/backtests/sip_smoke_qqq_daily-20260903T013222Z.md`（`oc backtest strategy_specs/drafts/sip_smoke_qqq_daily.yaml`，2680 根 bar=QQQ 全部 SIP 日线历史，`Mode: sip_parquet`）——**这是 W2 验收标准的真实端到端证据**：spec → `load_ohlcv_for_spec` → signal engine → backtest engine → report，全链路走通，非单元测试模拟。
+- [x] 全量回归：`uv run pytest -q -n 2` 共 11 个失败，**全部且仅**来自 `tests/test_mom_breadth_qd_r1.py`（与既有基线完全一致，逐个比对文件名确认）；`oc repo check --strict` = `status=ok`；`ruff format .` / `ruff check .` 全绿（508 文件）。
+- [x] `docs/data-layer-pitfalls-and-capabilities.zh.md` 第 8 条补充 SIP spec 级接入方式的说明。
+状态：done  commit: (pending)
 
 ## W3 冠军路由
 - [ ] SIP 重放  路径：

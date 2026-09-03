@@ -64,6 +64,17 @@ TIMEFRAME_SUPPORT: dict[str, TimeframeSupport] = {
         paper_ready=("1m", "5m", "15m", "30m", "1h", "4h", "daily", "weekly"),
         caveats=("adapter parity must be verified for the selected strategy subset",),
     ),
+    "sip_parquet": TimeframeSupport(
+        provider="sip_parquet",
+        supported=("daily",),
+        paper_ready=(),
+        caveats=(
+            "local research archive under data/sip/, not in capabilities/registry.yaml",
+            "minute-bar exposure through fetch_ohlcv is not wired yet; "
+            "call open_composer.adapters.data.sip_parquet.load_sip_bars directly for minute data",
+            "research_strict acquisition tier; never paper-ready by construction",
+        ),
+    ),
 }
 
 
