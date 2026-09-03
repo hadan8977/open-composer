@@ -10,7 +10,7 @@ import subprocess
 import sys
 import tempfile
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +34,13 @@ DEFAULT_SPEC = (
     "strategy_specs/active/"
     "nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate.yaml"
 )
+#: With --refresh-data and no explicit --start, fetch_ohlcv's own default window is
+#: "now minus 30 calendar days" (~22 trading sessions), which undershoots the
+#: router's 30-*trading*-session minimum and the router params' own lookbacks (up
+#: to roughly 100 trading days for this strategy family). 400 calendar days clears
+#: both with margin; daily bars are cheap enough that the wider window costs
+#: nothing meaningful in latency.
+TARGET_WEIGHTS_LOOKBACK_DAYS = 400
 
 
 @dataclass
@@ -358,6 +365,8 @@ def _step_commands(
                 "--data-source",
                 "alpaca",
                 "--refresh-data",
+                "--start",
+                (date.today() - timedelta(days=TARGET_WEIGHTS_LOOKBACK_DAYS)).isoformat(),
             ],
         ),
         ("paper_cycle", paper_command),

@@ -29,7 +29,9 @@ from open_composer.adapters.data.sip_parquet import (
     default_sip_root,
     load_sip_bars,
 )
+from open_composer.config import project_root
 from open_composer.market_calendar import us_equity_session_dates
+from open_composer.notifications import dispatch_notification
 
 #: A daily bar for yesterday's session may legitimately not be published yet, so
 #: one session of slack is normal and two is not.
@@ -94,6 +96,11 @@ def main() -> int:
     parser.add_argument("--max-stale-sessions", type=int, default=DEFAULT_MAX_STALE_SESSIONS)
     parser.add_argument("--frequency", choices=[*SUPPORTED_FREQUENCIES, "all"], default="all")
     parser.add_argument("--today", default=None, help="Override the reference date (ISO-8601).")
+    parser.add_argument(
+        "--notify-on-stale",
+        action="store_true",
+        help="Dispatch a system_alert notification (Telegram + log) when any archive is stale.",
+    )
     args = parser.parse_args()
 
     today = date.fromisoformat(args.today) if args.today else datetime.now(UTC).date()
@@ -122,6 +129,20 @@ def main() -> int:
             f"{item['sessions_behind']} session(s) behind {item['last_completed_session']}; "
             f"run scripts/fetch_sip_universe.py to top it up",
             file=sys.stderr,
+        )
+    if stale and args.notify_on_stale:
+        detail = "; ".join(
+            f"{item['frequency']}: last bar {item['last_bar']} is "
+            f"{item['sessions_behind']} session(s) behind {item['last_completed_session']}"
+            for item in stale
+        )
+        dispatch_notification(
+            kind="system_alert",
+            severity="warn",
+            title=f"SIP archive stale: {', '.join(item['frequency'] for item in stale)}",
+            body=detail,
+            metadata={"source": "check_sip_freshness.py", "stale": payload["stale"]},
+            root=project_root(),
         )
     return 1 if stale else 0
 

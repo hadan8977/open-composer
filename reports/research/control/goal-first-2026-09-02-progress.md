@@ -1,16 +1,20 @@
 # goal-first 2026-09-02 进度账本
-最后更新：2026-09-03T01:15:00Z  当前 Wave：W1  状态：in_progress
+最后更新：2026-09-03T01:30:00Z  当前 Wave：W2  状态：in_progress
 
 ## W0 创建账本
-- [x] 创建本文件  commit: (this commit)
+- [x] 创建本文件  commit: fa28e4a
 
 ## W1 运营闭环
-- [ ] dry-run 通过  产物：
-- [ ] cron 安装  行：
-- [ ] SIP 增量 + freshness cron  行：
-- [ ] Telegram 送达  时间：
-- [ ] 首次自动运行产物  路径：
-状态：todo  commit:
+- [x] dry-run 通过  产物：`uv run python scripts/run_daily_paper_cycle.py --dry-run` 打印 4 条计划命令（readiness/target-weights/paper/monitor），退出 0
+- [x] cron 安装  行：`45 13 * * 1-5 cd /root/codex-test/open-composer && uv run python scripts/run_daily_paper_cycle.py # open-composer daily paper cycle`
+- [x] SIP freshness cron  行：`30 22 * * 1-5 cd /root/codex-test/open-composer && export PATH=... && export UV_CACHE_DIR=... && uv run python scripts/check_sip_freshness.py --notify-on-stale >> /tmp/sip_freshness_cron.log 2>&1 # open-composer sip freshness`。**SIP 日线增量抓取未加入 cron**：`data/sip/daily/_LAYOUT.json` 记录 `batch_size=40`，当前 fetcher `BATCH_SIZE=12`，`assert_resumable_layout` 会正确拒绝续写（分片语义不同，续写=静默缺口）。按计划不绕过校验。**blocked_on_user 决策项**：是否值得用当前 batch_size 对 10 年日线做一次干净重抓（实测约 35 分钟、0.8GB，参照 SIP 迁移计划的实测数字）以换回可增量续写的布局；本轮不做。现在 freshness 是 `stale: []`（daily 2 session 落后、minute 1 session 落后，均在 `max_stale_sessions=2` 阈值内）。
+- [x] `--notify-on-stale` 功能新增：`scripts/check_sip_freshness.py` 增加该 flag，落盘时经 `open_composer.notifications.dispatch_notification` 发 `system_alert`（warn）。新增 2 个测试（`tests/test_sip_freshness_check.py`：`test_notify_on_stale_dispatches_a_system_alert`、`test_without_the_flag_no_notification_is_dispatched`），用 `OPEN_COMPOSER_ROOT` 隔离，子进程验证。全部 7 个测试通过。
+- [ ] Telegram 送达  **blocked_on_user**：`.env` 无 `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID`（`grep -c "^TELEGRAM" .env` = 0）。`oc notify status` 确认 `Telegram enabled: False`。这两个值只能由用户去 Telegram 创建 bot（@BotFather）获取，无法由执行者代办。`log_only` 通道正常工作（已验证，见下）。
+- [x] 首次自动运行产物（真实运行，非 dry-run）：`reports/paper/daily_cycle/nasdaq_tqqq_post_drawdown_reentry_router_delayed30_offensive_paper_auto_candidate-20260903.json`，`status=ok, failed_step=None`，5 步全部 exit 0（readiness/target_weights/paper_cycle/paper_monitor/state_drift）；`reports/paper/status.json` 时间戳 2026-09-03；`reports/notifications/log.jsonl` 新增 `system_alert` "Daily paper cycle ok: 2026-09-03" 行（`log_only: delivered`）。
+
+**发现并修复一个真实的运营 bug（不是本计划要求的范围，但直接阻塞 Q2）**：首次真实运行时 `target_weights` 步骤以 exit 2 失败，报错 `router requires at least 30 common daily sessions`。根因：`open_composer/adapters/data/alpaca.py:_request_start` 在 `start=None` 且无可用缓存时，默认回看窗口是 `now - 30 calendar days`（≈22 个交易日），而路由器要求至少 30 个*交易*日的共同样本——日历天与交易日的单位不匹配，永远差一截。`scripts/run_daily_paper_cycle.py` 调用 `target-weights` 时从不传 `--start`，所以只要走 `--refresh-data`（默认路径）就会触发。修复：在 `_step_commands` 里显式传 `--start (today - 400 calendar days)`（新增常量 `TARGET_WEIGHTS_LOOKBACK_DAYS = 400`，覆盖该策略族已知的最长 lookback 参数，日线数据便宜，代价可忽略）。修复前后各跑一次真实 cycle 验证：修复前 `target_weights exit=2`；修复后 `exit=0`，全流程 `status=ok`。新增 0 个测试（现有 `tests/test_daily_paper_cycle.py` 9 个测试通过，未依赖具体命令行参数，无需改测试断言）。
+
+状态：done  commit: (pending — see below)
 
 ## W2 SIP 接入
 - [ ] router_common sip_parquet 分支 + 测试
