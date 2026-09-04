@@ -155,7 +155,13 @@ def test_timeframe_summary_requires_panel_coverage_not_one_symbol_history() -> N
     assert explicit_half_coverage["go"] is True
 
 
-def test_minute_feasibility_uses_isolated_research_output(sample_workspace: Path) -> None:
+def test_minute_feasibility_uses_isolated_research_output(
+    sample_workspace: Path, monkeypatch
+) -> None:
+    # This test's cache fixture is named for the iex feed explicitly; declare
+    # that rather than relying on data_feed()'s global default (config.py
+    # defaults ALPACA_DATA_FEED to "sip" as of Step 10 section 3.3).
+    monkeypatch.setenv("ALPACA_DATA_FEED", "iex")
     cache_path = sample_workspace / "data" / "cache" / "qqq_15m_iex.csv"
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     _write_cache(cache_path, periods=30)
@@ -198,7 +204,12 @@ def test_minute_feasibility_missing_cache_records_error_without_fallback(
 
 def test_minute_feasibility_long_history_with_interior_gaps_is_no_go(
     sample_workspace: Path,
+    monkeypatch,
 ) -> None:
+    # See test_minute_feasibility_uses_isolated_research_output's comment:
+    # this fixture is an iex-named cache file, independent of the global
+    # data_feed() default.
+    monkeypatch.setenv("ALPACA_DATA_FEED", "iex")
     cache_path = sample_workspace / "data" / "cache" / "qqq_15m_iex.csv"
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     first = expected_us_equity_rth_bar_starts(pd.Timestamp("2024-01-02").date(), 15)
@@ -236,6 +247,10 @@ def test_minute_feasibility_long_history_with_interior_gaps_is_no_go(
 
 
 def test_minute_feasibility_cli_writes_report(sample_workspace: Path, monkeypatch) -> None:
+    # See test_minute_feasibility_uses_isolated_research_output's comment:
+    # this fixture is an iex-named cache file, independent of the global
+    # data_feed() default.
+    monkeypatch.setenv("ALPACA_DATA_FEED", "iex")
     monkeypatch.setattr("open_composer.cli.project_root", lambda: sample_workspace)
     cache_path = sample_workspace / "data" / "cache" / "qqq_15m_iex.csv"
     cache_path.parent.mkdir(parents=True, exist_ok=True)
