@@ -77,6 +77,17 @@ PAPER_SOURCE_TYPES = {"paper", "academic_paper", "working_paper", "ssrn", "arxiv
 Q2_ITERATION_ID = "mom_stock_intraday_codesign_q1"
 VALIDATION_STAGES = {"pre-backtest", "q2-preflight", "final", "q2-final"}
 ARTIFACT_REQUIRED_STAGES = {"final", "q2-final"}
+# Non-blocking audit marker. `_campaign_requirement_blockers` appends this
+# (prefixed) into the same `blocked`-shaped list it already returns, rather
+# than threading a second return value through every caller; the top-level
+# `validate_iteration_dossier` strips entries with this prefix into
+# `warnings` before computing `status`, so the marker never fails the gate.
+LIGHTWEIGHT_EXEMPTION_WARNING_PREFIX = "warning:"
+LIGHTWEIGHT_EXEMPTION_WARNING = "lightweight_single_mechanism_exemption_used"
+# Single-mechanism iterations may skip campaign-contract binding only when
+# every structural condition below holds; see
+# docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md §3.1.
+LIGHTWEIGHT_MAX_CANDIDATE_BUDGET = 24
 FINAL_STATUS_FIELDS = (
     "workflow_pass",
     "research_pass",
@@ -274,7 +285,18 @@ def validate_iteration_dossier(
     )
     if iter_id == Q2_ITERATION_ID and stage in ARTIFACT_REQUIRED_STAGES:
         blocked.extend(_q2_output_artifact_blockers(base))
-    status = "blocked" if blocked else "warning" if warnings else "ok"
+    # Non-blocking audit markers (currently only the lightweight single-
+    # mechanism exemption) travel through `blocked` because the nested
+    # blocker helpers only return one list; promote them to `warnings` here
+    # so they show up for audit without ever downgrading `status`.
+    remaining_blocked: list[str] = []
+    for item in blocked:
+        if item.startswith(LIGHTWEIGHT_EXEMPTION_WARNING_PREFIX):
+            warnings.append(item[len(LIGHTWEIGHT_EXEMPTION_WARNING_PREFIX) :])
+        else:
+            remaining_blocked.append(item)
+    blocked = remaining_blocked
+    status = "blocked" if blocked else "ok"
     return IterationDossierValidation(
         iter_id=iter_id,
         root=paths.root,
@@ -771,8 +793,47 @@ def _campaign_requirement_blockers(
             "campaign_contract_binding_missing_for_registered_child:" + registered_campaign_ids[0]
         )
     if not legacy_unbound and not campaign_bound:
-        blocked.append("campaign_contract_required_for_new_iteration")
+        if _lightweight_single_mechanism_exempt(payload, campaign_bound=campaign_bound):
+            blocked.append(LIGHTWEIGHT_EXEMPTION_WARNING_PREFIX + LIGHTWEIGHT_EXEMPTION_WARNING)
+        else:
+            blocked.append("campaign_contract_required_for_new_iteration")
     return blocked
+
+
+def _lightweight_single_mechanism_exempt(
+    payload: dict[str, Any],
+    *,
+    campaign_bound: bool,
+) -> bool:
+    """Structural, non-self-declared exemption from campaign-contract binding.
+
+    Every condition is a fact about the payload's shape (single path, small
+    fixed budget, no campaign fields, a preregistered candidate manifest
+    reference) plus an explicit boolean attestation. Self-declaration alone
+    (the attestation flag) is never sufficient on its own -- it only matters
+    once the structural conditions already hold, and the manifest/cost-table/
+    data-feasibility prerequisites are still independently enforced by
+    `_search_space_blockers` regardless of this exemption.
+    """
+    if campaign_bound:
+        return False
+    if payload.get("single_mechanism_no_campaign_attestation") is not True:
+        return False
+    paths = payload.get("paths")
+    if not isinstance(paths, list) or len(paths) != 1:
+        return False
+    budget = _int_or_none(payload.get("total_candidate_budget"))
+    if budget is None or budget < 1 or budget > LIGHTWEIGHT_MAX_CANDIDATE_BUDGET:
+        return False
+    if str(payload.get("campaign_contract_path") or "").strip():
+        return False
+    if str(payload.get("campaign_id") or "").strip():
+        return False
+    if str(payload.get("campaign_contract_sha256") or "").strip():
+        return False
+    if not str(payload.get("candidate_manifest_path") or "").strip():
+        return False
+    return True
 
 
 def _registered_campaign_ids_for_child(root: Path, iter_id: str) -> list[str]:

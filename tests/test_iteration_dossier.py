@@ -18,6 +18,7 @@ from open_composer.research.design_contract import (
     research_design_mapping,
 )
 from open_composer.research.iteration_dossier import (
+    LIGHTWEIGHT_EXEMPTION_WARNING,
     _campaign_contract_blockers,
     _campaign_universe_contract_blockers,
     _candidate_manifest_blockers,
@@ -25,6 +26,7 @@ from open_composer.research.iteration_dossier import (
     _final_evaluation_receipt_blockers,
     _generic_validation_contract_blockers,
     _q2_execution_map_blockers,
+    _search_space_blockers,
     _spec_iteration_binding_blockers,
     candidate_authorization_binding_sha256,
     init_iteration_dossier,
@@ -3022,3 +3024,371 @@ def _decision_record_md(decision: str) -> str:
 - Next iteration suggestion: Move to ML only if OOS decisions exceed the sample
   threshold and the non-ML baseline survives cost stress.
 """
+
+
+# ---------------------------------------------------------------------------
+# Step 10 (3.1): lightweight single-mechanism exemption from campaign binding.
+# See docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md §3.1.
+# ---------------------------------------------------------------------------
+
+
+def _lightweight_search_space_payload(**overrides: object) -> dict:
+    payload: dict = {
+        "schema_version": 3,
+        "created_at": "2026-09-04T00:00:00Z",
+        "iter_id": "step10_lightweight_fixture_r1",
+        "total_candidate_budget": 6,
+        "single_mechanism_no_campaign_attestation": True,
+        "candidate_manifest_path": (
+            "reports/research/iterations/step10_lightweight_fixture_r1/candidate-manifest.json"
+        ),
+        "paths": [{"name": "only_path", "candidate_count": 6}],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_lightweight_single_mechanism_exemption_grants_warning_not_block(
+    tmp_path: Path,
+) -> None:
+    """All structural conditions hold: no campaign block, only an audit warning."""
+    payload = _lightweight_search_space_payload()
+    blocked = _campaign_contract_blockers(payload, tmp_path, stage="pre-discovery")
+    assert "campaign_contract_required_for_new_iteration" not in blocked
+    assert f"warning:{LIGHTWEIGHT_EXEMPTION_WARNING}" in blocked
+
+
+def test_lightweight_exemption_denied_with_two_paths(tmp_path: Path) -> None:
+    payload = _lightweight_search_space_payload(
+        paths=[
+            {"name": "a", "candidate_count": 3},
+            {"name": "b", "candidate_count": 3},
+        ],
+    )
+    blocked = _campaign_contract_blockers(payload, tmp_path, stage="pre-discovery")
+    assert "campaign_contract_required_for_new_iteration" in blocked
+    assert not any(item.startswith("warning:") for item in blocked)
+
+
+def test_lightweight_exemption_denied_with_budget_over_24(tmp_path: Path) -> None:
+    payload = _lightweight_search_space_payload(total_candidate_budget=30)
+    blocked = _campaign_contract_blockers(payload, tmp_path, stage="pre-discovery")
+    assert "campaign_contract_required_for_new_iteration" in blocked
+    assert not any(item.startswith("warning:") for item in blocked)
+
+
+def test_lightweight_exemption_denied_when_campaign_fields_are_declared(
+    tmp_path: Path,
+) -> None:
+    """A stray campaign_id (even without campaign_contract_path) forfeits the exemption."""
+    payload = _lightweight_search_space_payload(campaign_id="sneaky_campaign_r1")
+    blocked = _campaign_contract_blockers(payload, tmp_path, stage="pre-discovery")
+    assert "campaign_contract_required_for_new_iteration" in blocked
+    assert "campaign_id_without_contract_path" in blocked
+    assert not any(item.startswith("warning:") for item in blocked)
+
+
+def test_lightweight_exemption_denied_without_candidate_manifest_path(
+    tmp_path: Path,
+) -> None:
+    payload = _lightweight_search_space_payload(candidate_manifest_path="")
+    blocked = _campaign_contract_blockers(payload, tmp_path, stage="pre-discovery")
+    assert "campaign_contract_required_for_new_iteration" in blocked
+    assert not any(item.startswith("warning:") for item in blocked)
+
+
+def test_lightweight_exemption_denied_when_attestation_is_a_string_not_boolean(
+    tmp_path: Path,
+) -> None:
+    """Self-declaration alone must never pass; `"true"` is not the boolean `True`."""
+    payload = _lightweight_search_space_payload(
+        single_mechanism_no_campaign_attestation="true",
+    )
+    blocked = _campaign_contract_blockers(payload, tmp_path, stage="pre-discovery")
+    assert "campaign_contract_required_for_new_iteration" in blocked
+    assert not any(item.startswith("warning:") for item in blocked)
+
+
+def test_lightweight_exemption_does_not_bypass_candidate_manifest_content_checks(
+    sample_workspace: Path,
+) -> None:
+    """The exemption only removes the campaign-contract block. A manifest whose
+    actual row count disagrees with the declared search-space total must still
+    fail closed via the pre-existing, unrelated manifest-content validator.
+    """
+    iter_id = "step10_lightweight_mismatch_r1"
+    iteration_root = sample_workspace / "reports/research/iterations" / iter_id
+    iteration_root.mkdir(parents=True)
+    manifest_path = iteration_root / "candidate-manifest.json"
+    manifest = {
+        "schema_version": 1,
+        "iter_id": iter_id,
+        "generated_before_backtest": True,
+        "candidate_count": 15,
+        "contracts": {
+            group: {"fixture": {}}
+            for group in ["data", "features", "labels", "validation", "costs", "benchmarks"]
+        },
+        "spec_hashes": {},
+        "candidates": [
+            {"candidate_id": f"C{index:02d}", "path": "only_path"} for index in range(15)
+        ],
+    }
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    cost_path = iteration_root / "cost-table.json"
+    cost_path.write_text("{}", encoding="utf-8")
+    feasibility_path = iteration_root / "data-feasibility.json"
+    feasibility_path.write_text("{}", encoding="utf-8")
+    payload = {
+        "schema_version": 3,
+        "created_at": "2026-09-04T00:00:00Z",
+        "iter_id": iter_id,
+        "total_candidate_budget": 10,
+        "single_mechanism_no_campaign_attestation": True,
+        "candidate_manifest_path": manifest_path.relative_to(sample_workspace).as_posix(),
+        "candidate_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+        "cost_table_path": cost_path.relative_to(sample_workspace).as_posix(),
+        "data_feasibility_path": feasibility_path.relative_to(sample_workspace).as_posix(),
+        "paths": [
+            {
+                "name": "only_path",
+                "candidate_count": 10,
+                "hypothesis_refs": ["h1"],
+                "parameters": {"x": [1]},
+                "benchmark_family": ["b"],
+            }
+        ],
+        "trial_ledger_paths": [],
+        "evaluation_report_paths": [],
+    }
+    blocked = _search_space_blockers(payload, sample_workspace, require_artifacts=False)
+    assert "campaign_contract_required_for_new_iteration" not in blocked
+    assert f"warning:{LIGHTWEIGHT_EXEMPTION_WARNING}" in blocked
+    assert "candidate_manifest_total_mismatch:15:10" in blocked
+
+
+def test_lightweight_exemption_reaches_ok_through_the_real_execution_gate(
+    sample_workspace: Path,
+) -> None:
+    """Documented regression path: a single-mechanism iteration with no campaign
+    binding reaches `status == "ok"` through the real
+    `require_iteration_execution_gate` entry point, with the exemption recorded
+    only as an audit warning.
+    """
+    iter_id = "step10_lightweight_fixture_r1"
+    iteration_root = sample_workspace / "reports/research/iterations" / iter_id
+    manifest_path = iteration_root / "candidate-manifest.json"
+    feasibility_path = iteration_root / "data-feasibility.json"
+    cost_path = iteration_root / "cost-table.json"
+
+    spec_path = sample_workspace / "strategy_specs/drafts/step10_lightweight_fixture_r1.yaml"
+    spec_payload = {
+        "name": "step10_lightweight_fixture_r1",
+        "description": "Step 10 lightweight-path regression fixture; research-only.",
+        "timeframe": "15m",
+        "universe": ["QQQ"],
+        "lifecycle": "draft",
+        "entry": {"all": ["close > 0"]},
+        "exit": {"any": ["close <= 0"]},
+        "risk": {"max_trades_per_day": 1, "max_position_weight": 1.0},
+        "execution": {"mode": "manual_signal", "broker": "none"},
+        "data": {"source": "sample", "symbol": "QQQ", "path": "data/sample/qqq_15m.csv"},
+        "data_assumptions": {"source": "sample", "adjusted": True},
+        "notes": {
+            "intent": "Step 10 lightweight-path regression fixture.",
+            "research_design": {
+                "iter_id": iter_id,
+                "candidate_manifest_path": manifest_path.relative_to(sample_workspace).as_posix(),
+                "data_feasibility_path": feasibility_path.relative_to(sample_workspace).as_posix(),
+            },
+        },
+    }
+    spec_path.write_text(yaml.safe_dump(spec_payload, sort_keys=False), encoding="utf-8")
+    spec = load_strategy_spec(spec_path)
+    spec_hash = strategy_content_hash(spec)
+    source_spec_path = spec_path.relative_to(sample_workspace).as_posix()
+
+    paths = init_iteration_dossier(iter_id, sample_workspace)
+    candidate_ids = [f"C{index:02d}" for index in range(1, 7)]
+    candidate_rows = [
+        {
+            "candidate_id": candidate_id,
+            "path": "only_path",
+            "role": "deterministic_mechanism_candidate",
+            "method": "fixture_method",
+            "ablation": "none",
+            "spec_path": source_spec_path,
+            "fallback": "BIL",
+            "data_contract": "fixture",
+            "feature_contract": "fixture",
+            "label_contract": "fixture",
+            "validation_contract": "fixture",
+            "cost_contract": "fixture",
+            "benchmark_contract": "fixture",
+        }
+        for candidate_id in candidate_ids
+    ]
+    manifest = {
+        "schema_version": 1,
+        "iter_id": iter_id,
+        "generated_before_backtest": True,
+        "candidate_count": len(candidate_rows),
+        "contracts": {
+            group: {"fixture": {"description": "lightweight fixture contract"}}
+            for group in ["data", "features", "labels", "validation", "costs", "benchmarks"]
+        },
+        "spec_hashes": {source_spec_path: spec_hash},
+        "candidates": candidate_rows,
+    }
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
+
+    cost_path.write_text(json.dumps({"primary_cost_bps": 20}), encoding="utf-8")
+
+    feasibility = {
+        "schema_version": 1,
+        "report_type": "step10_lightweight_fixture",
+        "iter_id": iter_id,
+        "workflow_pass": True,
+        "research_pass": False,
+        "llm_contribution_pass": False,
+        "paper_ready_pass": False,
+        "historical_evaluation_authorized": True,
+        "path_gates": {
+            "only_path": {
+                "action": "evaluate",
+                "historical_evaluation_go": True,
+                "candidate_ids": candidate_ids,
+            }
+        },
+        "candidate_accounting": {
+            "frozen_candidate_count": len(candidate_ids),
+            "evaluation_authorized_count": len(candidate_ids),
+            "dependency_skipped_count": 0,
+            "unresolved_count": 0,
+            "balanced": True,
+        },
+        "candidate_authorization": {
+            "candidate_count": len(candidate_ids),
+            "rows": [
+                {
+                    "candidate_id": row["candidate_id"],
+                    "path": row["path"],
+                    "action": "evaluate",
+                    "reason_code": "lightweight_fixture_ready",
+                    "candidate_binding_sha256": candidate_authorization_binding_sha256(row),
+                }
+                for row in candidate_rows
+            ],
+        },
+        "required_reference_names": ["cost_table"],
+        "required_references": {
+            "cost_table": {
+                "path": cost_path.relative_to(sample_workspace).as_posix(),
+                "sha256": hashlib.sha256(cost_path.read_bytes()).hexdigest(),
+            }
+        },
+    }
+    feasibility_path.write_text(json.dumps(feasibility, sort_keys=True), encoding="utf-8")
+
+    sources = [
+        {
+            "url": f"https://example.com/step10-source-{index}",
+            "published_or_updated_at": "2026-01-01",
+            "source_type": "paper" if index < 3 else "platform_docs",
+            "credibility": "test_fixture",
+            "core_claim": f"bounded fixture claim {index}",
+            "project_applicability": "Exercises the lightweight single-mechanism path.",
+            "reflection": "Fixture evidence only; not promotion or paper evidence.",
+        }
+        for index in range(8)
+    ]
+    paths.external_brief_json.write_text(
+        json.dumps(
+            {
+                "schema_version": 2,
+                "iter_id": iter_id,
+                "strategy_name": spec.name,
+                "source_spec_path": source_spec_path,
+                "spec_hash": spec_hash,
+                "objective": "Exercise the lightweight single-mechanism exemption end to end.",
+                "current_source_card_paths": ["reports/harness/source_cards/step10_fixture.jsonl"],
+                "source_evidence_bindings": [
+                    {
+                        "source_url": source["url"],
+                        "source_card_path": "reports/harness/source_cards/step10_fixture.jsonl",
+                        "claim_id": f"step10-source-{index}",
+                    }
+                    for index, source in enumerate(sources)
+                ],
+                "sources": sources,
+                "topic_coverage": [
+                    "parameter bounds",
+                    "candidate accounting",
+                    "cost assumptions",
+                    "benchmark coverage",
+                    "selection bias",
+                    "lightweight exemption scope",
+                ],
+                "candidate_matrix_revisions": [
+                    {
+                        "path": "only_path",
+                        "decision": "keep",
+                        "reason": "bounded fixture coverage",
+                    }
+                ],
+                "hypothesis_links": [{"hypothesis_id": "H1", "source_urls": [sources[0]["url"]]}],
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    paths.search_space_json.write_text(
+        json.dumps(
+            {
+                "schema_version": 3,
+                "created_at": "2026-09-04T00:00:00+00:00",
+                "iter_id": iter_id,
+                "strategy_name": spec.name,
+                "source_spec_path": source_spec_path,
+                "spec_hash": spec_hash,
+                "single_mechanism_no_campaign_attestation": True,
+                "total_candidate_budget": len(candidate_rows),
+                "candidate_manifest_path": manifest_path.relative_to(sample_workspace).as_posix(),
+                "candidate_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+                "cost_table_path": cost_path.relative_to(sample_workspace).as_posix(),
+                "data_feasibility_path": feasibility_path.relative_to(sample_workspace).as_posix(),
+                "data_feasibility_sha256": hashlib.sha256(
+                    feasibility_path.read_bytes()
+                ).hexdigest(),
+                "paths": [
+                    {
+                        "name": "only_path",
+                        "candidate_count": len(candidate_rows),
+                        "hypothesis_refs": ["H1"],
+                        "parameters": {"fixture_values": len(candidate_rows)},
+                        "benchmark_family": ["same_symbol_buy_and_hold", "cash_proxy_bil"],
+                    }
+                ],
+                "trial_ledger_paths": [],
+                "evaluation_report_paths": [],
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    paths.external_brief_md.write_text(_filled_md("External brief"), encoding="utf-8")
+    paths.hypotheses_md.write_text(_hypotheses_md(), encoding="utf-8")
+    paths.search_space_md.write_text(_filled_md("Search space"), encoding="utf-8")
+    paths.decision_record_md.write_text(_decision_record_md("pending"), encoding="utf-8")
+
+    result = require_iteration_execution_gate(
+        spec,
+        sample_workspace,
+        enforce_unbound_design=True,
+        require_registered_iteration=True,
+    )
+    assert result is not None
+    assert result.status == "ok"
+    assert result.blocked == []
+    assert LIGHTWEIGHT_EXEMPTION_WARNING in result.warnings
