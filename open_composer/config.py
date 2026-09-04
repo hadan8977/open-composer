@@ -113,7 +113,11 @@ def alpaca_sdk_base_url() -> str:
 
 
 def data_feed() -> str:
-    return os.getenv("ALPACA_DATA_FEED", "iex")
+    # Step 10 section 3.3 (docs/plan-step-10-mechanism-supplementation-
+    # 2026-09-03.zh.md): the project moved off IEX to SIP (see the retired IEX
+    # cache's documented adjustment defects); IEX as a silent fallback default
+    # was a known trap for any code path that runs before .env is loaded.
+    return os.getenv("ALPACA_DATA_FEED", "sip")
 
 
 def dashboard_api_token() -> str | None:

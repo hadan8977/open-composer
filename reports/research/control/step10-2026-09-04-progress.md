@@ -17,8 +17,8 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave | 状态 | commit |
 |---|---|---|
 | Wave 0 / 3.1 轻量迭代路径 | done | `16feec3` |
-| Wave 0 / 3.2 策略族门槛合同 | doing（代码+合同+测试完成，全仓库测试跑中，跑完即 commit） | 待定 |
-| Wave 0 / 3.3 SIP 档案增量更新 + cron | doing（脚本+测试+cron 完成；首次真实运行等后台抓取结束） | 待定 |
+| Wave 0 / 3.2 策略族门槛合同 | done | `5e61b08` |
+| Wave 0 / 3.3 SIP 档案增量更新 + cron | doing（代码+测试+cron 完成；首次真实运行等后台抓取结束，见小节） | 待定 |
 | Wave 1 / F1 beta 暴露族 | todo | - |
 | Wave 1 / F2 跨资产趋势 | todo | - |
 | Wave 2 / PIT 流动性过滤横截面动量 | todo | - |
@@ -120,15 +120,13 @@ $ uv run oc research iteration validate goal_first_w5_qqq_momentum --stage pre-b
 
 `load_preregistered_gates` 要求合同文件已被 git 追踪且无未提交改动，这是它的核心安全属性（防止事后改阈值）。所以 3 个"读取真实新合同文件"的测试（`test_the_unlevered_family_contract_loads_with_its_documented_key_set`、`test_the_unlevered_family_contract_is_not_loadable_under_the_old_key_set`、`test_vol_matched_promotion_eligibility_requires_the_committed_unlevered_contract`）在**提交 3.2 之前**跑必然失败（`not tracked by git`）——这是预期行为，不是要修的 bug，`config/promotion/kernel-paper-tier-gates.json` 当初也是这样进来的。提交后会立刻重跑这三个测试确认转绿。
 
-### 定向测试结果（提交前）
+### 测试结果
 
-- `uv run pytest -q tests/test_mechanism_eval.py tests/test_kernel_gate_contract.py -n 2`：`test_mechanism_eval.py` 12/12 全绿；`test_kernel_gate_contract.py` 除上述 3 个"依赖 git 提交"的新测试外全绿（提交后会转绿，见下）。
+- 提交前：`test_mechanism_eval.py` 12/12 全绿；`test_kernel_gate_contract.py` 除 3 个"依赖 git 提交"的新测试外全绿。
+- commit `5e61b08` 之后重跑 `uv run pytest -q tests/test_kernel_gate_contract.py -n 2`：**12/12 全绿**，那 3 条测试按预期转绿。
 - `uv run ruff format . && uv run ruff check .`：全绿。
 
-### 待做
-
-- 等本节写完后立即：`git add config/promotion/unlevered-family-paper-tier-gates.json open_composer/research/kernel/gate_contract.py open_composer/research/kernel/mechanism_eval.py tests/test_kernel_gate_contract.py tests/test_mechanism_eval.py` + 本账本，commit。
-- commit 后立刻重跑 `tests/test_kernel_gate_contract.py` 确认那 3 条测试转绿，且全仓库失败数仍是 11。
+状态：**done**。commit：`5e61b08`。
 
 ### blocked_on_user
 
@@ -167,10 +165,27 @@ $ uv run oc research iteration validate goal_first_w5_qqq_momentum --stage pre-b
 
 - `.env.example` 里 `ALPACA_DATA_FEED` 默认值示例同步成 `sip`：执行者的读写权限对 `.env.example` 整个文件被拒绝（命中 `.env*` deny 规则），只能请用户本人编辑该文件里 `ALPACA_DATA_FEED=` 那一行改成 `sip`（如果还是 `iex`）。影响很小——真正生效的是 `open_composer/config.py::data_feed()` 的代码默认值（已改）和实际 `.env`（据计划 §0 已经是 `sip`）；`.env.example` 只是给新环境的示例文件，不影响当前运行时行为。
 
+### 测试结果
+
+- `uv run pytest -q tests/test_update_sip_archive.py -n 2`：18/18 全绿（合并去重、原子写入、冻结列表幂等、新 symbol 分片分配、锁、bulk-fetch 守卫）。
+- `uv run ruff format . && uv run ruff check .`：全绿。
+- 全仓库 `uv run pytest -q -n 2`（含本节代码）：见文末"全仓库最终验收"一节。
+
 ### 待做
 
-- 后台抓取结束后：`update_sip_archive.py --kind daily`、`--kind minute` 各跑一次真实调用，`check_sip_freshness.py` 确认 `stale: []`，证据写回本节。
-- 全仓库 pytest 结果确认（与 3.2 共用同一次跑，见 3.2 小节）。
+- 后台抓取结束后：`update_sip_archive.py --kind daily`、`--kind minute` 各跑一次真实调用，`check_sip_freshness.py` 确认 `stale: []`，证据写回本节。这是本节唯一剩下的未完成项；其余（脚本、测试、cron、config.py 小修）均已完成并将随本节一起 commit。
+
+---
+
+## Wave 0 全仓库最终验收
+
+跑于 3.1+3.2+3.3 三次 commit 的代码全部落地之后（不含 3.3 的"真实更新跑一次"这一步，那一步不改代码，只读写 `data/sip/`）：
+
+- `uv run ruff format .`：无改动（全部已格式化）。
+- `uv run ruff check .`：All checks passed。
+- `uv run pytest -q -n 2`：**<PYTEST_RESULT_PLACEHOLDER>**（见 `/tmp/step10_full_pytest_wave0_final.log`）。
+
+对照计划 §3.4："全量测试 11 个基线失败不变"。
 
 ---
 
