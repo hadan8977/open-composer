@@ -16,9 +16,9 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 
 | Wave | 状态 | commit |
 |---|---|---|
-| Wave 0 / 3.1 轻量迭代路径 | doing（代码+测试完成，待最终 commit） | 待定 |
-| Wave 0 / 3.2 策略族门槛合同 | todo | - |
-| Wave 0 / 3.3 SIP 档案增量更新 + cron | todo（等后台抓取完成） | - |
+| Wave 0 / 3.1 轻量迭代路径 | done | `16feec3` |
+| Wave 0 / 3.2 策略族门槛合同 | doing（代码+合同+测试完成，全仓库测试跑中，跑完即 commit） | 待定 |
+| Wave 0 / 3.3 SIP 档案增量更新 + cron | doing（脚本+测试+cron 完成；首次真实运行等后台抓取结束） | 待定 |
 | Wave 1 / F1 beta 暴露族 | todo | - |
 | Wave 1 / F2 跨资产趋势 | todo | - |
 | Wave 2 / PIT 流动性过滤横截面动量 | todo | - |
@@ -105,13 +105,72 @@ $ uv run oc research iteration validate goal_first_w5_qqq_momentum --stage pre-b
 
 ## Wave 0 / 3.2 策略族门槛合同
 
-状态：todo（尚未开始；将在 3.1 commit 之后、且必须早于 Wave 1/2 任何评估运行之前，独立 commit）。
+状态：**doing**，只差全仓库 pytest 结果确认后的 commit。
+
+### 做了什么
+
+1. **新合同 `config/promotion/unlevered-family-paper-tier-gates.json`**：按计划 §3.2 原样落地——8 个门槛键（`cagr_excess_vol_matched_benchmark_minimum=0.05`、`sharpe_excess_bil_minimum=1.0`、`dsr_minimum=0.5`、`max_drawdown_minimum=-0.35`【计划要求从旧合同的 -0.65 收紧，理由写在 rationale：QQQ/SPY 十年最大回撤 -35.0%/-33.8%，非杠杆策略不该比自己的基准族更差】、`mar_minimum=0.6`、`minimum_positive_fold_fraction=0.6`、`benchmark_vm_capture_ratio_minimum=1.0`、`benchmark_vm_downside_capture_maximum=1.0`），`rationale` 字段完整写明为什么旧合同（`cagr_excess_qqq>=5pp` 对着 QQQ 十年 CAGR 20.2% 算，等于要求非杠杆策略年化 25%+）对本轮候选族不公平、新合同怎样通过波动率匹配基准解决这个问题。
+2. **`open_composer/research/kernel/gate_contract.py`**：`REQUIRED_GATE_KEYS` 保持不变；新增 `UNLEVERED_FAMILY_GATE_KEYS`（8 个新键名）；`load_preregistered_gates` 新增 `required_keys: tuple[str, ...] = REQUIRED_GATE_KEYS` 关键字参数（默认值=原常量，**未传参的既有调用方行为完全不变**），内部三处用到 `REQUIRED_GATE_KEYS` 的地方改用这个参数。新增 3 个测试（`tests/test_kernel_gate_contract.py`）：新合同能用 `UNLEVERED_FAMILY_GATE_KEYS` 加载且值与文件一致；新合同用旧键集加载必须报错（`missing thresholds`/`unknown thresholds`）；反过来旧合同用新键集加载也必须报错——两份合同的键集合互斥，防止调用方忘记传 `required_keys` 时静默用错键。
+3. **`open_composer/research/kernel/mechanism_eval.py::evaluate_candidate`**：新增 `benchmark_returns: pd.Series | None = None`、`benchmark_name: str = "QQQ"` 两个关键字参数。
+   - `benchmark_returns=None`（默认）：行为与改动前逐字节一致——`metrics`/`gate_results` 的键名、`gates_not_applicable`（QQQ 正交豁免）全部不变。用新增测试 `test_benchmark_returns_none_keeps_the_existing_qqq_path_byte_for_byte` 显式断言这一点，加上全部既有测试原样通过做双重保险。
+   - `benchmark_returns` 给定时：按公式 `w = candidate.std()/benchmark.std()`（两者都取 candidate 实际跑过的 OOS 拼接窗口）、`benchmark_vm = w*benchmark + (1-w)*BIL` 算出波动率匹配基准，**复用**（不重写）`campaign.recompute_candidate_promotion_metrics` 里已经测试过的 CAGR/capture-ratio 数学——把 `benchmark_vm` series 当成该函数的 `qqq_returns` 参数传第二次（`tqqq_returns` 传实际 TQQQ 只是为了满足行数校验，其输出被丢弃，不影响结果），把返回的 `cagr_excess_qqq`/`qqq_capture_ratio`/`qqq_downside_capture`/`qqq_correlation` 分别重命名进 `cagr_excess_vol_matched_benchmark`/`benchmark_vm_capture_ratio`/`benchmark_vm_downside_capture`/`benchmark_vm_correlation`。`gate_results` 在这条路径下换用新合同的键名求值（`cagr_excess_qqq`→`cagr_excess_vol_matched_benchmark`、`qqq_capture_ratio`→`benchmark_vm_capture_ratio`、`qqq_downside_capture`→`benchmark_vm_downside_capture`，其余 5 个键名两条路径共用），且不做 QQQ 正交豁免（这些候选族本来就该暴露于自己的基准，豁免没有意义）。`metrics` 额外记录 `benchmark_name`、`vol_match_weight`（`CandidateVerdict.metrics` 类型注解相应从 `dict[str, float | int]` 放宽为 `dict[str, float | int | str]`）。
+   - 新增 3 个合成序列测试（`tests/test_mechanism_eval.py`）：`test_vol_matched_benchmark_weight_and_metrics_match_manual_computation`（w<1，用独立算一遍 `recompute_candidate_promotion_metrics(qqq_returns=手算的vol_matched_benchmark)` 核对每个数字，误差 `rel=1e-9`）、`test_vol_matched_benchmark_weight_can_exceed_one_and_still_reuses_the_formula`（w>1 融资场景，同样手算核对）、上面提到的默认路径不变测试。另在 `tests/test_kernel_gate_contract.py` 加了一条端到端测试 `test_vol_matched_promotion_eligibility_requires_the_committed_unlevered_contract`，镜像既有的"内联传参不给 promotion_eligible，只有已提交的合同文件给"测试，验证新合同也遵守同一条纪律。
+
+### 已知的时序依赖（不是 bug）
+
+`load_preregistered_gates` 要求合同文件已被 git 追踪且无未提交改动，这是它的核心安全属性（防止事后改阈值）。所以 3 个"读取真实新合同文件"的测试（`test_the_unlevered_family_contract_loads_with_its_documented_key_set`、`test_the_unlevered_family_contract_is_not_loadable_under_the_old_key_set`、`test_vol_matched_promotion_eligibility_requires_the_committed_unlevered_contract`）在**提交 3.2 之前**跑必然失败（`not tracked by git`）——这是预期行为，不是要修的 bug，`config/promotion/kernel-paper-tier-gates.json` 当初也是这样进来的。提交后会立刻重跑这三个测试确认转绿。
+
+### 定向测试结果（提交前）
+
+- `uv run pytest -q tests/test_mechanism_eval.py tests/test_kernel_gate_contract.py -n 2`：`test_mechanism_eval.py` 12/12 全绿；`test_kernel_gate_contract.py` 除上述 3 个"依赖 git 提交"的新测试外全绿（提交后会转绿，见下）。
+- `uv run ruff format . && uv run ruff check .`：全绿。
+
+### 待做
+
+- 等本节写完后立即：`git add config/promotion/unlevered-family-paper-tier-gates.json open_composer/research/kernel/gate_contract.py open_composer/research/kernel/mechanism_eval.py tests/test_kernel_gate_contract.py tests/test_mechanism_eval.py` + 本账本，commit。
+- commit 后立刻重跑 `tests/test_kernel_gate_contract.py` 确认那 3 条测试转绿，且全仓库失败数仍是 11。
+
+### blocked_on_user
+
+无。
 
 ---
 
 ## Wave 0 / 3.3 SIP 档案每日增量更新 + cron
 
-状态：todo。**已确认后台抓取进程仍在跑**（`pgrep -af fetch_sip_universe` 命中 `--kind minute --start-year 2016 --end-year 2022 --out data/sip-hist`，`fetch_watchdog.sh` 同时在跑），2026-09-04 01:53 UTC 时进度在 2022 年（最后一年）shard 205/1118，累计运行约 31.9 小时。**不得碰这个进程**；`update_sip_archive.py` 首次真实运行必须等它结束（`pgrep -f fetch_sip_universe` 为空）且带锁文件。会在 Wave 1/2 评估跑的间隙轮询进度，不主动等待。
+状态：**doing**。代码、测试、cron 已完成；**首次真实运行等后台抓取结束**（见下）。
+
+### 做了什么
+
+1. **`scripts/update_sip_archive.py`**（新建）：把分片身份从"当前宇宙顺序 × 批大小"彻底解耦，改为"冻结在 `_LAYOUT.json.shard_symbols` 里的固定符号集合"：
+   - `freeze_shard_symbols`：首次调用时扫描当前窗口（日线：当年目录；分钟线：当月+月初3天内的上月目录）里每个分片文件的 **parquet 内容实际包含哪些 symbol**（不是重新按当前宇宙排序切片），写进 `_LAYOUT.json` 的 `shard_symbols` 字段；此后每次调用直接读缓存，不重扫（对抗性测试验证过：分片内容事后被改也不会重扫）。
+   - `update_existing_shards`：对每个冻结分片，读现有文件的 `max(timestamp)`，从"该时间戳往前 2 个交易日"（`refetch_window_start`，用 `open_composer.market_calendar.us_equity_session_dates` 数交易日，只读不改该模块）到 `now` 重新拉取该分片固定的 symbol 列表，与现有数据 `concat` 后按 `(symbol, timestamp)` `drop_duplicates(keep="last")`（新抓的覆盖旧的，用于吸收迟到修正），临时文件 + `os.replace` 原子改名后落盘。
+   - `append_new_symbols`：当前 ACTIVE 宇宙里不在任何冻结列表中的 symbol，按 `BATCH_SIZE=12`（复用 `fetch_sip_universe.BATCH_SIZE`，不重复声明常量）分批追加为新分片编号（`max(现有编号)+1` 起，只增不复用），只抓当前窗口起，写回 `shard_symbols`。
+   - 并发防护：`_refuse_if_bulk_fetch_active` 用 `pgrep -f fetch_sip_universe.py` 检测背景抓取进程,只要它在跑就整个拒绝执行；`_exclusive_lock`（`data/sip/_update_sip_archive.lock`,`O_CREAT|O_EXCL`）防止两次 `update_sip_archive.py` 自己撞车，正常/异常退出都在 `finally` 里释放,遗留锁需要人工确认+删除(有意不做自动清场,呼应 `check_sip_freshness.py` "宁可报警不要静默"的既有约定)。
+   - 加载器 `open_composer/adapters/data/sip_parquet.py` **未改动**（按计划：它本来就按 glob 发现分片、按 footer 符号范围剪枝，新增/更新的分片自然被读到）。
+2. **`tests/test_update_sip_archive.py`**（新建，18 个测试，全绿，无网络/凭据依赖）：纯函数（`current_window_dirs`、`window_full_start`、`refetch_window_start`、`_sessions_back` 隐含覆盖）；冻结列表重建 + 幂等不重扫；合并去重 `keep=last`（构造同一 `(symbol,timestamp)` 两个不同值,断言保留新值且不重复行）；原子写入(断言无残留 `.tmp*` 文件)；`update_existing_shards`/`append_new_symbols` 用假 `_fetch_batch`（monkeypatch 掉真实网络调用,返回形状与 Alpaca `.get_stock_bars(...).df` 一致的 MultiIndex DataFrame）验证端到端合并与分片编号分配；锁文件获取/释放/异常释放；`_refuse_if_bulk_fetch_active` 的两种分支（monkeypatch `subprocess.run`）。
+3. **cron 已装**（`crontab -l`）：
+   ```
+   30 22 * * 1-5 cd ... && uv run python scripts/check_sip_freshness.py --notify-on-stale >> /tmp/sip_freshness_cron.log 2>&1  # 原有，保留不变
+   0  22 * * 1-5 cd ... && uv run python scripts/update_sip_archive.py --kind daily >> /tmp/sip_update_cron.log 2>&1 && uv run python scripts/update_sip_archive.py --kind minute >> /tmp/sip_update_cron.log 2>&1  # 新增
+   ```
+   新增的更新任务排在 22:00 UTC，比 22:30 的新鲜度检查早 30 分钟，给它跑完的时间；两条都是工作日（周一到周五）。
+4. **顺便修的两项**（计划 §3.3 最后一段）：
+   - `open_composer/config.py::data_feed()` 默认值 `"iex"` → `"sip"`（`ALPACA_DATA_FEED` 环境变量未设时的兜底值；全仓库搜索确认没有测试依赖这个兜底值本身——所有引用它的地方要么显式传参覆盖，要么走 `spec.data.feed or data_feed()` 且测试都显式声明了 spec 级 `feed`）。已改，测试见下方全仓库结果。
+   - `.env.example` 同步：**做不了**。`Read`/`Bash cat` 都被拒绝——`.env.example` 命中了项目权限配置里 `.env*` 的 deny 规则（和 `.env` 本身一样，虽然计划原意应该只是不让读真正的 `.env`）。这不是我能绕过的权限边界，记在下面 `blocked_on_user`。
+
+### 真实验收（等待中，非阻塞）
+
+计划要求"跑一次 daily 更新后 `check_sip_freshness.py` 报 `stale: []`"。**后台的 2016-2022 分钟线抓取（`fetch_sip_universe.py --kind minute --out data/sip-hist`）截至本节写完时仍在跑**：`pgrep -af fetch_sip_universe` 命中 pid 686627/686631,`fetch_watchdog.sh` (686621) 同时在跑；最近一次检查点 2026-09-04 02:37 UTC,进度在 2022 年(最后一年)shard 325/1118,累计运行约 32.6 小时,近期速率约 2.7 分片/分钟,估计还要约 4.5 小时(约 07:00-07:30 UTC 完成)。**没有碰这个进程。** `update_sip_archive.py` 的 `_refuse_if_bulk_fetch_active` 也会在它还在跑时自动拒绝执行,所以现在手动跑第一次真实验收本来就会被脚本自己挡下来,不是我选择跳过。计划安排 Wave 1/2 的评估工作在这之后,会在做那些工作的间隙用 `pgrep -f fetch_sip_universe` 顺路确认一次；抓取结束后会补跑 `uv run python scripts/update_sip_archive.py --kind daily`、`--kind minute`,再跑 `check_sip_freshness.py`,把 `stale: []` 的证据和 `crontab -l` 输出一起追加到本节。
+
+### blocked_on_user
+
+- `.env.example` 里 `ALPACA_DATA_FEED` 默认值示例同步成 `sip`：执行者的读写权限对 `.env.example` 整个文件被拒绝（命中 `.env*` deny 规则），只能请用户本人编辑该文件里 `ALPACA_DATA_FEED=` 那一行改成 `sip`（如果还是 `iex`）。影响很小——真正生效的是 `open_composer/config.py::data_feed()` 的代码默认值（已改）和实际 `.env`（据计划 §0 已经是 `sip`）；`.env.example` 只是给新环境的示例文件，不影响当前运行时行为。
+
+### 待做
+
+- 后台抓取结束后：`update_sip_archive.py --kind daily`、`--kind minute` 各跑一次真实调用，`check_sip_freshness.py` 确认 `stale: []`，证据写回本节。
+- 全仓库 pytest 结果确认（与 3.2 共用同一次跑，见 3.2 小节）。
 
 ---
 

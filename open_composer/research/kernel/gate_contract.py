@@ -45,6 +45,27 @@ REQUIRED_GATE_KEYS: tuple[str, ...] = (
     "qqq_downside_capture_maximum",
 )
 
+#: Step 10 (docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md
+#: section 3.2): the leveraged-Nasdaq-router gates above compare a candidate's
+#: absolute CAGR to un-levered QQQ, which no unlevered strategy family can
+#: realistically clear (QQQ's own trailing CAGR is ~20%/yr). Unlevered
+#: candidate families (beta exposure, cross-asset trend, liquid cross-
+#: sectional momentum, single-ETF intraday, and their preregistered
+#: combinations) are instead judged against a volatility-matched benchmark --
+#: same structure, three keys renamed, nothing else. A contract declares
+#: exactly one of these two key sets, never a mix; ``load_preregistered_gates``
+#: rejects unknown or missing keys for whichever set it was asked to enforce.
+UNLEVERED_FAMILY_GATE_KEYS: tuple[str, ...] = (
+    "cagr_excess_vol_matched_benchmark_minimum",
+    "sharpe_excess_bil_minimum",
+    "dsr_minimum",
+    "max_drawdown_minimum",
+    "mar_minimum",
+    "minimum_positive_fold_fraction",
+    "benchmark_vm_capture_ratio_minimum",
+    "benchmark_vm_downside_capture_maximum",
+)
+
 
 class GateContractError(RuntimeError):
     """Raised when promotion gates cannot be proven to predate the result."""
@@ -78,9 +99,19 @@ def _git(args: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
 
 
 def load_preregistered_gates(
-    path: Path | str, *, repo_root: Path | None = None
+    path: Path | str,
+    *,
+    repo_root: Path | None = None,
+    required_keys: tuple[str, ...] = REQUIRED_GATE_KEYS,
 ) -> PreregisteredGates:
-    """Load promotion gates, refusing anything that cannot be shown to predate the run."""
+    """Load promotion gates, refusing anything that cannot be shown to predate the run.
+
+    ``required_keys`` defaults to the leveraged-Nasdaq-router key set
+    (``REQUIRED_GATE_KEYS``) so every existing caller is unaffected. Pass
+    ``UNLEVERED_FAMILY_GATE_KEYS`` to load
+    ``config/promotion/unlevered-family-paper-tier-gates.json`` instead; the
+    contract must declare exactly one of the two key sets, never a mix.
+    """
     contract_path = Path(path)
     root = repo_root or Path(__file__).resolve().parents[3]
     if not contract_path.is_file():
@@ -114,12 +145,12 @@ def load_preregistered_gates(
     gates = payload.get("gates")
     if not isinstance(gates, dict):
         raise GateContractError(f"gate contract {relative} has no 'gates' object")
-    missing = [key for key in REQUIRED_GATE_KEYS if key not in gates]
+    missing = [key for key in required_keys if key not in gates]
     if missing:
         raise GateContractError(
             f"gate contract {relative} is missing thresholds: {', '.join(missing)}"
         )
-    extra = [key for key in gates if key not in REQUIRED_GATE_KEYS]
+    extra = [key for key in gates if key not in required_keys]
     if extra:
         raise GateContractError(
             f"gate contract {relative} declares unknown thresholds: {', '.join(sorted(extra))}"
@@ -132,7 +163,7 @@ def load_preregistered_gates(
         )
 
     return PreregisteredGates(
-        values={key: float(gates[key]) for key in REQUIRED_GATE_KEYS},
+        values={key: float(gates[key]) for key in required_keys},
         source_path=relative,
         git_blob_sha1=blob.stdout.strip(),
         content_sha256=hashlib.sha256(raw).hexdigest(),

@@ -1,0 +1,25 @@
+{
+  "contract_id": "unlevered_family_paper_tier_gates_v1",
+  "registered_at": "2026-09-04",
+  "applies_to": "mechanism_eval candidates whose natural benchmark family is not the leveraged Nasdaq router (beta exposure, cross-asset trend, cross-sectional liquid-500, single-ETF intraday, and their preregistered combinations)",
+  "benchmark_families": {
+    "beta_exposure_router": "risk_on_symbol_buy_and_hold",
+    "cross_asset_trend_etf": "SPY",
+    "cross_sectional_liquid500": "SPY",
+    "single_etf_intraday": "same_symbol_buy_and_hold",
+    "preregistered_combination": "SPY"
+  },
+  "vol_matching": "benchmark_vm = w*benchmark + (1-w)*BIL, w = realized_vol(candidate)/realized_vol(benchmark) on the stitched OOS window; w>1 means financing at BIL; record w",
+  "gates": {
+    "cagr_excess_vol_matched_benchmark_minimum": 0.05,
+    "sharpe_excess_bil_minimum": 1.0,
+    "dsr_minimum": 0.5,
+    "max_drawdown_minimum": -0.35,
+    "mar_minimum": 0.6,
+    "minimum_positive_fold_fraction": 0.6,
+    "benchmark_vm_capture_ratio_minimum": 1.0,
+    "benchmark_vm_downside_capture_maximum": 1.0
+  },
+  "rationale": "config/promotion/kernel-paper-tier-gates.json requires cagr_excess_qqq >= 5pp and sharpe_excess_bil > 1.0 against un-levered QQQ/BIL; that contract's own rationale states it was set for 3x-leveraged Nasdaq router candidates. QQQ's own trailing ten-year CAGR is ~20.2%, so clearing +5pp on top of it means an un-levered strategy must earn >25%/yr -- not achievable for the mechanism families Step 10 evaluates (beta exposure, cross-asset trend, liquid-500 cross-sectional momentum, single-ETF intraday), and using that contract on them would auto-fail every candidate regardless of merit. AGENTS.md requires promotion checks to use the candidate's benchmark family; the correct fix is to preregister a benchmark-family-appropriate contract before any evaluation runs, not to loosen the existing one (which stays exactly as-is for the leveraged router path it was built for). This contract instead volatility-matches the benchmark to the candidate before comparing CAGR: benchmark_vm = w*benchmark + (1-w)*BIL, where w = realized_vol(candidate)/realized_vol(benchmark) measured on the same stitched out-of-sample window (w>1 means the benchmark blend borrows at the BIL rate to match a candidate riskier than the raw benchmark; w is always recorded on the verdict). This asks the same question the leveraged contract asks -- 'does the candidate beat its benchmark by a material margin at the same risk level' -- fairly for both higher- and lower-volatility candidates, instead of comparing an un-levered candidate's absolute return to an un-levered benchmark it was never sized to match. sharpe_excess_bil_minimum, dsr_minimum, mar_minimum, and minimum_positive_fold_fraction are carried over unchanged from the leveraged contract: those already compare the candidate to cash (BIL) or to itself across folds, so they need no benchmark-family adjustment. max_drawdown_minimum is tightened from -0.65 to -0.35: an un-levered strategy's drawdown should not be allowed to exceed its own benchmark family's own ten-year worst drawdown (QQQ -35.0%, SPY -33.8%, 2016-01..2026-08, SIP daily, daily_returns_on_naive_dates) -- the -0.65 figure in the leveraged contract was sized for 3x TQQQ exposure and would be a meaningless (too loose) bar for a family that never levers up.",
+  "gate_key_mapping_note": "cagr_excess_qqq_minimum -> cagr_excess_vol_matched_benchmark_minimum; qqq_capture_ratio_minimum -> benchmark_vm_capture_ratio_minimum; qqq_downside_capture_maximum -> benchmark_vm_downside_capture_maximum. All other keys are unchanged from config/promotion/kernel-paper-tier-gates.json. See open_composer/research/kernel/gate_contract.py:UNLEVERED_FAMILY_GATE_KEYS."
+}

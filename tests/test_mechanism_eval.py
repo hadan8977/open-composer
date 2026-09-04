@@ -350,3 +350,156 @@ def test_capture_gates_are_evaluated_when_the_candidate_tracks_qqq() -> None:
     assert not verdict.orthogonal_to_qqq
     assert verdict.gates_not_applicable == ()
     assert verdict.evaluated_gate_count == 8
+
+
+# ---------------------------------------------------------------------------
+# Step 10 section 3.2: volatility-matched benchmark for un-levered families.
+# See docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md.
+# ---------------------------------------------------------------------------
+
+_PERMISSIVE_UNLEVERED_GATES = {
+    "cagr_excess_vol_matched_benchmark_minimum": -1.0,
+    "sharpe_excess_bil_minimum": -1.0,
+    "dsr_minimum": -1.0,
+    "max_drawdown_minimum": -1.0,
+    "mar_minimum": -1.0,
+    "minimum_positive_fold_fraction": -1.0,
+    "benchmark_vm_capture_ratio_minimum": -1.0,
+    "benchmark_vm_downside_capture_maximum": 999.0,
+}
+
+
+def _vol_match_fixture(*, candidate_vol: float, benchmark_vol: float, seed: int):
+    """One candidate, one benchmark, one BIL series, all on a shared index."""
+    from open_composer.research.kernel.mechanism_eval import Mechanism, expand_mechanism
+
+    index = pd.date_range("2016-01-04", periods=2600, freq="B")
+    rng = np.random.default_rng(seed)
+    own = pd.Series(rng.normal(0.0004, candidate_vol, len(index)), index=index)
+    benchmark = pd.Series(rng.normal(0.0005, benchmark_vol, len(index)), index=index)
+    bil = pd.Series(rng.normal(0.00003, 0.0002, len(index)), index=index)
+    tqqq_placeholder = pd.Series(rng.normal(0.0008, 0.03, len(index)), index=index)
+    candidate = expand_mechanism(
+        Mechanism(family="VOLMATCH", signal_fn=lambda _p: own, param_space=[{}])
+    )[0]
+    return candidate, benchmark, bil, tqqq_placeholder
+
+
+def _assert_vol_matched_metrics_match_manual_computation(
+    verdict, candidate, benchmark: pd.Series, bil: pd.Series, tqqq_placeholder: pd.Series
+) -> None:
+    stitched_index = pd.DatetimeIndex(candidate.oos_dates)
+    stitched = pd.Series(candidate.oos_return_stream, index=stitched_index)
+    aligned_benchmark = benchmark.reindex(stitched_index)
+    aligned_bil = bil.reindex(stitched_index)
+    aligned_tqqq = tqqq_placeholder.reindex(stitched_index)
+    expected_weight = float(stitched.std() / aligned_benchmark.std())
+    expected_blend = expected_weight * aligned_benchmark + (1.0 - expected_weight) * aligned_bil
+    expected_metrics = recompute_candidate_promotion_metrics(
+        candidate_returns=candidate.oos_return_stream,
+        qqq_returns=expected_blend.tolist(),
+        tqqq_returns=aligned_tqqq.tolist(),
+        stress_returns=candidate.stress_return_stream,
+        development_fold_returns=candidate.oos_fold_returns,
+        annualization_sessions=252,
+    )
+    assert verdict.metrics["vol_match_weight"] == pytest.approx(expected_weight, rel=1e-9)
+    assert verdict.metrics["cagr_excess_vol_matched_benchmark"] == pytest.approx(
+        expected_metrics["cagr_excess_qqq"], rel=1e-9
+    )
+    assert verdict.metrics["benchmark_vm_capture_ratio"] == pytest.approx(
+        expected_metrics["qqq_capture_ratio"], rel=1e-9
+    )
+    assert verdict.metrics["benchmark_vm_downside_capture"] == pytest.approx(
+        expected_metrics["qqq_downside_capture"], rel=1e-9
+    )
+    return expected_weight
+
+
+def test_vol_matched_benchmark_weight_and_metrics_match_manual_computation() -> None:
+    """w = realized_vol(candidate)/realized_vol(benchmark); a less volatile
+    candidate than its benchmark gets w < 1, and every derived metric matches
+    an independent recomputation of the documented formula.
+    """
+    from open_composer.research.kernel.mechanism_eval import evaluate_candidate
+
+    candidate, benchmark, bil, tqqq_placeholder = _vol_match_fixture(
+        candidate_vol=0.006, benchmark_vol=0.011, seed=2026
+    )
+    verdict = evaluate_candidate(
+        candidate,
+        qqq_returns=benchmark,
+        tqqq_returns=tqqq_placeholder,
+        bil_returns=bil,
+        min_dsr_stream_rows=10,
+        gates=_PERMISSIVE_UNLEVERED_GATES,
+        benchmark_returns=benchmark,
+        benchmark_name="SPY",
+    )
+
+    assert verdict.metrics["benchmark_name"] == "SPY"
+    weight = _assert_vol_matched_metrics_match_manual_computation(
+        verdict, candidate, benchmark, bil, tqqq_placeholder
+    )
+    assert weight < 1.0
+    assert verdict.gates_provenance == "explicit"
+    assert set(verdict.gate_results) == {
+        "cagr_excess_vol_matched_benchmark",
+        "sharpe_excess_bil",
+        "dsr_probability",
+        "max_drawdown",
+        "mar",
+        "positive_fold_fraction",
+        "benchmark_vm_capture_ratio",
+        "benchmark_vm_downside_capture",
+    }
+    assert verdict.gates_not_applicable == ()
+    assert verdict.all_gates_pass
+
+
+def test_vol_matched_benchmark_weight_can_exceed_one_and_still_reuses_the_formula() -> None:
+    """A candidate riskier than its benchmark gets w > 1 -- the blend borrows
+    at the BIL rate ((1-w) is negative) rather than raising or clamping.
+    """
+    from open_composer.research.kernel.mechanism_eval import evaluate_candidate
+
+    candidate, benchmark, bil, tqqq_placeholder = _vol_match_fixture(
+        candidate_vol=0.02, benchmark_vol=0.008, seed=99
+    )
+    verdict = evaluate_candidate(
+        candidate,
+        qqq_returns=benchmark,
+        tqqq_returns=tqqq_placeholder,
+        bil_returns=bil,
+        min_dsr_stream_rows=10,
+        gates=_PERMISSIVE_UNLEVERED_GATES,
+        benchmark_returns=benchmark,
+        benchmark_name="QQQ",
+    )
+    weight = _assert_vol_matched_metrics_match_manual_computation(
+        verdict, candidate, benchmark, bil, tqqq_placeholder
+    )
+    assert weight > 1.0
+    assert verdict.metrics["vol_match_weight"] > 1.0
+
+
+def test_benchmark_returns_none_keeps_the_existing_qqq_path_byte_for_byte() -> None:
+    """The default (``benchmark_returns=None``) path must stay exactly what it
+    was before Step 10: old gate key names, no vol-match bookkeeping in
+    ``metrics``. This is the explicit regression guard the plan asks for --
+    every other pre-existing test in this file also exercises this path
+    unmodified and must keep passing.
+    """
+    verdict = _uncorrelated_candidate_verdict(correlated=True)
+    assert "benchmark_name" not in verdict.metrics
+    assert "vol_match_weight" not in verdict.metrics
+    assert set(verdict.gate_results) == {
+        "cagr_excess_qqq",
+        "sharpe_excess_bil",
+        "dsr_probability",
+        "max_drawdown",
+        "mar",
+        "positive_fold_fraction",
+        "qqq_capture_ratio",
+        "qqq_downside_capture",
+    }

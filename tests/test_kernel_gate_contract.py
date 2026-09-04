@@ -10,6 +10,7 @@ import pytest
 
 from open_composer.research.kernel.gate_contract import (
     REQUIRED_GATE_KEYS,
+    UNLEVERED_FAMILY_GATE_KEYS,
     GateContractError,
     load_preregistered_gates,
 )
@@ -17,6 +18,9 @@ from open_composer.research.kernel.mechanism_eval import DEFAULT_PROMOTION_GATES
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = REPO_ROOT / "config" / "promotion" / "kernel-paper-tier-gates.json"
+UNLEVERED_FAMILY_CONTRACT = (
+    REPO_ROOT / "config" / "promotion" / "unlevered-family-paper-tier-gates.json"
+)
 
 
 def _init_repo(tmp_path: Path) -> Path:
@@ -149,5 +153,96 @@ def test_promotion_eligibility_requires_the_contract_not_just_the_numbers() -> N
     assert preregistered.promotion_eligible is True
     assert inline.promotion_eligible is False
     assert defaults.promotion_eligible is False
+    assert preregistered.gate_contract["gate_contract_git_blob_sha1"]
+    assert inline.gate_contract == {}
+
+
+# ---------------------------------------------------------------------------
+# Step 10 section 3.2: a second, benchmark-family-appropriate contract for
+# un-levered candidates, loaded through the same provenance machinery under a
+# different required-key set. See
+# docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md section 3.2.
+# ---------------------------------------------------------------------------
+
+
+def test_the_unlevered_family_contract_loads_with_its_documented_key_set() -> None:
+    gates = load_preregistered_gates(
+        UNLEVERED_FAMILY_CONTRACT, required_keys=UNLEVERED_FAMILY_GATE_KEYS
+    )
+    payload = json.loads(UNLEVERED_FAMILY_CONTRACT.read_text(encoding="utf-8"))
+    assert gates.values == pytest.approx(payload["gates"])
+    assert set(gates.values) == set(UNLEVERED_FAMILY_GATE_KEYS)
+    assert gates.rationale
+    assert len(gates.git_blob_sha1) == 40
+    assert len(gates.content_sha256) == 64
+    assert gates.as_provenance()["gates_provenance"] == "preregistered"
+
+
+def test_the_unlevered_family_contract_is_not_loadable_under_the_old_key_set() -> None:
+    """The two contracts' key sets are mutually exclusive by construction: a
+    caller that forgets ``required_keys=UNLEVERED_FAMILY_GATE_KEYS`` must fail
+    closed, not silently fall back to a differently-shaped threshold set.
+    """
+    with pytest.raises(GateContractError, match="missing thresholds|unknown thresholds"):
+        load_preregistered_gates(UNLEVERED_FAMILY_CONTRACT)
+
+
+def test_the_leveraged_router_contract_is_not_loadable_under_the_unlevered_key_set() -> None:
+    with pytest.raises(GateContractError, match="missing thresholds|unknown thresholds"):
+        load_preregistered_gates(CONTRACT, required_keys=UNLEVERED_FAMILY_GATE_KEYS)
+
+
+def test_vol_matched_promotion_eligibility_requires_the_committed_unlevered_contract() -> None:
+    """Mirrors ``test_promotion_eligibility_requires_the_contract_not_just_the_
+    numbers`` for the vol-matched path: identical thresholds typed in at the
+    call site must not confer ``promotion_eligible``, only the committed
+    contract file can.
+    """
+    import numpy as np
+    import pandas as pd
+
+    from open_composer.research.kernel.mechanism_eval import (
+        Mechanism,
+        evaluate_candidate,
+        expand_mechanism,
+    )
+
+    index = pd.date_range("2016-01-04", periods=2600, freq="B")
+    rng = np.random.default_rng(7)
+    returns = pd.Series(rng.normal(0.0012, 0.008, len(index)), index=index)
+    benchmark = pd.Series(rng.normal(0.0003, 0.012, len(index)), index=index)
+    benchmarks = {
+        "qqq_returns": benchmark,
+        "tqqq_returns": pd.Series(rng.normal(0.0004, 0.030, len(index)), index=index),
+        "bil_returns": pd.Series(rng.normal(0.00002, 0.0002, len(index)), index=index),
+    }
+    candidate = expand_mechanism(
+        Mechanism(family="VM", signal_fn=lambda _p: returns, param_space=[{}])
+    )[0]
+    contract = load_preregistered_gates(
+        UNLEVERED_FAMILY_CONTRACT, required_keys=UNLEVERED_FAMILY_GATE_KEYS
+    )
+
+    preregistered = evaluate_candidate(
+        candidate,
+        gates=contract,
+        min_dsr_stream_rows=10,
+        benchmark_returns=benchmark,
+        benchmark_name="SPY",
+        **benchmarks,
+    )
+    inline = evaluate_candidate(
+        candidate,
+        gates=dict(contract.values),
+        min_dsr_stream_rows=10,
+        benchmark_returns=benchmark,
+        benchmark_name="SPY",
+        **benchmarks,
+    )
+
+    assert inline.gate_results == preregistered.gate_results
+    assert inline.all_gates_pass == preregistered.all_gates_pass
+    assert preregistered.promotion_eligible == preregistered.all_gates_pass
+    assert inline.promotion_eligible is False
     assert preregistered.gate_contract["gate_contract_git_blob_sha1"]
     assert inline.gate_contract == {}

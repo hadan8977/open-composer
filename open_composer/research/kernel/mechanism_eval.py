@@ -159,7 +159,7 @@ class CandidateVerdict(ResearchDataModel):
     """A candidate's promotion metrics and paper-tier gate results."""
 
     candidate: Candidate
-    metrics: dict[str, float | int]
+    metrics: dict[str, float | int | str]
     sharpe_excess_bil: float
     dsr_probability: float
     positive_fold_fraction: float
@@ -303,6 +303,8 @@ def evaluate_candidate(
     dsr_trial_count: int = DEFAULT_DSR_TRIAL_COUNT,
     dsr_hac_lag: int = DEFAULT_DSR_HAC_LAG,
     min_dsr_stream_rows: int = DEFAULT_MIN_DSR_STREAM_ROWS,
+    benchmark_returns: pd.Series | None = None,
+    benchmark_name: str = "QQQ",
 ) -> CandidateVerdict:
     """Score one candidate against the paper-tier promotion gates.
 
@@ -310,6 +312,29 @@ def evaluate_candidate(
     benchmark series; they are reindexed onto ``candidate.oos_dates`` here so
     every candidate -- even ones from mechanisms with different warm-up
     lengths -- is judged against the exact same benchmark dates it traded.
+
+    ``benchmark_returns`` is ``None`` by default, which keeps this function's
+    behavior identical to before Step 10 (see
+    docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md section 3.2):
+    the candidate is judged against absolute QQQ CAGR and QQQ capture, the
+    ``config/promotion/kernel-paper-tier-gates.json`` key names, exactly as
+    today. That contract was calibrated for 3x-leveraged Nasdaq router
+    candidates and auto-fails any un-levered strategy family regardless of
+    merit (QQQ's own trailing CAGR is ~20%/yr). When ``benchmark_returns`` is
+    given -- the candidate's own natural benchmark family, e.g. QQQ or SPY for
+    a beta-exposure router, SPY for a cross-asset trend book -- it is instead
+    volatility-matched to the candidate before comparing CAGR:
+    ``benchmark_vm = w*benchmark + (1-w)*BIL``, where
+    ``w = realized_vol(candidate)/realized_vol(benchmark)`` on the stitched
+    OOS window (``w>1`` means the blend borrows at the BIL rate to match a
+    candidate riskier than the raw benchmark). Gates are then evaluated under
+    the ``config/promotion/unlevered-family-paper-tier-gates.json`` key names
+    (``cagr_excess_vol_matched_benchmark_minimum`` etc. -- see
+    ``gate_contract.UNLEVERED_FAMILY_GATE_KEYS``); the caller must pass a
+    ``gates`` contract using those same key names in that case. ``metrics``
+    always additionally records the vol-matched figures plus ``benchmark_name``
+    and ``vol_match_weight`` when this path is taken, so a report can show
+    both benchmark framings.
     """
     if isinstance(gates, PreregisteredGates):
         thresholds = dict(gates.values)
@@ -349,38 +374,115 @@ def evaluate_candidate(
     positive_fold_fraction = metrics["positive_fold_count"] / len(candidate.oos_fold_returns)
 
     orthogonal = abs(metrics["qqq_correlation"]) <= QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD
-    # _qqq_capture_gate_passes returns (True, True) for an orthogonal candidate
-    # rather than evaluating the ratios. Record which gates that covers so the
-    # pass count cannot quietly overstate how much was actually tested.
-    gates_not_applicable = ("qqq_capture_ratio", "qqq_downside_capture") if orthogonal else ()
-    gate_results = {
-        "cagr_excess_qqq": metrics["cagr_excess_qqq"] >= thresholds["cagr_excess_qqq_minimum"],
-        "sharpe_excess_bil": sharpe_excess_bil > thresholds["sharpe_excess_bil_minimum"],
-        "dsr_probability": (
-            dsr_probability >= thresholds["dsr_minimum"] and len(stitched) >= min_dsr_stream_rows
-        ),
-        "max_drawdown": metrics["max_drawdown"] >= thresholds["max_drawdown_minimum"],
-        "mar": metrics["mar"] >= thresholds["mar_minimum"],
-        "positive_fold_fraction": (
-            positive_fold_fraction >= thresholds["minimum_positive_fold_fraction"]
-        ),
-        "qqq_capture_ratio": (
-            True
-            if orthogonal
-            else metrics["qqq_capture_ratio"] >= thresholds["qqq_capture_ratio_minimum"]
-        ),
-        "qqq_downside_capture": (
-            True
-            if orthogonal
-            else metrics["qqq_downside_capture"] <= thresholds["qqq_downside_capture_maximum"]
-        ),
+
+    vol_match_weight: float | None = None
+    vm_metrics: dict[str, float] | None = None
+    if benchmark_returns is not None:
+        aligned_benchmark = benchmark_returns.reindex(index)
+        if aligned_benchmark.isna().any():
+            raise ValueError(
+                f"benchmark_returns alignment produced missing rows for {candidate.candidate_id}"
+            )
+        candidate_vol = float(stitched.std())
+        benchmark_vol = float(aligned_benchmark.std())
+        if not math.isfinite(benchmark_vol) or benchmark_vol <= 0.0:
+            raise ValueError(
+                f"benchmark_returns has non-positive realized volatility for "
+                f"{candidate.candidate_id}"
+            )
+        vol_match_weight = candidate_vol / benchmark_vol
+        vol_matched_benchmark = (
+            vol_match_weight * aligned_benchmark + (1.0 - vol_match_weight) * aligned_bil
+        )
+        # Reuses the exact same, already-tested CAGR/capture-ratio math as the
+        # QQQ path above by substituting the vol-matched series in its place;
+        # ``tqqq_returns`` here is unused (its outputs are diagnostic-only and
+        # discarded below), passed only to satisfy the shared row-count check.
+        raw_vm_metrics = recompute_candidate_promotion_metrics(
+            candidate_returns=candidate.oos_return_stream,
+            qqq_returns=vol_matched_benchmark.tolist(),
+            tqqq_returns=aligned_tqqq.tolist(),
+            stress_returns=candidate.stress_return_stream,
+            development_fold_returns=candidate.oos_fold_returns,
+            annualization_sessions=annualization_sessions,
+        )
+        vm_metrics = {
+            "cagr_excess_vol_matched_benchmark": float(raw_vm_metrics["cagr_excess_qqq"]),
+            "benchmark_vm_capture_ratio": float(raw_vm_metrics["qqq_capture_ratio"]),
+            "benchmark_vm_downside_capture": float(raw_vm_metrics["qqq_downside_capture"]),
+            "benchmark_vm_correlation": float(raw_vm_metrics["qqq_correlation"]),
+        }
+
+    if vm_metrics is not None:
+        # The un-levered families this path serves are chosen to be exposed to
+        # their benchmark (a beta-exposure router IS long QQQ/SPY when
+        # risk-on), so unlike the QQQ path above there is no orthogonality
+        # carve-out here: both capture gates are always evaluated on their
+        # merits.
+        gates_not_applicable: tuple[str, ...] = ()
+        gate_results = {
+            "cagr_excess_vol_matched_benchmark": (
+                vm_metrics["cagr_excess_vol_matched_benchmark"]
+                >= thresholds["cagr_excess_vol_matched_benchmark_minimum"]
+            ),
+            "sharpe_excess_bil": sharpe_excess_bil > thresholds["sharpe_excess_bil_minimum"],
+            "dsr_probability": (
+                dsr_probability >= thresholds["dsr_minimum"]
+                and len(stitched) >= min_dsr_stream_rows
+            ),
+            "max_drawdown": metrics["max_drawdown"] >= thresholds["max_drawdown_minimum"],
+            "mar": metrics["mar"] >= thresholds["mar_minimum"],
+            "positive_fold_fraction": (
+                positive_fold_fraction >= thresholds["minimum_positive_fold_fraction"]
+            ),
+            "benchmark_vm_capture_ratio": (
+                vm_metrics["benchmark_vm_capture_ratio"]
+                >= thresholds["benchmark_vm_capture_ratio_minimum"]
+            ),
+            "benchmark_vm_downside_capture": (
+                vm_metrics["benchmark_vm_downside_capture"]
+                <= thresholds["benchmark_vm_downside_capture_maximum"]
+            ),
+        }
+    else:
+        # _qqq_capture_gate_passes returns (True, True) for an orthogonal candidate
+        # rather than evaluating the ratios. Record which gates that covers so the
+        # pass count cannot quietly overstate how much was actually tested.
+        gates_not_applicable = ("qqq_capture_ratio", "qqq_downside_capture") if orthogonal else ()
+        gate_results = {
+            "cagr_excess_qqq": metrics["cagr_excess_qqq"] >= thresholds["cagr_excess_qqq_minimum"],
+            "sharpe_excess_bil": sharpe_excess_bil > thresholds["sharpe_excess_bil_minimum"],
+            "dsr_probability": (
+                dsr_probability >= thresholds["dsr_minimum"]
+                and len(stitched) >= min_dsr_stream_rows
+            ),
+            "max_drawdown": metrics["max_drawdown"] >= thresholds["max_drawdown_minimum"],
+            "mar": metrics["mar"] >= thresholds["mar_minimum"],
+            "positive_fold_fraction": (
+                positive_fold_fraction >= thresholds["minimum_positive_fold_fraction"]
+            ),
+            "qqq_capture_ratio": (
+                True
+                if orthogonal
+                else metrics["qqq_capture_ratio"] >= thresholds["qqq_capture_ratio_minimum"]
+            ),
+            "qqq_downside_capture": (
+                True
+                if orthogonal
+                else metrics["qqq_downside_capture"] <= thresholds["qqq_downside_capture_maximum"]
+            ),
+        }
+    full_metrics: dict[str, float | int | str] = {
+        key: (float(value) if isinstance(value, float) else value) for key, value in metrics.items()
     }
+    if vm_metrics is not None:
+        full_metrics.update(vm_metrics)
+        full_metrics["benchmark_name"] = benchmark_name
+        assert vol_match_weight is not None
+        full_metrics["vol_match_weight"] = float(vol_match_weight)
     return CandidateVerdict(
         candidate=candidate,
-        metrics={
-            key: (float(value) if isinstance(value, float) else value)
-            for key, value in metrics.items()
-        },
+        metrics=full_metrics,
         sharpe_excess_bil=float(sharpe_excess_bil),
         dsr_probability=float(dsr_probability),
         positive_fold_fraction=float(positive_fold_fraction),
