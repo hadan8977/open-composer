@@ -20,8 +20,8 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave 0 / 3.2 策略族门槛合同 | done | `5e61b08` |
 | Wave 0 / 3.3 SIP 档案增量更新 + cron | doing（代码+测试+cron 完成；首次真实运行等后台抓取结束，见小节） | `3d6f42b` |
 | 全仓库回归修复（3.3 引起，Wave 1 之前） | done | `f53d34d` |
-| Wave 1 / F1 beta 暴露族 | todo | - |
-| Wave 1 / F2 跨资产趋势 | todo | - |
+| Wave 1 / F1 beta 暴露族 | done（负结果，0/24 通过新合同） | 待提交 |
+| Wave 1 / F2 跨资产趋势 | done（负结果，0/12 通过新合同；不可路由，走独立内核机制） | 待提交 |
 | Wave 2 / PIT 流动性过滤横截面动量 | todo | - |
 | Wave 3 / 预注册组合 | todo | - |
 | Wave 4 / 晋级或负结果记录 | todo | - |
@@ -217,11 +217,60 @@ $ uv run oc research iteration validate goal_first_w5_qqq_momentum --stage pre-b
 
 ## Wave 1 / F1 波动率管理 beta 暴露
 
-状态：todo
+状态：**done（负结果）**
+
+### 做了什么
+
+- 轻量迭代注册：`step10_w1_beta_exposure`（`strategy_specs/drafts/step10_w1_beta_exposure_router_family.yaml` + `scripts/new_lightweight_iteration.py` 生成 `reports/research/iterations/step10_w1_beta_exposure/{candidate-manifest,cost-table,data-feasibility,search-space}.json` 等）。`oc research iteration validate` 结果 `status: ok`，`warnings: [lightweight_single_mechanism_exemption_used]`。8 条来源卡（`reports/harness/source_cards/step10_w1_beta_exposure.jsonl`），复用本仓库 `mom_breadth_qd_r1` 已核实过的 8 篇论文（Moreira & Muir 2016 波动率管理组合、Avellaneda & Zhang 杠杆 ETF 路径依赖、Bailey&LdP DSR、Bailey et al PBO、Hansen SPA、Harvey-Liu-Zhu 多重检验、DeMiguel-Garlappi-Uppal 简单配置基准、Mouret&Clune MAP-Elites），换了新的 `project_applicability`/`reflection`，未重新逐一在线核实（复用同仓库已核实记录，claim/URL 不变）。
+- 网格：24 组，写死在 manifest 里，`market∈{QQQ,SPY} × trend_sma_days∈{100,200} × target_volatility_annual_pct∈{10,15,none} × max_drawdown_pct∈{none,-15}`，其余固定（`momentum_lookback_days=60, min_momentum_pct=0, volatility_lookback_days=20, max_volatility=none, drawdown_lookback_days=60, leverage_*=none, risk_on=market@1.0, neutral=market@0.5, risk_off=BIL@1.0`）。`beta_params_from_label` 往返验证通过；BIL 通过 `load_beta_router_dataset(..., extra_symbols=["BIL"])` 直接可用，不需要 `CASH` 兜底。数据 `data_source="sip_parquet"`，2016-01-04 至 2026-08-31，QQQ/SPY 均 2680 个公共交易日。
+- 评估脚本 `scripts/evaluate_beta_exposure_family_sip.py`，模板照 `scripts/evaluate_champion_route_sip.py`：`fold_count=5`，成本 base 5bps/边、压力 40bps（`spec.costs.slippage_bps`），两遍 DSR 有效试验数（探路用 `len(candidates)=24`，正式用 `max(effective_n, _MIN_DSR_TRIAL_COUNT=2)`；`_MIN_DSR_TRIAL_COUNT` 沿用 `layered_search.py`/`search_expression_trees_p2b.py` 现成常量，而不是 `search_intraday_momentum_etf.py` 里那个会在 `effective_n==1` 时崩溃的 `max(effective_n, 1)`）。裁定用新合同（`benchmark_returns=` 传每个候选自己的 `risk_on_symbol`，QQQ 候选比 QQQ、SPY 候选比 SPY）；旧合同同时跑出来仅作参照。CRISIS_WINDOWS + 选择后窗口（`2026-07-09` 起）诊断齐全；每候选输出 `exposure_pct`/`annualized_turnover_events`/`average_holding_period_days`。
+- 先用 3 候选烟雾测试（发现并修了一个字典推导式语法错误 + 一个 `dsr_trial_count` 下限 bug），再跑 24 候选正式版。
+
+### 结果（诚实负结果）
+
+- `raw_candidate_count=24`，`effective_n=1`（`breadth_ratio≈0.042`）——24 组高度相关，聚成 1 个有效独立试验；`dsr_trial_count_used=2`（下限）。
+- **`candidates_passing_new_contract: []`——0/24 通过新合同。**
+- 新合同门槛失败分布（24 组里失败数）：`cagr_excess_vol_matched_benchmark` 24/24、`benchmark_vm_capture_ratio` 24/24、`sharpe_excess_bil` 24/24、`mar` 11/24；`dsr_probability`/`positive_fold_fraction`/`max_drawdown`/`benchmark_vm_downside_capture` 多数通过。
+- 最接近的候选 `C12`（`sma200_..._maxdd-15_onQQQ1..._vtnone`，即 SMA200 趋势 + -15% 回撤止损、不设波动率目标）：`cagr_excess_vol_matched_benchmark=+0.0088`（仍 <0.05 门槛）、`benchmark_vm_capture_ratio=0.201`（<1.0 门槛）、`mar=0.7565`（通过）、`vol_match_weight=0.62`。旧合同下同样 `promotion_eligible=False`。
+- 诊断：C12 在选择后窗口（2026-07-09 起 37 个交易日）CAGR 为 **-12.17%**，同期基准 QQQ 为 **+4.88%**（非门槛，仅诊断，如实记录）；2020 疫情崩盘窗口回撤 -18.2%，跌幅小于基准但样本仅 24 天。
+- **结论与预注册的失败假说吻合**：路由的趋势/回撤/波动率门控确实压低了名义敞口和回撤，但换成"与候选自身已实现波动率相同"的基准比较后（而不是 100% 买入持有），超额 CAGR 和捕获比都不达标——去杠杆本身不是超额收益的来源。
+- 证据 JSON：`reports/research/control/step10-w1-beta-exposure-2026-09.json`。
+
+### blocked_on_user
+
+- 无。
 
 ## Wave 1 / F2 跨资产 ETF 趋势配置
 
-状态：todo
+状态：**done（负结果）**
+
+### 做了什么
+
+- **路由可行性核查（计划要求先查后定）**：详细读了 `open_composer/research/core_beta_satellite_core.py`。结论：**不可表达，走独立内核机制**。具体原因（写进了 `cross_asset_trend_etf.py` 模块 docstring 和 dossier 的 `notes.archive_descriptors`）：
+  1. `core_route_label()` 把 `"onTQQQ..."/"neuQQQ..."/"offCASH0"` 硬编码进 f-string，`core_variant` 只能选权重（0.5/0.75/1.0），选不了标的——做不到"core 是 BIL"。
+  2. `load_core_beta_satellite_dataset` 无条件要求 `QQQ,TQQQ,SQQQ,SMH`，`universe_mode` 只是 `.label` 里的描述字符串，`_target_snapshot` 从未读取它，没有任何行为预设。
+  3. 卫星仓位是叠加在核心之上的小额战术仓（`satellite_budget` 默认 0.1，即 10% 账面），不是这个机制需要的"主体仓位"。
+  4. `_theme_gate_ok` 用单一硬编码标的（默认 `SMH` 半导体）做卫星总开关，和本机制"10 个跨资产 ETF 各自独立看动量"完全是两回事。
+  5. core 的"risk off"腿是字面 0% 收益（`offCASH0`），不是 BIL 的真实收益率，本机制的现金腿需要后者。
+  这些都不是"改小参数就能绕过"的问题，属于要重写路由核心逻辑才能塞进去，超出"查一下能不能表达"的范围，也没有去碰任何禁改文件。
+- 新建 `open_composer/research/kernel/mechanisms/cross_asset_trend_etf.py`（独立内核机制，模板照 `intraday_momentum_etf.py`）：`SPY,QQQ,IWM,EFA,EEM,TLT,IEF,GLD,DBC,VNQ` + 现金腿 `BIL`；月末对每个 ETF 用**自身**过去 `lookback_months`（6 或 12）个月总收益判正负（时间序列动量，不做横截面排名）；正的进入"候选多头"，按动量高低排序取前 `top_n`（3/5/all=10）名。**一个计划文本未明确、需要执行者自行决定并如实记录的实现选择**：把 `top_n` 当作"槽位数"（1/top_n 每槽），未填满的槽位持有 BIL——这是标准 GTAA/双动量惯例（如 Faber 2007），不是"10 只 ETF 各占固定 1/10，选中的才换成 ETF"这种读法；两种读法计划文本都说得通，选了前者并在模块 docstring 里写明。权重 `equal`（每槽 1/top_n）或 `inverse_vol_60d`（选中的名字之间按 60 日已实现波动率倒数分配，总敞口不变）。成本 5bps/边（计划 §4.2 原话），压力 40bps，在换仓日按全部标的（含 BIL）权重变化绝对值之和计成本。
+- **写单测时抓到一个真实 bug**：`rebalance_positions` 的过滤条件写成了"交易日下标 - lookback_months >= 0"，应该是"月份下标 - lookback_months >= 0"；月份下标不够时 `month_end_positions[month_idx - lookback_months]` 会因为 Python 负数下标"绕到列表末尾"而不是报错，安静地用最后一个月当成"回看起点"，污染最早一次换仓的动量判断。8 个新单测里 4 个因此失败，定位后修好，全部 8 个测试转绿（`tests/test_cross_asset_trend_etf.py`）。**之前跑的一次 12 候选正式评估用的是修 bug 前的代码，已丢弃重跑**，下面数字全部来自修复后的版本。
+- 轻量迭代注册 `step10_w1_cross_asset_trend`（同样走 3.1 路径，`strategy_specs/drafts/step10_w1_cross_asset_trend_etf_family.yaml`，spec 里 `notes.archive_descriptors.product_executable: false` 并写明原因），8 条来源卡（复用 `mom_breadth_crossasset_trend_r1` 已核实的 8 篇：Moskowitz-Ooi-Pedersen 时序动量、Hurst-Ooi-Pedersen 百年趋势跟踪证据，其余 6 篇与 F1 共用方法论文献）。`oc research iteration validate` → `status: ok`。12 组网格（`lookback_months×top_n×weighting` = 2×3×2）直接从 `cross_asset_trend_etf.PARAMETER_SPACE` 生成 manifest，评估脚本反过来校验 manifest 与 `PARAMETER_SPACE` 逐项相等（单一事实来源，杜绝改一处忘改另一处）。
+- 评估脚本 `scripts/evaluate_cross_asset_trend_sip.py`：方法与 F1 一致（`fold_count=5`、两遍 DSR、CRISIS_WINDOWS+选择后诊断、新旧合同并报），基准统一用 **SPY**（计划 §4.2 明确写"基准族 SPY"，不像 F1 分标的）。交易活动诊断（在场天数占比/年化换手/平均持仓天数）通过给 `daily_cross_asset_trend_returns` 加一个可选 `rebalance_sink` 钩子精确复算，不是近似。数据：11 个标的 `daily_returns_on_naive_dates` 内连接，2016-01-05 至 2026-08-31，2679 个公共交易日。
+- 先 3 候选烟雾测试通过，再跑 12 候选正式版（第一次跑完发现单测 bug 后作废重跑一次，见上）。
+
+### 结果（诚实负结果）
+
+- `raw_candidate_count=12`，`effective_n=1`（`breadth_ratio≈0.083`），`dsr_trial_count_used=2`（下限）。
+- **`candidates_passing_new_contract: []`——0/12 通过新合同。**
+- 新合同门槛失败分布：`cagr_excess_vol_matched_benchmark` 12/12、`benchmark_vm_capture_ratio` 12/12、`sharpe_excess_bil` 12/12、`mar` 3/12。
+- 最接近的候选（`lookback_months=6, top_n=5, weighting=equal`）：原始 CAGR 10.85%，但 `cagr_excess_vol_matched_benchmark=+0.0111`（<0.05 门槛）、`benchmark_vm_capture_ratio=0.5895`（<1.0 门槛）、`mar=0.9736`（通过）、`max_drawdown=-11.14%`，平均持仓约 105 天，在场天数占比 98.3%。旧合同下同样 `promotion_eligible=False`。
+- **结论与 F1 同一模式**：月度轮动确实降低了波动/回撤，但用"与候选已实现波动率相同"的 SPY 基准比较后，超额收益和捕获比不达标；换成对波动率敏感的比较标准后，"更平滑的净值曲线"本身不足以构成晋级理由。
+- 证据 JSON：`reports/research/control/step10-w1-cross-asset-trend-2026-09.json`。
+
+### blocked_on_user
+
+- 无（"能不能接入产品"的问题已经自己查清楚并给出结论：这周不能，需要新路由模式或者给 `core_beta_satellite_core` 的 core 腿做成任意标的/权重才能接，这是下一轮的候选建议，不是需要用户此刻拍板的事）。
 
 ## Wave 2 / PIT 流动性过滤横截面动量
 
