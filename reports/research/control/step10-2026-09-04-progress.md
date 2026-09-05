@@ -18,7 +18,7 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 |---|---|---|
 | Wave 0 / 3.1 轻量迭代路径 | done | `16feec3` |
 | Wave 0 / 3.2 策略族门槛合同 | done | `5e61b08` |
-| Wave 0 / 3.3 SIP 档案增量更新 + cron | doing（代码+测试+cron 完成；首次真实运行等后台抓取结束，见小节） | `3d6f42b` |
+| Wave 0 / 3.3 SIP 档案增量更新 + cron | **done**（含真实首次运行验收，`stale: []`） | `3d6f42b` |
 | 全仓库回归修复（3.3 引起，Wave 1 之前） | done | `f53d34d` |
 | Wave 1 / F1 beta 暴露族 | done（负结果，0/24 通过新合同） | 待提交 |
 | Wave 1 / F2 跨资产趋势 | done（负结果，0/12 通过新合同；不可路由，走独立内核机制） | 待提交 |
@@ -158,9 +158,15 @@ $ uv run oc research iteration validate goal_first_w5_qqq_momentum --stage pre-b
    - `open_composer/config.py::data_feed()` 默认值 `"iex"` → `"sip"`（`ALPACA_DATA_FEED` 环境变量未设时的兜底值）。已改。**更正（见文末"全仓库最终验收"）**：当时"全仓库搜索确认没有测试依赖这个兜底值"的结论是错的——那是静态字符串搜索，不是实跑全量测试；实际上 `open_composer/research/minute_momentum_feasibility.py` 的 `selected_feed = feed or data_feed()` 依赖它，全量跑出 13 个失败（基线 11 + 2 个新增），已用 commit `f53d34d` 修复三个受影响测试（改测试注入 `ALPACA_DATA_FEED=iex`，不回退默认值）。
    - `.env.example` 同步：**做不了**。`Read`/`Bash cat` 都被拒绝——`.env.example` 命中了项目权限配置里 `.env*` 的 deny 规则（和 `.env` 本身一样，虽然计划原意应该只是不让读真正的 `.env`）。这不是我能绕过的权限边界，记在下面 `blocked_on_user`。
 
-### 真实验收（等待中，非阻塞）
+### 真实验收（已完成）
 
-计划要求"跑一次 daily 更新后 `check_sip_freshness.py` 报 `stale: []`"。**后台的 2016-2022 分钟线抓取（`fetch_sip_universe.py --kind minute --out data/sip-hist`）截至本节写完时仍在跑**：`pgrep -af fetch_sip_universe` 命中 pid 686627/686631,`fetch_watchdog.sh` (686621) 同时在跑；最近一次检查点 2026-09-04 02:37 UTC,进度在 2022 年(最后一年)shard 325/1118,累计运行约 32.6 小时,近期速率约 2.7 分片/分钟,估计还要约 4.5 小时(约 07:00-07:30 UTC 完成)。**没有碰这个进程。** `update_sip_archive.py` 的 `_refuse_if_bulk_fetch_active` 也会在它还在跑时自动拒绝执行,所以现在手动跑第一次真实验收本来就会被脚本自己挡下来,不是我选择跳过。计划安排 Wave 1/2 的评估工作在这之后,会在做那些工作的间隙用 `pgrep -f fetch_sip_universe` 顺路确认一次；抓取结束后会补跑 `uv run python scripts/update_sip_archive.py --kind daily`、`--kind minute`,再跑 `check_sip_freshness.py`,把 `stale: []` 的证据和 `crontab -l` 输出一起追加到本节。
+后台 2016-2022 分钟线抓取于 2026-09-04 07:07:27 UTC 完成（`data/sip-hist/minute/_COMPLETE_2016_2022.json` 标记文件出现，`fetch_watchdog.sh` 自行退出，日志见 `/tmp/fetch_minute_2016_2022.log` 最后两行）。累计运行约 37.2 小时，1,802,771,144 行。确认 `pgrep -af fetch_sip_universe` 干净（无残留进程）后，跑了两个 `--kind` 的第一次真实增量更新：
+
+- `uv run python scripts/update_sip_archive.py --kind daily`：`froze 336 shard(s)`（首次调用，冻结现有分片的 symbol 归属，此后不再因宇宙重排改变分片身份）→ `daily 2026: updated 336 frozen shard(s)` → `341 newly-listed symbol(s) in 29 new shard(s)` → `done -- 78514 row(s) refreshed, 953 row(s) from new listings, 1.4min`。
+- `uv run python scripts/update_sip_archive.py --kind minute`：`froze 1118 shard(s)` → `updated 1118 frozen shard(s)` → `1555 newly-listed symbol(s) in 130 new shard(s)` → `done -- 5473071 row(s) refreshed, 8602 row(s) from new listings, 9.0min`。
+- `uv run python scripts/check_sip_freshness.py`：`{"stale": [], "archives": [{"frequency": "daily", "sessions_behind": 0, "last_bar": "2026-09-03"}, {"frequency": "minute", "sessions_behind": 0, "last_bar": "2026-09-03"}]}`——两个频率都 `sessions_behind: 0`，达标。
+
+`crontab -l` 里 3.3 新增的每日 22:00 UTC 更新行已确认在案（见"做了什么"小节）。
 
 ### blocked_on_user
 
