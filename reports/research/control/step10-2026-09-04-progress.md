@@ -423,3 +423,25 @@ F1、F2、W2、Wave 3 组合**全部未通过新合同**（F1/F2/组合 8 门过
 ### blocked_on_user
 
 - 无——本轮没有候选到达"只剩用户决策"的地步，所以第 7 节要求的"账本里列出用户需要做的事（批准、凭据）"这一条本身不适用（该条只在有候选通过时触发）。用户仍然可以随时查看 `strategy-iteration-progress-2026-07-01.md` 的新增小节了解全貌，但没有需要用户当下拍板的事项。
+
+---
+
+## 计划 §11 完成定义：最终验收（Fable 5.1，2026-09-05 16:30 UTC）
+
+跑于 `311de75`（全部 Wave 已入库）的干净工作树上：
+
+- `uv run pytest -q -n 2`：**11 个失败，全部来自 `tests/test_mom_breadth_qd_r1.py`**（`test_recovery_*` 系列，与基线完全一致；日志 `/tmp/step10_final_full_pytest.log`）。无其他失败。
+- `uv run ruff format --check .`：无改动；`uv run ruff check .`：All checks passed。
+- `uv run oc repo check --strict`：`status=ok ready=yes`。
+- `git status`：干净。
+
+| 完成定义条目 | 状态 |
+|---|---|
+| 1. Wave 0 三项验收通过并各自独立 commit | 满足：`16feec3`、`5e61b08`、`3d6f42b`（+ `8a99902` 真实运行验收，`f53d34d` 回归修复） |
+| 2. Wave 1 两族、Wave 2 一族有完整评估产物；Wave 3 按规则执行 | 满足：`fad4b89` + `cdd4379`（度量修正与重评分）、`63c76d3` |
+| 3. 有候选通过则走到只剩用户决策 | 不适用：无候选通过新合同 |
+| 4. 无候选通过则有诚实负结果记录与下一轮建议 | 满足：`f44576c`（`strategy-iteration-progress-2026-07-01.md` 新增 Step 10 一节） |
+| 5. 测试 11 个基线失败不变、repo check ok、ruff 全绿 | 满足（见上） |
+| 6. 账本完整可接续 | 满足（本文件） |
+
+执行者备注：本轮由两个 Sonnet 代理接力完成；第一个在等待一个 nohup 进程的"通知"时空转一天后被终止，第二个从账本接续。教训已写进下一轮的执行纪律：等待后台进程必须用会自行退出的后台循环。
