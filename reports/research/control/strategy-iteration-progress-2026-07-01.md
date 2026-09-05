@@ -658,3 +658,149 @@ gate for the same structural reason (downside capture near 1.0, i.e. barely
 defensive, while upside capture is well under 1.0). No further variant of this
 specific route was checked -- doing so would cross from "checking a named prior
 candidate" into "searching," which is out of scope for this wave.
+
+## Step 10 Mechanism Supplementation -- Three Families and a Combination, All Negative
+
+Full plan: `docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md` (v2.0).
+Full working ledger with every command, artifact path, and intermediate number:
+`reports/research/control/step10-2026-09-04-progress.md`. This section is the
+plan's own required closeout ("all candidates fail" branch, section 7): the
+honest negative-result record plus next-round direction, appended here per the
+plan's explicit instruction rather than left only in the working ledger.
+
+**Context**: after the champion TQQQ router was retired (goal-first W3/W9 above)
+and the daily paper cycle stopped, this round asked whether any *unlevered*
+mechanism family -- volatility-managed beta exposure, cross-asset ETF trend
+following, PIT-liquidity-filtered cross-sectional momentum, or a preregistered
+combination of these -- could clear a promotion bar. Doing that honestly first
+required fixing the promotion bar itself: `config/promotion/kernel-paper-tier-
+gates.json` requires `cagr_excess_qqq >= 5pp` against un-levered QQQ, which was
+calibrated for a 3x-leveraged Nasdaq router and auto-fails any un-levered
+strategy regardless of merit (QQQ's own trailing CAGR is ~20%/yr, so clearing
++5pp on top of it means beating 25%/yr unlevered). Fixed by preregistering
+`config/promotion/unlevered-family-paper-tier-gates.json` *before* any
+evaluation ran: same structure, but the benchmark is volatility-matched to the
+candidate first (`benchmark_vm = w*benchmark + (1-w)*BIL`,
+`w = realized_vol(candidate)/realized_vol(benchmark)`), asking "does this beat
+its own risk-matched benchmark by a material margin" instead of "does this beat
+an un-levered benchmark by an amount only a levered strategy could plausibly
+clear." `max_drawdown_minimum` was also tightened from -65% to -35% (QQQ/SPY's
+own ten-year worst drawdown), since a -65% bar made no sense for a family that
+never levers up.
+
+### Best result per family, and exactly how far it is from passing
+
+| Family | Best candidate | `cagr_excess_vol_matched_benchmark` (>= 5pp) | `sharpe_excess_bil` (> 1.0) | Gates passed |
+|---|---|---:|---:|---:|
+| F1 beta exposure (`beta_exposure_router`) | C12: QQQ, SMA200 trend, -15% drawdown stop, no vol target | **+0.99pp** | **0.589** | 6/8 |
+| F2 cross-asset ETF trend (standalone kernel mechanism, not yet routable) | lookback=6mo, top_n=5, equal-weight | **+1.33pp** | **0.648** | 6/8 |
+| W2 PIT liquid-500 cross-sectional momentum (research track) | top_fraction=0.10, monthly rebalance | **-3.42pp** | **0.474** | 3/8 |
+| Wave 3 combination (inverse-vol, F1+F2, W2 excluded on correlation) | ~54%/F2, ~46%/F1 average weight | **+2.44pp** | **0.743** | 6/8 |
+
+**Root cause, same across every family**: every mechanism this round only ever
+*reduces* exposure relative to its benchmark (trend/volatility/drawdown gates,
+selecting a top-decile momentum sleeve instead of the whole market, rotating
+into cash) -- none of them adds leverage or genuine cross-sectional alpha large
+enough to clear a 5-percentage-point CAGR margin once compared at *matched*
+realized volatility. De-levering by itself is not a source of excess return;
+it just changes which benchmark is the fair comparison. `sharpe_excess_bil`
+tells the same story from a different angle: every family's best candidate is
+in the 0.47-0.75 range, meaningfully positive but well under the 1.0 bar this
+project has used for every strategy frozen after 2026-08-15 (`AGENTS.md`).
+
+**W2 is the one family that is also short on `benchmark_vm_capture_ratio`**
+(new capture-ratio definition, see the methodology note below) -- its best
+candidate runs at roughly 2x SPY's realized volatility (`vol_match_weight`
+1.9-2.2 across its 4 candidates), so its volatility-matched benchmark is
+itself close to 2x-levered SPY, and the candidate's own CAGR does not keep up
+with that levered benchmark. F1 and F2, by contrast, both cleared the capture
+gate for most of their candidates once the definition was fixed (see below) --
+their remaining gap is specifically on excess CAGR and Sharpe, not on capture
+asymmetry.
+
+**Wave 3's preregistered combination (F1 + F2, inverse-vol weighted, monthly
+rebalanced) is this round's one genuinely interesting result**: it does not
+pass either, but it improves on *both* of the two blocking metrics relative to
+either single sleeve (Sharpe-ex-BIL 0.743 vs 0.589/0.648; excess CAGR +2.44pp
+vs +0.99pp/+1.33pp), and beats both of its own constituent sleeves' own
+`max_drawdown` (-9.89% vs C12's -15.58% and F2's own -11.14%) and `mar` (1.206
+vs 0.762 and 0.994) -- not the best of every candidate evaluated this round
+(several off-sleeve grid points in F1 and F2 have smaller drawdowns on their
+own, e.g. F2's `top_n=all` variants sit near -6% to -11% MaxDD, just with lower
+Sharpe/CAGR than the candidates actually selected into the combination). W2 was
+excluded from the combination purely
+on correlation (0.71 with F2, over the 0.5 cap) -- not because it is weak in
+isolation. This is the first direct evidence in this project that
+diversification moves a candidate toward (not just around) its promotion
+gates; it just was not enough, with only two sleeves, this time.
+
+### A methodology lesson worth carrying forward on its own
+
+Mid-round, every single candidate across F1 (24/24) and F2 (12/12) failed
+`benchmark_vm_capture_ratio` -- a 100% failure rate across two unrelated
+mechanisms and 36 different parameter combinations. That uniformity was itself
+the tell that the metric, not the candidates, was broken: the ratio was built
+on `campaign._conditional_capture`'s *total compounded return* over the
+up-day/down-day subset of a >1,000-row stitched OOS window, which decays
+geometrically with sample size for any candidate with beta materially below
+1.0 (which every candidate here is, by construction). Fixed by scoring capture
+on each side's *per-period geometric mean* return instead (the standard
+Morningstar-style definition, invariant to window length) -- full derivation
+and before/after numbers in
+`reports/research/control/step10-2026-09-04-progress.md`'s "度量修正" section.
+After the fix, 24/24 (F1) and 9/12 (F2) candidates pass that specific gate; the
+economic conclusion (fails on excess CAGR / Sharpe) is unchanged, since those
+metrics never depended on the broken definition. **General lesson for future
+rounds**: a promotion gate that fails 100% of a large, diverse candidate set is
+worth auditing as a possible measurement artifact before it is read as a
+uniform verdict on the mechanism.
+
+### Next-round direction
+
+1. **F2 (cross-asset ETF trend) cannot be routed to the paper cycle today.**
+   `core_beta_satellite_router` cannot express a 10-ETF, BIL-overlaid,
+   time-series-momentum rotation: its `core_route_label()` hard-codes the core
+   leg to QQQ/TQQQ/CASH via an f-string, `universe_mode` is a label
+   `_target_snapshot` never reads, and the satellite sleeve is sized as a small
+   additive tilt (`satellite_budget` ~10%) rather than the dominant
+   construction this mechanism needs. **Making the core leg support an
+   arbitrary symbol (and the router read `universe_mode` for something other
+   than a label) is the concrete prerequisite** before F2 -- or anything
+   shaped like it -- can reach the paper cycle, independent of whether F2
+   itself ever clears the promotion bar. This is a router-engine change, not a
+   parameter change, and was out of scope to make unilaterally this round.
+2. **Intraday momentum, paper-exact entry rule, deferred from this round**:
+   full specification already written and not yet built --
+   `docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md` section 8.
+   Noise band `sigma_t(d)` = trailing-14-day mean of `|close/open_d' - 1|` at
+   the same bar-of-day, upper bound `max(open_d, close_{d-1})*(1+sigma_t)`,
+   checked at every 5-minute bar close; exit variants {hold to close, band
+   reversion stop, profit target x{1.0, 1.5, 2.0}, time stop {6, 12} bars};
+   uses `data/sip-hist/minute` (2016-2022, backfill completed 2026-09-04) +
+   `data/sip/minute` (2023-2026) read as two separate roots and concatenated,
+   never merged on disk. Needs `sip_parquet` to gain minute-timeframe support
+   before it can reach the paper cycle even if it passes.
+3. **Cross-sectional momentum product mapping** (target-weights identity for
+   `cross_sectional_momentum` mode) is still not built -- moot this round
+   since W2 did not pass, but still the prerequisite the moment any
+   cross-sectional candidate does.
+4. **Diversification is worth pursuing further, not abandoned**: Wave 3 showed
+   a real (if insufficient) lift from combining two ~0.4-correlated sleeves.
+   The natural next step is finding a genuinely different third mechanism
+   (not another momentum-flavored one -- F2 and W2 correlate at 0.71 for
+   exactly that reason) uncorrelated with both F1 and F2, rather than
+   re-combining the same three families.
+5. Deferred, unblocked, low-effort items from plan section 8 that remain
+   worth doing independent of any candidate passing: `run_daily_paper_cycle.py
+   --data-source sip_parquet` (the SIP archive now updates incrementally, so
+   research-identical data could drive paper trading directly instead of a
+   second Alpaca API read); Telegram alert delivery once the user supplies a
+   bot token.
+
+**Bottom line**: no candidate from this round is paper-ready or close to it.
+The new unlevered-family gate contract did its job -- it discriminated real
+differences (F1/F2 pass 6/8 gates and are within single-digit percentage
+points and low tenths of a Sharpe point of the two blocking gates; W2 passes
+only 3/8 and is further away) instead of auto-failing everything the way the
+old leveraged contract would have. Nothing was activated, no paper order was
+placed, and no account was touched.

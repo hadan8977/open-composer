@@ -24,7 +24,7 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave 1 / F2 跨资产趋势 | **done**（负结果，0/12 通过新合同；捕获比定义修正后 9/12 过捕获门；不可路由，走独立内核机制） | `fad4b89`（首次评估、代码、来源卡）+ `cdd4379`（捕获比定义修正、重评分、`step10-w1-cross-asset-trend-2026-09.md`） |
 | Wave 2 / PIT 流动性过滤横截面动量 | **done**（负结果，0/4 通过新合同；捕获比定义修正后仍不过，是三族里唯一捕获门本身也没过的） | `cdd4379` |
 | Wave 3 / 预注册组合 | **done**（负结果但有正向信号：8门过6，Sharpe/超额CAGR比任一单sleeve更接近门槛） | `63c76d3` |
-| Wave 4 / 晋级或负结果记录 | todo | - |
+| Wave 4 / 晋级或负结果记录 | **done**（无候选晋级；负结果记录追加进 `strategy-iteration-progress-2026-07-01.md`） | 本 commit（Wave 4） |
 
 ---
 
@@ -394,4 +394,32 @@ uv run python scripts/evaluate_cross_asset_trend_sip.py
 
 ## Wave 4 / 晋级或负结果记录
 
-状态：todo
+状态：**done（负结果记录）**。
+
+### 判断
+
+F1、F2、W2、Wave 3 组合**全部未通过新合同**（F1/F2/组合 8 门过 6，W2 8 门过 3），按计划 §7 最后一段的分支：不做产品晋级路径（没有候选可晋级），改为在 `reports/research/control/strategy-iteration-progress-2026-07-01.md` 追加一节诚实负结果记录。已完成：新增 "## Step 10 Mechanism Supplementation -- Three Families and a Combination, All Negative" 一节（英文，与该文件既有语言一致；该文件是追加式日志，"Current State" 顶部小节按既有惯例不回写，只在文末追加）。内容涵盖：
+
+- 新合同为什么存在（旧合同对非杠杆策略结构性不公平的原因）。
+- 每个族最好候选的具体数字与离哪道门多远（表格：`cagr_excess_vol_matched_benchmark`、`sharpe_excess_bil`、通过门数）。
+- 统一的根因判断：本轮所有机制都只会降低敞口（趋势/波动率/回撤门控、选前十分位而非全市场、轮动进现金），降杠杆本身不产生超额收益；换成风险匹配基准后这一点更清楚。
+- W2 单独多失败一道门（`benchmark_vm_capture_ratio`）的原因：该族波动率约为 SPY 两倍，风险匹配基准本身接近两倍杠杆 SPY，候选追不上。
+- Wave 3 组合是本轮唯一的"分散化把候选推向门槛"的直接证据，虽然仍不通过。
+- 捕获比旧定义缺陷作为独立的方法论教训（"一个门槛让一整个族 100% 失败，本身就是该查量尺而不是查策略的信号"）。
+- 下一轮方向建议（按任务指示要求的三项 + 计划 §8 其余项）：
+  1. F2 要接入产品需要先把 `core_beta_satellite_router` 的 core 腿改成支持任意标的（`core_route_label()` 目前把核心腿硬编码进 f-string），这是路由引擎改动，不是参数改动，本轮未擅自做。
+  2. 日内动量、论文口径入场的完整规格（噪声带公式、出场变体、双数据 root 读取方式）照抄计划 §8，作为下一轮第一项。
+  3. 横截面动量的产品目标权重映射仍未建（本轮 W2 没过，暂不紧急，但下一轮任何横截面候选一旦通过就立刻需要）。
+  4. 建议继续找与 F1、F2 都低相关的第三个 sleeve（不是另一个动量类机制——F2 和 W2 相关性 0.71 正是因为两者都是"顺势做多"类），而不是重新组合这三个族。
+  5. `run_daily_paper_cycle.py --data-source sip_parquet` 选项、Telegram 告警送达，仍是低成本待办，独立于本轮任何候选是否通过。
+
+### 未触碰的东西（按计划 §10 禁止事项与 §7 用户决策边界）
+
+- 没有把任何候选的 `lifecycle` 改成 `active`。
+- 没有提交任何模拟盘订单，没有动旧账号。
+- 没有生成新账号相关的任何操作（本轮没有候选走到这一步）。
+- `strategy_specs/active/` 保持为空（Wave 0 已确认的状态，本轮没有改变）。
+
+### blocked_on_user
+
+- 无——本轮没有候选到达"只剩用户决策"的地步，所以第 7 节要求的"账本里列出用户需要做的事（批准、凭据）"这一条本身不适用（该条只在有候选通过时触发）。用户仍然可以随时查看 `strategy-iteration-progress-2026-07-01.md` 的新增小节了解全貌，但没有需要用户当下拍板的事项。
