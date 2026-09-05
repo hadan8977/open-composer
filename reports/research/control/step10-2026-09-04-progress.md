@@ -20,13 +20,11 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave 0 / 3.2 策略族门槛合同 | done | `5e61b08` |
 | Wave 0 / 3.3 SIP 档案增量更新 + cron | **done**（含真实首次运行验收，`stale: []`） | `3d6f42b`, `8a99902`（首次真实更新记录） |
 | 全仓库回归修复（3.3 引起，Wave 1 之前） | done | `f53d34d`（+ `ed2d755` 记录） |
-| Wave 1 / F1 beta 暴露族 | **done**（负结果，0/24 通过新合同；捕获比定义修正后 24/24 过捕获门，超额CAGR/Sharpe仍不过） | `fad4b89`（首次评估、代码、来源卡）+ 本 commit（捕获比定义修正、重评分、`step10-w1-beta-exposure-2026-09.md`） |
-| Wave 1 / F2 跨资产趋势 | **done**（负结果，0/12 通过新合同；捕获比定义修正后 9/12 过捕获门；不可路由，走独立内核机制） | `fad4b89`（首次评估、代码、来源卡）+ 本 commit（捕获比定义修正、重评分、`step10-w1-cross-asset-trend-2026-09.md`） |
-| Wave 2 / PIT 流动性过滤横截面动量 | **done**（负结果，0/4 通过新合同；捕获比定义修正后仍不过，是三族里唯一捕获门本身也没过的） | 本 commit |
+| Wave 1 / F1 beta 暴露族 | **done**（负结果，0/24 通过新合同；捕获比定义修正后 24/24 过捕获门，超额CAGR/Sharpe仍不过） | `fad4b89`（首次评估、代码、来源卡）+ `cdd4379`（捕获比定义修正、重评分、`step10-w1-beta-exposure-2026-09.md`） |
+| Wave 1 / F2 跨资产趋势 | **done**（负结果，0/12 通过新合同；捕获比定义修正后 9/12 过捕获门；不可路由，走独立内核机制） | `fad4b89`（首次评估、代码、来源卡）+ `cdd4379`（捕获比定义修正、重评分、`step10-w1-cross-asset-trend-2026-09.md`） |
+| Wave 2 / PIT 流动性过滤横截面动量 | **done**（负结果，0/4 通过新合同；捕获比定义修正后仍不过，是三族里唯一捕获门本身也没过的） | `cdd4379` |
 | Wave 3 / 预注册组合 | todo | - |
 | Wave 4 / 晋级或负结果记录 | todo | - |
-
-**接续执行者请注意**：本表的 commit 列里出现"本 commit"，是因为本次写账本时这次 commit 自己的哈希还不知道（不能自引用）；写完本节后会立即提交，随后再用一个小的纯文档 commit（沿用 `ed2d755`/`8a99902` 已经用过的模式）把"本 commit"替换成真实哈希。如果你读到这里时表里仍写着"本 commit"而不是哈希，说明那个收尾小 commit 还没做，直接 `git log --oneline` 找最新一条 `feat: rescore Step 10 Wave 1/2 under the fixed capture-ratio definition...`（或类似字样）即可。
 
 ---
 
