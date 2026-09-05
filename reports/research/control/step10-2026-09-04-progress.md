@@ -18,13 +18,66 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 |---|---|---|
 | Wave 0 / 3.1 轻量迭代路径 | done | `16feec3` |
 | Wave 0 / 3.2 策略族门槛合同 | done | `5e61b08` |
-| Wave 0 / 3.3 SIP 档案增量更新 + cron | **done**（含真实首次运行验收，`stale: []`） | `3d6f42b` |
-| 全仓库回归修复（3.3 引起，Wave 1 之前） | done | `f53d34d` |
-| Wave 1 / F1 beta 暴露族 | done（负结果，0/24 通过新合同） | 待提交 |
-| Wave 1 / F2 跨资产趋势 | done（负结果，0/12 通过新合同；不可路由，走独立内核机制） | 待提交 |
-| Wave 2 / PIT 流动性过滤横截面动量 | todo | - |
+| Wave 0 / 3.3 SIP 档案增量更新 + cron | **done**（含真实首次运行验收，`stale: []`） | `3d6f42b`, `8a99902`（首次真实更新记录） |
+| 全仓库回归修复（3.3 引起，Wave 1 之前） | done | `f53d34d`（+ `ed2d755` 记录） |
+| Wave 1 / F1 beta 暴露族 | **done**（负结果，0/24 通过新合同；捕获比定义修正后 24/24 过捕获门，超额CAGR/Sharpe仍不过） | `fad4b89`（首次评估、代码、来源卡）+ 本 commit（捕获比定义修正、重评分、`step10-w1-beta-exposure-2026-09.md`） |
+| Wave 1 / F2 跨资产趋势 | **done**（负结果，0/12 通过新合同；捕获比定义修正后 9/12 过捕获门；不可路由，走独立内核机制） | `fad4b89`（首次评估、代码、来源卡）+ 本 commit（捕获比定义修正、重评分、`step10-w1-cross-asset-trend-2026-09.md`） |
+| Wave 2 / PIT 流动性过滤横截面动量 | **done**（负结果，0/4 通过新合同；捕获比定义修正后仍不过，是三族里唯一捕获门本身也没过的） | 本 commit |
 | Wave 3 / 预注册组合 | todo | - |
 | Wave 4 / 晋级或负结果记录 | todo | - |
+
+**接续执行者请注意**：本表的 commit 列里出现"本 commit"，是因为本次写账本时这次 commit 自己的哈希还不知道（不能自引用）；写完本节后会立即提交，随后再用一个小的纯文档 commit（沿用 `ed2d755`/`8a99902` 已经用过的模式）把"本 commit"替换成真实哈希。如果你读到这里时表里仍写着"本 commit"而不是哈希，说明那个收尾小 commit 还没做，直接 `git log --oneline` 找最新一条 `feat: rescore Step 10 Wave 1/2 under the fixed capture-ratio definition...`（或类似字样）即可。
+
+---
+
+## 度量修正：`benchmark_vm_capture_ratio` 的定义缺陷（原因、数学、影响范围）
+
+**发现过程**：接手时（本节作者，2026-09-05）核对上一位执行者未提交的工作树改动，发现 F1（beta 暴露族）24 个候选、F2（跨资产趋势）12 个候选**全部**在 `benchmark_vm_capture_ratio` 门（门槛 ≥1.0）上失败，跨越两个完全不同的机制、不同的参数组合，失败率 100%。这种整齐划一的失败本身就是可疑信号——真实的经济效应很少会让所有参数组合精确地卡在同一道门上，更可能是量出了问题，不是策略出了问题。上一位执行者已经诊断出根因并写好了修复代码和回归测试，但会话中止于重跑 F1 之后、重跑 F2 与 Wave 2 之前，也没有提交。本节把这次修正的原因、数学、验证方式完整记录下来，供任何人复核。
+
+### 旧定义错在哪
+
+`benchmark_vm_capture_ratio`/`benchmark_vm_downside_capture` 复用了 `campaign._conditional_capture`——这个函数原本是给 `kernel-paper-tier-gates.json`（TQQQ 路由合同）设计的，它的算法是：
+
+1. 找出基准（QQQ 或波动率匹配后的合成基准）上涨的那些交易日（或下跌的那些交易日）；
+2. 在这个子集上，把候选和基准各自的**逐日收益按顺序复利乘起来**（`_compound_return`：`exp(sum(log1p(r) for r in subset)) - 1`），得到子集内的总复利收益；
+3. 两个总复利收益相除。
+
+问题在于：**总复利收益是样本量的指数函数**。设子集里有 N 天，候选在这些天的平均对数收益是基准的 β 倍（即候选相对基准的"局部 beta"是 β），基准每天的平均对数收益是 μ。那么：
+
+- 基准总复利 ≈ `exp(N·μ) − 1`
+- 候选总复利 ≈ `exp(N·β·μ) − 1`
+- 两者相除，N 较大时 ≈ `exp(N·(β−1)·μ)`（分母主导）
+
+只要 β<1（候选比基准更保守，本轮所有候选都是这种构造——趋势/波动率/回撤门控只会降低敞口，不会放大），指数 `N·(β−1)·μ` 是负的，且**随 N 线性增长而指数级恶化**。本轮的拼接 OOS 窗口有上千行（F1/F2 约 1170-1180 行，一半左右是"基准上涨日"，即 N≈500-600），这个子集大到足以让这个 artefact 主导结果，而不是真实的"捕获不对称性"。
+
+**这不是"候选真的没有捕获能力"，而是"总复利比值这把尺子在长窗口上失效了"**。一个反例最能说明问题：一个零 alpha、精确按 β=0.5 复制基准的合成策略——每天收益恰好是基准的一半——直觉上应该读作"捕获比 ≈1.0"：它在基准上涨的日子里按比例少涨，在基准下跌的日子里也按比例少跌，涨跌两侧对称地打了同样的折扣，`upside_capture ≈ downside_capture`，比值应该抵消掉 β 本身、只剩下"是否对称"这一个信息。但旧定义在 1000 天的合成序列上会把这个理论上该是 1.0 的比值算成远低于 0.5（`tests/test_mechanism_eval.py::test_geometric_mean_capture_ratio_is_beta_invariant_unlike_the_compounded_one` 里的断言 `compounded_ratio < 0.5` 已经验证过这一点）——因为分子分母的"总复利"本身就已经不对称地放大了指数衰减效应。
+
+### 新定义
+
+把"总复利"换成"**每期几何平均收益**"（`_per_period_geometric_mean_return`：`expm1(mean(log1p(r) for r in subset))`），其余步骤不变（同样先按基准涨跌分子集，同样两边相除）。几何平均收益**不随子集大小变化**——不管 N 是 100 还是 1000，一个 β=0.5 的纯复制品在上涨子集和下跌子集上的每期几何平均收益都分别约等于基准对应子集的 β 倍，两者相除，β 自己就约掉了，比值稳定在 ≈1.0（`abs=0.05` 容差内）。这是 Morningstar 的标准"捕获比"定义,也是这个指标在业界原本要回答的问题："候选相对自己的整体风险水平,上涨捕获得多不多、下跌捕获得多不多",而不是"候选的绝对波动大小"。
+
+### 修复范围（刻意最小化）
+
+- 新增 `open_composer/research/kernel/mechanism_eval.py::_per_period_geometric_mean_return` 与 `_conditional_geometric_mean_capture`，只在 `evaluate_candidate` 的 `benchmark_returns is not None`（即 Step 10 新增的 vol-matched 路径）分支内使用。
+- **不改** `campaign._conditional_capture` 本身——它是 `kernel-paper-tier-gates.json`（杠杆 TQQQ 路由合同）路径的冻结证据，改了会让 `iteration_dossier.py` 的实现哈希锁（`e37b3125…`）与 `mom_breadth_qd_r1` 的封存记录产生新的漂移。`benchmark_returns=None` 的旧路径（QQQ 绝对合同）逐字节不变，由 `test_benchmark_returns_none_keeps_the_existing_qqq_path_byte_for_byte` 保证。
+- 旧定义的值原地保留在新字段 `benchmark_vm_capture_ratio_compounded_legacy`，只做对照展示，从不参与任何裁定。
+- 新增字段 `benchmark_vm_upside_capture`（之前只算了比值,没有单独暴露分子）。
+
+### 实际影响（用真实候选数字说话，不是假设）
+
+以 F1 最好的候选 C12 为例（`reports/research/control/step10-w1-beta-exposure-2026-09.json`）：`benchmark_vm_capture_ratio_compounded_legacy=0.2007`（旧定义,远低于 1.0,像是"完全没有捕获能力"）→ `benchmark_vm_capture_ratio=1.1162`（新定义,通过 ≥1.0 门槛）。三个族的汇总：
+
+| 族 | 候选数 | 捕获门修正前通过数 | 修正后通过数 |
+|---|---:|---:|---:|
+| F1 beta 暴露 | 24 | 0 | **24**（全过） |
+| F2 跨资产趋势 | 12 | 0 | **9** |
+| Wave 2 liquid-500 横截面动量 | 4 | 0 | 0（仍不过，见 Wave 2 小节——这个族波动率是 SPY 的约 2 倍,新定义下捕获比 0.97-0.999,非常接近但仍不到 1.0 门槛,不是同一种"完全没过"） |
+
+**三个族的最终裁定结论都没有变**：修正前后,`cagr_excess_vol_matched_benchmark`（超额 CAGR,门槛 ≥5pp）与 `sharpe_excess_bil`（门槛 >1.0）这两道真正卡住候选的门槛完全没有受这次修正影响（它们的计算路径与捕获比无关）,三个族依然是 0 候选通过全部门槛。这次修正**修的是量尺,不是结论**——但量尺错了会污染报告的可信度（"捕获比 0.2,像是这策略完全没有跟涨能力"是一个错误的、可能被后续读者误用的说法),所以仍然值得单独修、单独记录。
+
+### 验证
+
+`tests/test_mechanism_eval.py`：13 个测试全绿（原 12 个 + 新增的 `test_geometric_mean_capture_ratio_is_beta_invariant_unlike_the_compounded_one`），`uv run ruff format . && uv run ruff check .` 全绿。三个族（F1、F2、Wave 2）的重评分方法与结果见各自小节及 `step10-w1-beta-exposure-2026-09.md`、`step10-w1-cross-asset-trend-2026-09.md`、`step10-w2-cross-sectional-liquid500-2026-09.md`。
 
 ---
 
@@ -242,6 +295,10 @@ $ uv run oc research iteration validate goal_first_w5_qqq_momentum --stage pre-b
 - **结论与预注册的失败假说吻合**：路由的趋势/回撤/波动率门控确实压低了名义敞口和回撤，但换成"与候选自身已实现波动率相同"的基准比较后（而不是 100% 买入持有），超额 CAGR 和捕获比都不达标——去杠杆本身不是超额收益的来源。
 - 证据 JSON：`reports/research/control/step10-w1-beta-exposure-2026-09.json`。
 
+### 2026-09-05 更新：捕获比定义修正 + 正式报告
+
+上一位执行者中止会话前已经把 `mechanism_eval.py` 的捕获比公式改成每期几何平均定义（见本账本"度量修正"一节的完整数学），并用修正后的代码重跑出了当前这份 JSON（24/24 通过 `benchmark_vm_capture_ratio`/`benchmark_vm_downside_capture`，仍是 0/24 通过全部门槛）。本次会话核实了这份 JSON 已经是修正后的结果（`benchmark_vm_capture_ratio_compounded_legacy` 字段存在，C12 上是 0.2007，与修正前一致；新的 `benchmark_vm_capture_ratio` 是 1.1162），未重跑，直接据此写出正式报告 `reports/research/control/step10-w1-beta-exposure-2026-09.md`（含全部 24 候选按超额 CAGR 排序的表格、新旧捕获比并列、门槛通过分布、危机窗口与选择后诊断）。**结论不变**：0/24 通过新合同，最好的 C12 超额 CAGR +0.99pp（门槛 5pp），Sharpe-ex-BIL 0.589（门槛 1.0）。
+
 ### blocked_on_user
 
 - 无。
@@ -270,9 +327,21 @@ $ uv run oc research iteration validate goal_first_w5_qqq_momentum --stage pre-b
 - `raw_candidate_count=12`，`effective_n=1`（`breadth_ratio≈0.083`），`dsr_trial_count_used=2`（下限）。
 - **`candidates_passing_new_contract: []`——0/12 通过新合同。**
 - 新合同门槛失败分布：`cagr_excess_vol_matched_benchmark` 12/12、`benchmark_vm_capture_ratio` 12/12、`sharpe_excess_bil` 12/12、`mar` 3/12。
-- 最接近的候选（`lookback_months=6, top_n=5, weighting=equal`）：原始 CAGR 10.85%，但 `cagr_excess_vol_matched_benchmark=+0.0111`（<0.05 门槛）、`benchmark_vm_capture_ratio=0.5895`（<1.0 门槛）、`mar=0.9736`（通过）、`max_drawdown=-11.14%`，平均持仓约 105 天，在场天数占比 98.3%。旧合同下同样 `promotion_eligible=False`。
+- 最接近的候选（`lookback_months=6, top_n=5, weighting=equal`）：原始 CAGR 10.85%，但 `cagr_excess_vol_matched_benchmark=+0.0111`（<0.05 门槛）、`benchmark_vm_capture_ratio=0.5895`（<1.0 门槛，**修正前的旧定义值，见下**）、`mar=0.9736`（通过）、`max_drawdown=-11.14%`，平均持仓约 105 天，在场天数占比 98.3%。旧合同下同样 `promotion_eligible=False`。
 - **结论与 F1 同一模式**：月度轮动确实降低了波动/回撤，但用"与候选已实现波动率相同"的 SPY 基准比较后，超额收益和捕获比不达标；换成对波动率敏感的比较标准后，"更平滑的净值曲线"本身不足以构成晋级理由。
-- 证据 JSON：`reports/research/control/step10-w1-cross-asset-trend-2026-09.json`。
+
+### 2026-09-05 更新：捕获比定义修正 + 重跑 + 正式报告
+
+上一位执行者中止会话前只重跑了 F1，没来得及重跑 F2——本次会话接手时磁盘上**完全没有** F2 的证据 JSON（`step10-w1-cross-asset-trend-2026-09.json` 不存在，仓库全文搜索、`/tmp` 都没有），只有账本里这段用旧捕获比定义写的文字记录。F2 的评估脚本本身不依赖 DuckDB、数据量小（11 个标的的日收益），重跑成本是秒级，所以直接用已经修正的 `mechanism_eval.py` 重跑：
+
+```
+export PATH="$HOME/.local/bin:$PATH"; export UV_CACHE_DIR=/tmp/open-composer-uv-cache
+uv run python scripts/evaluate_cross_asset_trend_sip.py
+```
+
+重跑用的数据窗口比上次（`2016-01-05` 至 `2026-08-31`）多了几个交易日（SIP 日线增量更新已经推进到 `2026-09-04`），所以最好候选的具体数字与上面这段旧文字略有出入（CAGR 11.08% vs 10.85%，超额 CAGR +1.33pp vs +1.11pp），但结论完全一致。新结果：**捕获比修正后 9/12 通过 `benchmark_vm_capture_ratio`（旧定义 0/12），仍是 0/12 通过全部门槛**——最好候选（`lookback_months=6, top_n=5, weighting=equal`）新定义捕获比 1.058（旧定义 0.5915），`cagr_excess_vol_matched_benchmark=+0.0133`、`sharpe_excess_bil=0.648`，两者仍分别远低于 5pp、1.0 门槛。正式报告：`reports/research/control/step10-w1-cross-asset-trend-2026-09.md`（含全部 12 候选表格、新旧捕获比并列、危机窗口、选择后诊断——后者这次是正的：+27.6% CAGR vs SPY +21.7%，42 天样本，非门槛）。
+
+- 证据 JSON：`reports/research/control/step10-w1-cross-asset-trend-2026-09.json`（2026-09-05 重新生成）。
 
 ### blocked_on_user
 
@@ -280,7 +349,28 @@ $ uv run oc research iteration validate goal_first_w5_qqq_momentum --stage pre-b
 
 ## Wave 2 / PIT 流动性过滤横截面动量
 
-状态：todo
+状态：**done（负结果）**。正式报告：`reports/research/control/step10-w2-cross-sectional-liquid500-2026-09.md`（完整方法、PIT 过滤说明、幸存者偏差重测、内存超预算记录、捕获比重评分方法、全部 4 候选表格）。本节只记要点，细节一律以报告为准，不重复。
+
+### 做了什么
+
+- 上一位执行者已经写好并跑过 DuckDB 管线（`scripts/evaluate_cross_sectional_momentum_liquid500.py`、`scripts/duckdb_survivorship_bias_comparison_liquid500.py`，两者均未提交，本次一并入库）：PIT 流动性过滤（每月末用≤当日的 60 日滚动美元 ADV 取前 500，`close>5` 同样按月末时点评估，不用单一窗口套全历史）、4 组网格（`top_fraction∈{0.10,0.15} × rebalance_stride_months∈{1,2}`）、幸存者偏差在 liquid-500 内重测（`active_only` vs `active_plus_removed`，两个独立排名，不拼接）。
+- **内存**：正式评估脚本峰值 RSS **1,323.3MB**，幸存者重测脚本峰值 **1,262.0MB**，均超出脚本内 DuckDB `memory_limit=900MB` 与报告目标 1,000MB——如实记录，未收紧过滤力度去凑数（计划明令禁止）。两次都在 3.8GB 机器上跑完，未 OOM，但不代表可以和别的重负载任务并发。
+- **幸存者偏差重测结果**：CAGR 差 -0.12pp、Sharpe 差 -0.002，判定"非材料性"，但**结论范围限定为 liquid-500 动量族**（大市值代理），不是横截面动量幸存者偏差的一般性结论——W6 更早的无流动性过滤版本已经证明这个结论在更宽的设定下不成立，两者不矛盾。
+
+### 捕获比重评分（未重跑 DuckDB）
+
+原始 JSON（09-04 07:47 UTC 产出，早于捕获比修正）已经按计划要求持久化了每个候选的 `oos_return_stream`/`oos_dates`/`vol_match_weight`。由于本次修正只改变 `benchmark_vm_capture_ratio`/`benchmark_vm_downside_capture` 两个字段的计算公式，其余全部指标的输入和公式都未变，本次会话没有重跑 DuckDB 管线（1.3GB 峰值内存，重跑无必要的开销），而是写了一个一次性脚本（未入库，逻辑记录于 `step10-w2-cross-sectional-liquid500-2026-09.md` 第 4 节）：读原 JSON 持久化的 `oos_return_stream`/`oos_dates`/`vol_match_weight`，加一次新鲜的 SPY/BIL 读取重建波动率匹配基准，直接调用修正后的生产函数 `mechanism_eval._conditional_geometric_mean_capture`（不是重新实现数学）算出新捕获比，再用新合同门槛重新判定这两道门与总裁定，原地写回同一份 JSON 路径。**已知的口径误差**：SPY/BIL 是"现在"读取的，SIP 日线档案在原始跑批后经历过至少一次每日增量更新（2 交易日回看窗口的迟到修正），理论上 OOS 窗口末尾几天可能有 basis-point 级差异，但因为四个候选修正后的捕获比（0.97-0.999）离门槛（1.0）的差距远大于这种量级的噪声，不影响裁定。
+
+### 结果（诚实负结果）
+
+- **`candidates_passing_new_contract: []`——0/4 通过新合同。**
+- 捕获比修正后 `benchmark_vm_capture_ratio` 从旧定义的 0.09-0.19 升到新定义的 0.97-0.999——大幅改善但**仍全部 <1.0**，是本轮三个族里唯一一个捕获门本身也没有通过的（F1 全过、F2 9/12 过）。四个候选 `vol_match_weight` 都在 1.93-2.22（候选波动率接近 SPY 两倍），`cagr_excess_vol_matched_benchmark` 全部为负（-3.42pp 至 -8.59pp）、`sharpe_excess_bil` 最高只有 0.474、`mar` 最高只有 0.386，`max_drawdown` 4 个里 3 个不过（-34.0% 到 -40.6%）。
+- 危机窗口诊断出现了与 F1/F2 相反的模式：2020 疫情崩盘窗口跌幅（-38.4%）**大于**基准 SPY（-33.5%），2018Q4 同样跌幅更大——流动性前 500 的动量多头在这类极端流动性危机中不具备防御性。选择后窗口（2026-07-09 至 09-03，41 天）CAGR 普遍在 -37% 到 -55%，同期 SPY +25.2%，四个候选方向一致，如实记录。
+- 产品映射（`cross_sectional_momentum` 模式的目标权重身份）确认不在本周范围，本次结果也不改变这个判断——若某天这个族真通过了，才需要补映射。
+
+### blocked_on_user
+
+- 无。
 
 ## Wave 3 / 预注册组合
 

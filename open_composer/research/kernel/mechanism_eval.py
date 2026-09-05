@@ -38,6 +38,7 @@ import numpy as np
 import pandas as pd
 
 from open_composer.research.campaign import (
+    _UNMEASURABLE_DOWNSIDE_CAPTURE_RATIO,
     MIN_DSR_STREAM_ROWS,
     QQQ_ORTHOGONALITY_CORRELATION_THRESHOLD,
     recompute_candidate_promotion_metrics,
@@ -292,6 +293,59 @@ def expand_mechanism(
     return candidates
 
 
+def _per_period_geometric_mean_return(values: Sequence[float]) -> float:
+    """Geometric mean per-period return: ``expm1(mean(log1p(v) for v in values))``.
+
+    Invariant to how many periods are in ``values`` -- unlike a *total*
+    compounded return (``campaign._compound_return``, which sums ``log1p``
+    across the whole selected window), which grows exponentially with sample
+    size. Over a long stitched OOS window this made
+    ``campaign._conditional_capture``-based capture ratios collapse toward
+    zero for any candidate with materially fewer compounding days than its
+    benchmark on the selected up/down subset -- true even of a candidate that
+    is a pure, zero-alpha fractional-beta copy of the benchmark, which should
+    read as capture ratio 1.0 (see the vol-matched benchmark capture-ratio
+    fix in this module's evaluate_candidate for the full context; that fix
+    intentionally does not touch campaign._conditional_capture itself, which
+    remains frozen evidence for the existing kernel-paper-tier-gates.json
+    contract path).
+    """
+    if not values:
+        raise ValueError("geometric mean return requires at least one value")
+    mean_log_return = math.fsum(math.log1p(value) for value in values) / len(values)
+    return math.expm1(mean_log_return)
+
+
+def _conditional_geometric_mean_capture(
+    candidate_returns: Sequence[float],
+    benchmark_returns: Sequence[float],
+    *,
+    positive: bool,
+) -> float:
+    """Same up-day/down-day selection rule as ``campaign._conditional_capture``,
+    but each side's aggregate is a per-period geometric mean return rather
+    than a total compounded return over the selected window -- the standard
+    (Morningstar-style) capture-ratio convention, and the one that is
+    actually invariant to the length of the stitched OOS window.
+    """
+    selected = [
+        index
+        for index, value in enumerate(benchmark_returns)
+        if (value > 0.0 if positive else value < 0.0)
+    ]
+    if not selected:
+        raise ValueError("conditional capture benchmark subset is empty")
+    candidate_mean = _per_period_geometric_mean_return(
+        [candidate_returns[index] for index in selected]
+    )
+    benchmark_mean = _per_period_geometric_mean_return(
+        [benchmark_returns[index] for index in selected]
+    )
+    if math.isclose(benchmark_mean, 0.0, rel_tol=0.0, abs_tol=1e-15):
+        raise ValueError("conditional capture benchmark denominator is zero")
+    return candidate_mean / benchmark_mean
+
+
 def evaluate_candidate(
     candidate: Candidate,
     *,
@@ -406,10 +460,42 @@ def evaluate_candidate(
             development_fold_returns=candidate.oos_fold_returns,
             annualization_sessions=annualization_sessions,
         )
+        # Capture ratio and downside capture are NOT taken from
+        # raw_vm_metrics's qqq_capture_ratio/qqq_downside_capture: those come
+        # from campaign._conditional_capture, a TOTAL-compounded-return ratio
+        # over the selected up/down subset. Over a long stitched OOS window
+        # (hundreds of rows) that measure grows exponentially with sample
+        # size and stops measuring capture asymmetry at all -- a candidate
+        # that is a pure, zero-alpha fractional-beta copy of its benchmark
+        # scores far below 1.0 on it for no reason related to capture
+        # asymmetry (verified: tests/test_mechanism_eval.py's synthetic
+        # beta=0.5 fixture). The per-period geometric-mean version below is
+        # the standard (Morningstar-style) definition and is invariant to
+        # window length; campaign._conditional_capture itself is left
+        # untouched since it is frozen evidence for the existing
+        # kernel-paper-tier-gates.json contract path.
+        vm_benchmark_values = vol_matched_benchmark.tolist()
+        vm_upside_capture = _conditional_geometric_mean_capture(
+            candidate.oos_return_stream, vm_benchmark_values, positive=True
+        )
+        vm_downside_capture = _conditional_geometric_mean_capture(
+            candidate.oos_return_stream, vm_benchmark_values, positive=False
+        )
+        if math.isclose(vm_downside_capture, 0.0, rel_tol=0.0, abs_tol=1e-12):
+            vm_capture_ratio = (
+                _UNMEASURABLE_DOWNSIDE_CAPTURE_RATIO if vm_upside_capture > 0.0 else 0.0
+            )
+        else:
+            vm_capture_ratio = vm_upside_capture / vm_downside_capture
         vm_metrics = {
             "cagr_excess_vol_matched_benchmark": float(raw_vm_metrics["cagr_excess_qqq"]),
-            "benchmark_vm_capture_ratio": float(raw_vm_metrics["qqq_capture_ratio"]),
-            "benchmark_vm_downside_capture": float(raw_vm_metrics["qqq_downside_capture"]),
+            "benchmark_vm_upside_capture": float(vm_upside_capture),
+            "benchmark_vm_downside_capture": float(vm_downside_capture),
+            "benchmark_vm_capture_ratio": float(vm_capture_ratio),
+            # Kept for side-by-side comparison only -- never gated on.
+            "benchmark_vm_capture_ratio_compounded_legacy": float(
+                raw_vm_metrics["qqq_capture_ratio"]
+            ),
             "benchmark_vm_correlation": float(raw_vm_metrics["qqq_correlation"]),
         }
 

@@ -8,12 +8,18 @@ multi-point search sharing one code path, and the VOL02 numerical regression.
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from open_composer.adapters.data.sip_parquet import default_sip_root
-from open_composer.research.campaign import recompute_candidate_promotion_metrics
+from open_composer.research.campaign import (
+    _UNMEASURABLE_DOWNSIDE_CAPTURE_RATIO,
+    _conditional_capture,
+    recompute_candidate_promotion_metrics,
+)
 from open_composer.research.campaign_statistics import (
     annualized_sharpe,
     deflated_sharpe_probability,
@@ -21,6 +27,7 @@ from open_composer.research.campaign_statistics import (
 from open_composer.research.kernel.mechanism_eval import (
     Candidate,
     Mechanism,
+    _conditional_geometric_mean_capture,
     evaluate_family,
     expand_mechanism,
 )
@@ -403,15 +410,36 @@ def _assert_vol_matched_metrics_match_manual_computation(
         development_fold_returns=candidate.oos_fold_returns,
         annualization_sessions=252,
     )
+    expected_blend_values = expected_blend.tolist()
+    expected_upside = _conditional_geometric_mean_capture(
+        candidate.oos_return_stream, expected_blend_values, positive=True
+    )
+    expected_downside = _conditional_geometric_mean_capture(
+        candidate.oos_return_stream, expected_blend_values, positive=False
+    )
+    if math.isclose(expected_downside, 0.0, rel_tol=0.0, abs_tol=1e-12):
+        expected_ratio = _UNMEASURABLE_DOWNSIDE_CAPTURE_RATIO if expected_upside > 0.0 else 0.0
+    else:
+        expected_ratio = expected_upside / expected_downside
+
     assert verdict.metrics["vol_match_weight"] == pytest.approx(expected_weight, rel=1e-9)
     assert verdict.metrics["cagr_excess_vol_matched_benchmark"] == pytest.approx(
         expected_metrics["cagr_excess_qqq"], rel=1e-9
     )
-    assert verdict.metrics["benchmark_vm_capture_ratio"] == pytest.approx(
-        expected_metrics["qqq_capture_ratio"], rel=1e-9
+    # benchmark_vm_capture_ratio/_downside_capture use the per-period
+    # geometric-mean definition (_conditional_geometric_mean_capture), NOT
+    # campaign's total-compounded _conditional_capture -- see mechanism_eval
+    # .evaluate_candidate's comment on why. The compounded numbers are still
+    # available, renamed, for side-by-side comparison only.
+    assert verdict.metrics["benchmark_vm_upside_capture"] == pytest.approx(
+        expected_upside, rel=1e-9
     )
     assert verdict.metrics["benchmark_vm_downside_capture"] == pytest.approx(
-        expected_metrics["qqq_downside_capture"], rel=1e-9
+        expected_downside, rel=1e-9
+    )
+    assert verdict.metrics["benchmark_vm_capture_ratio"] == pytest.approx(expected_ratio, rel=1e-9)
+    assert verdict.metrics["benchmark_vm_capture_ratio_compounded_legacy"] == pytest.approx(
+        expected_metrics["qqq_capture_ratio"], rel=1e-9
     )
     return expected_weight
 
@@ -481,6 +509,45 @@ def test_vol_matched_benchmark_weight_can_exceed_one_and_still_reuses_the_formul
     )
     assert weight > 1.0
     assert verdict.metrics["vol_match_weight"] > 1.0
+
+
+def test_geometric_mean_capture_ratio_is_beta_invariant_unlike_the_compounded_one() -> None:
+    """A pure, zero-alpha, fixed-beta=0.5 copy of its benchmark must read as
+    capture ratio ~1.0 under the per-period geometric-mean definition
+    (upside and downside capture both scale by ~beta, so their ratio cancels
+    beta out) -- the standard, Morningstar-style meaning of "capture ratio"
+    (does this candidate capture proportionally more upside than downside,
+    relative to its own beta, not "is its beta close to 1").
+
+    campaign._conditional_capture (a TOTAL compounded return over the
+    selected up/down subset, not a per-period average) fails this invariance
+    over a long window: with ~500 up-days and ~500 down-days out of 1000,
+    exponentiating a per-day gap of "half the benchmark's move" compounds
+    into a ratio far below the true 0.5 beta, let alone the 1.0 a capture
+    RATIO should read for a symmetric fixed-beta copy. This is exactly the
+    defect discovered reviewing Wave 1 (docs/plan-step-10-mechanism-
+    supplementation-2026-09-03.zh.md): every one of 36 candidates failed
+    benchmark_vm_capture_ratio, which turned out to be this definition
+    artifact, not evidence about any candidate's actual capture asymmetry.
+    """
+    rng = np.random.default_rng(20260905)
+    benchmark_returns = rng.normal(0.0006, 0.012, 1000).tolist()
+    beta = 0.5
+    candidate_returns = [beta * value for value in benchmark_returns]
+
+    geometric_upside = _conditional_geometric_mean_capture(
+        candidate_returns, benchmark_returns, positive=True
+    )
+    geometric_downside = _conditional_geometric_mean_capture(
+        candidate_returns, benchmark_returns, positive=False
+    )
+    geometric_ratio = geometric_upside / geometric_downside
+    assert geometric_ratio == pytest.approx(1.0, abs=0.05)
+
+    compounded_ratio = _conditional_capture(candidate_returns, benchmark_returns, positive=True) / (
+        _conditional_capture(candidate_returns, benchmark_returns, positive=False)
+    )
+    assert compounded_ratio < 0.5
 
 
 def test_benchmark_returns_none_keeps_the_existing_qqq_path_byte_for_byte() -> None:

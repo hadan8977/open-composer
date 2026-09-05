@@ -305,6 +305,14 @@ def main() -> None:
             "parameters": dict(params),
             "trading_activity": trading_activity,
             "stitched_oos_row_count": len(candidate.oos_return_stream),
+            # Wave 3 (docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md
+            # section 6) screens sleeves by sharpe_excess_bil >= 0.4 and pairwise
+            # OOS-return correlation <= 0.5 -- persisted here so that screening
+            # script can read it directly instead of re-running this whole
+            # evaluation a second time just to recover one field per candidate.
+            "sharpe_excess_bil": old_verdict.sharpe_excess_bil,
+            "oos_dates": candidate.oos_dates,
+            "oos_return_stream": candidate.oos_return_stream,
             "stitched_oos_start": candidate.oos_dates[0],
             "stitched_oos_end": candidate.oos_dates[-1],
             "new_contract": {
