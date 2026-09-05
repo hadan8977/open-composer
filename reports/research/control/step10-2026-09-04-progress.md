@@ -23,7 +23,7 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave 1 / F1 beta 暴露族 | **done**（负结果，0/24 通过新合同；捕获比定义修正后 24/24 过捕获门，超额CAGR/Sharpe仍不过） | `fad4b89`（首次评估、代码、来源卡）+ `cdd4379`（捕获比定义修正、重评分、`step10-w1-beta-exposure-2026-09.md`） |
 | Wave 1 / F2 跨资产趋势 | **done**（负结果，0/12 通过新合同；捕获比定义修正后 9/12 过捕获门；不可路由，走独立内核机制） | `fad4b89`（首次评估、代码、来源卡）+ `cdd4379`（捕获比定义修正、重评分、`step10-w1-cross-asset-trend-2026-09.md`） |
 | Wave 2 / PIT 流动性过滤横截面动量 | **done**（负结果，0/4 通过新合同；捕获比定义修正后仍不过，是三族里唯一捕获门本身也没过的） | `cdd4379` |
-| Wave 3 / 预注册组合 | **done**（负结果但有正向信号：8门过6，Sharpe/超额CAGR比任一单sleeve更接近门槛） | 本 commit（Wave 3） |
+| Wave 3 / 预注册组合 | **done**（负结果但有正向信号：8门过6，Sharpe/超额CAGR比任一单sleeve更接近门槛） | `63c76d3` |
 | Wave 4 / 晋级或负结果记录 | todo | - |
 
 ---
