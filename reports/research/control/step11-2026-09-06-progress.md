@@ -18,12 +18,12 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 
 | Wave | 状态 | commit |
 |---|---|---|
-| 账本初始化 | done | (本提交) |
+| 账本初始化 | done | `e515e7e`（随 3.1 一起入库） |
 | Wave A / 3.1 依赖 | done | `e515e7e` |
-| Wave A / 3.2 宇宙 | done | (本提交) |
-| Wave A / 3.3.1 分钟线日聚合（后台） | **doing（代码完成，真实回填进行中）** | (本提交，代码) |
+| Wave A / 3.2 宇宙 | done | `e6db857` |
+| Wave A / 3.3.1 分钟线日聚合（后台） | **doing（代码完成，真实回填进行中）** | `b3f2e26`（代码） |
 | Wave A / 3.4 评估函数、账本、tearsheet、MLflow | todo | |
-| Wave A / 3.3.2 日线特征 + 3.3.3 标签 | done（daily-only 部分；分钟线派生滚动列待 3.3.1 回填完成后补） | (本提交) |
+| Wave A / 3.3.2 日线特征 + 3.3.3 标签 | done（daily-only 部分；分钟线派生滚动列待 3.3.1 回填完成后补） | `b3f2e26` |
 | Wave A / 3.5 B0/B1/B2 | todo | |
 | Wave B / B3 网格、安慰剂、报告 | todo | |
 | Wave C / model_ranking_portfolio 模式 | todo | |
