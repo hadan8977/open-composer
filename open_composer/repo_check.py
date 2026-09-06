@@ -62,6 +62,7 @@ CURRENT_DOCS = {
     "docs/plan-goal-first-verification-2026-09-02.zh.md",
     "docs/conclusion-goal-first-2026-09-03.zh.md",
     "docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md",
+    "docs/plan-step-11-ml-first-loop-2026-09-06.zh.md",
 }
 
 REQUIRED_SKILLS = [
