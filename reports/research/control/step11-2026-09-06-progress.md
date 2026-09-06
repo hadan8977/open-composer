@@ -22,7 +22,7 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave A / 3.1 依赖 | done | `e515e7e` |
 | Wave A / 3.2 宇宙 | done | `e6db857` |
 | Wave A / 3.3.1 分钟线日聚合（后台） | **doing（代码完成，真实回填进行中）** | `b3f2e26`（代码） |
-| Wave A / 3.4 评估函数、账本、tearsheet、MLflow | todo | |
+| Wave A / 3.4 评估函数、账本、tearsheet、MLflow | done | (本提交) |
 | Wave A / 3.3.2 日线特征 + 3.3.3 标签 | done（daily-only 部分；分钟线派生滚动列待 3.3.1 回填完成后补） | `b3f2e26` |
 | Wave A / 3.5 B0/B1/B2 | todo | |
 | Wave B / B3 网格、安慰剂、报告 | todo | |
@@ -110,6 +110,34 @@ export PATH="$HOME/.local/bin:$PATH"; export UV_CACHE_DIR=/tmp/open-composer-uv-
 uv run python scripts/build_daily_features.py
 ```
 （结果将在本节更新——见下方"真实运行结果"占位符，如果本次会话来不及跑到这一步，下一次会话先补跑这一步再继续）
+
+### blocked_on_user
+
+无。
+
+---
+
+## Wave A / 3.4 评估函数、账本、tearsheet、MLflow
+
+状态：**done**。
+
+### 做了什么
+
+- `open_composer/research/kernel/loop.py`:
+  - `ExperimentConfig`(可哈希,`config_hash()` 对特征列排序后再哈希,顺序无关但内容敏感——已用测试锁定)、`run_experiment(config, panel, universe_panel, label_column, strategy_factory, spy/qqq/tqqq/bil_returns, ...) -> ExperimentVerdict`。
+  - `build_weight_schedule`:按 `config.test_years` 逐年走前向扩展窗口——每年用"该年第一个周五调仓日往前退 `label_horizon_days` 个交易日"算出禁运截止日,训练集是截止日之前(含)的全部历史,过滤到该截止日为止,调用一次 `strategy.fit`;然后对该年每个周五调仓日,用 `universe_as_of_calendar_month`(按日历月分组,不按精确日期——遵照 3.2 账本记录的消费侧注意事项)取当日 PIT 宇宙、过滤出有完整特征的行、调用 `strategy.score`、按分数取前 K(或全部,K=None 时是 B0)、等权;`hedge="spy_beta_hedge"` 时用选中标的的 `beta_252_spy` 特征做加权平均得到组合 beta,卖空等额(按 beta 换算)SPY(记成一个特殊 key `__SPY_HEDGE__`,复用同一套换手成本计算,不用另开一条路径)。用一条"记录每次 fit 看到的训练集最大日期"的测试直接断言"没有任何一次训练看到过测试年"。
+  - `returns_from_weight_schedule`:固定权重-下次调仓前保持-按收盘价盯市,和 Step10 W2(`evaluate_cross_sectional_momentum_liquid500.py::_cohort_daily_returns`)同一套惯例(第 4 节"执行路径简化"里写明原因:没有分别建模周一开盘 OPG 成交,直接用信号日之后第一个交易日起的收盘价路径,视为对开盘执行的合理近似,产品面 Wave C 的 `execution.order_style=opg_limit` 是下单方式声明,不等于这周研究口径的精确复刻)。换仓当天扣成本(`2×bps/万分之一×换手`)。
+  - `_build_candidate` 直接构造 `mechanism_eval.Candidate`(不走 `expand_mechanism`/`rolling_origin_folds`——那条路径假设"一套固定参数、参数不随折数变化",与"模型逐年重训"的前向扩展窗口在语义上不兼容,已在代码注释里写明这个判断)。`oos_fold_returns` 按日历年切片(每个测试年一折,天然对应门槛的"逐年为正的比例")。`development_returns`/`development_dates` 留空——已核实 `evaluate_candidate`/`recompute_candidate_promotion_metrics` 都不读这两个字段(只读 `oos_fold_returns`),留空不影响任何门槛计算,只是放弃了一个纯诊断用的字段。
+  - `_dsr_trial_count_for_family`:扫 `experiments.jsonl` 里同一 family 的不同 `config_hash` 数量(含本次),下限 2(`deflated_sharpe_probability` 的硬约束)。故意比 `effective_trials.effective_independent_trials` 的相关性聚类简单——计划原话就是"自动取账本里同一族的实验数",这一路径每个 family 目前只有个位数实验,直接计数已经是诚实、可审计的做法。
+  - `_append_ledger`:同一 family+config_hash 已存在就不重复追加(计划:"同一配置哈希重复运行只记一次")；返回是否真的写入了新行。
+  - `_write_tearsheet`(QuantStats)、`_log_mlflow_run`(MLflow)。**真实撞到的问题**:mlflow 3.x 把经典的"每个 run 一个目录"文件后端标成"维护模式",默认直接拒绝(`MlflowException: filesystem tracking backend...in maintenance mode`)。计划明确要"本地文件后端"且后续要用 `mlflow ui --backend-store-uri reports/research/mlruns` 起看板(这个命令期望的正是目录布局,不是 sqlite),所以没有切后端,而是在写 run 之前 `os.environ.setdefault("MLFLOW_ALLOW_FILE_STORE", "true")` 显式опт in,修复后已验证 tearsheet 与 mlflow run 都能正常写出。
+  - 用的门槛合同还是 `config/promotion/unlevered-family-paper-tier-gates.json`(`UNLEVERED_FAMILY_GATE_KEYS`),`benchmark_returns=spy_returns`——不新建合同,遵照计划 §3.4"沿用现有合同的键"。
+- `open_composer/research/kernel/baseline_strategies.py`:`EqualWeightUniverseStrategy`(B0,`fit` 空操作,`score` 返回常数,配合调用方 `top_k=None` 等权全宇宙)、`MomentumFactorStrategy`(B1,直接读 `momentum_252_21` 列排序,`fit` 空操作——规则固定不需要估计)、`RidgeRankStrategy`(B2,`StandardScaler`+`Ridge(alpha=1.0)` 回归到 `label_rank_h`,每个测试年从零重新 `fit`,不带上一年状态)。B2 未做超参数网格——计划 §3.5 原文只对 B3 提网格与"验证年选择"规则,B0/B1/B2 都是"固定规则/固定默认超参,按年重训"，不需要嵌套验证选择；这条判断记在 `loop.py` 模块 docstring 里防止被误读成疏漏。
+
+### 测试
+
+- `tests/test_kernel_loop.py`(14 个,全绿):周度调仓日算法(含"节假日缩短周仍恰好一个调仓日"的边界)、PIT 宇宙按日历月归组(含"同月内两个不同精确 month_end 值必须归为一组"的对抗性用例,直接对应 3.2 账本记录的消费侧注意事项)、B1 恒定选出最高动量标的、B0 全宇宙等权、SPY beta 对冲的组合 beta 与对冲权重手算核对、**用一个自定义"记录训练集看到的最大日期"策略直接证明没有任何训练看到过对应测试年**、换仓当天成本扣减且仅扣一天、对冲腿贡献的收益与 SPY 收益方向和幅度核对、DSR 试验数随账本增长、账本去重、配置哈希对特征列顺序不敏感但对内容敏感。
+- `tests/test_kernel_loop_run_experiment.py`(1 个端到端,全绿):用真实 SPY/QQQ/TQQQ/BIL 基准数据(跟 `tests/test_mechanism_eval.py` 同样的既有惯例)对齐一个确定性合成策略面板,跑通完整 `run_experiment`——账本写入且不重复、tearsheet 文件真的生成、门槛结果的键集合与新合同一致、`dsr_trial_count` 在全新 family 下等于下限 2。
 
 ### blocked_on_user
 

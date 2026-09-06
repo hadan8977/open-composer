@@ -49,7 +49,11 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 
-DEFAULT_MEMORY_LIMIT = "2GB"
+#: 1.2GB (not the 2GB the plan's machine budget allows in general) so this
+#: can safely run concurrently with the much heavier intraday_daily.py
+#: backfill on this 3.8GB box -- the daily archive itself is small (545MB
+#: total across all years/symbols) so the tighter cap costs nothing here.
+DEFAULT_MEMORY_LIMIT = "1.2GB"
 DEFAULT_MARKET_SYMBOL = "SPY"
 DEFAULT_RETURN_WINDOWS: tuple[int, ...] = (1, 5, 21, 63, 126, 252)
 DEFAULT_VOL_WINDOWS: tuple[int, ...] = (21, 63)
@@ -103,6 +107,8 @@ def build_daily_features(
     connection = con or duckdb.connect()
     try:
         connection.execute(f"SET memory_limit='{memory_limit}'")
+        connection.execute("SET threads=2")
+        connection.execute("SET preserve_insertion_order=false")
         if temp_directory is not None:
             Path(temp_directory).mkdir(parents=True, exist_ok=True)
             connection.execute(f"SET temp_directory='{temp_directory}'")
