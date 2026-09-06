@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 license = "MIT"
 dependencies = [
   "alpaca-py>=0.28.0",
+  "duckdb>=1.0",
   "httpx>=0.27",
   "lightgbm>=4.5",
   "longbridge>=4.0.6",
@@ -25,6 +26,17 @@ dependencies = [
   "rich>=13.7",
   "scikit-learn>=1.5",
   "typer>=0.12",
+]
+
+[project.optional-dependencies]
+# Step 11 research workbench: experiment tearsheets (quantstats) and the
+# local-file-backend experiment tracker (mlflow). Kept optional so the core
+# CLI/product install stays lean; the research loop (open_composer.research.
+# kernel.loop) imports these lazily and fails with an actionable message if
+# the group was not installed.
+workbench = [
+  "mlflow>=2.15",
+  "quantstats>=0.0.62",
 ]
 
 [project.scripts]
