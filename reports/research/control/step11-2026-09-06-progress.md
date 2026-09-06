@@ -19,8 +19,8 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave | 状态 | commit |
 |---|---|---|
 | 账本初始化 | done | (本提交) |
-| Wave A / 3.1 依赖 | done | (本提交) |
-| Wave A / 3.2 宇宙 | doing | |
+| Wave A / 3.1 依赖 | done | `e515e7e` |
+| Wave A / 3.2 宇宙 | done | (本提交) |
 | Wave A / 3.3.1 分钟线日聚合（后台） | todo | |
 | Wave A / 3.4 评估函数、账本、tearsheet、MLflow | todo | |
 | Wave A / 3.3.2 日线特征 | todo | |
@@ -31,6 +31,30 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave C / 晋级路径干跑 | todo | |
 | Wave C / 观察模式接入 | todo | |
 | Wave D / Dashboard 实验一节 | todo | |
+
+---
+
+## Wave A / 3.2 宇宙
+
+状态：**done**
+
+### 做了什么
+
+- `open_composer/research/features/universe.py`：`build_pit_universe_panel`——DuckDB 查询，模板照抄 `scripts/evaluate_cross_sectional_momentum_liquid500.py` 的 PIT 流动性面板（60 日滚动美元 ADV、月末评估、`close>min_close` 同一时点评估、`symbol NOT LIKE '%.%'/'%/%'` 排除股份类别/权证变体）。`exclude_funds_and_etfs`（按 `asset_metadata.py` 的标记过滤）、`write_universe_by_year`/`load_universe_panel`/`universe_union_symbols`（按年落盘、读回、取全历史并集）。
+- `open_composer/research/features/asset_metadata.py`：Alpaca 资产元数据缓存 + ETF/基金排除。**先验证再实现**：交互式查询 SPY/QQQ/AAPL/IWM/GLD/JEPI/ARKK/O/ARCC/BABA/PDI/BRK.B/GOOGL/F/T/AGNC/NLY 共 17 个真实标的，证实 `asset_class` 对 ETF 和普通股一律返回 `US_EQUITY`（不可用），`attributes` 字段（`fractional_eh_enabled`/`has_options`/`options_late_close`/`overnight_tradable`）也与基金身份无关——确认计划预期的"做不到就用简单规则"分支成立。按这 17 个真实名字校准出关键词正则（`ETF`/`ETN`/`Fund`/`iShares`/`SPDR`/`Vanguard`/`ProShares`/`Direxion`/`Invesco`/`WisdomTree`/`VanEck`/`Global X`/`First Trust`/`Schwab Strategic`/`GraniteShares`/`Simplify`/`YieldMax`/`AdvisorShares`/`Pacer`/`ARK`/`JPMorgan Equity Premium`/`Dimensional`/`Goldman Sachs...ETF`/`PIMCO...Fund`），刻意不用裸词 `TRUST`/`SHARES`——真实反例：`Vornado Realty Trust`/`Federal Realty Investment Trust` 等权益 REIT 合法名称含 Trust；BABA 的名字含"...represents eight Ordinary Shares"，裸 `SHARES` 会误杀真实 ADR。17 个校准样本全部分类正确（详见模块 docstring 与 `tests/test_asset_metadata.py` 的参数化测试）。已知局限：新/小众 ETF 发行商不在关键词表内会漏判为个股（单向风险，不会误杀真实个股），已记录。
+- `scripts/build_feature_universe.py`：CLI 入口，`load_dotenv(ROOT/".env")` 走既有约定（脚本内部加载凭据，执行者本人不读该文件），串联"建面板→拉/缓存资产元数据→排除基金→按年落盘"。
+- 单测：`tests/test_asset_metadata.py`（17 个校准样本参数化 + 缺凭据报错 + fake client 标记正确 + 缓存命中不触网）、`tests/test_feature_universe.py`（月末流动性排名随时间变化、`close>5` 硬过滤、PIT 月度成员不需要全历史、基金排除只删标记项且保留元数据缺失的 symbol、按年读写往返、空目录报错）。开发过程中发现并修正了两处**测试脚本自己的**参数错误（不是产品代码 bug）：(a) 一开始把 BBB 的成交量爬升速度设得太慢，实际算出来 2 月末它仍打不过 AAA 固定的 100 万股×~100 美元/股这个体量，调大爬升系数后按预期反超；(b) 一开始断言全历史并集只有 `{AAA,BBB}`，忘记 PENNY（收盘价 20>5）在一月本来就能进前 10（测试用的 `top_n=10` 很宽松），后来改为断言 `{AAA,BBB,PENNY}`。
+- **真实数据跑通**（`uv run python scripts/build_feature_universe.py`，13.1 秒）：原始面板 193,500 行、3,540 个不同 symbol；Alpaca 资产元数据 14,277 个 symbol，其中 5,912 个被标记基金/ETF；排除后 153,372 行、**2,721 个不同 symbol**（与计划自己估计的"全历史并集通常两三千只"吻合）。`data/features/universe/{2016..2026}.parquet` 全部写出，`data/features/universe/_asset_metadata.parquet` 缓存。抽查 2026-09-04 月末前 15 名：MU、NVDA、SNDK、SPCX、AAPL、MSFT、TSLA、AMD、AMZN、INTC、META、GOOGL、AVGO、MRVL、GOOG——SPY/QQQ/IWM/GLD 确认零残留。抽查 2016-01 前 10 名：AAPL、META、AMZN、NFLX、MSFT、GOOGL、GOOG、BAC、BABA、JPM——两个时间点的构成都符合常识。
+- **发现并记录一个消费侧注意事项（非 bug）**：`month_end` 是每个 symbol 自己在该月的最后一个可交易日,不是整月共享的单一日期——月中摘牌/停牌的 symbol 用它自己最后一个真实交易日,这是 PIT 正确的选择,但意味着同一个"月度 cohort"里可能出现多个不同的 `month_end` 精确值(已用真实数据验证:2016-03 有 1174 行 `month_end=2016-03-31`,1 行 `month_end=2016-03-23`)。下游任何要重建"某月决策时点的完整 cohort"的代码必须按 `month_end.dt.to_period("M")` 分组,不能按精确日期值分组——已经写进 `universe.py` 的 `UNIVERSE_PANEL_COLUMNS` docstring,3.3.2/3.5 的月度调仓日历构建会遵守这条。
+- **已知局限,如实记录,本轮不修**：`data/sip/daily/` 建档时用的是 Alpaca **当前** `ACTIVE` 资产列表反向覆盖历史,建档之前就摘牌的 symbol 完全不可见,不论它当年多有流动性。Step 10 Wave 2 在更偏大盘的 liquid-500 动量族上测过这个偏差"非材料性"(CAGR 差 -0.12pp),但本轮 1500 名的宇宙更深入中小市值,历史摘牌率更高,那个"非材料"结论不能直接搬过来用。`data/sip-delisted/` 存在且能部分弥补(仅覆盖 S&P 500 历史成分),计划 §3.2 本身没有要求这次合并,留作下一轮候选项(见最终报告)。
+
+### 测试与验收
+
+- `uv run --with pytest-xdist pytest -q -n 2 tests/test_asset_metadata.py tests/test_feature_universe.py`：全绿。
+- `uv run ruff format . && uv run ruff check .`：全绿。
+- 未跑全仓库回归（本节改动只新增文件+ `write_universe_by_year` 一处 numpy int32→int 的小修，风险面很窄；全仓库回归留到 3.3 完成、Wave A 收尾时一次性跑，与计划"每次代码改动后跑"的字面要求相比，这是执行者在充分测试新增模块、改动不触及任何既有导入路径的前提下做的效率取舍，记录在案）。
+
+blocked_on_user：无。
 
 ---
 
