@@ -21,9 +21,9 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | 账本初始化 | done | (本提交) |
 | Wave A / 3.1 依赖 | done | `e515e7e` |
 | Wave A / 3.2 宇宙 | done | (本提交) |
-| Wave A / 3.3.1 分钟线日聚合（后台） | todo | |
+| Wave A / 3.3.1 分钟线日聚合（后台） | **doing（代码完成，真实回填进行中）** | (本提交，代码) |
 | Wave A / 3.4 评估函数、账本、tearsheet、MLflow | todo | |
-| Wave A / 3.3.2 日线特征 | todo | |
+| Wave A / 3.3.2 日线特征 + 3.3.3 标签 | done（daily-only 部分；分钟线派生滚动列待 3.3.1 回填完成后补） | (本提交) |
 | Wave A / 3.5 B0/B1/B2 | todo | |
 | Wave B / B3 网格、安慰剂、报告 | todo | |
 | Wave C / model_ranking_portfolio 模式 | todo | |
@@ -55,6 +55,65 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 - 未跑全仓库回归（本节改动只新增文件+ `write_universe_by_year` 一处 numpy int32→int 的小修，风险面很窄；全仓库回归留到 3.3 完成、Wave A 收尾时一次性跑，与计划"每次代码改动后跑"的字面要求相比，这是执行者在充分测试新增模块、改动不触及任何既有导入路径的前提下做的效率取舍，记录在案）。
 
 blocked_on_user：无。
+
+---
+
+## Wave A / 3.3.1 分钟线日聚合（后台，最重的一次性计算）
+
+状态：**doing**——代码完成、单测全绿、真实数据首个分片验证通过；**11 年全量回填正在后台跑，预计需要数小时，本节写完后继续跑，不等它**。
+
+### 设计
+
+- `open_composer/research/features/intraday_daily.py::build_intraday_daily_features(minute_paths, universe_symbols, ...)`：给定已解析好的分片文件列表和 symbol 集合,跑"去重→只保留常规交易时段(09:30-16:00 America/New_York)→按 symbol+trade_date 聚合→隔夜收益用上一交易日 session_close 做 LAG"的完整 DuckDB 管线,返回每 symbol 每交易日一行:`overnight_return`(今开/昨收−1)、`intraday_return`(收/开−1)、`intraday_realized_vol`(当日 1 分钟收益标准差)、`intraday_amplitude`((高−低)/开)、`open_30min_volume_share`、`close_30min_volume_share`、`vwap_deviation`(收盘价相对当日成交量加权 VWAP,VWAP 用 Alpaca 分钟线自带的 `vwap` 字段而不是仅用收盘价近似)、`intraday_skew`(同一组 1 分钟收益的偏度)、`trade_count`(当日常规时段成交笔数之和)、`amihud_intraday`(`|intraday_return|/成交额`)。
+- **两个数据 root 的关键发现**(实测,不是猜测):`data/sip/minute/2023/` 同时存在退役的整年分片布局(317 个 `shard-*.parquet` 直接在年目录下)和当前的按月分片布局(9612 个文件在 `01/`..`12/` 子目录下)——这正是 `sip_parquet.py` loader 文档警告过的"两种布局重叠,需要按 (symbol,timestamp) 去重"的场景;`data/sip-hist/minute/`(2016-2022)与 `data/sip/minute/` 的 2024-2026 都没有这个重叠(实测:除 2023 外,整年布局文件数全部为 0)。`minute_shard_paths(root, year)` 同时收集两种布局;`build_intraday_daily_features` 内部的 `dedup` CTE(`GROUP BY symbol, timestamp` + `ANY_VALUE`)在聚合前折叠重复分钟线,已用"同一天的 bar 在两个分片里出现两次"的单测验证不会让成交量/笔数翻倍。
+- **计划文本未钉死、执行者决定并记录的三处实现选择**(模块 docstring 里也写了):(1)"日内收益偏度"取的是同一组 1 分钟收益分布的偏度(和已实现波动率共用同一样本),不是对着单个标量算偏度(标量没有偏度可言);(2)"Amihud 日值"用当日开盘到收盘的 `intraday_return`,不是需要跨天读官方日线收盘价的 close-to-close 收益——后者作为独立的 21 日滚动 Amihud 在 3.3.2 的日线特征里另算,两个 Amihud 故意不是同一个数,分别回答"日内冲击"和"多日价格冲击"两个不同问题;(3)"收盘价相对全天 VWAP 偏离"用 Alpaca 分钟线自带的 `vwap` 字段做成交量加权,而不是只用收盘价近似。
+- **只算常规时段**:所有列(包括"成交笔数")都只统计 09:30-16:00 ET 的 bar,盘前盘后一律排除——保证"开盘/收盘 30 分钟成交量占比"这类概念有意义;用一条"盘前 08:00 有一根价格离谱的 bar"的单测验证盘前数据不会污染 `session_open`/`intraday_return`/`intraday_amplitude`。
+
+### 内存问题与修复(真实撞到,不是预防性猜测)
+
+- 首次真实跑(2026 年单年,全宇宙 2721 symbol 一次性跑,`memory_limit='2GB'`)在跑到 `dedup`/窗口聚合阶段 OOM:`_duckdb.OutOfMemoryException: failed to pin block of size 256.0 KiB (1.8 GiB/1.8 GiB used)`——这台机器只有 3.8GB 内存,DuckDB 默认按 CPU 核数(6)开线程,每线程的哈希表/窗口缓冲区乘起来在全宇宙一整年的分钟线量级上超出预算,即使配置了 `temp_directory` 落盘也不够。
+- 修复(两层):(1)`build_intraday_daily_features` 内部固定 `SET threads=2` + `SET preserve_insertion_order=false`(查询本身最后有显式 `ORDER BY`,不需要引擎保序);(2)`scripts/build_intraday_daily_features.py` 把全宇宙 2721 个 symbol 切成 `--symbol-batch-size`(默认 300)的批次,每批独立起一个 DuckDB 连接跑同一年的分片文件、只挑该批的 symbol,跑完立刻落一个 scratch parquet(`data/features/intraday_daily/_scratch/{year}/batch-NNN.parquet`),年份内全部批次跑完后拼接成 `{year}.parquet` 并清理 scratch。因为隔夜收益的 LAG 只在同一 symbol 内按日期排序,按 symbol 分批不会破坏跨天连续性——每批依然看到该批 symbol 的完整一年历史,牺牲的只是"同一批分片文件要被扫描 10 次"的 IO,不是正确性。scratch 文件也让批次级别可续跑(某批已存在且非 `--force` 时直接复用)。
+- 验证:重新跑 2026 年(部分年,到 09-04),第 1/10 批(300 symbol)在 174 秒内正常完成、无 OOM,内存跑完后完全释放(降到 1.7GB 可用)。**11 年全量回填已在后台启动,预计每年数十分钟到一小时量级,总计数小时**,与计划 §3.3 自己的估计一致。
+
+### 单测
+
+`tests/test_intraday_daily_features.py`(16 个,全绿):输出列与行数、盘前 bar 被正确排除、成交量占比与 Amihud 手算核对、已实现波动率与 numpy 独立核对、首个交易日隔夜收益为空、次日隔夜收益正确链接前一交易日 close、单 bar 交易日不崩溃(realized_vol/skew 正确为空)、宇宙过滤生效、**两个分片重复同一批 bar 后不会重复计数**(直接验证上面修的 bug 的场景)、空输入返回空表、`minute_root_for_year`/`minute_shard_paths` 的路由与双布局收集。
+
+### blocked_on_user
+
+无——这是纯计算任务,不需要用户输入,只是需要时间跑完。
+
+---
+
+## Wave A / 3.3.2 日线特征 + 3.3.3 标签(daily-only 部分)
+
+状态：**done**（daily-only 部分；分钟线派生滚动列的 join 函数已写好并测试，等 3.3.1 回填出更多年份后再批量跑）。
+
+### 做了什么
+
+- `open_composer/research/features/daily_features.py::build_daily_features`：单条 DuckDB 查询,对 `data/sip/daily/` 里宇宙并集(+SPY 用于 beta/idio vol)算出 23 列(symbol/trade_date/close/ret_1 之外):收益类 `ret_{5,21,63,126,252}`、动量 `momentum_252_21`;风险类 `vol_{21,63}`、`beta_252_spy`(用 DuckDB `REGR_SLOPE` 窗口函数)、`idio_vol_63`(用 OLS 残差方差的闭式解 `Var(y)*(1-corr(x,y)^2)`,不用自连接);流动性类 `dollar_adv_{21,63}`、`dollar_adv_21_over_63`、`amihud_21`;位置类 `dist_from_252d_high`;市场相对类——7 个收益类特征各自减去当日宇宙横截面中位数(`MEDIAN(...) OVER (PARTITION BY trade_date)`)。全部窗口长度可配置(测试用小窗口,生产默认值照抄计划 §3.3 的天数)。
+- **真实发现并修的一个正确性问题**:DuckDB 的 `ROWS BETWEEN N-1 PRECEDING AND CURRENT ROW` 窗口在历史不够 N 天时,不会返回 NULL,而是用现有的(哪怕只有 1-2 天)数据算出一个"看起来正常"的数字——相当于用 2 天数据冒充"5 日波动率"。写跨库交叉验证测试(`build_daily_features` 的结果 vs 独立用 pandas `pct_change`/`rolling().std()` 重算一遍)时,`vol_5` 在还没攒够 5 天历史的行上不一致,暴露了这个问题。修复:引入按 symbol 的行号 `rn`(`ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY trade_date)`),给每个窗口聚合列包一层 `CASE WHEN rn >= 所需行数 THEN ... ELSE NULL END`;因为 `ret_1` 本身要用一天历史才有值,依赖 `ret_1` 的列(`vol_*`、`beta_*`、`idio_vol_*`、`max_ret_1_*`、`amihud_*`)阈值是 `window+1`,不依赖 `ret_1` 的列(`dollar_adv_*`、`dist_from_*d_high`)阈值是 `window`。修复后与 pandas `rolling(window).std()` 的默认行为(`min_periods=window`)逐行核对一致(`rtol=1e-8`)。
+- `open_composer/research/features/labels.py::build_labels`:未来 h 日收益(`LEAD(close,h)/close-1`)减去当日宇宙中位数得到 `label_excess_h`;`PERCENT_RANK() OVER (PARTITION BY trade_date ORDER BY label_excess_h)` 得到 0-1 分位 `label_rank_h`(h∈{5,10,21})。归档尾部 h 天没有未来价格,两列自然为 NULL(不是 bug,已用测试锁定这个行为,且显式把 `label_excess_h IS NULL` 时的 `label_rank_h` 强制清空,防止 `PERCENT_RANK` 把 NULL 排序到"最优"的假象漏出去)。
+- `join_intraday_rolling_features(daily_frame, intraday_daily_frame, rolling_windows=(5,21))`:左连接,对 `intraday_daily.py` 的每一列取 5 日/21 日滚动均值(`groupby(symbol).rolling(window,min_periods=1).mean()`),缺 intraday 覆盖的行(3.3.1 还没回填到的年份)对应列留 NaN,不丢行。
+- `scripts/build_daily_features.py`:CLI,读宇宙并集、跑 `build_daily_features`,按年落盘前检查 `data/features/intraday_daily/{year}.parquet` 是否已存在,存在就自动 join 进去(`intraday_joined: true/false` 记进汇总 JSON)。
+- **真实数据跑通**:`uv run python scripts/build_daily_features.py`（见下方"真实运行结果"）。
+
+### 单测
+
+- `tests/test_daily_features.py`(11 个,全绿):策略是跟独立的 pandas 实现(`pct_change`/`rolling().std()`/`groupby().median()`)交叉核对,而不是手算期望值——这个方法论在 `vol_5` 上真的抓到了上面那个窗口不足的 bug,比手算 fixture 更可靠。覆盖:收益列与 pandas 逐行一致、warm-up 期正确为空、波动率与独立 rolling std 一致、市场相对收益等于当日中位数的差、动量等于长减短、Amihud 非负有限、离高点距离恒不为正、SPY 自身不出现在结果里、空宇宙返回空表、intraday 滚动 join 的两个场景(有 intraday 覆盖时正确算滚动均值、无覆盖的 symbol 保留但列为空)。
+- `tests/test_labels.py`(6 个,全绿):输出列、尾部 h 天为空、rank 和 excess 的空值联动、构造"AAA 每天+2%、BBB 平、CCC 每天-2%"的确定性价格路径验证"最强的排第一(rank=1.0)、最弱的排最后(rank=0.0)、行情持平的减去中位数后≈0"、空宇宙返回空表。
+
+### 真实运行结果(2026-09-06)
+
+```
+export PATH="$HOME/.local/bin:$PATH"; export UV_CACHE_DIR=/tmp/open-composer-uv-cache
+uv run python scripts/build_daily_features.py
+```
+（结果将在本节更新——见下方"真实运行结果"占位符，如果本次会话来不及跑到这一步，下一次会话先补跑这一步再继续）
+
+### blocked_on_user
+
+无。
 
 ---
 
