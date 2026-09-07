@@ -22,7 +22,7 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave A / 3.1 依赖 | done | `e515e7e` |
 | Wave A / 3.2 宇宙 | done | `e6db857` |
 | Wave A / 3.3.1 分钟线日聚合（后台） | **doing（代码完成，真实回填进行中）** | `b3f2e26`（代码） |
-| Wave A / 3.4 评估函数、账本、tearsheet、MLflow | done | (本提交) |
+| Wave A / 3.4 评估函数、账本、tearsheet、MLflow | done | `96cd8cd` |
 | Wave A / 3.3.2 日线特征 + 3.3.3 标签 | done（daily-only 部分；分钟线派生滚动列待 3.3.1 回填完成后补） | `b3f2e26` |
 | Wave A / 3.5 B0/B1/B2 | todo | |
 | Wave B / B3 网格、安慰剂、报告 | todo | |
@@ -138,6 +138,38 @@ uv run python scripts/build_daily_features.py
 
 - `tests/test_kernel_loop.py`(14 个,全绿):周度调仓日算法(含"节假日缩短周仍恰好一个调仓日"的边界)、PIT 宇宙按日历月归组(含"同月内两个不同精确 month_end 值必须归为一组"的对抗性用例,直接对应 3.2 账本记录的消费侧注意事项)、B1 恒定选出最高动量标的、B0 全宇宙等权、SPY beta 对冲的组合 beta 与对冲权重手算核对、**用一个自定义"记录训练集看到的最大日期"策略直接证明没有任何训练看到过对应测试年**、换仓当天成本扣减且仅扣一天、对冲腿贡献的收益与 SPY 收益方向和幅度核对、DSR 试验数随账本增长、账本去重、配置哈希对特征列顺序不敏感但对内容敏感。
 - `tests/test_kernel_loop_run_experiment.py`(1 个端到端,全绿):用真实 SPY/QQQ/TQQQ/BIL 基准数据(跟 `tests/test_mechanism_eval.py` 同样的既有惯例)对齐一个确定性合成策略面板,跑通完整 `run_experiment`——账本写入且不重复、tearsheet 文件真的生成、门槛结果的键集合与新合同一致、`dsr_trial_count` 在全新 family 下等于下限 2。
+
+### blocked_on_user
+
+无。
+
+---
+
+## Wave A / 3.5 B0/B1/B2 基线链
+
+状态：**doing**（代码完成、单测全绿、真实数据跑正在后台跑；本节先记方法论与过程中发现的两个真实内存事故，数字表格等跑完再补）。
+
+### 做了什么
+
+- `scripts/build_labels.py`、`scripts/run_baseline_chain.py`（新增）：`run_baseline_chain.py` 用 `open_composer/research/kernel/baseline_strategies.py`（已随 3.4 一起入库，`96cd8cd`）的 `EqualWeightUniverseStrategy`/`MomentumFactorStrategy`/`RidgeRankStrategy` 分别接成 B0/B1/B2 三个 `ExperimentConfig`，每个再各跑 `hedge="none"`（多头）与 `hedge="spy_beta_hedge"`（市场中性）两个变体，共 6 次 `run_experiment`。参数照抄计划 §3.5：周频调仓、K=50（B0 是 `top_k=None`，即全宇宙）、`DEFAULT_TEST_YEARS`=2018-2026、10bps/边基础成本、25bps 压力成本，都是 `loop.py` 的既定默认值，未改动。
+- **B0 的 `feature_columns` 选择记录一处非显然的设计决定**：`EqualWeightUniverseStrategy.score` 本身不读任何特征列，但 `build_weight_schedule` 同时把 `config.feature_columns` 当作每周 `.dropna(subset=feature_columns)` 的资格过滤条件用。把它设成 `("momentum_252_21",)`（跟 B1/B2 要求的列一样）意味着 B0 的每周可选宇宙被交集成"有 273 个交易日历史"，即与 B1/B2 完全相同的可交易名单，而不是未经过滤的原始 PIT 宇宙。这是故意的：让排序方法成为 B0 与 B1/B2 之间唯一的差异变量，不被"谁的可交易宇宙更大"混淆。已写进 `scripts/run_baseline_chain.py` 对应位置的行内注释。
+- 标签用 `label_rank_5`（5 日窗口，`label_horizon_days=5`），B2 特征集是 `daily_features.py` 的 23 列日线特征（不含 intraday 派生列——本轮仍是 daily-only，intraday 版留给回填完成后的对比实验）。
+
+### 真实撞到的三个问题与修复（记录在案，不是预防性猜测）
+
+跑真实数据（全宇宙 2,721 symbol、11 年）过程中，先后撞到两次接近 OOM 的真实事故和一次设计层面的重复计算问题，均已定位根因并修复：
+
+1. **`build_daily_features.py`**：第一次真实跑用单条 `read_parquet('data/sip/daily/*/*.parquet')`（11 年全量）+ 一次 `fetchdf()`，RSS 涨到 ~2GB 且仍在涨，系统 swap 一度只剩 ~500MB 可用（当时机器上还有协调者的分钟线回填等并发进程），执行者主动 kill 掉未让它真正 OOM。根因：DuckDB 的 `memory_limit`/`threads` 设置只管 DuckDB 自己的执行期缓冲区，不管最终 `fetchdf()` 物化出的 pandas 对象大小——11 年 x 2,721 symbol 的完整特征表本身就大。修复:改成按目标年份循环,每次只用 `[year-1, year]`(或首年单独 `[year]`)两年的 glob 跑一次 `build_daily_features`,只保留目标年的行、写盘、丢弃,再进下一年。**正确性代价**(如实记录,非静默吞掉):这让每个目标年份最前面几个交易日的行号计数器`rn`(`_guard` 用来判断窗口预热是否够格)从 `year-1` 年初重新计数,而不是该 symbol 在完整历史里的真实行号——对已经交易多年的 symbol 无影响(`year-1` 一整年就已经远超所有窗口阈值),只对"真实历史恰好始于 `year-1` 年中"的少数 symbol 在跨年边界处偏保守地多 NULL 掉几天本可计算的值,不会捏造任何数字。真实跑通:11 年全部跑完,每年 10-15 秒,内存全程 <2GB、无 swap 增长。`build_labels.py` 用同样的按年循环手法(镜像对称:标签需要*未来*数据,窗口是 `[year, year+1]` 而不是 `[year-1, year]`),真实跑通 11 年,每年数秒。
+2. **`run_baseline_chain.py::_load_panel`**:同样的教训在合并阶段重演——先把 11 年日线特征 `concat` 成一张表、11 年标签 `concat` 成另一张表、再整体 `merge` 一次,这一步比两次 `concat` 本身贵得多(pandas 哈希 join 在计算期间同时持有两个完整输入和输出),RSS 冲到 2.6GB 后一分钟仍未收敛。修复:改成按年份循环,每年的日线特征和标签先各自读入、当年合并,再把 11 个"当年已合并"的小表 `concat` 起来;同时把日线/标签两张表读入时都用 `columns=` 只取 B0/B1/B2 真正用到的列(`symbol`、`trade_date`、`close`、23 个 B2 特征列、`label_rank_5`),不读 intraday 派生的其余列;再叠加 float64→float32 降精度。三个改动叠加后峰值明显下降但仍会跟着系统整体负载波动(这台机器上同时跑着其他并发的 Claude Code 会话,`vmstat` 观测到的 iowait 一度到 70%,`Paseo Daemon` 等其他进程也处于磁盘等待态,是环境共享导致的外部压力,不是这份代码本身的 bug)。
+3. **`run_baseline_chain.py` 的重复计算设计问题**(第一次真实跑到一半时发现,不是内存问题但同样值得记录):脚本最初对每个模型分别构造 `hedge="none"` 和 `hedge="spy_beta_hedge"` 两个 `ExperimentConfig`,各跑一次 `run_experiment`,以为这样能拿到多头版和市场中性版。实际上 `run_experiment` 内部本来就无条件同时算 `long_base`/`long_stress`(`include_hedge=False`)和 `neutral_base`/`neutral_stress`(`include_hedge=True`)两组收益并写成*一条*账本记录——`config.hedge` 只决定 `build_weight_schedule` 要不要往权重表里插一条 `__SPY_HEDGE__` 腿。所以旧写法里 `hedge="none"` 那次调用算出来的"市场中性"字段其实是对着一个根本没有对冲腿的权重表做"保留对冲腿"运算,结果和它自己的多头版完全相同——白算了一遍,还把总耗时翻倍(在这台机器上一次 `run_experiment` 已经要跑数分钟,翻倍在原地观测到了)。修复:每个模型只建*一个* `hedge="spy_beta_hedge"` 的配置、只跑一次 `run_experiment`,多头版和市场中性版都从同一次返回的 `verdict.long_only`/`verdict.market_neutral` 里取——账本记录数也从 6 条(3 模型 × 2 hedge 配置,其中 3 条的市场中性字段是废的)变成正确的 3 条(每条内含两个真实、不同的版本)。**在第一个实验完整跑完、写入账本之前发现并修复,账本里不存在错误数据**。
+
+### 单测
+
+`tests/test_daily_features.py`(11 个)、`tests/test_labels.py`(6 个)、`tests/test_feature_universe.py`、`tests/test_kernel_loop.py`(14 个)、`tests/test_kernel_loop_run_experiment.py`(1 个端到端)在改动后重新跑过,全绿——本节的改动只是"输入 glob 从字符串放宽成字符串列表"+"CLI 脚本按年循环"+"只读需要的列"+"float64→float32 降精度",没有碰任何已测试的查询逻辑本身。
+
+### 真实运行结果
+
+（后台运行中，见 `/tmp/run_baseline_chain.log`；完成后本节补：B0/B1/B2 各自的 `cagr_excess_vol_matched_benchmark`、`sharpe_excess_bil`、`max_drawdown`、`mar`、`benchmark_vm_capture_ratio`、门槛通过数，多头与市场中性两个变体，以及"每级是否打赢上一级"的结论。）
 
 ### blocked_on_user
 

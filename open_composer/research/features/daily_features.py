@@ -76,7 +76,7 @@ def _return_column(window: int) -> str:
 
 
 def build_daily_features(
-    daily_glob: str,
+    daily_glob: str | list[str],
     universe_symbols: list[str],
     *,
     market_symbol: str = DEFAULT_MARKET_SYMBOL,

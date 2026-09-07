@@ -35,7 +35,7 @@ DEFAULT_MEMORY_LIMIT = "1.5GB"
 
 
 def build_labels(
-    daily_glob: str,
+    daily_glob: str | list[str],
     universe_symbols: list[str],
     *,
     horizons: tuple[int, ...] = DEFAULT_HORIZONS,
