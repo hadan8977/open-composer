@@ -303,3 +303,31 @@ def test_minute_shard_paths_collects_both_legacy_and_month_sharded_layouts(
 
 def test_minute_shard_paths_returns_empty_list_for_missing_year(tmp_path: Path) -> None:
     assert minute_shard_paths(tmp_path, 1999) == []
+
+
+@pytest.mark.parametrize("empty_first", [False, True])
+def test_zero_row_two_column_shard_does_not_break_glob_binding(
+    tmp_path: Path, synthetic_minute_shard: Path, empty_first: bool
+) -> None:
+    # The real archive contains empty ``shard-0868.parquet`` files with only
+    # ``symbol, timestamp`` columns (11 of them under data/sip/minute/2023/*/).
+    # DuckDB's default glob binding raised "schema mismatch in glob" on them
+    # and killed the first 2023 backfill on 2026-09-06; ``union_by_name``
+    # binds by column name so they contribute nothing instead of crashing.
+    empty_path = tmp_path / "01" / "shard-0868.parquet"
+    empty_path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        {
+            "symbol": pd.Series([], dtype="string"),
+            "timestamp": pd.Series([], dtype="datetime64[ns, UTC]"),
+        }
+    ).to_parquet(empty_path, index=False)
+
+    baseline = build_intraday_daily_features([str(synthetic_minute_shard)], ["AAA", "BBB"])
+    paths = [str(synthetic_minute_shard), str(empty_path)]
+    if empty_first:
+        paths.reverse()
+    with_empty = build_intraday_daily_features(paths, ["AAA", "BBB"])
+    pd.testing.assert_frame_equal(
+        with_empty.reset_index(drop=True), baseline.reset_index(drop=True)
+    )

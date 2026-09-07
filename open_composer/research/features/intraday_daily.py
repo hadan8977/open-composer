@@ -37,6 +37,15 @@ out-of-core hash/window execution carries the memory risk instead of a Python
 process. The output (one row per symbol per trading day) is small regardless
 of how much raw data fed it.
 
+**Degenerate zero-row shards** (found on the real archive 2026-09-06, crashed
+the first 2023 backfill): the fetcher writes an empty ``shard-0868.parquet``
+with only ``symbol, timestamp`` columns for a symbol batch that returned no
+bars in a month (11 such files across ``data/sip/minute/2023/*/``). DuckDB's
+default glob binding takes the first file's schema and raises ``schema
+mismatch in glob`` on those. ``read_parquet(..., union_by_name=true)`` binds
+by column name instead, so a zero-row shard contributes nothing and a shard
+missing a column would contribute NULLs (never observed) rather than a crash.
+
 **Implementation choices not fully pinned by the plan text** (decided and
 recorded here, not tried-until-passing):
 
@@ -156,7 +165,7 @@ def build_intraday_daily_features(
         query = f"""
             WITH raw AS (
                 SELECT symbol, timestamp, open, high, low, close, volume, trade_count, vwap
-                FROM read_parquet({minute_paths!r})
+                FROM read_parquet({minute_paths!r}, union_by_name=true)
                 WHERE symbol IN (SELECT symbol FROM _universe_symbols)
             ),
             dedup AS (
