@@ -233,8 +233,50 @@ def test_returns_from_weight_schedule_applies_cost_on_the_first_day() -> None:
         schedule, price_wide, spy_returns, cost_bps_per_side=50.0, include_hedge=False
     )
     # First day should differ by exactly the cost; later days identical.
-    assert with_cost.iloc[0] == pytest.approx(zero_cost.iloc[0] - 2 * 50.0 / 10_000.0)
+    # turnover Sigma|delta w| = |1.0 - 0.0| = 1.0 (a fresh 100% allocation)
+    # is already two-sided; cost = turnover * cost_bps_per_side / 10_000, not
+    # turnover * 2 * cost_bps_per_side / 10_000 (see loop.py's cost_rate
+    # comment -- that extra factor of 2 double-counted the two-sidedness
+    # already baked into turnover).
+    assert with_cost.iloc[0] == pytest.approx(zero_cost.iloc[0] - 50.0 / 10_000.0)
     pd.testing.assert_series_equal(with_cost.iloc[1:], zero_cost.iloc[1:])
+
+
+def test_returns_from_weight_schedule_steady_state_turnover_cost() -> None:
+    # Rebalance from a full AAA book into a half-AAA-half-BBB book: turnover
+    # Sigma|delta w| = |0.5-1.0| + |0.5-0.0| = 1.0 (selling half of AAA,
+    # buying half of BBB -- "half the book" turns over). Cost should be
+    # exactly 1.0 * cost_bps_per_side / 10_000, not double that.
+    dates = pd.bdate_range("2020-01-06", periods=10)
+    price_wide = pd.DataFrame(
+        {"AAA": [100.0] * len(dates), "BBB": [50.0] * len(dates)}, index=dates
+    )
+    spy_returns = pd.Series(0.0, index=dates)
+    schedule = [
+        loop.RebalanceEvent(
+            date=dates[0].isoformat(), universe_size=2, selected={"AAA": 1.0}, portfolio_beta=None
+        ),
+        loop.RebalanceEvent(
+            date=dates[3].isoformat(),
+            universe_size=2,
+            selected={"AAA": 0.5, "BBB": 0.5},
+            portfolio_beta=None,
+        ),
+    ]
+    zero_cost = loop.returns_from_weight_schedule(
+        schedule, price_wide, spy_returns, cost_bps_per_side=0.0, include_hedge=False
+    )
+    with_cost = loop.returns_from_weight_schedule(
+        schedule, price_wide, spy_returns, cost_bps_per_side=10.0, include_hedge=False
+    )
+    # The second event's window starts the first trading day *after* its
+    # signal date (dates[3]) -- i.e. dates[4] -- per the module's "signal
+    # close -> execute next session" convention. Label-based lookup avoids
+    # having to re-derive that offset positionally.
+    rebalance_execution_date = dates[4]
+    assert with_cost.loc[rebalance_execution_date] == pytest.approx(
+        zero_cost.loc[rebalance_execution_date] - 1.0 * 10.0 / 10_000.0
+    )
 
 
 def test_returns_from_weight_schedule_hedge_leg_subtracts_spy_return() -> None:

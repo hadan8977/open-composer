@@ -304,7 +304,18 @@ def returns_from_weight_schedule(
     """
     daily_returns = price_wide.pct_change()
     dates = daily_returns.index
-    cost_rate = 2.0 * cost_bps_per_side / 10_000.0
+    # turnover (Sigma|delta w|) is already two-sided -- one rebalance that
+    # sells $x of A and buys $x of B has turnover 2x, correctly reflecting
+    # two trades' worth of cost. Multiplying by 2*cost_bps_per_side on top of
+    # that double-counts: a steady-state weekly turnover of f was being
+    # charged 2f * 2*cost_bps_per_side instead of 2f * cost_bps_per_side, and
+    # a fresh 100% initial allocation was charged 20bps instead of 10bps.
+    # Found in review 2026-09-07; see the Step 11 ledger for the real-ledger-
+    # entry cleanup this required and the Step 10 caveat it implies (
+    # scripts/evaluate_cross_sectional_momentum_liquid500.py shares this same
+    # formula, so its already-negative conclusions were evaluated at
+    # effectively double the stated cost, not understated).
+    cost_rate = cost_bps_per_side / 10_000.0
     all_returns: dict[pd.Timestamp, float] = {}
     previous_weights: dict[str, float] = {}
     active = [event for event in schedule if event.selected]
