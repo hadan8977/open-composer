@@ -1,0 +1,13 @@
+{
+  "candidate_id": "step11_momentum_placeholder_v1",
+  "strategy_kind": "rule_momentum_top_k",
+  "model_path": null,
+  "score_column": "momentum_252_21",
+  "score_direction": "descending",
+  "universe_rule": "pit_adv_top_n",
+  "universe_top_n": 1500,
+  "min_close": 5.0,
+  "created_at": "2026-09-08",
+  "created_by": "step11_wavec_executor",
+  "notes": "Rule-based placeholder candidate for Step 11 Wave C product wiring (docs/plan-step-11-ml-first-loop-2026-09-06.zh.md section 5, item 4). Ranks the PIT top-1500-ADV universe by the momentum_252_21 daily feature column (ret_252 - ret_21, i.e. 12-1 momentum) and holds the top 50 equal-weight. As of 2026-09-08 the research line's own baseline chain (reports/research/control/step11-2026-09-06-progress.md) found this exact rule (B1) is the current best-of-chain candidate at 4/8 promotion gates -- it is not a strawman, it is the honest current best deterministic baseline, just not yet paper-ready. No model.joblib: config.json:score_column + config.json:strategy_kind=rule_momentum_top_k tells open_composer.adapters.execution.model_ranking_target_weights.load_candidate_artifact to score directly off the named feature column instead of loading a fitted model. Swap StrategySpec portfolio.candidate_artifact_dir to the research line's exported reports/research/candidates/<experiment_id>/ directory once it lands (expected 2026-09-10 22:00 UTC per the task brief) -- that directory follows the same config.json/features.json contract plus a model.joblib, so only that one spec field changes."
+}

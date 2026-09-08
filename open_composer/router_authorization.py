@@ -16,6 +16,11 @@ ROUTER_PORTFOLIO_MODES = {
     "beta_exposure_router",
     "core_beta_satellite_router",
     "cross_sectional_momentum",
+    #: Step 11 Wave C: multi-symbol like the other router modes, so it must
+    #: clear the same router-order-authorization artifact gate before any
+    #: broker order path is ever considered. Observation mode (the only mode
+    #: this strategy family runs in as of 2026-09) never reaches that gate.
+    "model_ranking_portfolio",
 }
 
 

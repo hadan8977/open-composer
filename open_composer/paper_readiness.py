@@ -880,6 +880,37 @@ def _portfolio_routing_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
             message="Single-symbol paper routing is supported.",
             details={"universe": spec.universe},
         )
+    if spec.portfolio.mode == "model_ranking_portfolio":
+        # Step 11 Wave C: a cross-sectional top-K book, not a labeled route --
+        # it declares candidate_artifact_dir/top_k/universe_top_n instead of
+        # selected_route_label (StrategySpec forbids setting both; see
+        # PortfolioConfig.require_model_ranking_fields).
+        missing = [
+            name
+            for name, value in (
+                ("candidate_artifact_dir", spec.portfolio.candidate_artifact_dir),
+                ("top_k", spec.portfolio.top_k),
+                ("universe_top_n", spec.portfolio.universe_top_n),
+            )
+            if not value
+        ]
+        if missing:
+            return PaperStrategyReadinessCheck(
+                name="portfolio_routing",
+                status="blocked",
+                message="model_ranking_portfolio routing is missing: " + ", ".join(missing),
+                details=spec.portfolio.model_dump(mode="json"),
+                suggested_actions=[
+                    "Set portfolio.candidate_artifact_dir, top_k, and universe_top_n before "
+                    "paper review."
+                ],
+            )
+        return PaperStrategyReadinessCheck(
+            name="portfolio_routing",
+            status="ok",
+            message="model_ranking_portfolio routing is declared inside StrategySpec.",
+            details=spec.portfolio.model_dump(mode="json") | {"universe": spec.universe},
+        )
     if spec.portfolio.mode in {
         "adaptive_intraday_internal_router",
         "hybrid_adaptive_router",
@@ -887,7 +918,7 @@ def _portfolio_routing_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
         "core_beta_satellite_router",
         "cross_sectional_momentum",
     }:
-        missing: list[str] = []
+        missing = []
         if not spec.portfolio.selected_route_label:
             missing.append("selected_route_label")
         if not spec.portfolio.max_symbols_per_day:
@@ -928,6 +959,52 @@ def _portfolio_routing_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
 
 def _portfolio_risk_check(spec: StrategySpec) -> PaperStrategyReadinessCheck:
     portfolio = spec.portfolio
+    if portfolio.mode == "model_ranking_portfolio":
+        top_k = portfolio.top_k or 0
+        implied_symbol_weight = 1.0 / top_k if top_k > 0 else 1.0
+        max_symbol_weight = portfolio.max_symbol_weight or implied_symbol_weight
+        default_gross = 1.0 if portfolio.hedge == "none" else None
+        gross_limit = portfolio.gross_exposure_limit or default_gross
+        details = {
+            "universe": spec.universe,
+            "mode": portfolio.mode,
+            "top_k": top_k,
+            "implied_symbol_weight_pct": round(implied_symbol_weight * 100, 4),
+            "gross_exposure_limit_pct": round(gross_limit * 100, 4) if gross_limit else None,
+            "single_name_weight_limit_pct": round(max_symbol_weight * 100, 4),
+            "hedge": portfolio.hedge,
+            "duplicate_signal_policy": portfolio.duplicate_signal_policy,
+            "sector_concentration": "unbounded_by_sector; PIT ADV top-N universe only",
+            "borrow_short_caveat": (
+                "spy_beta_hedge leg requires short-SPY borrow; equity sleeve is long-only"
+            ),
+        }
+        problems: list[str] = []
+        if gross_limit is None:
+            problems.append(
+                "portfolio.gross_exposure_limit must be set explicitly when hedge=spy_beta_hedge "
+                "(beta-hedge notional is not statically known)"
+            )
+        elif gross_limit <= 0 or gross_limit > 2:
+            problems.append("gross_exposure_limit must be within (0, 2] for a hedged top-K book")
+        if max_symbol_weight <= 0 or max_symbol_weight > spec.risk.max_position_weight:
+            problems.append(
+                "implied per-name weight (1/top_k) must not exceed risk.max_position_weight"
+            )
+        if problems:
+            return PaperStrategyReadinessCheck(
+                name="portfolio_risk",
+                status="blocked",
+                message="; ".join(problems),
+                details=details,
+                suggested_actions=["Tighten StrategySpec portfolio/risk config before activation."],
+            )
+        return PaperStrategyReadinessCheck(
+            name="portfolio_risk",
+            status="ok",
+            message="model_ranking_portfolio gross exposure and per-name weight are explicit.",
+            details=details,
+        )
     if portfolio.mode in {
         "adaptive_intraday_internal_router",
         "hybrid_adaptive_router",

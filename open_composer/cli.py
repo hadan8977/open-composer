@@ -6425,6 +6425,13 @@ def strategy_target_weights(
                 refresh_data=refresh_data,
             )
             status = result.parity_status
+        elif spec_obj.portfolio.mode == "model_ranking_portfolio":
+            from open_composer.adapters.execution.model_ranking_target_weights import (
+                run_model_ranking_target_weight_mapping,
+            )
+
+            result = run_model_ranking_target_weight_mapping(spec, project_root())
+            status = result.parity_status
         elif spec_obj.portfolio.mode == "etf_structural_family":
             from open_composer.adapters.execution.etf_structural_target_weights import (
                 run_etf_structural_target_weight_mapping,
