@@ -1,0 +1,129 @@
+name: us_model_ranking_portfolio_top50
+description: >-
+  Weekly cross-sectional model-ranking portfolio (Step 11 Wave C, observation
+  mode only): PIT top-1500-ADV US equity universe, top-50 equal-weight,
+  Friday-close signal / Monday-open OPG execution. Currently scored by a
+  rule-based 12-1 momentum placeholder
+  (config/model_ranking_candidates/step11_momentum_placeholder_v1); swap
+  portfolio.candidate_artifact_dir to the research line's exported
+  reports/research/candidates/<experiment_id>/ once it lands (see that
+  directory's README.md). No promotion gate has been passed as of 2026-09-08
+  (best-of-chain is B1 12-1 momentum at 4/8, per
+  reports/research/control/step11-2026-09-06-progress.md) -- this spec is not
+  paper-auto eligible and lifecycle stays draft.
+timeframe: daily
+# Nominal placeholder only -- length>1 so paper_readiness treats this as a
+# multi-symbol portfolio rather than falling into its single-symbol branch.
+# The *actual* universe for every rebalance is dynamic and point-in-time:
+# open_composer.adapters.execution.model_ranking_target_weights reads
+# data/features/universe/{year}.parquet (top portfolio.universe_top_n names
+# by trailing 60-session dollar ADV, as of the signal date) directly; it does
+# not read this field. Listed names are large, liquid, ETF-excluded US
+# equities that are almost always inside that PIT cohort, for documentation
+# only.
+universe:
+  [AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, JPM, V, UNH, XOM, JNJ, PG, HD, MA, AVGO, COST, PEP, KO, ADBE]
+lifecycle: draft
+position_direction: long_only
+entry:
+  # Unused by portfolio.mode=model_ranking_portfolio (target weights come
+  # from open_composer.adapters.execution.model_ranking_target_weights, not
+  # from entry/exit rule evaluation). Nominal, always-true placeholder only
+  # to satisfy the StrategySpec schema, matching the convention already used
+  # by other cross_sectional_momentum specs (e.g.
+  # strategy_specs/drafts/us_multiasset_paper_control_r7_d02.yaml).
+  all: [close > 0]
+  any: []
+exit:
+  all: []
+  any: [close <= 0]
+risk:
+  # Not consulted by this portfolio mode's own sizing logic (top-K equal
+  # weight is enforced by portfolio.top_k directly); set generously so it
+  # never falsely blocks paper_readiness's portfolio_risk check, whose real
+  # per-name test is 1/top_k <= max_position_weight.
+  max_trades_per_day: 100
+  max_position_weight: 0.05
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: model_ranking_portfolio
+  candidate_artifact_dir: config/model_ranking_candidates/step11_momentum_placeholder_v1
+  universe_rule: pit_adv_top_n
+  universe_top_n: 1500
+  feature_set_id: daily_only
+  label_horizon_days: 21
+  top_k: 50
+  rebalance: weekly_friday_close_monday_open
+  weighting: equal_weight
+  hedge: none
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.05
+  duplicate_signal_policy: stable_signal_id
+  # account_equity_for_sizing intentionally unset: whole-share sizing reads
+  # the live paper account's equity from reports/paper/account.json (refresh
+  # via `oc paper sync-account`) by default.
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+execution_policy:
+  policy_id: model_ranking_portfolio_opg_limit_v1
+  order_style: opg_limit
+  time_in_force: opg
+  price_protection: {limit_offset_bps: 20.0, max_open_gap_pct: 2.5, max_spread_bps: 15.0}
+  participation_cap: {max_adv_pct: 0.5, max_open_bar_volume_pct: 5.0}
+  fallback_behavior: {if_not_filled: skip, if_gap_exceeds_limit: skip, if_spread_exceeds_limit: skip}
+  tca:
+    enabled: true
+    compare_to: [decision_price, official_open, arrival_price, vwap]
+    record_submitted_at: true
+    record_fill_price: true
+    review_frequency: weekly
+  # Documented intent for a future paper_auto candidacy; not yet backed by a
+  # fresh source-researcher pass (the one broker OPG source card this repo
+  # already has, r9_alpaca_opg_semantics, expired 2026-08-18) -- recorded as
+  # an open gap in reports/research/control/step11-wavec-paper-connection-2026-09.md
+  # rather than cited as current evidence.
+  alternatives_compared: [moo_market, opg_limit]
+  source_card_ids: []
+reality_model:
+  fill_model: next_regular_open_with_policy
+  slippage_model: stress_bps_by_volatility_and_participation
+  stress_scenarios:
+    - {name: primary, slippage_bps: 10.0, open_gap_pct: 0.5}
+    - {name: stress, slippage_bps: 20.0, open_gap_pct: 1.5}
+    - {name: severe_report_only, slippage_bps: 35.0, open_gap_pct: 2.5}
+data:
+  source: alpaca
+  symbol: null
+  path: null
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+llm_review: {enabled: false}
+required_capabilities: [market.alpaca_bars]
+notes:
+  intent: >-
+    Step 11 Wave C observation-mode connection: daily target weights and
+    signal log for a weekly cross-sectional model-ranking portfolio, no
+    broker order submission. See
+    docs/plan-step-11-ml-first-loop-2026-09-06.zh.md section 5 and
+    reports/research/control/step11-wavec-paper-connection-2026-09.md.
+  candidate_id: step11_momentum_placeholder_v1
+  candidate_role: rule_based_placeholder_pending_research_candidate
+  promotion_eligible: false
+  order_authority: false
+  broker_writes: false
+  shadow_only: false
+  observation_only: true
