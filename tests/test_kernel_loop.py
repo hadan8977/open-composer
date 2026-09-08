@@ -507,3 +507,116 @@ def test_train_row_dates_enters_the_config_hash() -> None:
     )
     weekly = dataclasses.replace(base, train_row_dates="rebalance_dates")
     assert base.config_hash() != weekly.config_hash()
+
+
+def test_execution_enters_the_config_hash() -> None:
+    base = loop.ExperimentConfig(
+        experiment_id="x",
+        family="f",
+        model_kind="ridge",
+        feature_set="daily_only",
+        label_horizon_days=5,
+        feature_columns=("feature",),
+    )
+    assert base.execution == "close_marked"  # default, unchanged from before this field existed
+    next_open = dataclasses.replace(base, execution="next_open")
+    assert base.config_hash() != next_open.config_hash()
+
+
+def test_returns_from_weight_schedule_next_open_shifts_window_by_one_day_and_uses_open_prices() -> (
+    None
+):
+    dates = pd.bdate_range("2020-01-06", periods=10)  # starts on a Monday
+    open_wide = pd.DataFrame({"AAA": [100.0 * (1.02**i) for i in range(len(dates))]}, index=dates)
+    price_wide = pd.DataFrame(
+        {"AAA": [999.0] * len(dates)}, index=dates
+    )  # sentinel: must be unused
+    spy_returns = pd.Series(0.0, index=dates)
+    schedule = [
+        loop.RebalanceEvent(
+            date=dates[0].isoformat(), universe_size=1, selected={"AAA": 1.0}, portfolio_beta=None
+        )
+    ]
+    result = loop.returns_from_weight_schedule(
+        schedule,
+        price_wide,
+        spy_returns,
+        cost_bps_per_side=0.0,
+        include_hedge=False,
+        execution="next_open",
+        open_wide=open_wide,
+    )
+    # close_marked's window would start at dates[1] (the trading day right
+    # after the signal date dates[0]) and mark AAA's close-to-close return
+    # that same day. next_open instead fills at dates[1]'s *open* -- the new
+    # weights cannot capture dates[1]'s own open-to-close move, so dates[1]
+    # only carries the (here zero) execution cost, and the first real
+    # open-to-open move realized under the new weights lands on dates[2].
+    assert result.loc[dates[1]] == pytest.approx(0.0)
+    expected_day2 = open_wide["AAA"].iloc[2] / open_wide["AAA"].iloc[1] - 1.0
+    assert result.loc[dates[2]] == pytest.approx(expected_day2)
+    assert expected_day2 == pytest.approx(0.02)
+
+
+def test_returns_from_weight_schedule_next_open_charges_cost_on_execution_day() -> None:
+    dates = pd.bdate_range("2020-01-06", periods=10)
+    open_wide = pd.DataFrame({"AAA": [100.0] * len(dates), "BBB": [50.0] * len(dates)}, index=dates)
+    spy_returns = pd.Series(0.0, index=dates)
+    schedule = [
+        loop.RebalanceEvent(
+            date=dates[0].isoformat(), universe_size=2, selected={"AAA": 1.0}, portfolio_beta=None
+        ),
+        loop.RebalanceEvent(
+            date=dates[3].isoformat(),
+            universe_size=2,
+            selected={"AAA": 0.5, "BBB": 0.5},
+            portfolio_beta=None,
+        ),
+    ]
+    zero_cost = loop.returns_from_weight_schedule(
+        schedule,
+        open_wide,
+        spy_returns,
+        cost_bps_per_side=0.0,
+        include_hedge=False,
+        execution="next_open",
+        open_wide=open_wide,
+    )
+    with_cost = loop.returns_from_weight_schedule(
+        schedule,
+        open_wide,
+        spy_returns,
+        cost_bps_per_side=10.0,
+        include_hedge=False,
+        execution="next_open",
+        open_wide=open_wide,
+    )
+    # The second event's signal date is dates[3]; its execution (open-fill)
+    # day is dates[4] -- one day *before* where its own next_open return
+    # window starts (dates[5]), because dates[4] is still the tail of the
+    # *first* event's one-day-lagged window. Cost must land on the actual
+    # fill day, not on "day zero of this event's own window".
+    execution_date = dates[4]
+    assert with_cost.loc[execution_date] == pytest.approx(
+        zero_cost.loc[execution_date] - 1.0 * 10.0 / 10_000.0
+    )
+
+
+def test_returns_from_weight_schedule_next_open_requires_open_wide() -> None:
+    dates = pd.bdate_range("2020-01-06", periods=5)
+    price_wide = pd.DataFrame({"AAA": [100.0] * len(dates)}, index=dates)
+    spy_returns = pd.Series(0.0, index=dates)
+    schedule = [
+        loop.RebalanceEvent(
+            date=dates[0].isoformat(), universe_size=1, selected={"AAA": 1.0}, portfolio_beta=None
+        )
+    ]
+    with pytest.raises(ValueError, match="next_open"):
+        loop.returns_from_weight_schedule(
+            schedule,
+            price_wide,
+            spy_returns,
+            cost_bps_per_side=0.0,
+            include_hedge=False,
+            execution="next_open",
+        )

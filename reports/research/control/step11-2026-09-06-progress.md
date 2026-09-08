@@ -25,8 +25,12 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave A / 3.4 评估函数、账本、tearsheet、MLflow | done | `96cd8cd` |
 | Wave A / 3.3.2 日线特征 + 3.3.3 标签 | done（daily-only 部分已入库；daily+intraday 合并列见 3.5 第二步） | `b3f2e26` |
 | Wave A / 3.5 B0/B1/B2（daily-only） | **done**（B1 未打赢 B0→B2 未打赢 B1，链上当前最优是 B1 多头 4/8 门槛，如实记录负面结果） | `3aaed17`+`2553cca`+`00911bc`（协调者）、本 commit（本执行者：daily_plus_intraday 支持、共享 category dtype、gc.collect、真实数字写入账本） |
-| Wave B / B3 网格、安慰剂、报告 | in progress（`loop.py` 扩展 + `b3_grid_strategy.py` 修 bug + 编排脚本已入库；冒烟测试进行中，通过后跑全量 9 年×2 特征集） | `417455d`+`f9841b9`+`2e6e3ce`（协调者 `train_row_dates`）+`af0b44c`+`4b3b4b0` |
-| Wave C / model_ranking_portfolio 模式 | todo | |
+| Wave B / B3 网格、安慰剂、报告 | in progress（冒烟测试`--test-years 2025 2026`已通过；`--mem 1.8G`跑不下、smoke2 在`--mem 2.6G`撞 OOM、smoke3 在`--mem 2.6G`成功——2.6G 是边界值，见下节；全量 9 年×2 特征集正在启动，见下节） | `417455d`+`f9841b9`+`2e6e3ce`（协调者 `train_row_dates`）+`af0b44c`+`4b3b4b0`+`3332157`（本执行者：提交遗留脏文件） |
+| Wave B / 新执行者接手：B2 rebalance_dates 补跑 | todo（代码已在 `3332157` 入库，两个实验尚未真跑） | |
+| Wave B / next_open 成交路径 | **代码 done**，实跑（对最优候选两条路径都跑）待 B3 网格结果出来后进行 | 本节见下 |
+| Wave B / 候选工件导出 | todo | |
+| Wave B / 报告 `step11-w2-model-ranking-2026-09.md` | todo（等 B3 网格结果） | |
+| Wave C / model_ranking_portfolio 模式 | **另一个执行者在做，进行中**（`open_composer/adapters/execution/model_ranking_target_weights.py`、`config/model_ranking_candidates/` 等文件在工作树里，非本执行者所有，不碰） | |
 | Wave C / 目标权重映射 | todo | |
 | Wave C / 晋级路径干跑 | todo | |
 | Wave C / 观察模式接入 | todo | |
@@ -270,11 +274,39 @@ uv run python scripts/build_daily_features.py
 
 `scripts/run_b3_grid.py`(新文件,commit `af0b44c`):两个顶层 `run_experiment` 调用(daily-only、daily+intraday 各一个),每个内部包一个 `GridSelectedLightGBMStrategy`(6 格子:标签周期 {5,10,21}×树深 {3,6}),`train_row_dates="rebalance_dates"`(非可选,见上)。含 `--only`/`--test-years`(冒烟测试用)/`--placebo-only` 三个 flag、换手/容量报表(复用 `verdict.schedule`,假设 $10mm AUM 的容量代理指标)、标签打乱安慰剂(`label_rank_21` 按 `trade_date` 分组内打乱,交互式验证过不会破坏分组/保留 NaN 位置)。
 
-**冒烟测试状态**:`--only step11_b3_lightgbm_grid_daily_only --test-years 2025 2026`(`run_capped.sh --mem 2.6G`)第一次跑撞上面 `symbol` 的 bug,修复后第二次跑正在进行(日志 `/tmp/run_b3_smoke2.log`),结果待补。
+**冒烟测试状态(补全结果,本执行者核实)**:`--only step11_b3_lightgbm_grid_daily_only --test-years 2025 2026`,`run_capped.sh --mem 2.6G`——第一次(smoke2)撞 `symbol` bug;修复后第二次(smoke2 重跑)在 11:57:42 被 memcg OOM 杀(`journalctl -k`:`anon-rss:2576748kB`≈2.46GB,逼近 2.6G 上限,合计含父进程更高);**未做任何代码改动或改内存参数**,第三次(smoke3,同样 `--mem 2.6G`)在 12:04-12:05 干净跑完,391 秒——与 Wave A 3.5 B2 那段记录里"系统整体负载波动导致同一个 cap 有时候过有时候不过"的模式一致(这台机器上有多个并发 Claude/Codex 会话共享内存,不是这次改动引入的新不稳定性)。smoke3 的真实数字(`--test-years 2025 2026`,仅两年,**两折冒烟,不是证据**,已写入账本 `step11_b3_lightgbm_grid_daily_only`,`config_hash` 因 `test_years` 不同天然与全量 9 年跑法分开记账,不会被去重覆盖):多头 CAGR 超额 18.9%、回撤 -17.2%、7/8 门槛;两个验证年(2024、2025)选中的格子都是 `h21_d6`(最长标签周期+最深树)。**这两折结果不得在报告里与 B0-B2 的九年结果并列**,下面继续跑全量 9 年。
 
 ### blocked_on_user
 
 无(暂时)。
+
+---
+
+## Wave B 续(本执行者接手,2026-09-08 起,今日截止 09-10 22:00 UTC)
+
+### 已核实状态(交接检查,做重活之前先确认起点,不是从零假设)
+
+- 工作树在接手时有两处未提交改动:`reports/research/control/step11-2026-09-06-progress.md`(上一任写的 Wave A 3.5 第二步 + Wave B 记录,本执行者读过、认可)和 `scripts/run_baseline_chain.py`(新增两个 `train_row_dates="rebalance_dates"` 的 B2 配置:daily-only、daily+intraday)。两者一并提交为 `3332157`,不重新发明。
+- `reports/research/ledger/experiments.jsonl` 四条记录核对:B0/B1/B2(daily-only,`train_row_dates="all"`)+ B3 冒烟(`step11_b3_lightgbm_grid_daily_only`,两折,见上)。`step11_b2_ridge_top50_rebalance_dates`、`step11_b2_ridge_top50_daily_plus_intraday_rebalance_dates`、`step11_b3_lightgbm_grid_daily_plus_intraday`、B3 全量 9 年版都**尚未真跑**。
+- `scripts/run_b3_grid.py` 有一处未被上一任发现的真实 bug:`main()` 结尾无条件跑一次"标签打乱安慰剂",硬编码读 `panels["daily_only"]`——如果用 `--only step11_b3_lightgbm_grid_daily_plus_intraday` 单独跑(本执行者计划这么做,两个特征集的全量 9 年网格分开起,避免同一进程里累积两份面板),`panels` 字典里根本没有 `"daily_only"` 键,会在真正的实验结果已经落盘账本**之后**才 `KeyError` 崩溃。修了:trailing 安慰剂块加 `if "daily_only" in panels`,缺失时打印"跳过,另一次调用已覆盖"而不是崩溃(计划只要求"一次"安慰剂,不是每次调用一次)。
+
+### Wave B item 4:`next_open` 成交路径(代码 done,真跑待定)
+
+**`open` 加入日线特征面板**(`open_composer/research/features/daily_features.py`):`close` 一直是原样透传(不是计算特征);`open` 现在用同样方式透传——`raw`/`priced`/`windowed` 三个 CTE 依次带上 `open`(`with_momentum` 和最终 SELECT 用 `*`,自动带过),`_all_columns()`(空宇宙早退路径用)同步加 `"open"`。纯加列,不改任何既有列的计算方式,对只按列名读取子集的既有消费方(`run_baseline_chain.py`/`run_b3_grid.py`,已核实是仅有的两个真实消费方)是后向兼容的 schema 变更。`tests/test_daily_features.py`:fixture 数据加了一个独立于 close 的小幅随机 `open`(不是从 close 派生,避免测试意外地永真),新增 `test_open_is_passed_through_unchanged` 核对与源数据逐行相等且不等于 close。
+
+**全量重建 11 年日线特征存档**(`uv run python scripts/build_daily_features.py`,`run_capped.sh --mem 1.8G`,后台,日志 `/tmp/build_daily_features_with_open.log`):11 年全部重跑成功(逐年 7-26 秒),全部 48 列(原 47 列 +open),`intraday_joined=true` 逐年核实(含 2016-2017,确认 3.5 第二步的回填成果没有被这次重建覆盖丢失)。抽查 2026 年:459,012 行,`open`/`close` 均 0% 空值,`open==close` 仅 1.75% 行(不是误把 close 复制成 open)。`run_baseline_chain.py`/`run_b3_grid.py` 的 `_DAILY_ONLY_READ_COLUMNS`/`_DAILY_PLUS_INTRADAY_READ_COLUMNS` 同步加入 `"open"`。
+
+**`loop.py`**:`ExperimentConfig` 新增 `execution: Literal["close_marked","next_open"] = "close_marked"`,进 `config_hash()`(因此这是一个新增而非替换的哈希输入——已有的 B0-B3 记录哈希不受影响,只是往后任何重跑都会因为新增字段落在不同哈希上,不会被账本去重误认成同一条,如实记录这个后果)。`returns_from_weight_schedule` 用同一套窗口逻辑统一了两种成交模式,靠一个 `window_lag`(`close_marked`=0,`next_open`=1)推导:`next_open` 与 `close_marked` 的唯一区别是整个持仓窗口(以及成本计提之外的收益计提)整体后移一个交易日、且用 `open_wide.pct_change()`(开对开)而不是 `price_wide.pct_change()`(收对收)。成本仍在真正下单的那个交易日计提(用 `all_returns.get(date,0.0)-cost` 取代原来"只在窗口第 0 天扣"的写法,`close_marked` 下两种说法指向同一天,数值不变;`next_open` 下下单日是*上一个*持仓窗口的最后一天,不是本窗口的第 0 天,只有分离成本计提与窗口填充两步才能扣对日子)。`run_experiment` 在 `panel` 有 `open` 列时才 pivot `open_wide`,四条收益序列(多头/中性×基础/压力成本)都透传 `config.execution`/`open_wide`;`execution` 同步写进账本记录与 MLflow params。**新增 6 个测试**(`tests/test_kernel_loop.py`):`execution` 进 config_hash、`next_open` 把窗口后移一天且用开盘价算收益(数值核对到 `pytest.approx`)、`next_open` 的成本精确落在下单日而不是收益窗口的第 0 天、缺 `open_wide` 时 `next_open` 报 `ValueError`。**`close_marked` 默认路径逐行核对为字节级不变**——原有三个 `returns_from_weight_schedule` 测试(施加成本当天、稳态换手成本、对冲腿)一个字符没改就全部通过,证明重构没有改变默认路径的输出。
+
+`scripts/run_b3_grid.py` 加 `--execution {close_marked,next_open}` flag(默认 `close_marked`,匹配网格搜索阶段方法论不变的要求):选 `next_open` 时把选中的配置(通常配合 `--only <胜出的 experiment_id>`)`dataclasses.replace` 出 `execution="next_open"` 且 `experiment_id` 加 `_next_open` 后缀,产出独立的账本记录,不与 `close_marked` 版本去重混淆。
+
+**核实**:`tests/test_daily_features.py`(12,含新测试)、`tests/test_kernel_loop.py`(21,含新测试)、`tests/test_kernel_loop_run_experiment.py`(1)、`tests/test_labels.py`(6)、`tests/test_b3_grid_strategy.py`(9)、`tests/test_lightgbm_rank_strategy.py`(9)、`tests/test_baseline_strategies_ridge.py`(6)全绿(`run_capped.sh --mem 1.8G`)。`ruff format`/`ruff check` 干净。
+
+**还没做的**:对"最佳候选"实跑 `--execution next_open` 并写进报告的对比表——这需要先跑完全量 B3 网格才知道哪个候选是"最佳",安排在下面 B3 全量网格完成之后。
+
+### blocked_on_user
+
+无。
 
 ---
 

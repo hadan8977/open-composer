@@ -129,6 +129,21 @@ class ExperimentConfig:
     top_k: int | None = DEFAULT_TOP_K
     hedge: Literal["none", "spy_beta_hedge"] = "none"
     train_row_dates: Literal["all", "rebalance_dates"] = "all"
+    #: Wave B item 4. ``"close_marked"`` (default, unchanged) is the
+    #: close-to-close, one-trading-day-lagged approximation this module has
+    #: used since 3.4 (see the module docstring's "execution-path
+    #: simplification" note) -- every already-recorded B0-B3 experiment used
+    #: this and its config_hash/results stay exactly reproducible.
+    #: ``"next_open"`` instead fills at the following trading day's *open*
+    #: (plan's "周五收盘信号 → 周一开盘成交 → 下一个周一开盘换仓"), via
+    #: :func:`returns_from_weight_schedule`'s ``execution=`` argument.
+    #: Recorded here (not a silent constant) because it enters config_hash
+    #: and the ledger -- the two paths are different candidates, not the
+    #: same candidate reported two ways, so comparing them means running
+    #: both. See ``scripts/run_b3_grid.py``'s ``--execution`` flag and the
+    #: Step 11 ledger's Wave B section for why only the winning candidate is
+    #: ever run both ways rather than doubling the whole grid.
+    execution: Literal["close_marked", "next_open"] = "close_marked"
     rebalance: str = "weekly_friday_signal_next_session_close_marked"
     weighting: str = "equal_weight"
     cost_bps_per_side: float = DEFAULT_COST_BPS_PER_SIDE
@@ -147,6 +162,7 @@ class ExperimentConfig:
             "top_k": self.top_k,
             "hedge": self.hedge,
             "train_row_dates": self.train_row_dates,
+            "execution": self.execution,
             "rebalance": self.rebalance,
             "weighting": self.weighting,
             "cost_bps_per_side": self.cost_bps_per_side,
@@ -362,13 +378,59 @@ def returns_from_weight_schedule(
     *,
     cost_bps_per_side: float,
     include_hedge: bool,
+    execution: Literal["close_marked", "next_open"] = "close_marked",
+    open_wide: pd.DataFrame | None = None,
 ) -> pd.Series:
-    """Fixed-weight-until-next-rebalance daily returns, close-marked (see
-    module docstring's "execution-path simplification" note) -- the same
-    convention as ``scripts/evaluate_cross_sectional_momentum_liquid500.py``'s
-    ``_cohort_daily_returns``, generalized to an optional SPY hedge leg.
+    """Fixed-weight-until-next-rebalance daily returns, generalized to an
+    optional SPY hedge leg and (Wave B item 4) a choice of execution price.
+
+    ``execution="close_marked"`` (default, byte-for-byte unchanged from this
+    function's original implementation -- every already-recorded B0-B3
+    experiment used exactly this path and stays reproducible) marks to
+    market with **close-to-close** daily returns starting the trading day
+    after the Friday signal date -- see module docstring's "execution-path
+    simplification" note; the same convention as
+    ``scripts/evaluate_cross_sectional_momentum_liquid500.py``'s
+    ``_cohort_daily_returns``.
+
+    ``execution="next_open"`` instead fills the Friday close signal at the
+    *following* trading day's **open** (plan's "周五收盘信号 → 周一开盘成交 →
+    下一个周一开盘换仓"), requiring ``open_wide`` (same shape/index/columns
+    contract as ``price_wide``, priced off ``open`` instead of ``close``).
+    An order filled at Monday's open cannot capture Monday's own open-to-
+    close move for the *new* weights -- that session's move is still the old
+    position's exposure right up to the fill -- so the earliest full trading
+    day of realized P&L under the new weights is the day *after* the fill.
+    Concretely this is the identical event-window logic as
+    ``close_marked``, shifted by exactly one trading day, using
+    **open-to-open** daily returns (``open_wide.pct_change()``) instead of
+    close-to-close ones; the two modes share one code path below via
+    ``window_lag`` (0 for close_marked, 1 for next_open), which is why
+    close_marked's output is provably unchanged by this generalization.
+
+    Trading cost is charged on the day the order actually executes
+    (``dates[entry_pos]``, the trading day right after the Friday signal --
+    the first day of the close_marked return window, but the day *before*
+    the next_open return window starts) in both modes: written as a
+    get-or-create update to ``all_returns`` after the window is filled,
+    rather than being special-cased to "day zero of this iteration's
+    window" the way the original close_marked-only implementation did --
+    for close_marked those two descriptions name the same day (so the
+    output is identical), but only writing it this way makes next_open's
+    cost land on the fill day rather than a day late.
     """
-    daily_returns = price_wide.pct_change()
+    if execution == "next_open":
+        if open_wide is None:
+            raise ValueError("execution='next_open' requires open_wide")
+        mark_prices = open_wide
+        window_lag = 1
+    elif execution == "close_marked":
+        mark_prices = price_wide
+        window_lag = 0
+    else:
+        raise ValueError(f"unknown execution {execution!r}, expected 'close_marked' or 'next_open'")
+
+    daily_returns = mark_prices.pct_change()
     dates = daily_returns.index
     # turnover (Sigma|delta w|) is already two-sided -- one rebalance that
     # sells $x of A and buys $x of B has turnover 2x, correctly reflecting
@@ -397,9 +459,12 @@ def returns_from_weight_schedule(
         cost = turnover * cost_rate
 
         event_date = pd.Timestamp(event.date)
-        start = dates.searchsorted(event_date, side="right")
+        # entry_pos: the trading day the order executes on, regardless of
+        # execution mode -- the day right after the Friday signal.
+        entry_pos = dates.searchsorted(event_date, side="right")
+        start = entry_pos + window_lag
         end = (
-            dates.searchsorted(pd.Timestamp(active[i + 1].date), side="right") - 1
+            dates.searchsorted(pd.Timestamp(active[i + 1].date), side="right") + window_lag - 1
             if i + 1 < len(active)
             else len(dates) - 1
         )
@@ -408,7 +473,7 @@ def returns_from_weight_schedule(
             continue
 
         stock_weights = {s: w for s, w in weights.items() if s != "__SPY_HEDGE__"}
-        held_columns = [s for s in stock_weights if s in price_wide.columns]
+        held_columns = [s for s in stock_weights if s in mark_prices.columns]
         window = daily_returns.iloc[start : end + 1]
         stock_contribution = (
             window[held_columns].fillna(0.0).mul(pd.Series(stock_weights)[held_columns], axis=1)
@@ -421,11 +486,11 @@ def returns_from_weight_schedule(
             aligned_spy = spy_returns.reindex(window.index).fillna(0.0)
             day_returns = day_returns + hedge_weight * aligned_spy
 
-        for j, date in enumerate(window.index):
-            value = float(day_returns.iloc[j])
-            if j == 0:
-                value -= cost
-            all_returns[date] = value
+        for date, value in day_returns.items():
+            all_returns[date] = all_returns.get(date, 0.0) + float(value)
+
+        cost_date = dates[entry_pos]
+        all_returns[cost_date] = all_returns.get(cost_date, 0.0) - cost
         previous_weights = weights
 
     if not all_returns:
@@ -547,6 +612,7 @@ def _log_mlflow_run(
                 "top_k": config.top_k,
                 "hedge": config.hedge,
                 "train_row_dates": config.train_row_dates,
+                "execution": config.execution,
                 "cost_bps_per_side": config.cost_bps_per_side,
                 **{f"hp_{k}": v for k, v in config.hyperparameters.items()},
             }
@@ -589,6 +655,17 @@ def run_experiment(
     """
     config_hash = config.config_hash()
     price_wide = panel.pivot(index="trade_date", columns="symbol", values="close")
+    # "open" is only present once daily_features.py's passthrough (Wave B
+    # item 4, 2026-09-08) has been (re)built for the years panel covers --
+    # older/partial panels without it can still run close_marked (the
+    # default and the only path every already-recorded B0-B3 experiment
+    # used); asking for next_open without it fails fast inside
+    # returns_from_weight_schedule rather than silently falling back.
+    open_wide = (
+        panel.pivot(index="trade_date", columns="symbol", values="open")
+        if "open" in panel.columns
+        else None
+    )
 
     schedule = build_weight_schedule(
         panel=panel,
@@ -610,6 +687,8 @@ def run_experiment(
         spy_returns,
         cost_bps_per_side=config.cost_bps_per_side,
         include_hedge=False,
+        execution=config.execution,
+        open_wide=open_wide,
     )
     long_stress = returns_from_weight_schedule(
         schedule,
@@ -617,6 +696,8 @@ def run_experiment(
         spy_returns,
         cost_bps_per_side=config.stress_cost_bps_per_side,
         include_hedge=False,
+        execution=config.execution,
+        open_wide=open_wide,
     )
     neutral_base = returns_from_weight_schedule(
         schedule,
@@ -624,6 +705,8 @@ def run_experiment(
         spy_returns,
         cost_bps_per_side=config.cost_bps_per_side,
         include_hedge=True,
+        execution=config.execution,
+        open_wide=open_wide,
     )
     neutral_stress = returns_from_weight_schedule(
         schedule,
@@ -631,6 +714,8 @@ def run_experiment(
         spy_returns,
         cost_bps_per_side=config.stress_cost_bps_per_side,
         include_hedge=True,
+        execution=config.execution,
+        open_wide=open_wide,
     )
 
     long_candidate = _build_candidate(
@@ -686,6 +771,7 @@ def run_experiment(
             "top_k": config.top_k,
             "hedge": config.hedge,
             "train_row_dates": config.train_row_dates,
+            "execution": config.execution,
             "hyperparameters": config.hyperparameters,
             "test_years": list(config.test_years),
             "dsr_trial_count": dsr_trial_count,

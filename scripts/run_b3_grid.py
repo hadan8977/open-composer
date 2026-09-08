@@ -57,6 +57,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import gc
 import json
 import multiprocessing
@@ -142,9 +143,19 @@ ALL_LABEL_COLUMNS = (*EXTRA_LABEL_COLUMNS, PRIMARY_LABEL_COLUMN)
 #: max of the grid's horizons, so the cutoff is safe for every cell.
 LABEL_HORIZON_DAYS = 21
 
-_DAILY_ONLY_READ_COLUMNS = sorted({"symbol", "trade_date", "close", *B2_FEATURE_COLUMNS})
+# "open" (Wave B item 4, 2026-09-08): needed so run_experiment can pivot
+# open_wide for the next_open execution path; harmless/unused for the
+# default close_marked execution every other config here still uses.
+_DAILY_ONLY_READ_COLUMNS = sorted({"symbol", "trade_date", "open", "close", *B2_FEATURE_COLUMNS})
 _DAILY_PLUS_INTRADAY_READ_COLUMNS = sorted(
-    {"symbol", "trade_date", "close", *B2_FEATURE_COLUMNS, *INTRADAY_ROLLING_FEATURE_COLUMNS}
+    {
+        "symbol",
+        "trade_date",
+        "open",
+        "close",
+        *B2_FEATURE_COLUMNS,
+        *INTRADAY_ROLLING_FEATURE_COLUMNS,
+    }
 )
 _LABEL_READ_COLUMNS = ["symbol", "trade_date", *ALL_LABEL_COLUMNS]
 _READ_COLUMNS_BY_FEATURE_SET = {
@@ -215,6 +226,18 @@ def _parse_args() -> argparse.Namespace:
         "--placebo-only",
         action="store_true",
         help="run only the label-shuffle placebo check (no ledger/tearsheet experiments)",
+    )
+    parser.add_argument(
+        "--execution",
+        choices=["close_marked", "next_open"],
+        default="close_marked",
+        help=(
+            "loop.py's ExperimentConfig.execution (Wave B item 4). Default close_marked "
+            "matches every grid cell's search run (methodology held fixed while comparing "
+            "cells). Use --execution next_open with --only <winning experiment_id> to get "
+            "the second, next-bar-open reading the plan's report requires for the winning "
+            "candidate only -- not to rerun the whole grid twice."
+        ),
     )
     return parser.parse_args()
 
@@ -504,6 +527,25 @@ def main() -> int:
         if missing:
             raise SystemExit(f"--only requested unknown experiment_id(s): {sorted(missing)}")
 
+    if args.execution == "next_open":
+        # A distinct experiment_id (not just a distinct config_hash, though
+        # execution does enter the hash too -- see loop.py) so the ledger's
+        # two rows for "the same" grid cell are trivially distinguishable by
+        # id alone when skimming experiments.jsonl, and so this can never
+        # collide with (or get deduped against) the close_marked run of the
+        # same feature set. Intended usage is --only <one winning
+        # experiment_id> --execution next_open, not rerunning the whole
+        # grid a second time (see plan section 4 / the Step 11 ledger: only
+        # the winning candidate is reported both ways).
+        configs = [
+            dataclasses.replace(
+                config,
+                experiment_id=f"{config.experiment_id}_next_open",
+                execution="next_open",
+            )
+            for config in configs
+        ]
+
     needed_feature_sets = (
         sorted({config.feature_set for config in configs})
         if not args.placebo_only
@@ -554,11 +596,31 @@ def main() -> int:
         all_results[config.experiment_id] = result
         print(json.dumps(result, indent=2, default=str), flush=True)
 
-    print("\n=== label-shuffle placebo (daily_only, 2026 window) ===", flush=True)
-    gc.collect()
-    placebo = _run_label_shuffle_placebo(panels["daily_only"], universe_panel)
-    all_results["label_shuffle_placebo"] = placebo
-    print(json.dumps(placebo, indent=2, default=str), flush=True)
+    # The plan asks for one placebo total ("一次标签打乱的安慰剂"), not one per
+    # invocation -- but this script is routinely invoked with --only pinned to
+    # a single feature set (each full 9-year grid is its own multi-hour run on
+    # this box; see the Step 11 ledger's 2026-09-08 entries for why they are
+    # never run back to back in one process). Only run it here when the
+    # daily_only panel actually got loaded this invocation (default: both
+    # configs, or --only step11_b3_lightgbm_grid_daily_only); a run pinned to
+    # daily_plus_intraday alone skips it rather than crashing on a KeyError
+    # after its real experiment result is already safely in the ledger --
+    # that crash was a real bug hit while wiring up the two-invocation split
+    # described in the ledger, fixed here before either full-grid invocation
+    # ran for real.
+    if "daily_only" in panels:
+        print("\n=== label-shuffle placebo (daily_only, 2026 window) ===", flush=True)
+        gc.collect()
+        placebo = _run_label_shuffle_placebo(panels["daily_only"], universe_panel)
+        all_results["label_shuffle_placebo"] = placebo
+        print(json.dumps(placebo, indent=2, default=str), flush=True)
+    else:
+        print(
+            "\n=== label-shuffle placebo skipped (daily_only panel not loaded this "
+            "invocation -- run with --only step11_b3_lightgbm_grid_daily_only, or no "
+            "--only, to produce it) ===",
+            flush=True,
+        )
 
     print("\n=== SUMMARY ===", flush=True)
     summary_rows = [

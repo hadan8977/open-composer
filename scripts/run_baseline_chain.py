@@ -114,7 +114,10 @@ B2_FEATURE_COLUMNS_DAILY_PLUS_INTRADAY = B2_FEATURE_COLUMNS + INTRADAY_ROLLING_F
 #: Reading a column subset keeps the concatenated 11-year panel far smaller
 #: than the full archive (see scripts/build_daily_features.py's module
 #: docstring for the real OOM-adjacent incident this mirrors the fix for).
-_DAILY_ONLY_READ_COLUMNS = sorted({"symbol", "trade_date", "close", *B2_FEATURE_COLUMNS})
+# "open" (Wave B item 4, 2026-09-08): needed so run_experiment can pivot
+# open_wide for the next_open execution path; harmless/unused for the
+# default close_marked execution every other config here still uses.
+_DAILY_ONLY_READ_COLUMNS = sorted({"symbol", "trade_date", "open", "close", *B2_FEATURE_COLUMNS})
 #: daily_plus_intraday additionally needs the 20 rolled intraday columns --
 #: this set only exists in data/features/daily/{year}.parquet *after*
 #: scripts/build_daily_features.py has been (re)run with the intraday
@@ -122,7 +125,14 @@ _DAILY_ONLY_READ_COLUMNS = sorted({"symbol", "trade_date", "close", *B2_FEATURE_
 #: reading this column set against a not-yet-rejoined file raises a clear
 #: pyarrow error rather than silently proceeding without the columns.
 _DAILY_PLUS_INTRADAY_READ_COLUMNS = sorted(
-    {"symbol", "trade_date", "close", *B2_FEATURE_COLUMNS, *INTRADAY_ROLLING_FEATURE_COLUMNS}
+    {
+        "symbol",
+        "trade_date",
+        "open",
+        "close",
+        *B2_FEATURE_COLUMNS,
+        *INTRADAY_ROLLING_FEATURE_COLUMNS,
+    }
 )
 _LABEL_READ_COLUMNS = ["symbol", "trade_date", LABEL_COLUMN]
 _READ_COLUMNS_BY_FEATURE_SET = {

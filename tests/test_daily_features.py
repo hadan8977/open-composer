@@ -49,9 +49,21 @@ def _write_fixture(root: Path, n_days: int = 40, seed: int = 11) -> pd.DataFrame
     ]:
         price = base
         for i, date in enumerate(dates):
+            # Independent small gap from the prior close, not derived from
+            # the day's own close -- so a test asserting open != close (and
+            # open passed through unchanged) is not accidentally vacuous.
+            day_open = price * (1.0 + rng.normal(0, 0.004))
             price *= 1.0 + rng.normal(0, 0.012)
             volume = vol_base * (1 + 0.01 * i)
-            rows.append({"symbol": symbol, "timestamp": date, "close": price, "volume": volume})
+            rows.append(
+                {
+                    "symbol": symbol,
+                    "timestamp": date,
+                    "open": day_open,
+                    "close": price,
+                    "volume": volume,
+                }
+            )
     frame = pd.DataFrame(rows)
     year_dir = root / "2020"
     year_dir.mkdir(parents=True, exist_ok=True)
@@ -95,6 +107,30 @@ def test_returns_match_independent_pandas_pct_change(
                 check_names=False,
                 rtol=1e-9,
             )
+
+
+def test_open_is_passed_through_unchanged(
+    fixture_frame_and_glob: tuple[pd.DataFrame, str],
+) -> None:
+    """Wave B item 4: ``open`` must survive the pipeline as a plain
+    passthrough (like ``close``), not get dropped or windowed, since
+    ``loop.py``'s ``next_open`` execution path pivots it into
+    ``open_wide`` the same way ``close`` becomes ``price_wide``.
+    """
+    raw, glob = fixture_frame_and_glob
+    result = build_daily_features(glob, SYMBOLS, market_symbol=MARKET, **WINDOW_KW)
+    assert "open" in result.columns
+    for symbol in SYMBOLS:
+        got = result.loc[result["symbol"] == symbol].set_index("trade_date")["open"]
+        expected = raw.loc[raw["symbol"] == symbol].set_index("timestamp")["open"]
+        expected.index = pd.to_datetime(expected.index)
+        pd.testing.assert_series_equal(
+            got, expected.reindex(got.index), check_names=False, rtol=1e-12
+        )
+        # Not derived from close -- a real, independent price.
+        assert not got.equals(
+            result.loc[result["symbol"] == symbol].set_index("trade_date")["close"]
+        )
 
 
 def test_warm_up_period_is_null_not_fabricated(

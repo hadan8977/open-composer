@@ -5,6 +5,17 @@ per (symbol, trading day), computed entirely from ``data/sip/daily/`` (all
 prices already ``adjustment=all``), restricted to the PIT universe's
 full-history symbol union.
 
+**``open`` passthrough (Wave B item 4, added 2026-09-08)**: ``close`` was
+already carried through unchanged (not a computed feature, just the price
+the label/backtest machinery needs); ``open`` is now carried through the
+same way, from the same source rows, with no windowing at all -- added so
+``loop.py``'s ``next_open`` execution path (a next-bar-open fill instead of
+the default close-marked approximation) has an actual open price to pivot
+into ``open_wide`` alongside the existing ``price_wide`` (built from
+``close``). This is an additive, backward-compatible schema change: every
+existing consumer of ``data/features/daily/*.parquet`` that reads a named
+column subset (not ``SELECT *``) is unaffected.
+
 **Phased scope, recorded here rather than silently shipped partial**: the
 plan's full ~40-column daily feature table also includes 5d/21d rolling means
 of the minute-bar-derived intraday columns (``intraday_daily.py``, Wave A
@@ -165,7 +176,7 @@ def build_daily_features(
         )
         query = f"""
             WITH raw AS (
-                SELECT symbol, timestamp, close, volume
+                SELECT symbol, timestamp, open, close, volume
                 FROM read_parquet({daily_glob!r})
                 WHERE symbol IN (SELECT symbol FROM _universe_symbols) OR symbol = '{market_symbol}'
             ),
@@ -173,6 +184,7 @@ def build_daily_features(
                 SELECT
                     symbol,
                     CAST(timestamp AS DATE) AS trade_date,
+                    open,
                     close,
                     volume,
                     close / LAG(close) OVER w1 - 1.0 AS ret_1,
@@ -191,7 +203,7 @@ def build_daily_features(
             ),
             windowed AS (
                 SELECT
-                    symbol, trade_date, close, ret_1,
+                    symbol, trade_date, open, close, ret_1,
 {return_selects},
 {vol_selects},
                     {
@@ -256,7 +268,7 @@ def build_daily_features(
 def _all_columns(
     return_windows: tuple[int, ...], vol_windows: tuple[int, ...], adv_windows: tuple[int, ...]
 ) -> list[str]:
-    columns = ["symbol", "trade_date", "close", "ret_1"]
+    columns = ["symbol", "trade_date", "open", "close", "ret_1"]
     columns += [_return_column(w) for w in return_windows if w != 1]
     columns += [f"vol_{w}" for w in vol_windows]
     columns += [f"dollar_adv_{w}" for w in adv_windows]
