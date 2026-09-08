@@ -11,9 +11,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+import numpy as np
 import pandas as pd
-from sklearn.linear_model import Ridge
-from sklearn.preprocessing import StandardScaler
 
 
 class EqualWeightUniverseStrategy:
@@ -53,31 +52,83 @@ class RidgeRankStrategy:
     year's anchored, embargoed training window -- no state carries over
     between years, so a later year's fit can never see an earlier year's
     residual influence beyond what its own training window already implies.
+
+    **Constant-memory fit.** The expanding-window training frame reaches ~6M
+    rows by the last test year. Materializing it as one dense matrix and
+    handing that to ``StandardScaler`` + ``sklearn.Ridge`` costs three
+    copies (~3GB on this 3.9GB box) and was OOM-killed on 2026-09-08. With
+    only ~23-40 features, the normal equations are tiny, so this accumulates
+    the Gram matrix ``Z'Z`` (p x p) and ``Z'y`` (p) in row chunks and solves
+    ``(Z'Z + alpha*I) w = Z'(y - ybar)`` directly: peak memory is one chunk
+    (tens of MB) regardless of how many rows the window holds, and the
+    solution is the same one ``Ridge(solver="cholesky")`` computes on
+    standardized inputs (asserted against sklearn in
+    ``tests/test_baseline_strategies_ridge.py``). Moments accumulate in
+    float64 even though the panel is float32.
     """
 
     def __init__(
-        self, feature_columns: Sequence[str], label_column: str, alpha: float = 1.0
+        self,
+        feature_columns: Sequence[str],
+        label_column: str,
+        alpha: float = 1.0,
+        chunk_rows: int = 500_000,
     ) -> None:
         self.feature_columns = list(feature_columns)
         self.label_column = label_column
         self.alpha = alpha
-        self._scaler: StandardScaler | None = None
-        self._model: Ridge | None = None
+        self.chunk_rows = chunk_rows
+        self._mean: np.ndarray | None = None
+        self._scale: np.ndarray | None = None
+        self._coef: np.ndarray | None = None
+        self._intercept: float | None = None
+
+    def _chunks(self, frame: pd.DataFrame):
+        for start in range(0, len(frame), self.chunk_rows):
+            block = frame.iloc[start : start + self.chunk_rows]
+            x = block[self.feature_columns].to_numpy(dtype=np.float64)
+            y = block[self.label_column].to_numpy(dtype=np.float64)
+            yield x, y
 
     def fit(self, train_frame: pd.DataFrame) -> None:
-        x = train_frame[self.feature_columns].to_numpy()
-        y = train_frame[self.label_column].to_numpy()
-        scaler = StandardScaler()
-        x_scaled = scaler.fit_transform(x)
-        model = Ridge(alpha=self.alpha, random_state=7)
-        model.fit(x_scaled, y)
-        self._scaler = scaler
-        self._model = model
+        n_features = len(self.feature_columns)
+        count = 0
+        sum_x = np.zeros(n_features)
+        sum_x2 = np.zeros(n_features)
+        sum_y = 0.0
+        for x, y in self._chunks(train_frame):
+            count += x.shape[0]
+            sum_x += x.sum(axis=0)
+            sum_x2 += np.einsum("ij,ij->j", x, x)
+            sum_y += float(y.sum())
+        if count == 0:
+            raise ValueError("RidgeRankStrategy.fit received an empty training frame")
+        mean = sum_x / count
+        # Population variance (ddof=0), matching StandardScaler; a constant
+        # feature gets scale 1.0 so it standardizes to 0 instead of dividing
+        # by zero -- also StandardScaler's behavior.
+        variance = np.maximum(sum_x2 / count - mean**2, 0.0)
+        scale = np.sqrt(variance)
+        scale[scale == 0.0] = 1.0
+        y_mean = sum_y / count
+
+        gram = np.zeros((n_features, n_features))
+        rhs = np.zeros(n_features)
+        for x, y in self._chunks(train_frame):
+            z = (x - mean) / scale
+            gram += z.T @ z
+            rhs += z.T @ (y - y_mean)
+        coef = np.linalg.solve(gram + self.alpha * np.eye(n_features), rhs)
+
+        self._mean = mean
+        self._scale = scale
+        self._coef = coef
+        self._intercept = y_mean
 
     def score(self, asof_frame: pd.DataFrame) -> pd.Series:
-        if self._scaler is None or self._model is None:
+        if self._coef is None or self._mean is None or self._scale is None:
             raise RuntimeError("RidgeRankStrategy.score called before fit")
-        x = asof_frame[self.feature_columns].to_numpy()
-        x_scaled = self._scaler.transform(x)
-        predictions = self._model.predict(x_scaled)
+        x = asof_frame[self.feature_columns].to_numpy(dtype=np.float64)
+        z = (x - self._mean) / self._scale
+        predictions = z @ self._coef + float(self._intercept or 0.0)
         return pd.Series(predictions, index=asof_frame["symbol"].to_numpy())

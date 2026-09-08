@@ -12,10 +12,19 @@ results) to the ledger, and prints a comparison table for the ledger writeup.
 Usage::
 
     uv run python scripts/run_baseline_chain.py
+    # Re-run (or resume after a kill) just one experiment -- the ledger
+    # already dedups completed configs by config_hash (see loop.py's
+    # _append_ledger), so re-running an *already-recorded* id is a harmless
+    # no-op write but still repeats the full walk-forward computation
+    # (~25 minutes for B1). --only skips that waste when only one candidate
+    # in the chain actually needs (re)running, e.g. after B2 alone died to
+    # earlyoom/SIGTERM while B0/B1 were already safely recorded.
+    uv run python scripts/run_baseline_chain.py --only step11_b2_ridge_top50
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import multiprocessing
 import sys
@@ -28,6 +37,7 @@ sys.path.insert(0, str(ROOT))
 
 import pandas as pd  # noqa: E402
 
+from open_composer.research.features.intraday_daily import INTRADAY_DAILY_COLUMNS  # noqa: E402
 from open_composer.research.features.universe import load_universe_panel  # noqa: E402
 from open_composer.research.kernel.baseline_strategies import (  # noqa: E402
     EqualWeightUniverseStrategy,
@@ -79,21 +89,52 @@ B2_FEATURE_COLUMNS = (
 LABEL_COLUMN = "label_rank_5"
 LABEL_HORIZON_DAYS = 5
 
+#: The 5d/21d trailing means daily_features.py::join_intraday_rolling_features
+#: adds on top of every intraday_daily.py value column (symbol/trade_date
+#: excluded -- those are identifiers, not values to be rolled). Column-name
+#: derivation mirrors that function's own `add_suffix(f"_{window}d_mean")`
+#: exactly; kept here rather than imported so this script fails loudly (a
+#: KeyError from pd.read_parquet's columns= filter) if the two ever drift
+#: apart, instead of silently reading an empty/wrong set.
+INTRADAY_ROLLING_WINDOWS = (5, 21)
+INTRADAY_ROLLING_FEATURE_COLUMNS = tuple(
+    f"{column}_{window}d_mean"
+    for column in INTRADAY_DAILY_COLUMNS
+    if column not in ("symbol", "trade_date")
+    for window in INTRADAY_ROLLING_WINDOWS
+)
+B2_FEATURE_COLUMNS_DAILY_PLUS_INTRADAY = B2_FEATURE_COLUMNS + INTRADAY_ROLLING_FEATURE_COLUMNS
+
 
 #: Only pull the columns the B0/B1/B2 baselines (and run_experiment's own
 #: price pivot / beta-hedge weighting) actually touch -- data/features/daily
-#: carries ~27-47 columns per year once intraday joins land, but this round
-#: is daily_only and needs at most identifiers + B2_FEATURE_COLUMNS. Reading
-#: a column subset keeps the concatenated 11-year panel far smaller than the
-#: full archive (see scripts/build_daily_features.py's module docstring for
-#: the real OOM-adjacent incident this mirrors the fix for).
-_DAILY_READ_COLUMNS = sorted({"symbol", "trade_date", "close", *B2_FEATURE_COLUMNS})
+#: carries ~27-47 columns per year once intraday joins land, but the
+#: daily_only feature set needs at most identifiers + B2_FEATURE_COLUMNS.
+#: Reading a column subset keeps the concatenated 11-year panel far smaller
+#: than the full archive (see scripts/build_daily_features.py's module
+#: docstring for the real OOM-adjacent incident this mirrors the fix for).
+_DAILY_ONLY_READ_COLUMNS = sorted({"symbol", "trade_date", "close", *B2_FEATURE_COLUMNS})
+#: daily_plus_intraday additionally needs the 20 rolled intraday columns --
+#: this set only exists in data/features/daily/{year}.parquet *after*
+#: scripts/build_daily_features.py has been (re)run with the intraday
+#: backfill in place (join_intraday_rolling_features left-joins them on);
+#: reading this column set against a not-yet-rejoined file raises a clear
+#: pyarrow error rather than silently proceeding without the columns.
+_DAILY_PLUS_INTRADAY_READ_COLUMNS = sorted(
+    {"symbol", "trade_date", "close", *B2_FEATURE_COLUMNS, *INTRADAY_ROLLING_FEATURE_COLUMNS}
+)
 _LABEL_READ_COLUMNS = ["symbol", "trade_date", LABEL_COLUMN]
+_READ_COLUMNS_BY_FEATURE_SET = {
+    "daily_only": _DAILY_ONLY_READ_COLUMNS,
+    "daily_plus_intraday": _DAILY_PLUS_INTRADAY_READ_COLUMNS,
+}
 
 
 def _load_panel(feature_set: str = "daily_only") -> pd.DataFrame:
-    if feature_set != "daily_only":
-        raise NotImplementedError("daily_plus_intraday joins land once the backfill is complete")
+    if feature_set not in _READ_COLUMNS_BY_FEATURE_SET:
+        known = sorted(_READ_COLUMNS_BY_FEATURE_SET)
+        raise ValueError(f"unknown feature_set {feature_set!r}, expected one of {known}")
+    read_columns = _READ_COLUMNS_BY_FEATURE_SET[feature_set]
 
     # Merge per year, then concat the (much smaller) merged results -- one
     # 11-year-vs-11-year merge peaks far higher than 11 single-year merges,
@@ -106,9 +147,7 @@ def _load_panel(feature_set: str = "daily_only") -> pd.DataFrame:
     years = sorted(int(p.stem) for p in DAILY_FEATURES_ROOT.glob("*.parquet") if p.stem.isdigit())
     merged_frames = []
     for year in years:
-        daily_year = pd.read_parquet(
-            DAILY_FEATURES_ROOT / f"{year}.parquet", columns=_DAILY_READ_COLUMNS
-        )
+        daily_year = pd.read_parquet(DAILY_FEATURES_ROOT / f"{year}.parquet", columns=read_columns)
         label_path = LABELS_ROOT / f"{year}.parquet"
         if not label_path.exists():
             continue
@@ -128,18 +167,19 @@ def _load_panel(feature_set: str = "daily_only") -> pd.DataFrame:
     return panel
 
 
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--only",
+        action="append",
+        default=None,
+        help="experiment_id to run (repeatable); default runs all three",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
-    print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] loading daily+label panel ...", flush=True)
-    panel = _load_panel()
-    print(f"panel: {len(panel)} rows, {panel['symbol'].nunique()} symbols", flush=True)
-
-    universe_panel = load_universe_panel(UNIVERSE_ROOT)
-
-    print("loading SPY/QQQ/TQQQ/BIL benchmark returns ...", flush=True)
-    benchmarks = {
-        symbol: daily_returns_on_naive_dates(symbol, start=DATA_START)
-        for symbol in ("SPY", "QQQ", "TQQQ", "BIL")
-    }
+    args = _parse_args()
 
     # NOTE on why there is exactly one ExperimentConfig per model, not one per
     # (model, hedge) pair: run_experiment() *always* computes both the
@@ -214,7 +254,67 @@ def main() -> int:
             ),
             lambda: RidgeRankStrategy(B2_FEATURE_COLUMNS, LABEL_COLUMN, alpha=1.0),
         ),
+        (
+            # Wave A 3.5 step 2 (coordinator, 2026-09-08): same B2 ridge model
+            # and hyperparameters, but with the 20 intraday-derived 5d/21d
+            # rolling columns added to feature_columns, to A/B test
+            # daily-only vs daily+intraday now that the minute-bar backfill
+            # (3.3.1) is complete. Requires data/features/daily/{year}.parquet
+            # to already carry those columns -- run
+            # scripts/build_daily_features.py (no --skip-intraday-join) first.
+            ExperimentConfig(
+                experiment_id="step11_b2_ridge_top50_daily_plus_intraday",
+                family="step11_baseline_chain",
+                model_kind="ridge_regressor",
+                feature_set="daily_plus_intraday",
+                label_horizon_days=LABEL_HORIZON_DAYS,
+                feature_columns=B2_FEATURE_COLUMNS_DAILY_PLUS_INTRADAY,
+                top_k=50,
+                hedge="spy_beta_hedge",
+                test_years=DEFAULT_TEST_YEARS,
+                hyperparameters={"alpha": 1.0},
+            ),
+            lambda: RidgeRankStrategy(
+                B2_FEATURE_COLUMNS_DAILY_PLUS_INTRADAY, LABEL_COLUMN, alpha=1.0
+            ),
+        ),
     ]
+
+    if args.only:
+        wanted = set(args.only)
+        configs = [
+            (config, factory) for config, factory in configs if config.experiment_id in wanted
+        ]
+        missing = wanted - {config.experiment_id for config, _ in configs}
+        if missing:
+            raise SystemExit(f"--only requested unknown experiment_id(s): {sorted(missing)}")
+
+    # Load only the panel(s) the selected configs actually need -- running
+    # --only against a single daily_only experiment must not also pay for a
+    # daily_plus_intraday load (and vice versa). Panels are cached in this
+    # dict for the (currently impossible-to-hit-twice-cheaply, but harmless)
+    # case where --only spans both feature sets in one invocation.
+    needed_feature_sets = sorted({config.feature_set for config, _ in configs})
+    panels: dict[str, pd.DataFrame] = {}
+    for feature_set in needed_feature_sets:
+        print(
+            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] loading {feature_set} daily+label panel ...",
+            flush=True,
+        )
+        panel = _load_panel(feature_set)
+        print(
+            f"panel[{feature_set}]: {len(panel)} rows, {panel['symbol'].nunique()} symbols",
+            flush=True,
+        )
+        panels[feature_set] = panel
+
+    universe_panel = load_universe_panel(UNIVERSE_ROOT)
+
+    print("loading SPY/QQQ/TQQQ/BIL benchmark returns ...", flush=True)
+    benchmarks = {
+        symbol: daily_returns_on_naive_dates(symbol, start=DATA_START)
+        for symbol in ("SPY", "QQQ", "TQQQ", "BIL")
+    }
 
     summary_rows = []
     for config, factory in configs:
@@ -224,7 +324,9 @@ def main() -> int:
             flush=True,
         )
         started = time.monotonic()
-        rows = _run_experiment_in_subprocess(config, factory, panel, universe_panel, benchmarks)
+        rows = _run_experiment_in_subprocess(
+            config, factory, panels[config.feature_set], universe_panel, benchmarks
+        )
         elapsed = time.monotonic() - started
         for row in rows:
             row["elapsed_seconds"] = round(elapsed, 1)

@@ -21,10 +21,10 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | 账本初始化 | done | `e515e7e`（随 3.1 一起入库） |
 | Wave A / 3.1 依赖 | done | `e515e7e` |
 | Wave A / 3.2 宇宙 | done | `e6db857` |
-| Wave A / 3.3.1 分钟线日聚合（后台） | **doing（代码完成，真实回填进行中）** | `b3f2e26`（代码） |
+| Wave A / 3.3.1 分钟线日聚合（后台） | **done**（11 年全量回填完成并核实：6,037,773 行，逐年 null 率 0.000%，symbol 数 1809→2721） | `b3f2e26`（代码）+ `cd8b085`（协调者的分片修复） |
 | Wave A / 3.4 评估函数、账本、tearsheet、MLflow | done | `96cd8cd` |
-| Wave A / 3.3.2 日线特征 + 3.3.3 标签 | done（daily-only 部分；分钟线派生滚动列待 3.3.1 回填完成后补） | `b3f2e26` |
-| Wave A / 3.5 B0/B1/B2 | todo | |
+| Wave A / 3.3.2 日线特征 + 3.3.3 标签 | done（daily-only 部分已入库；daily+intraday 合并列见 3.5 第二步） | `b3f2e26` |
+| Wave A / 3.5 B0/B1/B2（daily-only） | **doing**（B0/B1 已入库 `3aaed17`；B2 因 earlyoom 误杀重跑中） | `3aaed17`（部分） |
 | Wave B / B3 网格、安慰剂、报告 | todo | |
 | Wave C / model_ranking_portfolio 模式 | todo | |
 | Wave C / 目标权重映射 | todo | |
@@ -60,7 +60,9 @@ blocked_on_user：无。
 
 ## Wave A / 3.3.1 分钟线日聚合（后台，最重的一次性计算）
 
-状态：**doing**——代码完成、单测全绿、真实数据首个分片验证通过；**11 年全量回填正在后台跑，预计需要数小时，本节写完后继续跑，不等它**。
+状态：**done**——11 年全量回填已完成并核实。协调者在回填过程中发现并修复了一处我未接触的 bug（2023 年分片里存在"零行两列"的退化分片，破坏了按位置拼接分钟分片的假设）：`open_composer/research/features/intraday_daily.py` 改为 `read_parquet(..., union_by_name=true)` 按列名而非位置绑定分片，已用 2023 真实数据验证两个批次并提交为 `cd8b085`（协调者自己的 commit，本执行者未改动该文件，遵守"不碰 intraday_daily.py"的既定边界）。
+
+**完工核实**（2026-09-08，本执行者用 `pyarrow.parquet` 只读 metadata、不加载全表验证行数，避免与并行的 B2 重跑抢内存）：`data/features/intraday_daily/{2016..2026}.parquet` 11 个文件全部存在，逐年行数 441506/459692/483757/508562/539159/592036/621689/628939/647280/657488/457665，**合计 6,037,773 行**，与协调者报告的数字完全一致；协调者另核实逐年 null 率 0.000%、日期覆盖完整、symbol 数从 1809 增长到 2721。3.3.2/3.3.3 的 daily+intraday 合并列（`join_intraday_rolling_features`，5 日/21 日滚动均值）可以开始跑（见 3.5 第二步）。
 
 ### 设计
 
@@ -147,7 +149,7 @@ uv run python scripts/build_daily_features.py
 
 ## Wave A / 3.5 B0/B1/B2 基线链
 
-状态：**doing**（代码完成、单测全绿、真实数据跑正在后台跑；本节先记方法论与过程中发现的两个真实内存事故，数字表格等跑完再补）。
+状态：**doing**（B0/B1 已跑完、已入库 `3aaed17`；B2 因下面第 8 条记录的 earlyoom 误杀事故重跑中，见"真实运行结果"）。
 
 ### 做了什么
 
@@ -155,7 +157,7 @@ uv run python scripts/build_daily_features.py
 - **B0 的 `feature_columns` 选择记录一处非显然的设计决定**：`EqualWeightUniverseStrategy.score` 本身不读任何特征列，但 `build_weight_schedule` 同时把 `config.feature_columns` 当作每周 `.dropna(subset=feature_columns)` 的资格过滤条件用。把它设成 `("momentum_252_21",)`（跟 B1/B2 要求的列一样）意味着 B0 的每周可选宇宙被交集成"有 273 个交易日历史"，即与 B1/B2 完全相同的可交易名单，而不是未经过滤的原始 PIT 宇宙。这是故意的：让排序方法成为 B0 与 B1/B2 之间唯一的差异变量，不被"谁的可交易宇宙更大"混淆。已写进 `scripts/run_baseline_chain.py` 对应位置的行内注释。
 - 标签用 `label_rank_5`（5 日窗口，`label_horizon_days=5`），B2 特征集是 `daily_features.py` 的 23 列日线特征（不含 intraday 派生列——本轮仍是 daily-only，intraday 版留给回填完成后的对比实验）。
 
-### 真实撞到的三个问题与修复（记录在案，不是预防性猜测）
+### 真实撞到的问题与修复（记录在案，不是预防性猜测；已累计到第 8 条，标题不再逐条更新计数）
 
 跑真实数据（全宇宙 2,721 symbol、11 年）过程中，先后撞到两次接近 OOM 的真实事故和一次设计层面的重复计算问题，均已定位根因并修复：
 
@@ -166,6 +168,9 @@ uv run python scripts/build_daily_features.py
 5. **这台机器上的共享磁盘瓶颈**(记录,非代码问题):协调者的分钟线回填(2016-2023 剩余年份)与本脚本并发跑时,`vmstat` 观测到 iowait 一度 92-97%、10+ 个进程处于磁盘等待态(`b` 列),同一时刻 swap 一度只剩 ~230MB(4GB 里用掉近 3.8GB)。执行者判断这属于对协调者回填任务的潜在风险(协调者的任务优先级更高、明确要求不能被干扰),主动 kill 掉本脚本让内存压力回落,确认 `dmesg`/`journalctl` 均无真实 OOM-kill 记录后,等系统缓一口气再重新启动本脚本——这是本轮记录到的又一次真实内存/IO 压力事件,不是预防性猜测。两个进程此后以"共享同一块慢磁盘、各自控制自己的内存上限"的方式共存,本脚本单个 `run_experiment` 调用的实际耗时(实测 B0 约 30 分钟)主要是这个共享 IO 瓶颈造成的,不是算法本身低效。
 6. **`loop.py::returns_from_weight_schedule` 的成本口径重复计算(协调者 review 发现,2026-09-07 13:30 UTC)**:`turnover = Σ|Δw|` 本身已经是双边(卖出 x、买入 x 记成 turnover=2x),再乘 `cost_rate = 2.0 * cost_bps_per_side / 10_000` 就把每一美元成交的成本算了两遍——稳态下每周换手 f 被扣成 `2f × 2 × cost_bps_per_side`(应为 `2f × cost_bps_per_side`),首次 100% 建仓被扣 20bps(应为 10bps)。修复:`cost_rate = cost_bps_per_side / 10_000.0`(去掉多余的 `2.0`)。`test_returns_from_weight_schedule_applies_cost_on_the_first_day` 的期望从 `2*50/10_000` 改为 `50/10_000`;新增 `test_returns_from_weight_schedule_steady_state_turnover_cost`(半仓换仓,`Σ|Δw|=1.0`,扣 `1.0×10bps`)锁定稳态场景。**已删除本次修复之前写入 `reports/research/ledger/experiments.jsonl` 的两条记录**(`step11_b0_equal_weight_universe`、`step11_b1_momentum_top50`,均含旧口径的双倍成本,且 `_append_ledger` 按 `config_hash` 去重——配置哈希不包含成本公式本身,重跑不会自动覆盖旧记录,必须手动清掉旧行才能让修复后的重跑写进去);对应的 tearsheet HTML 也一并删除,mlflow 的历史 run 未清(不参与去重判断,不阻塞重跑,留作历史对比无害)。**Step 10 caveat(如实记录,不重跑)**:`scripts/evaluate_cross_sectional_momentum_liquid500.py::_cohort_daily_returns` 用的是同一个双倍成本公式,即 Step 10 W2 的评估实际按"20bps/边基础成本、50bps/边压力成本"计算,而不是文档记载的 10bps/25bps——这只会让 Step 10 已经全负的结论更负(成本算多了,不是算少了),不影响 Step 10"全部拒绝"这个已完成判断的方向性,本轮不重跑 Step 10,只记录这条口径偏差以防未来引用 Step 10 数字时产生误解。
 7. **每个实验独立子进程,跑完即释放(协调者要求,2026-09-07)**:`scripts/run_baseline_chain.py` 原来在同一个 Python 进程里循环调用三次 `run_experiment`,每次调用残留的中间对象(权重表、两条收益序列、拟合好的模型、QuantStats 的 matplotlib 图)靠 Python 自己的 GC 回收,在这台机器上不够可靠。改为 `multiprocessing.Process`(Linux 默认 `fork` 方式,`panel`/`universe_panel`/`benchmarks` 靠写时复制继承,不重新加载、不走 pickle)——每个实验在独立子进程里跑,子进程退出时操作系统直接收回其全部内存,父进程只留下通过 `Queue` 传回的几个数字。子进程内部包一层 `try/except` 保证无论成功还是抛异常都会往队列写一条消息;父进程用"`is_alive()` 为 False 但队列仍为空"识别被信号杀死(比如 OOM-kill,退出码 `-9`)的情况并显式报错,避免一个被杀死的子进程让父进程的 `queue.get()` 永久挂起。真实数据下的多进程管道已用一个小合成面板跑通验证(跑完立刻清理了对应的 ledger/tearsheet 产物,不留痕)。
+8. **本会话被杀 5 次的真正根因：earlyoom（用户态），不是内核 OOM，也不是本项目的代码 bug（协调者 2026-09-08 09:15 UTC 诊断并修复，记录在案）**：`/etc/default/earlyoom` 配置了 `--prefer '(^|/)(claude|codex)$'`，给任何名为 `claude` 的进程额外加 +300 badness；同时 `/usr/local/sbin/oom-auto-protect.sh` 会给任何存活 ≥120 秒、RSS ≥400MB 的进程设置 `oom_score_adj=-500`（"保护"），但明确把 `claude`/`codex` 排除在这个保护之外。两条规则叠加的净效果是方向性错误的：本脚本（`run_baseline_chain.py`）涨到 2914 MiB 后被保护免杀，而编排会话（158 MiB）因为进程名匹配 `claude` 前缀被优先杀掉（真实日志，2026-09-07 13:47:39：`claude` badness 985 vs 同时刻 `python3` badness 726）——这解释了本次会话里观测到的多次"进程无端重启、转录中断"现象，`dmesg`/`journalctl` 找不到任何记录正是因为杀的一方是用户态 daemon，不经过内核 OOM 路径。**协调者已修复**（不需要本执行者动手）：给本项目的 claude 进程加了定时的 `-500` 保护、给 `oom-auto-protect.sh` 加了"已被 cgroup 限额的任务不再额外保护"的守卫、新增 `scripts/run_capped.sh`（把任务放进 `research-capped.slice` 的 cgroup 内存限额，超限时任务自己按 `MemoryMax` 被内核直接杀死、可续跑，不会波及系统整体或编排会话；已用"200MB 分配、200MB 限额"的用例验证 rc=137 生效）。**本执行者从这条记录之后的纪律变化**：往后每一个重活（实验、建特征、pytest、ruff 全仓库跑）一律套 `./scripts/run_capped.sh --mem <X> -- <command>`，不再裸跑；2026-09-08 的 B2 单独重跑（`--only step11_b2_ridge_top50`）是第一个套用 `run_capped.sh` 的任务，过程中又发现并修正了一处**容量取值**问题（不是 `run_capped.sh` 本身的 bug，是我第一次估的 `--mem` 太小）：第一次用 `--mem 2.2G --swap 1G` 时，`journalctl -k` 显示是 memcg 自己的 OOM killer 在 09:18:25 精确点杀（`Memory cgroup out of memory: Killed process ... (python3) ... anon-rss:2240704kB`）——即"资源正常耗尽后被限额本身杀死"，不是 earlyoom 误杀,机制完全符合设计预期(任务自己被杀,机器和编排会话都没事)。**真实测出的数字**:被杀那一刻,子进程(`run_experiment` 的独立子进程,里面在对 2018-2026 逐年展开窗口做 `RidgeRankStrategy` 拟合)自己吃了约 2.24GB anon-RSS,同时父进程(持有原始面板)另占约 0.77GB——两者同在一个 cgroup 里合计接近 3GB,超过 2.2G 上限。根因是 `loop.py::build_weight_schedule` 对每个测试年都重新 `panel.loc[...].dropna(...)` 出一份训练窗口副本,越往后的测试年(如 2026)训练窗口越接近完整 11 年面板,该副本本身就接近原面板大小,和原面板(父进程通过 fork 写时复制继承)同时活着时接近两倍面板体积——这是"每年从零展开重训"这个已经在 3.4 定型、经过评审接受的设计的真实内存代价,不是本次改动引入的新 bug,本轮不改 `loop.py` 的这部分结构。**处理**:把 `--mem` 上调到实测值上留出安全余量的 `3.4G`(`--swap 1.5G`),而不是继续用协调者给的示例值——协调者给的 `--mem 1.8G` 是验证 `run_capped.sh` 机制本身生效的例子(200MB 限额验证 rc=137),不是这个具体工作负载的容量建议,需要执行者自己按实测峰值定;3.4G 重跑已启动,见下方"真实运行结果"。**这次重跑(`--mem 3.4G --swap 1.5G`)又暴露了 earlyoom 修复之后仍然存在的一种真实场景**:这次不是我这个 cgroup 自己撞上限额被 memcg 直接杀(那种是"安全"的,契约内),而是我的子进程把自己的 RSS 涨到 2978 MiB、同时把*系统全局* swap 占用推到只剩 9.96% 空闲,跌破 earlyoom 的 10% SIGTERM 阈值,earlyoom 因此介入——`journalctl -u earlyoom` 显示 `sending SIGTERM to process 1648855 uid 0 "python3": badness 1154, VmRSS 2978 MiB`。**好消息**:这次 earlyoom 选中的是我的研究子进程本身(不是编排会话),说明协调者的修复方向对了;`run_baseline_chain.py` 的子进程隔离架构也按设计工作——父进程正确识别子进程被信号杀死、干净抛出 `RuntimeError`、打印完整 traceback、以退出码 1 收尾,没有污染账本,编排会话本身全程未受影响。**如实记录的局限**:cgroup 的 `MemoryMax`/`MemorySwapMax` 只约束这一个 cgroup 自己的用量,不能阻止它把*系统全局*swap 占用推向危险区——这台机器上跑着好几个独立的 Claude Code 会话,各自的瞬时内存需求会叠加到同一个 4GB swap 设备上,单个 cgroup 的上限不是系统整体安全的充分条件,只是必要条件。**处理**:把 `--swap` 从 `1.5G` 收紧到 `0.8G`(`--mem` 维持 `3.4G` 不变)重新提交——收紧自己这个 cgroup 能占用的 swap 份额,降低对系统全局 swap 池的贡献,physical 内存上限留够空间让真正的峰值(实测子进程 RSS 峰值约 2.9-3.0GB)尽量落在物理内存而不是 swap 里。
+
+**第三次重跑(`--mem 3.4G --swap 0.8G`)又被 memcg 直接杀**(`journalctl -k`:`Memory cgroup out of memory: Killed process ... anon-rss:3435108kB`,子进程单独吃到约 3.35GB,已经逼近这台机器的物理总量),说明真正的根因不是"这次 cap 选小了",而是 `RidgeRankStrategy.fit`(旧实现)本身的算法级内存代价——`train_frame[cols].to_numpy()` → `StandardScaler.fit_transform` → `sklearn.Ridge.fit` 对一个几百万行的展开窗口连续做 3 份稠密拷贝,且训练窗口本身随测试年增长到接近全量面板(anchored expanding window 的固有代价,`build_weight_schedule` 的设计已在 3.4 定型)。**协调者在同一时间段直接在工作树里修好了这个根因**(与我并行,`open_composer/research/kernel/baseline_strategies.py` 和 `open_composer/research/kernel/lightgbm_rank_strategy.py` 未经我改动就变成已修改状态,连同新增的 `tests/test_baseline_strategies_ridge.py`,发现时立刻核实并采用,不是我自己写的):`RidgeRankStrategy.fit` 改成分块累加 Gram 矩阵(`chunk_rows` 默认 50 万行)直接解正规方程 `(Z'Z+alpha·I)w=Z'(y-ȳ)`,数学上与标准化+`sklearn.Ridge(solver="cholesky")` 完全等价(`tests/test_baseline_strategies_ridge.py` 用 3 个不同 `chunk_rows`——含边界情形 `chunk_rows=1`——对照 sklearn 参考实现验证系数与预测值 `rtol=1e-9`),峰值内存与训练窗口行数无关,只取决于块大小(几十 MB)和特征数的平方(23-40 个特征,微不足道)。顺带把 `LightGBMRankStrategy.fit/score` 的 `to_numpy()` 也从隐式 float64 改成显式 float32(LightGBM 内部对特征分桶,float32 不损失精度,为 Wave B 的 B3 网格预先做好同样的内存修复)。**核实**:`tests/test_baseline_strategies_ridge.py`(6 个)、`tests/test_lightgbm_rank_strategy.py`(9 个)、`tests/test_kernel_loop.py`(15 个)、`tests/test_kernel_loop_run_experiment.py`(1 个)共 31 个测试全部重跑,全绿。**第四次重跑**(`--mem 2.4G --swap 0.8G`,用上这个修复)已提交,预期峰值应显著低于前三次,见下方"真实运行结果"。
 
 ### 单测
 

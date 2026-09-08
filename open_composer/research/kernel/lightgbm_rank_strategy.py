@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+import numpy as np
 import pandas as pd
 from lightgbm import LGBMRegressor
 
@@ -61,8 +62,12 @@ class LightGBMRankStrategy:
         self._model: LGBMRegressor | None = None
 
     def fit(self, train_frame: pd.DataFrame) -> None:
-        x = train_frame[self.feature_columns].to_numpy()
-        y = train_frame[self.label_column].to_numpy()
+        # float32 for the same reason as RidgeRankStrategy.fit: the default
+        # upcast to float64 doubles a multi-GB training matrix on a 3.9GB
+        # box. LightGBM bins features internally, so float32 input costs no
+        # accuracy at all here.
+        x = train_frame[self.feature_columns].to_numpy(dtype=np.float32)
+        y = train_frame[self.label_column].to_numpy(dtype=np.float32)
         model = LGBMRegressor(
             max_depth=self.max_depth,
             num_leaves=2**self.max_depth - 1,
@@ -74,7 +79,7 @@ class LightGBMRankStrategy:
     def score(self, asof_frame: pd.DataFrame) -> pd.Series:
         if self._model is None:
             raise RuntimeError("LightGBMRankStrategy.score called before fit")
-        x = asof_frame[self.feature_columns].to_numpy()
+        x = asof_frame[self.feature_columns].to_numpy(dtype=np.float32)
         predictions = self._model.predict(x)
         return pd.Series(predictions, index=asof_frame["symbol"].to_numpy())
 
