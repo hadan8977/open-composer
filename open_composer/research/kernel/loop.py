@@ -247,9 +247,22 @@ def build_weight_schedule(
         if not rebalance_dates:
             continue
         train_cutoff = _embargo_cutoff(trading_calendar, rebalance_dates[0], label_horizon_days)
-        train_frame = panel.loc[panel["trade_date"] <= train_cutoff].dropna(
-            subset=[*feature_columns, label_column]
-        )
+        # Memory, not style: ``panel.loc[mask].dropna(subset=...)`` made two
+        # full-width copies of a multi-GB panel for every test year -- the
+        # mask copy carries every column, then ``dropna`` copies its result
+        # again. Building the mask column by column (each ``notna`` is a 6M
+        # -element bool, ~6MB) and selecting only the columns a fit actually
+        # consumes leaves exactly one narrow copy. Same rows as before.
+        # ``fit`` therefore receives feature columns, the label column and
+        # ``trade_date`` (kept for any future time-weighted fit); it does not
+        # receive ``symbol``, whose object dtype is the panel's single
+        # largest column and which no B0-B3 strategy reads during training.
+        train_columns = [*feature_columns, label_column]
+        train_mask = panel["trade_date"] <= train_cutoff
+        for column in train_columns:
+            train_mask &= panel[column].notna()
+        train_frame = panel.loc[train_mask, ["trade_date", *train_columns]]
+        del train_mask
         strategy = strategy_factory()
         strategy.fit(train_frame)
 
