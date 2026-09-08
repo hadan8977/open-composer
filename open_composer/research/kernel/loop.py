@@ -128,6 +128,7 @@ class ExperimentConfig:
     feature_columns: tuple[str, ...]
     top_k: int | None = DEFAULT_TOP_K
     hedge: Literal["none", "spy_beta_hedge"] = "none"
+    train_row_dates: Literal["all", "rebalance_dates"] = "all"
     rebalance: str = "weekly_friday_signal_next_session_close_marked"
     weighting: str = "equal_weight"
     cost_bps_per_side: float = DEFAULT_COST_BPS_PER_SIDE
@@ -145,6 +146,7 @@ class ExperimentConfig:
             "feature_columns": sorted(self.feature_columns),
             "top_k": self.top_k,
             "hedge": self.hedge,
+            "train_row_dates": self.train_row_dates,
             "rebalance": self.rebalance,
             "weighting": self.weighting,
             "cost_bps_per_side": self.cost_bps_per_side,
@@ -241,11 +243,26 @@ def build_weight_schedule(
     hedge: Literal["none", "spy_beta_hedge"],
     beta_column: str = "beta_252_spy",
     extra_train_columns: Sequence[str] = (),
+    train_row_dates: Literal["all", "rebalance_dates"] = "all",
 ) -> list[RebalanceEvent]:
     """Walk-forward weight schedule: retrain once per ``test_years`` entry on
     an anchored, embargoed window, then score every weekly rebalance date
     within that year using that year's frozen fit. See module docstring for
     the three honesty requirements this enforces.
+
+    ``train_row_dates`` selects which rows of the embargoed window a fit
+    sees. ``"all"`` uses every trading day (the original behavior, kept as the
+    default so already-recorded results stay reproducible).
+    ``"rebalance_dates"`` uses only the weekly rebalance days -- the days the
+    model is actually applied on. That is a fivefold reduction in training
+    rows, which is what makes the wide daily+intraday panel fit in memory on
+    this box at all, but it is not only a memory trick: daily rows carry
+    ``h``-day overlapping forward labels, so their nominal count badly
+    overstates the independent sample, and training on the same cross-sections
+    the model is served on removes a train/serve mismatch. Which one predicts
+    better is an empirical question, so this is a recorded config field (it
+    enters ``ExperimentConfig.config_hash`` and the ledger) rather than a
+    silent constant -- run both and compare.
 
     ``extra_train_columns`` (Wave B, B3's grid): columns to carry into
     ``train_frame`` in addition to ``feature_columns``/``label_column``,
@@ -263,6 +280,14 @@ def build_weight_schedule(
     every existing caller (B0-B3's single-label strategies) is unaffected.
     """
     trading_calendar = pd.DatetimeIndex(sorted(panel["trade_date"].unique()))
+    # Every weekly rebalance day in the whole history, computed once; the
+    # per-year embargoed cutoff below restricts it to the training window.
+    # Same weekly grid the schedule itself trades on.
+    training_row_dates = (
+        pd.DatetimeIndex(weekly_rebalance_dates(trading_calendar))
+        if train_row_dates == "rebalance_dates"
+        else pd.DatetimeIndex([])
+    )
     events: list[RebalanceEvent] = []
     for year in test_years:
         year_dates = trading_calendar[trading_calendar.year == year]
@@ -284,6 +309,8 @@ def build_weight_schedule(
         # largest column and which no B0-B3 strategy reads during training.
         required_columns = [*feature_columns, label_column]
         train_mask = panel["trade_date"] <= train_cutoff
+        if train_row_dates == "rebalance_dates":
+            train_mask &= panel["trade_date"].isin(training_row_dates)
         for column in required_columns:
             train_mask &= panel[column].notna()
         train_columns = [*required_columns, *extra_train_columns]
@@ -519,6 +546,7 @@ def _log_mlflow_run(
                 "label_horizon_days": config.label_horizon_days,
                 "top_k": config.top_k,
                 "hedge": config.hedge,
+                "train_row_dates": config.train_row_dates,
                 "cost_bps_per_side": config.cost_bps_per_side,
                 **{f"hp_{k}": v for k, v in config.hyperparameters.items()},
             }
@@ -573,6 +601,7 @@ def run_experiment(
         top_k=config.top_k,
         hedge=config.hedge,
         extra_train_columns=extra_train_columns,
+        train_row_dates=config.train_row_dates,
     )
 
     long_base = returns_from_weight_schedule(
@@ -656,6 +685,7 @@ def run_experiment(
             "label_horizon_days": config.label_horizon_days,
             "top_k": config.top_k,
             "hedge": config.hedge,
+            "train_row_dates": config.train_row_dates,
             "hyperparameters": config.hyperparameters,
             "test_years": list(config.test_years),
             "dsr_trial_count": dsr_trial_count,

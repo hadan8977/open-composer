@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 from pathlib import Path
 
 import numpy as np
@@ -437,3 +438,72 @@ def test_experiment_config_hash_is_stable_and_sensitive_to_hyperparameters() -> 
     )
     assert base.config_hash() == same.config_hash()
     assert base.config_hash() != different.config_hash()
+
+
+def test_train_row_dates_rebalance_dates_restricts_the_fit_to_weekly_rows() -> None:
+    # A fit that sees only rebalance-day rows must receive exactly those rows
+    # (5x fewer than "all"), while the traded schedule itself is unchanged.
+    dates = pd.bdate_range("2019-01-07", "2020-12-31")
+    symbols = ["AAA", "BBB", "CCC"]
+    rng = np.random.default_rng(11)
+    panel = pd.DataFrame(
+        {
+            "symbol": np.repeat(symbols, len(dates)),
+            "trade_date": np.tile(dates, len(symbols)),
+            "close": rng.uniform(50, 150, len(dates) * len(symbols)),
+            "feature": rng.standard_normal(len(dates) * len(symbols)),
+            "label": rng.random(len(dates) * len(symbols)),
+            "beta_252_spy": 1.0,
+        }
+    )
+    universe_panel = pd.DataFrame(
+        {
+            "symbol": symbols,
+            "month_end": [pd.Timestamp("2019-01-31")] * len(symbols),
+        }
+    )
+    seen: dict[str, pd.DataFrame] = {}
+
+    class _Recorder:
+        def fit(self, train_frame: pd.DataFrame) -> None:
+            seen[str(len(seen))] = train_frame
+
+        def score(self, asof_frame: pd.DataFrame) -> pd.Series:
+            return pd.Series(1.0, index=asof_frame["symbol"].to_numpy())
+
+    common = dict(
+        panel=panel,
+        universe_panel=universe_panel,
+        strategy_factory=_Recorder,
+        feature_columns=["feature"],
+        label_column="label",
+        label_horizon_days=5,
+        test_years=[2020],
+        top_k=2,
+        hedge="none",
+    )
+    schedule_all = loop.build_weight_schedule(**common, train_row_dates="all")
+    rows_all = len(seen["0"])
+    seen.clear()
+    schedule_weekly = loop.build_weight_schedule(**common, train_row_dates="rebalance_dates")
+    weekly_frame = seen["0"]
+
+    weekly_dates = set(loop.weekly_rebalance_dates(pd.DatetimeIndex(sorted(dates))))
+    assert set(weekly_frame["trade_date"]) <= weekly_dates
+    # ~5 trading days per week, so the weekly fit sees far fewer rows ...
+    assert len(weekly_frame) < rows_all / 3
+    # ... but the traded weekly schedule is identical either way.
+    assert [event.date for event in schedule_weekly] == [event.date for event in schedule_all]
+
+
+def test_train_row_dates_enters_the_config_hash() -> None:
+    base = loop.ExperimentConfig(
+        experiment_id="x",
+        family="f",
+        model_kind="ridge",
+        feature_set="daily_only",
+        label_horizon_days=5,
+        feature_columns=("feature",),
+    )
+    weekly = dataclasses.replace(base, train_row_dates="rebalance_dates")
+    assert base.config_hash() != weekly.config_hash()
