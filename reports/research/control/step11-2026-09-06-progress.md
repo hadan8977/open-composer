@@ -310,6 +310,56 @@ uv run python scripts/build_daily_features.py
 
 ---
 
+## Wave B item 5:候选工件导出接口定义(先写接口,再实现——本节是唯一权威版本,产品线按此加载,路径与字段名一旦写下不再改)
+
+`scripts/export_candidate_artifact.py <experiment_id>`,产出 `reports/research/candidates/<experiment_id>/`:
+
+```
+reports/research/candidates/<experiment_id>/
+├── model.joblib     joblib.dump() 的 loop.RankingStrategy 协议对象(B0..B3 的
+│                    EqualWeightUniverseStrategy/MomentumFactorStrategy/
+│                    RidgeRankStrategy/GridSelectedLightGBMStrategy 之一,按
+│                    账本记录的 model_kind 反查)。在**单一最宽训练窗口**上重新
+│                    fit 一次——不是复用走查过程中任何一年的模型,是用截至
+│                    "全部可用历史里最后一个测试年自己的 embargo 截止日"为止
+│                    的全部数据重训一次(与 build_weight_schedule 对最后一个
+│                    测试年做的截断逻辑完全一致,只是不再留出该年做测试)。
+│                    对外接口是 `.score(asof_frame: pd.DataFrame) -> pd.Series`
+│                    (按 symbol 建索引),与 loop.py 内部用的协议完全相同——
+│                    调用方自己做 top-K/等权,这里不重复造轮子。B0/B1 没有可
+│                    学习的参数,`model.joblib` 依然写出(内容是一个近乎无状态
+│                    的对象),接口统一,调用方不需要按 model_kind 分支。
+├── features.json    {
+│                       "experiment_id": str,
+│                       "family": str,
+│                       "model_kind": str,
+│                       "feature_set": "daily_only" | "daily_plus_intraday",
+│                       "feature_columns": [str, ...],   // 训练时的精确顺序
+│                       "label_column": str,              // 如 "label_rank_5"
+│                       "label_horizon_days": int,
+│                       "top_k": int | null,
+│                       "hedge": "none" | "spy_beta_hedge",
+│                       "train_row_dates": "all" | "rebalance_dates",
+│                       "execution": "close_marked" | "next_open",
+│                       "refit_through_date": "YYYY-MM-DD"  // 重训窗口的最后一行日期
+│                     }
+├── config.json      完整 ExperimentConfig(dataclasses.asdict,tuple 转 list)
+└── README.md        experiment_id/family、长多头与市场中性各自门槛通过 x/8、
+                      诚实的一句话结论、重训窗口截止日、"未经批准不得下单"
+                      免责声明、账本记录与 tearsheet 路径指针。
+```
+
+**设计取舍记录**(避免被误读成疏漏):
+- 选 `.score()` 协议对象而不是裸模型(sklearn/LightGBM 原生对象),是因为 B0/B1 根本没有裸模型可言(纯规则),统一导出协议对象让产品线不用按 `model_kind` 分支处理"这个候选有没有模型"。
+- 不论门槛是否通过都导出"当前最好"的那个(计划原文:"无论过不过门槛都要导出当前最好的那个")——`README.md` 用醒目的免责声明承载"未过门槛"这件事,不是不导出。
+- "当前最好"的判定标准(本执行者定义,记录在案):按链上惯例"每级必须打赢上一级"排到的最上一级(如果 B3 打赢 B1,用 B3;否则退回链上最优的 B1);多头版本优先于市场中性版本(市场中性目前全线未过 1/8 以上门槛,见 3.5 账本);"打赢"的口径与 3.5 账本一致(样本外扣成本后的 CAGR 超额、回撤、门槛通过数综合看,不单独用一个指标)。
+
+### blocked_on_user
+
+无。
+
+---
+
 ## blocked_on_user（汇总，随时追加）
 
 - 新模拟盘账号凭据：`ALPACA_API_KEY_ID`、`ALPACA_API_SECRET_KEY`、`ALPACA_API_BASE_URL`（指向 paper 端点）、`ALPACA_PAPER=true` 需要用户本人写入 `.env`（执行者对 `.env`/`.env*` 无读写权限，命中项目 deny 规则）。凭据到位前，Wave C 用 `oc paper readiness`/`target-weights` 干跑验证全链路，不等待。
