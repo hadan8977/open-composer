@@ -271,6 +271,24 @@ def _turnover_and_capacity(schedule, panel: pd.DataFrame) -> dict[str, float]:
     }
 
 
+def _annual_compounded_returns(candidate) -> dict[str, float]:
+    """Plan section 4's "逐年组合收益" (per-year portfolio returns).
+    ``Candidate.oos_return_stream``/``oos_dates`` (mechanism_eval.py) are the
+    exact daily, cost-adjusted return stream ``evaluate_candidate`` scored --
+    already accessible off ``CandidateVerdict.candidate`` without needing any
+    further loop.py change. Grouped by calendar year and compounded
+    ((1+r).prod() - 1), one entry per test year actually present in the
+    stream (a year with zero active weeks -- e.g. an empty universe fallback
+    -- legitimately contributes 0.0, not a missing key).
+    """
+    if not candidate.oos_return_stream:
+        return {}
+    dates = pd.to_datetime(candidate.oos_dates)
+    returns = pd.Series(candidate.oos_return_stream, index=dates)
+    annual = returns.groupby(returns.index.year).apply(lambda r: float((1.0 + r).prod() - 1.0))
+    return {str(year): value for year, value in annual.items()}
+
+
 def _run_b3_and_queue_result(
     config: ExperimentConfig,
     panel: pd.DataFrame,
@@ -338,6 +356,7 @@ def _run_b3_and_queue_result(
                     "gates_total": len(gate_results),
                     "all_gates_pass": candidate_verdict.all_gates_pass,
                     "dsr_trial_count": verdict.dsr_trial_count,
+                    "annual_returns": _annual_compounded_returns(candidate_verdict.candidate),
                 }
             )
         result_queue.put(
