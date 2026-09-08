@@ -25,6 +25,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import multiprocessing
 import sys
@@ -145,6 +146,24 @@ def _load_panel(feature_set: str = "daily_only") -> pd.DataFrame:
     # scripts/build_daily_features.py's module docstring for the sibling
     # incident this mirrors the fix for).
     years = sorted(int(p.stem) for p in DAILY_FEATURES_ROOT.glob("*.parquet") if p.stem.isdigit())
+
+    # One narrow pass (symbol only -- parquet stores columns separately, so
+    # this never touches the wide feature data) to fix a single, shared
+    # pd.CategoricalDtype up front. This is required, not just an ordering
+    # choice: verified interactively that pd.concat does NOT union per-frame
+    # categories on its own -- concatenating two category columns whose
+    # `.cat.categories` differ even slightly silently upcasts the result
+    # back to `object`, undoing category-encoding entirely with no error or
+    # warning. Sharing one CategoricalDtype (built from every year's actual
+    # symbols) across all 11 per-year frames is what lets the dtype survive
+    # the final concat below.
+    all_symbols: set[str] = set()
+    for year in years:
+        year_symbols = pd.read_parquet(DAILY_FEATURES_ROOT / f"{year}.parquet", columns=["symbol"])
+        all_symbols.update(year_symbols["symbol"].unique())
+        del year_symbols
+    symbol_dtype = pd.CategoricalDtype(categories=sorted(all_symbols))
+
     merged_frames = []
     for year in years:
         daily_year = pd.read_parquet(DAILY_FEATURES_ROOT / f"{year}.parquet", columns=read_columns)
@@ -159,11 +178,24 @@ def _load_panel(feature_set: str = "daily_only") -> pd.DataFrame:
         for frame in (daily_year, label_year):
             float_columns = frame.select_dtypes(include=["float64"]).columns
             frame[float_columns] = frame[float_columns].astype("float32")
+        # Category-encode *before* merging, using the shared dtype: a year's
+        # ~500-650k Python strings is exactly the kind of object-dtype
+        # column that breaks copy-on-write sharing across the fork in this
+        # script's later multiprocessing.Process (every element is its own
+        # refcounted Python object; merely touching them dirties their
+        # pages). Collapsing to a small integer code array (against the one
+        # shared ~2,721-symbol dict) before the merge, not after, keeps
+        # every frame this function ever holds narrow, not just the one it
+        # returns -- both sides of the join need it for an efficient
+        # categorical merge, so both get it.
+        daily_year["symbol"] = daily_year["symbol"].astype(symbol_dtype)
+        label_year["symbol"] = label_year["symbol"].astype(symbol_dtype)
         merged_frames.append(daily_year.merge(label_year, on=["symbol", "trade_date"], how="inner"))
         del daily_year, label_year
 
     panel = pd.concat(merged_frames, ignore_index=True)
     del merged_frames
+    gc.collect()
     return panel
 
 
@@ -318,6 +350,14 @@ def main() -> int:
 
     summary_rows = []
     for config, factory in configs:
+        # Collect before every fork, not just once after loading: pandas'
+        # per-year merge/concat/category-cast loop in _load_panel leaves
+        # behind reference cycles (DataFrames hold cyclic refs to their own
+        # internal BlockManager) that plain refcounting won't free -- those
+        # garbage-but-uncollected pages would otherwise sit resident in the
+        # parent and get inherited (and charged again on first touch) by
+        # every child this loop forks.
+        gc.collect()
         print(
             f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] running {config.experiment_id} "
             f"(in its own subprocess) ...",
@@ -437,7 +477,14 @@ def _run_experiment_in_subprocess(
     if status is None:
         raise RuntimeError(
             f"{config.experiment_id} subprocess died with exit code {process.exitcode} "
-            "before producing a result (likely killed -- e.g. exit code -9 is SIGKILL/OOM)"
+            "before producing a result (likely killed by a signal -- exit code -9 is "
+            "SIGKILL, typically a cgroup MemoryMax/MemorySwapMax enforcement (run under "
+            "scripts/run_capped.sh: contained, the job alone dies and can be resumed); "
+            "exit code -15 is SIGTERM, typically earlyoom reacting to *system-wide* free "
+            "memory/swap dropping below its threshold -- this can fire even inside a "
+            "capped cgroup scope, since MemoryMax only bounds this job's own usage, not "
+            "how close the whole box's shared swap device is to exhaustion. See the Step "
+            "11 ledger's 2026-09-08 entries for real examples of both.)"
         )
     if status == "error":
         raise RuntimeError(f"{config.experiment_id} subprocess raised: {payload}")
