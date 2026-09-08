@@ -185,6 +185,112 @@ def test_dynamic_theme_profile_rejects_schedule_drift() -> None:
         )
 
 
+def _model_ranking_portfolio_kwargs() -> dict:
+    return {
+        "mode": "model_ranking_portfolio",
+        "candidate_artifact_dir": "reports/research/candidates/step11_momentum_placeholder",
+        "universe_rule": "pit_adv_top_n",
+        "universe_top_n": 1500,
+        "feature_set_id": "daily_only",
+        "label_horizon_days": 21,
+        "top_k": 50,
+        "rebalance": "weekly_friday_close_monday_open",
+        "weighting": "equal_weight",
+        "hedge": "none",
+    }
+
+
+def test_model_ranking_portfolio_accepts_complete_config() -> None:
+    config = PortfolioConfig(**_model_ranking_portfolio_kwargs())
+
+    assert config.mode == "model_ranking_portfolio"
+    assert config.top_k == 50
+    assert config.hedge == "none"
+    assert config.account_equity_for_sizing is None
+
+
+def test_model_ranking_portfolio_requires_all_fields_together() -> None:
+    with pytest.raises(ValueError, match="model_ranking_portfolio requires portfolio fields"):
+        PortfolioConfig(mode="model_ranking_portfolio")
+
+
+def test_model_ranking_portfolio_requires_equal_weight() -> None:
+    kwargs = _model_ranking_portfolio_kwargs()
+    kwargs["weighting"] = "engine_default"
+    with pytest.raises(ValueError, match="weighting=equal_weight"):
+        PortfolioConfig(**kwargs)
+
+
+def test_model_ranking_portfolio_rejects_blank_artifact_dir() -> None:
+    kwargs = _model_ranking_portfolio_kwargs()
+    kwargs["candidate_artifact_dir"] = "   "
+    with pytest.raises(ValueError, match="non-blank candidate_artifact_dir"):
+        PortfolioConfig(**kwargs)
+
+
+@pytest.mark.parametrize(
+    "field_name,value",
+    [
+        ("candidate_artifact_dir", "reports/research/candidates/x"),
+        ("universe_rule", "pit_adv_top_n"),
+        ("universe_top_n", 1500),
+        ("feature_set_id", "daily_only"),
+        ("label_horizon_days", 21),
+        ("top_k", 50),
+        ("rebalance", "weekly_friday_close_monday_open"),
+        ("hedge", "none"),
+        ("account_equity_for_sizing", 100000.0),
+    ],
+)
+def test_model_ranking_portfolio_fields_require_matching_mode(
+    field_name: str, value: object
+) -> None:
+    with pytest.raises(ValueError, match="require mode=model_ranking_portfolio"):
+        PortfolioConfig(mode="single_symbol", **{field_name: value})
+
+
+def _model_ranking_portfolio_spec(repo_root: Path) -> dict:
+    raw = yaml.safe_load(_fixture_spec(repo_root).read_text(encoding="utf-8"))
+    raw.update(
+        {
+            "name": "us_model_ranking_portfolio_step11_wavec",
+            "timeframe": "daily",
+            "universe": ["SPY"],
+            "portfolio": _model_ranking_portfolio_kwargs(),
+        }
+    )
+    return raw
+
+
+def test_model_ranking_portfolio_spec_loads_end_to_end(repo_root: Path) -> None:
+    raw = _model_ranking_portfolio_spec(repo_root)
+
+    spec = StrategySpec.model_validate(raw)
+
+    assert spec.portfolio.mode == "model_ranking_portfolio"
+    assert spec.portfolio.feature_set_id == "daily_only"
+    assert spec.portfolio.label_horizon_days == 21
+    assert spec.portfolio.top_k == 50
+
+
+def test_model_ranking_portfolio_rejects_non_pit_universe_rule_value() -> None:
+    kwargs = _model_ranking_portfolio_kwargs()
+    kwargs["universe_rule"] = "current_index_membership"
+    with pytest.raises(ValueError):
+        PortfolioConfig(**kwargs)
+
+
+def test_static_schema_defines_model_ranking_portfolio_contract(repo_root: Path) -> None:
+    schema = json.loads(
+        (repo_root / "schemas" / "strategy_spec.schema.json").read_text(encoding="utf-8")
+    )
+
+    portfolio = schema["$defs"]["portfolioConfig"]
+    assert "model_ranking_portfolio" in portfolio["properties"]["mode"]["enum"]
+    assert portfolio["properties"]["top_k"] == {"type": ["integer", "null"], "minimum": 1}
+    assert portfolio["properties"]["hedge"]["enum"] == ["none", "spy_beta_hedge", None]
+
+
 def test_static_schema_matches_factor_config_extension_fields(repo_root: Path) -> None:
     schema = json.loads(
         (repo_root / "schemas" / "strategy_spec.schema.json").read_text(encoding="utf-8")

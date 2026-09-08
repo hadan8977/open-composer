@@ -340,7 +340,8 @@
             "core_beta_satellite_router",
             "momentum_signal_router",
             "cross_sectional_momentum",
-            "etf_structural_family"
+            "etf_structural_family",
+            "model_ranking_portfolio"
           ]
         },
         "max_symbols_per_day": {"type": ["integer", "null"], "minimum": 1},
@@ -376,6 +377,18 @@
             {"$ref": "#/$defs/etfStructuralFamilyConfig"},
             {"type": "null"}
           ]
+        },
+        "candidate_artifact_dir": {"type": ["string", "null"]},
+        "universe_rule": {"enum": ["pit_adv_top_n", null]},
+        "universe_top_n": {"type": ["integer", "null"], "minimum": 1},
+        "feature_set_id": {"type": ["string", "null"]},
+        "label_horizon_days": {"enum": [5, 10, 21, null]},
+        "top_k": {"type": ["integer", "null"], "minimum": 1},
+        "rebalance": {"enum": ["weekly_friday_close_monday_open", null]},
+        "hedge": {"enum": ["none", "spy_beta_hedge", null]},
+        "account_equity_for_sizing": {
+          "type": ["number", "null"],
+          "exclusiveMinimum": 0
         }
       }
     },

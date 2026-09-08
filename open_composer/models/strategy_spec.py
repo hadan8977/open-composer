@@ -193,6 +193,7 @@ class PortfolioConfig(BaseModel):
         "momentum_signal_router",
         "cross_sectional_momentum",
         "etf_structural_family",
+        "model_ranking_portfolio",
     ] = "single_symbol"
     max_symbols_per_day: int | None = Field(default=None, ge=1)
     gross_exposure_limit: float | None = Field(default=None, gt=0, le=1)
@@ -215,6 +216,66 @@ class PortfolioConfig(BaseModel):
     reserve_symbol: str | None = None
     reserve_exempt_from_max_symbol_weight: bool = False
     etf_structural: ETFStructuralFamilyConfig | None = None
+    #: Step 11 Wave C -- `model_ranking_portfolio` mode fields. All are
+    #: required together when `mode == "model_ranking_portfolio"` and must
+    #: stay unset for every other mode (enforced in
+    #: `require_model_ranking_fields`). Directory produced by the research
+    #: line: `model.joblib` (or a rule-based placeholder that needs no
+    #: model file), `features.json`, `config.json`, `README.md`.
+    candidate_artifact_dir: str | None = None
+    universe_rule: Literal["pit_adv_top_n"] | None = None
+    universe_top_n: int | None = Field(default=None, ge=1)
+    feature_set_id: str | None = None
+    label_horizon_days: Literal[5, 10, 21] | None = None
+    top_k: int | None = Field(default=None, ge=1)
+    rebalance: Literal["weekly_friday_close_monday_open"] | None = None
+    #: `none` = long-only top-K; `spy_beta_hedge` = top-K long book plus a
+    #: short SPY leg sized at the book's blended 252-session beta.
+    hedge: Literal["none", "spy_beta_hedge"] | None = None
+    #: Overrides the live Alpaca account equity read for whole-share sizing.
+    #: Leave unset in every spec that ships; it exists for deterministic
+    #: tests and for a future explicit user override, not for routine use.
+    account_equity_for_sizing: float | None = Field(default=None, gt=0)
+
+    @model_validator(mode="after")
+    def require_model_ranking_fields(self) -> PortfolioConfig:
+        model_ranking_fields = {
+            "candidate_artifact_dir": self.candidate_artifact_dir,
+            "universe_rule": self.universe_rule,
+            "universe_top_n": self.universe_top_n,
+            "feature_set_id": self.feature_set_id,
+            "label_horizon_days": self.label_horizon_days,
+            "top_k": self.top_k,
+            "rebalance": self.rebalance,
+            "hedge": self.hedge,
+        }
+        if self.mode == "model_ranking_portfolio":
+            missing = sorted(name for name, value in model_ranking_fields.items() if value is None)
+            if missing:
+                raise ValueError(
+                    "model_ranking_portfolio requires portfolio fields: " + ", ".join(missing)
+                )
+            if not str(self.candidate_artifact_dir).strip():
+                msg = "model_ranking_portfolio requires a non-blank candidate_artifact_dir"
+                raise ValueError(msg)
+            if not str(self.feature_set_id).strip():
+                raise ValueError("model_ranking_portfolio requires a non-blank feature_set_id")
+            if self.weighting != "equal_weight":
+                raise ValueError(
+                    "model_ranking_portfolio requires portfolio.weighting=equal_weight"
+                )
+        else:
+            populated = sorted(
+                name for name, value in model_ranking_fields.items() if value is not None
+            )
+            if self.account_equity_for_sizing is not None:
+                populated.append("account_equity_for_sizing")
+            if populated:
+                raise ValueError(
+                    "model_ranking_portfolio fields require mode=model_ranking_portfolio: "
+                    + ", ".join(sorted(populated))
+                )
+        return self
 
     @model_validator(mode="after")
     def require_router_route(self) -> PortfolioConfig:
