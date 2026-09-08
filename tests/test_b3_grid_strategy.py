@@ -130,6 +130,23 @@ def test_top_feature_importances_delegates_to_the_selected_winner() -> None:
     assert list(importances.index) == ["signal"]
 
 
+def test_fit_works_when_train_frame_has_no_symbol_column() -> None:
+    # The real contract: build_weight_schedule's narrow-copy fix (commit
+    # 00911bc) only ever selects trade_date + feature_columns + label
+    # column(s) into the train_frame it hands to fit() -- "symbol" is never
+    # included, on the correct premise that no B0-B3 strategy's *fit* needs
+    # symbol identity. GridSelectedLightGBMStrategy.fit's internal
+    # validation-scoring step must not secretly depend on a column
+    # build_weight_schedule will never actually provide (a bug caught by a
+    # real dry run: every other test in this file's fixture happens to
+    # include "symbol", which masked this).
+    learnable, noise = _two_cell_grid()
+    frame = _synthetic_two_year_frame().drop(columns=["symbol"])
+    strategy = GridSelectedLightGBMStrategy(["signal"], grid=[learnable, noise])
+    strategy.fit(frame)
+    assert strategy.selected_cell == learnable
+
+
 def test_no_usable_grid_cell_raises_value_error() -> None:
     # Training-year (2020) labels stay real so model.fit() itself succeeds
     # on non-empty fit_rows; only the *validation* year's (2021) labels are

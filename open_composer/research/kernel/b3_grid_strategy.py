@@ -128,6 +128,21 @@ class GridSelectedLightGBMStrategy:
             if eval_rows.empty:
                 ic_by_cell[cell.config_id] = float("nan")
                 continue
+            # LightGBMRankStrategy.score requires a "symbol" column (it
+            # returns a symbol-indexed Series for build_weight_schedule's
+            # live scoring path) -- but train_frame (and therefore
+            # validation_frame/eval_rows, both sliced from it) never carries
+            # "symbol": build_weight_schedule's narrow-copy fix (commit
+            # 00911bc) only ever selects trade_date + feature_columns +
+            # label_column(s) into train_frame, on the correct premise that
+            # no B0-B3 strategy's *fit* needs symbol identity. This internal
+            # validation-scoring call is the one exception (it needs *some*
+            # column named "symbol" to satisfy score()'s contract, not the
+            # real identity) -- _rank_ic_by_date below only ever reads
+            # scores.to_numpy() positionally against eval_rows, so a
+            # synthetic placeholder is correct, not just expedient.
+            if "symbol" not in eval_rows.columns:
+                eval_rows = eval_rows.assign(symbol=eval_rows.index.astype(str))
             scores = model.score(eval_rows)
             ic_series = _rank_ic_by_date(scores, eval_rows, cell.label_column)
             mean_ic = float(ic_series.mean()) if not ic_series.empty else float("nan")
