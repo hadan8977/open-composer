@@ -25,7 +25,7 @@ export UV_CACHE_DIR=/tmp/open-composer-uv-cache
 | Wave A / 3.4 评估函数、账本、tearsheet、MLflow | done | `96cd8cd` |
 | Wave A / 3.3.2 日线特征 + 3.3.3 标签 | done（daily-only 部分已入库；daily+intraday 合并列见 3.5 第二步） | `b3f2e26` |
 | Wave A / 3.5 B0/B1/B2（daily-only） | **done**（B1 未打赢 B0→B2 未打赢 B1，链上当前最优是 B1 多头 4/8 门槛，如实记录负面结果） | `3aaed17`+`2553cca`+`00911bc`（协调者）、本 commit（本执行者：daily_plus_intraday 支持、共享 category dtype、gc.collect、真实数字写入账本） |
-| Wave B / B3 网格、安慰剂、报告 | todo | |
+| Wave B / B3 网格、安慰剂、报告 | in progress（`loop.py` 扩展 + `b3_grid_strategy.py` 修 bug + 编排脚本已入库；冒烟测试进行中，通过后跑全量 9 年×2 特征集） | `417455d`+`f9841b9`+`2e6e3ce`（协调者 `train_row_dates`）+`af0b44c`+`4b3b4b0` |
 | Wave C / model_ranking_portfolio 模式 | todo | |
 | Wave C / 目标权重映射 | todo | |
 | Wave C / 晋级路径干跑 | todo | |
@@ -228,6 +228,53 @@ uv run python scripts/build_daily_features.py
 ### blocked_on_user
 
 无。
+
+---
+
+## Wave A / 3.5 第二步：daily+intraday 合并列（进行中）与 Wave B / B3 网格
+
+### daily+intraday 特征回填(2016-2023)
+
+`scripts/build_daily_features.py --years 2016 2017 2018 2019 2020 2021 2022 2023`（无 `--skip-intraday-join`，`run_capped.sh --mem 1.8G`）：11 年全部核实为 47 列（之前 2016-2023 是 27 列 daily-only，因为分钟线回填在这些年份原始 `build_daily_features.py` 跑完之后才结束；2024-2026 早已是 47 列）。逐年 `intraday_joined=True`，零错误。日志 `/tmp/build_daily_features_2016_2023.log`（已确认清理时机未到，暂留供核对）。
+
+### daily+intraday 的 B2（岭回归）：`train_row_dates="all"` 撞内存，真实撞到、不是猜测
+
+`step11_b2_ridge_top50_daily_plus_intraday`（沿用 B2 岭回归，特征列换成 `B2_FEATURE_COLUMNS_DAILY_PLUS_INTRADAY`，44 列 vs daily-only 的 24 列）连续两次真实失败：
+
+- v1（`--mem 3.0G --swap 1.3G`）：面板加载成功（6,108,298 行,2,721 symbol),拟合阶段 memcg OOM——`journalctl -k`:`oom-kill:constraint=CONSTRAINT_MEMCG...task=python3,pid=1669522`,`anon-rss:2941320kB`(~2.94GB),整个 scope 被杀(父进程 `run_baseline_chain.py` 一起死,日志无 Traceback,这是本轮已知的"整 scope 被杀"模式)。
+- v2(`--mem 3.6G --swap 1.6G`,评估性上调后重试):面板加载成功,拟合阶段系统级 earlyoom(`exit code -15`),`journalctl -u earlyoom`:`badness 1114`附近数值,父进程存活并打印出干净的 `RuntimeError`(设计生效:earlyoom 只杀子进程,父进程能报告)。
+
+协调者确认根因(消息原文摘要):"daily+intraday 的 B2 撞内存不是拷贝没消干净,是这个面板本身就宽了一倍:610 万行 × 约 45 列,光面板就 1.1GB,训练子集因为几乎每列都是特征,再来 1.07GB。" 不是继续加内存上限能稳定解决的问题(v1→v2 从 3.0G/1.3G 加到 3.6G/1.6G 仍然失败,且第二次是系统级而非本任务 cgroup 触顶,说明单纯加大本任务上限意义有限)。
+
+### 根因修复:`train_row_dates` (`loop.py`,协调者提交 `2e6e3ce`)
+
+`build_weight_schedule`/`ExperimentConfig` 新增 `train_row_dates: Literal["all", "rebalance_dates"]`:
+- `"all"`(默认,不变):窗口内每个交易日的行都进训练集(已入账的 daily-only 结果口径不变,可复现)。
+- `"rebalance_dates"`:只用每周调仓日那几行——模型真正被调用的横截面。训练行数降到约五分之一。
+
+不只是省内存的权宜之计,是方法论选择——记录进 `config_hash`/账本/MLflow(不是写死常量):日频行带 h 日重叠的前瞻标签,名义样本量严重高估独立样本;而且模型只在周五被调用,daily 行训练存在训练/服务口径不一致。两种口径都跑、用数据说话。
+
+**执行计划(协调者指示,进行中)**:
+1. daily+intraday 的 B2 改用 `train_row_dates="rebalance_dates"` 重跑(`--mem 1.8G`)。
+2. daily-only 的 B2 补跑一次 `rebalance_dates` 版本(已加入 `run_baseline_chain.py` 的新配置 `step11_b2_ridge_top50_rebalance_dates`),这样有完整的 {daily-only, daily+intraday} × {all, rebalance_dates} 四格对比,特征集对比不与训练行口径混淆。已入账的 daily-only+all 结果不重跑。
+3. Wave B 的 B3 网格直接用 `rebalance_dates`(不是可选项——LightGBM 每个测试年要拟合 6 个格子,每个格子都物化整份训练矩阵,`all` 口径下宽面板 610 万×44 列在这台机器上跑不完,已用 B2 的单模型岭回归都需要 2.6-3.6GB+ 才能勉强跑,6 个模型级联只会更糟)。
+4. 四个 B2 格子的重跑尚未启动(先确保 B3 冒烟测试通过,再一起排队跑,避免同时抢内存导致互相看起来像对方的问题)。
+
+### Wave B / B3：编排脚本、bug 修复、冒烟测试
+
+`open_composer/research/kernel/loop.py`(commit `417455d`,本执行者):新增 `extra_train_columns`(`build_weight_schedule`/`run_experiment`,向后兼容默认 `()`)——`GridSelectedLightGBMStrategy.fit` 需要 `label_rank_5/10/21` 三个标签列同时出现在同一个 `train_frame` 里(每个格子一个标签列),但 `build_weight_schedule` 的窄拷贝(`00911bc`)只留一个 `label_column`;新增字段特意不参与行级 `notna` 掩码(每个格子自己在 `fit()` 内部按列 `dropna`,外层掩码若也按最长标签列过滤会错误地丢掉短标签格子本可以用的行)。同 commit 还给 `ExperimentVerdict` 加了 `schedule` 字段(内存态,不进账本 JSON),给 turnover/capacity 报表复用 `run_experiment` 内部已经算好的排期,不用重复跑一次 `build_weight_schedule`。
+
+`tests/test_b3_grid_strategy.py`(新文件,commit `f9841b9`,后随 `4b3b4b0` 补测试):`GridSelectedLightGBMStrategy` 之前完全没有专门测试,补了 9 个——按验证年 rank IC 选格子、`validation_year` 取值、`score`/`top_feature_importances` 委托与 fit 前报错、格子数与 `DEFAULT_GRID` 一致、全部格子验证年不可用时报 `ValueError`,以及(补丁后新增)`train_frame` 缺 `symbol` 列时 `fit()` 仍能正常工作。
+
+**真实撞到的 bug(不是预防性猜测,`scripts/run_b3_grid.py` 冒烟测试第一次跑就撞到)**:`GridSelectedLightGBMStrategy.fit()` 内部用验证年数据算 rank IC 时调用 `model.score(eval_rows)`,而 `LightGBMRankStrategy.score()` 的约定是返回按 `symbol` 建索引的 `Series`——但 `eval_rows` 取自 `train_frame`,而 `train_frame`(不论有没有 `extra_train_columns`)从 `00911bc` 起就从未包含 `symbol`(设计如此:拟合阶段没有 B0-B3 策略需要 symbol 身份)。`tests/test_b3_grid_strategy.py` 最初的 9 个单测全部直接调用 `.fit()`,用的合成 fixture 恰好都带 `symbol` 列,没有复现 `build_weight_schedule` 的真实窄拷贝合同,所以没测出来。修复(commit `4b3b4b0`):`eval_rows` 缺 `symbol` 列时用行索引现造一个占位列——安全,因为 `_rank_ic_by_date` 只按位置读 `scores.to_numpy()`,从不读索引本身。新增回归测试 `test_fit_works_when_train_frame_has_no_symbol_column` 钉住这个真实合同。
+
+`scripts/run_b3_grid.py`(新文件,commit `af0b44c`):两个顶层 `run_experiment` 调用(daily-only、daily+intraday 各一个),每个内部包一个 `GridSelectedLightGBMStrategy`(6 格子:标签周期 {5,10,21}×树深 {3,6}),`train_row_dates="rebalance_dates"`(非可选,见上)。含 `--only`/`--test-years`(冒烟测试用)/`--placebo-only` 三个 flag、换手/容量报表(复用 `verdict.schedule`,假设 $10mm AUM 的容量代理指标)、标签打乱安慰剂(`label_rank_21` 按 `trade_date` 分组内打乱,交互式验证过不会破坏分组/保留 NaN 位置)。
+
+**冒烟测试状态**:`--only step11_b3_lightgbm_grid_daily_only --test-years 2025 2026`(`run_capped.sh --mem 2.6G`)第一次跑撞上面 `symbol` 的 bug,修复后第二次跑正在进行(日志 `/tmp/run_b3_smoke2.log`),结果待补。
+
+### blocked_on_user
+
+无(暂时)。
 
 ---
 

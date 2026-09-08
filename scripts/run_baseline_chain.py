@@ -310,6 +310,56 @@ def main() -> int:
                 B2_FEATURE_COLUMNS_DAILY_PLUS_INTRADAY, LABEL_COLUMN, alpha=1.0
             ),
         ),
+        (
+            # Coordinator, 2026-09-08 (commit 2e6e3ce): the daily+intraday
+            # variant above (train_row_dates="all", the default) does not fit
+            # in memory on this box -- confirmed directly, not assumed: it
+            # died twice under generous caps (2.6-3.6GB+), once via a silent
+            # whole-scope memcg OOM and once via system-wide earlyoom (see
+            # the Step 11 ledger's 2026-09-08 entries for both). Rather than
+            # just retrying "all" at an ever-higher cap, train_row_dates=
+            # "rebalance_dates" removes the actual root cause (~6.1M training
+            # rows down to the ~1.2M weekly cross-sections the model is ever
+            # served on) instead of papering over it with more RAM. This
+            # config is also backfilled for daily-only (not just
+            # daily+intraday) so the feature-set comparison (daily-only vs
+            # daily+intraday) is never confounded with a training-row-
+            # methodology difference: all four {daily-only, daily+intraday} x
+            # {all, rebalance_dates} cells get run and reported (the already-
+            # recorded daily-only+all result is not rerun).
+            ExperimentConfig(
+                experiment_id="step11_b2_ridge_top50_rebalance_dates",
+                family="step11_baseline_chain",
+                model_kind="ridge_regressor",
+                feature_set="daily_only",
+                label_horizon_days=LABEL_HORIZON_DAYS,
+                feature_columns=B2_FEATURE_COLUMNS,
+                top_k=50,
+                hedge="spy_beta_hedge",
+                test_years=DEFAULT_TEST_YEARS,
+                train_row_dates="rebalance_dates",
+                hyperparameters={"alpha": 1.0},
+            ),
+            lambda: RidgeRankStrategy(B2_FEATURE_COLUMNS, LABEL_COLUMN, alpha=1.0),
+        ),
+        (
+            ExperimentConfig(
+                experiment_id="step11_b2_ridge_top50_daily_plus_intraday_rebalance_dates",
+                family="step11_baseline_chain",
+                model_kind="ridge_regressor",
+                feature_set="daily_plus_intraday",
+                label_horizon_days=LABEL_HORIZON_DAYS,
+                feature_columns=B2_FEATURE_COLUMNS_DAILY_PLUS_INTRADAY,
+                top_k=50,
+                hedge="spy_beta_hedge",
+                test_years=DEFAULT_TEST_YEARS,
+                train_row_dates="rebalance_dates",
+                hyperparameters={"alpha": 1.0},
+            ),
+            lambda: RidgeRankStrategy(
+                B2_FEATURE_COLUMNS_DAILY_PLUS_INTRADAY, LABEL_COLUMN, alpha=1.0
+            ),
+        ),
     ]
 
     if args.only:
