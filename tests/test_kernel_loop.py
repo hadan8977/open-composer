@@ -217,6 +217,86 @@ def test_build_weight_schedule_never_uses_a_fit_that_saw_the_test_year(
         assert train_max < first_test_date
 
 
+def test_build_weight_schedule_extra_train_columns_ride_along_without_default() -> None:
+    # Wave B's B3 grid needs several label horizons in one train_frame at
+    # once (see loop.build_weight_schedule's extra_train_columns docstring).
+    panel, universe_panel = _synthetic_panel()
+    panel["label_rank_21"] = 1.0 - panel["label_rank_5"]
+    seen_columns: list[frozenset[str]] = []
+
+    class _RecordingStrategy:
+        def fit(self, train_frame: pd.DataFrame) -> None:
+            seen_columns.append(frozenset(train_frame.columns))
+
+        def score(self, asof_frame: pd.DataFrame) -> pd.Series:
+            return pd.Series(1.0, index=asof_frame["symbol"].to_numpy())
+
+    loop.build_weight_schedule(
+        panel=panel,
+        universe_panel=universe_panel,
+        strategy_factory=_RecordingStrategy,
+        feature_columns=["momentum_252_21"],
+        label_column="label_rank_5",
+        label_horizon_days=5,
+        test_years=(2017,),
+        top_k=None,
+        hedge="none",
+        extra_train_columns=["label_rank_21"],
+    )
+    assert seen_columns, "fit() was never called"
+    for columns in seen_columns:
+        assert "label_rank_21" in columns
+
+    # Omitting extra_train_columns (every existing B0-B3 caller) leaves
+    # train_frame exactly as narrow as before -- no accidental default leak.
+    seen_columns.clear()
+    loop.build_weight_schedule(
+        panel=panel,
+        universe_panel=universe_panel,
+        strategy_factory=_RecordingStrategy,
+        feature_columns=["momentum_252_21"],
+        label_column="label_rank_5",
+        label_horizon_days=5,
+        test_years=(2017,),
+        top_k=None,
+        hedge="none",
+    )
+    for columns in seen_columns:
+        assert "label_rank_21" not in columns
+
+
+def test_build_weight_schedule_extra_train_columns_nan_does_not_shrink_training_rows() -> None:
+    # A strategy juggling several label horizons already does its own
+    # per-column dropna one horizon at a time (see GridSelectedLightGBMStrategy).
+    # build_weight_schedule's own row mask must therefore ignore NaNs in
+    # extra_train_columns -- otherwise one unresolved long-horizon label
+    # would wrongly drop rows a shorter-horizon cell could still have used.
+    panel, universe_panel = _synthetic_panel()
+    panel["label_rank_21"] = np.nan  # entirely unresolved, on purpose
+    row_counts: list[int] = []
+
+    class _RecordingStrategy:
+        def fit(self, train_frame: pd.DataFrame) -> None:
+            row_counts.append(len(train_frame))
+
+        def score(self, asof_frame: pd.DataFrame) -> pd.Series:
+            return pd.Series(1.0, index=asof_frame["symbol"].to_numpy())
+
+    loop.build_weight_schedule(
+        panel=panel,
+        universe_panel=universe_panel,
+        strategy_factory=_RecordingStrategy,
+        feature_columns=["momentum_252_21"],
+        label_column="label_rank_5",
+        label_horizon_days=5,
+        test_years=(2017,),
+        top_k=None,
+        hedge="none",
+        extra_train_columns=["label_rank_21"],
+    )
+    assert row_counts and all(count > 0 for count in row_counts)
+
+
 def test_returns_from_weight_schedule_applies_cost_on_the_first_day() -> None:
     dates = pd.bdate_range("2020-01-06", periods=10)  # starts on a Monday
     price_wide = pd.DataFrame({"AAA": [100.0 * (1.01**i) for i in range(len(dates))]}, index=dates)

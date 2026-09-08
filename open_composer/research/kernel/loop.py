@@ -175,6 +175,15 @@ class ExperimentVerdict(ResearchDataModel):
     tearsheet_path: str | None
     mlflow_run_id: str | None
     ledger_appended: bool
+    #: The walk-forward weight schedule run_experiment built internally, for
+    #: callers that need turnover/capacity/holdings reporting beyond what
+    #: .metrics carries (Wave B's step11-w2-model-ranking-2026-09.md report:
+    #: "换手、容量（每只持仓的成交额占比）") without a second, redundant
+    #: build_weight_schedule() call (B3's LightGBM refit-per-year is not
+    #: cheap on this box). Never written to the ledger record dict below --
+    #: that stays exactly as small as before; this is an in-memory-only field
+    #: on the returned dataclass.
+    schedule: list[RebalanceEvent]
 
 
 def weekly_rebalance_dates(trading_dates: Sequence[pd.Timestamp]) -> list[pd.Timestamp]:
@@ -231,11 +240,27 @@ def build_weight_schedule(
     top_k: int | None,
     hedge: Literal["none", "spy_beta_hedge"],
     beta_column: str = "beta_252_spy",
+    extra_train_columns: Sequence[str] = (),
 ) -> list[RebalanceEvent]:
     """Walk-forward weight schedule: retrain once per ``test_years`` entry on
     an anchored, embargoed window, then score every weekly rebalance date
     within that year using that year's frozen fit. See module docstring for
     the three honesty requirements this enforces.
+
+    ``extra_train_columns`` (Wave B, B3's grid): columns to carry into
+    ``train_frame`` in addition to ``feature_columns``/``label_column``,
+    without requiring them to be non-null. B3's ``GridSelectedLightGBMStrategy``
+    needs all three label horizons (``label_rank_5/10/21``) available in one
+    ``fit()`` call (one grid cell per horizon), but this function's outer
+    ``label_column`` is a single, official column -- callers pass the other
+    horizons here. Deliberately excluded from the row-level ``notna`` mask
+    below (unlike ``feature_columns``/``label_column``): a strategy that
+    needs several label columns at once already does its own per-column
+    ``dropna`` internally (one cell at a time), so requiring every extra
+    column to be simultaneously non-null here would wrongly drop rows a
+    shorter-horizon cell could have used just because a longer-horizon label
+    is unresolved near a symbol's last trading day. Defaults to ``()``, so
+    every existing caller (B0-B3's single-label strategies) is unaffected.
     """
     trading_calendar = pd.DatetimeIndex(sorted(panel["trade_date"].unique()))
     events: list[RebalanceEvent] = []
@@ -257,10 +282,11 @@ def build_weight_schedule(
         # ``trade_date`` (kept for any future time-weighted fit); it does not
         # receive ``symbol``, whose object dtype is the panel's single
         # largest column and which no B0-B3 strategy reads during training.
-        train_columns = [*feature_columns, label_column]
+        required_columns = [*feature_columns, label_column]
         train_mask = panel["trade_date"] <= train_cutoff
-        for column in train_columns:
+        for column in required_columns:
             train_mask &= panel[column].notna()
+        train_columns = [*required_columns, *extra_train_columns]
         train_frame = panel.loc[train_mask, ["trade_date", *train_columns]]
         del train_mask
         strategy = strategy_factory()
@@ -519,12 +545,19 @@ def run_experiment(
     write_ledger: bool = True,
     write_tearsheet: bool = True,
     write_mlflow: bool = True,
+    extra_train_columns: Sequence[str] = (),
 ) -> ExperimentVerdict:
     """Run one candidate configuration end to end: walk-forward weight
     schedule -> long-only and market-neutral daily return streams (base and
     stress cost) -> ``mechanism_eval.evaluate_candidate`` against the
     volatility-matched-SPY unlevered-family contract -> ledger append ->
     QuantStats tearsheet -> MLflow run.
+
+    ``extra_train_columns`` is forwarded to :func:`build_weight_schedule`
+    unchanged (see its docstring) -- B0-B2 never pass this; Wave B's B3 grid
+    (``scripts/run_b3_grid.py``) passes the two label horizons not already
+    named by ``label_column`` so ``GridSelectedLightGBMStrategy.fit`` can see
+    all three at once.
     """
     config_hash = config.config_hash()
     price_wide = panel.pivot(index="trade_date", columns="symbol", values="close")
@@ -539,6 +572,7 @@ def run_experiment(
         test_years=config.test_years,
         top_k=config.top_k,
         hedge=config.hedge,
+        extra_train_columns=extra_train_columns,
     )
 
     long_base = returns_from_weight_schedule(
@@ -651,4 +685,5 @@ def run_experiment(
         tearsheet_path=tearsheet_path,
         mlflow_run_id=mlflow_run_id,
         ledger_appended=ledger_appended,
+        schedule=schedule,
     )
