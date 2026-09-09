@@ -550,3 +550,58 @@ scripts/run_b3_grid.py --only step11_b3_lightgbm_grid_daily_plus_intraday >
 ### blocked_on_user
 
 无。
+
+## Wave B 续五(`daily_plus_intraday` 网格落地;安慰剂路径的真实 bug)
+
+### `daily_plus_intraday` 网格 v3:成功
+
+`nohup ... run_b3_grid.py --only step11_b3_lightgbm_grid_daily_plus_intraday`
+(`--mem 1.8G`,07:54 UTC 启动)于 08:38:44 UTC 完整落地账本
+(`config_hash 38213a14efb19306`),耗时 2507.8 秒(约 42 分钟),全程无
+OOM(`journalctl` 核实无 memcg/oom 事件)。**这是架构性修复真正生效的直接
+证据**——面板加载阶段从此前三次尝试的 18-32 分钟卡死/被杀,变成几秒钟内
+完成,`--mem` 也从被迫用到的 2.6G 回落到标准的 1.8G。
+
+结果(长仓):CAGR 超额 -13.13%,Sharpe-ex-BIL 0.3425,最大回撤 -57.2%,
+MAR 0.152,门槛 1/8。**比 daily_only B3(-10.15%、0.4175、2/8）更差**,两个
+特征集都打不赢 B1 动量(-4.95%、0.578、4/8)。链上最优仍是 B1,未被翻盘。
+
+**逐年格选择模式高度可疑**:2017-2025 每一年都选中同一个格
+(`h21_d6`,horizon=21/depth=6),验证年 rank IC 在 0.15-0.40 之间——比冒烟
+测试原本就偏高的 0.08-0.17 更极端。这不是"模型找到了强信号"该有的样子
+(9 个独立年份、同一格、IC 随时间只是缓慢漂移而不是波动),更像是某种系统性
+泄漏。安慰剂检验因此从"按计划做一次"变成"两个特征集都必须做,且优先级
+提到报告成稿之前"。
+
+### 安慰剂路径的真实 bug(`_run_label_shuffle_placebo`)
+
+`--placebo-only --placebo-feature-set daily_only` 第一次真正跑起来(此前
+该函数从未在本轮完整执行过——之前每次机会都在到达它之前进程已经死掉)就
+直接崩溃:
+
+```
+KeyError: ['label_rank_5']
+  File ".../b3_grid_strategy.py", line 122, in fit
+    fit_rows = train_frame.dropna(subset=[*self.feature_columns, cell.label_column])
+```
+
+根因有两层,都修了(提交 `cbba147`):
+1. `build_weight_schedule` 调用漏传 `extra_train_columns=EXTRA_LABEL_COLUMNS`,
+   导致窄列 `train_frame` 只带 `label_rank_21`,而网格的 h5/h10 格需要
+   `label_rank_5`/`label_rank_10` 同时在场——对照 `_run_b3_and_queue_result`
+   里真实网格调用 `run_experiment` 时是带了这个参数的,唯独安慰剂这条路径
+   漏了。
+2. 光加这个参数还不够:原代码只打乱了 `PRIMARY_LABEL_COLUMN`
+   (`label_rank_21`),另外两个标签列保持真实值不变——6 个格子里有 4 个
+   (所有 h5/h10 格)会在"打乱"后的安慰剂里继续看到真实标签,安慰剂对
+   它们完全无效。改成对 `ALL_LABEL_COLUMNS` 三列都打乱。
+
+这是一个通过**真实运行**(不是代码审查)抓到的 bug——先前对 `labels.py`
+LEAD 方向和 `daily_features.py` 窗口方向的代码审查没有发现明显问题,但那
+只是审查,安慰剂本身才是协调者要求的权威检验,现在才第一次真正跑起来。
+修复后重新在跑(`/tmp/placebo_daily_only_v2.log`),`daily_plus_intraday`
+的安慰剂排在其后,两者串行、不并行。
+
+### blocked_on_user
+
+无。
