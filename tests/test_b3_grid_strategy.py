@@ -161,3 +161,56 @@ def test_no_usable_grid_cell_raises_value_error() -> None:
     strategy = GridSelectedLightGBMStrategy(["signal"], grid=list(_two_cell_grid()))
     with pytest.raises(ValueError, match="no grid cell produced a usable validation rank IC"):
         strategy.fit(frame)
+
+
+def test_validation_year_is_held_out_of_the_fit_pool_not_scored_in_sample() -> None:
+    """2026-09-09 regression test for the leakage the daily_only placebo
+    caught: an earlier version of fit() trained each cell on the *entire*
+    train_frame, including the validation year, then scored that same
+    validation year -- in-sample scoring, not a real holdout. Reproduced
+    here at synthetic scale: 2020's label_rank_5 is genuinely learnable
+    from ``signal`` (same construction as _synthetic_two_year_frame), but
+    2021's label_rank_5 is independent noise, *unlearnable* from signal.
+    If fit() correctly excludes 2021 from the fit pool, scoring the
+    2020-trained model on 2021 must land near zero mean IC (the model never
+    saw 2021's rows, so it cannot "recall" them regardless of tree depth).
+    Under the old bug, the model would have been fit directly on 2021's
+    (signal, noise-label) pairs and could show a materially nonzero IC by
+    recalling those exact rows -- this is the same mechanism the real
+    placebo exposed (deeper trees, more capacity to memorize, showed
+    *higher* spurious IC, the opposite of what a real relationship would
+    predict).
+    """
+    rng = np.random.default_rng(29)
+    n_symbols, n_dates_per_year = 40, 60
+    dates_2020 = pd.bdate_range("2020-01-02", periods=n_dates_per_year)
+    dates_2021 = pd.bdate_range("2021-01-04", periods=n_dates_per_year)
+    symbols = [f"S{i:03d}" for i in range(n_symbols)]
+    rows = []
+    for date in list(dates_2020) + list(dates_2021):
+        signal = rng.normal(size=n_symbols)
+        if date.year == 2020:
+            label_rank_5 = (
+                pd.Series(signal + 0.05 * rng.normal(size=n_symbols)).rank(pct=True).to_numpy()
+            )
+        else:
+            label_rank_5 = rng.uniform(0, 1, size=n_symbols)  # independent of signal
+        for i, symbol in enumerate(symbols):
+            rows.append(
+                {
+                    "trade_date": date,
+                    "symbol": symbol,
+                    "signal": signal[i],
+                    "label_rank_5": label_rank_5[i],
+                }
+            )
+    frame = pd.DataFrame(rows)
+    cell = GridCell(label_horizon_days=5, max_depth=6)  # deepest tree -- most memorization risk
+    strategy = GridSelectedLightGBMStrategy(["signal"], grid=[cell])
+    strategy.fit(frame)
+    assert strategy.validation_year == 2021
+    mean_ic = strategy.validation_ic_by_cell[cell.config_id]
+    assert abs(mean_ic) < 0.05, (
+        f"validation IC {mean_ic!r} is too far from 0 -- the validation year "
+        "may still be leaking into the fit pool"
+    )

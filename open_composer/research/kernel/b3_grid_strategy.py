@@ -16,10 +16,20 @@ no changes to ``loop.py`` needed. All the grid/selection logic lives in
    window is itself already anchored + embargoed against the real test
    year, so the validation year is always strictly before the test year).
 2. Every grid cell (a ``(label_horizon, max_depth)`` pair) is fit on the
-   *entire* training window (including the validation year -- the plan's
-   own wording is "训练窗口最后一年", not "held out from the training
-   window", so this is a literal reading, not a from-scratch nested
-   holdout) and scored on the validation year's rows.
+   training window **excluding** the validation year and a trailing
+   ``label_horizon_days``-sized embargo before it (2026-09-09 fix -- see
+   below), then scored on the validation year's rows. An earlier version of
+   this module fit each cell on the *entire* window, validation year
+   included, reading the plan's "训练窗口最后一年（验证年）的 rank IC 选"
+   as "use the last year's rows for scoring" without also reading
+   "validation" as "held out" -- i.e. pure in-sample scoring. The
+   label-shuffle placebo caught this directly: with labels shuffled,
+   validation rank IC should sit at ~0, but every grid cell showed IC
+   between 0.05 and 0.21, worse (not better) for deeper trees (``_d6`` ~2-3x
+   ``_d3`` at the same horizon) -- exactly the signature of a model
+   memorizing rows it was scored on, not evidence of a real relationship.
+   See the Step 11 ledger's 2026-09-09 entries for the full placebo numbers
+   before and after this fix.
 3. Rank IC per validation-year row date is the Pearson correlation between
    the predicted scores' cross-sectional rank and ``label_rank_h`` (which
    is already a percentile rank of the true forward return -- correlating
@@ -111,6 +121,7 @@ class GridSelectedLightGBMStrategy:
         validation_year = int(train_frame["trade_date"].dt.year.max())
         self.validation_year = validation_year
         validation_frame = train_frame.loc[train_frame["trade_date"].dt.year == validation_year]
+        validation_start = validation_frame["trade_date"].min()
 
         best_ic = float("-inf")
         best_model: LightGBMRankStrategy | None = None
@@ -119,7 +130,28 @@ class GridSelectedLightGBMStrategy:
         ic_series_by_cell: dict[str, pd.Series] = {}
 
         for cell in self.grid:
-            fit_rows = train_frame.dropna(subset=[*self.feature_columns, cell.label_column])
+            # Held-out validation year (2026-09-09 fix, see class docstring):
+            # exclude the validation year *and* a trailing
+            # label_horizon_days-sized embargo before it from the fit pool.
+            # The embargo matters on top of the year split: a training row
+            # dated a few days before validation_start still carries a
+            # forward label (label_rank_h) computed from prices up to h
+            # *trading* days later, which can land inside the validation
+            # year -- scoring on validation rows with a model fit on labels
+            # that peeked into validation-year prices is still partially
+            # in-sample even though the training row's own date is not. This
+            # uses calendar days (not the true trading calendar -- fit()
+            # only ever receives train_frame, not the full daily calendar;
+            # see loop.py::build_weight_schedule's own trading_calendar
+            # parameter for why that distinction exists) with a 2x safety
+            # factor over label_horizon_days trading days (~1.4x calendar
+            # days plus holidays), so this errs toward excluding slightly
+            # more than the exact minimum rather than risking leakage from
+            # under-embargoing.
+            embargo_cutoff = validation_start - pd.Timedelta(days=cell.label_horizon_days * 2)
+            fit_pool = train_frame.loc[train_frame["trade_date"] <= embargo_cutoff]
+            fit_rows = fit_pool.dropna(subset=[*self.feature_columns, cell.label_column])
+            del fit_pool
             model = LightGBMRankStrategy(
                 self.feature_columns, cell.label_column, max_depth=cell.max_depth
             )
