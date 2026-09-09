@@ -209,7 +209,10 @@ def _load_panel(feature_set: str = "daily_only") -> pd.DataFrame:
     del merged_frames
     gc.collect()
     panel_gb = panel.memory_usage(deep=True).sum() / 1e9
-    print(f"[_load_panel] {feature_set}: panel.memory_usage(deep=True) = {panel_gb:.3f} GB", flush=True)
+    print(
+        f"[_load_panel] {feature_set}: panel.memory_usage(deep=True) = {panel_gb:.3f} GB",
+        flush=True,
+    )
     return panel
 
 
