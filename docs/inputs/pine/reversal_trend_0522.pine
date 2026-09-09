@@ -1,0 +1,169 @@
+//@version=6
+indicator("Reversal Trend", "Reversal Trend 0522", overlay=true, max_labels_count=500)
+
+gT = "Trend"
+gR = "RSI"
+gM = "MACD"
+gF = "Filters"
+gC = "Cooldown"
+
+emaFastLen = input.int(20,  "EMA Fast",  group=gT)
+emaMidLen  = input.int(50,  "EMA Mid",   group=gT)
+emaSlowLen = input.int(200, "EMA Slow",  group=gT)
+
+rsiLen        = input.int(14, "RSI Length", group=gR)
+rsiOB         = input.int(70, "RSI OB", group=gR)
+rsiOS         = input.int(30, "RSI OS", group=gR)
+rsiBullMin    = input.int(40, "Bull RSI Min", group=gR)
+rsiBullMax    = input.int(65, "Bull RSI Max", group=gR)
+rsiBearMin    = input.int(35, "Bear RSI Min", group=gR)
+rsiBearMax    = input.int(60, "Bear RSI Max", group=gR)
+extremeLB     = input.int(15, "RSI Extreme Lookback (bars)", group=gR)
+recSRsiPeak   = input.int(78, "RecS RSI Peak Min", group=gR)
+armMaxBars    = input.int(35, "RSI Event Max Bars", group=gR)
+rsiResetLong  = input.int(45, "OS Lock Reset RSI", group=gR)
+rsiResetShort = input.int(55, "OB Lock Reset RSI", group=gR)
+
+macdFast = input.int(12, "MACD Fast", group=gM)
+macdSlow = input.int(26, "MACD Slow", group=gM)
+macdSig  = input.int(9,  "MACD Signal", group=gM)
+histMode = input.string("1 Bar", "MACD Hist Confirmation", options=["Off", "1 Bar", "2 Bars"], group=gM)
+
+adxLen        = input.int(14,   "ADX Length", group=gF)
+adxMinBull    = input.float(18, "Bull: ADX Min", group=gF)
+adxMinBear    = input.float(15, "Bear: ADX Min", group=gF)
+dwellMin      = input.int(5,    "RecL/RecS dwell bars", group=gF)
+atrLen        = input.int(14,   "ATR Length", group=gF)
+recSMinAtrExt = input.float(0.35, "RecS Min EMA20 ATR Extension", step=0.05, group=gF)
+
+bullCD = input.int(30, "Bull cooldown", group=gC)
+bearCD = input.int(20, "Bear cooldown", group=gC)
+recLCD = input.int(8,  "RecL cooldown", group=gC)
+recSCD = input.int(8,  "RecS cooldown", group=gC)
+
+ef = ta.ema(close, emaFastLen)
+em = ta.ema(close, emaMidLen)
+es = ta.ema(close, emaSlowLen)
+r  = ta.rsi(close, rsiLen)
+atr = ta.atr(atrLen)
+[mLine, sLine, hist] = ta.macd(close, macdFast, macdSlow, macdSig)
+[diPlus, diMinus, adx] = ta.dmi(adxLen, adxLen)
+
+bullCross = ta.crossover(mLine, sLine)
+bearCross = ta.crossunder(mLine, sLine)
+
+histUp1 = hist > hist[1]
+histUp2 = hist > hist[1] and hist[1] > hist[2]
+histDn1 = hist < hist[1]
+histDn2 = hist < hist[1] and hist[1] < hist[2]
+
+histUpOk = histMode == "Off" ? true : histMode == "1 Bar" ? histUp1 : histUp2
+histDnOk = histMode == "Off" ? true : histMode == "1 Bar" ? histDn1 : histDn2
+
+var int dwellOB = 0
+var int dwellOS = 0
+dwellOB := r >= rsiOB ? dwellOB + 1 : 0
+dwellOS := r <= rsiOS ? dwellOS + 1 : 0
+
+recentOS = ta.lowest(r, extremeLB) <= rsiOS
+recentOB = ta.highest(r, extremeLB) >= rsiOB
+
+confirmed = barstate.isconfirmed
+
+inOS = r <= rsiOS
+inOB = r >= rsiOB
+enterOS = inOS and (na(r[1]) or r[1] > rsiOS)
+enterOB = inOB and (na(r[1]) or r[1] < rsiOB)
+
+var bool osArmed = false
+var bool obArmed = false
+var bool osLocked = false
+var bool obLocked = false
+var int osBar = na
+var int obBar = na
+
+if confirmed
+    if osLocked and r >= rsiResetLong
+        osLocked := false
+    if obLocked and r <= rsiResetShort
+        obLocked := false
+
+    if enterOS and not osLocked
+        osArmed := true
+        obArmed := false
+        osBar := bar_index
+
+    if enterOB and not obLocked
+        obArmed := true
+        osArmed := false
+        obBar := bar_index
+
+    if osArmed and not na(osBar) and bar_index - osBar > armMaxBars
+        osArmed := false
+    if obArmed and not na(obBar) and bar_index - obBar > armMaxBars
+        obArmed := false
+
+osActive = osArmed and not na(osBar) and bar_index - osBar <= armMaxBars
+obActive = obArmed and not na(obBar) and bar_index - obBar <= armMaxBars
+
+bull = bullCross and osActive and r > rsiBullMin and r < rsiBullMax
+   and close > ef and adx > adxMinBull and histUpOk
+
+bear = bearCross and obActive and r > rsiBearMin and r < rsiBearMax
+   and close < ef and adx > adxMinBear
+
+recL = ta.crossover(r, rsiOS) and dwellOS[1] >= dwellMin and close < em and histUpOk
+
+recSExtended = atr > 0 and (close - ef) / atr >= recSMinAtrExt
+recSHot = ta.highest(r, extremeLB) >= recSRsiPeak and close > ef and close > em and recSExtended
+recS = ta.crossunder(r, rsiOB) and dwellOB[1] >= dwellMin and recSHot and histDnOk
+
+var int lB  = na
+var int lS  = na
+var int lRL = na
+var int lRS = na
+
+okB  = na(lB)  or (bar_index - lB)  >= bullCD
+okS  = na(lS)  or (bar_index - lS)  >= bearCD
+okRL = na(lRL) or (bar_index - lRL) >= recLCD
+okRS = na(lRS) or (bar_index - lRS) >= recSCD
+
+fBull = bull and okB and confirmed
+fRecL = recL and okRL and osActive and confirmed and not fBull
+fBear = bear and okS and confirmed
+fRecS = recS and okRS and obActive and confirmed and not fBear
+
+if fBull
+    lB := bar_index
+if fBear
+    lS := bar_index
+if fRecL
+    lRL := bar_index
+if fRecS
+    lRS := bar_index
+
+if fBull or fRecL
+    osArmed := false
+    osLocked := true
+if fBear or fRecS
+    obArmed := false
+    obLocked := true
+
+pF = plot(ef, "EMA20", color=color.new(#FFD700, 0))
+pM = plot(em, "EMA50", color=color.new(#FF3030, 0))
+plot(es, "EMA200", color=color.new(#9E9E9E, 0))
+fill(pF, pM, color=ef > em ? color.new(#00C853, 75) : color.new(#D50000, 75), title="EMA20/50 Fill")
+
+plot(adx, "ADX", display=display.data_window)
+plot(obActive ? 1 : 0, "Bear Context Active", display=display.data_window)
+plot(osActive ? 1 : 0, "Bull Context Active", display=display.data_window)
+
+plotshape(fBull, "MACD+RSI Bull", style=shape.triangleup, location=location.belowbar, color=color.new(#00E676, 0), size=size.small)
+plotshape(fRecL, "RSI Recovery Long", style=shape.diamond, location=location.belowbar, color=color.new(#00BCD4, 0), size=size.small)
+plotshape(fBear, "MACD+RSI Bear", style=shape.triangledown, location=location.abovebar, color=color.new(#FF1744, 0), size=size.small)
+plotshape(fRecS, "RSI Recovery Short", style=shape.diamond, location=location.abovebar, color=color.new(#FF9100, 0), size=size.small)
+
+alertcondition(fBull, "Bull", "Reversal Trend Bull on {{ticker}} @ {{close}}")
+alertcondition(fBear, "Bear", "Reversal Trend Bear on {{ticker}} @ {{close}}")
+alertcondition(fRecL, "RecoveryLong", "Reversal Trend RecL on {{ticker}} @ {{close}}")
+alertcondition(fRecS, "RecoveryShort", "Reversal Trend RecS on {{ticker}} @ {{close}}")
