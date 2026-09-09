@@ -75,6 +75,7 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/plan-step-11-ml-first-loop-2026-09-06.zh.md",
         "docs/plan-step-12-groupb-recent-regime-high-hit-rate-2026-09-09.zh.md",
         "docs/plan-step-13-recent-high-return-ml-and-llm-tracks-2026-09-09.zh.md",
+        "docs/plan-step-13f-open-factor-library-import-and-screening-2026-09-09.zh.md",
     ]:
         source = repo_root / new_doc
         destination = target / new_doc
