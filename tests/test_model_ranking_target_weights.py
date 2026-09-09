@@ -26,6 +26,20 @@ MOMENTUM = {"AAA": 0.30, "BBB": 0.25, "CCC": 0.20, "DDD": 0.15, "EEE": 0.10}
 CLOSE = {"AAA": 100.0, "BBB": 50.0, "CCC": 20.0, "DDD": 10.0, "EEE": 5.0, "SPY": 500.0}
 
 
+class _FixedScoreModel:
+    """Module-level (joblib/pickle needs an importable class, not a nested
+    one) synthetic loop.RankingStrategy-protocol object for
+    ``_fitted_candidate_dir``: scores as ``-momentum_252_21``, i.e. the
+    *inverse* of the placeholder rule, so a test asserting on the model's
+    own ranking fails loudly if load_candidate_artifact ever silently
+    ignored the fitted model.joblib and fell back to the placeholder rule
+    instead.
+    """
+
+    def score(self, asof_frame: pd.DataFrame) -> pd.Series:
+        return -asof_frame.set_index("symbol")["momentum_252_21"].astype(float)
+
+
 def _write_daily_features(root: Path, dates: list[pd.Timestamp]) -> None:
     rows = []
     for trade_date in dates:
@@ -62,13 +76,27 @@ def _write_universe(root: Path, *, month_end: pd.Timestamp) -> None:
 
 
 def _candidate_dir(root: Path, *, top_k: int = 3, hedge: str = "none") -> Path:
+    # Field names match the research line's authoritative export interface
+    # (reports/research/control/step11-2026-09-06-progress.md, "Wave B item
+    # 5", commit 93ba159): config.json is an ExperimentConfig-shaped dump,
+    # features.json carries feature_columns (the only key this adapter
+    # reads) plus the interface's other metadata fields. model_kind +
+    # score_column together are this module's own rule-based-placeholder
+    # convention (no model.joblib), not part of that interface.
     candidate_dir = root / "candidates" / "test_momentum_placeholder"
     candidate_dir.mkdir(parents=True, exist_ok=True)
     (candidate_dir / "config.json").write_text(
         json.dumps(
             {
-                "candidate_id": "test_momentum_placeholder",
-                "strategy_kind": "rule_momentum_top_k",
+                "experiment_id": "test_momentum_placeholder",
+                "family": "test_b1_momentum",
+                "model_kind": "rule_momentum_top_k",
+                "feature_set": "daily_only",
+                "label_horizon_days": 21,
+                "feature_columns": ["momentum_252_21"],
+                "top_k": top_k,
+                "hedge": hedge,
+                "train_row_dates": "rule_based_no_training",
                 "score_column": "momentum_252_21",
             }
         ),
@@ -77,16 +105,72 @@ def _candidate_dir(root: Path, *, top_k: int = 3, hedge: str = "none") -> Path:
     (candidate_dir / "features.json").write_text(
         json.dumps(
             {
-                "feature_set_id": "daily_only",
+                "experiment_id": "test_momentum_placeholder",
+                "family": "test_b1_momentum",
+                "model_kind": "rule_momentum_top_k",
+                "feature_set": "daily_only",
                 "feature_columns": ["momentum_252_21"],
+                "label_column": "label_rank_21",
                 "label_horizon_days": 21,
                 "top_k": top_k,
                 "hedge": hedge,
-                "beta_column": "beta_252_spy",
+                "train_row_dates": "rule_based_no_training",
+                "execution": "close_marked",
+                "refit_through_date": None,
             }
         ),
         encoding="utf-8",
     )
+    return candidate_dir
+
+
+def _fitted_candidate_dir(root: Path) -> Path:
+    """A candidate directory with a real model.joblib -- a tiny synthetic
+    object implementing the loop.RankingStrategy protocol directly
+    (.score(asof_frame) -> pd.Series), exactly as the research line's real
+    exports do, to prove load_candidate_artifact uses it as-is with no
+    .predict()-based wrapper.
+    """
+    import joblib
+
+    candidate_dir = root / "candidates" / "test_fitted_candidate"
+    candidate_dir.mkdir(parents=True, exist_ok=True)
+    (candidate_dir / "config.json").write_text(
+        json.dumps(
+            {
+                "experiment_id": "test_fitted_candidate",
+                "family": "test_b3_lightgbm",
+                "model_kind": "lightgbm_rank",
+                "feature_set": "daily_only",
+                "label_horizon_days": 21,
+                "feature_columns": ["momentum_252_21"],
+                "top_k": 3,
+                "hedge": "none",
+                "train_row_dates": "rebalance_dates",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (candidate_dir / "features.json").write_text(
+        json.dumps(
+            {
+                "experiment_id": "test_fitted_candidate",
+                "family": "test_b3_lightgbm",
+                "model_kind": "lightgbm_rank",
+                "feature_set": "daily_only",
+                "feature_columns": ["momentum_252_21"],
+                "label_column": "label_rank_21",
+                "label_horizon_days": 21,
+                "top_k": 3,
+                "hedge": "none",
+                "train_row_dates": "rebalance_dates",
+                "execution": "next_open",
+                "refit_through_date": "2026-08-28",
+            }
+        ),
+        encoding="utf-8",
+    )
+    joblib.dump(_FixedScoreModel(), candidate_dir / "model.joblib")
     return candidate_dir
 
 
@@ -171,6 +255,36 @@ class TestLoadCandidateArtifact:
         assert artifact.is_placeholder is True
         assert artifact.model.score_column == "momentum_252_21"  # type: ignore[attr-defined]
         assert artifact.features["feature_columns"] == ["momentum_252_21"]
+
+    def test_model_joblib_is_used_directly_with_no_predict_wrapper(self, tmp_path: Path) -> None:
+        candidate_dir = _fitted_candidate_dir(tmp_path)
+
+        artifact = load_candidate_artifact(candidate_dir)
+
+        assert artifact.is_placeholder is False
+        frame = pd.DataFrame(
+            {"symbol": ["AAA", "BBB", "CCC"], "momentum_252_21": [0.30, 0.20, 0.10]}
+        )
+        scores = artifact.model.score(frame)
+        # The fixture model ranks ascending (inverse of momentum) -- if this
+        # module silently fell back to the placeholder rule instead of
+        # calling the fitted model's own .score(), CCC (lowest momentum)
+        # would not come out on top.
+        assert scores.idxmax() == "CCC"
+
+    def test_model_joblib_missing_score_method_raises_clear_error(self, tmp_path: Path) -> None:
+        import joblib
+
+        candidate_dir = tmp_path / "candidate"
+        candidate_dir.mkdir()
+        (candidate_dir / "config.json").write_text("{}", encoding="utf-8")
+        (candidate_dir / "features.json").write_text(
+            json.dumps({"feature_columns": ["momentum_252_21"]}), encoding="utf-8"
+        )
+        joblib.dump(object(), candidate_dir / "model.joblib")
+
+        with pytest.raises(ValueError, match="\\.score"):
+            load_candidate_artifact(candidate_dir)
 
 
 class TestMostRecentRebalanceDate:
@@ -295,3 +409,23 @@ class TestRunModelRankingTargetWeightMapping:
         assert hedge_rows[0]["target_weight"] < 0  # short leg
         assert hedge_rows[0]["shares"] < 0
         assert payload["summary"]["portfolio_beta"] == pytest.approx(1.0)
+
+    def test_fitted_model_joblib_drives_selection_end_to_end(
+        self, tmp_path: Path, repo_root: Path
+    ) -> None:
+        candidate_dir = _fitted_candidate_dir(tmp_path)
+        spec_path = _write_spec(tmp_path, repo_root, candidate_dir=candidate_dir, top_k=3)
+        _write_daily_features(tmp_path, [SIGNAL_DATE])
+        _write_universe(tmp_path, month_end=SIGNAL_DATE)
+
+        result = run_model_ranking_target_weight_mapping(
+            spec_path, tmp_path, account_equity_override=100_000.0
+        )
+
+        assert result.candidate_is_placeholder is False
+        payload = json.loads(result.json_path.read_text(encoding="utf-8"))
+        held = {row["symbol"] for row in payload["target_weights"] if row["selected"]}
+        # The fixture model ranks ascending (inverse of momentum_252_21), so
+        # the bottom-3-by-momentum names (CCC, DDD, EEE) should be selected
+        # instead of the top-3 (AAA, BBB, CCC) the placeholder would pick.
+        assert held == {"CCC", "DDD", "EEE"}

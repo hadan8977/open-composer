@@ -75,6 +75,11 @@ HEDGE_SYMBOL = "SPY"
 #: ``open_composer.research.kernel.loop.build_weight_schedule``'s convention
 #: exactly so the two code paths stay conceptually identical.
 HEDGE_KEY = "__SPY_HEDGE__"
+#: Not part of the candidate-artifact interface (features.json has no
+#: beta_column key) -- there is exactly one beta column in the shared
+#: feature library (open_composer/research/features/daily_features.py),
+#: so this is a fixed constant, not a per-candidate configurable.
+DEFAULT_BETA_COLUMN = "beta_252_spy"
 
 
 class ScoringModel(Protocol):
@@ -99,25 +104,6 @@ class MomentumPlaceholderModel:
 
 
 @dataclass(frozen=True)
-class JoblibScoringModel:
-    """Wraps a fitted ``model.joblib`` (LightGBM or ridge, per the research
-    line's export contract) that exposes ``.predict(X)``. Feature column
-    order comes from ``features.json``'s ``feature_columns`` list, not
-    DataFrame column order, so a mismatched export fails loudly rather than
-    silently scoring on the wrong columns.
-    """
-
-    model: Any
-    feature_columns: tuple[str, ...]
-
-    def score(self, asof_frame: pd.DataFrame) -> pd.Series:
-        indexed = asof_frame.set_index("symbol")
-        ordered = indexed[list(self.feature_columns)]
-        predictions = self.model.predict(ordered.to_numpy())
-        return pd.Series(predictions, index=ordered.index, dtype=float)
-
-
-@dataclass(frozen=True)
 class CandidateArtifact:
     candidate_dir: Path
     config: dict[str, Any]
@@ -128,10 +114,34 @@ class CandidateArtifact:
 
 def load_candidate_artifact(candidate_artifact_dir: Path) -> CandidateArtifact:
     """Load ``config.json``/``features.json`` (and ``model.joblib`` if
-    present) from a candidate artifact directory. Raises ``ValueError`` with
-    an explicit, actionable message on every failure mode -- this is the
+    present) from a candidate artifact directory, per the research line's
+    authoritative export interface (``reports/research/control/step11-2026-
+    09-06-progress.md``, "Wave B item 5", commit ``93ba159``): ``model.joblib``
+    is a ``joblib.dump()`` of a ``loop.RankingStrategy``-protocol object --
+    it already implements ``.score(asof_frame) -> pd.Series`` itself, so it
+    is used directly with no adapter/wrapper class, exactly as that section
+    specifies ("调用方自己做 top-K/等权,这里不重复造轮子" -- the caller does
+    its own top-K/equal-weight; this module never calls ``.predict()``).
+    ``features.json`` always carries ``feature_columns`` (exact training
+    order); every other key that interface defines
+    (``experiment_id``/``family``/``model_kind``/``feature_set``/
+    ``label_column``/``execution``/``refit_through_date``/...) is metadata
+    this module does not need to act on. Raises ``ValueError`` with an
+    explicit, actionable message on every failure mode -- this is the
     function ``tests/test_model_ranking_target_weights.py``'s
     missing-artifact coverage exercises directly.
+
+    Every real export always has ``model.joblib`` (per that same interface
+    note: "B0/B1 没有可学习的参数,model.joblib 依然写出... 接口统一" -- even
+    parameter-free candidates ship one). The ``model.joblib``-less fallback
+    below is this module's *own* rule-based placeholder convention only
+    (``config/model_ranking_candidates/step11_momentum_placeholder_v1``,
+    used before the research line's first real export lands): it reuses the
+    interface's own ``model_kind`` field (rather than inventing a new key)
+    with the sentinel value ``"rule_momentum_top_k"``, plus one genuinely
+    new field, ``score_column``, naming which ``feature_columns`` entry to
+    rank on directly -- there is no interface-defined way to say "no model,
+    just sort this column," because every real candidate has a model.
     """
     if not candidate_artifact_dir.is_dir():
         raise ValueError(
@@ -158,18 +168,23 @@ def load_candidate_artifact(candidate_artifact_dir: Path) -> CandidateArtifact:
         import joblib
 
         fitted = joblib.load(model_path)
+        if not hasattr(fitted, "score") or not callable(fitted.score):
+            raise ValueError(
+                f"{model_path} does not implement the required .score(asof_frame) method "
+                "(loop.RankingStrategy protocol); refusing to use it for scoring"
+            )
         return CandidateArtifact(
             candidate_dir=candidate_artifact_dir,
             config=config,
             features=features,
-            model=JoblibScoringModel(model=fitted, feature_columns=tuple(feature_columns)),
+            model=fitted,
             is_placeholder=False,
         )
     score_column = config.get("score_column")
-    if not score_column or config.get("strategy_kind") != "rule_momentum_top_k":
+    if not score_column or config.get("model_kind") != "rule_momentum_top_k":
         raise ValueError(
             f"candidate at {candidate_artifact_dir} has no model.joblib and config.json does "
-            "not declare a rule_momentum_top_k score_column; cannot score"
+            "not declare model_kind=rule_momentum_top_k with a score_column; cannot score"
         )
     if score_column not in feature_columns:
         raise ValueError(
@@ -505,7 +520,7 @@ def run_model_ranking_target_weight_mapping(
     candidate_dir = (base / str(portfolio.candidate_artifact_dir)).resolve()
     artifact = load_candidate_artifact(candidate_dir)
     feature_columns = tuple(artifact.features.get("feature_columns") or ())
-    beta_column = str(artifact.features.get("beta_column") or "beta_252_spy")
+    beta_column = DEFAULT_BETA_COLUMN
     request_columns = list(dict.fromkeys([*feature_columns, "close", beta_column]))
 
     latest_date = latest_available_trade_date(base)

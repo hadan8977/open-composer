@@ -1,13 +1,14 @@
 {
-  "feature_set_id": "daily_only",
-  "feature_columns": ["momentum_252_21"],
-  "label_horizon_days": 21,
-  "top_k": 50,
-  "hedge": "none",
-  "train_row_dates": "rule_based_no_training",
-  "beta_column": "beta_252_spy",
-  "execution": {
-    "rebalance": "weekly_friday_close_monday_open",
-    "order_style": "opg_limit"
-  }
+    "experiment_id": "step11_momentum_placeholder_v1",
+    "family": "b1_momentum_top50",
+    "model_kind": "rule_momentum_top_k",
+    "feature_set": "daily_only",
+    "feature_columns": ["momentum_252_21"],
+    "label_column": "label_rank_21",
+    "label_horizon_days": 21,
+    "top_k": 50,
+    "hedge": "none",
+    "train_row_dates": "rule_based_no_training",
+    "execution": "close_marked",
+    "refit_through_date": null
 }
