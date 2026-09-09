@@ -191,7 +191,3 @@ open question this report is still waiting on.
 ## 11. blocked_on_user
 
 None as of this writing.
-
-## 11. blocked_on_user
-
-None as of this writing.
