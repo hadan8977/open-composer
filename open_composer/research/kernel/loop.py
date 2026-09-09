@@ -260,6 +260,7 @@ def build_weight_schedule(
     beta_column: str = "beta_252_spy",
     extra_train_columns: Sequence[str] = (),
     train_row_dates: Literal["all", "rebalance_dates"] = "all",
+    trading_calendar: pd.DatetimeIndex | None = None,
 ) -> list[RebalanceEvent]:
     """Walk-forward weight schedule: retrain once per ``test_years`` entry on
     an anchored, embargoed window, then score every weekly rebalance date
@@ -295,7 +296,13 @@ def build_weight_schedule(
     is unresolved near a symbol's last trading day. Defaults to ``()``, so
     every existing caller (B0-B3's single-label strategies) is unaffected.
     """
-    trading_calendar = pd.DatetimeIndex(sorted(panel["trade_date"].unique()))
+    # ``trading_calendar`` may be supplied by the caller when ``panel`` holds
+    # only rebalance-day rows (the memory-lean loading path in
+    # ``open_composer.research.features.panel``): the embargo is counted in
+    # *trading days*, so it must come from the full daily calendar, not from
+    # whatever subset of dates happens to carry feature rows.
+    if trading_calendar is None:
+        trading_calendar = pd.DatetimeIndex(sorted(panel["trade_date"].unique()))
     # Every weekly rebalance day in the whole history, computed once; the
     # per-year embargoed cutoff below restricts it to the training window.
     # Same weekly grid the schedule itself trades on.
@@ -640,6 +647,7 @@ def run_experiment(
     write_tearsheet: bool = True,
     write_mlflow: bool = True,
     extra_train_columns: Sequence[str] = (),
+    price_panel: pd.DataFrame | None = None,
 ) -> ExperimentVerdict:
     """Run one candidate configuration end to end: walk-forward weight
     schedule -> long-only and market-neutral daily return streams (base and
@@ -654,7 +662,14 @@ def run_experiment(
     all three at once.
     """
     config_hash = config.config_hash()
-    price_wide = panel.pivot(index="trade_date", columns="symbol", values="close")
+    # ``price_panel`` (symbol, trade_date, close[, open] for EVERY trading
+    # day) lets ``panel`` carry feature rows for rebalance days only -- the
+    # wide daily+intraday panel is ~5x smaller that way and is what makes it
+    # fit on this box. Prices and the trading calendar then come from
+    # ``price_panel``; scoring/training rows come from ``panel``. When it is
+    # omitted, ``panel`` must hold every trading day, as before.
+    price_source = price_panel if price_panel is not None else panel
+    price_wide = price_source.pivot(index="trade_date", columns="symbol", values="close")
     # "open" is only present once daily_features.py's passthrough (Wave B
     # item 4, 2026-09-08) has been (re)built for the years panel covers --
     # older/partial panels without it can still run close_marked (the
@@ -662,10 +677,11 @@ def run_experiment(
     # used); asking for next_open without it fails fast inside
     # returns_from_weight_schedule rather than silently falling back.
     open_wide = (
-        panel.pivot(index="trade_date", columns="symbol", values="open")
-        if "open" in panel.columns
+        price_source.pivot(index="trade_date", columns="symbol", values="open")
+        if "open" in price_source.columns
         else None
     )
+    trading_calendar = pd.DatetimeIndex(sorted(price_source["trade_date"].unique()))
 
     schedule = build_weight_schedule(
         panel=panel,
@@ -679,6 +695,7 @@ def run_experiment(
         hedge=config.hedge,
         extra_train_columns=extra_train_columns,
         train_row_dates=config.train_row_dates,
+        trading_calendar=trading_calendar,
     )
 
     long_base = returns_from_weight_schedule(
