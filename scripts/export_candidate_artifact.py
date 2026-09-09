@@ -39,6 +39,7 @@ import joblib  # noqa: E402
 import pandas as pd  # noqa: E402
 import run_b3_grid as b3  # noqa: E402 -- flat scripts/ dir, no package __init__
 
+from open_composer.research.features.panel import load_feature_panel  # noqa: E402
 from open_composer.research.kernel import loop  # noqa: E402
 from open_composer.research.kernel.b3_grid_strategy import (  # noqa: E402
     DEFAULT_GRID,
@@ -355,7 +356,23 @@ def export_candidate_artifact(experiment_id: str, *, out_root: Path = CANDIDATES
     config = _build_config(experiment_id, record, entry)
 
     print(f"loading {config.feature_set} panel ...", flush=True)
-    panel = b3._load_panel(config.feature_set)
+    # dates=None -- every trading day, matching what the old (now-removed)
+    # b3._load_panel returned; _build_full_history_train_frame below still
+    # does its own train_row_dates filtering (rebalance-only vs. every day),
+    # so the loader here must not pre-filter to rebalance days itself (that
+    # would silently break every "all"-row candidate, i.e. every B0-B2
+    # export -- see run_b3_grid.py's 2026-09-09 memory-lean rewrite, which
+    # *can* pre-filter because its own caller only ever wants rebalance
+    # rows). include_prices=False: this refit path never touches open/close.
+    label_columns = list(dict.fromkeys([entry.label_column, *entry.extra_train_columns]))
+    panel = load_feature_panel(
+        list(entry.feature_columns),
+        label_columns,
+        dates=None,
+        include_prices=False,
+        daily_root=b3.DAILY_FEATURES_ROOT,
+        labels_root=b3.LABELS_ROOT,
+    )
 
     train_frame, refit_through_date = _build_full_history_train_frame(
         panel,

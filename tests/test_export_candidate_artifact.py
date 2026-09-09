@@ -1,15 +1,15 @@
 """Tests for scripts/export_candidate_artifact.py.
 
 Strategy: never touch the real 6M-row data/features/daily/*.parquet archive
-or the real ledger -- monkeypatch b3._load_panel (the panel loader this
-script reuses from run_b3_grid.py) to return a small synthetic panel, and
-point LEDGER_PATH at a tmp_path fixture ledger with a hand-written record
-matching the real ledger's schema (see loop.py::run_experiment's record
-dict). B1 (parameter-free momentum) is used for the full-pipeline test since
-its ``fit`` is a no-op -- this exercises every step of
-``export_candidate_artifact`` (registry lookup, ledger lookup, panel load,
-full-history train-frame construction, joblib dump, three metadata files)
-without paying for a real model fit.
+or the real ledger -- monkeypatch ``load_feature_panel`` (the memory-lean
+DuckDB-backed panel loader this script calls, 2026-09-09 rewrite) to return
+a small synthetic panel, and point LEDGER_PATH at a tmp_path fixture ledger
+with a hand-written record matching the real ledger's schema (see
+loop.py::run_experiment's record dict). B1 (parameter-free momentum) is
+used for the full-pipeline test since its ``fit`` is a no-op -- this
+exercises every step of ``export_candidate_artifact`` (registry lookup,
+ledger lookup, panel load, full-history train-frame construction, joblib
+dump, three metadata files) without paying for a real model fit.
 """
 
 from __future__ import annotations
@@ -98,7 +98,9 @@ def ledger_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 @pytest.fixture
 def patched_panel_loader(monkeypatch: pytest.MonkeyPatch) -> pd.DataFrame:
     panel = _synthetic_panel()
-    monkeypatch.setattr(eca.b3, "_load_panel", lambda feature_set: panel)  # noqa: ARG005
+    monkeypatch.setattr(
+        eca, "load_feature_panel", lambda feature_columns, label_columns, **kwargs: panel
+    )  # noqa: ARG005
     return panel
 
 
