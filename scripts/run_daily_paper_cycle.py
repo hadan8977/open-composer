@@ -60,6 +60,18 @@ def main(argv: list[str] | None = None) -> int:
     root = args.root.resolve()
     load_dotenv(root / ".env", override=False)
     cycle_date = date.fromisoformat(args.date) if args.date else datetime.now(UTC).date()
+    if _is_model_ranking_portfolio_spec(root, args.spec):
+        if args.dry_run:
+            for step in _model_ranking_step_commands(["uv", "run", "oc"], args.spec):
+                print(" ".join(step))
+            return 0
+        result = run_model_ranking_observation_cycle(
+            root=root,
+            spec=args.spec,
+            cycle_date=cycle_date,
+            oc_cmd=args.oc_cmd.split(),
+        )
+        return 0 if result["status"] in {"ok", "skipped"} else 1
     if args.dry_run:
         for step in planned_commands(args.strategy, args.spec, root=root):
             print(" ".join(step))
@@ -72,6 +84,169 @@ def main(argv: list[str] | None = None) -> int:
         oc_cmd=args.oc_cmd.split(),
     )
     return 0 if result["status"] in {"ok", "skipped"} else 1
+
+
+def _is_model_ranking_portfolio_spec(root: Path, spec_ref: str) -> bool:
+    """Whether ``spec_ref`` is a ``model_ranking_portfolio`` StrategySpec --
+    the sole switch between the classic 4-step router/single-symbol daily
+    cycle (``run_daily_cycle``, unchanged) and this mode's reduced,
+    observation-only cycle (``run_model_ranking_observation_cycle``, Step 11
+    Wave C item 5). Never raises: a missing/unparseable spec falls through
+    to the classic path unchanged, which will raise its own clear error the
+    same way it always has for a bad ``--spec``.
+    """
+    path = Path(spec_ref)
+    if not path.is_absolute():
+        path = root / path
+    if not path.is_file():
+        return False
+    try:
+        return load_strategy_spec(path).portfolio.mode == "model_ranking_portfolio"
+    except Exception:
+        return False
+
+
+def _model_ranking_step_commands(oc_cmd: list[str], spec: str) -> list[list[str]]:
+    return [
+        [*oc_cmd, "paper", "sync-account"],
+        [*oc_cmd, "strategy", "target-weights", spec],
+    ]
+
+
+def run_model_ranking_observation_cycle(
+    *,
+    root: Path,
+    spec: str,
+    cycle_date: date,
+    oc_cmd: list[str] | None = None,
+    command_runner=subprocess.run,
+) -> dict[str, Any]:
+    """Step 11 Wave C item 5: the daily observation-mode cycle for
+    ``portfolio.mode=model_ranking_portfolio`` -- account-equity refresh plus
+    target weights (which itself writes the per-strategy signal log; see
+    ``open_composer.adapters.execution.model_ranking_target_weights``).
+    Deliberately **not** a branch inside ``run_daily_cycle``: that function's
+    remaining two steps (``paper_cycle`` = ``oc run paper``, and the
+    route-state-drift machinery keyed on ``infer_route_state``'s small
+    named-route vocabulary) assume a router/single-symbol strategy that
+    ``open_composer/runner/paper.py`` (research/runner-owned, not touched by
+    this Wave) knows how to dispatch; a cross-sectional top-K book has no
+    such dispatch path yet. Keeping this as new, separate code rather than
+    editing ``run_daily_cycle`` means zero risk to any other strategy's
+    daily cycle. This function refuses to run against anything but a
+    draft/manual_signal/broker=none spec, so it can never be pointed at an
+    order-capable strategy by mistake.
+    """
+    started_at = datetime.now(UTC).isoformat()
+    load_dotenv(root / ".env", override=False)
+    spec_path = Path(spec)
+    if not spec_path.is_absolute():
+        spec_path = root / spec_path
+    strategy_spec = load_strategy_spec(spec_path)
+    if strategy_spec.portfolio.mode != "model_ranking_portfolio":
+        raise ValueError(
+            "run_model_ranking_observation_cycle requires portfolio.mode="
+            f"model_ranking_portfolio, got {strategy_spec.portfolio.mode!r}"
+        )
+    if strategy_spec.execution.mode != "manual_signal" or strategy_spec.execution.broker != "none":
+        raise ValueError(
+            "model_ranking_portfolio observation cycle requires execution.mode=manual_signal "
+            "and execution.broker=none -- this cycle never submits broker orders"
+        )
+    if strategy_spec.lifecycle != "draft":
+        raise ValueError(
+            "model_ranking_portfolio observation cycle refuses a non-draft lifecycle "
+            f"({strategy_spec.lifecycle!r}); Step 11 Wave C never activates a strategy"
+        )
+    log_path = (
+        root
+        / "reports"
+        / "paper"
+        / "daily_cycle"
+        / f"{strategy_spec.name}-observation-{cycle_date:%Y%m%d}.json"
+    )
+    ensure_dir(log_path.parent)
+    if not is_trading_day(cycle_date):
+        payload = {
+            "report_type": "daily_paper_cycle_observation_only",
+            "date": cycle_date.isoformat(),
+            "started_at": started_at,
+            "ended_at": datetime.now(UTC).isoformat(),
+            "strategy": strategy_spec.name,
+            "status": "skipped",
+            "skip_reason": "non_trading_day_weekend",
+            "steps": [],
+            "paper_order_authorization": False,
+            "broker_writes": False,
+        }
+        _write_json(log_path, payload)
+        return payload
+
+    selected_oc_cmd = oc_cmd or ["uv", "run", "oc"]
+    steps: list[CycleStep] = []
+    for name, command in (
+        ("account_sync", [*selected_oc_cmd, "paper", "sync-account"]),
+        ("target_weights", [*selected_oc_cmd, "strategy", "target-weights", str(spec_path)]),
+    ):
+        step = _run_step(name, command, root, command_runner)
+        steps.append(step)
+        if step.exit_code != 0:
+            payload = {
+                "report_type": "daily_paper_cycle_observation_only",
+                "date": cycle_date.isoformat(),
+                "started_at": started_at,
+                "ended_at": datetime.now(UTC).isoformat(),
+                "strategy": strategy_spec.name,
+                "status": "failed",
+                "failed_step": name,
+                "steps": [asdict(item) for item in steps],
+                "paper_order_authorization": False,
+                "broker_writes": False,
+            }
+            _write_json(log_path, payload)
+            return payload
+
+    target_weights_path = (
+        root / "reports" / "execution" / f"{strategy_spec.name}-target-weights.json"
+    )
+    target_weights_summary: dict[str, Any] = {}
+    if target_weights_path.is_file():
+        try:
+            target_payload = json.loads(target_weights_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            target_payload = {}
+        summary = target_payload.get("summary") or {}
+        target_weights_summary = {
+            "is_new_signal": summary.get("is_new_signal"),
+            "nonzero_target_rows": summary.get("nonzero_target_rows"),
+            "top_k": summary.get("top_k"),
+            "hedge": summary.get("hedge"),
+            "idle_cash": summary.get("idle_cash"),
+            "idle_cash_fraction": summary.get("idle_cash_fraction"),
+            "weight_deviation": summary.get("weight_deviation"),
+            "unaffordable": summary.get("unaffordable"),
+            "candidate_is_placeholder": summary.get("candidate_is_placeholder"),
+            "account_equity": summary.get("account_equity"),
+        }
+    payload = {
+        "report_type": "daily_paper_cycle_observation_only",
+        "date": cycle_date.isoformat(),
+        "started_at": started_at,
+        "ended_at": datetime.now(UTC).isoformat(),
+        "strategy": strategy_spec.name,
+        "status": "ok",
+        "steps": [asdict(item) for item in steps],
+        "artifact_paths": {"log": str(log_path), "target_weights": str(target_weights_path)},
+        "target_weights_summary": target_weights_summary,
+        "paper_order_authorization": False,
+        "broker_writes": False,
+        "safety_note": (
+            "Observation-only cycle: refreshes account equity and computes target weights "
+            "plus the signal log. Never calls `oc run paper` and never submits broker orders."
+        ),
+    }
+    _write_json(log_path, payload)
+    return payload
 
 
 def run_daily_cycle(
