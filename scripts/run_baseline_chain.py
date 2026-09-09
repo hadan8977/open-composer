@@ -25,6 +25,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import gc
 import json
 import multiprocessing
@@ -217,6 +218,19 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help="experiment_id to run (repeatable); default runs all three",
     )
+    parser.add_argument(
+        "--execution",
+        choices=["close_marked", "next_open"],
+        default="close_marked",
+        help=(
+            "loop.py's ExperimentConfig.execution (Wave B item 4), mirroring "
+            "run_b3_grid.py's flag of the same name. Default close_marked matches "
+            "every already-recorded B0-B2 result. Use --execution next_open with "
+            "--only <one experiment_id> to get the second, next-bar-open reading "
+            "the Wave B report needs for whichever candidate turns out to be the "
+            "chain's best -- not to rerun the whole chain twice."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -380,6 +394,23 @@ def main() -> int:
         missing = wanted - {config.experiment_id for config, _ in configs}
         if missing:
             raise SystemExit(f"--only requested unknown experiment_id(s): {sorted(missing)}")
+
+    if args.execution == "next_open":
+        # Distinct experiment_id (not just a distinct config_hash, though
+        # execution does enter the hash too -- see loop.py) so the ledger's
+        # two rows for "the same" candidate are distinguishable by id alone,
+        # and so this can never collide with (or get deduped against) the
+        # close_marked run of the same candidate. See run_b3_grid.py's
+        # identical --execution flag for the mirrored rationale.
+        configs = [
+            (
+                dataclasses.replace(
+                    config, experiment_id=f"{config.experiment_id}_next_open", execution="next_open"
+                ),
+                factory,
+            )
+            for config, factory in configs
+        ]
 
     # Load only the panel(s) the selected configs actually need -- running
     # --only against a single daily_only experiment must not also pay for a
