@@ -450,3 +450,23 @@ blocked_on_user：无。
 ### blocked_on_user
 
 无。
+
+### 追加:重跑期间发现的新变量——跨 executor 的内存争用
+
+`systemd-cgtop` 显示 `research-capped.slice` 里**同时**有两个 scope 在跑:我的
+`daily_plus_intraday` 网格(约 1.2G)和另一个 executor 的 pytest 子集运行(约
+713M,`pytest ... tests/test_dashboard_server.py tests/test_high_beta_sleeve_ensemble_r1.py ...`,
+看进程树应该是"Step 11 Wave C 报单接入"那条后台 agent 在跑它自己的验证测
+试)。再加上 `ps aux` 里同时挂着的五个 `claude` 编排进程(各 80-320MB 不等,
+合计约 680MB)、hermes gateway(~200MB)等常驻开销,这台机器同一时刻的真实负
+载远不止"我的一个作业"。`run_capped.sh` 的 cgroup 上限只保护**单个作业不
+拖垮编排会话**,并不阻止**多个独立作业各自守规矩但加总超过物理内存**——这
+和之前两次 daily_only 失败(单作业本身超限)是不同性质的问题。
+
+**处理方式**:不因为这个新发现就立刻杀掉当前作业重来——杀了大概率会在几分
+钟内撞上同样的跨作业争用。让已经挂起的后台等待循环(`bpzpj758z`)继续盯着,
+如果这次仍然被 memcg 杀掉或者卡到不合理的时长,再综合考虑"等其他 executor
+的作业先跑完"或者"把 `_load_panel` 改成 DuckDB 落盘式加载(这台机器上
+`labels.py`/`daily_features.py` 已经验证过 DuckDB 在 1.2-1.5GB 限制下能处理
+类似规模的数据,是比 pandas 列表拼接更省峰值内存的现成方案)"。如实记录,
+不臆断,不重复上一次"没验证就杀"的判断失误。
