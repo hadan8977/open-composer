@@ -61,7 +61,7 @@ class LightGBMRankStrategy:
         self.max_depth = max_depth
         self._model: LGBMRegressor | None = None
 
-    def fit(self, train_frame: pd.DataFrame) -> None:
+    def fit(self, train_frame: pd.DataFrame, sample_weight: pd.Series | None = None) -> None:
         # float32 for the same reason as RidgeRankStrategy.fit: the default
         # upcast to float64 doubles a multi-GB training matrix on a 3.9GB
         # box. LightGBM bins features internally, so float32 input costs no
@@ -73,7 +73,11 @@ class LightGBMRankStrategy:
             num_leaves=2**self.max_depth - 1,
             **FIXED_HYPERPARAMETERS,
         )
-        model.fit(x, y)
+        # Step 13 Track M's recency_halflife_days: omitting sample_weight
+        # (every pre-Step-13 caller) is LightGBM's own default of uniform
+        # weight, so this is unchanged for every existing experiment.
+        w = sample_weight.to_numpy(dtype=np.float32) if sample_weight is not None else None
+        model.fit(x, y, sample_weight=w)
         self._model = model
 
     def score(self, asof_frame: pd.DataFrame) -> pd.Series:

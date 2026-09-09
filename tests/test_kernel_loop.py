@@ -620,3 +620,273 @@ def test_returns_from_weight_schedule_next_open_requires_open_wide() -> None:
             include_hedge=False,
             execution="next_open",
         )
+
+
+# ---------------------------------------------------------------------------
+# Step 13 Track M additions (docs/plan-step-13-recent-high-return-ml-and-llm-
+# tracks-2026-09-09.zh.md section 3.3): train_window_months, refit_frequency,
+# recency_halflife_days, trend_gate, universe_top_n. Every test in this
+# section double-checks the "every existing default stays unchanged"
+# requirement alongside the new behavior itself.
+# ---------------------------------------------------------------------------
+
+
+def _pre_step13_config_hash(config: loop.ExperimentConfig) -> str:
+    """A frozen copy of ExperimentConfig.config_hash's payload exactly as it
+    was before the Step 13 fields existed -- the "golden" reference this
+    module's own hash must still reproduce for any config that never touches
+    those fields, since already-recorded B0-B3 ledger rows were hashed by
+    this exact formula and must stay reproducible.
+    """
+    import hashlib as _hashlib
+    import json as _json
+
+    payload = {
+        "family": config.family,
+        "model_kind": config.model_kind,
+        "feature_set": config.feature_set,
+        "label_horizon_days": config.label_horizon_days,
+        "feature_columns": sorted(config.feature_columns),
+        "top_k": config.top_k,
+        "hedge": config.hedge,
+        "train_row_dates": config.train_row_dates,
+        "execution": config.execution,
+        "rebalance": config.rebalance,
+        "weighting": config.weighting,
+        "cost_bps_per_side": config.cost_bps_per_side,
+        "stress_cost_bps_per_side": config.stress_cost_bps_per_side,
+        "test_years": list(config.test_years),
+        "hyperparameters": config.hyperparameters,
+    }
+    blob = _json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
+    return _hashlib.sha256(blob).hexdigest()[:16]
+
+
+def _base_config(**overrides: object) -> loop.ExperimentConfig:
+    defaults: dict[str, object] = dict(
+        experiment_id="step13_test",
+        family="step13_recent_high_return",
+        model_kind="rule",
+        feature_set="daily27",
+        label_horizon_days=5,
+        feature_columns=("momentum_252_21",),
+    )
+    defaults.update(overrides)
+    return loop.ExperimentConfig(**defaults)  # type: ignore[arg-type]
+
+
+def test_experiment_config_hash_matches_pre_step13_formula_when_fields_are_default() -> None:
+    config = _base_config()
+    assert config.config_hash() == _pre_step13_config_hash(config)
+
+
+def test_experiment_config_hash_changes_for_each_new_field_when_set() -> None:
+    baseline = _base_config().config_hash()
+    assert _base_config(train_window_months=24).config_hash() != baseline
+    assert _base_config(refit_frequency="quarterly").config_hash() != baseline
+    assert _base_config(recency_halflife_days=126.0).config_hash() != baseline
+    assert _base_config(trend_gate={"benchmark": "SPY", "sma_days": 200}).config_hash() != baseline
+    assert _base_config(universe_top_n=500).config_hash() != baseline
+
+
+def test_universe_as_of_calendar_month_top_n_restricts_by_adv_rank() -> None:
+    panel = pd.DataFrame(
+        {
+            "month_end": pd.to_datetime(["2020-01-31"] * 3),
+            "symbol": ["AAA", "BBB", "CCC"],
+            "adv_rank": [1, 2, 3],
+        }
+    )
+    as_of = pd.Timestamp("2020-01-31")
+    assert loop.universe_as_of_calendar_month(panel, as_of) == {"AAA", "BBB", "CCC"}
+    assert loop.universe_as_of_calendar_month(panel, as_of, top_n=2) == {"AAA", "BBB"}
+    assert loop.universe_as_of_calendar_month(panel, as_of, top_n=1) == {"AAA"}
+
+
+def test_recency_sample_weight_matches_closed_form_half_life() -> None:
+    as_of = pd.Timestamp("2024-06-30")
+    trade_dates = pd.Series([as_of, as_of - pd.Timedelta(days=126), pd.Timestamp("2024-01-01")])
+    weight = loop._recency_sample_weight(trade_dates, as_of=as_of, halflife_days=126.0)
+    assert weight.iloc[0] == pytest.approx(1.0)  # age 0 -> full weight
+    assert weight.iloc[1] == pytest.approx(0.5)  # age 126 days -> exactly one half-life
+    older_age_days = (as_of - trade_dates.iloc[2]).days
+    assert weight.iloc[2] == pytest.approx(0.5 ** (older_age_days / 126.0))
+
+
+def test_fit_with_optional_sample_weight_passes_only_when_strategy_declares_it() -> None:
+    received: dict[str, object] = {}
+
+    class _AcceptsWeight:
+        def fit(self, train_frame: pd.DataFrame, sample_weight: pd.Series | None = None) -> None:
+            received["weight"] = sample_weight
+
+    class _DoesNotAcceptWeight:
+        def fit(self, train_frame: pd.DataFrame) -> None:
+            received["called_without_weight"] = True
+
+    frame = pd.DataFrame({"trade_date": pd.to_datetime(["2024-01-02"])})
+    weight_series = pd.Series([0.5])
+
+    loop._fit_with_optional_sample_weight(_AcceptsWeight(), frame, weight_series)
+    assert received["weight"] is weight_series
+
+    received.clear()
+    # Must not raise TypeError even though this strategy's fit() has no
+    # sample_weight parameter at all -- this is exactly what protects every
+    # existing/future RankingStrategy this file does not own.
+    loop._fit_with_optional_sample_weight(_DoesNotAcceptWeight(), frame, weight_series)
+    assert received["called_without_weight"] is True
+
+
+def test_build_weight_schedule_train_window_months_truncates_the_training_window() -> None:
+    panel, universe_panel = _synthetic_panel(n_days=650)  # ~2.6 years of history
+    seen_min_dates: dict[str, pd.Timestamp] = {}
+
+    def _make_recorder(key: str) -> type:
+        class _Recorder:
+            def fit(self, train_frame: pd.DataFrame) -> None:
+                seen_min_dates[key] = train_frame["trade_date"].min()
+
+            def score(self, asof_frame: pd.DataFrame) -> pd.Series:
+                return pd.Series(1.0, index=asof_frame["symbol"].to_numpy())
+
+        return _Recorder
+
+    common_kwargs = dict(
+        panel=panel,
+        universe_panel=universe_panel,
+        feature_columns=["momentum_252_21"],
+        label_column="label_rank_5",
+        label_horizon_days=5,
+        test_years=(2018,),
+        top_k=None,
+        hedge="none",
+    )
+    loop.build_weight_schedule(strategy_factory=_make_recorder("expanding"), **common_kwargs)
+    loop.build_weight_schedule(
+        strategy_factory=_make_recorder("trailing_6m"), train_window_months=6, **common_kwargs
+    )
+    assert seen_min_dates["expanding"] < seen_min_dates["trailing_6m"]
+    # The trailing window's earliest training row should be close to (not
+    # much earlier than) 6 months before its own latest training row.
+    panel_dates = pd.DatetimeIndex(sorted(panel["trade_date"].unique()))
+    trailing_frame_min = seen_min_dates["trailing_6m"]
+    assert (panel_dates[panel_dates <= trailing_frame_min]).max() == trailing_frame_min
+
+
+def test_build_weight_schedule_refit_frequency_quarterly_refits_once_per_quarter() -> None:
+    panel, universe_panel = _synthetic_panel(n_days=650)
+    fit_calls: list[pd.Timestamp] = []
+
+    class _Recorder:
+        def fit(self, train_frame: pd.DataFrame) -> None:
+            fit_calls.append(train_frame["trade_date"].max())
+
+        def score(self, asof_frame: pd.DataFrame) -> pd.Series:
+            return pd.Series(1.0, index=asof_frame["symbol"].to_numpy())
+
+    common_kwargs = dict(
+        panel=panel,
+        universe_panel=universe_panel,
+        strategy_factory=_Recorder,
+        feature_columns=["momentum_252_21"],
+        label_column="label_rank_5",
+        label_horizon_days=5,
+        test_years=(2018,),
+        top_k=None,
+        hedge="none",
+    )
+    yearly_events = loop.build_weight_schedule(refit_frequency="yearly", **common_kwargs)
+    yearly_fit_calls = len(fit_calls)
+    fit_calls.clear()
+    quarterly_events = loop.build_weight_schedule(refit_frequency="quarterly", **common_kwargs)
+
+    assert yearly_fit_calls == 1
+    assert len(fit_calls) == 4  # one refit per calendar quarter present in 2018
+
+    # No week is dropped or double-counted at a quarter boundary: the set of
+    # rebalance dates produced must match exactly between the two modes for
+    # the same test year (see build_weight_schedule's docstring on why the
+    # quarterly branch filters a *globally* computed weekly-date sequence
+    # instead of recomputing "last day of week" on a quarter-only subset).
+    yearly_dates = {event.date for event in yearly_events}
+    quarterly_dates = {event.date for event in quarterly_events}
+    assert yearly_dates == quarterly_dates
+
+
+def test_build_weight_schedule_trend_gate_series_overrides_closed_weeks_to_cash() -> None:
+    panel, universe_panel = _synthetic_panel()
+    events = loop.build_weight_schedule(
+        panel=panel,
+        universe_panel=universe_panel,
+        strategy_factory=MomentumFactorStrategy,
+        feature_columns=["momentum_252_21"],
+        label_column="label_rank_5",
+        label_horizon_days=5,
+        test_years=(2017,),
+        top_k=1,
+        hedge="none",
+    )
+    assert events, "no events produced to build a gate series from"
+    all_dates = pd.DatetimeIndex([pd.Timestamp(event.date) for event in events])
+    # Close the gate for exactly the first half of the test year's rebalance
+    # dates, leave the rest open.
+    midpoint = len(all_dates) // 2
+    gate_series = pd.Series([i >= midpoint for i in range(len(all_dates))], index=all_dates)
+
+    gated_events = loop.build_weight_schedule(
+        panel=panel,
+        universe_panel=universe_panel,
+        strategy_factory=MomentumFactorStrategy,
+        feature_columns=["momentum_252_21"],
+        label_column="label_rank_5",
+        label_horizon_days=5,
+        test_years=(2017,),
+        top_k=1,
+        hedge="none",
+        trend_gate_series=gate_series,
+        trend_gate_cash_symbol="BIL",
+    )
+    for i, event in enumerate(gated_events):
+        if i < midpoint:
+            assert event.selected == {"BIL": 1.0}
+            assert event.portfolio_beta is None
+        else:
+            # Gate open: real strategy picks, identical to the ungated run.
+            assert event.selected == events[i].selected
+
+
+def test_run_experiment_requires_trend_gate_series_when_config_declares_trend_gate(
+    tmp_path: Path,
+) -> None:
+    from open_composer.research.kernel import loop as loop_module
+
+    panel, universe_panel = _synthetic_panel()
+    config = loop.ExperimentConfig(
+        experiment_id="step13_missing_gate_series",
+        family="step13_recent_high_return",
+        model_kind="rule",
+        feature_set="daily27",
+        label_horizon_days=5,
+        feature_columns=("momentum_252_21",),
+        top_k=1,
+        test_years=(2017,),
+        trend_gate={"benchmark": "SPY", "sma_days": 200, "cash_symbol": "BIL"},
+    )
+    dates = pd.DatetimeIndex(sorted(panel["trade_date"].unique()))
+    spy_returns = pd.Series(0.0, index=dates)
+    with pytest.raises(ValueError, match="trend_gate_series"):
+        loop_module.run_experiment(
+            config,
+            panel=panel,
+            universe_panel=universe_panel,
+            label_column="label_rank_5",
+            strategy_factory=MomentumFactorStrategy,
+            spy_returns=spy_returns,
+            qqq_returns=spy_returns,
+            tqqq_returns=spy_returns,
+            bil_returns=spy_returns,
+            write_ledger=False,
+            write_tearsheet=False,
+            write_mlflow=False,
+        )

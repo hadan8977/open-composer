@@ -21,7 +21,9 @@ class EqualWeightUniverseStrategy:
     symbol ties and ``top_k=None`` (the caller's job) keeps them all.
     """
 
-    def fit(self, train_frame: pd.DataFrame) -> None:  # noqa: ARG002 -- interface no-op
+    def fit(  # noqa: ARG002 -- interface no-op
+        self, train_frame: pd.DataFrame, sample_weight: pd.Series | None = None
+    ) -> None:
         return None
 
     def score(self, asof_frame: pd.DataFrame) -> pd.Series:
@@ -38,7 +40,9 @@ class MomentumFactorStrategy:
     def __init__(self, factor_column: str = "momentum_252_21") -> None:
         self.factor_column = factor_column
 
-    def fit(self, train_frame: pd.DataFrame) -> None:  # noqa: ARG002
+    def fit(  # noqa: ARG002
+        self, train_frame: pd.DataFrame, sample_weight: pd.Series | None = None
+    ) -> None:
         return None
 
     def score(self, asof_frame: pd.DataFrame) -> pd.Series:
@@ -83,41 +87,53 @@ class RidgeRankStrategy:
         self._coef: np.ndarray | None = None
         self._intercept: float | None = None
 
-    def _chunks(self, frame: pd.DataFrame):
+    def _chunks(self, frame: pd.DataFrame, sample_weight: pd.Series | None = None):
         for start in range(0, len(frame), self.chunk_rows):
             block = frame.iloc[start : start + self.chunk_rows]
             x = block[self.feature_columns].to_numpy(dtype=np.float64)
             y = block[self.label_column].to_numpy(dtype=np.float64)
-            yield x, y
+            # Step 13 Track M: an all-ones weight chunk when no
+            # sample_weight was given makes every formula below identical,
+            # element for element, to the original unweighted computation
+            # (multiplying by 1.0 changes nothing) -- so omitting
+            # sample_weight (every pre-Step-13 caller) reproduces the exact
+            # same fit as before this method learned about weights at all.
+            w = (
+                np.ones(len(block), dtype=np.float64)
+                if sample_weight is None
+                else sample_weight.iloc[start : start + self.chunk_rows].to_numpy(dtype=np.float64)
+            )
+            yield x, y, w
 
-    def fit(self, train_frame: pd.DataFrame) -> None:
+    def fit(self, train_frame: pd.DataFrame, sample_weight: pd.Series | None = None) -> None:
         n_features = len(self.feature_columns)
-        count = 0
+        total_weight = 0.0
         sum_x = np.zeros(n_features)
         sum_x2 = np.zeros(n_features)
         sum_y = 0.0
-        for x, y in self._chunks(train_frame):
-            count += x.shape[0]
-            sum_x += x.sum(axis=0)
-            sum_x2 += np.einsum("ij,ij->j", x, x)
-            sum_y += float(y.sum())
-        if count == 0:
+        for x, y, w in self._chunks(train_frame, sample_weight):
+            total_weight += float(w.sum())
+            sum_x += x.T @ w
+            sum_x2 += np.einsum("ij,ij,i->j", x, x, w)
+            sum_y += float(y @ w)
+        if total_weight <= 0:
             raise ValueError("RidgeRankStrategy.fit received an empty training frame")
-        mean = sum_x / count
-        # Population variance (ddof=0), matching StandardScaler; a constant
-        # feature gets scale 1.0 so it standardizes to 0 instead of dividing
-        # by zero -- also StandardScaler's behavior.
-        variance = np.maximum(sum_x2 / count - mean**2, 0.0)
+        mean = sum_x / total_weight
+        # Weighted population variance (ddof=0), matching StandardScaler
+        # when every weight is 1; a constant feature gets scale 1.0 so it
+        # standardizes to 0 instead of dividing by zero -- also
+        # StandardScaler's behavior.
+        variance = np.maximum(sum_x2 / total_weight - mean**2, 0.0)
         scale = np.sqrt(variance)
         scale[scale == 0.0] = 1.0
-        y_mean = sum_y / count
+        y_mean = sum_y / total_weight
 
         gram = np.zeros((n_features, n_features))
         rhs = np.zeros(n_features)
-        for x, y in self._chunks(train_frame):
+        for x, y, w in self._chunks(train_frame, sample_weight):
             z = (x - mean) / scale
-            gram += z.T @ z
-            rhs += z.T @ (y - y_mean)
+            gram += (z * w[:, None]).T @ z
+            rhs += z.T @ (w * (y - y_mean))
         coef = np.linalg.solve(gram + self.alpha * np.eye(n_features), rhs)
 
         self._mean = mean

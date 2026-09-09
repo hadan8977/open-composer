@@ -62,6 +62,7 @@ cohort is a next-iteration item.
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -151,6 +152,38 @@ class ExperimentConfig:
     test_years: tuple[int, ...] = DEFAULT_TEST_YEARS
     hyperparameters: dict[str, Any] = field(default_factory=dict)
     notes: str = ""
+    #: Step 13 Track M (docs/plan-step-13-recent-high-return-ml-and-llm-
+    #: tracks-2026-09-09.zh.md section 3.3). ``None`` (default) keeps the
+    #: original anchored/expanding training window every B0-B3 experiment
+    #: used -- unchanged. A number restricts each refit's training window to
+    #: the trailing ``train_window_months`` calendar months ending at that
+    #: refit's embargoed cutoff (the plan's "24 个月滚动窗").
+    train_window_months: int | None = None
+    #: ``"yearly"`` (default, unchanged) refits once per ``test_years`` entry,
+    #: exactly the original cadence. ``"quarterly"`` (Track M's "按季重训")
+    #: refits once per calendar quarter within each test year instead.
+    refit_frequency: Literal["yearly", "quarterly"] = "yearly"
+    #: ``None`` (default) fits with uniform sample weight, unchanged. A
+    #: number applies exponential-decay recency weights
+    #: ``0.5 ** (age_days / recency_halflife_days)`` to training rows, passed
+    #: to ``strategy.fit(train_frame, sample_weight=...)`` when the strategy
+    #: accepts that keyword (see ``_fit_with_optional_sample_weight``) --
+    #: strategies that do not accept it are unaffected, never silently wrong.
+    recency_halflife_days: float | None = None
+    #: ``None`` (default, unchanged) never overrides the schedule. A dict
+    #: shaped ``{"benchmark": "SPY", "sma_days": 200, "cash_symbol": "BIL"}``
+    #: is metadata only -- *which* dates count as "gate closed" is supplied
+    #: separately by the caller as a boolean ``trend_gate_series`` (``loop.py``
+    #: does not itself decide what "trend" means for any particular
+    #: benchmark/window choice; see ``run_experiment``'s ``trend_gate_series``
+    #: parameter). When the gate is closed for a rebalance date, that date's
+    #: weights become ``{cash_symbol: 1.0}`` regardless of what the strategy
+    #: scored (plan: "门关闭的周把全部权重给 BIL...以真实符号出现").
+    trend_gate: dict[str, Any] | None = None
+    #: ``None`` (default, unchanged) uses the full PIT universe cohort. A
+    #: number restricts the cohort to ``adv_rank <= universe_top_n`` within
+    #: that cohort (plan's top-1500/top-500 variants).
+    universe_top_n: int | None = None
 
     def config_hash(self) -> str:
         payload = {
@@ -170,6 +203,23 @@ class ExperimentConfig:
             "test_years": list(self.test_years),
             "hyperparameters": self.hyperparameters,
         }
+        # Step 13 Track M additions: entered into the hash payload only when
+        # set to a non-default ("active") value, so every pre-Step-13
+        # ExperimentConfig -- which never touches these fields -- continues
+        # to hash exactly as it did before this change landed (required so
+        # the already-recorded B0-B3 ledger's config_hash values stay
+        # reproducible; see docs/plan-step-13-recent-high-return-ml-and-llm-
+        # tracks-2026-09-09.zh.md section 3.3).
+        if self.train_window_months is not None:
+            payload["train_window_months"] = self.train_window_months
+        if self.refit_frequency != "yearly":
+            payload["refit_frequency"] = self.refit_frequency
+        if self.recency_halflife_days is not None:
+            payload["recency_halflife_days"] = self.recency_halflife_days
+        if self.trend_gate is not None:
+            payload["trend_gate"] = self.trend_gate
+        if self.universe_top_n is not None:
+            payload["universe_top_n"] = self.universe_top_n
         blob = json.dumps(payload, sort_keys=True, default=str).encode("utf-8")
         return hashlib.sha256(blob).hexdigest()[:16]
 
@@ -219,23 +269,45 @@ def weekly_rebalance_dates(trading_dates: Sequence[pd.Timestamp]) -> list[pd.Tim
     return sorted(last_per_week.tolist())
 
 
-def universe_as_of_calendar_month(universe_panel: pd.DataFrame, date: pd.Timestamp) -> set[str]:
+def universe_as_of_calendar_month(
+    universe_panel: pd.DataFrame, date: pd.Timestamp, *, top_n: int | None = None
+) -> set[str]:
     """The PIT universe cohort in effect on ``date``: the most recent
     calendar-month cohort whose ``month_end`` is ``<= date`` (see
     ``universe.py``'s ``UNIVERSE_PANEL_COLUMNS`` docstring for why this must
     group by calendar month, not the exact ``month_end`` value).
+
+    ``top_n`` (Step 13 Track M, plan section 3.1's top-500 variant):
+    additionally restricts the cohort to rows with ``adv_rank <= top_n``,
+    still decided from that same PIT cohort (never a different month's
+    ranking) -- omitted (default) returns every symbol in the cohort,
+    unchanged from every pre-Step-13 caller. Requires an ``adv_rank`` column
+    (``universe.py``'s ``UNIVERSE_PANEL_COLUMNS`` always has one); raises
+    ``KeyError`` if asked for on a panel that lacks it, rather than silently
+    returning the unrestricted cohort.
     """
     eligible = universe_panel.loc[universe_panel["month_end"] <= date]
     if eligible.empty:
         return set()
     latest_month = eligible["month_end"].dt.to_period("M").max()
     cohort = eligible.loc[eligible["month_end"].dt.to_period("M") == latest_month]
+    if top_n is not None:
+        cohort = cohort.loc[cohort["adv_rank"] <= top_n]
     return set(cohort["symbol"])
 
 
-def _embargo_cutoff(
+def embargo_cutoff(
     trading_calendar: pd.DatetimeIndex, first_test_date: pd.Timestamp, embargo_days: int
 ) -> pd.Timestamp:
+    """The last trading date a training window may include so that it stays
+    ``embargo_days`` trading days clear of ``first_test_date`` -- shared by
+    the outer walk-forward fit/test split (``build_weight_schedule``) and,
+    since Step 13 Track M, by ``regime.validated_grid_strategy``'s inner
+    fit/validation split within one already-anchored training window (same
+    embargo semantics, just applied to a different boundary date). Public
+    (renamed from ``_embargo_cutoff`` 2026-09-09) for that second, cross-
+    module reuse; behavior is unchanged.
+    """
     position = trading_calendar.searchsorted(first_test_date, side="left")
     cutoff_position = position - embargo_days
     if cutoff_position < 1:
@@ -244,6 +316,42 @@ def _embargo_cutoff(
             f"{embargo_days} day(s)"
         )
     return trading_calendar[cutoff_position - 1]
+
+
+def _fit_with_optional_sample_weight(
+    strategy: RankingStrategy, train_frame: pd.DataFrame, sample_weight: pd.Series | None
+) -> None:
+    """Call ``strategy.fit(train_frame)``, additionally passing
+    ``sample_weight=`` only when both (a) one was actually computed (Step 13
+    Track M's ``recency_halflife_days``) and (b) ``strategy.fit`` declares a
+    ``sample_weight`` parameter at all.
+
+    Feature-detected via ``inspect.signature`` rather than always passing it
+    -- this is the mechanism that lets ``build_weight_schedule`` grow
+    sample-weight support without editing (or breaking) every existing and
+    future ``RankingStrategy`` implementation, including ones this file does
+    not own (e.g. ``scripts/run_b3_grid.py``'s ``GridSelectedLightGBMStrategy``):
+    a strategy that has not been taught about ``sample_weight`` simply never
+    receives it and behaves exactly as before.
+    """
+    if sample_weight is not None and "sample_weight" in inspect.signature(strategy.fit).parameters:
+        strategy.fit(train_frame, sample_weight=sample_weight)
+    else:
+        strategy.fit(train_frame)
+
+
+def _recency_sample_weight(
+    trade_dates: pd.Series, *, as_of: pd.Timestamp, halflife_days: float
+) -> pd.Series:
+    """Exponential-decay recency weight ``0.5 ** (age_days / halflife_days)``
+    for each row, ``age_days`` measured from ``as_of`` (the training
+    window's own embargoed cutoff, never the real test date -- the schedule
+    a fit could not see remains exactly as unseen as before; only *how much
+    each already-visible row counts* changes). Plan section 3.3's "样本权重
+    0.5 ** (age_days / halflife) 传给 fit".
+    """
+    age_days = (pd.Timestamp(as_of) - trade_dates).dt.days.astype(float)
+    return (0.5 ** (age_days / halflife_days)).rename("sample_weight")
 
 
 def build_weight_schedule(
@@ -261,6 +369,12 @@ def build_weight_schedule(
     extra_train_columns: Sequence[str] = (),
     train_row_dates: Literal["all", "rebalance_dates"] = "all",
     trading_calendar: pd.DatetimeIndex | None = None,
+    train_window_months: int | None = None,
+    refit_frequency: Literal["yearly", "quarterly"] = "yearly",
+    recency_halflife_days: float | None = None,
+    universe_top_n: int | None = None,
+    trend_gate_series: pd.Series | None = None,
+    trend_gate_cash_symbol: str = "BIL",
 ) -> list[RebalanceEvent]:
     """Walk-forward weight schedule: retrain once per ``test_years`` entry on
     an anchored, embargoed window, then score every weekly rebalance date
@@ -295,6 +409,34 @@ def build_weight_schedule(
     shorter-horizon cell could have used just because a longer-horizon label
     is unresolved near a symbol's last trading day. Defaults to ``()``, so
     every existing caller (B0-B3's single-label strategies) is unaffected.
+
+    Step 13 Track M additions (plan section 3.3), every one defaulted to the
+    exact prior behavior:
+
+    * ``train_window_months``: when set, each refit's training window is
+      truncated to the trailing ``train_window_months`` calendar months
+      ending at that refit's embargoed cutoff, instead of the original
+      anchored/expanding window from the start of ``panel``.
+    * ``refit_frequency="quarterly"``: refits once per calendar quarter
+      within each ``test_years`` entry instead of once per year. The
+      ``"yearly"`` default runs the exact original per-year code path
+      (same variable names, same computation) -- this branch is additive,
+      never a rewrite of it.
+    * ``recency_halflife_days``: when set, computes an exponential-decay
+      sample weight per training row (age measured from that refit's own
+      embargoed cutoff) and passes it to ``strategy.fit`` when the strategy
+      accepts a ``sample_weight`` keyword (see
+      ``_fit_with_optional_sample_weight``).
+    * ``universe_top_n``: forwarded to ``universe_as_of_calendar_month`` to
+      restrict the PIT cohort by ADV rank.
+    * ``trend_gate_series``/``trend_gate_cash_symbol``: when
+      ``trend_gate_series`` is supplied (boolean-like, indexed by
+      rebalance date; missing/NaN dates are treated as gate-closed, the
+      conservative default), a rebalance date where the gate is closed gets
+      its weights overridden to ``{trend_gate_cash_symbol: 1.0}`` --
+      computed from the real strategy score first (so ``universe_size`` and
+      any hedge diagnostics stay meaningful) and then replaced, never
+      skipped.
     """
     # ``trading_calendar`` may be supplied by the caller when ``panel`` holds
     # only rebalance-day rows (the memory-lean loading path in
@@ -311,15 +453,46 @@ def build_weight_schedule(
         if train_row_dates == "rebalance_dates"
         else pd.DatetimeIndex([])
     )
+    if refit_frequency not in ("yearly", "quarterly"):
+        raise ValueError(
+            f"unknown refit_frequency {refit_frequency!r}, expected 'yearly' or 'quarterly'"
+        )
+    # Computed once, only if needed: every weekly rebalance date across all
+    # of history. The quarterly branch filters this (globally correct)
+    # sequence by (year, quarter) instead of recomputing "last day of the
+    # ISO week" on a quarter-restricted date subset, which would mis-place
+    # any week straddling a quarter boundary. The yearly (default) branch
+    # below does not use this at all -- it keeps its original, independent
+    # per-year computation so that path is untouched by this addition.
+    all_weekly_dates = (
+        pd.DatetimeIndex(weekly_rebalance_dates(trading_calendar))
+        if refit_frequency == "quarterly"
+        else None
+    )
+    periods: list[tuple[int, int | None]] = (
+        [(year, None) for year in test_years]
+        if refit_frequency == "yearly"
+        else [(year, quarter) for year in test_years for quarter in (1, 2, 3, 4)]
+    )
+
     events: list[RebalanceEvent] = []
-    for year in test_years:
-        year_dates = trading_calendar[trading_calendar.year == year]
-        if len(year_dates) == 0:
-            continue
-        rebalance_dates = [date for date in weekly_rebalance_dates(year_dates) if date.year == year]
+    for year, quarter in periods:
+        if quarter is None:
+            # Byte-for-byte the original per-year code path.
+            year_dates = trading_calendar[trading_calendar.year == year]
+            if len(year_dates) == 0:
+                continue
+            rebalance_dates = [
+                date for date in weekly_rebalance_dates(year_dates) if date.year == year
+            ]
+        else:
+            assert all_weekly_dates is not None
+            rebalance_dates = [
+                date for date in all_weekly_dates if date.year == year and date.quarter == quarter
+            ]
         if not rebalance_dates:
             continue
-        train_cutoff = _embargo_cutoff(trading_calendar, rebalance_dates[0], label_horizon_days)
+        train_cutoff = embargo_cutoff(trading_calendar, rebalance_dates[0], label_horizon_days)
         # Memory, not style: ``panel.loc[mask].dropna(subset=...)`` made two
         # full-width copies of a multi-GB panel for every test year -- the
         # mask copy carries every column, then ``dropna`` copies its result
@@ -332,6 +505,9 @@ def build_weight_schedule(
         # largest column and which no B0-B3 strategy reads during training.
         required_columns = [*feature_columns, label_column]
         train_mask = panel["trade_date"] <= train_cutoff
+        if train_window_months is not None:
+            window_start = train_cutoff - pd.DateOffset(months=train_window_months)
+            train_mask &= panel["trade_date"] > window_start
         if train_row_dates == "rebalance_dates":
             train_mask &= panel["trade_date"].isin(training_row_dates)
         for column in required_columns:
@@ -339,11 +515,20 @@ def build_weight_schedule(
         train_columns = [*required_columns, *extra_train_columns]
         train_frame = panel.loc[train_mask, ["trade_date", *train_columns]]
         del train_mask
+        sample_weight = (
+            _recency_sample_weight(
+                train_frame["trade_date"], as_of=train_cutoff, halflife_days=recency_halflife_days
+            )
+            if recency_halflife_days is not None
+            else None
+        )
         strategy = strategy_factory()
-        strategy.fit(train_frame)
+        _fit_with_optional_sample_weight(strategy, train_frame, sample_weight)
 
         for date in rebalance_dates:
-            universe_symbols = universe_as_of_calendar_month(universe_panel, date)
+            universe_symbols = universe_as_of_calendar_month(
+                universe_panel, date, top_n=universe_top_n
+            )
             asof_frame = panel.loc[
                 (panel["trade_date"] == date) & (panel["symbol"].isin(universe_symbols))
             ].dropna(subset=feature_columns)
@@ -366,6 +551,12 @@ def build_weight_schedule(
                 betas = beta_by_symbol.reindex(list(weights)).fillna(0.0)
                 portfolio_beta = float(sum(betas[symbol] * w for symbol, w in weights.items()))
                 weights["__SPY_HEDGE__"] = -portfolio_beta
+
+            if trend_gate_series is not None:
+                gate_open = bool(trend_gate_series.get(date, False))
+                if not gate_open:
+                    weights = {trend_gate_cash_symbol: 1.0}
+                    portfolio_beta = None
 
             events.append(
                 RebalanceEvent(
@@ -648,6 +839,7 @@ def run_experiment(
     write_mlflow: bool = True,
     extra_train_columns: Sequence[str] = (),
     price_panel: pd.DataFrame | None = None,
+    trend_gate_series: pd.Series | None = None,
 ) -> ExperimentVerdict:
     """Run one candidate configuration end to end: walk-forward weight
     schedule -> long-only and market-neutral daily return streams (base and
@@ -660,6 +852,16 @@ def run_experiment(
     (``scripts/run_b3_grid.py``) passes the two label horizons not already
     named by ``label_column`` so ``GridSelectedLightGBMStrategy.fit`` can see
     all three at once.
+
+    ``trend_gate_series`` (Step 13 Track M): required when
+    ``config.trend_gate`` is set (fails fast with a ``ValueError`` if it is
+    missing, rather than silently running the gate-less schedule) --
+    ``config.trend_gate`` is metadata only (which benchmark/window a report
+    should say the gate used), never the data itself, so this function does
+    not derive it: the caller (``scripts/run_step13_m_grid.py``) computes it
+    once from the regime feature table and passes it in. Forwarded to
+    :func:`build_weight_schedule` along with ``config.trend_gate``'s
+    ``cash_symbol`` (default ``"BIL"`` if the dict omits it).
     """
     config_hash = config.config_hash()
     # ``price_panel`` (symbol, trade_date, close[, open] for EVERY trading
@@ -683,6 +885,15 @@ def run_experiment(
     )
     trading_calendar = pd.DatetimeIndex(sorted(price_source["trade_date"].unique()))
 
+    if config.trend_gate is not None and trend_gate_series is None:
+        raise ValueError(
+            f"{config.experiment_id}: config.trend_gate is set "
+            f"({config.trend_gate!r}) but run_experiment was not given a "
+            "trend_gate_series -- compute one (e.g. from the regime feature "
+            "table's spy_gap_200sma column) and pass it, or clear "
+            "config.trend_gate"
+        )
+
     schedule = build_weight_schedule(
         panel=panel,
         universe_panel=universe_panel,
@@ -696,6 +907,12 @@ def run_experiment(
         extra_train_columns=extra_train_columns,
         train_row_dates=config.train_row_dates,
         trading_calendar=trading_calendar,
+        train_window_months=config.train_window_months,
+        refit_frequency=config.refit_frequency,
+        recency_halflife_days=config.recency_halflife_days,
+        universe_top_n=config.universe_top_n,
+        trend_gate_series=trend_gate_series,
+        trend_gate_cash_symbol=(config.trend_gate or {}).get("cash_symbol", "BIL"),
     )
 
     long_base = returns_from_weight_schedule(
@@ -791,6 +1008,15 @@ def run_experiment(
             "execution": config.execution,
             "hyperparameters": config.hyperparameters,
             "test_years": list(config.test_years),
+            # Step 13 Track M additions -- additive keys only, never touch
+            # config_hash (see ExperimentConfig.config_hash's own
+            # conditional-inclusion comment); always written (even as null)
+            # so every ledger row has a stable schema to read back.
+            "train_window_months": config.train_window_months,
+            "refit_frequency": config.refit_frequency,
+            "recency_halflife_days": config.recency_halflife_days,
+            "trend_gate": config.trend_gate,
+            "universe_top_n": config.universe_top_n,
             "dsr_trial_count": dsr_trial_count,
             "long_only": {
                 "metrics": long_verdict.metrics,
