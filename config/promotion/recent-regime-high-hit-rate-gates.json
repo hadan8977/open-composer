@@ -1,0 +1,63 @@
+{
+  "contract_id": "recent_regime_high_hit_rate_gates_v1",
+  "registered_at": "2026-09-09",
+  "applies_to": "Step 12 Group B candidates only (ledger family groupb_recent_regime_high_hit_rate): F1 ETF pullback mean reversion, F2 trend-filtered momentum with cash switch, F3 QQQ intraday opening-range momentum, F4 cross-sectional short-cycle ML. F5 (QQQ/TQQQ/QLD/BIL beta-exposure-router reference) is evaluated against these same metrics for disclosure only and is never promotion-eligible under this contract -- leverage is out of scope for a Group B recommendation per docs/plan-step-12-groupb-recent-regime-high-hit-rate-2026-09-09.zh.md section 2.",
+  "user_request_translation": "User (2026-09-09, verbatim): \"我希望找一些高胜率，近期年化高，更适配当前市场，不会特别要求长期收益的策略。\" Translated to a checkable contract: (1) the evaluation window is the most recent ~2.7 years (2024-01-02 through the SIP daily archive's latest date), not the 2018-founded nine-year window used by Step 11's Group A; (2) the primary metrics are holding-period hit rate and recent net annualized return, secondarily drawdown and profit factor; 2018-2023 performance is disclosure-only, never a gate; (3) the accepted cost is that short-window evidence is fragile and high-hit-rate rules often carry negative skew (many small wins, occasional large losses) that can fail if the current market regime changes -- this contract requires those costs to be quantified (skew, worst single week, regime disclosure) rather than omitted.",
+  "evaluation_window": {
+    "recent_gated_window_start": "2024-01-02",
+    "recent_gated_window_end": "sip_daily_archive_latest_date",
+    "disclosure_only_window": ["2018-01-01", "2023-12-31"],
+    "replay_disclosure_year": 2022
+  },
+  "walkforward": {
+    "scheme": "quarterly rolling-origin selection/refit, evaluated only over the recent gated window",
+    "train_or_select_window_months": 24,
+    "test_window": "next calendar quarter",
+    "fold_count_approx": 11,
+    "first_test_quarter": "2024Q1",
+    "isolation": "embargo = one label/holding period",
+    "execution_path": "next_open (Friday-close or daily-close signal -> next session's open fill) unless the mechanism carries its own equivalent execution path (F3 uses its own intraday opening-range fill)",
+    "rule_family_training_definition": "for rule-based (non-ML) candidates, \"training\" means selecting among the preregistered grid points by trailing performance inside the 24-month lookback window, never fitting a continuous parameter after seeing test-quarter data",
+    "ml_training_definition": "for F4, \"training\" means fitting only on the trailing 24-month window, refit once per test quarter"
+  },
+  "gates": {
+    "hit_rate_weekly_minimum": 0.60,
+    "hit_rate_daily_or_intraday_minimum": 0.55,
+    "cagr_recent_net_minimum": 0.20,
+    "max_drawdown_recent_minimum": -0.15,
+    "sharpe_excess_bil_recent_minimum": 1.5,
+    "profit_factor_minimum": 1.5,
+    "positive_quarter_fraction_minimum": 0.70,
+    "dsr_probability_minimum": 0.5,
+    "stress_cost_recent_cagr_minimum": 0.0,
+    "ml_placebo_rank_ic_abs_maximum": 0.02
+  },
+  "gate_notes": {
+    "hit_rate_by_holding_period": "net return per holding period (trade, week, or session) > 0, as a fraction of holding periods that were actually in a position -- flat/cash(BIL) periods are excluded from the denominator. hit_rate_weekly_minimum applies to weekly-rebalanced candidates (F2, F4); hit_rate_daily_or_intraday_minimum applies to daily-trade or intraday candidates (F1, F3).",
+    "cagr_recent_net": "2024-01-02 to archive latest date, net of cost_bps_per_side=10bp each side.",
+    "max_drawdown_recent": "same window as cagr_recent_net.",
+    "sharpe_excess_bil_recent": "same window, annualized Sharpe of (candidate return - BIL return).",
+    "profit_factor": "sum of positive holding-period net returns / abs(sum of negative holding-period net returns), same window and same holding-period definition as hit_rate.",
+    "positive_quarter_fraction": "fraction of natural calendar quarters within the recent gated window with positive net compounded return.",
+    "dsr_probability": "deflated Sharpe ratio probability on the recent-window excess-BIL stream; trial_count is taken automatically from the count of distinct config hashes already recorded under ledger family groupb_recent_regime_high_hit_rate (this contract's own family), never hand-typed -- see open_composer/research/regime/gates.py:dsr_trial_count_for_family.",
+    "stress_cost_still_positive": "recompute cagr_recent_net at a stressed cost of 25bp per side (stress_cost_bps_per_side, recorded below, outside the gates block because it is a cost parameter and not itself a pass/fail threshold); gate requires the result to stay > stress_cost_recent_cagr_minimum (0.0).",
+    "ml_placebo_rank_ic_abs_maximum": "F4 only: rank IC (Spearman) between the model's predicted rank and a label-shuffled placebo target must stay below this in absolute value, evaluated on the same trailing windows used for training. Declared not-applicable (gates_not_applicable) for every non-ML candidate (F1, F2, F3, F5)."
+  },
+  "stress_cost_bps_per_side": 25.0,
+  "primary_cost_bps_per_side": 10.0,
+  "disclosure_only_items": [
+    "cagr_2018_2023",
+    "max_drawdown_2018_2023",
+    "hit_rate_2018_2023",
+    "return_skewness_recent",
+    "return_skewness_2018_2023",
+    "worst_single_week_return_recent",
+    "worst_single_week_return_2018_2023",
+    "turnover_annualized_recent",
+    "trade_count_annualized_recent",
+    "quarterly_returns_2024_2026",
+    "replay_2022_full_year_return"
+  ],
+  "rationale": "The user explicitly asked for high hit-rate, high recent annualized return, current-regime-fit strategies and explicitly deprioritized long-run track record -- config/promotion/unlevered-family-paper-tier-gates.json (Step 10, Group A's contract) instead requires a nine-year rolling-origin stitched OOS stream and would either reject every short-window high-hit-rate candidate on stream-length grounds or force evaluation over a horizon the user does not care about for this request. This is a separate, narrower contract for a separate, narrower request; it does not loosen or replace the Group A contract, which remains the bar for long-horizon promotion claims. Thresholds: cagr_recent_net_minimum=0.20 and sharpe_excess_bil_recent_minimum=1.5 are deliberately demanding for a 2024-01-02..latest window (~2.7 years, SPY's own trailing CAGR over the same window is used as a reported comparator, not a gate) -- a short window has less statistical power, so the bar on the point estimate is raised rather than relaxed to compensate, consistent with AGENTS.md's requirement that promotion evidence be honest about sample-size caveats. max_drawdown_recent_minimum=-0.15 is tighter than Group A's -0.35 because a strategy sold on 'high hit rate, fits current regime' should not itself carry a large drawdown; a candidate that clears the return bar only via a big-drawdown regime bet is not what was asked for. profit_factor_minimum=1.5 and positive_quarter_fraction_minimum=0.70 are standard, easily-audited high-hit-rate-system thresholds (profit factor > 1.5 is a common practitioner bar for a system claiming statistical edge net of costs; >=0.70 of quarters positive over ~11 quarters means at most 3 losing quarters). dsr_minimum=0.5 and the stress-cost gate are carried over unchanged in spirit from the Group A/kernel contracts: they already compare the candidate to a null (DSR) or a harsher cost assumption (stress), which need no regime-specific adjustment. The ml_placebo_rank_ic gate exists because a short training window (24 months) is exactly the regime in which an ML ranking model is most likely to fit noise; a placebo (label-shuffled) control is the standard falsification check for that failure mode and is required only where a model is actually fit (F4). Disclosure-only items (2018-2023 performance, skew, worst week, turnover, quarterly table, 2022 replay) are required by the plan precisely because the gate's short window and hit-rate focus can hide negative skew and regime dependency; making them mandatory report fields (not gates) lets the user see the full cost of the short-window, high-hit-rate framing they asked for without silently blocking a candidate that legitimately fits the current regime.",
+  "honesty_clause": "These thresholds and this grid are preregistered before any Group B result is computed (docs/plan-step-12-groupb-recent-regime-high-hit-rate-2026-09-09.zh.md section 4: \"看到结果后不得改阈值、不得加网格、不得缩窗口\"). If every candidate fails, the report must say so plainly and name the closest candidate and its shortfall -- this file may not be edited to make a computed result pass."
+}
