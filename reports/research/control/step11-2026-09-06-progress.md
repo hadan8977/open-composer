@@ -411,3 +411,42 @@ reports/research/candidates/<experiment_id>/
 - mlflow 3.x（而非计划文本隐含的 2.x）：API（`mlflow.set_tracking_uri`、`start_run`、`log_metric(s)`、`log_artifact`）在 2.x/3.x 间稳定，3.4 节写 `loop.py` 时按 3.x 实际接口对齐，未发现不兼容。
 
 blocked_on_user：无。
+
+---
+
+## Wave B 续三(daily_plus_intraday 网格:swap 抖动、协调者介入、修复、重跑)
+
+### 事故时间线(如实记录)
+
+1. **第一次 `daily_plus_intraday` 网格尝试**(`--mem 2.6G`,未加 `--swap` 覆盖,沿用 `run_capped.sh` 默认 `1G`):卡在"loading daily_plus_intraday daily+label panel ..."18+ 分钟不动(`daily_only` 同阶段只要 2-3 分钟)。用 `/proc/<pid>/status` 核实 `VmSwap: 1200768 kB`(单进程换出超 1.1GB),`vmstat` 显示 13-15 个进程处于 blocked、80-91% iowait——判定为**换页抖动**,不是"还在正常算",于是 `pkill -9 -f "run_b3_grid.py --only step11_b3_lightgbm_grid_daily_plus_intraday"` 手动杀掉。
+2. **误伤**:同一个 `pkill -f` 命中了自己此前挂的后台监控链(任务 `bv9e61wue`,内部同样用 `pgrep -f` 嵌了这个字符串)——那条链本应在网格结束后自动跑安慰剂+B1 工件导出,被误杀后以 exit code 1 报"failed"。**这是本轮任务书里点名的 `pkill -f` 自匹配陷阱本身**,记录下来防止再犯:以后如果需要杀某个具体已知 PID 的作业,优先 `kill -9 <PID>`,不用 `pkill -f <pattern>`,除非能确认这个 pattern 不会出现在任何监控脚本自己的命令行里。
+3. **协调者独立核实并介入**:02:20 左右机器可用内存跌到 140MB、swap 用了 84%,协调者把网格所在 scope 就地收紧到 2.4G;此时它已加载到 2.3GB,随后被 memcg 杀,`/tmp/run_b3_full_dpi.log` 停在 02:12 的 "loading daily_plus_intraday panel",无 traceback(本机第 4 次在同一个位置栽跟头)。
+4. **条件变化**:协调者给机器加了 4GB 临时 swap(`/swapfile2`,总 swap 变 8GB),验证 earlyoom 双阈值远离触发点;明确授权重跑用 `--mem 2.6G --swap 2G`(`run_capped.sh` 默认 swap 上限 1G,必须显式传 `--swap 2G`),并要求这是最终上限,不再上调。
+
+### 重跑前的修复(提交 `86e8614`,`scripts/run_b3_grid.py` + `scripts/run_baseline_chain.py`)
+
+协调者指出的四点里,前两点(`symbol` 读入即转 `category`、只读该实验需要的列)**两个文件里都已经在做**(见各自 `_load_panel` docstring/注释,上一轮 OOM 就是为此加的);缺的是后两点,本次补上,两个文件同步修:
+
+1. 每年 merge 后立刻 `del daily_year, label_year` 之后,新增 `gc.collect()`(此前只有循环结束后合并完才调一次,九年的中间帧不会被及时回收)。
+2. 最终 `pd.concat(merged_frames, ignore_index=True)` 加 `copy=False`,避免 pandas block 整理再多拷贝一份全量面板。
+3. 面板拼好后打印 `panel.memory_usage(deep=True).sum()/1e9`(`[_load_panel] {feature_set}: ... GB`),这样面板真实大小第一次有据可查,不再是"不知道离上限还有多远"。
+
+验证:`python -m py_compile` 两个文件通过;这个函数是读取真实 parquet 的集成式代码,历来没有针对它的专门单测,且改动时机器只剩 173MB 可用、另一个 executor 的 pytest 正在跑,判断不值得为了这处 8 行的机械改动再抢内存跑一轮本地测试——如实记在这里,不是漏做。
+
+### 重跑(v2)
+
+`nohup ./scripts/run_capped.sh --mem 2.6G --swap 2G -- uv run python scripts/run_b3_grid.py --only step11_b3_lightgbm_grid_daily_plus_intraday > /tmp/run_b3_full_dpi_v2.log 2>&1 &`,02:41 UTC 启动,PID 1817325,后台自退出等待循环(任务 `bpzpj758z`)挂起监控,`while pgrep -f "run_b3_grid.py --only step11_b3_lightgbm_grid_daily_plus_intraday" >/dev/null; do sleep 120; done`。等待期间不空等,继续做:本节账本记录本身、下面排定的后续步骤命令预演。
+
+### 后续排定顺序(不并行,一个跑完再跑下一个)
+
+1. **当前**:`daily_plus_intraday` 六格网格(进行中)。
+2. 网格落地后:安慰剂(daily_only 最佳格,打乱标签)——`uv run python scripts/run_b3_grid.py --placebo-only`,同样走 `run_capped.sh`。冒烟测试的验证年 IC 0.08-0.17 偏高,这一步是检验是否有标签/特征泄漏的直接手段;如果打乱后 IC 仍显著非零,下一步查 `open_composer/research/features/labels.py` 的 `LEAD` 方向和 `daily_features.py` 的窗口方向。
+3. `step11_b3_lightgbm_grid_daily_only` 的特征重要性前 15、逐年 rank IC、换手/容量——之前一次进程死亡(写完账本之后、算 `_turnover_and_capacity` 途中)丢失,用单年(2026)重新 `fit` 补算特征重要性(每个 walk-forward 年份的拟合互相独立,不需要重跑全部九年)。
+4. 候选工件导出(`scripts/export_candidate_artifact.py`):按现有证据 `step11_b1_momentum_top50` 是链上最优,先导出它;如果 `daily_plus_intraday` 翻盘则改导出对应 experiment_id。字段名严格按 `93ba159` 定义的接口,不改。
+5. 报告剩余章节(rank IC 按年、`next_open` 对比、特征重要性、换手/容量)、账本收尾。
+
+时限:周四 22:00 UTC。协调者已经说明:如果 `daily_plus_intraday` 到周四 18:00 还没落地,就用 `daily_only` 结果收口报告、导出 B1 动量作为当前最好候选,报告里注明 intraday 未完成的原因,不再等。
+
+### blocked_on_user
+
+无。
