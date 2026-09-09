@@ -31,7 +31,7 @@ Plan reference: `docs/plan-step-11-ml-first-loop-2026-09-06.zh.md` sections
 | B2 ridge top50 | daily_only | rebalance_dates | -3.32% | 0.5612 | -45.5% | TBD | 0.31 | 0.992 | TBD | 3/8 |
 | B2 ridge top50 | daily_plus_intraday | rebalance_dates | **not run** (see caveat below) | -- | -- | -- | -- | -- | -- | -- | -- |
 | B3 LightGBM grid | daily_only | rebalance_dates | **-10.15%** | **0.4175** | **-57.9%** | fail | **0.198** | 0.972 | 0.737 | **0.778 (7/9)** | **2/8** |
-| B3 LightGBM grid | daily_plus_intraday | rebalance_dates | TBD (in progress) | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
+| B3 LightGBM grid | daily_plus_intraday | rebalance_dates | **-13.13%** | **0.3425** | **-57.2%** | fail | **0.152** | 0.953 | 0.745 | **0.556 (5/9)** | **1/8** |
 
 Market-neutral (SPY-beta-hedged) variants for every row above:
 
@@ -43,7 +43,7 @@ Market-neutral (SPY-beta-hedged) variants for every row above:
 | B2 | daily_only | rebalance_dates | -21.53% | -0.4321 | -66.3% | 1/8 |
 | B2 | daily_plus_intraday | rebalance_dates | **not run** | -- | -- | -- |
 | B3 | daily_only | rebalance_dates | **-17.99%** | **-0.1946** | **-53.2%** | **0/8** |
-| B3 | daily_plus_intraday | rebalance_dates | TBD | TBD | TBD | TBD |
+| B3 | daily_plus_intraday | rebalance_dates | **-23.49%** | **-0.2921** | **-71.3%** | **1/8** |
 
 **B2 daily_plus_intraday rebalance_dates was not completed.** Two attempts
 were made (2026-09-08 and 09-09); both died without producing a ledger
@@ -66,41 +66,207 @@ above (`step11_b3_lightgbm_grid_daily_only`, `config_hash
 
 ## 3. B3 vs. B1/B2: did the model beat the baseline chain?
 
-**No. B3 (daily-only) does not beat B1, on any dimension that matters.**
+**No. Neither B3 feature set beats B1, on any dimension that matters, and
+daily_plus_intraday is worse than daily_only, not better.**
 
-| Metric | B1 (12-1 momentum, long-only) | B3 daily-only (long-only) | B3 wins? |
-|---|---:|---:|:---:|
-| CAGR excess (vol-matched SPY) | -4.95% | -10.15% | no |
-| Sharpe-ex-BIL | 0.578 | 0.417 | no |
-| Max drawdown | -58.3% | -57.9% | ~tie (B3 marginally less bad) |
-| MAR | 0.333 | 0.198 | no |
-| Capture ratio | 1.003 | 0.972 | no |
-| Gates passed | 4/8 | 2/8 | no |
+| Metric | B1 (12-1 momentum, long-only) | B3 daily-only (long-only) | B3 daily+intraday (long-only) | Either B3 wins? |
+|---|---:|---:|---:|:---:|
+| CAGR excess (vol-matched SPY) | -4.95% | -10.15% | -13.13% | no |
+| Sharpe-ex-BIL | 0.578 | 0.417 | 0.342 | no |
+| Max drawdown | -58.3% | -57.9% | -57.2% | ~tie (both B3 marginally less bad) |
+| MAR | 0.333 | 0.198 | 0.152 | no |
+| Capture ratio | 1.003 | 0.972 | 0.953 | no |
+| Positive-fold fraction | -- | 0.778 (7/9) | 0.556 (5/9) | no |
+| Gates passed | 4/8 | 2/8 | 1/8 | no |
 
-B3's raw CAGR (11.5%) looks superficially reasonable in isolation, but every
-relative-to-benchmark measure is worse than B1's, and B1 already does not
-clear the promotion bar either -- B3 is a **regression from the chain's
-already-negative standing champion**, not an improvement that merely falls
-short. The two-fold smoke test's much more flattering numbers (45% CAGR
-excess, 7/8 gates) were an artifact of testing on only the two most
-favorable, most-recent years and must not be read as "B3 nearly worked."
+B3's raw CAGR (daily-only 11.5%, daily+intraday ~8.7%) looks superficially
+reasonable in isolation, but every relative-to-benchmark measure is worse
+than B1's, and B1 already does not clear the promotion bar either -- B3 is a
+**regression from the chain's already-negative standing champion**, not an
+improvement that merely falls short. Adding intraday features made every
+single one of these numbers worse, not better, and roughly halved the
+positive-fold fraction (7/9 -> 5/9) -- more features did not help here, they
+actively hurt out-of-sample. The two-fold smoke test's much more flattering
+daily-only numbers (45% CAGR excess, 7/8 gates) were an artifact of testing
+on only the two most favorable, most-recent years and must not be read as
+"B3 nearly worked."
 
-**Chain standing after Wave B (daily-only)**: B1 (12-1 momentum, long-only,
-4/8 gates) remains the best candidate produced by this round's baseline
-chain plus B3 grid. Per plan section 5 item 4, it is exported as the
-current-best candidate regardless (section 9) -- this negative result for
-B3 does not block that export.
+**Chain standing after Wave B**: B1 (12-1 momentum, long-only, 4/8 gates)
+remains the best candidate produced by this round's baseline chain plus the
+B3 grid, in both feature sets tested. Per plan section 5 item 4, it is
+exported as the current-best candidate regardless (section 9) -- this
+negative result for B3 does not block that export.
 
-**Suspiciously high validation-year rank IC in the smoke test (0.08-0.17)
-prompted a leakage check** -- see section 4's placebo result before trusting
-any of the numbers in this report.
+**Suspiciously high validation-year rank IC prompted a leakage check, and
+the full daily_plus_intraday grid made this more urgent, not less**: the
+daily-only smoke test's validation IC (0.08-0.17, 2 years only) already
+looked high for a rank-IC prediction target. The full 9-year
+daily_plus_intraday grid is worse: **every single validation year from
+2017 through 2025 selected the same cell (`h21_d6`, horizon 21/depth 6) at a
+mean rank IC between 0.15 and 0.40** -- IC that high, that consistently, for
+this many independent years, is not a pattern genuine cross-sectional equity
+return prediction produces. See section 4's placebo result (both feature
+sets) before trusting any of the numbers in this report.
+
+**Update 2026-09-09 14:1x UTC -- the leak flagged above is root-caused,
+fixed, and reverified (commit `bb21f27`; full mechanism and numbers in
+section 4).** The daily_only and daily_plus_intraday CAGR/Sharpe/MAR/gate
+numbers in the table above were both produced by the grid's pre-fix, leaky
+cell-selection path, so neither verdict should be read as "the best cell for
+that feature set, honestly measured" -- only as "B3, run through a
+since-fixed selection process, did not beat B1." **daily_plus_intraday
+stays closed** as a feature set regardless: it was already the worse of the
+two on every metric in the table above even under the shared pre-fix bias,
+consistent with the Step 13 plan's (section 3.1) decision to not use
+intraday features. Only the **daily_only** grid is queued for a clean
+re-run under the fix, and only for test years **2024-2026** (the Step 13
+recent-regime window this round actually targets, not the original
+2018-2026 range) -- **later, when the box is free**; it is not run in this
+session.
 
 ## 4. Placebo (label-shuffle) check
 
-TBD. Plan requirement: shuffle `label_rank_21` within each date's
-cross-section, refit, and confirm mean validation rank IC is approximately
-zero. A materially nonzero placebo IC would mean a leakage bug and blocks
-this report's other conclusions until root-caused.
+Plan requirement: shuffle **every** label horizon column (`label_rank_5`,
+`label_rank_10`, `label_rank_21` -- not just the outer `label_column`; see
+the bug note below) within each date's cross-section (destroys any true
+feature-label relationship, preserves the marginal distribution the model
+sees), refit the same `GridSelectedLightGBMStrategy` machinery on one
+anchored window (test year 2026), score the following validation year, and
+confirm the mean validation rank IC is approximately zero. Threshold, per
+`config/promotion/recent-regime-high-return-gates-v2.json`'s
+`ml_placebo_rank_ic_abs_maximum`: **clean means \|IC\| < 0.02.**
+
+`uv run python scripts/run_b3_grid.py --placebo-only --placebo-feature-set {daily_only,daily_plus_intraday}`
+
+**Verdict: FAILED pre-fix for both feature sets. Leakage confirmed** (both
+were run through the same leaky `GridSelectedLightGBMStrategy.fit()`
+path) **-- root-caused and fixed the same day, commit `bb21f27`; see the
+"Root cause" paragraph below for the corrected, post-fix daily_only
+numbers.**
+
+| Feature set | Selected cell (2026 validation) | Placebo mean rank IC (shuffled labels) | Clean (\|IC\| < 0.02)? |
+|---|---|---:|:---:|
+| daily_only (pre-fix) | h5_d6 | **0.1709** | **no -- 8.5x the threshold** |
+| daily_plus_intraday (pre-fix) | h21_d6 | **0.2057** | **no -- 10.3x the threshold** |
+| daily_only (post-fix, `bb21f27`) | h21_d6 | **0.0013** | **yes -- ~15x inside the threshold** |
+| daily_plus_intraday (post-fix) | -- | not yet rerun (see "what happens next" below) | -- |
+
+Full per-cell breakdown, daily_only pre-fix (every cell is well above
+threshold, not just the selected one -- this is not an artifact of which
+cell happened to be picked):
+
+| Cell | Placebo validation rank IC (pre-fix) |
+|---|---:|
+| h5_d3 | 0.0539 |
+| h5_d6 | **0.1709** (selected) |
+| h10_d3 | 0.0462 |
+| h10_d6 | 0.1590 |
+| h21_d3 | 0.0494 |
+| h21_d6 | 0.1690 |
+
+Full per-cell breakdown, daily_plus_intraday pre-fix (same pattern -- every
+cell elevated, deeper trees worse):
+
+| Cell | Placebo validation rank IC (pre-fix) |
+|---|---:|
+| h5_d3 | 0.0639 |
+| h5_d6 | 0.2016 |
+| h10_d3 | 0.0590 |
+| h10_d6 | 0.2050 |
+| h21_d3 | 0.0618 |
+| h21_d6 | **0.2057** (selected) |
+
+With labels shuffled within each date's cross-section -- destroying any real
+feature-label relationship by construction -- a correctly-isolated pipeline
+should produce IC statistically indistinguishable from zero. Every one of
+the six cells instead lands between 0.05 and 0.17, and the deeper-tree cells
+(`_d6`) are consistently ~3x the shallower (`_d3`) ones at the same horizon,
+which is itself informative: **this looks like a systematic property of the
+pipeline, not sampling noise around zero.** This means the B3 grid's own
+rank-IC-based cell selection (picking the (horizon, depth) cell by trailing
+validation-year rank IC) is itself contaminated -- it may be selecting
+cells by however strongly a leak expresses itself in a given cell's
+hyperparameters, not by genuine predictive skill. **Every B3 number in
+sections 2-3 of this report must now be read as coming from a pipeline with
+a confirmed leak, not merely as "a model that tried and honestly lost."**
+The two are different findings: the original section 3 conclusion ("B3 does
+not beat B1") remains true as a statement about what was measured, but the
+measurement itself is compromised, so it should not be read as a clean
+verdict on whether LightGBM ranking *could* work on this feature set --
+that question is now open pending root cause, not answered "no."
+
+**Root cause found and fixed the same day (commit `bb21f27`, 2026-09-09
+14:18 UTC).** `GridSelectedLightGBMStrategy.fit()`
+(`open_composer/research/kernel/b3_grid_strategy.py`) computed
+`validation_year` as the training window's last calendar year and scored
+each grid cell on that year's rows -- but built every cell's `fit_rows` from
+the *entire* `train_frame`, validation year included, so `model.fit(fit_rows)`
+trained directly on the same rows it was then scored on. In plain terms:
+**the cells were scored on rows they were trained on** -- in-sample recall,
+not a real train/validation split. This explains every feature of the
+placebo evidence above: shuffled labels should give ~0 IC, but every cell
+(both feature sets) showed 0.05-0.21, and the deeper-tree cells (`_d6`)
+consistently ran ~2-3x their shallow (`_d3`) counterparts at the same
+horizon -- the signature of extra tree capacity memorizing rows it was
+later "scored" on, not sampling noise (which would not scale with depth)
+and not a genuine relationship (which the label shuffle would have
+destroyed). Fix: `fit_rows` now excludes the validation year plus a
+`2 x label_horizon_days`-calendar-day embargo before it, so no training row
+whose forward label could have peeked into the validation year survives
+into the fit pool. A new regression test
+(`test_validation_year_is_held_out_of_the_fit_pool_not_scored_in_sample`,
+`tests/test_b3_grid_strategy.py`) reproduces the mechanism at synthetic
+scale; 43/43 kernel tests pass post-fix.
+
+**Corrected daily_only placebo, same protocol, post-fix**
+(`/tmp/placebo_daily_only_v3.log`): selected cell `h21_d6`, placebo mean
+rank IC **0.0013** -- clean (about 15x inside the `< 0.02` threshold), a
+roughly 130x reduction from the pre-fix 0.1709. Full post-fix per-cell
+breakdown (every cell now near zero, not just the selected one -- this is a
+genuine fix, not one that happens to help only the winning cell):
+
+| Cell | Placebo validation rank IC (post-fix) |
+|---|---:|
+| h5_d3 | -0.0007 |
+| h5_d6 | 0.0009 |
+| h10_d3 | -0.0009 |
+| h10_d6 | 0.0012 |
+| h21_d3 | -0.0008 |
+| h21_d6 | **0.0013** (selected) |
+
+**Three numbers for the record**: pre-fix daily_only **0.171**
+(`/tmp/placebo_daily_only_v2.log`), pre-fix daily_plus_intraday **0.206**
+(`/tmp/placebo_daily_plus_intraday.log`), post-fix daily_only **0.0013**
+(`/tmp/placebo_daily_only_v3.log`). daily_plus_intraday has not been rerun
+post-fix (see "what happens next" below), so there is no post-fix number
+for it yet.
+
+**What happens next.** The recorded daily_only and daily_plus_intraday B3
+grid verdicts in sections 2-3 both used the pre-fix, biased cell-selection
+path -- neither the -10.15% nor the -13.13% CAGR-excess number comes from a
+cleanly-selected cell. **daily_plus_intraday stays closed** as a feature
+set: it was already the worse of the two even under the shared pre-fix bias
+(every metric in section 3's table), so a clean re-run is not expected to
+change that decision and is not planned. Only the **daily_only** grid is
+queued for a clean re-run under `bb21f27`'s fix -- and only for test years
+**2024-2026** (the Step 13 recent-regime window this round is actually
+targeting, not the original Step 11 2018-2026 range) -- **later, when the
+box is free**; it is explicitly not run in this session (one heavy job at a
+time on a shared 3.9GB box, with Track M and Track L work both queued
+ahead of it).
+
+**Consequence for Track M (Step 13)**: per
+`docs/plan-step-13-recent-high-return-ml-and-llm-tracks-2026-09-09.zh.md`
+section 3.4, Track M's ML grid could not reuse this grid-selection path
+until this placebo's conclusion landed. It has now landed twice: **failed
+pre-fix** (leak confirmed) and **passed post-fix** (`bb21f27`, \|IC\| =
+0.0013, well under 0.02) -- the shared code path (`b3_grid_strategy.py`)
+itself is clean as of this commit. Track M should build on the post-fix
+code for any new grid work, still run its own per-unit placebo (plan
+section 3.4 is unchanged by this fix), and treat this report's own
+daily_only/daily_plus_intraday historical verdicts as provisional until the
+queued clean re-run above lands -- not as a green light to skip its own
+placebo discipline.
 
 ## 5. Rank IC by validation year (per grid cell selected)
 
