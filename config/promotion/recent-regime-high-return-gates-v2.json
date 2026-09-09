@@ -1,0 +1,85 @@
+{
+  "contract_id": "recent_regime_high_return_gates_v2",
+  "registered_at": "2026-09-09",
+  "supersedes_for": "Step 13 Track M (quant + ML) and Track L (quant + LLM) candidates only (ledger family step13_recent_high_return). Step 12 Group B candidates (F1-F5) stay under config/promotion/recent-regime-high-hit-rate-gates.json; this file does not retroactively change their verdicts.",
+  "user_request_translation": "User (2026-09-09, verbatim): \"我需要追求近期、年化高，同时能做传统的量化+模型的策略，以及量化+llm负责一部分因子、决策的非传统量化的策略\" and, about the Step 12 F1 result: \"收益太低了，虽然盈亏比和胜率都很好，但是交易很少\". Translated: (1) the gated window is the recent regime only (2024-01-02 through the SIP daily archive's latest date); (2) the PRIMARY metric is recent net annualized return, and the honest bar is not SPY but the passive momentum ETFs the user could simply buy (2024-01-02..2026-09-08 close-to-close, no cost: SPY 20.9% CAGR / -18.8% MaxDD, QQQ 24.0% / -22.8%, MTUM 29.8% / -21.0%, SPMO 37.4% / -20.1%); (3) hit rate and drawdown are secondary and set at levels a concentrated long-only equity book can actually reach in this window; (4) low-turnover mean-reversion with few trades is explicitly NOT what is wanted, so trade count / turnover are disclosed and a candidate that is flat most of the time is disqualified by the activity floor; (5) an ML candidate must beat its own rule baseline under the identical protocol, and an LLM candidate must show marginal lift over its quant-only twin, otherwise the simpler thing is the candidate.",
+  "evaluation_window": {
+    "recent_gated_window_start": "2024-01-02",
+    "recent_gated_window_end": "sip_daily_archive_latest_date",
+    "disclosure_only_window": ["2018-01-01", "2023-12-31"],
+    "replay_disclosure_year": 2022
+  },
+  "walkforward": {
+    "scheme": "quarterly rolling-origin refit, trailing 24-month training window, evaluated only over the recent gated window",
+    "train_window_months": 24,
+    "test_window": "next calendar quarter",
+    "first_test_quarter": "2024Q1",
+    "fold_count_approx": 11,
+    "isolation": "embargo = label horizon h trading days before every refit cutoff",
+    "execution_path": "next_open (Friday-close signal -> next session's open fill) is the gated path; close_marked is disclosure only",
+    "cell_selection": "inside a grid, the served cell for a test quarter is chosen by the trailing validation quarter (the last quarter of the training window), never by test-quarter results; every cell's test-quarter result is still written to the ledger for DSR counting",
+    "rule_family_training_definition": "for rule candidates (M0), training means choosing among preregistered grid points by trailing-window performance only",
+    "ml_training_definition": "for M1/M2/L-ml candidates, fit only on the trailing 24-month window, refit once per test quarter; optional recency sample weights are a preregistered grid dimension, not a post-hoc tweak"
+  },
+  "gates": {
+    "cagr_recent_net_minimum": 0.30,
+    "cagr_excess_vol_matched_spy_minimum": 0.0,
+    "hit_rate_weekly_minimum": 0.55,
+    "max_drawdown_recent_minimum": -0.25,
+    "sharpe_excess_bil_recent_minimum": 1.2,
+    "positive_quarter_fraction_minimum": 0.60,
+    "dsr_probability_minimum": 0.5,
+    "stress_cost_recent_cagr_minimum": 0.20,
+    "activity_floor_rebalances_with_change_per_year_minimum": 30,
+    "ml_placebo_rank_ic_abs_maximum": 0.02,
+    "ml_must_beat_rule_baseline_cagr_margin_minimum": 0.0,
+    "llm_marginal_lift_cagr_minimum": 0.03,
+    "llm_marginal_lift_rank_ic_minimum": 0.005
+  },
+  "gate_notes": {
+    "cagr_recent_net": "2024-01-02 to archive latest date, net of primary_cost_bps_per_side each side, next_open execution.",
+    "cagr_excess_vol_matched_spy": "same window; candidate CAGR minus the CAGR of SPY scaled to the candidate's realized daily volatility (the Step 11 vol-matched benchmark machinery, open_composer/research/kernel/mechanism_eval). Must be >= 0: a candidate that loses to vol-matched SPY over the window has no selection value even if its raw CAGR is high.",
+    "hit_rate_weekly": "fraction of weekly holding periods (Friday signal to next Friday) with net return > 0, counted only over weeks the candidate was invested (all-cash/BIL weeks excluded from numerator and denominator).",
+    "max_drawdown_recent": "same window, daily net equity curve.",
+    "sharpe_excess_bil_recent": "same window, annualized Sharpe of (candidate daily net return - BIL daily return).",
+    "positive_quarter_fraction": "fraction of calendar quarters in the recent gated window with positive net compounded return (11 quarters through 2026Q3-to-date).",
+    "dsr_probability": "deflated Sharpe ratio probability on the recent-window excess-BIL stream; trial_count = count of distinct config hashes recorded under ledger family step13_recent_high_return, never hand-typed (same mechanism as open_composer/research/regime/gates.py:dsr_trial_count_for_family).",
+    "stress_cost_still_high": "recompute cagr_recent_net at stress_cost_bps_per_side; must stay >= stress_cost_recent_cagr_minimum (0.20), i.e. the return must survive a 2.5x cost assumption, not merely stay positive.",
+    "activity_floor": "number of weekly rebalances per year in which at least one position changed must be >= 30; a candidate that is flat or unchanged most weeks (the Step 12 F1 pattern the user rejected) fails here regardless of its other metrics. The trend gate switching the whole book to BIL counts as a change.",
+    "ml_placebo_rank_ic": "ML candidates only: Spearman rank IC of the model's predicted rank against label-shuffled placebo targets on the same trailing training windows must stay below this in absolute value. Declared not-applicable for rule candidates (M0, L-rule).",
+    "ml_must_beat_rule_baseline": "ML candidates only: cagr_recent_net(ML cell) - cagr_recent_net(best M0 rule cell under the identical protocol, chosen by the same trailing-validation rule) must be >= 0; otherwise the rule cell is the candidate and the ML cell is recorded as failing this gate.",
+    "llm_marginal_lift": "Track L candidates only, both parts required: cagr_recent_net(LLM variant) - cagr_recent_net(its quant-only twin with the LLM features zeroed / the LLM overlay disabled) >= llm_marginal_lift_cagr_minimum, and, for the ML-feature variant, mean quarterly rank IC lift >= llm_marginal_lift_rank_ic_minimum. Declared not-applicable for Track M.",
+    "missing_modality_robustness": "Track L candidates only, disclosure with a hard floor: with every LLM/news feature set to its missing value (0 / NaN handled as missing), the candidate must still pass at least the Track M gates it passed before, i.e. the LLM layer may add return but must never be the only thing holding the candidate up."
+  },
+  "knowledge_time_disclosure": {
+    "required_for": "Track L only",
+    "statement": "Historical news packets carry the provider (Benzinga via Alpaca News) created_at timestamp plus a fixed 15-minute visibility lag as visible_at; they do not prove local first-seen time (capabilities/registry.yaml news.alpaca caveats). The extraction model is a 2026 model with knowledge of 2024-2026 outcomes; prompts are extraction-only (what the headline states, never a forward judgment) and the model id is recorded in every packet, but leakage through model knowledge cannot be ruled out. Therefore 2024-2026 Track L evidence is research-tier only; the forward paper period (collector fetch time = visible_at) is the only clean evidence and must be reported separately once it exists.",
+    "reference": "docs/capability-gap-analysis-2026-09-02.zh.md rows 15 and 21"
+  },
+  "leverage_policy": "Leveraged ETFs (TQQQ/SOXL/UPRO/...) are out of scope for a Track M/L recommendation unless the user explicitly asks; a vol-targeted leveraged variant may be recorded as reference_only (never promotion_eligible) for disclosure.",
+  "stress_cost_bps_per_side": 25.0,
+  "primary_cost_bps_per_side": 10.0,
+  "reference_disclosures": {
+    "window": "2024-01-02..2026-09-08, close-to-close, no cost, SIP daily archive",
+    "SPY": {"cagr": 0.209, "max_drawdown": -0.188, "weekly_hit_rate": 0.59},
+    "QQQ": {"cagr": 0.240, "max_drawdown": -0.228, "weekly_hit_rate": 0.57},
+    "MTUM": {"cagr": 0.298, "max_drawdown": -0.210, "weekly_hit_rate": 0.59},
+    "SPMO": {"cagr": 0.374, "max_drawdown": -0.201, "weekly_hit_rate": 0.57},
+    "TQQQ_reference_only": {"cagr": 0.494, "max_drawdown": -0.580},
+    "SOXL_reference_only": {"cagr": 0.678, "max_drawdown": -0.879}
+  },
+  "disclosure_only_items": [
+    "cagr_2018_2023",
+    "max_drawdown_2018_2023",
+    "hit_rate_2018_2023",
+    "return_skewness_recent",
+    "worst_single_week_return_recent",
+    "turnover_annualized_recent",
+    "rebalances_with_change_per_year",
+    "quarterly_returns_2024_2026",
+    "replay_2022_full_year_return",
+    "close_marked_vs_next_open_cagr_gap",
+    "spmo_mtum_comparison",
+    "llm_token_ledger_totals"
+  ]
+}
