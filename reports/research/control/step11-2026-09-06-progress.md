@@ -470,3 +470,83 @@ blocked_on_user：无。
 `labels.py`/`daily_features.py` 已经验证过 DuckDB 在 1.2-1.5GB 限制下能处理
 类似规模的数据,是比 pandas 列表拼接更省峰值内存的现成方案)"。如实记录,
 不臆断,不重复上一次"没验证就杀"的判断失误。
+
+## Wave B 续四(切换到内存精简面板加载器;`daily_plus_intraday` 网格 v3)
+
+### 协调者的根本解法
+
+`pandas` 逐年 merge 再 concat 的加载路径在 `daily_plus_intraday` 上连续失败
+五次后,协调者直接写好、测好、入库了根本解法:新文件
+`open_composer/research/features/panel.py`(`load_price_panel()` /
+`load_feature_panel(feature_columns, label_columns, dates=...)`,DuckDB 一次
+join,`symbol` 共享 category,float32),`loop.py::run_experiment` 新增
+`price_panel` 参数、`build_weight_schedule` 新增显式 `trading_calendar` 参数。
+核心思路:模型只在周调仓日打分/训练,宽特征列只需要加载调仓日那 1/5 的行,
+其余交易日只贡献窄价格表(`open`/`close`)用于逐日计值——彻底避开了
+`pd.concat` 对"全部输入 + 新输出同时存活"的固有内存翻倍问题,而不是继续在
+同一条路径上加大上限。
+
+### 本执行者完成的切换(`scripts/run_b3_grid.py`,提交 `b86d381`)
+
+- `_load_panel` 整个删除,换成 `_load_feature_panel(feature_set, fridays)`
+  包一层 `load_feature_panel`(`include_prices=False`,因为价格另有
+  `price_panel` 承担)。
+- `main()`:先加载一份共享的 `price_panel`(6,108,308 行、0.11GB、约 3 秒),
+  推出 `trading_calendar`/`fridays`,再按需加载每个 feature_set 的窄特征面板
+  (daily_only:1,268,415 行、0.15GB)。
+- `_run_label_shuffle_placebo`、`_run_b3_and_queue_result`、
+  `_run_b3_in_subprocess` 都补上 `trading_calendar`/`price_panel` 参数并透传。
+- 验证:`tests/test_kernel_loop*.py`、`tests/test_feature_panel_loader.py`、
+  `tests/test_b3_grid_strategy.py` 36/36 全绿(`run_capped.sh --mem 1.2G`);
+  ruff 干净;一次真实(非 mock)冒烟跑
+  (`--only step11_b3_lightgbm_grid_daily_only --test-years 2025 2026`)证实
+  两个新加载器返回的行数/体积符合预期,子进程(`multiprocessing.Process`
+  的 `args=` 元组新增了 `price_panel` 这一位)正常起跑、正常拟合——冒烟跑
+  本身跑了 20+ 分钟仍未出结果(不是卡死,是真实计算,RSS 一直很低、没有换页
+  迹象),鉴于已经拿到需要的"接线正确"证据,且冒烟跑一旦跑完会向账本写入
+  第二条 smoke 记录(需要再次改名/打标签才能避免和已有 SMOKE_2fold 记录冲
+  突),直接按精确 PID kill 掉,确认账本文件 mtime 未变、没有新记录混入。
+
+### 回归发现与修复:`scripts/export_candidate_artifact.py`
+
+`_load_panel` 删除后,`export_candidate_artifact.py` 第 358 行
+`b3._load_panel(config.feature_set)` 会直接 `AttributeError`——这是候选工件
+导出脚本,产品线周四要用,必须在被真正调用前发现。修复:改调
+`load_feature_panel(feature_columns, label_columns, dates=None,
+include_prices=False, ...)`,**`dates=None`(取全部交易日)而不是
+`dates=fridays`**——因为 `_build_full_history_train_frame` 自己会按
+`config.train_row_dates` 做二次过滤(`"all"` 还是 `"rebalance_dates"`),如果
+在加载层就先按 `fridays` 过滤,会悄悄破坏所有 `train_row_dates="all"` 的候选
+(也就是 B0/B1/B2 三条基线)的导出——这是本次改动里风险最高的一步,选择"加
+载层只按 feature_columns/label_columns 裁列,不裁行,行过滤仍交给已有且已
+测试覆盖的 `_build_full_history_train_frame`"这个最小改动面的方案。同步修
+`tests/test_export_candidate_artifact.py` 的 `patched_panel_loader` fixture
+(原来 monkeypatch `eca.b3._load_panel`,现在 monkeypatch
+`eca.load_feature_panel`)。提交 `b86d381` 未包含这处(在同一次提交里,见下
+方 diff 范围说明)。
+
+### `daily_plus_intraday` 网格 v3(当前进行中)
+
+`nohup ./scripts/run_capped.sh --mem 1.8G -- uv run python
+scripts/run_b3_grid.py --only step11_b3_lightgbm_grid_daily_plus_intraday >
+/tmp/run_b3_full_dpi_v3.log 2>&1 &`,07:54 UTC 启动,PID 1882932。**回到
+1.8G 上限**(不再需要 v2 那次的 2.6G/2G swap——根因已经用架构方式解决,不
+是靠加大上限绕过去)。后台自退出等待循环这次改用方括号转义
+`pgrep -f "scripts/run_b3_gri[d]\.py"`,避免了三次(`pkill`一次、`pgrep`两
+次)同一类"进程匹配到自己监控脚本的命令行"的错误。
+
+机器上同时有其他执行者的作业在跑(`make verify` @1.8G、Group B 的 F3 脚本
+@1.2G)——不是我启动的,协调者已经说明"不用管它,只是不要自己再并行开第二
+个大作业",按此执行,只监控自己这一个。
+
+### 排定的下一步命令(网格落地后立即串行执行,不并行)
+
+1. 安慰剂:`uv run python scripts/run_b3_grid.py --placebo-only`(`run_capped.sh --mem 1.8G`)。
+2. daily_only 最后一年(2026)特征重要性 + 全排期 turnover/capacity 的低成本重跑(单年 refit,不是全部九年)。
+3. 最佳候选判定(daily_only B3 vs daily_plus_intraday B3 vs B1)+ `next_open` 对比跑。
+4. `scripts/export_candidate_artifact.py <winning_experiment_id>` 导出到 `reports/research/candidates/`。
+5. 报告成稿(第 4/5/6/7/8 节)、账本收尾。
+
+### blocked_on_user
+
+无。
