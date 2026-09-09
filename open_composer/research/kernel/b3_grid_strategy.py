@@ -37,6 +37,7 @@ report's "逐年 rank IC" table.
 
 from __future__ import annotations
 
+import gc
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -123,10 +124,28 @@ class GridSelectedLightGBMStrategy:
                 self.feature_columns, cell.label_column, max_depth=cell.max_depth
             )
             model.fit(fit_rows)
+            # Real OOM incident, 2026-09-09 (full 9-year daily_only grid,
+            # memcg killed the whole run_capped.sh scope): six cells x nine
+            # years means 54 of these dropna()'d copies over the run's
+            # lifetime, each briefly coexisting with LightGBMRankStrategy.
+            # fit's own float32 numpy copy *and* LightGBM's internal
+            # binned-data copy of the same rows -- three representations of
+            # a several-hundred-MB frame alive at once per cell, at the
+            # grid's largest (last-test-year) window. Pandas DataFrames hold
+            # circular refs via their internal BlockManager (see
+            # run_baseline_chain.py::_load_panel's docstring for the same
+            # lesson learned there first), so plain refcounting does not
+            # reliably free `fit_rows` the moment this loop reassigns it on
+            # the next iteration -- explicit del + gc.collect() is required,
+            # not just tidiness.
+            del fit_rows
+            gc.collect()
 
             eval_rows = validation_frame.dropna(subset=[*self.feature_columns, cell.label_column])
             if eval_rows.empty:
                 ic_by_cell[cell.config_id] = float("nan")
+                del eval_rows
+                gc.collect()
                 continue
             # LightGBMRankStrategy.score requires a "symbol" column (it
             # returns a symbol-indexed Series for build_weight_schedule's
@@ -148,11 +167,19 @@ class GridSelectedLightGBMStrategy:
             mean_ic = float(ic_series.mean()) if not ic_series.empty else float("nan")
             ic_by_cell[cell.config_id] = mean_ic
             ic_series_by_cell[cell.config_id] = ic_series
+            del eval_rows, scores
+            gc.collect()
 
             if mean_ic == mean_ic and mean_ic > best_ic:  # NaN-safe: NaN != NaN
                 best_ic = mean_ic
                 best_model = model
                 best_cell = cell
+            else:
+                # Not the winner (so far) -- drop the last reference to its
+                # fitted LightGBM booster now rather than waiting for the
+                # loop's next `model = ...` reassignment to orphan it.
+                del model
+                gc.collect()
 
         if best_model is None or best_cell is None:
             raise ValueError(
