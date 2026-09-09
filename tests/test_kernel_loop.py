@@ -703,17 +703,17 @@ def test_universe_as_of_calendar_month_top_n_restricts_by_adv_rank() -> None:
     assert loop.universe_as_of_calendar_month(panel, as_of, top_n=1) == {"AAA"}
 
 
-def test_recency_sample_weight_matches_closed_form_half_life() -> None:
+def testrecency_sample_weight_matches_closed_form_half_life() -> None:
     as_of = pd.Timestamp("2024-06-30")
     trade_dates = pd.Series([as_of, as_of - pd.Timedelta(days=126), pd.Timestamp("2024-01-01")])
-    weight = loop._recency_sample_weight(trade_dates, as_of=as_of, halflife_days=126.0)
+    weight = loop.recency_sample_weight(trade_dates, as_of=as_of, halflife_days=126.0)
     assert weight.iloc[0] == pytest.approx(1.0)  # age 0 -> full weight
     assert weight.iloc[1] == pytest.approx(0.5)  # age 126 days -> exactly one half-life
     older_age_days = (as_of - trade_dates.iloc[2]).days
     assert weight.iloc[2] == pytest.approx(0.5 ** (older_age_days / 126.0))
 
 
-def test_fit_with_optional_sample_weight_passes_only_when_strategy_declares_it() -> None:
+def testfit_with_optional_sample_weight_passes_only_when_strategy_declares_it() -> None:
     received: dict[str, object] = {}
 
     class _AcceptsWeight:
@@ -727,14 +727,14 @@ def test_fit_with_optional_sample_weight_passes_only_when_strategy_declares_it()
     frame = pd.DataFrame({"trade_date": pd.to_datetime(["2024-01-02"])})
     weight_series = pd.Series([0.5])
 
-    loop._fit_with_optional_sample_weight(_AcceptsWeight(), frame, weight_series)
+    loop.fit_with_optional_sample_weight(_AcceptsWeight(), frame, weight_series)
     assert received["weight"] is weight_series
 
     received.clear()
     # Must not raise TypeError even though this strategy's fit() has no
     # sample_weight parameter at all -- this is exactly what protects every
     # existing/future RankingStrategy this file does not own.
-    loop._fit_with_optional_sample_weight(_DoesNotAcceptWeight(), frame, weight_series)
+    loop.fit_with_optional_sample_weight(_DoesNotAcceptWeight(), frame, weight_series)
     assert received["called_without_weight"] is True
 
 

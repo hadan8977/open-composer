@@ -167,7 +167,7 @@ class ExperimentConfig:
     #: number applies exponential-decay recency weights
     #: ``0.5 ** (age_days / recency_halflife_days)`` to training rows, passed
     #: to ``strategy.fit(train_frame, sample_weight=...)`` when the strategy
-    #: accepts that keyword (see ``_fit_with_optional_sample_weight``) --
+    #: accepts that keyword (see ``fit_with_optional_sample_weight``) --
     #: strategies that do not accept it are unaffected, never silently wrong.
     recency_halflife_days: float | None = None
     #: ``None`` (default, unchanged) never overrides the schedule. A dict
@@ -318,7 +318,7 @@ def embargo_cutoff(
     return trading_calendar[cutoff_position - 1]
 
 
-def _fit_with_optional_sample_weight(
+def fit_with_optional_sample_weight(
     strategy: RankingStrategy, train_frame: pd.DataFrame, sample_weight: pd.Series | None
 ) -> None:
     """Call ``strategy.fit(train_frame)``, additionally passing
@@ -340,7 +340,7 @@ def _fit_with_optional_sample_weight(
         strategy.fit(train_frame)
 
 
-def _recency_sample_weight(
+def recency_sample_weight(
     trade_dates: pd.Series, *, as_of: pd.Timestamp, halflife_days: float
 ) -> pd.Series:
     """Exponential-decay recency weight ``0.5 ** (age_days / halflife_days)``
@@ -426,7 +426,7 @@ def build_weight_schedule(
       sample weight per training row (age measured from that refit's own
       embargoed cutoff) and passes it to ``strategy.fit`` when the strategy
       accepts a ``sample_weight`` keyword (see
-      ``_fit_with_optional_sample_weight``).
+      ``fit_with_optional_sample_weight``).
     * ``universe_top_n``: forwarded to ``universe_as_of_calendar_month`` to
       restrict the PIT cohort by ADV rank.
     * ``trend_gate_series``/``trend_gate_cash_symbol``: when
@@ -516,14 +516,14 @@ def build_weight_schedule(
         train_frame = panel.loc[train_mask, ["trade_date", *train_columns]]
         del train_mask
         sample_weight = (
-            _recency_sample_weight(
+            recency_sample_weight(
                 train_frame["trade_date"], as_of=train_cutoff, halflife_days=recency_halflife_days
             )
             if recency_halflife_days is not None
             else None
         )
         strategy = strategy_factory()
-        _fit_with_optional_sample_weight(strategy, train_frame, sample_weight)
+        fit_with_optional_sample_weight(strategy, train_frame, sample_weight)
 
         for date in rebalance_dates:
             universe_symbols = universe_as_of_calendar_month(
