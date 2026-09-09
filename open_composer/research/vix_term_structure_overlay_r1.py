@@ -481,8 +481,46 @@ def runtime_contract_from_specs(specs: dict[str, StrategySpec], root: Path) -> V
     return contract
 
 
+#: Step 11 Wave C (open_composer/models/strategy_spec.py, PortfolioConfig)
+#: added these 9 always-default-None fields for portfolio.mode=
+#: model_ranking_portfolio. No VIX R1 spec uses that mode, but frozen
+#: historical lock snapshots captured before that change simply lack the
+#: keys, while a freshly re-dumped current spec now carries them (as
+#: null) -- an exact-dict-equality projection like this one must drop them
+#: when unset on a given side, the same way strategy_content_hash's own
+#: _remove_unset_schema_extensions already does, or every repair-identity
+#: check here spuriously fails independent of any real economic change.
+#: Confirmed via a real full-suite pytest run plus a direct before/after
+#: payload diff (git commit c394d82), not a hypothetical.
+_MODEL_RANKING_PORTFOLIO_SCHEMA_EXTENSION_FIELDS = (
+    "candidate_artifact_dir",
+    "universe_rule",
+    "universe_top_n",
+    "feature_set_id",
+    "label_horizon_days",
+    "top_k",
+    "rebalance",
+    "hedge",
+    "account_equity_for_sizing",
+)
+
+
 def _economic_spec_projection(payload: dict[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in payload.items() if key not in {"name", "research_design"}}
+    projection = {
+        key: value for key, value in payload.items() if key not in {"name", "research_design"}
+    }
+    portfolio = projection.get("portfolio")
+    if isinstance(portfolio, dict):
+        portfolio = dict(portfolio)
+        for field in _MODEL_RANKING_PORTFOLIO_SCHEMA_EXTENSION_FIELDS:
+            # Only drop when unset on this side, so a real future
+            # divergence (e.g. a repair iteration that actually adopts
+            # model_ranking_portfolio mode) still surfaces instead of
+            # being silently hidden.
+            if portfolio.get(field) is None:
+                portfolio.pop(field, None)
+        projection["portfolio"] = portfolio
+    return projection
 
 
 def _validate_repair_identity(
