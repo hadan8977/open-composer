@@ -11,7 +11,7 @@ from open_composer.compiler.spec_to_pine import compile_pine_strategy
 from open_composer.dashboard import build_dashboard_catalog
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
-from open_composer.models.strategy_spec import ResearchDesign, load_strategy_spec
+from open_composer.models.strategy_spec import PortfolioConfig, ResearchDesign, load_strategy_spec
 from open_composer.research import draft_strategy_from_idea
 from open_composer.strategy_capabilities import assess_strategy_capabilities
 from open_composer.strategy_lifecycle import activate_strategy
@@ -45,6 +45,24 @@ def test_optional_campaign_binding_preserves_legacy_content_hash(
     payload["research_design"].pop("campaign_contract_path")
     payload["research_design"].pop("candidate_policy_contract_path")
     payload["research_design"].pop("source_card_claim_ids")
+    # Step 11 Wave C's model_ranking_portfolio fields are the same kind of
+    # unset schema extension as research_design's fields above -- see
+    # test_model_ranking_portfolio_fields_preserve_legacy_content_hash for
+    # the dedicated regression test; this pre-existing test's own manual
+    # payload replica needs the same pops to stay in sync.
+    for field in (
+        "candidate_artifact_dir",
+        "universe_rule",
+        "universe_top_n",
+        "feature_set_id",
+        "label_horizon_days",
+        "top_k",
+        "rebalance",
+        "hedge",
+        "account_equity_for_sizing",
+    ):
+        assert payload["portfolio"][field] is None
+        payload["portfolio"].pop(field)
     expected = hashlib.sha256(
         json.dumps(
             payload,
@@ -80,6 +98,67 @@ def test_optional_campaign_binding_preserves_legacy_content_hash(
         }
     )
     assert strategy_content_hash(candidate_policy_bound) != expected
+
+
+def test_model_ranking_portfolio_fields_preserve_legacy_content_hash(
+    sample_workspace: Path,
+) -> None:
+    """Step 11 Wave C added 9 new (default-None) fields to PortfolioConfig
+    for mode=model_ranking_portfolio. Every pre-existing spec's `portfolio`
+    block does not set them, so they must be dropped from the hash payload
+    the same way research_design's and execution_policy's own schema
+    extensions already are -- otherwise every already-frozen spec-hash
+    contract in the repo changes the moment this field list merely exists,
+    independent of whether the spec actually uses the new mode. Caught via
+    a real full-suite run: multiple unrelated research iteration tests
+    (e.g. high_beta_sleeve_ensemble_r1's `R1 spec hash differs from
+    preregistered manifest`) broke from this before the fix below.
+    """
+    spec = load_strategy_spec(
+        sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
+    )
+    payload = spec.model_dump(mode="json")
+    for field in (
+        "candidate_artifact_dir",
+        "universe_rule",
+        "universe_top_n",
+        "feature_set_id",
+        "label_horizon_days",
+        "top_k",
+        "rebalance",
+        "hedge",
+        "account_equity_for_sizing",
+    ):
+        assert payload["portfolio"][field] is None
+        payload["portfolio"].pop(field)
+    expected = hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=True,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+
+    assert strategy_content_hash(spec) == expected
+
+    model_ranking_bound = spec.model_copy(
+        update={
+            "portfolio": PortfolioConfig(
+                mode="model_ranking_portfolio",
+                candidate_artifact_dir="config/model_ranking_candidates/x",
+                universe_rule="pit_adv_top_n",
+                universe_top_n=1500,
+                feature_set_id="daily_only",
+                label_horizon_days=21,
+                top_k=50,
+                rebalance="weekly_friday_close_monday_open",
+                weighting="equal_weight",
+                hedge="none",
+            )
+        }
+    )
+    assert strategy_content_hash(model_ranking_bound) != expected
 
 
 def test_strategy_version_registry_snapshots_specs_and_binds_runs(

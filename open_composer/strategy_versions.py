@@ -68,6 +68,30 @@ def _remove_unset_schema_extensions(spec: StrategySpec, payload: dict[str, objec
         payload.get("execution_policy"),
         ("historical_execution_contract", "future_order_contract"),
     )
+    drop_unset(
+        spec.portfolio,
+        payload.get("portfolio"),
+        (
+            # Step 11 Wave C -- model_ranking_portfolio mode fields, added
+            # to PortfolioConfig alongside every other pre-existing
+            # portfolio mode. All default to None and stay unset for every
+            # spec that does not use mode=model_ranking_portfolio, so they
+            # must be dropped here the same way every other schema
+            # extension is, or every already-frozen spec-hash contract in
+            # the repo (e.g. research candidate-manifest bindings) breaks
+            # the moment this field list exists at all -- confirmed via a
+            # real full-suite run, not a hypothetical.
+            "candidate_artifact_dir",
+            "universe_rule",
+            "universe_top_n",
+            "feature_set_id",
+            "label_horizon_days",
+            "top_k",
+            "rebalance",
+            "hedge",
+            "account_equity_for_sizing",
+        ),
+    )
     if spec.model is None:
         return
     model_payload = payload.get("model")
