@@ -88,6 +88,19 @@ def return_skewness(daily_returns: pd.Series) -> float:
     return float(pd.Series(daily_returns).skew())
 
 
+def weekly_returns(daily_returns: pd.Series) -> list[float]:
+    """Compounded return per calendar week -- the holding-period unit for a
+    mechanism that is always invested in something (F2's cash-switched
+    momentum book, F5's beta router) and therefore has no flat period to
+    exclude the way a discrete-trade mechanism (F1, F3) does: every week is
+    a holding period.
+    """
+    if daily_returns.empty:
+        raise ValueError("weekly_returns requires at least one observation")
+    weekly = daily_returns.groupby(pd.PeriodIndex(daily_returns.index, freq="W")).apply(_compound)
+    return weekly.tolist()
+
+
 def worst_single_week_return(daily_returns: pd.Series) -> float:
     """Worst compounded return over any single calendar week present."""
     if daily_returns.empty:

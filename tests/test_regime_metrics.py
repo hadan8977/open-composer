@@ -121,6 +121,20 @@ def test_worst_single_week_return_rejects_empty_series() -> None:
         metrics.worst_single_week_return(pd.Series([], dtype=float))
 
 
+def test_weekly_returns_compounds_each_calendar_week() -> None:
+    index = pd.DatetimeIndex(["2024-01-01", "2024-01-02", "2024-01-08", "2024-01-09"], tz="UTC")
+    series = pd.Series([0.01, 0.01, -0.10, -0.05], index=index)
+    result = metrics.weekly_returns(series)
+    assert len(result) == 2
+    assert result[0] == pytest.approx((1.01 * 1.01) - 1.0)
+    assert result[1] == pytest.approx((0.9 * 0.95) - 1.0)
+
+
+def test_weekly_returns_rejects_empty_series() -> None:
+    with pytest.raises(ValueError):
+        metrics.weekly_returns(pd.Series([], dtype=float))
+
+
 def test_annualized_trade_count_normalizes_by_years() -> None:
     assert metrics.annualized_trade_count(10, years=2.0) == pytest.approx(5.0)
 
