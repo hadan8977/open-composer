@@ -472,9 +472,17 @@ def _run_label_shuffle_placebo(
     feature_columns = list(feature_columns)
     rng = np.random.default_rng(7)
     shuffled = panel.copy()
-    shuffled[PRIMARY_LABEL_COLUMN] = shuffled.groupby("trade_date")[PRIMARY_LABEL_COLUMN].transform(
-        lambda s: rng.permutation(s.to_numpy()) if s.notna().any() else s
-    )
+    # Shuffle *every* label horizon the grid can select, not just
+    # PRIMARY_LABEL_COLUMN: GridSelectedLightGBMStrategy.fit() explores all
+    # 6 (horizon, depth) cells every call, and the h5/h10 cells train on
+    # label_rank_5/label_rank_10 -- leaving those un-shuffled would let 4 of
+    # 6 cells see real, unpermuted labels, which is not a placebo for them.
+    for label_column in ALL_LABEL_COLUMNS:
+        if label_column not in shuffled.columns:
+            continue
+        shuffled[label_column] = shuffled.groupby("trade_date")[label_column].transform(
+            lambda s: rng.permutation(s.to_numpy()) if s.notna().any() else s
+        )
 
     strategy = GridSelectedLightGBMStrategy(feature_columns, grid=DEFAULT_GRID)
     schedule = build_weight_schedule(
@@ -489,6 +497,17 @@ def _run_label_shuffle_placebo(
         hedge="none",
         train_row_dates="rebalance_dates",
         trading_calendar=trading_calendar,
+        # Without this, build_weight_schedule's narrow-column train_frame
+        # only carries label_column (label_rank_21); GridSelectedLightGBM
+        # Strategy.fit() needs all three horizons in the same train_frame
+        # (one grid cell per horizon) and KeyErrors on label_rank_5 the
+        # instant it tries an h5 cell. Mirrors _run_b3_and_queue_result's
+        # real (non-placebo) run_experiment(..., extra_train_columns=
+        # EXTRA_LABEL_COLUMNS) call -- this was the one call site that
+        # never got it, and every earlier chance to exercise this exact
+        # code path in this session died before reaching it (see the Step
+        # 11 ledger's 2026-09-09 entries), so the bug was latent until now.
+        extra_train_columns=EXTRA_LABEL_COLUMNS,
     )
     del schedule  # only strategy.fit()'s internal validation IC is needed
 
