@@ -203,10 +203,13 @@ def _load_panel(feature_set: str = "daily_only") -> pd.DataFrame:
         label_year["symbol"] = label_year["symbol"].astype(symbol_dtype)
         merged_frames.append(daily_year.merge(label_year, on=["symbol", "trade_date"], how="inner"))
         del daily_year, label_year
+        gc.collect()
 
-    panel = pd.concat(merged_frames, ignore_index=True)
+    panel = pd.concat(merged_frames, ignore_index=True, copy=False)
     del merged_frames
     gc.collect()
+    panel_gb = panel.memory_usage(deep=True).sum() / 1e9
+    print(f"[_load_panel] {feature_set}: panel.memory_usage(deep=True) = {panel_gb:.3f} GB", flush=True)
     return panel
 
 
