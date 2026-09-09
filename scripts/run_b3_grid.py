@@ -63,6 +63,7 @@ import json
 import multiprocessing
 import sys
 import time
+from collections.abc import Sequence
 from pathlib import Path
 from queue import Empty as QueueEmpty
 
@@ -208,6 +209,18 @@ def _parse_args() -> argparse.Namespace:
         "--placebo-only",
         action="store_true",
         help="run only the label-shuffle placebo check (no ledger/tearsheet experiments)",
+    )
+    parser.add_argument(
+        "--placebo-feature-set",
+        choices=["daily_only", "daily_plus_intraday"],
+        default="daily_only",
+        help=(
+            "which feature set --placebo-only shuffles/refits on (default: daily_only). "
+            "The daily_plus_intraday full grid's every validation year selecting the same "
+            "cell at rank IC 0.15-0.40 (2026-09-09) is at least as leakage-suspicious as "
+            "daily_only's original 0.08-0.17, so both feature sets need their own placebo, "
+            "not just daily_only's."
+        ),
     )
     parser.add_argument(
         "--execution",
@@ -427,6 +440,7 @@ def _run_label_shuffle_placebo(
     panel: pd.DataFrame,
     universe_panel: pd.DataFrame,
     trading_calendar: pd.DatetimeIndex,
+    feature_columns: Sequence[str] = B2_FEATURE_COLUMNS,
 ) -> dict[str, object]:
     """Plan section 4's "一次标签打乱的安慰剂": shuffle label_rank_21 *within*
     each trade_date's cross-section (so the marginal distribution the model
@@ -440,6 +454,13 @@ def _run_label_shuffle_placebo(
     train/embargo logic for one test year via a throwaway one-year config,
     which is representative of every other year's mechanics.
 
+    ``feature_columns`` (2026-09-09): defaults to ``B2_FEATURE_COLUMNS``
+    (daily_only) but every call site should pass the feature set actually
+    under suspicion -- the daily_plus_intraday full grid's every validation
+    year selecting the same cell at rank IC 0.15-0.40 is at least as
+    leakage-suspicious as daily_only's original 0.08-0.17 smoke-test IC, so
+    both feature sets get their own placebo, not just daily_only's.
+
     ``trading_calendar`` (2026-09-09, memory-lean loading rewrite): ``panel``
     now holds rebalance-day rows only (see ``_load_feature_panel``), so the
     embargo/rebalance-date computation inside ``build_weight_schedule`` can
@@ -448,18 +469,19 @@ def _run_label_shuffle_placebo(
     were the *only* trading day, breaking the embargo's day-count. The
     caller passes the same full calendar ``load_price_panel()`` provides.
     """
+    feature_columns = list(feature_columns)
     rng = np.random.default_rng(7)
     shuffled = panel.copy()
     shuffled[PRIMARY_LABEL_COLUMN] = shuffled.groupby("trade_date")[PRIMARY_LABEL_COLUMN].transform(
         lambda s: rng.permutation(s.to_numpy()) if s.notna().any() else s
     )
 
-    strategy = GridSelectedLightGBMStrategy(B2_FEATURE_COLUMNS, grid=DEFAULT_GRID)
+    strategy = GridSelectedLightGBMStrategy(feature_columns, grid=DEFAULT_GRID)
     schedule = build_weight_schedule(
         panel=shuffled,
         universe_panel=universe_panel,
         strategy_factory=lambda: strategy,
-        feature_columns=list(B2_FEATURE_COLUMNS),
+        feature_columns=feature_columns,
         label_column=PRIMARY_LABEL_COLUMN,
         label_horizon_days=LABEL_HORIZON_DAYS,
         test_years=(2026,),
@@ -545,7 +567,7 @@ def main() -> int:
     needed_feature_sets = (
         sorted({config.feature_set for config in configs})
         if not args.placebo_only
-        else ["daily_only"]
+        else [args.placebo_feature_set]
     )
 
     # Shared, narrow (symbol, trade_date, open, close) price panel for every
@@ -577,8 +599,13 @@ def main() -> int:
 
     if args.placebo_only:
         gc.collect()
-        print("running label-shuffle placebo ...", flush=True)
-        result = _run_label_shuffle_placebo(panels["daily_only"], universe_panel, trading_calendar)
+        print(f"running label-shuffle placebo ({args.placebo_feature_set}) ...", flush=True)
+        result = _run_label_shuffle_placebo(
+            panels[args.placebo_feature_set],
+            universe_panel,
+            trading_calendar,
+            feature_columns=FEATURE_COLUMNS_BY_SET[args.placebo_feature_set],
+        )
         print(json.dumps(result, indent=2, default=str), flush=True)
         return 0
 
