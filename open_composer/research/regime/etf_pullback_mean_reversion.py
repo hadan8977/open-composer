@@ -466,3 +466,45 @@ def materialize_composite(
                 trades.append(trade)
     composite = pd.concat(parts).sort_index() if parts else pd.Series(dtype=float)
     return composite, trades
+
+
+def load_common_bars(raw_frame: pd.DataFrame, symbols: Sequence[str]) -> dict[str, pd.DataFrame]:
+    """Pivot a long ``open_composer.adapters.data.sip_parquet.load_sip_bars``
+    -shaped frame (columns ``symbol, timestamp, open, high, low, close, ...``)
+    into one OHLC frame per symbol, all reindexed onto the shared
+    intersection of trading dates present for every requested symbol -- so
+    every entry in the returned dict (including a cash/BIL "symbol" if
+    passed in ``symbols``) can be zipped together index-for-index without
+    any one symbol's own holiday/listing gap producing a misaligned row.
+    """
+    per_symbol: dict[str, pd.DataFrame] = {}
+    common_index: pd.DatetimeIndex | None = None
+    for symbol in symbols:
+        rows = raw_frame.loc[raw_frame["symbol"] == symbol].sort_values("timestamp")
+        indexed = rows.set_index(pd.DatetimeIndex(rows["timestamp"]))[
+            ["open", "high", "low", "close"]
+        ]
+        per_symbol[symbol] = indexed
+        common_index = (
+            indexed.index if common_index is None else common_index.intersection(indexed.index)
+        )
+    if common_index is None or common_index.empty:
+        raise ValueError("no common trading dates across the requested symbols")
+    return {symbol: frame.reindex(common_index) for symbol, frame in per_symbol.items()}
+
+
+def compute_warmup_complete_date(bars: Mapping[str, pd.DataFrame]) -> pd.Timestamp:
+    """The earliest date by which every symbol in ``bars`` has a valid
+    SMA200 -- the latest of each symbol's own SMA200 first-valid date, since
+    the trend filter needs all of them simultaneously.
+    """
+    latest: pd.Timestamp | None = None
+    for symbol, frame in bars.items():
+        sma200 = frame["close"].rolling(SMA_TREND_DAYS, min_periods=SMA_TREND_DAYS).mean()
+        first_valid = sma200.first_valid_index()
+        if first_valid is None:
+            raise ValueError(f"{symbol}: insufficient history to warm up SMA{SMA_TREND_DAYS}")
+        if latest is None or first_valid > latest:
+            latest = first_valid
+    assert latest is not None  # bars is non-empty by construction of every caller
+    return latest

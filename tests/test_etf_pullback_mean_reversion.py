@@ -319,3 +319,109 @@ def test_profit_factor_and_hit_rate_can_be_computed_from_trade_net_returns() -> 
     assert regime_metrics.hit_rate(returns) == pytest.approx(0.5)
     assert regime_metrics.profit_factor(returns) == pytest.approx(2.0)
     assert not math.isnan(regime_metrics.profit_factor(returns))
+
+
+# ---------------------------------------------------------------------------
+# load_common_bars / compute_warmup_complete_date
+# ---------------------------------------------------------------------------
+
+
+def test_load_common_bars_pivots_and_intersects_dates() -> None:
+    # AAA trades 2024-01-02..01-05; BBB is missing 01-03 (e.g. a listing gap).
+    raw_frame = pd.DataFrame(
+        [
+            {
+                "symbol": "AAA",
+                "timestamp": "2024-01-02",
+                "open": 1,
+                "high": 2,
+                "low": 0,
+                "close": 1,
+            },
+            {
+                "symbol": "AAA",
+                "timestamp": "2024-01-03",
+                "open": 1,
+                "high": 2,
+                "low": 0,
+                "close": 1,
+            },
+            {
+                "symbol": "AAA",
+                "timestamp": "2024-01-04",
+                "open": 1,
+                "high": 2,
+                "low": 0,
+                "close": 1,
+            },
+            {
+                "symbol": "BBB",
+                "timestamp": "2024-01-02",
+                "open": 5,
+                "high": 6,
+                "low": 4,
+                "close": 5,
+            },
+            {
+                "symbol": "BBB",
+                "timestamp": "2024-01-04",
+                "open": 5,
+                "high": 6,
+                "low": 4,
+                "close": 5,
+            },
+        ]
+    )
+    result = f1.load_common_bars(raw_frame, ["AAA", "BBB"])
+    assert set(result) == {"AAA", "BBB"}
+    expected_index = pd.DatetimeIndex(["2024-01-02", "2024-01-04"])
+    for frame in result.values():
+        assert list(frame.index) == list(expected_index)
+        assert list(frame.columns) == ["open", "high", "low", "close"]
+
+
+def test_load_common_bars_raises_when_no_overlap() -> None:
+    raw_frame = pd.DataFrame(
+        [
+            {
+                "symbol": "AAA",
+                "timestamp": "2024-01-02",
+                "open": 1,
+                "high": 2,
+                "low": 0,
+                "close": 1,
+            },
+            {
+                "symbol": "BBB",
+                "timestamp": "2024-02-02",
+                "open": 5,
+                "high": 6,
+                "low": 4,
+                "close": 5,
+            },
+        ]
+    )
+    with pytest.raises(ValueError):
+        f1.load_common_bars(raw_frame, ["AAA", "BBB"])
+
+
+def test_compute_warmup_complete_date_takes_the_latest_symbol() -> None:
+    short_index = _dates(199)
+    long_index = _dates(300)
+    bars = {
+        "SHORT_WARMUP": _ohlc_frame(long_index, 10.0),  # 300 rows -> warms up early
+        "LATE_WARMUP": _ohlc_frame(long_index, 20.0),
+    }
+    # Force LATE_WARMUP's SMA200 to be undefined until later by truncating
+    # its own first-valid-index later than SHORT_WARMUP's: build it with an
+    # extra 5-row-later start so its 200th valid close lands 5 rows later.
+    bars["LATE_WARMUP"] = bars["LATE_WARMUP"].iloc[5:].reindex(long_index)
+    warmup_date = f1.compute_warmup_complete_date(bars)
+    assert warmup_date == long_index[204]
+    assert len(short_index) == 199  # sanity: not itself used, just documents the 200-row need
+
+
+def test_compute_warmup_complete_date_raises_with_insufficient_history() -> None:
+    bars = {"TOO_SHORT": _ohlc_frame(_dates(50))}
+    with pytest.raises(ValueError):
+        f1.compute_warmup_complete_date(bars)
