@@ -9,6 +9,7 @@ rather than a fake one.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -112,6 +113,17 @@ def test_run_experiment_end_to_end_writes_ledger_tearsheet_and_mlflow(
     assert verdict.dsr_trial_count == loop._MIN_DSR_TRIAL_COUNT
     # AAA is the always-highest-momentum name -- top_k=2 should always include it.
     assert verdict.long_only.metrics["cagr"] is not None
+
+    # sharpe_excess_bil is a top-level CandidateVerdict field, not a key
+    # inside .metrics -- confirm the ledger record on disk actually carries
+    # it (2026-09-08 fix; previously only each run's own stdout JSON did).
+    ledger_record = json.loads(ledger_path.read_text().splitlines()[0])
+    assert ledger_record["long_only"]["sharpe_excess_bil"] == pytest.approx(
+        verdict.long_only.sharpe_excess_bil
+    )
+    assert ledger_record["market_neutral"]["sharpe_excess_bil"] == pytest.approx(
+        verdict.market_neutral.sharpe_excess_bil
+    )
     assert set(verdict.long_only.gate_results) == {
         "cagr_excess_vol_matched_benchmark",
         "sharpe_excess_bil",

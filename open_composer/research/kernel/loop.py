@@ -779,11 +779,21 @@ def run_experiment(
                 "metrics": long_verdict.metrics,
                 "gate_results": long_verdict.gate_results,
                 "all_gates_pass": long_verdict.all_gates_pass,
+                # CandidateVerdict.sharpe_excess_bil is a top-level dataclass
+                # field, not a key inside .metrics -- omitting it here (as
+                # this record shape did until 2026-09-08) meant the ledger
+                # itself never carried Sharpe-ex-BIL at all, only each run's
+                # own stdout JSON did (see the Step 11 ledger's Wave A 3.5
+                # real-run-results table, which had to be sourced from
+                # /tmp/*.log for exactly this reason). Additive: does not
+                # change config_hash or any existing key.
+                "sharpe_excess_bil": long_verdict.sharpe_excess_bil,
             },
             "market_neutral": {
                 "metrics": neutral_verdict.metrics,
                 "gate_results": neutral_verdict.gate_results,
                 "all_gates_pass": neutral_verdict.all_gates_pass,
+                "sharpe_excess_bil": neutral_verdict.sharpe_excess_bil,
             },
             "tearsheet_path": tearsheet_path,
             "mlflow_run_id": mlflow_run_id,
