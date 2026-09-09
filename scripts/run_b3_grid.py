@@ -73,6 +73,7 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 from open_composer.research.features.intraday_daily import INTRADAY_DAILY_COLUMNS  # noqa: E402
+from open_composer.research.features.panel import load_feature_panel, load_price_panel  # noqa: E402
 from open_composer.research.features.universe import load_universe_panel  # noqa: E402
 from open_composer.research.kernel.b3_grid_strategy import (  # noqa: E402
     DEFAULT_GRID,
@@ -86,6 +87,7 @@ from open_composer.research.kernel.loop import (  # noqa: E402
     ExperimentConfig,
     build_weight_schedule,
     run_experiment,
+    weekly_rebalance_dates,
 )
 
 DAILY_FEATURES_ROOT = ROOT / "data" / "features" / "daily"
@@ -143,70 +145,47 @@ ALL_LABEL_COLUMNS = (*EXTRA_LABEL_COLUMNS, PRIMARY_LABEL_COLUMN)
 #: max of the grid's horizons, so the cutoff is safe for every cell.
 LABEL_HORIZON_DAYS = 21
 
-# "open" (Wave B item 4, 2026-09-08): needed so run_experiment can pivot
-# open_wide for the next_open execution path; harmless/unused for the
-# default close_marked execution every other config here still uses.
-_DAILY_ONLY_READ_COLUMNS = sorted({"symbol", "trade_date", "open", "close", *B2_FEATURE_COLUMNS})
-_DAILY_PLUS_INTRADAY_READ_COLUMNS = sorted(
-    {
-        "symbol",
-        "trade_date",
-        "open",
-        "close",
-        *B2_FEATURE_COLUMNS,
-        *INTRADAY_ROLLING_FEATURE_COLUMNS,
-    }
-)
-_LABEL_READ_COLUMNS = ["symbol", "trade_date", *ALL_LABEL_COLUMNS]
-_READ_COLUMNS_BY_FEATURE_SET = {
-    "daily_only": _DAILY_ONLY_READ_COLUMNS,
-    "daily_plus_intraday": _DAILY_PLUS_INTRADAY_READ_COLUMNS,
+#: feature_columns per feature_set, keyed the same way ExperimentConfig's
+#: own feature_set field is (see main()'s configs list) -- the single source
+#: both the ExperimentConfig construction and the panel loader below read
+#: from, so the two can never quietly drift apart.
+FEATURE_COLUMNS_BY_SET: dict[str, tuple[str, ...]] = {
+    "daily_only": B2_FEATURE_COLUMNS,
+    "daily_plus_intraday": B2_FEATURE_COLUMNS_DAILY_PLUS_INTRADAY,
 }
 
 
-def _load_panel(feature_set: str = "daily_only") -> pd.DataFrame:
-    """Same shared-CategoricalDtype-before-merge / float32 / per-year-merge
-    approach as run_baseline_chain.py::_load_panel (see that module's
-    comments for the full rationale) -- duplicated rather than imported
-    because the label column set differs (all 3 horizons here, one there)
-    and this script must not risk perturbing the already-committed,
-    already-recorded B0-B2 baseline chain by refactoring its loader.
+def _load_feature_panel(feature_set: str, fridays: pd.DatetimeIndex) -> pd.DataFrame:
+    """Rebalance-day-only feature+label rows via
+    ``open_composer.research.features.panel.load_feature_panel`` (2026-09-09
+    rewrite -- see that module's docstring). Replaces the old per-year
+    pandas read/merge/concat ``_load_panel``, which peaked above 2.6GB on
+    the daily_plus_intraday feature set and was killed by its memory cgroup
+    five times in three days (see the Step 11 ledger's 2026-09-08/09
+    entries) despite category-dtype-before-merge, float32 downcasting, and
+    per-year gc.collect() all already being in place -- none of that fixes
+    ``pd.concat``'s inherent need to hold every per-year input *and* the
+    freshly allocated output alive at once. ``include_prices=False``: this
+    script always calls ``run_experiment`` with a separate ``price_panel``
+    (see ``main()``), so the feature panel itself never needs open/close.
     """
-    if feature_set not in _READ_COLUMNS_BY_FEATURE_SET:
-        known = sorted(_READ_COLUMNS_BY_FEATURE_SET)
+    if feature_set not in FEATURE_COLUMNS_BY_SET:
+        known = sorted(FEATURE_COLUMNS_BY_SET)
         raise ValueError(f"unknown feature_set {feature_set!r}, expected one of {known}")
-    read_columns = _READ_COLUMNS_BY_FEATURE_SET[feature_set]
-
-    years = sorted(int(p.stem) for p in DAILY_FEATURES_ROOT.glob("*.parquet") if p.stem.isdigit())
-
-    all_symbols: set[str] = set()
-    for year in years:
-        year_symbols = pd.read_parquet(DAILY_FEATURES_ROOT / f"{year}.parquet", columns=["symbol"])
-        all_symbols.update(year_symbols["symbol"].unique())
-        del year_symbols
-    symbol_dtype = pd.CategoricalDtype(categories=sorted(all_symbols))
-
-    merged_frames = []
-    for year in years:
-        daily_year = pd.read_parquet(DAILY_FEATURES_ROOT / f"{year}.parquet", columns=read_columns)
-        label_path = LABELS_ROOT / f"{year}.parquet"
-        if not label_path.exists():
-            continue
-        label_year = pd.read_parquet(label_path, columns=_LABEL_READ_COLUMNS)
-        for frame in (daily_year, label_year):
-            float_columns = frame.select_dtypes(include=["float64"]).columns
-            frame[float_columns] = frame[float_columns].astype("float32")
-        daily_year["symbol"] = daily_year["symbol"].astype(symbol_dtype)
-        label_year["symbol"] = label_year["symbol"].astype(symbol_dtype)
-        merged_frames.append(daily_year.merge(label_year, on=["symbol", "trade_date"], how="inner"))
-        del daily_year, label_year
-        gc.collect()
-
-    panel = pd.concat(merged_frames, ignore_index=True, copy=False)
-    del merged_frames
-    gc.collect()
+    panel = load_feature_panel(
+        list(FEATURE_COLUMNS_BY_SET[feature_set]),
+        list(ALL_LABEL_COLUMNS),
+        dates=fridays,
+        include_prices=False,
+        daily_root=DAILY_FEATURES_ROOT,
+        labels_root=LABELS_ROOT,
+    )
     panel_gb = panel.memory_usage(deep=True).sum() / 1e9
-    print(f"[_load_panel] {feature_set}: panel.memory_usage(deep=True) = {panel_gb:.3f} GB", flush=True)
+    print(
+        f"[_load_feature_panel] {feature_set}: {len(panel)} rows, "
+        f"panel.memory_usage(deep=True) = {panel_gb:.3f} GB",
+        flush=True,
+    )
     return panel
 
 
@@ -318,6 +297,7 @@ def _annual_compounded_returns(candidate) -> dict[str, float]:
 def _run_b3_and_queue_result(
     config: ExperimentConfig,
     panel: pd.DataFrame,
+    price_panel: pd.DataFrame,
     universe_panel: pd.DataFrame,
     benchmarks: dict[str, pd.Series],
     result_queue: multiprocessing.Queue,
@@ -333,6 +313,7 @@ def _run_b3_and_queue_result(
         verdict = run_experiment(
             config,
             panel=panel,
+            price_panel=price_panel,
             universe_panel=universe_panel,
             label_column=PRIMARY_LABEL_COLUMN,
             strategy_factory=factory,
@@ -403,13 +384,14 @@ def _run_b3_and_queue_result(
 def _run_b3_in_subprocess(
     config: ExperimentConfig,
     panel: pd.DataFrame,
+    price_panel: pd.DataFrame,
     universe_panel: pd.DataFrame,
     benchmarks: dict[str, pd.Series],
 ) -> dict[str, object]:
     result_queue: multiprocessing.Queue = multiprocessing.Queue()
     process = multiprocessing.Process(
         target=_run_b3_and_queue_result,
-        args=(config, panel, universe_panel, benchmarks, result_queue),
+        args=(config, panel, price_panel, universe_panel, benchmarks, result_queue),
     )
     process.start()
     status: str | None = None
@@ -442,7 +424,9 @@ def _run_b3_in_subprocess(
 
 
 def _run_label_shuffle_placebo(
-    panel: pd.DataFrame, universe_panel: pd.DataFrame
+    panel: pd.DataFrame,
+    universe_panel: pd.DataFrame,
+    trading_calendar: pd.DatetimeIndex,
 ) -> dict[str, object]:
     """Plan section 4's "一次标签打乱的安慰剂": shuffle label_rank_21 *within*
     each trade_date's cross-section (so the marginal distribution the model
@@ -455,6 +439,14 @@ def _run_label_shuffle_placebo(
     9-year walk-forward: it borrows build_weight_schedule's exact
     train/embargo logic for one test year via a throwaway one-year config,
     which is representative of every other year's mechanics.
+
+    ``trading_calendar`` (2026-09-09, memory-lean loading rewrite): ``panel``
+    now holds rebalance-day rows only (see ``_load_feature_panel``), so the
+    embargo/rebalance-date computation inside ``build_weight_schedule`` can
+    no longer derive the trading calendar from ``panel["trade_date"]``
+    itself -- that would silently treat every rebalance day as though it
+    were the *only* trading day, breaking the embargo's day-count. The
+    caller passes the same full calendar ``load_price_panel()`` provides.
     """
     rng = np.random.default_rng(7)
     shuffled = panel.copy()
@@ -474,6 +466,7 @@ def _run_label_shuffle_placebo(
         top_k=50,
         hedge="none",
         train_row_dates="rebalance_dates",
+        trading_calendar=trading_calendar,
     )
     del schedule  # only strategy.fit()'s internal validation IC is needed
 
@@ -554,25 +547,38 @@ def main() -> int:
         if not args.placebo_only
         else ["daily_only"]
     )
+
+    # Shared, narrow (symbol, trade_date, open, close) price panel for every
+    # trading day -- feeds both run_experiment's price_panel= (mark-to-market
+    # between rebalances) and the trading_calendar every feature panel below
+    # is filtered against (see open_composer.research.features.panel and the
+    # Step 11 ledger's 2026-09-09 "memory-lean panel" rewrite).
+    print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] loading shared price panel ...", flush=True)
+    price_panel = load_price_panel(daily_root=DAILY_FEATURES_ROOT)
+    price_gb = price_panel.memory_usage(deep=True).sum() / 1e9
+    print(
+        f"price_panel: {len(price_panel)} rows, {price_panel['symbol'].nunique()} symbols, "
+        f"{price_gb:.3f} GB",
+        flush=True,
+    )
+    trading_calendar = pd.DatetimeIndex(sorted(price_panel["trade_date"].unique()))
+    fridays = pd.DatetimeIndex(weekly_rebalance_dates(trading_calendar))
+
     panels: dict[str, pd.DataFrame] = {}
     for feature_set in needed_feature_sets:
         print(
-            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] loading {feature_set} daily+label panel ...",
+            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] loading {feature_set} feature+label panel "
+            "(rebalance days only) ...",
             flush=True,
         )
-        panel = _load_panel(feature_set)
-        print(
-            f"panel[{feature_set}]: {len(panel)} rows, {panel['symbol'].nunique()} symbols",
-            flush=True,
-        )
-        panels[feature_set] = panel
+        panels[feature_set] = _load_feature_panel(feature_set, fridays)
 
     universe_panel = load_universe_panel(UNIVERSE_ROOT)
 
     if args.placebo_only:
         gc.collect()
         print("running label-shuffle placebo ...", flush=True)
-        result = _run_label_shuffle_placebo(panels["daily_only"], universe_panel)
+        result = _run_label_shuffle_placebo(panels["daily_only"], universe_panel, trading_calendar)
         print(json.dumps(result, indent=2, default=str), flush=True)
         return 0
 
@@ -592,7 +598,7 @@ def main() -> int:
         )
         started = time.monotonic()
         result = _run_b3_in_subprocess(
-            config, panels[config.feature_set], universe_panel, benchmarks
+            config, panels[config.feature_set], price_panel, universe_panel, benchmarks
         )
         elapsed = time.monotonic() - started
         result["elapsed_seconds"] = round(elapsed, 1)
@@ -614,7 +620,7 @@ def main() -> int:
     if "daily_only" in panels:
         print("\n=== label-shuffle placebo (daily_only, 2026 window) ===", flush=True)
         gc.collect()
-        placebo = _run_label_shuffle_placebo(panels["daily_only"], universe_panel)
+        placebo = _run_label_shuffle_placebo(panels["daily_only"], universe_panel, trading_calendar)
         all_results["label_shuffle_placebo"] = placebo
         print(json.dumps(placebo, indent=2, default=str), flush=True)
     else:
