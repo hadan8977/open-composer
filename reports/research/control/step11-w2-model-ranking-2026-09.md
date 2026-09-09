@@ -169,7 +169,28 @@ experiment_id** -- not left stale.
 
 ## 10. Honest conclusion
 
-TBD.
+**Preliminary (daily_plus_intraday grid still running as of this writing --
+finalized once it lands, not before):**
+
+Wave B's model-first hypothesis has not paid off so far. Every ML candidate
+tried this round (B2 ridge, B3 LightGBM, in both `train_row_dates`
+conventions tested for daily-only) has come in behind the simplest rule in
+the chain (B1, 12-1 momentum) on the metrics that matter for promotion
+(excess CAGR, Sharpe-ex-BIL, gate count). B3's headline raw CAGR (11.5%)
+would look fine in isolation; it only reads as a regression once compared
+to its own benchmark on a volatility-matched basis, which is exactly why
+that comparison exists. Nothing in this round's evidence supports
+promoting a model-ranking candidate over the existing rule-based champion.
+The chain's answer to "should Wave B's ML models replace B1" is, as of the
+daily-only result, **no** -- this is being written down plainly rather than
+reframed around B3's more flattering absolute numbers.
+
+Whether `daily_plus_intraday` features change this conclusion is the one
+open question this report is still waiting on.
+
+## 11. blocked_on_user
+
+None as of this writing.
 
 ## 11. blocked_on_user
 
