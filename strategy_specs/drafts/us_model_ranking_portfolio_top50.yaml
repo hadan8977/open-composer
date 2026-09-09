@@ -113,6 +113,14 @@ data_assumptions:
   timezone: America/New_York
 llm_review: {enabled: false}
 required_capabilities: [market.alpaca_bars]
+research_design:
+  # Wired for Step 11 Wave C item 4's promotion-path dry run
+  # (scripts/new_lightweight_iteration.py --from-ledger step11_b1_momentum_top50).
+  # Minimal binding: only the three fields build_dossier() actually checks
+  # against this spec (iter_id, candidate_manifest_path, data_feasibility_path).
+  iter_id: step11_wavec_model_ranking_top50
+  candidate_manifest_path: reports/research/iterations/step11_wavec_model_ranking_top50/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/step11_wavec_model_ranking_top50/data-feasibility.json
 notes:
   intent: >-
     Step 11 Wave C observation-mode connection: daily target weights and

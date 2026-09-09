@@ -104,8 +104,157 @@ _EXAMPLE_CONFIG: dict[str, Any] = {
 }
 
 
+#: Step 11 plan section 3.5's frozen cost assumption, used as the cost_table
+#: fallback for --from-ledger when a ledger row does not itself carry
+#: cost_bps_per_side/stress_cost_bps_per_side (the ledger schema records
+#: metrics and gate results, not every ExperimentConfig field verbatim --
+#: see reports/research/control/step11-2026-09-06-progress.md).
+_STEP11_DEFAULT_COST_TABLE = {
+    "base_cost_bps": 10.0,
+    "stress_cost_bps": 25.0,
+    "source": "docs/plan-step-11-ml-first-loop-2026-09-06.zh.md section 3.5 (frozen default)",
+}
+#: Cross-sectional analogue of the standard benchmark family (AGENTS.md:
+#: "same-symbol buy-and-hold, equal-weight universe, market proxy,
+#: sector/theme proxy, cash proxy, ex-post best symbol") -- there is no
+#: single "same symbol" for a top-K rotating book, so the universe
+#: equal-weight benchmark stands in for it; sector/theme proxy is omitted
+#: (no sector map registered for this universe, an already-recorded gap in
+#: paper_readiness._portfolio_risk_check's details).
+_STEP11_CROSS_SECTIONAL_BENCHMARK_FAMILY = [
+    "universe_equal_weight",
+    "market_proxy_spy",
+    "cash_proxy_bil",
+]
+
+
 def _fail(message: str) -> None:
     raise SystemExit(f"new_lightweight_iteration: {message}")
+
+
+def _load_ledger_experiment(root: Path, experiment_id: str) -> dict[str, Any]:
+    ledger_path = root / "reports" / "research" / "ledger" / "experiments.jsonl"
+    if not ledger_path.is_file():
+        _fail(f"no experiment ledger at {_relpath(ledger_path, root)}")
+    matches = []
+    for line_number, line in enumerate(ledger_path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as exc:
+            _fail(f"{_relpath(ledger_path, root)}:{line_number} is not valid JSON: {exc}")
+        if isinstance(row, dict) and row.get("experiment_id") == experiment_id:
+            matches.append(row)
+    if not matches:
+        _fail(
+            f"no ledger row with experiment_id={experiment_id!r} in {_relpath(ledger_path, root)}"
+        )
+    # _append_ledger dedupes on (config_hash, family), so more than one row
+    # sharing an experiment_id would mean the ledger itself is inconsistent
+    # -- surface that loudly rather than silently picking one.
+    if len(matches) > 1:
+        _fail(f"ledger has {len(matches)} rows with experiment_id={experiment_id!r}; expected 1")
+    return matches[0]
+
+
+def config_from_ledger(
+    *,
+    root: Path,
+    experiment_id: str,
+    iter_id: str,
+    strategy_name: str,
+    representative_spec_path: str,
+    sources: list[dict[str, Any]] | None,
+    topic_coverage: list[str] | None,
+    source_cards_path: str | None,
+) -> dict[str, Any]:
+    """Build a ``new_lightweight_iteration.py`` input config from a real
+    ``reports/research/ledger/experiments.jsonl`` row instead of hand-typed
+    JSON (Step 11 Wave C item 4: promote the current best-of-chain ledger
+    experiment through the standard preregistration path). Every field below
+    is either read directly off the ledger row or is this repo's
+    already-frozen Step 11 default (cited, not guessed) -- ``sources``/
+    ``topic_coverage``/``source_cards_path`` are the one part this function
+    deliberately does NOT fabricate: research-stage source-card exemption
+    (plan section 1) does not extend to this promotion step, so the caller
+    must supply real ones or this function fails closed (see ``main()``).
+    """
+    row = _load_ledger_experiment(root, experiment_id)
+    family = str(row.get("family") or "unknown_family")
+    model_kind = str(row.get("model_kind") or "unknown_model")
+    feature_set = str(row.get("feature_set") or "unknown_feature_set")
+    top_k = row.get("top_k")
+    hedge = str(row.get("hedge") or "none")
+    label_horizon_days = row.get("label_horizon_days")
+    long_only = row.get("long_only") or {}
+    long_gates = long_only.get("gate_results") or {}
+    gate_pass_count = sum(1 for value in long_gates.values() if value is True)
+    gate_total = len(long_gates) or 8
+    verdict_summary = (
+        f"long_only gates {gate_pass_count}/{gate_total} pass "
+        f"(all_gates_pass={long_only.get('all_gates_pass')}); "
+        f"recorded_at={row.get('recorded_at')}; "
+        f"tearsheet={row.get('tearsheet_path')}; mlflow_run_id={row.get('mlflow_run_id')}"
+    )
+    candidate_parameters = {
+        "family": family,
+        "model_kind": model_kind,
+        "feature_set": feature_set,
+        "label_horizon_days": label_horizon_days,
+        "top_k": top_k,
+        "hedge": hedge,
+        "config_hash": row.get("config_hash"),
+    }
+    return {
+        "iter_id": iter_id,
+        "strategy_name": strategy_name,
+        "representative_spec_path": representative_spec_path,
+        "path_name": family,
+        "hypothesis_id": "H1_ledger_best_of_chain",
+        "objective": (
+            f"Promote ledger experiment_id={experiment_id} (family={family}, "
+            f"model_kind={model_kind}) -- the current best-of-chain Step 11 baseline "
+            "-- into a model_ranking_portfolio StrategySpec for observation-mode paper "
+            "connection (no order submission this round)."
+        ),
+        "benchmark_family": list(_STEP11_CROSS_SECTIONAL_BENCHMARK_FAMILY),
+        "candidates": [{"candidate_id": experiment_id, "parameters": candidate_parameters}],
+        "cost_table": dict(_STEP11_DEFAULT_COST_TABLE),
+        "sources": sources or [],
+        "topic_coverage": topic_coverage or [],
+        "hypothesis": {
+            "statement": (
+                f"{family}/{model_kind} ranks the PIT top-1500-ADV universe and holds the "
+                f"top {top_k} equal-weight; it should beat the equal-weight-universe and "
+                "market-proxy benchmarks after costs."
+            ),
+            "failure_mode": (
+                "Fails to clear the unlevered-family-paper-tier-gates.json contract "
+                f"out-of-sample after costs -- verdict: {verdict_summary}"
+            ),
+            "measurement": (
+                "reports/research/ledger/experiments.jsonl gate_results against "
+                "config/promotion/unlevered-family-paper-tier-gates.json, long_only and "
+                "market_neutral variants, 2018-2026 walk-forward out-of-sample."
+            ),
+            "stop_pivot": (
+                "Not promoted while all_gates_pass is false for both variants; continue "
+                "observation-mode connection and revisit when a later ledger experiment "
+                "for this family clears the gate contract."
+            ),
+        },
+        "decision": {
+            "path": family,
+            "decision": "not_promoted_observation_only",
+            "reason": verdict_summary,
+            "next_iteration_suggestion": (
+                "Re-run this dossier generator against the next ledger experiment_id once "
+                "the research line's B3 grid or a later candidate clears more gates."
+            ),
+        },
+        "source_cards_path": source_cards_path or "",
+    }
 
 
 def _require(config: dict[str, Any], key: str) -> Any:
@@ -453,6 +602,48 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("config", nargs="?", type=Path, help="path to the input config JSON")
     parser.add_argument(
+        "--from-ledger",
+        metavar="EXPERIMENT_ID",
+        help=(
+            "Build the config from reports/research/ledger/experiments.jsonl instead of "
+            "a hand-written JSON file (Step 11 Wave C item 4: promote a real baseline-chain "
+            "experiment). Requires --spec, --iter-id, and --strategy-name; sources/"
+            "topic-coverage/source-cards-path are NOT fabricated -- pass --sources-json or "
+            "this fails closed with the exact promotion-path source-evidence blocker."
+        ),
+    )
+    parser.add_argument(
+        "--spec",
+        type=Path,
+        help="(with --from-ledger) representative_spec_path, relative to the repo root",
+    )
+    parser.add_argument(
+        "--iter-id",
+        help="(with --from-ledger) iter_id; must match the spec's research_design.iter_id",
+    )
+    parser.add_argument(
+        "--strategy-name",
+        help="(with --from-ledger) strategy_name for the generated dossier",
+    )
+    parser.add_argument(
+        "--sources-json",
+        type=Path,
+        help=(
+            "(with --from-ledger) path to a JSON array of source records "
+            "(>=8 entries, >=3 paper-type) -- see _EXAMPLE_CONFIG['sources'] for the shape"
+        ),
+    )
+    parser.add_argument(
+        "--topic-coverage",
+        action="append",
+        default=[],
+        help="(with --from-ledger) repeatable; needs >=6 total",
+    )
+    parser.add_argument(
+        "--source-cards-path",
+        help="(with --from-ledger) path recorded as this dossier's source_cards_path",
+    )
+    parser.add_argument(
         "--overwrite",
         action="store_true",
         help="replace an existing candidate-manifest/cost-table/data-feasibility/dossier set",
@@ -467,11 +658,42 @@ def main(argv: list[str] | None = None) -> int:
     if args.print_example:
         print(json.dumps(_EXAMPLE_CONFIG, indent=2))
         return 0
-    if args.config is None:
-        parser.error("config is required unless --print-example is given")
 
-    config = _load_config(args.config)
     root = project_root()
+    if args.from_ledger:
+        missing = [
+            name
+            for name, value in (
+                ("--spec", args.spec),
+                ("--iter-id", args.iter_id),
+                ("--strategy-name", args.strategy_name),
+            )
+            if not value
+        ]
+        if missing:
+            parser.error(f"--from-ledger requires {', '.join(missing)}")
+        sources: list[dict[str, Any]] | None = None
+        if args.sources_json:
+            sources_payload = json.loads(args.sources_json.read_text(encoding="utf-8"))
+            if not isinstance(sources_payload, list):
+                _fail(f"{args.sources_json} must contain a JSON array of source records")
+            sources = sources_payload
+        config = config_from_ledger(
+            root=root,
+            experiment_id=args.from_ledger,
+            iter_id=args.iter_id,
+            strategy_name=args.strategy_name,
+            representative_spec_path=str(args.spec),
+            sources=sources,
+            topic_coverage=list(args.topic_coverage) or None,
+            source_cards_path=args.source_cards_path,
+        )
+        print(json.dumps(config, indent=2, sort_keys=True))
+    else:
+        if args.config is None:
+            parser.error("config is required unless --from-ledger or --print-example is given")
+        config = _load_config(args.config)
+
     build_dossier(config, root, overwrite=args.overwrite)
     return 0
 
