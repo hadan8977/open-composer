@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -400,3 +401,47 @@ def test_select_articles_for_extraction_empty_input_returns_empty() -> None:
         prompt_hash_value="h",
     )
     assert result.empty
+
+
+def test_select_articles_for_extraction_handles_numpy_array_symbols() -> None:
+    """2026-09-10 regression: real collected packets carry ``symbols`` as a
+    numpy array (parquet's list-column round trip), not a Python list.
+    ``symbols or []`` evaluates the array's truthiness and raises
+    ``ValueError: The truth value of an array with more than one element is
+    ambiguous`` for any multi-symbol article -- this is exactly the crash
+    the first real bulk-extraction run hit on its very first batch."""
+    pools = {pd.Timestamp("2024-05-31"): {"AAPL"}}
+    articles = pd.DataFrame(
+        [
+            {**_article_row("1"), "symbols": np.array(["AAPL", "MSFT"])},  # multi-elem -> kept
+            {**_article_row("2"), "symbols": np.array(["ZZZ", "YYY"])},  # not in pool -> dropped
+            {**_article_row("3"), "symbols": np.array([], dtype=object)},  # empty -> dropped
+        ]
+    )
+
+    selected = ex.select_articles_for_extraction(
+        articles, pools=pools, cached_keys=set(), prompt_hash_value="h"
+    )
+
+    assert list(selected["id"]) == ["1"]
+
+
+def test_select_articles_for_extraction_after_real_parquet_round_trip(tmp_path: Path) -> None:
+    """Same bug, reproduced via an actual parquet write/read (the real
+    collector -> extractor path), not just a hand-built numpy array."""
+    pools = {pd.Timestamp("2024-05-31"): {"AAPL"}}
+    path = tmp_path / "articles.parquet"
+    pd.DataFrame(
+        [
+            {**_article_row("1"), "symbols": ["AAPL", "MSFT"]},
+            {**_article_row("2"), "symbols": []},
+        ]
+    ).to_parquet(path)
+    articles = pd.read_parquet(path)
+    assert isinstance(articles.iloc[0]["symbols"], np.ndarray)  # sanity: reproduces the real shape
+
+    selected = ex.select_articles_for_extraction(
+        articles, pools=pools, cached_keys=set(), prompt_hash_value="h"
+    )
+
+    assert list(selected["id"]) == ["1"]

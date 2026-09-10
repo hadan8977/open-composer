@@ -493,7 +493,15 @@ def select_articles_for_extraction(
 
     def _in_scope(row_idx: int) -> bool:
         symbols = articles.iloc[row_idx]["symbols"]
-        symbol_set = {str(s) for s in (symbols or [])}
+        # `symbols` round-trips through parquet as a numpy array, not a
+        # list -- `symbols or []` evaluates the array's truthiness and
+        # raises ValueError for any array with more than one element
+        # ("truth value of an array... is ambiguous"). `is None`/`len()`
+        # are always scalar, so neither line risks that coercion.
+        if symbols is None or len(symbols) == 0:
+            symbol_set: set[str] = set()
+        else:
+            symbol_set = {str(s) for s in symbols}
         if not symbol_set:
             return False
         pool = candidate_pool_for_date(dates.iloc[row_idx], pools)
