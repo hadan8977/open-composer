@@ -50,7 +50,51 @@ level near-duplicates (e.g. two K-bar ratio variants) show high correlation
 on any reasonably sized sample of dates, so this is judged an acceptable
 approximation, not silently skipped.
 
-Usage (foreground; already per-year/per-library chunked internally)::
+**Per-(year, library) checkpointing (2026-09-10 follow-up)**: the first
+real run against the full archive died silently after "2023
+reversal_trend" with no traceback -- the kernel memcg killed it at the
+1.8G cap while starting 2024 alpha158, and because nothing was
+checkpointed, the whole run's progress (2018-2023 x all 5 libraries) was
+lost. Every (year, library) cell now writes its just-computed IC/
+autocorrelation/missing-rate contribution to
+``reports/research/factor_screen/_checkpoints/{year}_{library}.parquet``
+(``_serialize_checkpoint``/``_write_checkpoint``, atomic via a same-dir
+temp file + rename) immediately after computing it; a rerun that finds
+that file already on disk loads it straight into the accumulators instead
+of recomputing (``_load_checkpoint_into_accumulators``,
+``_run_year_library``), so a mid-run OOM kill now costs at most one
+(year, library) cell's work, not the whole run's. Checkpoint contents
+round-trip exactly -- resuming produces the same accumulator state as an
+uninterrupted run would have, not an approximation. Checkpoints are
+gitignored scratch state (see ``.gitignore``), not a committed artifact.
+
+**Column-chunked processing, a second 2026-09-10 memory fix**: the killed
+run's peak (1.71GB, against alpha158's 154 float64 columns -- see
+``data/features/alpha158/{year}.parquet``, ~650MB on disk and ~850MB as an
+in-memory float64 frame for 2024 alone) came from loading and merging
+every factor column for a whole library-year at once before the
+rank-autocorrelation loop touched any of them. ``_process_library_year``
+now processes ``columns`` in ``FACTOR_CHUNK_SIZE``-wide slices (default
+40, ~26% of alpha158's 154): each chunk's ``_load_library_year`` call
+reads only that chunk's columns, downcasts any float64 factor column to
+float32 immediately after the weekly-date filter (a change to
+``_load_library_year`` itself, so the dedup step's
+``_load_recent_sample_panel`` -- which shares the same loader -- benefits
+too), and the chunk's frames are ``del``-eted and ``gc.collect()``-ed
+before the next chunk starts. The per-year rank-autocorrelation pivot
+additionally reuses the dedup step's existing "sample the last N
+rebalance dates" design (``AUTOCORR_SAMPLE_WEEKS``, default 8, mirroring
+``DEDUP_SAMPLE_WEEKS``) instead of pivoting every weekly date in the year
+-- accumulated across 9 years this still yields roughly 9 x 7 = 63
+week-over-week pairs per factor, judged sufficient for a turnover proxy
+that was never meant to be exact. This changes nothing about
+``ic_accumulators``/``missing_accumulators`` (chunking a sum is still the
+same sum); it does reduce how many week-pairs feed
+``autocorr_accumulators`` -- a disclosed, deliberate trade-off, not a
+silent one.
+
+Usage (foreground; already per-year/per-library/per-column-chunk chunked
+internally, and resumable via checkpoints)::
 
     uv run python scripts/screen_factors.py
 
@@ -63,6 +107,7 @@ Usage (detached + capped, if memory is tight)::
 
 from __future__ import annotations
 
+import gc
 import json
 import sys
 import time
@@ -90,6 +135,7 @@ UNIVERSE_ROOT = FEATURES_ROOT / "universe"
 OUT_PARQUET = ROOT / "reports" / "research" / "factor_screen" / "step13f_screen.parquet"
 OUT_MD = ROOT / "reports" / "research" / "factor_screen" / "step13f_screen.md"
 OUT_JSON = ROOT / "config" / "feature_sets" / "screened_top40_recent.json"
+CHECKPOINTS_ROOT = ROOT / "reports" / "research" / "factor_screen" / "_checkpoints"
 
 LIBRARIES: tuple[str, ...] = ("alpha158", "alpha101", "alpha191", "osap_price", "reversal_trend")
 LABEL_COLUMNS: tuple[str, ...] = ("label_excess_5", "label_excess_10")
@@ -102,6 +148,8 @@ TOP_N = 40
 DEDUP_RANK_CORR_THRESHOLD = 0.9
 DEDUP_CANDIDATE_POOL = 150  # headroom above TOP_N before dedup removes near-duplicates
 DEDUP_SAMPLE_WEEKS = 8  # see module docstring's "documented approximation"
+FACTOR_CHUNK_SIZE = 40  # 2026-09-10 memory fix -- see module docstring
+AUTOCORR_SAMPLE_WEEKS = 8  # same design as DEDUP_SAMPLE_WEEKS, see module docstring
 
 
 @dataclass
@@ -139,9 +187,22 @@ def _year_calendar(library_root: Path, year: int) -> list[pd.Timestamp]:
 def _load_library_year(
     library_root: Path, year: int, columns: list[str], dates: list[pd.Timestamp]
 ) -> pd.DataFrame:
+    """Read one library-year's ``columns`` (plus keys), filtered to
+    ``dates``. Downcasts any float64 factor column to float32 immediately
+    after filtering -- most of these tables are stored float64 on disk
+    despite the build plan's float32 intent (a Step 13-F 3.1/3.2 gap, not
+    fixed here), and halving the retained column width matters for both
+    callers of this function: the main per-chunk screen in
+    ``_process_library_year`` and the dedup step's
+    ``_load_recent_sample_panel``.
+    """
     path = library_root / f"{year}.parquet"
     frame = pd.read_parquet(path, columns=["symbol", "trade_date", *columns])
-    return frame.loc[frame["trade_date"].isin(dates)]
+    frame = frame.loc[frame["trade_date"].isin(dates)]
+    float64_columns = [c for c in columns if frame[c].dtype == np.float64]
+    if float64_columns:
+        frame = frame.astype({c: "float32" for c in float64_columns})
+    return frame
 
 
 def _load_labels_year(year: int, dates: list[pd.Timestamp]) -> pd.DataFrame:
@@ -160,6 +221,11 @@ def _universe_membership_frame(
     return pd.DataFrame(rows, columns=["trade_date", "symbol"])
 
 
+def _chunked(items: list[str], size: int) -> list[list[str]]:
+    """Split ``items`` into consecutive slices of at most ``size``."""
+    return [items[i : i + size] for i in range(0, len(items), size)]
+
+
 def _process_library_year(
     library: str,
     year: int,
@@ -174,54 +240,241 @@ def _process_library_year(
     dates = weekly_rebalance_dates(calendar)
     if not dates:
         return
+    # 2026-09-10 memory fix (see module docstring): the autocorrelation
+    # pivot only needs a turnover proxy, not every week in the year -- reuse
+    # the dedup step's "sample the last N rebalance dates" design instead of
+    # pivoting all of `dates`.
+    autocorr_dates = dates[-AUTOCORR_SAMPLE_WEEKS:]
 
-    factor_frame = _load_library_year(library_root, year, columns, dates)
     label_frame = _load_labels_year(year, dates)
     membership = _universe_membership_frame(universe_panel, dates, UNIVERSE_TOP_N)
 
-    merged = factor_frame.merge(label_frame, on=["symbol", "trade_date"], how="inner")
-    merged = merged.merge(membership, on=["symbol", "trade_date"], how="inner")
-    if merged.empty:
-        return
+    # 2026-09-10 memory fix (see module docstring): process at most
+    # FACTOR_CHUNK_SIZE factor columns at a time end-to-end (load, merge, IC
+    # accumulation, autocorrelation) instead of holding the whole library's
+    # columns in memory for the whole year -- this is what actually shrinks
+    # the peak, since these tables are ~650-850MB/year loaded whole.
+    for chunk in _chunked(columns, FACTOR_CHUNK_SIZE):
+        factor_frame = _load_library_year(library_root, year, chunk, dates)
+        merged = factor_frame.merge(label_frame, on=["symbol", "trade_date"], how="inner")
+        merged = merged.merge(membership, on=["symbol", "trade_date"], how="inner")
+        del factor_frame
+        if merged.empty:
+            del merged
+            continue
 
-    for factor in columns:
-        missing = missing_accumulators[(library, factor)]
-        missing.total += len(merged)
-        missing.missing += int(merged[factor].isna().sum())
+        for factor in chunk:
+            missing = missing_accumulators[(library, factor)]
+            missing.total += len(merged)
+            missing.missing += int(merged[factor].isna().sum())
 
-    for date, group in merged.groupby("trade_date", sort=False):
-        for factor in columns:
-            factor_values = group[factor]
-            if factor_values.notna().sum() < MIN_CROSS_SECTION:
-                continue
-            for label in LABEL_COLUMNS:
-                label_values = group[label]
-                valid = factor_values.notna() & label_values.notna()
-                if valid.sum() < MIN_CROSS_SECTION:
+        for date, group in merged.groupby("trade_date", sort=False):
+            for factor in chunk:
+                factor_values = group[factor]
+                if factor_values.notna().sum() < MIN_CROSS_SECTION:
                     continue
-                ic = factor_values.loc[valid].corr(label_values.loc[valid], method="spearman")
-                if pd.notna(ic):
-                    bucket = ic_accumulators[(library, factor, label)]
-                    bucket.dates.append(date)
-                    bucket.ic_values.append(float(ic))
+                for label in LABEL_COLUMNS:
+                    label_values = group[label]
+                    valid = factor_values.notna() & label_values.notna()
+                    if valid.sum() < MIN_CROSS_SECTION:
+                        continue
+                    ic = factor_values.loc[valid].corr(label_values.loc[valid], method="spearman")
+                    if pd.notna(ic):
+                        bucket = ic_accumulators[(library, factor, label)]
+                        bucket.dates.append(date)
+                        bucket.ic_values.append(float(ic))
 
-    for factor in columns:
-        try:
-            wide = merged.pivot(index="trade_date", columns="symbol", values=factor)
-        except ValueError:
-            continue  # duplicate (trade_date, symbol) pairs -- should not happen, skip defensively
-        ranked = wide.rank(axis=1, pct=True)
-        if len(ranked) < 2:
-            continue
-        prev = ranked.iloc[:-1].reset_index(drop=True)
-        nxt = ranked.iloc[1:].reset_index(drop=True)
-        weekly_corr = prev.corrwith(nxt, axis=1)
-        weekly_corr = weekly_corr.dropna()
-        if weekly_corr.empty:
-            continue
-        acc = autocorr_accumulators[(library, factor)]
-        acc.corr_sum += float(weekly_corr.sum())
-        acc.n_pairs += int(len(weekly_corr))
+        autocorr_slice = merged.loc[merged["trade_date"].isin(autocorr_dates)]
+        for factor in chunk:
+            try:
+                wide = autocorr_slice.pivot(index="trade_date", columns="symbol", values=factor)
+            except ValueError:
+                continue  # duplicate (trade_date, symbol) rows -- shouldn't happen, skip it
+            wide = wide.astype("float32")
+            ranked = wide.rank(axis=1, pct=True).astype("float32")
+            if len(ranked) < 2:
+                continue
+            prev = ranked.iloc[:-1].reset_index(drop=True)
+            nxt = ranked.iloc[1:].reset_index(drop=True)
+            weekly_corr = prev.corrwith(nxt, axis=1)
+            weekly_corr = weekly_corr.dropna()
+            if weekly_corr.empty:
+                continue
+            acc = autocorr_accumulators[(library, factor)]
+            acc.corr_sum += float(weekly_corr.sum())
+            acc.n_pairs += int(len(weekly_corr))
+
+        del merged, autocorr_slice
+        gc.collect()
+
+
+def _serialize_checkpoint(
+    ic_accumulators: dict[tuple[str, str, str], _FactorAccumulator],
+    autocorr_accumulators: dict[tuple[str, str], _RankAutocorrAccumulator],
+    missing_accumulators: dict[tuple[str, str], _MissingAccumulator],
+) -> pd.DataFrame:
+    """Flatten one (year, library) cell's freshly accumulated contribution
+    (the caller passes fresh, call-scoped accumulator dicts holding only
+    that cell's data -- see ``_run_year_library``) into a single long/tidy
+    frame that round-trips through parquet. ``record_type`` distinguishes
+    the three row shapes sharing this one file; only the columns relevant
+    to that shape are non-null on any given row.
+    """
+    rows: list[dict] = []
+    for (_library, factor, label), bucket in ic_accumulators.items():
+        for date, ic in zip(bucket.dates, bucket.ic_values, strict=True):
+            rows.append(
+                {
+                    "record_type": "ic",
+                    "factor": factor,
+                    "label": label,
+                    "trade_date": date,
+                    "ic": ic,
+                    "corr_sum": None,
+                    "n_pairs": None,
+                    "total": None,
+                    "missing": None,
+                }
+            )
+    for (_library, factor), acc in autocorr_accumulators.items():
+        rows.append(
+            {
+                "record_type": "autocorr",
+                "factor": factor,
+                "label": None,
+                "trade_date": None,
+                "ic": None,
+                "corr_sum": acc.corr_sum,
+                "n_pairs": acc.n_pairs,
+                "total": None,
+                "missing": None,
+            }
+        )
+    for (_library, factor), acc in missing_accumulators.items():
+        rows.append(
+            {
+                "record_type": "missing",
+                "factor": factor,
+                "label": None,
+                "trade_date": None,
+                "ic": None,
+                "corr_sum": None,
+                "n_pairs": None,
+                "total": acc.total,
+                "missing": acc.missing,
+            }
+        )
+    columns = [
+        "record_type",
+        "factor",
+        "label",
+        "trade_date",
+        "ic",
+        "corr_sum",
+        "n_pairs",
+        "total",
+        "missing",
+    ]
+    return pd.DataFrame(rows, columns=columns)
+
+
+def _write_checkpoint(path: Path, frame: pd.DataFrame) -> None:
+    """Write atomically (same-directory temp file + rename) so a process
+    killed mid-write never leaves a truncated checkpoint that a later
+    resume would silently load as complete-but-wrong."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_name(path.name + ".tmp")
+    frame.to_parquet(tmp_path, index=False)
+    tmp_path.replace(path)
+
+
+def _load_checkpoint_into_accumulators(
+    path: Path,
+    library: str,
+    ic_accumulators: dict[tuple[str, str, str], _FactorAccumulator],
+    autocorr_accumulators: dict[tuple[str, str], _RankAutocorrAccumulator],
+    missing_accumulators: dict[tuple[str, str], _MissingAccumulator],
+) -> None:
+    """Inverse of ``_serialize_checkpoint``: merge one (year, library)
+    checkpoint's rows into the (possibly already partly populated) shared
+    accumulator dicts, exactly as if ``_process_library_year`` had just
+    computed them."""
+    frame = pd.read_parquet(path)
+
+    ic_rows = frame.loc[frame["record_type"] == "ic"]
+    for (factor, label), group in ic_rows.groupby(["factor", "label"], sort=False):
+        bucket = ic_accumulators[(library, factor, label)]
+        bucket.dates.extend(pd.to_datetime(group["trade_date"]).tolist())
+        bucket.ic_values.extend(float(v) for v in group["ic"])
+
+    autocorr_rows = frame.loc[frame["record_type"] == "autocorr"]
+    for _, row in autocorr_rows.iterrows():
+        acc = autocorr_accumulators[(library, row["factor"])]
+        acc.corr_sum += float(row["corr_sum"])
+        acc.n_pairs += int(row["n_pairs"])
+
+    missing_rows = frame.loc[frame["record_type"] == "missing"]
+    for _, row in missing_rows.iterrows():
+        acc = missing_accumulators[(library, row["factor"])]
+        acc.total += int(row["total"])
+        acc.missing += int(row["missing"])
+
+
+def _run_year_library(
+    library: str,
+    year: int,
+    columns: list[str],
+    universe_panel: pd.DataFrame,
+    ic_accumulators: dict[tuple[str, str, str], _FactorAccumulator],
+    autocorr_accumulators: dict[tuple[str, str], _RankAutocorrAccumulator],
+    missing_accumulators: dict[tuple[str, str], _MissingAccumulator],
+    checkpoints_root: Path = CHECKPOINTS_ROOT,
+) -> str:
+    """Process one (year, library) cell, resuming from a checkpoint if a
+    prior run already finished it. Always leaves the three shared
+    accumulator dicts holding this cell's contribution merged in -- callers
+    do not need to branch on the return value, which is purely for
+    logging/tests. Returns ``"skipped"`` when a checkpoint was loaded
+    instead of recomputed, ``"computed"`` otherwise.
+    """
+    checkpoint_path = checkpoints_root / f"{year}_{library}.parquet"
+    if checkpoint_path.exists():
+        _load_checkpoint_into_accumulators(
+            checkpoint_path,
+            library,
+            ic_accumulators,
+            autocorr_accumulators,
+            missing_accumulators,
+        )
+        return "skipped"
+
+    year_ic: dict[tuple[str, str, str], _FactorAccumulator] = defaultdict(_FactorAccumulator)
+    year_autocorr: dict[tuple[str, str], _RankAutocorrAccumulator] = defaultdict(
+        _RankAutocorrAccumulator
+    )
+    year_missing: dict[tuple[str, str], _MissingAccumulator] = defaultdict(_MissingAccumulator)
+    _process_library_year(
+        library, year, columns, universe_panel, year_ic, year_autocorr, year_missing
+    )
+
+    for key, bucket in year_ic.items():
+        target = ic_accumulators[key]
+        target.dates.extend(bucket.dates)
+        target.ic_values.extend(bucket.ic_values)
+    for key, acc in year_autocorr.items():
+        target_acc = autocorr_accumulators[key]
+        target_acc.corr_sum += acc.corr_sum
+        target_acc.n_pairs += acc.n_pairs
+    for key, acc in year_missing.items():
+        target_missing = missing_accumulators[key]
+        target_missing.total += acc.total
+        target_missing.missing += acc.missing
+
+    checkpoint_frame = _serialize_checkpoint(year_ic, year_autocorr, year_missing)
+    _write_checkpoint(checkpoint_path, checkpoint_frame)
+    del year_ic, year_autocorr, year_missing, checkpoint_frame
+    gc.collect()
+    return "computed"
 
 
 def _window_stats(
@@ -359,10 +612,11 @@ def main() -> int:
         _MissingAccumulator
     )
 
+    CHECKPOINTS_ROOT.mkdir(parents=True, exist_ok=True)
     for year in ALL_YEARS:
         for library in LIBRARIES:
             started = time.monotonic()
-            _process_library_year(
+            status = _run_year_library(
                 library,
                 year,
                 library_columns[library],
@@ -373,7 +627,7 @@ def main() -> int:
             )
             print(
                 f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {year} {library}: "
-                f"{time.monotonic() - started:.0f}s",
+                f"{status} ({time.monotonic() - started:.0f}s)",
                 flush=True,
             )
 
