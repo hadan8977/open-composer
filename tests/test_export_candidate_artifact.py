@@ -87,6 +87,53 @@ def _ledger_record(**overrides: object) -> dict[str, object]:
     return record
 
 
+def _v2_ledger_record(**overrides: object) -> dict[str, object]:
+    """Shape matches ``scripts/run_step13_m_grid.py::_append_v2_ledger_record``
+    exactly (dataclasses.asdict of a ``RecentHighReturnVerdict`` plus the
+    owning ``ExperimentConfig``'s own fields) -- the v1 ``_ledger_record``
+    fixture above predates the v2 gate contract and has a different shape
+    (``long_only``/``market_neutral`` sub-objects instead of a flat
+    ``metrics``/``gate_results``), so rule-candidate export tests need
+    their own fixture.
+    """
+    record: dict[str, object] = {
+        "experiment_id": "step13_m0b_mom_over_vol63_uni500_k50_gate_off",
+        "config_hash": "abc123v2",
+        "family": "step13_recent_high_return",
+        "model_kind": "rule_single_factor",
+        "hyperparameters": {"score_column": "momentum_252_21_over_vol_63"},
+        "trend_gate": None,
+        "universe_top_n": 500,
+        "dsr_trial_count": 24,
+        "metrics": {
+            "cagr_recent_net": 0.330,
+            "max_drawdown_recent": -0.283,
+            "hit_rate_weekly": 0.616,
+            "cagr_excess_vol_matched_spy": -0.05,
+        },
+        "disclosure": {"turnover_annualized_recent": 12.0},
+        "gate_results": {
+            "cagr_recent_net_minimum": True,
+            "cagr_excess_vol_matched_spy_minimum": False,
+            "max_drawdown_recent_minimum": False,
+        },
+        "gates_not_applicable": ["ml_placebo_rank_ic_abs_maximum"],
+        "all_gates_pass": False,
+        "promotion_eligible": False,
+        "gate_contract": "recent_regime_high_return_gates_v2",
+        "recorded_at": "2026-09-10T09:00:00+00:00",
+    }
+    record.update(overrides)
+    return record
+
+
+@pytest.fixture
+def v2_ledger_path(tmp_path: Path) -> Path:
+    path = tmp_path / "v2_experiments.jsonl"
+    path.write_text(json.dumps(_v2_ledger_record()) + "\n")
+    return path
+
+
 @pytest.fixture
 def ledger_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     path = tmp_path / "experiments.jsonl"
@@ -226,3 +273,142 @@ def test_build_full_history_train_frame_rejects_unknown_train_row_dates() -> Non
             extra_train_columns=(),
             train_row_dates="bogus",
         )
+
+
+class TestFindFamilyLedgerRecord:
+    def test_filters_by_family_not_just_experiment_id(self, tmp_path: Path) -> None:
+        path = tmp_path / "experiments.jsonl"
+        path.write_text(
+            "\n".join(
+                json.dumps(rec)
+                for rec in (
+                    {"experiment_id": "dup", "family": "family_a", "metrics": {"x": 1}},
+                    {"experiment_id": "dup", "family": "family_b", "metrics": {"x": 2}},
+                )
+            )
+            + "\n"
+        )
+        record = eca._find_family_ledger_record("dup", "family_b", ledger_path=path)
+        assert record is not None
+        assert record["metrics"]["x"] == 2
+
+    def test_returns_none_when_ledger_file_missing(self, tmp_path: Path) -> None:
+        missing = tmp_path / "nope.jsonl"
+        assert eca._find_family_ledger_record("x", "y", ledger_path=missing) is None
+
+    def test_returns_none_when_no_matching_record(self, tmp_path: Path) -> None:
+        path = tmp_path / "experiments.jsonl"
+        path.write_text(json.dumps({"experiment_id": "other", "family": "f"}) + "\n")
+        assert eca._find_family_ledger_record("x", "f", ledger_path=path) is None
+
+
+class TestExportRuleCandidateArtifact:
+    """Step 13 Track M product path: a rule candidate scored by a derived
+    ratio (config.json:score_expression), no model.joblib, source ledger
+    metrics/gates quoted verbatim in the README.
+    """
+
+    def test_writes_config_features_readme_no_model_joblib(
+        self, tmp_path: Path, v2_ledger_path: Path
+    ) -> None:
+        out_root = tmp_path / "candidates"
+        out_dir = eca.export_rule_candidate_artifact(
+            "step13_rule_mom_over_vol63_uni500_k50_gate_off",
+            source_ledger_experiment_id="step13_m0b_mom_over_vol63_uni500_k50_gate_off",
+            score_expression={"numerator": "momentum_252_21", "denominator": "vol_63"},
+            universe_top_n=500,
+            top_k=50,
+            trend_gate=None,
+            out_root=out_root,
+            ledger_path=v2_ledger_path,
+        )
+
+        assert out_dir == out_root / "step13_rule_mom_over_vol63_uni500_k50_gate_off"
+        assert not (out_dir / "model.joblib").exists()
+        for name in ("config.json", "features.json", "README.md"):
+            assert (out_dir / name).exists(), name
+
+        config = json.loads((out_dir / "config.json").read_text())
+        assert config["model_kind"] == "rule_derived_ratio_top_k"
+        assert config["score_expression"] == {
+            "numerator": "momentum_252_21",
+            "denominator": "vol_63",
+        }
+        assert config["universe_top_n"] == 500
+        assert config["top_k"] == 50
+        assert config["trend_gate"] is None
+        assert config["source_ledger_experiment_id"] == (
+            "step13_m0b_mom_over_vol63_uni500_k50_gate_off"
+        )
+
+        features = json.loads((out_dir / "features.json").read_text())
+        assert features["feature_columns"] == ["momentum_252_21", "vol_63"]
+        assert features["top_k"] == 50
+
+        readme = (out_dir / "README.md").read_text()
+        assert "step13_m0b_mom_over_vol63_uni500_k50_gate_off" in readme
+        assert "0.33" in readme  # cagr_recent_net, quoted verbatim from the ledger
+        assert "cagr_excess_vol_matched_spy_minimum" in readme  # a failed gate, named
+        assert "all_gates_pass" in readme
+        assert "False" in readme
+        assert "NOT promotion-approved" in readme
+
+    def test_trend_gate_block_is_written_when_provided(
+        self, tmp_path: Path, v2_ledger_path: Path
+    ) -> None:
+        trend_gate = {"benchmark": "SPY", "sma_days": 200, "cash_symbol": "BIL"}
+        # v2_ledger_path only has a record for the uni500/gate_off cell (see
+        # _v2_ledger_record) -- this experiment_id has no match, exercising
+        # the "no ledger record found" README path at the same time as the
+        # trend_gate block, rather than needing a second ledger fixture.
+        out_dir = eca.export_rule_candidate_artifact(
+            "step13_rule_mom_over_vol63_uni200_k50_gate_on",
+            source_ledger_experiment_id="step13_m0b_mom_over_vol63_uni200_k50_gate_on",
+            score_expression={"numerator": "momentum_252_21", "denominator": "vol_63"},
+            universe_top_n=200,
+            top_k=50,
+            trend_gate=trend_gate,
+            out_root=tmp_path / "candidates",
+            ledger_path=v2_ledger_path,
+        )
+
+        config = json.loads((out_dir / "config.json").read_text())
+        assert config["trend_gate"] == trend_gate
+        readme = (out_dir / "README.md").read_text()
+        assert "No ledger record found" in readme
+        assert "BIL" in readme
+
+    def test_missing_ledger_record_does_not_raise(self, tmp_path: Path) -> None:
+        empty_ledger = tmp_path / "empty.jsonl"
+        empty_ledger.write_text("")
+
+        out_dir = eca.export_rule_candidate_artifact(
+            "some_candidate",
+            source_ledger_experiment_id="does_not_exist",
+            score_expression={"numerator": "a", "denominator": "b"},
+            universe_top_n=500,
+            top_k=50,
+            trend_gate=None,
+            out_root=tmp_path / "candidates",
+            ledger_path=empty_ledger,
+        )
+
+        assert (out_dir / "README.md").exists()
+        assert "No ledger record found" in (out_dir / "README.md").read_text()
+
+    def test_is_idempotent_and_overwrites_cleanly(
+        self, tmp_path: Path, v2_ledger_path: Path
+    ) -> None:
+        out_root = tmp_path / "candidates"
+        kwargs = dict(
+            source_ledger_experiment_id="step13_m0b_mom_over_vol63_uni500_k50_gate_off",
+            score_expression={"numerator": "momentum_252_21", "denominator": "vol_63"},
+            universe_top_n=500,
+            top_k=50,
+            trend_gate=None,
+            out_root=out_root,
+            ledger_path=v2_ledger_path,
+        )
+        first = eca.export_rule_candidate_artifact("dup_test", **kwargs)
+        second = eca.export_rule_candidate_artifact("dup_test", **kwargs)
+        assert first == second == out_root / "dup_test"

@@ -344,6 +344,230 @@ construction, only ranking.
     (out_dir / "README.md").write_text(readme)
 
 
+def _find_family_ledger_record(
+    experiment_id: str, family: str, *, ledger_path: Path = LEDGER_PATH
+) -> dict[str, Any] | None:
+    """Like ``_find_ledger_record``, scoped to a specific ``family`` (the v1
+    and v2 promotion ledgers share one file; different contracts could in
+    principle record a same-looking ``experiment_id`` under different
+    families) -- returns ``None`` rather than raising so a rule-candidate
+    export can still write an artifact (with an honest "no ledger record
+    found" README note) instead of hard failing, if the source cell was
+    somehow never recorded.
+    """
+    if not ledger_path.exists():
+        return None
+    matches = []
+    for line in ledger_path.read_text().splitlines():
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        if record.get("experiment_id") == experiment_id and record.get("family") == family:
+            matches.append(record)
+    return matches[-1] if matches else None
+
+
+def _render_rule_candidate_readme(
+    *,
+    experiment_id: str,
+    source_ledger_experiment_id: str,
+    record: dict[str, Any] | None,
+    config_payload: dict[str, Any],
+) -> str:
+    """README for a rule-based (no ``model.joblib``) candidate exported by
+    :func:`export_rule_candidate_artifact` -- quotes its source ledger
+    record's metrics/gate results verbatim (never hand-typed, so a reader
+    can trust the numbers match ``experiments.jsonl`` exactly) and is
+    explicit that this exporter never decides whether a candidate is
+    promotion-ready, matching :func:`_write_readme`'s v1-schema sibling for
+    the registry/ML :func:`export_candidate_artifact` case.
+    """
+    lines = [
+        f"# {experiment_id}",
+        "",
+        "Exported by `scripts/export_candidate_artifact.py::export_rule_candidate_artifact` "
+        f"(rule-based, no `model.joblib`). Source ledger cell: `{source_ledger_experiment_id}` "
+        f"(family `{config_payload.get('family')}`, `reports/research/ledger/experiments.jsonl`).",
+        "",
+        "## config.json summary",
+        "",
+        f"- `model_kind`: `{config_payload.get('model_kind')}`",
+        f"- `score_expression`: `{config_payload.get('score_expression')}`",
+        f"- `universe_top_n`: `{config_payload.get('universe_top_n')}`",
+        f"- `top_k`: `{config_payload.get('top_k')}`",
+        f"- `trend_gate`: `{config_payload.get('trend_gate')}`",
+        f"- `rebalance`: `{config_payload.get('rebalance')}`",
+        "- `cost_bps_per_side` / `stress_cost_bps_per_side`: "
+        f"`{config_payload.get('cost_bps_per_side')}` / "
+        f"`{config_payload.get('stress_cost_bps_per_side')}`",
+        "",
+    ]
+    if record is None:
+        lines += [
+            "## Ledger verdict",
+            "",
+            f"**No ledger record found** for `{source_ledger_experiment_id}` under family "
+            f"`{config_payload.get('family')}` at export time -- this artifact's config mirrors "
+            "the protocol the source cell was run under, but its metrics could not be quoted "
+            "here. Do not treat this as a passing or evaluated candidate.",
+            "",
+        ]
+    else:
+        metrics = record.get("metrics") or {}
+        gate_results = record.get("gate_results") or {}
+        gates_not_applicable = record.get("gates_not_applicable") or []
+        disclosure = record.get("disclosure") or {}
+        passed = sorted(name for name, ok in gate_results.items() if ok)
+        failed = sorted(name for name, ok in gate_results.items() if not ok)
+        lines += [
+            "## Ledger verdict (verbatim from `experiments.jsonl`, config_hash "
+            f"`{record.get('config_hash')}`, recorded_at `{record.get('recorded_at')}`)",
+            "",
+            f"- `all_gates_pass`: **`{record.get('all_gates_pass')}`**",
+            f"- `promotion_eligible`: **`{record.get('promotion_eligible')}`**",
+            "",
+            "### Metrics",
+            "",
+            "| metric | value |",
+            "| --- | --- |",
+        ]
+        for name in sorted(metrics):
+            lines.append(f"| `{name}` | `{metrics[name]}` |")
+        lines += [
+            "",
+            "### Gates",
+            "",
+            f"- Passed ({len(passed)}): {', '.join(f'`{name}`' for name in passed) or 'none'}",
+            f"- **Failed ({len(failed)})**: {', '.join(f'`{name}`' for name in failed) or 'none'}",
+            "- Not applicable: "
+            f"{', '.join(f'`{name}`' for name in gates_not_applicable) or 'none'}",
+            "",
+        ]
+        if disclosure:
+            lines += ["### Disclosure-only items", "", "| item | value |", "| --- | --- |"]
+            for name in sorted(disclosure):
+                lines.append(f"| `{name}` | `{disclosure[name]}` |")
+            lines.append("")
+
+    lines += [
+        "## One-sentence honest conclusion",
+        "",
+        (
+            "This is a below-contract candidate (fails "
+            f"`{config_payload.get('family')}`'s gates, see above) connected for **observation "
+            "mode only** -- target weights and a signal log, never broker orders -- exactly like "
+            "the earlier `step11_momentum_placeholder_v1` rule candidate. "
+            "**NOT promotion-approved.** Do not route live/paper orders from this artifact "
+            "without a human decision and the full promotion checklist (benchmark family, "
+            "OOS/walk-forward evidence, costs, data-source sensitivity, sample/fallback caveats)."
+        ),
+        "",
+        "## Interface",
+        "",
+        "Same candidate-artifact interface as every other export under "
+        "`reports/research/candidates/` (see `config/model_ranking_candidates/"
+        "step11_momentum_placeholder_v1/README.md` for the full contract): `config.json` + "
+        "`features.json`, **no `model.joblib`** (nothing to fit -- a two-column ratio rule needs "
+        "no training). `open_composer.adapters.execution.model_ranking_target_weights."
+        "load_candidate_artifact` reads `config.json:model_kind=rule_derived_ratio_top_k` + "
+        "`score_expression` to rank the universe on `numerator/denominator` directly, and, if "
+        "`config.json:trend_gate` is set, routes the whole book to `trend_gate.cash_symbol` on "
+        "weeks the benchmark closes below its trailing SMA.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def export_rule_candidate_artifact(
+    experiment_id: str,
+    *,
+    source_ledger_experiment_id: str,
+    score_expression: dict[str, str],
+    universe_top_n: int,
+    top_k: int,
+    trend_gate: dict[str, Any] | None,
+    ledger_family: str = "step13_recent_high_return",
+    feature_set: str = "daily27",
+    rebalance: str = "weekly_friday_signal_next_session_open",
+    cost_bps_per_side: float = 10.0,
+    stress_cost_bps_per_side: float = 25.0,
+    label_horizon_days: int = 5,
+    out_root: Path = CANDIDATES_ROOT,
+    ledger_path: Path = LEDGER_PATH,
+) -> Path:
+    """Rule-based (no ``model.joblib``) candidate export for a derived
+    risk-adjusted score, e.g. ``momentum_252_21/vol_63`` -- the Step 13
+    Track M product path
+    (``open_composer/adapters/execution/model_ranking_target_weights.py``'s
+    ``score_expression``/``trend_gate`` support). Unlike
+    :func:`export_candidate_artifact` (registry-driven ML refit), there is
+    nothing to fit: this generalizes the "a rule needs no training"
+    convention ``config/model_ranking_candidates/
+    step11_momentum_placeholder_v1`` already established, from a single
+    ``score_column`` to a two-column ratio plus an optional trend gate.
+    ``source_ledger_experiment_id`` (the research grid's own cell id, e.g.
+    ``step13_m0b_mom_over_vol63_uni500_k50_gate_off``) may differ from
+    ``experiment_id`` (this artifact's own, product-facing directory name)
+    -- the README quotes that source cell's ledger verdict verbatim.
+    """
+    numerator = score_expression["numerator"]
+    denominator = score_expression["denominator"]
+    record = _find_family_ledger_record(
+        source_ledger_experiment_id, ledger_family, ledger_path=ledger_path
+    )
+    feature_columns = [numerator, denominator]
+
+    config_payload: dict[str, Any] = {
+        "experiment_id": experiment_id,
+        "source_ledger_experiment_id": source_ledger_experiment_id,
+        "family": ledger_family,
+        "model_kind": "rule_derived_ratio_top_k",
+        "feature_set": feature_set,
+        "label_horizon_days": label_horizon_days,
+        "feature_columns": feature_columns,
+        "score_expression": {"numerator": numerator, "denominator": denominator},
+        "top_k": top_k,
+        "universe_top_n": universe_top_n,
+        "hedge": "none",
+        "train_row_dates": "rule_based_no_training",
+        "rebalance": rebalance,
+        "weighting": "equal_weight",
+        "cost_bps_per_side": cost_bps_per_side,
+        "stress_cost_bps_per_side": stress_cost_bps_per_side,
+        "trend_gate": trend_gate,
+        "hyperparameters": {},
+    }
+    features_payload = {
+        "experiment_id": experiment_id,
+        "family": ledger_family,
+        "model_kind": "rule_derived_ratio_top_k",
+        "feature_set": feature_set,
+        "feature_columns": feature_columns,
+        "label_column": "label_rank_5",
+        "label_horizon_days": label_horizon_days,
+        "top_k": top_k,
+        "hedge": "none",
+        "train_row_dates": "rule_based_no_training",
+        "execution": "next_open",
+        "refit_through_date": None,
+    }
+
+    out_dir = out_root / experiment_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "config.json").write_text(json.dumps(config_payload, indent=2, default=str))
+    (out_dir / "features.json").write_text(json.dumps(features_payload, indent=2, default=str))
+    (out_dir / "README.md").write_text(
+        _render_rule_candidate_readme(
+            experiment_id=experiment_id,
+            source_ledger_experiment_id=source_ledger_experiment_id,
+            record=record,
+            config_payload=config_payload,
+        )
+    )
+    print(f"wrote {out_dir}", flush=True)
+    return out_dir
+
+
 def export_candidate_artifact(experiment_id: str, *, out_root: Path = CANDIDATES_ROOT) -> Path:
     base_id = _base_experiment_id(experiment_id)
     if base_id not in _REGISTRY:
@@ -432,7 +656,64 @@ def main() -> int:
         default=CANDIDATES_ROOT,
         help="override reports/research/candidates/ (mainly for tests)",
     )
+    parser.add_argument(
+        "--rule",
+        action="store_true",
+        help=(
+            "export a rule-based derived-ratio candidate (no model.joblib) instead of "
+            "refitting a registry ML experiment_id -- see export_rule_candidate_artifact"
+        ),
+    )
+    parser.add_argument(
+        "--source-ledger-experiment-id",
+        help="--rule only: the research grid's ledger experiment_id to quote in the README",
+    )
+    parser.add_argument("--score-numerator", help="--rule only: score_expression.numerator")
+    parser.add_argument("--score-denominator", help="--rule only: score_expression.denominator")
+    parser.add_argument("--universe-top-n", type=int, help="--rule only")
+    parser.add_argument("--top-k", type=int, help="--rule only")
+    parser.add_argument("--ledger-family", default="step13_recent_high_return", help="--rule only")
+    parser.add_argument(
+        "--trend-gate", action="store_true", help="--rule only: enable the SMA trend gate"
+    )
+    parser.add_argument("--trend-gate-benchmark", default="SPY", help="--rule only")
+    parser.add_argument("--trend-gate-sma-days", type=int, default=200, help="--rule only")
+    parser.add_argument("--trend-gate-cash-symbol", default="BIL", help="--rule only")
     args = parser.parse_args()
+    if args.rule:
+        required = (
+            ("--source-ledger-experiment-id", args.source_ledger_experiment_id),
+            ("--score-numerator", args.score_numerator),
+            ("--score-denominator", args.score_denominator),
+            ("--universe-top-n", args.universe_top_n),
+            ("--top-k", args.top_k),
+        )
+        missing = [name for name, value in required if value is None]
+        if missing:
+            parser.error(f"--rule requires {', '.join(missing)}")
+        trend_gate = (
+            {
+                "benchmark": args.trend_gate_benchmark,
+                "sma_days": args.trend_gate_sma_days,
+                "cash_symbol": args.trend_gate_cash_symbol,
+            }
+            if args.trend_gate
+            else None
+        )
+        export_rule_candidate_artifact(
+            args.experiment_id,
+            source_ledger_experiment_id=args.source_ledger_experiment_id,
+            score_expression={
+                "numerator": args.score_numerator,
+                "denominator": args.score_denominator,
+            },
+            universe_top_n=args.universe_top_n,
+            top_k=args.top_k,
+            trend_gate=trend_gate,
+            ledger_family=args.ledger_family,
+            out_root=args.out_root,
+        )
+        return 0
     export_candidate_artifact(args.experiment_id, out_root=args.out_root)
     return 0
 

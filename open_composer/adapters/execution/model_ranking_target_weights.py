@@ -35,6 +35,18 @@ close-marks returns for backtest simplicity, while this adapter targets the
 StrategySpec's actual ``execution_policy.order_style=opg_limit`` -- the
 signal date's close decides the book, and :func:`next_us_equity_session`
 names the session whose opening auction is supposed to execute it.
+
+**Step 13 Track M additions (risk-adjusted rule score + trend gate)**: a
+candidate's ``config.json`` may declare ``score_expression`` (an explicit
+two-column ratio, e.g. ``{"numerator": "momentum_252_21", "denominator":
+"vol_63"}`` -- never an arbitrary evaluated string) instead of a single
+``score_column``, and/or a ``trend_gate`` block (``{"benchmark": "SPY",
+"sma_days": 200, "cash_symbol": "BIL"}``) that routes the whole book to the
+cash symbol on rebalance weeks where the benchmark closes below its own
+trailing SMA. Both are additive and opt-in per candidate: a candidate whose
+``config.json`` sets neither key (e.g. the existing
+``step11_momentum_placeholder_v1``) is scored exactly as before, with zero
+extra I/O. See :func:`load_candidate_artifact` and :func:`trend_gate_state`.
 """
 
 from __future__ import annotations
@@ -46,8 +58,10 @@ from pathlib import Path
 from typing import Any, Protocol
 
 import duckdb
+import numpy as np
 import pandas as pd
 
+from open_composer.adapters.data.sip_parquet import load_sip_bars
 from open_composer.adapters.execution.router_target_weights import (
     infer_acquisition_tier,
     write_router_execution_artifacts,
@@ -101,6 +115,33 @@ class MomentumPlaceholderModel:
 
     def score(self, asof_frame: pd.DataFrame) -> pd.Series:
         return asof_frame.set_index("symbol")[self.score_column].astype(float)
+
+
+@dataclass(frozen=True)
+class DerivedRatioScoreModel:
+    """Rule-based stand-in, generalizing :class:`MomentumPlaceholderModel`
+    from a single ranked column to a risk-adjusted ratio of two already-
+    computed feature columns (Step 13 Track M, e.g. ``momentum_252_21 /
+    vol_63``): no ``model.joblib`` required, same
+    ``open_composer.research.kernel.loop.RankingStrategy``-compatible
+    ``.score()`` contract as the single-column placeholder. Matches the
+    research grid's own derivation (``scripts/run_step13_m_grid.py``'s
+    ``stage_m0b``: ``panel["momentum_252_21_over_vol_63"] = (momentum_252_21
+    / vol_63).replace([inf, -inf], nan)``) -- the product side computes the
+    same ratio live from the two named columns instead of requiring a
+    precomputed derived column in ``data/features/daily/``, since that
+    table only ever carries the raw factor columns.
+    """
+
+    numerator_column: str
+    denominator_column: str
+
+    def score(self, asof_frame: pd.DataFrame) -> pd.Series:
+        frame = asof_frame.set_index("symbol")
+        numerator = frame[self.numerator_column].astype(float)
+        denominator = frame[self.denominator_column].astype(float)
+        ratio = numerator / denominator
+        return ratio.replace([np.inf, -np.inf], np.nan)
 
 
 @dataclass(frozen=True)
@@ -180,6 +221,41 @@ def load_candidate_artifact(candidate_artifact_dir: Path) -> CandidateArtifact:
             model=fitted,
             is_placeholder=False,
         )
+    score_expression = config.get("score_expression")
+    if score_expression is not None:
+        if config.get("model_kind") != "rule_derived_ratio_top_k":
+            raise ValueError(
+                f"{config_path} declares score_expression but model_kind="
+                f"{config.get('model_kind')!r}, not 'rule_derived_ratio_top_k'"
+            )
+        if not isinstance(score_expression, dict):
+            raise ValueError(
+                f"{config_path}:score_expression must be an object with 'numerator' and "
+                f"'denominator' column names, got {score_expression!r}"
+            )
+        numerator = score_expression.get("numerator")
+        denominator = score_expression.get("denominator")
+        if not numerator or not denominator:
+            raise ValueError(
+                f"{config_path}:score_expression must declare non-blank 'numerator' and "
+                f"'denominator' column names, got {score_expression!r}"
+            )
+        for label, column in (("numerator", numerator), ("denominator", denominator)):
+            if column not in feature_columns:
+                raise ValueError(
+                    f"{config_path}:score_expression.{label}={column!r} is not in "
+                    f"{features_path}:feature_columns={feature_columns!r}"
+                )
+        return CandidateArtifact(
+            candidate_dir=candidate_artifact_dir,
+            config=config,
+            features=features,
+            model=DerivedRatioScoreModel(
+                numerator_column=str(numerator), denominator_column=str(denominator)
+            ),
+            is_placeholder=True,
+        )
+
     score_column = config.get("score_column")
     if not score_column or config.get("model_kind") != "rule_momentum_top_k":
         raise ValueError(
@@ -293,6 +369,90 @@ def load_latest_universe_cohort(
         raise ValueError(f"universe_as_of_calendar_month found no cohort for {as_of.date()}")
     cohort_month_end = frame.loc[frame["symbol"].isin(cohort_symbols), "month_end"].max()
     return cohort_symbols, pd.Timestamp(cohort_month_end)
+
+
+def _sip_closes_on_or_before(
+    root: Path, symbol: str, *, as_of: pd.Timestamp, lookback_days: int
+) -> pd.DataFrame:
+    """``symbol``'s SIP daily bars in ``(as_of - lookback_days, as_of]``,
+    deduplicated to one row per ``trade_date`` -- the same raw-archive path
+    the research line's trend-gate machinery reads
+    (``scripts/run_step13_m_grid.py``'s ``_spy_close_and_returns``/
+    ``_bil_returns``), used here instead of ``data/features/daily/`` because
+    that table only carries the ranked equity universe, never a trend-gate
+    benchmark or a cash leg (verified empty for both SPY and BIL, 2026-09-10).
+    ``root`` is the same project-root parameter every other loader in this
+    module takes (``load_sip_bars``'s own archive root is ``root/data/sip``),
+    so tests can point this at a hermetic fixture archive instead of the
+    real repo.
+    """
+    start = (as_of - pd.Timedelta(days=int(lookback_days))).to_pydatetime()
+    raw = load_sip_bars(
+        symbol,
+        frequency="daily",
+        start=start,
+        end=as_of.to_pydatetime(),
+        root=root / "data" / "sip",
+    )
+    rows = raw.loc[raw["symbol"] == symbol].copy()
+    if rows.empty:
+        return rows
+    rows["trade_date"] = pd.to_datetime(pd.to_datetime(rows["timestamp"], utc=True).dt.date)
+    rows = rows.sort_values("trade_date").drop_duplicates("trade_date", keep="last")
+    return rows.loc[rows["trade_date"] <= as_of]
+
+
+def trend_gate_state(
+    root: Path, trend_gate: dict[str, Any], *, as_of: pd.Timestamp
+) -> tuple[bool, dict[str, Any]]:
+    """Whether ``trend_gate`` (``{"benchmark": "SPY", "sma_days": 200,
+    "cash_symbol": "BIL"}``, Step 13 Track M's product config block) is open
+    as of ``as_of``: ``benchmark``'s latest close vs. the simple mean of its
+    trailing ``sma_days`` closes, inclusive of ``as_of`` itself -- the same
+    formula the research line's ``spy_gap_200sma`` uses
+    (``scripts/build_step13_regime_daily_features.py``:
+    ``close.rolling(200, min_periods=200).mean()``, gate open iff
+    ``close/sma - 1 > 0``). Raises ``ValueError`` if fewer than ``sma_days``
+    sessions of history are available on/before ``as_of`` -- a silently
+    short window would silently mismark the gate, which this product path
+    must never do.
+    """
+    benchmark = str(trend_gate.get("benchmark") or "SPY")
+    sma_days = int(trend_gate.get("sma_days") or 200)
+    closes = _sip_closes_on_or_before(root, benchmark, as_of=as_of, lookback_days=sma_days * 2 + 30)
+    if len(closes) < sma_days:
+        raise ValueError(
+            f"trend_gate needs {sma_days} trading sessions of {benchmark} history on/before "
+            f"{as_of.date()}, found {len(closes)} under {root / 'data' / 'sip' / 'daily'}"
+        )
+    window = closes.tail(sma_days)
+    window_close = pd.to_numeric(window["close"], errors="raise")
+    sma = float(window_close.mean())
+    latest_close = float(window_close.iloc[-1])
+    is_open = latest_close > sma
+    detail = {
+        "benchmark": benchmark,
+        "sma_days": sma_days,
+        "as_of": as_of.date().isoformat(),
+        "close": latest_close,
+        "sma": sma,
+        "gap": latest_close / sma - 1.0,
+        "gate_open": is_open,
+    }
+    return is_open, detail
+
+
+def _latest_sip_close(
+    root: Path, symbol: str, *, as_of: pd.Timestamp, lookback_days: int = 10
+) -> float:
+    """Most recent SIP daily close for ``symbol`` on/before ``as_of`` --
+    used for the trend gate's cash leg (e.g. BIL), which never appears in
+    ``data/features/daily/`` (see :func:`_sip_closes_on_or_before`).
+    """
+    closes = _sip_closes_on_or_before(root, symbol, as_of=as_of, lookback_days=lookback_days)
+    if closes.empty:
+        raise ValueError(f"no SIP daily close for {symbol!r} on/before {as_of.date()}")
+    return float(pd.to_numeric(closes["close"], errors="raise").iloc[-1])
 
 
 def score_and_select(
@@ -536,6 +696,16 @@ def run_model_ranking_target_weight_mapping(
         previous is not None and previous.get("signal_session") == signal_date.isoformat()
     )
 
+    # Step 13 Track M: opt-in per candidate (config.json:trend_gate), only
+    # ever (re-)evaluated on a fresh weekly signal -- a hold day re-emits
+    # whatever the last rebalance decided, matching the module's own
+    # weekly-hold contract (docstring above) rather than reacting to the
+    # benchmark intraweek. `gate_open`/`gate_detail` stay `None` on a hold
+    # day: they were not recomputed this run, not "gate open by default".
+    trend_gate_cfg = artifact.config.get("trend_gate")
+    gate_open: bool | None = None
+    gate_detail: dict[str, Any] | None = None
+
     if reuse_previous:
         assert previous is not None  # narrows type for mypy; reuse_previous already implies it
         weights = dict(previous["weights"])
@@ -545,34 +715,46 @@ def run_model_ranking_target_weight_mapping(
         )
         is_new_signal = False
     else:
-        if pd.Timestamp(signal_date) == latest_date.normalize():
-            score_frame = today_frame
-        else:
-            score_frame = load_daily_feature_row(
-                base, trade_date=pd.Timestamp(signal_date), columns=request_columns
-            )
-            if score_frame.empty:
-                raise ValueError(
-                    f"no feature rows for the current weekly signal_date={signal_date}"
-                )
         universe_symbols, universe_month_end = load_latest_universe_cohort(
             base, top_n=int(portfolio.universe_top_n), as_of=pd.Timestamp(signal_date)
         )
-        weights, portfolio_beta = score_and_select(
-            asof_frame=score_frame,
-            universe_symbols=universe_symbols,
-            model=artifact.model,
-            top_k=int(portfolio.top_k),
-            hedge=str(portfolio.hedge),
-            beta_column=beta_column,
-            feature_columns=feature_columns,
-        )
-        if not weights:
-            raise ValueError(
-                f"model_ranking_portfolio scored zero eligible symbols for signal_date="
-                f"{signal_date} (universe_size={len(universe_symbols)}); refusing to write "
-                "an empty fresh signal -- investigate the feature/universe join before retrying"
+        if trend_gate_cfg is not None:
+            gate_open, gate_detail = trend_gate_state(
+                base, trend_gate_cfg, as_of=pd.Timestamp(signal_date)
             )
+        if trend_gate_cfg is not None and not gate_open:
+            # Gate closed: the whole book goes to the cash leg, matching
+            # loop.py::build_weight_schedule's research-side convention
+            # (weights = {trend_gate_cash_symbol: 1.0}) -- no ranking/
+            # scoring needed for an all-cash week.
+            weights = {str(trend_gate_cfg.get("cash_symbol") or "BIL"): 1.0}
+            portfolio_beta = None
+        else:
+            if pd.Timestamp(signal_date) == latest_date.normalize():
+                score_frame = today_frame
+            else:
+                score_frame = load_daily_feature_row(
+                    base, trade_date=pd.Timestamp(signal_date), columns=request_columns
+                )
+                if score_frame.empty:
+                    raise ValueError(
+                        f"no feature rows for the current weekly signal_date={signal_date}"
+                    )
+            weights, portfolio_beta = score_and_select(
+                asof_frame=score_frame,
+                universe_symbols=universe_symbols,
+                model=artifact.model,
+                top_k=int(portfolio.top_k),
+                hedge=str(portfolio.hedge),
+                beta_column=beta_column,
+                feature_columns=feature_columns,
+            )
+            if not weights:
+                raise ValueError(
+                    f"model_ranking_portfolio scored zero eligible symbols for signal_date="
+                    f"{signal_date} (universe_size={len(universe_symbols)}); refusing to write "
+                    "an empty fresh signal -- investigate the feature/universe join before retrying"
+                )
         is_new_signal = True
 
     previous_weights = dict(previous["weights"]) if previous is not None else {}
@@ -581,6 +763,15 @@ def run_model_ranking_target_weight_mapping(
         base, account_equity_override or portfolio.account_equity_for_sizing
     )
     price_lookup = _price_lookup(today_frame)
+    if trend_gate_cfg is not None:
+        # The cash leg never appears in data/features/daily/ (see
+        # _sip_closes_on_or_before's docstring); fetch its price directly
+        # whenever this candidate declares a trend gate, regardless of
+        # whether the gate is open this run, so a hold day that is
+        # reusing a previous all-cash signal can still size it.
+        cash_symbol = str(trend_gate_cfg.get("cash_symbol") or "BIL")
+        if cash_symbol not in price_lookup:
+            price_lookup[cash_symbol] = _latest_sip_close(base, cash_symbol, as_of=latest_date)
     sizing = _size_target_weights(weights, price_lookup, equity)
 
     target_rows, intents = build_model_ranking_rows(
@@ -609,8 +800,8 @@ def run_model_ranking_target_weight_mapping(
     warnings: list[str] = []
     if artifact.is_placeholder:
         warnings.append(
-            "candidate_artifact_dir is a rule-based momentum placeholder, not a "
-            "research-validated model artifact"
+            "candidate_artifact_dir is a rule-based candidate (momentum or a derived "
+            "risk-adjusted score), not a research-validated model artifact"
         )
     if sizing.unaffordable:
         warnings.append(f"unaffordable_at_current_equity={list(sizing.unaffordable)}")
@@ -636,6 +827,9 @@ def run_model_ranking_target_weight_mapping(
         "top_k": portfolio.top_k,
         "hedge": portfolio.hedge,
         "portfolio_beta": portfolio_beta,
+        "trend_gate": trend_gate_cfg,
+        "trend_gate_open": gate_open,
+        "trend_gate_detail": gate_detail,
         "universe_rule": portfolio.universe_rule,
         "universe_top_n": portfolio.universe_top_n,
         "universe_size": len(universe_symbols),
@@ -778,6 +972,14 @@ def _write_report(
         f"- Status: `{parity_check['status']}`",
         f"- New signal this run: `{mapping_summary['is_new_signal']}`",
         f"- Candidate is placeholder: `{mapping_summary['candidate_is_placeholder']}`",
+        *(
+            [
+                f"- Trend gate: `{mapping_summary['trend_gate']}` "
+                f"(open=`{mapping_summary['trend_gate_open']}`)"
+            ]
+            if mapping_summary.get("trend_gate") is not None
+            else []
+        ),
         f"- Held names: `{len(held)}`",
         f"- Signals logged this run: `{signal_count}`",
         f"- Idle cash: `{sizing.idle_cash:.2f}` ({sizing.idle_cash_fraction:.4%})",
