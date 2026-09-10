@@ -13,15 +13,18 @@ used -- then scores the resulting return streams against
 ``config/promotion/recent-regime-high-return-gates-v2.json`` via
 ``open_composer.research.regime.gates.evaluate_recent_high_return_candidate``.
 
-``feature_set`` is a named option (``--feature-set daily27``, the only one
-defined today) resolved through ``FEATURE_SET_REGISTRY`` below, never a
-hard-coded column list threaded through grid-cell code -- coordinator
-instruction, 2026-09-09, anticipating a separate Track F agent's forthcoming
-open-factor-library tables (``data/features/alpha158/`` etc., read-only
-input to this script, never built here) landing as a new
-``panel.load_feature_panel(extra_feature_roots=...)`` parameter. Adding
-"alpha158"/"both" later should only need a new registry entry plus passing
-that entry's ``extra_feature_roots`` through once ``panel.py`` defines it.
+``feature_set`` (``m1-single-cell``'s ``--feature-set``, e.g. ``daily27`` or
+``alpha158``) is a named option resolved through
+``open_composer.research.features.feature_sets.resolve_feature_set`` --
+Track F's real registry (commit ``85761b2``), never a hard-coded column list
+threaded through grid-cell code -- coordinator instruction, 2026-09-09.
+``resolve_feature_set`` returns ``(columns, roots)``; ``roots`` is passed
+straight through to ``panel.load_feature_panel(extra_feature_roots=...)``, so
+a new Track F feature set (``data/features/alpha158/`` etc., read-only input
+to this script, never built here) needs no changes in this file at all, only
+a new name on the ``--feature-set`` flag. M0/M0b's rule cells do not go
+through this registry (they each score a single, explicitly named column
+such as ``momentum_252_21``, not a whole feature set).
 
 **Checkpointing**: every cell's ``ExperimentConfig.config_hash`` is checked
 against the shared ledger (family ``step13_recent_high_return``) before
@@ -95,36 +98,6 @@ DATA_YEARS = (2022, 2023, 2024, 2025, 2026)
 TRAIN_WINDOW_MONTHS = 24
 CASH_SYMBOL = "BIL"
 
-#: Named feature sets, resolved through the panel loader -- see module
-#: docstring. Only "daily27" exists today.
-FEATURE_SET_REGISTRY: dict[str, tuple[str, ...]] = {
-    "daily27": (
-        "ret_1",
-        "ret_5",
-        "ret_21",
-        "ret_63",
-        "ret_126",
-        "ret_252",
-        "momentum_252_21",
-        "vol_21",
-        "vol_63",
-        "beta_252_spy",
-        "idio_vol_63",
-        "max_ret_1_21",
-        "dollar_adv_21",
-        "dollar_adv_63",
-        "dollar_adv_21_over_63",
-        "amihud_21",
-        "dist_from_252d_high",
-        "ret_1_rel",
-        "ret_5_rel",
-        "ret_21_rel",
-        "ret_63_rel",
-        "ret_126_rel",
-        "ret_252_rel",
-        "momentum_252_21_rel",
-    ),
-}
 M0_SCORE_COLUMNS = ("momentum_252_21", "ret_126_rel", "ret_63_rel")
 #: M0b (coordinator relay, 2026-09-10): M0's top1500/top20 momentum cells
 #: clear CAGR/activity/DSR but fail badly on max_drawdown and vol-matched-
@@ -766,29 +739,42 @@ def _best_m0_rule_baseline_cagr() -> float:
     return best
 
 
-def stage_m1_single_cell(*, placebo: bool) -> dict[str, Any]:
-    """M1's single smoke-test cell (plan: h=5, trend gate on, no recency
-    weight, top-1500 universe, daily27+5 regime feature columns), fit via
-    the leakage-safe ``ValidationSelectedLightGBMStrategy`` with a
-    one-cell grid (see that module's docstring). ``placebo=True`` shuffles
-    ``label_rank_5`` globally (same mechanism as A-group's
+def stage_m1_single_cell(
+    *, universe_top_n: int, top_k: int, feature_set: str, placebo: bool
+) -> dict[str, Any]:
+    """M1's single smoke-test cell (h=5, trend gate on, no recency weight),
+    fit via the leakage-safe ``ValidationSelectedLightGBMStrategy`` with a
+    one-cell grid (see that module's docstring). ``universe_top_n``/
+    ``top_k``/``feature_set`` are real parameters (coordinator relay,
+    2026-09-10: run on the best M0b universe/top_k, daily27 then alpha158)
+    resolved through ``open_composer.research.features.feature_sets``'s
+    registry -- never a hard-coded column list -- so a Track F feature set
+    such as ``alpha158`` needs no further wiring here once
+    ``extra_feature_roots`` (its ``roots``) exists. ``placebo=True``
+    shuffles ``label_rank_5`` globally (same mechanism as A-group's
     ``run_b3_grid.py --placebo-only``) before fitting, and reports the
     resulting out-of-sample validation IC per quarterly refit instead of
     scoring gates -- the coordinator's explicit ask, 2026-09-09 14:10 UTC.
     """
+    from open_composer.research.features import feature_sets
     from open_composer.research.regime.validated_grid_strategy import MLGridCell
     from open_composer.research.regime.validated_grid_strategy import (
         ValidationSelectedLightGBMStrategy as VSStrategy,
     )
 
     common = _load_common_data()
-    feature_columns = list(FEATURE_SET_REGISTRY["daily27"]) + REGIME_FEATURE_COLUMNS
-    _log(f"loading M1 feature panel ({len(feature_columns)} daily27+regime columns) ...")
+    base_columns, extra_roots = feature_sets.resolve_feature_set(feature_set)
+    feature_columns = list(base_columns) + list(REGIME_FEATURE_COLUMNS)
+    _log(
+        f"loading M1 feature panel ({feature_set}: {len(base_columns)} cols "
+        f"+ {len(REGIME_FEATURE_COLUMNS)} regime cols, roots={[str(r) for r in extra_roots]}) ..."
+    )
     daily_panel = load_feature_panel(
-        list(FEATURE_SET_REGISTRY["daily27"]),
+        list(base_columns),
         ["label_rank_5"],
         dates=common.weekly_dates,
         include_prices=False,
+        extra_feature_roots=extra_roots,
     )
     # Broadcast the 5 market-level regime_daily columns onto every symbol
     # row for that trade_date -- a left join, not a per-symbol feature.
@@ -798,13 +784,14 @@ def stage_m1_single_cell(*, placebo: bool) -> dict[str, Any]:
     if panel[REGIME_FEATURE_COLUMNS].isna().any().any():
         raise ValueError("regime feature columns have missing values after the merge")
 
+    cell_label = f"{feature_set}_uni{universe_top_n}_k{top_k}_gate_on"
     if placebo:
         rng = np.random.default_rng(2026)
         panel = panel.copy()
         panel["label_rank_5"] = rng.permutation(panel["label_rank_5"].to_numpy())
-        experiment_id = "step13_m1_single_cell_h5_gate_on_PLACEBO"
+        experiment_id = f"step13_m1_single_cell_{cell_label}_PLACEBO"
     else:
-        experiment_id = "step13_m1_single_cell_h5_gate_on"
+        experiment_id = f"step13_m1_single_cell_{cell_label}"
 
     fitted_strategies: list[VSStrategy] = []
 
@@ -817,17 +804,17 @@ def stage_m1_single_cell(*, placebo: bool) -> dict[str, Any]:
         experiment_id=experiment_id,
         family=FAMILY,
         model_kind="lightgbm_validation_selected",
-        feature_set="daily27_plus_regime5",
+        feature_set=f"{feature_set}_plus_regime5",
         label_horizon_days=5,
         feature_columns=tuple(feature_columns),
-        top_k=TOP_K,
+        top_k=top_k,
         execution="next_open",
         cost_bps_per_side=PRIMARY_COST_BPS,
         stress_cost_bps_per_side=STRESS_COST_BPS,
         test_years=TEST_YEARS,
         train_window_months=TRAIN_WINDOW_MONTHS,
         refit_frequency="quarterly",
-        universe_top_n=UNIVERSE_TOP_N,
+        universe_top_n=universe_top_n,
         trend_gate={"benchmark": "SPY", "sma_days": 200, "cash_symbol": CASH_SYMBOL},
         hyperparameters={"grid": ["h5_d3"], "placebo": placebo},
     )
@@ -940,6 +927,9 @@ def main() -> int:
         action="store_true",
         help="m1-single-cell only: shuffle label_rank_5, report validation IC instead of gates",
     )
+    parser.add_argument("--universe-top-n", type=int, default=500, help="m1-single-cell only")
+    parser.add_argument("--top-k", type=int, default=50, help="m1-single-cell only")
+    parser.add_argument("--feature-set", default="daily27", help="m1-single-cell only")
     args = parser.parse_args()
     if args.stage == "m0":
         stage_m0()
@@ -948,7 +938,12 @@ def main() -> int:
     elif args.stage == "m0b":
         stage_m0b()
     elif args.stage == "m1-single-cell":
-        stage_m1_single_cell(placebo=args.placebo)
+        stage_m1_single_cell(
+            universe_top_n=args.universe_top_n,
+            top_k=args.top_k,
+            feature_set=args.feature_set,
+            placebo=args.placebo,
+        )
     return 0
 
 
