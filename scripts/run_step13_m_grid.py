@@ -120,14 +120,22 @@ def _log(message: str) -> None:
 
 
 def _augment_price_panel_with_cash_and_benchmarks(
-    price_panel: pd.DataFrame, extra_symbols: tuple[str, ...] = (CASH_SYMBOL,)
+    price_panel: pd.DataFrame,
+    years: tuple[int, ...],
+    extra_symbols: tuple[str, ...] = (CASH_SYMBOL,),
 ) -> pd.DataFrame:
-    """``load_price_panel`` only covers the (ETF-excluded) equity universe;
-    the trend-gate cash leg needs real ``BIL`` open/close rows in the same
-    ``symbol, trade_date, open, close`` shape to be tradeable by
-    ``returns_from_weight_schedule``.
+    """``load_price_panel`` only covers the (ETF-excluded) equity universe,
+    already restricted to ``years``; the trend-gate cash leg needs real
+    ``BIL`` open/close rows in the same ``symbol, trade_date, open, close``
+    shape to be tradeable by ``returns_from_weight_schedule``. ``years`` is
+    required (not inferred from ``DATA_START``) so the merged trading
+    calendar cannot silently grow years earlier than the equity panel's own
+    range -- that mismatch previously fed 2016-2021 dates into
+    ``weekly_rebalance_dates`` that the (years-scoped)
+    ``data/features/regime_daily/`` lookup had no rows for.
     """
     frames = [price_panel]
+    wanted_years = set(years)
     for symbol in extra_symbols:
         raw = load_sip_bars(symbol, frequency="daily", start=DATA_START)
         rows = raw.loc[raw["symbol"] == symbol].copy()
@@ -135,6 +143,7 @@ def _augment_price_panel_with_cash_and_benchmarks(
         rows = rows.sort_values("timestamp")
         rows["trade_date"] = pd.to_datetime(rows["timestamp"].dt.date)
         rows = rows.drop_duplicates("trade_date", keep="last")
+        rows = rows.loc[rows["trade_date"].dt.year.isin(wanted_years)]
         frames.append(
             pd.DataFrame(
                 {
@@ -400,7 +409,7 @@ def stage_m0() -> None:
 
     _log(f"loading price panel ({FEATURE_SET_REGISTRY['daily27']!r} years {TEST_YEARS}) ...")
     price_panel = load_price_panel(years=list(TEST_YEARS))
-    price_panel = _augment_price_panel_with_cash_and_benchmarks(price_panel)
+    price_panel = _augment_price_panel_with_cash_and_benchmarks(price_panel, years=TEST_YEARS)
 
     _log("loading M0 feature panel (rebalance dates only) ...")
     trading_calendar = pd.DatetimeIndex(sorted(price_panel["trade_date"].unique()))
