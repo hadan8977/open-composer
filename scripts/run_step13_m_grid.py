@@ -739,6 +739,26 @@ def _best_m0_rule_baseline_cagr() -> float:
     return best
 
 
+def _ledger_cagr_for_experiment_id(experiment_id: str, family: str = FAMILY) -> float:
+    """A *specific* ledger record's ``cagr_recent_net``, by
+    ``experiment_id`` -- for a cell whose rule twin is one exact comparison
+    cell (e.g. the two-stage ML cell vs. M0b's matching pre-filter rule
+    cell), not "the best M0/M0b cell so far"
+    (``_best_m0_rule_baseline_cagr``'s job).
+    """
+    if not LEDGER_PATH.exists():
+        raise SystemExit(f"ledger does not exist -- run the twin cell {experiment_id!r} first")
+    for line in LEDGER_PATH.read_text().splitlines():
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        if record.get("family") == family and record.get("experiment_id") == experiment_id:
+            return record["metrics"]["cagr_recent_net"]
+    raise SystemExit(
+        f"{experiment_id!r} not found in the ledger (family {family!r}) -- run it first"
+    )
+
+
 def stage_m1_single_cell(
     *, universe_top_n: int, top_k: int, feature_set: str, placebo: bool
 ) -> dict[str, Any]:
@@ -922,15 +942,217 @@ def stage_m1_single_cell(
     return dataclasses.asdict(verdict)
 
 
+#: Coordinator-preregistered two-stage cell, 2026-09-10: pre-filter each
+#: rebalance date to the top-100 of the top-500 (ADV) universe by
+#: momentum_252_21/vol_63, then let the daily27 LightGBM model rank only
+#: those 100 and hold the top 50 (gate on). Rule twin (the
+#: ml_must_beat_rule_baseline comparison) is M0b's own matching pre-filter
+#: rule cell, not the looser "best M0/M0b cell so far" -- same pre-filter
+#: score, same universe/top_k, so the ML-vs-rule comparison is like for
+#: like.
+TWO_STAGE_UNIVERSE_TOP_N = 500
+TWO_STAGE_PRE_FILTER_TOP_N = 100
+TWO_STAGE_TOP_K = 50
+TWO_STAGE_RULE_TWIN_EXPERIMENT_ID = "step13_m0b_mom_over_vol63_uni500_k50_gate_on"
+
+
+def stage_two_stage_cell(*, placebo: bool) -> dict[str, Any]:
+    """See ``TWO_STAGE_*`` constants above for the preregistered spec.
+    ``fit`` trains the inner LightGBM strategy on the full window; only
+    scoring/selection is restricted to the pre-filter's top-100 pool (see
+    ``regime.validated_grid_strategy.TopNPreFilteredStrategy``'s own
+    docstring for why that split matches the coordinator's spec).
+    """
+    from open_composer.research.features import feature_sets
+    from open_composer.research.regime.validated_grid_strategy import (
+        MLGridCell,
+        TopNPreFilteredStrategy,
+    )
+    from open_composer.research.regime.validated_grid_strategy import (
+        ValidationSelectedLightGBMStrategy as VSStrategy,
+    )
+
+    common = _load_common_data()
+    base_columns, extra_roots = feature_sets.resolve_feature_set("daily27")
+    feature_columns = list(base_columns) + list(REGIME_FEATURE_COLUMNS)
+    _log(f"loading two-stage feature panel (daily27: {len(base_columns)} cols + regime5) ...")
+    daily_panel = load_feature_panel(
+        list(base_columns),
+        ["label_rank_5"],
+        dates=common.weekly_dates,
+        include_prices=False,
+        extra_feature_roots=extra_roots,
+    )
+    panel = daily_panel.merge(
+        common.regime_daily[["trade_date", *REGIME_FEATURE_COLUMNS]], on="trade_date", how="left"
+    )
+    if panel[list(REGIME_FEATURE_COLUMNS)].isna().any().any():
+        raise ValueError("regime feature columns have missing values after the merge")
+    # Same derived pre-filter score M0b uses (momentum_252_21 and vol_63
+    # are both already daily27 columns): inf from a zero-vol row mapped to
+    # NaN so it can never win nlargest() by accident.
+    ratio = panel["momentum_252_21"] / panel["vol_63"]
+    panel["momentum_252_21_over_vol_63"] = ratio.replace([np.inf, -np.inf], np.nan)
+
+    cell_label = (
+        f"two_stage_daily27_uni{TWO_STAGE_UNIVERSE_TOP_N}_"
+        f"pf{TWO_STAGE_PRE_FILTER_TOP_N}_k{TWO_STAGE_TOP_K}_gate_on"
+    )
+    if placebo:
+        rng = np.random.default_rng(2026)
+        panel = panel.copy()
+        panel["label_rank_5"] = rng.permutation(panel["label_rank_5"].to_numpy())
+        experiment_id = f"step13_m1_{cell_label}_PLACEBO"
+    else:
+        experiment_id = f"step13_m1_{cell_label}"
+
+    fitted_strategies: list[VSStrategy] = []
+
+    def _factory() -> TopNPreFilteredStrategy:
+        inner = VSStrategy(feature_columns, grid=[MLGridCell(label_horizon_days=5)])
+        fitted_strategies.append(inner)
+        return TopNPreFilteredStrategy(
+            inner,
+            pre_filter_score_column="momentum_252_21_over_vol_63",
+            pre_filter_top_n=TWO_STAGE_PRE_FILTER_TOP_N,
+        )
+
+    config = ExperimentConfig(
+        experiment_id=experiment_id,
+        family=FAMILY,
+        model_kind="lightgbm_validation_selected_two_stage_prefilter",
+        feature_set="daily27_plus_regime5_prefilter_mom_over_vol63",
+        label_horizon_days=5,
+        feature_columns=tuple(feature_columns),
+        top_k=TWO_STAGE_TOP_K,
+        execution="next_open",
+        cost_bps_per_side=PRIMARY_COST_BPS,
+        stress_cost_bps_per_side=STRESS_COST_BPS,
+        test_years=TEST_YEARS,
+        train_window_months=TRAIN_WINDOW_MONTHS,
+        refit_frequency="quarterly",
+        universe_top_n=TWO_STAGE_UNIVERSE_TOP_N,
+        trend_gate={"benchmark": "SPY", "sma_days": 200, "cash_symbol": CASH_SYMBOL},
+        hyperparameters={
+            "grid": ["h5_d3"],
+            "placebo": placebo,
+            "pre_filter_score_column": "momentum_252_21_over_vol_63",
+            "pre_filter_top_n": TWO_STAGE_PRE_FILTER_TOP_N,
+        },
+    )
+    config_hash = config.config_hash()
+    if not placebo:
+        existing = _existing_ledger_record(config_hash)
+        if existing is not None:
+            _log(f"{experiment_id} (hash {config_hash}) already in ledger -- skipping recompute")
+            return existing
+
+    _log(f"running {experiment_id} (hash {config_hash}) ...")
+    trading_calendar = pd.DatetimeIndex(sorted(common.price_panel["trade_date"].unique()))
+    schedule = build_weight_schedule(
+        panel=panel,
+        universe_panel=common.universe_panel,
+        strategy_factory=_factory,
+        feature_columns=feature_columns,
+        label_column="label_rank_5",
+        label_horizon_days=5,
+        test_years=config.test_years,
+        top_k=config.top_k,
+        hedge="none",
+        trading_calendar=trading_calendar,
+        train_window_months=config.train_window_months,
+        refit_frequency=config.refit_frequency,
+        universe_top_n=config.universe_top_n,
+        trend_gate_series=common.trend_gate_series_by_date,
+        trend_gate_cash_symbol=CASH_SYMBOL,
+    )
+
+    validation_ics = [
+        s.validation_ic_by_cell.get("h5_d3")
+        for s in fitted_strategies
+        if s.validation_ic_by_cell.get("h5_d3") == s.validation_ic_by_cell.get("h5_d3")  # drop NaN
+    ]
+    mean_validation_ic = float(np.mean(validation_ics)) if validation_ics else float("nan")
+    _log(
+        f"{experiment_id}: {len(fitted_strategies)} quarterly refits, "
+        f"per-quarter validation IC={[round(v, 4) for v in validation_ics]}, "
+        f"mean={mean_validation_ic:.4f}"
+    )
+
+    if placebo:
+        _log(f"PLACEBO RESULT: mean out-of-sample validation IC = {mean_validation_ic:.4f}")
+        return {
+            "experiment_id": experiment_id,
+            "mean_validation_ic": mean_validation_ic,
+            "per_quarter_ic": validation_ics,
+        }
+
+    price_wide = common.price_panel.pivot(index="trade_date", columns="symbol", values="close")
+    open_wide = common.price_panel.pivot(index="trade_date", columns="symbol", values="open")
+    primary_returns = returns_from_weight_schedule(
+        schedule,
+        price_wide,
+        common.spy_returns,
+        cost_bps_per_side=PRIMARY_COST_BPS,
+        include_hedge=False,
+        execution="next_open",
+        open_wide=open_wide,
+    )
+    stress_returns = returns_from_weight_schedule(
+        schedule,
+        price_wide,
+        common.spy_returns,
+        cost_bps_per_side=STRESS_COST_BPS,
+        include_hedge=False,
+        execution="next_open",
+        open_wide=open_wide,
+    )
+    recent_start = pd.Timestamp(regime_gates.RECENT_WINDOW_START)
+    weekly_returns_recent = _weekly_returns_excluding_cash(
+        schedule, primary_returns, recent_start=recent_start
+    )
+    rebalances_with_change = _rebalances_with_change_per_year(schedule)
+    rule_baseline_cagr = _ledger_cagr_for_experiment_id(TWO_STAGE_RULE_TWIN_EXPERIMENT_ID)
+
+    verdict = regime_gates.evaluate_recent_high_return_candidate(
+        experiment_id=experiment_id,
+        config_hash=config_hash,
+        full_returns=primary_returns,
+        full_stress_returns=stress_returns,
+        spy_returns=common.spy_returns,
+        bil_returns=common.bil_returns,
+        weekly_holding_period_net_returns_recent=weekly_returns_recent,
+        rebalances_with_change_per_year=rebalances_with_change,
+        family=FAMILY,
+        is_ml=True,
+        placebo_rank_ic_abs=abs(mean_validation_ic),
+        rule_baseline_cagr_recent_net=rule_baseline_cagr,
+    )
+    appended = _append_v2_ledger_record(config, verdict)
+    _log(
+        f"{experiment_id}: cagr_recent_net={verdict.metrics['cagr_recent_net']:.4f} "
+        f"mdd={verdict.metrics['max_drawdown_recent']:.4f} "
+        f"hit_rate_weekly={verdict.metrics['hit_rate_weekly']:.4f} "
+        f"vs_rule_baseline={rule_baseline_cagr:.4f} "
+        f"all_gates_pass={verdict.all_gates_pass} (ledger_appended={appended})"
+    )
+    return dataclasses.asdict(verdict)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--stage", choices=["m0", "reconcile", "m0b", "m1-single-cell"], default="m0"
+        "--stage",
+        choices=["m0", "reconcile", "m0b", "m1-single-cell", "two-stage"],
+        default="m0",
     )
     parser.add_argument(
         "--placebo",
         action="store_true",
-        help="m1-single-cell only: shuffle label_rank_5, report validation IC instead of gates",
+        help=(
+            "m1-single-cell/two-stage only: shuffle label_rank_5, report "
+            "validation IC instead of gates"
+        ),
     )
     parser.add_argument("--universe-top-n", type=int, default=500, help="m1-single-cell only")
     parser.add_argument("--top-k", type=int, default=50, help="m1-single-cell only")
@@ -949,6 +1171,8 @@ def main() -> int:
             feature_set=args.feature_set,
             placebo=args.placebo,
         )
+    elif args.stage == "two-stage":
+        stage_two_stage_cell(placebo=args.placebo)
     return 0
 
 
