@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from collections.abc import Iterable
 from datetime import date, datetime
 from pathlib import Path
@@ -47,59 +48,46 @@ def _chunked(frame: pd.DataFrame, size: int) -> list[pd.DataFrame]:
 
 
 def _run_batches(
-    batches: Iterable[pd.DataFrame], *, backend_name: str, model: str | None, budget: int
+    batches: Iterable[pd.DataFrame],
+    *,
+    backend_name: str,
+    model: str | None,
+    budget: int,
+    max_consecutive_failures: int = ex.DEFAULT_MAX_CONSECUTIVE_FAILURES,
 ) -> dict[str, object]:
-    """Runs already-chunked batches (each <= MAX_ARTICLES_PER_CALL rows)
-    against the backend, ledgering and checkpointing every call. ``batches``
-    is an iterable, not a list, so the streaming bulk path
-    (``ex.iter_weekly_extraction_batches``) never has to materialize more
-    than one batch at a time."""
+    """Thin CLI wrapper: all the retry/backoff/circuit-breaker/checkpoint
+    logic lives in the tested ``ex.run_extraction_batches`` generator (a
+    script file is not easily unit-testable, so the real logic does not
+    live here -- see ``tests/test_news_extract.py``); this just prints each
+    yielded progress event and returns the final summary dict."""
     backend = get_backend(backend_name)
     model = model or default_openai_model()
-    phash = ex.prompt_hash()
-    batches_run = 0
-    articles_processed = 0
-    stopped_reason = "exhausted_input"
-    for batch in batches:
-        used = ex.tokens_used_so_far()
-        if used >= budget:
-            stopped_reason = "budget_exhausted"
-            print(f"  STOP: {used} tokens already used, budget is {budget}", flush=True)
+    summary: dict[str, object] | None = None
+    for event in ex.run_extraction_batches(
+        batches,
+        backend=backend,
+        model=model,
+        budget=budget,
+        max_consecutive_failures=max_consecutive_failures,
+    ):
+        if event["final"]:
+            summary = event
             break
-        result = ex.extract_batch(batch, backend=backend, model=model)
-        row = ex.ledger_row(
-            batch_index=batches_run,
-            model=model,
-            prompt_hash_value=phash,
-            usage=result.usage,
-            article_ids=result.article_ids,
-            status=result.status,
-            error=result.error,
+        suffix = (
+            ""
+            if event["status"] == "ok"
+            else f" -- FAILED ({event['consecutive_failures']} in a row): {event['error']}"
         )
-        ex.append_ledger([row])
-        if result.status == "ok":
-            source_years = {
-                str(art.id): pd.Timestamp(art.created_at).year for art in batch.itertuples()
-            }
-            ex.append_events(result.rows, source_years=source_years)
-            articles_processed += len(result.rows)
-        else:
-            print(f"  batch {batches_run} FAILED: {result.error}", flush=True)
-        batches_run += 1
-        running_total = row["input_tokens"] + row["output_tokens"] + used
         print(
-            f"  batch {batches_run}: {result.status}, {len(batch)} articles, "
-            f"{row['input_tokens']}+{row['output_tokens']} tokens, "
-            f"running total {running_total}",
+            f"  batch {event['batch_index']}: {event['status']}, "
+            f"{event['article_count']} articles, "
+            f"{event['input_tokens']}+{event['output_tokens']} tokens{suffix}",
             flush=True,
         )
-    return {
-        "batches_run": batches_run,
-        "articles_processed": articles_processed,
-        "tokens_used_so_far": ex.tokens_used_so_far(),
-        "budget": budget,
-        "stopped_reason": stopped_reason,
-    }
+    assert summary is not None  # run_extraction_batches always yields a final event
+    if summary["stopped_reason"] in ("budget_exhausted", "consecutive_failures"):
+        print(f"  STOP: {summary['stopped_reason']}", flush=True)
+    return summary
 
 
 def _smoke(n: int, *, backend_name: str, model: str | None) -> int:
@@ -145,8 +133,6 @@ def _smoke(n: int, *, backend_name: str, model: str | None) -> int:
 
 
 def time_now() -> str:
-    import time
-
     return time.strftime("%H:%M:%S")
 
 
@@ -199,9 +185,22 @@ def _bulk(args: argparse.Namespace) -> int:
         pools, cached_keys=cached_keys, prompt_hash_value=phash, memory_limit="1GB"
     )
     summary = _run_batches(
-        batches, backend_name=args.backend, model=args.model, budget=args.budget_tokens
+        batches,
+        backend_name=args.backend,
+        model=args.model,
+        budget=args.budget_tokens,
+        max_consecutive_failures=args.max_consecutive_failures,
     )
     print(f"\nbulk summary: {summary}", flush=True)
+    if summary["stopped_reason"] == "consecutive_failures":
+        print(
+            f"FATAL: {args.max_consecutive_failures} consecutive batch failures -- "
+            "stopping rather than burning through the rest of the backlog against a "
+            "dead endpoint. Rerun the exact same command once the backend recovers: "
+            "the cache/ledger checkpoints mean nothing already-succeeded repeats.",
+            flush=True,
+        )
+        return 1
     return 0
 
 
@@ -219,6 +218,15 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--end", type=_parse_date, default=None)
     parser.add_argument("--top-n", type=int, default=ex.DEFAULT_CANDIDATE_POOL_TOP_N)
     parser.add_argument("--budget-tokens", type=int, default=ex.TOKEN_BUDGET_PER_WEEK)
+    parser.add_argument(
+        "--max-consecutive-failures",
+        type=int,
+        default=ex.DEFAULT_MAX_CONSECUTIVE_FAILURES,
+        help="stop (exit non-zero) after this many batch failures in a row -- "
+        "guards against a dead/rate-limited endpoint burning through the whole "
+        "backlog for zero tokens spent (failed calls cost 0 tokens, so the "
+        "budget gate alone never stops that case)",
+    )
     parser.add_argument("--model", default=None)
     parser.add_argument("--backend", default="openai", choices=["openai", "local_test_stub"])
     return parser.parse_args()

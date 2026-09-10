@@ -35,7 +35,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Iterable, Iterator, Sequence
+import random
+import time
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -65,6 +67,19 @@ DEFAULT_CANDIDATE_POOL_TOP_N = 150
 #: multi-symbol article can still be kept via any one of its symbols that
 #: has not hit this cap yet (see iter_weekly_extraction_batches).
 MAX_ARTICLES_PER_SYMBOL_PER_WEEK = 40
+
+#: 2026-09-10: a sustained backend outage costs 0 tokens per failed call, so
+#: the token budget alone never stops a run against a dead endpoint -- these
+#: bound wall-clock cost instead. Backoff ramps 30s -> 60 -> 120 -> 240 ->
+#: 480, capped at 600s (10 min); it reaches that cap by the 6th failure
+#: (30 * 2**5 = 960 > 600). DEFAULT_MAX_CONSECUTIVE_FAILURES is the hard
+#: stop -- a run gives up (exit non-zero at the CLI) before the backoff
+#: schedule's own 6th step in the default configuration (5 < 6), which is
+#: intentional: the schedule is a ceiling on how long any single wait can
+#: be, not a promise that every step of it is used.
+DEFAULT_MAX_CONSECUTIVE_FAILURES = 5
+BACKOFF_START_SECONDS = 30.0
+BACKOFF_CAP_SECONDS = 600.0
 
 #: Plan section 4.2's exact enum, order preserved for readability only.
 EVENT_TYPES: tuple[str, ...] = (
@@ -659,3 +674,111 @@ def iter_weekly_extraction_batches(
                 yield matched.iloc[start_idx : start_idx + batch_size]
     finally:
         con.close()
+
+
+def backoff_seconds(consecutive_failures: int, *, rng: random.Random | None = None) -> float:
+    """Equal-jitter exponential backoff for the delay before trying the
+    *next* batch after a failure (a failed batch is not retried in place --
+    see :func:`run_extraction_batches`): ``consecutive_failures=1`` ->
+    around 30s, doubling each additional failure, capped at 600s (10 min).
+    Equal jitter (``base/2 + uniform(0, base/2)``) keeps the expected delay
+    close to the nominal schedule while avoiding perfectly synchronized
+    retries.
+    """
+    generator = rng or random
+    base = min(BACKOFF_START_SECONDS * (2 ** max(consecutive_failures - 1, 0)), BACKOFF_CAP_SECONDS)
+    return base / 2 + generator.uniform(0, base / 2)
+
+
+def run_extraction_batches(
+    batches: Iterable[pd.DataFrame],
+    *,
+    backend: LLMBackend,
+    model: str,
+    budget: int,
+    max_consecutive_failures: int = DEFAULT_MAX_CONSECUTIVE_FAILURES,
+    sleep: Callable[[float], None] | None = None,
+    rng: random.Random | None = None,
+    ledger_path: Path = LEDGER_PATH,
+    events_root: Path = EVENTS_ROOT,
+) -> Iterator[dict[str, Any]]:
+    """Runs ``batches`` against ``backend``, ledgering and checkpointing
+    every call, yielding one small progress dict per batch attempted plus a
+    final summary dict (``{"final": True, ...}``) when the run stops.
+
+    Every batch is ledgered (and, if successful, persisted to the events
+    store) *before* it is yielded, so a consumer that stops iterating, or
+    crashes, never loses the checkpoint for a batch it already saw -- the
+    next call with a freshly-loaded ``cached_keys`` (see
+    :func:`load_cached_keys`) naturally resumes from the first
+    not-yet-cached article, never repeating already-successful work and
+    never restarting from scratch. This is the same mechanism whether the
+    stop was a clean end of input, the token budget, or the failure circuit
+    breaker below.
+
+    Stops (``stopped_reason``) on whichever comes first: the token budget
+    (``"budget_exhausted"``), ``max_consecutive_failures`` failures in a row
+    with no intervening success (``"consecutive_failures"`` -- a sustained
+    backend outage costs 0 tokens per call, so the budget alone would never
+    stop it), or the input being exhausted (``"exhausted_input"``).
+    ``sleep``/``rng`` are injectable so tests can run the failure path
+    without real delays.
+    """
+    sleep_fn = sleep if sleep is not None else time.sleep
+    phash = prompt_hash()
+    batches_run = 0
+    articles_processed = 0
+    consecutive_failures = 0
+
+    def _summary(stopped_reason: str) -> dict[str, Any]:
+        return {
+            "final": True,
+            "batches_run": batches_run,
+            "articles_processed": articles_processed,
+            "tokens_used_so_far": tokens_used_so_far(ledger_path=ledger_path),
+            "budget": budget,
+            "stopped_reason": stopped_reason,
+        }
+
+    for batch in batches:
+        used = tokens_used_so_far(ledger_path=ledger_path)
+        if used >= budget:
+            yield _summary("budget_exhausted")
+            return
+        result = extract_batch(batch, backend=backend, model=model)
+        row = ledger_row(
+            batch_index=batches_run,
+            model=model,
+            prompt_hash_value=phash,
+            usage=result.usage,
+            article_ids=result.article_ids,
+            status=result.status,
+            error=result.error,
+        )
+        append_ledger([row], ledger_path=ledger_path)
+        if result.status == "ok":
+            consecutive_failures = 0
+            source_years = {
+                str(art.id): pd.Timestamp(art.created_at).year for art in batch.itertuples()
+            }
+            append_events(result.rows, source_years=source_years, root=events_root)
+            articles_processed += len(result.rows)
+        else:
+            consecutive_failures += 1
+        batches_run += 1
+        yield {
+            "final": False,
+            "batch_index": batches_run,
+            "status": result.status,
+            "error": result.error,
+            "article_count": len(batch),
+            "input_tokens": row["input_tokens"],
+            "output_tokens": row["output_tokens"],
+            "consecutive_failures": consecutive_failures,
+        }
+        if consecutive_failures >= max_consecutive_failures:
+            yield _summary("consecutive_failures")
+            return
+        if result.status != "ok":
+            sleep_fn(backoff_seconds(consecutive_failures, rng=rng))
+    yield _summary("exhausted_input")

@@ -7,6 +7,7 @@ protocol (``infer`` and/or ``infer_with_usage``) that
 
 from __future__ import annotations
 
+import random
 from pathlib import Path
 from typing import Any
 
@@ -576,3 +577,197 @@ def test_iter_weekly_extraction_batches_no_packet_files_yields_nothing(tmp_path:
         )
     )
     assert batches == []
+
+
+# --- backoff / circuit breaker / resume (2026-09-10, endpoint outage) -----
+
+
+class _AlwaysFailingBackend:
+    def infer_with_usage(self, **kwargs: Any) -> tuple[dict[str, Any], dict[str, int]]:
+        raise RuntimeError("Error code: 503 - Service temporarily unavailable")
+
+
+class _FailNTimesBackend:
+    """Fails its first ``fail_times`` calls, then succeeds every call after."""
+
+    def __init__(self, fail_times: int) -> None:
+        self.fail_times = fail_times
+        self.calls = 0
+
+    def infer_with_usage(self, *, input_payload: dict[str, Any], **kwargs: Any) -> tuple:
+        self.calls += 1
+        if self.calls <= self.fail_times:
+            raise RuntimeError("Error code: 503 - Service temporarily unavailable")
+        ids = [a["id"] for a in input_payload["articles"]]
+        return (
+            {"results": [_valid_result(i) for i in ids]},
+            {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15},
+        )
+
+
+def _one_article_batches(n: int, *, start: str = "2024-06-03T10:00:00Z") -> list[pd.DataFrame]:
+    return [pd.DataFrame([_article_row(str(i), headline=f"H{i}")]) for i in range(n)]
+
+
+def test_backoff_seconds_ramps_and_caps() -> None:
+    rng = random.Random(0)
+    # attempt 1 -> base 30 -> [15, 30)
+    assert 15.0 <= ex.backoff_seconds(1, rng=rng) < 30.0
+    # attempt 5 -> base 480 -> [240, 480)
+    assert 240.0 <= ex.backoff_seconds(5, rng=rng) < 480.0
+    # attempt 6 and beyond -> capped at base 600 -> [300, 600)
+    assert 300.0 <= ex.backoff_seconds(6, rng=rng) < 600.0
+    assert 300.0 <= ex.backoff_seconds(20, rng=rng) < 600.0
+
+
+def test_run_extraction_batches_stops_after_max_consecutive_failures(tmp_path: Path) -> None:
+    sleep_calls: list[float] = []
+    events = list(
+        ex.run_extraction_batches(
+            _one_article_batches(10),
+            backend=_AlwaysFailingBackend(),
+            model="test-model",
+            budget=ex.TOKEN_BUDGET_PER_WEEK,
+            max_consecutive_failures=3,
+            sleep=sleep_calls.append,
+            ledger_path=tmp_path / "ledger.jsonl",
+            events_root=tmp_path / "events",
+        )
+    )
+    final = events[-1]
+    assert final["final"] is True
+    assert final["stopped_reason"] == "consecutive_failures"
+    assert final["batches_run"] == 3
+    assert final["articles_processed"] == 0
+    # Backoff sleeps after failures 1 and 2 only -- the 3rd failure trips
+    # the breaker and returns immediately, no sleep after it.
+    assert len(sleep_calls) == 2
+    assert all(s > 0 for s in sleep_calls)
+    # Every attempted call was still ledgered, including all 3 failures --
+    # a rerun can see exactly what was tried (plan section 6: "包括失败的").
+    ledger_lines = (tmp_path / "ledger.jsonl").read_text(encoding="utf-8").strip().splitlines()
+    assert len(ledger_lines) == 3
+
+
+def test_run_extraction_batches_resets_streak_on_success_and_does_not_trip(
+    tmp_path: Path,
+) -> None:
+    # fail, fail, SUCCESS, fail, fail -- never 3 in a row, so with
+    # max_consecutive_failures=3 the breaker must never trip.
+    class _Scripted:
+        def __init__(self) -> None:
+            self._inner_calls = 0
+
+        def infer_with_usage(self, **kwargs: Any) -> tuple:
+            self._inner_calls += 1
+            # calls 1,2 fail; call 3 succeeds; calls 4,5 fail again.
+            if self._inner_calls in (1, 2, 4, 5):
+                raise RuntimeError("Error code: 503 - Service temporarily unavailable")
+            ids = [a["id"] for a in kwargs["input_payload"]["articles"]]
+            return (
+                {"results": [_valid_result(i) for i in ids]},
+                {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15},
+            )
+
+    events = list(
+        ex.run_extraction_batches(
+            _one_article_batches(5),
+            backend=_Scripted(),
+            model="test-model",
+            budget=ex.TOKEN_BUDGET_PER_WEEK,
+            max_consecutive_failures=3,
+            sleep=lambda _seconds: None,
+            ledger_path=tmp_path / "ledger.jsonl",
+            events_root=tmp_path / "events",
+        )
+    )
+
+    final = events[-1]
+    assert final["stopped_reason"] == "exhausted_input"
+    assert final["batches_run"] == 5
+    assert final["articles_processed"] == 1
+    statuses = [e["status"] for e in events if not e["final"]]
+    assert statuses == ["error", "error", "ok", "error", "error"]
+
+
+def test_run_extraction_batches_stops_at_budget(tmp_path: Path) -> None:
+    backend = _FailNTimesBackend(fail_times=0)  # always succeeds, 15 tokens/batch
+    events = list(
+        ex.run_extraction_batches(
+            _one_article_batches(10),
+            backend=backend,
+            model="test-model",
+            budget=15,  # exactly 1 batch's worth (15 each) -- the 2nd batch's
+            # pre-check (used=15 >= budget=15) must stop before it runs
+            sleep=lambda _seconds: None,
+            ledger_path=tmp_path / "ledger.jsonl",
+            events_root=tmp_path / "events",
+        )
+    )
+    final = events[-1]
+    assert final["stopped_reason"] == "budget_exhausted"
+    assert final["batches_run"] == 1
+    assert final["tokens_used_so_far"] == 15
+
+
+def test_iter_weekly_extraction_batches_resume_skips_already_extracted(tmp_path: Path) -> None:
+    """The core resume property a killed/restarted bulk run relies on: a
+    fresh call with cache keys reloaded from disk must skip everything
+    already persisted and pick up exactly the not-yet-extracted rest --
+    never repeating paid-for work, never silently dropping unfinished work.
+    """
+    packets_root = tmp_path / "news_packets"
+    packets_root.mkdir()
+    _write_packet_year(
+        packets_root / "2024.parquet",
+        [
+            _packet("1", "2024-01-05T08:00:00Z", ["AAPL"]),
+            _packet("2", "2024-01-05T09:00:00Z", ["AAPL"]),
+            _packet("3", "2024-01-05T10:00:00Z", ["AAPL"]),
+        ],
+    )
+    pools = {pd.Timestamp("2024-01-05"): {"AAPL"}}
+    phash = "resume-hash"
+
+    first_pass_ids = sorted(
+        str(i)
+        for batch in ex.iter_weekly_extraction_batches(
+            pools, cached_keys=set(), prompt_hash_value=phash, packets_root=packets_root
+        )
+        for i in batch["id"]
+    )
+    assert first_pass_ids == ["1", "2", "3"]
+
+    # Simulate a partial run: only "1" and "2" were actually persisted
+    # (e.g. "3"'s batch failed, or the process died right after these two).
+    events_root = tmp_path / "events"
+    persisted_row = {
+        "event_type": "other_noise",
+        "stated_direction": 0,
+        "company_specific": False,
+        "confidence": 0.5,
+        "model_id": "m",
+        "knowledge_cutoff": "d",
+        "prompt_hash": phash,
+        "extracted_at": pd.Timestamp("2024-01-05T08:05:00Z"),
+    }
+    ex.append_events(
+        [{"id": "1", **persisted_row}, {"id": "2", **persisted_row}],
+        source_years={"1": 2024, "2": 2024},
+        root=events_root,
+    )
+
+    resumed_cached_keys = ex.load_cached_keys([2024], root=events_root)
+    assert resumed_cached_keys == {("1", phash), ("2", phash)}
+
+    second_pass_ids = sorted(
+        str(i)
+        for batch in ex.iter_weekly_extraction_batches(
+            pools,
+            cached_keys=resumed_cached_keys,
+            prompt_hash_value=phash,
+            packets_root=packets_root,
+        )
+        for i in batch["id"]
+    )
+    assert second_pass_ids == ["3"]
