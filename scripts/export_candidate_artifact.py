@@ -417,8 +417,17 @@ def _render_rule_candidate_readme(
         gate_results = record.get("gate_results") or {}
         gates_not_applicable = record.get("gates_not_applicable") or []
         disclosure = record.get("disclosure") or {}
-        passed = sorted(name for name, ok in gate_results.items() if ok)
-        failed = sorted(name for name, ok in gate_results.items() if not ok)
+        # gates.py's convention (open_composer/research/regime/gates.py):
+        # a not-applicable gate is recorded as gate_results[name]=True (so
+        # it never fails all_gates_pass on its own) *and* listed in
+        # gates_not_applicable -- excluded from "passed" here so the README
+        # never shows a not-applicable gate as if it were an evaluated pass.
+        passed = sorted(
+            name for name, ok in gate_results.items() if ok and name not in gates_not_applicable
+        )
+        failed = sorted(
+            name for name, ok in gate_results.items() if not ok and name not in gates_not_applicable
+        )
         lines += [
             "## Ledger verdict (verbatim from `experiments.jsonl`, config_hash "
             f"`{record.get('config_hash')}`, recorded_at `{record.get('recorded_at')}`)",
