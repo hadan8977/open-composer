@@ -44,9 +44,12 @@ def test_all_open_aggregates_every_open_library_but_not_daily27() -> None:
     assert fs.ALPHA158_ROOT in roots
     assert fs.ALPHA101_ROOT in roots
     assert fs.ALPHA191_ROOT in roots
-    # alpha158 (154) + alpha101 (20) + alpha191 (20); osap_price/
-    # reversal_trend are still empty placeholders at this point in the week.
-    assert len(columns) == 154 + 20 + 20
+    assert fs.OSAP_PRICE_ROOT in roots
+    assert fs.REVERSAL_TREND_ROOT in roots
+    # alpha158 (154) + alpha101 (20) + alpha191 (20) + osap_price (25) +
+    # reversal_trend's continuous columns only (21 of its 25 -- the 4
+    # discrete signal columns are event-study-only, not screened).
+    assert len(columns) == 154 + 20 + 20 + 25 + 21
 
 
 def test_screened_top40_recent_missing_file_raises_actionable_error() -> None:

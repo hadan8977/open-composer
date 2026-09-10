@@ -24,6 +24,10 @@ from pathlib import Path
 from open_composer.research.features.alpha101 import ALPHA101_COLUMNS
 from open_composer.research.features.alpha158 import DEFAULT_WINDOWS, alpha158_columns
 from open_composer.research.features.alpha191 import ALPHA191_COLUMNS
+from open_composer.research.features.osap_price import OSAP_PRICE_COLUMNS
+from open_composer.research.features.reversal_trend_daily import (
+    REVERSAL_TREND_CONTINUOUS_COLUMNS,
+)
 
 ROOT = Path(__file__).resolve().parents[3]
 FEATURES_ROOT = ROOT / "data" / "features"
@@ -71,11 +75,12 @@ DAILY27_COLUMNS: tuple[str, ...] = (
     "momentum_252_21_rel",
 )
 
-#: Populated once ``osap_price.py``/``reversal_trend_daily.py`` land later
-#: this round; kept as an empty tuple (not a missing name) so
-#: ``FEATURE_SETS``'s shape doesn't change out from under an early caller.
-OSAP_PRICE_COLUMNS: tuple[str, ...] = ()
-REVERSAL_TREND_CONTINUOUS_COLUMNS: tuple[str, ...] = ()
+# OSAP_PRICE_COLUMNS and REVERSAL_TREND_CONTINUOUS_COLUMNS are imported
+# above, not redefined here, so this registry can never drift from the
+# tables that actually get built: osap_price.py's 25 columns (24
+# per-symbol + momvol) and reversal_trend_daily.py's 21 continuous
+# ``rt_*`` columns (the 4 discrete signal columns are event-study-only,
+# see that module's docstring).
 
 #: name -> (columns, root). ``daily27`` has no root: those columns already
 #: live in ``panel.py``'s ``daily_root`` default, so no
