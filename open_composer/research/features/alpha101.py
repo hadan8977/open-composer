@@ -67,7 +67,7 @@ def compute_alpha101(frame: pd.DataFrame) -> pd.DataFrame:
 
     wide = {field: _pivot_wide(frame, field) for field in PANEL_FIELDS}
     open_, high, low, close, volume, vwap = (wide[f] for f in PANEL_FIELDS)
-    returns = close.pct_change()
+    returns = close.pct_change(fill_method=None)
     adv20 = ops.sma(volume, 20)
 
     alphas: dict[str, pd.DataFrame] = {}
