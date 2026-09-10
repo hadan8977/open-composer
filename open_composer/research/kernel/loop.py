@@ -380,6 +380,7 @@ def build_weight_schedule(
     universe_top_n: int | None = None,
     trend_gate_series: pd.Series | None = None,
     trend_gate_cash_symbol: str = "BIL",
+    max_periods: int | None = None,
 ) -> list[RebalanceEvent]:
     """Walk-forward weight schedule: retrain once per ``test_years`` entry on
     an anchored, embargoed window, then score every weekly rebalance date
@@ -479,6 +480,14 @@ def build_weight_schedule(
         if refit_frequency == "yearly"
         else [(year, quarter) for year in test_years for quarter in (1, 2, 3, 4)]
     )
+    if max_periods is not None:
+        # 2026-09-10 memory-fix dry-run support: process only the first
+        # max_periods walk-forward periods (in test_years/quarter order) --
+        # e.g. a one-quarter smoke test to measure peak RSS under
+        # /usr/bin/time -v before committing to a full multi-quarter run.
+        # None (default, every pre-existing caller) is unlimited and
+        # byte-for-byte unchanged.
+        periods = periods[:max_periods]
 
     events: list[RebalanceEvent] = []
     for year, quarter in periods:

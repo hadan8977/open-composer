@@ -760,7 +760,12 @@ def _ledger_cagr_for_experiment_id(experiment_id: str, family: str = FAMILY) -> 
 
 
 def stage_m1_single_cell(
-    *, universe_top_n: int, top_k: int, feature_set: str, placebo: bool
+    *,
+    universe_top_n: int,
+    top_k: int,
+    feature_set: str,
+    placebo: bool,
+    max_periods: int | None = None,
 ) -> dict[str, Any]:
     """M1's single smoke-test cell (h=5, trend gate on, no recency weight),
     fit via the leakage-safe ``ValidationSelectedLightGBMStrategy`` with a
@@ -775,6 +780,12 @@ def stage_m1_single_cell(
     ``run_b3_grid.py --placebo-only``) before fitting, and reports the
     resulting out-of-sample validation IC per quarterly refit instead of
     scoring gates -- the coordinator's explicit ask, 2026-09-09 14:10 UTC.
+    ``max_periods`` (2026-09-10 memory-fix dry-run support) caps
+    ``build_weight_schedule`` to the first N walk-forward periods and, like
+    ``placebo``, skips the ledger checkpoint/write and gate evaluation --
+    a short return stream is not meant to produce a real verdict, only to
+    smoke-test peak memory under ``/usr/bin/time -v`` before committing to
+    a full run.
     """
     from open_composer.research.features import feature_sets
     from open_composer.research.regime.validated_grid_strategy import MLGridCell
@@ -811,7 +822,9 @@ def stage_m1_single_cell(
         raise ValueError("regime feature columns have missing values after the merge")
 
     cell_label = f"{feature_set}_uni{universe_top_n}_k{top_k}_gate_on"
-    if placebo:
+    if max_periods is not None:
+        experiment_id = f"step13_m1_single_cell_{cell_label}_DRYRUN{max_periods}"
+    elif placebo:
         rng = np.random.default_rng(2026)
         panel = panel.copy()
         panel["label_rank_5"] = rng.permutation(panel["label_rank_5"].to_numpy())
@@ -845,7 +858,7 @@ def stage_m1_single_cell(
         hyperparameters={"grid": ["h5_d3"], "placebo": placebo},
     )
     config_hash = config.config_hash()
-    if not placebo:
+    if not placebo and max_periods is None:
         existing = _existing_ledger_record(config_hash)
         if existing is not None:
             _log(f"{experiment_id} (hash {config_hash}) already in ledger -- skipping recompute")
@@ -869,6 +882,7 @@ def stage_m1_single_cell(
         universe_top_n=config.universe_top_n,
         trend_gate_series=common.trend_gate_series_by_date,
         trend_gate_cash_symbol=CASH_SYMBOL,
+        max_periods=max_periods,
     )
 
     validation_ics = [
@@ -882,6 +896,16 @@ def stage_m1_single_cell(
         f"per-quarter validation IC={[round(v, 4) for v in validation_ics]}, "
         f"mean={mean_validation_ic:.4f}"
     )
+
+    if max_periods is not None:
+        _log(
+            f"DRY RUN (max_periods={max_periods}) completed without a memory kill -- stopping here."
+        )
+        return {
+            "experiment_id": experiment_id,
+            "mean_validation_ic": mean_validation_ic,
+            "per_quarter_ic": validation_ics,
+        }
 
     if placebo:
         _log(f"PLACEBO RESULT: mean out-of-sample validation IC = {mean_validation_ic:.4f}")
@@ -1159,6 +1183,16 @@ def main() -> int:
     parser.add_argument("--universe-top-n", type=int, default=500, help="m1-single-cell only")
     parser.add_argument("--top-k", type=int, default=50, help="m1-single-cell only")
     parser.add_argument("--feature-set", default="daily27", help="m1-single-cell only")
+    parser.add_argument(
+        "--max-periods",
+        type=int,
+        default=None,
+        help=(
+            "m1-single-cell only: cap build_weight_schedule to the first N "
+            "walk-forward periods and skip the ledger/gates -- a memory "
+            "dry run, e.g. --max-periods 1 for a one-quarter smoke test"
+        ),
+    )
     args = parser.parse_args()
     if args.stage == "m0":
         stage_m0()
@@ -1172,6 +1206,7 @@ def main() -> int:
             top_k=args.top_k,
             feature_set=args.feature_set,
             placebo=args.placebo,
+            max_periods=args.max_periods,
         )
     elif args.stage == "two-stage":
         stage_two_stage_cell(placebo=args.placebo)

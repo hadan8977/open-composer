@@ -900,6 +900,42 @@ def test_build_weight_schedule_refit_frequency_quarterly_refits_once_per_quarter
     assert yearly_dates == quarterly_dates
 
 
+def test_build_weight_schedule_max_periods_caps_walk_forward_periods() -> None:
+    """2026-09-10 memory-fix dry-run support: max_periods=1 processes only
+    the first walk-forward period (here, 2018 Q1 under quarterly refit,
+    which the test above already established is 4 periods for a full
+    year) and stops -- one refit, not four, and every produced event's
+    date falls in Q1.
+    """
+    panel, universe_panel = _synthetic_panel(n_days=650)
+    fit_calls: list[pd.Timestamp] = []
+
+    class _Recorder:
+        def fit(self, train_frame: pd.DataFrame) -> None:
+            fit_calls.append(train_frame["trade_date"].max())
+
+        def score(self, asof_frame: pd.DataFrame) -> pd.Series:
+            return pd.Series(1.0, index=asof_frame["symbol"].to_numpy())
+
+    events = loop.build_weight_schedule(
+        panel=panel,
+        universe_panel=universe_panel,
+        strategy_factory=_Recorder,
+        feature_columns=["momentum_252_21"],
+        label_column="label_rank_5",
+        label_horizon_days=5,
+        test_years=(2018,),
+        top_k=None,
+        hedge="none",
+        refit_frequency="quarterly",
+        max_periods=1,
+    )
+    assert len(fit_calls) == 1
+    assert events  # the one period that did run still produced real events
+    for event in events:
+        assert pd.Timestamp(event.date).quarter == 1
+
+
 def test_build_weight_schedule_trend_gate_series_overrides_closed_weeks_to_cash() -> None:
     panel, universe_panel = _synthetic_panel()
     events = loop.build_weight_schedule(
