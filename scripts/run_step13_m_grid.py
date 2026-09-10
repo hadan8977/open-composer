@@ -77,8 +77,19 @@ PRIMARY_COST_BPS = 10.0
 STRESS_COST_BPS = 25.0
 TOP_K = 20
 UNIVERSE_TOP_N = 1500
-TEST_YEARS = (2022, 2023, 2024, 2025, 2026)  # 2022-2023 warm the 24-month trailing window
-GATED_TEST_YEARS = (2024, 2025, 2026)  # years actually scored against the v2 recent window
+#: Years actually walked forward as test periods -- must equal the v2
+#: contract's gated window (2024Q1..2026Q3-to-date), never wider: passing an
+#: earlier year (e.g. 2022) to build_weight_schedule's test_years makes it a
+#: real test period needing its *own* embargoed training window before it,
+#: which the panel has no data for if DATA_YEARS' warm-up years are its
+#: first years loaded -- there is nothing "extra" about a warm-up year from
+#: build_weight_schedule's point of view, it is just another test year with
+#: no history (observed directly: this crashed the first two M0 launches).
+TEST_YEARS = (2024, 2025, 2026)
+#: Years to load into the price/feature/regime panels -- wider than
+#: TEST_YEARS so the first test quarter (2024Q1) has a real trailing
+#: 24-month training window (2022-01..2023-12) to draw from.
+DATA_YEARS = (2022, 2023, 2024, 2025, 2026)
 TRAIN_WINDOW_MONTHS = 24
 CASH_SYMBOL = "BIL"
 
@@ -246,7 +257,7 @@ def _rebalances_with_change_per_year(schedule) -> dict[int, int]:
     rebalance's} -- a trend-gate flip to/from cash counts as a change (it
     changes every weight), matching the gate contract's activity-floor note.
     """
-    counts: dict[int, int] = {year: 0 for year in GATED_TEST_YEARS}
+    counts: dict[int, int] = {year: 0 for year in TEST_YEARS}
     previous: dict[str, float] | None = None
     for event in schedule:
         date = pd.Timestamp(event.date)
@@ -407,9 +418,23 @@ def stage_m0() -> None:
     _log("loading universe panel ...")
     universe_panel = universe_mod.load_universe_panel(UNIVERSE_ROOT)
 
-    _log(f"loading price panel ({FEATURE_SET_REGISTRY['daily27']!r} years {TEST_YEARS}) ...")
-    price_panel = load_price_panel(years=list(TEST_YEARS))
-    price_panel = _augment_price_panel_with_cash_and_benchmarks(price_panel, years=TEST_YEARS)
+    _log(f"loading price panel ({FEATURE_SET_REGISTRY['daily27']!r} years {DATA_YEARS}) ...")
+    price_panel = load_price_panel(years=list(DATA_YEARS))
+    price_panel = _augment_price_panel_with_cash_and_benchmarks(price_panel, years=DATA_YEARS)
+
+    _log("loading regime_daily trend gate table ...")
+    regime_daily = _load_regime_daily(list(DATA_YEARS))
+    regime_daily_max_date = pd.Timestamp(regime_daily["trade_date"].max())
+    # The regime table and the equity daily-feature archive are built by
+    # separate jobs and can be one trading day out of sync at the very end
+    # of the covered history (observed 2026-09-10: the equity panel already
+    # had 2026-09-09 while regime_daily's own last build did not). Clipping
+    # the whole analysis window to regime_daily's own max date, rather than
+    # erroring on a single trailing date, keeps every downstream date
+    # (feature panel, rebalance schedule, mark-to-market prices) mutually
+    # consistent -- a disclosed, PIT-honest "as of the older table" choice,
+    # not a silent gap-fill.
+    price_panel = price_panel.loc[price_panel["trade_date"] <= regime_daily_max_date]
 
     _log("loading M0 feature panel (rebalance dates only) ...")
     trading_calendar = pd.DatetimeIndex(sorted(price_panel["trade_date"].unique()))
@@ -418,10 +443,9 @@ def stage_m0() -> None:
         list(M0_SCORE_COLUMNS), ["label_rank_5"], dates=weekly_dates, include_prices=False
     )
 
-    _log("loading SPY/BIL benchmark returns and regime_daily trend gate ...")
+    _log("loading SPY/BIL benchmark returns ...")
     _, spy_returns = _spy_close_and_returns()
     bil_returns = _bil_returns()
-    regime_daily = _load_regime_daily(list(TEST_YEARS))
     trend_gate_series_by_date = _trend_gate_series(regime_daily, weekly_dates)
 
     results = []
