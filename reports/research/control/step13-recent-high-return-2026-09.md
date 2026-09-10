@@ -403,3 +403,256 @@ could be promotion-eligible. Per the plan's own fallback rule ("若没有单元
 the best-available candidate is connected for observation only, with this
 report stating the gap plainly rather than the contract being relaxed to
 manufacture a pass.
+
+## P 轨：Reversal Trend
+
+Plan: `docs/plan-step-13p-reversal-trend-pine-factor-and-strategy-2026-09-09.zh.md`
+(sections 1, A2, A3, 3). Ledger family unchanged (`step13_recent_high_return`),
+track `M` (rule-based, `is_ml=False`), gate contract
+`config/promotion/recent-regime-high-return-gates-v2.json`. Port:
+`open_composer/research/pine_port/reversal_trend.py::compute_reversal_trend`.
+Live checkpoint-level detail: `reports/research/control/step13-2026-09-09-progress.md`
+("Track P executor log").
+
+### Indicator semantics (plan section 1)
+
+Reversal Trend is a Pine v6 indicator the user reverse-engineered from a
+closed-source QuanTGT script by matching marker positions on a chart (exact
+original parameters not visible; see plan section 0). It is an **event-type,
+sparse 0/1 signal**, not a continuous factor: a bull setup requires, in
+order, an RSI(14) oversold touch (<=30) that "arms" a window (expires after
+35 bars unless a signal fires and re-locks it), then -- while that arm is
+still active -- an EMA(12,26) MACD bullish crossover with RSI back in
+(40,65), close above EMA20, ADX(14) > 18, and the MACD histogram rising
+1-bar-over-1-bar, gated by a 30-bar cooldown since the last bull signal
+(`fBull`); `fRecL` is an earlier, weaker "RSI recovering out of oversold
+while still below EMA50" signal (dwell >=5 bars in oversold required first,
+8-bar cooldown). `fBear`/`fRecS` are the symmetric short-side pair (20/8-bar
+cooldowns), with one disclosed, deliberate asymmetry preserved from the
+original script: `bear` has no MACD-histogram confirmation term where `bull`
+does. All four signals are confirmed only at bar close (no repaint, no
+`request.security`), and the formulas are bar-period-agnostic (the same code
+runs on daily, hourly, or minute bars -- only the meaning of "1 bar" changes).
+Parameters are fixed at the script's own defaults everywhere in this chapter
+per plan section 6 ("不做：调指标参数").
+
+### Daily event study verdict (F 轨, `reports/research/factor_screen/reversal_trend_event_study.md`)
+
+All four daily signals are **"informative: no"** in both windows tested
+(2018-2026 full history and 2024-onward), against the rule "5d and 10d mean
+excess > 0 AND date-clustered t > 2.5 AND above the placebo's 95th
+percentile," on the PIT-top-1500 universe. `rt_bull_signal` is flatly
+uninformative in both windows (2024-onward 5d t=0.26, 10d t=-1.64). The two
+"recovery" signals and the bear signal show a directionally interesting but
+not-gate-clearing pattern: `rt_bear_signal` and `rt_recs_signal` (a
+short-covering-type setup) both have **positive** forward excess returns in
+the 2024-onward window (`rt_recs_signal` 10d t=2.69, 21d t=3.59;
+`rt_bear_signal` 21d t=2.58) -- i.e. after a bear/short-recovery signal
+fires, the stock's subsequent excess return tends to be positive, a
+contrarian pattern -- but neither clears the "both 5d AND 10d t>2.5" bar
+(both signals' 5d t-stats fall short: 0.67 and 1.87 respectively), so the
+formal verdict stays "no" for all four signals in both windows. This is
+disclosed here because it directly bears on the plan's original
+"combine as a factor with other indicators" idea (section 0): on this
+evidence, Reversal Trend's daily-bar signals are not a standalone
+cross-sectional factor and would need to earn their place through some
+other mechanism (e.g. the intraday-holding-period backtest below) rather
+than a forward-return factor screen.
+
+### 1h-bar strategy: 18-cell grid (A3, already run -- not re-run this session)
+
+Data: `data/bars/hourly/{2024,2025,2026}.parquet` (715,985 rows / 273
+symbols), 09:30-anchored regular-session 1h bars built from `data/sip/minute`
+(`open_composer/research/bars/hourly.py`). Window 2024-01-02..2026-09-09,
+next-bar-open execution, 5bp/side stock / 2bp/side ETF cost, 2.5x stress,
+max 10 concurrent positions (10% NAV each, ADX-descending tiebreak), long
+only -- `fBear`/`fRecS` are disclosure-only per plan section 2 ("空头...只做
+披露，不进候选") and were not run as separate ledgered candidate cells in
+this artifact set (no `bear`/`recs`-only files exist under
+`reports/research/artifacts/step13_p_reversal_trend_hourly/`; short-side
+economics are noted qualitatively in the progress log as clearly negative,
+consistent with the daily event study finding no informative long-side edge
+either). Grid: holding {6, 13, 26} 1h bars ({time_stop, time_stop_or_reverse,
+2xATR(14,1h) trailing stop} exit) x {bull_only, bull_and_recl} signal set =
+18 cells, all real cells landed with a matched same-symbol/same-count
+random-date placebo and a disclosure-only "SPY>200-day-SMA" trend-gate
+variant (neither placebo nor trend-gate is ledgered).
+
+| holding | exit rule | signal | trades | per-trade hit | PF | CAGR | MDD | weekly hit | Sharpe ex-BIL | placebo cum. return | trend-gate cum. return |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 6  | time_stop            | bull_only     | 1494 | 0.491 | 0.94 | -3.69%  | -20.98% | 0.521 | -0.65 | +0.018 | -0.045 |
+| 6  | time_stop            | bull_and_recl | 2991 | 0.492 | 0.98 | -3.00%  | -30.83% | 0.440 | -0.37 | +0.133 | +0.005 |
+| 6  | time_stop_or_reverse | bull_only     | 1494 | 0.491 | 0.94 | -3.69%  | -20.98% | 0.521 | -0.65 | +0.010 | -0.045 |
+| 6  | time_stop_or_reverse | bull_and_recl | 2991 | 0.492 | 0.98 | -3.00%  | -30.83% | 0.440 | -0.37 | +0.141 | +0.005 |
+| 6  | atr_trailing_2x      | bull_only     | 1501 | 0.458 | 0.85 | -7.88%  | -26.74% | 0.464 | -1.15 | -0.271 | -0.152 |
+| 6  | atr_trailing_2x      | bull_and_recl | 3082 | 0.457 | 0.85 | -15.03% | -45.58% | 0.376 | -1.26 | -0.397 | -0.281 |
+| 13 | time_stop            | bull_only     | 1374 | 0.512 | 0.99 | -1.89%  | -22.22% | 0.529 | -0.30 | +0.100 | -0.130 |
+| 13 | time_stop            | bull_and_recl | 2118 | 0.503 | 1.05 | +3.39%  | -17.35% | 0.511 | +0.04 | +0.259 | +0.047 |
+| 13 | time_stop_or_reverse | bull_only     | 1374 | 0.512 | 1.00 | -1.18%  | -22.17% | 0.521 | -0.26 | +0.066 | -0.113 |
+| 13 | time_stop_or_reverse | bull_and_recl | 2118 | 0.504 | 1.05 | +3.88%  | -17.17% | 0.511 | +0.07 | +0.174 | +0.060 |
+| 13 | atr_trailing_2x      | bull_only     | 1459 | 0.391 | 0.81 | -12.04% | -31.94% | 0.414 | -1.42 | -0.359 | -0.257 |
+| 13 | atr_trailing_2x      | bull_and_recl | 2574 | 0.390 | 0.81 | -19.42% | -47.18% | 0.369 | -1.37 | -0.311 | -0.453 |
+| 26 | time_stop            | bull_only     | 1099 | 0.540 | 1.27 | +19.32% | -23.89% | 0.564 | +0.78 | +0.212 | +0.506 |
+| 26 | **time_stop**        | **bull_and_recl** | **1352** | **0.536** | **1.32** | **+26.25%** | **-14.68%** | **0.589** | **+0.98** | +0.118 | +0.862 |
+| 26 | time_stop_or_reverse | bull_only     | 1103 | 0.539 | 1.26 | +18.47% | -24.50% | 0.564 | +0.75 | +0.231 | +0.477 |
+| 26 | time_stop_or_reverse | bull_and_recl | 1358 | 0.538 | 1.32 | +26.12% | -12.96% | 0.567 | +0.97 | +0.507 | +0.852 |
+| 26 | atr_trailing_2x      | bull_only     | 1445 | 0.352 | 0.77 | -14.88% | -37.30% | 0.343 | -1.62 | -0.161 | -0.313 |
+| 26 | atr_trailing_2x      | bull_and_recl | 2365 | 0.352 | 0.82 | -18.29% | -48.35% | 0.369 | -1.25 | -0.523 | -0.477 |
+
+(Best cell bolded. Source: `reports/research/artifacts/step13_p_reversal_trend_hourly/summary.json`
+plus its per-cell `__placebo.json`/`__trend_gate.json` checkpoints; every real
+row is also in `reports/research/ledger/experiments.jsonl` under
+`step13_recent_high_return`.)
+
+### Gate verdict, verbatim: nothing passes
+
+**0 of 18 cells have `all_gates_pass=True` / `promotion_eligible=True`.**
+Per-gate failure count across the 18 real cells:
+
+- `cagr_recent_net` (>=0.30 required): **fails on all 18/18** -- the best
+  cell reaches 0.2625.
+- `cagr_excess_vol_matched_spy` (>=0.0): **fails on all 18/18** -- every
+  cell, including the best one (-0.87%), loses to SPY scaled to the same
+  realized volatility.
+- `sharpe_excess_bil_recent` (>=1.2): **fails on all 18/18** -- the best
+  cell reaches 0.976.
+- `dsr_probability` (>=0.5): **fails on all 18/18** -- the best cell reaches
+  0.264 (highest in the grid; every h6/h13 and every ATR-trailing cell is
+  near 0.0-0.02).
+- `stress_cost_still_high` (>=0.20 at 2.5x cost): **fails on all 18/18** --
+  the two closest cells (h26 bull_and_recl, time_stop and
+  time_stop_or_reverse) reach 17.4% and 17.3%, about 2.6-2.7pp short.
+- `hit_rate_weekly` (>=0.55): fails on 14/18 -- passes only on the four h26
+  non-ATR cells (0.564-0.589).
+- `positive_quarter_fraction` (>=0.60): fails on 14/18 -- passes only on the
+  same four h26 non-ATR cells (0.727).
+- `max_drawdown_recent` (>=-0.25): fails on 8/18 -- the atr_trailing_2x
+  cells at every holding length, plus the worst h6/h13 bull_and_recl cells.
+- `activity_floor` (>=30 rebalances/yr with a change): **passes on 18/18**
+  (trade counts run from ~1,100 to ~3,100 over the window, far above the
+  floor).
+- `ml_placebo_rank_ic`, `ml_must_beat_rule_baseline`, `llm_marginal_lift`:
+  not applicable (rule-based Track M candidate, `is_ml=False`).
+
+### Honest read
+
+The best cell (h26, `time_stop`, `bull_and_recl`: 26.25% CAGR / -14.68% MDD
+/ 0.589 weekly hit / 1352 trades) and its close sibling (h26,
+`time_stop_or_reverse`, `bull_and_recl`: 26.12% / -12.96%) have a
+**meaningfully better drawdown profile than Track M's own connected
+weekly-momentum candidate** (`mom_over_vol63_uni500_k50_gate_off`, ~33.0%
+CAGR / -28.3% MDD, see the Track M chapter above) -- roughly the same order
+of return at about half the drawdown. But both numbers still sit **below the
+30% CAGR gate and well below SPMO's honest 37.4%/-20.1% comparator**
+(`config/promotion/recent-regime-high-return-gates-v2.json`
+`reference_disclosures`); at -13..-15% MDD this cell's drawdown is actually
+better than SPMO's, but the return gap is the binding problem, same as
+everywhere else in this report.
+
+Two disclosed reasons to distrust this result before treating it as a real
+edge:
+
+1. **Holding-length dependence, at the edge of the grid, not the interior.**
+   Of the three preregistered holding lengths, only the longest (h26, ~4
+   trading days) produces a competitive result at all. h13 is marginal
+   (+3.4% to +3.9% on the two non-ATR/`bull_and_recl` cells, -1.2% to -1.9%
+   on `bull_only`), and h6 is negative everywhere (-3.0% to -15.0%). The
+   `atr_trailing_2x` exit is bad at *every* holding length (-7.9% to
+   -19.4%), including h26 (-14.9%/-18.3%) -- a protective stop calibrated
+   at 2x ATR(14,1h) apparently cuts winners short more than it protects
+   against the specific drawdowns this signal produces. A genuine effect
+   would typically show up somewhere in the *interior* of a 3-point grid,
+   not exclusively at its longest boundary; this pattern is consistent
+   with (though does not prove) the good h26 result being partly a
+   holding-period-driven market-exposure effect rather than a
+   signal-driven one.
+2. **The reverse-exit sibling's placebo is not clean; the best cell's is
+   much cleaner but not zero.** The best cell's same-symbol/same-count
+   random-date placebo compounds to +0.118 over the window (1169 placebo
+   trades) versus the real cell's +0.8655 (1352 real trades, exact
+   compounded return from its quarterly disclosure table) -- the placebo
+   explains about 14% of the real cell's cumulative return, i.e. mostly
+   clean. Its sibling, h26 `time_stop_or_reverse` `bull_and_recl`, compounds
+   its placebo to **+0.5067** (1204 placebo trades) versus the real cell's
+   +0.8604 (1358 real trades) -- the placebo explains **about 59%** of that
+   cell's cumulative return. Random entries held ~4 trading days in a
+   10%-weighted, 10-slot, mostly-ETF/large-cap long book, during a
+   2024-2026 window that was on net a strong bull market, already capture
+   more than half of this cell's apparent edge -- most of what looks like
+   "signal" in the reverse-exit sibling is holding-period and market-beta
+   effect, disclosed here exactly as instructed rather than only reporting
+   the flattering headline number. The trend-gate variant (SPY>200dma) is
+   close to a no-op for both cells (0.862 and 0.852 cumulative vs. 0.8655
+   and 0.8604 real) simply because SPY was above its 200-day SMA for most
+   of this window -- it neither rescues nor meaningfully changes either
+   cell.
+
+Net: Reversal Trend's 1h-bar long strategy does not clear the v2 gate
+contract on any of the 18 preregistered cells, and the one region of the
+grid that looks attractive (h26, `bull_and_recl`) carries real, disclosed
+fragility (edge-of-grid holding-period dependence; a same-family sibling
+cell whose placebo is not clean). It is a better-drawdown, lower-return
+alternative to the Track M weekly momentum candidates already in this
+report, not a candidate that changes the report's overall conclusion that
+no Step 13 recent-high-return candidate yet clears the contract.
+
+### TradingView comparison (deliverable 2)
+
+Parity script: `scripts/reversal_trend_parity.py SPY 1h 2025-01-02 2025-06-30`
+(120 calendar days of pre-window warmup so EMA200/RSI/ADX are converged,
+`ReversalTrendParams()` defaults, no tuning). Full assumptions, an NVDA
+second data point, and DST-boundary notes are in
+`reports/research/artifacts/step13_p_reversal_trend_hourly/parity_spy_2025h1.md`
+(gitignored directory, so the SPY table is reproduced here in full for the
+user to compare against their TradingView screenshots of the original,
+unported indicator):
+
+**SPY, 2025-01-02..2025-06-30 -- 10 events (4 fBull, 1 fBear, 2 fRecL, 3 fRecS)**
+
+| bar close (ET) | bar start (ET) | signal | close | RSI | ADX | EMA20 | EMA50 |
+|---|---|---|---|---|---|---|---|
+| 2025-01-07 12:30 EST | 11:30 | fBear | 580.65 | 45.3 | 22.3 | 582.81 | 582.38 |
+| 2025-01-23 10:30 EST | 09:30 | fRecS | 595.51 | 69.5 | 43.1 | 592.70 | 587.06 |
+| 2025-01-28 14:30 EST | 13:30 | fBull | 593.85 | 53.4 | 30.3 | 592.54 | 591.04 |
+| 2025-02-28 16:00 EST | 15:30 | fBull | 584.04 | 53.3 | 38.8 | 581.01 | 585.76 |
+| 2025-03-07 14:30 EST | 13:30 | fBull | 566.84 | 49.2 | 25.7 | 565.74 | 572.17 |
+| 2025-03-14 10:30 EDT | 09:30 | fBull | 547.60 | 47.1 | 27.5 | 547.48 | 555.10 |
+| 2025-03-31 12:30 EDT | 11:30 | fRecL | 546.84 | 34.9 | 41.9 | 552.47 | 556.12 |
+| 2025-04-07 13:30 EDT | 12:30 | fRecL | 498.58 | 30.8 | 52.4 | 513.31 | 531.59 |
+| 2025-05-14 13:30 EDT | 12:30 | fRecS | 578.17 | 68.9 | 43.0 | 574.45 | 565.60 |
+| 2025-06-27 14:30 EDT | 13:30 | fRecS | 605.59 | 61.7 | 40.0 | 603.83 | 599.07 |
+
+Assumptions the user should check against their screenshots before treating
+any mismatch as a logic bug: 1h bars are 09:30-anchored regular-session-only
+(six 60-minute buckets + a trailing 15:30-16:00 30-minute bucket,
+pre/post-market dropped) -- **this is assumed, not independently verified
+this session, to match TradingView's default 1h anchoring for US equities**;
+"bar close" above is bar-start + 60 minutes (+30 minutes for the last bucket
+of the day), since `compute_reversal_trend`'s own `timestamp` column is
+documented as the bar's *start*. A one-bar (60/30-minute) offset between
+this table and a screenshot is more likely an anchoring-convention labeling
+difference than a signal-logic difference; a signal present in one series
+and absent in the other is the more interesting thing to report back.
+
+### Product-path disclosure: this is not paper-ready as-is
+
+Even if a cell had cleared the gate contract, **it could not be connected
+through the existing observation-mode path today.** `scripts/run_daily_paper_cycle.py`
+(installed via `scripts/install_daily_cron.sh`, the mechanism every other
+Track M/L candidate in this report references for observation-mode
+connection) runs **once per trading day**: sync-account, then compute target
+weights once, off the prior day's close. Reversal Trend's 1h-bar strategy
+needs a decision at **every 1h bar close during the regular session**
+(6-7 times per trading day: 10:30, 11:30, 12:30, 13:30, 14:30, 15:30, 16:00) --
+a fundamentally different runner cadence that does not exist yet:
+an intraday scheduler (hourly cron or event loop gated to regular-session
+bar closes, not a single daily cron line), a near-real-time hourly bar-build
+step (this report's `data/bars/hourly/{year}.parquet` is a historical/
+backfilled artifact, not a live-updating one), incremental per-bar signal
+computation, and per-bar target-weight/order submission through the same
+Alpaca Paper write path everything else in this report uses. None of this
+is built. Per this project's own discipline (no self-activation, StrategySpec
+rule path not `model_ranking` for a discrete-trade mechanism like this one),
+this gap is disclosed here rather than worked around; building the hourly
+runner is a prerequisite for connecting *any* future hourly-bar candidate to
+observation mode, not specific to Reversal Trend.
