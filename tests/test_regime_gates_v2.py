@@ -100,7 +100,15 @@ def test_evaluate_recent_high_return_candidate_slices_and_scores(tmp_path) -> No
         gates=_permissive_gates(),
     )
     assert verdict.metrics["recent_window_start"] >= "2024-01-02"
-    assert verdict.disclosure["cagr_2018_2023"] is None  # no data before 2024 in this fixture
+    # _fixture() deliberately starts 2021-06-01 ("enough rows before 2024
+    # for the disclosure window and the 2022 replay" -- see its docstring),
+    # so the 2018-2023 disclosure slice is 2021-06-01..2023-12-31: real
+    # data, not empty. A stale copy-pasted comment here previously claimed
+    # the opposite and asserted None, which only happened to pass if the
+    # fixture were changed to start in 2024 -- it was not, so this was
+    # dead/wrong until caught by an actual pytest run.
+    assert isinstance(verdict.disclosure["cagr_2018_2023"], float)
+    assert np.isfinite(verdict.disclosure["cagr_2018_2023"])
     assert verdict.gates_not_applicable == (
         "ml_placebo_rank_ic",
         "ml_must_beat_rule_baseline",
