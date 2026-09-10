@@ -73,7 +73,9 @@ from __future__ import annotations
 import gc
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from open_composer.research.kernel.lightgbm_rank_strategy import LightGBMRankStrategy
@@ -322,3 +324,43 @@ class ValidationSelectedLightGBMStrategy:
         if self._winner is None:
             raise RuntimeError("top_feature_importances called before fit")
         return self._winner.top_feature_importances(n=n)
+
+
+class TopNPreFilteredStrategy:
+    """Step 13 Track M's preregistered two-stage cell (coordinator relay,
+    2026-09-10): at each rebalance date, restrict to the top
+    ``pre_filter_top_n`` names by ``pre_filter_score_column`` (a rule
+    score, e.g. ``momentum_252_21_over_vol_63``) *within* the already-
+    ADV-filtered universe, then let ``inner`` (any ``loop.RankingStrategy``
+    -- here ``ValidationSelectedLightGBMStrategy``) rank only that smaller
+    pool. Names outside the pre-filter's pool get a score of ``-inf`` so a
+    downstream ``scores.nlargest(top_k)`` can never select them regardless
+    of what ``inner`` would have said about them -- and ``inner`` is never
+    even asked to predict for them, so its own behavior on the pool it does
+    see is unchanged from running it standalone on that smaller universe.
+
+    ``fit`` trains ``inner`` on the *full*, unfiltered training window (the
+    two-stage design only restricts scoring/selection, not training data --
+    the coordinator's spec describes a rebalance-date pre-filter, not a
+    training-row filter); this class does not touch ``sample_weight``
+    handling itself, matching ``inner.fit``'s own signature exactly (so
+    ``loop.fit_with_optional_sample_weight``'s signature detection sees
+    through to whatever ``inner`` actually supports).
+    """
+
+    def __init__(self, inner: Any, *, pre_filter_score_column: str, pre_filter_top_n: int) -> None:
+        self._inner = inner
+        self._pre_filter_score_column = pre_filter_score_column
+        self._pre_filter_top_n = pre_filter_top_n
+
+    def fit(self, train_frame: pd.DataFrame) -> None:
+        self._inner.fit(train_frame)
+
+    def score(self, asof_frame: pd.DataFrame) -> pd.Series:
+        rule_score = asof_frame.set_index("symbol")[self._pre_filter_score_column]
+        pool = set(rule_score.nlargest(self._pre_filter_top_n).index)
+        inner_scores = self._inner.score(asof_frame.loc[asof_frame["symbol"].isin(pool)])
+        full_index = pd.Index(asof_frame["symbol"].to_numpy())
+        result = pd.Series(-np.inf, index=full_index)
+        result.loc[inner_scores.index] = inner_scores.to_numpy()
+        return result

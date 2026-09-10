@@ -242,3 +242,64 @@ def test_label_shuffled_fit_gives_near_zero_out_of_sample_validation_ic() -> Non
     assert abs(ic) < 0.02, (
         f"label-shuffled validation IC={ic!r} looks leaked (expected |IC| < 0.02)"
     )
+
+
+class _StubInnerStrategy:
+    """A fake ``loop.RankingStrategy`` for ``TopNPreFilteredStrategy``
+    tests: ``.score()`` just returns ``rank_score`` (a column already on
+    the frame it is asked to score), and ``.fit()`` records which rows it
+    was called with so the test can assert the pre-filter never reaches
+    ``fit`` (only ``score``).
+    """
+
+    def __init__(self) -> None:
+        self.fit_called_with_n_rows: int | None = None
+
+    def fit(self, train_frame: pd.DataFrame) -> None:
+        self.fit_called_with_n_rows = len(train_frame)
+
+    def score(self, asof_frame: pd.DataFrame) -> pd.Series:
+        return asof_frame.set_index("symbol")["rank_score"]
+
+
+def test_top_n_pre_filtered_strategy_only_scores_the_pre_filter_pool() -> None:
+    """5 symbols, pre_filter_top_n=3: only the top 3 by rule_score get a
+    real (non -inf) score, and that score is exactly what the inner
+    strategy would have said for just those 3 -- proving the inner
+    strategy is scoped to the pre-filtered pool, not the full universe.
+    """
+    asof_frame = pd.DataFrame(
+        {
+            "symbol": ["A", "B", "C", "D", "E"],
+            "rule_score": [5.0, 1.0, 4.0, 2.0, 3.0],  # top 3 by rule_score: A, C, E
+            "rank_score": [10.0, 20.0, 30.0, 40.0, 50.0],  # inner's own score, unrelated
+        }
+    )
+    inner = _StubInnerStrategy()
+    strategy = vgs.TopNPreFilteredStrategy(
+        inner, pre_filter_score_column="rule_score", pre_filter_top_n=3
+    )
+    scores = strategy.score(asof_frame)
+
+    assert scores["A"] == 10.0
+    assert scores["C"] == 30.0
+    assert scores["E"] == 50.0
+    assert scores["B"] == float("-inf")
+    assert scores["D"] == float("-inf")
+    # nlargest(k) for any k <= 3 can therefore never select B or D.
+    assert set(scores.nlargest(2).index) == {"C", "E"}
+
+
+def test_top_n_pre_filtered_strategy_fit_delegates_to_inner_on_the_full_frame() -> None:
+    """fit() trains the inner strategy on the *whole* training window, not
+    a pre-filtered subset -- the two-stage design restricts scoring/
+    selection only, per the coordinator's spec ("pre-filter each rebalance
+    date ... then let the model rank those").
+    """
+    train_frame = pd.DataFrame({"trade_date": pd.bdate_range("2024-01-01", periods=40)})
+    inner = _StubInnerStrategy()
+    strategy = vgs.TopNPreFilteredStrategy(
+        inner, pre_filter_score_column="rule_score", pre_filter_top_n=3
+    )
+    strategy.fit(train_frame)
+    assert inner.fit_called_with_n_rows == len(train_frame)
