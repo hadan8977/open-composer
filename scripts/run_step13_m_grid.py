@@ -51,6 +51,7 @@ import dataclasses
 import json
 import sys
 import time
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -70,6 +71,7 @@ from open_composer.research.kernel.loop import (  # noqa: E402
     ExperimentConfig,
     build_weight_schedule,
     returns_from_weight_schedule,
+    universe_as_of_calendar_month,
     weekly_rebalance_dates,
 )
 from open_composer.research.regime import gates as regime_gates  # noqa: E402
@@ -759,6 +761,29 @@ def _ledger_cagr_for_experiment_id(experiment_id: str, family: str = FAMILY) -> 
     )
 
 
+def _pit_cohort_symbol_union(
+    universe_panel: pd.DataFrame, dates: Sequence[pd.Timestamp], *, top_n: int
+) -> list[str]:
+    """Union, across every date in ``dates``, of the PIT top-``top_n``
+    cohort (``universe_as_of_calendar_month(..., top_n=top_n)``) -- every
+    symbol that is ever in-universe at that cutoff somewhere in the
+    walk-forward window, typically ~500-800 names once monthly cohort
+    turnover is unioned across a multi-year window, vs. the ~2,700 symbols
+    in the full daily feature table. Passed to
+    ``panel.load_feature_panel(symbol_filter=...)`` so wide feature sets
+    (e.g. alpha158's 154 columns) don't materialize rows for symbols the
+    cell can never train or score on (coordinator decision, 2026-09-10:
+    alpha158's M1 cell peaked at ~1.87 GiB for a single quarter under the
+    full-universe load, over the 1.4GB bar, because the panel carried
+    every symbol in the daily table instead of just the cohorts this cell
+    actually uses).
+    """
+    symbols: set[str] = set()
+    for date in dates:
+        symbols.update(universe_as_of_calendar_month(universe_panel, date, top_n=top_n))
+    return sorted(symbols)
+
+
 def stage_m1_single_cell(
     *,
     universe_top_n: int,
@@ -766,26 +791,30 @@ def stage_m1_single_cell(
     feature_set: str,
     placebo: bool,
     max_periods: int | None = None,
+    gate_on: bool = True,
 ) -> dict[str, Any]:
-    """M1's single smoke-test cell (h=5, trend gate on, no recency weight),
-    fit via the leakage-safe ``ValidationSelectedLightGBMStrategy`` with a
-    one-cell grid (see that module's docstring). ``universe_top_n``/
-    ``top_k``/``feature_set`` are real parameters (coordinator relay,
-    2026-09-10: run on the best M0b universe/top_k, daily27 then alpha158)
-    resolved through ``open_composer.research.features.feature_sets``'s
-    registry -- never a hard-coded column list -- so a Track F feature set
-    such as ``alpha158`` needs no further wiring here once
-    ``extra_feature_roots`` (its ``roots``) exists. ``placebo=True``
-    shuffles ``label_rank_5`` globally (same mechanism as A-group's
-    ``run_b3_grid.py --placebo-only``) before fitting, and reports the
-    resulting out-of-sample validation IC per quarterly refit instead of
-    scoring gates -- the coordinator's explicit ask, 2026-09-09 14:10 UTC.
+    """M1's single smoke-test cell (h=5, no recency weight), fit via the
+    leakage-safe ``ValidationSelectedLightGBMStrategy`` with a one-cell
+    grid (see that module's docstring). ``universe_top_n``/``top_k``/
+    ``feature_set`` are real parameters (coordinator relay, 2026-09-10:
+    run on the best M0b universe/top_k, daily27 then alpha158) resolved
+    through ``open_composer.research.features.feature_sets``'s registry --
+    never a hard-coded column list -- so a Track F feature set such as
+    ``alpha158`` needs no further wiring here once ``extra_feature_roots``
+    (its ``roots``) exists. ``placebo=True`` shuffles ``label_rank_5``
+    globally (same mechanism as A-group's ``run_b3_grid.py
+    --placebo-only``) before fitting, and reports the resulting
+    out-of-sample validation IC per quarterly refit instead of scoring
+    gates -- the coordinator's explicit ask, 2026-09-09 14:10 UTC.
     ``max_periods`` (2026-09-10 memory-fix dry-run support) caps
     ``build_weight_schedule`` to the first N walk-forward periods and, like
     ``placebo``, skips the ledger checkpoint/write and gate evaluation --
     a short return stream is not meant to produce a real verdict, only to
     smoke-test peak memory under ``/usr/bin/time -v`` before committing to
-    a full run.
+    a full run. ``gate_on`` (default True, matching every cell run so far)
+    toggles the 200sma trend gate the same way M0/M0b's ``gate_on`` does --
+    added 2026-09-10 for the daily27 gate-off twin the coordinator asked
+    for once alpha158's memory picture was known.
     """
     from open_composer.research.features import feature_sets
     from open_composer.research.regime.validated_grid_strategy import MLGridCell
@@ -796,9 +825,13 @@ def stage_m1_single_cell(
     common = _load_common_data()
     base_columns, extra_roots = feature_sets.resolve_feature_set(feature_set)
     feature_columns = list(base_columns) + list(REGIME_FEATURE_COLUMNS)
+    symbol_filter = _pit_cohort_symbol_union(
+        common.universe_panel, common.weekly_dates, top_n=universe_top_n
+    )
     _log(
         f"loading M1 feature panel ({feature_set}: {len(base_columns)} cols "
-        f"+ {len(REGIME_FEATURE_COLUMNS)} regime cols, roots={[str(r) for r in extra_roots]}) ..."
+        f"+ {len(REGIME_FEATURE_COLUMNS)} regime cols, roots={[str(r) for r in extra_roots]}, "
+        f"symbol_filter={len(symbol_filter)} symbols) ..."
     )
     daily_panel = load_feature_panel(
         list(base_columns),
@@ -807,6 +840,7 @@ def stage_m1_single_cell(
         dates=common.weekly_dates,
         include_prices=False,
         extra_feature_roots=extra_roots,
+        symbol_filter=symbol_filter,
     )
     # Broadcast the 5 market-level regime_daily columns onto every symbol
     # row for that trade_date -- a left join, not a per-symbol feature.
@@ -821,7 +855,7 @@ def stage_m1_single_cell(
     if panel[list(REGIME_FEATURE_COLUMNS)].isna().any().any():
         raise ValueError("regime feature columns have missing values after the merge")
 
-    cell_label = f"{feature_set}_uni{universe_top_n}_k{top_k}_gate_on"
+    cell_label = f"{feature_set}_uni{universe_top_n}_k{top_k}_gate_{'on' if gate_on else 'off'}"
     if max_periods is not None:
         experiment_id = f"step13_m1_single_cell_{cell_label}_DRYRUN{max_periods}"
     elif placebo:
@@ -854,7 +888,9 @@ def stage_m1_single_cell(
         train_window_months=TRAIN_WINDOW_MONTHS,
         refit_frequency="quarterly",
         universe_top_n=universe_top_n,
-        trend_gate={"benchmark": "SPY", "sma_days": 200, "cash_symbol": CASH_SYMBOL},
+        trend_gate=(
+            {"benchmark": "SPY", "sma_days": 200, "cash_symbol": CASH_SYMBOL} if gate_on else None
+        ),
         hyperparameters={"grid": ["h5_d3"], "placebo": placebo},
     )
     config_hash = config.config_hash()
@@ -880,7 +916,7 @@ def stage_m1_single_cell(
         train_window_months=config.train_window_months,
         refit_frequency=config.refit_frequency,
         universe_top_n=config.universe_top_n,
-        trend_gate_series=common.trend_gate_series_by_date,
+        trend_gate_series=common.trend_gate_series_by_date if gate_on else None,
         trend_gate_cash_symbol=CASH_SYMBOL,
         max_periods=max_periods,
     )
@@ -1184,6 +1220,11 @@ def main() -> int:
     parser.add_argument("--top-k", type=int, default=50, help="m1-single-cell only")
     parser.add_argument("--feature-set", default="daily27", help="m1-single-cell only")
     parser.add_argument(
+        "--gate-off",
+        action="store_true",
+        help="m1-single-cell only: disable the 200sma trend gate (default on)",
+    )
+    parser.add_argument(
         "--max-periods",
         type=int,
         default=None,
@@ -1207,6 +1248,7 @@ def main() -> int:
             feature_set=args.feature_set,
             placebo=args.placebo,
             max_periods=args.max_periods,
+            gate_on=not args.gate_off,
         )
     elif args.stage == "two-stage":
         stage_two_stage_cell(placebo=args.placebo)

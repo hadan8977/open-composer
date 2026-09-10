@@ -117,6 +117,7 @@ def load_feature_panel(
     daily_root: Path = DAILY_FEATURES_ROOT,
     labels_root: Path = LABELS_ROOT,
     extra_feature_roots: Sequence[Path] = (),
+    symbol_filter: Sequence[str] | None = None,
 ) -> pd.DataFrame:
     """Feature + label rows, joined on (symbol, trade_date), cast to float32,
     ``symbol`` as a shared ``category``. Pass ``dates`` (typically
@@ -124,6 +125,19 @@ def load_feature_panel(
     only; omit it for every trading day. ``include_prices`` keeps
     ``open``/``close`` on the rows (needed when no separate price panel is
     used). Sorted by symbol, trade_date.
+
+    ``symbol_filter`` (Step 13-M, 2026-09-10): restrict rows to this set of
+    symbols, applied inside the DuckDB query (a registered temp table
+    joined via ``IN``, same mechanism as ``dates``) before the Arrow table
+    is materialized -- never a post-load pandas filter. A caller that only
+    ever trains/scores a sub-universe (e.g. a PIT top-N cohort of ~500-800
+    names out of the ~2,700 symbols in the full daily table) should pass
+    that sub-universe here: it cuts both the join's row count and the
+    final frame's memory footprint roughly in proportion to
+    in-filter/total symbols, which is what makes wide feature sets (e.g.
+    158 columns) fit in a bounded-memory run. ``None`` (default) keeps
+    every symbol -- exactly the prior behavior, unchanged for every
+    existing caller.
 
     ``extra_feature_roots`` (Step 13-F 3.4): additional ``{year}.parquet``
     feature tables (e.g. ``data/features/alpha158``, ``alpha101``,
@@ -172,13 +186,26 @@ def load_feature_panel(
             )
             if s
         ]
-        date_filter = ""
+        where_clauses: list[str] = []
         if dates is not None:
             date_frame = pd.DataFrame({"trade_date": pd.to_datetime(pd.Index(dates)).normalize()})
             con.register("_wanted_dates", date_frame)
-            date_filter = (
-                "WHERE d.trade_date IN (SELECT CAST(trade_date AS DATE) FROM _wanted_dates)"
+            where_clauses.append(
+                "d.trade_date IN (SELECT CAST(trade_date AS DATE) FROM _wanted_dates)"
             )
+        if symbol_filter is not None:
+            # dtype=object even when empty -- an untyped empty list infers
+            # float64, which DuckDB then refuses to compare against the
+            # VARCHAR symbol column ("Cannot compare values of type VARCHAR
+            # and DOUBLE"). An empty symbol_filter is a legitimate input
+            # (e.g. a cohort union that happened to be empty) and must
+            # still produce a valid, zero-row query, not a binder error.
+            symbol_frame = pd.DataFrame(
+                {"symbol": list(dict.fromkeys(symbol_filter))}, dtype=object
+            )
+            con.register("_wanted_symbols", symbol_frame)
+            where_clauses.append("d.symbol IN (SELECT symbol FROM _wanted_symbols)")
+        row_filter = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
         extra_join_sql = "\n".join(
             f"LEFT JOIN read_parquet({_year_glob(root, years)!r}, union_by_name=true) {alias} "
             f"USING (symbol, trade_date)"
@@ -190,7 +217,7 @@ def load_feature_panel(
             JOIN read_parquet({_year_glob(labels_root, years)!r}, union_by_name=true) l
               USING (symbol, trade_date)
             {extra_join_sql}
-            {date_filter}
+            {row_filter}
             ORDER BY d.symbol, d.trade_date
         """
         return _to_pandas(con.execute(query).fetch_arrow_table())

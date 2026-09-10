@@ -90,6 +90,52 @@ def test_feature_panel_filters_to_requested_dates_and_casts(fixture_roots) -> No
     assert "close" not in lean.columns
 
 
+def test_feature_panel_symbol_filter_restricts_rows_before_materialization(
+    fixture_roots,
+) -> None:
+    daily_root, labels_root, full = fixture_roots
+    calendar = pd.DatetimeIndex(sorted(full["trade_date"].unique()))
+    fridays = loop.weekly_rebalance_dates(calendar)
+    kept = ["AAA", "CCC"]
+    panel = load_feature_panel(
+        ["momentum_252_21", "vol_21", "beta_252_spy"],
+        ["label_rank_5"],
+        dates=fridays,
+        symbol_filter=kept,
+        daily_root=daily_root,
+        labels_root=labels_root,
+        memory_limit="256MB",
+    )
+    assert set(panel["symbol"].astype(str).unique()) == set(kept)
+    assert len(panel) == len(kept) * len(fridays)
+    # Same date filter, no symbol_filter -- every symbol still comes back,
+    # confirming the new parameter is additive and doesn't leak state
+    # across calls on the same connection pattern.
+    unfiltered = load_feature_panel(
+        ["momentum_252_21", "vol_21", "beta_252_spy"],
+        ["label_rank_5"],
+        dates=fridays,
+        daily_root=daily_root,
+        labels_root=labels_root,
+        memory_limit="256MB",
+    )
+    assert set(unfiltered["symbol"].astype(str).unique()) == set(SYMBOLS)
+
+
+def test_feature_panel_symbol_filter_empty_list_returns_no_rows(fixture_roots) -> None:
+    daily_root, labels_root, _full = fixture_roots
+    panel = load_feature_panel(
+        ["momentum_252_21"],
+        ["label_rank_5"],
+        symbol_filter=[],
+        include_prices=False,
+        daily_root=daily_root,
+        labels_root=labels_root,
+        memory_limit="256MB",
+    )
+    assert len(panel) == 0
+
+
 def test_weekly_panel_plus_price_panel_reproduces_the_full_panel_experiment(
     fixture_roots, monkeypatch: pytest.MonkeyPatch
 ) -> None:
