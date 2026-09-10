@@ -781,7 +781,12 @@ def stage_m1_single_cell(
     panel = daily_panel.merge(
         common.regime_daily[["trade_date", *REGIME_FEATURE_COLUMNS]], on="trade_date", how="left"
     )
-    if panel[REGIME_FEATURE_COLUMNS].isna().any().any():
+    # A bare tuple indexer (``panel[REGIME_FEATURE_COLUMNS]``) asks pandas
+    # for one column literally *named* by that tuple (MultiIndex-style),
+    # not "select these columns" -- must be a list. Caught here 2026-09-10
+    # on this function's first-ever real invocation: raised
+    # ``KeyError: ('spy_ret_20', ...)`` since no such single column exists.
+    if panel[list(REGIME_FEATURE_COLUMNS)].isna().any().any():
         raise ValueError("regime feature columns have missing values after the merge")
 
     cell_label = f"{feature_set}_uni{universe_top_n}_k{top_k}_gate_on"
