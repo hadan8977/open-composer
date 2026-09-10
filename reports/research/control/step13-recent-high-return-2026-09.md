@@ -57,8 +57,23 @@ years-scoped feature load (2022-2026 instead of all 2016-2026),
 max_bin=63`), `build_weight_schedule` now frees each period's panel
 slice/fitted model explicitly, and a new `max_periods` dry-run mode to
 measure peak RSS on one quarter before committing to the full 11-quarter
-run. Dry-run result and (if it fits) the real cell's numbers: **to be
-appended once they land.**
+run.
+
+**Dry-run result: still does not fit.** One-quarter dry run
+(`--max-periods 1`) under `run_capped.sh --mem 1.8G` with
+`/usr/bin/time -v` completed without a memcg kill (exit 0; 1 quarterly
+refit, validation IC=0.0686 for that single quarter -- not comparable to
+daily27's 11-quarter mean of 0.063), but peak RSS was **1,961,152 KB
+(~1.87 GiB / 2.01 GB decimal)** for just one quarter out of 11 -- well
+over the 1.4GB go/no-go bar and effectively at the 1.8G cap itself with
+no safety margin. The memory fix changed alpha158's failure mode from an
+outright memcg kill to "barely fits one quarter," not to a safe margin
+for an 11-quarter run, especially under concurrent load from other
+tracks sharing the box. Per instruction, the full alpha158 cell was
+**not launched**. Decision pending: further memory reduction (trim
+columns, chunked per-quarter loading) vs. dropping alpha158 and
+defaulting the planned gate-off twin to daily27, the only feature set
+with a complete, comparable result.
 
 ### Two-stage cell -- pre-filter top-100 of top-500 by momentum_252_21/vol_63,
 daily27 LightGBM model ranks those 100, holds top 50, gate on
