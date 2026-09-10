@@ -23,6 +23,26 @@ Plan reference: `docs/plan-step-11-ml-first-loop-2026-09-06.zh.md` sections
 
 ## 2. Headline comparison (same basis: 2018-2026 OOS, base cost, long-only unless noted)
 
+**Caveat added 2026-09-10 (Step 13 Track M bisection, commit `30879b4`)**:
+every return series in this report was computed before that commit, under
+`open_composer/research/kernel/loop.py::returns_from_weight_schedule`'s
+pre-fix formula, which recomputed each day's portfolio return with the
+*same*, never-updated target weight for the whole holding window --
+mathematically equivalent to rebalancing the book back to those exact
+weights every trading day, not buying once at signal time and holding.
+That formula **overstates** compounded returns for any book with real
+day-to-day return dispersion (proved in
+`tests/test_kernel_loop.py`'s new regression tests); it never understates
+them. Every row below already fails its gates on a negative CAGR
+excess/Sharpe basis, so a clean re-run under the fixed formula cannot flip
+any verdict from fail to pass -- it can only make an already-negative
+number more negative. A clean re-run of this report's rows is deferred
+(not scheduled this round); the numbers below should be read as an
+upper bound on how these candidates actually performed, not the corrected
+figure. `scripts/evaluate_cross_sectional_momentum_liquid500.py` (Step 10)
+independently implements the same pre-fix, constant-weight-per-day
+formula and has the same known issue -- not changed as part of this fix.
+
 | Candidate | Feature set | `train_row_dates` | CAGR excess (vol-matched SPY) | Sharpe-ex-BIL | Max DD | DSR prob. | MAR | Capture ratio | Downside capture | Positive-fold frac. | Gates x/8 |
 |---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | B0 equal-weight universe | daily_only | all | -5.58% | 0.4596 | -41.3% | TBD | 0.26 | 0.966 | TBD | TBD | 3/8 |

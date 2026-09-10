@@ -10,6 +10,8 @@
 
 门槛（详见门槛文件的 `gates`/`rationale` 字段，此处不重复）：`hit_rate_by_holding_period`（周持有≥0.60 / 日或日内持有≥0.55）、`cagr_recent_net`≥0.20、`max_drawdown_recent`≥-0.15、`sharpe_excess_bil_recent`≥1.5、`profit_factor`≥1.5、`positive_quarter_fraction`≥0.70、`dsr_probability`≥0.5、`stress_cost_still_positive`（25bp/边下近期 CAGR>0）、ML 候选另加安慰剂 rank IC 门槛（仅 F4）。**全部预注册,看到结果后未改动。**
 
+**说明（2026-09-10 补充,Step 13 Track M 排查,commit `30879b4`）**：本报告全部收益序列产生于该修复之前,`returns_from_weight_schedule` 旧公式按"从未更新的目标权重"逐日重算收益（等价于每天都调回目标权重,而非按周调仓后持有到下次调仓）,只会**高估**有日内离散度组合的收益,不会低估,因此下表已经不达标的结论不会被修复后的重算推翻；是否重跑本报告候选留待后续,本轮不安排。`scripts/evaluate_cross_sectional_momentum_liquid500.py`（Step 10）独立实现了同一缺陷公式,是已知问题,本次未改动该文件。
+
 ## 1. 门槛通过情况总览
 
 | 候选 | 持有期类型 | 评估状态 | 门槛通过 | 最接近但未过的门槛 |
