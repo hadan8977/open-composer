@@ -166,7 +166,12 @@ def _bulk(args: argparse.Namespace) -> int:
     if latest_date is not None and end > latest_date:
         print(f"capping --end {end} to latest collected day {latest_date}", flush=True)
         end = latest_date
-    print(f"[{time_now()}] bulk extraction {start} .. {end}, top_n={args.top_n} ...", flush=True)
+    print(
+        f"[{time_now()}] bulk extraction {start} .. {end}, top_n={args.top_n}, "
+        f"budget_tokens={args.budget_tokens}, backend={args.backend}, "
+        f"model={args.model or default_openai_model()}, already_used={ex.tokens_used_so_far()} ...",
+        flush=True,
+    )
 
     pools = ex.compute_weekly_candidate_pools(
         pd.Timestamp(start), pd.Timestamp(end), top_n=args.top_n, memory_limit="1GB"
