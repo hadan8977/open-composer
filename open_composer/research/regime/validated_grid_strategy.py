@@ -86,6 +86,18 @@ from open_composer.research.kernel.loop import (
 )
 
 DEFAULT_MAX_DEPTH = 3
+#: 2026-09-10 memory fix: every LightGBM fit this module makes (both the
+#: per-cell selection fits and the winning cell's full-window refit) is
+#: capped at 2 threads and a 63-bin histogram (LightGBM's own default is
+#: 255) -- found needed when alpha158's wider (154-column) feature panel
+#: OOM-killed at the 1.8GB run_capped.sh cap on this 3.9GB box. Applied
+#: unconditionally to every grid/refit here (not just the alpha158 path):
+#: there is no scenario on this box where leaving these unconstrained is
+#: preferable, and config_hash (which gates ledger checkpointing) does not
+#: depend on either value, so this cannot silently invalidate an
+#: already-recorded result.
+LIGHTGBM_NUM_THREADS = 2
+LIGHTGBM_MAX_BIN = 63
 #: Minimum names in a cross-section for that date's rank IC to be counted at
 #: all -- matches b3_grid_strategy.py's own choice (a 2-3 name cross-section
 #: correlation is not a meaningful rank statistic).
@@ -243,7 +255,11 @@ class ValidationSelectedLightGBMStrategy:
                 continue
 
             model = LightGBMRankStrategy(
-                self.feature_columns, cell.label_column, max_depth=cell.max_depth
+                self.feature_columns,
+                cell.label_column,
+                max_depth=cell.max_depth,
+                num_threads=LIGHTGBM_NUM_THREADS,
+                max_bin=LIGHTGBM_MAX_BIN,
             )
             fit_sample_weight = None
             if cell.recency_halflife_days is not None:
@@ -298,7 +314,11 @@ class ValidationSelectedLightGBMStrategy:
         final_required = [*self.feature_columns, best_cell.label_column]
         final_rows = train_frame.dropna(subset=final_required)
         final_model = LightGBMRankStrategy(
-            self.feature_columns, best_cell.label_column, max_depth=best_cell.max_depth
+            self.feature_columns,
+            best_cell.label_column,
+            max_depth=best_cell.max_depth,
+            num_threads=LIGHTGBM_NUM_THREADS,
+            max_bin=LIGHTGBM_MAX_BIN,
         )
         final_sample_weight = None
         if best_cell.recency_halflife_days is not None:

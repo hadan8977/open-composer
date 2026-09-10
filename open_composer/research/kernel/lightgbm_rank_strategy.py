@@ -55,10 +55,24 @@ class LightGBMRankStrategy:
         label_column: str,
         *,
         max_depth: int,
+        num_threads: int | None = None,
+        max_bin: int | None = None,
     ) -> None:
         self.feature_columns = list(feature_columns)
         self.label_column = label_column
         self.max_depth = max_depth
+        #: 2026-09-10 Track M memory fix: both default to ``None`` (LightGBM's
+        #: own defaults, byte-for-byte unchanged from every pre-existing
+        #: caller, including Step 11's B3 grid) so this is opt-in, not a
+        #: silent behavior change for anyone not passing them. A wider
+        #: feature set (e.g. alpha158's 154 columns) OOM-killed at the
+        #: 1.8GB run_capped.sh cap; num_threads caps LightGBM's internal
+        #: thread pool (each thread duplicates working buffers) and
+        #: max_bin=63 (LightGBM's default is 255) shrinks the per-feature
+        #: histogram, both real, disclosed reductions in compute/precision
+        #: traded for peak memory, not a free win.
+        self.num_threads = num_threads
+        self.max_bin = max_bin
         self._model: LGBMRegressor | None = None
 
     def fit(self, train_frame: pd.DataFrame, sample_weight: pd.Series | None = None) -> None:
@@ -68,10 +82,16 @@ class LightGBMRankStrategy:
         # accuracy at all here.
         x = train_frame[self.feature_columns].to_numpy(dtype=np.float32)
         y = train_frame[self.label_column].to_numpy(dtype=np.float32)
+        extra_params: dict[str, int] = {}
+        if self.num_threads is not None:
+            extra_params["num_threads"] = self.num_threads
+        if self.max_bin is not None:
+            extra_params["max_bin"] = self.max_bin
         model = LGBMRegressor(
             max_depth=self.max_depth,
             num_leaves=2**self.max_depth - 1,
             **FIXED_HYPERPARAMETERS,
+            **extra_params,
         )
         # Step 13 Track M's recency_halflife_days: omitting sample_weight
         # (every pre-Step-13 caller) is LightGBM's own default of uniform

@@ -792,6 +792,7 @@ def stage_m1_single_cell(
     daily_panel = load_feature_panel(
         list(base_columns),
         ["label_rank_5"],
+        years=list(DATA_YEARS),
         dates=common.weekly_dates,
         include_prices=False,
         extra_feature_roots=extra_roots,
@@ -979,6 +980,7 @@ def stage_two_stage_cell(*, placebo: bool) -> dict[str, Any]:
     daily_panel = load_feature_panel(
         list(base_columns),
         ["label_rank_5"],
+        years=list(DATA_YEARS),
         dates=common.weekly_dates,
         include_prices=False,
         extra_feature_roots=extra_roots,

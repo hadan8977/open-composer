@@ -65,6 +65,7 @@ cohort is a next-iteration item.
 
 from __future__ import annotations
 
+import gc
 import hashlib
 import inspect
 import json
@@ -570,6 +571,19 @@ def build_weight_schedule(
                     portfolio_beta=portfolio_beta,
                 )
             )
+        # Memory: this period's train_frame/sample_weight/fitted strategy
+        # are not needed once every rebalance date in this period has been
+        # scored -- explicit del + gc.collect() (CPython's refcounting GC
+        # would eventually reclaim these anyway once train_frame is
+        # reassigned next iteration, but not necessarily before the next,
+        # possibly-large period's train_frame is built, and a booster/model
+        # object can pin large arrays alive slightly longer than the
+        # DataFrame slice itself) matches the same pattern already used
+        # inside ValidationSelectedLightGBMStrategy.fit() for the same
+        # reason. Added 2026-09-10 after alpha158's wider (154-column)
+        # feature panel OOM-killed at the 1.8GB run_capped.sh cap.
+        del train_frame, sample_weight, strategy
+        gc.collect()
     return events
 
 
