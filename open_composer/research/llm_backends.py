@@ -53,14 +53,14 @@ class LocalTestStub:
 
 
 class OpenAIBackend:
-    def infer(
+    def _create_response(
         self,
         *,
         model: str,
         prompt: str,
         input_payload: dict[str, Any],
         output_schema: dict[str, Any],
-    ) -> dict[str, Any]:
+    ) -> Any:
         if not openai_api_key():
             raise RuntimeError("OPENAI_API_KEY is required for openai materialization backend")
         try:
@@ -71,7 +71,7 @@ class OpenAIBackend:
         if base_url := openai_base_url():
             client_options["base_url"] = base_url
         client = OpenAI(**client_options)
-        response = client.responses.create(
+        return client.responses.create(
             model=model or default_openai_model(),
             input=[
                 {
@@ -89,9 +89,51 @@ class OpenAIBackend:
                 }
             },
         )
+
+    def infer(
+        self,
+        *,
+        model: str,
+        prompt: str,
+        input_payload: dict[str, Any],
+        output_schema: dict[str, Any],
+    ) -> dict[str, Any]:
+        response = self._create_response(
+            model=model, prompt=prompt, input_payload=input_payload, output_schema=output_schema
+        )
         import json
 
         return json.loads(response.output_text)
+
+    def infer_with_usage(
+        self,
+        *,
+        model: str,
+        prompt: str,
+        input_payload: dict[str, Any],
+        output_schema: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, int]]:
+        """Same call as ``infer()`` but also returns token usage.
+
+        Additive, 2026-09-09 (Step 13 Track L, plan section 4.2): the L1 news
+        extraction ledger needs per-call ``input_tokens``/``output_tokens`` for
+        its 30M-token weekly budget, which ``infer()`` discards. This does not
+        change ``infer()``'s behavior or return type -- other callers (e.g.
+        ``open_composer/research/pit_semantic_theme_forward.py``) are
+        unaffected; it only adds a new method next to it.
+        """
+        response = self._create_response(
+            model=model, prompt=prompt, input_payload=input_payload, output_schema=output_schema
+        )
+        import json
+
+        usage = getattr(response, "usage", None)
+        usage_dict = {
+            "input_tokens": int(getattr(usage, "input_tokens", 0) or 0),
+            "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
+            "total_tokens": int(getattr(usage, "total_tokens", 0) or 0),
+        }
+        return json.loads(response.output_text), usage_dict
 
 
 def get_backend(name: str) -> LLMBackend:

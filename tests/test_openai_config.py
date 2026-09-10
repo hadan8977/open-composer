@@ -95,3 +95,62 @@ def test_openai_backend_uses_configured_provider(monkeypatch) -> None:
         "base_url": "https://compatible-provider.example/v1",
     }
     assert calls["request"]["model"] == "test-model"
+
+
+def test_openai_backend_infer_with_usage_returns_token_counts(monkeypatch) -> None:
+    """2026-09-09, Step 13 Track L: infer_with_usage() is additive next to
+    infer() (needed for the L1 news-extraction token ledger's budget
+    tracking) and must not change infer()'s own behavior -- covered above."""
+
+    class FakeResponses:
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                output_text='{"score": 0.5}',
+                usage=SimpleNamespace(input_tokens=120, output_tokens=40, total_tokens=160),
+            )
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.responses = FakeResponses()
+
+    monkeypatch.setattr(llm_backends, "openai_api_key", lambda: "test-key")
+    monkeypatch.setattr(llm_backends, "openai_base_url", lambda: None)
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+
+    result, usage = llm_backends.OpenAIBackend().infer_with_usage(
+        model="test-model",
+        prompt="Return a score.",
+        input_payload={"headline": "Example"},
+        output_schema={
+            "type": "object",
+            "properties": {"score": {"type": "number"}},
+            "required": ["score"],
+            "additionalProperties": False,
+        },
+    )
+
+    assert result == {"score": 0.5}
+    assert usage == {"input_tokens": 120, "output_tokens": 40, "total_tokens": 160}
+
+
+def test_openai_backend_infer_with_usage_defaults_missing_usage_to_zero(monkeypatch) -> None:
+    class FakeResponses:
+        def create(self, **kwargs):
+            return SimpleNamespace(output_text='{"score": 0.5}', usage=None)
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.responses = FakeResponses()
+
+    monkeypatch.setattr(llm_backends, "openai_api_key", lambda: "test-key")
+    monkeypatch.setattr(llm_backends, "openai_base_url", lambda: None)
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+
+    _, usage = llm_backends.OpenAIBackend().infer_with_usage(
+        model="test-model",
+        prompt="Return a score.",
+        input_payload={"headline": "Example"},
+        output_schema={"type": "object", "properties": {}},
+    )
+
+    assert usage == {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
