@@ -34,13 +34,17 @@ policy (plan section 3.4):
 practice** (also flagged in this round's review, see the Step 11 ledger):
 daily mark-to-market during a holding period uses **close-to-close** returns
 starting the trading day after the Friday signal date, not a separately
-modeled Monday-open OPG execution -- the same fixed-weight-until-next-
-rebalance, close-marked convention already used and accepted in
-``scripts/evaluate_cross_sectional_momentum_liquid500.py`` (Step 10 Wave 2).
-This is a roughly one-trading-day timing approximation, not a look-ahead: the
-Friday close used for the signal is real, already-observed data, and Monday's
-close-to-Friday's-close is a return no later data than Monday's own close
-enters. Modeling true next-bar-open execution (the product spec's
+modeled Monday-open OPG execution -- a buy-and-hold-until-next-rebalance,
+close-marked convention (see :func:`returns_from_weight_schedule`'s own
+docstring for a 2026-09-10 fix to how that holding period compounds; the
+convention was originally described as shared with
+``scripts/evaluate_cross_sectional_momentum_liquid500.py`` (Step 10 Wave 2),
+which independently implements the pre-fix, constant-weight-per-day
+formula and was not changed here). This close-vs-open choice is a roughly
+one-trading-day timing approximation, not a look-ahead: the Friday close
+used for the signal is real, already-observed data, and Monday's close-to-
+Friday's-close is a return no later data than Monday's own close enters.
+Modeling true next-bar-open execution (the product spec's
 ``execution.order_style=opg_limit``) is a next-iteration item, not something
 this research-stage evaluation loop depends on for its verdicts.
 
@@ -579,17 +583,46 @@ def returns_from_weight_schedule(
     execution: Literal["close_marked", "next_open"] = "close_marked",
     open_wide: pd.DataFrame | None = None,
 ) -> pd.Series:
-    """Fixed-weight-until-next-rebalance daily returns, generalized to an
-    optional SPY hedge leg and (Wave B item 4) a choice of execution price.
+    """Buy-and-hold-until-next-rebalance daily returns: weights are fixed at
+    each rebalance date and then held -- drifting with each name's own
+    cumulative return, never re-normalized back to the target fraction --
+    until the next rebalance, generalized to an optional SPY hedge leg and
+    (Wave B item 4) a choice of execution price.
 
-    ``execution="close_marked"`` (default, byte-for-byte unchanged from this
-    function's original implementation -- every already-recorded B0-B3
-    experiment used exactly this path and stays reproducible) marks to
-    market with **close-to-close** daily returns starting the trading day
-    after the Friday signal date -- see module docstring's "execution-path
-    simplification" note; the same convention as
+    **2026-09-10 fix (Step 13 Track M, coordinator-directed reconciliation
+    against an independent from-scratch check)**: this function previously
+    recomputed every day's portfolio return as
+    ``sum_s weight_s * one_day_return_s(t)`` using the *same*, never-updated
+    ``weight_s`` for every day of the holding window -- mathematically
+    identical to rebalancing the book back to those exact target weights
+    every single trading day, not buying once at the start of the window and
+    holding. The two formulas are provably identical whenever the held names
+    have zero return dispersion within the window (see
+    ``tests/test_kernel_loop.py``'s degenerate-case regression test) --
+    which is why this went unnoticed in any single-asset or single-day sanity
+    check and only shows up as a compounding drift over many multi-day,
+    multi-name windows. For a concentrated, high-dispersion, positively-
+    trending book (exactly what a top-20 momentum portfolio is),
+    daily-rebalance-to-constant-weight harvests a real "volatility pumping"
+    premium over true buy-and-hold: verified by feeding an independent,
+    from-scratch weekly close-to-close check's own 133 real Friday
+    signals/picks (real prices, no costs, ``docs/`` ledger note has the CSV
+    reference) through this exact function -- the pre-fix formula overstated
+    CAGR by ~8.6 percentage points versus that check's ground truth (0.3213
+    vs. 0.235) on identical symbols/dates/prices. Every ``close_marked``/
+    ``next_open`` number this module has ever produced (every B0-B3
+    experiment -- the old docstring's now-corrected "byte-for-byte
+    unchanged" claim) was computed under the old, inflating formula and
+    should be treated as upper-biased until re-run.
     ``scripts/evaluate_cross_sectional_momentum_liquid500.py``'s
-    ``_cohort_daily_returns``.
+    ``_cohort_daily_returns`` (Step 10 Wave 2) implements the same pre-fix
+    constant-weight-per-day formula independently -- flagged to the Step 13
+    coordinator, not changed here (outside Track M's owned files).
+
+    ``execution="close_marked"`` (default) marks to market with
+    **close-to-close** daily returns starting the trading day after the
+    Friday signal date -- see module docstring's "execution-path
+    simplification" note.
 
     ``execution="next_open"`` instead fills the Friday close signal at the
     *following* trading day's **open** (plan's "周五收盘信号 → 周一开盘成交 →
@@ -673,16 +706,42 @@ def returns_from_weight_schedule(
         stock_weights = {s: w for s, w in weights.items() if s != "__SPY_HEDGE__"}
         held_columns = [s for s in stock_weights if s in mark_prices.columns]
         window = daily_returns.iloc[start : end + 1]
-        stock_contribution = (
-            window[held_columns].fillna(0.0).mul(pd.Series(stock_weights)[held_columns], axis=1)
-            if held_columns
-            else pd.DataFrame(0.0, index=window.index, columns=[])
+        # Buy-and-hold, not daily-rebalance-to-constant-weight (2026-09-10
+        # fix, see the docstring above): accumulate each held name's own
+        # cumulative gross return since the *start* of this holding window,
+        # weight that by the target weight fixed at the window's start, sum
+        # into a portfolio value, and only then take day-over-day
+        # pct_change -- so a name that has drifted away from its starting
+        # weight keeps earning/losing at its own pace instead of being
+        # silently traded back to the target fraction every single day.
+        weight_series = (
+            pd.Series(stock_weights)[held_columns] if held_columns else pd.Series(dtype=float)
         )
-        day_returns = stock_contribution.sum(axis=1)
-        if "__SPY_HEDGE__" in weights:
-            hedge_weight = weights["__SPY_HEDGE__"]
+        gross = (
+            (1.0 + window[held_columns].fillna(0.0)).cumprod()
+            if held_columns
+            else pd.DataFrame(index=window.index)
+        )
+        invested_value = (
+            gross.mul(weight_series, axis=1).sum(axis=1)
+            if held_columns
+            else pd.Series(0.0, index=window.index)
+        )
+        hedge_weight = weights.get("__SPY_HEDGE__", 0.0)
+        if hedge_weight:
             aligned_spy = spy_returns.reindex(window.index).fillna(0.0)
-            day_returns = day_returns + hedge_weight * aligned_spy
+            invested_value = invested_value + hedge_weight * (1.0 + aligned_spy).cumprod()
+        # A target weight that never lands in invested_value above (a
+        # symbol entirely absent from mark_prices.columns, or a hedge
+        # weight already popped from `weights` when include_hedge is
+        # False) sits in an implicit, zero-return cash residual -- the same
+        # convention the pre-fix formula used (a missing symbol contributed
+        # nothing, rather than having its weight redistributed to the rest
+        # of the book).
+        cash_weight = 1.0 - float(weight_series.sum()) - hedge_weight
+        portfolio_value = invested_value + cash_weight
+        day_returns = portfolio_value.pct_change()
+        day_returns.iloc[0] = portfolio_value.iloc[0] - 1.0
 
         for date, value in day_returns.items():
             all_returns[date] = all_returns.get(date, 0.0) + float(value)

@@ -384,6 +384,92 @@ def test_returns_from_weight_schedule_hedge_leg_subtracts_spy_return() -> None:
     assert with_hedge.loc[dates[1]] == pytest.approx(-0.02)
 
 
+def test_returns_from_weight_schedule_matches_simple_compounding_when_no_dispersion() -> None:
+    """When every held name has the identical daily return, buy-and-hold and
+    daily-rebalance-to-constant-weight are mathematically the same thing
+    (rebalancing a basket of identical assets back to any fixed weights is
+    a no-op) -- this is the degenerate case the pre-2026-09-10-fix formula
+    got right, which is exactly why no existing single-asset/single-day
+    test caught the compounding bug the next test below exercises: the two
+    formulas only diverge once held names have real return dispersion
+    within a multi-day holding window.
+    """
+    dates = pd.bdate_range("2020-01-06", periods=3)
+    common = [100.0, 110.0, 99.0]  # +10%, then -10%
+    price_wide = pd.DataFrame({"AAA": common, "BBB": common}, index=dates)
+    spy_returns = pd.Series(0.0, index=dates)
+    schedule = [
+        loop.RebalanceEvent(
+            date=dates[0].isoformat(),
+            universe_size=2,
+            selected={"AAA": 0.3, "BBB": 0.7},  # deliberately uneven weights
+            portfolio_beta=None,
+        )
+    ]
+    returns = loop.returns_from_weight_schedule(
+        schedule, price_wide, spy_returns, cost_bps_per_side=0.0, include_hedge=False
+    )
+    expected = pd.Series([0.10, -0.10], index=dates[1:])
+    pd.testing.assert_series_equal(returns, expected, check_names=False, check_freq=False)
+
+
+def test_returns_from_weight_schedule_is_buy_and_hold_not_daily_rebalanced() -> None:
+    """2026-09-10 fix regression (Step 13 Track M, coordinator-directed
+    reconciliation against an independent from-scratch weekly momentum
+    check -- see loop.py's returns_from_weight_schedule docstring). The
+    pre-fix formula recomputed every day's return with the *same*,
+    never-updated target weight -- mathematically rebalancing the book
+    back to that exact weight every single day -- which is provably
+    different from holding the position bought at the window's start
+    whenever held names have return dispersion within the window.
+
+    AAA (+20% then -20%) and BBB (-20% then +20%) each round-trip to
+    exactly the same -4% total return over the two days
+    (1.2*0.8 - 1 == 0.8*1.2 - 1 == -0.04). Any fixed-weight buy-and-hold
+    combination of two names with identical total returns must itself
+    realize that same total return, by a trivial weighted-average
+    identity -- regardless of the day-by-day path. The pre-fix formula
+    instead computed 0.5*(+0.20)+0.5*(-0.20) = 0.0 on day 1 and
+    0.5*(-0.20)+0.5*(+0.20) = 0.0 on day 2, compounding to a flat 0.0%: an
+    entirely fabricated "volatility harvesting" gain of +4 percentage
+    points that a real, weekly-rebalanced buy-and-hold position never
+    earns. This is the same mechanism that overstated a real top-20
+    momentum backtest's CAGR by ~8.6 percentage points when checked against
+    133 real weekly signals (see the loop.py docstring and the Step 13
+    progress log).
+    """
+    dates = pd.bdate_range("2020-01-06", periods=3)  # signal day + 2 holding days
+    price_wide = pd.DataFrame(
+        {
+            "AAA": [100.0, 120.0, 96.0],  # +20%, then -20%
+            "BBB": [100.0, 80.0, 96.0],  # -20%, then +20%
+        },
+        index=dates,
+    )
+    spy_returns = pd.Series(0.0, index=dates)
+    schedule = [
+        loop.RebalanceEvent(
+            date=dates[0].isoformat(),
+            universe_size=2,
+            selected={"AAA": 0.5, "BBB": 0.5},
+            portfolio_beta=None,
+        )
+    ]
+    returns = loop.returns_from_weight_schedule(
+        schedule, price_wide, spy_returns, cost_bps_per_side=0.0, include_hedge=False
+    )
+    total_return = (1.0 + returns).prod() - 1.0
+    assert total_return == pytest.approx(-0.04, abs=1e-9)
+    # Day 1: real dispersion (+20% vs -20%) happens to net to a 0 weighted
+    # average -- both the pre- and post-fix formulas agree here, same as
+    # the no-dispersion test above.
+    assert returns.iloc[0] == pytest.approx(0.0, abs=1e-9)
+    # Day 2 must reflect AAA/BBB's now-drifted (unequal) dollar weights,
+    # not another 0.5/0.5 constant-weight recombination -- the pre-fix
+    # formula would have given 0.0 here (and thus 0.0 total, not -4%).
+    assert returns.iloc[1] == pytest.approx(-0.04, abs=1e-9)
+
+
 def test_dsr_trial_count_grows_with_distinct_configs_in_the_ledger(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
