@@ -89,6 +89,23 @@ def load_price_panel(
         con.close()
 
 
+def _root_schema_columns(
+    con: duckdb.DuckDBPyConnection, root: Path, years: Sequence[int] | None
+) -> set[str]:
+    """The column names available under ``root`` (a ``{year}.parquet``
+    feature table), read from the parquet footer only (``LIMIT 0`` -- no
+    row data is scanned). Empty set if the glob matches no files.
+    """
+    glob = _year_glob(root, years)
+    existing = [g for g in glob if "*" in g or Path(g).exists()]
+    if not existing:
+        return set()
+    probe = con.execute(
+        f"SELECT * FROM read_parquet({existing!r}, union_by_name=true) LIMIT 0"
+    ).fetch_arrow_table()
+    return set(probe.schema.names)
+
+
 def load_feature_panel(
     feature_columns: Sequence[str],
     label_columns: Sequence[str],
@@ -99,6 +116,7 @@ def load_feature_panel(
     memory_limit: str = DEFAULT_MEMORY_LIMIT,
     daily_root: Path = DAILY_FEATURES_ROOT,
     labels_root: Path = LABELS_ROOT,
+    extra_feature_roots: Sequence[Path] = (),
 ) -> pd.DataFrame:
     """Feature + label rows, joined on (symbol, trade_date), cast to float32,
     ``symbol`` as a shared ``category``. Pass ``dates`` (typically
@@ -106,16 +124,53 @@ def load_feature_panel(
     only; omit it for every trading day. ``include_prices`` keeps
     ``open``/``close`` on the rows (needed when no separate price panel is
     used). Sorted by symbol, trade_date.
+
+    ``extra_feature_roots`` (Step 13-F 3.4): additional ``{year}.parquet``
+    feature tables (e.g. ``data/features/alpha158``, ``alpha101``,
+    ``alpha191``, ``osap_price``) to pull requested columns from. Each root
+    is **left**-joined on ``(symbol, trade_date)`` -- a row present in
+    ``daily_root`` but missing from an extra root (a symbol/date the extra
+    table never computed, or a table that doesn't cover every year) keeps
+    its NaN rather than being dropped, since LightGBM handles NaN natively
+    and this repo's convention is to never fabricate a value for missing
+    history. Only requested columns are pulled from each root (never
+    ``SELECT *``): every root's own parquet schema is probed once (a
+    zero-row ``LIMIT 0`` query, footer-only) to see which of
+    ``feature_columns`` it actually has; a column present in more than one
+    root is taken from the first root that has it, in the order given.
     """
     feature_columns = list(dict.fromkeys(feature_columns))
     label_columns = list(dict.fromkeys(label_columns))
     con = _connect(memory_limit)
     try:
-        feature_select = ", ".join(f"CAST(d.{c} AS FLOAT) AS {c}" for c in feature_columns)
+        remaining = list(feature_columns)
+        extra_joins: list[tuple[str, Path, list[str]]] = []
+        for index, root in enumerate(extra_feature_roots):
+            root_columns = _root_schema_columns(con, Path(root), years) - {"symbol", "trade_date"}
+            matched = [c for c in remaining if c in root_columns]
+            if not matched:
+                continue
+            for column in matched:
+                remaining.remove(column)
+            extra_joins.append((f"x{index}", Path(root), matched))
+        daily_feature_columns = remaining
+
+        feature_select = ", ".join(f"CAST(d.{c} AS FLOAT) AS {c}" for c in daily_feature_columns)
         label_select = ", ".join(f"CAST(l.{c} AS FLOAT) AS {c}" for c in label_columns)
         price_select = ", ".join(f"CAST(d.{c} AS FLOAT) AS {c}" for c in PRICE_COLUMNS)
+        extra_selects = [
+            ", ".join(f"CAST({alias}.{c} AS FLOAT) AS {c}" for c in matched)
+            for alias, _root, matched in extra_joins
+        ]
         selects = [
-            s for s in (price_select if include_prices else "", feature_select, label_select) if s
+            s
+            for s in (
+                price_select if include_prices else "",
+                feature_select,
+                label_select,
+                *extra_selects,
+            )
+            if s
         ]
         date_filter = ""
         if dates is not None:
@@ -124,11 +179,17 @@ def load_feature_panel(
             date_filter = (
                 "WHERE d.trade_date IN (SELECT CAST(trade_date AS DATE) FROM _wanted_dates)"
             )
+        extra_join_sql = "\n".join(
+            f"LEFT JOIN read_parquet({_year_glob(root, years)!r}, union_by_name=true) {alias} "
+            f"USING (symbol, trade_date)"
+            for alias, root, _matched in extra_joins
+        )
         query = f"""
             SELECT d.symbol, d.trade_date, {", ".join(selects)}
             FROM read_parquet({_year_glob(daily_root, years)!r}, union_by_name=true) d
             JOIN read_parquet({_year_glob(labels_root, years)!r}, union_by_name=true) l
               USING (symbol, trade_date)
+            {extra_join_sql}
             {date_filter}
             ORDER BY d.symbol, d.trade_date
         """

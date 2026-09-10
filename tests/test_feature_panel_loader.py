@@ -147,3 +147,93 @@ def test_weekly_panel_plus_price_panel_reproduces_the_full_panel_experiment(
     assert lean.long_only.metrics["max_drawdown"] == pytest.approx(
         reference.long_only.metrics["max_drawdown"], rel=1e-6
     )
+
+
+# -- Step 13-F 3.4: extra_feature_roots (new tests only; the three above are
+# untouched per the plan's "existing 3 tests must not change" constraint) --
+
+
+def _write_extra_root(root: Path, frame: pd.DataFrame) -> Path:
+    root.mkdir(parents=True, exist_ok=True)
+    for year, part in frame.groupby(frame["trade_date"].dt.year):
+        part.to_parquet(root / f"{year}.parquet", index=False)
+    return root
+
+
+def test_extra_feature_roots_left_joins_and_keeps_nan_for_missing_rows(
+    fixture_roots, tmp_path: Path
+) -> None:
+    daily_root, labels_root, full = fixture_roots
+    calendar = pd.DatetimeIndex(sorted(full["trade_date"].unique()))
+    fridays = loop.weekly_rebalance_dates(calendar)
+
+    # An "alpha158-like" extra table that only covers AAA and BBB (CCC/DDD
+    # missing entirely) -- exercises the left-join / NaN-kept behavior.
+    extra = full.loc[full["symbol"].isin(["AAA", "BBB"]), ["symbol", "trade_date"]].copy()
+    rng = np.random.default_rng(1)
+    extra["KMID5"] = rng.normal(size=len(extra))
+    extra_root = _write_extra_root(tmp_path / "alpha158", extra)
+
+    panel = load_feature_panel(
+        ["momentum_252_21", "KMID5"],
+        ["label_rank_5"],
+        dates=fridays,
+        daily_root=daily_root,
+        labels_root=labels_root,
+        extra_feature_roots=[extra_root],
+        memory_limit="256MB",
+    )
+    assert "KMID5" in panel.columns
+    assert panel["KMID5"].dtype == np.float32
+    # Every row is still present (left join), including CCC/DDD which the
+    # extra table never covered.
+    assert len(panel) == len(SYMBOLS) * len(fridays)
+    assert panel.loc[panel["symbol"].isin(["CCC", "DDD"]), "KMID5"].isna().all()
+    assert panel.loc[panel["symbol"].isin(["AAA", "BBB"]), "KMID5"].notna().any()
+
+
+def test_extra_feature_roots_only_selects_requested_columns_from_each_root(
+    fixture_roots, tmp_path: Path
+) -> None:
+    daily_root, labels_root, full = fixture_roots
+    calendar = pd.DatetimeIndex(sorted(full["trade_date"].unique()))
+    fridays = loop.weekly_rebalance_dates(calendar)
+
+    base = full[["symbol", "trade_date"]].copy()
+    rng = np.random.default_rng(2)
+    root_a = base.copy()
+    root_a["factor_a"] = rng.normal(size=len(root_a))
+    root_a["unwanted_column"] = rng.normal(size=len(root_a))
+    root_b = base.copy()
+    root_b["factor_b"] = rng.normal(size=len(root_b))
+    path_a = _write_extra_root(tmp_path / "root_a", root_a)
+    path_b = _write_extra_root(tmp_path / "root_b", root_b)
+
+    panel = load_feature_panel(
+        ["momentum_252_21", "factor_a", "factor_b"],
+        ["label_rank_5"],
+        dates=fridays,
+        daily_root=daily_root,
+        labels_root=labels_root,
+        extra_feature_roots=[path_a, path_b],
+        memory_limit="256MB",
+    )
+    assert {"factor_a", "factor_b"} <= set(panel.columns)
+    assert "unwanted_column" not in panel.columns
+    assert len(panel) == len(SYMBOLS) * len(fridays)
+
+
+def test_extra_feature_roots_empty_sequence_is_a_no_op(fixture_roots) -> None:
+    daily_root, labels_root, full = fixture_roots
+    calendar = pd.DatetimeIndex(sorted(full["trade_date"].unique()))
+    fridays = loop.weekly_rebalance_dates(calendar)
+    panel = load_feature_panel(
+        ["momentum_252_21"],
+        ["label_rank_5"],
+        dates=fridays,
+        daily_root=daily_root,
+        labels_root=labels_root,
+        extra_feature_roots=[],
+        memory_limit="256MB",
+    )
+    assert len(panel) == len(SYMBOLS) * len(fridays)
