@@ -30,6 +30,7 @@ by directory, not by which module happens to have a matching helper).
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -344,6 +345,268 @@ def evaluate_regime_candidate(
         disclosure=disclosure,
         gate_results=gate_results,
         gates_not_applicable=gates_not_applicable,
+        all_gates_pass=all_gates_pass,
+        gates_provenance=gates_provenance,
+        gate_contract=gate_contract,
+    )
+
+
+#: Step 13 Track M/L (docs/plan-step-13-recent-high-return-ml-and-llm-tracks-
+#: 2026-09-09.zh.md; config/promotion/recent-regime-high-return-gates-v2.json).
+#: Independent of Group B's v1 contract/family above -- v2 does not
+#: retroactively change F1-F5's verdicts, and this module's v1 machinery is
+#: untouched by anything below.
+GATE_CONTRACT_V2_PATH = ROOT / "config" / "promotion" / "recent-regime-high-return-gates-v2.json"
+LEDGER_FAMILY_V2 = "step13_recent_high_return"
+
+RECENT_HIGH_RETURN_GATE_KEYS: tuple[str, ...] = (
+    "cagr_recent_net_minimum",
+    "cagr_excess_vol_matched_spy_minimum",
+    "hit_rate_weekly_minimum",
+    "max_drawdown_recent_minimum",
+    "sharpe_excess_bil_recent_minimum",
+    "positive_quarter_fraction_minimum",
+    "dsr_probability_minimum",
+    "stress_cost_recent_cagr_minimum",
+    "activity_floor_rebalances_with_change_per_year_minimum",
+    "ml_placebo_rank_ic_abs_maximum",
+    "ml_must_beat_rule_baseline_cagr_margin_minimum",
+    "llm_marginal_lift_cagr_minimum",
+    "llm_marginal_lift_rank_ic_minimum",
+)
+
+
+def load_recent_high_return_gates(path: Path | str = GATE_CONTRACT_V2_PATH) -> PreregisteredGates:
+    """Load the Step 13 v2 contract (see module-level constants above)."""
+    return load_preregistered_gates(path, required_keys=RECENT_HIGH_RETURN_GATE_KEYS)
+
+
+@dataclass(frozen=True)
+class RecentHighReturnVerdict(ResearchDataModel):
+    """One Step 13 Track M/L candidate's v2-contract metrics, gate results,
+    and disclosure-only figures. A separate dataclass from :class:`RegimeVerdict`
+    (Step 12's v1) rather than a shared base: the two contracts' gate key
+    sets, activity-floor semantics, and disclosure items are different
+    enough (v2 has no profit_factor/daily-or-intraday-hit-rate gates at all,
+    and adds activity_floor/ml_must_beat_rule_baseline/llm_marginal_lift)
+    that sharing a base class would mean more conditional fields than a
+    plain, independent dataclass costs.
+    """
+
+    experiment_id: str
+    family: str
+    config_hash: str
+    track: Literal["M", "L"]
+    is_ml: bool
+    reference_only: bool
+    dsr_trial_count: int
+    metrics: dict[str, float | int | str | None]
+    disclosure: dict[str, float | int | str | None]
+    gate_results: dict[str, bool]
+    gates_not_applicable: tuple[str, ...]
+    all_gates_pass: bool
+    gates_provenance: str
+    gate_contract: dict[str, str]
+
+    @property
+    def evaluated_gate_count(self) -> int:
+        return len(self.gate_results) - len(self.gates_not_applicable)
+
+    @property
+    def promotion_eligible(self) -> bool:
+        if self.reference_only:
+            return False
+        return self.all_gates_pass and self.gates_provenance == "preregistered"
+
+
+def evaluate_recent_high_return_candidate(
+    *,
+    experiment_id: str,
+    config_hash: str,
+    full_returns: pd.Series,
+    full_stress_returns: pd.Series,
+    spy_returns: pd.Series,
+    bil_returns: pd.Series,
+    weekly_holding_period_net_returns_recent: Sequence[float],
+    rebalances_with_change_per_year: dict[int, int],
+    family: str = LEDGER_FAMILY_V2,
+    track: Literal["M", "L"] = "M",
+    is_ml: bool = False,
+    placebo_rank_ic_abs: float | None = None,
+    rule_baseline_cagr_recent_net: float | None = None,
+    reference_only: bool = False,
+    gates: PreregisteredGates | None = None,
+    dsr_hac_lag: int = DEFAULT_DSR_HAC_LAG,
+) -> RecentHighReturnVerdict:
+    """Score one Step 13 Track M/L candidate's recent-window
+    (2024-01-02..latest) return stream against the preregistered v2
+    contract, and compute the mandatory disclosure block.
+
+    ``full_returns``/``full_stress_returns``/``spy_returns``/``bil_returns``
+    are complete available-history daily streams -- this function slices
+    the recent-gated and disclosure-only windows out of them itself, exactly
+    like v1's :func:`evaluate_regime_candidate`, so every candidate is
+    sliced identically.
+
+    ``weekly_holding_period_net_returns_recent`` must already be restricted
+    to weeks the candidate was actually invested (all-cash/BIL weeks
+    excluded -- gate contract's own ``hit_rate_weekly`` note).
+    ``rebalances_with_change_per_year`` is ``{calendar_year: count}`` for
+    every year with at least one rebalance date in the recent window; the
+    activity-floor gate uses the *minimum* year, not the average, so a
+    candidate must clear the floor in every year it is scored over, not
+    merely on average across them.
+
+    ``rule_baseline_cagr_recent_net`` is required when ``is_ml=True`` (the
+    best M0 rule cell's own ``cagr_recent_net``, chosen by the identical
+    trailing-validation protocol) -- raises ``ValueError`` if missing, the
+    same "declare, don't silently skip" discipline v1 uses for
+    ``placebo_rank_ic_abs``.
+    """
+    resolved_gates = gates or load_recent_high_return_gates()
+    thresholds = resolved_gates.values
+    gates_provenance = "preregistered"
+    gate_contract = resolved_gates.as_provenance()
+
+    recent = _slice_from(full_returns, RECENT_WINDOW_START)
+    if recent.empty:
+        raise ValueError(f"{experiment_id}: no returns on/after {RECENT_WINDOW_START}")
+    recent_stress = _slice_from(full_stress_returns, RECENT_WINDOW_START)
+    if recent_stress.empty:
+        raise ValueError(f"{experiment_id}: no stress returns on/after {RECENT_WINDOW_START}")
+    recent_bil = bil_returns.reindex(recent.index)
+    if recent_bil.isna().any():
+        raise ValueError(f"{experiment_id}: BIL benchmark alignment produced missing rows")
+    recent_spy = spy_returns.reindex(recent.index)
+    if recent_spy.isna().any():
+        raise ValueError(f"{experiment_id}: SPY benchmark alignment produced missing rows")
+
+    cagr_recent_net = annualized_cagr(recent)
+    max_drawdown_recent = max_drawdown(recent)
+    excess_bil = (recent - recent_bil).to_numpy()
+    sharpe_excess_bil_recent = annualized_sharpe(excess_bil)
+    dsr_trial_count = dsr_trial_count_for_family(family, config_hash)
+    dsr_probability = deflated_sharpe_probability(
+        excess_bil, trial_count=dsr_trial_count, hac_lag=dsr_hac_lag
+    )
+    hit_rate_weekly = regime_metrics.hit_rate(weekly_holding_period_net_returns_recent)
+    pqf = regime_metrics.positive_quarter_fraction(recent)
+    stress_cagr_recent = annualized_cagr(recent_stress)
+
+    # Vol-matched-SPY excess CAGR: same construction as
+    # mechanism_eval.evaluate_candidate's benchmark_returns path (candidate
+    # volatility-scaled blend of SPY + BIL), applied directly to the
+    # recent-window slice rather than through that function's rolling-origin
+    # Candidate/fold machinery, which this continuous-stream contract does
+    # not use (see gate contract's walkforward.scheme).
+    candidate_vol = float(recent.std())
+    spy_vol = float(recent_spy.std())
+    if not math.isfinite(spy_vol) or spy_vol <= 0.0:
+        raise ValueError(f"{experiment_id}: SPY has non-positive realized volatility in this window")
+    vol_match_weight = candidate_vol / spy_vol
+    vol_matched_spy = vol_match_weight * recent_spy + (1.0 - vol_match_weight) * recent_bil
+    cagr_excess_vol_matched_spy = cagr_recent_net - annualized_cagr(vol_matched_spy)
+
+    if not rebalances_with_change_per_year:
+        raise ValueError(f"{experiment_id}: rebalances_with_change_per_year must be non-empty")
+    activity_floor_value = min(rebalances_with_change_per_year.values())
+
+    gate_results: dict[str, bool] = {
+        "cagr_recent_net": cagr_recent_net >= thresholds["cagr_recent_net_minimum"],
+        "cagr_excess_vol_matched_spy": (
+            cagr_excess_vol_matched_spy >= thresholds["cagr_excess_vol_matched_spy_minimum"]
+        ),
+        "hit_rate_weekly": hit_rate_weekly >= thresholds["hit_rate_weekly_minimum"],
+        "max_drawdown_recent": max_drawdown_recent >= thresholds["max_drawdown_recent_minimum"],
+        "sharpe_excess_bil_recent": (
+            sharpe_excess_bil_recent >= thresholds["sharpe_excess_bil_recent_minimum"]
+        ),
+        "positive_quarter_fraction": pqf >= thresholds["positive_quarter_fraction_minimum"],
+        "dsr_probability": dsr_probability >= thresholds["dsr_probability_minimum"],
+        "stress_cost_still_high": (
+            stress_cagr_recent >= thresholds["stress_cost_recent_cagr_minimum"]
+        ),
+        "activity_floor": (
+            activity_floor_value
+            >= thresholds["activity_floor_rebalances_with_change_per_year_minimum"]
+        ),
+    }
+
+    gates_not_applicable: list[str] = []
+    if is_ml:
+        if placebo_rank_ic_abs is None:
+            raise ValueError("is_ml=True requires placebo_rank_ic_abs")
+        gate_results["ml_placebo_rank_ic"] = (
+            abs(placebo_rank_ic_abs) < thresholds["ml_placebo_rank_ic_abs_maximum"]
+        )
+        if rule_baseline_cagr_recent_net is None:
+            raise ValueError("is_ml=True requires rule_baseline_cagr_recent_net")
+        gate_results["ml_must_beat_rule_baseline"] = (
+            cagr_recent_net - rule_baseline_cagr_recent_net
+            >= thresholds["ml_must_beat_rule_baseline_cagr_margin_minimum"]
+        )
+    else:
+        gate_results["ml_placebo_rank_ic"] = True
+        gate_results["ml_must_beat_rule_baseline"] = True
+        gates_not_applicable += ["ml_placebo_rank_ic", "ml_must_beat_rule_baseline"]
+
+    # Track L's llm_marginal_lift_* gates are evaluated by the L-track
+    # executor's own script (it has the quant-only-twin comparison this
+    # module has no data to compute) -- declared not-applicable here for
+    # every Track M candidate and for any Track L candidate this function is
+    # asked to score before that comparison exists, never silently omitted.
+    gate_results["llm_marginal_lift"] = True
+    gates_not_applicable.append("llm_marginal_lift")
+
+    all_gates_pass = all(gate_results.values())
+
+    metrics: dict[str, float | int | str | None] = {
+        "cagr_recent_net": cagr_recent_net,
+        "cagr_excess_vol_matched_spy": cagr_excess_vol_matched_spy,
+        "vol_match_weight_vs_spy": vol_match_weight,
+        "hit_rate_weekly": hit_rate_weekly,
+        "max_drawdown_recent": max_drawdown_recent,
+        "sharpe_excess_bil_recent": sharpe_excess_bil_recent,
+        "positive_quarter_fraction": pqf,
+        "dsr_probability": dsr_probability,
+        "stress_cost_recent_cagr_net": stress_cagr_recent,
+        "activity_floor_rebalances_with_change_per_year_min": activity_floor_value,
+        "recent_window_start": recent.index.min().date().isoformat(),
+        "recent_window_end": recent.index.max().date().isoformat(),
+        "recent_window_row_count": int(len(recent)),
+    }
+    if is_ml:
+        metrics["ml_placebo_rank_ic_abs"] = (
+            abs(placebo_rank_ic_abs) if placebo_rank_ic_abs is not None else None
+        )
+        metrics["rule_baseline_cagr_recent_net"] = rule_baseline_cagr_recent_net
+        metrics["ml_cagr_margin_over_rule_baseline"] = (
+            cagr_recent_net - rule_baseline_cagr_recent_net
+            if rule_baseline_cagr_recent_net is not None
+            else None
+        )
+
+    disclosure = _disclosure_block(full_returns, None)
+    disclosure["return_skewness_recent"] = regime_metrics.return_skewness(recent)
+    disclosure["worst_single_week_return_recent"] = regime_metrics.worst_single_week_return(recent)
+    disclosure["quarterly_returns_2024_2026"] = regime_metrics.quarterly_returns(recent)
+    disclosure["replay_2022_full_year_return"] = regime_metrics.replay_year_return(
+        full_returns, REPLAY_YEAR
+    )
+    disclosure["rebalances_with_change_per_year"] = dict(rebalances_with_change_per_year)
+
+    return RecentHighReturnVerdict(
+        experiment_id=experiment_id,
+        family=family,
+        config_hash=config_hash,
+        track=track,
+        is_ml=is_ml,
+        reference_only=reference_only,
+        dsr_trial_count=dsr_trial_count,
+        metrics=metrics,
+        disclosure=disclosure,
+        gate_results=gate_results,
+        gates_not_applicable=tuple(gates_not_applicable),
         all_gates_pass=all_gates_pass,
         gates_provenance=gates_provenance,
         gate_contract=gate_contract,
