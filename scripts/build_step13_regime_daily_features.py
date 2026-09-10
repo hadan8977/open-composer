@@ -13,13 +13,16 @@ does not resemble in shape):
   (plan: "vix_close（data/ 里已有 CBOE 指数则用...)"). Falls back to
   ``spy_vol_21`` (SPY's trailing 21-day realized vol, annualized and scaled
   to VIX-like "vol points" for rough continuity, i.e. multiplied by 100)
-  only if that file is missing or its coverage over this table's date range
-  is worse than 95% -- the plan's own documented contingency ("没有则
-  spy_vol_21 代替，并在报告里说明"). Every row also carries
-  ``vix_close_source`` so a report can say honestly which one was used;
-  as of this script's writing the real CBOE history file covers back to
-  1990, so the fallback path is expected to be dead code in practice, kept
-  because the plan asks for it to be disclosed if it is ever exercised.
+  for any *individual* date that file lacks, and for the *whole* series
+  if its aggregate coverage over this table's date range is worse than
+  95% -- the plan's own documented contingency ("没有则 spy_vol_21
+  代替，并在报告里说明"). Every row also carries ``vix_close_source`` so a
+  report can say honestly which one was used. Not dead code in practice:
+  ``VIX_HISTORY_CSV`` is a point-in-time research snapshot (fetched
+  2026-08-14, per its own directory name) that structurally cannot cover
+  trade dates after that, so every date past it falls back per-row until
+  the file is refreshed (found 2026-09-10 when it first blocked a real
+  M1 run: 16 dates, 2026-08-14..2026-09-04, fell back).
 * ``cs_dispersion_21``: cross-sectional (sample) standard deviation of
   ``ret_21`` across every symbol with a row on that ``trade_date`` in
   ``data/features/daily/`` -- i.e. the same PIT-universe-union population
@@ -130,19 +133,38 @@ def build_spy_derived_columns() -> pd.DataFrame:
 
     vix = vix_close_series()
     coverage = float(vix.reindex(close.index).notna().mean()) if vix is not None else 0.0
+    # Plan section 3.1's documented contingency: fall back to SPY's own
+    # realized vol, scaled to roughly VIX-like "vol points" (x100) only for
+    # continuity of units in a report table -- this is explicitly not a
+    # VIX-equivalent measure, just a same-direction regime proxy.
+    daily_returns = close.pct_change()
+    realized_vol = daily_returns.rolling(
+        REALIZED_VOL_WINDOW, min_periods=REALIZED_VOL_WINDOW
+    ).std() * (ANNUALIZATION_SESSIONS**0.5)
+    fallback_vix = realized_vol * 100.0
     if vix is not None and coverage >= MIN_VIX_COVERAGE:
-        frame["vix_close"] = vix.reindex(close.index).to_numpy()
-        frame["vix_close_source"] = "cboe_vix_history"
+        # 2026-09-10 fix: VIX_HISTORY_CSV is a point-in-time research
+        # snapshot (its own directory name is dated 20260814) -- it will
+        # structurally never cover trade dates after its fetch date, and
+        # that gap only grows as "today" keeps advancing past it. The
+        # original code chose ONE source for the *entire* series based on
+        # aggregate coverage (>=95% here), which correctly picks
+        # "cboe_vix_history" overall but then left every date past the
+        # snapshot's cutoff as a silent NaN -- exactly the individually
+        # recent, actively-scored dates a live M1/M2 run needs most. Now
+        # aggregate coverage still decides whether the real series is
+        # trustworthy at all, but each *individual* missing date -- not
+        # just a globally-poor-coverage series -- gets the same documented
+        # per-row fallback rather than staying NaN.
+        aligned_vix = vix.reindex(close.index)
+        missing = aligned_vix.isna()
+        frame["vix_close"] = aligned_vix.where(~missing, fallback_vix).to_numpy()
+        frame["vix_close_source"] = pd.Series("cboe_vix_history", index=close.index, dtype="object")
+        frame.loc[missing.to_numpy(), "vix_close_source"] = (
+            f"spy_vol_21_fallback_row_gap_coverage_{coverage:.2%}"
+        )
     else:
-        # Plan section 3.1's documented contingency: fall back to SPY's own
-        # realized vol, scaled to roughly VIX-like "vol points" (x100) only
-        # for continuity of units in a report table -- this is explicitly
-        # not a VIX-equivalent measure, just a same-direction regime proxy.
-        daily_returns = close.pct_change()
-        realized_vol = daily_returns.rolling(
-            REALIZED_VOL_WINDOW, min_periods=REALIZED_VOL_WINDOW
-        ).std() * (ANNUALIZATION_SESSIONS**0.5)
-        frame["vix_close"] = (realized_vol * 100.0).to_numpy()
+        frame["vix_close"] = fallback_vix.to_numpy()
         frame["vix_close_source"] = (
             "spy_vol_21_fallback_no_vix_file"
             if vix is None
