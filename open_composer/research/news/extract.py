@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -47,6 +47,7 @@ import pandas as pd
 from open_composer.research.features.universe import exclude_funds_and_etfs, load_universe_panel
 from open_composer.research.kernel.loop import universe_as_of_calendar_month
 from open_composer.research.llm_backends import LLMBackend
+from open_composer.research.news.collector import NEWS_PACKETS_ROOT
 
 ROOT = Path(__file__).resolve().parents[3]
 EVENTS_ROOT = ROOT / "data" / "features" / "news_events"
@@ -58,6 +59,12 @@ MAX_ARTICLES_PER_CALL = 25
 MAX_FIELD_CHARS = 300
 TOKEN_BUDGET_PER_WEEK = 30_000_000
 DEFAULT_CANDIDATE_POOL_TOP_N = 150
+#: 2026-09-10: caps a single flooded mega-cap symbol's article count within
+#: one week so it cannot dominate the token budget at the expense of every
+#: other symbol's news that week. "Per symbol" not "per article" -- a
+#: multi-symbol article can still be kept via any one of its symbols that
+#: has not hit this cap yet (see iter_weekly_extraction_batches).
+MAX_ARTICLES_PER_SYMBOL_PER_WEEK = 40
 
 #: Plan section 4.2's exact enum, order preserved for readability only.
 EVENT_TYPES: tuple[str, ...] = (
@@ -486,29 +493,169 @@ def select_articles_for_extraction(
 ) -> pd.DataFrame:
     """Filter ``articles`` (collector packet rows) down to the ones actually
     worth an LLM call: symbols intersect that article's week's candidate
-    pool, and not already cached under the current prompt."""
-    if articles.empty:
-        return articles
-    dates = pd.to_datetime(articles["created_at"]).dt.tz_localize(None).dt.normalize()
+    pool, and not already cached under the current prompt.
 
-    def _in_scope(row_idx: int) -> bool:
-        symbols = articles.iloc[row_idx]["symbols"]
-        # `symbols` round-trips through parquet as a numpy array, not a
-        # list -- `symbols or []` evaluates the array's truthiness and
-        # raises ValueError for any array with more than one element
-        # ("truth value of an array... is ambiguous"). `is None`/`len()`
-        # are always scalar, so neither line risks that coercion.
-        if symbols is None or len(symbols) == 0:
-            symbol_set: set[str] = set()
-        else:
-            symbol_set = {str(s) for s in symbols}
-        if not symbol_set:
-            return False
-        pool = candidate_pool_for_date(dates.iloc[row_idx], pools)
-        if not (symbol_set & pool):
-            return False
-        key = (str(articles.iloc[row_idx]["id"]), prompt_hash_value)
-        return key not in cached_keys
+    Fully vectorized (``merge_asof`` + ``explode`` + ``isin``) -- 2026-09-10
+    rewrite after a per-row Python-loop version (``.iloc`` plus a linear
+    pool scan per row) proved far too slow on the real ~685k-article
+    archive: still hadn't finished after several minutes in the first real
+    bulk run. This version does the same filtering as one small number of
+    vectorized pandas/numpy operations instead of 685k individual ones.
+    """
+    if articles.empty or not pools:
+        return articles.iloc[0:0]
+    all_pool_symbols: set[str] = set().union(*pools.values())
+    if not all_pool_symbols:
+        return articles.iloc[0:0]
 
-    mask = [_in_scope(i) for i in range(len(articles))]
-    return articles.loc[mask]
+    working = articles.reset_index(drop=True).copy()
+    working["_row_pos"] = range(len(working))
+    working["_date"] = pd.to_datetime(working["created_at"]).dt.tz_localize(None).dt.normalize()
+
+    fridays = pd.DataFrame({"_friday": sorted(pools)})
+    merged = pd.merge_asof(
+        working.sort_values("_date"),
+        fridays.sort_values("_friday"),
+        left_on="_date",
+        right_on="_friday",
+        direction="backward",  # most recent Friday <= this article's date (PIT)
+    )
+    merged = merged.dropna(subset=["_friday"])  # before the first Friday -> no pool yet
+    if merged.empty:
+        return articles.iloc[0:0]
+
+    # Explode (row, symbol) pairs, then immediately drop anything that is
+    # not in *any* week's pool -- shrinks the join before it happens rather
+    # than after, since most mentioned symbols are never a top-150 name.
+    exploded = merged[["_row_pos", "_friday", "symbols"]].explode("symbols")
+    exploded = exploded.dropna(subset=["symbols"])
+    exploded = exploded.loc[exploded["symbols"].isin(all_pool_symbols)]
+    if exploded.empty:
+        return articles.iloc[0:0]
+
+    pool_pairs = pd.DataFrame(
+        [(friday, symbol) for friday, symbols in pools.items() for symbol in symbols],
+        columns=["_friday", "symbols"],
+    )
+    matched_positions = set(
+        exploded.merge(pool_pairs, on=["_friday", "symbols"], how="inner")["_row_pos"]
+    )
+    if not matched_positions:
+        return articles.iloc[0:0]
+
+    cached_ids_for_prompt = {
+        article_id for article_id, phash in cached_keys if phash == prompt_hash_value
+    }
+    matched = working.loc[sorted(matched_positions)]
+    keep = matched.loc[~matched["id"].astype(str).isin(cached_ids_for_prompt), "_row_pos"]
+    return articles.iloc[sorted(keep.tolist())]
+
+
+def _weekly_matched_articles(
+    con: duckdb.DuckDBPyConnection,
+    *,
+    year_files: list[str],
+    week_start: pd.Timestamp,
+    week_end_exclusive: pd.Timestamp,
+    pool_symbols: Sequence[str],
+    max_per_symbol: int,
+) -> pd.DataFrame:
+    """One week's worth of in-scope articles, read directly from the
+    consolidated ``data/features/news_packets/{year}.parquet`` archives via
+    DuckDB (columnar + predicate pushdown on ``created_at`` -- never reads
+    more than this one week's rows into memory). An article is kept if,
+    for at least one of its symbols that is also in ``pool_symbols``, it
+    ranks among that symbol's ``max_per_symbol`` most recent articles this
+    week (caps a single flooded symbol without dropping a multi-symbol
+    article just because one of its *other* symbols is flooded).
+    """
+    symbol_list_sql = "(" + ", ".join(repr(s) for s in pool_symbols) + ")"
+    query = f"""
+        WITH windowed AS (
+            SELECT id, created_at, headline, summary, symbols
+            FROM read_parquet({year_files!r}, union_by_name=true)
+            WHERE created_at >= ? AND created_at < ?
+        ),
+        exploded AS (
+            SELECT id, created_at, headline, summary, UNNEST(symbols) AS symbol
+            FROM windowed
+        ),
+        ranked AS (
+            SELECT *, ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY created_at DESC) AS rn
+            FROM exploded
+            WHERE symbol IN {symbol_list_sql}
+        )
+        SELECT id, ANY_VALUE(created_at) AS created_at, ANY_VALUE(headline) AS headline,
+               ANY_VALUE(summary) AS summary
+        FROM ranked
+        WHERE rn <= ?
+        GROUP BY id
+        ORDER BY created_at
+    """
+    frame = (
+        con.execute(query, [week_start, week_end_exclusive, max_per_symbol])
+        .fetch_arrow_table()
+        .to_pandas()
+    )
+    frame["id"] = frame["id"].astype(str)
+    return frame
+
+
+def iter_weekly_extraction_batches(
+    pools: dict[pd.Timestamp, set[str]],
+    *,
+    cached_keys: set[tuple[str, str]],
+    prompt_hash_value: str,
+    packets_root: Path = NEWS_PACKETS_ROOT,
+    max_articles_per_symbol_per_week: int = MAX_ARTICLES_PER_SYMBOL_PER_WEEK,
+    batch_size: int = MAX_ARTICLES_PER_CALL,
+    memory_limit: str = "1GB",
+) -> Iterator[pd.DataFrame]:
+    """Streams batches of up to ``batch_size`` in-scope, not-yet-cached
+    articles, one week at a time.
+
+    2026-09-10 rewrite: the prior "load every raw article into one pandas
+    frame, then filter" path was OOM-killed at the run_capped 1.8GB cap on
+    the real ~685k-article archive (``loaded 684876 raw articles from
+    _daily/`` was the last line before the kernel memcg kill). This version
+    reads only each week's rows from the consolidated
+    ``data/features/news_packets/{year}.parquet`` files via DuckDB
+    (predicate pushdown on ``created_at``), so peak memory is bounded by
+    one week's matched rows, not the whole archive, regardless of how many
+    years are requested.
+    """
+    year_files = sorted(str(p) for p in packets_root.glob("*.parquet") if p.stem.isdigit())
+    if not year_files:
+        return
+    cached_ids_for_prompt = {
+        article_id for article_id, phash in cached_keys if phash == prompt_hash_value
+    }
+    sorted_fridays = sorted(pools)
+    con = _connect(memory_limit)
+    try:
+        for i, friday in enumerate(sorted_fridays):
+            pool = pools[friday]
+            if not pool:
+                continue
+            week_end_exclusive = (
+                sorted_fridays[i + 1]
+                if i + 1 < len(sorted_fridays)
+                else friday + pd.Timedelta(days=3650)
+            )
+            matched = _weekly_matched_articles(
+                con,
+                year_files=year_files,
+                week_start=friday,
+                week_end_exclusive=week_end_exclusive,
+                pool_symbols=sorted(pool),
+                max_per_symbol=max_articles_per_symbol_per_week,
+            )
+            if matched.empty:
+                continue
+            matched = matched.loc[~matched["id"].isin(cached_ids_for_prompt)]
+            if matched.empty:
+                continue
+            for start_idx in range(0, len(matched), batch_size):
+                yield matched.iloc[start_idx : start_idx + batch_size]
+    finally:
+        con.close()

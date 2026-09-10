@@ -445,3 +445,134 @@ def test_select_articles_for_extraction_after_real_parquet_round_trip(tmp_path: 
     )
 
     assert list(selected["id"]) == ["1"]
+
+
+# --- iter_weekly_extraction_batches (streaming, real-parquet-backed) ------
+
+
+def _write_packet_year(path: Path, rows: list[dict]) -> None:
+    frame = pd.DataFrame(rows)
+    frame["created_at"] = pd.to_datetime(frame["created_at"], utc=True)
+    frame.to_parquet(path)
+
+
+def _packet(article_id: str, created_at: str, symbols: list[str]) -> dict:
+    return {
+        "id": article_id,
+        "created_at": created_at,
+        "headline": f"headline {article_id}",
+        "summary": f"summary {article_id}",
+        "symbols": symbols,
+    }
+
+
+def test_iter_weekly_extraction_batches_scopes_by_week_and_symbol(tmp_path: Path) -> None:
+    root = tmp_path / "news_packets"
+    root.mkdir()
+    _write_packet_year(
+        root / "2024.parquet",
+        [
+            _packet("1", "2024-01-05T12:00:00Z", ["AAPL"]),  # week 1, in pool -> kept
+            _packet("2", "2024-01-05T13:00:00Z", ["ZZZ"]),  # week 1, not in pool -> dropped
+            _packet("3", "2024-01-12T12:00:00Z", ["MSFT"]),  # week 2, in pool -> kept
+            _packet("4", "2024-01-12T13:00:00Z", ["AAPL"]),  # week 2, AAPL not week-2's pool
+        ],
+    )
+    pools = {
+        pd.Timestamp("2024-01-05"): {"AAPL"},
+        pd.Timestamp("2024-01-12"): {"MSFT"},
+    }
+
+    batches = list(
+        ex.iter_weekly_extraction_batches(
+            pools, cached_keys=set(), prompt_hash_value="h", packets_root=root
+        )
+    )
+    kept_ids = sorted(str(i) for batch in batches for i in batch["id"])
+
+    assert kept_ids == ["1", "3"]
+
+
+def test_iter_weekly_extraction_batches_excludes_cached_ids(tmp_path: Path) -> None:
+    root = tmp_path / "news_packets"
+    root.mkdir()
+    _write_packet_year(
+        root / "2024.parquet",
+        [
+            _packet("1", "2024-01-05T12:00:00Z", ["AAPL"]),
+            _packet("2", "2024-01-05T13:00:00Z", ["AAPL"]),
+        ],
+    )
+    pools = {pd.Timestamp("2024-01-05"): {"AAPL"}}
+
+    batches = list(
+        ex.iter_weekly_extraction_batches(
+            pools,
+            cached_keys={("1", "h")},
+            prompt_hash_value="h",
+            packets_root=root,
+        )
+    )
+    kept_ids = sorted(str(i) for batch in batches for i in batch["id"])
+
+    assert kept_ids == ["2"]
+
+
+def test_iter_weekly_extraction_batches_caps_per_symbol_keeping_most_recent(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "news_packets"
+    root.mkdir()
+    # 6 articles, same symbol, same week, strictly increasing created_at.
+    rows = [_packet(str(i), f"2024-01-05T{8 + i:02d}:00:00Z", ["AAPL"]) for i in range(6)]
+    _write_packet_year(root / "2024.parquet", rows)
+    pools = {pd.Timestamp("2024-01-05"): {"AAPL"}}
+
+    batches = list(
+        ex.iter_weekly_extraction_batches(
+            pools,
+            cached_keys=set(),
+            prompt_hash_value="h",
+            packets_root=root,
+            max_articles_per_symbol_per_week=3,
+        )
+    )
+    kept_ids = sorted(str(i) for batch in batches for i in batch["id"])
+
+    # 6 articles, same symbol, same week, cap=3 -> only the 3 most recent
+    # (ids "3", "4", "5" -- created_at strictly increasing with id).
+    assert kept_ids == ["3", "4", "5"]
+
+
+def test_iter_weekly_extraction_batches_respects_batch_size(tmp_path: Path) -> None:
+    root = tmp_path / "news_packets"
+    root.mkdir()
+    rows = [_packet(str(i), f"2024-01-05T{8 + i:02d}:00:00Z", ["AAPL"]) for i in range(5)]
+    _write_packet_year(root / "2024.parquet", rows)
+    pools = {pd.Timestamp("2024-01-05"): {"AAPL"}}
+
+    batches = list(
+        ex.iter_weekly_extraction_batches(
+            pools,
+            cached_keys=set(),
+            prompt_hash_value="h",
+            packets_root=root,
+            batch_size=2,
+        )
+    )
+
+    assert [len(b) for b in batches] == [2, 2, 1]
+
+
+def test_iter_weekly_extraction_batches_no_packet_files_yields_nothing(tmp_path: Path) -> None:
+    root = tmp_path / "empty_news_packets"
+    root.mkdir()
+    batches = list(
+        ex.iter_weekly_extraction_batches(
+            {pd.Timestamp("2024-01-05"): {"AAPL"}},
+            cached_keys=set(),
+            prompt_hash_value="h",
+            packets_root=root,
+        )
+    )
+    assert batches == []
