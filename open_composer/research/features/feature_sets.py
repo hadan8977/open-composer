@@ -85,11 +85,27 @@ DAILY27_COLUMNS: tuple[str, ...] = (
 #: name -> (columns, root). ``daily27`` has no root: those columns already
 #: live in ``panel.py``'s ``daily_root`` default, so no
 #: ``extra_feature_roots`` entry is needed for them.
+#: Columns that are numerically degenerate *as implemented* and therefore
+#: excluded from every M-grid feature set (Step 13-F/M, 2026-09-11).
+#: ``gtja017`` = ``rank(vwap - ts_max(vwap, 15)) ** delta(close, 5)``: a
+#: rank in (0, 1] raised to a raw 5-day price difference explodes to
+#: ~1e68..1e307 whenever the base is small and the exponent negative, which
+#: (a) DuckDB refuses to cast to FLOAT (``ConversionException`` in
+#: ``panel.load_feature_panel``, seen on the alpha191 cell) and (b) is not a
+#: usable feature anyway. The 3.5 screen still evaluated it (rank IC is
+#: scale-free), so its row stays in the screen table; only the M-grid
+#: resolution drops it. Fixing the formula itself would be an alpha191
+#: build change (out of scope here; disclosed in the F chapter).
+DEGENERATE_COLUMNS: frozenset[str] = frozenset({"gtja017"})
+
 _STATIC_FEATURE_SETS: dict[str, tuple[tuple[str, ...], Path | None]] = {
     "daily27": (DAILY27_COLUMNS, None),
     "alpha158": (tuple(alpha158_columns(DEFAULT_WINDOWS)), ALPHA158_ROOT),
     "alpha101": (ALPHA101_COLUMNS, ALPHA101_ROOT),
-    "alpha191": (ALPHA191_COLUMNS, ALPHA191_ROOT),
+    "alpha191": (
+        tuple(c for c in ALPHA191_COLUMNS if c not in DEGENERATE_COLUMNS),
+        ALPHA191_ROOT,
+    ),
     "osap_price": (OSAP_PRICE_COLUMNS, OSAP_PRICE_ROOT),
     "reversal_trend": (REVERSAL_TREND_CONTINUOUS_COLUMNS, REVERSAL_TREND_ROOT),
 }
