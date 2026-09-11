@@ -206,10 +206,28 @@ def load_feature_panel(
             con.register("_wanted_symbols", symbol_frame)
             where_clauses.append("d.symbol IN (SELECT symbol FROM _wanted_symbols)")
         row_filter = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
+        # Step 13-F/M (2026-09-10): each extra root is joined as a filtered,
+        # projected subquery -- the same ``dates``/``symbol_filter`` IN-filters
+        # as the daily table, applied to the root's own columns -- instead of
+        # a bare ``read_parquet`` scan. DuckDB cannot push the driving table's
+        # row filter through a LEFT JOIN into the right side, so a bare scan
+        # builds a hash table over every symbol/date the root has (~2.6M rows
+        # per root for the open libraries); with five roots that overflowed
+        # the 1GB DuckDB limit (screened_top40_recent cell,
+        # ``OutOfMemoryException`` at 953 MiB). The filtered subquery keeps
+        # each build side to the requested cohort/dates only. Results are
+        # identical: a LEFT JOIN on (symbol, trade_date) never needs right
+        # rows outside the left side's filter.
+        extra_row_filter = (
+            ("WHERE " + " AND ".join(c.replace("d.", "", 1) for c in where_clauses))
+            if where_clauses
+            else ""
+        )
         extra_join_sql = "\n".join(
-            f"LEFT JOIN read_parquet({_year_glob(root, years)!r}, union_by_name=true) {alias} "
-            f"USING (symbol, trade_date)"
-            for alias, root, _matched in extra_joins
+            f"LEFT JOIN (SELECT symbol, trade_date, {', '.join(matched)} "
+            f"FROM read_parquet({_year_glob(root, years)!r}, union_by_name=true) "
+            f"{extra_row_filter}) {alias} USING (symbol, trade_date)"
+            for alias, root, matched in extra_joins
         )
         query = f"""
             SELECT d.symbol, d.trade_date, {", ".join(selects)}
