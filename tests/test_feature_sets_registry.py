@@ -27,7 +27,7 @@ def test_alpha101_and_alpha191_columns_and_roots() -> None:
     assert roots_101 == [fs.ALPHA101_ROOT]
 
     columns_191, roots_191 = fs.resolve_feature_set("alpha191")
-    assert len(columns_191) == 20
+    assert len(columns_191) == 19  # 20 implemented minus the degenerate gtja017
     assert roots_191 == [fs.ALPHA191_ROOT]
 
 
@@ -49,7 +49,7 @@ def test_all_open_aggregates_every_open_library_but_not_daily27() -> None:
     # alpha158 (154) + alpha101 (20) + alpha191 (20) + osap_price (25) +
     # reversal_trend's continuous columns only (21 of its 25 -- the 4
     # discrete signal columns are event-study-only, not screened).
-    assert len(columns) == 154 + 20 + 20 + 25 + 21
+    assert len(columns) == 154 + 19 + 20 + 25 + 21  # alpha191 minus the degenerate gtja017
 
 
 def test_screened_top40_recent_missing_file_raises_actionable_error() -> None:
