@@ -404,6 +404,100 @@ the best-available candidate is connected for observation only, with this
 report stating the gap plainly rather than the contract being relaxed to
 manufacture a pass.
 
+## F 轨：公开因子库导入与筛选
+
+作者：协调者（Fable）。执行代理在 2026-09-10 的 5 小时上限 429 中中止，本章由协调者按磁盘上的产出直接写成；所有数字来自
+`reports/research/factor_screen/step13f_screen.{parquet,md}`、`config/feature_sets/screened_top40_recent.json` 和账本
+`reports/research/ledger/experiments.jsonl`（family `step13_recent_high_return`），未手工估算。
+
+### 导入了什么（plan 13-F §2-3.4）
+
+| 库 | 来源卡 | 导入列数 | 说明 |
+|---|---|---|---|
+| Qlib Alpha158 | `step13f_open_factor_libraries.jsonl` | 154 | pandas 移植，`data/features/alpha158/{year}.parquet`，2016-2026 |
+| WorldQuant Alpha101 | 同上（Kakushadze 2016） | 20 / 101 | 子集移植；`data/features/alpha101/` |
+| GTJA Alpha191 | 同上 | 20 / 191 | 子集移植；`data/features/alpha191/`；**gtja017 数值退化**（见下） |
+| OSAP price-only | 同上（Chen-Zimmermann 开放资产定价，仅价格量可算的信号） | 24 | `data/features/osap_price/` |
+| Reversal Trend 日线表 | 用户 Pine 指标（plan 13-P A1） | 25 | `data/features/reversal_trend/`，`rt_*` 连续列 + 4 个信号列 |
+
+未能复用现成轮子的原因（已验证，不是猜测）：`py-alpha-lib` 需要 Python 3.12（本机 venv 3.11）；`KunQuant` 需要 AVX2
+（本机 Xeon E5-2697 v2 没有）。因此五张表都是本仓库的 pandas 移植，101/191 只移植了子集。
+注册表 `open_composer/research/features/feature_sets.py`：`daily27`、`alpha158`、`alpha101`、`alpha191`、`osap_price`、
+`reversal_trend`、`all_open`（239 列，仅供筛选）、`screened_top40_recent`（读筛选产出的 JSON）。
+
+### 筛选协议（plan 13-F §3.5，预注册）
+
+- 每个周频再平衡日做横截面 rank IC，标签 `label_excess_5` 与 `label_excess_10`；全样本（2016→）与近期（2024-01→）两个窗口。
+- 每个因子报告 IC 均值、ICIR、t 值、符号稳定性（逐年 IC 同号的比例）、rank 自相关（每年抽 8 个再平衡日）。
+- 多重检验：BH FDR q = 0.05，对全样本 t 值；去重：|rank 相关| > 0.9 只留 ICIR 高者。
+- 输出：按近期 |ICIR| 排序的前 40 → `config/feature_sets/screened_top40_recent.json`。
+- 运行史：第一次运行 2026-09-10 09:50 UTC 被内存 cgroup 杀死（1.845 GB，无检查点，什么都没保存）；`7193b71` 加了按
+  (年, 库) 的检查点、40 列分块、float32；重跑 801 秒完成（14:41 UTC）。
+
+### 筛选结果
+
+480 项检验（5 库 × 240 因子 × 2 标签），**80 项通过 FDR**：
+
+| 库 | 检验数 | FDR 通过 | 通过的因子数 |
+|---|---|---|---|
+| alpha158 | 308 | 54 | 29 |
+| alpha101 | 40 | 17 | 10 |
+| alpha191 | 40 | 7 | 5 |
+| osap_price | 50 | 2 | 2 |
+| reversal_trend | 42 | 0 | 0 |
+
+前 40（近期 |ICIR| 0.163-0.285）的构成：alpha158 21、alpha101 7、alpha191 6、osap_price 4、reversal_trend 2
+（`rt_bars_since_macd_bull_cross`、`rt_macd_hist`）。其中 24 个全样本 FDR 通过；**16 个是"仅近期有效"的体制因子**
+（FDR 不通过、近期 t > 2）：RSQR30、VSUMP10、RSQR20、rt_bars_since_macd_bull_cross、gtja003、WVMA30、gtja020、WVMA5、gtja002、
+alpha003、RSQR60、VSUMP20、mom12m、CNTD30、rt_macd_hist、lrreversal。符号稳定性 ≥ 0.89 的有 13 个。
+领头的是 osap 的 `coskew_252`（近期 ICIR -0.285）、alpha158 的波动/相关族（VSTD30、VMA30、CORR5、VSTD20，均为负号）、
+alpha101 的 alpha007/016/012、alpha191 的 gtja013。完整表见 `reports/research/factor_screen/step13f_screen.md`。
+
+数据源敏感性：alpha191 的 `gtja017 = rank(vwap - ts_max(vwap,15)) ** delta(close,5)` 按字面公式实现后数值退化
+（部分行到 1e68-1e307）。筛选用的是 rank IC，不受影响；但 M 网格加载时 DuckDB 拒绝把它转成 FLOAT（alpha191 单元第一次因此崩溃），
+`5b1d653` 起注册表在 M 网格中剔除该列（alpha191 变为 19 列，all_open 239 列）。公式修正留给 alpha191 的构建脚本。
+
+### Reversal Trend 日线事件研究（plan 13-P A2）
+
+`reports/research/factor_screen/reversal_trend_event_study.md`：四个日线信号（fBull、fRecL、fBear、fRecS）在全样本与近期窗口
+都判定为"informative: no"；fBear/fRecS 之后的前瞻超额为正（逆向），但未达预注册门槛。小时线结果见 P 轨章节。
+
+### 用公开因子集跑 ML 单元（M1 single cell）
+
+协议同 M 轨：宇宙 = PIT 前 500 美元 ADV，前 50 等权，周频，次日开盘成交，10 bp，24 个月滚动训练 + 季度重训（11 次），
+留出验证季选模型，验证 IC 只在未见行上算；占位 = 打乱标签后的验证 IC。窗口 2024-01-02 → 2026-09-09。
+规则基线（同宇宙、同 K、`momentum_252_21 / vol_63`，门关）年化 33.7%。
+
+| 因子集 | 趋势门 | 年化 | 最大回撤 | 周胜率 | 验证 IC | 占位 IC | 过门槛 |
+|---|---|---|---|---|---|---|---|
+| screened_top40_recent | 开 | 17.5% | -18.9% | 0.559 | 0.035 | 0.004 | 否 |
+| screened_top40_recent | 关 | 19.4% | -26.8% | 0.576 | 0.035 | 同上 | 否 |
+| alpha101 (20) | 开 | 17.5% | -16.7% | 0.598 | 0.014 | 0.004 | 否 |
+| alpha191 (19) | 开 | 13.5% | -17.7% | 0.606 | 0.020 | -0.003 | 否 |
+| osap_price (24) | 开 | 9.6% | -14.2% | 0.575 | 0.025 | -0.002 | 否 |
+| reversal_trend (21) | 开 | 4.4% | -19.4% | 0.543 | 0.018 | -0.002 | 否 |
+| alpha158 (154，见 M 轨) | 开 | 14.8% | -17.6% | 0.591 | 0.021 | -0.001 | 否 |
+| daily27（见 M 轨） | 开 / 关 | 3.5% / 20.0% | -18.5% / -31.7% | 0.548 / 0.594 | — | 0.001 | 否 |
+
+账本单元名：`step13_m1_single_cell_<set>_uni500_k50_gate_on`（`_off`），占位行带 `_PLACEBO` 后缀（只记 IC）。
+`all_open` 未作为 M 单元运行（plan §3.6：仅供筛选，240 列与 LightGBM 直方图一起会超内存预算）。
+
+读法：
+- 筛选出的 40 因子集在所有公开集合里验证 IC 最高（0.035，alpha158 全集 0.021），占位干净（0.004），说明"先筛后训"确实比整库直灌好。
+- 但 0.035 的 IC 在前 50 组合上只对应 17-19% 年化，仍是规则基线的一半，低于 SPMO 的 37%；每个 ML 单元都输给它的规则孪生，与 M 轨结论一致。
+- 与文献预期一致：AlphaMemo（arXiv 2606.20625）在标普 500 2022-2025 上静态 Alpha158 RankIC 0.008、年化 14%；Qlib 官方 CSI300
+  LightGBM RankIC 0.047。这里的 0.035 处于两者之间，没有异常好也没有异常差。
+- 所有单元都未通过合同 v2（`cagr_recent_net`、`cagr_excess_vol_matched_spy`、`sharpe_excess_bil_recent` 等）。
+
+### 结论与下一步（额度重置后）
+
+公开因子库的导入是一次性的、可复用的基础设施（五张表、注册表、带检查点的筛选器），但在这个窗口和宇宙上，
+静态使用它们没有带来超过简单风险调整动量规则的收益。下一步按优先级：
+1. 动态因子刷新：每季度重筛，用"最近一季的前 k 因子"训练（AlphaMemo 的结论是动态刷新才有效），而不是固定集合。
+2. 两阶段：先用规则分数取前 100，再用筛选集排序取前 50（M 轨两阶段单元用 daily27 时为 10.4%，换成筛选集值得一试）。
+3. 修 alpha191 的 gtja017 公式；补齐 101/191 的其余因子并重筛。
+4. P 轨 1 分钟方向（plan 13-P §3，代码尚未开始）。
+
 ## P 轨：Reversal Trend
 
 Plan: `docs/plan-step-13p-reversal-trend-pine-factor-and-strategy-2026-09-09.zh.md`
