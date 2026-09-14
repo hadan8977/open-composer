@@ -98,6 +98,34 @@ DAILY27_COLUMNS: tuple[str, ...] = (
 #: build change (out of scope here; disclosed in the F chapter).
 DEGENERATE_COLUMNS: frozenset[str] = frozenset({"gtja017"})
 
+#: Step 15 Track A (2026-09-14): the 17 GTJA Alpha191 ids Du/Walter/Ulrich
+#: (arXiv 2601.06499) found survive a double-selection-LASSO screen against
+#: 151 fundamental factors in the S&P 500 (2002-2022, monthly, t>2).
+#: ``181`` is excluded from ``US17_ALPHA191_COLUMNS`` below -- not
+#: implemented this round, see alpha191.py's module docstring for why.
+US17_ALPHA191_IDS: tuple[int, ...] = (
+    1,
+    15,
+    39,
+    46,
+    49,
+    54,
+    63,
+    71,
+    73,
+    84,
+    86,
+    123,
+    155,
+    161,
+    181,
+    184,
+    190,
+)
+US17_ALPHA191_COLUMNS: tuple[str, ...] = tuple(
+    f"gtja{i:03d}" for i in US17_ALPHA191_IDS if f"gtja{i:03d}" in ALPHA191_COLUMNS
+)
+
 _STATIC_FEATURE_SETS: dict[str, tuple[tuple[str, ...], Path | None]] = {
     "daily27": (DAILY27_COLUMNS, None),
     "alpha158": (tuple(alpha158_columns(DEFAULT_WINDOWS)), ALPHA158_ROOT),
@@ -132,7 +160,12 @@ def _all_open_columns_and_roots() -> tuple[tuple[str, ...], tuple[Path, ...]]:
 
 def available_feature_sets() -> list[str]:
     """Every resolvable name, including the dynamic ones."""
-    return [*_STATIC_FEATURE_SETS.keys(), "all_open", "screened_top40_recent"]
+    return [
+        *_STATIC_FEATURE_SETS.keys(),
+        "all_open",
+        "screened_top40_recent",
+        "screened_top40_recent_us17",
+    ]
 
 
 def resolve_feature_set(name: str) -> tuple[list[str], list[Path]]:
@@ -141,20 +174,37 @@ def resolve_feature_set(name: str) -> tuple[list[str], list[Path]]:
     extra_feature_roots=roots)``.
 
     Raises ``KeyError`` for an unknown name, and ``FileNotFoundError`` for
-    ``"screened_top40_recent"`` before ``scripts/screen_factors.py`` (Step
-    13-F 3.5) has written ``config/feature_sets/screened_top40_recent.json``.
+    ``"screened_top40_recent"``/``"screened_top40_recent_us17"`` before
+    ``scripts/screen_factors.py`` (Step 13-F 3.5) has written
+    ``config/feature_sets/screened_top40_recent.json``.
     """
     if name == "all_open":
         columns, roots = _all_open_columns_and_roots()
         return list(columns), list(roots)
     if name == "screened_top40_recent":
         return _load_screened_top40_recent()
+    if name == "screened_top40_recent_us17":
+        return _load_screened_top40_recent_us17()
     if name not in _STATIC_FEATURE_SETS:
         raise KeyError(
             f"unknown feature set {name!r}; available: {sorted(available_feature_sets())}"
         )
     columns, root = _STATIC_FEATURE_SETS[name]
     return list(columns), ([root] if root is not None else [])
+
+
+def _load_screened_top40_recent_us17() -> tuple[list[str], list[Path]]:
+    """Step 15 Track A section A step 4: ``screened_top40_recent`` unioned
+    with :data:`US17_ALPHA191_COLUMNS`, for the conditional M1 unit run
+    only if >=5 of the US-17 ids pass FDR in the recent window (plan
+    ``docs/plan-step-15-gtja17-port-and-insider-transactions-packet-2026-09-11.zh.md``
+    section A step 4). Order-preserving de-dup: any US-17 id that already
+    made the screened top-40 cut is not counted twice as a feature column.
+    """
+    base_columns, base_roots = _load_screened_top40_recent()
+    combined_columns = list(dict.fromkeys([*base_columns, *US17_ALPHA191_COLUMNS]))
+    combined_roots = list(dict.fromkeys([*base_roots, ALPHA191_ROOT]))
+    return combined_columns, combined_roots
 
 
 def _load_screened_top40_recent() -> tuple[list[str], list[Path]]:

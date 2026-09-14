@@ -32,12 +32,14 @@ section 3.5. **This docstring is the preregistration** ("先写进本节再跑�
 "~520 factors x 2 labels ~= 1,040 tests" assumed the full Alpha101 (101)
 and Alpha191 (191) libraries. Sections 3.0/3.2 found ``py-alpha-lib``
 unusable on this box (Python/AVX2 mismatches) and hand-ported only 20 ids
-from each instead. The real count this script tests is 154 (alpha158) + 20
-(alpha101) + 20 (alpha191) + 25 (osap_price) + 21 (reversal_trend,
-continuous columns only) = 240 factors x 2 labels = 480 tests. FDR is run
-on however many tests actually execute, not the plan's original estimate --
-using the real count is the statistically correct choice regardless of
-which number was originally guessed.
+from each instead (alpha191 grew to 34 ids -- 33 after the degenerate
+``gtja017`` exclusion -- in Step 15 Track A, 2026-09-14; see
+``alpha191.py``'s module docstring). The real count this script tests is
+154 (alpha158) + 20 (alpha101) + 33 (alpha191) + 25 (osap_price) + 21
+(reversal_trend, continuous columns only) = 253 factors x 2 labels = 506
+tests. FDR is run on however many tests actually execute, not the plan's
+original estimate -- using the real count is the statistically correct
+choice regardless of which number was originally guessed.
 
 **Rank-correlation dedup, a documented memory-driven approximation**: the
 plan's "秩相关 > 0.9" dedup check is computed over each recent-window
@@ -674,9 +676,29 @@ def main() -> int:
     p_values = np.where(screen["n_full"].to_numpy() >= 2, p_values, np.nan)
     screen["p_value_full"] = p_values
     screen["fdr_pass"] = _benjamini_hochberg(p_values, FDR_Q)
+
+    # Step 15 Track A (2026-09-14): the same BH q=0.05 procedure, run a
+    # second time on the recent-window t-stats (t_recent/n_recent) instead
+    # of full-sample. Added because the Step 15 plan's own conditional
+    # step ("若 US-17 中有 >=5 个在近期窗通过 FDR") needs a real
+    # recent-window multiple-testing-corrected pass/fail, not the
+    # full-sample-only `fdr_pass` this script already computed -- a
+    # factor can be recent-window-informative without being full-sample
+    # significant (that is exactly what the existing "16 个是仅近期有效的
+    # 体制因子" disclosure in the F chapter already describes), so
+    # reusing `fdr_pass` for a recent-window question would be wrong, not
+    # just imprecise. Purely additive: `fdr_pass`/`p_value_full` are
+    # unchanged, every existing reader of this table is unaffected.
+    p_values_recent = 2.0 * scipy_stats.t.sf(
+        np.abs(screen["t_recent"].to_numpy()), df=np.maximum(screen["n_recent"].to_numpy() - 1, 1)
+    )
+    p_values_recent = np.where(screen["n_recent"].to_numpy() >= 2, p_values_recent, np.nan)
+    screen["p_value_recent"] = p_values_recent
+    screen["fdr_pass_recent"] = _benjamini_hochberg(p_values_recent, FDR_Q)
     print(
         f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {int(screen['fdr_pass'].sum())}/{len(screen)} "
-        f"tests pass BH q={FDR_Q}",
+        f"tests pass BH q={FDR_Q} (full-sample); "
+        f"{int(screen['fdr_pass_recent'].sum())}/{len(screen)} pass BH q={FDR_Q} (recent-window)",
         flush=True,
     )
 

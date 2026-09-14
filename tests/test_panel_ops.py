@@ -106,3 +106,52 @@ def test_replace_inf_with_nan(wide: pd.DataFrame) -> None:
     assert np.isnan(cleaned.iloc[0, 0])
     assert np.isnan(cleaned.iloc[1, 1])
     assert cleaned.iloc[2, 2] == pytest.approx(dirty.iloc[2, 2])
+
+
+def test_decay_linear_matches_a_naive_per_column_python_loop(wide: pd.DataFrame) -> None:
+    """Step 15 Track A: GTJA ``DECAYLINEAR(X, d)`` -- weights ``d..1``
+    normalized to sum to 1, today's observation (the window's last row)
+    gets the largest weight."""
+    window = 4
+    result = ops.decay_linear(wide, window)
+    # Ascending [1, ..., window]: the window array from a chronologically
+    # ordered slice has today last, so today's position must carry the
+    # largest weight (see ops.decay_linear's docstring for why arange(window,
+    # 0, -1) would be backwards here).
+    raw_weights = np.arange(1, window + 1, dtype="float64")
+    weights = raw_weights / raw_weights.sum()
+    for col_idx, col in enumerate(COLUMNS):
+        column = wide[col].to_numpy()
+        for row_idx in range(len(column)):
+            if row_idx < window - 1:
+                assert np.isnan(result.iloc[row_idx, col_idx])
+                continue
+            window_values = column[row_idx - window + 1 : row_idx + 1]
+            expected = float(np.dot(window_values, weights))
+            assert result.iloc[row_idx, col_idx] == pytest.approx(expected, rel=1e-10)
+
+
+def test_decay_linear_weights_the_most_recent_observation_most() -> None:
+    """A single 1.0 spike at the most recent day in the window should move
+    the decayed average more than the same spike further in the past --
+    proves the weight order (``d..1``, not reversed)."""
+    dates = pd.bdate_range("2024-01-02", periods=5)
+    recent_spike = pd.DataFrame({"X": [0.0, 0.0, 0.0, 0.0, 1.0]}, index=dates)
+    old_spike = pd.DataFrame({"X": [1.0, 0.0, 0.0, 0.0, 0.0]}, index=dates)
+    recent_result = ops.decay_linear(recent_spike, 5).iloc[-1, 0]
+    old_result = ops.decay_linear(old_spike, 5).iloc[-1, 0]
+    assert recent_result > old_result
+    assert recent_result == pytest.approx(5.0 / 15.0)  # weight 5 / sum(1..5)=15
+    assert old_result == pytest.approx(1.0 / 15.0)  # weight 1 / sum(1..5)=15
+
+
+def test_decay_linear_nan_propagates_not_silently_dropped() -> None:
+    """A missing observation anywhere in the trailing window makes that
+    date's result NaN -- no weight is ever silently zeroed to paper over
+    missing data, matching every other rolling operator in this module."""
+    dates = pd.bdate_range("2024-01-02", periods=5)
+    with_gap = pd.DataFrame({"X": [1.0, np.nan, 1.0, 1.0, 1.0]}, index=dates)
+    result = ops.decay_linear(with_gap, 3)
+    assert np.isnan(result.iloc[2, 0])  # window [1.0, NaN, 1.0]
+    assert np.isnan(result.iloc[3, 0])  # window [NaN, 1.0, 1.0]
+    assert not np.isnan(result.iloc[4, 0])  # window [1.0, 1.0, 1.0], clean

@@ -44,10 +44,76 @@ conditional-regime signal the fetched source itself flags as unusual, not
 worth the fidelity risk this round), ``005``/``010``/``021``-``023``/
 ``026``/``028``/``031``/``034``/``036``-``038``/``040`` (not independently
 re-verified this round -- fetched but not yet implemented), ``025``/
-``035``/``039`` (need ``DECAYLINEAR``, not implemented this round), ``030``
+``035`` (need ``DECAYLINEAR``, not implemented this round), ``030``
 (the fetched source itself marks this one "unfinished/TODO"), ``033``
 (needs a turnover-rate ``turn`` column this repo does not have). Ids
-041-191 (151 ids) were never fetched or verified this round.
+041-191 outside this round's US-17 additions (below) were never fetched or
+verified.
+
+**Step 15 Track A addition (2026-09-14): 14 of the 15 "US-surviving"
+ids added -- ``{039, 046, 049, 054, 063, 071, 073, 084, 086, 123, 155,
+161, 184, 190}``.** Du/Walter/Ulrich (arXiv 2601.06499) found 17 GTJA
+Alpha191 ids survive a double-selection-LASSO screen against 151
+fundamental factors in the S&P 500 (2002-2022, monthly, t>2): ``046,
+084, 073, 123, 049, 071, 184, 155, 054, 181, 161, 190, 039, 015, 063,
+001, 086`` -- ``001``/``015`` were already implemented; this round adds
+14 of the remaining 15. Formula text cross-checked against 3 independent
+sources (BigQuant wiki, ChannelCMT/OFO wiki, a kangchihlun gist), plus
+the already-fetched Daic115 reference, before writing any code -- see
+``reports/harness/source_cards/step15_us_alpha17_formulas.jsonl``. The
+new ``_panel_ops.decay_linear`` primitive implements ``DECAYLINEAR``
+(needed by 039/073), used here for the first time.
+
+Three more corrections/interpretation choices, same "quoted text over a
+possibly-buggy fetched code sample" discipline as the original round's
+three (see above):
+
+* ``gtja073``/``gtja086``: the Daic115 fetch (retrieved this round via an
+  automated fetch-and-summarize tool, not a raw file read) contained two
+  real transcription errors caught by cross-referencing the two
+  independent formula-text sources that agree with each other: 073's
+  outer ``* -1`` was applied to only one of its two terms (should
+  distribute over both, i.e. the correct form is ``RANK(...) -
+  TSRANK(...)``, not ``-TSRANK(...) - RANK(...)``), and 086's nested
+  ``IF/ELIF/ELSE`` branches for ``-1``/``1``/the close-diff term were
+  swapped relative to its own quoted formula. Both ids are implemented
+  here from the verified formula text directly, not from that fetch's
+  code.
+* ``gtja054``: the original formula's ``STD(ABS(CLOSE-OPEN)[, window])``
+  term has no consistent explicit window across sources (one source
+  omits it, another gives 5, a third implies 10 by reusing the formula's
+  only other explicit window). This module uses window ``10`` (tied to
+  the formula's ``CORR(CLOSE,OPEN,10)`` window) -- a disclosed
+  interpretation choice, not a verified single answer; see source card
+  ``gtja191_alpha054_std_window_ambiguity``.
+
+**Not implemented -- ``gtja181`` is genuinely blocked, not merely
+deferred**: its formula needs a ``BANCHMARKINDEXCLOSE`` (benchmark index
+close) input this module's ``PANEL_FIELDS`` do not carry, and that
+variable's own semantics are ambiguous across every source found (a
+literal raw index price level is dimensionally inconsistent with the
+return-scale terms it is added to and divided against; the only source
+with a working implementation silently redefines it as the
+cross-sectional mean of every stock's own daily return instead of an
+actual index series -- an unstated modeling substitution, not a literal
+transcription). Two of three independent sources decline to implement
+this id at all. Encoding either guessed interpretation would silently
+feed every downstream screen/backtest with an unverified formula --
+judged not worth the risk this round; see source card
+``gtja191_alpha181_benchmarkindexclose_blocked`` for the full reasoning.
+Reported as not-implemented (not silently dropped from the US-17 table)
+in the Step 15 report chapter.
+
+None of the 14 new ids has a ``gtja017``-style (``rank ** delta``)
+numerically degenerate sub-expression -- checked individually; the one
+formula with a data-dependent exponent (``gtja190``'s
+``(CLOSE/DELAY(CLOSE,19)) ** (1/20)``) uses a *fixed* small exponent
+(never a raw price delta), which is bounded and safe for any positive
+base. Every new id's stored column is still wrapped in
+``ops.replace_inf_with_nan`` as blanket insurance against a literal
+division-by-zero on a bad-tick (zero-close/zero-volume) row, matching
+the risk this repo's ``osap_price.py`` module already documents for this
+same SIP daily archive.
 """
 
 from __future__ import annotations
@@ -55,6 +121,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import duckdb
+import numpy as np
 import pandas as pd
 
 from open_composer.research.features import _panel_ops as ops
@@ -83,6 +150,20 @@ IMPLEMENTED_IDS: tuple[int, ...] = (
     24,
     27,
     32,
+    39,
+    46,
+    49,
+    54,
+    63,
+    71,
+    73,
+    84,
+    86,
+    123,
+    155,
+    161,
+    184,
+    190,
 )
 ALPHA191_COLUMNS: tuple[str, ...] = tuple(f"gtja{i:03d}" for i in IMPLEMENTED_IDS)
 
@@ -105,8 +186,16 @@ _FETCHED_NOT_IMPLEMENTED: dict[int, str] = {
     36: "fetched but not independently re-verified this round",
     37: "fetched but not independently re-verified this round",
     38: "fetched but not independently re-verified this round",
-    39: "needs DECAYLINEAR, not implemented this round",
     40: "fetched but not independently re-verified this round",
+    181: (
+        "Step 15 Track A: needs a BANCHMARKINDEXCLOSE (benchmark index close) "
+        "input this module's PANEL_FIELDS do not carry, and that variable's "
+        "semantics are ambiguous across every source found (raw index price "
+        "level vs. cross-sectional mean return -- dimensionally inconsistent "
+        "either way with how the formula uses it); 2 of 3 independent open "
+        "references decline to implement this id at all. Blocked, not "
+        "guessed -- see source card gtja191_alpha181_benchmarkindexclose_blocked."
+    ),
 }
 
 
@@ -219,6 +308,146 @@ def compute_alpha191(frame: pd.DataFrame) -> pd.DataFrame:
     # gtja032: -1 * sum(rank(correlation(rank(high), rank(volume), 3)), 3)
     corr_hv = ops.replace_inf_with_nan(ops.correlation(ops.rank(high), ops.rank(volume), 3))
     alphas["gtja032"] = -1 * ops.ts_sum(ops.rank(corr_hv), 3)
+
+    # --- Step 15 Track A: US-17-surviving ids (see module docstring) ---
+
+    # gtja039: (rank(decaylinear(corr(vwap*0.3+open*0.7, sum(mean(volume,180),37), 14), 12))
+    #           - rank(decaylinear(delta(close,2), 8))) -- outer *-1 of the quoted
+    #           formula already distributed into this sign (see module docstring).
+    vol_sum_mean_180_37 = ops.ts_sum(ops.sma(volume, 180), 37)
+    corr_039 = ops.replace_inf_with_nan(
+        ops.correlation(vwap * 0.3 + open_ * 0.7, vol_sum_mean_180_37, 14)
+    )
+    alphas["gtja039"] = ops.rank(ops.decay_linear(corr_039, 12)) - ops.rank(
+        ops.decay_linear(ops.delta(close, 2), 8)
+    )
+
+    # gtja046: (mean(close,3)+mean(close,6)+mean(close,12)+mean(close,24)) / (4*close)
+    mean_stack_046 = ops.sma(close, 3) + ops.sma(close, 6) + ops.sma(close, 12) + ops.sma(close, 24)
+    alphas["gtja046"] = mean_stack_046 / (4.0 * close)
+
+    # gtja049: sum(term1,12) / (sum(term1,12)+sum(term2,12)), where mx =
+    #   max(abs(high-delay(high,1)), abs(low-delay(low,1))):
+    #   term1 = (high+low)>=(delay(high,1)+delay(low,1)) ? 0 : mx
+    #   term2 = (high+low)<=(delay(high,1)+delay(low,1)) ? 0 : mx
+    delay_high1 = ops.delay(high, 1)
+    delay_low1 = ops.delay(low, 1)
+    up_regime_049 = (high + low) >= (delay_high1 + delay_low1)
+    down_regime_049 = (high + low) <= (delay_high1 + delay_low1)
+    max_move_049 = np.maximum((high - delay_high1).abs(), (low - delay_low1).abs())
+    term1_049 = max_move_049.where(~up_regime_049, 0.0)
+    term2_049 = max_move_049.where(~down_regime_049, 0.0)
+    num_049 = ops.ts_sum(term1_049, 12)
+    den_049 = num_049 + ops.ts_sum(term2_049, 12)
+    alphas["gtja049"] = ops.replace_inf_with_nan(num_049 / den_049)
+
+    # gtja054: -1 * rank((std(abs(close-open), 10) + (close-open)) + corr(close,open,10))
+    # -- STD window is unspecified in the original formula text; this module uses 10
+    # (tied to the formula's only other explicit window), a disclosed interpretation
+    # choice -- see module docstring and source card gtja191_alpha054_std_window_ambiguity.
+    diff_oc_054 = close - open_
+    std_term_054 = ops.stddev(diff_oc_054.abs(), 10)
+    corr_term_054 = ops.replace_inf_with_nan(ops.correlation(close, open_, 10))
+    alphas["gtja054"] = -1 * ops.rank(std_term_054 + diff_oc_054 + corr_term_054)
+
+    # gtja063: SMA(max(close-delay(close,1),0),6,1) / SMA(abs(close-delay(close,1)),6,1) * 100
+    diff_c_063 = close - delay1
+    up_part_063 = diff_c_063.clip(lower=0.0)
+    alphas["gtja063"] = (
+        ops.recursive_ewm(up_part_063, 6, 1) / ops.recursive_ewm(diff_c_063.abs(), 6, 1) * 100
+    )
+
+    # gtja071: (close - mean(close,24)) / mean(close,24) * 100
+    mean24_071 = ops.sma(close, 24)
+    alphas["gtja071"] = (close - mean24_071) / mean24_071 * 100
+
+    # gtja073: rank(decaylinear(corr(vwap, mean(volume,30), 4), 3))
+    #          - tsrank(decaylinear(decaylinear(corr(close,volume,10), 16), 4), 5)
+    # -- outer *-1 of the quoted formula distributes over BOTH terms (see module
+    # docstring's correction note against the Daic115 fetch, which distributed it
+    # over only one term).
+    corr_close_vol_073 = ops.replace_inf_with_nan(ops.correlation(close, volume, 10))
+    decay_inner_073 = ops.decay_linear(ops.decay_linear(corr_close_vol_073, 16), 4)
+    tsrank_073 = ops.ts_rank(decay_inner_073, 5)
+    corr_vwap_volmean_073 = ops.replace_inf_with_nan(ops.correlation(vwap, ops.sma(volume, 30), 4))
+    alphas["gtja073"] = ops.rank(ops.decay_linear(corr_vwap_volmean_073, 3)) - tsrank_073
+
+    # gtja084: sum((close>delay(close,1) ? volume : (close<delay(close,1) ? -volume : 0)), 20)
+    signed_vol_084 = volume.where(close > delay1, (-volume).where(close < delay1, 0.0))
+    signed_vol_084 = signed_vol_084.where(delay1.notna())
+    alphas["gtja084"] = ops.ts_sum(signed_vol_084, 20)
+
+    # gtja086: diff = (delay(close,20)-delay(close,10))/10 - (delay(close,10)-close)/10;
+    #   diff>0.25 ? -1 : (diff<0 ? 1 : -1*(close-delay(close,1)))
+    # -- reimplemented directly from the verified formula text, not from the fetched
+    # Daic115 code (its branch logic for this id was inverted, see module docstring).
+    delay20_086 = ops.delay(close, 20)
+    delay10_086 = ops.delay(close, 10)
+    diff_086 = (delay20_086 - delay10_086) / 10.0 - (delay10_086 - close) / 10.0
+    close_diff_term_086 = -1.0 * (close - delay1)
+    cond_neg1_086 = diff_086 > 0.25
+    cond_pos1_086 = diff_086 < 0
+    result_086 = close_diff_term_086.where(~cond_neg1_086, -1.0).where(~cond_pos1_086, 1.0)
+    alphas["gtja086"] = result_086.where(diff_086.notna() & delay1.notna())
+
+    # gtja123: (rank(corr(sum((high+low)/2,20), sum(mean(volume,60),20), 9))
+    #           < rank(corr(low,volume,6))) * -1
+    # -- boolean-cast result masked to NaN (not a fabricated 0) wherever either input
+    # rank is itself NaN, matching this file's existing gtja003-style convention.
+    corr_a_123 = ops.replace_inf_with_nan(
+        ops.correlation(ops.ts_sum((high + low) / 2.0, 20), ops.ts_sum(ops.sma(volume, 60), 20), 9)
+    )
+    corr_b_123 = ops.replace_inf_with_nan(ops.correlation(low, volume, 6))
+    rank_a_123 = ops.rank(corr_a_123)
+    rank_b_123 = ops.rank(corr_b_123)
+    raw_123 = (rank_a_123 < rank_b_123).astype(float) * -1.0
+    alphas["gtja123"] = raw_123.where(rank_a_123.notna() & rank_b_123.notna())
+
+    # gtja155: SMA(volume,13,2) - SMA(volume,27,2) - SMA(SMA(volume,13,2)-SMA(volume,27,2),10,2)
+    ema13_155 = ops.recursive_ewm(volume, 13, 2)
+    ema27_155 = ops.recursive_ewm(volume, 27, 2)
+    macd_like_155 = ema13_155 - ema27_155
+    alphas["gtja155"] = macd_like_155 - ops.recursive_ewm(macd_like_155, 10, 2)
+
+    # gtja161: mean(max(max(high-low, abs(delay(close,1)-high)), abs(delay(close,1)-low)), 12)
+    true_range_161 = np.maximum(np.maximum(high - low, (delay1 - high).abs()), (delay1 - low).abs())
+    alphas["gtja161"] = ops.sma(true_range_161, 12)
+
+    # gtja184: rank(corr(delay(open-close,1), close, 200)) + rank(open-close)
+    corr_184 = ops.replace_inf_with_nan(ops.correlation(ops.delay(open_ - close, 1), close, 200))
+    alphas["gtja184"] = ops.rank(corr_184) + ops.rank(open_ - close)
+
+    # gtja190: log((count(a>b,20)-1) * sumif((a-b)^2,20,a<b)
+    #              / (count(a<b,20) * sumif((a-b)^2,20,a>b)))
+    #   where a = close/delay(close,1)-1, b = (close/delay(close,19))^(1/20)-1
+    # -- validity-masked to NaN (not a fabricated 0/False) wherever a or b is itself
+    # NaN, matching this file's existing gtja003-style warm-up convention, so a
+    # rolling 20-window's count/sumif is NaN whenever it includes an undefined day.
+    part1_190 = close / delay1 - 1.0
+    part2_190 = (close / ops.delay(close, 19)) ** (1.0 / 20.0) - 1.0
+    sq_diff_190 = (part1_190 - part2_190) ** 2
+    valid_190 = part1_190.notna() & part2_190.notna()
+    up_190 = part1_190 > part2_190
+    down_190 = part1_190 < part2_190
+    up_indicator_190 = up_190.astype(float).where(valid_190)
+    down_indicator_190 = down_190.astype(float).where(valid_190)
+    sumsq_up_terms_190 = sq_diff_190.where(up_190, 0.0).where(valid_190)
+    sumsq_down_terms_190 = sq_diff_190.where(down_190, 0.0).where(valid_190)
+    n_up_190 = ops.ts_sum(up_indicator_190, 20)
+    n_down_190 = ops.ts_sum(down_indicator_190, 20)
+    sumsq_up_190 = ops.ts_sum(sumsq_up_terms_190, 20)
+    sumsq_down_190 = ops.ts_sum(sumsq_down_terms_190, 20)
+    ratio_190 = ops.replace_inf_with_nan(
+        (n_up_190 - 1.0) * sumsq_down_190 / (n_down_190 * sumsq_up_190)
+    )
+    alphas["gtja190"] = ops.safe_log(ratio_190)
+
+    # Blanket safety net for every Step 15 Track A id (module docstring): guard
+    # against a literal division-by-zero on a bad-tick (zero-close/zero-volume) SIP
+    # row producing an unbounded inf, without altering any genuine finite value.
+    for _new_id in (39, 46, 49, 54, 63, 71, 73, 84, 86, 123, 155, 161, 184, 190):
+        _col = f"gtja{_new_id:03d}"
+        alphas[_col] = ops.replace_inf_with_nan(alphas[_col])
 
     frames = []
     for name in ALPHA191_COLUMNS:

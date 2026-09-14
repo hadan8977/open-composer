@@ -63,10 +63,14 @@ ALPHA101_SOURCE = (
 ALPHA191_SOURCE = (
     "Guotai Junan 2017 Alpha191 research report; pandas fallback spot-checked "
     "against Daic115/alpha191 (no LICENSE, not vendored; 3 formula corrections "
-    "documented in alpha191.py's module docstring). See "
+    "documented in alpha191.py's module docstring). Step 15 Track A "
+    "(2026-09-14) added 14 more ids (the arXiv 2601.06499 US-17 survivors, "
+    "minus 001/015 already present and 181, blocked -- see "
+    "reports/harness/source_cards/step15_us_alpha17_formulas.jsonl) and the "
+    "DECAYLINEAR primitive. See also "
     "reports/harness/source_cards/step13f_open_factor_libraries.jsonl"
 )
-FORMULA_VERSION = "step13f-2026-09-10-v1"
+FORMULA_VERSION = "step15-track-a-2026-09-14-v1"
 
 
 def _load_ohlcv_vwap_batch(
@@ -223,7 +227,10 @@ def main() -> int:
             skipped=alpha191_skipped_ids(),
             rows_by_year={str(year): rows_191},
             build_seconds_by_year={str(year): round(elapsed, 1)},
-            notes="20 of 191 ids implemented this round; see alpha191_skipped_ids() for the rest.",
+            notes=(
+                "34 of 191 ids implemented (20 original + 14 Step 15 Track A "
+                "US-17 additions); see alpha191_skipped_ids() for the rest."
+            ),
         )
         print(
             f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {year}: done -- alpha101 {rows_101} rows, "

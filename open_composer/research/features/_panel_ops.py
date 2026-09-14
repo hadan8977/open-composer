@@ -135,3 +135,54 @@ def recursive_ewm(panel: pd.DataFrame, n: int, m: int = 1) -> pd.DataFrame:
 
 def replace_inf_with_nan(panel: pd.DataFrame) -> pd.DataFrame:
     return panel.replace([np.inf, -np.inf], np.nan)
+
+
+def decay_linear(panel: pd.DataFrame, window: int) -> pd.DataFrame:
+    """GTJA Alpha191's ``DECAYLINEAR(X, d)``: a ``d``-day linearly decaying
+    weighted moving average -- the standard weighted-moving-average
+    convention universally cited for this operator: the weight sequence is
+    ``d, d-1, ..., 1`` *walking backwards from today*, i.e. today (the
+    most recent observation) gets the largest weight ``d`` and the day
+    ``d-1`` trading days ago gets the smallest weight ``1``, normalized to
+    sum to 1.
+
+    Implementation note (a real bug caught by this module's own test,
+    ``test_decay_linear_weights_the_most_recent_observation_most``):
+    :func:`numpy.lib.stride_tricks.sliding_window_view` keeps each
+    window's values in their original chronological order (oldest first,
+    today last). Dotting that chronological window against
+    ``[d, d-1, ..., 1]`` would therefore put the *largest* weight on the
+    *oldest* day -- backwards. The weight array actually used here is
+    ``[1, 2, ..., d]`` (ascending), so that it lines up positionally with
+    the chronological window and today (the window's last position) gets
+    the largest weight ``d``. A fetched open reference's own
+    ``np.arange(n, 0, -1)`` snippet (see
+    ``reports/harness/source_cards/step15_us_alpha17_formulas.jsonl``,
+    claim ``gtja191_daic115_fetch_ids_39_190``) reads as the same
+    "d..1" weight sequence in the abstract, but that snippet applies it
+    inside ``DataFrame.rolling(n).apply(...)``, whose window array is
+    *also* chronological -- so a literal copy of that snippet would
+    reproduce this exact backwards-weighting bug; not copied for that
+    reason.
+
+    Implemented with :func:`numpy.lib.stride_tricks.sliding_window_view`
+    (the same closed-form, no-Python-loop approach :func:`ts_argmax`/
+    :func:`ts_argmin` already use in this module) rather than
+    ``DataFrame.rolling(d).apply(...)`` -- a plain ``.apply`` would work
+    but reintroduces the per-window Python callback this module's
+    docstring specifically says every operator here avoids.
+
+    NaN propagates: any missing observation within the trailing ``window``
+    makes that date's weighted average NaN (a weight of 0 is never used to
+    silently paper over a missing day), matching every other rolling
+    operator in this module.
+    """
+    weights = np.arange(1, window + 1, dtype="float64")
+    weights = weights / weights.sum()
+    values = panel.to_numpy(dtype="float64")
+    n_rows, n_cols = values.shape
+    out = np.full((n_rows, n_cols), np.nan, dtype="float64")
+    if n_rows >= window:
+        windows = sliding_window_view(values, window, axis=0)  # (n-w+1, n_cols, w)
+        out[window - 1 :, :] = windows @ weights
+    return pd.DataFrame(out, index=panel.index, columns=panel.columns)
