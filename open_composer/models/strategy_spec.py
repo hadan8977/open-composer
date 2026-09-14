@@ -194,6 +194,7 @@ class PortfolioConfig(BaseModel):
         "cross_sectional_momentum",
         "etf_structural_family",
         "model_ranking_portfolio",
+        "event_driven_capacity_book",
     ] = "single_symbol"
     max_symbols_per_day: int | None = Field(default=None, ge=1)
     gross_exposure_limit: float | None = Field(default=None, gt=0, le=1)
@@ -236,6 +237,51 @@ class PortfolioConfig(BaseModel):
     #: Leave unset in every spec that ships; it exists for deterministic
     #: tests and for a future explicit user override, not for routine use.
     account_equity_for_sizing: float | None = Field(default=None, gt=0)
+    #: Step 14 (``docs/plan-step-14-timeframe-agnostic-bar-cycle-runner-2026-09-11.zh.md``)
+    #: -- `event_driven_capacity_book` mode fields: a discrete, signal-
+    #: triggered entry/exit book with a fixed concurrent-position cap (e.g.
+    #: Reversal Trend hourly, `open_composer.execution.signal_engine.ReversalTrendSignalEngine`),
+    #: as opposed to a periodically-rescored ranking book
+    #: (`model_ranking_portfolio`). All required together when
+    #: mode=="event_driven_capacity_book"; must stay unset for every other
+    #: mode. `StrategySpec` is this repo's source of truth for strategy
+    #: behavior (CLAUDE.md), so the engine's own parameterization lives here,
+    #: not hardcoded in a script.
+    event_signal_engine: str | None = None
+    event_holding_bars: int | None = Field(default=None, ge=1)
+    event_exit_rule: Literal["time_stop", "time_stop_or_reverse", "atr_trailing_2x"] | None = None
+    event_signal_set: Literal["bull_only", "bull_and_recl"] | None = None
+    event_max_positions: int | None = Field(default=None, ge=1)
+    event_position_weight: float | None = Field(default=None, gt=0, le=1)
+
+    @model_validator(mode="after")
+    def require_event_driven_fields(self) -> PortfolioConfig:
+        event_fields = {
+            "event_signal_engine": self.event_signal_engine,
+            "event_holding_bars": self.event_holding_bars,
+            "event_exit_rule": self.event_exit_rule,
+            "event_signal_set": self.event_signal_set,
+            "event_max_positions": self.event_max_positions,
+            "event_position_weight": self.event_position_weight,
+        }
+        if self.mode == "event_driven_capacity_book":
+            missing = sorted(name for name, value in event_fields.items() if value is None)
+            if missing:
+                raise ValueError(
+                    "event_driven_capacity_book requires portfolio fields: " + ", ".join(missing)
+                )
+            if not str(self.event_signal_engine).strip():
+                raise ValueError(
+                    "event_driven_capacity_book requires a non-blank event_signal_engine"
+                )
+        else:
+            populated = sorted(name for name, value in event_fields.items() if value is not None)
+            if populated:
+                raise ValueError(
+                    "event_driven_capacity_book fields require mode=event_driven_capacity_book: "
+                    + ", ".join(populated)
+                )
+        return self
 
     @model_validator(mode="after")
     def require_model_ranking_fields(self) -> PortfolioConfig:

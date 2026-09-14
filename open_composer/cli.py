@@ -8514,6 +8514,29 @@ def paper_sync_account() -> None:
     )
 
 
+@paper_app.command("schedule-suggest")
+def paper_schedule_suggest(spec: Path) -> None:
+    """Print (never install) the crontab line for a StrategySpec's timeframe.
+
+    Routes through the generic ``scripts/run_bar_cycle.py`` runner (Step 14):
+    one runner for every timeframe (1m/5m/15m/30m/1h/4h/daily), so this
+    command works for any spec regardless of bar cadence. Prints suggested
+    text only -- installing a crontab entry requires the user's own explicit
+    action, never this command.
+    """
+    from open_composer.execution.schedule import suggest_crontab_line
+
+    spec_path = spec if spec.is_absolute() else project_root() / spec
+    spec_obj = load_strategy_spec(spec_path)
+    line = suggest_crontab_line(spec_path, spec_obj, root=project_root())
+    console.print(f"[green]suggested crontab line[/green] (not installed) for {spec_obj.name}:")
+    # Plain print, not console.print: this text is meant to be copy-pasted
+    # verbatim into a crontab, and Rich soft-wraps long lines with inserted
+    # newlines when stdout isn't a wide TTY (e.g. when captured by a script
+    # or piped), which would corrupt the command.
+    print(line)
+
+
 @paper_app.command("status")
 def paper_status() -> None:
     """Write and print a local paper status snapshot."""

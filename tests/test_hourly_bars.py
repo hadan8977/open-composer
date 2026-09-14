@@ -21,7 +21,9 @@ import pandas as pd
 import pytest
 
 from open_composer.research.bars.hourly import (
+    AGGREGATE_OUTPUT_COLUMNS,
     OUTPUT_COLUMNS,
+    aggregate_regular_session,
     resample_regular_session_hourly,
 )
 
@@ -224,3 +226,151 @@ def test_all_rows_outside_session_returns_empty_frame() -> None:
     result = resample_regular_session_hourly(bars)
     assert result.empty
     assert list(result.columns) == list(OUTPUT_COLUMNS)
+
+
+# ---------------------------------------------------------------------------
+# Step 14: aggregate_regular_session generalization
+# (docs/plan-step-14-timeframe-agnostic-bar-cycle-runner-2026-09-11.zh.md
+# section 1, ArchiveBarSource). resample_regular_session_hourly is now a
+# thin wrapper over this function with timeframe="1h" -- every test above
+# already proves that wrapper is unchanged (bar-for-bar identical to the
+# pre-Step-14 implementation); the tests below cover the generalization
+# itself: other timeframes, the new bar_close_ts column, and DST on both
+# sides for a non-1h timeframe.
+# ---------------------------------------------------------------------------
+
+
+def test_aggregate_regular_session_1h_matches_the_hourly_wrapper_bar_for_bar() -> None:
+    bars = _minute_bars("AAA", "2024-01-02", 14, 30, 390)
+    generalized = aggregate_regular_session(bars, "1h")
+    wrapped = resample_regular_session_hourly(bars)
+
+    assert list(generalized.columns) == list(AGGREGATE_OUTPUT_COLUMNS)
+    pd.testing.assert_frame_equal(
+        generalized.loc[:, list(OUTPUT_COLUMNS)], wrapped, check_like=False
+    )
+    # bar_close_ts: bucket start + 60 minutes, capped at the trailing
+    # bucket's real close (30 minutes in, at the session close).
+    expected_closes = [
+        pd.Timestamp("2024-01-02 15:30", tz="UTC"),
+        pd.Timestamp("2024-01-02 16:30", tz="UTC"),
+        pd.Timestamp("2024-01-02 17:30", tz="UTC"),
+        pd.Timestamp("2024-01-02 18:30", tz="UTC"),
+        pd.Timestamp("2024-01-02 19:30", tz="UTC"),
+        pd.Timestamp("2024-01-02 20:30", tz="UTC"),
+        pd.Timestamp("2024-01-02 21:00", tz="UTC"),  # trailing bucket closes at 16:00 ET
+    ]
+    assert list(generalized["bar_close_ts"]) == expected_closes
+
+
+@pytest.mark.parametrize(
+    ("timeframe", "expected_buckets", "first_close_minute_offset"),
+    [
+        ("5m", 78, 5),
+        ("15m", 26, 15),
+        ("30m", 13, 30),
+    ],
+)
+def test_aggregate_regular_session_intraday_timeframes_divide_the_session_evenly(
+    timeframe: str, expected_buckets: int, first_close_minute_offset: int
+) -> None:
+    # 2024-01-02 is EST (UTC=ET+5): 09:30 ET = 14:30 UTC, full 390-minute session.
+    bars = _minute_bars("AAA", "2024-01-02", 14, 30, 390)
+    result = aggregate_regular_session(bars, timeframe)
+    assert list(result.columns) == list(AGGREGATE_OUTPUT_COLUMNS)
+    assert len(result) == expected_buckets
+    # These timeframes divide 390 minutes evenly, so every bucket is full
+    # length -- no short trailing bucket, unlike 1h/4h.
+    bucket_minutes = first_close_minute_offset
+    assert set(result["minute_bar_count"]) == {bucket_minutes}
+    assert result.iloc[0]["timestamp"] == pd.Timestamp("2024-01-02 14:30", tz="UTC")
+    assert result.iloc[0]["bar_close_ts"] == pd.Timestamp(
+        "2024-01-02 14:30", tz="UTC"
+    ) + pd.Timedelta(minutes=first_close_minute_offset)
+    # The very last bucket must close exactly at the session close (16:00 ET
+    # = 21:00 UTC on this winter date), never later.
+    assert result.iloc[-1]["bar_close_ts"] == pd.Timestamp("2024-01-02 21:00", tz="UTC")
+
+
+def test_aggregate_regular_session_4h_splits_into_two_uneven_buckets() -> None:
+    bars = _minute_bars("AAA", "2024-01-02", 14, 30, 390)
+    result = aggregate_regular_session(bars, "4h")
+    assert len(result) == 2
+    # Bucket 0: 09:30-13:30 ET (240 minutes); bucket 1: 13:30-16:00 ET (150).
+    assert list(result["minute_bar_count"]) == [240, 150]
+    assert result.iloc[0]["timestamp"] == pd.Timestamp("2024-01-02 14:30", tz="UTC")
+    assert result.iloc[0]["bar_close_ts"] == pd.Timestamp("2024-01-02 18:30", tz="UTC")
+    assert result.iloc[1]["timestamp"] == pd.Timestamp("2024-01-02 18:30", tz="UTC")
+    assert result.iloc[1]["bar_close_ts"] == pd.Timestamp("2024-01-02 21:00", tz="UTC")
+
+
+def test_aggregate_regular_session_1m_is_a_session_filtered_identity() -> None:
+    bars = _minute_bars("AAA", "2024-01-02", 14, 30, 390)
+    result = aggregate_regular_session(bars, "1m")
+    assert len(result) == 390
+    assert set(result["minute_bar_count"]) == {1}
+    assert list(result["timestamp"]) == list(bars["timestamp"])
+    assert list(result["bar_close_ts"]) == [
+        ts + pd.Timedelta(minutes=1) for ts in bars["timestamp"]
+    ]
+    assert result.iloc[0]["open"] == pytest.approx(bars.iloc[0]["open"])
+    assert result.iloc[-1]["close"] == pytest.approx(bars.iloc[-1]["close"])
+
+
+def test_aggregate_regular_session_dst_spring_forward_both_sides_30m() -> None:
+    # Before spring-forward (2024-03-08, EST, UTC=ET+5): 09:30 ET = 14:30 UTC.
+    before = _minute_bars("AAA", "2024-03-08", 14, 30, 390)
+    result_before = aggregate_regular_session(before, "30m")
+    assert len(result_before) == 13
+    assert result_before.iloc[0]["timestamp"] == pd.Timestamp("2024-03-08 14:30", tz="UTC")
+    assert result_before.iloc[0]["bar_close_ts"] == pd.Timestamp("2024-03-08 15:00", tz="UTC")
+    assert result_before.iloc[-1]["bar_close_ts"] == pd.Timestamp("2024-03-08 21:00", tz="UTC")
+
+    # After spring-forward (2024-03-11, EDT, UTC=ET+4): 09:30 ET = 13:30 UTC.
+    after = _minute_bars("AAA", "2024-03-11", 13, 30, 390)
+    result_after = aggregate_regular_session(after, "30m")
+    assert len(result_after) == 13
+    assert result_after.iloc[0]["timestamp"] == pd.Timestamp("2024-03-11 13:30", tz="UTC")
+    assert result_after.iloc[0]["bar_close_ts"] == pd.Timestamp("2024-03-11 14:00", tz="UTC")
+    assert result_after.iloc[-1]["bar_close_ts"] == pd.Timestamp("2024-03-11 20:00", tz="UTC")
+
+
+def test_aggregate_regular_session_dst_fall_back_both_sides_30m() -> None:
+    # Before fall-back (2024-11-01, EDT, UTC=ET+4): 09:30 ET = 13:30 UTC.
+    before = _minute_bars("AAA", "2024-11-01", 13, 30, 390)
+    result_before = aggregate_regular_session(before, "30m")
+    assert len(result_before) == 13
+    assert result_before.iloc[0]["timestamp"] == pd.Timestamp("2024-11-01 13:30", tz="UTC")
+    assert result_before.iloc[0]["bar_close_ts"] == pd.Timestamp("2024-11-01 14:00", tz="UTC")
+    assert result_before.iloc[-1]["bar_close_ts"] == pd.Timestamp("2024-11-01 20:00", tz="UTC")
+
+    # After fall-back (2024-11-04, EST, UTC=ET+5): 09:30 ET = 14:30 UTC.
+    after = _minute_bars("AAA", "2024-11-04", 14, 30, 390)
+    result_after = aggregate_regular_session(after, "30m")
+    assert len(result_after) == 13
+    assert result_after.iloc[0]["timestamp"] == pd.Timestamp("2024-11-04 14:30", tz="UTC")
+    assert result_after.iloc[0]["bar_close_ts"] == pd.Timestamp("2024-11-04 15:00", tz="UTC")
+    assert result_after.iloc[-1]["bar_close_ts"] == pd.Timestamp("2024-11-04 21:00", tz="UTC")
+
+
+def test_aggregate_regular_session_bar_close_ts_never_exceeds_session_close() -> None:
+    bars = _minute_bars("AAA", "2024-01-02", 14, 30, 390)
+    for timeframe in ("1m", "5m", "15m", "30m", "1h", "4h"):
+        result = aggregate_regular_session(bars, timeframe)
+        assert (result["bar_close_ts"] <= pd.Timestamp("2024-01-02 21:00", tz="UTC")).all()
+        # Every bar_close_ts strictly after its own bucket start (no
+        # zero-length or backwards-in-time bucket).
+        assert (result["bar_close_ts"] > result["timestamp"]).all()
+
+
+def test_aggregate_regular_session_unsupported_timeframe_raises() -> None:
+    bars = _minute_bars("AAA", "2024-01-02", 14, 30, 5)
+    with pytest.raises(ValueError, match="unsupported timeframe"):
+        aggregate_regular_session(bars, "daily")
+
+
+def test_aggregate_regular_session_empty_input_returns_empty_frame_with_columns() -> None:
+    bars = _minute_bars("AAA", "2024-01-02", 14, 30, 5).iloc[0:0]
+    result = aggregate_regular_session(bars, "15m")
+    assert result.empty
+    assert list(result.columns) == list(AGGREGATE_OUTPUT_COLUMNS)
