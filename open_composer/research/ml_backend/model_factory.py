@@ -2,10 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-
 from open_composer.models.strategy_spec import StrategySpec
 
 _LIGHTGBM_DEFAULTS: dict[str, Any] = {
@@ -27,6 +23,13 @@ def create_model(spec: StrategySpec):
     """Create the estimator declared by the StrategySpec."""
     if spec.model is None:
         raise ValueError("create_model requires spec.model")
+    # Imported lazily: this module sits on the import path of the CLI and of
+    # every cron cycle (via pdr_ml_gate / ml_backend.training) and sklearn
+    # alone costs ~1.5 s and ~100 MB to import on this box.
+    from sklearn.linear_model import LogisticRegression, Ridge
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler
+
     kind = spec.model.kind
     if kind == "ridge_regressor":
         params = {"alpha": 1.0, "fit_intercept": True, **spec.model.hyperparameters}

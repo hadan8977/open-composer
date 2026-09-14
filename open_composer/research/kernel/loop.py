@@ -38,8 +38,9 @@ modeled Monday-open OPG execution -- a buy-and-hold-until-next-rebalance,
 close-marked convention (see :func:`returns_from_weight_schedule`'s own
 docstring for a 2026-09-10 fix to how that holding period compounds; the
 convention was originally described as shared with
-``scripts/evaluate_cross_sectional_momentum_liquid500.py`` (Step 10 Wave 2),
-which independently implements the pre-fix, constant-weight-per-day
+``scripts/evaluate_cross_sectional_momentum_liquid500.py`` (Step 10 Wave 2;
+archived 2026-09-14 to git branch ``archive/rounds-2026-09``), which
+independently implements the pre-fix, constant-weight-per-day
 formula and was not changed here). This close-vs-open choice is a roughly
 one-trading-day timing approximation, not a look-ahead: the Friday close
 used for the signal is real, already-observed data, and Monday's close-to-
@@ -596,6 +597,17 @@ def build_weight_schedule(
     return events
 
 
+#: Which portfolio-return formula produced a ledger row's metrics. Stamped
+#: into every record ``run_experiment`` writes and, via
+#: ``regime.gates.append_ledger(calculation_contract=...)``, into the grid
+#: scripts that reuse ``returns_from_weight_schedule``. Rows computed under
+#: the pre-30879b4 constant-weight-per-day formula carry
+#: ``portfolio_returns.constant_weight_daily.v1`` (back-filled by
+#: ``scripts/tag_ledger_calculation_contract.py``), so the two can never be
+#: compared again without the difference being visible in the row itself.
+PORTFOLIO_RETURNS_CONTRACT = "portfolio_returns.buy_and_hold_drift.v2"
+
+
 def returns_from_weight_schedule(
     schedule: Sequence[RebalanceEvent],
     price_wide: pd.DataFrame,
@@ -638,7 +650,8 @@ def returns_from_weight_schedule(
     unchanged" claim) was computed under the old, inflating formula and
     should be treated as upper-biased until re-run.
     ``scripts/evaluate_cross_sectional_momentum_liquid500.py``'s
-    ``_cohort_daily_returns`` (Step 10 Wave 2) implements the same pre-fix
+    ``_cohort_daily_returns`` (Step 10 Wave 2; archived 2026-09-14 to git branch
+    ``archive/rounds-2026-09``) implements the same pre-fix
     constant-weight-per-day formula independently -- flagged to the Step 13
     coordinator, not changed here (outside Track M's owned files).
 
@@ -694,7 +707,8 @@ def returns_from_weight_schedule(
     # a fresh 100% initial allocation was charged 20bps instead of 10bps.
     # Found in review 2026-09-07; see the Step 11 ledger for the real-ledger-
     # entry cleanup this required and the Step 10 caveat it implies (
-    # scripts/evaluate_cross_sectional_momentum_liquid500.py shares this same
+    # scripts/evaluate_cross_sectional_momentum_liquid500.py (archived
+    # 2026-09-14, branch archive/rounds-2026-09) shares this same
     # formula, so its already-negative conclusions were evaluated at
     # effectively double the stated cost, not understated).
     cost_rate = cost_bps_per_side / 10_000.0
@@ -1122,6 +1136,7 @@ def run_experiment(
             },
             "tearsheet_path": tearsheet_path,
             "mlflow_run_id": mlflow_run_id,
+            "calculation_contract": PORTFOLIO_RETURNS_CONTRACT,
             "recorded_at": pd.Timestamp.now(tz="UTC").isoformat(),
         }
         ledger_appended = _append_ledger(record)

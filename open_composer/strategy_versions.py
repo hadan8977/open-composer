@@ -90,6 +90,15 @@ def _remove_unset_schema_extensions(spec: StrategySpec, payload: dict[str, objec
             "rebalance",
             "hedge",
             "account_equity_for_sizing",
+            # Step 14 W2 -- event_driven_capacity_book mode fields, same
+            # rule: unset for every other mode, so they must not enter the
+            # content hash of already-frozen specs.
+            "event_signal_engine",
+            "event_holding_bars",
+            "event_exit_rule",
+            "event_signal_set",
+            "event_max_positions",
+            "event_position_weight",
         ),
     )
     if spec.model is None:

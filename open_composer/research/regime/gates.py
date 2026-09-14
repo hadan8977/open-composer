@@ -502,7 +502,9 @@ def evaluate_recent_high_return_candidate(
     candidate_vol = float(recent.std())
     spy_vol = float(recent_spy.std())
     if not math.isfinite(spy_vol) or spy_vol <= 0.0:
-        raise ValueError(f"{experiment_id}: SPY has non-positive realized volatility in this window")
+        raise ValueError(
+            f"{experiment_id}: SPY has non-positive realized volatility in this window"
+        )
     vol_match_weight = candidate_vol / spy_vol
     vol_matched_spy = vol_match_weight * recent_spy + (1.0 - vol_match_weight) * recent_bil
     cagr_excess_vol_matched_spy = cagr_recent_net - annualized_cagr(vol_matched_spy)
@@ -613,12 +615,24 @@ def evaluate_recent_high_return_candidate(
     )
 
 
-def append_ledger(record: dict[str, object], *, ledger_path: Path = LEDGER_PATH) -> bool:
+def append_ledger(
+    record: dict[str, object],
+    *,
+    ledger_path: Path = LEDGER_PATH,
+    calculation_contract: str | None = None,
+) -> bool:
     """Append ``record`` unless its ``config_hash`` is already present for
     that family -- same "same config hash only recorded once" rule as
     ``loop._append_ledger``, reimplemented here for the same file-ownership
     reason as :func:`dsr_trial_count_for_family`.
+
+    ``calculation_contract`` names the return formula behind the row's
+    metrics (``loop.PORTFOLIO_RETURNS_CONTRACT`` for anything that went
+    through ``returns_from_weight_schedule``, ``script_local:<script>`` for
+    scripts with their own return math). Stored as ``"unspecified"`` when
+    the caller does not say, never silently omitted.
     """
+    record.setdefault("calculation_contract", calculation_contract or "unspecified")
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
     if ledger_path.exists():
         for line in ledger_path.read_text().splitlines():

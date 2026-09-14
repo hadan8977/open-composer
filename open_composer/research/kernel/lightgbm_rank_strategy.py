@@ -23,10 +23,13 @@ different ``(feature_columns, label_column, max_depth)``.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from lightgbm import LGBMRegressor
+
+if TYPE_CHECKING:
+    from lightgbm import LGBMRegressor
 
 #: Plan section 4's fixed hyperparameters, held constant across every grid
 #: cell -- only max_depth (and therefore num_leaves) and the caller's choice
@@ -80,6 +83,10 @@ class LightGBMRankStrategy:
         # upcast to float64 doubles a multi-GB training matrix on a 3.9GB
         # box. LightGBM bins features internally, so float32 input costs no
         # accuracy at all here.
+        # Imported lazily so that importing the kernel (cron cycles, CLI) does
+        # not pay for lightgbm until a model is actually fitted.
+        from lightgbm import LGBMRegressor
+
         x = train_frame[self.feature_columns].to_numpy(dtype=np.float32)
         y = train_frame[self.label_column].to_numpy(dtype=np.float32)
         extra_params: dict[str, int] = {}

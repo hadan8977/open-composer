@@ -60,6 +60,13 @@ def test_optional_campaign_binding_preserves_legacy_content_hash(
         "rebalance",
         "hedge",
         "account_equity_for_sizing",
+        # Step 14 W2 -- event_driven_capacity_book fields, same rule.
+        "event_signal_engine",
+        "event_holding_bars",
+        "event_exit_rule",
+        "event_signal_set",
+        "event_max_positions",
+        "event_position_weight",
     ):
         assert payload["portfolio"][field] is None
         payload["portfolio"].pop(field)
@@ -128,6 +135,13 @@ def test_model_ranking_portfolio_fields_preserve_legacy_content_hash(
         "rebalance",
         "hedge",
         "account_equity_for_sizing",
+        # Step 14 W2 -- event_driven_capacity_book fields, same rule.
+        "event_signal_engine",
+        "event_holding_bars",
+        "event_exit_rule",
+        "event_signal_set",
+        "event_max_positions",
+        "event_position_weight",
     ):
         assert payload["portfolio"][field] is None
         payload["portfolio"].pop(field)

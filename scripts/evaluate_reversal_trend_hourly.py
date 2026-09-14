@@ -367,7 +367,10 @@ def main() -> int:
                             "gate_contract": verdict.gate_contract,
                             "recorded_at": pd.Timestamp.now(tz="UTC").isoformat(),
                         }
-                        appended = regime_gates.append_ledger(record)
+                        appended = regime_gates.append_ledger(
+                            record,
+                            calculation_contract="script_local:evaluate_reversal_trend_hourly.py",
+                        )
                         print(f"  [real] ledger appended={appended}", flush=True)
                         real_verdicts[cid] = record
 

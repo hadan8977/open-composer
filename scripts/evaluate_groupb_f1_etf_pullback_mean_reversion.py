@@ -32,6 +32,7 @@ from pathlib import Path
 import pandas as pd
 
 from open_composer.adapters.data.sip_parquet import load_sip_bars
+from open_composer.research.kernel.loop import PORTFOLIO_RETURNS_CONTRACT
 from open_composer.research.regime import etf_pullback_mean_reversion as f1
 from open_composer.research.regime import gates as regime_gates
 from open_composer.research.regime import metrics as regime_metrics
@@ -196,7 +197,7 @@ def main() -> None:
         "gate_contract": verdict.gate_contract,
         "recorded_at": pd.Timestamp.now(tz="UTC").isoformat(),
     }
-    appended = regime_gates.append_ledger(record)
+    appended = regime_gates.append_ledger(record, calculation_contract=PORTFOLIO_RETURNS_CONTRACT)
     print(f"ledger appended: {appended} -> {regime_gates.LEDGER_PATH}")
 
 

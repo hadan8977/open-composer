@@ -289,7 +289,10 @@ def main() -> None:
         "gate_contract": verdict.gate_contract,
         "recorded_at": pd.Timestamp.now(tz="UTC").isoformat(),
     }
-    appended = regime_gates.append_ledger(record)
+    appended = regime_gates.append_ledger(
+        record,
+        calculation_contract="script_local:evaluate_groupb_f3_qqq_intraday_momentum.py",
+    )
     print(f"ledger appended: {appended} -> {regime_gates.LEDGER_PATH}")
 
 

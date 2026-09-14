@@ -68,6 +68,7 @@ from open_composer.research.kernel import mechanism_eval  # noqa: E402
 from open_composer.research.kernel.baseline_strategies import MomentumFactorStrategy  # noqa: E402
 from open_composer.research.kernel.loop import (  # noqa: E402
     LEDGER_PATH,
+    PORTFOLIO_RETURNS_CONTRACT,
     ExperimentConfig,
     build_weight_schedule,
     returns_from_weight_schedule,
@@ -305,7 +306,7 @@ def _append_v2_ledger_record(
         "gate_contract": verdict.gate_contract,
         "recorded_at": pd.Timestamp.now(tz="UTC").isoformat(),
     }
-    return regime_gates.append_ledger(record)
+    return regime_gates.append_ledger(record, calculation_contract=PORTFOLIO_RETURNS_CONTRACT)
 
 
 def run_m0_cell(
@@ -501,8 +502,9 @@ def reconcile_m0_close_marked_no_cost() -> dict[str, Any]:
     """Coordinator ask, 2026-09-10: rerun M0's momentum_252_21 gate-off
     cell (top-1500 universe, top-20, quarterly refit) with raw
     close-to-close marking (``execution="close_marked"``, the same
-    convention ``scripts/evaluate_cross_sectional_momentum_liquid500.py``
-    uses) and zero cost, to reconcile against an independent close-to-
+    convention ``scripts/evaluate_cross_sectional_momentum_liquid500.py``,
+    archived 2026-09-14 to git branch ``archive/rounds-2026-09``, uses) and
+    zero cost, to reconcile against an independent close-to-
     close/no-cost check the coordinator ran directly off
     ``data/features/daily`` + universe ``adv_rank`` (134 weeks from
     2024-01 onward). M0's own cell used ``execution="next_open"`` (Friday

@@ -7,7 +7,8 @@ a single latest-window snapshot applied across all history, which would use
 2026 liquidity to decide 2016 membership (look-ahead). ``close > min_close``
 is evaluated at the same month-end, for the same reason. This is the same PIT
 discipline and the same DuckDB idiom already used and tested in
-``scripts/evaluate_cross_sectional_momentum_liquid500.py`` (Step 10 Wave 2);
+``scripts/evaluate_cross_sectional_momentum_liquid500.py`` (Step 10 Wave 2;
+archived 2026-09-14 to git branch ``archive/rounds-2026-09``);
 this module factors the query out into a reusable, testable function instead
 of copy-pasting a third near-identical script.
 
@@ -69,7 +70,8 @@ def build_pit_universe_panel(
     dollar-ADV universe. ``daily_glob`` is a DuckDB ``read_parquet`` glob
     (e.g. ``data/sip/daily/*/*.parquet``); ``symbol NOT LIKE '%.%'``/``'%/%'``
     excludes share-class/warrant ticker variants, matching the convention
-    already used by ``scripts/evaluate_cross_sectional_momentum_liquid500.py``.
+    already used by ``scripts/evaluate_cross_sectional_momentum_liquid500.py``
+    (archived 2026-09-14 to git branch ``archive/rounds-2026-09``).
     """
     owns_connection = con is None
     connection = con or duckdb.connect()
