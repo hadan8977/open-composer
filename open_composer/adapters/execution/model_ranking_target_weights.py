@@ -594,6 +594,8 @@ def build_model_ranking_rows(
     signal_date: date,
     rebalance_session: date,
     is_new_signal: bool,
+    price_lookup: dict[str, float] | None = None,
+    equity: float | None = None,
 ) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     """Pure row-building step (no I/O): one ``target_rows`` entry per symbol
     ever seen (currently selected or just dropped), and one order-intent
@@ -620,6 +622,15 @@ def build_model_ranking_rows(
                 "target_weight": target_weight,
                 "shares": int(sizing.shares.get(pseudo_symbol, 0)),
                 "realized_weight": float(sizing.realized_weights.get(pseudo_symbol, 0.0)),
+                # Step 17: the sizing price and equity, so the paper rehearsal can
+                # rebuild whole-share targets against the live account without
+                # re-reading the feature store.
+                "reference_price": (
+                    float(price_lookup[pseudo_symbol])
+                    if price_lookup and pseudo_symbol in price_lookup
+                    else None
+                ),
+                "sizing_equity": float(equity) if equity is not None else None,
                 "leg": "beta_hedge" if pseudo_symbol == HEDGE_KEY else "top_k",
                 "selected": abs(target_weight) > 1e-12,
                 "state": "signal" if is_new_signal else "hold_no_new_signal",
@@ -776,6 +787,8 @@ def run_model_ranking_target_weight_mapping(
 
     target_rows, intents = build_model_ranking_rows(
         spec=spec,
+        price_lookup=price_lookup,
+        equity=equity,
         weights=weights,
         previous_weights=previous_weights,
         sizing=sizing,

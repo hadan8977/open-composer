@@ -86,8 +86,13 @@ execution:
   fill_assumption: next_bar_open
   broker: none
 execution_policy:
-  policy_id: model_ranking_portfolio_opg_limit_v1
-  order_style: opg_limit
+  # Step 17 (2026-09-15): market-on-open instead of a 20 bp limit-on-open.
+  # The backtest assumes a fill at the next regular open for every name; a
+  # 20 bp LOO on a 50-name momentum book would silently under-fill the names
+  # that gap up, which is exactly the leg the strategy lives on. TCA records
+  # the official open vs fill so the cost of MOO is measured, not assumed.
+  policy_id: model_ranking_portfolio_moo_market_v1
+  order_style: moo_market
   time_in_force: opg
   price_protection: {limit_offset_bps: 20.0, max_open_gap_pct: 2.5, max_spread_bps: 15.0}
   participation_cap: {max_adv_pct: 0.5, max_open_bar_volume_pct: 5.0}
@@ -147,6 +152,20 @@ notes:
   candidate_role: below_contract_rule_candidate_connected_for_observation
   promotion_eligible: false
   order_authority: false
-  broker_writes: false
+  broker_writes: rehearsal_only
   shadow_only: false
-  observation_only: true
+  observation_only: false
+  paper_rehearsal:
+    # Step 17 (2026-09-15): the user requires a live paper run this week. This
+    # candidate FAILS gate v2 (Step 13: +33% total / -28% max drawdown since
+    # 2024, vol-matched SPY excess -11%). It trades on Alpaca Paper only as an
+    # execution REHEARSAL -- to exercise and measure targets -> opening-auction
+    # orders -> fills -> TCA on a 50-name book -- not as a promotion. Authority
+    # comes from reports/paper/rehearsal/<name>-authorization.json (expiring,
+    # bound to this spec's content hash and the paper account hash) via
+    # `oc paper authorize-rehearsal`; orders go through `oc paper rehearsal-run`.
+    status: below_contract
+    started: 2026-09-15
+    plan: docs/plan-step-17-paper-rehearsal-portfolio-canary-2026-09-15.zh.md
+    gate_v2: fail
+    purpose: execution_chain_rehearsal_and_tca_measurement

@@ -1,0 +1,918 @@
+"""Portfolio paper rehearsal: bounded Alpaca Paper execution for a multi-name
+candidate that has NOT passed the promotion gates (Step 17, 2026-09-15).
+
+Why this exists
+---------------
+The order path that already exists (``oc run paper`` -> readiness -> canary
+authorization -> ``submit_paper_order``) was built for one- or two-symbol ETF
+router strategies: its canary caps are $1,000 per order and 4 orders per
+session, its readiness chain requires a passing promotion report, and its
+runner does not know ``portfolio.mode=model_ranking_portfolio`` at all. The
+user's 2026-09-15 instruction is that a paper run must be live again this
+week, and the best candidate on file (rule momentum top-50, 33%/-28% since
+2024) fails gate v2. A *rehearsal* is therefore an explicitly acknowledged,
+bounded, expiring, paper-only execution of a below-contract book whose purpose
+is to exercise and measure the whole chain (targets -> orders -> fills ->
+TCA), not to claim promotion.
+
+Safety properties kept (in code, not paperwork)
+------------------------------------------------
+* Alpaca **paper** only: the verified paper client from
+  ``adapters.broker.alpaca_paper`` (origin + credential checks) is reused; the
+  authorization is bound to the paper account id hash and to the spec hash.
+* Explicit, expiring operator authorization with limits: max gross exposure,
+  max per-name weight, max orders / notional per session, max total notional.
+* The global paper kill switch blocks every submission.
+* Every order is preceded by a persisted signal (``signal_logs/``), carries a
+  deterministic ``client_order_id`` (strategy, session, symbol, side) so a rerun
+  in the same session cannot double-submit, and is appended to an append-only
+  rehearsal ledger with the broker order id and status.
+* Orders are opening-auction orders only (``moo_market`` or ``opg_limit``,
+  time-in-force ``opg``), submitted only inside Alpaca's acceptance window
+  (after 19:00 ET for the next open, before 09:28 ET the same morning).
+* Every artifact is labelled ``rehearsal=below_contract`` with the gate status
+  note verbatim. This module never touches ``strategy_specs/active`` or the
+  router-era readiness/canary files.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, date, datetime, time, timedelta
+from pathlib import Path
+from typing import Any
+from zoneinfo import ZoneInfo
+
+from open_composer.adapters.broker.alpaca_paper import (
+    PaperOrderError,
+    _broker_order_by_client_id,
+    _client_positions,
+    _get_broker_orders,
+    _optional_broker_account_hash,
+    _require_verified_paper_client,
+    _trading_client,
+    sync_paper_account,
+    sync_paper_orders,
+)
+from open_composer.config import project_root
+from open_composer.engines.signal_engine import build_signal
+from open_composer.execution_policy import require_orderable_execution_policy
+from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.paper_controls import load_paper_kill_switch
+from open_composer.paper_lock import paper_control_lock
+from open_composer.storage import append_jsonl, ensure_dir, write_json
+from open_composer.strategy_versions import strategy_content_hash, strategy_version_id
+
+REHEARSAL_DIRNAME = Path("reports") / "paper" / "rehearsal"
+AUTHORIZATION_MAX_DURATION_DAYS = 45
+SUPPORTED_PORTFOLIO_MODES = frozenset({"model_ranking_portfolio"})
+ALLOWED_ORDER_STYLES = frozenset({"moo_market", "opg_limit", "loo_limit"})
+TARGET_WEIGHTS_MAX_AGE_HOURS = 30
+OPEN_ORDER_STATUSES = frozenset(
+    {"accepted", "new", "partially_filled", "pending_cancel", "pending_new", "submitted", "held"}
+)
+DEFAULT_LIMITS: dict[str, float | int] = {
+    "max_gross_exposure": 1.0,
+    "max_symbol_weight": 0.05,
+    "max_orders_per_session": 150,
+    "max_session_notional_usd": 150_000.0,
+    "max_total_notional_usd": 750_000.0,
+}
+#: Alpaca accepts opening-auction (``opg``) orders from 19:00 ET for the next
+#: session until 09:28 ET on the session itself; anything in between is rejected.
+OPG_ACCEPT_AFTER = time(19, 0)
+OPG_ACCEPT_UNTIL = time(9, 28)
+
+
+class RehearsalError(ValueError):
+    """Raised when the rehearsal cannot proceed safely."""
+
+
+@dataclass(frozen=True)
+class RehearsalAuthorization:
+    authorization_id: str
+    strategy_name: str
+    spec_hash: str
+    version_id: str
+    authorized_by: str
+    authorized_at: str
+    expires_at: str
+    broker_account_id_hash: str
+    limits: dict[str, float | int]
+    below_contract_acknowledged: bool
+    gate_status_note: str
+    paper_only: bool = True
+    path: str = ""
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any], path: Path) -> RehearsalAuthorization:
+        required = (
+            "authorization_id",
+            "strategy_name",
+            "spec_hash",
+            "version_id",
+            "authorized_by",
+            "authorized_at",
+            "expires_at",
+            "broker_account_id_hash",
+            "limits",
+            "below_contract_acknowledged",
+            "gate_status_note",
+        )
+        missing = [key for key in required if payload.get(key) in (None, "", {})]
+        if missing:
+            raise RehearsalError(f"rehearsal authorization is missing fields: {missing}")
+        if payload.get("paper_only") is not True:
+            raise RehearsalError("rehearsal authorization must be paper_only")
+        if payload.get("below_contract_acknowledged") is not True:
+            raise RehearsalError("rehearsal authorization requires below_contract_acknowledged")
+        return cls(
+            authorization_id=str(payload["authorization_id"]),
+            strategy_name=str(payload["strategy_name"]),
+            spec_hash=str(payload["spec_hash"]),
+            version_id=str(payload["version_id"]),
+            authorized_by=str(payload["authorized_by"]),
+            authorized_at=str(payload["authorized_at"]),
+            expires_at=str(payload["expires_at"]),
+            broker_account_id_hash=str(payload["broker_account_id_hash"]),
+            limits=dict(payload["limits"]),
+            below_contract_acknowledged=True,
+            gate_status_note=str(payload["gate_status_note"]),
+            paper_only=True,
+            path=str(path),
+        )
+
+
+@dataclass
+class RehearsalOrderPlan:
+    symbol: str
+    side: str
+    action: str
+    qty: float
+    reference_price: float
+    target_weight: float
+    current_qty: float
+    target_qty: float
+    notional: float
+    decision: str
+    reason: str = ""
+    signal_id: str | None = None
+    client_order_id: str | None = None
+    broker_order_id: str | None = None
+    broker_status: str | None = None
+    limit_price: float | None = None
+    rebalance_id: str | None = None
+
+
+@dataclass
+class RehearsalCycleResult:
+    strategy_name: str
+    session: str
+    status: str
+    allow_paper_orders: bool
+    equity: float
+    plans: list[RehearsalOrderPlan] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
+    report_path: str | None = None
+
+    def counts(self) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for plan in self.plans:
+            out[plan.decision] = out.get(plan.decision, 0) + 1
+        return out
+
+
+# ---------------------------------------------------------------------------
+# authorization
+
+
+def rehearsal_dir(root: Path) -> Path:
+    return root / REHEARSAL_DIRNAME
+
+
+def rehearsal_authorization_path(root: Path, strategy_name: str) -> Path:
+    return rehearsal_dir(root) / f"{strategy_name}-authorization.json"
+
+
+def rehearsal_ledger_path(root: Path, strategy_name: str) -> Path:
+    return rehearsal_dir(root) / f"{strategy_name}-orders.jsonl"
+
+
+def _validate_limits(limits: dict[str, Any]) -> dict[str, float | int]:
+    out: dict[str, float | int] = {}
+    try:
+        gross = float(limits["max_gross_exposure"])
+        symbol_weight = float(limits["max_symbol_weight"])
+        orders = int(limits["max_orders_per_session"])
+        session_notional = float(limits["max_session_notional_usd"])
+        total_notional = float(limits["max_total_notional_usd"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RehearsalError(f"rehearsal limits are malformed: {exc}") from exc
+    if not 0 < gross <= 1.0:
+        raise RehearsalError("max_gross_exposure must be in (0, 1]; leverage is out of scope")
+    if not 0 < symbol_weight <= gross:
+        raise RehearsalError("max_symbol_weight must be in (0, max_gross_exposure]")
+    if orders < 1:
+        raise RehearsalError("max_orders_per_session must be >= 1")
+    if not (session_notional > 0 and total_notional >= session_notional):
+        raise RehearsalError("notional limits must be positive and total >= session")
+    out.update(
+        max_gross_exposure=gross,
+        max_symbol_weight=symbol_weight,
+        max_orders_per_session=orders,
+        max_session_notional_usd=session_notional,
+        max_total_notional_usd=total_notional,
+    )
+    return out
+
+
+def validate_rehearsal_spec(spec: StrategySpec, root: Path) -> dict[str, Any]:
+    """Return the execution policy payload after checking the spec shape."""
+    if spec.portfolio.mode not in SUPPORTED_PORTFOLIO_MODES:
+        raise RehearsalError(
+            f"paper rehearsal supports portfolio.mode in {sorted(SUPPORTED_PORTFOLIO_MODES)}, "
+            f"got {spec.portfolio.mode!r}"
+        )
+    if spec.position_direction != "long_only":
+        raise RehearsalError("paper rehearsal is long-only")
+    try:
+        binding = require_orderable_execution_policy(spec, root)
+    except ValueError as exc:
+        raise RehearsalError(str(exc)) from exc
+    style = str(binding.payload.get("order_style") or "").lower()
+    tif = str(binding.payload.get("time_in_force") or "").lower()
+    if style not in ALLOWED_ORDER_STYLES or tif != "opg":
+        raise RehearsalError(
+            "paper rehearsal requires an opening-auction execution policy "
+            f"(order_style in {sorted(ALLOWED_ORDER_STYLES)}, time_in_force=opg); "
+            f"got {style!r}/{tif!r}"
+        )
+    return {"policy_id": binding.policy_id, "policy_hash": binding.content_hash, **binding.payload}
+
+
+def write_rehearsal_authorization(
+    spec_path: Path,
+    root: Path | None = None,
+    *,
+    authorized_by: str,
+    confirm_paper_only: bool,
+    acknowledge_below_contract: bool,
+    gate_status_note: str,
+    duration_days: int = 14,
+    limits: dict[str, Any] | None = None,
+    client: Any | None = None,
+    now: datetime | None = None,
+) -> Path:
+    base = root or project_root()
+    if not confirm_paper_only or not acknowledge_below_contract:
+        raise RehearsalError(
+            "rehearsal authorization requires --confirm-paper-only and --acknowledge-below-contract"
+        )
+    if not authorized_by.strip():
+        raise RehearsalError("authorized_by must identify the confirming operator")
+    if not gate_status_note.strip():
+        raise RehearsalError("gate_status_note must state the candidate's gate result verbatim")
+    if (
+        isinstance(duration_days, bool)
+        or not 1 <= int(duration_days) <= AUTHORIZATION_MAX_DURATION_DAYS
+    ):
+        raise RehearsalError(
+            f"duration_days must be between 1 and {AUTHORIZATION_MAX_DURATION_DAYS}"
+        )
+    spec = load_strategy_spec(spec_path)
+    validate_rehearsal_spec(spec, base)
+    effective_limits = _validate_limits({**DEFAULT_LIMITS, **(limits or {})})
+    if effective_limits["max_symbol_weight"] < float(spec.portfolio.max_symbol_weight or 0):
+        raise RehearsalError(
+            "max_symbol_weight limit is below the spec's own portfolio.max_symbol_weight"
+        )
+    broker = client or _trading_client()
+    _require_verified_paper_client(broker)
+    account = broker.get_account()
+    account_hash = _optional_broker_account_hash(getattr(account, "id", None))
+    if not account_hash:
+        raise RehearsalError("paper account id is unavailable; cannot bind the authorization")
+    sync_paper_account(base, broker)
+    stamp = now or datetime.now(UTC)
+    payload = {
+        "authorization_kind": "portfolio_paper_rehearsal",
+        "authorization_id": "reh_"
+        + hashlib.sha256(
+            f"{spec.name}|{strategy_content_hash(spec)}|{stamp.isoformat()}".encode()
+        ).hexdigest()[:16],
+        "strategy_name": spec.name,
+        "spec_path": str(Path(spec_path)),
+        "spec_hash": strategy_content_hash(spec),
+        "version_id": strategy_version_id(spec),
+        "authorized_by": authorized_by.strip(),
+        "authorized_at": stamp.isoformat(),
+        "expires_at": (stamp + timedelta(days=int(duration_days))).isoformat(),
+        "broker_account_id_hash": account_hash,
+        "limits": effective_limits,
+        "below_contract_acknowledged": True,
+        "gate_status_note": gate_status_note.strip(),
+        "paper_only": True,
+        "scope": (
+            "Alpaca Paper only; opening-auction orders only; long-only; below-contract "
+            "execution rehearsal, not a promotion. Real-money broker writes are out of scope."
+        ),
+    }
+    path = rehearsal_authorization_path(base, spec.name)
+    ensure_dir(path.parent)
+    with paper_control_lock(base):
+        write_json(path, payload)
+        archive = path.with_name(f"{spec.name}-authorization-{stamp:%Y%m%dT%H%M%SZ}.json")
+        write_json(archive, payload)
+    return path
+
+
+def load_rehearsal_authorization(
+    spec: StrategySpec, root: Path, *, now: datetime | None = None
+) -> RehearsalAuthorization:
+    path = rehearsal_authorization_path(root, spec.name)
+    if not path.is_file():
+        raise RehearsalError(f"no rehearsal authorization at {path}")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise RehearsalError(f"rehearsal authorization is not valid JSON: {exc}") from exc
+    auth = RehearsalAuthorization.from_payload(payload, path)
+    if auth.strategy_name != spec.name:
+        raise RehearsalError("rehearsal authorization belongs to a different strategy")
+    if auth.spec_hash != strategy_content_hash(spec):
+        raise RehearsalError(
+            "rehearsal authorization was written for a different StrategySpec content hash; "
+            "re-authorize after spec changes"
+        )
+    stamp = now or datetime.now(UTC)
+    expires = datetime.fromisoformat(auth.expires_at)
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=UTC)
+    if stamp >= expires:
+        raise RehearsalError(f"rehearsal authorization expired at {auth.expires_at}")
+    _validate_limits(auth.limits)
+    return auth
+
+
+def revoke_rehearsal_authorization(
+    spec_path: Path, root: Path | None = None, *, reason: str
+) -> Path:
+    base = root or project_root()
+    spec = load_strategy_spec(spec_path)
+    path = rehearsal_authorization_path(base, spec.name)
+    if not path.is_file():
+        raise RehearsalError(f"no rehearsal authorization at {path}")
+    stamp = datetime.now(UTC)
+    target = path.with_name(f"{spec.name}-authorization-revoked-{stamp:%Y%m%dT%H%M%SZ}.json")
+    with paper_control_lock(base):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["revoked_at"] = stamp.isoformat()
+        payload["revoked_reason"] = reason
+        write_json(target, payload)
+        path.unlink()
+    return target
+
+
+# ---------------------------------------------------------------------------
+# planning (pure)
+
+
+def load_target_rows(
+    spec: StrategySpec, root: Path, *, now: datetime | None = None
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    path = root / "reports" / "execution" / f"{spec.name}-target-weights.json"
+    if not path.is_file():
+        raise RehearsalError(f"target weights artifact is missing: {path}")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if payload.get("strategy_name") != spec.name:
+        raise RehearsalError("target weights artifact belongs to a different strategy")
+    generated = payload.get("generated_at")
+    if not generated:
+        raise RehearsalError("target weights artifact has no generated_at")
+    generated_at = datetime.fromisoformat(str(generated).replace("Z", "+00:00"))
+    if generated_at.tzinfo is None:
+        generated_at = generated_at.replace(tzinfo=UTC)
+    stamp = now or datetime.now(UTC)
+    age_hours = (stamp - generated_at).total_seconds() / 3600
+    if age_hours > TARGET_WEIGHTS_MAX_AGE_HOURS:
+        raise RehearsalError(
+            f"target weights artifact is {age_hours:.1f}h old (> {TARGET_WEIGHTS_MAX_AGE_HOURS}h); "
+            "run oc strategy target-weights first"
+        )
+    rows = payload.get("target_weights")
+    if not isinstance(rows, list) or not rows:
+        raise RehearsalError("target weights artifact has no rows")
+    return rows, payload
+
+
+def _reference_price(row: dict[str, Any], equity_hint: float | None) -> float | None:
+    price = row.get("reference_price")
+    if price is not None:
+        try:
+            value = float(price)
+            return value if value > 0 else None
+        except (TypeError, ValueError):
+            return None
+    shares = float(row.get("shares") or 0)
+    realized = float(row.get("realized_weight") or 0)
+    sizing_equity = row.get("sizing_equity") or equity_hint
+    if shares > 0 and realized > 0 and sizing_equity:
+        return float(sizing_equity) * realized / shares
+    return None
+
+
+def plan_rehearsal_orders(
+    *,
+    target_rows: list[dict[str, Any]],
+    positions: dict[str, float],
+    position_prices: dict[str, float],
+    open_order_symbols: set[str],
+    equity: float,
+    limits: dict[str, float | int],
+    sizing_equity_hint: float | None = None,
+) -> list[RehearsalOrderPlan]:
+    """Turn target rows + broker state into per-symbol order plans (no I/O).
+
+    Sells (risk reducing) are planned before buys; buys are cut off once the
+    per-session order count, per-session notional, or gross-exposure limit
+    would be exceeded, and the cut-off ones are marked ``deferred_*`` so the
+    next session picks them up.
+    """
+    if not (math.isfinite(equity) and equity > 0):
+        raise RehearsalError("paper account equity must be finite and positive")
+    max_symbol_weight = float(limits["max_symbol_weight"])
+    max_gross = float(limits["max_gross_exposure"])
+    max_orders = int(limits["max_orders_per_session"])
+    max_session_notional = float(limits["max_session_notional_usd"])
+
+    targets: dict[str, dict[str, Any]] = {}
+    for row in target_rows:
+        symbol = str(row.get("symbol") or "").upper()
+        if not symbol or not row.get("selected"):
+            continue
+        targets[symbol] = row
+    plans: list[RehearsalOrderPlan] = []
+    projected_value = 0.0
+    for symbol, current_qty in positions.items():
+        if symbol in targets:
+            continue
+        price = position_prices.get(symbol) or 0.0
+        if current_qty <= 0 or price <= 0:
+            continue
+        plans.append(
+            RehearsalOrderPlan(
+                symbol=symbol,
+                side="sell",
+                action="exit",
+                qty=float(current_qty),
+                reference_price=float(price),
+                target_weight=0.0,
+                current_qty=float(current_qty),
+                target_qty=0.0,
+                notional=float(current_qty) * float(price),
+                decision="submit",
+                reason="held but not in current targets",
+            )
+        )
+    buys: list[RehearsalOrderPlan] = []
+    for symbol, row in targets.items():
+        weight = min(float(row.get("target_weight") or 0.0), max_symbol_weight)
+        price = _reference_price(row, sizing_equity_hint)
+        current_qty = float(positions.get(symbol, 0.0))
+        if price is None:
+            plans.append(
+                RehearsalOrderPlan(
+                    symbol=symbol,
+                    side="buy",
+                    action="entry",
+                    qty=0.0,
+                    reference_price=0.0,
+                    target_weight=weight,
+                    current_qty=current_qty,
+                    target_qty=0.0,
+                    notional=0.0,
+                    decision="skip_no_reference_price",
+                    rebalance_id=row.get("rebalance_id"),
+                )
+            )
+            continue
+        target_qty = float(math.floor(weight * equity / price)) if weight > 0 else 0.0
+        projected_value += target_qty * price
+        delta = target_qty - current_qty
+        common = dict(
+            symbol=symbol,
+            reference_price=price,
+            target_weight=weight,
+            current_qty=current_qty,
+            target_qty=target_qty,
+            rebalance_id=row.get("rebalance_id"),
+        )
+        if abs(delta) < 1:
+            plans.append(
+                RehearsalOrderPlan(
+                    side="buy" if delta >= 0 else "sell",
+                    action="hold",
+                    qty=0.0,
+                    notional=0.0,
+                    decision="skip_no_change",
+                    **common,
+                )
+            )
+            continue
+        plan = RehearsalOrderPlan(
+            side="buy" if delta > 0 else "sell",
+            action="entry" if delta > 0 else "exit",
+            qty=abs(delta),
+            notional=abs(delta) * price,
+            decision="submit",
+            **common,
+        )
+        if plan.side == "sell":
+            plans.append(plan)
+        else:
+            buys.append(plan)
+    for plan in plans + buys:
+        if plan.decision == "submit" and plan.symbol in open_order_symbols:
+            plan.decision = "skip_open_order"
+            plan.reason = "an open broker order already exists for this symbol"
+    # budgets: sells first (already in `plans`), then buys in target order
+    session_orders = sum(1 for p in plans if p.decision == "submit")
+    session_notional = sum(p.notional for p in plans if p.decision == "submit")
+    held_value = sum(
+        float(positions.get(s, 0.0)) * float(position_prices.get(s, 0.0)) for s in positions
+    )
+    gross_after = held_value
+    for plan in buys:
+        if plan.decision != "submit":
+            continue
+        if session_orders + 1 > max_orders:
+            plan.decision, plan.reason = (
+                "deferred_order_budget",
+                f"max_orders_per_session={max_orders}",
+            )
+            continue
+        if session_notional + plan.notional > max_session_notional + 1e-6:
+            plan.decision, plan.reason = (
+                "deferred_notional_budget",
+                f"max_session_notional_usd={max_session_notional}",
+            )
+            continue
+        if gross_after + plan.notional > max_gross * equity + 1e-6:
+            plan.decision, plan.reason = (
+                "deferred_gross_exposure",
+                f"max_gross_exposure={max_gross}",
+            )
+            continue
+        session_orders += 1
+        session_notional += plan.notional
+        gross_after += plan.notional
+    plans.extend(buys)
+    return plans
+
+
+def _in_opg_acceptance_window(now: datetime, timezone: str) -> bool:
+    local = now.astimezone(ZoneInfo(timezone))
+    clock = local.time()
+    if clock >= OPG_ACCEPT_AFTER:
+        # evening: queued for the next session (a Friday evening queues for Monday)
+        return True
+    # early morning of a weekday: still accepted for today's open
+    return clock <= OPG_ACCEPT_UNTIL and local.weekday() < 5
+
+
+def _next_session(now: datetime, timezone: str) -> date:
+    from open_composer.market_calendar import next_us_equity_session
+
+    local = now.astimezone(ZoneInfo(timezone))
+    if local.time() >= OPG_ACCEPT_AFTER:
+        return next_us_equity_session(local.date())
+    return next_us_equity_session(local.date() - timedelta(days=1))
+
+
+def _client_order_id(strategy_name: str, session: date, symbol: str, side: str) -> str:
+    digest = hashlib.sha256(
+        f"{strategy_name}|{session.isoformat()}|{symbol}|{side}".encode()
+    ).hexdigest()
+    return f"reh-{session:%Y%m%d}-{symbol[:8]}-{digest[:12]}"
+
+
+def _open_order_symbols(client: Any) -> set[str]:
+    symbols: set[str] = set()
+    for order in _get_broker_orders(client, include_closed=False):
+        status = str(
+            getattr(getattr(order, "status", ""), "value", getattr(order, "status", ""))
+        ).lower()
+        if status in OPEN_ORDER_STATUSES or not status:
+            symbols.add(str(getattr(order, "symbol", "")).upper())
+    return symbols
+
+
+def _ledger_total_notional(root: Path, strategy_name: str, authorization_id: str) -> float:
+    path = rehearsal_ledger_path(root, strategy_name)
+    if not path.is_file():
+        return 0.0
+    total = 0.0
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        if record.get("authorization_id") == authorization_id and record.get("broker_order_id"):
+            total += float(record.get("notional") or 0.0)
+    return total
+
+
+def _submit(client: Any, plan: RehearsalOrderPlan, policy: dict[str, Any]) -> Any:
+    from alpaca.trading.enums import OrderSide, TimeInForce
+    from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
+
+    side = OrderSide.BUY if plan.side == "buy" else OrderSide.SELL
+    style = str(policy.get("order_style") or "").lower()
+    if style == "moo_market":
+        request = MarketOrderRequest(
+            symbol=plan.symbol,
+            qty=plan.qty,
+            side=side,
+            time_in_force=TimeInForce.OPG,
+            client_order_id=plan.client_order_id,
+        )
+    else:
+        protection = policy.get("price_protection") or {}
+        offset = float(protection.get("limit_offset_bps") or 0.0) / 10_000.0
+        multiplier = 1 + offset if plan.side == "buy" else 1 - offset
+        plan.limit_price = round(plan.reference_price * multiplier, 2)
+        request = LimitOrderRequest(
+            symbol=plan.symbol,
+            qty=plan.qty,
+            side=side,
+            time_in_force=TimeInForce.OPG,
+            limit_price=plan.limit_price,
+            client_order_id=plan.client_order_id,
+        )
+    return client.submit_order(request)
+
+
+def run_portfolio_paper_rehearsal(
+    spec_path: Path,
+    root: Path | None = None,
+    *,
+    allow_paper_orders: bool,
+    client: Any | None = None,
+    now: datetime | None = None,
+) -> RehearsalCycleResult:
+    base = root or project_root()
+    stamp = now or datetime.now(UTC)
+    spec = load_strategy_spec(spec_path)
+    policy = validate_rehearsal_spec(spec, base)
+    auth = load_rehearsal_authorization(spec, base, now=stamp)
+    timezone = spec.data_assumptions.timezone
+    session = _next_session(stamp, timezone)
+    result = RehearsalCycleResult(
+        strategy_name=spec.name,
+        session=session.isoformat(),
+        status="planned",
+        allow_paper_orders=allow_paper_orders,
+        equity=0.0,
+    )
+    result.notes.append(f"rehearsal=below_contract; {auth.gate_status_note}")
+
+    kill_switch = load_paper_kill_switch(base, require_control_file=True)
+    if kill_switch.enabled:
+        result.status = "blocked_by_kill_switch"
+        result.notes.append(f"paper kill switch enabled: {kill_switch.reason}")
+        _write_cycle_report(base, result, auth, policy)
+        return result
+
+    broker = client or _trading_client()
+    _require_verified_paper_client(broker)
+    sync_paper_account(base, broker)
+    try:
+        sync_paper_orders(base, broker)
+    except PaperOrderError as exc:
+        # The router-era ledger (reports/paper/orders.jsonl) may reference orders
+        # from a paper account that has since been reset; that reconciliation is
+        # not this path's job. Open orders are still read directly from the broker.
+        result.notes.append(f"legacy order sync skipped: {exc}"[:300])
+    account = broker.get_account()
+    account_hash = _optional_broker_account_hash(getattr(account, "id", None))
+    if account_hash != auth.broker_account_id_hash:
+        raise RehearsalError("rehearsal authorization is bound to a different paper account")
+    equity = float(getattr(account, "equity", 0) or 0)
+    result.equity = equity
+    positions: dict[str, float] = {}
+    position_prices: dict[str, float] = {}
+    for position in _client_positions(broker):
+        symbol = str(getattr(position, "symbol", "")).upper()
+        positions[symbol] = float(getattr(position, "qty", 0) or 0)
+        price = getattr(position, "current_price", None)
+        position_prices[symbol] = float(price) if price else 0.0
+    open_symbols = _open_order_symbols(broker)
+    rows, artifact = load_target_rows(spec, base, now=stamp)
+    sizing_hint = None
+    summary = artifact.get("summary") if isinstance(artifact.get("summary"), dict) else {}
+    if summary and summary.get("account_equity"):
+        sizing_hint = float(summary["account_equity"])
+    plans = plan_rehearsal_orders(
+        target_rows=rows,
+        positions=positions,
+        position_prices=position_prices,
+        open_order_symbols=open_symbols,
+        equity=equity,
+        limits=auth.limits,
+        sizing_equity_hint=sizing_hint,
+    )
+    result.plans = plans
+
+    prior_total = _ledger_total_notional(base, spec.name, auth.authorization_id)
+    max_total = float(auth.limits["max_total_notional_usd"])
+    window_ok = _in_opg_acceptance_window(stamp, timezone)
+    if allow_paper_orders and not window_ok:
+        for plan in plans:
+            if plan.decision == "submit":
+                plan.decision, plan.reason = (
+                    "blocked_by_submission_window",
+                    ("opening-auction orders are accepted only after 19:00 ET or before 09:28 ET"),
+                )
+    spec_hash = strategy_content_hash(spec)
+    version_id = strategy_version_id(spec)
+    signal_log = base / "signal_logs" / f"paper-rehearsal-{spec.name}.jsonl"
+    ledger = rehearsal_ledger_path(base, spec.name)
+    ensure_dir(ledger.parent)
+    run_id = f"paper-rehearsal-{spec.name}-{session.isoformat()}"
+    for plan in plans:
+        if plan.decision != "submit":
+            continue
+        plan.client_order_id = _client_order_id(spec.name, session, plan.symbol, plan.side)
+        signal = build_signal(
+            spec,
+            run_id,
+            stamp,
+            plan.action if plan.action != "hold" else "entry",
+            "paper_rehearsal",
+            plan.reference_price,
+            version_id=version_id,
+            spec_hash=spec_hash,
+            symbol=plan.symbol,
+            qty=plan.qty,
+            target_weight=plan.target_weight,
+            conditions=[
+                "rehearsal=below_contract",
+                f"session={session.isoformat()}",
+                f"rebalance_id={plan.rebalance_id}",
+                f"target_qty={plan.target_qty:.0f}",
+                f"current_qty={plan.current_qty:.0f}",
+                f"client_order_id={plan.client_order_id}",
+                f"authorization_id={auth.authorization_id}",
+            ],
+            side_override=plan.side,  # type: ignore[arg-type]
+        )
+        plan.signal_id = signal.id
+        append_jsonl(signal_log, [signal])
+        if not allow_paper_orders:
+            plan.decision = "would_submit"
+            continue
+        existing = _broker_order_by_client_id(broker, plan.client_order_id)
+        if existing is not None:
+            plan.decision = "already_submitted"
+            plan.broker_order_id = str(getattr(existing, "id", ""))
+            plan.broker_status = str(
+                getattr(getattr(existing, "status", ""), "value", getattr(existing, "status", ""))
+            )
+            continue
+        if prior_total + plan.notional > max_total + 1e-6:
+            plan.decision, plan.reason = (
+                "deferred_total_budget",
+                f"max_total_notional_usd={max_total}",
+            )
+            continue
+        try:
+            with paper_control_lock(base):
+                fresh = load_paper_kill_switch(base, require_control_file=True)
+                if fresh.enabled:
+                    raise PaperOrderError("paper kill switch enabled")
+                order = _submit(broker, plan, policy)
+        except Exception as exc:  # broker rejections are recorded, never raised past the loop
+            plan.decision = "rejected"
+            plan.reason = f"{exc.__class__.__name__}: {exc}"[:300]
+            continue
+        plan.broker_order_id = str(getattr(order, "id", ""))
+        plan.broker_status = str(
+            getattr(getattr(order, "status", ""), "value", getattr(order, "status", ""))
+        )
+        plan.decision = "submitted"
+        prior_total += plan.notional
+        append_jsonl(
+            ledger,
+            [
+                {
+                    "recorded_at": datetime.now(UTC).isoformat(),
+                    "authorization_id": auth.authorization_id,
+                    "strategy_name": spec.name,
+                    "session": session.isoformat(),
+                    "rebalance_id": plan.rebalance_id,
+                    "symbol": plan.symbol,
+                    "side": plan.side,
+                    "qty": plan.qty,
+                    "order_style": policy.get("order_style"),
+                    "time_in_force": "opg",
+                    "limit_price": plan.limit_price,
+                    "reference_price": plan.reference_price,
+                    "notional": plan.notional,
+                    "client_order_id": plan.client_order_id,
+                    "broker_order_id": plan.broker_order_id,
+                    "broker_status": plan.broker_status,
+                    "signal_id": plan.signal_id,
+                    "spec_hash": spec_hash,
+                    "paper": True,
+                    "rehearsal": "below_contract",
+                }
+            ],
+        )
+    counts = result.counts()
+    if counts.get("rejected"):
+        result.status = "partial" if counts.get("submitted") else "rejected"
+    elif counts.get("submitted"):
+        result.status = "submitted"
+    elif allow_paper_orders and counts.get("already_submitted"):
+        result.status = "already_submitted"
+    elif allow_paper_orders and counts.get("blocked_by_submission_window"):
+        result.status = "blocked_by_submission_window"
+    elif not allow_paper_orders:
+        result.status = "dry_run"
+    else:
+        result.status = "no_orders"
+    _write_cycle_report(base, result, auth, policy)
+    return result
+
+
+def _write_cycle_report(
+    root: Path, result: RehearsalCycleResult, auth: RehearsalAuthorization, policy: dict[str, Any]
+) -> None:
+    directory = rehearsal_dir(root)
+    ensure_dir(directory)
+    stamp = datetime.now(UTC)
+    payload = {
+        "report_type": "portfolio_paper_rehearsal_cycle",
+        "rehearsal": "below_contract",
+        "gate_status_note": auth.gate_status_note,
+        "strategy_name": result.strategy_name,
+        "session": result.session,
+        "generated_at": stamp.isoformat(),
+        "status": result.status,
+        "allow_paper_orders": result.allow_paper_orders,
+        "equity": result.equity,
+        "authorization_id": auth.authorization_id,
+        "authorization_expires_at": auth.expires_at,
+        "limits": auth.limits,
+        "execution_policy_id": policy.get("policy_id"),
+        "order_style": policy.get("order_style"),
+        "counts": result.counts(),
+        "submitted_notional": sum(p.notional for p in result.plans if p.decision == "submitted"),
+        "notes": result.notes,
+        "orders": [asdict(plan) for plan in result.plans],
+        "paper": True,
+        "broker_writes": any(p.decision == "submitted" for p in result.plans),
+    }
+    json_path = directory / f"{result.strategy_name}-{result.session}-{stamp:%H%M%S}.json"
+    write_json(json_path, payload)
+    latest = directory / f"{result.strategy_name}-latest.json"
+    write_json(latest, payload)
+    md_path = latest.with_suffix(".md")
+    lines = [
+        f"# 模拟盘彩排 {result.strategy_name} — 目标交易日 {result.session}",
+        "",
+        f"- 状态：{result.status}（允许下单：{result.allow_paper_orders}）",
+        f"- 定位：低于合同的执行彩排；{auth.gate_status_note}",
+        f"- 账户权益：{result.equity:,.2f} 美元；"
+        f"本次提交名义金额：{payload['submitted_notional']:,.2f}",
+        f"- 各决策计数：{payload['counts']}",
+        f"- 授权 {auth.authorization_id} 到期 {auth.expires_at}；限额 {auth.limits}",
+        "",
+        "| 代码 | 方向 | 股数 | 参考价 | 目标权重 | 决策 | 说明 |",
+        "|---|---|---:|---:|---:|---|---|",
+    ]
+    for plan in result.plans:
+        lines.append(
+            f"| {plan.symbol} | {plan.side} | {plan.qty:.0f} | {plan.reference_price:.2f} | "
+            f"{plan.target_weight:.3f} | {plan.decision} | "
+            f"{plan.reason or plan.broker_status or ''} |"
+        )
+    md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    append_jsonl(directory / "cycles.jsonl", [{k: v for k, v in payload.items() if k != "orders"}])
+    result.report_path = str(json_path)
+    try:
+        from open_composer.notifications import safe_dispatch_notification
+
+        severity = "info" if result.status in {"submitted", "dry_run", "no_orders"} else "warn"
+        safe_dispatch_notification(
+            kind="signal_paper_only",
+            severity=severity,
+            title=f"paper rehearsal {result.strategy_name} {result.session}: {result.status}",
+            body=f"counts={payload['counts']} equity={result.equity:,.0f} below_contract",
+            metadata={"report": str(json_path)},
+            root=root,
+        )
+    except Exception:  # notifications must never break the cycle
+        pass

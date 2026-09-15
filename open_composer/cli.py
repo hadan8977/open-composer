@@ -7946,6 +7946,93 @@ def paper_kill_switch(
     )
 
 
+@paper_app.command("authorize-rehearsal")
+def paper_authorize_rehearsal(
+    spec_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    authorized_by: str = typer.Option(..., "--authorized-by"),
+    gate_status_note: str = typer.Option(
+        ...,
+        "--gate-status-note",
+        help="The candidate's gate v2 result, verbatim (it is copied into every artifact).",
+    ),
+    confirm_paper_only: bool = typer.Option(False, "--confirm-paper-only"),
+    acknowledge_below_contract: bool = typer.Option(False, "--acknowledge-below-contract"),
+    duration_days: int = typer.Option(14, "--duration-days", min=1, max=45),
+    max_gross_exposure: float = typer.Option(1.0, "--max-gross-exposure"),
+    max_symbol_weight: float = typer.Option(0.05, "--max-symbol-weight"),
+    max_orders_per_session: int = typer.Option(150, "--max-orders-per-session"),
+    max_session_notional_usd: float = typer.Option(150_000.0, "--max-session-notional-usd"),
+    max_total_notional_usd: float = typer.Option(750_000.0, "--max-total-notional-usd"),
+) -> None:
+    """Authorize a bounded, expiring, paper-only rehearsal of a below-contract portfolio."""
+    from open_composer.paper_rehearsal import RehearsalError, write_rehearsal_authorization
+
+    try:
+        path = write_rehearsal_authorization(
+            spec_path,
+            project_root(),
+            authorized_by=authorized_by,
+            confirm_paper_only=confirm_paper_only,
+            acknowledge_below_contract=acknowledge_below_contract,
+            gate_status_note=gate_status_note,
+            duration_days=duration_days,
+            limits={
+                "max_gross_exposure": max_gross_exposure,
+                "max_symbol_weight": max_symbol_weight,
+                "max_orders_per_session": max_orders_per_session,
+                "max_session_notional_usd": max_session_notional_usd,
+                "max_total_notional_usd": max_total_notional_usd,
+            },
+        )
+    except (RehearsalError, ValueError, RuntimeError) as exc:
+        console.print(f"[red]rehearsal authorization refused[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(f"[green]paper rehearsal authorized[/green] {path}")
+
+
+@paper_app.command("revoke-rehearsal")
+def paper_revoke_rehearsal(
+    spec_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    reason: str = typer.Option(..., "--reason"),
+) -> None:
+    """Revoke the paper rehearsal authorization for a strategy."""
+    from open_composer.paper_rehearsal import RehearsalError, revoke_rehearsal_authorization
+
+    try:
+        path = revoke_rehearsal_authorization(spec_path, project_root(), reason=reason)
+    except RehearsalError as exc:
+        console.print(f"[red]revoke failed[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(f"[green]paper rehearsal authorization revoked[/green] {path}")
+
+
+@paper_app.command("rehearsal-run")
+def paper_rehearsal_run(
+    spec_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    allow_paper_orders: bool = typer.Option(
+        False,
+        "--allow-paper-orders",
+        help="Submit opening-auction orders to Alpaca Paper (default is a dry run).",
+    ),
+) -> None:
+    """Plan (and optionally submit) opening-auction paper orders for a rehearsal book."""
+    from open_composer.paper_rehearsal import RehearsalError, run_portfolio_paper_rehearsal
+
+    try:
+        result = run_portfolio_paper_rehearsal(
+            spec_path, project_root(), allow_paper_orders=allow_paper_orders
+        )
+    except (RehearsalError, ValueError, RuntimeError) as exc:
+        console.print(f"[red]paper rehearsal aborted[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        f"[green]paper rehearsal[/green] {result.strategy_name} session={result.session} "
+        f"status={result.status} counts={result.counts()} report={result.report_path}"
+    )
+    if result.status in {"rejected", "blocked_by_kill_switch", "blocked_by_submission_window"}:
+        raise typer.Exit(code=2)
+
+
 @journal_app.command("add")
 def journal_add(
     signal_id: str = typer.Option(..., "--signal"),
