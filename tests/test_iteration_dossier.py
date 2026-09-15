@@ -841,68 +841,6 @@ def test_r5_v3_final_receipt_accepts_complete_staged_publication(tmp_path: Path)
     assert authoritative == staged / "decision-record.md"
 
 
-def test_r5_finalize_recovers_sealed_publication_without_price_recomputation(
-    tmp_path: Path,
-    monkeypatch,
-) -> None:
-    from open_composer.research import multiasset_forward_multimodal_r5 as r5_module
-
-    paths, _, _, _, _ = _write_r5_final_receipt_fixture(tmp_path)
-    evaluation_dir = paths.root / "evaluation-run"
-    evaluation = json.loads((evaluation_dir / "evaluation-report.json").read_text(encoding="utf-8"))
-    attempt_hash = evaluation["preflight"]["evaluation_attempt"]["sha256"]
-    staged = paths.root / f".r5-evaluation-stage-{attempt_hash[:16]}"
-    evaluation_dir.rename(staged)
-    r5_module._seal_evidence_directory(staged)
-
-    custody_receipt = tmp_path / "external-custody-receipt.json"
-    custody_receipt.write_text("{}\n", encoding="utf-8")
-    custody_receipt.chmod(0o400)
-    custody = SimpleNamespace(
-        receipt_path=custody_receipt,
-        receipt_sha256="c" * 64,
-    )
-    staged_verifications: list[bool] = []
-    monkeypatch.setattr(r5_module, "_verify_recovery_lock_identity", lambda *args, **kwargs: None)
-    monkeypatch.setattr(r5_module, "_reverify_locked_inputs", lambda *args, **kwargs: None)
-    monkeypatch.setattr(
-        r5_module,
-        "_verify_staged_publication",
-        lambda *args, **kwargs: staged_verifications.append(True),
-    )
-    monkeypatch.setattr(
-        r5_module,
-        "_write_r5_evaluation_custody",
-        lambda *args, **kwargs: custody,
-    )
-    monkeypatch.setattr(
-        r5_module,
-        "validate_iteration_dossier",
-        lambda *args, **kwargs: SimpleNamespace(ok=True, blocked=[]),
-    )
-    monkeypatch.setattr(
-        r5_module,
-        "load_r5_panel",
-        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("price path called")),
-    )
-    monkeypatch.setattr(
-        r5_module,
-        "build_point_in_time_features",
-        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("feature path called")),
-    )
-
-    result = r5_module.finalize_multiasset_forward_multimodal_r5(
-        tmp_path,
-        expected_lock_anchor_sha256="a" * 64,
-        custody_dir=(tmp_path.parent / "custody").resolve(),
-    )
-
-    assert result.evaluation_path == paths.root / "evaluation-run/evaluation-report.json"
-    assert result.custody_receipt_sha256 == "c" * 64
-    assert staged_verifications == [True]
-    assert not staged.exists()
-
-
 def test_r5_v3_final_receipt_requires_read_only_evaluation_anchor(tmp_path: Path) -> None:
     missing_root = tmp_path / "missing"
     paths, _, _, _, _ = _write_r5_final_receipt_fixture(missing_root)

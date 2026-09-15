@@ -39,17 +39,6 @@ from open_composer.research.quality_diversity import (
     initialize_allocation_ledger,
     quality_diversity_policy_from_campaign,
 )
-from scripts.prepare_mom_breadth_qd_r1 import (
-    CAMPAIGN_PATH as MOM_BREADTH_CAMPAIGN_PATH,
-)
-from scripts.prepare_mom_breadth_qd_r1 import (
-    TRIAL_ACCOUNTING_IDENTITY_KEYS,
-    _candidate_manifest_payload,
-    _cumulative_trial_contract,
-    _search_space,
-    _trial_accounting_identity,
-    _validation_contract,
-)
 
 
 def _hypothesis(
@@ -782,76 +771,6 @@ def test_campaign_trial_accounting_rejects_fraction_above_incremental_budget() -
             effective_trial_exposure=57.01,
             visibility_partition="development_validation",
         )
-
-
-def test_mom_breadth_generator_has_one_four_way_trial_accounting_identity(
-    tmp_path: Path,
-) -> None:
-    campaign = _nineteen_candidate_contract()
-    campaign_path = tmp_path / MOM_BREADTH_CAMPAIGN_PATH
-    campaign_path.parent.mkdir(parents=True)
-    campaign_path.write_text(json.dumps(campaign), encoding="utf-8")
-    iter_id = "mom_breadth_crossasset_trend_r1"
-    candidate_ids = ["TSM01"]
-    search_candidates = [
-        {
-            "candidate_id": "TSM01",
-            "method_variant": "absolute_trend",
-            "factor_variant": "trend_126",
-        }
-    ]
-    specs = {
-        "TSM01": {
-            "path": Path("strategy_specs/drafts/tsm01.yaml"),
-            "hash": "a" * 64,
-        }
-    }
-    expected = _trial_accounting_identity(campaign)
-    validation = _validation_contract(campaign, iter_id, candidate_ids)
-    cumulative = _cumulative_trial_contract(campaign, iter_id, candidate_ids)
-    search = _search_space(
-        campaign=campaign,
-        iter_id=iter_id,
-        branch={
-            "strategy_stem": "test_trend",
-            "objective": "test",
-            "path": "cross_asset_time_series_trend",
-            "hypothesis_id": "H2_CROSSASSET_TREND",
-        },
-        candidates=search_candidates,
-        specs=specs,
-        root=tmp_path,
-        finalized=False,
-    )
-    manifest = _candidate_manifest_payload(
-        campaign=campaign,
-        iter_id=iter_id,
-        candidates=[
-            {
-                "candidate_id": "TSM01",
-                "spec_path": specs["TSM01"]["path"].as_posix(),
-            }
-        ],
-        specs=specs,
-        contracts={},
-    )
-
-    views = [
-        {key: validation["dsr"][key] for key in TRIAL_ACCOUNTING_IDENTITY_KEYS},
-        {key: cumulative[key] for key in TRIAL_ACCOUNTING_IDENTITY_KEYS},
-        search["trial_accounting"],
-        manifest["trial_accounting"],
-    ]
-    assert views == [expected] * 4
-    assert expected == {
-        "prior_effective_trial_count": 8147,
-        "campaign_candidate_count": 19,
-        "minimum_incremental_trial_count": 19,
-        "campaign_trial_exposure_budget": 57,
-        "minimum_effective_trial_count": 8166,
-        "maximum_effective_trial_count": 8204,
-        "effective_trial_count_source": "campaign_pre_oos_seal",
-    }
 
 
 def test_pre_oos_seal_trial_identity_is_family_scoped_not_prior_inclusive(

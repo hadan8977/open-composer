@@ -1,8 +1,8 @@
 {
  "schema_version": 1,
- "generated_at": "2026-09-14T11:59:15+00:00",
+ "generated_at": "2026-09-14T12:24:54+00:00",
  "git": {
-  "head": "c632e61d383faffe70b22d6774fa36dc905422e3",
+  "head": "42ff1ef2fd1736735cf140bad073db5b700d7b4c",
   "branch": "step-7r-pdr-router-ml-gate-2026-07-03"
  },
  "generator": "scripts/build_codemap.py",
@@ -33,29 +33,29 @@
  },
  "summary": {
   "repo": "open-composer",
-  "python_files": 410,
-  "python_loc": 254837,
+  "python_files": 355,
+  "python_loc": 151488,
   "frontend_files": 40,
   "frontend_loc": 7610,
-  "test_files": 230,
-  "test_functions": 2282,
-  "test_loc": 79125,
+  "test_files": 192,
+  "test_functions": 1801,
+  "test_loc": 58179,
   "first_screen_nodes": 20,
-  "edges": 205,
-  "import_edges": 148,
+  "edges": 195,
+  "import_edges": 140,
   "flows": 5,
-  "entrypoints": 77,
-  "unreachable_python_files": 75,
-  "unreachable_python_loc": 48159,
+  "entrypoints": 60,
+  "unreachable_python_files": 56,
+  "unreachable_python_loc": 11649,
   "cron_reachable_python_loc": 20163,
-  "cli_only_python_loc": 71021,
+  "cli_only_python_loc": 43514,
   "cron_entry_scripts": [
    "scripts/check_sip_freshness.py",
    "scripts/run_daily_paper_cycle.py",
    "scripts/update_sip_archive.py"
   ],
   "churn_since": "2026-08-01",
-  "facade_loaded_by_files": 215,
+  "facade_loaded_by_files": 165,
   "facade_imports": 0
  },
  "nodes": [
@@ -76,12 +76,12 @@
    ],
    "paths": [],
    "file_count": 6,
-   "loc": 11437,
-   "python_loc": 11437,
-   "test_files": 41,
-   "test_count": 411,
-   "churn_touches_since": 18,
-   "last_commit": "2026-09-09",
+   "loc": 10623,
+   "python_loc": 10623,
+   "test_files": 39,
+   "test_count": 379,
+   "churn_touches_since": 19,
+   "last_commit": "2026-09-14",
    "upstream": [
     {
      "id": "dashboard",
@@ -114,20 +114,16 @@
      "weight": 33
     },
     {
-     "id": "data",
-     "weight": 32
-    },
-    {
-     "id": "rounds",
-     "weight": 31
-    },
-    {
      "id": "shared",
      "weight": 26
     },
     {
      "id": "dashboard",
      "weight": 25
+    },
+    {
+     "id": "data",
+     "weight": 23
     },
     {
      "id": "autollm",
@@ -152,6 +148,10 @@
     {
      "id": "engines",
      "weight": 2
+    },
+    {
+     "id": "rounds",
+     "weight": 1
     }
    ],
    "impact": [
@@ -172,24 +172,19 @@
     }
    ],
    "impact_tests": {
-    "files": 49,
-    "functions": 534
+    "files": 47,
+    "functions": 502
    },
    "pulls_in": [
     {
      "id": "governance",
-     "files": 27,
-     "loc": 17468
+     "files": 26,
+     "loc": 17149
     },
     {
      "id": "routers",
      "files": 23,
      "loc": 16804
-    },
-    {
-     "id": "rounds",
-     "files": 19,
-     "loc": 42889
     },
     {
      "id": "spec",
@@ -212,24 +207,24 @@
      "loc": 6067
     },
     {
-     "id": "paper",
-     "files": 14,
-     "loc": 10375
-    },
-    {
      "id": "kernel",
      "files": 14,
      "loc": 2976
     },
     {
-     "id": "ml",
-     "files": 11,
-     "loc": 4102
+     "id": "paper",
+     "files": 13,
+     "loc": 10161
     },
     {
      "id": "engines",
      "files": 11,
      "loc": 1759
+    },
+    {
+     "id": "ml",
+     "files": 11,
+     "loc": 4102
     },
     {
      "id": "features",
@@ -250,6 +245,11 @@
      "id": "shared",
      "files": 5,
      "loc": 395
+    },
+    {
+     "id": "rounds",
+     "files": 1,
+     "loc": 1380
     }
    ],
    "externals": {
@@ -263,8 +263,8 @@
      "reports/dashboard": 1,
      "reports/reviews": 1,
      "reports/context": 1,
-     "reports/research": 1,
      "reports/shadow": 1,
+     "reports/research": 1,
      "reports/harness": 1,
      "harness/": 1,
      "reports/runs": 1,
@@ -282,7 +282,6 @@
      "yaml": 1,
      "dotenv": 1,
      "rich": 1,
-     "httpx": 1,
      "pydantic": 1
     }
    },
@@ -297,27 +296,23 @@
    "reach": {
     "cron_loc": 0,
     "scripts_loc": 0,
-    "cli_loc": 11436,
-    "cli_only_loc": 9676,
+    "cli_loc": 10622,
+    "cli_only_loc": 8862,
     "dashboard_loc": 1760,
     "unreachable_loc": 1
    },
    "tests": [
     {
      "path": "tests/test_iteration_dossier.py",
-     "test_count": 59
+     "test_count": 58
     },
     {
      "path": "tests/test_research_campaign.py",
-     "test_count": 44
+     "test_count": 43
     },
     {
      "path": "tests/test_intraday_daily_rotation.py",
      "test_count": 38
-    },
-    {
-     "path": "tests/test_multiasset_forward_multimodal_r5_target_weights.py",
-     "test_count": 26
     },
     {
      "path": "tests/test_paper_readiness.py",
@@ -412,10 +407,6 @@
      "test_count": 4
     },
     {
-     "path": "tests/test_multiasset_paper_control_r7_target_weights.py",
-     "test_count": 4
-    },
-    {
      "path": "tests/test_project_queue.py",
      "test_count": 4
     },
@@ -471,10 +462,10 @@
    "files": [
     {
      "path": "open_composer/cli.py",
-     "loc": 8695,
-     "in": 37,
-     "out": 107,
-     "last_commit": "2026-09-08",
+     "loc": 7881,
+     "in": 35,
+     "out": 92,
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "cli"
@@ -549,20 +540,20 @@
     "F4"
    ],
    "cli": {
-    "total_commands": 217,
+    "total_commands": 189,
     "groups": [
      {
       "group": "strategy",
-      "commands": 105,
+      "commands": 77,
       "nodes": {
-       "shared": 101,
+       "shared": 73,
        "routers": 49,
-       "rounds": 30,
        "spec": 13,
-       "data": 10,
        "ml": 7,
        "execution": 4,
        "governance": 4,
+       "data": 1,
+       "rounds": 1,
        "features": 1
       }
      },
@@ -1804,271 +1795,10 @@
      },
      {
       "group": "strategy",
-      "name": "robust-momentum-r4-prepare",
+      "name": "etf-structural-r9-evaluate",
       "line": 3968,
       "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "robust-momentum-r4-diagnostics",
-      "line": 3991,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "spy-dual-trend-r8-evaluate",
-      "line": 4013,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "etf-structural-r9-evaluate",
-      "line": 4032,
-      "nodes": [
        "data",
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "dynamic-theme-r8-freeze",
-      "line": 4052,
-      "nodes": [
-       "data",
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "dynamic-theme-r8-evaluate",
-      "line": 4069,
-      "nodes": [
-       "data",
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "dynamic-theme-r8-ml-freeze",
-      "line": 4089,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "dynamic-theme-r8-ml-evaluate",
-      "line": 4104,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r11-freeze",
-      "line": 4125,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r11-evaluate",
-      "line": 4141,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r12-freeze",
-      "line": 4162,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r12-evaluate",
-      "line": 4179,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r12-forward-freeze",
-      "line": 4200,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r12-forward-observe",
-      "line": 4218,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r12-forward-retry-llm",
-      "line": 4262,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r22-forward-freeze",
-      "line": 4299,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r22-forward-observe",
-      "line": 4318,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r23-forward-freeze",
-      "line": 4363,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "pit-semantic-theme-r23-forward-observe",
-      "line": 4382,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "multiasset-forward-mm-r4-evaluate",
-      "line": 4427,
-      "nodes": [
-       "data",
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "multiasset-forward-mm-r4-freeze",
-      "line": 4461,
-      "nodes": [
-       "data",
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "multiasset-forward-mm-r5-evaluate",
-      "line": 4480,
-      "nodes": [
-       "data",
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "multiasset-forward-mm-r6-freeze",
-      "line": 4527,
-      "nodes": [
-       "data",
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "multiasset-forward-mm-r6-evaluate",
-      "line": 4545,
-      "nodes": [
-       "data",
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "multiasset-forward-mm-r5-freeze",
-      "line": 4579,
-      "nodes": [
-       "data",
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "multiasset-forward-mm-r5-finalize",
-      "line": 4611,
-      "nodes": [
-       "data",
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "multiasset-forward-mm-r5-state",
-      "line": 4650,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "multiscale-event-r5-prepare",
-      "line": 4660,
-      "nodes": [
-       "rounds",
-       "shared"
-      ]
-     },
-     {
-      "group": "strategy",
-      "name": "multiscale-event-r5-diagnostics",
-      "line": 4686,
-      "nodes": [
        "rounds",
        "shared"
       ]
@@ -2076,7 +1806,7 @@
      {
       "group": "strategy",
       "name": "llm-rotate-universe",
-      "line": 4706,
+      "line": 3988,
       "nodes": [
        "routers",
        "shared"
@@ -2085,7 +1815,7 @@
      {
       "group": "strategy",
       "name": "intraday-daily-rotation",
-      "line": 4777,
+      "line": 4059,
       "nodes": [
        "routers",
        "shared"
@@ -2094,7 +1824,7 @@
      {
       "group": "strategy",
       "name": "llm-intraday-daily-rotation",
-      "line": 4878,
+      "line": 4160,
       "nodes": [
        "routers",
        "shared"
@@ -2103,7 +1833,7 @@
      {
       "group": "strategy",
       "name": "adaptive-intraday-router",
-      "line": 4985,
+      "line": 4267,
       "nodes": [
        "routers",
        "shared"
@@ -2112,7 +1842,7 @@
      {
       "group": "strategy",
       "name": "adaptive-intraday-router-scan",
-      "line": 5088,
+      "line": 4370,
       "nodes": [
        "routers",
        "shared"
@@ -2121,7 +1851,7 @@
      {
       "group": "strategy",
       "name": "llm-adaptive-intraday-router",
-      "line": 5138,
+      "line": 4420,
       "nodes": [
        "routers",
        "shared"
@@ -2130,7 +1860,7 @@
      {
       "group": "strategy",
       "name": "hybrid-adaptive-router",
-      "line": 5236,
+      "line": 4518,
       "nodes": [
        "routers",
        "shared"
@@ -2139,7 +1869,7 @@
      {
       "group": "strategy",
       "name": "wide-router-research",
-      "line": 5509,
+      "line": 4791,
       "nodes": [
        "routers",
        "shared"
@@ -2148,7 +1878,7 @@
      {
       "group": "strategy",
       "name": "hybrid-news-marginal-lift",
-      "line": 5547,
+      "line": 4829,
       "nodes": [
        "routers",
        "shared"
@@ -2157,7 +1887,7 @@
      {
       "group": "strategy",
       "name": "hybrid-factor-attribution",
-      "line": 5599,
+      "line": 4881,
       "nodes": [
        "routers",
        "shared"
@@ -2166,7 +1896,7 @@
      {
       "group": "strategy",
       "name": "beta-router-research",
-      "line": 5642,
+      "line": 4924,
       "nodes": [
        "routers",
        "shared"
@@ -2175,7 +1905,7 @@
      {
       "group": "strategy",
       "name": "core-satellite-router-research",
-      "line": 5756,
+      "line": 5038,
       "nodes": [
        "routers",
        "shared"
@@ -2184,7 +1914,7 @@
      {
       "group": "strategy",
       "name": "core-beta-satellite-router-research",
-      "line": 5846,
+      "line": 5128,
       "nodes": [
        "routers",
        "shared"
@@ -2193,7 +1923,7 @@
      {
       "group": "strategy",
       "name": "aggressive-theme-router-research",
-      "line": 5926,
+      "line": 5208,
       "nodes": [
        "routers",
        "shared"
@@ -2202,7 +1932,7 @@
      {
       "group": "strategy",
       "name": "theme-intraday-router-research",
-      "line": 6022,
+      "line": 5304,
       "nodes": [
        "routers",
        "shared"
@@ -2211,7 +1941,7 @@
      {
       "group": "strategy",
       "name": "hybrid-target-weights",
-      "line": 6124,
+      "line": 5406,
       "nodes": [
        "execution",
        "shared"
@@ -2220,7 +1950,7 @@
      {
       "group": "strategy",
       "name": "beta-target-weights",
-      "line": 6166,
+      "line": 5448,
       "nodes": [
        "execution",
        "shared"
@@ -2229,10 +1959,9 @@
      {
       "group": "strategy",
       "name": "target-weights",
-      "line": 6205,
+      "line": 5487,
       "nodes": [
        "execution",
-       "rounds",
        "routers",
        "shared",
        "spec"
@@ -2241,7 +1970,7 @@
      {
       "group": "strategy",
       "name": "shadow-observe",
-      "line": 6462,
+      "line": 5648,
       "nodes": [
        "execution",
        "shared"
@@ -2250,7 +1979,7 @@
      {
       "group": "strategy",
       "name": "shadow-refresh-data",
-      "line": 6486,
+      "line": 5672,
       "nodes": [
        "features",
        "shared"
@@ -2259,7 +1988,7 @@
      {
       "group": "strategy",
       "name": "shadow-cycle",
-      "line": 6500,
+      "line": 5686,
       "nodes": [
        "routers",
        "shared"
@@ -2268,7 +1997,7 @@
      {
       "group": "strategy",
       "name": "shadow-ml-preflight",
-      "line": 6523,
+      "line": 5709,
       "nodes": [
        "ml",
        "shared"
@@ -2277,7 +2006,7 @@
      {
       "group": "strategy",
       "name": "shadow-status",
-      "line": 6552,
+      "line": 5738,
       "nodes": [
        "ml",
        "shared"
@@ -2286,7 +2015,7 @@
      {
       "group": "strategy",
       "name": "shadow-resolve-remediation",
-      "line": 6570,
+      "line": 5756,
       "nodes": [
        "routers",
        "shared"
@@ -2295,7 +2024,7 @@
      {
       "group": "strategy",
       "name": "router-attribution",
-      "line": 6597,
+      "line": 5783,
       "nodes": [
        "routers",
        "shared"
@@ -2304,7 +2033,7 @@
      {
       "group": "strategy",
       "name": "router-gate-eval",
-      "line": 6640,
+      "line": 5826,
       "nodes": [
        "ml",
        "shared"
@@ -2313,7 +2042,7 @@
      {
       "group": "strategy",
       "name": "route-cross-source-validation",
-      "line": 6673,
+      "line": 5859,
       "nodes": [
        "governance",
        "routers",
@@ -2323,7 +2052,7 @@
      {
       "group": "strategy",
       "name": "router-replay-audit",
-      "line": 6711,
+      "line": 5897,
       "nodes": [
        "governance",
        "routers",
@@ -2333,7 +2062,7 @@
      {
       "group": "strategy",
       "name": "router-cost-stress",
-      "line": 6745,
+      "line": 5931,
       "nodes": [
        "shared",
        "spec"
@@ -2342,7 +2071,7 @@
      {
       "group": "strategy",
       "name": "data-evidence",
-      "line": 6755,
+      "line": 5941,
       "nodes": [
        "shared",
        "spec"
@@ -2351,7 +2080,7 @@
      {
       "group": "strategy",
       "name": "alt-data-evidence",
-      "line": 6767,
+      "line": 5953,
       "nodes": [
        "routers",
        "shared"
@@ -2360,7 +2089,7 @@
      {
       "group": "strategy",
       "name": "short-risk",
-      "line": 6777,
+      "line": 5963,
       "nodes": [
        "routers",
        "shared"
@@ -2369,7 +2098,7 @@
      {
       "group": "strategy",
       "name": "hybrid-paper-plan",
-      "line": 6788,
+      "line": 5974,
       "nodes": [
        "routers",
        "shared"
@@ -2378,7 +2107,7 @@
      {
       "group": "strategy",
       "name": "market-time",
-      "line": 6921,
+      "line": 6107,
       "nodes": [
        "routers",
        "shared"
@@ -2387,7 +2116,7 @@
      {
       "group": "strategy",
       "name": "leverage-research",
-      "line": 7028,
+      "line": 6214,
       "nodes": [
        "routers",
        "shared"
@@ -2396,7 +2125,7 @@
      {
       "group": "strategy",
       "name": "exposure-switch",
-      "line": 7074,
+      "line": 6260,
       "nodes": [
        "routers",
        "shared"
@@ -2405,7 +2134,7 @@
      {
       "group": "strategy",
       "name": "llm-exposure-switch",
-      "line": 7167,
+      "line": 6353,
       "nodes": [
        "routers",
        "shared"
@@ -2414,7 +2143,7 @@
      {
       "group": "strategy",
       "name": "list",
-      "line": 7316,
+      "line": 6502,
       "nodes": [
        "shared",
        "spec"
@@ -2423,7 +2152,7 @@
      {
       "group": "strategy",
       "name": "versions",
-      "line": 7338,
+      "line": 6524,
       "nodes": [
        "shared",
        "spec"
@@ -2432,7 +2161,7 @@
      {
       "group": "strategy",
       "name": "register-version",
-      "line": 7370,
+      "line": 6556,
       "nodes": [
        "shared",
        "spec"
@@ -2441,7 +2170,7 @@
      {
       "group": "strategy",
       "name": "diff-versions",
-      "line": 7382,
+      "line": 6568,
       "nodes": [
        "shared",
        "spec"
@@ -2450,7 +2179,7 @@
      {
       "group": "strategy",
       "name": "rollback-version",
-      "line": 7399,
+      "line": 6585,
       "nodes": [
        "shared",
        "spec"
@@ -2459,7 +2188,7 @@
      {
       "group": "strategy",
       "name": "approve",
-      "line": 7415,
+      "line": 6601,
       "nodes": [
        "shared",
        "spec"
@@ -2468,7 +2197,7 @@
      {
       "group": "strategy",
       "name": "activate",
-      "line": 7423,
+      "line": 6609,
       "nodes": [
        "shared",
        "spec"
@@ -2477,7 +2206,7 @@
      {
       "group": "strategy",
       "name": "disable",
-      "line": 7450,
+      "line": 6636,
       "nodes": [
        "shared",
        "spec"
@@ -2486,7 +2215,7 @@
      {
       "group": "strategy",
       "name": "advance",
-      "line": 7460,
+      "line": 6646,
       "nodes": [
        "governance",
        "shared",
@@ -2496,7 +2225,7 @@
      {
       "group": "strategy",
       "name": "diff",
-      "line": 7512,
+      "line": 6698,
       "nodes": [
        "governance",
        "shared"
@@ -2505,13 +2234,13 @@
      {
       "group": "strategy",
       "name": "research-workflow",
-      "line": 7541,
+      "line": 6727,
       "nodes": []
      },
      {
       "group": "harness",
       "name": "check",
-      "line": 7562,
+      "line": 6748,
       "nodes": [
        "governance",
        "shared",
@@ -2521,7 +2250,7 @@
      {
       "group": "harness",
       "name": "plan",
-      "line": 7621,
+      "line": 6807,
       "nodes": [
        "governance",
        "shared",
@@ -2531,7 +2260,7 @@
      {
       "group": "harness",
       "name": "verify",
-      "line": 7740,
+      "line": 6926,
       "nodes": [
        "governance",
        "shared",
@@ -2541,7 +2270,7 @@
      {
       "group": "harness",
       "name": "curate",
-      "line": 7880,
+      "line": 7066,
       "nodes": [
        "shared",
        "spec"
@@ -2550,7 +2279,7 @@
      {
       "group": "harness",
       "name": "policy-list",
-      "line": 8044,
+      "line": 7230,
       "nodes": [
        "governance"
       ]
@@ -2558,7 +2287,7 @@
      {
       "group": "run",
       "name": "paper",
-      "line": 8111,
+      "line": 7297,
       "nodes": [
        "paper",
        "shared"
@@ -2567,7 +2296,7 @@
      {
       "group": "options",
       "name": "optimize",
-      "line": 8151,
+      "line": 7337,
       "nodes": [
        "routers",
        "shared"
@@ -2576,7 +2305,7 @@
      {
       "group": "options",
       "name": "overlay-report",
-      "line": 8173,
+      "line": 7359,
       "nodes": [
        "routers",
        "shared"
@@ -2585,7 +2314,7 @@
      {
       "group": "options",
       "name": "research-report",
-      "line": 8186,
+      "line": 7372,
       "nodes": [
        "routers",
        "shared"
@@ -2594,7 +2323,7 @@
      {
       "group": "paper",
       "name": "submit",
-      "line": 8199,
+      "line": 7385,
       "nodes": [
        "paper",
        "shared",
@@ -2604,7 +2333,7 @@
      {
       "group": "paper",
       "name": "authorize",
-      "line": 8235,
+      "line": 7421,
       "nodes": [
        "shared"
       ]
@@ -2612,7 +2341,7 @@
      {
       "group": "paper",
       "name": "authorize-router",
-      "line": 8255,
+      "line": 7441,
       "nodes": [
        "shared"
       ]
@@ -2620,7 +2349,7 @@
      {
       "group": "paper",
       "name": "authorize-canary",
-      "line": 8272,
+      "line": 7458,
       "nodes": [
        "paper",
        "shared",
@@ -2630,7 +2359,7 @@
      {
       "group": "paper",
       "name": "revoke-canary",
-      "line": 8313,
+      "line": 7499,
       "nodes": [
        "paper",
        "shared",
@@ -2640,7 +2369,7 @@
      {
       "group": "paper",
       "name": "readiness",
-      "line": 8336,
+      "line": 7522,
       "nodes": [
        "paper",
        "shared",
@@ -2650,7 +2379,7 @@
      {
       "group": "paper",
       "name": "validation-report",
-      "line": 8369,
+      "line": 7555,
       "nodes": [
        "execution",
        "paper",
@@ -2661,7 +2390,7 @@
      {
       "group": "paper",
       "name": "tca-ingest",
-      "line": 8438,
+      "line": 7624,
       "nodes": [
        "paper"
       ]
@@ -2669,7 +2398,7 @@
      {
       "group": "paper",
       "name": "tca-report",
-      "line": 8468,
+      "line": 7654,
       "nodes": [
        "paper"
       ]
@@ -2677,7 +2406,7 @@
      {
       "group": "paper",
       "name": "sync",
-      "line": 8495,
+      "line": 7681,
       "nodes": [
        "paper",
        "shared"
@@ -2686,7 +2415,7 @@
      {
       "group": "paper",
       "name": "sync-account",
-      "line": 8505,
+      "line": 7691,
       "nodes": [
        "paper",
        "shared"
@@ -2695,7 +2424,7 @@
      {
       "group": "paper",
       "name": "schedule-suggest",
-      "line": 8518,
+      "line": 7704,
       "nodes": [
        "execution",
        "shared",
@@ -2705,7 +2434,7 @@
      {
       "group": "paper",
       "name": "status",
-      "line": 8541,
+      "line": 7727,
       "nodes": [
        "paper",
        "shared"
@@ -2714,7 +2443,7 @@
      {
       "group": "paper",
       "name": "reconcile",
-      "line": 8555,
+      "line": 7741,
       "nodes": [
        "paper",
        "shared"
@@ -2723,7 +2452,7 @@
      {
       "group": "paper",
       "name": "alerts",
-      "line": 8566,
+      "line": 7752,
       "nodes": [
        "paper",
        "shared"
@@ -2732,7 +2461,7 @@
      {
       "group": "paper",
       "name": "monitor",
-      "line": 8577,
+      "line": 7763,
       "nodes": [
        "paper",
        "shared"
@@ -2741,7 +2470,7 @@
      {
       "group": "paper",
       "name": "monitor-loop",
-      "line": 8593,
+      "line": 7779,
       "nodes": [
        "paper",
        "shared"
@@ -2750,7 +2479,7 @@
      {
       "group": "paper",
       "name": "kill-switch",
-      "line": 8618,
+      "line": 7804,
       "nodes": [
        "paper",
        "shared"
@@ -2759,7 +2488,7 @@
      {
       "group": "journal",
       "name": "add",
-      "line": 8635,
+      "line": 7821,
       "nodes": [
        "paper",
        "shared"
@@ -2854,12 +2583,12 @@
     {
      "id": "cli",
      "files": 3,
-     "loc": 9618
+     "loc": 8804
     }
    ],
    "impact_tests": {
-    "files": 49,
-    "functions": 539
+    "files": 47,
+    "functions": 507
    },
    "pulls_in": [
     {
@@ -2878,14 +2607,14 @@
      "loc": 3895
     },
     {
-     "id": "paper",
-     "files": 11,
-     "loc": 9061
-    },
-    {
      "id": "engines",
      "files": 11,
      "loc": 1759
+    },
+    {
+     "id": "paper",
+     "files": 11,
+     "loc": 9061
     },
     {
      "id": "governance",
@@ -2903,14 +2632,14 @@
      "loc": 1510
     },
     {
-     "id": "ml",
-     "files": 5,
-     "loc": 435
-    },
-    {
      "id": "shared",
      "files": 5,
      "loc": 395
+    },
+    {
+     "id": "ml",
+     "files": 5,
+     "loc": 435
     },
     {
      "id": "execution",
@@ -3538,12 +3267,12 @@
     "scripts/run_capped.sh"
    ],
    "paths": [],
-   "file_count": 65,
-   "loc": 22771,
-   "python_loc": 22117,
+   "file_count": 64,
+   "loc": 22740,
+   "python_loc": 22086,
    "test_files": 12,
    "test_count": 115,
-   "churn_touches_since": 95,
+   "churn_touches_since": 102,
    "last_commit": "2026-09-14",
    "upstream": [],
    "dependencies": [
@@ -3561,11 +3290,11 @@
     },
     {
      "id": "shared",
-     "weight": 42
+     "weight": 41
     },
     {
      "id": "data",
-     "weight": 24
+     "weight": 23
     },
     {
      "id": "spec",
@@ -3594,10 +3323,6 @@
     {
      "id": "dsl",
      "weight": 3
-    },
-    {
-     "id": "rounds",
-     "weight": 1
     }
    ],
    "impact": [],
@@ -3637,14 +3362,14 @@
      "loc": 2483
     },
     {
-     "id": "governance",
-     "files": 9,
-     "loc": 8251
-    },
-    {
      "id": "execution",
      "files": 8,
      "loc": 3330
+    },
+    {
+     "id": "governance",
+     "files": 8,
+     "loc": 7932
     },
     {
      "id": "engines",
@@ -3665,11 +3390,6 @@
      "id": "shared",
      "files": 5,
      "loc": 395
-    },
-    {
-     "id": "rounds",
-     "files": 5,
-     "loc": 13377
     },
     {
      "id": "ml",
@@ -3721,7 +3441,7 @@
    },
    "reach": {
     "cron_loc": 1893,
-    "scripts_loc": 22117,
+    "scripts_loc": 22086,
     "cli_loc": 0,
     "cli_only_loc": 0,
     "dashboard_loc": 0,
@@ -3783,7 +3503,7 @@
      "loc": 1831,
      "in": 0,
      "out": 0,
-     "last_commit": null,
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -3807,7 +3527,7 @@
      "loc": 1261,
      "in": 0,
      "out": 9,
-     "last_commit": "2026-09-10",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -3928,7 +3648,7 @@
      "loc": 527,
      "in": 0,
      "out": 6,
-     "last_commit": null,
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -3964,7 +3684,7 @@
      "loc": 489,
      "in": 0,
      "out": 5,
-     "last_commit": "2026-09-10",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -4084,7 +3804,7 @@
      "loc": 300,
      "in": 0,
      "out": 5,
-     "last_commit": "2026-09-09",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -4216,7 +3936,7 @@
      "loc": 205,
      "in": 0,
      "out": 5,
-     "last_commit": "2026-09-09",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -4300,7 +4020,7 @@
      "loc": 152,
      "in": 0,
      "out": 3,
-     "last_commit": "2026-09-09",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -4383,7 +4103,7 @@
      "loc": 118,
      "in": 0,
      "out": 0,
-     "last_commit": null,
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -4517,18 +4237,6 @@
      "role": "模拟盘/观察周期"
     },
     {
-     "path": "scripts/run_r7_forward_observation.py",
-     "loc": 31,
-     "in": 0,
-     "out": 3,
-     "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": "模拟盘/观察周期"
-    },
-    {
      "path": "scripts/sync-agent-skills.py",
      "loc": 27,
      "in": 0,
@@ -4561,7 +4269,7 @@
     "特征构建": 11,
     "运维与安装": 9,
     "数据归档与抓取": 7,
-    "模拟盘/观察周期": 5
+    "模拟盘/观察周期": 4
    },
    "crontab": [
     "30 22 * * 1-5  scripts/check_sip_freshness.py",
@@ -4595,15 +4303,11 @@
    "file_count": 21,
    "loc": 4039,
    "python_loc": 4039,
-   "test_files": 70,
-   "test_count": 912,
-   "churn_touches_since": 8,
-   "last_commit": "2026-09-09",
+   "test_files": 56,
+   "test_count": 655,
+   "churn_touches_since": 10,
+   "last_commit": "2026-09-14",
    "upstream": [
-    {
-     "id": "rounds",
-     "weight": 130
-    },
     {
      "id": "dashboard",
      "weight": 60
@@ -4661,6 +4365,10 @@
      "weight": 3
     },
     {
+     "id": "rounds",
+     "weight": 3
+    },
+    {
      "id": "shared",
      "weight": 2
     }
@@ -4685,19 +4393,14 @@
    ],
    "impact": [
     {
-     "id": "rounds",
-     "files": 54,
-     "loc": 103737
-    },
-    {
      "id": "routers",
      "files": 40,
      "loc": 22776
     },
     {
      "id": "scripts",
-     "files": 35,
-     "loc": 15264
+     "files": 34,
+     "loc": 15233
     },
     {
      "id": "governance",
@@ -4720,14 +4423,14 @@
      "loc": 6896
     },
     {
-     "id": "ml",
-     "files": 11,
-     "loc": 3996
-    },
-    {
      "id": "features",
      "files": 11,
      "loc": 6321
+    },
+    {
+     "id": "ml",
+     "files": 11,
+     "loc": 3996
     },
     {
      "id": "paper",
@@ -4752,12 +4455,17 @@
     {
      "id": "cli",
      "files": 5,
-     "loc": 11436
+     "loc": 10622
     },
     {
      "id": "dsl",
      "files": 2,
      "loc": 425
+    },
+    {
+     "id": "rounds",
+     "files": 1,
+     "loc": 1380
     },
     {
      "id": "shared",
@@ -4766,8 +4474,8 @@
     }
    ],
    "impact_tests": {
-    "files": 173,
-    "functions": 1611
+    "files": 135,
+    "functions": 1130
    },
    "pulls_in": [
     {
@@ -4791,6 +4499,11 @@
      "loc": 616
     },
     {
+     "id": "autollm",
+     "files": 2,
+     "loc": 673
+    },
+    {
      "id": "features",
      "files": 2,
      "loc": 2175
@@ -4799,11 +4512,6 @@
      "id": "execution",
      "files": 2,
      "loc": 501
-    },
-    {
-     "id": "autollm",
-     "files": 2,
-     "loc": 673
     },
     {
      "id": "governance",
@@ -4844,24 +4552,16 @@
    },
    "reach": {
     "cron_loc": 2292,
-    "scripts_loc": 2653,
+    "scripts_loc": 2483,
     "cli_loc": 3805,
-    "cli_only_loc": 52,
+    "cli_only_loc": 222,
     "dashboard_loc": 3497,
     "unreachable_loc": 234
    },
    "tests": [
     {
-     "path": "tests/test_multiasset_forward_multimodal_r5.py",
-     "test_count": 68
-    },
-    {
      "path": "tests/test_iteration_dossier.py",
-     "test_count": 59
-    },
-    {
-     "path": "tests/test_mom_breadth_qd_r1.py",
-     "test_count": 54
+     "test_count": 58
     },
     {
      "path": "tests/test_alpaca_paper.py",
@@ -4869,7 +4569,7 @@
     },
     {
      "path": "tests/test_research_campaign.py",
-     "test_count": 44
+     "test_count": 43
     },
     {
      "path": "tests/test_intraday_daily_rotation.py",
@@ -4880,16 +4580,8 @@
      "test_count": 30
     },
     {
-     "path": "tests/test_multiasset_forward_multimodal_r4.py",
-     "test_count": 30
-    },
-    {
      "path": "tests/test_model_ranking_target_weights.py",
      "test_count": 28
-    },
-    {
-     "path": "tests/test_multiasset_forward_multimodal_r5_target_weights.py",
-     "test_count": 26
     },
     {
      "path": "tests/test_paper_readiness.py",
@@ -4960,27 +4652,11 @@
      "test_count": 10
     },
     {
-     "path": "tests/test_dynamic_theme_chain_r8.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_event_seeded_theme_stock_r10.py",
-     "test_count": 9
-    },
-    {
      "path": "tests/test_factor_catalog_and_auto_research.py",
      "test_count": 9
     },
     {
      "path": "tests/test_paper_tca.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r11.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r23_forward.py",
      "test_count": 9
     },
     {
@@ -4996,24 +4672,12 @@
      "test_count": 8
     },
     {
-     "path": "tests/test_multiasset_forward_multimodal_r6.py",
-     "test_count": 8
-    },
-    {
      "path": "tests/test_notifications.py",
-     "test_count": 8
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_forward.py",
      "test_count": 8
     },
     {
      "path": "tests/test_strategy_projects.py",
      "test_count": 8
-    },
-    {
-     "path": "tests/test_dynamic_theme_chain_r8_ml.py",
-     "test_count": 7
     },
     {
      "path": "tests/test_llm_materialize.py",
@@ -5024,15 +4688,7 @@
      "test_count": 7
     },
     {
-     "path": "tests/test_pit_semantic_theme_r22_forward.py",
-     "test_count": 7
-    },
-    {
      "path": "tests/test_context_and_research_workflow.py",
-     "test_count": 6
-    },
-    {
-     "path": "tests/test_dynamic_theme_stock_r9.py",
      "test_count": 6
     },
     {
@@ -5049,10 +4705,6 @@
     },
     {
      "path": "tests/test_data_evidence_tiers.py",
-     "test_count": 5
-    },
-    {
-     "path": "tests/test_high_beta_sleeve_ensemble_r1_semantic.py",
      "test_count": 5
     },
     {
@@ -5136,9 +4788,9 @@
     {
      "path": "open_composer/models/strategy_spec.py",
      "loc": 1128,
-     "in": 229,
+     "in": 168,
      "out": 4,
-     "last_commit": "2026-09-08",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "cron",
@@ -5164,9 +4816,9 @@
     {
      "path": "open_composer/strategy_versions.py",
      "loc": 345,
-     "in": 93,
+     "in": 42,
      "out": 4,
-     "last_commit": "2026-09-09",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "cron",
@@ -5227,7 +4879,6 @@
      "last_commit": "2026-07-15",
      "reachable": true,
      "entries": [
-      "scripts",
       "cli"
      ],
      "role": null
@@ -5284,7 +4935,7 @@
     {
      "path": "open_composer/models/event.py",
      "loc": 97,
-     "in": 15,
+     "in": 9,
      "out": 0,
      "last_commit": "2026-07-17",
      "reachable": true,
@@ -5465,15 +5116,11 @@
    "file_count": 10,
    "loc": 1941,
    "python_loc": 1941,
-   "test_files": 20,
-   "test_count": 359,
+   "test_files": 14,
+   "test_count": 157,
    "churn_touches_since": 4,
    "last_commit": "2026-08-26",
    "upstream": [
-    {
-     "id": "rounds",
-     "weight": 24
-    },
     {
      "id": "execution",
      "weight": 12
@@ -5523,6 +5170,10 @@
      "weight": 1
     },
     {
+     "id": "rounds",
+     "weight": 1
+    },
+    {
      "id": "spec",
      "weight": 1
     }
@@ -5543,19 +5194,14 @@
    ],
    "impact": [
     {
-     "id": "rounds",
-     "files": 54,
-     "loc": 103737
-    },
-    {
      "id": "routers",
      "files": 39,
      "loc": 22637
     },
     {
      "id": "scripts",
-     "files": 35,
-     "loc": 15202
+     "files": 34,
+     "loc": 15171
     },
     {
      "id": "governance",
@@ -5598,14 +5244,19 @@
      "loc": 1296
     },
     {
+     "id": "cli",
+     "files": 5,
+     "loc": 10622
+    },
+    {
      "id": "kernel",
      "files": 5,
      "loc": 1484
     },
     {
-     "id": "cli",
-     "files": 5,
-     "loc": 11436
+     "id": "spec",
+     "files": 4,
+     "loc": 1775
     },
     {
      "id": "dashboard",
@@ -5613,14 +5264,14 @@
      "loc": 5867
     },
     {
-     "id": "spec",
-     "files": 4,
-     "loc": 1775
+     "id": "rounds",
+     "files": 1,
+     "loc": 1380
     }
    ],
    "impact_tests": {
-    "files": 170,
-    "functions": 1613
+    "files": 132,
+    "functions": 1132
    },
    "pulls_in": [
     {
@@ -5680,22 +5331,6 @@
    },
    "tests": [
     {
-     "path": "tests/test_multiasset_forward_multimodal_r5.py",
-     "test_count": 68
-    },
-    {
-     "path": "tests/test_mom_breadth_qd_r1.py",
-     "test_count": 54
-    },
-    {
-     "path": "tests/test_vix_term_structure_overlay_r1.py",
-     "test_count": 32
-    },
-    {
-     "path": "tests/test_multiasset_forward_multimodal_r4.py",
-     "test_count": 30
-    },
-    {
      "path": "tests/test_paper_readiness.py",
      "test_count": 24
     },
@@ -5728,15 +5363,7 @@
      "test_count": 10
     },
     {
-     "path": "tests/test_core_satellite_r7.py",
-     "test_count": 9
-    },
-    {
      "path": "tests/test_minute_momentum_feasibility.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_multiscale_low_turnover_r6.py",
      "test_count": 9
     },
     {
@@ -5764,7 +5391,7 @@
     {
      "path": "open_composer/expressions.py",
      "loc": 942,
-     "in": 23,
+     "in": 20,
      "out": 2,
      "last_commit": "2026-08-26",
      "reachable": true,
@@ -5791,7 +5418,7 @@
     {
      "path": "open_composer/market_calendar.py",
      "loc": 393,
-     "in": 45,
+     "in": 26,
      "out": 0,
      "last_commit": "2026-08-26",
      "reachable": true,
@@ -5942,15 +5569,11 @@
    "file_count": 32,
    "loc": 18131,
    "python_loc": 18131,
-   "test_files": 32,
-   "test_count": 415,
+   "test_files": 30,
+   "test_count": 382,
    "churn_touches_since": 26,
    "last_commit": "2026-09-04",
    "upstream": [
-    {
-     "id": "rounds",
-     "weight": 75
-    },
     {
      "id": "routers",
      "weight": 42
@@ -5993,6 +5616,10 @@
     },
     {
      "id": "ml",
+     "weight": 1
+    },
+    {
+     "id": "rounds",
      "weight": 1
     }
    ],
@@ -6048,19 +5675,14 @@
    ],
    "impact": [
     {
-     "id": "rounds",
-     "files": 51,
-     "loc": 100875
-    },
-    {
      "id": "routers",
      "files": 33,
      "loc": 17743
     },
     {
      "id": "scripts",
-     "files": 32,
-     "loc": 13694
+     "files": 31,
+     "loc": 13663
     },
     {
      "id": "kernel",
@@ -6078,19 +5700,14 @@
      "loc": 4611
     },
     {
-     "id": "paper",
-     "files": 5,
-     "loc": 7232
-    },
-    {
      "id": "features",
      "files": 5,
      "loc": 2941
     },
     {
-     "id": "ml",
-     "files": 4,
-     "loc": 2330
+     "id": "paper",
+     "files": 5,
+     "loc": 7232
     },
     {
      "id": "dashboard",
@@ -6098,14 +5715,24 @@
      "loc": 5867
     },
     {
+     "id": "ml",
+     "files": 4,
+     "loc": 2330
+    },
+    {
      "id": "cli",
      "files": 4,
-     "loc": 10455
+     "loc": 9641
     },
     {
      "id": "spec",
      "files": 1,
      "loc": 172
+    },
+    {
+     "id": "rounds",
+     "files": 1,
+     "loc": 1380
     },
     {
      "id": "engines",
@@ -6114,19 +5741,19 @@
     }
    ],
    "impact_tests": {
-    "files": 155,
-    "functions": 1611
+    "files": 120,
+    "functions": 1149
    },
    "pulls_in": [
-    {
-     "id": "spec",
-     "files": 13,
-     "loc": 2818
-    },
     {
      "id": "kernel",
      "files": 13,
      "loc": 1821
+    },
+    {
+     "id": "spec",
+     "files": 13,
+     "loc": 2818
     },
     {
      "id": "data",
@@ -6169,14 +5796,14 @@
      "loc": 1281
     },
     {
-     "id": "features",
-     "files": 3,
-     "loc": 2677
-    },
-    {
      "id": "autollm",
      "files": 3,
      "loc": 878
+    },
+    {
+     "id": "features",
+     "files": 3,
+     "loc": 2677
     },
     {
      "id": "cli",
@@ -6206,9 +5833,10 @@
    },
    "intra_node_imports": 92,
    "unreachable_from_entrypoints": {
-    "files": 5,
-    "loc": 663,
+    "files": 6,
+    "loc": 982,
     "paths": [
+     "open_composer/research/evidence_custody.py",
      "open_composer/research/strategy_dag.py",
      "open_composer/research/alternative_data_evidence.py",
      "open_composer/research/cost_sensitivity.py",
@@ -6218,28 +5846,24 @@
    },
    "reach": {
     "cron_loc": 469,
-    "scripts_loc": 9520,
-    "cli_loc": 17468,
-    "cli_only_loc": 7085,
+    "scripts_loc": 7932,
+    "cli_loc": 17149,
+    "cli_only_loc": 8354,
     "dashboard_loc": 8276,
-    "unreachable_loc": 663
+    "unreachable_loc": 982
    },
    "tests": [
     {
      "path": "tests/test_iteration_dossier.py",
-     "test_count": 59
+     "test_count": 58
     },
     {
      "path": "tests/test_research_campaign.py",
-     "test_count": 44
+     "test_count": 43
     },
     {
      "path": "tests/test_harness_gates.py",
      "test_count": 30
-    },
-    {
-     "path": "tests/test_multiasset_forward_multimodal_r5_target_weights.py",
-     "test_count": 26
     },
     {
      "path": "tests/test_effective_trials.py",
@@ -6306,10 +5930,6 @@
      "test_count": 5
     },
     {
-     "path": "tests/test_high_beta_sleeve_ensemble_r1_semantic.py",
-     "test_count": 5
-    },
-    {
      "path": "tests/test_promotion_ml_gate.py",
      "test_count": 5
     },
@@ -6358,7 +5978,7 @@
     {
      "path": "open_composer/research/iteration_dossier.py",
      "loc": 3360,
-     "in": 48,
+     "in": 19,
      "out": 8,
      "last_commit": "2026-09-04",
      "reachable": true,
@@ -6372,7 +5992,7 @@
     {
      "path": "open_composer/research/campaign.py",
      "loc": 2437,
-     "in": 12,
+     "in": 11,
      "out": 4,
      "last_commit": "2026-09-01",
      "reachable": true,
@@ -6398,12 +6018,11 @@
     {
      "path": "open_composer/research/knowledge_memory.py",
      "loc": 1269,
-     "in": 19,
+     "in": 2,
      "out": 4,
      "last_commit": "2026-08-26",
      "reachable": true,
      "entries": [
-      "scripts",
       "cli"
      ],
      "role": null
@@ -6423,7 +6042,7 @@
     {
      "path": "open_composer/research/quality_diversity.py",
      "loc": 790,
-     "in": 8,
+     "in": 7,
      "out": 2,
      "last_commit": "2026-08-26",
      "reachable": true,
@@ -6486,7 +6105,7 @@
     {
      "path": "open_composer/harness/policy.py",
      "loc": 469,
-     "in": 7,
+     "in": 5,
      "out": 0,
      "last_commit": "2026-08-26",
      "reachable": true,
@@ -6550,20 +6169,17 @@
     {
      "path": "open_composer/research/evidence_custody.py",
      "loc": 319,
-     "in": 4,
+     "in": 1,
      "out": 0,
      "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "scripts",
-      "cli"
-     ],
+     "reachable": false,
+     "entries": [],
      "role": null
     },
     {
      "path": "open_composer/research/campaign_statistics.py",
      "loc": 282,
-     "in": 10,
+     "in": 9,
      "out": 0,
      "last_commit": "2026-08-26",
      "reachable": true,
@@ -6824,10 +6440,6 @@
      "weight": 4
     },
     {
-     "id": "rounds",
-     "weight": 4
-    },
-    {
      "id": "execution",
      "weight": 1
     },
@@ -6890,14 +6502,14 @@
      "loc": 2881
     },
     {
-     "id": "execution",
-     "files": 5,
-     "loc": 1680
-    },
-    {
      "id": "paper",
      "files": 5,
      "loc": 7232
+    },
+    {
+     "id": "execution",
+     "files": 5,
+     "loc": 1680
     },
     {
      "id": "dashboard",
@@ -6905,14 +6517,14 @@
      "loc": 5867
     },
     {
-     "id": "cli",
+     "id": "engines",
      "files": 3,
-     "loc": 9618
+     "loc": 995
     },
     {
-     "id": "rounds",
+     "id": "cli",
      "files": 3,
-     "loc": 7860
+     "loc": 8804
     },
     {
      "id": "scripts",
@@ -6920,14 +6532,19 @@
      "loc": 1397
     },
     {
-     "id": "engines",
-     "files": 3,
-     "loc": 995
-    },
-    {
      "id": "dsl",
      "files": 1,
      "loc": 402
+    },
+    {
+     "id": "data",
+     "files": 1,
+     "loc": 352
+    },
+    {
+     "id": "spec",
+     "files": 1,
+     "loc": 172
     },
     {
      "id": "kernel",
@@ -6938,21 +6555,11 @@
      "id": "ml",
      "files": 1,
      "loc": 253
-    },
-    {
-     "id": "spec",
-     "files": 1,
-     "loc": 172
-    },
-    {
-     "id": "data",
-     "files": 1,
-     "loc": 352
     }
    ],
    "impact_tests": {
-    "files": 87,
-    "functions": 798
+    "files": 81,
+    "functions": 737
    },
    "pulls_in": [
     {
@@ -6961,14 +6568,14 @@
      "loc": 14477
     },
     {
-     "id": "spec",
-     "files": 14,
-     "loc": 2844
-    },
-    {
      "id": "kernel",
      "files": 14,
      "loc": 2976
+    },
+    {
+     "id": "spec",
+     "files": 14,
+     "loc": 2844
     },
     {
      "id": "data",
@@ -7263,7 +6870,7 @@
     {
      "path": "open_composer/feature_packets.py",
      "loc": 514,
-     "in": 19,
+     "in": 18,
      "out": 6,
      "last_commit": "2026-07-17",
      "reachable": true,
@@ -7363,7 +6970,7 @@
     {
      "path": "open_composer/research/llm_backends.py",
      "loc": 144,
-     "in": 8,
+     "in": 5,
      "out": 1,
      "last_commit": "2026-09-10",
      "reachable": true,
@@ -7460,7 +7067,6 @@
     "研究内核（实验循环、门槛合同）",
     "ML 训练后端",
     "路由与动量策略族",
-    "按轮次一次性研究模块",
     "数据适配与能力注册",
     "执行适配（目标权重、Nautilus）",
     "模拟盘、券商与安全控制"
@@ -7489,7 +7095,7 @@
    "loc": 1761,
    "python_loc": 1761,
    "test_files": 15,
-   "test_count": 130,
+   "test_count": 129,
    "churn_touches_since": 3,
    "last_commit": "2026-08-26",
    "upstream": [
@@ -7511,10 +7117,6 @@
     },
     {
      "id": "paper",
-     "weight": 4
-    },
-    {
-     "id": "rounds",
      "weight": 4
     },
     {
@@ -7599,11 +7201,6 @@
      "loc": 7232
     },
     {
-     "id": "rounds",
-     "files": 4,
-     "loc": 7890
-    },
-    {
      "id": "dashboard",
      "files": 4,
      "loc": 5867
@@ -7611,7 +7208,7 @@
     {
      "id": "cli",
      "files": 4,
-     "loc": 10599
+     "loc": 9785
     },
     {
      "id": "scripts",
@@ -7634,19 +7231,19 @@
      "loc": 402
     },
     {
-     "id": "kernel",
-     "files": 1,
-     "loc": 1001
-    },
-    {
      "id": "spec",
      "files": 1,
      "loc": 172
+    },
+    {
+     "id": "kernel",
+     "files": 1,
+     "loc": 1001
     }
    ],
    "impact_tests": {
-    "files": 94,
-    "functions": 857
+    "files": 87,
+    "functions": 784
    },
    "pulls_in": [
     {
@@ -7680,14 +7277,14 @@
      "loc": 435
     },
     {
-     "id": "execution",
-     "files": 3,
-     "loc": 1192
-    },
-    {
      "id": "kernel",
      "files": 3,
      "loc": 322
+    },
+    {
+     "id": "execution",
+     "files": 3,
+     "loc": 1192
     },
     {
      "id": "autollm",
@@ -7738,7 +7335,7 @@
    "tests": [
     {
      "path": "tests/test_research_campaign.py",
-     "test_count": 44
+     "test_count": 43
     },
     {
      "path": "tests/test_backtest_scan_pine.py",
@@ -7937,7 +7534,7 @@
     {
      "path": "open_composer/analytics/__init__.py",
      "loc": 18,
-     "in": 10,
+     "in": 6,
      "out": 3,
      "last_commit": "2026-05-16",
      "reachable": true,
@@ -7983,7 +7580,6 @@
     "研究内核（实验循环、门槛合同）",
     "ML 训练后端",
     "路由与动量策略族",
-    "按轮次一次性研究模块",
     "数据适配与能力注册",
     "执行适配（目标权重、Nautilus）",
     "模拟盘、券商与安全控制"
@@ -8017,9 +7613,9 @@
    "loc": 10573,
    "python_loc": 10573,
    "test_files": 35,
-   "test_count": 497,
-   "churn_touches_since": 71,
-   "last_commit": "2026-09-10",
+   "test_count": 496,
+   "churn_touches_since": 74,
+   "last_commit": "2026-09-14",
    "upstream": [
     {
      "id": "scripts",
@@ -8078,14 +7674,9 @@
    ],
    "impact": [
     {
-     "id": "rounds",
-     "files": 51,
-     "loc": 100875
-    },
-    {
      "id": "scripts",
-     "files": 29,
-     "loc": 12418
+     "files": 28,
+     "loc": 12387
     },
     {
      "id": "governance",
@@ -8098,14 +7689,14 @@
      "loc": 7652
     },
     {
-     "id": "ml",
-     "files": 6,
-     "loc": 1850
-    },
-    {
      "id": "autollm",
      "files": 6,
      "loc": 4822
+    },
+    {
+     "id": "ml",
+     "files": 6,
+     "loc": 1850
     },
     {
      "id": "execution",
@@ -8125,22 +7716,27 @@
     {
      "id": "cli",
      "files": 1,
-     "loc": 8695
+     "loc": 7881
     },
     {
-     "id": "paper",
+     "id": "rounds",
      "files": 1,
-     "loc": 1072
+     "loc": 1380
     },
     {
      "id": "engines",
      "files": 1,
      "loc": 535
+    },
+    {
+     "id": "paper",
+     "files": 1,
+     "loc": 1072
     }
    ],
    "impact_tests": {
-    "files": 146,
-    "functions": 1666
+    "files": 111,
+    "functions": 1204
    },
    "pulls_in": [
     {
@@ -8184,14 +7780,14 @@
      "loc": 1192
     },
     {
-     "id": "routers",
-     "files": 2,
-     "loc": 974
-    },
-    {
      "id": "autollm",
      "files": 2,
      "loc": 673
+    },
+    {
+     "id": "routers",
+     "files": 2,
+     "loc": 974
     },
     {
      "id": "features",
@@ -8241,7 +7837,7 @@
    "tests": [
     {
      "path": "tests/test_research_campaign.py",
-     "test_count": 44
+     "test_count": 43
     },
     {
      "path": "tests/test_kernel_loop.py",
@@ -8386,7 +7982,7 @@
      "loc": 1155,
      "in": 16,
      "out": 3,
-     "last_commit": "2026-09-10",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts",
@@ -8435,7 +8031,7 @@
      "loc": 648,
      "in": 7,
      "out": 6,
-     "last_commit": "2026-09-10",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -8692,7 +8288,7 @@
      "loc": 126,
      "in": 4,
      "out": 0,
-     "last_commit": "2026-09-10",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -8899,8 +8495,8 @@
    "loc": 11154,
    "python_loc": 11154,
    "test_files": 33,
-   "test_count": 304,
-   "churn_touches_since": 37,
+   "test_count": 303,
+   "churn_touches_since": 39,
    "last_commit": "2026-09-14",
    "upstream": [
     {
@@ -8921,10 +8517,6 @@
     },
     {
      "id": "governance",
-     "weight": 5
-    },
-    {
-     "id": "rounds",
      "weight": 5
     },
     {
@@ -8980,14 +8572,9 @@
    ],
    "impact": [
     {
-     "id": "rounds",
-     "files": 54,
-     "loc": 103737
-    },
-    {
      "id": "scripts",
-     "files": 46,
-     "loc": 17755
+     "files": 45,
+     "loc": 17724
     },
     {
      "id": "routers",
@@ -9032,17 +8619,7 @@
     {
      "id": "cli",
      "files": 5,
-     "loc": 11436
-    },
-    {
-     "id": "dashboard",
-     "files": 4,
-     "loc": 5867
-    },
-    {
-     "id": "kernel",
-     "files": 4,
-     "loc": 1319
+     "loc": 10622
     },
     {
      "id": "spec",
@@ -9050,14 +8627,29 @@
      "loc": 1775
     },
     {
+     "id": "kernel",
+     "files": 4,
+     "loc": 1319
+    },
+    {
+     "id": "dashboard",
+     "files": 4,
+     "loc": 5867
+    },
+    {
      "id": "dsl",
      "files": 2,
      "loc": 425
+    },
+    {
+     "id": "rounds",
+     "files": 1,
+     "loc": 1380
     }
    ],
    "impact_tests": {
-    "files": 187,
-    "functions": 1785
+    "files": 149,
+    "functions": 1304
    },
    "pulls_in": [
     {
@@ -9147,7 +8739,7 @@
    "tests": [
     {
      "path": "tests/test_research_campaign.py",
-     "test_count": 44
+     "test_count": 43
     },
     {
      "path": "tests/test_reversal_trend_port.py",
@@ -9282,7 +8874,7 @@
     {
      "path": "open_composer/research/factor_library.py",
      "loc": 1714,
-     "in": 16,
+     "in": 11,
      "out": 2,
      "last_commit": "2026-08-26",
      "reachable": true,
@@ -9501,7 +9093,7 @@
      "loc": 233,
      "in": 3,
      "out": 0,
-     "last_commit": "2026-09-10",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -9549,7 +9141,7 @@
      "loc": 179,
      "in": 16,
      "out": 0,
-     "last_commit": "2026-09-06",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -9694,14 +9286,10 @@
    "loc": 4107,
    "python_loc": 4107,
    "test_files": 9,
-   "test_count": 89,
-   "churn_touches_since": 3,
-   "last_commit": "2026-08-26",
+   "test_count": 88,
+   "churn_touches_since": 4,
+   "last_commit": "2026-09-14",
    "upstream": [
-    {
-     "id": "rounds",
-     "weight": 12
-    },
     {
      "id": "cli",
      "weight": 11
@@ -9767,11 +9355,6 @@
    ],
    "impact": [
     {
-     "id": "rounds",
-     "files": 18,
-     "loc": 36741
-    },
-    {
      "id": "routers",
      "files": 16,
      "loc": 9604
@@ -9797,19 +9380,19 @@
      "loc": 3114
     },
     {
+     "id": "cli",
+     "files": 1,
+     "loc": 7881
+    },
+    {
      "id": "kernel",
      "files": 1,
      "loc": 1001
     },
     {
-     "id": "cli",
+     "id": "execution",
      "files": 1,
-     "loc": 8695
-    },
-    {
-     "id": "paper",
-     "files": 1,
-     "loc": 1072
+     "loc": 445
     },
     {
      "id": "engines",
@@ -9817,14 +9400,14 @@
      "loc": 535
     },
     {
-     "id": "execution",
+     "id": "paper",
      "files": 1,
-     "loc": 445
+     "loc": 1072
     }
    ],
    "impact_tests": {
-    "files": 94,
-    "functions": 891
+    "files": 73,
+    "functions": 657
    },
    "pulls_in": [
     {
@@ -9863,11 +9446,6 @@
      "loc": 395
     },
     {
-     "id": "execution",
-     "files": 3,
-     "loc": 1192
-    },
-    {
      "id": "autollm",
      "files": 3,
      "loc": 878
@@ -9876,6 +9454,11 @@
      "id": "kernel",
      "files": 3,
      "loc": 322
+    },
+    {
+     "id": "execution",
+     "files": 3,
+     "loc": 1192
     },
     {
      "id": "features",
@@ -9915,7 +9498,7 @@
    "tests": [
     {
      "path": "tests/test_research_campaign.py",
-     "test_count": 44
+     "test_count": 43
     },
     {
      "path": "tests/test_momentum_ml_research.py",
@@ -10055,9 +9638,9 @@
     {
      "path": "open_composer/research/ml_backend/model_factory.py",
      "loc": 80,
-     "in": 15,
+     "in": 3,
      "out": 1,
-     "last_commit": "2026-08-26",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts",
@@ -10113,7 +9696,6 @@
     "回测/信号引擎、分析与报告",
     "研究内核（实验循环、门槛合同）",
     "路由与动量策略族",
-    "按轮次一次性研究模块",
     "执行适配（目标权重、Nautilus）",
     "模拟盘、券商与安全控制"
    ],
@@ -10140,10 +9722,10 @@
    "file_count": 43,
    "loc": 23686,
    "python_loc": 23686,
-   "test_files": 40,
-   "test_count": 348,
-   "churn_touches_since": 12,
-   "last_commit": "2026-09-03",
+   "test_files": 39,
+   "test_count": 320,
+   "churn_touches_since": 13,
+   "last_commit": "2026-09-14",
    "upstream": [
     {
      "id": "cli",
@@ -10172,10 +9754,6 @@
     {
      "id": "paper",
      "weight": 7
-    },
-    {
-     "id": "rounds",
-     "weight": 4
     },
     {
      "id": "dashboard",
@@ -10234,14 +9812,9 @@
    ],
    "impact": [
     {
-     "id": "rounds",
-     "files": 51,
-     "loc": 100875
-    },
-    {
      "id": "scripts",
-     "files": 14,
-     "loc": 4804
+     "files": 13,
+     "loc": 4773
     },
     {
      "id": "governance",
@@ -10254,14 +9827,14 @@
      "loc": 3000
     },
     {
-     "id": "ml",
-     "files": 5,
-     "loc": 3356
-    },
-    {
      "id": "autollm",
      "files": 5,
      "loc": 4724
+    },
+    {
+     "id": "ml",
+     "files": 5,
+     "loc": 3356
     },
     {
      "id": "dashboard",
@@ -10274,29 +9847,34 @@
      "loc": 1760
     },
     {
+     "id": "cli",
+     "files": 1,
+     "loc": 7881
+    },
+    {
      "id": "kernel",
      "files": 1,
      "loc": 1001
     },
     {
-     "id": "cli",
+     "id": "rounds",
      "files": 1,
-     "loc": 8695
-    },
-    {
-     "id": "paper",
-     "files": 1,
-     "loc": 1072
+     "loc": 1380
     },
     {
      "id": "engines",
      "files": 1,
      "loc": 535
+    },
+    {
+     "id": "paper",
+     "files": 1,
+     "loc": 1072
     }
    ],
    "impact_tests": {
-    "files": 128,
-    "functions": 1217
+    "files": 93,
+    "functions": 755
    },
    "pulls_in": [
     {
@@ -10423,19 +10001,15 @@
    "tests": [
     {
      "path": "tests/test_iteration_dossier.py",
-     "test_count": 59
+     "test_count": 58
     },
     {
      "path": "tests/test_research_campaign.py",
-     "test_count": 44
+     "test_count": 43
     },
     {
      "path": "tests/test_intraday_daily_rotation.py",
      "test_count": 38
-    },
-    {
-     "path": "tests/test_multiasset_forward_multimodal_r5_target_weights.py",
-     "test_count": 26
     },
     {
      "path": "tests/test_execution_policy.py",
@@ -10599,7 +10173,7 @@
     {
      "path": "open_composer/research/hybrid_router_core.py",
      "loc": 1572,
-     "in": 23,
+     "in": 22,
      "out": 6,
      "last_commit": "2026-09-03",
      "reachable": true,
@@ -10624,7 +10198,7 @@
     {
      "path": "open_composer/research/router_common.py",
      "loc": 1398,
-     "in": 26,
+     "in": 25,
      "out": 5,
      "last_commit": "2026-09-03",
      "reachable": true,
@@ -10661,7 +10235,7 @@
     {
      "path": "open_composer/research/multiasset_momentum_portfolio.py",
      "loc": 1094,
-     "in": 3,
+     "in": 2,
      "out": 9,
      "last_commit": "2026-08-01",
      "reachable": true,
@@ -10972,7 +10546,7 @@
      "loc": 183,
      "in": 5,
      "out": 0,
-     "last_commit": "2026-06-30",
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "cli",
@@ -11083,7 +10657,7 @@
    "facade": {
     "path": "open_composer/research/__init__.py",
     "imports": 0,
-    "loaded_by_files": 215,
+    "loaded_by_files": 165,
     "note": "任何 `import open_composer.research.<x>` 都会先执行该门面，从而加载它再导出的全部路由模块。"
    },
    "impact_labels": [
@@ -11120,75 +10694,43 @@
    "purpose": "以轮次命名的模块（pit_semantic_theme r11-r24、multiasset r1-r7、breadth/high-beta/VIX r1 等）及其 prepare 脚本。每轮复制一份而非参数化；只被自身测试与少数脚本引用。",
    "configs": [],
    "paths": [],
-   "file_count": 55,
-   "loc": 103884,
-   "python_loc": 103884,
-   "test_files": 41,
-   "test_count": 588,
-   "churn_touches_since": 60,
-   "last_commit": "2026-09-09",
+   "file_count": 1,
+   "loc": 1380,
+   "python_loc": 1380,
+   "test_files": 1,
+   "test_count": 6,
+   "churn_touches_since": 1,
+   "last_commit": "2026-08-01",
    "upstream": [
     {
      "id": "cli",
-     "weight": 31
-    },
-    {
-     "id": "execution",
      "weight": 1
     },
     {
-     "id": "scripts",
+     "id": "execution",
      "weight": 1
     }
    ],
    "dependencies": [
     {
      "id": "spec",
-     "weight": 130
-    },
-    {
-     "id": "governance",
-     "weight": 75
-    },
-    {
-     "id": "shared",
-     "weight": 66
+     "weight": 3
     },
     {
      "id": "data",
-     "weight": 39
+     "weight": 2
+    },
+    {
+     "id": "shared",
+     "weight": 2
     },
     {
      "id": "dsl",
-     "weight": 24
+     "weight": 1
     },
     {
-     "id": "ml",
-     "weight": 12
-    },
-    {
-     "id": "execution",
-     "weight": 5
-    },
-    {
-     "id": "features",
-     "weight": 5
-    },
-    {
-     "id": "autollm",
-     "weight": 4
-    },
-    {
-     "id": "engines",
-     "weight": 4
-    },
-    {
-     "id": "paper",
-     "weight": 4
-    },
-    {
-     "id": "routers",
-     "weight": 4
+     "id": "governance",
+     "weight": 1
     }
    ],
    "impact": [
@@ -11200,38 +10742,18 @@
     {
      "id": "cli",
      "files": 1,
-     "loc": 8695
-    },
-    {
-     "id": "scripts",
-     "files": 1,
-     "loc": 31
+     "loc": 7881
     }
    ],
    "impact_tests": {
-    "files": 76,
-    "functions": 882
+    "files": 38,
+    "functions": 401
    },
    "pulls_in": [
     {
-     "id": "data",
-     "files": 12,
-     "loc": 4978
-    },
-    {
      "id": "spec",
-     "files": 10,
-     "loc": 2179
-    },
-    {
-     "id": "governance",
-     "files": 9,
-     "loc": 9333
-    },
-    {
-     "id": "routers",
-     "files": 7,
-     "loc": 6472
+     "files": 6,
+     "loc": 1721
     },
     {
      "id": "dsl",
@@ -11244,903 +10766,78 @@
      "loc": 395
     },
     {
-     "id": "engines",
-     "files": 4,
-     "loc": 390
+     "id": "governance",
+     "files": 5,
+     "loc": 6944
     },
     {
-     "id": "ml",
-     "files": 3,
-     "loc": 911
+     "id": "data",
+     "files": 5,
+     "loc": 2036
     },
     {
      "id": "kernel",
-     "files": 3,
-     "loc": 322
-    },
-    {
-     "id": "autollm",
-     "files": 3,
-     "loc": 817
-    },
-    {
-     "id": "execution",
      "files": 2,
-     "loc": 398
-    },
-    {
-     "id": "paper",
-     "files": 2,
-     "loc": 311
+     "loc": 291
     },
     {
      "id": "features",
      "files": 1,
      "loc": 1714
+    },
+    {
+     "id": "routers",
+     "files": 1,
+     "loc": 662
     }
    ],
    "externals": {
     "store": {
-     "data/research": 9,
-     "reports/research": 3,
-     "reports/forward": 3,
-     "reports/harness": 2,
-     "harness/": 2,
-     "reports/execution": 1,
-     "prompts/": 1,
-     "data/forward": 1,
-     "data/cache": 1,
-     "data/sample": 1
+     "reports/research": 1
     },
-    "api": {
-     "ProShares 基金页面": 3,
-     "Alpaca Market Data / Paper Trading": 2,
-     "SEC EDGAR": 2,
-     "CBOE": 1
-    },
+    "api": {},
     "lib": {
      "numpy": 1,
-     "pandas": 1,
-     "scipy": 1,
-     "sklearn": 1,
-     "lightgbm": 1,
-     "dotenv": 1,
-     "pydantic": 1,
-     "yaml": 1
+     "pandas": 1
     }
    },
-   "intra_node_imports": 445,
+   "intra_node_imports": 0,
    "unreachable_from_entrypoints": {
-    "files": 20,
-    "loc": 36829,
-    "paths": [
-     "open_composer/research/mom_breadth_qd_r1.py",
-     "open_composer/research/high_beta_sleeve_ensemble_r1.py",
-     "open_composer/research/vix_term_structure_overlay_r1.py",
-     "open_composer/research/core_satellite_r7.py",
-     "open_composer/research/pit_semantic_theme_r24.py",
-     "open_composer/research/multiscale_low_turnover_r6.py",
-     "open_composer/research/pit_semantic_theme_r21.py",
-     "open_composer/research/pit_semantic_theme_r20.py",
-     "open_composer/research/pit_semantic_theme_r19.py",
-     "open_composer/research/pit_semantic_theme_r17.py",
-     "open_composer/research/pit_semantic_theme_r18.py",
-     "open_composer/research/pit_semantic_theme_r16.py",
-     "open_composer/research/pit_semantic_theme_r15.py",
-     "open_composer/research/pit_semantic_theme_r14.py",
-     "open_composer/research/pit_semantic_theme_r13.py",
-     "open_composer/research/dynamic_theme_stock_r9_evaluation.py",
-     "open_composer/research/event_seeded_theme_stock_r10.py",
-     "open_composer/research/dynamic_theme_stock_r9.py",
-     "open_composer/research/event_seeded_theme_stock_r10_evaluation.py",
-     "open_composer/research/pit_semantic_theme_r24_forward.py"
-    ]
+    "files": 0,
+    "loc": 0,
+    "paths": []
    },
    "reach": {
     "cron_loc": 0,
-    "scripts_loc": 37543,
-    "cli_loc": 42889,
-    "cli_only_loc": 29512,
+    "scripts_loc": 0,
+    "cli_loc": 1380,
+    "cli_only_loc": 1380,
     "dashboard_loc": 0,
-    "unreachable_loc": 36829
+    "unreachable_loc": 0
    },
    "tests": [
     {
-     "path": "tests/test_multiasset_forward_multimodal_r5.py",
-     "test_count": 68
-    },
-    {
-     "path": "tests/test_iteration_dossier.py",
-     "test_count": 59
-    },
-    {
-     "path": "tests/test_mom_breadth_qd_r1.py",
-     "test_count": 54
-    },
-    {
-     "path": "tests/test_research_campaign.py",
-     "test_count": 44
-    },
-    {
-     "path": "tests/test_vix_term_structure_overlay_r1.py",
-     "test_count": 32
-    },
-    {
-     "path": "tests/test_multiasset_forward_multimodal_r4.py",
-     "test_count": 30
-    },
-    {
-     "path": "tests/test_multiasset_forward_multimodal_r5_target_weights.py",
-     "test_count": 26
-    },
-    {
-     "path": "tests/test_high_beta_sleeve_ensemble_r1.py",
-     "test_count": 17
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r24.py",
-     "test_count": 16
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r21.py",
-     "test_count": 12
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r22.py",
-     "test_count": 12
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r20.py",
-     "test_count": 11
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r17.py",
-     "test_count": 10
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r18.py",
-     "test_count": 10
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r19.py",
-     "test_count": 10
-    },
-    {
-     "path": "tests/test_core_satellite_r7.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_dynamic_theme_chain_r8.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_event_seeded_theme_stock_r10.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_multiscale_event_r5.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_multiscale_low_turnover_r6.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r11.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r23_forward.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_robust_momentum_r4.py",
-     "test_count": 9
-    },
-    {
-     "path": "tests/test_multiasset_forward_multimodal_r6.py",
-     "test_count": 8
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_forward.py",
-     "test_count": 8
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r13.py",
-     "test_count": 8
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r14.py",
-     "test_count": 8
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r15.py",
-     "test_count": 8
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r16.py",
-     "test_count": 8
-    },
-    {
-     "path": "tests/test_dynamic_theme_chain_r8_ml.py",
-     "test_count": 7
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r22_forward.py",
-     "test_count": 7
-    },
-    {
-     "path": "tests/test_dynamic_theme_stock_r9.py",
-     "test_count": 6
-    },
-    {
      "path": "tests/test_etf_structural_r9.py",
      "test_count": 6
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_r12.py",
-     "test_count": 6
-    },
-    {
-     "path": "tests/test_high_beta_sleeve_ensemble_r1_semantic.py",
-     "test_count": 5
-    },
-    {
-     "path": "tests/test_multiasset_paper_control_r7_forward_snapshot.py",
-     "test_count": 5
-    },
-    {
-     "path": "tests/test_multiasset_paper_control_r7_target_weights.py",
-     "test_count": 4
-    },
-    {
-     "path": "tests/test_spy_dual_trend_r8.py",
-     "test_count": 4
-    },
-    {
-     "path": "tests/test_dynamic_theme_stock_r9_evaluation.py",
-     "test_count": 3
-    },
-    {
-     "path": "tests/test_event_seeded_theme_stock_r10_evaluation.py",
-     "test_count": 3
-    },
-    {
-     "path": "tests/test_pit_semantic_theme_features_labels_and_embargo_use_registered_timing.py",
-     "test_count": 1
     }
    ],
    "files": [
     {
-     "path": "open_composer/research/multiasset_forward_multimodal_r5.py",
-     "loc": 8959,
-     "in": 10,
-     "out": 11,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts",
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/multiasset_forward_multimodal_r4.py",
-     "loc": 4903,
-     "in": 2,
-     "out": 7,
-     "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/mom_breadth_qd_r1.py",
-     "loc": 4672,
-     "in": 1,
-     "out": 8,
-     "last_commit": "2026-08-27",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/high_beta_sleeve_ensemble_r1.py",
-     "loc": 3490,
-     "in": 2,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/vix_term_structure_overlay_r1.py",
-     "loc": 3369,
-     "in": 1,
-     "out": 12,
-     "last_commit": "2026-09-09",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r23_forward.py",
-     "loc": 3048,
-     "in": 2,
-     "out": 11,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "loc": 2609,
-     "in": 2,
-     "out": 9,
-     "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_forward.py",
-     "loc": 2507,
-     "in": 2,
-     "out": 11,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/core_satellite_r7.py",
-     "loc": 2493,
-     "in": 1,
-     "out": 8,
-     "last_commit": "2026-08-01",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_mom_breadth_qd_r1.py",
-     "loc": 2443,
-     "in": 2,
-     "out": 7,
-     "last_commit": "2026-08-27",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_vix_term_structure_overlay_r1.py",
-     "loc": 2331,
-     "in": 0,
-     "out": 5,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r22_forward.py",
-     "loc": 2305,
-     "in": 2,
-     "out": 10,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r11.py",
-     "loc": 2263,
-     "in": 34,
-     "out": 8,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r24.py",
-     "loc": 2134,
-     "in": 3,
-     "out": 10,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/multiasset_forward_multimodal_r6.py",
-     "loc": 2108,
-     "in": 4,
-     "out": 6,
-     "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "scripts",
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r24.py",
-     "loc": 2019,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/multiscale_low_turnover_r6.py",
-     "loc": 1973,
-     "in": 3,
-     "out": 8,
-     "last_commit": "2026-08-01",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/robust_momentum_r4.py",
-     "loc": 1957,
-     "in": 2,
-     "out": 6,
-     "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r23.py",
-     "loc": 1906,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/dynamic_theme_chain_r8.py",
-     "loc": 1779,
-     "in": 19,
-     "out": 8,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r22.py",
-     "loc": 1744,
-     "in": 6,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r21.py",
-     "loc": 1727,
-     "in": 2,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r20.py",
-     "loc": 1726,
-     "in": 2,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r19.py",
-     "loc": 1669,
-     "in": 2,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r17.py",
-     "loc": 1657,
-     "in": 2,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r18.py",
-     "loc": 1657,
-     "in": 2,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r16.py",
-     "loc": 1582,
-     "in": 2,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r15.py",
-     "loc": 1580,
-     "in": 2,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r14.py",
-     "loc": 1577,
-     "in": 2,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/dynamic_theme_chain_r8_ml.py",
-     "loc": 1554,
-     "in": 2,
-     "out": 5,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_high_beta_sleeve_ensemble_r1.py",
-     "loc": 1554,
-     "in": 1,
-     "out": 5,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r13.py",
-     "loc": 1527,
-     "in": 1,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/multiscale_event_r5.py",
-     "loc": 1467,
-     "in": 2,
-     "out": 6,
-     "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r20.py",
-     "loc": 1394,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
      "path": "open_composer/research/etf_structural_r9.py",
      "loc": 1380,
-     "in": 22,
+     "in": 3,
      "out": 8,
      "last_commit": "2026-08-01",
      "reachable": true,
      "entries": [
       "cli"
      ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r22.py",
-     "loc": 1354,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r18.py",
-     "loc": 1343,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r21.py",
-     "loc": 1341,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r17.py",
-     "loc": 1327,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r19.py",
-     "loc": 1298,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r14.py",
-     "loc": 1295,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r16.py",
-     "loc": 1263,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r13.py",
-     "loc": 1262,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r15.py",
-     "loc": 1256,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/dynamic_theme_stock_r9_evaluation.py",
-     "loc": 1200,
-     "in": 2,
-     "out": 7,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r12.py",
-     "loc": 1179,
-     "in": 3,
-     "out": 9,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/event_seeded_theme_stock_r10.py",
-     "loc": 1145,
-     "in": 2,
-     "out": 1,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/multiasset_paper_control_r7.py",
-     "loc": 1114,
-     "in": 3,
-     "out": 5,
-     "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "scripts",
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/adapters/execution/multiasset_paper_control_r7_target_weights.py",
-     "loc": 939,
-     "in": 3,
-     "out": 7,
-     "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "scripts",
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/dynamic_theme_stock_r9.py",
-     "loc": 900,
-     "in": 2,
-     "out": 1,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/spy_dual_trend_r8.py",
-     "loc": 817,
-     "in": 2,
-     "out": 7,
-     "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "scripts/prepare_pit_semantic_theme_r12.py",
-     "loc": 780,
-     "in": 0,
-     "out": 4,
-     "last_commit": "2026-08-26",
-     "reachable": true,
-     "entries": [
-      "scripts"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/event_seeded_theme_stock_r10_evaluation.py",
-     "loc": 604,
-     "in": 1,
-     "out": 6,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
-     "role": null
-    },
-    {
-     "path": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py",
-     "loc": 257,
-     "in": 4,
-     "out": 5,
-     "last_commit": "2026-08-01",
-     "reachable": true,
-     "entries": [
-      "scripts",
-      "cli"
-     ],
-     "role": null
-    },
-    {
-     "path": "open_composer/research/pit_semantic_theme_r24_forward.py",
-     "loc": 147,
-     "in": 1,
-     "out": 0,
-     "last_commit": "2026-08-26",
-     "reachable": false,
-     "entries": [],
      "role": null
     }
    ],
    "flows": [],
    "impact_labels": [
     "CLI 与产品工具链",
-    "脚本与定时任务",
     "执行适配（目标权重、Nautilus）"
    ],
    "pos": {
@@ -12168,22 +10865,18 @@
    "file_count": 18,
    "loc": 6376,
    "python_loc": 6376,
-   "test_files": 41,
-   "test_count": 310,
+   "test_files": 38,
+   "test_count": 291,
    "churn_touches_since": 14,
    "last_commit": "2026-09-03",
    "upstream": [
     {
-     "id": "rounds",
-     "weight": 39
-    },
-    {
      "id": "cli",
-     "weight": 32
+     "weight": 23
     },
     {
      "id": "scripts",
-     "weight": 24
+     "weight": 23
     },
     {
      "id": "routers",
@@ -12222,6 +10915,10 @@
      "weight": 2
     },
     {
+     "id": "rounds",
+     "weight": 2
+    },
+    {
      "id": "ml",
      "weight": 1
     }
@@ -12254,19 +10951,14 @@
    ],
    "impact": [
     {
-     "id": "rounds",
-     "files": 52,
-     "loc": 101692
-    },
-    {
      "id": "routers",
      "files": 37,
      "loc": 21809
     },
     {
      "id": "scripts",
-     "files": 34,
-     "loc": 14779
+     "files": 33,
+     "loc": 14748
     },
     {
      "id": "execution",
@@ -12306,7 +10998,7 @@
     {
      "id": "cli",
      "files": 4,
-     "loc": 10599
+     "loc": 9785
     },
     {
      "id": "engines",
@@ -12322,11 +11014,16 @@
      "id": "spec",
      "files": 1,
      "loc": 172
+    },
+    {
+     "id": "rounds",
+     "files": 1,
+     "loc": 1380
     }
    ],
    "impact_tests": {
-    "files": 155,
-    "functions": 1460
+    "files": 119,
+    "functions": 994
    },
    "pulls_in": [
     {
@@ -12469,10 +11166,6 @@
      "test_count": 10
     },
     {
-     "path": "tests/test_dynamic_theme_chain_r8.py",
-     "test_count": 9
-    },
-    {
      "path": "tests/test_capability_layer.py",
      "test_count": 8
     },
@@ -12503,14 +11196,6 @@
     {
      "path": "tests/test_strategy_capabilities.py",
      "test_count": 6
-    },
-    {
-     "path": "tests/test_high_beta_sleeve_ensemble_r1_semantic.py",
-     "test_count": 5
-    },
-    {
-     "path": "tests/test_multiasset_paper_control_r7_forward_snapshot.py",
-     "test_count": 5
     },
     {
      "path": "tests/test_beta_exposure_router.py",
@@ -12593,7 +11278,7 @@
     {
      "path": "open_composer/adapters/data/alpaca_snapshot.py",
      "loc": 1520,
-     "in": 26,
+     "in": 6,
      "out": 5,
      "last_commit": "2026-08-26",
      "reachable": true,
@@ -12607,7 +11292,7 @@
     {
      "path": "open_composer/adapters/events/fetcher.py",
      "loc": 820,
-     "in": 6,
+     "in": 3,
      "out": 6,
      "last_commit": "2026-08-26",
      "reachable": true,
@@ -12645,7 +11330,7 @@
     {
      "path": "open_composer/adapters/data/cboe_volatility.py",
      "loc": 420,
-     "in": 2,
+     "in": 1,
      "out": 2,
      "last_commit": "2026-08-26",
      "reachable": false,
@@ -12679,7 +11364,7 @@
     {
      "path": "open_composer/adapters/data/alpaca.py",
      "loc": 380,
-     "in": 20,
+     "in": 10,
      "out": 3,
      "last_commit": "2026-08-26",
      "reachable": true,
@@ -12693,7 +11378,7 @@
     {
      "path": "open_composer/strategy_capabilities.py",
      "loc": 352,
-     "in": 9,
+     "in": 8,
      "out": 7,
      "last_commit": "2026-07-03",
      "reachable": true,
@@ -12723,7 +11408,7 @@
     {
      "path": "open_composer/adapters/data/__init__.py",
      "loc": 253,
-     "in": 42,
+     "in": 41,
      "out": 10,
      "last_commit": "2026-09-03",
      "reachable": true,
@@ -12795,7 +11480,7 @@
     {
      "path": "open_composer/adapters/data/sample.py",
      "loc": 29,
-     "in": 28,
+     "in": 27,
      "out": 1,
      "last_commit": "2026-05-08",
      "reachable": true,
@@ -12879,8 +11564,8 @@
    "python_loc": 7059,
    "test_files": 15,
    "test_count": 227,
-   "churn_touches_since": 12,
-   "last_commit": "2026-09-10",
+   "churn_touches_since": 16,
+   "last_commit": "2026-09-14",
    "upstream": [
     {
      "id": "cli",
@@ -12893,10 +11578,6 @@
     {
      "id": "paper",
      "weight": 9
-    },
-    {
-     "id": "rounds",
-     "weight": 5
     },
     {
      "id": "engines",
@@ -12969,11 +11650,6 @@
      "loc": 4440
     },
     {
-     "id": "rounds",
-     "files": 6,
-     "loc": 11665
-    },
-    {
      "id": "paper",
      "files": 6,
      "loc": 7329
@@ -12984,24 +11660,19 @@
      "loc": 5867
     },
     {
-     "id": "scripts",
-     "files": 4,
-     "loc": 1592
-    },
-    {
      "id": "cli",
      "files": 3,
-     "loc": 9618
+     "loc": 8804
     },
     {
-     "id": "kernel",
-     "files": 1,
-     "loc": 1001
+     "id": "scripts",
+     "files": 3,
+     "loc": 1561
     },
     {
-     "id": "ml",
+     "id": "data",
      "files": 1,
-     "loc": 253
+     "loc": 352
     },
     {
      "id": "autollm",
@@ -13014,9 +11685,14 @@
      "loc": 172
     },
     {
-     "id": "data",
+     "id": "kernel",
      "files": 1,
-     "loc": 352
+     "loc": 1001
+    },
+    {
+     "id": "ml",
+     "files": 1,
+     "loc": 253
     },
     {
      "id": "engines",
@@ -13025,8 +11701,8 @@
     }
    ],
    "impact_tests": {
-    "files": 86,
-    "functions": 814
+    "files": 79,
+    "functions": 748
    },
    "pulls_in": [
     {
@@ -13235,7 +11911,7 @@
      "loc": 605,
      "in": 3,
      "out": 8,
-     "last_commit": null,
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -13298,7 +11974,7 @@
      "loc": 378,
      "in": 3,
      "out": 4,
-     "last_commit": null,
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "scripts"
@@ -13321,7 +11997,7 @@
     {
      "path": "open_composer/adapters/execution/router_target_weights.py",
      "loc": 309,
-     "in": 12,
+     "in": 10,
      "out": 4,
      "last_commit": "2026-08-26",
      "reachable": true,
@@ -13388,7 +12064,7 @@
      "loc": 76,
      "in": 2,
      "out": 2,
-     "last_commit": null,
+     "last_commit": "2026-09-14",
      "reachable": true,
      "entries": [
       "cli"
@@ -13413,7 +12089,7 @@
      "loc": 9,
      "in": 0,
      "out": 0,
-     "last_commit": null,
+     "last_commit": "2026-09-14",
      "reachable": false,
      "entries": [],
      "role": null
@@ -13434,7 +12110,6 @@
     "研究内核（实验循环、门槛合同）",
     "ML 训练后端",
     "路由与动量策略族",
-    "按轮次一次性研究模块",
     "数据适配与能力注册",
     "模拟盘、券商与安全控制"
    ],
@@ -13477,10 +12152,6 @@
     {
      "id": "scripts",
      "weight": 7
-    },
-    {
-     "id": "rounds",
-     "weight": 4
     },
     {
      "id": "governance",
@@ -13552,24 +12223,19 @@
      "loc": 1663
     },
     {
-     "id": "autollm",
-     "files": 4,
-     "loc": 1690
-    },
-    {
      "id": "dashboard",
      "files": 4,
      "loc": 5867
     },
     {
-     "id": "cli",
+     "id": "autollm",
      "files": 4,
-     "loc": 10455
+     "loc": 1690
     },
     {
-     "id": "rounds",
-     "files": 3,
-     "loc": 7860
+     "id": "cli",
+     "files": 4,
+     "loc": 9641
     },
     {
      "id": "scripts",
@@ -13582,14 +12248,14 @@
      "loc": 360
     },
     {
-     "id": "spec",
-     "files": 1,
-     "loc": 172
-    },
-    {
      "id": "data",
      "files": 1,
      "loc": 352
+    },
+    {
+     "id": "spec",
+     "files": 1,
+     "loc": 172
     },
     {
      "id": "routers",
@@ -13598,8 +12264,8 @@
     }
    ],
    "impact_tests": {
-    "files": 69,
-    "functions": 683
+    "files": 63,
+    "functions": 622
    },
    "pulls_in": [
     {
@@ -13638,14 +12304,14 @@
      "loc": 1281
     },
     {
-     "id": "ml",
-     "files": 3,
-     "loc": 911
-    },
-    {
      "id": "autollm",
      "files": 3,
      "loc": 882
+    },
+    {
+     "id": "ml",
+     "files": 3,
+     "loc": 911
     },
     {
      "id": "features",
@@ -13653,14 +12319,14 @@
      "loc": 2175
     },
     {
-     "id": "governance",
-     "files": 2,
-     "loc": 801
-    },
-    {
      "id": "kernel",
      "files": 2,
      "loc": 42
+    },
+    {
+     "id": "governance",
+     "files": 2,
+     "loc": 801
     }
    ],
    "externals": {
@@ -13695,7 +12361,7 @@
    "reach": {
     "cron_loc": 9275,
     "scripts_loc": 9275,
-    "cli_loc": 10375,
+    "cli_loc": 10161,
     "cli_only_loc": 1100,
     "dashboard_loc": 9061,
     "unreachable_loc": 3
@@ -13890,21 +12556,20 @@
     {
      "path": "open_composer/paper_state_drift.py",
      "loc": 214,
-     "in": 3,
+     "in": 2,
      "out": 2,
      "last_commit": "2026-08-26",
      "reachable": true,
      "entries": [
       "cron",
-      "scripts",
-      "cli"
+      "scripts"
      ],
      "role": null
     },
     {
      "path": "open_composer/paper_freshness.py",
      "loc": 97,
-     "in": 6,
+     "in": 3,
      "out": 4,
      "last_commit": "2026-08-01",
      "reachable": true,
@@ -14001,7 +12666,6 @@
     "自动研究、LLM 与新闻",
     "特征管线与因子库",
     "路由与动量策略族",
-    "按轮次一次性研究模块",
     "数据适配与能力注册"
    ],
    "pos": {
@@ -14046,10 +12710,6 @@
     {
      "id": "scripts",
      "weight": 91
-    },
-    {
-     "id": "rounds",
-     "weight": 65
     },
     {
      "id": "autollm",
@@ -14164,10 +12824,6 @@
    "last_commit": null,
    "upstream": [
     {
-     "id": "rounds",
-     "weight": 396
-    },
-    {
      "id": "scripts",
      "weight": 133
     },
@@ -14185,7 +12841,7 @@
     },
     {
      "id": "cli",
-     "weight": 84
+     "weight": 82
     },
     {
      "id": "dashboard",
@@ -14230,6 +12886,10 @@
     {
      "id": "shared",
      "weight": 2
+    },
+    {
+     "id": "rounds",
+     "weight": 1
     }
    ],
    "dependencies": [],
@@ -14306,16 +12966,12 @@
      "weight": 78
     },
     {
-     "id": "rounds",
-     "weight": 66
-    },
-    {
      "id": "governance",
      "weight": 53
     },
     {
      "id": "scripts",
-     "weight": 42
+     "weight": 41
     },
     {
      "id": "execution",
@@ -14360,6 +13016,10 @@
     {
      "id": "dsl",
      "weight": 3
+    },
+    {
+     "id": "rounds",
+     "weight": 2
     }
    ],
    "dependencies": [
@@ -14370,19 +13030,14 @@
    ],
    "impact": [
     {
-     "id": "rounds",
-     "files": 54,
-     "loc": 103737
-    },
-    {
      "id": "routers",
      "files": 40,
      "loc": 22776
     },
     {
      "id": "scripts",
-     "files": 38,
-     "loc": 16442
+     "files": 37,
+     "loc": 16411
     },
     {
      "id": "governance",
@@ -14435,24 +13090,29 @@
      "loc": 8234
     },
     {
-     "id": "cli",
-     "files": 5,
-     "loc": 11436
-    },
-    {
      "id": "spec",
      "files": 5,
      "loc": 2480
     },
     {
+     "id": "cli",
+     "files": 5,
+     "loc": 10622
+    },
+    {
      "id": "dsl",
      "files": 2,
      "loc": 425
+    },
+    {
+     "id": "rounds",
+     "files": 1,
+     "loc": 1380
     }
    ],
    "impact_tests": {
-    "files": 192,
-    "functions": 1934
+    "files": 154,
+    "functions": 1453
    },
    "pulls_in": [
     {
@@ -14527,7 +13187,7 @@
     {
      "path": "open_composer/config.py",
      "loc": 163,
-     "in": 160,
+     "in": 149,
      "out": 0,
      "last_commit": "2026-09-04",
      "reachable": true,
@@ -14557,7 +13217,7 @@
     {
      "path": "open_composer/storage.py",
      "loc": 74,
-     "in": 164,
+     "in": 123,
      "out": 3,
      "last_commit": "2026-08-01",
      "reachable": true,
@@ -14587,7 +13247,7 @@
     {
      "path": "open_composer/yaml_utils.py",
      "loc": 11,
-     "in": 7,
+     "in": 5,
      "out": 0,
      "last_commit": "2026-07-03",
      "reachable": true,
@@ -14658,10 +13318,6 @@
    "last_commit": null,
    "upstream": [
     {
-     "id": "rounds",
-     "weight": 138
-    },
-    {
      "id": "scripts",
      "weight": 77
     },
@@ -14694,12 +13350,12 @@
      "weight": 29
     },
     {
-     "id": "cli",
-     "weight": 24
-    },
-    {
      "id": "spec",
      "weight": 21
+    },
+    {
+     "id": "cli",
+     "weight": 20
     },
     {
      "id": "dashboard",
@@ -14724,6 +13380,10 @@
     {
      "id": "engines",
      "weight": 6
+    },
+    {
+     "id": "rounds",
+     "weight": 2
     }
    ],
    "dependencies": [],
@@ -15573,7 +14233,7 @@
    "source": "cli",
    "target": "data",
    "kind": "import",
-   "weight": 32,
+   "weight": 23,
    "evidence": [
     {
      "file": "open_composer/cli.py",
@@ -15724,13 +14384,13 @@
     },
     {
      "file": "open_composer/cli.py",
-     "line": 6469,
+     "line": 5655,
      "statement": "from open_composer.adapters.execution.momentum_shadow import (",
      "target": "open_composer/adapters/execution/momentum_shadow.py"
     },
     {
      "file": "open_composer/cli.py",
-     "line": 8417,
+     "line": 7603,
      "statement": "from open_composer.execution_policy import resolve_execution_policy",
      "target": "open_composer/execution_policy.py"
     }
@@ -15780,7 +14440,7 @@
    "source": "cli",
    "target": "external",
    "kind": "lib",
-   "weight": 14,
+   "weight": 10,
    "evidence": [
     {
      "file": "open_composer/cli.py",
@@ -15801,11 +14461,6 @@
      "file": "open_composer/cli.py",
      "line": 0,
      "statement": "rich"
-    },
-    {
-     "file": "open_composer/cli.py",
-     "line": 0,
-     "statement": "httpx"
     },
     {
      "file": "open_composer/deployment.py",
@@ -16047,55 +14702,13 @@
    "source": "cli",
    "target": "rounds",
    "kind": "import",
-   "weight": 31,
+   "weight": 1,
    "evidence": [
     {
      "file": "open_composer/cli.py",
-     "line": 3970,
-     "statement": "from open_composer.research.robust_momentum_r4 import (",
-     "target": "open_composer/research/robust_momentum_r4.py"
-    },
-    {
-     "file": "open_composer/cli.py",
-     "line": 3993,
-     "statement": "from open_composer.research.robust_momentum_r4 import (",
-     "target": "open_composer/research/robust_momentum_r4.py"
-    },
-    {
-     "file": "open_composer/cli.py",
-     "line": 4015,
-     "statement": "from open_composer.research.spy_dual_trend_r8 import run_spy_dual_trend_r8",
-     "target": "open_composer/research/spy_dual_trend_r8.py"
-    },
-    {
-     "file": "open_composer/cli.py",
-     "line": 4035,
+     "line": 3971,
      "statement": "from open_composer.research.etf_structural_r9 import run_etf_structural_r9",
      "target": "open_composer/research/etf_structural_r9.py"
-    },
-    {
-     "file": "open_composer/cli.py",
-     "line": 4055,
-     "statement": "from open_composer.research.dynamic_theme_chain_r8 import (",
-     "target": "open_composer/research/dynamic_theme_chain_r8.py"
-    },
-    {
-     "file": "open_composer/cli.py",
-     "line": 4072,
-     "statement": "from open_composer.research.dynamic_theme_chain_r8 import run_dynamic_theme_chain_r8",
-     "target": "open_composer/research/dynamic_theme_chain_r8.py"
-    },
-    {
-     "file": "open_composer/cli.py",
-     "line": 4091,
-     "statement": "from open_composer.research.dynamic_theme_chain_r8_ml import (",
-     "target": "open_composer/research/dynamic_theme_chain_r8_ml.py"
-    },
-    {
-     "file": "open_composer/cli.py",
-     "line": 4106,
-     "statement": "from open_composer.research.dynamic_theme_chain_r8_ml import (",
-     "target": "open_composer/research/dynamic_theme_chain_r8_ml.py"
     }
    ]
   },
@@ -16275,7 +14888,7 @@
    "source": "cli",
    "target": "store_artifacts",
    "kind": "store",
-   "weight": 84,
+   "weight": 82,
    "evidence": [
     {
      "file": "open_composer/cli.py",
@@ -16314,27 +14927,27 @@
     },
     {
      "file": "open_composer/cli.py",
-     "line": 3985,
-     "statement": "reports/research"
-    },
-    {
-     "file": "open_composer/cli.py",
-     "line": 6535,
+     "line": 5721,
      "statement": "reports/shadow"
     },
     {
      "file": "open_composer/cli.py",
-     "line": 7626,
+     "line": 5934,
+     "statement": "reports/research"
+    },
+    {
+     "file": "open_composer/cli.py",
+     "line": 6812,
      "statement": "reports/harness"
     },
     {
      "file": "open_composer/cli.py",
-     "line": 7626,
+     "line": 6812,
      "statement": "harness/"
     },
     {
      "file": "open_composer/cli.py",
-     "line": 8135,
+     "line": 7321,
      "statement": "reports/runs"
     }
    ]
@@ -20712,91 +19325,22 @@
    ]
   },
   {
-   "id": "rounds->autollm:import",
-   "source": "rounds",
-   "target": "autollm",
-   "kind": "import",
-   "weight": 4,
-   "evidence": [
-    {
-     "file": "open_composer/research/pit_semantic_theme_forward.py",
-     "line": 24,
-     "statement": "from open_composer.feature_packets import FeaturePacketRow",
-     "target": "open_composer/feature_packets.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_forward.py",
-     "line": 29,
-     "statement": "from open_composer.research.llm_backends import get_backend",
-     "target": "open_composer/research/llm_backends.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r22_forward.py",
-     "line": 27,
-     "statement": "from open_composer.research.llm_backends import get_backend",
-     "target": "open_composer/research/llm_backends.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r23_forward.py",
-     "line": 29,
-     "statement": "from open_composer.research.llm_backends import get_backend",
-     "target": "open_composer/research/llm_backends.py"
-    }
-   ]
-  },
-  {
    "id": "rounds->data:import",
    "source": "rounds",
    "target": "data",
    "kind": "import",
-   "weight": 39,
+   "weight": 2,
    "evidence": [
     {
-     "file": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py",
-     "line": 12,
+     "file": "open_composer/research/etf_structural_r9.py",
+     "line": 16,
      "statement": "from open_composer.adapters.data.alpaca import AlpacaDataError",
      "target": "open_composer/adapters/data/alpaca.py"
     },
     {
-     "file": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py",
-     "line": 13,
-     "statement": "from open_composer.adapters.data.alpaca_snapshot import (",
-     "target": "open_composer/adapters/data/alpaca_snapshot.py"
-    },
-    {
-     "file": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py",
-     "line": 13,
-     "statement": "from open_composer.adapters.data.alpaca_snapshot import (",
-     "target": "open_composer/adapters/data/alpaca_snapshot.py"
-    },
-    {
-     "file": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py",
-     "line": 13,
-     "statement": "from open_composer.adapters.data.alpaca_snapshot import (",
-     "target": "open_composer/adapters/data/alpaca_snapshot.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 19,
-     "statement": "from open_composer.adapters.data.alpaca_snapshot import verify_alpaca_contract_snapshot",
-     "target": "open_composer/adapters/data/alpaca_snapshot.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
+     "file": "open_composer/research/etf_structural_r9.py",
      "line": 17,
-     "statement": "from open_composer.adapters.data.alpaca import AlpacaDataError",
-     "target": "open_composer/adapters/data/alpaca.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
-     "line": 18,
-     "statement": "from open_composer.adapters.data.alpaca_snapshot import (",
-     "target": "open_composer/adapters/data/alpaca_snapshot.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
-     "line": 18,
-     "statement": "from open_composer.adapters.data.alpaca_snapshot import (",
+     "statement": "from open_composer.adapters.data.alpaca_snapshot import verify_alpaca_contract_snapshot",
      "target": "open_composer/adapters/data/alpaca_snapshot.py"
     }
    ]
@@ -20806,176 +19350,13 @@
    "source": "rounds",
    "target": "dsl",
    "kind": "import",
-   "weight": 24,
+   "weight": 1,
    "evidence": [
     {
-     "file": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py",
-     "line": 18,
-     "statement": "from open_composer.market_calendar import NEW_YORK, us_equity_session_close",
-     "target": "open_composer/market_calendar.py"
-    },
-    {
-     "file": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py",
-     "line": 18,
-     "statement": "from open_composer.market_calendar import NEW_YORK, us_equity_session_close",
-     "target": "open_composer/market_calendar.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 26,
-     "statement": "from open_composer.market_calendar import NEW_YORK, us_equity_session_close",
-     "target": "open_composer/market_calendar.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 26,
-     "statement": "from open_composer.market_calendar import NEW_YORK, us_equity_session_close",
-     "target": "open_composer/market_calendar.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_paper_control_r7_target_weights.py",
-     "line": 23,
-     "statement": "from open_composer.market_calendar import NEW_YORK, us_equity_session_close",
-     "target": "open_composer/market_calendar.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_paper_control_r7_target_weights.py",
-     "line": 23,
-     "statement": "from open_composer.market_calendar import NEW_YORK, us_equity_session_close",
-     "target": "open_composer/market_calendar.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
-     "line": 22,
+     "file": "open_composer/research/etf_structural_r9.py",
+     "line": 19,
      "statement": "from open_composer.market_calendar import NEW_YORK",
      "target": "open_composer/market_calendar.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_stock_r9_evaluation.py",
-     "line": 17,
-     "statement": "from open_composer.market_calendar import NEW_YORK",
-     "target": "open_composer/market_calendar.py"
-    }
-   ]
-  },
-  {
-   "id": "rounds->engines:import",
-   "source": "rounds",
-   "target": "engines",
-   "kind": "import",
-   "weight": 4,
-   "evidence": [
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 16,
-     "statement": "from open_composer.analytics import build_performance_metrics",
-     "target": "open_composer/analytics/__init__.py"
-    },
-    {
-     "file": "open_composer/research/multiscale_event_r5.py",
-     "line": 14,
-     "statement": "from open_composer.analytics import build_performance_metrics",
-     "target": "open_composer/analytics/__init__.py"
-    },
-    {
-     "file": "open_composer/research/multiscale_low_turnover_r6.py",
-     "line": 18,
-     "statement": "from open_composer.analytics import build_performance_metrics",
-     "target": "open_composer/analytics/__init__.py"
-    },
-    {
-     "file": "open_composer/research/robust_momentum_r4.py",
-     "line": 20,
-     "statement": "from open_composer.analytics import build_performance_metrics",
-     "target": "open_composer/analytics/__init__.py"
-    }
-   ]
-  },
-  {
-   "id": "rounds->execution:import",
-   "source": "rounds",
-   "target": "execution",
-   "kind": "import",
-   "weight": 5,
-   "evidence": [
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 20,
-     "statement": "from open_composer.adapters.execution.router_target_weights import (",
-     "target": "open_composer/adapters/execution/router_target_weights.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 20,
-     "statement": "from open_composer.adapters.execution.router_target_weights import (",
-     "target": "open_composer/adapters/execution/router_target_weights.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 20,
-     "statement": "from open_composer.adapters.execution.router_target_weights import (",
-     "target": "open_composer/adapters/execution/router_target_weights.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 20,
-     "statement": "from open_composer.adapters.execution.router_target_weights import (",
-     "target": "open_composer/adapters/execution/router_target_weights.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_paper_control_r7_target_weights.py",
-     "line": 20,
-     "statement": "from open_composer.adapters.execution.router_target_weights import (",
-     "target": "open_composer/adapters/execution/router_target_weights.py"
-    }
-   ]
-  },
-  {
-   "id": "rounds->external:api",
-   "source": "rounds",
-   "target": "external",
-   "kind": "api",
-   "weight": 14,
-   "evidence": [
-    {
-     "file": "open_composer/research/multiscale_low_turnover_r6.py",
-     "line": 134,
-     "statement": "Alpaca Market Data / Paper Trading"
-    },
-    {
-     "file": "scripts/prepare_pit_semantic_theme_r16.py",
-     "line": 61,
-     "statement": "ProShares 基金页面"
-    },
-    {
-     "file": "scripts/prepare_pit_semantic_theme_r18.py",
-     "line": 60,
-     "statement": "ProShares 基金页面"
-    },
-    {
-     "file": "scripts/prepare_pit_semantic_theme_r19.py",
-     "line": 68,
-     "statement": "SEC EDGAR"
-    },
-    {
-     "file": "scripts/prepare_pit_semantic_theme_r20.py",
-     "line": 73,
-     "statement": "SEC EDGAR"
-    },
-    {
-     "file": "scripts/prepare_vix_term_structure_overlay_r1.py",
-     "line": 296,
-     "statement": "CBOE"
-    },
-    {
-     "file": "scripts/prepare_vix_term_structure_overlay_r1.py",
-     "line": 332,
-     "statement": "ProShares 基金页面"
-    },
-    {
-     "file": "scripts/prepare_vix_term_structure_overlay_r1.py",
-     "line": 344,
-     "statement": "Alpaca Market Data / Paper Trading"
     }
    ]
   },
@@ -20984,86 +19365,17 @@
    "source": "rounds",
    "target": "external",
    "kind": "lib",
-   "weight": 124,
+   "weight": 2,
    "evidence": [
     {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
+     "file": "open_composer/research/etf_structural_r9.py",
      "line": 0,
      "statement": "numpy"
     },
     {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
+     "file": "open_composer/research/etf_structural_r9.py",
      "line": 0,
      "statement": "pandas"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8_ml.py",
-     "line": 0,
-     "statement": "scipy"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8_ml.py",
-     "line": 0,
-     "statement": "sklearn"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8_ml.py",
-     "line": 0,
-     "statement": "lightgbm"
-    },
-    {
-     "file": "open_composer/research/multiscale_low_turnover_r6.py",
-     "line": 0,
-     "statement": "dotenv"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_forward.py",
-     "line": 0,
-     "statement": "pydantic"
-    },
-    {
-     "file": "scripts/prepare_high_beta_sleeve_ensemble_r1.py",
-     "line": 0,
-     "statement": "yaml"
-    }
-   ]
-  },
-  {
-   "id": "rounds->features:import",
-   "source": "rounds",
-   "target": "features",
-   "kind": "import",
-   "weight": 5,
-   "evidence": [
-    {
-     "file": "open_composer/research/high_beta_sleeve_ensemble_r1.py",
-     "line": 33,
-     "statement": "from open_composer.research.factor_library import get_factor_definition",
-     "target": "open_composer/research/factor_library.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r24.py",
-     "line": 25,
-     "statement": "from open_composer.research.factor_library import factor_definition_ids",
-     "target": "open_composer/research/factor_library.py"
-    },
-    {
-     "file": "scripts/prepare_high_beta_sleeve_ensemble_r1.py",
-     "line": 16,
-     "statement": "from open_composer.research.factor_library import write_factor_library_artifact",
-     "target": "open_composer/research/factor_library.py"
-    },
-    {
-     "file": "scripts/prepare_mom_breadth_qd_r1.py",
-     "line": 16,
-     "statement": "from open_composer.research.factor_library import write_factor_library_artifact",
-     "target": "open_composer/research/factor_library.py"
-    },
-    {
-     "file": "scripts/prepare_vix_term_structure_overlay_r1.py",
-     "line": 16,
-     "statement": "from open_composer.research.factor_library import write_factor_library_artifact",
-     "target": "open_composer/research/factor_library.py"
     }
    ]
   },
@@ -21072,178 +19384,13 @@
    "source": "rounds",
    "target": "governance",
    "kind": "import",
-   "weight": 75,
+   "weight": 1,
    "evidence": [
     {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 28,
-     "statement": "from open_composer.research.evidence_custody import (",
-     "target": "open_composer/research/evidence_custody.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 28,
-     "statement": "from open_composer.research.evidence_custody import (",
-     "target": "open_composer/research/evidence_custody.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 32,
+     "file": "open_composer/research/etf_structural_r9.py",
+     "line": 21,
      "statement": "from open_composer.research.iteration_dossier import validate_iteration_dossier",
      "target": "open_composer/research/iteration_dossier.py"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 19,
-     "statement": "from open_composer.research.iteration_dossier import validate_iteration_dossier",
-     "target": "open_composer/research/iteration_dossier.py"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 20,
-     "statement": "from open_composer.research.knowledge_memory import canonical_source_url, claim_fingerprint",
-     "target": "open_composer/research/knowledge_memory.py"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 20,
-     "statement": "from open_composer.research.knowledge_memory import canonical_source_url, claim_fingerprint",
-     "target": "open_composer/research/knowledge_memory.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
-     "line": 28,
-     "statement": "from open_composer.research.iteration_dossier import validate_iteration_dossier",
-     "target": "open_composer/research/iteration_dossier.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_stock_r9_evaluation.py",
-     "line": 29,
-     "statement": "from open_composer.research.iteration_dossier import validate_iteration_dossier",
-     "target": "open_composer/research/iteration_dossier.py"
-    }
-   ]
-  },
-  {
-   "id": "rounds->ml:import",
-   "source": "rounds",
-   "target": "ml",
-   "kind": "import",
-   "weight": 12,
-   "evidence": [
-    {
-     "file": "open_composer/research/pit_semantic_theme_r12.py",
-     "line": 26,
-     "statement": "from open_composer.research.ml_backend.model_factory import create_model",
-     "target": "open_composer/research/ml_backend/model_factory.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r13.py",
-     "line": 26,
-     "statement": "from open_composer.research.ml_backend.model_factory import create_model",
-     "target": "open_composer/research/ml_backend/model_factory.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r14.py",
-     "line": 26,
-     "statement": "from open_composer.research.ml_backend.model_factory import create_model",
-     "target": "open_composer/research/ml_backend/model_factory.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r15.py",
-     "line": 26,
-     "statement": "from open_composer.research.ml_backend.model_factory import create_model",
-     "target": "open_composer/research/ml_backend/model_factory.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r16.py",
-     "line": 26,
-     "statement": "from open_composer.research.ml_backend.model_factory import create_model",
-     "target": "open_composer/research/ml_backend/model_factory.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r17.py",
-     "line": 26,
-     "statement": "from open_composer.research.ml_backend.model_factory import create_model",
-     "target": "open_composer/research/ml_backend/model_factory.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r18.py",
-     "line": 26,
-     "statement": "from open_composer.research.ml_backend.model_factory import create_model",
-     "target": "open_composer/research/ml_backend/model_factory.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r19.py",
-     "line": 26,
-     "statement": "from open_composer.research.ml_backend.model_factory import create_model",
-     "target": "open_composer/research/ml_backend/model_factory.py"
-    }
-   ]
-  },
-  {
-   "id": "rounds->paper:import",
-   "source": "rounds",
-   "target": "paper",
-   "kind": "import",
-   "weight": 4,
-   "evidence": [
-    {
-     "file": "open_composer/research/pit_semantic_theme_forward.py",
-     "line": 27,
-     "statement": "from open_composer.paper_freshness import latest_completed_us_equity_session",
-     "target": "open_composer/paper_freshness.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_forward.py",
-     "line": 28,
-     "statement": "from open_composer.paper_state_drift import build_state_drift_report",
-     "target": "open_composer/paper_state_drift.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r22_forward.py",
-     "line": 26,
-     "statement": "from open_composer.paper_freshness import latest_completed_us_equity_session",
-     "target": "open_composer/paper_freshness.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r23_forward.py",
-     "line": 28,
-     "statement": "from open_composer.paper_freshness import latest_completed_us_equity_session",
-     "target": "open_composer/paper_freshness.py"
-    }
-   ]
-  },
-  {
-   "id": "rounds->routers:import",
-   "source": "rounds",
-   "target": "routers",
-   "kind": "import",
-   "weight": 4,
-   "evidence": [
-    {
-     "file": "open_composer/research/pit_semantic_theme_r11.py",
-     "line": 29,
-     "statement": "from open_composer.research.hybrid_router_core import (",
-     "target": "open_composer/research/hybrid_router_core.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r11.py",
-     "line": 29,
-     "statement": "from open_composer.research.hybrid_router_core import (",
-     "target": "open_composer/research/hybrid_router_core.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r11.py",
-     "line": 29,
-     "statement": "from open_composer.research.hybrid_router_core import (",
-     "target": "open_composer/research/hybrid_router_core.py"
-    },
-    {
-     "file": "open_composer/research/pit_semantic_theme_r11.py",
-     "line": 35,
-     "statement": "from open_composer.research.router_common import RouterFrameDataset",
-     "target": "open_composer/research/router_common.py"
     }
    ]
   },
@@ -21252,55 +19399,19 @@
    "source": "rounds",
    "target": "shared",
    "kind": "import",
-   "weight": 66,
+   "weight": 2,
    "evidence": [
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 52,
-     "statement": "from open_composer.yaml_utils import safe_load_yaml",
-     "target": "open_composer/yaml_utils.py"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 17,
-     "statement": "from open_composer.config import ensure_dir, project_root",
-     "target": "open_composer/config.py"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 17,
-     "statement": "from open_composer.config import ensure_dir, project_root",
-     "target": "open_composer/config.py"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 36,
-     "statement": "from open_composer.storage import write_json",
-     "target": "open_composer/storage.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
-     "line": 29,
-     "statement": "from open_composer.storage import write_json",
-     "target": "open_composer/storage.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8_ml.py",
-     "line": 58,
-     "statement": "from open_composer.storage import write_json",
-     "target": "open_composer/storage.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_stock_r9_evaluation.py",
-     "line": 30,
-     "statement": "from open_composer.storage import write_json",
-     "target": "open_composer/storage.py"
-    },
     {
      "file": "open_composer/research/etf_structural_r9.py",
      "line": 18,
      "statement": "from open_composer.config import ensure_dir",
      "target": "open_composer/config.py"
+    },
+    {
+     "file": "open_composer/research/etf_structural_r9.py",
+     "line": 22,
+     "statement": "from open_composer.storage import write_json",
+     "target": "open_composer/storage.py"
     }
    ]
   },
@@ -21309,55 +19420,25 @@
    "source": "rounds",
    "target": "spec",
    "kind": "import",
-   "weight": 130,
+   "weight": 3,
    "evidence": [
     {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 27,
-     "statement": "from open_composer.models.strategy_spec import StrategySpec",
-     "target": "open_composer/models/strategy_spec.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 51,
-     "statement": "from open_composer.strategy_versions import strategy_content_hash",
-     "target": "open_composer/strategy_versions.py"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_paper_control_r7_target_weights.py",
-     "line": 24,
+     "file": "open_composer/research/etf_structural_r9.py",
+     "line": 20,
      "statement": "from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec",
      "target": "open_composer/models/strategy_spec.py"
     },
     {
-     "file": "open_composer/adapters/execution/multiasset_paper_control_r7_target_weights.py",
-     "line": 24,
+     "file": "open_composer/research/etf_structural_r9.py",
+     "line": 20,
      "statement": "from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec",
      "target": "open_composer/models/strategy_spec.py"
     },
     {
-     "file": "open_composer/adapters/execution/multiasset_paper_control_r7_target_weights.py",
-     "line": 44,
-     "statement": "from open_composer.strategy_versions import strategy_content_hash",
-     "target": "open_composer/strategy_versions.py"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 18,
-     "statement": "from open_composer.models.strategy_spec import load_strategy_spec",
-     "target": "open_composer/models/strategy_spec.py"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 37,
-     "statement": "from open_composer.strategy_versions import strategy_content_hash",
-     "target": "open_composer/strategy_versions.py"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
+     "file": "open_composer/research/etf_structural_r9.py",
      "line": 23,
-     "statement": "from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec",
-     "target": "open_composer/models/strategy_spec.py"
+     "statement": "from open_composer.strategy_versions import strategy_content_hash",
+     "target": "open_composer/strategy_versions.py"
     }
    ]
   },
@@ -21366,136 +19447,12 @@
    "source": "rounds",
    "target": "store_artifacts",
    "kind": "store",
-   "weight": 396,
+   "weight": 1,
    "evidence": [
     {
-     "file": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py",
-     "line": 24,
-     "statement": "reports/research"
-    },
-    {
-     "file": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py",
+     "file": "open_composer/research/etf_structural_r9.py",
      "line": 26,
-     "statement": "reports/forward"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_forward_multimodal_r5_target_weights.py",
-     "line": 141,
-     "statement": "reports/forward"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_paper_control_r7_target_weights.py",
-     "line": 87,
-     "statement": "reports/forward"
-    },
-    {
-     "file": "open_composer/adapters/execution/multiasset_paper_control_r7_target_weights.py",
-     "line": 711,
-     "statement": "reports/execution"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 42,
      "statement": "reports/research"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 47,
-     "statement": "reports/harness"
-    },
-    {
-     "file": "open_composer/research/core_satellite_r7.py",
-     "line": 47,
-     "statement": "harness/"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
-     "line": 33,
-     "statement": "reports/research"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
-     "line": 127,
-     "statement": "reports/harness"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
-     "line": 127,
-     "statement": "harness/"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
-     "line": 128,
-     "statement": "prompts/"
-    }
-   ]
-  },
-  {
-   "id": "rounds->store_data:store",
-   "source": "rounds",
-   "target": "store_data",
-   "kind": "store",
-   "weight": 65,
-   "evidence": [
-    {
-     "file": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py",
-     "line": 28,
-     "statement": "data/forward"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_chain_r8.py",
-     "line": 36,
-     "statement": "data/research"
-    },
-    {
-     "file": "open_composer/research/dynamic_theme_stock_r9_evaluation.py",
-     "line": 60,
-     "statement": "data/cache"
-    },
-    {
-     "file": "open_composer/research/high_beta_sleeve_ensemble_r1.py",
-     "line": 49,
-     "statement": "data/research"
-    },
-    {
-     "file": "open_composer/research/mom_breadth_qd_r1.py",
-     "line": 76,
-     "statement": "data/research"
-    },
-    {
-     "file": "open_composer/research/multiasset_forward_multimodal_r4.py",
-     "line": 31,
-     "statement": "data/research"
-    },
-    {
-     "file": "open_composer/research/multiasset_forward_multimodal_r4.py",
-     "line": 2325,
-     "statement": "data/sample"
-    },
-    {
-     "file": "open_composer/research/multiasset_forward_multimodal_r5.py",
-     "line": 48,
-     "statement": "data/research"
-    },
-    {
-     "file": "open_composer/research/multiasset_forward_multimodal_r6.py",
-     "line": 55,
-     "statement": "data/research"
-    },
-    {
-     "file": "open_composer/research/multiasset_paper_control_r7.py",
-     "line": 42,
-     "statement": "data/research"
-    },
-    {
-     "file": "open_composer/research/multiscale_event_r5.py",
-     "line": 619,
-     "statement": "data/research"
-    },
-    {
-     "file": "open_composer/research/multiscale_low_turnover_r6.py",
-     "line": 32,
-     "statement": "data/research"
     }
    ]
   },
@@ -22159,7 +20116,7 @@
    "source": "scripts",
    "target": "data",
    "kind": "import",
-   "weight": 24,
+   "weight": 23,
    "evidence": [
     {
      "file": "scripts/build_step13_regime_daily_features.py",
@@ -22644,21 +20601,6 @@
    ]
   },
   {
-   "id": "scripts->rounds:import",
-   "source": "scripts",
-   "target": "rounds",
-   "kind": "import",
-   "weight": 1,
-   "evidence": [
-    {
-     "file": "scripts/run_r7_forward_observation.py",
-     "line": 6,
-     "statement": "from open_composer.adapters.data.multiasset_paper_control_r7_snapshot import (",
-     "target": "open_composer/adapters/data/multiasset_paper_control_r7_snapshot.py"
-    }
-   ]
-  },
-  {
    "id": "scripts->routers:import",
    "source": "scripts",
    "target": "routers",
@@ -22720,7 +20662,7 @@
    "source": "scripts",
    "target": "shared",
    "kind": "import",
-   "weight": 42,
+   "weight": 41,
    "evidence": [
     {
      "file": "scripts/check_sip_freshness.py",
@@ -23637,7 +21579,7 @@
      "detail": "按组合模式分发到执行适配。",
      "evidence": {
       "file": "open_composer/cli.py",
-      "line": 6205,
+      "line": 5487,
       "expect": "def strategy_target_weights("
      }
     },
