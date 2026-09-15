@@ -15,177 +15,12 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
 
-from open_composer.adapters.broker.alpaca_paper import (
-    PaperOrderError,
-    submit_paper_order,
-    sync_paper_account,
-    sync_paper_orders,
-)
-from open_composer.adapters.data import fetch_ohlcv
-from open_composer.adapters.data.comparison import compare_ohlcv_sources
 from open_composer.adapters.data.longbridge import (
     DEFAULT_LONGBRIDGE_TRADE_SESSIONS,
     MAX_LONGBRIDGE_CANDLESTICKS,
-    LongbridgeDataError,
-    fetch_longbridge_bars,
-    fetch_longbridge_quotes,
-    longbridge_credentials_status,
-    longbridge_quote_status,
 )
-from open_composer.adapters.events import fetch_capability_events
-from open_composer.adapters.execution import build_nautilus_trader_plan, write_nautilus_trader_plan
-from open_composer.adapters.execution.adaptive_intraday_target_weights import (
-    run_adaptive_intraday_target_weight_mapping,
-)
-from open_composer.adapters.execution.beta_target_weights import run_beta_target_weight_mapping
-from open_composer.adapters.execution.core_beta_satellite_target_weights import (
-    run_core_beta_satellite_target_weight_mapping,
-)
-from open_composer.adapters.execution.hybrid_target_weights import (
-    run_hybrid_target_weight_mapping,
-)
-from open_composer.cache import (
-    build_cache_inventory,
-    clean_cache_targets,
-    resolve_clean_target_keys,
-)
-from open_composer.capabilities import evaluate_capabilities, load_registry
-from open_composer.compiler.spec_to_pine import compile_pine, compile_pine_strategy
-from open_composer.config import (
-    alpaca_api_base_url,
-    data_feed,
-    default_openai_model,
-    openai_base_url,
-    openai_base_url_source,
-    optional_env_status,
-    project_root,
-)
-from open_composer.context import build_signal_context
-from open_composer.dashboard import (
-    DashboardCommandError,
-    DashboardServerError,
-    build_dashboard_catalog,
-    build_dashboard_command_plan,
-    build_feature_packet_records,
-    execute_dashboard_command_plan,
-    load_dashboard_command_plan,
-    serve_dashboard,
-    write_dashboard_catalog,
-    write_dashboard_command_plan,
-    write_dashboard_html,
-    write_dashboard_review_markdown,
-)
-from open_composer.dashboard.vps_deploy import (
-    VpsDashboardDeployError,
-    apply_vps_dashboard_deploy,
-    build_vps_dashboard_deploy_config,
-    write_vps_dashboard_deploy_report,
-)
-from open_composer.dashboard.vps_deploy import (
-    detect_public_ip as detect_dashboard_public_ip,
-)
-from open_composer.dashboard.vps_deploy import (
-    write_system_templates as write_dashboard_system_templates,
-)
-from open_composer.deployment import (
-    ensure_runtime_dirs,
-    prepare_workspace,
-    write_feature_validation_report,
-)
-from open_composer.engines.backtest_engine import run_backtest
-from open_composer.engines.scanner_engine import run_scan
-from open_composer.feature_packets import (
-    FeaturePacketError,
-    build_context_feature_packet,
-    build_manual_feature_packet,
-    default_context_feature_path,
-    parse_datetime,
-    parse_feature_pairs,
-    write_feature_packet,
-)
-from open_composer.journal.writer import add_journal_entry
-from open_composer.models.notification import NotificationKind, NotificationSeverity
-from open_composer.models.project import StrategyProjectCreate, StrategyProjectRun
-from open_composer.models.strategy_spec import load_strategy_spec
-from open_composer.notifications import (
-    notification_config_status,
-    read_notification_log,
-    send_test_notification,
-)
-from open_composer.paper_controls import (
-    build_paper_alerts,
-    build_paper_status,
-    clear_paper_kill_switch,
-    enable_paper_kill_switch,
-    reconcile_paper_state,
-    refresh_paper_monitor,
-    run_paper_monitor_loop,
-    write_paper_status,
-)
-from open_composer.paper_readiness import (
-    assess_paper_strategy_readiness,
-    write_paper_readiness_report,
-)
-from open_composer.paper_validation import write_paper_validation_report
-from open_composer.projects import (
-    create_project,
-    list_projects,
-    load_project,
-    load_project_run_summary,
-    update_gate_state,
-    update_project_state,
-)
-from open_composer.readiness import build_readiness_report, write_readiness_report
-from open_composer.repo_check import build_repo_check_report, write_repo_check_report
-from open_composer.research import (
-    build_alternative_data_evidence,
-    build_geometry_feature_report,
-    build_hybrid_paper_plan,
-    build_options_overlay_report,
-    build_options_research_report,
-    build_overfit_risk_report,
-    build_promotion_report,
-    build_short_risk_report,
-    build_strategy_evidence,
-    draft_strategy_from_idea_with_status,
-    optimize_option_overlays,
-    optimize_strategy,
-    optimize_strategy_horizons,
-    optimize_strategy_universe,
-    parse_sweep_parameters,
-    run_adaptive_intraday_router_research,
-    run_adaptive_intraday_router_scan,
-    run_aggressive_theme_router_research,
-    run_beta_exposure_router_research,
-    run_blind_test,
-    run_core_beta_satellite_router_research,
-    run_core_satellite_router_research,
-    run_cost_grid,
-    run_exposure_switch_research,
-    run_factor_lab,
-    run_hybrid_adaptive_router_research,
-    run_hybrid_factor_attribution,
-    run_hybrid_news_marginal_lift_research,
-    run_intraday_daily_rotation_research,
-    run_leverage_research,
-    run_llm_adaptive_intraday_router_selection,
-    run_llm_exposure_switch_meta_selection,
-    run_llm_intraday_daily_rotation_selection,
-    run_llm_rotation_meta_selection,
-    run_market_timing_research,
-    run_parameter_sweep,
-    run_rotation_research,
-    run_skill_attribution,
-    run_theme_intraday_rotation_router_research,
-    run_universe_audit,
-    run_wide_router_research,
-    search_similar_regimes,
-    sweep_parameters_from_spec,
-    update_research_control,
-    validate_strategy_dag,
-    write_intraday_product_reflection,
-    write_strategy_dag_validation,
-)
+from open_composer.config import project_root
+from open_composer.research import build_promotion_report, run_hybrid_adaptive_router_research
 from open_composer.research.llm_exposure_switch import LLMExposureSwitchChoice
 from open_composer.research.pdr_attribution import (
     DEFAULT_DATE_TAG as PDR_ATTRIBUTION_DEFAULT_DATE_TAG,
@@ -202,10 +37,6 @@ from open_composer.research.pdr_attribution import (
 from open_composer.research.pdr_attribution import (
     DEFAULT_START as PDR_ATTRIBUTION_DEFAULT_START,
 )
-from open_composer.research.pdr_attribution import (
-    parse_fold_windows,
-    run_pdr_router_attribution,
-)
 from open_composer.research.pdr_ml_gate_evaluation import (
     DEFAULT_END as PDR_ML_GATE_DEFAULT_END,
 )
@@ -215,11 +46,7 @@ from open_composer.research.pdr_ml_gate_evaluation import (
 from open_composer.research.pdr_ml_gate_evaluation import (
     evaluate_pdr_router_ml_gate,
 )
-from open_composer.research.research_brief import init_research_brief, validate_research_brief
-from open_composer.research.research_cache_manifest import (
-    DEFAULT_RESEARCH_CACHE_DIR,
-    verify_longbridge_research_cache_manifest,
-)
+from open_composer.research.research_cache_manifest import DEFAULT_RESEARCH_CACHE_DIR
 from open_composer.research.route_cross_source import (
     DEFAULT_ALT_DIR as ROUTE_CROSS_SOURCE_DEFAULT_ALT_DIR,
 )
@@ -244,10 +71,6 @@ from open_composer.research.route_cross_source import (
 from open_composer.research.route_cross_source import (
     DEFAULT_START as ROUTE_CROSS_SOURCE_DEFAULT_START,
 )
-from open_composer.research.route_cross_source import (
-    evaluate_route_cross_source_validation,
-    materialize_alt_daily_source,
-)
 from open_composer.research.router_replay_audit import (
     DEFAULT_AUDIT_DATE as ROUTER_REPLAY_AUDIT_DEFAULT_DATE,
 )
@@ -257,29 +80,7 @@ from open_composer.research.router_replay_audit import (
 from open_composer.research.router_replay_audit import (
     DEFAULT_OUT_DIR as ROUTER_REPLAY_AUDIT_DEFAULT_OUT_DIR,
 )
-from open_composer.research.router_replay_audit import (
-    run_router_replay_audit,
-)
-from open_composer.review.llm import review_signal_with_status
-from open_composer.runner.paper import PaperRunnerError, run_paper_loop
-from open_composer.storage import find_signal
-from open_composer.strategy_capabilities import (
-    StrategyCapabilityReport,
-    assess_strategy_capabilities,
-)
-from open_composer.strategy_lifecycle import (
-    activate_strategy,
-    approve_strategy,
-    disable_strategy,
-    list_strategies,
-    resolve_strategy_path,
-)
-from open_composer.strategy_versions import (
-    diff_strategy_versions,
-    load_strategy_versions,
-    register_strategy_version,
-    rollback_strategy_version,
-)
+from open_composer.strategy_capabilities import StrategyCapabilityReport
 
 app = typer.Typer(no_args_is_help=True)
 spec_app = typer.Typer(no_args_is_help=True)
@@ -1374,6 +1175,15 @@ def doctor(
 
     Use --plain for shell-parseable output (one row per line, tab-separated).
     """
+    from open_composer.config import (
+        alpaca_api_base_url,
+        data_feed,
+        default_openai_model,
+        openai_base_url,
+        openai_base_url_source,
+        optional_env_status,
+    )
+
     root = project_root()
     _ensure_runtime_dirs(root)
     sample_path = root / "data" / "sample" / "qqq_15m.csv"
@@ -1457,6 +1267,8 @@ def cache_status_command(
     ] = False,
 ) -> None:
     """Show local dependency, cache, and runtime artifact sizes."""
+    from open_composer.cache import build_cache_inventory
+
     root = project_root()
     inventory = build_cache_inventory(root)
     payload = {
@@ -1529,6 +1341,8 @@ def cache_clean_command(
     ] = False,
 ) -> None:
     """Preview or clean ignored local cache and runtime artifacts."""
+    from open_composer.cache import clean_cache_targets, resolve_clean_target_keys
+
     root = project_root()
     selected = resolve_clean_target_keys(
         data_cache=data_cache,
@@ -1583,6 +1397,8 @@ def readiness_command(
     ] = None,
 ) -> None:
     """Write and print a deployment readiness report."""
+    from open_composer.readiness import build_readiness_report, write_readiness_report
+
     root = project_root()
     report = build_readiness_report(root)
     json_path, md_path = write_readiness_report(report, root, output)
@@ -1618,6 +1434,8 @@ def repo_check_command(
     ] = None,
 ) -> None:
     """Check repository docs, control surface, and sample workflow anchors."""
+    from open_composer.repo_check import build_repo_check_report, write_repo_check_report
+
     root = project_root()
     report = build_repo_check_report(root)
     json_path, md_path = write_repo_check_report(report, root, output)
@@ -1653,6 +1471,8 @@ def deploy_prepare_command(
     ] = False,
 ) -> None:
     """Rebuild the local deployment surface for a smooth workspace startup."""
+    from open_composer.deployment import prepare_workspace
+
     root = project_root()
     report = prepare_workspace(root, sync_broker=sync_broker)
     table = Table(title="Open Composer Deployment Prepare")
@@ -1687,6 +1507,9 @@ def feature_validate_command(
     ] = False,
 ) -> None:
     """Validate feature packet logs and write a point-in-time report."""
+    from open_composer.dashboard import build_feature_packet_records
+    from open_composer.deployment import write_feature_validation_report
+
     root = project_root()
     packets = build_feature_packet_records(root)
     report_path = output or root / "reports" / "features" / "validation.json"
@@ -1762,6 +1585,14 @@ def feature_write_command(
     ] = "unknown",
 ) -> None:
     """Append a canonical point-in-time feature packet row."""
+    from open_composer.feature_packets import (
+        FeaturePacketError,
+        build_manual_feature_packet,
+        parse_datetime,
+        parse_feature_pairs,
+        write_feature_packet,
+    )
+
     if sentiment not in {"positive", "neutral", "negative", "unknown"}:
         raise typer.BadParameter("--sentiment must be positive, neutral, negative, or unknown")
     try:
@@ -1800,6 +1631,13 @@ def feature_from_context_command(
     ] = None,
 ) -> None:
     """Convert a signal context packet into replayable feature values."""
+    from open_composer.feature_packets import (
+        FeaturePacketError,
+        build_context_feature_packet,
+        default_context_feature_path,
+        write_feature_packet,
+    )
+
     root = project_root()
     try:
         packet = build_context_feature_packet(signal_id, root)
@@ -1840,6 +1678,7 @@ def feature_materialize_command(
     ] = None,
 ) -> None:
     """Materialize llm_feature factors into PIT replay packets."""
+    from open_composer.models.strategy_spec import load_strategy_spec
     from open_composer.research.llm_materialize import materialize_factor
 
     root = project_root()
@@ -1883,6 +1722,8 @@ def dashboard_catalog_command(
     ] = None,
 ) -> None:
     """Build a rebuildable read model for strategies, runs, signals, reviews, and audits."""
+    from open_composer.dashboard import build_dashboard_catalog, write_dashboard_catalog
+
     root = project_root()
     output_path = output or root / "reports" / "dashboard" / "catalog.json"
     markdown_path = markdown or root / "reports" / "dashboard" / "catalog.md"
@@ -1917,6 +1758,8 @@ def dashboard_review_plan_command(
     ] = None,
 ) -> None:
     """Write a strict D0 review of the current Dashboard plan against repo artifacts."""
+    from open_composer.dashboard import build_dashboard_catalog, write_dashboard_review_markdown
+
     root = project_root()
     output_path = output or root / "reports" / "dashboard" / "review.md"
     catalog = build_dashboard_catalog(root)
@@ -1932,6 +1775,12 @@ def dashboard_html_command(
     ] = None,
 ) -> None:
     """Build a read-only static Dashboard page from the dashboard catalog."""
+    from open_composer.dashboard import (
+        build_dashboard_catalog,
+        write_dashboard_catalog,
+        write_dashboard_html,
+    )
+
     root = project_root()
     output_path = output or root / "reports" / "dashboard" / "index.html"
     catalog = build_dashboard_catalog(root)
@@ -1961,6 +1810,8 @@ def dashboard_serve_command(
     ] = None,
 ) -> None:
     """Serve the built React dashboard or the static read-only HTML locally."""
+    from open_composer.dashboard import DashboardServerError, serve_dashboard
+
     try:
         serve_dashboard(project_root(), host=host, port=port, api_token=api_token)
     except DashboardServerError as exc:
@@ -2057,6 +1908,17 @@ def dashboard_deploy_vps_command(
     ] = False,
 ) -> None:
     """Deploy the canonical VPS-hosted Dashboard without Vercel."""
+    from open_composer.dashboard.vps_deploy import (
+        VpsDashboardDeployError,
+        apply_vps_dashboard_deploy,
+        build_vps_dashboard_deploy_config,
+        write_vps_dashboard_deploy_report,
+    )
+    from open_composer.dashboard.vps_deploy import detect_public_ip as detect_dashboard_public_ip
+    from open_composer.dashboard.vps_deploy import (
+        write_system_templates as write_dashboard_system_templates,
+    )
+
     resolved_public_ip = public_ip
     if apply and not dashboard_url and not resolved_public_ip and detect_ip:
         resolved_public_ip = detect_dashboard_public_ip()
@@ -2147,6 +2009,8 @@ def dashboard_command_plan_command(
     ] = None,
 ) -> None:
     """Create a local Dashboard command plan without executing it."""
+    from open_composer.dashboard import build_dashboard_command_plan, write_dashboard_command_plan
+
     allowed = {
         "paper.status.refresh",
         "paper.monitor.refresh",
@@ -2199,6 +2063,12 @@ def dashboard_command_run_command(
     ] = "dashboard",
 ) -> None:
     """Execute a paper-only Dashboard command plan after explicit confirmation."""
+    from open_composer.dashboard import (
+        DashboardCommandError,
+        execute_dashboard_command_plan,
+        load_dashboard_command_plan,
+    )
+
     root = project_root()
     command_plan = load_dashboard_command_plan(plan)
     try:
@@ -2225,6 +2095,9 @@ def project_create_command(
     use_llm: Annotated[bool, typer.Option("--use-llm/--no-llm")] = False,
 ) -> None:
     """Create a lightweight StrategyProject."""
+    from open_composer.models.project import StrategyProjectCreate
+    from open_composer.projects import create_project
+
     try:
         project, command = create_project(
             StrategyProjectCreate(
@@ -2249,6 +2122,8 @@ def project_create_command(
 @project_app.command("list")
 def project_list_command() -> None:
     """List StrategyProject records."""
+    from open_composer.projects import list_projects
+
     table = Table(title="Open Composer Strategy Projects")
     table.add_column("Project")
     table.add_column("State")
@@ -2273,6 +2148,8 @@ def project_state_command(
     next_action: Annotated[str | None, typer.Option("--next-action")] = None,
 ) -> None:
     """Update lightweight StrategyProject state."""
+    from open_composer.projects import update_project_state
+
     try:
         project = update_project_state(
             project_id,
@@ -2296,6 +2173,8 @@ def project_gate_state_command(
     ] = None,
 ) -> None:
     """Update project gate_summary through the single gate-state writer."""
+    from open_composer.projects import update_gate_state
+
     try:
         project = update_gate_state(
             project_id,
@@ -2315,6 +2194,8 @@ def project_gate_state_command(
 @project_app.command("show")
 def project_show_command(project_id: str) -> None:
     """Show a StrategyProject as JSON."""
+    from open_composer.projects import load_project
+
     try:
         project = load_project(project_id, project_root())
     except FileNotFoundError as exc:
@@ -2350,7 +2231,13 @@ def project_run_append_command(
     ] = None,
 ) -> None:
     """Append a lightweight worker run summary and run deterministic path/spec checks."""
-    from open_composer.projects import append_project_run, verify_project_run
+    from open_composer.models.project import StrategyProjectRun
+    from open_composer.projects import (
+        append_project_run,
+        load_project,
+        load_project_run_summary,
+        verify_project_run,
+    )
 
     root = project_root()
     project = load_project(project_id, root)
@@ -2498,6 +2385,8 @@ def notify_status_command(
     limit: Annotated[int, typer.Option("--limit", help="Recent notification log rows.")] = 10,
 ) -> None:
     """Show outbound notification configuration without exposing secrets."""
+    from open_composer.notifications import notification_config_status, read_notification_log
+
     root = project_root()
     status = notification_config_status(root)
     table = Table(title="Open Composer Notifications")
@@ -2553,6 +2442,9 @@ def notify_test_command(
     ] = False,
 ) -> None:
     """Send or dry-run a test outbound notification."""
+    from open_composer.models.notification import NotificationKind, NotificationSeverity
+    from open_composer.notifications import send_test_notification
+
     allowed_kinds = set(get_args(NotificationKind))
     allowed_severities = set(get_args(NotificationSeverity))
     if kind not in allowed_kinds:
@@ -2576,6 +2468,8 @@ def notify_test_command(
 @capability_app.command("list")
 def capability_list() -> None:
     """List registered strategy/data capabilities."""
+    from open_composer.capabilities import load_registry
+
     registry = load_registry(project_root())
     table = Table(title="Open Composer Capabilities")
     table.add_column("ID")
@@ -2597,6 +2491,8 @@ def capability_list() -> None:
 @capability_app.command("test")
 def capability_test() -> None:
     """Evaluate capability fixtures for coverage, validity, and dedupe hygiene."""
+    from open_composer.capabilities import evaluate_capabilities
+
     evaluations = evaluate_capabilities(project_root())
     failed = [evaluation for evaluation in evaluations if not evaluation.passed]
     for evaluation in evaluations:
@@ -2612,6 +2508,8 @@ def capability_test() -> None:
 @spec_app.command("validate")
 def spec_validate(path: Path) -> None:
     """Validate a StrategySpec YAML file and supported expressions."""
+    from open_composer.models.strategy_spec import load_strategy_spec
+
     spec = load_strategy_spec(path)
     console.print(f"[green]valid[/green] {path} ({spec.name})")
 
@@ -2622,6 +2520,8 @@ def spec_capabilities(
     json_output: bool = typer.Option(False, "--json", help="Print machine-readable JSON."),
 ) -> None:
     """Assess StrategySpec compatibility across backtest, Pine, Alpaca, and LLM workflows."""
+    from open_composer.strategy_capabilities import assess_strategy_capabilities
+
     report = assess_strategy_capabilities(path)
     if json_output:
         print(
@@ -2667,6 +2567,11 @@ def spec_backend_plan(
     ] = None,
 ) -> None:
     """Build the NautilusTrader compatibility plan for a StrategySpec."""
+    from open_composer.adapters.execution import (
+        build_nautilus_trader_plan,
+        write_nautilus_trader_plan,
+    )
+
     plan = build_nautilus_trader_plan(path, project_root())
     if output is not None:
         write_nautilus_trader_plan(output, plan)
@@ -2752,6 +2657,9 @@ def data_fetch(
     ),
 ) -> None:
     """Fetch OHLCV bars into data/cache."""
+    from open_composer.adapters.data import fetch_ohlcv
+    from open_composer.adapters.data.longbridge import LongbridgeDataError, fetch_longbridge_bars
+
     root = project_root()
     selected_symbol = symbol.upper()
     selected_start = _parse_datetime(start)
@@ -2799,6 +2707,8 @@ def data_compare(
     right_feed: str | None = typer.Option(None, "--right-feed"),
 ) -> None:
     """Compare two OHLCV sources and write a diff report."""
+    from open_composer.adapters.data.comparison import compare_ohlcv_sources
+
     root = project_root()
     comparison = compare_ohlcv_sources(
         root=root,
@@ -2829,6 +2739,14 @@ def data_longbridge_check(
     ),
 ) -> None:
     """Validate Longbridge credentials, quote permission, and live bars."""
+    from open_composer.adapters.data.longbridge import (
+        LongbridgeDataError,
+        fetch_longbridge_bars,
+        fetch_longbridge_quotes,
+        longbridge_credentials_status,
+        longbridge_quote_status,
+    )
+
     root = project_root()
     credentials = longbridge_credentials_status(root)
     table = Table(title="Longbridge Live Check")
@@ -2898,6 +2816,10 @@ def data_verify_research_cache(
     ] = None,
 ) -> None:
     """Verify Longbridge adjusted research cache against its manifest."""
+    from open_composer.research.research_cache_manifest import (
+        verify_longbridge_research_cache_manifest,
+    )
+
     try:
         report = verify_longbridge_research_cache_manifest(
             project_root(),
@@ -3069,6 +2991,8 @@ def data_fetch_alt_daily(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Materialize an alternate daily source for fixed-route cross-source replay."""
+    from open_composer.research.route_cross_source import materialize_alt_daily_source
+
     parsed_symbols = (
         [item.strip().upper() for item in symbols.split(",") if item.strip()] if symbols else None
     )
@@ -3106,6 +3030,8 @@ def events_fetch(
     sort: str | None = typer.Option(None, "--sort"),
 ) -> None:
     """Fetch or replay event/news records into raw event logs."""
+    from open_composer.adapters.events import fetch_capability_events
+
     selected_symbols = [symbol.strip().upper() for symbol in symbols.split(",") if symbol.strip()]
     events = fetch_capability_events(
         source,
@@ -3126,6 +3052,8 @@ def macro_fetch(
     offline: bool = typer.Option(True, "--offline/--live"),
 ) -> None:
     """Fetch or replay macro records into raw macro logs."""
+    from open_composer.adapters.events import fetch_capability_events
+
     events = fetch_capability_events(source, project_root(), None, offline=offline)
     console.print(f"[green]macro fetched[/green] source={source} records={len(events)}")
 
@@ -3133,6 +3061,8 @@ def macro_fetch(
 @app.command()
 def backtest(spec: Path) -> None:
     """Run a deterministic backtest from a StrategySpec."""
+    from open_composer.engines.backtest_engine import run_backtest
+
     _require_declared_iteration_gate(spec)
     artifacts = run_backtest(spec)
     console.print(
@@ -3150,6 +3080,9 @@ def scan(
     refresh_data: bool = typer.Option(False, "--refresh-data"),
 ) -> None:
     """Scan the latest bar for a StrategySpec."""
+    from open_composer.context import build_signal_context
+    from open_composer.engines.scanner_engine import run_scan
+
     signals = run_scan(spec, refresh_data=refresh_data)
     console.print(f"[green]scan complete[/green] signals={len(signals)}")
     for signal in signals:
@@ -3165,6 +3098,8 @@ def scan(
 @compile_app.command("pine")
 def compile_pine_command(spec: Path) -> None:
     """Compile a StrategySpec to TradingView Pine Script."""
+    from open_composer.compiler.spec_to_pine import compile_pine
+
     path = compile_pine(spec)
     console.print(f"[green]pine generated[/green] {path}")
 
@@ -3172,6 +3107,8 @@ def compile_pine_command(spec: Path) -> None:
 @compile_app.command("pine-strategy")
 def compile_pine_strategy_command(spec: Path) -> None:
     """Compile a StrategySpec to a TradingView Strategy Tester Pine Script."""
+    from open_composer.compiler.spec_to_pine import compile_pine_strategy
+
     path = compile_pine_strategy(spec)
     console.print(f"[green]pine strategy generated[/green] {path}")
 
@@ -3192,6 +3129,10 @@ def review_signal(
     By default, respects the strategy's llm_review.enabled flag. Use --force to
     override and request a review for strategies that have it disabled.
     """
+    from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.review.llm import review_signal_with_status
+    from open_composer.storage import find_signal
+
     root = project_root()
     signal = find_signal(signal_id, root)
     spec_path = _find_strategy_spec(signal.strategy_name, root)
@@ -3206,6 +3147,8 @@ def review_signal(
 @context_app.command("build")
 def context_build(signal_id: str) -> None:
     """Build a deterministic event/macro/news context packet for a signal."""
+    from open_composer.context import build_signal_context
+
     context = build_signal_context(signal_id, project_root())
     console.print(
         f"[green]context written[/green] reports/context/{signal_id}.json "
@@ -3224,6 +3167,9 @@ def strategy_draft(
     falls back to the deterministic drafter and records the fallback reason in
     the draft research plan.
     """
+    from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.research import draft_strategy_from_idea_with_status
+
     result = draft_strategy_from_idea_with_status(idea, project_root(), use_llm=use_llm)
     spec = load_strategy_spec(result.path)
     if result.fallback_reason:
@@ -3243,6 +3189,8 @@ def strategy_optimize(
     min_sharpe: float = typer.Option(0.0, "--min-sharpe"),
 ) -> None:
     """Generate candidate rule variants and select the best deterministic backtest result."""
+    from open_composer.research import optimize_strategy
+
     _require_declared_iteration_gate(spec)
     result = optimize_strategy(spec, project_root(), min_return_pct, min_signals, min_sharpe)
     console.print(
@@ -3282,6 +3230,13 @@ def strategy_parameter_sweep(
     ),
 ) -> None:
     """Run a bounded parameter grid over a StrategySpec and write ranked reports."""
+    from open_composer.research import (
+        parse_sweep_parameters,
+        run_parameter_sweep,
+        sweep_parameters_from_spec,
+        update_research_control,
+    )
+
     _require_declared_iteration_gate(spec)
     try:
         parsed = sweep_parameters_from_spec(spec, project_root()) if from_spec else {}
@@ -3323,6 +3278,8 @@ def strategy_research_brief_init(
     overwrite: bool = typer.Option(False, "--overwrite"),
 ) -> None:
     """Create or refresh the research brief required before optimization."""
+    from open_composer.research.research_brief import init_research_brief
+
     json_path, md_path = init_research_brief(
         spec,
         project_root(),
@@ -3336,6 +3293,8 @@ def strategy_research_brief_init(
 @research_brief_app.command("validate")
 def strategy_research_brief_validate(spec: Path) -> None:
     """Validate a research brief against the current StrategySpec hash."""
+    from open_composer.research.research_brief import validate_research_brief
+
     result = validate_research_brief(spec, project_root(), require_for_optimization=True)
     if not result.ok:
         raise typer.BadParameter("research brief invalid: " + ", ".join(result.blocked))
@@ -3349,6 +3308,8 @@ def strategy_factor_lab(
     quantiles: int = typer.Option(5, "--quantiles"),
 ) -> None:
     """Run a lightweight factor diagnostic report for a StrategySpec."""
+    from open_composer.research import run_factor_lab
+
     _require_declared_iteration_gate(spec)
     result = run_factor_lab(
         spec,
@@ -3422,6 +3383,8 @@ def strategy_geometry_features(
     window_bars: int = typer.Option(20, "--window-bars"),
 ) -> None:
     """Build a research-only geometry/topology feature sandbox report."""
+    from open_composer.research import build_geometry_feature_report
+
     try:
         result = build_geometry_feature_report(
             spec,
@@ -3445,6 +3408,8 @@ def strategy_evidence(spec: Path) -> None:
 
 
 def _print_strategy_evidence(spec: Path) -> None:
+    from open_composer.research import build_strategy_evidence
+
     _require_declared_iteration_gate(spec)
     result = build_strategy_evidence(spec, project_root())
     console.print(f"[green]strategy evidence complete[/green] status={result.status}")
@@ -3458,6 +3423,8 @@ def _print_strategy_evidence(spec: Path) -> None:
 @strategy_app.command("universe-audit")
 def strategy_universe_audit(spec: Path) -> None:
     """Audit PIT universe, current-symbol, and survivorship risks."""
+    from open_composer.research import run_universe_audit
+
     result = run_universe_audit(spec, project_root())
     console.print(f"[green]universe audit complete[/green] status={result.status}")
     console.print(f"report: {result.report_path}")
@@ -3467,6 +3434,8 @@ def strategy_universe_audit(spec: Path) -> None:
 @strategy_app.command("overfit-risk")
 def strategy_overfit_risk(spec: Path) -> None:
     """Write the lightweight PBO/DSR proxy report for a parameter-sweep run."""
+    from open_composer.research import build_overfit_risk_report
+
     result = build_overfit_risk_report(spec, project_root())
     console.print(f"[green]overfit risk complete[/green] status={result.status}")
     console.print(f"trials={result.trial_count} dsr={result.dsr_proxy} pbo={result.pbo_proxy}")
@@ -3493,6 +3462,8 @@ def strategy_research_control(spec: Path) -> None:
 @strategy_app.command("dag-validate")
 def strategy_dag_validate(path: Path) -> None:
     """Validate a replay-only StrategyDAG file."""
+    from open_composer.research import validate_strategy_dag, write_strategy_dag_validation
+
     result = validate_strategy_dag(path, project_root())
     json_path, md_path = write_strategy_dag_validation(result, project_root())
     console.print(f"[green]dag validation complete[/green] status={result.status}")
@@ -3606,6 +3577,8 @@ def strategy_blind_test(
     seed: int = typer.Option(42, "--seed", help="Deterministic remap seed."),
 ) -> None:
     """Run a BlindTrade-style counterfactual evaluation over remapped ticker identities."""
+    from open_composer.research import run_blind_test
+
     report = run_blind_test(spec, project_root(), seed=seed)
     table = Table(title=f"Blind Test: {report.strategy_name}")
     for column in ("Mode", "Return %", "Sharpe", "Signals", "Corr w/ real"):
@@ -3632,6 +3605,8 @@ def strategy_cost_grid(
     impact_model: Annotated[list[str] | None, typer.Option("--impact-model")] = None,
 ) -> None:
     """Run a cost sensitivity grid across commission, slippage, and impact model."""
+    from open_composer.research import run_cost_grid
+
     report = run_cost_grid(
         spec,
         commission_grid=commission or [0.0, 0.01],
@@ -3661,6 +3636,8 @@ def strategy_regime_search(
     lookback_months: int = typer.Option(6, "--lookback-months"),
 ) -> None:
     """Search historical macro/news regimes similar to the latest available window."""
+    from open_composer.research import search_similar_regimes
+
     report = search_similar_regimes(
         spec,
         root=project_root(),
@@ -3686,6 +3663,8 @@ def strategy_skill_attribution(
     sample_size: int = typer.Option(20, "--sample-size"),
 ) -> None:
     """Estimate offline contribution of repo skills using recent promotion reports."""
+    from open_composer.research import run_skill_attribution
+
     report = run_skill_attribution(project_root(), sample_size=sample_size)
     table = Table(title="Skill Attribution")
     for column in ("Skill", "Shapley", "Tokens", "Value/token", "Recommendation"):
@@ -3712,6 +3691,8 @@ def strategy_optimize_universe(
     refresh_data: bool = typer.Option(True, "--refresh-data/--use-cache"),
 ) -> None:
     """Optimize one strategy family across a symbol universe."""
+    from open_composer.research import optimize_strategy_universe
+
     _require_declared_iteration_gate(spec)
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
@@ -3747,6 +3728,8 @@ def strategy_optimize_horizons(
     refresh_data: bool = typer.Option(True, "--refresh-data/--use-cache"),
 ) -> None:
     """Compare 5m scan speed, 15m lower-turnover, and 1h trend-hold variants."""
+    from open_composer.research import optimize_strategy_horizons
+
     _require_declared_iteration_gate(spec)
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
@@ -3817,6 +3800,8 @@ def strategy_rotate_universe(
     ),
 ) -> None:
     """Research a point-in-time momentum rotation grid across a symbol universe."""
+    from open_composer.research import run_rotation_research
+
     _require_declared_iteration_gate(spec)
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
@@ -4013,6 +3998,8 @@ def strategy_llm_rotate_universe(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Use an LLM to select a rotation method from training-only evidence, then validate OOS."""
+    from open_composer.research import run_llm_rotation_meta_selection
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     objective_key = _rotation_objective(objective)
@@ -4105,6 +4092,8 @@ def strategy_intraday_daily_rotation(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Research daily selected, same-day-exit NASDAQ intraday stock rotation."""
+    from open_composer.research import run_intraday_daily_rotation_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -4206,6 +4195,11 @@ def strategy_llm_intraday_daily_rotation(
     local_choice_label: str | None = typer.Option(None, "--local-choice-label"),
 ) -> None:
     """Use an LLM to select an intraday daily rotation method from training evidence."""
+    from open_composer.research import (
+        run_llm_intraday_daily_rotation_selection,
+        write_intraday_product_reflection,
+    )
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -4313,6 +4307,8 @@ def strategy_adaptive_intraday_router(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Research one StrategySpec with internal market scanning and sub-strategy routing."""
+    from open_composer.research import run_adaptive_intraday_router_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -4386,6 +4382,8 @@ def strategy_adaptive_intraday_router_scan(
     news_lookback_hours: int = typer.Option(72, "--news-lookback-hours"),
 ) -> None:
     """Scan the adaptive router and write standard signals plus replayable feature packets."""
+    from open_composer.research import run_adaptive_intraday_router_scan
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -4467,6 +4465,8 @@ def strategy_llm_adaptive_intraday_router(
     local_choice_label: str | None = typer.Option(None, "--local-choice-label"),
 ) -> None:
     """Use an LLM to select an internal adaptive intraday route from training evidence."""
+    from open_composer.research import run_llm_adaptive_intraday_router_selection
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -4799,6 +4799,8 @@ def strategy_wide_router_research(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Run the formal wide NASDAQ daily hybrid-router research contract."""
+    from open_composer.research import run_wide_router_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     symbol_list = None
@@ -4843,6 +4845,8 @@ def strategy_hybrid_news_marginal_lift(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Measure PIT news/LLM-style marginal lift for the selected hybrid route."""
+    from open_composer.research import run_hybrid_news_marginal_lift_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -4891,6 +4895,8 @@ def strategy_hybrid_factor_attribution(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Run route-level factor attribution for the selected hybrid route."""
+    from open_composer.research import run_hybrid_factor_attribution
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -4986,6 +4992,8 @@ def strategy_beta_router_research(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Research a QQQ/TQQQ/cash beta target-weight router."""
+    from open_composer.research import run_beta_exposure_router_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -5087,6 +5095,8 @@ def strategy_core_satellite_router_research(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Research a QQQ core plus bounded leveraged ETF satellite router."""
+    from open_composer.research import run_core_satellite_router_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -5162,6 +5172,8 @@ def strategy_core_beta_satellite_router_research(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Research a validated beta core plus bounded NASDAQ/theme satellite router."""
+    from open_composer.research import run_core_beta_satellite_router_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     universe = (
@@ -5260,6 +5272,8 @@ def strategy_aggressive_theme_router_research(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Research a theme-momentum router with bounded leveraged ETF satellite exposure."""
+    from open_composer.research import run_aggressive_theme_router_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -5356,6 +5370,8 @@ def strategy_theme_intraday_router_research(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Research a daily-scanned, same-session NASDAQ theme intraday router."""
+    from open_composer.research import run_theme_intraday_rotation_router_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     universe = (
@@ -5416,6 +5432,10 @@ def strategy_hybrid_target_weights(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Map the selected hybrid route into Nautilus-compatible target weights."""
+    from open_composer.adapters.execution.hybrid_target_weights import (
+        run_hybrid_target_weight_mapping,
+    )
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -5457,6 +5477,8 @@ def strategy_beta_target_weights(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Map the selected beta exposure route into Nautilus-compatible target weights."""
+    from open_composer.adapters.execution.beta_target_weights import run_beta_target_weight_mapping
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -5503,6 +5525,18 @@ def strategy_target_weights(
     as_of: str | None = typer.Option(None, "--as-of"),
 ) -> None:
     """Generate target weights, rebalance intents, and observation artifacts."""
+    from open_composer.adapters.execution.adaptive_intraday_target_weights import (
+        run_adaptive_intraday_target_weight_mapping,
+    )
+    from open_composer.adapters.execution.beta_target_weights import run_beta_target_weight_mapping
+    from open_composer.adapters.execution.core_beta_satellite_target_weights import (
+        run_core_beta_satellite_target_weight_mapping,
+    )
+    from open_composer.adapters.execution.hybrid_target_weights import (
+        run_hybrid_target_weight_mapping,
+    )
+    from open_composer.models.strategy_spec import load_strategy_spec
+
     spec_obj = load_strategy_spec(spec)
     parsed_symbols = (
         [item.strip().upper() for item in symbols.split(",") if item.strip()] if symbols else None
@@ -5796,6 +5830,11 @@ def strategy_router_attribution(
     date_tag: str = typer.Option(PDR_ATTRIBUTION_DEFAULT_DATE_TAG, "--date-tag"),
 ) -> None:
     """Attribute PDR router state and asset contributions by fold."""
+    from open_composer.research.pdr_attribution import (
+        parse_fold_windows,
+        run_pdr_router_attribution,
+    )
+
     if data_source not in {"longbridge", "alpaca", "sample"}:
         raise typer.BadParameter("--data-source supports longbridge, alpaca, or sample")
     try:
@@ -5870,6 +5909,11 @@ def strategy_route_cross_source_validation(
     output_dir: Annotated[Path, typer.Option("--output-dir")] = ROUTE_CROSS_SOURCE_DEFAULT_OUT_DIR,
 ) -> None:
     """Replay the fixed PDR route on primary and alternate daily sources."""
+    from open_composer.research.research_cache_manifest import (
+        verify_longbridge_research_cache_manifest,
+    )
+    from open_composer.research.route_cross_source import evaluate_route_cross_source_validation
+
     try:
         verify_longbridge_research_cache_manifest(project_root())
         payload = evaluate_route_cross_source_validation(
@@ -5906,6 +5950,8 @@ def strategy_router_replay_audit(
     end: str = typer.Option(PDR_ATTRIBUTION_DEFAULT_END, "--end"),
 ) -> None:
     """Replay the fixed PDR route on the current research cache and compare baseline."""
+    from open_composer.research.router_replay_audit import run_router_replay_audit
+
     try:
         payload = run_router_replay_audit(
             root=project_root(),
@@ -5930,6 +5976,8 @@ def strategy_router_replay_audit(
 @strategy_app.command("router-cost-stress")
 def strategy_router_cost_stress(spec: Path) -> None:
     """Print the router cost-stress artifact path for a generated target-weight run."""
+    from open_composer.models.strategy_spec import load_strategy_spec
+
     spec_obj = load_strategy_spec(spec)
     path = project_root() / "reports" / "research" / f"{spec_obj.name}-router-cost-stress.json"
     if not path.exists():
@@ -5940,6 +5988,8 @@ def strategy_router_cost_stress(spec: Path) -> None:
 @strategy_app.command("data-evidence")
 def strategy_data_evidence(spec: Path) -> None:
     """Print the router data-evidence artifact path for a generated target-weight run."""
+    from open_composer.models.strategy_spec import load_strategy_spec
+
     spec_obj = load_strategy_spec(spec)
     path = project_root() / "reports" / "research" / f"{spec_obj.name}-router-data-evidence.json"
     if not path.exists():
@@ -5952,6 +6002,8 @@ def strategy_data_evidence(spec: Path) -> None:
 @strategy_app.command("alt-data-evidence")
 def strategy_alt_data_evidence(spec: Path) -> None:
     """Generate PIT replay, marginal lift, and robustness shells for alternative data."""
+    from open_composer.research import build_alternative_data_evidence
+
     result = build_alternative_data_evidence(spec, project_root())
     console.print(f"[green]alternative data evidence complete[/green] report: {result.report_path}")
     console.print(
@@ -5962,6 +6014,8 @@ def strategy_alt_data_evidence(spec: Path) -> None:
 @strategy_app.command("short-risk")
 def strategy_short_risk(spec: Path) -> None:
     """Generate short-selling borrow, squeeze, dividend, and exposure artifacts."""
+    from open_composer.research import build_short_risk_report
+
     try:
         result = build_short_risk_report(spec, project_root())
     except ValueError as exc:
@@ -5973,6 +6027,8 @@ def strategy_short_risk(spec: Path) -> None:
 @strategy_app.command("hybrid-paper-plan")
 def strategy_hybrid_paper_plan(spec: Path) -> None:
     """Build a paper_auto candidate plan without activating or submitting orders."""
+    from open_composer.research import build_hybrid_paper_plan
+
     result = build_hybrid_paper_plan(spec, project_root())
     console.print(f"[green]hybrid paper plan complete[/green] report: {result.report_path}")
     console.print(
@@ -6138,6 +6194,8 @@ def strategy_market_time(
     write_best_spec: bool = typer.Option(True, "--write-best-spec/--no-write-best-spec"),
 ) -> None:
     """Research same-symbol timing grids against buy-and-hold."""
+    from open_composer.research import run_market_timing_research
+
     _require_declared_iteration_gate(spec)
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
@@ -6228,6 +6286,8 @@ def strategy_leverage_research(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Research levered same-symbol exposure against unlevered buy-and-hold."""
+    from open_composer.research import run_leverage_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     result = run_leverage_research(
@@ -6301,6 +6361,8 @@ def strategy_exposure_switch(
     refresh_data: bool = typer.Option(False, "--refresh-data/--use-cache"),
 ) -> None:
     """Research point-in-time dynamic exposure switching against buy-and-hold."""
+    from open_composer.research import run_exposure_switch_research
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     try:
@@ -6399,6 +6461,8 @@ def strategy_llm_exposure_switch(
     ),
 ) -> None:
     """Use an LLM to select an exposure switch from training-only evidence."""
+    from open_composer.research import run_llm_exposure_switch_meta_selection
+
     if data_source not in {"alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source currently supports alpaca or longbridge")
     result = run_llm_exposure_switch_meta_selection(
@@ -6501,6 +6565,8 @@ def _optional_symbol_values(values: list[str] | None) -> list[str | None] | None
 @strategy_app.command("list")
 def strategy_list() -> None:
     """List StrategySpecs by lifecycle."""
+    from open_composer.strategy_lifecycle import list_strategies
+
     table = Table(title="Open Composer Strategies")
     table.add_column("Name")
     table.add_column("Lifecycle")
@@ -6528,6 +6594,8 @@ def strategy_versions_command(
     ] = None,
 ) -> None:
     """List immutable StrategySpec versions registered from drafts, runs, and lifecycle moves."""
+    from open_composer.strategy_versions import load_strategy_versions
+
     versions = load_strategy_versions(project_root(), strategy)
     table = Table(title="Open Composer Strategy Versions")
     table.add_column("Strategy")
@@ -6555,6 +6623,9 @@ def strategy_versions_command(
 @strategy_app.command("register-version")
 def strategy_register_version(spec: str) -> None:
     """Register the current StrategySpec file as an immutable version snapshot."""
+    from open_composer.strategy_lifecycle import resolve_strategy_path
+    from open_composer.strategy_versions import register_strategy_version
+
     root = project_root()
     version = register_strategy_version(
         resolve_strategy_path(spec, root),
@@ -6571,6 +6642,8 @@ def strategy_diff_versions(
     right_version: str,
 ) -> None:
     """Print a unified diff between two immutable StrategySpec versions."""
+    from open_composer.strategy_versions import diff_strategy_versions
+
     try:
         diff = diff_strategy_versions(project_root(), strategy, left_version, right_version)
     except FileNotFoundError as exc:
@@ -6587,6 +6660,8 @@ def strategy_rollback_version(
     version: str,
 ) -> None:
     """Restore a registered version into drafts/manual mode for review."""
+    from open_composer.strategy_versions import rollback_strategy_version
+
     try:
         result = rollback_strategy_version(project_root(), strategy, version)
     except FileNotFoundError as exc:
@@ -6600,6 +6675,8 @@ def strategy_rollback_version(
 @strategy_app.command("approve")
 def strategy_approve(spec: str) -> None:
     """Promote a StrategySpec to approved/manual mode."""
+    from open_composer.strategy_lifecycle import approve_strategy, resolve_strategy_path
+
     root = project_root()
     path = approve_strategy(resolve_strategy_path(spec, root), root)
     console.print(f"[green]approved[/green] {path}")
@@ -6614,6 +6691,8 @@ def strategy_activate(
     enforce_paper_readiness: bool = typer.Option(False, "--enforce-paper-readiness"),
 ) -> None:
     """Activate a StrategySpec for manual signals or Alpaca Paper automation."""
+    from open_composer.strategy_lifecycle import activate_strategy, resolve_strategy_path
+
     if data_source not in {"keep", "sample", "alpaca", "longbridge"}:
         raise typer.BadParameter("--data-source must be keep, sample, alpaca, or longbridge")
     root = project_root()
@@ -6635,6 +6714,8 @@ def strategy_activate(
 @strategy_app.command("disable")
 def strategy_disable(strategy: str) -> None:
     """Disable an active strategy and move it to retired/manual mode."""
+    from open_composer.strategy_lifecycle import disable_strategy
+
     try:
         path = disable_strategy(strategy, project_root())
     except FileNotFoundError as exc:
@@ -7303,6 +7384,8 @@ def run_paper(
     require_review_consider: bool = typer.Option(False, "--require-review-consider"),
 ) -> None:
     """Run an active strategy against scanner/review/Alpaca Paper controls."""
+    from open_composer.runner.paper import PaperRunnerError, run_paper_loop
+
     try:
         cycles = run_paper_loop(
             strategy,
@@ -7340,6 +7423,8 @@ def options_optimize(
     min_trades: int = typer.Option(1, "--min-trades"),
 ) -> None:
     """Optimize paper-only option overlays for one or more equity StrategySpecs."""
+    from open_composer.research import optimize_option_overlays
+
     result = optimize_option_overlays(
         specs,
         project_root(),
@@ -7358,6 +7443,8 @@ def options_optimize(
 @options_app.command("overlay-report")
 def options_overlay_report(overlay: Path) -> None:
     """Generate observation-only research report for an OptionsOverlay spec."""
+    from open_composer.research import build_options_overlay_report
+
     try:
         result = build_options_overlay_report(overlay, project_root())
     except ValueError as exc:
@@ -7371,6 +7458,8 @@ def options_overlay_report(overlay: Path) -> None:
 @options_app.command("research-report")
 def options_research_report(options_spec: Path) -> None:
     """Generate observation-only research report for an independent OptionsSpec."""
+    from open_composer.research import build_options_research_report
+
     try:
         result = build_options_research_report(options_spec, project_root())
     except ValueError as exc:
@@ -7388,6 +7477,11 @@ def paper_submit(
     qty: float | None = typer.Option(None, "--qty"),
 ) -> None:
     """Submit a signal to Alpaca Paper after explicit confirmation."""
+    from open_composer.adapters.broker.alpaca_paper import PaperOrderError, submit_paper_order
+    from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.paper_readiness import assess_paper_strategy_readiness
+    from open_composer.storage import find_signal
+
     if not allow_paper_orders:
         raise typer.BadParameter("pass --allow-paper-orders to submit a paper order")
     root = project_root()
@@ -7470,6 +7564,7 @@ def paper_authorize_canary(
     max_total_orders: Annotated[int, typer.Option("--max-total-orders", min=1)] = 12,
 ) -> None:
     """Authorize a capped, expiring Alpaca Paper canary; never full readiness."""
+    from open_composer.models.strategy_spec import load_strategy_spec
     from open_composer.paper_authorization import write_paper_canary_authorization
 
     root = project_root()
@@ -7502,6 +7597,7 @@ def paper_revoke_canary(
     reason: Annotated[str, typer.Option("--reason")],
 ) -> None:
     """Revoke the current bounded Alpaca Paper canary authorization."""
+    from open_composer.models.strategy_spec import load_strategy_spec
     from open_composer.paper_authorization import write_paper_canary_revocation
 
     root = project_root()
@@ -7531,6 +7627,12 @@ def paper_readiness(
     ] = None,
 ) -> None:
     """Check whether a strategy is ready for Alpaca Paper automation."""
+    from open_composer.paper_readiness import (
+        assess_paper_strategy_readiness,
+        write_paper_readiness_report,
+    )
+    from open_composer.strategy_lifecycle import resolve_strategy_path
+
     root = project_root()
     try:
         report = assess_paper_strategy_readiness(resolve_strategy_path(strategy, root), root)
@@ -7557,6 +7659,10 @@ def paper_validation_report(
     strategy: str | None = typer.Option(None, "--strategy"),
 ) -> None:
     """Build the 20-trading-day paper workflow validation report."""
+    from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.paper_validation import write_paper_validation_report
+    from open_composer.strategy_lifecycle import resolve_strategy_path
+
     root = project_root()
     strategy_name = strategy
     spec_hash = None
@@ -7601,6 +7707,8 @@ def paper_validation_report(
 
 def _paper_tca_binding(strategy: str):
     from open_composer.execution_policy import resolve_execution_policy
+    from open_composer.models.strategy_spec import load_strategy_spec
+    from open_composer.strategy_lifecycle import resolve_strategy_path
     from open_composer.strategy_versions import strategy_content_hash
 
     root = project_root()
@@ -7680,6 +7788,8 @@ def paper_tca_report(
 @paper_app.command("sync")
 def paper_sync() -> None:
     """Sync Alpaca Paper orders to reports/paper/sync.jsonl."""
+    from open_composer.adapters.broker.alpaca_paper import PaperOrderError, sync_paper_orders
+
     try:
         path = sync_paper_orders(project_root())
     except PaperOrderError as exc:
@@ -7690,6 +7800,8 @@ def paper_sync() -> None:
 @paper_app.command("sync-account")
 def paper_sync_account() -> None:
     """Sync Alpaca Paper account and positions to reports/paper."""
+    from open_composer.adapters.broker.alpaca_paper import PaperOrderError, sync_paper_account
+
     try:
         account_path, positions_path = sync_paper_account(project_root())
     except PaperOrderError as exc:
@@ -7711,6 +7823,7 @@ def paper_schedule_suggest(spec: Path) -> None:
     action, never this command.
     """
     from open_composer.execution.schedule import suggest_crontab_line
+    from open_composer.models.strategy_spec import load_strategy_spec
 
     spec_path = spec if spec.is_absolute() else project_root() / spec
     spec_obj = load_strategy_spec(spec_path)
@@ -7726,6 +7839,8 @@ def paper_schedule_suggest(spec: Path) -> None:
 @paper_app.command("status")
 def paper_status() -> None:
     """Write and print a local paper status snapshot."""
+    from open_composer.paper_controls import build_paper_status, write_paper_status
+
     snapshot = build_paper_status(project_root())
     path = write_paper_status(project_root())
     console.print(f"[green]paper status written[/green] {path}")
@@ -7740,6 +7855,8 @@ def paper_status() -> None:
 @paper_app.command("reconcile")
 def paper_reconcile() -> None:
     """Check local paper orders against account and positions snapshots."""
+    from open_composer.paper_controls import reconcile_paper_state, write_paper_status
+
     report = reconcile_paper_state(project_root())
     write_paper_status(project_root())
     console.print(
@@ -7751,6 +7868,8 @@ def paper_reconcile() -> None:
 @paper_app.command("alerts")
 def paper_alerts() -> None:
     """Build local paper monitoring alerts from status and reconciliation artifacts."""
+    from open_composer.paper_controls import build_paper_alerts, write_paper_status
+
     report = build_paper_alerts(project_root())
     write_paper_status(project_root())
     console.print(
@@ -7768,6 +7887,8 @@ def paper_monitor(
     ),
 ) -> None:
     """Refresh local paper reconciliation, alerts, and status artifacts."""
+    from open_composer.paper_controls import refresh_paper_monitor
+
     report = refresh_paper_monitor(project_root(), sync_broker=sync_broker)
     console.print(
         f"[green]paper monitor refreshed[/green] {report.report_markdown_path} "
@@ -7786,6 +7907,8 @@ def paper_monitor_loop(
     ),
 ) -> None:
     """Run repeated local paper monitor refresh cycles."""
+    from open_composer.paper_controls import run_paper_monitor_loop
+
     reports = run_paper_monitor_loop(
         project_root(),
         interval_seconds=interval_seconds,
@@ -7806,6 +7929,12 @@ def paper_kill_switch(
     reason: str = typer.Option("", "--reason"),
 ) -> None:
     """Enable or clear the paper kill switch."""
+    from open_composer.paper_controls import (
+        clear_paper_kill_switch,
+        enable_paper_kill_switch,
+        write_paper_status,
+    )
+
     if enable:
         state = enable_paper_kill_switch(project_root(), reason=reason, updated_by="cli")
     else:
@@ -7825,6 +7954,9 @@ def journal_add(
     outcome: str = typer.Option("", "--outcome"),
 ) -> None:
     """Add a manual journal entry linked to a signal."""
+    from open_composer.journal.writer import add_journal_entry
+    from open_composer.storage import find_signal
+
     find_signal(signal_id, project_root())
     entry = add_journal_entry(project_root(), signal_id, action, notes, outcome)
     console.print(f"[green]journal written[/green] {entry.id}")
@@ -7856,6 +7988,8 @@ def _resolve_output_path(root: Path, path: Path) -> Path:
 
 
 def _ensure_runtime_dirs(root: Path) -> None:
+    from open_composer.deployment import ensure_runtime_dirs
+
     ensure_runtime_dirs(root)
 
 

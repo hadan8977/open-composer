@@ -131,3 +131,61 @@ W2（Step 14 通用运行器）的改动仍未提交：`open_composer/cli.py`、
 | B1c | 轮次结论登记表（归档前生成） | 从 51 份决策记录与账本生成一张表：轮次 → 假设 → 数据 → 结果 → 决策 → 可复用件，写入 `docs/codemap/rounds-outcome-register-2026-09.md`；同时重建知识索引并确认 `empirical_memory` 非空，让自动研究与 LLM 起草读得到"已证伪方向" |
 | C6 | 机制抽取（按需，每项半天到一天，需要用户逐项点头） | 候选：(1) r24 的路线切换/政策价值回归 → 内核的 regime 模型种类；(2) multimodal r4–r6 的 scipy 权重优化 → 内核组合层的权重方法；(3) vix_term_structure_overlay_r1 的 VIX 期限结构过滤 → regime 特征；(4) high_beta_sleeve_ensemble_r1 的集成校准 → W4m 方法网格；(5) mom_breadth_qd_r1 的广度因子 → 特征集。原则：只搬机制，不搬轮次参数；进内核后以预注册 + 账本重跑一次 |
 | 不抽取 | `scripts/prepare_pit_semantic_theme_r*.py`（13 份、17.8k 行）与 `multiasset_paper_control_r7*` | 前者的 event-features 只服务各自轮次，后者是已结束的模拟盘对照组 |
+
+## 8. 执行状态（2026-09-15 更新）
+
+| 阶段 | 状态 | 提交 |
+|---|---|---|
+| 代码地图与评估 | 完成 | dd4503b |
+| Phase A（惰性门面、重库延迟导入、event_* 去空列表、账本口径标签、归档两份 liquid500 脚本） | 完成 | 2a0b040 |
+| W2 未提交改动（闲置 > 2 小时，其 57 个测试通过） | 按默认值单独入库 | 42ff1ef |
+| Phase B1（归档 93 个轮次文件 + 4 个 systemd 单元，删 28 条命令，登记表 B1c） | 完成 | fc7ed24 |
+| Phase B2（`cli.py` 159 个模块级导入移入 124 个命令函数） | 完成，全量测试见下 | 见 git log |
+| Phase C | 等你看完本表再逐项决定 | — |
+
+实测前后对照（同一台机器，安静状态下单次测量，±0.3 s 属正常波动）：
+
+| 指标 | 之前 | 之后 | 说明 |
+|---|---:|---:|---|
+| Python 文件 / 代码行 | 411 / 255,516 | 355 / 151,661 | 代码地图统计，含 tests；B2 的命令内导入加回 173 行 |
+| 测试文件 / 测试函数 / 测试代码行 | 230 / 2,279 / 79,067 | 192 / 1,801 / 58,179 | 同上 |
+| 默认全量 pytest | 2,622 通过 / 50 跳过 / 15 失败 | 2,018 通过 / 13 跳过 / 3 失败（B1 后）；3 个失败已定位并修复 | 3 个是 `tests/test_dashboard_server.py` 的 CORS 用例：驱动 CLI 的测试触发 `_load_env` 把 `.env` 里的 `OPEN_COMPOSER_DASHBOARD_TOKEN` 留在进程环境里，后面的服务器测试就答 401。修法与 `tests/test_readiness.py` 相同：该文件加 autouse fixture 清掉两个环境变量。带着环境令牌复现：修前 3 个 401，修后通过 |
+| `oc` 命令数 | 217 | 189 | 删除 28 条 r4–r23 轮次命令 |
+| `cli.py` 行数 | 8,695 | 8,015 | B1 −814，B2 +134（命令内导入） |
+| `import open_composer.research` | 5.1 s / 219 MB | 0.13 s / 42 MB | 惰性门面 |
+| `import open_composer.research.kernel.loop`（cron 观察周期经 model_ranking 适配器走这条路） | 5.1 s / 219 MB | 1.44 s / 128 MB | 剩余为 pandas + pydantic + StrategySpec 基线（单独实测 1.58 s） |
+| `import open_composer.cli` | ≈5.0 s / 240 MB | 1.84 s / 136 MB | 剩余大头：`adapters.data.longbridge` 链 1.26 s（两个常量作为选项默认值）+ pandas |
+| `oc --help` 冷启动 | 5.0 s / 240 MB | 2.3–3.4 s / 143 MB | 目标 < 1 s 未达到；再往下要把选项默认值与命令组按 C4 拆包后惰性注册 |
+| 账本行带 `calculation_contract` | 0 / 60 | 60 / 60 | 8 行 v1（修复前公式）、32 行 v2、20 行脚本自有算法 |
+| 知识索引 `empirical_memory` | 0 | 64 | 之前的索引过期 |
+| 导入研究内核后加载 sklearn / lightgbm / nautilus | 是 | 否 | `tests/test_research_facade.py` 守住 |
+| 三条 cron 的入口 | — | `check_sip_freshness` 实跑 ok；两条观察周期 `--dry-run` 输出的命令（`oc paper sync-account`、`oc strategy target-weights`）都仍存在 | — |
+
+未达成与遗留：
+
+- `oc --help` < 1 s 未达成（见上）。
+- 全量套件里剩余的失败已清零（CORS 三例是测试隔离问题，已修）；B2 之后的全量复跑结果见 git log 最后一次提交说明。
+- `etf_structural_r9.py` 及其测试与命令保留，等 C1 决定 `etf_structural_family` 模式去留。
+- `oc repo check --strict` 仍被 3 份历史顶层文档（post-reset roadmap、step-14、step-15 计划）阻塞，与本次改动无关。
+
+可达性（代码地图 `summary`，入口类 = cron / scripts / cli / dashboard；生成器已修正为把 `from open_composer.research import X` 解析到 X 所在模块，否则惰性门面会让 42 个模块显示为不可达）：
+
+| 指标 | 原始（09-14 10:04） | Phase B2 之后 |
+|---|---:|---:|
+| 任何入口都不可达的代码行 | 39,040 | 2,713（29 个文件） |
+| 只能经 CLI 到达的代码行 | 61,071 | 52,767 |
+| cron 可达的代码行 | 20,163 | 20,163 |
+
+仍不可达的文件按节点：features 5 个 / 827 行，routers 2 个 / 763 行，data 1 个 / 420 行，governance 2 个 / 340 行，kernel 4 个 / 166 行，spec 1 个 / 130 行，dsl 3 个 / 29 行，autollm 2 个 / 13 行，execution 1 个 / 9 行，shared 1 个 / 5 行，ml 1 个 / 5 行，paper 3 个 / 3 行，engines 2 个 / 2 行，cli 1 个 / 1 行。行数最多的（Phase C 的候选）：
+  - `open_composer/research/pdr_risk_on_review.py`（580 行，routers）
+  - `open_composer/research/corporate_action_reconciliation.py`（478 行，features）
+  - `open_composer/adapters/data/cboe_volatility.py`（420 行，data）
+  - `open_composer/research/price_adjustment_quality.py`（349 行，features）
+  - `open_composer/research/evidence_custody.py`（319 行，governance）
+  - `open_composer/research/__init__.py`（183 行，routers）
+  - `open_composer/research/regime/trend_filtered_momentum.py`（148 行，kernel）
+  - `open_composer/models/__init__.py`（130 行，spec）
+  - `open_composer/compiler/spec_to_python.py`（23 行，dsl）
+  - `open_composer/harness/__init__.py`（21 行，governance）
+  - `open_composer/research/optimizers/__init__.py`（18 行，kernel）
+  - `open_composer/research/news/__init__.py`（12 行，autollm）

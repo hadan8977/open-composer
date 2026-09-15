@@ -979,6 +979,40 @@ def docstring_lines(tree: ast.AST) -> set[int]:
     return lines
 
 
+_FACADE_EXPORTS: dict[str, dict[str, str] | None] = {}
+
+
+def facade_exports(package_init: str) -> dict[str, str] | None:
+    """Return the ``_EXPORTS`` name -> module map of a lazy (PEP 562) package
+    facade such as ``open_composer/research/__init__.py``, or None. Without
+    this, ``from open_composer.research import run_factor_lab`` would resolve
+    to the package init only and every facade-exported module would look
+    unreachable in the map."""
+    if package_init not in _FACADE_EXPORTS:
+        result: dict[str, str] | None = None
+        path = ROOT / package_init
+        if path.name == "__init__.py" and path.exists():
+            try:
+                tree = ast.parse(path.read_text())
+            except SyntaxError:  # pragma: no cover - defensive
+                tree = None
+            for node in getattr(tree, "body", []):
+                targets = node.targets if isinstance(node, ast.Assign) else []
+                if isinstance(node, ast.AnnAssign):
+                    targets = [node.target]
+                if not any(isinstance(t, ast.Name) and t.id == "_EXPORTS" for t in targets):
+                    continue
+                value = node.value
+                if isinstance(value, ast.Dict):
+                    result = {
+                        k.value: v.value
+                        for k, v in zip(value.keys, value.values, strict=True)
+                        if isinstance(k, ast.Constant) and isinstance(v, ast.Constant)
+                    }
+        _FACADE_EXPORTS[package_init] = result
+    return _FACADE_EXPORTS[package_init]
+
+
 def parse_python(source_file: SourceFile, text: str, known: set[str]) -> None:
     try:
         tree = ast.parse(text)
@@ -1009,6 +1043,11 @@ def parse_python(source_file: SourceFile, text: str, known: set[str]) -> None:
             for alias in node.names:
                 sub_target = module_to_path(f"{module}.{alias.name}", known) if module else None
                 target = sub_target or base_target
+                if sub_target is None and base_target and base_target.endswith("__init__.py"):
+                    exports = facade_exports(base_target)
+                    owner = exports.get(alias.name) if exports else None
+                    if owner:
+                        target = module_to_path(owner, known) or target
                 if target:
                     source_file.imports.append((target, node.lineno, stmt))
         elif isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
