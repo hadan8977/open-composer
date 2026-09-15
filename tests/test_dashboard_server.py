@@ -53,6 +53,16 @@ from open_composer.dashboard.server import (
 from open_composer.strategy_lifecycle import activate_strategy
 
 
+@pytest.fixture(autouse=True)
+def _no_ambient_dashboard_auth(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests that drive the CLI call ``load_dotenv(root / ".env")`` and leave the
+    developer's real dashboard token in ``os.environ`` for the rest of the
+    session; the server tests here must not depend on that (same guard as
+    ``tests/test_readiness.py``), otherwise the CORS checks answer 401."""
+    monkeypatch.delenv("OPEN_COMPOSER_DASHBOARD_TOKEN", raising=False)
+    monkeypatch.delenv("OPEN_COMPOSER_DASHBOARD_AUTH_MODE", raising=False)
+
+
 def test_dashboard_server_creates_and_updates_strategy_project(sample_workspace: Path) -> None:
     response = build_project_create_payload(
         sample_workspace,
