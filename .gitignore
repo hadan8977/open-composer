@@ -103,6 +103,20 @@ reports/research/iterations/*
 !reports/research/iterations/mom_minute_r4_portfolio/
 !reports/research/iterations/mom_minute_r4_portfolio/*.json
 !reports/research/iterations/mom_minute_r4_portfolio/*.md
+# H-20260916-03 (meta-labeling position tiers): report.md / report.json /
+# validation_metrics.json are the reviewable evidence and stay in git. The
+# round's parquet checkpoints (picks/dataset/predictions/weekly marks, ~7MB),
+# its 312 per-quarter joblib models (~24MB) and its run logs are excluded
+# again below -- all fully reproducible from data/features/ via
+# scripts/run_h20260916_03_meta_label.py. (Un-ignoring the directory itself is
+# what makes git descend into it at all; the per-pattern lines under
+# mom_minute_r3_ml above are no-ops for the same reason, so the exclusions
+# have to be written as positive patterns, not negations.)
+!reports/research/iterations/h20260916_03_meta_label/
+reports/research/iterations/h20260916_03_meta_label/*.parquet
+reports/research/iterations/h20260916_03_meta_label/schedule_baseline.json
+reports/research/iterations/h20260916_03_meta_label/models/
+reports/research/iterations/h20260916_03_meta_label/logs/
 data/sip/
 data/sip-hist/
 data/sip-delisted/

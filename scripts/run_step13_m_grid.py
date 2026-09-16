@@ -424,24 +424,48 @@ class _CommonData:
     spy_returns: pd.Series
     bil_returns: pd.Series
     regime_daily: pd.DataFrame
-    trend_gate_series_by_date: pd.Series
+    #: ``None`` only when the caller passed ``trend_gate_required=False`` (see
+    #: ``_load_common_data``); every stage in this file leaves the default in
+    #: place and therefore always gets a real, fully-populated series.
+    trend_gate_series_by_date: pd.Series | None
 
 
-def _load_common_data() -> _CommonData:
+def _load_common_data(
+    years: tuple[int, ...] = DATA_YEARS, *, trend_gate_required: bool = True
+) -> _CommonData:
     """Universe, price panel (+cash/benchmarks), regime_daily/trend-gate, and
     SPY/BIL benchmark returns -- shared by every M0/M1/M2 stage so the
     "regime_daily lags the equity panel by up to a day" clipping (see
     inline comment below) happens exactly once, consistently.
+
+    ``years`` defaults to ``DATA_YEARS`` (every M0/M0b/M1/M2 stage in this
+    file, unchanged). It is a parameter only so that a *different* round
+    which must reuse these exact loaders over a wider history -- H-20260916-03
+    needs 2016-2026 picks out of the same M0b cell, not just the gated
+    2022-2026 slice -- can do so without re-implementing the loading,
+    augmentation, and regime-clipping sequence. Passing a wider range widens
+    the price panel and the weekly rebalance grid; nothing else in this file
+    reads it.
+
+    ``trend_gate_required=False`` (H-20260916-03's gate-off cell) returns
+    ``trend_gate_series_by_date=None`` instead of raising when the regime
+    table has no ``spy_gap_200sma`` for some early weekly date. That is not a
+    relaxation of the gate: ``spy_gap_200sma`` is genuinely undefined for the
+    archive's first ~200 trading days (the 200-day SMA warm-up), so a window
+    that starts in 2016 has no trend gate to speak of, and a caller that runs
+    a gate-off cell must be told "there is no series" rather than handed a
+    silently gate-closed default. Every gate-on caller keeps the strict
+    default, so no gated experiment's meaning changes.
     """
     _log("loading universe panel ...")
     universe_panel = universe_mod.load_universe_panel(UNIVERSE_ROOT)
 
-    _log(f"loading price panel (years {DATA_YEARS}) ...")
-    price_panel = load_price_panel(years=list(DATA_YEARS))
-    price_panel = _augment_price_panel_with_cash_and_benchmarks(price_panel, years=DATA_YEARS)
+    _log(f"loading price panel (years {years}) ...")
+    price_panel = load_price_panel(years=list(years))
+    price_panel = _augment_price_panel_with_cash_and_benchmarks(price_panel, years=years)
 
     _log("loading regime_daily trend gate table ...")
-    regime_daily = _load_regime_daily(list(DATA_YEARS))
+    regime_daily = _load_regime_daily(list(years))
     regime_daily_max_date = pd.Timestamp(regime_daily["trade_date"].max())
     # The regime table and the equity daily-feature archive are built by
     # separate jobs and can be one trading day out of sync at the very end
@@ -460,7 +484,9 @@ def _load_common_data() -> _CommonData:
     _log("loading SPY/BIL benchmark returns ...")
     _, spy_returns = _spy_close_and_returns()
     bil_returns = _bil_returns()
-    trend_gate_series_by_date = _trend_gate_series(regime_daily, weekly_dates)
+    trend_gate_series_by_date = (
+        _trend_gate_series(regime_daily, weekly_dates) if trend_gate_required else None
+    )
 
     return _CommonData(
         universe_panel=universe_panel,

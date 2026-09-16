@@ -382,6 +382,7 @@ def build_weight_schedule(
     trend_gate_series: pd.Series | None = None,
     trend_gate_cash_symbol: str = "BIL",
     max_periods: int | None = None,
+    pick_observer: Callable[..., None] | None = None,
 ) -> list[RebalanceEvent]:
     """Walk-forward weight schedule: retrain once per ``test_years`` entry on
     an anchored, embargoed window, then score every weekly rebalance date
@@ -444,6 +445,21 @@ def build_weight_schedule(
       computed from the real strategy score first (so ``universe_size`` and
       any hedge diagnostics stay meaningful) and then replaced, never
       skipped.
+
+    ``pick_observer`` (H-20260916-03, 2026-09-16) is a read-only tap for
+    callers that need the *inside* of each rebalance -- the scored cohort and
+    the as-of feature rows, not just the surviving weights -- so a
+    second-stage (meta-labeling) model can be trained on exactly the picks
+    this function made instead of a re-implementation of the selection loop.
+    When supplied it is called once per rebalance date that produced a
+    non-empty as-of cross-section, with keyword arguments ``date``,
+    ``asof_frame``, ``scores``, ``weights`` (final, after any trend-gate
+    override) and ``universe_size``, immediately before the corresponding
+    ``RebalanceEvent`` is appended. It must not mutate what it is handed; it
+    returns nothing and cannot influence selection, and it is not an
+    ``ExperimentConfig`` field, so no config hash and no already-recorded
+    result changes. Default ``None`` keeps the original code path.
+    See ``kernel/pick_export.py``'s ``PickCollector``.
     """
     # ``trading_calendar`` may be supplied by the caller when ``panel`` holds
     # only rebalance-day rows (the memory-lean loading path in
@@ -572,6 +588,15 @@ def build_weight_schedule(
                 if not gate_open:
                     weights = {trend_gate_cash_symbol: 1.0}
                     portfolio_beta = None
+
+            if pick_observer is not None:
+                pick_observer(
+                    date=date,
+                    asof_frame=asof_frame,
+                    scores=scores,
+                    weights=weights,
+                    universe_size=len(universe_symbols),
+                )
 
             events.append(
                 RebalanceEvent(
