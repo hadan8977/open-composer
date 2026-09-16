@@ -70,6 +70,7 @@ import gc
 import hashlib
 import inspect
 import json
+import logging
 import math
 import os
 from collections.abc import Callable, Sequence
@@ -90,6 +91,8 @@ from open_composer.research.kernel.mechanism_eval import (
     evaluate_candidate,
 )
 
+logger = logging.getLogger(__name__)
+
 ROOT = Path(__file__).resolve().parents[3]
 LEDGER_PATH = ROOT / "reports" / "research" / "ledger" / "experiments.jsonl"
 TEARSHEET_DIR = ROOT / "reports" / "research" / "tearsheets"
@@ -100,6 +103,13 @@ NEW_GATE_CONTRACT_PATH = ROOT / "config" / "promotion" / "unlevered-family-paper
 #: ("训练 2016-2017 → 测试 2018, ..., 直到 2026").
 DEFAULT_TEST_YEARS: tuple[int, ...] = tuple(range(2018, 2027))
 DEFAULT_TOP_K = 50
+#: Fewest symbols a monthly universe cohort must hold to be treated as a real
+#: cross-section by ``universe_as_of_calendar_month``. The real top-1500 panel
+#: carries ~1120-1240 symbols per month, so any floor between ~2 and ~1000
+#: separates "real cohort" from "malformed one-row cohort" identically; 50 is
+#: deliberately far below the real minimum so a genuinely thin future universe
+#: is not silently discarded.
+DEFAULT_MIN_COHORT_SYMBOLS = 50
 DEFAULT_COST_BPS_PER_SIDE = 10.0
 DEFAULT_STRESS_COST_BPS_PER_SIDE = 25.0
 #: DSR requires trial_count >= 2 (deflated_sharpe_probability); a brand-new
@@ -276,7 +286,11 @@ def weekly_rebalance_dates(trading_dates: Sequence[pd.Timestamp]) -> list[pd.Tim
 
 
 def universe_as_of_calendar_month(
-    universe_panel: pd.DataFrame, date: pd.Timestamp, *, top_n: int | None = None
+    universe_panel: pd.DataFrame,
+    date: pd.Timestamp,
+    *,
+    top_n: int | None = None,
+    min_cohort_symbols: int = DEFAULT_MIN_COHORT_SYMBOLS,
 ) -> set[str]:
     """The PIT universe cohort in effect on ``date``: the most recent
     calendar-month cohort whose ``month_end`` is ``<= date`` (see
@@ -291,12 +305,60 @@ def universe_as_of_calendar_month(
     (``universe.py``'s ``UNIVERSE_PANEL_COLUMNS`` always has one); raises
     ``KeyError`` if asked for on a panel that lacks it, rather than silently
     returning the unrestricted cohort.
+
+    ``min_cohort_symbols`` (2026-09-16 defect fix, see
+    ``reports/research/control/universe-cohort-fix-2026-09-16.md``): a cohort
+    holding fewer than this many symbols is not a real cross-section -- it is
+    a malformed/partial cohort -- so it is skipped, with a logged warning, in
+    favour of the previous valid one. The pre-fix builder stamped a
+    delisted/acquired symbol's own mid-month last trade date as a ``month_end``
+    of its own, which produced one-row "cohorts" (2019-10-02, 2021-04-05, ...)
+    and silently emptied the book for the weeks that resolved to them. The
+    builder no longer emits those, and this floor keeps any future
+    malformed/truncated universe file from doing the same damage. If *no*
+    eligible cohort clears the floor (a hand-built fixture, a deliberately
+    tiny panel), the most recent cohort is returned anyway -- with a warning --
+    so small-panel callers behave exactly as before. Pass ``0`` to disable.
     """
     eligible = universe_panel.loc[universe_panel["month_end"] <= date]
     if eligible.empty:
         return set()
-    latest_month = eligible["month_end"].dt.to_period("M").max()
-    cohort = eligible.loc[eligible["month_end"].dt.to_period("M") == latest_month]
+    months = eligible["month_end"].dt.to_period("M")
+    candidates = sorted(months.unique(), reverse=True)
+    # ``date`` may be a plain ``datetime.date`` (pandas compares it fine above);
+    # normalize before formatting so the warning path cannot raise.
+    as_of = pd.Timestamp(date).date()
+    skipped: list[tuple[str, int]] = []
+    for month in candidates:
+        cohort = eligible.loc[months == month]
+        if len(cohort) < min_cohort_symbols:
+            skipped.append((str(month), len(cohort)))
+            continue
+        if skipped:
+            logger.warning(
+                "universe_as_of_calendar_month(%s): skipped malformed cohort(s) %s "
+                "(< %d symbols); falling back to %s (%d symbols)",
+                as_of,
+                skipped,
+                min_cohort_symbols,
+                month,
+                len(cohort),
+            )
+        return _restrict_cohort(cohort, top_n)
+    cohort = eligible.loc[months == candidates[0]]
+    if min_cohort_symbols > 0:
+        logger.warning(
+            "universe_as_of_calendar_month(%s): no eligible cohort has >= %d symbols "
+            "(most recent cohort %s has %d); using it as-is",
+            as_of,
+            min_cohort_symbols,
+            candidates[0],
+            len(cohort),
+        )
+    return _restrict_cohort(cohort, top_n)
+
+
+def _restrict_cohort(cohort: pd.DataFrame, top_n: int | None) -> set[str]:
     if top_n is not None:
         cohort = cohort.loc[cohort["adv_rank"] <= top_n]
     return set(cohort["symbol"])

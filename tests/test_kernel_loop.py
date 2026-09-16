@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -71,6 +72,72 @@ def test_universe_as_of_calendar_month_uses_most_recent_month_end() -> None:
 def test_universe_as_of_calendar_month_before_any_cohort_is_empty() -> None:
     panel = _universe_panel()
     assert loop.universe_as_of_calendar_month(panel, pd.Timestamp("2019-01-01")) == set()
+
+
+def _real_shaped_universe_panel() -> pd.DataFrame:
+    """A panel shaped like the real one: two 60-symbol monthly cohorts plus the
+    pre-2026-09-16 builder defect -- a one-row "cohort" stamped with a
+    delisted symbol's own mid-month last trade date.
+    """
+    rows: list[dict[str, object]] = []
+    for month_end in ("2020-01-31", "2020-02-28"):
+        for rank in range(1, 61):
+            rows.append(
+                {
+                    "month_end": pd.Timestamp(month_end),
+                    "symbol": f"S{rank:03d}",
+                    "adv_rank": rank,
+                }
+            )
+    rows.append({"month_end": pd.Timestamp("2020-03-11"), "symbol": "DELISTED", "adv_rank": 42})
+    return pd.DataFrame(rows)
+
+
+def test_universe_as_of_calendar_month_skips_a_malformed_one_row_cohort(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    panel = _real_shaped_universe_panel()
+    # 2020-03-20 is after the malformed 2020-03-11 row but before any real
+    # March cohort exists: the pre-fix code returned {"DELISTED"} and the book
+    # went fully to cash for that week.
+    with caplog.at_level(logging.WARNING, logger="open_composer.research.kernel.loop"):
+        cohort = loop.universe_as_of_calendar_month(panel, pd.Timestamp("2020-03-20"))
+    assert len(cohort) == 60
+    assert "DELISTED" not in cohort
+    assert cohort == {f"S{rank:03d}" for rank in range(1, 61)}
+    assert "skipped malformed cohort" in caplog.text
+    assert "2020-03" in caplog.text
+
+    # top_n still applies to the cohort that was actually chosen.
+    assert loop.universe_as_of_calendar_month(panel, pd.Timestamp("2020-03-20"), top_n=3) == {
+        "S001",
+        "S002",
+        "S003",
+    }
+
+    # A real cohort is returned without any warning.
+    caplog.clear()
+    with caplog.at_level(logging.WARNING, logger="open_composer.research.kernel.loop"):
+        assert len(loop.universe_as_of_calendar_month(panel, pd.Timestamp("2020-02-28"))) == 60
+    assert caplog.text == ""
+
+    # min_cohort_symbols=0 restores the pre-fix behaviour exactly.
+    assert loop.universe_as_of_calendar_month(
+        panel, pd.Timestamp("2020-03-20"), min_cohort_symbols=0
+    ) == {"DELISTED"}
+
+
+def test_universe_as_of_calendar_month_falls_back_when_no_cohort_clears_the_floor(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    # Every cohort in a hand-built fixture is below the 50-symbol floor; the
+    # most recent one is still returned (with a warning) so small-panel
+    # callers keep their pre-fix behaviour instead of getting an empty set.
+    panel = _universe_panel()
+    with caplog.at_level(logging.WARNING, logger="open_composer.research.kernel.loop"):
+        cohort = loop.universe_as_of_calendar_month(panel, pd.Timestamp("2020-02-28"))
+    assert cohort == {"AAA", "BBB", "CCC"}
+    assert "no eligible cohort has >= 50 symbols" in caplog.text
 
 
 def test_universe_as_of_respects_the_consumer_note_on_exact_month_end_dates() -> None:

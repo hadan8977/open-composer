@@ -44,15 +44,23 @@ DEFAULT_MEMORY_LIMIT = "2GB"
 #: ``close`` are kept too -- they are cheap, already computed, and useful for
 #: debugging/auditing the ranking without re-deriving it.
 #:
-#: **Consumer note**: ``month_end`` is each symbol's own last available trade
-#: date within that calendar month, not a single shared date -- a symbol that
-#: stopped trading mid-month (delisted, halted) is ranked and admitted using
-#: its own last trading day, which is the PIT-correct choice (it never had a
-#: later price to rank on) but means two rows for the "same" monthly cohort
-#: can carry different exact ``month_end`` values (verified against the real
-#: archive: 2016-03 has 1174 rows dated 2016-03-31 and 1 row dated
-#: 2016-03-23). Group by ``month_end.dt.to_period("M")`` to reconstruct "the
-#: cohort decided at month X", never by the exact ``month_end`` value.
+#: **Consumer note**: ``month_end`` is one single shared date per calendar
+#: month -- the last session of that month present in the source archive, the
+#: date the whole cohort is decided on. ``dollar_adv`` and ``close`` are still
+#: each symbol's own last available values *within* that month: a symbol that
+#: stopped trading mid-month (delisted, acquired, halted) is ranked on its own
+#: last trading day, which is the PIT-correct choice (it never had a later
+#: price to rank on), but it is still stamped with the cohort's shared
+#: ``month_end`` so the cohort is a single dated cross-section.
+#:
+#: Before 2026-09-16 ``month_end`` carried each symbol's *own* last trade date,
+#: which made every acquisition/delisting emit a one-row "cohort" dated
+#: mid-month (e.g. 2019-10-02 BID, 2021-04-05 PS); a consumer asking "the most
+#: recent cohort as of date d" for a d inside that month then got a 1-symbol
+#: universe. See ``reports/research/control/universe-cohort-fix-2026-09-16.md``.
+#: Grouping by ``month_end.dt.to_period("M")`` remains correct and is what
+#: ``kernel.loop.universe_as_of_calendar_month`` does; it is now equivalent to
+#: grouping by the exact value.
 UNIVERSE_PANEL_COLUMNS = ("month_end", "symbol", "adv_rank", "dollar_adv", "close")
 
 
@@ -67,7 +75,12 @@ def build_pit_universe_panel(
     con: duckdb.DuckDBPyConnection | None = None,
 ) -> pd.DataFrame:
     """One row per (month_end, symbol) admitted to the PIT top-``top_n``
-    dollar-ADV universe. ``daily_glob`` is a DuckDB ``read_parquet`` glob
+    dollar-ADV universe, where ``month_end`` is the *shared* cohort date of
+    that calendar month (the month's last session in ``daily_glob``) -- see
+    :data:`UNIVERSE_PANEL_COLUMNS`. The archive's trailing, still-running
+    calendar month gets no cohort at all (see the ``complete_month_end`` CTE):
+    a monthly universe must not start applying mid-month.
+    ``daily_glob`` is a DuckDB ``read_parquet`` glob
     (e.g. ``data/sip/daily/*/*.parquet``); ``symbol NOT LIKE '%.%'``/``'%/%'``
     excludes share-class/warrant ticker variants, matching the convention
     already used by ``scripts/evaluate_cross_sectional_momentum_liquid500.py``
@@ -97,6 +110,30 @@ def build_pit_universe_panel(
                     ) AS dollar_adv
                 FROM raw
             ),
+            month_last_session AS (
+                -- The cohort date: the last session of each calendar month
+                -- present anywhere in the archive. Shared by every row of the
+                -- cohort so that a symbol whose own last bar of the month is
+                -- mid-month (delisted/acquired/halted) does not emit a
+                -- separate, one-row, mid-month "cohort".
+                SELECT date_trunc('month', trade_date) AS month_key,
+                       MAX(trade_date) AS cohort_date
+                FROM priced
+                GROUP BY 1
+            ),
+            complete_month_end AS (
+                -- Only *finished* calendar months get a cohort: a month is
+                -- finished once the archive holds a session in a later month.
+                -- The archive's trailing, still-running month would otherwise
+                -- be stamped with a mid-month cohort date -- the same class of
+                -- defect as the delisting rows above, since a monthly universe
+                -- must not change membership in the middle of a month. It
+                -- reappears, dated the real month end, on the next rebuild
+                -- once the following month has data.
+                SELECT month_key, cohort_date
+                FROM month_last_session
+                WHERE month_key < (SELECT MAX(month_key) FROM month_last_session)
+            ),
             monthly AS (
                 SELECT *,
                        ROW_NUMBER() OVER (
@@ -116,9 +153,15 @@ def build_pit_universe_panel(
                        ) AS adv_rank
                 FROM month_end
             )
-            SELECT trade_date AS month_end, symbol, adv_rank, dollar_adv, close
+            SELECT complete_month_end.cohort_date AS month_end,
+                   ranked.symbol,
+                   ranked.adv_rank,
+                   ranked.dollar_adv,
+                   ranked.close
             FROM ranked
-            WHERE adv_rank <= {top_n}
+            JOIN complete_month_end
+              ON complete_month_end.month_key = date_trunc('month', ranked.trade_date)
+            WHERE ranked.adv_rank <= {top_n}
             ORDER BY month_end, adv_rank
         """
         panel = connection.execute(query).fetchdf()

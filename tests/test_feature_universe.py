@@ -17,12 +17,18 @@ from open_composer.research.features.universe import (
 
 
 def _write_daily_fixture(root: Path) -> None:
-    """Three symbols, ~2 months of business days. AAA is the most liquid
+    """Five symbols, ~2 months of business days. AAA is the most liquid
     throughout; BBB overtakes it in February; CHEAP never clears the
     close > 5 filter; PENNY only exists in January (delisted-style gap, to
-    confirm month-end ranking does not require every symbol on every date).
+    confirm month-end ranking does not require every symbol on every date);
+    GONE stops trading mid-February (acquisition-style delisting, the case
+    that produced malformed one-row mid-month cohorts before 2026-09-16).
+
+    The range runs a few sessions into March so that January and February are
+    *finished* months: the builder deliberately emits no cohort for the
+    archive's trailing, still-running month (here March).
     """
-    dates = pd.bdate_range("2020-01-01", "2020-02-29")
+    dates = pd.bdate_range("2020-01-01", "2020-03-04")
     rows: list[dict[str, object]] = []
     for i, date in enumerate(dates):
         rows.append(
@@ -38,6 +44,8 @@ def _write_daily_fixture(root: Path) -> None:
         rows.append({"symbol": "CHEAP", "timestamp": date, "close": 2.0, "volume": 5_000_000})
         if date < pd.Timestamp("2020-02-01"):
             rows.append({"symbol": "PENNY", "timestamp": date, "close": 20.0, "volume": 900_000})
+        if date <= pd.Timestamp("2020-02-13"):
+            rows.append({"symbol": "GONE", "timestamp": date, "close": 30.0, "volume": 800_000})
     frame = pd.DataFrame(rows)
     year_dir = root / "2020"
     year_dir.mkdir(parents=True, exist_ok=True)
@@ -55,7 +63,8 @@ def test_universe_panel_ranks_by_trailing_dollar_adv_at_each_month_end(daily_glo
         daily_glob, adv_lookback_days=10, top_n=2, min_close=5.0, memory_limit="512MB"
     )
     months = sorted(panel["month_end"].dt.to_period("M").unique())
-    assert len(months) == 2  # January and February month-ends
+    # January and February month-ends; March is still running, so no cohort.
+    assert [str(month) for month in months] == ["2020-01", "2020-02"]
 
     # CHEAP (close=2.0) never appears despite the highest raw dollar volume.
     assert "CHEAP" not in set(panel["symbol"])
@@ -82,6 +91,42 @@ def test_universe_panel_is_pit_month_membership_does_not_require_full_history(
     # PENNY existed only in January and must not leak into the February cohort.
     feb_symbols = set(panel.loc[panel["month_end"].dt.month == 2, "symbol"])
     assert "PENNY" not in feb_symbols
+
+
+def test_universe_panel_stamps_one_shared_month_end_per_calendar_month(
+    daily_glob: str,
+) -> None:
+    """Regression test for the 2026-09-16 malformed-cohort defect: GONE's last
+    February bar is 2020-02-13, but its row must still carry February's shared
+    cohort date (the month's last session in the archive), not 2020-02-13 --
+    otherwise ``universe_as_of_calendar_month`` resolves the weeks after
+    2020-02-13 to a one-row cohort.
+    """
+    panel = build_pit_universe_panel(daily_glob, adv_lookback_days=10, top_n=10, min_close=5.0)
+    per_month = panel.groupby(panel["month_end"].dt.to_period("M"))["month_end"].nunique()
+    assert (per_month == 1).all(), panel["month_end"].drop_duplicates().tolist()
+
+    february = panel.loc[panel["month_end"].dt.month == 2]
+    # Last business day of the fixture's February date range.
+    assert set(february["month_end"]) == {pd.Timestamp("2020-02-28")}
+    # GONE is still admitted to (and ranked inside) the February cohort, on its
+    # own last-traded ADV/close -- it is only the cohort *date* that is shared.
+    assert "GONE" in set(february["symbol"])
+    assert february.loc[february["symbol"] == "GONE", "close"].tolist() == [30.0]
+
+    # No cohort is degenerate: every month carries the full cross-section.
+    sizes = panel.groupby("month_end").size()
+    assert sizes.min() >= 3
+
+
+def test_universe_panel_omits_the_archives_still_running_final_month(daily_glob: str) -> None:
+    """The fixture archive ends 2020-03-04. A March cohort dated 2020-03-04
+    would make the universe change membership mid-month, which is the same
+    defect class as the mid-month delisting rows -- so March is skipped until
+    April data proves the month is over.
+    """
+    panel = build_pit_universe_panel(daily_glob, adv_lookback_days=10, top_n=10, min_close=5.0)
+    assert panel["month_end"].max() == pd.Timestamp("2020-02-28")
 
 
 def test_exclude_funds_and_etfs_drops_only_flagged_symbols(daily_glob: str) -> None:
@@ -120,7 +165,7 @@ def test_write_and_load_universe_by_year_round_trips(tmp_path: Path, daily_glob:
     # PENNY (close=20 > min_close) legitimately clears the price floor and
     # the generous top_n=10 cutoff for January before it disappears from the
     # fixture -- the full-history union correctly retains it.
-    assert union == {"AAA", "BBB", "PENNY"}
+    assert union == {"AAA", "BBB", "PENNY", "GONE"}
 
 
 def test_load_universe_panel_raises_when_nothing_written(tmp_path: Path) -> None:

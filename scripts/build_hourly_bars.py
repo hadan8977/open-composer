@@ -87,14 +87,25 @@ def _available_year_months() -> list[tuple[int, int]]:
 
 def _month_universe(year: int, month: int) -> list[str]:
     """This month's PIT top-:data:`TOP_N_ADV` dollar-ADV cohort plus the fixed
-    reference set. ``month_end`` is each symbol's own last trade date within
-    the month, not one shared date (``universe.py`` docstring), so group by
-    year-month period rather than filtering on an exact date.
+    reference set. Selected by year-month period (equivalent to, but more
+    robust than, comparing the exact ``month_end`` value -- see
+    ``universe.py``'s ``UNIVERSE_PANEL_COLUMNS`` docstring).
+
+    Raises if the month has no cohort at all, rather than silently falling
+    back to :data:`FIXED_SYMBOLS`: since 2026-09-16 the universe builder emits
+    cohorts only for *finished* calendar months, so asking for the currently
+    running month before the next month's data exists is a caller error.
     """
     panel = load_universe_panel(UNIVERSE_ROOT, years=[year])
     period = panel["month_end"].dt.to_period("M")
     target = pd.Period(year=year, month=month, freq="M")
     cohort = panel.loc[(period == target) & (panel["adv_rank"] <= TOP_N_ADV)]
+    if cohort.empty:
+        raise RuntimeError(
+            f"no universe cohort for {year}-{month:02d} in {UNIVERSE_ROOT}; "
+            "the month may still be running (the builder only emits finished months) "
+            "-- rerun scripts/build_feature_universe.py once the next month has data"
+        )
     symbols = set(cohort["symbol"].unique()) | set(FIXED_SYMBOLS)
     return sorted(symbols)
 

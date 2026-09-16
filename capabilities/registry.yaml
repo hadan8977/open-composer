@@ -120,6 +120,32 @@ capabilities:
       - live SEC requests require SEC_USER_AGENT with a contact email
       - EDGAR public access does not establish reuse rights for issuer-authored filing content
 
+  - id: events.sec_form4_insider
+    kind: event
+    status: trial
+    provider: sec
+    use_for: [insider_confirmation_gate, cross_sectional_feature]
+    reliability: high
+    default_mode: live_with_cache
+    strict_behavior: research_only
+    fixture: data/fixtures/capabilities/sec_form4_insider.jsonl
+    env: [SEC_USER_AGENT]
+    min_score: 0.9
+    source_urls:
+      quarterly_data_sets: https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/{yyyy}q{n}_form345.zip
+      daily_index: https://www.sec.gov/Archives/edgar/daily-index/{yyyy}/QTR{n}/form.{yyyymmdd}.idx
+    collector: scripts/collect_sec_insider_transactions.py
+    feature_builder: scripts/build_insider_features.py
+    caveats:
+      - visible date = FILING_DATE next US trading session; TRANS_DATE is never used as visibility
+      - 10b5-1 plan trades cannot always be distinguished; flag field if present (SUBMISSION.AFF10B5ONE exists only from 2023q2 onward, so every earlier filing's is_10b5_1 is null, never false)
+      - SEC data reuse is public domain but personal names are not to be redistributed
+      - quarterly data sets are bucketed by FILING_DATE and publish roughly one week after quarter end, so the most recent weeks are only available through the EDGAR daily index tail collector
+      - a single Form 4 can be filed jointly by several reporting owners, so share and dollar sums must use owner_seq == 0 rows while owner counts use every row
+      - ISSUERTRADINGSYMBOL is issuer-supplied free text and is not a permanent security identifier; issuer_cik is kept for later PIT symbol mapping
+      - late and back-dated filings are normal (2016q1 contains transactions dated 2005) and a few TRANS_DATE values are impossible (future-dated), so transaction dates must be clipped against the filing date
+      - "research_only: sample and fixture rows are not paper-ready market evidence"
+
   - id: macro.fred_series
     kind: macro
     status: trial

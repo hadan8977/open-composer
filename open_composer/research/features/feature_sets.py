@@ -24,6 +24,7 @@ from pathlib import Path
 from open_composer.research.features.alpha101 import ALPHA101_COLUMNS
 from open_composer.research.features.alpha158 import DEFAULT_WINDOWS, alpha158_columns
 from open_composer.research.features.alpha191 import ALPHA191_COLUMNS
+from open_composer.research.features.insider import INSIDER_COLUMNS
 from open_composer.research.features.osap_price import OSAP_PRICE_COLUMNS
 from open_composer.research.features.reversal_trend_daily import (
     REVERSAL_TREND_CONTINUOUS_COLUMNS,
@@ -37,6 +38,7 @@ ALPHA101_ROOT = FEATURES_ROOT / "alpha101"
 ALPHA191_ROOT = FEATURES_ROOT / "alpha191"
 OSAP_PRICE_ROOT = FEATURES_ROOT / "osap_price"
 REVERSAL_TREND_ROOT = FEATURES_ROOT / "reversal_trend"
+INSIDER_ROOT = FEATURES_ROOT / "insider"
 SCREENED_TOP40_PATH = ROOT / "config" / "feature_sets" / "screened_top40_recent.json"
 
 #: The 26 non-key columns of ``data/features/daily/{year}.parquet`` that
@@ -136,6 +138,12 @@ _STATIC_FEATURE_SETS: dict[str, tuple[tuple[str, ...], Path | None]] = {
     ),
     "osap_price": (OSAP_PRICE_COLUMNS, OSAP_PRICE_ROOT),
     "reversal_trend": (REVERSAL_TREND_CONTINUOUS_COLUMNS, REVERSAL_TREND_ROOT),
+    # H-20260916-01 (2026-09-16): the Form 4 insider table. A first-tier
+    # data layer, not a price-volume library, so it is deliberately *not*
+    # folded into ``all_open`` -- that name is the Step 13-F 3.5 screen's
+    # preregistered open-price-library union and its multiple-testing count
+    # must not change retroactively. Resolve ``"insider"`` explicitly.
+    "insider": (INSIDER_COLUMNS, INSIDER_ROOT),
 }
 
 
