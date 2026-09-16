@@ -69,7 +69,25 @@ from open_composer.strategy_versions import strategy_content_hash, strategy_vers
 REHEARSAL_DIRNAME = Path("reports") / "paper" / "rehearsal"
 AUTHORIZATION_MAX_DURATION_DAYS = 45
 SUPPORTED_PORTFOLIO_MODES = frozenset({"model_ranking_portfolio"})
-ALLOWED_ORDER_STYLES = frozenset({"moo_market", "opg_limit", "loo_limit"})
+#: Opening-auction styles plus ``day_market``: Alpaca Paper's auction simulation
+#: filled only 5 of 50 ``opg`` market orders on 2026-09-15 (45 expired at the
+#: open, several partially), so a plain market order queued after the close and
+#: executed at the 09:30 open is the reliable paper path. TCA still measures the
+#: fill against the reference price and the official open.
+ALLOWED_ORDER_STYLES = frozenset({"moo_market", "opg_limit", "loo_limit", "day_market"})
+STYLE_TIME_IN_FORCE = {
+    "moo_market": "opg",
+    "opg_limit": "opg",
+    "loo_limit": "opg",
+    "day_market": "day",
+}
+#: Whole-share drift below this notional (and below the fraction of the target
+#: value) is not worth an order; it only creates churn when reference prices move.
+MIN_TRADE_NOTIONAL_USD = 50.0
+CHURN_TOLERANCE_FRACTION = 0.05
+#: Broker statuses that mean "this client_order_id never became a position";
+#: a rerun may submit a fresh order for the same session.
+TERMINAL_UNFILLED_STATUSES = frozenset({"canceled", "cancelled", "expired", "rejected", "replaced"})
 TARGET_WEIGHTS_MAX_AGE_HOURS = 30
 OPEN_ORDER_STATUSES = frozenset(
     {"accepted", "new", "partially_filled", "pending_cancel", "pending_new", "submitted", "held"}
@@ -244,11 +262,11 @@ def validate_rehearsal_spec(spec: StrategySpec, root: Path) -> dict[str, Any]:
         raise RehearsalError(str(exc)) from exc
     style = str(binding.payload.get("order_style") or "").lower()
     tif = str(binding.payload.get("time_in_force") or "").lower()
-    if style not in ALLOWED_ORDER_STYLES or tif != "opg":
+    if style not in ALLOWED_ORDER_STYLES or tif != STYLE_TIME_IN_FORCE.get(style):
         raise RehearsalError(
-            "paper rehearsal requires an opening-auction execution policy "
-            f"(order_style in {sorted(ALLOWED_ORDER_STYLES)}, time_in_force=opg); "
-            f"got {style!r}/{tif!r}"
+            "paper rehearsal requires an open-of-session execution policy "
+            f"(order_style in {sorted(ALLOWED_ORDER_STYLES)} with its matching "
+            f"time_in_force); got {style!r}/{tif!r}"
         )
     return {"policy_id": binding.policy_id, "policy_hash": binding.content_hash, **binding.payload}
 
@@ -510,14 +528,21 @@ def plan_rehearsal_orders(
             target_qty=target_qty,
             rebalance_id=row.get("rebalance_id"),
         )
-        if abs(delta) < 1:
+        tolerance = max(
+            MIN_TRADE_NOTIONAL_USD,
+            CHURN_TOLERANCE_FRACTION * max(target_qty * price, current_qty * price),
+        )
+        if abs(delta) < 1 or (current_qty > 0 and abs(delta) * price <= tolerance):
             plans.append(
                 RehearsalOrderPlan(
                     side="buy" if delta >= 0 else "sell",
                     action="hold",
                     qty=0.0,
                     notional=0.0,
-                    decision="skip_no_change",
+                    decision="skip_no_change" if abs(delta) < 1 else "skip_below_tolerance",
+                    reason=""
+                    if abs(delta) < 1
+                    else f"drift {abs(delta):.0f} sh < tolerance {tolerance:.0f} USD",
                     **common,
                 )
             )
@@ -592,11 +617,175 @@ def _next_session(now: datetime, timezone: str) -> date:
     return next_us_equity_session(local.date() - timedelta(days=1))
 
 
-def _client_order_id(strategy_name: str, session: date, symbol: str, side: str) -> str:
+def _client_order_id(
+    strategy_name: str, session: date, symbol: str, side: str, style: str = ""
+) -> str:
     digest = hashlib.sha256(
-        f"{strategy_name}|{session.isoformat()}|{symbol}|{side}".encode()
+        f"{strategy_name}|{session.isoformat()}|{symbol}|{side}|{style}".encode()
     ).hexdigest()
     return f"reh-{session:%Y%m%d}-{symbol[:8]}-{digest[:12]}"
+
+
+def _status_text(order: Any) -> str:
+    status = getattr(order, "status", "")
+    return str(getattr(status, "value", status)).split(".")[-1].lower()
+
+
+def _ledger_rows(root: Path, strategy_name: str) -> list[dict[str, Any]]:
+    path = rehearsal_ledger_path(root, strategy_name)
+    if not path.is_file():
+        return []
+    return [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
+
+
+def cancel_open_rehearsal_orders(
+    spec_path: Path, root: Path | None = None, *, reason: str, client: Any | None = None
+) -> list[dict[str, Any]]:
+    """Cancel this strategy's still-open rehearsal orders at the paper broker.
+
+    Only orders whose client_order_id appears in this strategy's rehearsal
+    ledger are touched; everything else on the account is left alone.
+    """
+    base = root or project_root()
+    spec = load_strategy_spec(spec_path)
+    ours = {
+        row["client_order_id"]
+        for row in _ledger_rows(base, spec.name)
+        if row.get("client_order_id")
+    }
+    broker = client or _trading_client()
+    _require_verified_paper_client(broker)
+    cancelled: list[dict[str, Any]] = []
+    for order in _get_broker_orders(broker, include_closed=False):
+        coid = str(getattr(order, "client_order_id", ""))
+        if coid not in ours or _status_text(order) in TERMINAL_UNFILLED_STATUSES | {"filled"}:
+            continue
+        broker.cancel_order_by_id(str(getattr(order, "id", "")))
+        cancelled.append(
+            {
+                "recorded_at": datetime.now(UTC).isoformat(),
+                "strategy_name": spec.name,
+                "client_order_id": coid,
+                "broker_order_id": str(getattr(order, "id", "")),
+                "symbol": str(getattr(order, "symbol", "")).upper(),
+                "status_before": _status_text(order),
+                "reason": reason,
+            }
+        )
+    if cancelled:
+        append_jsonl(rehearsal_dir(base) / f"{spec.name}-cancellations.jsonl", cancelled)
+    return cancelled
+
+
+def reconcile_rehearsal_fills(
+    spec_path: Path, root: Path | None = None, *, client: Any | None = None
+) -> dict[str, Any]:
+    """Pull broker status for every ledgered rehearsal order and write a fills
+    snapshot plus a per-session summary (fill rate, slippage vs reference)."""
+    base = root or project_root()
+    spec = load_strategy_spec(spec_path)
+    rows = _ledger_rows(base, spec.name)
+    broker = client or _trading_client()
+    _require_verified_paper_client(broker)
+    by_coid = {
+        str(getattr(o, "client_order_id", "")): o
+        for o in _get_broker_orders(broker, include_closed=True)
+    }
+    fills: list[dict[str, Any]] = []
+    for row in rows:
+        order = by_coid.get(str(row.get("client_order_id")))
+        status = _status_text(order) if order is not None else "unknown"
+        filled_qty = float(getattr(order, "filled_qty", 0) or 0) if order is not None else 0.0
+        raw_price = getattr(order, "filled_avg_price", None) if order is not None else None
+        fill_price = float(raw_price) if raw_price not in (None, "") else None
+        ref = float(row.get("reference_price") or 0) or None
+        slippage_bps = None
+        if fill_price and ref:
+            sign = 1.0 if row.get("side") == "buy" else -1.0
+            slippage_bps = sign * (fill_price / ref - 1.0) * 10_000
+        qty = float(row.get("qty") or 0)
+        fills.append(
+            {
+                "session": row.get("session"),
+                "symbol": row.get("symbol"),
+                "side": row.get("side"),
+                "qty": qty,
+                "reference_price": ref,
+                "order_style": row.get("order_style"),
+                "client_order_id": row.get("client_order_id"),
+                "broker_order_id": row.get("broker_order_id"),
+                "status": status,
+                "filled_qty": filled_qty,
+                "filled_avg_price": fill_price,
+                "filled_at": str(getattr(order, "filled_at", "") or "")[:19]
+                if order is not None
+                else None,
+                "fill_fraction": (filled_qty / qty) if qty else None,
+                "slippage_vs_reference_bps": slippage_bps,
+            }
+        )
+    directory = rehearsal_dir(base)
+    ensure_dir(directory)
+    fills_path = directory / f"{spec.name}-fills.jsonl"
+    fills_path.write_text(
+        "".join(json.dumps(f, ensure_ascii=False) + "\n" for f in fills), encoding="utf-8"
+    )
+    summary: dict[str, Any] = {
+        "strategy_name": spec.name,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "sessions": {},
+    }
+    for session in sorted({f["session"] for f in fills if f.get("session")}):
+        all_part = [f for f in fills if f["session"] == session]
+        cancelled = [f for f in all_part if f["status"] in {"canceled", "cancelled", "replaced"}]
+        part = [f for f in all_part if f not in cancelled]
+        notional = sum(f["qty"] * (f["reference_price"] or 0) for f in part)
+        filled_notional = sum(f["filled_qty"] * (f["reference_price"] or 0) for f in part)
+        slips = sorted(
+            f["slippage_vs_reference_bps"]
+            for f in part
+            if f["slippage_vs_reference_bps"] is not None
+        )
+        summary["sessions"][session] = {
+            "orders": len(part),
+            "cancelled_before_open": len(cancelled),
+            "filled_full": sum(1 for f in part if f["status"] == "filled"),
+            "filled_partial": sum(
+                1 for f in part if f["status"] != "filled" and f["filled_qty"] > 0
+            ),
+            "unfilled": sum(1 for f in part if f["filled_qty"] == 0),
+            "fill_rate_by_notional": (filled_notional / notional) if notional else None,
+            "median_slippage_vs_reference_bps": slips[len(slips) // 2] if slips else None,
+            "order_styles": sorted({str(f.get("order_style")) for f in part}),
+        }
+    write_json(directory / f"{spec.name}-fills-summary.json", summary)
+    lines = [
+        f"# 成交对账 {spec.name}",
+        "",
+        "| 交易日 | 有效下单 | 开盘前撤单 | 全部成交 | 部分成交 | 未成交 | 按金额成交率 "
+        "| 相对参考价滑点中位数(bp) | 单类型 |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    for session, v in summary["sessions"].items():
+        rate = (
+            f"{v['fill_rate_by_notional']:.0%}" if v["fill_rate_by_notional"] is not None else "-"
+        )
+        slip = (
+            f"{v['median_slippage_vs_reference_bps']:.1f}"
+            if v["median_slippage_vs_reference_bps"] is not None
+            else "-"
+        )
+        lines.append(
+            f"| {session} | {v['orders']} | {v['cancelled_before_open']} | {v['filled_full']} | "
+            f"{v['filled_partial']} | "
+            f"{v['unfilled']} | {rate} | {slip} | {', '.join(v['order_styles'])} |"
+        )
+    (directory / f"{spec.name}-fills-summary.md").write_text(
+        "\n".join(lines) + "\n", encoding="utf-8"
+    )
+    return summary
 
 
 def _open_order_symbols(client: Any) -> set[str]:
@@ -630,12 +819,13 @@ def _submit(client: Any, plan: RehearsalOrderPlan, policy: dict[str, Any]) -> An
 
     side = OrderSide.BUY if plan.side == "buy" else OrderSide.SELL
     style = str(policy.get("order_style") or "").lower()
-    if style == "moo_market":
+    tif = TimeInForce.DAY if style == "day_market" else TimeInForce.OPG
+    if style in {"moo_market", "day_market"}:
         request = MarketOrderRequest(
             symbol=plan.symbol,
             qty=plan.qty,
             side=side,
-            time_in_force=TimeInForce.OPG,
+            time_in_force=tif,
             client_order_id=plan.client_order_id,
         )
     else:
@@ -744,7 +934,9 @@ def run_portfolio_paper_rehearsal(
     for plan in plans:
         if plan.decision != "submit":
             continue
-        plan.client_order_id = _client_order_id(spec.name, session, plan.symbol, plan.side)
+        plan.client_order_id = _client_order_id(
+            spec.name, session, plan.symbol, plan.side, str(policy.get("order_style") or "")
+        )
         signal = build_signal(
             spec,
             run_id,
@@ -774,6 +966,8 @@ def run_portfolio_paper_rehearsal(
             plan.decision = "would_submit"
             continue
         existing = _broker_order_by_client_id(broker, plan.client_order_id)
+        if existing is not None and _status_text(existing) in TERMINAL_UNFILLED_STATUSES:
+            existing = None  # canceled/expired: nothing became a position, submit afresh
         if existing is not None:
             plan.decision = "already_submitted"
             plan.broker_order_id = str(getattr(existing, "id", ""))
@@ -816,7 +1010,9 @@ def run_portfolio_paper_rehearsal(
                     "side": plan.side,
                     "qty": plan.qty,
                     "order_style": policy.get("order_style"),
-                    "time_in_force": "opg",
+                    "time_in_force": STYLE_TIME_IN_FORCE.get(
+                        str(policy.get("order_style") or ""), "opg"
+                    ),
                     "limit_price": plan.limit_price,
                     "reference_price": plan.reference_price,
                     "notional": plan.notional,

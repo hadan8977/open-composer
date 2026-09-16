@@ -91,9 +91,19 @@ execution_policy:
   # 20 bp LOO on a 50-name momentum book would silently under-fill the names
   # that gap up, which is exactly the leg the strategy lives on. TCA records
   # the official open vs fill so the cost of MOO is measured, not assumed.
-  policy_id: model_ranking_portfolio_moo_market_v1
-  order_style: moo_market
-  time_in_force: opg
+  # 2026-09-16 update: Alpaca Paper filled only 5 of 50 opg market orders at the
+  # 2026-09-15 open (45 expired, several partial), so the auction simulation is
+  # not usable for a 50-name book. A day market order submitted after the close
+  # is queued and executed at the 09:30 open; TCA compares the fill with the
+  # reference price and the official open.
+  policy_id: model_ranking_portfolio_day_market_open_queue_v1
+  order_style: day_market
+  time_in_force: day
+  naked_market_justification: >-
+    Paper rehearsal only. Opening-auction (opg) orders expired unfilled for 45 of
+    50 names at the 2026-09-15 open in Alpaca Paper; day market orders queued
+    after the close execute at the open and are measured by TCA. Real-money
+    execution would revert to the opg/limit policy after this evidence is reviewed.
   price_protection: {limit_offset_bps: 20.0, max_open_gap_pct: 2.5, max_spread_bps: 15.0}
   participation_cap: {max_adv_pct: 0.5, max_open_bar_volume_pct: 5.0}
   fallback_behavior: {if_not_filled: skip, if_gap_exceeds_limit: skip, if_spread_exceeds_limit: skip}

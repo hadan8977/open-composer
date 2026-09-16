@@ -8006,6 +8006,44 @@ def paper_revoke_rehearsal(
     console.print(f"[green]paper rehearsal authorization revoked[/green] {path}")
 
 
+@paper_app.command("rehearsal-cancel-open")
+def paper_rehearsal_cancel_open(
+    spec_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+    reason: str = typer.Option(..., "--reason"),
+) -> None:
+    """Cancel this strategy's still-open rehearsal orders at the paper broker."""
+    from open_composer.paper_rehearsal import RehearsalError, cancel_open_rehearsal_orders
+
+    try:
+        cancelled = cancel_open_rehearsal_orders(spec_path, project_root(), reason=reason)
+    except (RehearsalError, ValueError, RuntimeError) as exc:
+        console.print(f"[red]cancel failed[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(f"[green]rehearsal orders cancelled[/green] n={len(cancelled)}")
+
+
+@paper_app.command("rehearsal-reconcile")
+def paper_rehearsal_reconcile(
+    spec_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],
+) -> None:
+    """Pull broker fill status for every rehearsal order; write fills + summary."""
+    from open_composer.paper_rehearsal import RehearsalError, reconcile_rehearsal_fills
+
+    try:
+        summary = reconcile_rehearsal_fills(spec_path, project_root())
+    except (RehearsalError, ValueError, RuntimeError) as exc:
+        console.print(f"[red]reconcile failed[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    for session, row in summary["sessions"].items():
+        rate = row["fill_rate_by_notional"]
+        rate_text = f"{rate:.0%}" if rate is not None else "-"
+        console.print(
+            f"{session}: orders={row['orders']} filled={row['filled_full']} "
+            f"partial={row['filled_partial']} unfilled={row['unfilled']} "
+            f"fill_rate_by_notional={rate_text}"
+        )
+
+
 @paper_app.command("rehearsal-run")
 def paper_rehearsal_run(
     spec_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False)],

@@ -14,8 +14,10 @@ from open_composer.models.strategy_spec import load_strategy_spec
 from open_composer.paper_controls import enable_paper_kill_switch
 from open_composer.paper_rehearsal import (
     RehearsalError,
+    cancel_open_rehearsal_orders,
     load_rehearsal_authorization,
     plan_rehearsal_orders,
+    reconcile_rehearsal_fills,
     run_portfolio_paper_rehearsal,
     write_rehearsal_authorization,
 )
@@ -59,6 +61,11 @@ class FakeClient:
 
     def get_orders(self, filter=None):  # noqa: A002 - alpaca-py keyword
         return list(self.orders)
+
+    def cancel_order_by_id(self, order_id):
+        for order in self.orders:
+            if order.id == order_id:
+                order.status = "canceled"
 
     def submit_order(self, request):
         self.submissions.append(request)
@@ -198,7 +205,7 @@ def test_submit_then_rerun_is_idempotent(rehearsal_workspace) -> None:
     assert result.plans[0].symbol == "META" and result.plans[0].side == "sell"
     assert result.plans[0].qty == 10
     assert len(client.submissions) == 4
-    assert all(str(req.time_in_force).lower().endswith("opg") for req in client.submissions)
+    assert all(str(req.time_in_force).lower().endswith("day") for req in client.submissions)
     assert all(req.client_order_id.startswith("reh-20260917-") for req in client.submissions)
     ledger = root / "reports" / "paper" / "rehearsal" / f"{result.strategy_name}-orders.jsonl"
     rows = [json.loads(line) for line in ledger.read_text().splitlines() if line.strip()]
@@ -324,13 +331,95 @@ def test_planner_exits_held_names_and_skips_open_orders() -> None:
     assert by_symbol["BBB"].decision == "skip_open_order"
 
 
-def test_paper_rehearsal_rejects_non_opg_policy(rehearsal_workspace) -> None:
+def test_paper_rehearsal_rejects_non_open_policy(rehearsal_workspace) -> None:
     root, spec_path = rehearsal_workspace
-    text = (
-        spec_path.read_text(encoding="utf-8")
-        .replace("order_style: opg_limit", "order_style: day_market")
-        .replace("time_in_force: opg", "time_in_force: day")
+    text = spec_path.read_text(encoding="utf-8").replace(
+        "order_style: day_market", "order_style: twap"
     )
     spec_path.write_text(text, encoding="utf-8")
     with pytest.raises(RehearsalError):
         paper_rehearsal.validate_rehearsal_spec(load_strategy_spec(spec_path), root)
+
+
+def test_expired_prior_order_does_not_block_resubmission(rehearsal_workspace) -> None:
+    root, spec_path = rehearsal_workspace
+    client = FakeClient()
+    _authorize(root, spec_path, client)
+    first = run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=True, client=client, now=SUBMIT_TIME
+    )
+    assert first.counts() == {"submitted": 3}
+    for order in client.orders:  # the broker expired everything at the open
+        order.status = "expired"
+    second = run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=True, client=client, now=SUBMIT_TIME
+    )
+    assert second.counts() == {"submitted": 3}
+    assert len(client.submissions) == 6
+
+
+def test_cancel_open_touches_only_this_strategys_ledgered_orders(rehearsal_workspace) -> None:
+    root, spec_path = rehearsal_workspace
+    client = FakeClient()
+    _authorize(root, spec_path, client)
+    run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=True, client=client, now=SUBMIT_TIME
+    )
+    client.orders.append(
+        SimpleNamespace(
+            id="ord-foreign", client_order_id="oc-sig_other", symbol="ZZZ", status="new"
+        )
+    )
+    cancelled = cancel_open_rehearsal_orders(spec_path, root, reason="test", client=client)
+    assert len(cancelled) == 3
+    assert {o.status for o in client.orders if o.client_order_id.startswith("reh-")} == {"canceled"}
+    assert next(o for o in client.orders if o.id == "ord-foreign").status == "new"
+    assert (root / "reports" / "paper" / "rehearsal").glob("*-cancellations.jsonl")
+
+
+def test_reconcile_reports_fill_rate_and_slippage(rehearsal_workspace) -> None:
+    root, spec_path = rehearsal_workspace
+    client = FakeClient()
+    _authorize(root, spec_path, client)
+    result = run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=True, client=client, now=SUBMIT_TIME
+    )
+    by_symbol = {o.symbol: o for o in client.orders}
+    by_symbol["AAPL"].status, by_symbol["AAPL"].filled_qty = "filled", 25
+    by_symbol["AAPL"].filled_avg_price = 202.0  # +100 bp vs reference 200
+    by_symbol["MSFT"].status, by_symbol["MSFT"].filled_qty = "expired", 0
+    by_symbol["NVDA"].status, by_symbol["NVDA"].filled_qty = "expired", 10
+    by_symbol["NVDA"].filled_avg_price = 100.0
+    summary = reconcile_rehearsal_fills(spec_path, root, client=client)
+    row = summary["sessions"][result.session]
+    assert (row["filled_full"], row["filled_partial"], row["unfilled"]) == (1, 1, 1)
+    assert (
+        abs(row["fill_rate_by_notional"] - (25 * 200 + 10 * 100) / (25 * 200 + 12 * 400 + 40 * 100))
+        < 1e-9
+    )
+    fills = (
+        root / "reports" / "paper" / "rehearsal" / f"{result.strategy_name}-fills.jsonl"
+    ).read_text()
+    assert '"slippage_vs_reference_bps": 100.0' in fills.replace("99.99999999999", "100.0")
+
+
+def test_planner_skips_whole_share_drift_below_tolerance() -> None:
+    rows = _rows(("AAA", 0.02, 100.0))  # target 20 shares
+    plans = plan_rehearsal_orders(
+        target_rows=rows,
+        positions={"AAA": 19.0},
+        position_prices={"AAA": 100.0},
+        open_order_symbols=set(),
+        equity=100_000.0,
+        limits=LIMITS,
+    )
+    assert plans[0].decision == "skip_below_tolerance"
+    plans = plan_rehearsal_orders(
+        target_rows=rows,
+        positions={"AAA": 5.0},
+        position_prices={"AAA": 100.0},
+        open_order_symbols=set(),
+        equity=100_000.0,
+        limits=LIMITS,
+    )
+    assert plans[0].decision == "submit" and plans[0].qty == 15
