@@ -97,6 +97,8 @@ uv run oc paper revoke-rehearsal strategy_specs/drafts/us_recent_high_return_top
 - **顺手补的两件事**：一是"整股漂移容忍"，目标和现状只差一两股、金额不到目标 5% 时不再下单，避免每晚因参考价变动产生几十笔小单；
   二是新增 `oc paper rehearsal-reconcile`（成交对账，输出成交率和相对参考价的滑点）和 `oc paper rehearsal-cancel-open`（只撤本策略账本里的挂单）。
 - **对账文件**：`reports/paper/rehearsal/us_recent_high_return_top50-fills-summary.md`（人读）、`-fills.jsonl`（逐笔）。
+- **9/16 开盘结果**：改为市价单后的 45 笔全部成交（按金额 100%），组合到齐 50 只，账户约 9.99 万美元。
+  相对参考价的成交价中位数低 226 个基点，参考价是周一收盘口径，不是执行质量指标；真正的执行质量要等"相对官方开盘价"的 TCA。
 
 ## 8. 本周验收标准
 
