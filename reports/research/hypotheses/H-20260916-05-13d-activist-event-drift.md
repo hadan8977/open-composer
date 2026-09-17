@@ -1,6 +1,6 @@
 # H-20260916-05 13D 举牌事件漂移：独立的事件驱动策略，不是动量的叠加层
 
-- 状态：proposed · 假设族：event_13d_drift（预算 4）· 层：选股（事件驱动）· 数据层：**一级**（SEC 13D/13G，免费）
+- 状态：**done — 被否定**（2026-09-17 02:00 UTC，由 Fable 依据 `reports/research/lessons/L-20260916-05.md` 翻转）· 假设族：event_13d_drift（用 1 / 预算 4）· 层：选股（事件驱动）· 数据层：**一级**（SEC 13D/13G，免费）
 - 一句话假设：以 EDGAR 受理时间戳为可见时点，在 13D（5% 以上主动持股/维权）申报公开后的次一交易日开盘买入，持有 20–60 个交易日，
   相对同规模同行业对照有正的超额；与动量组合相关性低，因而有分散价值。
 - 出处：`reports/research/control/informed-flow-sources-and-strategy-families-2026-09-16.md` A.1 / B.4（13D 事件漂移文献；2024-12 起 EDGAR 提供 XML 结构化 13D）。

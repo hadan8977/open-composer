@@ -146,6 +146,36 @@ capabilities:
       - late and back-dated filings are normal (2016q1 contains transactions dated 2005) and a few TRANS_DATE values are impossible (future-dated), so transaction dates must be clipped against the filing date
       - "research_only: sample and fixture rows are not paper-ready market evidence"
 
+  - id: events.sec_13d_13g
+    kind: event
+    status: trial
+    provider: sec
+    use_for: [activist_event_drift, cross_sectional_feature, llm_dossier_material]
+    reliability: high
+    default_mode: live_with_cache
+    strict_behavior: research_only
+    fixture: data/fixtures/capabilities/sec_13d_13g.jsonl
+    env: [SEC_USER_AGENT]
+    min_score: 0.9
+    source_urls:
+      quarterly_form_index: https://www.sec.gov/Archives/edgar/full-index/{yyyy}/QTR{n}/form.idx
+      complete_submission: https://www.sec.gov/Archives/{file_name}
+      company_tickers: https://www.sec.gov/files/company_tickers.json
+    collector: scripts/collect_sec_13d_filings.py
+    feature_builder: scripts/build_sec_13d_features.py
+    caveats:
+      - visibility = the <ACCEPTANCE-DATETIME> in the filing header; a filing accepted after that session's close is visible only on the next session, and the card's entry is the session after visibility
+      - EDGAR disseminates filings accepted by 17:30 ET on the same business day, which is after every market close, so the close-based visibility rule here is never more aggressive than EDGAR's own cutoff
+      - Date Filed in the quarterly index has no time of day and cannot separate a 09:45 ET filing from a 16:40 ET one; it is used only for the 13G family, which is not document-fetched and is flagged visible_confidence=filing_date_only
+      - EDGAR renamed the form types on 2024-12-18 (SC 13D -> SCHEDULE 13D); both spellings are normalized and form_type_raw keeps the original, otherwise every 2025+ amendment parses as a new filing
+      - the filer of a Schedule 13D is the activist, not the issuer; the issuer must come from the header SUBJECT COMPANY block, never from the first CIK in the file
+      - percent of class is parsed from the cover page for pre-2024-12 text filings and carries percent_parse_confidence (high/medium/none); structured XML filings (2024-12-18 onward) supply it directly
+      - Item 4 character count is a crude activism proxy only; it does not distinguish a genuine campaign from a verbose boilerplate purpose statement
+      - company_tickers.json is a current snapshot, so issuers acquired or delisted before it was fetched have no ticker row and their filings cannot be mapped; the PIT ADV universe is itself built from surviving symbols, so activist targets that were taken over are systematically absent
+      - the 13G family is ~95% of Schedule 13 traffic (28,924 SC 13G/A in 2024Q1 alone) and is index-only in this build; do not read 13G rows as having a verified visibility timestamp
+      - "measured on a 400-filing random 13G/13G/A header sample (2026-09-17): index-only issuer attribution disagrees with the filing header's SUBJECT COMPANY for 14.0% of comparable filings (46/328) and a further 8.9% have no in-force ticker at all, so 13G counts must be quoted at the EDGAR index level, not per issuer"
+      - "research_only: sample and fixture rows are not paper-ready market evidence"
+
   - id: macro.fred_series
     kind: macro
     status: trial
