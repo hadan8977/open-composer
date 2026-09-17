@@ -1,0 +1,45 @@
+{
+  "purpose": "why the symbol-shuffle placebo uses --shuffle-symbols-mode relabel and not draw",
+  "year": 2024,
+  "table": "data/features/news_attention/{year}.parquet, PIT top-1000 daily grid",
+  "measured": {
+    "real": {
+      "rows": 199398,
+      "any_news_5d": 0.6923,
+      "any_news_20d": 0.939,
+      "no_news_20d": 0.061,
+      "news_count_5d_p50": 1.0,
+      "news_count_5d_p99": 38.0,
+      "news_count_5d_dispersion_std_over_mean": 2.182,
+      "surge_ge_2_share": 0.1713,
+      "novelty_5d_median": 0.9286
+    },
+    "relabel_seed20260916": {
+      "rows": 199398,
+      "any_news_5d": 0.5715,
+      "any_news_20d": 0.8409,
+      "no_news_20d": 0.1591,
+      "news_count_5d_p50": 1.0,
+      "news_count_5d_p99": 28.0,
+      "news_count_5d_dispersion_std_over_mean": 2.593,
+      "surge_ge_2_share": 0.1579,
+      "novelty_5d_median": 0.9474
+    },
+    "draw_seed20260916": {
+      "rows": 199398,
+      "any_news_5d": 0.974,
+      "any_news_20d": 0.9922,
+      "no_news_20d": 0.0078,
+      "news_count_5d_p50": 4.0,
+      "news_count_5d_p99": 10.0,
+      "news_count_5d_dispersion_std_over_mean": 0.524,
+      "surge_ge_2_share": 0.1681,
+      "novelty_5d_median": 0.9789
+    }
+  },
+  "conclusion": "Neither symbol-level shuffle is distribution-matched, and they fail in opposite directions, because news volume is itself a size/liquidity proxy: the per-article uniform `draw` flattens the heavy tail (dispersion 2.18 -> 0.52, the 'no news in 20 sessions' tier 6.1% -> 0.8%), while the fixed-bijection `relabel` under-covers (coverage 69.2% -> 57.2%, that tier 6.1% -> 15.9%) because the bijection is drawn over the 1,237-symbol union universe and routinely maps a well-covered large cap onto a name outside that year's ~977-symbol cohort. `relabel` is the mode this round uses -- it preserves each pseudo-symbol's whole news history verbatim, which is the property a placebo for a persistent count feature needs -- but the control that is exactly size-matched by construction is the within-week state shuffle (kernel/news_gate.shuffle_states_within_date), and that is the one the verdict leans on.",
+  "leftover_draw_mode_directories": [
+    "data/features/news_attention_placebo_shuffle_seed20260916 (complete, kept as the evidence for this table)",
+    "data/features/news_attention_placebo_shuffle_seed20260917 (partial: interrupted when the mode was changed; safe to delete)"
+  ]
+}

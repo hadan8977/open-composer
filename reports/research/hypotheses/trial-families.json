@@ -34,7 +34,23 @@
         "H-20260916-02"
       ],
       "budget": 6,
-      "used": 0
+      "used": 3,
+      "budget_remaining": 3,
+      "used_variants_2026_09_16": [
+        "gate_N_surge (surge>=2 and novelty>=pool median -> full, else half)",
+        "gate_N_nonews (no article in 20 sessions -> half, else full; the card sentence's literal reading)",
+        "gate_N_tiered (1.0 / 0.75 / 0.5 three-tier; the 0.75 middle tier is this round's own invention, disclosed in the report)"
+      ],
+      "not_counted": [
+        "the 48-test preregistered factor screen (scripts/screen_news_attention_factors.py) -- a screen with its own BH denominator, not a set of selectable cells",
+        "the 9-test novelty-tercile block -- same reason, own BH denominator",
+        "the two controls (within-week same-size shuffle x 5 seeds, article-symbol shuffle x 5 seeds) -- controls, not candidates"
+      ],
+      "unused_variants_registered": [
+        "novelty_5d with the prior-20-session window taken per rebalance date instead of per headline (the other reading of the card's wording; see build_news_attention_features.py's novelty_5d entry)",
+        "attention_surge_5d with the current 5-session window excluded from its own 60-session baseline"
+      ],
+      "note": "stage 1 (no LLM) run 2026-09-16; see reports/research/lessons/L-20260916-02-draft.md. Stage 2 (LLM scoring of a sample) needs the user's separately configured model and is not part of this family's count yet."
     },
     "llm_acceptance_judge_forward": {
       "prior_trials_from_ledger": 0,
@@ -51,7 +67,22 @@
         "H-20260916-05"
       ],
       "budget": 4,
-      "used": 0
+      "used": 1,
+      "budget_remaining": 3,
+      "used_variants_2026_09_17": [
+        "weekly equal-weight book of every name with a new 13D entry session in the trailing 60 sessions (next-open, 10 bps/side)"
+      ],
+      "not_counted": [
+        "the event study itself (20/40/60 sessions x 6 windows x 8 subsample slices) -- diagnostics on one event definition, not selectable cells",
+        "the two controls (size-matched random control x 5 seeds, filing-date shift +-20 sessions x 5 seeds)",
+        "the 400-filing random 13G/13G/A header sample -- a data-quality validation, not a candidate"
+      ],
+      "unused_variants_registered": [
+        "20-session and 120-session lookback books (same rule, different holding window)",
+        "Item 4 length filter (activism proxy) on the same book",
+        "percent-of-class >= 10% filter on the same book"
+      ],
+      "note": "refuted 2026-09-17 (L-20260916-05-draft): the announcement-session excess is +1.73% (t=4.15) but the tradable leg (entry at the next open, 20-60 sessions) is |t| < 1 after 2024-02-05 and the filing-date-shift placebo reproduces 176% of it at 40 sessions. Recommend closing the remaining budget; the 13D/13G PIT table stays for H-04's LLM dossier and as a risk marker."
     },
     "pead_xbrl_8k": {
       "prior_trials_from_ledger": 0,

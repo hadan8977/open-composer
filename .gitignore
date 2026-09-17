@@ -135,6 +135,39 @@ reports/research/iterations/h20260916_01_insider_gate/step2-results-raw.json
 reports/research/iterations/h20260916_01_insider_gate/gate_states/
 reports/research/iterations/h20260916_01_insider_gate/step1_screen_checkpoints/
 reports/research/iterations/h20260916_01_insider_gate/logs/
+# H-20260916-02 (news attention features, stage 1, no LLM): the pre-check cross
+# table, the factor screen and the twin-cell report are the reviewable evidence
+# and stay in git. The round's parquet checkpoints (picks, per-source gate
+# states, per-year screen checkpoints), the raw priced-book dump
+# (results-raw.json) and its run logs are excluded again below -- all
+# reproducible from data/features/ via scripts/build_news_attention_features.py,
+# scripts/screen_news_attention_factors.py and
+# scripts/run_h20260916_02_news_attention.py. Same shape as the two blocks
+# above: the directory has to be un-ignored for git to descend into it at all,
+# so the exclusions are written as positive patterns.
+!reports/research/iterations/h20260916_02_news_attention/
+reports/research/iterations/h20260916_02_news_attention/*.parquet
+reports/research/iterations/h20260916_02_news_attention/schedule_baseline.json
+reports/research/iterations/h20260916_02_news_attention/results-raw.json
+reports/research/iterations/h20260916_02_news_attention/gate_states/
+reports/research/iterations/h20260916_02_news_attention/step3_screen_checkpoints/
+reports/research/iterations/h20260916_02_news_attention/logs/
+# H-20260916-05 (13D activist event drift): the pre-check cross table, the
+# event study, the tradability sketch and the report are the reviewable
+# evidence and stay in git as md/json only. The per-event parquet checkpoints
+# and the run logs are excluded again below -- all reproducible from
+# data/raw/sec_13d/ + data/features/ via scripts/collect_sec_13d_filings.py,
+# scripts/build_sec_13d_features.py and
+# scripts/run_h20260916_05_13d_drift.py. Same shape as the three blocks above:
+# the directory has to be un-ignored for git to descend into it at all, so the
+# exclusions are written as positive patterns.
+!reports/research/iterations/h20260916_05_13d_drift/
+reports/research/iterations/h20260916_05_13d_drift/*.parquet
+reports/research/iterations/h20260916_05_13d_drift/logs/
+# (data/raw/sec_13d/ -- the quarterly form-index slices, the filing header and
+# cover-page extracts and the company_tickers.json snapshot -- needs no entry
+# of its own: data/raw/ is already ignored above, and all of it is refetchable
+# from sec.gov by scripts/collect_sec_13d_filings.py.)
 data/sip/
 data/sip-hist/
 data/sip-delisted/
