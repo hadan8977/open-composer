@@ -18,6 +18,19 @@ Usage (the real multi-year backfill; run detached + capped)::
     nohup ./scripts/run_capped.sh --mem 1.8G -- \
         uv run python scripts/build_reversal_trend_features.py \
         > /tmp/build_reversal_trend.log 2>&1 &
+
+**2026-09-18 broad-universe rerun**: ``--universe-root``/``--out-dir``/
+``--extra-daily-root`` (same names/defaults-unchanged contract as
+``build_daily_features.py``) target ``data/features/reversal_trend_broad``
+off ``data/features/universe_broad`` with ``data/sip-delisted/by_year``
+folded in::
+
+    nohup setsid ./scripts/run_capped.sh --mem 1.8G -- \
+        uv run python scripts/build_reversal_trend_features.py \
+        --universe-root data/features/universe_broad \
+        --out-dir data/features/reversal_trend_broad \
+        --extra-daily-root data/sip-delisted/by_year \
+        --memory-limit 800MB > logs/reversal_trend_broad.log 2>&1 &
 """
 
 from __future__ import annotations
@@ -68,11 +81,38 @@ def main() -> int:
     parser.add_argument("--memory-limit", default="1.2GB")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--symbol-batch-size", type=int, default=DEFAULT_SYMBOL_BATCH_SIZE)
+    parser.add_argument(
+        "--universe-root",
+        type=Path,
+        default=UNIVERSE_ROOT,
+        help="PIT universe panel dir whose symbol union bounds the feature set",
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=OUT_ROOT,
+        help="where {year}.parquet feature files go (default data/features/reversal_trend)",
+    )
+    parser.add_argument(
+        "--extra-daily-root",
+        type=Path,
+        default=None,
+        help=(
+            "second bars root in {root}/{year}/*.parquet layout scanned next to "
+            "data/sip/daily (e.g. data/sip-delisted/by_year for backfilled delisted names)"
+        ),
+    )
     args = parser.parse_args()
 
-    OUT_ROOT.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(args.out_dir)
+    universe_root = Path(args.universe_root)
+    extra_root = Path(args.extra_daily_root) if args.extra_daily_root is not None else None
+    if extra_root is not None and not any(extra_root.glob("*/*.parquet")):
+        raise SystemExit(f"no parquet files under {extra_root}")
+
+    out_dir.mkdir(parents=True, exist_ok=True)
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] loading universe union symbols ...", flush=True)
-    universe_symbols = sorted(universe_union_symbols(UNIVERSE_ROOT))
+    universe_symbols = sorted(universe_union_symbols(universe_root))
     print(f"universe union: {len(universe_symbols)} symbols", flush=True)
 
     archive_years = _available_archive_years()
@@ -82,7 +122,7 @@ def main() -> int:
 
     summary: dict[str, object] = {}
     for year in target_years:
-        out_path = OUT_ROOT / f"{year}.parquet"
+        out_path = out_dir / f"{year}.parquet"
         if out_path.exists() and not args.force:
             print(
                 f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {year}: already done, skipping", flush=True
@@ -92,6 +132,12 @@ def main() -> int:
 
         window_years = sorted({y for y in (year - LOOKBACK_YEARS, year) if y >= first_archive_year})
         glob_paths = [str(DAILY_ROOT / str(y) / "*.parquet") for y in window_years]
+        if extra_root is not None:
+            glob_paths += [
+                str(extra_root / str(y) / "*.parquet")
+                for y in window_years
+                if (extra_root / str(y)).is_dir()
+            ]
         symbol_batches = [
             universe_symbols[i : i + args.symbol_batch_size]
             for i in range(0, len(universe_symbols), args.symbol_batch_size)
@@ -103,7 +149,7 @@ def main() -> int:
             flush=True,
         )
 
-        scratch = OUT_ROOT / "_scratch" / str(year)
+        scratch = out_dir / "_scratch" / str(year)
         scratch.mkdir(parents=True, exist_ok=True)
         frames: list[pd.DataFrame] = []
         for batch_index, batch_symbols in enumerate(symbol_batches):
@@ -145,7 +191,7 @@ def main() -> int:
 
         elapsed = time.monotonic() - started
         write_feature_table_manifest(
-            OUT_ROOT,
+            out_dir,
             table="reversal_trend",
             source_library=SOURCE_LIBRARY,
             formula_version=FORMULA_VERSION,

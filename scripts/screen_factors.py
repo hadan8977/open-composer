@@ -105,10 +105,62 @@ Usage (detached + capped, if memory is tight)::
     nohup ./scripts/run_capped.sh --mem 1.2G -- \
         uv run python scripts/screen_factors.py \
         > /tmp/screen_factors.log 2>&1 &
+
+**2026-09-18 broad-universe rerun -- preregistration amendment, written
+before running, per this docstring's own rule.** The narrow protocol above
+is unchanged and its artifacts (``step13f_screen.parquet/.md``,
+``config/feature_sets/screened_top40_recent.json``) are untouched --
+``--features-suffix ""`` (the default) still runs exactly that code path
+(``_run_narrow``). ``--features-suffix _broad`` instead runs the same
+protocol (Friday rows, PIT cohort, per-factor cross-sectional Spearman rank
+IC, full-sample (2018-2026, unchanged) and recent (2024-01-02+) windows,
+per-year sign stability, rank autocorrelation, missing rate, BH q=0.05 FDR
+on full-sample t, near-duplicate collapse at rank correlation > 0.9)
+against ``data/features/{library}_broad``/``labels_broad``/
+``universe_broad`` (9,191 symbols, 128 monthly cohorts, 2016-2026, built via
+``scripts/build_{alpha158,alpha101_alpha191,osap_price,reversal_trend}_
+features.py --universe-root data/features/universe_broad --extra-daily-root
+data/sip-delisted/by_year``), with two additions:
+
+(a) The screen is run once per liquidity band in :data:`LIQUIDITY_BANDS` --
+    ``all`` (the unrestricted broad population, no rank cap: the headline
+    "broad universe" number compared against the narrow run's fixed
+    top-1500), ``b1_500``, ``b501_1500``, ``b1501_plus`` (``adv_rank``
+    bounds) -- because the whole point of building the broad universe is
+    that a published factor mined on liquid large/mid-caps may only carry
+    (or may only newly appear) in the small-cap tail; a single pooled
+    broad-universe number would hide that.
+(b) ``label_excess_21``/``label_excess_63`` are added to the label set
+    (``LABEL_COLUMNS + EXTRA_LABEL_COLUMNS``, 4 labels total) because
+    ``data/features/labels_broad`` -- unlike the narrow ``data/features/
+    labels`` this script originally targeted -- has those two horizons
+    built, and a monthly-horizon signal was previously invisible to this
+    screen entirely.
+
+Output for the broad run: ``config/feature_sets/screened_top40_recent_
+broad.json``, ``reports/research/factor_screen/step13f_screen_broad.parquet``,
+and a markdown comparison report at ``reports/research/control/factor-
+screen-broad-2026-09-18.md`` (or ``--out``), with a "band" column added to
+every table (absent from the narrow artifacts' schema, which is otherwise
+identical to before) so the per-band, per-label breakdown job 4 asks for is
+directly readable off one file.
+
+Usage (broad; one library's factor tables must already be built -- see
+``scripts/build_*_features.py``'s own broad-rerun usage sections -- before
+its rows can contribute; this script's own per-(year, library, band)
+checkpointing under ``reports/research/factor_screen/_checkpoints_broad/``
+makes a mid-run kill resumable exactly like the narrow run)::
+
+    uv run python scripts/screen_factors.py --features-suffix _broad
+
+    nohup ./scripts/run_capped.sh --mem 1.2G -- \
+        uv run python scripts/screen_factors.py --features-suffix _broad \
+        > logs/screen_factors_broad.log 2>&1 &
 """
 
 from __future__ import annotations
 
+import argparse
 import gc
 import json
 import sys
@@ -139,11 +191,42 @@ OUT_MD = ROOT / "reports" / "research" / "factor_screen" / "step13f_screen.md"
 OUT_JSON = ROOT / "config" / "feature_sets" / "screened_top40_recent.json"
 CHECKPOINTS_ROOT = ROOT / "reports" / "research" / "factor_screen" / "_checkpoints"
 
+#: 2026-09-18 broad-universe rerun (see module docstring's dated addendum
+#: below): non-empty only inside ``_run_broad``, read by ``_library_root``
+#: so ``_process_library_year``/``_load_recent_sample_panel`` resolve
+#: ``data/features/{library}{FEATURES_SUFFIX}`` instead of the narrow
+#: ``data/features/{library}``. Left at ``""`` for the narrow run (the
+#: module-level default every existing test relies on).
+FEATURES_SUFFIX = ""
+
+#: 2026-09-18 addendum's default broad-run markdown report path (job 4's
+#: "the comparison that matters"), used when ``--out`` is not given.
+DEFAULT_BROAD_OUT_MD = (
+    ROOT / "reports" / "research" / "control" / "factor-screen-broad-2026-09-18.md"
+)
+
 LIBRARIES: tuple[str, ...] = ("alpha158", "alpha101", "alpha191", "osap_price", "reversal_trend")
 LABEL_COLUMNS: tuple[str, ...] = ("label_excess_5", "label_excess_10")
+#: 2026-09-18 addendum (b): ``label_excess_21``/``label_excess_63`` exist in
+#: ``data/features/labels_broad`` (not the narrow ``data/features/labels``)
+#: -- only the broad run (``_run_broad``) adds these to ``LABEL_COLUMNS``.
+EXTRA_LABEL_COLUMNS: tuple[str, ...] = ("label_excess_21", "label_excess_63")
 ALL_YEARS: list[int] = list(range(2018, 2027))
 RECENT_START = pd.Timestamp("2024-01-02")
 UNIVERSE_TOP_N = 1500
+#: 2026-09-18 addendum (a): the three liquidity bands job 3 asks for, as
+#: (min_rank, max_rank) inclusive bounds on ``adv_rank`` -- ``None`` means
+#: unbounded on that side. ``"all"`` is the unrestricted broad population
+#: (every symbol in that month's PIT cohort, no rank cap at all), the
+#: headline "broad universe" number job 4 compares against the narrow
+#: run's fixed top-1500. Only used by ``_run_broad``; the narrow run keeps
+#: its original single top-1500 population untouched.
+LIQUIDITY_BANDS: dict[str, tuple[int | None, int | None]] = {
+    "all": (None, None),
+    "b1_500": (1, 500),
+    "b501_1500": (501, 1500),
+    "b1501_plus": (1501, None),
+}
 MIN_CROSS_SECTION = 10  # minimum non-null names for one date's IC/rank-corr to count
 FDR_Q = 0.05
 TOP_N = 40
@@ -152,6 +235,19 @@ DEDUP_CANDIDATE_POOL = 150  # headroom above TOP_N before dedup removes near-dup
 DEDUP_SAMPLE_WEEKS = 8  # see module docstring's "documented approximation"
 FACTOR_CHUNK_SIZE = 40  # 2026-09-10 memory fix -- see module docstring
 AUTOCORR_SAMPLE_WEEKS = 8  # same design as DEDUP_SAMPLE_WEEKS, see module docstring
+
+
+def _library_root(library: str) -> Path:
+    """``data/features/{library}{FEATURES_SUFFIX}`` -- the one seam every
+    library-table reader goes through, so the 2026-09-18 broad rerun (which
+    sets ``FEATURES_SUFFIX = "_broad"`` for the duration of ``_run_broad``)
+    needs no other change to ``_process_library_year``/
+    ``_load_recent_sample_panel``. ``FEATURES_SUFFIX`` defaults to ``""``,
+    reproducing the pre-2026-09-18 ``FEATURES_ROOT / library`` path exactly
+    (this is also what the existing tests' ``monkeypatch.setattr(sf,
+    "FEATURES_ROOT", ...)`` fixture relies on).
+    """
+    return FEATURES_ROOT / f"{library}{FEATURES_SUFFIX}"
 
 
 @dataclass
@@ -207,18 +303,38 @@ def _load_library_year(
     return frame
 
 
-def _load_labels_year(year: int, dates: list[pd.Timestamp]) -> pd.DataFrame:
+def _load_labels_year(
+    year: int, dates: list[pd.Timestamp], label_columns: tuple[str, ...] = LABEL_COLUMNS
+) -> pd.DataFrame:
     path = LABELS_ROOT / f"{year}.parquet"
-    frame = pd.read_parquet(path, columns=["symbol", "trade_date", *LABEL_COLUMNS])
+    frame = pd.read_parquet(path, columns=["symbol", "trade_date", *label_columns])
     return frame.loc[frame["trade_date"].isin(dates)]
 
 
 def _universe_membership_frame(
-    universe_panel: pd.DataFrame, dates: list[pd.Timestamp], top_n: int
+    universe_panel: pd.DataFrame,
+    dates: list[pd.Timestamp],
+    top_n: int | None,
+    *,
+    min_rank: int | None = None,
 ) -> pd.DataFrame:
+    """Membership rows for ``dates``, restricted to ``adv_rank`` in
+    ``(min_rank, top_n]`` -- ``top_n=None`` means no upper cap, ``min_rank=None``
+    (the default, and the only value the pre-2026-09-18 narrow run ever
+    passes) means no lower floor, reproducing the original top-``top_n``-only
+    membership exactly. 2026-09-18 addendum (a): a non-default ``min_rank``
+    is how ``_run_broad`` derives the b501_1500/b1501_plus liquidity bands,
+    via two calls to the already-tested ``universe_as_of_calendar_month``
+    (one for the band's upper cap, one for the ``min_rank - 1`` symbols to
+    exclude) rather than teaching that function a new lower-bound argument.
+    """
     rows = []
     for date in dates:
-        for symbol in universe_as_of_calendar_month(universe_panel, date, top_n=top_n):
+        symbols = universe_as_of_calendar_month(universe_panel, date, top_n=top_n)
+        if min_rank is not None and min_rank > 1:
+            excluded = universe_as_of_calendar_month(universe_panel, date, top_n=min_rank - 1)
+            symbols = symbols - excluded
+        for symbol in symbols:
             rows.append((date, symbol))
     return pd.DataFrame(rows, columns=["trade_date", "symbol"])
 
@@ -236,8 +352,21 @@ def _process_library_year(
     ic_accumulators: dict[tuple[str, str, str], _FactorAccumulator],
     autocorr_accumulators: dict[tuple[str, str], _RankAutocorrAccumulator],
     missing_accumulators: dict[tuple[str, str], _MissingAccumulator],
+    *,
+    top_n: int | None = UNIVERSE_TOP_N,
+    min_rank: int | None = None,
+    label_columns: tuple[str, ...] = LABEL_COLUMNS,
 ) -> None:
-    library_root = FEATURES_ROOT / library
+    """Process one (library, year) cell for one population (the population
+    is ``top_n``/``min_rank``, defaulting to the original fixed top-1500
+    membership every pre-2026-09-18 caller relies on -- see
+    ``_universe_membership_frame``). ``label_columns`` defaults to the
+    original 2-label ``LABEL_COLUMNS``; 2026-09-18 addendum (b) passes the
+    4-label broad-run tuple instead. Both keyword-only defaults are bound at
+    import time from the still-narrow module globals, so every existing
+    positional-args-only call (including the test suite's) is unaffected.
+    """
+    library_root = _library_root(library)
     calendar = _year_calendar(library_root, year)
     dates = weekly_rebalance_dates(calendar)
     if not dates:
@@ -248,8 +377,8 @@ def _process_library_year(
     # pivoting all of `dates`.
     autocorr_dates = dates[-AUTOCORR_SAMPLE_WEEKS:]
 
-    label_frame = _load_labels_year(year, dates)
-    membership = _universe_membership_frame(universe_panel, dates, UNIVERSE_TOP_N)
+    label_frame = _load_labels_year(year, dates, label_columns=label_columns)
+    membership = _universe_membership_frame(universe_panel, dates, top_n, min_rank=min_rank)
 
     # 2026-09-10 memory fix (see module docstring): process at most
     # FACTOR_CHUNK_SIZE factor columns at a time end-to-end (load, merge, IC
@@ -275,7 +404,7 @@ def _process_library_year(
                 factor_values = group[factor]
                 if factor_values.notna().sum() < MIN_CROSS_SECTION:
                     continue
-                for label in LABEL_COLUMNS:
+                for label in label_columns:
                     label_values = group[label]
                     valid = factor_values.notna() & label_values.notna()
                     if valid.sum() < MIN_CROSS_SECTION:
@@ -431,6 +560,11 @@ def _run_year_library(
     autocorr_accumulators: dict[tuple[str, str], _RankAutocorrAccumulator],
     missing_accumulators: dict[tuple[str, str], _MissingAccumulator],
     checkpoints_root: Path = CHECKPOINTS_ROOT,
+    *,
+    band: str | None = None,
+    top_n: int | None = UNIVERSE_TOP_N,
+    min_rank: int | None = None,
+    label_columns: tuple[str, ...] = LABEL_COLUMNS,
 ) -> str:
     """Process one (year, library) cell, resuming from a checkpoint if a
     prior run already finished it. Always leaves the three shared
@@ -438,8 +572,20 @@ def _run_year_library(
     do not need to branch on the return value, which is purely for
     logging/tests. Returns ``"skipped"`` when a checkpoint was loaded
     instead of recomputed, ``"computed"`` otherwise.
+
+    ``band``/``top_n``/``min_rank``/``label_columns`` are 2026-09-18
+    additions for ``_run_broad``'s per-liquidity-band reruns: leaving
+    ``band`` at its default ``None`` keeps the original
+    ``{year}_{library}.parquet`` checkpoint name (so the narrow run's
+    existing checkpoints keep resolving unchanged); a given ``band`` name
+    namespaces the checkpoint as ``{year}_{library}_{band}.parquet`` instead,
+    since ``_run_broad`` computes one full (year, library) pass per
+    population and they must not overwrite each other.
     """
-    checkpoint_path = checkpoints_root / f"{year}_{library}.parquet"
+    checkpoint_name = (
+        f"{year}_{library}.parquet" if band is None else f"{year}_{library}_{band}.parquet"
+    )
+    checkpoint_path = checkpoints_root / checkpoint_name
     if checkpoint_path.exists():
         _load_checkpoint_into_accumulators(
             checkpoint_path,
@@ -456,7 +602,16 @@ def _run_year_library(
     )
     year_missing: dict[tuple[str, str], _MissingAccumulator] = defaultdict(_MissingAccumulator)
     _process_library_year(
-        library, year, columns, universe_panel, year_ic, year_autocorr, year_missing
+        library,
+        year,
+        columns,
+        universe_panel,
+        year_ic,
+        year_autocorr,
+        year_missing,
+        top_n=top_n,
+        min_rank=min_rank,
+        label_columns=label_columns,
     )
 
     for key, bucket in year_ic.items():
@@ -574,7 +729,7 @@ def _load_recent_sample_panel(library: str, factor: str, weeks: int) -> pd.DataF
     """Last ``weeks`` rebalance dates' raw (not ranked) values for one
     factor, trade_date-indexed / symbol-columned -- used only by the dedup
     sampling approximation, not the IC computation."""
-    library_root = FEATURES_ROOT / library
+    library_root = _library_root(library)
     recent_years = [year for year in (2025, 2026) if (library_root / f"{year}.parquet").exists()]
     frames = []
     for year in recent_years:
@@ -590,7 +745,119 @@ def _load_recent_sample_panel(library: str, factor: str, weeks: int) -> pd.DataF
     return combined.pivot(index="trade_date", columns="symbol", values=factor)
 
 
-def main() -> int:
+def _compute_screen_table(
+    ic_accumulators: dict[tuple[str, str, str], _FactorAccumulator],
+    autocorr_accumulators: dict[tuple[str, str], _RankAutocorrAccumulator],
+    missing_accumulators: dict[tuple[str, str], _MissingAccumulator],
+) -> pd.DataFrame:
+    """Turn one population's raw accumulators into the enriched per-
+    (library, factor, label) row table: full/recent window stats, sign
+    stability, rank autocorrelation, missing rate, and both the
+    full-sample and recent-window Benjamini-Hochberg FDR passes.
+
+    Factored out of the original single-population ``main()`` (now
+    ``_run_narrow``) unchanged, 2026-09-18, so ``_run_broad`` can call it
+    once per liquidity band without duplicating the statistics.
+    """
+    rows: list[dict] = []
+    for (library, factor, label), bucket in ic_accumulators.items():
+        full = _window_stats(bucket.dates, bucket.ic_values, start=None)
+        recent = _window_stats(bucket.dates, bucket.ic_values, start=RECENT_START)
+        sign_stability = _sign_stability(bucket.dates, bucket.ic_values, full["ic_mean"])
+        autocorr = autocorr_accumulators.get((library, factor))
+        rank_autocorr = (
+            autocorr.corr_sum / autocorr.n_pairs
+            if autocorr and autocorr.n_pairs > 0
+            else float("nan")
+        )
+        missing = missing_accumulators.get((library, factor))
+        missing_rate = (
+            missing.missing / missing.total if missing and missing.total > 0 else float("nan")
+        )
+        rows.append(
+            {
+                "library": library,
+                "factor": factor,
+                "label": label,
+                "ic_mean_full": full["ic_mean"],
+                "ic_std_full": full["ic_std"],
+                "icir_full": full["icir"],
+                "t_full": full["t"],
+                "n_full": full["n"],
+                "ic_mean_recent": recent["ic_mean"],
+                "ic_std_recent": recent["ic_std"],
+                "icir_recent": recent["icir"],
+                "t_recent": recent["t"],
+                "n_recent": recent["n"],
+                "sign_stability": sign_stability,
+                "rank_autocorr_weekly": rank_autocorr,
+                "missing_rate": missing_rate,
+            }
+        )
+    screen = pd.DataFrame(rows)
+    if screen.empty:
+        return screen
+
+    p_values = 2.0 * scipy_stats.t.sf(
+        np.abs(screen["t_full"].to_numpy()), df=np.maximum(screen["n_full"].to_numpy() - 1, 1)
+    )
+    p_values = np.where(screen["n_full"].to_numpy() >= 2, p_values, np.nan)
+    screen["p_value_full"] = p_values
+    screen["fdr_pass"] = _benjamini_hochberg(p_values, FDR_Q)
+
+    # Step 15 Track A (2026-09-14): the same BH q=0.05 procedure, run a
+    # second time on the recent-window t-stats (t_recent/n_recent) instead
+    # of full-sample. Added because the Step 15 plan's own conditional
+    # step ("若 US-17 中有 >=5 个在近期窗通过 FDR") needs a real
+    # recent-window multiple-testing-corrected pass/fail, not the
+    # full-sample-only `fdr_pass` this script already computed -- a
+    # factor can be recent-window-informative without being full-sample
+    # significant (that is exactly what the existing "16 个是仅近期有效的
+    # 体制因子" disclosure in the F chapter already describes), so
+    # reusing `fdr_pass` for a recent-window question would be wrong, not
+    # just imprecise. Purely additive: `fdr_pass`/`p_value_full` are
+    # unchanged, every existing reader of this table is unaffected.
+    p_values_recent = 2.0 * scipy_stats.t.sf(
+        np.abs(screen["t_recent"].to_numpy()), df=np.maximum(screen["n_recent"].to_numpy() - 1, 1)
+    )
+    p_values_recent = np.where(screen["n_recent"].to_numpy() >= 2, p_values_recent, np.nan)
+    screen["p_value_recent"] = p_values_recent
+    screen["fdr_pass_recent"] = _benjamini_hochberg(p_values_recent, FDR_Q)
+    return screen
+
+
+def _select_top_n(screen: pd.DataFrame) -> pd.DataFrame:
+    """The recent-|ICIR|-ranked, near-duplicate-deduped top ``TOP_N`` rows
+    of ``screen`` (see module docstring). Reads each dedup candidate's raw
+    values via ``_load_recent_sample_panel`` -> ``_library_root``, so the
+    caller must have ``FEATURES_SUFFIX``/``LABELS_ROOT`` already set to the
+    population being screened (``_run_narrow`` leaves them at the module
+    defaults; ``_run_broad`` sets them once for the whole broad run, before
+    looping over bands).
+    """
+    ranked = screen.assign(_abs_icir_recent=screen["icir_recent"].abs())
+    ranked = ranked.sort_values("_abs_icir_recent", ascending=False, na_position="last")
+    candidate_pool = ranked.head(DEDUP_CANDIDATE_POOL)
+
+    value_lookup: dict[tuple[str, str], pd.DataFrame] = {}
+    for (library, factor), _ in candidate_pool.groupby(["library", "factor"], sort=False):
+        value_lookup[(library, factor)] = _load_recent_sample_panel(
+            library, factor, DEDUP_SAMPLE_WEEKS
+        )
+
+    top = _dedupe_by_rank_correlation(candidate_pool, value_lookup, DEDUP_RANK_CORR_THRESHOLD)
+    return top.assign(is_regime_factor=~top["fdr_pass"])
+
+
+def _run_narrow() -> int:
+    """The original (pre-2026-09-18) single-population screen, byte-for-byte
+    unchanged in behavior: narrow ``data/features/{library}``/``labels``/
+    ``universe`` roots, the fixed top-1500 population, ``LABEL_COLUMNS``'s
+    original 2 labels, writing exactly ``OUT_PARQUET``/``OUT_MD``/
+    ``OUT_JSON``. Invoked when ``--features-suffix`` is empty (main()'s
+    default) -- see module docstring's 2026-09-18 addendum for the new
+    ``_run_broad`` path this leaves untouched.
+    """
     started_all = time.monotonic()
     universe_panel = load_universe_panel(UNIVERSE_ROOT)
     print(
@@ -633,68 +900,7 @@ def main() -> int:
                 flush=True,
             )
 
-    rows: list[dict] = []
-    for (library, factor, label), bucket in ic_accumulators.items():
-        full = _window_stats(bucket.dates, bucket.ic_values, start=None)
-        recent = _window_stats(bucket.dates, bucket.ic_values, start=RECENT_START)
-        sign_stability = _sign_stability(bucket.dates, bucket.ic_values, full["ic_mean"])
-        autocorr = autocorr_accumulators.get((library, factor))
-        rank_autocorr = (
-            autocorr.corr_sum / autocorr.n_pairs
-            if autocorr and autocorr.n_pairs > 0
-            else float("nan")
-        )
-        missing = missing_accumulators.get((library, factor))
-        missing_rate = (
-            missing.missing / missing.total if missing and missing.total > 0 else float("nan")
-        )
-        rows.append(
-            {
-                "library": library,
-                "factor": factor,
-                "label": label,
-                "ic_mean_full": full["ic_mean"],
-                "ic_std_full": full["ic_std"],
-                "icir_full": full["icir"],
-                "t_full": full["t"],
-                "n_full": full["n"],
-                "ic_mean_recent": recent["ic_mean"],
-                "ic_std_recent": recent["ic_std"],
-                "icir_recent": recent["icir"],
-                "t_recent": recent["t"],
-                "n_recent": recent["n"],
-                "sign_stability": sign_stability,
-                "rank_autocorr_weekly": rank_autocorr,
-                "missing_rate": missing_rate,
-            }
-        )
-    screen = pd.DataFrame(rows)
-
-    p_values = 2.0 * scipy_stats.t.sf(
-        np.abs(screen["t_full"].to_numpy()), df=np.maximum(screen["n_full"].to_numpy() - 1, 1)
-    )
-    p_values = np.where(screen["n_full"].to_numpy() >= 2, p_values, np.nan)
-    screen["p_value_full"] = p_values
-    screen["fdr_pass"] = _benjamini_hochberg(p_values, FDR_Q)
-
-    # Step 15 Track A (2026-09-14): the same BH q=0.05 procedure, run a
-    # second time on the recent-window t-stats (t_recent/n_recent) instead
-    # of full-sample. Added because the Step 15 plan's own conditional
-    # step ("若 US-17 中有 >=5 个在近期窗通过 FDR") needs a real
-    # recent-window multiple-testing-corrected pass/fail, not the
-    # full-sample-only `fdr_pass` this script already computed -- a
-    # factor can be recent-window-informative without being full-sample
-    # significant (that is exactly what the existing "16 个是仅近期有效的
-    # 体制因子" disclosure in the F chapter already describes), so
-    # reusing `fdr_pass` for a recent-window question would be wrong, not
-    # just imprecise. Purely additive: `fdr_pass`/`p_value_full` are
-    # unchanged, every existing reader of this table is unaffected.
-    p_values_recent = 2.0 * scipy_stats.t.sf(
-        np.abs(screen["t_recent"].to_numpy()), df=np.maximum(screen["n_recent"].to_numpy() - 1, 1)
-    )
-    p_values_recent = np.where(screen["n_recent"].to_numpy() >= 2, p_values_recent, np.nan)
-    screen["p_value_recent"] = p_values_recent
-    screen["fdr_pass_recent"] = _benjamini_hochberg(p_values_recent, FDR_Q)
+    screen = _compute_screen_table(ic_accumulators, autocorr_accumulators, missing_accumulators)
     print(
         f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {int(screen['fdr_pass'].sum())}/{len(screen)} "
         f"tests pass BH q={FDR_Q} (full-sample); "
@@ -702,18 +908,7 @@ def main() -> int:
         flush=True,
     )
 
-    ranked = screen.assign(_abs_icir_recent=screen["icir_recent"].abs())
-    ranked = ranked.sort_values("_abs_icir_recent", ascending=False, na_position="last")
-    candidate_pool = ranked.head(DEDUP_CANDIDATE_POOL)
-
-    value_lookup: dict[tuple[str, str], pd.DataFrame] = {}
-    for (library, factor), _ in candidate_pool.groupby(["library", "factor"], sort=False):
-        value_lookup[(library, factor)] = _load_recent_sample_panel(
-            library, factor, DEDUP_SAMPLE_WEEKS
-        )
-
-    top40 = _dedupe_by_rank_correlation(candidate_pool, value_lookup, DEDUP_RANK_CORR_THRESHOLD)
-    top40 = top40.assign(is_regime_factor=~top40["fdr_pass"])
+    top40 = _select_top_n(screen)
 
     OUT_PARQUET.parent.mkdir(parents=True, exist_ok=True)
     screen.to_parquet(OUT_PARQUET, index=False)
@@ -774,6 +969,223 @@ def main() -> int:
         flush=True,
     )
     return 0
+
+
+def _run_broad(suffix: str, out_arg: Path | None) -> int:
+    """2026-09-18 broad-universe rerun: the same protocol as ``_run_narrow``
+    (Friday rebalance rows, PIT cohort membership, cross-sectional Spearman
+    rank IC, full-sample/recent windows, sign stability, rank
+    autocorrelation, missing rate, BH q=0.05 FDR on full-sample t, and the
+    recent-|ICIR| rank-correlation dedup) run once per entry of
+    :data:`LIQUIDITY_BANDS` (addition (a) -- ``"all"`` is the unrestricted
+    broad population, the headline number job 4 compares against the
+    narrow run's fixed top-1500) and against ``LABEL_COLUMNS +
+    EXTRA_LABEL_COLUMNS`` (addition (b) -- the broad labels table has
+    ``label_excess_21``/``label_excess_63`` the narrow one lacks). Reads
+    ``data/features/{library}{suffix}``/``labels{suffix}``/
+    ``universe{suffix}`` instead of the narrow roots; never touches
+    ``OUT_PARQUET``/``OUT_MD``/``OUT_JSON`` (the narrow run's own
+    artifacts) -- writes ``config/feature_sets/screened_top40_recent{suffix}.json``,
+    ``reports/research/factor_screen/step13f_screen{suffix}.parquet``, and
+    a markdown report at ``out_arg`` (default :data:`DEFAULT_BROAD_OUT_MD`).
+    """
+    global FEATURES_SUFFIX, LABELS_ROOT, UNIVERSE_ROOT
+    started_all = time.monotonic()
+    FEATURES_SUFFIX = suffix
+    LABELS_ROOT = FEATURES_ROOT / f"labels{suffix}"
+    UNIVERSE_ROOT = FEATURES_ROOT / f"universe{suffix}"
+    checkpoints_root = CHECKPOINTS_ROOT.parent / f"_checkpoints{suffix}"
+    out_json = ROOT / "config" / "feature_sets" / f"screened_top40_recent{suffix}.json"
+    out_parquet = (
+        ROOT / "reports" / "research" / "factor_screen" / f"step13f_screen{suffix}.parquet"
+    )
+    out_md = Path(out_arg) if out_arg is not None else DEFAULT_BROAD_OUT_MD
+
+    universe_panel = load_universe_panel(UNIVERSE_ROOT)
+    print(
+        f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] broad universe panel ({UNIVERSE_ROOT}): "
+        f"{len(universe_panel)} rows",
+        flush=True,
+    )
+
+    label_columns = LABEL_COLUMNS + EXTRA_LABEL_COLUMNS
+    library_columns: dict[str, list[str]] = {}
+    for library in LIBRARIES:
+        columns, _ = resolve_feature_set(library)
+        library_columns[library] = columns
+        print(f"  {library}: {len(columns)} columns (root {_library_root(library)})", flush=True)
+
+    checkpoints_root.mkdir(parents=True, exist_ok=True)
+
+    band_screens: list[pd.DataFrame] = []
+    band_top_n: list[pd.DataFrame] = []
+    for band, (min_rank, max_rank) in LIQUIDITY_BANDS.items():
+        ic_accumulators: dict[tuple[str, str, str], _FactorAccumulator] = defaultdict(
+            _FactorAccumulator
+        )
+        autocorr_accumulators: dict[tuple[str, str], _RankAutocorrAccumulator] = defaultdict(
+            _RankAutocorrAccumulator
+        )
+        missing_accumulators: dict[tuple[str, str], _MissingAccumulator] = defaultdict(
+            _MissingAccumulator
+        )
+        for year in ALL_YEARS:
+            for library in LIBRARIES:
+                started = time.monotonic()
+                status = _run_year_library(
+                    library,
+                    year,
+                    library_columns[library],
+                    universe_panel,
+                    ic_accumulators,
+                    autocorr_accumulators,
+                    missing_accumulators,
+                    checkpoints_root,
+                    band=band,
+                    top_n=max_rank,
+                    min_rank=min_rank,
+                    label_columns=label_columns,
+                )
+                print(
+                    f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {band} {year} {library}: "
+                    f"{status} ({time.monotonic() - started:.0f}s)",
+                    flush=True,
+                )
+
+        band_screen = _compute_screen_table(
+            ic_accumulators, autocorr_accumulators, missing_accumulators
+        )
+        if band_screen.empty:
+            print(
+                f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {band}: no IC observations, skipping",
+                flush=True,
+            )
+            continue
+        band_screen = band_screen.assign(band=band)
+        print(
+            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {band}: "
+            f"{int(band_screen['fdr_pass'].sum())}/{len(band_screen)} pass BH q={FDR_Q} "
+            f"(full-sample); {int(band_screen['fdr_pass_recent'].sum())}/{len(band_screen)} "
+            f"pass BH q={FDR_Q} (recent-window)",
+            flush=True,
+        )
+        band_top = _select_top_n(band_screen).assign(band=band)
+        band_screens.append(band_screen)
+        band_top_n.append(band_top)
+
+    if not band_screens:
+        print(
+            f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] no IC observations in any band -- "
+            f"is data/features/{{library}}{suffix} built yet? nothing written.",
+            flush=True,
+        )
+        return 1
+
+    screen = pd.concat(band_screens, ignore_index=True)
+    top_by_band = pd.concat(band_top_n, ignore_index=True)
+
+    out_parquet.parent.mkdir(parents=True, exist_ok=True)
+    screen.to_parquet(out_parquet, index=False)
+
+    payload = {
+        "generated_at": pd.Timestamp.now(tz="UTC").isoformat(),
+        "protocol": (
+            "scripts/screen_factors.py module docstring, 2026-09-18 broad-universe addendum"
+        ),
+        "features_suffix": suffix,
+        "bands": list(LIQUIDITY_BANDS.keys()),
+        "label_columns": list(label_columns),
+        "n_tests": len(screen),
+        "n_fdr_pass": int(screen["fdr_pass"].sum()),
+        "factors": [
+            {
+                "factor": row["factor"],
+                "source_root": row["library"],
+                "label": row["label"],
+                "band": row["band"],
+                "icir_recent": row["icir_recent"],
+                "icir_full": row["icir_full"],
+                "t_recent": row["t_recent"],
+                "t_full": row["t_full"],
+                "sign_stability": row["sign_stability"],
+                "fdr_pass": bool(row["fdr_pass"]),
+                "is_regime_factor": bool(row["is_regime_factor"]),
+            }
+            for _, row in top_by_band.iterrows()
+        ],
+    }
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_json.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    report_lines = [
+        "# Factor screen -- broad universe rerun (2026-09-18)",
+        "",
+        f"Source roots: `data/features/{{library}}{suffix}`, "
+        f"`data/features/labels{suffix}`, `data/features/universe{suffix}`.",
+        f"{len(screen)} tests total across {len(LIQUIDITY_BANDS)} liquidity bands "
+        f"({screen['library'].nunique()} libraries x {screen['factor'].nunique()} factors x "
+        f"{len(label_columns)} labels), {int(screen['fdr_pass'].sum())} pass BH q={FDR_Q} "
+        "on full-sample t.",
+        "",
+    ]
+    for band in LIQUIDITY_BANDS:
+        band_rows = top_by_band.loc[top_by_band["band"] == band]
+        if band_rows.empty:
+            continue
+        report_lines += [
+            f"## Band `{band}` -- top {len(band_rows)} by recent |ICIR| "
+            f"(deduped at rank correlation > {DEDUP_RANK_CORR_THRESHOLD})",
+            "",
+            "| factor | library | label | icir_recent | t_recent | icir_full | t_full |"
+            " sign_stability | fdr_pass | regime_factor |",
+            "|---|---|---|---|---|---|---|---|---|---|",
+        ]
+        for _, row in band_rows.iterrows():
+            report_lines.append(
+                f"| {row['factor']} | {row['library']} | {row['label']} |"
+                f" {row['icir_recent']:.3f} | {row['t_recent']:.2f} |"
+                f" {row['icir_full']:.3f} | {row['t_full']:.2f} |"
+                f" {row['sign_stability']:.2f} | {row['fdr_pass']} | {row['is_regime_factor']} |"
+            )
+        report_lines.append("")
+    out_md.parent.mkdir(parents=True, exist_ok=True)
+    out_md.write_text("\n".join(report_lines), encoding="utf-8")
+
+    print(
+        f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] wrote {out_parquet}, {out_md}, {out_json}"
+        f" ({time.monotonic() - started_all:.0f}s total)",
+        flush=True,
+    )
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--features-suffix",
+        default="",
+        help=(
+            "suffix appended to each library/labels/universe dir under data/features "
+            "(e.g. _broad for the 2026-09-18 broad-universe rerun); default '' runs "
+            "the original narrow protocol unchanged, writing the original artifacts "
+            f"({OUT_PARQUET.relative_to(ROOT)}, {OUT_MD.relative_to(ROOT)}, "
+            f"{OUT_JSON.relative_to(ROOT)})"
+        ),
+    )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help=(
+            "markdown report path for a --features-suffix run (default "
+            f"{DEFAULT_BROAD_OUT_MD.relative_to(ROOT)}); ignored when --features-suffix "
+            "is empty"
+        ),
+    )
+    args = parser.parse_args()
+    if not args.features_suffix:
+        return _run_narrow()
+    return _run_broad(args.features_suffix, args.out)
 
 
 if __name__ == "__main__":
