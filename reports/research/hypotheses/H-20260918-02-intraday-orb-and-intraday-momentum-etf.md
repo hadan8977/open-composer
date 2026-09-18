@@ -1,6 +1,6 @@
 # H-20260918-02 盘中策略：开盘区间突破（ORB）与盘中动量，先在指数 ETF 上复现已发表结果
 
-- 状态：approved（Fable 决定，2026-09-18）· 假设族：intraday_single_asset（预算 8）· 前置依赖：无（分钟线已在本地）
+- 状态：**ORB-ETF 部分 done / refuted**（2026-09-18，见 `reports/research/lessons/L-20260918-02.md`）；SPY 噪声带盘中动量部分仍为 approved 未跑 · 原状态 approved（Fable 决定）· 假设族：intraday_single_asset（预算 8）· 前置依赖：无（分钟线已在本地）
 - 层：择时（单标的日内）· 数据层：分钟线（`data/sip/minute` 2023-01→2026-09，`data/sip-hist/minute` 2016→2022；SPY 两段都全，QQQ/TQQQ 只有 2023 起）
 - 触发：用户 2026-09-18「我没说只做动量策略……高频的低频的，只要支持或者有办法实现，都要做」。这是第一条盘中线，因为它是唯一有公开发表、可核对规则、且我们已有数据的高年化候选。
 
