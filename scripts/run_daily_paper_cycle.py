@@ -41,6 +41,11 @@ DEFAULT_SPEC = (
 #: both with margin; daily bars are cheap enough that the wider window costs
 #: nothing meaningful in latency.
 TARGET_WEIGHTS_LOOKBACK_DAYS = 400
+#: Portfolio modes served by the reduced observation-only cycle (account sync +
+#: target weights, never orders): the Step 11 model-ranking book and, since
+#: 2026-09-18, the insider-buy book (H-20260917-01) which shares the same
+#: target-weights artifact contract.
+OBSERVATION_CYCLE_PORTFOLIO_MODES = ("model_ranking_portfolio", "insider_buy_portfolio")
 
 
 @dataclass
@@ -101,7 +106,7 @@ def _is_model_ranking_portfolio_spec(root: Path, spec_ref: str) -> bool:
     if not path.is_file():
         return False
     try:
-        return load_strategy_spec(path).portfolio.mode == "model_ranking_portfolio"
+        return load_strategy_spec(path).portfolio.mode in OBSERVATION_CYCLE_PORTFOLIO_MODES
     except Exception:
         return False
 
@@ -143,10 +148,10 @@ def run_model_ranking_observation_cycle(
     if not spec_path.is_absolute():
         spec_path = root / spec_path
     strategy_spec = load_strategy_spec(spec_path)
-    if strategy_spec.portfolio.mode != "model_ranking_portfolio":
+    if strategy_spec.portfolio.mode not in OBSERVATION_CYCLE_PORTFOLIO_MODES:
         raise ValueError(
-            "run_model_ranking_observation_cycle requires portfolio.mode="
-            f"model_ranking_portfolio, got {strategy_spec.portfolio.mode!r}"
+            "run_model_ranking_observation_cycle requires portfolio.mode in "
+            f"{OBSERVATION_CYCLE_PORTFOLIO_MODES}, got {strategy_spec.portfolio.mode!r}"
         )
     if strategy_spec.execution.mode != "manual_signal" or strategy_spec.execution.broker != "none":
         raise ValueError(

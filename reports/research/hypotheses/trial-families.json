@@ -1,145 +1,167 @@
 {
-  "schema": "trial-families.v1",
-  "note": "Cumulative trial counts per hypothesis family; DSR for any cell in a family uses the family's count plus prior related trials recorded in the ledger.",
-  "families": {
-    "rule_momentum_top50_price_volume": {
-      "prior_trials_from_ledger": 60,
-      "cards": [],
-      "budget_remaining": 0,
-      "note": "closed: no new cells on the same price-volume features without a new data layer or target"
-    },
-    "meta_labeling_on_rule_momentum": {
-      "prior_trials_from_ledger": 0,
-      "cards": [
-        "H-20260916-03"
-      ],
-      "budget": 6,
-      "used": 2,
-      "note": "closed 2026-09-16: refuted (L-20260916-03); no further cells on price-volume features",
-      "budget_remaining": 0
-    },
-    "insider_form4_gate": {
-      "prior_trials_from_ledger": 0,
-      "cards": [
-        "H-20260916-01"
-      ],
-      "budget": 6,
-      "used": 4,
-      "budget_remaining": 0,
-      "note": "closed 2026-09-16: refuted as a layer on the momentum book (L-20260916-01); Form 4 pipeline stays for independent-candidate use (H-20260916-08)"
-    },
-    "news_attention_features": {
-      "prior_trials_from_ledger": 0,
-      "cards": [
-        "H-20260916-02"
-      ],
-      "budget": 6,
-      "used": 3,
-      "budget_remaining": 3,
-      "used_variants_2026_09_16": [
-        "gate_N_surge (surge>=2 and novelty>=pool median -> full, else half)",
-        "gate_N_nonews (no article in 20 sessions -> half, else full; the card sentence's literal reading)",
-        "gate_N_tiered (1.0 / 0.75 / 0.5 three-tier; the 0.75 middle tier is this round's own invention, disclosed in the report)"
-      ],
-      "not_counted": [
-        "the 48-test preregistered factor screen (scripts/screen_news_attention_factors.py) -- a screen with its own BH denominator, not a set of selectable cells",
-        "the 9-test novelty-tercile block -- same reason, own BH denominator",
-        "the two controls (within-week same-size shuffle x 5 seeds, article-symbol shuffle x 5 seeds) -- controls, not candidates"
-      ],
-      "unused_variants_registered": [
-        "novelty_5d with the prior-20-session window taken per rebalance date instead of per headline (the other reading of the card's wording; see build_news_attention_features.py's novelty_5d entry)",
-        "attention_surge_5d with the current 5-session window excluded from its own 60-session baseline"
-      ],
-      "note": "stage 1 (no LLM) run 2026-09-16; see reports/research/lessons/L-20260916-02-draft.md. Stage 2 (LLM scoring of a sample) needs the user's separately configured model and is not part of this family's count yet."
-    },
-    "llm_acceptance_judge_forward": {
-      "prior_trials_from_ledger": 0,
-      "cards": [
-        "H-20260916-04"
-      ],
-      "budget": 2,
-      "used": 0,
-      "note": "forward shadow evaluation; trial = each distinct prompt/rubric version put in front of live weeks"
-    },
-    "event_13d_drift": {
-      "prior_trials_from_ledger": 0,
-      "cards": [
-        "H-20260916-05"
-      ],
-      "budget": 4,
-      "used": 1,
-      "budget_remaining": 3,
-      "used_variants_2026_09_17": [
-        "weekly equal-weight book of every name with a new 13D entry session in the trailing 60 sessions (next-open, 10 bps/side)"
-      ],
-      "not_counted": [
-        "the event study itself (20/40/60 sessions x 6 windows x 8 subsample slices) -- diagnostics on one event definition, not selectable cells",
-        "the two controls (size-matched random control x 5 seeds, filing-date shift +-20 sessions x 5 seeds)",
-        "the 400-filing random 13G/13G/A header sample -- a data-quality validation, not a candidate"
-      ],
-      "unused_variants_registered": [
-        "20-session and 120-session lookback books (same rule, different holding window)",
-        "Item 4 length filter (activism proxy) on the same book",
-        "percent-of-class >= 10% filter on the same book"
-      ],
-      "note": "refuted 2026-09-17 (L-20260916-05-draft): the announcement-session excess is +1.73% (t=4.15) but the tradable leg (entry at the next open, 20-60 sessions) is |t| < 1 after 2024-02-05 and the filing-date-shift placebo reproduces 176% of it at 40 sessions. Recommend closing the remaining budget; the 13D/13G PIT table stays for H-04's LLM dossier and as a risk marker."
-    },
-    "pead_xbrl_8k": {
-      "prior_trials_from_ledger": 0,
-      "cards": [
-        "H-20260916-06"
-      ],
-      "budget": 4,
-      "used": 0
-    },
-    "short_interest_avoid": {
-      "prior_trials_from_ledger": 0,
-      "cards": [
-        "H-20260916-07"
-      ],
-      "budget": 3,
-      "used": 2,
-      "budget_remaining": 1,
-      "used_variants_2026_09_17": [
-        "avoid_drop (days-to-cover 在当日点时 top-500 池百分位 >= 0.80 则剔除，其余满仓，归一化到 100% 暴露)",
-        "avoid_half (同一条件下减半，归一化到 100% 暴露)"
-      ],
-      "not_counted": [
-        "the 15-test preregistered factor screen (scripts/screen_short_interest_factors.py) -- own BH denominator, not a set of selectable cells",
-        "the pre-check cross-table (book vs top-500 pool vs broad liquid universe, three thresholds) -- diagnostics on one condition, not candidates",
-        "the broad-universe quintile / top-minus-bottom tables -- evidence for a *different* family (crowded-short reversal on the broad universe), which needs its own card before anything is priced",
-        "the two controls (within-week same-size shuffle x 5 seeds, publication-shift +-1..10 sessions x 5 seeds)"
-      ],
-      "unused_variants_registered": [
-        "0.90 threshold (highest 10% days-to-cover) -- measured in the pre-check at 8.8% of book stock-weeks, below the 10% floor, so not priced",
-        "0.70 threshold (highest 30%)",
-        "avoid on short_interest_ratio (shares short / own 63-session ADV shares) instead of FINRA days-to-cover"
-      ]
-    },
-    "insider_cluster_buy_independent": {
-      "prior_trials_from_ledger": 0,
-      "cards": [
-        "H-20260916-08"
-      ],
-      "budget": 3,
-      "used": 0,
-      "note": "independent contrarian candidate on the top-500 pool; expectation low given the screener's null/negative recent-window results"
-    },
-    "insider_independent_broad": {
-      "prior_trials_from_ledger": 0,
-      "cards": [
-        "H-20260917-01"
-      ],
-      "budget": 6,
-      "used": 0
-    },
-    "ml_ranking_broad": {
-      "prior_trials_from_ledger": 0,
-      "cards": [
-        "H-20260917-02"
-      ],
-      "budget": 6,
-      "used": 0
-    }
+ "schema": "trial-families.v1",
+ "note": "Cumulative trial counts per hypothesis family; DSR for any cell in a family uses the family's count plus prior related trials recorded in the ledger.",
+ "families": {
+  "rule_momentum_top50_price_volume": {
+   "prior_trials_from_ledger": 60,
+   "cards": [],
+   "budget_remaining": 0,
+   "note": "closed: no new cells on the same price-volume features without a new data layer or target"
+  },
+  "meta_labeling_on_rule_momentum": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260916-03"
+   ],
+   "budget": 6,
+   "used": 2,
+   "note": "closed 2026-09-16: refuted (L-20260916-03); no further cells on price-volume features",
+   "budget_remaining": 0
+  },
+  "insider_form4_gate": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260916-01"
+   ],
+   "budget": 6,
+   "used": 4,
+   "budget_remaining": 0,
+   "note": "closed 2026-09-16: refuted as a layer on the momentum book (L-20260916-01); Form 4 pipeline stays for independent-candidate use (H-20260916-08)"
+  },
+  "news_attention_features": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260916-02"
+   ],
+   "budget": 6,
+   "used": 3,
+   "budget_remaining": 3,
+   "used_variants_2026_09_16": [
+    "gate_N_surge (surge>=2 and novelty>=pool median -> full, else half)",
+    "gate_N_nonews (no article in 20 sessions -> half, else full; the card sentence's literal reading)",
+    "gate_N_tiered (1.0 / 0.75 / 0.5 three-tier; the 0.75 middle tier is this round's own invention, disclosed in the report)"
+   ],
+   "not_counted": [
+    "the 48-test preregistered factor screen (scripts/screen_news_attention_factors.py) -- a screen with its own BH denominator, not a set of selectable cells",
+    "the 9-test novelty-tercile block -- same reason, own BH denominator",
+    "the two controls (within-week same-size shuffle x 5 seeds, article-symbol shuffle x 5 seeds) -- controls, not candidates"
+   ],
+   "unused_variants_registered": [
+    "novelty_5d with the prior-20-session window taken per rebalance date instead of per headline (the other reading of the card's wording; see build_news_attention_features.py's novelty_5d entry)",
+    "attention_surge_5d with the current 5-session window excluded from its own 60-session baseline"
+   ],
+   "note": "stage 1 (no LLM) run 2026-09-16; see reports/research/lessons/L-20260916-02-draft.md. Stage 2 (LLM scoring of a sample) needs the user's separately configured model and is not part of this family's count yet."
+  },
+  "llm_acceptance_judge_forward": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260916-04"
+   ],
+   "budget": 2,
+   "used": 0,
+   "note": "forward shadow evaluation; trial = each distinct prompt/rubric version put in front of live weeks"
+  },
+  "event_13d_drift": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260916-05"
+   ],
+   "budget": 4,
+   "used": 1,
+   "budget_remaining": 3,
+   "used_variants_2026_09_17": [
+    "weekly equal-weight book of every name with a new 13D entry session in the trailing 60 sessions (next-open, 10 bps/side)"
+   ],
+   "not_counted": [
+    "the event study itself (20/40/60 sessions x 6 windows x 8 subsample slices) -- diagnostics on one event definition, not selectable cells",
+    "the two controls (size-matched random control x 5 seeds, filing-date shift +-20 sessions x 5 seeds)",
+    "the 400-filing random 13G/13G/A header sample -- a data-quality validation, not a candidate"
+   ],
+   "unused_variants_registered": [
+    "20-session and 120-session lookback books (same rule, different holding window)",
+    "Item 4 length filter (activism proxy) on the same book",
+    "percent-of-class >= 10% filter on the same book"
+   ],
+   "note": "refuted 2026-09-17 (L-20260916-05-draft): the announcement-session excess is +1.73% (t=4.15) but the tradable leg (entry at the next open, 20-60 sessions) is |t| < 1 after 2024-02-05 and the filing-date-shift placebo reproduces 176% of it at 40 sessions. Recommend closing the remaining budget; the 13D/13G PIT table stays for H-04's LLM dossier and as a risk marker."
+  },
+  "pead_xbrl_8k": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260916-06"
+   ],
+   "budget": 4,
+   "used": 0
+  },
+  "short_interest_avoid": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260916-07"
+   ],
+   "budget": 3,
+   "used": 2,
+   "budget_remaining": 1,
+   "used_variants_2026_09_17": [
+    "avoid_drop (days-to-cover 在当日点时 top-500 池百分位 >= 0.80 则剔除，其余满仓，归一化到 100% 暴露)",
+    "avoid_half (同一条件下减半，归一化到 100% 暴露)"
+   ],
+   "not_counted": [
+    "the 15-test preregistered factor screen (scripts/screen_short_interest_factors.py) -- own BH denominator, not a set of selectable cells",
+    "the pre-check cross-table (book vs top-500 pool vs broad liquid universe, three thresholds) -- diagnostics on one condition, not candidates",
+    "the broad-universe quintile / top-minus-bottom tables -- evidence for a *different* family (crowded-short reversal on the broad universe), which needs its own card before anything is priced",
+    "the two controls (within-week same-size shuffle x 5 seeds, publication-shift +-1..10 sessions x 5 seeds)"
+   ],
+   "unused_variants_registered": [
+    "0.90 threshold (highest 10% days-to-cover) -- measured in the pre-check at 8.8% of book stock-weeks, below the 10% floor, so not priced",
+    "0.70 threshold (highest 30%)",
+    "avoid on short_interest_ratio (shares short / own 63-session ADV shares) instead of FINRA days-to-cover"
+   ]
+  },
+  "insider_cluster_buy_independent": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260916-08"
+   ],
+   "budget": 3,
+   "used": 0,
+   "note": "independent contrarian candidate on the top-500 pool; expectation low given the screener's null/negative recent-window results"
+  },
+  "insider_independent_broad": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260917-01"
+   ],
+   "budget": 6,
+   "used": 0
+  },
+  "ml_ranking_broad": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260917-02",
+    "H-20260918-03"
+   ],
+   "budget": 6,
+   "used": 0,
+   "note": "2026-09-18: H-20260918-03 adopts Qlib's published LightGBM-Alpha158 and DoubleEnsemble recipes verbatim (no tuning) plus TopkDropout(50,5)"
+  },
+  "momentum_risk_control": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260918-01"
+   ],
+   "budget": 6,
+   "used": 15,
+   "budget_remaining": 0,
+   "note": "closed 2026-09-18: refuted (L-20260918-01). 15 cells (vol target x trend gate; the sector-cap knob was dropped for lack of any local sector field); none beat SPMO on both CAGR and max drawdown. Vol targeting slides along the same risk-return line; the trend gate's drawdown improvement is indistinguishable from a random +/-21-session calendar shift. Position sizing cannot fix a Sharpe gap."
+  },
+  "intraday_single_asset": {
+   "prior_trials_from_ledger": 0,
+   "cards": [
+    "H-20260918-02"
+   ],
+   "budget": 8,
+   "used": 0,
+   "budget_remaining": 8,
+   "note": "opened 2026-09-18: published intraday rules (ORB on index ETFs, SPY noise-band intraday momentum); 2024-01 onward is true out-of-sample for all three source papers"
   }
+ }
 }

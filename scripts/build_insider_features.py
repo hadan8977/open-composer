@@ -46,6 +46,26 @@ set repeats the transaction once per owner. Share, dollar and transaction
 counts therefore use ``owner_seq == 0`` rows only; distinct-owner counts
 (``buyers_60d`` / ``sellers_60d``) use every owner row.
 
+**Role split (officer/director vs ten-percent-owner).** ``net_buy_usd_60d``,
+``open_market_buy_count_60d`` and ``buyers_60d`` mix three legally distinct
+reporting-owner roles together: officers, directors and ten-percent owners.
+On 2026-09-15 this made the table unable to express the hypothesis it is
+used for -- RSG's ``net_buy_usd_60d`` was $1.38 billion, all of it a single
+10%-owner (CIK 0000902012, 107 transaction rows over 14 accessions), so a
+strategy ranking on the unsplit column was actually selecting large
+passive-holder accumulation, not the officer/director buying the research
+literature treats as informative. The table therefore also publishes an
+officer-or-director cut (``*_od_60d``) and a ten-percent-owner-only cut
+(``*_tenpct_60d``/``*_tenpct_od_excluded_60d``), computed from the parsed
+``is_director``/``is_officer``/``is_ten_percent_owner`` flags on each
+transaction row. The same ``owner_seq == 0`` rule above still applies to
+every share/dollar/count sum in the split columns; ``buyers_od_60d`` counts
+every owner row that passes the role filter, exactly like ``buyers_60d``.
+A reporting owner who is both a ten-percent owner and an officer or
+director counts only in the ``od`` columns -- ``*_tenpct_60d`` /
+``*_tenpct_od_excluded_60d`` are ten-percent-owner-**only** cuts, restricted
+to rows where neither ``is_officer`` nor ``is_director`` is also true.
+
 Routine vs opportunistic (Cohen-Malloy-Pomorski)
 ------------------------------------------------
 The exact rule implemented, stated so it can be checked and criticized:
@@ -154,16 +174,41 @@ WEEKLY_PANEL_TOP_N = 500
 OTHER_CODES = ("M", "A", "F")
 DEFAULT_PLACEBO_SEED = 20260916
 
+#: Officer/director vs ten-percent-owner role-split columns (see the module
+#: docstring's "Joint filings" section). Not yet part of
+#: ``open_composer.research.features.insider.INSIDER_COLUMNS`` -- that
+#: registry file is out of scope for this change, so the split columns are
+#: appended here rather than edited into the shared registry.
+ROLE_SPLIT_COLUMNS: tuple[str, ...] = (
+    "net_buy_usd_od_60d",
+    "net_buy_shares_od_60d",
+    "open_market_buy_count_od_60d",
+    "buyers_od_60d",
+    "net_buy_usd_tenpct_60d",
+    "open_market_buy_count_tenpct_od_excluded_60d",
+)
+
 #: The feature columns this table publishes, in output order. Single source
 #: of truth is ``open_composer.research.features.insider`` so the
-#: feature-set registry and this builder cannot drift apart.
-FEATURE_COLUMNS: tuple[str, ...] = INSIDER_COLUMNS
+#: feature-set registry and this builder cannot drift apart -- with
+#: ``ROLE_SPLIT_COLUMNS`` appended (see that tuple's docstring).
+FEATURE_COLUMNS: tuple[str, ...] = INSIDER_COLUMNS + ROLE_SPLIT_COLUMNS
 
 #: Share and dollar aggregates stay float64: a 60-day net share flow can
 #: exceed float32's ~7 significant digits (observed -166,998.625 where the
 #: true value was -166,998), and a USD flow above 1e9 would lose hundreds
 #: of dollars. Counts and day gaps are small integers and stay float32.
-WIDE_COLUMNS: tuple[str, ...] = ("net_buy_shares_60d", "net_buy_usd_60d")
+#: The two role-split USD/shares columns and the ten-percent-owner USD
+#: column carry the same precision risk (the RSG example above is itself a
+#: ten-percent-owner concentration, so ``net_buy_usd_tenpct_60d`` can reach
+#: the same magnitudes as ``net_buy_usd_60d``) and stay float64 too.
+WIDE_COLUMNS: tuple[str, ...] = (
+    "net_buy_shares_60d",
+    "net_buy_usd_60d",
+    "net_buy_usd_od_60d",
+    "net_buy_shares_od_60d",
+    "net_buy_usd_tenpct_60d",
+)
 
 READ_COLUMNS = (
     "accession",
@@ -177,6 +222,9 @@ READ_COLUMNS = (
     "acquired_disposed",
     "shares",
     "price_per_share",
+    "is_director",
+    "is_officer",
+    "is_ten_percent_owner",
 )
 
 
@@ -295,6 +343,13 @@ def classify_transactions(transactions: pd.DataFrame) -> pd.DataFrame:
     price = pd.to_numeric(transactions["price_per_share"], errors="coerce").fillna(0.0)
     transactions["shares_num"] = shares.astype("float64")
     transactions["usd"] = (shares * price).astype("float64")
+    is_officer = transactions["is_officer"].astype("boolean").fillna(False)
+    is_director = transactions["is_director"].astype("boolean").fillna(False)
+    is_ten_percent_owner = transactions["is_ten_percent_owner"].astype("boolean").fillna(False)
+    transactions["is_od"] = (is_officer | is_director).to_numpy(dtype=bool)
+    transactions["is_tenpct_only"] = (is_ten_percent_owner & ~is_officer & ~is_director).to_numpy(
+        dtype=bool
+    )
     return transactions
 
 
@@ -501,6 +556,8 @@ def build_year(
     is_buy = window["is_buy"].to_numpy(dtype=bool)
     is_sell = window["is_sell"].to_numpy(dtype=bool)
     is_other = window["is_other"].to_numpy(dtype=bool)
+    is_od = window["is_od"].to_numpy(dtype=bool)
+    is_tenpct_only = window["is_tenpct_only"].to_numpy(dtype=bool)
     shares = window["shares_num"].to_numpy(dtype=np.float64)
     usd = window["usd"].to_numpy(dtype=np.float64)
     routine = window["is_routine_buy"].to_numpy(dtype=bool)
@@ -521,11 +578,23 @@ def build_year(
             "routine_buy",
             "cmp_opportunistic_buy",
             "cmp_unclassified_buy",
+            "buy_shares_od",
+            "sell_shares_od",
+            "buy_usd_od",
+            "sell_usd_od",
+            "buy_count_od",
+            "buy_usd_tenpct",
+            "sell_usd_tenpct",
+            "buy_count_tenpct",
         )
     }
     buy_primary = primary & is_buy
     sell_primary = primary & is_sell
     other_primary = primary & is_other
+    buy_od_primary = buy_primary & is_od
+    sell_od_primary = sell_primary & is_od
+    buy_tenpct_primary = buy_primary & is_tenpct_only
+    sell_tenpct_primary = sell_primary & is_tenpct_only
     _scatter_sum(
         daily["buy_shares"], positions[buy_primary], locals_[buy_primary], shares[buy_primary]
     )
@@ -547,6 +616,46 @@ def build_year(
         ("cmp_unclassified_buy", buy_primary & cmp_unclassified),
     ):
         _scatter_sum(daily[name], positions[flag], locals_[flag], ones)
+    _scatter_sum(
+        daily["buy_shares_od"],
+        positions[buy_od_primary],
+        locals_[buy_od_primary],
+        shares[buy_od_primary],
+    )
+    _scatter_sum(
+        daily["sell_shares_od"],
+        positions[sell_od_primary],
+        locals_[sell_od_primary],
+        shares[sell_od_primary],
+    )
+    _scatter_sum(
+        daily["buy_usd_od"], positions[buy_od_primary], locals_[buy_od_primary], usd[buy_od_primary]
+    )
+    _scatter_sum(
+        daily["sell_usd_od"],
+        positions[sell_od_primary],
+        locals_[sell_od_primary],
+        usd[sell_od_primary],
+    )
+    _scatter_sum(daily["buy_count_od"], positions[buy_od_primary], locals_[buy_od_primary], ones)
+    _scatter_sum(
+        daily["buy_usd_tenpct"],
+        positions[buy_tenpct_primary],
+        locals_[buy_tenpct_primary],
+        usd[buy_tenpct_primary],
+    )
+    _scatter_sum(
+        daily["sell_usd_tenpct"],
+        positions[sell_tenpct_primary],
+        locals_[sell_tenpct_primary],
+        usd[sell_tenpct_primary],
+    )
+    _scatter_sum(
+        daily["buy_count_tenpct"],
+        positions[buy_tenpct_primary],
+        locals_[buy_tenpct_primary],
+        ones,
+    )
 
     rolled = {name: _rolling_window_sum(array, WINDOW_SESSIONS) for name, array in daily.items()}
 
@@ -564,6 +673,15 @@ def build_year(
         symbol_positions=positions[is_sell],
         owners=owners[is_sell],
         indices=window["visible_idx"].to_numpy(dtype=np.int64)[is_sell],
+        n_symbols=n_symbols,
+        local_start=local_start,
+        n_local=n_local,
+        window=WINDOW_SESSIONS,
+    )
+    buyers_od = _distinct_owner_counts(
+        symbol_positions=positions[is_buy & is_od],
+        owners=owners[is_buy & is_od],
+        indices=window["visible_idx"].to_numpy(dtype=np.int64)[is_buy & is_od],
         n_symbols=n_symbols,
         local_start=local_start,
         n_local=n_local,
@@ -602,6 +720,7 @@ def build_year(
     date_array = np.tile(target_dates.to_numpy(), n_symbols)
     buyers_flat = buyers[:, slice_].ravel()[selected].astype(np.float32)
     sellers_flat = sellers[:, slice_].ravel()[selected].astype(np.float32)
+    buyers_od_flat = buyers_od[:, slice_].ravel()[selected].astype(np.float32)
     frame = pd.DataFrame(
         {
             "symbol": symbol_array[selected],
@@ -625,6 +744,20 @@ def build_year(
             ],
             "cmp_unclassified_buy_60d": rolled["cmp_unclassified_buy"][:, slice_].ravel()[selected],
             "days_since_last_visible_buy": days_since.ravel()[selected],
+            "net_buy_usd_od_60d": (
+                rolled["buy_usd_od"][:, slice_] - rolled["sell_usd_od"][:, slice_]
+            ).ravel()[selected],
+            "net_buy_shares_od_60d": (
+                rolled["buy_shares_od"][:, slice_] - rolled["sell_shares_od"][:, slice_]
+            ).ravel()[selected],
+            "open_market_buy_count_od_60d": rolled["buy_count_od"][:, slice_].ravel()[selected],
+            "buyers_od_60d": buyers_od_flat,
+            "net_buy_usd_tenpct_60d": (
+                rolled["buy_usd_tenpct"][:, slice_] - rolled["sell_usd_tenpct"][:, slice_]
+            ).ravel()[selected],
+            "open_market_buy_count_tenpct_od_excluded_60d": rolled["buy_count_tenpct"][
+                :, slice_
+            ].ravel()[selected],
         }
     )
     frame["symbol"] = frame["symbol"].astype("string")
@@ -791,7 +924,16 @@ def main(argv: list[str] | None = None) -> int:
             f"unclassified {float(primary_buys['is_cmp_unclassified_buy'].mean()):.2%}"
         )
     transactions = transactions.drop(
-        columns=["accession", "trans_code", "acquired_disposed", "shares", "price_per_share"]
+        columns=[
+            "accession",
+            "trans_code",
+            "acquired_disposed",
+            "shares",
+            "price_per_share",
+            "is_director",
+            "is_officer",
+            "is_ten_percent_owner",
+        ]
     )
 
     written: list[str] = []
@@ -850,6 +992,15 @@ def main(argv: list[str] | None = None) -> int:
             "opportunistic_buy_60d = not routine (the card's literal rule); "
             "cmp_opportunistic_buy_60d additionally requires a visible P/S transaction in "
             "each of the three prior calendar years, cmp_unclassified_buy_60d is the rest"
+        ),
+        "role_split_columns": list(ROLE_SPLIT_COLUMNS),
+        "role_split_rule": (
+            "*_od_60d restricts owner_seq==0 share/dollar/count sums to rows where "
+            "is_officer or is_director is true; buyers_od_60d counts every owner row "
+            "(not just owner_seq==0) that passes that same filter, mirroring buyers_60d; "
+            "*_tenpct_60d / *_tenpct_od_excluded_60d additionally require is_ten_percent_owner "
+            "true and both is_officer and is_director false, so an owner who is both a "
+            "ten-percent owner and an officer/director counts only in the od columns"
         ),
         "years": written,
     }

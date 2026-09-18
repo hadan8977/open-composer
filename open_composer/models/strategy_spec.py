@@ -181,6 +181,61 @@ class ETFStructuralFamilyConfig(BaseModel):
         return self
 
 
+class InsiderBuyPortfolioConfig(BaseModel):
+    """``portfolio.mode=insider_buy_portfolio`` selection rule (H-20260917-01).
+
+    A monthly, equal-weight, long-only book of names whose point-in-time Form 4
+    insider table shows open-market buying over the trailing 60 sessions.
+    Consumed by ``open_composer.adapters.execution.insider_portfolio_target_weights``;
+    every field is a parameter of that adapter and nothing here is read by the
+    rule engine. Paths are repo-relative feature roots; the ``*_fallback_root``
+    is used (with a recorded warning) only when the preferred root has no
+    yearly parquet files yet.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    universe_root: str = "data/features/universe_broad"
+    universe_fallback_root: str | None = "data/features/universe"
+    insider_feature_root: str = "data/features/insider_broad"
+    insider_feature_fallback_root: str | None = "data/features/insider"
+    #: Optional liquidity band on the cohort's ``adv_rank`` (inclusive, 1-based).
+    #: ``None`` on both ends means the whole cohort; e.g. 501/100000 keeps
+    #: everything outside the top-500 ADV names.
+    adv_rank_min: int | None = Field(default=None, ge=1)
+    adv_rank_max: int | None = Field(default=None, ge=1)
+    min_open_market_buy_count_60d: int = Field(default=1, ge=1)
+    min_net_buy_usd_60d: float = Field(default=25_000.0, ge=0)
+    min_buyers_60d: int = Field(default=1, ge=1)
+    rank_column: Literal[
+        "net_buy_usd_60d",
+        "net_buy_shares_60d",
+        "buyers_60d",
+        "net_buyers_60d",
+        "opportunistic_buy_60d",
+        "cmp_opportunistic_buy_60d",
+    ] = "net_buy_usd_60d"
+    max_names: int = Field(default=100, ge=1)
+    gross_target: float = Field(default=1.0, gt=0, le=1)
+    per_name_cap: float = Field(default=0.05, gt=0, le=1)
+    rebalance: Literal["calendar_month_end"] = "calendar_month_end"
+    #: A candidate with no daily bar inside the last N sessions is skipped
+    #: (delisted / halted / backfilled-only name) and recorded in the manifest.
+    stale_bar_sessions: int = Field(default=5, ge=1)
+
+    @model_validator(mode="after")
+    def validate_band(self) -> InsiderBuyPortfolioConfig:
+        if (
+            self.adv_rank_min is not None
+            and self.adv_rank_max is not None
+            and self.adv_rank_min > self.adv_rank_max
+        ):
+            raise ValueError("insider_buy.adv_rank_min must be <= adv_rank_max")
+        if self.per_name_cap > self.gross_target:
+            raise ValueError("insider_buy.per_name_cap must be <= gross_target")
+        return self
+
+
 class PortfolioConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -195,6 +250,7 @@ class PortfolioConfig(BaseModel):
         "etf_structural_family",
         "model_ranking_portfolio",
         "event_driven_capacity_book",
+        "insider_buy_portfolio",
     ] = "single_symbol"
     max_symbols_per_day: int | None = Field(default=None, ge=1)
     gross_exposure_limit: float | None = Field(default=None, gt=0, le=1)
@@ -253,6 +309,27 @@ class PortfolioConfig(BaseModel):
     event_signal_set: Literal["bull_only", "bull_and_recl"] | None = None
     event_max_positions: int | None = Field(default=None, ge=1)
     event_position_weight: float | None = Field(default=None, gt=0, le=1)
+    #: 2026-09-18 -- `insider_buy_portfolio` mode block (H-20260917-01 paper
+    #: plumbing). Required iff mode=="insider_buy_portfolio", forbidden
+    #: otherwise; see `InsiderBuyPortfolioConfig`.
+    insider_buy: InsiderBuyPortfolioConfig | None = None
+
+    @model_validator(mode="after")
+    def require_insider_buy_fields(self) -> PortfolioConfig:
+        if self.mode == "insider_buy_portfolio":
+            if self.insider_buy is None:
+                raise ValueError("insider_buy_portfolio requires portfolio.insider_buy")
+            if self.weighting != "equal_weight":
+                raise ValueError("insider_buy_portfolio requires portfolio.weighting=equal_weight")
+            if self.max_symbol_weight is not None and (
+                self.insider_buy.per_name_cap > self.max_symbol_weight + 1e-12
+            ):
+                raise ValueError(
+                    "insider_buy.per_name_cap must not exceed portfolio.max_symbol_weight"
+                )
+        elif self.insider_buy is not None:
+            raise ValueError("portfolio.insider_buy requires mode=insider_buy_portfolio")
+        return self
 
     @model_validator(mode="after")
     def require_event_driven_fields(self) -> PortfolioConfig:
