@@ -112,6 +112,46 @@ Three deliberate choices in that rule:
   holder or fund that files on many issuers would otherwise look routine
   at issuer A because of a same-month trade in issuer B.
 
+10b5-1 plan split (H-20260916-01 intel brief, 2026-09-18)
+-----------------------------------------------------------
+A trade made under a pre-scheduled Rule 10b5-1 plan carries no information
+-- it was decided months before the filing, not in reaction to anything
+happening now. ``scripts/collect_sec_insider_transactions.py`` already
+carries the SEC's per-filing ``AFF10B5ONE`` checkbox through as a nullable
+boolean, ``is_10b5_1`` (see that module's ``normalize_10b5_1_flag``): the
+checkbox exists only from 2023q2 onward, and every Form 4/4-A filing in
+that range carries a non-blank value (blanks are exclusively Form 3/3-A
+initial statements, which never reach this table since they have no
+transaction rows). So in practice the null bucket below is not a scattered
+handful of ambiguous filings -- it is exactly "this whole window predates
+the checkbox", and ``tenb5one_flag_coverage_60d`` exists so a reader can
+tell the two situations apart instead of silently reading a pre-2023
+non-plan number as if the filter had been applied.
+
+* ``open_market_buy_count_nonplan_60d`` / ``net_buy_usd_nonplan_60d`` /
+  ``buyers_nonplan_60d`` -- the same ``open_market_buy_count_60d`` /
+  ``net_buy_usd_60d`` / ``buyers_60d`` aggregates, restricted to rows whose
+  filing has ``is_10b5_1 == False``. This is the informative cut: buys
+  that were not pre-scheduled.
+* ``open_market_buy_count_plan_60d`` / ``net_buy_usd_plan_60d`` -- the
+  complement, ``is_10b5_1 == True``.
+* ``open_market_buy_count_flag_unknown_60d`` -- ``is_10b5_1`` null (either
+  pre-2023q2, when the checkbox did not exist, or -- structurally
+  impossible today, but checked rather than assumed -- a genuinely blank
+  flag on a Form 4/4-A). Buys land in exactly one of the nonplan / plan /
+  unknown counts, and the three sum to ``open_market_buy_count_60d``.
+* ``tenb5one_flag_coverage_60d`` -- ``1 - open_market_buy_count_flag_unknown_60d
+  / open_market_buy_count_60d`` when the window has any buys at all, else
+  ``0.0``. ``0.0`` for a window entirely before the checkbox existed,
+  ``1.0`` once the window is entirely past it.
+
+Like the role split, ``net_buy_usd_{nonplan,plan}_60d`` nets a buy-side sum
+against a sell-side sum computed under the *same* row filter (a plan-flagged
+sell nets against a plan-flagged buy, not against every sell), mirroring
+``net_buy_usd_od_60d``. Only ``owner_seq == 0`` rows enter any of these
+sums or counts, same as the rest of the table; ``buyers_nonplan_60d`` counts
+every owner row that passes the filter, same as ``buyers_60d``.
+
 Placebo (required by the card)
 ------------------------------
 ``--shift-filing-dates-days N`` shifts every *filing's* visible session
@@ -188,11 +228,25 @@ ROLE_SPLIT_COLUMNS: tuple[str, ...] = (
     "open_market_buy_count_tenpct_od_excluded_60d",
 )
 
+#: Rule 10b5-1 pre-scheduled-plan split (see the module docstring's "10b5-1
+#: plan split" section). Same rationale as ``ROLE_SPLIT_COLUMNS`` for not
+#: being part of the shared ``INSIDER_COLUMNS`` registry yet.
+TENB5ONE_SPLIT_COLUMNS: tuple[str, ...] = (
+    "open_market_buy_count_nonplan_60d",
+    "net_buy_usd_nonplan_60d",
+    "buyers_nonplan_60d",
+    "open_market_buy_count_plan_60d",
+    "net_buy_usd_plan_60d",
+    "open_market_buy_count_flag_unknown_60d",
+    "tenb5one_flag_coverage_60d",
+)
+
 #: The feature columns this table publishes, in output order. Single source
 #: of truth is ``open_composer.research.features.insider`` so the
 #: feature-set registry and this builder cannot drift apart -- with
-#: ``ROLE_SPLIT_COLUMNS`` appended (see that tuple's docstring).
-FEATURE_COLUMNS: tuple[str, ...] = INSIDER_COLUMNS + ROLE_SPLIT_COLUMNS
+#: ``ROLE_SPLIT_COLUMNS`` and ``TENB5ONE_SPLIT_COLUMNS`` appended (see those
+#: tuples' docstrings).
+FEATURE_COLUMNS: tuple[str, ...] = INSIDER_COLUMNS + ROLE_SPLIT_COLUMNS + TENB5ONE_SPLIT_COLUMNS
 
 #: Share and dollar aggregates stay float64: a 60-day net share flow can
 #: exceed float32's ~7 significant digits (observed -166,998.625 where the
@@ -208,6 +262,8 @@ WIDE_COLUMNS: tuple[str, ...] = (
     "net_buy_usd_od_60d",
     "net_buy_shares_od_60d",
     "net_buy_usd_tenpct_60d",
+    "net_buy_usd_nonplan_60d",
+    "net_buy_usd_plan_60d",
 )
 
 READ_COLUMNS = (
@@ -225,6 +281,7 @@ READ_COLUMNS = (
     "is_director",
     "is_officer",
     "is_ten_percent_owner",
+    "is_10b5_1",
 )
 
 
@@ -350,6 +407,23 @@ def classify_transactions(transactions: pd.DataFrame) -> pd.DataFrame:
     transactions["is_tenpct_only"] = (is_ten_percent_owner & ~is_officer & ~is_director).to_numpy(
         dtype=bool
     )
+    # Three-way, mutually exclusive and exhaustive: is_10b5_1 is a nullable
+    # boolean, and null (pre-2023q2, no checkbox on the form) must stay its
+    # own bucket rather than collapse into "not a plan trade". fillna(False)
+    # only supplies a throwaway value for the AND below; is_flag_known masks
+    # it back out for every row that was actually null. A caller whose frame
+    # predates this column entirely (older synthetic fixtures) gets an
+    # all-null column, i.e. every row treated as flag-unknown -- the same
+    # semantics as a real pre-2023q2 filing.
+    if "is_10b5_1" in transactions.columns:
+        flag = transactions["is_10b5_1"].astype("boolean")
+    else:
+        flag = pd.Series(pd.NA, index=transactions.index, dtype="boolean")
+    is_flag_known = flag.notna().to_numpy(dtype=bool)
+    is_flag_true = flag.fillna(False).to_numpy(dtype=bool)
+    transactions["is_plan"] = is_flag_known & is_flag_true
+    transactions["is_nonplan"] = is_flag_known & ~is_flag_true
+    transactions["is_flag_unknown"] = ~is_flag_known
     return transactions
 
 
@@ -558,6 +632,9 @@ def build_year(
     is_other = window["is_other"].to_numpy(dtype=bool)
     is_od = window["is_od"].to_numpy(dtype=bool)
     is_tenpct_only = window["is_tenpct_only"].to_numpy(dtype=bool)
+    is_nonplan = window["is_nonplan"].to_numpy(dtype=bool)
+    is_plan = window["is_plan"].to_numpy(dtype=bool)
+    is_flag_unknown = window["is_flag_unknown"].to_numpy(dtype=bool)
     shares = window["shares_num"].to_numpy(dtype=np.float64)
     usd = window["usd"].to_numpy(dtype=np.float64)
     routine = window["is_routine_buy"].to_numpy(dtype=bool)
@@ -586,6 +663,13 @@ def build_year(
             "buy_usd_tenpct",
             "sell_usd_tenpct",
             "buy_count_tenpct",
+            "buy_usd_nonplan",
+            "sell_usd_nonplan",
+            "buy_count_nonplan",
+            "buy_usd_plan",
+            "sell_usd_plan",
+            "buy_count_plan",
+            "buy_count_unknown",
         )
     }
     buy_primary = primary & is_buy
@@ -595,6 +679,11 @@ def build_year(
     sell_od_primary = sell_primary & is_od
     buy_tenpct_primary = buy_primary & is_tenpct_only
     sell_tenpct_primary = sell_primary & is_tenpct_only
+    buy_nonplan_primary = buy_primary & is_nonplan
+    sell_nonplan_primary = sell_primary & is_nonplan
+    buy_plan_primary = buy_primary & is_plan
+    sell_plan_primary = sell_primary & is_plan
+    buy_unknown_primary = buy_primary & is_flag_unknown
     _scatter_sum(
         daily["buy_shares"], positions[buy_primary], locals_[buy_primary], shares[buy_primary]
     )
@@ -656,6 +745,48 @@ def build_year(
         locals_[buy_tenpct_primary],
         ones,
     )
+    _scatter_sum(
+        daily["buy_usd_nonplan"],
+        positions[buy_nonplan_primary],
+        locals_[buy_nonplan_primary],
+        usd[buy_nonplan_primary],
+    )
+    _scatter_sum(
+        daily["sell_usd_nonplan"],
+        positions[sell_nonplan_primary],
+        locals_[sell_nonplan_primary],
+        usd[sell_nonplan_primary],
+    )
+    _scatter_sum(
+        daily["buy_count_nonplan"],
+        positions[buy_nonplan_primary],
+        locals_[buy_nonplan_primary],
+        ones,
+    )
+    _scatter_sum(
+        daily["buy_usd_plan"],
+        positions[buy_plan_primary],
+        locals_[buy_plan_primary],
+        usd[buy_plan_primary],
+    )
+    _scatter_sum(
+        daily["sell_usd_plan"],
+        positions[sell_plan_primary],
+        locals_[sell_plan_primary],
+        usd[sell_plan_primary],
+    )
+    _scatter_sum(
+        daily["buy_count_plan"],
+        positions[buy_plan_primary],
+        locals_[buy_plan_primary],
+        ones,
+    )
+    _scatter_sum(
+        daily["buy_count_unknown"],
+        positions[buy_unknown_primary],
+        locals_[buy_unknown_primary],
+        ones,
+    )
 
     rolled = {name: _rolling_window_sum(array, WINDOW_SESSIONS) for name, array in daily.items()}
 
@@ -682,6 +813,15 @@ def build_year(
         symbol_positions=positions[is_buy & is_od],
         owners=owners[is_buy & is_od],
         indices=window["visible_idx"].to_numpy(dtype=np.int64)[is_buy & is_od],
+        n_symbols=n_symbols,
+        local_start=local_start,
+        n_local=n_local,
+        window=WINDOW_SESSIONS,
+    )
+    buyers_nonplan = _distinct_owner_counts(
+        symbol_positions=positions[is_buy & is_nonplan],
+        owners=owners[is_buy & is_nonplan],
+        indices=window["visible_idx"].to_numpy(dtype=np.int64)[is_buy & is_nonplan],
         n_symbols=n_symbols,
         local_start=local_start,
         n_local=n_local,
@@ -721,6 +861,7 @@ def build_year(
     buyers_flat = buyers[:, slice_].ravel()[selected].astype(np.float32)
     sellers_flat = sellers[:, slice_].ravel()[selected].astype(np.float32)
     buyers_od_flat = buyers_od[:, slice_].ravel()[selected].astype(np.float32)
+    buyers_nonplan_flat = buyers_nonplan[:, slice_].ravel()[selected].astype(np.float32)
     frame = pd.DataFrame(
         {
             "symbol": symbol_array[selected],
@@ -758,10 +899,30 @@ def build_year(
             "open_market_buy_count_tenpct_od_excluded_60d": rolled["buy_count_tenpct"][
                 :, slice_
             ].ravel()[selected],
+            "open_market_buy_count_nonplan_60d": rolled["buy_count_nonplan"][:, slice_].ravel()[
+                selected
+            ],
+            "net_buy_usd_nonplan_60d": (
+                rolled["buy_usd_nonplan"][:, slice_] - rolled["sell_usd_nonplan"][:, slice_]
+            ).ravel()[selected],
+            "buyers_nonplan_60d": buyers_nonplan_flat,
+            "open_market_buy_count_plan_60d": rolled["buy_count_plan"][:, slice_].ravel()[selected],
+            "net_buy_usd_plan_60d": (
+                rolled["buy_usd_plan"][:, slice_] - rolled["sell_usd_plan"][:, slice_]
+            ).ravel()[selected],
+            "open_market_buy_count_flag_unknown_60d": rolled["buy_count_unknown"][
+                :, slice_
+            ].ravel()[selected],
         }
     )
     frame["symbol"] = frame["symbol"].astype("string")
     frame["trade_date"] = pd.to_datetime(frame["trade_date"])
+    total_buy_count = frame["open_market_buy_count_60d"].to_numpy(dtype=np.float64)
+    unknown_buy_count = frame["open_market_buy_count_flag_unknown_60d"].to_numpy(dtype=np.float64)
+    has_buys = total_buy_count > 0
+    frame["tenb5one_flag_coverage_60d"] = np.where(
+        has_buys, 1.0 - unknown_buy_count / np.where(has_buys, total_buy_count, 1.0), 0.0
+    )
     for column in FEATURE_COLUMNS:
         frame[column] = frame[column].astype("float64" if column in WIDE_COLUMNS else "float32")
     visible_at_map = {
@@ -933,6 +1094,7 @@ def main(argv: list[str] | None = None) -> int:
             "is_director",
             "is_officer",
             "is_ten_percent_owner",
+            "is_10b5_1",
         ]
     )
 
@@ -1001,6 +1163,17 @@ def main(argv: list[str] | None = None) -> int:
             "*_tenpct_60d / *_tenpct_od_excluded_60d additionally require is_ten_percent_owner "
             "true and both is_officer and is_director false, so an owner who is both a "
             "ten-percent owner and an officer/director counts only in the od columns"
+        ),
+        "tenb5one_columns": list(TENB5ONE_SPLIT_COLUMNS),
+        "tenb5one_rule": (
+            "AFF10B5ONE checkbox exists from 2023q2 onward only; is_10b5_1 null means the "
+            "checkbox predates the filing (pre-2023q2) or -- structurally never observed on "
+            "a Form 4/4-A -- a genuinely blank flag. *_nonplan_60d restricts owner_seq==0 "
+            "buy/sell sums and counts to is_10b5_1 == False; *_plan_60d to is_10b5_1 == True; "
+            "*_flag_unknown_60d counts buys where is_10b5_1 is null; buyers_nonplan_60d counts "
+            "every owner row (not just owner_seq==0) that passes the nonplan filter, mirroring "
+            "buyers_60d; tenb5one_flag_coverage_60d = 1 - flag_unknown_count / total_buy_count "
+            "when the window has any buys, else 0.0"
         ),
         "years": written,
     }

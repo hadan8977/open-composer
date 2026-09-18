@@ -140,6 +140,7 @@ PARSED_COLUMNS: tuple[str, ...] = (
     "price_per_share",
     "shares_owned_after",
     "is_10b5_1",
+    "is_10b5_1_raw",
     "direct_or_indirect",
     "source_dataset",
 )
@@ -363,6 +364,34 @@ def _read_tsv(archive: zipfile.ZipFile, name: str, usecols: tuple[str, ...]) -> 
     return frame
 
 
+#: Present from 2023q2 onward only (the Rule 10b5-1 amendments added the
+#: checkbox to the form); the pre-2023q2 absence of the ``AFF10B5ONE``
+#: column and any genuinely blank field both normalize to null here.
+#: H-20260916-01's intel brief (2026-09-18): the observed vintages mix
+#: ``"0"``/``"1"`` and ``"true"``/``"false"``, and every Form 4/4-A filing
+#: from 2023q2 onward carries a non-blank value -- blanks are exclusively
+#: Form 3/3-A initial statements, which never reach the transaction-level
+#: table (they have no ``NONDERIV_TRANS`` rows to join against).
+TEN_B5_ONE_TRUE_TOKENS = frozenset({"1", "true", "y", "yes"})
+TEN_B5_ONE_FALSE_TOKENS = frozenset({"0", "false", "n", "no"})
+
+
+def normalize_10b5_1_flag(raw: pd.Series) -> pd.Series:
+    """Normalize a raw ``AFF10B5ONE`` text series to a nullable boolean.
+
+    ``{'1', 'true', 'TRUE', 'Y', 'y'}`` (case-insensitive after stripping) ->
+    ``True``; ``{'0', 'false', 'FALSE', 'N', 'n'}`` -> ``False``; empty or
+    unrecognized text (including an all-missing column, i.e. every value
+    ``pd.NA``) -> ``pd.NA``. Extracted as its own function so the mapping
+    can be unit-tested without going through a whole zip.
+    """
+    lowered = raw.astype("string").str.strip().str.lower()
+    result = pd.Series(pd.NA, index=raw.index, dtype="boolean")
+    result.loc[lowered.isin(TEN_B5_ONE_TRUE_TOKENS)] = True
+    result.loc[lowered.isin(TEN_B5_ONE_FALSE_TOKENS)] = False
+    return result
+
+
 def _owner_flags(relationship: pd.Series) -> pd.DataFrame:
     """``RPTOWNER_RELATIONSHIP`` is a comma-separated token list:
     ``Director``, ``Officer``, ``TenPercentOwner``, ``Other``."""
@@ -415,12 +444,10 @@ def assemble_parsed_frame(
         "Int64"
     )
     submission["document_type"] = submission["DOCUMENT_TYPE"].astype("string").str.strip()
-    # AFF10B5ONE is "0"/"1"/"true"/"false" depending on vintage; anything
-    # unrecognized (including the pre-2023q2 absence of the column) stays NA.
-    flag_text = submission["AFF10B5ONE"].astype("string").str.strip().str.lower()
-    submission["is_10b5_1"] = pd.Series(pd.NA, index=submission.index, dtype="boolean")
-    submission.loc[flag_text.isin(["1", "true", "y", "yes"]), "is_10b5_1"] = True
-    submission.loc[flag_text.isin(["0", "false", "n", "no"]), "is_10b5_1"] = False
+    # is_10b5_1_raw keeps the stripped source text (pre-lowercasing) so a
+    # future reader can audit the normalization without re-opening the zip.
+    submission["is_10b5_1_raw"] = submission["AFF10B5ONE"].astype("string").str.strip()
+    submission["is_10b5_1"] = normalize_10b5_1_flag(submission["AFF10B5ONE"])
     submission = submission[
         [
             "ACCESSION_NUMBER",
@@ -429,6 +456,7 @@ def assemble_parsed_frame(
             "issuer_cik",
             "issuer_symbol",
             "is_10b5_1",
+            "is_10b5_1_raw",
         ]
     ]
 
@@ -497,6 +525,7 @@ def assemble_parsed_frame(
     merged["owner_count"] = merged["owner_count"].astype("Int16")
     merged["reporting_owner_cik"] = merged["reporting_owner_cik"].astype("string")
     merged["source_dataset"] = merged["source_dataset"].astype("string")
+    merged["is_10b5_1_raw"] = merged["is_10b5_1_raw"].astype("string")
 
     result = merged.reindex(columns=list(PARSED_COLUMNS))
     result = result.loc[result["filing_date"].notna()]
@@ -755,6 +784,7 @@ def parse_form4_xml(payload: bytes, *, accession: str, source_dataset: str) -> p
             "price_per_share": value_of(amounts, "transactionPricePerShare"),
             "shares_owned_after": value_of(post, "sharesOwnedFollowingTransaction"),
             "is_10b5_1": is_10b5_1,
+            "is_10b5_1_raw": aff,
             "direct_or_indirect": (value_of(ownership, "directOrIndirectOwnership") or "")[
                 :1
             ].upper()
@@ -792,6 +822,7 @@ def parse_form4_xml(payload: bytes, *, accession: str, source_dataset: str) -> p
         "acquired_disposed",
         "direct_or_indirect",
         "source_dataset",
+        "is_10b5_1_raw",
     ):
         frame[column] = frame[column].astype("string")
     for column in (

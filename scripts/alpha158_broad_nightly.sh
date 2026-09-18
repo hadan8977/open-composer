@@ -32,6 +32,14 @@ case "${1:-}" in
       echo "[alpha158_broad] already running; nothing to do"
       exit 0
     fi
+    # Yield to card H-20260918-06's placebo pass: it is active research and this
+    # table serves the demoted factor-screen line. Two 1.7 GB jobs on a 3.9 GB box
+    # is how the agent gets OOM-killed.
+    POOL_PATTERN="run_h20260918_06""_etf_pool"
+    if ps -eo args= | grep -F "${POOL_PATTERN}" | grep -qv grep; then
+      echo "[alpha158_broad] etf pool placebo pass is running; yielding"
+      exit 0
+    fi
     echo "[alpha158_broad] $(date -u +%FT%TZ) start" >> logs/broad_factor_build_driver.log
     ./scripts/run_capped.sh --mem 1.8G -- uv run python scripts/build_alpha158_features.py \
       --universe-root data/features/universe_broad \
