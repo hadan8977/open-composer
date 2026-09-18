@@ -16,15 +16,23 @@ exit:
   all: []
   any: [close <= 0]
 risk:
+  # 2026-09-18: a rotation sleeve holds at most top_n names and, when the
+  # absolute-momentum filter drops a pick, unfilled_slot_policy
+  # =renormalize_survivors can put 100% of the sleeve in a single ETF (the
+  # levered sleeve does exactly that today). The real exposure bound is the
+  # sleeve's own notional_budget_usd of 15000 against a 103k account, not a
+  # per-name weight cap, so the weight caps are set to 1.0 rather than
+  # silently clamping the strategy's own rule. A 5% cap would have sized
+  # today's levered book at 4 shares instead of 99.
   max_trades_per_day: 10
-  max_position_weight: 0.5
+  max_position_weight: 1.0
   stop_loss_pct: null
   take_profit_pct: null
 portfolio:
   mode: etf_rotation_portfolio
   weighting: equal_weight
   gross_exposure_limit: 1.0
-  max_symbol_weight: 0.5
+  max_symbol_weight: 1.0
   duplicate_signal_policy: stable_signal_id
   etf_rotation:
     menu: [TQQQ, SOXL, UPRO, USD, TECL]

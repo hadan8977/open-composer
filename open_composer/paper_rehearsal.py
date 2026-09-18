@@ -33,6 +33,16 @@ Safety properties kept (in code, not paperwork)
 * Every artifact is labelled ``rehearsal=below_contract`` with the gate status
   note verbatim. This module never touches ``strategy_specs/active`` or the
   router-era readiness/canary files.
+* ``execution_policy.position_scope`` (2026-09-18) controls which positions a
+  strategy is planned against when more than one strategy shares the same
+  paper account. ``broker_account`` (the default, unchanged behaviour) plans
+  against every position in the whole account. ``strategy_ledger`` plans
+  against only this strategy's own recorded fills
+  (``reports/paper/rehearsal/{name}-fills.jsonl``) so that one strategy's
+  ``rehearsal-run`` never liquidates -- or double-counts -- another
+  strategy's book, even when they hold the same symbol. The key is part of
+  the execution-policy content hash, so it is covered by the rehearsal
+  authorization like every other policy field.
 """
 
 from __future__ import annotations
@@ -68,7 +78,9 @@ from open_composer.strategy_versions import strategy_content_hash, strategy_vers
 
 REHEARSAL_DIRNAME = Path("reports") / "paper" / "rehearsal"
 AUTHORIZATION_MAX_DURATION_DAYS = 45
-SUPPORTED_PORTFOLIO_MODES = frozenset({"model_ranking_portfolio", "insider_buy_portfolio"})
+SUPPORTED_PORTFOLIO_MODES = frozenset(
+    {"model_ranking_portfolio", "insider_buy_portfolio", "etf_rotation_portfolio"}
+)
 #: Authorization id / status used when ``rehearsal-run`` is invoked as a dry run
 #: before any authorization exists: the plan is produced with DEFAULT_LIMITS so
 #: the operator can review it, and nothing can be submitted on that path.
@@ -204,6 +216,18 @@ class RehearsalCycleResult:
     plans: list[RehearsalOrderPlan] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     report_path: str | None = None
+    #: ``execution_policy.position_scope`` resolved for this cycle; see the
+    #: module docstring. Always set, even for ``broker_account``, so a report
+    #: reader never has to guess which accounting the plan used.
+    position_scope: str = "broker_account"
+    #: Populated only when ``position_scope == "strategy_ledger"``: the
+    #: ledger-derived positions the plan was built from, so an operator can
+    #: see that other strategies' broker positions were deliberately ignored.
+    scoped_positions: dict[str, float] = field(default_factory=dict)
+    #: Populated only when ``position_scope == "strategy_ledger"``: the
+    #: strategy's own sizing equity used for target quantities and the gross-
+    #: exposure budget, in place of the whole account's equity.
+    sizing_equity: float | None = None
 
     def counts(self) -> dict[str, int]:
         out: dict[str, int] = {}
@@ -226,6 +250,10 @@ def rehearsal_authorization_path(root: Path, strategy_name: str) -> Path:
 
 def rehearsal_ledger_path(root: Path, strategy_name: str) -> Path:
     return rehearsal_dir(root) / f"{strategy_name}-orders.jsonl"
+
+
+def rehearsal_fills_path(root: Path, strategy_name: str) -> Path:
+    return rehearsal_dir(root) / f"{strategy_name}-fills.jsonl"
 
 
 def _validate_limits(limits: dict[str, Any]) -> dict[str, float | int]:
@@ -681,6 +709,105 @@ def _ledger_rows(root: Path, strategy_name: str) -> list[dict[str, Any]]:
     ]
 
 
+# ---------------------------------------------------------------------------
+# position_scope=strategy_ledger: per-strategy position accounting
+
+
+def _fills_ledger_rows(root: Path, strategy_name: str) -> list[dict[str, Any]]:
+    """Rows from ``reports/paper/rehearsal/{strategy_name}-fills.jsonl``, the
+    artifact ``reconcile_rehearsal_fills`` writes. A missing file is legal --
+    it means the strategy has never had a rehearsal order reconciled -- and is
+    returned as an empty list, not an error."""
+    path = rehearsal_fills_path(root, strategy_name)
+    if not path.is_file():
+        return []
+    return [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
+
+
+def _require_ledger_reconciled(
+    rows: list[dict[str, Any]], session: date, strategy_name: str
+) -> None:
+    """Fail closed when a ``position_scope=strategy_ledger`` position would be
+    computed from a fill that has not been reconciled against the broker yet.
+
+    ``reports/paper/rehearsal/{strategy}-fills.jsonl`` only reflects broker
+    reality right after ``oc paper rehearsal-reconcile`` has run for this
+    strategy; between a submission and the next reconcile, a row still shows
+    whatever status it had when it was last written (or is simply absent). A
+    row from a session strictly before the one being planned that is still
+    non-terminal -- or was never resolved to a status at all -- means this
+    module does not actually know whether those shares exist. Silently
+    treating it as flat would understate the true position and could make the
+    planner buy the same book a second time. Never guess: refuse, and name
+    the unreconciled session so the operator can reconcile first.
+    """
+    terminal = TERMINAL_UNFILLED_STATUSES | {"filled"}
+    for row in rows:
+        raw_session = row.get("session")
+        if not raw_session:
+            continue
+        try:
+            row_session = date.fromisoformat(str(raw_session))
+        except ValueError:
+            continue
+        if row_session >= session:
+            continue
+        status = str(row.get("status") or "").strip().lower()
+        if status in terminal:
+            continue
+        raise RehearsalError(
+            f"strategy ledger for {strategy_name!r} is unreconciled as of session "
+            f"{row_session.isoformat()} (status={status or 'none'}); run "
+            f"`oc paper rehearsal-reconcile <spec path for {strategy_name}>` before planning "
+            "with position_scope=strategy_ledger"
+        )
+
+
+def _positions_from_fills_ledger(rows: list[dict[str, Any]]) -> dict[str, float]:
+    """Net filled quantity per symbol from this strategy's own fills ledger:
+    a ``buy`` fill adds shares, a ``sell`` fill subtracts them. Symbols whose
+    net rounds to zero (fully round-tripped) are dropped -- they are not a
+    position to plan against."""
+    net: dict[str, float] = {}
+    for row in rows:
+        symbol = str(row.get("symbol") or "").upper()
+        if not symbol:
+            continue
+        filled_qty = float(row.get("filled_qty") or 0.0)
+        if filled_qty == 0:
+            continue
+        side = str(row.get("side") or "").lower()
+        signed = filled_qty if side == "buy" else -filled_qty
+        net[symbol] = net.get(symbol, 0.0) + signed
+    return {symbol: qty for symbol, qty in net.items() if round(qty) != 0}
+
+
+def _resolve_strategy_sizing_equity(summary: dict[str, Any]) -> float | None:
+    """Equity to size and gross-cap a ``strategy_ledger`` plan against.
+
+    Prefers the target-weights artifact's ``sizing_equity`` -- the capped
+    equity an adapter records when a per-strategy budget (e.g.
+    ``etf_rotation.notional_budget_usd``) binds below the account -- and
+    falls back to the artifact's ``account_equity`` when no such cap applies
+    (e.g. a model-ranking strategy sized against the whole account). Returns
+    ``None`` when neither is a usable positive number; the caller must fail
+    closed rather than guess an equity to size against.
+    """
+    for key in ("sizing_equity", "account_equity"):
+        value = summary.get(key) if summary else None
+        if value in (None, ""):
+            continue
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError):
+            continue
+        if parsed > 0:
+            return parsed
+    return None
+
+
 def cancel_open_rehearsal_orders(
     spec_path: Path, root: Path | None = None, *, reason: str, client: Any | None = None
 ) -> list[dict[str, Any]]:
@@ -769,7 +896,7 @@ def reconcile_rehearsal_fills(
         )
     directory = rehearsal_dir(base)
     ensure_dir(directory)
-    fills_path = directory / f"{spec.name}-fills.jsonl"
+    fills_path = rehearsal_fills_path(base, spec.name)
     fills_path.write_text(
         "".join(json.dumps(f, ensure_ascii=False) + "\n" for f in fills), encoding="utf-8"
     )
@@ -912,6 +1039,10 @@ def run_portfolio_paper_rehearsal(
         status="planned",
         allow_paper_orders=allow_paper_orders,
         equity=0.0,
+        # Resolved up front (even on an early kill-switch return) so a report
+        # never shows the "broker_account" default for a spec that actually
+        # declares strategy_ledger.
+        position_scope=str(policy.get("position_scope") or "broker_account"),
     )
     result.notes.append(f"rehearsal=below_contract; {auth.gate_status_note}")
     if unauthorized_dry_run:
@@ -943,13 +1074,13 @@ def run_portfolio_paper_rehearsal(
         raise RehearsalError("rehearsal authorization is bound to a different paper account")
     equity = float(getattr(account, "equity", 0) or 0)
     result.equity = equity
-    positions: dict[str, float] = {}
-    position_prices: dict[str, float] = {}
+    broker_positions: dict[str, float] = {}
+    broker_position_prices: dict[str, float] = {}
     for position in _client_positions(broker):
         symbol = str(getattr(position, "symbol", "")).upper()
-        positions[symbol] = float(getattr(position, "qty", 0) or 0)
+        broker_positions[symbol] = float(getattr(position, "qty", 0) or 0)
         price = getattr(position, "current_price", None)
-        position_prices[symbol] = float(price) if price else 0.0
+        broker_position_prices[symbol] = float(price) if price else 0.0
     open_symbols = _open_order_symbols(broker)
     rows, artifact = load_target_rows(spec, base, now=stamp)
     sizing_hint = None
@@ -980,12 +1111,56 @@ def run_portfolio_paper_rehearsal(
         result.notes.append(
             "target_weights_manifest=" + json.dumps(audit, ensure_ascii=False, default=str)[:1500]
         )
+
+    # position_scope: broker_account (default, unchanged) plans against every
+    # broker position; strategy_ledger plans against only this strategy's own
+    # recorded fills, and sizes/gross-caps against its own sizing equity
+    # instead of the whole account. See the module docstring. Already
+    # resolved onto `result` above so an early kill-switch return reports it
+    # too.
+    position_scope = result.position_scope
+    plan_equity = equity
+    if position_scope == "strategy_ledger":
+        fills_rows = _fills_ledger_rows(base, spec.name)
+        _require_ledger_reconciled(fills_rows, session, spec.name)
+        positions = _positions_from_fills_ledger(fills_rows)
+        artifact_prices: dict[str, float] = {}
+        for row in rows:
+            row_symbol = str(row.get("symbol") or "").upper()
+            row_price = row.get("reference_price")
+            if row_symbol and row_price not in (None, "") and float(row_price) > 0:
+                artifact_prices[row_symbol] = float(row_price)
+        position_prices = {
+            symbol: (
+                broker_position_prices[symbol]
+                if symbol in broker_positions
+                else artifact_prices.get(symbol, 0.0)
+            )
+            for symbol in positions
+        }
+        plan_equity = _resolve_strategy_sizing_equity(summary)
+        if plan_equity is None:
+            raise RehearsalError(
+                "position_scope=strategy_ledger requires the target weights artifact's "
+                "summary to record a positive sizing_equity or account_equity; found neither"
+            )
+        result.scoped_positions = dict(positions)
+        result.sizing_equity = plan_equity
+        result.notes.append(
+            "position_scope=strategy_ledger: planned against this strategy's own ledger "
+            f"positions ({positions}), ignoring any other strategy's broker positions; "
+            f"sizing_equity={plan_equity:.2f}"
+        )
+    else:
+        positions = broker_positions
+        position_prices = broker_position_prices
+
     plans = plan_rehearsal_orders(
         target_rows=rows,
         positions=positions,
         position_prices=position_prices,
         open_order_symbols=open_symbols,
-        equity=equity,
+        equity=plan_equity,
         limits=auth.limits,
         sizing_equity_hint=sizing_hint,
     )
@@ -1135,6 +1310,13 @@ def _write_cycle_report(
         "status": result.status,
         "allow_paper_orders": result.allow_paper_orders,
         "equity": result.equity,
+        "position_scope": result.position_scope,
+        "strategy_ledger_positions": result.scoped_positions
+        if result.position_scope == "strategy_ledger"
+        else None,
+        "strategy_ledger_sizing_equity": result.sizing_equity
+        if result.position_scope == "strategy_ledger"
+        else None,
         "authorization_id": auth.authorization_id,
         "authorization_expires_at": auth.expires_at,
         "limits": auth.limits,
@@ -1159,6 +1341,14 @@ def _write_cycle_report(
         f"- 定位：低于合同的执行彩排；{auth.gate_status_note}",
         f"- 账户权益：{result.equity:,.2f} 美元；"
         f"本次提交名义金额：{payload['submitted_notional']:,.2f}",
+        f"- 持仓口径 position_scope：{result.position_scope}"
+        + (
+            f"（仅本策略账本持仓 {result.scoped_positions}；"
+            f"用于定位与总敞口预算的策略自身权益 sizing_equity="
+            f"{result.sizing_equity:,.2f}，忽略其他策略在同一账户的持仓）"
+            if result.position_scope == "strategy_ledger" and result.sizing_equity is not None
+            else "（该策略与账户其他持仓共用同一口径，或本轮在计算持仓前已终止）"
+        ),
         f"- 各决策计数：{payload['counts']}",
         f"- 授权 {auth.authorization_id} 到期 {auth.expires_at}；限额 {auth.limits}",
         "",

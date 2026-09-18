@@ -7,6 +7,7 @@ from shutil import copyfile
 from types import SimpleNamespace
 
 import pytest
+import yaml
 
 from open_composer import paper_rehearsal
 from open_composer.adapters.broker import alpaca_paper
@@ -119,10 +120,30 @@ def _write_targets(root: Path, name: str, rows: list[dict], *, generated_at: dat
     )
 
 
+def _force_position_scope(spec_path: Path, scope: str) -> None:
+    """Rewrite a copied spec's ``execution_policy.position_scope``.
+
+    Comments are lost in the round trip, which is fine for a throwaway copy
+    inside a test workspace."""
+    payload = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
+    payload["execution_policy"]["position_scope"] = scope
+    spec_path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+
+
 @pytest.fixture
 def rehearsal_workspace(sample_workspace: Path) -> tuple[Path, Path]:
     spec_path = sample_workspace / "strategy_specs" / "drafts" / REPO_SPEC.name
     copyfile(REPO_SPEC, spec_path)
+    # 2026-09-18: every test in this file was written for the account-wide
+    # position scope, where a held name that is not in the current targets is
+    # sold. The real spec now declares position_scope=strategy_ledger, because
+    # four strategies share the paper account and each must plan only against
+    # its own fills. Pin the copy back to broker_account so this suite keeps
+    # testing the scope it asserts, and so the real spec's future edits cannot
+    # silently change what these tests mean. The ledger scope has its own
+    # coverage in tests/test_paper_rehearsal_strategy_ledger.py, including the
+    # foreign-position case this fixture's META holding would otherwise hit.
+    _force_position_scope(spec_path, "broker_account")
     name = load_strategy_spec(spec_path).name
     _write_targets(
         sample_workspace,
@@ -423,3 +444,13 @@ def test_planner_skips_whole_share_drift_below_tolerance() -> None:
         limits=LIMITS,
     )
     assert plans[0].decision == "submit" and plans[0].qty == 15
+
+
+def test_repo_spec_still_declares_the_strategy_ledger_scope() -> None:
+    """The four strategies on the shared paper account must each plan against
+    their own fills. If this key is ever dropped from the real spec, the first
+    strategy to run each night liquidates the others, so guard it here rather
+    than discovering it from a broker fill."""
+    spec = load_strategy_spec(REPO_SPEC)
+    assert spec.execution_policy is not None
+    assert spec.execution_policy.position_scope == "strategy_ledger"
