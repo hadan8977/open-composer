@@ -1,0 +1,119 @@
+name: us_etf_growth_rotation_blend_top2_monthly
+description: >-
+  S2 of card H-20260918-05: month-end rotation across SPMO/QQQ/SMH/XLK/GLD/TLT scored by the mean of 21/63/126/252-session returns, top 2 equal weight, absolute-momentum filter against SHY. Recent-window evidence (net 10 bp per side, next-open fills): selection Sharpe 1.66, untouched 2026 holdout Sharpe 1.36 / 57.5% annualized, 2024-01-08..2026-09-16 Sharpe 1.50 / 49.1% annualized / -20.3% max drawdown versus SPMO 1.28 / 35.8% / -20.3%. Turnover 3.9 per year, so 20 bp stress costs move the holdout Sharpe only from 1.365 to 1.352. CAVEAT recorded in the card: the menu was chosen knowing which assets led 2023-2026, and a random 2-of-6 pick from the same menu reaches this holdout Sharpe in 20% of seeds, so most of the return is the menu and the ranking adds a modest amount.
+timeframe: daily
+universe: [SPMO, QQQ, SMH, XLK, GLD, TLT, SHY]
+lifecycle: draft
+position_direction: long_only
+entry:
+  # Unused: target weights come from
+  # open_composer.adapters.execution.rotation_target_weights, not from rule
+  # evaluation. Always-true placeholder to satisfy the StrategySpec schema,
+  # same convention as strategy_specs/drafts/us_recent_high_return_top50.yaml.
+  all: [close > 0]
+  any: []
+exit:
+  all: []
+  any: [close <= 0]
+risk:
+  max_trades_per_day: 10
+  max_position_weight: 0.5
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: etf_rotation_portfolio
+  weighting: equal_weight
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.5
+  duplicate_signal_policy: stable_signal_id
+  etf_rotation:
+    menu: [SPMO, QQQ, SMH, XLK, GLD, TLT]
+    cash_symbol: SHY
+    lookbacks: [21, 63, 126, 252]
+    top_n: 2
+    rebalance: monthly_last_session
+    absolute_momentum_filter: true
+    min_history_sessions: 260
+    # 2026-09-18: three rotation sleeves share one $103k Alpaca paper account
+    # that already runs us_recent_high_return_top50 at ~100% of equity. Each
+    # sleeve is therefore sized against its own $15k budget, not account
+    # equity, and each is tracked as an independent forward record rather than
+    # as part of one account-level portfolio.
+    notional_budget_usd: 15000.0
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+execution_policy:
+  policy_id: etf_rotation_day_market_open_queue_v1
+  # 2026-09-18: four strategies now share one Alpaca paper account. The
+  # rehearsal planner's default scope sells every account position that is not
+  # in the current strategy's targets, so without this key the first strategy to
+  # run each night would liquidate the other three. strategy_ledger makes the
+  # planner reconcile against this strategy's own recorded fills
+  # (reports/paper/rehearsal/<name>-fills.jsonl) and ignore positions it did not
+  # open. Required here because the sleeves overlap on symbols (XLK is in two
+  # menus), so scoping by symbol would not be enough.
+  position_scope: strategy_ledger
+  order_style: day_market
+  time_in_force: day
+  naked_market_justification: >-
+    Paper rehearsal only, and the book is two to three high-liquidity ETFs.
+    Opening-auction (opg) orders expired unfilled for 45 of 50 names at the
+    2026-09-15 Alpaca Paper open, so this path uses a day market order queued
+    after the close, which executes at the 09:30 open. TCA records the
+    submitted price, the official open and the fill so the cost of the market
+    order is measured rather than assumed.
+  price_protection: {limit_offset_bps: 20.0, max_open_gap_pct: 3.0, max_spread_bps: 10.0}
+  participation_cap: {max_adv_pct: 0.1, max_open_bar_volume_pct: 1.0}
+  fallback_behavior: {if_not_filled: skip, if_gap_exceeds_limit: skip, if_spread_exceeds_limit: skip}
+  tca:
+    enabled: true
+    compare_to: [decision_price, official_open, arrival_price, vwap]
+    record_submitted_at: true
+    record_fill_price: true
+    review_frequency: weekly
+  alternatives_compared: [moo_market, opg_limit]
+  source_card_ids: []
+reality_model:
+  fill_model: next_regular_open_with_policy
+  slippage_model: stress_bps_by_volatility_and_participation
+  stress_scenarios:
+    - {name: primary, slippage_bps: 10.0, open_gap_pct: 0.5}
+    - {name: stress, slippage_bps: 20.0, open_gap_pct: 1.5}
+    - {name: severe_report_only, slippage_bps: 35.0, open_gap_pct: 2.5}
+data:
+  source: alpaca
+  symbol: null
+  path: null
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+llm_review: {enabled: false}
+required_capabilities: [market.alpaca_bars]
+notes:
+  intent: >-
+    Forward paper record for the best Sharpe-and-return cell of the whole H-20260918-05 grid. It beats SPMO on both axes at the same drawdown, but its random-pick placebo beat fraction is 20%, so the forward test is specifically about whether the ranking adds anything over equal-weighting the same menu.
+  candidate_id: h20260918_05_us_etf_growth_rotation_blend_top2_monthly
+  candidate_role: recent_window_rotation_sleeve_on_paper
+  promotion_eligible: false
+  order_authority: false
+  broker_writes: rehearsal_only
+  shadow_only: false
+  observation_only: false
+  paper_rehearsal:
+    status: below_contract
+    started: 2026-09-18
+    plan: reports/research/hypotheses/H-20260918-05-recent-window-etf-menu.md
+    gate_v2: not_evaluated
+    purpose: forward_evidence_on_recent_window_rotation_cells

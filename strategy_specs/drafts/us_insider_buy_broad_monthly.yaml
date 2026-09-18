@@ -92,6 +92,13 @@ execution_policy:
   # close and the official open. Small/mid caps in the broad universe make the
   # open-price slippage the key number this rehearsal has to produce.
   policy_id: insider_buy_portfolio_day_market_open_queue_v1
+  # 2026-09-18: added after three ETF rotation sleeves joined this paper
+  # account. Without it this strategy's planner would sell their positions as
+  # "held but not in current targets". Adding the key invalidates the
+  # 2026-09-18T06:56 rehearsal authorization on purpose -- this candidate was
+  # refuted by card H-20260917-01 and must not submit orders until someone
+  # deliberately re-authorizes it.
+  position_scope: strategy_ledger
   order_style: day_market
   time_in_force: day
   naked_market_justification: >-

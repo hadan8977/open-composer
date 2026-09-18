@@ -101,6 +101,8 @@ def _remove_unset_schema_extensions(spec: StrategySpec, payload: dict[str, objec
             "event_position_weight",
             # 2026-09-18 -- insider_buy_portfolio mode block, same rule.
             "insider_buy",
+            # 2026-09-18 -- etf_rotation_portfolio mode block, same rule.
+            "etf_rotation",
         ),
     )
     if spec.model is None:

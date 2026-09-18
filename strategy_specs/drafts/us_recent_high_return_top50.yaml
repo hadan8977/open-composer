@@ -97,6 +97,16 @@ execution_policy:
   # is queued and executed at the 09:30 open; TCA compares the fill with the
   # reference price and the official open.
   policy_id: model_ranking_portfolio_day_market_open_queue_v1
+  # 2026-09-18: three ETF rotation sleeves (card H-20260918-05) joined this
+  # paper account. The planner's default scope would make THIS strategy sell
+  # their ETF positions as "held but not in current targets", and make them sell
+  # these 50 names. strategy_ledger scopes each strategy to its own recorded
+  # fills. Verified before switching: this strategy's fill ledger nets to
+  # exactly the 50 broker positions in reports/paper/positions.json, same
+  # symbols, same quantities, zero mismatches. Adding this key changes the
+  # execution-policy content hash, so the rehearsal authorization was
+  # regenerated on 2026-09-18 with identical limits.
+  position_scope: strategy_ledger
   order_style: day_market
   time_in_force: day
   naked_market_justification: >-

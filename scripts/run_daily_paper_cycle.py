@@ -43,9 +43,13 @@ DEFAULT_SPEC = (
 TARGET_WEIGHTS_LOOKBACK_DAYS = 400
 #: Portfolio modes served by the reduced observation-only cycle (account sync +
 #: target weights, never orders): the Step 11 model-ranking book and, since
-#: 2026-09-18, the insider-buy book (H-20260917-01) which shares the same
-#: target-weights artifact contract.
-OBSERVATION_CYCLE_PORTFOLIO_MODES = ("model_ranking_portfolio", "insider_buy_portfolio")
+#: 2026-09-18, the insider-buy book (H-20260917-01) and the ETF-rotation book,
+#: which share the same target-weights artifact contract.
+OBSERVATION_CYCLE_PORTFOLIO_MODES = (
+    "model_ranking_portfolio",
+    "insider_buy_portfolio",
+    "etf_rotation_portfolio",
+)
 
 
 @dataclass

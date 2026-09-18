@@ -24,6 +24,9 @@ ROUTER_PORTFOLIO_MODES = {
     #: 2026-09-18: second rehearsal book (insider buying, H-20260917-01); same
     #: multi-symbol gate as model_ranking_portfolio.
     "insider_buy_portfolio",
+    #: 2026-09-18: ETF rotation book; same multi-symbol gate as
+    #: model_ranking_portfolio and insider_buy_portfolio.
+    "etf_rotation_portfolio",
 }
 
 

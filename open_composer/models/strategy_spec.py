@@ -236,6 +236,72 @@ class InsiderBuyPortfolioConfig(BaseModel):
         return self
 
 
+class ETFRotationConfig(BaseModel):
+    """``portfolio.mode=etf_rotation_portfolio`` selection rule.
+
+    A periodically rescored, equal-weight, long-only rotation across a fixed
+    menu of ETFs: each candidate's score is the arithmetic mean of its simple
+    total return over every configured lookback (in sessions), the top
+    ``top_n`` scorers are held, and (when ``absolute_momentum_filter`` is set)
+    a pick is dropped in favor of ``cash_symbol`` whenever its score does not
+    exceed the cash symbol's score over the same lookbacks. Consumed by
+    ``open_composer.adapters.execution.rotation_target_weights``.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    menu: list[str] = Field(min_length=2, max_length=24)
+    cash_symbol: str
+    lookbacks: list[int] = Field(min_length=1, max_length=8)
+    top_n: int = Field(ge=1)
+    rebalance: Literal["monthly_last_session", "weekly_friday"]
+    absolute_momentum_filter: bool = True
+    min_history_sessions: int = Field(default=260, ge=30, le=2000)
+    #: Optional per-strategy sizing budget in USD. Several
+    #: ``etf_rotation_portfolio`` strategies may run concurrently against one
+    #: shared paper account, so each one needs its own dollar budget rather
+    #: than sizing against the full account. When set, the adapter sizes this
+    #: book against ``min(notional_budget_usd, account_equity)``; when unset
+    #: (the default), it sizes against full account equity, matching every
+    #: other portfolio mode's behavior.
+    notional_budget_usd: float | None = Field(default=None, gt=0, le=1_000_000)
+
+    @field_validator("menu")
+    @classmethod
+    def normalize_menu(cls, value: list[str]) -> list[str]:
+        normalized = [symbol.upper().strip() for symbol in value]
+        if any(not symbol for symbol in normalized):
+            raise ValueError("etf_rotation.menu cannot contain blanks")
+        if len(normalized) != len(set(normalized)):
+            raise ValueError("etf_rotation.menu must be unique")
+        return normalized
+
+    @field_validator("cash_symbol")
+    @classmethod
+    def normalize_cash_symbol(cls, value: str) -> str:
+        normalized = value.upper().strip()
+        if not normalized:
+            raise ValueError("etf_rotation.cash_symbol cannot be blank")
+        return normalized
+
+    @field_validator("lookbacks")
+    @classmethod
+    def validate_lookbacks(cls, value: list[int]) -> list[int]:
+        if any(lookback < 2 or lookback > 504 for lookback in value):
+            raise ValueError("etf_rotation.lookbacks entries must be in 2..504")
+        if len(value) != len(set(value)):
+            raise ValueError("etf_rotation.lookbacks must be unique")
+        return value
+
+    @model_validator(mode="after")
+    def validate_menu_and_top_n(self) -> ETFRotationConfig:
+        if self.cash_symbol in self.menu:
+            raise ValueError("etf_rotation.cash_symbol must not appear in menu")
+        if self.top_n > len(self.menu):
+            raise ValueError("etf_rotation.top_n must be <= len(menu)")
+        return self
+
+
 class PortfolioConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -251,6 +317,7 @@ class PortfolioConfig(BaseModel):
         "model_ranking_portfolio",
         "event_driven_capacity_book",
         "insider_buy_portfolio",
+        "etf_rotation_portfolio",
     ] = "single_symbol"
     max_symbols_per_day: int | None = Field(default=None, ge=1)
     gross_exposure_limit: float | None = Field(default=None, gt=0, le=1)
@@ -313,6 +380,10 @@ class PortfolioConfig(BaseModel):
     #: plumbing). Required iff mode=="insider_buy_portfolio", forbidden
     #: otherwise; see `InsiderBuyPortfolioConfig`.
     insider_buy: InsiderBuyPortfolioConfig | None = None
+    #: 2026-09-18 -- `etf_rotation_portfolio` mode block. Required iff
+    #: mode=="etf_rotation_portfolio", forbidden otherwise; see
+    #: `ETFRotationConfig`.
+    etf_rotation: ETFRotationConfig | None = None
 
     @model_validator(mode="after")
     def require_insider_buy_fields(self) -> PortfolioConfig:
@@ -329,6 +400,17 @@ class PortfolioConfig(BaseModel):
                 )
         elif self.insider_buy is not None:
             raise ValueError("portfolio.insider_buy requires mode=insider_buy_portfolio")
+        return self
+
+    @model_validator(mode="after")
+    def require_etf_rotation_fields(self) -> PortfolioConfig:
+        if self.mode == "etf_rotation_portfolio":
+            if self.etf_rotation is None:
+                raise ValueError("etf_rotation_portfolio requires portfolio.etf_rotation")
+            if self.weighting != "equal_weight":
+                raise ValueError("etf_rotation_portfolio requires portfolio.weighting=equal_weight")
+        elif self.etf_rotation is not None:
+            raise ValueError("portfolio.etf_rotation requires mode=etf_rotation_portfolio")
         return self
 
     @model_validator(mode="after")
@@ -821,6 +903,17 @@ class ExecutionPolicy(BaseModel):
         "twap",
     ]
     time_in_force: Literal["day", "opg", "ioc", "gtc"] = "day"
+    #: 2026-09-18 -- which positions the paper rehearsal planner reconciles a
+    #: strategy against. ``broker_account`` (the default, and the behaviour of
+    #: every spec written before this date) plans against every position in the
+    #: paper account, so anything held but not in the current targets is sold.
+    #: ``strategy_ledger`` plans against only this strategy's own recorded fills
+    #: (``reports/paper/rehearsal/<name>-fills.jsonl``) and ignores positions it
+    #: did not open. ``strategy_ledger`` is required whenever more than one
+    #: strategy shares the paper account, and it is the only correct option when
+    #: two strategies can hold the same symbol, because scoping by symbol would
+    #: not separate them. Consumed by ``open_composer.paper_rehearsal``.
+    position_scope: Literal["broker_account", "strategy_ledger"] = "broker_account"
     price_protection: PriceProtection = Field(default_factory=PriceProtection)
     participation_cap: ParticipationCap = Field(default_factory=ParticipationCap)
     fallback_behavior: FallbackBehavior = Field(default_factory=FallbackBehavior)
@@ -1176,6 +1269,17 @@ class StrategySpec(BaseModel):
             raise ValueError("reserve_symbol cannot also be a sector candidate")
         if set(config.diversifier_symbols) & set(config.sector_relative.symbols):
             raise ValueError("diversifier and sector symbol sets must be disjoint")
+        return self
+
+    @model_validator(mode="after")
+    def validate_etf_rotation_portfolio(self) -> StrategySpec:
+        config = self.portfolio.etf_rotation
+        if config is None:
+            return self
+        if self.timeframe != "daily":
+            raise ValueError("etf_rotation_portfolio requires timeframe=daily")
+        if self.position_direction != "long_only":
+            raise ValueError("etf_rotation_portfolio requires position_direction=long_only")
         return self
 
     @property
