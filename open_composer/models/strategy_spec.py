@@ -243,8 +243,9 @@ class ETFRotationConfig(BaseModel):
     menu of ETFs: each candidate's score is the arithmetic mean of its simple
     total return over every configured lookback (in sessions), the top
     ``top_n`` scorers are held, and (when ``absolute_momentum_filter`` is set)
-    a pick is dropped in favor of ``cash_symbol`` whenever its score does not
-    exceed the cash symbol's score over the same lookbacks. Consumed by
+    a pick is dropped whenever its score does not exceed the cash symbol's
+    score over the same lookbacks. ``unfilled_slot_policy`` decides what
+    happens to a dropped pick's weight. Consumed by
     ``open_composer.adapters.execution.rotation_target_weights``.
     """
 
@@ -257,6 +258,18 @@ class ETFRotationConfig(BaseModel):
     rebalance: Literal["monthly_last_session", "weekly_friday"]
     absolute_momentum_filter: bool = True
     min_history_sessions: int = Field(default=260, ge=30, le=2000)
+    #: What happens to the weight of a pick the absolute-momentum filter
+    #: dropped. ``cash`` leaves that slot in ``cash_symbol``, so a two-slot
+    #: book with one survivor is 50% invested; this is the more common
+    #: published rule and the defensive default. ``renormalize_survivors``
+    #: equal-weights the survivors among themselves, so the same book is 100%
+    #: in the single survivor. The difference only bites when the filter fires
+    #: often, and it concentrates risk exactly when the filter is warning --
+    #: measured on card H-20260918-05, the levered sleeve fires the filter in 13
+    #: of 52 months and its anchor-window Sharpe is 1.48 under
+    #: ``renormalize_survivors`` against 1.26 under ``cash``. Set it explicitly
+    #: and say which one the backtest used.
+    unfilled_slot_policy: Literal["cash", "renormalize_survivors"] = "cash"
     #: Optional per-strategy sizing budget in USD. Several
     #: ``etf_rotation_portfolio`` strategies may run concurrently against one
     #: shared paper account, so each one needs its own dollar budget rather

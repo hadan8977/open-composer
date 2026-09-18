@@ -33,6 +33,17 @@ portfolio:
     top_n: 2
     rebalance: weekly_friday
     absolute_momentum_filter: true
+    # The preregistered grid on card H-20260918-05 equal-weighted the
+    # survivors among themselves whenever the absolute-momentum filter dropped
+    # a pick, so a two-slot book with one survivor was 100% in that survivor.
+    # Shipping the more defensive per-slot-cash rule instead would ship a
+    # strategy that was never tested. Measured difference (card section 12):
+    # the sector sleeve never fires the filter in 225 rebalances and the growth
+    # sleeve fires once in 52, so both are unaffected; the levered sleeve fires
+    # it in 13 of 52 months and its anchor-window Sharpe is 1.48 here against
+    # 1.26 under the cash rule. Known risk, stated in the card: this
+    # concentrates exactly when the filter is warning.
+    unfilled_slot_policy: renormalize_survivors
     min_history_sessions: 260
     # 2026-09-18: three rotation sleeves share one $103k Alpaca paper account
     # that already runs us_recent_high_return_top50 at ~100% of equity. Each
