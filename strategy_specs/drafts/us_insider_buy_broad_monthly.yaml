@@ -1,0 +1,213 @@
+name: us_insider_buy_broad_monthly
+description: >-
+  Monthly equal-weight long-only book of US equities whose point-in-time Form 4
+  table shows open-market insider buying over the trailing 60 sessions
+  (H-20260917-01 "insider buying as an independent strategy", broad
+  universe). Universe = latest completed PIT cohort of data/features/universe_broad
+  (price >= 2 USD, 60-session dollar ADV >= 1M, ETFs/funds excluded; falls back
+  to the top-1500 data/features/universe with a recorded warning while the
+  broad insider table is still being built). Eligible = open_market_buy_count_60d
+  >= 1, net_buy_usd_60d >= 25,000, buyers_60d >= 1 on the latest completed
+  feature date; ranked by net_buy_usd_60d, top 100, equal weight, 5% per-name
+  cap (gross scales down below 20 names, never above the cap). Rebalanced on
+  the first run after each month end; initial full entry on first
+  authorization. Second paper-rehearsal book after us_recent_high_return_top50:
+  notes.paper_rehearsal.status is pending_evidence -- no backtest verdict for
+  this exact rule exists yet (the H-20260917-01 evaluation is running under
+  reports/research/iterations/h20260917_01_insider_independent/); until that
+  evidence is reviewed this spec is a below-contract execution rehearsal
+  candidate only, not a promotion, and it is not paper-auto eligible.
+timeframe: daily
+# Nominal placeholder only -- length>1 so paper_readiness treats this as a
+# multi-symbol portfolio rather than a single-symbol strategy. The actual
+# universe is dynamic and point-in-time:
+# open_composer.adapters.execution.insider_portfolio_target_weights reads the
+# cohort from portfolio.insider_buy.universe_root directly and never reads this
+# field. Listed names are documentation only.
+universe:
+  [AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, JPM, V, UNH, XOM, JNJ, PG, HD, MA, AVGO, COST, PEP, KO, ADBE]
+lifecycle: draft
+position_direction: long_only
+entry:
+  # Unused by portfolio.mode=insider_buy_portfolio (target weights come from
+  # the insider adapter, not from entry/exit rule evaluation). Always-true
+  # placeholder to satisfy the StrategySpec schema, same convention as
+  # strategy_specs/drafts/us_recent_high_return_top50.yaml.
+  all: [close > 0]
+  any: []
+exit:
+  all: []
+  any: [close <= 0]
+risk:
+  # Sizing is enforced by portfolio.insider_buy (equal weight, per_name_cap);
+  # these bounds must simply not contradict it: 1/max_names <= per_name_cap <=
+  # max_position_weight. max_trades_per_day covers a full 100-name entry.
+  max_trades_per_day: 150
+  max_position_weight: 0.05
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: insider_buy_portfolio
+  weighting: equal_weight
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.05
+  duplicate_signal_policy: stable_signal_id
+  insider_buy:
+    universe_root: data/features/universe_broad
+    universe_fallback_root: data/features/universe
+    insider_feature_root: data/features/insider_broad
+    insider_feature_fallback_root: data/features/insider
+    # null/null = whole cohort. The card's preferred band is outside the top
+    # 500 ADV names (adv_rank_min: 501); left open for the first rehearsal so
+    # the book has enough names while the broad insider table is pending.
+    adv_rank_min: null
+    adv_rank_max: null
+    min_open_market_buy_count_60d: 1
+    min_net_buy_usd_60d: 25000
+    min_buyers_60d: 1
+    rank_column: net_buy_usd_60d
+    max_names: 100
+    gross_target: 1.0
+    per_name_cap: 0.05
+    rebalance: calendar_month_end
+    stale_bar_sessions: 5
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+execution_policy:
+  # Same execution contract as us_recent_high_return_top50 (Step 17,
+  # 2026-09-16 update): a day market order submitted after the close is
+  # queued and executed at the 09:30 open. Alpaca Paper filled only 5 of 50
+  # opening-auction (opg) market orders on 2026-09-15, so opg is not usable for
+  # a 50-100 name paper book; TCA measures the fill against the reference
+  # close and the official open. Small/mid caps in the broad universe make the
+  # open-price slippage the key number this rehearsal has to produce.
+  policy_id: insider_buy_portfolio_day_market_open_queue_v1
+  order_style: day_market
+  time_in_force: day
+  naked_market_justification: >-
+    Paper rehearsal only. Opening-auction (opg) orders expired unfilled for 45 of
+    50 names at the 2026-09-15 open in Alpaca Paper; day market orders queued
+    after the close execute at the open and are measured by TCA. Real-money
+    execution would revert to the opg/limit policy after this evidence is reviewed.
+  price_protection: {limit_offset_bps: 20.0, max_open_gap_pct: 2.5, max_spread_bps: 15.0}
+  participation_cap: {max_adv_pct: 0.5, max_open_bar_volume_pct: 5.0}
+  fallback_behavior: {if_not_filled: skip, if_gap_exceeds_limit: skip, if_spread_exceeds_limit: skip}
+  tca:
+    enabled: true
+    compare_to: [decision_price, official_open, arrival_price, vwap]
+    record_submitted_at: true
+    record_fill_price: true
+    review_frequency: weekly
+  # Same open gap as the momentum spec: no fresh source-researcher pass on
+  # Alpaca order semantics is cited here as current evidence.
+  alternatives_compared: [moo_market, opg_limit]
+  source_card_ids: []
+reality_model:
+  fill_model: next_regular_open_with_policy
+  slippage_model: stress_bps_by_volatility_and_participation
+  stress_scenarios:
+    - {name: primary, slippage_bps: 10.0, open_gap_pct: 0.5}
+    - {name: stress, slippage_bps: 25.0, open_gap_pct: 1.5}
+    - {name: severe_report_only, slippage_bps: 50.0, open_gap_pct: 3.0}
+data:
+  source: alpaca
+  symbol: null
+  path: null
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+llm_review: {enabled: false}
+required_capabilities: [market.alpaca_bars, events.sec_form4_insider]
+research_design:
+  # Bounded search space for the H-20260917-01 family (budget 6 from the
+  # card); the shipped parameter set above is one cell of it. Preregistered
+  # candidates live under reports/research/iterations/h20260917_01_insider_independent/.
+  candidate_budget: 6
+  selection_objective: >-
+    Monthly excess return vs IWM/SPY and same-size random controls in the
+    501+ ADV band, 1/3/6-month holds, after visibility; |t| >= 2 and effect
+    present after 2020, else refuted.
+  parameter_space:
+    lookback_sessions: [30, 60, 90]
+    min_net_buy_usd_60d: [25000, 100000]
+    min_buyers_60d: [1, 2]
+    rank_column: [net_buy_usd_60d, buyers_60d, cmp_opportunistic_buy_60d]
+    max_names: [50, 100]
+    adv_rank_band: ["all", "501-100000", "1501-100000"]
+    hold_months: [1, 3, 6]
+  anti_overfit_notes:
+    - "Same-size random control with >= 5 seeds and a filing-date placebo (+/-30 sessions, >= 5 seeds) are required before any cell is called a result."
+    - "Survivorship: report survivors-only and delisted-backfilled versions (D-20260917-01)."
+    - "One frozen OOS evaluation per branch; no post-OOS tuning of thresholds."
+  validation_plan:
+    - "Benchmark family: SPY, IWM, MTUM, SPMO, equal-weight band, vol-matched excess."
+    - "Execution reality: TCA on official open vs fill for small/mid caps from the paper rehearsal."
+notes:
+  intent: >-
+    Second paper-rehearsal book: connect the H-20260917-01 insider-buying
+    selection rule to the Step 17 rehearsal chain (targets -> day market
+    orders queued after the close -> fills -> TCA) so it can be authorized on
+    Alpaca Paper the evening the research evidence passes, and measured on a
+    broad (small/mid-cap heavy) book. See
+    docs/plan-step-17-paper-rehearsal-portfolio-canary-2026-09-15.zh.md.
+  hypothesis_card: reports/research/hypotheses/H-20260917-01-insider-independent-broad-universe.md
+  data_card: reports/research/hypotheses/D-20260917-01-broad-universe-and-delisted-backfill.md
+  candidate_role: pending_evidence_rule_candidate_connected_for_rehearsal
+  promotion_eligible: false
+  order_authority: false
+  broker_writes: rehearsal_only
+  shadow_only: false
+  observation_only: false
+  design:
+    parameter_ranges:
+      lookback_sessions: {min: 30, max: 90, shipped: 60}
+      min_net_buy_usd_60d: {min: 25000, max: 100000, shipped: 25000}
+      min_buyers_60d: {min: 1, max: 2, shipped: 1}
+      max_names: {min: 50, max: 100, shipped: 100}
+      per_name_cap: {min: 0.02, max: 0.05, shipped: 0.05}
+      adv_rank_min: {min: 1, max: 1501, shipped: null}
+      stale_bar_sessions: {min: 3, max: 10, shipped: 5}
+    method_variants:
+      - equal_weight_monthly_top_n_by_net_buy_usd
+      - equal_weight_monthly_all_eligible_capped
+      - staggered_1_3_6_month_hold_tranches
+      - cluster_buy_only_two_or_more_buyers_30d
+    factor_variants:
+      - net_buy_usd_60d
+      - buyers_60d_distinct_owners
+      - cmp_opportunistic_buy_60d
+      - net_buy_usd_60d_conditioned_on_3m_drawdown_gt_20pct
+      - net_buy_usd_60d_conditioned_on_52w_low_distance
+    bounded_search_space:
+      lookback_sessions: [30, 60, 90]
+      min_net_buy_usd_60d: [25000, 100000]
+      min_buyers_60d: [1, 2]
+      rank_column: [net_buy_usd_60d, buyers_60d, cmp_opportunistic_buy_60d]
+      max_names: [50, 100]
+      adv_rank_band: ["all", "501-100000", "1501-100000"]
+      hold_months: [1, 3, 6]
+  paper_rehearsal:
+    # 2026-09-18: plumbing connected, authorization NOT granted. The rule has
+    # no reviewed backtest verdict yet; the main session decides tonight after
+    # reading the H-20260917-01 evidence. Authority, when granted, comes from
+    # reports/paper/rehearsal/<name>-authorization.json (expiring, bound to
+    # this spec's content hash and the paper account hash) via
+    # `oc paper authorize-rehearsal`; orders go through `oc paper rehearsal-run`.
+    status: pending_evidence
+    prepared: 2026-09-18
+    plan: docs/plan-step-17-paper-rehearsal-portfolio-canary-2026-09-15.zh.md
+    gate_v2: pending
+    purpose: execution_chain_rehearsal_and_tca_measurement_broad_universe
+    rebalance: first_run_after_each_month_end_plus_initial_full_entry
