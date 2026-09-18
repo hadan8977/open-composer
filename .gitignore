@@ -168,6 +168,28 @@ reports/research/iterations/h20260916_05_13d_drift/logs/
 # cover-page extracts and the company_tickers.json snapshot -- needs no entry
 # of its own: data/raw/ is already ignored above, and all of it is refetchable
 # from sec.gov by scripts/collect_sec_13d_filings.py.)
+# H-20260916-07 (FINRA short-interest avoid list): the pre-check cross table,
+# the factor screen and the twin-cell report are the reviewable evidence and
+# stay in git as md/json only. The book/panel parquet checkpoints and the run
+# logs are excluded again below -- all reproducible from
+# data/raw/finra_short_interest/ + data/features/ via
+# scripts/collect_finra_short_interest.py,
+# scripts/build_short_interest_features.py,
+# scripts/screen_short_interest_factors.py and
+# scripts/run_h20260916_07_short_interest.py. Same shape as the four blocks
+# above: the directory has to be un-ignored for git to descend into it at all,
+# so the exclusions are written as positive patterns.
+!reports/research/iterations/h20260916_07_short_interest/
+reports/research/iterations/h20260916_07_short_interest/**/*.parquet
+reports/research/iterations/h20260916_07_short_interest/schedule_baseline.json
+reports/research/iterations/h20260916_07_short_interest/results-raw.json
+reports/research/iterations/h20260916_07_short_interest/gate_states/
+reports/research/iterations/h20260916_07_short_interest/screen_checkpoints*/
+reports/research/iterations/h20260916_07_short_interest/logs/
+# (data/raw/finra_short_interest/ -- the per-settlement-date gzipped CSVs, the
+# parsed archive and the scraped publication schedule -- needs no entry of its
+# own: data/raw/ is already ignored above, and all of it is refetchable from
+# FINRA's free Query API by scripts/collect_finra_short_interest.py.)
 data/sip/
 data/sip-hist/
 data/sip-delisted/

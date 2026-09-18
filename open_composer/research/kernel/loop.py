@@ -80,6 +80,7 @@ from typing import Any, Literal, Protocol
 
 import pandas as pd
 
+from open_composer.research.features import price_hygiene
 from open_composer.research.kernel.datamodel import ResearchDataModel
 from open_composer.research.kernel.gate_contract import (
     UNLEVERED_FAMILY_GATE_KEYS,
@@ -692,7 +693,22 @@ def build_weight_schedule(
 #: ``portfolio_returns.constant_weight_daily.v1`` (back-filled by
 #: ``scripts/tag_ledger_calculation_contract.py``), so the two can never be
 #: compared again without the difference being visible in the row itself.
-PORTFOLIO_RETURNS_CONTRACT = "portfolio_returns.buy_and_hold_drift.v2"
+#: ``.v3`` (2026-09-17): prices now go through
+#: ``features.price_hygiene.sanitize_price_matrices`` and daily returns are
+#: taken without ``pct_change``'s padding, so a ``v2`` row's metrics were
+#: computed on a panel that could still book an unadjusted relisting or a
+#: bridged multi-session gap as one day's return (measured: a weekly
+#: small-cap book printed 154% CAGR from two symbols). The tag changes so the
+#: two can never be compared without the difference being visible in the row.
+PORTFOLIO_RETURNS_CONTRACT = "portfolio_returns.buy_and_hold_drift_price_hygiene.v3"
+
+#: The hygiene manifest from the most recent ``returns_from_weight_schedule``
+#: call with ``price_hygiene_enabled=True`` -- a module-level record (not a
+#: return value) so adding it costs no caller a signature change, and any
+#: script can copy it into its own manifest:
+#: ``json.dumps(loop.LAST_PRICE_HYGIENE_MANIFEST)``. Overwritten per call;
+#: empty when the last call ran with hygiene off.
+LAST_PRICE_HYGIENE_MANIFEST: dict[str, Any] = {}
 
 
 def returns_from_weight_schedule(
@@ -704,6 +720,9 @@ def returns_from_weight_schedule(
     include_hedge: bool,
     execution: Literal["close_marked", "next_open"] = "close_marked",
     open_wide: pd.DataFrame | None = None,
+    price_hygiene_enabled: bool = True,
+    price_hygiene_max_one_day_price_ratio: float = (price_hygiene.DEFAULT_MAX_ONE_DAY_PRICE_RATIO),
+    price_hygiene_max_gap_sessions: int = price_hygiene.DEFAULT_MAX_GAP_SESSIONS,
 ) -> pd.Series:
     """Buy-and-hold-until-next-rebalance daily returns: weights are fixed at
     each rebalance date and then held -- drifting with each name's own
@@ -772,7 +791,46 @@ def returns_from_weight_schedule(
     for close_marked those two descriptions name the same day (so the
     output is identical), but only writing it this way makes next_open's
     cost land on the fill day rather than a day late.
+
+    **2026-09-17 price hygiene (on by default)**: before anything is priced,
+    both matrices go through
+    ``features.price_hygiene.sanitize_price_matrices`` -- every symbol's
+    history up to and including its last unadjusted regime break (a one-day
+    price ratio beyond ``price_hygiene_max_one_day_price_ratio``, or a hole
+    of ``price_hygiene_max_gap_sessions`` sessions or more) is blanked,
+    because such a join is a different security or a different share basis,
+    not a return, and the factor that would splice them is not in the panel.
+    Daily returns are then taken with
+    ``price_hygiene.daily_returns_no_pad``: ``pct_change()``'s default
+    ``fill_method="pad"`` bridged ``NaN`` holes and booked a multi-session
+    move as one day (+1,730% on AZUL, found by H-20260916-05, whose first
+    tradability run printed a 154% CAGR that was two symbols' worth of
+    fabricated prices). Pass ``price_hygiene_enabled=False`` to reproduce a
+    pre-fix (``...buy_and_hold_drift.v2``) number; the manifest of what was
+    masked is left in :data:`LAST_PRICE_HYGIENE_MANIFEST` for the caller to
+    record.
     """
+    if price_hygiene_enabled:
+        price_wide, open_wide, hygiene_report = price_hygiene.sanitize_price_matrices(
+            price_wide,
+            open_wide,
+            max_one_day_price_ratio=price_hygiene_max_one_day_price_ratio,
+            max_gap_sessions=price_hygiene_max_gap_sessions,
+        )
+        LAST_PRICE_HYGIENE_MANIFEST.clear()
+        LAST_PRICE_HYGIENE_MANIFEST.update(hygiene_report.manifest())
+        if hygiene_report.symbols_masked:
+            logger.info(
+                "price hygiene: masked %d symbols at a regime break (%d jumps, %d gaps; "
+                "%d price cells)",
+                hygiene_report.symbols_masked,
+                hygiene_report.symbols_masked_for_jump,
+                hygiene_report.symbols_masked_for_gap,
+                hygiene_report.price_cells_masked,
+            )
+    else:
+        LAST_PRICE_HYGIENE_MANIFEST.clear()
+
     if execution == "next_open":
         if open_wide is None:
             raise ValueError("execution='next_open' requires open_wide")
@@ -784,7 +842,11 @@ def returns_from_weight_schedule(
     else:
         raise ValueError(f"unknown execution {execution!r}, expected 'close_marked' or 'next_open'")
 
-    daily_returns = mark_prices.pct_change()
+    daily_returns = (
+        price_hygiene.daily_returns_no_pad(mark_prices)
+        if price_hygiene_enabled
+        else price_hygiene.daily_returns_padding_gaps_legacy(mark_prices)
+    )
     dates = daily_returns.index
     # turnover (Sigma|delta w|) is already two-sided -- one rebalance that
     # sells $x of A and buys $x of B has turnover 2x, correctly reflecting

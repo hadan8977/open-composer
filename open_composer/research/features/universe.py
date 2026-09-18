@@ -65,27 +65,49 @@ UNIVERSE_PANEL_COLUMNS = ("month_end", "symbol", "adv_rank", "dollar_adv", "clos
 
 
 def build_pit_universe_panel(
-    daily_glob: str,
+    daily_glob: str | list[str],
     *,
     adv_lookback_days: int = DEFAULT_ADV_LOOKBACK_DAYS,
-    top_n: int = DEFAULT_TOP_N,
+    top_n: int | None = DEFAULT_TOP_N,
     min_close: float = DEFAULT_MIN_CLOSE,
+    min_dollar_adv: float | None = None,
     memory_limit: str = DEFAULT_MEMORY_LIMIT,
     temp_directory: str | None = None,
     con: duckdb.DuckDBPyConnection | None = None,
 ) -> pd.DataFrame:
-    """One row per (month_end, symbol) admitted to the PIT top-``top_n``
-    dollar-ADV universe, where ``month_end`` is the *shared* cohort date of
-    that calendar month (the month's last session in ``daily_glob``) -- see
-    :data:`UNIVERSE_PANEL_COLUMNS`. The archive's trailing, still-running
-    calendar month gets no cohort at all (see the ``complete_month_end`` CTE):
-    a monthly universe must not start applying mid-month.
-    ``daily_glob`` is a DuckDB ``read_parquet`` glob
-    (e.g. ``data/sip/daily/*/*.parquet``); ``symbol NOT LIKE '%.%'``/``'%/%'``
-    excludes share-class/warrant ticker variants, matching the convention
-    already used by ``scripts/evaluate_cross_sectional_momentum_liquid500.py``
-    (archived 2026-09-14 to git branch ``archive/rounds-2026-09``).
+    """One row per (month_end, symbol) admitted to the PIT dollar-ADV universe,
+    where ``month_end`` is the *shared* cohort date of that calendar month (the
+    month's last session in ``daily_glob``) -- see :data:`UNIVERSE_PANEL_COLUMNS`.
+    The archive's trailing, still-running calendar month gets no cohort at all
+    (see the ``complete_month_end`` CTE): a monthly universe must not start
+    applying mid-month.
+
+    Admission has two independent knobs, both applied at each month end:
+    ``top_n`` keeps the ``top_n`` highest trailing-dollar-ADV symbols
+    (``None`` = no rank cap) and ``min_dollar_adv`` keeps symbols whose
+    trailing dollar ADV is at least that floor (``None`` = no floor). Every row
+    still carries ``adv_rank`` over the *whole* month-end cross-section, so a
+    floor-mode universe can be split into liquidity bands (1-500 / 501-1500 /
+    1501+) downstream without rebuilding. The rank-cap default reproduces the
+    pre-2026-09-17 top-1500 universe; the floor mode is the broad universe of
+    ``reports/research/hypotheses/D-20260917-01-broad-universe-and-delisted-backfill.md``.
+
+    ``daily_glob`` is a DuckDB ``read_parquet`` glob or a list of globs (e.g.
+    ``["data/sip/daily/*/*.parquet", "data/sip-delisted/by_year/*/*.parquet"]``
+    so backfilled delisted names rank alongside survivors);
+    ``symbol NOT LIKE '%.%'``/``'%/%'`` excludes share-class/warrant ticker
+    variants, matching the convention already used by
+    ``scripts/evaluate_cross_sectional_momentum_liquid500.py`` (archived
+    2026-09-14 to git branch ``archive/rounds-2026-09``).
     """
+    if top_n is None and min_dollar_adv is None:
+        raise ValueError("at least one of top_n or min_dollar_adv must be set")
+    admission = []
+    if top_n is not None:
+        admission.append(f"ranked.adv_rank <= {int(top_n)}")
+    if min_dollar_adv is not None:
+        admission.append(f"ranked.dollar_adv >= {float(min_dollar_adv)}")
+    admission_sql = " AND ".join(admission)
     owns_connection = con is None
     connection = con or duckdb.connect()
     try:
@@ -96,7 +118,7 @@ def build_pit_universe_panel(
         query = f"""
             WITH raw AS (
                 SELECT symbol, timestamp, close, volume
-                FROM read_parquet({daily_glob!r})
+                FROM read_parquet({daily_glob!r}, union_by_name=true)
                 WHERE symbol NOT LIKE '%.%' AND symbol NOT LIKE '%/%'
             ),
             priced AS (
@@ -161,7 +183,7 @@ def build_pit_universe_panel(
             FROM ranked
             JOIN complete_month_end
               ON complete_month_end.month_key = date_trunc('month', ranked.trade_date)
-            WHERE ranked.adv_rank <= {top_n}
+            WHERE {admission_sql}
             ORDER BY month_end, adv_rank
         """
         panel = connection.execute(query).fetchdf()

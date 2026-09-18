@@ -171,3 +171,81 @@ def test_write_and_load_universe_by_year_round_trips(tmp_path: Path, daily_glob:
 def test_load_universe_panel_raises_when_nothing_written(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         load_universe_panel(tmp_path / "does_not_exist")
+
+
+def test_universe_panel_floor_mode_admits_everything_above_the_dollar_adv_floor(
+    daily_glob: str,
+) -> None:
+    capped = build_pit_universe_panel(
+        daily_glob, adv_lookback_days=10, top_n=2, min_close=5.0, memory_limit="512MB"
+    )
+    floor = build_pit_universe_panel(
+        daily_glob,
+        adv_lookback_days=10,
+        top_n=None,
+        min_close=5.0,
+        min_dollar_adv=1.0,
+        memory_limit="512MB",
+    )
+    # No rank cap: the floor-mode panel is a superset of the capped one ...
+    capped_keys = set(zip(capped["month_end"], capped["symbol"], strict=True))
+    floor_keys = set(zip(floor["month_end"], floor["symbol"], strict=True))
+    assert capped_keys <= floor_keys
+    assert len(floor_keys) > len(capped_keys)
+    # ... and adv_rank is the rank over the whole month-end cross-section in
+    # both modes, so the floor-mode panel can be sliced back to the capped one.
+    merged = floor.merge(capped, on=["month_end", "symbol"], suffixes=("_floor", "_cap"))
+    assert (merged["adv_rank_floor"] == merged["adv_rank_cap"]).all()
+    assert set(floor.loc[floor["adv_rank"] <= 2, "symbol"]) == set(capped["symbol"])
+    # a floor high enough to exclude BBB in January leaves AAA alone that month
+    strict = build_pit_universe_panel(
+        daily_glob,
+        adv_lookback_days=10,
+        top_n=None,
+        min_close=5.0,
+        min_dollar_adv=90_000_000.0,
+        memory_limit="512MB",
+    )
+    january = strict.loc[strict["month_end"].dt.month == 1]
+    assert set(january["symbol"]) == {"AAA"}
+
+
+def test_universe_panel_requires_a_rank_cap_or_a_floor(daily_glob: str) -> None:
+    with pytest.raises(ValueError):
+        build_pit_universe_panel(daily_glob, top_n=None, min_dollar_adv=None)
+
+
+def test_universe_panel_accepts_a_list_of_globs_for_a_delisted_root(tmp_path: Path) -> None:
+    survivors = tmp_path / "sip"
+    delisted = tmp_path / "sip-delisted"
+    _write_daily_fixture(survivors)
+    # A very liquid name that only exists in the delisted root (acquired in
+    # February) must rank alongside survivors in January.
+    dates = pd.bdate_range("2020-01-01", "2020-02-10")
+    frame = pd.DataFrame(
+        {
+            "symbol": "TWTR",
+            "timestamp": dates,
+            "close": 40.0,
+            "volume": 10_000_000,
+            "trade_count": 1.0,
+        }
+    )
+    (delisted / "2020").mkdir(parents=True)
+    frame.to_parquet(delisted / "2020" / "batch-0000.parquet", index=False)
+    panel = build_pit_universe_panel(
+        [str(survivors / "*" / "*.parquet"), str(delisted / "*" / "*.parquet")],
+        adv_lookback_days=10,
+        top_n=2,
+        min_close=5.0,
+        memory_limit="512MB",
+    )
+    january = panel.loc[panel["month_end"].dt.month == 1].sort_values("adv_rank")
+    assert january["symbol"].tolist()[0] == "TWTR"
+    # Same semantics as GONE above: the acquired name is still ranked in the
+    # cohort of the month it stopped trading, stamped with the shared cohort
+    # date, and disappears from the next month's cohort.
+    february = panel.loc[panel["month_end"].dt.month == 2]
+    assert set(february["month_end"]) == {pd.Timestamp("2020-02-28")}
+    assert "TWTR" in set(february["symbol"])
+    assert january["month_end"].nunique() == 1

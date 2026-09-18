@@ -176,6 +176,41 @@ capabilities:
       - "measured on a 400-filing random 13G/13G/A header sample (2026-09-17): index-only issuer attribution disagrees with the filing header's SUBJECT COMPANY for 14.0% of comparable filings (46/328) and a further 8.9% have no in-force ticker at all, so 13G counts must be quoted at the EDGAR index level, not per issuer"
       - "research_only: sample and fixture rows are not paper-ready market evidence"
 
+  - id: market.finra_short_interest
+    kind: event
+    status: trial
+    provider: finra
+    use_for: [short_interest_avoid_list, cross_sectional_feature, llm_dossier_material]
+    reliability: high
+    default_mode: live_with_cache
+    strict_behavior: research_only
+    fixture: data/fixtures/capabilities/finra_short_interest.jsonl
+    env: []
+    min_score: 0.9
+    source_urls:
+      query_api_data: https://api.finra.org/data/group/otcMarket/name/consolidatedShortInterest
+      query_api_partitions: https://api.finra.org/partitions/group/otcMarket/name/consolidatedShortInterest
+      query_api_metadata: https://api.finra.org/metadata/group/otcMarket/name/consolidatedShortInterest
+      official_publication_schedule: https://www.finra.org/filing-reporting/regulatory-filing-systems/short-interest
+    collector: scripts/collect_finra_short_interest.py
+    feature_builder: scripts/build_short_interest_features.py
+    caveats:
+      - "FINRA states non-commercial use of FINRA Data; this repo's use is personal research only and the data must not be redistributed or resold"
+      - kind is event rather than market because the payload is a bi-monthly position snapshot with an explicit publication timestamp, not an OHLCV series; the market-kind evaluator expects OHLCV columns
+      - visible date = next US equity session after the official publication date; settlementDate is NEVER a visibility date (it precedes publication by 7 sessions, so keying on it is a week-and-a-half look-ahead)
+      - "publication dates come from FINRA's own settlement/due/publication table where the live page carries them (2025-11-14 onward, 28 rows as of 2026-09-17) and otherwise from the rule that table validates exactly: settlement + 7 US equity sessions, which matches FINRA's prose of roughly eight business days once the publication session itself is excluded"
+      - "the publication time of day is not documented anywhere on the FINRA page, so the whole publication session is treated as unusable rather than assuming a morning release"
+      - "historical depth measured, not assumed: the partitions endpoint lists 209 settlement dates from 2017-12-29 to 2026-08-31, so 2016-01-01..2017-12-28 is NOT available; cdn.finra.org/equity/otcshortinterest returns HTTP 403 and the otce.finra.org static-archive page is a JavaScript shell, so there is no free back-fill and every downstream table starts in 2018"
+      - "the dataset's own metadata description still says data is available online for one rolling year; that is stale, but it means the depth above is not contractual and could be withdrawn"
+      - "consolidatedShortInterest (all exchanges, used here) and equityShortInterest (OTC-only, different fields) are different datasets and must not be concatenated"
+      - "daily short sale volume (regShoDaily) is deliberately NOT collected: FINRA states it is volume marked short on the day, not a net position, and it is dominated by market-maker hedging, so it cannot be read as bearish sentiment"
+      - daysToCoverQuantity documents 0 as its default value rather than a measurement, so a record with no positive averageDailyVolume must carry a null days-to-cover downstream, never 0
+      - FINRA's averageDailyVolumeQuantity excludes non-media trades and is not the same denominator as our own dollar_adv_63/close, so days_to_cover and short_interest_ratio are two different normalizations of the same numerator
+      - no shares-outstanding or float series exists in this repo, so short interest as a percentage of float cannot be computed and the ADV-based ratio must not be read as one
+      - "revisionFlag='R' marks a revision of the PRIOR cycle; snapshots are kept exactly as published and revisions are never back-applied, because back-applying them would break point-in-time"
+      - symbolCode is a SIP symbol at publication time and is not a permanent security identifier; ticker changes and reuses are not tracked
+      - "research_only: sample and fixture rows are not paper-ready market evidence"
+
   - id: macro.fred_series
     kind: macro
     status: trial

@@ -29,6 +29,30 @@ available for a given year. Wave B's own grid already plans to A/B test
 "daily-only" vs "daily+intraday" feature sets, so this phasing lines up with
 a distinction the plan wants measured anyway rather than working around it.
 
+**Vendor ghost bars are dropped at the source (2026-09-17)**: the archive
+carries placeholder sessions for securities that are not trading -- ``volume
+= 0``, ``trade_count = 0``, ``open = high = low = close`` at the last price
+the security ever printed (68,720 rows across 341 universe-union symbols,
+1.1% of the archive). WW prints 0.2496 with zero volume on every session
+from 2025-06-02 to 2025-07-03, the cancelled pre-Chapter-11 equity's final
+trade, and the *new* equity prints 40.00 on 2025-07-07. Left in, those rows
+are read as real sessions, and the worst of it is that they defeat the
+``_guard`` below: a symbol that has not traded for two years still
+"accumulates" 252 rows, so ``ret_252`` divides today's price by a dead
+company's frozen quote (TLN, 2024-11-29: ``momentum_252_21`` = 14.08 against
+the pre-bankruptcy stub; null after the fix, as it should be until a real
+year of trading exists). They also flatten ``ret_1`` to zero (so ``vol_*``
+shrink and ``dollar_adv``/``amihud`` read 0) and *hide* the hole in the tape,
+so a downstream gap rule cannot see that the two segments are different
+securities. The
+predicate lives in ``features/price_hygiene.py``
+(:data:`~open_composer.research.features.price_hygiene.GHOST_BAR_SQL_PREDICATE`)
+so every builder reading ``data/sip/daily`` can adopt the same definition;
+see ``reports/research/control/price-hygiene-fix-2026-09-17.md``. Note what
+this does **not** fix: every window below counts *rows*, not sessions, so a
+trailing 252-row return can still straddle the resulting hole and compare
+two different securities' prices. That guard is a separate, recorded item.
+
 **Implementation choices not fully pinned by the plan text**:
 
 * Volatility columns (``vol_21``, ``vol_63``, ``idio_vol_63``) are raw daily
@@ -59,6 +83,8 @@ from pathlib import Path
 
 import duckdb
 import pandas as pd
+
+from open_composer.research.features import price_hygiene
 
 #: 1.2GB (not the 2GB the plan's machine budget allows in general) so this
 #: can safely run concurrently with the much heavier intraday_daily.py
@@ -125,6 +151,21 @@ def build_daily_features(
             connection.execute(f"SET temp_directory='{temp_directory}'")
         connection.register("_universe_symbols", pd.DataFrame({"symbol": symbols}))
 
+        # Ghost-bar filter (see module docstring). The predicate is derived
+        # from the archive's own schema rather than hard-coded, so a bar
+        # table without ``trade_count``/``high``/``low`` (a fixture, or the
+        # delisted-names side archive) still builds -- with the tightest
+        # predicate its columns can express, recorded in the returned frame's
+        # provenance by the caller.
+        available_columns = [
+            description[0]
+            for description in connection.execute(
+                f"SELECT * FROM read_parquet({daily_glob!r}) LIMIT 0"
+            ).description
+        ]
+        ghost_predicate = price_hygiene.ghost_bar_sql_predicate(available_columns)
+        ghost_filter = "" if ghost_predicate is None else f"AND NOT {ghost_predicate}"
+
         def _guard(min_rows: int, expr: str) -> str:
             # DuckDB's ``ROWS BETWEEN N-1 PRECEDING AND CURRENT ROW`` frame is
             # happy to compute an aggregate over however many rows physically
@@ -178,7 +219,11 @@ def build_daily_features(
             WITH raw AS (
                 SELECT symbol, timestamp, open, close, volume
                 FROM read_parquet({daily_glob!r})
-                WHERE symbol IN (SELECT symbol FROM _universe_symbols) OR symbol = '{market_symbol}'
+                WHERE (
+                    symbol IN (SELECT symbol FROM _universe_symbols)
+                    OR symbol = '{market_symbol}'
+                )
+                {ghost_filter}
             ),
             priced AS (
                 SELECT

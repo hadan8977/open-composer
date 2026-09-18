@@ -68,7 +68,11 @@ from open_composer.strategy_versions import strategy_content_hash, strategy_vers
 
 REHEARSAL_DIRNAME = Path("reports") / "paper" / "rehearsal"
 AUTHORIZATION_MAX_DURATION_DAYS = 45
-SUPPORTED_PORTFOLIO_MODES = frozenset({"model_ranking_portfolio"})
+SUPPORTED_PORTFOLIO_MODES = frozenset({"model_ranking_portfolio", "insider_buy_portfolio"})
+#: Authorization id / status used when ``rehearsal-run`` is invoked as a dry run
+#: before any authorization exists: the plan is produced with DEFAULT_LIMITS so
+#: the operator can review it, and nothing can be submitted on that path.
+UNAUTHORIZED_DRY_RUN_ID = "unauthorized-dry-run"
 #: Opening-auction styles plus ``day_market``: Alpaca Paper's auction simulation
 #: filled only 5 of 50 ``opg`` market orders on 2026-09-15 (45 expired at the
 #: open, several partially), so a plain market order queued after the close and
@@ -83,8 +87,13 @@ STYLE_TIME_IN_FORCE = {
 }
 #: Whole-share drift below this notional (and below the fraction of the target
 #: value) is not worth an order; it only creates churn when reference prices move.
-MIN_TRADE_NOTIONAL_USD = 50.0
-CHURN_TOLERANCE_FRACTION = 0.05
+#: 2026-09-18: raised from 50 USD / 5% after the 2026-09-17 cycle sent 23 one-
+#: to-two-share drift orders (100-400 USD each, median slippage -240 bp) on a
+#: hold day simply because equity had grown ~1.5%. A 25% drift of a 2% position
+#: is still corrected; weekly membership changes are unaffected (they compare
+#: against a zero target/current side).
+MIN_TRADE_NOTIONAL_USD = 100.0
+CHURN_TOLERANCE_FRACTION = 0.25
 #: Broker statuses that mean "this client_order_id never became a position";
 #: a rerun may submit a fresh order for the same session.
 TERMINAL_UNFILLED_STATUSES = frozenset({"canceled", "cancelled", "expired", "rejected", "replaced"})
@@ -345,6 +354,38 @@ def write_rehearsal_authorization(
         archive = path.with_name(f"{spec.name}-authorization-{stamp:%Y%m%dT%H%M%SZ}.json")
         write_json(archive, payload)
     return path
+
+
+def _dry_run_placeholder_authorization(
+    spec: StrategySpec, stamp: datetime
+) -> RehearsalAuthorization:
+    """Stand-in used only when no authorization file exists *and* orders are
+    not allowed: lets ``rehearsal-run`` produce a reviewable plan report. It
+    is never persisted, carries no account binding, and the cycle status is
+    ``dry_run_unauthorized`` so it cannot be mistaken for an authorized run."""
+    notes = spec.notes.model_dump(mode="json")
+    rehearsal_notes = notes.get("paper_rehearsal") if isinstance(notes, dict) else None
+    status = (
+        rehearsal_notes.get("status") if isinstance(rehearsal_notes, dict) else None
+    ) or "unknown"
+    return RehearsalAuthorization(
+        authorization_id=UNAUTHORIZED_DRY_RUN_ID,
+        strategy_name=spec.name,
+        spec_hash=strategy_content_hash(spec),
+        version_id=strategy_version_id(spec),
+        authorized_by="none (plan-only dry run, no authorization on file)",
+        authorized_at=stamp.isoformat(),
+        expires_at=stamp.isoformat(),
+        broker_account_id_hash="",
+        limits=dict(DEFAULT_LIMITS),
+        below_contract_acknowledged=True,
+        gate_status_note=(
+            "UNAUTHORIZED DRY RUN: no rehearsal authorization on file; "
+            f"notes.paper_rehearsal.status={status}; default limits; nothing can be submitted"
+        ),
+        paper_only=True,
+        path="",
+    )
 
 
 def load_rehearsal_authorization(
@@ -856,7 +897,13 @@ def run_portfolio_paper_rehearsal(
     stamp = now or datetime.now(UTC)
     spec = load_strategy_spec(spec_path)
     policy = validate_rehearsal_spec(spec, base)
-    auth = load_rehearsal_authorization(spec, base, now=stamp)
+    unauthorized_dry_run = (
+        not allow_paper_orders and not rehearsal_authorization_path(base, spec.name).is_file()
+    )
+    if unauthorized_dry_run:
+        auth = _dry_run_placeholder_authorization(spec, stamp)
+    else:
+        auth = load_rehearsal_authorization(spec, base, now=stamp)
     timezone = spec.data_assumptions.timezone
     session = _next_session(stamp, timezone)
     result = RehearsalCycleResult(
@@ -867,6 +914,11 @@ def run_portfolio_paper_rehearsal(
         equity=0.0,
     )
     result.notes.append(f"rehearsal=below_contract; {auth.gate_status_note}")
+    if unauthorized_dry_run:
+        result.notes.append(
+            "no rehearsal authorization on file: plan-only dry run with DEFAULT_LIMITS; run "
+            "`oc paper authorize-rehearsal` before any --allow-paper-orders run"
+        )
 
     kill_switch = load_paper_kill_switch(base, require_control_file=True)
     if kill_switch.enabled:
@@ -887,7 +939,7 @@ def run_portfolio_paper_rehearsal(
         result.notes.append(f"legacy order sync skipped: {exc}"[:300])
     account = broker.get_account()
     account_hash = _optional_broker_account_hash(getattr(account, "id", None))
-    if account_hash != auth.broker_account_id_hash:
+    if not unauthorized_dry_run and account_hash != auth.broker_account_id_hash:
         raise RehearsalError("rehearsal authorization is bound to a different paper account")
     equity = float(getattr(account, "equity", 0) or 0)
     result.equity = equity
@@ -904,6 +956,30 @@ def run_portfolio_paper_rehearsal(
     summary = artifact.get("summary") if isinstance(artifact.get("summary"), dict) else {}
     if summary and summary.get("account_equity"):
         sizing_hint = float(summary["account_equity"])
+    manifest = summary.get("selection_manifest") if summary else None
+    if isinstance(manifest, dict):
+        # Adapters that publish a selection manifest (feature dates, cohort,
+        # fallbacks, skips) get its audit keys copied into the cycle report.
+        audit_keys = (
+            "insider_feature_date",
+            "feature_date_bound_last_completed_session",
+            "insider_feature_root",
+            "insider_root_fallback_used",
+            "universe_root",
+            "universe_root_fallback_used",
+            "universe_month_end",
+            "eligible_after_thresholds",
+            "skipped_stale_count",
+            "selected_count",
+            "gross_effective",
+            "gross_scaled_down",
+            "is_new_signal",
+            "warnings",
+        )
+        audit = {key: manifest.get(key) for key in audit_keys if key in manifest}
+        result.notes.append(
+            "target_weights_manifest=" + json.dumps(audit, ensure_ascii=False, default=str)[:1500]
+        )
     plans = plan_rehearsal_orders(
         target_rows=rows,
         positions=positions,
@@ -1036,7 +1112,7 @@ def run_portfolio_paper_rehearsal(
     elif allow_paper_orders and counts.get("blocked_by_submission_window"):
         result.status = "blocked_by_submission_window"
     elif not allow_paper_orders:
-        result.status = "dry_run"
+        result.status = "dry_run_unauthorized" if unauthorized_dry_run else "dry_run"
     else:
         result.status = "no_orders"
     _write_cycle_report(base, result, auth, policy)
@@ -1101,7 +1177,11 @@ def _write_cycle_report(
     try:
         from open_composer.notifications import safe_dispatch_notification
 
-        severity = "info" if result.status in {"submitted", "dry_run", "no_orders"} else "warn"
+        severity = (
+            "info"
+            if result.status in {"submitted", "dry_run", "dry_run_unauthorized", "no_orders"}
+            else "warn"
+        )
         safe_dispatch_notification(
             kind="signal_paper_only",
             severity=severity,

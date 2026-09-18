@@ -62,11 +62,13 @@ def is_probable_fund_or_etf(name: str) -> bool:
     return bool(_FUND_KEYWORDS.search(name or ""))
 
 
-def fetch_alpaca_asset_metadata() -> pd.DataFrame:
-    """One ``get_all_assets`` call for the full active US-equity list (same
-    call ``scripts/fetch_sip_universe.py::load_universe`` already makes, so
-    this is a known-fast, already-exercised code path -- not a new per-symbol
-    loop). Columns: ``symbol, name, exchange, tradable, fractionable,
+def fetch_alpaca_asset_metadata(*, include_inactive: bool = True) -> pd.DataFrame:
+    """``get_all_assets`` for the active US-equity list (same call
+    ``scripts/fetch_sip_universe.py::load_universe`` already makes) plus, by
+    default, the INACTIVE list, so delisted funds/ETFs that were backfilled
+    under ``data/sip-delisted/`` can be excluded by name too (2026-09-17, data
+    card D-20260917-01). Where a symbol appears in both lists the active row
+    wins. Columns: ``symbol, name, exchange, tradable, fractionable, status,
     is_probable_fund_or_etf``.
     """
     from alpaca.trading.client import TradingClient
@@ -82,20 +84,25 @@ def fetch_alpaca_asset_metadata() -> pd.DataFrame:
             "load_dotenv() (e.g. scripts/build_feature_universe.py)"
         )
     client = TradingClient(key, secret, paper=True)
-    assets = client.get_all_assets(
-        GetAssetsRequest(status=AssetStatus.ACTIVE, asset_class=AssetClass.US_EQUITY)
-    )
-    rows = [
-        {
-            "symbol": asset.symbol,
-            "name": asset.name or "",
-            "exchange": str(asset.exchange),
-            "tradable": bool(asset.tradable),
-            "fractionable": bool(asset.fractionable),
-        }
-        for asset in assets
-    ]
+    statuses = [AssetStatus.ACTIVE] + ([AssetStatus.INACTIVE] if include_inactive else [])
+    rows = []
+    for status in statuses:
+        assets = client.get_all_assets(
+            GetAssetsRequest(status=status, asset_class=AssetClass.US_EQUITY)
+        )
+        rows.extend(
+            {
+                "symbol": asset.symbol,
+                "name": asset.name or "",
+                "exchange": str(asset.exchange),
+                "tradable": bool(asset.tradable),
+                "fractionable": bool(asset.fractionable),
+                "status": str(status.value),
+            }
+            for asset in assets
+        )
     frame = pd.DataFrame(rows)
+    frame = frame.drop_duplicates(subset=["symbol"], keep="first").reset_index(drop=True)
     frame["is_probable_fund_or_etf"] = frame["name"].map(is_probable_fund_or_etf)
     return frame
 

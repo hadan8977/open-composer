@@ -98,7 +98,23 @@
         "H-20260916-07"
       ],
       "budget": 3,
-      "used": 0
+      "used": 2,
+      "budget_remaining": 1,
+      "used_variants_2026_09_17": [
+        "avoid_drop (days-to-cover 在当日点时 top-500 池百分位 >= 0.80 则剔除，其余满仓，归一化到 100% 暴露)",
+        "avoid_half (同一条件下减半，归一化到 100% 暴露)"
+      ],
+      "not_counted": [
+        "the 15-test preregistered factor screen (scripts/screen_short_interest_factors.py) -- own BH denominator, not a set of selectable cells",
+        "the pre-check cross-table (book vs top-500 pool vs broad liquid universe, three thresholds) -- diagnostics on one condition, not candidates",
+        "the broad-universe quintile / top-minus-bottom tables -- evidence for a *different* family (crowded-short reversal on the broad universe), which needs its own card before anything is priced",
+        "the two controls (within-week same-size shuffle x 5 seeds, publication-shift +-1..10 sessions x 5 seeds)"
+      ],
+      "unused_variants_registered": [
+        "0.90 threshold (highest 10% days-to-cover) -- measured in the pre-check at 8.8% of book stock-weeks, below the 10% floor, so not priced",
+        "0.70 threshold (highest 30%)",
+        "avoid on short_interest_ratio (shares short / own 63-session ADV shares) instead of FINRA days-to-cover"
+      ]
     },
     "insider_cluster_buy_independent": {
       "prior_trials_from_ledger": 0,

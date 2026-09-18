@@ -660,11 +660,17 @@ def _carry_in_last_buy(
 # --------------------------------------------------------------------------
 
 
-def build_weekly_panel(out_root: Path, *, sessions: pd.DatetimeIndex, top_n: int) -> Path:
+def build_weekly_panel(
+    out_root: Path,
+    *,
+    sessions: pd.DatetimeIndex,
+    top_n: int,
+    universe_root: Path = UNIVERSE_ROOT,
+) -> Path:
     """Collapse the daily table to the weekly rebalance grid the F-track
     screener scores on, restricted to the point-in-time top-``top_n`` ADV
-    cohort."""
-    universe_panel = load_universe_panel(UNIVERSE_ROOT)
+    cohort of the panel under ``universe_root``."""
+    universe_panel = load_universe_panel(universe_root)
     fridays = set(weekly_rebalance_dates(list(sessions)))
     frames: list[pd.DataFrame] = []
     for path in sorted(out_root.glob("[0-9][0-9][0-9][0-9].parquet")):
@@ -725,6 +731,15 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--out-root", type=Path, default=None)
+    parser.add_argument(
+        "--universe-root",
+        type=Path,
+        default=UNIVERSE_ROOT,
+        help=(
+            "PIT universe panel dir (default data/features/universe; pass "
+            "data/features/universe_broad with a large --top-n for the broad universe)"
+        ),
+    )
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--skip-weekly-panel", action="store_true")
     return parser
@@ -746,7 +761,8 @@ def main(argv: list[str] | None = None) -> int:
     log(
         f"feature dates: {sessions[0].date()} .. {sessions[-1].date()} ({len(sessions):,} sessions)"
     )
-    universe_panel = load_universe_panel(UNIVERSE_ROOT)
+    universe_root = Path(args.universe_root)
+    universe_panel = load_universe_panel(universe_root)
     universe_symbols = set(universe_panel.loc[universe_panel["adv_rank"] <= args.top_n, "symbol"])
     log(
         f"point-in-time universe union (adv_rank <= {args.top_n}): "
@@ -807,11 +823,14 @@ def main(argv: list[str] | None = None) -> int:
         del frame
 
     if not args.skip_weekly_panel:
-        build_weekly_panel(out_root, sessions=sessions, top_n=args.weekly_top_n)
+        build_weekly_panel(
+            out_root, sessions=sessions, top_n=args.weekly_top_n, universe_root=universe_root
+        )
 
     manifest = {
         "built_at": datetime.now().astimezone().isoformat(),
         "as_of": last_date.isoformat(),
+        "universe_root": str(universe_root),
         "first_feature_date": sessions[0].date().isoformat(),
         "last_feature_date": sessions[-1].date().isoformat(),
         "window_sessions": WINDOW_SESSIONS,

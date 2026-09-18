@@ -60,11 +60,36 @@ def main() -> int:
         default=None,
         help="restrict to these target years (default: every year under data/sip/daily/)",
     )
+    parser.add_argument(
+        "--extra-daily-root",
+        type=Path,
+        default=None,
+        help=(
+            "second bars root in {root}/{year}/*.parquet layout scanned next to "
+            "data/sip/daily (e.g. data/sip-delisted/by_year for backfilled delisted names)"
+        ),
+    )
+    parser.add_argument(
+        "--universe-root",
+        type=Path,
+        default=UNIVERSE_ROOT,
+        help="PIT universe panel dir whose symbol union bounds the label set",
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=OUT_DIR,
+        help="where {year}.parquet label files go (default data/features/labels)",
+    )
     args = parser.parse_args()
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    extra_root = Path(args.extra_daily_root) if args.extra_daily_root is not None else None
+    if extra_root is not None and not any(extra_root.glob("*/*.parquet")):
+        raise SystemExit(f"no parquet files under {extra_root}")
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] loading universe union symbols ...", flush=True)
-    universe_symbols = sorted(universe_union_symbols(UNIVERSE_ROOT))
+    universe_symbols = sorted(universe_union_symbols(Path(args.universe_root)))
     print(f"universe union: {len(universe_symbols)} symbols", flush=True)
 
     archive_years = _available_archive_years()
@@ -78,6 +103,12 @@ def main() -> int:
         window_years = [y for y in (year, year + LOOKAHEAD_YEARS) if y <= last_archive_year]
         window_years = sorted(set(window_years))
         glob_paths = [str(DAILY_ROOT / str(y) / "*.parquet") for y in window_years]
+        if extra_root is not None:
+            glob_paths += [
+                str(extra_root / str(y) / "*.parquet")
+                for y in window_years
+                if (extra_root / str(y)).is_dir()
+            ]
 
         started = time.monotonic()
         print(
@@ -97,7 +128,7 @@ def main() -> int:
         elapsed = time.monotonic() - started
         print(f"{year}: {len(year_frame)} rows, {elapsed:.1f}s", flush=True)
 
-        out_path = OUT_DIR / f"{year}.parquet"
+        out_path = out_dir / f"{year}.parquet"
         tmp_path = out_path.with_suffix(".parquet.tmp")
         year_frame.sort_values(["symbol", "trade_date"]).to_parquet(tmp_path, index=False)
         tmp_path.replace(out_path)

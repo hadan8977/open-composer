@@ -30,6 +30,8 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 
+from open_composer.research.features import price_hygiene
+
 DEFAULT_HORIZONS: tuple[int, ...] = (5, 10, 21)
 DEFAULT_MEMORY_LIMIT = "1.5GB"
 
@@ -60,6 +62,17 @@ def build_labels(
             Path(temp_directory).mkdir(parents=True, exist_ok=True)
             connection.execute(f"SET temp_directory='{temp_directory}'")
         connection.register("_universe_symbols", pd.DataFrame({"symbol": symbols}))
+        # Vendor ghost bars (frozen zero-volume quotes of dead tickers) must not
+        # feed LEAD(): they would manufacture zero forward returns for names
+        # that no longer trade. Same predicate as daily_features.py (2026-09-17).
+        available_columns = [
+            row[0]
+            for row in connection.execute(
+                f"DESCRIBE SELECT * FROM read_parquet({daily_glob!r}) LIMIT 0"
+            ).fetchall()
+        ]
+        ghost_predicate = price_hygiene.ghost_bar_sql_predicate(available_columns)
+        ghost_filter = "" if ghost_predicate is None else f"AND NOT {ghost_predicate}"
 
         fwd_return_selects = ",\n".join(
             f"    (LEAD(close, {h}) OVER w / close - 1.0) AS fwd_return_{h}" for h in horizons
@@ -85,6 +98,7 @@ def build_labels(
                 SELECT symbol, timestamp, close
                 FROM read_parquet({daily_glob!r})
                 WHERE symbol IN (SELECT symbol FROM _universe_symbols)
+                {ghost_filter}
             ),
             priced AS (
                 SELECT
