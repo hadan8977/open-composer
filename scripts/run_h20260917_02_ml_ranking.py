@@ -175,14 +175,35 @@ except ImportError:  # pragma: no cover -- exercised only if sklearn is absent
 
 ITERATION_ID = "h20260917_02_ml_ranking"
 OUT_DIR = ROOT / "reports" / "research" / "iterations" / ITERATION_ID
-CACHE_DIR = OUT_DIR / "cache"
+FEATURES_ROOT = ROOT / "data" / "features"
+SEC13D_PATH = FEATURES_ROOT / "sec_13d" / "filings.parquet"
+
+#: Cache and artifact paths are per feature family. Without this a ``_broad``
+#: run silently reuses the narrow run's cached panel/train/returns: on
+#: 2026-09-18 the first broad run finished in 8 seconds and reported the
+#: narrow 2023-2025 window's numbers ("train: ridge_excess21 cached --
+#: reusing"). ``bind_paths`` is called once from ``main`` before any stage.
+CACHE_DIR = OUT_DIR / "cache" / "broad"
 TRAIN_DIR = CACHE_DIR / "train"
 RETURNS_DIR = CACHE_DIR / "returns"
 BOOKS_DIR = CACHE_DIR / "books"
-FEATURES_ROOT = ROOT / "data" / "features"
-SEC13D_PATH = FEATURES_ROOT / "sec_13d" / "filings.parquet"
 SUMMARY_PATH = OUT_DIR / "summary.json"
 REPORT_PATH = OUT_DIR / "report.md"
+
+
+def bind_paths(features_suffix: str) -> str:
+    """Point cache and artifact paths at this feature family; return its tag."""
+    global CACHE_DIR, TRAIN_DIR, RETURNS_DIR, BOOKS_DIR, SUMMARY_PATH, REPORT_PATH
+    tag = features_suffix.strip("_") or "narrow"
+    CACHE_DIR = OUT_DIR / "cache" / tag
+    TRAIN_DIR = CACHE_DIR / "train"
+    RETURNS_DIR = CACHE_DIR / "returns"
+    BOOKS_DIR = CACHE_DIR / "books"
+    stem = "" if tag == "broad" else f"_{tag}"
+    SUMMARY_PATH = OUT_DIR / f"summary{stem}.json"
+    REPORT_PATH = OUT_DIR / f"report{stem}.md"
+    return tag
+
 
 DATA_START = "2016-01-04"
 PRIMARY_COST_BPS = 10.0
@@ -1910,6 +1931,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    tag = bind_paths(args.features_suffix)
+    _log(f"paths: feature family {tag!r} -> cache {CACHE_DIR}, report {REPORT_PATH.name}")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     if args.stage in ("all", "panel"):
         stage_panel(args)
