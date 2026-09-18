@@ -11,11 +11,17 @@ from open_composer.compiler.spec_to_pine import compile_pine_strategy
 from open_composer.dashboard import build_dashboard_catalog
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
-from open_composer.models.strategy_spec import PortfolioConfig, ResearchDesign, load_strategy_spec
+from open_composer.models.strategy_spec import (
+    ETFRotationConfig,
+    PortfolioConfig,
+    ResearchDesign,
+    load_strategy_spec,
+)
 from open_composer.research import draft_strategy_from_idea
 from open_composer.strategy_capabilities import assess_strategy_capabilities
 from open_composer.strategy_lifecycle import activate_strategy
 from open_composer.strategy_versions import (
+    _remove_unset_schema_extensions,
     diff_strategy_versions,
     load_strategy_versions,
     register_strategy_version,
@@ -41,35 +47,16 @@ def test_optional_campaign_binding_preserves_legacy_content_hash(
     assert payload["research_design"]["campaign_contract_path"] is None
     assert payload["research_design"]["candidate_policy_contract_path"] is None
     assert payload["research_design"]["workflow_only_ungated_draft"] is False
-    payload["research_design"].pop("workflow_only_ungated_draft")
-    payload["research_design"].pop("campaign_contract_path")
-    payload["research_design"].pop("candidate_policy_contract_path")
-    payload["research_design"].pop("source_card_claim_ids")
-    # Step 11 Wave C's model_ranking_portfolio fields are the same kind of
-    # unset schema extension as research_design's fields above -- see
-    # test_model_ranking_portfolio_fields_preserve_legacy_content_hash for
-    # the dedicated regression test; this pre-existing test's own manual
-    # payload replica needs the same pops to stay in sync.
-    for field in (
-        "candidate_artifact_dir",
-        "universe_rule",
-        "universe_top_n",
-        "feature_set_id",
-        "label_horizon_days",
-        "top_k",
-        "rebalance",
-        "hedge",
-        "account_equity_for_sizing",
-        # Step 14 W2 -- event_driven_capacity_book fields, same rule.
-        "event_signal_engine",
-        "event_holding_bars",
-        "event_exit_rule",
-        "event_signal_set",
-        "event_max_positions",
-        "event_position_weight",
-    ):
-        assert payload["portfolio"][field] is None
-        payload["portfolio"].pop(field)
+    # Derive the "legacy" payload straight from the production helper
+    # (_remove_unset_schema_extensions in open_composer/strategy_versions.py)
+    # instead of hand-mirroring its drop list here. That helper already
+    # knows every optional schema extension -- research_design's own
+    # fields, plus every unset PortfolioConfig mode block (
+    # model_ranking_portfolio, event_driven_capacity_book,
+    # insider_buy_portfolio, etf_rotation_portfolio) -- and drops it the
+    # same way strategy_content_hash itself does, so this test does not go
+    # stale again the next time an optional field is added there.
+    _remove_unset_schema_extensions(spec, payload)
     expected = hashlib.sha256(
         json.dumps(
             payload,
@@ -120,31 +107,21 @@ def test_model_ranking_portfolio_fields_preserve_legacy_content_hash(
     a real full-suite run: multiple unrelated research iteration tests
     (e.g. high_beta_sleeve_ensemble_r1's `R1 spec hash differs from
     preregistered manifest`) broke from this before the fix below.
+
+    Later `PortfolioConfig` mode blocks (event_driven_capacity_book,
+    insider_buy_portfolio, etf_rotation_portfolio) are the same kind of
+    schema extension. Rather than keep re-copying their field names into a
+    second, hand-maintained mirror here (which is exactly what went stale
+    for insider_buy and etf_rotation and made this test fail), the expected
+    payload below is derived straight from the production helper
+    (`_remove_unset_schema_extensions`), so a future extension only needs
+    to be added in one place.
     """
     spec = load_strategy_spec(
         sample_workspace / "strategy_specs" / "drafts" / "fixture_pullback_15m.yaml"
     )
     payload = spec.model_dump(mode="json")
-    for field in (
-        "candidate_artifact_dir",
-        "universe_rule",
-        "universe_top_n",
-        "feature_set_id",
-        "label_horizon_days",
-        "top_k",
-        "rebalance",
-        "hedge",
-        "account_equity_for_sizing",
-        # Step 14 W2 -- event_driven_capacity_book fields, same rule.
-        "event_signal_engine",
-        "event_holding_bars",
-        "event_exit_rule",
-        "event_signal_set",
-        "event_max_positions",
-        "event_position_weight",
-    ):
-        assert payload["portfolio"][field] is None
-        payload["portfolio"].pop(field)
+    _remove_unset_schema_extensions(spec, payload)
     expected = hashlib.sha256(
         json.dumps(
             payload,
@@ -173,6 +150,50 @@ def test_model_ranking_portfolio_fields_preserve_legacy_content_hash(
         }
     )
     assert strategy_content_hash(model_ranking_bound) != expected
+
+    # 2026-09-18 -- etf_rotation_portfolio: confirm the other half of the
+    # invariant. A spec that DOES populate `portfolio.etf_rotation` must
+    # hash differently from this unset baseline, and two otherwise-
+    # identical specs that differ only in `etf_rotation.top_n` must hash
+    # differently from each other too -- the paper rehearsal authorization
+    # is bound to the spec content hash, so a top_n change must not be
+    # silently invisible to it.
+    etf_rotation_bound = spec.model_copy(
+        update={
+            "timeframe": "daily",
+            "portfolio": PortfolioConfig(
+                mode="etf_rotation_portfolio",
+                weighting="equal_weight",
+                etf_rotation=ETFRotationConfig(
+                    menu=["SPY", "QQQ", "IWM"],
+                    cash_symbol="BIL",
+                    lookbacks=[21, 63],
+                    top_n=1,
+                    rebalance="monthly_last_session",
+                ),
+            ),
+        }
+    )
+    etf_rotation_bound_top2 = spec.model_copy(
+        update={
+            "timeframe": "daily",
+            "portfolio": PortfolioConfig(
+                mode="etf_rotation_portfolio",
+                weighting="equal_weight",
+                etf_rotation=ETFRotationConfig(
+                    menu=["SPY", "QQQ", "IWM"],
+                    cash_symbol="BIL",
+                    lookbacks=[21, 63],
+                    top_n=2,
+                    rebalance="monthly_last_session",
+                ),
+            ),
+        }
+    )
+    assert strategy_content_hash(etf_rotation_bound) != expected
+    assert strategy_content_hash(etf_rotation_bound) != strategy_content_hash(
+        etf_rotation_bound_top2
+    )
 
 
 def test_strategy_version_registry_snapshots_specs_and_binds_runs(
