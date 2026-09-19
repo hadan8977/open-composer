@@ -390,3 +390,146 @@ table {
     text-overflow: ellipsis;
   }
 }
+
+/* ---------------------------------------------------- hypothesis board (T4) */
+
+.lane-panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ------------------------------------------------------------- lineage (T4)
+ * Desktop gets an inline-SVG graph; phone gets the same graph flattened into
+ * an indented list, per plan section 4 screen 2 ("不要在手机上画力导向图").
+ * Toggled the same way the topbar's own mobile/desktop split already is.
+ */
+
+.lineage-mobile {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .lineage-desktop {
+    display: none;
+  }
+
+  .lineage-mobile {
+    display: block;
+  }
+}
+
+.lineage-svg {
+  width: 100%;
+  height: auto;
+  background: var(--bg-alt);
+  border-radius: var(--radius);
+}
+
+.lineage-node--ok {
+  fill: var(--ok);
+}
+
+.lineage-node--warn {
+  fill: var(--warn);
+}
+
+.lineage-node--stale {
+  fill: var(--stale);
+}
+
+.lineage-node--unknown {
+  fill: var(--unknown);
+}
+
+.lineage-label {
+  fill: var(--fg);
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Solid = explicit 上一环 (strong evidence). Dashed = a card id mentioned in
+ * body text (weak evidence) -- never rendered as if it were the same thing
+ * as a solid line. See `open_composer.cockpit.data.hypotheses.build_lineage`.
+ */
+.lineage-edge--explicit {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.lineage-edge--mentioned {
+  stroke: var(--fg-dim);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.lineage-legend-swatch {
+  display: inline-block;
+  width: 1.5em;
+  border-top-width: 2px;
+  border-top-style: solid;
+  margin-right: 0.3em;
+  vertical-align: middle;
+}
+
+.lineage-legend-swatch--explicit {
+  border-top-color: var(--accent);
+}
+
+.lineage-legend-swatch--mentioned {
+  border-top-color: var(--fg-dim);
+  border-top-style: dashed;
+}
+
+.lineage-indent-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.lineage-indent-list li {
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ------------------------------------------------------ card detail (T4) */
+
+.criteria-compare {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.criteria-compare-col {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+}
+
+.markdown-body p {
+  margin: 0.5rem 0;
+}
+
+.markdown-body ul {
+  padding-left: 1.4rem;
+}
+
+.markdown-body pre {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  overflow-x: auto;
+}
+
+.markdown-body table {
+  margin: 0.5rem 0;
+}

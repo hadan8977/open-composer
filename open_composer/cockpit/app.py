@@ -1,17 +1,17 @@
-"""FastAPI application factory for the read-only cockpit (Step 18, T3).
+"""FastAPI application factory for the read-only cockpit (Step 18, T3+T4).
 
 Everything this app can do is a GET (or HEAD) request against files this repo
-already owns: crontab, `df`/`free` today, and (T4-T8) hypothesis cards, paper
-rehearsal artifacts, and agent session logs later. There is intentionally no
-POST/PUT/PATCH/DELETE route anywhere -- ``tests/test_cockpit_app.py`` walks
-``app.routes`` and fails loudly if one ever appears; treat that test as the
-enforcement mechanism for the whole design, not a formality.
+already owns: crontab, `df`/`free`, hypothesis cards and their lineage (T4),
+and (T5-T8) paper rehearsal artifacts and agent session logs later. There is
+intentionally no POST/PUT/PATCH/DELETE route anywhere -- ``tests/test_cockpit_app.py``
+walks ``app.routes`` and fails loudly if one ever appears; treat that test as
+the enforcement mechanism for the whole design, not a formality.
 
 Authentication is not this app's job: ``oc cockpit serve`` (see
 ``open_composer/cli.py``) refuses anything but ``127.0.0.1``, and Cloudflare
 Access authenticates at the edge (see ``AGENTS.md``).
 
-Interface for T4-T8
+Interface for T5-T8
 -------------------
 * ``SCREENS`` is the single source of truth for the five-screen nav (slug, URL
   path, label). Add a screen's route with the same slug used here and its stub
@@ -33,11 +33,12 @@ Interface for T4-T8
 from __future__ import annotations
 
 import os
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -47,7 +48,22 @@ from open_composer.cockpit.data.health import (
     build_health_report,
     summarize_statuses,
 )
+from open_composer.cockpit.data.hypotheses import (
+    build_hypotheses_report,
+    compute_lineage_layout,
+    extract_criteria_sections,
+    find_card,
+    flatten_lineage_for_mobile,
+    headline_summary,
+    lane_status,
+)
+from open_composer.cockpit.markdown import render_markdown
+from open_composer.cockpit.security import PathTraversalError, safe_repo_path
 from open_composer.config import project_root
+
+#: Validated before a card id ever touches the filesystem (T4 brief, "card
+#: detail" section) -- matches `open_composer.cockpit.data.hypotheses.CARD_ID_RE`.
+_CARD_ID_PATH_RE = re.compile(r"^[HD]-\d{8}-\d{2}$")
 
 _PACKAGE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = _PACKAGE_DIR / "templates"
@@ -119,12 +135,98 @@ def create_app() -> FastAPI:
 
     @app.get("/", response_class=HTMLResponse)
     def index_page(request: Request) -> HTMLResponse:
-        # T4 replaces this body with the hypothesis board. Until then the home
-        # route renders the health screen so the app is not blank at "/".
-        report = build_health_report(project_root())
+        """Screen 1: the hypothesis-card board (plan section 4, "假设卡看板").
+
+        Swimlanes come pre-bucketed from `group_cards_by_lane` in lane order;
+        this route's only job is to also look up, per card, whichever
+        `summary.json` results joined to it by `card_id` (see
+        `hypotheses.load_results`'s docstring for why the join key is
+        `card_id` and not the card's own prose "产出目录" field) and reduce
+        each to one headline string for the row.
+        """
+        report = build_hypotheses_report(project_root())
+        headlines: dict[str, list[str]] = {
+            card.id: [headline_summary(facts) for facts in report.results.for_card(card.id)]
+            for card in report.cards
+        }
         context = _base_context(request, "hypotheses")
         context["report"] = report
-        return templates.TemplateResponse(request, "health.html", context)
+        context["headlines"] = headlines
+        context["lane_status"] = lane_status
+        return templates.TemplateResponse(request, "hypotheses.html", context)
+
+    @app.get("/lineage", response_class=HTMLResponse)
+    def lineage_page(request: Request) -> HTMLResponse:
+        """Screen 2: research lineage (plan section 4, "研究血统图").
+
+        Two edge kinds, drawn differently on purpose: solid = an explicit
+        `上一环：` field (only 1 of 19 cards has one, as of 2026-09-19 -- see
+        `hypotheses.build_lineage`'s docstring), dashed = a weaker "this card
+        id is mentioned somewhere in that card's body" signal. Desktop gets
+        an inline SVG (`compute_lineage_layout`); phone gets the same graph
+        flattened into an indented list (`flatten_lineage_for_mobile`) with
+        the edge kind shown as a text label instead of a line style, per the
+        plan's explicit instruction not to force a force-directed graph onto
+        a phone screen.
+        """
+        report = build_hypotheses_report(project_root())
+        graph = report.lineage
+        layout = compute_lineage_layout(graph)
+        node_status = {node.card_id: lane_status(node.lane) for node in graph.nodes}
+        mobile_rows = flatten_lineage_for_mobile(graph)
+        context = _base_context(request, "lineage")
+        context["graph"] = graph
+        context["layout"] = layout
+        context["node_status"] = node_status
+        context["mobile_rows"] = mobile_rows
+        return templates.TemplateResponse(request, "lineage.html", context)
+
+    @app.get("/card/{card_id}", response_class=HTMLResponse)
+    def card_detail_page(request: Request, card_id: str) -> HTMLResponse:
+        """Card detail: markdown body, matched results, and lineage neighbours.
+
+        `card_id` is validated against `^[HD]-\\d{8}-\\d{2}$` before it is used
+        for anything -- including before the one-more `safe_repo_path` check
+        on the card's own (already-known-safe, glob-discovered) path, per the
+        plan's explicit "validate, and still go through safe_repo_path"
+        instruction for this route. Both an invalid id (`/card/nope`) and a
+        well-formed but unknown id return 404, never 500.
+        """
+        if not _CARD_ID_PATH_RE.match(card_id):
+            raise HTTPException(status_code=404, detail="not a valid card id")
+
+        root = project_root()
+        report = build_hypotheses_report(root)
+        card = find_card(report.cards, card_id)
+        if card is None:
+            raise HTTPException(status_code=404, detail="card not found")
+        try:
+            safe_repo_path(card.path, root=root)
+        except PathTraversalError as exc:
+            raise HTTPException(status_code=404, detail="invalid card path") from exc
+
+        card_html = render_markdown(card.body_markdown)
+        criteria_sections = [
+            (section, render_markdown(section.markdown))
+            for section in extract_criteria_sections(card.body_markdown)
+        ]
+        results = report.results.for_card(card.id)
+        neighbours = [
+            edge
+            for edge in report.lineage.edges
+            if edge.source == card.id or edge.target == card.id
+        ]
+
+        context = _base_context(request, "hypotheses")
+        context["card"] = card
+        context["card_html"] = card_html
+        context["criteria_sections"] = criteria_sections
+        context["results"] = results
+        context["headline_summary"] = headline_summary
+        context["neighbours"] = neighbours
+        context["cards_by_id"] = {c.id: c for c in report.cards}
+        context["lane_status"] = lane_status
+        return templates.TemplateResponse(request, "card_detail.html", context)
 
     def _stub_page(slug: str, label: str):
         def _handler(request: Request) -> HTMLResponse:
@@ -134,7 +236,6 @@ def create_app() -> FastAPI:
 
         return _handler
 
-    app.get("/lineage", response_class=HTMLResponse)(_stub_page("lineage", "Lineage"))
     app.get("/agents", response_class=HTMLResponse)(_stub_page("agents", "Agents"))
     app.get("/paper", response_class=HTMLResponse)(_stub_page("paper", "Paper"))
 

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Hypotheses -- Open Composer Cockpit{% endblock %}
+{% block content %}
+<h1>Hypothesis board</h1>
+<p class="muted">
+  Generated {{ report.generated_at.isoformat() }}. {{ report.cards|length }} card(s) under
+  <code>reports/research/hypotheses/</code>. A card is never dropped: anything the parser could not
+  classify lands in <strong>未分类</strong> below with its raw status text and the reason.
+</p>
+
+{% if report.results.warnings %}
+<section class="panel">
+  <h2>Results-join warnings</h2>
+  <p class="muted">
+    Results join to a card by the <code>card_id</code> field inside <code>summary.json</code>, not by the
+    card's own prose "产出目录". These <code>summary.json</code> files have no usable <code>card_id</code>
+    and so could not be joined to any card:
+  </p>
+  <ul>
+    {% for warning in report.results.warnings %}
+    <li class="muted">{{ warning }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% for lane in report.lanes %}
+{% set cards = report.lanes[lane] %}
+<section class="panel lane-panel">
+  <h2>
+    <span class="dot dot--{{ lane_status(lane) }}">{{ lane }}</span>
+    <span class="muted">({{ cards|length }})</span>
+  </h2>
+  {% if not cards %}
+  <p class="muted">No cards in this lane.</p>
+  {% else %}
+  <table class="responsive-table">
+    <thead>
+      <tr>
+        <th>Card</th>
+        <th>Title</th>
+        {% if lane == "未分类" %}
+        <th>Raw status</th>
+        <th>Reason</th>
+        {% else %}
+        <th>Layer</th>
+        <th>Results</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for card in cards %}
+      <tr>
+        <td data-label="Card"><a href="/card/{{ card.id }}"><code>{{ card.id }}</code></a></td>
+        <td data-label="Title">{{ card.title }}</td>
+        {% if lane == "未分类" %}
+        <td data-label="Raw status">{{ card.status_text if card.status_text else "(none)" }}</td>
+        <td data-label="Reason">{{ card.lane_reason }}</td>
+        {% else %}
+        <td data-label="Layer">
+          {{ card.layer if card.layer else "-" }}{% if card.data_layer %} &middot; {{ card.data_layer }}{% endif %}
+        </td>
+        <td data-label="Results">
+          {% set lines = headlines.get(card.id, []) %}
+          {% if lines %}
+            {% for line in lines %}<div>{{ line }}</div>{% endfor %}
+          {% else %}
+            <span class="muted">no summary.json joined</span>
+          {% endif %}
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

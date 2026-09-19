@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}{{ card.id }} -- Open Composer Cockpit{% endblock %}
+{% block content %}
+<h1><code>{{ card.id }}</code> {{ card.title }}</h1>
+<p class="muted">
+  <span class="dot dot--{{ lane_status(card.lane) }}">{{ card.lane }}</span>
+  {% if card.lane == "未分类" %}&mdash; {{ card.lane_reason }}{% endif %}
+  &middot; <code>{{ card.path }}</code>
+</p>
+
+<section class="panel">
+  <h2>Fields</h2>
+  <table class="responsive-table">
+    <tbody>
+      <tr><td data-label="Field">Status (raw)</td><td data-label="Value">{{ card.status_text if card.status_text else "(none found)" }}</td></tr>
+      <tr><td data-label="Field">Layer</td><td data-label="Value">{{ card.layer if card.layer else "-" }}</td></tr>
+      <tr><td data-label="Field">Data layer</td><td data-label="Value">{{ card.data_layer if card.data_layer else "-" }}</td></tr>
+      <tr><td data-label="Field">Script</td><td data-label="Value">{% if card.script %}<code>{{ card.script }}</code>{% else %}-{% endif %}</td></tr>
+      <tr><td data-label="Field">Output</td><td data-label="Value">{% if card.output_dir %}<code>{{ card.output_dir }}</code>{% else %}-{% endif %}</td></tr>
+      <tr><td data-label="Field">Lesson</td><td data-label="Value">{{ card.lesson_ref if card.lesson_ref else "-" }}</td></tr>
+      <tr><td data-label="Field">上一环 (explicit)</td><td data-label="Value">{% if card.previous %}<a href="/card/{{ card.previous }}"><code>{{ card.previous }}</code></a>{% else %}(none){% endif %}</td></tr>
+    </tbody>
+  </table>
+  {% if card.parse_warnings %}
+  <p class="muted">Parse warnings: {{ card.parse_warnings|join("; ") }}</p>
+  {% endif %}
+  {% if card.front_matter and card.front_matter.criteria %}
+  <h3>预注册标准（结构化，来自 front-matter）</h3>
+  <p class="muted">
+    Listed as declared, not paired against any specific result number automatically -- doing that pairing
+    without a named, matching metric key would be inventing a comparison the data does not support.
+  </p>
+  <table class="responsive-table">
+    <thead><tr><th>Name</th><th>Threshold</th><th>Direction</th></tr></thead>
+    <tbody>
+      {% for criterion in card.front_matter.criteria %}
+      <tr>
+        <td data-label="Name">{{ criterion.name }}</td>
+        <td data-label="Threshold">{{ criterion.threshold }}</td>
+        <td data-label="Direction">{{ criterion.direction if criterion.direction else "-" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>判定 vs 实际</h2>
+  {% if not criteria_sections and not results %}
+  <p class="muted">No 判定/预注册 heading found in this card's body, and no summary.json joined by card_id.</p>
+  {% endif %}
+  {% if criteria_sections or results %}
+  <p class="muted">
+    <strong>未结构化（人工对照）</strong>: the card's own 判定/预注册 prose, placed next to whatever
+    summary.json numbers joined by card_id. This is a side-by-side for a human to eyeball, not a computed
+    pass/fail -- most cards state their criteria in prose, not in machine-checkable form.
+  </p>
+  <div class="criteria-compare">
+    <div class="criteria-compare-col">
+      <h3>预注册 / 判定 (as written)</h3>
+      {% if criteria_sections %}
+        {% for section, section_html in criteria_sections %}
+        <div class="markdown-body">{{ section_html | safe }}</div>
+        {% endfor %}
+      {% else %}
+      <p class="muted">No 判定/预注册 heading found in this card's body.</p>
+      {% endif %}
+    </div>
+    <div class="criteria-compare-col">
+      <h3>实际 (summary.json)</h3>
+      {% if results %}
+        {% for facts in results %}
+        <div class="panel">
+          <p><code>{{ facts.iteration_id }}</code> &middot; {{ headline_summary(facts) }}</p>
+          {% if facts.incumbent_to_beat %}
+          <table class="responsive-table">
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>
+              {% for key, value in facts.incumbent_to_beat.items() %}
+              <tr><td data-label="Metric">{{ key }}</td><td data-label="Value">{{ value }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+          {% if facts.windows %}
+          <p class="muted">windows: {{ facts.windows }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      {% else %}
+      <p class="muted">No summary.json joined to this card by card_id.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Lineage neighbours</h2>
+  {% if not neighbours %}
+  <p class="muted">No lineage edges touch this card.</p>
+  {% else %}
+  <ul>
+    {% for edge in neighbours %}
+    <li>
+      {% if edge.target == card.id %}
+        <a href="/card/{{ edge.source }}"><code>{{ edge.source }}</code></a>
+        {{ cards_by_id[edge.source].title if edge.source in cards_by_id else "" }}
+        &rarr; this card ({{ edge.label }})
+      {% else %}
+        this card &rarr;
+        <a href="/card/{{ edge.target }}"><code>{{ edge.target }}</code></a>
+        {{ cards_by_id[edge.target].title if edge.target in cards_by_id else "" }}
+        ({{ edge.label }})
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Card body</h2>
+  <div class="markdown-body">{{ card_html | safe }}</div>
+</section>
+{% endblock %}
