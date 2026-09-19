@@ -2,13 +2,11 @@
 # Open Composer — Local Setup (Linux / macOS)
 #
 # Usage:
-#   ./scripts/setup-local.sh                # full run, ends with dashboard serve in background
-#   ./scripts/setup-local.sh --skip-serve   # everything except the serve step
-#   ./scripts/setup-local.sh --port 8001    # use a different port
+#   ./scripts/setup-local.sh                # full run
 #   ./scripts/setup-local.sh --dry-run      # show what would run, change nothing
 #
 # Behaviour:
-#   - Runs 10 ordered steps, prints [N/10] <title>  <status> for each.
+#   - Runs 6 ordered steps, prints [N/6] <title>  <status> for each.
 #   - Skips already-done steps (idempotent).
 #   - Stops at the first hard failure with an actionable hint.
 #   - At the end prints what's still optional (env keys, etc.) and how to fix it.
@@ -19,17 +17,13 @@
 set -uo pipefail
 
 # ---------- options ----------
-SKIP_SERVE=0
 DRY_RUN=0
-PORT=8000
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --skip-serve) SKIP_SERVE=1; shift ;;
     --dry-run)    DRY_RUN=1; shift ;;
-    --port)       PORT="$2"; shift 2 ;;
     -h|--help)
-      sed -n '2,25p' "$0"
+      sed -n '2,18p' "$0"
       exit 0
       ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
@@ -54,7 +48,7 @@ else
 fi
 
 # ---------- state ----------
-TOTAL=10
+TOTAL=6
 WARNINGS=()
 NEXT_ACTIONS=()
 FAILED=0
@@ -88,18 +82,8 @@ else
   exit 1
 fi
 
-# ---------- Step 2: node + npm ----------
-step 2 "node + npm"
-if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
-  ok "$(node --version) / npm $(npm --version)"
-else
-  fail "node or npm not found"
-  sub "Install: https://nodejs.org/ (LTS) or 'nvm install --lts'"
-  exit 1
-fi
-
-# ---------- Step 3: Python deps ----------
-step 3 "Python deps (.venv)"
+# ---------- Step 2: Python deps ----------
+step 2 "Python deps (.venv)"
 if [[ -d .venv && -x .venv/bin/python ]] || [[ -d .venv && -x .venv/Scripts/python.exe ]]; then
   run_cmd "uv sync (idempotent)" uv sync || true
   ok ".venv synced"
@@ -118,33 +102,14 @@ else
   fi
 fi
 
-# ---------- Step 4: dashboard node deps ----------
-step 4 "Dashboard node deps"
-if [[ -d dashboard/node_modules ]]; then
-  ok "node_modules present"
-else
-  sub "First-time install can take 1-2 minutes."
-  if [[ $DRY_RUN -eq 1 ]]; then
-    skip "(dry-run) would: npm --prefix dashboard install"
-  else
-    (cd dashboard && npm install >/dev/null 2>&1)
-  fi
-  if [[ -d dashboard/node_modules ]] || [[ $DRY_RUN -eq 1 ]]; then
-    ok "installed"
-  else
-    fail "npm install failed"
-    FAILED=1
-  fi
-fi
-
 if [[ $FAILED -eq 1 ]]; then
   echo
-  echo "${C_YELLOW}Setup stopped at step 3 or 4. Fix dep install and re-run.${C_RESET}"
+  echo "${C_YELLOW}Setup stopped at step 2. Fix dep install and re-run.${C_RESET}"
   exit 1
 fi
 
-# ---------- Step 5: repo consistency ----------
-step 5 "Repo consistency check"
+# ---------- Step 3: repo consistency ----------
+step 3 "Repo consistency check"
 if [[ $DRY_RUN -eq 1 ]]; then
   skip "(dry-run)"
 else
@@ -161,8 +126,8 @@ else
   fi
 fi
 
-# ---------- Step 6: .env ----------
-step 6 ".env file"
+# ---------- Step 4: .env ----------
+step 4 ".env file"
 if [[ -f .env ]]; then
   configured=$(grep -E '^[A-Z][A-Z_0-9]+=.+' .env 2>/dev/null | grep -v '=$' | grep -v '=<' | grep -v '=YOUR_' | wc -l | tr -d ' ')
   ok "$configured keys configured"
@@ -181,8 +146,8 @@ else
   fi
 fi
 
-# ---------- Step 7: doctor ----------
-step 7 "Doctor (env check)"
+# ---------- Step 5: doctor ----------
+step 5 "Doctor (env check)"
 if [[ $DRY_RUN -eq 1 ]]; then
   skip "(dry-run)"
 else
@@ -198,12 +163,12 @@ else
   fi
 fi
 
-# ---------- Step 8: dashboard catalog ----------
-step 8 "Dashboard catalog"
+# ---------- Step 6: cockpit catalog ----------
+step 6 "Cockpit catalog"
 if [[ $DRY_RUN -eq 1 ]]; then
   skip "(dry-run)"
 else
-  uv run oc dashboard catalog >/dev/null 2>&1
+  uv run oc cockpit index >/dev/null 2>&1
   if [[ -f reports/dashboard/catalog.json ]]; then
     s_strat=$(uv run python -c "import json; print(json.load(open('reports/dashboard/catalog.json'))['summary'].get('strategy_count', 0))" 2>/dev/null || echo "?")
     s_ver=$(uv run python -c "import json; print(json.load(open('reports/dashboard/catalog.json'))['summary'].get('version_count', 0))" 2>/dev/null || echo "?")
@@ -212,64 +177,6 @@ else
   else
     fail "catalog not generated"
     FAILED=1
-  fi
-fi
-
-# ---------- Step 9: dashboard frontend ----------
-step 9 "Dashboard frontend (Vite)"
-if [[ ! -f dashboard/dist/index.html ]] || [[ $DRY_RUN -eq 1 ]]; then
-  if [[ $DRY_RUN -eq 1 ]]; then
-    skip "(dry-run) would: npm --prefix dashboard run build"
-  else
-    (cd dashboard && npm run build >/dev/null 2>&1)
-  fi
-fi
-if [[ -f dashboard/dist/index.html ]]; then
-  bundle=$(find dashboard/dist/assets -name 'index-*.js' 2>/dev/null | head -1)
-  if [[ -n "$bundle" ]]; then
-    size_kb=$(( $(stat -c%s "$bundle" 2>/dev/null || stat -f%z "$bundle" 2>/dev/null) / 1024 ))
-    ok "built (${size_kb} KB JS)"
-  else
-    ok "built"
-  fi
-elif [[ $DRY_RUN -eq 1 ]]; then
-  ok "would build"
-else
-  fail "vite build failed"
-  FAILED=1
-fi
-
-if [[ $FAILED -eq 1 ]]; then
-  echo
-  echo "${C_YELLOW}Setup stopped before dashboard serve. Fix above errors and re-run.${C_RESET}"
-  exit 1
-fi
-
-# ---------- Step 10: dashboard serve ----------
-step 10 "Dashboard serve"
-if [[ $SKIP_SERVE -eq 1 ]]; then
-  skip "skip (--skip-serve)"
-  NEXT_ACTIONS+=("Start manually: uv run oc dashboard serve --port $PORT")
-elif [[ $DRY_RUN -eq 1 ]]; then
-  skip "(dry-run)"
-else
-  if lsof -i ":$PORT" >/dev/null 2>&1 || ss -tln 2>/dev/null | grep -q ":$PORT "; then
-    warn "port $PORT already in use"
-    WARNINGS+=("Port $PORT is busy. Stop the other process or pass --port <other>")
-  else
-    LOG="${TMPDIR:-/tmp}/oc-dashboard.log"
-    nohup uv run oc dashboard serve --host 127.0.0.1 --port "$PORT" >"$LOG" 2>&1 &
-    pid=$!
-    sleep 3
-    if curl -sf -o /dev/null --max-time 5 "http://127.0.0.1:$PORT/api/dashboard/health"; then
-      ok "ready at http://127.0.0.1:$PORT (PID $pid)"
-      NEXT_ACTIONS+=("Open: http://127.0.0.1:$PORT")
-      NEXT_ACTIONS+=("Stop server: kill $pid")
-    else
-      fail "started but /api/dashboard/health did not respond"
-      sub "log: $LOG"
-      FAILED=1
-    fi
   fi
 fi
 
@@ -293,11 +200,10 @@ printf "%sNext steps:%s\n" "$C_CYAN" "$C_RESET"
 if [[ ${#NEXT_ACTIONS[@]} -gt 0 ]]; then
   for a in "${NEXT_ACTIONS[@]}"; do echo "  - $a"; done
 else
-  echo "  - Open: http://127.0.0.1:$PORT"
+  echo "  - Read the cockpit catalog: reports/dashboard/catalog.json"
 fi
 echo "  - Configure env keys:  docs/setup-local.zh.md section 3"
 echo "  - Try a strategy:      uv run oc strategy draft --idea \"...\""
-echo "  - VPS deployment:      docs/remote-dashboard-deploy.zh.md"
 printf "%s%s%s\n" "$C_DIM" "$(printf '%.0s-' {1..70})" "$C_RESET"
 
 exit $FAILED

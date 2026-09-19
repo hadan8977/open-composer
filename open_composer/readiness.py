@@ -8,15 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from open_composer.adapters.execution.nautilus_trader import nautilus_trader_available
 from open_composer.cockpit.data.catalog import build_dashboard_catalog, build_feature_packet_records
-from open_composer.config import (
-    cloudflare_access_audience,
-    cloudflare_access_team_domain,
-    dashboard_allowed_emails,
-    dashboard_api_token,
-    dashboard_auth_mode,
-    ensure_dir,
-    project_root,
-)
+from open_composer.config import ensure_dir, project_root
 from open_composer.paper_controls import build_paper_status
 from open_composer.paper_readiness import assess_paper_strategy_readiness
 from open_composer.storage import write_json
@@ -71,18 +63,18 @@ def build_readiness_report(root: Path | None = None) -> ReadinessReport:
     except Exception as exc:
         checks.append(
             ReadinessCheck(
-                name="dashboard_catalog",
+                name="cockpit_catalog",
                 status="blocked",
-                message=f"Dashboard catalog cannot be built: {exc}",
-                suggested_actions=["uv run oc dashboard catalog", "make verify"],
+                message=f"Cockpit catalog cannot be built: {exc}",
+                suggested_actions=["uv run oc cockpit index", "make verify"],
             )
         )
     else:
         checks.append(
             ReadinessCheck(
-                name="dashboard_catalog",
+                name="cockpit_catalog",
                 status="ok",
-                message="Dashboard catalog can be rebuilt from repository artifacts.",
+                message="Cockpit catalog can be rebuilt from repository artifacts.",
                 suggested_actions=[],
                 details={
                     "strategies": catalog.summary.strategy_count,
@@ -91,62 +83,6 @@ def build_readiness_report(root: Path | None = None) -> ReadinessReport:
                 },
             )
         )
-
-    serve_root = _resolve_dashboard_serve_root(base)
-    checks.append(
-        ReadinessCheck(
-            name="dashboard_bundle",
-            status="ok" if serve_root else "warning",
-            message=(
-                f"Dashboard bundle is available at {serve_root}."
-                if serve_root
-                else "Dashboard bundle is missing; run make dashboard-build or oc dashboard html."
-            ),
-            suggested_actions=[]
-            if serve_root
-            else ["make dashboard-build", "uv run oc dashboard html"],
-            details={"serve_root": str(serve_root) if serve_root else None},
-        )
-    )
-
-    auth_mode = dashboard_auth_mode()
-    token = dashboard_api_token()
-    cloudflare_ready = bool(
-        cloudflare_access_team_domain()
-        and cloudflare_access_audience()
-        and dashboard_allowed_emails()
-    )
-    auth_ready = (
-        auth_mode == "disabled"
-        or (auth_mode == "token" and bool(token))
-        or (auth_mode == "cloudflare_access" and cloudflare_ready)
-        or (auth_mode == "cloudflare_access_or_token" and (cloudflare_ready or bool(token)))
-    )
-    suggested_actions: list[str] = []
-    if auth_mode == "token" and not token:
-        suggested_actions.append("export OPEN_COMPOSER_DASHBOARD_TOKEN=<local-token>")
-    if auth_mode in {"cloudflare_access", "cloudflare_access_or_token"} and not cloudflare_ready:
-        suggested_actions.append(
-            "set OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN, OC_CLOUDFLARE_ACCESS_AUD, "
-            "and OC_DASHBOARD_ALLOWED_EMAILS"
-        )
-    checks.append(
-        ReadinessCheck(
-            name="dashboard_api_auth",
-            status="ok",
-            message=(
-                f"Dashboard API auth mode is configured: {auth_mode}."
-                if auth_ready
-                else f"Dashboard API auth mode needs configuration: {auth_mode}."
-            ),
-            suggested_actions=suggested_actions,
-            details={
-                "auth_mode": auth_mode,
-                "token_configured": bool(token),
-                "cloudflare_access_configured": cloudflare_ready,
-            },
-        )
-    )
 
     feature_packets = build_feature_packet_records(base)
     incomplete_packets = [
@@ -358,7 +294,7 @@ def _overall_status(checks: list[ReadinessCheck]) -> ReadinessStatus:
 def _paper_monitor_suggested_actions(warnings: list[str]) -> list[str]:
     actions: list[str] = []
     if any("kill switch" in warning for warning in warnings):
-        actions.append("uv run oc dashboard command-plan paper.kill_switch.clear")
+        actions.append("uv run oc paper kill-switch --disable")
     if any("account snapshot" in warning for warning in warnings):
         actions.append("uv run oc paper sync-account")
     return actions
@@ -369,18 +305,8 @@ def _strategy_capability_suggested_actions(degraded: dict[str, int]) -> list[str
         return []
     return [
         "uv run oc spec capabilities <strategy-spec.yaml>",
-        (
-            "uv run oc dashboard command-plan strategy.workflow.verify "
-            "--strategy-path <strategy-spec.yaml>"
-        ),
+        "uv run oc spec validate <strategy-spec.yaml>",
     ]
-
-
-def _resolve_dashboard_serve_root(base: Path) -> Path | None:
-    dist_root = base / "dashboard" / "dist"
-    html_root = base / "reports" / "dashboard"
-    candidate = dist_root if (dist_root / "index.html").exists() else html_root
-    return candidate if (candidate / "index.html").exists() else None
 
 
 def _relpath(path: Path, base: Path) -> str:

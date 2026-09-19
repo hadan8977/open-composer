@@ -1,8 +1,8 @@
 # Open Composer
 
 Open Composer is a personal AI strategy workbench for turning trading ideas
-into auditable `StrategySpec` files, deterministic backtests, research reports,
-Dashboard views, and paper-trading readiness checks.
+into auditable `StrategySpec` files, deterministic backtests, research
+reports, and paper-trading readiness checks.
 
 It is built for a file-first workflow: Codex edits specs and code, the Python
 engine provides the deterministic reference runtime, NautilusTrader is the
@@ -36,12 +36,14 @@ Windows PowerShell:
 .\scripts\setup-local.ps1
 ```
 
-Then open `http://127.0.0.1:8000`.
-
-The setup path is idempotent. It installs Python and Dashboard dependencies,
-creates `.env` from `.env.example` when needed, builds the Dashboard read model,
-and starts the local Dashboard. External API keys are optional; sample data and
-fixtures are enough for a local smoke test.
+The setup path is idempotent. It installs Python dependencies, creates `.env`
+from `.env.example` when needed, and builds the read-only cockpit catalog
+under `reports/dashboard/`. There is no browser UI yet (the old Dashboard was
+removed; a read-only Cockpit rebuild is tracked in
+[docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md](docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md)).
+External API keys are optional; sample data and fixtures are enough for a
+local smoke test. Day-to-day work happens through the CLI (`uv run oc ...`)
+and Codex/Claude Code work sessions.
 
 ## Product Map
 
@@ -50,26 +52,24 @@ fixtures are enough for a local smoke test.
 | Strategy specs | YAML `StrategySpec` drafts, approvals, activation state, version diffs, and rollback. |
 | Research reports | Backtests, promotion gates, research contracts, factor diagnostics, execution reality, cost sensitivity, and data quality. |
 | Data capabilities | Sample OHLCV, Alpaca, Longbridge, SEC filings, FRED macro, Alpha Vantage news, and GDELT through a registry. |
-| Dashboard | Local or VPS-hosted artifact read model with Monitor, Strategies, Activity, Settings, and Cloudflare Access-ready auth views. |
+| Cockpit catalog | Read-only artifact aggregation (`oc cockpit index`) over strategies, runs, signals, orders, and reviews; no browser UI yet (Step 18 rebuild in progress). |
 | Paper safety | Alpaca Paper-only automation with explicit confirmation, readiness gates, kill switch, and audit artifacts. |
-| Deployment | One normal path: VPS serves Dashboard from local files; Cloudflare Access is the recommended mobile-friendly remote gate. |
+| Deployment | CLI/file/agent driven; remote access will go through Cloudflare Access once the read-only Cockpit ships. |
 
 ## Two Ways To Use Open Composer
 
 | Audience | Primary interface |
 |---|---|
-| Day-to-day user | Dashboard at `http://127.0.0.1:8000`; create, continue, review, promote, and monitor strategies without opening a terminal. |
+| Day-to-day user | CLI (`uv run oc ...`); create, continue, review, promote, and monitor strategies from the terminal. |
 | Agent (Codex / Claude Code) | CLI plus file contracts: `oc strategy ...`, `projects/{id}/queue.jsonl`, `projects/{id}/trace.jsonl`, and `projects/{id}/context.md`. |
-| Advanced user | Both: Dashboard for status and controlled actions, CLI for batch work and debugging. |
 
-Every Dashboard action writes an audit or trace entry with `via=dashboard`.
-Agent and CLI paths write the same project files, so browser sessions can close
+Agent and CLI paths write the same project files, so sessions can close
 without losing strategy context.
 
 ## Typical Workflow
 
-1. Open the Dashboard and use Build to create a Strategy Project from a natural-language idea.
-2. Work from Strategy Detail: continue research, inspect trace, review spec diff, and queue evidence or LLM-factor materialization.
+1. Use `oc strategy draft` (or a Codex/Claude Code work session) to create a Strategy Project from a natural-language idea.
+2. Continue research from the CLI: inspect trace, review spec diff, and queue evidence or LLM-factor materialization.
 3. Review factor, execution, data, benchmark, LLM contribution, and paper readiness gates.
 4. Promote only when the report evidence is sufficient.
 5. Use paper automation only for active `paper_auto` specs that pass readiness.
@@ -109,20 +109,15 @@ Optional credentials unlock live or cached provider workflows:
 Secrets belong in `.env`; `.env` is ignored by Git. Do not commit broker,
 OpenAI, Longbridge, Dashboard, or legacy remote secrets.
 
-## Dashboard And Deployment
+## Cockpit And Deployment
 
-Local Dashboard is part of the normal setup flow. For a remote personal control
-plane, use the VPS deployment script:
-
-```bash
-make vps-deploy VPS_DEPLOY_ARGS="--cloudflare-access --dashboard-url https://dashboard.example.com"
-```
-
-The VPS hosts the Dashboard as a local service. For mobile-friendly remote
-access, keep the Dashboard bound to `127.0.0.1:8000` and publish it through
-Cloudflare Tunnel + Cloudflare Access rather than exposing a raw port. Strategy
-research, backtests, scans, tests, and file edits remain CLI/file/agent driven.
-See [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md).
+The old password-session/Vercel BFF Dashboard was removed; a read-only Cockpit
+rebuild is in progress (see
+[docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md](docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md)).
+The Cockpit will expose no command entry point. Remote access will be
+authenticated at the edge by Cloudflare Access, and commands will continue to
+go through CLI/file/agent workflows via a Paseo session rather than the
+Cockpit itself.
 
 ## Safety Boundaries
 
@@ -157,7 +152,7 @@ artifact size without deleting anything.
 
 - [docs/user-guide.md](docs/user-guide.md) - command-level user guide
 - [docs/setup-local.zh.md](docs/setup-local.zh.md) - local setup details and troubleshooting
-- [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md) - VPS Dashboard deployment
+- [docs/remote-dashboard-deploy.zh.md](docs/remote-dashboard-deploy.zh.md) - deprecated VPS Dashboard deployment notes, superseded by Step 18
 - [docs/longbridge-integration.md](docs/longbridge-integration.md) - Longbridge configuration and data scope
 - [docs/product-golden-path-codex-quant-review-2026-05-13.zh.md](docs/product-golden-path-codex-quant-review-2026-05-13.zh.md) - no-context Codex starting review document
 - [docs/strategy-research-product-remediation-plan-2026-05-26.zh.md](docs/strategy-research-product-remediation-plan-2026-05-26.zh.md) - strategy research workflow remediation plan for no-context agent review

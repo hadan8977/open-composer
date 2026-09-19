@@ -1,4 +1,7 @@
-"""Read-only data aggregation layer for the cockpit (moved from open_composer.dashboard.catalog)."""
+"""Read-only data aggregation layer for the cockpit.
+
+Moved from the old dashboard package's catalog module.
+"""
 
 from open_composer.cockpit.data.catalog import (
     DashboardCatalogArtifacts,

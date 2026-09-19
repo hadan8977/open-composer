@@ -1,20 +1,15 @@
 UV_CACHE_DIR ?= /tmp/open-composer-uv-cache
-NPM_CONFIG_CACHE ?= /tmp/open-composer-npm-cache
 MONITOR_INTERVAL_SECONDS ?= 60
 MONITOR_MAX_CYCLES ?= 1
 PAPER_STRATEGY ?= qqq_pullback_15m
 
-VPS_DEPLOY_ARGS ?=
-VPS_STOP_ARGS ?=
-
-.PHONY: start bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test test-fast test-full lint format check dashboard-catalog dashboard-html dashboard-build dashboard-dev dashboard-serve dashboard-check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync vps-plan vps-deploy vps-stop verify
+.PHONY: start bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test test-fast test-full lint format check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync verify
 
 start:
 	./scripts/setup-local.sh
 
 bootstrap:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv sync
-	NPM_CONFIG_CACHE=$(NPM_CONFIG_CACHE) npm --prefix dashboard install
 
 doctor:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc doctor
@@ -51,23 +46,6 @@ format:
 
 check: format lint test
 
-dashboard-catalog:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc dashboard catalog
-
-dashboard-html:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc dashboard html
-
-dashboard-build: dashboard-catalog
-	NPM_CONFIG_CACHE=$(NPM_CONFIG_CACHE) npm --prefix dashboard run build
-
-dashboard-dev: dashboard-catalog
-	NPM_CONFIG_CACHE=$(NPM_CONFIG_CACHE) npm --prefix dashboard run dev
-
-dashboard-serve: dashboard-build
-	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc dashboard serve
-
-dashboard-check: dashboard-html dashboard-build
-
 feature-validate:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc feature validate --strict
 
@@ -101,13 +79,4 @@ paper-monitor-loop:
 paper-monitor-loop-sync:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc paper monitor-loop --sync-broker --interval-seconds $(MONITOR_INTERVAL_SECONDS) --max-cycles $(MONITOR_MAX_CYCLES)
 
-vps-plan:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc dashboard deploy-vps $(VPS_DEPLOY_ARGS)
-
-vps-deploy:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) NPM_CONFIG_CACHE=$(NPM_CONFIG_CACHE) ./scripts/deploy-vps.sh $(VPS_DEPLOY_ARGS)
-
-vps-stop:
-	./scripts/stop-remote-dashboard.sh $(VPS_STOP_ARGS)
-
-verify: format lint test-full repo-check capability-test agent-parity deploy-prepare dashboard-check feature-validate readiness
+verify: format lint test-full repo-check capability-test agent-parity deploy-prepare feature-validate readiness

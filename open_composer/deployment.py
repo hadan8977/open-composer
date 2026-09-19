@@ -13,7 +13,6 @@ from open_composer.cockpit.data.catalog import (
     write_dashboard_review_markdown,
 )
 from open_composer.config import ensure_dir, project_root
-from open_composer.dashboard.html import write_dashboard_html
 from open_composer.paper_controls import refresh_paper_monitor, write_paper_status
 from open_composer.readiness import ReadinessStatus, build_readiness_report, write_readiness_report
 from open_composer.storage import write_json
@@ -264,16 +263,14 @@ def prepare_workspace(
     catalog = build_dashboard_catalog(base)
     catalog_artifacts = write_dashboard_catalog(catalog, base)
     write_dashboard_review_markdown(catalog, root=base)
-    dashboard_html_path = write_dashboard_html(catalog, base)
     dashboard_step = DeploymentStep(
         name="dashboard_artifacts",
         status="ok",
-        message="Dashboard catalog, review, and static HTML were rebuilt.",
+        message="Dashboard catalog and review were rebuilt.",
         output_paths=[
             _relpath(catalog_artifacts.catalog_path, base),
             _relpath(catalog_artifacts.markdown_path, base),
             _relpath(catalog_artifacts.review_path, base),
-            _relpath(dashboard_html_path, base),
         ],
         details={
             "strategies": catalog.summary.strategy_count,

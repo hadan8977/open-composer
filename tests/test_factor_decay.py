@@ -9,9 +9,9 @@ from typer.testing import CliRunner
 
 from open_composer.cli import app
 from open_composer.cockpit.data.catalog import build_dashboard_catalog
-from open_composer.dashboard.server import build_factor_decay_payload
 from open_composer.research.factor_decay import (
     build_decay_report,
+    build_factor_decay_payload,
     monitor_factor_decay,
     retire_factor,
 )

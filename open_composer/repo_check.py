@@ -4,13 +4,12 @@ import json
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal, get_args, get_origin
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from open_composer.capabilities import load_registry
 from open_composer.config import ensure_dir, project_root
-from open_composer.models.dashboard_command import DashboardCommandAction
 from open_composer.storage import write_json
 
 RepoCheckStatus = Literal["ok", "warning", "blocked"]
@@ -115,27 +114,6 @@ REQUIRED_CAPABILITIES = {
     "options.trial_chain",
 }
 
-REQUIRED_DASHBOARD_ACTIONS = {
-    "paper.status.refresh",
-    "paper.monitor.refresh",
-    "paper.sync.orders",
-    "paper.sync.account",
-    "paper.kill_switch.enable",
-    "paper.kill_switch.clear",
-    "system.prepare_workspace",
-    "system.readiness.refresh",
-    "strategy.draft",
-    "strategy.workflow.verify",
-    "strategy.validate",
-    "strategy.capabilities.refresh",
-    "strategy.approve",
-    "strategy.activate.manual",
-    "strategy.activate.paper_auto",
-    "strategy.backtest.rerun",
-    "strategy.scan.rerun",
-    "strategy.disable",
-}
-
 
 class RepoConsistencyCheck(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -171,7 +149,6 @@ def build_repo_check_report(root: Path | None = None) -> RepoConsistencyReport:
         _claude_parity_check(base),
         _repo_skills_check(base),
         _capability_registry_check(base),
-        _dashboard_command_model_check(),
         _no_live_llm_backtest_check(base),
         _makefile_verify_check(base),
         _harness_policy_check(base),
@@ -530,7 +507,7 @@ def _claude_parity_check(root: Path) -> RepoConsistencyCheck:
         "research_pass",
         "llm_contribution_pass",
         "paper_ready_pass",
-        "Remote Dashboard commands",
+        "Cockpit is read-only",
     ]
     missing_anchors = _missing_text(root / "CLAUDE.md", required_anchors)
     problems = {
@@ -610,25 +587,6 @@ def _capability_registry_check(root: Path) -> RepoConsistencyCheck:
     )
 
 
-def _dashboard_command_model_check() -> RepoConsistencyCheck:
-    actions = _literal_strings(DashboardCommandAction)
-    missing = sorted(REQUIRED_DASHBOARD_ACTIONS - actions)
-    if missing:
-        return RepoConsistencyCheck(
-            name="dashboard_command_model",
-            status="blocked",
-            message="Dashboard command model is missing required controlled actions.",
-            details={"missing": missing, "actions": sorted(actions)},
-            suggested_actions=["Update open_composer/models/dashboard_command.py"],
-        )
-    return RepoConsistencyCheck(
-        name="dashboard_command_model",
-        status="ok",
-        message="Dashboard command model exposes the controlled local action set.",
-        details={"action_count": len(actions)},
-    )
-
-
 def _no_live_llm_backtest_check(root: Path) -> RepoConsistencyCheck:
     paths = [
         root / "open_composer" / "expressions.py",
@@ -702,7 +660,7 @@ def _makefile_verify_check(root: Path) -> RepoConsistencyCheck:
             message="Makefile verify target does not include the full local closure checks.",
             details={"missing": missing},
             suggested_actions=[
-                "Add repo-check, capability-test, deploy-prepare, dashboard-check, "
+                "Add repo-check, capability-test, deploy-prepare, "
                 "feature-validate, and readiness to make verify"
             ],
         )
@@ -710,7 +668,7 @@ def _makefile_verify_check(root: Path) -> RepoConsistencyCheck:
         name="makefile_verify",
         status="ok",
         message=(
-            "make verify includes repository, capability, deployment, dashboard, feature, "
+            "make verify includes repository, capability, deployment, feature, "
             "and readiness checks."
         ),
     )
@@ -940,16 +898,6 @@ def _missing_text(path: Path, required: list[str]) -> list[str]:
         return [str(path)]
     text = path.read_text(encoding="utf-8")
     return [item for item in required if item not in text]
-
-
-def _literal_strings(annotation: object) -> set[str]:
-    origin = get_origin(annotation)
-    if origin is Literal:
-        return {str(item) for item in get_args(annotation)}
-    values: set[str] = set()
-    for arg in get_args(annotation):
-        values.update(_literal_strings(arg))
-    return values
 
 
 def _overall_status(checks: list[RepoConsistencyCheck]) -> RepoCheckStatus:

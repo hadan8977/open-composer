@@ -60,18 +60,6 @@ NODES: list[dict[str, Any]] = [
         "configs": ["Makefile", "pyproject.toml"],
     },
     {
-        "id": "dashboard",
-        "label": "Dashboard 服务与前端",
-        "category": "product",
-        "col": 0,
-        "row": 1,
-        "purpose": (
-            "标准库 http.server 提供只读 artifact 读模型与受控命令；Vite/React 前端"
-            "读取 reports/ 与 strategy_specs/ 的目录快照。历史 Vercel BFF 保留在 dashboard/api。"
-        ),
-        "configs": ["dashboard/package.json", "dashboard/vite.config.ts"],
-    },
-    {
         "id": "scripts",
         "label": "脚本与定时任务",
         "category": "product",
@@ -403,8 +391,6 @@ RULES: list[tuple[str, str]] = [
     (r"^open_composer/adapters/broker/", "paper"),
     (r"^open_composer/(paper_\w+|router_authorization)\.py$", "paper"),
     (r"^open_composer/(runner|notifications|journal)/", "paper"),
-    (r"^open_composer/dashboard/", "dashboard"),
-    (r"^dashboard/", "dashboard"),
     (r"^open_composer/(config|storage|json_utils|yaml_utils|timeframes|__init__)\.py$", "shared"),
     (r"^open_composer/context\.py$", "autollm"),
     (r"^open_composer/", "cli"),
@@ -926,11 +912,6 @@ def collect_source_paths() -> list[Path]:
     paths.extend(sorted((ROOT / "open_composer").rglob("*.py")))
     paths.extend(sorted((ROOT / "scripts").glob("*.py")))
     paths.extend(sorted((ROOT / "scripts").glob("*.sh")))
-    for sub in ("src", "api", "lib"):
-        base = ROOT / "dashboard" / sub
-        if base.exists():
-            for ext in ("*.ts", "*.tsx", "*.js", "*.mjs"):
-                paths.extend(sorted(base.rglob(ext)))
     return [p for p in paths if "__pycache__" not in p.parts and "node_modules" not in p.parts]
 
 
@@ -1355,9 +1336,7 @@ def build_model() -> dict[str, Any]:
     entrypoints = [
         p
         for p in files
-        if p == "open_composer/cli.py"
-        or p == "open_composer/dashboard/server.py"
-        or (p.startswith("scripts/") and p.endswith(".py"))
+        if p == "open_composer/cli.py" or (p.startswith("scripts/") and p.endswith(".py"))
     ]
     adjacency: dict[str, set[str]] = defaultdict(set)
     for source_file in files.values():
@@ -1387,15 +1366,12 @@ def build_model() -> dict[str, Any]:
         "cron": cron_scripts,
         "scripts": [p for p in entrypoints if p.startswith("scripts/")],
         "cli": ["open_composer/cli.py"],
-        "dashboard": ["open_composer/dashboard/server.py"],
     }
     reach_by_class = {cls: bfs(starts) for cls, starts in entry_classes.items()}
     reachable = set().union(*reach_by_class.values())
 
     def entries_for(path: str) -> list[str]:
-        return [
-            cls for cls in ("cron", "scripts", "cli", "dashboard") if path in reach_by_class[cls]
-        ]
+        return [cls for cls in ("cron", "scripts", "cli") if path in reach_by_class[cls]]
 
     # ---- transitive dependents / dependencies at FILE level -------------------------
     # Node-level closure would manufacture paths (file A in X imports B in Y, and an
@@ -1521,9 +1497,6 @@ def build_model() -> dict[str, Any]:
                 ),
                 "cli_only_loc": sum(
                     f.loc for f in node_files if f.is_python and entries_for(f.path) == ["cli"]
-                ),
-                "dashboard_loc": sum(
-                    f.loc for f in node_files if f.is_python and "dashboard" in entries_for(f.path)
                 ),
                 "unreachable_loc": sum(files[p].loc for p in unreachable),
             },

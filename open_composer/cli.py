@@ -97,7 +97,7 @@ run_app = typer.Typer(no_args_is_help=True)
 options_app = typer.Typer(no_args_is_help=True)
 feature_app = typer.Typer(no_args_is_help=True)
 deploy_app = typer.Typer(no_args_is_help=True)
-dashboard_app = typer.Typer(no_args_is_help=True)
+cockpit_app = typer.Typer(no_args_is_help=True)
 repo_app = typer.Typer(no_args_is_help=True)
 notify_app = typer.Typer(no_args_is_help=True)
 cache_app = typer.Typer(no_args_is_help=True)
@@ -130,7 +130,7 @@ app.add_typer(run_app, name="run")
 app.add_typer(options_app, name="options")
 app.add_typer(feature_app, name="feature")
 app.add_typer(deploy_app, name="deploy")
-app.add_typer(dashboard_app, name="dashboard")
+app.add_typer(cockpit_app, name="cockpit")
 app.add_typer(repo_app, name="repo")
 app.add_typer(notify_app, name="notify")
 app.add_typer(cache_app, name="cache")
@@ -1219,11 +1219,6 @@ def doctor(
             ("ALPACA_API_BASE_URL", alpaca_api_base_url(), "paper trading endpoint"),
             ("ALPACA_DATA_FEED", data_feed(), "default feed"),
             (
-                "OPEN_COMPOSER_DASHBOARD_TOKEN",
-                optional_env_status("OPEN_COMPOSER_DASHBOARD_TOKEN"),
-                "optional token for dashboard API",
-            ),
-            (
                 "ALPHA_VANTAGE_API_KEY",
                 optional_env_status("ALPHA_VANTAGE_API_KEY"),
                 "optional news",
@@ -1710,15 +1705,15 @@ def feature_materialize_command(
         )
 
 
-@dashboard_app.command("catalog")
-def dashboard_catalog_command(
+@cockpit_app.command("index")
+def cockpit_index_command(
     output: Annotated[
         Path | None,
-        typer.Option("--output", help="Path for the JSON dashboard catalog."),
+        typer.Option("--output", help="Path for the JSON cockpit catalog."),
     ] = None,
     markdown: Annotated[
         Path | None,
-        typer.Option("--markdown", help="Path for the Markdown dashboard summary."),
+        typer.Option("--markdown", help="Path for the Markdown cockpit summary."),
     ] = None,
 ) -> None:
     """Build a rebuildable read model for strategies, runs, signals, reviews, and audits."""
@@ -1729,7 +1724,7 @@ def dashboard_catalog_command(
     markdown_path = markdown or root / "reports" / "dashboard" / "catalog.md"
     catalog = build_dashboard_catalog(root)
     artifacts = write_dashboard_catalog(catalog, root, output_path, markdown_path)
-    table = Table(title="Dashboard Catalog")
+    table = Table(title="Cockpit Index")
     table.add_column("Metric")
     table.add_column("Value")
     table.add_row("Strategies", str(catalog.summary.strategy_count))
@@ -1748,340 +1743,6 @@ def dashboard_catalog_command(
     table.add_row("Read model", str(artifacts.catalog_path))
     table.add_row("Summary markdown", str(artifacts.markdown_path))
     console.print(table)
-
-
-@dashboard_app.command("review-plan")
-def dashboard_review_plan_command(
-    output: Annotated[
-        Path | None,
-        typer.Option("--output", help="Path for the Dashboard D0 review document."),
-    ] = None,
-) -> None:
-    """Write a strict D0 review of the current Dashboard plan against repo artifacts."""
-    from open_composer.cockpit.data.catalog import (
-        build_dashboard_catalog,
-        write_dashboard_review_markdown,
-    )
-
-    root = project_root()
-    output_path = output or root / "reports" / "dashboard" / "review.md"
-    catalog = build_dashboard_catalog(root)
-    path = write_dashboard_review_markdown(catalog, output_path, root)
-    console.print(f"[green]dashboard review written[/green] {path}")
-
-
-@dashboard_app.command("html")
-def dashboard_html_command(
-    output: Annotated[
-        Path | None,
-        typer.Option("--output", help="Path for the read-only static Dashboard HTML."),
-    ] = None,
-) -> None:
-    """Build a read-only static Dashboard page from the dashboard catalog."""
-    from open_composer.cockpit.data.catalog import build_dashboard_catalog, write_dashboard_catalog
-    from open_composer.dashboard import write_dashboard_html
-
-    root = project_root()
-    output_path = output or root / "reports" / "dashboard" / "index.html"
-    catalog = build_dashboard_catalog(root)
-    write_dashboard_catalog(catalog, root)
-    path = write_dashboard_html(catalog, root, output_path)
-    console.print(f"[green]dashboard html written[/green] {path}")
-
-
-@dashboard_app.command("serve")
-def dashboard_serve_command(
-    host: Annotated[
-        str,
-        typer.Option("--host", help="Host interface for the local dashboard server."),
-    ] = "127.0.0.1",
-    port: Annotated[
-        int,
-        typer.Option("--port", help="Port for the local dashboard server."),
-    ] = 8000,
-    api_token: Annotated[
-        str | None,
-        typer.Option(
-            "--api-token",
-            help=(
-                "Optional Dashboard API token. Defaults to OPEN_COMPOSER_DASHBOARD_TOKEN when set."
-            ),
-        ),
-    ] = None,
-) -> None:
-    """Serve the built React dashboard or the static read-only HTML locally."""
-    from open_composer.dashboard import DashboardServerError, serve_dashboard
-
-    try:
-        serve_dashboard(project_root(), host=host, port=port, api_token=api_token)
-    except DashboardServerError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-
-
-@dashboard_app.command("deploy-vps")
-def dashboard_deploy_vps_command(
-    apply: Annotated[
-        bool,
-        typer.Option("--apply", help="Write files and start the VPS Dashboard service."),
-    ] = False,
-    dashboard_url: Annotated[
-        str | None,
-        typer.Option("--dashboard-url", help="Public HTTPS URL for the VPS Dashboard."),
-    ] = None,
-    public_ip: Annotated[
-        str | None,
-        typer.Option("--public-ip", help="VPS public IPv4; creates https://<ip>.nip.io."),
-    ] = None,
-    cloudflare_access: Annotated[
-        bool,
-        typer.Option(
-            "--cloudflare-access",
-            help="Use Cloudflare Tunnel + Access; install systemd only and skip Caddy.",
-        ),
-    ] = False,
-    cloudflare_team_domain: Annotated[
-        str | None,
-        typer.Option(
-            "--cloudflare-team-domain",
-            envvar="OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN",
-            help="Cloudflare Access team domain, e.g. https://team.cloudflareaccess.com.",
-        ),
-    ] = None,
-    cloudflare_aud: Annotated[
-        str | None,
-        typer.Option(
-            "--cloudflare-aud",
-            envvar="OC_CLOUDFLARE_ACCESS_AUD",
-            help="Cloudflare Access application AUD tag.",
-        ),
-    ] = None,
-    allowed_emails: Annotated[
-        str | None,
-        typer.Option(
-            "--allowed-emails",
-            envvar="OC_DASHBOARD_ALLOWED_EMAILS",
-            help="Comma-separated Dashboard email allowlist for Cloudflare Access.",
-        ),
-    ] = None,
-    detect_ip: Annotated[
-        bool,
-        typer.Option(
-            "--detect-ip/--no-detect-ip",
-            help="Detect public IPv4 during --apply when Dashboard URL is not provided.",
-        ),
-    ] = True,
-    dashboard_token: Annotated[
-        str | None,
-        typer.Option(
-            "--dashboard-token",
-            envvar="OPEN_COMPOSER_DASHBOARD_TOKEN",
-            help="Dashboard API token. Defaults to OPEN_COMPOSER_DASHBOARD_TOKEN.",
-        ),
-    ] = None,
-    rotate_token: Annotated[
-        bool,
-        typer.Option("--rotate-token", help="Generate a new Dashboard API token."),
-    ] = False,
-    dashboard_host: Annotated[
-        str,
-        typer.Option("--host", help="Local host interface for the Dashboard service."),
-    ] = "127.0.0.1",
-    dashboard_port: Annotated[
-        int,
-        typer.Option("--port", help="Local port for the Dashboard service."),
-    ] = 8000,
-    skip_system: Annotated[
-        bool,
-        typer.Option("--skip-system", help="Do not install systemd or Caddy files."),
-    ] = False,
-    skip_prepare: Annotated[
-        bool,
-        typer.Option("--skip-prepare", help="Do not run deployment prepare/build during apply."),
-    ] = False,
-    verify: Annotated[
-        bool,
-        typer.Option("--verify/--no-verify", help="Run Dashboard health check after apply."),
-    ] = True,
-    use_sudo: Annotated[
-        bool,
-        typer.Option("--sudo", help="Prefix systemctl/install commands with sudo."),
-    ] = False,
-) -> None:
-    """Deploy the canonical VPS-hosted Dashboard without Vercel."""
-    from open_composer.dashboard.vps_deploy import (
-        VpsDashboardDeployError,
-        apply_vps_dashboard_deploy,
-        build_vps_dashboard_deploy_config,
-        write_vps_dashboard_deploy_report,
-    )
-    from open_composer.dashboard.vps_deploy import detect_public_ip as detect_dashboard_public_ip
-    from open_composer.dashboard.vps_deploy import (
-        write_system_templates as write_dashboard_system_templates,
-    )
-
-    resolved_public_ip = public_ip
-    if apply and not dashboard_url and not resolved_public_ip and detect_ip:
-        resolved_public_ip = detect_dashboard_public_ip()
-    try:
-        config = build_vps_dashboard_deploy_config(
-            project_root(),
-            apply=apply,
-            remote_access_mode="cloudflare_tunnel" if cloudflare_access else "token_caddy",
-            dashboard_auth_mode="cloudflare_access" if cloudflare_access else None,
-            dashboard_url=dashboard_url,
-            public_ip=resolved_public_ip,
-            cloudflare_access_team_domain=cloudflare_team_domain,
-            cloudflare_access_audience=cloudflare_aud,
-            dashboard_allowed_emails=allowed_emails,
-            dashboard_token=dashboard_token,
-            rotate_token=rotate_token,
-            dashboard_host=dashboard_host,
-            dashboard_port=dashboard_port,
-            skip_system=skip_system,
-            skip_prepare=skip_prepare,
-            verify=verify,
-            use_sudo=use_sudo,
-        )
-        if apply:
-            plan = apply_vps_dashboard_deploy(config)
-        else:
-            if config.dashboard_url:
-                write_dashboard_system_templates(config)
-            plan = config.plan
-            write_vps_dashboard_deploy_report(plan, config.root)
-    except VpsDashboardDeployError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-
-    table = Table(title="Open Composer VPS Dashboard Deploy")
-    table.add_column("Item")
-    table.add_column("Value")
-    table.add_row("Status", plan.status)
-    table.add_row("Apply", str(plan.apply))
-    table.add_row("Mode", plan.mode)
-    table.add_row("Remote access", plan.remote_access_mode)
-    table.add_row("Dashboard URL", plan.dashboard_url or "missing")
-    table.add_row("Dashboard bind", plan.dashboard_bind)
-    table.add_row("Report", plan.report_markdown_path or "")
-    if plan.generated_token_path:
-        table.add_row("Token path", plan.generated_token_path)
-    table.add_row("Verify", "enabled" if plan.verify_enabled else "skipped")
-    console.print(table)
-    if config.generated_dashboard_token and apply and plan.generated_token_path:
-        console.print(
-            f"[yellow]generated Dashboard token written to[/yellow] {plan.generated_token_path}"
-        )
-    if not apply:
-        console.print("[yellow]dry run only[/yellow] rerun with --apply to deploy.")
-    if plan.status == "blocked":
-        raise typer.Exit(code=1)
-
-
-@dashboard_app.command("command-plan")
-def dashboard_command_plan_command(
-    action: str,
-    reason: Annotated[
-        str,
-        typer.Option("--reason", help="Reason recorded with the command plan."),
-    ] = "",
-    requested_by: Annotated[
-        str,
-        typer.Option("--requested-by", help="Actor recorded on the command plan."),
-    ] = "dashboard",
-    strategy_path: Annotated[
-        str | None,
-        typer.Option("--strategy-path", help="Strategy YAML path or name for lifecycle commands."),
-    ] = None,
-    data_source: Annotated[
-        str,
-        typer.Option("--data-source", help="Data source used when activating a strategy."),
-    ] = "keep",
-    idea: Annotated[
-        str,
-        typer.Option("--idea", help="Natural-language idea for strategy.draft."),
-    ] = "",
-    use_llm: Annotated[
-        bool,
-        typer.Option("--use-llm", help="Allow LLM drafting for strategy.draft."),
-    ] = False,
-    output: Annotated[
-        Path | None,
-        typer.Option("--output", help="Path for the command plan JSON."),
-    ] = None,
-) -> None:
-    """Create a local Dashboard command plan without executing it."""
-    from open_composer.dashboard import build_dashboard_command_plan, write_dashboard_command_plan
-
-    allowed = {
-        "paper.status.refresh",
-        "paper.monitor.refresh",
-        "paper.sync.orders",
-        "paper.sync.account",
-        "paper.kill_switch.enable",
-        "paper.kill_switch.clear",
-        "system.prepare_workspace",
-        "system.readiness.refresh",
-        "strategy.draft",
-        "strategy.workflow.verify",
-        "strategy.validate",
-        "strategy.capabilities.refresh",
-        "strategy.approve",
-        "strategy.activate.manual",
-        "strategy.activate.paper_auto",
-        "strategy.backtest.rerun",
-        "strategy.scan.rerun",
-        "strategy.disable",
-    }
-    if action not in allowed:
-        raise typer.BadParameter(f"action must be one of: {', '.join(sorted(allowed))}")
-    root = project_root()
-    plan = build_dashboard_command_plan(
-        action,  # type: ignore[arg-type]
-        root,
-        reason=reason,
-        requested_by=requested_by,
-        strategy_path=strategy_path,
-        data_source=data_source,
-        idea=idea,
-        use_llm=use_llm,
-    )
-    path = write_dashboard_command_plan(plan, root, output)
-    console.print(f"[green]dashboard command plan written[/green] {path}")
-    console.print(f"confirmation_phrase={plan.confirmation_phrase!r}")
-    console.print("cli=" + " ".join(plan.cli_args))
-
-
-@dashboard_app.command("command-run")
-def dashboard_command_run_command(
-    plan: Path,
-    confirm: Annotated[
-        str,
-        typer.Option("--confirm", help="Exact confirmation phrase from the command plan."),
-    ],
-    executed_by: Annotated[
-        str,
-        typer.Option("--executed-by", help="Actor recorded on the command result."),
-    ] = "dashboard",
-) -> None:
-    """Execute a paper-only Dashboard command plan after explicit confirmation."""
-    from open_composer.dashboard import (
-        DashboardCommandError,
-        execute_dashboard_command_plan,
-        load_dashboard_command_plan,
-    )
-
-    root = project_root()
-    command_plan = load_dashboard_command_plan(plan)
-    try:
-        result = execute_dashboard_command_plan(
-            command_plan,
-            root,
-            confirmation=confirm,
-            executed_by=executed_by,
-        )
-    except DashboardCommandError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    console.print(f"[green]dashboard command executed[/green] {result.result_path}")
-    console.print(result.message)
 
 
 @project_app.command("create")

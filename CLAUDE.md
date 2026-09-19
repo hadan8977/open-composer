@@ -14,7 +14,7 @@ Use the same project rules as Codex:
 - Keep `workflow_pass`, `research_pass`, `llm_contribution_pass`, and `paper_ready_pass` separate.
 - LLM, news, event, and macro inputs must become point-in-time feature packets before they can affect trading behavior.
 - Alpaca Paper is the only automated simulated broker write path; real-money broker write access is out of scope.
-- Dashboard commands must use the confirmed command surface. Remote Dashboard commands must go through password session, Vercel BFF, HMAC, async job, backup, audit, and double confirmation for Red actions.
+- Cockpit is read-only and exposes no command entry point; remote access is authenticated at the edge by Cloudflare Access; commands are issued through a Paseo session.
 - Do not expose `.env`, private keys, remote shared secrets, broker secrets, or access tokens in artifacts.
 - Run `uv run ruff format .`, `uv run ruff check .`, and `uv run pytest` after code changes. Run `uv run oc repo check --strict` and `make verify` for product-surface changes.
 

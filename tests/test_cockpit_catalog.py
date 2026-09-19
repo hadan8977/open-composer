@@ -8,7 +8,6 @@ from open_composer.cockpit.data.catalog import (
     write_dashboard_catalog,
     write_dashboard_review_markdown,
 )
-from open_composer.dashboard import write_dashboard_html
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.journal.writer import add_journal_entry
 from open_composer.models.paper import PaperOrderRecord
@@ -266,7 +265,6 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
 
     catalog = build_dashboard_catalog(sample_workspace)
     artifacts = write_dashboard_catalog(catalog, sample_workspace)
-    html_path = write_dashboard_html(catalog, sample_workspace)
     review_path = write_dashboard_review_markdown(catalog, root=sample_workspace)
 
     assert catalog.summary.strategy_count == 1
@@ -385,41 +383,6 @@ def test_dashboard_catalog_rebuilds_repo_artifacts(
     assert catalog.orders[0].execution_backend == "python_reference"
     assert artifacts.catalog_path.exists()
     assert artifacts.markdown_path.exists()
-    assert html_path == sample_workspace / "reports" / "dashboard" / "index.html"
-    assert html_path.exists()
-    html = html_path.read_text(encoding="utf-8")
-    assert "Open Composer Dashboard" in html
-    assert "Buy/Hold" in html
-    assert "fixture_pullback_15m" in html
-    assert "strategies/fixture_pullback_15m.html" in html
-    assert "python_reference" in html
-    assert "Annualized" in html
-    assert "Sharpe" in html
-    assert "Evidence" in html
-    assert "E0_sample_smoke" in html
-    assert "warnings" in html
-    assert "reports/dashboard/catalog.json" in html
-    assert "Data Quality" in html
-    assert "alpaca / longbridge" in html
-    assert "Research Evidence" in html
-    assert "research-fixture_pullback_15m-fixture" in html
-    assert "paper_gap" in html
-    assert "LLM Feature Replay" in html
-    assert "qqq_llm_features.jsonl" in html
-    assert "Deployment Readiness" in html
-    assert "uv run oc paper monitor --sync-broker" in html
-    assert "uv run oc spec capabilities strategy_specs/drafts/fixture_pullback_15m.yaml" in html
-    detail_path = (
-        sample_workspace / "reports" / "dashboard" / "strategies" / "fixture_pullback_15m.html"
-    )
-    assert detail_path.exists()
-    detail_html = detail_path.read_text(encoding="utf-8")
-    assert "Strategy Profile" in detail_html
-    assert "Backend plan" in detail_html
-    assert "E0_sample_smoke" in detail_html
-    assert "Research Evidence" in detail_html
-    assert backtest.run.run_id in detail_html
-    assert signal.id in detail_html
     assert review_path == sample_workspace / "reports" / "dashboard" / "review.md"
     assert review_path.exists()
 

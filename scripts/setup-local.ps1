@@ -2,13 +2,11 @@
 # Open Composer — Local Setup (Windows)
 #
 # Usage:
-#   .\scripts\setup-local.ps1                # full run, ends with dashboard serve in background
-#   .\scripts\setup-local.ps1 -SkipServe     # everything except the serve step
-#   .\scripts\setup-local.ps1 -Port 8001     # use a different port
+#   .\scripts\setup-local.ps1                # full run
 #   .\scripts\setup-local.ps1 -DryRun        # show what would run, change nothing
 #
 # Behaviour:
-#   - Runs 10 ordered steps, prints [N/10] <title>  <status> for each.
+#   - Runs 6 ordered steps, prints [N/6] <title>  <status> for each.
 #   - Skips already-done steps (idempotent).
 #   - Stops at the first hard failure with an actionable hint.
 #   - At the end prints what's still optional (env keys, etc.) and how to fix it.
@@ -18,9 +16,7 @@
 
 [CmdletBinding()]
 param(
-    [switch]$SkipServe,
-    [switch]$DryRun,
-    [int]$Port = 8000
+    [switch]$DryRun
 )
 
 $ErrorActionPreference = "Continue"
@@ -34,7 +30,7 @@ $repoRoot = Split-Path -Parent $scriptDir
 Set-Location $repoRoot
 
 # ---------- helpers ----------
-$Total = 10
+$Total = 6
 $Warnings = New-Object System.Collections.Generic.List[string]
 $NextActions = New-Object System.Collections.Generic.List[string]
 $Failed = $false
@@ -71,22 +67,8 @@ if ($uv) {
     exit 1
 }
 
-# ---------- Step 2: node + npm ----------
-Write-Step 2 "node + npm"
-$node = Get-Command node -ErrorAction SilentlyContinue
-$npm = Get-Command npm -ErrorAction SilentlyContinue
-if ($node -and $npm) {
-    $nodeV = & node --version
-    $npmV = & npm --version
-    Write-Ok "$nodeV / npm $npmV"
-} else {
-    Write-Fail "node or npm not found"
-    Write-Sub "Install: https://nodejs.org/ (LTS)"
-    exit 1
-}
-
-# ---------- Step 3: Python deps ----------
-Write-Step 3 "Python deps (.venv)"
+# ---------- Step 2: Python deps ----------
+Write-Step 2 "Python deps (.venv)"
 $venvOk = (Test-Path .venv) -and (Test-Path .venv\Scripts\python.exe)
 if ($venvOk) {
     # Quick check: confirm pyproject.toml hasn't drifted from lockfile
@@ -103,32 +85,14 @@ if ($venvOk) {
     }
 }
 
-# ---------- Step 4: dashboard node deps ----------
-Write-Step 4 "Dashboard node deps"
-if (Test-Path dashboard\node_modules) {
-    Write-Ok "node_modules present"
-} else {
-    Write-Sub "First-time install can take 1-2 minutes."
-    Invoke-Cmd "npm --prefix dashboard install" {
-        Push-Location dashboard
-        try { & npm install 2>&1 | Out-Null } finally { Pop-Location }
-    }
-    if ((Test-Path dashboard\node_modules) -or $DryRun) {
-        Write-Ok "installed"
-    } else {
-        Write-Fail "npm install failed"
-        $Failed = $true
-    }
-}
-
 if ($Failed) {
     Write-Host ""
-    Write-Host "Setup stopped at step 3 or 4. Fix dep install and re-run." -ForegroundColor Yellow
+    Write-Host "Setup stopped at step 2. Fix dep install and re-run." -ForegroundColor Yellow
     exit 1
 }
 
-# ---------- Step 5: repo consistency ----------
-Write-Step 5 "Repo consistency check"
+# ---------- Step 3: repo consistency ----------
+Write-Step 3 "Repo consistency check"
 if ($DryRun) {
     Write-Skip "(dry-run)"
 } else {
@@ -145,8 +109,8 @@ if ($DryRun) {
     }
 }
 
-# ---------- Step 6: .env ----------
-Write-Step 6 ".env file"
+# ---------- Step 4: .env ----------
+Write-Step 4 ".env file"
 if (Test-Path .env) {
     $envLines = Get-Content .env -ErrorAction SilentlyContinue
     $configured = ($envLines | Where-Object { $_ -match '^[A-Z][A-Z_0-9]+=.+' -and $_ -notmatch '=$' -and $_ -notmatch '=<' -and $_ -notmatch '=YOUR_' }).Count
@@ -162,8 +126,8 @@ if (Test-Path .env) {
     }
 }
 
-# ---------- Step 7: doctor ----------
-Write-Step 7 "Doctor (env check)"
+# ---------- Step 5: doctor ----------
+Write-Step 5 "Doctor (env check)"
 if ($DryRun) {
     Write-Skip "(dry-run)"
 } else {
@@ -178,12 +142,12 @@ if ($DryRun) {
     }
 }
 
-# ---------- Step 8: dashboard catalog ----------
-Write-Step 8 "Dashboard catalog"
+# ---------- Step 6: cockpit catalog ----------
+Write-Step 6 "Cockpit catalog"
 if ($DryRun) {
     Write-Skip "(dry-run)"
 } else {
-    $catOut = & uv run oc dashboard catalog 2>&1
+    $catOut = & uv run oc cockpit index 2>&1
     if (Test-Path reports\dashboard\catalog.json) {
         try {
             $catalog = Get-Content reports\dashboard\catalog.json -Raw | ConvertFrom-Json
@@ -195,74 +159,6 @@ if ($DryRun) {
     } else {
         Write-Fail "catalog not generated"
         $Failed = $true
-    }
-}
-
-# ---------- Step 9: dashboard frontend ----------
-Write-Step 9 "Dashboard frontend (Vite)"
-$distOk = Test-Path dashboard\dist\index.html
-if (-not $distOk -or $DryRun) {
-    Invoke-Cmd "npm --prefix dashboard run build" {
-        Push-Location dashboard
-        try { & npm run build 2>&1 | Out-Null } finally { Pop-Location }
-    }
-    $distOk = Test-Path dashboard\dist\index.html
-}
-if ($distOk) {
-    $jsBundle = Get-ChildItem dashboard\dist\assets -Filter "index-*.js" -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($jsBundle) {
-        $sizeKB = [math]::Round($jsBundle.Length / 1KB, 1)
-        Write-Ok "built ($sizeKB KB JS)"
-    } else {
-        Write-Ok "built"
-    }
-} else {
-    Write-Fail "vite build failed"
-    $Failed = $true
-}
-
-if ($Failed) {
-    Write-Host ""
-    Write-Host "Setup stopped before dashboard serve. Fix above errors and re-run." -ForegroundColor Yellow
-    exit 1
-}
-
-# ---------- Step 10: dashboard serve ----------
-Write-Step 10 "Dashboard serve"
-if ($SkipServe) {
-    Write-Skip "skip (-SkipServe)"
-    $NextActions.Add("Start manually: uv run oc dashboard serve --port $Port") | Out-Null
-} elseif ($DryRun) {
-    Write-Skip "(dry-run)"
-} else {
-    $portBusy = $null
-    try { $portBusy = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue -State Listen } catch {}
-    if ($portBusy) {
-        Write-Warn "port $Port already in use by PID $($portBusy.OwningProcess)"
-        $Warnings.Add("Port $Port is busy. Stop the other process or pass -Port <other>") | Out-Null
-    } else {
-        $logPath = Join-Path $env:TEMP "oc-dashboard.log"
-        $errPath = Join-Path $env:TEMP "oc-dashboard.err"
-        $proc = Start-Process -FilePath "uv" `
-            -ArgumentList @("run", "oc", "dashboard", "serve", "--host", "127.0.0.1", "--port", $Port) `
-            -PassThru -WindowStyle Hidden `
-            -RedirectStandardOutput $logPath -RedirectStandardError $errPath
-        Start-Sleep -Seconds 3
-        $ok = $false
-        try {
-            $health = Invoke-RestMethod "http://127.0.0.1:$Port/api/dashboard/health" -TimeoutSec 5
-            if ($health.status -eq "ok") { $ok = $true }
-        } catch {}
-        if ($ok) {
-            Write-Ok "ready at http://127.0.0.1:$Port (PID $($proc.Id))"
-            $NextActions.Add("Open: http://127.0.0.1:$Port") | Out-Null
-            $NextActions.Add("Stop server: Stop-Process -Id $($proc.Id)") | Out-Null
-        } else {
-            Write-Fail "started but /api/dashboard/health did not respond"
-            Write-Sub "log: $logPath"
-            Write-Sub "err: $errPath"
-            $Failed = $true
-        }
     }
 }
 
@@ -286,11 +182,10 @@ Write-Host "Next steps:" -ForegroundColor Cyan
 if ($NextActions.Count -gt 0) {
     foreach ($a in $NextActions) { Write-Host "  - $a" }
 } else {
-    Write-Host "  - Open: http://127.0.0.1:$Port"
+    Write-Host "  - Read the cockpit catalog: reports/dashboard/catalog.json"
 }
 Write-Host "  - Configure env keys:  docs/setup-local.zh.md section 3"
 Write-Host "  - Try a strategy:      uv run oc strategy draft --idea `"...`""
-Write-Host "  - VPS deployment:      docs/remote-dashboard-deploy.zh.md"
 Write-Host ("-" * 70) -ForegroundColor DarkCyan
 
 if ($Failed) { exit 1 } else { exit 0 }

@@ -12,7 +12,7 @@ REQUIRED_CLAUDE_ANCHORS = [
     "research_pass",
     "llm_contribution_pass",
     "paper_ready_pass",
-    "Remote Dashboard commands",
+    "Cockpit is read-only",
     "uv run oc repo check --strict",
 ]
 
@@ -65,7 +65,7 @@ def _check_settings(root: Path) -> list[str]:
         anchor
         for anchor in [
             "uv run oc *",
-            "uv run oc dashboard command-run*",
+            "uv run oc paper submit*",
             "git reset --hard*",
             "Read(.env)",
         ]
