@@ -956,14 +956,32 @@ def reconcile_rehearsal_fills(
     return summary
 
 
-def _open_order_symbols(client: Any) -> set[str]:
+def _open_order_symbols(client: Any, *, own_client_order_ids: set[str] | None = None) -> set[str]:
+    """Symbols with an open order at the broker.
+
+    ``own_client_order_ids`` scopes the answer to one strategy. It must be
+    supplied whenever ``position_scope == "strategy_ledger"``, because the check
+    exists to stop a strategy double-submitting its own order, not to stop two
+    sleeves from both holding a symbol.
+
+    This was a real defect, found from a live fill: on 2026-09-18 the sector
+    sleeve submitted XLK at 23:35 UTC and the growth sleeve's own XLK leg was
+    then skipped at 23:40 with "an open broker order already exists for this
+    symbol", leaving that sleeve half invested. Scoping positions per strategy
+    was not enough; open orders need the same scoping.
+    """
     symbols: set[str] = set()
     for order in _get_broker_orders(client, include_closed=False):
         status = str(
             getattr(getattr(order, "status", ""), "value", getattr(order, "status", ""))
         ).lower()
-        if status in OPEN_ORDER_STATUSES or not status:
-            symbols.add(str(getattr(order, "symbol", "")).upper())
+        if status not in OPEN_ORDER_STATUSES and status:
+            continue
+        if own_client_order_ids is not None:
+            coid = str(getattr(order, "client_order_id", ""))
+            if coid not in own_client_order_ids:
+                continue
+        symbols.add(str(getattr(order, "symbol", "")).upper())
     return symbols
 
 
@@ -1081,7 +1099,15 @@ def run_portfolio_paper_rehearsal(
         broker_positions[symbol] = float(getattr(position, "qty", 0) or 0)
         price = getattr(position, "current_price", None)
         broker_position_prices[symbol] = float(price) if price else 0.0
-    open_symbols = _open_order_symbols(broker)
+    scope_for_open_orders = str(policy.get("position_scope") or "broker_account")
+    own_coids: set[str] | None = None
+    if scope_for_open_orders == "strategy_ledger":
+        own_coids = {
+            str(row["client_order_id"])
+            for row in _ledger_rows(base, spec.name)
+            if row.get("client_order_id")
+        }
+    open_symbols = _open_order_symbols(broker, own_client_order_ids=own_coids)
     rows, artifact = load_target_rows(spec, base, now=stamp)
     sizing_hint = None
     summary = artifact.get("summary") if isinstance(artifact.get("summary"), dict) else {}

@@ -500,3 +500,66 @@ def test_strategy_ledger_requires_a_sizing_equity_in_the_artifact(sample_workspa
         run_portfolio_paper_rehearsal(
             spec_path, root, allow_paper_orders=False, client=client, now=SUBMIT_TIME
         )
+
+
+# ---------------------------------------------------------------------------
+# open orders must be scoped per strategy too
+#
+# Found from a live fill, not from reading code: on 2026-09-18 the sector sleeve
+# submitted XLK at 23:35 UTC and the growth sleeve's own XLK leg was skipped at
+# 23:40 with "an open broker order already exists for this symbol", leaving that
+# sleeve half invested. Scoping positions per strategy was not enough.
+
+
+def _foreign_open_order(symbol: str) -> SimpleNamespace:
+    """An open order another strategy submitted: its client_order_id is not in
+    this strategy's rehearsal ledger."""
+    return SimpleNamespace(
+        id="ord-foreign-1",
+        client_order_id="reh-20260918-" + symbol + "-deadbeefcafe",
+        symbol=symbol,
+        status="new",
+        qty="40",
+        filled_qty="0",
+        filled_avg_price=None,
+    )
+
+
+def test_strategy_ledger_ignores_another_strategys_open_order(ledger_workspace) -> None:
+    root, spec_path = ledger_workspace
+    client = FakeClient()
+    client.orders.append(_foreign_open_order("AAPL"))
+    _authorize(root, spec_path, client)
+
+    result = run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=True, client=client, now=SUBMIT_TIME
+    )
+
+    decisions = {plan.symbol: plan.decision for plan in result.plans}
+    assert decisions.get("AAPL") == "submitted", (
+        "an open AAPL order belonging to another strategy must not block this "
+        f"strategy's own AAPL leg; got {decisions}"
+    )
+    assert "skip_open_order" not in result.counts()
+
+
+def test_strategy_ledger_still_blocks_its_own_open_order(ledger_workspace) -> None:
+    root, spec_path = ledger_workspace
+    client = FakeClient()
+    _authorize(root, spec_path, client)
+
+    first = run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=True, client=client, now=SUBMIT_TIME
+    )
+    assert "submitted" in first.counts()
+    # the broker still shows those orders as open on the rerun
+    for order in client.orders:
+        order.status = "new"
+
+    second = run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=True, client=client, now=SUBMIT_TIME
+    )
+    assert "submitted" not in second.counts(), (
+        "a strategy's OWN open order must still stop it from double-submitting; "
+        f"got {second.counts()}"
+    )
