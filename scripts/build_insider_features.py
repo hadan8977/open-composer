@@ -152,6 +152,47 @@ sell nets against a plan-flagged buy, not against every sell), mirroring
 sums or counts, same as the rest of the table; ``buyers_nonplan_60d`` counts
 every owner row that passes the filter, same as ``buyers_60d``.
 
+Officer/director x 10b5-1 plan crossed aggregates (2026-09-19 gap fix)
+-----------------------------------------------------------------------
+The published recipe this table exists to reproduce requires **both**
+filters on the same trade at once: an officer/director buy that is
+**not** under a pre-scheduled 10b5-1 plan. The role split and the plan
+split above are independent gates over the whole table -- applying both
+externally (e.g. filtering ``*_od_60d`` and then re-filtering by
+``is_10b5_1``) is not available to a downstream reader, who only sees the
+two aggregated column families, not the underlying rows -- so this table
+also publishes the crossed aggregates directly:
+
+* ``open_market_buy_count_od_nonplan_60d`` / ``net_buy_usd_od_nonplan_60d``
+  / ``buyers_od_nonplan_60d`` -- ``is_od`` (officer or director) **and**
+  ``is_nonplan`` (``is_10b5_1 == False``). Same ``owner_seq == 0`` dedupe
+  for the dollar and count sums as every other column in this table; same
+  every-owner-row rule for ``buyers_od_nonplan_60d`` as ``buyers_od_60d``
+  and ``buyers_nonplan_60d``; ``net_buy_usd_od_nonplan_60d`` nets a
+  buy-side sum against a sell-side sum computed under the same crossed
+  filter, mirroring ``net_buy_usd_od_60d`` and ``net_buy_usd_nonplan_60d``.
+* ``open_market_buy_count_od_plan_60d`` / ``net_buy_usd_od_plan_60d`` --
+  ``is_od`` and ``is_plan`` (``is_10b5_1 == True``), same conventions.
+* ``open_market_buy_count_od_flag_unknown_60d`` -- ``is_od`` and
+  ``is_flag_unknown`` (``is_10b5_1`` null). Exactly as in the uncrossed
+  plan split, a null flag lands only in this counter, never in the
+  crossed nonplan or plan counts, and
+  ``open_market_buy_count_od_nonplan_60d + open_market_buy_count_od_plan_60d
+  + open_market_buy_count_od_flag_unknown_60d == open_market_buy_count_od_60d``
+  holds exactly, the same way the uncrossed three-way split sums to
+  ``open_market_buy_count_60d``.
+
+Each crossed count is bounded by both of its parents
+(``open_market_buy_count_od_nonplan_60d <= open_market_buy_count_od_60d``
+and ``<= open_market_buy_count_nonplan_60d``), because it is the row
+subset that satisfies both filters at once rather than either alone. A
+frame with no ``is_10b5_1`` column (older synthetic fixture, or real data
+predating the checkbox) makes ``is_flag_unknown`` true for every row, the
+same as for the uncrossed split, so the crossed columns are tolerant of
+that case with no extra handling: every od row lands in
+``open_market_buy_count_od_flag_unknown_60d`` and none in the crossed
+nonplan/plan counts.
+
 Placebo (required by the card)
 ------------------------------
 ``--shift-filing-dates-days N`` shifts every *filing's* visible session
@@ -241,12 +282,27 @@ TENB5ONE_SPLIT_COLUMNS: tuple[str, ...] = (
     "tenb5one_flag_coverage_60d",
 )
 
+#: Crossed officer/director x 10b5-1-plan-flag aggregates (see the module
+#: docstring's "Officer/director x 10b5-1 plan crossed aggregates" section).
+#: Same rationale as ``ROLE_SPLIT_COLUMNS`` and ``TENB5ONE_SPLIT_COLUMNS``
+#: for not being part of the shared ``INSIDER_COLUMNS`` registry yet.
+TENB5ONE_ROLE_CROSS_COLUMNS: tuple[str, ...] = (
+    "open_market_buy_count_od_nonplan_60d",
+    "net_buy_usd_od_nonplan_60d",
+    "buyers_od_nonplan_60d",
+    "open_market_buy_count_od_plan_60d",
+    "net_buy_usd_od_plan_60d",
+    "open_market_buy_count_od_flag_unknown_60d",
+)
+
 #: The feature columns this table publishes, in output order. Single source
 #: of truth is ``open_composer.research.features.insider`` so the
 #: feature-set registry and this builder cannot drift apart -- with
-#: ``ROLE_SPLIT_COLUMNS`` and ``TENB5ONE_SPLIT_COLUMNS`` appended (see those
-#: tuples' docstrings).
-FEATURE_COLUMNS: tuple[str, ...] = INSIDER_COLUMNS + ROLE_SPLIT_COLUMNS + TENB5ONE_SPLIT_COLUMNS
+#: ``ROLE_SPLIT_COLUMNS``, ``TENB5ONE_SPLIT_COLUMNS`` and
+#: ``TENB5ONE_ROLE_CROSS_COLUMNS`` appended (see those tuples' docstrings).
+FEATURE_COLUMNS: tuple[str, ...] = (
+    INSIDER_COLUMNS + ROLE_SPLIT_COLUMNS + TENB5ONE_SPLIT_COLUMNS + TENB5ONE_ROLE_CROSS_COLUMNS
+)
 
 #: Share and dollar aggregates stay float64: a 60-day net share flow can
 #: exceed float32's ~7 significant digits (observed -166,998.625 where the
@@ -255,7 +311,9 @@ FEATURE_COLUMNS: tuple[str, ...] = INSIDER_COLUMNS + ROLE_SPLIT_COLUMNS + TENB5O
 #: The two role-split USD/shares columns and the ten-percent-owner USD
 #: column carry the same precision risk (the RSG example above is itself a
 #: ten-percent-owner concentration, so ``net_buy_usd_tenpct_60d`` can reach
-#: the same magnitudes as ``net_buy_usd_60d``) and stay float64 too.
+#: the same magnitudes as ``net_buy_usd_60d``) and stay float64 too. The
+#: two crossed od/plan-flag USD columns are row subsets of
+#: ``net_buy_usd_od_60d``, so they carry the same risk and stay float64.
 WIDE_COLUMNS: tuple[str, ...] = (
     "net_buy_shares_60d",
     "net_buy_usd_60d",
@@ -264,6 +322,8 @@ WIDE_COLUMNS: tuple[str, ...] = (
     "net_buy_usd_tenpct_60d",
     "net_buy_usd_nonplan_60d",
     "net_buy_usd_plan_60d",
+    "net_buy_usd_od_nonplan_60d",
+    "net_buy_usd_od_plan_60d",
 )
 
 READ_COLUMNS = (
@@ -635,6 +695,13 @@ def build_year(
     is_nonplan = window["is_nonplan"].to_numpy(dtype=bool)
     is_plan = window["is_plan"].to_numpy(dtype=bool)
     is_flag_unknown = window["is_flag_unknown"].to_numpy(dtype=bool)
+    # Crossed officer/director x plan-flag filters (see the module
+    # docstring's "Officer/director x 10b5-1 plan crossed aggregates"
+    # section) -- row subsets of both is_od and the respective plan-flag
+    # bucket, so the resulting counts are bounded by both parents.
+    is_od_nonplan = is_od & is_nonplan
+    is_od_plan = is_od & is_plan
+    is_od_flag_unknown = is_od & is_flag_unknown
     shares = window["shares_num"].to_numpy(dtype=np.float64)
     usd = window["usd"].to_numpy(dtype=np.float64)
     routine = window["is_routine_buy"].to_numpy(dtype=bool)
@@ -670,6 +737,13 @@ def build_year(
             "sell_usd_plan",
             "buy_count_plan",
             "buy_count_unknown",
+            "buy_usd_od_nonplan",
+            "sell_usd_od_nonplan",
+            "buy_count_od_nonplan",
+            "buy_usd_od_plan",
+            "sell_usd_od_plan",
+            "buy_count_od_plan",
+            "buy_count_od_unknown",
         )
     }
     buy_primary = primary & is_buy
@@ -684,6 +758,11 @@ def build_year(
     buy_plan_primary = buy_primary & is_plan
     sell_plan_primary = sell_primary & is_plan
     buy_unknown_primary = buy_primary & is_flag_unknown
+    buy_od_nonplan_primary = buy_primary & is_od_nonplan
+    sell_od_nonplan_primary = sell_primary & is_od_nonplan
+    buy_od_plan_primary = buy_primary & is_od_plan
+    sell_od_plan_primary = sell_primary & is_od_plan
+    buy_od_unknown_primary = buy_primary & is_od_flag_unknown
     _scatter_sum(
         daily["buy_shares"], positions[buy_primary], locals_[buy_primary], shares[buy_primary]
     )
@@ -787,6 +866,48 @@ def build_year(
         locals_[buy_unknown_primary],
         ones,
     )
+    _scatter_sum(
+        daily["buy_usd_od_nonplan"],
+        positions[buy_od_nonplan_primary],
+        locals_[buy_od_nonplan_primary],
+        usd[buy_od_nonplan_primary],
+    )
+    _scatter_sum(
+        daily["sell_usd_od_nonplan"],
+        positions[sell_od_nonplan_primary],
+        locals_[sell_od_nonplan_primary],
+        usd[sell_od_nonplan_primary],
+    )
+    _scatter_sum(
+        daily["buy_count_od_nonplan"],
+        positions[buy_od_nonplan_primary],
+        locals_[buy_od_nonplan_primary],
+        ones,
+    )
+    _scatter_sum(
+        daily["buy_usd_od_plan"],
+        positions[buy_od_plan_primary],
+        locals_[buy_od_plan_primary],
+        usd[buy_od_plan_primary],
+    )
+    _scatter_sum(
+        daily["sell_usd_od_plan"],
+        positions[sell_od_plan_primary],
+        locals_[sell_od_plan_primary],
+        usd[sell_od_plan_primary],
+    )
+    _scatter_sum(
+        daily["buy_count_od_plan"],
+        positions[buy_od_plan_primary],
+        locals_[buy_od_plan_primary],
+        ones,
+    )
+    _scatter_sum(
+        daily["buy_count_od_unknown"],
+        positions[buy_od_unknown_primary],
+        locals_[buy_od_unknown_primary],
+        ones,
+    )
 
     rolled = {name: _rolling_window_sum(array, WINDOW_SESSIONS) for name, array in daily.items()}
 
@@ -827,6 +948,15 @@ def build_year(
         n_local=n_local,
         window=WINDOW_SESSIONS,
     )
+    buyers_od_nonplan = _distinct_owner_counts(
+        symbol_positions=positions[is_buy & is_od_nonplan],
+        owners=owners[is_buy & is_od_nonplan],
+        indices=window["visible_idx"].to_numpy(dtype=np.int64)[is_buy & is_od_nonplan],
+        n_symbols=n_symbols,
+        local_start=local_start,
+        n_local=n_local,
+        window=WINDOW_SESSIONS,
+    )
 
     # days_since_last_visible_buy uses full history, not just the window.
     last_buy = np.full((n_symbols, n_local), -1, dtype=np.int64)
@@ -862,6 +992,7 @@ def build_year(
     sellers_flat = sellers[:, slice_].ravel()[selected].astype(np.float32)
     buyers_od_flat = buyers_od[:, slice_].ravel()[selected].astype(np.float32)
     buyers_nonplan_flat = buyers_nonplan[:, slice_].ravel()[selected].astype(np.float32)
+    buyers_od_nonplan_flat = buyers_od_nonplan[:, slice_].ravel()[selected].astype(np.float32)
     frame = pd.DataFrame(
         {
             "symbol": symbol_array[selected],
@@ -911,6 +1042,22 @@ def build_year(
                 rolled["buy_usd_plan"][:, slice_] - rolled["sell_usd_plan"][:, slice_]
             ).ravel()[selected],
             "open_market_buy_count_flag_unknown_60d": rolled["buy_count_unknown"][
+                :, slice_
+            ].ravel()[selected],
+            "open_market_buy_count_od_nonplan_60d": rolled["buy_count_od_nonplan"][
+                :, slice_
+            ].ravel()[selected],
+            "net_buy_usd_od_nonplan_60d": (
+                rolled["buy_usd_od_nonplan"][:, slice_] - rolled["sell_usd_od_nonplan"][:, slice_]
+            ).ravel()[selected],
+            "buyers_od_nonplan_60d": buyers_od_nonplan_flat,
+            "open_market_buy_count_od_plan_60d": rolled["buy_count_od_plan"][:, slice_].ravel()[
+                selected
+            ],
+            "net_buy_usd_od_plan_60d": (
+                rolled["buy_usd_od_plan"][:, slice_] - rolled["sell_usd_od_plan"][:, slice_]
+            ).ravel()[selected],
+            "open_market_buy_count_od_flag_unknown_60d": rolled["buy_count_od_unknown"][
                 :, slice_
             ].ravel()[selected],
         }
@@ -1174,6 +1321,16 @@ def main(argv: list[str] | None = None) -> int:
             "every owner row (not just owner_seq==0) that passes the nonplan filter, mirroring "
             "buyers_60d; tenb5one_flag_coverage_60d = 1 - flag_unknown_count / total_buy_count "
             "when the window has any buys, else 0.0"
+        ),
+        "tenb5one_role_cross_columns": list(TENB5ONE_ROLE_CROSS_COLUMNS),
+        "tenb5one_role_cross_rule": (
+            "*_od_nonplan_60d / *_od_plan_60d / *_od_flag_unknown_60d restrict owner_seq==0 "
+            "buy/sell sums and counts to rows passing both the is_od filter and the "
+            "respective plan-flag bucket (is_10b5_1 False / True / null) at once; "
+            "buyers_od_nonplan_60d counts every owner row (not just owner_seq==0) that passes "
+            "both filters, mirroring buyers_od_60d and buyers_nonplan_60d; each crossed count "
+            "is bounded by both of its uncrossed parents, and the three crossed buy counts sum "
+            "to open_market_buy_count_od_60d"
         ),
         "years": written,
     }

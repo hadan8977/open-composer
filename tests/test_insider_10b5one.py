@@ -6,6 +6,16 @@ brief, 2026-09-18): ``open_market_buy_count_nonplan_60d``,
 ``tenb5one_flag_coverage_60d``, plus
 ``scripts.collect_sec_insider_transactions.normalize_10b5_1_flag``.
 
+Also tests the crossed officer/director x 10b5-1-plan-flag aggregates added
+2026-09-19 to close the gap between this split and the officer/director
+role split in ``tests/test_insider_role_split.py``:
+``open_market_buy_count_od_nonplan_60d``, ``net_buy_usd_od_nonplan_60d``,
+``buyers_od_nonplan_60d``, ``open_market_buy_count_od_plan_60d``,
+``net_buy_usd_od_plan_60d`` and ``open_market_buy_count_od_flag_unknown_60d``
+-- the intersection the published recipe actually needs (officer/director
+buys that are *not* under a pre-scheduled plan), which the two independent
+uncrossed families above cannot express.
+
 Two independent things are exercised:
 
 1. ``normalize_10b5_1_flag`` -- the raw ``AFF10B5ONE`` text -> nullable
@@ -114,6 +124,9 @@ def _row(
     shares: float,
     price: float,
     is_10b5_1: bool | None,
+    is_director: bool = False,
+    is_officer: bool = False,
+    is_ten_percent_owner: bool = False,
     trans_code: str = "P",
     acquired_disposed: str = "A",
 ) -> dict:
@@ -128,9 +141,9 @@ def _row(
         "acquired_disposed": acquired_disposed,
         "shares": shares,
         "price_per_share": price,
-        "is_director": False,
-        "is_officer": False,
-        "is_ten_percent_owner": False,
+        "is_director": is_director,
+        "is_officer": is_officer,
+        "is_ten_percent_owner": is_ten_percent_owner,
         "is_10b5_1": is_10b5_1,
     }
 
@@ -417,3 +430,194 @@ def test_nonplan_plus_plan_plus_unknown_equals_total_buy_count() -> None:
         + row["open_market_buy_count_flag_unknown_60d"]
     )
     assert row["tenb5one_flag_coverage_60d"] == pytest.approx(2.0 / 3.0)
+
+
+# --------------------------------------------------------------------------
+# crossed officer/director x 10b5-1-plan-flag aggregates
+# --------------------------------------------------------------------------
+
+
+def test_officer_nonplan_buy_lands_in_crossed_and_both_uncrossed_parents() -> None:
+    rows = [
+        _row(
+            accession="OX1",
+            symbol="ODNONPLAN1",
+            owner_cik=910,
+            owner_seq=0,
+            filing_date="2024-01-10",
+            trans_date="2024-01-08",
+            shares=1000.0,
+            price=5.0,
+            is_10b5_1=False,
+            is_officer=True,
+        )
+    ]
+    row = _last_row(_build_year_frame(rows), "ODNONPLAN1")
+    # crossed columns
+    assert row["open_market_buy_count_od_nonplan_60d"] == pytest.approx(1.0)
+    assert row["net_buy_usd_od_nonplan_60d"] == pytest.approx(5000.0)
+    assert row["buyers_od_nonplan_60d"] == pytest.approx(1.0)
+    assert row["open_market_buy_count_od_plan_60d"] == pytest.approx(0.0)
+    assert row["net_buy_usd_od_plan_60d"] == pytest.approx(0.0)
+    assert row["open_market_buy_count_od_flag_unknown_60d"] == pytest.approx(0.0)
+    # both uncrossed parents
+    assert row["open_market_buy_count_od_60d"] == pytest.approx(1.0)
+    assert row["net_buy_usd_od_60d"] == pytest.approx(5000.0)
+    assert row["buyers_od_60d"] == pytest.approx(1.0)
+    assert row["open_market_buy_count_nonplan_60d"] == pytest.approx(1.0)
+    assert row["net_buy_usd_nonplan_60d"] == pytest.approx(5000.0)
+    assert row["buyers_nonplan_60d"] == pytest.approx(1.0)
+
+
+def test_pure_tenpct_owner_nonplan_buy_excluded_from_crossed_columns() -> None:
+    """A pure ten-percent owner (no officer/director role) passes the
+    uncrossed nonplan filter but must not appear in any od-crossed column,
+    since it never passes ``is_od``."""
+    rows = [
+        _row(
+            accession="OX2",
+            symbol="ODNONPLAN2",
+            owner_cik=920,
+            owner_seq=0,
+            filing_date="2024-01-10",
+            trans_date="2024-01-08",
+            shares=400.0,
+            price=10.0,
+            is_10b5_1=False,
+            is_ten_percent_owner=True,
+        )
+    ]
+    row = _last_row(_build_year_frame(rows), "ODNONPLAN2")
+    assert row["open_market_buy_count_nonplan_60d"] == pytest.approx(1.0)
+    assert row["net_buy_usd_nonplan_60d"] == pytest.approx(4000.0)
+    assert row["buyers_nonplan_60d"] == pytest.approx(1.0)
+    assert row["open_market_buy_count_od_nonplan_60d"] == pytest.approx(0.0)
+    assert row["net_buy_usd_od_nonplan_60d"] == pytest.approx(0.0)
+    assert row["buyers_od_nonplan_60d"] == pytest.approx(0.0)
+    assert row["open_market_buy_count_od_60d"] == pytest.approx(0.0)
+
+
+def test_officer_plan_flagged_buy_lands_in_crossed_plan_columns_only() -> None:
+    rows = [
+        _row(
+            accession="OX3",
+            symbol="ODPLAN1",
+            owner_cik=930,
+            owner_seq=0,
+            filing_date="2024-01-10",
+            trans_date="2024-01-08",
+            shares=600.0,
+            price=10.0,
+            is_10b5_1=True,
+            is_officer=True,
+        )
+    ]
+    row = _last_row(_build_year_frame(rows), "ODPLAN1")
+    assert row["open_market_buy_count_od_plan_60d"] == pytest.approx(1.0)
+    assert row["net_buy_usd_od_plan_60d"] == pytest.approx(6000.0)
+    assert row["open_market_buy_count_od_nonplan_60d"] == pytest.approx(0.0)
+    assert row["net_buy_usd_od_nonplan_60d"] == pytest.approx(0.0)
+    assert row["buyers_od_nonplan_60d"] == pytest.approx(0.0)
+    assert row["open_market_buy_count_od_flag_unknown_60d"] == pytest.approx(0.0)
+
+
+def test_officer_null_flag_buy_lands_only_in_crossed_unknown_counter() -> None:
+    rows = [
+        _row(
+            accession="OX4",
+            symbol="ODUNK1",
+            owner_cik=940,
+            owner_seq=0,
+            filing_date="2024-01-10",
+            trans_date="2024-01-08",
+            shares=300.0,
+            price=10.0,
+            is_10b5_1=None,
+            is_director=True,
+        )
+    ]
+    row = _last_row(_build_year_frame(rows), "ODUNK1")
+    assert row["open_market_buy_count_od_flag_unknown_60d"] == pytest.approx(1.0)
+    assert row["open_market_buy_count_od_nonplan_60d"] == pytest.approx(0.0)
+    assert row["net_buy_usd_od_nonplan_60d"] == pytest.approx(0.0)
+    assert row["buyers_od_nonplan_60d"] == pytest.approx(0.0)
+    assert row["open_market_buy_count_od_plan_60d"] == pytest.approx(0.0)
+    assert row["net_buy_usd_od_plan_60d"] == pytest.approx(0.0)
+    assert row["open_market_buy_count_od_60d"] == pytest.approx(1.0)
+
+
+def test_crossed_counts_never_exceed_either_parent_count() -> None:
+    """One officer+nonplan buy, one pure-tenpct+nonplan buy, one
+    officer+plan buy and one director+null-flag buy in the same window:
+    every crossed count must stay <= both of its uncrossed parents, and
+    here the exact values are known so the bound is checked precisely
+    rather than just as an inequality."""
+    rows = [
+        _row(
+            accession="CX1",
+            symbol="CROSSMIX1",
+            owner_cik=951,
+            owner_seq=0,
+            filing_date="2024-01-10",
+            trans_date="2024-01-08",
+            shares=100.0,
+            price=10.0,
+            is_10b5_1=False,
+            is_officer=True,
+        ),
+        _row(
+            accession="CX2",
+            symbol="CROSSMIX1",
+            owner_cik=952,
+            owner_seq=0,
+            filing_date="2024-01-10",
+            trans_date="2024-01-08",
+            shares=200.0,
+            price=10.0,
+            is_10b5_1=False,
+            is_ten_percent_owner=True,
+        ),
+        _row(
+            accession="CX3",
+            symbol="CROSSMIX1",
+            owner_cik=953,
+            owner_seq=0,
+            filing_date="2024-01-10",
+            trans_date="2024-01-08",
+            shares=300.0,
+            price=10.0,
+            is_10b5_1=True,
+            is_officer=True,
+        ),
+        _row(
+            accession="CX4",
+            symbol="CROSSMIX1",
+            owner_cik=954,
+            owner_seq=0,
+            filing_date="2024-01-10",
+            trans_date="2024-01-08",
+            shares=400.0,
+            price=10.0,
+            is_10b5_1=None,
+            is_director=True,
+        ),
+    ]
+    row = _last_row(_build_year_frame(rows), "CROSSMIX1")
+    assert row["open_market_buy_count_od_nonplan_60d"] <= row["open_market_buy_count_od_60d"]
+    assert row["open_market_buy_count_od_nonplan_60d"] <= row["open_market_buy_count_nonplan_60d"]
+    assert row["open_market_buy_count_od_plan_60d"] <= row["open_market_buy_count_od_60d"]
+    assert row["open_market_buy_count_od_plan_60d"] <= row["open_market_buy_count_plan_60d"]
+    assert row["open_market_buy_count_od_flag_unknown_60d"] <= row["open_market_buy_count_od_60d"]
+    assert (
+        row["open_market_buy_count_od_flag_unknown_60d"]
+        <= row["open_market_buy_count_flag_unknown_60d"]
+    )
+    # Exact values: CX1 is od+nonplan, CX3 is od+plan, CX4 is od+unknown;
+    # CX2 is tenpct-only nonplan (uncrossed nonplan, never od-crossed).
+    assert row["open_market_buy_count_od_nonplan_60d"] == pytest.approx(1.0)
+    assert row["open_market_buy_count_od_plan_60d"] == pytest.approx(1.0)
+    assert row["open_market_buy_count_od_flag_unknown_60d"] == pytest.approx(1.0)
+    assert row["open_market_buy_count_od_60d"] == pytest.approx(3.0)
+    assert row["open_market_buy_count_nonplan_60d"] == pytest.approx(2.0)
+    assert row["open_market_buy_count_plan_60d"] == pytest.approx(1.0)
+    assert row["open_market_buy_count_flag_unknown_60d"] == pytest.approx(1.0)
