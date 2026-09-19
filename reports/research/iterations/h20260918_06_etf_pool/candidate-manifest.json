@@ -1,0 +1,898 @@
+{
+  "card_id": "H-20260918-06",
+  "generated_at": "2026-09-19T00:30:05.952508+00:00",
+  "windows": {
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "holdout": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-16"
+    ]
+  },
+  "pit_universe_rule": {
+    "classifier": "asset_metadata.is_probable_fund_or_etf",
+    "min_history_sessions": 250,
+    "min_dollar_adv": 20000000.0,
+    "adv_window": 60
+  },
+  "max_pair_corr": 0.95,
+  "corr_window": 250,
+  "cost_bps_primary": 10.0,
+  "cost_bps_stress": 20.0,
+  "cells": [
+    {
+      "cell_id": "pool_blend_all_top3_monthly_equal",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_all_top3_monthly_inverse_vol",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_all_top3_weekly_equal",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_all_top3_weekly_inverse_vol",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_all_top5_monthly_equal",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_all_top5_monthly_inverse_vol",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_all_top5_weekly_equal",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_all_top5_weekly_inverse_vol",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_all_top10_monthly_equal",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_all_top10_monthly_inverse_vol",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_all_top10_weekly_equal",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_all_top10_weekly_inverse_vol",
+      "family": "blend|all",
+      "score": "blend",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top3_monthly_equal",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top3_monthly_inverse_vol",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top3_weekly_equal",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top3_weekly_inverse_vol",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top5_monthly_equal",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top5_monthly_inverse_vol",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top5_weekly_equal",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top5_weekly_inverse_vol",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top10_monthly_equal",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top10_monthly_inverse_vol",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top10_weekly_equal",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_blend_exclude_levered_top10_weekly_inverse_vol",
+      "family": "blend|exclude_levered",
+      "score": "blend",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top3_monthly_equal",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top3_monthly_inverse_vol",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top3_weekly_equal",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top3_weekly_inverse_vol",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top5_monthly_equal",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top5_monthly_inverse_vol",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top5_weekly_equal",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top5_weekly_inverse_vol",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top10_monthly_equal",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top10_monthly_inverse_vol",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top10_weekly_equal",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_all_top10_weekly_inverse_vol",
+      "family": "risk_adj|all",
+      "score": "risk_adj",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top3_monthly_equal",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top3_monthly_inverse_vol",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top3_weekly_equal",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top3_weekly_inverse_vol",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top5_monthly_equal",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top5_monthly_inverse_vol",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top5_weekly_equal",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top5_weekly_inverse_vol",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top10_monthly_equal",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top10_monthly_inverse_vol",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top10_weekly_equal",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_risk_adj_exclude_levered_top10_weekly_inverse_vol",
+      "family": "risk_adj|exclude_levered",
+      "score": "risk_adj",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_all_top3_monthly_equal",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_all_top3_monthly_inverse_vol",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_all_top3_weekly_equal",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_all_top3_weekly_inverse_vol",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_all_top5_monthly_equal",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_all_top5_monthly_inverse_vol",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_all_top5_weekly_equal",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_all_top5_weekly_inverse_vol",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_all_top10_monthly_equal",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_all_top10_monthly_inverse_vol",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_all_top10_weekly_equal",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_all_top10_weekly_inverse_vol",
+      "family": "r63|all",
+      "score": "r63",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top3_monthly_equal",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top3_monthly_inverse_vol",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top3_weekly_equal",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top3_weekly_inverse_vol",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top5_monthly_equal",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top5_monthly_inverse_vol",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top5_weekly_equal",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top5_weekly_inverse_vol",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top10_monthly_equal",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top10_monthly_inverse_vol",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top10_weekly_equal",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r63_exclude_levered_top10_weekly_inverse_vol",
+      "family": "r63|exclude_levered",
+      "score": "r63",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_all_top3_monthly_equal",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_all_top3_monthly_inverse_vol",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_all_top3_weekly_equal",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_all_top3_weekly_inverse_vol",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_all_top5_monthly_equal",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_all_top5_monthly_inverse_vol",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_all_top5_weekly_equal",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_all_top5_weekly_inverse_vol",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_all_top10_monthly_equal",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_all_top10_monthly_inverse_vol",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_all_top10_weekly_equal",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_all_top10_weekly_inverse_vol",
+      "family": "r252|all",
+      "score": "r252",
+      "leverage_arm": "all",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top3_monthly_equal",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top3_monthly_inverse_vol",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top3_weekly_equal",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top3_weekly_inverse_vol",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 3,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top5_monthly_equal",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top5_monthly_inverse_vol",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top5_weekly_equal",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top5_weekly_inverse_vol",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 5,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top10_monthly_equal",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top10_monthly_inverse_vol",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "monthly",
+      "weighting": "inverse_vol"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top10_weekly_equal",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "equal"
+    },
+    {
+      "cell_id": "pool_r252_exclude_levered_top10_weekly_inverse_vol",
+      "family": "r252|exclude_levered",
+      "score": "r252",
+      "leverage_arm": "exclude_levered",
+      "top_n": 10,
+      "rebalance": "weekly",
+      "weighting": "inverse_vol"
+    }
+  ],
+  "cell_count": 96,
+  "family_count": 8,
+  "selection_rule": "highest selection-window Sharpe within each (score, leverage) family; the holdout window is never used to rank and is reported as the out-of-sample estimate for whatever the selection window picked",
+  "placebo_seeds": 20
+}
