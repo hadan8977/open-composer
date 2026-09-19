@@ -9,7 +9,10 @@ start:
 	./scripts/setup-local.sh
 
 bootstrap:
-	UV_CACHE_DIR=$(UV_CACHE_DIR) uv sync
+	# --extra workbench: the research loop's tearsheet/tracking path (quantstats,
+	# mlflow) is exercised by the test suite; a plain `uv sync` uninstalls it and
+	# tests/test_kernel_loop_run_experiment.py then fails on a null tearsheet path.
+	UV_CACHE_DIR=$(UV_CACHE_DIR) uv sync --extra workbench
 
 doctor:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc doctor

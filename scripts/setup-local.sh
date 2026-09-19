@@ -85,14 +85,14 @@ fi
 # ---------- Step 2: Python deps ----------
 step 2 "Python deps (.venv)"
 if [[ -d .venv && -x .venv/bin/python ]] || [[ -d .venv && -x .venv/Scripts/python.exe ]]; then
-  run_cmd "uv sync (idempotent)" uv sync || true
+  run_cmd "uv sync (idempotent)" uv sync --extra workbench || true
   ok ".venv synced"
 else
   sub "First-time install can take 5-10 minutes."
   if [[ $DRY_RUN -eq 1 ]]; then
-    skip "(dry-run) would: uv sync"
+    skip "(dry-run) would: uv sync --extra workbench"
   else
-    uv sync >/dev/null 2>&1
+    uv sync --extra workbench >/dev/null 2>&1
   fi
   if [[ -x .venv/bin/python ]] || [[ $DRY_RUN -eq 1 ]]; then
     ok "installed"
