@@ -19,6 +19,15 @@ NO_CONTEXT_START_DOC = "docs/product-golden-path-codex-quant-review-2026-05-13.z
 
 CURRENT_DOCS = {
     NO_CONTEXT_START_DOC,
+    "docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md",
+    "docs/answers-friday-plan-questions-2026-09-15.zh.md",
+    "docs/answers-iteration-intelligence-llm-quant-2026-09-15.zh.md",
+    "docs/current-view.zh.md",
+    "docs/plan-post-reset-roadmap-2026-09-11.zh.md",
+    "docs/plan-step-14-timeframe-agnostic-bar-cycle-runner-2026-09-11.zh.md",
+    "docs/plan-step-15-gtja17-port-and-insider-transactions-packet-2026-09-11.zh.md",
+    "docs/plan-step-17-paper-rehearsal-portfolio-canary-2026-09-15.zh.md",
+    "docs/proposal-research-loop-redesign-2026-09-15.zh.md",
     "docs/user-guide.md",
     "docs/setup-local.zh.md",
     "docs/remote-dashboard-deploy.zh.md",

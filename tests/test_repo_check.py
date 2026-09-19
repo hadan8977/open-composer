@@ -77,6 +77,15 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/plan-step-13-recent-high-return-ml-and-llm-tracks-2026-09-09.zh.md",
         "docs/plan-step-13f-open-factor-library-import-and-screening-2026-09-09.zh.md",
         "docs/plan-step-13p-reversal-trend-pine-factor-and-strategy-2026-09-09.zh.md",
+        "docs/plan-post-reset-roadmap-2026-09-11.zh.md",
+        "docs/plan-step-14-timeframe-agnostic-bar-cycle-runner-2026-09-11.zh.md",
+        "docs/plan-step-15-gtja17-port-and-insider-transactions-packet-2026-09-11.zh.md",
+        "docs/answers-friday-plan-questions-2026-09-15.zh.md",
+        "docs/answers-iteration-intelligence-llm-quant-2026-09-15.zh.md",
+        "docs/proposal-research-loop-redesign-2026-09-15.zh.md",
+        "docs/plan-step-17-paper-rehearsal-portfolio-canary-2026-09-15.zh.md",
+        "docs/current-view.zh.md",
+        "docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md",
     ]:
         source = repo_root / new_doc
         destination = target / new_doc
