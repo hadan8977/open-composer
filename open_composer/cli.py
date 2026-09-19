@@ -1507,7 +1507,7 @@ def feature_validate_command(
     ] = False,
 ) -> None:
     """Validate feature packet logs and write a point-in-time report."""
-    from open_composer.dashboard import build_feature_packet_records
+    from open_composer.cockpit.data.catalog import build_feature_packet_records
     from open_composer.deployment import write_feature_validation_report
 
     root = project_root()
@@ -1722,7 +1722,7 @@ def dashboard_catalog_command(
     ] = None,
 ) -> None:
     """Build a rebuildable read model for strategies, runs, signals, reviews, and audits."""
-    from open_composer.dashboard import build_dashboard_catalog, write_dashboard_catalog
+    from open_composer.cockpit.data.catalog import build_dashboard_catalog, write_dashboard_catalog
 
     root = project_root()
     output_path = output or root / "reports" / "dashboard" / "catalog.json"
@@ -1758,7 +1758,10 @@ def dashboard_review_plan_command(
     ] = None,
 ) -> None:
     """Write a strict D0 review of the current Dashboard plan against repo artifacts."""
-    from open_composer.dashboard import build_dashboard_catalog, write_dashboard_review_markdown
+    from open_composer.cockpit.data.catalog import (
+        build_dashboard_catalog,
+        write_dashboard_review_markdown,
+    )
 
     root = project_root()
     output_path = output or root / "reports" / "dashboard" / "review.md"
@@ -1775,11 +1778,8 @@ def dashboard_html_command(
     ] = None,
 ) -> None:
     """Build a read-only static Dashboard page from the dashboard catalog."""
-    from open_composer.dashboard import (
-        build_dashboard_catalog,
-        write_dashboard_catalog,
-        write_dashboard_html,
-    )
+    from open_composer.cockpit.data.catalog import build_dashboard_catalog, write_dashboard_catalog
+    from open_composer.dashboard import write_dashboard_html
 
     root = project_root()
     output_path = output or root / "reports" / "dashboard" / "index.html"

@@ -7,8 +7,8 @@ from pathlib import Path
 import yaml
 
 from open_composer.adapters.execution.nautilus_trader import build_nautilus_backtest_plan
+from open_composer.cockpit.data.catalog import build_dashboard_catalog
 from open_composer.compiler.spec_to_pine import compile_pine_strategy
-from open_composer.dashboard import build_dashboard_catalog
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.engines.scanner_engine import run_scan
 from open_composer.models.strategy_spec import (

@@ -9,7 +9,7 @@ import yaml
 from typer.testing import CliRunner
 
 from open_composer.cli import app
-from open_composer.dashboard import build_dashboard_catalog, build_feature_packet_records
+from open_composer.cockpit.data.catalog import build_dashboard_catalog, build_feature_packet_records
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.feature_packets import FeaturePacketError, FeaturePacketRow, write_feature_packet
 from open_composer.models.strategy_spec import load_strategy_spec

@@ -10,7 +10,7 @@ import yaml
 
 import open_composer.paper_readiness as paper_readiness
 from open_composer.adapters.broker import alpaca_paper
-from open_composer.dashboard import build_dashboard_catalog
+from open_composer.cockpit.data.catalog import build_dashboard_catalog
 from open_composer.engines.signal_engine import build_signal
 from open_composer.execution_policy import resolve_execution_policy
 from open_composer.market_calendar import next_us_equity_session

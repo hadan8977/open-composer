@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from open_composer.adapters.execution.nautilus_trader import nautilus_trader_available
+from open_composer.cockpit.data.catalog import build_dashboard_catalog, build_feature_packet_records
 from open_composer.config import (
     cloudflare_access_audience,
     cloudflare_access_team_domain,
@@ -16,7 +17,6 @@ from open_composer.config import (
     ensure_dir,
     project_root,
 )
-from open_composer.dashboard.catalog import build_dashboard_catalog, build_feature_packet_records
 from open_composer.paper_controls import build_paper_status
 from open_composer.paper_readiness import assess_paper_strategy_readiness
 from open_composer.storage import write_json

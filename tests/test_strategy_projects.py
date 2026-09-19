@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from open_composer.dashboard.catalog import build_dashboard_catalog
+from open_composer.cockpit.data.catalog import build_dashboard_catalog
 from open_composer.models.project import StrategyProjectCreate, StrategyProjectRun
 from open_composer.projects import (
     append_project_run,

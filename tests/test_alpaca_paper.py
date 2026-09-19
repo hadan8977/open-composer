@@ -13,7 +13,7 @@ import yaml
 
 from open_composer import paper_authorization
 from open_composer.adapters.broker import alpaca_paper
-from open_composer.dashboard import build_dashboard_catalog
+from open_composer.cockpit.data.catalog import build_dashboard_catalog
 from open_composer.execution_policy import require_orderable_execution_policy
 from open_composer.models.paper import PaperOrderIntent, PaperOrderRecord
 from open_composer.models.signal import Signal

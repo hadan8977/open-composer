@@ -3,12 +3,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
-from open_composer.dashboard import (
+from open_composer.cockpit.data.catalog import (
     build_dashboard_catalog,
     write_dashboard_catalog,
-    write_dashboard_html,
     write_dashboard_review_markdown,
 )
+from open_composer.dashboard import write_dashboard_html
 from open_composer.engines.backtest_engine import run_backtest
 from open_composer.journal.writer import add_journal_entry
 from open_composer.models.paper import PaperOrderRecord

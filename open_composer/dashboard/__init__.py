@@ -1,4 +1,4 @@
-from open_composer.dashboard.catalog import (
+from open_composer.cockpit.data.catalog import (
     DashboardCatalogArtifacts,
     build_dashboard_catalog,
     build_feature_packet_records,

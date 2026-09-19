@@ -17,6 +17,7 @@ import yaml
 
 from open_composer.agent_backend import get_agent_backend
 from open_composer.capabilities import evaluate_capabilities, load_registry
+from open_composer.cockpit.data.catalog import build_dashboard_catalog
 from open_composer.config import (
     agent_backend_name,
     alpaca_api_base_url,
@@ -38,7 +39,6 @@ from open_composer.dashboard.auth import (
     dashboard_auth_required,
     dashboard_request_authorized,
 )
-from open_composer.dashboard.catalog import build_dashboard_catalog
 from open_composer.dashboard.commands import (
     DashboardCommandError,
     _execute_strategy_command,

@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from open_composer.dashboard import build_dashboard_catalog
+from open_composer.cockpit.data.catalog import build_dashboard_catalog
 from open_composer.dashboard.commands import (
     DashboardCommandError,
     build_dashboard_command_plan,

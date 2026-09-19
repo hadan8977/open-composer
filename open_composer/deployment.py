@@ -6,13 +6,13 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from open_composer.config import ensure_dir, project_root
-from open_composer.dashboard.catalog import (
+from open_composer.cockpit.data.catalog import (
     build_dashboard_catalog,
     build_feature_packet_records,
     write_dashboard_catalog,
     write_dashboard_review_markdown,
 )
+from open_composer.config import ensure_dir, project_root
 from open_composer.dashboard.html import write_dashboard_html
 from open_composer.paper_controls import refresh_paper_monitor, write_paper_status
 from open_composer.readiness import ReadinessStatus, build_readiness_report, write_readiness_report
