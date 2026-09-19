@@ -1,17 +1,18 @@
-"""FastAPI application factory for the read-only cockpit (Step 18, T3+T4).
+"""FastAPI application factory for the read-only cockpit (Step 18, T3+T4+T5).
 
 Everything this app can do is a GET (or HEAD) request against files this repo
 already owns: crontab, `df`/`free`, hypothesis cards and their lineage (T4),
-and (T5-T8) paper rehearsal artifacts and agent session logs later. There is
-intentionally no POST/PUT/PATCH/DELETE route anywhere -- ``tests/test_cockpit_app.py``
-walks ``app.routes`` and fails loudly if one ever appears; treat that test as
-the enforcement mechanism for the whole design, not a formality.
+paper rehearsal artifacts (T5), and (T6-T8) quota interfaces and agent session
+logs later. There is intentionally no POST/PUT/PATCH/DELETE route anywhere --
+``tests/test_cockpit_app.py`` walks ``app.routes`` and fails loudly if one
+ever appears; treat that test as the enforcement mechanism for the whole
+design, not a formality.
 
 Authentication is not this app's job: ``oc cockpit serve`` (see
 ``open_composer/cli.py``) refuses anything but ``127.0.0.1``, and Cloudflare
 Access authenticates at the edge (see ``AGENTS.md``).
 
-Interface for T5-T8
+Interface for T6-T8
 -------------------
 * ``SCREENS`` is the single source of truth for the five-screen nav (slug, URL
   path, label). Add a screen's route with the same slug used here and its stub
@@ -57,6 +58,14 @@ from open_composer.cockpit.data.hypotheses import (
     headline_summary,
     lane_status,
 )
+from open_composer.cockpit.data.paper import (
+    AUTH_STATE_LABELS,
+    build_paper_report,
+    build_rehearsal_countdown,
+    build_strategy_detail,
+    compute_equity_chart_layout,
+    discover_strategy_names,
+)
 from open_composer.cockpit.markdown import render_markdown
 from open_composer.cockpit.security import PathTraversalError, safe_repo_path
 from open_composer.config import project_root
@@ -96,6 +105,20 @@ def _topbar_data_freshness(root: Path) -> dict[str, str]:
     return {"status": status, "label": status}
 
 
+def _topbar_rehearsal_countdown(root: Path) -> dict[str, str]:
+    """Soonest rehearsal-authorization expiry, for the top bar (T5).
+
+    Best-effort like `_topbar_data_freshness` above: any failure degrades to
+    an "unknown" badge rather than breaking whichever screen is showing it --
+    `/paper` is where a real failure should be visible in detail.
+    """
+    try:
+        countdown = build_rehearsal_countdown(root)
+    except Exception:
+        return {"status": "unknown", "label": "unknown"}
+    return {"status": countdown.status, "label": countdown.label}
+
+
 def _base_context(request: Request, active: str) -> dict[str, Any]:
     root = project_root()
     return {
@@ -103,6 +126,7 @@ def _base_context(request: Request, active: str) -> dict[str, Any]:
         "screens": SCREENS,
         "active_screen": active,
         "topbar_data_freshness": _topbar_data_freshness(root),
+        "topbar_rehearsal": _topbar_rehearsal_countdown(root),
         "generated_at": datetime.now(UTC),
     }
 
@@ -237,6 +261,45 @@ def create_app() -> FastAPI:
         return _handler
 
     app.get("/agents", response_class=HTMLResponse)(_stub_page("agents", "Agents"))
-    app.get("/paper", response_class=HTMLResponse)(_stub_page("paper", "Paper"))
+
+    @app.get("/paper", response_class=HTMLResponse)
+    def paper_index_page(request: Request) -> HTMLResponse:
+        """Screen 4: paper trading (plan section 4, "模拟盘").
+
+        One summary row per strategy, the FreqUI multi-bot rollup pattern the
+        plan calls for. "策略" is the organising dimension: this route never
+        groups or filters by symbol.
+        """
+        report = build_paper_report(project_root())
+        context = _base_context(request, "paper")
+        context["report"] = report
+        context["auth_state_labels"] = AUTH_STATE_LABELS
+        return templates.TemplateResponse(request, "paper.html", context)
+
+    @app.get("/paper/{strategy}", response_class=HTMLResponse)
+    def paper_detail_page(request: Request, strategy: str) -> HTMLResponse:
+        """Paper trading detail for one strategy.
+
+        `strategy` is validated against `discover_strategy_names` (built from
+        the files actually on disk) *before* any further filesystem access --
+        both an unknown name (`/paper/nope`) and a traversal attempt return
+        404, never 500. `safe_repo_path` is still run as defense in depth,
+        per the plan's explicit "validate, and still go through
+        safe_repo_path" instruction (mirrors `card_detail_page` above).
+        """
+        root = project_root()
+        if strategy not in discover_strategy_names(root):
+            raise HTTPException(status_code=404, detail="unknown strategy")
+        try:
+            safe_repo_path(f"reports/paper/rehearsal/{strategy}-latest.json", root=root)
+        except PathTraversalError as exc:
+            raise HTTPException(status_code=404, detail="invalid strategy path") from exc
+
+        detail = build_strategy_detail(root, strategy)
+        context = _base_context(request, "paper")
+        context["detail"] = detail
+        context["chart"] = compute_equity_chart_layout(detail.equity_series)
+        context["auth_state_labels"] = AUTH_STATE_LABELS
+        return templates.TemplateResponse(request, "paper_detail.html", context)
 
     return app

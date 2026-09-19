@@ -19,13 +19,13 @@ def client() -> TestClient:
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("path", ["/", "/health", "/healthz", "/lineage"])
+@pytest.mark.parametrize("path", ["/", "/health", "/healthz", "/lineage", "/paper"])
 def test_core_routes_return_200(client: TestClient, path: str) -> None:
     response = client.get(path)
     assert response.status_code == 200
 
 
-@pytest.mark.parametrize("path", ["/agents", "/paper"])
+@pytest.mark.parametrize("path", ["/agents"])
 def test_stub_routes_return_200(client: TestClient, path: str) -> None:
     response = client.get(path)
     assert response.status_code == 200

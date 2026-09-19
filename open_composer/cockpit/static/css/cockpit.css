@@ -533,3 +533,29 @@ table {
 .markdown-body table {
   margin: 0.5rem 0;
 }
+
+/* ---------------------------------------------------------------- paper (T5)
+ * Equity history renders as a server-side inline-SVG bar chart, one bar per
+ * real observed cycle -- never a connecting line, so nothing implies the
+ * (unobserved) equity path between two cycles. See
+ * `open_composer.cockpit.data.paper.compute_equity_chart_layout`. When only
+ * one observation exists the template skips this entirely and falls back to
+ * a plain `.stat-card` snapshot instead.
+ */
+
+.equity-svg {
+  width: 100%;
+  height: auto;
+  background: var(--bg-alt);
+  border-radius: var(--radius);
+}
+
+.equity-bar {
+  fill: var(--accent);
+}
+
+.auth-note {
+  border-left: 3px solid var(--warn);
+  padding-left: 0.6rem;
+  margin: 0.5rem 0;
+}
