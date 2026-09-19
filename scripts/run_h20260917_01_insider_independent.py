@@ -335,13 +335,35 @@ def _benchmark_prices(symbols: tuple[str, ...]) -> tuple[pd.DataFrame, pd.DataFr
     return close.sort_index(), open_.sort_index()
 
 
+#: Per-year tables that were missing a requested feature column, as
+#: ``{column: [years]}``. Populated by ``_read_insider_at`` and written into the
+#: load manifest so the report can state which variants have a truncated sample
+#: instead of silently treating "column absent" as "no insider activity".
+MISSING_COLUMN_YEARS: dict[str, list[int]] = {}
+
+
 def _read_insider_at(root: Path, years: list[int], dates: set[pd.Timestamp]) -> pd.DataFrame:
     frames: list[pd.DataFrame] = []
     for year in years:
         path = root / f"{year}.parquet"
         if not path.exists():
             continue
-        frame = pd.read_parquet(path, columns=["symbol", "trade_date", *INSIDER_COLUMNS])
+        # A year's table may legitimately lack a column: the crossed
+        # officer/director x 10b5-1 columns were only built for 2023-2026,
+        # because the AFF10B5ONE checkbox does not exist before 2023q2, so
+        # asking pyarrow for them on a 2016-2022 file raises. Read the
+        # intersection and reindex, which makes the absent column NaN -- the
+        # semantically right value, since the flag really is unknown there --
+        # and record the gap rather than letting it pass silently.
+        available = set(pq.ParquetFile(path).schema.names)
+        wanted = [c for c in INSIDER_COLUMNS if c in available]
+        for column in INSIDER_COLUMNS:
+            if column not in available:
+                MISSING_COLUMN_YEARS.setdefault(column, []).append(year)
+        frame = pd.read_parquet(path, columns=["symbol", "trade_date", *wanted])
+        for column in INSIDER_COLUMNS:
+            if column not in frame.columns:
+                frame[column] = np.nan
         frame["trade_date"] = _ns(frame["trade_date"])
         frame = frame.loc[frame["trade_date"].isin(dates)]
         if not frame.empty:
@@ -576,6 +598,12 @@ def stage_load(args: argparse.Namespace) -> None:
         "insider_manifest": json.loads((roots["insider"] / "_build_manifest.json").read_text())
         if (roots["insider"] / "_build_manifest.json").exists()
         else None,
+        # Which requested feature columns were absent from which years' tables.
+        # The crossed officer/director x 10b5-1 columns exist only for 2023-2026
+        # by design, so a non-empty entry here is expected -- but it has to be
+        # recorded, because "column absent" reads downstream as "no insider
+        # activity", which is why _guard_recipe_windows exists.
+        "missing_column_years": {k: sorted(set(v)) for k, v in MISSING_COLUMN_YEARS.items()},
     }
     _write_json(manifest_path, manifest)
     _log("load: done")
