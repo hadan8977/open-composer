@@ -77,21 +77,26 @@ def test_no_card_is_ever_dropped_when_grouped_by_lane() -> None:
 def test_every_unclassified_card_carries_a_reason_and_raw_status() -> None:
     cards = H.load_cards(REPO_ROOT)
     unclassified = [c for c in cards if c.lane == "未分类"]
-    assert unclassified, "expected at least one 未分类 card in the real corpus"
+    # The vocabulary covers the whole corpus as of 2026-09-19 (19 cards, 0
+    # unclassified). This is not asserted as "must stay 0" -- a new card with
+    # novel status prose legitimately lands here -- but every such card must
+    # carry a reason and still be rendered.
+    assert len(unclassified) == 0, [(c.id, c.lane_reason) for c in unclassified]
     for card in unclassified:
         assert card.lane_reason, f"{card.id} is 未分类 with no reason"
 
 
-def test_only_one_real_card_has_an_explicit_previous_field() -> None:
-    # Ground truth measured 2026-09-19 (plan section 4, screen 2): exactly one
-    # of the cards writes 上一环. If this changes, the lineage graph should
-    # grow more solid edges, not fewer -- a drop to zero would mean the field
-    # regex broke.
+def test_the_real_cards_with_an_explicit_previous_field() -> None:
+    # Ground truth re-measured 2026-09-19 after the regex learned 上一张卡,
+    # which is the same causal relation as 上一环 written differently: two
+    # cards declare a predecessor. A drop to zero would mean the field regex
+    # broke; growth is expected as new cards adopt the field.
     cards = H.load_cards(REPO_ROOT)
-    with_previous = [c for c in cards if c.previous]
-    assert len(with_previous) == 1
-    assert with_previous[0].id == "H-20260919-02"
-    assert with_previous[0].previous == "H-20260917-01"
+    with_previous = {c.id: c.previous for c in cards if c.previous}
+    assert with_previous == {
+        "H-20260919-01": "H-20260918-06",
+        "H-20260919-02": "H-20260917-01",
+    }
 
 
 # --------------------------------------------------------------------------
@@ -113,8 +118,10 @@ LANE_CASES = [
     ("bare 已执行+上线", "已执行，通过并上线", "完成·已上线"),
     ("bare 搁置", "搁置，等待更多数据", "搁置"),
     ("bare 暂停", "暂停中", "搁置"),
-    ("english proposed", "proposed（等你配置模型）", "未分类"),
-    ("english approved", "approved（Fable 决定）", "未分类"),
+    ("english proposed", "proposed（等你配置模型）", "提出"),
+    ("english approved", "approved（Fable 决定）", "已批准"),
+    ("english running", "**running -> see the lesson file**", "在跑"),
+    ("approved but already running", "approved（Fable 决定），评估在跑", "在跑"),
     ("empty status", "", "未分类"),
     (
         "done+否定 wins over incidental 预注册 mention",

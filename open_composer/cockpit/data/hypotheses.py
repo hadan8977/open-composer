@@ -55,13 +55,33 @@ _CARD_ID_ANYWHERE_RE = re.compile(r"\b([HD]-\d{8}-\d{2})\b")
 #: is a *guarantee*, not a fallback that is expected to stay empty: any card
 #: whose status text does not contain a recognized keyword lands here rather
 #: than being dropped or guessed at. See `test_no_card_is_ever_dropped`.
-LANES: tuple[str, ...] = ("预注册", "在跑", "完成·已上线", "完成·否定", "搁置", "未分类")
+# Lane order follows this project's own card lifecycle, written down in
+# docs/proposal-research-loop-redesign-2026-09-15.zh.md section 2.3
+# (提出 / 你已批准 / 运行中 / 完成), with 完成 split by outcome and two extra
+# buckets: 数据卡 for D- cards, which are data/framework corrections with no
+# hypothesis lifecycle at all, and 未分类 for anything the vocabulary cannot
+# place. Step 18's plan originally invented a different vocabulary; measured
+# against the real corpus on 2026-09-19 that mislabelled 7 of 19 cards as
+# unclassified purely because their status prose is English.
+LANES: tuple[str, ...] = (
+    "提出",
+    "已批准",
+    "预注册",
+    "在跑",
+    "完成·已上线",
+    "完成·否定",
+    "搁置",
+    "数据卡",
+    "未分类",
+)
 
 # Keyword sets for the tolerant, keyword-based lane classifier. Chinese
 # keywords are matched literally; "done" and "refuted" are the two English
 # exceptions the plan's cards actually use (e.g. "done / refuted").
 _PREREG_WORDS = ("预注册", "已写死", "待跑")
-_RUNNING_WORDS = ("在跑", "运行中", "评估在跑")
+_PROPOSED_WORDS = ("proposed", "提出")
+_APPROVED_WORDS = ("approved", "已批准")
+_RUNNING_WORDS = ("在跑", "运行中", "评估在跑", "running")
 _HOLD_WORDS = ("搁置", "暂停")
 _DONE_WORDS = ("已执行", "done")
 _NEGATIVE_WORDS = ("否定", "被否定", "refuted")
@@ -81,6 +101,9 @@ _LANE_STATUS: dict[str, Status] = {
     "在跑": "warn",
     "搁置": "warn",
     "预注册": "unknown",
+    "提出": "unknown",
+    "已批准": "unknown",
+    "数据卡": "unknown",
     "未分类": "unknown",
 }
 
@@ -109,12 +132,16 @@ def derive_lane(status_text: str) -> tuple[str, str | None]:
     more current signal ("evaluation is running now") should win over the
     completed-setup signal ("the grid is frozen").
 
-    Cards whose status prose uses only English planning words the vocabulary
-    does not recognize -- `proposed`, `approved`, or "running" spelled as
-    literally "running" rather than "在跑" -- fall to `未分类` with a reason.
-    This is by design, not a gap: the plan asks for a narrow, auditable
-    keyword set rather than a guess, and an unclassified card is still shown
-    (with its raw status and the reason), never dropped.
+    The vocabulary covers both languages, because the real corpus mixes them:
+    `proposed` / `approved` / `running` appear in English on 7 of the 19 cards
+    while the newer ones write 已执行 / 评估在跑 in Chinese. `已批准` and `提出`
+    are checked last so that a card which is approved *and* already running is
+    filed under the more current state.
+
+    Anything still unmatched goes to `未分类` **with its raw status text and a
+    reason**, and is rendered on the board like any other card. A card is never
+    dropped for being unparseable -- an invisible card is worse than an
+    unlabelled one.
     """
     if not status_text or not status_text.strip():
         return "未分类", "no 状态 field found on this card"
@@ -129,6 +156,10 @@ def derive_lane(status_text: str) -> tuple[str, str | None]:
         return "在跑", None
     if _contains_any(status_text, _PREREG_WORDS):
         return "预注册", None
+    if _contains_any(status_text, _APPROVED_WORDS):
+        return "已批准", None
+    if _contains_any(status_text, _PROPOSED_WORDS):
+        return "提出", None
     # Note: deliberately avoids the substring "key" immediately before a
     # colon-and-value here (e.g. spelling out "keyword:") -- `secret_scrub`'s
     # generic catch-all pattern treats "<word ending in key/token/secret/
@@ -232,7 +263,9 @@ _OUTPUT_DIR_RE = re.compile(r"产出目录[：:]\s*(.+)")
 _OUTPUT_RE = re.compile(r"产出(?!目录)[：:]\s*(.+)")
 _LAYER_RE = re.compile(r"(?<!数据)层[：:]\s*([^·\n]+)")
 _DATA_LAYER_RE = re.compile(r"数据层[：:]\s*([^·\n]+)")
-_PREVIOUS_RE = re.compile(r"上一环[：:]\s*`?([HD]-\d{8}-\d{2})`?")
+# 上一环 and 上一张卡 are the same relation written two ways; both are causal
+# ("this card follows from that one") and both produce a solid lineage edge.
+_PREVIOUS_RE = re.compile(r"(?:上一环|上一张卡)[：:]\s*`?([HD]-\d{8}-\d{2})`?")
 _STATUS_LINE_RE = re.compile(r"^\s*-?\s*状态[：:]\s*(.+)$", re.MULTILINE)
 _LESSON_FIELD_RE = re.compile(r"教训[：:]?\s*`?(L-\d{8}-\d{2})`?")
 _LESSON_PATH_RE = re.compile(r"lessons/(L-\d{8}-\d{2})\.md")
@@ -387,6 +420,13 @@ def _parse_card_file(path: Path, base: Path) -> Card:
             lane, lane_reason = derive_lane(status_text)
     else:
         lane, lane_reason = derive_lane(status_text)
+
+    # D- cards are data/framework corrections ("性质：数据与框架修正，不是策略假设"),
+    # so they carry no 状态 field and have no hypothesis lifecycle to be in the
+    # middle of. Filing them under 未分类 would read as a parser failure; they
+    # get their own lane instead.
+    if kind == "D" and lane == "未分类":
+        lane, lane_reason = "数据卡", None
 
     return Card(
         id=card_id,
@@ -673,7 +713,7 @@ class LineageEdge:
     @property
     def label(self) -> str:
         if self.kind == "explicit_previous":
-            return "上一环 (explicit)"
+            return "上一环/上一张卡 (explicit)"
         return "mentioned in body (weak)"
 
     @property
