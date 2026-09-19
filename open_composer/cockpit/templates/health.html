@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Health -- Open Composer Cockpit{% endblock %}
+{% block content %}
+<h1>Health</h1>
+<p class="muted">Generated {{ report.generated_at.isoformat() }}</p>
+
+<section class="panel">
+  <h2>System</h2>
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-label">Disk (/)</div>
+      {% if report.disk %}
+      <div class="stat-value"><span class="dot dot--{{ report.disk.status }}"></span>{{ "%.1f"|format(report.disk.used_percent) }}% used</div>
+      <div class="stat-detail">{{ "%.1f"|format(report.disk.available_bytes / 1073741824) }} GB free of {{ "%.1f"|format(report.disk.total_bytes / 1073741824) }} GB</div>
+      {% else %}
+      <div class="stat-value"><span class="dot dot--unknown"></span>unknown</div>
+      <div class="stat-detail">`df` was not available</div>
+      {% endif %}
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Memory</div>
+      {% if report.memory %}
+      <div class="stat-value"><span class="dot dot--{{ report.memory.status }}"></span>{{ "%.1f"|format(report.memory.used_percent) }}% used</div>
+      <div class="stat-detail">{{ "%.1f"|format(report.memory.available_bytes / 1073741824) }} GB available of {{ "%.1f"|format(report.memory.total_bytes / 1073741824) }} GB</div>
+      {% else %}
+      <div class="stat-value"><span class="dot dot--unknown"></span>unknown</div>
+      <div class="stat-detail">`free` was not available</div>
+      {% endif %}
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cockpit process</div>
+      <div class="stat-value"><span class="dot dot--{{ report.process.status }}"></span>{{ "%.1f"|format(report.process.rss_bytes / 1048576) }} MB RSS</div>
+      <div class="stat-detail">pid {{ report.process.pid }}</div>
+    </div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Data freshness</h2>
+  <table class="responsive-table">
+    <thead>
+      <tr><th>Source</th><th>Latest date</th><th>Detail</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      {% for entry in report.data_freshness %}
+      <tr>
+        <td data-label="Source">{{ entry.name }}</td>
+        <td data-label="Latest date">{{ entry.latest_date.isoformat() if entry.latest_date else "unknown" }}</td>
+        <td data-label="Detail">{{ entry.detail }}</td>
+        <td data-label="Status"><span class="dot dot--{{ entry.status }}">{{ entry.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Cron jobs</h2>
+  {% if not report.cron.available %}
+  <p class="muted">Crontab unavailable: {{ report.cron.error }}</p>
+  {% endif %}
+  {% if report.cron.available and not report.cron.jobs %}
+  <p class="muted">No cron jobs found.</p>
+  {% endif %}
+  {% for job in report.cron.jobs %}
+  <details class="cron-job">
+    <summary>
+      <span class="dot dot--{{ job.status }}"></span>
+      <span class="cron-job-name">{{ job.name }}</span>
+      <code class="cron-schedule">{{ job.schedule }}</code>
+    </summary>
+    <div class="cron-job-body">
+      <p class="muted cron-command">{{ job.command }}</p>
+      {% if job.note %}<p class="muted">{{ job.note }}</p>{% endif %}
+      {% if job.logs %}
+      <table class="responsive-table">
+        <thead><tr><th>Log</th><th>Last written</th><th>Size</th><th>Error in tail</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for log in job.logs %}
+          <tr>
+            <td data-label="Log">{{ log.path }}</td>
+            <td data-label="Last written">{{ log.mtime.isoformat() if log.mtime else "never" }}</td>
+            <td data-label="Size">{{ log.size_bytes if log.size_bytes is not none else "-" }} bytes</td>
+            <td data-label="Error in tail">{{ "yes" if log.has_error_marker else "no" }}</td>
+            <td data-label="Status"><span class="dot dot--{{ log.status }}">{{ log.status }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
+  </details>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,392 @@
+/* Open Composer Cockpit -- hand-written, no framework, no build step.
+ *
+ * Conventions later screens (T4-T7) should reuse:
+ *   - `.responsive-table` + `data-label` on every `<td>` turns a wide table
+ *     into stacked cards under the mobile breakpoint. Every table on every
+ *     screen should use this class; do not ship a second table pattern.
+ *   - `.dot--ok|warn|stale|unknown` colors any inline status indicator.
+ *     Matches `open_composer.cockpit.data.health.Status`; reuse the same
+ *     four words for any other status the paper/agents/hypotheses screens
+ *     introduce so the palette means one thing everywhere.
+ *   - `.stat-card` / `.stat-row` is the small KPI-tile pattern used by the
+ *     health screen's System section; reuse it for quota bars (T6) and
+ *     sleeve summaries (T5).
+ *   - `.panel` wraps every top-level section of a screen's content.
+ */
+
+:root {
+  --bg: #0f1216;
+  --bg-alt: #161b22;
+  --bg-card: #1c222b;
+  --border: #2a323d;
+  --fg: #e6edf3;
+  --fg-dim: #9aa7b4;
+  --accent: #4da3ff;
+  --ok: #3fb950;
+  --warn: #d29922;
+  --stale: #f85149;
+  --unknown: #6e7681;
+  --radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--bg-alt);
+  padding: 0.05em 0.35em;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--fg-dim);
+}
+
+/* ---------------------------------------------------------------- topbar */
+
+.topbar {
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar-brand {
+  font-weight: 700;
+  color: var(--fg);
+  letter-spacing: 0.02em;
+}
+
+.topbar-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--fg);
+  font-size: 1.1rem;
+  padding: 0.15rem 0.6rem;
+  cursor: pointer;
+}
+
+.topbar-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-top: 0.4rem;
+}
+
+.topbar-nav a {
+  color: var(--fg-dim);
+  padding: 0.15rem 0.1rem;
+  border-bottom: 2px solid transparent;
+}
+
+.topbar-nav a.is-active {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+
+.topbar-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.status-slot {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.status-label {
+  color: var(--fg-dim);
+}
+
+.status-value.stub {
+  color: var(--fg-dim);
+  font-style: italic;
+}
+
+/* ------------------------------------------------------------- mobile nav */
+
+@media (max-width: 640px) {
+  .topbar-toggle {
+    display: inline-block;
+  }
+
+  .topbar-nav,
+  .topbar-status {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .topbar.is-expanded .topbar-nav,
+  .topbar.is-expanded .topbar-status {
+    display: flex;
+  }
+}
+
+/* --------------------------------------------------------------- content */
+
+.content {
+  padding: 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.4rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.6rem;
+  color: var(--fg);
+}
+
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.footer {
+  padding: 1rem;
+  text-align: center;
+  color: var(--fg-dim);
+  font-size: 0.8rem;
+}
+
+/* --------------------------------------------------------------- dots */
+
+.dot {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.05em 0.5em;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dot::before {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  margin-right: 0.4em;
+  background: currentColor;
+}
+
+.dot--ok {
+  color: var(--ok);
+  background: color-mix(in srgb, var(--ok) 18%, transparent);
+}
+
+.dot--warn {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 18%, transparent);
+}
+
+.dot--stale {
+  color: var(--stale);
+  background: color-mix(in srgb, var(--stale) 18%, transparent);
+}
+
+.dot--unknown {
+  color: var(--unknown);
+  background: color-mix(in srgb, var(--unknown) 18%, transparent);
+}
+
+/* ------------------------------------------------------------ stat cards */
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.stat-card {
+  flex: 1 1 200px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
+
+.stat-label {
+  color: var(--fg-dim);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  margin: 0.15rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.stat-detail {
+  color: var(--fg-dim);
+  font-size: 0.85rem;
+}
+
+/* ----------------------------------------------------------------- cron */
+
+.cron-job {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.cron-job summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.cron-job-name {
+  font-weight: 600;
+}
+
+.cron-schedule {
+  color: var(--fg-dim);
+}
+
+.cron-job-body {
+  margin-top: 0.5rem;
+}
+
+.cron-command {
+  word-break: break-word;
+}
+
+/* ------------------------------------------------------------ tables */
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.responsive-table th,
+.responsive-table td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.responsive-table thead th {
+  color: var(--fg-dim);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Stack wide tables into cards under the phone breakpoint instead of letting
+ * them scroll horizontally -- required by the plan (section 4: "mobile and
+ * desktop are both first-class ... no horizontal scrolling of wide tables"). */
+@media (max-width: 640px) {
+  .responsive-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .responsive-table,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 0.6rem;
+    overflow: hidden;
+  }
+
+  .responsive-table td {
+    border-bottom: 1px solid var(--border);
+    padding-left: 45%;
+    position: relative;
+    text-align: right;
+  }
+
+  .responsive-table td:last-child {
+    border-bottom: none;
+  }
+
+  .responsive-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0.5rem;
+    width: 40%;
+    text-align: left;
+    font-weight: 600;
+    color: var(--fg-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

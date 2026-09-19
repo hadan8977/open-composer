@@ -1745,6 +1745,47 @@ def cockpit_index_command(
     console.print(table)
 
 
+#: Hosts that mean "listen on every interface." The cockpit has no
+#: application-level auth by design (Cloudflare Access authenticates at the
+#: edge instead -- see AGENTS.md), so binding one of these would expose every
+#: screen to anything that can reach the box.
+_COCKPIT_UNSAFE_HOSTS = {"0.0.0.0", "::", "*"}
+
+
+@cockpit_app.command("serve")
+def cockpit_serve_command(
+    host: Annotated[
+        str,
+        typer.Option("--host", help="Bind host. Must stay 127.0.0.1; see AGENTS.md."),
+    ] = "127.0.0.1",
+    port: Annotated[
+        int,
+        typer.Option("--port", help="Bind port."),
+    ] = 8770,
+) -> None:
+    """Serve the read-only cockpit (FastAPI + Jinja2, GET/HEAD routes only).
+
+    Refuses to bind a wildcard host: the app has zero authentication code of
+    its own, so remote access must go through Cloudflare Access in front of a
+    loopback-only bind, never through binding the cockpit to a public
+    interface directly.
+    """
+    if host in _COCKPIT_UNSAFE_HOSTS:
+        console.print(
+            f"[red]Refusing to bind {host!r}.[/red] The cockpit has no application-level "
+            "authentication by design -- keep --host 127.0.0.1 and put Cloudflare Access "
+            "in front of it for remote access (see AGENTS.md and "
+            "docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md)."
+        )
+        raise typer.Exit(1)
+
+    import uvicorn
+
+    from open_composer.cockpit.app import create_app
+
+    uvicorn.run(create_app(), host=host, port=port, log_level="info")
+
+
 @project_app.command("create")
 def project_create_command(
     name: Annotated[str, typer.Option("--name", help="StrategyProject display name.")],

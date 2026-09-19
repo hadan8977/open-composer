@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Open Composer Cockpit{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/cockpit.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-row">
+      <a class="topbar-brand" href="/">Cockpit</a>
+      <button type="button" class="topbar-toggle" id="topbar-toggle" aria-expanded="false" aria-controls="topbar-details">
+        <span class="sr-only">Toggle status</span>&#9776;
+      </button>
+    </div>
+
+    <nav class="topbar-nav" aria-label="Screens">
+      {% for slug, path, label in screens %}
+      <a href="{{ path }}" class="{{ 'is-active' if active_screen == slug else '' }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+
+    <div class="topbar-status" id="topbar-details">
+      <div class="status-slot" data-slot="quota-claude">
+        <span class="status-label">Claude quota</span>
+        <span class="status-value stub">pending T6</span>
+      </div>
+      <div class="status-slot" data-slot="quota-codex">
+        <span class="status-label">Codex quota</span>
+        <span class="status-value stub">metered, no subscription cap (pending T6 interface)</span>
+      </div>
+      <div class="status-slot" data-slot="agent-dots">
+        <span class="status-label">Agents</span>
+        <span class="status-value stub">pending T7</span>
+      </div>
+      <div class="status-slot" data-slot="data-freshness">
+        <span class="status-label">Data</span>
+        <span class="status-value dot dot--{{ topbar_data_freshness.status }}">{{ topbar_data_freshness.label }}</span>
+      </div>
+      <div class="status-slot" data-slot="rehearsal-countdown">
+        <span class="status-label">Rehearsal auth</span>
+        <span class="status-value stub">pending T5</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <span>Read-only. No command entry point. Generated {{ generated_at.isoformat() if generated_at else "" }}.</span>
+  </footer>
+
+  <script src="/static/js/topbar.js"></script>
+</body>
+</html>
