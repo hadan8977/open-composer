@@ -167,9 +167,42 @@ VARIANTS: dict[str, str] = {
     "any60_down20": "any60 且近 63 个交易日收益 < -20%（拆分：跌幅段）",
     "any60_notdown20": "any60 且近 63 个交易日收益 ≥ -20%（拆分：非跌幅段）",
     "any60_single": "any60 且只有 1 个买家（buyers_60d == 1，拆分：非集群）",
+    "recipe_od_nonplan": (
+        "已发表口径的机会型内部人买入 recipe：60 日内 ≥ 1 笔董事/高管的非预定 10b5-1 计划"
+        "公开市场买入（open_market_buy_count_od_nonplan_60d > 0）"
+    ),
+    "recipe_od_nonplan_cluster": (
+        "recipe_od_nonplan 且 60 日内 ≥ 2 个不同买家（buyers_od_nonplan_60d >= 2）"
+    ),
+    "recipe_od_nonplan_usd25k": (
+        "recipe_od_nonplan 且 60 日非计划净买入金额 ≥ 25,000 美元"
+        "（net_buy_usd_od_nonplan_60d >= 25000）"
+    ),
+    "recipe_od_plan": (
+        "对照双胞胎，不是候选：60 日内 ≥ 1 笔董事/高管的预定 10b5-1 计划公开市场买入"
+        "（open_market_buy_count_od_plan_60d > 0）。recipe 的预测是预定计划买入不含信息；"
+        "它与 recipe_od_nonplan 之间的差距，才是 10b5-1 过滤器本身真正贡献的部分"
+    ),
+    "recipe_od_unknown": (
+        "10b5-1 标志缺失/不可用：60 日内 ≥ 1 笔董事/高管公开市场买入但计划标志未知"
+        "（open_market_buy_count_od_flag_unknown_60d > 0），衡量样本里标志不可用的比例"
+    ),
 }
 CARD_VARIANTS: tuple[str, ...] = ("any60", "usd25k", "cluster", "cmp", "any30", "any90")
 SPLIT_VARIANTS: tuple[str, ...] = ("any60_down20", "any60_notdown20", "any60_single")
+#: The 10b5-1 opportunistic-buying recipe: officer/director x non-plan buy,
+#: tightened by cluster and dollar-amount confirmation, plus its control twin
+#: (plan buys, which the recipe predicts carry no information) and the
+#: flag-unknown variant (sample coverage of the AFF10B5ONE checkbox itself).
+#: See ``_guard_recipe_windows`` -- every one of these selects an empty book
+#: before 2023q2 (``WINDOWS["recipe_2023q2"]``) by construction.
+RECIPE_VARIANTS: tuple[str, ...] = (
+    "recipe_od_nonplan",
+    "recipe_od_nonplan_cluster",
+    "recipe_od_nonplan_usd25k",
+    "recipe_od_plan",
+    "recipe_od_unknown",
+)
 MAIN_VARIANT = "any60"
 INSIDER_COLUMNS: tuple[str, ...] = (
     "open_market_buy_count_60d",
@@ -178,19 +211,37 @@ INSIDER_COLUMNS: tuple[str, ...] = (
     "cmp_opportunistic_buy_60d",
     "days_since_last_visible_buy",
     "open_market_sell_count_60d",
+    "open_market_buy_count_od_nonplan_60d",
+    "net_buy_usd_od_nonplan_60d",
+    "buyers_od_nonplan_60d",
+    "open_market_buy_count_od_plan_60d",
+    "net_buy_usd_od_plan_60d",
+    "open_market_buy_count_od_flag_unknown_60d",
 )
 WINDOWS: dict[str, tuple[str | None, str | None]] = {
     "full": (None, None),
     "pre_2020": (None, "2019-12-31"),
     "from_2020": ("2020-01-01", None),
     "recent_2024": (RECENT_WINDOW_START, None),
+    "recipe_2023q2": ("2023-04-01", None),
 }
 WINDOW_LABELS = {
     "full": "全样本",
     "pre_2020": "2020 年前",
     "from_2020": "2020 年起",
     "recent_2024": "2024 年起",
+    "recipe_2023q2": "2023Q2 起（AFF10B5ONE 10b5-1 复选框唯一有值的窗口）",
 }
+#: The AFF10B5ONE 10b5-1 plan checkbox is only populated in SEC Form 345
+#: quarterly TSVs from 2023q2 onward (see ``WINDOWS["recipe_2023q2"]``).
+#: Before that every row's plan flag is unknown, so every ``RECIPE_VARIANTS``
+#: mask selects an empty book by construction. Any window whose start is
+#: before this date mixes that guaranteed-empty, cash-sitting period into the
+#: reported return series -- see ``_guard_recipe_windows``.
+RECIPE_FLAG_START = pd.Timestamp("2023-04-01")
+RECIPE_UNUSABLE_REASON = (
+    "10b5-1 checkbox only populated from 2023q2; pre-2023q2 book is empty by construction"
+)
 
 _T0 = time.time()
 
@@ -558,6 +609,18 @@ def variant_mask(frame: pd.DataFrame, variant: str) -> pd.Series:
         return any60 & frame["ret_63"].ge(-0.20).fillna(False)
     if variant == "any60_single":
         return any60 & (frame["buyers_60d"].fillna(0.0) == 1)
+    if variant == "recipe_od_nonplan":
+        return frame["open_market_buy_count_od_nonplan_60d"].fillna(0.0) > 0
+    if variant == "recipe_od_nonplan_cluster":
+        recipe_od_nonplan = frame["open_market_buy_count_od_nonplan_60d"].fillna(0.0) > 0
+        return recipe_od_nonplan & (frame["buyers_od_nonplan_60d"].fillna(0.0) >= 2)
+    if variant == "recipe_od_nonplan_usd25k":
+        recipe_od_nonplan = frame["open_market_buy_count_od_nonplan_60d"].fillna(0.0) > 0
+        return recipe_od_nonplan & (frame["net_buy_usd_od_nonplan_60d"].fillna(0.0) >= 25_000.0)
+    if variant == "recipe_od_plan":
+        return frame["open_market_buy_count_od_plan_60d"].fillna(0.0) > 0
+    if variant == "recipe_od_unknown":
+        return frame["open_market_buy_count_od_flag_unknown_60d"].fillna(0.0) > 0
     raise KeyError(variant)
 
 
@@ -778,9 +841,16 @@ def _price_and_save(
 
 
 def enumerate_variant_order(args: argparse.Namespace) -> list[str]:
-    wanted = list(args.variants) if args.variants else [*CARD_VARIANTS, *SPLIT_VARIANTS]
+    wanted = (
+        list(args.variants)
+        if args.variants
+        else [*CARD_VARIANTS, *SPLIT_VARIANTS, *RECIPE_VARIANTS]
+    )
     ordered = (
-        [MAIN_VARIANT] + [v for v in CARD_VARIANTS if v != MAIN_VARIANT] + list(SPLIT_VARIANTS)
+        [MAIN_VARIANT]
+        + [v for v in CARD_VARIANTS if v != MAIN_VARIANT]
+        + list(SPLIT_VARIANTS)
+        + list(RECIPE_VARIANTS)
     )
     return [v for v in ordered if v in wanted]
 
@@ -1107,6 +1177,12 @@ def cell_verdict(real: dict[str, Any], random_agg: dict[str, Any] | None) -> dic
 def bh_fdr(pvalues: list[float], q: float = 0.10) -> int:
     clean = sorted(p for p in pvalues if p is not None and np.isfinite(p))
     m = len(clean)
+    if m == 0:
+        # Every cell's t-statistic was None. Reachable since the 2026-09-19
+        # recipe guard nulls the verdict of every RECIPE_VARIANTS cell, so a run
+        # restricted to recipe variants alone (--variants recipe_od_nonplan ...)
+        # leaves nothing to correct. No tests means no passes, not a crash.
+        return 0
     passed = 0
     for i, p in enumerate(clean, start=1):
         if p <= q * i / m:
@@ -1118,6 +1194,85 @@ def _one_sided_p(t: float | None) -> float | None:
     if t is None or not np.isfinite(t):
         return None
     return float(0.5 * math.erfc(t / math.sqrt(2.0)))
+
+
+def _unusable_windows_for_recipe() -> list[str]:
+    """``WINDOWS`` keys whose start is before ``RECIPE_FLAG_START`` (or open,
+    i.e. ``None``) -- these mix the guaranteed-empty pre-2023q2 book into the
+    reported series for every ``RECIPE_VARIANTS`` cell."""
+    out = []
+    for name, (start, _end) in WINDOWS.items():
+        if start is None or pd.Timestamp(start) < RECIPE_FLAG_START:
+            out.append(name)
+    return out
+
+
+def _guard_recipe_windows(cells: dict[str, Any]) -> None:
+    """CRITICAL GUARD, one explicit pass instead of scattered inline checks:
+    before 2023q2 the AFF10B5ONE plan flag is unknown everywhere, so every
+    ``RECIPE_VARIANTS`` mask selects an empty book and a window that starts
+    before then is really just BIL cash dressed up as a low-vol result.
+
+    For every cell whose variant is in ``RECIPE_VARIANTS`` this (1) tags each
+    unusable window's metrics dict (in ``real``, ``stress_25bps`` and every
+    ``random``/``placebo`` seed) with ``unusable_reason`` without deleting the
+    underlying numbers, so a forensic read can still see what they were, and
+    (2) replaces the cell-level ``verdict`` -- which the family-wise
+    significance tallies and BH-FDR pass count in ``stage_report`` read
+    straight off ``full_cells.values()`` -- with an explicit ``"unusable"``
+    verdict whose t-statistics are ``None``, so those tallies see nothing to
+    count instead of a real-looking (but fake) t-stat computed off a
+    cash-sitting period. Also records, per cell, how many of the (~41 at
+    best) monthly formation dates the book was actually non-empty -- the
+    number the report must show, not make the reader infer from
+    ``months - empty_tranches``.
+    """
+    unusable = _unusable_windows_for_recipe()
+    for cell in cells.values():
+        if cell.get("variant") not in RECIPE_VARIANTS:
+            continue
+        for block_name in ("real", "stress_25bps"):
+            block = cell.get(block_name)
+            if not isinstance(block, dict):
+                continue
+            for window in unusable:
+                entry = block.get(window)
+                if isinstance(entry, dict):
+                    entry["unusable_reason"] = RECIPE_UNUSABLE_REASON
+        for control_name in ("random", "placebo"):
+            per_seed = (cell.get(control_name) or {}).get("per_seed") or {}
+            for metrics in per_seed.values():
+                if not isinstance(metrics, dict):
+                    continue
+                for window in unusable:
+                    entry = metrics.get(window)
+                    if isinstance(entry, dict):
+                        entry["unusable_reason"] = RECIPE_UNUSABLE_REASON
+        book = cell.get("book") or {}
+        nonempty = int(book.get("months", 0)) - int(book.get("empty_tranches", 0))
+        cell["recipe_nonempty_formation_dates"] = nonempty
+        cell["recipe_total_formation_dates"] = int(book.get("months", 0))
+        if isinstance(cell.get("verdict"), dict):
+            cell["verdict"] = {
+                "verdict": "unusable",
+                "code": "pre_2023q2_empty_book",
+                "reasons": [RECIPE_UNUSABLE_REASON],
+                "unusable_reason": RECIPE_UNUSABLE_REASON,
+                "unusable_windows": unusable,
+                "usable_windows": [w for w in WINDOWS if w not in unusable],
+                "nonempty_formation_dates": nonempty,
+                "t_spy": None,
+                "t_iwm": None,
+                "t_random": None,
+                "mean_monthly_excess_spy": None,
+                "random_mean_monthly_excess_spy": None,
+                "random_share_of_real": None,
+                "pre_2020_excess_spy": None,
+                "from_2020_excess_spy": None,
+                "crit_all_t_below_2": True,
+                "crit_random_ge_50pct": False,
+                "crit_pre_2020_only": False,
+            }
 
 
 def stage_report(args: argparse.Namespace) -> dict[str, Any]:
@@ -1205,6 +1360,11 @@ def stage_report(args: argparse.Namespace) -> dict[str, Any]:
     if reference_index is None:
         raise SystemExit("report: no priced cells found -- run --stage price first")
 
+    # CRITICAL GUARD: must run before the family-wise tallies below, which
+    # read `full_cells.values()` (not just `card_cells`) -- see the docstring
+    # on `_guard_recipe_windows`.
+    _guard_recipe_windows(cells)
+
     # --- card-level verdict ---------------------------------------------------
     full_cells = {k: c for k, c in cells.items() if c["universe_version"] == "full"}
     card_cells = {k: c for k, c in full_cells.items() if c["variant"] in CARD_VARIANTS}
@@ -1283,8 +1443,9 @@ def stage_report(args: argparse.Namespace) -> dict[str, Any]:
             "family": "insider_independent_broad",
             "selectable_cells_this_round": family_count,
             "definition": (
-                "variants (9) x horizons (3) x bands (4) on the full broad universe; "
-                "the survivors-only twin, band-EW, random and placebo controls are not counted"
+                f"variants ({len(VARIANTS)}) x horizons ({len(HORIZONS)}) x bands ({len(BANDS)}) "
+                "on the full broad universe; the survivors-only twin, band-EW, random and "
+                "placebo controls are not counted"
             ),
         },
     }
@@ -1532,6 +1693,33 @@ def render_markdown(summary: dict[str, Any], paper: dict[str, Any] | None) -> st
                     f"{book.get('tranche_size_mean', 0):.0f} "
                     f"({book.get('tranche_size_min', 0)}–{book.get('tranche_size_max', 0)})"
                 )
+                if f.get("unusable_reason"):
+                    # CRITICAL GUARD (see `_guard_recipe_windows`): the `full`
+                    # window's book is empty by construction before 2023q2,
+                    # so its CAGR/vol/excess numbers are cash-sitting, not a
+                    # result -- report the reason and the non-empty formation
+                    # date count instead of the numbers.
+                    nonempty = c.get("recipe_nonempty_formation_dates")
+                    note = (
+                        f"不可用（{f['unusable_reason']}；非空形成日 "
+                        f"{nonempty if nonempty is not None else 'n/a'} 个；"
+                        "见 `recipe_2023q2` 窗口）"
+                    )
+                    rows.append(
+                        "| "
+                        + " | ".join(
+                            [
+                                BAND_LABELS[band],
+                                str(k),
+                                tranche_txt,
+                                *(["不可用"] * 11),
+                                _num(book.get("turnover_per_month_mean"), 2),
+                                note,
+                            ]
+                        )
+                        + " |"
+                    )
+                    continue
                 spy_txt = (
                     f"{_bp(ex['SPY']['mean_monthly_excess'])} (t {_num(ex['SPY']['t_nw'], 1)})"
                 )
