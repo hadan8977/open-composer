@@ -71,9 +71,11 @@ from open_composer.cockpit.data.paper import (
 from open_composer.cockpit.data.quota import (
     CodexQuotaState,
     TopbarQuota,
+    UsageEstimate,
     build_codex_quota_state,
     build_quota_report,
     get_default_claude_cache,
+    get_default_usage_estimate_cache,
     to_topbar_quota,
     unknown_topbar_quota,
 )
@@ -166,6 +168,30 @@ def _topbar_codex_quota() -> CodexQuotaState:
         return _UNKNOWN_CODEX_QUOTA_STATE
 
 
+def _topbar_usage_estimate(now: datetime) -> UsageEstimate:
+    """The transcript-based usage estimate's compact topbar view (T6b).
+
+    Second line of the quota topbar slot, distinct from the live gauge
+    above it (plan section 3.5: "one line for the live state ..., one line
+    for the estimate"). `build_usage_estimate` already degrades to an
+    all-zero estimate rather than raising (see its docstring); this wrapper
+    is one more defensive layer at the integration boundary, matching
+    `_topbar_claude_quota`/`_topbar_codex_quota` above.
+    """
+    try:
+        return get_default_usage_estimate_cache().get(now=now)
+    except Exception:
+        return UsageEstimate(
+            window_start=now,
+            window_end=now,
+            by_model=(),
+            total_tokens=0,
+            distinct_session_count=0,
+            files_scanned=0,
+            generated_at=now,
+        )
+
+
 def _base_context(request: Request, active: str) -> dict[str, Any]:
     root = project_root()
     now = datetime.now(UTC)
@@ -177,6 +203,7 @@ def _base_context(request: Request, active: str) -> dict[str, Any]:
         "topbar_rehearsal": _topbar_rehearsal_countdown(root),
         "topbar_quota_claude": _topbar_claude_quota(now),
         "topbar_quota_codex": _topbar_codex_quota(),
+        "topbar_usage_estimate": _topbar_usage_estimate(now),
         "generated_at": now,
     }
 

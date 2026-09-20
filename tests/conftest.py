@@ -44,23 +44,41 @@ def _cockpit_quota_no_live_network(
 ) -> None:
     """Every test runs with no real Claude credentials on the quota lookup path.
 
-    ``open_composer.cockpit.data.quota`` reads ``~/.claude/.credentials.json``
-    by default so the real cockpit server can hit the live, undocumented
-    subscription-usage endpoint (Step 18, T6). This box has a real
-    credentials file, so without this fixture *every* cockpit test that
-    renders a page -- not just the quota tests -- would attempt a live
-    network call on every request (``_base_context`` builds the topbar quota
-    state for every screen), which violates the hard rule that tests never
-    touch the network. Pointing the default credentials path at a file that
-    does not exist makes that lookup degrade deterministically to the
-    "no credentials" state before any HTTP client is even constructed.
+    ``open_composer.cockpit.data.quota`` resolves a Claude OAuth token from
+    three sources, tried in order (Step 18, T6b): the ``CLAUDE_CODE_OAUTH_TOKEN``
+    environment variable, ``~/.paseo/config.json``, and
+    ``~/.claude/.credentials.json``. This box has real values at all three
+    (a working long-lived token injects the env var into every agent process
+    here, and the paseo config and credentials file both exist), so without
+    this fixture *every* cockpit test that renders a page -- not just the
+    quota tests -- would attempt a live network call on every request
+    (``_base_context`` builds the topbar quota state for every screen),
+    which violates the hard rule that tests never touch the network. Each
+    source is pointed at something that resolves to "no token" before any
+    HTTP client is even constructed:
+
+    * the env var is deleted for the duration of the test (``raising=False``
+      since it may not be set in every environment this suite runs in);
+    * ``PASEO_CONFIG_PATH`` is pointed at a file that does not exist, so
+      the real ``~/.paseo/config.json`` -- which holds other providers'
+      live secrets alongside this one -- is never opened by a test;
+    * ``CLAUDE_CREDENTIALS_PATH`` is pointed at a file that does not exist,
+      same reasoning, unchanged from T6.
+
     Tests in ``test_cockpit_quota.py`` that want to exercise the live-fetch
-    path pass their own ``credentials_path=``/``client=`` arguments (or
-    monkeypatch ``open_composer.cockpit.data.quota.CLAUDE_CREDENTIALS_PATH``
-    themselves for the duration of one test), which overrides this default.
+    path pass their own ``credentials_path=``/``paseo_config_path=``/``env=``/
+    ``client=`` arguments (or monkeypatch the module constants themselves for
+    the duration of one test), which overrides these defaults.
     """
-    missing = tmp_path_factory.mktemp("no-claude-credentials") / ".credentials.json"
-    monkeypatch.setattr("open_composer.cockpit.data.quota.CLAUDE_CREDENTIALS_PATH", missing)
+    missing_dir = tmp_path_factory.mktemp("no-claude-credentials")
+    monkeypatch.setattr(
+        "open_composer.cockpit.data.quota.CLAUDE_CREDENTIALS_PATH",
+        missing_dir / ".credentials.json",
+    )
+    monkeypatch.setattr(
+        "open_composer.cockpit.data.quota.PASEO_CONFIG_PATH", missing_dir / "paseo-config.json"
+    )
+    monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:

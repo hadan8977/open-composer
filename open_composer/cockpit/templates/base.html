@@ -37,6 +37,7 @@
           {% else %}
             <span class="dot dot--unknown">unavailable ({{ topbar_quota_claude.unavailable_reason }})</span>
           {% endif %}
+          <span class="muted quota-topbar-estimate">estimate (from local transcripts) {{ '{:,}'.format(topbar_usage_estimate.total_tokens) }} tok, {{ topbar_usage_estimate.distinct_session_count }} session(s), {{ topbar_usage_estimate.generated_at.isoformat() }}</span>
         </a>
       </div>
       <div class="status-slot" data-slot="quota-codex">

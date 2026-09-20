@@ -53,6 +53,57 @@
 </div>
 
 <div class="panel">
+  <h2>Claude -- credential sources</h2>
+  <p class="muted">ordered resolution, T6b: env var, paseo config, credentials file</p>
+  {% if report.claude.snapshot.credential_probes %}
+  <table class="responsive-table">
+    <thead>
+      <tr><th>Source</th><th>Token found</th><th>Outcome</th></tr>
+    </thead>
+    <tbody>
+      {% for probe in report.claude.snapshot.credential_probes %}
+      <tr>
+        <td data-label="Source">{{ probe.label }}</td>
+        <td data-label="Token found">{{ probe.token_found }}</td>
+        <td data-label="Outcome">{{ probe.outcome }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">no credential sources probed this round</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Claude -- usage estimate (from local transcripts)</h2>
+  <p class="muted">absolute tokens, not a percentage -- denominator unknown, see /quota source</p>
+  <p class="stat-detail">window {{ report.usage_estimate.window_start.isoformat() }} to {{ report.usage_estimate.window_end.isoformat() }}</p>
+  <table class="responsive-table">
+    <thead>
+      <tr><th>Model</th><th>Input</th><th>Output</th><th>Cache creation</th><th>Cache read</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+      {% for m in report.usage_estimate.by_model %}
+      <tr>
+        <td data-label="Model">{{ m.model }}</td>
+        <td data-label="Input" class="num">{{ '{:,}'.format(m.input_tokens) }}</td>
+        <td data-label="Output" class="num">{{ '{:,}'.format(m.output_tokens) }}</td>
+        <td data-label="Cache creation" class="num">{{ '{:,}'.format(m.cache_creation_tokens) }}</td>
+        <td data-label="Cache read" class="num">{{ '{:,}'.format(m.cache_read_tokens) }}</td>
+        <td data-label="Total" class="num">{{ '{:,}'.format(m.total_tokens) }}</td>
+      </tr>
+      {% endfor %}
+      {% if not report.usage_estimate.by_model %}
+      <tr><td colspan="6">none</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+  <p class="stat-detail">total {{ '{:,}'.format(report.usage_estimate.total_tokens) }} tok, {{ report.usage_estimate.distinct_session_count }} distinct session(s), {{ report.usage_estimate.files_scanned }} file(s) scanned</p>
+  <p class="stat-detail">generated {{ report.usage_estimate.generated_at.isoformat() }}</p>
+</div>
+
+<div class="panel">
   <h2>Claude -- last throttle event</h2>
   <p class="muted">fallback layer, an event, not a live gauge</p>
   {% if report.claude_throttle_event %}

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import time
 from datetime import UTC, datetime, timedelta
@@ -325,6 +326,158 @@ def test_real_client_degrades_within_timeout_against_unroutable_address(
 
 
 # --------------------------------------------------------------------------
+# Multi-source ordered credential resolution (T6b)
+# --------------------------------------------------------------------------
+
+
+def _handler_by_bearer_token(mapping: dict[str, httpx.Response]):
+    """Route a mock response by which literal bearer token the request carries.
+
+    Lets one test give the env-var token, the paseo token, and the
+    credentials-file token three different simulated server responses, the
+    way three real, differently-broken credentials would.
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        auth = request.headers.get("authorization", "")
+        token = auth.removeprefix("Bearer ").strip()
+        return mapping[token]
+
+    return handler
+
+
+def test_env_token_present_succeeds_without_probing_other_sources(tmp_path: Path) -> None:
+    env_token = "sk-ant-oat01-envtoken00000000000000000000000000"
+    file_token = "sk-ant-oat01-filetoken0000000000000000000000000"
+    creds = _write_credentials(tmp_path, token=file_token)
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.headers.get("authorization", ""))
+        return httpx.Response(200, json=_SAMPLE_PAYLOAD)
+
+    cache = Q.ClaudeQuotaCache()
+    report = cache.get(
+        credentials_path=creds,
+        env={"CLAUDE_CODE_OAUTH_TOKEN": env_token},
+        client=_client_for(handler),
+    )
+
+    assert report.snapshot.available is True
+    assert len(calls) == 1, "the credentials-file source must not be probed once env succeeds"
+    probes = {p.source: p for p in report.snapshot.credential_probes}
+    assert probes["env"].outcome == "ok"
+    assert probes["env"].token_found is True
+    assert "credentials_file" not in probes, "round stops at the first success"
+
+
+def test_all_sources_absent_reports_no_credentials_with_full_probe_list(tmp_path: Path) -> None:
+    calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(200, json=_SAMPLE_PAYLOAD)
+
+    cache = Q.ClaudeQuotaCache()
+    report = cache.get(
+        credentials_path=tmp_path / "nope.json",
+        paseo_config_path=tmp_path / "nope-paseo.json",
+        env={},
+        client=_client_for(handler),
+    )
+
+    assert report.snapshot.available is False
+    assert report.snapshot.unavailable_reason == "no credentials"
+    assert calls == []
+    assert len(report.snapshot.credential_probes) == 3
+    assert {p.outcome for p in report.snapshot.credential_probes} == {"absent"}
+    assert all(p.token_found is False for p in report.snapshot.credential_probes)
+
+
+def test_paseo_scope_failure_and_credentials_file_expiry_are_both_diagnosed(
+    tmp_path: Path,
+) -> None:
+    """The exact two-source, two-failure-mode scenario this box hit 2026-09-20.
+
+    Both present sources are attempted (neither short-circuits the other),
+    both real outcomes show up in `credential_probes`, and the headline
+    `unavailable_reason` picks the expired-token wording ahead of the
+    scope-failure wording because re-login is the fix that actually restores
+    live reads (module docstring's "Credential handling", last paragraph).
+    """
+    paseo_token = "sk-ant-oat01-paseotoken00000000000000000000000"
+    file_token = "sk-ant-oat01-filetoken0000000000000000000000000"
+    paseo_path = tmp_path / "paseo-config.json"
+    paseo_path.write_text(
+        json.dumps(
+            {"agents": {"providers": {"claude": {"env": {"CLAUDE_CODE_OAUTH_TOKEN": paseo_token}}}}}
+        ),
+        encoding="utf-8",
+    )
+    creds = _write_credentials(tmp_path, token=file_token)
+
+    handler = _handler_by_bearer_token(
+        {
+            paseo_token: httpx.Response(403, json={"type": "permission_error"}),
+            file_token: httpx.Response(401, json={"type": "authentication_error"}),
+        }
+    )
+
+    cache = Q.ClaudeQuotaCache()
+    report = cache.get(
+        credentials_path=creds,
+        paseo_config_path=paseo_path,
+        env={},
+        client=_client_for(handler),
+    )
+
+    assert report.snapshot.available is False
+    assert report.snapshot.unavailable_reason == "token expired -- re-login"
+    probes = {p.source: p for p in report.snapshot.credential_probes}
+    assert probes["env"].outcome == "absent"
+    assert probes["paseo"].outcome == "insufficient scope (403)"
+    assert probes["credentials_file"].outcome == "expired (401)"
+
+
+def test_breaker_open_round_reports_token_found_without_any_http_attempt(tmp_path: Path) -> None:
+    creds = _write_credentials(tmp_path)
+    calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(500, text="boom")
+
+    cache = Q.ClaudeQuotaCache()
+    base = datetime(2026, 9, 20, tzinfo=UTC)
+    step = timedelta(seconds=Q.CACHE_TTL_SECONDS + 1)
+    for i in range(3):
+        cache.get(
+            now=base + i * step,
+            credentials_path=creds,
+            paseo_config_path=tmp_path / "nope-paseo.json",
+            env={},
+            client=_client_for(handler),
+        )
+    assert len(calls) == 3
+
+    report = cache.get(
+        now=base + 3 * step,
+        credentials_path=creds,
+        paseo_config_path=tmp_path / "nope-paseo.json",
+        env={},
+        client=_client_for(handler),
+    )
+
+    assert len(calls) == 3, "breaker must stop calling the handler while open"
+    assert report.breaker_open is True
+    probes = {p.source: p for p in report.snapshot.credential_probes}
+    assert probes["credentials_file"].token_found is True
+    assert probes["credentials_file"].outcome == "breaker open"
+    assert probes["paseo"].token_found is False
+    assert probes["paseo"].outcome == "absent"
+
+
+# --------------------------------------------------------------------------
 # The token must never reach a rendered page, even via a leaking response body
 # --------------------------------------------------------------------------
 
@@ -509,6 +662,180 @@ def test_find_last_throttle_event_skips_files_without_a_match(tmp_path: Path) ->
         json.dumps({"type": "assistant", "message": {}}) + "\n", encoding="utf-8"
     )
     assert Q.find_last_throttle_event(tmp_path) is None
+
+
+# --------------------------------------------------------------------------
+# Usage estimate: absolute tokens from local transcripts, never a percentage (T6b)
+# --------------------------------------------------------------------------
+
+
+def _write_transcript(path: Path, lines: list[dict]) -> None:
+    path.write_text("\n".join(json.dumps(line) for line in lines) + "\n", encoding="utf-8")
+
+
+def _usage(input_tokens=0, output_tokens=0, cache_creation=0, cache_read=0) -> dict:
+    return {
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "cache_creation_input_tokens": cache_creation,
+        "cache_read_input_tokens": cache_read,
+    }
+
+
+def test_usage_estimate_dedups_repeated_lines_by_message_id(tmp_path: Path) -> None:
+    """The real 2026-09-20 finding this module exists to avoid: a session can
+    log the same assistant turn's `usage` object on several jsonl lines
+    (376 lines, 24 distinct `message.id` values, observed on this box).
+    Summing every line instead of every distinct id overcounts by ~2x.
+    """
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    project_dir = tmp_path / "proj1"
+    project_dir.mkdir()
+    transcript = project_dir / "session1.jsonl"
+    ts = (now - timedelta(minutes=10)).isoformat().replace("+00:00", "Z")
+    line = {
+        "type": "assistant",
+        "timestamp": ts,
+        "sessionId": "sess-1",
+        "message": {
+            "id": "msg-1",
+            "model": "claude-opus-5",
+            "usage": _usage(input_tokens=10, output_tokens=20, cache_creation=5, cache_read=100),
+        },
+    }
+    _write_transcript(transcript, [line, line, line])  # same message logged 3x
+    os.utime(transcript, (now.timestamp(), now.timestamp()))
+
+    estimate = Q.build_usage_estimate(tmp_path, now=now)
+
+    assert estimate.total_tokens == 10 + 20 + 5 + 100
+    assert estimate.distinct_session_count == 1
+    assert len(estimate.by_model) == 1
+    assert estimate.by_model[0].model == "claude-opus-5"
+    assert estimate.by_model[0].input_tokens == 10
+
+
+def test_usage_estimate_skips_files_older_than_window_by_mtime(tmp_path: Path) -> None:
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    project_dir = tmp_path / "proj1"
+    project_dir.mkdir()
+    old_file = project_dir / "old.jsonl"
+    recent_file = project_dir / "recent.jsonl"
+    ts = now.isoformat().replace("+00:00", "Z")
+    _write_transcript(
+        old_file,
+        [
+            {
+                "type": "assistant",
+                "timestamp": ts,
+                "sessionId": "sess-old",
+                "message": {"id": "msg-old", "model": "m", "usage": _usage(input_tokens=1)},
+            }
+        ],
+    )
+    _write_transcript(
+        recent_file,
+        [
+            {
+                "type": "assistant",
+                "timestamp": ts,
+                "sessionId": "sess-recent",
+                "message": {"id": "msg-recent", "model": "m", "usage": _usage(input_tokens=2)},
+            }
+        ],
+    )
+    old_mtime = (now - timedelta(hours=10)).timestamp()
+    os.utime(old_file, (old_mtime, old_mtime))
+    os.utime(recent_file, (now.timestamp(), now.timestamp()))
+
+    estimate = Q.build_usage_estimate(tmp_path, now=now)
+
+    assert estimate.files_scanned == 1
+    assert estimate.distinct_session_count == 1
+    assert estimate.total_tokens == 2
+
+
+def test_usage_estimate_missing_directory_degrades_to_zero(tmp_path: Path) -> None:
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    estimate = Q.build_usage_estimate(tmp_path / "does-not-exist", now=now)
+    assert estimate.total_tokens == 0
+    assert estimate.distinct_session_count == 0
+    assert estimate.files_scanned == 0
+    assert estimate.by_model == ()
+
+
+def test_usage_estimate_tail_scan_grows_to_cover_a_deeply_buried_line(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A small initial tail read must not silently lose an in-window line
+    that sits far from the end of the file -- the doubling-by-4 growth
+    (`_USAGE_SCAN_INITIAL_TAIL_BYTES` up to `_USAGE_SCAN_MAX_TAIL_BYTES`)
+    must keep reading until the window is actually covered.
+    """
+    monkeypatch.setattr(Q, "_USAGE_SCAN_INITIAL_TAIL_BYTES", 50)
+    monkeypatch.setattr(Q, "_USAGE_SCAN_MAX_TAIL_BYTES", 1_000_000)
+
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    project_dir = tmp_path / "proj1"
+    project_dir.mkdir()
+    transcript = project_dir / "session1.jsonl"
+
+    window_start = now - timedelta(hours=Q.USAGE_ESTIMATE_WINDOW_HOURS)
+    target_line = {
+        "type": "assistant",
+        "timestamp": (window_start + timedelta(seconds=1)).isoformat().replace("+00:00", "Z"),
+        "sessionId": "sess-1",
+        "message": {"id": "msg-target", "model": "m", "usage": _usage(input_tokens=7)},
+    }
+    filler_lines = [
+        {
+            "type": "user",
+            "timestamp": (window_start + timedelta(minutes=i + 1))
+            .isoformat()
+            .replace("+00:00", "Z"),
+            "sessionId": "sess-1",
+            "message": {},
+        }
+        for i in range(40)
+    ]
+    _write_transcript(transcript, [target_line, *filler_lines])
+    os.utime(transcript, (now.timestamp(), now.timestamp()))
+    assert transcript.stat().st_size > 50 * 4, "test setup must exceed a few growth doublings"
+
+    estimate = Q.build_usage_estimate(tmp_path, now=now)
+
+    assert estimate.total_tokens == 7
+    assert estimate.distinct_session_count == 1
+
+
+def test_usage_estimate_cache_reuses_within_ttl_and_refreshes_after(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[int] = []
+    stub = Q.UsageEstimate(
+        window_start=datetime(2026, 9, 20, tzinfo=UTC),
+        window_end=datetime(2026, 9, 20, tzinfo=UTC),
+        by_model=(),
+        total_tokens=0,
+        distinct_session_count=0,
+        files_scanned=0,
+        generated_at=datetime(2026, 9, 20, tzinfo=UTC),
+    )
+
+    def fake_build(root, *, now=None, max_files=Q._MAX_USAGE_TRANSCRIPT_FILES):
+        calls.append(1)
+        return stub
+
+    monkeypatch.setattr(Q, "build_usage_estimate", fake_build)
+    cache = Q.UsageEstimateCache()
+    base = datetime(2026, 9, 20, tzinfo=UTC)
+
+    cache.get(now=base)
+    cache.get(now=base + timedelta(seconds=30))
+    assert len(calls) == 1, "a request within the 60s TTL must not re-scan"
+
+    cache.get(now=base + timedelta(seconds=Q.USAGE_ESTIMATE_CACHE_TTL_SECONDS + 1))
+    assert len(calls) == 2
 
 
 # --------------------------------------------------------------------------
@@ -708,6 +1035,17 @@ def test_quota_route_shows_no_credentials_state_by_default(client: TestClient) -
 def test_quota_route_rejects_post(client: TestClient) -> None:
     response = client.post("/quota")
     assert response.status_code == 405
+
+
+def test_quota_route_renders_credential_table_and_usage_estimate(client: TestClient) -> None:
+    response = client.get("/quota")
+    text = response.text.lower()
+    assert "credential sources" in text
+    assert "usage estimate (from local transcripts)" in text
+    # The autouse fixture in tests/conftest.py neutralizes all three sources,
+    # so every row in this round's table is "absent" -- see
+    # test_quota_route_shows_no_credentials_state_by_default above.
+    assert "absent" in text
 
 
 def test_index_page_renders_codex_quota_state(client: TestClient) -> None:

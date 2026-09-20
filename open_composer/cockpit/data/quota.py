@@ -45,20 +45,67 @@ Three data sources, three honesty levels
 
 Credential handling
 --------------------
-The Claude OAuth access token lives in ``~/.claude/.credentials.json``, which
-is outside the repository, so ``open_composer.cockpit.security.safe_repo_path``
-(which validates paths *inside* the repo) does not apply. Instead this module
-uses one explicit, hardcoded constant, :data:`CLAUDE_CREDENTIALS_PATH` --
-never a caller-supplied or request-derived path. :func:`_load_oauth_token` is
-the only function in this module that ever holds the token in a variable; the
-instant its one caller (``ClaudeQuotaCache._refresh``) has copied it into an
+The Claude OAuth access token can live in any of three places on this box,
+tried in this fixed order (Step 18, T6b) because they fail in genuinely
+different ways that the owner needs to tell apart:
+
+1. The ``CLAUDE_CODE_OAUTH_TOKEN`` environment variable.
+2. ``~/.paseo/config.json``'s ``agents.providers.claude.env.CLAUDE_CODE_OAUTH_TOKEN``
+   -- a long-lived ``sk-ant-oat01-...`` token from ``claude setup-token``. It
+   runs inference (that is how agents on this box work at all) but was
+   observed 2026-09-20 to lack the ``user:profile`` scope this endpoint
+   requires: HTTP 403, ``permission_error``. No amount of re-authenticating
+   *this* token fixes that; a setup-token flow does not appear to ever mint
+   that scope.
+3. ``~/.claude/.credentials.json`` -- the interactive CLI login's token. It
+   does carry ``user:profile`` when fresh, but expires: HTTP 401,
+   ``authentication_error``. Re-running interactive login fixes this one.
+
+Both non-repo paths are outside ``open_composer.cockpit.security.safe_repo_path``
+(which validates paths *inside* the repo), so each is one explicit, hardcoded
+module constant -- :data:`CLAUDE_CREDENTIALS_PATH`, :data:`PASEO_CONFIG_PATH`
+-- never a caller-supplied or request-derived path. ``~/.paseo/config.json``
+also holds *other providers'* secrets alongside this one key, so
+:func:`_load_oauth_token_from_paseo` parses the whole small JSON document (it
+has to, to reach the nested key) but only ever extracts and returns that one
+string; the parsed ``dict`` is a local that goes out of scope on return, and
+none of its other keys are read, logged, or placed on any dataclass.
+:func:`_load_oauth_token`, :func:`_load_oauth_token_from_paseo`, and
+:func:`_load_oauth_token_from_env` are the only functions in this module that
+ever hold a real token in a variable; the instant their one caller
+(``ClaudeQuotaCache._refresh``) has copied a chosen token into an
 ``Authorization`` header value for one outgoing request, that local binding
 is deleted. The token is never stored on a dataclass field, never logged,
-and never returned by any other function. A failing HTTP response's body can
-itself echo request headers back (a real misbehavior class for reverse
-gateways) -- any diagnostic text this module keeps from an error response
-body is passed through ``secret_scrub`` before it is ever stored, so a
-token-shaped string in that body cannot reach a rendered page either.
+and never returned by any other function -- :class:`CredentialProbe`, the
+per-source diagnosis record rendered on ``/quota``, carries only a source
+name, a boolean, and a short fixed outcome string, never the token or a
+response body. A failing HTTP response's body can itself echo request
+headers back (a real misbehavior class for reverse gateways) -- any
+diagnostic text this module keeps from an error response body is passed
+through ``secret_scrub`` before it is ever stored, so a token-shaped string
+in that body cannot reach a rendered page either.
+
+Resolution is ordered, not "probe all three and report the best": sources
+are tried in the fixed order above, and a source with no token found there
+costs nothing (``"absent"``, no HTTP attempt). A source *with* a token is
+always attempted even after an earlier source already failed -- stopping at
+the first failure would have hidden one of this box's two real,
+simultaneously-true failure reasons from the diagnosis table -- but the
+round stops at the first *success*, since a live snapshot makes further
+attempts pointless. The whole pass counts as exactly one breaker failure
+when it nets no success (see "Cache, breaker, timeout" below), never three,
+so a box with two broken sources and one absent one still only spends one
+of the three-strikes budget per cache period. When every attempted source
+fails, the round's single headline reason is chosen by priority --
+``token expired -- re-login`` before ``token lacks user:profile scope``
+before a generic HTTP failure before ``timeout``/``network error`` before
+``invalid response`` -- because on this box specifically, fixing the expired
+credential (case 3 above) is the one action that actually restores live
+reads; naming it first, even when a scope failure is *also* true of another
+source, points the owner at the fix that works. The full, unprioritized
+picture (every attempted source's own outcome) is what :class:`CredentialProbe`
+and its ``/quota`` table are for -- the headline reason is a recommendation,
+not a claim that the other failures do not exist.
 
 Cache, breaker, timeout
 -------------------------
@@ -80,15 +127,53 @@ least five minutes (:data:`_MIN_BURN_SPAN_SECONDS`) *and* utilization is
 rising between the oldest and newest sample; a single sample is never
 extrapolated from, and every other case renders the fixed label
 ``"projection: not enough samples"``.
+
+Usage estimate: absolute tokens, never a percentage (T6b)
+-----------------------------------------------------------
+:func:`build_usage_estimate` answers a narrower, honest question that does
+not depend on the live endpoint at all: from this machine's own
+``~/.claude/projects/*/*.jsonl`` transcripts, how many tokens did the
+current rolling five-hour window actually spend, by model, and across how
+many distinct sessions? This is a real count of what these transcripts
+recorded, not a percentage of anything -- the five-hour *limit* the live
+endpoint measures against is not public and not guessed at here, so turning
+a token count into "X%" would be manufactured precision dressed up as a
+number. The template labels this block "estimate (from local transcripts)"
+and never puts a "%" next to it, distinct from the live block's percentages.
+
+One correctness trap this had to avoid: a single logical assistant turn can
+appear as *multiple* ``type: "assistant"`` lines in a transcript (observed
+2026-09-20 -- one session had 376 such lines but only 24 distinct
+``message.id`` values), each carrying the *same* ``usage`` object. Summing
+every line naively overcounts by roughly 2x on real data. Every accumulator
+in this module keys by ``message.id`` and keeps exactly one ``usage`` record
+per id, so a repeated line contributes once.
+
+Reading strategy, matching :func:`_last_quota_event_in_file`'s existing
+bounded-tail pattern rather than a fresh one: a file whose ``mtime`` is
+older than the window start cannot contain a line timestamped inside the
+window (transcripts are append-only), so it is skipped without being opened
+at all. A file that was touched inside the window is read from the end in
+growing chunks (:data:`_USAGE_SCAN_INITIAL_TAIL_BYTES`, doubling-by-4 up to
+:data:`_USAGE_SCAN_MAX_TAIL_BYTES`) until either the window's start is
+reached inside the chunk already read, the whole file has been read, or the
+cap is hit -- whichever comes first. No file is ever read past that cap
+regardless of its total size, and no file is ever loaded as one whole
+string held alongside others; each file's chunk is decoded, scanned for the
+records it contributes, and discarded before the next file is opened.
+:class:`UsageEstimateCache` caches the assembled result for
+:data:`USAGE_ESTIMATE_CACHE_TTL_SECONDS` (60s) so that the topbar, which
+renders this on every screen, does not re-scan on every request.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from collections import deque
-from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Final, Literal, Protocol
@@ -112,6 +197,9 @@ CLAUDE_OAUTH_BETA_HEADER: Final[str] = "oauth-2025-04-20"
 #: repo root, so `security.safe_repo_path` does not apply; hardcoded rather
 #: than accepting any caller/request-supplied path, by design.
 CLAUDE_CREDENTIALS_PATH: Final[Path] = Path.home() / ".claude" / ".credentials.json"
+#: T6b's second credential source. Outside the repo, like `CLAUDE_CREDENTIALS_PATH`
+#: above -- same allowlist discipline, same reasons `safe_repo_path` does not apply.
+PASEO_CONFIG_PATH: Final[Path] = Path.home() / ".paseo" / "config.json"
 CODEX_AUTH_PATH: Final[Path] = Path.home() / ".codex" / "auth.json"
 CLAUDE_PROJECTS_DIR: Final[Path] = Path.home() / ".claude" / "projects"
 
@@ -119,6 +207,26 @@ DEFAULT_TIMEOUT_SECONDS: Final[float] = 5.0
 CACHE_TTL_SECONDS: Final[float] = 60.0
 BREAKER_FAILURE_THRESHOLD: Final[int] = 3
 BREAKER_COOLDOWN_SECONDS: Final[float] = 600.0  # 10 minutes
+
+#: T6b: ordered credential resolution. The env var name is Anthropic's own
+#: (also what a real `claude setup-token` writes into `~/.paseo/config.json`).
+_ENV_TOKEN_VAR: Final[str] = "CLAUDE_CODE_OAUTH_TOKEN"
+
+CredentialSourceKey = Literal["env", "paseo", "credentials_file"]
+
+#: Fixed resolution order and display labels -- never the token, see module
+#: docstring's "Credential handling". Order matches the module docstring's
+#: numbered list.
+CREDENTIAL_SOURCE_ORDER: Final[tuple[CredentialSourceKey, ...]] = (
+    "env",
+    "paseo",
+    "credentials_file",
+)
+_CREDENTIAL_SOURCE_LABELS: Final[dict[CredentialSourceKey, str]] = {
+    "env": f"env:{_ENV_TOKEN_VAR}",
+    "paseo": "~/.paseo/config.json",
+    "credentials_file": "~/.claude/.credentials.json",
+}
 
 #: At most one successful sample per `CACHE_TTL_SECONDS`, so this covers a
 #: little over 5 hours of history -- exactly the window the projection needs.
@@ -137,6 +245,22 @@ _MAX_TRANSCRIPT_FILES_SCANNED: Final[int] = 20
 
 _CODEX_LABEL_APIKEY: Final[str] = "api key billing -- no subscription quota"
 _NOT_ENOUGH_SAMPLES_LABEL: Final[str] = "projection: not enough samples"
+
+# --------------------------------------------------------------------------
+# Usage estimate (T6b): see module docstring's "Usage estimate" section.
+# --------------------------------------------------------------------------
+
+USAGE_ESTIMATE_WINDOW_HOURS: Final[float] = 5.0
+USAGE_ESTIMATE_CACHE_TTL_SECONDS: Final[float] = 60.0
+#: First tail read per file. Large enough to cover a normal session's
+#: worth of chatter without a second read; doubled-by-4 (see
+#: `_scan_transcript_for_usage`) up to the cap below on a busy file.
+_USAGE_SCAN_INITIAL_TAIL_BYTES: Final[int] = 1_048_576  # 1 MiB
+_USAGE_SCAN_MAX_TAIL_BYTES: Final[int] = 16 * 1024 * 1024  # 16 MiB, never more per file
+#: Safety cap on how many in-window files get scanned at all, independent of
+#: the per-file byte cap above -- guards against a pathological number of
+#: distinct session files all touched inside one five-hour window.
+_MAX_USAGE_TRANSCRIPT_FILES: Final[int] = 50
 
 
 # --------------------------------------------------------------------------
@@ -268,6 +392,71 @@ def _load_oauth_token(path: Path) -> str | None:
     return token if isinstance(token, str) and token else None
 
 
+def _load_oauth_token_from_paseo(path: Path) -> str | None:
+    """Read ``agents.providers.claude.env.CLAUDE_CODE_OAUTH_TOKEN`` from `path`.
+
+    `path` holds several other providers' secrets alongside this one key
+    (module docstring). Parsing the whole small JSON document is required to
+    reach the nested key, but only that one string is ever pulled out; the
+    parsed ``dict`` (and every sibling provider's secret in it) goes out of
+    scope the moment this function returns and is never logged, stored on a
+    dataclass, or handed to any caller other than the one that immediately
+    builds one `Authorization` header from it.
+    """
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(data, dict):
+        return None
+    agents = data.get("agents")
+    if not isinstance(agents, dict):
+        return None
+    providers = agents.get("providers")
+    if not isinstance(providers, dict):
+        return None
+    claude = providers.get("claude")
+    if not isinstance(claude, dict):
+        return None
+    env = claude.get("env")
+    if not isinstance(env, dict):
+        return None
+    token = env.get(_ENV_TOKEN_VAR)
+    return token if isinstance(token, str) and token else None
+
+
+def _load_oauth_token_from_env(env: Mapping[str, str]) -> str | None:
+    """Read `_ENV_TOKEN_VAR` from an environment mapping (default `os.environ`).
+
+    Takes the mapping as a parameter (never reaches into `os.environ`
+    itself) so a test can supply a synthetic one without mutating the real
+    process environment.
+    """
+    token = env.get(_ENV_TOKEN_VAR)
+    return token if isinstance(token, str) and token else None
+
+
+def _resolve_credential_candidates(
+    *, env: Mapping[str, str], paseo_path: Path, credentials_path: Path
+) -> tuple[tuple[CredentialSourceKey, str, str | None], ...]:
+    """The three (source, display label, token-or-None) candidates, in the
+    fixed order documented in the module docstring's "Credential handling".
+    """
+    return (
+        ("env", _CREDENTIAL_SOURCE_LABELS["env"], _load_oauth_token_from_env(env)),
+        ("paseo", _CREDENTIAL_SOURCE_LABELS["paseo"], _load_oauth_token_from_paseo(paseo_path)),
+        (
+            "credentials_file",
+            _CREDENTIAL_SOURCE_LABELS["credentials_file"],
+            _load_oauth_token(credentials_path),
+        ),
+    )
+
+
 # --------------------------------------------------------------------------
 # Claude usage payload parsing
 # --------------------------------------------------------------------------
@@ -306,6 +495,26 @@ class ClaudeExtraUsage:
 
 
 @dataclass(frozen=True)
+class CredentialProbe:
+    """One credential source's diagnosis for one resolution round (T6b).
+
+    Rendered as a row in the ``/quota`` credential table. Never carries the
+    token or a response body -- ``label`` is one of the three fixed display
+    strings in :data:`_CREDENTIAL_SOURCE_LABELS`, and ``outcome`` is one of
+    the short fixed strings documented on :func:`build_quota_report`'s
+    caller, `ClaudeQuotaCache._refresh`: ``"ok"``, ``"expired (401)"``,
+    ``"insufficient scope (403)"``, ``"http <code>"``, ``"timeout"``,
+    ``"network error"``, ``"invalid response"``, or ``"absent"`` (no token
+    found at this source, so no request was attempted).
+    """
+
+    source: CredentialSourceKey
+    label: str
+    token_found: bool
+    outcome: str
+
+
+@dataclass(frozen=True)
 class ClaudeQuotaSnapshot:
     """What is known about Claude subscription usage right now.
 
@@ -314,8 +523,16 @@ class ClaudeQuotaSnapshot:
     ``"no credentials"``, ``"breaker open"``, plus two this module adds for
     completeness (``"network error"`` for a connection failure that is not a
     timeout, ``"invalid response"`` for a response that parses as JSON but
-    not into the expected shape). ``diagnostic`` is only ever populated for
-    an HTTP error, and only after `secret_scrub` -- see module docstring.
+    not into the expected shape), plus two T6b adds once a specific status
+    code names the actual cause (``"token expired -- re-login"`` for a 401,
+    ``"token lacks user:profile scope"`` for a 403) -- see module docstring's
+    "Credential handling" for why these two get to be the headline reason
+    ahead of the generic ones. ``diagnostic`` is only ever populated for an
+    HTTP error, and only after `secret_scrub` -- see module docstring.
+    ``credential_probes`` is the full per-source diagnosis for this round
+    (T6b); it is empty only when the breaker was already open and even then
+    still reports each source's `token_found` (a local file read, not a
+    network attempt) -- see `ClaudeQuotaCache._refresh`.
     """
 
     fetched_at: datetime
@@ -325,6 +542,7 @@ class ClaudeQuotaSnapshot:
     unavailable_reason: str | None
     diagnostic: str | None
     http_status: int | None = None
+    credential_probes: tuple[CredentialProbe, ...] = ()
 
 
 # ok/warn/stale thresholds mirror `health.build_disk_status`/`build_memory_status`
@@ -391,7 +609,12 @@ def _parse_usage_payload(payload: Any, *, now: datetime) -> ClaudeQuotaSnapshot:
 
 
 def _unavailable_snapshot(
-    moment: datetime, reason: str, *, diagnostic: str | None = None, http_status: int | None = None
+    moment: datetime,
+    reason: str,
+    *,
+    diagnostic: str | None = None,
+    http_status: int | None = None,
+    credential_probes: tuple[CredentialProbe, ...] = (),
 ) -> ClaudeQuotaSnapshot:
     return ClaudeQuotaSnapshot(
         fetched_at=moment,
@@ -401,6 +624,7 @@ def _unavailable_snapshot(
         unavailable_reason=reason,
         diagnostic=diagnostic,
         http_status=http_status,
+        credential_probes=credential_probes,
     )
 
 
@@ -463,6 +687,56 @@ def compute_burn_rate_projection(
 
 
 # --------------------------------------------------------------------------
+# Round-level failure summary: which attempted source's outcome becomes the
+# one headline `unavailable_reason` when a whole resolution round fails.
+# See module docstring's "Credential handling", last paragraph, for why this
+# is a priority pick rather than "first attempted" or "last attempted".
+# --------------------------------------------------------------------------
+
+#: Most actionable first. Only reached for probes that were actually
+#: attempted (a token was found there); `"absent"` never appears here.
+_ROUND_REASON_PRIORITY: Final[tuple[str, ...]] = (
+    "expired (401)",
+    "insufficient scope (403)",
+    "http",  # generic bucket for any `f"http {code}"` outcome
+    "timeout",
+    "network error",
+    "invalid response",
+)
+
+_OUTCOME_TO_ROUND_REASON: Final[dict[str, str]] = {
+    "expired (401)": "token expired -- re-login",
+    "insufficient scope (403)": "token lacks user:profile scope",
+    "timeout": "timeout",
+    "network error": "network error",
+    "invalid response": "invalid response",
+}
+
+
+def _priority_rank(outcome: str) -> int:
+    key = "http" if outcome.startswith("http ") else outcome
+    try:
+        return _ROUND_REASON_PRIORITY.index(key)
+    except ValueError:
+        return len(_ROUND_REASON_PRIORITY)  # defensive: unrecognized outcome, lowest priority
+
+
+def _round_reason_for_outcome(outcome: str) -> str:
+    """The pre-T6b-compatible `unavailable_reason` string for one outcome.
+
+    Every code path that is not 401/403 keeps its exact pre-T6b wording
+    (``"http 4xx/5xx"``, ``"timeout"``, ``"network error"``,
+    ``"invalid response"``) so existing callers and tests that predate the
+    three-source round see unchanged text for those cases.
+    """
+    if outcome in _OUTCOME_TO_ROUND_REASON:
+        return _OUTCOME_TO_ROUND_REASON[outcome]
+    if outcome.startswith("http "):
+        return "http 4xx/5xx"
+    return outcome
+
+
+# --------------------------------------------------------------------------
 # Cache + circuit breaker + live fetch
 # --------------------------------------------------------------------------
 
@@ -513,6 +787,8 @@ class ClaudeQuotaCache:
         *,
         now: datetime | None = None,
         credentials_path: Path | None = None,
+        paseo_config_path: Path | None = None,
+        env: Mapping[str, str] | None = None,
         client: httpx.Client | None = None,
         timeout: float = DEFAULT_TIMEOUT_SECONDS,
     ) -> ClaudeQuotaReport:
@@ -523,7 +799,12 @@ class ClaudeQuotaCache:
                 return self._make_report(moment, served_from_cache=True, cache_age=age)
 
         snapshot = self._refresh(
-            moment, credentials_path=credentials_path, client=client, timeout=timeout
+            moment,
+            credentials_path=credentials_path,
+            paseo_config_path=paseo_config_path,
+            env=env,
+            client=client,
+            timeout=timeout,
         )
         self._snapshot = snapshot
         self._snapshot_at = moment
@@ -536,63 +817,184 @@ class ClaudeQuotaCache:
         moment: datetime,
         *,
         credentials_path: Path | None,
+        paseo_config_path: Path | None,
+        env: Mapping[str, str] | None,
         client: httpx.Client | None,
         timeout: float,
     ) -> ClaudeQuotaSnapshot:
+        """One resolution round across all three credential sources.
+
+        See module docstring's "Credential handling": sources are tried in
+        `CREDENTIAL_SOURCE_ORDER`, an absent source costs no HTTP attempt, a
+        present-but-failing source does not stop the round (so the diagnosis
+        table can show every real failure, not just the first), and the
+        round stops at the first success. Whatever happens, this whole call
+        is at most one round -- `_record_failure` below is called at most
+        once per round, never once per source, so the breaker's
+        three-strikes budget is spent in cache periods, not in credential
+        sources.
+        """
+        # Local, cheap, no network: which sources have a token right now.
+        # Computed even when the breaker is open below, since checking for a
+        # token is a local file/env read, not the network attempt the
+        # breaker exists to gate.
+        candidates = _resolve_credential_candidates(
+            env=env if env is not None else os.environ,
+            paseo_path=paseo_config_path if paseo_config_path is not None else PASEO_CONFIG_PATH,
+            credentials_path=(
+                credentials_path if credentials_path is not None else CLAUDE_CREDENTIALS_PATH
+            ),
+        )
+
         if self._breaker_open_until is not None:
             if moment < self._breaker_open_until:
-                return _unavailable_snapshot(moment, "breaker open")
-            # Cooldown elapsed: close the breaker and allow exactly one fresh attempt.
+                probes = tuple(
+                    CredentialProbe(
+                        source=source,
+                        label=label,
+                        token_found=token is not None,
+                        outcome="breaker open" if token is not None else "absent",
+                    )
+                    for source, label, token in candidates
+                )
+                return _unavailable_snapshot(moment, "breaker open", credential_probes=probes)
+            # Cooldown elapsed: close the breaker and allow exactly one fresh round.
             self._breaker_open_until = None
             self._consecutive_failures = 0
 
-        path = credentials_path if credentials_path is not None else CLAUDE_CREDENTIALS_PATH
-        token = _load_oauth_token(path)
-        if token is None:
-            return _unavailable_snapshot(moment, "no credentials")
+        probes: list[CredentialProbe] = []
+        winning_snapshot: ClaudeQuotaSnapshot | None = None
+        best_priority: int | None = None
+        best_reason: str | None = None
+        best_diagnostic: str | None = None
+        best_http_status: int | None = None
 
-        version = discover_claude_cli_version()
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "anthropic-beta": CLAUDE_OAUTH_BETA_HEADER,
-            "User-Agent": f"claude-code/{version}",
-        }
-        del token  # must not survive past building this one header value
+        def _consider_failure(
+            outcome: str, *, diagnostic: str | None = None, http_status: int | None = None
+        ) -> None:
+            nonlocal best_priority, best_reason, best_diagnostic, best_http_status
+            rank = _priority_rank(outcome)
+            if best_priority is None or rank < best_priority:
+                best_priority = rank
+                best_reason = _round_reason_for_outcome(outcome)
+                best_diagnostic = diagnostic
+                best_http_status = http_status
 
         owns_client = client is None
         http_client = client if client is not None else _build_http_client()
         try:
-            try:
-                response = http_client.get(CLAUDE_USAGE_URL, headers=headers, timeout=timeout)
-            except httpx.TimeoutException:
-                self._record_failure(moment)
-                return _unavailable_snapshot(moment, "timeout")
-            except httpx.HTTPError:
-                self._record_failure(moment)
-                return _unavailable_snapshot(moment, "network error")
+            for source, label, token in candidates:
+                if token is None:
+                    probes.append(
+                        CredentialProbe(
+                            source=source, label=label, token_found=False, outcome="absent"
+                        )
+                    )
+                    continue
+
+                version = discover_claude_cli_version()
+                headers = {
+                    "Authorization": f"Bearer {token}",
+                    "anthropic-beta": CLAUDE_OAUTH_BETA_HEADER,
+                    "User-Agent": f"claude-code/{version}",
+                }
+                del token  # must not survive past building this one header value
+
+                try:
+                    response = http_client.get(CLAUDE_USAGE_URL, headers=headers, timeout=timeout)
+                except httpx.TimeoutException:
+                    probes.append(
+                        CredentialProbe(
+                            source=source, label=label, token_found=True, outcome="timeout"
+                        )
+                    )
+                    _consider_failure("timeout")
+                    continue
+                except httpx.HTTPError:
+                    probes.append(
+                        CredentialProbe(
+                            source=source, label=label, token_found=True, outcome="network error"
+                        )
+                    )
+                    _consider_failure("network error")
+                    continue
+
+                if response.status_code == 401:
+                    probes.append(
+                        CredentialProbe(
+                            source=source, label=label, token_found=True, outcome="expired (401)"
+                        )
+                    )
+                    diagnostic = secret_scrub(response.text[:500]) if response.text else None
+                    _consider_failure("expired (401)", diagnostic=diagnostic, http_status=401)
+                    continue
+                if response.status_code == 403:
+                    probes.append(
+                        CredentialProbe(
+                            source=source,
+                            label=label,
+                            token_found=True,
+                            outcome="insufficient scope (403)",
+                        )
+                    )
+                    diagnostic = secret_scrub(response.text[:500]) if response.text else None
+                    _consider_failure(
+                        "insufficient scope (403)", diagnostic=diagnostic, http_status=403
+                    )
+                    continue
+                if response.status_code >= 400:
+                    outcome = f"http {response.status_code}"
+                    probes.append(
+                        CredentialProbe(
+                            source=source, label=label, token_found=True, outcome=outcome
+                        )
+                    )
+                    diagnostic = secret_scrub(response.text[:500]) if response.text else None
+                    _consider_failure(
+                        outcome, diagnostic=diagnostic, http_status=response.status_code
+                    )
+                    continue
+
+                try:
+                    winning_snapshot = _parse_usage_payload(response.json(), now=moment)
+                except Exception:
+                    # Defensive: this endpoint is undocumented and can change
+                    # shape without notice (module docstring) -- a parse
+                    # surprise must degrade this one probe, not crash the page.
+                    probes.append(
+                        CredentialProbe(
+                            source=source,
+                            label=label,
+                            token_found=True,
+                            outcome="invalid response",
+                        )
+                    )
+                    _consider_failure("invalid response")
+                    continue
+
+                probes.append(
+                    CredentialProbe(source=source, label=label, token_found=True, outcome="ok")
+                )
+                break  # a live snapshot makes further sources pointless
         finally:
             if owns_client:
                 http_client.close()
 
-        if response.status_code >= 400:
-            self._record_failure(moment)
-            diagnostic = secret_scrub(response.text[:500]) if response.text else None
-            return _unavailable_snapshot(
-                moment, "http 4xx/5xx", diagnostic=diagnostic, http_status=response.status_code
-            )
+        probes_tuple = tuple(probes)
+        if winning_snapshot is not None:
+            self._consecutive_failures = 0
+            self._breaker_open_until = None
+            return replace(winning_snapshot, credential_probes=probes_tuple)
 
-        try:
-            snapshot = _parse_usage_payload(response.json(), now=moment)
-        except Exception:
-            # Defensive: this endpoint is undocumented and can change shape
-            # without notice (module docstring) -- a parse surprise must
-            # degrade this one snapshot, not crash the page.
-            self._record_failure(moment)
-            return _unavailable_snapshot(moment, "invalid response")
-
-        self._consecutive_failures = 0
-        self._breaker_open_until = None
-        return snapshot
+        self._record_failure(moment)
+        reason = best_reason if best_reason is not None else "no credentials"
+        return _unavailable_snapshot(
+            moment,
+            reason,
+            diagnostic=best_diagnostic,
+            http_status=best_http_status,
+            credential_probes=probes_tuple,
+        )
 
     def _record_failure(self, moment: datetime) -> None:
         self._consecutive_failures += 1
@@ -905,6 +1307,282 @@ def build_codex_quota_state(
 
 
 # --------------------------------------------------------------------------
+# Usage estimate (T6b) -- see module docstring's "Usage estimate" section.
+# Absolute tokens from local transcripts, never a percentage; no network.
+# --------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class ModelUsageTotals:
+    """One model's token totals within the estimate window."""
+
+    model: str
+    input_tokens: int
+    output_tokens: int
+    cache_creation_tokens: int
+    cache_read_tokens: int
+    total_tokens: int
+
+
+@dataclass(frozen=True)
+class UsageEstimate:
+    """A transcript-derived, absolute-tokens usage figure for one window.
+
+    Deliberately has no percentage field -- see module docstring. Every
+    number here is a real count of what local transcripts recorded in
+    ``[window_start, window_end)``; ``files_scanned`` and ``generated_at``
+    are the honesty/staleness receipts a reader needs to trust the rest.
+    """
+
+    window_start: datetime
+    window_end: datetime
+    by_model: tuple[ModelUsageTotals, ...]
+    total_tokens: int
+    distinct_session_count: int
+    files_scanned: int
+    generated_at: datetime
+
+
+def _usage_int(value: Any) -> int:
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
+def _iter_transcript_files_in_window(
+    root: Path, window_start: datetime, *, max_files: int
+) -> tuple[Path, ...]:
+    """Transcript files whose `mtime` falls inside the window, newest first.
+
+    A file untouched since before `window_start` is append-only and so
+    cannot contain a line timestamped inside the window -- it is excluded
+    here without ever being opened (module docstring's "Reading strategy").
+    """
+    if not root.is_dir():
+        return ()
+    try:
+        candidates = [p for p in root.glob("*/*.jsonl") if p.is_file()]
+    except OSError:
+        return ()
+    in_window: list[tuple[float, Path]] = []
+    for path in candidates:
+        try:
+            mtime = path.stat().st_mtime
+        except OSError:
+            continue
+        if datetime.fromtimestamp(mtime, tz=UTC) >= window_start:
+            in_window.append((mtime, path))
+    in_window.sort(key=lambda pair: pair[0], reverse=True)
+    return tuple(path for _, path in in_window[:max_files])
+
+
+def _decode_tail_lines(path: Path, tail_bytes: int) -> tuple[list[str], int]:
+    """Read the last `tail_bytes` of `path` and split into lines.
+
+    Returns `(lines, chunk_start_offset)`. When `chunk_start_offset > 0` the
+    first decoded line may be a truncated fragment of a longer line, so the
+    caller drops it (mirrors `_last_quota_event_in_file`'s existing pattern).
+    """
+    with path.open("rb") as handle:
+        handle.seek(0, 2)
+        size = handle.tell()
+        start = max(0, size - tail_bytes)
+        handle.seek(start)
+        chunk = handle.read()
+    lines = chunk.decode("utf-8", errors="replace").split("\n")
+    if start > 0:
+        lines = lines[1:]
+    return lines, start
+
+
+def _scan_transcript_for_usage(
+    path: Path, window_start: datetime
+) -> tuple[dict[str, tuple[str, int, int, int, int]], set[str]]:
+    """Bounded, growing tail-scan of one transcript for in-window usage.
+
+    Returns `(usage_by_message_id, session_ids)`. Keying by `message.id`
+    (never summing every matching line) is what makes this honest -- see
+    module docstring's "one correctness trap" paragraph: a single logical
+    turn can be logged as several lines sharing one `usage` object, and
+    summing every line overcounts.
+
+    Starts with `_USAGE_SCAN_INITIAL_TAIL_BYTES` and, if the window is not
+    yet fully covered by what has been read (the oldest parsed timestamp in
+    the chunk is still `>= window_start`, and the chunk is not already the
+    whole file), grows the tail by 4x and re-reads, up to
+    `_USAGE_SCAN_MAX_TAIL_BYTES` -- this file is never read past that cap
+    and is never held in memory as more than one such chunk at a time.
+    """
+    messages: dict[str, tuple[str, int, int, int, int]] = {}
+    sessions: set[str] = set()
+    try:
+        size = path.stat().st_size
+    except OSError:
+        return messages, sessions
+    if size <= 0:
+        return messages, sessions
+
+    tail_bytes = min(size, _USAGE_SCAN_INITIAL_TAIL_BYTES)
+    while True:
+        try:
+            lines, start = _decode_tail_lines(path, tail_bytes)
+        except OSError:
+            return messages, sessions
+
+        earliest_seen_ts: datetime | None = None
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            try:
+                obj = json.loads(stripped)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(obj, dict):
+                continue
+            ts = _parse_iso(obj.get("timestamp"))
+            if ts is None:
+                continue
+            if earliest_seen_ts is None or ts < earliest_seen_ts:
+                earliest_seen_ts = ts
+            if ts < window_start:
+                continue
+
+            session_id = obj.get("sessionId")
+            if isinstance(session_id, str) and session_id:
+                sessions.add(session_id)
+
+            if obj.get("type") != "assistant":
+                continue
+            message = obj.get("message")
+            if not isinstance(message, dict):
+                continue
+            usage = message.get("usage")
+            if not isinstance(usage, dict):
+                continue
+            msg_id = message.get("id")
+            if not isinstance(msg_id, str) or not msg_id:
+                continue
+            model = message.get("model")
+            model = model if isinstance(model, str) and model else "unknown"
+            messages[msg_id] = (
+                model,
+                _usage_int(usage.get("input_tokens")),
+                _usage_int(usage.get("output_tokens")),
+                _usage_int(usage.get("cache_creation_input_tokens")),
+                _usage_int(usage.get("cache_read_input_tokens")),
+            )
+
+        reached_bof = start == 0
+        window_fully_covered = reached_bof or (
+            earliest_seen_ts is not None and earliest_seen_ts < window_start
+        )
+        if window_fully_covered or tail_bytes >= _USAGE_SCAN_MAX_TAIL_BYTES or tail_bytes >= size:
+            break
+        tail_bytes = min(_USAGE_SCAN_MAX_TAIL_BYTES, size, tail_bytes * 4)
+
+    return messages, sessions
+
+
+def build_usage_estimate(
+    root: Path | None = None,
+    *,
+    now: datetime | None = None,
+    max_files: int = _MAX_USAGE_TRANSCRIPT_FILES,
+) -> UsageEstimate:
+    """Absolute token totals for the current rolling window, from local
+    transcripts only -- no network, no live-endpoint dependency, see module
+    docstring's "Usage estimate" section. Degrades to an all-zero estimate
+    (never raises) when the transcripts directory is missing or every file
+    in it fails to read; a caller-visible zero is honest here (it means "no
+    local record of usage in this window"), unlike a guessed percentage.
+    """
+    moment = now or datetime.now(UTC)
+    window_start = moment - timedelta(hours=USAGE_ESTIMATE_WINDOW_HOURS)
+    base = root if root is not None else CLAUDE_PROJECTS_DIR
+    files = _iter_transcript_files_in_window(base, window_start, max_files=max_files)
+
+    all_messages: dict[str, tuple[str, int, int, int, int]] = {}
+    sessions: set[str] = set()
+    for path in files:
+        try:
+            messages, file_sessions = _scan_transcript_for_usage(path, window_start)
+        except Exception:
+            # Defensive: one unreadable/surprising transcript must not blank
+            # the whole estimate.
+            continue
+        all_messages.update(messages)
+        sessions.update(file_sessions)
+
+    totals: dict[str, list[int]] = {}
+    for model, input_tokens, output_tokens, cache_creation, cache_read in all_messages.values():
+        bucket = totals.setdefault(model, [0, 0, 0, 0])
+        bucket[0] += input_tokens
+        bucket[1] += output_tokens
+        bucket[2] += cache_creation
+        bucket[3] += cache_read
+
+    by_model = tuple(
+        ModelUsageTotals(
+            model=model,
+            input_tokens=values[0],
+            output_tokens=values[1],
+            cache_creation_tokens=values[2],
+            cache_read_tokens=values[3],
+            total_tokens=sum(values),
+        )
+        for model, values in sorted(totals.items())
+    )
+    return UsageEstimate(
+        window_start=window_start,
+        window_end=moment,
+        by_model=by_model,
+        total_tokens=sum(m.total_tokens for m in by_model),
+        distinct_session_count=len(sessions),
+        files_scanned=len(files),
+        generated_at=moment,
+    )
+
+
+class UsageEstimateCache:
+    """A 60-second in-memory cache for `build_usage_estimate` (T6b).
+
+    Mirrors `ClaudeQuotaCache`'s TTL policy but carries no circuit breaker:
+    a filesystem read has no remote service to protect, and every failure
+    mode of the scan it wraps already degrades to zero rather than raising
+    (see `build_usage_estimate`). Exists so the topbar, which renders this
+    on every screen (module docstring), does not re-scan on every request.
+    """
+
+    def __init__(self) -> None:
+        self._estimate: UsageEstimate | None = None
+        self._computed_at: datetime | None = None
+
+    def get(self, *, now: datetime | None = None, root: Path | None = None) -> UsageEstimate:
+        moment = now or datetime.now(UTC)
+        if self._estimate is not None and self._computed_at is not None:
+            age = (moment - self._computed_at).total_seconds()
+            if 0 <= age < USAGE_ESTIMATE_CACHE_TTL_SECONDS:
+                return self._estimate
+        estimate = build_usage_estimate(root, now=moment)
+        self._estimate = estimate
+        self._computed_at = moment
+        return estimate
+
+
+_DEFAULT_USAGE_ESTIMATE_CACHE = UsageEstimateCache()
+
+
+def get_default_usage_estimate_cache() -> UsageEstimateCache:
+    """The process-wide cache `open_composer.cockpit.app` shares across requests.
+
+    A function, not a bare module attribute, for the same reason as
+    `get_default_claude_cache`: a test can monkeypatch this name to hand out
+    a fresh, isolated instance instead of the one long-lived instance a real
+    server keeps for its entire run.
+    """
+    return _DEFAULT_USAGE_ESTIMATE_CACHE
+
+
+# --------------------------------------------------------------------------
 # Topbar (cheap: every screen renders this)
 # --------------------------------------------------------------------------
 
@@ -978,6 +1656,7 @@ class QuotaReport:
     claude: ClaudeQuotaReport
     claude_throttle_event: ThrottleEvent | None
     codex: CodexQuotaState
+    usage_estimate: UsageEstimate
 
 
 def build_quota_report(
@@ -985,22 +1664,31 @@ def build_quota_report(
     *,
     now: datetime | None = None,
     credentials_path: Path | None = None,
+    paseo_config_path: Path | None = None,
+    env: Mapping[str, str] | None = None,
     client: httpx.Client | None = None,
     timeout: float = DEFAULT_TIMEOUT_SECONDS,
     transcripts_root: Path | None = None,
     codex_auth_path: Path | None = None,
     codex_rpc_client: CodexRateLimitsClient | None = None,
+    usage_cache: UsageEstimateCache | None = None,
 ) -> QuotaReport:
     """Assemble the full `/quota` detail view: all four Claude windows, extra
-    usage, the Codex state, and the last throttle event from the fallback
-    layer. `cache` is required (not defaulted here) so callers -- both
-    `open_composer.cockpit.app` and tests -- always say explicitly which
-    cache instance's state (and cache age / breaker state) they are asking
-    to render.
+    usage, the per-source credential diagnosis, the Codex state, the last
+    throttle event from the fallback layer, and the transcript-based usage
+    estimate (T6b). `cache` is required (not defaulted here) so callers --
+    both `open_composer.cockpit.app` and tests -- always say explicitly
+    which cache instance's state (and cache age / breaker state) they are
+    asking to render.
     """
     moment = now or datetime.now(UTC)
     claude_report = cache.get(
-        now=moment, credentials_path=credentials_path, client=client, timeout=timeout
+        now=moment,
+        credentials_path=credentials_path,
+        paseo_config_path=paseo_config_path,
+        env=env,
+        client=client,
+        timeout=timeout,
     )
     try:
         throttle_event = find_last_throttle_event(transcripts_root)
@@ -1008,11 +1696,14 @@ def build_quota_report(
         # Defensive: a transcript-scanning surprise must not blank this page.
         throttle_event = None
     codex_state = build_codex_quota_state(auth_path=codex_auth_path, rpc_client=codex_rpc_client)
+    usage_cache_obj = usage_cache if usage_cache is not None else get_default_usage_estimate_cache()
+    usage_estimate = usage_cache_obj.get(now=moment, root=transcripts_root)
     return QuotaReport(
         generated_at=moment,
         claude=claude_report,
         claude_throttle_event=throttle_event,
         codex=codex_state,
+        usage_estimate=usage_estimate,
     )
 
 
@@ -1025,7 +1716,11 @@ __all__ = [
     "CLAUDE_PROJECTS_DIR",
     "CLAUDE_USAGE_URL",
     "CODEX_AUTH_PATH",
+    "CREDENTIAL_SOURCE_ORDER",
     "DEFAULT_TIMEOUT_SECONDS",
+    "PASEO_CONFIG_PATH",
+    "USAGE_ESTIMATE_CACHE_TTL_SECONDS",
+    "USAGE_ESTIMATE_WINDOW_HOURS",
     "BurnRateProjection",
     "BurnRateSample",
     "ClaudeExtraUsage",
@@ -1036,16 +1731,23 @@ __all__ = [
     "CodexQuotaState",
     "CodexRateLimitWindow",
     "CodexRateLimitsClient",
+    "CredentialProbe",
+    "CredentialSourceKey",
+    "ModelUsageTotals",
     "QuotaReport",
     "ThrottleEvent",
     "TopbarQuota",
     "TopbarQuotaBar",
+    "UsageEstimate",
+    "UsageEstimateCache",
     "build_codex_quota_state",
     "build_quota_report",
+    "build_usage_estimate",
     "compute_burn_rate_projection",
     "discover_claude_cli_version",
     "find_last_throttle_event",
     "get_default_claude_cache",
+    "get_default_usage_estimate_cache",
     "parse_codex_rate_limits_response",
     "to_topbar_quota",
     "unknown_topbar_quota",
