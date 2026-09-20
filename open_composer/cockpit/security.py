@@ -34,8 +34,22 @@ _PATTERNS: tuple[re.Pattern[str], ...] = (
     # "sk-ant-...", OpenAI keys are "sk-proj-..." or "sk-...": one pattern covers
     # all of them since they share the "sk-" prefix and are token-charset after it.
     re.compile(r"\bsk-[A-Za-z0-9_\-]{8,}"),
-    # "Bearer <token>" authorization headers.
-    re.compile(r"\bBearer\s+[A-Za-z0-9_\-.=]{8,}"),
+    # "Bearer <token>" / "Basic <base64>" authorization values, any casing of the
+    # scheme word (agent transcripts quote curl commands in lower case).
+    re.compile(r"(?i)\b(?:Bearer|Basic)\s+[A-Za-z0-9_\-.=+/]{8,}"),
+    # JWTs and JWT-shaped base64 blobs: `eyJ` is base64 for `{"`. Cloudflare tunnel
+    # connector tokens and Paseo relay tokens have this shape without any prefix.
+    re.compile(r"\beyJ[A-Za-z0-9_\-]{16,}(?:\.[A-Za-z0-9_\-]{8,}){0,2}"),
+    # Vendor-prefixed tokens that carry no key= context: GitHub (ghp_/gho_/ghu_/ghs_/
+    # ghr_/github_pat_), Slack (xox?-), AWS access key ids.
+    re.compile(
+        r"\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}"
+        r"|xox[abprs]-[A-Za-z0-9\-]{10,}|AKIA[A-Z0-9]{16})\b"
+    ),
+    # PEM private keys: the whole block, header included, to the END line or EOF.
+    re.compile(
+        r"-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|\Z)"
+    ),
     # Named environment variables that are always secrets regardless of value
     # shape, e.g. `CLAUDE_CODE_OAUTH_TOKEN=abc123` or `export OPENAI_API_KEY: xyz`.
     re.compile(
@@ -44,9 +58,12 @@ _PATTERNS: tuple[re.Pattern[str], ...] = (
     ),
     # Generic `key` / `token` / `secret` / `password` assignments in any casing,
     # ini/env/json/yaml style (`FOO_TOKEN=...`, `"secret": "..."`, `password: ...`).
+    # The value must be at least 6 characters and not a bare integer, so
+    # `fresh_tokens: 4321`, `sorted(x, key=len)` and `--keyword=foo` in a rendered
+    # transcript survive while `token=abcdefgh12345678` does not.
     re.compile(
-        r"(?i)\b[\w.-]*(?:key|token|secret|password)[\w.-]*\b\s*[:=]\s*"
-        r"(\"[^\"]+\"|'[^']+'|\S+)"
+        r"(?i)\b[\w.-]*(?:key|token|secret|password|passwd)[\w.-]*\b\s*[:=]\s*"
+        r"(?!\d+\b)(\"[^\"]{6,}\"|'[^']{6,}'|\S{6,})"
     ),
 )
 

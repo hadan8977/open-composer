@@ -674,11 +674,18 @@ def _load_agent_record(path: Path) -> tuple[AgentRecord | None, str | None]:
         model_value = config.get("model")
         model = model_value if isinstance(model_value, str) and model_value else None
 
+    # The session id and cwd become path components under CLAUDE_PROJECTS_DIR /
+    # SUBAGENT_TASKS_ROOT (and a glob under CODEX_SESSIONS_DIR), so both are
+    # shape-checked here: a session id must be a UUID, a cwd must be absolute.
+    # Anything else is treated as "no transcript" rather than trusted.
     session_id: str | None = None
     runtime_info = raw.get("runtimeInfo")
     if isinstance(runtime_info, dict):
         session_value = runtime_info.get("sessionId")
-        session_id = session_value if isinstance(session_value, str) and session_value else None
+        if isinstance(session_value, str) and AGENT_ID_RE.match(session_value):
+            session_id = session_value
+    cwd_value = _str("cwd")
+    cwd = cwd_value if cwd_value and cwd_value.startswith("/") else None
 
     last_status_raw = _str("lastStatus")
     last_status = last_status_raw.lower() if last_status_raw else "unknown"
@@ -689,7 +696,7 @@ def _load_agent_record(path: Path) -> tuple[AgentRecord | None, str | None]:
     record = AgentRecord(
         id=agent_id,
         provider=_str("provider") or "unknown",
-        cwd=_str("cwd"),
+        cwd=cwd,
         workspace_id=_str("workspaceId"),
         title=title,
         created_at=_parse_iso(raw.get("createdAt")),

@@ -171,6 +171,51 @@ SECRET_SCRUB_CASES = [
     ("generic token assignment", "some_token: 'abcdefgh12345678'", "abcdefgh12345678"),
     ("generic password assignment", 'db_password = "hunter2hunter2"', "hunter2hunter2"),
     ("generic secret assignment", "webhook_secret=abcdef0123456789", "abcdef0123456789"),
+    (
+        "bare jwt",
+        "relay eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+        ".eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fw",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+    ),
+    (
+        "cloudflare connector token (jwt-shaped, no dots)",
+        "token eyJhIjoiNjk3ZTEyMzQ1Njc4OTBhYmNkZWYi"
+        "LCJ0IjoiODliNWI4N2EtMTIzNCIsInMiOiJaWGhoYlhCc1pRPT0ifQ",
+        "eyJhIjoiNjk3ZTEyMzQ1Njc4OTBhYmNkZWYi",
+    ),
+    (
+        "basic auth header",
+        "Authorization: Basic dXNlcjpwYXNzd29yZDEyMzQ1Ng==",
+        "dXNlcjpwYXNzd29yZDEyMzQ1Ng==",
+    ),
+    (
+        "lower-case bearer in a quoted curl command",
+        "curl -H 'authorization: bearer abcdefghijklmnop'",
+        "abcdefghijklmnop",
+    ),
+    (
+        "github token",
+        "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef012345",
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef012345",
+    ),
+    ("slack token", "xoxb-FAKETESTNOTREAL0000000000000", "FAKETESTNOTREAL0000000000000"),
+    (
+        "pem private key block",
+        "-----BEGIN OPENSSH PRIVATE KEY-----\n"
+        "b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQ\n"
+        "-----END OPENSSH PRIVATE KEY-----",
+        "b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQ",
+    ),
+]
+
+#: Text that mentions key/token words but carries no secret. Agent transcripts and
+#: cron logs are full of these; masking them would make the timeline unreadable.
+SECRET_SCRUB_KEEP_CASES = [
+    "fresh_tokens: 4321 cache_read: 99",
+    "sorted(rows, key=len)",
+    "pytest -k test_quota --keyword=foo",
+    "card_id: H-20260919-01 tokens=12",
+    "the token budget is 5h fresh tokens",
 ]
 
 
@@ -181,6 +226,11 @@ def test_secret_scrub_masks_each_pattern(label: str, raw: str, secret: str) -> N
     scrubbed = secret_scrub(raw)
     assert secret not in scrubbed, f"{label}: secret value leaked through: {scrubbed!r}"
     assert "REDACTED" in scrubbed, f"{label}: no redaction marker present: {scrubbed!r}"
+
+
+@pytest.mark.parametrize("text", SECRET_SCRUB_KEEP_CASES)
+def test_secret_scrub_leaves_key_words_without_a_secret_alone(text: str) -> None:
+    assert secret_scrub(text) == text
 
 
 def test_secret_scrub_preserves_non_secret_text() -> None:

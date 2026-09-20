@@ -52,7 +52,7 @@ def _write_agent_json(
     cwd: str = "/repo",
     status: str = "idle",
     model: str = "claude-fable-5-1",
-    session_id: str = "sess-0001",
+    session_id: str = "00000000-0000-4000-8000-000000000001",
     title: str = "a test agent",
     last_activity_at: datetime = NOW,
     extra_top_level: dict | None = None,
@@ -189,7 +189,7 @@ def test_bearer_token_never_reaches_rendered_html_or_the_sse_stream(
         AGENT_RUNNING,
         status="running",
         cwd="/repo",
-        session_id="sess-bearer",
+        session_id="00000000-0000-4000-8000-000000000002",
         extra_top_level=extra,
     )
     # A tool result is the other realistic place a live token leaks (e.g. a
@@ -197,7 +197,7 @@ def test_bearer_token_never_reaches_rendered_html_or_the_sse_stream(
     transcript_path = _write_claude_transcript(
         claude_root,
         "/repo",
-        "sess-bearer",
+        "00000000-0000-4000-8000-000000000002",
         [
             _tool_use_line("Bash", {"command": "cat ~/.paseo-secret"}, tool_use_id="t1", at=NOW),
             _tool_result_line(f"Authorization: Bearer {bearer_secret}", tool_use_id="t1", at=NOW),
@@ -403,12 +403,16 @@ def test_thinking_blocks_are_ignored_and_reasoning_never_rendered(
     agents_root = tmp_path / "agents"
     claude_root = tmp_path / "claude-projects"
     _write_agent_json(
-        agents_root, AGENT_RUNNING, status="running", cwd="/repo", session_id="sess-x"
+        agents_root,
+        AGENT_RUNNING,
+        status="running",
+        cwd="/repo",
+        session_id="00000000-0000-4000-8000-000000000010",
     )
     _write_claude_transcript(
         claude_root,
         "/repo",
-        "sess-x",
+        "00000000-0000-4000-8000-000000000010",
         [
             _assistant_thinking_line(at=NOW),
             _assistant_text_line("here is what I actually said out loud", at=NOW),
@@ -440,14 +444,18 @@ def test_tool_use_and_tool_result_pairing_gives_a_duration(
     agents_root = tmp_path / "agents"
     claude_root = tmp_path / "claude-projects"
     _write_agent_json(
-        agents_root, AGENT_RUNNING, status="running", cwd="/repo", session_id="sess-dur"
+        agents_root,
+        AGENT_RUNNING,
+        status="running",
+        cwd="/repo",
+        session_id="00000000-0000-4000-8000-000000000003",
     )
     called_at = NOW
     returned_at = NOW.replace(second=3)  # 3 seconds later
     _write_claude_transcript(
         claude_root,
         "/repo",
-        "sess-dur",
+        "00000000-0000-4000-8000-000000000003",
         [
             _tool_use_line("Bash", {"command": "sleep 3"}, tool_use_id="tool-1", at=called_at),
             _tool_result_line("done", tool_use_id="tool-1", at=returned_at),
@@ -468,12 +476,16 @@ def test_tool_result_is_error_flag_is_preserved(tmp_path: Path) -> None:
     agents_root = tmp_path / "agents"
     claude_root = tmp_path / "claude-projects"
     _write_agent_json(
-        agents_root, AGENT_RUNNING, status="running", cwd="/repo", session_id="sess-err"
+        agents_root,
+        AGENT_RUNNING,
+        status="running",
+        cwd="/repo",
+        session_id="00000000-0000-4000-8000-000000000004",
     )
     _write_claude_transcript(
         claude_root,
         "/repo",
-        "sess-err",
+        "00000000-0000-4000-8000-000000000004",
         [
             _tool_use_line("Bash", {"command": "false"}, tool_use_id="tool-2", at=NOW),
             _tool_result_line("Exit code 1", tool_use_id="tool-2", at=NOW, is_error=True),
@@ -495,12 +507,16 @@ def test_stream_yields_only_entries_appended_after_connect_time(tmp_path: Path) 
     agents_root = tmp_path / "agents"
     claude_root = tmp_path / "claude-projects"
     _write_agent_json(
-        agents_root, AGENT_RUNNING, status="running", cwd="/repo", session_id="sess-live"
+        agents_root,
+        AGENT_RUNNING,
+        status="running",
+        cwd="/repo",
+        session_id="00000000-0000-4000-8000-000000000006",
     )
     transcript_path = _write_claude_transcript(
         claude_root,
         "/repo",
-        "sess-live",
+        "00000000-0000-4000-8000-000000000006",
         [_assistant_text_line("already here before connect", at=NOW)],
     )
 
@@ -537,9 +553,13 @@ def test_stream_emits_keep_alive_once_the_interval_elapses(tmp_path: Path) -> No
     agents_root = tmp_path / "agents"
     claude_root = tmp_path / "claude-projects"
     _write_agent_json(
-        agents_root, AGENT_RUNNING, status="running", cwd="/repo", session_id="sess-keepalive"
+        agents_root,
+        AGENT_RUNNING,
+        status="running",
+        cwd="/repo",
+        session_id="00000000-0000-4000-8000-000000000005",
     )
-    _write_claude_transcript(claude_root, "/repo", "sess-keepalive", [])
+    _write_claude_transcript(claude_root, "/repo", "00000000-0000-4000-8000-000000000005", [])
 
     class _FakeClock:
         def __init__(self) -> None:
@@ -570,9 +590,13 @@ def test_stream_closes_itself_after_max_duration(tmp_path: Path) -> None:
     agents_root = tmp_path / "agents"
     claude_root = tmp_path / "claude-projects"
     _write_agent_json(
-        agents_root, AGENT_RUNNING, status="running", cwd="/repo", session_id="sess-timeout"
+        agents_root,
+        AGENT_RUNNING,
+        status="running",
+        cwd="/repo",
+        session_id="00000000-0000-4000-8000-000000000009",
     )
-    _write_claude_transcript(claude_root, "/repo", "sess-timeout", [])
+    _write_claude_transcript(claude_root, "/repo", "00000000-0000-4000-8000-000000000009", [])
 
     class _FakeClock:
         """First call (the connect-time `start`) returns 0; every call after
@@ -744,7 +768,11 @@ def test_agents_board_has_no_cjk_chrome_when_empty(
 def test_subagents_degrade_to_none_when_tree_absent(tmp_path: Path) -> None:
     agents_root = tmp_path / "agents"
     _write_agent_json(
-        agents_root, AGENT_RUNNING, status="running", cwd="/repo", session_id="sess-no-sub"
+        agents_root,
+        AGENT_RUNNING,
+        status="running",
+        cwd="/repo",
+        session_id="00000000-0000-4000-8000-000000000007",
     )
     detail = build_agent_detail(
         AGENT_RUNNING,
@@ -759,9 +787,13 @@ def test_subagents_are_discovered_and_nested_under_the_parent_session(tmp_path: 
     agents_root = tmp_path / "agents"
     subagent_root = tmp_path / "claude-0"
     _write_agent_json(
-        agents_root, AGENT_RUNNING, status="running", cwd="/repo", session_id="sess-parent"
+        agents_root,
+        AGENT_RUNNING,
+        status="running",
+        cwd="/repo",
+        session_id="00000000-0000-4000-8000-000000000008",
     )
-    tasks_dir = subagent_root / "-repo" / "sess-parent" / "tasks"
+    tasks_dir = subagent_root / "-repo" / "00000000-0000-4000-8000-000000000008" / "tasks"
     tasks_dir.mkdir(parents=True)
     (tasks_dir / "a1b2c3d4e5f6a7b8c.output").write_text(
         json.dumps(_assistant_text_line("subagent report", at=NOW)) + "\n", encoding="utf-8"
@@ -789,3 +821,39 @@ def test_agent_record_has_no_persistence_or_mcp_field() -> None:
     assert "mcpServers" not in field_names
     assert "config" not in field_names  # only its allowlisted .model survives, as `model`
     assert "runtimeInfo" not in field_names  # only its allowlisted .sessionId survives
+
+
+# --------------------------------------------------------------------------
+# Session id / cwd shape checks (they become path components)
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "session_id,cwd",
+    [
+        ("../../etc/passwd", "/repo"),
+        ("00000000-0000-4000-8000-000000000001", "/repo"),
+        ("*", "/repo"),
+        (AGENT_RUNNING, ".."),
+        (AGENT_RUNNING, "relative/dir"),
+    ],
+    ids=["traversal-session", "non-uuid-session", "glob-session", "dotdot-cwd", "relative-cwd"],
+)
+def test_agent_json_with_unsafe_session_id_or_cwd_resolves_no_transcript(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, session_id: str, cwd: str
+) -> None:
+    agents_root = tmp_path / "agents"
+    claude_root = tmp_path / "projects"
+    _write_agent_json(agents_root, AGENT_RUNNING, cwd=cwd, session_id=session_id, status="running")
+    # A transcript planted where a naive join would land must never be picked up.
+    (claude_root / "-repo").mkdir(parents=True)
+    (claude_root / "-repo" / f"{AGENT_RUNNING}.jsonl").write_text("", encoding="utf-8")
+    monkeypatch.setattr("open_composer.cockpit.data.agents.PASEO_AGENTS_DIR", agents_root)
+    monkeypatch.setattr("open_composer.cockpit.data.agents.CLAUDE_PROJECTS_DIR", claude_root)
+
+    record = find_agent_record(AGENT_RUNNING)
+    assert record is not None
+    assert record.session_id is None or AGENT_ID_RE.match(record.session_id)
+    assert record.cwd is None or record.cwd.startswith("/")
+    detail = build_agent_detail(AGENT_RUNNING)
+    assert detail.transcript_available is False
