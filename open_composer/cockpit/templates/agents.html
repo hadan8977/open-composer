@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Agents -- Open Composer Cockpit{% endblock %}
+{% block content %}
+<h1>Agents</h1>
+<p class="muted">Generated {{ report.generated_at.isoformat() }}.</p>
+
+<section class="panel">
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-label">Running</div>
+      <div class="stat-value num">{{ counts.running }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Idle</div>
+      <div class="stat-value num">{{ counts.idle }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Error</div>
+      <div class="stat-value num">{{ counts.error }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Closed (48h)</div>
+      <div class="stat-value num">{{ counts.closed }}</div>
+      <div class="stat-detail">collapsed &gt;48h: {{ report.closed_collapsed_count }}, cutoff {{ report.closed_stale_cutoff.isoformat() }}</div>
+    </div>
+  </div>
+</section>
+
+{% if report.warnings %}
+<section class="panel">
+  <h2>Warnings</h2>
+  <ul>{% for warning in report.warnings %}<li class="muted">{{ warning }}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>Sessions ({{ report.agents|length }})</h2>
+  <table class="responsive-table">
+    <thead>
+      <tr>
+        <th>Agent</th>
+        <th>Provider</th>
+        <th>Model</th>
+        <th>State</th>
+        <th>Running</th>
+        <th>Current file</th>
+        <th>Last text</th>
+        <th>Last activity</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for agent in report.agents %}
+      <tr>
+        <td data-label="Agent"><a href="/agents/{{ agent.record.id }}"><code>{{ agent.record.id[:8] }}</code></a></td>
+        <td data-label="Provider">{{ agent.record.provider }}</td>
+        <td data-label="Model">{{ agent.record.model or "unknown" }}</td>
+        <td data-label="State"><span class="dot dot--{{ agent.record.last_status|agent_dot }}">{{ agent.record.last_status }}</span></td>
+        <td data-label="Running" class="num">
+          {% if agent.record.created_at %}{{ ((report.generated_at - agent.record.created_at).total_seconds())|elapsed_s }}{% else %}unknown{% endif %}
+        </td>
+        <td data-label="Current file"><code>{{ (agent.activity.current_file if agent.activity else none) or "none" }}</code></td>
+        <td data-label="Last text">{{ (agent.activity.last_text if agent.activity else none) or "none" }}</td>
+        <td data-label="Last activity">
+          {% if agent.record.last_activity_at %}{{ ((report.generated_at - agent.record.last_activity_at).total_seconds())|elapsed_s }} ago{% else %}unknown{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>Heavy jobs</h2>
+  {% if not heavy.available %}
+  <p class="muted">unavailable -- {{ heavy.warnings|join("; ") if heavy.warnings else "systemctl not reachable" }}</p>
+  {% elif not heavy.jobs %}
+  <p class="muted">none</p>
+  {% else %}
+  <table class="responsive-table">
+    <thead>
+      <tr>
+        <th>Unit</th>
+        <th>Started</th>
+        <th>Elapsed</th>
+        <th>Memory</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in heavy.jobs %}
+      <tr>
+        <td data-label="Unit"><code>{{ job.unit }}</code></td>
+        <td data-label="Started">{{ job.started_at.isoformat() if job.started_at else "unknown" }}</td>
+        <td data-label="Elapsed" class="num">{{ job.elapsed_seconds|elapsed_s if job.elapsed_seconds is not none else "unknown" }}</td>
+        <td data-label="Memory" class="num">
+          {% if job.memory_current_bytes is not none %}{{ "%.0f"|format(job.memory_current_bytes / 1048576) }}MiB{% else %}unknown{% endif %}
+          / {% if job.memory_max_unlimited %}unlimited{% elif job.memory_max_bytes is not none %}{{ "%.0f"|format(job.memory_max_bytes / 1048576) }}MiB{% else %}unknown{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+{% endblock %}

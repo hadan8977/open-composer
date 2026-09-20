@@ -42,10 +42,21 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from open_composer.cockpit.data.agents import (
+    AGENT_ID_RE,
+    agent_state_dot,
+    build_agent_detail,
+    find_agent_record,
+    format_elapsed_seconds,
+    format_timeline_time,
+    load_agents,
+    load_heavy_jobs,
+    stream_agent_timeline,
+)
 from open_composer.cockpit.data.health import (
     build_data_freshness,
     build_health_report,
@@ -170,6 +181,25 @@ def _topbar_codex_quota() -> CodexQuotaState:
         return _UNKNOWN_CODEX_QUOTA_STATE
 
 
+def _topbar_agents() -> tuple[tuple[str, str], ...]:
+    """`(agent_id, last_status)` for every non-closed agent, for the top
+    bar's status-dot row (plan section 4: "agent 状态点：每个活着的 agent 一个点").
+
+    Calls `load_agents(enrich=False)` -- no transcript resolution or
+    reading, just the agent JSON files themselves -- so this stays cheap
+    enough to run on every screen's `_base_context`, not just `/agents`.
+    """
+    try:
+        report = load_agents(enrich=False)
+    except Exception:
+        return ()
+    return tuple(
+        (summary.record.id, summary.record.last_status)
+        for summary in report.agents
+        if summary.record.last_status != "closed"
+    )
+
+
 def _topbar_usage_estimate(now: datetime) -> UsageEstimate:
     """The transcript-based usage estimate's compact topbar view (T6b).
 
@@ -228,6 +258,7 @@ def _base_context(request: Request, active: str) -> dict[str, Any]:
         "topbar_quota_claude": _topbar_claude_quota(now),
         "topbar_quota_codex": _topbar_codex_quota(),
         "topbar_usage_estimate": _topbar_usage_estimate(now),
+        "topbar_agents": _topbar_agents(),
         "generated_at": now,
     }
 
@@ -239,6 +270,9 @@ def create_app() -> FastAPI:
     )
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
     templates.env.filters["short_ts"] = _format_short_timestamp
+    templates.env.filters["elapsed_s"] = format_elapsed_seconds
+    templates.env.filters["hms_ts"] = format_timeline_time
+    templates.env.filters["agent_dot"] = agent_state_dot
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.get("/healthz")
@@ -354,15 +388,69 @@ def create_app() -> FastAPI:
         context["lane_status"] = lane_status
         return templates.TemplateResponse(request, "card_detail.html", context)
 
-    def _stub_page(slug: str, label: str):
-        def _handler(request: Request) -> HTMLResponse:
-            context = _base_context(request, slug)
-            context["screen_label"] = label
-            return templates.TemplateResponse(request, "stub.html", context)
+    @app.get("/agents", response_class=HTMLResponse)
+    def agents_index_page(request: Request) -> HTMLResponse:
+        """Screen 3: agent activity (plan section 4, "agent 活动").
 
-        return _handler
+        `load_agents()` (default `enrich=True`) resolves and reads a bounded
+        transcript tail for every non-closed agent; `load_heavy_jobs()` is
+        the separate "当前重活" section for `scripts/run_capped.sh` scopes.
+        Both degrade to an empty/`available=False` state on their own rather
+        than raising, so this route has nothing extra to catch.
+        """
+        report = load_agents()
+        heavy = load_heavy_jobs()
+        counts = {
+            "running": sum(1 for a in report.agents if a.record.last_status == "running"),
+            "idle": sum(1 for a in report.agents if a.record.last_status == "idle"),
+            "error": sum(1 for a in report.agents if a.record.last_status == "error"),
+            "closed": sum(1 for a in report.agents if a.record.last_status == "closed"),
+        }
+        context = _base_context(request, "agents")
+        context["report"] = report
+        context["heavy"] = heavy
+        context["counts"] = counts
+        return templates.TemplateResponse(request, "agents.html", context)
 
-    app.get("/agents", response_class=HTMLResponse)(_stub_page("agents", "Agents"))
+    @app.get("/agents/{agent_id}", response_class=HTMLResponse)
+    def agent_detail_page(request: Request, agent_id: str) -> HTMLResponse:
+        """Agent detail: the full text-and-tool audit timeline for one
+        session, plus any nested subagent transcripts.
+
+        `agent_id` is validated against `AGENT_ID_RE` before
+        `build_agent_detail` (which re-validates via `find_agent_record`)
+        ever touches the filesystem; both a malformed id and a well-formed
+        but unknown one return 404, never 500.
+        """
+        if not AGENT_ID_RE.match(agent_id):
+            raise HTTPException(status_code=404, detail="not a valid agent id")
+        detail = build_agent_detail(agent_id)
+        if detail.record is None:
+            raise HTTPException(status_code=404, detail="agent not found")
+        context = _base_context(request, "agents")
+        context["detail"] = detail
+        return templates.TemplateResponse(request, "agent_detail.html", context)
+
+    @app.get("/agents/{agent_id}/stream")
+    def agent_stream(agent_id: str) -> StreamingResponse:
+        """SSE tail of one agent's transcript, from the current end.
+
+        Existence is checked once, up front, with the same validated
+        `find_agent_record` lookup the detail page uses -- an unknown or
+        malformed id returns 404 immediately rather than opening a stream
+        that would only ever say "not found". `stream_agent_timeline` does
+        the actual bounded polling/keep-alive/timeout work; see its
+        docstring in `open_composer.cockpit.data.agents`.
+        """
+        if not AGENT_ID_RE.match(agent_id):
+            raise HTTPException(status_code=404, detail="not a valid agent id")
+        if find_agent_record(agent_id) is None:
+            raise HTTPException(status_code=404, detail="agent not found")
+        return StreamingResponse(
+            stream_agent_timeline(agent_id),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
 
     @app.get("/paper", response_class=HTMLResponse)
     def paper_index_page(request: Request) -> HTMLResponse:

@@ -619,3 +619,22 @@ table {
   padding-left: 0.6rem;
   margin: 0.5rem 0;
 }
+
+/* --------------------------------------------------------------- agents (T7) */
+
+/* One status dot per live agent in the top bar -- icon-only, so the usual
+ * `.dot` text padding collapses to just the colored circle. */
+.agent-dot {
+  padding: 0;
+  width: 0.7em;
+  height: 0.7em;
+  vertical-align: middle;
+}
+
+.agent-dot::before {
+  margin-right: 0;
+}
+
+.timeline-row--error td:first-child {
+  border-left: 3px solid var(--stale);
+}

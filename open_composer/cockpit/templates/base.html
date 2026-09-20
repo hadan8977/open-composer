@@ -48,7 +48,15 @@
       </div>
       <div class="status-slot" data-slot="agent-dots">
         <span class="status-label">Agents</span>
-        <span class="status-value stub">pending T7</span>
+        <span class="status-value">
+          {% if topbar_agents %}
+            {% for agent_id, agent_status in topbar_agents %}
+            <a class="dot dot--{{ agent_status|agent_dot }} agent-dot" href="/agents/{{ agent_id }}" title="{{ agent_status }}"></a>
+            {% endfor %}
+          {% else %}
+            <span class="dot dot--unknown">none</span>
+          {% endif %}
+        </span>
       </div>
       <div class="status-slot" data-slot="data-freshness">
         <span class="status-label">Data</span>

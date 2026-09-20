@@ -23,7 +23,9 @@ def client() -> TestClient:
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("path", ["/", "/health", "/healthz", "/lineage", "/paper", "/quota"])
+@pytest.mark.parametrize(
+    "path", ["/", "/health", "/healthz", "/lineage", "/agents", "/paper", "/quota"]
+)
 def test_core_routes_return_200(client: TestClient, path: str) -> None:
     response = client.get(path)
     assert response.status_code == 200
@@ -43,7 +45,7 @@ def test_core_routes_return_200(client: TestClient, path: str) -> None:
 _CJK_RE = re.compile(r"[一-鿿]")
 
 
-@pytest.mark.parametrize("path", ["/", "/lineage", "/health", "/paper", "/quota"])
+@pytest.mark.parametrize("path", ["/", "/lineage", "/health", "/agents", "/paper", "/quota"])
 def test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies(
     client: TestClient, path: str
 ) -> None:
@@ -72,13 +74,6 @@ def test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies(
         text = text.replace(field, "")
     found = _CJK_RE.findall(text)
     assert not found, f"{path} rendered {len(found)} CJK character(s) in UI chrome: {found!r}"
-
-
-@pytest.mark.parametrize("path", ["/agents"])
-def test_stub_routes_return_200(client: TestClient, path: str) -> None:
-    response = client.get(path)
-    assert response.status_code == 200
-    assert "T5-T8" in response.text
 
 
 def test_healthz_is_json_liveness(client: TestClient) -> None:

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Agent {{ detail.record.id[:8] }} -- Open Composer Cockpit{% endblock %}
+{% block content %}
+<h1>Agent <code>{{ detail.record.id }}</code></h1>
+<p class="muted">
+  {{ detail.record.provider }} &middot; {{ detail.record.model or "unknown model" }} &middot;
+  <span class="dot dot--{{ detail.record.last_status|agent_dot }}">{{ detail.record.last_status }}</span>
+  &middot; cwd <code>{{ detail.record.cwd or "unknown" }}</code>
+</p>
+{% if detail.record.title %}<p class="muted">{{ detail.record.title }}</p>{% endif %}
+<p><a href="/agents">back to agents</a></p>
+
+{% if detail.warnings %}
+<section class="panel">
+  <h2>Warnings</h2>
+  <ul>{% for warning in detail.warnings %}<li class="muted">{{ warning }}</li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>Timeline (transcript: {{ detail.transcript_kind }})</h2>
+  {% if not detail.transcript_available %}
+  <p class="muted">none</p>
+  {% else %}
+  <table class="responsive-table" id="timeline-table">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Kind</th>
+        <th>Tool</th>
+        <th>Target</th>
+        <th>Duration</th>
+        <th>Outcome</th>
+      </tr>
+    </thead>
+    <tbody id="timeline-body">
+      {% for entry in detail.entries %}
+      <tr class="{{ 'timeline-row--error' if entry.is_error else '' }}">
+        <td data-label="Time">{{ entry.at|hms_ts }}</td>
+        <td data-label="Kind">{{ entry.kind }}</td>
+        <td data-label="Tool">{{ entry.tool_name or "-" }}</td>
+        <td data-label="Target">{{ entry.target or entry.detail or "-" }}</td>
+        <td data-label="Duration" class="num">{{ entry.duration_seconds|elapsed_s if entry.duration_seconds is not none else "-" }}</td>
+        <td data-label="Outcome">
+          {% if entry.kind == "result" %}<span class="dot dot--{{ 'stale' if entry.is_error else 'ok' }}">{{ "error" if entry.is_error else "ok" }}</span>{% else %}-{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Subagents</h2>
+  {% if not detail.subagents %}
+  <p class="muted">none</p>
+  {% else %}
+  {% for task in detail.subagents %}
+  <details class="cron-job">
+    <summary>
+      <span class="cron-job-name"><code>{{ task.id }}</code></span>
+      {% if task.warning %}<span class="muted">{{ task.warning }}</span>{% endif %}
+    </summary>
+    <div class="cron-job-body">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Kind</th>
+            <th>Tool</th>
+            <th>Target</th>
+            <th>Duration</th>
+            <th>Outcome</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in task.entries %}
+          <tr class="{{ 'timeline-row--error' if entry.is_error else '' }}">
+            <td data-label="Time">{{ entry.at|hms_ts }}</td>
+            <td data-label="Kind">{{ entry.kind }}</td>
+            <td data-label="Tool">{{ entry.tool_name or "-" }}</td>
+            <td data-label="Target">{{ entry.target or entry.detail or "-" }}</td>
+            <td data-label="Duration" class="num">{{ entry.duration_seconds|elapsed_s if entry.duration_seconds is not none else "-" }}</td>
+            <td data-label="Outcome">
+              {% if entry.kind == "result" %}<span class="dot dot--{{ 'stale' if entry.is_error else 'ok' }}">{{ "error" if entry.is_error else "ok" }}</span>{% else %}-{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+  {% endfor %}
+  {% endif %}
+</section>
+
+{% if detail.transcript_available %}
+<script>
+// Tails this agent's transcript via SSE and appends rows to the timeline
+// table as they arrive. No framework: plain EventSource, plain DOM, and
+// `textContent` (never `innerHTML`) so a transcript containing HTML-shaped
+// text cannot inject markup into this page.
+(function () {
+  "use strict";
+  var tbody = document.getElementById("timeline-body");
+  if (!tbody || typeof EventSource === "undefined") {
+    return;
+  }
+  var streamUrl = window.location.pathname.replace(/\/$/, "") + "/stream";
+  var source = new EventSource(streamUrl);
+  source.onmessage = function (event) {
+    var data;
+    try {
+      data = JSON.parse(event.data);
+    } catch (err) {
+      return;
+    }
+    var row = document.createElement("tr");
+    if (data.is_error) {
+      row.className = "timeline-row--error";
+    }
+    var outcome = "-";
+    if (data.kind === "result") {
+      outcome = data.is_error ? "error" : "ok";
+    }
+    var values = [
+      data.at,
+      data.kind,
+      data.tool_name,
+      data.content,
+      data.duration_seconds,
+      outcome,
+    ];
+    values.forEach(function (value) {
+      var cell = document.createElement("td");
+      cell.textContent = value === null || value === undefined || value === "" ? "-" : String(value);
+      row.appendChild(cell);
+    });
+    tbody.appendChild(row);
+  };
+})();
+</script>
+{% endif %}
+{% endblock %}

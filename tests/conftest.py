@@ -112,6 +112,41 @@ def _cockpit_quota_no_live_network(
         no_subagent_dir / "claude-0-does-not-exist",
     )
 
+    # T7 (`open_composer.cockpit.data.agents`) reads three more real,
+    # populated local trees on this box -- `~/.paseo/agents` (every agent
+    # this account has ever run, including live bearer tokens elsewhere in
+    # those same files), `~/.claude/projects` (this session's own
+    # transcript), and `~/.codex/sessions` -- plus reuses the `/tmp/claude-0`
+    # subagent tree above. Every cockpit test renders `_base_context` (the
+    # persistent top bar's agent-status dots), so without pointing all four
+    # of this module's own module-global roots at nonexistent paths, *every*
+    # test would read this machine's real agent/transcript history on every
+    # request, exactly the non-determinism (and real-data-in-tests) problem
+    # the credential/transcript overrides above already guard against. Tests
+    # that want real scanning behavior pass their own `root=`/`claude_root=`/
+    # `codex_root=`/`subagent_root=` pointed at a `tmp_path` with synthetic
+    # fixtures, the same override pattern as the sources above.
+    no_agents_dir = tmp_path_factory.mktemp("no-paseo-agents")
+    monkeypatch.setattr(
+        "open_composer.cockpit.data.agents.PASEO_AGENTS_DIR",
+        no_agents_dir / "agents-do-not-exist",
+    )
+    no_agent_transcripts_dir = tmp_path_factory.mktemp("no-agent-claude-transcripts")
+    monkeypatch.setattr(
+        "open_composer.cockpit.data.agents.CLAUDE_PROJECTS_DIR",
+        no_agent_transcripts_dir / "projects-do-not-exist",
+    )
+    no_agent_subagent_dir = tmp_path_factory.mktemp("no-agent-subagent-transcripts")
+    monkeypatch.setattr(
+        "open_composer.cockpit.data.agents.SUBAGENT_TASKS_ROOT",
+        no_agent_subagent_dir / "claude-0-does-not-exist",
+    )
+    no_codex_dir = tmp_path_factory.mktemp("no-codex-sessions")
+    monkeypatch.setattr(
+        "open_composer.cockpit.data.agents.CODEX_SESSIONS_DIR",
+        no_codex_dir / "sessions-do-not-exist",
+    )
+
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     """Skip `slow` tests by default so the day-to-day suite stays a few minutes.
