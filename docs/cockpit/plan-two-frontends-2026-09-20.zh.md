@@ -57,11 +57,15 @@
 5. 构建：`pnpm install --frozen-lockfile`（机上有 pnpm 11，按 zip 自带的 `pnpm-lock.yaml`，网络一次）→ `scripts/run_capped.sh --mem 1.8G -- npx vite build --base=/v2/ --outDir ../../open_composer/cockpit/static/v2 --emptyOutDir`；产物提交；`node_modules/` 进 `.gitignore`；`Makefile` 加 `cockpit-v2` 目标。
 6. 验收：`curl -s 127.0.0.1:8770/v2/ | head -3` 为构建后的 `index.html`；六屏在 1440 / 390 各截一张到 `docs/cockpit-screens/b/`；页面无 `mock`、无假数字；构建产物 < 400 KB gzip 前。
 
-## 4. 顺序与并发
+## 4. 分工（2026-09-20 机主定）
 
-T10（进行中，改 `app.py`/`quota.py`/`agents.py`/模板）→ **T11** → **T9 ∥ T12**（文件集合不相交）→ 机主在手机和电脑上比较 `/` 与 `/v2/` → 选定后合并（保留另一版里更好的局部想法，删代码）。
+前端设计与实现——设计系统、模板、组件、屏——由主会话（Fable）亲自做；Sonnet 只接与模型无关的机械活：T11 JSON 序列化、pnpm/vite 构建管线、截图、测试脚手架、数据层性能修补。理由：上一版由执行器按简报做出来的是"功能 MVP"，机主看重前端质量。
 
-## 5. 不做的事
+## 5. 顺序与并发
+
+T10（Sonnet，进行中，改 `app.py`/`quota.py`/`agents.py`/模板）→ **T11**（Sonnet）→ **T9 与 T12 由我在独立 worktree 里做**（先 A 后 B；预览实例跑在 8781，不动主 checkout 的服务）→ 机主在手机和电脑上比较 `/` 与 `/v2/` → 选定后合并（保留另一版里更好的局部想法，删代码）。
+
+## 6. 不做的事
 
 - 不在服务端引入 node 运行时；B 版只是静态产物。
 - 不为 B 版新增任何写接口；`/api/*` 与 HTML 路由共用同一套只读数据层和校验。
