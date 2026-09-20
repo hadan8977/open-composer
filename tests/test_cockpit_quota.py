@@ -1471,3 +1471,27 @@ def test_index_page_renders_codex_quota_state(client: TestClient) -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert "Codex quota" in response.text
+
+
+def test_compute_throttle_calibration_marks_partial_coverage_when_subagent_files_postdate_event(
+    tmp_path: Path,
+) -> None:
+    """A throttle from before the oldest surviving subagent transcript can only
+    be calibrated against main-session tokens: the figure is a lower bound,
+    rendered with a >= sign, and no `vs last throttle` ratio is derived from
+    it. Guards against the 2026-09-20 reading where a 2026-09-07 event (669k)
+    was shown as "5.49x vs last throttle" although every /tmp task file
+    dated from 2026-09-19."""
+    event_at = datetime(2026, 9, 7, 9, 31, 0, tzinfo=UTC)
+    subagent_root = tmp_path / "subagent"
+    task_file = _subagent_task_path(subagent_root)
+    task_file.parent.mkdir(parents=True)
+    task_file.write_text(
+        json.dumps(_user_brief_line(event_at + timedelta(days=12), "brief")) + "\n"
+    )
+    later = (event_at + timedelta(days=12)).timestamp()
+    os.utime(task_file, (later, later))
+
+    assert Q._throttle_window_coverage(event_at, subagent_root) == "partial"
+    assert Q._throttle_window_coverage(event_at, tmp_path / "missing") == "main only"
+    assert Q._throttle_window_coverage(event_at + timedelta(days=13), subagent_root) == "full"

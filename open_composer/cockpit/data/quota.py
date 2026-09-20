@@ -2078,6 +2078,35 @@ class ThrottleCalibration:
     min_fresh_at_event: int | None
     median_fresh_at_event: int | None
     vs_last_throttle_ratio: float | None
+    # "full" when surviving transcripts can cover the last event's window;
+    # "partial" when every surviving subagent transcript postdates that window
+    # (the /tmp task tree does not persist across reboots or cleanups), so the
+    # figure is a lower bound and no ratio is derived from it; "main only" when
+    # there is no subagent tree at all.
+    coverage: str = "full"
+
+
+def _throttle_window_coverage(event_at: datetime, subagent_base: Path) -> str:
+    """Can the surviving subagent transcripts cover the 5h window ending at `event_at`?
+
+    Main transcripts persist under ~/.claude, subagent ones live under /tmp
+    and vanish; a throttle from before the oldest surviving task file can only
+    be calibrated against main-session tokens, i.e. as a lower bound. The
+    check is deliberately coarse -- oldest surviving mtime vs window end --
+    so it can never turn a real figure into "partial" by accident.
+    """
+    try:
+        if not subagent_base.exists():
+            return "main only"
+        mtimes = [
+            p.stat().st_mtime for p in subagent_base.glob("*/*/tasks/*.output") if p.is_file()
+        ]
+    except OSError:
+        return "main only"
+    if not mtimes:
+        return "main only"
+    oldest = datetime.fromtimestamp(min(mtimes), tz=UTC)
+    return "partial" if oldest > event_at else "full"
 
 
 def compute_throttle_calibration(
@@ -2150,8 +2179,11 @@ def compute_throttle_calibration(
 
     last_fresh = fresh_values[0] if fresh_values else None
     numeric = [v for v in fresh_values if v is not None]
+    coverage = _throttle_window_coverage(dated[0].at, subagent_base)  # type: ignore[arg-type]
     ratio = (
-        (current_fresh_total / last_fresh) if last_fresh is not None and last_fresh > 0 else None
+        (current_fresh_total / last_fresh)
+        if coverage == "full" and last_fresh is not None and last_fresh > 0
+        else None
     )
     return ThrottleCalibration(
         available=True,
@@ -2161,6 +2193,7 @@ def compute_throttle_calibration(
         min_fresh_at_event=min(numeric) if numeric else None,
         median_fresh_at_event=round(statistics.median(numeric)) if numeric else None,
         vs_last_throttle_ratio=ratio,
+        coverage=coverage,
     )
 
 

@@ -147,7 +147,7 @@
   </p>
   <p class="stat-detail">
     empirical window capacity: fresh tokens at last throttle
-    {{ '{:,}'.format(report.throttle_calibration.last_fresh_at_event) if report.throttle_calibration.last_fresh_at_event is not none else 'unknown' }}
+    {% if report.throttle_calibration.coverage != 'full' %}&ge; {% endif %}{{ '{:,}'.format(report.throttle_calibration.last_fresh_at_event) if report.throttle_calibration.last_fresh_at_event is not none else 'unknown' }}
     (at {{ report.throttle_calibration.last_event.at|short_ts if report.throttle_calibration.last_event else 'unknown' }})
   </p>
   <p class="stat-detail">throttle event(s) seen: {{ report.throttle_calibration.event_count }}</p>
@@ -159,7 +159,9 @@
   </p>
   {% endif %}
   <p class="stat-detail">
-    {% if report.throttle_calibration.vs_last_throttle_ratio is not none %}
+    {% if report.throttle_calibration.coverage != 'full' %}
+    lower bound -- {{ 'no subagent transcripts' if report.throttle_calibration.coverage == 'main only' else 'subagent transcripts for that window no longer exist' }}; no ratio
+    {% elif report.throttle_calibration.vs_last_throttle_ratio is not none %}
     {{ '%.2f'|format(report.throttle_calibration.vs_last_throttle_ratio) }}x vs last throttle
     {% else %}
     vs last throttle: unknown
