@@ -175,7 +175,8 @@ cron 每条任务的上次运行时间与退出码、数据新鲜度（SIP 归�
 - **T5 · 模拟盘屏**：屏 4，复用搬家后的 `catalog.py` + `reports/paper/rehearsal/**`。验收：四个 sleeve 都显示，授权倒计时正确。
 - **T6 · 额度层**：`open_composer/cockpit/data/quota.py`，Claude 走 oauth/usage 并带完整容错与"估算"标注，Codex 返回"按量计费"占位但接口按 `{usedPercent, resetsAt, windowDurationMins}` 定型。验收：断网时页面不报错、显示降级状态。
 - **T7 · agent 活动屏 + SSE**：屏 3。验收：打开页面能看到本会话自己，思考流能实时追加，屏蔽规则对构造的假 token 生效。
-- **T8 · 手机布局 + Cloudflare 上线**：两套布局；`cloudflared` 用现有 `~/.cloudflared/dsh-vps.json` 令牌起 systemd 服务，确认 Access 策略生效后才对外可达。验收：手机上五屏都可读；未登录 Access 时返回 403。
+- **T8 · Cloudflare 上线**（2026-09-20 改：手机布局并入 T9，不在现有 CSS 上做两遍）：`~/.cloudflared/dsh-vps.json` 是远程管理隧道的 connector token（本机无 `cert.pem`，改不了 ingress 与 Access）；用 `cloudflared tunnel run --token-file` 起 systemd 服务并锁内存；公共主机名 → `http://127.0.0.1:8770` 与 Access 策略在 Zero Trust 控制台配置（机主侧），文档列出剩余步骤。验收：本机 `curl` 隧道主机名未登录返回 403（不是 200，不是 530）；`systemctl status` 显示已连接。
+- **T9 · 设计系统 pass**：按 `docs/cockpit/design-path-mvp-to-workbench-2026-09-20.zh.md` 路径 A：字体阶梯、语义色（自动明暗）、同心圆角、两种壳（桌面侧栏+检视器 / 手机浮动标签栏+Sheet）、主指标带、相对时间、删说明文字、四个状态词。等机主带回 Figma Make 稿后开始。验收：手机上五屏第一眼是数字不是文字，不滚动即见状态带。
 
 ## 8. 验收（整体）
 
