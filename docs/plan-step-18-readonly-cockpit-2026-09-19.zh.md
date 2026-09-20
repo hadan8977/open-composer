@@ -107,9 +107,11 @@ Cockpit 的唯一目的是**把这些询问固化成页面**，让他不用打�
 把弱关系当成因果画成实线就是在编造研究脉络，禁止。今后新卡应写 `上一环：`，图会自动变强。
 
 **屏 3 · agent 活动**
-每个 agent 一张卡：provider / 模型 / 状态 / 已运行时长 / 当前在读的文件 / 最近一条思考摘要。
-展开 = SSE 跟随该会话的思考流与工具调用，抄 QuantDinger 的"可审计决策时间线"部件形态（谁 / 做了什么 / 结果 / 耗时 / 原因）。
-另有"当前重活"区：`run_capped.sh` 起的任务，显示内存上限、已运行时长、日志尾部。
+每个 agent 一张卡：provider / 模型 / 状态 / 已运行时长 / 当前在读的文件 / 最近一段助手文本。
+展开 = SSE 跟随该会话的**助手文本与工具调用时间线**，抄 QuantDinger 的"可审计决策时间线"部件形态（时间 / 工具 / 目标 / 耗时 / 结果）。
+另有"当前重活"区：`run_capped.sh` 起的任务（`systemd-run --scope --slice=research-capped`），显示内存上限与当前占用、已运行时长、日志尾部。
+
+**2026-09-20 实测修正——"思考流"拿不到。** Claude Code 会话记录里的 `thinking` 块只有加密签名，正文为空字符串；能读到的是 `text`（助手对用户说的话）、`tool_use`（工具名 + 输入）、`tool_result`（输出 + 是否出错）。Codex 的 rollout 里对应的是 `response_item.message` / `function_call` / `function_call_output`，部分版本有 `agent_reasoning`。所以这一屏展示的是"它说了什么、做了什么"，不是"它想了什么"；界面上不得把助手文本标成 reasoning。
 
 **屏 4 · 模拟盘**
 总览 = 四个 sleeve 汇总（抄 FreqUI 多 bot 汇总），点进去是单个策略明细。
