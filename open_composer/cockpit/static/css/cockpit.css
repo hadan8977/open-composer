@@ -154,6 +154,59 @@ code {
   font-style: italic;
 }
 
+.quota-topbar-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--fg);
+}
+
+.quota-topbar-link:hover {
+  text-decoration: none;
+}
+
+.quota-topbar-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Flat, static fill -- no gradient, no transition, no animation (plan
+ * section 3.5). Width is set inline per-render from a server-computed
+ * percentage; the bar itself never moves once rendered. */
+.quota-bar {
+  display: inline-block;
+  width: 60px;
+  height: 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.quota-bar-fill {
+  display: block;
+  height: 100%;
+}
+
+.quota-bar-fill--ok {
+  background: var(--ok);
+}
+
+.quota-bar-fill--warn {
+  background: var(--warn);
+}
+
+.quota-bar-fill--stale {
+  background: var(--stale);
+}
+
+.quota-bar-fill--unknown {
+  background: var(--unknown);
+}
+
 /* ------------------------------------------------------------- mobile nav */
 
 @media (max-width: 640px) {

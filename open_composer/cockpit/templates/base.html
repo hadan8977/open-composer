@@ -24,11 +24,26 @@
     <div class="topbar-status" id="topbar-details">
       <div class="status-slot" data-slot="quota-claude">
         <span class="status-label">Claude quota</span>
-        <span class="status-value stub">pending T6</span>
+        <a class="status-value quota-topbar-link" href="/quota">
+          {% if topbar_quota_claude.available %}
+            {% for bar in topbar_quota_claude.bars %}
+            <span class="quota-topbar-bar">
+              <span class="dot dot--{{ bar.status }}">{{ bar.label }} {{ bar.percent_display }}</span>
+              <span class="quota-bar"><span class="quota-bar-fill quota-bar-fill--{{ bar.status }}" style="width: {{ bar.width_percent }}%"></span></span>
+              <span class="muted">{{ bar.reset_label }}</span>
+              {% if bar.projection_label %}<span class="muted">{{ bar.projection_label }}</span>{% endif %}
+            </span>
+            {% endfor %}
+          {% else %}
+            <span class="dot dot--unknown">unavailable ({{ topbar_quota_claude.unavailable_reason }})</span>
+          {% endif %}
+        </a>
       </div>
       <div class="status-slot" data-slot="quota-codex">
         <span class="status-label">Codex quota</span>
-        <span class="status-value stub">metered, no subscription cap (pending T6 interface)</span>
+        <a class="status-value quota-topbar-link" href="/quota">
+          <span class="dot dot--unknown">{{ topbar_quota_codex.label }}</span>
+        </a>
       </div>
       <div class="status-slot" data-slot="agent-dots">
         <span class="status-label">Agents</span>

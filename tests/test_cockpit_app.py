@@ -23,7 +23,7 @@ def client() -> TestClient:
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("path", ["/", "/health", "/healthz", "/lineage", "/paper"])
+@pytest.mark.parametrize("path", ["/", "/health", "/healthz", "/lineage", "/paper", "/quota"])
 def test_core_routes_return_200(client: TestClient, path: str) -> None:
     response = client.get(path)
     assert response.status_code == 200
@@ -43,7 +43,7 @@ def test_core_routes_return_200(client: TestClient, path: str) -> None:
 _CJK_RE = re.compile(r"[一-鿿]")
 
 
-@pytest.mark.parametrize("path", ["/", "/lineage", "/health", "/paper"])
+@pytest.mark.parametrize("path", ["/", "/lineage", "/health", "/paper", "/quota"])
 def test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies(
     client: TestClient, path: str
 ) -> None:
@@ -124,7 +124,7 @@ def test_every_route_is_get_or_head_only() -> None:
 
 @pytest.mark.parametrize(
     "path",
-    ["/", "/health", "/healthz", "/lineage", "/agents", "/paper"],
+    ["/", "/health", "/healthz", "/lineage", "/agents", "/paper", "/quota"],
 )
 def test_post_is_rejected_with_405(client: TestClient, path: str) -> None:
     response = client.post(path)

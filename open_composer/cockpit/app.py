@@ -1,9 +1,11 @@
-"""FastAPI application factory for the read-only cockpit (Step 18, T3+T4+T5).
+"""FastAPI application factory for the read-only cockpit (Step 18, T3+T4+T5+T6).
 
 Everything this app can do is a GET (or HEAD) request against files this repo
-already owns: crontab, `df`/`free`, hypothesis cards and their lineage (T4),
-paper rehearsal artifacts (T5), and (T6-T8) quota interfaces and agent session
-logs later. There is intentionally no POST/PUT/PATCH/DELETE route anywhere --
+already owns (crontab, `df`/`free`, hypothesis cards and their lineage (T4),
+paper rehearsal artifacts (T5)) or a bounded live/local read of quota state
+(T6: the Claude subscription-usage endpoint, this machine's own transcripts,
+and Codex's local auth mode) -- and (T7-T8) agent session logs later. There
+is intentionally no POST/PUT/PATCH/DELETE route anywhere --
 ``tests/test_cockpit_app.py`` walks ``app.routes`` and fails loudly if one
 ever appears; treat that test as the enforcement mechanism for the whole
 design, not a formality.
@@ -12,7 +14,7 @@ Authentication is not this app's job: ``oc cockpit serve`` (see
 ``open_composer/cli.py``) refuses anything but ``127.0.0.1``, and Cloudflare
 Access authenticates at the edge (see ``AGENTS.md``).
 
-Interface for T6-T8
+Interface for T7-T8
 -------------------
 * ``SCREENS`` is the single source of truth for the five-screen nav (slug, URL
   path, label). Add a screen's route with the same slug used here and its stub
@@ -65,6 +67,15 @@ from open_composer.cockpit.data.paper import (
     build_strategy_detail,
     compute_equity_chart_layout,
     discover_strategy_names,
+)
+from open_composer.cockpit.data.quota import (
+    CodexQuotaState,
+    TopbarQuota,
+    build_codex_quota_state,
+    build_quota_report,
+    get_default_claude_cache,
+    to_topbar_quota,
+    unknown_topbar_quota,
 )
 from open_composer.cockpit.markdown import render_markdown
 from open_composer.cockpit.security import PathTraversalError, safe_repo_path
@@ -119,15 +130,54 @@ def _topbar_rehearsal_countdown(root: Path) -> dict[str, str]:
     return {"status": countdown.status, "label": countdown.label}
 
 
+def _topbar_claude_quota(now: datetime) -> TopbarQuota:
+    """Claude's compact topbar view (T6). Every failure mode of the quota
+    module already degrades to a rendered state on its own (see
+    `open_composer.cockpit.data.quota`'s module docstring); this wrapper is
+    one more defensive layer, matching `_topbar_data_freshness` above, so an
+    integration surprise here still cannot blank a page.
+    """
+    try:
+        report = get_default_claude_cache().get(now=now)
+        return to_topbar_quota(report, now=now)
+    except Exception:
+        return unknown_topbar_quota()
+
+
+_UNKNOWN_CODEX_QUOTA_STATE = CodexQuotaState(
+    auth_mode=None,
+    subscription_capable=False,
+    available=False,
+    label="unknown (state builder failed)",
+    windows=(),
+    note="",
+)
+
+
+def _topbar_codex_quota() -> CodexQuotaState:
+    """Codex's compact topbar view (T6). `build_codex_quota_state` never
+    raises by construction (see its docstring), but this wrapper mirrors
+    `_topbar_claude_quota` above as one more defensive layer at the
+    integration boundary.
+    """
+    try:
+        return build_codex_quota_state()
+    except Exception:
+        return _UNKNOWN_CODEX_QUOTA_STATE
+
+
 def _base_context(request: Request, active: str) -> dict[str, Any]:
     root = project_root()
+    now = datetime.now(UTC)
     return {
         "request": request,
         "screens": SCREENS,
         "active_screen": active,
         "topbar_data_freshness": _topbar_data_freshness(root),
         "topbar_rehearsal": _topbar_rehearsal_countdown(root),
-        "generated_at": datetime.now(UTC),
+        "topbar_quota_claude": _topbar_claude_quota(now),
+        "topbar_quota_codex": _topbar_codex_quota(),
+        "generated_at": now,
     }
 
 
@@ -301,5 +351,20 @@ def create_app() -> FastAPI:
         context["chart"] = compute_equity_chart_layout(detail.equity_series)
         context["auth_state_labels"] = AUTH_STATE_LABELS
         return templates.TemplateResponse(request, "paper_detail.html", context)
+
+    @app.get("/quota", response_class=HTMLResponse)
+    def quota_page(request: Request) -> HTMLResponse:
+        """Quota detail (T6): all four Claude windows, extra usage, the Codex
+        state, the last throttle event from the transcript fallback layer,
+        and the cache/breaker state -- the density-over-prose counterpart to
+        the compact topbar slots every other screen shows.
+
+        Not one of the five main screens (`SCREENS`), so no nav entry is
+        highlighted for it; it is reached from the topbar quota slots.
+        """
+        report = build_quota_report(get_default_claude_cache())
+        context = _base_context(request, "quota")
+        context["report"] = report
+        return templates.TemplateResponse(request, "quota.html", context)
 
     return app

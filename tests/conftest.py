@@ -38,6 +38,31 @@ def pytest_configure(config: pytest.Config) -> None:
     )
 
 
+@pytest.fixture(autouse=True)
+def _cockpit_quota_no_live_network(
+    monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    """Every test runs with no real Claude credentials on the quota lookup path.
+
+    ``open_composer.cockpit.data.quota`` reads ``~/.claude/.credentials.json``
+    by default so the real cockpit server can hit the live, undocumented
+    subscription-usage endpoint (Step 18, T6). This box has a real
+    credentials file, so without this fixture *every* cockpit test that
+    renders a page -- not just the quota tests -- would attempt a live
+    network call on every request (``_base_context`` builds the topbar quota
+    state for every screen), which violates the hard rule that tests never
+    touch the network. Pointing the default credentials path at a file that
+    does not exist makes that lookup degrade deterministically to the
+    "no credentials" state before any HTTP client is even constructed.
+    Tests in ``test_cockpit_quota.py`` that want to exercise the live-fetch
+    path pass their own ``credentials_path=``/``client=`` arguments (or
+    monkeypatch ``open_composer.cockpit.data.quota.CLAUDE_CREDENTIALS_PATH``
+    themselves for the duration of one test), which overrides this default.
+    """
+    missing = tmp_path_factory.mktemp("no-claude-credentials") / ".credentials.json"
+    monkeypatch.setattr("open_composer.cockpit.data.quota.CLAUDE_CREDENTIALS_PATH", missing)
+
+
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     """Skip `slow` tests by default so the day-to-day suite stays a few minutes.
 

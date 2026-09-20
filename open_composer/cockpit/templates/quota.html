@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Quota -- Open Composer Cockpit{% endblock %}
+{% block content %}
+<h1>Quota</h1>
+<p class="muted">generated {{ report.generated_at.isoformat() }}</p>
+
+<div class="panel">
+  <h2>Claude -- subscription OAuth</h2>
+  <p class="stat-detail">endpoint api.anthropic.com/api/oauth/usage, undocumented, reverse-engineered</p>
+  {% if report.claude.snapshot.available %}
+  <table class="responsive-table">
+    <thead>
+      <tr><th>Window</th><th>Used</th><th>Resets</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      {% for w in report.claude.snapshot.windows %}
+      <tr>
+        <td data-label="Window">{{ w.label }}</td>
+        <td data-label="Used" class="num">{{ '%.1f'|format(w.percent_used) if w.percent_used is not none else 'unknown' }}%</td>
+        <td data-label="Resets">{{ w.resets_at.isoformat() if w.resets_at else 'unknown' }}</td>
+        <td data-label="Status"><span class="dot dot--{{ w.status }}">{{ w.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="stat-detail">
+    extra usage:
+    {% if report.claude.snapshot.extra_usage and report.claude.snapshot.extra_usage.present and report.claude.snapshot.extra_usage.summary %}
+      {% for k, v in report.claude.snapshot.extra_usage.summary.items() %}{{ k }}={{ v }}{{ ", " if not loop.last else "" }}{% endfor %}
+    {% else %}
+      none
+    {% endif %}
+  </p>
+  {% else %}
+  <p>
+    <span class="dot dot--unknown">unavailable ({{ report.claude.snapshot.unavailable_reason }})</span>
+    {% if report.claude.snapshot.http_status %}<span class="muted">http {{ report.claude.snapshot.http_status }}</span>{% endif %}
+  </p>
+  {% if report.claude.snapshot.diagnostic %}<p class="stat-detail">upstream body present ({{ report.claude.snapshot.diagnostic|length }} char(s), scrubbed, not rendered)</p>{% endif %}
+  {% endif %}
+  <p class="stat-detail">fetched {{ report.claude.snapshot.fetched_at.isoformat() }}</p>
+  <p class="stat-detail">cache age {{ '%.0f'|format(report.claude.cache_age_seconds) }}s, served from cache: {{ report.claude.served_from_cache }}</p>
+  <p class="stat-detail">
+    breaker:
+    {% if report.claude.breaker_open %}
+      open until {{ report.claude.breaker_open_until.isoformat() }}
+    {% else %}
+      closed
+    {% endif %}
+    ({{ report.claude.consecutive_failures }} consecutive failure(s))
+  </p>
+  <p class="stat-detail">{{ report.claude.projection.label }}{% if report.claude.projection.available %} ({{ '%.2f'|format(report.claude.projection.rate_percent_per_hour) }}%/h){% endif %}</p>
+</div>
+
+<div class="panel">
+  <h2>Claude -- last throttle event</h2>
+  <p class="muted">fallback layer, an event, not a live gauge</p>
+  {% if report.claude_throttle_event %}
+  <p>
+    last throttled at {{ report.claude_throttle_event.at.isoformat() if report.claude_throttle_event.at else 'unknown' }},
+    reset at {{ report.claude_throttle_event.resets_at.isoformat() if report.claude_throttle_event.resets_at else 'unknown' }}
+    ({{ report.claude_throttle_event.rate_limit_type or 'unknown window' }}, status {{ report.claude_throttle_event.status or 'unknown' }})
+  </p>
+  {% else %}
+  <p class="muted">no throttle event on file</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Codex</h2>
+  <p><span class="dot dot--unknown">{{ report.codex.label }}</span></p>
+  <p class="stat-detail">auth mode: {{ report.codex.auth_mode or 'unknown' }}</p>
+  <p class="stat-detail">{{ report.codex.note }}</p>
+  {% if report.codex.windows %}
+  <table class="responsive-table">
+    <thead>
+      <tr><th>Window</th><th>Used</th><th>Resets</th><th>Duration</th></tr>
+    </thead>
+    <tbody>
+      {% for w in report.codex.windows %}
+      <tr>
+        <td data-label="Window">{{ w.limit_id }}</td>
+        <td data-label="Used" class="num">{{ w.used_percent if w.used_percent is not none else 'unknown' }}%</td>
+        <td data-label="Resets">{{ w.resets_at.isoformat() if w.resets_at else 'unknown' }}</td>
+        <td data-label="Duration" class="num">{{ w.window_duration_mins if w.window_duration_mins is not none else 'unknown' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}
