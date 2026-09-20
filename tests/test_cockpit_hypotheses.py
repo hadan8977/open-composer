@@ -172,14 +172,24 @@ def test_lane_layout_bare_line_vs_bullet(tmp_path: Path) -> None:
 
 
 def test_load_results_joins_real_summaries_by_card_id() -> None:
+    # The research loop keeps writing into reports/research/iterations/ from a
+    # separate session, so this asserts structure, not an exact census: the
+    # three cards known to carry card_id on 2026-09-19 must still join, and
+    # every summary.json that cannot join must surface as a warning naming its
+    # file rather than vanish. Exact counts were removed on 2026-09-20 after a
+    # concurrent research run added a summary.json and broke a hard-coded 4.
     results = H.load_results(REPO_ROOT)
-    assert set(results.by_card_id) == {"H-20260918-05", "H-20260918-06", "H-20260919-01"}
+    assert {"H-20260918-05", "H-20260918-06", "H-20260919-01"} <= set(results.by_card_id)
     volband_iterations = {f.iteration_id for f in results.by_card_id["H-20260919-01"]}
-    assert volband_iterations == {"h20260919_01_smoke", "h20260919_01_volband"}
-    # 4 of the 8 real summary.json files predate the card_id convention and
-    # must degrade to a warning, not silently vanish.
-    assert len(results.warnings) == 4
-    assert all("no usable top-level card_id" in w for w in results.warnings)
+    assert {"h20260919_01_smoke", "h20260919_01_volband"} <= volband_iterations
+    joined_files = {f.iteration_id for fs in results.by_card_id.values() for f in fs}
+    all_summaries = {
+        p.parent.name for p in (REPO_ROOT / "reports/research/iterations").glob("*/summary.json")
+    }
+    unjoined = all_summaries - joined_files
+    assert unjoined, "expected at least one pre-card_id summary.json in the real corpus"
+    for iteration_id in unjoined:
+        assert any(iteration_id in w for w in results.warnings), f"{iteration_id} dropped silently"
 
 
 def test_load_results_missing_directory_degrades_to_warning(tmp_path: Path) -> None:
