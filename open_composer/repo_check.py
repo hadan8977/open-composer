@@ -19,7 +19,6 @@ NO_CONTEXT_START_DOC = "docs/product-golden-path-codex-quant-review-2026-05-13.z
 CURRENT_DOCS = {
     NO_CONTEXT_START_DOC,
     "docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md",
-    "docs/cockpit-figma-make-prompt.md",
     "docs/design-token-budget-2026-09-20.zh.md",
     "docs/answers-friday-plan-questions-2026-09-15.zh.md",
     "docs/answers-iteration-intelligence-llm-quant-2026-09-15.zh.md",

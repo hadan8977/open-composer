@@ -86,7 +86,6 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/plan-step-17-paper-rehearsal-portfolio-canary-2026-09-15.zh.md",
         "docs/current-view.zh.md",
         "docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md",
-        "docs/cockpit-figma-make-prompt.md",
         "docs/design-token-budget-2026-09-20.zh.md",
     ]:
         source = repo_root / new_doc
