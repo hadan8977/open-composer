@@ -670,6 +670,7 @@ def test_find_last_throttle_event_skips_files_without_a_match(tmp_path: Path) ->
 
 
 def _write_transcript(path: Path, lines: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(json.dumps(line) for line in lines) + "\n", encoding="utf-8")
 
 
@@ -682,7 +683,31 @@ def _usage(input_tokens=0, output_tokens=0, cache_creation=0, cache_read=0) -> d
     }
 
 
-def test_usage_estimate_dedups_repeated_lines_by_message_id(tmp_path: Path) -> None:
+def _assistant_line(ts: datetime, msg_id: str, model: str = "m", **usage_kwargs) -> dict:
+    return {
+        "type": "assistant",
+        "timestamp": ts.isoformat().replace("+00:00", "Z"),
+        "sessionId": "sess-1",
+        "message": {"id": msg_id, "model": model, "usage": _usage(**usage_kwargs)},
+    }
+
+
+def _user_brief_line(ts: datetime, brief: str) -> dict:
+    return {
+        "type": "user",
+        "timestamp": ts.isoformat().replace("+00:00", "Z"),
+        "sessionId": "sess-1",
+        "message": {"role": "user", "content": brief},
+    }
+
+
+def _subagent_task_path(root: Path, stem: str = "agent1") -> Path:
+    return root / "proj1" / "sess1" / "tasks" / f"{stem}.output"
+
+
+def test_usage_estimate_dedups_repeated_lines_by_message_id_in_main_transcripts(
+    tmp_path: Path,
+) -> None:
     """The real 2026-09-20 finding this module exists to avoid: a session can
     log the same assistant turn's `usage` object on several jsonl lines
     (376 lines, 24 distinct `message.id` values, observed on this box).
@@ -692,27 +717,253 @@ def test_usage_estimate_dedups_repeated_lines_by_message_id(tmp_path: Path) -> N
     project_dir = tmp_path / "proj1"
     project_dir.mkdir()
     transcript = project_dir / "session1.jsonl"
-    ts = (now - timedelta(minutes=10)).isoformat().replace("+00:00", "Z")
-    line = {
-        "type": "assistant",
-        "timestamp": ts,
-        "sessionId": "sess-1",
-        "message": {
-            "id": "msg-1",
-            "model": "claude-opus-5",
-            "usage": _usage(input_tokens=10, output_tokens=20, cache_creation=5, cache_read=100),
-        },
-    }
+    ts = now - timedelta(minutes=10)
+    line = _assistant_line(
+        ts,
+        "msg-1",
+        model="claude-opus-5",
+        input_tokens=10,
+        output_tokens=20,
+        cache_creation=5,
+        cache_read=100,
+    )
     _write_transcript(transcript, [line, line, line])  # same message logged 3x
     os.utime(transcript, (now.timestamp(), now.timestamp()))
 
     estimate = Q.build_usage_estimate(tmp_path, now=now)
 
-    assert estimate.total_tokens == 10 + 20 + 5 + 100
+    # T6c: fresh (input + output + cache_creation) never includes cache_read.
+    assert estimate.fresh_main == 10 + 20 + 5
+    assert estimate.fresh_total == estimate.fresh_main
+    assert estimate.cache_read_main == 100
     assert estimate.distinct_session_count == 1
-    assert len(estimate.by_model) == 1
-    assert estimate.by_model[0].model == "claude-opus-5"
-    assert estimate.by_model[0].input_tokens == 10
+    assert len(estimate.by_role_model) == 1
+    row = estimate.by_role_model[0]
+    assert row.role == "main"
+    assert row.model == "claude-opus-5"
+    assert row.input_tokens == 10
+    assert row.fresh_tokens == 35
+    assert row.cache_read_tokens == 100
+
+
+def test_usage_estimate_dedups_repeated_lines_by_message_id_in_subagent_tasks(
+    tmp_path: Path,
+) -> None:
+    """Same overcounting trap as the main-transcript scan, but for a
+    subagent task file (T6c's second source) -- a repeated line must not
+    inflate `turns` or the task's fresh/cache-read totals.
+    """
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    ts = now - timedelta(minutes=5)
+    task_file = _subagent_task_path(tmp_path)
+    line = _assistant_line(
+        ts,
+        "msg-a",
+        model="claude-sonnet-5",
+        input_tokens=3,
+        output_tokens=4,
+        cache_creation=1,
+        cache_read=50,
+    )
+    _write_transcript(task_file, [_user_brief_line(ts, "brief"), line, line])
+    os.utime(task_file, (now.timestamp(), now.timestamp()))
+
+    estimate = Q.build_usage_estimate(tmp_path / "no-main-here", now=now, subagent_root=tmp_path)
+
+    assert len(estimate.subagent_tasks) == 1
+    task = estimate.subagent_tasks[0]
+    assert task.turns == 1
+    assert task.fresh_tokens == 3 + 4 + 1
+    assert task.cache_read_tokens == 50
+
+
+def test_usage_estimate_role_attribution_keeps_main_and_subagent_separate(
+    tmp_path: Path,
+) -> None:
+    """T6c: main-session and subagent-task usage must land in distinct
+    `(role, model)` buckets and distinct `fresh_main`/`fresh_subagent`
+    totals -- never merged into one undifferentiated figure.
+    """
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    ts = now - timedelta(minutes=10)
+
+    main_root = tmp_path / "main"
+    main_root.mkdir()
+    _write_transcript(
+        main_root / "proj1" / "session1.jsonl",
+        [
+            _assistant_line(
+                ts, "msg-main", model="claude-opus-5", input_tokens=100, output_tokens=50
+            )
+        ],
+    )
+    os.utime(main_root / "proj1" / "session1.jsonl", (now.timestamp(), now.timestamp()))
+
+    subagent_root = tmp_path / "subagent"
+    task_file = _subagent_task_path(subagent_root)
+    _write_transcript(
+        task_file,
+        [
+            _user_brief_line(ts, "brief"),
+            _assistant_line(
+                ts, "msg-sub", model="claude-sonnet-5", input_tokens=7, output_tokens=8
+            ),
+        ],
+    )
+    os.utime(task_file, (now.timestamp(), now.timestamp()))
+
+    estimate = Q.build_usage_estimate(main_root, now=now, subagent_root=subagent_root)
+
+    assert estimate.fresh_main == 150
+    assert estimate.fresh_subagent == 15
+    assert estimate.fresh_total == 165
+    roles_by_model = {(r.role, r.model) for r in estimate.by_role_model}
+    assert ("main", "claude-opus-5") in roles_by_model
+    assert ("subagent", "claude-sonnet-5") in roles_by_model
+    assert len(estimate.subagent_tasks) == 1
+
+
+def test_usage_estimate_fresh_never_includes_cache_read(tmp_path: Path) -> None:
+    """T6c's core honesty invariant: a cache read is billed at a fraction of
+    a fresh token, so it must never be folded into `fresh_tokens` at any
+    level -- per-row, per-task, or the window totals.
+    """
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    ts = now - timedelta(minutes=1)
+    main_root = tmp_path / "main"
+    main_root.mkdir()
+    transcript = main_root / "proj1" / "session1.jsonl"
+    _write_transcript(
+        transcript,
+        [
+            _assistant_line(
+                ts,
+                "msg-1",
+                model="m",
+                input_tokens=1,
+                output_tokens=1,
+                cache_creation=1,
+                cache_read=999_999,
+            )
+        ],
+    )
+    os.utime(transcript, (now.timestamp(), now.timestamp()))
+
+    estimate = Q.build_usage_estimate(main_root, now=now, subagent_root=tmp_path / "no-subagent")
+
+    assert estimate.fresh_main == 3
+    assert estimate.fresh_total == 3
+    assert estimate.cache_read_main == 999_999
+    assert estimate.cache_read_total == 999_999
+    assert estimate.fresh_main != estimate.fresh_main + estimate.cache_read_main  # sanity
+    for row in estimate.by_role_model:
+        assert row.fresh_tokens < row.cache_read_tokens or row.cache_read_tokens == 999_999
+        assert row.fresh_tokens == row.input_tokens + row.output_tokens + row.cache_creation_tokens
+
+
+def test_usage_estimate_subagent_task_turn_counting(tmp_path: Path) -> None:
+    """`turns` counts distinct `message.id`s, matching the main-transcript
+    dedupe discipline -- three distinct turns plus one repeated line must
+    still report 3, not 4.
+    """
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    base_ts = now - timedelta(minutes=30)
+    task_file = _subagent_task_path(tmp_path)
+    turn_1 = _assistant_line(base_ts, "msg-1", input_tokens=1)
+    turn_2 = _assistant_line(base_ts + timedelta(minutes=1), "msg-2", input_tokens=1)
+    turn_3 = _assistant_line(base_ts + timedelta(minutes=2), "msg-3", input_tokens=1)
+    _write_transcript(
+        task_file, [_user_brief_line(base_ts, "brief"), turn_1, turn_2, turn_2, turn_3]
+    )
+    os.utime(task_file, (now.timestamp(), now.timestamp()))
+
+    estimate = Q.build_usage_estimate(tmp_path / "no-main", now=now, subagent_root=tmp_path)
+
+    assert len(estimate.subagent_tasks) == 1
+    assert estimate.subagent_tasks[0].turns == 3
+    assert estimate.subagent_tasks[0].first_activity == base_ts
+    assert estimate.subagent_tasks[0].last_activity == base_ts + timedelta(minutes=2)
+
+
+def test_usage_estimate_subagent_task_label_uses_scrubbed_brief(tmp_path: Path) -> None:
+    """The label is `<file stem>: <~60 char, secret_scrub'd brief>` (T6c),
+    taken from the *first* user-role line, not the tail.
+    """
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    ts = now - timedelta(minutes=1)
+    task_file = _subagent_task_path(tmp_path, stem="bxyz123")
+    secret_bearing_brief = "do the thing sk-ant-oat01-supersecrettoken0000000000000000"
+    _write_transcript(
+        task_file,
+        [_user_brief_line(ts, secret_bearing_brief), _assistant_line(ts, "msg-1", input_tokens=1)],
+    )
+    os.utime(task_file, (now.timestamp(), now.timestamp()))
+
+    estimate = Q.build_usage_estimate(tmp_path / "no-main", now=now, subagent_root=tmp_path)
+
+    assert len(estimate.subagent_tasks) == 1
+    label = estimate.subagent_tasks[0].label
+    assert label.startswith("bxyz123: ")
+    assert "sk-ant" not in label
+    assert "REDACTED" in label
+
+
+def test_usage_estimate_subagent_tree_absent_degrades_cleanly(tmp_path: Path) -> None:
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    estimate = Q.build_usage_estimate(
+        tmp_path / "no-main", now=now, subagent_root=tmp_path / "no-subagent-tree"
+    )
+    assert estimate.subagent_tree_found is False
+    assert estimate.subagent_tasks == ()
+    assert estimate.fresh_subagent == 0
+
+
+def test_subagent_task_marked_partial_when_tail_scan_hits_the_cap(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A task file bigger than `_USAGE_SCAN_MAX_TAIL_BYTES` whose window is
+    never fully covered by the capped tail read must be reported
+    `truncated=True` -- rendered on `/quota` as `partial` rather than
+    silently understating that one task's numbers.
+    """
+    monkeypatch.setattr(Q, "_USAGE_SCAN_INITIAL_TAIL_BYTES", 50)
+    # Big enough to contain one whole assistant JSON line (~242 bytes here),
+    # small enough to stay well short of the file's total size below.
+    monkeypatch.setattr(Q, "_USAGE_SCAN_MAX_TAIL_BYTES", 400)
+
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    window_start = now - timedelta(hours=Q.USAGE_ESTIMATE_WINDOW_HOURS)
+    task_file = _subagent_task_path(tmp_path, stem="bigtask")
+
+    filler_lines = [
+        {
+            "type": "user",
+            "timestamp": (window_start + timedelta(minutes=i + 1))
+            .isoformat()
+            .replace("+00:00", "Z"),
+            "sessionId": "sess-1",
+            "message": {},
+        }
+        for i in range(60)
+    ]
+    target_line = _assistant_line(now - timedelta(minutes=1), "msg-target", input_tokens=9)
+    _write_transcript(
+        task_file,
+        [
+            _user_brief_line(window_start + timedelta(seconds=1), "brief"),
+            *filler_lines,
+            target_line,
+        ],
+    )
+    os.utime(task_file, (now.timestamp(), now.timestamp()))
+    assert task_file.stat().st_size > 400 * 3, "test setup must exceed the small tail cap"
+
+    estimate = Q.build_usage_estimate(tmp_path / "no-main", now=now, subagent_root=tmp_path)
+
+    assert len(estimate.subagent_tasks) == 1
+    task = estimate.subagent_tasks[0]
+    assert task.truncated is True
+    assert task.fresh_tokens == 9
 
 
 def test_usage_estimate_skips_files_older_than_window_by_mtime(tmp_path: Path) -> None:
@@ -721,47 +972,28 @@ def test_usage_estimate_skips_files_older_than_window_by_mtime(tmp_path: Path) -
     project_dir.mkdir()
     old_file = project_dir / "old.jsonl"
     recent_file = project_dir / "recent.jsonl"
-    ts = now.isoformat().replace("+00:00", "Z")
-    _write_transcript(
-        old_file,
-        [
-            {
-                "type": "assistant",
-                "timestamp": ts,
-                "sessionId": "sess-old",
-                "message": {"id": "msg-old", "model": "m", "usage": _usage(input_tokens=1)},
-            }
-        ],
-    )
-    _write_transcript(
-        recent_file,
-        [
-            {
-                "type": "assistant",
-                "timestamp": ts,
-                "sessionId": "sess-recent",
-                "message": {"id": "msg-recent", "model": "m", "usage": _usage(input_tokens=2)},
-            }
-        ],
-    )
+    _write_transcript(old_file, [_assistant_line(now, "msg-old", input_tokens=1)])
+    _write_transcript(recent_file, [_assistant_line(now, "msg-recent", input_tokens=2)])
     old_mtime = (now - timedelta(hours=10)).timestamp()
     os.utime(old_file, (old_mtime, old_mtime))
     os.utime(recent_file, (now.timestamp(), now.timestamp()))
 
     estimate = Q.build_usage_estimate(tmp_path, now=now)
 
-    assert estimate.files_scanned == 1
+    assert estimate.main_files_scanned == 1
     assert estimate.distinct_session_count == 1
-    assert estimate.total_tokens == 2
+    assert estimate.fresh_main == 2
 
 
 def test_usage_estimate_missing_directory_degrades_to_zero(tmp_path: Path) -> None:
     now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
     estimate = Q.build_usage_estimate(tmp_path / "does-not-exist", now=now)
-    assert estimate.total_tokens == 0
+    assert estimate.fresh_total == 0
+    assert estimate.cache_read_total == 0
     assert estimate.distinct_session_count == 0
-    assert estimate.files_scanned == 0
-    assert estimate.by_model == ()
+    assert estimate.main_files_scanned == 0
+    assert estimate.by_role_model == ()
+    assert estimate.subagent_tasks == ()
 
 
 def test_usage_estimate_tail_scan_grows_to_cover_a_deeply_buried_line(
@@ -781,12 +1013,7 @@ def test_usage_estimate_tail_scan_grows_to_cover_a_deeply_buried_line(
     transcript = project_dir / "session1.jsonl"
 
     window_start = now - timedelta(hours=Q.USAGE_ESTIMATE_WINDOW_HOURS)
-    target_line = {
-        "type": "assistant",
-        "timestamp": (window_start + timedelta(seconds=1)).isoformat().replace("+00:00", "Z"),
-        "sessionId": "sess-1",
-        "message": {"id": "msg-target", "model": "m", "usage": _usage(input_tokens=7)},
-    }
+    target_line = _assistant_line(window_start + timedelta(seconds=1), "msg-target", input_tokens=7)
     filler_lines = [
         {
             "type": "user",
@@ -804,7 +1031,7 @@ def test_usage_estimate_tail_scan_grows_to_cover_a_deeply_buried_line(
 
     estimate = Q.build_usage_estimate(tmp_path, now=now)
 
-    assert estimate.total_tokens == 7
+    assert estimate.fresh_main == 7
     assert estimate.distinct_session_count == 1
 
 
@@ -815,14 +1042,30 @@ def test_usage_estimate_cache_reuses_within_ttl_and_refreshes_after(
     stub = Q.UsageEstimate(
         window_start=datetime(2026, 9, 20, tzinfo=UTC),
         window_end=datetime(2026, 9, 20, tzinfo=UTC),
-        by_model=(),
-        total_tokens=0,
+        by_role_model=(),
+        subagent_tasks=(),
+        fresh_main=0,
+        fresh_subagent=0,
+        fresh_total=0,
+        cache_read_main=0,
+        cache_read_subagent=0,
+        cache_read_total=0,
         distinct_session_count=0,
-        files_scanned=0,
+        main_files_scanned=0,
+        subagent_files_scanned=0,
+        subagent_tree_found=False,
+        topbar_label="fresh 0 (main 0, subagents 0) . 5h window",
         generated_at=datetime(2026, 9, 20, tzinfo=UTC),
     )
 
-    def fake_build(root, *, now=None, max_files=Q._MAX_USAGE_TRANSCRIPT_FILES):
+    def fake_build(
+        root,
+        *,
+        now=None,
+        max_files=Q._MAX_USAGE_TRANSCRIPT_FILES,
+        subagent_root=None,
+        max_subagent_files=Q._MAX_SUBAGENT_TASK_FILES,
+    ):
         calls.append(1)
         return stub
 
@@ -835,6 +1078,182 @@ def test_usage_estimate_cache_reuses_within_ttl_and_refreshes_after(
     assert len(calls) == 1, "a request within the 60s TTL must not re-scan"
 
     cache.get(now=base + timedelta(seconds=Q.USAGE_ESTIMATE_CACHE_TTL_SECONDS + 1))
+    assert len(calls) == 2
+
+
+# --------------------------------------------------------------------------
+# 429 calibration (T6c): empirical window capacity from observed throttles
+# --------------------------------------------------------------------------
+
+
+def test_find_all_throttle_events_returns_empty_when_dir_missing(tmp_path: Path) -> None:
+    assert Q.find_all_throttle_events(tmp_path / "does-not-exist") == ()
+
+
+def test_find_all_throttle_events_collects_every_rejected_event(tmp_path: Path) -> None:
+    project_dir = tmp_path / "proj1"
+    project_dir.mkdir()
+    transcript = project_dir / "session1.jsonl"
+    lines = [
+        json.dumps(
+            {
+                "type": "assistant",
+                "timestamp": "2026-09-07T09:28:44.887Z",
+                "message": {},
+                "quotaLimits": {
+                    "status": "rejected",
+                    "resetsAt": 1_788_000_000,
+                    "rateLimitType": "five_hour",
+                },
+            }
+        ),
+        json.dumps({"type": "assistant", "timestamp": "2026-09-07T10:00:00.000Z", "message": {}}),
+        json.dumps(
+            {
+                "type": "assistant",
+                "timestamp": "2026-09-07T14:00:00.000Z",
+                "message": {},
+                "quotaLimits": {
+                    "status": "rejected",
+                    "resetsAt": 1_788_100_000,
+                    "rateLimitType": "five_hour",
+                },
+            }
+        ),
+    ]
+    transcript.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    events = Q.find_all_throttle_events(tmp_path)
+    assert len(events) == 2
+    assert {e.status for e in events} == {"rejected"}
+
+
+def test_compute_throttle_calibration_no_events_reports_not_observed(tmp_path: Path) -> None:
+    now = datetime(2026, 9, 20, 12, 0, 0, tzinfo=UTC)
+    calibration = Q.compute_throttle_calibration(
+        now=now,
+        current_fresh_total=1000,
+        main_root=tmp_path / "does-not-exist",
+        subagent_root=tmp_path / "does-not-exist-either",
+    )
+    assert calibration.available is False
+    assert calibration.event_count == 0
+    assert calibration.last_event is None
+    assert calibration.last_fresh_at_event is None
+    assert calibration.min_fresh_at_event is None
+    assert calibration.median_fresh_at_event is None
+    assert calibration.vs_last_throttle_ratio is None
+
+
+def test_compute_throttle_calibration_computes_fresh_at_a_synthetic_event(
+    tmp_path: Path,
+) -> None:
+    """For a synthetic 429, the calibration must sum fresh tokens (both
+    sources, never cache_read) in the 5h window ending at the event's own
+    timestamp, not "now" -- and report a ratio (never a percentage) against
+    the caller-supplied current fresh total.
+    """
+    event_at = datetime(2026, 9, 18, 8, 19, 17, 850000, tzinfo=UTC)
+    now = event_at + timedelta(hours=2)
+
+    main_root = tmp_path / "main"
+    project_dir = main_root / "proj1"
+    project_dir.mkdir(parents=True)
+    transcript = project_dir / "session1.jsonl"
+    lines = [
+        _assistant_line(
+            event_at - timedelta(hours=1),
+            "msg-main",
+            input_tokens=100,
+            output_tokens=50,
+            cache_creation=25,
+            cache_read=10,
+        ),
+        {
+            "type": "assistant",
+            "timestamp": event_at.isoformat().replace("+00:00", "Z"),
+            "message": {},
+            "quotaLimits": {
+                "status": "rejected",
+                "resetsAt": 1_788_329_400,
+                "rateLimitType": "five_hour",
+            },
+        },
+    ]
+    _write_transcript(transcript, lines)
+    os.utime(transcript, (event_at.timestamp(), event_at.timestamp()))
+
+    subagent_root = tmp_path / "subagent"
+    task_file = _subagent_task_path(subagent_root)
+    _write_transcript(
+        task_file,
+        [
+            _user_brief_line(event_at - timedelta(minutes=30), "brief"),
+            _assistant_line(
+                event_at - timedelta(minutes=30),
+                "msg-sub",
+                input_tokens=10,
+                output_tokens=5,
+                cache_read=1000,
+            ),
+        ],
+    )
+    os.utime(task_file, (event_at.timestamp(), event_at.timestamp()))
+
+    calibration = Q.compute_throttle_calibration(
+        now=now,
+        current_fresh_total=500,
+        main_root=main_root,
+        subagent_root=subagent_root,
+    )
+
+    assert calibration.available is True
+    assert calibration.event_count == 1
+    # main fresh (100+50+25=175) + subagent fresh (10+5=15) = 190, cache_read excluded.
+    assert calibration.last_fresh_at_event == 190
+    assert calibration.min_fresh_at_event == 190
+    assert calibration.median_fresh_at_event == 190
+    assert calibration.vs_last_throttle_ratio == pytest.approx(500 / 190)
+    assert calibration.last_event is not None
+    assert calibration.last_event.at == event_at
+
+
+def test_throttle_calibration_cache_reuses_within_ttl_and_refreshes_after(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`compute_throttle_calibration` is measurably expensive on a box with
+    real, populated transcript trees (scanning every file touched since an
+    old historical window's start) -- `ThrottleCalibrationCache` exists so a
+    normal browsing session's repeated `/quota` renders do not each pay
+    that cost, matching `UsageEstimateCache`'s TTL policy.
+    """
+    calls: list[int] = []
+    stub = Q.ThrottleCalibration(
+        available=False,
+        last_event=None,
+        last_fresh_at_event=None,
+        event_count=0,
+        min_fresh_at_event=None,
+        median_fresh_at_event=None,
+        vs_last_throttle_ratio=None,
+    )
+
+    def fake_compute(*, now, current_fresh_total, main_root=None, subagent_root=None):
+        calls.append(1)
+        return stub
+
+    monkeypatch.setattr(Q, "compute_throttle_calibration", fake_compute)
+    cache = Q.ThrottleCalibrationCache()
+    base = datetime(2026, 9, 20, tzinfo=UTC)
+
+    cache.get(now=base, current_fresh_total=100)
+    cache.get(now=base + timedelta(seconds=30), current_fresh_total=100)
+    assert len(calls) == 1, "a request within the 60s TTL must not re-scan"
+
+    cache.get(
+        now=base + timedelta(seconds=Q.THROTTLE_CALIBRATION_CACHE_TTL_SECONDS + 1),
+        current_fresh_total=100,
+    )
     assert len(calls) == 2
 
 

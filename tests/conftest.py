@@ -69,6 +69,27 @@ def _cockpit_quota_no_live_network(
     path pass their own ``credentials_path=``/``paseo_config_path=``/``env=``/
     ``client=`` arguments (or monkeypatch the module constants themselves for
     the duration of one test), which overrides these defaults.
+
+    T6c extends the same discipline to the two *local-filesystem* usage-estimate
+    sources, for the same reason: this box has a real, populated
+    ``~/.claude/projects`` (the box owner's own main-session transcripts) and
+    a real, populated ``/tmp/claude-0`` (real subagent task transcripts, see
+    ``open_composer.cockpit.data.quota``'s "Usage estimate, T6c" docstring
+    section), so without also neutralizing these two, *every* cockpit test
+    that renders a page would read real transcripts off this machine on every
+    request -- non-deterministic test output, and a violation of the same
+    "tests never touch real user data" rule the three credential sources
+    above exist to uphold. Both are pointed at a directory that does not
+    exist, which every reader in ``quota.py`` already degrades cleanly for
+    (an empty/missing-tree result), exactly like the credential paths above:
+
+    * ``CLAUDE_PROJECTS_DIR`` (main-session transcripts);
+    * ``SUBAGENT_TASKS_ROOT`` (subagent task transcripts).
+
+    Tests that want real scanning behavior pass their own ``root=``/
+    ``transcripts_root=``/``subagent_root=``/``subagent_transcripts_root=``
+    arguments pointed at a ``tmp_path`` with synthetic JSONL, the same
+    override pattern as the three credential sources.
     """
     missing_dir = tmp_path_factory.mktemp("no-claude-credentials")
     monkeypatch.setattr(
@@ -79,6 +100,17 @@ def _cockpit_quota_no_live_network(
         "open_composer.cockpit.data.quota.PASEO_CONFIG_PATH", missing_dir / "paseo-config.json"
     )
     monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+
+    no_transcripts_dir = tmp_path_factory.mktemp("no-claude-transcripts")
+    monkeypatch.setattr(
+        "open_composer.cockpit.data.quota.CLAUDE_PROJECTS_DIR",
+        no_transcripts_dir / "projects-do-not-exist",
+    )
+    no_subagent_dir = tmp_path_factory.mktemp("no-subagent-transcripts")
+    monkeypatch.setattr(
+        "open_composer.cockpit.data.quota.SUBAGENT_TASKS_ROOT",
+        no_subagent_dir / "claude-0-does-not-exist",
+    )
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:

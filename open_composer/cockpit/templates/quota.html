@@ -2,7 +2,7 @@
 {% block title %}Quota -- Open Composer Cockpit{% endblock %}
 {% block content %}
 <h1>Quota</h1>
-<p class="muted">generated {{ report.generated_at.isoformat() }}</p>
+<p class="muted">generated {{ report.generated_at|short_ts }}</p>
 
 <div class="panel">
   <h2>Claude -- subscription OAuth</h2>
@@ -17,7 +17,7 @@
       <tr>
         <td data-label="Window">{{ w.label }}</td>
         <td data-label="Used" class="num">{{ '%.1f'|format(w.percent_used) if w.percent_used is not none else 'unknown' }}%</td>
-        <td data-label="Resets">{{ w.resets_at.isoformat() if w.resets_at else 'unknown' }}</td>
+        <td data-label="Resets">{{ w.resets_at|short_ts if w.resets_at else 'unknown' }}</td>
         <td data-label="Status"><span class="dot dot--{{ w.status }}">{{ w.status }}</span></td>
       </tr>
       {% endfor %}
@@ -38,12 +38,12 @@
   </p>
   {% if report.claude.snapshot.diagnostic %}<p class="stat-detail">upstream body present ({{ report.claude.snapshot.diagnostic|length }} char(s), scrubbed, not rendered)</p>{% endif %}
   {% endif %}
-  <p class="stat-detail">fetched {{ report.claude.snapshot.fetched_at.isoformat() }}</p>
+  <p class="stat-detail">fetched {{ report.claude.snapshot.fetched_at|short_ts }}</p>
   <p class="stat-detail">cache age {{ '%.0f'|format(report.claude.cache_age_seconds) }}s, served from cache: {{ report.claude.served_from_cache }}</p>
   <p class="stat-detail">
     breaker:
     {% if report.claude.breaker_open %}
-      open until {{ report.claude.breaker_open_until.isoformat() }}
+      open until {{ report.claude.breaker_open_until|short_ts }}
     {% else %}
       closed
     {% endif %}
@@ -77,43 +77,96 @@
 
 <div class="panel">
   <h2>Claude -- usage estimate (from local transcripts)</h2>
-  <p class="muted">absolute tokens, not a percentage -- denominator unknown, see /quota source</p>
-  <p class="stat-detail">window {{ report.usage_estimate.window_start.isoformat() }} to {{ report.usage_estimate.window_end.isoformat() }}</p>
+  <p class="muted">absolute tokens, not a percentage -- denominator unknown, see /quota source. fresh and cache read are never summed.</p>
+  <p class="stat-detail">window {{ report.usage_estimate.window_start|short_ts }} to {{ report.usage_estimate.window_end|short_ts }}</p>
   <table class="responsive-table">
     <thead>
-      <tr><th>Model</th><th>Input</th><th>Output</th><th>Cache creation</th><th>Cache read</th><th>Total</th></tr>
+      <tr><th>Role</th><th>Model</th><th>Input</th><th>Output</th><th>Cache write</th><th>Fresh</th><th>Cache read</th></tr>
     </thead>
     <tbody>
-      {% for m in report.usage_estimate.by_model %}
+      {% for r in report.usage_estimate.by_role_model %}
       <tr>
-        <td data-label="Model">{{ m.model }}</td>
-        <td data-label="Input" class="num">{{ '{:,}'.format(m.input_tokens) }}</td>
-        <td data-label="Output" class="num">{{ '{:,}'.format(m.output_tokens) }}</td>
-        <td data-label="Cache creation" class="num">{{ '{:,}'.format(m.cache_creation_tokens) }}</td>
-        <td data-label="Cache read" class="num">{{ '{:,}'.format(m.cache_read_tokens) }}</td>
-        <td data-label="Total" class="num">{{ '{:,}'.format(m.total_tokens) }}</td>
+        <td data-label="Role">{{ r.role }}</td>
+        <td data-label="Model">{{ r.model }}</td>
+        <td data-label="Input" class="num">{{ '{:,}'.format(r.input_tokens) }}</td>
+        <td data-label="Output" class="num">{{ '{:,}'.format(r.output_tokens) }}</td>
+        <td data-label="Cache write" class="num">{{ '{:,}'.format(r.cache_creation_tokens) }}</td>
+        <td data-label="Fresh" class="num"><strong>{{ '{:,}'.format(r.fresh_tokens) }}</strong></td>
+        <td data-label="Cache read" class="num muted">{{ '{:,}'.format(r.cache_read_tokens) }}</td>
       </tr>
       {% endfor %}
-      {% if not report.usage_estimate.by_model %}
-      <tr><td colspan="6">none</td></tr>
+      {% if not report.usage_estimate.by_role_model %}
+      <tr><td colspan="7">none</td></tr>
       {% endif %}
     </tbody>
   </table>
-  <p class="stat-detail">total {{ '{:,}'.format(report.usage_estimate.total_tokens) }} tok, {{ report.usage_estimate.distinct_session_count }} distinct session(s), {{ report.usage_estimate.files_scanned }} file(s) scanned</p>
-  <p class="stat-detail">generated {{ report.usage_estimate.generated_at.isoformat() }}</p>
+  <p class="stat-detail">fresh: main <strong>{{ '{:,}'.format(report.usage_estimate.fresh_main) }}</strong>, subagents <strong>{{ '{:,}'.format(report.usage_estimate.fresh_subagent) }}</strong>, total <strong>{{ '{:,}'.format(report.usage_estimate.fresh_total) }}</strong></p>
+  <p class="stat-detail muted">cache read: main {{ '{:,}'.format(report.usage_estimate.cache_read_main) }}, subagents {{ '{:,}'.format(report.usage_estimate.cache_read_subagent) }}, total {{ '{:,}'.format(report.usage_estimate.cache_read_total) }}</p>
+  <p class="stat-detail">{{ report.usage_estimate.distinct_session_count }} distinct main session(s), {{ report.usage_estimate.main_files_scanned }} main file(s) scanned, {{ report.usage_estimate.subagent_files_scanned }} subagent task file(s) scanned{% if not report.usage_estimate.subagent_tree_found %} -- no subagent transcripts found{% endif %}</p>
+  <p class="stat-detail">generated {{ report.usage_estimate.generated_at|short_ts }}</p>
 </div>
 
 <div class="panel">
-  <h2>Claude -- last throttle event</h2>
-  <p class="muted">fallback layer, an event, not a live gauge</p>
-  {% if report.claude_throttle_event %}
+  <h2>Claude -- subagent task usage</h2>
+  <p class="muted">one row per task file with recorded usage, sorted by fresh, descending</p>
+  {% if report.usage_estimate.subagent_tasks %}
+  <table class="responsive-table">
+    <thead>
+      <tr><th>Label</th><th>Model</th><th>Fresh</th><th>Cache read</th><th>Turns</th><th>First activity</th><th>Last activity</th><th>Coverage</th></tr>
+    </thead>
+    <tbody>
+      {% for t in report.usage_estimate.subagent_tasks %}
+      <tr>
+        <td data-label="Label">{{ t.label }}</td>
+        <td data-label="Model">{{ t.model }}</td>
+        <td data-label="Fresh" class="num"><strong>{{ '{:,}'.format(t.fresh_tokens) }}</strong></td>
+        <td data-label="Cache read" class="num muted">{{ '{:,}'.format(t.cache_read_tokens) }}</td>
+        <td data-label="Turns" class="num">{{ t.turns }}</td>
+        <td data-label="First activity">{{ t.first_activity|short_ts }}</td>
+        <td data-label="Last activity">{{ t.last_activity|short_ts }}</td>
+        <td data-label="Coverage">{{ 'partial' if t.truncated else 'full' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% elif report.usage_estimate.subagent_tree_found %}
+  <p class="muted">no subagent task usage in window</p>
+  {% else %}
+  <p class="muted">no subagent transcripts found</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Claude -- 429 calibration</h2>
+  <p class="muted">empirical window capacity, from observed throttles -- never a percentage</p>
+  {% if report.throttle_calibration.available %}
   <p>
-    last throttled at {{ report.claude_throttle_event.at.isoformat() if report.claude_throttle_event.at else 'unknown' }},
-    reset at {{ report.claude_throttle_event.resets_at.isoformat() if report.claude_throttle_event.resets_at else 'unknown' }}
-    ({{ report.claude_throttle_event.rate_limit_type or 'unknown window' }}, status {{ report.claude_throttle_event.status or 'unknown' }})
+    last throttled at {{ report.throttle_calibration.last_event.at|short_ts if report.throttle_calibration.last_event else 'unknown' }},
+    reset at {{ report.throttle_calibration.last_event.resets_at|short_ts if report.throttle_calibration.last_event else 'unknown' }}
+    ({{ report.throttle_calibration.last_event.rate_limit_type or 'unknown window' if report.throttle_calibration.last_event else 'unknown window' }})
+  </p>
+  <p class="stat-detail">
+    empirical window capacity: fresh tokens at last throttle
+    {{ '{:,}'.format(report.throttle_calibration.last_fresh_at_event) if report.throttle_calibration.last_fresh_at_event is not none else 'unknown' }}
+    (at {{ report.throttle_calibration.last_event.at|short_ts if report.throttle_calibration.last_event else 'unknown' }})
+  </p>
+  <p class="stat-detail">throttle event(s) seen: {{ report.throttle_calibration.event_count }}</p>
+  {% if report.throttle_calibration.event_count > 1 %}
+  <p class="stat-detail">
+    min {{ '{:,}'.format(report.throttle_calibration.min_fresh_at_event) if report.throttle_calibration.min_fresh_at_event is not none else 'unknown' }},
+    median {{ '{:,}'.format(report.throttle_calibration.median_fresh_at_event) if report.throttle_calibration.median_fresh_at_event is not none else 'unknown' }}
+    fresh tokens across sampled throttle events
+  </p>
+  {% endif %}
+  <p class="stat-detail">
+    {% if report.throttle_calibration.vs_last_throttle_ratio is not none %}
+    {{ '%.2f'|format(report.throttle_calibration.vs_last_throttle_ratio) }}x vs last throttle
+    {% else %}
+    vs last throttle: unknown
+    {% endif %}
   </p>
   {% else %}
-  <p class="muted">no throttle event on file</p>
+  <p class="muted">no throttle observed yet</p>
   {% endif %}
 </div>
 
@@ -132,7 +185,7 @@
       <tr>
         <td data-label="Window">{{ w.limit_id }}</td>
         <td data-label="Used" class="num">{{ w.used_percent if w.used_percent is not none else 'unknown' }}%</td>
-        <td data-label="Resets">{{ w.resets_at.isoformat() if w.resets_at else 'unknown' }}</td>
+        <td data-label="Resets">{{ w.resets_at|short_ts if w.resets_at else 'unknown' }}</td>
         <td data-label="Duration" class="num">{{ w.window_duration_mins if w.window_duration_mins is not none else 'unknown' }}</td>
       </tr>
       {% endfor %}

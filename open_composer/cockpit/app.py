@@ -69,11 +69,13 @@ from open_composer.cockpit.data.paper import (
     discover_strategy_names,
 )
 from open_composer.cockpit.data.quota import (
+    USAGE_ESTIMATE_WINDOW_HOURS,
     CodexQuotaState,
     TopbarQuota,
     UsageEstimate,
     build_codex_quota_state,
     build_quota_report,
+    format_compact_token_count,
     get_default_claude_cache,
     get_default_usage_estimate_cache,
     to_topbar_quota,
@@ -184,12 +186,34 @@ def _topbar_usage_estimate(now: datetime) -> UsageEstimate:
         return UsageEstimate(
             window_start=now,
             window_end=now,
-            by_model=(),
-            total_tokens=0,
+            by_role_model=(),
+            subagent_tasks=(),
+            fresh_main=0,
+            fresh_subagent=0,
+            fresh_total=0,
+            cache_read_main=0,
+            cache_read_subagent=0,
+            cache_read_total=0,
             distinct_session_count=0,
-            files_scanned=0,
+            main_files_scanned=0,
+            subagent_files_scanned=0,
+            subagent_tree_found=False,
+            topbar_label=f"fresh {format_compact_token_count(0)} "
+            f"(main {format_compact_token_count(0)}, subagents {format_compact_token_count(0)}) "
+            f". {USAGE_ESTIMATE_WINDOW_HOURS:.0f}h window",
             generated_at=now,
         )
+
+
+def _format_short_timestamp(value: datetime | None) -> str:
+    """`YYYY-MM-DD HH:MMZ`, no microseconds, no UTC offset punctuation (plan
+    section 3.5, `/quota`-specific rule folded in at T6c): every timestamp on
+    that page renders through this, registered below as the `short_ts`
+    Jinja filter. `None` renders as `unknown` -- a label, not a sentence.
+    """
+    if value is None:
+        return "unknown"
+    return value.strftime("%Y-%m-%d %H:%M") + "Z"
 
 
 def _base_context(request: Request, active: str) -> dict[str, Any]:
@@ -214,6 +238,7 @@ def create_app() -> FastAPI:
         description="Read-only status cockpit. No write routes exist by design.",
     )
     templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+    templates.env.filters["short_ts"] = _format_short_timestamp
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.get("/healthz")
