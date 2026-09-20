@@ -56,6 +56,33 @@ Cockpit 的唯一目的是**把这些询问固化成页面**，让他不用打�
 - `readiness.py` 里的 `dashboard_bundle` 检查项和 `dashboard_auth_mode` / `dashboard_api_token` / `dashboard_allowed_emails` 相关检查一并删除（应用不再有鉴权层）；`dashboard_catalog` 检查项改名 `cockpit_catalog` 保留。
 - `deployment.py` 里 `write_dashboard_html` 那一步删除，`build/write_dashboard_catalog` 改指向新包。
 
+## 3.5 界面规则（2026-09-20 机主指示，T6 起一律遵守，T1-T5 回头统一改）
+
+**界面文字全部英文。** 唯一例外是数据本身：卡片正文、报告原文是中文，原样渲染，不翻译——那是数据，不是界面。
+解析用的中文词表（`状态`、`上一环`、`产出目录`、`已执行`、`否定` 等正则）当然保持中文，它们要匹配中文原文。
+
+**不要 AI 味的文案**：
+- 不写读者看一眼就知道的话。没有欢迎语、没有"这里显示……"、没有空状态打气。空就是 `none`，或者 `no data yet` 加一句为什么。
+- 标签用名词，不用句子。不加感叹号，不加表情符号，不加装饰性图标。
+- 每一个可能过期的数值旁边必须有它的时间戳。宁可多一个时间戳，不要多一句解释。
+
+**不要 AI 味的设计**：
+- 不用渐变、阴影、动画、过渡。圆角一律 ≤ 2px（状态圆点的 50% 除外），不用胶囊形。
+- 桌面端优先密度：能用表格就不用卡片。手机端才把表格折叠成卡片。
+- 数字右对齐、等宽字体。颜色只承担状态语义（ok/warn/stale/unknown），不做装饰。
+
+**术语表**（内部标识符和显示文字都用这一套）：
+
+| 中文 | 英文 |
+|---|---|
+| 提出 / 已批准 / 预注册 / 在跑 | proposed / approved / preregistered / running |
+| 完成·已上线 / 完成·否定 / 搁置 | shipped / refuted / on hold |
+| 数据卡 / 未分类 | data card / unclassified |
+| 仅观察 / 已过期 | observation only / expired |
+| 判定 vs 实际 | criteria vs result |
+| 未结构化（人工对照） | unstructured |
+| 上一环（实线边）/ 正文引用（虚线边） | declared / mentioned |
+
 ## 4. 信息架构（五屏 + 常驻顶栏）
 
 **常驻顶栏**（每一屏都在，手机上折叠成一行图标 + 可展开）：
