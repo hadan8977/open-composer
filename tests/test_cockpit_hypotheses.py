@@ -21,7 +21,7 @@ def _make_card(
     kind: str = "H",
     title: str = "title",
     status_text: str = "",
-    lane: str = "未分类",
+    lane: str = "unclassified",
     lane_reason: str | None = None,
     previous: str | None = None,
     referenced_ids: tuple[str, ...] = (),
@@ -50,7 +50,7 @@ def _make_card(
 
 
 # --------------------------------------------------------------------------
-# Real corpus: every card parses, none is dropped, 未分类 always has a reason
+# Real corpus: every card parses, none is dropped, unclassified always has a reason
 # --------------------------------------------------------------------------
 
 
@@ -76,14 +76,14 @@ def test_no_card_is_ever_dropped_when_grouped_by_lane() -> None:
 
 def test_every_unclassified_card_carries_a_reason_and_raw_status() -> None:
     cards = H.load_cards(REPO_ROOT)
-    unclassified = [c for c in cards if c.lane == "未分类"]
+    unclassified = [c for c in cards if c.lane == "unclassified"]
     # The vocabulary covers the whole corpus as of 2026-09-19 (19 cards, 0
     # unclassified). This is not asserted as "must stay 0" -- a new card with
     # novel status prose legitimately lands here -- but every such card must
     # carry a reason and still be rendered.
     assert len(unclassified) == 0, [(c.id, c.lane_reason) for c in unclassified]
     for card in unclassified:
-        assert card.lane_reason, f"{card.id} is 未分类 with no reason"
+        assert card.lane_reason, f"{card.id} is unclassified with no reason"
 
 
 def test_the_real_cards_with_an_explicit_previous_field() -> None:
@@ -105,33 +105,33 @@ def test_the_real_cards_with_an_explicit_previous_field() -> None:
 
 
 LANE_CASES = [
-    ("bare 预注册", "预注册已写死，等待评估", "预注册"),
-    ("bare 已写死", "已写死，尚未开跑", "预注册"),
-    ("bare 待跑", "设计完成，待跑", "预注册"),
-    ("bare 在跑", "在跑，预计明天出结果", "在跑"),
-    ("bare 运行中", "运行中", "在跑"),
-    ("bare 评估在跑", "评估在跑", "在跑"),
-    ("bullet done+被否定", "- 状态：**done — 被否定**（四个门命中停止条件）", "完成·否定"),
-    ("bare done+refuted", "**done / refuted**（见 L-20260918-01）", "完成·否定"),
-    ("bare 已执行+否定", "已执行，否定", "完成·否定"),
-    ("bare 已执行+通过", "已执行，三个 cell 通过，今天上模拟盘", "完成·已上线"),
-    ("bare 已执行+上线", "已执行，通过并上线", "完成·已上线"),
-    ("bare 搁置", "搁置，等待更多数据", "搁置"),
-    ("bare 暂停", "暂停中", "搁置"),
-    ("english proposed", "proposed（等你配置模型）", "提出"),
-    ("english approved", "approved（Fable 决定）", "已批准"),
-    ("english running", "**running -> see the lesson file**", "在跑"),
-    ("approved but already running", "approved（Fable 决定），评估在跑", "在跑"),
-    ("empty status", "", "未分类"),
+    ("bare 预注册", "预注册已写死，等待评估", "preregistered"),
+    ("bare 已写死", "已写死，尚未开跑", "preregistered"),
+    ("bare 待跑", "设计完成，待跑", "preregistered"),
+    ("bare 在跑", "在跑，预计明天出结果", "running"),
+    ("bare 运行中", "运行中", "running"),
+    ("bare 评估在跑", "评估在跑", "running"),
+    ("bullet done+被否定", "- 状态：**done — 被否定**（四个门命中停止条件）", "refuted"),
+    ("bare done+refuted", "**done / refuted**（见 L-20260918-01）", "refuted"),
+    ("bare 已执行+否定", "已执行，否定", "refuted"),
+    ("bare 已执行+通过", "已执行，三个 cell 通过，今天上模拟盘", "shipped"),
+    ("bare 已执行+上线", "已执行，通过并上线", "shipped"),
+    ("bare 搁置", "搁置，等待更多数据", "on hold"),
+    ("bare 暂停", "暂停中", "on hold"),
+    ("english proposed", "proposed（等你配置模型）", "proposed"),
+    ("english approved", "approved（Fable 决定）", "approved"),
+    ("english running", "**running -> see the lesson file**", "running"),
+    ("approved but already running", "approved（Fable 决定），评估在跑", "running"),
+    ("empty status", "", "unclassified"),
     (
         "done+否定 wins over incidental 预注册 mention",
         "已执行，否定。8 个族的预注册选择规则没有一个打赢",
-        "完成·否定",
+        "refuted",
     ),
     (
         "在跑 wins over 已写死/预注册 when both present",
         "预注册已写死；描述统计已出，评估在跑",
-        "在跑",
+        "running",
     ),
 ]
 
@@ -144,7 +144,7 @@ def test_derive_lane_table_driven(label: str, status_text: str, expected_lane: s
     assert lane == expected_lane, (
         f"{label}: expected {expected_lane}, got {lane} (reason={reason!r})"
     )
-    if lane == "未分类":
+    if lane == "unclassified":
         assert reason
 
 
@@ -162,8 +162,8 @@ def test_lane_layout_bare_line_vs_bullet(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     cards = {c.id: c for c in H.load_cards(tmp_path)}
-    assert cards["H-20260101-01"].lane == "完成·已上线"
-    assert cards["H-20260101-02"].lane == "完成·否定"
+    assert cards["H-20260101-01"].lane == "shipped"
+    assert cards["H-20260101-02"].lane == "refuted"
 
 
 # --------------------------------------------------------------------------
@@ -397,7 +397,7 @@ def test_card_detail_renders_body_and_results(client: TestClient) -> None:
     response = client.get("/card/H-20260918-05")
     assert response.status_code == 200
     assert "h20260918_05_recent_menu" in response.text
-    assert "未结构化（人工对照）" in response.text
+    assert "unstructured" in response.text
 
 
 def test_hypotheses_report_degrades_when_repo_root_is_empty(tmp_path: Path) -> None:

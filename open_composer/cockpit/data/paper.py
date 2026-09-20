@@ -48,12 +48,12 @@ from open_composer.config import project_root
 
 AuthorizationState = Literal["authorized", "observation_only", "expired"]
 
-#: Display labels for `AuthorizationState`, in the exact vocabulary the plan
-#: specifies for this screen's chips (plan section 7, T5: "authorized / 仅观察 / 已过期").
+#: Display labels for `AuthorizationState`, in the English UI vocabulary
+#: (plan section 3.5: "observation only" / "expired").
 AUTH_STATE_LABELS: dict[AuthorizationState, str] = {
     "authorized": "authorized",
-    "observation_only": "仅观察",
-    "expired": "已过期",
+    "observation_only": "observation only",
+    "expired": "expired",
 }
 
 REHEARSAL_DIR = ("reports", "paper", "rehearsal")

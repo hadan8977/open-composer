@@ -13,7 +13,7 @@ Three data sources feed this screen, all listed in plan section 5:
   hypothesis (``H-YYYYMMDD-NN``) or data/framework correction
   (``D-YYYYMMDD-NN``). Format is **not** uniform (see :func:`load_cards`);
   parsing is deliberately tolerant and a card that cannot be classified goes
-  to the ``未分类`` lane with a reason attached rather than disappearing.
+  to the ``unclassified`` lane with a reason attached rather than disappearing.
 * ``reports/research/iterations/*/summary.json`` -- machine-written trial
   results. Only some of them carry a top-level ``card_id`` field; only those
   join to a card (see :func:`load_results`). This is a real gap in the data,
@@ -51,28 +51,28 @@ from open_composer.yaml_utils import safe_load_yaml
 CARD_ID_RE = re.compile(r"^([HD])-(\d{8})-(\d{2})$")
 _CARD_ID_ANYWHERE_RE = re.compile(r"\b([HD]-\d{8}-\d{2})\b")
 
-#: Swimlanes in board order (plan section 4, screen 1). `未分类` is last and
+#: Swimlanes in board order (plan section 4, screen 1). `unclassified` is last and
 #: is a *guarantee*, not a fallback that is expected to stay empty: any card
 #: whose status text does not contain a recognized keyword lands here rather
 #: than being dropped or guessed at. See `test_no_card_is_ever_dropped`.
 # Lane order follows this project's own card lifecycle, written down in
 # docs/proposal-research-loop-redesign-2026-09-15.zh.md section 2.3
 # (提出 / 你已批准 / 运行中 / 完成), with 完成 split by outcome and two extra
-# buckets: 数据卡 for D- cards, which are data/framework corrections with no
-# hypothesis lifecycle at all, and 未分类 for anything the vocabulary cannot
+# buckets: `data card` for D- cards, which are data/framework corrections with no
+# hypothesis lifecycle at all, and `unclassified` for anything the vocabulary cannot
 # place. Step 18's plan originally invented a different vocabulary; measured
 # against the real corpus on 2026-09-19 that mislabelled 7 of 19 cards as
 # unclassified purely because their status prose is English.
 LANES: tuple[str, ...] = (
-    "提出",
-    "已批准",
-    "预注册",
-    "在跑",
-    "完成·已上线",
-    "完成·否定",
-    "搁置",
-    "数据卡",
-    "未分类",
+    "proposed",
+    "approved",
+    "preregistered",
+    "running",
+    "shipped",
+    "refuted",
+    "on hold",
+    "data card",
+    "unclassified",
 )
 
 # Keyword sets for the tolerant, keyword-based lane classifier. Chinese
@@ -96,15 +96,15 @@ _POSITIVE_WORDS = ("通过", "上线", "上模拟盘")
 # paused one is `warn`; anything not yet started, or not classifiable, is
 # `unknown`.
 _LANE_STATUS: dict[str, Status] = {
-    "完成·已上线": "ok",
-    "完成·否定": "stale",
-    "在跑": "warn",
-    "搁置": "warn",
-    "预注册": "unknown",
-    "提出": "unknown",
-    "已批准": "unknown",
-    "数据卡": "unknown",
-    "未分类": "unknown",
+    "shipped": "ok",
+    "refuted": "stale",
+    "running": "warn",
+    "on hold": "warn",
+    "preregistered": "unknown",
+    "proposed": "unknown",
+    "approved": "unknown",
+    "data card": "unknown",
+    "unclassified": "unknown",
 }
 
 
@@ -138,34 +138,37 @@ def derive_lane(status_text: str) -> tuple[str, str | None]:
     are checked last so that a card which is approved *and* already running is
     filed under the more current state.
 
-    Anything still unmatched goes to `未分类` **with its raw status text and a
+    Anything still unmatched goes to `unclassified` **with its raw status text and a
     reason**, and is rendered on the board like any other card. A card is never
     dropped for being unparseable -- an invisible card is worse than an
     unlabelled one.
     """
     if not status_text or not status_text.strip():
-        return "未分类", "no 状态 field found on this card"
+        return "unclassified", "no 状态 field found on this card"
     done = _contains_any(status_text, _DONE_WORDS)
     if done and _contains_any(status_text, _NEGATIVE_WORDS):
-        return "完成·否定", None
+        return "refuted", None
     if done and _contains_any(status_text, _POSITIVE_WORDS):
-        return "完成·已上线", None
+        return "shipped", None
     if _contains_any(status_text, _HOLD_WORDS):
-        return "搁置", None
+        return "on hold", None
     if _contains_any(status_text, _RUNNING_WORDS):
-        return "在跑", None
+        return "running", None
     if _contains_any(status_text, _PREREG_WORDS):
-        return "预注册", None
+        return "preregistered", None
     if _contains_any(status_text, _APPROVED_WORDS):
-        return "已批准", None
+        return "approved", None
     if _contains_any(status_text, _PROPOSED_WORDS):
-        return "提出", None
+        return "proposed", None
     # Note: deliberately avoids the substring "key" immediately before a
     # colon-and-value here (e.g. spelling out "keyword:") -- `secret_scrub`'s
     # generic catch-all pattern treats "<word ending in key/token/secret/
     # password>: <value>" as a leaked credential, and this message embeds the
     # untouched raw status text right after itself.
-    return "未分类", f"status text has no recognized lane marker; raw status text = {status_text!r}"
+    return (
+        "unclassified",
+        f"status text has no recognized lane marker; raw status text = {status_text!r}",
+    )
 
 
 # --------------------------------------------------------------------------
@@ -311,7 +314,7 @@ def _parse_card_file(path: Path, base: Path) -> Card:
             kind="H",
             title=path.stem,
             status_text="",
-            lane="未分类",
+            lane="unclassified",
             lane_reason=f"could not read file: {exc}",
             script=None,
             output_dir=None,
@@ -333,7 +336,7 @@ def _parse_card_file(path: Path, base: Path) -> Card:
             kind="H",
             title=path.stem,
             status_text="",
-            lane="未分类",
+            lane="unclassified",
             lane_reason=warnings[-1],
             script=None,
             output_dir=None,
@@ -423,10 +426,10 @@ def _parse_card_file(path: Path, base: Path) -> Card:
 
     # D- cards are data/framework corrections ("性质：数据与框架修正，不是策略假设"),
     # so they carry no 状态 field and have no hypothesis lifecycle to be in the
-    # middle of. Filing them under 未分类 would read as a parser failure; they
+    # middle of. Filing them under `unclassified` would read as a parser failure; they
     # get their own lane instead.
-    if kind == "D" and lane == "未分类":
-        lane, lane_reason = "数据卡", None
+    if kind == "D" and lane == "unclassified":
+        lane, lane_reason = "data card", None
 
     return Card(
         id=card_id,
@@ -454,7 +457,7 @@ def load_cards(root: Path | None = None) -> tuple[Card, ...]:
 
     ``README.md`` and ``trial-families.json`` in the same directory are not
     cards and are skipped by name/extension. Every ``*.md`` file besides
-    ``README.md`` is parsed -- a parse failure degrades to a ``未分类`` card
+    ``README.md`` is parsed -- a parse failure degrades to an ``unclassified`` card
     carrying the reason, it never raises and never drops the file.
     """
     base = root or project_root()
@@ -474,7 +477,7 @@ def load_cards(root: Path | None = None) -> tuple[Card, ...]:
                     kind="H",
                     title=path.stem,
                     status_text="",
-                    lane="未分类",
+                    lane="unclassified",
                     lane_reason=f"parser raised {exc!r}",
                     script=None,
                     output_dir=None,
@@ -713,8 +716,8 @@ class LineageEdge:
     @property
     def label(self) -> str:
         if self.kind == "explicit_previous":
-            return "上一环/上一张卡 (explicit)"
-        return "mentioned in body (weak)"
+            return "declared"
+        return "mentioned"
 
     @property
     def is_explicit(self) -> bool:
@@ -962,7 +965,7 @@ def build_hypotheses_report(root: Path | None = None) -> HypothesesReport:
     """Assemble the full hypothesis board data model.
 
     Each phase is isolated: a broken card file must degrade that one card to
-    `未分类` (already handled inside `load_cards`), and a missing/corrupt
+    `unclassified` (already handled inside `load_cards`), and a missing/corrupt
     `summary.json` must degrade to a warning (already handled inside
     `load_results`) -- neither should take down the board. The outer
     try/except here is a last-resort backstop mirroring

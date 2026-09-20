@@ -97,12 +97,12 @@
       {% for row in detail.positions %}
       <tr>
         <td data-label="Symbol"><code>{{ row.symbol }}</code></td>
-        <td data-label="Target weight">{{ "%.3f"|format(row.target_weight) if row.target_weight is not none else "-" }}</td>
-        <td data-label="Target qty">{{ row.target_qty if row.target_qty is not none else "-" }}</td>
-        <td data-label="Ledger qty">{{ row.ledger_qty if row.ledger_qty is not none else "-" }}</td>
-        <td data-label="Broker qty">{{ row.broker_qty if row.broker_qty is not none else "-" }}</td>
-        <td data-label="Market value">{{ "%.2f"|format(row.market_value) if row.market_value is not none else "-" }}</td>
-        <td data-label="Unrealized P&amp;L">{{ "%.2f"|format(row.unrealized_pl) if row.unrealized_pl is not none else "-" }}</td>
+        <td data-label="Target weight" class="num">{{ "%.3f"|format(row.target_weight) if row.target_weight is not none else "-" }}</td>
+        <td data-label="Target qty" class="num">{{ row.target_qty if row.target_qty is not none else "-" }}</td>
+        <td data-label="Ledger qty" class="num">{{ row.ledger_qty if row.ledger_qty is not none else "-" }}</td>
+        <td data-label="Broker qty" class="num">{{ row.broker_qty if row.broker_qty is not none else "-" }}</td>
+        <td data-label="Market value" class="num">{{ "%.2f"|format(row.market_value) if row.market_value is not none else "-" }}</td>
+        <td data-label="Unrealized P&amp;L" class="num">{{ "%.2f"|format(row.unrealized_pl) if row.unrealized_pl is not none else "-" }}</td>
         <td data-label="Action">{{ row.action or "-" }}{% if row.decision %} ({{ row.decision }}){% endif %}</td>
       </tr>
       {% endfor %}
@@ -130,8 +130,8 @@
         <td data-label="Session">{{ order.session or "-" }}</td>
         <td data-label="Symbol"><code>{{ order.symbol }}</code></td>
         <td data-label="Side">{{ order.side or "-" }}</td>
-        <td data-label="Qty">{{ order.qty if order.qty is not none else "-" }}</td>
-        <td data-label="Notional">{{ "%.2f"|format(order.notional) if order.notional is not none else "-" }}</td>
+        <td data-label="Qty" class="num">{{ order.qty if order.qty is not none else "-" }}</td>
+        <td data-label="Notional" class="num">{{ "%.2f"|format(order.notional) if order.notional is not none else "-" }}</td>
         <td data-label="Style">{{ order.order_style or "-" }}</td>
         <td data-label="Broker status">{{ order.broker_status or "-" }}</td>
       </tr>
@@ -159,13 +159,13 @@
       {% for row in detail.fills.sessions %}
       <tr>
         <td data-label="Session">{{ row.session }}</td>
-        <td data-label="Orders">{{ row.orders if row.orders is not none else "-" }}</td>
-        <td data-label="Filled full">{{ row.filled_full if row.filled_full is not none else "-" }}</td>
-        <td data-label="Filled partial">{{ row.filled_partial if row.filled_partial is not none else "-" }}</td>
-        <td data-label="Unfilled">{{ row.unfilled if row.unfilled is not none else "-" }}</td>
-        <td data-label="Cancelled pre-open">{{ row.cancelled_before_open if row.cancelled_before_open is not none else "-" }}</td>
-        <td data-label="Fill rate (notional)">{{ "%.0f"|format(row.fill_rate_by_notional * 100) if row.fill_rate_by_notional is not none else "-" }}%</td>
-        <td data-label="Median slippage (bps)">{{ "%.1f"|format(row.median_slippage_vs_reference_bps) if row.median_slippage_vs_reference_bps is not none else "-" }}</td>
+        <td data-label="Orders" class="num">{{ row.orders if row.orders is not none else "-" }}</td>
+        <td data-label="Filled full" class="num">{{ row.filled_full if row.filled_full is not none else "-" }}</td>
+        <td data-label="Filled partial" class="num">{{ row.filled_partial if row.filled_partial is not none else "-" }}</td>
+        <td data-label="Unfilled" class="num">{{ row.unfilled if row.unfilled is not none else "-" }}</td>
+        <td data-label="Cancelled pre-open" class="num">{{ row.cancelled_before_open if row.cancelled_before_open is not none else "-" }}</td>
+        <td data-label="Fill rate (notional)" class="num">{{ "%.0f"|format(row.fill_rate_by_notional * 100) if row.fill_rate_by_notional is not none else "-" }}%</td>
+        <td data-label="Median slippage (bps)" class="num">{{ "%.1f"|format(row.median_slippage_vs_reference_bps) if row.median_slippage_vs_reference_bps is not none else "-" }}</td>
       </tr>
       {% endfor %}
     </tbody>

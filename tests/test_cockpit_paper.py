@@ -301,7 +301,7 @@ def test_paper_index_returns_200_and_lists_every_strategy(client: TestClient) ->
 
 def test_paper_index_shows_expired_and_observation_labels(client: TestClient) -> None:
     response = client.get("/paper")
-    assert "仅观察" in response.text
+    assert "observation only" in response.text
 
 
 @pytest.mark.parametrize(
@@ -324,7 +324,7 @@ def test_paper_detail_returns_200_for_every_real_strategy(
 def test_paper_detail_marks_insider_as_observation_only_not_trading(client: TestClient) -> None:
     response = client.get("/paper/us_insider_buy_broad_monthly")
     assert response.status_code == 200
-    assert "仅观察" in response.text
+    assert "observation only" in response.text
     assert "never been permitted to submit a real paper order" in response.text
 
 

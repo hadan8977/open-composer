@@ -4,7 +4,7 @@
 <h1><code>{{ card.id }}</code> {{ card.title }}</h1>
 <p class="muted">
   <span class="dot dot--{{ lane_status(card.lane) }}">{{ card.lane }}</span>
-  {% if card.lane == "未分类" %}&mdash; {{ card.lane_reason }}{% endif %}
+  {% if card.lane == "unclassified" %}&mdash; {{ card.lane_reason }}{% endif %}
   &middot; <code>{{ card.path }}</code>
 </p>
 
@@ -18,17 +18,17 @@
       <tr><td data-label="Field">Script</td><td data-label="Value">{% if card.script %}<code>{{ card.script }}</code>{% else %}-{% endif %}</td></tr>
       <tr><td data-label="Field">Output</td><td data-label="Value">{% if card.output_dir %}<code>{{ card.output_dir }}</code>{% else %}-{% endif %}</td></tr>
       <tr><td data-label="Field">Lesson</td><td data-label="Value">{{ card.lesson_ref if card.lesson_ref else "-" }}</td></tr>
-      <tr><td data-label="Field">上一环 (explicit)</td><td data-label="Value">{% if card.previous %}<a href="/card/{{ card.previous }}"><code>{{ card.previous }}</code></a>{% else %}(none){% endif %}</td></tr>
+      <tr><td data-label="Field">Previous (declared)</td><td data-label="Value">{% if card.previous %}<a href="/card/{{ card.previous }}"><code>{{ card.previous }}</code></a>{% else %}(none){% endif %}</td></tr>
     </tbody>
   </table>
   {% if card.parse_warnings %}
   <p class="muted">Parse warnings: {{ card.parse_warnings|join("; ") }}</p>
   {% endif %}
   {% if card.front_matter and card.front_matter.criteria %}
-  <h3>预注册标准（结构化，来自 front-matter）</h3>
+  <h3>criteria (front-matter)</h3>
   <p class="muted">
-    Listed as declared, not paired against any specific result number automatically -- doing that pairing
-    without a named, matching metric key would be inventing a comparison the data does not support.
+    Declared, not paired against a result number automatically -- that pairing would invent a
+    comparison the data does not support.
   </p>
   <table class="responsive-table">
     <thead><tr><th>Name</th><th>Threshold</th><th>Direction</th></tr></thead>
@@ -46,29 +46,29 @@
 </section>
 
 <section class="panel">
-  <h2>判定 vs 实际</h2>
+  <h2>criteria vs result</h2>
   {% if not criteria_sections and not results %}
-  <p class="muted">No 判定/预注册 heading found in this card's body, and no summary.json joined by card_id.</p>
+  <p class="muted">No 判定/预注册 heading in this card's body, and no summary.json joined by card_id.</p>
   {% endif %}
   {% if criteria_sections or results %}
   <p class="muted">
-    <strong>未结构化（人工对照）</strong>: the card's own 判定/预注册 prose, placed next to whatever
-    summary.json numbers joined by card_id. This is a side-by-side for a human to eyeball, not a computed
-    pass/fail -- most cards state their criteria in prose, not in machine-checkable form.
+    <strong>unstructured</strong>: the card's own 判定/预注册 prose, placed next to whatever summary.json
+    numbers joined by card_id. A side-by-side for a human to eyeball, not a computed pass/fail -- most
+    cards state their criteria in prose, not in machine-checkable form.
   </p>
   <div class="criteria-compare">
     <div class="criteria-compare-col">
-      <h3>预注册 / 判定 (as written)</h3>
+      <h3>criteria as written</h3>
       {% if criteria_sections %}
         {% for section, section_html in criteria_sections %}
         <div class="markdown-body">{{ section_html | safe }}</div>
         {% endfor %}
       {% else %}
-      <p class="muted">No 判定/预注册 heading found in this card's body.</p>
+      <p class="muted">No 判定/预注册 heading in this card's body.</p>
       {% endif %}
     </div>
     <div class="criteria-compare-col">
-      <h3>实际 (summary.json)</h3>
+      <h3>result (summary.json)</h3>
       {% if results %}
         {% for facts in results %}
         <div class="panel">
@@ -99,7 +99,7 @@
 <section class="panel">
   <h2>Lineage neighbours</h2>
   {% if not neighbours %}
-  <p class="muted">No lineage edges touch this card.</p>
+  <p class="muted">none</p>
   {% else %}
   <ul>
     {% for edge in neighbours %}

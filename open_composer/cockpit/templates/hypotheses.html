@@ -4,17 +4,16 @@
 <h1>Hypothesis board</h1>
 <p class="muted">
   Generated {{ report.generated_at.isoformat() }}. {{ report.cards|length }} card(s) under
-  <code>reports/research/hypotheses/</code>. A card is never dropped: anything the parser could not
-  classify lands in <strong>未分类</strong> below with its raw status text and the reason.
+  <code>reports/research/hypotheses/</code>. Unparseable cards land in <strong>unclassified</strong>
+  with their raw status text and reason.
 </p>
 
 {% if report.results.warnings %}
 <section class="panel">
   <h2>Results-join warnings</h2>
   <p class="muted">
-    Results join to a card by the <code>card_id</code> field inside <code>summary.json</code>, not by the
-    card's own prose "产出目录". These <code>summary.json</code> files have no usable <code>card_id</code>
-    and so could not be joined to any card:
+    Joined by <code>card_id</code> in <code>summary.json</code>, not by the card's own output-directory
+    prose. No usable <code>card_id</code>, not joined to any card:
   </p>
   <ul>
     {% for warning in report.results.warnings %}
@@ -32,14 +31,14 @@
     <span class="muted">({{ cards|length }})</span>
   </h2>
   {% if not cards %}
-  <p class="muted">No cards in this lane.</p>
+  <p class="muted">none</p>
   {% else %}
   <table class="responsive-table">
     <thead>
       <tr>
         <th>Card</th>
         <th>Title</th>
-        {% if lane == "未分类" %}
+        {% if lane == "unclassified" %}
         <th>Raw status</th>
         <th>Reason</th>
         {% else %}
@@ -53,7 +52,7 @@
       <tr>
         <td data-label="Card"><a href="/card/{{ card.id }}"><code>{{ card.id }}</code></a></td>
         <td data-label="Title">{{ card.title }}</td>
-        {% if lane == "未分类" %}
+        {% if lane == "unclassified" %}
         <td data-label="Raw status">{{ card.status_text if card.status_text else "(none)" }}</td>
         <td data-label="Reason">{{ card.lane_reason }}</td>
         {% else %}

@@ -60,7 +60,7 @@
   <p class="muted">Crontab unavailable: {{ report.cron.error }}</p>
   {% endif %}
   {% if report.cron.available and not report.cron.jobs %}
-  <p class="muted">No cron jobs found.</p>
+  <p class="muted">none</p>
   {% endif %}
   {% for job in report.cron.jobs %}
   <details class="cron-job">
@@ -80,7 +80,7 @@
           <tr>
             <td data-label="Log">{{ log.path }}</td>
             <td data-label="Last written">{{ log.mtime.isoformat() if log.mtime else "never" }}</td>
-            <td data-label="Size">{{ log.size_bytes if log.size_bytes is not none else "-" }} bytes</td>
+            <td data-label="Size" class="num">{{ log.size_bytes if log.size_bytes is not none else "-" }} bytes</td>
             <td data-label="Error in tail">{{ "yes" if log.has_error_marker else "no" }}</td>
             <td data-label="Status"><span class="dot dot--{{ log.status }}">{{ log.status }}</span></td>
           </tr>

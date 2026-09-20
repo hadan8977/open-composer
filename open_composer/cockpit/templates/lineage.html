@@ -3,12 +3,7 @@
 {% block content %}
 <h1>Research lineage</h1>
 <p class="muted">
-  Nodes are hypothesis/data cards, colored by lane. Edges come in two kinds and are never mixed:
-  a <strong>solid</strong> line is an explicit <code>上一环：</code> field the card itself declares;
-  a <strong>dashed</strong> line is a weaker signal -- the target card just mentions the source card's id
-  somewhere in its body, which may only mean "referenced", not "derives from". As of 2026-09-19 only 1 of the
-  19 cards has an explicit <code>上一环</code>, so most of this graph is the weaker dashed signal on purpose --
-  that is a fact about the corpus, not a bug in the parser.
+  2 of 19 cards declare a previous card (2026-09-19); most edges below are dashed (mentioned), not solid (declared).
 </p>
 
 {% if graph.warnings %}
@@ -25,9 +20,9 @@
 <section class="panel lineage-desktop">
   <h2>Graph</h2>
   <p class="muted">
-    <span class="lineage-legend-swatch lineage-legend-swatch--explicit"></span> solid = explicit 上一环
+    <span class="lineage-legend-swatch lineage-legend-swatch--explicit"></span> solid = declared
     &nbsp;&nbsp;
-    <span class="lineage-legend-swatch lineage-legend-swatch--mentioned"></span> dashed = mentioned in body (weak)
+    <span class="lineage-legend-swatch lineage-legend-swatch--mentioned"></span> dashed = mentioned
   </p>
   <svg viewBox="0 0 {{ layout.width }} {{ layout.height }}" class="lineage-svg" role="img"
        aria-label="Hypothesis lineage graph, {{ graph.nodes|length }} nodes, {{ graph.edges|length }} edges">

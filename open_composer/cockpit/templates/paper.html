@@ -5,9 +5,9 @@
 <p class="muted">
   Generated {{ report.generated_at.isoformat() }}. Organised by <strong>strategy</strong>, never by
   symbol -- every sleeve below currently shares one Alpaca Paper account. A
-  <span class="dot dot--unknown">仅观察</span> chip means the strategy computes signals but has
+  <span class="dot dot--unknown">observation only</span> chip means the strategy computes signals but has
   <strong>never been authorized to submit a single order</strong> -- it is not trading, whatever its
-  target weights below might suggest. A <span class="dot dot--stale">已过期</span> chip means its
+  target weights below might suggest. A <span class="dot dot--stale">expired</span> chip means its
   authorization has lapsed: its orders have silently stopped.
 </p>
 
@@ -75,7 +75,7 @@
         <td data-label="Authorization">
           <span class="dot dot--{{ strategy.authorization.status }}">{{ auth_state_labels[strategy.authorization.state] }}</span>
         </td>
-        <td data-label="Expires in">
+        <td data-label="Expires in" class="num">
           {% if strategy.authorization.days_remaining is not none %}{{ "%.1f"|format(strategy.authorization.days_remaining) }}d{% else %}-{% endif %}
         </td>
         <td data-label="Last cycle">
@@ -83,7 +83,7 @@
           {% if strategy.cycle_status %}<div class="muted">{{ strategy.cycle_status }}</div>{% endif %}
         </td>
         <td data-label="Target vs actual">{{ strategy.positions_agreement }}</td>
-        <td data-label="Latest fill rate">
+        <td data-label="Latest fill rate" class="num">
           {% if strategy.latest_fill_rate is not none %}
           {{ "%.0f"|format(strategy.latest_fill_rate * 100) }}% ({{ strategy.latest_fill_session }})
           {% else %}
