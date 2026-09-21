@@ -19,7 +19,7 @@
 <div class="metrics">
   <div class="metric">
     <span class="metric-label">Equity</span>
-    <span class="metric-value num"><span class="dot dot--{{ account.status }}"></span>{{ account.equity|money if account.equity is not none else "–" }}</span>
+    <span class="metric-value num"><span class="dot dot--{{ account.status }}"></span>{{ account.equity|money(0) if account.equity is not none else "–" }}</span>
     <span class="metric-sub">cash {{ account.cash|money }} · buying power {{ account.buying_power|money }}</span>
   </div>
   <div class="metric">

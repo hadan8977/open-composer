@@ -37,7 +37,7 @@
     </dl>
   </div>
 
-  <div class="section">Timeline <span class="num">{{ detail.entries|length|count_sep }} of {{ detail.entries_total|count_sep }} entries</span></div>
+  <div class="section">Timeline <span><span class="live" data-live hidden><i class="dot dot--ok dot--live"></i>live</span><span class="num">{{ detail.entries|length|count_sep }} of {{ detail.entries_total|count_sep }} entries</span></span></div>
   {% if detail.transcript_available %}
   <div class="table-wrap" data-stream="/agents/{{ record.id }}/stream">
     {{ timeline(detail.entries) }}

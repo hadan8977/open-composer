@@ -21,11 +21,11 @@
     {% for edge in graph.edges %}
     {% set a = layout.positions[edge.source] %}{% set b = layout.positions[edge.target] %}
     {% set mx = (a[0] + b[0]) / 2 %}
-    <path d="M {{ a[0] + 7 }} {{ a[1] }} C {{ mx }} {{ a[1] }}, {{ mx }} {{ b[1] }}, {{ b[0] - 7 }} {{ b[1] }}" fill="none" class="edge edge--{{ 'explicit' if edge.is_explicit else 'mentioned' }}"><title>{{ edge.source }} → {{ edge.target }} · {{ edge.label }}</title></path>
+    <path d="M {{ a[0] + 7 }} {{ a[1] }} C {{ mx }} {{ a[1] }}, {{ mx }} {{ b[1] }}, {{ b[0] - 7 }} {{ b[1] }}" fill="none" class="edge edge--{{ 'explicit' if edge.is_explicit else 'mentioned' }}" data-a="{{ edge.source }}" data-b="{{ edge.target }}"><title>{{ edge.source }} → {{ edge.target }} · {{ edge.label }}</title></path>
     {% endfor %}
     {% for node in graph.nodes if node.card_id in linked_ids %}
     {% set pos = layout.positions[node.card_id] %}
-    <a href="/card/{{ node.card_id }}" data-detail>
+    <a href="/card/{{ node.card_id }}" data-detail data-dim data-id="{{ node.card_id }}" data-filter="{{ node.card_id }} {{ node.title }} {{ node.lane }}">
       <circle cx="{{ pos[0] }}" cy="{{ pos[1] }}" r="6" class="node node--{{ node_status[node.card_id] }}"><title>{{ node.card_id }} · {{ node.title }} · {{ node.lane }}</title></circle>
       <text x="{{ pos[0] + 12 }}" y="{{ pos[1] + 4 }}" class="node-label">{{ node.card_id }}</text>
     </a>
@@ -34,9 +34,9 @@
 </div>
 
 <div class="section only-narrow">Tree</div>
-<div class="group only-narrow tree">
+<div class="group only-narrow tree" data-filter-group>
   {% for row in mobile_rows if row.card_id in linked_ids %}
-  <a class="row" href="/card/{{ row.card_id }}" data-detail style="--depth: {{ row.depth }}">
+  <a class="row" href="/card/{{ row.card_id }}" data-detail style="--depth: {{ row.depth }}" data-filter="{{ row.card_id }} {{ row.title }} {{ row.lane }}">
     <span class="dot dot--{{ node_status[row.card_id] }}"></span>
     <span class="row-main">
       <span class="row-title"><span class="id">{{ row.card_id }}</span><span class="text">{{ row.title }}</span></span>

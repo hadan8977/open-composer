@@ -19,7 +19,7 @@
   {% set record = agent.record %}
   {% set act = agent.activity %}
   <a class="row" href="/agents/{{ record.id }}" data-detail data-filter="{{ record.provider }} {{ record.model or '' }} {{ record.title or '' }} {{ record.last_status }} {{ record.id }}">
-    <span class="dot dot--{{ record.last_status|agent_dot }}"></span>
+    <span class="dot dot--{{ record.last_status|agent_dot }}{% if record.last_status == 'running' %} dot--live{% endif %}"></span>
     <span class="row-main">
       <span class="row-title">
         <span class="text">{{ record.title or record.id[:8] }}</span>

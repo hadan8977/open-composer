@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Cockpit">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%23007aff'/%3E%3Cpath d='M10.6 5.6A3.2 3.2 0 1 0 10.6 10.4' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%235458d0'/%3E%3Cpath d='M10.6 5.6A3.2 3.2 0 1 0 10.6 10.4' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E" />
   <title>{% block title %}Cockpit{% endblock %}</title>
   <link rel="stylesheet" href="/static/css/cockpit.css">
 </head>
@@ -50,7 +50,7 @@
     {% for _agent_id, agent_status in topbar_agents %}{% if agent_status == "running" %}{% set live.running = live.running + 1 %}{% elif agent_status == "error" %}{% set live.error = live.error + 1 %}{% else %}{% set live.idle = live.idle + 1 %}{% endif %}{% endfor %}
     <a class="strip-item" data-slot="agent-dots" href="/agents" title="{{ live.running }} running · {{ live.error }} error · {{ live.idle }} idle">
       <span class="t-cap">agents</span>
-      <span class="agent-dots">{% for _agent_id, agent_status in topbar_agents if agent_status in ("running", "error") %}<span class="dot dot--{{ agent_status|agent_dot }}"></span>{% endfor %}</span>
+      <span class="agent-dots">{% for _agent_id, agent_status in topbar_agents if agent_status in ("running", "error") %}<span class="dot dot--{{ agent_status|agent_dot }}{% if agent_status == 'running' %} dot--live{% endif %}"></span>{% endfor %}</span>
       {% if live.running %}<span class="num">{{ live.running }}</span><span>running</span>{% endif %}
       {% if live.error %}<span class="num">{{ live.error }}</span><span>error</span>{% endif %}
       <span class="num">{{ live.idle }}</span><span>idle</span>

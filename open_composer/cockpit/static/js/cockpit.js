@@ -185,7 +185,17 @@
     var q = query.trim().toLowerCase();
     var items = document.querySelectorAll("[data-filter]");
     for (var i = 0; i < items.length; i++) {
-      items[i].hidden = q !== "" && items[i].getAttribute("data-filter").toLowerCase().indexOf(q) < 0;
+      var miss = q !== "" && items[i].getAttribute("data-filter").toLowerCase().indexOf(q) < 0;
+      // Graph nodes fade instead of vanishing so the shape of the graph stays readable.
+      if (items[i].hasAttribute("data-dim")) items[i].classList.toggle("is-dim", miss);
+      else items[i].hidden = miss;
+    }
+    var edges = document.querySelectorAll(".edge[data-a][data-b]");
+    for (var e = 0; e < edges.length; e++) {
+      var a = document.querySelector('[data-dim][data-id="' + edges[e].getAttribute("data-a") + '"]');
+      var b = document.querySelector('[data-dim][data-id="' + edges[e].getAttribute("data-b") + '"]');
+      var dim = (a && a.classList.contains("is-dim")) || (b && b.classList.contains("is-dim"));
+      edges[e].classList.toggle("is-dim", !!dim);
     }
     var groups = document.querySelectorAll(".group[data-filter-group]");
     for (var g = 0; g < groups.length; g++) {
@@ -221,11 +231,17 @@
 
   // ---- agent timeline tail ----
 
+  function setLive(on) {
+    var badges = document.querySelectorAll("[data-live]");
+    for (var i = 0; i < badges.length; i++) badges[i].hidden = !on;
+  }
+
   function stopStream() {
     if (stream) {
       stream.close();
       stream = null;
     }
+    setLive(false);
   }
 
   function startStream(root) {
@@ -239,6 +255,12 @@
     scroller.scrollTop = scroller.scrollHeight;
 
     stream = new EventSource(streamPath);
+    stream.onopen = function () {
+      setLive(true);
+    };
+    stream.onerror = function () {
+      setLive(false);
+    };
     stream.onmessage = function (ev) {
       var d;
       try {

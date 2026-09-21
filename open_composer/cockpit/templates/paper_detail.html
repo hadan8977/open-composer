@@ -20,7 +20,7 @@
       {% if auth.expires_at %}<dt>Expires</dt><dd class="num" title="{{ auth.expires_at.isoformat() }}">{{ auth.expires_at.strftime("%Y-%m-%d %H:%M") }}Z · {{ auth.expires_at|ago }}</dd>{% endif %}
       {% if auth.scope %}<dt>Scope</dt><dd>{{ auth.scope }}</dd>{% endif %}
       {% if auth.limits %}{% for key, value in auth.limits.items() %}<dt>{{ key|replace("_", " ") }}</dt><dd class="num">{{ value }}</dd>{% endfor %}{% endif %}
-      {% if auth.gate_status_note %}<dt>Gate</dt><dd>{{ auth.gate_status_note }}</dd>{% endif %}
+      {% if auth.gate_status_note %}<dt>Gate</dt><dd>{% if auth.gate_status_note|length > 140 %}<details class="clamp"><summary>{{ auth.gate_status_note[:140]|trim }}… <span class="more-word">more</span></summary>{{ auth.gate_status_note }}</details>{% else %}{{ auth.gate_status_note }}{% endif %}</dd>{% endif %}
       {% if detail.session %}<dt>Session</dt><dd>{{ detail.session }}</dd>{% endif %}
       {% if detail.positions_agreement %}<dt>Positions</dt><dd>{{ detail.positions_agreement }}</dd>{% endif %}
     </dl>

@@ -330,11 +330,11 @@ def _format_hms(value: datetime | None) -> str:
     return value.astimezone(UTC).strftime("%H:%M:%S")
 
 
-def _format_money(value: float | None) -> str:
+def _format_money(value: float | None, digits: int = 2) -> str:
     if value is None:
         return "–"
     sign = "-" if value < 0 else ""
-    return f"{sign}${abs(value):,.2f}"
+    return f"{sign}${abs(value):,.{digits}f}"
 
 
 def _format_k(value: int | float | None) -> str:
