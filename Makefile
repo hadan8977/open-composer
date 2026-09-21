@@ -3,7 +3,7 @@ MONITOR_INTERVAL_SECONDS ?= 60
 MONITOR_MAX_CYCLES ?= 1
 PAPER_STRATEGY ?= qqq_pullback_15m
 
-.PHONY: start bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test test-fast test-full lint format check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync verify
+.PHONY: start bootstrap doctor readiness deploy-prepare repo-check capability-test agent-parity test test-fast test-full lint format check feature-validate paper-readiness paper-sync paper-sync-account paper-status paper-reconcile paper-alerts paper-monitor paper-monitor-sync paper-monitor-loop paper-monitor-loop-sync cockpit-v2 verify
 
 start:
 	./scripts/setup-local.sh
@@ -83,3 +83,9 @@ paper-monitor-loop-sync:
 	UV_CACHE_DIR=$(UV_CACHE_DIR) uv run oc paper monitor-loop --sync-broker --interval-seconds $(MONITOR_INTERVAL_SECONDS) --max-cycles $(MONITOR_MAX_CYCLES)
 
 verify: format lint test-full repo-check capability-test agent-parity deploy-prepare feature-validate readiness
+
+# Cockpit front end B (frontend/cockpit-v2, React/Vite): type-check and build
+# the static bundle into open_composer/cockpit/static/v2, which the cockpit
+# serves at /v2/ when it exists. Needs node 22 + pnpm; the server never does.
+cockpit-v2:
+	cd frontend/cockpit-v2 && pnpm install --frozen-lockfile --ignore-scripts && pnpm exec tsc --noEmit && ../../scripts/run_capped.sh --mem 1.8G -- pnpm exec vite build

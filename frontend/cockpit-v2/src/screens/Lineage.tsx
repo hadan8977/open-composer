@@ -1,211 +1,166 @@
-import { hypotheses, lineageEdges } from '../data/mock'
-import { StatusDot, MetricCard, SectionCap } from '../components/Shared'
-import { HypothesesInspector } from './Hypotheses'
+// Lineage: the connected part of the card graph, laid out by the server
+// (columns = depth from a root), plus the isolated cards as a list. On the
+// phone the same graph is an indented list. Same inspector as Hypotheses.
+import { useMemo } from 'react'
+import type { InspectorProps, ScreenProps } from '../App'
+import { useJson, type LineagePayload } from '../api'
+import { Card, Empty, ErrorNote, Group, Loading, MetricCard, Metrics, Row, RowAside, RowMain, SectionCap, StatusDot, matches, plural } from '../components/Shared'
+import { STATUS_COLOR } from '../components/Shared'
+import { HypothesesInspector, edgeLabel } from './Hypotheses'
 
-interface Props {
-  selectedId: string | null
-  onSelect: (id: string | null) => void
-  search: string
+const NODE_W = 196
+const NODE_H = 40
+
+/** Cut a title so it fits the node box: CJK glyphs are about twice as wide
+ *  as Latin ones at 11px, so they cost two units each. */
+function fitTitle(title: string, units = 27): string {
+  let used = 0
+  let out = ''
+  for (const ch of title) {
+    const w = /[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe4f\uff00-\uff60\uffe0-\uffe6\u3000-\u303f]/.test(ch) ? 2 : 1
+    if (used + w > units) return `${out}…`
+    used += w
+    out += ch
+  }
+  return out
 }
 
-function buildTree() {
-  const childrenOf = new Map<string, string[]>()
-  const hasParent = new Set<string>()
+export default function Lineage({ selectedId, onSelect, search }: ScreenProps) {
+  const { data, error, loading } = useJson<LineagePayload>('/api/lineage.json', 60_000)
+  const byId = useMemo(() => new Map((data?.nodes ?? []).map(n => [n.card_id, n])), [data])
+  if (!data) return loading ? <Loading /> : error ? <ErrorNote error={error} /> : null
 
-  for (const e of lineageEdges) {
-    if (!childrenOf.has(e.from)) childrenOf.set(e.from, [])
-    childrenOf.get(e.from)!.push(e.to)
-    hasParent.add(e.to)
-  }
-
-  const allConnected = new Set<string>()
-  for (const e of lineageEdges) {
-    allConnected.add(e.from)
-    allConnected.add(e.to)
-  }
-
-  const roots = [...allConnected].filter(id => !hasParent.has(id))
-  const isolated = hypotheses.filter(h => !allConnected.has(h.id))
-
-  return { roots, childrenOf, isolated }
-}
-
-type NodePos = { id: string; x: number; y: number }
-
-function layoutGraph(): NodePos[] {
-  const positions: NodePos[] = []
-  const levels: Map<string, number> = new Map()
-
-  const { roots, childrenOf } = buildTree()
-
-  function assignLevel(id: string, level: number) {
-    if (!levels.has(id) || levels.get(id)! < level) {
-      levels.set(id, level)
-      for (const child of (childrenOf.get(id) ?? [])) {
-        assignLevel(child, level + 1)
-      }
-    }
-  }
-  for (const r of roots) assignLevel(r, 0)
-
-  const byLevel = new Map<number, string[]>()
-  for (const [id, lvl] of levels) {
-    if (!byLevel.has(lvl)) byLevel.set(lvl, [])
-    byLevel.get(lvl)!.push(id)
-  }
-
-  const COLS = 3
-  const COL_W = 180
-  const ROW_H = 70
-
-  for (const [lvl, ids] of byLevel) {
-    ids.forEach((id, i) => {
-      positions.push({ id, x: (i % COLS) * COL_W + 20, y: lvl * ROW_H + 20 })
-    })
-  }
-
-  return positions
-}
-
-export default function Lineage({ selectedId, onSelect, search }: Props) {
-  const { isolated } = buildTree()
-  const positions = layoutGraph()
-  const declaredEdges = lineageEdges.filter(e => e.type === 'declares').length
-  const mentionedEdges = lineageEdges.filter(e => e.type === 'mentions').length
-  const roots = positions.length > 0 ? new Set(positions.filter(p => p.y < 40).map(p => p.id)).size : 0
-
-  const posMap = new Map(positions.map(p => [p.id, p]))
-  const svgH = Math.max(...positions.map(p => p.y), 0) + 80
-
-  const filteredIsolated = isolated.filter(h =>
-    h.title.toLowerCase().includes(search.toLowerCase()) ||
-    h.id.toLowerCase().includes(search.toLowerCase()),
-  )
+  const declared = data.edges.filter(e => e.kind === 'explicit_previous').length
+  const mentioned = data.edges.length - declared
+  const positions = data.layout.positions
+  const connected = Object.keys(positions)
+  const isolated = data.isolated.filter(n => matches(search, n.card_id, n.title, n.lane))
+  const q = search.trim().toLowerCase()
+  const dim = (id: string) => q !== '' && !matches(search, id, byId.get(id)?.title, byId.get(id)?.lane)
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, padding: 16 }}>
-        <MetricCard label="Declared edges" value={declaredEdges} status="ok" />
-        <MetricCard label="Mentioned edges" value={mentionedEdges} status="unk" />
-        <MetricCard label="Roots" value={roots} />
-      </div>
+      <Metrics>
+        <MetricCard label="Declared edges" value={declared} status={declared ? 'ok' : 'unknown'} sub="previous: field" />
+        <MetricCard label="Mentioned edges" value={mentioned} status="unknown" sub="id cited in body" />
+        <MetricCard label="Connected" value={connected.length} sub={`of ${plural(data.nodes.length, 'card')}`} />
+        <MetricCard label="Isolated" value={data.isolated.length} sub="no edge either way" />
+      </Metrics>
 
-      {/* Graph */}
-      <div style={{ padding: '0 16px 16px' }}>
-        <div className="section-cap" style={{ padding: '0 0 8px', border: 0 }}>Connected graph</div>
-        <div
-          style={{
-            background: 'var(--bg2)',
-            borderRadius: 12,
-            overflow: 'hidden',
-            position: 'relative',
-          }}
-        >
-          <svg
-            width="100%"
-            viewBox={`0 0 600 ${svgH}`}
-            style={{ display: 'block' }}
-          >
-            {/* Edges */}
-            {lineageEdges.map((e, i) => {
-              const from = posMap.get(e.from)
-              const to = posMap.get(e.to)
-              if (!from || !to) return null
-              return (
-                <line
-                  key={i}
-                  x1={from.x + 70}
-                  y1={from.y + 16}
-                  x2={to.x + 70}
-                  y2={to.y + 16}
-                  stroke={e.type === 'declares' ? 'var(--tint)' : 'var(--label3)'}
-                  strokeWidth={e.type === 'declares' ? 1.5 : 1}
-                  strokeDasharray={e.type === 'mentions' ? '4 3' : undefined}
-                  opacity={0.6}
-                />
-              )
-            })}
-
-            {/* Nodes */}
-            {positions.map(p => {
-              const h = hypotheses.find(x => x.id === p.id)
-              if (!h) return null
-              const sel = selectedId === h.id
-              return (
-                <g
-                  key={p.id}
-                  transform={`translate(${p.x}, ${p.y})`}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => onSelect(sel ? null : h.id)}
+      <SectionCap aside={`${connected.length} nodes · ${data.edges.length} edges`}>Connected graph</SectionCap>
+      {connected.length === 0 ? (
+        <Group>
+          <Empty>None</Empty>
+        </Group>
+      ) : (
+        <>
+          <div className="desktop-only">
+            <Card pad={0}>
+              <div style={{ overflow: 'auto', padding: 8 }}>
+                <svg
+                  viewBox={`0 0 ${data.layout.width} ${data.layout.height}`}
+                  width={data.layout.width}
+                  height={data.layout.height}
+                  style={{ display: 'block', minWidth: Math.min(data.layout.width, 640), maxWidth: '100%', height: 'auto' }}
+                  role="img"
+                  aria-label="lineage graph"
                 >
-                  <rect
-                    width={140}
-                    height={40}
-                    rx={8}
-                    fill={sel ? 'var(--tint)' : 'var(--bg3)'}
-                    opacity={sel ? 1 : 0.9}
-                  />
-                  <circle cx={14} cy={20} r={4} fill={
-                    h.status === 'ok' ? 'var(--ok)' :
-                    h.status === 'warn' ? 'var(--warn)' :
-                    h.status === 'stale' ? 'var(--stale)' : 'var(--unk)'
-                  } />
-                  <text x={26} y={14} fontSize={9} fill={sel ? 'rgba(255,255,255,0.7)' : 'var(--label3)'} fontFamily="ui-monospace, monospace">
-                    {h.id.slice(-8)}
-                  </text>
-                  <text x={26} y={28} fontSize={10} fill={sel ? 'white' : 'var(--label)'} fontFamily="-apple-system, sans-serif">
-                    {h.title.slice(0, 16)}{h.title.length > 16 ? '…' : ''}
-                  </text>
-                </g>
-              )
-            })}
-          </svg>
-
-          {/* Legend */}
-          <div style={{ display: 'flex', gap: 16, padding: '8px 16px 12px', borderTop: '1px solid var(--sep)', fontSize: 11, color: 'var(--label3)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <svg width={24} height={6}><line x1={0} y1={3} x2={24} y2={3} stroke="var(--tint)" strokeWidth={1.5} /></svg>
-              declares
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <svg width={24} height={6}><line x1={0} y1={3} x2={24} y2={3} stroke="var(--label3)" strokeWidth={1} strokeDasharray="4 3" /></svg>
-              mentions
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Isolated */}
-      {filteredIsolated.length > 0 && (
-        <div style={{ padding: '0 16px 16px' }}>
-          <SectionCap>Isolated</SectionCap>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 4 }}>
-            {filteredIsolated.map(h => (
-              <div
-                key={h.id}
-                onClick={() => onSelect(selectedId === h.id ? null : h.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '7px 10px',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  background: selectedId === h.id ? 'rgba(0,122,255,0.10)' : 'var(--bg2)',
-                }}
-              >
-                <StatusDot status={h.status} />
-                <span className="num" style={{ fontSize: 11, color: 'var(--label3)' }}>{h.id.slice(-8)}</span>
-                <span style={{ fontSize: 12, color: 'var(--label)' }}>{h.title}</span>
+                  {data.edges.map((e, i) => {
+                    const a = positions[e.source]
+                    const b = positions[e.target]
+                    if (!a || !b) return null
+                    const x1 = a[0] + NODE_W
+                    const y1 = a[1] + NODE_H / 2
+                    const x2 = b[0]
+                    const y2 = b[1] + NODE_H / 2
+                    const dx = Math.max(24, (x2 - x1) / 2)
+                    const declaredEdge = e.kind === 'explicit_previous'
+                    return (
+                      <path
+                        key={i}
+                        d={`M${x1} ${y1} C${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`}
+                        fill="none"
+                        stroke={declaredEdge ? 'var(--tint)' : 'var(--label3)'}
+                        strokeWidth={declaredEdge ? 1.6 : 1}
+                        strokeDasharray={declaredEdge ? undefined : '4 3'}
+                        opacity={dim(e.source) || dim(e.target) ? 0.25 : 0.8}
+                      >
+                        <title>{`${e.source} → ${e.target} · ${edgeLabel(e.kind)}`}</title>
+                      </path>
+                    )
+                  })}
+                  <defs>
+                    <clipPath id="node-clip">
+                      <rect width={NODE_W} height={NODE_H} rx={8} />
+                    </clipPath>
+                  </defs>
+                  {connected.map(id => {
+                    const n = byId.get(id)
+                    const [x, y] = positions[id]
+                    const sel = selectedId === id
+                    const status = data.node_status[id] ?? 'unknown'
+                    const title = n?.title ?? ''
+                    return (
+                      <g key={id} transform={`translate(${x}, ${y})`} style={{ cursor: 'pointer' }} onClick={() => onSelect(sel ? null : id)} opacity={dim(id) ? 0.35 : 1} clipPath="url(#node-clip)">
+                        <rect width={NODE_W} height={NODE_H} rx={8} fill={sel ? 'var(--tint)' : 'var(--bg3)'} stroke={sel ? 'var(--tint)' : 'var(--sep)'} />
+                        <circle cx={14} cy={NODE_H / 2} r={4} fill={sel ? 'white' : STATUS_COLOR[status]} />
+                        <text x={26} y={16} fontSize={10} fill={sel ? 'rgba(255,255,255,0.75)' : 'var(--label2)'} fontFamily="var(--mono)">
+                          {id}
+                        </text>
+                        <text x={26} y={30} fontSize={11} fill={sel ? 'white' : 'var(--label)'} fontFamily="var(--font)">
+                          {fitTitle(title)}
+                        </text>
+                        <title>{`${id} · ${title} · ${n?.lane ?? ''}`}</title>
+                      </g>
+                    )
+                  })}
+                </svg>
               </div>
-            ))}
+              <div style={{ display: 'flex', gap: 16, padding: '8px 14px 10px', borderTop: '1px solid var(--sep)', fontSize: 11, color: 'var(--label3)' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <svg width={24} height={6}><line x1={0} y1={3} x2={24} y2={3} stroke="var(--tint)" strokeWidth={1.6} /></svg>
+                  declared
+                </span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <svg width={24} height={6}><line x1={0} y1={3} x2={24} y2={3} stroke="var(--label3)" strokeWidth={1} strokeDasharray="4 3" /></svg>
+                  mentioned
+                </span>
+                <span>left to right = earlier to later</span>
+              </div>
+            </Card>
           </div>
-        </div>
+
+          <div className="mobile-only" style={{ flexDirection: 'column' }}>
+            <Group>
+              {data.mobile_rows.map((r, i) => (
+                <Row key={`${r.card_id}-${i}`} selected={selectedId === r.card_id} onClick={() => onSelect(selectedId === r.card_id ? null : r.card_id)}>
+                  <span style={{ width: r.depth * 14, flexShrink: 0 }} aria-hidden />
+                  <StatusDot status={data.node_status[r.card_id] ?? 'unknown'} />
+                  <RowMain id={r.card_id} title={r.is_cycle_repeat ? `${r.title} · repeat` : r.title} sub={r.edge_label ? `${r.edge_label} · ${r.lane}` : r.lane} />
+                </Row>
+              ))}
+            </Group>
+          </div>
+        </>
       )}
+
+      <div className="desktop-only">
+      <SectionCap aside={plural(isolated.length, 'card')}>Isolated</SectionCap>
+      <Group>
+        {isolated.length === 0 && <Empty>None</Empty>}
+        {isolated.map(n => (
+          <Row key={n.card_id} selected={selectedId === n.card_id} onClick={() => onSelect(selectedId === n.card_id ? null : n.card_id)}>
+            <StatusDot status={data.node_status[n.card_id] ?? 'unknown'} />
+            <RowMain id={n.card_id} title={n.title} sub={n.lane} />
+            <RowAside value={<span style={{ fontWeight: 400, fontSize: 11, color: 'var(--label3)' }}>{n.kind}</span>} />
+          </Row>
+        ))}
+      </Group>
+      </div>
     </div>
   )
 }
 
-export function LineageInspector({ id }: { id: string }) {
-  return <HypothesesInspector id={id} />
+export function LineageInspector(props: InspectorProps) {
+  return <HypothesesInspector {...props} />
 }

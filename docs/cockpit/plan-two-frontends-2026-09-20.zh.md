@@ -70,3 +70,27 @@ T10（Sonnet，进行中，改 `app.py`/`quota.py`/`agents.py`/模板）→ **T1
 - 不在服务端引入 node 运行时；B 版只是静态产物。
 - 不为 B 版新增任何写接口；`/api/*` 与 HTML 路由共用同一套只读数据层和校验。
 - 不把 Figma 的假数据形状反向塞进数据层。
+
+## 7. 状态（2026-09-21）
+
+| 任务 | 状态 | 落点 |
+|---|---|---|
+| T11 JSON API | 完成 | `open_composer/cockpit/api.py`，十个 `/api/*.json`，`tests/test_cockpit_api.py`；`/v2/` 在构建产物存在时自动挂载 |
+| T9 A 版 | 完成，已上线 `/` | `open_composer/cockpit/{templates,static/css,static/js}`；截图 `docs/cockpit-screens/a/` |
+| T12 B 版 | 完成，`/v2/` | `frontend/cockpit-v2/src/**`（补齐 `components/Shared.tsx`、`components/StatusStrip.tsx`、`screens/Hypotheses.tsx`、`api.ts`，删 mock，五屏全部改读真实形状）；产物 `open_composer/cockpit/static/v2/`（js 258 KB / gzip 77 KB，css 17 KB）；`make cockpit-v2` 重建；截图 `docs/cockpit-screens/b/` |
+| 顺手修的 | 完成 | Claude 用量探测：过期/无权限的 token 记住指纹不再重发（6h 或 token 变更），429 按 `Retry-After` 退避且一个 429 结束整轮（之前每分钟 2 个 401 换来 429）；agent 时间线里 base64 截图块改显示 `[image]` |
+
+### 怎么比
+
+同一台机、同一份数据：`https://dsh.hadan.blog/`（A）与 `https://dsh.hadan.blog/v2/`（B），手机和电脑各看一遍；A 右下角有 `v2` 链接，B 侧栏底部有 `Native view` 链接。
+
+| | A · Native | B · Figma 续作 |
+|---|---|---|
+| 壳 | 玻璃侧栏 216 + 内容 + 检视器 392；手机浮动标签栏 + `<dialog>` 抽屉 | 玻璃工具栏（标签在栏内）+ 侧栏 240 + 检视器 372；手机浮动标签栏 + 底部 sheet |
+| 渲染 | 服务端 Jinja，一个 12 KB 脚本；无 JS 也能看 | React 单页，首屏 77 KB gzip；必须有 JS |
+| 刷新 | 整页刷新 + agent SSE | 每屏 20–60 s 轮询 JSON + agent SSE；相对时间每 30 s 重算 |
+| 过滤 | 当前屏文本过滤 | 当前屏文本过滤；血统图里不匹配的节点淡出 |
+| 深链 | `/card/<id>`、`/agents/<id>`；检视器用 `#/path` | `#/hypotheses/<id>`、`#/agents/<id>`、`#/paper/<s>`、`#/health/<job>` |
+| 改一处要动什么 | Python + 模板 + CSS | TypeScript + 重新 `make cockpit-v2`（node 22 + pnpm） |
+
+我的倾向：**A 做主版本**——一套工具链、无构建步骤、首屏快、无 JS 也可读，长期只维护一份；把 B 里更好的两处搬回 A：主指标卡可点击跳到对应分组，血统图按过滤词淡出不相关节点。若机主更喜欢 B 的观感，则反过来：B 做主，A 保留为无 JS 后备。定下来之前两版并存，数据层与 API 不变。
