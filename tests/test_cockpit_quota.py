@@ -1612,7 +1612,7 @@ def test_quota_route_renders_credential_table_and_usage_estimate(client: TestCli
     response = client.get("/quota")
     text = response.text.lower()
     assert "credential sources" in text
-    assert "usage estimate (from local transcripts)" in text
+    assert "usage estimate" in text
     # The autouse fixture in tests/conftest.py neutralizes all three sources,
     # so every row in this round's table is "absent" -- see
     # test_quota_route_shows_no_credentials_state_by_default above.

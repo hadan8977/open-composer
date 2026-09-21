@@ -1,64 +1,70 @@
 {% extends "base.html" %}
-{% block title %}Lineage -- Open Composer Cockpit{% endblock %}
+{% block title %}Lineage · Cockpit{% endblock %}
 {% block content %}
-<h1>Research lineage</h1>
-<p class="muted">
-  2 of 19 cards declare a previous card (2026-09-19); most edges below are dashed (mentioned), not solid (declared).
-</p>
+{% set explicit = graph.edges|selectattr("is_explicit")|list|length %}
+{% set mentioned = graph.edges|length - explicit %}
+<div class="page-head">
+  <h1>Lineage</h1>
+  <span class="aside num">{{ graph.nodes|length }} cards · <a href="/">Hypotheses</a></span>
+</div>
 
-{% if graph.warnings %}
-<section class="panel">
-  <h2>Lineage warnings</h2>
-  <ul>
-    {% for warning in graph.warnings %}
-    <li class="muted">{{ warning }}</li>
-    {% endfor %}
-  </ul>
-</section>
-{% endif %}
+<div class="metrics metrics--3">
+  <div class="metric"><span class="metric-label">Declared</span><span class="metric-value num">{{ explicit }}</span><span class="metric-sub">edges · solid</span></div>
+  <div class="metric"><span class="metric-label">Mentioned</span><span class="metric-value num">{{ mentioned }}</span><span class="metric-sub">edges · dashed</span></div>
+  <div class="metric"><span class="metric-label">Roots</span><span class="metric-value num">{{ graph.roots|length }}</span><span class="metric-sub">{{ isolated|length }} isolated</span></div>
+</div>
 
-<section class="panel lineage-desktop">
-  <h2>Graph</h2>
-  <p class="muted">
-    <span class="lineage-legend-swatch lineage-legend-swatch--explicit"></span> solid = declared
-    &nbsp;&nbsp;
-    <span class="lineage-legend-swatch lineage-legend-swatch--mentioned"></span> dashed = mentioned
-  </p>
-  <svg viewBox="0 0 {{ layout.width }} {{ layout.height }}" class="lineage-svg" role="img"
-       aria-label="Hypothesis lineage graph, {{ graph.nodes|length }} nodes, {{ graph.edges|length }} edges">
+{% if linked_ids %}
+<div class="section only-wide">Graph <span class="legend"><i></i> declared &nbsp; <i class="dashed"></i> mentioned</span></div>
+<div class="lineage only-wide">
+  <svg viewBox="0 0 {{ layout.width }} {{ layout.height }}" role="img" aria-label="lineage graph, {{ linked_ids|length }} connected cards, {{ graph.edges|length }} edges">
     {% for edge in graph.edges %}
-    {% set source_pos = layout.positions[edge.source] %}
-    {% set target_pos = layout.positions[edge.target] %}
-    <line
-      x1="{{ source_pos[0] }}" y1="{{ source_pos[1] }}"
-      x2="{{ target_pos[0] }}" y2="{{ target_pos[1] }}"
-      class="lineage-edge lineage-edge--{{ 'explicit' if edge.is_explicit else 'mentioned' }}"
-    ><title>{{ edge.source }} -&gt; {{ edge.target }}: {{ edge.label }}</title></line>
+    {% set a = layout.positions[edge.source] %}{% set b = layout.positions[edge.target] %}
+    {% set mx = (a[0] + b[0]) / 2 %}
+    <path d="M {{ a[0] + 7 }} {{ a[1] }} C {{ mx }} {{ a[1] }}, {{ mx }} {{ b[1] }}, {{ b[0] - 7 }} {{ b[1] }}" fill="none" class="edge edge--{{ 'explicit' if edge.is_explicit else 'mentioned' }}"><title>{{ edge.source }} → {{ edge.target }} · {{ edge.label }}</title></path>
     {% endfor %}
-    {% for node in graph.nodes %}
+    {% for node in graph.nodes if node.card_id in linked_ids %}
     {% set pos = layout.positions[node.card_id] %}
-    <a href="/card/{{ node.card_id }}">
-      <circle cx="{{ pos[0] }}" cy="{{ pos[1] }}" r="7"
-              class="lineage-node lineage-node--{{ node_status[node.card_id] }}">
-        <title>{{ node.card_id }}: {{ node.title }} ({{ node.lane }})</title>
-      </circle>
-      <text x="{{ pos[0] + 11 }}" y="{{ pos[1] + 4 }}" class="lineage-label">{{ node.card_id }}</text>
+    <a href="/card/{{ node.card_id }}" data-detail>
+      <circle cx="{{ pos[0] }}" cy="{{ pos[1] }}" r="6" class="node node--{{ node_status[node.card_id] }}"><title>{{ node.card_id }} · {{ node.title }} · {{ node.lane }}</title></circle>
+      <text x="{{ pos[0] + 12 }}" y="{{ pos[1] + 4 }}" class="node-label">{{ node.card_id }}</text>
     </a>
     {% endfor %}
   </svg>
-</section>
+</div>
 
-<section class="panel lineage-mobile">
-  <h2>Lineage list</h2>
-  <ul class="lineage-indent-list">
-    {% for row in mobile_rows %}
-    <li style="margin-left: {{ row.depth * 1.25 }}rem;">
-      <a href="/card/{{ row.card_id }}"><code>{{ row.card_id }}</code></a>
-      <span class="dot dot--{{ node_status[row.card_id] }}">{{ row.lane }}</span>
-      {% if row.edge_label %}<span class="muted">&larr; {{ row.edge_label }}</span>{% endif %}
-      {% if row.is_cycle_repeat %}<span class="muted">(cycle, stopped here)</span>{% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-</section>
+<div class="section only-narrow">Tree</div>
+<div class="group only-narrow tree">
+  {% for row in mobile_rows if row.card_id in linked_ids %}
+  <a class="row" href="/card/{{ row.card_id }}" data-detail style="--depth: {{ row.depth }}">
+    <span class="dot dot--{{ node_status[row.card_id] }}"></span>
+    <span class="row-main">
+      <span class="row-title"><span class="id">{{ row.card_id }}</span><span class="text">{{ row.title }}</span></span>
+      <span class="row-sub">{{ row.lane }}{% if row.edge_label %} · {{ row.edge_label }}{% endif %}{% if row.is_cycle_repeat %} · cycle{% endif %}</span>
+    </span>
+    <span class="row-aside"></span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="section">Isolated <span class="num">{{ isolated|length }}</span></div>
+<div class="group" data-filter-group>
+  {% for node in isolated %}
+  <a class="row" href="/card/{{ node.card_id }}" data-detail data-filter="{{ node.card_id }} {{ node.title }} {{ node.lane }}">
+    <span class="dot dot--{{ node_status[node.card_id] }}"></span>
+    <span class="row-main"><span class="row-title"><span class="id">{{ node.card_id }}</span><span class="text">{{ node.title }}</span></span></span>
+    <span class="row-aside"><span>{{ node.lane }}</span></span>
+  </a>
+  {% else %}
+  <div class="empty">None</div>
+  {% endfor %}
+</div>
+
+{% if graph.warnings %}
+<details class="more">
+  <summary>{{ graph.warnings|length }} warning{{ "s" if graph.warnings|length != 1 }}</summary>
+  <ul class="faint t-foot">{% for warning in graph.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+</details>
+{% endif %}
 {% endblock %}

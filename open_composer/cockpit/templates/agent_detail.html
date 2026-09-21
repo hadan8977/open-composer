@@ -1,150 +1,66 @@
-{% extends "base.html" %}
-{% block title %}Agent {{ detail.record.id[:8] }} -- Open Composer Cockpit{% endblock %}
+{% extends layout %}
+{% block title %}{{ detail.record.title or detail.record.id[:8] }} · Cockpit{% endblock %}
+{% macro timeline(entries) -%}
+<table class="t t--tight tl">
+  <thead><tr><th>Time</th><th>What</th><th>Target</th><th class="num">Duration</th><th></th></tr></thead>
+  <tbody>
+    {% for entry in entries %}
+    <tr{% if entry.is_error %} class="is-error"{% endif %}>
+      <td class="mono">{{ entry.at|hms_ts }}</td>
+      <td class="what">
+        {% if entry.kind == "tool" %}<span class="chip chip--tool">{{ entry.tool_name or "tool" }}</span>
+        {% elif entry.kind == "result" %}<span class="chip chip--text">↳ {{ entry.tool_name or "result" }}</span>
+        {% else %}<span class="chip chip--text">text</span>{% endif %}
+      </td>
+      <td class="target">{{ entry.target or entry.detail or "–" }}</td>
+      <td class="num">{{ entry.duration_seconds|elapsed_s if entry.duration_seconds is not none else "–" }}</td>
+      <td>{% if entry.kind == "result" %}<span class="dot dot--{{ 'stale' if entry.is_error else 'ok' }}"></span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{%- endmacro %}
 {% block content %}
-<h1>Agent <code>{{ detail.record.id }}</code></h1>
-<p class="muted">
-  {{ detail.record.provider }} &middot; {{ detail.record.model or "unknown model" }} &middot;
-  <span class="dot dot--{{ detail.record.last_status|agent_dot }}">{{ detail.record.last_status }}</span>
-  &middot; cwd <code>{{ detail.record.cwd or "unknown" }}</code>
-</p>
-{% if detail.record.title %}<p class="muted">{{ detail.record.title }}</p>{% endif %}
-<p><a href="/agents">back to agents</a></p>
+{% set record = detail.record %}
+<div class="detail" data-title="{{ record.title or record.id[:8] }}">
+  <div class="detail-head">
+    <h1 class="t-title">{{ record.title or record.id[:8] }}</h1>
+    <p class="state"><span class="dot dot--{{ record.last_status|agent_dot }}"></span>{{ record.last_status }} <span class="faint">·</span> {{ record.provider }} <span class="faint">·</span> <span class="mono">{{ record.model or "unknown model" }}</span></p>
+  </div>
 
-{% if detail.warnings %}
-<section class="panel">
-  <h2>Warnings</h2>
-  <ul>{% for warning in detail.warnings %}<li class="muted">{{ warning }}</li>{% endfor %}</ul>
-</section>
-{% endif %}
+  <div class="card">
+    <dl class="kv">
+      <dt>Session</dt><dd class="mono">{{ record.id }}</dd>
+      <dt>Directory</dt><dd class="mono">{{ record.cwd or "–" }}</dd>
+      <dt>Transcript</dt><dd>{{ detail.transcript_kind if detail.transcript_available else "none" }}</dd>
+      <dt>Last activity</dt><dd><span class="num" title="{{ record.last_activity_at.isoformat() if record.last_activity_at else '' }}">{{ record.last_activity_at|ago }}</span></dd>
+    </dl>
+  </div>
 
-<section class="panel">
-  <h2>Timeline (transcript: {{ detail.transcript_kind }}) -- {{ detail.entries|length|count_sep }} of {{ detail.entries_total|count_sep }} entries</h2>
-  {% if not detail.transcript_available %}
-  <p class="muted">none</p>
+  <div class="section">Timeline <span class="num">{{ detail.entries|length|count_sep }} of {{ detail.entries_total|count_sep }} entries</span></div>
+  {% if detail.transcript_available %}
+  <div class="table-wrap" data-stream="/agents/{{ record.id }}/stream">
+    {{ timeline(detail.entries) }}
+  </div>
   {% else %}
-  <table class="responsive-table" id="timeline-table">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Kind</th>
-        <th>Tool</th>
-        <th>Target</th>
-        <th>Duration</th>
-        <th>Outcome</th>
-      </tr>
-    </thead>
-    <tbody id="timeline-body">
-      {% for entry in detail.entries %}
-      <tr class="{{ 'timeline-row--error' if entry.is_error else '' }}">
-        <td data-label="Time">{{ entry.at|hms_ts }}</td>
-        <td data-label="Kind">{{ entry.kind }}</td>
-        <td data-label="Tool">{{ entry.tool_name or "-" }}</td>
-        <td data-label="Target">{{ entry.target or entry.detail or "-" }}</td>
-        <td data-label="Duration" class="num">{{ entry.duration_seconds|elapsed_s if entry.duration_seconds is not none else "-" }}</td>
-        <td data-label="Outcome">
-          {% if entry.kind == "result" %}<span class="dot dot--{{ 'stale' if entry.is_error else 'ok' }}">{{ "error" if entry.is_error else "ok" }}</span>{% else %}-{% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <div id="bottom"></div>
+  <div class="card empty">No transcript</div>
   {% endif %}
-</section>
 
-<section class="panel">
-  <h2>Subagents</h2>
-  {% if not detail.subagents %}
-  <p class="muted">none</p>
-  {% else %}
+  <div class="section">Subagents <span class="num">{{ detail.subagents|length }}</span></div>
   {% for task in detail.subagents %}
-  <details class="cron-job">
-    <summary>
-      <span class="cron-job-name"><code>{{ task.id }}</code></span>
-      <span class="muted">{{ task.entries|length|count_sep }} of {{ task.entries_total|count_sep }} entries</span>
-      {% if task.warning %}<span class="muted">{{ task.warning }}</span>{% endif %}
-    </summary>
-    <div class="cron-job-body">
-      <table class="responsive-table">
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Kind</th>
-            <th>Tool</th>
-            <th>Target</th>
-            <th>Duration</th>
-            <th>Outcome</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entry in task.entries %}
-          <tr class="{{ 'timeline-row--error' if entry.is_error else '' }}">
-            <td data-label="Time">{{ entry.at|hms_ts }}</td>
-            <td data-label="Kind">{{ entry.kind }}</td>
-            <td data-label="Tool">{{ entry.tool_name or "-" }}</td>
-            <td data-label="Target">{{ entry.target or entry.detail or "-" }}</td>
-            <td data-label="Duration" class="num">{{ entry.duration_seconds|elapsed_s if entry.duration_seconds is not none else "-" }}</td>
-            <td data-label="Outcome">
-              {% if entry.kind == "result" %}<span class="dot dot--{{ 'stale' if entry.is_error else 'ok' }}">{{ "error" if entry.is_error else "ok" }}</span>{% else %}-{% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <details class="more">
+    <summary><span class="mono">{{ task.id }}</span> · <span class="num">{{ task.entries|length|count_sep }} of {{ task.entries_total|count_sep }}</span> entries{% if task.warning %} · {{ task.warning }}{% endif %}</summary>
+    <div class="table-wrap">{{ timeline(task.entries) }}</div>
   </details>
+  {% else %}
+  <div class="card empty">None</div>
   {% endfor %}
-  {% endif %}
-</section>
 
-{% if detail.transcript_available %}
-<script>
-// Tails this agent's transcript via SSE and appends rows to the timeline
-// table as they arrive. No framework: plain EventSource, plain DOM, and
-// `textContent` (never `innerHTML`) so a transcript containing HTML-shaped
-// text cannot inject markup into this page.
-(function () {
-  "use strict";
-  var tbody = document.getElementById("timeline-body");
-  if (!tbody || typeof EventSource === "undefined") {
-    return;
-  }
-  var streamUrl = window.location.pathname.replace(/\/$/, "") + "/stream";
-  var source = new EventSource(streamUrl);
-  source.onmessage = function (event) {
-    var data;
-    try {
-      data = JSON.parse(event.data);
-    } catch (err) {
-      return;
-    }
-    var row = document.createElement("tr");
-    if (data.is_error) {
-      row.className = "timeline-row--error";
-    }
-    var outcome = "-";
-    if (data.kind === "result") {
-      outcome = data.is_error ? "error" : "ok";
-    }
-    var values = [
-      data.at,
-      data.kind,
-      data.tool_name,
-      data.content,
-      data.duration_seconds,
-      outcome,
-    ];
-    values.forEach(function (value) {
-      var cell = document.createElement("td");
-      cell.textContent = value === null || value === undefined || value === "" ? "-" : String(value);
-      row.appendChild(cell);
-    });
-    tbody.appendChild(row);
-  };
-})();
-</script>
-{% endif %}
-<script>
-document.getElementById("bottom")?.scrollIntoView();
-</script>
+  {% if detail.warnings %}
+  <details class="more">
+    <summary>{{ detail.warnings|length }} warning{{ "s" if detail.warnings|length != 1 }}</summary>
+    <ul class="faint t-foot">{% for warning in detail.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+  </details>
+  {% endif %}
+</div>
 {% endblock %}

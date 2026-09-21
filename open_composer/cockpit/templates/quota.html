@@ -1,200 +1,161 @@
 {% extends "base.html" %}
-{% block title %}Quota -- Open Composer Cockpit{% endblock %}
+{% block title %}Quota · Cockpit{% endblock %}
 {% block content %}
-<h1>Quota</h1>
-<p class="muted">generated {{ report.generated_at|short_ts }}</p>
+{% set claude = report.claude %}
+{% set snap = claude.snapshot %}
+{% set est = report.usage_estimate %}
+{% set cal = report.throttle_calibration %}
+{% set codex = report.codex %}
 
-<div class="panel">
-  <h2>Claude -- subscription OAuth</h2>
-  <p class="stat-detail">endpoint api.anthropic.com/api/oauth/usage, undocumented, reverse-engineered</p>
-  {% if report.claude.snapshot.available %}
-  <table class="responsive-table">
-    <thead>
-      <tr><th>Window</th><th>Used</th><th>Resets</th><th>Status</th></tr>
-    </thead>
-    <tbody>
-      {% for w in report.claude.snapshot.windows %}
-      <tr>
-        <td data-label="Window">{{ w.label }}</td>
-        <td data-label="Used" class="num">{{ '%.1f'|format(w.percent_used) if w.percent_used is not none else 'unknown' }}%</td>
-        <td data-label="Resets">{{ w.resets_at|short_ts if w.resets_at else 'unknown' }}</td>
-        <td data-label="Status"><span class="dot dot--{{ w.status }}">{{ w.status }}</span></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <p class="stat-detail">
-    extra usage:
-    {% if report.claude.snapshot.extra_usage and report.claude.snapshot.extra_usage.present and report.claude.snapshot.extra_usage.summary %}
-      {% for k, v in report.claude.snapshot.extra_usage.summary.items() %}{{ k }}={{ v }}{{ ", " if not loop.last else "" }}{% endfor %}
+<div class="page-head">
+  <h1>Quota</h1>
+  <span class="aside num" title="{{ est.window_start }} → {{ est.window_end }}">estimate {{ est.generated_at|ago }}</span>
+</div>
+
+<div class="metrics">
+  <div class="metric">
+    <span class="metric-label">Fresh 5h</span>
+    <span class="metric-value num">{{ est.fresh_total|k }}</span>
+    <span class="metric-sub">main {{ est.fresh_main|k }} · subagents {{ est.fresh_subagent|k }}</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">At last throttle</span>
+    {% if cal.state == "computing" %}
+    <span class="metric-value"><span class="skeleton" aria-label="computing"></span></span>
+    <span class="metric-sub">computing</span>
+    {% elif cal.available and cal.last_fresh_at_event is not none %}
+    <span class="metric-value num">{% if cal.coverage != "full" %}<small>≥</small>{% endif %}{{ cal.last_fresh_at_event|k }}</span>
+    <span class="metric-sub">
+      {% if cal.vs_last_throttle_ratio is not none %}now {{ "%.1f"|format(cal.vs_last_throttle_ratio) }}× that
+      {% elif cal.coverage != "full" %}lower bound · {{ cal.coverage }}
+      {% else %}{{ cal.event_count }} event{{ "s" if cal.event_count != 1 }}{% endif %}
+    </span>
     {% else %}
-      none
+    <span class="metric-value is-word"><span class="dot dot--unknown"></span>{{ cal.state or "none" }}</span>
+    <span class="metric-sub">no throttle observed</span>
     {% endif %}
-  </p>
-  {% else %}
-  <p>
-    <span class="dot dot--unknown">unavailable ({{ report.claude.snapshot.unavailable_reason }})</span>
-    {% if report.claude.snapshot.http_status %}<span class="muted">http {{ report.claude.snapshot.http_status }}</span>{% endif %}
-  </p>
-  {% if report.claude.snapshot.diagnostic %}<p class="stat-detail">upstream body present ({{ report.claude.snapshot.diagnostic|length }} char(s), scrubbed, not rendered)</p>{% endif %}
-  {% endif %}
-  <p class="stat-detail">fetched {{ report.claude.snapshot.fetched_at|short_ts }}</p>
-  <p class="stat-detail">cache age {{ '%.0f'|format(report.claude.cache_age_seconds) }}s, served from cache: {{ report.claude.served_from_cache }}</p>
-  <p class="stat-detail">
-    breaker:
-    {% if report.claude.breaker_open %}
-      open until {{ report.claude.breaker_open_until|short_ts }}
+  </div>
+  <div class="metric">
+    <span class="metric-label">Cache reads</span>
+    <span class="metric-value num">{{ est.cache_read_total|k }}</span>
+    <span class="metric-sub">not fresh · {{ est.distinct_session_count }} sessions</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Live</span>
+    {% if snap.available and snap.windows %}
+    {% set first = snap.windows[0] %}
+    <span class="metric-value num"><span class="dot dot--{{ first.status }}"></span>{{ "%.0f%%"|format(first.percent_used) if first.percent_used is not none else "–" }}</span>
+    <span class="metric-sub">{{ first.label }}{% if claude.served_from_cache %} · cached{% endif %}</span>
     {% else %}
-      closed
+    <span class="metric-value is-word"><span class="dot dot--unknown"></span>unavailable</span>
+    <span class="metric-sub" title="{{ snap.unavailable_reason }}">{{ snap.unavailable_reason }}</span>
     {% endif %}
-    ({{ report.claude.consecutive_failures }} consecutive failure(s))
-  </p>
-  <p class="stat-detail">{{ report.claude.projection.label }}{% if report.claude.projection.available %} ({{ '%.2f'|format(report.claude.projection.rate_percent_per_hour) }}%/h){% endif %}</p>
+  </div>
 </div>
 
-<div class="panel">
-  <h2>Claude -- credential sources</h2>
-  <p class="muted">ordered resolution, T6b: env var, paseo config, credentials file</p>
-  {% if report.claude.snapshot.credential_probes %}
-  <table class="responsive-table">
-    <thead>
-      <tr><th>Source</th><th>Token found</th><th>Outcome</th></tr>
-    </thead>
-    <tbody>
-      {% for probe in report.claude.snapshot.credential_probes %}
-      <tr>
-        <td data-label="Source">{{ probe.label }}</td>
-        <td data-label="Token found">{{ probe.token_found }}</td>
-        <td data-label="Outcome">{{ probe.outcome }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{% if snap.available and snap.windows %}
+<div class="section">Live windows <span class="faint">{{ 'cached · ' if claude.served_from_cache }}{{ snap.fetched_at|ago if snap.fetched_at else '' }}</span></div>
+<div class="group">
+  {% for w in snap.windows %}
+  <div class="row row--plain">
+    <span class="row-main">
+      <span class="row-title"><span class="text">{{ w.label }}</span></span>
+      <span class="row-sub"><span class="bar bar--inline bar--{{ w.status }}"><i style="width:{{ w.percent_used or 0 }}%"></i></span> resets {{ w.resets_at or "unknown" }}</span>
+    </span>
+    <span class="row-aside"><span class="num">{{ "%.0f%%"|format(w.percent_used) if w.percent_used is not none else "–" }}</span><span>used</span></span>
+  </div>
+  {% endfor %}
+</div>
+{% if claude.projection.available %}<div class="t-foot muted">{{ claude.projection.label }}</div>{% endif %}
+{% endif %}
+
+<div class="section">Credential sources</div>
+<div class="group">
+  {% for probe in snap.credential_probes %}
+  <div class="row row--plain">
+    <span class="row-main"><span class="row-title"><span class="text">{{ probe.label }}</span></span></span>
+    <span class="row-aside"><span class="chip chip--{{ 'ok' if probe.outcome == 'ok' else ('unknown' if probe.outcome == 'absent' else 'stale') }}">{{ probe.outcome }}</span></span>
+  </div>
   {% else %}
-  <p class="muted">no credential sources probed this round</p>
+  <div class="empty">None</div>
+  {% endfor %}
+  {% if snap.diagnostic or claude.breaker_open or snap.http_status %}
+  <div class="row row--plain">
+    <span class="row-main"><span class="row-sub">
+      {% if snap.http_status %}http {{ snap.http_status }}{% endif %}
+      {% if snap.diagnostic %} · {{ snap.diagnostic }}{% endif %}
+      {% if claude.breaker_open %} · breaker open until {{ claude.breaker_open_until }}{% endif %}
+      {% if claude.consecutive_failures %} · {{ claude.consecutive_failures }} consecutive failures{% endif %}
+    </span></span>
+    <span class="row-aside"></span>
+  </div>
   {% endif %}
 </div>
 
-<div class="panel">
-  <h2>Claude -- usage estimate (from local transcripts)</h2>
-  <p class="muted">absolute tokens, not a percentage -- denominator unknown, see /quota source. fresh and cache read are never summed.</p>
-  <p class="stat-detail">window {{ report.usage_estimate.window_start|short_ts }} to {{ report.usage_estimate.window_end|short_ts }}</p>
-  <table class="responsive-table">
-    <thead>
-      <tr><th>Role</th><th>Model</th><th>Input</th><th>Output</th><th>Cache write</th><th>Fresh</th><th>Cache read</th></tr>
-    </thead>
+<div class="section">Usage estimate <span class="faint">by role and model · {{ est.main_files_scanned }} main · {{ est.subagent_files_scanned }} subagent files</span></div>
+{% if est.by_role_model %}
+<div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>Role</th><th>Model</th><th class="num">Input</th><th class="num">Output</th><th class="num">Cache write</th><th class="num">Fresh</th><th class="num">Cache read</th></tr></thead>
     <tbody>
-      {% for r in report.usage_estimate.by_role_model %}
+      {% for r in est.by_role_model %}
       <tr>
-        <td data-label="Role">{{ r.role }}</td>
-        <td data-label="Model">{{ r.model }}</td>
-        <td data-label="Input" class="num">{{ '{:,}'.format(r.input_tokens) }}</td>
-        <td data-label="Output" class="num">{{ '{:,}'.format(r.output_tokens) }}</td>
-        <td data-label="Cache write" class="num">{{ '{:,}'.format(r.cache_creation_tokens) }}</td>
-        <td data-label="Fresh" class="num"><strong>{{ '{:,}'.format(r.fresh_tokens) }}</strong></td>
-        <td data-label="Cache read" class="num muted">{{ '{:,}'.format(r.cache_read_tokens) }}</td>
-      </tr>
-      {% endfor %}
-      {% if not report.usage_estimate.by_role_model %}
-      <tr><td colspan="7">none</td></tr>
-      {% endif %}
-    </tbody>
-  </table>
-  <p class="stat-detail">fresh: main <strong>{{ '{:,}'.format(report.usage_estimate.fresh_main) }}</strong>, subagents <strong>{{ '{:,}'.format(report.usage_estimate.fresh_subagent) }}</strong>, total <strong>{{ '{:,}'.format(report.usage_estimate.fresh_total) }}</strong></p>
-  <p class="stat-detail muted">cache read: main {{ '{:,}'.format(report.usage_estimate.cache_read_main) }}, subagents {{ '{:,}'.format(report.usage_estimate.cache_read_subagent) }}, total {{ '{:,}'.format(report.usage_estimate.cache_read_total) }}</p>
-  <p class="stat-detail">{{ report.usage_estimate.distinct_session_count }} distinct main session(s), {{ report.usage_estimate.main_files_scanned }} main file(s) scanned, {{ report.usage_estimate.subagent_files_scanned }} subagent task file(s) scanned{% if not report.usage_estimate.subagent_tree_found %} -- no subagent transcripts found{% endif %}</p>
-  <p class="stat-detail">generated {{ report.usage_estimate.generated_at|short_ts }}</p>
-</div>
-
-<div class="panel">
-  <h2>Claude -- subagent task usage</h2>
-  <p class="muted">one row per task file with recorded usage, sorted by fresh, descending</p>
-  {% if report.usage_estimate.subagent_tasks %}
-  <table class="responsive-table">
-    <thead>
-      <tr><th>Label</th><th>Model</th><th>Fresh</th><th>Cache read</th><th>Turns</th><th>First activity</th><th>Last activity</th><th>Coverage</th></tr>
-    </thead>
-    <tbody>
-      {% for t in report.usage_estimate.subagent_tasks %}
-      <tr>
-        <td data-label="Label">{{ t.label }}</td>
-        <td data-label="Model">{{ t.model }}</td>
-        <td data-label="Fresh" class="num"><strong>{{ '{:,}'.format(t.fresh_tokens) }}</strong></td>
-        <td data-label="Cache read" class="num muted">{{ '{:,}'.format(t.cache_read_tokens) }}</td>
-        <td data-label="Turns" class="num">{{ t.turns }}</td>
-        <td data-label="First activity">{{ t.first_activity|short_ts }}</td>
-        <td data-label="Last activity">{{ t.last_activity|short_ts }}</td>
-        <td data-label="Coverage">{{ 'partial' if t.truncated else 'full' }}</td>
+        <td>{{ r.role }}</td>
+        <td class="mono">{{ r.model|replace("claude-", "") }}</td>
+        <td class="num">{{ r.input_tokens|k }}</td>
+        <td class="num">{{ r.output_tokens|k }}</td>
+        <td class="num">{{ r.cache_creation_tokens|k }}</td>
+        <td class="num"><strong>{{ r.fresh_tokens|k }}</strong></td>
+        <td class="num muted">{{ r.cache_read_tokens|k }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-  {% elif report.usage_estimate.subagent_tree_found %}
-  <p class="muted">no subagent task usage in window</p>
-  {% else %}
-  <p class="muted">no subagent transcripts found</p>
-  {% endif %}
 </div>
+{% else %}
+<div class="card empty">No data yet</div>
+{% endif %}
 
-<div class="panel">
-  <h2>Claude -- 429 calibration</h2>
-  <p class="muted">empirical window capacity, from observed throttles -- never a percentage</p>
-  {% if report.throttle_calibration.state == 'computing' %}
-  <p class="muted">computing</p>
-  {% elif report.throttle_calibration.available %}
-  <p>
-    last throttled at {{ report.throttle_calibration.last_event.at|short_ts if report.throttle_calibration.last_event else 'unknown' }},
-    reset at {{ report.throttle_calibration.last_event.resets_at|short_ts if report.throttle_calibration.last_event else 'unknown' }}
-    ({{ report.throttle_calibration.last_event.rate_limit_type or 'unknown window' if report.throttle_calibration.last_event else 'unknown window' }})
-  </p>
-  <p class="stat-detail">
-    empirical window capacity: fresh tokens at last throttle
-    {% if report.throttle_calibration.coverage != 'full' %}&ge; {% endif %}{{ '{:,}'.format(report.throttle_calibration.last_fresh_at_event) if report.throttle_calibration.last_fresh_at_event is not none else 'unknown' }}
-    (at {{ report.throttle_calibration.last_event.at|short_ts if report.throttle_calibration.last_event else 'unknown' }})
-  </p>
-  <p class="stat-detail">throttle event(s) seen: {{ report.throttle_calibration.event_count }}</p>
-  {% if report.throttle_calibration.event_count > 1 %}
-  <p class="stat-detail">
-    min {{ '{:,}'.format(report.throttle_calibration.min_fresh_at_event) if report.throttle_calibration.min_fresh_at_event is not none else 'unknown' }},
-    median {{ '{:,}'.format(report.throttle_calibration.median_fresh_at_event) if report.throttle_calibration.median_fresh_at_event is not none else 'unknown' }}
-    fresh tokens across sampled throttle events
-  </p>
-  {% endif %}
-  <p class="stat-detail">
-    {% if report.throttle_calibration.coverage != 'full' %}
-    lower bound -- {{ 'no subagent transcripts' if report.throttle_calibration.coverage == 'main only' else 'subagent transcripts for that window no longer exist' }}; no ratio
-    {% elif report.throttle_calibration.vs_last_throttle_ratio is not none %}
-    {{ '%.2f'|format(report.throttle_calibration.vs_last_throttle_ratio) }}x vs last throttle
+<div class="section">Subagent tasks <span class="num">{{ est.subagent_tasks|length }}</span></div>
+{% if not est.subagent_tree_found %}
+<div class="card empty">No subagent transcripts</div>
+{% elif est.subagent_tasks %}
+<div class="table-wrap">
+  <table class="t">
+    <thead><tr><th>Task</th><th>Model</th><th class="num">Fresh</th><th class="num">Cache read</th><th class="num">Turns</th><th class="num">First</th><th class="num">Last</th></tr></thead>
+    <tbody>
+      {% for t in est.subagent_tasks %}
+      <tr>
+        <td class="wrap" title="{{ t.label }}">{{ t.label }}</td>
+        <td class="mono">{{ t.model|replace("claude-", "") }}</td>
+        <td class="num"><strong>{{ t.fresh_tokens|k }}</strong></td>
+        <td class="num muted">{{ t.cache_read_tokens|k }}</td>
+        <td class="num">{{ t.turns }}</td>
+        <td class="num">{{ t.first_activity|ago }}</td>
+        <td class="num">{{ t.last_activity|ago }}{% if t.truncated %} <span class="faint">partial</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card empty">None</div>
+{% endif %}
+
+<div class="section">Throttle</div>
+<div class="card">
+  <dl class="kv">
+    {% if cal.state == "computing" %}
+    <dt>Events</dt><dd><span class="skeleton"></span> computing</dd>
+    {% elif cal.available and cal.last_event %}
+    <dt>Last event</dt><dd><span class="num">{{ cal.last_event.at|ago }}</span> · {{ cal.last_event.rate_limit_type or "unknown window" }}{% if cal.last_event.resets_at %} · reset {{ cal.last_event.resets_at }}{% endif %}</dd>
+    <dt>Fresh at event</dt><dd class="num">{% if cal.coverage != "full" %}≥ {% endif %}{{ cal.last_fresh_at_event|k }}{% if cal.coverage != "full" %} <span class="faint">({{ cal.coverage }})</span>{% endif %}</dd>
+    {% if cal.event_count > 1 %}<dt>Across {{ cal.event_count }} events</dt><dd class="num">min {{ cal.min_fresh_at_event|k }} · median {{ cal.median_fresh_at_event|k }}</dd>{% endif %}
     {% else %}
-    vs last throttle: unknown
+    <dt>Events</dt><dd>{{ cal.state or "none observed" }}</dd>
     {% endif %}
-  </p>
-  {% else %}
-  <p class="muted">no throttle observed yet</p>
-  {% endif %}
-</div>
-
-<div class="panel">
-  <h2>Codex</h2>
-  <p><span class="dot dot--unknown">{{ report.codex.label }}</span></p>
-  <p class="stat-detail">auth mode: {{ report.codex.auth_mode or 'unknown' }}</p>
-  <p class="stat-detail">{{ report.codex.note }}</p>
-  {% if report.codex.windows %}
-  <table class="responsive-table">
-    <thead>
-      <tr><th>Window</th><th>Used</th><th>Resets</th><th>Duration</th></tr>
-    </thead>
-    <tbody>
-      {% for w in report.codex.windows %}
-      <tr>
-        <td data-label="Window">{{ w.limit_id }}</td>
-        <td data-label="Used" class="num">{{ w.used_percent if w.used_percent is not none else 'unknown' }}%</td>
-        <td data-label="Resets">{{ w.resets_at|short_ts if w.resets_at else 'unknown' }}</td>
-        <td data-label="Duration" class="num">{{ w.window_duration_mins if w.window_duration_mins is not none else 'unknown' }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
+    <dt>Codex quota</dt><dd>{{ codex.label }}{% if codex.auth_mode %} · {{ codex.auth_mode }}{% endif %}{% if codex.note %} <span class="faint">· {{ codex.note }}</span>{% endif %}</dd>
+    {% for w in codex.windows %}<dt>{{ w.label }}</dt><dd class="num">{{ w.used_percent if w.used_percent is not none else "–" }}% · resets {{ w.resets_at or "unknown" }}</dd>{% endfor %}
+  </dl>
 </div>
 {% endblock %}

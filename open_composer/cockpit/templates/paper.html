@@ -1,99 +1,80 @@
 {% extends "base.html" %}
-{% block title %}Paper -- Open Composer Cockpit{% endblock %}
+{% block title %}Paper · Cockpit{% endblock %}
 {% block content %}
-<h1>Paper trading</h1>
-<p class="muted">
-  Generated {{ report.generated_at.isoformat() }}. Organised by <strong>strategy</strong>, never by
-  symbol -- every sleeve below currently shares one Alpaca Paper account. A
-  <span class="dot dot--unknown">observation only</span> chip means the strategy computes signals but has
-  <strong>never been authorized to submit a single order</strong> -- it is not trading, whatever its
-  target weights below might suggest. A <span class="dot dot--stale">expired</span> chip means its
-  authorization has lapsed: its orders have silently stopped.
-</p>
+{% set account = report.account %}
+{% set kill = report.kill_switch %}
+{% set tally = namespace(soonest=none, expired=0, authorized=0) %}
+{% for strategy in report.strategies %}
+  {% set auth = strategy.authorization %}
+  {% if auth.state == "expired" %}{% set tally.expired = tally.expired + 1 %}{% endif %}
+  {% if auth.state == "authorized" %}{% set tally.authorized = tally.authorized + 1 %}{% endif %}
+  {% if auth.days_remaining is not none and (tally.soonest is none or auth.days_remaining < tally.soonest) %}{% set tally.soonest = auth.days_remaining %}{% endif %}
+{% endfor %}
 
-<section class="panel">
-  <h2>Account</h2>
-  <div class="stat-row">
-    <div class="stat-card">
-      <div class="stat-label">Equity</div>
-      {% if report.account.equity is not none %}
-      <div class="stat-value"><span class="dot dot--{{ report.account.status }}"></span>${{ "%.2f"|format(report.account.equity) }}</div>
-      <div class="stat-detail">
-        cash {{ "$%.2f"|format(report.account.cash) if report.account.cash is not none else "unknown" }}
-        &middot; buying power {{ "$%.2f"|format(report.account.buying_power) if report.account.buying_power is not none else "unknown" }}
-      </div>
-      <div class="stat-detail">snapshot as of {{ report.account.generated_at.isoformat() if report.account.generated_at else "unknown" }}</div>
-      {% else %}
-      <div class="stat-value"><span class="dot dot--unknown"></span>unknown</div>
-      {% endif %}
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Kill switch</div>
-      <div class="stat-value">
-        {% if report.kill_switch.enabled is none %}
-        <span class="dot dot--unknown">unknown</span>
-        {% elif report.kill_switch.enabled %}
-        <span class="dot dot--warn">ENABLED (halted)</span>
-        {% else %}
-        <span class="dot dot--ok">disabled</span>
-        {% endif %}
-      </div>
-      {% if report.kill_switch.reason %}<div class="stat-detail">{{ report.kill_switch.reason }}</div>{% endif %}
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Open orders</div>
-      <div class="stat-value">{{ report.open_order_count if report.open_order_count is not none else "unknown" }}</div>
-    </div>
+<div class="page-head">
+  <h1>Paper</h1>
+  <span class="aside num" title="{{ account.generated_at.isoformat() if account.generated_at else '' }}">Alpaca Paper · snapshot {{ account.generated_at|ago if account.generated_at else "unknown" }}</span>
+</div>
+
+<div class="metrics">
+  <div class="metric">
+    <span class="metric-label">Equity</span>
+    <span class="metric-value num"><span class="dot dot--{{ account.status }}"></span>{{ account.equity|money if account.equity is not none else "–" }}</span>
+    <span class="metric-sub">cash {{ account.cash|money }} · buying power {{ account.buying_power|money }}</span>
   </div>
-</section>
+  <div class="metric">
+    <span class="metric-label">Open orders</span>
+    <span class="metric-value num">{{ report.open_order_count if report.open_order_count is not none else "–" }}</span>
+    <span class="metric-sub">&nbsp;</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Kill switch</span>
+    <span class="metric-value is-word">
+      {% if kill.enabled is none %}<span class="dot dot--unknown"></span>unknown
+      {% elif kill.enabled %}<span class="dot dot--warn"></span>halted
+      {% else %}<span class="dot dot--ok"></span>off{% endif %}
+    </span>
+    <span class="metric-sub" title="{{ kill.reason or '' }}">{{ kill.reason if kill.reason else "&nbsp;"|safe }}</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Soonest expiry</span>
+    <span class="metric-value num">
+      {% if tally.soonest is not none %}<span class="dot dot--{{ 'stale' if tally.soonest < 0 else ('warn' if tally.soonest < 7 else 'ok') }}"></span>{{ "%.1f"|format(tally.soonest) }}<small>d</small>
+      {% else %}–{% endif %}
+    </span>
+    <span class="metric-sub">{{ tally.authorized }} authorized · {{ tally.expired }} expired</span>
+  </div>
+</div>
+
+<div class="section">Strategies <span class="num">{{ report.strategies|length }}</span></div>
+<div class="group" data-filter-group>
+  {% for strategy in report.strategies %}
+  {% set auth = strategy.authorization %}
+  <a class="row" href="/paper/{{ strategy.name }}" data-detail data-filter="{{ strategy.name }} {{ auth.state }} {{ strategy.cycle_status or '' }}">
+    <span class="dot dot--{{ auth.status }}"></span>
+    <span class="row-main">
+      <span class="row-title"><span class="text">{{ strategy.name }}</span><span class="chip chip--{{ auth.status }}">{{ auth_state_labels[auth.state] }}</span></span>
+      <span class="row-sub">
+        cycle {{ strategy.cycle_status or "unknown" }} · {{ strategy.generated_at|ago if strategy.generated_at else "never" }}
+        {% if strategy.latest_fill_rate is not none %} · fill <span class="num">{{ "%.0f%%"|format(strategy.latest_fill_rate * 100) }}</span>{% if strategy.latest_fill_session %} {{ strategy.latest_fill_session }}{% endif %}{% endif %}
+        · order {{ strategy.last_order_at|ago if strategy.last_order_at else "never" }}
+        {% if strategy.positions_agreement %} · positions {{ strategy.positions_agreement }}{% endif %}
+      </span>
+    </span>
+    <span class="row-aside">
+      {% if auth.days_remaining is not none %}<span class="num">{{ "%.1f"|format(auth.days_remaining) }}d</span><span>to expiry</span>
+      {% else %}<span class="num">–</span><span>{{ auth_state_labels[auth.state] }}</span>{% endif %}
+    </span>
+  </a>
+  {% else %}
+  <div class="empty">None</div>
+  {% endfor %}
+</div>
 
 {% if report.warnings %}
-<section class="panel">
-  <h2>Warnings</h2>
-  <ul>{% for warning in report.warnings %}<li class="muted">{{ warning }}</li>{% endfor %}</ul>
-</section>
+<details class="more">
+  <summary>{{ report.warnings|length }} warning{{ "s" if report.warnings|length != 1 }}</summary>
+  <ul class="faint t-foot">{% for warning in report.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+</details>
 {% endif %}
-
-<section class="panel">
-  <h2>Strategies ({{ report.strategies|length }})</h2>
-  <table class="responsive-table">
-    <thead>
-      <tr>
-        <th>Strategy</th>
-        <th>Authorization</th>
-        <th>Expires in</th>
-        <th>Last cycle</th>
-        <th>Target vs actual</th>
-        <th>Latest fill rate</th>
-        <th>Last order</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for strategy in report.strategies %}
-      <tr>
-        <td data-label="Strategy"><a href="/paper/{{ strategy.name }}"><code>{{ strategy.name }}</code></a></td>
-        <td data-label="Authorization">
-          <span class="dot dot--{{ strategy.authorization.status }}">{{ auth_state_labels[strategy.authorization.state] }}</span>
-        </td>
-        <td data-label="Expires in" class="num">
-          {% if strategy.authorization.days_remaining is not none %}{{ "%.1f"|format(strategy.authorization.days_remaining) }}d{% else %}-{% endif %}
-        </td>
-        <td data-label="Last cycle">
-          {{ strategy.generated_at.isoformat() if strategy.generated_at else "never" }}
-          {% if strategy.cycle_status %}<div class="muted">{{ strategy.cycle_status }}</div>{% endif %}
-        </td>
-        <td data-label="Target vs actual">{{ strategy.positions_agreement }}</td>
-        <td data-label="Latest fill rate" class="num">
-          {% if strategy.latest_fill_rate is not none %}
-          {{ "%.0f"|format(strategy.latest_fill_rate * 100) }}% ({{ strategy.latest_fill_session }})
-          {% else %}
-          <span class="muted">no fills recorded</span>
-          {% endif %}
-        </td>
-        <td data-label="Last order">{{ strategy.last_order_at.isoformat() if strategy.last_order_at else "never submitted" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
 {% endblock %}

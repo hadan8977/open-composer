@@ -1,82 +1,87 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Open Composer Cockpit{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Cockpit">
+  <title>{% block title %}Cockpit{% endblock %}</title>
   <link rel="stylesheet" href="/static/css/cockpit.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-row">
-      <a class="topbar-brand" href="/">Cockpit</a>
-      <button type="button" class="topbar-toggle" id="topbar-toggle" aria-expanded="false" aria-controls="topbar-details">
-        <span class="sr-only">Toggle status</span>&#9776;
-      </button>
-    </div>
+{% from "_icons.html" import icon %}
+<div class="app" id="app">
 
-    <nav class="topbar-nav" aria-label="Screens">
-      {% for slug, path, label in screens %}
-      <a href="{{ path }}" class="{{ 'is-active' if active_screen == slug else '' }}">{{ label }}</a>
-      {% endfor %}
-    </nav>
+  <nav class="rail glass" aria-label="Screens">
+    <a class="rail-brand" href="/"><i></i>Cockpit</a>
+    {% for slug, path, label in screens %}
+    <a class="nav{{ ' is-active' if active_screen == slug }}" href="{{ path }}" data-screen{% if active_screen == slug %} aria-current="page"{% endif %}>{{ icon(slug) }}<span>{{ label }}</span><kbd>⌘{{ loop.index }}</kbd></a>
+    {% endfor %}
+    <div class="rail-foot num" title="{{ generated_at.isoformat() }}">{{ generated_at|hms }}Z · read-only</div>
+  </nav>
 
-    <div class="topbar-status" id="topbar-details">
-      <div class="status-slot" data-slot="quota-claude">
-        <span class="status-label">Claude quota</span>
-        <a class="status-value quota-topbar-link" href="/quota">
-          {% if topbar_quota_claude.available %}
-            {% for bar in topbar_quota_claude.bars %}
-            <span class="quota-topbar-bar">
-              <span class="dot dot--{{ bar.status }}">{{ bar.label }} {{ bar.percent_display }}</span>
-              <span class="quota-bar"><span class="quota-bar-fill quota-bar-fill--{{ bar.status }}" style="width: {{ bar.width_percent }}%"></span></span>
-              <span class="muted">{{ bar.reset_label }}</span>
-              {% if bar.projection_label %}<span class="muted">{{ bar.projection_label }}</span>{% endif %}
-            </span>
-            {% endfor %}
-          {% else %}
-            <span class="dot dot--unknown">unavailable ({{ topbar_quota_claude.unavailable_reason }})</span>
-          {% endif %}
-          <span class="muted quota-topbar-estimate">{{ topbar_usage_estimate.topbar_label }}</span>
-        </a>
-      </div>
-      <div class="status-slot" data-slot="quota-codex">
-        <span class="status-label">Codex quota</span>
-        <a class="status-value quota-topbar-link" href="/quota">
-          <span class="dot dot--unknown">{{ topbar_quota_codex.label }}</span>
-        </a>
-      </div>
-      <div class="status-slot" data-slot="agent-dots">
-        <span class="status-label">Agents</span>
-        <span class="status-value">
-          {% if topbar_agents %}
-            {% for agent_id, agent_status in topbar_agents %}
-            <a class="dot dot--{{ agent_status|agent_dot }} agent-dot" href="/agents/{{ agent_id }}" title="{{ agent_status }}"></a>
-            {% endfor %}
-          {% else %}
-            <span class="dot dot--unknown">none</span>
-          {% endif %}
-        </span>
-      </div>
-      <div class="status-slot" data-slot="data-freshness">
-        <span class="status-label">Data</span>
-        <span class="status-value dot dot--{{ topbar_data_freshness.status }}">{{ topbar_data_freshness.label }}</span>
-      </div>
-      <div class="status-slot" data-slot="rehearsal-countdown">
-        <span class="status-label">Rehearsal auth</span>
-        <span class="status-value dot dot--{{ topbar_rehearsal.status }}">{{ topbar_rehearsal.label }}</span>
-      </div>
-    </div>
+  <header class="mobile-head glass">
+    <a class="brand" href="/">{{ screen_label }}</a>
+    <input class="filter" id="filter-m" type="search" placeholder="Filter" autocomplete="off" aria-label="Filter">
   </header>
 
-  <main class="content">
+  <div class="strip glass" role="status" aria-label="Status">
+    {% if topbar_quota_claude.available %}
+      {% for bar in topbar_quota_claude.bars %}
+      <a class="strip-item" data-slot="quota-claude" href="/quota" title="{{ bar.reset_label }}{% if bar.projection_label %} · {{ bar.projection_label }}{% endif %}">
+        <span class="t-cap">{{ bar.label }}</span>
+        <span class="bar bar--{{ bar.status }}"><i style="width:{{ bar.width_percent }}%"></i></span>
+        <span class="num">{{ bar.percent_display }}</span>
+      </a>
+      {% endfor %}
+    {% else %}
+      <a class="strip-item" data-slot="quota-claude" href="/quota" title="{{ topbar_quota_claude.unavailable_reason }}">
+        <span class="t-cap">Claude</span>
+        <span class="chip chip--unknown"><span class="clip">{{ topbar_quota_claude.unavailable_reason }}</span></span>
+      </a>
+    {% endif %}
+    <a class="strip-item" data-slot="quota-codex" href="/quota" title="Codex quota · {{ topbar_quota_codex.label }}"><span class="t-cap">Codex</span><span class="faint">{{ topbar_quota_codex.label }}</span></a>
+    <a class="strip-item" data-slot="usage-estimate" href="/quota" title="fresh tokens, current 5h window · main {{ topbar_usage_estimate.fresh_main|k }} · subagents {{ topbar_usage_estimate.fresh_subagent|k }}">
+      <span class="t-cap">fresh 5h</span><span class="num">{{ topbar_usage_estimate.fresh_total|k }}</span>
+    </a>
+    {% set live = namespace(running=0, error=0, idle=0) %}
+    {% for _agent_id, agent_status in topbar_agents %}{% if agent_status == "running" %}{% set live.running = live.running + 1 %}{% elif agent_status == "error" %}{% set live.error = live.error + 1 %}{% else %}{% set live.idle = live.idle + 1 %}{% endif %}{% endfor %}
+    <a class="strip-item" data-slot="agent-dots" href="/agents" title="{{ live.running }} running · {{ live.error }} error · {{ live.idle }} idle">
+      <span class="t-cap">agents</span>
+      <span class="agent-dots">{% for _agent_id, agent_status in topbar_agents if agent_status in ("running", "error") %}<span class="dot dot--{{ agent_status|agent_dot }}"></span>{% endfor %}</span>
+      {% if live.running %}<span class="num">{{ live.running }}</span><span>running</span>{% endif %}
+      {% if live.error %}<span class="num">{{ live.error }}</span><span>error</span>{% endif %}
+      <span class="num">{{ live.idle }}</span><span>idle</span>
+    </a>
+    <a class="strip-item" data-slot="data-freshness" href="/health" title="data freshness"><span class="t-cap">data</span><span class="dot dot--{{ topbar_data_freshness.status }}"></span><span>{{ topbar_data_freshness.label }}</span></a>
+    <a class="strip-item" data-slot="rehearsal-countdown" href="/paper" title="{{ topbar_rehearsal.label }}"><span class="t-cap">auth</span><span class="dot dot--{{ topbar_rehearsal.status }}"></span><span class="num">{{ topbar_rehearsal.label.rsplit(":", 1)[-1]|trim }}</span></a>
+    <span class="strip-spacer"></span>
+    <input class="filter" id="filter" type="search" placeholder="Filter  ⌘F" autocomplete="off" aria-label="Filter">
+  </div>
+
+  <main class="content" id="content">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="footer">
-    <span>Read-only. No command entry point. Generated {{ generated_at.isoformat() if generated_at else "" }}.</span>
-  </footer>
+  <aside class="inspector" id="inspector" hidden aria-label="Detail">
+    <div class="inspector-head glass"><span class="title clip">Detail</span><button type="button" class="close" data-close aria-label="Close">✕</button></div>
+    <div class="inspector-body"></div>
+  </aside>
 
-  <script src="/static/js/topbar.js"></script>
+  <nav class="tabbar glass" id="tabbar" aria-label="Screens">
+    {% for slug, path, label in screens if slug != "lineage" %}
+    <a class="{{ 'is-active' if active_screen == slug }}" href="{{ path }}">{{ icon(slug) }}<span>{{ label }}</span></a>
+    {% endfor %}
+  </nav>
+
+  <dialog class="sheet" id="sheet" aria-label="Detail">
+    <div class="sheet-grab"></div>
+    <div class="sheet-head"><span class="title clip">Detail</span><button type="button" class="done" data-close>Done</button></div>
+    <div class="sheet-body"></div>
+  </dialog>
+
+</div>
+<script src="/static/js/cockpit.js" defer></script>
 </body>
 </html>

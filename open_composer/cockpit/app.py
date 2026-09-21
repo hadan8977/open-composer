@@ -39,6 +39,8 @@ import os
 import re
 import threading
 import time
+from collections import defaultdict
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -68,7 +70,6 @@ from open_composer.cockpit.data.health import (
 )
 from open_composer.cockpit.data.hypotheses import (
     build_hypotheses_report,
-    compute_lineage_layout,
     extract_criteria_sections,
     find_card,
     flatten_lineage_for_mobile,
@@ -118,6 +119,7 @@ SCREENS: tuple[tuple[str, str, str], ...] = (
     ("lineage", "/lineage", "Lineage"),
     ("agents", "/agents", "Agents"),
     ("paper", "/paper", "Paper"),
+    ("quota", "/quota", "Quota"),
     ("health", "/health", "Health"),
 )
 
@@ -269,7 +271,116 @@ def _base_context(request: Request, active: str) -> dict[str, Any]:
         "topbar_usage_estimate": _topbar_usage_estimate(now),
         "topbar_agents": _topbar_agents(),
         "generated_at": now,
+        "screen_label": next(
+            (label for slug, _path, label in SCREENS if slug == active), "Cockpit"
+        ),
+        # Detail routes render the content block alone when asked for a partial,
+        # which is how the inspector (desktop) and the sheet (phone) load them.
+        "layout": "partial.html" if request.query_params.get("partial") else "base.html",
     }
+
+
+def _format_span(seconds: float) -> str:
+    whole = int(seconds)
+    if whole < 3600:
+        return f"{max(1, whole // 60)}m"
+    if whole < 86400:
+        return f"{whole // 3600}h"
+    return f"{whole // 86400}d"
+
+
+def _format_ago(value: datetime | None, now: datetime | None = None) -> str:
+    """Relative time for lists: `now`, `4m ago`, `3h ago`, `12d ago`, `in 2h`."""
+    if value is None:
+        return "never"
+    if isinstance(value, str):
+        return value
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    moment = now or datetime.now(UTC)
+    seconds = (moment - value).total_seconds()
+    if seconds < -45:
+        return "in " + _format_span(-seconds)
+    if seconds < 45:
+        return "now"
+    return _format_span(seconds) + " ago"
+
+
+def _format_hms(value: datetime | None) -> str:
+    if value is None:
+        return "–"
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value.astimezone(UTC).strftime("%H:%M:%S")
+
+
+def _format_money(value: float | None) -> str:
+    if value is None:
+        return "–"
+    sign = "-" if value < 0 else ""
+    return f"{sign}${abs(value):,.2f}"
+
+
+def _format_k(value: int | float | None) -> str:
+    if value is None:
+        return "–"
+    return format_compact_token_count(int(value))
+
+
+@dataclass(frozen=True)
+class _ConnectedLayout:
+    positions: dict[str, tuple[float, float]]
+    width: float
+    height: float
+
+
+def _layout_connected(
+    graph: Any,
+    linked_ids: set[str],
+    *,
+    column_width: float = 236.0,
+    row_height: float = 54.0,
+    margin_x: float = 24.0,
+    margin_y: float = 22.0,
+) -> _ConnectedLayout:
+    """Left-to-right layering of the connected part of the lineage graph.
+
+    Column = longest path from a root (edges run predecessor → successor), row =
+    order inside the column; the isolated cards are listed, not drawn, so they
+    never take part here. Cycles are cut by refusing to raise a node's depth
+    more than once per edge.
+    """
+    successors: dict[str, list[str]] = defaultdict(list)
+    indegree: dict[str, int] = {card_id: 0 for card_id in linked_ids}
+    for edge in graph.edges:
+        if edge.source in linked_ids and edge.target in linked_ids:
+            successors[edge.source].append(edge.target)
+            indegree[edge.target] += 1
+    depth: dict[str, int] = {card_id: 0 for card_id in linked_ids}
+    frontier = sorted(card_id for card_id, n in indegree.items() if n == 0)
+    seen_edges = 0
+    while frontier and seen_edges <= 4 * max(1, len(graph.edges)):
+        card_id = frontier.pop(0)
+        for nxt in sorted(successors[card_id]):
+            seen_edges += 1
+            if depth[nxt] < depth[card_id] + 1:
+                depth[nxt] = depth[card_id] + 1
+                frontier.append(nxt)
+    columns: dict[int, list[str]] = defaultdict(list)
+    for card_id in sorted(linked_ids):
+        columns[depth[card_id]].append(card_id)
+    positions: dict[str, tuple[float, float]] = {}
+    tallest = max((len(ids) for ids in columns.values()), default=1)
+    for col, ids in columns.items():
+        offset = (tallest - len(ids)) * row_height / 2
+        for row, card_id in enumerate(ids):
+            positions[card_id] = (
+                margin_x + col * column_width,
+                margin_y + offset + row * row_height,
+            )
+    width = margin_x * 2 + (max(columns, default=0) + 1) * column_width - 60
+    height = margin_y * 2 + tallest * row_height - row_height / 2
+    return _ConnectedLayout(positions=positions, width=width, height=height)
 
 
 #: Name of the T10 warm thread, for tests that inspect `threading.enumerate()`.
@@ -366,6 +477,10 @@ def create_app(*, warm: bool = True) -> FastAPI:
     templates.env.filters["elapsed_s"] = format_elapsed_seconds
     templates.env.filters["hms_ts"] = format_timeline_time
     templates.env.filters["agent_dot"] = agent_state_dot
+    templates.env.filters["ago"] = _format_ago
+    templates.env.filters["hms"] = _format_hms
+    templates.env.filters["money"] = _format_money
+    templates.env.filters["k"] = _format_k
     templates.env.filters["count_sep"] = format_entry_count
     if warm:
         _start_warm_thread()
@@ -427,10 +542,13 @@ def create_app(*, warm: bool = True) -> FastAPI:
         """
         report = build_hypotheses_report(project_root())
         graph = report.lineage
-        layout = compute_lineage_layout(graph)
         node_status = {node.card_id: lane_status(node.lane) for node in graph.nodes}
         mobile_rows = flatten_lineage_for_mobile(graph)
+        linked_ids = {edge.source for edge in graph.edges} | {edge.target for edge in graph.edges}
+        layout = _layout_connected(graph, linked_ids)
         context = _base_context(request, "lineage")
+        context["linked_ids"] = linked_ids
+        context["isolated"] = tuple(node for node in graph.nodes if node.card_id not in linked_ids)
         context["graph"] = graph
         context["layout"] = layout
         context["node_status"] = node_status

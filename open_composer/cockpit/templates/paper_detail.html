@@ -1,182 +1,121 @@
-{% extends "base.html" %}
-{% block title %}{{ detail.name }} -- Paper -- Open Composer Cockpit{% endblock %}
+{% extends layout %}
+{% block title %}{{ detail.name }} · Cockpit{% endblock %}
 {% block content %}
-<h1>{{ detail.name }}</h1>
-<p class="muted">
-  <a href="/paper">&larr; all strategies</a> &middot;
-  last cycle {{ detail.generated_at.isoformat() if detail.generated_at else "never" }}
-  ({{ detail.cycle_status or "unknown" }}), session {{ detail.session or "-" }}.
-</p>
+{% set auth = detail.authorization %}
+<div class="detail" data-title="{{ detail.name }}">
+  <div class="detail-head">
+    <h1 class="t-title">{{ detail.name }}</h1>
+    <p class="state">
+      <span class="dot dot--{{ auth.status }}"></span>{{ auth_state_labels[auth.state] }}
+      {% if auth.days_remaining is not none %} · <span class="num">{{ "%.1f"|format(auth.days_remaining) }}d</span> to expiry{% endif %}
+      <span class="faint">·</span> cycle {{ detail.cycle_status or "unknown" }}
+      <span class="faint">·</span> <span title="{{ detail.generated_at.isoformat() if detail.generated_at else '' }}">{{ detail.generated_at|ago if detail.generated_at else "never" }}</span>
+    </p>
+  </div>
 
-<section class="panel">
-  <h2>Authorization</h2>
-  <p>
-    <span class="dot dot--{{ detail.authorization.status }}">{{ auth_state_labels[detail.authorization.state] }}</span>
-    {% if detail.authorization.expires_at %}
-    &mdash;
-    {% if detail.authorization.days_remaining >= 0 %}
-    {{ "%.1f"|format(detail.authorization.days_remaining) }} day(s) remaining
-    {% else %}
-    expired {{ "%.1f"|format(-detail.authorization.days_remaining) }} day(s) ago
-    {% endif %}
-    (expires {{ detail.authorization.expires_at.isoformat() }})
-    {% endif %}
-  </p>
-  {% if detail.authorization.state == "observation_only" %}
-  <p class="muted auth-note">
-    No rehearsal authorization is on file for this strategy: it computes target weights and would-be
-    orders every cycle but has never been permitted to submit a real paper order. Nothing on this page
-    below reflects an actual broker action, including any "would_submit" rows in the table below.
-  </p>
-  {% elif detail.authorization.state == "expired" %}
-  <p class="muted auth-note">
-    This authorization has lapsed. Orders stop the moment that happens, silently -- there is no separate
-    alarm anywhere else in the system.
-  </p>
-  {% endif %}
-  {% if detail.authorization.limits %}
-  <table class="responsive-table">
-    <thead><tr><th>Limit</th><th>Value</th></tr></thead>
-    <tbody>
-      {% for key, value in detail.authorization.limits.items() %}
-      <tr><td data-label="Limit">{{ key }}</td><td data-label="Value">{{ value }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
-  {% if detail.authorization.scope %}<p class="muted">{{ detail.authorization.scope }}</p>{% endif %}
-  {% if detail.authorization.gate_status_note %}<p class="muted">{{ detail.authorization.gate_status_note }}</p>{% endif %}
-</section>
+  <div class="section">Authorization</div>
+  <div class="card">
+    <dl class="kv">
+      <dt>State</dt><dd><span class="chip chip--{{ auth.status }}">{{ auth_state_labels[auth.state] }}</span>{% if auth.state == "observation_only" %} <span class="faint">never been permitted to submit a real paper order</span>{% elif auth.state == "expired" %} <span class="faint">orders stopped</span>{% endif %}</dd>
+      {% if auth.expires_at %}<dt>Expires</dt><dd class="num" title="{{ auth.expires_at.isoformat() }}">{{ auth.expires_at.strftime("%Y-%m-%d %H:%M") }}Z · {{ auth.expires_at|ago }}</dd>{% endif %}
+      {% if auth.scope %}<dt>Scope</dt><dd>{{ auth.scope }}</dd>{% endif %}
+      {% if auth.limits %}{% for key, value in auth.limits.items() %}<dt>{{ key|replace("_", " ") }}</dt><dd class="num">{{ value }}</dd>{% endfor %}{% endif %}
+      {% if auth.gate_status_note %}<dt>Gate</dt><dd>{{ auth.gate_status_note }}</dd>{% endif %}
+      {% if detail.session %}<dt>Session</dt><dd>{{ detail.session }}</dd>{% endif %}
+      {% if detail.positions_agreement %}<dt>Positions</dt><dd>{{ detail.positions_agreement }}</dd>{% endif %}
+    </dl>
+  </div>
 
-<section class="panel">
-  <h2>Equity</h2>
-  {% if chart %}
-  <svg viewBox="0 0 {{ chart.width }} {{ chart.height }}" class="equity-svg" role="img"
-       aria-label="Equity history, {{ chart.bars|length }} observed point(s)">
-    {% for bar in chart.bars %}
-    <rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}" class="equity-bar">
-      <title>{{ bar.title }}</title>
-    </rect>
-    {% endfor %}
-  </svg>
-  <p class="muted">
-    {{ detail.equity_series.note }} Range ${{ "%.2f"|format(chart.min_value) }} -
-    ${{ "%.2f"|format(chart.max_value) }} across {{ chart.bars|length }} observed cycle(s).
-  </p>
+  <div class="section">Positions <span class="num">{{ detail.positions|length }}</span></div>
+  {% if detail.positions %}
+  <div class="table-wrap">
+    <table class="t t--stack">
+      <thead><tr><th>Symbol</th><th class="num">Target w</th><th class="num">Target qty</th><th class="num">Ledger</th><th class="num">Broker</th><th class="num">Value</th><th class="num">Unrealized</th></tr></thead>
+      <tbody>
+        {% for row in detail.positions %}
+        <tr>
+          <td class="lead mono">{{ row.symbol }}</td>
+          <td class="num" data-l="Target w">{{ "%.3f"|format(row.target_weight) if row.target_weight is not none else "–" }}</td>
+          <td class="num" data-l="Target qty">{{ row.target_qty if row.target_qty is not none else "–" }}</td>
+          <td class="num" data-l="Ledger">{{ row.ledger_qty if row.ledger_qty is not none else "–" }}</td>
+          <td class="num" data-l="Broker">{{ row.broker_qty if row.broker_qty is not none else "–" }}</td>
+          <td class="num" data-l="Value">{{ row.market_value|money if row.market_value is not none else "–" }}</td>
+          <td class="num" data-l="Unrealized">{{ row.unrealized_pl|money if row.unrealized_pl is not none else "–" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="card empty">None</div>{% endif %}
+
+  <div class="section">Orders <span class="num">{{ detail.orders|length }}</span>{% if detail.orders_window_truncated %}<span class="faint">window truncated</span>{% endif %}</div>
+  {% if detail.orders %}
+  <div class="table-wrap">
+    <table class="t t--stack">
+      <thead><tr><th>Symbol</th><th>Side</th><th class="num">Qty</th><th class="num">Notional</th><th>Style</th><th>Status</th><th>Session</th><th class="num">Recorded</th></tr></thead>
+      <tbody>
+        {% for order in detail.orders %}
+        <tr>
+          <td class="lead mono">{{ order.symbol }}</td>
+          <td data-l="Side">{{ order.side or "–" }}</td>
+          <td class="num" data-l="Qty">{{ order.qty if order.qty is not none else "–" }}</td>
+          <td class="num" data-l="Notional">{{ order.notional|money if order.notional is not none else "–" }}</td>
+          <td data-l="Style">{{ order.order_style or "–" }}</td>
+          <td data-l="Status">{{ order.broker_status or "–" }}</td>
+          <td data-l="Session">{{ order.session or "–" }}</td>
+          <td class="num" data-l="Recorded" title="{{ order.recorded_at.isoformat() if order.recorded_at else '' }}">{{ order.recorded_at|ago if order.recorded_at else "–" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<div class="card empty">None</div>{% endif %}
+
+  <div class="section">Fills</div>
+  {% if not detail.fills.available %}<div class="card empty">No data yet</div>
+  {% elif not detail.fills.sessions %}<div class="card empty">None</div>
   {% else %}
-  <div class="stat-card">
-    <div class="stat-label">Equity (single snapshot -- no history yet)</div>
-    {% if detail.equity_series.latest %}
-    <div class="stat-value">${{ "%.2f"|format(detail.equity_series.latest.equity) }}</div>
-    <div class="stat-detail">as of {{ detail.equity_series.latest.at.isoformat() }}</div>
-    {% else %}
-    <div class="stat-value muted">no equity observation on file</div>
-    {% endif %}
-    <div class="stat-detail">
-      Only one (or zero) cycle observations are on file for this strategy, so no history is drawn --
-      a chart from a single point would fabricate a trend that was never observed.
-    </div>
+  <div class="table-wrap">
+    <table class="t t--stack">
+      <thead><tr><th>Session</th><th class="num">Orders</th><th class="num">Full</th><th class="num">Partial</th><th class="num">Unfilled</th><th class="num">Cancelled</th><th class="num">Fill rate</th><th class="num">Slippage bps</th><th>Decision</th></tr></thead>
+      <tbody>
+        {% for row in detail.fills.sessions %}
+        <tr>
+          <td class="lead">{{ row.session }}</td>
+          <td class="num" data-l="Orders">{{ row.orders if row.orders is not none else "–" }}</td>
+          <td class="num" data-l="Full">{{ row.filled_full if row.filled_full is not none else "–" }}</td>
+          <td class="num" data-l="Partial">{{ row.filled_partial if row.filled_partial is not none else "–" }}</td>
+          <td class="num" data-l="Unfilled">{{ row.unfilled if row.unfilled is not none else "–" }}</td>
+          <td class="num" data-l="Cancelled">{{ row.cancelled_before_open if row.cancelled_before_open is not none else "–" }}</td>
+          <td class="num" data-l="Fill rate">{{ "%.0f%%"|format(row.fill_rate_by_notional * 100) if row.fill_rate_by_notional is not none else "–" }}</td>
+          <td class="num" data-l="Slippage bps">{{ "%.1f"|format(row.median_slippage_vs_reference_bps) if row.median_slippage_vs_reference_bps is not none else "–" }}</td>
+          <td data-l="Decision">{{ row.decision or "–" }}{% if row.action %} · {{ row.action }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
   {% endif %}
-</section>
 
-<section class="panel">
-  <h2>Target weights vs actual positions</h2>
-  <p class="muted">{{ detail.positions_agreement }}</p>
-  {% if not detail.positions %}
-  <p class="muted">No target/position rows on file for this cycle.</p>
+  <div class="section">Equity</div>
+  {% if chart %}
+  <div class="card">
+    <svg class="chart" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="img" aria-label="equity history">
+      {% for bar in chart.bars %}<rect x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}" rx="1.5"><title>{{ bar.title }}</title></rect>{% endfor %}
+    </svg>
+    {% if detail.equity_series.latest %}
+    <div class="t-foot muted mt6">latest <span class="num" title="{{ detail.equity_series.latest.at.isoformat() }}">{{ detail.equity_series.latest.at|ago }}</span>{% if detail.equity_series.note %} · {{ detail.equity_series.note }}{% endif %}</div>
+    {% endif %}
+  </div>
   {% else %}
-  <table class="responsive-table">
-    <thead>
-      <tr>
-        <th>Symbol</th><th>Target weight</th><th>Target qty</th><th>Ledger qty</th>
-        <th>Broker qty</th><th>Market value</th><th>Unrealized P&amp;L</th><th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in detail.positions %}
-      <tr>
-        <td data-label="Symbol"><code>{{ row.symbol }}</code></td>
-        <td data-label="Target weight" class="num">{{ "%.3f"|format(row.target_weight) if row.target_weight is not none else "-" }}</td>
-        <td data-label="Target qty" class="num">{{ row.target_qty if row.target_qty is not none else "-" }}</td>
-        <td data-label="Ledger qty" class="num">{{ row.ledger_qty if row.ledger_qty is not none else "-" }}</td>
-        <td data-label="Broker qty" class="num">{{ row.broker_qty if row.broker_qty is not none else "-" }}</td>
-        <td data-label="Market value" class="num">{{ "%.2f"|format(row.market_value) if row.market_value is not none else "-" }}</td>
-        <td data-label="Unrealized P&amp;L" class="num">{{ "%.2f"|format(row.unrealized_pl) if row.unrealized_pl is not none else "-" }}</td>
-        <td data-label="Action">{{ row.action or "-" }}{% if row.decision %} ({{ row.decision }}){% endif %}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="card empty">No history yet{% if detail.equity_series.note %} · {{ detail.equity_series.note }}{% endif %}</div>
   {% endif %}
-</section>
 
-<section class="panel">
-  <h2>Submitted orders</h2>
-  {% if detail.orders_window_truncated %}
-  <p class="muted">Showing only the most recent read window of a larger order log.</p>
+  {% if detail.warnings %}
+  <details class="more">
+    <summary>{{ detail.warnings|length }} warning{{ "s" if detail.warnings|length != 1 }}</summary>
+    <ul class="faint t-foot">{% for warning in detail.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+  </details>
   {% endif %}
-  {% if not detail.orders %}
-  <p class="muted">No orders on file for this strategy.</p>
-  {% else %}
-  <table class="responsive-table">
-    <thead>
-      <tr><th>Recorded at</th><th>Session</th><th>Symbol</th><th>Side</th><th>Qty</th><th>Notional</th><th>Style</th><th>Broker status</th></tr>
-    </thead>
-    <tbody>
-      {% for order in detail.orders %}
-      <tr>
-        <td data-label="Recorded at">{{ order.recorded_at.isoformat() if order.recorded_at else "-" }}</td>
-        <td data-label="Session">{{ order.session or "-" }}</td>
-        <td data-label="Symbol"><code>{{ order.symbol }}</code></td>
-        <td data-label="Side">{{ order.side or "-" }}</td>
-        <td data-label="Qty" class="num">{{ order.qty if order.qty is not none else "-" }}</td>
-        <td data-label="Notional" class="num">{{ "%.2f"|format(order.notional) if order.notional is not none else "-" }}</td>
-        <td data-label="Style">{{ order.order_style or "-" }}</td>
-        <td data-label="Broker status">{{ order.broker_status or "-" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
-</section>
-
-<section class="panel">
-  <h2>Fills / slippage</h2>
-  {% if not detail.fills.available %}
-  <p class="muted">No fills-summary on file for this strategy yet.</p>
-  {% elif not detail.fills.sessions %}
-  <p class="muted">fills-summary.json exists but records zero sessions so far.</p>
-  {% else %}
-  <table class="responsive-table">
-    <thead>
-      <tr>
-        <th>Session</th><th>Orders</th><th>Filled full</th><th>Filled partial</th><th>Unfilled</th>
-        <th>Cancelled pre-open</th><th>Fill rate (notional)</th><th>Median slippage (bps)</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in detail.fills.sessions %}
-      <tr>
-        <td data-label="Session">{{ row.session }}</td>
-        <td data-label="Orders" class="num">{{ row.orders if row.orders is not none else "-" }}</td>
-        <td data-label="Filled full" class="num">{{ row.filled_full if row.filled_full is not none else "-" }}</td>
-        <td data-label="Filled partial" class="num">{{ row.filled_partial if row.filled_partial is not none else "-" }}</td>
-        <td data-label="Unfilled" class="num">{{ row.unfilled if row.unfilled is not none else "-" }}</td>
-        <td data-label="Cancelled pre-open" class="num">{{ row.cancelled_before_open if row.cancelled_before_open is not none else "-" }}</td>
-        <td data-label="Fill rate (notional)" class="num">{{ "%.0f"|format(row.fill_rate_by_notional * 100) if row.fill_rate_by_notional is not none else "-" }}%</td>
-        <td data-label="Median slippage (bps)" class="num">{{ "%.1f"|format(row.median_slippage_vs_reference_bps) if row.median_slippage_vs_reference_bps is not none else "-" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
-</section>
-
-{% if detail.warnings %}
-<section class="panel">
-  <h2>Warnings</h2>
-  <ul>{% for warning in detail.warnings %}<li class="muted">{{ warning }}</li>{% endfor %}</ul>
-</section>
-{% endif %}
+</div>
 {% endblock %}

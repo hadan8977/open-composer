@@ -1,78 +1,52 @@
 {% extends "base.html" %}
-{% block title %}Hypotheses -- Open Composer Cockpit{% endblock %}
+{% block title %}Hypotheses · Cockpit{% endblock %}
 {% block content %}
-<h1>Hypothesis board</h1>
-<p class="muted">
-  Generated {{ report.generated_at.isoformat() }}. {{ report.cards|length }} card(s) under
-  <code>reports/research/hypotheses/</code>. Unparseable cards land in <strong>unclassified</strong>
-  with their raw status text and reason.
-</p>
+{% set lanes = report.lanes %}
+<div class="page-head">
+  <h1>Hypotheses</h1>
+  <span class="aside num">{{ report.cards|length }} cards · <a href="/lineage">Lineage</a></span>
+</div>
 
-{% if report.results.warnings %}
-<section class="panel">
-  <h2>Results-join warnings</h2>
-  <p class="muted">
-    Joined by <code>card_id</code> in <code>summary.json</code>, not by the card's own output-directory
-    prose. No usable <code>card_id</code>, not joined to any card:
-  </p>
-  <ul>
-    {% for warning in report.results.warnings %}
-    <li class="muted">{{ warning }}</li>
-    {% endfor %}
-  </ul>
-</section>
-{% endif %}
+<div class="metrics">
+  <a class="metric" href="#running"><span class="metric-label">Running</span><span class="metric-value num"><span class="dot dot--ok"></span>{{ lanes.get("running", ())|length }}</span><span class="metric-sub">{{ lanes.get("preregistered", ())|length }} preregistered</span></a>
+  <a class="metric" href="#shipped"><span class="metric-label">Shipped</span><span class="metric-value num"><span class="dot dot--ok"></span>{{ lanes.get("shipped", ())|length }}</span><span class="metric-sub">{{ lanes.get("approved", ())|length }} approved</span></a>
+  <a class="metric" href="#refuted"><span class="metric-label">Refuted</span><span class="metric-value num"><span class="dot dot--stale"></span>{{ lanes.get("refuted", ())|length }}</span><span class="metric-sub">{{ lanes.get("on hold", ())|length }} on hold</span></a>
+  <a class="metric" href="#unclassified"><span class="metric-label">Unclassified</span><span class="metric-value num"><span class="dot dot--{{ 'warn' if lanes.get('unclassified') else 'unknown' }}"></span>{{ lanes.get("unclassified", ())|length }}</span><span class="metric-sub">{{ lanes.get("data card", ())|length }} data cards</span></a>
+</div>
 
-{% for lane in report.lanes %}
-{% set cards = report.lanes[lane] %}
-<section class="panel lane-panel">
-  <h2>
-    <span class="dot dot--{{ lane_status(lane) }}">{{ lane }}</span>
-    <span class="muted">({{ cards|length }})</span>
-  </h2>
-  {% if not cards %}
-  <p class="muted">none</p>
-  {% else %}
-  <table class="responsive-table">
-    <thead>
-      <tr>
-        <th>Card</th>
-        <th>Title</th>
-        {% if lane == "unclassified" %}
-        <th>Raw status</th>
-        <th>Reason</th>
-        {% else %}
-        <th>Layer</th>
-        <th>Results</th>
-        {% endif %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for card in cards %}
-      <tr>
-        <td data-label="Card"><a href="/card/{{ card.id }}"><code>{{ card.id }}</code></a></td>
-        <td data-label="Title">{{ card.title }}</td>
-        {% if lane == "unclassified" %}
-        <td data-label="Raw status">{{ card.status_text if card.status_text else "(none)" }}</td>
-        <td data-label="Reason">{{ card.lane_reason }}</td>
-        {% else %}
-        <td data-label="Layer">
-          {{ card.layer if card.layer else "-" }}{% if card.data_layer %} &middot; {{ card.data_layer }}{% endif %}
-        </td>
-        <td data-label="Results">
-          {% set lines = headlines.get(card.id, []) %}
-          {% if lines %}
-            {% for line in lines %}<div>{{ line }}</div>{% endfor %}
-          {% else %}
-            <span class="muted">no summary.json joined</span>
-          {% endif %}
-        </td>
-        {% endif %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
+{% for lane, cards in lanes.items() if cards %}
+<section class="group" id="{{ lane|replace(' ', '-') }}" data-filter-group>
+  <div class="group-head">
+    <span class="state"><span class="dot dot--{{ lane_status(lane) }}"></span>{{ lane }}</span>
+    <span class="num">{{ cards|length }}</span>
+  </div>
+  {% for card in cards %}
+  {% set facts = report.results.for_card(card.id) %}
+  {% set ns = namespace(cells=0, counted=false) %}
+  {% for f in facts %}{% if f.cell_count is not none %}{% set ns.cells = ns.cells + f.cell_count %}{% set ns.counted = true %}{% endif %}{% endfor %}
+  <a class="row" href="/card/{{ card.id }}" data-detail data-filter="{{ card.id }} {{ card.title }} {{ card.layer or '' }} {{ card.data_layer or '' }} {{ lane }}">
+    <span class="dot dot--{{ lane_status(lane) }}"></span>
+    <span class="row-main">
+      <span class="row-title"><span class="id">{{ card.id }}</span><span class="text">{{ card.title }}</span></span>
+      <span class="row-sub">
+        {% if lane == "unclassified" %}{{ card.status_text or "no status line" }}
+        {% else %}{{ card.layer or "–" }}{% if card.data_layer %} · {{ card.data_layer }}{% endif %}{% endif %}
+      </span>
+    </span>
+    <span class="row-aside">
+      {% if ns.counted %}<span class="num">{{ ns.cells }}</span><span>cells · {{ facts|length }} run{{ "s" if facts|length != 1 }}</span>
+      {% elif facts %}<span class="num">{{ facts|length }}</span><span>run{{ "s" if facts|length != 1 }}</span>
+      {% else %}<span class="faint">No results</span>{% endif %}
+    </span>
+  </a>
+  {% endfor %}
 </section>
 {% endfor %}
+
+{% if report.results.warnings %}
+<details class="more">
+  <summary>{{ report.results.warnings|length }} result file{{ "s" if report.results.warnings|length != 1 }} not joined</summary>
+  <ul class="faint t-foot">{% for warning in report.results.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+</details>
+{% endif %}
 {% endblock %}

@@ -1,127 +1,91 @@
-{% extends "base.html" %}
-{% block title %}{{ card.id }} -- Open Composer Cockpit{% endblock %}
+{% extends layout %}
+{% block title %}{{ card.id }} · Cockpit{% endblock %}
 {% block content %}
-<h1><code>{{ card.id }}</code> {{ card.title }}</h1>
-<p class="muted">
-  <span class="dot dot--{{ lane_status(card.lane) }}">{{ card.lane }}</span>
-  {% if card.lane == "unclassified" %}&mdash; {{ card.lane_reason }}{% endif %}
-  &middot; <code>{{ card.path }}</code>
-</p>
+<div class="detail" data-title="{{ card.id }}">
+  <div class="detail-head">
+    <h1 class="t-title">{{ card.title }}</h1>
+    <p class="state"><span class="dot dot--{{ lane_status(card.lane) }}"></span>{{ card.lane }}{% if card.lane == "unclassified" and card.lane_reason %} · {{ card.lane_reason }}{% endif %} <span class="faint">·</span> <span class="mono">{{ card.id }}</span></p>
+  </div>
 
-<section class="panel">
-  <h2>Fields</h2>
-  <table class="responsive-table">
-    <tbody>
-      <tr><td data-label="Field">Status (raw)</td><td data-label="Value">{{ card.status_text if card.status_text else "(none found)" }}</td></tr>
-      <tr><td data-label="Field">Layer</td><td data-label="Value">{{ card.layer if card.layer else "-" }}</td></tr>
-      <tr><td data-label="Field">Data layer</td><td data-label="Value">{{ card.data_layer if card.data_layer else "-" }}</td></tr>
-      <tr><td data-label="Field">Script</td><td data-label="Value">{% if card.script %}<code>{{ card.script }}</code>{% else %}-{% endif %}</td></tr>
-      <tr><td data-label="Field">Output</td><td data-label="Value">{% if card.output_dir %}<code>{{ card.output_dir }}</code>{% else %}-{% endif %}</td></tr>
-      <tr><td data-label="Field">Lesson</td><td data-label="Value">{{ card.lesson_ref if card.lesson_ref else "-" }}</td></tr>
-      <tr><td data-label="Field">Previous (declared)</td><td data-label="Value">{% if card.previous %}<a href="/card/{{ card.previous }}"><code>{{ card.previous }}</code></a>{% else %}(none){% endif %}</td></tr>
-    </tbody>
-  </table>
-  {% if card.parse_warnings %}
-  <p class="muted">Parse warnings: {{ card.parse_warnings|join("; ") }}</p>
-  {% endif %}
+  <div class="section">Fields</div>
+  <div class="card">
+    <dl class="kv">
+      {% if card.status_text %}<dt>Status</dt><dd>{{ card.status_text }}</dd>{% endif %}
+      {% if card.layer %}<dt>Layer</dt><dd>{{ card.layer }}</dd>{% endif %}
+      {% if card.data_layer %}<dt>Data</dt><dd>{{ card.data_layer }}</dd>{% endif %}
+      {% if card.script %}<dt>Script</dt><dd class="mono">{{ card.script }}</dd>{% endif %}
+      {% if card.output_dir %}<dt>Output</dt><dd class="mono">{{ card.output_dir }}</dd>{% endif %}
+      {% if card.lesson_ref %}<dt>Lesson</dt><dd>{{ card.lesson_ref }}</dd>{% endif %}
+      <dt>Previous</dt><dd>{% if card.previous %}<a href="/card/{{ card.previous }}" data-detail class="mono">{{ card.previous }}</a>{% else %}<span class="faint">None</span>{% endif %}</dd>
+      <dt>File</dt><dd class="mono faint">{{ card.path }}</dd>
+    </dl>
+  </div>
+
   {% if card.front_matter and card.front_matter.criteria %}
-  <h3>criteria (front-matter)</h3>
-  <p class="muted">
-    Declared, not paired against a result number automatically -- that pairing would invent a
-    comparison the data does not support.
-  </p>
-  <table class="responsive-table">
-    <thead><tr><th>Name</th><th>Threshold</th><th>Direction</th></tr></thead>
-    <tbody>
-      {% for criterion in card.front_matter.criteria %}
-      <tr>
-        <td data-label="Name">{{ criterion.name }}</td>
-        <td data-label="Threshold">{{ criterion.threshold }}</td>
-        <td data-label="Direction">{{ criterion.direction if criterion.direction else "-" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
-</section>
-
-<section class="panel">
-  <h2>criteria vs result</h2>
-  {% if not criteria_sections and not results %}
-  <p class="muted">No 判定/预注册 heading in this card's body, and no summary.json joined by card_id.</p>
-  {% endif %}
-  {% if criteria_sections or results %}
-  <p class="muted">
-    <strong>unstructured</strong>: the card's own 判定/预注册 prose, placed next to whatever summary.json
-    numbers joined by card_id. A side-by-side for a human to eyeball, not a computed pass/fail -- most
-    cards state their criteria in prose, not in machine-checkable form.
-  </p>
-  <div class="criteria-compare">
-    <div class="criteria-compare-col">
-      <h3>criteria as written</h3>
-      {% if criteria_sections %}
-        {% for section, section_html in criteria_sections %}
-        <div class="markdown-body">{{ section_html | safe }}</div>
+  <div class="section">Criteria <span class="faint">front matter</span></div>
+  <div class="table-wrap">
+    <table class="t t--tight">
+      <thead><tr><th>Name</th><th class="num">Threshold</th><th>Direction</th></tr></thead>
+      <tbody>
+        {% for criterion in card.front_matter.criteria %}
+        <tr><td>{{ criterion.name }}</td><td class="num">{{ criterion.threshold }}</td><td>{{ criterion.direction or "–" }}</td></tr>
         {% endfor %}
-      {% else %}
-      <p class="muted">No 判定/预注册 heading in this card's body.</p>
-      {% endif %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <div class="section">Criteria vs result {% if criteria_sections or results %}<span class="chip">unstructured</span>{% endif %}</div>
+  {% if not criteria_sections and not results %}
+  <div class="card empty">No data yet</div>
+  {% else %}
+  <div class="two">
+    <div class="card">
+      <div class="t-cap muted mb6">As written</div>
+      {% if criteria_sections %}
+        {% for section, section_html in criteria_sections %}<div class="md">{{ section_html|safe }}</div>{% endfor %}
+      {% else %}<span class="faint t-foot">None</span>{% endif %}
     </div>
-    <div class="criteria-compare-col">
-      <h3>result (summary.json)</h3>
+    <div class="card">
+      <div class="t-cap muted mb6">Result</div>
       {% if results %}
         {% for facts in results %}
-        <div class="panel">
-          <p><code>{{ facts.iteration_id }}</code> &middot; {{ headline_summary(facts) }}</p>
-          {% if facts.incumbent_to_beat %}
-          <table class="responsive-table">
-            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
-            <tbody>
-              {% for key, value in facts.incumbent_to_beat.items() %}
-              <tr><td data-label="Metric">{{ key }}</td><td data-label="Value">{{ value }}</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          {% endif %}
-          {% if facts.windows %}
-          <p class="muted">windows: {{ facts.windows }}</p>
-          {% endif %}
-        </div>
+        <div class="t-foot mono mb6{% if not loop.first %} mt12{% endif %}">{{ facts.iteration_id }}</div>
+        <dl class="kv">
+          {% if facts.cell_count is not none %}<dt>Cells</dt><dd class="num">{{ facts.cell_count }}</dd>{% endif %}
+          {% if facts.incumbent_to_beat %}{% for key, value in facts.incumbent_to_beat.items() %}<dt>{{ key }}</dt><dd class="num">{{ value }}</dd>{% endfor %}{% endif %}
+          {% if facts.family_picks is not none %}<dt>Family picks</dt><dd class="num">{{ facts.family_picks|length }}</dd>{% endif %}
+          {% if facts.benchmarks is not none %}<dt>Benchmarks</dt><dd class="num">{{ facts.benchmarks|length }}</dd>{% endif %}
+          {% if facts.windows %}<dt>Windows</dt><dd class="mono">{{ facts.windows }}</dd>{% endif %}
+        </dl>
         {% endfor %}
-      {% else %}
-      <p class="muted">No summary.json joined to this card by card_id.</p>
-      {% endif %}
+      {% else %}<span class="faint t-foot">None</span>{% endif %}
     </div>
   </div>
   {% endif %}
-</section>
 
-<section class="panel">
-  <h2>Lineage neighbours</h2>
-  {% if not neighbours %}
-  <p class="muted">none</p>
-  {% else %}
-  <ul>
+  <div class="section">Lineage <span class="num">{{ neighbours|length }}</span></div>
+  {% if neighbours %}
+  <div class="group">
     {% for edge in neighbours %}
-    <li>
-      {% if edge.target == card.id %}
-        <a href="/card/{{ edge.source }}"><code>{{ edge.source }}</code></a>
-        {{ cards_by_id[edge.source].title if edge.source in cards_by_id else "" }}
-        &rarr; this card ({{ edge.label }})
-      {% else %}
-        this card &rarr;
-        <a href="/card/{{ edge.target }}"><code>{{ edge.target }}</code></a>
-        {{ cards_by_id[edge.target].title if edge.target in cards_by_id else "" }}
-        ({{ edge.label }})
-      {% endif %}
-    </li>
+    {% set other = edge.source if edge.target == card.id else edge.target %}
+    <a class="row row--plain" href="/card/{{ other }}" data-detail>
+      <span class="row-main"><span class="row-title"><span class="id">{{ other }}</span><span class="text">{{ cards_by_id[other].title if other in cards_by_id else "" }}</span></span></span>
+      <span class="row-aside"><span>{{ "from" if edge.target == card.id else "to" }} · {{ edge.label }}</span></span>
+    </a>
     {% endfor %}
-  </ul>
-  {% endif %}
-</section>
+  </div>
+  {% else %}<div class="card empty">None</div>{% endif %}
 
-<section class="panel">
-  <h2>Card body</h2>
-  <div class="markdown-body">{{ card_html | safe }}</div>
-</section>
+  <details class="more"{% if layout == "base.html" %} open{% endif %}>
+    <summary>Card body</summary>
+    <div class="card md">{{ card_html|safe }}</div>
+  </details>
+  {% if card.parse_warnings %}
+  <details class="more">
+    <summary>{{ card.parse_warnings|length }} parse warning{{ "s" if card.parse_warnings|length != 1 }}</summary>
+    <ul class="faint t-foot">{% for warning in card.parse_warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+  </details>
+  {% endif %}
+</div>
 {% endblock %}

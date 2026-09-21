@@ -1,104 +1,79 @@
 {% extends "base.html" %}
-{% block title %}Agents -- Open Composer Cockpit{% endblock %}
+{% block title %}Agents · Cockpit{% endblock %}
 {% block content %}
-<h1>Agents</h1>
-<p class="muted">Generated {{ report.generated_at.isoformat() }}.</p>
+<div class="page-head">
+  <h1>Agents</h1>
+  <span class="aside num" title="closed before {{ report.closed_stale_cutoff.isoformat() }}">{{ report.closed_collapsed_count }} closed &gt;48h hidden</span>
+</div>
 
-<section class="panel">
-  <div class="stat-row">
-    <div class="stat-card">
-      <div class="stat-label">Running</div>
-      <div class="stat-value num">{{ counts.running }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Idle</div>
-      <div class="stat-value num">{{ counts.idle }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Error</div>
-      <div class="stat-value num">{{ counts.error }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Closed (48h)</div>
-      <div class="stat-value num">{{ counts.closed }}</div>
-      <div class="stat-detail">collapsed &gt;48h: {{ report.closed_collapsed_count }}, cutoff {{ report.closed_stale_cutoff.isoformat() }}</div>
-    </div>
-  </div>
-</section>
+<div class="metrics">
+  <div class="metric"><span class="metric-label">Running</span><span class="metric-value num"><span class="dot dot--ok"></span>{{ counts.running }}</span><span class="metric-sub">{% if heavy.available %}{{ heavy.jobs|length }} heavy job{{ "s" if heavy.jobs|length != 1 }}{% else %}heavy jobs unknown{% endif %}</span></div>
+  <div class="metric"><span class="metric-label">Idle</span><span class="metric-value num"><span class="dot dot--unknown"></span>{{ counts.idle }}</span><span class="metric-sub">&nbsp;</span></div>
+  <div class="metric"><span class="metric-label">Error</span><span class="metric-value num"><span class="dot dot--{{ 'stale' if counts.error else 'unknown' }}"></span>{{ counts.error }}</span><span class="metric-sub">&nbsp;</span></div>
+  <div class="metric"><span class="metric-label">Closed</span><span class="metric-value num"><span class="dot dot--unknown"></span>{{ counts.closed }}</span><span class="metric-sub">last 48h</span></div>
+</div>
 
-{% if report.warnings %}
-<section class="panel">
-  <h2>Warnings</h2>
-  <ul>{% for warning in report.warnings %}<li class="muted">{{ warning }}</li>{% endfor %}</ul>
-</section>
-{% endif %}
-
-<section class="panel">
-  <h2>Sessions ({{ report.agents|length }})</h2>
-  <table class="responsive-table">
-    <thead>
-      <tr>
-        <th>Agent</th>
-        <th>Provider</th>
-        <th>Model</th>
-        <th>State</th>
-        <th>Running</th>
-        <th>Current file</th>
-        <th>Last text</th>
-        <th>Last activity</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for agent in report.agents %}
-      <tr>
-        <td data-label="Agent"><a href="/agents/{{ agent.record.id }}"><code>{{ agent.record.id[:8] }}</code></a></td>
-        <td data-label="Provider">{{ agent.record.provider }}</td>
-        <td data-label="Model">{{ agent.record.model or "unknown" }}</td>
-        <td data-label="State"><span class="dot dot--{{ agent.record.last_status|agent_dot }}">{{ agent.record.last_status }}</span></td>
-        <td data-label="Running" class="num">
-          {% if agent.record.created_at %}{{ ((report.generated_at - agent.record.created_at).total_seconds())|elapsed_s }}{% else %}unknown{% endif %}
-        </td>
-        <td data-label="Current file"><code>{{ (agent.activity.current_file if agent.activity else none) or "none" }}</code></td>
-        <td data-label="Last text">{{ (agent.activity.last_text if agent.activity else none) or "none" }}</td>
-        <td data-label="Last activity">
-          {% if agent.record.last_activity_at %}{{ ((report.generated_at - agent.record.last_activity_at).total_seconds())|elapsed_s }} ago{% else %}unknown{% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
-
-<section class="panel">
-  <h2>Heavy jobs</h2>
-  {% if not heavy.available %}
-  <p class="muted">unavailable -- {{ heavy.warnings|join("; ") if heavy.warnings else "systemctl not reachable" }}</p>
-  {% elif not heavy.jobs %}
-  <p class="muted">none</p>
+<div class="section">Sessions <span class="num">{{ report.agents|length }}</span></div>
+<div class="group" data-filter-group>
+  {% for agent in report.agents %}
+  {% set record = agent.record %}
+  {% set act = agent.activity %}
+  <a class="row" href="/agents/{{ record.id }}" data-detail data-filter="{{ record.provider }} {{ record.model or '' }} {{ record.title or '' }} {{ record.last_status }} {{ record.id }}">
+    <span class="dot dot--{{ record.last_status|agent_dot }}"></span>
+    <span class="row-main">
+      <span class="row-title">
+        <span class="text">{{ record.title or record.id[:8] }}</span>
+        <span class="id after">{{ record.provider }} · {{ (record.model or "unknown")|replace("claude-", "") }}</span>
+      </span>
+      <span class="row-sub">
+        {% if act and act.current_file %}<span class="mono">{{ act.current_file }}</span>
+        {% elif act and act.last_text %}{{ act.last_text }}
+        {% else %}<span class="faint">No transcript</span>{% endif %}
+      </span>
+    </span>
+    <span class="row-aside">
+      <span class="num" title="{{ record.last_activity_at.isoformat() if record.last_activity_at else '' }}">{{ record.last_activity_at|ago }}</span>
+      <span>{{ record.last_status }}</span>
+    </span>
+  </a>
   {% else %}
-  <table class="responsive-table">
-    <thead>
-      <tr>
-        <th>Unit</th>
-        <th>Started</th>
-        <th>Elapsed</th>
-        <th>Memory</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for job in heavy.jobs %}
-      <tr>
-        <td data-label="Unit"><code>{{ job.unit }}</code></td>
-        <td data-label="Started">{{ job.started_at.isoformat() if job.started_at else "unknown" }}</td>
-        <td data-label="Elapsed" class="num">{{ job.elapsed_seconds|elapsed_s if job.elapsed_seconds is not none else "unknown" }}</td>
-        <td data-label="Memory" class="num">
-          {% if job.memory_current_bytes is not none %}{{ "%.0f"|format(job.memory_current_bytes / 1048576) }}MiB{% else %}unknown{% endif %}
-          / {% if job.memory_max_unlimited %}unlimited{% elif job.memory_max_bytes is not none %}{{ "%.0f"|format(job.memory_max_bytes / 1048576) }}MiB{% else %}unknown{% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
-</section>
+  <div class="empty">None</div>
+  {% endfor %}
+</div>
+
+<div class="section">Heavy jobs {% if heavy.available %}<span class="num">{{ heavy.jobs|length }}</span>{% else %}<span class="faint">systemctl unavailable</span>{% endif %}</div>
+<div class="group">
+  {% for job in heavy.jobs %}
+  <div class="row row--plain">
+    <span class="row-main">
+      <span class="row-title"><span class="text mono">{{ job.unit }}</span></span>
+      <span class="row-sub">
+        {% if job.memory_current_bytes is not none %}
+          {% set used_mb = job.memory_current_bytes / 1048576 %}
+          {% if job.memory_max_bytes %}
+            {% set share = job.memory_current_bytes / job.memory_max_bytes %}
+            <span class="bar bar--{{ 'stale' if share > 0.92 else ('warn' if share > 0.75 else 'ok') }}"><i style="width:{{ (share * 100)|round|int }}%"></i></span>
+            <span class="num">{{ "%.0f"|format(used_mb) }}</span> of {{ "%.0f"|format(job.memory_max_bytes / 1048576) }} MB
+          {% else %}
+            <span class="num">{{ "%.0f"|format(used_mb) }}</span> MB{% if job.memory_max_unlimited %} · no cap{% endif %}
+          {% endif %}
+        {% else %}<span class="faint">memory unknown</span>{% endif %}
+      </span>
+    </span>
+    <span class="row-aside">
+      <span class="num">{{ job.elapsed_seconds|elapsed_s if job.elapsed_seconds is not none else "–" }}</span>
+      <span>{{ job.started_at|ago if job.started_at else "" }}</span>
+    </span>
+  </div>
+  {% else %}
+  <div class="empty">None</div>
+  {% endfor %}
+</div>
+
+{% if report.warnings or heavy.warnings %}
+<details class="more">
+  <summary>{{ (report.warnings|length) + (heavy.warnings|length) }} warning{{ "s" if (report.warnings|length) + (heavy.warnings|length) != 1 }}</summary>
+  <ul class="faint t-foot">{% for warning in report.warnings %}<li>{{ warning }}</li>{% endfor %}{% for warning in heavy.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+</details>
+{% endif %}
 {% endblock %}

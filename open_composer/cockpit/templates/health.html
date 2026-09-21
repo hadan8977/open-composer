@@ -1,95 +1,103 @@
 {% extends "base.html" %}
-{% block title %}Health -- Open Composer Cockpit{% endblock %}
+{% block title %}Health · Cockpit{% endblock %}
 {% block content %}
-<h1>Health</h1>
-<p class="muted">Generated {{ report.generated_at.isoformat() }}</p>
+{% set stale = report.data_freshness|selectattr("status", "equalto", "stale")|list|length %}
+{% set warn = report.data_freshness|selectattr("status", "equalto", "warn")|list|length %}
+{% set failing = report.cron.jobs|selectattr("status", "equalto", "stale")|list|length %}
 
-<section class="panel">
-  <h2>System</h2>
-  <div class="stat-row">
-    <div class="stat-card">
-      <div class="stat-label">Disk (/)</div>
-      {% if report.disk %}
-      <div class="stat-value"><span class="dot dot--{{ report.disk.status }}"></span>{{ "%.1f"|format(report.disk.used_percent) }}% used</div>
-      <div class="stat-detail">{{ "%.1f"|format(report.disk.available_bytes / 1073741824) }} GB free of {{ "%.1f"|format(report.disk.total_bytes / 1073741824) }} GB</div>
-      {% else %}
-      <div class="stat-value"><span class="dot dot--unknown"></span>unknown</div>
-      <div class="stat-detail">`df` was not available</div>
-      {% endif %}
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Memory</div>
-      {% if report.memory %}
-      <div class="stat-value"><span class="dot dot--{{ report.memory.status }}"></span>{{ "%.1f"|format(report.memory.used_percent) }}% used</div>
-      <div class="stat-detail">{{ "%.1f"|format(report.memory.available_bytes / 1073741824) }} GB available of {{ "%.1f"|format(report.memory.total_bytes / 1073741824) }} GB</div>
-      {% else %}
-      <div class="stat-value"><span class="dot dot--unknown"></span>unknown</div>
-      <div class="stat-detail">`free` was not available</div>
-      {% endif %}
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Cockpit process</div>
-      <div class="stat-value"><span class="dot dot--{{ report.process.status }}"></span>{{ "%.1f"|format(report.process.rss_bytes / 1048576) }} MB RSS</div>
-      <div class="stat-detail">pid {{ report.process.pid }}</div>
-    </div>
+<div class="page-head">
+  <h1>Health</h1>
+  <span class="aside num">cockpit pid {{ report.process.pid }}{% if report.process.rss_bytes %} · {{ "%.0f"|format(report.process.rss_bytes / 1048576) }} MB{% endif %}</span>
+</div>
+
+<div class="metrics">
+  <div class="metric">
+    <span class="metric-label">Stale sources</span>
+    <span class="metric-value num"><span class="dot dot--{{ 'stale' if stale else ('warn' if warn else 'ok') }}"></span>{{ stale }}</span>
+    <span class="metric-sub">{{ warn }} warn · {{ report.data_freshness|length }} sources</span>
   </div>
-</section>
+  <div class="metric">
+    <span class="metric-label">Cron failing</span>
+    {% if report.cron.available %}
+    <span class="metric-value num"><span class="dot dot--{{ 'stale' if failing else 'ok' }}"></span>{{ failing }}</span>
+    <span class="metric-sub">of {{ report.cron.jobs|length }} jobs</span>
+    {% else %}
+    <span class="metric-value is-word"><span class="dot dot--unknown"></span>unknown</span>
+    <span class="metric-sub" title="{{ report.cron.error }}">{{ report.cron.error }}</span>
+    {% endif %}
+  </div>
+  <div class="metric">
+    <span class="metric-label">Disk free</span>
+    {% if report.disk %}
+    <span class="metric-value num"><span class="dot dot--{{ report.disk.status }}"></span>{{ "%.0f"|format(report.disk.available_bytes / 1073741824) }}<small>GB</small></span>
+    <span class="metric-sub">{{ "%.0f%%"|format(report.disk.used_percent) }} used of {{ "%.0f"|format(report.disk.total_bytes / 1073741824) }} GB · {{ report.disk.mount }}</span>
+    {% else %}
+    <span class="metric-value is-word"><span class="dot dot--unknown"></span>unknown</span><span class="metric-sub">&nbsp;</span>
+    {% endif %}
+  </div>
+  <div class="metric">
+    <span class="metric-label">Memory free</span>
+    {% if report.memory %}
+    <span class="metric-value num"><span class="dot dot--{{ report.memory.status }}"></span>{{ "%.0f"|format(report.memory.available_bytes / 1048576) }}<small>MB</small></span>
+    <span class="metric-sub">{{ "%.0f%%"|format(report.memory.used_percent) }} used of {{ "%.1f"|format(report.memory.total_bytes / 1073741824) }} GB</span>
+    {% else %}
+    <span class="metric-value is-word"><span class="dot dot--unknown"></span>unknown</span><span class="metric-sub">&nbsp;</span>
+    {% endif %}
+  </div>
+</div>
 
-<section class="panel">
-  <h2>Data freshness</h2>
-  <table class="responsive-table">
-    <thead>
-      <tr><th>Source</th><th>Latest date</th><th>Detail</th><th>Status</th></tr>
-    </thead>
+<div class="section">Cron jobs <span class="num">{{ report.cron.jobs|length }}</span></div>
+{% if not report.cron.available %}
+<div class="card empty">{{ report.cron.error or "unknown" }}</div>
+{% elif not report.cron.jobs %}
+<div class="card empty">None</div>
+{% else %}
+<div class="table-wrap">
+  <table class="t t--stack">
+    <thead><tr><th>Job</th><th>Schedule</th><th>State</th><th class="num">Last log</th><th class="num">Size</th><th>Errors</th></tr></thead>
     <tbody>
-      {% for entry in report.data_freshness %}
+      {% for job in report.cron.jobs %}
+      {% set log = job.logs[0] if job.logs else none %}
       <tr>
-        <td data-label="Source">{{ entry.name }}</td>
-        <td data-label="Latest date">{{ entry.latest_date.isoformat() if entry.latest_date else "unknown" }}</td>
-        <td data-label="Detail">{{ entry.detail }}</td>
-        <td data-label="Status"><span class="dot dot--{{ entry.status }}">{{ entry.status }}</span></td>
+        <td class="lead" title="{{ job.command }}">{{ job.name }}{% if job.note %} <span class="faint">· {{ job.note }}</span>{% endif %}</td>
+        <td class="mono" data-l="Schedule">{{ job.schedule }}</td>
+        <td data-l="State"><span class="state"><span class="dot dot--{{ job.status }}"></span>{{ job.status }}</span></td>
+        <td class="num" data-l="Last log" title="{{ log.mtime.isoformat() if log and log.mtime else '' }}">{{ log.mtime|ago if log and log.mtime else "never" }}</td>
+        <td class="num" data-l="Size">{{ "%.0f"|format(log.size_bytes / 1024) ~ " KB" if log and log.size_bytes is not none else "–" }}</td>
+        <td data-l="Errors">{% if log and log.has_error_marker %}<span class="state"><span class="dot dot--stale"></span>error marker</span>{% elif log %}<span class="faint">none</span>{% else %}–{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-</section>
+</div>
+{% endif %}
 
-<section class="panel">
-  <h2>Cron jobs</h2>
-  {% if not report.cron.available %}
-  <p class="muted">Crontab unavailable: {{ report.cron.error }}</p>
-  {% endif %}
-  {% if report.cron.available and not report.cron.jobs %}
-  <p class="muted">none</p>
-  {% endif %}
-  {% for job in report.cron.jobs %}
-  <details class="cron-job">
-    <summary>
-      <span class="dot dot--{{ job.status }}"></span>
-      <span class="cron-job-name">{{ job.name }}</span>
-      <code class="cron-schedule">{{ job.schedule }}</code>
-    </summary>
-    <div class="cron-job-body">
-      <p class="muted cron-command">{{ job.command }}</p>
-      {% if job.note %}<p class="muted">{{ job.note }}</p>{% endif %}
-      {% if job.logs %}
-      <table class="responsive-table">
-        <thead><tr><th>Log</th><th>Last written</th><th>Size</th><th>Error in tail</th><th>Status</th></tr></thead>
-        <tbody>
-          {% for log in job.logs %}
-          <tr>
-            <td data-label="Log">{{ log.path }}</td>
-            <td data-label="Last written">{{ log.mtime.isoformat() if log.mtime else "never" }}</td>
-            <td data-label="Size" class="num">{{ log.size_bytes if log.size_bytes is not none else "-" }} bytes</td>
-            <td data-label="Error in tail">{{ "yes" if log.has_error_marker else "no" }}</td>
-            <td data-label="Status"><span class="dot dot--{{ log.status }}">{{ log.status }}</span></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% endif %}
-    </div>
-  </details>
+<div class="section">Data freshness <span class="num">{{ report.data_freshness|length }}</span></div>
+{% if report.data_freshness %}
+<div class="group">
+  {% for entry in report.data_freshness %}
+  <div class="row">
+    <span class="dot dot--{{ entry.status }}"></span>
+    <span class="row-main">
+      <span class="row-title"><span class="text">{{ entry.name }}</span></span>
+      <span class="row-sub">{{ entry.detail }}</span>
+    </span>
+    <span class="row-aside">
+      <span class="num">{{ entry.latest_date.isoformat() if entry.latest_date else "unknown" }}</span>
+      <span>{% if entry.sessions_behind is not none %}{{ entry.sessions_behind }} sessions behind{% else %}{{ entry.status }}{% endif %}</span>
+    </span>
+  </div>
   {% endfor %}
-</section>
+</div>
+{% else %}
+<div class="card empty">unknown</div>
+{% endif %}
+
+{% for job in report.cron.jobs if job.logs and job.logs[0].tail_snippet %}
+{% if loop.first %}<div class="section">Log tails</div>{% endif %}
+<details class="more">
+  <summary><span class="mono">{{ job.name }}</span></summary>
+  <pre class="card md mono" style="white-space: pre-wrap; overflow-wrap: anywhere;">{{ job.logs[0].tail_snippet }}</pre>
+</details>
+{% endfor %}
 {% endblock %}
