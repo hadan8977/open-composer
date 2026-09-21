@@ -37,7 +37,7 @@ def _client_for(handler) -> httpx.Client:
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(create_app())
+    return TestClient(create_app(warm=False))
 
 
 # --------------------------------------------------------------------------
@@ -536,7 +536,7 @@ def test_quota_route_scrubs_leaked_token_shaped_body(
         "open_composer.cockpit.app.get_default_claude_cache", lambda: Q.ClaudeQuotaCache()
     )
 
-    response = TestClient(create_app()).get("/quota")
+    response = TestClient(create_app(warm=False)).get("/quota")
 
     assert response.status_code == 200
     assert real_token not in response.text
@@ -1218,43 +1218,195 @@ def test_compute_throttle_calibration_computes_fresh_at_a_synthetic_event(
     assert calibration.last_event.at == event_at
 
 
-def test_throttle_calibration_cache_reuses_within_ttl_and_refreshes_after(
+def _write_throttle_event_fixture(tmp_path: Path, event_at: datetime) -> tuple[Path, Path]:
+    """A main transcript with one `quotaLimits{status: "rejected"}` line at
+    `event_at`, plus a subagent task tree old enough that
+    `_throttle_window_coverage` reports `"full"` for that event (so a
+    `vs_last_throttle_ratio` gets computed) -- shared by the T10 memoization
+    tests below. Returns `(main_root, subagent_root)`.
+    """
+    main_root = tmp_path / "main"
+    project_dir = main_root / "proj1"
+    project_dir.mkdir(parents=True)
+    transcript = project_dir / "session1.jsonl"
+    _write_transcript(
+        transcript,
+        [
+            _assistant_line(
+                event_at - timedelta(hours=1),
+                "msg-main",
+                input_tokens=100,
+                output_tokens=50,
+                cache_creation=25,
+                cache_read=10,
+            ),
+            {
+                "type": "assistant",
+                "timestamp": event_at.isoformat().replace("+00:00", "Z"),
+                "message": {},
+                "quotaLimits": {
+                    "status": "rejected",
+                    "resetsAt": 1_788_329_400,
+                    "rateLimitType": "five_hour",
+                },
+            },
+        ],
+    )
+    os.utime(transcript, (event_at.timestamp(), event_at.timestamp()))
+
+    subagent_root = tmp_path / "subagent"
+    old_enough = event_at - timedelta(days=1)
+    task_file = _subagent_task_path(subagent_root)
+    _write_transcript(task_file, [_user_brief_line(old_enough, "brief")])
+    os.utime(task_file, (old_enough.timestamp(), old_enough.timestamp()))
+    return main_root, subagent_root
+
+
+def test_throttle_calibration_cache_memoizes_per_event_and_never_rescans_it(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """T10: a throttle event is immutable history. Once
+    `ThrottleCalibrationCache` has computed a fresh-token figure for a given
+    `(event.at, event.resets_at)`, a later `get()` call that sees the same
+    event again must not re-invoke the expensive per-event scan
+    (`_fresh_tokens_in_window`) -- only the cheap `find_all_throttle_events`
+    discovery and an O(1) ratio recompute against the new
+    `current_fresh_total` should run.
+    """
+    event_at = datetime(2026, 9, 18, 8, 0, 0, tzinfo=UTC)
+    main_root, subagent_root = _write_throttle_event_fixture(tmp_path, event_at)
+    now = event_at + timedelta(hours=1)
+
+    calls: list[int] = []
+    real_fresh_tokens_in_window = Q._fresh_tokens_in_window
+
+    def counting_fresh_tokens_in_window(*args, **kwargs):
+        calls.append(1)
+        return real_fresh_tokens_in_window(*args, **kwargs)
+
+    monkeypatch.setattr(Q, "_fresh_tokens_in_window", counting_fresh_tokens_in_window)
+
+    cache = Q.ThrottleCalibrationCache()
+
+    first = cache.get(
+        now=now, current_fresh_total=100, main_root=main_root, subagent_root=subagent_root
+    )
+    assert first.available is True
+    assert first.coverage == "full"
+    assert len(calls) == 1
+
+    second = cache.get(
+        now=now, current_fresh_total=250, main_root=main_root, subagent_root=subagent_root
+    )
+    assert len(calls) == 1, "the same event must not be re-scanned on a repeat get()"
+    assert second.last_fresh_at_event == first.last_fresh_at_event
+    # The ratio is still recomputed fresh against the caller's own total.
+    assert second.vs_last_throttle_ratio == pytest.approx(250 / first.last_fresh_at_event)
+    assert second.state == "ready"
+
+
+def test_compute_throttle_calibration_event_memo_skips_a_seen_event(tmp_path: Path) -> None:
+    """The lower-level contract `ThrottleCalibrationCache` relies on: passing
+    the same `event_memo` dict across two direct `compute_throttle_calibration`
+    calls skips the scan for an event already in it, keyed by
+    `(event.at, event.resets_at)`.
+    """
+    event_at = datetime(2026, 9, 18, 8, 0, 0, tzinfo=UTC)
+    main_root, subagent_root = _write_throttle_event_fixture(tmp_path, event_at)
+    now = event_at + timedelta(hours=1)
+    memo: dict = {}
+
+    first = Q.compute_throttle_calibration(
+        now=now,
+        current_fresh_total=100,
+        main_root=main_root,
+        subagent_root=subagent_root,
+        event_memo=memo,
+    )
+    assert len(memo) == 1
+
+    # A stale/wrong value planted directly into the memo proves the second
+    # call reused it instead of recomputing (a real recompute would find the
+    # fixture's actual 175 fresh tokens, not 999).
+    (key,) = memo.keys()
+    memo[key] = Q._EventCalibrationMemo(fresh=999, coverage="full")
+
+    second = Q.compute_throttle_calibration(
+        now=now,
+        current_fresh_total=100,
+        main_root=main_root,
+        subagent_root=subagent_root,
+        event_memo=memo,
+    )
+    assert second.last_fresh_at_event == 999
+    assert first.event_count == second.event_count == 1
+
+
+def test_throttle_calibration_cache_reports_computing_when_nothing_computed_yet_and_contended() -> (
+    None
+):
+    """A request that arrives while a scan is already in flight (e.g. the
+    T10 warm thread's first pass) must get the fixed `state="computing"`
+    result immediately rather than wait for the lock (plan item 1: "must
+    not block on the scan").
+    """
+    cache = Q.ThrottleCalibrationCache()
+    acquired = cache._lock.acquire(blocking=False)
+    assert acquired
+    try:
+        result = cache.get(now=datetime(2026, 9, 20, tzinfo=UTC), current_fresh_total=100)
+    finally:
+        cache._lock.release()
+
+    assert result.state == "computing"
+    assert result.available is False
+
+
+def test_throttle_calibration_cache_serves_the_previous_result_once_warm_even_if_contended() -> (
+    None
+):
+    """`computing` is only for "nothing computed yet" -- once at least one
+    scan has completed, a contended `get()` serves that previous result
+    instead, never the `computing` sentinel.
+    """
+    cache = Q.ThrottleCalibrationCache()
+    stub = Q.ThrottleCalibration(
+        available=True,
+        last_event=None,
+        last_fresh_at_event=123,
+        event_count=1,
+        min_fresh_at_event=123,
+        median_fresh_at_event=123,
+        vs_last_throttle_ratio=2.0,
+    )
+    cache._latest = stub
+
+    acquired = cache._lock.acquire(blocking=False)
+    assert acquired
+    try:
+        result = cache.get(now=datetime(2026, 9, 20, tzinfo=UTC), current_fresh_total=100)
+    finally:
+        cache._lock.release()
+
+    assert result is stub
+    assert result.state == "ready"
+
+
+def test_quota_page_renders_computing_when_calibration_has_not_finished_its_first_scan(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """`compute_throttle_calibration` is measurably expensive on a box with
-    real, populated transcript trees (scanning every file touched since an
-    old historical window's start) -- `ThrottleCalibrationCache` exists so a
-    normal browsing session's repeated `/quota` renders do not each pay
-    that cost, matching `UsageEstimateCache`'s TTL policy.
-    """
-    calls: list[int] = []
-    stub = Q.ThrottleCalibration(
-        available=False,
-        last_event=None,
-        last_fresh_at_event=None,
-        event_count=0,
-        min_fresh_at_event=None,
-        median_fresh_at_event=None,
-        vs_last_throttle_ratio=None,
-    )
-
-    def fake_compute(*, now, current_fresh_total, main_root=None, subagent_root=None):
-        calls.append(1)
-        return stub
-
-    monkeypatch.setattr(Q, "compute_throttle_calibration", fake_compute)
     cache = Q.ThrottleCalibrationCache()
-    base = datetime(2026, 9, 20, tzinfo=UTC)
+    acquired = cache._lock.acquire(blocking=False)
+    assert acquired  # left locked for the duration of this test: an in-flight scan
+    monkeypatch.setattr(Q, "get_default_throttle_calibration_cache", lambda: cache)
 
-    cache.get(now=base, current_fresh_total=100)
-    cache.get(now=base + timedelta(seconds=30), current_fresh_total=100)
-    assert len(calls) == 1, "a request within the 60s TTL must not re-scan"
+    try:
+        response = TestClient(create_app(warm=False)).get("/quota")
+    finally:
+        cache._lock.release()
 
-    cache.get(
-        now=base + timedelta(seconds=Q.THROTTLE_CALIBRATION_CACHE_TTL_SECONDS + 1),
-        current_fresh_total=100,
-    )
-    assert len(calls) == 2
+    assert response.status_code == 200
+    assert "computing" in response.text
 
 
 # --------------------------------------------------------------------------

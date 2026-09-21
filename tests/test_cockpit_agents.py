@@ -11,21 +11,26 @@ machine's real agent history.
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+import os
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
 from open_composer.cockpit.app import create_app
+from open_composer.cockpit.data import agents as A
 from open_composer.cockpit.data.agents import (
     AGENT_ID_RE,
     AgentRecord,
     TimelineEntry,
+    TopbarAgentsCache,
     build_agent_detail,
     find_agent_record,
     load_agents,
     load_heavy_jobs,
+    load_subagent_tasks,
+    load_timeline,
     stream_agent_timeline,
     summarize_activity,
 )
@@ -857,3 +862,248 @@ def test_agent_json_with_unsafe_session_id_or_cwd_resolves_no_transcript(
     assert record.cwd is None or record.cwd.startswith("/")
     detail = build_agent_detail(AGENT_RUNNING)
     assert detail.transcript_available is False
+
+
+# --------------------------------------------------------------------------
+# T10: agent detail caps -- main timeline, subagent count, subagent entries
+# --------------------------------------------------------------------------
+
+
+def test_build_agent_detail_caps_main_entries_and_reports_the_pre_cap_total(
+    tmp_path: Path,
+) -> None:
+    agents_root = tmp_path / "agents"
+    claude_root = tmp_path / "claude-projects"
+    session_id = "00000000-0000-4000-8000-0000000000aa"
+    _write_agent_json(
+        agents_root, AGENT_RUNNING, status="running", cwd="/repo", session_id=session_id
+    )
+    lines = [_assistant_text_line(f"line-{i:03d}", at=NOW) for i in range(5)]
+    _write_claude_transcript(claude_root, "/repo", session_id, lines)
+
+    detail = build_agent_detail(
+        AGENT_RUNNING, root=agents_root, claude_root=claude_root, max_entries=3
+    )
+
+    assert detail.entries_total == 5
+    assert len(detail.entries) == 3
+    # The cap keeps the *last* (most recent) entries, not the first.
+    assert [e.detail for e in detail.entries] == ["line-002", "line-003", "line-004"]
+
+
+def test_load_subagent_tasks_orders_by_mtime_descending_not_filename(tmp_path: Path) -> None:
+    subagent_root = tmp_path / "claude-0"
+    session_id = "00000000-0000-4000-8000-0000000000bb"
+    tasks_dir = subagent_root / "-repo" / session_id / "tasks"
+    tasks_dir.mkdir(parents=True)
+    # Filenames are deliberately in the *opposite* order from their mtimes,
+    # so a lexical `sorted(paths)` (the pre-T10 bug) would pick the wrong
+    # ones -- only an mtime sort gets this right.
+    names_oldest_to_newest = ["aaaaaaaaaaaaaaaaa", "mmmmmmmmmmmmmmmmm", "zzzzzzzzzzzzzzzzz"]
+    base_time = NOW.timestamp()
+    for offset, name in enumerate(names_oldest_to_newest):
+        path = tasks_dir / f"{name}.output"
+        path.write_text(json.dumps(_assistant_text_line("hi", at=NOW)) + "\n", encoding="utf-8")
+        os.utime(path, (base_time + offset, base_time + offset))
+
+    record = AgentRecord(
+        id=AGENT_RUNNING,
+        provider="claude",
+        cwd="/repo",
+        workspace_id=None,
+        title=None,
+        created_at=None,
+        updated_at=None,
+        last_activity_at=None,
+        last_user_message_at=None,
+        last_status="running",
+        model=None,
+        session_id=session_id,
+    )
+
+    tasks = load_subagent_tasks(record, root=subagent_root, max_tasks=2)
+
+    # Newest two by mtime ("zzz..." then "mmm..."), never the lexically-first two.
+    assert [t.id for t in tasks] == ["zzzzzzzzzzzzzzzzz", "mmmmmmmmmmmmmmmmm"]
+
+
+def test_load_subagent_tasks_caps_entries_per_task_and_reports_the_total(tmp_path: Path) -> None:
+    subagent_root = tmp_path / "claude-0"
+    session_id = "00000000-0000-4000-8000-0000000000cc"
+    tasks_dir = subagent_root / "-repo" / session_id / "tasks"
+    tasks_dir.mkdir(parents=True)
+    lines = [_assistant_text_line(f"sub-{i:03d}", at=NOW) for i in range(5)]
+    (tasks_dir / "a1b2c3d4e5f6a7b8c.output").write_text(
+        "".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8"
+    )
+
+    record = AgentRecord(
+        id=AGENT_RUNNING,
+        provider="claude",
+        cwd="/repo",
+        workspace_id=None,
+        title=None,
+        created_at=None,
+        updated_at=None,
+        last_activity_at=None,
+        last_user_message_at=None,
+        last_status="running",
+        model=None,
+        session_id=session_id,
+    )
+
+    tasks = load_subagent_tasks(record, root=subagent_root, max_entries=2)
+
+    assert len(tasks) == 1
+    assert tasks[0].entries_total == 5
+    assert [e.detail for e in tasks[0].entries] == ["sub-003", "sub-004"]
+
+
+def test_agent_detail_page_header_shows_capped_of_total_entries_as_numbers(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    agents_root = tmp_path / "agents"
+    claude_root = tmp_path / "claude-projects"
+    session_id = "00000000-0000-4000-8000-0000000000dd"
+    _write_agent_json(
+        agents_root, AGENT_RUNNING, status="running", cwd="/repo", session_id=session_id
+    )
+    lines = [_assistant_text_line(f"line-{i:03d}", at=NOW) for i in range(160)]
+    _write_claude_transcript(claude_root, "/repo", session_id, lines)
+    monkeypatch.setattr("open_composer.cockpit.data.agents.PASEO_AGENTS_DIR", agents_root)
+    monkeypatch.setattr("open_composer.cockpit.data.agents.CLAUDE_PROJECTS_DIR", claude_root)
+
+    client = TestClient(create_app(warm=False))
+    response = client.get(f"/agents/{AGENT_RUNNING}")
+
+    assert response.status_code == 200
+    assert "150 of 160 entries" in response.text
+    # The header shows numbers only, never a truncation sentence.
+    assert "showing" not in response.text.lower()
+    assert "truncated" not in response.text.lower()
+    # Newest rows survive the cap; the earliest ones do not.
+    assert "line-159" in response.text
+    assert "line-000" not in response.text
+
+
+# --------------------------------------------------------------------------
+# T10: SSE resolves the record/transcript path once, not on every poll
+# --------------------------------------------------------------------------
+
+
+def test_load_timeline_with_explicit_path_never_calls_find_agent_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    claude_root = tmp_path / "claude-projects"
+    session_id = "00000000-0000-4000-8000-0000000000ee"
+    transcript_path = _write_claude_transcript(
+        claude_root, "/repo", session_id, [_assistant_text_line("hello", at=NOW)]
+    )
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("find_agent_record must not be called when path= is given")
+
+    monkeypatch.setattr(A, "find_agent_record", _boom)
+
+    chunk = load_timeline("irrelevant-agent-id", 0, path=transcript_path, kind="claude")
+
+    assert chunk.transcript_path == transcript_path
+    assert len(chunk.entries) == 1
+    assert chunk.entries[0].detail == "hello"
+
+
+# --------------------------------------------------------------------------
+# T10: cwd slug fallback (Claude Code's broader `[^A-Za-z0-9-]` -> `-` slug)
+# --------------------------------------------------------------------------
+
+
+def test_resolve_transcript_falls_back_to_the_broader_slug_when_naive_slug_is_absent(
+    tmp_path: Path,
+) -> None:
+    agents_root = tmp_path / "agents"
+    claude_root = tmp_path / "claude-projects"
+    cwd = "/repo/sub.dir"  # naive slug "-repo-sub.dir" != fallback slug "-repo-sub-dir"
+    session_id = "00000000-0000-4000-8000-0000000000ff"
+    _write_agent_json(agents_root, AGENT_RUNNING, status="running", cwd=cwd, session_id=session_id)
+    # Only the *fallback* slug directory exists -- the naive one is absent.
+    fallback_dir = claude_root / "-repo-sub-dir"
+    fallback_dir.mkdir(parents=True)
+    (fallback_dir / f"{session_id}.jsonl").write_text(
+        json.dumps(_assistant_text_line("via fallback slug", at=NOW)) + "\n", encoding="utf-8"
+    )
+
+    detail = build_agent_detail(AGENT_RUNNING, root=agents_root, claude_root=claude_root)
+
+    assert detail.transcript_available is True
+    assert detail.transcript_kind == "claude"
+    assert detail.entries[0].detail == "via fallback slug"
+
+
+def test_load_subagent_tasks_falls_back_to_the_broader_slug_too(tmp_path: Path) -> None:
+    subagent_root = tmp_path / "claude-0"
+    cwd = "/repo/sub.dir"
+    session_id = "00000000-0000-4000-8000-000000001000"
+    fallback_tasks_dir = subagent_root / "-repo-sub-dir" / session_id / "tasks"
+    fallback_tasks_dir.mkdir(parents=True)
+    (fallback_tasks_dir / "a1b2c3d4e5f6a7b8c.output").write_text(
+        json.dumps(_assistant_text_line("subagent via fallback", at=NOW)) + "\n", encoding="utf-8"
+    )
+    record = AgentRecord(
+        id=AGENT_RUNNING,
+        provider="claude",
+        cwd=cwd,
+        workspace_id=None,
+        title=None,
+        created_at=None,
+        updated_at=None,
+        last_activity_at=None,
+        last_user_message_at=None,
+        last_status="running",
+        model=None,
+        session_id=session_id,
+    )
+
+    tasks = load_subagent_tasks(record, root=subagent_root)
+
+    assert len(tasks) == 1
+    assert tasks[0].entries[0].detail == "subagent via fallback"
+
+
+# --------------------------------------------------------------------------
+# T10: top-bar agents cache
+# --------------------------------------------------------------------------
+
+
+def test_topbar_agents_cache_reuses_within_ttl_and_refreshes_after(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[int] = []
+    stub = A.AgentsReport(
+        agents=(), closed_collapsed_count=0, closed_stale_cutoff=NOW, generated_at=NOW, warnings=()
+    )
+
+    def fake_load_agents(*, root=None, now=None, enrich=True):
+        calls.append(1)
+        return stub
+
+    monkeypatch.setattr(A, "load_agents", fake_load_agents)
+    cache = TopbarAgentsCache()
+    base = NOW
+
+    cache.get(now=base)
+    cache.get(now=base + timedelta(seconds=5))
+    assert len(calls) == 1, "a request within the 10s TTL must not re-parse"
+
+    cache.get(now=base + timedelta(seconds=A._TOPBAR_AGENTS_CACHE_TTL_SECONDS + 1))
+    assert len(calls) == 2
+
+
+def test_topbar_agents_cache_is_thread_safe_lock_guarded() -> None:
+    """Not a concurrency stress test -- just confirms the cache actually
+    holds a lock (T10 build item 5's "guarded by a lock" claim), so a
+    reviewer does not have to trust the docstring alone.
+    """
+    cache = TopbarAgentsCache()
+    assert hasattr(cache, "_lock")
+    assert cache._lock.acquire(blocking=False)
+    cache._lock.release()

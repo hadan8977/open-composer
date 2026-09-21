@@ -18,7 +18,7 @@
 {% endif %}
 
 <section class="panel">
-  <h2>Timeline (transcript: {{ detail.transcript_kind }})</h2>
+  <h2>Timeline (transcript: {{ detail.transcript_kind }}) -- {{ detail.entries|length|count_sep }} of {{ detail.entries_total|count_sep }} entries</h2>
   {% if not detail.transcript_available %}
   <p class="muted">none</p>
   {% else %}
@@ -48,6 +48,7 @@
       {% endfor %}
     </tbody>
   </table>
+  <div id="bottom"></div>
   {% endif %}
 </section>
 
@@ -60,6 +61,7 @@
   <details class="cron-job">
     <summary>
       <span class="cron-job-name"><code>{{ task.id }}</code></span>
+      <span class="muted">{{ task.entries|length|count_sep }} of {{ task.entries_total|count_sep }} entries</span>
       {% if task.warning %}<span class="muted">{{ task.warning }}</span>{% endif %}
     </summary>
     <div class="cron-job-body">
@@ -142,4 +144,7 @@
 })();
 </script>
 {% endif %}
+<script>
+document.getElementById("bottom")?.scrollIntoView();
+</script>
 {% endblock %}

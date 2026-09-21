@@ -228,6 +228,24 @@ by the fresh-at-last-throttle figure -- and only when that denominator
 exists and is positive; it is a ratio (e.g. ``0.87x``), never rendered
 with a ``%`` sign. With no throttle event on file at all, the page states
 ``no throttle observed yet`` rather than a manufactured zero.
+
+Calibration is warmed off the request path (T10)
+----------------------------------------------------
+:func:`compute_throttle_calibration` scans every in-window file for every
+sampled throttle event and was measured on this box re-reading ~300 MB of
+transcripts per call (T10 brief) -- expensive enough that it must not run
+synchronously inside a request. :class:`ThrottleCalibrationCache` now (1)
+memoizes each individual event's own fresh-token figure forever (a past
+throttle event is immutable history -- see its docstring), so a repeated
+render after the first one to see a given event costs only a cheap
+event-discovery scan and an O(1) ratio recompute, and (2) never blocks a
+request on an in-flight scan: a non-blocking lock means a request that
+arrives while a scan (typically the ``open_composer.cockpit.app`` warm
+thread's periodic refresh) is already running gets the previous result
+immediately, or the fixed ``state="computing"`` sentinel if nothing has
+been computed yet. ``/quota`` renders that state as the bare word
+``computing`` -- never a sentence, matching every other fixed-vocabulary
+label in this module.
 """
 
 from __future__ import annotations
@@ -236,8 +254,9 @@ import json
 import os
 import shutil
 import statistics
+import threading
 from collections import deque
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -1657,23 +1676,71 @@ def _iter_files_in_window(
     return tuple(path for _, path in in_window[:max_files])
 
 
-def _decode_tail_lines(path: Path, tail_bytes: int) -> tuple[list[str], int]:
-    """Read the last `tail_bytes` of `path` and split into lines.
+#: Read buffer for `_iter_tail_lines` -- kept small and constant regardless
+#: of how large a tail is being scanned, so scanning a 16 MiB tail never
+#: holds more than one such block (plus the one line currently being
+#: assembled) in memory at once. T10: this replaces a single `handle.read()`
+#: of the whole tail followed by `.decode()` and `.split("\n")` -- three
+#: full-tail-sized objects (raw bytes, decoded string, line list) alive at
+#: once, repeated across up to ~100 files per calibration pass -- which is
+#: where the cockpit's calibration-scan +140 MB RSS peak came from (T10
+#: "Memory" build item).
+_TAIL_SCAN_BLOCK_BYTES: Final[int] = 65_536  # 64 KiB
+#: A single JSONL line longer than this is abandoned (its bytes discarded,
+#: never buffered to completion) -- protects the block-by-block reader below
+#: from a pathological no-newline run inside an otherwise bounded tail.
+_MAX_LINE_BYTES: Final[int] = 4 * 1024 * 1024  # 4 MiB
 
-    Returns `(lines, chunk_start_offset)`. When `chunk_start_offset > 0` the
-    first decoded line may be a truncated fragment of a longer line, so the
-    caller drops it (mirrors `_last_quota_event_in_file`'s existing pattern).
+
+def _iter_tail_lines(
+    path: Path, tail_bytes: int, *, block_bytes: int = _TAIL_SCAN_BLOCK_BYTES
+) -> Iterator[bytes]:
+    """Stream complete lines (as `bytes`, no trailing `\\n`) from the last
+    `tail_bytes` of `path`.
+
+    Reads in fixed `block_bytes` chunks and assembles lines incrementally --
+    never the whole tail as one `bytes`/decoded-`str` object, and never a
+    list holding every line in the tail at once (T10 "Memory" fix -- see
+    module docstring and `_TAIL_SCAN_BLOCK_BYTES` above). A tail read can
+    begin mid-line; the first, possibly-truncated fragment before the first
+    `\\n` is dropped, exactly like the single-`read()` version this
+    replaces. A line longer than `_MAX_LINE_BYTES` is dropped rather than
+    buffered to completion. The file's own trailing fragment (no final
+    `\\n` -- e.g. a writer mid-append) is yielded as-is, same as before: a
+    malformed trailing line simply fails `json.loads` downstream, exactly as
+    it always has.
     """
     with path.open("rb") as handle:
         handle.seek(0, 2)
         size = handle.tell()
         start = max(0, size - tail_bytes)
         handle.seek(start)
-        chunk = handle.read()
-    lines = chunk.decode("utf-8", errors="replace").split("\n")
-    if start > 0:
-        lines = lines[1:]
-    return lines, start
+        buffer = bytearray()
+        drop_first = start > 0
+        skipping_oversized = False
+        while True:
+            block = handle.read(block_bytes)
+            if not block:
+                break
+            buffer.extend(block)
+            while True:
+                newline_at = buffer.find(b"\n")
+                if newline_at == -1:
+                    if len(buffer) > _MAX_LINE_BYTES:
+                        buffer.clear()
+                        skipping_oversized = True
+                    break
+                line = bytes(buffer[:newline_at])
+                del buffer[: newline_at + 1]
+                if skipping_oversized:
+                    skipping_oversized = False
+                    continue
+                if drop_first:
+                    drop_first = False
+                    continue
+                yield line
+        if buffer and not skipping_oversized and not drop_first:
+            yield bytes(buffer)
 
 
 def _bounded_tail_scan_usage(
@@ -1701,12 +1768,15 @@ def _bounded_tail_scan_usage(
     yet fully covered by what has been read (the oldest parsed timestamp in
     the chunk is still `>= window_start`, and the chunk is not already the
     whole file), grows the tail by 4x and re-reads, up to
-    `_USAGE_SCAN_MAX_TAIL_BYTES` -- this file is never read past that cap
-    and is never held in memory as more than one such chunk at a time.
-    `truncated` is `True` only when the cap was hit *and* the window was
-    not fully covered *and* the whole file was not already read -- i.e.
-    real content beyond the cap was left unread (T6c: rendered as `partial`
-    on `/quota` for a subagent task).
+    `_USAGE_SCAN_MAX_TAIL_BYTES` -- this file is never read past that cap.
+    T10: each attempt streams the candidate tail line-by-line via
+    `_iter_tail_lines` rather than materializing it as one `bytes`/`str`/list
+    object, so the memory held at any moment is one small read buffer plus
+    the (much smaller) accumulated `messages`/`sessions` result, regardless
+    of how large `tail_bytes` grows. `truncated` is `True` only when the cap
+    was hit *and* the window was not fully covered *and* the whole file was
+    not already read -- i.e. real content beyond the cap was left unread
+    (T6c: rendered as `partial` on `/quota` for a subagent task).
     """
     messages: dict[str, _UsageRecord] = {}
     sessions: set[str] = set()
@@ -1720,60 +1790,57 @@ def _bounded_tail_scan_usage(
     tail_bytes = min(size, _USAGE_SCAN_INITIAL_TAIL_BYTES)
     truncated = False
     while True:
+        earliest_seen_ts: datetime | None = None
         try:
-            lines, start = _decode_tail_lines(path, tail_bytes)
+            for raw_line in _iter_tail_lines(path, tail_bytes):
+                stripped = raw_line.strip()
+                if not stripped:
+                    continue
+                try:
+                    obj = json.loads(stripped)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(obj, dict):
+                    continue
+                ts = _parse_iso(obj.get("timestamp"))
+                if ts is None:
+                    continue
+                if earliest_seen_ts is None or ts < earliest_seen_ts:
+                    earliest_seen_ts = ts
+                if ts < window_start:
+                    continue
+                if window_end is not None and ts >= window_end:
+                    continue
+
+                session_id = obj.get("sessionId")
+                if isinstance(session_id, str) and session_id:
+                    sessions.add(session_id)
+
+                if obj.get("type") != "assistant":
+                    continue
+                message = obj.get("message")
+                if not isinstance(message, dict):
+                    continue
+                usage = message.get("usage")
+                if not isinstance(usage, dict):
+                    continue
+                msg_id = message.get("id")
+                if not isinstance(msg_id, str) or not msg_id:
+                    continue
+                model = message.get("model")
+                model = model if isinstance(model, str) and model else "unknown"
+                messages[msg_id] = _UsageRecord(
+                    model=model,
+                    input_tokens=_usage_int(usage.get("input_tokens")),
+                    output_tokens=_usage_int(usage.get("output_tokens")),
+                    cache_creation_tokens=_usage_int(usage.get("cache_creation_input_tokens")),
+                    cache_read_tokens=_usage_int(usage.get("cache_read_input_tokens")),
+                    at=ts,
+                )
         except OSError:
             return messages, sessions, False
 
-        earliest_seen_ts: datetime | None = None
-        for line in lines:
-            stripped = line.strip()
-            if not stripped:
-                continue
-            try:
-                obj = json.loads(stripped)
-            except json.JSONDecodeError:
-                continue
-            if not isinstance(obj, dict):
-                continue
-            ts = _parse_iso(obj.get("timestamp"))
-            if ts is None:
-                continue
-            if earliest_seen_ts is None or ts < earliest_seen_ts:
-                earliest_seen_ts = ts
-            if ts < window_start:
-                continue
-            if window_end is not None and ts >= window_end:
-                continue
-
-            session_id = obj.get("sessionId")
-            if isinstance(session_id, str) and session_id:
-                sessions.add(session_id)
-
-            if obj.get("type") != "assistant":
-                continue
-            message = obj.get("message")
-            if not isinstance(message, dict):
-                continue
-            usage = message.get("usage")
-            if not isinstance(usage, dict):
-                continue
-            msg_id = message.get("id")
-            if not isinstance(msg_id, str) or not msg_id:
-                continue
-            model = message.get("model")
-            model = model if isinstance(model, str) and model else "unknown"
-            messages[msg_id] = _UsageRecord(
-                model=model,
-                input_tokens=_usage_int(usage.get("input_tokens")),
-                output_tokens=_usage_int(usage.get("output_tokens")),
-                cache_creation_tokens=_usage_int(usage.get("cache_creation_input_tokens")),
-                cache_read_tokens=_usage_int(usage.get("cache_read_input_tokens")),
-                at=ts,
-            )
-
-        reached_bof = start == 0
-        window_fully_covered = reached_bof or (
+        window_fully_covered = tail_bytes >= size or (
             earliest_seen_ts is not None and earliest_seen_ts < window_start
         )
         hit_cap = tail_bytes >= _USAGE_SCAN_MAX_TAIL_BYTES
@@ -2084,6 +2151,13 @@ class ThrottleCalibration:
     # figure is a lower bound and no ratio is derived from it; "main only" when
     # there is no subagent tree at all.
     coverage: str = "full"
+    # T10: "ready" is every pre-T10 result (computed, whether available or
+    # not). "computing" is the one new state -- `ThrottleCalibrationCache`
+    # renders it only when the process-lifetime warm thread has not finished
+    # its first pass yet, so a request never blocks on the scan itself (see
+    # `ThrottleCalibrationCache.get`). No other function in this module ever
+    # constructs a "computing" instance.
+    state: Literal["ready", "computing"] = "ready"
 
 
 def _throttle_window_coverage(event_at: datetime, subagent_base: Path) -> str:
@@ -2109,6 +2183,21 @@ def _throttle_window_coverage(event_at: datetime, subagent_base: Path) -> str:
     return "partial" if oldest > event_at else "full"
 
 
+@dataclass(frozen=True)
+class _EventCalibrationMemo:
+    """One throttle event's memoized fresh-token figure and window coverage.
+
+    T10: a past throttle event is immutable history -- its own 5h window
+    closed the moment the event happened, so the figure computed for it can
+    never change. Keyed by `(event.at, event.resets_at)` in
+    `ThrottleCalibrationCache._event_memo` and kept for the life of the
+    process; see `compute_throttle_calibration`'s `event_memo` parameter.
+    """
+
+    fresh: int | None
+    coverage: str
+
+
 def compute_throttle_calibration(
     *,
     now: datetime,
@@ -2118,6 +2207,8 @@ def compute_throttle_calibration(
     max_events: int = _MAX_THROTTLE_EVENTS_FOR_CALIBRATION,
     max_main_files: int = _MAX_USAGE_TRANSCRIPT_FILES,
     max_subagent_files: int = _MAX_SUBAGENT_TASK_FILES,
+    event_memo: MutableMapping[tuple[datetime, datetime | None], _EventCalibrationMemo]
+    | None = None,
 ) -> ThrottleCalibration:
     """T6c: turn every observed 429 into an honest, non-percentage figure.
 
@@ -2138,10 +2229,19 @@ def compute_throttle_calibration(
     this was tried and rejected: the relevant session for an old event is
     often no longer among the *most-recently-modified* files, so a smaller
     cap silently zeroes out real historical usage rather than merely
-    approximating it. `ThrottleCalibrationCache` below is the actual fix for
-    repeated page renders; the first render in a given 60s period still pays
-    this cost, same trade-off `UsageEstimateCache` makes for the (much
-    cheaper) usage estimate.
+    approximating it.
+
+    T10: `event_memo`, when given, makes the per-event scan (the expensive
+    part -- `_fresh_tokens_in_window` plus `_throttle_window_coverage`) run
+    at most once per distinct event for the life of the process. A throttle
+    event is immutable history, so once `(event.at, event.resets_at)` has a
+    memoized `_EventCalibrationMemo`, every later call for that same event
+    reuses it instead of re-scanning -- this is what lets
+    `ThrottleCalibrationCache.get` stay cheap on every render after the
+    first one that ever saw a given event (see its docstring). The default
+    `None` (every direct caller of this function, including the tests below)
+    disables memoization and always scans fresh, exactly matching this
+    function's pre-T10 behavior.
     """
     try:
         events = find_all_throttle_events(main_root)
@@ -2163,26 +2263,35 @@ def compute_throttle_calibration(
     subagent_base = subagent_root if subagent_root is not None else SUBAGENT_TASKS_ROOT
 
     fresh_values: list[int | None] = []
-    for event in dated[:max_events]:
-        try:
-            fresh_values.append(
-                _fresh_tokens_in_window(
+    last_event_coverage = "full"
+    for index, event in enumerate(dated[:max_events]):
+        memo_key = (event.at, event.resets_at)
+        memo = event_memo.get(memo_key) if event_memo is not None else None
+        if memo is not None:
+            fresh, coverage = memo.fresh, memo.coverage
+        else:
+            try:
+                fresh = _fresh_tokens_in_window(
                     event.at,  # type: ignore[arg-type]
                     main_root=main_base,
                     subagent_root=subagent_base,
                     max_main_files=max_main_files,
                     max_subagent_files=max_subagent_files,
                 )
-            )
-        except Exception:
-            fresh_values.append(None)
+            except Exception:
+                fresh = None
+            coverage = _throttle_window_coverage(event.at, subagent_base)  # type: ignore[arg-type]
+            if event_memo is not None:
+                event_memo[memo_key] = _EventCalibrationMemo(fresh=fresh, coverage=coverage)
+        fresh_values.append(fresh)
+        if index == 0:
+            last_event_coverage = coverage
 
     last_fresh = fresh_values[0] if fresh_values else None
     numeric = [v for v in fresh_values if v is not None]
-    coverage = _throttle_window_coverage(dated[0].at, subagent_base)  # type: ignore[arg-type]
     ratio = (
         (current_fresh_total / last_fresh)
-        if coverage == "full" and last_fresh is not None and last_fresh > 0
+        if last_event_coverage == "full" and last_fresh is not None and last_fresh > 0
         else None
     )
     return ThrottleCalibration(
@@ -2193,25 +2302,61 @@ def compute_throttle_calibration(
         min_fresh_at_event=min(numeric) if numeric else None,
         median_fresh_at_event=round(statistics.median(numeric)) if numeric else None,
         vs_last_throttle_ratio=ratio,
-        coverage=coverage,
+        coverage=last_event_coverage,
     )
 
 
-class ThrottleCalibrationCache:
-    """A 60-second in-memory cache for `compute_throttle_calibration` (T6c).
+#: The one `ThrottleCalibration` instance ever constructed with
+#: `state="computing"` -- returned by `ThrottleCalibrationCache.get` only
+#: when nothing has been computed yet (T10 build item 1). Rendered on
+#: `/quota` as the bare word "computing", never a sentence.
+_COMPUTING_THROTTLE_CALIBRATION: Final[ThrottleCalibration] = ThrottleCalibration(
+    available=False,
+    last_event=None,
+    last_fresh_at_event=None,
+    event_count=0,
+    min_fresh_at_event=None,
+    median_fresh_at_event=None,
+    vs_last_throttle_ratio=None,
+    state="computing",
+)
 
-    Mirrors `UsageEstimateCache`'s TTL policy and carries no circuit breaker
-    for the same reason: every failure mode this wraps already degrades to
-    a `ThrottleCalibration(available=False, ...)` rather than raising. Exists
-    because `compute_throttle_calibration` is measurably expensive on this
-    box (see its own docstring's "Cost note") -- without this, every
-    `/quota` render would pay that cost, not just the first one in a given
-    `THROTTLE_CALIBRATION_CACHE_TTL_SECONDS` period.
+
+class ThrottleCalibrationCache:
+    """Per-event-memoized, off-the-request-path cache for calibration (T10).
+
+    Pre-T10 this cached the *whole* `ThrottleCalibration` result behind a
+    60-second TTL, so every render after a TTL expiry paid
+    `compute_throttle_calibration`'s full cost (the "Cost note" on that
+    function's docstring: ~1-2s per throttle event, on the request path).
+    T10 replaces that with two changes:
+
+    1. `_event_memo` memoizes each individual throttle event's expensive
+       scan (`_fresh_tokens_in_window` + `_throttle_window_coverage`) keyed
+       by `(event.at, event.resets_at)`, forever -- a past throttle event is
+       immutable history and never needs rescanning once seen (see
+       `_EventCalibrationMemo`, `compute_throttle_calibration`'s
+       `event_memo` parameter). After the first time a given event has been
+       seen, `get` only pays for `find_all_throttle_events` (cheap: a
+       bounded tail scan of at most `_MAX_TRANSCRIPT_FILES_SCANNED` files)
+       plus an O(1) ratio recompute against the caller's own
+       `current_fresh_total` -- never the expensive per-event scan again.
+    2. A non-blocking `threading.Lock` means a request that arrives while a
+       scan is already in flight (typically the warm thread's first pass,
+       `open_composer.cockpit.app`'s `_warm_loop`) is served the last known
+       result immediately -- `_COMPUTING_THROTTLE_CALIBRATION` if nothing
+       has ever been computed yet, or the previous `ThrottleCalibration`
+       otherwise -- rather than waiting for the scan to finish. `get` itself
+       still performs the (now-cheap-after-the-first-time) scan when the
+       lock is free, so the warm thread and any uncontended request-path
+       caller share the exact same memoized, incremental code path; nothing
+       here is warm-thread-specific.
     """
 
     def __init__(self) -> None:
-        self._calibration: ThrottleCalibration | None = None
-        self._computed_at: datetime | None = None
+        self._event_memo: dict[tuple[datetime, datetime | None], _EventCalibrationMemo] = {}
+        self._latest: ThrottleCalibration | None = None
+        self._lock = threading.Lock()
 
     def get(
         self,
@@ -2221,19 +2366,23 @@ class ThrottleCalibrationCache:
         main_root: Path | None = None,
         subagent_root: Path | None = None,
     ) -> ThrottleCalibration:
-        if self._calibration is not None and self._computed_at is not None:
-            age = (now - self._computed_at).total_seconds()
-            if 0 <= age < THROTTLE_CALIBRATION_CACHE_TTL_SECONDS:
-                return self._calibration
-        calibration = compute_throttle_calibration(
-            now=now,
-            current_fresh_total=current_fresh_total,
-            main_root=main_root,
-            subagent_root=subagent_root,
-        )
-        self._calibration = calibration
-        self._computed_at = now
-        return calibration
+        acquired = self._lock.acquire(blocking=False)
+        if not acquired:
+            # A scan (warm thread, or a concurrent request) is already in
+            # flight -- never wait for it on this request's path.
+            return self._latest if self._latest is not None else _COMPUTING_THROTTLE_CALIBRATION
+        try:
+            calibration = compute_throttle_calibration(
+                now=now,
+                current_fresh_total=current_fresh_total,
+                main_root=main_root,
+                subagent_root=subagent_root,
+                event_memo=self._event_memo,
+            )
+            self._latest = calibration
+            return calibration
+        finally:
+            self._lock.release()
 
 
 _DEFAULT_THROTTLE_CALIBRATION_CACHE = ThrottleCalibrationCache()

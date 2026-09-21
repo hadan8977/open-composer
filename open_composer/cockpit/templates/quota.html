@@ -139,7 +139,9 @@
 <div class="panel">
   <h2>Claude -- 429 calibration</h2>
   <p class="muted">empirical window capacity, from observed throttles -- never a percentage</p>
-  {% if report.throttle_calibration.available %}
+  {% if report.throttle_calibration.state == 'computing' %}
+  <p class="muted">computing</p>
+  {% elif report.throttle_calibration.available %}
   <p>
     last throttled at {{ report.throttle_calibration.last_event.at|short_ts if report.throttle_calibration.last_event else 'unknown' }},
     reset at {{ report.throttle_calibration.last_event.resets_at|short_ts if report.throttle_calibration.last_event else 'unknown' }}

@@ -37,6 +37,8 @@ from __future__ import annotations
 
 import os
 import re
+import threading
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -52,7 +54,9 @@ from open_composer.cockpit.data.agents import (
     build_agent_detail,
     find_agent_record,
     format_elapsed_seconds,
+    format_entry_count,
     format_timeline_time,
+    get_default_topbar_agents_cache,
     load_agents,
     load_heavy_jobs,
     stream_agent_timeline,
@@ -80,6 +84,7 @@ from open_composer.cockpit.data.paper import (
     discover_strategy_names,
 )
 from open_composer.cockpit.data.quota import (
+    THROTTLE_CALIBRATION_CACHE_TTL_SECONDS,
     USAGE_ESTIMATE_WINDOW_HOURS,
     CodexQuotaState,
     TopbarQuota,
@@ -88,6 +93,7 @@ from open_composer.cockpit.data.quota import (
     build_quota_report,
     format_compact_token_count,
     get_default_claude_cache,
+    get_default_throttle_calibration_cache,
     get_default_usage_estimate_cache,
     to_topbar_quota,
     unknown_topbar_quota,
@@ -185,12 +191,15 @@ def _topbar_agents() -> tuple[tuple[str, str], ...]:
     """`(agent_id, last_status)` for every non-closed agent, for the top
     bar's status-dot row (plan section 4: "agent 状态点：每个活着的 agent 一个点").
 
-    Calls `load_agents(enrich=False)` -- no transcript resolution or
-    reading, just the agent JSON files themselves -- so this stays cheap
-    enough to run on every screen's `_base_context`, not just `/agents`.
+    Goes through `TopbarAgentsCache` (T10) rather than calling
+    `load_agents(enrich=False)` directly: parsing every agent JSON file on
+    every screen's `_base_context` (~230 files, ~0.3s on this box) is cheap
+    once, not free on every request. See
+    `open_composer.cockpit.data.agents.TopbarAgentsCache`'s docstring for
+    why this is a short TTL cache rather than an mtime-based parse-skip.
     """
     try:
-        report = load_agents(enrich=False)
+        report = get_default_topbar_agents_cache().get()
     except Exception:
         return ()
     return tuple(
@@ -263,7 +272,91 @@ def _base_context(request: Request, active: str) -> dict[str, Any]:
     }
 
 
-def create_app() -> FastAPI:
+#: Name of the T10 warm thread, for tests that inspect `threading.enumerate()`.
+_WARM_THREAD_NAME = "cockpit-quota-warm"
+_WARM_THREAD_LOCK = threading.Lock()
+_WARM_THREAD_STARTED = False
+
+
+def _warm_once(now: datetime | None = None) -> None:
+    """One refresh pass: the usage estimate, the 429 calibration, and the
+    live Claude quota cache (plan item 1's "at startup and then every
+    `THROTTLE_CALIBRATION_CACHE_TTL_SECONDS`..."). Each cache already
+    degrades any of its own failure modes to a renderable state rather than
+    raising (see their own docstrings); the `except Exception` here is one
+    more defensive layer so a surprise in one cache can never stop this
+    background thread or the caches after it in the same pass.
+    """
+    moment = now if now is not None else datetime.now(UTC)
+    try:
+        usage = get_default_usage_estimate_cache().get(now=moment)
+    except Exception:
+        usage = None
+    try:
+        get_default_throttle_calibration_cache().get(
+            now=moment, current_fresh_total=usage.fresh_total if usage is not None else 0
+        )
+    except Exception:
+        pass
+    try:
+        get_default_claude_cache().get(now=moment)
+    except Exception:
+        pass
+
+
+def _warm_loop() -> None:
+    """Background body of the T10 warm thread.
+
+    Does nothing at all -- never even enters the periodic loop -- when this
+    box has no Claude transcript tree (`CLAUDE_PROJECTS_DIR` absent): every
+    cache this warms degrades cleanly to an empty/unavailable state with
+    nothing to scan, so looping forever to no effect would only be a wasted
+    daemon thread. This is also what keeps the thread harmless under pytest:
+    the suite's autouse fixture (`tests/conftest.py`) already points
+    `CLAUDE_PROJECTS_DIR` at a nonexistent path for every test, so even a
+    test that constructs the app with the `warm=True` default exits this
+    function immediately rather than scanning real data or looping.
+    """
+    from open_composer.cockpit.data.quota import CLAUDE_PROJECTS_DIR
+
+    if not CLAUDE_PROJECTS_DIR.exists():
+        return
+    while True:
+        _warm_once()
+        time.sleep(THROTTLE_CALIBRATION_CACHE_TTL_SECONDS)
+
+
+def _start_warm_thread() -> threading.Thread | None:
+    """Start the process-wide warm thread exactly once (plan item 1: "guard
+    against double start").
+
+    `create_app()` can run more than once in the same process (a reload, or
+    more than one test module importing it) and every cache this thread
+    warms is itself process-wide (`get_default_*_cache()`), so a second
+    thread would duplicate work without adding coverage. Returns the
+    started `Thread`, or `None` when a thread was already running.
+    """
+    global _WARM_THREAD_STARTED
+    with _WARM_THREAD_LOCK:
+        if _WARM_THREAD_STARTED:
+            return None
+        _WARM_THREAD_STARTED = True
+    thread = threading.Thread(target=_warm_loop, name=_WARM_THREAD_NAME, daemon=True)
+    thread.start()
+    return thread
+
+
+def create_app(*, warm: bool = True) -> FastAPI:
+    """Build the cockpit's FastAPI app.
+
+    `warm`, default `True`: start the T10 background thread that keeps the
+    429-calibration/usage-estimate/live-quota caches refreshed off the
+    request path (see `_warm_loop`). The real `oc cockpit serve` entry point
+    always wants this; tests that care about the thread's absence construct
+    the app with `warm=False` explicitly (most tests do not need to, since
+    `_warm_loop` is already a no-op without a real `~/.claude/projects`
+    tree -- see its docstring).
+    """
     app = FastAPI(
         title="Open Composer Cockpit",
         description="Read-only status cockpit. No write routes exist by design.",
@@ -273,6 +366,9 @@ def create_app() -> FastAPI:
     templates.env.filters["elapsed_s"] = format_elapsed_seconds
     templates.env.filters["hms_ts"] = format_timeline_time
     templates.env.filters["agent_dot"] = agent_state_dot
+    templates.env.filters["count_sep"] = format_entry_count
+    if warm:
+        _start_warm_thread()
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.get("/healthz")

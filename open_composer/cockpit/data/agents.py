@@ -64,6 +64,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import threading
 import time
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, replace
@@ -110,7 +111,23 @@ _STREAM_MAX_READ_BYTES: Final[int] = 1_048_576
 _MAX_ENTRY_TEXT_CHARS: Final[int] = 400
 #: "the last assistant text (first 160 chars)" -- plan "Build", item 1.
 _LAST_TEXT_LIST_CHARS: Final[int] = 160
-_MAX_SUBAGENT_TASKS: Final[int] = 20
+#: T10 build item 3: `build_agent_detail` renders at most the last this many
+#: parsed entries of the bounded tail it already reads -- a busy session's
+#: 256 KiB tail can still hold well over a thousand entries, each of which
+#: was being rendered into the page and read again by every nested subagent
+#: transcript (see `_MAX_SUBAGENT_TASKS`/`_MAX_SUBAGENT_ENTRIES` below).
+_MAX_DETAIL_ENTRIES: Final[int] = 150
+#: T10: was 20, sorted by filename (i.e. by nothing meaningful -- subagent
+#: ids are random hex, so this was effectively an arbitrary 20, not the 20
+#: newest). Now sorted by mtime descending in `load_subagent_tasks`, so this
+#: is genuinely "the newest 5".
+_MAX_SUBAGENT_TASKS: Final[int] = 5
+#: T10: each kept subagent transcript is itself capped to its last this many
+#: entries, mirroring `_MAX_DETAIL_ENTRIES` for the main timeline -- with
+#: `_MAX_SUBAGENT_TASKS` above, an agent detail page reads at most
+#: `_MAX_SUBAGENT_TASKS` transcripts of up to `_TRANSCRIPT_TAIL_BYTES` each,
+#: never renders more than this many rows from any one of them.
+_MAX_SUBAGENT_ENTRIES: Final[int] = 30
 
 DEFAULT_SSE_POLL_INTERVAL_SECONDS: Final[float] = 2.0
 DEFAULT_SSE_KEEPALIVE_INTERVAL_SECONDS: Final[float] = 15.0
@@ -241,15 +258,31 @@ class TimelineChunk:
 
 @dataclass(frozen=True)
 class SubagentTask:
+    """One nested subagent transcript (T10: capped to the last
+    `_MAX_SUBAGENT_ENTRIES` of `entries_total` parsed entries -- see
+    `load_subagent_tasks`). `entries_total` is the count within the
+    already-bounded tail this module ever reads (`_TRANSCRIPT_TAIL_BYTES`),
+    not a full-file count -- the same "of what we scanned" honesty the rest
+    of this module already applies (module docstring's bounded-read design).
+    """
+
     id: str
     entries: tuple[TimelineEntry, ...]
+    entries_total: int
     warning: str | None
 
 
 @dataclass(frozen=True)
 class AgentDetail:
+    """T10: `entries` is capped to the last `_MAX_DETAIL_ENTRIES` of
+    `entries_total` parsed from the transcript's own bounded tail read --
+    the template renders both as `"{len(entries)} of {entries_total}
+    entries"` (numbers only, never a sentence -- plan section 3.5).
+    """
+
     record: AgentRecord | None
     entries: tuple[TimelineEntry, ...]
+    entries_total: int
     subagents: tuple[SubagentTask, ...]
     transcript_kind: TranscriptKind
     transcript_available: bool
@@ -300,6 +333,24 @@ def _slugify_cwd(cwd: str) -> str:
     e.g. `/root/codex-test/open-composer` -> `-root-codex-test-open-composer`.
     """
     return cwd.replace("/", "-")
+
+
+#: T10 build item 6: every character that is not alphanumeric or `-` (not
+#: just `/`) maps to `-` -- Claude Code's own project-directory slug for a
+#: `cwd` that itself contains a character such as `.` (a naive `/`-only
+#: replace would leave that character in the directory name, which does not
+#: match how the CLI actually names the directory). No real example with a
+#: `.` exists under `~/.claude/projects` on this box (checked 2026-09-20:
+#: every entry here is a plain path with no dots), so this is implemented
+#: per the brief without a live example to verify against, and is only ever
+#: tried as a fallback after the naive `_slugify_cwd` directory is confirmed
+#: absent -- it can only add a second chance to find a real transcript,
+#: never take priority over the already-verified convention.
+_CWD_SLUG_FALLBACK_RE: Final[re.Pattern[str]] = re.compile(r"[^A-Za-z0-9-]")
+
+
+def _slugify_cwd_fallback(cwd: str) -> str:
+    return _CWD_SLUG_FALLBACK_RE.sub("-", cwd)
 
 
 def _read_tail_bytes(path: Path, max_bytes: int) -> tuple[bytes, bool] | None:
@@ -757,8 +808,18 @@ def _resolve_transcript(
 ) -> tuple[TranscriptKind, Path | None]:
     if record.provider == "claude" and record.cwd and record.session_id:
         base = claude_root if claude_root is not None else CLAUDE_PROJECTS_DIR
-        path = base / _slugify_cwd(record.cwd) / f"{record.session_id}.jsonl"
-        return ("claude", path) if path.is_file() else ("none", None)
+        naive_slug = _slugify_cwd(record.cwd)
+        path = base / naive_slug / f"{record.session_id}.jsonl"
+        if path.is_file():
+            return "claude", path
+        # T10 build item 6: the naive `/`-only slug did not exist -- try
+        # Claude Code's broader slug convention before giving up.
+        fallback_slug = _slugify_cwd_fallback(record.cwd)
+        if fallback_slug != naive_slug:
+            fallback_path = base / fallback_slug / f"{record.session_id}.jsonl"
+            if fallback_path.is_file():
+                return "claude", fallback_path
+        return "none", None
     if record.provider == "codex" and record.session_id:
         path = _find_codex_transcript(record.session_id, root=codex_root)
         return ("codex", path) if path is not None else ("none", None)
@@ -884,6 +945,64 @@ def load_agents(
     )
 
 
+#: T10 build item 5: how long `TopbarAgentsCache` reuses a `load_agents(enrich=False)`
+#: result. `_topbar_agents` (`open_composer.cockpit.app`) renders this on
+#: every screen, and parsing every agent JSON file (~230 on this box, ~0.3s)
+#: on every request was measured as one of the cheaper-but-still-real costs
+#: this task set out to remove from the request path.
+_TOPBAR_AGENTS_CACHE_TTL_SECONDS: Final[float] = 10.0
+
+
+class TopbarAgentsCache:
+    """A short-lived cache for `load_agents(enrich=False)` (T10 build item 5).
+
+    The brief's preferred fix was to `stat()` every agent file first and
+    skip *parsing* any whose mtime is older than `CLOSED_STALE_HOURS` --
+    cheap if a non-closed agent's JSON file is reliably rewritten on
+    activity. Measured against this box's real `~/.paseo/agents` on
+    2026-09-20, that assumption does not hold: of 21 non-closed (running
+    /idle/error) agents, 19 had a file mtime *older* than `CLOSED_STALE_HOURS`
+    (up to ~3 000 hours old) even though their own `lastStatus` was not
+    `"closed"` -- an mtime-based skip would have silently dropped most of
+    this box's idle agents from the top bar's status-dot row. This class is
+    the brief's documented fallback instead: cache the full, correctly-parsed
+    `load_agents(enrich=False)` result for `_TOPBAR_AGENTS_CACHE_TTL_SECONDS`,
+    guarded by a lock so concurrent requests during a real box's normal
+    traffic never trigger more than one re-parse per TTL period.
+    """
+
+    def __init__(self) -> None:
+        self._report: AgentsReport | None = None
+        self._computed_at: datetime | None = None
+        self._lock = threading.Lock()
+
+    def get(self, *, now: datetime | None = None, root: Path | None = None) -> AgentsReport:
+        moment = now if now is not None else datetime.now(UTC)
+        with self._lock:
+            if self._report is not None and self._computed_at is not None:
+                age = (moment - self._computed_at).total_seconds()
+                if 0 <= age < _TOPBAR_AGENTS_CACHE_TTL_SECONDS:
+                    return self._report
+            report = load_agents(root=root, now=moment, enrich=False)
+            self._report = report
+            self._computed_at = moment
+            return report
+
+
+_DEFAULT_TOPBAR_AGENTS_CACHE = TopbarAgentsCache()
+
+
+def get_default_topbar_agents_cache() -> TopbarAgentsCache:
+    """The process-wide cache `open_composer.cockpit.app` shares across requests.
+
+    A function, not a bare module attribute, for the same reason as
+    `open_composer.cockpit.data.quota.get_default_claude_cache`: a test can
+    monkeypatch this name to hand out a fresh, isolated instance instead of
+    the one long-lived instance a real server keeps for its entire run.
+    """
+    return _DEFAULT_TOPBAR_AGENTS_CACHE
+
+
 # --------------------------------------------------------------------------
 # Timeline (detail page + SSE)
 # --------------------------------------------------------------------------
@@ -897,6 +1016,8 @@ def load_timeline(
     claude_root: Path | None = None,
     codex_root: Path | None = None,
     max_bytes: int = _STREAM_MAX_READ_BYTES,
+    path: Path | None = None,
+    kind: TranscriptKind | None = None,
 ) -> TimelineChunk:
     """New timeline entries appended to `agent_id`'s transcript since
     `since_offset` (a byte offset), for the SSE stream's polling loop.
@@ -907,13 +1028,27 @@ def load_timeline(
     back to its start, so the next call picks it up whole. A single line
     longer than `max_bytes` is skipped rather than stalling the stream on it
     forever.
+
+    T10 build item 4: `path` (with its matching `kind`), when both given,
+    is used directly instead of re-resolving the transcript from `agent_id`
+    -- `stream_agent_timeline` resolves the record and transcript path once
+    at connect time and passes both here on every poll, so the
+    `find_agent_record` glob over `PASEO_AGENTS_DIR` (and, for a Codex
+    agent, `_find_codex_transcript`'s `rglob`) no longer repeats every
+    `poll_interval`. Every other caller (the default, `path=None`) keeps the
+    pre-T10 behavior of resolving from `agent_id` on every call.
     """
-    record = find_agent_record(agent_id, root=root)
-    if record is None:
-        return TimelineChunk(entries=(), next_offset=since_offset, transcript_path=None)
-    kind, path = _resolve_transcript(record, claude_root=claude_root, codex_root=codex_root)
-    if path is None:
-        return TimelineChunk(entries=(), next_offset=since_offset, transcript_path=None)
+    if path is not None:
+        resolved_kind: TranscriptKind = kind if kind is not None else "none"
+    else:
+        record = find_agent_record(agent_id, root=root)
+        if record is None:
+            return TimelineChunk(entries=(), next_offset=since_offset, transcript_path=None)
+        resolved_kind, path = _resolve_transcript(
+            record, claude_root=claude_root, codex_root=codex_root
+        )
+        if path is None:
+            return TimelineChunk(entries=(), next_offset=since_offset, transcript_path=None)
     try:
         size = path.stat().st_size
     except OSError:
@@ -946,7 +1081,7 @@ def load_timeline(
     lines = _iter_jsonl_lines(complete, drop_first=False)
     entries = (
         _entries_from_codex_lines(lines)
-        if kind == "codex"
+        if resolved_kind == "codex"
         else _entries_from_claude_style_lines(lines)
     )
     entries = _pair_tool_durations(entries)
@@ -1000,7 +1135,7 @@ def stream_agent_timeline(
         yield ": agent not found\n\n"
         return
 
-    _, path = _resolve_transcript(record, claude_root=claude_root, codex_root=codex_root)
+    kind, path = _resolve_transcript(record, claude_root=claude_root, codex_root=codex_root)
     try:
         offset = path.stat().st_size if path is not None else 0
     except OSError:
@@ -1016,9 +1151,11 @@ def stream_agent_timeline(
             yield ": stream-closed (max duration reached)\n\n"
             return
 
-        chunk = load_timeline(
-            agent_id, offset, root=root, claude_root=claude_root, codex_root=codex_root
-        )
+        # T10 build item 4: `record`/`path`/`kind` were already resolved once
+        # above, at connect time -- passed straight through on every poll so
+        # `load_timeline` never repeats the `find_agent_record` glob (nor,
+        # for a Codex agent, the `_find_codex_transcript` `rglob`).
+        chunk = load_timeline(agent_id, offset, path=path, kind=kind)
         offset = chunk.next_offset
         for entry in chunk.entries:
             yield f"data: {json.dumps(_entry_to_stream_payload(entry))}\n\n"
@@ -1037,41 +1174,78 @@ def stream_agent_timeline(
 # --------------------------------------------------------------------------
 
 
+def _resolve_subagent_tasks_dir(base: Path, cwd: str, session_id: str) -> Path | None:
+    """The `tasks/` directory for one session, trying the naive slug first
+    and Claude Code's alternate slug (T10 build item 6, mirrors
+    `_resolve_transcript`'s fallback) if that does not exist.
+    """
+    naive = base / _slugify_cwd(cwd) / session_id / "tasks"
+    if naive.is_dir():
+        return naive
+    fallback_slug = _slugify_cwd_fallback(cwd)
+    if fallback_slug != _slugify_cwd(cwd):
+        fallback = base / fallback_slug / session_id / "tasks"
+        if fallback.is_dir():
+            return fallback
+    return None
+
+
 def load_subagent_tasks(
     record: AgentRecord,
     *,
     root: Path | None = None,
     tail_bytes: int = _TRANSCRIPT_TAIL_BYTES,
     max_tasks: int = _MAX_SUBAGENT_TASKS,
+    max_entries: int = _MAX_SUBAGENT_ENTRIES,
 ) -> tuple[SubagentTask, ...]:
     """Subagent (`Task`-tool) transcripts nested under one main session.
 
     Degrades to `()` -- rendered as "none" -- if `SUBAGENT_TASKS_ROOT` (a
     `/tmp` tree) or this session's own `tasks/` directory is absent, which
     is the normal state after a reboot, per plan "Ground truth".
+
+    T10: kept the newest `max_tasks` by *mtime*, descending -- a subagent
+    id is a random hex string (`SUBAGENT_ID_RE`), so the previous
+    `sorted(paths)[:max_tasks]` (lexical, by filename) picked an arbitrary
+    `max_tasks` rather than the most recent ones. Each kept task's own
+    entries are further capped to the last `max_entries` (of however many
+    were parsed from its own bounded `tail_bytes` read) -- see
+    `SubagentTask.entries_total`.
     """
     if not record.cwd or not record.session_id:
         return ()
     base = root if root is not None else SUBAGENT_TASKS_ROOT
-    tasks_dir = base / _slugify_cwd(record.cwd) / record.session_id / "tasks"
-    if not tasks_dir.is_dir():
+    tasks_dir = _resolve_subagent_tasks_dir(base, record.cwd, record.session_id)
+    if tasks_dir is None:
         return ()
     try:
-        paths = sorted(tasks_dir.glob("*.output"))
+        candidates = [p for p in tasks_dir.glob("*.output") if p.is_file()]
     except OSError:
         return ()
 
-    tasks: list[SubagentTask] = []
-    for path in paths[:max_tasks]:
+    def _mtime(p: Path) -> float:
         try:
-            entries: tuple[TimelineEntry, ...] = tuple(
+            return p.stat().st_mtime
+        except OSError:
+            return 0.0
+
+    candidates.sort(key=_mtime, reverse=True)
+
+    tasks: list[SubagentTask] = []
+    for path in candidates[:max_tasks]:
+        try:
+            all_entries: tuple[TimelineEntry, ...] = tuple(
                 _read_transcript_entries("claude", path, max_bytes=tail_bytes)
             )
             warning = None
         except OSError as exc:
-            entries = ()
+            all_entries = ()
             warning = f"failed to read subagent transcript {path.name}: {exc}"
-        tasks.append(SubagentTask(id=path.stem, entries=entries, warning=warning))
+        total = len(all_entries)
+        capped = all_entries[-max_entries:] if total > max_entries else all_entries
+        tasks.append(
+            SubagentTask(id=path.stem, entries=capped, entries_total=total, warning=warning)
+        )
     return tuple(tasks)
 
 
@@ -1083,16 +1257,22 @@ def build_agent_detail(
     codex_root: Path | None = None,
     subagent_root: Path | None = None,
     tail_bytes: int = _TRANSCRIPT_TAIL_BYTES,
+    max_entries: int = _MAX_DETAIL_ENTRIES,
 ) -> AgentDetail:
     """Everything `GET /agents/{agent_id}` needs: full timeline + nested
     subagents. `agent_id` is validated by `find_agent_record` (via
     `AGENT_ID_RE`) before any filesystem access.
+
+    T10: `entries` is capped to the last `max_entries` of however many were
+    parsed from the transcript's own bounded `tail_bytes` read (`entries_total`
+    keeps the pre-cap count so the template can render "`N` of `M` entries").
     """
     record = find_agent_record(agent_id, root=root)
     if record is None:
         return AgentDetail(
             record=None,
             entries=(),
+            entries_total=0,
             subagents=(),
             transcript_kind="none",
             transcript_available=False,
@@ -1102,9 +1282,12 @@ def build_agent_detail(
     warnings: list[str] = []
     kind, path = _resolve_transcript(record, claude_root=claude_root, codex_root=codex_root)
     entries: tuple[TimelineEntry, ...] = ()
+    entries_total = 0
     if path is not None:
         try:
-            entries = tuple(_read_transcript_entries(kind, path, max_bytes=tail_bytes))
+            all_entries = tuple(_read_transcript_entries(kind, path, max_bytes=tail_bytes))
+            entries_total = len(all_entries)
+            entries = all_entries[-max_entries:] if entries_total > max_entries else all_entries
         except OSError as exc:
             warnings.append(f"failed to read transcript: {exc}")
     else:
@@ -1119,6 +1302,7 @@ def build_agent_detail(
     return AgentDetail(
         record=record,
         entries=entries,
+        entries_total=entries_total,
         subagents=subagents,
         transcript_kind=kind,
         transcript_available=path is not None,
@@ -1323,6 +1507,19 @@ def agent_state_dot(status: str) -> str:
     return _STATE_DOT.get(status, "unknown")
 
 
+def format_entry_count(n: int) -> str:
+    """An exact integer count with a space thousands-separator, e.g. `1 204`.
+
+    T10 build item 3: the agent-detail/subagent-task section headers show
+    truncation as numbers only (`"150 of 1 204 entries"`), never a sentence
+    (plan section 3.5) -- this is the one formatting helper both counts in
+    that header go through. Unlike `quota.format_compact_token_count`, this
+    is never rounded to a `k`/`M` unit: an entry count is small enough, and
+    exact enough, that "204" should not become "0.2k".
+    """
+    return f"{max(0, int(n)):,}".replace(",", " ")
+
+
 __all__ = [
     "AGENT_ID_RE",
     "CLAUDE_PROJECTS_DIR",
@@ -1344,13 +1541,16 @@ __all__ = [
     "SubagentTask",
     "TimelineChunk",
     "TimelineEntry",
+    "TopbarAgentsCache",
     "TranscriptKind",
     "agent_state_dot",
     "build_agent_activity",
     "build_agent_detail",
     "find_agent_record",
     "format_elapsed_seconds",
+    "format_entry_count",
     "format_timeline_time",
+    "get_default_topbar_agents_cache",
     "load_agents",
     "load_heavy_jobs",
     "load_subagent_tasks",

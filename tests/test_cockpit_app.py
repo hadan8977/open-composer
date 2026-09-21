@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import html
 import re
+import threading
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
+from open_composer.cockpit import app as APP_MODULE
 from open_composer.cockpit.app import create_app
 from open_composer.cockpit.data.hypotheses import load_cards
 from open_composer.cockpit.security import PathTraversalError, safe_repo_path, secret_scrub
@@ -15,7 +17,10 @@ from open_composer.config import project_root
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(create_app())
+    # `warm=False`: this suite does not exercise the T10 background warm
+    # thread here (see `test_create_app_starts_warm_thread_*` below for
+    # those) -- most other tests just want a plain app.
+    return TestClient(create_app(warm=False))
 
 
 # --------------------------------------------------------------------------
@@ -99,7 +104,7 @@ def test_health_page_renders_cron_and_freshness_sections(client: TestClient) -> 
 
 
 def test_every_route_is_get_or_head_only() -> None:
-    app = create_app()
+    app = create_app(warm=False)
     checked = 0
     for route in app.routes:
         methods = getattr(route, "methods", None)
@@ -298,9 +303,94 @@ def test_health_page_renders_when_repo_root_has_no_data_sources(
     monkeypatch.setattr("open_composer.cockpit.app.project_root", lambda: tmp_path)
     monkeypatch.setattr("open_composer.cockpit.data.health.project_root", lambda: tmp_path)
 
-    app = create_app()
+    app = create_app(warm=False)
     client = TestClient(app)
     response = client.get("/health")
 
     assert response.status_code == 200
     assert "unknown" in response.text
+
+
+# --------------------------------------------------------------------------
+# T10: the calibration/usage-estimate/live-quota warm thread
+# --------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _reset_warm_thread_guard(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every test in this module starts from "no warm thread started yet".
+
+    `_WARM_THREAD_STARTED` is a process-wide guard (by design -- plan item
+    1's "guard against double start"), so without resetting it between
+    tests, whichever test in this file happens to start the real thread
+    first would make every later `create_app(warm=True)` in this module a
+    silent no-op.
+    """
+    monkeypatch.setattr(APP_MODULE, "_WARM_THREAD_STARTED", False)
+
+
+def test_warm_loop_returns_immediately_when_transcript_root_is_absent() -> None:
+    """`_warm_loop` must never enter its `while True` when there is nothing
+    to warm. `tests/conftest.py`'s autouse fixture already points
+    `CLAUDE_PROJECTS_DIR` at a path that does not exist for every test in
+    the suite, so calling the loop body directly here is the same "roots
+    absent" case `create_app(warm=True)` would hit under pytest -- driven
+    through a joined, timed-out thread rather than a bare call, so a bug
+    that removed the early return would fail this test instead of hanging
+    the whole suite.
+    """
+    thread = threading.Thread(target=APP_MODULE._warm_loop, daemon=True)
+    thread.start()
+    thread.join(timeout=2.0)
+    assert not thread.is_alive(), (
+        "_warm_loop must return at once when its transcript root is absent"
+    )
+
+
+def test_start_warm_thread_guards_against_double_start() -> None:
+    first = APP_MODULE._start_warm_thread()
+    second = APP_MODULE._start_warm_thread()
+    try:
+        assert first is not None
+        assert first.daemon is True
+        assert second is None, "a second start must be a no-op, not a second thread"
+    finally:
+        first.join(timeout=2.0)
+
+
+def test_create_app_default_warm_true_starts_the_thread_exactly_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`create_app()`'s default wires up to `_start_warm_thread` -- and a
+    second `create_app()` call in the same process must not add a second
+    thread (the double-start guard is process-wide, not per-app). Tracks
+    calls through the real `_start_warm_thread` rather than scanning
+    `threading.enumerate()` after the fact, since `_warm_loop` can finish
+    (and stop being "alive") before this test gets to look for it -- this
+    box's `CLAUDE_PROJECTS_DIR` is absent under every test, so the thread's
+    entire body is just one fast, early return (see
+    `test_warm_loop_returns_immediately_when_transcript_root_is_absent`).
+    """
+    started: list[threading.Thread] = []
+    original = APP_MODULE._start_warm_thread
+
+    def _tracking_start() -> threading.Thread | None:
+        thread = original()
+        if thread is not None:
+            started.append(thread)
+        return thread
+
+    monkeypatch.setattr(APP_MODULE, "_start_warm_thread", _tracking_start)
+
+    create_app()
+    create_app()  # a second app in the same process must not add a second thread
+
+    assert len(started) == 1
+    assert started[0].daemon is True
+    started[0].join(timeout=2.0)
+
+
+def test_create_app_warm_false_never_starts_the_thread() -> None:
+    create_app(warm=False)
+    assert APP_MODULE._WARM_THREAD_STARTED is False
+    assert not any(t.name == APP_MODULE._WARM_THREAD_NAME for t in threading.enumerate())
