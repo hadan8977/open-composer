@@ -131,6 +131,29 @@ def test_post_is_rejected_with_405(client: TestClient, path: str) -> None:
     assert response.status_code == 405
 
 
+def test_static_assets_are_immutable_and_versioned(client: TestClient) -> None:
+    """Static files carry a one-year immutable cache header and every page
+    references them with a content-hash query, so a redeploy is picked up
+    at once while an unchanged build never re-validates through the tunnel.
+    HTML itself never carries that header."""
+    asset = client.get("/static/css/cockpit.css")
+    assert asset.status_code == 200
+    assert asset.headers["cache-control"] == "public, max-age=31536000, immutable"
+    page = client.get("/")
+    versions = set(
+        re.findall(r"/static/(?:css/cockpit\.css|js/cockpit\.js)\?v=([0-9a-f]{12})", page.text)
+    )
+    assert len(versions) == 1
+    assert "immutable" not in page.headers.get("cache-control", "")
+
+
+def test_shell_is_named_quant(client: TestClient) -> None:
+    page = client.get("/")
+    assert "<i></i>Quant</a>" in page.text
+    assert "Cockpit</a>" not in page.text
+    assert "<title>Hypotheses · Quant</title>" in page.text
+
+
 def test_static_mount_rejects_post(client: TestClient) -> None:
     response = client.post("/static/css/cockpit.css")
     assert response.status_code == 405

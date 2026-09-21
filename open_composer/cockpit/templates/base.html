@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Cockpit">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%235458d0'/%3E%3Cpath d='M10.6 5.6A3.2 3.2 0 1 0 10.6 10.4' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E" />
-  <title>{% block title %}Cockpit{% endblock %}</title>
-  <link rel="stylesheet" href="/static/css/cockpit.css">
+  <meta name="apple-mobile-web-app-title" content="Quant">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%234f5eff'/%3E%3Ccircle cx='7.4' cy='7.4' r='3.4' fill='none' stroke='white' stroke-width='1.8'/%3E%3Cpath d='M9.8 9.8L12.2 12.2' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <title>{% block title %}Quant{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/cockpit.css?v={{ asset_v }}">
 </head>
 <body>
 {% from "_icons.html" import icon %}
 <div class="app" id="app">
 
   <nav class="rail glass" aria-label="Screens">
-    <a class="rail-brand" href="/"><i></i>Cockpit</a>
+    <a class="rail-brand" href="/"><i></i>Quant</a>
     {% for slug, path, label in screens %}
     <a class="nav{{ ' is-active' if active_screen == slug }}" href="{{ path }}" data-screen{% if active_screen == slug %} aria-current="page"{% endif %}>{{ icon(slug) }}<span>{{ label }}</span><kbd>⌘{{ loop.index }}</kbd></a>
     {% endfor %}
@@ -81,6 +81,6 @@
   </dialog>
 
 </div>
-<script src="/static/js/cockpit.js" defer></script>
+<script src="/static/js/cockpit.js?v={{ asset_v }}" defer></script>
 </body>
 </html>

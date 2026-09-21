@@ -1,9 +1,10 @@
-// The cockpit's only script. Four jobs, nothing else:
+// The cockpit's only script. Five jobs, nothing else:
 //   1. open a row's detail in the inspector (desktop) or a sheet (phone)
 //      by fetching the same route with ?partial=1 -- no page navigation;
 //   2. keyboard: ⌘1-6 screens, ⌘F filter, ↑/↓ select, Space/Enter open, Esc close;
 //   3. the phone tab bar minimises while scrolling down;
-//   4. the agent timeline tail (EventSource) appends rows with textContent.
+//   4. the agent timeline tail (EventSource) appends rows with textContent;
+//   5. the six screens are prefetched and switched in place (see "screens").
 // Every string that reaches the DOM is either server-rendered HTML from our own
 // origin (already escaped and secret-scrubbed) or inserted via textContent.
 (function () {
@@ -132,10 +133,9 @@
 
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
       var n = parseInt(e.key, 10);
-      var screens = document.querySelectorAll("[data-screen]");
       if (n >= 1 && n <= screens.length) {
         e.preventDefault();
-        location.href = screens[n - 1].getAttribute("href");
+        go(screens[n - 1], "push");
         return;
       }
       if (e.key === "f" || e.key === "F") {
@@ -318,16 +318,214 @@
     };
   }
 
+  // ---- screens: instant switching ----
+  // The six screens are fetched in parallel right after first paint and kept
+  // in memory, so tapping the rail or the tab bar swaps the content block in
+  // place instead of reloading the whole page through the tunnel. A copy older
+  // than FRESH_MS is refetched before it is shown (a thin progress line says
+  // so); the rest are refreshed in the background after every switch. Tapping
+  // the screen you are already on refetches it. Everything else -- detail
+  // pages, /v2/, a session the edge has expired -- stays a normal navigation.
+
+  var FRESH_MS = 120000;
+  var screens = [];
+  var pages = {};
+  var inflight = {};
+  var progress = null;
+
+  (function () {
+    var links = document.querySelectorAll("[data-screen]");
+    for (var i = 0; i < links.length; i++) screens.push(links[i].getAttribute("href"));
+  })();
+
+  function isScreen(path) {
+    return screens.indexOf(path) >= 0;
+  }
+
+  function fetchPage(path) {
+    if (inflight[path]) return inflight[path];
+    var p = fetch(path, { headers: { Accept: "text/html" }, credentials: "same-origin" })
+      .then(function (r) {
+        if (!r.ok || r.redirected) throw new Error(String(r.status));
+        return r.text();
+      })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        if (!doc.getElementById("content")) throw new Error("no content");
+        pages[path] = { doc: doc, at: Date.now() };
+        return pages[path];
+      });
+    inflight[path] = p;
+    p.then(
+      function () {
+        delete inflight[path];
+      },
+      function () {
+        delete inflight[path];
+      }
+    );
+    return p;
+  }
+
+  function prefetchOthers(except) {
+    for (var i = 0; i < screens.length; i++) {
+      var path = screens[i];
+      var have = pages[path];
+      if (path === except || (have && Date.now() - have.at < FRESH_MS)) continue;
+      fetchPage(path).catch(function () {});
+    }
+  }
+
+  function showProgress() {
+    if (!progress) {
+      progress = document.createElement("div");
+      progress.className = "progress";
+      document.body.appendChild(progress);
+    }
+    progress.classList.add("is-on");
+  }
+
+  function hideProgress() {
+    if (progress) progress.classList.remove("is-on");
+  }
+
+  function replaceStripItems(doc) {
+    var strip = document.querySelector(".strip");
+    var fresh = doc.querySelector(".strip");
+    if (!strip || !fresh) return;
+    var old = strip.querySelectorAll(".strip-item, .strip-spacer");
+    for (var i = 0; i < old.length; i++) old[i].remove();
+    var filter = document.getElementById("filter");
+    var items = fresh.querySelectorAll(".strip-item, .strip-spacer");
+    for (var j = 0; j < items.length; j++) strip.insertBefore(document.importNode(items[j], true), filter);
+  }
+
+  function setActive(path) {
+    var links = document.querySelectorAll("[data-screen], #tabbar a");
+    for (var i = 0; i < links.length; i++) {
+      var on = links[i].getAttribute("href") === path;
+      links[i].classList.toggle("is-active", on);
+      if (!links[i].hasAttribute("data-screen")) continue;
+      if (on) links[i].setAttribute("aria-current", "page");
+      else links[i].removeAttribute("aria-current");
+    }
+  }
+
+  function swap(path, page) {
+    var doc = page.doc;
+    var hash = location.hash;
+    close();
+    document.getElementById("content").innerHTML = doc.getElementById("content").innerHTML;
+    document.title = doc.title;
+    var brand = document.querySelector(".mobile-head .brand");
+    var freshBrand = doc.querySelector(".mobile-head .brand");
+    if (brand && freshBrand) brand.textContent = freshBrand.textContent;
+    var foot = document.querySelector(".rail-foot");
+    var freshFoot = doc.querySelector(".rail-foot");
+    if (foot && freshFoot) {
+      foot.innerHTML = freshFoot.innerHTML;
+      foot.title = freshFoot.title;
+    }
+    replaceStripItems(doc);
+    setActive(path);
+    var filters = document.querySelectorAll("#filter, #filter-m");
+    for (var i = 0; i < filters.length; i++) filters[i].value = "";
+    if (tabbar) tabbar.classList.remove("is-min");
+    window.scrollTo(0, 0);
+    startStream(document);
+    openDeep(hash);
+  }
+
+  function go(path, mode) {
+    if (!isScreen(path)) {
+      location.href = path;
+      return;
+    }
+    var have = pages[path];
+    var ready;
+    if (have && have.doc && Date.now() - have.at < FRESH_MS) {
+      ready = Promise.resolve(have);
+    } else {
+      showProgress();
+      ready = fetchPage(path);
+    }
+    ready
+      .then(function (page) {
+        hideProgress();
+        if (mode === "push") history.pushState({ screen: path }, "", path);
+        else if (mode === "replace") history.replaceState({ screen: path }, "", path);
+        var run = function () {
+          swap(path, page);
+        };
+        if (document.startViewTransition) document.startViewTransition(run);
+        else run();
+        setTimeout(function () {
+          prefetchOthers(path);
+        }, 600);
+      })
+      .catch(function () {
+        hideProgress();
+        location.href = path;
+      });
+  }
+
+  document.addEventListener("click", function (e) {
+    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    var a = e.target.closest("a[href]");
+    if (!a || a.hasAttribute("data-detail") || a.getAttribute("target")) return;
+    var href = a.getAttribute("href");
+    if (!isScreen(href)) return;
+    e.preventDefault();
+    if (href === location.pathname) {
+      // The screen you are on: fetch it again rather than trust the copy.
+      pages[href] = null;
+      go(href, "replace");
+      return;
+    }
+    go(href, "push");
+  });
+
+  window.addEventListener("popstate", function () {
+    if (isScreen(location.pathname)) go(location.pathname, "pop");
+  });
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible") return;
+    var here = location.pathname;
+    if (!isScreen(here) || current) return;
+    var have = pages[here];
+    if (have && Date.now() - have.at < FRESH_MS) return;
+    fetchPage(here)
+      .then(function (page) {
+        if (location.pathname === here && !current) swap(here, page);
+      })
+      .catch(function () {});
+    prefetchOthers(here);
+  });
+
   // ---- boot ----
 
-  startStream(document);
+  function openDeep(hash) {
+    var h = hash == null ? location.hash : hash;
+    if (h.length < 2) return;
+    var deep = h.slice(1);
+    if (!SAFE_PATH.test(deep)) return;
+    var row = document.querySelector('a.row[data-detail][href="' + deep + '"]');
+    open(deep, row);
+  }
 
-  if (location.hash.length > 1) {
-    var deep = location.hash.slice(1);
-    if (SAFE_PATH.test(deep)) {
-      var row = document.querySelector('a.row[data-detail][href="' + deep + '"]');
-      open(deep, row);
-    }
+  startStream(document);
+  openDeep();
+
+  if (isScreen(location.pathname)) {
+    pages[location.pathname] = { doc: null, at: Date.now() };
+    setTimeout(function () {
+      prefetchOthers(location.pathname);
+    }, 300);
+  } else {
+    setTimeout(function () {
+      prefetchOthers(null);
+    }, 1200);
   }
 
   wide.addEventListener("change", function () {

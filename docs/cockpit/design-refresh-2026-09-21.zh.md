@@ -45,9 +45,18 @@
 - **过滤**：血统图不匹配的节点 / 边 180ms 淡到 16% / 10%；过滤框聚焦时宽度从 190 展到 240，带强调色外圈。
 - `prefers-reduced-motion: reduce` 时全部关闭（含 View Transition）；`prefers-reduced-transparency` 时玻璃退化为不透明。
 
+## 4b. 名字与切屏（2026-09-21 晚补）
+
+- **名字改为 Quant**（域名 `quant.hadan.blog`，机主不喜欢 cockpit 这个词）：侧栏品牌、页面标题、主屏幕图标名、favicon 与侧栏的标记都改成 Q 形（圆 + 尾巴），代码里的模块名 `open_composer.cockpit` 不动。
+- **切屏不再整页刷新**：机主在手机上经隧道访问时，每次点侧栏都要等好几秒。本机渲染每屏只要 0.2–0.8 s，慢的是链路：一次整页导航 = HTML 一趟 + CSS 一趟 + 字体一趟 + 脚本一趟，串行三四个往返，而且跨文档 View Transition 会把旧页冻住直到新页就绪，看不到进度。现在：
+  1. 静态资源带内容哈希 `?v=`，响应头 `Cache-Control: public, max-age=31536000, immutable`（`_ImmutableStaticFiles`），浏览器与 Cloudflare 边缘都能长期缓存，一次导航只剩 HTML 一趟。
+  2. 首屏画完 300 ms 后并行预取另外五屏的 HTML 存在内存里；点侧栏 / 标签栏 / ⌘1-6 时就地替换内容区、标题、顶栏状态项与激活态（同文档 View Transition），不再整页加载；每次切换后把其它屏的旧副本（超过 120 s）在后台刷新；再点当前屏 = 重新拉取；页面从后台回到前台且副本过期时自动刷新当前屏。需要走网络时顶部出现 2px 强调色进度线。
+  3. 详情页、`/v2/`、边缘会话过期（fetch 被 302 到登录页）一律退回整页导航；无 JS 时链接照常可用。
+  4. 实测（本机 Playwright，桌面 + 手机）：整个会话只有 1 次 document 请求，其余五屏由预取覆盖；切换 160–500 ms（含 400 ms 过渡动画）；检视器深链在后退时恢复。
+
 ## 5. 可调的旋钮
 
-想更冷 / 更暖：改 `--bg` 四级与 `--ink`。想换强调色：只改 `--tint` / `--tint-2`（`--tint-bg` / `--tint-ring` 跟着改 alpha 即可）。想更密：`.row { min-height; padding }`、`.metrics { margin-bottom }`、`.section { margin }`。想更慢或更快：`--ease` / `--spring` 与各 `animation` 时长。光晕：`--glow`。
+想更冷 / 更暖：改 `--bg` 四级与 `--ink`。想换强调色：只改 `--tint` / `--tint-2`（`--tint-bg` / `--tint-ring` 跟着改 alpha 即可）。想更密：`.row { min-height; padding }`、`.metrics { margin-bottom }`、`.section { margin }`。想更慢或更快：`--ease` / `--spring` 与各 `animation` 时长。光晕：`--glow`。切屏副本的保鲜期：`cockpit.js` 里的 `FRESH_MS`（默认 120 s）。
 
 ## 6. 作废的暖纸墨稿（为什么不回去）
 

@@ -35,6 +35,7 @@ Interface for T7-T8
 
 from __future__ import annotations
 
+import hashlib
 import os
 import threading
 import time
@@ -46,6 +47,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.responses import Response
+from starlette.types import Scope
 
 from open_composer.cockpit.api import CARD_ID_PATH_RE, register_api_routes
 from open_composer.cockpit.data.agents import (
@@ -105,6 +108,33 @@ from open_composer.config import project_root
 _PACKAGE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = _PACKAGE_DIR / "templates"
 STATIC_DIR = _PACKAGE_DIR / "static"
+
+
+class _ImmutableStaticFiles(StaticFiles):
+    """``/static`` with a one-year immutable cache header.
+
+    Every reference from the templates carries ``?v=<content hash>`` (see
+    :func:`_asset_version`), so a browser -- and the Cloudflare edge in front
+    of the tunnel -- can keep the stylesheet, script and fonts indefinitely and
+    still pick up a new build the moment the HTML points at a new hash.
+    Without this every screen change re-validated four assets through the
+    tunnel before the page could paint.
+    """
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        response = await super().get_response(path, scope)
+        if response.status_code in (200, 304):
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+
+def _asset_version() -> str:
+    """Short content hash of the stylesheet and script, computed once per process."""
+    digest = hashlib.sha256()
+    for name in ("css/cockpit.css", "js/cockpit.js"):
+        digest.update((STATIC_DIR / name).read_bytes())
+    return digest.hexdigest()[:12]
+
 
 # Every screen the information architecture in plan section 4 calls for.
 # (slug, url path, nav label). T4-T8 replace the stub route body for their
@@ -287,9 +317,7 @@ def _base_context(request: Request, active: str) -> dict[str, Any]:
         "topbar_usage_estimate": status["usage_estimate"],
         "topbar_agents": status["agents"],
         "generated_at": now,
-        "screen_label": next(
-            (label for slug, _path, label in SCREENS if slug == active), "Cockpit"
-        ),
+        "screen_label": next((label for slug, _path, label in SCREENS if slug == active), "Quant"),
         # Detail routes render the content block alone when asked for a partial,
         # which is how the inspector (desktop) and the sheet (phone) load them.
         "layout": "partial.html" if request.query_params.get("partial") else "base.html",
@@ -442,9 +470,10 @@ def create_app(*, warm: bool = True) -> FastAPI:
     templates.env.filters["money"] = _format_money
     templates.env.filters["k"] = _format_k
     templates.env.filters["count_sep"] = format_entry_count
+    templates.env.globals["asset_v"] = _asset_version()
     if warm:
         _start_warm_thread()
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+    app.mount("/static", _ImmutableStaticFiles(directory=str(STATIC_DIR)), name="static")
 
     @app.get("/healthz")
     def healthz() -> JSONResponse:
