@@ -250,6 +250,7 @@ label in this module.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -291,6 +292,18 @@ DEFAULT_TIMEOUT_SECONDS: Final[float] = 5.0
 CACHE_TTL_SECONDS: Final[float] = 60.0
 BREAKER_FAILURE_THRESHOLD: Final[int] = 3
 BREAKER_COOLDOWN_SECONDS: Final[float] = 600.0  # 10 minutes
+
+#: A token value that answered 401/403 is remembered (by an in-memory,
+#: non-reversible fingerprint -- never the token) and not sent to the network
+#: again until the value changes (re-login writes a new token) or this much
+#: time passes. Before this, an expired token was re-sent every cache period
+#: from every source that held it, and the endpoint answered with 429s.
+TOKEN_VERDICT_TTL_SECONDS: Final[float] = 6 * 3600.0
+#: After a 429 no source is probed until ``Retry-After`` has elapsed, bounded
+#: to this range (the endpoint limits per client, so a second source in the
+#: same round only earns a second 429). Without the header: the minimum.
+RATE_LIMIT_BACKOFF_MIN_SECONDS: Final[float] = 900.0
+RATE_LIMIT_BACKOFF_MAX_SECONDS: Final[float] = 3600.0
 
 #: T6b: ordered credential resolution. The env var name is Anthropic's own
 #: (also what a real `claude setup-token` writes into `~/.paseo/config.json`).
@@ -620,13 +633,16 @@ class CredentialProbe:
     caller, `ClaudeQuotaCache._refresh`: ``"ok"``, ``"expired (401)"``,
     ``"insufficient scope (403)"``, ``"http <code>"``, ``"timeout"``,
     ``"network error"``, ``"invalid response"``, or ``"absent"`` (no token
-    found at this source, so no request was attempted).
+    found at this source, so no request was attempted). ``cached`` is true
+    when the outcome was remembered from an earlier round (expired token, or
+    a 429 back-off still running) and no request was made this round.
     """
 
     source: CredentialSourceKey
     label: str
     token_found: bool
     outcome: str
+    cached: bool = False
 
 
 @dataclass(frozen=True)
@@ -880,6 +896,39 @@ def _build_http_client() -> httpx.Client:
     return httpx.Client()
 
 
+@dataclass(frozen=True)
+class _TokenVerdict:
+    """What one exact token value answered last time, kept until ``until``."""
+
+    outcome: str
+    http_status: int
+    diagnostic: str | None
+    until: datetime
+
+
+def _token_fingerprint(token: str) -> str:
+    """Non-reversible key for remembering a verdict per token *value*.
+
+    In-memory only, never rendered, never logged; a different token (after a
+    re-login) has a different fingerprint and is probed at once.
+    """
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()[:16]
+
+
+def _retry_after_seconds(response: httpx.Response) -> float:
+    """``Retry-After`` in seconds, clamped to the back-off range.
+
+    Only the delta-seconds form is honoured; an HTTP-date (or no header at
+    all) falls back to the minimum.
+    """
+    raw = response.headers.get("Retry-After", "")
+    try:
+        seconds = float(raw.strip())
+    except ValueError:
+        return RATE_LIMIT_BACKOFF_MIN_SECONDS
+    return max(RATE_LIMIT_BACKOFF_MIN_SECONDS, min(RATE_LIMIT_BACKOFF_MAX_SECONDS, seconds))
+
+
 class ClaudeQuotaCache:
     """Process-wide cache + circuit breaker + burn-rate ring buffer.
 
@@ -896,6 +945,11 @@ class ClaudeQuotaCache:
         self._consecutive_failures = 0
         self._breaker_open_until: datetime | None = None
         self._samples: deque[BurnRateSample] = deque(maxlen=_MAX_BURN_SAMPLES)
+        # Remembered 401/403 verdicts keyed by token fingerprint, and the
+        # global 429 back-off. Both exist so a round with nothing new to
+        # learn costs no request at all.
+        self._verdicts: dict[str, _TokenVerdict] = {}
+        self._rate_limited_until: datetime | None = None
 
     def get(
         self,
@@ -995,6 +1049,11 @@ class ClaudeQuotaCache:
                 best_diagnostic = diagnostic
                 best_http_status = http_status
 
+        # Verdicts past their TTL are dropped here, once per round.
+        self._verdicts = {fp: v for fp, v in self._verdicts.items() if moment < v.until}
+        rate_limited = self._rate_limited_until is not None and moment < self._rate_limited_until
+        attempted_http = False
+
         owns_client = client is None
         http_client = client if client is not None else _build_http_client()
         try:
@@ -1007,6 +1066,44 @@ class ClaudeQuotaCache:
                     )
                     continue
 
+                fingerprint = _token_fingerprint(token)
+                if rate_limited:
+                    # One 429 (this round or a recent one) silences every
+                    # source until Retry-After has elapsed.
+                    del token
+                    probes.append(
+                        CredentialProbe(
+                            source=source,
+                            label=label,
+                            token_found=True,
+                            outcome="http 429",
+                            cached=True,
+                        )
+                    )
+                    _consider_failure("http 429", http_status=429)
+                    continue
+                remembered = self._verdicts.get(fingerprint)
+                if remembered is not None:
+                    # This exact token value already answered 401/403: do
+                    # not send it again; the diagnosis table still shows why.
+                    del token
+                    probes.append(
+                        CredentialProbe(
+                            source=source,
+                            label=label,
+                            token_found=True,
+                            outcome=remembered.outcome,
+                            cached=True,
+                        )
+                    )
+                    _consider_failure(
+                        remembered.outcome,
+                        diagnostic=remembered.diagnostic,
+                        http_status=remembered.http_status,
+                    )
+                    continue
+
+                attempted_http = True
                 version = discover_claude_cli_version()
                 headers = {
                     "Authorization": f"Bearer {token}",
@@ -1042,6 +1139,7 @@ class ClaudeQuotaCache:
                     )
                     diagnostic = secret_scrub(response.text[:500]) if response.text else None
                     _consider_failure("expired (401)", diagnostic=diagnostic, http_status=401)
+                    self._remember(fingerprint, "expired (401)", 401, diagnostic, moment)
                     continue
                 if response.status_code == 403:
                     probes.append(
@@ -1056,6 +1154,7 @@ class ClaudeQuotaCache:
                     _consider_failure(
                         "insufficient scope (403)", diagnostic=diagnostic, http_status=403
                     )
+                    self._remember(fingerprint, "insufficient scope (403)", 403, diagnostic, moment)
                     continue
                 if response.status_code >= 400:
                     outcome = f"http {response.status_code}"
@@ -1068,6 +1167,11 @@ class ClaudeQuotaCache:
                     _consider_failure(
                         outcome, diagnostic=diagnostic, http_status=response.status_code
                     )
+                    if response.status_code == 429:
+                        self._rate_limited_until = moment + timedelta(
+                            seconds=_retry_after_seconds(response)
+                        )
+                        rate_limited = True
                     continue
 
                 try:
@@ -1099,9 +1203,13 @@ class ClaudeQuotaCache:
         if winning_snapshot is not None:
             self._consecutive_failures = 0
             self._breaker_open_until = None
+            self._rate_limited_until = None
             return replace(winning_snapshot, credential_probes=probes_tuple)
 
-        self._record_failure(moment)
+        if attempted_http:
+            # A round that only replayed remembered verdicts is not a new
+            # failure: the breaker counts network attempts, not cache reads.
+            self._record_failure(moment)
         reason = best_reason if best_reason is not None else "no credentials"
         return _unavailable_snapshot(
             moment,
@@ -1109,6 +1217,21 @@ class ClaudeQuotaCache:
             diagnostic=best_diagnostic,
             http_status=best_http_status,
             credential_probes=probes_tuple,
+        )
+
+    def _remember(
+        self,
+        fingerprint: str,
+        outcome: str,
+        http_status: int,
+        diagnostic: str | None,
+        moment: datetime,
+    ) -> None:
+        self._verdicts[fingerprint] = _TokenVerdict(
+            outcome=outcome,
+            http_status=http_status,
+            diagnostic=diagnostic,
+            until=moment + timedelta(seconds=TOKEN_VERDICT_TTL_SECONDS),
         )
 
     def _record_failure(self, moment: datetime) -> None:

@@ -1107,3 +1107,16 @@ def test_topbar_agents_cache_is_thread_safe_lock_guarded() -> None:
     assert hasattr(cache, "_lock")
     assert cache._lock.acquire(blocking=False)
     cache._lock.release()
+
+
+def test_tool_result_binary_blocks_are_named_not_dumped() -> None:
+    from open_composer.cockpit.data.agents import _stringify_tool_result_content
+
+    blob = "iVBORw0KGgoAAAANSUhEUgAA" * 40
+    content = [
+        {"type": "text", "text": "wrote the file"},
+        {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": blob}},
+    ]
+    out = _stringify_tool_result_content(content)
+    assert out == "wrote the file [image]"
+    assert "iVBOR" not in out

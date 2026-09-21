@@ -74,7 +74,7 @@
   {% for probe in snap.credential_probes %}
   <div class="row row--plain">
     <span class="row-main"><span class="row-title"><span class="text">{{ probe.label }}</span></span></span>
-    <span class="row-aside"><span class="chip chip--{{ 'ok' if probe.outcome == 'ok' else ('unknown' if probe.outcome == 'absent' else 'stale') }}">{{ probe.outcome }}</span></span>
+    <span class="row-aside"><span class="chip chip--{{ 'ok' if probe.outcome == 'ok' else ('unknown' if probe.outcome == 'absent' else 'stale') }}">{{ probe.outcome }}</span>{% if probe.cached %}<span>remembered · not re-sent</span>{% endif %}</span>
   </div>
   {% else %}
   <div class="empty">None</div>

@@ -427,6 +427,11 @@ def _stringify_tool_result_content(content: Any) -> str:
         for block in content:
             if isinstance(block, dict) and isinstance(block.get("text"), str):
                 parts.append(block["text"])
+            elif isinstance(block, dict) and isinstance(block.get("type"), str):
+                # Binary blocks (screenshots come back as base64 image
+                # blocks) are named, never dumped: a 400-char slice of
+                # base64 tells the reader nothing.
+                parts.append(f"[{block['type']}]")
             else:
                 parts.append(str(block))
         return " ".join(parts)

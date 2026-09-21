@@ -1647,3 +1647,105 @@ def test_compute_throttle_calibration_marks_partial_coverage_when_subagent_files
     assert Q._throttle_window_coverage(event_at, subagent_root) == "partial"
     assert Q._throttle_window_coverage(event_at, tmp_path / "missing") == "main only"
     assert Q._throttle_window_coverage(event_at + timedelta(days=13), subagent_root) == "full"
+
+
+# --------------------------------------------------------------------------
+# Expired tokens are remembered, a 429 backs off, one 429 ends the round
+# --------------------------------------------------------------------------
+
+
+def test_expired_token_is_remembered_and_not_resent_until_it_changes(tmp_path: Path) -> None:
+    creds = _write_credentials(tmp_path)
+    calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(401, text="expired")
+
+    cache = Q.ClaudeQuotaCache()
+    base = datetime(2026, 9, 20, tzinfo=UTC)
+    step = timedelta(seconds=Q.CACHE_TTL_SECONDS + 1)
+    first = cache.get(now=base, credentials_path=creds, client=_client_for(handler))
+    second = cache.get(now=base + step, credentials_path=creds, client=_client_for(handler))
+
+    assert len(calls) == 1, "the same expired token must not be sent again"
+    assert first.snapshot.unavailable_reason == "token expired -- re-login"
+    assert second.snapshot.unavailable_reason == "token expired -- re-login"
+    assert second.snapshot.http_status == 401
+    probe = next(p for p in second.snapshot.credential_probes if p.source == "credentials_file")
+    assert probe.outcome == "expired (401)"
+    assert probe.cached is True
+    assert second.consecutive_failures == 1, "a remembered verdict is not a new failure"
+    assert second.breaker_open is False
+
+    # A re-login writes a different token value: that one is probed at once.
+    _write_credentials(tmp_path, token="sk-ant-oat01-newtoken00000000000000000000")
+    cache.get(now=base + 2 * step, credentials_path=creds, client=_client_for(handler))
+    assert len(calls) == 2
+
+    # The verdict itself expires eventually, so a stuck box is re-checked.
+    later = base + 2 * step + timedelta(seconds=Q.TOKEN_VERDICT_TTL_SECONDS + 1)
+    cache.get(now=later, credentials_path=creds, client=_client_for(handler))
+    assert len(calls) == 3
+
+
+def test_rate_limit_ends_the_round_and_backs_off_for_retry_after(tmp_path: Path) -> None:
+    creds = _write_credentials(tmp_path)
+    calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(429, text="rate limited", headers={"Retry-After": "1200"})
+
+    cache = Q.ClaudeQuotaCache()
+    base = datetime(2026, 9, 20, tzinfo=UTC)
+    env = {Q._ENV_TOKEN_VAR: "sk-ant-oat01-envtoken000000000000000000000"}
+    kwargs = dict(env=env, credentials_path=creds, paseo_config_path=tmp_path / "missing.json")
+
+    first = cache.get(now=base, client=_client_for(handler), **kwargs)
+    assert len(calls) == 1, "a 429 ends the round; the next source is not tried"
+    assert first.snapshot.http_status == 429
+    assert first.snapshot.unavailable_reason == "http 4xx/5xx"
+    by_source = {p.source: p for p in first.snapshot.credential_probes}
+    assert by_source["env"].outcome == "http 429" and by_source["env"].cached is False
+    assert by_source["credentials_file"].outcome == "http 429"
+    assert by_source["credentials_file"].cached is True
+    assert by_source["paseo"].outcome == "absent"
+
+    step = timedelta(seconds=Q.CACHE_TTL_SECONDS + 1)
+    second = cache.get(now=base + step, client=_client_for(handler), **kwargs)
+    assert len(calls) == 1, "inside Retry-After: no request at all"
+    assert second.consecutive_failures == 1
+    assert all(p.cached for p in second.snapshot.credential_probes if p.token_found)
+    assert second.breaker_open is False
+
+    after = base + timedelta(seconds=1200 + 1)
+    cache.get(now=after, client=_client_for(handler), **kwargs)
+    assert len(calls) == 2, "Retry-After elapsed: exactly one new request"
+
+
+def test_retry_after_is_bounded_and_tolerates_dates() -> None:
+    low = httpx.Response(429, headers={"Retry-After": "5"})
+    high = httpx.Response(429, headers={"Retry-After": "999999"})
+    date = httpx.Response(429, headers={"Retry-After": "Wed, 21 Oct 2026 07:28:00 GMT"})
+    none = httpx.Response(429)
+    assert Q._retry_after_seconds(low) == Q.RATE_LIMIT_BACKOFF_MIN_SECONDS
+    assert Q._retry_after_seconds(high) == Q.RATE_LIMIT_BACKOFF_MAX_SECONDS
+    assert Q._retry_after_seconds(date) == Q.RATE_LIMIT_BACKOFF_MIN_SECONDS
+    assert Q._retry_after_seconds(none) == Q.RATE_LIMIT_BACKOFF_MIN_SECONDS
+
+
+def test_success_clears_the_rate_limit_backoff(tmp_path: Path) -> None:
+    creds = _write_credentials(tmp_path)
+    answers = [httpx.Response(429, text="rate limited"), httpx.Response(200, json=_SAMPLE_PAYLOAD)]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return answers.pop(0)
+
+    cache = Q.ClaudeQuotaCache()
+    base = datetime(2026, 9, 20, tzinfo=UTC)
+    cache.get(now=base, credentials_path=creds, client=_client_for(handler))
+    after = base + timedelta(seconds=Q.RATE_LIMIT_BACKOFF_MIN_SECONDS + 1)
+    report = cache.get(now=after, credentials_path=creds, client=_client_for(handler))
+    assert report.snapshot.available is True
+    assert answers == []
