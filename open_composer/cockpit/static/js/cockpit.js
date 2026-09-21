@@ -183,6 +183,16 @@
 
   function applyFilter(query) {
     var q = query.trim().toLowerCase();
+    var lanes = document.querySelectorAll("details[data-lane]");
+    for (var l = 0; l < lanes.length; l++) {
+      if (q !== "") {
+        if (!lanes[l].hasAttribute("data-was-open")) lanes[l].setAttribute("data-was-open", lanes[l].open ? "1" : "0");
+        lanes[l].open = true;
+      } else if (lanes[l].hasAttribute("data-was-open")) {
+        lanes[l].open = lanes[l].getAttribute("data-was-open") === "1";
+        lanes[l].removeAttribute("data-was-open");
+      }
+    }
     var items = document.querySelectorAll("[data-filter]");
     for (var i = 0; i < items.length; i++) {
       var miss = q !== "" && items[i].getAttribute("data-filter").toLowerCase().indexOf(q) < 0;
@@ -203,6 +213,8 @@
       var anyVisible = false;
       for (var r = 0; r < rows.length; r++) if (!rows[r].hidden) anyVisible = true;
       groups[g].hidden = rows.length > 0 && !anyVisible;
+      var lane = groups[g].closest("details[data-lane]");
+      if (lane) lane.hidden = groups[g].hidden;
     }
   }
 

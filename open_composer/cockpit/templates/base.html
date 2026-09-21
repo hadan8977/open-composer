@@ -42,7 +42,7 @@
         <span class="chip chip--unknown"><span class="clip">{{ topbar_quota_claude.unavailable_reason }}</span></span>
       </a>
     {% endif %}
-    <a class="strip-item" data-slot="quota-codex" href="/quota" title="Codex quota · {{ topbar_quota_codex.label }}"><span class="t-cap">Codex</span><span class="faint">{{ topbar_quota_codex.label }}</span></a>
+    <a class="strip-item strip-item--quiet" data-slot="quota-codex" href="/quota" title="Codex quota · {{ topbar_quota_codex.label }}"><span class="t-cap">Codex</span><span class="faint">{{ 'live' if topbar_quota_codex.available else 'none' }}</span></a>
     <a class="strip-item" data-slot="usage-estimate" href="/quota" title="fresh tokens, current 5h window · main {{ topbar_usage_estimate.fresh_main|k }} · subagents {{ topbar_usage_estimate.fresh_subagent|k }}">
       <span class="t-cap">fresh 5h</span><span class="num">{{ topbar_usage_estimate.fresh_total|k }}</span>
     </a>
@@ -51,11 +51,9 @@
     <a class="strip-item" data-slot="agent-dots" href="/agents" title="{{ live.running }} running · {{ live.error }} error · {{ live.idle }} idle">
       <span class="t-cap">agents</span>
       <span class="agent-dots">{% for _agent_id, agent_status in topbar_agents if agent_status in ("running", "error") %}<span class="dot dot--{{ agent_status|agent_dot }}{% if agent_status == 'running' %} dot--live{% endif %}"></span>{% endfor %}</span>
-      {% if live.running %}<span class="num">{{ live.running }}</span><span>running</span>{% endif %}
-      {% if live.error %}<span class="num">{{ live.error }}</span><span>error</span>{% endif %}
-      <span class="num">{{ live.idle }}</span><span>idle</span>
+      {% if live.running %}<span class="num">{{ live.running }}</span><span>running</span>{% elif live.error %}<span class="num">{{ live.error }}</span><span>error</span>{% else %}<span class="num">{{ live.idle }}</span><span>idle</span>{% endif %}
     </a>
-    <a class="strip-item" data-slot="data-freshness" href="/health" title="data freshness"><span class="t-cap">data</span><span class="dot dot--{{ topbar_data_freshness.status }}"></span><span>{{ topbar_data_freshness.label }}</span></a>
+    <a class="strip-item" data-slot="data-freshness" href="/health" title="data freshness · {{ topbar_data_freshness.label }}"><span class="t-cap">data</span><span class="dot dot--{{ topbar_data_freshness.status }}"></span><span>{{ topbar_data_freshness.label }}</span></a>
     <a class="strip-item" data-slot="rehearsal-countdown" href="/paper" title="{{ topbar_rehearsal.label }}"><span class="t-cap">auth</span><span class="dot dot--{{ topbar_rehearsal.status }}"></span><span class="num">{{ topbar_rehearsal.label.rsplit(":", 1)[-1]|trim }}</span></a>
     <span class="strip-spacer"></span>
     <input class="filter" id="filter" type="search" placeholder="Filter  ⌘F" autocomplete="off" aria-label="Filter">

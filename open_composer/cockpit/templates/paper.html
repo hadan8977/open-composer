@@ -54,12 +54,7 @@
     <span class="dot dot--{{ auth.status }}"></span>
     <span class="row-main">
       <span class="row-title"><span class="text">{{ strategy.name }}</span><span class="chip chip--{{ auth.status }}">{{ auth_state_labels[auth.state] }}</span></span>
-      <span class="row-sub">
-        cycle {{ strategy.cycle_status or "unknown" }} · {{ strategy.generated_at|ago if strategy.generated_at else "never" }}
-        {% if strategy.latest_fill_rate is not none %} · fill <span class="num">{{ "%.0f%%"|format(strategy.latest_fill_rate * 100) }}</span>{% if strategy.latest_fill_session %} {{ strategy.latest_fill_session }}{% endif %}{% endif %}
-        · order {{ strategy.last_order_at|ago if strategy.last_order_at else "never" }}
-        {% if strategy.positions_agreement %} · positions {{ strategy.positions_agreement }}{% endif %}
-      </span>
+      <span class="row-sub">cycle {{ strategy.cycle_status or "unknown" }} · {{ strategy.generated_at|ago if strategy.generated_at else "never" }}{% if strategy.latest_fill_rate is not none %} · fill <span class="num">{{ "%.0f%%"|format(strategy.latest_fill_rate * 100) }}</span>{% endif %}</span>
     </span>
     <span class="row-aside">
       {% if auth.days_remaining is not none %}<span class="num">{{ "%.1f"|format(auth.days_remaining) }}d</span><span>to expiry</span>

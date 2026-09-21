@@ -23,13 +23,8 @@
     <span class="row-main">
       <span class="row-title">
         <span class="text">{{ record.title or record.id[:8] }}</span>
-        <span class="id after">{{ record.provider }} · {{ (record.model or "unknown")|replace("claude-", "") }}</span>
       </span>
-      <span class="row-sub">
-        {% if act and act.current_file %}<span class="mono">{{ act.current_file }}</span>
-        {% elif act and act.last_text %}{{ act.last_text }}
-        {% else %}<span class="faint">No transcript</span>{% endif %}
-      </span>
+      <span class="row-sub">{{ record.provider }} · <span class="mono">{{ (record.model or "unknown")|replace("claude-", "") }}</span>{% if act and act.current_file %} · <span class="mono">{{ act.current_file|replace(record.cwd ~ "/", "") if record.cwd else act.current_file }}</span>{% elif not act or not act.transcript_path %} · <span class="faint">no transcript</span>{% endif %}</span>
     </span>
     <span class="row-aside">
       <span class="num" title="{{ record.last_activity_at.isoformat() if record.last_activity_at else '' }}">{{ record.last_activity_at|ago }}</span>

@@ -15,11 +15,13 @@
 </div>
 
 {% for lane, cards in lanes.items() if cards %}
-<section class="group" id="{{ lane|replace(' ', '-') }}" data-filter-group>
-  <div class="group-head">
+{% set settled = lane in ("refuted", "on hold", "data card", "unclassified") %}
+<details class="lane" id="{{ lane|replace(' ', '-') }}" data-lane{% if not settled %} open{% endif %}>
+  <summary class="lane-head">
     <span class="state"><span class="dot dot--{{ lane_status(lane) }}"></span>{{ lane }}</span>
     <span class="num">{{ cards|length }}</span>
-  </div>
+  </summary>
+<section class="group" data-filter-group>
   {% for card in cards %}
   {% set facts = report.results.for_card(card.id) %}
   {% set ns = namespace(cells=0, counted=false) %}
@@ -30,17 +32,18 @@
       <span class="row-title"><span class="id">{{ card.id }}</span><span class="text">{{ card.title }}</span></span>
       <span class="row-sub">
         {% if lane == "unclassified" %}{{ card.status_text or "no status line" }}
-        {% else %}{{ card.layer or "–" }}{% if card.data_layer %} · {{ card.data_layer }}{% endif %}{% endif %}
+        {% else %}{{ card.layer or "–" }}{% endif %}
       </span>
     </span>
     <span class="row-aside">
-      {% if ns.counted %}<span class="num">{{ ns.cells }}</span><span>cells · {{ facts|length }} run{{ "s" if facts|length != 1 }}</span>
+      {% if ns.counted %}<span class="num">{{ ns.cells }}</span><span>cells</span>
       {% elif facts %}<span class="num">{{ facts|length }}</span><span>run{{ "s" if facts|length != 1 }}</span>
-      {% else %}<span class="faint">No results</span>{% endif %}
+      {% endif %}
     </span>
   </a>
   {% endfor %}
 </section>
+</details>
 {% endfor %}
 
 {% if report.results.warnings %}
