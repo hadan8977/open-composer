@@ -36,11 +36,8 @@ Interface for T7-T8
 from __future__ import annotations
 
 import os
-import re
 import threading
 import time
-from collections import defaultdict
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -50,6 +47,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from open_composer.cockpit.api import CARD_ID_PATH_RE, register_api_routes
 from open_composer.cockpit.data.agents import (
     AGENT_ID_RE,
     agent_state_dot,
@@ -69,6 +67,7 @@ from open_composer.cockpit.data.health import (
     summarize_statuses,
 )
 from open_composer.cockpit.data.hypotheses import (
+    _layout_connected,
     build_hypotheses_report,
     extract_criteria_sections,
     find_card,
@@ -102,10 +101,6 @@ from open_composer.cockpit.data.quota import (
 from open_composer.cockpit.markdown import render_markdown
 from open_composer.cockpit.security import PathTraversalError, safe_repo_path
 from open_composer.config import project_root
-
-#: Validated before a card id ever touches the filesystem (T4 brief, "card
-#: detail" section) -- matches `open_composer.cockpit.data.hypotheses.CARD_ID_RE`.
-_CARD_ID_PATH_RE = re.compile(r"^[HD]-\d{8}-\d{2}$")
 
 _PACKAGE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = _PACKAGE_DIR / "templates"
@@ -257,19 +252,40 @@ def _format_short_timestamp(value: datetime | None) -> str:
     return value.strftime("%Y-%m-%d %H:%M") + "Z"
 
 
-def _base_context(request: Request, active: str) -> dict[str, Any]:
+def _status_context() -> dict[str, Any]:
+    """The six top-bar status objects (plan section 4's persistent top bar).
+
+    Shared verbatim by every HTML screen's :func:`_base_context` and by
+    ``GET /api/status.json`` (T11, ``open_composer.cockpit.api``) -- passed to
+    :func:`open_composer.cockpit.api.register_api_routes` as its
+    ``status_context`` callable -- so the HTML top bar and the JSON status
+    endpoint can never independently drift.
+    """
     root = project_root()
     now = datetime.now(UTC)
+    return {
+        "claude": _topbar_claude_quota(now),
+        "codex": _topbar_codex_quota(),
+        "usage_estimate": _topbar_usage_estimate(now),
+        "agents": _topbar_agents(),
+        "data_freshness": _topbar_data_freshness(root),
+        "rehearsal": _topbar_rehearsal_countdown(root),
+    }
+
+
+def _base_context(request: Request, active: str) -> dict[str, Any]:
+    now = datetime.now(UTC)
+    status = _status_context()
     return {
         "request": request,
         "screens": SCREENS,
         "active_screen": active,
-        "topbar_data_freshness": _topbar_data_freshness(root),
-        "topbar_rehearsal": _topbar_rehearsal_countdown(root),
-        "topbar_quota_claude": _topbar_claude_quota(now),
-        "topbar_quota_codex": _topbar_codex_quota(),
-        "topbar_usage_estimate": _topbar_usage_estimate(now),
-        "topbar_agents": _topbar_agents(),
+        "topbar_data_freshness": status["data_freshness"],
+        "topbar_rehearsal": status["rehearsal"],
+        "topbar_quota_claude": status["claude"],
+        "topbar_quota_codex": status["codex"],
+        "topbar_usage_estimate": status["usage_estimate"],
+        "topbar_agents": status["agents"],
         "generated_at": now,
         "screen_label": next(
             (label for slug, _path, label in SCREENS if slug == active), "Cockpit"
@@ -325,62 +341,6 @@ def _format_k(value: int | float | None) -> str:
     if value is None:
         return "–"
     return format_compact_token_count(int(value))
-
-
-@dataclass(frozen=True)
-class _ConnectedLayout:
-    positions: dict[str, tuple[float, float]]
-    width: float
-    height: float
-
-
-def _layout_connected(
-    graph: Any,
-    linked_ids: set[str],
-    *,
-    column_width: float = 236.0,
-    row_height: float = 54.0,
-    margin_x: float = 24.0,
-    margin_y: float = 22.0,
-) -> _ConnectedLayout:
-    """Left-to-right layering of the connected part of the lineage graph.
-
-    Column = longest path from a root (edges run predecessor → successor), row =
-    order inside the column; the isolated cards are listed, not drawn, so they
-    never take part here. Cycles are cut by refusing to raise a node's depth
-    more than once per edge.
-    """
-    successors: dict[str, list[str]] = defaultdict(list)
-    indegree: dict[str, int] = {card_id: 0 for card_id in linked_ids}
-    for edge in graph.edges:
-        if edge.source in linked_ids and edge.target in linked_ids:
-            successors[edge.source].append(edge.target)
-            indegree[edge.target] += 1
-    depth: dict[str, int] = {card_id: 0 for card_id in linked_ids}
-    frontier = sorted(card_id for card_id, n in indegree.items() if n == 0)
-    seen_edges = 0
-    while frontier and seen_edges <= 4 * max(1, len(graph.edges)):
-        card_id = frontier.pop(0)
-        for nxt in sorted(successors[card_id]):
-            seen_edges += 1
-            if depth[nxt] < depth[card_id] + 1:
-                depth[nxt] = depth[card_id] + 1
-                frontier.append(nxt)
-    columns: dict[int, list[str]] = defaultdict(list)
-    for card_id in sorted(linked_ids):
-        columns[depth[card_id]].append(card_id)
-    positions: dict[str, tuple[float, float]] = {}
-    tallest = max((len(ids) for ids in columns.values()), default=1)
-    for col, ids in columns.items():
-        offset = (tallest - len(ids)) * row_height / 2
-        for row, card_id in enumerate(ids):
-            positions[card_id] = (
-                margin_x + col * column_width,
-                margin_y + offset + row * row_height,
-            )
-    width = margin_x * 2 + (max(columns, default=0) + 1) * column_width - 60
-    height = margin_y * 2 + tallest * row_height - row_height / 2
-    return _ConnectedLayout(positions=positions, width=width, height=height)
 
 
 #: Name of the T10 warm thread, for tests that inspect `threading.enumerate()`.
@@ -566,7 +526,7 @@ def create_app(*, warm: bool = True) -> FastAPI:
         instruction for this route. Both an invalid id (`/card/nope`) and a
         well-formed but unknown id return 404, never 500.
         """
-        if not _CARD_ID_PATH_RE.match(card_id):
+        if not CARD_ID_PATH_RE.match(card_id):
             raise HTTPException(status_code=404, detail="not a valid card id")
 
         root = project_root()
@@ -720,5 +680,21 @@ def create_app(*, warm: bool = True) -> FastAPI:
         context = _base_context(request, "quota")
         context["report"] = report
         return templates.TemplateResponse(request, "quota.html", context)
+
+    # T11: read-only JSON mirror of every HTML screen above (`/api/*.json`),
+    # for the future SwiftUI client (plan section 2, path C) and for the B
+    # front end's static build below. `status_context=_status_context` is
+    # the same six-object builder `_base_context` uses for the HTML top bar,
+    # so `GET /api/status.json` cannot independently drift from it.
+    register_api_routes(app, status_context=_status_context)
+
+    # T12: the B front end (Figma-derived React, `frontend/cockpit-v2/`) is a
+    # one-time `vite build --base=/v2/` static artifact committed under
+    # `static/v2/`, not a node runtime this server ever starts -- mounted
+    # only when that build actually exists so a checkout without it (or
+    # mid-build) still serves every other route unchanged.
+    v2_dir = STATIC_DIR / "v2"
+    if (v2_dir / "index.html").exists():
+        app.mount("/v2", StaticFiles(directory=str(v2_dir), html=True), name="v2")
 
     return app

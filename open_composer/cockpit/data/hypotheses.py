@@ -947,6 +947,67 @@ def compute_lineage_layout(
     return LineageLayout(positions=positions, width=max_x + column_width, height=max_y + row_height)
 
 
+@dataclass(frozen=True)
+class _ConnectedLayout:
+    positions: dict[str, tuple[float, float]]
+    width: float
+    height: float
+
+
+def _layout_connected(
+    graph: Any,
+    linked_ids: set[str],
+    *,
+    column_width: float = 236.0,
+    row_height: float = 54.0,
+    margin_x: float = 24.0,
+    margin_y: float = 22.0,
+) -> _ConnectedLayout:
+    """Left-to-right layering of the connected part of the lineage graph.
+
+    Column = longest path from a root (edges run predecessor → successor), row =
+    order inside the column; the isolated cards are listed, not drawn, so they
+    never take part here. Cycles are cut by refusing to raise a node's depth
+    more than once per edge.
+
+    Moved here from ``open_composer.cockpit.app`` (T11) so both the HTML
+    ``/lineage`` route and ``GET /api/lineage.json`` can import the same
+    function without ``open_composer.cockpit.api`` importing ``app.py`` (which
+    would be a circular import, since ``app.py`` imports ``api.py``).
+    """
+    successors: dict[str, list[str]] = defaultdict(list)
+    indegree: dict[str, int] = {card_id: 0 for card_id in linked_ids}
+    for edge in graph.edges:
+        if edge.source in linked_ids and edge.target in linked_ids:
+            successors[edge.source].append(edge.target)
+            indegree[edge.target] += 1
+    depth: dict[str, int] = {card_id: 0 for card_id in linked_ids}
+    frontier = sorted(card_id for card_id, n in indegree.items() if n == 0)
+    seen_edges = 0
+    while frontier and seen_edges <= 4 * max(1, len(graph.edges)):
+        card_id = frontier.pop(0)
+        for nxt in sorted(successors[card_id]):
+            seen_edges += 1
+            if depth[nxt] < depth[card_id] + 1:
+                depth[nxt] = depth[card_id] + 1
+                frontier.append(nxt)
+    columns: dict[int, list[str]] = defaultdict(list)
+    for card_id in sorted(linked_ids):
+        columns[depth[card_id]].append(card_id)
+    positions: dict[str, tuple[float, float]] = {}
+    tallest = max((len(ids) for ids in columns.values()), default=1)
+    for col, ids in columns.items():
+        offset = (tallest - len(ids)) * row_height / 2
+        for row, card_id in enumerate(ids):
+            positions[card_id] = (
+                margin_x + col * column_width,
+                margin_y + offset + row * row_height,
+            )
+    width = margin_x * 2 + (max(columns, default=0) + 1) * column_width - 60
+    height = margin_y * 2 + tallest * row_height - row_height / 2
+    return _ConnectedLayout(positions=positions, width=width, height=height)
+
+
 # --------------------------------------------------------------------------
 # Aggregate report
 # --------------------------------------------------------------------------
