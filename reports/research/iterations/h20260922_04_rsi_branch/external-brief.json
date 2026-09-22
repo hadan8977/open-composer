@@ -1,0 +1,100 @@
+{
+  "candidate_matrix_revisions": [
+    "Overheat threshold fixed at 80 instead of searching {80, 85}: the primary snapshot discloses 'a 10-day heat gauge (RSI) above 80', so round 1 is a replication of a published value, not a parameter search.",
+    "RSI window fixed at 10 and oversold threshold at 30 for the same reason.",
+    "Grid cut from the brief's upper bound of 32 cells to 16: halves multiple testing and fits the 24-candidate ceiling the iteration gate imposes on a single-mechanism iteration that is not bound to a campaign contract.",
+    "Short-volatility products (SVXY, SVIX) excluded by product category, per the brief; the overheat branch may only hold long volatility (UVXY) or cash (BIL).",
+    "Benchmarks extended beyond SPY/MTUM/SPMO to include the live S1 sleeve and equal-weight holdings of both menus, so 'the menu did it' is testable."
+  ],
+  "generated_at": "2026-09-22T03:10:00+00:00",
+  "iter_id": "h20260922_04_rsi_branch",
+  "schema_version": 1,
+  "source_spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+  "sources": [
+    {
+      "core_claim": "Composer's published Sector Rotator MS symphony states its full branch rule in plain English -- a 10-day RSI above 80 on a sector sends the book to UVXY, an RSI below 30 buys a short-term rebound in that sector, and otherwise it holds the month's strongest of the 11 US sector ETFs -- and reports an out-of-sample annualized return near 98% with Sharpe near 1.44 and max drawdown near 29%, against a 134.72% annualized / 1.7 Sharpe headline that includes in-sample history.",
+      "credibility": "Primary: the strategy author's own published page on the platform that executes it. Performance is platform-computed and unaudited, and the discovery listing is survivorship-filtered.",
+      "project_applicability": "Gives the exact rule tree, the RSI window, both thresholds and the hedge asset this iteration replicates, so no parameter search is needed for them.",
+      "published_or_updated_at": "2025-09-08",
+      "reflection": "The headline 134.72% is in-sample-inclusive; the honest target is the ~98% / 1.44 out-of-sample line on the same page. Our intel card copied the headline and is corrected in H-20260922-04.",
+      "source_type": "platform_docs",
+      "url": "https://www.composer.trade/trading-strategies/sector-rotator-ms-cms-update-2025-09-08-nRUmDZa2ZGUemOBh0tdc"
+    },
+    {
+      "core_claim": "The second instance of the same family, Composer's Portfolio Experiment: Volatility Minimization, reports an out-of-sample annualized return near 43.7% with Sharpe near 1.92 and max drawdown near 15.1%, well below its 116.11% annualized / 3.52 Sharpe headline.",
+      "credibility": "Primary but unaudited, same platform caveats.",
+      "project_applicability": "Second, independent instance of the RSI-branch structure; its much lower out-of-sample number sets the honest bar this replication should be measured against, rather than the headline.",
+      "published_or_updated_at": "2026-09-22",
+      "reflection": "Two instances of one structure with out-of-sample Sharpe 1.44 and 1.92 is weak-but-real evidence that the structure, not one lucky recipe, is doing something. Neither reaches the 3.52 headline out of sample.",
+      "source_type": "platform_docs",
+      "url": "https://www.composer.trade/trading-strategies/portfolio-experiment-volatility-minimization-olR3E8zE5wCiK7qlJ7Xj"
+    },
+    {
+      "core_claim": "ProShares states that UVXY targets 1.5x the daily performance of the S&P 500 VIX Short-Term Futures Index for a single day and that, because daily returns compound, holding periods longer than one day can return something significantly different from that target.",
+      "credibility": "Issuer's own product page; authoritative on fund mechanics.",
+      "project_applicability": "The overheat branch holds UVXY for whole sessions, so the hedge leg's holding days and its decay are a reported diagnostic, not an assumption.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Forces the hedge leg to be judged on realized contribution and holding days, not on the intuition that 'a VIX ETF protects you'.",
+      "source_type": "provider_official_docs",
+      "url": "https://www.proshares.com/our-etfs/strategic/uvxy"
+    },
+    {
+      "core_claim": "Industry components of stock returns carry a strong momentum effect that accounts for much of individual-stock momentum.",
+      "credibility": "Moskowitz and Grinblatt, Journal of Finance 54(4):1249-1290; one of the most replicated results in the momentum literature.",
+      "project_applicability": "This is the published mechanism behind the normal branch: rank sectors by trailing return and hold the leader.",
+      "published_or_updated_at": "1999-08-01",
+      "reflection": "The paper supports medium-horizon industry momentum; the 21-day lookback used here is shorter than its 1-12 month evidence, so the normal branch is the part most at risk of being noise -- which is why the random-pick placebo runs 60 seeds on it.",
+      "source_type": "paper",
+      "url": "https://onlinelibrary.wiley.com/doi/abs/10.1111/0022-1082.00146"
+    },
+    {
+      "core_claim": "Combining relative-strength selection with an absolute-momentum filter raises risk-adjusted returns versus either alone.",
+      "credibility": "Antonacci, widely replicated practitioner-academic work on dual momentum; public long-run tracking exists for the monthly global version.",
+      "project_applicability": "The Composer tree is a branch-shaped dual momentum: the RSI extremes play the role the absolute-momentum filter plays in Antonacci.",
+      "published_or_updated_at": "2016-10-01",
+      "reflection": "Public dual-momentum trackers earn 10-15% annualized, two orders below the platform headlines. The gap is leverage plus window selection, and that is exactly the thing the placebos here have to separate.",
+      "source_type": "ssrn",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2042750"
+    },
+    {
+      "core_claim": "Portfolios that take less risk when realized volatility is high earn higher Sharpe ratios, because volatility changes are not matched by proportional changes in expected returns.",
+      "credibility": "Moreira and Muir, NBER w22208, published as Journal of Finance 72(4):1611-1644; multiple independent replications and critiques.",
+      "project_applicability": "This is the economic case for the overheat branch existing at all: cut or invert exposure when the market is stretched.",
+      "published_or_updated_at": "2016-04-01",
+      "reflection": "Moreira-Muir scales exposure by realized volatility; RSI > 80 is a price-extreme proxy, not a volatility measure, so a pass here would not be evidence for Moreira-Muir and a failure would not refute it. Candidate B-2 tests the volatility-target version directly.",
+      "source_type": "working_paper",
+      "url": "https://www.nber.org/papers/w22208"
+    },
+    {
+      "core_claim": "A cross-asset ETF momentum strategy holding the four strongest ETFs with a 30% short leg on the weakest reports a Sharpe near 0.5 over 2007-2026.",
+      "credibility": "Working paper with a public QuantConnect notebook; no live track record.",
+      "project_applicability": "Reference point for what a disciplined, long-sample ETF rotation actually earns once it is not window-selected.",
+      "published_or_updated_at": "2025-01-01",
+      "reflection": "Sharpe 0.5 over 19 years versus 1.4-1.9 over one to four recent years is the size of the window-selection effect we are knowingly accepting. I-20260922-02 already ruled this candidate out on return grounds; it is kept here only as the honest long-sample anchor.",
+      "source_type": "ssrn",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5095447"
+    },
+    {
+      "core_claim": "A long/short sectoral momentum cycle over 9 SPDR sectors plus SPY with 252-day momentum and intramonth rebalancing reports about 5.99% annualized at Sharpe 0.55.",
+      "credibility": "Quantpedia strategy write-up with a linked paper; descriptive, no live tracking.",
+      "project_applicability": "Independent, same-universe evidence on how much a pure sector-momentum ranking is worth without leverage or branch logic.",
+      "published_or_updated_at": "2026-08-17",
+      "reflection": "Roughly 6% annualized from the ranking alone means any 50%+ result here is coming from leverage and from the branch tree, not from sector selection. That framing decides how the contribution decomposition in the report is read.",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/strategies/sectoral-intramonth-momentum-cycle-in-us-equities/"
+    }
+  ],
+  "spec_hash": "88a1d3bcaa281d1b67718e9c447fc516dc72a3a3bcc9bcf595ee2b41b2392622",
+  "strategy_name": "h20260922_04_rsi_branch_family",
+  "title": "RSI-extreme branch rotation with a volatility hedge leg -- replication brief",
+  "topic_coverage": [
+    "published rule tree of the Composer RSI-branch symphony family",
+    "out-of-sample versus headline performance reported by the platform",
+    "sector/industry momentum as the normal-branch ranking mechanism",
+    "cross-sectional and time-series momentum menus for the leveraged variant",
+    "volatility-managed exposure as the economic story behind the overheat branch",
+    "leveraged and VIX-futures ETF daily reset, decay and holding-period risk",
+    "short-horizon RSI mean reversion as the oversold-branch mechanism",
+    "local negative evidence on single-gate leveraged ETF timing in this window"
+  ]
+}

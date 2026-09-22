@@ -1,0 +1,89 @@
+{
+  "cheapest_decisive_test": {
+    "action": "One CPU pass over 16 preregistered cells on SIP daily bars: rank on the selection window only, report the untouched holdout, then run both placebos (RSI signal calendar-shifted 1-20 sessions x 20 seeds, and random single pick from the same menu x 60 seeds) plus the 20 bp per side stress view.",
+    "falsification_condition": "Calendar-shifting the RSI signal does not degrade the result, or more than 10% of placebo seeds match the true cell -- then the return is the menu and the bull market, the branch tree adds nothing, and the family is refuted.",
+    "max_compute_minutes": 45,
+    "pass_condition": "At least one cell with anchor CAGR >= 50% and max drawdown <= 35% (or Sharpe >= 2.0 with CAGR >= 30%), holdout Sharpe >= 1.0 and positive, placebo beat rate <= 10%, and the same verdict still standing at 20 bp per side."
+  },
+  "cost_and_execution_assumptions": "sum(|delta w|) * slippage charged on the execution session, 10 bp per side primary and 20 bp per side stress; signal on the close, fill at the next session's open (matching the live paper path's fill_assumption); fully adjusted SIP daily closes; long-only Alpaca-tradable US ETFs, no shorting, no options, no intraday.",
+  "decision": "proceed",
+  "existing_solution_comparison": "Two published instances of this exact rule family already run publicly on Composer with out-of-sample tracking (~98% annualized / Sharpe 1.44 and ~43.7% / Sharpe 1.92). Their rules, RSI window (10), overheat threshold (80) and oversold threshold (30) are disclosed in plain English on the pages, so nothing is reinvented here and no threshold search is run. What the platform does not give is a cost-aware, placebo-controlled, holdout-separated evaluation on our data, which is the only thing this iteration adds.",
+  "iter_id": "h20260922_04_rsi_branch",
+  "negative_experiments_checked": "L-20260918-05: a single moving-average gate on leveraged ETFs failed the calendar-shift placebo in this same window. H-20260918-05: the S3 leveraged menu reached 145% anchor CAGR but with a 25% placebo-beat rate, i.e. the ranking was weak evidence and the return came from leverage. This card is only reopened because it adds two elements those runs did not have -- an RSI extreme branch and a volatility hedge leg -- and it is set up so the same placebo can kill it.",
+  "objective": "Replicate the Composer RSI-extreme branch family (overheat -> volatility hedge or cash, oversold -> leveraged rebound, otherwise -> last month's strongest sector) under our frozen recent-window protocol, and decide whether it clears G1-G5 or joins L-20260918-05 as a second confirmation that single-gate leveraged ETF timing does not survive placebos in this bull window.",
+  "queries": [
+    {
+      "opened_urls": [
+        "https://www.composer.trade/trading-strategies/sector-rotator-ms-cms-update-2025-09-08-nRUmDZa2ZGUemOBh0tdc"
+      ],
+      "query": "composer.trade trading-strategies \"Sector Rotator MS\" symphony",
+      "searched_at": "2026-09-22T03:03:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://www.composer.trade/trading-strategies/portfolio-experiment-volatility-minimization-olR3E8zE5wCiK7qlJ7Xj"
+      ],
+      "query": "composer.trade trading-strategies \"Portfolio Experiment: Volatility Minimization\"",
+      "searched_at": "2026-09-22T03:03:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://www.proshares.com/our-etfs/strategic/uvxy"
+      ],
+      "query": "ProShares UVXY Ultra VIX Short-Term Futures ETF daily rebalance decay prospectus 2026",
+      "searched_at": "2026-09-22T03:03:00+00:00"
+    }
+  ],
+  "remaining_evidence_gap": "Composer's discovery page shows winners only and lets authors reset the out-of-sample start after editing a recipe, so the published numbers cannot be treated as live evidence. Missing locally: whether the branch signal (not the menu and not the bull market) carries the return, whether it survives 20 bp per side at daily rebalancing turnover, and whether the UVXY hedge leg earns anything net of its 1.5x daily-reset decay.",
+  "reviewed_at": "2026-09-22T03:10:00+00:00",
+  "schema_version": 1,
+  "sources": [
+    {
+      "applicability": "Gives the exact rule tree, the RSI window, both thresholds and the hedge asset this iteration replicates, so no parameter search is needed for them.",
+      "claim": "Composer's published Sector Rotator MS symphony states its full branch rule in plain English -- a 10-day RSI above 80 on a sector sends the book to UVXY, an RSI below 30 buys a short-term rebound in that sector, and otherwise it holds the month's strongest of the 11 US sector ETFs -- and reports an out-of-sample annualized return near 98% with Sharpe near 1.44 and max drawdown near 29%, against a 134.72% annualized / 1.7 Sharpe headline that includes in-sample history.",
+      "claim_id": "h20260922_04_rsi_branch:composer_sector_rotator_rule_and_oos",
+      "fetched_at": "2026-09-22T03:06:00+00:00",
+      "independent_replication": "No independent audited replication exists. This iteration is the local replication under our own windows, costs and placebos.",
+      "limitations": "Composer's discovery page shows winners only (survivorship), the author can edit the recipe and reset the out-of-sample start, and the numbers are platform-computed, not independently audited. RSI is computed per sector in the original; this iteration's preregistered proxy computes it on SPY or QQQ.",
+      "market_and_period": "US sector ETFs plus leveraged sector ETFs and UVXY; page backtest starts 2019-10-30 and the page was read 2026-09-22.",
+      "published_or_updated_at": "2025-09-08",
+      "sha256": "8b1a0ffc21f2e645282e0caa9fb257489b61a43b2a5de20eacc3fb43e1f2a958",
+      "snapshot_path": "reports/research/iterations/h20260922_04_rsi_branch/sources/composer-sector-rotator-ms.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_04_rsi_branch.jsonl",
+      "source_type": "platform_docs",
+      "url": "https://www.composer.trade/trading-strategies/sector-rotator-ms-cms-update-2025-09-08-nRUmDZa2ZGUemOBh0tdc"
+    },
+    {
+      "applicability": "Second, independent instance of the RSI-branch structure; its much lower out-of-sample number sets the honest bar this replication should be measured against, rather than the headline.",
+      "claim": "The second instance of the same family, Composer's Portfolio Experiment: Volatility Minimization, reports an out-of-sample annualized return near 43.7% with Sharpe near 1.92 and max drawdown near 15.1%, well below its 116.11% annualized / 3.52 Sharpe headline.",
+      "claim_id": "h20260922_04_rsi_branch:composer_vol_minimization_oos",
+      "fetched_at": "2026-09-22T03:06:00+00:00",
+      "independent_replication": "None published.",
+      "limitations": "Same platform survivorship and recipe-reset caveats; the 127-asset universe is far wider than the preregistered 18-asset menu tested here.",
+      "market_and_period": "127 US stocks and ETFs including TQQQ, UPRO, TECL, SOXL, UVXY, VIXY, BIL; page backtest starts 2022-04-13 and the page was read 2026-09-22.",
+      "published_or_updated_at": "2026-09-22",
+      "sha256": "40f1f9f6ed715e6230bea282f4fad8aa6676682700cff618a82ec2def56b7544",
+      "snapshot_path": "reports/research/iterations/h20260922_04_rsi_branch/sources/composer-volatility-minimization.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_04_rsi_branch.jsonl",
+      "source_type": "platform_docs",
+      "url": "https://www.composer.trade/trading-strategies/portfolio-experiment-volatility-minimization-olR3E8zE5wCiK7qlJ7Xj"
+    },
+    {
+      "applicability": "The overheat branch holds UVXY for whole sessions, so the hedge leg's holding days and its decay are a reported diagnostic, not an assumption.",
+      "claim": "ProShares states that UVXY targets 1.5x the daily performance of the S&P 500 VIX Short-Term Futures Index for a single day and that, because daily returns compound, holding periods longer than one day can return something significantly different from that target.",
+      "claim_id": "h20260922_04_rsi_branch:proshares_uvxy_daily_reset",
+      "fetched_at": "2026-09-22T03:06:00+00:00",
+      "independent_replication": "Daily-reset path dependence for leveraged ETFs is established in the academic literature (e.g. Avellaneda and Zhang), independent of the issuer.",
+      "limitations": "Issuer marketing page, not the statutory prospectus; the 1.5x multiple has changed historically, so pre-2021 UVXY bars are not the same instrument.",
+      "market_and_period": "US-listed ETF, issuer page read 2026-09-22.",
+      "published_or_updated_at": "unknown",
+      "sha256": "94494f60b9d7611c2aef3481da0dbc22eaa2c209c43694236d04c0106837eda8",
+      "snapshot_path": "reports/research/iterations/h20260922_04_rsi_branch/sources/proshares-uvxy.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_04_rsi_branch.jsonl",
+      "source_type": "provider_official_docs",
+      "url": "https://www.proshares.com/our-etfs/strategic/uvxy"
+    }
+  ],
+  "stop_condition": "Stop and write L-20260922-04 if no cell clears G1 or G1' on the anchor window, or if the surviving cell's holdout Sharpe is below 1.0, or if placebos beat the true cell more than 10% of the time, or if 20 bp per side breaks G1/G1'. One round; the brief allows at most two and the second may only use preregistered variations.",
+  "target_regime_and_horizon": "US ETFs, daily bars, selection window 2023-09-18..2025-12-31, untouched holdout 2026-01-02..2026-09-17, anchor window 2024-01-08..2026-09-16. The claim under test is recent-regime-only; it carries an explicit exit rule and no multi-year robustness claim."
+}

@@ -1,0 +1,959 @@
+{
+  "card_id": "H-20260922-04",
+  "iter_id": "h20260922_04_rsi_branch",
+  "brief": "reports/research/briefs/B-1-rsi-branch-rotation-2026-09-22.md",
+  "cell_count": 16,
+  "windows": {
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "holdout": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-16"
+    ]
+  },
+  "cost_bps_primary": 10.0,
+  "cost_bps_stress": 20.0,
+  "candidate_manifest_sha256": null,
+  "placebo_targets": [
+    "rsib_SPY_ohUVXY_sector1x_friday",
+    "rsib_SPY_ohUVXY_levered3x_daily"
+  ],
+  "cells_by_select_sharpe": [
+    {
+      "cell_id": "rsib_SPY_ohUVXY_levered3x_daily",
+      "select_sharpe": 0.9389177252429818,
+      "select_cagr": 0.5138124150064551,
+      "holdout_sharpe": 0.8533874856639625,
+      "holdout_cagr": 0.4551357296348868,
+      "anchor_sharpe": 0.7744576857575332,
+      "anchor_cagr": 0.38677481104105205,
+      "anchor_max_dd": -0.5792173968370439,
+      "anchor_vol": 0.5930707235967866,
+      "anchor_turnover_yr": 107.52000000000001,
+      "anchor_vol_matched_excess_vs_spy": -0.08093589261847423,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": false,
+      "stress20_anchor_cagr": 0.2449687559391971,
+      "stress20_anchor_sharpe": 0.5925796073786702,
+      "stress20_anchor_max_dd": -0.5981388007799475,
+      "stress20_holdout_sharpe": 0.6715675333227242,
+      "G4_stress20": false,
+      "placebo_rsi_calendar_shift_select_median": 0.6182219216545466,
+      "placebo_rsi_calendar_shift_select_p95": 1.0428154791527362,
+      "placebo_rsi_calendar_shift_select_beat_frac": 0.1,
+      "placebo_rsi_calendar_shift_holdout_median": 0.9007397634603638,
+      "placebo_rsi_calendar_shift_holdout_p95": 1.356734108075382,
+      "placebo_rsi_calendar_shift_holdout_beat_frac": 0.55,
+      "placebo_rsi_calendar_shift_anchor_median": 0.6680830084888698,
+      "placebo_rsi_calendar_shift_anchor_p95": 1.059621216728514,
+      "placebo_rsi_calendar_shift_anchor_beat_frac": 0.2,
+      "placebo_random_menu_pick_select_median": 0.13018359669372015,
+      "placebo_random_menu_pick_select_p95": 0.7478670098452331,
+      "placebo_random_menu_pick_select_beat_frac": 0.0,
+      "placebo_random_menu_pick_holdout_median": -0.10960494152069097,
+      "placebo_random_menu_pick_holdout_p95": 1.1972226010152343,
+      "placebo_random_menu_pick_holdout_beat_frac": 0.23333333333333334,
+      "placebo_random_menu_pick_anchor_median": -0.005668953636180915,
+      "placebo_random_menu_pick_anchor_p95": 0.5301906592567943,
+      "placebo_random_menu_pick_anchor_beat_frac": 0.0,
+      "G3_placebo_holdout": false,
+      "placebo_worst_holdout_beat_frac": 0.55,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 10,
+          "anchor_sum_return": -0.058793910169830155,
+          "anchor_mean_daily": -0.005879391016983015
+        },
+        "oversold": {
+          "anchor_days": 19,
+          "anchor_sum_return": 0.2589002679758349,
+          "anchor_mean_daily": 0.013626329893464994
+        },
+        "normal": {
+          "anchor_days": 646,
+          "anchor_sum_return": 1.1426179318668916,
+          "anchor_mean_daily": 0.0017687584084626806
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 1.3427242896728964
+      }
+    },
+    {
+      "cell_id": "rsib_QQQ_ohUVXY_levered3x_daily",
+      "select_sharpe": 0.9370126957971783,
+      "select_cagr": 0.5116527465185166,
+      "holdout_sharpe": 1.1184678678343123,
+      "holdout_cagr": 0.716724319914078,
+      "anchor_sharpe": 0.9672817781567444,
+      "anchor_cagr": 0.5484409239792145,
+      "anchor_max_dd": -0.527018608044831,
+      "anchor_vol": 0.5826824132807042,
+      "anchor_turnover_yr": 114.24000000000001,
+      "anchor_vol_matched_excess_vs_spy": -0.04612641873844803,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.38128166247368456,
+      "stress20_anchor_sharpe": 0.7711131363487741,
+      "stress20_anchor_max_dd": -0.5491364807701704,
+      "stress20_holdout_sharpe": 0.9168921891434766,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 19,
+          "anchor_sum_return": 0.1615002053679513,
+          "anchor_mean_daily": 0.008500010808839541
+        },
+        "oversold": {
+          "anchor_days": 20,
+          "anchor_sum_return": 0.6202782484876674,
+          "anchor_mean_daily": 0.031013912424383373
+        },
+        "normal": {
+          "anchor_days": 636,
+          "anchor_sum_return": 0.8404209968708506,
+          "anchor_mean_daily": 0.0013214166617466203
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 1.6221994507264692
+      }
+    },
+    {
+      "cell_id": "rsib_SPY_ohUVXY_levered3x_friday",
+      "select_sharpe": 0.8515242415713953,
+      "select_cagr": 0.44755183742931925,
+      "holdout_sharpe": 0.8068572006884734,
+      "holdout_cagr": 0.41166915094482825,
+      "anchor_sharpe": 0.7810645101769267,
+      "anchor_cagr": 0.3945662861212802,
+      "anchor_max_dd": -0.4916126607129946,
+      "anchor_vol": 0.6006862139275594,
+      "anchor_turnover_yr": 50.02666666666667,
+      "anchor_vol_matched_excess_vs_spy": -0.07992179911594799,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": false,
+      "stress20_anchor_cagr": 0.3268628190447107,
+      "stress20_anchor_sharpe": 0.6982557804214198,
+      "stress20_anchor_max_dd": -0.4976550991635377,
+      "stress20_holdout_sharpe": 0.723461376989039,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 20,
+          "anchor_sum_return": 0.046310870666379844,
+          "anchor_mean_daily": 0.002315543533318992
+        },
+        "oversold": {
+          "anchor_days": 24,
+          "anchor_sum_return": 0.3049579726888466,
+          "anchor_mean_daily": 0.01270658219536861
+        },
+        "normal": {
+          "anchor_days": 631,
+          "anchor_sum_return": 1.0178933594317665,
+          "anchor_mean_daily": 0.0016131432003673003
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 1.3691622027869932
+      }
+    },
+    {
+      "cell_id": "rsib_SPY_ohBIL_levered3x_daily",
+      "select_sharpe": 0.8411997494336878,
+      "select_cagr": 0.43216473818759815,
+      "holdout_sharpe": 0.9948843213037012,
+      "holdout_cagr": 0.5960026429411613,
+      "anchor_sharpe": 0.8309267013102394,
+      "anchor_cagr": 0.43263554688186057,
+      "anchor_max_dd": -0.5792173968370438,
+      "anchor_vol": 0.5887688872551684,
+      "anchor_turnover_yr": 107.52000000000001,
+      "anchor_vol_matched_excess_vs_spy": -0.07082119308427615,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": false,
+      "stress20_anchor_cagr": 0.28627647372199716,
+      "stress20_anchor_sharpe": 0.6478152872974551,
+      "stress20_anchor_max_dd": -0.5981388007799474,
+      "stress20_holdout_sharpe": 0.8104583239757662,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 10,
+          "anchor_sum_return": -0.06364920391921135,
+          "anchor_mean_daily": -0.006364920391921135
+        },
+        "oversold": {
+          "anchor_days": 19,
+          "anchor_sum_return": 0.2589002679758349,
+          "anchor_mean_daily": 0.013626329893464994
+        },
+        "normal": {
+          "anchor_days": 646,
+          "anchor_sum_return": 1.2276307728947407,
+          "anchor_mean_daily": 0.0019003572335831898
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 1.4228818369513643
+      }
+    },
+    {
+      "cell_id": "rsib_QQQ_ohUVXY_levered3x_friday",
+      "select_sharpe": 0.8410303312110331,
+      "select_cagr": 0.4373537704692787,
+      "holdout_sharpe": 1.4578150800886869,
+      "holdout_cagr": 1.164652314187376,
+      "anchor_sharpe": 0.9536495770452986,
+      "anchor_cagr": 0.5425515337323075,
+      "anchor_max_dd": -0.4916126607129948,
+      "anchor_vol": 0.5937283147965888,
+      "anchor_turnover_yr": 50.02666666666667,
+      "anchor_vol_matched_excess_vs_spy": -0.04885139924448989,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.46759243979641485,
+      "stress20_anchor_sharpe": 0.8698425762673211,
+      "stress20_anchor_max_dd": -0.4976550991635371,
+      "stress20_holdout_sharpe": 1.3638404377666011,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 14,
+          "anchor_sum_return": 0.02541865475014904,
+          "anchor_mean_daily": 0.001815618196439217
+        },
+        "oversold": {
+          "anchor_days": 14,
+          "anchor_sum_return": 0.486091139343631,
+          "anchor_mean_daily": 0.034720795667402216
+        },
+        "normal": {
+          "anchor_days": 647,
+          "anchor_sum_return": 1.1176102982281808,
+          "anchor_mean_daily": 0.0017273729493480384
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 1.6291200923219606
+      }
+    },
+    {
+      "cell_id": "rsib_SPY_ohBIL_levered3x_friday",
+      "select_sharpe": 0.8395270041491375,
+      "select_cagr": 0.43228880970465733,
+      "holdout_sharpe": 0.7794773262448635,
+      "holdout_cagr": 0.3857358490187084,
+      "anchor_sharpe": 0.7828908869376159,
+      "anchor_cagr": 0.3940399131269037,
+      "anchor_max_dd": -0.49161266071299414,
+      "anchor_vol": 0.5936835277945567,
+      "anchor_turnover_yr": 50.02666666666667,
+      "anchor_vol_matched_excess_vs_spy": -0.07945083829847488,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": false,
+      "stress20_anchor_cagr": 0.3264240589184597,
+      "stress20_anchor_sharpe": 0.69920885102029,
+      "stress20_anchor_max_dd": -0.49765509916353723,
+      "stress20_holdout_sharpe": 0.6959495343719748,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 20,
+          "anchor_sum_return": -0.010105886646463717,
+          "anchor_mean_daily": -0.0005052943323231859
+        },
+        "oversold": {
+          "anchor_days": 24,
+          "anchor_sum_return": 0.3049579726888466,
+          "anchor_mean_daily": 0.01270658219536861
+        },
+        "normal": {
+          "anchor_days": 631,
+          "anchor_sum_return": 1.0626021989227028,
+          "anchor_mean_daily": 0.0016839971456778175
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 1.3574542849650857
+      }
+    },
+    {
+      "cell_id": "rsib_QQQ_ohBIL_levered3x_friday",
+      "select_sharpe": 0.8029077186400484,
+      "select_cagr": 0.405359121792791,
+      "holdout_sharpe": 1.5177116989758652,
+      "holdout_cagr": 1.2338303232461811,
+      "anchor_sharpe": 0.9602333941624602,
+      "anchor_cagr": 0.5466620839852905,
+      "anchor_max_dd": -0.49161266071299503,
+      "anchor_vol": 0.5902591495239211,
+      "anchor_turnover_yr": 50.02666666666667,
+      "anchor_vol_matched_excess_vs_spy": -0.04757705681639823,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.4715161045707903,
+      "stress20_anchor_sharpe": 0.8759549624412157,
+      "stress20_anchor_max_dd": -0.4976550991635369,
+      "stress20_holdout_sharpe": 1.4224699144756519,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 14,
+          "anchor_sum_return": 0.0034403026202122263,
+          "anchor_mean_daily": 0.00024573590144373044
+        },
+        "oversold": {
+          "anchor_days": 14,
+          "anchor_sum_return": 0.486091139343631,
+          "anchor_mean_daily": 0.034720795667402216
+        },
+        "normal": {
+          "anchor_days": 647,
+          "anchor_sum_return": 1.1411432883953343,
+          "anchor_mean_daily": 0.0017637454225584764
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 1.6306747303591775
+      }
+    },
+    {
+      "cell_id": "rsib_QQQ_ohBIL_levered3x_daily",
+      "select_sharpe": 0.7994904117647335,
+      "select_cagr": 0.4002058723873678,
+      "holdout_sharpe": 1.2162003300562814,
+      "holdout_cagr": 0.8199876837676505,
+      "anchor_sharpe": 0.9428638585279657,
+      "anchor_cagr": 0.5245453939921718,
+      "anchor_max_dd": -0.5270186080448305,
+      "anchor_vol": 0.5788487152023605,
+      "anchor_turnover_yr": 114.24000000000001,
+      "anchor_vol_matched_excess_vs_spy": -0.050472135547642294,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.3599936388510472,
+      "stress20_anchor_sharpe": 0.7454573519687101,
+      "stress20_anchor_max_dd": -0.5491364807701709,
+      "stress20_holdout_sharpe": 1.0122108026767151,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 19,
+          "anchor_sum_return": 0.07828893401930936,
+          "anchor_mean_daily": 0.004120470211542598
+        },
+        "oversold": {
+          "anchor_days": 20,
+          "anchor_sum_return": 0.6202782484876674,
+          "anchor_mean_daily": 0.031013912424383373
+        },
+        "normal": {
+          "anchor_days": 636,
+          "anchor_sum_return": 0.8758560869959017,
+          "anchor_mean_daily": 0.001377132212257707
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 1.5744232695028786
+      }
+    },
+    {
+      "cell_id": "rsib_SPY_ohUVXY_sector1x_friday",
+      "select_sharpe": 0.588551519837638,
+      "select_cagr": 0.21917313181215525,
+      "holdout_sharpe": 1.0911179293701987,
+      "holdout_cagr": 0.37076392129705327,
+      "anchor_sharpe": 0.612569281655937,
+      "anchor_cagr": 0.21987122611643772,
+      "anchor_max_dd": -0.26284693005250637,
+      "anchor_vol": 0.34787266435954484,
+      "anchor_turnover_yr": 58.24,
+      "anchor_vol_matched_excess_vs_spy": -0.10012853623172746,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.1509560742100804,
+      "stress20_anchor_sharpe": 0.4454121819470536,
+      "stress20_anchor_max_dd": -0.2745327671211607,
+      "stress20_holdout_sharpe": 0.9229122255244476,
+      "G4_stress20": false,
+      "placebo_rsi_calendar_shift_select_median": -0.13229284135840155,
+      "placebo_rsi_calendar_shift_select_p95": 0.7696928565757906,
+      "placebo_rsi_calendar_shift_select_beat_frac": 0.1,
+      "placebo_rsi_calendar_shift_holdout_median": 1.8869384836793128,
+      "placebo_rsi_calendar_shift_holdout_p95": 3.1924896875697892,
+      "placebo_rsi_calendar_shift_holdout_beat_frac": 0.85,
+      "placebo_rsi_calendar_shift_anchor_median": 0.41821176625233114,
+      "placebo_rsi_calendar_shift_anchor_p95": 0.8740396106513231,
+      "placebo_rsi_calendar_shift_anchor_beat_frac": 0.4,
+      "placebo_random_menu_pick_select_median": 0.8360931591683147,
+      "placebo_random_menu_pick_select_p95": 1.2502054546552706,
+      "placebo_random_menu_pick_select_beat_frac": 0.8,
+      "placebo_random_menu_pick_holdout_median": -0.04253355809499089,
+      "placebo_random_menu_pick_holdout_p95": 0.9058416193264703,
+      "placebo_random_menu_pick_holdout_beat_frac": 0.016666666666666666,
+      "placebo_random_menu_pick_anchor_median": 0.4843222157602557,
+      "placebo_random_menu_pick_anchor_p95": 0.8542636322171986,
+      "placebo_random_menu_pick_anchor_beat_frac": 0.3333333333333333,
+      "G3_placebo_holdout": false,
+      "placebo_worst_holdout_beat_frac": 0.85,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 20,
+          "anchor_sum_return": 0.053499054786282696,
+          "anchor_mean_daily": 0.0026749527393141346
+        },
+        "oversold": {
+          "anchor_days": 24,
+          "anchor_sum_return": 0.3501363351349993,
+          "anchor_mean_daily": 0.014589013963958305
+        },
+        "normal": {
+          "anchor_days": 631,
+          "anchor_sum_return": 0.27951898977595435,
+          "anchor_mean_daily": 0.0004429777967923207
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 0.6831543796972364
+      }
+    },
+    {
+      "cell_id": "rsib_SPY_ohBIL_sector1x_friday",
+      "select_sharpe": 0.5740564415419867,
+      "select_cagr": 0.20671151578723967,
+      "holdout_sharpe": 1.0380695892466432,
+      "holdout_cagr": 0.34571206594743975,
+      "anchor_sharpe": 0.6234108236376982,
+      "anchor_cagr": 0.2197572160866592,
+      "anchor_max_dd": -0.2628469300525068,
+      "anchor_vol": 0.3347763657115729,
+      "anchor_turnover_yr": 58.24,
+      "anchor_vol_matched_excess_vs_spy": -0.09737821463064877,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.150903665096074,
+      "stress20_anchor_sharpe": 0.44993682332894985,
+      "stress20_anchor_max_dd": -0.27453276712116126,
+      "stress20_holdout_sharpe": 0.8683505816880384,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 20,
+          "anchor_sum_return": -0.0029177025265608655,
+          "anchor_mean_daily": -0.00014588512632804327
+        },
+        "oversold": {
+          "anchor_days": 24,
+          "anchor_sum_return": 0.3501363351349993,
+          "anchor_mean_daily": 0.014589013963958305
+        },
+        "normal": {
+          "anchor_days": 631,
+          "anchor_sum_return": 0.32422782926689053,
+          "anchor_mean_daily": 0.0005138317421028376
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 0.671446461875329
+      }
+    },
+    {
+      "cell_id": "rsib_QQQ_ohUVXY_sector1x_daily",
+      "select_sharpe": 0.4761381318941172,
+      "select_cagr": 0.16829058392426455,
+      "holdout_sharpe": 2.4482977453208705,
+      "holdout_cagr": 0.9559795687773969,
+      "anchor_sharpe": 0.9229465634407544,
+      "anchor_cagr": 0.34594693712288094,
+      "anchor_max_dd": -0.2600247078188479,
+      "anchor_vol": 0.3322423885630984,
+      "anchor_turnover_yr": 144.10666666666668,
+      "anchor_vol_matched_excess_vs_spy": -0.043874239172077445,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.16507043226966722,
+      "stress20_anchor_sharpe": 0.48794219787919574,
+      "stress20_anchor_max_dd": -0.29498407273336125,
+      "stress20_holdout_sharpe": 1.9502656181270082,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 19,
+          "anchor_sum_return": 0.10781307460064482,
+          "anchor_mean_daily": 0.005674372347402359
+        },
+        "oversold": {
+          "anchor_days": 20,
+          "anchor_sum_return": 0.590853373925301,
+          "anchor_mean_daily": 0.02954266869626505
+        },
+        "normal": {
+          "anchor_days": 636,
+          "anchor_sum_return": 0.23500218120459782,
+          "anchor_mean_daily": 0.00036950028491288965
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 0.9336686297305437
+      }
+    },
+    {
+      "cell_id": "rsib_QQQ_ohUVXY_sector1x_friday",
+      "select_sharpe": 0.4707972316671562,
+      "select_cagr": 0.16639526532188853,
+      "holdout_sharpe": 1.9595816314875234,
+      "holdout_cagr": 0.7320338462304976,
+      "anchor_sharpe": 0.8191207939152122,
+      "anchor_cagr": 0.3018525285863283,
+      "anchor_max_dd": -0.2628469300525068,
+      "anchor_vol": 0.33392510648426993,
+      "anchor_turnover_yr": 59.733333333333334,
+      "anchor_vol_matched_excess_vs_spy": -0.06272119027018475,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.22648590581032524,
+      "stress20_anchor_sharpe": 0.64061548005768,
+      "stress20_anchor_max_dd": -0.27453276712116104,
+      "stress20_holdout_sharpe": 1.7484881927291922,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 14,
+          "anchor_sum_return": 0.023112448211737413,
+          "anchor_mean_daily": 0.0016508891579812438
+        },
+        "oversold": {
+          "anchor_days": 14,
+          "anchor_sum_return": 0.51559499826932,
+          "anchor_mean_daily": 0.03682821416209429
+        },
+        "normal": {
+          "anchor_days": 647,
+          "anchor_sum_return": 0.30637688070430424,
+          "anchor_mean_daily": 0.0004735345915058798
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 0.8450843271853616
+      }
+    },
+    {
+      "cell_id": "rsib_SPY_ohUVXY_sector1x_daily",
+      "select_sharpe": 0.4259783059638547,
+      "select_cagr": 0.14884094830796446,
+      "holdout_sharpe": 1.857398628883508,
+      "holdout_cagr": 0.6531087748245636,
+      "anchor_sharpe": 0.5685917839783939,
+      "anchor_cagr": 0.19695929877052198,
+      "anchor_max_dd": -0.263224039113059,
+      "anchor_vol": 0.3338031012713115,
+      "anchor_turnover_yr": 137.38666666666668,
+      "anchor_vol_matched_excess_vs_spy": -0.10686388001832503,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.04283033883210452,
+      "stress20_anchor_sharpe": 0.156405343514772,
+      "stress20_anchor_max_dd": -0.3045245092544616,
+      "stress20_holdout_sharpe": 1.399633715364116,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 10,
+          "anchor_sum_return": -0.024150992762988377,
+          "anchor_mean_daily": -0.0024150992762988375
+        },
+        "oversold": {
+          "anchor_days": 19,
+          "anchor_sum_return": 0.3024745553465573,
+          "anchor_mean_daily": 0.01591971343929249
+        },
+        "normal": {
+          "anchor_days": 646,
+          "anchor_sum_return": 0.34234819529110105,
+          "anchor_mean_daily": 0.0005299507667044908
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 0.62067175787467
+      }
+    },
+    {
+      "cell_id": "rsib_QQQ_ohBIL_sector1x_friday",
+      "select_sharpe": 0.40737517621031916,
+      "select_cagr": 0.14065195319630863,
+      "holdout_sharpe": 2.1817877459948845,
+      "holdout_cagr": 0.7847378824850013,
+      "anchor_sharpe": 0.8347075958809644,
+      "anchor_cagr": 0.3050007358399731,
+      "anchor_max_dd": -0.2628469300525076,
+      "anchor_vol": 0.32837889102949736,
+      "anchor_turnover_yr": 59.733333333333334,
+      "anchor_vol_matched_excess_vs_spy": -0.05950860490062104,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.22946131091333122,
+      "stress20_anchor_sharpe": 0.6532388292533781,
+      "stress20_anchor_max_dd": -0.2745327671211618,
+      "stress20_holdout_sharpe": 1.9570633807829338,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 14,
+          "anchor_sum_return": 0.0011340960818006004,
+          "anchor_mean_daily": 8.100686298575717e-05
+        },
+        "oversold": {
+          "anchor_days": 14,
+          "anchor_sum_return": 0.51559499826932,
+          "anchor_mean_daily": 0.03682821416209429
+        },
+        "normal": {
+          "anchor_days": 647,
+          "anchor_sum_return": 0.32990987087145773,
+          "anchor_mean_daily": 0.000509907064716318
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 0.8466389652225783
+      }
+    },
+    {
+      "cell_id": "rsib_SPY_ohBIL_sector1x_daily",
+      "select_sharpe": 0.26368695418366295,
+      "select_cagr": 0.08696650093038616,
+      "holdout_sharpe": 2.269608029477867,
+      "holdout_cagr": 0.8068281038425049,
+      "anchor_sharpe": 0.6684007233373871,
+      "anchor_cagr": 0.23539297048392105,
+      "anchor_max_dd": -0.26322403911305936,
+      "anchor_vol": 0.3287141381068204,
+      "anchor_turnover_yr": 137.38666666666668,
+      "anchor_vol_matched_excess_vs_spy": -0.08913601601498322,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.07642499304490302,
+      "stress20_anchor_sharpe": 0.24959867706080888,
+      "stress20_anchor_max_dd": -0.2937482531016373,
+      "stress20_holdout_sharpe": 1.78936836646931,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 10,
+          "anchor_sum_return": -0.029006286512369577,
+          "anchor_mean_daily": -0.0029006286512369577
+        },
+        "oversold": {
+          "anchor_days": 19,
+          "anchor_sum_return": 0.3024745553465573,
+          "anchor_mean_daily": 0.01591971343929249
+        },
+        "normal": {
+          "anchor_days": 646,
+          "anchor_sum_return": 0.42736103631895017,
+          "anchor_mean_daily": 0.0006615495918250002
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 0.700829305153138
+      }
+    },
+    {
+      "cell_id": "rsib_QQQ_ohBIL_sector1x_daily",
+      "select_sharpe": 0.2503694707101298,
+      "select_cagr": 0.08240225315652827,
+      "holdout_sharpe": 2.768734984446086,
+      "holdout_cagr": 1.069878235098177,
+      "anchor_sharpe": 0.8846719905628119,
+      "anchor_cagr": 0.32469507998519287,
+      "anchor_max_dd": -0.2600247078188477,
+      "anchor_vol": 0.3264404485985531,
+      "anchor_turnover_yr": 144.10666666666668,
+      "anchor_vol_matched_excess_vs_spy": -0.05039300832338878,
+      "G1_anchor_cagr_50_dd_35": false,
+      "G1p_sharpe_2_cagr_30": false,
+      "G2_holdout": true,
+      "stress20_anchor_cagr": 0.14669630940884848,
+      "stress20_anchor_sharpe": 0.4421731486491642,
+      "stress20_anchor_max_dd": -0.2949840727333608,
+      "stress20_holdout_sharpe": 2.2465013816715294,
+      "G4_stress20": false,
+      "G5_executable": true,
+      "branch_diagnostics": {
+        "overheat": {
+          "anchor_days": 19,
+          "anchor_sum_return": 0.02460180325200291,
+          "anchor_mean_daily": 0.0012948317501054163
+        },
+        "oversold": {
+          "anchor_days": 20,
+          "anchor_sum_return": 0.590853373925301,
+          "anchor_mean_daily": 0.02954266869626505
+        },
+        "normal": {
+          "anchor_days": 636,
+          "anchor_sum_return": 0.2704372713296489,
+          "anchor_mean_daily": 0.00042521583542397625
+        },
+        "cash": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "warmup": {
+          "anchor_days": 0,
+          "anchor_sum_return": 0.0,
+          "anchor_mean_daily": 0.0
+        },
+        "anchor_total_sum_return": 0.8858924485069529
+      }
+    }
+  ],
+  "benchmarks": [
+    {
+      "cell_id": "bench_SPY",
+      "select_sharpe": 1.056220524247302,
+      "select_cagr": 0.22441856408508798,
+      "holdout_sharpe": 1.0504770644870616,
+      "holdout_cagr": 0.17642277019833874,
+      "anchor_sharpe": 1.0191018940923269,
+      "anchor_cagr": 0.2086475207002032,
+      "anchor_max_dd": -0.1864277329992564,
+      "anchor_vol_matched_excess_vs_spy": 0.0
+    },
+    {
+      "cell_id": "bench_MTUM",
+      "select_sharpe": 1.1286232897930197,
+      "select_cagr": 0.29082034917034094,
+      "holdout_sharpe": 1.0136023455071688,
+      "holdout_cagr": 0.33502506330278936,
+      "anchor_sharpe": 1.0486257181413214,
+      "anchor_cagr": 0.29975334552628974,
+      "anchor_max_dd": -0.21001002796855128,
+      "anchor_vol_matched_excess_vs_spy": -0.01163455764641741
+    },
+    {
+      "cell_id": "bench_SPMO",
+      "select_sharpe": 1.4601287263761795,
+      "select_cagr": 0.3762519781725189,
+      "holdout_sharpe": 1.0929994044515707,
+      "holdout_cagr": 0.3430021077030916,
+      "anchor_sharpe": 1.2729308959469348,
+      "anchor_cagr": 0.35762204781659346,
+      "anchor_max_dd": -0.202538595589836,
+      "anchor_vol_matched_excess_vs_spy": 0.03263497872609622
+    },
+    {
+      "cell_id": "bench_QQQ",
+      "select_sharpe": 0.9998362907659423,
+      "select_cagr": 0.25819700289082426,
+      "holdout_sharpe": 1.0097160217159808,
+      "holdout_cagr": 0.2460675409853592,
+      "anchor_sharpe": 0.9577839753121185,
+      "anchor_cagr": 0.24679188513424188,
+      "anchor_max_dd": -0.22639371526717644,
+      "anchor_vol_matched_excess_vs_spy": -0.024102144022190686
+    },
+    {
+      "cell_id": "bench_TQQQ",
+      "select_sharpe": 0.9799398856486374,
+      "select_cagr": 0.5814823207669433,
+      "holdout_sharpe": 0.9573101999961368,
+      "holdout_cagr": 0.5398201377297784,
+      "anchor_sharpe": 0.9311252399995142,
+      "anchor_cagr": 0.5353039711828516,
+      "anchor_max_dd": -0.5716320743338026,
+      "anchor_vol_matched_excess_vs_spy": -0.05348195301382508
+    },
+    {
+      "cell_id": "bench_eqw_sector1x",
+      "select_sharpe": 0.8266690722972189,
+      "select_cagr": 0.15852143283670062,
+      "holdout_sharpe": 1.1944872242004325,
+      "holdout_cagr": 0.15072709684397112,
+      "anchor_sharpe": 0.8786390056158162,
+      "anchor_cagr": 0.15423920696641602,
+      "anchor_max_dd": -0.1518929616993865,
+      "anchor_vol_matched_excess_vs_spy": -0.013664871223650898
+    },
+    {
+      "cell_id": "bench_eqw_levered3x",
+      "select_sharpe": 0.8576712824892266,
+      "select_cagr": 0.36754128625301696,
+      "holdout_sharpe": 1.8615787502223962,
+      "holdout_cagr": 0.7364367338067273,
+      "anchor_sharpe": 1.0092149573897204,
+      "anchor_cagr": 0.43468337918753397,
+      "anchor_max_dd": -0.4319293468872588,
+      "anchor_vol_matched_excess_vs_spy": -0.0320907844730165
+    },
+    {
+      "cell_id": "bench_live_sleeve_S1",
+      "select_sharpe": 1.1350771493270653,
+      "select_cagr": 0.23641097978497494,
+      "holdout_sharpe": 2.1785437771382066,
+      "holdout_cagr": 0.4568054525488814,
+      "anchor_sharpe": 1.351584075151784,
+      "anchor_cagr": 0.2767901864707216,
+      "anchor_max_dd": -0.16865370395494717,
+      "anchor_vol_matched_excess_vs_spy": 0.0637598992036521
+    }
+  ]
+}

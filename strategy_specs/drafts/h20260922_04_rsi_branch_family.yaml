@@ -1,0 +1,124 @@
+name: h20260922_04_rsi_branch_family
+description: >-
+  Preregistered single-mechanism candidate family (lightweight path, no
+  campaign) replicating the published Composer RSI-extreme branch tree: on each
+  signal close, if RSI(10) on the reference index is above 80 the book holds the
+  overheat asset (UVXY or BIL); if it is below 30 the book holds TQQQ as the
+  rebound bet; otherwise it holds the single strongest 21-day performer of the
+  menu (11 SPDR sector ETFs, or the five 3x sector ETFs TECL/FAS/ERX/CURE/DUSL).
+  This file fixes the mechanism's shape at one grid point (SPY reference,
+  sector1x menu, daily rebalance); the 16 evaluated parameter combinations are
+  recorded in candidate-manifest.json, not here, and the evaluation script
+  applies them directly.
+timeframe: daily
+universe:
+- SPY
+- QQQ
+- UVXY
+- BIL
+- TQQQ
+- XLK
+- XLV
+- XLF
+- XLE
+- XLI
+- XLY
+- XLP
+- XLU
+- XLB
+- XLRE
+- XLC
+- TECL
+- FAS
+- ERX
+- CURE
+- DUSL
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - "rsi(close, 10) < 80"
+exit:
+  any:
+  - "rsi(close, 10) > 80"
+risk:
+  max_trades_per_day: 2
+  max_position_weight: 1.0
+costs:
+  slippage_bps: 10.0
+execution:
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  caveat: >-
+    SIP archive fully adjusted daily bars. UVXY changed its daily target
+    multiple historically, so pre-2021 UVXY bars are not the same instrument;
+    the evaluation window starts 2022-06-01 and is unaffected.
+research_design:
+  iter_id: h20260922_04_rsi_branch
+  candidate_manifest_path: reports/research/iterations/h20260922_04_rsi_branch/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260922_04_rsi_branch/data-feasibility.json
+  cost_contract_path: reports/research/iterations/h20260922_04_rsi_branch/cost-table.json
+  source_cards_path: reports/harness/source_cards/h20260922_04_rsi_branch.jsonl
+  source_card_claim_ids:
+  - h20260922_04_rsi_branch:composer_sector_rotator_rule_and_oos
+  - h20260922_04_rsi_branch:composer_vol_minimization_oos
+  - h20260922_04_rsi_branch:proshares_uvxy_daily_reset
+  parameter_space:
+    rsi_ref:
+    - SPY
+    - QQQ
+    overheat_asset:
+    - UVXY
+    - BIL
+    menu:
+    - sector1x
+    - levered3x
+    rebalance:
+    - daily
+    - friday
+  candidate_budget: 16
+  selection_objective: >-
+    Rank on selection-window Sharpe only (2023-09-18..2025-12-31), then report
+    the untouched 2026 holdout, the SPMO-matched anchor window, both placebo
+    distributions and the 20 bp per side stress view.
+  anti_overfit_notes:
+  - RSI window 10, overheat threshold 80 and oversold threshold 30 are values published by the
+    source strategy, not values searched here.
+  - Candidate count and grid are frozen in candidate-manifest.json before any price is read.
+  - Single-mechanism lightweight path per docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md
+    section 3.1; no campaign archive and no genetic search.
+  - Two placebos are preregistered as kill switches, not as decoration - a 1-20 session calendar
+    shift of the RSI signal and a random single pick from the same menu.
+  validation_plan:
+  - selection_window_ranking_then_untouched_holdout
+  - placebo_rsi_calendar_shift_20_seeds
+  - placebo_random_menu_pick_60_seeds
+  - cost_stress_10bps_and_20bps_per_side
+  - benchmark_family_spy_mtum_spmo_qqq_tqqq_s1_and_menu_equal_weight
+notes:
+  intent: >-
+    Round 1 of brief B-1: replicate a published, out-of-sample-tracked strategy
+    family under our own windows, costs and placebos, and decide keep-or-refute
+    against gates G1-G5.
+  known_limits:
+  - The original computes RSI per sector; this replication's preregistered proxy computes it on
+    a single index (SPY or QQQ), which fires the overheat branch less often.
+  - The original buys the washed-out sector itself on the oversold branch; this fixes it to TQQQ.
+  - The whole evaluation window is a bull market; no bear regime is tested.
+  - UVXY targets 1.5x daily and decays over multi-day holds, so the hedge leg's contribution is
+    reported explicitly rather than assumed.
+  archive_descriptors:
+    mechanism_family: rsi_extreme_branch_rotation_with_volatility_hedge
+required_capabilities:
+- market.alpaca_bars

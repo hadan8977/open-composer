@@ -1,0 +1,477 @@
+{
+  "candidate_count": 16,
+  "candidates": [
+    {
+      "ablation": "overheat_branch_UVXY",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C01",
+      "cell_id": "rsib_SPY_ohUVXY_sector1x_daily",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "sector1x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "UVXY",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "daily",
+        "rsi_ref": "SPY",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_UVXY",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C02",
+      "cell_id": "rsib_SPY_ohUVXY_sector1x_friday",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "sector1x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "UVXY",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "friday",
+        "rsi_ref": "SPY",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_UVXY",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C03",
+      "cell_id": "rsib_SPY_ohUVXY_levered3x_daily",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "levered3x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "UVXY",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "daily",
+        "rsi_ref": "SPY",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_UVXY",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C04",
+      "cell_id": "rsib_SPY_ohUVXY_levered3x_friday",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "levered3x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "UVXY",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "friday",
+        "rsi_ref": "SPY",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_BIL",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C05",
+      "cell_id": "rsib_SPY_ohBIL_sector1x_daily",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "sector1x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "BIL",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "daily",
+        "rsi_ref": "SPY",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_BIL",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C06",
+      "cell_id": "rsib_SPY_ohBIL_sector1x_friday",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "sector1x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "BIL",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "friday",
+        "rsi_ref": "SPY",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_BIL",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C07",
+      "cell_id": "rsib_SPY_ohBIL_levered3x_daily",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "levered3x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "BIL",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "daily",
+        "rsi_ref": "SPY",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_BIL",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C08",
+      "cell_id": "rsib_SPY_ohBIL_levered3x_friday",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "levered3x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "BIL",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "friday",
+        "rsi_ref": "SPY",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_UVXY",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C09",
+      "cell_id": "rsib_QQQ_ohUVXY_sector1x_daily",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "sector1x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "UVXY",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "daily",
+        "rsi_ref": "QQQ",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_UVXY",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C10",
+      "cell_id": "rsib_QQQ_ohUVXY_sector1x_friday",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "sector1x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "UVXY",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "friday",
+        "rsi_ref": "QQQ",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_UVXY",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C11",
+      "cell_id": "rsib_QQQ_ohUVXY_levered3x_daily",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "levered3x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "UVXY",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "daily",
+        "rsi_ref": "QQQ",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_UVXY",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C12",
+      "cell_id": "rsib_QQQ_ohUVXY_levered3x_friday",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "levered3x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "UVXY",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "friday",
+        "rsi_ref": "QQQ",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_BIL",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C13",
+      "cell_id": "rsib_QQQ_ohBIL_sector1x_daily",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "sector1x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "BIL",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "daily",
+        "rsi_ref": "QQQ",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_BIL",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C14",
+      "cell_id": "rsib_QQQ_ohBIL_sector1x_friday",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "sector1x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "BIL",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "friday",
+        "rsi_ref": "QQQ",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_BIL",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C15",
+      "cell_id": "rsib_QQQ_ohBIL_levered3x_daily",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "levered3x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "BIL",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "daily",
+        "rsi_ref": "QQQ",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    },
+    {
+      "ablation": "overheat_branch_BIL",
+      "benchmark_contract": "recent_window_etf_benchmarks_v1",
+      "candidate_id": "C16",
+      "cell_id": "rsib_QQQ_ohBIL_levered3x_friday",
+      "cost_contract": "sip_daily_10bp_primary_20bp_stress",
+      "data_contract": "sip_daily_adjusted_close_open",
+      "fallback": "BIL",
+      "feature_contract": "rsi10_and_21d_return_rank",
+      "label_contract": "next_session_open_to_open_total_return",
+      "method": "rsi_extreme_branch_tree_with_sector_rotation",
+      "parameters": {
+        "menu": "levered3x",
+        "normal_lookback_days": 21,
+        "overheat_asset": "BIL",
+        "overheat_threshold": 80,
+        "oversold_asset": "TQQQ",
+        "oversold_threshold": 30,
+        "rebalance": "friday",
+        "rsi_ref": "QQQ",
+        "rsi_window": 10
+      },
+      "path": "rsi_branch_sector_rotation",
+      "role": "deterministic_mechanism_candidate",
+      "spec_path": "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml",
+      "validation_contract": "select_rank_holdout_report_plus_two_placebos"
+    }
+  ],
+  "contracts": {
+    "benchmarks": {
+      "recent_window_etf_benchmarks_v1": {
+        "description": "SPY, MTUM, SPMO, QQQ, TQQQ buy-and-hold, the live S1 sleeve (rot_A2_sector_lb252_top2_weekly) and equal-weight holdings of both menus, all on the same windows and fill assumption."
+      }
+    },
+    "costs": {
+      "sip_daily_10bp_primary_20bp_stress": {
+        "cost_table_sha256": "40eddd3640753c24c2bc51addcc96e134d5a7f618672470b76345f9595974098",
+        "description": "See cost-table.json."
+      }
+    },
+    "data": {
+      "sip_daily_adjusted_close_open": {
+        "description": "SIP archive fully adjusted daily open/close from data/sip/daily/*/*.parquet; zero-volume zero-trade ghost bars dropped."
+      }
+    },
+    "features": {
+      "rsi10_and_21d_return_rank": {
+        "description": "Wilder RSI(10) on the reference symbol's adjusted close, and the 21-session simple return used to rank the menu."
+      }
+    },
+    "labels": {
+      "next_session_open_to_open_total_return": {
+        "description": "No supervised labels. Weights decided on the signal close take effect at the next session's open."
+      }
+    },
+    "validation": {
+      "select_rank_holdout_report_plus_two_placebos": {
+        "description": "Rank on 2023-09-18..2025-12-31 only; report the untouched holdout 2026-01-02..2026-09-17 and the anchor 2024-01-08..2026-09-16; placebos are a 1-20 session RSI calendar shift x 20 seeds and a random single pick from the same menu x 60 seeds."
+      }
+    }
+  },
+  "generated_at": "2026-09-22T03:10:00+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "h20260922_04_rsi_branch",
+  "schema_version": 1,
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260922_04_rsi_branch_family.yaml": "88a1d3bcaa281d1b67718e9c447fc516dc72a3a3bcc9bcf595ee2b41b2392622"
+  }
+}
