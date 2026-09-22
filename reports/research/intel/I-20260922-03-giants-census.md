@@ -86,3 +86,18 @@ A 组规律：(1) 骨架 = **200 日线定趋势 + RSI(10) 双阈值**（超买 
 | 不进 | VIX 期限结构（无 VX 期货）、OFI（tick）、财报前溢价（消失）、LAA（宏观序列）、ORB | — |
 
 合计约 200–250 个新 cell，加 B-1/B-2 的 80 个。全部日线，一次跑完。
+
+## E. 有代码、有美股结果的高阶策略（第二次采集，2026-09-22）
+
+| 名称 | 方法 | 数据需求 | 报告结果 | 复现/衰减证据 | 判定 |
+|---|---|---|---|---|---|
+| Open Source Asset Pricing [openassetpricing.com](https://www.openassetpricing.com/) / [OpenSourceAP/CrossSection](https://github.com/OpenSourceAP/CrossSection) | 209 个已发表个股特征的月度宽表 + 组合收益，PyPI 包 `openassetpricing` | 免费；v2.0.0（2025-10）覆盖至 2024-12；标识为 permno，无 ticker/CUSIP 映射；Price/Size/STreversal 三个信号需 CRSP | 特征库，非策略 | 不需复现 | **第一优先**：这是文献里真正有效的截面 ML（Gu-Kelly-Xiu 一类）的免费训练集。缺口：permno→ticker 映射；数据只到 2024-12，实盘要自算可算子集（价量类 + XBRL 财务类） |
+| Deep Learning Statistical Arbitrage [arXiv 2106.04028](https://arxiv.org/abs/2106.04028) / [官方 repo](https://github.com/JorgeGuijarro/Deep-Learning-Statistical-Arbitrage) | FF/PCA/IPCA 残差 + 卷积 Transformer | 日线 + FF 因子（有）；IPCA 需特征 | 2002–2016 残差空间夏普 3.2–3.9（未扣费） | [bsiranosian 复现](https://bsiranosian.com/blog/deep-learning-statistical-arbitrage-part-1/)：残差空间对得上，映射回可交易股票后 FF 版夏普 2.30 → **0.97**；官方 repo 只有 PDF | 第二批：FF 残差版本本地可做，但按复现者的口径扣费后重估，日频换手是硬伤 |
+| Fischer & Krauss 2018 LSTM / Krauss-Do-Huck 2017 | 逐日截面排序，多空 top-k | S&P 500 历史成分（需自建） | 2010 年前日均 0.3–0.4% | **2010 年后收益消失**，多方证实 | 不做 |
+| QuantConnect 日内协整配对 / PCA 残差均值回归 | 10 分钟协整配对；PCA 残差 z-score | 分钟线（有）/日线 | 官方展示夏普 3.0 但样本一个月未扣费 | 独立复现夏普 0.47–0.85 | 不做（先否证）|
+| Learning-to-Rank 截面（Poh 等 2020，[repo](https://github.com/qclijun/Cross-Sectional-Momentum-LTR)） | LambdaMART 排序 | 截面特征 | 未核实 | 官方代码 | 并入 OSAP 路线的模型选项 |
+| Momentum Transformer / Spatio-Temporal Momentum（[2302.10175](https://arxiv.org/abs/2302.10175)、[2412.12516](https://arxiv.org/pdf/2412.12516)） | 时序 + 截面动量神经网络 | 日线 | 美股 2020–23 年化 4.1% / 夏普 1.12 | 非官方复现 | 不做（收益太低）|
+| 2025–26 LLM 因子挖掘（Chain-of-Alpha、Alpha Jungle、AlphaLogics、FactorEngine、CrossAlpha） | LLM 生成公式因子 | 多为 A 股基准 | 未核实 | 作者自证 | 不做 |
+| je-suis-tm/quant-trading、stefan-jansen/machine-learning-for-trading | 策略合集 / 教材代码 | 日线 | 无统一战绩 | — | 只作工具参考 |
+
+E 组结论：高阶策略里真正能在本机、用免费数据、且有文献背书的只有一条：**OSAP 特征库上的截面 ML 排序**（GKX 范式）。它不是"爆炸"型，文献口径是月频多空夏普 1–2 扣费前、long-only 前十分位年化 15–25%；价值在于它是唯一还没在本地试过的、文献里 ML 真正有效的做法（此前本地 ML 全在价量特征上，先验本来就低）。DLSA 排第二批。其余排除。
