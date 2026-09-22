@@ -1,0 +1,525 @@
+# Preregistered candidate manifest for the giants sweep (iteration giants_sweep_20260922).
+#
+# Built from the "汇总" table of reports/research/intel/I-20260922-03-giants-census.md.
+# Families F1, F2, F4, F5, F6, F7 are in scope. F3 is skipped (H-20260922-04 already
+# ran that family and it was refuted); the VIX term-structure family is skipped as
+# unrunnable (no VX futures on this box) -- both are recorded in unrunnable.md.
+#
+# The census table sketched ~156 grid points. `oc research iteration validate` caps an
+# uncampaigned iteration at 24 preregistered candidates, so every *searched* dimension
+# (threshold sweeps, extra rebalance variants) was dropped and only values that the
+# cited primary source actually publishes were kept, plus one explicitly labelled
+# ablation or leverage variant per family. This is a narrowing, never a widening: no
+# window, cost, placebo or gate threshold from the brief was relaxed. See
+# reports/research/iterations/giants_sweep_20260922/search-space.md.
+#
+# Protocol (frozen, identical to H-20260918-05 / H-20260922-02 / H-20260922-04):
+#   warmup  2022-06-01 .. 2023-09-15   (lookbacks only, never scored)
+#   select  2023-09-18 .. 2025-12-31   (the only window used for ranking)
+#   holdout 2026-01-02 .. 2026-09-17   (untouched out-of-sample)
+#   anchor  2024-01-08 .. 2026-09-16   (the window the SPMO benchmark quotes)
+#   costs   sum(|delta w|) * bps on the execution session, 10 bp primary / 20 bp stress
+#   fills   signal on the close, filled at the next session's open
+schema_version: 1
+iter_id: giants_sweep_20260922
+generated_before_backtest: true
+cash_asset: SHY
+risk_free_asset: BIL
+benchmarks: [SPY, MTUM, SPMO, QQQ, TQQQ]
+costs_bp: [10, 20]
+placebo_seeds:
+  random_pick: 60
+  random_weights: 60
+  calendar_shift: 20
+
+candidates:
+
+# ---------------------------------------------------------------- F1
+- id: f1_composer_tqqq_safe
+  family: F1_trend_rsi_hedge
+  source_url: https://www.composer.trade/trading-strategies/tqqq-safe-strategy-5Hta0uxaYbx5NktfwlWF
+  reported: {annualized: 0.5626, max_drawdown: null, sharpe: 1.28, period: "2022-12-28..2026-09-22 (platform, incl. in-sample)"}
+  exclusions_allowed: [lev_3x]
+  placebos: [calendar_shift]
+  spec:
+    rebalance: daily
+    root:
+      gate:
+        type: sma
+        asset: QQQ
+        window: 200
+        op: above
+        on_true:
+          gate:
+            type: rsi
+            asset: QQQ
+            window: 10
+            threshold: 78
+            op: above
+            on_true: {asset: BIL}
+            on_false:
+              gate:
+                type: rsi
+                asset: QQQ
+                window: 10
+                threshold: 30
+                op: below
+                on_true: {asset: TQQQ}
+                on_false: {weights: {TQQQ: 0.7, BIL: 0.3}}
+        on_false: {asset: BIL}
+
+- id: f1_composer_tqqq_rsi
+  family: F1_trend_rsi_hedge
+  source_url: https://www.composer.trade/trading-strategies/tqqq-rsi-strategy-Lh0fYfA5RJQmpyfGEORb
+  reported: {annualized: 0.689, max_drawdown: null, sharpe: 1.46, period: "2011-10-04..2026-09-22 (platform, incl. in-sample); OOS ~41%/yr"}
+  exclusions_allowed: [lev_3x, vol_etp]
+  placebos: [calendar_shift]
+  spec:
+    rebalance: daily
+    root:
+      gate:
+        type: sma
+        asset: QQQ
+        window: 200
+        op: above
+        on_true:
+          gate:
+            type: rsi
+            asset: QQQ
+            window: 10
+            threshold: 80
+            op: above
+            on_true: {asset: UVXY}
+            on_false:
+              gate:
+                type: rsi
+                asset: QQQ
+                window: 10
+                threshold: 30
+                op: below
+                on_true: {asset: TQQQ}
+                on_false: {asset: SHV}
+        on_false:
+          gate:
+            type: rsi
+            asset: QQQ
+            window: 10
+            threshold: 30
+            op: below
+            on_true: {asset: TECL}
+            on_false: {asset: SHV}
+
+- id: f1_composer_ftlt20
+  family: F1_trend_rsi_hedge
+  source_url: https://www.composer.trade/trading-strategies/tqqq-ftlt-20-iM4mdWcn3DPeUNZPsYNW
+  reported: {annualized: 0.3357, max_drawdown: null, sharpe: null, period: "2011-10-17..2026-09-22 (platform); OOS ~29.7%/yr"}
+  exclusions_allowed: [lev_3x, vol_etp, inverse]
+  placebos: [calendar_shift]
+  spec:
+    rebalance: daily
+    root:
+      gate:
+        type: sma
+        asset: SPY
+        window: 200
+        op: above
+        on_true:
+          gate:
+            type: rsi
+            asset: QQQ
+            window: 10
+            threshold: 80
+            op: above
+            on_true: {asset: UVXY}
+            on_false: {asset: TQQQ}
+        on_false:
+          gate:
+            type: rsi
+            asset: QQQ
+            window: 10
+            threshold: 30
+            op: below
+            on_true: {asset: TECL}
+            on_false:
+              rank: {menu: [SQQQ, TLT], lookback: 21, top_n: 1}
+
+- id: f1_tqqq_rsi_no_hedge_ablation
+  family: F1_trend_rsi_hedge
+  source_url: https://www.composer.trade/trading-strategies/tqqq-rsi-strategy-Lh0fYfA5RJQmpyfGEORb
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "ablation of the cell above, not a published strategy"}
+  exclusions_allowed: [lev_3x]
+  note: >-
+    Identical to f1_composer_tqqq_rsi with the UVXY/TECL volatility legs replaced by
+    cash. Isolates how much of the family's result is the hedge rather than the trend
+    and RSI branches.
+  placebos: [calendar_shift]
+  spec:
+    rebalance: daily
+    root:
+      gate:
+        type: sma
+        asset: QQQ
+        window: 200
+        op: above
+        on_true:
+          gate:
+            type: rsi
+            asset: QQQ
+            window: 10
+            threshold: 80
+            op: above
+            on_true: {asset: BIL}
+            on_false:
+              gate:
+                type: rsi
+                asset: QQQ
+                window: 10
+                threshold: 30
+                op: below
+                on_true: {asset: TQQQ}
+                on_false: {asset: SHV}
+        on_false: {asset: SHV}
+
+- id: f1_sp500_2x_leverage
+  family: F1_trend_rsi_hedge
+  source_url: https://www.composer.trade/trading-strategies/tqqq-safe-strategy-5Hta0uxaYbx5NktfwlWF
+  reported: {annualized: 0.586, max_drawdown: -0.336, sharpe: 1.54, period: "census A group, S&P Symphony w/ Leverage, 2010-02 start"}
+  exclusions_allowed: [lev_2x]
+  note: 2x (SSO) variant of the same published skeleton, SPY as both trend and RSI reference.
+  placebos: [calendar_shift]
+  spec:
+    rebalance: daily
+    root:
+      gate:
+        type: sma
+        asset: SPY
+        window: 200
+        op: above
+        on_true:
+          gate:
+            type: rsi
+            asset: SPY
+            window: 10
+            threshold: 80
+            op: above
+            on_true: {asset: SHV}
+            on_false: {asset: SSO}
+        on_false: {asset: SHV}
+
+# ---------------------------------------------------------------- F2
+- id: f2_hedged_sector_60_40
+  family: F2_two_leg_hedged_rotation
+  source_url: https://www.composer.trade/trading-strategies/tqqq-ftlt-20-iM4mdWcn3DPeUNZPsYNW
+  reported: {annualized: 1.404, max_drawdown: -0.199, sharpe: 2.46, period: "census A group Hedged Sector Rotator, OOS from 2024-08-03"}
+  exclusions_allowed: []
+  placebos: [random_pick, calendar_shift]
+  spec:
+    rebalance: weekly
+    root:
+      blend:
+      - weight: 0.6
+        node:
+          gate:
+            type: rsi
+            asset: SPY
+            window: 10
+            threshold: 79
+            op: above
+            on_true: {rank: {menu: [XLP, GLD], lookback: 21, top_n: 1}}
+            on_false:
+              rank:
+                menu: [XLK, XLV, XLF, XLE, XLI, XLY, XLP, XLU, XLB, XLRE, XLC]
+                lookback: 21
+                top_n: 1
+      - weight: 0.4
+        node:
+          rank: {menu: [TLT, SHV, EEM, QQQ], lookback: 21, top_n: 1}
+
+- id: f2_hedged_sector_50_50
+  family: F2_two_leg_hedged_rotation
+  source_url: https://www.composer.trade/trading-strategies/tqqq-ftlt-20-iM4mdWcn3DPeUNZPsYNW
+  reported: {annualized: 0.428, max_drawdown: -0.086, sharpe: 2.37, period: "census A group '2007 @ 2.25 Sharpe - ETFs', OOS from 2024-08-19"}
+  exclusions_allowed: []
+  placebos: [random_pick, calendar_shift]
+  spec:
+    rebalance: weekly
+    root:
+      blend:
+      - weight: 0.5
+        node:
+          gate:
+            type: rsi
+            asset: SPY
+            window: 10
+            threshold: 79
+            op: above
+            on_true: {rank: {menu: [XLP, GLD], lookback: 21, top_n: 1}}
+            on_false:
+              rank:
+                menu: [XLK, XLV, XLF, XLE, XLI, XLY, XLP, XLU, XLB, XLRE, XLC]
+                lookback: 21
+                top_n: 1
+      - weight: 0.5
+        node:
+          rank: {menu: [TLT, SHV, EEM, QQQ], lookback: 21, top_n: 1}
+
+- id: f2_sector_leg_only_ablation
+  family: F2_two_leg_hedged_rotation
+  source_url: https://www.composer.trade/trading-strategies/tqqq-ftlt-20-iM4mdWcn3DPeUNZPsYNW
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "ablation: leg 1 alone, not a published strategy"}
+  exclusions_allowed: []
+  note: Isolates whether the independent hedge leg is what lifts the two-leg family's Sharpe.
+  placebos: [random_pick, calendar_shift]
+  spec:
+    rebalance: weekly
+    root:
+      gate:
+        type: rsi
+        asset: SPY
+        window: 10
+        threshold: 79
+        op: above
+        on_true: {rank: {menu: [XLP, GLD], lookback: 21, top_n: 1}}
+        on_false:
+          rank:
+            menu: [XLK, XLV, XLF, XLE, XLI, XLY, XLP, XLU, XLB, XLRE, XLC]
+            lookback: 21
+            top_n: 1
+
+# ---------------------------------------------------------------- F4
+- id: f4_hfea_55_45_quarterly
+  family: F4_fixed_weight_leverage
+  source_url: https://www.optimizedportfolio.com/hedgefundie-adventure/
+  reported: {annualized: null, max_drawdown: -0.708, sharpe: null, period: "author's live record 2019-2023; -64% in 2022, -70.8% peak-to-trough"}
+  exclusions_allowed: [lev_3x]
+  placebos: [random_weights]
+  spec:
+    rebalance: quarterly
+    root: {weights: {UPRO: 0.55, TMF: 0.45}}
+
+- id: f4_hfea_55_45_monthly
+  family: F4_fixed_weight_leverage
+  source_url: https://www.optimizedportfolio.com/hedgefundie-adventure/
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "rebalance variant discussed in the same thread summary"}
+  exclusions_allowed: [lev_3x]
+  placebos: [random_weights]
+  spec:
+    rebalance: monthly
+    root: {weights: {UPRO: 0.55, TMF: 0.45}}
+
+- id: f4_tqqq_tmf_50_50_bimonthly
+  family: F4_fixed_weight_leverage
+  source_url: https://medium.com/@setupalpha.capital/3x-leveraged-etf-strategy-2-600-return-with-38-drawdown-trading-strategy-rules-f4dad806bc25
+  reported: {annualized: 0.238, max_drawdown: -0.387, sharpe: 0.95, period: "2010..2025-10 (author's backtest)"}
+  exclusions_allowed: [lev_3x]
+  placebos: [random_weights]
+  spec:
+    rebalance: bimonthly
+    root: {weights: {TQQQ: 0.5, TMF: 0.5}}
+
+- id: f4_nine_sig_tqqq_agg
+  family: F4_fixed_weight_leverage
+  source_url: https://portfolioslab.com/portfolio/vyshlq6kapi8qy8rdgibte59
+  reported: {annualized: 0.394, max_drawdown: -0.721, sharpe: 1.20, period: "2010-02..2026-04 (third-party backtest); trailing-12m Sharpe 1.20"}
+  exclusions_allowed: [lev_3x]
+  placebos: [random_weights]
+  spec:
+    rebalance: quarterly
+    root:
+      signal_growth:
+        growth_asset: TQQQ
+        bond_asset: AGG
+        rate: 0.09
+        bond_floor: 0.10
+        initial_growth_weight: 0.6
+
+# ---------------------------------------------------------------- F5
+- id: f5_baa_aggressive
+  family: F5_canary_breadth_defense
+  source_url: https://allocatesmartly.com/bold-asset-allocation/
+  reported: {annualized: 0.20, max_drawdown: -0.15, sharpe: null, period: "Keller & Keuning 1970-2022 (paper), AS flags overfitting risk"}
+  exclusions_allowed: []
+  placebos: [calendar_shift, random_pick]
+  spec:
+    rebalance: monthly
+    root:
+      canary:
+        assets: [SPY, EFA, EEM, AGG]
+        method: m13612w
+        on_ok:
+          rank: {menu: [QQQ, EEM, EFA, AGG], method: rel13, top_n: 1, cash_policy: park}
+        on_fail:
+          rank: {menu: [TIP, DBC, BIL, IEF, TLT, LQD, AGG], method: rel13, top_n: 3, cash_filter: BIL, cash_policy: park}
+
+- id: f5_baa_balanced
+  family: F5_canary_breadth_defense
+  source_url: https://allocatesmartly.com/bold-asset-allocation/
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "same page, balanced variant"}
+  exclusions_allowed: []
+  placebos: [calendar_shift, random_pick]
+  spec:
+    rebalance: monthly
+    root:
+      canary:
+        assets: [SPY, EFA, EEM, AGG]
+        method: m13612w
+        on_ok:
+          rank:
+            menu: [SPY, QQQ, IWM, VGK, EWJ, EEM, VNQ, DBC, GLD, TLT, HYG, LQD]
+            method: rel13
+            top_n: 6
+            cash_policy: park
+        on_fail:
+          rank: {menu: [TIP, DBC, BIL, IEF, TLT, LQD, AGG], method: rel13, top_n: 3, cash_filter: BIL, cash_policy: park}
+
+- id: f5_baa_aggressive_3x
+  family: F5_canary_breadth_defense
+  source_url: https://allocatesmartly.com/bold-asset-allocation/
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "leverage variant, no public record (AS does not track levered TAA)"}
+  exclusions_allowed: [lev_3x]
+  note: The census's explicit ask -- put the BAA canary switch in front of a leveraged offensive basket.
+  placebos: [calendar_shift, random_pick]
+  spec:
+    rebalance: monthly
+    root:
+      canary:
+        assets: [SPY, EFA, EEM, AGG]
+        method: m13612w
+        on_ok:
+          rank: {menu: [TQQQ, EEM, EFA, AGG], method: rel13, top_n: 1, cash_policy: park}
+        on_fail:
+          rank: {menu: [TIP, DBC, BIL, IEF, TLT, LQD, AGG], method: rel13, top_n: 3, cash_filter: BIL, cash_policy: park}
+
+- id: f5_canary_over_s3_levered
+  family: F5_canary_breadth_defense
+  source_url: https://allocatesmartly.com/bold-asset-allocation/
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "overlay variant, no public record"}
+  exclusions_allowed: [lev_3x]
+  note: >-
+    BAA canary as a risk switch in front of the live S3 sleeve (menu A4, 63-day momentum,
+    top 2, month end). Tests whether a published breadth defense fixes S3's -56% drawdown.
+  placebos: [calendar_shift, random_pick]
+  spec:
+    rebalance: monthly
+    root:
+      canary:
+        assets: [SPY, EFA, EEM, AGG]
+        method: m13612w
+        on_ok:
+          rank: {menu: [TQQQ, SOXL, UPRO, USD, TECL], lookback: 63, top_n: 2, cash_filter: SHY}
+        on_fail: {asset: SHY}
+
+- id: f5_accelerating_dual_momentum
+  family: F5_canary_breadth_defense
+  source_url: https://allocatesmartly.com/taa-strategy-accelerating-dual-momentum/
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "rules public on Allocate Smartly, recent numbers behind the paywall"}
+  exclusions_allowed: []
+  placebos: [calendar_shift, random_pick]
+  spec:
+    rebalance: monthly
+    root:
+      accel_dual_momentum:
+        risk_assets: [SPY, SCZ]
+        defensive: [TLT, TIP]
+        lookbacks: [21, 63, 126]
+        defensive_lookback: 21
+
+- id: f5_accelerating_dual_momentum_3x
+  family: F5_canary_breadth_defense
+  source_url: https://allocatesmartly.com/taa-strategy-accelerating-dual-momentum/
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "leverage variant, no public record"}
+  exclusions_allowed: [lev_3x]
+  note: Same signal, UPRO instead of SPY on the US leg and TMF instead of TLT on the defensive leg.
+  placebos: [calendar_shift, random_pick]
+  spec:
+    rebalance: monthly
+    root:
+      accel_dual_momentum:
+        risk_assets: [SPY, SCZ]
+        defensive: [TLT, TIP]
+        lookbacks: [21, 63, 126]
+        defensive_lookback: 21
+        substitutions: {SPY: UPRO, TLT: TMF}
+
+# ---------------------------------------------------------------- F6
+- id: f6_sector_trend_sma200
+  family: F6_industry_trend_following
+  source_url: https://quantpedia.com/strategies/sector-momentum-rotational-system/
+  reported: {annualized: null, max_drawdown: -0.4629, sharpe: 0.54, period: "Quantpedia exhibit 4.5, top-3 sector momentum, long history"}
+  exclusions_allowed: []
+  placebos: [calendar_shift]
+  spec:
+    rebalance: monthly
+    root:
+      trend_basket:
+        menu: [XLK, XLV, XLF, XLE, XLI, XLY, XLP, XLU, XLB, XLRE, XLC]
+        method: sma
+        window: 200
+        cash_asset: BIL
+
+- id: f6_sector_trend_sma126
+  family: F6_industry_trend_following
+  source_url: https://quantpedia.com/strategies/sector-momentum-rotational-system/
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "shorter-window variant of the same rule"}
+  exclusions_allowed: []
+  placebos: [calendar_shift]
+  spec:
+    rebalance: monthly
+    root:
+      trend_basket:
+        menu: [XLK, XLV, XLF, XLE, XLI, XLY, XLP, XLU, XLB, XLRE, XLC]
+        method: sma
+        window: 126
+        cash_asset: BIL
+
+- id: f6_sector_tsmom_12m
+  family: F6_industry_trend_following
+  source_url: https://quantpedia.com/strategies/sector-momentum-rotational-system/
+  reported: {annualized: 0.182, max_drawdown: null, sharpe: 1.39, period: "Zarattini & Antonacci 2024, 48 industries, 1926-2024 (paper)"}
+  exclusions_allowed: []
+  placebos: [calendar_shift]
+  spec:
+    rebalance: monthly
+    root:
+      trend_basket:
+        menu: [XLK, XLV, XLF, XLE, XLI, XLY, XLP, XLU, XLB, XLRE, XLC]
+        method: tsmom
+        window: 252
+        cash_asset: BIL
+
+# ---------------------------------------------------------------- F7
+- id: f7_overnight_qqq_skip_wed_fri
+  family: F7_overnight_effect
+  source_url: https://redfame.com/journal/index.php/aef/article/view/7705
+  reported: {annualized: null, max_drawdown: null, sharpe: 7.75, period: "Lin 2025, AEF 12(3):30-46; headline Sharpe is the paper's, not ours"}
+  exclusions_allowed: []
+  note: >-
+    The paper's cost assumption is far below this protocol's frozen 10/20 bp per side.
+    Run here at the frozen costs anyway; the frozen protocol is not relaxed for one family.
+  placebos: [random_nights]
+  spec:
+    overnight:
+      asset: QQQ
+      skip_weekdays: [2, 4]
+
+- id: f7_overnight_qqq_all_nights
+  family: F7_overnight_effect
+  source_url: https://redfame.com/journal/index.php/aef/article/view/7705
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "no-seasonality control from the same paper"}
+  exclusions_allowed: []
+  placebos: [random_nights]
+  spec:
+    overnight:
+      asset: QQQ
+      skip_weekdays: []
+
+- id: f7_overnight_spy_skip_wed_fri
+  family: F7_overnight_effect
+  source_url: https://redfame.com/journal/index.php/aef/article/view/7705
+  reported: {annualized: null, max_drawdown: null, sharpe: null, period: "same rule on the other index ETF the paper studies"}
+  exclusions_allowed: []
+  placebos: [random_nights]
+  spec:
+    overnight:
+      asset: SPY
+      skip_weekdays: [2, 4]

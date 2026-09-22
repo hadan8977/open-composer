@@ -1,0 +1,199 @@
+{
+  "cheapest_decisive_test": {
+    "action": "One vectorised CPU pass over 24 preregistered cells on SIP daily bars: rank on the selection window only, report the untouched holdout and the SPMO-matched anchor window, then run each cell's declared placebos (1-20 session calendar shift x 20 seeds for gate and canary signals, random pick from the same menu x 60 seeds for ranked selections, random Dirichlet weights x 60 seeds for fixed-weight cells, random night subsets x 60 seeds for the overnight cells) plus the 20 bp stress view.",
+    "falsification_condition": "If no family clears those gates, the census's headline numbers are an artifact of the sources' own windows and cost assumptions, and the giants route is closed for this regime rather than iterated on.",
+    "max_compute_minutes": 45,
+    "pass_condition": "At least one cell with anchor CAGR >= 50% and max drawdown <= 35% (or anchor Sharpe >= 2.0 with CAGR >= 30%), holdout Sharpe >= 1.0 and positive, every declared placebo beaten on at least 90% of seeds, and the same verdict at 20 bp per side."
+  },
+  "cost_and_execution_assumptions": "sum(|delta w|) * slippage charged on the execution session, 10 bp per side primary and 20 bp per side stress; signal on the close, filled at the next session's open; fully adjusted SIP daily bars; long-only US ETFs tradable on the existing Alpaca paper cron; no shorting, no options, no intraday, no VX futures. Fixed-weight cells let their weights drift between the published rebalance dates instead of being reset daily.",
+  "decision": "proceed",
+  "existing_solution_comparison": "Every cell is somebody else's finished product: Composer runs three of them live on a platform, Allocate Smartly tracks the TAA family in near real time, HEDGEFUNDIE's allocation has a multi-year forum record and two of the rules are published papers. Nothing is re-derived. What none of them provides is an evaluation on our data with our next-open fills, our 10 and 20 bp cost views, a selection/holdout split and placebo controls, which is the only thing this iteration adds. Where a public number already exists it is recorded in the manifest's `reported` field and compared, not recomputed from scratch.",
+  "iter_id": "giants_sweep_20260922",
+  "negative_experiments_checked": "L-20260918-01 and L-20260918-05 already killed single moving-average timing of leveraged ETFs in this window on the calendar-shift placebo. H-20260918-05 found the S3 leveraged sleeve's ranking was weak evidence (25% placebo beat rate). H-20260922-04 ran the F3 3x-sector RSI-branch family and it was refuted, so F3 is excluded here rather than re-run. H-20260922-02 already covers the volatility-target and drawdown-brake overlays, so no overlay is re-searched. The families kept are the ones none of those runs touched, plus two explicitly labelled ablations that exist to let the same placebos kill them.",
+  "objective": "Take the strategies that already have public records -- Composer symphonies, the Allocate Smartly TAA canon, the retail leveraged-ETF canon and two 2024-2026 academic rules -- and measure 24 of them verbatim under this project's frozen recent-window protocol, so that compute goes to deciding which published giant survives our costs, windows and placebos rather than to inventing another rule.",
+  "queries": [
+    {
+      "opened_urls": [
+        "https://www.composer.trade/trading-strategies/tqqq-rsi-strategy-Lh0fYfA5RJQmpyfGEORb"
+      ],
+      "query": "composer.trade trading-strategies \"TQQQ RSI Strategy\" symphony",
+      "searched_at": "2026-09-22T07:05:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://www.composer.trade/trading-strategies/tqqq-safe-strategy-5Hta0uxaYbx5NktfwlWF"
+      ],
+      "query": "composer.trade trading-strategies \"TQQQ Safe Strategy\" symphony",
+      "searched_at": "2026-09-22T07:05:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://www.composer.trade/trading-strategies/tqqq-ftlt-20-iM4mdWcn3DPeUNZPsYNW"
+      ],
+      "query": "composer.trade trading-strategies \"TQQQ FTLT 2.0\" symphony rules",
+      "searched_at": "2026-09-22T07:05:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://allocatesmartly.com/taa-strategy-accelerating-dual-momentum/"
+      ],
+      "query": "allocate smartly accelerating dual momentum strategy rules SPY SCZ TLT TIP",
+      "searched_at": "2026-09-22T07:05:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://allocatesmartly.com/bold-asset-allocation/"
+      ],
+      "query": "allocate smartly bold asset allocation BAA canary 13612W offensive defensive universe",
+      "searched_at": "2026-09-22T07:05:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://www.optimizedportfolio.com/hedgefundie-adventure/"
+      ],
+      "query": "HEDGEFUNDIE excellent adventure UPRO TMF 55/45 quarterly rebalancing summary",
+      "searched_at": "2026-09-22T07:05:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://redfame.com/journal/index.php/aef/article/view/7705"
+      ],
+      "query": "\"Weekly Seasonality in Overnight Effects of the Stock Market\" Applied Economics and Finance",
+      "searched_at": "2026-09-22T07:05:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://quantpedia.com/strategies/sector-momentum-rotational-system/"
+      ],
+      "query": "quantpedia sector momentum rotational system ten sector ETFs 12-month momentum",
+      "searched_at": "2026-09-22T07:05:00+00:00"
+    }
+  ],
+  "remaining_evidence_gap": "Composer's discovery page shows winners only and lets authors reset the out-of-sample start; Allocate Smartly's recent numbers are paywalled and it tracks no leveraged variant; the leveraged-ETF canon's records are self-reported forum and blog backtests; the two academic rules publish no cost assumption. So for every family the missing evidence is the same: does the published rule still work in 2024-2026 after realistic costs, and is it the signal or the underlying asset that produced the return.",
+  "reviewed_at": "2026-09-22T07:20:57+00:00",
+  "schema_version": 1,
+  "sources": [
+    {
+      "applicability": "Fixes the F1 family's trend window (200 days), RSI window (10) and the identity of the overheat and rebound assets, so the sweep replicates published values instead of searching thresholds.",
+      "claim": "Composer's TQQQ RSI Strategy page states the full rule in plain English -- a 200-day trend filter, RSI and PPO speed checks, TQQQ bought on dips and SHV held otherwise, with SQQQ or UVXY after extreme up days and TECL on deep sell-offs -- and reports a 68.9% annualized return with Sharpe 1.46 over the whole 2011-10-04 backtest, against roughly 41% annualized out of sample.",
+      "claim_id": "giants_sweep_20260922:composer_tqqq_rsi_rule_and_oos",
+      "fetched_at": "2026-09-22T07:07:00+00:00",
+      "independent_replication": "No independent audited replication; this sweep is the local one.",
+      "limitations": "Composer's discovery page shows winners only, the author can edit the recipe and reset the out-of-sample start, and the headline blends in-sample with out-of-sample history. The page does not disclose the exact PPO parameters, so the replication uses the disclosed 200-day trend and RSI(10) branches only.",
+      "market_and_period": "US Nasdaq-100 and 3x tech ETFs; page backtest starts 2011-10-04, page read 2026-09-22.",
+      "published_or_updated_at": "2026-09-22",
+      "sha256": "cfd6ff9e20550f51c81e29914d7ba986703f0d65eae66bdcca88cdea329ef42b",
+      "snapshot_path": "reports/research/iterations/giants_sweep_20260922/sources/composer-tqqq-rsi-strategy.html",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_type": "platform_docs",
+      "url": "https://www.composer.trade/trading-strategies/tqqq-rsi-strategy-Lh0fYfA5RJQmpyfGEORb"
+    },
+    {
+      "applicability": "Supplies the exact 78/30 RSI thresholds and the 70/30 partial-risk weighting for the second F1 cell, again removing any need to search thresholds locally.",
+      "claim": "Composer's TQQQ Safe Strategy page discloses the whole decision tree -- QQQ above its 200-day average holds TQQQ at 100% when strong or 70/30 with T-bills when softer, buys dips at RSI below 30 and moves to T-bills when RSI is above 78 or price is below the 50-day average -- and reports 56.26% annualized with Sharpe 1.28 since 2022-12-28.",
+      "claim_id": "giants_sweep_20260922:composer_tqqq_safe_rule_and_oos",
+      "fetched_at": "2026-09-22T07:07:00+00:00",
+      "independent_replication": "None published.",
+      "limitations": "Same platform caveats as the page above; the out-of-sample start is 2026-03-29, so its OOS record is under six months and the headline is mostly in-sample.",
+      "market_and_period": "Nasdaq-100 ETFs; page backtest starts 2022-12-28, page read 2026-09-22.",
+      "published_or_updated_at": "2026-09-22",
+      "sha256": "ef341d30f27791d8cb94fb68677b159940bc79212830ae3c6bfb4be435a6ddb3",
+      "snapshot_path": "reports/research/iterations/giants_sweep_20260922/sources/composer-tqqq-safe-strategy.html",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_type": "platform_docs",
+      "url": "https://www.composer.trade/trading-strategies/tqqq-safe-strategy-5Hta0uxaYbx5NktfwlWF"
+    },
+    {
+      "applicability": "Defines the third F1 cell and the hedge-leg structure the F2 two-leg cells reuse.",
+      "claim": "Composer's TQQQ FTLT 2.0 page discloses a two-state tree -- SPY above its 200-day average is risk-on and rotates into volatility funds when tech is very hot, otherwise rides leveraged Nasdaq; below trend it buys deeply oversold leveraged rebounds or holds whichever of SQQQ and TLT is stronger -- and targets roughly 29.7% annualized out of sample versus 20% for the S&P.",
+      "claim_id": "giants_sweep_20260922:composer_tqqq_ftlt_rule",
+      "fetched_at": "2026-09-22T07:07:00+00:00",
+      "independent_replication": "None published.",
+      "limitations": "Winners-only discovery page; the risk-off leg's exact oversold threshold is not published, so the replication uses the same RSI(10) < 30 rule as the other F1 cells.",
+      "market_and_period": "US index and 3x sector ETFs plus volatility ETPs; backtest from 2011-10-17, read 2026-09-22.",
+      "published_or_updated_at": "2026-09-22",
+      "sha256": "5e503d3137e375b9b9c697ece938de68f0aa91d88e2465090075eec3450da7be",
+      "snapshot_path": "reports/research/iterations/giants_sweep_20260922/sources/composer-tqqq-ftlt-20.html",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_type": "platform_docs",
+      "url": "https://www.composer.trade/trading-strategies/tqqq-ftlt-20-iM4mdWcn3DPeUNZPsYNW"
+    },
+    {
+      "applicability": "Gives two of the six F5 cells their exact signal; recent performance numbers sit behind Allocate Smartly's paywall, which is precisely the gap this sweep fills.",
+      "claim": "Allocate Smartly publishes Accelerating Dual Momentum's complete rule set for free: at each month end average each of SPY's and SCZ's 1, 3 and 6-month total returns, hold whichever is higher if it is also positive, and otherwise hold whichever of TLT and TIP has the higher 1-month return, holding until the next month end.",
+      "claim_id": "giants_sweep_20260922:allocatesmartly_accelerating_dual_momentum_rules",
+      "fetched_at": "2026-09-22T07:07:00+00:00",
+      "independent_replication": "Allocate Smartly tracks it in near real time behind a paywall; unverified here.",
+      "limitations": "The page publishes rules but not current performance, so there is no public recent benchmark to compare our numbers against; Allocate Smartly does not track leveraged variants at all, so the 3x cell has no public record by construction.",
+      "market_and_period": "US large caps and international small caps plus US Treasuries; page read 2026-09-22.",
+      "published_or_updated_at": "2026-09-22",
+      "sha256": "4ff31f7350a817e238f6a232e4a70f8a8d84afe466ff3f28562309d1144c8dad",
+      "snapshot_path": "reports/research/iterations/giants_sweep_20260922/sources/allocatesmartly-accelerating-dual-momentum.html",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://allocatesmartly.com/taa-strategy-accelerating-dual-momentum/"
+    },
+    {
+      "applicability": "Gives four F5 cells their exact canary rule, momentum definitions and asset universes, including the leveraged overlay the census asked the engine to test.",
+      "claim": "Allocate Smartly publishes Bold Asset Allocation in full: a canary universe of SPY, EFA, EEM and AGG scored with 13612W momentum, any negative score sending the whole book to the defensive universe, selection inside each universe by the slower p0/average(p0..p12) relative momentum, one offensive asset for the aggressive version and six for the balanced one, three defensive assets, and any defensive asset weaker than BIL parked in cash.",
+      "claim_id": "giants_sweep_20260922:allocatesmartly_baa_rules_and_universes",
+      "fetched_at": "2026-09-22T07:07:00+00:00",
+      "independent_replication": "Tracked by Allocate Smartly in near real time behind a paywall.",
+      "limitations": "Allocate Smartly itself flags BAA as carrying overfitting risk and says it prefers Hybrid Asset Allocation; the current performance figures are behind its paywall.",
+      "market_and_period": "Global ETF universes (offensive QQQ/EEM/EFA/AGG aggressive or a twelve-asset balanced basket, defensive TIP/DBC/BIL/IEF/TLT/LQD/AGG); page read 2026-09-22.",
+      "published_or_updated_at": "2026-09-22",
+      "sha256": "6800a7d57bddbd0b5cb5e0bd7502f602c344e51690a52036c4e63529bb96f099",
+      "snapshot_path": "reports/research/iterations/giants_sweep_20260922/sources/allocatesmartly-bold-asset-allocation.html",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://allocatesmartly.com/bold-asset-allocation/"
+    },
+    {
+      "applicability": "Fixes the two F4 HFEA cells' weights and rebalance cadence; the monthly cell is labelled in the manifest as a cadence variant of the same published allocation.",
+      "claim": "The summary of HEDGEFUNDIE's Excellent Adventure states that the strategy was updated in August 2019 to a 55/45 UPRO/TMF allocation and that the proposed strategy calls for quarterly rebalancing.",
+      "claim_id": "giants_sweep_20260922:optimizedportfolio_hfea_allocation_and_rebalance",
+      "fetched_at": "2026-09-22T07:07:00+00:00",
+      "independent_replication": "Widely replicated by retail backtesters; no audited record.",
+      "limitations": "A summary of a forum thread, not an audited track record; the -70.8% drawdown and -64% 2022 quoted in the census come from the thread, not from this page.",
+      "market_and_period": "3x S&P 500 and 3x long-Treasury ETFs; article last modified 2025-09-08, read 2026-09-22.",
+      "published_or_updated_at": "2025-09-08",
+      "sha256": "5db2fad64ef4136a36508dc3cfc929e5709696c7ffeaa9442ef2c84f007a265c",
+      "snapshot_path": "reports/research/iterations/giants_sweep_20260922/sources/optimizedportfolio-hedgefundie.html",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://www.optimizedportfolio.com/hedgefundie-adventure/"
+    },
+    {
+      "applicability": "Defines the three F7 cells (QQQ and SPY, skipping Wednesday and Friday nights or trading every night) without any local parameter search.",
+      "claim": "Lin (2025, Applied Economics and Finance 12(3):30-46) reports a statistically significant positive Monday-to-Tuesday and negative Friday-to-next-Monday overnight return in US large caps and index ETFs, and builds a trading model that buys before the close and sells at the next open while skipping Wednesday and/or Friday.",
+      "claim_id": "giants_sweep_20260922:redfame_weekly_overnight_seasonality",
+      "fetched_at": "2026-09-22T07:07:00+00:00",
+      "independent_replication": "No independent replication located.",
+      "limitations": "The abstract does not state a cost assumption, and the census recorded a headline Sharpe of 7.75, which is implausible net of real spreads. This sweep charges the frozen 10 and 20 bp per side, which is almost certainly stricter than the paper's.",
+      "market_and_period": "US large-cap stocks and index ETFs including QQQ; journal article published 2025-08.",
+      "published_or_updated_at": "2025-08-01",
+      "sha256": "ed7161dcbb7b34e25573edb9d71a6bb69a8e5ed3a5a6245e53868e6e14e649ba",
+      "snapshot_path": "reports/research/iterations/giants_sweep_20260922/sources/redfame-weekly-overnight.html",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_type": "paper",
+      "url": "https://redfame.com/journal/index.php/aef/article/view/7705"
+    },
+    {
+      "applicability": "Anchors the F6 industry trend-following cells' momentum window and rebalance cadence to a published specification rather than a searched one.",
+      "claim": "Quantpedia's sector momentum rotational system entry states the rule as picking the three sector ETFs with the strongest 12-month momentum, weighting them equally and rebalancing monthly, and reports a Sharpe ratio of 0.54 with a -46.29% maximum drawdown for the top-three variant.",
+      "claim_id": "giants_sweep_20260922:quantpedia_sector_momentum_rotation",
+      "fetched_at": "2026-09-22T07:07:00+00:00",
+      "independent_replication": "Quantpedia cites the underlying academic work; not independently re-run here.",
+      "limitations": "Quantpedia summarises an academic source rather than running a live book; the 0.54 Sharpe is a long-history number and says nothing about 2023-2026.",
+      "market_and_period": "Ten US sector ETFs; long-history academic backtest, page read 2026-09-22.",
+      "published_or_updated_at": "2026-09-22",
+      "sha256": "49450bb0ac8d80e0dc1fb781f7d9f80894d9fee233a9b10f5da0c1e294412321",
+      "snapshot_path": "reports/research/iterations/giants_sweep_20260922/sources/quantpedia-sector-momentum.html",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/strategies/sector-momentum-rotational-system/"
+    }
+  ],
+  "stop_condition": "A cell is dropped when its placebo beats it on more than 10% of seeds, when it fails the holdout Sharpe gate, or when 20 bp per side removes its edge. The whole iteration stops at one CPU pass over 24 cells plus their placebos; no cell is re-tuned and no second grid is opened on the same holdout.",
+  "target_regime_and_horizon": "The recent US regime only: a selection window of 2023-09-18..2025-12-31 and an untouched 2026 holdout, on daily bars, with a one- to twelve-month holding horizon depending on the family. No claim is made about pre-2022 regimes, and every cell is reported with its own applicability window rather than as a permanent edge."
+}

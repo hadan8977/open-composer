@@ -1,0 +1,149 @@
+name: giants_sweep_20260922_family
+description: >-
+  Preregistered replication family (lightweight single-mechanism path, no campaign)
+  for the giants sweep. The mechanism under test is one thing: take a strategy that
+  already has a public record -- a Composer symphony, an Allocate Smartly TAA rule,
+  a retail leveraged-ETF allocation or a published paper -- and run it verbatim
+  under this project's frozen recent-window protocol, with no parameter search.
+  This file fixes the family's shape at one grid point (the published Composer
+  "TQQQ Safe" tree: QQQ above its 200-day average holds TQQQ, RSI(10) above 78
+  parks in T-bills, RSI(10) below 30 buys the dip); the 24 evaluated published
+  specifications live in candidate-manifest.json and config/giants_sweep/manifest.yaml,
+  and scripts/run_giants_sweep.py applies them directly.
+timeframe: daily
+universe:
+- SPY
+- QQQ
+- TQQQ
+- SQQQ
+- UVXY
+- TECL
+- UPRO
+- TMF
+- SSO
+- SHY
+- BIL
+- SHV
+- AGG
+- TLT
+- IEF
+- LQD
+- TIP
+- DBC
+- GLD
+- EEM
+- EFA
+- IWM
+- VGK
+- EWJ
+- VNQ
+- HYG
+- SCZ
+- SOXL
+- USD
+- XLK
+- XLV
+- XLF
+- XLE
+- XLI
+- XLY
+- XLP
+- XLU
+- XLB
+- XLRE
+- XLC
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - "rsi(close, 10) < 78"
+exit:
+  any:
+  - "rsi(close, 10) > 78"
+risk:
+  max_trades_per_day: 2
+  max_position_weight: 1.0
+costs:
+  slippage_bps: 10.0
+execution:
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: QQQ
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  caveat: >-
+    SIP archive fully adjusted daily bars. UVXY changed its daily target multiple
+    historically, so pre-2021 UVXY bars are not the same instrument; the evaluation
+    window starts 2022-06-01 and is unaffected. No VX futures exist on this box, so
+    the census's VIX term-structure family is recorded as unrunnable instead of
+    approximated.
+research_design:
+  iter_id: giants_sweep_20260922
+  candidate_manifest_path: reports/research/iterations/giants_sweep_20260922/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/giants_sweep_20260922/data-feasibility.json
+  cost_contract_path: reports/research/iterations/giants_sweep_20260922/cost-table.json
+  source_cards_path: reports/harness/source_cards/giants_sweep_20260922.jsonl
+  source_card_claim_ids:
+  - giants_sweep_20260922:composer_tqqq_rsi_rule_and_oos
+  - giants_sweep_20260922:composer_tqqq_safe_rule_and_oos
+  - giants_sweep_20260922:composer_tqqq_ftlt_rule
+  - giants_sweep_20260922:allocatesmartly_accelerating_dual_momentum_rules
+  - giants_sweep_20260922:allocatesmartly_baa_rules_and_universes
+  - giants_sweep_20260922:optimizedportfolio_hfea_allocation_and_rebalance
+  - giants_sweep_20260922:redfame_weekly_overnight_seasonality
+  - giants_sweep_20260922:quantpedia_sector_momentum_rotation
+  parameter_space:
+    family:
+    - F1_trend_rsi_hedge
+    - F2_two_leg_hedged_rotation
+    - F4_fixed_weight_leverage
+    - F5_canary_breadth_defense
+    - F6_industry_trend_following
+    - F7_overnight_effect
+  candidate_budget: 24
+  selection_objective: >-
+    Rank on selection-window Sharpe only (2023-09-18..2025-12-31), then report the
+    untouched 2026 holdout, the SPMO-matched anchor window, every declared placebo
+    distribution and the 20 bp per side stress view.
+  anti_overfit_notes:
+  - Every parameter comes from the cited primary source; nothing is searched locally. The
+    only cells without a published parameter are two explicitly labelled ablations.
+  - The census sketched roughly 156 grid points; this iteration keeps 24 published
+    specifications and drops every searched dimension rather than widening the grid.
+  - Candidate list frozen in candidate-manifest.json and config/giants_sweep/manifest.yaml
+    before the engine read a single price.
+  - Each cell declares its own placebo kinds as kill switches, not decoration.
+  - The engine is regression-locked to run_h20260918_05_recent_menu.rotation_cell on the
+    three live S1/S2/S3 sleeves before the sweep is allowed to run.
+  validation_plan:
+  - selection_window_ranking_then_untouched_holdout
+  - placebo_calendar_shift_20_seeds
+  - placebo_random_pick_60_seeds
+  - placebo_random_weights_60_seeds
+  - placebo_random_nights_60_seeds
+  - cost_stress_10bps_and_20bps_per_side
+  - benchmark_family_spy_mtum_spmo_qqq_tqqq
+notes:
+  intent: >-
+    Brief ENGINE: one generic sweep engine and one manifest, so the census of public
+    strategies is decided in a single bounded pass instead of one card per family.
+  known_limits:
+  - The whole evaluation window is a bull market; no cell is tested in a bear regime.
+  - Composer pages do not publish every threshold, so two F1 cells use the disclosed
+    RSI(10) branches and omit the undisclosed PPO leg.
+  - The 9-sig cell implements the published signal line and 10% bond floor but not the
+    thread's later "30 down, stick around" discretionary overrides.
+  - The overnight family is run at the frozen 10/20 bp per side, which is far stricter
+    than the paper's unstated cost assumption; it is a cost verdict, not a signal verdict.
+  archive_descriptors:
+    mechanism_family: published_strategy_replication_under_frozen_protocol
+required_capabilities:
+- market.alpaca_bars

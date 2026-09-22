@@ -1,0 +1,789 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/giants_sweep_20260922/candidate-manifest.json",
+  "candidate_manifest_sha256": "352da5eb0286b81ee09465291d1db51405885a01fdd97145e64a6b8d997d402a",
+  "cost_table_path": "reports/research/iterations/giants_sweep_20260922/cost-table.json",
+  "created_at": "2026-09-22T07:22:22.550673+00:00",
+  "data_feasibility_path": "reports/research/iterations/giants_sweep_20260922/data-feasibility.json",
+  "data_feasibility_sha256": "672b330abdab003cd5f2a3f793e21e00061562359eb577e017f25b6b17a0b115",
+  "evaluation_report_paths": [],
+  "iter_id": "giants_sweep_20260922",
+  "paths": [
+    {
+      "benchmark_family": [
+        "buy_and_hold_spy",
+        "buy_and_hold_mtum",
+        "buy_and_hold_spmo",
+        "buy_and_hold_qqq",
+        "buy_and_hold_tqqq",
+        "live_sleeve_s1_s2_s3_of_h20260918_05"
+      ],
+      "candidate_count": 24,
+      "hypothesis_refs": [
+        "H_published_giants_survive_our_costs"
+      ],
+      "name": "giants_replication_sweep",
+      "parameters": {
+        "family": [
+          "F1_trend_rsi_hedge",
+          "F2_two_leg_hedged_rotation",
+          "F4_fixed_weight_leverage",
+          "F5_canary_breadth_defense",
+          "F6_industry_trend_following",
+          "F7_overnight_effect"
+        ],
+        "source_url": [
+          "https://www.composer.trade/trading-strategies/tqqq-safe-strategy-5Hta0uxaYbx5NktfwlWF",
+          "https://www.composer.trade/trading-strategies/tqqq-rsi-strategy-Lh0fYfA5RJQmpyfGEORb",
+          "https://www.composer.trade/trading-strategies/tqqq-ftlt-20-iM4mdWcn3DPeUNZPsYNW",
+          "https://www.optimizedportfolio.com/hedgefundie-adventure/",
+          "https://medium.com/@setupalpha.capital/3x-leveraged-etf-strategy-2-600-return-with-38-drawdown-trading-strategy-rules-f4dad806bc25",
+          "https://portfolioslab.com/portfolio/vyshlq6kapi8qy8rdgibte59",
+          "https://allocatesmartly.com/bold-asset-allocation/",
+          "https://allocatesmartly.com/taa-strategy-accelerating-dual-momentum/",
+          "https://quantpedia.com/strategies/sector-momentum-rotational-system/",
+          "https://redfame.com/journal/index.php/aef/article/view/7705"
+        ],
+        "spec": [
+          {
+            "rebalance": "daily",
+            "root": {
+              "gate": {
+                "asset": "QQQ",
+                "on_false": {
+                  "asset": "BIL"
+                },
+                "on_true": {
+                  "gate": {
+                    "asset": "QQQ",
+                    "on_false": {
+                      "gate": {
+                        "asset": "QQQ",
+                        "on_false": {
+                          "weights": {
+                            "BIL": 0.3,
+                            "TQQQ": 0.7
+                          }
+                        },
+                        "on_true": {
+                          "asset": "TQQQ"
+                        },
+                        "op": "below",
+                        "threshold": 30,
+                        "type": "rsi",
+                        "window": 10
+                      }
+                    },
+                    "on_true": {
+                      "asset": "BIL"
+                    },
+                    "op": "above",
+                    "threshold": 78,
+                    "type": "rsi",
+                    "window": 10
+                  }
+                },
+                "op": "above",
+                "type": "sma",
+                "window": 200
+              }
+            }
+          },
+          {
+            "rebalance": "daily",
+            "root": {
+              "gate": {
+                "asset": "QQQ",
+                "on_false": {
+                  "gate": {
+                    "asset": "QQQ",
+                    "on_false": {
+                      "asset": "SHV"
+                    },
+                    "on_true": {
+                      "asset": "TECL"
+                    },
+                    "op": "below",
+                    "threshold": 30,
+                    "type": "rsi",
+                    "window": 10
+                  }
+                },
+                "on_true": {
+                  "gate": {
+                    "asset": "QQQ",
+                    "on_false": {
+                      "gate": {
+                        "asset": "QQQ",
+                        "on_false": {
+                          "asset": "SHV"
+                        },
+                        "on_true": {
+                          "asset": "TQQQ"
+                        },
+                        "op": "below",
+                        "threshold": 30,
+                        "type": "rsi",
+                        "window": 10
+                      }
+                    },
+                    "on_true": {
+                      "asset": "UVXY"
+                    },
+                    "op": "above",
+                    "threshold": 80,
+                    "type": "rsi",
+                    "window": 10
+                  }
+                },
+                "op": "above",
+                "type": "sma",
+                "window": 200
+              }
+            }
+          },
+          {
+            "rebalance": "daily",
+            "root": {
+              "gate": {
+                "asset": "SPY",
+                "on_false": {
+                  "gate": {
+                    "asset": "QQQ",
+                    "on_false": {
+                      "rank": {
+                        "lookback": 21,
+                        "menu": [
+                          "SQQQ",
+                          "TLT"
+                        ],
+                        "top_n": 1
+                      }
+                    },
+                    "on_true": {
+                      "asset": "TECL"
+                    },
+                    "op": "below",
+                    "threshold": 30,
+                    "type": "rsi",
+                    "window": 10
+                  }
+                },
+                "on_true": {
+                  "gate": {
+                    "asset": "QQQ",
+                    "on_false": {
+                      "asset": "TQQQ"
+                    },
+                    "on_true": {
+                      "asset": "UVXY"
+                    },
+                    "op": "above",
+                    "threshold": 80,
+                    "type": "rsi",
+                    "window": 10
+                  }
+                },
+                "op": "above",
+                "type": "sma",
+                "window": 200
+              }
+            }
+          },
+          {
+            "rebalance": "daily",
+            "root": {
+              "gate": {
+                "asset": "QQQ",
+                "on_false": {
+                  "asset": "SHV"
+                },
+                "on_true": {
+                  "gate": {
+                    "asset": "QQQ",
+                    "on_false": {
+                      "gate": {
+                        "asset": "QQQ",
+                        "on_false": {
+                          "asset": "SHV"
+                        },
+                        "on_true": {
+                          "asset": "TQQQ"
+                        },
+                        "op": "below",
+                        "threshold": 30,
+                        "type": "rsi",
+                        "window": 10
+                      }
+                    },
+                    "on_true": {
+                      "asset": "BIL"
+                    },
+                    "op": "above",
+                    "threshold": 80,
+                    "type": "rsi",
+                    "window": 10
+                  }
+                },
+                "op": "above",
+                "type": "sma",
+                "window": 200
+              }
+            }
+          },
+          {
+            "rebalance": "daily",
+            "root": {
+              "gate": {
+                "asset": "SPY",
+                "on_false": {
+                  "asset": "SHV"
+                },
+                "on_true": {
+                  "gate": {
+                    "asset": "SPY",
+                    "on_false": {
+                      "asset": "SSO"
+                    },
+                    "on_true": {
+                      "asset": "SHV"
+                    },
+                    "op": "above",
+                    "threshold": 80,
+                    "type": "rsi",
+                    "window": 10
+                  }
+                },
+                "op": "above",
+                "type": "sma",
+                "window": 200
+              }
+            }
+          },
+          {
+            "rebalance": "weekly",
+            "root": {
+              "blend": [
+                {
+                  "node": {
+                    "gate": {
+                      "asset": "SPY",
+                      "on_false": {
+                        "rank": {
+                          "lookback": 21,
+                          "menu": [
+                            "XLK",
+                            "XLV",
+                            "XLF",
+                            "XLE",
+                            "XLI",
+                            "XLY",
+                            "XLP",
+                            "XLU",
+                            "XLB",
+                            "XLRE",
+                            "XLC"
+                          ],
+                          "top_n": 1
+                        }
+                      },
+                      "on_true": {
+                        "rank": {
+                          "lookback": 21,
+                          "menu": [
+                            "XLP",
+                            "GLD"
+                          ],
+                          "top_n": 1
+                        }
+                      },
+                      "op": "above",
+                      "threshold": 79,
+                      "type": "rsi",
+                      "window": 10
+                    }
+                  },
+                  "weight": 0.6
+                },
+                {
+                  "node": {
+                    "rank": {
+                      "lookback": 21,
+                      "menu": [
+                        "TLT",
+                        "SHV",
+                        "EEM",
+                        "QQQ"
+                      ],
+                      "top_n": 1
+                    }
+                  },
+                  "weight": 0.4
+                }
+              ]
+            }
+          },
+          {
+            "rebalance": "weekly",
+            "root": {
+              "blend": [
+                {
+                  "node": {
+                    "gate": {
+                      "asset": "SPY",
+                      "on_false": {
+                        "rank": {
+                          "lookback": 21,
+                          "menu": [
+                            "XLK",
+                            "XLV",
+                            "XLF",
+                            "XLE",
+                            "XLI",
+                            "XLY",
+                            "XLP",
+                            "XLU",
+                            "XLB",
+                            "XLRE",
+                            "XLC"
+                          ],
+                          "top_n": 1
+                        }
+                      },
+                      "on_true": {
+                        "rank": {
+                          "lookback": 21,
+                          "menu": [
+                            "XLP",
+                            "GLD"
+                          ],
+                          "top_n": 1
+                        }
+                      },
+                      "op": "above",
+                      "threshold": 79,
+                      "type": "rsi",
+                      "window": 10
+                    }
+                  },
+                  "weight": 0.5
+                },
+                {
+                  "node": {
+                    "rank": {
+                      "lookback": 21,
+                      "menu": [
+                        "TLT",
+                        "SHV",
+                        "EEM",
+                        "QQQ"
+                      ],
+                      "top_n": 1
+                    }
+                  },
+                  "weight": 0.5
+                }
+              ]
+            }
+          },
+          {
+            "rebalance": "weekly",
+            "root": {
+              "gate": {
+                "asset": "SPY",
+                "on_false": {
+                  "rank": {
+                    "lookback": 21,
+                    "menu": [
+                      "XLK",
+                      "XLV",
+                      "XLF",
+                      "XLE",
+                      "XLI",
+                      "XLY",
+                      "XLP",
+                      "XLU",
+                      "XLB",
+                      "XLRE",
+                      "XLC"
+                    ],
+                    "top_n": 1
+                  }
+                },
+                "on_true": {
+                  "rank": {
+                    "lookback": 21,
+                    "menu": [
+                      "XLP",
+                      "GLD"
+                    ],
+                    "top_n": 1
+                  }
+                },
+                "op": "above",
+                "threshold": 79,
+                "type": "rsi",
+                "window": 10
+              }
+            }
+          },
+          {
+            "rebalance": "quarterly",
+            "root": {
+              "weights": {
+                "TMF": 0.45,
+                "UPRO": 0.55
+              }
+            }
+          },
+          {
+            "rebalance": "monthly",
+            "root": {
+              "weights": {
+                "TMF": 0.45,
+                "UPRO": 0.55
+              }
+            }
+          },
+          {
+            "rebalance": "bimonthly",
+            "root": {
+              "weights": {
+                "TMF": 0.5,
+                "TQQQ": 0.5
+              }
+            }
+          },
+          {
+            "rebalance": "quarterly",
+            "root": {
+              "signal_growth": {
+                "bond_asset": "AGG",
+                "bond_floor": 0.1,
+                "growth_asset": "TQQQ",
+                "initial_growth_weight": 0.6,
+                "rate": 0.09
+              }
+            }
+          },
+          {
+            "rebalance": "monthly",
+            "root": {
+              "canary": {
+                "assets": [
+                  "SPY",
+                  "EFA",
+                  "EEM",
+                  "AGG"
+                ],
+                "method": "m13612w",
+                "on_fail": {
+                  "rank": {
+                    "cash_filter": "BIL",
+                    "cash_policy": "park",
+                    "menu": [
+                      "TIP",
+                      "DBC",
+                      "BIL",
+                      "IEF",
+                      "TLT",
+                      "LQD",
+                      "AGG"
+                    ],
+                    "method": "rel13",
+                    "top_n": 3
+                  }
+                },
+                "on_ok": {
+                  "rank": {
+                    "cash_policy": "park",
+                    "menu": [
+                      "QQQ",
+                      "EEM",
+                      "EFA",
+                      "AGG"
+                    ],
+                    "method": "rel13",
+                    "top_n": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "rebalance": "monthly",
+            "root": {
+              "canary": {
+                "assets": [
+                  "SPY",
+                  "EFA",
+                  "EEM",
+                  "AGG"
+                ],
+                "method": "m13612w",
+                "on_fail": {
+                  "rank": {
+                    "cash_filter": "BIL",
+                    "cash_policy": "park",
+                    "menu": [
+                      "TIP",
+                      "DBC",
+                      "BIL",
+                      "IEF",
+                      "TLT",
+                      "LQD",
+                      "AGG"
+                    ],
+                    "method": "rel13",
+                    "top_n": 3
+                  }
+                },
+                "on_ok": {
+                  "rank": {
+                    "cash_policy": "park",
+                    "menu": [
+                      "SPY",
+                      "QQQ",
+                      "IWM",
+                      "VGK",
+                      "EWJ",
+                      "EEM",
+                      "VNQ",
+                      "DBC",
+                      "GLD",
+                      "TLT",
+                      "HYG",
+                      "LQD"
+                    ],
+                    "method": "rel13",
+                    "top_n": 6
+                  }
+                }
+              }
+            }
+          },
+          {
+            "rebalance": "monthly",
+            "root": {
+              "canary": {
+                "assets": [
+                  "SPY",
+                  "EFA",
+                  "EEM",
+                  "AGG"
+                ],
+                "method": "m13612w",
+                "on_fail": {
+                  "rank": {
+                    "cash_filter": "BIL",
+                    "cash_policy": "park",
+                    "menu": [
+                      "TIP",
+                      "DBC",
+                      "BIL",
+                      "IEF",
+                      "TLT",
+                      "LQD",
+                      "AGG"
+                    ],
+                    "method": "rel13",
+                    "top_n": 3
+                  }
+                },
+                "on_ok": {
+                  "rank": {
+                    "cash_policy": "park",
+                    "menu": [
+                      "TQQQ",
+                      "EEM",
+                      "EFA",
+                      "AGG"
+                    ],
+                    "method": "rel13",
+                    "top_n": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "rebalance": "monthly",
+            "root": {
+              "canary": {
+                "assets": [
+                  "SPY",
+                  "EFA",
+                  "EEM",
+                  "AGG"
+                ],
+                "method": "m13612w",
+                "on_fail": {
+                  "asset": "SHY"
+                },
+                "on_ok": {
+                  "rank": {
+                    "cash_filter": "SHY",
+                    "lookback": 63,
+                    "menu": [
+                      "TQQQ",
+                      "SOXL",
+                      "UPRO",
+                      "USD",
+                      "TECL"
+                    ],
+                    "top_n": 2
+                  }
+                }
+              }
+            }
+          },
+          {
+            "rebalance": "monthly",
+            "root": {
+              "accel_dual_momentum": {
+                "defensive": [
+                  "TLT",
+                  "TIP"
+                ],
+                "defensive_lookback": 21,
+                "lookbacks": [
+                  21,
+                  63,
+                  126
+                ],
+                "risk_assets": [
+                  "SPY",
+                  "SCZ"
+                ]
+              }
+            }
+          },
+          {
+            "rebalance": "monthly",
+            "root": {
+              "accel_dual_momentum": {
+                "defensive": [
+                  "TLT",
+                  "TIP"
+                ],
+                "defensive_lookback": 21,
+                "lookbacks": [
+                  21,
+                  63,
+                  126
+                ],
+                "risk_assets": [
+                  "SPY",
+                  "SCZ"
+                ],
+                "substitutions": {
+                  "SPY": "UPRO",
+                  "TLT": "TMF"
+                }
+              }
+            }
+          },
+          {
+            "rebalance": "monthly",
+            "root": {
+              "trend_basket": {
+                "cash_asset": "BIL",
+                "menu": [
+                  "XLK",
+                  "XLV",
+                  "XLF",
+                  "XLE",
+                  "XLI",
+                  "XLY",
+                  "XLP",
+                  "XLU",
+                  "XLB",
+                  "XLRE",
+                  "XLC"
+                ],
+                "method": "sma",
+                "window": 200
+              }
+            }
+          },
+          {
+            "rebalance": "monthly",
+            "root": {
+              "trend_basket": {
+                "cash_asset": "BIL",
+                "menu": [
+                  "XLK",
+                  "XLV",
+                  "XLF",
+                  "XLE",
+                  "XLI",
+                  "XLY",
+                  "XLP",
+                  "XLU",
+                  "XLB",
+                  "XLRE",
+                  "XLC"
+                ],
+                "method": "sma",
+                "window": 126
+              }
+            }
+          },
+          {
+            "rebalance": "monthly",
+            "root": {
+              "trend_basket": {
+                "cash_asset": "BIL",
+                "menu": [
+                  "XLK",
+                  "XLV",
+                  "XLF",
+                  "XLE",
+                  "XLI",
+                  "XLY",
+                  "XLP",
+                  "XLU",
+                  "XLB",
+                  "XLRE",
+                  "XLC"
+                ],
+                "method": "tsmom",
+                "window": 252
+              }
+            }
+          },
+          {
+            "overnight": {
+              "asset": "QQQ",
+              "skip_weekdays": [
+                2,
+                4
+              ]
+            }
+          },
+          {
+            "overnight": {
+              "asset": "QQQ",
+              "skip_weekdays": []
+            }
+          },
+          {
+            "overnight": {
+              "asset": "SPY",
+              "skip_weekdays": [
+                2,
+                4
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/giants_sweep_20260922_family.yaml",
+  "spec_hash": "be3e6f4d3e15df6c1e896e637c38871d11c9c4931daa0d91cedce02451aeeb23",
+  "strategy_name": "giants_sweep_20260922_family",
+  "total_candidate_budget": 24,
+  "trial_ledger_paths": []
+}

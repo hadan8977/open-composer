@@ -1,0 +1,218 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "decision": "keep",
+      "path": "giants_replication_sweep",
+      "reason": "initial preregistration"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/giants_sweep_20260922.jsonl"
+  ],
+  "hypothesis_links": [
+    {
+      "hypothesis_id": "H_published_giants_survive_our_costs",
+      "source_urls": [
+        "https://www.composer.trade/trading-strategies/tqqq-rsi-strategy-Lh0fYfA5RJQmpyfGEORb"
+      ]
+    }
+  ],
+  "iter_id": "giants_sweep_20260922",
+  "objective": "Decide, in one bounded pass, which publicly recorded strategy families still clear the frozen recent-window gates after our costs, fills and placebos, instead of inventing new rules.",
+  "schema_version": 2,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "giants_sweep_20260922:composer_tqqq_rsi_rule_and_oos",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://www.composer.trade/trading-strategies/tqqq-rsi-strategy-Lh0fYfA5RJQmpyfGEORb"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:composer_tqqq_safe_rule_and_oos",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://www.composer.trade/trading-strategies/tqqq-safe-strategy-5Hta0uxaYbx5NktfwlWF"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:composer_tqqq_ftlt_rule",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://www.composer.trade/trading-strategies/tqqq-ftlt-20-iM4mdWcn3DPeUNZPsYNW"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:allocatesmartly_accelerating_dual_momentum_rules",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://allocatesmartly.com/taa-strategy-accelerating-dual-momentum/"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:allocatesmartly_baa_rules_and_universes",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://allocatesmartly.com/bold-asset-allocation/"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:optimizedportfolio_hfea_allocation_and_rebalance",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://www.optimizedportfolio.com/hedgefundie-adventure/"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:redfame_weekly_overnight_seasonality",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://redfame.com/journal/index.php/aef/article/view/7705"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:quantpedia_sector_momentum_rotation",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://quantpedia.com/strategies/sector-momentum-rotational-system/"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:external_4857230",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4857230"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:external_4166845",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4166845"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:external_3718828",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3718828"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:external_3002624",
+      "source_card_path": "reports/harness/source_cards/giants_sweep_20260922.jsonl",
+      "source_url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3002624"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/giants_sweep_20260922_family.yaml",
+  "sources": [
+    {
+      "claim_id": "giants_sweep_20260922:composer_tqqq_rsi_rule_and_oos",
+      "core_claim": "Composer's TQQQ RSI Strategy page states the full rule in plain English -- a 200-day trend filter, RSI and PPO speed checks, TQQQ bought on dips and SHV held otherwise, with SQQQ or UVXY after extreme up days and TECL on deep sell-offs -- and reports a 68.9% annualized return with Sharpe 1.46 over the whole 2011-10-04 backtest, against roughly 41% annualized out of sample.",
+      "credibility": "medium",
+      "project_applicability": "Fixes published parameter values for one or more preregistered cells in config/giants_sweep/manifest.yaml, so no threshold is searched locally.",
+      "published_or_updated_at": "2026-09-22",
+      "reflection": "Snapshot fetched and hashed into reports/research/iterations/giants_sweep_20260922/sources/; the quote used is extracted from that snapshot. Composer's discovery page shows winners only, the author can edit the recipe and reset the out-of-sample start, and the headline blends in-sample with out-of-sample history. The page does not disclose the exact PPO parameters, so the replication uses the disclosed 200-day trend and RSI(10) branches only.",
+      "source_type": "platform_docs",
+      "url": "https://www.composer.trade/trading-strategies/tqqq-rsi-strategy-Lh0fYfA5RJQmpyfGEORb"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:composer_tqqq_safe_rule_and_oos",
+      "core_claim": "Composer's TQQQ Safe Strategy page discloses the whole decision tree -- QQQ above its 200-day average holds TQQQ at 100% when strong or 70/30 with T-bills when softer, buys dips at RSI below 30 and moves to T-bills when RSI is above 78 or price is below the 50-day average -- and reports 56.26% annualized with Sharpe 1.28 since 2022-12-28.",
+      "credibility": "medium",
+      "project_applicability": "Fixes published parameter values for one or more preregistered cells in config/giants_sweep/manifest.yaml, so no threshold is searched locally.",
+      "published_or_updated_at": "2026-09-22",
+      "reflection": "Snapshot fetched and hashed into reports/research/iterations/giants_sweep_20260922/sources/; the quote used is extracted from that snapshot. Same platform caveats as the page above; the out-of-sample start is 2026-03-29, so its OOS record is under six months and the headline is mostly in-sample.",
+      "source_type": "platform_docs",
+      "url": "https://www.composer.trade/trading-strategies/tqqq-safe-strategy-5Hta0uxaYbx5NktfwlWF"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:composer_tqqq_ftlt_rule",
+      "core_claim": "Composer's TQQQ FTLT 2.0 page discloses a two-state tree -- SPY above its 200-day average is risk-on and rotates into volatility funds when tech is very hot, otherwise rides leveraged Nasdaq; below trend it buys deeply oversold leveraged rebounds or holds whichever of SQQQ and TLT is stronger -- and targets roughly 29.7% annualized out of sample versus 20% for the S&P.",
+      "credibility": "medium",
+      "project_applicability": "Fixes published parameter values for one or more preregistered cells in config/giants_sweep/manifest.yaml, so no threshold is searched locally.",
+      "published_or_updated_at": "2026-09-22",
+      "reflection": "Snapshot fetched and hashed into reports/research/iterations/giants_sweep_20260922/sources/; the quote used is extracted from that snapshot. Winners-only discovery page; the risk-off leg's exact oversold threshold is not published, so the replication uses the same RSI(10) < 30 rule as the other F1 cells.",
+      "source_type": "platform_docs",
+      "url": "https://www.composer.trade/trading-strategies/tqqq-ftlt-20-iM4mdWcn3DPeUNZPsYNW"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:allocatesmartly_accelerating_dual_momentum_rules",
+      "core_claim": "Allocate Smartly publishes Accelerating Dual Momentum's complete rule set for free: at each month end average each of SPY's and SCZ's 1, 3 and 6-month total returns, hold whichever is higher if it is also positive, and otherwise hold whichever of TLT and TIP has the higher 1-month return, holding until the next month end.",
+      "credibility": "high",
+      "project_applicability": "Fixes published parameter values for one or more preregistered cells in config/giants_sweep/manifest.yaml, so no threshold is searched locally.",
+      "published_or_updated_at": "2026-09-22",
+      "reflection": "Snapshot fetched and hashed into reports/research/iterations/giants_sweep_20260922/sources/; the quote used is extracted from that snapshot. The page publishes rules but not current performance, so there is no public recent benchmark to compare our numbers against; Allocate Smartly does not track leveraged variants at all, so the 3x cell has no public record by construction.",
+      "source_type": "industry_standard",
+      "url": "https://allocatesmartly.com/taa-strategy-accelerating-dual-momentum/"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:allocatesmartly_baa_rules_and_universes",
+      "core_claim": "Allocate Smartly publishes Bold Asset Allocation in full: a canary universe of SPY, EFA, EEM and AGG scored with 13612W momentum, any negative score sending the whole book to the defensive universe, selection inside each universe by the slower p0/average(p0..p12) relative momentum, one offensive asset for the aggressive version and six for the balanced one, three defensive assets, and any defensive asset weaker than BIL parked in cash.",
+      "credibility": "high",
+      "project_applicability": "Fixes published parameter values for one or more preregistered cells in config/giants_sweep/manifest.yaml, so no threshold is searched locally.",
+      "published_or_updated_at": "2026-09-22",
+      "reflection": "Snapshot fetched and hashed into reports/research/iterations/giants_sweep_20260922/sources/; the quote used is extracted from that snapshot. Allocate Smartly itself flags BAA as carrying overfitting risk and says it prefers Hybrid Asset Allocation; the current performance figures are behind its paywall.",
+      "source_type": "industry_standard",
+      "url": "https://allocatesmartly.com/bold-asset-allocation/"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:optimizedportfolio_hfea_allocation_and_rebalance",
+      "core_claim": "The summary of HEDGEFUNDIE's Excellent Adventure states that the strategy was updated in August 2019 to a 55/45 UPRO/TMF allocation and that the proposed strategy calls for quarterly rebalancing.",
+      "credibility": "high",
+      "project_applicability": "Fixes published parameter values for one or more preregistered cells in config/giants_sweep/manifest.yaml, so no threshold is searched locally.",
+      "published_or_updated_at": "2026-09-22",
+      "reflection": "Snapshot fetched and hashed into reports/research/iterations/giants_sweep_20260922/sources/; the quote used is extracted from that snapshot. A summary of a forum thread, not an audited track record; the -70.8% drawdown and -64% 2022 quoted in the census come from the thread, not from this page.",
+      "source_type": "industry_standard",
+      "url": "https://www.optimizedportfolio.com/hedgefundie-adventure/"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:redfame_weekly_overnight_seasonality",
+      "core_claim": "Lin (2025, Applied Economics and Finance 12(3):30-46) reports a statistically significant positive Monday-to-Tuesday and negative Friday-to-next-Monday overnight return in US large caps and index ETFs, and builds a trading model that buys before the close and sells at the next open while skipping Wednesday and/or Friday.",
+      "credibility": "high",
+      "project_applicability": "Fixes published parameter values for one or more preregistered cells in config/giants_sweep/manifest.yaml, so no threshold is searched locally.",
+      "published_or_updated_at": "2025-08-01",
+      "reflection": "Snapshot fetched and hashed into reports/research/iterations/giants_sweep_20260922/sources/; the quote used is extracted from that snapshot. The abstract does not state a cost assumption, and the census recorded a headline Sharpe of 7.75, which is implausible net of real spreads. This sweep charges the frozen 10 and 20 bp per side, which is almost certainly stricter than the paper's.",
+      "source_type": "paper",
+      "url": "https://redfame.com/journal/index.php/aef/article/view/7705"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:quantpedia_sector_momentum_rotation",
+      "core_claim": "Quantpedia's sector momentum rotational system entry states the rule as picking the three sector ETFs with the strongest 12-month momentum, weighting them equally and rebalancing monthly, and reports a Sharpe ratio of 0.54 with a -46.29% maximum drawdown for the top-three variant.",
+      "credibility": "high",
+      "project_applicability": "Fixes published parameter values for one or more preregistered cells in config/giants_sweep/manifest.yaml, so no threshold is searched locally.",
+      "published_or_updated_at": "2026-09-22",
+      "reflection": "Snapshot fetched and hashed into reports/research/iterations/giants_sweep_20260922/sources/; the quote used is extracted from that snapshot. Quantpedia summarises an academic source rather than running a live book; the 0.54 Sharpe is a long-history number and says nothing about 2023-2026.",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/strategies/sector-momentum-rotational-system/"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:external_4857230",
+      "core_claim": "Zarattini & Antonacci (2024) report that long-only time-series trend following across 48 US industry portfolios returned 18.2% annualized with 12.6% volatility and a 1.39 Sharpe from 1926 to 2024, against 0.63 for the market.",
+      "credibility": "high",
+      "project_applicability": "Motivates the F6 industry trend-following cells; our version uses 11 SPDR sector ETFs, the tradable proxy for the paper's industry portfolios.",
+      "published_or_updated_at": "2024-06-01",
+      "reflection": "SSRN returns HTTP 403 to this host, so the abstract page was NOT opened directly; the claim is carried over from the census brief reports/research/intel/I-20260922-03-giants-census.md. No engine parameter depends on it -- every executable parameter comes from a snapshot we did fetch.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4857230"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:external_4166845",
+      "core_claim": "Keller & Keuning (2022) introduce Bold Asset Allocation, whose canary universe and 13612W momentum the F5 cells replicate; the paper reports over 20% annualized with monthly drawdowns under 15% from 1970 to 2022.",
+      "credibility": "high",
+      "project_applicability": "Provides the academic origin of the F5 canary rule; the executable rule text used by the engine comes from the Allocate Smartly page, which we did open.",
+      "published_or_updated_at": "2022-07-01",
+      "reflection": "SSRN returns HTTP 403 to this host, so the abstract page was NOT opened directly; the claim is carried over from the census brief reports/research/intel/I-20260922-03-giants-census.md. No engine parameter depends on it -- every executable parameter comes from a snapshot we did fetch.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4166845"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:external_3718828",
+      "core_claim": "Gayed & Bilello's 'Leverage for the Long Run' reports that holding 2-3x exposure only while the S&P 500 closes above its 200-day average raised the 1928-2015 Sharpe from 0.30 to 0.51.",
+      "credibility": "high",
+      "project_applicability": "This is the negative control for the F1 family: L-20260918-05 already failed the same 200-day timing rule on leveraged ETFs in our window, so F1 is only reopened because it adds the RSI branches.",
+      "published_or_updated_at": "2020-11-01",
+      "reflection": "SSRN returns HTTP 403 to this host, so the abstract page was NOT opened directly; the claim is carried over from the census brief reports/research/intel/I-20260922-03-giants-census.md. No engine parameter depends on it -- every executable parameter comes from a snapshot we did fetch.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3718828"
+    },
+    {
+      "claim_id": "giants_sweep_20260922:external_3002624",
+      "core_claim": "Keller & Keuning's Vigilant Asset Allocation uses 13612W breadth momentum over a small risk universe to switch between offensive and defensive baskets; third parties quote a 16.3% CAGR for VAA-G4.",
+      "credibility": "high",
+      "project_applicability": "Background for the F5 breadth-defense family; no F5 cell takes a parameter from this paper without the Allocate Smartly page confirming it.",
+      "published_or_updated_at": "2017-07-01",
+      "reflection": "SSRN returns HTTP 403 to this host, so the abstract page was NOT opened directly; the claim is carried over from the census brief reports/research/intel/I-20260922-03-giants-census.md. No engine parameter depends on it -- every executable parameter comes from a snapshot we did fetch.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3002624"
+    }
+  ],
+  "spec_hash": "be3e6f4d3e15df6c1e896e637c38871d11c9c4931daa0d91cedce02451aeeb23",
+  "strategy_name": "giants_sweep_20260922_family",
+  "topic_coverage": [
+    "composer_public_symphonies",
+    "allocate_smartly_taa_canon",
+    "retail_leveraged_etf_canon",
+    "2024_2026_academic_daily_rules",
+    "overnight_and_seasonality_effects",
+    "cost_and_execution_feasibility_on_alpaca"
+  ]
+}
