@@ -7,7 +7,7 @@
 ## 工程（Codex，先做，不需要模型额度）
 
 1. `scripts/fetch_osap.py`：用 `openassetpricing` 包（或官方 release 链接）下载个股月度特征宽表与 SignalDoc 到 `data/raw/osap/v2.0.0/`；记录版本、发布日、覆盖月份、行数、列数、许可；不进仓库（gitignore），写 `data/raw/osap/README.md`。
-2. **标识对齐**：查宽表的标识列（permno？是否含 CUSIP/ticker？）。若只有 permno：用免费来源建 permno→ticker 交叉表——候选：SEC Fails-to-Deliver 文件（CUSIP↔symbol，逐月）配合 OSAP 里若有的 CUSIP；CRSP 公开的 permno 样例；学术 repo 里的 permno-ticker 表。做不到就写明比例（能映射多少 permno-月），不猜。输出 `data/features/osap_crosswalk.parquet` 与覆盖率报告。
+2. **标识对齐（09-22 已探明口径）**：`openassetpricing` 包可用（本机 CPU 无 AVX2，必须 `polars-lts-cpu` + `POLARS_SKIP_CPU_CHECK=1`）；`OpenAP().dl_signal('pandas',[acronym])` 返回 `permno, yyyymm, value`，覆盖 1926-11→2024-12，28,065 个 permno；SignalDoc 已存 `data/raw/osap/signal_doc.parquet`（212 个 Predictor：Accounting 99、Price 45、Analyst 18、Trading 13、Other 12、Options 9、13F 8、Event 8）。**没有 ticker/CUSIP，也没有月收益**。做法：用**信号匹配**建交叉表——对本地日线里 2016-01→2024-12 每个代码每个月末自算 Mom12m、Mom6m、DolVol、ShareVol（按 SignalDoc 定义），与 OSAP 同名信号按 permno 做时间序列匹配（≥ 24 个月、四个信号相关系数均 ≥ 0.98 才算命中；一对多或冲突写 `ambiguous`），方法与 `scripts/detect_delisted_aliases.py` 的收益匹配同源。输出 `data/features/osap_crosswalk.parquet`（permno, ticker, first_month, last_month, n_months, match_score）与覆盖率报告。月度收益标签用本地日线算，不依赖 CRSP；因此训练样本只能是 2016 年起（本地日线起点），切分改为训练 2016–2021、验证 2022、测试 2023-01→2024-12。
 3. **可实盘子集**：把 209 个特征分三类并写成 `config/osap_live_subset.json`：(a) 纯价量、可由本地日线按原文定义重算；(b) 需要财务数据、可由 SEC XBRL Financial Statement Data Sets 近似；(c) 需要 CRSP/IBES/其它，不可算。给出每类计数与前 40 个 (a)+(b) 特征的定义引用（SignalDoc 行）。
 4. 与本地日线对齐：把 OSAP 月末与 `data/sip/daily` 的次月收益对齐（用交叉表），生成 `data/features/osap_panel/{year}.parquet`（permno, ticker, month_end, 特征…, fwd_1m_excess, fwd_3m_excess），报告对齐率。
 
