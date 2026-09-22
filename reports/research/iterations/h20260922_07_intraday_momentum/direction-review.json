@@ -1,0 +1,107 @@
+{
+  "cheapest_decisive_test": {
+    "action": "Run the frozen published rule on SPY minute bars for both exit semantics (persist: hold while price is outside the band; cross: enter only on a fresh crossing and lock the side out after the VWAP stop fires), at three costs and three leverages, against the three placebos that killed ORB -- random entry direction, a band profile shifted 30 minutes later in the day, and random long-only days matched to realised exposure.",
+    "falsification_condition": "Net return negative in either window at the primary cost, or any placebo beats it on out-of-sample annualized return more than 10% of the time.",
+    "max_compute_minutes": 90,
+    "pass_condition": "Net return positive in both the in-sample and the 2024+ out-of-sample window at the primary cost, and all three placebos beat the strategy on out-of-sample annualized return no more than 10% of the time, and still positive at 2 bp per side."
+  },
+  "cost_and_execution_assumptions": "Decision taken on a completed minute's close, filled at the next minute. Cost charged as leverage x |change in position| x cost per side on every minute the position changes. Three levels: 1, 2 and 5 bp per side as the frozen grid, plus a calibration run at the paper's own friction of $0.0035/share commission plus $0.001/share slippage, which on our sample's SPY price is 0.06 to 0.25 bp per side. Three leverage levels 1, 2 and 4. Flat at the last traded minute of every session, so there is no overnight exposure and no borrow cost.",
+  "decision": "proceed",
+  "existing_solution_comparison": "The rule is fully published and we copy it rather than invent: the noise band is the session open times one plus/minus the average absolute move from the open at that minute over the previous 14 sessions, with the upper bound anchored up by an overnight gap down and the lower bound anchored down by an overnight gap up. What is not public is whether the edge survives in 2016-2026 and in the authors' own out-of-sample period. Maroy (SSRN 5095349, 2025-01) claims that optimizing the exit (VWAP, Ladder, VWAP+Ladder) lifts this family to Sharpe above 3.0 and over 50% annualized, while an independent automated replication of the same family reports Sharpe 0.41. That contradiction is itself the cheapest decisive test: we run both exit semantics on the same bars.",
+  "iter_id": "h20260922_07_intraday_momentum",
+  "negative_experiments_checked": "L-20260918-02 killed our opening-range-breakout implementation on the same three placebos, and the lesson it wrote (decide on a completed bar, fill on the next, charge cost per side on every position change, run the placebos) is applied here unchanged. The giants sweep (I-20260922-03) has already refuted 24 published K-line and ETF rules this month, including overnight seasonality at -20%/yr after costs, so the prior on a published intraday rule surviving is low. The scout census also records that an independent replication of the related interday cross-sectional intraday momentum family (Schlie-Zhou) returns -5.58% annualized.",
+  "objective": "Ask whether the published Zarattini-Aziz-Barbon intraday momentum rule on SPY (noise band around the session open, VWAP trailing stop, flat at the close; reported 19.6% annualized, Sharpe 1.33, net of costs, 2007 to early 2024) still earns its reported edge on our 2016-2026 minute bars, and in particular on 2024-01-02 onward, which begins where the authors' sample ends.",
+  "queries": [
+    {
+      "opened_urls": [
+        "https://www.sfi.ch/en/publications/n-24-97-beat-the-market-an-effective-intraday-momentum-strategy-for-s-p500-etf-spy",
+        "https://alexandria.unisg.ch/entities/publication/71ef0a23-34e3-4b37-a8d7-d98285579662",
+        "https://concretumgroup.com/beat-the-market-an-effective-intraday-momentum-strategy-for-sp500-etf-spy/"
+      ],
+      "query": "Zarattini Aziz Barbon \"Beat the Market\" intraday momentum SPY noise area pdf",
+      "searched_at": "2026-09-22T09:12:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5095349"
+      ],
+      "query": "Maroy \"Improvements to Intraday Momentum Strategies\" VWAP ladder exit Sharpe",
+      "searched_at": "2026-09-22T09:12:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://www.cxoadvisory.com/momentum-investing/complex-intraday-time-series-momentum-strategy-applied-to-spy/",
+        "https://quantmacro.substack.com/p/paper-review-an-effective-intraday"
+      ],
+      "query": "intraday momentum SPY transaction cost assumption per share commissions slippage review",
+      "searched_at": "2026-09-22T09:20:00+00:00"
+    }
+  ],
+  "remaining_evidence_gap": "Whether an edge the authors measured over 2007-2024 -- a sample containing 2008, 2010, 2011 and March 2020 -- still exists in 2016-2026, and whether the VWAP trailing stop that Maroy reports as the best exit actually adds or destroys value on bars we own.",
+  "reviewed_at": "2026-09-22T09:40:00+00:00",
+  "schema_version": 1,
+  "sources": [
+    {
+      "applicability": "This is the exact rule under test. Our band definition matches the published one including the gap anchoring.",
+      "claim": "A noise band is computed as the daily opening SPY price times one plus and one minus the average daily return up to that minute over the last 14 trading days, with the upper bound adjusted up by any prior overnight gap down and the lower bound adjusted down by any prior overnight gap up; trend-following positions are opened as soon as price leaves the band and a dynamic trailing stop limits downside. From 2007 to early 2024 the portfolio returned 1,985% in total, 19.6% annualized, Sharpe 1.33, described as net of costs.",
+      "claim_id": "zarattini2024_intraday_momentum_spy",
+      "fetched_at": "2026-09-22T09:35:00+00:00",
+      "independent_replication": "No peer-reviewed replication found. Maroy (2025) extends it; an automated third-party replication of the same family reports Sharpe 0.41.",
+      "limitations": "SSRN working paper, not peer reviewed; authors sell day-trading education and software; sample starts in 2007 and therefore contains 2008, 2010, 2011 and March 2020, none of which are in our data.",
+      "market_and_period": "SPY, minute bars, 2007 to early 2024.",
+      "published_or_updated_at": "2024-05-10",
+      "sha256": "a2b8cf9ce28c27f52fda7cfac75e400506bb0b263c2747e3c7168e19a09ae623",
+      "snapshot_path": "reports/research/iterations/h20260922_07_intraday_momentum/sources/sfi-24-97-beat-the-market.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_07_intraday_momentum.jsonl",
+      "source_type": "paper",
+      "url": "https://www.sfi.ch/en/publications/n-24-97-beat-the-market-an-effective-intraday-momentum-strategy-for-s-p500-etf-spy"
+    },
+    {
+      "applicability": "Decisive for calibration: $0.0045/share on our sample's SPY price is 0.06 to 0.25 bp per side, four to sixteen times cheaper than our 1 bp primary grid, so we must also report the result at the paper's own friction before concluding anything about costs.",
+      "claim": "The paper assumes trading frictions of $0.0035 per share in commissions plus $0.001 per share in slippage.",
+      "claim_id": "cxo2026_intraday_momentum_costs",
+      "fetched_at": "2026-09-22T09:35:00+00:00",
+      "independent_replication": "Review only, findings behind a paywall.",
+      "limitations": "Only the cost assumption is visible above the paywall; the review's own verdict is not readable.",
+      "market_and_period": "Review of the SPY intraday momentum paper.",
+      "published_or_updated_at": "2024-06-01",
+      "sha256": "2089d32d47fabe75763e1214cba77254d36ebbcaecd81e4faae63d48d8d8568a",
+      "snapshot_path": "reports/research/iterations/h20260922_07_intraday_momentum/sources/cxoadvisory-intraday-momentum-spy.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_07_intraday_momentum.jsonl",
+      "source_type": "independent_review",
+      "url": "https://www.cxoadvisory.com/momentum-investing/complex-intraday-time-series-momentum-strategy-applied-to-spy/"
+    },
+    {
+      "applicability": "Supplies the second exit semantics we test (VWAP as a true trailing stop with lockout) and sets up the decisive comparison against the literal level reading.",
+      "claim": "Optimizing all parameters of noise-boundary intraday momentum strategies on SPY and comparing exit rules, the best results come from VWAP, VWAP-and-Ladder and Ladder exits, with Sharpe ratios over 3.0 and annualized returns over 50%.",
+      "claim_id": "maroy2025_exit_optimization",
+      "fetched_at": "2026-09-22T09:14:00+00:00",
+      "independent_replication": "None found. Directly contradicted by a third-party automated replication of the same family at Sharpe 0.41.",
+      "limitations": "We could not open the full text. The reported result is explicitly the output of a parameter optimization over exits, which is the classic setting for an overfit, and no out-of-sample or cost sensitivity is visible in the abstract.",
+      "market_and_period": "SPY, minute bars, period not verified (SSRN returned HTTP 403 to our fetcher; claim taken from the indexed abstract).",
+      "published_or_updated_at": "2025-01-12",
+      "sha256": null,
+      "snapshot_path": null,
+      "source_card_path": "reports/harness/source_cards/h20260922_07_intraday_momentum.jsonl",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5095349"
+    },
+    {
+      "applicability": "Establishes that scepticism about this result predates our test and that no public replication existed before ours.",
+      "claim": "An independent reviewer calls the paper solid but says the headline results are a bit too good to be true, notes a roughly 43% win rate, and raises five unresolved questions including whether the tested patterns are predictive or contemporaneous.",
+      "claim_id": "quantmacro2024_review_too_good",
+      "fetched_at": "2026-09-22T09:35:00+00:00",
+      "independent_replication": "The reviewer did not replicate the strategy.",
+      "limitations": "Blog review, no code, no numbers of its own beyond the win rate.",
+      "market_and_period": "Review of the SPY intraday momentum paper.",
+      "published_or_updated_at": "2024-06-15",
+      "sha256": "4148e600c6c134c50dea5ab9aecf5b8248d5cbf584654a215e8f7a295980982d",
+      "snapshot_path": "reports/research/iterations/h20260922_07_intraday_momentum/sources/quantmacro-paper-review-intraday.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_07_intraday_momentum.jsonl",
+      "source_type": "independent_review",
+      "url": "https://quantmacro.substack.com/p/paper-review-an-effective-intraday"
+    }
+  ],
+  "stop_condition": "Two implementations maximum: the literal level reading and the trailing-stop reading. If neither passes, write a lesson card and stop; do not try a third exit rule, because Maroy's own result is a parameter optimization over exits and re-running that search on our data would be the same overfit.",
+  "target_regime_and_horizon": "Intraday only, no overnight exposure. SPY minute bars 2016-01 to 2026-09. In-sample overlap with the paper 2016-2023; untouched out-of-sample 2024-01-02 onward, which is out of sample for the authors as well as for us. Claim of validity would be limited to the current US large-cap intraday regime and re-checked at each renewal."
+}

@@ -225,7 +225,10 @@ def _extract_front_matter(text: str, warnings: list[str]) -> tuple[CardFrontMatt
             card_id=data.get("card_id"),
             status=data.get("status"),
             lane=data.get("lane"),
-            previous=data.get("previous"),
+            # Cards declare the predecessor under either the English key or the
+            # Chinese one the corpus actually writes (上一环 / 上一张卡, the same
+            # causal relation). Reading only "previous" silently dropped it.
+            previous=(data.get("previous") or data.get("上一环") or data.get("上一张卡")),
             criteria=tuple(criteria),
         ),
         remainder,

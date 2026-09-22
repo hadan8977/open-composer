@@ -101,3 +101,41 @@ A 组规律：(1) 骨架 = **200 日线定趋势 + RSI(10) 双阈值**（超买 
 | je-suis-tm/quant-trading、stefan-jansen/machine-learning-for-trading | 策略合集 / 教材代码 | 日线 | 无统一战绩 | — | 只作工具参考 |
 
 E 组结论：高阶策略里真正能在本机、用免费数据、且有文献背书的只有一条：**OSAP 特征库上的截面 ML 排序**（GKX 范式）。它不是"爆炸"型，文献口径是月频多空夏普 1–2 扣费前、long-only 前十分位年化 15–25%；价值在于它是唯一还没在本地试过的、文献里 ML 真正有效的做法（此前本地 ML 全在价量特征上，先验本来就低）。DLSA 排第二批。其余排除。
+
+## F. 日内 / 高频策略普查（第三次采集，2026-09-22，18 次检索）
+
+| 名称 | 规则 | 标的与频率 | 报告结果 | 复现/衰减证据 | 判定 |
+|---|---|---|---|---|---|
+| Zarattini-Aziz-Barbon [Beat the Market](https://www.sfi.ch/en/publications/n-24-97-beat-the-market-an-effective-intraday-momentum-strategy-for-s-p500-etf-spy)（SSRN 4824172） | 噪声带突破 + VWAP 跟踪止损，日终平 | SPY，分钟 | 2007–2024 初总 1,985%、年化 19.6%、夏普 1.33，摩擦 $0.0035/股佣金 + $0.001/股滑点 | **本地已复现并否定：H-20260922-07** | **已否定**：按论文自己的成本口径，2016–2026 年化 +2.2%、夏普 0.30，随机方向安慰剂 80% 打赢 |
+| Maroy [Improvements to Intraday Momentum](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5095349)（SSRN 5095349, 2025-01） | 对上族做全参数优化，比较固定止盈 / VWAP / Ladder / VWAP+Ladder 退出 | SPY，分钟 | 自称 VWAP/Ladder 退出夏普 >3.0、年化 >50% | 第三方自动复现同族仅 0.41；**本地 H-20260922-07 测到 VWAP 跟踪止损把毛收益从 +3.6% 打到 +0.3%** | **不做**：头条来自对退出维度的参数搜索，那正是它的过拟合维度 |
+| Gao-Han-Li-Zhou [Market Intraday Momentum](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2440866)（JFE 2018） | 首个 30 分钟收益预测末 30 分钟收益 | SPY 等 11 只 ETF，30 分钟 | 原文 1993–2013 称显著，具体数字未核实 | paperswithbacktest 自建可执行版 1990–2026：年化 3.14%、夏普 0.41、回撤 −29.7% | 不做（独立复现的量级已低于无风险利率）|
+| Concretum [Identifying Stocks to Fade](https://concretumgroup.substack.com/p/identifying-stocks-to-fade) | Russell 3000 剔除流动性最差 30%，隔夜异常大跳空个股日内做反向 | 美股个股，日内 | 2012-01 → 2026-05 毛 CAGR ~98%、夏普 ~2.08、回撤 ~67%；作者明示"扣费后有实质差异" | 作者自陈 2022 年后结构性走弱，归因卖空基础设施普及 | **第一优先**：见下 |
+| Schlie & Zhou [Interday Cross-Sectional Momentum](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4934543) | 某半小时收益预测次日同一半小时 | 9 个发达市场成分股，半小时 | 作者自认"美股该效应已减弱" | paperswithbacktest 1990–2026：年化 **−5.58%**、夏普 −0.49、回撤 −93% | 不做 |
+| [MG-source-1/equities-and-vol](https://github.com/MG-source-1/equities-and-vol) | 隔夜缺口 + 开盘 30 分钟同向做空末 30 分钟 | SPY，5 分钟 | 2020–2024 总 +14%、夏普 0.10 | 作者自己因夏普过低未纳入组合 | 不做 |
+| VWAP 偏离反转（行业博客） | 偏离当日 VWAP N 倍标准差反向 | 流动股，分钟 | 无扣费学术级结果 | 无独立复现，来源多为教学/营销 | 不做 |
+| 隔夜/日内拆分文献（[Alpha Architect](https://alphaarchitect.com/trading-costs-wipe-out-the-overnight-return-anomaly/)、Muravyev JoF 2025） | 检验隔夜异象扣真实成本/借券成本后是否存活 | 美股，日频 | 结论：基本被抹平 | 本身即否定性复现 | 不必重新论证（本地扫荡 F7 已独立测到 −20%/年）|
+| ESN / ELM 等纯 K 线日内 ML（[2504.19623](https://arxiv.org/abs/2504.19623)、[2505.09551](https://arxiv.org/pdf/2505.09551)） | 储备池计算 / 极限学习机预测 5 分钟方向 | 未核实 | 无可核实数字、无代码 | 无 | 不做 |
+
+**F 组结论**：日内这一族里，单标的择时（SPY 噪声带、30 分钟动量、隔夜）已被本地或独立复现逐条打掉，共同形态是**毛边际 2–4%/年、扣任何摩擦都不剩**。唯一还没被否定、且与我们数据匹配的是 **Concretum 的截面 gap fade**——它是横截面而非单标的，规则具体，作者自曝 2022 年后走弱（可直接切两段证伪），本地分钟线全覆盖。
+
+**与本地证据的一个交叉点（值得单开一张卡）**：H-20260922-01 在 8-K 盈余事件日测到开盘跳空对当日 open→close 收益的 t = **4.63**，方向是**延续**；Concretum 则对异常跳空做**反向**。两者同时成立的唯一方式是按"跳空是否由新闻驱动"分工：**有新闻的跳空延续、没新闻的跳空反转**。我们有 680k 条带 `visible_at` 的 Benzinga 标题，能按事件时点精确切开这条线，这是别人公开资料里没有的本地优势。
+
+## G. 可在本机训练的模型普查（第三次采集，2026-09-22，18 次检索）
+
+约束：4 GB 内存 / 2 核 / 无 GPU，只用已有免费数据。
+
+| 名称 | 方法 | 报告结果 | 反面证据 | CPU 可行性 | 判定 |
+|---|---|---|---|---|---|
+| **Conformal Kelly**（[arXiv 2608.01494](https://arxiv.org/abs/2608.01494) / SSRN 7221760） | 用 75% 保序预测区间的**宽度**缩放分数 Kelly 仓位：区间越宽仓位越小 | 2016–2021 含成本与杠杆上限：年化净对数增长 **28.5%**、夏普 **1.34**，同期 SPY 15.9% | 未见第三方复现 | 是——保序校准几乎零额外算力 | **第一优先**：直接作用于**仓位**而非选股，与"只有杠杆账本 + 仓位层能过 50% 门槛"的结构性判断正面吻合，也是 S3 加档那条线的自然下一步 |
+| 统计跳跃模型（[arXiv 2402.05272](https://arxiv.org/abs/2402.05272)） | 跳跃惩罚代替 HMM 转移矩阵做 regime 识别再择时 | 称较 HMM/买入持有降波动与回撤、计入成本与延迟；具体数字未核实 | 未见第三方复现 | 是（凸优化，比 HMM 更轻） | 第二批：先定位作者的 `jumpmodels` 包并核实扣费后数字 |
+| HAR + SVM 方向性波动率（T&F 2024） | HAR 上叠 SVM 预测已实现波动率方向 | 称多个 horizon 策略夏普最高，数字未核实 | — | 是 | 第二批（作为仓位层的输入）|
+| 波动率择时反面证据（ScienceDirect S1062940826000276） | 更精细 RV 预测驱动 vol targeting | **各模型风险调整后夏普均为负** | 本身即"更准的波动预测→更好 sizing"的反面 | — | **重要负面**：与本地 H-20260922-05 "vol target 在 S1 是收益税"同向，压低"换更好的波动率模型"这条线的优先级 |
+| LightGBM + 不确定性门控（[arXiv 2603.13252](https://arxiv.org/abs/2603.13252)） | 7 因子排序 + 不确定性退出门 | 全样本 walk-forward 夏普 2.73（含 10 bp）；**2024 后 OOS 降到 1.91、回撤 −18.1%** | 论文自报的 OOS 衰减 | 是 | 并入 OSAP 路线 |
+| Qlib + Alpha158 | 158 技术因子截面 LightGBM 排序 | 官方 benchmark 主要在 A 股，无美股专版数字 | 本地已否定（H-20260918-03） | 是 | 不做 |
+| meta-labeling（Hudson & Thames / mlfinlab） | 规则主模型 + ML 二级过滤 | 反转 0.28→0.97、趋势 0.36→0.53，**均未扣成本** | 作者自陈"主模型差时只能减损失" | 是 | 第三批：只在已通过的 S2/S3 规则上试，且必须扣费 |
+| FinRL 深度 RL（[repo](https://github.com/AI4Finance-Foundation/FinRL)） | PPO/A2C/DDPG/TD3/SAC 做配置/仓位 | 官方对比 MVO/DJIA | [独立诊断](https://github.com/Aarav-Nagar/QINN-FinRL-Evaluation)：五只票 2018–2026 多种子含成本，PPO 平均夏普**低于全部经典基线含买入持有** | 否（4 GB/2 核跑不动） | 不做 |
+| Kronos（[arXiv 2508.02739](https://arxiv.org/abs/2508.02739)） | K 线专用 Transformer 基础模型 | 排序 IC 较通用 TSFM +93%；**无美股可交易回测数字** | 未核实 | 预训练不可行，推理未核实 | 不做（无可交易证据）|
+| TimesFM / Chronos / Moirai 零样本（[arXiv 2511.18578](https://arxiv.org/abs/2511.18578)） | 通用时序基础模型零样本预测个股收益 | **R² 为负**：TimesFM −2.80%/策略 −1.47%，Chronos −1.37% | 论文本身即反面证据 | 是（只需推理） | 不做 |
+| RL 执行（[arXiv 2507.06345](https://arxiv.org/abs/2507.06345)） | RL 学最优限价/市价混合 | 无美股可交易数字 | — | 否（需盘口/tick，我们没有） | 不做 |
+
+**G 组结论**：模型这一侧的证据-投入比排序很清楚——**Conformal Kelly（仓位层）> 跳跃模型 regime 择时 > OSAP 截面 ML > meta-labeling > 其余全部不做**。基础模型（Kronos/TimesFM）和深度 RL 都有明确的负面或缺失证据，不值得占用本机算力。
