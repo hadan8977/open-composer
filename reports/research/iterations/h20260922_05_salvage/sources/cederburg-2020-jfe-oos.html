@@ -1,0 +1,1382 @@
+<!DOCTYPE html> 
+<HTML lang="en">
+<HEAD>
+<TITLE>On the performance of volatility-managed portfolios</TITLE>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" integrity="sha256-pdY4ejLKO67E0CM2tbPtq1DJ3VGDVVdqAR6j3ZwdiE4=" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+<!--    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awes
+ome.min.css" integrity="sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=" crossorigin="anonymous">-->
+<!--    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.2.0/css/all.css" />-->
+    <link href="/css/normalnew.css" rel="stylesheet" type="text/css"/>
+    <link href="/css/pushy.css" rel="stylesheet" type="text/css"/>
+    <link rel="icon" type="image.jpg" href="/favicon.ico">
+<!--[if lte IE 9]>
+  <script src="/css/html5shiv.min.js"></script>
+  <script src="/css/respond.min.js"></script>
+<![endif]-->
+  <script type='text/javascript'>
+    var captchaContainer = null;
+    var loadCaptcha = function() {
+      captchaContainer = grecaptcha.render('captcha_container', {
+        'sitekey' : '6LdQebIaAAAAACSKxvbloyrkQ_q-MqhOAGgD5PQV',
+        'callback' : function(response) {
+          console.log(response);
+        }
+      });
+    };
+  </script>
+
+<META NAME="handle" CONTENT="RePEc:eee:jfinec:v:138:y:2020:i:1:p:95-117"><META NAME="DOI" CONTENT="10.1016/j.jfineco.2020.04.015"><META NAME="description" CONTENT="Downloadable (with restrictions)! Using a comprehensive set of 103 equity strategies, we analyze the value of volatility-managed portfolios for real-time investors. Volatility-managed portfolios do not systematically outperform their corresponding unmanaged portfolios in direct comparisons. Consistent with Moreira and Muir (2017), volatility-managed portfolios tend to exhibit significantly positive alphas in spanning regressions. However, the trading strategies implied by these regressions are not implementable in real time, and reasonable out-of-sample versions generally earn lower certainty equivalent returns and Sharpe ratios than do simple investments in the original, unmanaged portfolios. This poor out-of-sample performance for volatility-managed portfolios stems primarily from structural instability in the underlying spanning regressions.">
+<META NAME="robots" content="NOARCHIVE"><META NAME="keywords" CONTENT="Volatility-managed portfolios; Portfolio choice">
+<META NAME="jel_code" CONTENT="G10; G11; G12">
+<META NAME="author" CONTENT="Cederburg, Scott & O’Doherty, Michael S. & Wang, Feifei & Yan, Xuemin (Sterling)">
+<META NAME="author_shortid" CONTENT="">
+<META NAME="title" CONTENT="On the performance of volatility-managed portfolios">
+<META NAME="download" CONTENT="1">
+<META NAME="freedownload" CONTENT="0">
+<META NAME="date" CONTENT="2020-02-02">
+<META NAME="citation_publication_date" CONTENT="2020">
+<META NAME="citation_authors" content="Cederburg, Scott; O’Doherty, Michael S.; Wang, Feifei; Yan, Xuemin (Sterling)">
+<META NAME="citation_title" content="On the performance of volatility-managed portfolios">
+<META NAME="citation_abstract" content="Using a comprehensive set of 103 equity strategies, we analyze the value of volatility-managed portfolios for real-time investors. Volatility-managed portfolios do not systematically outperform their corresponding unmanaged portfolios in direct comparisons. Consistent with Moreira and Muir (2017), volatility-managed portfolios tend to exhibit significantly positive alphas in spanning regressions. However, the trading strategies implied by these regressions are not implementable in real time, and reasonable out-of-sample versions generally earn lower certainty equivalent returns and Sharpe ratios than do simple investments in the original, unmanaged portfolios. This poor out-of-sample performance for volatility-managed portfolios stems primarily from structural instability in the underlying spanning regressions.">
+<META NAME="citation_publisher" content="Elsevier">
+<META NAME="citation_journal_title" content="Journal of Financial Economics">
+<META NAME="citation_keywords" content="Volatility-managed portfolios; Portfolio choice">
+<META NAME="citation_abstract_html_url" content="https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html">
+<META NAME="citation_abstract_pdf_url" content="https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html">
+<META NAME="redif-type" content="article">
+<META NAME="citation_type" content="redif-article">
+<META NAME="citation_year" content="2020">
+<META NAME="citation_volume" content="138">
+<META NAME="citation_issue" content="1">
+
+<META NAME="citation_firstpage" content="95">
+<META NAME="citation_lastpage" content="117">
+<META NAME="twitter:card" content="summary_large_image">
+<META NAME="twitter:site" content="@repec_org">
+<META NAME="twitter:title" content="On the performance of volatility-managed portfolios, by Cederburg, Sco">
+<META NAME="twitter:description" content="Using a comprehensive set of 103 equity strategies, we analyze the value of volatility-managed portfolios for real-time investors. Volatility-managed portfolios do not systematically outperform their ">
+<META NAME="twitter:image" content="https://ideas.repec.org/cgi-bin/twimage.cgi?a&eee:jfinec:v:138:y:2020:i:1:p:95-117">
+<META PROPERTY="og:type" content="article">
+<META PROPERTY="og:title" content="On the performance of volatility-managed portfolios">
+<META PROPERTY="og:description" content="Using a comprehensive set of 103 equity strategies, we analyze the value of volatility-managed portfolios for real-time investors. Volatility-managed portfolios do not systematically outperform their ">
+<META PROPERTY="og:url" content="https://ideas.repec.org//a/eee/jfinec/v138y2020i1p95-117.html">
+<META PROPERTY="og:image" content="https://ideas.repec.org/cgi-bin/twimage.cgi?a&eee:jfinec:v:138:y:2020:i:1:p:95-117">
+<script type="application/ld+json">
+    {
+	"@context": "http://schema.org",
+	"@graph": [
+	  {
+	    "@id": "#periodical",
+	    "@type": "Periodical",
+	    "name": "Journal of Financial Economics",
+	    "publisher": "Elsevier",
+	    "url": "https://ideas.repec.org/s/eee/jfinec.html",
+	    "requiresSubscription": "false"
+          },
+	  {
+	    "@id": "#number",
+	    "@type": "PublicationIssue",
+	    "datePublished": "2020",
+	    "issueNumber": "1"
+          },
+	    {		
+	      "@id": "#volume",
+	      "@type": "PublicationVolume",
+	      "volumeNumber": "138"
+            },
+	  {
+	    "@id": "#article",
+	    "@type": "ScholarlyArticle",
+ 	    "name": "On the performance of volatility-managed portfolios",
+	    "url": "https://ideas.repec.org//a/eee/jfinec/v138y2020i1p95-117.html",
+	    "description": "Using a comprehensive set of 103 equity strategies, we analyze the value of volatility-managed portfolios for real-time investors. Volatility-managed portfolios do not systematically outperform their corresponding unmanaged portfolios in direct comparisons. Consistent with Moreira and Muir (2017), volatility-managed portfolios tend to exhibit significantly positive alphas in spanning regressions. However, the trading strategies implied by these regressions are not implementable in real time, and reasonable out-of-sample versions generally earn lower certainty equivalent returns and Sharpe ratios than do simple investments in the original, unmanaged portfolios. This poor out-of-sample performance for volatility-managed portfolios stems primarily from structural instability in the underlying spanning regressions.",
+	    "keywords": "Volatility-managed portfolios; Portfolio choice",
+	    "pageEnd": "117",
+	    "pageStart": "95",
+	    "pagination": "95-117",
+          
+	    "author": "Cederburg, Scott & O’Doherty, Michael S. & Wang, Feifei & Yan, Xuemin (Sterling)",
+	    "isPartOf": [
+	      {
+	        "@id": "#volume"
+	      },
+	      {	
+	        "@id": "#periodical"
+	      },
+	      {
+	        "@id": "#number"
+	      }
+	    ]
+	 }
+      ]
+    }
+    </script>
+    </HEAD><BODY>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-G63YGSJVZ7"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-G63YGSJVZ7');
+</script>
+
+<div class="container">
+    <div id="header" class="row">
+      <nav class="navbar navbar-collapse navbar-expand-md" role="navigation">
+          <a class="navbar-brand" href="/">
+            <img width="125" src="/ideas4.jpg" border="0" alt="IDEAS home">
+          </a>
+	<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-toggle="collapse" data-target="#mobilesearch" aria-controls="mobilesearch" aria-expanded="false" aria-label="Toggle navigation">
+	  <span class="navbar-toggler-icon"><i class="bi-search"></i></span>
+	</button>
+	<div class="collapse" id="mobilesearch">
+	  <div class="form-inline">
+	  <form method="POST" action="/cgi-bin/htsearch2" id="mobilesearch" role="search" class="card card-body">
+            <div class="input-group">
+              <input class="form-control" type="text" name="q" value="" placeholder="Search econ literature">
+              <span class="input-group-btn">
+		<button type="submit" class="btn" style="background-color: #2d4e8b; color: white;" aria-label="Search">
+                <i class="bi-search"></i>
+              </button>
+		<!--<input class="btn btn-default btn-lg fa" type="submit" value="&#xf002;" style="color:white;background-color:#2d4e8b;">-->
+              </span>
+            </div>
+            <a href="/search.html" class="advanced-search">Advanced search</a>
+	  </form>
+	  </div>
+	  </div>
+	<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-toggle="collapse" data-target="#mobilemenu" aria-controls="mobilemenu" aria-expanded="false" aria-label="Toggle navigation">
+	  <span class="navbar-toggler-icon"><i class="bi bi-list"></i></span>
+	</button>
+	<div class="collapse" id="mobilemenu">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+	      <a class="nav-link" href="/">Economic literature:</a> <a href="/i/p.html">papers</A>, <a href="/i/a.html">articles</A>, <a href="/i/c.html">software</A>, <a href="/i/h.html">chapters</A>, <a href="/i/b.html">books</A>.
+	    </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/i/e.html">Authors</a>
+	    </li>
+            <li class="nav-item">
+              <a class="nav-link" href="http://edirc.repec.org/">Institutions</a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/top/">Rankings</a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/help.html" target="_blank">Help/FAQ  <i class="bi bi-box-arrow-up-right"></i></a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/cgi-bin/myideas.cgi">MyIDEAS <I class="bi bi-lightbulb"></I></a>
+	    </li>
+	    <li class="nav-item">
+	      <span class="nav-text">More options at page bottom</span>
+	    </li>
+          </ul>
+	</div>
+	<div class="d-none d-md-inline">
+          <ul class="nav nav-fill" id="topnav">
+            <li class="nav-item">
+	      <a class="nav-link" href="/">Economic literature</a>
+	    </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/i/e.html">Authors</a>
+	    </li>
+            <li class="nav-item">
+              <a class="nav-link" href="http://edirc.repec.org/">Institutions</a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/top/">Rankings</a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/help.html" target="_blank">Help/FAQ  <i class="bi bi-box-arrow-up-right"></i></a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/cgi-bin/myideas.cgi" style="color:blue;">MyIDEAS <I class="bi bi-lightbulb"></I> <small>(now improved)</small></a>
+	    </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    
+    
+    <div class="row">
+      <div class="col-12" style="margin-top: -10px;">
+	
+	
+	<div id="sidebar" class="sidebar-nav-fixed pull-right d-none d-print-none d-md-inline col-md-3">
+	  <div class="inline-form">
+	  <form method="POST" action="/cgi-bin/htsearch2" id="topsearch" role="search" class="navbar-form navbar-right">
+            <div class="input-group">
+              <input class="form-control" type="text" name="q" value="" placeholder="Search econ literature">
+              <button type="submit" class="btn" style="background-color: #2d4e8b; color: white;" aria-label="Search">
+                <i class="bi-search"></i>
+              </button>
+	      <!--<input class="btn fa" type="submit" value="&#xf002;" style="color:white;background-color:#2d4e8b;">-->
+            </div>
+            <a href="/search.html" class="advanced-search">Advanced search</a>
+	  </form>
+	  </div>
+	  <div id="menu">
+            <h3>Browse Econ Literature</h3>
+            <ul>
+              <li><a href="/i/p.html">Working papers</a></li>
+              <li><a href="/i/a.html">Journals</a></li>
+              <li><a href="/i/c.html">Software components</a></li>
+              <li><a href="/i/b.html">Books</a></li>
+              <li><a href="/i/h.html">Book chapters</a></li>
+              <li><a href="/j/">JEL classification</a></li>
+            </ul>
+	    
+            <h3>More features</h3>
+            <ul>
+	      <li><a href="http://nep.repec.org/">Subscribe to new research</a></li>
+	      <li><a href="https://biblio.repec.org/">RePEc Biblio</a></li>
+	      <li><a href="https://authors.repec.org/">Author registration</a></li>
+	      <li><a href="/v/">Economics Virtual Seminar Calendar</a></li>
+	      <li><a href="https://confwatcher.b2ideas.eu/"><font color="red">ConfWatcher</font></a> NEW!</li>
+            </ul>
+	  </div>
+	</div>
+	<div class="d-none d-print-block">
+	  <img width="145" src="/ideas4.jpg" border="0" alt="IDEAS home"> Printed from https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html 
+	</div>
+	
+	<div id="main" class="col-12 col-md-9">
+	  <div class="site-overlay"></div>
+	  <div class="d-print-none">
+	    
+<div id="messages" class="col-xs-12">
+<span class="share-block">
+            &nbsp;<a href="https://bsky.app/intent/compose?text=Found%20on%20RePEc/IDEAS:%20https://ideas.repec.org//a/eee/jfinec/v138y2020i1p95-117.html%20&#128161;" target="_NEW"><i class="bi bi-bluesky"></i></a>&nbsp;
+            <share-to-mastodon message="Found on RePEc/IDEAS:" url='https://ideas.repec.org//a/eee/jfinec/v138y2020i1p95-117.html'><font color="#2d4e8b"><i class="bi bi-mastodon"></i></font></share-to-mastodon>
+            <a class="share-twitter bi bi-twitter-x" href="#" title="Share on Twitter"></a>
+            <a class="share-facebook bi bi-facebook" href="#" title="Share on Facebook"></a>
+            <a class="share-reddit bi bi-reddit" href="#" title="Share on Reddit"></a>
+            <a class="share-linkedin bi bi-linkedin" href="#"  title="Share on LinkedIn"></a>
+            <a class="share-email bi bi-envelope" href="#"  title="Share by Email"></a>
+            <a class="share-print bi bi-printer" href="#" title="Print this page"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<span id="myideas">
+
+<a href="/cgi-bin/myideas.cgi" data-bs-toggle="tooltip" data-toggle="tooltip" title="MyIDEAS: not logged in">
+<i class="bi bi-lightbulb"></i>
+<i class="bi bi-lock"></i>&nbsp;</a>
+
+
+ <A HREF="/cgi-bin/myideas.cgi#myibiblio1unassigned"><I class="bi bi-archive-fill"></I>&nbsp;My&nbsp;bibliography</A> 
+ <i class="bi bi-bookmark"></i>&nbsp;<span onclick="loadDoc('https://ideas.repec.org/cgi-bin/myiadd2.cgi',myFunction);return true;">Save this article</span>
+
+
+
+
+</span>
+<script>
+function loadDoc(url,cfunc) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+      cfunc(xhttp);
+    }
+  };
+  xhttp.open("GET", url, true);
+  xhttp.send();
+}
+function myFunction(xhttp) {
+  document.getElementById("response").innerHTML = xhttp.responseText;
+}
+</script><span id="response"></span>
+</div>
+
+
+	  </div>
+	  <div id="content-block">
+	    
+	    
+
+<div id="title">
+<h1>On the performance of volatility-managed portfolios</h1></div>
+<div>
+<ul class="nav nav-pills" id="myTab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" id="author-abstract-tab" data-bs-toggle="tab" data-toggle="tab" href="#author-abstract" role="tab" aria-controls="author-abstract" aria-selected="true">Author & abstract</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link download-tab" id="download-tab" data-bs-toggle="tab" data-toggle="tab" href="#download" role="tab" aria-controls="download" aria-selected="false">Download</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="refs-tab" data-bs-toggle="tab" data-toggle="tab" href="#refs" role="tab" aria-controls="refs" aria-selected="false">100 References</a>
+  </li>
+      <li class="nav-item">
+    <a class="nav-link" id="cites-tab" href="/r/eee/jfinec/v138y2020i1p95-117.html" role="tab" aria-controls="cites" aria-selected="false">50 Citations</a>
+  </li>
+          <li class="nav-item">
+    <a class="nav-link" id="mrel-tab" data-bs-toggle="tab" data-toggle="tab" href="#mrel" role="tab" aria-controls="mrel" aria-selected="false">Most related</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="more-tab" data-bs-toggle="tab" data-toggle="tab" href="#more" role="tab" aria-controls="more" aria-selected="false">Related works & more</a>
+  </li>
+  <!-- Placeholder usernotes pill-->
+  <li class="nav-item">
+    <a class="nav-link" id="correct-tab" data-bs-toggle="tab" data-toggle="tab" href="#correct" role="tab" aria-controls="correct" aria-selected="false">Corrections</a>
+  </li>
+</ul>
+    
+
+<div class="tab-content" id="myTabContent">
+  <div class="tab-pane fade show active" id="author-abstract" role="tabpanel" aria-labelledby="author-abstract-tab">
+
+<h2>Author</h2>
+    <div id="author-body">
+      <div id="authortable">
+        <div id="listed-authors">Listed:
+          <ul id="authorlist"><li class="authorname">Cederburg, Scott</li>
+<li class="authorname">O’Doherty, Michael S.</li>
+<li class="authorname">Wang, Feifei</li>
+<li class="authorname">Yan, Xuemin (Sterling)</li>
+</ul></div><div id="registered-authors"> <a href="https://authors.repec.org/">Registered:</a> <ul id="authorregistered"></ul>
+</div>
+</div>
+</div>
+
+
+<h2 style="clear:left">Abstract</h2><div id="abstract-body">Using a comprehensive set of 103 equity strategies, we analyze the value of volatility-managed portfolios for real-time investors. Volatility-managed portfolios do not systematically outperform their corresponding unmanaged portfolios in direct comparisons. Consistent with Moreira and Muir (2017), volatility-managed portfolios tend to exhibit significantly positive alphas in spanning regressions. However, the trading strategies implied by these regressions are not implementable in real time, and reasonable out-of-sample versions generally earn lower certainty equivalent returns and Sharpe ratios than do simple investments in the original, unmanaged portfolios. This poor out-of-sample performance for volatility-managed portfolios stems primarily from structural instability in the underlying spanning regressions.</div>
+<h2>Suggested Citation</h2>
+<div id="biblio-body">
+<LI class="list-group-item downgate">  Cederburg, Scott & O’Doherty, Michael S. & Wang, Feifei & Yan, Xuemin (Sterling), 2020.
+"<B><A HREF="/a/eee/jfinec/v138y2020i1p95-117.html">On the performance of volatility-managed portfolios</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 138(1), pages 95-117.
+</li>
+Handle: <i style="word-break:break-all">RePEc:eee:jfinec:v:138:y:2020:i:1:p:95-117</i>
+<br>DOI: 10.1016/j.jfineco.2020.04.015
+<form method="post" action="/cgi-bin/refs.cgi" target="refs" class="form-inline" role="form" style="margin-bottom: 10px;">
+<input type="hidden" name="handle" value="RePEc:eee:jfinec:v:138:y:2020:i:1:p:95-117">
+<div class="pull-left" style="padding-right: 2px;">
+<span class="input-group-btn">
+<input class="btn btn-default btn-lg fa" type="submit" value="Export reference" style="background-color:lightgrey;"><i class="bi bi-box-arrow-up-right"></i> as
+<select name="output" size="1">
+<option value="0">HTML</option>
+<option value="0.5">HTML with abstract</option>
+<option value="1">plain text</option>
+<option value="1.5">plain text with abstract</option>
+<option value="2">BibTeX</option>
+<option value="3">RIS (EndNote, RefMan, ProCite)</option>
+<option value="4">ReDIF</option>
+<option value="6">JSON</option>
+</select> 
+</span>
+</div>
+</form></div>
+   </div>
+  <div class="tab-pane fade" id="download" role="tabpanel" aria-labelledby="download-tab">
+    <h2>Download full text from publisher</h2><p></p>
+       <FORM METHOD=GET ACTION="/cgi-bin/get_doc.cgi" target="_blank">
+       <INPUT TYPE=HIDDEN NAME="urn" VALUE="RePEc:eee:jfinec:v:138:y:2020:i:1:p:95-117"><INPUT TYPE="radio" NAME="url" VALUE="http://www.sciencedirect.com/science/article/pii/S0304405X2030132X" checked><B>File URL:</B> <span style="word-break:break-all">http://www.sciencedirect.com/science/article/pii/S0304405X2030132X</span><BR><B>Download Restriction:</B> Full text for ScienceDirect subscribers only<BR>
+<HR><INPUT TYPE="radio" NAME="url" VALUE="https://libkey.io/10.1016/j.jfineco.2020.04.015?utm_source=ideas">
+		<B>File URL:</B> <span style="word-break:break-all">https://libkey.io/10.1016/j.jfineco.2020.04.015?utm_source=ideas</span><BR>
+                <B>LibKey link</B>: if access is restricted and if your library uses this service, LibKey will redirect you to where you can use your library subscription to access this item<BR>
+<font size="+2" color="red">---><INPUT TYPE="SUBMIT" class="btn fa" VALUE="Download the selected file &#xf08e;" style="color:white;background-color:#2d4e8b;"><---</font></FORM><P>As the access to this document is restricted, you may want to <form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="On+the+performance+of+volatility+managed+portfolios"><button type="submit" value="submit" class="link-button">search</button></form> for a different version of it.
+
+</div>
+
+  <div class="tab-pane fade" id="refs" role="tabpanel" aria-labelledby="refs-tab"><h2>References listed on IDEAS</h2><form method="post" action="/cgi-bin/refs.cgi" target="refs" class="form-inline" role="form" style="margin-bottom: 10px;">
+<input type="hidden" name="handle" value="repec:aea:aecrev:v:94:y:2004:i:3:p:405-420#repec:bla:jfinan:v:36:y:1981:i:4:p:889-908#repec:bla:jfinan:v:40:y:1985:i:3:p:793-805#repec:bla:jfinan:v:43:y:1988:i:2:p:507-28#repec:bla:jfinan:v:45:y:1990:i:3:p:881-98#repec:bla:jfinan:v:47:y:1992:i:5:p:1785-809#repec:bla:jfinan:v:48:y:1993:i:1:p:65-91#repec:bla:jfinan:v:49:y:1994:i:2:p:515-41#repec:bla:jfinan:v:49:y:1994:i:5:p:1541-78#repec:bla:jfinan:v:51:y:1996:i:1:p:55-84#repec:bla:jfinan:v:51:y:1996:i:5:p:1681-1713#repec:bla:jfinan:v:51:y:1996:i:5:p:1715-42#repec:bla:jfinan:v:52:y:1997:i:1:p:57-82#repec:bla:jfinan:v:53:y:1998:i:3:p:1131-1147#repec:bla:jfinan:v:55:y:2000:i:3:p:1263-1295#repec:bla:jfinan:v:56:y:2001:i:1:p:329-352#repec:bla:jfinan:v:56:y:2001:i:6:p:2431-2456#repec:bla:jfinan:v:57:y:2002:i:5:p:2113-2141#repec:bla:jfinan:v:58:y:2003:i:4:p:1651-1683#repec:bla:jfinan:v:58:y:2003:i:4:p:1651-1684#repec:bla:jfinan:v:59:y:2004:i:5:p:2145-2176#repec:bla:jfinan:v:61:y:2006:i:1:p:259-299#repec:bla:jfinan:v:61:y:2006:i:2:p:921-956#repec:bla:jfinan:v:61:y:2006:i:4:p:1605-1643#repec:bla:jfinan:v:62:y:2007:i:2:p:877-915#repec:bla:jfinan:v:63:y:2008:i:2:p:921-945#repec:bla:jfinan:v:63:y:2008:i:4:p:1609-1651#repec:bla:jfinan:v:63:y:2008:i:6:p:2899-2939#repec:bla:jfinan:v:68:y:2013:i:4:p:1365-1406#repec:bla:jfinan:v:69:y:2014:i:2:p:611-644#repec:bla:jfinan:v:71:y:2016:i:1:p:5-32#repec:bla:jfinan:v:72:y:2017:i:4:p:1611-1644#repec:bla:jfnres:v:33:y:2010:i:4:p:519-538#repec:bla:joares:v:38:y:2000:i::p:1-41#repec:bla:joares:v:45:y:2007:i:2:p:427-467#repec:bla:joares:v:49:y:2011:i:3:p:791-821#repec:cup:jfinqa:v:39:y:2004:i:04:p:677-700_00#repec:cup:jfinqa:v:47:y:2012:i:02:p:437-467_00#repec:ecl:ohidic:2004-18#repec:ecl:ohidic:2012-23#repec:ecm:emetrp:v:48:y:1980:i:4:p:817-38#repec:ecm:emetrp:v:57:y:1989:i:5:p:1121-52#repec:ecm:emetrp:v:66:y:1998:i:1:p:47-78#repec:eee:bracre:v:41:y:2009:i:3:p:184-196#repec:eee:ecofch:2-1203#repec:eee:ecofor:2#repec:eee:empfin:v:8:y:2001:i:5:p:573-637#repec:eee:empfin:v:9:y:2002:i:5:p:495-510#repec:eee:finmar:v:1:y:1998:i:2:p:203-219#repec:eee:finmar:v:5:y:2002:i:1:p:31-56#repec:eee:jaecon:v:25:y:1998:i:3:p:283-319#repec:eee:jaecon:v:38:y:2004:i::p:297-331#repec:eee:jaecon:v:39:y:2005:i:2:p:295-327#repec:eee:jaecon:v:39:y:2005:i:3:p:437-485#repec:eee:jaecon:v:41:y:2006:i:1-2:p:147-171#repec:eee:jaecon:v:42:y:2006:i:1-2:p:53-85#repec:eee:jaecon:v:50:y:2010:i:1:p:20-41#repec:eee:jfinec:v:102:y:2011:i:2:p:363-389#repec:eee:jfinec:v:103:y:2012:i:3:p:429-453#repec:eee:jfinec:v:104:y:2012:i:2:p:228-250#repec:eee:jfinec:v:108:y:2013:i:1:p:1-28#repec:eee:jfinec:v:111:y:2014:i:1:p:1-25#repec:eee:jfinec:v:116:y:2015:i:1:p:1-22#repec:eee:jfinec:v:116:y:2015:i:1:p:111-120#repec:eee:jfinec:v:12:y:1983:i:1:p:129-156#repec:eee:jfinec:v:131:y:2019:i:3:p:507-527#repec:eee:jfinec:v:134:y:2019:i:3:p:501-524#repec:eee:jfinec:v:135:y:2020:i:2:p:271-292#repec:eee:jfinec:v:13:y:1984:i:2:p:283-294#repec:eee:jfinec:v:17:y:1986:i:2:p:223-249#repec:eee:jfinec:v:18:y:1987:i:2:p:373-399#repec:eee:jfinec:v:19:y:1987:i:1:p:3-29#repec:eee:jfinec:v:33:y:1993:i:1:p:3-56#repec:eee:jfinec:v:49:y:1998:i:3:p:345-373#repec:eee:jfinec:v:59:y:2001:i:1:p:3-32#repec:eee:jfinec:v:61:y:2001:i:1:p:77-106#repec:eee:jfinec:v:67:y:2003:i:3:p:473-509#repec:eee:jfinec:v:72:y:2004:i:2:p:217-257#repec:eee:jfinec:v:7:y:1979:i:2:p:163-195#repec:eee:jfinec:v:7:y:1979:i:2:p:197-226#repec:eee:jfinec:v:82:y:2006:i:2:p:289-314#repec:eee:jfinec:v:83:y:2007:i:1:p:171-222#repec:eee:jfinec:v:87:y:2008:i:2:p:418-445#repec:eee:jfinec:v:99:y:2011:i:2:p:427-446#repec:eee:jfinec:v:9:y:1981:i:1:p:3-18#repec:ehl:lserod:24932#repec:fmg:fmgdps:dp412#repec:hal:journl:halshs-00009850#repec:hrv:faseco:30721347#repec:hrv:faseco:3199070#repec:hrv:faseco:3207699#repec:inm:ormnsc:v:55:y:2009:i:5:p:798-812#repec:inm:ormnsc:v:66:y:2020:i:6:p:2452-2473#repec:jae:japmet:v:18:y:2003:i:1:p:1-22#repec:now:jnlcfr:104.00000051#repec:oup:rfinst:v:21:y:2008:i:4:p:1767-1795#repec:oup:rfinst:v:21:y:2008:i:6:p:2825-2855#repec:oup:rfinst:v:22:y:2009:i:5:p:1915-1953#repec:oup:rfinst:v:24:y:2011:i:9:p:2974-3007#repec:oup:rfinst:v:25:y:2012:i:1:p:278-313#repec:oup:rfinst:v:28:y:2015:i:3:p:650-705.#repec:oup:rfinst:v:30:y:2017:i:12:p:4389-4436.#repec:oxp:obooks:9780199959327#repec:red:issued:12-71#repec:taf:quantf:v:18:y:2018:i:10:p:1715-1733#repec:ucp:jpolec:doi:10.1086/674549#repec:ucp:jpolec:v:81:y:1973:i:3:p:607-36#repec:ucp:jpolec:v:90:y:1982:i:6:p:1118-41#repec:wpa:wuwpfi:0412001">
+<div class="pull-left" style="padding-right: 2px;">
+<span class="input-group-btn">
+<input class="btn btn-default btn-lg fa" type="submit" value="Export references" style="background-color:lightgrey;"><i class="bi bi-box-arrow-up-right"></i> as
+<select name="output" size="1">
+<option value="0">HTML</option>
+<option value="0.5">HTML with abstract</option>
+<option value="1">plain text</option>
+<option value="1.5">plain text with abstract</option>
+<option value="2">BibTeX</option>
+<option value="3">RIS (EndNote, RefMan, ProCite)</option>
+<option value="4">ReDIF</option>
+<option value="6">JSON</option>
+</select> 
+</span>
+</div>
+</form>
+<ol class="list-group"><LI class="list-group-item downgate">  Francis, Jennifer & LaFond, Ryan & Olsson, Per & Schipper, Katherine, 2005.
+"<B><A HREF="/a/eee/jaecon/v39y2005i2p295-327.html">The market pricing of accruals quality</A></B>,"
+<A HREF="/s/eee/jaecon.html">Journal of Accounting and Economics</A>, Elsevier, vol. 39(2), pages 295-327, June.
+<LI class="list-group-item downgate">   Lakonishok, Josef & Shleifer, Andrei & Vishny, Robert W, 1994.
+"<B><A HREF="/a/bla/jfinan/v49y1994i5p1541-78.html">Contrarian Investment, Extrapolation, and Risk</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 49(5), pages 1541-1578, December.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Josef Lakonishok & Robert W. Vishny & Andrei Shleifer, 1993.
+ "<B><A HREF="/p/nbr/nberwo/4360.html">Contrarian Investment, Extrapolation, and Risk</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+4360, National Bureau of Economic Research, Inc.
+
+<LI class="list-group-item downfree"> Lakonishok, Josef & Shleifer, Andrei & Vishny, Robert W, 1994.
+ "<B><A HREF="/p/hrv/faseco/30721347.html">Contrarian Investment, Extrapolation, and Risk</A></B>,"
+<A HREF="/s/hrv/faseco.html">Scholarly Articles</A> 
+30721347, Harvard University Department of Economics.
+<LI class="list-group-item downfree"> Lakonishok, Josef & Shleifer, Andrei & Vishny, Robert W., 1993.
+ "<B><A HREF="/p/zbw/cbscwp/84.html">Contrarian Investment, Extrapolation, and Risk</A></B>,"
+<A HREF="/s/zbw/cbscwp.html">Working Papers</A> 
+84, The University of Chicago Booth School of Business, George J. Stigler Center for the Study of the Economy and the State.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Frederico Belo & Xiaoji Lin, 2012.
+"<B><A HREF="/a/oup/rfinst/v25y2012i1p278-313.html">The Inventory Growth Spread</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 25(1), pages 278-313.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Belo, Frederico & Lin, Xiaoji, 2012.
+ "<B><A HREF="/p/ecl/ohidic/2012-23.html">The Inventory Growth Spread</A></B>,"
+<A HREF="/s/ecl/ohidic.html">Working Paper Series</A> 
+2012-23, Ohio State University, Charles A. Dice Center for Research in Financial Economics.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Frederico Belo & Xiaoji Lin & Maria Ana Vitorino, 2014.
+"<B><A HREF="/a/red/issued/12-71.html">Brand Capital and Firm Value</A></B>,"
+<A HREF="/s/red/issued.html">Review of Economic Dynamics</A>, Elsevier for the Society for Economic Dynamics, vol. 17(1), pages 150-169, January.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Belo, Frederico & Lin, Xiaoji & Vitorino, Maria Ana, 2013.
+ "<B><A HREF="/p/ecl/ohidic/2013-04.html">Brand Capital and Firm Value</A></B>,"
+<A HREF="/s/ecl/ohidic.html">Working Paper Series</A> 
+2013-04, Ohio State University, Charles A. Dice Center for Research in Financial Economics.
+
+<LI class="list-group-item downfree"> Frederico Belo & Xiaoji Lin & Maria Ana Vitorino, 2013.
+ "<B><A HREF="/p/red/append/12-71.html">Online Appendix to &quot;Brand Capital and Firm Value&quot;</A></B>,"
+<A HREF="/s/red/append.html">Online Appendices</A> 
+12-71, Review of Economic Dynamics.
+
+<LI class="list-group-item downfree">  Frederico Belo & Xiaoji Lin & Maria Ana Vitorino, 2013.
+"<B><A HREF="/c/red/ccodes/12-71.html">Code and data files for &quot;Brand Capital and Firm Value&quot;</A></B>,"
+<A HREF="/s/red/ccodes.html">Computer Codes</A>
+12-71, Review of Economic Dynamics.
+
+</UL></div>
+<LI class="list-group-item downfree">  Karl B. Diether & Christopher J. Malloy & Anna Scherbina, 2002.
+"<B><A HREF="/a/bla/jfinan/v57y2002i5p2113-2141.html">Differences of Opinion and the Cross Section of Stock Returns</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 57(5), pages 2113-2141, October.
+<LI class="list-group-item downgate">  Frankel, Richard & Lee, Charles M. C., 1998.
+"<B><A HREF="/a/eee/jaecon/v25y1998i3p283-319.html">Accounting valuation, market expectation, and cross-sectional stock returns</A></B>,"
+<A HREF="/s/eee/jaecon.html">Journal of Accounting and Economics</A>, Elsevier, vol. 25(3), pages 283-319, June.
+<LI class="list-group-item downgate">  Harvey, Campbell R., 2001.
+"<B><A HREF="/a/eee/empfin/v8y2001i5p573-637.html">The specification of conditional expectations</A></B>,"
+<A HREF="/s/eee/empfin.html">Journal of Empirical Finance</A>, Elsevier, vol. 8(5), pages 573-637, December.
+<LI class="list-group-item downfree">  Piotroski, JD, 2000.
+"<B><A HREF="/a/bla/joares/v38y2000ip1-41.html">Value investing: The use of historical financial statement information to separate winners from losers</A></B>,"
+<A HREF="/s/bla/joares.html">Journal of Accounting Research</A>, John Wiley & Sons, Ltd., vol. 38, pages 1-41.
+<LI class="list-group-item downgate">  Chordia, Tarun & Subrahmanyam, Avanidhar & Anshuman, V. Ravi, 2001.
+"<B><A HREF="/a/eee/jfinec/v59y2001i1p3-32.html">Trading activity and expected stock returns</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 59(1), pages 3-32, January.
+<LI class="list-group-item downgate">  Novy-Marx, Robert, 2013.
+"<B><A HREF="/a/eee/jfinec/v108y2013i1p1-28.html">The other side of value: The gross profitability premium</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 108(1), pages 1-28.
+<LI class="list-group-item downgate">  R. David Mclean & Jeffrey Pontiff, 2016.
+"<B><A HREF="/a/bla/jfinan/v71y2016i1p5-32.html">Does Academic Research Destroy Stock Return Predictability?</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 71(1), pages 5-32, February.
+<LI class="list-group-item downfree">  John Y. Campbell & Jens Hilscher & Jan Szilagyi, 2008.
+"<B><A HREF="/a/bla/jfinan/v63y2008i6p2899-2939.html">In Search of Distress Risk</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 63(6), pages 2899-2939, December.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Campbell, John Y. & Hilscher, Jens & Szilagyi, Jan, 2005.
+ "<B><A HREF="/p/zbw/bubdp1/4221.html">In search of distress risk</A></B>,"
+<A HREF="/s/zbw/bubdp1.html">Discussion Paper Series 1: Economic Studies</A> 
+2005,27, Deutsche Bundesbank.
+
+<LI class="list-group-item downfree"> John Y. Campbell & Jens Hilscher & Jan Szilagyi, 2005.
+ "<B><A HREF="/p/fth/harver/2081.html">In Searach of Distress Risk</A></B>,"
+<A HREF="/s/fth/harver.html">Harvard Institute of Economic Research Working Papers</A> 
+2081, Harvard - Institute of Economic Research.
+<LI class="list-group-item downfree"> Szilagyi, Jan & Hilscher, Jens & Campbell, John, 2008.
+ "<B><A HREF="/p/hrv/faseco/3199070.html">In Search of Distress Risk</A></B>,"
+<A HREF="/s/hrv/faseco.html">Scholarly Articles</A> 
+3199070, Harvard University Department of Economics.
+<LI class="list-group-item downfree"> John Y. Campbell & Jens Hilscher & Jan Szilagyi, 2006.
+ "<B><A HREF="/p/nbr/nberwo/12362.html">In Search of Distress Risk</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+12362, National Bureau of Economic Research, Inc.
+
+
+</UL></div>
+<LI class="list-group-item">repec:bla:jfinan:v:59:y:2004:i:5:p:2145-2176 is not listed on IDEAS
+<LI class="list-group-item downgate">  Kewei Hou & Chen Xue & Lu Zhang, 2015.
+"<B><A HREF="/a/oup/rfinst/v28y2015i3p650-705..html">Editor's Choice Digesting Anomalies: An Investment Approach</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 28(3), pages 650-705.
+<LI class="list-group-item downgate">  Victor DeMiguel & Lorenzo Garlappi & Raman Uppal, 2009.
+"<B><A HREF="/a/oup/rfinst/v22y2009i5p1915-1953.html">Optimal Versus Naive Diversification: How Inefficient is the 1-N Portfolio Strategy?</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 22(5), pages 1915-1953, May.
+<LI class="list-group-item downgate">  Robert Engle, 2004.
+"<B><A HREF="/a/aea/aecrev/v94y2004i3p405-420.html">Risk and Volatility: Econometric Models and Financial Practice</A></B>,"
+<A HREF="/s/aea/aecrev.html">American Economic Review</A>, American Economic Association, vol. 94(3), pages 405-420, June.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Robert F. Engle III, 2003.
+ "<B><A HREF="/p/ris/nobelp/2003_004.html">Risk and Volatility: Econometric Models and Financial Practice</A></B>,"
+<A HREF="/s/ris/nobelp.html">Nobel Prize in Economics documents</A> 
+2003-4, Nobel Prize Committee.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">   Green, Richard C & Hollifield, Burton, 1992.
+"<B><A HREF="/a/bla/jfinan/v47y1992i5p1785-809.html">When Will Mean-Variance Efficient Portfolios Be Well Diversified?</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 47(5), pages 1785-1809, December.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downnone"> Green, R.C. & Hollifield, B., 1990.
+ "<B><A HREF="/p/cmu/gsiawp/1990-12.html">When Will Mean-Variance Efficient Portfolios Be Well Diversified?</A></B>,"
+<A HREF="/s/cmu/gsiawp.html">GSIA Working Papers</A> 
+1990-12, Carnegie Mellon University, Tepper School of Business.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Amihud, Yakov, 2002.
+"<B><A HREF="/a/eee/finmar/v5y2002i1p31-56.html">Illiquidity and stock returns: cross-section and time-series effects</A></B>,"
+<A HREF="/s/eee/finmar.html">Journal of Financial Markets</A>, Elsevier, vol. 5(1), pages 31-56, January.
+<LI class="list-group-item downgate">  Fama, Eugene F. & French, Kenneth R., 2015.
+"<B><A HREF="/a/eee/jfinec/v116y2015i1p1-22.html">A five-factor asset pricing model</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 116(1), pages 1-22.
+<LI class="list-group-item downgate">  White, Halbert, 1980.
+"<B><A HREF="/a/ecm/emetrp/v48y1980i4p817-38.html">A Heteroskedasticity-Consistent Covariance Matrix Estimator and a Direct Test for Heteroskedasticity</A></B>,"
+<A HREF="/s/ecm/emetrp.html">Econometrica</A>, Econometric Society, vol. 48(4), pages 817-838, May.
+<LI class="list-group-item downgate">  Basu, Sanjoy, 1983.
+"<B><A HREF="/a/eee/jfinec/v12y1983i1p129-156.html">The relationship between earnings' yield, market value and return for NYSE common stocks : Further evidence</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 12(1), pages 129-156, June.
+<LI class="list-group-item downgate">   De Bondt, Werner F M & Thaler, Richard, 1985.
+"<B><A HREF="/a/bla/jfinan/v40y1985i3p793-805.html">Does the Stock Market Overreact?</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 40(3), pages 793-805, July.
+<LI class="list-group-item downgate">  Dongmei Li, 2011.
+"<B><A HREF="/a/oup/rfinst/v24y2011i9p2974-3007.html">Financial Constraints, R&D Investment, and Stock Returns</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 24(9), pages 2974-3007.
+<LI class="list-group-item downfree">  Andrew Ang & Robert J. Hodrick & Yuhang Xing & Xiaoyan Zhang, 2006.
+"<B><A HREF="/a/bla/jfinan/v61y2006i1p259-299.html">The Cross‐Section of Volatility and Expected Returns</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 61(1), pages 259-299, February.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Andrew Ang & Robert J. Hodrick & Yuhang Xing & Xiaoyan Zhang, 2004.
+ "<B><A HREF="/p/nbr/nberwo/10852.html">The Cross-Section of Volatility and Expected Returns</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+10852, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Balakrishnan, Karthik & Bartov, Eli & Faurel, Lucile, 2010.
+"<B><A HREF="/a/eee/jaecon/v50y2010i1p20-41.html">Post loss/profit announcement drift</A></B>,"
+<A HREF="/s/eee/jaecon.html">Journal of Accounting and Economics</A>, Elsevier, vol. 50(1), pages 20-41, May.
+<LI class="list-group-item downgate">  Fama, Eugene F. & French, Kenneth R., 1993.
+"<B><A HREF="/a/eee/jfinec/v33y1993i1p3-56.html">Common risk factors in the returns on stocks and bonds</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 33(1), pages 3-56, February.
+<LI class="list-group-item downgate">  Kozak, Serhiy & Nagel, Stefan & Santosh, Shrihari, 2020.
+"<B><A HREF="/a/eee/jfinec/v135y2020i2p271-292.html">Shrinking the cross-section</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 135(2), pages 271-292.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Nagel, Stefan & Santosh, Shrihari & Kozak, Serhiy, 2017.
+ "<B><A HREF="/p/cpr/ceprdp/12463.html">Shrinking the Cross Section</A></B>,"
+<A HREF="/s/cpr/ceprdp.html">CEPR Discussion Papers</A> 
+12463, Centre for Economic Policy Research.
+
+<LI class="list-group-item downfree"> Serhiy Kozak & Stefan Nagel & Shrihari Santosh, 2017.
+ "<B><A HREF="/p/nbr/nberwo/24070.html">Shrinking the Cross Section</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+24070, National Bureau of Economic Research, Inc.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Barroso, Pedro & Santa-Clara, Pedro, 2015.
+"<B><A HREF="/a/eee/jfinec/v116y2015i1p111-120.html">Momentum has its moments</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 116(1), pages 111-120.
+<LI class="list-group-item downfree">  Jacob Thomas & Frank X. Zhang, 2011.
+"<B><A HREF="/a/bla/joares/v49y2011i3p791-821.html">Tax Expense Momentum</A></B>,"
+<A HREF="/s/bla/joares.html">Journal of Accounting Research</A>, John Wiley & Sons, Ltd., vol. 49(3), pages 791-821, June.
+<LI class="list-group-item downfree">  Jacob Boudoukh & Roni Michaely & Matthew Richardson & Michael R. Roberts, 2007.
+"<B><A HREF="/a/bla/jfinan/v62y2007i2p877-915.html">On the Importance of Measuring Payout Yield: Implications for Empirical Asset Pricing</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 62(2), pages 877-915, April.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Jacob Boudoukh & Roni Michaely & Matthew Richardson & Michael Roberts, 2004.
+ "<B><A HREF="/p/nbr/nberwo/10651.html">On the Importance of Measuring Payout Yield: Implications for Empirical Asset Pricing</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+10651, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downfree">  Louis K. C. Chan & Josef Lakonishok & Theodore Sougiannis, 2001.
+"<B><A HREF="/a/bla/jfinan/v56y2001i6p2431-2456.html">The Stock Market Valuation of Research and Development Expenditures</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 56(6), pages 2431-2456, December.
+<LI class="list-group-item downgate">   Whitelaw, Robert F, 1994.
+"<B><A HREF="/a/bla/jfinan/v49y1994i2p515-41.html">Time Variations and Covariations in the Expectation and Volatility of Stock Market Returns</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 49(2), pages 515-541, June.
+<LI class="list-group-item downgate">  Alwathainani, Abdulaziz M., 2009.
+"<B><A HREF="/a/eee/bracre/v41y2009i3p184-196.html">Consistency of firms' past financial performance measures and future returns</A></B>,"
+<A HREF="/s/eee/bracre.html">The British Accounting Review</A>, Elsevier, vol. 41(3), pages 184-196.
+<LI class="list-group-item downgate">  Bali, Turan G. & Cakici, Nusret & Whitelaw, Robert F., 2011.
+"<B><A HREF="/a/eee/jfinec/v99y2011i2p427-446.html">Maxing out: Stocks as lotteries and the cross-section of expected returns</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 99(2), pages 427-446, February.
+<LI class="list-group-item downfree">  Titman, Sheridan & Wei, K. C. John & Xie, Feixue, 2004.
+"<B><A HREF="/a/cup/jfinqa/v39y2004i04p677-700_00.html">Capital Investments and Stock Returns</A></B>,"
+<A HREF="/s/cup/jfinqa.html">Journal of Financial and Quantitative Analysis</A>, Cambridge University Press, vol. 39(4), pages 677-700, December.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Sheridan Titman & K.C. John Wei & Feixue Xie, 2003.
+ "<B><A HREF="/p/nbr/nberwo/9951.html">Capital Investments and Stock Returns</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+9951, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Heston, Steven L. & Sadka, Ronnie, 2008.
+"<B><A HREF="/a/eee/jfinec/v87y2008i2p418-445.html">Seasonality in the cross-section of stock returns</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 87(2), pages 418-445, February.
+<LI class="list-group-item downgate">  Richardson, Scott A. & Sloan, Richard G. & Soliman, Mark T. & Tuna, Irem, 2005.
+"<B><A HREF="/a/eee/jaecon/v39y2005i3p437-485.html">Accrual reliability, earnings persistence and stock prices</A></B>,"
+<A HREF="/s/eee/jaecon.html">Journal of Accounting and Economics</A>, Elsevier, vol. 39(3), pages 437-485, September.
+<LI class="list-group-item downgate">  Pesaran, M. Hashem & Timmermann, Allan, 2002.
+"<B><A HREF="/a/eee/empfin/v9y2002i5p495-510.html">Market timing and return prediction under model instability</A></B>,"
+<A HREF="/s/eee/empfin.html">Journal of Empirical Finance</A>, Elsevier, vol. 9(5), pages 495-510, December.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Pesaran, M. Hashem & Timmermann, Allan, 2002.
+ "<B><A HREF="/p/ehl/lserod/24932.html">Market timing and return prediction under model instability</A></B>,"
+<A HREF="/s/ehl/lserod.html">LSE Research Online Documents on Economics</A> 
+24932, London School of Economics and Political Science, LSE Library.
+
+<LI class="list-group-item downfree"> Allan Timmermann & M. Hashem Pesaran, 2002.
+ "<B><A HREF="/p/fmg/fmgdps/dp412.html">Market Timing and Return Prediction under Model Instability</A></B>,"
+<A HREF="/s/fmg/fmgdps.html">FMG Discussion Papers</A> 
+dp412, Financial Markets Group.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Gibbons, Michael R & Ross, Stephen A & Shanken, Jay, 1989.
+"<B><A HREF="/a/ecm/emetrp/v57y1989i5p1121-52.html">A Test of the Efficiency of a Given Portfolio</A></B>,"
+<A HREF="/s/ecm/emetrp.html">Econometrica</A>, Econometric Society, vol. 57(5), pages 1121-1152, September.
+<LI class="list-group-item downfree">  Ravi Jagannathan & Tongshu Ma, 2003.
+"<B><A HREF="/a/bla/jfinan/v58y2003i4p1651-1683.html">Risk Reduction in Large Portfolios: Why Imposing the Wrong Constraints Helps</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 58(4), pages 1651-1683, August.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Ravi Jagannathan & Tongshu Ma, 2002.
+ "<B><A HREF="/p/nbr/nberwo/8922.html">Risk Reduction in Large Portfolios: Why Imposing the Wrong Constraints Helps</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+8922, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Evgeny Lyandres & Le Sun & Lu Zhang, 2008.
+"<B><A HREF="/a/oup/rfinst/v21y2008i6p2825-2855.html">The New Issues Puzzle: Testing the Investment-Based Explanation</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 21(6), pages 2825-2855, November.
+<LI class="list-group-item downfree">  Daniel, Kent & Hodrick, Robert J. & Lu, Zhongjin, 2017.
+"<B><A HREF="/a/now/jnlcfr/104.00000051.html">The Carry Trade: Risks and Drawdowns</A></B>,"
+<A HREF="/s/now/jnlcfr.html">Critical Finance Review</A>, now publishers, vol. 6(2), pages 211-262, September.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Kent Daniel & Robert J. Hodrick & Zhongjin Lu, 2014.
+ "<B><A HREF="/p/nbr/nberwo/20433.html">The Carry Trade: Risks and Drawdowns</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+20433, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Boguth, Oliver & Carlson, Murray & Fisher, Adlai & Simutin, Mikhail, 2011.
+"<B><A HREF="/a/eee/jfinec/v102y2011i2p363-389.html">Conditional risk and performance evaluation: Volatility timing, overconditioning, and new estimates of momentum alphas</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 102(2), pages 363-389.
+<LI class="list-group-item downgate">  Michael Johannes & Arthur Korteweg & Nicholas Polson, 2014.
+"<B><A HREF="/a/bla/jfinan/v69y2014i2p611-644.html">Sequential Learning, Predictability, and Optimal Portfolio Returns</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 69(2), pages 611-644, April.
+<LI class="list-group-item downgate">  Dimson, Elroy, 1979.
+"<B><A HREF="/a/eee/jfinec/v7y1979i2p197-226.html">Risk measurement when shares are subject to infrequent trading</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 7(2), pages 197-226, June.
+<LI class="list-group-item downfree">  Jeff Fleming & Chris Kirby & Barbara Ostdiek, 2001.
+"<B><A HREF="/a/bla/jfinan/v56y2001i1p329-352.html">The Economic Value of Volatility Timing</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 56(1), pages 329-352, February.
+<LI class="list-group-item downfree">  Jeffrey Pontiff & Artemiza Woodgate, 2008.
+"<B><A HREF="/a/bla/jfinan/v63y2008i2p921-945.html">Share Issuance and Cross‐sectional Returns</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 63(2), pages 921-945, April.
+<LI class="list-group-item downgate">  Dechow, Patricia M. & Hutton, Amy P. & Meulbroek, Lisa & Sloan, Richard G., 2001.
+"<B><A HREF="/a/eee/jfinec/v61y2001i1p77-106.html">Short-sellers, fundamental analysis, and stock returns</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 61(1), pages 77-106, July.
+<LI class="list-group-item downgate">  Hirshleifer, David & Kewei Hou & Teoh, Siew Hong & Yinglei Zhang, 2004.
+"<B><A HREF="/a/eee/jaecon/v38y2004ip297-331.html">Do investors overvalue firms with bloated balance sheets?</A></B>,"
+<A HREF="/s/eee/jaecon.html">Journal of Accounting and Economics</A>, Elsevier, vol. 38(1), pages 297-331, December.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Hirshleifer, David & Hou, Kewei & Teoh, Siew Hong & Zhang, Yinglei, 2004.
+ "<B><A HREF="/p/ecl/ohidic/2004-18.html">Do Investors Overvalue Firms with Bloated Balance Sheets?</A></B>,"
+<A HREF="/s/ecl/ohidic.html">Working Paper Series</A> 
+2004-18, Ohio State University, Charles A. Dice Center for Research in Financial Economics.
+
+<LI class="list-group-item downfree"> David Hirshleifer & KEWEI HOU & Siew Hong Teoh & YINGLEI ZHANG, 2004.
+ "<B><A HREF="/p/wpa/wuwpfi/0412001.html">Do Investors Overvalue Firms With Bloated Balance Sheets?</A></B>,"
+<A HREF="/s/wpa/wuwpfi.html">Finance</A> 
+0412001, University Library of Munich, Germany.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Klaus Grobys & Joni Ruotsalainen & Janne Äijö, 2018.
+"<B><A HREF="/a/taf/quantf/v18y2018i10p1715-1733.html">Risk-managed industry momentum and momentum crashes</A></B>,"
+<A HREF="/s/taf/quantf.html">Quantitative Finance</A>, Taylor & Francis Journals, vol. 18(10), pages 1715-1733, October.
+<LI class="list-group-item downgate">   Carhart, Mark M, 1997.
+"<B><A HREF="/a/bla/jfinan/v52y1997i1p57-82.html">On Persistence in Mutual Fund Performance</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 52(1), pages 57-82, March.
+<LI class="list-group-item downfree">  Victor DeMiguel & Lorenzo Garlappi & Francisco J. Nogales & Raman Uppal, 2009.
+"<B><A HREF="/a/inm/ormnsc/v55y2009i5p798-812.html">A Generalized Approach to Portfolio Optimization: Improving Performance by Constraining Portfolio Norms</A></B>,"
+<A HREF="/s/inm/ormnsc.html">Management Science</A>, INFORMS, vol. 55(5), pages 798-812, May.
+<LI class="list-group-item downgate">  Campbell, John Y., 1987.
+"<B><A HREF="/a/eee/jfinec/v18y1987i2p373-399.html">Stock returns and the term structure</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 18(2), pages 373-399, June.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> John Y. Campbell, 1985.
+ "<B><A HREF="/p/nbr/nberwo/1626.html">Stock Returns and the Term Structure</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+1626, National Bureau of Economic Research, Inc.
+
+<LI class="list-group-item downfree"> Campbell, John, 1987.
+ "<B><A HREF="/p/hrv/faseco/3207699.html">Stock Returns and the Term Structure</A></B>,"
+<A HREF="/s/hrv/faseco.html">Scholarly Articles</A> 
+3207699, Harvard University Department of Economics.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  French, Kenneth R. & Schwert, G. William & Stambaugh, Robert F., 1987.
+"<B><A HREF="/a/eee/jfinec/v19y1987i1p3-29.html">Expected stock returns and volatility</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 19(1), pages 3-29, September.
+<LI class="list-group-item downgate">  Andrea L. Eisfeldt & Dimitris Papanikolaou, 2013.
+"<B><A HREF="/a/bla/jfinan/v68y2013i4p1365-1406.html">Organization Capital and the Cross-Section of Expected Returns</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 68(4), pages 1365-1406, August.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Dimitris Papanikolaou & Andrea Eisfeldt, 2009.
+ "<B><A HREF="/p/red/sed009/671.html">Organization Capital and the Cross-Section of Expected Returns</A></B>,"
+<A HREF="/s/red/sed009.html">2009 Meeting Papers</A> 
+671, Society for Economic Dynamics.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Moreira, Alan & Muir, Tyler, 2019.
+"<B><A HREF="/a/eee/jfinec/v131y2019i3p507-527.html">Should Long-Term Investors Time Volatility?</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 131(3), pages 507-527.
+<LI class="list-group-item downgate">   Jegadeesh, Narasimhan, 1990.
+"<B><A HREF="/a/bla/jfinan/v45y1990i3p881-98.html">Evidence of Predictable Behavior of Security Returns</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 45(3), pages 881-898, July.
+<LI class="list-group-item downgate">  Frederico Belo & Xiaoji Lin & Santiago Bazdresch, 2014.
+"<B><A HREF="/a/ucp/jpolec/doi10.1086-674549.html">Labor Hiring, Investment, and Stock Return Predictability in the Cross Section</A></B>,"
+<A HREF="/s/ucp/jpolec.html">Journal of Political Economy</A>, University of Chicago Press, vol. 122(1), pages 129-177.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Xiaoji Lin & Santiago Bazdrech & Frederico Belo, 2009.
+ "<B><A HREF="/p/fmg/fmgdps/dp628.html">Labor Hiring, Investment and Stock Return Predictability in the Cross Section</A></B>,"
+<A HREF="/s/fmg/fmgdps.html">FMG Discussion Papers</A> 
+dp628, Financial Markets Group.
+
+<LI class="list-group-item downfree"> Belo, Frederico & Lin, Xiaoji & Bazdresch, Santiago, 2012.
+ "<B><A HREF="/p/ecl/ohidic/2012-17.html">Labor Hiring, Investment, and Stock Return Predictability in the Cross Section</A></B>,"
+<A HREF="/s/ecl/ohidic.html">Working Paper Series</A> 
+2012-17, Ohio State University, Charles A. Dice Center for Research in Financial Economics.
+<LI class="list-group-item downfree"> Bazdrech, Santiago & Belo, Frederico & Lin, Xiaoji, 2009.
+ "<B><A HREF="/p/ehl/lserod/24418.html">Labor hiring, investment and stock return predictability in the cross section</A></B>,"
+<A HREF="/s/ehl/lserod.html">LSE Research Online Documents on Economics</A> 
+24418, London School of Economics and Political Science, LSE Library.
+
+
+</UL></div>
+<LI class="list-group-item downnone">  Ang, Andrew, 2014.
+"<B><A HREF="/b/oxp/obooks/9780199959327.html">Asset Management: A Systematic Approach to Factor Investing</A></B>,"
+<A HREF="/s/oxp/obooks.html">OUP Catalogue</A>,
+Oxford University Press, number 9780199959327.
+<LI class="list-group-item downgate">  Fama, Eugene F & MacBeth, James D, 1973.
+"<B><A HREF="/a/ucp/jpolec/v81y1973i3p607-36.html">Risk, Return, and Equilibrium: Empirical Tests</A></B>,"
+<A HREF="/s/ucp/jpolec.html">Journal of Political Economy</A>, University of Chicago Press, vol. 81(3), pages 607-636, May-June.
+<LI class="list-group-item downgate">  Barry, Christopher B. & Brown, Stephen J., 1984.
+"<B><A HREF="/a/eee/jfinec/v13y1984i2p283-294.html">Differential information and the small firm effect</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 13(2), pages 283-294, June.
+<LI class="list-group-item downgate">  Frazzini, Andrea & Pedersen, Lasse Heje, 2014.
+"<B><A HREF="/a/eee/jfinec/v111y2014i1p1-25.html">Betting against beta</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 111(1), pages 1-25.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Andrea Frazzini & Lasse H. Pedersen, 2010.
+ "<B><A HREF="/p/nbr/nberwo/16601.html">Betting Against Beta</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+16601, National Bureau of Economic Research, Inc.
+
+<LI class="list-group-item downfree"> Andrea Frazzini & Lasse Heje Pedersen, 2012.
+ "<B><A HREF="/p/chf/rpseri/rp1217.html">Betting Against Beta</A></B>,"
+<A HREF="/s/chf/rpseri.html">Swiss Finance Institute Research Paper Series</A> 
+12-17, Swiss Finance Institute.
+
+
+</UL></div>
+<LI class="list-group-item downfree">  Francesco Franzoni & José M. Marín, 2006.
+"<B><A HREF="/a/bla/jfinan/v61y2006i2p921-956.html">Pension Plan Funding and Stock Market Efficiency</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 61(2), pages 921-956, April.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Francesco Franzoni & José M. Marín, 2005.
+ "<B><A HREF="/p/upf/upfgen/871.html">Pension plan funding and stock market efficiency</A></B>,"
+<A HREF="/s/upf/upfgen.html">Economics Working Papers</A> 
+871, Department of Economics and Business, Universitat Pompeu Fabra.
+
+<LI class="list-group-item downnone"> Francesco Franzoni & J. M. Marin, 2006.
+ "<B><A HREF="/p/hal/journl/halshs-00009850.html">Pension Plan Funding and Stock Market Efficiency</A></B>,"
+<A HREF="/s/hal/journl.html">Post-Print</A> 
+halshs-00009850, HAL.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Amihud, Yakov & Mendelson, Haim, 1986.
+"<B><A HREF="/a/eee/jfinec/v17y1986i2p223-249.html">Asset pricing and the bid-ask spread</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 17(2), pages 223-249, December.
+<LI class="list-group-item downgate">  G. Elliott & C. Granger & A. Timmermann (ed.), 2013.
+"<B><A HREF="/b/eee/ecofor/2.html">Handbook of Economic Forecasting</A></B>,"
+<A HREF="/s/eee/ecofor.html">Handbook of Economic Forecasting</A>,
+Elsevier,
+edition 1, volume 2, number 2.
+<LI class="list-group-item downgate">  Datar, Vinay T. & Y. Naik, Narayan & Radcliffe, Robert, 1998.
+"<B><A HREF="/a/eee/finmar/v1y1998i2p203-219.html">Liquidity and stock returns: An alternative test</A></B>,"
+<A HREF="/s/eee/finmar.html">Journal of Financial Markets</A>, Elsevier, vol. 1(2), pages 203-219, August.
+<LI class="list-group-item">repec:bla:jfinan:v:58:y:2003:i:4:p:1651-1684 is not listed on IDEAS
+<LI class="list-group-item downfree">  Michael J. Cooper & Huseyin Gulen & Michael J. Schill, 2008.
+"<B><A HREF="/a/bla/jfinan/v63y2008i4p1609-1651.html">Asset Growth and the Cross‐Section of Stock Returns</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 63(4), pages 1609-1651, August.
+<LI class="list-group-item downfree">  Jushan Bai & Pierre Perron, 2003.
+"<B><A HREF="/a/jae/japmet/v18y2003i1p1-22.html">Computation and analysis of multiple structural change models</A></B>,"
+<A HREF="/s/jae/japmet.html">Journal of Applied Econometrics</A>, John Wiley & Sons, Ltd., vol. 18(1), pages 1-22.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> BAI, Jushan & PERRON, Pierre, 1998.
+ "<B><A HREF="/p/mtl/montde/9807.html">Computation and Analysis of Multiple Structural-Change Models</A></B>,"
+<A HREF="/s/mtl/montde.html">Cahiers de recherche</A> 
+9807, Universite de Montreal, Departement de sciences economiques.
+
+
+<LI class="list-group-item downfree">  Tom Doan, 2025.
+"<B><A HREF="/c/boc/bocode/rts00138.html">MULTIPLEBREAKS: RATS procedure to perform multiple structural change analysis</A></B>,"
+<A HREF="/s/boc/bocode.html">Statistical Software Components</A>
+RTS00138, Boston College Department of Economics.
+
+<LI class="list-group-item downfree">  Tom Doan, 2025.
+"<B><A HREF="/c/boc/bocode/rtz00008.html">RATS programs to replicate examples of Bai-Perron procedure</A></B>,"
+<A HREF="/s/boc/bocode.html">Statistical Software Components</A>
+RTZ00008, Boston College Department of Economics.
+<LI class="list-group-item downfree">  Tom Doan, 2025.
+"<B><A HREF="/c/boc/bocode/rts00013.html">BAIPERRON: RATS procedure to perform Bai-Perron Test for Multiple Structural Changes</A></B>,"
+<A HREF="/s/boc/bocode.html">Statistical Software Components</A>
+RTS00013, Boston College Department of Economics.
+</UL></div>
+<LI class="list-group-item downgate">   Fama, Eugene F & French, Kenneth R, 1996.
+"<B><A HREF="/a/bla/jfinan/v51y1996i1p55-84.html">Multifactor Explanations of Asset Pricing Anomalies</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 51(1), pages 55-84, March.
+<LI class="list-group-item">repec:bla:jfinan:v:43:y:1988:i:2:p:507-28 is not listed on IDEAS
+<LI class="list-group-item downnone">  Jushan Bai & Pierre Perron, 1998.
+"<B><A HREF="/a/ecm/emetrp/v66y1998i1p47-78.html">Estimating and Testing Linear Models with Multiple Structural Changes</A></B>,"
+<A HREF="/s/ecm/emetrp.html">Econometrica</A>, Econometric Society, vol. 66(1), pages 47-78, January.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Perron, P. & Bai, J., 1995.
+ "<B><A HREF="/p/mtl/montde/9552.html">Estimating and Testing Linear Models with Multiple Structural Changes</A></B>,"
+<A HREF="/s/mtl/montde.html">Cahiers de recherche</A> 
+9552, Universite de Montreal, Departement de sciences economiques.
+
+<LI class="list-group-item downnone"> Perron, P. & Bai, J., 1995.
+ "<B><A HREF="/p/mtl/montec/9552.html">Estimating and Testing Linear Models with Multiple Structural Changes</A></B>,"
+<A HREF="/s/mtl/montec.html">Cahiers de recherche</A> 
+9552, Centre interuniversitaire de recherche en Ã©conomie quantitative, CIREQ.
+
+
+</UL></div>
+<LI class="list-group-item downfree">  Assaf Eisdorfer & Efdal Ulas Misirli, 2020.
+"<B><A HREF="/a/inm/ormnsc/v66y2020i6p2452-2473.html">Distressed Stocks in Distressed Times</A></B>,"
+<A HREF="/s/inm/ormnsc.html">Management Science</A>, INFORMS, vol. 66(6), pages 2452-2473, June.
+<LI class="list-group-item downgate">  Rossi, Barbara, 2013.
+"<B><A HREF="/h/eee/ecofch/2-1203.html">Advances in Forecasting under Instability</A></B>,"
+<A HREF="/s/eee/ecofch.html">Handbook of Economic Forecasting</A>, in:  G. Elliott & C. Granger & A. Timmermann (ed.), <A HREF="/b/eee/ecofor/2.html">Handbook of Economic Forecasting</A>, edition 1, volume 2, chapter 0, pages 1203-1324,
+Elsevier.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Barbara Rossi, 2011.
+ "<B><A HREF="/p/duk/dukeec/11-20.html">Advances in Forecasting Under Instability</A></B>,"
+<A HREF="/s/duk/dukeec.html">Working Papers</A> 
+11-20, Duke University, Department of Economics.
+
+
+
+</UL></div>
+<LI class="list-group-item">repec:bla:jfinan:v:53:y:1998:i:3:p:1131-1147 is not listed on IDEAS
+<LI class="list-group-item downgate">  Jobson, J D & Korkie, Bob M, 1981.
+"<B><A HREF="/a/bla/jfinan/v36y1981i4p889-908.html">Performance Hypothesis Testing with the Sharpe and Treynor Measures</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 36(4), pages 889-908, September.
+<LI class="list-group-item downgate">  Yuhang Xing, 2008.
+"<B><A HREF="/a/oup/rfinst/v21y2008i4p1767-1795.html">Interpreting the Value Effect Through the Q-Theory: An Empirical Investigation</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 21(4), pages 1767-1795, July.
+<LI class="list-group-item downgate">  Brandt, Michael W. & Kang, Qiang, 2004.
+"<B><A HREF="/a/eee/jfinec/v72y2004i2p217-257.html">On the relationship between the conditional mean and volatility of stock returns: A latent VAR approach</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 72(2), pages 217-257, May.
+<LI class="list-group-item downgate">  Lewellen, Jonathan & Nagel, Stefan, 2006.
+"<B><A HREF="/a/eee/jfinec/v82y2006i2p289-314.html">The conditional CAPM does not explain asset-pricing anomalies</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 82(2), pages 289-314, November.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Lewellen, Jonathan & Nagel, Stefan, 2003.
+ "<B><A HREF="/p/mit/sloanp/3544.html">The Conditional CAPM Does Not Explain Asset-pricing Anomalies</A></B>,"
+<A HREF="/s/mit/sloanp.html">Working papers</A> 
+4427-03, Massachusetts Institute of Technology (MIT), Sloan School of Management.
+
+<LI class="list-group-item downfree"> Jonathan Lewellen & Stefan Nagel, 2003.
+ "<B><A HREF="/p/nbr/nberwo/9974.html">The Conditional CAPM does not Explain Asset-Pricing Anamolies</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+9974, National Bureau of Economic Research, Inc.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Brennan, Michael J. & Chordia, Tarun & Subrahmanyam, Avanidhar, 1998.
+"<B><A HREF="/a/eee/jfinec/v49y1998i3p345-373.html">Alternative factor specifications, security characteristics, and the cross-section of expected stock returns</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 49(3), pages 345-373, September.
+<LI class="list-group-item downfree">  Campbell R. Harvey & Akhtar Siddique, 2000.
+"<B><A HREF="/a/bla/jfinan/v55y2000i3p1263-1295.html">Conditional Skewness in Asset Pricing Tests</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 55(3), pages 1263-1295, June.
+<LI class="list-group-item downgate">  Jeremiah Green & John R. M. Hand & X. Frank Zhang, 2017.
+"<B><A HREF="/a/oup/rfinst/v30y2017i12p4389-4436..html">The Characteristics that Provide Independent Information about Average U.S. Monthly Stock Returns</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 30(12), pages 4389-4436.
+<LI class="list-group-item downgate">  Moskowitz, Tobias J. & Ooi, Yao Hua & Pedersen, Lasse Heje, 2012.
+"<B><A HREF="/a/eee/jfinec/v104y2012i2p228-250.html">Time series momentum</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 104(2), pages 228-250.
+<LI class="list-group-item downgate">   Chan, Louis K C & Jegadeesh, Narasimhan & Lakonishok, Josef, 1996.
+"<B><A HREF="/a/bla/jfinan/v51y1996i5p1681-1713.html">Momentum Strategies</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 51(5), pages 1681-1713, December.
+<LI class="list-group-item downgate">  Alan Moreira & Tyler Muir, 2017.
+"<B><A HREF="/a/bla/jfinan/v72y2017i4p1611-1644.html">Volatility-Managed Portfolios</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 72(4), pages 1611-1644, August.
+<LI class="list-group-item downgate">  Banz, Rolf W., 1981.
+"<B><A HREF="/a/eee/jfinec/v9y1981i1p3-18.html">The relationship between return and market value of common stocks</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 9(1), pages 3-18, March.
+<LI class="list-group-item downgate">  Novy-Marx, Robert, 2012.
+"<B><A HREF="/a/eee/jfinec/v103y2012i3p429-453.html">Is momentum really momentum?</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 103(3), pages 429-453.
+<LI class="list-group-item downgate">  Bradshaw, Mark T. & Richardson, Scott A. & Sloan, Richard G., 2006.
+"<B><A HREF="/a/eee/jaecon/v42y2006i1-2p53-85.html">The relation between corporate financing activities, analysts' forecasts and stock returns</A></B>,"
+<A HREF="/s/eee/jaecon.html">Journal of Accounting and Economics</A>, Elsevier, vol. 42(1-2), pages 53-85, October.
+<LI class="list-group-item downgate">  Jegadeesh, Narasimhan & Livnat, Joshua, 2006.
+"<B><A HREF="/a/eee/jaecon/v41y2006i1-2p147-171.html">Revenue surprises and stock returns</A></B>,"
+<A HREF="/s/eee/jaecon.html">Journal of Accounting and Economics</A>, Elsevier, vol. 41(1-2), pages 147-171, April.
+<LI class="list-group-item downfree">  Kent Daniel & Sheridan Titman, 2006.
+"<B><A HREF="/a/bla/jfinan/v61y2006i4p1605-1643.html">Market Reactions to Tangible and Intangible Information</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 61(4), pages 1605-1643, August.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Kent Daniel & Sheridan Titman, 2003.
+ "<B><A HREF="/p/nbr/nberwo/9743.html">Market Reactions to Tangible and Intangible Information</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+9743, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downnone">  Larry Lockwood & Wikrom Prombutr, 2010.
+"<B><A HREF="/a/bla/jfnres/v33y2010i4p519-538.html">Sustainable Growth And Stock Returns</A></B>,"
+<A HREF="/s/bla/jfnres.html">Journal of Financial Research</A>, Southern Finance Association;Southwestern Finance Association, vol. 33(4), pages 519-538, December.
+<LI class="list-group-item downgate">   Jegadeesh, Narasimhan & Titman, Sheridan, 1993.
+"<B><A HREF="/a/bla/jfinan/v48y1993i1p65-91.html">Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 48(1), pages 65-91, March.
+<LI class="list-group-item downgate">   La Porta, Rafael, 1996.
+"<B><A HREF="/a/bla/jfinan/v51y1996i5p1715-42.html">Expectations and the Cross-Section of Stock Returns</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 51(5), pages 1715-1742, December.
+<LI class="list-group-item downgate">  Miller, Merton H & Scholes, Myron S, 1982.
+"<B><A HREF="/a/ucp/jpolec/v90y1982i6p1118-41.html">Dividends and Taxes: Some Empirical Evidence</A></B>,"
+<A HREF="/s/ucp/jpolec.html">Journal of Political Economy</A>, University of Chicago Press, vol. 90(6), pages 1118-1141, December.
+<LI class="list-group-item downgate">  Fleming, Jeff & Kirby, Chris & Ostdiek, Barbara, 2003.
+"<B><A HREF="/a/eee/jfinec/v67y2003i3p473-509.html">The economic value of volatility timing using &quot;realized&quot; volatility</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 67(3), pages 473-509, March.
+<LI class="list-group-item downgate">  Ludvigson, Sydney C. & Ng, Serena, 2007.
+"<B><A HREF="/a/eee/jfinec/v83y2007i1p171-222.html">The empirical risk-return relation: A factor analysis approach</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 83(1), pages 171-222, January.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Sydney C. Ludvigson & Serena Ng, 2005.
+ "<B><A HREF="/p/nbr/nberwo/11477.html">The Empirical Risk-Return Relation: A Factor Analysis Approach</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+11477, National Bureau of Economic Research, Inc.
+
+<LI class="list-group-item downfree"> Sydney Ludvigson & Serena Ng, 2006.
+ "<B><A HREF="/p/red/sed006/236.html">The Empirical Risk-Return Relation: a factor analysis approach</A></B>,"
+<A HREF="/s/red/sed006.html">2006 Meeting Papers</A> 
+236, Society for Economic Dynamics.
+
+
+</UL></div>
+<LI class="list-group-item downfree">  Stephen H. Penman & Scott A. Richardson & İrem Tuna, 2007.
+"<B><A HREF="/a/bla/joares/v45y2007i2p427-467.html">The Book‐to‐Price Effect in Stock Returns: Accounting for Leverage</A></B>,"
+<A HREF="/s/bla/joares.html">Journal of Accounting Research</A>, John Wiley & Sons, Ltd., vol. 45(2), pages 427-467, May.
+<LI class="list-group-item downgate">  Kelly, Bryan T. & Pruitt, Seth & Su, Yinan, 2019.
+"<B><A HREF="/a/eee/jfinec/v134y2019i3p501-524.html">Characteristics are covariances: A unified model of risk and return</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 134(3), pages 501-524.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Bryan Kelly & Seth Pruitt & Yinan Su, 2018.
+ "<B><A HREF="/p/nbr/nberwo/24540.html">Characteristics Are Covariances: A Unified Model of Risk and Return</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+24540, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downfree">  Kirby, Chris & Ostdiek, Barbara, 2012.
+"<B><A HREF="/a/cup/jfinqa/v47y2012i02p437-467_00.html">It’s All in the Timing: Simple Active Portfolio Strategies that Outperform Naïve Diversification</A></B>,"
+<A HREF="/s/cup/jfinqa.html">Journal of Financial and Quantitative Analysis</A>, Cambridge University Press, vol. 47(2), pages 437-467, April.
+<LI class="list-group-item downgate">  Litzenberger, Robert H. & Ramaswamy, Krishna, 1979.
+"<B><A HREF="/a/eee/jfinec/v7y1979i2p163-195.html">The effect of personal taxes and dividends on capital asset prices : Theory and empirical evidence</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 7(2), pages 163-195, June.
+</ol>
+<A TARGET="_blank" HREF="http://citec.repec.org/cgi-bin/get_data.pl?h=RePEc:eee:jfinec:v:138:y:2020:i:1:p:95-117&o=all"><B>Full references</B> <i class="bi bi-box-arrow-up-right"></i></A> (including those not matched with items on IDEAS)<P>
+</div>
+
+ <div class="tab-pane fade" id="mrel" role="tabpanel" aria-labelledby="mrel-tab">
+    <h2>Most related items</H2>
+These are the items that most often cite the same works as this one and are cited by the same works as this one.
+<ol class="list-group"><LI class="list-group-item downgate">  Wang, Feifei & Yan, Xuemin Sterling, 2021.
+"<B><A HREF="/a/eee/jbfina/v131y2021ics0378426621001576.html">Downside risk and the performance of volatility-managed portfolios</A></B>,"
+<A HREF="/s/eee/jbfina.html">Journal of Banking & Finance</A>, Elsevier, vol. 131(C).
+<LI class="list-group-item downfree"> Hou, Kewei & Xue, Chen & Zhang, Lu, 2017.
+ "<B><A HREF="/p/ecl/ohidic/2017-10.html">Replicating Anomalies</A></B>,"
+<A HREF="/s/ecl/ohidic.html">Working Paper Series</A> 
+2017-10, Ohio State University, Charles A. Dice Center for Research in Financial Economics.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Kewei Hou & Chen Xue & Lu Zhang, 2017.
+ "<B><A HREF="/p/nbr/nberwo/23394.html">Replicating Anomalies</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+23394, National Bureau of Economic Research, Inc.
+
+
+</UL></div>
+<LI class="list-group-item downfree">  Andrew Y. Chen & Tom Zimmermann, 2022.
+"<B><A HREF="/a/now/jnlcfr/104.00000112.html">Open Source Cross-Sectional Asset Pricing</A></B>,"
+<A HREF="/s/now/jnlcfr.html">Critical Finance Review</A>, now publishers, vol. 11(2), pages 207-264, May.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Chen, Andrew Y. & Zimmermann, Tom, 2020.
+ "<B><A HREF="/p/zbw/cfrwps/2004.html">Open source cross-sectional asset pricing</A></B>,"
+<A HREF="/s/zbw/cfrwps.html">CFR Working Papers</A> 
+20-04, University of Cologne, Centre for Financial Research (CFR).
+
+<LI class="list-group-item downfree"> Andrew Y. Chen & Tom Zimmermann, 2021.
+ "<B><A HREF="/p/fip/fedgfe/2021-37.html">Open Source Cross-Sectional Asset Pricing</A></B>,"
+<A HREF="/s/fip/fedgfe.html">Finance and Economics Discussion Series</A> 
+2021-037, Board of Governors of the Federal Reserve System (U.S.).
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Geertsema, Paul & Lu, Helen, 2020.
+"<B><A HREF="/a/eee/jbfina/v119y2020ics0378426620301965.html">The correlation structure of anomaly strategies</A></B>,"
+<A HREF="/s/eee/jbfina.html">Journal of Banking & Finance</A>, Elsevier, vol. 119(C).
+<LI class="list-group-item downgate">  Tobek, Ondrej & Hronec, Martin, 2021.
+"<B><A HREF="/a/eee/finmar/v56y2021ics1386418120300574.html">Does it pay to follow anomalies research? Machine learning approach with international evidence</A></B>,"
+<A HREF="/s/eee/finmar.html">Journal of Financial Markets</A>, Elsevier, vol. 56(C).
+<LI class="list-group-item downgate">  Kewei Hou & Haitao Mo & Chen Xue & Lu Zhang, 2019.
+"<B><A HREF="/a/oup/revfin/v23y2019i1p1-35..html">Which Factors?</A></B>,"
+<A HREF="/s/oup/revfin.html">Review of Finance</A>, European Finance Association, vol. 23(1), pages 1-35.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Kewei Hou & Haitao Mo & Chen Xue & Lu Zhang, 2014.
+ "<B><A HREF="/p/nbr/nberwo/20682.html">Which Factors?</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+20682, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Nettayanun, Sampan, 2023.
+"<B><A HREF="/a/eee/intfin/v83y2023ics1042443123000021.html">Asset pricing in bull and bear markets</A></B>,"
+<A HREF="/s/eee/intfin.html">Journal of International Financial Markets, Institutions and Money</A>, Elsevier, vol. 83(C).
+<LI class="list-group-item downfree"> Kristoffer Pons Bertelsen, 2022.
+ "<B><A HREF="/p/aah/create/2022-05.html">The Prior Adaptive Group Lasso and the Factor Zoo</A></B>,"
+<A HREF="/s/aah/create.html">CREATES Research Papers</A> 
+2022-05, Department of Economics and Business Economics, Aarhus University.
+<LI class="list-group-item downgate">  Baruník, Jozef & Hronec, Martin & Tobek, Ondřej, 2026.
+"<B><A HREF="/a/eee/intfor/v42y2026i4p1298-1313.html">Forecasting stock return distributions around the globe with quantile neural networks</A></B>,"
+<A HREF="/s/eee/intfor.html">International Journal of Forecasting</A>, Elsevier, vol. 42(4), pages 1298-1313.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Jozef Barunik & Martin Hronec & Ondrej Tobek, 2024.
+ "<B><A HREF="/p/arx/papers/2408.07497.html">Forecasting stock return distributions around the globe with quantile neural networks</A></B>,"
+<A HREF="/s/arx/papers.html">Papers</A> 
+2408.07497, arXiv.org, revised Aug 2025.
+
+
+
+</UL></div>
+<LI class="list-group-item downnone">  Adam Zaremba & Jacob Koby Shemer, 2018.
+"<B><A HREF="/b/spr/sprbok/978-3-319-91530-2.html">Price-Based Investment Strategies</A></B>,"
+<A HREF="/s/spr/sprbok.html">Springer Books</A>,
+Springer, number 978-3-319-91530-2, January.
+<LI class="list-group-item downfree">  Guanhao Feng & Stefano Giglio & Dacheng Xiu, 2020.
+"<B><A HREF="/a/bla/jfinan/v75y2020i3p1327-1370.html">Taming the Factor Zoo: A Test of New Factors</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 75(3), pages 1327-1370, June.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Guanhao Feng & Stefano Giglio & Dacheng Xiu, 2019.
+ "<B><A HREF="/p/nbr/nberwo/25481.html">Taming the Factor Zoo: A Test of New Factors</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+25481, National Bureau of Economic Research, Inc.
+
+<LI class="list-group-item downfree"> Giglio, Stefano & Feng, Guanhao & Xiu, Dacheng, 2020.
+ "<B><A HREF="/p/cpr/ceprdp/14266.html">Taming the Factor Zoo: A Test of New Factors</A></B>,"
+<A HREF="/s/cpr/ceprdp.html">CEPR Discussion Papers</A> 
+14266, Centre for Economic Policy Research.
+
+
+</UL></div>
+<LI class="list-group-item downfree"> Donggyu Kim & Minseok Shin, 2024.
+ "<B><A HREF="/p/ucr/wpaper/202418.html">Nonconvex High-Dimensional Time-Varying Coefficient Estimation for Noisy High-Frequency Observations with a Factor Structure</A></B>,"
+<A HREF="/s/ucr/wpaper.html">Working Papers</A> 
+202418, University of California at Riverside, Department of Economics.
+<LI class="list-group-item downgate">  Joachim Freyberger & Andreas Neuhierl & Michael Weber, 2020.
+"<B><A HREF="/a/oup/rfinst/v33y2020i5p2326-2377..html">Dissecting Characteristics Nonparametrically</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 33(5), pages 2326-2377.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Joachim Freyberger & Andreas Neuhierl & Michael Weber, 2017.
+ "<B><A HREF="/p/nbr/nberwo/23227.html">Dissecting Characteristics Nonparametrically</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+23227, National Bureau of Economic Research, Inc.
+
+<LI class="list-group-item downfree"> Joachim Freyberger & Andreas Neuhierl & Michael Weber & Michael Weber, 2018.
+ "<B><A HREF="/p/ces/ceswps/_7187.html">Dissecting Characteristics Nonparametrically</A></B>,"
+<A HREF="/s/ces/ceswps.html">CESifo Working Paper Series</A> 
+7187, CESifo.
+<LI class="list-group-item downfree"> Joachim Freyberger & Andreas Neuhierl & Michael Weber & Michael Weber, 2017.
+ "<B><A HREF="/p/ces/ceswps/_6391.html">Dissecting Characteristics Nonparametrically</A></B>,"
+<A HREF="/s/ces/ceswps.html">CESifo Working Paper Series</A> 
+6391, CESifo.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Jacobs, Heiko, 2015.
+"<B><A HREF="/a/eee/jbfina/v57y2015icp65-85.html">What explains the dynamics of 100 anomalies?</A></B>,"
+<A HREF="/s/eee/jbfina.html">Journal of Banking & Finance</A>, Elsevier, vol. 57(C), pages 65-85.
+<LI class="list-group-item downfree"> Olivier Ledoit & Michael Wolf & Zhao Zhao, 2016.
+ "<B><A HREF="/p/zur/econwp/238.html">Efficient Sorting: A More Powerful Test for Cross-Sectional Anomalies</A></B>,"
+<A HREF="/s/zur/econwp.html">ECON - Working Papers</A> 
+238, Department of Economics - University of Zurich, revised May 2018.
+<LI class="list-group-item downgate">  Wang, Feifei & Yan, Xuemin Sterling & Zheng, Lingling, 2024.
+"<B><A HREF="/a/eee/jaecon/v78y2024i1s0165410124000168.html">Institutional trading, news, and accounting anomalies</A></B>,"
+<A HREF="/s/eee/jaecon.html">Journal of Accounting and Economics</A>, Elsevier, vol. 78(1).
+<LI class="list-group-item downgate">  Tran, Vu Le, 2023.
+"<B><A HREF="/a/eee/finana/v86y2023ics1057521923000492.html">Sentiment and covariance characteristics</A></B>,"
+<A HREF="/s/eee/finana.html">International Review of Financial Analysis</A>, Elsevier, vol. 86(C).
+<LI class="list-group-item downgate">  Amit Goyal, 2012.
+"<B><A HREF="/a/kap/fmktpm/v26y2012i1p3-38.html">Empirical cross-sectional asset pricing: a survey</A></B>,"
+<A HREF="/s/kap/fmktpm.html">Financial Markets and Portfolio Management</A>, Springer;Swiss Society for Financial Market Research, vol. 26(1), pages 3-38, March.
+<LI class="list-group-item downfree"> Yu-Chin Hsu & Hsiou-Wei Lin & Kendro Vincent, 2017.
+ "<B><A HREF="/p/sin/wpaper/17-a003.html">Do Cross-Sectional Stock Return Predictors Pass the Test without Data-Snooping Bias?</A></B>,"
+<A HREF="/s/sin/wpaper.html">IEAS Working Paper : academic research</A> 
+17-A003, Institute of Economics, Academia Sinica, Taipei, Taiwan.
+<LI class="list-group-item downgate">  De Nard, Gianluca & Zhao, Zhao, 2022.
+"<B><A HREF="/a/eee/reveco/v80y2022icp654-676.html">A large-dimensional test for cross-sectional anomalies:Efficient sorting revisited</A></B>,"
+<A HREF="/s/eee/reveco.html">International Review of Economics & Finance</A>, Elsevier, vol. 80(C), pages 654-676.
+</ol>
+</div>
+
+  <div class="tab-pane fade" id="more" role="tabpanel" aria-labelledby="more-tab">
+    <H2> More about this item</H2>  <h3>Keywords</h3><form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="Volatility-managed portfolios"><button type="submit" value="submit" class="link-button">Volatility-managed portfolios</button></form>; <form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="Portfolio choice"><button type="submit" value="submit" class="link-button">Portfolio choice</button></form>; <form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="Volatility-managed portfolios Portfolio choice "><button type="submit" value="submit" class="link-button">All these keywords</button></form><H3><A HREF="/j/">JEL</A> classification:</h3>
+ <UL> <LI><A HREF="/j/G10.html"><B>G10</B></A> - Financial Economics - - General Financial Markets - - - General (includes Measurement and Data)</LI>
+ <LI><A HREF="/j/G11.html"><B>G11</B></A> - Financial Economics - - General Financial Markets - - - Portfolio Choice; Investment Decisions</LI>
+ <LI><A HREF="/j/G12.html"><B>G12</B></A> - Financial Economics - - General Financial Markets - - - Asset Pricing; Trading Volume; Bond Interest Rates</LI>
+ </UL><P>
+<h3>Statistics</h3>
+ <A      HREF="http://logec.repec.org/scripts/paperstat.pl?h=RePEc:eee:jfinec:v:138:y:2020:i:1:p:95-117">Access and download statistics</A>
+</div>
+
+<!-- placeholder usernotes tab-->
+ <div class="tab-pane fade" id="correct" role="tabpanel" aria-labelledby="correct-tab">
+    <h2>Corrections</H2>
+    <P>All material on this site has been provided by the respective publishers and authors. You can help correct errors and omissions. When requesting a correction, please mention this item's handle: <I style="word-break:break-all;">RePEc:eee:jfinec:v:138:y:2020:i:1:p:95-117</I>. See <A HREF="/corrections.html">general information</A> about how to correct material in RePEc.
+      </P><P>
+      If you have authored this item and are not yet registered with RePEc, we encourage you to do it <A HREF="https://authors.repec.org/new-user">here</A>. This allows to link your profile to this item. It also allows you to accept potential citations to this item that we are uncertain about.
+      </P><p>If <A HREF="http://citec.repec.org/" target ="_blank">CitEc <i class="bi bi-box-arrow-up-right"></i></a> recognized a bibliographic reference but did not link an item in RePEc to it, you can help with <A HREF="http://citec.repec.org/cgi-bin/get_data.pl?h=RePEc:eee:jfinec:v:138:y:2020:i:1:p:95-117&o=all" target="_blank">this form <I class="bi bi-box-arrow-up-right"></I></A>.</p><P>
+      If you know of missing items citing this one, you can help us creating those links by adding the relevant references in the same way as above, for each refering item. If you are a registered author of this item, you may also want to check the "citations" tab in your <a href="https://authors.repec.org/">RePEc Author Service</A> profile, as there may be some citations waiting for confirmation.
+      </P><P>
+        For technical questions regarding this item, or to correct its authors, title, abstract, bibliographic or download information, contact: Catherine Liu (email available below). General contact details of provider: <A HREF="http://www.elsevier.com/locate/inca/505576" target="_blank" style="word-break:break-all;">http://www.elsevier.com/locate/inca/505576 <i class="bi bi-box-arrow-up-right"></i></A>.
+
+<div id="viewemail">
+<form id="emailForm" action="/cgi-bin/getemail.cgi" method="POST">
+<input type="hidden" name="handle" value="repec:eee:jfinec:m">
+<div id="captcha_container"></div>
+          <input type="submit" value="View email address">
+      </form>
+      <script src="https://www.google.com/recaptcha/api.js?onload=loadCaptcha&render=explicit" async defer></script>
+<div id="emailResponse"></div>
+</div>
+</p><p>
+      Please note that corrections may take a couple of weeks to filter through
+      the various RePEc services.</p>
+</div>
+</div>
+</div>
+<div id="footer" class="row d-print-none">
+  <div class="col-sm-6 more-services">
+    <h3 style="border-bottom: 1px solid #111; position: relative; right:0.9em;">More services and features</h3>
+    <div class="row">
+      <div class="list-group col">
+        <a href="/cgi-bin/myideas.cgi" class="list-group-item">
+          <h4 class="list-group-item-heading">MyIDEAS</h4>
+          <p class="list-group-item-text">Follow serials, authors, keywords &amp; more</p>
+        </a>
+        <a href="http://authors.repec.org/" class="list-group-item">
+          <h4 class="list-group-item-heading">Author registration</h4>
+          <p class="list-group-item-text">Public profiles for Economics researchers</p>
+        </a>
+        <a href="http://ideas.repec.org/top/" class="list-group-item">
+          <h4 class="list-group-item-heading">Rankings</h4>
+          <p class="list-group-item-text">Various research rankings in Economics</p>
+        </a>
+        <a href="http://genealogy.repec.org/" class="list-group-item">
+          <h4 class="list-group-item-heading">RePEc Genealogy</h4>
+          <p class="list-group-item-text">Who was a student of whom, using RePEc</p>
+        </a>
+        <a href="http://biblio.repec.org/" class="list-group-item">
+          <h4 class="list-group-item-heading">RePEc Biblio</h4>
+          <p class="list-group-item-text">Curated articles &amp; papers on economics topics</p>
+        </a>
+      </div>
+      <div class="list-group col">
+        <a href="http://mpra.ub.uni-muenchen.de/" class="list-group-item" target="_blank">
+          <h4 class="list-group-item-heading">MPRA  <i class="bi bi-box-arrow-up-right"></i></h4>
+          <p class="list-group-item-text">Upload your paper to be listed on RePEc and IDEAS</p>
+        </a>
+        <a href="http://nep.repec.org/" class="list-group-item" target="_blank">
+          <h4 class="list-group-item-heading">New papers by email <i class="bi bi-box-arrow-up-right"></i></h4>
+          <p class="list-group-item-text">Subscribe to new additions to RePEc</p>
+        </a>
+        <a href="http://www.econacademics.org/" class="list-group-item">
+          <h4 class="list-group-item-heading">EconAcademics</h4>
+          <p class="list-group-item-text">Blog aggregator for economics research</p>
+        </a>
+        <a href="http://plagiarism.repec.org/" class="list-group-item">
+          <h4 class="list-group-item-heading">Plagiarism</h4>
+          <p class="list-group-item-text">Cases of plagiarism in Economics</p>
+        </a>
+      </div>
+      </div>
+    </div>
+    <div class="col-sm more-services">
+      <h3 style="border-bottom: 1px solid #111;">About RePEc</h3>
+      <div class="list-group col">
+        <a href="http://repec.org/" class="list-group-item" target="_blank">
+	  <h4 class="list-group-item-heading">RePEc home <i class="bi bi-box-arrow-up-right"></i></h4>
+	  <p class="list-group-item-text">Initiative for open bibliographies in Economics</p>
+	</a>
+        <a href="http://blog.repec.org/" class="list-group-item" target="_blank">
+          <h4 class="list-group-item-heading">Blog <i class="bi bi-box-arrow-up-right"></i></h4>
+          <p class="list-group-item-text">News about RePEc</p>
+	</a>
+        <a href="/help.html" class="list-group-item" target="_blank">
+          <h4 class="list-group-item-heading">Help/FAQ <i class="bi bi-box-arrow-up-right"></i></h4>
+          <p class="list-group-item-text">Questions about IDEAS and RePEc</p>
+	</a>
+        <a href="/team.html" class="list-group-item">
+          <h4 class="list-group-item-heading">RePEc team</h4>
+          <p class="list-group-item-text">RePEc volunteers</p>
+	</a>
+        <a href="/archives.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Participating archives</h4>
+          <p class="list-group-item-text">Publishers indexing in RePEc</p>
+	</a>
+        <a href="https://ideas.repec.org/privacy.html" class="list-group-item" target="_blank">
+          <h4 class="list-group-item-heading">Privacy statement <i class="bi bi-box-arrow-up-right"></i></h4>
+	</a>
+      </div>
+    </div>
+    <div class="col-sm more-services">
+      <h3 style="border-bottom: 1px solid #111;">Help us</h3>
+      <div class="list-group col">
+        <a href="/corrections.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Corrections</h4>
+          <p class="list-group-item-text">Found an error or omission?</p>
+	</a>
+        <a href="/volunteers.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Volunteers</h4>
+          <p class="list-group-item-text">Opportunities to help RePEc</p>
+	</a>
+        <a href="/participate.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Get papers listed</h4>
+          <p class="list-group-item-text">Have your research listed on RePEc</p>
+	</a>
+        <a href="/stepbystep.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Open a RePEc archive</h4>
+          <p class="list-group-item-text">Have your institution's/publisher's output listed on RePEc</p>
+	</a>
+	<a href="/getdata.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Get RePEc data</h4>
+          <p class="list-group-item-text">Use data assembled by RePEc</p>
+	</a>
+      </div>
+    </div>
+</div>
+<div class="row">
+  <div class="col-12" style="text-align: center; padding-top: 10px;">
+    <div id="sidelogos">
+      <a href="https://ideas.repec.org/">IDEAS</a> is a <a href="http://repec.org/" target="_blank">RePEc <i class="bi bi-box-arrow-up-right"></i></a> service. RePEc uses bibliographic data supplied by the respective publishers.
+    </div>
+  </div>
+  
+  
+</div>
+</div>
+
+</div>
+<!--<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>-->
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@justinribeiro/share-to-mastodon@0.2.0/dist/share-to-mastodon.js"></script>
+<script src="/css/ideas.js"></script>
+<script src="/css/pushy.js"></script>
+<script>
+$(document).ready(function() {
+    // show active tab on reload
+    if (location.hash !== '') $('a[href="' + location.hash + '"]').tab('show');
+
+    // remember the hash in the URL without jumping
+//    $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+//       if(history.pushState) {
+//            history.pushState(null, null, '#'+$(e.target).attr('href').substr(1));
+//       } else {
+//            location.hash = '#'+$(e.target).attr('href').substr(1);
+//       }
+//    });
+});
+</script>
+
+</BODY>
+</HTML>

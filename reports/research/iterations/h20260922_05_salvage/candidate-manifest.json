@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "iter_id": "h20260922_05_salvage",
+  "frozen_at": "2026-09-22T11:33:09.972234+00:00",
+  "rule": "targets = fraction x median 21-session realized vol of the unscaled book, selection window only; no return series enters this choice",
+  "fractions": [
+    0.6,
+    0.8
+  ],
+  "sleeves": {
+    "s1": {
+      "select_median_realized_vol": 0.1427,
+      "targets": [
+        0.086,
+        0.114
+      ],
+      "menu": "A2_sector",
+      "lookback": "252",
+      "rebal": "weekly",
+      "top_n": 2
+    },
+    "s2": {
+      "select_median_realized_vol": 0.1955,
+      "targets": [
+        0.117,
+        0.156
+      ],
+      "menu": "A3_growth",
+      "lookback": "blend",
+      "rebal": "monthly",
+      "top_n": 2
+    },
+    "s3": {
+      "select_median_realized_vol": 0.5274,
+      "targets": [
+        0.4
+      ],
+      "menu": "A4_levered",
+      "lookback": "63",
+      "rebal": "monthly",
+      "top_n": 2
+    }
+  },
+  "path_b": {
+    "base_target": 0.4,
+    "boost_targets": [
+      0.55,
+      0.6
+    ],
+    "holds": [
+      5,
+      10
+    ],
+    "signal": "QQQ > SMA200 and Wilder RSI(10) < 30.0"
+  }
+}

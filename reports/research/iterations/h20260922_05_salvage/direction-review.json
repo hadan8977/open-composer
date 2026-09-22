@@ -1,0 +1,169 @@
+{
+  "cheapest_decisive_test": {
+    "action": "Reuse the frozen H-20260922-02 overlay engine on the two unlevered live sleeves (S1 sector, S2 growth) at targets fixed before any metric was computed at 0.6x and 0.8x of each book's own median 21-session realized volatility on the selection window, and separately raise the frozen S3-vt40 target while the one placebo-clean signal from the 2026-09-22 giants sweep (QQQ above SMA200 and Wilder RSI(10) below 30) is live for 5 or 10 sessions.",
+    "falsification_condition": "Path A: every transferred cell either lowers Sharpe, deepens drawdown, drops below SPMO, or loses to more than 10% of random-pick seeds -- the mechanism does not transfer off the levered book and only S3 keeps it. Path B: no boost cell reaches 110% annualized inside -35%, or more than 10% of the 20 calendar shifts beat it -- the dip signal adds nothing and S3-vt40 ships unchanged.",
+    "max_compute_minutes": 45,
+    "pass_condition": "Path A: a transferred cell raises anchor Sharpe and shrinks anchor max drawdown versus the same sleeve with no overlay, keeps anchor annualized return at or above SPMO 35.8%, holdout Sharpe at or above 1.0, and random-pick placebo beat fraction at or below 10%. Path B: anchor annualized return at or above 110% with max drawdown no worse than -35%, holdout Sharpe at or above 2.0, and the dip-signal calendar-shift placebo beat fraction at or below 10%."
+  },
+  "cost_and_execution_assumptions": "sum(|delta w|) x slippage charged on the execution session, 10 bp per side primary and 20 bp per side stress; signal on a completed session close, fill at the next session open (fill_assumption next_bar_open, matching the live paper path); SIP fully adjusted daily closes; cash leg is SHY; risk free is BIL. Long-only spot ETFs, so Alpaca can execute it.",
+  "decision": "proceed",
+  "existing_solution_comparison": "The overlay itself is published (Moreira-Muir 2017; Man Group 2017) and already passed our own gates once, on S3 (H-20260922-02: 98.3% / -30.2% / 1.66 versus the unmodified 145.4% / -56.4% / 1.48). What is not public is whether it transfers to two unlevered rotation books whose realized volatility is a third of S3's, and whether the only placebo-clean branch the 2026-09-22 public-strategy sweep produced (f1_tqqq_rsi_no_hedge_ablation, anchor 15.9% / -5.2% / 1.37, calendar-shift placebo 0%) is worth anything once it stops picking assets and only sizes an existing book. Both questions are answered by re-running a frozen engine, not by inventing a strategy.",
+  "iter_id": "h20260922_05_salvage",
+  "negative_experiments_checked": "Cederburg et al. (2020) find volatility management fails out of sample across 103 strategies; Barroso and Detzel (2021) find it dies after costs except for the market portfolio; the 2025 international study agrees. Locally, L-20260918-01 killed a single moving-average trend gate on the calendar-shift placebo, and H-20260918-05 recorded that S3's own ranking edge is weak (25% of random-pick seeds beat it). This round therefore treats the overlay, not the ranking, as the thing under test, and keeps both placebos. Added 2026-09-22: the giants sweep (reports/research/iterations/giants_sweep_20260922) refuted 24 published K-line/ETF rules under this same protocol, including the full Composer RSI-branch family with its hedge legs (H-20260922-04), the 60/40 two-leg rotation, HFEA/9-Sig fixed weights, Keller canary defence and overnight seasonality; the dip branch tested here is the single surviving placebo-clean component of that sweep and is deliberately demoted from an asset picker to a sizing signal.",
+  "objective": "Ask whether a Moreira-Muir volatility target plus an equity-curve drawdown brake can compress the S3 levered-ETF rotation sleeve's anchor window drawdown from -56.4% to no worse than -35% while keeping annualized return at or above 50% and holdout Sharpe at or above 1.0.",
+  "queries": [
+    {
+      "opened_urls": [
+        "https://www.nber.org/papers/w22208",
+        "https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html"
+      ],
+      "query": "Moreira Muir volatility managed portfolios replication failure Cederburg out-of-sample",
+      "searched_at": "2026-09-22T02:47:22+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://www.man.com/insights/the-impact-of-volatility-targeting",
+        "https://arxiv.org/abs/2603.01298",
+        "https://quantpedia.com/leveraged-etfs-in-asset-allocation-opportunity-or-trap/",
+        "https://quantpedia.com/leveraged-etfs-in-low-volatility-environments/"
+      ],
+      "query": "volatility targeting leveraged ETF drawdown control 2025 2026 evidence Sharpe improvement",
+      "searched_at": "2026-09-22T02:47:22+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://ideas.repec.org/a/eee/jfinec/v140y2021i3p744-767.html",
+        "https://ideas.repec.org/a/eee/empfin/v80y2025ics092753982400094x.html"
+      ],
+      "query": "volatility managed portfolios transaction costs Barroso Detzel do not survive",
+      "searched_at": "2026-09-22T02:47:22+00:00"
+    }
+  ],
+  "remaining_evidence_gap": "Whether exposure reduction alone, capped at 1.0 leverage, is enough to halve a -56% levered drawdown without destroying the return that makes the sleeve interesting, on the 2026 holdout that has never been scored.",
+  "reviewed_at": null,
+  "schema_version": 1,
+  "sources": [
+    {
+      "applicability": "This is the giant the B-2 overlay copies: scale the S3 levered sleeve down by trailing realized volatility. Our sleeve is a single long-only levered-ETF book, not a long-short factor, so only the mechanism carries over, not the magnitudes.",
+      "claim": "Moreira and Muir show that scaling factor exposure down when realized volatility is high raises Sharpe ratios for the market, value, momentum, profitability, return-on-equity and investment factors and for the currency carry trade, because factor volatility changes are not offset by proportional changes in expected returns.",
+      "claim_id": "mm2017_volatility_managed_sharpe",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Replicated in spanning regressions by Cederburg et al. (2020) and Barroso and Detzel (2021); both dispute the real-time value.",
+      "limitations": "Long-short factor portfolios with unconstrained leverage, monthly data, no transaction costs, sample ends a decade before our anchor window.",
+      "market_and_period": "US equity factors and currency carry, monthly, 1926-2015.",
+      "published_or_updated_at": "2016-04-28",
+      "sha256": "aa84dbc3f2d8acf1f6f9ba0c8e77ef57b68abbbc370296243353d1bf32d212fb",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/moreira-muir-nber-w22208.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://www.nber.org/papers/w22208"
+    },
+    {
+      "applicability": "This is the strongest reason B-2 could fail. It forces the design to be a pure exposure reducer with leverage capped at 1.0 and to be judged on an untouched 2026 holdout rather than on in-sample alphas.",
+      "claim": "Across 103 equity strategies, volatility-managed portfolios do not systematically beat their unmanaged counterparts for a real-time investor: the spanning-regression alphas are not implementable and out-of-sample versions generally earn lower certainty equivalents and Sharpe ratios than simply holding the unmanaged portfolio.",
+      "claim_id": "cederburg2020_oos_failure",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Consistent with Barroso and Detzel (2021) on costs and with the 2025 international evidence in the Journal of Empirical Finance.",
+      "limitations": "Monthly long-short equity factors, real-time estimation of the scaling coefficient; it does not test a fixed target-volatility rule with a hard leverage cap on a levered-ETF sleeve.",
+      "market_and_period": "103 US equity strategies, monthly, long historical samples through 2017.",
+      "published_or_updated_at": "2020-01-01",
+      "sha256": "67ca99ae459acaf93679b93b0885caf02f74dccc094c8f60636181fc87b1ecb2",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/cederburg-2020-jfe-oos.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html"
+    },
+    {
+      "applicability": "Our overlay is a market-directional, long-only book, i.e. the one case that survived costs in this paper; it still forces the 20 bp per side stress view to be a gate (G4) rather than a footnote.",
+      "claim": "After transaction costs, volatility management of asset-pricing factors other than the market generally produces zero abnormal returns and significantly lower Sharpe ratios, while the volatility-managed market portfolio stays robust to costs.",
+      "claim_id": "barroso_detzel2021_costs",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Same direction as Cederburg et al. (2020).",
+      "limitations": "Factor portfolios, not ETFs; cost model is US equity spreads, not ETF spreads.",
+      "market_and_period": "US equity asset-pricing factors, monthly, 1926-2017.",
+      "published_or_updated_at": "2021-06-01",
+      "sha256": "a40f15e9e32d177f4ae008921a85ab7b21b99534143812cf8462f89bfd30b997",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/barroso-detzel-2021-jfe-costs.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/jfinec/v140y2021i3p744-767.html"
+    },
+    {
+      "applicability": "Supports applying the overlay to an equity-beta sleeve specifically, and supports the drawdown-compression objective of B-2.",
+      "claim": "Across more than 60 assets with daily data from 1926, volatility scaling raises Sharpe ratios for risk assets (equities and credit) and for portfolios with a large allocation to them, and consistently reduces the likelihood of extreme returns.",
+      "claim_id": "man2017_voltarget_risk_assets",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Published as Harvey et al. in the Journal of Portfolio Management (2018).",
+      "limitations": "Practitioner research by a manager that sells volatility-targeted products; unlevered assets, no ETF path-dependency or borrow costs.",
+      "market_and_period": "60+ global assets, daily, 1926-2017.",
+      "published_or_updated_at": "2017-08-06",
+      "sha256": "b85bd8fcf8ce8f84dd276034a2a6d324f431cca25dad1b0893cb25e8f368ba7a",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/man-group-impact-of-volatility-targeting.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://www.man.com/insights/the-impact-of-volatility-targeting"
+    },
+    {
+      "applicability": "Most recent replication we could open. Keeps the prior that the overlay is at best cost-marginal outside market and momentum exposure.",
+      "claim": "In 45 international equity markets, only the volatility-managed market and momentum strategies are partially robust to transaction costs, suggesting most of the abnormal return of volatility management is explained by costs.",
+      "claim_id": "empfin2025_international_costs",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Third independent study in the same direction as Cederburg and Barroso-Detzel.",
+      "limitations": "International factor portfolios; no levered ETF or daily-rebalanced sleeve.",
+      "market_and_period": "45 international equity markets, nine managed factors, through 2023.",
+      "published_or_updated_at": "2025-01-01",
+      "sha256": "4e157b22a4f583de62e6ad20aaf34abd7edf09e782a6bf2c795576385ac0d030",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/empfin-2025-international-voltarget.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/empfin/v80y2025ics092753982400094x.html"
+    },
+    {
+      "applicability": "Closest published analogue of B-2 on the exact instrument class. We use realized volatility only, because our PIT implied-volatility feed is not wired into this engine.",
+      "claim": "Quantpedia proposes gating leveraged-ETF exposure with a volatility filter that compares short-term realized volatility with implied volatility, cutting exposure in high-volatility periods to keep the leverage while mitigating the worst drawdowns.",
+      "claim_id": "quantpedia2025_letf_vol_filter",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Not independently replicated; treated as a design hint, not as evidence.",
+      "limitations": "Vendor blog, rules described but thresholds not fully public, no live track record, uses an implied-volatility input we do not have PIT.",
+      "market_and_period": "US leveraged equity ETFs, daily, post-2010 through 2025.",
+      "published_or_updated_at": "2025-09-15",
+      "sha256": "c1a415b0a840caf5a34ed79f89175ebecf3a9e657dc641b61bdf040d27d1b4b6",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/quantpedia-letf-low-volatility-environments.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/leveraged-etfs-in-low-volatility-environments/"
+    },
+    {
+      "applicability": "Independent confirmation that an active risk overlay, not buy-and-hold, is the only defensible way to run the A4 levered menu.",
+      "claim": "Leveraged ETFs do not work in long-term passive portfolios because they amplify losses and volatility, but simple trend filters (10-month moving average, 12-month high) reduce the damage when leverage is actively managed.",
+      "claim_id": "quantpedia2025_letf_trend_allocation",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Overlaps with the published trend-following literature on levered exposure.",
+      "limitations": "Vendor blog, monthly trend rules only, no cost or capacity analysis of our sleeve.",
+      "market_and_period": "US leveraged equity ETFs in static and dynamic allocations, monthly.",
+      "published_or_updated_at": "unknown",
+      "sha256": "8a91bb4ea45d34e0cafb4c672cde8bfa117c475792af4b84921797ed4610698f",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/quantpedia-letf-asset-allocation.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/leveraged-etfs-in-asset-allocation-opportunity-or-trap/"
+    },
+    {
+      "applicability": "Explains why B-2 freezes the overlay to a monthly update with a hard 1.0 leverage cap instead of a daily inverse-variance scaler: turnover and leverage spikes are the known failure mode.",
+      "claim": "Open-loop volatility targeting that scales exposure inversely with a variance forecast suffers from high turnover, leverage spikes and sensitivity to estimation error; a proportional-control formulation hits the target volatility more consistently.",
+      "claim_id": "arxiv2026_closed_loop_voltarget",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "None yet (March 2026 preprint).",
+      "limitations": "Simulation only, no live or historical trading record, not peer reviewed.",
+      "market_and_period": "Simulation study of a risky-plus-riskfree index, 2026 preprint.",
+      "published_or_updated_at": "2026-03-01",
+      "sha256": "dc1ebb0cbe082f253b7f5357a7292fecad05e9cfaaae7ec363233b28452811dc",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/arxiv-2603.01298-adaptive-leveraged-vol-control.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2603.01298"
+    }
+  ],
+  "stop_condition": "Stop and write a lesson card if no cell reaches anchor drawdown of -35% or better with annualized return at or above 50% (or the G1' alternative of Sharpe at or above 2.0 with return at or above 30%), or if the best cell's holdout Sharpe is below 1.0, or if more than 10% of the 60 random-pick placebo seeds beat it, or if the brake cannot beat its own calendar-shift placebo. Two rounds maximum; this is round 1.",
+  "target_regime_and_horizon": "Recent-regime only: selection 2023-09-18..2025-12-31, untouched holdout 2026-01-02..2026-09-17, anchor 2024-01-08..2026-09-16. Monthly rebalance, daily brake, US levered equity ETFs. Claim of validity is limited to a trending, high-dispersion US large-cap tech regime; the exit rule is the brake plus the G-gate re-check at each renewal."
+}
