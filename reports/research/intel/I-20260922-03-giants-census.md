@@ -53,3 +53,36 @@ B 组结论：规则全免费可复现，Alpaca 全能执行；预期收益 10%�
 | Zhang & Zhou 2026 EAR-AI；Yu et al. 2026（见 I-20260922-01） | LLM 读财报文本 | 见 I-20260922-01 | 文本 | 轨道 A |
 
 C 组结论：可信且能进日线引擎的是 **行业趋势跟踪**（Zarattini-Antonacci）与 **隔夜效应**（成本敏感，必须 1/2/5 bp 三档）；SPY 日内动量进分钟线引擎；OFI、财报前溢价明确排除。
+
+## A. Composer 公开 symphony（OOS ≥ 9 个月且年化 ≥ 40% 或夏普 ≥ 2；12 个核实，11 个去重）
+
+| 名称 | 规则骨架（页面原文摘述） | 年化 / 回撤 / 夏普 | 回测起 / OOS 起 | 持仓 | 族 |
+|---|---|---|---|---|---|
+| v6 Symphony Sorter | 20/200 日均线趋势 + RSI 走强 → TQQQ/SOXL/TECL/UPRO；RSI>70 或波动/债券走弱 → UVXY/VIXY 或 SQQQ/SOXS；盘整 → BIL/SHY/TLT 或 XLP/XLV | 144.8% / −48.4% / 1.81 | 2022-10 / 2023-09-22 | 83 池，日频 | F3 3x 板块动量 + 对冲 |
+| Hedged Sector Rotator（两个 URL 同数字） | 60% 按 RSI 热度轮动至最强标普板块，过热转防御；40% 按 QQQ/SPY/债券热度在多空债券、多空股票、VIX 基金间切换 | 140.4% / −19.9% / 2.46 | 2019-10 / 2024-08-03 | 40，日频 | F2 60/40 双腿 |
+| 2007 @ 2.25 Sharpe – ETFs | 60% RSI 热度 + SPY/QQQ 200 日线：过热 SHV/PSQ/SH，过冷 QQQ/QLD+TLT/XLV，否则 XLP/GLD；40% 按债券强弱 EEM/EUM/TLT/SHV | 42.8% / −8.6% / 2.37 | 2007-11 / 2024-08-19 | 20 | F2 |
+| UVXY & TQQQ | SPY>200 日线顺势 TQQQ；动能过热转 UVXY；科技走弱/波动或利率抬升转国债/T-bill/黄金/美元或 SQQQ | 279.6% / −36.7% / 2.38 | 2012-04 / 2024-06-17 | 25 | F1 趋势 + RSI 双阈值 + 对冲 |
+| QQQ – Bull or Hedge | SPY>200 日线持 QQQ/TQQQ；RSI 与回撤触发转 UVXY 或 UUP/GLD | 72.1% / −28.3% / 1.62 | 2011-10 / 2022-09-21 | 9，日频 | F1 |
+| TQQQ RSI Strategy / Infinite RSI! – QQQ / Holy Moly（同一回测起点 2011-10-04，同作者模板） | 价格>200 日线定趋势；RSI(10) 超买（70/79/80/81）→ UVXY/SQQQ；超卖（30/34）→ TQQQ/TECL/SOXL；否则顺势或 SHV | 68.9% / −33.1% / 1.46；97.3% / −32.5% / 1.64；140.7% / −33.3% / 1.72 | 2011-10 / 2023-09、2024-06、2025-11 | 6–8，日频 | F1 |
+| S&P Symphony w/ Leverage | SPY>200 日线且 RSI 不极端 → SSO 或最强国债/黄金；跌破 → QQQ/PSQ 反向；否则 SHV | 58.6% / −33.6% / 1.54 | 2010-02 / 2023-11-04 | 单持仓 | F1（2x）|
+| angarey sector 3x v2 | TQQQ 与长期均线判趋势；上升持近 10 日最强 3x 板块，过强短暂 UVXY，走弱买 SOXL；下降找超卖反弹或 SQQQ/UGL | 351.6% / −46.7% / 2.51 | 2018-12 / 2025-11-18 | 13，日频 | F3 |
+| SOXL Growth v2.4.5 RL | 波动率+RSI+收益+回撤综合打分；顺境持 2–3 只 3x 多头，逆境转 3x 空头或 TMV/TMF | 139.2% / −88.8% / 1.45 | 2011-03 / 2023-03-14 | 8 | F3 |
+| Volatility Index Black Swan Catcher | VIXM 触发 crash-mode；10/20/30 日 RSI 判 QQQ/SMH 温度：过热 SQQQ/SOXS，过冷 TQQQ/SOXL，中性 BIL/债券篮 | 90.5% / −45.8% / 1.66 | 2022-03 / 2022-12-14 | 20，日频 | F1 变体 |
+
+A 组规律：(1) 骨架 = **200 日线定趋势 + RSI(10) 双阈值**（超买 70–81 → UVXY/SQQQ，超卖 30–34 → 加仓 3x 多头）；(2) **60/40 双腿**（轮动腿 + 独立债券/波动率对冲腿）夏普最高、回撤最低；(3) 3x 板块动量族年化最高（139%–352%）但回撤 46%–89%，收益来自尾部杠杆；(4) 三个"RSI"策略共享回测起点，是同一模板的迭代，算一个家族；(5) 警告：发现页只展示赢家，作者可更新后重置 OOS。
+
+## 汇总：进引擎的家族与 manifest 条目（供 ENGINE 执行者直接构造）
+
+| 族 | 原语 | 网格要点（预注册，≤ 给定 cell 数） |
+|---|---|---|
+| F1 趋势 + RSI 双阈值 + 对冲（Composer A 组 5 个实例；D 组 TQQQ RSI/Safe） | `gate(sma200 of SPY/QQQ)` 嵌套 `gate(rsi10)`：超买 → {UVXY, BIL, SQQQ}；超卖 → {TQQQ, TECL}；否则 → {TQQQ, QQQ, SSO} | RSI 标的 {SPY, QQQ} × 超买 {70, 80} × 超卖 {30} × 超买资产 3 × 顺势资产 3 × 再平衡 {日, 周} = 72 |
+| F2 60/40 双腿 | 腿 1 = `rank`(11 SPDR, 21 日, top1) 套 `gate(rsi10 过热 → XLP/GLD)`；腿 2 = `rank`({TLT, SHV, EEM/EUM 或 SQQQ/QQQ}, 21 日, top1)；权重 {60/40, 50/50} | ≤ 24 |
+| F3 3x 板块动量 + 对冲（B-1 卡已覆盖核心） | `rank`({TECL, FAS, ERX, CURE, DUSL, SOXL, TQQQ}, {10, 21} 日, top{1,2}) 套 `gate(rsi10 过热 → UVXY/BIL)` 与 `gate(sma200 趋势 → 否则 SOXL 超卖买 / SQQQ)` | ≤ 48（与 H-20260922-04 合并去重）|
+| F4 固定权重杠杆（HFEA、TQQQ/TMF、9-Sig） | `fixed_weights` {UPRO/TMF 55/45, TQQQ/TMF 50/50, TQQQ/AGG 9-sig} × 再平衡 {月, 季, 双月} | ≤ 12 |
+| F5 canary/广度防御叠杠杆（Keller BAA/VAA/HAA、Antonacci GEM、Faber GTAA） | `canary` 与 `abs_filter`/`gate(sma10m)` 原版 + 进攻篮换成 {UPRO/TQQQ/SSO} 的杠杆版 | 原版 6 + 杠杆版 12 = 18 |
+| F6 行业趋势跟踪（Zarattini-Antonacci） | 11 SPDR + 可得行业 ETF 各自 `gate(sma{126,200} 或 12 月时序动量)`，等权持有在趋势内者，否则 BIL | ≤ 12 |
+| F7 隔夜效应 | `overnight`(QQQ/TQQQ/SPY 收盘买次日开盘卖) × 跳过周五 {是, 否} × 成本 {1, 2, 5} bp | ≤ 18 |
+| 已在跑 | B-2 波动率目标/回撤刹车（H-20260922-02）；B-1 RSI 分支（H-20260922-04）| — |
+| 不进 | VIX 期限结构（无 VX 期货）、OFI（tick）、财报前溢价（消失）、LAA（宏观序列）、ORB | — |
+
+合计约 200–250 个新 cell，加 B-1/B-2 的 80 个。全部日线，一次跑完。
