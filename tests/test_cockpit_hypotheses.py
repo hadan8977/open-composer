@@ -87,23 +87,27 @@ def test_every_unclassified_card_carries_a_reason_and_raw_status() -> None:
 
 
 def test_the_real_cards_with_an_explicit_previous_field() -> None:
-    # Ground truth re-measured 2026-09-22 after the front-matter parser learned
-    # the Chinese keys (上一环 / 上一张卡), which is the same causal relation as
-    # the English "previous" written differently. Before that fix the 09-22 cards
-    # that declare the predecessor in front matter rather than in prose were
-    # silently dropped. A drop back toward two would mean the field parsing
-    # broke; growth is expected as new cards adopt the field.
-    cards = H.load_cards(REPO_ROOT)
-    with_previous = {c.id: c.previous for c in cards if c.previous}
-    assert with_previous == {
-        "H-20260919-01": "H-20260918-06",
-        "H-20260919-02": "H-20260917-01",
+    # The invariant is that the field keeps parsing, not that the corpus stops
+    # growing: every new card that declares a predecessor used to break an exact
+    # equality here, which taught us to edit the test rather than read it. These
+    # relations are the ones re-measured 2026-09-22, after the front-matter parser
+    # learned the Chinese keys (上一环 / 上一张卡) that the corpus actually writes;
+    # before that fix, cards declaring the predecessor in front matter rather than
+    # in prose were silently dropped. Losing any of them means the parsing broke.
+    known = {
+        "H-20260919-01": "H-20260918-06",  # prose form
+        "H-20260919-02": "H-20260917-01",  # prose form
         "H-20260922-01": "H-20260916-06",
         "H-20260922-02": "H-20260918-05",
-        "H-20260922-04": "H-20260918-05",
+        "H-20260922-04": "H-20260918-05",  # front-matter form, needs the CJK key
         "H-20260922-05": "H-20260922-02",
-        "H-20260922-07": "H-20260918-02",
+        "H-20260922-07": "H-20260918-02",  # front-matter form, needs the CJK key
     }
+    cards = H.load_cards(REPO_ROOT)
+    with_previous = {c.id: c.previous for c in cards if c.previous}
+    missing = {k: v for k, v in known.items() if with_previous.get(k) != v}
+    assert not missing, f"predecessor parsing regressed for {missing}"
+    assert len(with_previous) >= len(known)
 
 
 # --------------------------------------------------------------------------

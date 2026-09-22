@@ -1,0 +1,69 @@
+{
+  "cheapest_decisive_test": {
+    "action": "Build the point-in-time gap panel once (gap and trailing volatility use only sessions strictly before the open), estimate E[oc | z bucket] day-demeaned with the t computed on daily means, then run the frozen 3x3x3x3 grid of leg size, liquidity tier, cost and borrow, with a 20-shift calendar placebo and a 20-seed random-pick placebo on the judgement cell.",
+    "falsification_condition": "Any of those three fails.",
+    "max_compute_minutes": 60,
+    "pass_condition": "In the 2022-2026 window at 5 bp per side plus 10 bp per day borrow, the book has positive annualized return, Sharpe at or above 1.0, and the calendar-shift placebo beats it no more than 10% of the time."
+  },
+  "cost_and_execution_assumptions": "Enter at the official open, exit at the same session's close. Cost charged on entry and exit of both legs at 5, 10 and 20 bp per side. Borrow charged on the short notional at 0, 10 and 25 bp per day. Dollar-neutral book, 1x long notional and 1x short notional, return quoted on capital as the mean of the two legs. Prices are the SIP fully adjusted daily bars, so splits and dividends cannot create phantom gaps; the residual caveat is that an ex-dividend morning still shows as a small gap.",
+  "decision": "proceed",
+  "existing_solution_comparison": "Concretum's 'Identifying Stocks to Fade' is the one practitioner writeup with numbers: 2012-01 to mid-May 2026, gross CAGR about 98%, Sharpe about 2.08, max drawdown about 67%. The rule table is behind a paywall, so this is a reconstruction from the public description, not a line-by-line replication, and the card says so. Two things are ours and not theirs: our frictions are charged explicitly including a per-day borrow leg, and we estimate the full conditional response curve before building any book rather than assuming the fade direction.",
+  "iter_id": "h20260922_08_gap_fade",
+  "negative_experiments_checked": "arXiv 2605.04004 (systematic falsification of OHLCV intraday signals on MNQ futures) finds the gap-fill fade fails at every tested entry time -- but on a single index future, not in the cross-section, so it does not settle the stock-level question. The source itself volunteers the strongest negative: it says the strategy 'ticks every box for facing brutal frictions' (commissions, market impact, cost of borrow) and that the curve peaked in H1 2022 and has given back a substantial portion of prior gains since, which it attributes to crowding as short-selling infrastructure democratized. Locally, H-20260922-07 has just refuted single-instrument intraday timing on SPY, and H-20260922-01 measured a gap coefficient of t=4.63 in the continuation direction on 8-K earnings days -- a local data point that argues against a blanket fade.",
+  "objective": "Estimate the cross-sectional response of the US equity intraday session to the overnight gap -- E[open-to-close return | gap measured in units of the stock's own trailing volatility] -- and ask whether the gap-fade book built from it survives realistic single-stock frictions including borrow, in particular in the 2022-2026 window where the one practitioner with a published track record says the effect decayed.",
+  "queries": [
+    {
+      "opened_urls": [
+        "https://concretumgroup.substack.com/p/identifying-stocks-to-fade"
+      ],
+      "query": "Concretum identifying stocks to fade abnormal overnight gap intraday reversion",
+      "searched_at": "2026-09-22T10:40:00+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://arxiv.org/abs/2507.04481",
+        "https://arxiv.org/pdf/2507.04481",
+        "https://www.sciencedirect.com/science/article/abs/pii/S1544612325018458"
+      ],
+      "query": "overnight gap reversal intraday stocks academic paper news vs no-news gap continuation",
+      "searched_at": "2026-09-22T10:45:00+00:00"
+    }
+  ],
+  "remaining_evidence_gap": "Whether a real cross-sectional gap response, if one exists, is large enough to pay single-stock round-trip costs plus borrow, and whether it is concentrated in names we could not actually short.",
+  "reviewed_at": "2026-09-22T11:05:00+00:00",
+  "schema_version": 1,
+  "sources": [
+    {
+      "applicability": "This is the object under test. Because the rule table is paywalled, a negative result here refutes our reconstruction, not necessarily the author's exact rule -- the card must say so.",
+      "claim": "Fading stocks that experience abnormally large overnight gaps during the subsequent intraday session returned roughly 98% CAGR with a Sharpe of about 2.08 and a maximum drawdown of around 67% from January 2012 through mid-May 2026, gross of costs. The author states the strategy 'ticks every box for facing brutal frictions' -- commissions, market impact and cost of borrow -- and that 'from 2022 onwards, something clearly changed. The equity curve peaked in the first half of that year and has since given back a substantial portion of prior gains', attributed to crowding as short-selling infrastructure democratized.",
+      "claim_id": "concretum2026_gap_fade",
+      "fetched_at": "2026-09-22T11:00:00+00:00",
+      "independent_replication": "None found. This test is the replication.",
+      "limitations": "Practitioner newsletter; the exact selection rule table is behind a paywall so we reconstruct from the public description; the headline figures are explicitly gross of costs and the author says costs make a material difference; no independent audit of the track record.",
+      "market_and_period": "US equities, Russell 3000 excluding the least liquid 30%, intraday, 2012-01 to 2026-05.",
+      "published_or_updated_at": "2026-05-01",
+      "sha256": "28281815884037ced6f5429c8d3007c1fadec96da8ae5e5f606c0baf85737307",
+      "snapshot_path": "reports/research/iterations/h20260922_08_gap_fade/sources/concretum-identifying-stocks-to-fade.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_08_gap_fade.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://concretumgroup.substack.com/p/identifying-stocks-to-fade"
+    },
+    {
+      "applicability": "This is precisely why this round estimates the conditional response curve instead of assuming a fade direction. It also records the baseline that intraday returns are on average negative or flat, which a dollar-neutral book neutralizes but a long-only intraday book would fight.",
+      "claim": "Verbatim from the abstract: 'Over the past 30 years, nearly all the gains in the U.S. stock market have been earned overnight, while average intraday returns have been negative or flat. We find that a large part of this effect can be explained through features of intraday and overnight news. Our analysis uses a collection of 2.4 million news articles... In out-of-sample tests, our approach forecasts which stocks will do particularly well overnight and particularly poorly intraday. Our approach also helps explain patterns of continuation and reversal in intraday and overnight returns.'",
+      "claim_id": "arxiv2025_overnight_news_topics",
+      "fetched_at": "2026-09-22T11:00:00+00:00",
+      "independent_replication": "Not replicated by us; used only to set the prior.",
+      "limitations": "Preprint. The abstract says news topics help explain BOTH continuation and reversal; it does not license a one-line 'news gaps continue' or 'news gaps reverse' rule. Two secondary summaries of this paper that we read first asserted opposite directions, and neither matched the abstract.",
+      "market_and_period": "US equities, 2.4 million news articles, roughly 30 years.",
+      "published_or_updated_at": "2025-07-06",
+      "sha256": "33661fc866b7b008c539c29568e37035104626a00b2d8b193c57bf5f725cba9a",
+      "snapshot_path": "reports/research/iterations/h20260922_08_gap_fade/sources/arxiv-2507.04481-overnight-news.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_08_gap_fade.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2507.04481"
+    }
+  ],
+  "stop_condition": "One round. If the frozen cell fails, record the conditional response table as knowledge and stop; do not proceed to the news split, because splitting a signal that has no tradable magnitude only manufactures multiple comparisons.",
+  "target_regime_and_horizon": "Intraday only, no overnight exposure, one-day holding period. US common stocks and ETFs above $5 with at least $1M of 21-day median dollar volume, 2016-03-31 to 2026-09-21, 9.68M symbol-days over 8,559 symbols. Judgement window is 2022-01-01 onward, because that is the period the source says decayed."
+}
