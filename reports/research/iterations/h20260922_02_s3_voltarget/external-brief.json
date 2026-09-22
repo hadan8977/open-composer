@@ -1,0 +1,162 @@
+{
+  "candidate_matrix_revisions": [
+    {
+      "driver": "arxiv2026_closed_loop_voltarget",
+      "effect": "The overlay may only scale exposure down into SHY; no cell is allowed to lever up when realized volatility is low, which removes the leverage-spike failure mode.",
+      "revision": "leverage_cap_1.0"
+    },
+    {
+      "driver": "arxiv2026_closed_loop_voltarget",
+      "effect": "Caps turnover so the 20 bp per side stress gate stays reachable.",
+      "revision": "monthly_overlay_update_instead_of_daily_inverse_variance"
+    },
+    {
+      "driver": "barroso_detzel2021_costs",
+      "effect": "G4 is a pass/fail gate, not a footnote.",
+      "revision": "twenty_bp_stress_promoted_to_a_gate"
+    },
+    {
+      "driver": "cederburg2020_oos_failure",
+      "effect": "In-sample spanning alphas are not accepted as evidence; the selection window only ranks, the holdout only judges.",
+      "revision": "untouched_2026_holdout_is_decisive"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl"
+  ],
+  "hypothesis_links": [
+    "reports/research/hypotheses/H-20260922-02-s3-voltarget-drawdown-brake.md",
+    "reports/research/hypotheses/H-20260918-05-recent-window-etf-menu.md"
+  ],
+  "iter_id": "h20260922_02_s3_voltarget",
+  "objective": "Copy the published volatility-managed-portfolio overlay onto the local S3 levered ETF rotation sleeve and ask whether it compresses drawdown enough to clear the 2026-09-22 shipping gates.",
+  "schema_version": 3,
+  "source_evidence_bindings": [
+    {
+      "claim_id": "mm2017_volatility_managed_sharpe",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "overlay_mechanism"
+    },
+    {
+      "claim_id": "cederburg2020_oos_failure",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "negative_evidence_and_cost_gate"
+    },
+    {
+      "claim_id": "barroso_detzel2021_costs",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "negative_evidence_and_cost_gate"
+    },
+    {
+      "claim_id": "man2017_voltarget_risk_assets",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "overlay_mechanism"
+    },
+    {
+      "claim_id": "empfin2025_international_costs",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "negative_evidence_and_cost_gate"
+    },
+    {
+      "claim_id": "quantpedia2025_letf_vol_filter",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "negative_evidence_and_cost_gate"
+    },
+    {
+      "claim_id": "quantpedia2025_letf_trend_allocation",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "negative_evidence_and_cost_gate"
+    },
+    {
+      "claim_id": "arxiv2026_closed_loop_voltarget",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "overlay_mechanism"
+    }
+  ],
+  "source_spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+  "sources": [
+    {
+      "core_claim": "Moreira and Muir show that scaling factor exposure down when realized volatility is high raises Sharpe ratios for the market, value, momentum, profitability, return-on-equity and investment factors and for the currency carry trade, because factor volatility changes are not offset by proportional changes in expected returns.",
+      "credibility": "top_journal_or_nber",
+      "project_applicability": "This is the giant the B-2 overlay copies: scale the S3 levered sleeve down by trailing realized volatility. Our sleeve is a single long-only levered-ETF book, not a long-short factor, so only the mechanism carries over, not the magnitudes.",
+      "published_or_updated_at": "2016-04-28",
+      "reflection": "Long-short factor portfolios with unconstrained leverage, monthly data, no transaction costs, sample ends a decade before our anchor window.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/papers/w22208"
+    },
+    {
+      "core_claim": "Across 103 equity strategies, volatility-managed portfolios do not systematically beat their unmanaged counterparts for a real-time investor: the spanning-regression alphas are not implementable and out-of-sample versions generally earn lower certainty equivalents and Sharpe ratios than simply holding the unmanaged portfolio.",
+      "credibility": "top_journal_or_nber",
+      "project_applicability": "This is the strongest reason B-2 could fail. It forces the design to be a pure exposure reducer with leverage capped at 1.0 and to be judged on an untouched 2026 holdout rather than on in-sample alphas.",
+      "published_or_updated_at": "2020-01-01",
+      "reflection": "Monthly long-short equity factors, real-time estimation of the scaling coefficient; it does not test a fixed target-volatility rule with a hard leverage cap on a levered-ETF sleeve.",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html"
+    },
+    {
+      "core_claim": "After transaction costs, volatility management of asset-pricing factors other than the market generally produces zero abnormal returns and significantly lower Sharpe ratios, while the volatility-managed market portfolio stays robust to costs.",
+      "credibility": "top_journal_or_nber",
+      "project_applicability": "Our overlay is a market-directional, long-only book, i.e. the one case that survived costs in this paper; it still forces the 20 bp per side stress view to be a gate (G4) rather than a footnote.",
+      "published_or_updated_at": "2021-06-01",
+      "reflection": "Factor portfolios, not ETFs; cost model is US equity spreads, not ETF spreads.",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/jfinec/v140y2021i3p744-767.html"
+    },
+    {
+      "core_claim": "Across more than 60 assets with daily data from 1926, volatility scaling raises Sharpe ratios for risk assets (equities and credit) and for portfolios with a large allocation to them, and consistently reduces the likelihood of extreme returns.",
+      "credibility": "practitioner_research",
+      "project_applicability": "Supports applying the overlay to an equity-beta sleeve specifically, and supports the drawdown-compression objective of B-2.",
+      "published_or_updated_at": "2017-08-06",
+      "reflection": "Practitioner research by a manager that sells volatility-targeted products; unlevered assets, no ETF path-dependency or borrow costs.",
+      "source_type": "industry_standard",
+      "url": "https://www.man.com/insights/the-impact-of-volatility-targeting"
+    },
+    {
+      "core_claim": "In 45 international equity markets, only the volatility-managed market and momentum strategies are partially robust to transaction costs, suggesting most of the abnormal return of volatility management is explained by costs.",
+      "credibility": "top_journal_or_nber",
+      "project_applicability": "Most recent replication we could open. Keeps the prior that the overlay is at best cost-marginal outside market and momentum exposure.",
+      "published_or_updated_at": "2025-01-01",
+      "reflection": "International factor portfolios; no levered ETF or daily-rebalanced sleeve.",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/empfin/v80y2025ics092753982400094x.html"
+    },
+    {
+      "core_claim": "Quantpedia proposes gating leveraged-ETF exposure with a volatility filter that compares short-term realized volatility with implied volatility, cutting exposure in high-volatility periods to keep the leverage while mitigating the worst drawdowns.",
+      "credibility": "practitioner_research",
+      "project_applicability": "Closest published analogue of B-2 on the exact instrument class. We use realized volatility only, because our PIT implied-volatility feed is not wired into this engine.",
+      "published_or_updated_at": "2025-09-15",
+      "reflection": "Vendor blog, rules described but thresholds not fully public, no live track record, uses an implied-volatility input we do not have PIT.",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/leveraged-etfs-in-low-volatility-environments/"
+    },
+    {
+      "core_claim": "Leveraged ETFs do not work in long-term passive portfolios because they amplify losses and volatility, but simple trend filters (10-month moving average, 12-month high) reduce the damage when leverage is actively managed.",
+      "credibility": "practitioner_research",
+      "project_applicability": "Independent confirmation that an active risk overlay, not buy-and-hold, is the only defensible way to run the A4 levered menu.",
+      "published_or_updated_at": "unknown",
+      "reflection": "Vendor blog, monthly trend rules only, no cost or capacity analysis of our sleeve.",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/leveraged-etfs-in-asset-allocation-opportunity-or-trap/"
+    },
+    {
+      "core_claim": "Open-loop volatility targeting that scales exposure inversely with a variance forecast suffers from high turnover, leverage spikes and sensitivity to estimation error; a proportional-control formulation hits the target volatility more consistently.",
+      "credibility": "top_journal_or_nber",
+      "project_applicability": "Explains why B-2 freezes the overlay to a monthly update with a hard 1.0 leverage cap instead of a daily inverse-variance scaler: turnover and leverage spikes are the known failure mode.",
+      "published_or_updated_at": "2026-03-01",
+      "reflection": "Simulation only, no live or historical trading record, not peer reviewed.",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2603.01298"
+    }
+  ],
+  "spec_hash": "9d3c77b25002ecb877eb39c4605929ce62f2746715d50aaa25559833e5563c9c",
+  "strategy_name": "s3_voltarget_brake_h20260922_02",
+  "topic_coverage": [
+    "volatility_managed_portfolios_original_evidence",
+    "out_of_sample_replication_failure",
+    "transaction_cost_survival",
+    "international_and_recent_replication",
+    "leveraged_etf_specific_risk_overlay",
+    "drawdown_brake_and_equity_curve_control",
+    "implementation_turnover_and_leverage_cap"
+  ]
+}

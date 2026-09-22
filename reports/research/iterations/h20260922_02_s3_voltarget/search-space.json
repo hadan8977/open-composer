@@ -1,0 +1,79 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/h20260922_02_s3_voltarget/candidate-manifest.json",
+  "candidate_manifest_sha256": "875bd55624ddd404c5af61b5c8cd362f48ba4e584e12bea16146c5f1af8e08c2",
+  "cost_table_path": "reports/research/iterations/h20260922_02_s3_voltarget/cost-contract.json",
+  "created_at": "2026-09-22T03:07:22+00:00",
+  "data_feasibility_path": "reports/research/iterations/h20260922_02_s3_voltarget/data-feasibility.json",
+  "data_feasibility_sha256": "d7518f9b155de1d5b502d7574f1274ef18e15410b0a3cc653133c4aa7dee4762",
+  "evaluation_report_paths": [],
+  "iter_id": "h20260922_02_s3_voltarget",
+  "objective": "One mechanism: reduce exposure of the frozen S3 levered rotation sleeve by realized volatility and by an equity-curve drawdown brake.",
+  "paths": [
+    {
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "MTUM_buy_and_hold",
+        "SPMO_buy_and_hold",
+        "TQQQ_buy_and_hold",
+        "A4_menu_equal_weight_monthly",
+        "S3_unmodified_inside_grid",
+        "volatility_matched_excess_over_SPY"
+      ],
+      "candidate_count": 12,
+      "hypothesis_refs": [
+        "H-20260922-02"
+      ],
+      "name": "levered_rotation_volatility_overlay",
+      "parameters": {
+        "candidate_ids": [
+          "VT01",
+          "VT02",
+          "VT03",
+          "VT04",
+          "VT05",
+          "VT06",
+          "VT07",
+          "VT08",
+          "VT09",
+          "VT10",
+          "VT11",
+          "VT12"
+        ],
+        "drawdown_brake": [
+          "none",
+          "dd25_halve_recover_high_or_21d"
+        ],
+        "leverage_cap": [
+          1.0
+        ],
+        "lookback": [
+          "63",
+          "blend"
+        ],
+        "model_training": false,
+        "mutation": "none",
+        "realized_vol_window": [
+          21
+        ],
+        "rebalance": [
+          "monthly"
+        ],
+        "top_n": [
+          2
+        ],
+        "vol_target_annual": [
+          "0.40",
+          "0.60",
+          "none"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+  "spec_hash": "9d3c77b25002ecb877eb39c4605929ce62f2746715d50aaa25559833e5563c9c",
+  "strategy_name": "s3_voltarget_brake_h20260922_02",
+  "total_candidate_budget": 12,
+  "trial_ledger_paths": []
+}

@@ -1,0 +1,461 @@
+{
+  "brief": "reports/research/briefs/B-2-s3-voltarget-2026-09-22.md",
+  "candidate_count": 12,
+  "candidates": [
+    {
+      "ablation": "no_drawdown_brake",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT01",
+      "cell_id": "s3_lb63_vt40_nobrake",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "vol_target_40pct_21d",
+      "parameters": {
+        "brake_exposure_multiplier": null,
+        "brake_recover_sessions": null,
+        "brake_trigger_dd": null,
+        "cell_id": "s3_lb63_vt40_nobrake",
+        "drawdown_brake": "none",
+        "leverage_cap": 1.0,
+        "lookback": "63",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": 0.4
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "drawdown_brake_25pct_halve",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT02",
+      "cell_id": "s3_lb63_vt40_brake25",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "vol_target_40pct_21d",
+      "parameters": {
+        "brake_exposure_multiplier": 0.5,
+        "brake_recover_sessions": 21,
+        "brake_trigger_dd": -0.25,
+        "cell_id": "s3_lb63_vt40_brake25",
+        "drawdown_brake": "dd25_halve_recover_high_or_21d",
+        "leverage_cap": 1.0,
+        "lookback": "63",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": 0.4
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "no_drawdown_brake",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT03",
+      "cell_id": "s3_lb63_vt60_nobrake",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "vol_target_60pct_21d",
+      "parameters": {
+        "brake_exposure_multiplier": null,
+        "brake_recover_sessions": null,
+        "brake_trigger_dd": null,
+        "cell_id": "s3_lb63_vt60_nobrake",
+        "drawdown_brake": "none",
+        "leverage_cap": 1.0,
+        "lookback": "63",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": 0.6
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "drawdown_brake_25pct_halve",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT04",
+      "cell_id": "s3_lb63_vt60_brake25",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "vol_target_60pct_21d",
+      "parameters": {
+        "brake_exposure_multiplier": 0.5,
+        "brake_recover_sessions": 21,
+        "brake_trigger_dd": -0.25,
+        "cell_id": "s3_lb63_vt60_brake25",
+        "drawdown_brake": "dd25_halve_recover_high_or_21d",
+        "leverage_cap": 1.0,
+        "lookback": "63",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": 0.6
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "no_drawdown_brake",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT05",
+      "cell_id": "s3_lb63_novt_nobrake",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "no_vol_target",
+      "parameters": {
+        "brake_exposure_multiplier": null,
+        "brake_recover_sessions": null,
+        "brake_trigger_dd": null,
+        "cell_id": "s3_lb63_novt_nobrake",
+        "drawdown_brake": "none",
+        "leverage_cap": 1.0,
+        "lookback": "63",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": null
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "drawdown_brake_25pct_halve",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT06",
+      "cell_id": "s3_lb63_novt_brake25",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "no_vol_target",
+      "parameters": {
+        "brake_exposure_multiplier": 0.5,
+        "brake_recover_sessions": 21,
+        "brake_trigger_dd": -0.25,
+        "cell_id": "s3_lb63_novt_brake25",
+        "drawdown_brake": "dd25_halve_recover_high_or_21d",
+        "leverage_cap": 1.0,
+        "lookback": "63",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": null
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "no_drawdown_brake",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT07",
+      "cell_id": "s3_lbblend_vt40_nobrake",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "vol_target_40pct_21d",
+      "parameters": {
+        "brake_exposure_multiplier": null,
+        "brake_recover_sessions": null,
+        "brake_trigger_dd": null,
+        "cell_id": "s3_lbblend_vt40_nobrake",
+        "drawdown_brake": "none",
+        "leverage_cap": 1.0,
+        "lookback": "blend",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": 0.4
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "drawdown_brake_25pct_halve",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT08",
+      "cell_id": "s3_lbblend_vt40_brake25",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "vol_target_40pct_21d",
+      "parameters": {
+        "brake_exposure_multiplier": 0.5,
+        "brake_recover_sessions": 21,
+        "brake_trigger_dd": -0.25,
+        "cell_id": "s3_lbblend_vt40_brake25",
+        "drawdown_brake": "dd25_halve_recover_high_or_21d",
+        "leverage_cap": 1.0,
+        "lookback": "blend",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": 0.4
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "no_drawdown_brake",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT09",
+      "cell_id": "s3_lbblend_vt60_nobrake",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "vol_target_60pct_21d",
+      "parameters": {
+        "brake_exposure_multiplier": null,
+        "brake_recover_sessions": null,
+        "brake_trigger_dd": null,
+        "cell_id": "s3_lbblend_vt60_nobrake",
+        "drawdown_brake": "none",
+        "leverage_cap": 1.0,
+        "lookback": "blend",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": 0.6
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "drawdown_brake_25pct_halve",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT10",
+      "cell_id": "s3_lbblend_vt60_brake25",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "vol_target_60pct_21d",
+      "parameters": {
+        "brake_exposure_multiplier": 0.5,
+        "brake_recover_sessions": 21,
+        "brake_trigger_dd": -0.25,
+        "cell_id": "s3_lbblend_vt60_brake25",
+        "drawdown_brake": "dd25_halve_recover_high_or_21d",
+        "leverage_cap": 1.0,
+        "lookback": "blend",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": 0.6
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "no_drawdown_brake",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT11",
+      "cell_id": "s3_lbblend_novt_nobrake",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "no_vol_target",
+      "parameters": {
+        "brake_exposure_multiplier": null,
+        "brake_recover_sessions": null,
+        "brake_trigger_dd": null,
+        "cell_id": "s3_lbblend_novt_nobrake",
+        "drawdown_brake": "none",
+        "leverage_cap": 1.0,
+        "lookback": "blend",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": null
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    },
+    {
+      "ablation": "drawdown_brake_25pct_halve",
+      "benchmark_contract": "benchmark_v1_spy_mtum_spmo_tqqq_equalweight",
+      "candidate_id": "VT12",
+      "cell_id": "s3_lbblend_novt_brake25",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "data_contract": "data_v1_sip_daily_adjusted",
+      "fallback": "SHY",
+      "feature_contract": "feature_v1_momentum_and_realized_vol",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "method": "no_vol_target",
+      "parameters": {
+        "brake_exposure_multiplier": 0.5,
+        "brake_recover_sessions": 21,
+        "brake_trigger_dd": -0.25,
+        "cell_id": "s3_lbblend_novt_brake25",
+        "drawdown_brake": "dd25_halve_recover_high_or_21d",
+        "leverage_cap": 1.0,
+        "lookback": "blend",
+        "menu": "A4_levered",
+        "realized_vol_window": 21,
+        "rebalance": "monthly",
+        "top_n": 2,
+        "vol_target_annual": null
+      },
+      "path": "levered_rotation_volatility_overlay",
+      "role": "risk_overlay_on_frozen_rotation_sleeve",
+      "spec_path": "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml",
+      "validation_contract": "validation_v1_select_then_untouched_holdout"
+    }
+  ],
+  "card_id": "H-20260922-02",
+  "contracts": {
+    "benchmarks": {
+      "benchmark_v1_spy_mtum_spmo_tqqq_equalweight": {
+        "members": [
+          "SPY buy and hold",
+          "MTUM buy and hold",
+          "SPMO buy and hold",
+          "TQQQ buy and hold",
+          "A4 menu equal weight monthly",
+          "S3 unmodified (inside the grid)"
+        ]
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": {
+        "contract_path": "reports/research/iterations/h20260922_02_s3_voltarget/cost-contract.json"
+      }
+    },
+    "data": {
+      "data_v1_sip_daily_adjusted": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": [
+          "TQQQ",
+          "SOXL",
+          "UPRO",
+          "USD",
+          "TECL",
+          "SHY",
+          "BIL",
+          "SPY",
+          "MTUM",
+          "SPMO",
+          "QQQ"
+        ]
+      }
+    },
+    "features": {
+      "feature_v1_momentum_and_realized_vol": {
+        "decision_lag_sessions": 1,
+        "momentum": "close/lag(close,63)-1 or the equal blend of 21/63/126/252",
+        "realized_vol": "21-session stdev of the unscaled sleeve book return, annualized"
+      }
+    },
+    "labels": {
+      "label_v1_next_session_open_to_open_total_return": {
+        "definition": "weights effective at the next session open; return legs split open and close"
+      }
+    },
+    "validation": {
+      "validation_v1_select_then_untouched_holdout": {
+        "anchor": "2024-01-08..2026-09-16 (gate window)",
+        "holdout": "2026-01-02..2026-09-17 (never ranks)",
+        "select": "2023-09-18..2025-12-31 (ranking only)"
+      }
+    }
+  },
+  "generated_at": "2026-09-22T03:07:22+00:00",
+  "generated_before_backtest": true,
+  "iter_id": "h20260922_02_s3_voltarget",
+  "placebos": {
+    "brake_calendar_shift": {
+      "description": "brake state shifted by a random 1..20 session offset",
+      "seeds": 20
+    },
+    "random_pick": {
+      "description": "same menu, same calendar, 2 random assets",
+      "seeds": 60
+    }
+  },
+  "schema_version": 1,
+  "selection_rule": "rank by selection-window Sharpe at 10 bp per side; holdout never ranks",
+  "spec_hashes": {
+    "strategy_specs/drafts/s3_voltarget_brake_h20260922_02.yaml": "9d3c77b25002ecb877eb39c4605929ce62f2746715d50aaa25559833e5563c9c"
+  },
+  "windows": {
+    "anchor": [
+      "2024-01-08",
+      "2026-09-16"
+    ],
+    "holdout": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "warmup": [
+      "2022-06-01",
+      "2023-09-15"
+    ]
+  }
+}

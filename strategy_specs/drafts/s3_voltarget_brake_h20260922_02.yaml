@@ -1,0 +1,134 @@
+name: s3_voltarget_brake_h20260922_02
+description: Preregistered B-2 candidate family. S3 (A4 levered ETF menu, 63-day or
+  blended momentum, top 2, month-end, absolute-momentum filter vs SHY) wrapped in a
+  Moreira-Muir style volatility target and an equity-curve drawdown brake. Research
+  only, deterministic, next-session execution; no broker writes are authorized.
+timeframe: daily
+universe:
+- TQQQ
+- SOXL
+- UPRO
+- USD
+- TECL
+- SHY
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 6
+  max_position_weight: 0.5
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.5
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260922_02:S3VT:voltarget_drawdown_brake
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: TQQQ
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  mom_63:
+    source: expression
+    expression: close / lag(close, 63) - 1
+    default: 0.0
+    description: 63-session total return used for the cross-sectional rank; decided
+      on a completed session close and executed at the next open.
+    params:
+      decision_lag_sessions: 1
+  realized_vol_21:
+    source: expression
+    expression: stdev(close / lag(close, 1) - 1, 21)
+    default: 0.0
+    description: 21-session realized volatility of the sleeve book, annualized in the
+      runner, used only to scale exposure down toward SHY.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260922_02_s3_voltarget
+  candidate_manifest_path: reports/research/iterations/h20260922_02_s3_voltarget/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260922_02_s3_voltarget/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl
+  source_card_claim_ids:
+  - mm2017_volatility_managed_sharpe
+  - cederburg2020_oos_failure
+  - barroso_detzel2021_costs
+  - man2017_voltarget_risk_assets
+  - quantpedia2025_letf_vol_filter
+  parameter_space:
+    vol_target_annual:
+    - 0.40
+    - 0.60
+    - none
+    realized_vol_window:
+    - 21
+    drawdown_brake:
+    - none
+    - halve_at_25pct
+    lookback:
+    - '63'
+    - blend
+    top_n:
+    - 2
+  candidate_budget: 12
+  selection_objective: Maximize selection-window Sharpe (2023-09-18..2025-12-31) net
+    of 10 bp per side; the holdout window 2026-01-02..2026-09-17 is never used to rank.
+  anti_overfit_notes:
+  - Twelve candidates are frozen in the manifest before any return is computed.
+  - Leverage is capped at 1.0 so the overlay can only reduce exposure.
+  - Random-pick and brake-calendar-shift placebos are required for the winner.
+  validation_plan:
+  - selection_then_untouched_holdout
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+  - random_pick_placebo_60_seeds
+  - brake_calendar_shift_placebo_20_seeds
+  - benchmark_family_spy_mtum_spmo_tqqq_equal_weight_menu
+notes:
+  intent: Test whether a volatility target plus an equity-curve drawdown brake compresses
+    the S3 sleeve's anchor-window drawdown from -56.4% to within -35% while keeping
+    annualized return at or above 50%.
+  hypothesis_id: H-20260922-02
+  previous_link: H-20260918-05
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready
