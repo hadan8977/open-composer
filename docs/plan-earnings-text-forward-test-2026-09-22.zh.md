@@ -17,7 +17,7 @@
 | T4 | 前向采集 `scripts/poll_edgar_8k.py` + cron：美东 06:00–22:00 每 10 分钟拉 SEC submissions/全文检索增量；新事件立即取文本、打分、追加到 `data/forward/earnings_text/{date}.jsonl`（含 fetched_at, scored_at） | 连续 3 个交易日无漏（与 T1 当日事件数对账）；单次运行 < 200 MB 内存 | 1 日 |
 | T5 | 10-13 起每周五自动生成 `reports/research/iterations/h20260922_01_earnings_text/forward-week-{n}.md` | 事件数、Q5−Q1、long-only Q5 净、占位、价格基线 | 0.5 日 |
 
-顺序：T1 → T2（并行 T4 的采集部分）→ T3 → T4 打分接入 → T5。T2 在用户给出模型端点前用 `--dry-run` 与 20 份样本手工核对。
+顺序：T1 → T2（并行 T4 的采集部分）→ T3 → T4 打分接入 → T5。T2 先用 `--dry-run` 与 20 份样本手工核对，再接端点跑 200 个事件的试点测吞吐。
 
 ## 2. 数据来源与口径（全部免费）
 
@@ -25,7 +25,7 @@
 - **正文**：filing index `https://www.sec.gov/Archives/edgar/data/{cik}/{accession无横线}/` 里 type 为 EX-99.1（有时 EX-99.2 才是新闻稿，按标题含 "results"/"earnings"/"quarter" 兜底）；HTML → 纯文本，去表格后截断到 12k token。
 - **CIK ↔ ticker 点时映射**：`https://www.sec.gov/files/company_tickers.json` 只有当前映射；历史改名/退市用已有 `data/features/universe_broad` 的 cohort 与 `scripts/detect_delisted_aliases.py` 的别名表回填；对不上的写 `ticker_unresolved`，不猜。
 - **价格**：`data/sip/minute/{year}/shard-*.parquet`（用 `_LAYOUT.json` 定位分片），入场取开盘后第一根 1 分钟 bar 的 open，出场取 15:59 bar 的 close；缺 bar 的事件标 `no_minute_bars` 跳过。
-- **可选电话会文本**：只有用户批准付费源后才加；接口封装成同一 `text_source` 字段，评估时分列。
+- 电话会文本：用户 09-22 决定不买；不做。
 
 ## 3. 打分提示词（冻结，改动即新版本）
 
@@ -52,11 +52,12 @@
 | 每周五 | T5 周报 |
 | 11-14 | 财报季主体结束；按否定条件裁定；通过则写模拟盘 sleeve 申请（用户授权） |
 
-## 6. 需要用户提供的（没有就停在 T2 的 dry-run）
+## 6. 已定（用户 2026-09-22）
 
-1. 打分模型：`OC_TEXT_SCORER_BASE_URL` / `OC_TEXT_SCORER_API_KEY` / `OC_TEXT_SCORER_MODEL`（OpenAI 兼容）或 `ANTHROPIC_API_KEY` + 模型名；月度上限。放进 `.env`，不进仓库。
-2. 是否购买电话会文本源。
-3. 通过后的模拟盘 sleeve 授权（另行决定）。
+1. 打分模型：用户提供的 OpenAI 兼容端点，模型 `Deepseek-v4-flash`。凭据在 `/root/.config/open-composer/text-scorer.env`（仓库外，mode 600），变量 `OC_TEXT_SCORER_BASE_URL` / `OC_TEXT_SCORER_API_KEY` / `OC_TEXT_SCORER_MODEL`。**5 小时滚动限额**：记录每次 usage，429 即停批并写 `next_try_at`，每 100 事件 checkpoint，大批量放 00:00–06:00 UTC。key 不进仓库、日志、报告。
+2. 不买电话会文本源，只用免费 8-K 新闻稿。
+3. 通过后的模拟盘 sleeve：按 `docs/plan-strategy-factory-2026-09-22.zh.md` 第 1 节的委托范围执行（Paper、≤ $15k）。
+4. 新增 T6：新闻标题打分（本地 68.5 万条 Benzinga 标题），规格见工厂计划轨道 A。
 
 ## 7. 不做
 
