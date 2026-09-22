@@ -21,3 +21,35 @@
 | Logical Invest UISX3 [链接](https://logical-invest.com/app/strategy/uisx3/) | 资产配置模型 3x 版，细则未核实 | 自 2002 年化 45%、夏普 1.3（未核实） | 商业订阅 | 近两年样本外未核实 | 未公开 |
 
 D 组结论：(1) 长记录的是 HFEA / 9-Sig，也是最惨的公开先例（−70%/−72%）；(2) Composer 上 TQQQ 趋势+RSI 类给出 2025 年 38%–49%，无第三方验证；(3) 做空波动率有 2018 年清零先例，且本机无 VIX 期货数据；(4) NTSX/RSSB 风险调整后最稳但收益不"爆炸"；(5) 200 日线择时被大量复现，能把 3x 回撤减半，但本地窗口内不过安慰剂。**进引擎的**：HFEA 与 TQQQ/TMF 固定权重族（`fixed_weights`）、9-Sig（`signal_growth`）、TQQQ/QQQ 趋势+RSI 分支族（`gate` 嵌套，与 B-1 合并）、TQQQ/SQQQ 动量反转（`gate`）。**不进**：VIX 期限结构（无数据）、UISX3（规则不公开）。
+
+## B. TAA 经典（Allocate Smartly 跟踪范围；规则全部免费公开，近期数字在付费墙后）
+
+| 策略 | 规则要点 | 已知数字 | 数据 | 进引擎 |
+|---|---|---|---|---|
+| Keller BAA [SSRN 4166845](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4166845) | canary（SPY/EFA/EEM/AGG）任一 13612W 动量 ≤ 0 → 防御篮（TIP/DBC/BIL/IEF/TLT/LQD/AGG 按绝对动量选）；否则进攻篮相对动量选 1；月频 | 原文 1970–2022 年化 ≥ 20%、月度回撤 ≤ 15%；AS 提示"历史过拟合"；近期未核实 | 全为美股 ETF 日线 | 是（`canary`）|
+| Keller DAA [SSRN 3212862](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3212862) | canary VWO/BND 决定防御比例 0/50/100%；风险篮相对动量 | 第三方称 CAGR 13.7% | 同上 + SHY | 是 |
+| Keller HAA [SSRN 4346906](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4346906) | BAA 简化，单 canary（TIP）转负则半/全防御 | AS 会员占比第 2；近期未核实 | 少量 ETF | 是 |
+| Keller PAA / VAA / GPM [SSRN 2759734](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2759734) / [3002624](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3002624) / [AS](https://allocatesmartly.com/keuning-kellers-generalized-protective-momentum/) | 广度动量（正动量资产数）决定防御权重；VAA 用 13612W；GPM 加相关性调整 | VAA G4 第三方 CAGR 16.3%；其余未核实 | 全球资产 ETF | 是 |
+| Antonacci GEM / 复合双动量 | SPY vs BIL 绝对 + SPY vs VEU 相对，负则 AGG；复合版 5 组资产对 | 官方长期 CAGR 15.2%、回撤 −21.7% | SPY VEU AGG BIL | 是（`abs_filter`+`rank`）|
+| Faber GTAA 5/13、Ivy、Trinity | 各资产 10 月 SMA 上方持有否则现金；Trinity 50% 静态 + 50% 趋势 | 2008 回撤 −8.5%；近期未核实 | 5–13 类 ETF | 是（`gate: sma`）|
+| Accelerating Dual Momentum [AS](https://allocatesmartly.com/taa-strategy-accelerating-dual-momentum/) | SPY vs SCZ 1/3/6 月均值动量取正且高者；都负转 TLT/TIP | 未核实 | SPY SCZ TLT TIP | 是 |
+| Keller LAA [SSRN 3498092](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3498092) | 失业率趋势 + SPX 趋势同时转空才现金 | 未核实 | 需 FRED 失业率 | 否（宏观序列，第二批）|
+| Kipnis KDA、Varadi 最小相关 | 1-3-6-12 动量选前 5 + 最小方差配权；最小相关是权重算法 | 第三方 CAGR 10.9% | ETF 池 + 协方差 | 第二批 |
+
+B 组结论：规则全免费可复现，Alpaca 全能执行；预期收益 10%–20%，不"爆炸"，价值在于 **canary/广度防御逻辑**可作为杠杆执行的风险开关（把 BAA/VAA 信号叠到 UPRO/TQQQ/TMF 上是引擎里要测的变体）；AS 不跟踪杠杆策略，所以这类变体没有公开记录，只能本地验。
+
+## C. 2024–2026 学术（SSRN 原文多为 403，数字来自检索摘要）
+
+| 论文 | 规则 | 报告指标 | 数据 | 进引擎 |
+|---|---|---|---|---|
+| Zarattini & Antonacci 2024《A Century of Profitable Industry Trends》[SSRN 4857230](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4857230) | 48 行业组合多头时序动量趋势跟踪 | 1926–2024 年化 18.2%、波动 12.6%、夏普 1.39 vs 市场 0.63 | 行业指数/行业 ETF 日线 | 是（行业 ETF 菜单 + `gate: sma`/时序动量）|
+| "Weekly Seasonality in Overnight Effects"（Redfame AEF 2025-07） | QQQ 隔夜多头、跳过周五夜 | 夏普 7.75（可疑） | 日线开收盘 | 是，但成本档 1/2/5 bp（`overnight` 原语）|
+| Lin et al. 2025《Volatility Decay and Arbitrage in LETFs》[SSRN 5421274](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5421274)；Khadivar 2024 | 贝塔中性做空杠杆 ETF 对吃衰减 | 夏普最高 2.12（摘要） | 日线 | 研究单列（需做空，非现有彩排通道）|
+| Harvey/Mazzoleni/Melone 2025《Unintended Consequences of Rebalancing》[SSRN 5122748](https://ssrn.com/abstract=5122748) | 月末指数再平衡流可预测 | 无策略端夏普 | 需再平衡日历 | 第二批 |
+| Chen et al.《Maxing Out Short-term Reversals》[SSRN 4622831](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4622831) | 高 MAX 股票周度反转 | 高 MAX 周均 1.66% vs 0.65% | 个股日线 | 第二批（个股周频，需成本）|
+| Zarattini/Aziz/Barbon《Beat the Market》SSRN 4824172；Maróy 2025 [SSRN 5095349](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5095349) | SPY 非 ORB 日内动量（噪声带）；改进版加 VWAP 止盈 | 年化 19.6% 夏普 1.33（扣费）；改进版夏普 >3（未核实） | 分钟线 | 是，分钟线引擎（H-20260918-02 后半已 approved 未跑）|
+| Kethan《Predictive OFI》SSRN 7053198 | 订单流失衡 | 毛夏普 +0.98，扣价差后 **−1.73** | tick | 否 |
+| Heitz et al.《Disappearing Earnings Announcement Premium》SSRN 3296537 | 财报前溢价 | 标题即"消失" | 日线 | 否 |
+| Zhang & Zhou 2026 EAR-AI；Yu et al. 2026（见 I-20260922-01） | LLM 读财报文本 | 见 I-20260922-01 | 文本 | 轨道 A |
+
+C 组结论：可信且能进日线引擎的是 **行业趋势跟踪**（Zarattini-Antonacci）与 **隔夜效应**（成本敏感，必须 1/2/5 bp 三档）；SPY 日内动量进分钟线引擎；OFI、财报前溢价明确排除。
