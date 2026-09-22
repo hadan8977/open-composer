@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # UserPromptSubmit hook: inject compact harness + research-control context.
-# Reads stdin JSON: {"prompt": "..."} and appends a short memory packet when
-# strategy-relevant keywords are detected. It never runs backtests or shell-heavy work.
+# Emits Claude's documented additionalContext envelope, including Chinese prompts.
 
 set -euo pipefail
 
@@ -18,15 +17,15 @@ prompt = data.get("prompt", "")
 
 KEYWORDS = re.compile(
     r"strategy|strategy_specs|spec|backtest|research|parameter[- ]sweep|"
-    r"execution.policy|source.card|harness.verify|paper.auto|promotion",
+    r"execution.policy|source.card|harness.verify|paper.auto|promotion|"
+    r"策略|盈利|研究|回测|训练|优化|迭代|自主|循环|方向|任务|继续|进展",
     re.IGNORECASE,
 )
 
 if not KEYWORDS.search(prompt):
-    print(json.dumps(data, ensure_ascii=False))
     sys.exit(0)
 
-root = Path(os.environ.get("OC_ROOT", "."))
+root = Path(os.environ.get("OC_ROOT") or os.environ.get("CLAUDE_PROJECT_DIR") or ".")
 
 
 def strategy_names_from_prompt(text: str) -> list[str]:
@@ -54,7 +53,16 @@ def read_text(path: Path, max_chars: int = 1200) -> str | None:
     return text[:max_chars] if text else None
 
 
-context_lines: list[str] = []
+context_lines: list[str] = [
+    "Shared mission: read docs/research-mission.zh.md and the latest dated section "
+    "of docs/current-view.zh.md. Prioritize credible near-term profit after costs; "
+    "regime-specific opportunities are valid. Search the web and open primary sources "
+    "FIRST; reuse existing implementations and negative experiments before compute. "
+    "Routine research is delegated; do not stall on superseded per-card approvals. "
+    "New background budgets and broker authorizations require explicit scope. "
+    "New v3 iterations require direction-review.json, oc research direction-check, "
+    "and oc research iteration validate. Do not relax frozen gates."
+]
 names = strategy_names_from_prompt(prompt)
 
 for strategy_name in names:
@@ -77,16 +85,8 @@ for strategy_name in names:
             f"strategy_specs/drafts/{strategy_name}.yaml"
         )
 
-if not context_lines:
-    context_lines.append(
-        "Research control reminder: before strategy generation or optimization, run "
-        "`oc strategy research-control <spec>` after research-report or parameter-sweep, "
-        "then use the memory packet to avoid repeated failed paths."
-    )
-
-injection = "\n--- Open Composer research control (injected) ---\n"
-injection += "\n".join(context_lines)
-injection += "\n---"
-data["prompt"] = prompt + injection
-print(json.dumps(data, ensure_ascii=False))
+print(json.dumps({"hookSpecificOutput": {
+    "hookEventName": "UserPromptSubmit",
+    "additionalContext": "\n".join(context_lines),
+}}, ensure_ascii=False))
 PYEOF

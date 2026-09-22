@@ -236,6 +236,8 @@ def test_claude_prompt_hook_injects_memory_from_real_paths(
     )
 
     payload = json.loads(completed.stdout)
-    assert "Research memory for 'fixture_pullback_15m'" in payload["prompt"]
-    assert "avoid repeated stop loss grid" in payload["prompt"]
-    assert "Last harness verify for 'fixture_pullback_15m': warning" in payload["prompt"]
+    assert payload["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
+    context = payload["hookSpecificOutput"]["additionalContext"]
+    assert "Research memory for 'fixture_pullback_15m'" in context
+    assert "avoid repeated stop loss grid" in context
+    assert "Last harness verify for 'fixture_pullback_15m': warning" in context

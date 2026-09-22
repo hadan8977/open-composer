@@ -124,3 +124,36 @@ ProtectHome=read-only
 [Install]
 WantedBy=multi-user.target
 ```
+
+## 2026-09-21 补充：最终连接方案（机主问"Cloudflare 原生内网穿透有没有用"）
+
+**结论**：Cloudflare 的"原生内网穿透"就是 Cloudflare Tunnel，本机已经在用（`cloudflared-cockpit.service`，远程管理模式，四条 QUIC 连接已注册）。
+2026 年的新东西里，对这个只读 cockpit 有影响的只有一条：**主机名路由（私有网络模式）2026-08 正式可用**，可以不发布公网主机名，
+手机装 Cloudflare One Client 后直接访问 tunnel 后面的服务。**不采用**：它要求每台设备装客户端并登录组织，而客户端在大陆 2026 年实测基本不可用；
+cockpit 只有一个用户、只需浏览器，公网主机名 + Access 更简单也更稳。其余新功能（tunnel 管理并入主控制台 Networking → Tunnels、
+控制台里配 origin 参数、实时日志、批量路由）都是运维便利，不改变方案。
+
+**最终方案：公网主机名 + Cloudflare Access（邮箱一次性验证码），顺序先 Access 后主机名。**
+
+1. Zero Trust → Access controls → Applications → Create new application → Self-hosted and private → Add public hostname，
+   域名选 `hadan.blog`，子域填 `quant`（机主定的名字）。Policy：Allow，Include → Emails → 机主邮箱。Login method 只留 One-time PIN。
+   **2026-06-18 起新建组织默认没有 One-time PIN**（默认是"Cloudflare 账号登录"，Restrict to account members 开着），要先到
+   Zero Trust → Integrations → Identity providers → Add new identity provider → One-time PIN 加上（旧入口 Settings → Authentication 已不存在）。
+   加不上就直接用默认的 Cloudflare 登录：policy 仍填机主邮箱（须与 Cloudflare 账号邮箱相同），手机上用 Cloudflare 账号登录一次即可。
+   Session duration 选 1 week。打开 Apply instant authentication。
+2. Zero Trust → Networks → Tunnels → dsh-vps → Public Hostname → Add：`quant.hadan.blog`，Service 选 HTTP，URL 填 `localhost:8770`，Path 留空。
+   （也可以在主控制台 Networking → Tunnels 里做，同一份配置。）
+3. 本机验证：`curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://quant.hadan.blog/`，预期 `302` 跳到 `https://<team>.cloudflareaccess.com/...`。
+   看到 `200` 立即回控制台查 Policy；查不出就 `systemctl disable --now cloudflared-cockpit`。
+4. 手机：Safari 打开 `https://quant.hadan.blog`，输入邮箱 → 收验证码 → 进入；"添加到主屏幕"后一周内不再要求登录。
+   `/api/*.json` 与 agent 时间线的 SSE 走同一道门；SSE 每 15 秒发一次 keep-alive，在 Cloudflare 100 秒空闲上限之内，10 分钟服务端主动断流后浏览器自动重连。
+
+**顺手可做**：删除 tunnel 里那条历史规则 `dsh.hadan.blog → 127.0.0.1:3080`（本机没有 3080，公网 502）；把 cloudflared 从 2026.8.3 升到 2026.9.1（日志已提示）。
+**不做**：不装 WARP / Cloudflare One Client；不给 `/api` 单独放行；不做 service token；应用层继续零鉴权。
+免费额度：Zero Trust 免费版 50 用户、50 个 Access 应用，这里用 1 和 1。
+
+**2026-09-21 09:22Z 验证结果**：机主在控制台做完第 0–2 步后，connector 收到新配置（`quant.hadan.blog → http://localhost:8770`）。
+本机 `curl` 三条路径 `/`、`/api/status.json`、`/agents` 全部 `302` 跳到 `https://<team>.cloudflareaccess.com/...`，没有 200，门禁生效。
+旧规则 `dsh.hadan.blog → 127.0.0.1:3080` 仍在 ingress 里，公网 502，本机无进程监听 3080；删除它只能在控制台
+（Networks → Tunnels → dsh-vps → Public Hostname → 删除该行；DNS 里对应的 CNAME 一并删）。本机的 `open-composer-dashboard.service`
+（老 dashboard，指向 8000，早已 disabled + failed）与此无关，已 `reset-failed` 清掉失败状态。

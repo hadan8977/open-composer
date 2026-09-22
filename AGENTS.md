@@ -1,5 +1,13 @@
 # Open Composer Agent Rules
 
+## User Mission — reaffirmed 2026-09-21
+- Read `docs/research-mission.zh.md` at session start and before choosing the next research action. It is the shared mission for Codex, Claude Code, and background workers.
+- Optimize for time to a credible, executable, profitable near-term strategy after costs. Regime-specific or short-lived opportunities are valid; do not impose ten-year/index-like durability unless the user requests it.
+- Search the web and open primary sources FIRST for every new direction or material design decision. Check existing implementations, post-publication records, independent replication, counterevidence, and local applicability before building or spending compute. Reuse fresh verified knowledge and negative experiments.
+- New iteration briefs use schema v3 (retaining v2 evidence bindings) and a validated `direction-review.json`: goal fit, existing-solution comparison, actual fetched source snapshots, negative evidence, cheapest decisive test, and stop condition. Run `oc research direction-check <path>` before allocation; the standard iteration gate also checks v3 reviews.
+- Routine research, reversible fixes, and bounded experiments within existing budget and valid contracts are delegated; do not re-ask for per-card approval based on superseded proposals. New spending caps, broker writes/renewals, and changes to frozen success criteria require explicit scope from the user.
+- Never silently substitute long-term robustness for recent profitability, or report workflow completion as profitable Alpha. Preserve frozen thresholds and untouched evaluation windows.
+
 ## Product
 - Open Composer is a personal AI strategy workbench.
 - `StrategySpec` is the source of truth for strategy behavior.

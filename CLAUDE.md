@@ -1,5 +1,9 @@
 # Open Composer Claude Code Rules
 
+@docs/research-mission.zh.md
+
+Read `docs/research-mission.zh.md` and the latest dated section of `docs/current-view.zh.md` before choosing work. The user's priority is time to credible near-term profit after costs, including regime-specific opportunities. Search and open primary sources first; reuse existing implementations and negative evidence before allocating compute. Routine research is delegated: superseded per-card approval proposals must not stall it. Unknown background budgets and new broker authorizations remain separate decisions. New v3 iterations require `oc research direction-check <path>` and the existing iteration gate.
+
 Open Composer is a personal AI strategy workbench. `StrategySpec` is the source of truth for strategy behavior, and CLI plus files remain the first product surface.
 
 Use the same project rules as Codex:

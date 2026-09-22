@@ -761,6 +761,35 @@ def research_iteration_init_command(
     console.print(f"decision record: {paths.decision_record_md}")
 
 
+@research_app.command("direction-check")
+def research_direction_check_command(path: Path) -> None:
+    """Verify web-first direction evidence before allocating research compute."""
+    from open_composer.research.direction import validate_direction_review
+
+    blocked = validate_direction_review(path, project_root())
+    sys.stdout.write(
+        json.dumps({"status": "blocked" if blocked else "ok", "blocked": blocked}) + "\n"
+    )
+    if blocked:
+        raise typer.Exit(1)
+
+
+@research_app.command("autonomy-tick")
+def research_autonomy_tick_command(
+    execute: Annotated[
+        bool, typer.Option("--execute", help="Run one ready task within configured budget.")
+    ] = False,
+) -> None:
+    """Inspect the autonomous research queue; default is a non-executing dry run."""
+    from open_composer.research.autonomy import tick
+
+    try:
+        result = tick(project_root(), execute=execute)
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    sys.stdout.write(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+
+
 @research_iteration_app.command("validate")
 def research_iteration_validate_command(
     iter_id: str,

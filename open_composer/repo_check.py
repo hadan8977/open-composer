@@ -18,6 +18,10 @@ NO_CONTEXT_START_DOC = "docs/product-golden-path-codex-quant-review-2026-05-13.z
 
 CURRENT_DOCS = {
     NO_CONTEXT_START_DOC,
+    "docs/research-mission.zh.md",
+    "docs/research-autonomy.zh.md",
+    "docs/plan-research-autonomy-2026-09-21.zh.md",
+    "docs/alpha158-recovery-2026-09-21.zh.md",
     "docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md",
     "docs/design-token-budget-2026-09-20.zh.md",
     "docs/answers-friday-plan-questions-2026-09-15.zh.md",

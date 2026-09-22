@@ -1,0 +1,16 @@
+[Unit]
+Description=Open Composer bounded research tick
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/codex-test/open-composer
+Environment=PATH=/root/.hermes/node/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=UV_CACHE_DIR=/tmp/open-composer-uv-cache
+ExecStart=/root/.local/bin/uv run oc research autonomy-tick --execute
+TimeoutStartSec=20min
+KillMode=control-group
+MemoryMax=1800M
+CPUQuota=100%
+Nice=10
+NoNewPrivileges=yes

@@ -1,0 +1,1669 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="readthedocs-addons-api-version" content="1"><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online Serving &mdash; QLib 0.9.8.dev11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=9822f9a4"></script>
+      <script src="../_static/doctools.js?v=888ff710"></script>
+      <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/js/theme.js"></script>
+    <script src="../_static/js/versions.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reinforcement Learning in Quantitative Trading" href="rl/toctree.html" />
+    <link rel="prev" title="Analysis: Evaluation &amp; Results Analysis" href="report.html" /> 
+<script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="qlib" /><meta name="readthedocs-version-slug" content="latest" /><meta name="readthedocs-resolver-filename" content="/component/online.html" /><meta name="readthedocs-http-status" content="200" /></head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/1.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="switch-menus">
+                <div class="version-switch"></div>
+                <div class="language-switch"></div>
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Home</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">GETTING STARTED:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/introduction.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../introduction/introduction.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../introduction/introduction.html#framework">Framework</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../introduction/quick.html">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../introduction/quick.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../introduction/quick.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../introduction/quick.html#prepare-data">Prepare Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../introduction/quick.html#auto-quant-research-workflow">Auto Quant Research Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../introduction/quick.html#custom-model-integration">Custom Model Integration</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FIRST STEPS:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../start/installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../start/installation.html#qlib-installation"><code class="docutils literal notranslate"><span class="pre">Qlib</span></code> Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../start/initialization.html">Initialization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../start/initialization.html#id1">Initialization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../start/initialization.html#parameters">Parameters</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../start/getdata.html">Data Retrieval</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../start/getdata.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../start/getdata.html#examples">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../start/getdata.html#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../start/integration.html">Custom Model Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../start/integration.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../start/integration.html#custom-model-class">Custom Model Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../start/integration.html#configuration-file">Configuration File</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../start/integration.html#model-testing">Model Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../start/integration.html#reference">Reference</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">MAIN COMPONENTS:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow: Workflow Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#complete-example">Complete Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#configuration-file">Configuration File</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="workflow.html#qlib-init-section">Qlib Init Section</a></li>
+<li class="toctree-l3"><a class="reference internal" href="workflow.html#task-section">Task Section</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="workflow.html#model-section">Model Section</a></li>
+<li class="toctree-l4"><a class="reference internal" href="workflow.html#dataset-section">Dataset Section</a></li>
+<li class="toctree-l4"><a class="reference internal" href="workflow.html#record-section">Record Section</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data.html">Data Layer: Data Framework &amp; Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="data.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#data-preparation">Data Preparation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data.html#qlib-format-data">Qlib Format Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#qlib-format-dataset">Qlib Format Dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#automatic-update-of-daily-frequency-data">Automatic update of daily frequency data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#converting-csv-and-parquet-format-into-qlib-format">Converting CSV and Parquet Format into Qlib Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#checking-the-health-of-the-data">Checking the health of the data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#stock-pool-market">Stock Pool (Market)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#multiple-stock-modes">Multiple Stock Modes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#data-api">Data API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data.html#data-retrieval">Data Retrieval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#feature">Feature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#filter">Filter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#reference">Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#id6">Data Loader</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data.html#qlibdataloader">QlibDataLoader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#staticdataloader">StaticDataLoader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#interface">Interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#id7">Data Handler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data.html#datahandlerlp">DataHandlerLP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#id8">Interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#processor">Processor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#id11">API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#id12">Dataset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data.html#id13">API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#cache">Cache</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="data.html#global-memory-cache">Global Memory Cache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#expressioncache">ExpressionCache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="data.html#datasetcache">DatasetCache</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="data.html#data-and-cache-file-structure">Data and Cache File Structure</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="model.html">Forecast Model: Model Training &amp; Prediction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="model.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#base-class-interface">Base Class &amp; Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#example">Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#custom-model">Custom Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="strategy.html">Portfolio Management and Backtest</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="strategy.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strategy.html#base-class-interface">Base Class &amp; Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="strategy.html#basestrategy">BaseStrategy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="strategy.html#weightstrategybase">WeightStrategyBase</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="strategy.html#implemented-strategy">Implemented Strategy</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="strategy.html#topkdropoutstrategy">TopkDropoutStrategy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="strategy.html#enhancedindexingstrategy">EnhancedIndexingStrategy</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="strategy.html#usage-example">Usage &amp; Example</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="strategy.html#prediction-score">Prediction Score</a></li>
+<li class="toctree-l3"><a class="reference internal" href="strategy.html#running-backtest">Running backtest</a></li>
+<li class="toctree-l3"><a class="reference internal" href="strategy.html#result">Result</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="strategy.html#reference">Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="highfreq.html">Nested Decision Execution: High-Frequency Trading</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="highfreq.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="highfreq.html#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="meta.html">Meta Controller: Meta-Task &amp; Meta-Dataset &amp; Meta-Model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="meta.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meta.html#meta-task">Meta Task</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="meta.html#qlib.model.meta.task.MetaTask"><code class="docutils literal notranslate"><span class="pre">MetaTask</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="meta.html#qlib.model.meta.task.MetaTask.__init__"><code class="docutils literal notranslate"><span class="pre">MetaTask.__init__</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="meta.html#qlib.model.meta.task.MetaTask.get_meta_input"><code class="docutils literal notranslate"><span class="pre">MetaTask.get_meta_input</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="meta.html#meta-dataset">Meta Dataset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="meta.html#qlib.model.meta.dataset.MetaTaskDataset"><code class="docutils literal notranslate"><span class="pre">MetaTaskDataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="meta.html#qlib.model.meta.dataset.MetaTaskDataset.__init__"><code class="docutils literal notranslate"><span class="pre">MetaTaskDataset.__init__</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="meta.html#qlib.model.meta.dataset.MetaTaskDataset.prepare_tasks"><code class="docutils literal notranslate"><span class="pre">MetaTaskDataset.prepare_tasks</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="meta.html#meta-model">Meta Model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="meta.html#general-meta-model">General Meta Model</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="meta.html#qlib.model.meta.model.MetaModel"><code class="docutils literal notranslate"><span class="pre">MetaModel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="meta.html#meta-task-model">Meta Task Model</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="meta.html#qlib.model.meta.model.MetaTaskModel"><code class="docutils literal notranslate"><span class="pre">MetaTaskModel</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="meta.html#meta-guide-model">Meta Guide Model</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="meta.html#qlib.model.meta.model.MetaGuideModel"><code class="docutils literal notranslate"><span class="pre">MetaGuideModel</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="meta.html#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="recorder.html">Qlib Recorder: Experiment Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="recorder.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="recorder.html#qlib-recorder">Qlib Recorder</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder"><code class="docutils literal notranslate"><span class="pre">QlibRecorder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.__init__"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.__init__</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.start"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.start</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.start_exp"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.start_exp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.end_exp"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.end_exp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.search_records"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.search_records</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.list_experiments"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.list_experiments</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.list_recorders"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.list_recorders</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.get_exp"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.get_exp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.delete_exp"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.delete_exp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.get_uri"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.get_uri</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.set_uri"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.set_uri</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.uri_context"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.uri_context</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.get_recorder"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.get_recorder</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.delete_recorder"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.delete_recorder</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.save_objects"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.save_objects</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.load_object"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.load_object</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.log_params"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.log_params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.log_metrics"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.log_metrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.log_artifact"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.log_artifact</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.download_artifact"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.download_artifact</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="recorder.html#qlib.workflow.__init__.QlibRecorder.set_tags"><code class="docutils literal notranslate"><span class="pre">QlibRecorder.set_tags</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="recorder.html#experiment-manager">Experiment Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="recorder.html#experiment">Experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="recorder.html#id1">Recorder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="recorder.html#record-template">Record Template</a></li>
+<li class="toctree-l2"><a class="reference internal" href="recorder.html#known-limitations">Known Limitations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="report.html">Analysis: Evaluation &amp; Results Analysis</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="report.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="report.html#graphical-reports">Graphical Reports</a></li>
+<li class="toctree-l2"><a class="reference internal" href="report.html#usage-example">Usage &amp; Example</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="report.html#usage-of-analysis-position-report">Usage of <cite>analysis_position.report</cite></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="report.html#api">API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="report.html#graphical-result">Graphical Result</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="report.html#usage-of-analysis-position-score-ic">Usage of <cite>analysis_position.score_ic</cite></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="report.html#id1">API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="report.html#id2">Graphical Result</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="report.html#usage-of-analysis-position-risk-analysis">Usage of <cite>analysis_position.risk_analysis</cite></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="report.html#id3">API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="report.html#id4">Graphical Result</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="report.html#usage-of-analysis-model-analysis-model-performance">Usage of <cite>analysis_model.analysis_model_performance</cite></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="report.html#id5">API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="report.html#graphical-results">Graphical Results</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Online Serving: Online Management &amp; Strategy &amp; Tool</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">Online Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">Online Strategy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">Online Tool</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">Updater</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rl/toctree.html">Reinforcement Learning</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rl/guidance.html">Guidance</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rl/guidance.html#beginners-to-reinforcement-learning-algorithms">Beginners to Reinforcement Learning Algorithms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rl/guidance.html#reinforcement-learning-algorithm-researcher">Reinforcement Learning Algorithm Researcher</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rl/guidance.html#quantitative-researcher">Quantitative Researcher</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rl/overall.html">Overall</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rl/overall.html#reinforcement-learning">Reinforcement Learning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rl/overall.html#potential-application-scenarios-in-quantitative-trading">Potential Application Scenarios in Quantitative Trading</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rl/overall.html#order-execution">Order Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rl/overall.html#portfolio-construction">Portfolio Construction</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rl/quickstart.html">Quick Start</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rl/framework.html">Framework</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rl/framework.html#envwrapper">EnvWrapper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rl/framework.html#policy">Policy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rl/framework.html#training-vessel-trainer">Training Vessel &amp; Trainer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">OTHER COMPONENTS/FEATURES/TOPICS:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/alpha.html">Building Formulaic Alphas</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/alpha.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/alpha.html#building-formulaic-alphas-in-qlib">Building Formulaic Alphas in <code class="docutils literal notranslate"><span class="pre">Qlib</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../advanced/alpha.html#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/alpha.html#reference">Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/server.html">Online &amp; Offline mode</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/server.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/server.html#qlib-server">Qlib-Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/server.html#reference">Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/serial.html">Serialization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/serial.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/serial.html#serializable-class">Serializable Class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/serial.html#example">Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/serial.html#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/task_management.html">Task Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/task_management.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/task_management.html#task-generating">Task Generating</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/task_management.html#task-storing">Task Storing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/task_management.html#task-training">Task Training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/task_management.html#task-collecting">Task Collecting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../advanced/PIT.html">Point-In-Time database</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/PIT.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/PIT.html#data-preparation">Data Preparation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../advanced/PIT.html#file-based-design-for-pit-data">File-based design for PIT data</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">FOR DEVELOPERS:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer/code_standard_and_dev_guide.html">Code Standard</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/code_standard_and_dev_guide.html#docstring">Docstring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/code_standard_and_dev_guide.html#continuous-integration">Continuous Integration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/code_standard_and_dev_guide.html#development-guidance">Development Guidance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/how_to_build_image.html">How to build image</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../developer/how_to_build_image.html#dockerfile">Dockerfile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/how_to_build_image.html#auto-build-of-qlib-images">Auto build of qlib images</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../developer/how_to_build_image.html#how-to-use-qlib-images">How to use qlib images</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">REFERENCE:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../reference/api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/api.html#data">Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.data.data">Provider</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.ProviderBackendMixin"><code class="docutils literal notranslate"><span class="pre">ProviderBackendMixin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.CalendarProvider"><code class="docutils literal notranslate"><span class="pre">CalendarProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.InstrumentProvider"><code class="docutils literal notranslate"><span class="pre">InstrumentProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.FeatureProvider"><code class="docutils literal notranslate"><span class="pre">FeatureProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.PITProvider"><code class="docutils literal notranslate"><span class="pre">PITProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.ExpressionProvider"><code class="docutils literal notranslate"><span class="pre">ExpressionProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.DatasetProvider"><code class="docutils literal notranslate"><span class="pre">DatasetProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.LocalCalendarProvider"><code class="docutils literal notranslate"><span class="pre">LocalCalendarProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.LocalInstrumentProvider"><code class="docutils literal notranslate"><span class="pre">LocalInstrumentProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.LocalFeatureProvider"><code class="docutils literal notranslate"><span class="pre">LocalFeatureProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.LocalPITProvider"><code class="docutils literal notranslate"><span class="pre">LocalPITProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.LocalExpressionProvider"><code class="docutils literal notranslate"><span class="pre">LocalExpressionProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.LocalDatasetProvider"><code class="docutils literal notranslate"><span class="pre">LocalDatasetProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.ClientCalendarProvider"><code class="docutils literal notranslate"><span class="pre">ClientCalendarProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.ClientInstrumentProvider"><code class="docutils literal notranslate"><span class="pre">ClientInstrumentProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.ClientDatasetProvider"><code class="docutils literal notranslate"><span class="pre">ClientDatasetProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.BaseProvider"><code class="docutils literal notranslate"><span class="pre">BaseProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.LocalProvider"><code class="docutils literal notranslate"><span class="pre">LocalProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.ClientProvider"><code class="docutils literal notranslate"><span class="pre">ClientProvider</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.CalendarProviderWrapper"><code class="docutils literal notranslate"><span class="pre">CalendarProviderWrapper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.InstrumentProviderWrapper"><code class="docutils literal notranslate"><span class="pre">InstrumentProviderWrapper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.FeatureProviderWrapper"><code class="docutils literal notranslate"><span class="pre">FeatureProviderWrapper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.PITProviderWrapper"><code class="docutils literal notranslate"><span class="pre">PITProviderWrapper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.ExpressionProviderWrapper"><code class="docutils literal notranslate"><span class="pre">ExpressionProviderWrapper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.DatasetProviderWrapper"><code class="docutils literal notranslate"><span class="pre">DatasetProviderWrapper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.BaseProviderWrapper"><code class="docutils literal notranslate"><span class="pre">BaseProviderWrapper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.data.register_all_wrappers"><code class="docutils literal notranslate"><span class="pre">register_all_wrappers</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.data.filter">Filter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.filter.BaseDFilter"><code class="docutils literal notranslate"><span class="pre">BaseDFilter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.filter.SeriesDFilter"><code class="docutils literal notranslate"><span class="pre">SeriesDFilter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.filter.NameDFilter"><code class="docutils literal notranslate"><span class="pre">NameDFilter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.filter.ExpressionDFilter"><code class="docutils literal notranslate"><span class="pre">ExpressionDFilter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.data.base">Class</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.base.Expression"><code class="docutils literal notranslate"><span class="pre">Expression</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.base.Feature"><code class="docutils literal notranslate"><span class="pre">Feature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.base.PFeature"><code class="docutils literal notranslate"><span class="pre">PFeature</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.base.ExpressionOps"><code class="docutils literal notranslate"><span class="pre">ExpressionOps</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.data.ops">Operator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.ElemOperator"><code class="docutils literal notranslate"><span class="pre">ElemOperator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.ChangeInstrument"><code class="docutils literal notranslate"><span class="pre">ChangeInstrument</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.NpElemOperator"><code class="docutils literal notranslate"><span class="pre">NpElemOperator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Abs"><code class="docutils literal notranslate"><span class="pre">Abs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Sign"><code class="docutils literal notranslate"><span class="pre">Sign</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Log"><code class="docutils literal notranslate"><span class="pre">Log</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Mask"><code class="docutils literal notranslate"><span class="pre">Mask</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Not"><code class="docutils literal notranslate"><span class="pre">Not</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.PairOperator"><code class="docutils literal notranslate"><span class="pre">PairOperator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.NpPairOperator"><code class="docutils literal notranslate"><span class="pre">NpPairOperator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Power"><code class="docutils literal notranslate"><span class="pre">Power</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Add"><code class="docutils literal notranslate"><span class="pre">Add</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Sub"><code class="docutils literal notranslate"><span class="pre">Sub</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Mul"><code class="docutils literal notranslate"><span class="pre">Mul</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Div"><code class="docutils literal notranslate"><span class="pre">Div</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Greater"><code class="docutils literal notranslate"><span class="pre">Greater</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Less"><code class="docutils literal notranslate"><span class="pre">Less</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Gt"><code class="docutils literal notranslate"><span class="pre">Gt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Ge"><code class="docutils literal notranslate"><span class="pre">Ge</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Lt"><code class="docutils literal notranslate"><span class="pre">Lt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Le"><code class="docutils literal notranslate"><span class="pre">Le</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Eq"><code class="docutils literal notranslate"><span class="pre">Eq</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Ne"><code class="docutils literal notranslate"><span class="pre">Ne</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.And"><code class="docutils literal notranslate"><span class="pre">And</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Or"><code class="docutils literal notranslate"><span class="pre">Or</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.If"><code class="docutils literal notranslate"><span class="pre">If</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Rolling"><code class="docutils literal notranslate"><span class="pre">Rolling</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Ref"><code class="docutils literal notranslate"><span class="pre">Ref</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Mean"><code class="docutils literal notranslate"><span class="pre">Mean</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Sum"><code class="docutils literal notranslate"><span class="pre">Sum</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Std"><code class="docutils literal notranslate"><span class="pre">Std</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Var"><code class="docutils literal notranslate"><span class="pre">Var</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Skew"><code class="docutils literal notranslate"><span class="pre">Skew</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Kurt"><code class="docutils literal notranslate"><span class="pre">Kurt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Max"><code class="docutils literal notranslate"><span class="pre">Max</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.IdxMax"><code class="docutils literal notranslate"><span class="pre">IdxMax</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Min"><code class="docutils literal notranslate"><span class="pre">Min</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.IdxMin"><code class="docutils literal notranslate"><span class="pre">IdxMin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Quantile"><code class="docutils literal notranslate"><span class="pre">Quantile</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Med"><code class="docutils literal notranslate"><span class="pre">Med</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Mad"><code class="docutils literal notranslate"><span class="pre">Mad</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Rank"><code class="docutils literal notranslate"><span class="pre">Rank</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Count"><code class="docutils literal notranslate"><span class="pre">Count</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Delta"><code class="docutils literal notranslate"><span class="pre">Delta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Slope"><code class="docutils literal notranslate"><span class="pre">Slope</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Rsquare"><code class="docutils literal notranslate"><span class="pre">Rsquare</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Resi"><code class="docutils literal notranslate"><span class="pre">Resi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.WMA"><code class="docutils literal notranslate"><span class="pre">WMA</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.EMA"><code class="docutils literal notranslate"><span class="pre">EMA</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.PairRolling"><code class="docutils literal notranslate"><span class="pre">PairRolling</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Corr"><code class="docutils literal notranslate"><span class="pre">Corr</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.Cov"><code class="docutils literal notranslate"><span class="pre">Cov</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.TResample"><code class="docutils literal notranslate"><span class="pre">TResample</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.OpsWrapper"><code class="docutils literal notranslate"><span class="pre">OpsWrapper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.ops.register_all_ops"><code class="docutils literal notranslate"><span class="pre">register_all_ops</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#cache">Cache</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.cache.MemCacheUnit"><code class="docutils literal notranslate"><span class="pre">MemCacheUnit</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.cache.MemCache"><code class="docutils literal notranslate"><span class="pre">MemCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.cache.ExpressionCache"><code class="docutils literal notranslate"><span class="pre">ExpressionCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.cache.DatasetCache"><code class="docutils literal notranslate"><span class="pre">DatasetCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.cache.DiskExpressionCache"><code class="docutils literal notranslate"><span class="pre">DiskExpressionCache</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.cache.DiskDatasetCache"><code class="docutils literal notranslate"><span class="pre">DiskDatasetCache</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#storage">Storage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.storage.storage.BaseStorage"><code class="docutils literal notranslate"><span class="pre">BaseStorage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.storage.storage.CalendarStorage"><code class="docutils literal notranslate"><span class="pre">CalendarStorage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.storage.storage.InstrumentStorage"><code class="docutils literal notranslate"><span class="pre">InstrumentStorage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.storage.storage.FeatureStorage"><code class="docutils literal notranslate"><span class="pre">FeatureStorage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.storage.file_storage.FileStorageMixin"><code class="docutils literal notranslate"><span class="pre">FileStorageMixin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.storage.file_storage.FileCalendarStorage"><code class="docutils literal notranslate"><span class="pre">FileCalendarStorage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.storage.file_storage.FileInstrumentStorage"><code class="docutils literal notranslate"><span class="pre">FileInstrumentStorage</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.data.storage.file_storage.FileFeatureStorage"><code class="docutils literal notranslate"><span class="pre">FileFeatureStorage</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#dataset">Dataset</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#module-qlib.data.dataset.__init__">Dataset Class</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#module-qlib.data.dataset.loader">Data Loader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#module-qlib.data.dataset.handler">Data Handler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#module-qlib.data.dataset.processor">Processor</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/api.html#contrib">Contrib</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.model.base">Model</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.base.BaseModel"><code class="docutils literal notranslate"><span class="pre">BaseModel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.base.Model"><code class="docutils literal notranslate"><span class="pre">Model</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.base.ModelFT"><code class="docutils literal notranslate"><span class="pre">ModelFT</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.contrib.strategy">Strategy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.strategy.TopkDropoutStrategy"><code class="docutils literal notranslate"><span class="pre">TopkDropoutStrategy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.strategy.WeightStrategyBase"><code class="docutils literal notranslate"><span class="pre">WeightStrategyBase</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.strategy.EnhancedIndexingStrategy"><code class="docutils literal notranslate"><span class="pre">EnhancedIndexingStrategy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.strategy.TWAPStrategy"><code class="docutils literal notranslate"><span class="pre">TWAPStrategy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.strategy.SBBStrategyBase"><code class="docutils literal notranslate"><span class="pre">SBBStrategyBase</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.strategy.SBBStrategyEMA"><code class="docutils literal notranslate"><span class="pre">SBBStrategyEMA</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.strategy.SoftTopkStrategy"><code class="docutils literal notranslate"><span class="pre">SoftTopkStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.contrib.evaluate">Evaluate</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.evaluate.risk_analysis"><code class="docutils literal notranslate"><span class="pre">risk_analysis</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.evaluate.indicator_analysis"><code class="docutils literal notranslate"><span class="pre">indicator_analysis</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.evaluate.backtest_daily"><code class="docutils literal notranslate"><span class="pre">backtest_daily</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.contrib.evaluate.long_short_backtest"><code class="docutils literal notranslate"><span class="pre">long_short_backtest</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#report">Report</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/api.html#workflow">Workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#experiment-manager">Experiment Manager</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.expm.ExpManager"><code class="docutils literal notranslate"><span class="pre">ExpManager</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#experiment">Experiment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.exp.Experiment"><code class="docutils literal notranslate"><span class="pre">Experiment</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#recorder">Recorder</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder"><code class="docutils literal notranslate"><span class="pre">Recorder</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.workflow.record_temp">Record Template</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.record_temp.RecordTemp"><code class="docutils literal notranslate"><span class="pre">RecordTemp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.record_temp.SignalRecord"><code class="docutils literal notranslate"><span class="pre">SignalRecord</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.record_temp.ACRecordTemp"><code class="docutils literal notranslate"><span class="pre">ACRecordTemp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.record_temp.HFSignalRecord"><code class="docutils literal notranslate"><span class="pre">HFSignalRecord</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.record_temp.SigAnaRecord"><code class="docutils literal notranslate"><span class="pre">SigAnaRecord</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.record_temp.PortAnaRecord"><code class="docutils literal notranslate"><span class="pre">PortAnaRecord</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.record_temp.MultiPassPortAnaRecord"><code class="docutils literal notranslate"><span class="pre">MultiPassPortAnaRecord</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/api.html#task-management">Task Management</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.workflow.task.gen">TaskGen</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.gen.task_generator"><code class="docutils literal notranslate"><span class="pre">task_generator</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.gen.TaskGen"><code class="docutils literal notranslate"><span class="pre">TaskGen</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.gen.handler_mod"><code class="docutils literal notranslate"><span class="pre">handler_mod</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.gen.trunc_segments"><code class="docutils literal notranslate"><span class="pre">trunc_segments</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.gen.RollingGen"><code class="docutils literal notranslate"><span class="pre">RollingGen</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.gen.MultiHorizonGenBase"><code class="docutils literal notranslate"><span class="pre">MultiHorizonGenBase</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.workflow.task.manage">TaskManager</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.manage.TaskManager"><code class="docutils literal notranslate"><span class="pre">TaskManager</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.manage.run_task"><code class="docutils literal notranslate"><span class="pre">run_task</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.model.trainer">Trainer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.trainer.begin_task_train"><code class="docutils literal notranslate"><span class="pre">begin_task_train</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.trainer.end_task_train"><code class="docutils literal notranslate"><span class="pre">end_task_train</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.trainer.task_train"><code class="docutils literal notranslate"><span class="pre">task_train</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.trainer.Trainer"><code class="docutils literal notranslate"><span class="pre">Trainer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.trainer.TrainerR"><code class="docutils literal notranslate"><span class="pre">TrainerR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.trainer.DelayTrainerR"><code class="docutils literal notranslate"><span class="pre">DelayTrainerR</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.trainer.TrainerRM"><code class="docutils literal notranslate"><span class="pre">TrainerRM</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.trainer.DelayTrainerRM"><code class="docutils literal notranslate"><span class="pre">DelayTrainerRM</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.workflow.task.collect">Collector</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.collect.Collector"><code class="docutils literal notranslate"><span class="pre">Collector</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.collect.MergeCollector"><code class="docutils literal notranslate"><span class="pre">MergeCollector</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.collect.RecorderCollector"><code class="docutils literal notranslate"><span class="pre">RecorderCollector</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.model.ens.group">Group</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.ens.group.Group"><code class="docutils literal notranslate"><span class="pre">Group</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.ens.group.RollingGroup"><code class="docutils literal notranslate"><span class="pre">RollingGroup</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.model.ens.ensemble">Ensemble</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.ens.ensemble.Ensemble"><code class="docutils literal notranslate"><span class="pre">Ensemble</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.ens.ensemble.SingleKeyEnsemble"><code class="docutils literal notranslate"><span class="pre">SingleKeyEnsemble</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.ens.ensemble.RollingEnsemble"><code class="docutils literal notranslate"><span class="pre">RollingEnsemble</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.model.ens.ensemble.AverageEnsemble"><code class="docutils literal notranslate"><span class="pre">AverageEnsemble</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.workflow.task.utils">Utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.utils.get_mongodb"><code class="docutils literal notranslate"><span class="pre">get_mongodb</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.utils.list_recorders"><code class="docutils literal notranslate"><span class="pre">list_recorders</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.utils.TimeAdjuster"><code class="docutils literal notranslate"><span class="pre">TimeAdjuster</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.utils.replace_task_handler_with_cache"><code class="docutils literal notranslate"><span class="pre">replace_task_handler_with_cache</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/api.html#online-serving">Online Serving</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.workflow.online.manager">Online Manager</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.manager.OnlineManager"><code class="docutils literal notranslate"><span class="pre">OnlineManager</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#id5">Online Strategy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy"><code class="docutils literal notranslate"><span class="pre">OnlineStrategy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.RollingStrategy"><code class="docutils literal notranslate"><span class="pre">RollingStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.workflow.online.utils">Online Tool</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.utils.OnlineTool"><code class="docutils literal notranslate"><span class="pre">OnlineTool</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.utils.OnlineToolR"><code class="docutils literal notranslate"><span class="pre">OnlineToolR</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.workflow.online.update">RecordUpdater</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.update.RMDLoader"><code class="docutils literal notranslate"><span class="pre">RMDLoader</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.update.RecordUpdater"><code class="docutils literal notranslate"><span class="pre">RecordUpdater</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.update.DSBasedUpdater"><code class="docutils literal notranslate"><span class="pre">DSBasedUpdater</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.update.PredUpdater"><code class="docutils literal notranslate"><span class="pre">PredUpdater</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.update.LabelUpdater"><code class="docutils literal notranslate"><span class="pre">LabelUpdater</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/api.html#id10">Utils</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.utils.serial">Serializable</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.utils.serial.Serializable"><code class="docutils literal notranslate"><span class="pre">Serializable</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/api.html#rl">RL</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.rl">Base Component</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.Interpreter"><code class="docutils literal notranslate"><span class="pre">Interpreter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.StateInterpreter"><code class="docutils literal notranslate"><span class="pre">StateInterpreter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.ActionInterpreter"><code class="docutils literal notranslate"><span class="pre">ActionInterpreter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.Reward"><code class="docutils literal notranslate"><span class="pre">Reward</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.RewardCombination"><code class="docutils literal notranslate"><span class="pre">RewardCombination</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.Simulator"><code class="docutils literal notranslate"><span class="pre">Simulator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#id11">Strategy</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.strategy.SingleOrderStrategy"><code class="docutils literal notranslate"><span class="pre">SingleOrderStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#id12">Trainer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.trainer.Trainer"><code class="docutils literal notranslate"><span class="pre">Trainer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.trainer.TrainingVessel"><code class="docutils literal notranslate"><span class="pre">TrainingVessel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.trainer.TrainingVesselBase"><code class="docutils literal notranslate"><span class="pre">TrainingVesselBase</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.trainer.Checkpoint"><code class="docutils literal notranslate"><span class="pre">Checkpoint</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.trainer.EarlyStopping"><code class="docutils literal notranslate"><span class="pre">EarlyStopping</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.trainer.MetricsWriter"><code class="docutils literal notranslate"><span class="pre">MetricsWriter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.trainer.train"><code class="docutils literal notranslate"><span class="pre">train</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.trainer.backtest"><code class="docutils literal notranslate"><span class="pre">backtest</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#module-qlib.rl.order_execution">Order Execution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.FullHistoryStateInterpreter"><code class="docutils literal notranslate"><span class="pre">FullHistoryStateInterpreter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.CurrentStepStateInterpreter"><code class="docutils literal notranslate"><span class="pre">CurrentStepStateInterpreter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.CategoricalActionInterpreter"><code class="docutils literal notranslate"><span class="pre">CategoricalActionInterpreter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.TwapRelativeActionInterpreter"><code class="docutils literal notranslate"><span class="pre">TwapRelativeActionInterpreter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.Recurrent"><code class="docutils literal notranslate"><span class="pre">Recurrent</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.AllOne"><code class="docutils literal notranslate"><span class="pre">AllOne</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.PPO"><code class="docutils literal notranslate"><span class="pre">PPO</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.PAPenaltyReward"><code class="docutils literal notranslate"><span class="pre">PAPenaltyReward</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.SingleAssetOrderExecutionSimple"><code class="docutils literal notranslate"><span class="pre">SingleAssetOrderExecutionSimple</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.SAOEStateAdapter"><code class="docutils literal notranslate"><span class="pre">SAOEStateAdapter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.SAOEMetrics"><code class="docutils literal notranslate"><span class="pre">SAOEMetrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.SAOEState"><code class="docutils literal notranslate"><span class="pre">SAOEState</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.SAOEStrategy"><code class="docutils literal notranslate"><span class="pre">SAOEStrategy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.ProxySAOEStrategy"><code class="docutils literal notranslate"><span class="pre">ProxySAOEStrategy</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.order_execution.SAOEIntStrategy"><code class="docutils literal notranslate"><span class="pre">SAOEIntStrategy</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/api.html#id13">Utils</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.utils.LogLevel"><code class="docutils literal notranslate"><span class="pre">LogLevel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.utils.DataQueue"><code class="docutils literal notranslate"><span class="pre">DataQueue</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.utils.EnvWrapper"><code class="docutils literal notranslate"><span class="pre">EnvWrapper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.utils.LogCollector"><code class="docutils literal notranslate"><span class="pre">LogCollector</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.utils.LogWriter"><code class="docutils literal notranslate"><span class="pre">LogWriter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.utils.vectorize_env"><code class="docutils literal notranslate"><span class="pre">vectorize_env</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.utils.ConsoleWriter"><code class="docutils literal notranslate"><span class="pre">ConsoleWriter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.utils.CsvWriter"><code class="docutils literal notranslate"><span class="pre">CsvWriter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.utils.EnvWrapperStatus"><code class="docutils literal notranslate"><span class="pre">EnvWrapperStatus</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../reference/api.html#qlib.rl.utils.LogBuffer"><code class="docutils literal notranslate"><span class="pre">LogBuffer</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../FAQ/FAQ.html">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../FAQ/FAQ.html#qlib-frequently-asked-questions">Qlib Frequently Asked Questions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ/FAQ.html#runtimeerror-an-attempt-has-been-made-to-start-a-new-process-before-the-current-process-has-finished-its-bootstrapping-phase">1. RuntimeError: An attempt has been made to start a new process before the current process has finished its bootstrapping phase…</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ/FAQ.html#qlib-data-cache-qlibcacheexception-it-sees-the-key-of-the-redis-lock-has-existed-in-your-redis-db-now">2. qlib.data.cache.QlibCacheException: It sees the key(…) of the redis lock has existed in your redis db now.</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ/FAQ.html#modulenotfounderror-no-module-named-qlib-data-libs-rolling">3. ModuleNotFoundError: No module named ‘qlib.data._libs.rolling’</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ/FAQ.html#badnamespaceerror-is-not-a-connected-namespace">4. BadNamespaceError: / is not a connected namespace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../FAQ/FAQ.html#typeerror-send-got-an-unexpected-keyword-argument-binary">5. TypeError: send() got an unexpected keyword argument ‘binary’</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Change Log:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../changelog/changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-1-0">Version 0.1.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-1-1">Version 0.1.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-1-2">Version 0.1.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-1-3">Version 0.1.3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-2-0">Version 0.2.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-2-1">Version 0.2.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-2-2">Version 0.2.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-2-3">Version 0.2.3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-2-4">Version 0.2.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-3-0">Version 0.3.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-3-1">Version 0.3.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-3-2">Version 0.3.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-3-3">Version 0.3.3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-3-4">Version 0.3.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-3-5">Version 0.3.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-4-0">Version 0.4.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-4-1">Version 0.4.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-4-2">Version 0.4.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-4-3">Version 0.4.3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-4-4">Version 0.4.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-4-5">Version 0.4.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-4-6">Version 0.4.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-5-0">Version 0.5.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#version-0-8-0">Version 0.8.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changelog/changelog.html#other-versions">Other Versions</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QLib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Online Serving</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/component/online.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="online-serving">
+<span id="id1"></span><h1>Online Serving<a class="headerlink" href="#online-serving" title="Permalink to this heading"></a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<img alt="../_images/online_serving.png" class="align-center" src="../_images/online_serving.png" />
+<p>In addition to backtesting, one way to test a model is effective is to make predictions in real market conditions or even do real trading based on those predictions.
+<code class="docutils literal notranslate"><span class="pre">Online</span> <span class="pre">Serving</span></code> is a set of modules for online models using the latest data,
+which including <a class="reference external" href="#OnlineManager">Online Manager</a>, <a class="reference external" href="#OnlineStrategy">Online Strategy</a>, <a class="reference external" href="#OnlineTool">Online Tool</a>, <a class="reference external" href="#Updater">Updater</a>.</p>
+<p><a class="reference external" href="https://github.com/microsoft/qlib/tree/main/examples/online_srv">Here</a> are several examples for reference, which demonstrate different features of <code class="docutils literal notranslate"><span class="pre">Online</span> <span class="pre">Serving</span></code>.
+If you have many models or <cite>task</cite> needs to be managed, please consider <a class="reference external" href="../advanced/task_management.html">Task Management</a>.
+The <a class="reference external" href="https://github.com/microsoft/qlib/tree/main/examples/online_srv">examples</a> are based on some components in <a class="reference external" href="../advanced/task_management.html">Task Management</a> such as <code class="docutils literal notranslate"><span class="pre">TrainerRM</span></code> or <code class="docutils literal notranslate"><span class="pre">Collector</span></code>.</p>
+<p><strong>NOTE</strong>: User should keep his data source updated to support online serving. For example, Qlib provides <a class="reference external" href="https://github.com/microsoft/qlib/blob/main/scripts/data_collector/yahoo/README.md#automatic-update-of-daily-frequency-datafrom-yahoo-finance">a batch of scripts</a> to help users update Yahoo daily data.</p>
+<p>Known limitations currently
+- Currently, the daily updating prediction for the next trading day is supported. But generating orders for the next trading day is not supported due to the <cite>limitations of public data &lt;https://github.com/microsoft/qlib/issues/215#issuecomment-766293563&gt;_</cite></p>
+</section>
+<section id="id3">
+<h2>Online Manager<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h2>
+<p>OnlineManager can manage a set of <a class="reference external" href="#OnlineStrategy">Online Strategy</a> and run them dynamically.</p>
+<p>With the change of time, the decisive models will be also changed. In this module, we call those contributing models <cite>online</cite> models.
+In every routine(such as every day or every minute), the <cite>online</cite> models may be changed and the prediction of them needs to be updated.
+So this module provides a series of methods to control this process.</p>
+<p>This module also provides a method to simulate <a class="reference external" href="#OnlineStrategy">Online Strategy</a> in history.
+Which means you can verify your strategy or find a better one.</p>
+<p>There are 4 total situations for using different trainers in different situations:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Situations</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Online + Trainer</p></td>
+<td><p>When you want to do a REAL routine, the Trainer will help you train the models. It
+will train models task by task and strategy by strategy.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Online + DelayTrainer</p></td>
+<td><p>DelayTrainer will skip concrete training until all tasks have been prepared by
+different strategies. It makes users can parallelly train all tasks at the end of
+<cite>routine</cite> or <cite>first_train</cite>. Otherwise, these functions will get stuck when each
+strategy prepare tasks.</p></td>
+</tr>
+<tr class="row-even"><td><p>Simulation + Trainer</p></td>
+<td><p>It will behave in the same way as <cite>Online + Trainer</cite>. The only difference is that it
+is for simulation/backtesting instead of online trading</p></td>
+</tr>
+<tr class="row-odd"><td><p>Simulation + DelayTrainer</p></td>
+<td><p>When your models don’t have any temporal dependence, you can use DelayTrainer
+for the ability to multitasking. It means all tasks in all routines
+can be REAL trained at the end of simulating. The signals will be prepared well at
+different time segments (based on whether or not any new model is online).</p></td>
+</tr>
+</tbody>
+</table>
+<p>Here is some pseudo code that demonstrate the workflow of each situation</p>
+<dl class="simple">
+<dt>For simplicity</dt><dd><ul class="simple">
+<li><p>Only one strategy is used in the strategy</p></li>
+<li><p><cite>update_online_pred</cite> is only called in the online mode and is ignored</p></li>
+</ul>
+</dd>
+</dl>
+<ol class="arabic simple">
+<li><p><cite>Online + Trainer</cite></p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tasks</span> <span class="o">=</span> <span class="n">first_train</span><span class="p">()</span>
+<span class="n">models</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span>
+<span class="n">trainer</span><span class="o">.</span><span class="n">end_train</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">day</span> <span class="ow">in</span> <span class="n">online_trading_days</span><span class="p">:</span>
+    <span class="c1"># OnlineManager.routine</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">strategy</span><span class="o">.</span><span class="n">prepare_tasks</span><span class="p">())</span>  <span class="c1"># for each strategy</span>
+    <span class="n">strategy</span><span class="o">.</span><span class="n">prepare_online_models</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>  <span class="c1"># for each strategy</span>
+
+    <span class="n">trainer</span><span class="o">.</span><span class="n">end_train</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>
+    <span class="n">prepare_signals</span><span class="p">()</span>  <span class="c1"># prepare trading signals daily</span>
+</pre></div>
+</div>
+<p><cite>Online + DelayTrainer</cite>: the workflow is the same as <cite>Online + Trainer</cite>.</p>
+<ol class="arabic simple" start="2">
+<li><p><cite>Simulation + DelayTrainer</cite></p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># simulate</span>
+<span class="n">tasks</span> <span class="o">=</span> <span class="n">first_train</span><span class="p">()</span>
+<span class="n">models</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">day</span> <span class="ow">in</span> <span class="n">historical_calendars</span><span class="p">:</span>
+    <span class="c1"># OnlineManager.routine</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">strategy</span><span class="o">.</span><span class="n">prepare_tasks</span><span class="p">())</span>  <span class="c1"># for each strategy</span>
+    <span class="n">strategy</span><span class="o">.</span><span class="n">prepare_online_models</span><span class="p">(</span><span class="n">models</span><span class="p">)</span>  <span class="c1"># for each strategy</span>
+<span class="c1"># delay_prepare()</span>
+<span class="c1"># FIXME: Currently the delay_prepare is not implemented in a proper way.</span>
+<span class="n">trainer</span><span class="o">.</span><span class="n">end_train</span><span class="p">(</span><span class="o">&lt;</span><span class="k">for</span> <span class="nb">all</span> <span class="n">previous</span> <span class="n">models</span><span class="o">&gt;</span><span class="p">)</span>
+<span class="n">prepare_signals</span><span class="p">()</span>
+</pre></div>
+</div>
+<p># Can we simplify current workflow?</p>
+<ul>
+<li><p>Can reduce the number of state of tasks?</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>For each task, we have three phases (i.e. task, partly trained task, final trained task)</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qlib.workflow.online.manager.</span></span><span class="sig-name descname"><span class="pre">OnlineManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><span class="pre">OnlineStrategy</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><span class="pre">OnlineStrategy</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.model.trainer.Trainer" title="qlib.model.trainer.Trainer"><span class="pre">Trainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">begin_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'day'</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>OnlineManager can manage online models with <a class="reference external" href="#OnlineStrategy">Online Strategy</a>.
+It also provides a history recording of which models are online at what time.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><span class="pre">OnlineStrategy</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><span class="pre">OnlineStrategy</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.model.trainer.Trainer" title="qlib.model.trainer.Trainer"><span class="pre">Trainer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">begin_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'day'</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Init OnlineManager.
+One OnlineManager must have at least one OnlineStrategy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>strategies</strong> (<em>Union</em><em>[</em><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><em>OnlineStrategy</em></a><em>, </em><em>List</em><em>[</em><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><em>OnlineStrategy</em></a><em>]</em><em>]</em>) – an instance of OnlineStrategy or a list of OnlineStrategy</p></li>
+<li><p><strong>begin_time</strong> (<em>Union</em><em>[</em><em>str</em><em>,</em><em>pd.Timestamp</em><em>]</em><em>, </em><em>optional</em>) – the OnlineManager will begin at this time. Defaults to None for using the latest date.</p></li>
+<li><p><strong>trainer</strong> (<a class="reference internal" href="../reference/api.html#qlib.model.trainer.Trainer" title="qlib.model.trainer.Trainer"><em>qlib.model.trainer.Trainer</em></a>) – the trainer to train task. None for using TrainerR.</p></li>
+<li><p><strong>freq</strong> (<em>str</em><em>, </em><em>optional</em>) – data frequency. Defaults to “day”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">first_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><span class="pre">OnlineStrategy</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Get tasks from every strategy’s first_tasks method and train them.
+If using DelayTrainer, it can finish training all together after every strategy’s first_tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>strategies</strong> (<em>List</em><em>[</em><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><em>OnlineStrategy</em></a><em>]</em>) – the strategies list (need this param when adding strategies). None for use default strategies.</p></li>
+<li><p><strong>model_kwargs</strong> (<em>dict</em>) – the params for <cite>prepare_online_models</cite></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">routine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cur_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Timestamp</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Typical update process for every strategy and record the online history.</p>
+<p>The typical update process after a routine, such as day by day or month by month.
+The process is: Update predictions -&gt; Prepare tasks -&gt; Prepare online models -&gt; Prepare signals.</p>
+<p>If using DelayTrainer, it can finish training all together after every strategy’s prepare_tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cur_time</strong> (<em>Union</em><em>[</em><em>str</em><em>,</em><em>pd.Timestamp</em><em>]</em><em>, </em><em>optional</em>) – run routine method in this time. Defaults to None.</p></li>
+<li><p><strong>task_kwargs</strong> (<em>dict</em>) – the params for <cite>prepare_tasks</cite></p></li>
+<li><p><strong>model_kwargs</strong> (<em>dict</em>) – the params for <cite>prepare_online_models</cite></p></li>
+<li><p><strong>signal_kwargs</strong> (<em>dict</em>) – the params for <cite>prepare_signals</cite></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_collector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.collect.MergeCollector" title="qlib.workflow.task.collect.MergeCollector"><span class="pre">MergeCollector</span></a></span></span></dt>
+<dd><p>Get the instance of <a class="reference external" href="../advanced/task_management.html#TaskCollecting">Collector</a> to collect results from every strategy.
+This collector can be a basis as the signals preparation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – the params for get_collector.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the collector to merge other collectors.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../reference/api.html#qlib.workflow.task.collect.MergeCollector" title="qlib.workflow.task.collect.MergeCollector">MergeCollector</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">add_strategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">strategies</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><span class="pre">OnlineStrategy</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><span class="pre">OnlineStrategy</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Add some new strategies to OnlineManager.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>strategy</strong> (<em>Union</em><em>[</em><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><em>OnlineStrategy</em></a><em>, </em><em>List</em><em>[</em><a class="reference internal" href="../reference/api.html#qlib.workflow.online.strategy.OnlineStrategy" title="qlib.workflow.online.strategy.OnlineStrategy"><em>OnlineStrategy</em></a><em>]</em><em>]</em>) – a list of OnlineStrategy</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">prepare_signals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prepare_func:</span> <span class="pre">~typing.Callable</span> <span class="pre">=</span> <span class="pre">&lt;qlib.model.ens.ensemble.AverageEnsemble</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">over_write=False</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>After preparing the data of the last routine (a box in box-plot) which means the end of the routine, we can prepare trading signals for the next routine.</p>
+<p>NOTE: Given a set prediction, all signals before these prediction end times will be prepared well.</p>
+<p>Even if the latest signal already exists, the latest calculation result will be overwritten.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Given a prediction of a certain time, all signals before this time will be prepared well.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prepare_func</strong> (<em>Callable</em><em>, </em><em>optional</em>) – Get signals from a dict after collecting. Defaults to AverageEnsemble(), the results collected by MergeCollector must be {xxx:pred}.</p></li>
+<li><p><strong>over_write</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the new signals will overwrite. If False, the new signals will append to the end of signals. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the signals.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_signals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Series</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataFrame</span></span></span></dt>
+<dd><p>Get prepared online signals.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.Series for only one signals every datetime.
+pd.DataFrame for multiple signals, for example, buy and sell operations use different trading signals.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Union[pd.Series, pd.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">simulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">end_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'day'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Series</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">DataFrame</span></span></span></dt>
+<dd><p>Starting from the current time, this method will simulate every routine in OnlineManager until the end time.</p>
+<p>Considering the parallel training, the models and signals can be prepared after all routine simulating.</p>
+<p>The delay training way can be <code class="docutils literal notranslate"><span class="pre">DelayTrainer</span></code> and the delay preparing signals way can be <code class="docutils literal notranslate"><span class="pre">delay_prepare</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>end_time</strong> – the time the simulation will end</p></li>
+<li><p><strong>frequency</strong> – the calendar frequency</p></li>
+<li><p><strong>task_kwargs</strong> (<em>dict</em>) – the params for <cite>prepare_tasks</cite></p></li>
+<li><p><strong>model_kwargs</strong> (<em>dict</em>) – the params for <cite>prepare_online_models</cite></p></li>
+<li><p><strong>signal_kwargs</strong> (<em>dict</em>) – the params for <cite>prepare_signals</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>pd.Series for only one signals every datetime.
+pd.DataFrame for multiple signals, for example, buy and sell operations use different trading signals.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[pd.Series, pd.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">delay_prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Prepare all models and signals if something is waiting for preparation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_kwargs</strong> – the params for <cite>end_train</cite></p></li>
+<li><p><strong>signal_kwargs</strong> – the params for <cite>prepare_signals</cite></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="id7">
+<h2>Online Strategy<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h2>
+<p>OnlineStrategy module is an element of online serving.</p>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qlib.workflow.online.strategy.</span></span><span class="sig-name descname"><span class="pre">OnlineStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>OnlineStrategy is working with <a class="reference external" href="#OnlineManager">Online Manager</a>, responding to how the tasks are generated, the models are updated and signals are prepared.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Init OnlineStrategy.
+This module <strong>MUST</strong> use <a class="reference external" href="../reference/api.html#qlib.model.trainer.Trainer">Trainer</a> to finishing model training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name_id</strong> (<em>str</em>) – a unique name or id.</p></li>
+<li><p><strong>trainer</strong> (<a class="reference internal" href="../reference/api.html#qlib.model.trainer.Trainer" title="qlib.model.trainer.Trainer"><em>qlib.model.trainer.Trainer</em></a><em>, </em><em>optional</em>) – a instance of Trainer. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">prepare_tasks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cur_time</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>After the end of a routine, check whether we need to prepare and train some new tasks based on cur_time (None for latest)..
+Return the new tasks waiting for training.</p>
+<p>You can find the last online models by OnlineTool.online_models.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">prepare_online_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trained_models</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cur_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">object</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Select some models from trained models and set them to online models.
+This is a typical implementation to online all trained models, you can override it to implement the complex method.
+You can find the last online models by OnlineTool.online_models if you still need them.</p>
+<p>NOTE: Reset all online models to trained models. If there are no trained models, then do nothing.</p>
+<dl class="simple">
+<dt><strong>NOTE</strong>:</dt><dd><p>Current implementation is very naive. Here is a more complex situation which is more closer to the
+practical scenarios.
+1. Train new models at the day before <cite>test_start</cite> (at time stamp <cite>T</cite>)
+2. Switch models at the <cite>test_start</cite> (at time timestamp <cite>T + 1</cite> typically)</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>models</strong> (<em>list</em>) – a list of models.</p></li>
+<li><p><strong>cur_time</strong> (<em>pd.Dataframe</em>) – current time from OnlineManger. None for the latest.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a list of online models.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[object]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">first_tasks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Generate a series of tasks firstly and return them.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_collector</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.collect.Collector" title="qlib.workflow.task.collect.Collector"><span class="pre">Collector</span></a></span></span></dt>
+<dd><p>Get the instance of <a class="reference external" href="../advanced/task_management.html#TaskCollecting">Collector</a> to collect different results of this strategy.</p>
+<dl class="simple">
+<dt>For example:</dt><dd><ol class="arabic simple">
+<li><p>collect predictions in Recorder</p></li>
+<li><p>collect signals in a txt file</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Collector</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qlib.workflow.online.strategy.</span></span><span class="sig-name descname"><span class="pre">RollingStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_template</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling_gen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.gen.RollingGen" title="qlib.workflow.task.gen.RollingGen"><span class="pre">RollingGen</span></a></span></em><span class="sig-paren">)</span></dt>
+<dd><p>This example strategy always uses the latest rolling model sas online models.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_template</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rolling_gen</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.task.gen.RollingGen" title="qlib.workflow.task.gen.RollingGen"><span class="pre">RollingGen</span></a></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Init RollingStrategy.</p>
+<p>Assumption: the str of name_id, the experiment name, and the trainer’s experiment name are the same.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name_id</strong> (<em>str</em>) – a unique name or id. Will be also the name of the Experiment.</p></li>
+<li><p><strong>task_template</strong> (<em>Union</em><em>[</em><em>dict</em><em>, </em><em>List</em><em>[</em><em>dict</em><em>]</em><em>]</em>) – a list of task_template or a single template, which will be used to generate many tasks using rolling_gen.</p></li>
+<li><p><strong>rolling_gen</strong> (<a class="reference internal" href="../reference/api.html#qlib.workflow.task.gen.RollingGen" title="qlib.workflow.task.gen.RollingGen"><em>RollingGen</em></a>) – an instance of RollingGen</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_collector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">process_list=[&lt;qlib.model.ens.group.RollingGroup</span> <span class="pre">object&gt;],</span> <span class="pre">rec_key_func=None,</span> <span class="pre">rec_filter_func=None,</span> <span class="pre">artifacts_key=None</span></em><span class="sig-paren">)</span></dt>
+<dd><p>Get the instance of <a class="reference external" href="../advanced/task_management.html#TaskCollecting">Collector</a> to collect results. The returned collector must distinguish results in different models.</p>
+<p>Assumption: the models can be distinguished based on the model name and rolling test segments.
+If you do not want this assumption, please implement your method or use another rec_key_func.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rec_key_func</strong> (<em>Callable</em>) – a function to get the key of a recorder. If None, use recorder id.</p></li>
+<li><p><strong>rec_filter_func</strong> (<em>Callable</em><em>, </em><em>optional</em>) – filter the recorder by return True or False. Defaults to None.</p></li>
+<li><p><strong>artifacts_key</strong> (<em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – the artifacts key you want to get. If None, get all artifacts.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">first_tasks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Use rolling_gen to generate different tasks based on task_template.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>a list of tasks</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">prepare_tasks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cur_time</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span></dt>
+<dd><p>Prepare new tasks based on cur_time (None for the latest).</p>
+<p>You can find the last online models by OnlineToolR.online_models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>a list of new tasks.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="id11">
+<h2>Online Tool<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h2>
+<p>OnlineTool is a module to set and unset a series of <cite>online</cite> models.
+The <cite>online</cite> models are some decisive models in some time points, which can be changed with the change of time.
+This allows us to use efficient submodels as the market-style changing.</p>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qlib.workflow.online.utils.</span></span><span class="sig-name descname"><span class="pre">OnlineTool</span></span></dt>
+<dd><p>OnlineTool will manage <cite>online</cite> models in an experiment that includes the model recorders.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Init OnlineTool.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">set_online_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">object</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Set <cite>tag</cite> to the model to sign whether online.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tag</strong> (<em>str</em>) – the tags in <cite>ONLINE_TAG</cite>, <cite>OFFLINE_TAG</cite></p></li>
+<li><p><strong>recorder</strong> (<em>Union</em><em>[</em><em>list</em><em>,</em><em>object</em><em>]</em>) – the model’s recorder</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_online_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span></dt>
+<dd><p>Given a model recorder and return its online tag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>recorder</strong> (<em>Object</em>) – the model’s recorder</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the online tag</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">reset_online_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">object</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Offline all models and set the recorders to ‘online’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>recorder</strong> (<em>Union</em><em>[</em><em>list</em><em>,</em><em>object</em><em>]</em>) – the recorder you want to reset to ‘online’.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">online_models</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span></dt>
+<dd><p>Get current <cite>online</cite> models</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>a list of <cite>online</cite> models.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">update_online_pred</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Update the predictions of <cite>online</cite> models to to_date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>to_date</strong> (<em>pd.Timestamp</em>) – the pred before this date will be updated. None for updating to the latest.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qlib.workflow.online.utils.</span></span><span class="sig-name descname"><span class="pre">OnlineToolR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_exp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>The implementation of OnlineTool based on (R)ecorder.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">default_exp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Init OnlineToolR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>default_exp_name</strong> (<em>str</em>) – the default experiment name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">set_online_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><span class="pre">Recorder</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Set <cite>tag</cite> to the model’s recorder to sign whether online.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tag</strong> (<em>str</em>) – the tags in <cite>ONLINE_TAG</cite>, <cite>NEXT_ONLINE_TAG</cite>, <cite>OFFLINE_TAG</cite></p></li>
+<li><p><strong>recorder</strong> (<em>Union</em><em>[</em><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><em>Recorder</em></a><em>, </em><em>List</em><em>]</em>) – a list of Recorder or an instance of Recorder</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_online_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><span class="pre">Recorder</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span></dt>
+<dd><p>Given a model recorder and return its online tag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>recorder</strong> (<a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><em>Recorder</em></a>) – an instance of recorder</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the online tag</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">reset_online_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recorder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><span class="pre">Recorder</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">List</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Offline all models and set the recorders to ‘online’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>recorder</strong> (<em>Union</em><em>[</em><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><em>Recorder</em></a><em>, </em><em>List</em><em>]</em>) – the recorder you want to reset to ‘online’.</p></li>
+<li><p><strong>exp_name</strong> (<em>str</em>) – the experiment name. If None, then use default_exp_name.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">online_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span></dt>
+<dd><p>Get current <cite>online</cite> models</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>exp_name</strong> (<em>str</em>) – the experiment name. If None, then use default_exp_name.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a list of <cite>online</cite> models.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">update_online_pred</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exp_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Update the predictions of online models to to_date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>to_date</strong> (<em>pd.Timestamp</em>) – the pred before this date will be updated. None for updating to latest time in Calendar.</p></li>
+<li><p><strong>exp_name</strong> (<em>str</em>) – the experiment name. If None, then use default_exp_name.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="id12">
+<h2>Updater<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h2>
+<p>Updater is a module to update artifacts such as predictions when the stock data is updating.</p>
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qlib.workflow.online.update.</span></span><span class="sig-name descname"><span class="pre">RMDLoader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><span class="pre">Recorder</span></a></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Recorder Model Dataset Loader</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rec</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><span class="pre">Recorder</span></a></span></em><span class="sig-paren">)</span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_time</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">segments</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unprepared_dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DatasetH</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DatasetH</span></span></span></dt>
+<dd><p>Load, config and setup dataset.</p>
+<p>This dataset is for inference.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start_time</strong> – the start_time of underlying data</p></li>
+<li><p><strong>end_time</strong> – the end_time of underlying data</p></li>
+<li><p><strong>segments</strong> – dict
+the segments config for dataset
+Due to the time series dataset (TSDatasetH), the test segments maybe different from start_time and end_time</p></li>
+<li><p><strong>unprepared_dataset</strong> – Optional[DatasetH]
+if user don’t want to load dataset from recorder, please specify user’s dataset</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the instance of DatasetH</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../reference/api.html#qlib.data.dataset.__init__.DatasetH" title="qlib.data.dataset.__init__.DatasetH">DatasetH</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qlib.workflow.online.update.</span></span><span class="sig-name descname"><span class="pre">RecordUpdater</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><span class="pre">Recorder</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Update a specific recorders</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><span class="pre">Recorder</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Update info for specific recorder</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qlib.workflow.online.update.</span></span><span class="sig-name descname"><span class="pre">DSBasedUpdater</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record:</span> <span class="pre">~qlib.workflow.recorder.Recorder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_date=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_date=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_ref:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq='day'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname='pred.pkl'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loader_cls:</span> <span class="pre">type</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'qlib.workflow.online.update.RMDLoader'&gt;</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Dataset-Based Updater</p>
+<ul class="simple">
+<li><p>Providing updating feature for Updating data based on Qlib Dataset</p></li>
+</ul>
+<p>Assumption</p>
+<ul>
+<li><p>Based on Qlib dataset</p></li>
+<li><p>The data to be updated is a multi-level index pd.DataFrame. For example label, prediction.</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span>                         <span class="n">LABEL0</span>
+<span class="n">datetime</span>   <span class="n">instrument</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">10</span> <span class="n">SH600000</span>    <span class="mf">0.006965</span>
+           <span class="n">SH600004</span>    <span class="mf">0.003407</span>
+<span class="o">...</span>                         <span class="o">...</span>
+<span class="mi">2021</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">28</span> <span class="n">SZ300498</span>    <span class="mf">0.015748</span>
+           <span class="n">SZ300676</span>   <span class="o">-</span><span class="mf">0.001321</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record:</span> <span class="pre">~qlib.workflow.recorder.Recorder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_date=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_date=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_ref:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq='day'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname='pred.pkl'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loader_cls:</span> <span class="pre">type</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'qlib.workflow.online.update.RMDLoader'&gt;</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Init PredUpdater.</p>
+<p>Expected behavior in following cases:</p>
+<ul class="simple">
+<li><p>if <cite>to_date</cite> is greater than the max date in the calendar, the data will be updated to the latest date</p></li>
+<li><p>if there are data before <cite>from_date</cite> or after <cite>to_date</cite>, only the data between <cite>from_date</cite> and <cite>to_date</cite> are affected.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>record</strong> – Recorder</p></li>
+<li><p><strong>to_date</strong> – <p>update to prediction to the <cite>to_date</cite></p>
+<p>if to_date is None:</p>
+<blockquote>
+<div><p>data will updated to the latest date.</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>from_date</strong> – <p>the update will start from <cite>from_date</cite></p>
+<p>if from_date is None:</p>
+<blockquote>
+<div><p>the updating will occur on the next tick after the latest data in historical data</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>hist_ref</strong> – <p>int
+Sometimes, the dataset will have historical depends.
+Leave the problem to users to set the length of historical dependency
+If user doesn’t specify this parameter, Updater will try to load dataset to automatically determine the hist_ref</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>the start_time is not included in the <cite>hist_ref</cite>; So the <cite>hist_ref</cite> will be <cite>step_len - 1</cite> in most cases</p>
+</div>
+</p></li>
+<li><p><strong>loader_cls</strong> – type
+the class to load the model and dataset</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">prepare_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unprepared_dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DatasetH</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DatasetH</span></span></span></dt>
+<dd><p>Load dataset
+- if unprepared_dataset is specified, then prepare the dataset directly
+- Otherwise,</p>
+<p>Separating this function will make it easier to reuse the dataset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the instance of DatasetH</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="../reference/api.html#qlib.data.dataset.__init__.DatasetH" title="qlib.data.dataset.__init__.DatasetH">DatasetH</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DatasetH</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ret_new</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">object</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<a class="reference internal" href="../reference/api.html#qlib.data.dataset.__init__.DatasetH" title="qlib.data.dataset.__init__.DatasetH"><em>DatasetH</em></a>) – DatasetH: the instance of DatasetH. None for prepare it again.</p></li>
+<li><p><strong>write</strong> (<em>bool</em>) – will the the write action be executed</p></li>
+<li><p><strong>ret_new</strong> (<em>bool</em>) – will the updated data be returned</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the updated dataset</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[object]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_update_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span></dt>
+<dd><p>return the updated data based on the given dataset</p>
+<p>The difference between <cite>get_update_data</cite> and <cite>update</cite>
+- <cite>update_date</cite> only include some data specific feature
+- <cite>update</cite> include some general routine steps(e.g. prepare dataset, checking)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qlib.workflow.online.update.</span></span><span class="sig-name descname"><span class="pre">PredUpdater</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record:</span> <span class="pre">~qlib.workflow.recorder.Recorder</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_date=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">from_date=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_ref:</span> <span class="pre">int</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq='day'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname='pred.pkl'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loader_cls:</span> <span class="pre">type</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'qlib.workflow.online.update.RMDLoader'&gt;</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Update the prediction in the Recorder</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_update_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span></dt>
+<dd><p>return the updated data based on the given dataset</p>
+<p>The difference between <cite>get_update_data</cite> and <cite>update</cite>
+- <cite>update_date</cite> only include some data specific feature
+- <cite>update</cite> include some general routine steps(e.g. prepare dataset, checking)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">qlib.workflow.online.update.</span></span><span class="sig-name descname"><span class="pre">LabelUpdater</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><span class="pre">Recorder</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Update the label in the recorder</p>
+<p>Assumption
+- The label is generated from record_temp.SignalRecord.</p>
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">record</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../reference/api.html#qlib.workflow.recorder.Recorder" title="qlib.workflow.recorder.Recorder"><span class="pre">Recorder</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_date</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Init PredUpdater.</p>
+<p>Expected behavior in following cases:</p>
+<ul class="simple">
+<li><p>if <cite>to_date</cite> is greater than the max date in the calendar, the data will be updated to the latest date</p></li>
+<li><p>if there are data before <cite>from_date</cite> or after <cite>to_date</cite>, only the data between <cite>from_date</cite> and <cite>to_date</cite> are affected.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>record</strong> – Recorder</p></li>
+<li><p><strong>to_date</strong> – <p>update to prediction to the <cite>to_date</cite></p>
+<p>if to_date is None:</p>
+<blockquote>
+<div><p>data will updated to the latest date.</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>from_date</strong> – <p>the update will start from <cite>from_date</cite></p>
+<p>if from_date is None:</p>
+<blockquote>
+<div><p>the updating will occur on the next tick after the latest data in historical data</p>
+</div></blockquote>
+</p></li>
+<li><p><strong>hist_ref</strong> – <p>int
+Sometimes, the dataset will have historical depends.
+Leave the problem to users to set the length of historical dependency
+If user doesn’t specify this parameter, Updater will try to load dataset to automatically determine the hist_ref</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>the start_time is not included in the <cite>hist_ref</cite>; So the <cite>hist_ref</cite> will be <cite>step_len - 1</cite> in most cases</p>
+</div>
+</p></li>
+<li><p><strong>loader_cls</strong> – type
+the class to load the model and dataset</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">get_update_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span></dt>
+<dd><p>return the updated data based on the given dataset</p>
+<p>The difference between <cite>get_update_data</cite> and <cite>update</cite>
+- <cite>update_date</cite> only include some data specific feature
+- <cite>update</cite> include some general routine steps(e.g. prepare dataset, checking)</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="report.html" class="btn btn-neutral float-left" title="Analysis: Evaluation &amp; Results Analysis" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rl/toctree.html" class="btn btn-neutral float-right" title="Reinforcement Learning in Quantitative Trading" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Microsoft.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

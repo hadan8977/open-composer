@@ -215,6 +215,8 @@ def init_iteration_dossier(
     *,
     overwrite: bool = False,
 ) -> IterationDossierPaths:
+    from open_composer.research.direction import direction_review_template
+
     paths = iteration_dossier_paths(iter_id, root)
     ensure_dir(paths.root)
     _write_text_if_needed(paths.external_brief_md, _external_brief_md_template(iter_id), overwrite)
@@ -225,6 +227,9 @@ def init_iteration_dossier(
     _write_json_if_needed(paths.search_space_json, _search_space_json_template(iter_id), overwrite)
     _write_text_if_needed(paths.search_space_md, _search_space_md_template(iter_id), overwrite)
     _write_text_if_needed(paths.decision_record_md, _decision_record_template(iter_id), overwrite)
+    _write_json_if_needed(
+        paths.root / "direction-review.json", direction_review_template(iter_id), overwrite
+    )
     return paths
 
 
@@ -265,6 +270,20 @@ def validate_iteration_dossier(
     if isinstance(external, dict):
         blocked.extend(_identity_blockers(external, iter_id, base))
         blocked.extend(_external_brief_blockers(external))
+        from open_composer.research.direction import (
+            requires_direction_review,
+            validate_direction_review,
+        )
+
+        if requires_direction_review(paths.root, base, external):
+            blocked.extend(
+                validate_direction_review(
+                    paths.root / "direction-review.json",
+                    base,
+                    expected_iter_id=iter_id,
+                    check_freshness=stage not in ARTIFACT_REQUIRED_STAGES,
+                )
+            )
     if isinstance(search_space, dict):
         blocked.extend(_identity_blockers(search_space, iter_id, base))
         blocked.extend(
@@ -3246,7 +3265,7 @@ def _write_json_if_needed(path: Path, payload: dict[str, Any], overwrite: bool) 
 
 def _external_brief_json_template(iter_id: str) -> dict[str, Any]:
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "iter_id": iter_id,
         "strategy_name": "us_minute_momentum",
         "source_spec_path": None,

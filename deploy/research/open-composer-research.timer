@@ -1,0 +1,10 @@
+[Unit]
+Description=Check bounded research queue every 10 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitInactiveSec=10min
+Unit=open-composer-research.service
+
+[Install]
+WantedBy=timers.target

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build data/features/alpha158_broad in the overnight window only.
 #
-# Why a window: the box has 3.9 GB total and this build holds ~1.7 GB, which
+# Why a window: the box has 3.9 GB total and the old build accumulated whole-year frames, which
 # leaves too little for the 23:05-23:45 UTC paper cycle (three rotation sleeves
 # plus the existing top-50 book). earlyoom on this machine prefers killing the
 # agent process, and a paper run that gets killed means no orders for the next
@@ -45,9 +45,12 @@ case "${1:-}" in
       --universe-root data/features/universe_broad \
       --out-dir data/features/alpha158_broad \
       --extra-daily-root data/sip-delisted/by_year \
-      --memory-limit 800MB \
+      --symbol-batch-size 100 \
+      --memory-limit 600MB \
       >> logs/alpha158_broad.log 2>&1
-    echo "[alpha158_broad] $(date -u +%FT%TZ) exit=$?" >> logs/broad_factor_build_driver.log
+    build_status=$?
+    echo "[alpha158_broad] $(date -u +%FT%TZ) exit=${build_status}" >> logs/broad_factor_build_driver.log
+    exit "${build_status}"
     ;;
   stop)
     pids="$(running_pids)"

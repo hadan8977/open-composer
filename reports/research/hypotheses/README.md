@@ -1,5 +1,7 @@
 # 假设卡（Hypothesis cards）
 
+2026-09-21：日常有界研究已受用户委托，不再逐卡等审批；仍须先联网查方向并过机器检查。最新目标、预算与资金权限边界见 `docs/research-mission.zh.md`。看板里的旧 proposed/approved 标签只是历史记录，恢复前先看后续否定证据，不能按旧泳道盲跑。
+
 每张卡是一次可被推翻的实验。状态流转：proposed → approved（你批准或按 2026-09-16 的委托默认批准）→ running → done（写复盘卡到 `../lessons/`）。
 规则（来自 `docs/proposal-research-loop-redesign-2026-09-15.zh.md` 2.4/2.5）：
 - 方法一栏必须引用 `knowledge/digest/` 里的条目或有 URL 的来源；没有出处的卡不合格。

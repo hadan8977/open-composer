@@ -34,6 +34,10 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
     copytree(repo_root / ".claude", target / ".claude", dirs_exist_ok=True)
     copytree(repo_root / "harness", target / "harness", dirs_exist_ok=True)
     for new_doc in [
+        "docs/research-mission.zh.md",
+        "docs/research-autonomy.zh.md",
+        "docs/plan-research-autonomy-2026-09-21.zh.md",
+        "docs/alpha158-recovery-2026-09-21.zh.md",
         "docs/plan-step-1-simplification-2026-05-22.zh.md",
         "docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md",
         "docs/plan-step-3-dashboard-first-2026-05-22.zh.md",

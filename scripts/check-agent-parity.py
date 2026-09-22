@@ -14,6 +14,8 @@ REQUIRED_CLAUDE_ANCHORS = [
     "paper_ready_pass",
     "Cockpit is read-only",
     "uv run oc repo check --strict",
+    "docs/research-mission.zh.md",
+    "oc research direction-check",
 ]
 
 REQUIRED_COMMANDS = [
@@ -26,6 +28,11 @@ def main() -> int:
     root = Path(__file__).resolve().parents[1]
     problems: list[str] = []
     problems.extend(_check_claude_doc(root))
+    for filename in ("AGENTS.md", "CLAUDE.md"):
+        if "docs/research-mission.zh.md" not in (root / filename).read_text(encoding="utf-8"):
+            problems.append(f"{filename} does not load the shared research mission")
+    if not (root / "docs/research-mission.zh.md").is_file():
+        problems.append("Shared research mission is missing")
     problems.extend(_check_settings(root))
     problems.extend(_check_commands(root))
     problems.extend(_check_skill_mirror(root))
