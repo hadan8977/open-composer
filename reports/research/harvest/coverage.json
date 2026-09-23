@@ -64,10 +64,11 @@
     "dir:capital_gain_momentum_no_dividend",
     "dir:collective2_us_stock_momentum_top10_sp500",
     "dir:ema_crossover_atr_paper_track",
-    "dir:reversal_trend_hourly_selection_alpha"
+    "dir:reversal_trend_hourly_selection_alpha",
+    "dir:reversal_trend_daily_signals"
    ],
-   "gap": "only the rule top-50 book was run; residual and industry-relative momentum never tested; never combined with other signals",
-   "next": "signal card on the broad universe, then feature in the multi-source model"
+   "gap": "only the rule top-50 book was run; residual and industry-relative momentum never tested; never combined with other signals Signal library v1: 12-1 momentum admitted; top-30 of the largest 500 held 20 days beats the universe by 17.7%/yr at 20 bp (43.6%/yr since 2024), max DD -50%.",
+   "next": "combine with the other admitted signals in the ranking model (plan item 6)"
   },
   {
    "id": "reversal.stock_short_term_reversal",
@@ -78,9 +79,9 @@
     "large_cap",
     "small_cap"
    ],
-   "status": "untested",
+   "status": "tested_refuted",
    "directions": [],
-   "gap": "no standalone long-only test by liquidity tier",
+   "gap": "no standalone long-only test by liquidity tier Signal library v1: 5- and 21-day reversal rejected; IC small and turnover eats it at 20 bp even in small caps.",
    "next": "signal card (week 1)"
   },
   {
@@ -125,7 +126,7 @@
     "large_cap",
     "small_cap"
    ],
-   "status": "tested_refuted",
+   "status": "tested_partial",
    "directions": [
     "dir:insider_form4_confirmation_gate",
     "dir:insider_buy_independent_broad_universe",
@@ -133,8 +134,8 @@
     "dir:event_13d_drift",
     "dir:activist_13d_long_horizon_hold"
    ],
-   "gap": "insider tests were partly gates on momentum; still refuted standalone",
-   "next": "re-run as signal cards feeding the multi-source model only"
+   "gap": "insider tests were partly gates on momentum; still refuted standalone Signal library v1: cluster insider buying admitted as an event feature (+0.78% over 20 sessions, t=5.0; book +2.4%/yr at 20 bp); single buys lose after costs; new 13D filings drift down after we can buy (-0.56%, -3.5% since 2024).",
+   "next": "use cluster buys inside the ranking model"
   },
   {
    "id": "event.earnings_pead",
@@ -226,15 +227,15 @@
     "large_cap",
     "small_cap"
    ],
-   "status": "tested_partial",
+   "status": "tested_refuted",
    "directions": [
     "dir:short_interest_avoidance_gate",
     "dir:short_interest_ratio_crowding_factor",
     "dir:finra_daily_short_volume_bjz",
     "dir:sec_fails_to_deliver_signal"
    ],
-   "gap": "daily short volume downloaded but never tested; fails-to-deliver never searched",
-   "next": "signal card (week 1)"
+   "gap": "daily short volume downloaded but never tested; fails-to-deliver never searched Signal library v1: FINRA daily short-volume z-score has no signal (IC 0.002); days to cover weak (IC 0.008, t=1.4).",
+   "next": "fails-to-deliver only with new evidence"
   },
   {
    "id": "alt_data.news_social",
@@ -251,8 +252,8 @@
     "dir:retail_sentiment_attention",
     "dir:news_sentiment_trading_pwb"
    ],
-   "gap": "counts refuted; LLM-scored sentiment on 680k items never run as a standalone signal",
-   "next": "local LLM scoring on the GPU machine, then signal card"
+   "gap": "counts refuted; LLM-scored sentiment on 680k items never run as a standalone signal Signal library v1 confirms news-count attention carries nothing (IC -0.003). The signed high-frequency news reaction (H-20260923-14) is a different construction and is being built.",
+   "next": "news_hf_reaction cards after the feature build"
   },
   {
    "id": "alt_data.web_and_other",
@@ -360,10 +361,11 @@
     "dir:drift_regime_conditional_factor_unicorn_edge",
     "dir:trend_filtered_mean_variance_pwb",
     "dir:factor_momentum_timing_decay",
-    "dir:long_only_fundamental_decile_10k"
+    "dir:long_only_fundamental_decile_10k",
+    "dir:signal_library_v1_price_anomalies"
    ],
-   "gap": "judged long-short and whole-universe; long-only small-cap and low-capacity tiers never checked",
-   "next": "signal cards by liquidity tier"
+   "gap": "judged long-short and whole-universe; long-only small-cap and low-capacity tiers never checked Signal library v1: idiosyncratic volatility, MAX and 52-week-high have strong ICs (0.04-0.05) but their value is on the avoid side, so top-30 long books do not beat the universe; residual momentum's largest-500 book is strong (+19.4%/yr) with a weak IC.",
+   "next": "feed them to the ranking model as features"
   },
   {
    "id": "intraday_hf.stock_intraday",
