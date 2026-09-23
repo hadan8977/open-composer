@@ -1,0 +1,54 @@
+{
+ "schema_version": 1,
+ "library": "signal-library-news-hf-v1",
+ "preregistered_at": "2026-09-23T12:50:14+00:00",
+ "plan": "reports/research/iterations/h20260923_14_news_hf_reaction/ (direction dir:high_freq_news_return_underreaction_drift, card H-20260923-14, candidate-manifest.json NHF01-NHF03); docs/plan-research-coverage-2026-09-23.zh.md section 6.1/6.2",
+ "tool": "open_composer/research/signal_card.py (rank: top 3000 PIT universe, top-30 long-only books; event: calendar-time books)",
+ "directions_fixed_before_running": true,
+ "trials": {
+  "signals": 3,
+  "horizons_reported": [
+   1,
+   5,
+   20,
+   60
+  ],
+  "note": "screening; admission is not a strategy claim. Requires data/features/news_hf_reaction/*.parquet to be built first (scripts/build_news_hf_reaction.py) for the years this batch is run against. Run only after the concurrently-running library-v1 batch (reports/research/signal-cards/library-v1-manifest.json) has finished, so the two memory-capped jobs do not overlap on this 3.9GB box."
+ },
+ "admission_rule": {
+  "rank": "stable_years AND beats_shuffle AND (T1 or T2 top-30 book positive excess at 20 bp in both the full and the 2024+ window at the primary horizon) AND max |t_nonoverlap| over horizons >= 2.5 with the preregistered sign",
+  "event_long": "beats_redated AND t_dates >= 3 at the primary horizon AND calendar-time book positive excess at 20 bp in the full and the 2024+ window",
+  "event_exit": "t_dates <= -3 at the primary horizon AND beats_redated: admitted as an exit or avoid signal only",
+  "reported_not_required": [
+   "timely",
+   "distinct_from_controls"
+  ]
+ },
+ "signals": [
+  {
+   "name": "news_hf_reaction_raw",
+   "source": "data/features/news_hf_reaction",
+   "column": "news_return",
+   "direction": 1,
+   "primary_horizon": 5,
+   "rationale": "NHF01 (candidate-manifest.json, h20260923_14_news_hf_reaction): signed high-frequency news-return (Jiang-Li-Wang 2019/2021), raw daily value, no smoothing; one-week primary horizon matches the paper own one-week holding period; long-only, mechanistically distinct from the already-refuted count-based news_attention (news COUNT/novelty, not the SIGN of the price reaction)"
+  },
+  {
+   "name": "news_hf_reaction_5d_sum",
+   "sql": "WITH r AS (SELECT symbol, trade_date, news_return FROM read_parquet('data/features/news_hf_reaction/*.parquet')), cal AS (SELECT DISTINCT symbol, trade_date FROM read_parquet('data/features/daily_broad/*.parquet')), dense AS (SELECT cal.symbol, cal.trade_date, COALESCE(r.news_return, 0) AS news_return FROM cal LEFT JOIN r USING (symbol, trade_date)) SELECT symbol, trade_date, SUM(news_return) OVER (PARTITION BY symbol ORDER BY trade_date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS value FROM dense",
+   "direction": 1,
+   "primary_horizon": 5,
+   "rationale": "NHF02 (candidate-manifest.json, h20260923_14_news_hf_reaction): trailing 5-session sum of news_return, zero-filled on non-news sessions against the PIT daily_broad calendar so the sum is a true trailing-5-trading-day window, not 5 sparse news rows; tests whether accumulated signed reaction over the paper own one-week holding window carries more (or less) information than a single day value"
+  },
+  {
+   "name": "news_hf_reaction_event_p90",
+   "mode": "event",
+   "source": "data/features/news_hf_reaction",
+   "column": "news_return",
+   "threshold": 0.0274,
+   "direction": 1,
+   "primary_horizon": 5,
+   "rationale": "NHF03 (candidate-manifest.json, h20260923_14_news_hf_reaction): event mode on large positive reactions only (news_return >= 0.0274, the 90th percentile measured on the 2025-06 real-data validation build, 10,073 stock-days / 3,279 symbols -- fixed before any signal-card result exists, a data-grounded disclosed choice, not tuned after seeing forward returns); long-only analog of the paper decile-10 winner portfolio"
+  }
+ ]
+}

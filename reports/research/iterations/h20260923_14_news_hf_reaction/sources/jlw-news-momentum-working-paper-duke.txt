@@ -1,0 +1,181 @@
+[transcribed by direct reading of the PDF page images, 2026-09-23 -- the fetch
+tool could not extract machine-readable text from this PDF, so these are
+verbatim-typed excerpts of the passages actually read, not an automated
+scrape; page numbers refer to the PDF's own printed footer]
+
+SOURCE: "News Momentum", Hao Jiang, Sophia Zhengzi Li, Hao Wang. This Draft:
+August 6, 2019. Retrieved from
+https://ipl.econ.duke.edu/seminars/system/files/seminars/2516.pdf (Duke
+Economics seminar archive), 47 pages. This is the pre-publication working-
+paper title; the same construction was later published as "Pervasive
+underreaction: Evidence from high-frequency data", Journal of Financial
+Economics 141 (2021): 573-599 (confirmed via Hao Jiang's CV, see companion
+snapshot; SSRN listing https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2679614,
+DOI 10.2139/ssrn.2679614).
+
+=== p.1, Abstract ===
+"We decompose daily stock returns into news- and non-news-driven components,
+using a comprehensive sample of high-frequency firm-level news arrivals. We
+find that news-driven returns tend to exhibit momentum, different from
+non-news returns that precede a reversal. A news momentum strategy that buys
+(sells) stocks with high (low) news returns generates a monthly return of
+3.34% in the following week, with a four-factor alpha of 3.37%. The news
+momentum effect is stronger when investors are distracted. Using analyst
+earnings forecasts as a proxy, we also find that slow adjustments of market
+expectations following firm news contribute to news momentum."
+
+=== p.2, Introduction ===
+"In this paper, we exploit these insights to contribute to the literature on
+return predictability. Specifically, we combine a comprehensive sample of
+time-stamped firm-level public news announcements with high-frequency (e.g.,
+within a 15-minute time interval) price movements of individual stocks, to
+identify the very short-term response of individual stocks to firm-specific
+information events."
+
+"During the period from 2000 to 2012, this strategy generates an average
+monthly return of 3.34%, with a four-factor alpha of 3.37%, controlling for
+the market, size, value, and momentum."
+
+=== p.4-5, Section 2 Sample Construction ===
+"Our sample consists of all the firms listed on the New York Stock Exchange
+(NYSE), National Association of Securities Dealers Automated Quotations
+(NASDAQ), and American Stock Exchange (AMEX) with at least one news story
+covered by the Dow Jones News Wire. Our intraday price and quote data come
+from the TAQ database; high-frequency firm news data are from RavenPack;
+dividends, share splits and other stock market data are from CRSP; accounting
+data are from Compustat; and analyst forecasts are from I/B/E/S. Our sample
+period is from March 2000 to October 2012. Following prior literature, we use
+common stocks with share code of 10 or 11."
+
+"To prepare the intraday return data, we gather minute-by-minute observations
+of intraday prices by applying the cleaning rules of Barndorff-Nielsen et al.
+(2009) and Bollerslev et al. (2016) to the TAQ database. Using these intraday
+prices, we then compute intraday returns as every 15-minute return between
+9:45 a.m. and 4:00 p.m. and the overnight return as the return between 4:00
+p.m. on the previous trading day and 9:45 a.m. on the current trading day.
+Because the TAQ transaction prices are raw prices without adjustments for
+share splits, we use the daily "cumulative factor to adjust price" and
+"dividend cash amount" variables in the CRSP database to adjust for split and
+dividend." [footnote 2:] "We use the price at 9:45 a.m. for overnight returns
+to ensure that most stocks have traded at least once after the market open,
+following Patton and Verardo (2012) and Bollerslev et al. (2016). As a
+robustness test, we use 9:30 a.m. price to compute the overnight return and
+find qualitatively similar results."
+
+"To capture a news story specifically about a given firm, we use the
+"relevance score" that RavenPack provides ... We require news stories in our
+sample to have a relevance score of 100 ... We exclude repeated news by
+setting the "event novelty score" (ENS) provided by RavenPack to be 100,
+which captures only the fresh news about a company."
+
+"To capture the high-frequency market reaction to firm-level news, we combine
+the intraday return data partitioned at 15-minute intervals and firm-specific
+news event data time-stamped at the second level. To avoid extremely illiquid
+stocks, we eliminate stocks that are priced below $1 at the end of the
+portfolio formation period. Our final sample includes a total of 5,480 firms
+that have at least one news story over the period of 3,189 days between March
+2000 and October 2012. A typical day has an average of 3,781 firms covered by
+news stories."
+
+"Our main innovation is to decompose stock returns into news-driven and
+non-news-driven returns based on high-frequency market reaction. Specifically,
+we classify a stock's return according to whether firm-level news is released
+during the return measurement period. For news occurring within regular
+trading hours, the news return is simply the 15-minute return over the same
+period that the news occurs. For news occurring during the weekend, holiday,
+or overnight, the news return is the nearest subsequent overnight return to
+reflect that the first reaction to such news stories is incorporated into the
+stock's price only for the first trade of the following trading day. For
+example, the return for news events during the weekend is the return over the
+period of 4:00 p.m. of the surrounding Friday and 9:45 a.m. of the surrounding
+Monday. After classification, we aggregate all news and non-news returns
+within each day starting from 4:00 p.m. on day t-1 to 4:00 p.m. on day t to
+form daily news and non-news returns."
+
+=== p.6, equation and M=26 ===
+"More formally, suppose there are M overnight plus intraday returns per day.
+For example, in the case of 15-minute returns, M = 26. Let r^j_{i,t} be the
+jth overnight or intraday simple return for firm i on day t, where j =
+1, 2, ..., M. We compute the daily news and non-news returns for firm i and
+day t as follows: R_{i,t,news} = prod_{j=1}^{M}(1+r^j_{i,t,news}) - 1,
+R_{i,t,non-news} = prod_{j=1}^{M}(1+r^j_{i,t,non-news}) - 1, where
+r^j_{i,t,news} = r^j_{i,t} if there is a news story in the interval j and 0
+otherwise, and r^j_{i,t,non-news} = r^j_{i,t} if there is no news story in the
+interval j and 0 otherwise. Clearly, the daily overall return is the product
+of news and non-news returns."
+
+=== p.7, Section 3.1 Portfolio Sorts ===
+"At the 4:00 p.m. market close of each trading day t, we sort stocks into
+decile portfolios based on their news returns on day t, R_{i,t,news}. We
+compute the equal-weighted returns for each decile portfolio and a
+self-financing strategy that buys stocks in the top decile with high news
+returns and sells stocks in the bottom decile with low news returns with a
+one-week holding period until market close of day t+5. To increase the power
+of our tests, we follow Jegadeesh and Titman (1993) by using portfolios with
+overlapping holding periods. That is, we revise the weights on one-fifth of
+the securities in our news momentum strategy on any given day and carry over
+the rest from the previous day, resulting in non-overlapping series of
+portfolio returns throughout calendar days." [footnote 4:] "Only firms with
+news arrivals on day t enter into portfolio formation. On average, there are
+approximately 280 firms with news per day."
+
+"The average monthly return increases from -0.78% for the loser portfolio in
+decile 1 to 2.55% for the winner portfolio in decile 10, yielding a return of
+3.34% per month with a t-statistic of 11.72. Stated in annual terms, the news
+momentum strategy generates a return of 40.08% per year and an annualized
+Sharpe ratio of around 3.29."
+
+"The FFC4 alpha of the news momentum strategy is 3.37% per month and remains
+highly significant with a t-statistic of 11.76."
+
+=== p.16-17, Section 5 The Case of Overnight News ===
+"The news momentum strategy uses news returns computed from market close on
+day t-1 to market close on day t; the portfolios are formed immediately and
+held for the next five days. ... Using an intraday event study approach, we
+find compelling evidence for delayed reaction to overnight news, which
+constitutes more than half of our sample."
+
+"Specifically, to investigate potential delayed reaction to overnight news, at
+10:00 a.m. on each trading day t, we sort news returns computed from the close
+of day t-1 to 9:45 a.m. of day t into deciles and then hold the
+winner-minus-loser portfolio for the subsequent five trading days."
+
+"The average five-day return in investing in the overnight news has a large
+spread of 104 bps, substantially larger than the average five-day cumulative
+return of 88 bps shown in Figure 1, where the impact of the overnight news on
+the immediate open-to-close period is ignored."
+
+=== p.24-25, Section 6.9 Drift After Headlines (Chan 2003 replication) ===
+"Chan (2003) studies stock return patterns following the month with headline
+news. He finds evidence of post-news drift for stocks with headlines and
+reversal for stocks without identifiable news. ... To formally illustrate the
+difference between Chan (2003)'s effect and ours, we replicate Chan (2003)'s
+strategy in our sample as follows. At the end of each month, we consider a
+news group consisting of all stocks that have at least one news story during
+that month. We then sort them into ten portfolios based on their monthly
+return and compute the equal-weighted return of a self-financing portfolio
+that buys stocks in the top decile with high returns and sells stocks in the
+bottom decile with low returns with K = 1, 3, and 6 month holding periods."
+
+"We see that Chan (2003)'s effect does not exist in our sample as returns
+seem to exhibit weakly reversal rather than momentum for those news stocks.
+The four-factor alphas are -0.85%, -0.44% and -0.27% per month with
+t-statistics of -1.74, -1.85 and -1.86 for one-, three- and six-month holding
+periods, respectively."
+
+=== p.25, Section 7 Conclusion ===
+"We decompose daily stock returns into news- and non-news-driven components,
+using a comprehensive sample of high-frequency firm-level news arrivals. We
+find that news-driven returns tend to exhibit momentum, different from
+non-news returns that precede a reversal. A news momentum strategy that buys
+(sells) stocks with high (low) news returns generates a monthly return of
+3.34% in the following week, with a four-factor alpha of 3.37%."
+
+[end of transcribed excerpts. No transaction-cost / net-of-cost figure was
+found anywhere in this 2019 draft's readable pages (sections 1-7, the
+Conclusion, and the References list were all read); the ~18bp/~1.37%-net
+figure carried in reports/research/harvest/directions.jsonl for this
+direction is therefore NOT verified against this draft -- see
+direction-review.json's negative_experiments_checked / remaining_evidence_gap
+fields, which flag this explicitly rather than silently repeating it as
+directly read.]

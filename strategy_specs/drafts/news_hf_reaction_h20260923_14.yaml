@@ -1,0 +1,204 @@
+name: news_hf_reaction_h20260923_14
+description: >-
+  Preregistered H-20260923-14 candidate family. NHF01/NHF02/NHF03 are
+  signal-card tests (open_composer/research/signal_card.py) of the signed
+  high-frequency news-return feature (Jiang, Li & Wang, "Pervasive
+  underreaction - evidence from high-frequency data", JFE 141, 2021; read from
+  the authors' own 2019 working-paper draft) built by
+  scripts/build_news_hf_reaction.py into data/features/news_hf_reaction/. The
+  paper decomposes each trading day into 15-minute intraday intervals plus one
+  overnight interval, aggregates the intervals containing a firm-news event
+  into a signed "news return", and finds it predicts one-week drift
+  (long-short, 2000-2012, gross 3.34%/month). NHF01 ranks stocks on the raw
+  daily news return; NHF02 ranks on a trailing 5-session sum (to test whether
+  accumulated reaction over the paper's own one-week holding period is more or
+  less informative than a single day's reaction); NHF03 is an event-mode test
+  on large positive reactions only, the long-only analog of the paper's decile
+  10. All three test the long leg only (direction +1) -- the short leg is not
+  executable for us. No strategy backtest is run in this pass; the signal-card
+  tool is the decisive test, and it is explicitly deferred to the main
+  session, not run by this iteration.
+timeframe: daily
+universe:
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - GOOGL
+lifecycle: draft
+position_direction: long_only
+
+entry:
+  all:
+    - close > 0
+  any: []
+
+exit:
+  all: []
+  any:
+    - close <= 0
+
+risk:
+  max_trades_per_day: 30
+  max_position_weight: 0.033
+  stop_loss_pct: null
+  take_profit_pct: null
+
+portfolio:
+  mode: adaptive_intraday_internal_router
+  max_symbols_per_day: 30
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.033
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260923_14:NHF:news_hf_reaction_signal_screen
+
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/minute
+  feed: sip
+
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+  caveat: >
+    The feature itself is built from two sources this single `data.path`
+    cannot express: data/features/news_packets (Alpaca/Benzinga news,
+    ~685k articles, effective coverage 2024-01-01+) and data/sip/minute
+    (1-minute SIP bars, 2023+, confirmed already split-adjusted -- checked
+    empirically against NVDA's 2024-06-10 10:1 split, continuous across the
+    ex-date). `adjusted: true` reflects the minute archive; the news source
+    has no adjustment concept. See data-feasibility.json for full coverage
+    numbers (regular-hours vs overnight share, symbol-match rate against the
+    minute archive, fanout distribution).
+
+factors:
+  news_hf_reaction_daily:
+    source: expression
+    expression: sma(close, 1)
+    default: 0.0
+    description: Documentation-only stand-in. The real `news_return` value is
+      a cross-symbol, cross-timestamp computation (news items matched to
+      1-minute-bar-derived 15-minute interval anchors, compounded per the
+      paper's decomposition) computed entirely by
+      scripts/build_news_hf_reaction.py and read by signal_card.py from
+      data/features/news_hf_reaction/{year}.parquet, not by this per-symbol
+      expression grammar -- the same pattern this repo already uses for
+      cross-symbol gates (see
+      strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml's
+      opening_range_high stand-in).
+    params:
+      decision_lag_sessions: 1
+  news_hf_reaction_5d_sum:
+    source: expression
+    expression: sma(close, 5)
+    default: 0.0
+    description: Documentation-only stand-in for NHF02's trailing 5-session
+      sum of news_return (zero-filled on non-news sessions), also computed by
+      the signal-card tool's own `--sql` option, not by this expression.
+    params:
+      decision_lag_sessions: 1
+
+llm_review:
+  enabled: false
+  model: null
+
+required_capabilities:
+  - market.alpaca_bars
+  - news.alpaca
+
+research_design:
+  iter_id: h20260923_14_news_hf_reaction
+  candidate_manifest_path: reports/research/iterations/h20260923_14_news_hf_reaction/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260923_14_news_hf_reaction/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260923_14_news_hf_reaction.jsonl
+  source_card_claim_ids:
+    - jlw_construction_window_and_overnight_rule
+    - jlw_construction_news_classification_weekend_example
+    - jlw_reported_magnitude_decile_sort
+    - jlw_overnight_majority_of_sample
+    - jlw_ssrn_crossref_bibliographic_confirmation
+  parameter_space:
+    candidate_id:
+      - NHF01
+      - NHF02
+      - NHF03
+  candidate_budget: 3
+  selection_objective: >-
+    No ranking between NHF01/NHF02/NHF03 -- each is judged
+    independently against the fixed admission rule already preregistered in
+    reports/research/signal-cards/library-v1-manifest.json (rank rule --
+    stable_years AND beats_shuffle AND a tradable tier's top-30 book is
+    positive at 20bp in both the full and 2024+ windows AND |t_nonoverlap| >=
+    2.5 with the preregistered sign; event rule -- beats_redated AND t_dates >=
+    3 AND the calendar-time book is positive at 20bp in both windows). This
+    iteration builds the feature and preregisters the three specs in
+    reports/research/signal-cards/news-hf-v1-manifest.json; running
+    signal_card.py against that manifest is the main session's next step, not
+    part of this pass.
+  anti_overfit_notes:
+    - Three candidates (NHF01 rank on the raw daily value, NHF02 rank on a
+      5-session sum, NHF03 event on large positive reactions) are frozen in
+      the manifest before any signal-card result is computed.
+    - The admission rule is reused verbatim from the already-preregistered
+      library-v1-manifest.json rather than invented per-direction, so no
+      threshold can be tuned after seeing this direction's own numbers.
+    - The event threshold (NHF03) is set from the actual 2025-06 validation
+      month's empirical news_return distribution (~90th percentile, disclosed
+      in candidate-manifest.json), not chosen after a full-sample run.
+    - This project's own most closely related family (dir:news_attention_features)
+      was refuted at the same admission bar, disclosed in
+      negative_experiments_checked; the bar is not being relaxed for this
+      direction.
+  validation_plan:
+    - feature_build_identity_check_news_plus_nonnews_equals_overall_return
+    - point_in_time_and_overnight_unit_tests_tests_test_build_news_hf_reaction_script
+    - one_month_real_data_validation_build_before_multi_year_build_2025_06
+    - signal_card_admission_rule_reused_from_library_v1_manifest_not_invented
+
+notes:
+  intent: Ask whether the Jiang-Li-Wang signed high-frequency news-return
+    feature, built faithfully on our own Alpaca/Benzinga news and SIP minute
+    bars, clears this project's own signal-library admission bar as an
+    independent per-stock signal -- before any strategy-level combination or
+    backtest. Per the registry's own note, this is genuinely distinct from
+    the already-refuted count-based news-attention family and both required
+    data ingredients are already in local inventory.
+  hypothesis_id: H-20260923-14
+  previous_link: null
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready
+  design_constraints:
+    long_only: true
+    no_backtest_this_pass: true
+    signal_card_is_the_decisive_test_deferred_to_main_session: true
+  research_notes: >
+    scripts/build_news_hf_reaction.py and tests/test_build_news_hf_reaction_script.py
+    carry the full construction detail and are the authoritative reference;
+    this spec exists only to satisfy the project's candidate-manifest/
+    research-design preregistration convention for a signal-card-only
+    (no-backtest) research round.

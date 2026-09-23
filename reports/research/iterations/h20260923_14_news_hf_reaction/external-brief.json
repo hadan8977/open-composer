@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260923_14_news_hf_reaction",
+  "strategy_name": "news_hf_reaction_h20260923_14",
+  "source_spec_path": "strategy_specs/drafts/news_hf_reaction_h20260923_14.yaml",
+  "spec_hash": "3c0b647d0a95ccfa8d7af4adaaff5c221e0c0d9eb6fe8e8b5611efdadae0efb8",
+  "generated_at": "2026-09-23T12:40:00Z",
+  "generated_before_backtest": true,
+  "objective": "Pin the exact construction of the Jiang-Li-Wang signed high-frequency news-return feature from primary and corroborating sources before building it locally, and gather enough context (post-2012 replication status, related adaptations, data caveats) to judge whether the local build and its preregistered signal-card tests are worth the compute.",
+  "decision": "proceed_to_feature_build_and_signal_card_preregistration_no_backtest",
+  "existing_solution_comparison": "The mechanism (signed high-frequency price reaction to firm news, aggregated into a daily 'news return', predicting subsequent drift) is a peer-reviewed, published construction (JFE 2021), read here from the authors' own 2019 working-paper draft; it is mechanistically distinct from this project's already-refuted count/novelty-based news-attention family. No local prior attempt at this exact construction exists.",
+  "negative_experiments_checked": "dir:news_attention_features (refuted 2026-09-16, count/novelty only); checked via `oc research directions check` before starting this iteration, no other direction constructs a signed HF news-reaction feature.",
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260923_14_news_hf_reaction.jsonl"
+  ],
+  "source_evidence_bindings": [
+    "jlw_construction_window_and_overnight_rule",
+    "jlw_construction_news_classification_weekend_example",
+    "jlw_reported_magnitude_decile_sort",
+    "jlw_overnight_majority_of_sample",
+    "jlw_ssrn_crossref_bibliographic_confirmation"
+  ],
+  "sources": [
+    {
+      "claim_id": "jlw_construction_window_and_overnight_rule",
+      "url": "https://ipl.econ.duke.edu/seminars/system/files/seminars/2516.pdf",
+      "published_or_updated_at": "2019-08-06",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_published_jfe_2021_this_is_the_authors_own_pre_publication_draft",
+      "core_claim": "M=26 interval grid per day: 1 overnight (prior 4pm close to current 9:45am price) + 25 intraday 15-minute intervals (9:45am-4pm); TAQ prices split/dividend-adjusted via CRSP factors.",
+      "project_applicability": "Exact grid replicated on our 1-minute SIP bars in scripts/build_news_hf_reaction.py.",
+      "reflection": "Read by direct PDF page rendering (image-based), hand-transcribed since the fetch tool could not extract machine text from this specific PDF; cross-checked against Hao Jiang's CV and the crossref bibliographic record for the published version."
+    },
+    {
+      "claim_id": "jlw_construction_news_classification_weekend_example",
+      "url": "https://ipl.econ.duke.edu/seminars/system/files/seminars/2516.pdf",
+      "published_or_updated_at": "2019-08-06",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_published_jfe_2021_this_is_the_authors_own_pre_publication_draft",
+      "core_claim": "Regular-hours news -> same-interval 15-min return; weekend/holiday/overnight news -> nearest subsequent overnight return (worked example: weekend news gets Friday-4pm-to-Monday-9:45am).",
+      "project_applicability": "Pins attribute_news()'s exact overnight-routing rule.",
+      "reflection": "Same reading method as above; this rule is the single most load-bearing design choice in the local build and is quoted verbatim in direction-review.json."
+    },
+    {
+      "claim_id": "jlw_reported_magnitude_decile_sort",
+      "url": "https://ipl.econ.duke.edu/seminars/system/files/seminars/2516.pdf",
+      "published_or_updated_at": "2019-08-06",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_published_jfe_2021_this_is_the_authors_own_pre_publication_draft",
+      "core_claim": "Equal-weighted decile sort at 4pm close, one-week overlapping holding: decile1 -0.78%/mo to decile10 +2.55%/mo, spread 3.34%/mo (t=11.72), FFC4 alpha 3.37%/mo (t=11.76), 2000-2012.",
+      "project_applicability": "Headline magnitude and long-short structure motivating a long-only (direction +1) signal-card test.",
+      "reflection": "Gross of costs; no transaction-cost scenario found in this draft's readable sections -- the registry's ~18bp/~1.37%-net figure is not independently re-verified this pass."
+    },
+    {
+      "claim_id": "jlw_overnight_majority_of_sample",
+      "url": "https://ipl.econ.duke.edu/seminars/system/files/seminars/2516.pdf",
+      "published_or_updated_at": "2019-08-06",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_published_jfe_2021_this_is_the_authors_own_pre_publication_draft",
+      "core_claim": "Overnight news is more than half of the paper's full sample and shows delayed (not immediate) reaction once tested with an intraday event-study design.",
+      "project_applicability": "Corroborated locally: 57.1% of our own 2024+ news items arrive outside 09:30-16:00 ET (see data-feasibility.json), so the overnight bucket is not a minor edge case here either.",
+      "reflection": "Independent local measurement, not a re-run of the paper's own overnight event study."
+    },
+    {
+      "claim_id": "jlw_ssrn_crossref_bibliographic_confirmation",
+      "url": "https://api.crossref.org/works?query.bibliographic=Pervasive+underreaction+high+frequency+data+Jiang+Li+Wang&rows=3",
+      "published_or_updated_at": "2015-10-28",
+      "source_type": "paper",
+      "credibility": "crossref_bibliographic_record_machine_generated_but_from_the_doi_registry",
+      "core_claim": "SSRN DOI 10.2139/ssrn.2679614's abstract matches the Duke working-paper draft's abstract verbatim -- same paper.",
+      "project_applicability": "Confirms the working-paper draft and the JFE-published paper the registry cites are one and the same.",
+      "reflection": "Bibliographic/abstract match only; SSRN and ScienceDirect both returned HTTP 403 to direct fetch this pass, so the full published text was not independently read."
+    },
+    {
+      "claim_id": "jlw_jfe_publication_citation_cv",
+      "url": "https://bps.broad.msu.edu/media/documents/64de1b705a16be5f428b4567.pdf",
+      "published_or_updated_at": "2026-08-01",
+      "source_type": "paper",
+      "credibility": "author_own_cv_self_reported_publication_list",
+      "core_claim": "Hao Jiang's own CV lists 'Jiang, Hao, Sophia Li and Hao Wang (2021). Pervasive Underreaction: Evidence from High-Frequency Data. Journal of Financial Economics 141: 573-599', winner of Best Paper Awards at the Eleventh Triple Crown Conference.",
+      "project_applicability": "Independently confirms the working-paper draft's later publication venue, volume/page numbers, and that it is peer-reviewed (not just a permanent working paper).",
+      "reflection": "This specific PDF turned out to be Hao Jiang's CV, not the paper itself, when first fetched while searching for a free full-text copy -- kept as a source because the CV's own publication-list line is independently useful bibliographic confirmation."
+    },
+    {
+      "claim_id": "jlw_sciencedirect_listing_paywalled",
+      "url": "https://www.sciencedirect.com/science/article/abs/pii/S0304405X21001306",
+      "published_or_updated_at": "2021-01-01",
+      "source_type": "paper",
+      "credibility": "publisher_journal_page_paywalled_beyond_abstract",
+      "core_claim": "Journal of Financial Economics's own page lists this article under the title 'Pervasive underreaction: Evidence from high-frequency data', confirming the DOI family and journal placement found by search.",
+      "project_applicability": "Corroborates the paper's existence and journal placement; contributes no additional methodology detail (fetch returned HTTP 403, abstract-only page not retrievable this pass).",
+      "reflection": "Could not be fetched (403); listed here only because it was one of the first and most consistently returned search results across every query this pass, and its non-retrievability is itself a disclosed limitation."
+    },
+    {
+      "claim_id": "dissecting_momentum_china_2026_daily_variant_null",
+      "url": "http://yuchenxu.com/paper/Momentum.pdf",
+      "published_or_updated_at": "2026-04-01",
+      "source_type": "paper",
+      "credibility": "working_paper_april_2026_not_yet_peer_reviewed_five_named_authors",
+      "core_claim": "\"Dissecting Momentum in China\" (Liu, Tan, Xu, Yuan, Zhu, April 2026) explicitly builds on Jiang et al. (2021)'s news/non-news decomposition ('This method is inspired by Jiang et al. (2021), who decomposed daily stock returns into news-driven and non-news-driven components') but classifies whole DAYS (not 15-minute intervals) as news/non-news and sorts on the past 5-day news return at MONTHLY rebalance on Chinese equities; the resulting quintile long-short spread is not significant (0.10%/month, t=0.31), i.e. this coarser day-level, different-market, different-horizon adaptation does not reproduce a positive result.",
+      "project_applicability": "The only post-2012, non-registry evidence found this pass that engages with the JLW construction directly; a genuine caution (not a refutation, given the methodological differences) about assuming the effect transfers easily outside the original HF/US/weekly design -- directly relevant to this iteration's own remaining_evidence_gap.",
+      "reflection": "Read via pdftotext extraction (this PDF's text layer was machine-readable, unlike the Duke PDF); the null result is for a DAY-level decomposition and MONTHLY horizon in CHINA, not the 15-minute/US/weekly construction this iteration actually builds, so it is evidence about adaptation risk, not a like-for-like replication failure."
+    }
+  ],
+  "topic_coverage": [
+    "hf_news_return_construction_window_and_overnight_rule",
+    "hf_news_return_daily_aggregation_and_decile_sort",
+    "hf_news_return_reported_magnitude_and_cost_gap",
+    "hf_news_return_mechanism_inattention_and_analyst_slow_adjustment",
+    "hf_news_return_overnight_news_majority_and_delayed_reaction",
+    "hf_news_return_bibliographic_confirmation_working_paper_vs_published",
+    "hf_news_return_post_2012_replication_status_and_china_adaptation_caution",
+    "local_data_feasibility_news_packets_and_sip_minute_coverage"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "jlw_construction_news_classification_weekend_example",
+      "effect": "The paper's own grid starts intraday intervals at 9:45am, folding the 9:30-9:45 opening-auction window into the overnight interval by construction, not as an approximation.",
+      "revision": "attribute_news() classifies any news before a session's own 9:45 anchor as overnight for that session, not as a same-day intraday bucket -- an exact rule, not a simplification"
+    },
+    {
+      "driver": "jlw_overnight_majority_of_sample",
+      "effect": "Overnight news is more than half the sample in both the paper's data and ours (57.1% locally).",
+      "revision": "kept the full overnight-interval machinery (chained prior-session close to next-session 9:45 anchor) rather than dropping or approximating overnight news as a simplification for build speed"
+    },
+    {
+      "driver": "dissecting_momentum_china_2026_daily_variant_null",
+      "effect": "A coarser day-level, monthly-horizon, different-market adaptation of the same decomposition did not find a significant effect.",
+      "revision": "kept the paper's own fine-grained 15-minute/weekly construction (not a day-level shortcut) precisely so this build is not exposed to the same failure mode; flagged as an open risk in direction-review.json rather than treated as resolved"
+    }
+  ]
+}

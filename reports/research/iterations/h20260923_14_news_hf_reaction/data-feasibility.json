@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260923_14_news_hf_reaction_historical_evaluation_authorization",
+  "iter_id": "h20260923_14_news_hf_reaction",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 3,
+    "evaluation_authorized_count": 3,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 3,
+    "rows": [
+      {
+        "candidate_id": "NHF01",
+        "path": "news_hf_reaction_signal_screen",
+        "action": "evaluate",
+        "reason_code": "feature_built_and_validated_on_2025_06_real_data",
+        "candidate_binding_sha256": "193e91b7bb9875879fe4ff54eb8fb40b968a54f763af7e3f7b13d4d01c4d7509"
+      },
+      {
+        "candidate_id": "NHF02",
+        "path": "news_hf_reaction_signal_screen",
+        "action": "evaluate",
+        "reason_code": "feature_built_and_validated_on_2025_06_real_data",
+        "candidate_binding_sha256": "fc402d0bc0fb7a0ecbd5bdeb628efb417f687f7804926244a7126b3ae3c5b7ae"
+      },
+      {
+        "candidate_id": "NHF03",
+        "path": "news_hf_reaction_signal_screen",
+        "action": "evaluate",
+        "reason_code": "feature_built_and_validated_on_2025_06_real_data",
+        "candidate_binding_sha256": "c48141953459184dac1a37d3f7d9ad4a65fb00828aa54e4efa2dc8085f1d95b0"
+      }
+    ]
+  },
+  "path_gates": {
+    "news_hf_reaction_signal_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "NHF01",
+        "NHF02",
+        "NHF03"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "GO, with disclosed caveats. Verified this pass by direct inspection (duckdb queries against the real archives, plus one real end-to-end feature build for 2025-06) rather than a full backtest. (1) News: data/features/news_packets holds 684,876 Alpaca/Benzinga articles across 2024/2025/2026.parquet; effective coverage starts 2024-01-01 (196 rows before it, excluded as non-representative); visible_at has genuine second-level precision (verified: distinct second values roughly uniform, not clustered at :00). (2) Regular-hours vs overnight split (2024+, duckdb, ET): 42.9% regular hours (09:30-16:00), 34.0% premarket, 16.7% after-hours, 5.0% deep overnight, 1.4% weekend -- i.e. 57.1% of news arrives outside regular hours, corroborating the paper's own 'more than half of our sample' overnight-news finding (claim_id jlw_overnight_majority_of_sample) independently on our data. (3) Symbol coverage: a one-month probe (news_packets January 2024) found 4,701 distinct symbols named in news that month, of which 3,319 (70.6%) had at least one matching 1-minute bar in data/sip/minute/2024/01 -- the remaining ~29% are news-only names (delisted, OTC, index/ETF-basket roundups, or ticker-format mismatches) that will simply produce no feature row, not a crash; this gap is disclosed, not patched, in this pass. (4) Fanout: of 2024+ articles, 81.3% name exactly 1 symbol, a long tail up to 19+ (MAX_SYMBOL_FANOUT=10 reused from news_attention.py drops the rest as roundups). (5) SIP minute bars: confirmed already split-adjusted (NVDA 2024-06-07 close ~$119.19 to 2024-06-10 -- the 10:1 split ex-date -- open ~$118, continuous, no 10x jump); layout data/sip/minute/{year}/{month:02d}/shard-*.parquet, 2023-2026, 13,405 symbols, 1,279,495,748 total rows per _COMPLETE_2023_2026.json. (6) End-to-end build validated on 2025-06 (one real month, not synthetic): 10,073 (symbol, trade_date) rows, 3,279 symbols, zero nulls, zero inf, and the news+non-news=overall reconstruction identity held EXACTLY (max abs error 0.0) across all rows -- the strongest available correctness check on real data. None of (1)-(4) is a missing capability (market.alpaca_bars and news.alpaca both exist and hold real, already-fetched data); all are disclosed limitations on how far any later signal-card result's claim can reach."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/news_hf_reaction_h20260923_14.yaml",
+      "sha256": "2862bba729c472e5b04df4908b093d6362f16300583f11cf3cf28fcf26cdb467"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260923_14_news_hf_reaction/cost-contract.json",
+      "sha256": "30010348c6f0212f60fbfbe0df4cbab389fde7f27700b28d833718a2648dfb1e"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260923_14_news_hf_reaction.jsonl",
+      "sha256": "f07518728a99af0f9df4ec5fd25d3adb8c731e72594f61a744fb741980f3ac9a"
+    }
+  }
+}

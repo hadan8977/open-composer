@@ -1,0 +1,77 @@
+{
+  "iter_id": "h20260923_14_news_hf_reaction",
+  "strategy_name": "news_hf_reaction_h20260923_14",
+  "source_spec_path": "strategy_specs/drafts/news_hf_reaction_h20260923_14.yaml",
+  "spec_hash": "3c0b647d0a95ccfa8d7af4adaaff5c221e0c0d9eb6fe8e8b5611efdadae0efb8",
+  "schema_version": 3,
+  "created_at": "2026-09-23T12:20:00Z",
+  "objective": "Preregister three signal-card specifications for the signed high-frequency news-return feature (Jiang-Li-Wang) -- NHF01 rank on the raw daily news_return, NHF02 rank on a trailing 5-session sum, NHF03 event on large positive reactions -- against the admission rule already fixed in reports/research/signal-cards/library-v1-manifest.json, before the feature is built at scale and before any signal-card result exists. No strategy backtest is run in this iteration.",
+  "paths": [
+    {
+      "name": "news_hf_reaction_signal_screen",
+      "candidate_count": 3,
+      "hypothesis_refs": [
+        "H-20260923-14"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "NHF01",
+          "NHF02",
+          "NHF03"
+        ],
+        "signal_card_mode": [
+          "rank",
+          "rank",
+          "event"
+        ],
+        "direction": [1, 1, 1],
+        "primary_horizon": [5, 5, 5],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "signal_card_library_v1_admission_rule",
+        "signal_card_within_day_shuffle_placebo",
+        "signal_card_redated_event_placebo",
+        "signal_card_standard_controls_momentum_reversal_size_volatility"
+      ]
+    }
+  ],
+  "total_candidate_budget": 3,
+  "candidate_manifest_path": "reports/research/iterations/h20260923_14_news_hf_reaction/candidate-manifest.json",
+  "candidate_manifest_sha256": "410acf0e92889a6d3519a4f03feb2cf4cba01d2bb7b3c3d5963b3b7a8db502e3",
+  "data_feasibility_path": "reports/research/iterations/h20260923_14_news_hf_reaction/data-feasibility.json",
+  "data_feasibility_sha256": "2a185ccaf39c29214e6bbe7b2d99b264aed51eb584e8a655c26423a9784d4f1e",
+  "cost_table_path": "reports/research/iterations/h20260923_14_news_hf_reaction/cost-contract.json",
+  "trial_ledger_paths": [],
+  "evaluation_report_paths": [],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "feature_coverage": [
+      "2024-01-01",
+      "2026-09-09",
+      "news archive coverage as of this build; SIP minute bars 2023+"
+    ],
+    "signal_card_recent_window": [
+      "2024-01-01",
+      "latest",
+      "signal_card.py's own RECENT_START convention, reused unchanged"
+    ]
+  },
+  "controls": {
+    "rank_mode_shuffle": {
+      "description": "signal_card.py's own within-day shuffle placebo (10 seeds), 252-session-stale placebo, and overlap with the four standard controls (momentum_12_1, reversal_5d, size, volatility) -- reused unchanged, not reinvented for this direction.",
+      "seeds": 10
+    },
+    "event_mode_redated": {
+      "description": "signal_card.py's own redated-event placebo (20 seeds, each event moved to a random session of the same stock within +/-126 sessions) -- reused unchanged.",
+      "seeds": 20
+    }
+  },
+  "adoption_rule": {
+    "rank_admission": "reused verbatim from reports/research/signal-cards/library-v1-manifest.json admission_rule.rank",
+    "event_admission": "reused verbatim from reports/research/signal-cards/library-v1-manifest.json admission_rule.event_long",
+    "multiple_comparisons": "3 candidates, no ranking between them; the shared, unmodified library-wide admission rule is the only bar",
+    "fallback_if_none_pass": "keep refuted (dir:high_freq_news_return_underreaction_drift stays closed pending new disclosed data or a materially different construction)"
+  }
+}

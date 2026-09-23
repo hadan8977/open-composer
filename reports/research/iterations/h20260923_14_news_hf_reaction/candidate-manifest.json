@@ -1,0 +1,138 @@
+{
+  "iter_id": "h20260923_14_news_hf_reaction",
+  "generated_at": "2026-09-23T12:45:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "news_hf_reaction_h20260923_14",
+  "objective": "Preregister three signal-card specifications for the signed high-frequency news-return feature (Jiang-Li-Wang) before the main session runs any of them: NHF01 ranks on the raw daily news_return, NHF02 ranks on a trailing 5-session sum of news_return (zero-filled on non-news sessions), NHF03 is an event-mode test on large positive reactions only (the long-only analog of the paper's decile 10). All three are long-only (direction +1) and use the admission rule already preregistered in reports/research/signal-cards/library-v1-manifest.json, unchanged. No signal card is run by this iteration.",
+  "candidates": [
+    {
+      "candidate_id": "NHF01",
+      "path": "news_hf_reaction_signal_screen",
+      "role": "primary_rank_on_raw_daily_news_return",
+      "method": "signal_card_rank_mode_news_return_direction_plus1",
+      "ablation": "raw_daily_value_no_smoothing",
+      "spec_path": "strategy_specs/drafts/news_hf_reaction_h20260923_14.yaml",
+      "fallback": "no_row_emitted_on_stock_days_with_zero_attributed_news",
+      "data_contract": "data_v1_news_packets_and_sip_minute_news_hf_reaction",
+      "feature_contract": "feature_v1_news_hf_reaction_m26_interval_decomposition",
+      "label_contract": "label_v1_signal_card_next_open_forward_returns",
+      "validation_contract": "validation_v1_signal_card_full_sample_and_2024_plus_recent",
+      "cost_contract": "cost_v1_signal_card_10_20bps_next_open_news_hf_reaction",
+      "benchmark_contract": "benchmark_v1_signal_card_library_v1_admission_rule",
+      "parameters": {
+        "candidate_id": "NHF01",
+        "signal_card_mode": "rank",
+        "source": "data/features/news_hf_reaction",
+        "column": "news_return",
+        "direction": 1,
+        "primary_horizon": 5,
+        "lag": 0,
+        "top_k": 30,
+        "top_n": 3000,
+        "rationale": "signed high-frequency news-return, one-week primary horizon matching the paper's own holding period (Jiang-Li-Wang 2019/2021); long-only, distinct from the refuted count-based dir:news_attention_features"
+      }
+    },
+    {
+      "candidate_id": "NHF02",
+      "path": "news_hf_reaction_signal_screen",
+      "role": "rank_on_trailing_5_session_sum",
+      "method": "signal_card_rank_mode_news_return_5d_sum_direction_plus1",
+      "ablation": "trailing_5_session_accumulated_value_zero_filled_calendar",
+      "spec_path": "strategy_specs/drafts/news_hf_reaction_h20260923_14.yaml",
+      "fallback": "no_row_emitted_outside_the_pit_universe_calendar",
+      "data_contract": "data_v1_news_packets_and_sip_minute_news_hf_reaction",
+      "feature_contract": "feature_v1_news_hf_reaction_m26_interval_decomposition",
+      "label_contract": "label_v1_signal_card_next_open_forward_returns",
+      "validation_contract": "validation_v1_signal_card_full_sample_and_2024_plus_recent",
+      "cost_contract": "cost_v1_signal_card_10_20bps_next_open_news_hf_reaction",
+      "benchmark_contract": "benchmark_v1_signal_card_library_v1_admission_rule",
+      "parameters": {
+        "candidate_id": "NHF02",
+        "signal_card_mode": "rank",
+        "sql": "WITH r AS (SELECT symbol, trade_date, news_return FROM read_parquet('data/features/news_hf_reaction/*.parquet')), cal AS (SELECT DISTINCT symbol, trade_date FROM read_parquet('data/features/daily_broad/*.parquet')), dense AS (SELECT cal.symbol, cal.trade_date, COALESCE(r.news_return, 0) AS news_return FROM cal LEFT JOIN r USING (symbol, trade_date)) SELECT symbol, trade_date, SUM(news_return) OVER (PARTITION BY symbol ORDER BY trade_date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS value FROM dense",
+        "direction": 1,
+        "primary_horizon": 5,
+        "lag": 0,
+        "top_k": 30,
+        "top_n": 3000,
+        "rationale": "tests whether accumulated signed reaction over the paper's own one-week holding window carries more (or less) information than a single day's reaction; zero-filled on non-news sessions using the PIT daily_broad calendar so the sum is a true trailing-5-trading-day window, not 5 sparse news rows"
+      }
+    },
+    {
+      "candidate_id": "NHF03",
+      "path": "news_hf_reaction_signal_screen",
+      "role": "event_mode_large_positive_reaction_long_only_analog_of_decile_10",
+      "method": "signal_card_event_mode_news_return_threshold_direction_plus1",
+      "ablation": "event_admission_rule_not_rank_admission_rule",
+      "spec_path": "strategy_specs/drafts/news_hf_reaction_h20260923_14.yaml",
+      "fallback": "no_event_on_stock_days_below_threshold",
+      "data_contract": "data_v1_news_packets_and_sip_minute_news_hf_reaction",
+      "feature_contract": "feature_v1_news_hf_reaction_m26_interval_decomposition",
+      "label_contract": "label_v1_signal_card_next_open_forward_returns",
+      "validation_contract": "validation_v1_signal_card_full_sample_and_2024_plus_recent",
+      "cost_contract": "cost_v1_signal_card_10_20bps_next_open_news_hf_reaction",
+      "benchmark_contract": "benchmark_v1_signal_card_library_v1_admission_rule",
+      "parameters": {
+        "candidate_id": "NHF03",
+        "signal_card_mode": "event",
+        "source": "data/features/news_hf_reaction",
+        "column": "news_return",
+        "threshold": 0.0274,
+        "direction": 1,
+        "primary_horizon": 5,
+        "top_n": 3000,
+        "threshold_basis": "90th percentile of news_return over the 2025-06 real-data validation build (10,073 stock-days, 3,279 symbols), fixed before any signal-card result exists; a data-grounded, disclosed choice, not tuned after seeing forward returns",
+        "rationale": "long-only analog of the paper's decile-10 winner portfolio: does a large signed positive HF reaction alone (event, not rank) predict next-week drift"
+      }
+    }
+  ],
+  "candidate_count": 3,
+  "contracts": {
+    "data": {
+      "data_v1_news_packets_and_sip_minute_news_hf_reaction": {
+        "news_packets_glob": "data/features/news_packets/*.parquet",
+        "sip_minute_glob": "data/sip/minute/{year}/{month:02d}/shard-*.parquet",
+        "source": "Alpaca/Benzinga news (~685k articles, effective coverage 2024-01-01+) + Alpaca SIP 1-minute bars (2023+, confirmed already split-adjusted)",
+        "coverage_window": ["2024-01-01", "2026-09-09"],
+        "hygiene": "articles with 0 or >10 symbols dropped (MAX_SYMBOL_FANOUT, reused from news_attention.py); price anchors forward-filled within a session from the last available 1-minute bar"
+      }
+    },
+    "features": {
+      "feature_v1_news_hf_reaction_m26_interval_decomposition": {
+        "definition": "per (symbol, trade_date): 26 intervals (1 overnight, 4pm close(t-1) to 9:45am(t); 25 intraday 15-minute intervals 9:45am-4pm(t)); news_return = compounded product of intervals containing >=1 attributed article; non_news_return = compounded product of the rest; overall_return = (1+news_return)(1+non_news_return)-1, verified exact on the 2025-06 validation build",
+        "builder": "scripts/build_news_hf_reaction.py",
+        "output": "data/features/news_hf_reaction/{year}.parquet"
+      }
+    },
+    "labels": {
+      "label_v1_signal_card_next_open_forward_returns": {
+        "definition": "signal_card.py's own forward_returns(): formation at the close of trade_date, entry at the next session's open, forward returns at h=1/5/20/60 sessions"
+      }
+    },
+    "validation": {
+      "validation_v1_signal_card_full_sample_and_2024_plus_recent": {
+        "full_sample": "whatever years of data/features/news_hf_reaction exist at run time (2024-2026 target)",
+        "recent_window": ["2024-01-01", "latest"],
+        "placebos": "signal_card.py's own within-day shuffle (rank mode) or redated-event (event mode) placebos, reused unchanged"
+      }
+    },
+    "costs": {
+      "cost_v1_signal_card_10_20bps_next_open_news_hf_reaction": {
+        "contract_path": "reports/research/iterations/h20260923_14_news_hf_reaction/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_signal_card_library_v1_admission_rule": {
+        "admission_rule_source": "reports/research/signal-cards/library-v1-manifest.json",
+        "rank_rule": "stable_years AND beats_shuffle AND (T1 or T2 top-30 book positive excess at 20bp in both full and 2024+ windows) AND max |t_nonoverlap| >= 2.5 with the preregistered sign",
+        "event_long_rule": "beats_redated AND t_dates >= 3 at the primary horizon AND calendar-time book positive excess at 20bp in the full and 2024+ windows",
+        "reused_unchanged": true
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/news_hf_reaction_h20260923_14.yaml": "3c0b647d0a95ccfa8d7af4adaaff5c221e0c0d9eb6fe8e8b5611efdadae0efb8"
+  },
+  "source_spec_path": "strategy_specs/drafts/news_hf_reaction_h20260923_14.yaml",
+  "spec_hash": "3c0b647d0a95ccfa8d7af4adaaff5c221e0c0d9eb6fe8e8b5611efdadae0efb8"
+}

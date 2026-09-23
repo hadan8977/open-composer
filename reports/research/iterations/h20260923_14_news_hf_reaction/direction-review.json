@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260923_14_news_hf_reaction",
+  "reviewed_at": "2026-09-23T12:36:00Z",
+  "decision": "proceed",
+  "objective": "Build the point-in-time signed high-frequency news-return feature (Jiang-Li-Wang 2019/2021, dir:high_freq_news_return_underreaction_drift, evidence reports/research/intel/I-20260923-07-owner-five-directions-wave.md section 4) on our own Alpaca/Benzinga news + SIP minute bars, and preregister 2-3 signal-card tests of it (rank on the daily news return, rank on a trailing 5-session sum, event on a large positive reaction) before any result is looked at -- the cheapest decisive test named in the registry row. No strategy backtest is run in this iteration; the decisive test is the signal-card tool, deferred to the main session per task scope.",
+  "target_regime_and_horizon": "Feature coverage: news_packets 2024-01-01..2026-09-09 (196 pre-2024 rows excluded as non-representative), SIP minute bars 2023+; the signal cards that will consume this feature use the same PIT universe/window conventions as reports/research/signal-cards/library-v1-manifest.json (top-3000 PIT ADV universe, close>=$5, entries at next open, 10/20bp costs, full-sample plus 2024+ recent window reported separately). The paper's own sample (2000-2012, NYSE/NASDAQ/AMEX, Dow Jones Newswire via RavenPack) is 12-24 years older than our data and pre-dates this project's own post-publication-decay prior; no 2023-2025 confirmation of the HF mechanism itself was found this pass (see remaining_evidence_gap). This iteration makes no near-term-profitability claim -- it only builds the feature and preregisters the signal-card admission test that will make that claim later.",
+  "existing_solution_comparison": "The mechanism is not invented here: Jiang, Li and Wang decompose daily returns into a signed 'news return' (short high-frequency price reaction around each news item) and a 'non-news return', and find the news-return component alone predicts one-week-ahead drift (long-short 3.34%/month gross, 2000-2012), which is mechanistically distinct from the count/novelty-based dir:news_attention_features already tested and refuted locally (0/48 preregistered tests passed BH-FDR; see reports/research/hypotheses/H-20260916-02-news-attention-features.md) -- that refutation used how MUCH news arrived, never the SIGN of the price reaction to it, so it does not pre-empt this direction. Both required ingredients (~685k timestamped Alpaca/Benzinga news articles, SIP minute bars 2023+) are already in local inventory; no new data acquisition, vendor, or capability is needed. This iteration's own contribution is exclusively the local feature build (paper-faithful 1-overnight+25-intraday-interval decomposition on 1-minute bars in place of TAQ ticks) and the preregistered signal-card admission test; the strategy-level backtest itself is explicitly out of scope and deferred.",
+  "remaining_evidence_gap": "(1) No 2023-2025 independent replication or post-publication critique of the HF news-return mechanism itself was found this pass (one general WebSearch and one targeted citation search both came back empty of a direct replication); the registry row already flags this as the main open risk (dated 2000-2012 sample) and this pass does not close it. (2) A 2026-04 working paper ('Dissecting Momentum in China', Liu/Tan/Xu/Yuan/Zhu) explicitly built on Jiang et al. (2021)'s news/non-news decomposition but used a coarser DAY-level (not 15-minute) split and a monthly (not weekly) holding period on Chinese equities, and found the past-news-return quintile spread was NOT significant (0.10%/month, t=0.31) -- this is not a refutation of the HF mechanism (different granularity, different market, different horizon) but is a disclosed caution that even sophisticated re-implementations inspired by this paper do not trivially reproduce a positive result outside the original design; see external-brief.json claim_id dissecting_momentum_china_2026_daily_variant_null. (3) The ~18bp-cost/~1.37%-net-of-cost figure carried in reports/research/harvest/directions.jsonl for this direction could not be re-verified against the working-paper draft actually read this pass (its readable sections state only gross, FFC4-alpha, and characteristic-adjusted returns, no transaction-cost scenario) -- flagged, not silently repeated. (4) Whether the LONG-ONLY, next-day-entry, top-decile/large-positive-reaction version of this signal (the only version executable for us) clears this project's own signal-library admission rule on our data is exactly what the deferred signal-card runs will answer; it is not yet known.",
+  "negative_experiments_checked": "dir:news_attention_features (refuted 2026-09-16): count/novelty attention features carry no tradable cross-sectional information on momentum-book names (0/48 BH-FDR passes, novelty-tercile IC sign opposite hypothesis, within-week shuffle placebo reproduced 88-111% of each gate's effect). Mechanistically distinct from this direction -- that family measures HOW MUCH news arrived, this direction measures the SIGNED short-window price reaction TO the news, which dir:news_attention_features never constructed or tested; reopening rule for that direction ('stage 2 LLM content/event-type scoring' or a small-cap/monthly retest) does not apply here since this is neither. dir:etf_constituent_lead_lag_reversion and dir:llm_8k_gdelt_sentiment_acceleration (both harvested same pass, I-20260923-07): distinct mechanisms (ETF-to-constituent reversion; LLM-extracted sentiment acceleration), not re-tested or touched by this iteration. No other locally-refuted direction constructs a signed high-frequency news-reaction feature; checked via `oc research directions check high frequency news return` before starting (see queries).",
+  "cost_and_execution_assumptions": "This iteration performs no backtest and authorizes none; it only builds a feature table and preregisters signal-card specifications. The deferred decisive test (signal_card.py, run by the main session) uses that tool's own fixed cost/execution convention: entries at the next session's open after formation, 10bp and 20bp per side on sum|delta weight|, long-only top-K or calendar-time event books, excess measured against the PIT universe equal weight -- see cost-contract.json, which preregisters this convention for the deferred test rather than inventing a new one.",
+  "stop_condition": "If the feature build's own internal identity check fails (overall_return != (1+news_return)(1+non_news_return)-1 for any row) or the point-in-time tests in tests/test_build_news_hf_reaction_script.py do not pass, the build is not run at scale and this direction is not advanced to signal-card testing. If the build succeeds but every preregistered signal-card spec (NHF01/NHF02/NHF03) fails the fixed admission rule (reused verbatim from reports/research/signal-cards/library-v1-manifest.json), the verdict is 'keep refuted' for dir:high_freq_news_return_underreaction_drift and it is not reopened except with new disclosed data (e.g. a 2023-2025 replication found later) or a materially different construction, not by re-tuning NHF01-03's thresholds after seeing results. Budget: ~75 minutes for this iteration (search, data-feasibility check, build script + tests, one validation month, dossier); the multi-year feature build itself runs detached/resumable and is not charged against this budget once launched.",
+  "queries": [
+    {
+      "query": "Jiang Li Wang Pervasive underreaction high-frequency news return SSRN working paper pdf",
+      "opened_urls": [
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2679614",
+        "https://www.sciencedirect.com/science/article/abs/pii/S0304405X21001306",
+        "https://www.researchgate.net/publication/350763057_Pervasive_underreaction_Evidence_from_high-frequency_data"
+      ],
+      "searched_at": "2026-09-23T12:06:00Z"
+    },
+    {
+      "query": "News Momentum Jiang Li Wang working paper duke seminar pdf full text",
+      "opened_urls": [
+        "https://ipl.econ.duke.edu/seminars/system/files/seminars/2516.pdf",
+        "https://bps.broad.msu.edu/media/documents/64de1b705a16be5f428b4567.pdf"
+      ],
+      "searched_at": "2026-09-23T12:08:00Z"
+    },
+    {
+      "query": "crossref bibliographic api Pervasive underreaction high frequency data Jiang Li Wang",
+      "opened_urls": [
+        "https://api.crossref.org/works?query.bibliographic=Pervasive+underreaction+high+frequency+data+Jiang+Li+Wang&rows=3"
+      ],
+      "searched_at": "2026-09-23T12:07:00Z"
+    },
+    {
+      "query": "pervasive underreaction OR news momentum Jiang Wang citing paper replication high-frequency decomposition 2023 2024 2025",
+      "opened_urls": [
+        "http://yuchenxu.com/paper/Momentum.pdf",
+        "https://wxiong.mycpanel.princeton.edu/papers/DailyMomentum.pdf"
+      ],
+      "searched_at": "2026-09-23T12:33:00Z"
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "jlw_construction_window_and_overnight_rule",
+      "claim": "Jiang, Li and Wang decompose each trading day into 15-minute intraday intervals between 9:45am and 4:00pm plus one overnight interval from the previous day's 4:00pm close to the current day's 9:45am price (using the 9:45 price so most stocks have traded at least once after the open), and reclassify raw TAQ prices with CRSP's split/dividend adjustment factors before computing returns.",
+      "source_type": "paper",
+      "url": "https://ipl.econ.duke.edu/seminars/system/files/seminars/2516.pdf",
+      "published_or_updated_at": "2019-08-06",
+      "market_and_period": "NYSE/NASDAQ/AMEX common stocks, March 2000-October 2012.",
+      "applicability": "This is the exact interval grid (M=26: 1 overnight + 25 intraday 15-minute intervals) that scripts/build_news_hf_reaction.py replicates on our 1-minute SIP bars.",
+      "limitations": "2019-08-06 working-paper draft (title 'News Momentum'), read via direct PDF page rendering and hand-transcribed (the fetch tool could not extract machine text from this PDF); construction and headline numbers cross-checked against Hao Jiang's own CV and the SSRN/crossref bibliographic record for the JFE-published version.",
+      "independent_replication": "Construction cross-confirmed by Hao Jiang's own CV listing (Journal of Financial Economics 141: 573-599, 2021) and the SSRN/crossref bibliographic record (source jlw_ssrn_crossref_bibliographic_confirmation, same abstract); no independent third-party replication of the HF construction itself was found this pass (see remaining_evidence_gap).",
+      "fetched_at": "2026-09-23T12:10:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_14_news_hf_reaction/sources/jlw-news-momentum-working-paper-duke.txt",
+      "sha256": "e3c2adf9749d98c44e3d0639f850fbe549bc1350a618e012af775bb64c6bc056",
+      "source_card_path": "reports/harness/source_cards/h20260923_14_news_hf_reaction.jsonl"
+    },
+    {
+      "claim_id": "jlw_construction_news_classification_weekend_example",
+      "claim": "For news occurring within regular trading hours the news return is the 15-minute return of the interval the news occurs in; for news during the weekend, a holiday, or overnight, the news return is instead the nearest subsequent overnight interval -- e.g. weekend news gets the Friday-4pm-to-Monday-9:45am return.",
+      "source_type": "paper",
+      "url": "https://ipl.econ.duke.edu/seminars/system/files/seminars/2516.pdf",
+      "published_or_updated_at": "2019-08-06",
+      "market_and_period": "NYSE/NASDAQ/AMEX common stocks, March 2000-October 2012.",
+      "applicability": "Pins scripts/build_news_hf_reaction.py's attribute_news() rule exactly: regular-hours news attributes to the same session's intraday bucket; everything else attributes to the next session's overnight bucket.",
+      "limitations": "Same draft-vs-published caveat as jlw_construction_window_and_overnight_rule.",
+      "independent_replication": "Same as jlw_construction_window_and_overnight_rule.",
+      "fetched_at": "2026-09-23T12:10:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_14_news_hf_reaction/sources/jlw-news-momentum-working-paper-duke.txt",
+      "sha256": "e3c2adf9749d98c44e3d0639f850fbe549bc1350a618e012af775bb64c6bc056",
+      "source_card_path": "reports/harness/source_cards/h20260923_14_news_hf_reaction.jsonl"
+    },
+    {
+      "claim_id": "jlw_reported_magnitude_decile_sort",
+      "claim": "At the 4:00pm close of each day, stocks are sorted into equal-weighted decile portfolios on that day's news return; a self-financing long-top-decile/short-bottom-decile strategy held one week (overlapping cohorts, Jegadeesh-Titman 1993 style) averaged -0.78%/month (decile 1) to +2.55%/month (decile 10), a 3.34%/month spread (t=11.72), ~40%/yr, Sharpe ~3.29, over March 2000-October 2012.",
+      "source_type": "paper",
+      "url": "https://ipl.econ.duke.edu/seminars/system/files/seminars/2516.pdf",
+      "published_or_updated_at": "2019-08-06",
+      "market_and_period": "NYSE/NASDAQ/AMEX common stocks, March 2000-October 2012.",
+      "applicability": "Establishes the reported magnitude and long-short structure that motivates testing the LONG leg only (direction +1) via the signal card, since only the long side is executable for us.",
+      "limitations": "Gross-of-cost, long-short, 2000-2012 sample; this draft does not itself state a transaction-cost scenario.",
+      "independent_replication": "Not independently replicated at the HF-construction level this pass (see remaining_evidence_gap); the coarser day-level adaptation in dissecting_momentum_china_2026_daily_variant_null (external-brief.json) is a related but methodologically distinct test.",
+      "fetched_at": "2026-09-23T12:10:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_14_news_hf_reaction/sources/jlw-news-momentum-working-paper-duke.txt",
+      "sha256": "e3c2adf9749d98c44e3d0639f850fbe549bc1350a618e012af775bb64c6bc056",
+      "source_card_path": "reports/harness/source_cards/h20260923_14_news_hf_reaction.jsonl"
+    },
+    {
+      "claim_id": "jlw_overnight_majority_of_sample",
+      "claim": "The paper's own overnight-news event study states overnight news (which its intraday-hours grid cannot directly capture) constitutes more than half of the full news sample, and finds delayed (not immediate) reaction to it.",
+      "source_type": "paper",
+      "url": "https://ipl.econ.duke.edu/seminars/system/files/seminars/2516.pdf",
+      "published_or_updated_at": "2019-08-06",
+      "market_and_period": "NYSE/NASDAQ/AMEX common stocks, March 2000-October 2012.",
+      "applicability": "Justifies why this build's overnight-bucket handling is not a minor edge case: corroborated locally (57.1% of our own 2024+ news items arrive outside 09:30-16:00 ET, see data-feasibility.json).",
+      "limitations": "Same draft-vs-published caveat as jlw_construction_window_and_overnight_rule.",
+      "independent_replication": "Corroborated by this iteration's own local data measurement (independent of the paper), not by a third-party replication of the paper itself.",
+      "fetched_at": "2026-09-23T12:10:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_14_news_hf_reaction/sources/jlw-news-momentum-working-paper-duke.txt",
+      "sha256": "e3c2adf9749d98c44e3d0639f850fbe549bc1350a618e012af775bb64c6bc056",
+      "source_card_path": "reports/harness/source_cards/h20260923_14_news_hf_reaction.jsonl"
+    },
+    {
+      "claim_id": "jlw_ssrn_crossref_bibliographic_confirmation",
+      "claim": "Crossref's bibliographic record for SSRN DOI 10.2139/ssrn.2679614 confirms the paper \"Pervasive underreaction: Evidence from high-frequency data\" by Hao Jiang, Sophia Zhengzi Li and Hao Wang, with an abstract matching the Duke working-paper draft's own abstract -- i.e. the SSRN-listed/published paper and the working-paper draft actually read are the same paper.",
+      "source_type": "paper",
+      "url": "https://api.crossref.org/works?query.bibliographic=Pervasive+underreaction+high+frequency+data+Jiang+Li+Wang&rows=3",
+      "published_or_updated_at": "2015-10-28",
+      "market_and_period": "Bibliographic record only, no sample/market disclosed.",
+      "applicability": "Confirms the Duke-hosted working-paper draft and the JFE-published paper the registry direction cites are the same underlying work, not two different papers.",
+      "limitations": "Crossref's 'posted' date (2015-10-28) is the SSRN posting timestamp, not the 2019 draft date or the 2021 JFE publication date; abstract/bibliographic match only, not the full paper text (SSRN and ScienceDirect both returned 403 to direct fetch this pass).",
+      "independent_replication": "N/A -- a bibliographic cross-check, not a replication.",
+      "fetched_at": "2026-09-23T12:10:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_14_news_hf_reaction/sources/jlw-ssrn-crossref-bibliographic.txt",
+      "sha256": "7985da6a4fa64bff21127f8fc23a651a26af52fc113295f90b8a87619923c803",
+      "source_card_path": "reports/harness/source_cards/h20260923_14_news_hf_reaction.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Build data/features/news_hf_reaction/{year}.parquet (scripts/build_news_hf_reaction.py, month-by-month, checkpointed) from local news_packets + SIP minute bars, verify the news+non-news=overall identity holds exactly and the point-in-time/overnight tests pass, then preregister NHF01 (rank, news_return, direction +1), NHF02 (rank, trailing 5-session sum of news_return, direction +1) and NHF03 (event, large positive news_return, direction +1) in reports/research/signal-cards/news-hf-v1-manifest.json using the exact admission rule already preregistered in library-v1-manifest.json. The main session runs signal_card.py --batch on that manifest next (not run in this iteration).",
+    "pass_condition": "The build completes with the identity check exact (max abs error 0.0, confirmed on the 2025-06 validation month: 10,073 rows, 0.0 max reconstruction error) and all tests in tests/test_build_news_hf_reaction_script.py pass; at least one of NHF01-03 is preregistered with a fixed, data-grounded threshold before any signal-card result exists.",
+    "falsification_condition": "The build's identity check fails on real data, or point-in-time/overnight tests fail, or fewer than 2 candidates can be preregistered because the feature has no usable variation -- in any of these cases the direction is not advanced to signal-card testing this pass.",
+    "max_compute_minutes": 75
+  }
+}
