@@ -1,0 +1,167 @@
+{
+ "schema_version": 1,
+ "library": "signal-library-v1",
+ "preregistered_at": "2026-09-23T11:53:04+00:00",
+ "plan": "docs/plan-research-coverage-2026-09-23.zh.md section 6.1",
+ "tool": "open_composer/research/signal_card.py (rank: top 3000 PIT universe, top-30 long-only books; event: calendar-time books)",
+ "directions_fixed_before_running": true,
+ "trials": {
+  "signals": 19,
+  "horizons_reported": [
+   1,
+   5,
+   20,
+   60
+  ],
+  "note": "screening; admission is not a strategy claim"
+ },
+ "admission_rule": {
+  "rank": "stable_years AND beats_shuffle AND (T1 or T2 top-30 book positive excess at 20 bp in both the full and the 2024+ window at the primary horizon) AND max |t_nonoverlap| over horizons >= 2.5 with the preregistered sign",
+  "event_long": "beats_redated AND t_dates >= 3 at the primary horizon AND calendar-time book positive excess at 20 bp in the full and the 2024+ window",
+  "event_exit": "t_dates <= -3 at the primary horizon AND beats_redated: admitted as an exit or avoid signal only",
+  "reported_not_required": [
+   "timely",
+   "distinct_from_controls"
+  ]
+ },
+ "signals": [
+  {
+   "name": "mom_12_1",
+   "source": "data/features/daily_broad",
+   "column": "momentum_252_21",
+   "direction": 1,
+   "rationale": "12-1 momentum (Jegadeesh-Titman 1993); tool check, run first"
+  },
+  {
+   "name": "rev_5d",
+   "source": "data/features/daily_broad",
+   "column": "ret_5",
+   "direction": -1,
+   "primary_horizon": 5,
+   "rationale": "short-term reversal (Lehmann 1990); expect strongest in small, illiquid names, costly turnover"
+  },
+  {
+   "name": "rev_21d",
+   "source": "data/features/daily_broad",
+   "column": "ret_21",
+   "direction": -1,
+   "rationale": "one-month reversal (Jegadeesh 1990)"
+  },
+  {
+   "name": "high_52w",
+   "source": "data/features/daily_broad",
+   "column": "dist_from_252d_high",
+   "direction": 1,
+   "rationale": "52-week-high proximity (George-Hwang 2004); value is close/high-1 <= 0"
+  },
+  {
+   "name": "idio_vol_63",
+   "source": "data/features/daily_broad",
+   "column": "idio_vol_63",
+   "direction": -1,
+   "rationale": "idiosyncratic volatility puzzle (Ang-Hodrick-Xing-Zhang 2006)"
+  },
+  {
+   "name": "max_ret_21",
+   "source": "data/features/daily_broad",
+   "column": "max_ret_1_21",
+   "direction": -1,
+   "rationale": "lottery demand, MAX effect (Bali-Cakici-Whitelaw 2011)"
+  },
+  {
+   "name": "overnight_mom_21",
+   "source": "data/features/daily_broad",
+   "column": "overnight_return_21d_mean",
+   "direction": 1,
+   "rationale": "overnight returns persist (Lou-Polk-Skouras 2019, tug of war)"
+  },
+  {
+   "name": "intraday_rev_21",
+   "source": "data/features/daily_broad",
+   "column": "intraday_return_21d_mean",
+   "direction": -1,
+   "rationale": "intraday component reverses against overnight (Lou-Polk-Skouras 2019)"
+  },
+  {
+   "name": "resid_mom",
+   "source": "data/features/osap_price_broad",
+   "column": "residualmom_252_21",
+   "direction": 1,
+   "rationale": "residual momentum (Blitz-Huij-Martens 2011)"
+  },
+  {
+   "name": "season_2_5",
+   "source": "data/features/osap_price_broad",
+   "column": "momseason_2_5",
+   "direction": 1,
+   "rationale": "return seasonality, same calendar month years 2-5 (Heston-Sadka 2008)"
+  },
+  {
+   "name": "days_to_cover",
+   "source": "data/features/short_interest",
+   "column": "days_to_cover",
+   "direction": -1,
+   "rationale": "days to cover predicts low returns (Hong-Li-Ni-Scheinkman-Yan 2016); rows dated on or after FINRA publication + 1 session; 2018+"
+  },
+  {
+   "name": "short_vol_z21",
+   "source": "data/features/short_volume_broad",
+   "column": "short_volume_ratio_zscore_21",
+   "direction": -1,
+   "primary_horizon": 5,
+   "rationale": "abnormal daily short volume predicts low returns (Boehmer-Jones-Zhang style on FINRA data; weak public evidence); visible after publication; 2018+"
+  },
+  {
+   "name": "news_attention",
+   "source": "data/features/news_attention",
+   "column": "attention_surge_5d",
+   "direction": -1,
+   "rationale": "media-coverage discount (Fang-Peress 2009); counts only articles visible before the row's open; 2024+ only"
+  },
+  {
+   "name": "insider_new_buy",
+   "mode": "event",
+   "sql": "SELECT symbol, trade_date, 1.0 AS value FROM read_parquet('data/features/insider_broad/*.parquet', union_by_name=true) WHERE days_since_last_visible_buy = 0",
+   "rationale": "a Form 4 open-market buy becomes visible (Lakonishok-Lee 2001; Cohen-Malloy-Pomorski 2012); visible the session after filing; four earlier local variants lost to SPY"
+  },
+  {
+   "name": "insider_cluster_buy",
+   "mode": "event",
+   "sql": "SELECT symbol, trade_date, 1.0 AS value FROM read_parquet('data/features/insider_broad/*.parquet', union_by_name=true) WHERE days_since_last_visible_buy = 0 AND buyers_60d >= 2",
+   "rationale": "new visible buy with two or more distinct buyers in 60 sessions (cluster buying)"
+  },
+  {
+   "name": "sec_13d_new",
+   "mode": "event",
+   "sql": "SELECT issuer_symbol AS symbol, visible_session AS trade_date, 1.0 AS value FROM read_parquet('data/features/sec_13d/*.parquet') WHERE is_new_13d",
+   "rationale": "new 13D (activist) filing (Brav-Jiang-Partnoy-Thomas 2008); entered the open after the session it became visible; local test found the gain is before we can buy"
+  },
+  {
+   "name": "rt_bull",
+   "mode": "event",
+   "source": "data/features/reversal_trend_broad",
+   "column": "rt_bull_signal",
+   "threshold": 0.5,
+   "primary_horizon": 5,
+   "rationale": "owner's Reversal Trend indicator (QuanTGT reconstruction), bull signal on daily bars"
+  },
+  {
+   "name": "rt_reclaim",
+   "mode": "event",
+   "source": "data/features/reversal_trend_broad",
+   "column": "rt_recl_signal",
+   "threshold": 0.5,
+   "primary_horizon": 5,
+   "rationale": "owner's Reversal Trend indicator, reclaim signal on daily bars"
+  },
+  {
+   "name": "rt_bear",
+   "mode": "event",
+   "source": "data/features/reversal_trend_broad",
+   "column": "rt_bear_signal",
+   "threshold": 0.5,
+   "primary_horizon": 5,
+   "rationale": "owner's Reversal Trend indicator, bear signal; expected negative (exit or avoid use)"
+  }
+ ]
+}
