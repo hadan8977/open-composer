@@ -89,6 +89,11 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
         "docs/proposal-research-loop-redesign-2026-09-15.zh.md",
         "docs/plan-step-17-paper-rehearsal-portfolio-canary-2026-09-15.zh.md",
         "docs/current-view.zh.md",
+        "docs/plan-strategy-factory-2026-09-22.zh.md",
+        "docs/plan-giants-sweep-2026-09-22.zh.md",
+        "docs/plan-earnings-text-forward-test-2026-09-22.zh.md",
+        "docs/handoff-2026-09-23.zh.md",
+        "docs/plan-broad-search-and-direction-registry-2026-09-23.zh.md",
         "docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md",
         "docs/design-token-budget-2026-09-20.zh.md",
     ]:
