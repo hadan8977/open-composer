@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260923_11_s3_bear_guard",
+  "reviewed_at": "2026-09-23T08:12:00Z",
+  "decision": "proceed",
+  "objective": "Ask whether a bear-regime gate on the live S3 book (move S3's risk weight to SHY while the gate is on; signal on a completed close, applied at the next open; gate state checked daily) cuts the pre-window (2016-01-04..2023-09-15) drawdown by more than an exposure-matched lower volatility target would, without breaking the frozen anchor-window (2024-01-08..2026-09-16) return bar. Five candidates, no ranking: BG00 reference (no gate), BG01 QQQ<SMA200, BG02 SMH<SMA200, BG03 HYG/IEF ratio<SMA100, BG04 unscaled S3 equity curve<SMA200, each judged independently against a preregistered adoption rule with an exposure-matched control (EM-k) and a circular-shift placebo (CS-k, 20 offsets per gate).",
+  "target_regime_and_horizon": "Design window 2016-01-04..2023-09-15 (warmup requested from 2015-01-02, but the local SIP daily archive's earliest bar for every symbol checked -- QQQ, SMH, HYG, IEF, SHY, BIL, TQQQ, SOXL, UPRO, USD, TECL -- is 2016-01-04, so no true pre-window warmup exists; 200-session SMA/equity-curve gates and the 100-session HYG/IEF ratio SMA default to 'off', same as BG00, for their first window's length from 2016-01-04, which precedes the 2018 and 2022 drawdown episodes the design window is meant to test). Frozen anchor 2024-01-08..2026-09-16 is a do-no-harm check only, at 10 and 20 bp. The 2026 holdout (2026-01-02..2026-09-17) was already spent evaluating the live S3 book at its 2026-09-23 renewal, so no holdout claim is made for any gate in this round. Claim of validity, if any gate is adopted, is limited to the same leveraged-momentum semiconductor-concentrated regime S3 itself is limited to (H-20260923-09), with the gate as an additional, regime-triggered de-risking rule, not a claim that the gate generalizes beyond US leveraged-ETF bear markets resembling 2018/2022.",
+  "existing_solution_comparison": "The S3 vt40+boost overlay machine itself (63-session absolute momentum vs SHY, 21-session realized-volatility target 0.40 with a QQQ-oversold dip boost to 0.60, 1.0 leverage cap, monthly rebalance) is reused unchanged from the authorized live renewal (commit 97c992c, reports/paper/renewal/) and is not re-searched. BG00's own numbers are reused rather than recomputed: its design-window metrics (CAGR 30.7%, Sharpe 0.83, max drawdown -48.0%, the s3_vt40_boost series) come from the existing stress replay reports/paper/renewal/2026-09-23-s3-stress-2016-2023.md (scripts/stress_s3_pre_window.py), which already covers exactly this iteration's design window; its anchor-window numbers (116.3% CAGR, -32.3% max drawdown, Sharpe 1.82) come from the authorized 2026-09-23 renewal record. The gate mechanism itself (price or index below its own N-session moving average moves risk to cash) is not invented here: it is the published Gayed and Bilello (2016, SSRN 2741701) 'Leverage for the Long Run' rule, the same mechanism class as Faber's (2007/2013, SSRN 962461) moving-average tactical asset allocation, and it has an independent, currently-live real-money implementation (Gehrman, r/LETFs, Sep 2026 update) applying the identical 200-day-SMA/deleverage-to-cash rule to a 2x S&P 500 ETF since March 2024. What is new here is applying that published mechanism as a gate on top of the already-authorized S3 vt40+boost book specifically (not as a standalone strategy), on four different gate assets (index, sector, credit-ratio, own-equity-curve), tested against an exposure-matched control rather than only a full-exposure baseline -- the exact gap the earlier drawdown-brake experiment (H-20260922-02) flagged as needed to reopen the family (dir:drawdown_brake_overlay reopen_if: 'a drawdown signal validated with an exposure-matched control').",
+  "remaining_evidence_gap": "Whether any of the four gates, run through the exact frozen S3 overlay machine with no other parameter changed, actually clears its preregistered adoption rule (a)-(e) on our own menu, costs, and next-open fills -- in particular whether it beats a same-average-exposure EM-k control and survives a circular-shift placebo built for a genuinely slow signal, not the short 1-20 session shift that was adequate for the earlier, faster 25%-drawdown brake -- has not been tested locally or found in any public backtest of this exact machine on these exact instruments. Gehrman's live post confirms the 200-day SMA gate is currently on (SSO still above its 200-day average as of Sep 2026) but that single live observation cannot show what the gate would have done through 2018 or 2022, which is exactly what the design window is for.",
+  "negative_experiments_checked": "dir:drawdown_brake_overlay (refuted): an equity-curve drawdown brake (-25% trigger, half-size, recover at new high or after 21 sessions) added no increment over the vol target alone, and lost to a calendar-shifted version of itself in 70% of seeds -- its own reopen_if is 'a drawdown signal validated with an exposure-matched control,' which this iteration's EM-k directly implements. H-20260922-02 (same family): confirms the vol-target-only book (S3-vt40, no brake) is what actually passed G1-G5; the brake's failure was a timing claim failing a placebo, not a sizing claim failing a return bar, which is the same structural risk BG01-BG04 face and why CS-k is required here too, strengthened to a whole-window circular shift rather than the original 1-20 session shift (adequate for a fast, reactive 25%-drawdown signal but not for a slow 100/200-session trend gate, which barely changes state over 1-20 sessions). dir:levered_single_asset_sma_trend_gate (refuted): a 200-session SMA gate used to select which single leveraged ETF to hold lost to its own calendar-shift placebo in 100% of seeds; that failure mode was picking an asset by trend, not de-risking an already-chosen book by trend, which is mechanistically what BG01/BG02/BG04 do, so the same placebo discipline is required and tightened here. dir:letf_multi_signal_regime_vote (harvested, not tested locally): independent authors' multi-signal regime-gated leveraged books report strong headline numbers, but the LRS Sentinel author's own start-year table shows the headline 49.9% CAGR is a post-2013 artifact (2001 start: 17.7%/-72.5% max drawdown) -- a reminder that a single favorable start or window can flatter a gated leveraged book, exactly why this round's design window starts in 2016 (before the frozen select window) and includes both the 2018 and 2022 bear episodes rather than picking a start date. dir:macro_credit_drawdown_probability_gate (harvested, not executable as described): a credit/macro drawdown-probability gate was proposed as a slower, less-whipsaw alternative to a 200-day SMA, but the author never disclosed the indicator set, so it cannot be replicated; BG03 (HYG/IEF ratio) is this iteration's own executable, fully-specified credit-based alternative to the price-based gates.",
+  "cost_and_execution_assumptions": "Reused byte-for-byte cost contract cost_v1_10_20bps_next_open: sum(abs(delta_weight)) * slippage_bps charged on the execution session, 10 bp per side primary and 20 bp per side stress; signal on a completed session close, fill at the next session open; SIP fully adjusted daily closes; cash leg and gate-off fallback SHY; risk-free BIL. The bear gate is evaluated every session (not only on S3's monthly rebalance or vol/boost recompute days), since a 200- or 100-session SMA/ratio can cross on any day and the adoption rule requires the gate's own timing, not just its monthly-aligned timing, to be tested.",
+  "stop_condition": "If no gate (BG01-BG04) passes all of (a) design-window max drawdown improvement >=10pp vs BG00, (b) design-window Sharpe >= BG00 Sharpe + 0.10, (c) design-window Sharpe beats its EM-k control, (d) design-window Sharpe beats >=18 of 20 CS-k circular-shift placebos, and (e) anchor-window CAGR >=50% and max drawdown >=-35% at both 10 and 20 bp, the verdict is 'no guard; keep the 25% exit' and the direction is not reopened except with a new gate mechanism or new data, not by re-tuning these four gates' windows or thresholds. Compute budget for the decisive test: 88 simulations (4 gates + 4 EM-k controls + 80 CS-k placebos), fixed; BG00 requires no new simulation since its numbers are reused from existing records.",
+  "queries": [
+    {
+      "query": "Moreira Muir volatility managed portfolios replication failure Cederburg out-of-sample",
+      "opened_urls": [
+        "https://www.nber.org/papers/w22208",
+        "https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html"
+      ],
+      "searched_at": "2026-09-22T02:47:22+00:00"
+    },
+    {
+      "query": "volatility targeting leveraged ETF drawdown control 2025 2026 evidence Sharpe improvement",
+      "opened_urls": [
+        "https://www.man.com/insights/the-impact-of-volatility-targeting",
+        "https://arxiv.org/abs/2603.01298",
+        "https://quantpedia.com/leveraged-etfs-in-asset-allocation-opportunity-or-trap/",
+        "https://quantpedia.com/leveraged-etfs-in-low-volatility-environments/"
+      ],
+      "searched_at": "2026-09-22T02:47:22+00:00"
+    },
+    {
+      "query": "volatility managed portfolios transaction costs Barroso Detzel do not survive",
+      "opened_urls": [
+        "https://ideas.repec.org/a/eee/jfinec/v140y2021i3p744-767.html",
+        "https://ideas.repec.org/a/eee/empfin/v80y2025ics092753982400094x.html"
+      ],
+      "searched_at": "2026-09-22T02:47:22+00:00"
+    },
+    {
+      "query": "Gayed Bilello Leverage for the Long Run SSRN 2741701 moving average leveraged ETF rotation",
+      "opened_urls": [
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2741701"
+      ],
+      "searched_at": "2026-09-23T08:02:30Z"
+    },
+    {
+      "query": "Faber quantitative approach tactical asset allocation SSRN 962461 moving average timing",
+      "opened_urls": [
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=962461"
+      ],
+      "searched_at": "2026-09-23T08:04:30Z"
+    },
+    {
+      "query": "Gehrman LETFs real money live test Leverage for the Long Run 200 day SMA update September 2026",
+      "opened_urls": [
+        "https://www.reddit.com/r/LETFs/comments/1w3te3t/update_sep_2026_gehrmans_ongoing_test_of_3/"
+      ],
+      "searched_at": "2026-09-23T08:06:30Z"
+    }
+  ],
+  "sources": [
+    {
+      "applicability": "This is the giant behind the frozen S3 vt40+boost overlay every BG00-BG04 candidate and every EM-k control reuses unchanged; scaling exposure down when realized volatility is high is the mechanism EM-k dials via a single scale factor, so this still grounds why the overlay (and therefore the EM-k baseline every gate must beat) is trustworthy.",
+      "claim": "Moreira and Muir show that scaling factor exposure down when realized volatility is high raises Sharpe ratios for the market, value, momentum, profitability, return-on-equity and investment factors and for the currency carry trade, because factor volatility changes are not offset by proportional changes in expected returns.",
+      "claim_id": "mm2017_volatility_managed_sharpe",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Replicated in spanning regressions by Cederburg et al. (2020) and Barroso and Detzel (2021); both dispute the real-time value.",
+      "limitations": "Long-short factor portfolios with unconstrained leverage, monthly data, no transaction costs, sample ends a decade before our anchor window.",
+      "market_and_period": "US equity factors and currency carry, monthly, 1926-2015.",
+      "published_or_updated_at": "2016-04-28",
+      "sha256": "aa84dbc3f2d8acf1f6f9ba0c8e77ef57b68abbbc370296243353d1bf32d212fb",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/moreira-muir-nber-w22208.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://www.nber.org/papers/w22208"
+    },
+    {
+      "applicability": "Keeps this round honest about a second, independent overlay: a gate that only 'looks like' de-risking must still beat a real-time-implementable, same-average-exposure control (EM-k) and a placebo (CS-k), not an in-sample full-exposure baseline alone.",
+      "claim": "Across 103 equity strategies, volatility-managed portfolios do not systematically beat their unmanaged counterparts for a real-time investor: the spanning-regression alphas are not implementable and out-of-sample versions generally earn lower certainty equivalents and Sharpe ratios than simply holding the unmanaged portfolio.",
+      "claim_id": "cederburg2020_oos_failure",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Consistent with Barroso and Detzel (2021) on costs and with the 2025 international evidence in the Journal of Empirical Finance.",
+      "limitations": "Monthly long-short equity factors, real-time estimation of the scaling coefficient; it does not test a fixed target-volatility rule with a hard leverage cap on a levered-ETF sleeve.",
+      "market_and_period": "103 US equity strategies, monthly, long historical samples through 2017.",
+      "published_or_updated_at": "2020-01-01",
+      "sha256": "67ca99ae459acaf93679b93b0885caf02f74dccc094c8f60636181fc87b1ecb2",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/cederburg-2020-jfe-oos.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html"
+    },
+    {
+      "applicability": "Reused reason the anchor-window do-no-harm check (e) is evaluated at both 10 and 20 bp for every gate, not only the design-window criteria.",
+      "claim": "After transaction costs, volatility management of asset-pricing factors other than the market generally produces zero abnormal returns and significantly lower Sharpe ratios, while the volatility-managed market portfolio stays robust to costs.",
+      "claim_id": "barroso_detzel2021_costs",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Same direction as Cederburg et al. (2020).",
+      "limitations": "Factor portfolios, not ETFs; cost model is US equity spreads, not ETF spreads.",
+      "market_and_period": "US equity asset-pricing factors, monthly, 1926-2017.",
+      "published_or_updated_at": "2021-06-01",
+      "sha256": "a40f15e9e32d177f4ae008921a85ab7b21b99534143812cf8462f89bfd30b997",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/barroso-detzel-2021-jfe-costs.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/jfinec/v140y2021i3p744-767.html"
+    },
+    {
+      "applicability": "General support that volatility/exposure scaling helps risk assets including equities with large drawdowns, independent of which specific gate asset (QQQ, SMH, HYG/IEF, or S3's own equity curve) is used.",
+      "claim": "Across more than 60 assets with daily data from 1926, volatility scaling raises Sharpe ratios for risk assets (equities and credit) and for portfolios with a large allocation to them, and consistently reduces the likelihood of extreme returns.",
+      "claim_id": "man2017_voltarget_risk_assets",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Published as Harvey et al. in the Journal of Portfolio Management (2018).",
+      "limitations": "Practitioner research by a manager that sells volatility-targeted products; unlevered assets, no ETF path-dependency or borrow costs.",
+      "market_and_period": "60+ global assets, daily, 1926-2017.",
+      "published_or_updated_at": "2017-08-06",
+      "sha256": "b85bd8fcf8ce8f84dd276034a2a6d324f431cca25dad1b0893cb25e8f368ba7a",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/man-group-impact-of-volatility-targeting.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://www.man.com/insights/the-impact-of-volatility-targeting"
+    },
+    {
+      "applicability": "Keeps the prior that a sizing overlay's edge is cost-marginal in general, so any BG01-BG04 edge over EM-k must come from the gate's timing information, not merely from being smaller on average.",
+      "claim": "In 45 international equity markets, only the volatility-managed market and momentum strategies are partially robust to transaction costs, suggesting most of the abnormal return of volatility management is explained by costs.",
+      "claim_id": "empfin2025_international_costs",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Third independent study in the same direction as Cederburg and Barroso-Detzel.",
+      "limitations": "International factor portfolios; no levered ETF or daily-rebalanced sleeve.",
+      "market_and_period": "45 international equity markets, nine managed factors, through 2023.",
+      "published_or_updated_at": "2025-01-01",
+      "sha256": "4e157b22a4f583de62e6ad20aaf34abd7edf09e782a6bf2c795576385ac0d030",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/empfin-2025-international-voltarget.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/empfin/v80y2025ics092753982400094x.html"
+    },
+    {
+      "applicability": "Closest published analogue of a volatility/regime filter on leveraged ETFs specifically, independent of which gate asset is used.",
+      "claim": "Quantpedia proposes gating leveraged-ETF exposure with a volatility filter that compares short-term realized volatility with implied volatility, cutting exposure in high-volatility periods to keep the leverage while mitigating the worst drawdowns.",
+      "claim_id": "quantpedia2025_letf_vol_filter",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Not independently replicated; treated as a design hint, not as evidence.",
+      "limitations": "Vendor blog, rules described but thresholds not fully public, no live track record, uses an implied-volatility input we do not have PIT.",
+      "market_and_period": "US leveraged equity ETFs, daily, post-2010 through 2025.",
+      "published_or_updated_at": "2025-09-15",
+      "sha256": "c1a415b0a840caf5a34ed79f89175ebecf3a9e657dc641b61bdf040d27d1b4b6",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/quantpedia-letf-low-volatility-environments.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/leveraged-etfs-in-low-volatility-environments/"
+    },
+    {
+      "applicability": "Independent confirmation that an active risk overlay, not buy-and-hold, is the defensible way to run any of S3's single-name legs, and that simple trend filters are the standard tool -- exactly the BG01/BG02/BG04 mechanism class.",
+      "claim": "Leveraged ETFs do not work in long-term passive portfolios because they amplify losses and volatility, but simple trend filters (10-month moving average, 12-month high) reduce the damage when leverage is actively managed.",
+      "claim_id": "quantpedia2025_letf_trend_allocation",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Overlaps with the published trend-following literature on levered exposure.",
+      "limitations": "Vendor blog, monthly trend rules only, no cost or capacity analysis of our sleeve.",
+      "market_and_period": "US leveraged equity ETFs in static and dynamic allocations, monthly.",
+      "published_or_updated_at": "unknown",
+      "sha256": "8a91bb4ea45d34e0cafb4c672cde8bfa117c475792af4b84921797ed4610698f",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/quantpedia-letf-asset-allocation.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/leveraged-etfs-in-asset-allocation-opportunity-or-trap/"
+    },
+    {
+      "applicability": "Same reason the frozen overlay keeps a monthly-plus-event-triggered update cadence with a hard 1.0 leverage cap; the bear gate reuses this cadence discipline and adds only a daily-checked on/off override, not a new continuous scaler.",
+      "claim": "Open-loop volatility targeting that scales exposure inversely with a variance forecast suffers from high turnover, leverage spikes and sensitivity to estimation error; a proportional-control formulation hits the target volatility more consistently.",
+      "claim_id": "arxiv2026_closed_loop_voltarget",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "None yet (March 2026 preprint).",
+      "limitations": "Simulation only, no live or historical trading record, not peer reviewed.",
+      "market_and_period": "Simulation study of a risky-plus-riskfree index, 2026 preprint.",
+      "published_or_updated_at": "2026-03-01",
+      "sha256": "dc1ebb0cbe082f253b7f5357a7292fecad05e9cfaaae7ec363233b28452811dc",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/arxiv-2603.01298-adaptive-leveraged-vol-control.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2603.01298"
+    },
+    {
+      "claim_id": "gayed_bilello2016_leverage_long_run_sma_rule",
+      "claim": "Gayed and Bilello (2016) show that using leverage when the broad U.S. equity market is above its Moving Average and deleveraging to Treasury bills when it is below produces better absolute and risk-adjusted returns than a comparable unleveraged buy-and-hold strategy or a constant-leverage strategy, and that this holds across various leverage amounts, Moving Average time periods, and multiple economic and financial market cycles.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2741701",
+      "published_or_updated_at": "2016-03-03",
+      "market_and_period": "US broad equity market (SSRN abstract does not name the exact index), various moving-average windows and leverage amounts, multiple market cycles, results updated through December 31, 2020.",
+      "applicability": "This is the published giant behind the gate mechanism class BG01, BG02 and BG04 instantiate (price or index closing below its own moving average moves risk to cash); it is why 200 sessions (roughly the trading-day equivalent of the paper's long moving-average windows) was chosen for the price- and equity-curve-based gates rather than a short window.",
+      "limitations": "SSRN working paper (2016 Charles H. Dow Award), not a peer-reviewed journal article; author-run backtest with author-chosen moving-average and leverage parameters; only the abstract was read locally (PDF not fetched), so the exact universe, sample period and cost assumptions are not yet independently verified; this is evidence for the general mechanism, not a claim about S3's specific 5-ETF menu, its 40 percent volatility target, or its dip boost.",
+      "independent_replication": "Replicated as a currently-live, real-money public track record by an independent author (Gehrman, r/LETFs, source gehrman2026_lrs_live_200sma_rotation_update in this same card set) applying the identical 200-day SMA/deleverage-to-cash rule to a 2x S&P 500 ETF since March 2024; not yet independently replicated in an academic venue.",
+      "fetched_at": "2026-09-23T08:02:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_11_s3_bear_guard/sources/ssrn-2741701-gayed-bilello-leverage-long-run.txt",
+      "sha256": "23737f8a252f59e97762ee240066792170f17a997c9b2f4fce589a9e7c1f0e71",
+      "source_card_path": "reports/harness/source_cards/h20260923_11_s3_bear_guard.jsonl"
+    },
+    {
+      "claim_id": "faber2007_tactical_asset_allocation_ma_timing",
+      "claim": "Faber's updated (2013) tactical asset allocation study reports that a simple quantitative moving-average timing system continued to perform well in real time from 2008-2012, achieving equity-like returns with bond-like volatility and drawdowns across several asset classes, extending the original 2006 result.",
+      "source_type": "paper",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=962461",
+      "published_or_updated_at": "2013-02-01",
+      "market_and_period": "US and global asset classes (equities, bonds, commodities, REITs) via a small set of asset-class timing models on monthly closes, original sample from the early 1970s, updated through 2012.",
+      "applicability": "Second, independent giant behind the general moving-average regime-timing mechanism class (distinct instrument and asset classes from Gayed and Bilello), supporting that a moving-average gate is a broadly-documented mechanism rather than a single-paper artifact; cited for the mechanism class, not as direct evidence for any of S3's leveraged-ETF legs or gate assets.",
+      "limitations": "SSRN working paper originally published in The Journal of Wealth Management (Spring 2007, a practitioner journal), updated 2013; uses a 10-month simple moving average on monthly closes across broad, unleveraged asset classes, not leveraged ETFs, not S3's specific menu, and not a 200-session daily gate; only the abstract was read locally (PDF not fetched).",
+      "independent_replication": "One of the most cited practitioner tactical-asset-allocation papers; the 10-month/200-day moving-average timing rule it popularized has been repeatedly replicated and extended in the practitioner and quant-blog literature (including the leveraged-ETF variants already logged under dir:letf_published_rules_live_tracked and dir:levered_single_asset_sma_trend_gate in this repo's own registry); not independently re-verified from source in this pass.",
+      "fetched_at": "2026-09-23T08:04:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_11_s3_bear_guard/sources/ssrn-962461-faber-tactical-asset-allocation.txt",
+      "sha256": "de21b7a275f75205a30c2986b3cdc4ee20acde8368da7c96ef7e152973d8a245",
+      "source_card_path": "reports/harness/source_cards/h20260923_11_s3_bear_guard.jsonl"
+    },
+    {
+      "claim_id": "gehrman2026_lrs_live_200sma_rotation_update",
+      "claim": "An independent real-money, publicly-tracked implementation of the Gayed and Bilello Leverage-for-the-Long-Run rule (2x S&P 500 ETF SSO while the S&P 500 closes above its 200-day moving average, else BIL) has been running live since March 2024 with monthly Reddit updates; as of the September 2026 update it remains fully invested in SSO because the S&P 500 is still above its 200-day moving average, and the author states the portfolio has been followed strictly with no additional contributions.",
+      "source_type": "industry_standard",
+      "url": "https://www.reddit.com/r/LETFs/comments/1w3te3t/update_sep_2026_gehrmans_ongoing_test_of_3/",
+      "published_or_updated_at": "2026-08-31",
+      "market_and_period": "US large-cap equities via SSO (2x S&P 500) vs BIL, daily-close 200-day SMA signal, live since March 2024 through the September 2026 update read here.",
+      "applicability": "The independent, currently-live post-publication record required for this round: confirms the exact 200-day SMA/deleverage-to-cash rule that BG01/BG02/BG04 instantiate is not only a backtest artifact but a real-money position someone is holding today; it cannot show pre-2024 (2018/2022) behavior, which is exactly what this iteration's design window is for.",
+      "limitations": "Single anonymous retail author's self-reported real-money account on r/LETFs, not independently audited; only the current allocation state and cumulative narrative are given in the posts read so far -- no verified since-inception return table has been located locally yet (also noted in this repo's own dir:letf_published_rules_live_tracked); demonstrates only that the gate is currently on (a single observed state), not that it avoids whipsaw or adds value net of costs; the instrument (SSO, 2x S&P 500) differs from S3's menu (TQQQ/SOXL/UPRO/USD/TECL) and from all four gate assets tested here.",
+      "independent_replication": "One of three parallel real-money tracks the same author runs (alongside HFEA and 9Sig) since March 2024, with a buy-and-hold S&P 500 index fund as a stated control group; the underlying rule itself directly cites Gayed and Bilello (2016) as its source, so this is a live replication of that published rule rather than an independently-derived signal.",
+      "fetched_at": "2026-09-23T08:06:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_11_s3_bear_guard/sources/reddit-letfs-gehrman-sep2026-update.txt",
+      "sha256": "fd7df599d9928a20e48657411eca0141079c2cfceacc643a1c604cb6aec77a5f",
+      "source_card_path": "reports/harness/source_cards/h20260923_11_s3_bear_guard.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run the frozen S3 vt40+boost machine, unmodified except for the gate override (force risk weight to SHY while the gate is on, checked daily, signal on close applied at next open), for BG01-BG04 across the full warmup+design+anchor panel; for each gate k, bisect EM-k's single vol-target scale factor c on the design window to match k's mean daily gross exposure, and build CS-k's 20 circular-shift placebos (offset_j = round(N*j/21) sessions); score all against the preregistered adoption rule (a)-(e); BG00's numbers are read from the existing stress-replay and renewal records rather than recomputed.",
+    "pass_condition": "At least one gate passes all of (a)-(e), reported alongside the other gates' full results and multiple-comparison context (4 gates, no cherry-picking one that merely turns green after seeing the others fail).",
+    "falsification_condition": "No gate passes all of (a)-(e), or a gate passes (a)-(d) but breaks the anchor-window do-no-harm check (e) at either cost level, or a gate's own EM-k or CS-k control cannot be computed because the gate is on or off for the entire design window (degenerate signal).",
+    "max_compute_minutes": 30
+  }
+}

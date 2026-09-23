@@ -1,0 +1,135 @@
+{
+  "iter_id": "h20260923_11_s3_bear_guard",
+  "strategy_name": "s3_bear_guard_h20260923_11",
+  "source_spec_path": "strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml",
+  "spec_hash": "c80ea7a78ccb8efbd385f453c55fd893ad0bd11eae019e79aa4fe48838dc57de",
+  "schema_version": 3,
+  "created_at": "2026-09-23T08:15:00Z",
+  "objective": "Screen four bear-regime gates on the live S3 book (BG01 QQQ<SMA200, BG02 SMH<SMA200, BG03 HYG/IEF ratio<SMA100, BG04 unscaled S3 equity curve<SMA200), each against a BG00 no-gate reference, a bisected exposure-matched control (EM-k) and a 20-offset circular-shift placebo (CS-k), for whether moving S3's risk weight to SHY while the gate is on cuts the pre-window (2016-2023) drawdown by more than an exposure-matched lower volatility target would, without breaking the frozen anchor-window return bar.",
+  "paths": [
+    {
+      "name": "s3_bear_regime_guard_screen",
+      "candidate_count": 5,
+      "hypothesis_refs": [
+        "H-20260923-11"
+      ],
+      "parameters": {
+        "gate_id": [
+          "BG00",
+          "BG01",
+          "BG02",
+          "BG03",
+          "BG04"
+        ],
+        "gate_asset": [
+          null,
+          "QQQ",
+          "SMH",
+          "HYG/IEF",
+          "s3_unscaled_book_equity_curve"
+        ],
+        "gate_sma_window": [
+          null,
+          200,
+          200,
+          100,
+          200
+        ],
+        "vol_target_base": [
+          0.4
+        ],
+        "vol_target_boost": [
+          0.6
+        ],
+        "leverage_cap": [
+          1.0
+        ],
+        "lookback_sessions": [
+          63
+        ],
+        "realized_vol_window": [
+          21
+        ],
+        "rebalance": [
+          "monthly_last_session"
+        ],
+        "vs_symbol": [
+          "SHY"
+        ],
+        "gate_checked": [
+          "daily"
+        ],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "BG00_reference_no_gate",
+        "EM_k_exposure_matched_control",
+        "CS_k_circular_shift_placebo_distribution",
+        "s3_no_overlay_unscaled_book",
+        "SHY_buy_and_hold",
+        "QQQ_buy_and_hold"
+      ]
+    }
+  ],
+  "total_candidate_budget": 5,
+  "candidate_manifest_path": "reports/research/iterations/h20260923_11_s3_bear_guard/candidate-manifest.json",
+  "candidate_manifest_sha256": "57d54659e9fcc02601c3cba14e3d404a23dde338c8957318a357db5d61d5ffca",
+  "data_feasibility_path": "reports/research/iterations/h20260923_11_s3_bear_guard/data-feasibility.json",
+  "data_feasibility_sha256": "b6bab5d5798321e0347f8ff0aca2a05892bf4eb4acdd4c1c267353bad54925b6",
+  "cost_table_path": "reports/research/iterations/h20260923_11_s3_bear_guard/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260923_11_s3_bear_guard/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260923_11_s3_bear_guard/report.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "warmup": [
+      "2015-01-02 (requested)",
+      "2016-01-04 (actual earliest local bar)"
+    ],
+    "design": [
+      "2016-01-04",
+      "2023-09-15"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-16"
+    ],
+    "holdout_2026": [
+      "2026-01-02",
+      "2026-09-17",
+      "already spent on the live S3 book; no holdout claim made here"
+    ]
+  },
+  "controls": {
+    "exposure_matched_em_k": {
+      "description": "One control per gate (EM01..EM04): S3 with both the base (0.40) and boost (0.60) volatility targets scaled by a single factor c in (0, 1], found by bisection on the design window only, so that EM-k's mean daily gross risk exposure (sum of non-cash weights after the multiplier) equals gate k's mean daily gross risk exposure over the design window. No gate signal; continuously scaled. Not counted as a candidate.",
+      "count": 4
+    },
+    "circular_shift_cs_k": {
+      "description": "20 placebos per gate (CS-k-1..CS-k-20): gate k's own design-window daily on/off series, circularly shifted by offset_j = round(N * j / 21) sessions for j = 1..20, where N is the number of design-window sessions. Preserves the gate's on/off durations and total time-in-market but breaks its alignment with actual market states. Evaluated on the design window only. Not counted as candidates.",
+      "offsets_per_gate": 20,
+      "total": 80
+    },
+    "fixed_simulation_budget": {
+      "description": "4 gates (BG01-BG04) + 4 EM-k controls + 80 CS-k placebos = 88 simulations, fixed. BG00 requires no new simulation: its design-window numbers are reused from reports/paper/renewal/2026-09-23-s3-stress-2016-2023.json and its anchor-window numbers from the authorized 2026-09-23 S1-S3 renewal record.",
+      "count": 88
+    }
+  },
+  "adoption_rule": {
+    "design_window": [
+      "(a) max drawdown improves by >= 10 percentage points vs BG00",
+      "(b) Sharpe >= BG00 Sharpe + 0.10",
+      "(c) Sharpe > its EM-k control",
+      "(d) Sharpe beats >= 18 of its 20 CS-k placebos"
+    ],
+    "anchor_window_do_no_harm": [
+      "(e) at both 10 and 20 bp: CAGR >= 50% and max drawdown >= -35% (frozen gate G1)"
+    ],
+    "multiple_comparisons": "4 gates; report all regardless of outcome",
+    "fallback_if_none_pass": "no guard; keep the 25% exit"
+  }
+}

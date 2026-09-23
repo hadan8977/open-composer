@@ -1,0 +1,235 @@
+name: s3_bear_guard_h20260923_11
+description: Preregistered H-20260923-11 candidate family. BG00 is the live S3
+  book (leveraged-ETF momentum rotation over TQQQ/SOXL/UPRO/USD/TECL, 63-session
+  lookback, top 2, monthly, absolute-momentum filter vs SHY, 40% vol target with
+  a QQQ oversold dip boost to 60%) exactly as renewed, with no bear-regime gate.
+  BG01-BG04 add a bear-regime gate (QQQ<SMA200, SMH<SMA200, HYG/IEF ratio<SMA100,
+  or the unscaled S3 book's own equity curve<SMA200) that moves all of S3's risk
+  weight to SHY while the gate is on, signal on a completed close applied at the
+  next open, gate state checked every session. Screens whether any gate cuts the
+  pre-window (2016-2023) drawdown by more than an exposure-matched lower vol
+  target would, without breaking the frozen anchor-window return bar. Research
+  only, deterministic, next-session execution; no broker writes are authorized.
+timeframe: daily
+universe:
+- TQQQ
+- SOXL
+- UPRO
+- USD
+- TECL
+- SHY
+- QQQ
+- SMH
+- HYG
+- IEF
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 2
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260923_11:BG:s3_bear_regime_guard_screen
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: TQQQ
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  mom_63:
+    source: expression
+    expression: close / lag(close, 63) - 1
+    default: 0.0
+    description: 63-session total return of each S3 menu leg (TQQQ, SOXL, UPRO,
+      USD, TECL), compared against SHY's 63-session return for the absolute-momentum
+      filter; top 2 legs held equal-weight, decided on a completed session close
+      and executed at the next open. Unchanged from the live S3 book.
+    params:
+      decision_lag_sessions: 1
+  realized_vol_21:
+    source: expression
+    expression: stdev(close / lag(close, 1) - 1, 21)
+    default: 0.0
+    description: 21-session realized volatility of the unscaled S3 book, annualized
+      in the runner, used to scale exposure down toward SHY (down-only, leverage
+      cap 1.0, base target 0.40, dip-boost target 0.60). Unchanged from the live
+      S3 book; recomputed at the open after a rebalance close and when the dip
+      boost toggles.
+    params:
+      decision_lag_sessions: 1
+  qqq_sma_200:
+    source: expression
+    expression: sma(close, 200)
+    default: 0.0
+    description: QQQ 200-session simple moving average. Documentation-only; evaluated
+      on QQQ's own close series by the runner, not by the generic per-symbol engine.
+      Serves two roles -- half of the live dip-boost trigger (QQQ above its own
+      SMA200), and the BG01 bear-gate input (QQQ close below this SMA200 moves
+      all S3 risk weight to SHY until QQQ closes back above it).
+    params:
+      decision_lag_sessions: 1
+  qqq_rsi_10:
+    source: expression
+    expression: wilder_rsi(close, 10)
+    default: 50.0
+    description: QQQ 10-session Wilder RSI. Second half of the dip-boost trigger
+      (RSI below 30); when both trigger conditions hold, the volatility target is
+      raised from 0.40 to 0.60 for 10 sessions. Unchanged from the live S3 book;
+      not used by any BG01-BG04 gate.
+    params:
+      decision_lag_sessions: 1
+  smh_sma_200:
+    source: expression
+    expression: sma(close, 200)
+    default: 0.0
+    description: SMH 200-session simple moving average. Documentation-only; evaluated
+      on SMH's own close series by the runner, not by the generic per-symbol engine.
+      BG02 bear-gate input (SMH close below this SMA200 moves all S3 risk weight
+      to SHY until SMH closes back above it) -- a semis-specific version of BG01,
+      since S3's book is presently concentrated in SOXL and USD.
+    params:
+      decision_lag_sessions: 1
+  hyg_ief_ratio_sma_100:
+    source: expression
+    expression: sma(close, 100)
+    default: 0.0
+    description: Documentation-only stand-in. The actual BG03 gate input is the
+      100-session simple moving average of the HYG/IEF close-price ratio (high-yield
+      credit relative to intermediate Treasuries), computed by the runner directly
+      from HYG and IEF closes -- a cross-symbol ratio is outside the single-symbol
+      expression grammar, so it is not evaluated by the generic per-symbol factor
+      engine. Gate rule -- the ratio closing below its own 100-session SMA moves
+      all S3 risk weight to SHY until the ratio closes back above it. Credit-trend gate,
+      mechanistically distinct from the price-trend gates BG01/BG02/BG04.
+    params:
+      decision_lag_sessions: 1
+  s3_unscaled_equity_sma_200:
+    source: expression
+    expression: sma(close, 200)
+    default: 0.0
+    description: Documentation-only stand-in. The actual BG04 gate input is the
+      200-session simple moving average of the unscaled S3 book's own simulated
+      daily-return equity curve (same menu, lookback, top-2 selection and absolute-momentum
+      filter as the live book, but with no volatility target and no dip boost applied,
+      i.e. the "s3_no_overlay" series already computed by scripts/stress_s3_pre_window.py
+      for the design window) -- not any single symbol's price series, so it is
+      computed entirely by the runner, not the generic per-symbol factor engine.
+      Gate rule -- the book's own equity curve closing below its own 200-session SMA moves
+      all S3 risk weight to SHY until the equity curve closes back above it. Equity-curve
+      trend, mechanistically distinct from the three external-asset gates.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260923_11_s3_bear_guard
+  candidate_manifest_path: reports/research/iterations/h20260923_11_s3_bear_guard/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260923_11_s3_bear_guard/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260923_11_s3_bear_guard.jsonl
+  source_card_claim_ids:
+  - gayed_bilello2016_leverage_long_run_sma_rule
+  - faber2007_tactical_asset_allocation_ma_timing
+  - gehrman2026_lrs_live_200sma_rotation_update
+  parameter_space:
+    gate_id:
+    - BG00
+    - BG01
+    - BG02
+    - BG03
+    - BG04
+  candidate_budget: 5
+  selection_objective: No selection or ranking among the five gate variants. Each
+    (BG00 reference, BG01 QQQ<SMA200, BG02 SMH<SMA200, BG03 HYG/IEF ratio<SMA100,
+    BG04 unscaled-equity-curve<SMA200) is judged independently against the preregistered
+    adoption rule -- on the design window (2016-01-04..2023-09-15), (a) max drawdown
+    improves by >=10 percentage points vs BG00, (b) Sharpe >= BG00 Sharpe + 0.10,
+    (c) Sharpe > its exposure-matched EM-k control, (d) Sharpe beats >=18 of its
+    20 circular-shift CS-k placebos; and on the frozen anchor window (2024-01-08..2026-09-16)
+    at both 10 and 20 bp, (e) CAGR >= 50% and max drawdown >= -35% (gate G1), a
+    do-no-harm check only. No holdout claim is made for any gate, because the 2026
+    window was already used to evaluate the live S3 book. If no gate passes all
+    of (a)-(e), the verdict is "no guard; keep the 25% exit".
+  anti_overfit_notes:
+  - Five candidates (BG00 reference plus BG01-BG04) are frozen in the manifest
+    before any return is computed; the S3 vt40+boost overlay machine itself (momentum
+    lookback, vol targets, dip boost, leverage cap) is inherited unchanged from
+    the live renewal and is not re-searched.
+  - Leverage never exceeds the frozen 1.0 cap; a gate can only move risk weight
+    toward SHY, never add leverage.
+  - Each gate k has a preregistered exposure-matched control EM-k -- S3 with both
+    the base (0.40) and boost (0.60) vol targets scaled by one bisected factor c
+    in (0, 1] so EM-k's mean daily gross risk exposure over the design window equals
+    gate k's -- so a gate must beat a same-average-exposure, non-informative alternative,
+    not just a fully-exposed baseline.
+  - Each gate k has 20 circular-shift placebos CS-k -- gate k's own design-window
+    on/off series rotated by offset_j = round(N * j / 21) sessions for j = 1..20
+    (N = design-window session count), which preserves on/off duration and time-in-market
+    but breaks alignment with actual market states. This replaces a short 1-20
+    session shift (used in the earlier, refuted H-20260922-02 drawdown brake),
+    because a 200- or 100-session trend gate changes state too rarely for a short
+    shift to test anything.
+  - The 2026 holdout is not reused as an out-of-sample claim for this family; the
+    anchor window is a do-no-harm check only, since the live S3 book already spent
+    that window during its own renewal.
+  - Multiple comparisons across 4 gates are reported in full regardless of outcome;
+    the preregistered fallback if none pass is "no guard, keep the 25% exit", not
+    a widened search.
+  validation_plan:
+  - design_window_2016_01_04_to_2023_09_15_then_anchor_do_no_harm_check
+  - no_2026_holdout_claim_already_seen_by_live_s3_book
+  - exposure_matched_control_em_k_per_gate_bisected_on_design_window
+  - circular_shift_placebo_cs_k_20_offsets_per_gate
+  - multiple_comparisons_4_gates_report_all_regardless_of_outcome
+  - benchmark_family_bg00_reference_and_em_k_controls
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+notes:
+  intent: Ask whether a bear-regime gate on S3 cuts the pre-window (2016-2023)
+    drawdown by more than an exposure-matched lower volatility target would, without
+    breaking the frozen anchor-window return bar, so the live 25% drawdown exit
+    could be replaced or supplemented by a cheaper, earlier de-risking signal.
+  hypothesis_id: H-20260923-11
+  previous_link: H-20260922-02
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

@@ -70,11 +70,12 @@ def symbols() -> list[str]:
     return sorted(set(salvage.symbols()) | {"SMH", "HYG", "IEF"})
 
 
-def gate_signals(close: pd.DataFrame, book_gross: pd.Series) -> dict[str, np.ndarray]:
-    """True on a close where the gate says risk off; warmup reads as off."""
+def gate_signals(close: pd.DataFrame, book_net: pd.Series) -> dict[str, np.ndarray]:
+    """True on a close where the gate says risk off; warmup reads as off.
+    BG04 reads the unscaled book net of 10 bp (the stress replay's s3_no_overlay)."""
     qqq, smh = close["QQQ"], close["SMH"]
     ratio = close["HYG"] / close["IEF"]
-    book = (1.0 + book_gross).cumprod()
+    book = (1.0 + book_net).cumprod()
     raw = {
         "BG01": qqq < qqq.rolling(200).mean(),
         "BG02": smh < smh.rolling(200).mean(),
@@ -132,6 +133,7 @@ def main() -> int:
     weights, signal_dates = salvage.sleeve_weights(close, "s3")
     ones = np.ones(len(close.index))
     book_gross, _ = salvage.simulate(weights, leg_open, leg_close, ones, 0.0)
+    book_net, _ = salvage.simulate(weights, leg_open, leg_close, ones, 10.0)
     boost = salvage.boost_window(salvage.dip_signal(close), BOOST_HOLD)
 
     def schedule(c: float) -> np.ndarray:
@@ -148,7 +150,7 @@ def main() -> int:
 
     design = window_mask(close.index, DESIGN)
     sched = schedule(1.0)
-    gates = gate_signals(close, book_gross)
+    gates = gate_signals(close, book_net)
     rows, placebo_rows = [], []
 
     def record(cell_id: str, role: str, scale: np.ndarray, extra: dict) -> dict:

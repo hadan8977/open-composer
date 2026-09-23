@@ -1,0 +1,284 @@
+{
+  "iter_id": "h20260923_11_s3_bear_guard",
+  "generated_at": "2026-09-23T08:15:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "s3_bear_guard_h20260923_11",
+  "objective": "Screen four bear-regime gates (BG01-BG04) plus the BG00 no-gate reference for whether moving S3's risk weight to SHY while the gate is on cuts the pre-window (2016-2023) drawdown by more than an exposure-matched lower volatility target (EM-k), without breaking the frozen anchor-window return bar, and while beating a circular-shift placebo (CS-k).",
+  "candidates": [
+    {
+      "candidate_id": "BG00",
+      "path": "s3_bear_regime_guard_screen",
+      "role": "reference_no_gate",
+      "method": "s3_frozen_vt40_boost_no_gate",
+      "ablation": "none_frozen_machine",
+      "spec_path": "strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_adjusted_bear_guard",
+      "feature_contract": "feature_v1_bear_gate_and_s3_overlay",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_design_window_then_anchor_do_no_harm",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_bear_guard_diagnostics",
+      "parameters": {
+        "candidate_id": "BG00",
+        "vol_target_base": 0.4,
+        "vol_target_boost": 0.6,
+        "boost_trigger_symbol": "QQQ",
+        "boost_trigger_sma_sessions": 200,
+        "boost_trigger_rsi_sessions": 10,
+        "boost_trigger_rsi_threshold": 30,
+        "boost_duration_sessions": 10,
+        "realized_vol_window": 21,
+        "leverage_cap": 1.0,
+        "lookback_sessions": 63,
+        "rebalance": "monthly_last_session",
+        "vs_symbol": "SHY",
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "gate_checked": "daily",
+        "gate_type": "none",
+        "gate_asset": null,
+        "gate_sma_window": null,
+        "gate_rule": "no gate; S3 as renewed",
+        "em_control_id": null,
+        "cs_placebo_id_prefix": null,
+        "reuse_existing_numbers": true,
+        "reuse_source": "design-window metrics (s3_vt40_boost) from reports/paper/renewal/2026-09-23-s3-stress-2016-2023.json; anchor-window metrics from the authorized 2026-09-23 S1-S3 renewal record -- no new simulation required"
+      }
+    },
+    {
+      "candidate_id": "BG01",
+      "path": "s3_bear_regime_guard_screen",
+      "role": "bear_regime_gate_candidate",
+      "method": "s3_bear_gate_qqq_sma200",
+      "ablation": "single_gate_price_below_sma",
+      "spec_path": "strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_adjusted_bear_guard",
+      "feature_contract": "feature_v1_bear_gate_and_s3_overlay",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_design_window_then_anchor_do_no_harm",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_bear_guard_diagnostics",
+      "parameters": {
+        "candidate_id": "BG01",
+        "vol_target_base": 0.4,
+        "vol_target_boost": 0.6,
+        "boost_trigger_symbol": "QQQ",
+        "boost_trigger_sma_sessions": 200,
+        "boost_trigger_rsi_sessions": 10,
+        "boost_trigger_rsi_threshold": 30,
+        "boost_duration_sessions": 10,
+        "realized_vol_window": 21,
+        "leverage_cap": 1.0,
+        "lookback_sessions": 63,
+        "rebalance": "monthly_last_session",
+        "vs_symbol": "SHY",
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "gate_checked": "daily",
+        "gate_type": "price_below_sma",
+        "gate_asset": "QQQ",
+        "gate_sma_window": 200,
+        "gate_rule": "QQQ close < 200-session SMA(QQQ close) => gate ON; move all S3 non-cash weight to SHY",
+        "em_control_id": "EM01",
+        "cs_placebo_id_prefix": "CS01"
+      }
+    },
+    {
+      "candidate_id": "BG02",
+      "path": "s3_bear_regime_guard_screen",
+      "role": "bear_regime_gate_candidate",
+      "method": "s3_bear_gate_smh_sma200",
+      "ablation": "single_gate_price_below_sma",
+      "spec_path": "strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_adjusted_bear_guard",
+      "feature_contract": "feature_v1_bear_gate_and_s3_overlay",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_design_window_then_anchor_do_no_harm",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_bear_guard_diagnostics",
+      "parameters": {
+        "candidate_id": "BG02",
+        "vol_target_base": 0.4,
+        "vol_target_boost": 0.6,
+        "boost_trigger_symbol": "QQQ",
+        "boost_trigger_sma_sessions": 200,
+        "boost_trigger_rsi_sessions": 10,
+        "boost_trigger_rsi_threshold": 30,
+        "boost_duration_sessions": 10,
+        "realized_vol_window": 21,
+        "leverage_cap": 1.0,
+        "lookback_sessions": 63,
+        "rebalance": "monthly_last_session",
+        "vs_symbol": "SHY",
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "gate_checked": "daily",
+        "gate_type": "price_below_sma",
+        "gate_asset": "SMH",
+        "gate_sma_window": 200,
+        "gate_rule": "SMH close < 200-session SMA(SMH close) => gate ON; move all S3 non-cash weight to SHY",
+        "em_control_id": "EM02",
+        "cs_placebo_id_prefix": "CS02"
+      }
+    },
+    {
+      "candidate_id": "BG03",
+      "path": "s3_bear_regime_guard_screen",
+      "role": "bear_regime_gate_candidate",
+      "method": "s3_bear_gate_hyg_ief_ratio_sma100",
+      "ablation": "single_gate_ratio_below_sma",
+      "spec_path": "strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_adjusted_bear_guard",
+      "feature_contract": "feature_v1_bear_gate_and_s3_overlay",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_design_window_then_anchor_do_no_harm",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_bear_guard_diagnostics",
+      "parameters": {
+        "candidate_id": "BG03",
+        "vol_target_base": 0.4,
+        "vol_target_boost": 0.6,
+        "boost_trigger_symbol": "QQQ",
+        "boost_trigger_sma_sessions": 200,
+        "boost_trigger_rsi_sessions": 10,
+        "boost_trigger_rsi_threshold": 30,
+        "boost_duration_sessions": 10,
+        "realized_vol_window": 21,
+        "leverage_cap": 1.0,
+        "lookback_sessions": 63,
+        "rebalance": "monthly_last_session",
+        "vs_symbol": "SHY",
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "gate_checked": "daily",
+        "gate_type": "ratio_below_sma",
+        "gate_asset": "HYG/IEF",
+        "gate_sma_window": 100,
+        "gate_rule": "(HYG close / IEF close) < 100-session SMA of that ratio => gate ON; move all S3 non-cash weight to SHY",
+        "em_control_id": "EM03",
+        "cs_placebo_id_prefix": "CS03"
+      }
+    },
+    {
+      "candidate_id": "BG04",
+      "path": "s3_bear_regime_guard_screen",
+      "role": "bear_regime_gate_candidate",
+      "method": "s3_bear_gate_equity_curve_sma200",
+      "ablation": "single_gate_equity_curve_below_sma",
+      "spec_path": "strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_adjusted_bear_guard",
+      "feature_contract": "feature_v1_bear_gate_and_s3_overlay",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_design_window_then_anchor_do_no_harm",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_bear_guard_diagnostics",
+      "parameters": {
+        "candidate_id": "BG04",
+        "vol_target_base": 0.4,
+        "vol_target_boost": 0.6,
+        "boost_trigger_symbol": "QQQ",
+        "boost_trigger_sma_sessions": 200,
+        "boost_trigger_rsi_sessions": 10,
+        "boost_trigger_rsi_threshold": 30,
+        "boost_duration_sessions": 10,
+        "realized_vol_window": 21,
+        "leverage_cap": 1.0,
+        "lookback_sessions": 63,
+        "rebalance": "monthly_last_session",
+        "vs_symbol": "SHY",
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "gate_checked": "daily",
+        "gate_type": "equity_curve_below_sma",
+        "gate_asset": "s3_unscaled_book_equity_curve",
+        "gate_sma_window": 200,
+        "gate_rule": "unscaled S3 book equity curve (same menu/lookback/top-2/absolute-momentum picks as the live book, no vol target, no boost -- the s3_no_overlay series) close < 200-session SMA of that curve => gate ON; move all S3 non-cash weight to SHY",
+        "em_control_id": "EM04",
+        "cs_placebo_id_prefix": "CS04"
+      }
+    }
+  ],
+  "candidate_count": 5,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_adjusted_bear_guard": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": [
+          "BIL",
+          "HYG",
+          "IEF",
+          "QQQ",
+          "SHY",
+          "SMH",
+          "SOXL",
+          "TECL",
+          "TQQQ",
+          "UPRO",
+          "USD"
+        ]
+      }
+    },
+    "features": {
+      "feature_v1_bear_gate_and_s3_overlay": {
+        "decision_lag_sessions": 1,
+        "momentum": "close/lag(close,63)-1 for each S3 menu leg (TQQQ, SOXL, UPRO, USD, TECL) vs the same for SHY (absolute-momentum filter), unchanged from the live book",
+        "realized_vol": "21-session stdev of the unscaled S3 book return, annualized",
+        "dip_trigger": "QQQ close > 200-session SMA and QQQ 10-session Wilder RSI < 30 raises the volatility target from 0.40 to 0.60 for 10 sessions, unchanged from the live book",
+        "bear_gate": "gate-specific: BG01 QQQ close<SMA200; BG02 SMH close<SMA200; BG03 HYG/IEF close ratio<SMA100; BG04 unscaled S3 equity curve close<SMA200; evaluated every session, signal on a completed close applied at the next open, forces all non-cash weight to SHY while on"
+      }
+    },
+    "labels": {
+      "label_v1_next_session_open_to_open_total_return": {
+        "definition": "weights effective at the next session open; return legs split open and close"
+      }
+    },
+    "validation": {
+      "validation_v1_design_window_then_anchor_do_no_harm": {
+        "design": "2016-01-04..2023-09-15 (warmup requested from 2015-01-02; actual earliest local bar for every symbol checked is 2016-01-04, so no true pre-window warmup exists -- see warmup_first_valid_dates for exactly when each signal in this family first has enough history)",
+        "anchor": "2024-01-08..2026-09-16 (do-no-harm check only, gate G1 at 10 and 20 bp)",
+        "no_holdout_claim": "2026-01-02..2026-09-17 already spent evaluating the live S3 book at its 2026-09-23 renewal; not reused as an out-of-sample claim for any gate here",
+        "warmup_first_valid_dates": {
+          "s3_book_first_holds_risk": "2016-05-02",
+          "note": "63-session momentum/absolute-momentum-filter lookback warmup from the 2016-01-04 panel start; before this date S3 itself (BG00 and every gated variant) is flat/SHY by construction, not gated.",
+          "BG01_qqq_sma200_first_valid": "2016-10-17",
+          "BG02_smh_sma200_first_valid": "2016-10-17",
+          "dip_boost_first_valid": "2016-10-17",
+          "BG03_hyg_ief_ratio_sma100_first_valid": "2016-05",
+          "BG04_equity_curve_sma200_first_valid": "2017-02 (approximate; 200 sessions after the S3 book itself first holds risk on 2016-05-02)",
+          "effect": [
+            "Before its first-valid date, each gate reads as off (same as BG00) by construction (rolling-window functions return NaN until fully populated, and NaN is treated as gate-off, never gate-on); this is a warmup limitation, not a lookahead bias or a crash. It only affects the first ~7-13 months of the 2016-01-04..2023-09-15 design window and does not reach into the 2018 (-22.0%) or 2022 (-33.6%) drawdown episodes the design window exists to test."
+          ]
+        }
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": {
+        "contract_path": "reports/research/iterations/h20260923_11_s3_bear_guard/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_bear_guard_diagnostics": {
+        "members": [
+          "BG00_reference_no_gate",
+          "EM_k_exposure_matched_control",
+          "CS_k_circular_shift_placebo_distribution",
+          "s3_no_overlay_unscaled_book",
+          "SHY_buy_and_hold",
+          "QQQ_buy_and_hold"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml": "c80ea7a78ccb8efbd385f453c55fd893ad0bd11eae019e79aa4fe48838dc57de"
+  },
+  "source_spec_path": "strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml",
+  "spec_hash": "c80ea7a78ccb8efbd385f453c55fd893ad0bd11eae019e79aa4fe48838dc57de"
+}

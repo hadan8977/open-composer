@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260923_11_s3_bear_guard_historical_evaluation_authorization",
+  "iter_id": "h20260923_11_s3_bear_guard",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 5,
+    "evaluation_authorized_count": 5,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 5,
+    "rows": [
+      {
+        "candidate_id": "BG00",
+        "path": "s3_bear_regime_guard_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "27f02365d74e103b23bdb4e09afaa5dacf240ce1da8b44f865008dcf4c37c3e4"
+      },
+      {
+        "candidate_id": "BG01",
+        "path": "s3_bear_regime_guard_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "f2d906e8643bced685b1f198aabce2b2b33cbaefc2e0df0552f5794da9296dc2"
+      },
+      {
+        "candidate_id": "BG02",
+        "path": "s3_bear_regime_guard_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "192a799b6cd7aabd09badbd9dd1a317fb935e95c423f8dd531260314d09d61fa"
+      },
+      {
+        "candidate_id": "BG03",
+        "path": "s3_bear_regime_guard_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "9c2ba52dbddc7520e9a852c0e0cdaf4e50cf385295d0397c02d85eb8429dfbb2"
+      },
+      {
+        "candidate_id": "BG04",
+        "path": "s3_bear_regime_guard_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "a4b6e3407a65953e36898f2f2c4d8594b8cd3e270803c4b90a603b7bf65d62ec"
+      }
+    ]
+  },
+  "path_gates": {
+    "s3_bear_regime_guard_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "BG00",
+        "BG01",
+        "BG02",
+        "BG03",
+        "BG04"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "QQQ, SMH, HYG, IEF, SHY, BIL and the five S3 menu ETFs (TQQQ, SOXL, UPRO, USD, TECL) are all present in the local SIP daily archive with 2695 daily bars each, 2016-01-04..2026-09-22 (confirmed via duckdb against data/sip/daily/*/*.parquet), covering the full design window (2016-01-04..2023-09-15), the frozen anchor window (2024-01-08..2026-09-16), and next-session fills through 2026-09-17. The requested 2015-01-02 warmup is not available (earliest bar for every symbol is 2016-01-04); see candidate-manifest.json contracts.validation.validation_v1_design_window_then_anchor_do_no_harm.warmup_first_valid_dates for exactly when each signal (S3 itself 2016-05-02; QQQ/SMH SMA200 and the dip boost 2016-10-17; HYG/IEF ratio SMA100 approx. 2016-05; BG04 equity-curve SMA200 approx. 2017-02) first has enough history -- before its date each gate reads as off (same as BG00), which precedes and therefore does not affect the 2018 or 2022 drawdown episodes the design window exists to test. No new capability or vendor is required; the overlay and cost engine are reused unchanged from scripts/run_h20260922_05_salvage.py and scripts/run_h20260918_05_recent_menu.py."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml",
+      "sha256": "1f5c3bee5a9f2ac2b45c27f039f4ad26fcfc0c586ab78b4c3618a888472ac8c0"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260923_11_s3_bear_guard/cost-contract.json",
+      "sha256": "936ef56f8b2ad3196b8d1615f3b954fc0e33b334f0301b7cdd1e0e7d67166df8"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260923_11_s3_bear_guard.jsonl",
+      "sha256": "1996cb771187d4994d557e7ff02d567741744d93c155f0f2bc4a5e241f13192a"
+    }
+  }
+}
