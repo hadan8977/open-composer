@@ -317,13 +317,23 @@ _LIMIT_KEYWORDS_RE = re.compile(r"limit|quota", re.IGNORECASE)
 
 
 def is_rate_limited(result: ChatCallResult) -> bool:
+    """HTTP 429, or a failed reply whose body mentions a limit or quota. A
+    successful reply is never keyword-scanned: its own content can say
+    "limitations" (found 2026-09-23 by the feed classifier)."""
     if result.status_code == 429:
         return True
+    if result.status_code == 200 and result.content_text is not None:
+        return False
     return bool(result.raw_body) and bool(_LIMIT_KEYWORDS_RE.search(result.raw_body))
 
 
 def make_requests_chat_call_fn(
-    *, base_url: str, api_key: str, model: str, timeout: float = HTTP_TIMEOUT_SECONDS
+    *,
+    base_url: str,
+    api_key: str,
+    model: str,
+    timeout: float = HTTP_TIMEOUT_SECONDS,
+    max_tokens: int = CHAT_MAX_TOKENS,
 ) -> ChatCallFn:
     """A ``ChatCallFn`` backed by plain ``requests`` against an
     OpenAI-compatible ``POST {base_url}/chat/completions``. ``api_key`` is
@@ -339,7 +349,7 @@ def make_requests_chat_call_fn(
             "model": model,
             "messages": messages,
             "temperature": CHAT_TEMPERATURE,
-            "max_tokens": CHAT_MAX_TOKENS,
+            "max_tokens": max_tokens,
         }
         try:
             response = requests.post(url, json=payload, headers=headers, timeout=timeout)

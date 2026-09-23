@@ -437,3 +437,12 @@ def test_load_already_scored_reads_existing_partition(tmp_path, monkeypatch):
     )
     scored = load_already_scored({"2024"})
     assert scored == {"0001-24-000001"}
+
+
+def test_is_rate_limited_ignores_a_successful_reply_that_mentions_limits():
+    result = ChatCallResult(
+        status_code=200,
+        content_text='{"tone": 0.1, "guidance": "limited visibility", "rationale": "x"}',
+        raw_body='{"choices": [{"message": {"content": "limited visibility"}}]}',
+    )
+    assert is_rate_limited(result) is False
