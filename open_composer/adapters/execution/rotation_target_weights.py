@@ -55,12 +55,20 @@ import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time, timedelta
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 import duckdb
 import pandas as pd
 
+from open_composer.adapters.execution.rotation_overlay import (
+    OverlayDecision,
+    apply_multiplier,
+    decide_overlay,
+    held_symbols,
+    sleeve_equity_curve,
+)
 from open_composer.adapters.execution.router_target_weights import (
     infer_acquisition_tier,
     write_router_execution_artifacts,
@@ -172,10 +180,12 @@ def _no_trading_day_after(day: date, period_end: date) -> bool:
     return len(us_equity_session_dates(day + timedelta(days=1), period_end)) == 0
 
 
+@lru_cache(maxsize=8192)
 def _is_period_end_month(day: date) -> bool:
     return _no_trading_day_after(day, _last_day_of_month(day))
 
 
+@lru_cache(maxsize=8192)
 def _is_period_end_week(day: date) -> bool:
     return _no_trading_day_after(day, _last_day_of_iso_week(day))
 
@@ -306,7 +316,7 @@ def load_price_panel(
     memory_limit: str = DEFAULT_MEMORY_LIMIT,
     threads: int = DEFAULT_THREADS,
 ) -> pd.DataFrame:
-    """One row per ``(symbol, trade_date)`` with that day's close, read from
+    """One row per ``(symbol, trade_date)`` with that day's open and close, read from
     ``data/sip/daily/{year}/*.parquet`` for ``years`` and ``symbols`` only.
     Vendor ghost bars (``volume<=0 AND trade_count<=0``) are dropped before
     a duplicate-timestamp day is collapsed to its latest bar. Runs under a
@@ -318,7 +328,7 @@ def load_price_panel(
     globs = [str(directory / "*.parquet") for directory in dirs]
     wanted = sorted({str(symbol).upper() for symbol in symbols if str(symbol).strip()})
     if not wanted:
-        return pd.DataFrame(columns=["symbol", "trade_date", "close"])
+        return pd.DataFrame(columns=["symbol", "trade_date", "open", "close"])
     con = duckdb.connect()
     try:
         con.execute(f"SET memory_limit='{memory_limit}'")
@@ -329,7 +339,7 @@ def load_price_panel(
             f"""
             WITH bars AS (
                 SELECT symbol, CAST(timestamp AS DATE) AS trade_date, timestamp,
-                       close, volume, trade_count
+                       open, close, volume, trade_count
                 FROM read_parquet({globs!r}, union_by_name=true)
                 WHERE symbol IN (SELECT symbol FROM wanted_symbols)
             ),
@@ -343,7 +353,7 @@ def load_price_panel(
                 ) AS rn
                 FROM clean
             )
-            SELECT symbol, trade_date, close FROM ranked WHERE rn = 1
+            SELECT symbol, trade_date, open, close FROM ranked WHERE rn = 1
             """,  # noqa: S608
         ).fetchdf()
     finally:
@@ -351,6 +361,7 @@ def load_price_panel(
     frame["symbol"] = frame["symbol"].astype(str).str.upper()
     frame["trade_date"] = pd.to_datetime(frame["trade_date"]).dt.date
     frame["close"] = frame["close"].astype(float)
+    frame["open"] = frame["open"].astype(float)
     return frame.sort_values(["symbol", "trade_date"]).reset_index(drop=True)
 
 
@@ -375,6 +386,179 @@ def _resolve_account_equity(root: Path, override: float | None) -> tuple[float, 
     if equity is None or float(equity) <= 0:
         raise ValueError(f"reports/paper/account.json has no positive 'equity' field: {payload}")
     return float(equity), payload.get("generated_at"), "reports/paper/account.json"
+
+
+def _sleeve_fills(root: Path, strategy_name: str) -> list[dict[str, Any]]:
+    """This sleeve's paper fills ledger, the file
+    ``open_composer.paper_rehearsal.rehearsal_fills_path`` names (read here
+    directly so the observation adapter does not import the broker module).
+    Missing file = nothing has filled yet."""
+    path = root / "reports" / "paper" / "rehearsal" / f"{strategy_name}-fills.jsonl"
+    if not path.is_file():
+        return []
+    return [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
+
+
+def _close_frame(panel: pd.DataFrame, latest_session: date) -> pd.DataFrame:
+    frame = panel.loc[panel["trade_date"] <= latest_session]
+    return frame.pivot(index="trade_date", columns="symbol", values="close").sort_index()
+
+
+def replay_books(
+    series: Mapping[str, tuple[list[date], dict[date, float]]],
+    sessions: Sequence[date],
+    *,
+    menu: Sequence[str],
+    cash_symbol: str,
+    lookbacks: Sequence[int],
+    top_n: int,
+    rebalance: str,
+    absolute_momentum_filter: bool,
+    min_history_sessions: int,
+    unfilled_slot_policy: str,
+) -> tuple[pd.DataFrame, list[date]]:
+    """The unscaled book live from each session's open, rebuilt with this
+    module's own selection rule at every rebalance close in ``sessions``;
+    before the first rebalance, and whenever the cash symbol cannot be
+    scored, the book is all cash. Returns ``(weights, rebalance_sessions)``."""
+    period_end = _is_period_end_month if rebalance == "monthly_last_session" else None
+    if rebalance == "weekly_friday":
+        period_end = _is_period_end_week
+    if period_end is None:
+        raise ValueError(f"unsupported etf_rotation.rebalance: {rebalance!r}")
+    signal_sessions = [day for day in sessions if period_end(day)]
+    cash_dates, cash_closes = series[cash_symbol]
+    position = {day: i for i, day in enumerate(sessions)}
+    changes: dict[int, dict[str, float]] = {}
+    for day in signal_sessions:
+        scores: dict[str, float] = {}
+        for symbol in menu:
+            dates, closes = series[symbol]
+            result = score_symbol(
+                dates,
+                closes,
+                signal_session=day,
+                lookbacks=lookbacks,
+                min_history_sessions=min_history_sessions,
+            )
+            if result.reason is None:
+                scores[symbol] = float(result.score)  # type: ignore[arg-type]
+        cash_result = score_symbol(
+            cash_dates,
+            cash_closes,
+            signal_session=day,
+            lookbacks=lookbacks,
+            min_history_sessions=min_history_sessions,
+        )
+        if absolute_momentum_filter and cash_result.reason is not None:
+            book = {cash_symbol: 1.0}
+        else:
+            picks, _ = select_book(
+                scores,
+                top_n=top_n,
+                cash_score=cash_result.score,
+                absolute_momentum_filter=absolute_momentum_filter,
+            )
+            book = build_weights(
+                picks,
+                top_n=top_n,
+                cash_symbol=cash_symbol,
+                unfilled_slot_policy=unfilled_slot_policy,
+            )
+        if position[day] + 1 < len(sessions):
+            changes[position[day] + 1] = book
+    columns = sorted({*menu, cash_symbol})
+    current: dict[str, float] = {cash_symbol: 1.0}
+    rows: list[dict[str, float]] = []
+    for i in range(len(sessions)):
+        current = changes.get(i, current)
+        rows.append(dict(current))
+    weights = pd.DataFrame(rows, index=list(sessions)).reindex(columns=columns).fillna(0.0)
+    return weights, signal_sessions
+
+
+def _decide_overlay(
+    panel: pd.DataFrame,
+    series: Mapping[str, tuple[list[date], dict[date, float]]],
+    *,
+    menu: Sequence[str],
+    cash_symbol: str,
+    latest_session: date,
+    lookbacks: Sequence[int],
+    top_n: int,
+    rebalance: str,
+    absolute_momentum_filter: bool,
+    min_history_sessions: int,
+    unfilled_slot_policy: str,
+    vol_cfg: Any,
+) -> OverlayDecision:
+    columns = sorted({*menu, cash_symbol})
+    book_panel = panel.loc[panel["symbol"].isin(columns) & (panel["trade_date"] <= latest_session)]
+    sessions = sorted(set(book_panel["trade_date"]))
+    weights, signal_sessions = replay_books(
+        series,
+        sessions,
+        menu=menu,
+        cash_symbol=cash_symbol,
+        lookbacks=lookbacks,
+        top_n=top_n,
+        rebalance=rebalance,
+        absolute_momentum_filter=absolute_momentum_filter,
+        min_history_sessions=min_history_sessions,
+        unfilled_slot_policy=unfilled_slot_policy,
+    )
+    close = book_panel.pivot(index="trade_date", columns="symbol", values="close")
+    open_ = book_panel.pivot(index="trade_date", columns="symbol", values="open")
+    close = close.reindex(index=sessions, columns=columns)
+    open_ = open_.reindex(index=sessions, columns=columns)
+    boost = getattr(vol_cfg, "dip_boost", None)
+    dip_close = None
+    if boost is not None:
+        dip_dates, dip_closes = series[str(boost.signal_symbol).upper()]
+        dip_close = pd.Series(
+            [dip_closes[day] for day in dip_dates if day <= latest_session],
+            index=[day for day in dip_dates if day <= latest_session],
+            dtype=float,
+        )
+    return decide_overlay(
+        sessions,
+        weights,
+        close,
+        open_,
+        signal_sessions,
+        base_target=float(vol_cfg.target_annual_vol),
+        realized_vol_sessions=int(vol_cfg.realized_vol_sessions),
+        dip_close=dip_close,
+        sma_sessions=int(boost.sma_sessions) if boost is not None else 200,
+        rsi_sessions=int(boost.rsi_sessions) if boost is not None else 10,
+        rsi_below=float(boost.rsi_below) if boost is not None else 30.0,
+        boost_target=float(boost.target_annual_vol) if boost is not None else None,
+        hold_sessions=int(boost.hold_sessions) if boost is not None else None,
+    )
+
+
+def _overlay_report_lines(manifest: Mapping[str, Any]) -> list[str]:
+    lines: list[str] = []
+    overlay = manifest.get("vol_target")
+    if overlay:
+        realized = overlay.get("realized_annual_vol")
+        lines.append(
+            f"- Volatility target: multiplier `{overlay['multiplier']:.4f}` = min(1, "
+            f"`{overlay['target_annual_vol']}` / realized "
+            f"`{realized if realized is None else round(realized, 4)}`), decided on the "
+            f"`{overlay['decision_session']}` close; boost active: `{overlay['boost_active']}`"
+        )
+    guard = manifest.get("sleeve_guard")
+    if guard:
+        lines.append(
+            f"- Sleeve equity: `{guard['equity_latest']:.2f}` (peak `{guard['peak_equity']:.2f}`, "
+            f"drawdown `{guard['drawdown']:.2%}`, exit at `{guard['drawdown_exit_pct']}`, "
+            f"breached: `{guard['drawdown_exit_breached']}`); sizing basis "
+            f"`{guard['sizing_basis']}`"
+        )
+    return lines
 
 
 # ---------------------------------------------------------------------------
@@ -413,6 +597,15 @@ def run_rotation_target_weight_mapping_for_spec(
     notional_budget_usd = getattr(rotation_config, "notional_budget_usd", None)
     if notional_budget_usd is not None:
         notional_budget_usd = float(notional_budget_usd)
+    vol_cfg = getattr(rotation_config, "vol_target", None)
+    boost_cfg = getattr(vol_cfg, "dip_boost", None) if vol_cfg is not None else None
+    sizing_basis = str(getattr(rotation_config, "sizing_basis", None) or "notional_budget")
+    drawdown_exit_pct = getattr(rotation_config, "drawdown_exit_pct", None)
+    tolerance_fraction = getattr(rotation_config, "rebalance_tolerance_fraction", None)
+    track_sleeve = sizing_basis == "sleeve_equity" or drawdown_exit_pct is not None
+    if track_sleeve and notional_budget_usd is None:
+        raise ValueError("sleeve_equity sizing and drawdown_exit_pct need notional_budget_usd")
+    fills = _sleeve_fills(root, spec.name) if track_sleeve else []
 
     now = datetime.now(UTC)
     reference_dt = as_of or now
@@ -420,7 +613,14 @@ def run_rotation_target_weight_mapping_for_spec(
     years = [run_year - 2, run_year - 1, run_year]
     as_of_bound = as_of.date() if as_of else None
 
-    symbols_needed = sorted({*menu, cash_symbol})
+    symbols_needed = sorted(
+        {
+            *menu,
+            cash_symbol,
+            *held_symbols(fills),
+            *([str(boost_cfg.signal_symbol).upper()] if boost_cfg is not None else []),
+        }
+    )
     panel = load_price_panel(
         root, symbols_needed, years, memory_limit=memory_limit, threads=threads
     )
@@ -477,6 +677,49 @@ def run_rotation_target_weight_mapping_for_spec(
         cash_symbol=cash_symbol,
         unfilled_slot_policy=unfilled_slot_policy,
     )
+    book_weights = dict(weights)
+
+    # Every price and equity the sizing reads is taken at the anchor: the
+    # close whose data last changed the target weights (the rebalance close,
+    # or a later volatility-target update). Between updates the share targets
+    # are therefore identical run after run, which keeps the daily cron
+    # idempotent; the sleeve holds its shares until the next update.
+    anchor_session = signal_session
+    overlay_manifest: dict[str, Any] | None = None
+    if vol_cfg is not None:
+        decision = _decide_overlay(
+            panel,
+            series,
+            menu=menu,
+            cash_symbol=cash_symbol,
+            latest_session=latest_session,
+            lookbacks=lookbacks,
+            top_n=top_n,
+            rebalance=rebalance,
+            absolute_momentum_filter=absolute_momentum_filter,
+            min_history_sessions=min_history_sessions,
+            unfilled_slot_policy=unfilled_slot_policy,
+            vol_cfg=vol_cfg,
+        )
+        weights = apply_multiplier(book_weights, decision.multiplier, cash_symbol)
+        anchor_session = max(signal_session, decision.decision_session or signal_session)
+        overlay_manifest = {
+            "multiplier": decision.multiplier,
+            "target_annual_vol": decision.target_annual_vol,
+            "base_target_annual_vol": float(vol_cfg.target_annual_vol),
+            "realized_annual_vol": decision.realized_annual_vol,
+            "realized_vol_sessions": int(vol_cfg.realized_vol_sessions),
+            "boost_active": decision.boost_active,
+            "boost_target_annual_vol": float(boost_cfg.target_annual_vol) if boost_cfg else None,
+            "boost_hold_sessions": int(boost_cfg.hold_sessions) if boost_cfg else None,
+            "boost_signal_symbol": str(boost_cfg.signal_symbol).upper() if boost_cfg else None,
+            "recent_boost_signal_sessions": [d.isoformat() for d in decision.boost_fired_sessions],
+            "decision_session": decision.decision_session.isoformat()
+            if decision.decision_session
+            else None,
+            "updates_next_session": decision.updates_next_session,
+            "book_weights": book_weights,
+        }
 
     account_equity, equity_generated_at, equity_source = _resolve_account_equity(
         root, account_equity_override
@@ -485,20 +728,47 @@ def run_rotation_target_weight_mapping_for_spec(
         account_equity, notional_budget_usd
     )
 
+    sleeve_guard: dict[str, Any] | None = None
+    if track_sleeve:
+        budget = float(notional_budget_usd)  # type: ignore[arg-type]
+        closes_frame = _close_frame(panel, latest_session)
+        curve = sleeve_equity_curve(fills, closes_frame, budget)
+        at_anchor = curve.loc[[day <= anchor_session for day in curve.index]]
+        equity_at_anchor = float(at_anchor.iloc[-1]) if not at_anchor.empty else budget
+        equity_latest = float(curve.iloc[-1]) if not curve.empty else budget
+        peak = max(budget, float(curve.max()) if not curve.empty else budget)
+        drawdown = 1.0 - equity_latest / peak
+        sleeve_guard = {
+            "sizing_basis": sizing_basis,
+            "starting_equity": budget,
+            "first_fill_session": min(curve.index).isoformat() if not curve.empty else None,
+            "equity_at_anchor": equity_at_anchor,
+            "equity_latest": equity_latest,
+            "peak_equity": peak,
+            "drawdown": drawdown,
+            "drawdown_exit_pct": drawdown_exit_pct,
+            "drawdown_exit_breached": drawdown_exit_pct is not None
+            and drawdown >= float(drawdown_exit_pct),
+            "marked_through": latest_session.isoformat(),
+        }
+        if sizing_basis == "sleeve_equity":
+            sizing_equity = min(equity_at_anchor, float(account_equity))
+            notional_budget_binds = sizing_equity < float(account_equity) - 1e-9
+
     reference_prices: dict[str, float] = {}
     for symbol in weights:
-        _, closes = series[symbol]
-        price = closes.get(signal_session)
-        if price is None:
+        dates, closes = series[symbol]
+        known = [day for day in dates if day <= anchor_session and closes.get(day)]
+        if not known or (anchor_session == signal_session and known[-1] != signal_session):
             raise ValueError(
-                f"no {symbol} close on signal_session {signal_session} despite passing eligibility"
+                f"no {symbol} close on anchor session {anchor_session} despite passing eligibility"
             )
-        reference_prices[symbol] = float(price)
+        reference_prices[symbol] = float(closes[known[-1]])
 
     sizing = size_whole_share_portfolio(weights, reference_prices, sizing_equity)
 
-    rebalance_session = next_us_equity_session(signal_session)
-    rebalance_id = f"{spec.name}:{signal_session.isoformat()}"
+    rebalance_session = next_us_equity_session(anchor_session)
+    rebalance_id = f"{spec.name}:{anchor_session.isoformat()}"
     target_rows: list[dict[str, object]] = []
     for symbol in sorted(weights):
         weight = float(weights[symbol])
@@ -565,6 +835,11 @@ def run_rotation_target_weight_mapping_for_spec(
         "dropped_by_absolute_momentum_count": len(dropped_by_filter),
         "weight_per_pick": (1.0 / top_n) if picks else 0.0,
         "cash_weight": float(weights.get(cash_symbol, 0.0)),
+        "anchor_session": anchor_session.isoformat(),
+        "vol_target": overlay_manifest,
+        "sizing_basis": sizing_basis,
+        "sleeve_guard": sleeve_guard,
+        "rebalance_tolerance_fraction": tolerance_fraction,
         "account_equity": account_equity,
         "account_equity_generated_at": equity_generated_at,
         "account_equity_source": equity_source,
@@ -615,7 +890,7 @@ def run_rotation_target_weight_mapping_for_spec(
     report_path = target_weights_path.with_suffix(".md")
 
     signals = _build_signals(
-        spec=spec, target_rows=target_rows, signal_session=signal_session, manifest=manifest
+        spec=spec, target_rows=target_rows, signal_session=anchor_session, manifest=manifest
     )
     signal_log_path = root / "signal_logs" / f"etf-rotation-{spec.name}.jsonl"
     if signals:
@@ -690,6 +965,12 @@ def _build_signals(
         f"top_n={manifest['top_n']}",
         f"absolute_momentum_filter={manifest['absolute_momentum_filter']}",
     ]
+    overlay = manifest.get("vol_target")
+    if overlay:
+        conditions.append(
+            f"vol_target_multiplier={overlay['multiplier']:.4f}"
+            f";target={overlay['target_annual_vol']};boost={overlay['boost_active']}"
+        )
     signals = []
     for row in target_rows:
         if not row["selected"]:
@@ -740,6 +1021,7 @@ def _write_report(
         f"`{manifest['notional_budget_usd']}`; sizing equity: `{manifest['sizing_equity']:.2f}` "
         f"(binds: `{manifest['notional_budget_binds']}`)",
         f"- Idle cash: `{manifest['idle_cash']:.2f}` (`{manifest['idle_cash_fraction']:.4%}`)",
+        *_overlay_report_lines(manifest),
         f"- Signals logged this run: `{signal_count}`",
         "- Broker writes: `false`",
         "",

@@ -71,6 +71,7 @@ from open_composer.config import project_root
 from open_composer.engines.signal_engine import build_signal
 from open_composer.execution_policy import require_orderable_execution_policy
 from open_composer.models.strategy_spec import StrategySpec, load_strategy_spec
+from open_composer.notifications import safe_dispatch_notification
 from open_composer.paper_controls import load_paper_kill_switch
 from open_composer.paper_lock import paper_control_lock
 from open_composer.storage import append_jsonl, ensure_dir, write_json
@@ -520,13 +521,18 @@ def plan_rehearsal_orders(
     equity: float,
     limits: dict[str, float | int],
     sizing_equity_hint: float | None = None,
+    churn_tolerance_fraction: float = CHURN_TOLERANCE_FRACTION,
 ) -> list[RehearsalOrderPlan]:
     """Turn target rows + broker state into per-symbol order plans (no I/O).
 
     Sells (risk reducing) are planned before buys; buys are cut off once the
     per-session order count, per-session notional, or gross-exposure limit
     would be exceeded, and the cut-off ones are marked ``deferred_*`` so the
-    next session picks them up.
+    next session picks them up. Gross exposure is counted after this
+    session's sells, and a buy that only partly fits under the gross cap is
+    clipped to the whole shares that fit rather than deferred whole.
+    ``churn_tolerance_fraction`` is the drift, as a fraction of position
+    value, below which a resize of a held position is skipped.
     """
     if not (math.isfinite(equity) and equity > 0):
         raise RehearsalError("paper account equity must be finite and positive")
@@ -599,7 +605,7 @@ def plan_rehearsal_orders(
         )
         tolerance = max(
             MIN_TRADE_NOTIONAL_USD,
-            CHURN_TOLERANCE_FRACTION * max(target_qty * price, current_qty * price),
+            churn_tolerance_fraction * max(target_qty * price, current_qty * price),
         )
         if abs(delta) < 1 or (current_qty > 0 and abs(delta) * price <= tolerance):
             plans.append(
@@ -638,7 +644,14 @@ def plan_rehearsal_orders(
     held_value = sum(
         float(positions.get(s, 0.0)) * float(position_prices.get(s, 0.0)) for s in positions
     )
-    gross_after = held_value
+    # Shares sold at this same open no longer count toward gross; without
+    # this, a rotation that sells A to buy B never fits under a 1.0 cap.
+    sold_value = sum(
+        plan.qty * float(position_prices.get(plan.symbol) or plan.reference_price)
+        for plan in plans
+        if plan.decision == "submit" and plan.side == "sell"
+    )
+    gross_after = max(0.0, held_value - sold_value)
     for plan in buys:
         if plan.decision != "submit":
             continue
@@ -654,12 +667,20 @@ def plan_rehearsal_orders(
                 f"max_session_notional_usd={max_session_notional}",
             )
             continue
-        if gross_after + plan.notional > max_gross * equity + 1e-6:
-            plan.decision, plan.reason = (
-                "deferred_gross_exposure",
-                f"max_gross_exposure={max_gross}",
+        room = max_gross * equity - gross_after
+        if plan.notional > room + 1e-6:
+            fit = math.floor((room + 1e-6) / plan.reference_price)
+            if fit < 1 or fit * plan.reference_price < MIN_TRADE_NOTIONAL_USD:
+                plan.decision, plan.reason = (
+                    "deferred_gross_exposure",
+                    f"max_gross_exposure={max_gross}",
+                )
+                continue
+            plan.reason = (
+                f"clipped from {plan.qty:.0f} to {fit} sh by max_gross_exposure={max_gross}"
             )
-            continue
+            plan.qty = float(fit)
+            plan.notional = fit * plan.reference_price
         session_orders += 1
         session_notional += plan.notional
         gross_after += plan.notional
@@ -1134,10 +1155,27 @@ def run_portfolio_paper_rehearsal(
             if row.get("client_order_id")
         }
     open_symbols = _open_order_symbols(broker, own_client_order_ids=own_coids)
+    drawdown_exit: dict[str, Any] | None = None
     if liquidate:
         rows, artifact = [], {}
     else:
         rows, artifact = load_target_rows(spec, base, now=stamp)
+        drawdown_exit = _drawdown_exit_state(spec, base, artifact, stamp)
+        if drawdown_exit is not None:
+            if result.position_scope != "strategy_ledger":
+                raise RehearsalError(
+                    "a drawdown exit liquidates the sleeve's own ledger and needs "
+                    "execution_policy.position_scope=strategy_ledger"
+                )
+            liquidate = True
+            reason_text = str(drawdown_exit["reason"])
+            rows = []
+            result.notes.append(
+                f"{reason_text}; liquidating the sleeve, and revoking its authorization once "
+                "its ledger is flat"
+            )
+            if allow_paper_orders:
+                _latch_drawdown_exit(base, spec.name, drawdown_exit)
     sizing_hint = None
     summary = artifact.get("summary") if isinstance(artifact.get("summary"), dict) else {}
     if summary and summary.get("account_equity"):
@@ -1212,6 +1250,8 @@ def run_portfolio_paper_rehearsal(
         positions = broker_positions
         position_prices = broker_position_prices
 
+    rotation = _etf_rotation_config(spec)
+    tolerance = getattr(rotation, "rebalance_tolerance_fraction", None) if rotation else None
     plans = plan_rehearsal_orders(
         target_rows=rows,
         positions=positions,
@@ -1220,6 +1260,7 @@ def run_portfolio_paper_rehearsal(
         equity=plan_equity,
         limits=auth.limits,
         sizing_equity_hint=sizing_hint,
+        churn_tolerance_fraction=CHURN_TOLERANCE_FRACTION if tolerance is None else tolerance,
     )
     result.plans = plans
     if liquidate:
@@ -1359,8 +1400,100 @@ def run_portfolio_paper_rehearsal(
         result.status = "dry_run_unauthorized" if unauthorized_dry_run else "dry_run"
     else:
         result.status = "no_orders"
+    if drawdown_exit is not None and allow_paper_orders and not positions:
+        # The exit is complete only once the ledger is flat: until then the
+        # authorization stays so the next run can sell what did not fill.
+        try:
+            revoked = revoke_rehearsal_authorization(
+                spec_path, base, reason=str(drawdown_exit["reason"])
+            )
+            _record_drawdown_exit_event(base, spec.name, "authorization_revoked", drawdown_exit)
+            result.notes.append(f"drawdown exit complete: ledger flat; revoked -> {revoked.name}")
+        except RehearsalError as exc:
+            result.notes.append(f"drawdown exit: revoke failed: {exc}"[:300])
     _write_cycle_report(base, result, auth, policy)
     return result
+
+
+def drawdown_exit_latch_path(root: Path, strategy_name: str) -> Path:
+    return rehearsal_dir(root) / f"{strategy_name}-drawdown-exit.json"
+
+
+def _etf_rotation_config(spec: StrategySpec) -> Any | None:
+    if spec.portfolio.mode != "etf_rotation_portfolio":
+        return None
+    return getattr(spec.portfolio, "etf_rotation", None)
+
+
+def _drawdown_exit_state(
+    spec: StrategySpec, root: Path, artifact: dict[str, Any], stamp: datetime
+) -> dict[str, Any] | None:
+    """The drawdown exit in force for this sleeve, or ``None``.
+
+    The exit is latched: once a submitting run has seen the breach, the
+    latch file keeps it in force even if the marked drawdown later shrinks
+    (a half-liquidated sleeve can bounce). The breach itself is read from the
+    target weights artifact's ``sleeve_guard``, which the rotation adapter
+    marks from this sleeve's fills ledger at the latest close."""
+    latch = drawdown_exit_latch_path(root, spec.name)
+    if latch.is_file():
+        return json.loads(latch.read_text(encoding="utf-8"))
+    rotation = _etf_rotation_config(spec)
+    limit = getattr(rotation, "drawdown_exit_pct", None) if rotation else None
+    if limit is None:
+        return None
+    summary = artifact.get("summary") if isinstance(artifact.get("summary"), dict) else {}
+    guard = summary.get("sleeve_guard")
+    if not isinstance(guard, dict) or guard.get("drawdown") is None:
+        raise RehearsalError(
+            "spec sets etf_rotation.drawdown_exit_pct but the target weights artifact has no "
+            "sleeve_guard; rerun `oc strategy target-weights` first"
+        )
+    drawdown = float(guard["drawdown"])
+    if drawdown < float(limit):
+        return None
+    equity = float(guard.get("equity_latest") or 0.0)
+    peak = float(guard.get("peak_equity") or 0.0)
+    return {
+        "strategy_name": spec.name,
+        "triggered_at": stamp.isoformat(),
+        "drawdown": drawdown,
+        "drawdown_exit_pct": float(limit),
+        "equity_latest": equity,
+        "peak_equity": peak,
+        "marked_through": guard.get("marked_through"),
+        "reason": (
+            f"drawdown exit: sleeve equity {equity:.2f} is {drawdown:.2%} below its peak "
+            f"{peak:.2f} (limit {float(limit):.0%})"
+        ),
+    }
+
+
+def _latch_drawdown_exit(root: Path, strategy_name: str, state: dict[str, Any]) -> None:
+    latch = drawdown_exit_latch_path(root, strategy_name)
+    if latch.is_file():
+        return
+    write_json(latch, state)
+    _record_drawdown_exit_event(root, strategy_name, "triggered", state)
+    safe_dispatch_notification(
+        kind="system_alert",
+        severity="red",
+        title=f"Paper sleeve {strategy_name}: drawdown exit triggered",
+        body=str(state.get("reason") or ""),
+        metadata={"strategy": strategy_name, "drawdown": state.get("drawdown")},
+        root=root,
+    )
+
+
+def _record_drawdown_exit_event(
+    root: Path, strategy_name: str, event: str, state: dict[str, Any]
+) -> Path:
+    stamp = datetime.now(UTC)
+    directory = root / "reports" / "paper" / "control_history" / "drawdown_exit"
+    ensure_dir(directory)
+    path = directory / f"{stamp:%Y%m%dT%H%M%S%fZ}-{strategy_name}-{event}.json"
+    write_json(path, {"event": event, "recorded_at": stamp.isoformat(), **state})
+    return path
 
 
 def _write_cycle_report(

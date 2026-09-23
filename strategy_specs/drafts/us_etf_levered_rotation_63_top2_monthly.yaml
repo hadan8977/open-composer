@@ -1,8 +1,8 @@
 name: us_etf_levered_rotation_63_top2_monthly
 description: >-
-  S3 of card H-20260918-05: month-end rotation across the levered ETFs TQQQ/SOXL/UPRO/USD/TECL on a 63-session lookback, top 2 equal weight, absolute-momentum filter against SHY so unfilled slots sit in short Treasuries. Recent-window evidence (net 10 bp per side, next-open fills): selection Sharpe 1.21, untouched 2026 holdout Sharpe 1.80, 2024-01-08..2026-09-16 Sharpe 1.48 / 145.4% annualized / -56.4% max drawdown versus SPMO 1.28 / 35.8% / -20.3%. HIGH RISK: the return is leverage and the anchor-window drawdown is -56%; the random-pick placebo reaches this holdout Sharpe in 25% of seeds, so the 63-day ranking across five levered ETFs is weak evidence.
+  S3 of card H-20260918-05 with the renewal overlay of card H-20260922-05 (owner approved the S1-S3 renewal on 2026-09-23): month-end rotation across the levered ETFs TQQQ/SOXL/UPRO/USD/TECL on a 63-session lookback, top 2 equal-weighted among the survivors of an absolute-momentum filter against SHY; a down-only volatility target then scales the book to min(1, 0.40 / 21-session realized volatility of the unscaled book), raised to 0.60 for 10 sessions after QQQ closes above its 200-session average with Wilder RSI(10) below 30, and the removed weight sits in SHY. Frozen-protocol evidence (net 10 bp per side, next-open fills): 2024-01-08..2026-09-16 116.3% annualized / -32.3% max drawdown / Sharpe 1.82, untouched 2026 holdout Sharpe 2.21, 113.7% at 20 bp, dip-signal calendar-shift placebo 0/20. WHAT IT REALLY IS (card H-20260923-09): a semiconductor-led levered equity position; measured average weights SOXL+USD 58.5% on the anchor window and 69.4% on the 2026 holdout (SOXL alone 52.0%). Works in a trending semiconductor/AI-capex market with positive return autocorrelation. Failure signals: the book's 21-session realized volatility staying above 40% annualized (multiplier below 0.4; it fell to 0.22 in the July 2026 SOXL crash, when this overlay lost -1.0% against -27.5% unscaled) and semiconductors trending down against the broad market. Exits: the volatility target itself, plus a 25% sleeve drawdown exit that liquidates the sleeve and revokes its paper authorization. Leveraged-ETF survivorship bias is not handled (the delisted archive has no closed levered fund).
 timeframe: daily
-universe: [TQQQ, SOXL, UPRO, USD, TECL, SHY]
+universe: [TQQQ, SOXL, UPRO, USD, TECL, SHY, QQQ]
 lifecycle: draft
 position_direction: long_only
 entry:
@@ -59,6 +59,27 @@ portfolio:
     # equity, and each is tracked as an independent forward record rather than
     # as part of one account-level portfolio.
     notional_budget_usd: 15000.0
+    # 2026-09-23 renewal, card H-20260922-05 path B winner (S3-vt40 + dip
+    # boost 60/10), frozen before 2025-12-31 and not re-searched. QQQ is in
+    # the universe only as the boost signal's data; it is never traded.
+    vol_target:
+      target_annual_vol: 0.40
+      realized_vol_sessions: 21
+      dip_boost:
+        signal_symbol: QQQ
+        sma_sessions: 200
+        rsi_sessions: 10
+        rsi_below: 30.0
+        target_annual_vol: 0.60
+        hold_sessions: 10
+    # The backtest compounds the sleeve's own P&L; sizing against budget plus
+    # marked P&L does the same. Share targets move only when the overlay or
+    # the rebalance updates, and the sleeve holds its shares in between.
+    sizing_basis: sleeve_equity
+    drawdown_exit_pct: 0.25
+    # The planner's default 0.25 churn tolerance would skip most multiplier
+    # moves; 0.05 still ignores rounding noise.
+    rebalance_tolerance_fraction: 0.05
 costs:
   commission_pct: 0.0
   slippage_bps: 10.0

@@ -1,6 +1,6 @@
 name: us_etf_growth_rotation_blend_top2_monthly
 description: >-
-  S2 of card H-20260918-05: month-end rotation across SPMO/QQQ/SMH/XLK/GLD/TLT scored by the mean of 21/63/126/252-session returns, top 2 equal weight, absolute-momentum filter against SHY. Recent-window evidence (net 10 bp per side, next-open fills): selection Sharpe 1.66, untouched 2026 holdout Sharpe 1.36 / 57.5% annualized, 2024-01-08..2026-09-16 Sharpe 1.50 / 49.1% annualized / -20.3% max drawdown versus SPMO 1.28 / 35.8% / -20.3%. Turnover 3.9 per year, so 20 bp stress costs move the holdout Sharpe only from 1.365 to 1.352. CAVEAT recorded in the card: the menu was chosen knowing which assets led 2023-2026, and a random 2-of-6 pick from the same menu reaches this holdout Sharpe in 20% of seeds, so most of the return is the menu and the ranking adds a modest amount.
+  S2 of card H-20260918-05: month-end rotation across SPMO/QQQ/SMH/XLK/GLD/TLT scored by the mean of 21/63/126/252-session returns, top 2 equal weight, absolute-momentum filter against SHY. Recent-window evidence (net 10 bp per side, next-open fills): selection Sharpe 1.66, untouched 2026 holdout Sharpe 1.36 / 57.5% annualized, 2024-01-08..2026-09-16 Sharpe 1.50 / 49.1% annualized / -20.3% max drawdown versus SPMO 1.28 / 35.8% / -20.3%. Turnover 3.9 per year, so 20 bp stress costs move the holdout Sharpe only from 1.365 to 1.352. CAVEAT recorded in the card: the menu was chosen knowing which assets led 2023-2026, and a random 2-of-6 pick from the same menu reaches this holdout Sharpe in 20% of seeds, so most of the return is the menu and the ranking adds a modest amount. RENEWAL 2026-09-23 (card H-20260922-05 path A, owner approved): a down-only volatility target min(1, 0.156 / 21-session realized volatility of the unscaled book) moves the excess to SHY; 2024-01-08..2026-09-16 39.7% annualized / -10.2% max drawdown / Sharpe 1.80 (unscaled 1.49 / -20.3%), holdout Sharpe 1.88, 38.8% at 20 bp. The random-pick placebo reaches 23.3%, so this is a better-sized tech basket, not a selection edge. A 15% sleeve drawdown exit liquidates the sleeve and revokes its paper authorization.
 timeframe: daily
 universe: [SPMO, QQQ, SMH, XLK, GLD, TLT, SHY]
 lifecycle: draft
@@ -59,6 +59,15 @@ portfolio:
     # equity, and each is tracked as an independent forward record rather than
     # as part of one account-level portfolio.
     notional_budget_usd: 15000.0
+    # 2026-09-23 renewal, card H-20260922-05 path A: target frozen at 0.8x the
+    # book's own selection-window median realized volatility (19.55%) before
+    # any return was computed. No dip boost on this sleeve.
+    vol_target:
+      target_annual_vol: 0.156
+      realized_vol_sessions: 21
+    sizing_basis: sleeve_equity
+    drawdown_exit_pct: 0.15
+    rebalance_tolerance_fraction: 0.05
 costs:
   commission_pct: 0.0
   slippage_bps: 10.0

@@ -1,6 +1,6 @@
 name: us_etf_sector_rotation_252_top2_weekly
 description: >-
-  S1 of card H-20260918-05: weekly relative-strength rotation across the 11 SPDR sector ETFs, 252-session lookback, top 2 equal weight, absolute-momentum filter against SHY. Recent-window evidence (net 10 bp per side, next-open fills): selection 2023-09-18..2025-12-31 Sharpe 1.14, untouched holdout 2026-01-02..2026-09-17 Sharpe 2.22 / 46.4% annualized, 2024-01-08..2026-09-16 Sharpe 1.36 / 27.8% annualized / -16.9% max drawdown versus SPMO 1.28 / 35.8% / -20.3%. A 60-seed random-pick placebo over the same menu and calendar reaches this holdout Sharpe in only 2% of seeds, so the ranking itself carries the evidence here. Below contract: multi-year robustness was deliberately not required.
+  S1 of card H-20260918-05: weekly relative-strength rotation across the 11 SPDR sector ETFs, 252-session lookback, top 2 equal weight, absolute-momentum filter against SHY. Recent-window evidence (net 10 bp per side, next-open fills): selection 2023-09-18..2025-12-31 Sharpe 1.14, untouched holdout 2026-01-02..2026-09-17 Sharpe 2.22 / 46.4% annualized, 2024-01-08..2026-09-16 Sharpe 1.36 / 27.8% annualized / -16.9% max drawdown versus SPMO 1.28 / 35.8% / -20.3%. A 60-seed random-pick placebo over the same menu and calendar reaches this holdout Sharpe in only 2% of seeds, so the ranking itself carries the evidence here. Below contract: multi-year robustness was deliberately not required. RENEWAL 2026-09-23 (owner approved): selection rule unchanged (card H-20260922-05 measured the volatility target as a return tax here); a 12% sleeve drawdown exit liquidates the sleeve and revokes its paper authorization.
 timeframe: daily
 universe: [XLK, XLV, XLF, XLE, XLI, XLY, XLP, XLU, XLB, XLRE, XLC, SHY]
 lifecycle: draft
@@ -59,6 +59,10 @@ portfolio:
     # equity, and each is tracked as an independent forward record rather than
     # as part of one account-level portfolio.
     notional_budget_usd: 15000.0
+    # 2026-09-23 renewal: rule unchanged; the sleeve compounds its own P&L
+    # and exits on a 12% drawdown from its equity peak.
+    sizing_basis: sleeve_equity
+    drawdown_exit_pct: 0.12
 costs:
   commission_pct: 0.0
   slippage_bps: 10.0

@@ -69,6 +69,7 @@
 
 ### 轨道 C（20%）现役 sleeve 运营（用户 09-22 委托 Fable 决定）
 
+- **C1 完成（2026-09-23 07:15 UTC）**：按机主要求提前到当天，新规则上线、授权重签到 11-01，见 `docs/current-view.zh.md` 09-23（再续）。
 - **C1 更新（2026-09-23）**：机主已批准 S1–S3 续期（"s1-s3续期没问题"），top50 已退役、不续期。改动为 S3 vt40 + 加档 60/10、S2 vt16、S1 不变，加回撤清仓线；09-30 开盘前一次性切换规则并重签 32 天授权（到 11-01）。细节见 `docs/current-view.zh.md` 09-23（续）一节。下一行是 09-22 的原计划，保留作记录。
 - C1（Codex，10-01 前）：S1、S2、S3、top50 彩排各续 30 天，同额度；加回撤清仓线 S1 12%、S2 15%、S3 25%、top50 15%（从各自 sleeve 权益最高点算，日检，触发即 `oc paper revoke-rehearsal` 该 sleeve 并写 control_history）。S2 明确标注为"科技篮子 beta 对照"，不算研究成果。
 - C2（Sonnet，每周五）：四个 sleeve 前向周报：净值、vs SPMO、vs 同菜单等权、成交偏差；写进 `reports/paper/rehearsal/weekly-<date>.md`，cockpit 自动可见。

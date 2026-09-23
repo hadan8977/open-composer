@@ -236,6 +236,59 @@ class InsiderBuyPortfolioConfig(BaseModel):
         return self
 
 
+class RotationDipBoostConfig(BaseModel):
+    """Temporary lift of the volatility target after an oversold dip in an
+    uptrend (card H-20260922-05, path B): when ``signal_symbol`` closes above
+    its ``sma_sessions`` simple moving average and its Wilder RSI over
+    ``rsi_sessions`` is below ``rsi_below``, the target becomes
+    ``target_annual_vol`` for the next ``hold_sessions`` sessions. The
+    multiplier stays capped at 1.0, so a boost can only move the book back
+    toward the unscaled rotation, never lever it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    signal_symbol: str = "QQQ"
+    sma_sessions: int = Field(default=200, ge=20, le=400)
+    rsi_sessions: int = Field(default=10, ge=2, le=50)
+    rsi_below: float = Field(default=30.0, gt=0, lt=100)
+    target_annual_vol: float = Field(gt=0, le=3.0)
+    hold_sessions: int = Field(ge=1, le=60)
+
+    @field_validator("signal_symbol")
+    @classmethod
+    def normalize_signal_symbol(cls, value: str) -> str:
+        normalized = value.upper().strip()
+        if not normalized:
+            raise ValueError("vol_target.dip_boost.signal_symbol cannot be blank")
+        return normalized
+
+
+class RotationVolTargetConfig(BaseModel):
+    """Down-only volatility target on a rotation book (cards H-20260922-02
+    and -05). The multiplier is ``min(1, target / realized)``, where
+    ``realized`` is the annualized sample standard deviation of the
+    *unscaled* book's daily returns over ``realized_vol_sessions``. It is
+    recomputed only at the open after a rebalance close and, with a dip
+    boost, at the open after the boost turns on or off; between updates it
+    is constant. The weight it removes goes to the cash symbol."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    target_annual_vol: float = Field(gt=0, le=3.0)
+    realized_vol_sessions: int = Field(default=21, ge=5, le=126)
+    dip_boost: RotationDipBoostConfig | None = None
+
+    @model_validator(mode="after")
+    def validate_boost_above_base(self) -> RotationVolTargetConfig:
+        if self.dip_boost is not None and (
+            self.dip_boost.target_annual_vol <= self.target_annual_vol
+        ):
+            raise ValueError(
+                "vol_target.dip_boost.target_annual_vol must exceed vol_target.target_annual_vol"
+            )
+        return self
+
+
 class ETFRotationConfig(BaseModel):
     """``portfolio.mode=etf_rotation_portfolio`` selection rule.
 
@@ -278,6 +331,22 @@ class ETFRotationConfig(BaseModel):
     #: (the default), it sizes against full account equity, matching every
     #: other portfolio mode's behavior.
     notional_budget_usd: float | None = Field(default=None, gt=0, le=1_000_000)
+    #: Optional down-only volatility target (see ``RotationVolTargetConfig``).
+    vol_target: RotationVolTargetConfig | None = None
+    #: What a paper sleeve is sized against. ``notional_budget`` (default)
+    #: sizes every rebalance against ``notional_budget_usd`` as a fixed
+    #: amount. ``sleeve_equity`` treats the budget as the sleeve's starting
+    #: capital and sizes against the budget plus the sleeve's own marked P&L
+    #: (from its fills ledger), so the sleeve compounds like the backtest.
+    sizing_basis: Literal["notional_budget", "sleeve_equity"] = "notional_budget"
+    #: Optional drawdown exit: when the sleeve's equity (budget plus marked
+    #: P&L) falls this fraction below its peak, the paper run liquidates the
+    #: sleeve and revokes its rehearsal authorization.
+    drawdown_exit_pct: float | None = Field(default=None, gt=0, lt=1)
+    #: Optional override of the paper planner's churn tolerance (the drift, as
+    #: a fraction of position value, below which a resize is skipped). The
+    #: planner default of 0.25 would swallow most volatility-target moves.
+    rebalance_tolerance_fraction: float | None = Field(default=None, ge=0, le=0.5)
 
     @field_validator("menu")
     @classmethod
@@ -312,6 +381,12 @@ class ETFRotationConfig(BaseModel):
             raise ValueError("etf_rotation.cash_symbol must not appear in menu")
         if self.top_n > len(self.menu):
             raise ValueError("etf_rotation.top_n must be <= len(menu)")
+        needs_budget = self.sizing_basis == "sleeve_equity" or self.drawdown_exit_pct is not None
+        if needs_budget and self.notional_budget_usd is None:
+            raise ValueError(
+                "etf_rotation.sizing_basis=sleeve_equity and drawdown_exit_pct need "
+                "notional_budget_usd as the sleeve's starting equity"
+            )
         return self
 
 
