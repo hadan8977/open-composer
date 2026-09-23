@@ -110,6 +110,7 @@ research_app = typer.Typer(no_args_is_help=True)
 research_campaign_app = typer.Typer(no_args_is_help=True)
 research_iteration_app = typer.Typer(no_args_is_help=True)
 research_knowledge_app = typer.Typer(no_args_is_help=True)
+research_directions_app = typer.Typer(no_args_is_help=True)
 console = Console()
 PDR_ML_GATE_DEFAULT_SPEC_PATH = Path(
     "strategy_specs/drafts/nasdaq_tqqq_pdr_router_mlgate_iter1.yaml"
@@ -142,6 +143,7 @@ app.add_typer(research_app, name="research")
 research_app.add_typer(research_campaign_app, name="campaign")
 research_app.add_typer(research_iteration_app, name="iteration")
 research_app.add_typer(research_knowledge_app, name="knowledge")
+research_app.add_typer(research_directions_app, name="directions")
 
 
 @app.callback()
@@ -759,6 +761,58 @@ def research_iteration_init_command(
     console.print(f"root: {paths.root}")
     console.print(f"external brief: {paths.external_brief_json}")
     console.print(f"decision record: {paths.decision_record_md}")
+
+
+@research_directions_app.command("check")
+def research_directions_check_command(
+    terms: Annotated[
+        list[str], typer.Argument(help="Words naming the idea, source, or mechanism.")
+    ],
+    limit: int = typer.Option(10, "--limit", min=1, max=50),
+    json_output: Annotated[bool, typer.Option("--json")] = False,
+) -> None:
+    """Has this direction been searched, tested, or ruled out before? Run before new work."""
+    from open_composer.research.harvest_registry import check_direction
+
+    matches = check_direction(project_root(), " ".join(terms), limit=limit)
+    if json_output:
+        sys.stdout.write(json.dumps([match.__dict__ for match in matches], ensure_ascii=False))
+        sys.stdout.write("\n")
+        return
+    if not matches:
+        console.print("no prior direction, card, or trial family matches these terms")
+        return
+    for match in matches:
+        flag = "[red]likely repeat[/red] " if match.score >= 0.5 else ""
+        console.print(
+            f"{flag}{match.score:.2f} {match.kind} {match.ref} | {match.title} | "
+            f"{match.status} | {match.verdict}"
+        )
+
+
+@research_directions_app.command("validate")
+def research_directions_validate_command() -> None:
+    """Validate the direction registry and search log (schema, verdicts, links)."""
+    from open_composer.research.harvest_registry import validate_registry
+
+    problems = validate_registry(project_root())
+    for problem in problems:
+        console.print(f"[red]{problem}[/red]")
+    sys.stdout.write(
+        json.dumps({"status": "blocked" if problems else "ok", "problems": len(problems)}) + "\n"
+    )
+    if problems:
+        raise typer.Exit(1)
+
+
+@research_directions_app.command("summary")
+def research_directions_summary_command() -> None:
+    """Coverage: directions by category and status, searches by channel."""
+    from open_composer.research.harvest_registry import registry_summary
+
+    sys.stdout.write(
+        json.dumps(registry_summary(project_root()), ensure_ascii=False, indent=2) + "\n"
+    )
 
 
 @research_app.command("direction-check")
