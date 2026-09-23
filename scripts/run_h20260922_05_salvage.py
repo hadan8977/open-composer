@@ -282,8 +282,7 @@ def main(argv: list[str] | None = None) -> int:
             "boost_targets": BOOST_TARGETS,
             "holds": BOOST_HOLDS,
             "signal": (
-                f"{DIP_ASSET} > SMA{DIP_SMA} and "
-                f"Wilder RSI({DIP_RSI_WINDOW}) < {DIP_RSI_LEVEL}"
+                f"{DIP_ASSET} > SMA{DIP_SMA} and Wilder RSI({DIP_RSI_WINDOW}) < {DIP_RSI_LEVEL}"
             ),
         }
         MANIFEST.write_text(json.dumps(frozen, indent=2) + "\n")
