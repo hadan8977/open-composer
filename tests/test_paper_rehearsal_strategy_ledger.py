@@ -563,3 +563,147 @@ def test_strategy_ledger_still_blocks_its_own_open_order(ledger_workspace) -> No
         "a strategy's OWN open order must still stop it from double-submitting; "
         f"got {second.counts()}"
     )
+
+
+# ---------------------------------------------------------------------------
+# liquidate: wind one strategy down on a shared account (2026-09-23)
+#
+# The owner retired us_recent_high_return_top50 because it was sized against
+# the whole account while three $15k sleeves shared it, leaving the account on
+# margin. A liquidation must sell exactly this strategy's own ledger and never
+# touch another sleeve's positions.
+
+
+def test_liquidate_sells_whole_ledger_buys_nothing_and_skips_other_strategies(
+    ledger_workspace,
+) -> None:
+    root, spec_path = ledger_workspace
+    name = load_strategy_spec(spec_path).name
+    _write_fills(
+        root,
+        name,
+        [
+            _fill_row(
+                session="2026-09-15",
+                symbol="AAPL",
+                side="buy",
+                filled_qty=30.0,
+                client_order_id="reh-aapl-1",
+            ),
+            _fill_row(
+                session="2026-09-15",
+                symbol="MSFT",
+                side="buy",
+                filled_qty=10.0,
+                client_order_id="reh-msft-1",
+            ),
+        ],
+    )
+    # AAPL/MSFT are also current targets, so a normal run would hold them;
+    # META belongs to another strategy on the same account.
+    positions = [
+        SimpleNamespace(symbol="AAPL", qty="30", current_price="205", market_value="6150"),
+        SimpleNamespace(symbol="MSFT", qty="10", current_price="410", market_value="4100"),
+        SimpleNamespace(symbol="META", qty="7", current_price="500", market_value="3500"),
+    ]
+    client = FakeClient(positions=positions)
+    _authorize(root, spec_path, client)
+
+    result = run_portfolio_paper_rehearsal(
+        spec_path,
+        root,
+        allow_paper_orders=True,
+        client=client,
+        now=SUBMIT_TIME,
+        liquidate=True,
+        liquidation_reason="owner retired the sleeve",
+    )
+
+    assert result.status == "submitted"
+    assert result.counts() == {"submitted": 2}
+    sells = {plan.symbol: plan.qty for plan in result.plans if plan.side == "sell"}
+    assert sells == {"AAPL": 30.0, "MSFT": 10.0}
+    assert all(plan.side == "sell" for plan in result.plans)
+    assert all(plan.symbol != "META" for plan in result.plans)
+    assert all(plan.reason == "liquidation: owner retired the sleeve" for plan in result.plans)
+    assert any("owner retired the sleeve" in note for note in result.notes)
+
+
+def test_liquidate_does_not_need_a_target_weights_artifact(ledger_workspace) -> None:
+    root, spec_path = ledger_workspace
+    name = load_strategy_spec(spec_path).name
+    (root / "reports" / "execution" / f"{name}-target-weights.json").unlink()
+    _write_fills(
+        root,
+        name,
+        [_fill_row(session="2026-09-15", symbol="AAPL", side="buy", filled_qty=5.0)],
+    )
+    held = SimpleNamespace(symbol="AAPL", qty="5", current_price="205", market_value="1025")
+    client = FakeClient(positions=[held])
+    _authorize(root, spec_path, client)
+
+    result = run_portfolio_paper_rehearsal(
+        spec_path,
+        root,
+        allow_paper_orders=False,
+        client=client,
+        now=SUBMIT_TIME,
+        liquidate=True,
+        liquidation_reason="retire",
+    )
+    assert result.counts() == {"would_submit": 1}
+    assert result.plans[0].symbol == "AAPL" and result.plans[0].side == "sell"
+
+
+def test_liquidate_refuses_broker_account_scope(broker_account_workspace) -> None:
+    root, spec_path = broker_account_workspace
+    client = FakeClient()
+    _authorize(root, spec_path, client)
+    with pytest.raises(RehearsalError, match="position_scope=strategy_ledger"):
+        run_portfolio_paper_rehearsal(
+            spec_path,
+            root,
+            allow_paper_orders=True,
+            client=client,
+            now=SUBMIT_TIME,
+            liquidate=True,
+            liquidation_reason="retire",
+        )
+
+
+def test_liquidate_requires_a_reason(ledger_workspace) -> None:
+    root, spec_path = ledger_workspace
+    client = FakeClient()
+    _authorize(root, spec_path, client)
+    with pytest.raises(RehearsalError, match="reason"):
+        run_portfolio_paper_rehearsal(
+            spec_path,
+            root,
+            allow_paper_orders=True,
+            client=client,
+            now=SUBMIT_TIME,
+            liquidate=True,
+            liquidation_reason="  ",
+        )
+
+
+def test_liquidate_still_fails_closed_on_an_unreconciled_ledger(ledger_workspace) -> None:
+    root, spec_path = ledger_workspace
+    name = load_strategy_spec(spec_path).name
+    _write_fills(
+        root,
+        name,
+        [_fill_row(session="2026-09-15", symbol="AAPL", side="buy", filled_qty=0.0, status="new")],
+    )
+    client = FakeClient()
+    _authorize(root, spec_path, client)
+    with pytest.raises(RehearsalError, match="unreconciled"):
+        run_portfolio_paper_rehearsal(
+            spec_path,
+            root,
+            allow_paper_orders=True,
+            client=client,
+            now=SUBMIT_TIME,
+            liquidate=True,
+            liquidation_reason="retire",
+        )

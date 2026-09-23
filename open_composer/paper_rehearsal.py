@@ -1037,11 +1037,33 @@ def run_portfolio_paper_rehearsal(
     allow_paper_orders: bool,
     client: Any | None = None,
     now: datetime | None = None,
+    liquidate: bool = False,
+    liquidation_reason: str | None = None,
 ) -> RehearsalCycleResult:
+    """Plan (and optionally submit) one session of a rehearsal book.
+
+    ``liquidate=True`` winds a strategy down on a shared account: it plans
+    against an empty target book, so every position in this strategy's own
+    fills ledger is sold and nothing is bought. It is refused unless the spec
+    declares ``position_scope: strategy_ledger`` (a ``broker_account``
+    liquidation would sell every other strategy's positions too) and needs a
+    reason, which is copied into the cycle report. The target weights artifact
+    is not read. Authorization, kill switch, submission window, open-order and
+    ledger-reconciliation checks all still apply.
+    """
     base = root or project_root()
     stamp = now or datetime.now(UTC)
     spec = load_strategy_spec(spec_path)
     policy = validate_rehearsal_spec(spec, base)
+    reason_text = (liquidation_reason or "").strip()
+    if liquidate:
+        if str(policy.get("position_scope") or "broker_account") != "strategy_ledger":
+            raise RehearsalError(
+                "liquidate requires execution_policy.position_scope=strategy_ledger; a "
+                "broker_account liquidation would sell every strategy's positions on the account"
+            )
+        if not reason_text:
+            raise RehearsalError("liquidate requires a reason; it is copied into the cycle report")
     unauthorized_dry_run = (
         not allow_paper_orders and not rehearsal_authorization_path(base, spec.name).is_file()
     )
@@ -1063,6 +1085,10 @@ def run_portfolio_paper_rehearsal(
         position_scope=str(policy.get("position_scope") or "broker_account"),
     )
     result.notes.append(f"rehearsal=below_contract; {auth.gate_status_note}")
+    if liquidate:
+        result.notes.append(
+            f"liquidation: sell this strategy's whole ledger; reason: {reason_text}"
+        )
     if unauthorized_dry_run:
         result.notes.append(
             "no rehearsal authorization on file: plan-only dry run with DEFAULT_LIMITS; run "
@@ -1108,7 +1134,10 @@ def run_portfolio_paper_rehearsal(
             if row.get("client_order_id")
         }
     open_symbols = _open_order_symbols(broker, own_client_order_ids=own_coids)
-    rows, artifact = load_target_rows(spec, base, now=stamp)
+    if liquidate:
+        rows, artifact = [], {}
+    else:
+        rows, artifact = load_target_rows(spec, base, now=stamp)
     sizing_hint = None
     summary = artifact.get("summary") if isinstance(artifact.get("summary"), dict) else {}
     if summary and summary.get("account_equity"):
@@ -1164,7 +1193,9 @@ def run_portfolio_paper_rehearsal(
             )
             for symbol in positions
         }
-        plan_equity = _resolve_strategy_sizing_equity(summary)
+        # A liquidation places no buys, so its sizing equity only feeds the
+        # gross-exposure cap on buys; the account equity is a safe stand-in.
+        plan_equity = equity if liquidate else _resolve_strategy_sizing_equity(summary)
         if plan_equity is None:
             raise RehearsalError(
                 "position_scope=strategy_ledger requires the target weights artifact's "
@@ -1191,6 +1222,18 @@ def run_portfolio_paper_rehearsal(
         sizing_equity_hint=sizing_hint,
     )
     result.plans = plans
+    if liquidate:
+        planned_sells = {plan.symbol for plan in plans if plan.side == "sell"}
+        not_sold = sorted(symbol for symbol in positions if symbol not in planned_sells)
+        if not_sold:
+            result.notes.append(
+                "liquidation did NOT sell (no broker price or non-positive ledger qty): "
+                + ", ".join(not_sold)
+            )
+        for plan in plans:
+            plan.rebalance_id = f"{spec.name}:liquidation:{session.isoformat()}"
+            if plan.decision == "submit":
+                plan.reason = f"liquidation: {reason_text}"
 
     prior_total = _ledger_total_notional(base, spec.name, auth.authorization_id)
     max_total = float(auth.limits["max_total_notional_usd"])

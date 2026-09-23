@@ -154,20 +154,40 @@ def test_top50_fills_summary_has_real_fill_rate_and_slippage_numbers() -> None:
     assert fills.latest is not None
 
 
-def test_authorized_strategy_without_fills_summary_file_degrades_to_warning() -> None:
-    # Ground truth 2026-09-19: two of the four authorized sleeves have not
-    # had a fills-summary.json written yet.
-    fills = P.load_fills_summary(REPO_ROOT, "us_etf_sector_rotation_252_top2_weekly")
+def test_authorized_strategy_without_fills_summary_file_degrades_to_warning(
+    tmp_path: Path,
+) -> None:
+    # An authorized sleeve whose first reconcile has not run yet. Built in a
+    # temp workspace: the 2026-09-19 version read the live repo and broke as
+    # soon as the reconcile cron wrote that sleeve's summary on 2026-09-22.
+    rehearsal_dir = tmp_path / "reports" / "paper" / "rehearsal"
+    rehearsal_dir.mkdir(parents=True)
+    (rehearsal_dir / "sleeve-authorization.json").write_text(
+        json.dumps({"strategy_name": "sleeve", "status": "authorized"}), encoding="utf-8"
+    )
+    fills = P.load_fills_summary(tmp_path, "sleeve")
     assert fills.available is False
     assert fills.warnings
 
 
-def test_authorized_strategy_with_empty_sessions_is_available_but_empty() -> None:
-    # us_etf_levered_rotation_63_top2_monthly has a fills-summary.json on
-    # disk but its "sessions" object is `{}` -- present and well-formed, just
-    # nothing recorded yet. That is a different, more specific fact than
-    # "missing" and must not be collapsed into the same warning bucket.
-    fills = P.load_fills_summary(REPO_ROOT, "us_etf_levered_rotation_63_top2_monthly")
+def test_authorized_strategy_with_empty_sessions_is_available_but_empty(tmp_path: Path) -> None:
+    # A fills-summary.json whose "sessions" object is `{}` -- present and
+    # well-formed, just nothing recorded yet. That is a different, more
+    # specific fact than "missing" and must not be collapsed into the same
+    # warning bucket. (Temp workspace for the same reason as above.)
+    rehearsal_dir = tmp_path / "reports" / "paper" / "rehearsal"
+    rehearsal_dir.mkdir(parents=True)
+    (rehearsal_dir / "sleeve-fills-summary.json").write_text(
+        json.dumps(
+            {
+                "strategy_name": "sleeve",
+                "generated_at": "2026-09-19T14:09:00+00:00",
+                "sessions": {},
+            }
+        ),
+        encoding="utf-8",
+    )
+    fills = P.load_fills_summary(tmp_path, "sleeve")
     assert fills.available is True
     assert fills.sessions == ()
 

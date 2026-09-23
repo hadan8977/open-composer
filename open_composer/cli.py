@@ -7797,13 +7797,28 @@ def paper_rehearsal_run(
         "--allow-paper-orders",
         help="Submit opening-auction orders to Alpaca Paper (default is a dry run).",
     ),
+    liquidate: bool = typer.Option(
+        False,
+        "--liquidate",
+        help=(
+            "Sell every position in this strategy's own fills ledger and buy nothing "
+            "(position_scope=strategy_ledger only; target weights are ignored)."
+        ),
+    ),
+    reason: str = typer.Option(
+        "", "--reason", help="Required with --liquidate; copied into the cycle report."
+    ),
 ) -> None:
     """Plan (and optionally submit) opening-auction paper orders for a rehearsal book."""
     from open_composer.paper_rehearsal import RehearsalError, run_portfolio_paper_rehearsal
 
     try:
         result = run_portfolio_paper_rehearsal(
-            spec_path, project_root(), allow_paper_orders=allow_paper_orders
+            spec_path,
+            project_root(),
+            allow_paper_orders=allow_paper_orders,
+            liquidate=liquidate,
+            liquidation_reason=reason or None,
         )
     except (RehearsalError, ValueError, RuntimeError) as exc:
         console.print(f"[red]paper rehearsal aborted[/red] {exc}")
