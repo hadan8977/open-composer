@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260923_09_s3_attribution",
+  "reviewed_at": "2026-09-23T04:10:00+00:00",
+  "decision": "proceed",
+  "objective": "Ask what the live S3 sleeve's 116.3% anchor return is actually made of -- levered beta, the absolute-momentum filter, the menu breadth, the ranking, the volatility target, the dip boost -- so that the next round attacks the term that carries the return instead of the term that is easiest to change. This is an attribution of an already-frozen result, not a new strategy search: no gate is re-searched and the frozen S3 cell is reproduced as the control.",
+  "target_regime_and_horizon": "Same frozen protocol as H-20260918-05 and H-20260922-02: warmup from 2022-06-01, select 2023-09-18 to 2025-12-31, untouched holdout 2026-01-02 onward, anchor 2024-01-08 onward. Monthly rebalance, US levered equity ETFs, 10 bp per side.",
+  "existing_solution_comparison": "There is nothing to copy here: no published source attributes our specific sleeve. The relevant external anchor is arXiv 2504.20116 (2025), which argues the volatility-drag paradigm is incomplete and that leveraged-ETF compounding depends on return autocorrelation -- trends help, mean reversion hurts. That is the paper against which our own breadth hypothesis had to be checked, and the check killed the hypothesis.",
+  "negative_experiments_checked": "H-20260918-05 already recorded that S3's ranking edge is weak: 25% of random-pick seeds beat it without an overlay. H-20260922-02 found the drawdown brake adds nothing. The 2026-09-23 census correction records two independent external negatives against making the sizing layer more sophisticated (Conformal Kelly's own pre-registered holdout, and the ScienceDirect finding that finer realized-vol forecasts driving vol-targeted portfolios give uniformly negative risk-adjusted Sharpe). Together these say the improvement is not in ranking and not in sizing, which is why this round asks where the return actually comes from before proposing anything.",
+  "cost_and_execution_assumptions": "Unchanged from the frozen protocol: signal on a completed session close, fill at the next session open, cost = sum(|delta w|) x 10 bp per side, cash leg SHY, risk free BIL. Every variant uses the same signal dates, the same 63-day momentum score and the same absolute-momentum filter against cash, so only breadth and ranking differ between them and any difference is attributable to those two things.",
+  "cheapest_decisive_test": {
+    "action": "Run four nested books (TQQQ held outright; TQQQ with the absolute-momentum filter; all five menu names equal-weighted with the same filter; the live top-2 ranking) through each of three overlays (none, vt40, vt40+boost), plus a 20-seed random-2-of-5 selection placebo under the full overlay. Then leave-one-out on the equal-weight book and each name alone, to test whether any breadth effect is breadth or is one name.",
+    "pass_condition": "Not applicable -- this is an attribution, not a candidate. The success criterion is that the frozen S3 cell reproduces to four decimals, so the decomposition is trustworthy.",
+    "falsification_condition": "If the frozen cell does not reproduce, the decomposition is discarded.",
+    "max_compute_minutes": 45
+  },
+  "remaining_evidence_gap": "Whether the sleeve's concentration is managed by the volatility target well enough to survive a real drawdown in the sector it is concentrated in. The holdout contains exactly one such event (July 2026), so it can be measured rather than assumed.",
+  "stop_condition": "One round. This produces a description of what we own and a ranked list of which terms are worth attacking; it does not propose a new book. Any change to the live sleeve needs its own preregistered card.",
+  "queries": [
+    {
+      "query": "diversified portfolio of leveraged ETFs volatility drag decay rebalancing evidence 2024 2025",
+      "searched_at": "2026-09-23T04:00:00+00:00",
+      "opened_urls": ["https://arxiv.org/abs/2504.20116"]
+    },
+    {
+      "query": "leveraged ETF portfolio diversification reduces volatility decay academic paper risk parity 3x sector",
+      "searched_at": "2026-09-23T04:02:00+00:00",
+      "opened_urls": ["https://quantpedia.com/leveraged-etfs-in-asset-allocation-opportunity-or-trap/"]
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "arxiv2025_letf_compounding_beyond_drag",
+      "claim": "The common view that leveraged ETFs suffer long-term decay from volatility drag is incomplete: performance depends on return autocorrelation and return dynamics. In markets with independent returns, LETFs exhibit positive expected compounding effects on their target multiples; in serially correlated markets trends enhance returns while mean reversion induces underperformance, so daily-rebalanced LETFs enhance returns in momentum-driven markets while infrequent rebalancing mitigates losses in mean-reverting regimes.",
+      "url": "https://arxiv.org/abs/2504.20116",
+      "source_type": "paper",
+      "market_and_period": "Theoretical and simulation analysis of leveraged ETF compounding, 2025 preprint.",
+      "published_or_updated_at": "2025-04-28",
+      "fetched_at": "2026-09-23T04:00:00+00:00",
+      "snapshot_path": null,
+      "sha256": null,
+      "source_card_path": "reports/harness/source_cards/h20260923_09_s3_attribution.jsonl",
+      "independent_replication": "Not replicated by us; used to set the prior against which our own breadth hypothesis was tested.",
+      "limitations": "Preprint, theoretical, no tradable backtest, no cost model.",
+      "applicability": "This is the reason the breadth hypothesis had to be tested rather than asserted. Our initial mechanism -- that spreading across five levered ETFs lowers portfolio volatility, lowering drag, raising compounded return -- is exactly the drag paradigm this paper calls incomplete. The leave-one-out test then showed our breadth effect was one sector, not diversification."
+    },
+    {
+      "claim_id": "quantpedia_letf_allocation_trap",
+      "claim": "Leveraged ETFs do not work in long-term passive portfolios because they amplify losses and volatility, but simple trend filters reduce the damage when leverage is actively managed.",
+      "url": "https://quantpedia.com/leveraged-etfs-in-asset-allocation-opportunity-or-trap/",
+      "source_type": "industry_standard",
+      "market_and_period": "US leveraged equity ETFs in static and dynamic allocations, monthly.",
+      "published_or_updated_at": "unknown",
+      "fetched_at": "2026-09-23T04:02:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/quantpedia-letf-asset-allocation.html",
+      "sha256": "8a91bb4ea45d34e0cafb4c672cde8bfa117c475792af4b84921797ed4610698f",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "independent_replication": "Reused from the H-20260922-02 source set, where it was already snapshotted.",
+      "limitations": "Vendor blog, monthly trend rules only, no cost or capacity analysis of our sleeve.",
+      "applicability": "Supports the finding that the active risk layer, not the menu, is what makes a levered book survivable -- which is what the July 2026 measurement in this round confirms."
+    }
+  ]
+}
