@@ -152,3 +152,64 @@ def test_run_refuses_a_logged_query_before_any_network_call(hs, tmp_path, monkey
         channel="exa", query="leveraged etf rotation", site=None, force=False, no_triage=True
     )
     assert hs.cmd_run(args) == 1
+
+
+def test_archive_results_keep_source_and_popularity(hs) -> None:
+    article = hs.archive_result(
+        "articles",
+        {
+            "url": "https://web.archive.org/web/2024/https://alvarezquanttrading.com/blog/x/",
+            "title": "UPRO/TQQQ Leveraged ETF Strategy",
+            "source": "Alvarez Quant Trading",
+            "date": "2024-03-28",
+            "desc": "A reader sent me a leveraged ETF strategy.",
+        },
+    )
+    assert article.engine == "archive:articles"
+    assert article.published == "2024-03-28"
+    assert article.snippet.startswith("Alvarez Quant Trading: ")
+    script = hs.archive_result(
+        "pine",
+        {
+            "url": "https://www.tradingview.com/script/cN0h4ehO/",
+            "title": "Sector Rotation",
+            "author": "Zeiierman",
+            "type": "indicator",
+            "likes": 229,
+            "date": "2026-06-01",
+            "desc": "relative strength rotation",
+        },
+    )
+    assert script.extra["likes"] == 229
+    assert "229 likes" in script.snippet
+    paper = hs.archive_result(
+        "papers",
+        {"url": "https://arxiv.org/abs/2609.1", "title": "T", "published": "2026-09-01"},
+    )
+    assert (paper.engine, paper.published) == ("archive:papers", "2026-09-01")
+    repo = hs.archive_result(
+        "repos", {"url": "https://github.com/a/b", "name": "b", "stars": 5, "created_at": ""}
+    )
+    assert repo.title == "b" and repo.extra["stars"] == 5
+
+
+def test_archive_corpus_choice_is_part_of_the_logged_query(hs, tmp_path, monkeypatch) -> None:
+    harvest = tmp_path / "harvest"
+    harvest.mkdir()
+    row = {"id": "search:20260923:archive:x", "channel": "archive", "query": "rotation"}
+    (harvest / "search-log.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+    monkeypatch.setattr(hs, "HARVEST", harvest)
+
+    def no_network(*_args, **_kwargs):
+        raise AssertionError("searched although the query is already logged")
+
+    monkeypatch.setattr(hs, "run_search", no_network)
+    args = argparse.Namespace(
+        channel="archive", query="rotation", site=None, corpus=None, force=False, no_triage=True
+    )
+    assert hs.cmd_run(args) == 1
+    assert hs.archive_corpora(args) == list(hs.DEFAULT_CORPORA)
+    args.corpus = ["pine"]
+    assert hs.query_label(args, "2026-09-23") == "rotation [pine]"
+    args.profile = "channels"
+    assert hs.query_label(args, "2026-09-23") == "[channels] rotation [pine]"

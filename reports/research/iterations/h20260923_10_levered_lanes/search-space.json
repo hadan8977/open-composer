@@ -1,0 +1,92 @@
+{
+  "candidate_manifest_path": "reports/research/iterations/h20260923_10_levered_lanes/candidate-manifest.json",
+  "candidate_manifest_sha256": "49ecf9d3936510292e12f61bb2db807a8a94cd39ecc093c2813e5887f4f8e3d6",
+  "cost_table_path": "reports/research/iterations/h20260923_10_levered_lanes/cost-contract.json",
+  "created_at": "2026-09-23T07:20:00+00:00",
+  "data_feasibility_path": "reports/research/iterations/h20260923_10_levered_lanes/data-feasibility.json",
+  "data_feasibility_sha256": "06906505ff07717ee990e75428954f736177b4f5a84cb59910d5c545bf2784d4",
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260923_10_levered_lanes/report.md"
+  ],
+  "iter_id": "h20260923_10_levered_lanes",
+  "objective": "Screen five single-ETF levered sector lanes (NUGT, JNUG, FAS, DPST, DFEN) under the frozen S3 overlay machine for a second trending-sector bet, beyond semiconductors, that clears the frozen gates and is weakly correlated with the live S3 book.",
+  "paths": [
+    {
+      "benchmark_family": [
+        "own_lane_raw_no_overlay",
+        "own_lane_vt40_only_no_boost",
+        "S3_live_book_vt40_plus_boost_correlation_reference",
+        "SHY_buy_and_hold",
+        "QQQ_buy_and_hold"
+      ],
+      "candidate_count": 5,
+      "hypothesis_refs": [
+        "H-20260923-10"
+      ],
+      "name": "levered_industry_second_bet_lane_screen",
+      "parameters": {
+        "boost_duration_sessions": [
+          10
+        ],
+        "boost_trigger_rsi_sessions": [
+          10
+        ],
+        "boost_trigger_rsi_threshold": [
+          30
+        ],
+        "boost_trigger_sma_sessions": [
+          200
+        ],
+        "boost_trigger_symbol": [
+          "QQQ"
+        ],
+        "candidate_ids": [
+          "LN01",
+          "LN02",
+          "LN03",
+          "LN04",
+          "LN05"
+        ],
+        "lane_symbol": [
+          "NUGT",
+          "JNUG",
+          "FAS",
+          "DPST",
+          "DFEN"
+        ],
+        "leverage_cap": [
+          1.0
+        ],
+        "lookback_sessions": [
+          63
+        ],
+        "model_training": false,
+        "mutation": "none",
+        "realized_vol_window": [
+          21
+        ],
+        "rebalance": [
+          "monthly_last_session"
+        ],
+        "vol_target_base": [
+          0.4
+        ],
+        "vol_target_boost": [
+          0.6
+        ],
+        "vs_symbol": [
+          "SHY"
+        ]
+      }
+    }
+  ],
+  "schema_version": 3,
+  "single_mechanism_no_campaign_attestation": true,
+  "source_spec_path": "strategy_specs/drafts/levered_lanes_h20260923_10.yaml",
+  "spec_hash": "60f0cf600e43300bc7363f765c5cfad2744773573f9ed55b3309f921296d70ec",
+  "strategy_name": "levered_lanes_h20260923_10",
+  "total_candidate_budget": 5,
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260923_10_levered_lanes/trial-ledger.jsonl"
+  ]
+}

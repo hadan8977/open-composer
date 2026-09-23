@@ -144,6 +144,8 @@ research_app.add_typer(research_campaign_app, name="campaign")
 research_app.add_typer(research_iteration_app, name="iteration")
 research_app.add_typer(research_knowledge_app, name="knowledge")
 research_app.add_typer(research_directions_app, name="directions")
+research_channels_app = typer.Typer(no_args_is_help=True)
+research_app.add_typer(research_channels_app, name="channels")
 
 
 @app.callback()
@@ -792,7 +794,7 @@ def research_directions_check_command(
 
 @research_directions_app.command("validate")
 def research_directions_validate_command() -> None:
-    """Validate the direction registry and search log (schema, verdicts, links)."""
+    """Validate the direction registry, channel registry and search log."""
     from open_composer.research.harvest_registry import validate_registry
 
     problems = validate_registry(project_root())
@@ -813,6 +815,32 @@ def research_directions_summary_command() -> None:
     sys.stdout.write(
         json.dumps(registry_summary(project_root()), ensure_ascii=False, indent=2) + "\n"
     )
+
+
+@research_channels_app.command("check")
+def research_channels_check_command(
+    terms: Annotated[list[str], typer.Argument(help="Words naming the place, site, or group.")],
+    limit: int = typer.Option(10, "--limit", min=1, max=50),
+) -> None:
+    """Is this place to search already recorded? Run before adding a channel."""
+    from open_composer.research.harvest_registry import check_channel
+
+    matches = check_channel(project_root(), " ".join(terms), limit=limit)
+    if not matches:
+        console.print("no recorded channel matches these terms")
+        return
+    for match in matches:
+        console.print(f"{match.score:.2f} {match.ref} | {match.title} | {match.status}")
+
+
+@research_channels_app.command("summary")
+def research_channels_summary_command() -> None:
+    """Channels by status, level, and kind (validate them with `directions validate`)."""
+    from open_composer.research.harvest_registry import registry_summary
+
+    summary = registry_summary(project_root())
+    keys = ("channel_count", "channels_by_status", "channels_by_level", "channels_by_kind")
+    sys.stdout.write(json.dumps({key: summary[key] for key in keys}, indent=2) + "\n")
 
 
 @research_app.command("direction-check")

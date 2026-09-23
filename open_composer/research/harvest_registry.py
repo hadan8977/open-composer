@@ -5,7 +5,7 @@ The owner's instruction on 2026-09-23: search much more widely -- posts,
 forums, code, and papers, not only a few platforms -- keep good records and
 confirm each direction, so nothing gets searched or tested twice.
 
-Two append-only JSONL files under ``reports/research/harvest/``:
+Three append-only JSONL files under ``reports/research/harvest/``:
 
 * ``directions.jsonl`` -- one row per candidate direction (factor, intraday
   rule, model, ETF rule, event, ...). Rows are keyed by ``id``; when a
@@ -13,6 +13,12 @@ Two append-only JSONL files under ``reports/research/harvest/``:
   last row wins, so the file keeps its own history.
 * ``search-log.jsonl`` -- one row per search pass (channel, tool, query), so
   coverage is visible and a later session does not rerun the same queries.
+* ``channels.jsonl`` -- the places worth searching (owner, 2026-09-23: also
+  search for search routes -- forums, groups, newsletters, projects -- in
+  several levels, and record them). Level 0 is a seed already in use, level 1
+  was found by searching for channels, level 2 was found inside a level-1
+  channel (a blogroll, a wiki, a curated list, who an account follows). Same
+  last-row-wins rule as directions.
 
 ``check_direction`` is the "have we done this before?" query: run it before
 opening any new direction. It also reads the hypothesis cards and
@@ -35,6 +41,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 HARVEST_DIR = Path("reports") / "research" / "harvest"
 DIRECTIONS_FILE = "directions.jsonl"
 SEARCH_LOG_FILE = "search-log.jsonl"
+CHANNELS_FILE = "channels.jsonl"
 
 DirectionStatus = Literal[
     "harvested",  # found, not yet confirmed
@@ -153,6 +160,64 @@ class SearchLogEntry(BaseModel):
         return value
 
 
+ChannelKind = Literal[
+    "forum",
+    "subreddit",
+    "chat_group",
+    "x_account",
+    "x_list",
+    "newsletter",
+    "blog",
+    "aggregator",
+    "paper_feed",
+    "data_library",
+    "backtest_database",
+    "code_hub",
+    "curated_list",
+    "video_podcast",
+    "search_tool",
+    "other",
+]
+ChannelStatus = Literal[
+    "candidate",  # found, not yet read
+    "active",  # in the regular search rotation
+    "watch",  # worth an occasional pass
+    "rejected",  # read, low signal for our goal
+    "blocked",  # cannot be read from this server
+]
+ChannelAccess = Literal["open", "login", "invite", "paid", "blocked_from_server"]
+
+
+class Channel(BaseModel):
+    """A place to search. ``parent`` names the channel (``chan:...``) or search
+    (``search:...``) it was found through; together with ``level`` it keeps
+    the discovery tree."""
+
+    model_config = ConfigDict(extra="allow")
+
+    id: str = Field(pattern=r"^chan:[a-z0-9_]+$")
+    name: str = Field(min_length=2)
+    kind: ChannelKind
+    url: str = Field(min_length=4)
+    level: int = Field(ge=0, le=3)
+    status: ChannelStatus
+    access: ChannelAccess
+    updated: str
+    parent: str | None = None
+    read_via: str = ""
+    topics: list[str] = Field(default_factory=list)
+    activity: str = ""
+    signal: str = ""
+    verdict: str = ""
+    found_by: list[str] = Field(default_factory=list)
+
+    @field_validator("updated")
+    @classmethod
+    def _iso_updated(cls, value: str) -> str:
+        date.fromisoformat(value)
+        return value
+
+
 def harvest_dir(root: Path) -> Path:
     return root / HARVEST_DIR
 
@@ -190,6 +255,47 @@ def load_directions(root: Path) -> dict[str, Direction]:
             continue
         current[direction.id] = direction
     return current
+
+
+def load_channels(root: Path) -> dict[str, Channel]:
+    """Current state per channel id (the last row for an id wins)."""
+    current: dict[str, Channel] = {}
+    for _, payload, error in _read_jsonl(harvest_dir(root) / CHANNELS_FILE):
+        if error or payload is None:
+            continue
+        try:
+            channel = Channel(**payload)
+        except ValidationError:
+            continue
+        current[channel.id] = channel
+    return current
+
+
+def _channel_problems(root: Path) -> list[str]:
+    problems: list[str] = []
+    for number, payload, error in _read_jsonl(harvest_dir(root) / CHANNELS_FILE):
+        where = f"{CHANNELS_FILE}:{number}"
+        if error or payload is None:
+            problems.append(f"{where}: {error}")
+            continue
+        try:
+            Channel(**payload)
+        except ValidationError as exc:
+            first = exc.errors()[0]
+            loc = ".".join(str(part) for part in first.get("loc", ()))
+            problems.append(f"{where}: {loc}: {first.get('msg')}")
+    current = load_channels(root)
+    for channel in current.values():
+        where = f"{channel.id} (status={channel.status})"
+        if channel.level > 0 and not (channel.parent or channel.found_by):
+            problems.append(f"{where}: level {channel.level} needs parent or found_by")
+        if channel.parent and channel.parent.startswith("chan:") and channel.parent not in current:
+            problems.append(f"{where}: parent {channel.parent} is unknown")
+        if channel.status in ("active", "watch") and not channel.read_via.strip():
+            problems.append(f"{where}: needs read_via (how we read it)")
+        if channel.status in ("rejected", "blocked") and not channel.verdict.strip():
+            problems.append(f"{where}: needs a verdict")
+    return problems
 
 
 def load_search_log(root: Path) -> list[SearchLogEntry]:
@@ -262,6 +368,7 @@ def validate_registry(root: Path) -> list[str]:
         for search_id, count in sorted(search_ids.items())
         if count > 1
     )
+    problems.extend(_channel_problems(root))
     return problems
 
 
@@ -284,7 +391,7 @@ def _tokens(text: str) -> set[str]:
 
 @dataclass(frozen=True)
 class DirectionMatch:
-    kind: str  # "registry" | "hypothesis_card" | "trial_family"
+    kind: str  # "registry" | "hypothesis_card" | "trial_family" | "channel"
     ref: str
     title: str
     status: str
@@ -370,9 +477,33 @@ def check_direction(root: Path, terms: str, *, limit: int = 10) -> list[Directio
     return matches[:limit]
 
 
+def check_channel(root: Path, terms: str, *, limit: int = 10) -> list[DirectionMatch]:
+    """Recorded channels matching ``terms`` (name, URL, topics, kind): run before
+    adding a channel so the same place is not recorded twice."""
+    query = _tokens(terms)
+    matches = []
+    for channel in load_channels(root).values():
+        text = " ".join([channel.id, channel.name, channel.url, channel.kind, *channel.topics])
+        score = _score(query, text)
+        if score > 0:
+            matches.append(
+                DirectionMatch(
+                    kind="channel",
+                    ref=channel.id,
+                    title=f"{channel.name} <{channel.url}>",
+                    status=f"{channel.status} level={channel.level}",
+                    verdict=channel.verdict or channel.signal,
+                    score=score,
+                )
+            )
+    matches.sort(key=lambda match: (-match.score, match.ref))
+    return matches[:limit]
+
+
 def registry_summary(root: Path) -> dict[str, Any]:
     directions = load_directions(root)
     log = load_search_log(root)
+    channels = load_channels(root)
     by_category: dict[str, Counter[str]] = {}
     for direction in directions.values():
         by_category.setdefault(direction.category, Counter())[direction.status] += 1
@@ -382,4 +513,8 @@ def registry_summary(root: Path) -> dict[str, Any]:
         "by_category": {key: dict(value) for key, value in sorted(by_category.items())},
         "search_count": len(log),
         "searches_by_channel": dict(Counter(entry.channel for entry in log)),
+        "channel_count": len(channels),
+        "channels_by_status": dict(Counter(c.status for c in channels.values())),
+        "channels_by_level": dict(Counter(str(c.level) for c in channels.values())),
+        "channels_by_kind": dict(Counter(c.kind for c in channels.values())),
     }

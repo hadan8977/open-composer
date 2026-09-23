@@ -16,7 +16,9 @@ from typer.testing import CliRunner
 
 from open_composer.cli import app
 from open_composer.research.harvest_registry import (
+    check_channel,
     check_direction,
+    load_channels,
     load_directions,
     registry_summary,
     validate_registry,
@@ -221,3 +223,61 @@ def test_cli_check_and_validate(tmp_path: Path, monkeypatch) -> None:
     _write(tmp_path, "directions.jsonl", [_refuted(verdict="")])
     blocked = runner.invoke(app, ["research", "directions", "validate"])
     assert blocked.exit_code == 1
+
+
+# ---------------------------------------------------------------------------
+# channel registry (places to search, found in levels)
+
+
+def _channel(**overrides) -> dict:
+    row = {
+        "id": "chan:quantocracy",
+        "name": "Quantocracy",
+        "kind": "aggregator",
+        "url": "https://quantocracy.com/",
+        "level": 0,
+        "status": "active",
+        "access": "open",
+        "updated": "2026-09-23",
+        "read_via": "searxng site:quantocracy.com",
+        "topics": ["quant blogs", "backtests"],
+    }
+    row.update(overrides)
+    return row
+
+
+def test_channel_tree_rules(tmp_path: Path) -> None:
+    child = _channel(
+        id="chan:alpha_architect_blog",
+        name="Alpha Architect blog",
+        kind="blog",
+        url="https://alphaarchitect.com/blog/",
+        level=2,
+        status="candidate",
+        read_via="",
+        parent="chan:quantocracy",
+    )
+    _write(tmp_path, "channels.jsonl", [_channel(), child])
+    assert validate_registry(tmp_path) == []
+    assert set(load_channels(tmp_path)) == {"chan:quantocracy", "chan:alpha_architect_blog"}
+
+    orphan = _channel(id="chan:orphan", level=1, parent=None, found_by=[])
+    unread = _channel(id="chan:unread", read_via="")
+    rejected = _channel(id="chan:noise", status="rejected", verdict="")
+    lost = _channel(id="chan:lost", level=2, parent="chan:missing")
+    _write(tmp_path, "channels.jsonl", [_channel(), orphan, unread, rejected, lost])
+    problems = "\n".join(validate_registry(tmp_path))
+    assert "chan:orphan (status=active): level 1 needs parent or found_by" in problems
+    assert "chan:unread (status=active): needs read_via" in problems
+    assert "chan:noise (status=rejected): needs a verdict" in problems
+    assert "chan:lost (status=active): parent chan:missing is unknown" in problems
+
+
+def test_channel_check_and_summary(tmp_path: Path) -> None:
+    _write(tmp_path, "channels.jsonl", [_channel()])
+    matches = check_channel(tmp_path, "quantocracy blog aggregator")
+    assert matches and matches[0].ref == "chan:quantocracy"
+    assert check_channel(tmp_path, "telegram signals") == []
+    summary = registry_summary(tmp_path)
+    assert summary["channel_count"] == 1
+    assert summary["channels_by_level"] == {"0": 1}

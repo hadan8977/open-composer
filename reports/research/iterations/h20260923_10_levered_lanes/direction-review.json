@@ -1,0 +1,280 @@
+{
+  "cheapest_decisive_test": {
+    "action": "Run the frozen vt40+boost machine (unmodified from the live S3 renewal) on each of the five candidate lanes plus the three diagnostics (each lane raw, each lane with vt40 only and no boost, and the live S3 book) over the selection, holdout and anchor windows at 10 and 20 bp per side, then run the pool-rank placebo (24 ETFs) and the dip-signal calendar-shift placebo (20 offsets), and compute each lane's anchor daily-return correlation with the live S3 book.",
+    "falsification_condition": "Every lane fails at least one of: G1/G1' (anchor return/drawdown or Sharpe/return), G2 (holdout Sharpe/return), either G3 placebo (pool-rank or calendar-shift beat-fraction <= 10%), G4 (G1/G1' at 20 bp), or has anchor daily-return correlation with the live S3 book above 0.5.",
+    "max_compute_minutes": 15,
+    "pass_condition": "At least one lane has anchor annualized return >= 50% with max drawdown no worse than -35% (or Sharpe >= 2.0 with annualized return >= 30%), holdout Sharpe >= 1.0 with positive holdout return, both G3 placebo beat-fractions <= 10% (strict family-wise 2% reported alongside), G1/G1' still holds at 20 bp, the long spot ETF is executable on Alpaca Paper, and anchor daily-return correlation with the live S3 book is <= 0.5."
+  },
+  "cost_and_execution_assumptions": "sum(|delta w|) x slippage charged on the execution session, 10 bp per side primary and 20 bp per side stress (reused contract id cost_v1_10_20bps_next_open, byte-identical cost model to the live S3 renewal); signal on a completed session close, fill at the next session open (fill_assumption next_bar_open); SIP fully adjusted daily closes; cash leg SHY; risk-free BIL. Every candidate is a single long-only spot leveraged ETF, so Alpaca Paper can execute it (G5); each fund's own daily-reset objective (verified for DPST and NUGT/DUST in this round's Direxion source cards) means the momentum and volatility-target inputs are computed on the ETF's own daily-reset NAV series, not synthesized from an unlevered index, which is the correct and only tradable representation.",
+  "decision": "proceed",
+  "existing_solution_comparison": "The overlay machine is not re-searched: it is copied unchanged from the already-authorized S3 vt40+boost renewal (116.3% anchor return / -32.3% max drawdown / Sharpe 1.82 anchor, holdout Sharpe 2.21; H-20260923-09), so nothing about the overlay itself is a new claim in this round. What is new is the choice of lane, and that choice reuses two existing, unmodified public records rather than a home-grown search: Ken French's 49 value-weighted industry portfolios (official methodology verified in this round; the specific returns are from I-20260923-01, a first-party from-source computation already in this repo and not recomputed here) rank Gold 66.2%/-28.8% (Sharpe 1.47), Chips 45.9%/-16.0% (Sharpe 1.71, already the live S3 book), Banks 36.5%/-10.1% (Sharpe 1.55) and Aero 35.7%/-3.8% (Sharpe 1.91) as the top four select-window (2023-09-18..2025-12-31) industries; and Moskowitz and Grinblatt (1999) is the giant that makes 'a second trending industry' an economically motivated mechanism (industry return continuation) rather than an ETF pick chosen after seeing its own backtest. The five candidate levered ETFs (NUGT/JNUG for gold and junior gold miners, FAS/DPST for financials/regional banks, DFEN for aerospace/defense) are standard, already-existing 2x/3x products tracking those industries; none are newly constructed for this round.",
+  "iter_id": "h20260923_10_levered_lanes",
+  "negative_experiments_checked": "H-20260918-06 (pooled ETF relative strength without a hand-picked menu): 0 of 8 preregistered families beat SPMO's 1.46 selection-window Sharpe, and the one high-Sharpe cell that looked good turned out to hold only Treasury-bill funds; the lesson carried into this round is that a hand-picked, risk-homogeneous menu (five single-ETF levered lanes, each judged independently, no cross-sectional ranking) is structurally required, not a shortcut. The 2026-09-22 giants sweep: 0/24 public momentum/trend rules survived G1 or G1' on the anchor window (gates: G1 0/24, G1' 0/24, G2 7/24, G3 4/24, G4 0/24), so this round does not assume any public rule transfers without re-testing on our own cost and window contract. Single-name priors under the identical frozen machine (H-20260923-09, step D+vt40+boost decomposition): TQQQ 38.5%, UPRO 36.9%, TECL 45.8% anchor return, all below the 50% G1 bar, which is why this round does not simply add more S&P/Nasdaq single names and instead moves to industries with an independent trend driver. H-20260923-09 itself is why this round exists: it found that S3's return is concentrated in SOXL+USD (58.5% anchor / 69.4% holdout average weight) rather than coming from menu diversification, which is a reason to doubt, not assume, that a second industry lane will behave the same way.",
+  "objective": "Ask whether a second levered sector lane, beyond semiconductors, held under the frozen S3 vt40+boost machine, clears the frozen gates (G1-G5) and is weakly correlated (anchor daily-return correlation <= 0.5) with the live S3 book, so it could run as a separate diversifying sleeve. Five candidates (LN01 NUGT, LN02 JNUG, LN03 FAS, LN04 DPST, LN05 DFEN) are each judged independently against the gates; there is no ranking or selection among them.",
+  "queries": [
+    {
+      "opened_urls": [
+        "https://www.nber.org/papers/w22208",
+        "https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html"
+      ],
+      "query": "Moreira Muir volatility managed portfolios replication failure Cederburg out-of-sample",
+      "searched_at": "2026-09-22T02:47:22+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://www.man.com/insights/the-impact-of-volatility-targeting",
+        "https://arxiv.org/abs/2603.01298",
+        "https://quantpedia.com/leveraged-etfs-in-asset-allocation-opportunity-or-trap/",
+        "https://quantpedia.com/leveraged-etfs-in-low-volatility-environments/"
+      ],
+      "query": "volatility targeting leveraged ETF drawdown control 2025 2026 evidence Sharpe improvement",
+      "searched_at": "2026-09-22T02:47:22+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://ideas.repec.org/a/eee/jfinec/v140y2021i3p744-767.html",
+        "https://ideas.repec.org/a/eee/empfin/v80y2025ics092753982400094x.html"
+      ],
+      "query": "volatility managed portfolios transaction costs Barroso Detzel do not survive",
+      "searched_at": "2026-09-22T02:47:22+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/det_49_ind_port.html",
+        "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
+      ],
+      "query": "Ken French Data Library 49 Industry Portfolios detail page construction methodology",
+      "searched_at": "2026-09-23T07:00:20+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://arxiv.org/abs/2504.20116"
+      ],
+      "query": "arXiv 2504.20116 leveraged ETF compounding volatility drag return autocorrelation",
+      "searched_at": "2026-09-23T07:00:55+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://onlinelibrary.wiley.com/doi/abs/10.1111/0022-1082.00146"
+      ],
+      "query": "Moskowitz Grinblatt Do Industries Explain Momentum NBER",
+      "searched_at": "2026-09-23T07:04:30+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://www.direxion.com/product/daily-regional-banks-bull-3x-etf"
+      ],
+      "query": "Direxion Daily Regional Banks Bull 3X Shares DPST site:direxion.com",
+      "searched_at": "2026-09-23T07:07:10+00:00"
+    },
+    {
+      "opened_urls": [
+        "https://www.direxion.com/product/daily-gold-miners-bull-bear-2x-etfs"
+      ],
+      "query": "Direxion Daily Gold Miners Bull 2X Shares NUGT site:direxion.com",
+      "searched_at": "2026-09-23T07:07:40+00:00"
+    }
+  ],
+  "remaining_evidence_gap": "Whether any of the five lanes, run through the exact frozen overlay machine (not re-tuned per lane), actually clears G1/G1' and G2 on data neither the industry ranking nor the ETF pick has seen, survives the pool-rank and calendar-shift placebos, still holds at 20 bp, and is weakly enough correlated with the live S3 book (<= 0.5 anchor daily-return correlation) to count as a genuine second bet rather than a relabeled semiconductor trade. This has not been tested locally or found in any public backtest of this exact machine on these exact instruments.",
+  "reviewed_at": "2026-09-23T07:22:00+00:00",
+  "schema_version": 1,
+  "sources": [
+    {
+      "applicability": "This is the giant the B-2 overlay copies: scale the S3 levered sleeve down by trailing realized volatility. Our sleeve is a single long-only levered-ETF book, not a long-short factor, so only the mechanism carries over, not the magnitudes.",
+      "claim": "Moreira and Muir show that scaling factor exposure down when realized volatility is high raises Sharpe ratios for the market, value, momentum, profitability, return-on-equity and investment factors and for the currency carry trade, because factor volatility changes are not offset by proportional changes in expected returns.",
+      "claim_id": "mm2017_volatility_managed_sharpe",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Replicated in spanning regressions by Cederburg et al. (2020) and Barroso and Detzel (2021); both dispute the real-time value.",
+      "limitations": "Long-short factor portfolios with unconstrained leverage, monthly data, no transaction costs, sample ends a decade before our anchor window.",
+      "market_and_period": "US equity factors and currency carry, monthly, 1926-2015.",
+      "published_or_updated_at": "2016-04-28",
+      "sha256": "aa84dbc3f2d8acf1f6f9ba0c8e77ef57b68abbbc370296243353d1bf32d212fb",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/moreira-muir-nber-w22208.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://www.nber.org/papers/w22208"
+    },
+    {
+      "applicability": "This is the strongest reason B-2 could fail. It forces the design to be a pure exposure reducer with leverage capped at 1.0 and to be judged on an untouched 2026 holdout rather than on in-sample alphas.",
+      "claim": "Across 103 equity strategies, volatility-managed portfolios do not systematically beat their unmanaged counterparts for a real-time investor: the spanning-regression alphas are not implementable and out-of-sample versions generally earn lower certainty equivalents and Sharpe ratios than simply holding the unmanaged portfolio.",
+      "claim_id": "cederburg2020_oos_failure",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Consistent with Barroso and Detzel (2021) on costs and with the 2025 international evidence in the Journal of Empirical Finance.",
+      "limitations": "Monthly long-short equity factors, real-time estimation of the scaling coefficient; it does not test a fixed target-volatility rule with a hard leverage cap on a levered-ETF sleeve.",
+      "market_and_period": "103 US equity strategies, monthly, long historical samples through 2017.",
+      "published_or_updated_at": "2020-01-01",
+      "sha256": "67ca99ae459acaf93679b93b0885caf02f74dccc094c8f60636181fc87b1ecb2",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/cederburg-2020-jfe-oos.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html"
+    },
+    {
+      "applicability": "Our overlay is a market-directional, long-only book, i.e. the one case that survived costs in this paper; it still forces the 20 bp per side stress view to be a gate (G4) rather than a footnote.",
+      "claim": "After transaction costs, volatility management of asset-pricing factors other than the market generally produces zero abnormal returns and significantly lower Sharpe ratios, while the volatility-managed market portfolio stays robust to costs.",
+      "claim_id": "barroso_detzel2021_costs",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Same direction as Cederburg et al. (2020).",
+      "limitations": "Factor portfolios, not ETFs; cost model is US equity spreads, not ETF spreads.",
+      "market_and_period": "US equity asset-pricing factors, monthly, 1926-2017.",
+      "published_or_updated_at": "2021-06-01",
+      "sha256": "a40f15e9e32d177f4ae008921a85ab7b21b99534143812cf8462f89bfd30b997",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/barroso-detzel-2021-jfe-costs.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/jfinec/v140y2021i3p744-767.html"
+    },
+    {
+      "applicability": "Supports applying the overlay to an equity-beta sleeve specifically, and supports the drawdown-compression objective of B-2.",
+      "claim": "Across more than 60 assets with daily data from 1926, volatility scaling raises Sharpe ratios for risk assets (equities and credit) and for portfolios with a large allocation to them, and consistently reduces the likelihood of extreme returns.",
+      "claim_id": "man2017_voltarget_risk_assets",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Published as Harvey et al. in the Journal of Portfolio Management (2018).",
+      "limitations": "Practitioner research by a manager that sells volatility-targeted products; unlevered assets, no ETF path-dependency or borrow costs.",
+      "market_and_period": "60+ global assets, daily, 1926-2017.",
+      "published_or_updated_at": "2017-08-06",
+      "sha256": "b85bd8fcf8ce8f84dd276034a2a6d324f431cca25dad1b0893cb25e8f368ba7a",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/man-group-impact-of-volatility-targeting.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://www.man.com/insights/the-impact-of-volatility-targeting"
+    },
+    {
+      "applicability": "Most recent replication we could open. Keeps the prior that the overlay is at best cost-marginal outside market and momentum exposure.",
+      "claim": "In 45 international equity markets, only the volatility-managed market and momentum strategies are partially robust to transaction costs, suggesting most of the abnormal return of volatility management is explained by costs.",
+      "claim_id": "empfin2025_international_costs",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Third independent study in the same direction as Cederburg and Barroso-Detzel.",
+      "limitations": "International factor portfolios; no levered ETF or daily-rebalanced sleeve.",
+      "market_and_period": "45 international equity markets, nine managed factors, through 2023.",
+      "published_or_updated_at": "2025-01-01",
+      "sha256": "4e157b22a4f583de62e6ad20aaf34abd7edf09e782a6bf2c795576385ac0d030",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/empfin-2025-international-voltarget.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://ideas.repec.org/a/eee/empfin/v80y2025ics092753982400094x.html"
+    },
+    {
+      "applicability": "Closest published analogue of B-2 on the exact instrument class. We use realized volatility only, because our PIT implied-volatility feed is not wired into this engine.",
+      "claim": "Quantpedia proposes gating leveraged-ETF exposure with a volatility filter that compares short-term realized volatility with implied volatility, cutting exposure in high-volatility periods to keep the leverage while mitigating the worst drawdowns.",
+      "claim_id": "quantpedia2025_letf_vol_filter",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Not independently replicated; treated as a design hint, not as evidence.",
+      "limitations": "Vendor blog, rules described but thresholds not fully public, no live track record, uses an implied-volatility input we do not have PIT.",
+      "market_and_period": "US leveraged equity ETFs, daily, post-2010 through 2025.",
+      "published_or_updated_at": "2025-09-15",
+      "sha256": "c1a415b0a840caf5a34ed79f89175ebecf3a9e657dc641b61bdf040d27d1b4b6",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/quantpedia-letf-low-volatility-environments.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/leveraged-etfs-in-low-volatility-environments/"
+    },
+    {
+      "applicability": "Independent confirmation that an active risk overlay, not buy-and-hold, is the only defensible way to run the A4 levered menu.",
+      "claim": "Leveraged ETFs do not work in long-term passive portfolios because they amplify losses and volatility, but simple trend filters (10-month moving average, 12-month high) reduce the damage when leverage is actively managed.",
+      "claim_id": "quantpedia2025_letf_trend_allocation",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "Overlaps with the published trend-following literature on levered exposure.",
+      "limitations": "Vendor blog, monthly trend rules only, no cost or capacity analysis of our sleeve.",
+      "market_and_period": "US leveraged equity ETFs in static and dynamic allocations, monthly.",
+      "published_or_updated_at": "unknown",
+      "sha256": "8a91bb4ea45d34e0cafb4c672cde8bfa117c475792af4b84921797ed4610698f",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/quantpedia-letf-asset-allocation.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "industry_standard",
+      "url": "https://quantpedia.com/leveraged-etfs-in-asset-allocation-opportunity-or-trap/"
+    },
+    {
+      "applicability": "Explains why B-2 freezes the overlay to a monthly update with a hard 1.0 leverage cap instead of a daily inverse-variance scaler: turnover and leverage spikes are the known failure mode.",
+      "claim": "Open-loop volatility targeting that scales exposure inversely with a variance forecast suffers from high turnover, leverage spikes and sensitivity to estimation error; a proportional-control formulation hits the target volatility more consistently.",
+      "claim_id": "arxiv2026_closed_loop_voltarget",
+      "fetched_at": "2026-09-22T02:57:22+00:00",
+      "independent_replication": "None yet (March 2026 preprint).",
+      "limitations": "Simulation only, no live or historical trading record, not peer reviewed.",
+      "market_and_period": "Simulation study of a risky-plus-riskfree index, 2026 preprint.",
+      "published_or_updated_at": "2026-03-01",
+      "sha256": "dc1ebb0cbe082f253b7f5357a7292fecad05e9cfaaae7ec363233b28452811dc",
+      "snapshot_path": "reports/research/iterations/h20260922_02_s3_voltarget/sources/arxiv-2603.01298-adaptive-leveraged-vol-control.html",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2603.01298"
+    },
+    {
+      "applicability": "This is the provider-official methodology page for the dataset behind the local I-20260923-01 industry-return census that ranked Gold, Chips, Banks and Aero as the top four select-window (2023-09-18..2025-12-31) industries; it grounds that the industries are a point-in-time, rules-based SIC assignment, not a hand-picked list.",
+      "claim": "Kenneth French's 49 Industry Portfolios dataset assigns each NYSE, AMEX, and NASDAQ stock to one of 49 industry portfolios at the end of June of year t using its four-digit SIC code at that time, then computes returns from July of t to June of t+1, with daily, monthly, and annual return files spanning July 1926 to the present.",
+      "claim_id": "kf49_industry_construction",
+      "fetched_at": "2026-09-23T07:02:00+00:00",
+      "independent_replication": "The Fama-French data library is the standard reference dataset in asset pricing and is used by hundreds of published replications; the specific I-20260923-01 census is a local, first-party computation on the official files, not yet independently replicated outside this repo.",
+      "limitations": "Describes portfolio construction only, not the specific select-window return numbers (those come from I-20260923-01's own computation on the downloaded files, computed locally and out of scope for this snapshot); industries are cap-weighted stock baskets, not directly investable, and have no leverage, so the mapping to a specific leveraged sector ETF is an extra step this iteration makes, not something French's page claims.",
+      "market_and_period": "US NYSE/AMEX/NASDAQ common stocks grouped into 49 industries, daily/monthly/annual, July 1926 to the present (data-through metadata July 2026; only pre-2026-01 observations were used for any statistic in I-20260923-01).",
+      "published_or_updated_at": "unknown",
+      "sha256": "338852c07a355e089403a031d0619a0ad6cad1fa20b0aad43cdede660d9a67c8",
+      "snapshot_path": "reports/research/iterations/h20260923_10_levered_lanes/sources/french-49-industry-portfolios-detail.html",
+      "source_card_path": "reports/harness/source_cards/h20260923_10_levered_lanes.jsonl",
+      "source_type": "provider_official_docs",
+      "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/det_49_ind_port.html"
+    },
+    {
+      "applicability": "This is the giant behind the direction's core economic mechanism: a second trending industry, held via a liquid sector-tilted instrument, is not an ad hoc ETF pick but an instance of a well-replicated industry momentum effect that is stronger than individual-stock momentum.",
+      "claim": "Moskowitz and Grinblatt (1999, Journal of Finance) document a strong and prevalent momentum effect in industry components of stock returns that accounts for much of the individual-stock momentum anomaly: industry momentum strategies that buy past winning industries and sell past losing industries are highly profitable even after controlling for size, book-to-market, individual stock momentum, cross-sectional dispersion in mean returns, and microstructure effects, while individual stock momentum is significantly less profitable once industry momentum is controlled for.",
+      "claim_id": "mg1999_industry_momentum",
+      "fetched_at": "2026-09-23T07:04:00+00:00",
+      "independent_replication": "One of the most cited momentum papers in finance; replicated and extended by, among others, the Ken French industry data library itself and later work relating momentum to industry versus individual-stock components; our own I-20260923-01 census is a first-party, from-source replication of the underlying return pattern on the current French files.",
+      "limitations": "Unlevered, equal- or value-weighted industry portfolios rebalanced monthly with no transaction costs modeled at the ETF-spread level; a decades-old sample that predates our 2023-2026 selection and holdout windows and predates the existence of any of the five candidate leveraged-ETF lanes; does not address leverage, daily reset, or volatility targeting at all.",
+      "market_and_period": "US common stocks (NYSE/AMEX), industry and individual-stock momentum, monthly rebalancing, sample period 1963-1995 (original study).",
+      "published_or_updated_at": "1999-08-01",
+      "sha256": "d3890ab26e37c43458946f1fc279fb26d34d45b5268a5a5951f08327c04b036b",
+      "snapshot_path": "reports/research/iterations/h20260923_10_levered_lanes/sources/wiley-moskowitz-grinblatt-1999-do-industries-explain-momentum.txt",
+      "source_card_path": "reports/harness/source_cards/h20260923_10_levered_lanes.jsonl",
+      "source_type": "paper",
+      "url": "https://onlinelibrary.wiley.com/doi/abs/10.1111/0022-1082.00146"
+    },
+    {
+      "applicability": "Directly explains the mechanism found locally in H-20260923-09: that S3's 116.3% anchor return is concentrated in SOXL+USD (58.5% anchor weight, 69.4% holdout) rather than coming from diversification, because leveraged ETFs compound favorably under positive return autocorrelation (trending regimes) and unfavorably under mean reversion. It is the reason this round looks for a second industry with an independent trend driver rather than assuming any leveraged sector ETF would do.",
+      "claim": "Hsieh et al. (arXiv 2504.20116) show that leveraged ETF performance depends fundamentally on return autocorrelation and return dynamics rather than only volatility drag: in markets with independent returns LETFs exhibit positive expected compounding on their target multiple, serially correlated (trending) markets enhance daily-rebalanced LETF returns, and mean-reverting regimes cause underperformance.",
+      "claim_id": "hsieh2025_letf_autocorrelation_compounding",
+      "fetched_at": "2026-09-23T07:01:00+00:00",
+      "independent_replication": "Formalizes and extends the standard, widely documented volatility-drag literature on leveraged/inverse ETFs (e.g. Cheng and Madhavan 2009, Avellaneda and Zhang 2010); not yet independently replicated as a preprint, and its specific autocorrelation framing is new as of 2025.",
+      "limitations": "Theoretical/simulation paper with an empirical section limited to SPY and QQQ, not to any of the five candidate 2x/3x sector ETFs (NUGT, JNUG, FAS, DPST, DFEN); a preprint, not yet peer reviewed; does not itself claim any specific industry will trend in 2026.",
+      "market_and_period": "SPDR S&P 500 ETF (SPY) and Nasdaq-100 ETF (QQQ), about 20 years of daily data, plus AR(1)/AR-GARCH and regime-switching simulation; submitted April 2025.",
+      "published_or_updated_at": "2025-04-28",
+      "sha256": "465097d23d6040ffb308199b96d0797c44154c46273429ca162aa91a01b57b17",
+      "snapshot_path": "reports/research/iterations/h20260923_10_levered_lanes/sources/arxiv-2504.20116-letf-compounding-autocorrelation.html",
+      "source_card_path": "reports/harness/source_cards/h20260923_10_levered_lanes.jsonl",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2504.20116"
+    },
+    {
+      "applicability": "DPST is candidate LN04 in this round's screen. This is the fund's own daily-reset disclosure, which the spec's notes must carry forward: the machine's 63-session momentum and monthly rebalance operate on a path that compounds daily 3x exposure, not a fixed 3x multiple of any multi-day return.",
+      "claim": "Direxion's DPST (Daily Regional Banks Bull 3X ETF) seeks a return of 300% of its benchmark index for a single day only; the fund should not be expected to provide three times the benchmark's cumulative return for periods greater than a day.",
+      "claim_id": "direxion_dpst_daily_reset",
+      "fetched_at": "2026-09-23T07:08:00+00:00",
+      "independent_replication": "The single-day leveraged-ETF reset mechanism is standard industry-wide practice, documented identically by every 2x/3x issuer (Direxion, ProShares, MicroSectors) and by SEC/FINRA investor bulletins on leveraged and inverse ETFs.",
+      "limitations": "Marketing/product page, not a prospectus; states the objective and single-day caveat but not the historical magnitude of compounding decay or borrow/financing costs, which are inside the fund NAV and not visible on this page.",
+      "market_and_period": "US regional bank equities via the S&P Regional Banks Select Industry Index, 3x daily leverage, share class inception 2015-08-19, current as of the September 2026 snapshot.",
+      "published_or_updated_at": "unknown",
+      "sha256": "901c74d9fa4c848afe864ca48770b950456d90582de75ba17b65394118cfdcec",
+      "snapshot_path": "reports/research/iterations/h20260923_10_levered_lanes/sources/direxion-dpst-product-page.txt",
+      "source_card_path": "reports/harness/source_cards/h20260923_10_levered_lanes.jsonl",
+      "source_type": "provider_official_docs",
+      "url": "https://www.direxion.com/product/daily-regional-banks-bull-3x-etf"
+    },
+    {
+      "applicability": "NUGT is candidate LN01 in this round's screen. Confirms the same single-day reset objective and multi-day caveat as DPST from a second, independent Direxion product page covering a different underlying index family (gold miners rather than regional banks).",
+      "claim": "Direxion's NUGT and DUST (Daily Gold Miners Index Bull and Bear 2X ETFs) seek a return of 200% or -200% of their benchmark index for a single day only; the funds should not be expected to provide two times or negative two times the benchmark's cumulative return for periods greater than a day.",
+      "claim_id": "direxion_nugt_dust_daily_reset",
+      "fetched_at": "2026-09-23T07:09:00+00:00",
+      "independent_replication": "Same standard, industry-wide single-day reset disclosure as DPST and every other 2x/3x leveraged ETF issuer.",
+      "limitations": "Marketing/product page; NUGT's own since-inception NAV return is reported as -31.53%, a reminder that a trending-regime lane can still have a negative full-history return outside the regime it trends in, which is why this round scores lanes only on the frozen 2023-2026 windows, not since-inception performance shown on this page.",
+      "market_and_period": "Global gold-mining equities via the MarketVector Global Gold Miners Index, 2x daily leverage (bull NUGT / bear DUST), NUGT inception 2010-12-08, current as of the September 2026 snapshot.",
+      "published_or_updated_at": "unknown",
+      "sha256": "88c58a0c1306d2e7b9071551af0489883bbb976d3eb651fa224c972053c1d443",
+      "snapshot_path": "reports/research/iterations/h20260923_10_levered_lanes/sources/direxion-nugt-dust-product-page.txt",
+      "source_card_path": "reports/harness/source_cards/h20260923_10_levered_lanes.jsonl",
+      "source_type": "provider_official_docs",
+      "url": "https://www.direxion.com/product/daily-gold-miners-bull-bear-2x-etfs"
+    }
+  ],
+  "stop_condition": "Stop and treat the direction as refuted if no lane passes all of: G1 or G1', G2, both G3 placebos (<=10% each, strict family-wise 2% reported alongside), G4, G5, and the <=0.5 correlation criterion. Reopen only with a new mechanism (for example a regime model) or new data, not by re-tuning the overlay parameters or widening the candidate list to more ETFs in the same five industries. Compute budget for the decisive test: 15 minutes.",
+  "target_regime_and_horizon": "Recent-regime only, same windows as the live S3 renewal: selection 2023-09-18..2025-12-31 (feeds only the placebo distributions, not a ranking), untouched holdout 2026-01-02..2026-09-17 (scored once), anchor 2024-01-08..2026-09-16 (carries G1/G1'/G4). Monthly rebalance, daily overlay recompute, US single-name levered sector ETFs. Claim of validity is limited to whichever trending-industry regime each lane's underlying sector is currently in (gold miners, junior gold miners, financials, regional banks, aerospace/defense); the exit rule is the frozen volatility-target/boost overlay itself plus the same re-authorization cadence used for the live S3 book."
+}

@@ -11,7 +11,7 @@ from open_composer.research.auto_research import run_auto_research
 
 
 @pytest.mark.slow
-def test_overnight_factors_produce_ic_or_diagnosis(repo_root: Path) -> None:
+def test_overnight_factors_produce_ic_or_diagnosis(sample_workspace: Path) -> None:
     result = run_auto_research(
         thesis="Overnight thesis: exploit overnight gap behavior on SYN daily bars.",
         universe=["SYN"],
@@ -20,7 +20,7 @@ def test_overnight_factors_produce_ic_or_diagnosis(repo_root: Path) -> None:
         data_path="data/sample/syn_daily.csv",
         max_factors=5,
         use_llm=False,
-        root=repo_root,
+        root=sample_workspace,
     )
 
     ic = json.loads((Path(result.report_path).parent / "ic_scores.json").read_text())

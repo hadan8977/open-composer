@@ -1,0 +1,164 @@
+name: levered_lanes_h20260923_10
+description: Preregistered H-20260923-10 candidate family. Five single-ETF levered
+  sector lanes (NUGT, JNUG, FAS, DPST, DFEN) each wrapped in the frozen S3 machine
+  (63-session absolute momentum vs SHY, down-only 21-session realized-volatility
+  target with a QQQ oversold dip boost, 1.0 leverage cap). Screens for a second
+  trending-sector lane beyond semiconductors that clears the frozen gates and is
+  weakly correlated with the live S3 book. Research only, deterministic, next-session
+  execution; no broker writes are authorized.
+timeframe: daily
+universe:
+- NUGT
+- JNUG
+- FAS
+- DPST
+- DFEN
+- SHY
+- QQQ
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 2
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260923_10:LN:levered_industry_second_bet_lane_screen
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: NUGT
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  mom_63:
+    source: expression
+    expression: close / lag(close, 63) - 1
+    default: 0.0
+    description: 63-session total return of the candidate lane ETF, compared against
+      SHY's 63-session return for the absolute-momentum filter (hold the lane at
+      100% when its 63-session return exceeds SHY's, else 100% SHY); decided on a
+      completed session close and executed at the next open.
+    params:
+      decision_lag_sessions: 1
+  realized_vol_21:
+    source: expression
+    expression: stdev(close / lag(close, 1) - 1, 21)
+    default: 0.0
+    description: 21-session realized volatility of the unscaled lane book, annualized
+      in the runner, used to scale exposure down toward SHY (down-only, leverage
+      cap 1.0). Recomputed at the open after a rebalance close and when the dip
+      boost toggles.
+    params:
+      decision_lag_sessions: 1
+  qqq_sma_200:
+    source: expression
+    expression: sma(close, 200)
+    default: 0.0
+    description: QQQ 200-session simple moving average. Half of the dip-boost trigger
+      (QQQ closes above its 200-session SMA); documentation-only, evaluated on QQQ's
+      own close series by the runner, not by the generic per-symbol engine.
+    params:
+      decision_lag_sessions: 1
+  qqq_rsi_10:
+    source: expression
+    expression: wilder_rsi(close, 10)
+    default: 50.0
+    description: QQQ 10-session Wilder RSI. Second half of the dip-boost trigger
+      (RSI below 30); when both trigger conditions hold, the volatility target is
+      raised from 0.40 to 0.60 for 10 sessions.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260923_10_levered_lanes
+  candidate_manifest_path: reports/research/iterations/h20260923_10_levered_lanes/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260923_10_levered_lanes/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260923_10_levered_lanes.jsonl
+  source_card_claim_ids:
+  - kf49_industry_construction
+  - mg1999_industry_momentum
+  - hsieh2025_letf_autocorrelation_compounding
+  - direxion_dpst_daily_reset
+  - direxion_nugt_dust_daily_reset
+  parameter_space:
+    lane_symbol:
+    - NUGT
+    - JNUG
+    - FAS
+    - DPST
+    - DFEN
+  candidate_budget: 5
+  selection_objective: No selection or ranking among the five lanes. Each lane (LN01..LN05)
+    is judged independently against the frozen gates G1-G5 and the second-bet correlation
+    criterion (anchor daily-return correlation with the live S3 book <= 0.5); the
+    selection window (2023-09-18..2025-12-31) and holdout (2026-01-02..2026-09-17)
+    are both reported per lane, and the holdout never ranks because there is no
+    ranking step to feed.
+  anti_overfit_notes:
+  - Five candidates are frozen in the manifest before any return is computed; the
+    overlay machine itself (momentum lookback, vol target, dip boost, leverage cap)
+    is inherited unchanged from the live S3 renewal and is not re-searched.
+  - Leverage is capped at 1.0 so the overlay can only reduce exposure toward SHY.
+  - G3 requires two placebos per lane -- a 24-ETF pool-rank placebo and a 20-offset
+    dip-signal calendar-shift placebo -- plus the strict family-wise read (10% /
+    5 comparisons = 2%).
+  - The stop condition is preregistered -- if no lane passes, the direction is refuted
+    and reopens only with a new mechanism or new data, not a wider parameter search
+    on the same five lanes.
+  validation_plan:
+  - selection_then_untouched_holdout
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+  - pool_rank_placebo_24_etf_levered_pool
+  - dip_signal_calendar_shift_placebo_20_offsets
+  - second_bet_correlation_check_vs_live_s3_book
+  - benchmark_family_raw_lane_vt40_only_and_s3_reference
+notes:
+  intent: Ask whether a second levered sector lane, beyond semiconductors, clears
+    the frozen S3-machine gates and is weakly correlated with the live S3 book,
+    so it could run as a separate diversifying sleeve.
+  hypothesis_id: H-20260923-10
+  previous_link: H-20260923-09
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

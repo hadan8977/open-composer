@@ -18,7 +18,9 @@ decision model) six typed questions about it, and writes
 Channels: ``exa`` (semantic web search), ``web`` (local SearXNG; ``--site``),
 ``reddit`` (the Arctic Shift archive, posts plus top comments), ``x`` (X search or
 ``--x-user`` timelines through the owner's cookie once ``x-login`` has stored it;
-without it, tweets found by search engines) and ``github``.
+without it, tweets found by search engines), ``github`` and ``archive``
+(researcher.marketmaker.cc: Quantocracy-listed blog posts 2015-04..2026-05,
+TradingView scripts, arXiv q-fin and GitHub repos; ``--corpus``).
 
 Jev only orders the reading list. Numbers in posts stay author-reported, and a
 direction enters ``directions.jsonl`` only after ``oc research directions check``.
@@ -51,6 +53,7 @@ KEY_FILE = Path(os.environ.get("OC_SEARCH_ENV", "/root/.config/open-composer/sea
 SEARXNG = "http://127.0.0.1:8888"
 EXA_MCP = "https://mcp.exa.ai/mcp"
 ARCTIC = "https://arctic-shift.photon-reddit.com/api"
+ARCHIVE = "https://researcher.marketmaker.cc/api/v1"
 JEV_URL = "https://api.typesafe.ai/v1/systemone"
 
 # Engines that answered from this server on 2026-09-23; the second set honours site:.
@@ -63,7 +66,9 @@ SITE_ENGINES = "google,brave,yahoo"
 BROWSER_HOSTS = ("xueqiu.com", "zhihu.com")
 EXA_ONLY_HOSTS = ("joinquant.com",)
 DEFAULT_SUBREDDITS = ("algotrading", "quant", "LETFs", "options", "investing")
-CHANNELS = ("exa", "web", "reddit", "x", "github")
+CHANNELS = ("exa", "web", "reddit", "x", "github", "archive")
+ARCHIVE_CORPORA = ("articles", "pine", "papers", "repos")
+DEFAULT_CORPORA = ("articles", "pine", "papers")
 # twscrape keeps the owner's X cookie session here (mode 600, outside the repo).
 X_DB = TOOLS / "x-accounts.db"
 X_ACCOUNT = "oc_x"
@@ -108,6 +113,42 @@ QUESTIONS: dict[str, dict[str, Any]] = {
     "code": {"type": "noul", "instructions": "It links to or includes runnable code"},
 }
 EVIDENCE_WEIGHT = {"live_record": 1.0, "backtest": 0.6, "claim_only": 0.3, "none": 0.1}
+#: ``--profile channels``: the page is judged as a pointer to places worth
+#: searching (level-1/2 channel discovery), not as a strategy.
+CHANNEL_QUESTIONS: dict[str, dict[str, Any]] = {
+    "directory": {
+        "type": "noul",
+        "instructions": "The text names or recommends specific places where people share "
+        "systematic-trading strategies, factors, backtests or research: forums, communities, "
+        "chat groups, newsletters, blogs, social accounts, paper or data feeds, code hubs or "
+        "search tools",
+    },
+    "kind": {
+        "type": "choice",
+        "instructions": "The main kind of place the text points to",
+        "criteria": {
+            "community": "Forums, subreddits, Discord, Slack or Telegram groups",
+            "publication": "Newsletters, blogs, aggregators or research sites",
+            "social": "X/Twitter or other social media accounts or lists",
+            "papers_data": "Paper series, preprint feeds, data libraries or backtest databases",
+            "code_tools": "Code repositories, curated lists, search or research tools",
+            "other": "Something else or unclear",
+        },
+    },
+    "active": {
+        "type": "noul",
+        "instructions": "The text shows that the places it names were active in 2025 or 2026",
+    },
+    "us_equity": {
+        "type": "noul",
+        "instructions": "The places it names cover systematic trading of US stocks or ETFs, "
+        "not only crypto or forex",
+    },
+    "free": {
+        "type": "noul",
+        "instructions": "The places it names can be read for free without an invitation",
+    },
+}
 
 
 @dataclass
@@ -317,6 +358,12 @@ def search_github(query: str, n: int) -> tuple[list[Result], str]:
     resp = _http().get(
         "https://api.github.com/search/repositories", params=params, headers=headers, timeout=30
     )
+    if resp.status_code in (403, 429) and not token:
+        # The unauthenticated search API is rate limited per IP (403 from this
+        # server on 2026-09-23); a site-restricted web search still finds repos.
+        results, _ = search_searxng(f"site:github.com {query}", n, SITE_ENGINES)
+        repos = [r for r in results if re.match(r"https://github\.com/[^/]+/[^/?#]+/?$", r.url)]
+        return repos, f"github api {resp.status_code} without GITHUB_TOKEN; used site:github.com"
     resp.raise_for_status()
     results = [
         Result(
@@ -330,6 +377,67 @@ def search_github(query: str, n: int) -> tuple[list[Result], str]:
         for repo in resp.json().get("items", [])
     ]
     return results, ""
+
+
+def archive_corpora(args: argparse.Namespace) -> list[str]:
+    return list(getattr(args, "corpus", None) or DEFAULT_CORPORA)
+
+
+def archive_result(corpus: str, item: dict[str, Any]) -> Result:
+    """One researcher.marketmaker.cc hit. Blog URLs are Wayback snapshots, which
+    also keeps them readable after the original post moves."""
+    if corpus == "articles":
+        return Result(
+            url=item["url"],
+            title=item.get("title") or "",
+            engine="archive:articles",
+            published=(item.get("date") or "")[:10],
+            snippet=f"{item.get('source') or ''}: {item.get('desc') or ''}",
+            extra={"source": item.get("source")},
+        )
+    if corpus == "pine":
+        return Result(
+            url=item["url"],
+            title=item.get("title") or "",
+            engine="archive:pine",
+            published=(item.get("date") or "")[:10],
+            snippet=f"{item.get('type') or ''} by {item.get('author') or ''}, "
+            f"{item.get('likes')} likes: {item.get('desc') or ''}",
+            extra={"likes": item.get("likes"), "type": item.get("type")},
+        )
+    if corpus == "papers":
+        return Result(
+            url=item["url"],
+            title=item.get("title") or "",
+            engine="archive:papers",
+            published=(item.get("published") or "")[:10],
+            snippet=(item.get("abstract") or "")[:EXCERPT_CHARS],
+            extra={"categories": item.get("categories")},
+        )
+    return Result(
+        url=item["url"],
+        title=item.get("name") or "",
+        engine="archive:repos",
+        published=(item.get("created_at") or "")[:10],
+        snippet=f"{item.get('description') or ''} | stars {item.get('stars')}",
+        extra={"stars": item.get("stars")},
+    )
+
+
+def search_archive(query: str, n: int, corpora: list[str]) -> tuple[list[Result], str]:
+    """Articles and scripts match every word, so keep those queries to one or
+    two words; papers and repos rank by relevance."""
+    results: list[Result] = []
+    notes = []
+    for corpus in corpora:
+        resp = _http().get(
+            f"{ARCHIVE}/{corpus}", params={"q": query, "limit": min(n, 100)}, timeout=30
+        )
+        resp.raise_for_status()
+        body = resp.json()
+        notes.append(f"{corpus} {body.get('total', 0)} hits")
+        results.extend(archive_result(corpus, item) for item in body.get("items", []))
+    return results, "; ".join(notes)
 
 
 def tweet_id(url: str) -> str | None:
@@ -415,6 +523,10 @@ def run_search(args: argparse.Namespace) -> tuple[list[Result], str, str]:
         return results, f"harvest_search.py:arctic_shift({','.join(subs)})", notes
     if args.channel == "x":
         return search_x(args.query, args.n, getattr(args, "x_user", None))
+    if args.channel == "archive":
+        corpora = archive_corpora(args)
+        results, notes = search_archive(args.query, args.n, corpora)
+        return results, f"harvest_search.py:marketmaker_archive({','.join(corpora)})", notes
     results, notes = search_github(args.query, args.n)
     return results, "harvest_search.py:github_api", notes
 
@@ -584,8 +696,11 @@ class Reader:
 # --------------------------------------------------------------------------- triage
 
 
-def jev_answers(state: str, key: str) -> tuple[dict[str, Any], int, str]:
-    body = {"model": "jev-latest", "state": state, "questions": QUESTIONS}
+def jev_answers(
+    state: str, key: str, profile: str = "strategies"
+) -> tuple[dict[str, Any], int, str]:
+    questions = CHANNEL_QUESTIONS if profile == "channels" else QUESTIONS
+    body = {"model": "jev-latest", "state": state, "questions": questions}
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     for attempt in range(5):
         resp = _http().post(JEV_URL, json=body, headers=headers, timeout=60)
@@ -595,6 +710,12 @@ def jev_answers(state: str, key: str) -> tuple[dict[str, Any], int, str]:
         resp.raise_for_status()
         data = resp.json()
         answers = data["answers"]
+        usage = int((data.get("usage") or {}).get("input_tokens") or 0)
+        if profile == "channels":
+            flat = {name: answers[name]["noul"] for name in ("directory", "active", "us_equity")}
+            flat["free"] = answers["free"]["noul"]
+            flat["kind"] = answers["kind"]["choice"]
+            return flat, usage, data.get("model", "")
         flat = {
             "concrete": answers["concrete"]["noul"],
             "evidence": answers["evidence"]["choice"],
@@ -608,6 +729,12 @@ def jev_answers(state: str, key: str) -> tuple[dict[str, Any], int, str]:
     raise RuntimeError("Jev kept answering 429/5xx; retry later")
 
 
+def channel_priority(jev: dict[str, Any]) -> float:
+    """Reading order for channel discovery: names places, active, US equities, free."""
+    score = jev["directory"] * (0.5 + 0.5 * jev["active"]) * (0.4 + 0.6 * jev["us_equity"])
+    return round(score * (0.6 + 0.4 * jev["free"]), 3)
+
+
 def priority(jev: dict[str, Any]) -> float:
     """Reading order only: concrete rules, US long-only fit, evidence, recency, code."""
     fit = max(jev["us_long_only"], 1.0 if jev["market"] == "us_stocks_etfs" else 0.0)
@@ -618,15 +745,26 @@ def priority(jev: dict[str, Any]) -> float:
 # --------------------------------------------------------------------------- commands
 
 
-def cmd_run(args: argparse.Namespace) -> int:
-    today = datetime.now(UTC).date().isoformat()
-    log_path = HARVEST / "search-log.jsonl"
-    log_rows = read_jsonl(log_path)
+def query_label(args: argparse.Namespace, today: str) -> str:
+    """The search as logged; a repeat of a logged label is refused."""
     x_user = getattr(args, "x_user", None)
     if x_user:  # a timeline is worth re-reading on another day
         label = f"@{x_user.lstrip('@')} timeline {today}"
     else:
         label = f"site:{args.site} {args.query}" if args.site else args.query
+    if args.channel == "archive" and getattr(args, "corpus", None):
+        label = f"{label} [{','.join(archive_corpora(args))}]"
+    if getattr(args, "profile", "strategies") == "channels":
+        label = f"[channels] {label}"
+    return label
+
+
+def cmd_run(args: argparse.Namespace) -> int:
+    today = datetime.now(UTC).date().isoformat()
+    log_path = HARVEST / "search-log.jsonl"
+    log_rows = read_jsonl(log_path)
+    label = query_label(args, today)
+    profile = getattr(args, "profile", "strategies")
     repeats = [
         r["id"] for r in log_rows if r.get("channel") == args.channel and r["query"] == label
     ]
@@ -661,8 +799,9 @@ def cmd_run(args: argparse.Namespace) -> int:
             if key:
                 state = f"Title: {result.title}\nURL: {result.url}\n"
                 state += f"Published: {result.published}\n\n{body[:STATE_CHARS]}"
-                result.jev, used, model = jev_answers(state, key)
-                result.priority = priority(result.jev)
+                result.jev, used, model = jev_answers(state, key, profile)
+                rank = channel_priority if profile == "channels" else priority
+                result.priority = rank(result.jev)
                 tokens += used
             print(
                 f"  [{index + 1}/{min(len(fresh), args.max_read)}] {result.read_via:16} "
@@ -701,7 +840,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         jev = result.jev or {}
         print(
             f"{result.priority if result.priority is not None else '-':>6}  "
-            f"{jev.get('evidence', '-'):11} {jev.get('market', '-'):14} "
+            f"{jev.get('evidence', jev.get('kind', '-')):11} "
+            f"{jev.get('market', 'active' if jev.get('active', 0) >= 0.5 else '-'):14} "
             f"{result.title[:56]}\n        {result.url}"
         )
     return 0
@@ -755,10 +895,22 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--engines", help="web channel only: override the SearXNG engine list")
     run.add_argument("--subreddit", action="append", help="reddit channel; repeatable")
     run.add_argument("--x-user", help="x channel: read this account's timeline (needs x-login)")
+    run.add_argument(
+        "--corpus",
+        action="append",
+        choices=ARCHIVE_CORPORA,
+        help=f"archive channel; repeatable (default: {', '.join(DEFAULT_CORPORA)})",
+    )
     run.add_argument("--n", type=int, default=10, help="results to request per source")
     run.add_argument("--max-read", type=int, default=20, help="results to read and triage")
     run.add_argument("--show", type=int, default=10)
     run.add_argument("--no-triage", action="store_true", help="skip Jev")
+    run.add_argument(
+        "--profile",
+        choices=("strategies", "channels"),
+        default="strategies",
+        help="channels: judge pages as pointers to new places to search (channels.jsonl)",
+    )
     run.add_argument("--force", action="store_true", help="repeat a logged query")
     run.set_defaults(func=cmd_run)
     fetch = sub.add_parser("fetch", help="read one URL through the same router")
