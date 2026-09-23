@@ -28,7 +28,8 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import run_h20260918_05_recent_menu as base  # noqa: E402
 import run_h20260922_05_salvage as salvage  # noqa: E402
 
-PANEL_START = "2015-01-02"  # QQQ SMA200 and the 63-day lookback need warmup
+PANEL_START = "2015-01-02"  # bars begin 2016-01-04: S3 holds risk from 2016-05-02,
+# the QQQ SMA200 (dip boost) is valid from 2016-10-17
 REPORT_START = "2016-01-04"
 REPORT_END = "2023-09-15"  # the last session before the frozen select window
 EXIT_DRAWDOWN = 0.25
