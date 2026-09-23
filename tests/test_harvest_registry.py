@@ -174,6 +174,15 @@ def test_check_finds_registry_rows_cards_and_trial_families(tmp_path: Path) -> N
     assert check_direction(tmp_path, "completely unrelated words") == []
 
 
+def test_check_ignores_function_words(tmp_path: Path) -> None:
+    _write(
+        tmp_path,
+        "directions.jsonl",
+        [_direction(id="dir:risk_models", name="Covariance models for the portfolio")],
+    )
+    assert check_direction(tmp_path, "9Sig for the HFEA") == []
+
+
 def test_summary_counts_by_category_status_and_channel(tmp_path: Path) -> None:
     _write(tmp_path, "directions.jsonl", [_direction(), _refuted()])
     _write(

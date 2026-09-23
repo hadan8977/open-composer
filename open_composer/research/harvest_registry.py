@@ -266,10 +266,20 @@ def validate_registry(root: Path) -> list[str]:
 
 
 _TOKEN = re.compile(r"[a-z0-9]+|[一-鿿]+")
+# Function words would otherwise make "leverage for the long run" a likely repeat of
+# any direction whose name contains "for" and "the".
+_STOPWORDS = frozenset(
+    "an and are as at be by for from in into is it its of on or over than the their "
+    "to via vs with without".split()
+)
 
 
 def _tokens(text: str) -> set[str]:
-    return {token for token in _TOKEN.findall(text.lower()) if len(token) > 1}
+    return {
+        token
+        for token in _TOKEN.findall(text.lower())
+        if len(token) > 1 and token not in _STOPWORDS
+    }
 
 
 @dataclass(frozen=True)
