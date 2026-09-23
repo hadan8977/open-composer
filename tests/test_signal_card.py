@@ -98,3 +98,28 @@ def test_row_ranks_match_pandas_with_ties_and_gaps() -> None:
     got = sc._row_ranks(x, chunk=7)
     want = pd.DataFrame(x).rank(axis=1).to_numpy(np.float32)
     assert np.allclose(got, want, equal_nan=True)
+
+
+def test_admission_and_summary_follow_the_manifest(tmp_path) -> None:
+    import json
+
+    m = _market()
+    leak = m.forward_returns(5) + np.random.default_rng(1).normal(0, 0.02, m.open_.shape).astype(
+        np.float32
+    )
+    card = sc.rank_card(m, leak, top_k=10, primary=5, seeds=2)
+    card = {
+        "meta": {"name": "leak", "mode": "rank", "source": "synthetic", "lag": 0, "direction": 1}
+        | {"threshold": None, "top_n": 90, "top_k": 10, "primary_horizon": 5}
+        | {"generated_at": "2026-09-23T00:00:00+00:00"},
+        **card,
+    }
+    sc.write_card(card, tmp_path)
+    assert sc.admission(card) in {"admit", "reject"}
+    manifest = tmp_path / "lib-manifest.json"
+    manifest.write_text(
+        json.dumps({"library": "lib", "signals": [{"name": "leak"}, {"name": "x"}]})
+    )
+    text = sc.library_summary(manifest, tmp_path)
+    assert "| leak | rank | 5d |" in text and "not run" in text
+    assert (tmp_path / "lib-summary.md").exists()

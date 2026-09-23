@@ -953,10 +953,111 @@ def run_batch(manifest: Path, top_n: int, force: bool = False) -> int:
     return 0
 
 
+def admission(card: dict) -> str:
+    """The preregistered library-v1 admission rule applied to one card."""
+    meta, flags = card["meta"], card["flags"]
+    h = meta["primary_horizon"]
+    if meta["mode"] == "rank":
+        best_t = max((card["ic"][f"h{x}"].get("t_nonoverlap") or 0.0) for x in HORIZONS)
+        ok = (
+            flags["stable_years"]
+            and flags["beats_shuffle"]
+            and bool(flags["tradable_tiers_20bp"])
+            and best_t >= 2.5
+        )
+        return "admit" if ok else "reject"
+    car = card["car"][f"h{h}"]
+    t = car.get("t_dates") or 0.0
+    if t >= 3 and flags["beats_redated"] and flags["book_positive_20bp"]:
+        return "admit" if flags["book_positive_20bp_recent"] else "reject"
+    if t <= -3 and flags["beats_redated"]:
+        return "admit_exit"
+    return "reject"
+
+
+def library_summary(manifest: Path, out_dir: Path = OUT_DIR) -> str:
+    """One table over every finished card of a manifest, with the verdicts."""
+    spec = json.loads(manifest.read_text(encoding="utf-8"))
+    head = [
+        "signal",
+        "mode",
+        "h",
+        "IC or excess",
+        "t",
+        "2024+",
+        "best book tier: excess/yr full / 2024+ (20 bp)",
+        "verdict",
+    ]
+    lines = [
+        f"# {spec.get('library', manifest.stem)}: summary",
+        "",
+        f"Admission rule (preregistered {spec.get('preregistered_at')}): "
+        + "; ".join(f"{k}: {v}" for k, v in spec.get("admission_rule", {}).items()),
+        "",
+        *_header(head),
+    ]
+    for sig in spec["signals"]:
+        path = out_dir / f"{sig['name']}.json"
+        if not path.exists():
+            lines.append(
+                _row([sig["name"], sig.get("mode", "rank"), "", "", "", "", "", "not run"])
+            )
+            continue
+        card = json.loads(path.read_text(encoding="utf-8"))
+        h = card["meta"]["primary_horizon"]
+        if card["meta"]["mode"] == "rank":
+            ic = card["ic"][f"h{h}"]
+            books = [
+                (
+                    name,
+                    card["book"][name][f"h{h}"]["20bp"].get("excess_ann"),
+                    card["book"][name][f"h{h}"]["20bp_recent"].get("excess_ann"),
+                )
+                for name in ("all", "t1", "t2", "t3")
+            ]
+            name, full, recent = max(books, key=lambda b: b[1] if b[1] is not None else -9)
+            cells = [
+                _num(ic.get("mean")),
+                _num(ic.get("t_nonoverlap"), 1),
+                _num(ic.get("recent_mean")),
+            ]
+        else:
+            car = card["car"][f"h{h}"]
+            blk = card["book"][f"h{h}"]
+            name, full, recent = (
+                "events",
+                blk["20bp"].get("excess_ann"),
+                blk["20bp_recent"].get("excess_ann"),
+            )
+            cells = [
+                _pct(car.get("mean"), 2),
+                _num(car.get("t_dates"), 1),
+                _pct(car.get("recent_mean"), 2),
+            ]
+        lines.append(
+            _row(
+                [
+                    sig["name"],
+                    card["meta"]["mode"],
+                    f"{h}d",
+                    *cells,
+                    f"{name}: {_pct(full)} / {_pct(recent)}",
+                    admission(card),
+                ]
+            )
+        )
+    text = "\n".join(lines) + "\n"
+    (out_dir / f"{manifest.stem.replace('-manifest', '')}-summary.md").write_text(
+        text, encoding="utf-8"
+    )
+    return text
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Signal card for a per-stock signal")
     ap.add_argument("--batch", type=Path, help="manifest JSON with a 'signals' list of specs")
     ap.add_argument("--force", action="store_true", help="batch: rerun finished cards")
+    ap.add_argument("--summarize", type=Path, help="manifest JSON: table of finished cards")
     ap.add_argument("--name")
     ap.add_argument("--mode", choices=("rank", "event"), default="rank")
     ap.add_argument("--source", help="parquet file or directory with symbol, trade_date, <column>")
@@ -973,6 +1074,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--primary-horizon", type=int, default=20, choices=(5, 20, 60))
     ap.add_argument("--no-controls", action="store_true")
     args = ap.parse_args(argv)
+    if args.summarize:
+        print(library_summary(args.summarize))
+        return 0
     if args.batch:
         return run_batch(args.batch, args.top_n, args.force)
     if not args.name:
