@@ -1,0 +1,248 @@
+{
+  "iter_id": "h20260923_12_s3_defense_first",
+  "generated_at": "2026-09-23T08:50:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "s3_defense_first_h20260923_12",
+  "objective": "Screen two Defense First remainder candidates (DF01 published SPY fallback, DF02 SHY fallback) plus the DF00 no-change reference for whether redirecting S3's already-idle remainder into a published Defense First rotation (Carlson 2025) raises the design-window (2016-2023) Sharpe and cuts the drawdown versus plain SHY, beyond a momentum-free diversification control (EW) and 40 random-ranking placebos per candidate (RR-k), without breaking the frozen anchor-window return bar.",
+  "candidates": [
+    {
+      "candidate_id": "DF00",
+      "path": "s3_defense_first_remainder_screen",
+      "role": "reference_remainder_in_shy",
+      "method": "s3_frozen_remainder_in_shy",
+      "ablation": "none_frozen_machine",
+      "spec_path": "strategy_specs/drafts/s3_defense_first_h20260923_12.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_adjusted_defense_first",
+      "feature_contract": "feature_v1_defense_first_remainder",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_design_window_then_anchor_do_no_harm_defense_first",
+      "cost_contract": "cost_v1_10_20bps_next_open_defense_first",
+      "benchmark_contract": "benchmark_v1_defense_first_diagnostics",
+      "parameters": {
+        "candidate_id": "DF00",
+        "vol_target_base": 0.4,
+        "vol_target_boost": 0.6,
+        "boost_trigger_symbol": "QQQ",
+        "boost_trigger_sma_sessions": 200,
+        "boost_trigger_rsi_sessions": 10,
+        "boost_trigger_rsi_threshold": 30,
+        "boost_duration_sessions": 10,
+        "realized_vol_window": 21,
+        "leverage_cap": 1.0,
+        "lookback_sessions": 63,
+        "rebalance": "monthly_last_session",
+        "vs_symbol": "SHY",
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "remainder_mode": "shy_unchanged",
+        "defense_first_enabled": false,
+        "ew_control_id": null,
+        "rr_placebo_id_prefix": null,
+        "reuse_existing_numbers": true,
+        "reuse_source": "design-window metrics (s3_vt40_boost) from reports/paper/renewal/2026-09-23-s3-stress-2016-2023.json; anchor-window metrics from the authorized 2026-09-23 S1-S3 renewal record -- no new simulation required"
+      }
+    },
+    {
+      "candidate_id": "DF01",
+      "path": "s3_defense_first_remainder_screen",
+      "role": "defense_first_remainder_candidate",
+      "method": "s3_remainder_defense_first_spy_fallback",
+      "ablation": "single_candidate_remainder_reallocation",
+      "spec_path": "strategy_specs/drafts/s3_defense_first_h20260923_12.yaml",
+      "fallback": "SPY",
+      "data_contract": "data_v1_sip_daily_adjusted_defense_first",
+      "feature_contract": "feature_v1_defense_first_remainder",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_design_window_then_anchor_do_no_harm_defense_first",
+      "cost_contract": "cost_v1_10_20bps_next_open_defense_first",
+      "benchmark_contract": "benchmark_v1_defense_first_diagnostics",
+      "parameters": {
+        "candidate_id": "DF01",
+        "vol_target_base": 0.4,
+        "vol_target_boost": 0.6,
+        "boost_trigger_symbol": "QQQ",
+        "boost_trigger_sma_sessions": 200,
+        "boost_trigger_rsi_sessions": 10,
+        "boost_trigger_rsi_threshold": 30,
+        "boost_duration_sessions": 10,
+        "realized_vol_window": 21,
+        "leverage_cap": 1.0,
+        "lookback_sessions": 63,
+        "rebalance": "monthly_last_session",
+        "vs_symbol": "SHY",
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "remainder_mode": "defense_first",
+        "defense_first_enabled": true,
+        "defensive_menu": [
+          "TLT",
+          "GLD",
+          "DBC",
+          "UUP"
+        ],
+        "momentum_components_months": [
+          1,
+          3,
+          6,
+          12
+        ],
+        "momentum_combination": "unweighted_mean",
+        "rank_weights_by_rank": [
+          0.4,
+          0.3,
+          0.2,
+          0.1
+        ],
+        "cash_hurdle_instrument": "BIL",
+        "cash_hurdle_test": "asset_momentum_score < BIL_momentum_score -> slot fails, weight redirected to fallback asset",
+        "defense_first_rebalance": "monthly_last_session_close_next_open",
+        "defense_first_decision_lag_sessions": 1,
+        "failing_slot_fallback_asset": "SPY",
+        "fallback_rule_source": "published (Carlson 2025 / AllocateSmartly replication): failing slot -> SPY",
+        "ew_control_id": "EW",
+        "rr_placebo_id_prefix": "RR01"
+      }
+    },
+    {
+      "candidate_id": "DF02",
+      "path": "s3_defense_first_remainder_screen",
+      "role": "defense_first_remainder_candidate",
+      "method": "s3_remainder_defense_first_shy_fallback",
+      "ablation": "single_candidate_remainder_reallocation",
+      "spec_path": "strategy_specs/drafts/s3_defense_first_h20260923_12.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_adjusted_defense_first",
+      "feature_contract": "feature_v1_defense_first_remainder",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_design_window_then_anchor_do_no_harm_defense_first",
+      "cost_contract": "cost_v1_10_20bps_next_open_defense_first",
+      "benchmark_contract": "benchmark_v1_defense_first_diagnostics",
+      "parameters": {
+        "candidate_id": "DF02",
+        "vol_target_base": 0.4,
+        "vol_target_boost": 0.6,
+        "boost_trigger_symbol": "QQQ",
+        "boost_trigger_sma_sessions": 200,
+        "boost_trigger_rsi_sessions": 10,
+        "boost_trigger_rsi_threshold": 30,
+        "boost_duration_sessions": 10,
+        "realized_vol_window": 21,
+        "leverage_cap": 1.0,
+        "lookback_sessions": 63,
+        "rebalance": "monthly_last_session",
+        "vs_symbol": "SHY",
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "remainder_mode": "defense_first",
+        "defense_first_enabled": true,
+        "defensive_menu": [
+          "TLT",
+          "GLD",
+          "DBC",
+          "UUP"
+        ],
+        "momentum_components_months": [
+          1,
+          3,
+          6,
+          12
+        ],
+        "momentum_combination": "unweighted_mean",
+        "rank_weights_by_rank": [
+          0.4,
+          0.3,
+          0.2,
+          0.1
+        ],
+        "cash_hurdle_instrument": "BIL",
+        "cash_hurdle_test": "asset_momentum_score < BIL_momentum_score -> slot fails, weight redirected to fallback asset",
+        "defense_first_rebalance": "monthly_last_session_close_next_open",
+        "defense_first_decision_lag_sessions": 1,
+        "failing_slot_fallback_asset": "SHY",
+        "fallback_rule_source": "this iteration's own disclosed departure from the published SPY fallback, to keep the remainder free of equity beta",
+        "ew_control_id": "EW",
+        "rr_placebo_id_prefix": "RR02"
+      }
+    }
+  ],
+  "candidate_count": 3,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_adjusted_defense_first": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": [
+          "BIL",
+          "DBC",
+          "GLD",
+          "QQQ",
+          "SHY",
+          "SOXL",
+          "SPY",
+          "TECL",
+          "TLT",
+          "TQQQ",
+          "UPRO",
+          "USD",
+          "UUP"
+        ]
+      }
+    },
+    "features": {
+      "feature_v1_defense_first_remainder": {
+        "decision_lag_sessions": 1,
+        "momentum": "close/lag(close,63)-1 for each S3 menu leg (TQQQ, SOXL, UPRO, USD, TECL) vs the same for SHY (absolute-momentum filter); top 2 legs held equal-weight. Unchanged from the live S3 book.",
+        "realized_vol": "21-session stdev of the unscaled S3 book return, annualized; drives the remainder size (1 - risk-sleeve weight). Unchanged from the live S3 book.",
+        "dip_trigger": "QQQ close > 200-session SMA and QQQ 10-session Wilder RSI < 30 raises the volatility target from 0.40 to 0.60 for 10 sessions, unchanged from the live S3 book.",
+        "defense_first_momentum_score": "for each of TLT, GLD, DBC, UUP and the cash-hurdle instrument BIL: mean of the 1/3/6/12-calendar-month percent return measured from month-end closes (last trading day of each month), per claim_id carlson_defense_first_momentum_definition_allocatesmartly.",
+        "defense_first_rank_and_weight": "rank TLT/GLD/DBC/UUP by defense_first_momentum_score descending; assign 40/30/20/10 by rank; any asset whose score is below BIL's own score has its tier weight redirected to the candidate's fallback asset (SPY for DF01, SHY for DF02). RR-k placebos replace the rank assignment with a seeded random permutation, holding weights and the cash-hurdle screen fixed.",
+        "defense_first_rebalance": "decided on the last session of each calendar month at the close, applied from the next session's open; the remainder's dollar size still floats daily with S3's own vol-target/boost mechanics between Defense First decision dates."
+      }
+    },
+    "labels": {
+      "label_v1_next_session_open_to_open_total_return": {
+        "definition": "weights effective at the next session open; return legs split open and close"
+      }
+    },
+    "validation": {
+      "validation_v1_design_window_then_anchor_do_no_harm_defense_first": {
+        "design": "2016-01-04..2023-09-15 (S3 itself first holds risk 2016-05-02; see warmup_first_valid_dates for the Defense First sleeve)",
+        "anchor": "2024-01-08..2026-09-16 (do-no-harm check only, gate G1 at 10 and 20 bp)",
+        "no_holdout_claim": "2026-01-02..2026-09-17 already spent evaluating the live S3 book at its 2026-09-23 renewal; not reused as an out-of-sample claim for DF01/DF02/EW/RR-k here",
+        "warmup_first_valid_dates": {
+          "s3_book_first_holds_risk": "2016-05-02",
+          "note": "63-session momentum/absolute-momentum-filter lookback warmup from the 2016-01-04 panel start; before this date S3 itself (and therefore every candidate's remainder) is flat/SHY by construction.",
+          "ew_first_valid": "2016-05-02 (no momentum lookback needed; valid as soon as S3 first has a remainder to hold -- a known, disclosed head-start over DF01/DF02/RR-k of about 9 months)",
+          "defense_first_momentum_score_first_valid": "2017-01-31 decision (close), applied from the 2017-02-03 open -- the 12-month component needs 12 completed prior calendar month-end closes; the first month-end close in the local archive is 2016-01-29, so the first month whose 12-month-prior month-end also exists is January 2017",
+          "df01_df02_rr_k_first_valid": "2017-02-03 (same as defense_first_momentum_score_first_valid); before this date DF01, DF02 and every RR-k placebo default to DF00's own behavior (remainder in SHY) -- a warmup limitation, not a lookahead bias, disclosed as an asymmetry against EW",
+          "effect": [
+            "Before its first-valid date, the Defense First sleeve reads as inactive (same as DF00) by construction; this only affects the first ~9 months of the 2016-01-04..2023-09-15 design window and does not reach into the 2018 (-22.0%) or 2022 (-33.6%) drawdown episodes the design window exists to test."
+          ]
+        }
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open_defense_first": {
+        "contract_path": "reports/research/iterations/h20260923_12_s3_defense_first/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_defense_first_diagnostics": {
+        "members": [
+          "DF00_reference_remainder_in_shy",
+          "EW_momentum_free_diversification_control",
+          "RR_k_random_ranking_placebo_distribution",
+          "SPY_buy_and_hold",
+          "SHY_buy_and_hold"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/s3_defense_first_h20260923_12.yaml": "f4612ab44b9c751cd520c39414329b1ea2daa7b182afd8fbf65e407d30e6092c"
+  },
+  "source_spec_path": "strategy_specs/drafts/s3_defense_first_h20260923_12.yaml",
+  "spec_hash": "f4612ab44b9c751cd520c39414329b1ea2daa7b182afd8fbf65e407d30e6092c"
+}

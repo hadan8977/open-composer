@@ -1,0 +1,302 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260923_12_s3_defense_first",
+  "strategy_name": "s3_defense_first_h20260923_12",
+  "source_spec_path": "strategy_specs/drafts/s3_defense_first_h20260923_12.yaml",
+  "spec_hash": "f4612ab44b9c751cd520c39414329b1ea2daa7b182afd8fbf65e407d30e6092c",
+  "spec_hashes": {
+    "strategy_specs/drafts/s3_defense_first_h20260923_12.yaml": "f4612ab44b9c751cd520c39414329b1ea2daa7b182afd8fbf65e407d30e6092c"
+  },
+  "generated_at": "2026-09-23T08:55:00Z",
+  "generated_before_backtest": true,
+  "objective": "Ask whether redirecting the part of S3's book that currently sits idle in SHY (the vol-target remainder, plus any slot the absolute-momentum filter empties) into a published Defense First rotation (Carlson 2025: TLT/GLD/DBC/UUP ranked monthly by blended 1/3/6/12-month momentum, 40/30/20/10 weights, a cash-hurdle screen vs T-bills) raises S3's design-window Sharpe and cuts its drawdown beyond what a momentum-free diversification control (EW) or 40 random-ranking placebos per candidate (RR-k) give, without breaking the frozen anchor-window return bar, using the already-verified S3 vt40+boost overlay giants (Moreira and Muir 2017; Man Group 2017; and the cost/robustness counter-evidence in Cederburg et al. 2020, Barroso and Detzel 2021, the 2025 international replication and the 2026 closed-loop preprint) to ground why the remainder this iteration reallocates is itself a defensible, published sizing mechanism, and Carlson's 2025 SSRN preprint plus two independent third-party replications (AllocateSmartly, Quantitativo) and the author's own LinkedIn confirmation to ground the Defense First mechanism itself.",
+  "decision": "proceed",
+  "existing_solution_comparison": "The S3 vt40+boost overlay machine itself (63-session absolute momentum vs SHY, 21-session realized-volatility target 0.40 with a QQQ-oversold dip boost to 0.60, 1.0 leverage cap, monthly rebalance) is reused unchanged from the authorized live renewal (commit 97c992c) and its own attribution finding (H-20260923-09: S3 is a leveraged semiconductor position whose only validated de-risking mechanism is the volatility target) and is not re-searched here; DF00's own numbers are reused rather than recomputed, from the existing stress replay (design window, CAGR 30.7%, Sharpe 0.83, max drawdown -48.0%) and the authorized 2026-09-23 renewal record (anchor window). The Defense First mechanism is not invented here: it is Thomas Carlson's 2025 SSRN preprint (DOI 10.2139/ssrn.5334772, located and bibliographically confirmed this pass though its full text was not fetchable), already read once at the Quantitativo blog level before this task was scoped (registry row dir:defense_first_taa_carlson_concretum: rank TLT/GLD/DBC/UUP by 1/3/6/12-month momentum, 40/30/20/10 weights, cash-hurdle screen vs T-bills, SPY fallback; author-reported ~1990s-2025 unleveraged CAGR 10.4%, Sharpe 0.95, max drawdown -19.4%, correlation to equities 0.27), and now independently cross-checked against AllocateSmartly's exact rule-by-rule replication (tested from 1971) and the author's own LinkedIn confirmation of the asset menu (TLT, GLD, DBC, UUP). What is new here is not the Defense First mechanism but the role it is tested in: a leveraged-ETF strategy's un-invested remainder specifically, tested against a momentum-free diversification control (EW) and per-candidate random-ranking placebos (RR-k) that none of the public replications, and no prior iteration in this repo, run.",
+  "negative_experiments_checked": "dir:s1_sector_rotation_voltarget (refuted): a volatility-target overlay taxed S1's Sharpe and CAGR -- a sizing-layer result on a risk sleeve, structurally different from this iteration, which leaves S3's own vol target, boost and leverage cap untouched and only changes what the already-sized remainder holds. dir:s3_bear_regime_guard (refuted, H-20260923-11, same book, same day): four bear-regime gates that moved S3's risk weight to SHY on a trend signal all failed their own exposure-matched (EM-k) and circular-shift (CS-k) controls -- a timing claim about when to de-risk the risk sleeve. This iteration makes no timing claim about the risk sleeve; the remainder's size is whatever S3's unchanged machine decides, so EW and RR-k (not EM-k/CS-k) are the matching controls for a composition question rather than a timing question. H-20260918-06 (refuted): fully mechanical, menu-free cross-sectional relative-strength selection over the whole ETF/fund universe underperformed simple SPMO buy-and-hold in all 8 preregistered families -- a selection-among-many-risk-assets result. DF01/DF02 select among exactly four named defensive assets, gated by an absolute-momentum-vs-cash screen before ranking matters, a narrower and mechanistically different question, which is why a fresh test is warranted rather than assumed refuted by analogy. dir:giants_sweep_published_etf_rules (refuted): 0 of 24 published ETF rules cleared the G1-G5 standalone-strategy bar; Defense First (published July 2025) was not part of that September 2026 census (no 'Defense First' or 'Carlson' hit in reports/research/intel/I-20260922-03-giants-census.md), so this is not a re-run of an already-refuted item, and this iteration applies its own remainder-specific adoption rule (a)-(e), not the G1-G5 standalone bar. dir:recent_window_etf_menu_rotation (passed, related family): confirms small-menu winner-take-all rotation can win on raw CAGR while losing to its own equal-weight benchmark on Sharpe/drawdown -- the direct reason EW is a required control here.",
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl",
+    "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "mm2017_volatility_managed_sharpe",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "remainder_size_mechanism_reused_unchanged"
+    },
+    {
+      "claim_id": "cederburg2020_oos_failure",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "remainder_size_mechanism_reused_unchanged"
+    },
+    {
+      "claim_id": "barroso_detzel2021_costs",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "remainder_size_mechanism_reused_unchanged"
+    },
+    {
+      "claim_id": "man2017_voltarget_risk_assets",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "remainder_size_mechanism_reused_unchanged"
+    },
+    {
+      "claim_id": "empfin2025_international_costs",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "remainder_size_mechanism_reused_unchanged"
+    },
+    {
+      "claim_id": "quantpedia2025_letf_vol_filter",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "remainder_size_mechanism_reused_unchanged"
+    },
+    {
+      "claim_id": "quantpedia2025_letf_trend_allocation",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "remainder_size_mechanism_reused_unchanged"
+    },
+    {
+      "claim_id": "arxiv2026_closed_loop_voltarget",
+      "source_card_path": "reports/harness/source_cards/h20260922_02_s3_voltarget.jsonl",
+      "used_for": "remainder_size_mechanism_reused_unchanged"
+    },
+    {
+      "claim_id": "carlson2025_defense_first_ssrn_listing",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl",
+      "used_for": "primary_source_located_full_text_not_fetchable"
+    },
+    {
+      "claim_id": "carlson_defense_first_momentum_definition_allocatesmartly",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl",
+      "used_for": "defense_first_momentum_score_definition"
+    },
+    {
+      "claim_id": "carlson_defense_first_rank_weights_allocatesmartly",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl",
+      "used_for": "defense_first_rank_weight_table"
+    },
+    {
+      "claim_id": "carlson_defense_first_cash_hurdle_fallback_allocatesmartly",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl",
+      "used_for": "defense_first_cash_hurdle_and_fallback_rule"
+    },
+    {
+      "claim_id": "carlson_defense_first_rebalance_timing_allocatesmartly",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl",
+      "used_for": "defense_first_rebalance_timing"
+    },
+    {
+      "claim_id": "carlson_defense_first_author_linkedin_menu_confirmation",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl",
+      "used_for": "commodities_ticker_dbc_vs_pdbc_resolution"
+    },
+    {
+      "claim_id": "quantitativo2025_defense_first_replication_numbers",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl",
+      "used_for": "third_replication_triangulation"
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "mm2017_volatility_managed_sharpe",
+      "url": "https://www.nber.org/papers/w22208",
+      "published_or_updated_at": "2016-04-28",
+      "source_type": "paper",
+      "credibility": "top_journal_or_nber",
+      "core_claim": "Moreira and Muir show that scaling factor exposure down when realized volatility is high raises Sharpe ratios for the market, value, momentum, profitability, return-on-equity and investment factors and for the currency carry trade, because factor volatility changes are not offset by proportional changes in expected returns.",
+      "project_applicability": "This is the giant behind the frozen S3 vt40+boost overlay that determines the remainder's size every DF00/DF01/DF02/EW/RR-k candidate reuses unchanged; this iteration does not touch that mechanism, only what the remainder it produces is held in.",
+      "reflection": "Long-short factor portfolios with unconstrained leverage, monthly data, no transaction costs, sample ends a decade before our anchor window."
+    },
+    {
+      "claim_id": "cederburg2020_oos_failure",
+      "url": "https://ideas.repec.org/a/eee/jfinec/v138y2020i1p95-117.html",
+      "published_or_updated_at": "2020-01-01",
+      "source_type": "paper",
+      "credibility": "top_journal_or_nber",
+      "core_claim": "Across 103 equity strategies, volatility-managed portfolios do not systematically beat their unmanaged counterparts for a real-time investor: the spanning-regression alphas are not implementable and out-of-sample versions generally earn lower certainty equivalents and Sharpe ratios than simply holding the unmanaged portfolio.",
+      "project_applicability": "Keeps this round honest that any apparent remainder-reallocation edge must survive a real, same-cost control (EW) and a placebo (RR-k), not merely look better than doing nothing.",
+      "reflection": "Monthly long-short equity factors, real-time estimation of the scaling coefficient; does not test a fixed target-volatility rule with a hard leverage cap on a levered-ETF sleeve's remainder."
+    },
+    {
+      "claim_id": "barroso_detzel2021_costs",
+      "url": "https://ideas.repec.org/a/eee/jfinec/v140y2021i3p744-767.html",
+      "published_or_updated_at": "2021-06-01",
+      "source_type": "paper",
+      "credibility": "top_journal_or_nber",
+      "core_claim": "After transaction costs, volatility management of asset-pricing factors other than the market generally produces zero abnormal returns and significantly lower Sharpe ratios, while the volatility-managed market portfolio stays robust to costs.",
+      "project_applicability": "Reused reason the anchor-window do-no-harm check (e) is evaluated at both 10 and 20 bp for both candidates, not only the design-window criteria.",
+      "reflection": "Factor portfolios, not ETFs; cost model is US equity spreads, not ETF spreads."
+    },
+    {
+      "claim_id": "man2017_voltarget_risk_assets",
+      "url": "https://www.man.com/insights/the-impact-of-volatility-targeting",
+      "published_or_updated_at": "2017-08-06",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_research",
+      "core_claim": "Across more than 60 assets with daily data from 1926, volatility scaling raises Sharpe ratios for risk assets (equities and credit) and for portfolios with a large allocation to them, and consistently reduces the likelihood of extreme returns.",
+      "project_applicability": "General support that the S3 vol-target mechanism producing the remainder this iteration reallocates is itself a defensible, published sizing approach, independent of what the remainder is then held in.",
+      "reflection": "Practitioner research by a manager that sells volatility-targeted products; unlevered assets, no ETF path-dependency or borrow costs."
+    },
+    {
+      "claim_id": "empfin2025_international_costs",
+      "url": "https://ideas.repec.org/a/eee/empfin/v80y2025ics092753982400094x.html",
+      "published_or_updated_at": "2025-01-01",
+      "source_type": "paper",
+      "credibility": "top_journal_or_nber",
+      "core_claim": "In 45 international equity markets, only the volatility-managed market and momentum strategies are partially robust to transaction costs, suggesting most of the abnormal return of volatility management is explained by costs.",
+      "project_applicability": "Keeps the prior that any apparent edge must be checked after realistic costs (10/20 bp per side) on the full expanded weight vector, not only gross of costs.",
+      "reflection": "International factor portfolios; no levered ETF or daily-rebalanced sleeve."
+    },
+    {
+      "claim_id": "quantpedia2025_letf_vol_filter",
+      "url": "https://quantpedia.com/leveraged-etfs-in-low-volatility-environments/",
+      "published_or_updated_at": "2025-09-15",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_research",
+      "core_claim": "Quantpedia proposes gating leveraged-ETF exposure with a volatility filter that compares short-term realized volatility with implied volatility, cutting exposure in high-volatility periods to keep the leverage while mitigating the worst drawdowns.",
+      "project_applicability": "Background context for why S3's own vol-target/remainder mechanism (reused unchanged here) is a standard, published approach to sizing leveraged-ETF exposure.",
+      "reflection": "Vendor blog, rules described but thresholds not fully public, no live track record, uses an implied-volatility input we do not have PIT."
+    },
+    {
+      "claim_id": "quantpedia2025_letf_trend_allocation",
+      "url": "https://quantpedia.com/leveraged-etfs-in-asset-allocation-opportunity-or-trap/",
+      "published_or_updated_at": "unknown",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_research",
+      "core_claim": "Leveraged ETFs do not work in long-term passive portfolios because they amplify losses and volatility, but simple trend filters (10-month moving average, 12-month high) reduce the damage when leverage is actively managed.",
+      "project_applicability": "Independent confirmation that an actively managed risk overlay (not buy-and-hold) is the defensible way to run S3's risk sleeve, which this iteration leaves untouched while only changing the remainder's holding.",
+      "reflection": "Vendor blog, monthly trend rules only, no cost or capacity analysis of our sleeve."
+    },
+    {
+      "claim_id": "arxiv2026_closed_loop_voltarget",
+      "url": "https://arxiv.org/abs/2603.01298",
+      "published_or_updated_at": "2026-03-01",
+      "source_type": "paper",
+      "credibility": "preprint_arxiv_not_peer_reviewed",
+      "core_claim": "Open-loop volatility targeting that scales exposure inversely with a variance forecast suffers from high turnover, leverage spikes and sensitivity to estimation error; a proportional-control formulation hits the target volatility more consistently.",
+      "project_applicability": "Same reason the frozen overlay (and therefore the remainder size this iteration reallocates) keeps a monthly-plus-event-triggered update cadence with a hard 1.0 leverage cap, unchanged here.",
+      "reflection": "Simulation only, no live or historical trading record, not peer reviewed."
+    },
+    {
+      "claim_id": "carlson2025_defense_first_ssrn_listing",
+      "url": "https://doi.org/10.2139/ssrn.5334772",
+      "published_or_updated_at": "2025-01-01",
+      "source_type": "paper",
+      "credibility": "author_preprint_unverified_full_text",
+      "core_claim": "Thomas A. Carlson's paper \"Defense First: A Multi-Asset Tactical Model for Adaptive Downside Protection\" is listed in the SSRN Electronic Journal as a 2025 preprint (DOI 10.2139/ssrn.5334772); the full abstract and methodology text were not retrievable through the available fetch tooling (only bibliographic metadata rendered), so this iteration's exact-rules pinning relies on the AllocateSmartly and Quantitativo replications and the author's own LinkedIn summary instead of the primary PDF text.",
+      "market_and_period": "SSRN Electronic Journal listing only.",
+      "project_applicability": "Confirms the primary source exists as a named, dated 2025 SSRN preprint before this iteration relies on secondary replications for the exact rules.",
+      "reflection": "Full abstract/methodology text not fetchable through available tooling; bibliometric author-index line (h-index 70) does not match a single-preprint TAA author and is treated as an indexer artifact."
+    },
+    {
+      "claim_id": "carlson_defense_first_momentum_definition_allocatesmartly",
+      "url": "https://allocatesmartly.com/carlsons-defense-first/",
+      "published_or_updated_at": "2025-07-20",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_research",
+      "core_claim": "AllocateSmartly's independent test of Carlson's Defense First paper states that at the close on the last trading day of the month, the momentum of four defensive assets (TLT, GLD, PDBC, UUP) plus a T-bill risk-free proxy (BIL) is measured as the average of each asset's 1, 3, 6 and 12-month dividend-adjusted percent return.",
+      "market_and_period": "TLT/GLD/PDBC/UUP/BIL, tested by AllocateSmartly from 1971 through 2025-07-20.",
+      "project_applicability": "This is the exact momentum-score formula (mean of 1/3/6/12-month returns) preregistered for DF01/DF02/RR-k in candidate-manifest.json.",
+      "reflection": "Secondary source restating the paper's rules, not the primary PDF; consistent with Quantitativo's independent description."
+    },
+    {
+      "claim_id": "carlson_defense_first_rank_weights_allocatesmartly",
+      "url": "https://allocatesmartly.com/carlsons-defense-first/",
+      "published_or_updated_at": "2025-07-20",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_research",
+      "core_claim": "AllocateSmartly states that Defense First ranks the four defensive assets from highest to lowest momentum and assigns tiered portfolio weights of 40% to the top rank, 30% to second, 20% to third, and 10% to fourth.",
+      "market_and_period": "Same TAA test as above.",
+      "project_applicability": "Pins the exact 40/30/20/10 rank-to-weight table used by DF01, DF02 and every RR-k placebo.",
+      "reflection": "Secondary source; consistent with Quantitativo's independent 40/30/20/10 description."
+    },
+    {
+      "claim_id": "carlson_defense_first_cash_hurdle_fallback_allocatesmartly",
+      "url": "https://allocatesmartly.com/carlsons-defense-first/",
+      "published_or_updated_at": "2025-07-20",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_research",
+      "core_claim": "AllocateSmartly states that if a defensive asset's momentum is less than that of T-bills, Defense First allocates that asset's tier weight to US stocks (SPY) instead -- a dual-momentum absolute-return screen applied per asset, per tier, every month.",
+      "market_and_period": "Same TAA test as above.",
+      "project_applicability": "Pins the cash-hurdle instrument (BIL) and test, and the paper's own SPY fallback (DF01); DF02 is this iteration's disclosed departure (SHY fallback).",
+      "reflection": "Secondary source; AllocateSmartly separately suggests cash-instead-of-UUP as their own improvement, not adopted here."
+    },
+    {
+      "claim_id": "carlson_defense_first_rebalance_timing_allocatesmartly",
+      "url": "https://allocatesmartly.com/carlsons-defense-first/",
+      "published_or_updated_at": "2025-07-20",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_research",
+      "core_claim": "AllocateSmartly states that Defense First holds all positions until the end of the following month and rebalances monthly regardless of whether the target allocation has changed.",
+      "market_and_period": "Same TAA test as above.",
+      "project_applicability": "Pins monthly, unconditional rebalancing; this iteration adds an explicit next-open fill lag beyond the source text for execution realism.",
+      "reflection": "Source does not state a decision-to-fill lag explicitly; the next-open convention is this repo's own addition, disclosed in search-space.md."
+    },
+    {
+      "claim_id": "carlson_defense_first_author_linkedin_menu_confirmation",
+      "url": "https://www.linkedin.com/posts/thomasdcarlson_defense-first-a-multi-asset-tactical-model-activity-7349155637907333120-INqK",
+      "published_or_updated_at": "2025-07-10",
+      "source_type": "industry_standard",
+      "credibility": "author_self_reported",
+      "core_claim": "Thomas Carlson's own LinkedIn announcement of the paper states the model allocates monthly across four liquid, macro-hedging ETFs (TLT, GLD, DBC, UUP) using multi-horizon momentum and an absolute strength filter, with SPY as a fallback asset.",
+      "market_and_period": "Author's own announcement, no backtest sample disclosed.",
+      "project_applicability": "Resolves the DBC-vs-PDBC discrepancy between replicators in favor of DBC, the author's own stated ticker and what is locally available.",
+      "reflection": "Promotional social post, not the paper; gives no numeric rule detail beyond AllocateSmartly's replication."
+    },
+    {
+      "claim_id": "quantitativo2025_defense_first_replication_numbers",
+      "url": "https://www.quantitativo.com/p/from-defense-to-offense-a-tactical",
+      "published_or_updated_at": "2025-07-26",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_research",
+      "core_claim": "Quantitativo's independent backtest replication of Carlson's Defense First strategy reports that, with roughly the same volatility as the S&P 500, the (3x-leveraged-fallback variant of the) strategy delivers significantly higher returns (16.2% vs. 10.6%) while maintaining a superior Sharpe ratio and much smaller drawdowns than the S&P 500 buy-and-hold benchmark.",
+      "market_and_period": "Quantitativo's own backtest, unleveraged and 3x-leveraged-fallback variants.",
+      "project_applicability": "One of three independent replications (Quantitativo, AllocateSmartly, BestFolio) triangulated before trusting the mechanism; the original background evidence this task was scoped from, now bound to a fresh verified source card.",
+      "reflection": "Already-harvested secondary source (registry row dir:defense_first_taa_carlson_concretum); leveraged-fallback numbers are Quantitativo's own extension beyond the base paper."
+    }
+  ],
+  "topic_coverage": [
+    "volatility_managed_portfolios_original_evidence",
+    "out_of_sample_replication_failure",
+    "transaction_cost_survival",
+    "leveraged_etf_specific_risk_overlay",
+    "defense_first_taa_primary_source_located",
+    "defense_first_exact_rules_independent_replication",
+    "commodities_proxy_ticker_discrepancy_dbc_vs_pdbc",
+    "cash_hurdle_and_fallback_mechanism",
+    "momentum_free_diversification_control_design",
+    "random_ranking_placebo_design",
+    "s3_remainder_sizing_mechanism_reused_unchanged",
+    "negative_experiments_distinguishing_remainder_vs_risk_sleeve_vs_selection"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "carlson_defense_first_momentum_definition_allocatesmartly",
+      "effect": "Gives the exact momentum-score formula (unweighted mean of 1/3/6/12-month returns) rather than an assumed or guessed blend.",
+      "revision": "momentum_score_pinned_from_independent_replication_not_assumed"
+    },
+    {
+      "driver": "carlson_defense_first_rank_weights_allocatesmartly",
+      "effect": "Pins the 40/30/20/10 rank-to-weight table as fixed, not a swept parameter.",
+      "revision": "rank_weight_table_fixed_not_swept"
+    },
+    {
+      "driver": "carlson_defense_first_cash_hurdle_fallback_allocatesmartly",
+      "effect": "Pins BIL as the cash-hurdle instrument and SPY as the published fallback (DF01); motivates DF02 as an explicit, disclosed departure (SHY fallback) rather than an ambiguity.",
+      "revision": "df02_added_as_disclosed_departure_shy_fallback"
+    },
+    {
+      "driver": "carlson_defense_first_author_linkedin_menu_confirmation",
+      "effect": "Resolves a DBC-vs-PDBC discrepancy between AllocateSmartly's/BestFolio's replications and the author's own post in favor of DBC, matching local data availability.",
+      "revision": "commodities_ticker_set_to_dbc_matching_author_and_local_data"
+    },
+    {
+      "driver": "dir:s3_bear_regime_guard_refuted_same_day_sibling",
+      "effect": "A timing/gating claim on S3's risk sleeve already failed its own exposure-matched and circular-shift controls this same day, on the same book.",
+      "revision": "this_round_scoped_to_remainder_composition_not_risk_sleeve_timing_uses_ew_rr_k_not_em_cs"
+    },
+    {
+      "driver": "H-20260918-06_refuted",
+      "effect": "Naive cross-sectional relative-strength selection over a broad ETF/fund universe underperformed simple buy-and-hold in all 8 preregistered families.",
+      "revision": "scope_narrowed_to_four_named_defensive_assets_with_absolute_momentum_screen_not_broad_relative_strength"
+    }
+  ]
+}

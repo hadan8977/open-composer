@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260923_12_s3_defense_first",
+  "reviewed_at": "2026-09-23T08:42:00Z",
+  "decision": "proceed",
+  "objective": "Ask whether the part of S3's book that currently sits idle in SHY (the vol-target remainder, plus any slot the absolute-momentum filter empties) earns a better design-window Sharpe and a shallower drawdown if it is held in a Defense First rotation (Carlson 2025: monthly-ranked TLT/GLD/DBC/UUP by blended 1/3/6/12-month momentum, 40/30/20/10 weights, a cash-hurdle screen vs T-bills, failing slots falling back to SPY as published or to SHY as this iteration's own disclosed variant) than plain SHY -- and whether any edge survives a momentum-free diversification control (EW, static 25/25/25/25) and 40 random-ranking placebos per candidate, without breaking the frozen anchor-window return bar. Exactly two candidates (DF01 published fallback, DF02 SHY fallback) against a DF00 reference (S3 exactly as renewed, remainder in SHY); no ranking between DF01 and DF02, both reported.",
+  "target_regime_and_horizon": "Design window 2016-01-04..2023-09-15 (S3 itself first holds risk 2016-05-02, same 63-session warmup as every other S3 iteration this month; the Defense First sleeve's blended momentum score needs 12 completed prior month-end closes, so it is first fully valid at the 2017-01-31 month-end decision, applied from the 2017-02-03 open -- before that date DF01/DF02/RR-k default to DF00's own behavior (remainder in SHY), a warmup limitation disclosed in candidate-manifest.json, not a lookahead bias; it shrinks the first ~9 months of the design window but does not reach into the 2018 or 2022 drawdown episodes the window exists to test). EW needs no momentum history so it is valid from 2016-05-02, a known, disclosed head-start asymmetry against DF01/DF02/RR-k over that same ~9-month stretch. Frozen anchor 2024-01-08..2026-09-16 is a do-no-harm check only, at 10 and 20 bp. The 2026 holdout (2026-01-02..2026-09-17) was already spent evaluating the live S3 book at its 2026-09-23 renewal, so no holdout claim is made here. Claim of validity, if adopted, is limited to what the remainder of this same leveraged-momentum semiconductor-concentrated S3 book (H-20260923-09) should hold instead of idle SHY -- not a claim that Defense First works as a standalone strategy or beyond this specific remainder-sizing role.",
+  "existing_solution_comparison": "S3's own machine (menu, 63-session lookback, top 2, monthly rebalance, absolute-momentum filter vs SHY, 21-session realized-vol target 0.40/0.60 boost, 1.0 leverage cap) is reused unchanged from the authorized live renewal (commit 97c992c) and the attribution/decomposition finding that S3 is a leveraged semiconductor position with a volatility-target overlay that is itself the only validated de-risking mechanism (H-20260923-09); this iteration does not touch that machine at all, only what its already-idle remainder holds. The Defense First mechanism itself is not invented here: it is Thomas Carlson's 2025 SSRN preprint 'Defense First: A Multi-Asset Tactical Model for Adaptive Downside Protection' (DOI 10.2139/ssrn.5334772, located and bibliographically confirmed this pass, though its full text was not fetchable -- see carlson2025_defense_first_ssrn_listing), already read once at the Quantitativo blog level before this task was scoped (registry row dir:defense_first_taa_carlson_concretum) and independently replicated by at least two more third parties found this pass -- AllocateSmartly (exact rule-by-rule restatement, tested from 1971) and BestFolio (tested 1986-2026, 10.7% CAGR/1.15 Sharpe/-20.3% max drawdown) -- plus the author's own LinkedIn confirmation of the asset menu (TLT, GLD, DBC, UUP). What is new here is not the Defense First mechanism itself but applying it to a role none of these three replicators tested: a leveraged-ETF strategy's un-invested remainder, specifically, rather than a full portfolio allocation, tested against a momentum-free diversification control (EW) and per-candidate random-ranking placebos (RR-k) that none of the public replications run.",
+  "remaining_evidence_gap": "Whether DF01 or DF02, run through the exact frozen S3 remainder on our own menu, costs, and next-open fills over 2016-2023, actually clears the preregistered adoption rule (a)-(e) -- in particular whether a real momentum ranking beats both a same-cost momentum-free basket (EW) and 40 seeds of its own randomized ranking (RR-k), which would show the ranking itself (not just diversification into bonds/gold/commodities/dollar) carries information -- has not been tested locally or found in any of the three public replications, none of which evaluate a leveraged-strategy remainder or run anything resembling an EW or RR-k control.",
+  "negative_experiments_checked": "dir:s1_sector_rotation_voltarget (refuted): adding a volatility-target overlay to S1 taxed its Sharpe (1.35 -> 1.05/1.13) and CAGR (27.7% -> 14.7%/19.0%) -- a sizing-layer result on a *risk* sleeve, structurally different from this iteration, which changes only what the already-existing, already-sized remainder holds and does not touch S3's own vol target, boost, or leverage cap at all. dir:s3_bear_regime_guard (refuted, H-20260923-11, same book, same day): four bear-regime gates that moved S3's *risk* weight to SHY on a trend signal all failed their own exposure-matched and circular-shift controls -- a timing claim about *when* to de-risk the risk sleeve. This iteration makes no timing claim about the risk sleeve at all; it only asks what asset the remainder (whatever size S3's own unchanged machine decides) should hold, which is why EW and RR-k, not an exposure-matched or circular-shift control, are the right placebos here -- the remainder's *size* is not being gated or predicted, only its *composition* is being decided by a preregistered, published ranking rule versus a naive basket and random rankings. H-20260918-06 (refuted): a fully mechanical, menu-free cross-sectional relative-strength selection over the whole ETF/fund universe underperformed simple SPMO buy-and-hold in all 8 preregistered families -- a *selection-among-many-risk-assets* result. This iteration's DF01/DF02 select among exactly four *defensive* assets (TLT/GLD/DBC/UUP), not risk assets, and the selection is gated by an absolute-momentum-vs-cash screen before ranking matters at all, which is mechanistically why a fresh test (with EW and RR-k) is still warranted rather than assumed refuted by analogy. dir:giants_sweep_published_etf_rules (refuted): 0 of 24 published ETF rules cleared the G1-G5 standalone-strategy promotion bar under the frozen protocol; Defense First (published July 2025) was not part of that September 2026 census (checked: no 'Defense First' or 'Carlson' hit in reports/research/intel/I-20260922-03-giants-census.md), so it is not a re-run of an already-refuted item, and in any case this iteration does not apply the G1-G5 standalone bar -- it applies its own preregistered remainder-specific adoption rule (a)-(e) against DF00/EW/RR-k. dir:recent_window_etf_menu_rotation (passed, related family): confirms small-menu winner-take-all rotation can win on raw CAGR while still losing to its own equal-weight benchmark on Sharpe/drawdown -- exactly why EW is a required control here, not an optional one.",
+  "cost_and_execution_assumptions": "New cost contract cost_v1_10_20bps_next_open_defense_first, same structure as every other S3-family iteration this month: sum(abs(delta_weight)) * slippage_bps charged on the execution session, 10 bp per side primary and 20 bp per side stress, over the full expanded weight vector (S3's own risk-sleeve weights, unchanged, plus the remainder's split across TLT/GLD/DBC/UUP and whichever fallback asset is active), so cost is charged whenever that vector changes -- including sessions where only the remainder's *size* changes (S3's own boost trigger toggling or a rebalance-driven vol-target rescale) even if the Defense First sub-weights themselves are unchanged that month. Signal on a completed session close; the Defense First decision is made on the last session of each calendar month at that close and applied from the next session's open (an explicit, disclosed addition beyond AllocateSmartly's source text, which does not state a decision-to-fill lag); SIP fully adjusted daily closes; cash/fallback for S3's own risk sleeve remains SHY, unchanged; the Defense First cash-hurdle test instrument is BIL (13-week T-bills), a different instrument from S3's own SHY fallback, both present in the local archive with full history.",
+  "stop_condition": "If neither DF01 nor DF02 passes all of: (a) design-window Sharpe >= DF00 Sharpe + 0.10, (b) design-window max drawdown no worse than DF00's, (c) design-window Sharpe beats >= 36 of its 40 RR-k placebos, (d) design-window Sharpe > EW's, and (e) anchor-window CAGR >= 50% and max drawdown >= -35% at both 10 and 20 bp (frozen gate G1) -- the verdict is 'keep SHY' and this direction (dir:s3_defense_first_remainder) is not reopened except with a new defensive-asset set, a new published remainder-allocation rule, or new disclosed data, not by re-tuning DF01/DF02's windows, weights, or momentum blend. Fixed budget for the decisive test: 2 candidates (DF01, DF02) + 1 EW control + 80 RR-k placebos (40 seeds x 2 candidates) = 83 simulations; DF00 needs no new simulation (its numbers are reused from the existing stress replay and the authorized 2026-09-23 renewal record). This is round 1 of this direction.",
+  "queries": [
+    {
+      "query": "Carlson Defense First tactical asset allocation 2025 paper SSRN",
+      "opened_urls": [
+        "https://doi.org/10.2139/ssrn.5334772",
+        "https://bestfolio.app/strategies/defense-first",
+        "https://allocatesmartly.com/carlsons-defense-first/",
+        "https://www.quantifiedstrategies.com/alternative-60-40-portfolio/",
+        "https://www.linkedin.com/posts/thomasdcarlson_defense-first-a-multi-asset-tactical-model-activity-7349155637907333120-INqK",
+        "https://www.linkedin.com/posts/thomasdcarlson_quantfinance-tacticalallocation-ssrn-activity-7352887921353388036-E4vP"
+      ],
+      "searched_at": "2026-09-23T08:39:00Z"
+    },
+    {
+      "query": "site:quantitativo.com from defense to offense tactical model all seasons Carlson",
+      "opened_urls": [
+        "https://www.quantitativo.com/p/from-defense-to-offense-a-tactical"
+      ],
+      "searched_at": "2026-09-23T07:50:00Z"
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "carlson2025_defense_first_ssrn_listing",
+      "claim": "Thomas A. Carlson's paper \"Defense First: A Multi-Asset Tactical Model for Adaptive Downside Protection\" is listed in the SSRN Electronic Journal as a 2025 preprint (DOI 10.2139/ssrn.5334772); the full abstract and methodology text were not retrievable through the available fetch tooling (only bibliographic metadata rendered), so this iteration's exact-rules pinning relies on the AllocateSmartly and Quantitativo replications and the author's own LinkedIn summary instead of the primary PDF text.",
+      "source_type": "paper",
+      "url": "https://doi.org/10.2139/ssrn.5334772",
+      "published_or_updated_at": "2025-01-01",
+      "market_and_period": "SSRN Electronic Journal listing only; no sample/market/period disclosed in the retrievable metadata.",
+      "applicability": "Establishes the primary source exists, is a named, dated (2025) SSRN preprint by a single identified author, before this iteration relies on secondary replications for the exact rules -- required first step ('open primary sources first') even though the full text could not be fetched.",
+      "limitations": "Only a short bibliographic stub (509 bytes: title, author, date, journal, 0 citations) rendered; the fetch tool could not retrieve the abstract or full text of papers.ssrn.com/sol3/papers.cfm?abstract_id=5334772 or ssrn.com/abstract=5334772 directly (both attempted, both returned 0 chars) -- unlike the older, more-cached Gayed and Bilello SSRN page this repo fetched in full for h20260923_11. The page's auto-generated 'Authors' bibliometric line (h-index 70, 17,932 citations) does not match a single-preprint tactical-allocation author and is treated as an indexer artifact, not evidence.",
+      "independent_replication": "The mechanism has three independent secondary replications read this pass (AllocateSmartly, Quantitativo, and BestFolio's snippet-level numbers seen in search results though not separately card-bound), plus the author's own LinkedIn confirmation of the asset menu; the primary PDF itself is not independently corroborated locally beyond its SSRN listing.",
+      "fetched_at": "2026-09-23T08:40:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_12_s3_defense_first/sources/ssrn-5334772-carlson-defense-first-listing.txt",
+      "sha256": "225aad4ee732188d42a35515369ff1d908dcbcab9d410b4485fc2b4f10fb4485",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl"
+    },
+    {
+      "claim_id": "carlson_defense_first_momentum_definition_allocatesmartly",
+      "claim": "AllocateSmartly's independent test of Carlson's Defense First paper states that at the close on the last trading day of the month, the momentum of four defensive assets (TLT, GLD, PDBC, UUP) plus a T-bill risk-free proxy (BIL) is measured as the average of each asset's 1, 3, 6 and 12-month dividend-adjusted percent return.",
+      "source_type": "industry_standard",
+      "url": "https://allocatesmartly.com/carlsons-defense-first/",
+      "published_or_updated_at": "2025-07-20",
+      "market_and_period": "TLT/GLD/PDBC/UUP/BIL, monthly momentum measurement, sample tested by AllocateSmartly from 1971 through their 2025-07-20 publication date.",
+      "applicability": "This is the exact momentum-score formula preregistered for DF01/DF02/RR-k in candidate-manifest.json (mean of 1/3/6/12-month returns), applied to TLT/GLD/DBC/UUP/BIL using the local SIP daily archive's month-end closes.",
+      "limitations": "Secondary source (a TAA strategy-tracking site's own restatement of the paper's rules), not the primary PDF; AllocateSmartly substitutes PDBC for the commodities leg where the author's own LinkedIn post and Quantitativo's replication both say DBC -- noted as a disclosed difference, not followed (this iteration uses DBC, matching the author's own description and local data availability).",
+      "independent_replication": "Consistent with Quantitativo's independently-worded description ('rank 4 defensive assets by momentum (multi-timeframe 1/3/6/12 month)') in the already-harvested registry row dir:defense_first_taa_carlson_concretum; both independently describe the same blended multi-horizon score.",
+      "fetched_at": "2026-09-23T08:40:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_12_s3_defense_first/sources/allocatesmartly-carlsons-defense-first.txt",
+      "sha256": "ea2b7323354c772e4c8917a9d9bba0bcb77cf2263d53318e2da56e2fee5b5cfe",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl"
+    },
+    {
+      "claim_id": "carlson_defense_first_rank_weights_allocatesmartly",
+      "claim": "AllocateSmartly states that Defense First ranks the four defensive assets from highest to lowest momentum and assigns tiered portfolio weights of 40% to the top rank, 30% to second, 20% to third, and 10% to fourth.",
+      "source_type": "industry_standard",
+      "url": "https://allocatesmartly.com/carlsons-defense-first/",
+      "published_or_updated_at": "2025-07-20",
+      "market_and_period": "Same TAA test as above.",
+      "applicability": "This is the exact 40/30/20/10 rank-to-weight table preregistered for DF01/DF02 and held fixed (only the rank assignment randomized) for every RR-k placebo.",
+      "limitations": "Same secondary-source caveat as the momentum-definition claim from this page; weights confirmed consistent with the already-harvested Quantitativo/registry description (dir:defense_first_taa_carlson_concretum), which independently states the same 40/30/20/10 tiering.",
+      "independent_replication": "Consistent with Quantitativo's independently-worded '40/30/20/10 by rank' description in dir:defense_first_taa_carlson_concretum; two independent replicators state the identical tiering.",
+      "fetched_at": "2026-09-23T08:40:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_12_s3_defense_first/sources/allocatesmartly-carlsons-defense-first.txt",
+      "sha256": "ea2b7323354c772e4c8917a9d9bba0bcb77cf2263d53318e2da56e2fee5b5cfe",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl"
+    },
+    {
+      "claim_id": "carlson_defense_first_cash_hurdle_fallback_allocatesmartly",
+      "claim": "AllocateSmartly states that if a defensive asset's momentum is less than that of T-bills, Defense First allocates that asset's tier weight to US stocks (SPY) instead -- a dual-momentum absolute-return screen applied per asset, per tier, every month.",
+      "source_type": "industry_standard",
+      "url": "https://allocatesmartly.com/carlsons-defense-first/",
+      "published_or_updated_at": "2025-07-20",
+      "market_and_period": "Same TAA test as above.",
+      "applicability": "This is the exact cash-hurdle instrument (BIL) and test (per-asset momentum score vs BIL's own momentum score) and the paper's own failing-slot fallback (SPY), preregistered as DF01; DF02 is this iteration's own disclosed departure (SHY fallback) for the S3-remainder-specific goal of not adding equity beta.",
+      "limitations": "Same secondary-source caveat; AllocateSmartly's own review separately suggests holding cash instead of UUP as an improvement they would consider, which this iteration does not adopt for DF01 (published version) but is conceptually why DF02 (SHY fallback) is preregistered as a second candidate.",
+      "independent_replication": "Consistent with Quantitativo's independently-worded 'a failing slot goes to SPY' description in dir:defense_first_taa_carlson_concretum; two independent replicators state the identical fallback.",
+      "fetched_at": "2026-09-23T08:40:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_12_s3_defense_first/sources/allocatesmartly-carlsons-defense-first.txt",
+      "sha256": "ea2b7323354c772e4c8917a9d9bba0bcb77cf2263d53318e2da56e2fee5b5cfe",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl"
+    },
+    {
+      "claim_id": "carlson_defense_first_rebalance_timing_allocatesmartly",
+      "claim": "AllocateSmartly states that Defense First holds all positions until the end of the following month and rebalances monthly regardless of whether the target allocation has changed.",
+      "source_type": "industry_standard",
+      "url": "https://allocatesmartly.com/carlsons-defense-first/",
+      "published_or_updated_at": "2025-07-20",
+      "market_and_period": "Same TAA test as above.",
+      "applicability": "This is the exact rebalance cadence (monthly, unconditional) preregistered for DF01/DF02/RR-k and the basis for this iteration's added next-open fill assumption (an execution-realism addition beyond the source text, disclosed in search-space.md).",
+      "limitations": "AllocateSmartly does not state an explicit decision-to-fill lag (close vs next open); this iteration's manifest adds an explicit next-open fill (decision at month-end close, applied from next session open) for execution realism and consistency with the rest of this repo's cost/fill convention, disclosed as an addition beyond the source text.",
+      "independent_replication": "Not separately stated by Quantitativo's shorter summary; this specific fact (monthly, unconditional rebalance) is sourced from AllocateSmartly alone this pass.",
+      "fetched_at": "2026-09-23T08:40:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_12_s3_defense_first/sources/allocatesmartly-carlsons-defense-first.txt",
+      "sha256": "ea2b7323354c772e4c8917a9d9bba0bcb77cf2263d53318e2da56e2fee5b5cfe",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl"
+    },
+    {
+      "claim_id": "carlson_defense_first_author_linkedin_menu_confirmation",
+      "claim": "Thomas Carlson's own LinkedIn announcement of the paper states the model allocates monthly across four liquid, macro-hedging ETFs (TLT, GLD, DBC, UUP) using multi-horizon momentum and an absolute strength filter, with SPY as a fallback asset.",
+      "source_type": "industry_standard",
+      "url": "https://www.linkedin.com/posts/thomasdcarlson_defense-first-a-multi-asset-tactical-model-activity-7349155637907333120-INqK",
+      "published_or_updated_at": "2025-07-10",
+      "market_and_period": "Author's own announcement, no backtest sample disclosed.",
+      "applicability": "Resolves the DBC-vs-PDBC discrepancy between replicators in favor of DBC (the author's own stated ticker), which is also what is available in the local SIP daily archive and what this iteration's task scope specifies.",
+      "limitations": "A promotional social-media post by the author, not the paper itself; confirms the ticker-level asset menu (DBC, not PDBC) but gives no numeric rule detail beyond what AllocateSmartly's replication already states.",
+      "independent_replication": "Consistent with Quantitativo's DBC choice; differs from AllocateSmartly's and BestFolio's PDBC substitution, noted as a disclosed difference between replicators, not resolved by a second author statement.",
+      "fetched_at": "2026-09-23T08:40:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_12_s3_defense_first/sources/linkedin-carlson-defense-first-announcement.txt",
+      "sha256": "b3471a5231debf197ff6bcf9d95e6c497a121ba022b7f9899fb39d348ae9d98e",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl"
+    },
+    {
+      "claim_id": "quantitativo2025_defense_first_replication_numbers",
+      "claim": "Quantitativo's independent backtest replication of Carlson's Defense First strategy reports that, with roughly the same volatility as the S&P 500, the (3x-leveraged-fallback variant of the) strategy delivers significantly higher returns (16.2% vs. 10.6%) while maintaining a superior Sharpe ratio and much smaller drawdowns than the S&P 500 buy-and-hold benchmark.",
+      "source_type": "industry_standard",
+      "url": "https://www.quantitativo.com/p/from-defense-to-offense-a-tactical",
+      "published_or_updated_at": "2025-07-26",
+      "market_and_period": "Quantitativo's own backtest, unleveraged and 3x-leveraged-fallback variants, sample not fully restated this pass (already logged in dir:defense_first_taa_carlson_concretum as ~1990s-2025 for the base case).",
+      "applicability": "One of three independent replications triangulated before trusting the mechanism is real; already the background evidence this task was scoped from, re-bound to a fresh verified source card this pass rather than only cited from the harvest registry.",
+      "limitations": "Already-harvested secondary source (registry row dir:defense_first_taa_carlson_concretum, harvested 2026-09-23, not re-read in full this pass beyond the snippet/excerpt captured in the original search); the 16.2%/10.6% figures are Quantitativo's own 3x-leveraged-fallback extension, not the paper's base unleveraged case (10.4% CAGR per the registry claim); independent from, and roughly consistent in direction with, AllocateSmartly's and BestFolio's separate replications (10.7%-11.5% CAGR ranges over longer 1971/1986-start samples).",
+      "independent_replication": "Directionally consistent with AllocateSmartly's independent 1971-start replication (benchmark-like returns after ~1980, better downside protection, low correlation to other tactical strategies) and BestFolio's 1986-2026 replication (10.7% CAGR, 1.15 Sharpe, -20.3% max drawdown); three independent replicators, three different start dates, broadly the same shape.",
+      "fetched_at": "2026-09-23T08:40:00Z",
+      "snapshot_path": "reports/research/iterations/h20260923_12_s3_defense_first/sources/quantitativo-defense-to-offense.txt",
+      "sha256": "b9ee52edddb5d59c6186eebb15ba3430083099f8d18d04b8f5304b310d0f7e24",
+      "source_card_path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run the frozen S3 machine unmodified except for redirecting its own remainder (1 - risk-sleeve weight, computed daily by S3's own unchanged logic) into a monthly-decided Defense First sub-allocation across TLT/GLD/DBC/UUP (DF01: failing slots to SPY; DF02: failing slots to SHY) across the full warmup+design+anchor panel; build the EW control (static 25/25/25/25, monthly rebalance) and 80 RR-k placebos (40 random monthly rankings per candidate, same weights/cash-hurdle/fallback, only the rank order randomized); score all against the preregistered adoption rule (a)-(e); DF00's numbers are read from the existing stress-replay and renewal records rather than recomputed.",
+    "pass_condition": "At least one of DF01/DF02 passes all of (a)-(e), reported alongside the other candidate's full result and the EW/RR-k context (2 candidates, both reported regardless of outcome, no cherry-picking one that turns green only after seeing the other fail).",
+    "falsification_condition": "Neither DF01 nor DF02 passes all of (a)-(e), or a candidate passes (a)-(d) but breaks the anchor-window do-no-harm check (e) at either cost level, or a candidate's RR-k placebo distribution cannot be computed because the cash-hurdle screen is degenerate (always-pass or always-fail) over the design window.",
+    "max_compute_minutes": 45
+  }
+}

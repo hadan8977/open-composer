@@ -1,0 +1,212 @@
+{
+  "schema_version": 2,
+  "verification_contract": "harness_verify_v2",
+  "strategy_name": "s3_bear_guard_h20260923_11",
+  "spec_path": "strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml",
+  "spec_file_sha256": "1f5c3bee5a9f2ac2b45c27f039f4ad26fcfc0c586ab78b4c3618a888472ac8c0",
+  "spec_semantic_sha256": "c80ea7a78ccb8efbd385f453c55fd893ad0bd11eae019e79aa4fe48838dc57de",
+  "stage": "research",
+  "risk_domains": [
+    "daily_open_execution",
+    "leveraged_etf",
+    "router_strategy"
+  ],
+  "required_artifacts": [
+    "execution_policy",
+    "execution_reality_report",
+    "gap_stress_report",
+    "leveraged_etf_risk_note",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "source_cards"
+  ],
+  "artifact_path_overrides": {
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260923_11_s3_bear_guard.jsonl",
+      "required_claim_ids": [
+        "gayed_bilello2016_leverage_long_run_sma_rule",
+        "faber2007_tactical_asset_allocation_ma_timing",
+        "gehrman2026_lrs_live_200sma_rotation_update"
+      ]
+    }
+  },
+  "plan_binding": null,
+  "config_bindings": {
+    "risk_domains": {
+      "path": "harness/risk_domains.yaml",
+      "sha256": "d0bd4d8e5368de57a8063fd2a973c897063a127b153c739e96787e29cde8f3c9",
+      "size_bytes": 13714
+    },
+    "artifact_contracts": {
+      "path": "harness/artifact_contracts.yaml",
+      "sha256": "97716bc4789e65c586d6d69b382273673baee1b4ded74e539575cafe5eebdf3c",
+      "size_bytes": 14710
+    }
+  },
+  "artifacts": [
+    {
+      "name": "execution_policy",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "order_style",
+        "time_in_force",
+        "price_protection",
+        "gap_filter",
+        "spread_filter",
+        "participation_cap",
+        "fallback_behavior",
+        "tca_plan",
+        "source_card_ids",
+        "alternatives_compared"
+      ],
+      "path": "reports/harness/execution/s3_bear_guard_h20260923_11-execution-policy.json",
+      "binding": null
+    },
+    {
+      "name": "execution_reality_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "slippage_scenarios",
+        "gap_stress",
+        "capacity_assessment",
+        "tca_reference_prices"
+      ],
+      "path": "reports/harness/execution/s3_bear_guard_h20260923_11-execution-reality.json",
+      "binding": null
+    },
+    {
+      "name": "gap_stress_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "scenarios",
+        "max_adverse_gap_pct",
+        "fill_model_gap_handling",
+        "recommended_gap_filter"
+      ],
+      "path": "reports/harness/execution/s3_bear_guard_h20260923_11-gap-stress.json",
+      "binding": null
+    },
+    {
+      "name": "leveraged_etf_risk_note",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [],
+      "path": "reports/harness/execution/s3_bear_guard_h20260923_11-leveraged-etf-risk.md",
+      "binding": null
+    },
+    {
+      "name": "router_cost_stress",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "scenarios",
+        "recommendation"
+      ],
+      "path": "reports/research/s3_bear_guard_h20260923_11-router-cost-stress.json",
+      "binding": null
+    },
+    {
+      "name": "router_data_evidence",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "data_source",
+        "acquisition_tier",
+        "data_profile"
+      ],
+      "path": "reports/research/s3_bear_guard_h20260923_11-router-data-evidence.json",
+      "binding": null
+    },
+    {
+      "name": "router_execution_observation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "execution_substate",
+        "target_weights_path",
+        "rebalance_intents_path"
+      ],
+      "path": "reports/execution/s3_bear_guard_h20260923_11-execution-observation.json",
+      "binding": null
+    },
+    {
+      "name": "router_rebalance_intents",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "intents",
+        "summary",
+        "execution_substate"
+      ],
+      "path": "reports/execution/s3_bear_guard_h20260923_11-rebalance-intents.json",
+      "binding": null
+    },
+    {
+      "name": "router_target_weights",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "target_weights",
+        "summary",
+        "acquisition_tier"
+      ],
+      "path": "reports/execution/s3_bear_guard_h20260923_11-target-weights.json",
+      "binding": null
+    },
+    {
+      "name": "router_validation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "portfolio_mode",
+        "summary",
+        "blockers"
+      ],
+      "path": "reports/research/s3_bear_guard_h20260923_11-router-validation.json",
+      "binding": null
+    },
+    {
+      "name": "source_cards",
+      "present": true,
+      "schema_ok": false,
+      "missing_fields": [
+        "claim_id:gayed_bilello2016_leverage_long_run_sma_rule:impact_on_spec",
+        "claim_id:faber2007_tactical_asset_allocation_ma_timing:impact_on_spec",
+        "claim_id:gehrman2026_lrs_live_200sma_rotation_update:impact_on_spec"
+      ],
+      "path": "reports/harness/source_cards/h20260923_11_s3_bear_guard.jsonl",
+      "binding": {
+        "path": "reports/harness/source_cards/h20260923_11_s3_bear_guard.jsonl",
+        "sha256": "1996cb771187d4994d557e7ff02d567741744d93c155f0f2bc4a5e241f13192a",
+        "size_bytes": 5295
+      }
+    }
+  ],
+  "overall": "blocked"
+}

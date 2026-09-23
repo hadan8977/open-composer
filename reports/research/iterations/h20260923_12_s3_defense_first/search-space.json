@@ -1,0 +1,140 @@
+{
+  "iter_id": "h20260923_12_s3_defense_first",
+  "strategy_name": "s3_defense_first_h20260923_12",
+  "source_spec_path": "strategy_specs/drafts/s3_defense_first_h20260923_12.yaml",
+  "spec_hash": "f4612ab44b9c751cd520c39414329b1ea2daa7b182afd8fbf65e407d30e6092c",
+  "schema_version": 3,
+  "created_at": "2026-09-23T08:50:00Z",
+  "objective": "Screen two Defense First remainder candidates (DF01 published SPY fallback, DF02 SHY fallback) plus the DF00 no-change reference for whether redirecting S3's already-idle remainder into a published Defense First rotation (Carlson 2025) raises the design-window (2016-2023) Sharpe and cuts the drawdown versus plain SHY, beyond a momentum-free diversification control (EW) and 40 random-ranking placebos per candidate (RR-k), without breaking the frozen anchor-window return bar.",
+  "paths": [
+    {
+      "name": "s3_defense_first_remainder_screen",
+      "candidate_count": 3,
+      "hypothesis_refs": [
+        "H-20260923-12"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "DF00",
+          "DF01",
+          "DF02"
+        ],
+        "defensive_menu": [
+          "TLT",
+          "GLD",
+          "DBC",
+          "UUP"
+        ],
+        "momentum_components_months": [
+          1,
+          3,
+          6,
+          12
+        ],
+        "rank_weights_by_rank": [
+          0.4,
+          0.3,
+          0.2,
+          0.1
+        ],
+        "cash_hurdle_instrument": [
+          "BIL"
+        ],
+        "failing_slot_fallback": [
+          null,
+          "SPY",
+          "SHY"
+        ],
+        "vol_target_base": [
+          0.4
+        ],
+        "vol_target_boost": [
+          0.6
+        ],
+        "leverage_cap": [
+          1.0
+        ],
+        "lookback_sessions": [
+          63
+        ],
+        "realized_vol_window": [
+          21
+        ],
+        "rebalance": [
+          "monthly_last_session"
+        ],
+        "vs_symbol": [
+          "SHY"
+        ],
+        "defense_first_rebalance": [
+          "monthly_last_session_close_next_open"
+        ],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "DF00_reference_remainder_in_shy",
+        "EW_momentum_free_diversification_control",
+        "RR_k_random_ranking_placebo_distribution",
+        "SPY_buy_and_hold",
+        "SHY_buy_and_hold"
+      ]
+    }
+  ],
+  "total_candidate_budget": 3,
+  "candidate_manifest_path": "reports/research/iterations/h20260923_12_s3_defense_first/candidate-manifest.json",
+  "candidate_manifest_sha256": "0dc7da47b9cbf573208912f1b0cf47c27cf260b5f97238dbd49d2c6ccc48c656",
+  "data_feasibility_path": "reports/research/iterations/h20260923_12_s3_defense_first/data-feasibility.json",
+  "data_feasibility_sha256": "f11827adbd57f67407f0e0ef31eef0a4c00b6baac1267da7f39b4a9668ccd01a",
+  "cost_table_path": "reports/research/iterations/h20260923_12_s3_defense_first/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260923_12_s3_defense_first/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260923_12_s3_defense_first/report.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "design": [
+      "2016-01-04",
+      "2023-09-15"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-16"
+    ],
+    "holdout_2026": [
+      "2026-01-02",
+      "2026-09-17",
+      "already spent on the live S3 book; no holdout claim made here"
+    ]
+  },
+  "controls": {
+    "ew_static_basket": {
+      "description": "One shared control (EW): static 25/25/25/25 TLT/GLD/DBC/UUP basket, rebalanced monthly, no momentum ranking, no cash-hurdle screen, no fallback substitution -- isolates diversification into the same four defensive assets from the momentum-ranking mechanism. Valid from 2016-05-02 (no warmup needed). Not counted as a candidate; both DF01 and DF02 are compared against this same single EW series.",
+      "count": 1
+    },
+    "rr_k_random_ranking": {
+      "description": "40 placebos per candidate (RR01-1..RR01-40 for DF01; RR02-1..RR02-40 for DF02): each month, the same cash-hurdle screen (asset momentum score vs BIL momentum score) and the same 40/30/20/10 weights and the same fallback asset (SPY for RR01-*, SHY for RR02-*) are applied exactly as in the real candidate, but the rank-to-asset assignment is a fresh seeded random permutation of the four defensive assets each month (seed = placebo index, advanced monthly across the design window's decision dates in date order) instead of a momentum-based rank -- isolates whether the momentum ranking itself (not the screen, weights, or fallback) carries information. Design window only, same warmup as the real candidate (defaults to DF00 before 2017-02-03).",
+      "seeds_per_candidate": 40,
+      "total": 80
+    },
+    "fixed_simulation_budget": {
+      "description": "2 new candidate simulations (DF01, DF02) + 1 EW control + 80 RR-k placebos (40 seeds x 2 candidates) = 83 simulations, fixed. DF00 requires no new simulation: its design-window numbers are reused from reports/paper/renewal/2026-09-23-s3-stress-2016-2023.json and its anchor-window numbers from the authorized 2026-09-23 S1-S3 renewal record.",
+      "count": 83
+    }
+  },
+  "adoption_rule": {
+    "design_window": [
+      "(a) Sharpe >= DF00 Sharpe + 0.10",
+      "(b) max drawdown no worse than DF00's",
+      "(c) Sharpe beats >= 36 of its 40 RR-k placebos",
+      "(d) Sharpe > EW's"
+    ],
+    "anchor_window_do_no_harm": [
+      "(e) at both 10 and 20 bp: CAGR >= 50% and max drawdown >= -35% (frozen gate G1)"
+    ],
+    "multiple_comparisons": "2 candidates (DF01, DF02); report both regardless of outcome",
+    "fallback_if_none_pass": "keep SHY"
+  }
+}

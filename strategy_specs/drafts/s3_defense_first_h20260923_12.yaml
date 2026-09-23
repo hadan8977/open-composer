@@ -1,0 +1,266 @@
+name: s3_defense_first_h20260923_12
+description: Preregistered H-20260923-12 candidate family. DF00 is the live S3
+  book (leveraged-ETF momentum rotation over TQQQ/SOXL/UPRO/USD/TECL, 63-session
+  lookback, top 2, monthly, absolute-momentum filter vs SHY, 40% vol target with
+  a QQQ oversold dip boost to 60%) exactly as renewed, with its remainder (1 minus
+  the risk-sleeve weight) sitting in SHY, unchanged. DF01 and DF02 redirect that
+  same remainder into a Defense First rotation (Carlson 2025 -- rank TLT/GLD/DBC/UUP
+  monthly by the mean of each asset's 1/3/6/12-month return, weight 40/30/20/10 by
+  rank, replace any asset whose momentum is below T-bill (BIL) momentum) -- DF01
+  with the published SPY fallback for a failing slot, DF02 with SHY instead, to
+  keep the remainder free of equity beta. Screens whether either candidate raises
+  the design-window (2016-2023) Sharpe and cuts the drawdown versus DF00, beyond
+  what a momentum-free equal-weight basket (EW) or 40 random monthly rankings per
+  candidate (RR-k) give, without breaking the frozen anchor-window return bar.
+  Research only, deterministic, next-session execution; no broker writes are
+  authorized.
+timeframe: daily
+universe:
+- TQQQ
+- SOXL
+- UPRO
+- USD
+- TECL
+- SHY
+- QQQ
+- TLT
+- GLD
+- DBC
+- UUP
+- SPY
+- BIL
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 6
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 6
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260923_12:DF:s3_defense_first_remainder_screen
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: TQQQ
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  mom_63:
+    source: expression
+    expression: close / lag(close, 63) - 1
+    default: 0.0
+    description: 63-session total return of each S3 menu leg (TQQQ, SOXL, UPRO,
+      USD, TECL), compared against SHY's 63-session return for the absolute-momentum
+      filter; top 2 legs held equal-weight, decided on a completed session close
+      and executed at the next open. Unchanged from the live S3 book; this iteration
+      does not touch S3's own risk-sleeve selection or sizing.
+    params:
+      decision_lag_sessions: 1
+  realized_vol_21:
+    source: expression
+    expression: stdev(close / lag(close, 1) - 1, 21)
+    default: 0.0
+    description: 21-session realized volatility of the unscaled S3 book, annualized
+      in the runner, used to scale exposure down toward the remainder (down-only,
+      leverage cap 1.0, base target 0.40, dip-boost target 0.60). Unchanged from
+      the live S3 book; determines the remainder size (1 - risk-sleeve weight)
+      that DF01/DF02/EW/RR-k redirect away from SHY, but is not itself modified.
+    params:
+      decision_lag_sessions: 1
+  qqq_sma_200:
+    source: expression
+    expression: sma(close, 200)
+    default: 0.0
+    description: QQQ 200-session simple moving average, half of the live dip-boost
+      trigger (QQQ above its own SMA200 with Wilder RSI(10) below 30 raises the
+      vol target from 0.40 to 0.60 for 10 sessions). Unchanged from the live S3
+      book; documentation-only, evaluated on QQQ's own close series by the runner.
+    params:
+      decision_lag_sessions: 1
+  qqq_rsi_10:
+    source: expression
+    expression: wilder_rsi(close, 10)
+    default: 50.0
+    description: QQQ 10-session Wilder RSI, second half of the dip-boost trigger.
+      Unchanged from the live S3 book.
+    params:
+      decision_lag_sessions: 1
+  mom_1m:
+    source: expression
+    expression: close / lag(close, 21) - 1
+    default: 0.0
+    description: Documentation-only stand-in for the Defense First momentum
+      score's 1-month leg, evaluated per-symbol for TLT, GLD, DBC, UUP and the
+      cash-hurdle instrument BIL. The actual DF01/DF02/RR-k momentum score is
+      computed by the runner from calendar month-end closes (last trading day
+      of each month), not this fixed 21-session approximation, per the source
+      rule pinned in candidate-manifest.json (claim_id
+      carlson_defense_first_momentum_definition_allocatesmartly).
+    params:
+      decision_lag_sessions: 1
+  mom_3m:
+    source: expression
+    expression: close / lag(close, 63) - 1
+    default: 0.0
+    description: Documentation-only stand-in for the Defense First momentum
+      score's 3-month leg (see mom_1m for the calendar-month-end caveat).
+    params:
+      decision_lag_sessions: 1
+  mom_6m:
+    source: expression
+    expression: close / lag(close, 126) - 1
+    default: 0.0
+    description: Documentation-only stand-in for the Defense First momentum
+      score's 6-month leg (see mom_1m for the calendar-month-end caveat).
+    params:
+      decision_lag_sessions: 1
+  mom_12m:
+    source: expression
+    expression: close / lag(close, 252) - 1
+    default: 0.0
+    description: Documentation-only stand-in for the Defense First momentum
+      score's 12-month leg (see mom_1m for the calendar-month-end caveat). This
+      is the binding warmup constraint -- the blended score first uses a full
+      12-month-lagged calendar month-end close on 2017-01-31 -- because the
+      local SIP daily archive's earliest bar for every symbol in this universe
+      is 2016-01-04.
+    params:
+      decision_lag_sessions: 1
+  defense_first_rank_and_weight:
+    source: expression
+    expression: sma(close, 1)
+    default: 0.0
+    description: Documentation-only stand-in. The actual DF01/DF02 rank-and-weight
+      step (rank TLT/GLD/DBC/UUP by the mean of mom_1m/mom_3m/mom_6m/mom_12m,
+      assign 40/30/20/10 by rank, replace any asset whose score is below BIL's
+      own score with the fallback asset) is a cross-symbol computation outside
+      the single-symbol expression grammar, so it is computed entirely by the
+      runner, not the generic per-symbol factor engine -- the same pattern this
+      repo already uses for cross-symbol gates (see the HYG/IEF ratio and S3
+      equity-curve stand-ins in strategy_specs/drafts/s3_bear_guard_h20260923_11.yaml).
+      RR-k placebos use this identical computation with the rank-to-asset
+      assignment replaced by a seeded random permutation, holding the
+      cash-hurdle screen and weights fixed.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260923_12_s3_defense_first
+  candidate_manifest_path: reports/research/iterations/h20260923_12_s3_defense_first/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260923_12_s3_defense_first/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl
+  source_card_claim_ids:
+  - carlson2025_defense_first_ssrn_listing
+  - carlson_defense_first_momentum_definition_allocatesmartly
+  - carlson_defense_first_rank_weights_allocatesmartly
+  - carlson_defense_first_cash_hurdle_fallback_allocatesmartly
+  - carlson_defense_first_rebalance_timing_allocatesmartly
+  - carlson_defense_first_author_linkedin_menu_confirmation
+  - quantitativo2025_defense_first_replication_numbers
+  parameter_space:
+    candidate_id:
+    - DF00
+    - DF01
+    - DF02
+  candidate_budget: 3
+  selection_objective: No selection or ranking between DF01 and DF02. Each (DF00
+    reference; DF01 Defense First with the published SPY fallback; DF02 Defense
+    First with an SHY fallback) is judged independently against the preregistered
+    adoption rule -- on the design window (2016-01-04..2023-09-15), (a) Sharpe
+    >= DF00 Sharpe + 0.10, (b) max drawdown no worse than DF00's, (c) Sharpe
+    beats >=36 of its 40 RR-k placebos, (d) Sharpe > EW's; and on the frozen
+    anchor window (2024-01-08..2026-09-16) at both 10 and 20 bp, (e) CAGR >=50%
+    and max drawdown >=-35% (gate G1), a do-no-harm check only. No holdout claim
+    is made for either candidate, because the 2026 window was already used to
+    evaluate the live S3 book. If neither candidate passes all of (a)-(e), the
+    verdict is "keep SHY".
+  anti_overfit_notes:
+  - Three candidates (DF00 reference plus DF01, DF02) are frozen in the manifest
+    before any return is computed; S3's own machine (momentum lookback, vol
+    targets, dip boost, leverage cap, risk-sleeve selection) is inherited
+    unchanged from the live renewal and is not re-searched or re-sized.
+  - The Defense First rank-to-weight table (40/30/20/10) and cash-hurdle screen
+    (per-asset momentum vs BIL momentum) are fixed exactly as pinned from the
+    published source (AllocateSmartly's rule-by-rule replication, cross-checked
+    against the author's own LinkedIn summary and Quantitativo's description);
+    only the fallback asset for a failing slot differs between DF01 (SPY, the
+    paper's own rule) and DF02 (SHY, this iteration's own disclosed departure).
+  - A momentum-free control (EW, static 25/25/25/25 TLT/GLD/DBC/UUP, monthly
+    rebalance) isolates whether diversification alone (not the ranking) explains
+    any apparent edge.
+  - 40 random-ranking placebos per candidate (RR-k, seeds 0-39) keep the
+    40/30/20/10 weights and the same cash-hurdle screen and fallback, randomizing
+    only which asset receives which rank, isolating whether the momentum ranking
+    itself (not the screen, weights, or fallback) carries information.
+  - Leverage never exceeds the frozen 1.0 cap; the remainder can only ever equal
+    1 minus S3's own risk-sleeve weight, decided solely by S3's unchanged
+    machinery -- DF01/DF02/EW/RR-k never add leverage or change how much of the
+    book is in risk assets.
+  - The 2026 holdout is not reused as an out-of-sample claim for this family;
+    the anchor window is a do-no-harm check only, since the live S3 book already
+    spent that window during its own renewal.
+  - Before the Defense First momentum score is first fully valid (2017-01-31
+    decision, 2017-02-03 application -- 12 calendar months of history from the
+    2016-01-04 panel start), DF01/DF02/RR-k default to DF00's own behavior
+    (remainder in SHY); EW has no such warmup and is valid from 2016-05-02 when
+    S3 first holds risk, a known, disclosed asymmetry.
+  validation_plan:
+  - design_window_2016_01_04_to_2023_09_15_then_anchor_do_no_harm_check
+  - no_2026_holdout_claim_already_seen_by_live_s3_book
+  - momentum_free_diversification_control_ew_static_basket
+  - random_ranking_placebo_rr_k_40_seeds_per_candidate
+  - multiple_comparisons_2_candidates_report_both_regardless_of_outcome
+  - benchmark_family_df00_reference_and_ew_control
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+notes:
+  intent: Ask whether S3's already-idle remainder earns a better design-window
+    Sharpe and a shallower drawdown in a published Defense First rotation than
+    in plain SHY, beyond what momentum-free diversification or random rankings
+    give, without breaking the frozen anchor-window return bar, so the live
+    remainder-in-SHY default could be replaced by a better-sourced, still-cheap
+    holding rule.
+  hypothesis_id: H-20260923-12
+  previous_link: H-20260923-11
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

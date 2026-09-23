@@ -1,0 +1,216 @@
+{
+  "schema_version": 2,
+  "verification_contract": "harness_verify_v2",
+  "strategy_name": "levered_lanes_h20260923_10",
+  "spec_path": "strategy_specs/drafts/levered_lanes_h20260923_10.yaml",
+  "spec_file_sha256": "1f74ecf13155b5c42ad2da86d633410999fb474526a63578483f5de1c3e65671",
+  "spec_semantic_sha256": "60f0cf600e43300bc7363f765c5cfad2744773573f9ed55b3309f921296d70ec",
+  "stage": "research",
+  "risk_domains": [
+    "daily_open_execution",
+    "leveraged_etf",
+    "router_strategy"
+  ],
+  "required_artifacts": [
+    "execution_policy",
+    "execution_reality_report",
+    "gap_stress_report",
+    "leveraged_etf_risk_note",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "source_cards"
+  ],
+  "artifact_path_overrides": {
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260923_10_levered_lanes.jsonl",
+      "required_claim_ids": [
+        "kf49_industry_construction",
+        "mg1999_industry_momentum",
+        "hsieh2025_letf_autocorrelation_compounding",
+        "direxion_dpst_daily_reset",
+        "direxion_nugt_dust_daily_reset"
+      ]
+    }
+  },
+  "plan_binding": null,
+  "config_bindings": {
+    "risk_domains": {
+      "path": "harness/risk_domains.yaml",
+      "sha256": "d0bd4d8e5368de57a8063fd2a973c897063a127b153c739e96787e29cde8f3c9",
+      "size_bytes": 13714
+    },
+    "artifact_contracts": {
+      "path": "harness/artifact_contracts.yaml",
+      "sha256": "97716bc4789e65c586d6d69b382273673baee1b4ded74e539575cafe5eebdf3c",
+      "size_bytes": 14710
+    }
+  },
+  "artifacts": [
+    {
+      "name": "execution_policy",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "order_style",
+        "time_in_force",
+        "price_protection",
+        "gap_filter",
+        "spread_filter",
+        "participation_cap",
+        "fallback_behavior",
+        "tca_plan",
+        "source_card_ids",
+        "alternatives_compared"
+      ],
+      "path": "reports/harness/execution/levered_lanes_h20260923_10-execution-policy.json",
+      "binding": null
+    },
+    {
+      "name": "execution_reality_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "slippage_scenarios",
+        "gap_stress",
+        "capacity_assessment",
+        "tca_reference_prices"
+      ],
+      "path": "reports/harness/execution/levered_lanes_h20260923_10-execution-reality.json",
+      "binding": null
+    },
+    {
+      "name": "gap_stress_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "scenarios",
+        "max_adverse_gap_pct",
+        "fill_model_gap_handling",
+        "recommended_gap_filter"
+      ],
+      "path": "reports/harness/execution/levered_lanes_h20260923_10-gap-stress.json",
+      "binding": null
+    },
+    {
+      "name": "leveraged_etf_risk_note",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [],
+      "path": "reports/harness/execution/levered_lanes_h20260923_10-leveraged-etf-risk.md",
+      "binding": null
+    },
+    {
+      "name": "router_cost_stress",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "scenarios",
+        "recommendation"
+      ],
+      "path": "reports/research/levered_lanes_h20260923_10-router-cost-stress.json",
+      "binding": null
+    },
+    {
+      "name": "router_data_evidence",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "data_source",
+        "acquisition_tier",
+        "data_profile"
+      ],
+      "path": "reports/research/levered_lanes_h20260923_10-router-data-evidence.json",
+      "binding": null
+    },
+    {
+      "name": "router_execution_observation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "execution_substate",
+        "target_weights_path",
+        "rebalance_intents_path"
+      ],
+      "path": "reports/execution/levered_lanes_h20260923_10-execution-observation.json",
+      "binding": null
+    },
+    {
+      "name": "router_rebalance_intents",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "intents",
+        "summary",
+        "execution_substate"
+      ],
+      "path": "reports/execution/levered_lanes_h20260923_10-rebalance-intents.json",
+      "binding": null
+    },
+    {
+      "name": "router_target_weights",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "target_weights",
+        "summary",
+        "acquisition_tier"
+      ],
+      "path": "reports/execution/levered_lanes_h20260923_10-target-weights.json",
+      "binding": null
+    },
+    {
+      "name": "router_validation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "portfolio_mode",
+        "summary",
+        "blockers"
+      ],
+      "path": "reports/research/levered_lanes_h20260923_10-router-validation.json",
+      "binding": null
+    },
+    {
+      "name": "source_cards",
+      "present": true,
+      "schema_ok": false,
+      "missing_fields": [
+        "claim_id:kf49_industry_construction:impact_on_spec",
+        "claim_id:mg1999_industry_momentum:impact_on_spec",
+        "claim_id:hsieh2025_letf_autocorrelation_compounding:impact_on_spec",
+        "claim_id:direxion_dpst_daily_reset:impact_on_spec",
+        "claim_id:direxion_nugt_dust_daily_reset:impact_on_spec"
+      ],
+      "path": "reports/harness/source_cards/h20260923_10_levered_lanes.jsonl",
+      "binding": {
+        "path": "reports/harness/source_cards/h20260923_10_levered_lanes.jsonl",
+        "sha256": "959a95a8fb1e0cd3934cbd3ab80f98323c6738d14c30f23683e009a56bc334a0",
+        "size_bytes": 7953
+      }
+    }
+  ],
+  "overall": "blocked"
+}

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260923_12_s3_defense_first_historical_evaluation_authorization",
+  "iter_id": "h20260923_12_s3_defense_first",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 3,
+    "evaluation_authorized_count": 3,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 3,
+    "rows": [
+      {
+        "candidate_id": "DF00",
+        "path": "s3_defense_first_remainder_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "d8895f95a5e56e48f3aec59002ce4f7d2307b40f719eed809711220c1bfc9853"
+      },
+      {
+        "candidate_id": "DF01",
+        "path": "s3_defense_first_remainder_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "68887a9b4eaa7e206898015a804f679956d183efc08b5671aebc1484c3934a15"
+      },
+      {
+        "candidate_id": "DF02",
+        "path": "s3_defense_first_remainder_screen",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "d4df70700bdb3d0e0260dbafb661f1f0d665eb488c0013beeebe7cba3e5e64b3"
+      }
+    ]
+  },
+  "path_gates": {
+    "s3_defense_first_remainder_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "DF00",
+        "DF01",
+        "DF02"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "TLT, GLD, DBC, UUP, SPY, BIL, SHY, QQQ and the five S3 menu ETFs (TQQQ, SOXL, UPRO, USD, TECL) are all present in the local SIP daily archive with 2695 daily bars each, 2016-01-04..2026-09-22 (confirmed via duckdb against data/sip/daily/*/*.parquet), covering the full design window (2016-01-04..2023-09-15), the frozen anchor window (2024-01-08..2026-09-16), and next-session fills through 2026-09-17. See candidate-manifest.json contracts.validation.validation_v1_design_window_then_anchor_do_no_harm_defense_first.warmup_first_valid_dates for exactly when each signal first has enough history (S3 itself 2016-05-02; EW 2016-05-02, no momentum lookback; the Defense First momentum score, and therefore DF01/DF02/RR-k, first fully valid at the 2017-01-31 month-end decision applied from the 2017-02-03 open). No new capability or vendor is required; the overlay and cost engine are reused unchanged from scripts/run_h20260922_05_salvage.py and scripts/run_h20260918_05_recent_menu.py."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/s3_defense_first_h20260923_12.yaml",
+      "sha256": "084cb5a9082fe8d9c9d24600807db892eeebff76d2368e53c6bd7f81033c1842"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260923_12_s3_defense_first/cost-contract.json",
+      "sha256": "a83eef0e3484381c8533b3199dd9cd45bda98bdb28aa820bfdfba1e029c43026"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260923_12_s3_defense_first.jsonl",
+      "sha256": "588db2a2692922cc31ecabb340c545ec977946ac4d522a81c5d21e92bdc63de2"
+    }
+  }
+}
