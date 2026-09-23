@@ -308,14 +308,33 @@ def explode_news_events(news: pd.DataFrame, calendar: pd.DataFrame) -> pd.DataFr
 
 
 def minute_shard_paths(year: int, month: int) -> list[str]:
+    """Shard files for one (year, month). ``sip_parquet.py``'s own docstring
+    documents two layouts: ``{year}/shard-NNNN.parquet`` ("legacy whole-year
+    layout") and ``{year}/{month}/shard-NNNN.parquet`` ("current
+    month-sharded layout"), and its own ``_finalize`` explicitly dedupes
+    because "the whole-year and month-sharded minute layouts overlap" -- i.e.
+    the two layouts hold the *same* bars, not complementary halves. An
+    earlier version of this function unconditionally read both and combined
+    them, which is correct for correctness but was measured (2026-09-23, a
+    2024-01 build run) to pull in the *entire* legacy 2023 archive --
+    301.7M rows / 8,227 symbols spanning all of Jan-Dec 2023 -- merely to
+    resolve December 2023's overnight anchor for a January build, instead of
+    December's own 19.09M-row / 6,120-symbol per-month shard set; that 15x
+    over-read is what drove the memory-capped build's OOM-kill (cgroup
+    anon-rss hit the 1.8GB MemoryMax after 11+ minutes of CPU with zero
+    checkpoints written). Since the per-month directory exists for every
+    month of 2023 (verified) and duplicates the legacy shards' content, this
+    function now prefers the month directory and only falls back to the
+    (expensive, whole-year) legacy glob when no month directory exists at
+    all for that year -- true fallback semantics, not an unconditional union.
+    """
     year_dir = SIP_MINUTE_ROOT / str(year)
     month_dir = year_dir / f"{month:02d}"
-    paths = sorted(str(p) for p in month_dir.glob("shard-*.parquet")) if month_dir.is_dir() else []
-    # 2023 also has a legacy whole-year layout; harmless to include the glob
-    # unconditionally for any year (empty when absent) for parity with
-    # sip_parquet.py's loader, even though our news coverage starts 2024.
-    legacy = sorted(str(p) for p in year_dir.glob("shard-*.parquet")) if year_dir.is_dir() else []
-    return legacy + paths
+    if month_dir.is_dir():
+        return sorted(str(p) for p in month_dir.glob("shard-*.parquet"))
+    if year_dir.is_dir():
+        return sorted(str(p) for p in year_dir.glob("shard-*.parquet"))
+    return []
 
 
 def anchor_prices_from_minute_bars(

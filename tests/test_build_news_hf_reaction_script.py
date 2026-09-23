@@ -205,6 +205,73 @@ def test_explode_news_events_explodes_multi_symbol_article(small_calendar):
     assert (events["bucket"] == 1).all()
 
 
+# --------------------------------------------------------------------- minute shard paths
+
+
+def test_minute_shard_paths_uses_month_dir_when_present(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    sip_root = tmp_path / "sip" / "minute"
+    monkeypatch.setattr(builder, "SIP_MINUTE_ROOT", sip_root)
+    month_dir = sip_root / "2023" / "12"
+    month_dir.mkdir(parents=True)
+    (month_dir / "shard-0317.parquet").touch()
+    (month_dir / "shard-0318.parquet").touch()
+
+    paths = builder.minute_shard_paths(2023, 12)
+
+    assert paths == [
+        str(month_dir / "shard-0317.parquet"),
+        str(month_dir / "shard-0318.parquet"),
+    ]
+
+
+def test_minute_shard_paths_falls_back_to_legacy_year_dir_when_no_month_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    sip_root = tmp_path / "sip" / "minute"
+    monkeypatch.setattr(builder, "SIP_MINUTE_ROOT", sip_root)
+    year_dir = sip_root / "2023"
+    year_dir.mkdir(parents=True)
+    (year_dir / "shard-0002.parquet").touch()
+
+    paths = builder.minute_shard_paths(2023, 12)
+
+    assert paths == [str(year_dir / "shard-0002.parquet")]
+
+
+def test_minute_shard_paths_prefers_month_dir_over_legacy_when_both_exist(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """Regression guard for the 2026-09-23 OOM: a real 2023 archive has both
+    a legacy whole-year glob (301.7M rows / 8,227 symbols, Jan-Dec) and a
+    per-month December directory (19.09M rows / 6,120 symbols) that
+    ``sip_parquet.py`` documents as overlapping content, not complementary
+    halves. Once the month directory exists, the (much larger) legacy glob
+    must not also be read -- combining both drove a capped build's anon-rss
+    past its 1.8GB cgroup limit before a single month's checkpoint was
+    written."""
+    sip_root = tmp_path / "sip" / "minute"
+    monkeypatch.setattr(builder, "SIP_MINUTE_ROOT", sip_root)
+    year_dir = sip_root / "2023"
+    month_dir = year_dir / "12"
+    month_dir.mkdir(parents=True)
+    (year_dir / "shard-0002.parquet").touch()  # legacy whole-year shard
+    (month_dir / "shard-0317.parquet").touch()  # current month-sharded shard
+
+    paths = builder.minute_shard_paths(2023, 12)
+
+    assert paths == [str(month_dir / "shard-0317.parquet")]
+
+
+def test_minute_shard_paths_empty_when_neither_layout_exists(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr(builder, "SIP_MINUTE_ROOT", tmp_path / "sip" / "minute")
+
+    assert builder.minute_shard_paths(2099, 1) == []
+
+
 # --------------------------------------------------------------------- price anchors
 
 
