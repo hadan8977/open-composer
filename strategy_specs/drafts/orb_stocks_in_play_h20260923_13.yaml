@@ -1,0 +1,250 @@
+name: orb_stocks_in_play_h20260923_13
+description: Preregistered H-20260923-13 candidate family. SIP01 is the individual-
+  stock opening-range breakout on "Stocks in Play" (Zarattini, Barbon & Aziz 2024,
+  SSRN 4729284) -- eligible stocks (price>$5, 14-day average volume>=1,000,000
+  shares/day, 14-day ATR>$0.50) ranked by opening relative volume (first-5-minute
+  volume over the trailing-14-day same-window average), trading only the top 20
+  by relative volume, entered with a stop order at the 5-minute opening range's
+  own extreme in the direction of that range, protective stop at 10% of the
+  14-day ATR from the entry, exit at end of day if not stopped, long-only (a
+  bearish opening range on an eligible name produces no trade rather than a
+  short), house leverage cap 1.0x (a disclosed departure from the paper's own
+  4x). SIP02 repeats the same mechanics on a stricter liquidity floor (price>=
+  $10, 14-day average volume>=5,000,000 shares/day, 14-day ATR>=$1.00, relative
+  volume>=150%). SIP03 is a long-short diagnostic only (not a promotion
+  candidate) -- the paper's own parameters exactly, both directions active, house
+  leverage cap raised to the paper's own 4x, used only to sanity-check
+  implementation fidelity against the published combined long+short Sharpe 2.81
+  headline before trusting SIP01/SIP02's long-only numbers. Research only,
+  deterministic, no broker writes are authorized; no backtest is run in this
+  pass.
+timeframe: 1m
+universe:
+  - TSLA
+  - NVDA
+  - AMD
+  - DDD
+  - FSLR
+  - SWBI
+  - RCL
+  - AAPL
+  - MSFT
+  - SPY
+lifecycle: draft
+position_direction: long_short
+
+entry:
+  all:
+    - close > 0
+  any: []
+
+exit:
+  all: []
+  any:
+    - close <= 0
+
+risk:
+  max_trades_per_day: 20
+  max_position_weight: 0.05
+  stop_loss_pct: null
+  take_profit_pct: null
+
+portfolio:
+  mode: adaptive_intraday_internal_router
+  max_symbols_per_day: 20
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.05
+  same_day_flatten: true
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260923_13:SIP:orb_stocks_in_play_screen
+
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/minute
+  feed: sip
+
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+  caveat: >
+    Minute bars live in two roots that this draft spec's single `data.path`
+    cannot express: data/sip-hist/minute (2016-2022, no per-symbol shard index)
+    for the design window, and data/sip/minute (2023+, has a shard_symbols
+    index but flags shards 0-316/year as stale) for the select and 2026
+    windows; 14-day average-volume/ATR eligibility filters are computed from
+    data/sip/daily, not from the minute archive. `adjusted: true` (Alpaca
+    `adjustment=all`) is a confirmed, disclosed departure from the paper's own
+    unadjusted IQFeed data -- see data-feasibility.json and engine-design.md.
+
+factors:
+  opening_range_high:
+    source: expression
+    expression: sma(high, 1)
+    default: 0.0
+    description: Documentation-only stand-in for the 5-minute opening range's
+      high (09:30-09:34:59 ET, 5 one-minute bars). The actual opening range,
+      relative-volume ranking and top-20 selection are cross-symbol
+      computations outside the single-symbol expression grammar and are
+      computed entirely by a future runner script, not the generic per-symbol
+      factor engine -- the same pattern this repo already uses for cross-symbol
+      gates (see strategy_specs/drafts/s3_defense_first_h20260923_12.yaml's
+      defense_first_rank_and_weight stand-in).
+    params:
+      decision_lag_sessions: 0
+  opening_range_low:
+    source: expression
+    expression: sma(low, 1)
+    default: 0.0
+    description: Documentation-only stand-in for the 5-minute opening range's
+      low. See opening_range_high.
+    params:
+      decision_lag_sessions: 0
+  atr_14:
+    source: expression
+    expression: sma(high - low, 14)
+    default: 0.0
+    description: Documentation-only stand-in for the paper's 14-day ATR
+      eligibility filter and stop-distance base (10% of ATR); the real
+      computation uses daily bars from data/sip/daily, a proper true-range
+      formula (max of high-low, |high-prev_close|, |low-prev_close|), and is
+      computed by the runner, not this per-minute-bar expression.
+    params:
+      decision_lag_sessions: 1
+  relative_volume_open:
+    source: expression
+    expression: volume / sma(volume, 14)
+    default: 1.0
+    description: Documentation-only stand-in for the paper's Relative Volume
+      metric (first-5-minute volume on day t divided by the trailing-14-day
+      average of the same stock's first-5-minute volume). The actual metric is
+      a cross-sectional, cross-day computation over the full eligible universe
+      each morning, computed entirely by the runner (claim_id
+      orb_sip_universe_survivorship_and_adjustment /
+      orb_sip_eligibility_filters in candidate-manifest.json), not this
+      single-symbol per-minute-bar expression.
+    params:
+      decision_lag_sessions: 0
+
+llm_review:
+  enabled: false
+  model: null
+
+required_capabilities:
+  - market.alpaca_bars
+
+research_design:
+  iter_id: h20260923_13_orb_stocks_in_play
+  candidate_manifest_path: reports/research/iterations/h20260923_13_orb_stocks_in_play/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260923_13_orb_stocks_in_play/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl
+  source_card_claim_ids:
+    - orb_sip_universe_survivorship_and_adjustment
+    - orb_sip_eligibility_filters
+    - orb_sip_entry_stop_exit_mechanics
+    - orb_sip_sizing_and_leverage
+    - orb_sip_reported_results
+    - orb_qc_universe_and_replication_scope
+    - orb_qc_one_bar_late_stop_fill_and_alpaca_execution_risk
+    - orb_etf_simplification_2026_self_critique_no_stock_level_update
+  parameter_space:
+    candidate_id:
+      - SIP01
+      - SIP02
+      - SIP03
+  candidate_budget: 3
+  selection_objective: No selection or ranking between SIP01 and SIP02; SIP03
+    is a diagnostic only and is never eligible for promotion. Each candidate is
+    judged independently against the preregistered adoption rule -- design
+    window (2016-01-04..2022-12-30) -- (a) beats the equal-weight-eligible-
+    universe control, (b) beats its own random-direction placebo (RD) median,
+    (c) beats its own random-non-in-play-liquid-stock placebo (RL) median, (d)
+    positive net of 20bp/side plus the $0.0035/share commission; frozen select
+    window (2023-09-18..2025-12-31, the only ranking window) at 5/10/20bp
+    (e) CAGR>=50% and max drawdown>=-35% (gate G1) at 10bp, (f) beats>=90% of
+    combined RD+RL placebo draws (gate G3). 2026-01-02..latest is reported as
+    an already-seen window (per docs/plan-research-coverage-2026-09-23.zh.md
+    section 1.6, the 2026 holdout has already been used by several other
+    directions this month) with no out-of-sample claim. If no candidate passes,
+    the verdict is "keep refuted" and dir:orb_stocks_in_play_relative_volume is
+    not reopened except with new disclosed data or a new published selection
+    rule.
+  anti_overfit_notes:
+    - Three candidates (SIP01, SIP02, SIP03) are frozen in the manifest before
+      any return is computed; SIP03 is permanently excluded from promotion by
+      construction (diagnostic role only), not by a result-dependent choice.
+    - The eligibility filters, relative-volume definition, top-20 selection,
+      entry/stop/exit mechanics are pinned from the primary paper and cross-
+      checked against QuantConnect's independent replication before any local
+      compute is spent; the one parameter this iteration deliberately departs
+      from the paper (leverage cap 1.0x for SIP01/SIP02 versus the paper's 4x)
+      is disclosed, not swept.
+    - A same-top-N-by-relative-volume-but-random-direction control (RD) and a
+      same-breakout-rules-on-random-non-in-play-liquid-stocks control (RL) are
+      preregistered so any apparent edge must be shown to come from the
+      selection and direction call, not from generic intraday long beta in
+      liquid names (the same failure mode that refuted
+      dir:orb_etf_opening_range_breakout).
+    - No profit target is preregistered for SIP01/SIP02/SIP03, because the
+      paper's individual-stock section describes none (a disclosed correction
+      of this project's own ETF-proxy script, which added a 10R target by
+      analogy from a different paper).
+    - Cost and fill-assumption sensitivity (5/10/20bp per side, plus a
+      one-bar-late stop-fill variant per the QuantConnect forum's reported
+      backtest-vs-live discrepancy) are preregistered reporting dimensions
+      within each candidate's future evaluation, not separate candidates.
+  validation_plan:
+    - data_feasibility_check_before_any_grid_is_run_survivorship_and_adjustment
+    - design_window_2016_2022_sip_hist_minute_then_select_window_2023_09_18_to_2025_12_31_sip_minute
+    - 2026_reported_as_already_seen_no_holdout_claim
+    - random_direction_placebo_rd_and_random_non_in_play_liquid_stock_placebo_rl
+    - etf_orb_known_negative_reference_dir_orb_etf_opening_range_breakout
+    - cost_sensitivity_5_10_20bps_plus_commission_and_one_bar_late_fill_variant
+    - benchmark_family_spy_buy_and_hold_equal_weight_universe_cash_proxy_etf_orb_reference_ex_post_best_performer
+
+notes:
+  intent: Ask whether individual-stock opening-range breakout filtered by
+    opening relative volume ("Stocks in Play") clears its own data-feasibility
+    and placebo bar on this project's minute archive and cost/fill
+    conventions, long-only, before any backtest or engine code is written --
+    per the registry's own note that this direction's executable_for_us status
+    is "feasibility unresolved" pending exactly this check.
+  hypothesis_id: H-20260923-13
+  previous_link: null
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready
+  design_constraints:
+    long_only_primary: true
+    long_short_diagnostic_only: SIP03
+    leverage_cap_house_default: 1.0
+    leverage_cap_paper_diagnostic_only: 4.0
+    pattern_day_trader_note: >
+      Up to 20 same-day round-trip positions per session structurally trips
+      the US FINRA pattern-day-trader rule every active session; this strategy
+      is not legally executable below $25,000 net liquidation value in a
+      margin account. Whether the existing paper/live account clears this
+      threshold and has margin/day-trading enabled is a broker-authorization
+      decision for the owner, not assumed here.

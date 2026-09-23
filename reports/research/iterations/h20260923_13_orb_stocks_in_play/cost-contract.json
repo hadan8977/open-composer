@@ -1,0 +1,22 @@
+{
+  "contract_id": "cost_v1_5_10_20bps_plus_commission_orb_stocks_in_play",
+  "iter_id": "h20260923_13_orb_stocks_in_play",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "cost_model": "per-trade round-trip cost = (entry_notional + exit_notional) * (slippage_bps/10000), reported at three per-side bp levels on notional; a separate paper-fidelity-only column additionally applies the paper's own $0.0035/share commission so results are comparable to the published numbers without blending the two conventions",
+  "slippage_bps_per_side_grid": [
+    5.0,
+    10.0,
+    20.0
+  ],
+  "primary_bps_per_side": 10.0,
+  "stress_bps_per_side": 20.0,
+  "commission_per_share_paper_fidelity_cross_check": 0.0035,
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none for SIP01/SIP02 (long-only, no short borrow); SIP03 (long-short diagnostic) prices a 0.3%/year annualized borrow fee prorated by holding minutes on short legs, matching this project's own H-20260918-02 ETF-ORB convention, since the paper itself does not disclose a borrow-cost assumption",
+  "stop_fill_variants": {
+    "same_bar_conservative": "gap-through-stop fills at the bar's own open; if both the stop and (in a future candidate that adds one) a target are touched within one bar, the stop is assumed to fire first -- this project's standing conservative convention",
+    "one_bar_late_qc_forum_variant": "protective stop is not considered live until the bar AFTER the entry bar, per claim_id orb_qc_one_bar_late_stop_fill_and_alpaca_execution_risk (QuantConnect forum commenter Yuri Lopukhov); reported alongside the conservative variant, not in place of it"
+  }
+}

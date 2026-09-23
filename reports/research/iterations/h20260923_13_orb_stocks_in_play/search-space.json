@@ -1,0 +1,137 @@
+{
+  "iter_id": "h20260923_13_orb_stocks_in_play",
+  "strategy_name": "orb_stocks_in_play_h20260923_13",
+  "source_spec_path": "strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml",
+  "spec_hash": "d6046d5bebdba39137f9265d233a9674a8da5d77cd377f6a166dac42888aecc3",
+  "schema_version": 3,
+  "created_at": "2026-09-23T10:00:00Z",
+  "objective": "Preregister three candidates for individual-stock opening-range breakout filtered by opening relative volume ('Stocks in Play', Zarattini/Barbon/Aziz SSRN 4729284): SIP01 long-only at the paper's own eligibility parameters, SIP02 long-only at a stricter liquidity floor, SIP03 a long-short diagnostic (not promotable) for implementation-fidelity checking only -- plus a random-direction control (RD) and a random-non-in-play-liquid-stock control (RL), against the design window (2016-2022), the frozen select window (2023-09-18..2025-12-31), and an already-seen 2026 report window, before any backtest is run.",
+  "paths": [
+    {
+      "name": "orb_stocks_in_play_screen",
+      "candidate_count": 3,
+      "hypothesis_refs": [
+        "H-20260923-13"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "SIP01",
+          "SIP02",
+          "SIP03"
+        ],
+        "opening_range_minutes": [
+          5
+        ],
+        "entry_type": [
+          "stop_order_at_range_extreme"
+        ],
+        "stop_loss_fraction_of_atr14": [
+          0.1
+        ],
+        "top_n_by_relative_volume": [
+          20
+        ],
+        "relative_volume_floor": [
+          1.0,
+          1.0,
+          1.5
+        ],
+        "price_floor_usd": [
+          5.0,
+          5.0,
+          10.0
+        ],
+        "avg_volume_floor_shares_per_day": [
+          1000000,
+          1000000,
+          5000000
+        ],
+        "atr_floor_usd": [
+          0.5,
+          0.5,
+          1.0
+        ],
+        "allow_short": [
+          false,
+          false,
+          true
+        ],
+        "leverage_cap": [
+          1.0,
+          1.0,
+          4.0
+        ],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "equal_weight_daily_eligible_universe",
+        "cash_proxy_bil_or_shy",
+        "RD_random_direction_placebo",
+        "RL_random_non_in_play_liquid_stock_placebo",
+        "ETF_ORB_known_negative_reference_dir_orb_etf_opening_range_breakout"
+      ]
+    }
+  ],
+  "total_candidate_budget": 3,
+  "candidate_manifest_path": "reports/research/iterations/h20260923_13_orb_stocks_in_play/candidate-manifest.json",
+  "candidate_manifest_sha256": "3843120d8bebdd09485a589680ece7012eac8f8d561044e962bb4566a97cdcc8",
+  "data_feasibility_path": "reports/research/iterations/h20260923_13_orb_stocks_in_play/data-feasibility.json",
+  "data_feasibility_sha256": "db6e1ce6ce35ecb08811360a6b328bb6fe14681d874ee8dc13aded60c28e7019",
+  "cost_table_path": "reports/research/iterations/h20260923_13_orb_stocks_in_play/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260923_13_orb_stocks_in_play/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260923_13_orb_stocks_in_play/report.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "design": [
+      "2016-01-04",
+      "2022-12-30"
+    ],
+    "select": [
+      "2023-09-18",
+      "2025-12-31",
+      "frozen, the only ranking window"
+    ],
+    "report_2026": [
+      "2026-01-02",
+      "2026-09-17",
+      "already seen by several other directions this month; no holdout claim made here"
+    ]
+  },
+  "controls": {
+    "rd_random_direction": {
+      "description": "RD: same daily top-20-by-relative-volume selection as the real candidate (same eligibility filters, same universe), but the traded direction is drawn randomly (+-1) instead of read from the opening candle's own close-vs-open -- isolates whether the direction call carries information versus just being in a volatile, abnormally-active name that day. 10 seeds, applied to SIP01's and SIP02's own eligible/selected sets separately.",
+      "seeds": 10
+    },
+    "rl_random_liquid_non_in_play": {
+      "description": "RL: same breakout/stop/exit mechanics and the same price/avg-volume/ATR eligibility filters as the real candidate, but instead of ranking by relative volume, 20 stocks are drawn at random from the eligible-but-NOT-real-top-20 set each day -- isolates whether the relative-volume ('in play') selection itself carries information versus generic breakout trading on liquid names. 10 seeds.",
+      "seeds": 10
+    },
+    "etf_orb_known_negative": {
+      "description": "No new simulation: dir:orb_etf_opening_range_breakout's already-refuted OOS numbers (QQQ -3.0%, SPY -6.0%, random-direction placebo capturing 92.7-92.9% of real return) are reused as a reference floor from reports/research/hypotheses/H-20260918-02-intraday-orb-and-intraday-momentum-etf.md and reports/research/lessons/L-20260918-02.md."
+    },
+    "fixed_simulation_budget_next_step": {
+      "description": "For the NEXT (backtest) step: 3 candidates + 20 RD seeds (10 x SIP01, 10 x SIP02) + 20 RL seeds (10 x SIP01, 10 x SIP02) = 43 core simulations across the design and select windows; SIP03 is evaluated once (diagnostic, no seeds). Cost (5/10/20bp) and stop-fill-variant (conservative/one-bar-late) are reporting dimensions within each run, not separate manifest candidates.",
+      "count": 43
+    }
+  },
+  "adoption_rule": {
+    "design_window": [
+      "(a) beats the equal-weight-eligible-universe control",
+      "(b) beats its own RD placebo median",
+      "(c) beats its own RL placebo median",
+      "(d) positive net of 20bp/side plus the $0.0035/share commission cross-check"
+    ],
+    "select_window_frozen": [
+      "(e) at 10bp: CAGR >= 50% and max drawdown >= -35% (gate G1)",
+      "(f) beats >= 90% of its combined RD+RL placebo draws (gate G3, <=10% placebo win rate)"
+    ],
+    "multiple_comparisons": "2 promotable candidates (SIP01, SIP02); SIP03 is never promotable",
+    "fallback_if_none_pass": "keep refuted (dir:orb_stocks_in_play_relative_volume stays closed)"
+  }
+}

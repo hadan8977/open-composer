@@ -1,0 +1,210 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260923_13_orb_stocks_in_play",
+  "strategy_name": "orb_stocks_in_play_h20260923_13",
+  "source_spec_path": "strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml",
+  "spec_hash": "d6046d5bebdba39137f9265d233a9674a8da5d77cd377f6a166dac42888aecc3",
+  "spec_hashes": {
+    "strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml": "d6046d5bebdba39137f9265d233a9674a8da5d77cd377f6a166dac42888aecc3"
+  },
+  "generated_at": "2026-09-23T10:00:00Z",
+  "generated_before_backtest": true,
+  "objective": "Preregister three candidates for individual-stock opening-range breakout filtered by opening relative volume ('Stocks in Play', Zarattini/Barbon/Aziz SSRN 4729284): SIP01 long-only at the paper's own eligibility parameters, SIP02 long-only at a stricter liquidity floor, SIP03 a long-short diagnostic (not promotable) for implementation-fidelity checking only -- plus a random-direction control (RD) and a random-non-in-play-liquid-stock control (RL), against the design window (2016-2022), the frozen select window (2023-09-18..2025-12-31), and an already-seen 2026 report window, before any backtest is run.",
+  "decision": "proceed",
+  "existing_solution_comparison": "The mechanism is not invented here: it is Zarattini, Barbon & Aziz (2024/2025 revision), 'A Profitable Day Trading Strategy For The U.S. Equity Market' (SSRN 4729284), read in full from the primary PDF this pass (46KB extracted text, all sections read, not just the abstract) -- exact eligibility filters, relative-volume formula, entry/stop/exit mechanics, sizing, leverage, costs, and reported results (Base vs Stocks-in-Play vs S&P500, all long+short combined, no long-only split published) are pinned with direct quotes (see sources below). This is independently cross-checked against QuantConnect's third-party code replication (orb_qc), which confirms the mechanism's shape (beats buy-and-hold, near-zero beta) but only over a single year (2016) on a narrower 1,000-name universe, and against the same author group's own 2026-07-08 self-critique of the single-ETF simplification (already independently and locally refuted as dir:orb_etf_opening_range_breakout via H-20260918-02/L-20260918-02: random-direction placebo captured 92.7-92.9% of real OOS return; the residual was intraday beta, not an opening-range signal). What is new in this pass, versus the existing registry row dir:orb_stocks_in_play_relative_volume (status 'harvested' before this pass) and the two prior intel briefs (intel-intraday-and-options-runnable-2026-09-18.md, I-20260921-02-near-term-alternatives.md), is: (1) reading the full paper text directly rather than relying on secondary paraphrase, which surfaced that the stock version has NO profit target (the ETF-proxy script's 10R target does not apply here) and that results are long+short combined with no published long-only split; (2) a direct, evidence-based data-feasibility finding that this project's minute archives were built from a current-active-asset snapshot (fetch_sip_universe.py's load_universe() calls Alpaca get_all_assets(status=ACTIVE)) with no minute-bar counterpart to the daily-only delisted-name archive (data/sip-delisted/, confirmed to hold no 'minute' subdirectory), and that data/sip-hist/minute (2016-2022) has no per-symbol shard index at all -- neither fact was previously verified by this project for this direction; (3) a concrete one-bar-late stop-fill variant and an Alpaca-specific wash-trade-rejection risk, both sourced from the QuantConnect forum thread the registry row had flagged but not yet read in full.",
+  "negative_experiments_checked": "dir:orb_etf_opening_range_breakout (refuted, H-20260918-02/L-20260918-02): the single-ETF (QQQ/TQQQ/SPY/SPXL) simplification of this same author group's ORB mechanism failed OOS 2024-01-02..2026-09-17 at every leverage/cost/stop-fill cell tested; a random-direction placebo captured 92.7-92.9% of the real return, and shifting the entry time to 10:05/10:35 matched or beat the real 09:35 entry -- the residual was intraday beta, not an opening-range signal. This iteration is explicitly scoped as a DIFFERENT, narrower mechanism (individual-stock selection by abnormal relative volume, not a fixed-symbol ETF breakout) per the registry row's own reopen_if clause ('the individual-stock Stocks-in-Play relative-volume selection layer clears its own placebos first'), and preregisters the same category of placebo (RD, matching the ETF study's own random-direction control) plus a new RL control targeting the selection layer specifically, precisely because the ETF study's failure mode (generic intraday beta masquerading as a signal) is the most likely way this mechanism fails too. dir:cross_sectional_gap_fade (not_executable, same registry): a related Concretum cross-sectional mechanism was found real but concentrated in an illiquid short leg this project cannot trade -- a structural reminder to check liquidity/capacity per name, reflected in SIP02's stricter floor. H-20260918-02's own card already flagged (not yet independently verified) that minute-bar backtests may fill stops a bar late; this pass locates and quotes the specific QuantConnect forum comment behind that flag and preregisters it as a reporting variant rather than leaving it as an open flag.",
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "orb_sip_universe_survivorship_and_adjustment",
+      "source_card_path": "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl",
+      "used_for": "orb_stocks_in_play_rule_pinning_and_feasibility"
+    },
+    {
+      "claim_id": "orb_sip_eligibility_filters",
+      "source_card_path": "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl",
+      "used_for": "orb_stocks_in_play_rule_pinning_and_feasibility"
+    },
+    {
+      "claim_id": "orb_sip_entry_stop_exit_mechanics",
+      "source_card_path": "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl",
+      "used_for": "orb_stocks_in_play_rule_pinning_and_feasibility"
+    },
+    {
+      "claim_id": "orb_sip_sizing_and_leverage",
+      "source_card_path": "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl",
+      "used_for": "orb_stocks_in_play_rule_pinning_and_feasibility"
+    },
+    {
+      "claim_id": "orb_sip_reported_results",
+      "source_card_path": "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl",
+      "used_for": "orb_stocks_in_play_rule_pinning_and_feasibility"
+    },
+    {
+      "claim_id": "orb_qc_universe_and_replication_scope",
+      "source_card_path": "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl",
+      "used_for": "orb_stocks_in_play_rule_pinning_and_feasibility"
+    },
+    {
+      "claim_id": "orb_qc_one_bar_late_stop_fill_and_alpaca_execution_risk",
+      "source_card_path": "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl",
+      "used_for": "orb_stocks_in_play_rule_pinning_and_feasibility"
+    },
+    {
+      "claim_id": "orb_etf_simplification_2026_self_critique_no_stock_level_update",
+      "source_card_path": "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl",
+      "used_for": "orb_stocks_in_play_rule_pinning_and_feasibility"
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "orb_sip_universe_survivorship_and_adjustment",
+      "url": "https://concretumgroup.com/wp-content/uploads/2026/02/A-Profitable-Day-Trading-Strategy-For-The-U.S.-Equity-Market.pdf",
+      "published_or_updated_at": "2024-02-16",
+      "source_type": "paper",
+      "credibility": "author_preprint_peer_reviewed_status_unknown",
+      "core_claim": "The Stocks-in-Play paper's universe is ~7,000 NYSE+Nasdaq stocks, Jan 2016-Dec 2023, explicitly free of survivorship bias (delisted names included, e.g. Twitter, delisted 2022-10-27), sourced from CRSP with IQFeed intraday data that is explicitly left unadjusted for splits/dividends.",
+      "project_applicability": "Local minute archive was populated from a current-active-asset snapshot (scripts/fetch_sip_universe.py load_universe() pulls only ACTIVE tradable assets); our own data-feasibility check found no minute-bar counterpart to the daily-only data/sip-delisted archive, so matching this survivorship-bias-free claim on our own minute data is an open, disclosed gap, not yet resolved.",
+      "reflection": "Author-reported methodology description, not an independently re-run backtest of this exact universe; PDF text extraction, page-break/footnote splicing means only short contiguous spans are quoted verbatim."
+    },
+    {
+      "claim_id": "orb_sip_eligibility_filters",
+      "url": "https://concretumgroup.com/wp-content/uploads/2026/02/A-Profitable-Day-Trading-Strategy-For-The-U.S.-Equity-Market.pdf",
+      "published_or_updated_at": "2024-02-16",
+      "source_type": "paper",
+      "credibility": "author_preprint_peer_reviewed_status_unknown",
+      "core_claim": "Base eligibility (both Base and Stocks-in-Play variants): opening price above $5, 14-day average volume at least 1,000,000 shares/day, 14-day ATR more than $0.50. Stocks-in-Play adds: Relative Volume at least 100%, trade only the top 20 stocks by Relative Volume.",
+      "project_applicability": "Pins SIP01's eligibility filters exactly (price>$5, 14d avg vol>=1,000,000 sh/day, 14d ATR>$0.50, relvol>=100%, top-20-by-relvol); SIP02 preregisters a deliberately stricter version of the same four filters as a disclosed departure.",
+      "reflection": "Filters as described in the paper's Base Strategy and Section 4; exact ATR look-back convention (Wilder vs simple 14-day true-range average) not fully disambiguated in the extracted text."
+    },
+    {
+      "claim_id": "orb_sip_entry_stop_exit_mechanics",
+      "url": "https://concretumgroup.com/wp-content/uploads/2026/02/A-Profitable-Day-Trading-Strategy-For-The-U.S.-Equity-Market.pdf",
+      "published_or_updated_at": "2024-02-16",
+      "source_type": "paper",
+      "credibility": "author_preprint_peer_reviewed_status_unknown",
+      "core_claim": "Entry is a stop order (not a stop-loss order) placed at the high/low of the 5-minute opening range in the direction of that range's own move; a doji (open equals close in the first 5 minutes) places no order; protective stop is 10% of the 14-day ATR from the executed entry price; if not stopped, the position is closed at the end of the session (4:00pm ET). No profit target is described for the individual-stock Stocks-in-Play strategy.",
+      "project_applicability": "Confirms entry is a STOP order at the range extreme (matching this project's H-20260918-02 ETF proxy), but that script's added 10R profit target is NOT part of this paper's individual-stock rule -- SIP01/SIP02/SIP03 drop the target and exit only on stop or EOD, a disclosed correction versus the ETF proxy script.",
+      "reflection": "The doji rule is stated as exact open==close; our own ETF proxy script instead used a |close-open|<=5%*(high-low) approximation -- SIP01-03 preregister the paper's exact rule, a disclosed departure from the ETF proxy's convention."
+    },
+    {
+      "claim_id": "orb_sip_sizing_and_leverage",
+      "url": "https://concretumgroup.com/wp-content/uploads/2026/02/A-Profitable-Day-Trading-Strategy-For-The-U.S.-Equity-Market.pdf",
+      "published_or_updated_at": "2024-02-16",
+      "source_type": "paper",
+      "credibility": "author_preprint_peer_reviewed_status_unknown",
+      "core_claim": "Position size is set so a stop-out loses 1% of the capital deployed to that position; the paper caps leverage at 4x, citing FINRA pattern-day-trader margin rules for most US brokers.",
+      "project_applicability": "SIP01/SIP02 preregister a house leverage_cap of 1.0x (no margin) as a disclosed, deliberate departure from the paper's 4x, for pattern-day-trader/margin-safety reasons pending an explicit broker-authorization decision; SIP03 (long-short diagnostic only) uses the paper's own 4x to attempt like-for-like fidelity.",
+      "reflection": "'Capital deployed for that position' is not spelled out as a per-slot fraction in the paper's own text; the QuantConnect replication code makes the equal-split convention explicit (risk 1% of TotalPortfolioValue/MaxPositions per slot, capped at equal-weight per name) and is used to resolve the ambiguity -- see orb_qc_universe_and_replication_scope."
+    },
+    {
+      "claim_id": "orb_sip_reported_results",
+      "url": "https://concretumgroup.com/wp-content/uploads/2026/02/A-Profitable-Day-Trading-Strategy-For-The-U.S.-Equity-Market.pdf",
+      "published_or_updated_at": "2024-02-16",
+      "source_type": "paper",
+      "credibility": "author_preprint_peer_reviewed_status_unknown",
+      "core_claim": "2016-2023, long+short combined, top-20-by-relative-volume portfolio: total return 1,637%, annualized (IRR) 41.6%, Sharpe 2.81, max drawdown 12%, hit ratio 48.4%, annualized alpha 35.8%, beta 0.00, net of a $0.0035/share commission. The Base variant (same filters, no relative-volume/top-20 layer) returns only 29% total / 3.2% annualized / Sharpe 0.48 / MDD 13% over the same window; S&P 500 buy-and-hold returns 198% total / 14.2% annualized / Sharpe 0.78 / MDD 34%. No long-only or short-only breakdown is reported anywhere in the paper.",
+      "project_applicability": "Because the 2.81 Sharpe headline is a combined long+short number and no long-only split is published, SIP01/SIP02 (long-only) are NOT expected to reproduce 2.81; SIP03 (long-short diagnostic) is the only candidate positioned to sanity-check implementation fidelity against the published magnitude, and is explicitly excluded from promotion per this iteration's design constraints.",
+      "reflection": "Author-reported backtest, MATLAB, zero independent audit of the full multi-year multi-thousand-stock run found; no bid-ask spread/market-impact term is mentioned in the extracted text beyond the flat per-share commission."
+    },
+    {
+      "claim_id": "zarattini_aziz_2023_qqq_tqqq_predecessor",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4416622",
+      "published_or_updated_at": "2023-01-01",
+      "source_type": "paper",
+      "credibility": "author_preprint_peer_reviewed_status_unknown",
+      "core_claim": "Zarattini & Aziz (2023), 'Can Day Trading Really Be Profitable?' (SSRN 4416622) is the direct predecessor this Stocks-in-Play paper explicitly extends (own text: 'we provided significant evidence of profitability for a 5-minute ORB applied on QQQ and TQQQ ETFs... our goal was to apply the 5-minute ORB framework developed in our previous work'). This project already tested the single-ETF simplification of this exact lineage (H-20260918-02) and refuted it OOS.",
+      "project_applicability": "Grounds why this iteration treats the ETF simplification as a closed, already-refuted direction and scopes strictly to the individual-stock selection layer, per the registry row's own reopen_if clause.",
+      "reflection": "Not re-read in full this pass; already fully characterized by this project's own H-20260918-02/L-20260918-02 (1,795 trades, Sharpe 1.12 author-reported, third-party replication found the net edge vanishes near 2.2 cents/share slippage)."
+    },
+    {
+      "claim_id": "brock_lakonishok_lebaron_1992_technical_rules",
+      "url": "https://doi.org/10.1111/j.1540-6261.1992.tb04681.x",
+      "published_or_updated_at": "1992-01-01",
+      "source_type": "paper",
+      "credibility": "top_journal_or_nber",
+      "core_claim": "Brock, Lakonishok & LeBaron (1992), 'Simple technical trading rules and the stochastic properties of stock returns', Journal of Finance 47:1731-1764 -- cited directly in the Stocks-in-Play paper's own bibliography ([8]) as the seminal evidence that simple technical rules including moving averages and range breakouts have predictive content on ~100 years of Dow Jones data, challenging the random walk hypothesis.",
+      "project_applicability": "Background academic grounding (via the primary paper's own citation, read directly in its References section this pass) for why an opening-range-breakout-family rule is not an ad hoc invention but sits inside a decades-old, peer-reviewed technical-trading-rules literature -- context only, not evidence for THIS specific relative-volume-filtered variant.",
+      "reflection": "A 1992 index-level study, no transaction costs modeled by 1990s standards, and not specific to intraday opening ranges or individual stocks; cited here only as the primary paper's own foundational reference, not independently re-read in full."
+    },
+    {
+      "claim_id": "orb_qc_universe_and_replication_scope",
+      "url": "https://www.quantconnect.com/research/18444/opening-range-breakout-for-stocks-in-play/",
+      "published_or_updated_at": "unknown",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_replication",
+      "core_claim": "QuantConnect's independent replication narrows the universe to the 1,000 most liquid US equities above $5/share with ATR>$0.50 (versus the paper's ~7,000-name, $1M-share-volume-floor universe), backtests only 2016 (the first year of the paper's window), and reports a 2.396 Sharpe versus a 0.836 Sharpe SPY buy-and-hold benchmark over that single year, with -0.042 beta.",
+      "project_applicability": "The registry's own caveat ('QuantConnect's headline ~2.4 Sharpe comes from a SINGLE year on the top-1000-liquid subset, not multi-year OOS') is confirmed verbatim; this iteration's design/select/2026 windows are all multi-year and the full local universe (subject to the survivorship caveat), not a single-year top-1000 replay.",
+      "reflection": "QuantConnect's own parameter-sweep (5-25min range x 500-1500 universe size) found 17/25 (68%) combinations beat the benchmark, and an ATR-sensitivity sweep found all tested values beat it too -- the platform post does not claim this as robust multi-year OOS evidence, only as a single-year sensitivity check."
+    },
+    {
+      "claim_id": "orb_qc_one_bar_late_stop_fill_and_alpaca_execution_risk",
+      "url": "https://www.quantconnect.com/research/18444/opening-range-breakout-for-stocks-in-play/",
+      "published_or_updated_at": "unknown",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_forum_unverified",
+      "core_claim": "A QuantConnect forum commenter (Yuri Lopukhov) identified that in minute-resolution backtests the protective stop order is only placed on the bar AFTER the entry stop order fills, so an entry filled at 9:35:01 gets its live-trading stop placed immediately but the backtest's stop is not placed until 9:36:00 -- a one-bar-late discrepancy between backtest and live/real-time execution. A separate commenter (AleNoc) reported Alpaca paper trading rejecting some of this strategy's stop orders as a 'wash trade'.",
+      "project_applicability": "Directly satisfies this task's requirement for a one-bar-late fill variant: every candidate's minute-bar simulation reports both the conservative same-bar stop-fill convention and a one-bar-late variant as a sensitivity check, per this exact community-reported discrepancy. The Alpaca wash-trade rejection is recorded as a live-feasibility risk for the future paper-trading step, not something this dossier resolves.",
+      "reflection": "Forum comments, not a verified/audited report; unverified whether the wash-trade rejection is Alpaca-specific policy, an account-tier limitation, or a QuantConnect broker-adapter bug; this project has not independently reproduced either claim."
+    },
+    {
+      "claim_id": "orb_etf_simplification_2026_self_critique_no_stock_level_update",
+      "url": "https://concretumgroup.substack.com/p/improving-the-opening-range-breakout",
+      "published_or_updated_at": "2026-07-08",
+      "source_type": "industry_standard",
+      "credibility": "author_self_reported",
+      "core_claim": "The same author group's 2026-07-08 study of the plain single-ETF (SPY) 5-minute ORB over Jan 2008-Dec 2025 found that, in its plain-vanilla form, the strategy fails to generate meaningful net-of-fee returns; simple economically-motivated filters, trade management and position-sizing enhancements raised CAGR from 1.0% to 12.1% and Sharpe from 0.14 to 0.84, but the detailed enhanced rules are paywalled and were not read. No 2024-25 update specific to the individual-stock Stocks-in-Play version was found in this pass.",
+      "project_applicability": "Corroborates, from the original authors themselves and as recently as 2026-07, that the single-ETF simplification (already refuted locally as dir:orb_etf_opening_range_breakout) is genuinely weak without the Stocks-in-Play selection layer -- consistent with, not contrary to, the local refutation; this iteration does not reopen the ETF direction and does not claim the individual-stock mechanism has any fresher-than-2024 published evidence than what was already in the registry.",
+      "reflection": "Paywalled beyond the abstract/preview; the specific 'enhancements' are unknown and not assumed to be the same as this iteration's relative-volume/top-20 selection layer, even though both raise a weak base ORB toward profitability."
+    },
+    {
+      "claim_id": "dir_orb_etf_opening_range_breakout_refuted_internal",
+      "url": "reports/research/hypotheses/H-20260918-02-intraday-orb-and-intraday-momentum-etf.md",
+      "published_or_updated_at": "2026-09-18",
+      "source_type": "internal",
+      "credibility": "internal_verified_backtest",
+      "core_claim": "This project's own refutation of the single-ETF (QQQ/TQQQ/SPY/SPXL) ORB simplification: OOS 2024-01-02..2026-09-17 failed at every leverage/cost/stop-fill cell; random-direction placebo captured 92.7-92.9% of real return; shifting entry to 10:05/10:35 matched or beat 09:35; the residual was intraday beta, not signal.",
+      "project_applicability": "The negative-evidence floor this iteration must clear a genuinely different mechanism against; motivates the RD and RL controls preregistered here.",
+      "reflection": "A different, narrower mechanism (fixed-symbol ETF breakout, no cross-sectional selection) -- not assumed to transfer 1:1, but the most likely shared failure mode (generic intraday beta) is explicitly tested for again here."
+    }
+  ],
+  "topic_coverage": [
+    "stocks_in_play_universe_and_relvol_filters",
+    "orb_entry_stop_exit_mechanics",
+    "orb_sizing_and_leverage",
+    "orb_reported_results_long_short_combined_no_split",
+    "quantconnect_independent_replication_caveats",
+    "one_bar_late_stop_fill_and_broker_execution_risk",
+    "etf_simplification_known_negative_and_2026_recency_check",
+    "data_feasibility_survivorship_and_adjustment"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "orb_sip_entry_stop_exit_mechanics",
+      "effect": "The individual-stock section of the paper describes no profit target, only a protective stop and an end-of-day exit.",
+      "revision": "removed_the_etf_proxy_scripts_10r_target_from_all_three_candidates"
+    },
+    {
+      "driver": "orb_sip_reported_results",
+      "effect": "The published 2.81 Sharpe / 41.6% annualized headline is a combined long+short number; no long-only or short-only split is reported anywhere in the paper.",
+      "revision": "sip03_long_short_diagnostic_added_and_permanently_excluded_from_promotion_sip01_sip02_not_expected_to_reproduce_2.81"
+    },
+    {
+      "driver": "orb_qc_one_bar_late_stop_fill_and_alpaca_execution_risk",
+      "effect": "A named, dated community report of a backtest-vs-live stop-fill timing discrepancy in minute-resolution QuantConnect backtests of this exact strategy.",
+      "revision": "added_one_bar_late_fill_as_a_preregistered_reporting_variant"
+    },
+    {
+      "driver": "data_feasibility_survivorship_and_adjustment_check",
+      "effect": "The local minute archive was built from a current-active-asset snapshot with no minute-bar counterpart to the daily-only delisted-name archive, and data/sip-hist/minute has no per-symbol shard index; adjustment=all conflicts with the paper's own unadjusted data.",
+      "revision": "historical_evaluation_authorized_true_with_five_disclosed_caveats_two_of_them_named_as_prerequisite_engineering_steps_in_engine_design_md_before_the_first_evaluation_run"
+    },
+    {
+      "driver": "orb_qc_universe_and_replication_scope",
+      "effect": "QuantConnect's own replication substitutes a 1,000-most-liquid-by-dollar-volume universe for the paper's 7,000-name, $1M-share-volume-floor universe, and tests only 2016, not multi-year OOS.",
+      "revision": "sip02_preregistered_with_a_deliberately_stricter_liquidity_floor_rather_than_copying_qcs_top_1000_substitution_outright"
+    }
+  ]
+}

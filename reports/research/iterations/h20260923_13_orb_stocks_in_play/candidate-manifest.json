@@ -1,0 +1,249 @@
+{
+  "iter_id": "h20260923_13_orb_stocks_in_play",
+  "generated_at": "2026-09-23T10:00:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "orb_stocks_in_play_h20260923_13",
+  "objective": "Preregister three candidates for individual-stock opening-range breakout filtered by opening relative volume ('Stocks in Play', Zarattini/Barbon/Aziz SSRN 4729284): SIP01 long-only at the paper's own eligibility parameters, SIP02 long-only at a stricter liquidity floor, SIP03 a long-short diagnostic (not promotable) for implementation-fidelity checking only -- plus a random-direction control (RD) and a random-non-in-play-liquid-stock control (RL), against the design window (2016-2022), the frozen select window (2023-09-18..2025-12-31), and an already-seen 2026 report window, before any backtest is run.",
+  "candidates": [
+    {
+      "candidate_id": "SIP01",
+      "path": "orb_stocks_in_play_screen",
+      "role": "primary_long_only_paper_parameters",
+      "method": "orb_relvol_top20_long_only_paper_filters",
+      "ablation": "long_only_house_leverage_cap",
+      "spec_path": "strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml",
+      "fallback": "flat_no_trade_if_universe_or_bars_unavailable",
+      "data_contract": "data_v1_sip_minute_and_daily_orb_stocks_in_play",
+      "feature_contract": "feature_v1_orb_stocks_in_play_relvol_selection",
+      "label_contract": "label_v1_orb_trade_outcome_stop_or_eod",
+      "validation_contract": "validation_v1_design_then_select_then_2026_already_seen",
+      "cost_contract": "cost_v1_5_10_20bps_plus_commission_orb_stocks_in_play",
+      "benchmark_contract": "benchmark_v1_orb_stocks_in_play_diagnostics",
+      "parameters": {
+        "opening_range_minutes": 5,
+        "opening_range_window": "09:30-09:34:59 ET (5 one-minute bars)",
+        "entry_time": "09:35 ET (stop order placed at range extreme, filled if touched)",
+        "entry_type": "stop_order_at_range_extreme",
+        "doji_rule": "exact open==close in the opening range -> no order (paper's own rule)",
+        "stop_loss_fraction_of_atr14": 0.1,
+        "profit_target": null,
+        "exit_rule": "stop_or_end_of_session_16_00_et",
+        "atr_lookback_days": 14,
+        "avg_volume_lookback_days": 14,
+        "relative_volume_definition": "first-5-minute volume on day t / mean of first-5-minute volume over the trailing 14 trading days",
+        "risk_per_trade_pct_of_slot_capital": 0.01,
+        "slot_capital_convention": "equal split across max_positions (equity_or_buying_power / max_positions per slot, per QuantConnect's replication formula), capped at 1/max_positions portfolio weight per name",
+        "max_positions": 20,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open_for_the_09:35_entry_bar",
+        "stop_fill_variants_to_report": [
+          "same_bar_conservative",
+          "one_bar_late_qc_forum_variant"
+        ],
+        "cost_bps_per_side_to_report": [
+          5.0,
+          10.0,
+          20.0
+        ],
+        "commission_per_share_cross_check": 0.0035,
+        "candidate_id": "SIP01",
+        "allow_long": true,
+        "allow_short": false,
+        "price_floor_usd": 5.0,
+        "avg_volume_floor_shares_per_day": 1000000,
+        "atr_floor_usd": 0.5,
+        "relative_volume_floor": 1.0,
+        "top_n_by_relative_volume": 20,
+        "leverage_cap": 1.0,
+        "leverage_cap_source": "house_default_disclosed_departure_from_paper_4x"
+      }
+    },
+    {
+      "candidate_id": "SIP02",
+      "path": "orb_stocks_in_play_screen",
+      "role": "long_only_stricter_liquidity_floor",
+      "method": "orb_relvol_top20_long_only_stricter_liquidity",
+      "ablation": "stricter_liquidity_floor_vs_sip01",
+      "spec_path": "strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml",
+      "fallback": "flat_no_trade_if_universe_or_bars_unavailable",
+      "data_contract": "data_v1_sip_minute_and_daily_orb_stocks_in_play",
+      "feature_contract": "feature_v1_orb_stocks_in_play_relvol_selection",
+      "label_contract": "label_v1_orb_trade_outcome_stop_or_eod",
+      "validation_contract": "validation_v1_design_then_select_then_2026_already_seen",
+      "cost_contract": "cost_v1_5_10_20bps_plus_commission_orb_stocks_in_play",
+      "benchmark_contract": "benchmark_v1_orb_stocks_in_play_diagnostics",
+      "parameters": {
+        "opening_range_minutes": 5,
+        "opening_range_window": "09:30-09:34:59 ET (5 one-minute bars)",
+        "entry_time": "09:35 ET (stop order placed at range extreme, filled if touched)",
+        "entry_type": "stop_order_at_range_extreme",
+        "doji_rule": "exact open==close in the opening range -> no order (paper's own rule)",
+        "stop_loss_fraction_of_atr14": 0.1,
+        "profit_target": null,
+        "exit_rule": "stop_or_end_of_session_16_00_et",
+        "atr_lookback_days": 14,
+        "avg_volume_lookback_days": 14,
+        "relative_volume_definition": "first-5-minute volume on day t / mean of first-5-minute volume over the trailing 14 trading days",
+        "risk_per_trade_pct_of_slot_capital": 0.01,
+        "slot_capital_convention": "equal split across max_positions (equity_or_buying_power / max_positions per slot, per QuantConnect's replication formula), capped at 1/max_positions portfolio weight per name",
+        "max_positions": 20,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open_for_the_09:35_entry_bar",
+        "stop_fill_variants_to_report": [
+          "same_bar_conservative",
+          "one_bar_late_qc_forum_variant"
+        ],
+        "cost_bps_per_side_to_report": [
+          5.0,
+          10.0,
+          20.0
+        ],
+        "commission_per_share_cross_check": 0.0035,
+        "candidate_id": "SIP02",
+        "allow_long": true,
+        "allow_short": false,
+        "price_floor_usd": 10.0,
+        "avg_volume_floor_shares_per_day": 5000000,
+        "atr_floor_usd": 1.0,
+        "relative_volume_floor": 1.5,
+        "top_n_by_relative_volume": 20,
+        "leverage_cap": 1.0,
+        "leverage_cap_source": "house_default_disclosed_departure_from_paper_4x",
+        "rationale": "Our execution is less resourced than the paper's zero-slippage MATLAB backtest; a stricter floor reduces exposure to the least-liquid, least-adjustment-reliable names flagged in data-feasibility.json."
+      }
+    },
+    {
+      "candidate_id": "SIP03",
+      "path": "orb_stocks_in_play_screen",
+      "role": "long_short_diagnostic_not_promotable",
+      "method": "orb_relvol_top20_long_short_paper_fidelity_check",
+      "ablation": "long_short_paper_leverage_diagnostic",
+      "spec_path": "strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml",
+      "fallback": "flat_no_trade_if_universe_or_bars_unavailable",
+      "data_contract": "data_v1_sip_minute_and_daily_orb_stocks_in_play",
+      "feature_contract": "feature_v1_orb_stocks_in_play_relvol_selection",
+      "label_contract": "label_v1_orb_trade_outcome_stop_or_eod",
+      "validation_contract": "validation_v1_design_then_select_then_2026_already_seen",
+      "cost_contract": "cost_v1_5_10_20bps_plus_commission_orb_stocks_in_play",
+      "benchmark_contract": "benchmark_v1_orb_stocks_in_play_diagnostics",
+      "parameters": {
+        "opening_range_minutes": 5,
+        "opening_range_window": "09:30-09:34:59 ET (5 one-minute bars)",
+        "entry_time": "09:35 ET (stop order placed at range extreme, filled if touched)",
+        "entry_type": "stop_order_at_range_extreme",
+        "doji_rule": "exact open==close in the opening range -> no order (paper's own rule)",
+        "stop_loss_fraction_of_atr14": 0.1,
+        "profit_target": null,
+        "exit_rule": "stop_or_end_of_session_16_00_et",
+        "atr_lookback_days": 14,
+        "avg_volume_lookback_days": 14,
+        "relative_volume_definition": "first-5-minute volume on day t / mean of first-5-minute volume over the trailing 14 trading days",
+        "risk_per_trade_pct_of_slot_capital": 0.01,
+        "slot_capital_convention": "equal split across max_positions (equity_or_buying_power / max_positions per slot, per QuantConnect's replication formula), capped at 1/max_positions portfolio weight per name",
+        "max_positions": 20,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open_for_the_09:35_entry_bar",
+        "stop_fill_variants_to_report": [
+          "same_bar_conservative",
+          "one_bar_late_qc_forum_variant"
+        ],
+        "cost_bps_per_side_to_report": [
+          5.0,
+          10.0,
+          20.0
+        ],
+        "commission_per_share_cross_check": 0.0035,
+        "candidate_id": "SIP03",
+        "allow_long": true,
+        "allow_short": true,
+        "price_floor_usd": 5.0,
+        "avg_volume_floor_shares_per_day": 1000000,
+        "atr_floor_usd": 0.5,
+        "relative_volume_floor": 1.0,
+        "top_n_by_relative_volume": 20,
+        "leverage_cap": 4.0,
+        "leverage_cap_source": "paper_own_parameter_for_fidelity_check_only",
+        "promotion_eligible": false,
+        "role_note": "Diagnostic only: the paper's headline Sharpe 2.81 is a combined long+short number with no published long-only split, so this candidate exists solely to sanity-check implementation fidelity against that magnitude before trusting SIP01/SIP02's long-only results. Never eligible for promotion regardless of outcome."
+      }
+    }
+  ],
+  "candidate_count": 3,
+  "contracts": {
+    "data": {
+      "data_v1_sip_minute_and_daily_orb_stocks_in_play": {
+        "sip_hist_minute_glob": "data/sip-hist/minute/{year}/{month:02d}/shard-*.parquet",
+        "sip_minute_glob": "data/sip/minute/{year}/{month:02d}/shard-*.parquet",
+        "sip_daily_glob": "data/sip/daily/*/*.parquet",
+        "source": "alpaca SIP minute + daily archives, adjustment=all (fully adjusted)",
+        "hygiene": "drop bars with zero volume; require >=60 RTH minute bars/session",
+        "design_window": [
+          "2016-01-04",
+          "2022-12-30"
+        ],
+        "select_window": [
+          "2023-09-18",
+          "2025-12-31"
+        ],
+        "report_2026_window": [
+          "2026-01-02",
+          "2026-09-17"
+        ]
+      }
+    },
+    "features": {
+      "feature_v1_orb_stocks_in_play_relvol_selection": {
+        "opening_range": "09:30:00-09:34:59 ET, 5 one-minute bars; high/low/open/close",
+        "relative_volume": "first-5-minute volume on day t / mean(first-5-minute volume, trailing 14 trading days), per claim_id orb_sip_eligibility_filters",
+        "eligibility_filters": "candidate-specific price/avg-volume/ATR/relvol floors, see each candidate's parameters",
+        "selection": "rank eligible stocks by relative_volume descending; take top_n; cross-sectional, computed by a future runner script, not the per-symbol factor engine (same pattern as s3_defense_first_h20260923_12's cross-symbol rank stand-in)",
+        "atr14": "14-trading-day average true range from data/sip/daily, used for the eligibility floor and the stop-loss distance"
+      }
+    },
+    "labels": {
+      "label_v1_orb_trade_outcome_stop_or_eod": {
+        "definition": "per selected name per day: stop-order fill at the opening range extreme (or no trade if not touched or doji), outcome = protective-stop exit (10% of ATR14 from entry) or end-of-session close, whichever comes first; no profit target"
+      }
+    },
+    "validation": {
+      "validation_v1_design_then_select_then_2026_already_seen": {
+        "design": [
+          "2016-01-04",
+          "2022-12-30"
+        ],
+        "select": [
+          "2023-09-18",
+          "2025-12-31"
+        ],
+        "report_2026_already_seen": [
+          "2026-01-02",
+          "2026-09-17"
+        ],
+        "no_holdout_claim": "2026 is reported for continuity only; per docs/plan-research-coverage-2026-09-23.zh.md section 1.6 this window has already been used by several other directions this month and is not a clean out-of-sample claim here"
+      }
+    },
+    "costs": {
+      "cost_v1_5_10_20bps_plus_commission_orb_stocks_in_play": {
+        "contract_path": "reports/research/iterations/h20260923_13_orb_stocks_in_play/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_orb_stocks_in_play_diagnostics": {
+        "members": [
+          "SPY_buy_and_hold",
+          "equal_weight_daily_eligible_universe",
+          "cash_proxy_bil_or_shy",
+          "RD_random_direction_placebo",
+          "RL_random_non_in_play_liquid_stock_placebo",
+          "ETF_ORB_known_negative_reference_dir_orb_etf_opening_range_breakout",
+          "ex_post_best_performer_paper_table4_upper_bound_warning_only"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml": "d6046d5bebdba39137f9265d233a9674a8da5d77cd377f6a166dac42888aecc3"
+  },
+  "source_spec_path": "strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml",
+  "spec_hash": "d6046d5bebdba39137f9265d233a9674a8da5d77cd377f6a166dac42888aecc3"
+}

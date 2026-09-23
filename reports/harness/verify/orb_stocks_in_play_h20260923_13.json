@@ -1,0 +1,208 @@
+{
+  "schema_version": 2,
+  "verification_contract": "harness_verify_v2",
+  "strategy_name": "orb_stocks_in_play_h20260923_13",
+  "spec_path": "strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml",
+  "spec_file_sha256": "a1fcf281407afe4bee8f2713b4716cfc9104bf05b79d679ba6c2e6973411a900",
+  "spec_semantic_sha256": "d6046d5bebdba39137f9265d233a9674a8da5d77cd377f6a166dac42888aecc3",
+  "stage": "research",
+  "risk_domains": [
+    "router_strategy",
+    "short_selling"
+  ],
+  "required_artifacts": [
+    "borrow_cost_estimate",
+    "ex_dividend_risk_note",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "short_exposure_policy",
+    "short_sale_source_cards",
+    "short_squeeze_stress"
+  ],
+  "artifact_path_overrides": {
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl",
+      "required_claim_ids": [
+        "orb_sip_universe_survivorship_and_adjustment",
+        "orb_sip_eligibility_filters",
+        "orb_sip_entry_stop_exit_mechanics",
+        "orb_sip_sizing_and_leverage",
+        "orb_sip_reported_results",
+        "orb_qc_universe_and_replication_scope",
+        "orb_qc_one_bar_late_stop_fill_and_alpaca_execution_risk",
+        "orb_etf_simplification_2026_self_critique_no_stock_level_update"
+      ]
+    }
+  },
+  "plan_binding": null,
+  "config_bindings": {
+    "risk_domains": {
+      "path": "harness/risk_domains.yaml",
+      "sha256": "d0bd4d8e5368de57a8063fd2a973c897063a127b153c739e96787e29cde8f3c9",
+      "size_bytes": 13714
+    },
+    "artifact_contracts": {
+      "path": "harness/artifact_contracts.yaml",
+      "sha256": "97716bc4789e65c586d6d69b382273673baee1b4ded74e539575cafe5eebdf3c",
+      "size_bytes": 14710
+    }
+  },
+  "artifacts": [
+    {
+      "name": "borrow_cost_estimate",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "position_direction",
+        "status",
+        "borrow_rate_assumption_annual_pct",
+        "shortable_field_required"
+      ],
+      "path": "reports/research/orb_stocks_in_play_h20260923_13-borrow-cost-estimate.json",
+      "binding": null
+    },
+    {
+      "name": "ex_dividend_risk_note",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [],
+      "path": "reports/research/orb_stocks_in_play_h20260923_13-ex-dividend-risk-note.md",
+      "binding": null
+    },
+    {
+      "name": "router_cost_stress",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "scenarios",
+        "recommendation"
+      ],
+      "path": "reports/research/orb_stocks_in_play_h20260923_13-router-cost-stress.json",
+      "binding": null
+    },
+    {
+      "name": "router_data_evidence",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "data_source",
+        "acquisition_tier",
+        "data_profile"
+      ],
+      "path": "reports/research/orb_stocks_in_play_h20260923_13-router-data-evidence.json",
+      "binding": null
+    },
+    {
+      "name": "router_execution_observation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "execution_substate",
+        "target_weights_path",
+        "rebalance_intents_path"
+      ],
+      "path": "reports/execution/orb_stocks_in_play_h20260923_13-execution-observation.json",
+      "binding": null
+    },
+    {
+      "name": "router_rebalance_intents",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "intents",
+        "summary",
+        "execution_substate"
+      ],
+      "path": "reports/execution/orb_stocks_in_play_h20260923_13-rebalance-intents.json",
+      "binding": null
+    },
+    {
+      "name": "router_target_weights",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "target_weights",
+        "summary",
+        "acquisition_tier"
+      ],
+      "path": "reports/execution/orb_stocks_in_play_h20260923_13-target-weights.json",
+      "binding": null
+    },
+    {
+      "name": "router_validation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "portfolio_mode",
+        "summary",
+        "blockers"
+      ],
+      "path": "reports/research/orb_stocks_in_play_h20260923_13-router-validation.json",
+      "binding": null
+    },
+    {
+      "name": "short_exposure_policy",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "position_direction",
+        "max_gross_short_exposure",
+        "paper_auto_default",
+        "requires"
+      ],
+      "path": "reports/harness/execution/orb_stocks_in_play_h20260923_13-short-exposure-policy.json",
+      "binding": null
+    },
+    {
+      "name": "short_sale_source_cards",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "claim_id",
+        "claim",
+        "source_url",
+        "source_type",
+        "accessed_at",
+        "applies_to",
+        "impact_on_spec",
+        "limitations"
+      ],
+      "path": "reports/harness/source_cards/orb_stocks_in_play_h20260923_13.jsonl",
+      "binding": null
+    },
+    {
+      "name": "short_squeeze_stress",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "scenarios",
+        "kill_switch_recommendation"
+      ],
+      "path": "reports/research/orb_stocks_in_play_h20260923_13-short-squeeze-stress.json",
+      "binding": null
+    }
+  ],
+  "overall": "blocked"
+}

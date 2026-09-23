@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260923_13_orb_stocks_in_play_historical_evaluation_authorization",
+  "iter_id": "h20260923_13_orb_stocks_in_play",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 3,
+    "evaluation_authorized_count": 3,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 3,
+    "rows": [
+      {
+        "candidate_id": "SIP01",
+        "path": "orb_stocks_in_play_screen",
+        "action": "evaluate",
+        "reason_code": "minute_and_daily_sip_archives_present_disclosed_caveats_see_path_gates",
+        "candidate_binding_sha256": "a89f71fe185b129405964c0f7dd490d150de3af96ba1f51e45a4bcf0b3fb9cc5"
+      },
+      {
+        "candidate_id": "SIP02",
+        "path": "orb_stocks_in_play_screen",
+        "action": "evaluate",
+        "reason_code": "minute_and_daily_sip_archives_present_disclosed_caveats_see_path_gates",
+        "candidate_binding_sha256": "685bb7c6e9f036af6c976d6ef7e8bdbcecc17e0258a3121380c6b439c4d3ee1d"
+      },
+      {
+        "candidate_id": "SIP03",
+        "path": "orb_stocks_in_play_screen",
+        "action": "evaluate",
+        "reason_code": "minute_and_daily_sip_archives_present_disclosed_caveats_see_path_gates",
+        "candidate_binding_sha256": "debf9ed9a2b93f341ca155acf212d513fe5e59902c03d4f5ef9fa2d03cdf8f8c"
+      }
+    ]
+  },
+  "path_gates": {
+    "orb_stocks_in_play_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "SIP01",
+        "SIP02",
+        "SIP03"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "GO, with disclosed caveats. Verified this pass by direct, read-only inspection (directory listings, _LAYOUT.json/_MANIFEST.json contents, script source reading -- no simulation run): both minute archives exist and cover the proposed windows (data/sip-hist/minute: 2016-2022, 1,118 shard files/month, 13,414-symbol universe per _LAYOUT.json; data/sip/minute: 2023-2026, confirmed 1,266 shard keys / ~13,578 symbol slots in its shard_symbols index, _COMPLETE_2023_2026.json records 1,279,495,748 total rows across 13,405 symbols); data/sip/daily exists for the 14-day average-volume/ATR eligibility filters and for the benchmark family. Five caveats are disclosed, none of which block evaluation but all of which bound the claim any result can make: (1) both archives were populated by scripts/fetch_sip_universe.py's load_universe(), which calls Alpaca get_all_assets(status=ACTIVE) -- a CURRENT tradable-asset snapshot, not a point-in-time historical listing, so some fraction of the paper's survivorship-bias-free universe (delisted/acquired names) is likely not locally coverable; (2) the only survivorship-bias-corrected archive found (data/sip-delisted/, ~4,833 symbols per by_year/_MANIFEST.json) is DAILY-BAR ONLY, confirmed by direct listing to have no 'minute' subdirectory, so this gap cannot be patched from local data without a new fetch; (3) data/sip/minute/_LAYOUT.json's own note states shards 0-316 of each year were written under an earlier, different batch_size=40 layout and 'hold a different symbol slice than their index implies under the current layout' -- any candidate symbol landing in that range needs a direct symbol-column read before trusting the index, exactly the discipline scripts/run_h20260918_02_orb_etf.py already used for its 4 fixed symbols; (4) data/sip-hist/minute (2016-2022, the design window) has NO shard_symbols manifest at all -- building one (reading just the `symbol` column of each shard for one representative month, then spot-checking stability across years, per engine-design.md) is a bounded, previously-demonstrated-feasible prerequisite engineering step, not a capability gap; (5) fetch_sip_universe.py requests adjustment='all' (fully split+dividend adjusted) while the paper's own text states its IQFeed intraday data 'remained unadjusted for stock splits or dividends' (claim_id orb_sip_universe_survivorship_and_adjustment) -- a confirmed, disclosed methodology difference from the source paper, not a missing capability; (6) whether the minute archive includes pre-market prints is NOT directly verified this pass -- inferred only, from scripts/run_h20260918_02_orb_etf.py's own defensive filter (`raw[(ny_time >= 09:30) & (ny_time <= 16:00)]`) applied before that script does anything else with the bars, which would be a no-op if the source never carried pre-9:30 rows; the cheapest direct check (a single-symbol, single-day timestamp scan for rows before 09:30 ET) is named but not run here, and Stage 1 in engine-design.md's own 09:30-09:35 WHERE clause is written to exclude pre-market prints from the opening range regardless of the answer, so this gap does not block evaluate/go but is flagged as unverified rather than silently assumed. None of (1)-(6) is a missing data capability (the market.alpaca_bars capability and the underlying minute/daily archives all exist); all six are disclosed limitations on how far any future result's claim can reach, and (3)-(4) are concrete prerequisite engineering steps named in engine-design.md, to be done before, not during, the first evaluation run."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/orb_stocks_in_play_h20260923_13.yaml",
+      "sha256": "a1fcf281407afe4bee8f2713b4716cfc9104bf05b79d679ba6c2e6973411a900"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260923_13_orb_stocks_in_play/cost-contract.json",
+      "sha256": "76aa5723999f7dabf8da42732cca08739bebdd29c5a5fb4e22740fdab2213602"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260923_13_orb_stocks_in_play.jsonl",
+      "sha256": "2efd113cec6fd7db7380cb080d0a6a5d4e844e471c8269197f0557de407d5a6e"
+    }
+  }
+}
