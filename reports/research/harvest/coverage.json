@@ -150,9 +150,10 @@
     "dir:pead_xbrl_8k_llm",
     "dir:earnings_8k_tone_next_day",
     "dir:earnings_announcement_premium_decay",
-    "dir:llm_earnings_call_transcript_pricing"
+    "dir:llm_earnings_call_transcript_pricing",
+    "dir:pead_classic_sue_microcap_decay"
    ],
-   "gap": "8-K tone refuted at next day; surprise-based PEAD from free XBRL never built",
+   "gap": "8-K tone refuted at next day; surprise-based PEAD from free XBRL never built Classic SUE PEAD is microcap-only through 2024 (UCLA replication, ex-microcap t=1.43); test on our tiers with free XBRL before anything fancier.",
    "next": "build XBRL surprise + earnings-day gap event table (week 1)"
   },
   {
@@ -168,9 +169,13 @@
    "directions": [
     "dir:buyback_announcement_effect",
     "dir:index_addition_deletion_effect",
-    "dir:fda_calendar_binary_events"
+    "dir:fda_calendar_binary_events",
+    "dir:event_8k_item402_restatement_drift",
+    "dir:spinoff_outperformance_recent_decay",
+    "dir:seo_atm_offering_dilution_drift",
+    "dir:buyback_execution_vs_announcement"
    ],
-   "gap": "no event table by 8-K item; offerings, spin-offs, M&A never searched",
+   "gap": "no event table by 8-K item; offerings, spin-offs, M&A never searched Item 4.02 restatement drift real (n=8,143, -2.0% at 20d) but short/avoidance use; spin-offs, SEO/ATM, buyback execution: weak evidence.",
    "next": "event table from EDGAR submissions (week 1-2)"
   },
   {
@@ -206,7 +211,8 @@
    "status": "searched",
    "directions": [
     "dir:index_rebalance_flow_prediction",
-    "dir:passive_flow_commodity_etf_price_impact_pwb"
+    "dir:passive_flow_commodity_etf_price_impact_pwb",
+    "dir:etf_creation_redemption_flow_constituents"
    ],
    "gap": "options-expiration and LETF-rebalance effects on constituents never searched",
    "next": "search wave week 2"
@@ -224,7 +230,8 @@
    "directions": [
     "dir:short_interest_avoidance_gate",
     "dir:short_interest_ratio_crowding_factor",
-    "dir:finra_daily_short_volume_bjz"
+    "dir:finra_daily_short_volume_bjz",
+    "dir:sec_fails_to_deliver_signal"
    ],
    "gap": "daily short volume downloaded but never tested; fails-to-deliver never searched",
    "next": "signal card (week 1)"
@@ -264,7 +271,10 @@
     "dir:alt_data_satellite_app_supply_chain",
     "dir:congressional_trading_disclosure",
     "dir:analyst_estimate_revisions",
-    "dir:buy_side_analyst_recommendations_pwb"
+    "dir:buy_side_analyst_recommendations_pwb",
+    "dir:wikipedia_pageview_attention_signal",
+    "dir:job_postings_hiring_alt_data",
+    "dir:github_commit_activity_signal"
    ],
    "gap": "Wikipedia page views and job postings never searched; most others weak or paid",
    "next": "search wave (running)"
@@ -348,7 +358,9 @@
     "dir:skewness_preference_52wk_high_pwb",
     "dir:moving_average_volume_heuristic_pwb",
     "dir:drift_regime_conditional_factor_unicorn_edge",
-    "dir:trend_filtered_mean_variance_pwb"
+    "dir:trend_filtered_mean_variance_pwb",
+    "dir:factor_momentum_timing_decay",
+    "dir:long_only_fundamental_decile_10k"
    ],
    "gap": "judged long-short and whole-universe; long-only small-cap and low-capacity tiers never checked",
    "next": "signal cards by liquidity tier"
@@ -366,7 +378,8 @@
    "directions": [
     "dir:orb_stocks_in_play_relative_volume",
     "dir:overnight_intraday_gap_retail_pwb",
-    "dir:intraday_reversal_reit_pwb"
+    "dir:intraday_reversal_reit_pwb",
+    "dir:closing_auction_imbalance_signal"
    ],
    "gap": "all intraday tests so far were on ETFs",
    "next": "stocks-in-play feasibility and test (week 1); news momentum (week 2)"
@@ -418,9 +431,11 @@
    "directions": [
     "dir:signed_jump_variation",
     "dir:realized_skewness_weekly",
-    "dir:cn_sellside_hf_factors"
+    "dir:cn_sellside_hf_factors",
+    "dir:etf_constituent_lead_lag_reversion",
+    "dir:high_freq_news_return_underreaction_drift"
    ],
-   "gap": "signed jump variation triaged only",
+   "gap": "signed jump variation triaged only Top of I-20260923-07: signed high-frequency news-return underreaction (JFE, ~1.37%/mo net 2000-12) and ETF-to-constituent daily reversion; both data on hand.",
    "next": "signal card from the minute panel"
   },
   {
@@ -519,9 +534,11 @@
    "directions": [
     "dir:text_to_pit_feature_extraction",
     "dir:lazy_prices_10k_changes",
-    "dir:llm_acceptance_judge_forward_shadow"
+    "dir:llm_acceptance_judge_forward_shadow",
+    "dir:llm_analyst_report_narrative_alpha",
+    "dir:llm_8k_gdelt_sentiment_acceleration"
    ],
-   "gap": "8-K tone refuted; broader extraction never run",
+   "gap": "8-K tone refuted; broader extraction never run Analyst-report narrative alpha needs paid Investext (owner: no paid data); 8-K + GDELT sentiment acceleration is weak but free and cheap to kill.",
    "next": "local 7B-14B model on the GPU machine for bulk labeling"
   },
   {
@@ -614,7 +631,8 @@
    "status": "searched",
    "directions": [
     "dir:intraday_cointegration_pairs_pca",
-    "dir:deep_learning_stat_arb_residual"
+    "dir:deep_learning_stat_arb_residual",
+    "dir:sector_residual_reversal_statarb_decay"
    ],
    "gap": "never tested; the short leg needs an owner permission, the long-only leg (buy the cheap side) was never isolated",
    "next": "search wave week 2; long-leg-only test before any short-permission request"
