@@ -139,7 +139,7 @@ class SearchLogEntry(BaseModel):
 
     id: str = Field(pattern=r"^search:[A-Za-z0-9_.:-]+$")
     date: str
-    channel: str = Field(min_length=2)
+    channel: str = Field(min_length=1)  # "x" is a channel
     tool: str = Field(min_length=2)
     query: str = Field(min_length=2)
     results_seen: int | None = None

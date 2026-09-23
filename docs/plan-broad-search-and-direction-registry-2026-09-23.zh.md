@@ -63,8 +63,8 @@
 | 结果库 | paperswithbacktest、Ken French、AQR、JKP、OSAP、q-factor | 站内搜索 | 可以。paperswithbacktest 已抽样 2,335/5,341 个策略（`I-20260923-04`） |
 | 量化博客汇总 | Quantocracy | 站内搜索 | 可以 |
 | 博客 / Substack / Medium | 帖子 | Exa 语义搜索；SearXNG（Google、Brave、Bing、Yahoo） | 直连（curl_cffi）或 Jina |
-| Reddit（r/algotrading、r/LETFs …） | 帖子 | Exa 能搜到帖子；Arctic Shift 存档按版块全文搜索 | Arctic Shift 按帖子 id 读全文。reddit.com 本身仍然 403 |
-| X / Twitter | 帖子 | **不行** | 需要一个小号的 cookie（twscrape 或 Agent-Reach 的 twitter 渠道） |
+| Reddit（r/algotrading、r/LETFs …） | 帖子、评论 | Exa；Arctic Shift 存档按版块全文搜索，延迟不到 1 小时 | Arctic Shift 读帖子全文和评论树，不需要账号。reddit.com 本身仍然 403；只是不能发帖 |
+| X / Twitter | 推文 | 不用 cookie：Google/Brave/Yahoo 搜 `site:x.com`。**站内搜索和账号时间线要小号 cookie**（twscrape，已装好） | 单条推文：fxtwitter，不用 cookie |
 | GitHub | 代码、awesome 清单 | API（代码搜索要免费 token） | 可以 |
 | TradingView 脚本库 | Pine 策略 | SearXNG `site:` | 可以 |
 | 公众号 | 券商金工、量化作者 | 搜狗微信（SearXNG 引擎）；Exa | 永久链接直连可读；搜狗临时链接走浏览器 |
@@ -134,7 +134,7 @@
 
 **还缺的，需要机主提供**
 
-- X/Twitter：一个小号的 cookie。美股一手信息在 X 上很多，这是现在最大的缺口。
+- X/Twitter：一个小号的 cookie（`auth_token` 和 `ct0`）。放进 `search.env` 后运行 `harvest_search.py x-login` 验证。美股一手信息在 X 上很多，这是现在最大的缺口。
 
 ## 6. 测试漏斗与第一批
 

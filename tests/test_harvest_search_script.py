@@ -75,6 +75,26 @@ def test_reddit_post_id_and_url_normalization(hs) -> None:
     assert hs.normalize_url("HTTPS://Example.com/a/b/#frag") == "https://example.com/a/b"
 
 
+def test_tweet_ids_route_x_links(hs) -> None:
+    assert hs.tweet_id("https://x.com/QuantifiedStrat/status/2076003084375851403") == (
+        "2076003084375851403"
+    )
+    assert hs.tweet_id("https://twitter.com/jack/status/20?s=21") == "20"
+    assert hs.tweet_id("https://x.com/QuantifiedStrat") is None
+
+
+def test_top_comments_skip_removed_and_rank_by_score(hs) -> None:
+    tree = [
+        {"kind": "t1", "data": {"body": "Nice", "score": 3}},
+        {"kind": "t1", "data": {"body": "[removed]", "score": 90}},
+        {"kind": "t1", "data": {"body": "Overfit: 426 configs\nno OOS", "score": 40}},
+    ]
+    text = hs.format_top_comments(tree)
+    assert text.index("Overfit: 426 configs no OOS") < text.index("Nice")
+    assert "[removed]" not in text
+    assert hs.format_top_comments([]) == ""
+
+
 def test_priority_puts_live_us_records_first(hs) -> None:
     base = {"concrete": 0.9, "us_long_only": 0.9, "recent": 1.0, "code": 0.0}
     live = hs.priority({**base, "evidence": "live_record", "market": "us_stocks_etfs"})

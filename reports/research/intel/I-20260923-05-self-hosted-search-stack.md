@@ -122,7 +122,30 @@ scripts/setup_search_tools.sh
   - Reddit 只走学术存档，不碰 reddit.com；
   - 账号 cookie 只用机主提供的小号。
 
-## 7. 还缺什么
+## 7. Reddit 与 X 的访问范围（09-23 晚补测）
 
-- **X/Twitter**：需要一个小号的 cookie（twscrape 或 Agent-Reach 的 twitter 渠道）。美股一手信息在 X 上很多，这是现在最大的缺口。
+**Reddit：能读，不能写**
+
+- 通过 Arctic Shift 存档读取，不需要账号。
+- 实测延迟很短：r/LETFs 最新帖子是 0.7 小时前的，r/algotrading 最新评论是 0.3 小时前的。
+- 评论树可读。脚本读帖子时会附上得分最高的 8 条一级评论。
+- 评论里常有关键的反面证据。例：LRS Sentinel 帖子里，作者自己贴出按起点年份分开的结果：
+  - 2001 年起：年化 17.7%，最大回撤 −72.5%；
+  - 2013 年起：年化 49.9%，即正文标题里的数字。
+- 缺的只有发帖和投票，研究用不上。
+
+**X：没有 cookie 时能找、能读单条；有 cookie 才能搜和看时间线**
+
+- **不用 cookie**：
+  - 发现：用 SearXNG 的 Google、Brave、Yahoo 搜 `site:x.com`，一次约 30 条推文链接；
+  - 读取：fxtwitter 的 `api.fxtwitter.com/status/<id>`（全文、作者、点赞数），X 官方 oEmbed 作备用（长推文会被截断）；
+  - 以下都已失效：fxtwitter 带用户名的旧路径（401）、官方 syndication（400）、nitter.net（连不上）；Exa 不收录 x.com。
+- **用小号 cookie（`auth_token` + `ct0`）**：
+  - 用 twscrape（2.8k 星，09-22 仍在更新）接入 X 自己的搜索（按"最新"排序）和账号时间线：`run --channel x --query ...`、`run --channel x --x-user <账号>`；
+  - cookie 放进 `search.env` 后，运行 `harvest_search.py x-login` 验证并存进 `/opt/oc-search/x-accounts.db`（权限 600），全程不打印 cookie；
+  - 风险：X 的条款不允许脚本抓取，被识别时账号可能被锁，所以只用小号，并保持低频。
+
+## 8. 还缺什么
+
+- **X 的站内搜索和时间线**：等机主提供小号 cookie。
 - **知乎站内搜索、聚宽全站**：中文渠道已降级，不再追。

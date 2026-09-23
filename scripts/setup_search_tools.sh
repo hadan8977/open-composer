@@ -5,12 +5,15 @@
 # must never touch the project's pinned packages (on 2026-09-23 a transitive
 # install replaced polars-lts-cpu with an AVX2 build and crashed pytest).
 #
-#   $OC_SEARCH_HOME/venv    curl_cffi, camoufox + its Firefox build, trafilatura, agent-reach
+#   $OC_SEARCH_HOME/venv    curl_cffi, camoufox + its Firefox build, trafilatura, twscrape,
+#                           agent-reach
 #   $OC_SEARCH_HOME/sxvenv  SearXNG at a pinned commit, served on 127.0.0.1:8888 only
 #   $OC_SEARCH_HOME/cache   page-text cache
 #
 # Keys stay in /root/.config/open-composer/search.env (mode 600): JEV_API_KEY,
-# optionally GITHUB_TOKEN. Re-running is safe; it only fills in what is missing.
+# optionally GITHUB_TOKEN and X_COOKIES (a secondary account's auth_token + ct0,
+# stored for twscrape by `harvest_search.py x-login`).
+# Re-running is safe; it only fills in what is missing.
 set -euo pipefail
 
 HOME_DIR="${OC_SEARCH_HOME:-/opt/oc-search}"
@@ -24,7 +27,7 @@ mkdir -p "$HOME_DIR/cache"
 # 1. Fetch/read tools.
 [ -x "$HOME_DIR/venv/bin/python" ] || "$UV" venv -q "$HOME_DIR/venv" --python 3.12
 "$UV" pip install -q --python "$HOME_DIR/venv/bin/python" \
-  "curl_cffi==0.16.3" "camoufox==0.5.6" "trafilatura==2.2.0" \
+  "curl_cffi==0.16.3" "camoufox==0.5.6" "trafilatura==2.2.0" "twscrape==0.20.1" \
   "agent-reach @ https://github.com/Panniantong/agent-reach/archive/${AGENT_REACH_COMMIT}.zip"
 "$HOME_DIR/venv/bin/python" -m camoufox fetch >/dev/null
 

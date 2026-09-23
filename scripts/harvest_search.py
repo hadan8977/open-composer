@@ -15,6 +15,11 @@ decision model) six typed questions about it, and writes
   each with a short excerpt, how the page was read, and Jev's answers;
 - one row in ``reports/research/harvest/search-log.jsonl``.
 
+Channels: ``exa`` (semantic web search), ``web`` (local SearXNG; ``--site``),
+``reddit`` (the Arctic Shift archive, posts plus top comments), ``x`` (X search or
+``--x-user`` timelines through the owner's cookie once ``x-login`` has stored it;
+without it, tweets found by search engines) and ``github``.
+
 Jev only orders the reading list. Numbers in posts stay author-reported, and a
 direction enters ``directions.jsonl`` only after ``oc research directions check``.
 Full page text is cached outside the repo, in ``/opt/oc-search/cache``.
@@ -58,8 +63,12 @@ SITE_ENGINES = "google,brave,yahoo"
 BROWSER_HOSTS = ("xueqiu.com", "zhihu.com")
 EXA_ONLY_HOSTS = ("joinquant.com",)
 DEFAULT_SUBREDDITS = ("algotrading", "quant", "LETFs", "options", "investing")
-CHANNELS = ("exa", "web", "reddit", "github")
+CHANNELS = ("exa", "web", "reddit", "x", "github")
+# twscrape keeps the owner's X cookie session here (mode 600, outside the repo).
+X_DB = TOOLS / "x-accounts.db"
+X_ACCOUNT = "oc_x"
 MIN_TEXT = 400
+MIN_TWEET = 20
 STATE_CHARS = 6000
 EXCERPT_CHARS = 400
 
@@ -292,11 +301,7 @@ def search_reddit(query: str, n: int, subreddits: list[str]) -> tuple[list[Resul
                     engine=f"arctic_shift:r/{sub}",
                     published=created.date().isoformat(),
                     snippet=body[:1500],
-                    extra={
-                        "score": post.get("score"),
-                        "num_comments": post.get("num_comments"),
-                        "selftext": body,
-                    },
+                    extra={"score": post.get("score"), "num_comments": post.get("num_comments")},
                 )
             )
         time.sleep(2)
@@ -327,6 +332,73 @@ def search_github(query: str, n: int) -> tuple[list[Result], str]:
     return results, ""
 
 
+def tweet_id(url: str) -> str | None:
+    match = re.search(r"(?:x|twitter)\.com/[^/?#]+/status(?:es)?/(\d+)", url)
+    return match.group(1) if match else None
+
+
+def _x_api():
+    from twscrape import API
+
+    return API(str(X_DB), raise_when_no_account=True, wait_timeout=60)
+
+
+def x_ready() -> bool:
+    """True once ``x-login`` has stored an active cookie session."""
+    if not X_DB.is_file():
+        return False
+    import asyncio
+
+    return any(info.get("active") for info in asyncio.run(_x_api().pool.accounts_info()))
+
+
+def search_x(query: str, n: int, user: str | None) -> tuple[list[Result], str, str]:
+    """X search or one account's timeline through the owner's cookie session.
+
+    Without a cookie, X's own search is out of reach; tweets are then found by
+    search engines (``site:x.com``) and read one by one through fxtwitter.
+    """
+    if not x_ready():
+        if user:
+            raise RuntimeError("an account timeline needs an X cookie: run `x-login` first")
+        results, notes = search_searxng(f"site:x.com {query}", n, SITE_ENGINES)
+        note = "no X cookie: tweets found through search engines only"
+        tool = f"harvest_search.py:searxng({SITE_ENGINES}) site:x.com"
+        return [r for r in results if tweet_id(r.url)], tool, f"{note}; {notes}".strip("; ")
+
+    import asyncio
+
+    async def collect():
+        from twscrape import gather
+
+        api = _x_api()
+        if user:
+            profile = await api.user_by_login(user)
+            if profile is None:
+                raise RuntimeError(f"no X account @{user}")
+            return await gather(api.user_tweets(profile.id, limit=n))
+        return await gather(api.search(query, limit=n, kv={"product": "Latest"}))
+
+    results = [
+        Result(
+            url=tweet.url,
+            title=tweet.rawContent.split("\n", 1)[0][:120],
+            engine="x:twscrape",
+            published=tweet.date.date().isoformat(),
+            snippet=tweet.rawContent[:1500],
+            extra={
+                "author": tweet.user.username,
+                "likes": tweet.likeCount,
+                "retweets": tweet.retweetCount,
+                "views": tweet.viewCount,
+                "tweet_text": tweet.rawContent,
+            },
+        )
+        for tweet in asyncio.run(collect())[:n]
+    ]
+    return results, "harvest_search.py:twscrape", ""
+
+
 def run_search(args: argparse.Namespace) -> tuple[list[Result], str, str]:
     """Return results, a tool label for the search log, and engine notes."""
     if args.channel == "exa":
@@ -341,6 +413,8 @@ def run_search(args: argparse.Namespace) -> tuple[list[Result], str, str]:
         subs = args.subreddit or list(DEFAULT_SUBREDDITS)
         results, notes = search_reddit(args.query, args.n, subs)
         return results, f"harvest_search.py:arctic_shift({','.join(subs)})", notes
+    if args.channel == "x":
+        return search_x(args.query, args.n, getattr(args, "x_user", None))
     results, notes = search_github(args.query, args.n)
     return results, "harvest_search.py:github_api", notes
 
@@ -372,6 +446,19 @@ def reddit_post_id(url: str) -> str | None:
     return match.group(1) if match else None
 
 
+def format_top_comments(tree: list[dict[str, Any]], keep: int = 8, chars: int = 400) -> str:
+    comments = [node.get("data") or {} for node in tree]
+    live = [c for c in comments if c.get("body") and c["body"] not in ("[removed]", "[deleted]")]
+    live.sort(key=lambda c: -(c.get("score") or 0))
+    if not live:
+        return ""
+    lines = []
+    for comment in live[:keep]:
+        body = re.sub(r"\s+", " ", comment["body"])[:chars]
+        lines.append(f"- ({comment.get('score')}) {body}")
+    return "\n\nTop comments:\n" + "\n".join(lines)
+
+
 def _extract(html: str) -> str:
     import trafilatura
 
@@ -396,15 +483,21 @@ class Reader:
             self._camoufox = self._page = None
 
     def read(self, result: Result) -> tuple[str, str]:
+        """Return (text, how it was read); how is "none" when no path produced text."""
         url, host = result.url, (urlsplit(result.url).hostname or "")
-        if result.extra.get("selftext") is not None:  # arctic shift returns the whole post
-            return f"{result.title}\n\n{result.extra.pop('selftext')}", "arctic_shift"
-        cache = TOOLS / "cache" / (hashlib.sha1(url.encode()).hexdigest() + ".json")
+        if result.extra.get("tweet_text"):  # twscrape already returned the whole tweet
+            author = result.extra.get("author", "")
+            return f"@{author} ({result.published}): {result.extra['tweet_text']}", "twscrape"
+        # v2: Reddit reads include the top comments.
+        cache = TOOLS / "cache" / (hashlib.sha1(f"v2:{url}".encode()).hexdigest() + ".json")
         if cache.is_file():
             cached = json.loads(cache.read_text(encoding="utf-8"))
             if not looks_blocked(cached["text"]):
                 return cached["text"], cached["via"] + "(cached)"
-        if host.endswith("reddit.com") and reddit_post_id(url):
+        minimum = MIN_TWEET if tweet_id(url) else MIN_TEXT
+        if tweet_id(url):
+            attempts = [("fxtwitter", self._fxtwitter), ("x_oembed", self._oembed)]
+        elif host.endswith("reddit.com") and reddit_post_id(url):
             attempts = [("arctic_shift", self._arctic), ("exa_fetch", self._exa)]
         elif host.endswith(EXA_ONLY_HOSTS):
             attempts = [("exa_fetch", self._exa)]
@@ -419,7 +512,7 @@ class Reader:
             except Exception as exc:  # a failed path falls through to the next one
                 print(f"  read {name} failed for {url[:70]}: {str(exc)[:90]}", file=sys.stderr)
                 text = ""
-            if len(text) >= MIN_TEXT and not looks_blocked(text):
+            if len(text) >= minimum and not looks_blocked(text):
                 via = name
                 break
             text = ""
@@ -428,12 +521,42 @@ class Reader:
         return text, via
 
     def _arctic(self, url: str) -> str:
-        resp = _http().get(f"{ARCTIC}/posts/ids", params={"ids": reddit_post_id(url)}, timeout=60)
+        """The post plus its highest-scored top-level comments, where critiques and
+        the author's later live results usually are."""
+        http, post_id = _http(), reddit_post_id(url)
+        resp = http.get(f"{ARCTIC}/posts/ids", params={"ids": post_id}, timeout=60)
         resp.raise_for_status()
         posts = resp.json().get("data") or []
         if not posts:
             return ""
-        return f"{posts[0].get('title', '')}\n\n{posts[0].get('selftext') or ''}".strip()
+        text = f"{posts[0].get('title', '')}\n\n{posts[0].get('selftext') or ''}".strip()
+        tree = http.get(f"{ARCTIC}/comments/tree", params={"link_id": post_id}, timeout=60)
+        if tree.status_code == 200:
+            text += format_top_comments(tree.json().get("data") or [])
+        return text
+
+    def _fxtwitter(self, url: str) -> str:
+        resp = _http().get(
+            f"https://api.fxtwitter.com/status/{tweet_id(url)}", impersonate="chrome", timeout=30
+        )
+        tweet = (resp.json().get("tweet") or {}) if resp.status_code == 200 else {}
+        if not tweet.get("text"):
+            return ""
+        author = (tweet.get("author") or {}).get("screen_name", "")
+        text = f"@{author} ({tweet.get('created_at', '')}): {tweet['text']}"
+        quoted = (tweet.get("quote") or {}).get("text")
+        if quoted:
+            text += f"\n\nQuoted: {quoted}"
+        return text + f"\n[likes {tweet.get('likes')}, replies {tweet.get('replies')}]"
+
+    def _oembed(self, url: str) -> str:
+        resp = _http().get(
+            "https://publish.twitter.com/oembed",
+            params={"url": url, "omit_script": 1},
+            timeout=30,
+        )
+        html = resp.json().get("html", "") if resp.status_code == 200 else ""
+        return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)).strip()
 
     def _direct(self, url: str) -> str:
         resp = _http().get(url, impersonate="chrome", timeout=40)
@@ -499,7 +622,11 @@ def cmd_run(args: argparse.Namespace) -> int:
     today = datetime.now(UTC).date().isoformat()
     log_path = HARVEST / "search-log.jsonl"
     log_rows = read_jsonl(log_path)
-    label = f"site:{args.site} {args.query}" if args.site else args.query
+    x_user = getattr(args, "x_user", None)
+    if x_user:  # a timeline is worth re-reading on another day
+        label = f"@{x_user.lstrip('@')} timeline {today}"
+    else:
+        label = f"site:{args.site} {args.query}" if args.site else args.query
     repeats = [
         r["id"] for r in log_rows if r.get("channel") == args.channel and r["query"] == label
     ]
@@ -525,12 +652,12 @@ def cmd_run(args: argparse.Namespace) -> int:
     try:
         for index, result in enumerate(fresh[: args.max_read]):
             text, result.read_via = reader.read(result)
-            body = text if len(text) >= MIN_TEXT else result.snippet
+            body = text
             if result.read_via == "none":
-                result.read_via = "snippet"
+                body, result.read_via = result.snippet, "snippet"
             result.text_chars = len(body)
             result.excerpt = re.sub(r"\s+", " ", body)[:EXCERPT_CHARS]
-            result.extra.pop("selftext", None)
+            result.extra.pop("tweet_text", None)
             if key:
                 state = f"Title: {result.title}\nURL: {result.url}\n"
                 state += f"Published: {result.published}\n\n{body[:STATE_CHARS]}"
@@ -591,15 +718,43 @@ def cmd_fetch(args: argparse.Namespace) -> int:
     return 0 if text else 1
 
 
+def cmd_x_login(args: argparse.Namespace) -> int:
+    """Store the owner's X cookie session for twscrape; the cookie is never printed."""
+    cookies = load_key("X_COOKIES") or ""
+    if "auth_token=" not in cookies or "ct0=" not in cookies:
+        print(f"put X_COOKIES='auth_token=...; ct0=...' into {KEY_FILE} first", file=sys.stderr)
+        return 2
+    import asyncio
+
+    async def store_and_test():
+        api = _x_api()
+        await api.pool.delete_accounts(X_ACCOUNT)
+        await api.pool.add_account_cookies(X_ACCOUNT, cookies)
+        return await api.user_by_login(args.test_user)
+
+    old_umask = os.umask(0o077)
+    try:
+        user = asyncio.run(store_and_test())
+    finally:
+        os.umask(old_umask)
+    X_DB.chmod(0o600)
+    if user is None:
+        print("cookie stored, but the test lookup failed: it may be expired", file=sys.stderr)
+        return 1
+    print(f"X cookie works (looked up @{user.username}); session stored in {X_DB}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="search one channel, read, rank with Jev, log")
     run.add_argument("--channel", choices=CHANNELS, required=True)
-    run.add_argument("--query", required=True)
+    run.add_argument("--query", default="", help="required except for --x-user")
     run.add_argument("--site", help="web channel only: restrict to a site, e.g. xueqiu.com")
     run.add_argument("--engines", help="web channel only: override the SearXNG engine list")
     run.add_argument("--subreddit", action="append", help="reddit channel; repeatable")
+    run.add_argument("--x-user", help="x channel: read this account's timeline (needs x-login)")
     run.add_argument("--n", type=int, default=10, help="results to request per source")
     run.add_argument("--max-read", type=int, default=20, help="results to read and triage")
     run.add_argument("--show", type=int, default=10)
@@ -610,14 +765,24 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("url")
     fetch.add_argument("--chars", type=int, default=2000)
     fetch.set_defaults(func=cmd_fetch)
+    login = sub.add_parser("x-login", help="store the X cookie from search.env and test it")
+    login.add_argument("--test-user", default="XDevelopers")
+    login.set_defaults(func=cmd_x_login)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if getattr(args, "site", None) and args.channel != "web":
-        print("--site only applies to --channel web", file=sys.stderr)
-        return 2
+    if args.command == "run":
+        if args.site and args.channel != "web":
+            print("--site only applies to --channel web", file=sys.stderr)
+            return 2
+        if args.x_user and args.channel != "x":
+            print("--x-user only applies to --channel x", file=sys.stderr)
+            return 2
+        if len(args.query) < 2 and not args.x_user:
+            print("--query is required", file=sys.stderr)
+            return 2
     return args.func(args)
 
 
