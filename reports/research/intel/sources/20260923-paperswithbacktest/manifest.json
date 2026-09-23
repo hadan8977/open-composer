@@ -1,0 +1,50 @@
+{
+  "fetched_at": "2026-09-23T03:45:50Z",
+  "source": "paperswithbacktest.com",
+  "tools_used": ["curl -A \"Mozilla/5.0 (research; open-composer)\"", "rate limit: >= 2s between requests, mostly via explicit `sleep 2`"],
+  "robots_txt": {
+    "url": "https://paperswithbacktest.com/robots.txt",
+    "fetched": true,
+    "content": "User-agent: *\nDisallow: /admin/\nDisallow: /api/\nSitemap: https://paperswithbacktest.com/sitemap.xml",
+    "interpretation": "Everything under /strategies/ is allowed. /api/ is explicitly disallowed; the site's own client-side pagination and search widgets call /api/ under the hood, so we did not call /api/ directly and did not drive a JS browser to trigger it indirectly either."
+  },
+  "terms_and_pricing": {
+    "terms_url": "https://paperswithbacktest.com/terms",
+    "terms_last_updated_shown": "2026-08-12",
+    "operator": "EADBA, a SARL company registered in France",
+    "pricing_url": "https://paperswithbacktest.com/pricing",
+    "tiers": [
+      {"name": "Free", "price": "0", "includes": "browsing the catalog, listing pages, dataset pages and the course are free with no login; one lifetime strategy unlock (paper + runnable Python + backtest) kept forever; $1 one-time research-agent budget"},
+      {"name": "Reader", "price": "$10/month", "includes": "premium blog & newsletter, plus catalog/browser-agent access per the FAQ; page text ordering suggests code/datasets are NOT part of this tier (the $50 tier is explicitly where '5,000+ strategies with runnable Python' and '1.04 TB of clean datasets' are listed)"},
+      {"name": "Backtester", "price": "$50/month or $300/year", "includes": "5,000+ strategies with runnable Python code, 1.04 TB of datasets, $10/month research-agent budget, MCP connector for Claude/Codex/Cursor, 100 strategy 'unlocks' per calendar month, the algo-trading course"},
+      {"name": "Institution", "price": "custom", "includes": "everything in Backtester plus seats, SLA, dedicated Slack, custom datasets"}
+    ],
+    "api_or_dataset_download": "No public/free API and no bulk dataset download found. robots.txt names an /api/ path that backs the site's own UI (search box, pagination beyond page 1); it is not documented or offered as a public API and is covered by Disallow. A 'research agent' (in-browser sandbox) and an MCP connector exist, but both are paid-plan features that operate on the account holder's own unlocked strategies, not a bulk export.",
+    "no_login_no_paywall_bypass": "We did not create an account, log in, or attempt to unlock any paid strategy/code/dataset. Everything recorded here is what the site serves to an anonymous, unauthenticated request."
+  },
+  "catalog_enumeration": {
+    "sitemap_url": "https://paperswithbacktest.com/sitemap.xml",
+    "sitemap_total_urls": 5780,
+    "sitemap_strategy_slugs": 5341,
+    "sitemap_other_strategy_pages": 32,
+    "claimed_catalog_size": "~5,000 (site copy: 'Search 5,000 peer-reviewed trading strategies' and pricing page: '5,000+ strategies with runnable Python'); sitemap has 5,341 individual /strategies/<slug> URLs, consistent with that claim",
+    "pagination_finding": "The default listing at /strategies is fully server-rendered (50 real strategy cards with Sharpe/period/asset-class/rebalancing chips embedded in the initial HTML). /strategies/page/2 .. /strategies/page/88 (the deepest page number the pagination widget names) return HTTP 200 but an EMPTY shell (~112KB, only nav/footer, zero strategy cards) -- confirmed by fetching page 2 twice (byte-identical, 111689 bytes both times) and page 88. The path-based pager depends on client-side JavaScript, almost certainly calling the /api/ route robots.txt disallows, so we did not paginate through it and did not drive a headless browser to do so either (that would just relocate the same disallowed call into a browser process). A bare query-string variant (/strategies?page=2) 308-redirects away rather than paginating.",
+    "search_workaround": "The full-text search box (/strategies?q=<term>) IS server-rendered (confirmed: returns up to 50 real cards with full stats, e.g. ?q=momentum). This path is under /strategies, not /api/, so it is allowed by robots.txt. We used it as a policy-compliant way to sample far beyond the 50 cards on page 1.",
+    "queries_run": 102,
+    "query_list_note": "1 default listing (/strategies) + 102 distinct ?q= keyword searches across four rounds (finance/factor vocabulary, asset classes, rebalancing styles, sector/commodity themes); see reports/research/harvest/search-log.jsonl entry search:20260923:pwb:catalog for the query themes",
+    "unique_strategy_cards_recovered": 2335,
+    "unique_cards_as_pct_of_sitemap_slugs": "43.7%",
+    "diminishing_returns_observed": "round 1 (30 queries): 38 strategies qualified for the shortlist filter; round 2 (+30 queries, cumulative 60): 44 qualified; round 3 (+25, cumulative 85): 46 qualified; round 4 (+15, cumulative 100): 47 qualified. Marginal yield per query batch fell from ~1.5 new qualifiers/query to ~0.1, so we stopped rather than exhaustively searching the remaining ~3,000 unseen slugs.",
+    "what_could_not_be_reached": [
+      "The remaining ~56% of the 5,341-strategy catalog beyond our 2,335-card keyword-search sample: full pagination is blocked (see pagination_finding above); reaching every strategy would require either the disallowed /api/ or opening all 5,341 individual detail pages one at a time, which is far beyond the 'up to 60 detail pages' this task calls for.",
+      "Runnable Python code for any strategy: never shown on a public strategy page in our sample; it is a paid-plan unlock ('5,000+ strategies with runnable Python' is explicitly a Backtester-tier line item). We did not attempt to unlock it.",
+      "Per-year (or per-month) numeric return breakdowns on detail pages: each detail page shows a 'Net worth' chart with 1Y/3Y/5Y/10Y/Max view toggles, but the chart's underlying data points are not present as static text or embedded JSON in the server-rendered HTML (likely fetched client-side); we recorded 'not shown as static text' rather than reading values off a chart we cannot render, and rather than reverse-engineering the chart's client-side data source.",
+      "Exact per-page 'current positions' counts for a few strategies whose detail page does not render a positions table at all (shown as null in catalog/shortlist data, not a parsing failure)."
+    ]
+  },
+  "rate_limiting": {
+    "policy": "minimum 2 seconds between requests, enforced with `sleep 2` before every request after the first handful of exploratory fetches",
+    "total_requests_this_session": "~158 (1 robots.txt, 1 sitemap.xml, 1 terms, 1 pricing, ~6 exploratory listing/pagination probes, 102 search-query listing fetches, 47 strategy detail-page fetches)",
+    "blocked_or_throttled": "none observed: every request returned HTTP 200 (one 308 redirect on an unsupported query-string pagination guess, not a block)"
+  }
+}
