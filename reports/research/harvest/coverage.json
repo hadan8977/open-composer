@@ -1,0 +1,654 @@
+{
+ "schema_version": 1,
+ "updated": "2026-09-23",
+ "plan": "docs/plan-research-coverage-2026-09-23.zh.md",
+ "statuses": [
+  "untested",
+  "searched",
+  "testing",
+  "tested_partial",
+  "tested_refuted",
+  "live",
+  "blocked_data",
+  "blocked_permission",
+  "blocked_hardware",
+  "out_of_scope"
+ ],
+ "cells": [
+  {
+   "id": "trend_momentum.etf_letf_rotation",
+   "family": "trend_momentum",
+   "name": "ETF and leveraged-ETF momentum rotation",
+   "horizon": "week_month",
+   "universe": [
+    "etf",
+    "levered_etf"
+   ],
+   "status": "live",
+   "directions": [
+    "dir:s3_levered_rotation_voltarget_dip_boost",
+    "dir:s2_growth_rotation_voltarget",
+    "dir:recent_window_etf_menu_rotation",
+    "dir:levered_industry_trend_second_bet",
+    "dir:levered_single_asset_sma_trend_gate",
+    "dir:levered_menu_expansion",
+    "dir:s3_rank_optimization",
+    "dir:cn_ashare_etf_rotation_posts",
+    "dir:etf_dual_momentum_rotation_gem_pools",
+    "dir:composer_rsi_branch_uvxy",
+    "dir:pooled_etf_relative_strength_no_menu",
+    "dir:mechanical_volband_beta_grouping",
+    "dir:precious_metals_levered_trend",
+    "dir:uisx3_leveraged_allocation",
+    "dir:tqqq_levered_gold_pair_rebalance",
+    "dir:letf_multi_signal_regime_vote",
+    "dir:volatility_gated_momentum_aegis",
+    "dir:sector_momentum_middle_tier_buy"
+   ],
+   "gap": "S1-S3 live in paper; bear-market risk measured (2016-2023 -48%)",
+   "next": "batch 3 (Defense First remainder), then leave"
+  },
+  {
+   "id": "trend_momentum.stock_momentum",
+   "family": "trend_momentum",
+   "name": "Individual-stock momentum (cross-sectional, residual, industry-relative)",
+   "horizon": "week_month",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "tested_partial",
+   "directions": [
+    "dir:equity_momentum_concentrated_pwb",
+    "dir:clenow_stocks_on_the_move_momentum",
+    "dir:capital_gain_momentum_no_dividend",
+    "dir:collective2_us_stock_momentum_top10_sp500",
+    "dir:ema_crossover_atr_paper_track",
+    "dir:reversal_trend_hourly_selection_alpha"
+   ],
+   "gap": "only the rule top-50 book was run; residual and industry-relative momentum never tested; never combined with other signals",
+   "next": "signal card on the broad universe, then feature in the multi-source model"
+  },
+  {
+   "id": "reversal.stock_short_term_reversal",
+   "family": "reversal",
+   "name": "Individual-stock 1-5 day reversal, industry-adjusted, by liquidity tier",
+   "horizon": "day_week",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "untested",
+   "directions": [],
+   "gap": "no standalone long-only test by liquidity tier",
+   "next": "signal card (week 1)"
+  },
+  {
+   "id": "reversal.etf_mean_reversion",
+   "family": "reversal",
+   "name": "ETF short-term mean reversion rules",
+   "horizon": "day_week",
+   "universe": [
+    "etf"
+   ],
+   "status": "tested_refuted",
+   "directions": [
+    "dir:giants_sweep_published_etf_rules",
+    "dir:tactical_mean_reversion_multi_asset_pwb"
+   ],
+   "gap": "",
+   "next": "none"
+  },
+  {
+   "id": "reversal.end_of_day_and_gap",
+   "family": "reversal",
+   "name": "End-of-day reversal and overnight gap fade",
+   "horizon": "intraday_overnight",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "tested_partial",
+   "directions": [
+    "dir:end_of_day_reversal",
+    "dir:cross_sectional_gap_fade"
+   ],
+   "gap": "gap fade edge sits in the illiquid short leg; end-of-day reversal triaged only",
+   "next": "measure real open costs (P2-A); test end-of-day reversal long leg"
+  },
+  {
+   "id": "event.insider_13d",
+   "family": "event",
+   "name": "Insider buying and 13D activist filings",
+   "horizon": "day_month",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "tested_refuted",
+   "directions": [
+    "dir:insider_form4_confirmation_gate",
+    "dir:insider_buy_independent_broad_universe",
+    "dir:insider_cluster_buy_top500",
+    "dir:event_13d_drift",
+    "dir:activist_13d_long_horizon_hold"
+   ],
+   "gap": "insider tests were partly gates on momentum; still refuted standalone",
+   "next": "re-run as signal cards feeding the multi-source model only"
+  },
+  {
+   "id": "event.earnings_pead",
+   "family": "event",
+   "name": "Post-earnings drift, earnings-day gap continuation, guidance",
+   "horizon": "day_month",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "untested",
+   "directions": [
+    "dir:pead_xbrl_8k_llm",
+    "dir:earnings_8k_tone_next_day",
+    "dir:earnings_announcement_premium_decay",
+    "dir:llm_earnings_call_transcript_pricing"
+   ],
+   "gap": "8-K tone refuted at next day; surprise-based PEAD from free XBRL never built",
+   "next": "build XBRL surprise + earnings-day gap event table (week 1)"
+  },
+  {
+   "id": "event.8k_item_events",
+   "family": "event",
+   "name": "8-K item-coded events (1.01, 2.02, 5.02, ...), offerings/ATM, spin-offs, M&A targets, dividend changes, biotech catalysts",
+   "horizon": "day_month",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "untested",
+   "directions": [
+    "dir:buyback_announcement_effect",
+    "dir:index_addition_deletion_effect",
+    "dir:fda_calendar_binary_events"
+   ],
+   "gap": "no event table by 8-K item; offerings, spin-offs, M&A never searched",
+   "next": "event table from EDGAR submissions (week 1-2)"
+  },
+  {
+   "id": "flows_structural.calendar_and_fomc",
+   "family": "flows_structural",
+   "name": "Turn of month, pre-FOMC, pre-holiday",
+   "horizon": "day",
+   "universe": [
+    "etf",
+    "levered_etf",
+    "large_cap"
+   ],
+   "status": "searched",
+   "directions": [
+    "dir:turn_of_month_equity_seasonality",
+    "dir:pre_fomc_announcement_drift",
+    "dir:end_of_month_reversal_effect",
+    "dir:sectoral_intramonth_momentum",
+    "dir:front_running_sector_seasonality"
+   ],
+   "gap": "harvested, not tested",
+   "next": "cheap test after batch 3"
+  },
+  {
+   "id": "flows_structural.rebalance_and_hedging_flows",
+   "family": "flows_structural",
+   "name": "Index rebalance, month-end pension rebalance, options expiration and dealer hedging, leveraged-ETF close rebalancing, ETF creation/redemption",
+   "horizon": "day_intraday",
+   "universe": [
+    "large_cap",
+    "etf"
+   ],
+   "status": "searched",
+   "directions": [
+    "dir:index_rebalance_flow_prediction",
+    "dir:passive_flow_commodity_etf_price_impact_pwb"
+   ],
+   "gap": "options-expiration and LETF-rebalance effects on constituents never searched",
+   "next": "search wave week 2"
+  },
+  {
+   "id": "alt_data.short_selling",
+   "family": "alt_data",
+   "name": "FINRA daily short volume, short interest, fails-to-deliver",
+   "horizon": "day_week",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "tested_partial",
+   "directions": [
+    "dir:short_interest_avoidance_gate",
+    "dir:short_interest_ratio_crowding_factor",
+    "dir:finra_daily_short_volume_bjz"
+   ],
+   "gap": "daily short volume downloaded but never tested; fails-to-deliver never searched",
+   "next": "signal card (week 1)"
+  },
+  {
+   "id": "alt_data.news_social",
+   "family": "alt_data",
+   "name": "News flow, social attention, sentiment",
+   "horizon": "intraday_week",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "tested_partial",
+   "directions": [
+    "dir:news_attention_features",
+    "dir:retail_sentiment_attention",
+    "dir:news_sentiment_trading_pwb"
+   ],
+   "gap": "counts refuted; LLM-scored sentiment on 680k items never run as a standalone signal",
+   "next": "local LLM scoring on the GPU machine, then signal card"
+  },
+  {
+   "id": "alt_data.web_and_other",
+   "family": "alt_data",
+   "name": "Web attention, analysts, institutional holdings and other alternative data",
+   "horizon": "week_quarter",
+   "universe": [
+    "large_cap"
+   ],
+   "status": "searched",
+   "directions": [
+    "dir:patent_grant_event_kpss",
+    "dir:government_contract_flow_signal",
+    "dir:lobbying_spend_signal",
+    "dir:13f_holdings_replication",
+    "dir:alt_data_satellite_app_supply_chain",
+    "dir:congressional_trading_disclosure",
+    "dir:analyst_estimate_revisions",
+    "dir:buy_side_analyst_recommendations_pwb"
+   ],
+   "gap": "Wikipedia page views and job postings never searched; most others weak or paid",
+   "next": "search wave (running)"
+  },
+  {
+   "id": "options.options_signals",
+   "family": "options",
+   "name": "Implied-volatility skew, IV minus realized vol, unusual options volume",
+   "horizon": "day_week",
+   "universe": [
+    "large_cap"
+   ],
+   "status": "blocked_data",
+   "directions": [
+    "dir:options_derived_signals_retail",
+    "dir:option_implied_variance_premium_pwb",
+    "dir:options_data_deferred_owner_decision",
+    "dir:iv_informed_dip_mean_reversion_live"
+   ],
+   "gap": "no point-in-time options history locally",
+   "next": "feasibility with Alpaca options data since 2024; purchase is an owner decision"
+  },
+  {
+   "id": "options.options_income",
+   "family": "options",
+   "name": "Option selling income",
+   "horizon": "week_month",
+   "universe": [
+    "etf"
+   ],
+   "status": "blocked_permission",
+   "directions": [
+    "dir:put_credit_spread_income",
+    "dir:naked_options_income_0dte",
+    "dir:broker_native_bracket_multileg_options",
+    "dir:covered_call_cef_income_pwb"
+   ],
+   "gap": "Alpaca limits (no naked short options, no OCO multi-leg)",
+   "next": "none unless the owner changes permissions"
+  },
+  {
+   "id": "fundamental.pit_accounting",
+   "family": "fundamental",
+   "name": "Value, quality, profitability, accruals, accounting changes",
+   "horizon": "month_quarter",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "blocked_data",
+   "directions": [
+    "dir:jkp_accounting_change_factors",
+    "dir:classic_long_short_anomalies_recent",
+    "dir:fundamental_scoring_dcf_lynch_retail_product"
+   ],
+   "gap": "no point-in-time fundamentals",
+   "next": "build a PIT fundamentals table from SEC XBRL company facts (free)"
+  },
+  {
+   "id": "factor_library.anomaly_replication",
+   "family": "factor_library",
+   "name": "Published anomalies and formulaic factor libraries",
+   "horizon": "day_month",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "tested_partial",
+   "directions": [
+    "dir:gtja191_alpha_formulas",
+    "dir:osap_ml_ranking",
+    "dir:classic_long_short_anomalies_recent",
+    "dir:classic_anomalies_beta_size_europe_pwb",
+    "dir:classic_anomalies_factor_reviews_pwb",
+    "dir:esg_smart_beta_pwb",
+    "dir:regime_smart_beta_shariah_pwb",
+    "dir:market_inefficiency_scoring_pwb",
+    "dir:long_short_ratio_extension_pwb",
+    "dir:nominal_price_anomaly_pwb",
+    "dir:dual_class_share_arbitrage_pwb",
+    "dir:skewness_preference_52wk_high_pwb",
+    "dir:moving_average_volume_heuristic_pwb",
+    "dir:drift_regime_conditional_factor_unicorn_edge",
+    "dir:trend_filtered_mean_variance_pwb"
+   ],
+   "gap": "judged long-short and whole-universe; long-only small-cap and low-capacity tiers never checked",
+   "next": "signal cards by liquidity tier"
+  },
+  {
+   "id": "intraday_hf.stock_intraday",
+   "family": "intraday_hf",
+   "name": "Stocks-in-play opening-range breakout, news momentum, auctions, VWAP deviation, lead-lag",
+   "horizon": "intraday",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "untested",
+   "directions": [
+    "dir:orb_stocks_in_play_relative_volume",
+    "dir:overnight_intraday_gap_retail_pwb",
+    "dir:intraday_reversal_reit_pwb"
+   ],
+   "gap": "all intraday tests so far were on ETFs",
+   "next": "stocks-in-play feasibility and test (week 1); news momentum (week 2)"
+  },
+  {
+   "id": "intraday_hf.etf_intraday",
+   "family": "intraday_hf",
+   "name": "ETF opening-range breakout, SPY noise-band momentum",
+   "horizon": "intraday",
+   "universe": [
+    "etf",
+    "levered_etf"
+   ],
+   "status": "tested_refuted",
+   "directions": [
+    "dir:orb_etf_opening_range_breakout",
+    "dir:spy_noise_band_intraday",
+    "dir:monday_afternoon_reversal_index_timing",
+    "dir:orb_futures_confirmation_filter"
+   ],
+   "gap": "",
+   "next": "none"
+  },
+  {
+   "id": "intraday_hf.true_hft",
+   "family": "intraday_hf",
+   "name": "Market making, latency arbitrage, order-book imbalance",
+   "horizon": "intraday",
+   "universe": [
+    "large_cap"
+   ],
+   "status": "blocked_hardware",
+   "directions": [
+    "dir:true_hft_market_making"
+   ],
+   "gap": "needs co-location and depth data",
+   "next": "none"
+  },
+  {
+   "id": "intraday_hf.hf_derived_daily",
+   "family": "intraday_hf",
+   "name": "High-frequency-derived daily signals (jumps, realized skewness)",
+   "horizon": "day_week",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "tested_partial",
+   "directions": [
+    "dir:signed_jump_variation",
+    "dir:realized_skewness_weekly",
+    "dir:cn_sellside_hf_factors"
+   ],
+   "gap": "signed jump variation triaged only",
+   "next": "signal card from the minute panel"
+  },
+  {
+   "id": "volatility.vol_targeting_and_regime",
+   "family": "volatility",
+   "name": "Volatility targeting, VIX regime, bear gates",
+   "horizon": "day_month",
+   "universe": [
+    "etf",
+    "levered_etf"
+   ],
+   "status": "live",
+   "directions": [
+    "dir:s1_sector_rotation_voltarget",
+    "dir:drawdown_brake_overlay",
+    "dir:s3_bear_regime_guard",
+    "dir:jump_model_regime",
+    "dir:vix_term_structure_short_vol",
+    "dir:letf_decay_short_beta_neutral",
+    "dir:momentum_risk_control_vs_spmo"
+   ],
+   "gap": "",
+   "next": "none beyond batch 3"
+  },
+  {
+   "id": "macro_cross_asset.defensive_rotation",
+   "family": "macro_cross_asset",
+   "name": "Cross-asset defensive rotation and macro state",
+   "horizon": "month",
+   "universe": [
+    "etf"
+   ],
+   "status": "testing",
+   "directions": [
+    "dir:defense_first_taa_carlson_concretum",
+    "dir:macro_credit_drawdown_probability_gate",
+    "dir:spy_sso_tlt_vix_regime_rotation",
+    "dir:macro_relative_value_us_vs_canada_pwb"
+   ],
+   "gap": "",
+   "next": "batch 3 verdict"
+  },
+  {
+   "id": "model.multi_source_ranking",
+   "family": "model",
+   "name": "One per-stock feature table (price, events, alt data, text) with a ranking model",
+   "horizon": "week_month",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "untested",
+   "directions": [
+    "dir:ml_ranking_broad_universe_custom",
+    "dir:qlib_lightgbm_doubleensemble_recipe",
+    "dir:lightgbm_price_volume_recipe_v1_closed",
+    "dir:ml_implied_risk_premia_pwb"
+   ],
+   "gap": "only price-volume versions ran; text and event features never added",
+   "next": "v1 on CPU (week 1), deep versions on GPU (week 2)"
+  },
+  {
+   "id": "model.deep_and_foundation",
+   "family": "model",
+   "name": "Deep cross-sectional and sequence models, time-series foundation models, tabular foundation models",
+   "horizon": "day_month",
+   "universe": [
+    "large_cap",
+    "small_cap",
+    "etf"
+   ],
+   "status": "blocked_hardware",
+   "directions": [
+    "dir:deep_sequence_tabular_foundation_models_gpu",
+    "dir:kronos_kline_foundation_model",
+    "dir:tsfm_zero_shot_returns",
+    "dir:momentum_transformer_spatiotemporal",
+    "dir:fischer_krauss_lstm_xs_ranking",
+    "dir:deep_learning_stat_arb_residual",
+    "dir:finrl_deep_rl"
+   ],
+   "gap": "unblocked once the owner's GPU laptop is connected",
+   "next": "GPU environment check, then Qlib model zoo on the shared feature table"
+  },
+  {
+   "id": "model.llm_text_features",
+   "family": "model",
+   "name": "LLM-extracted features from news and filings",
+   "horizon": "day_month",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "tested_partial",
+   "directions": [
+    "dir:text_to_pit_feature_extraction",
+    "dir:lazy_prices_10k_changes",
+    "dir:llm_acceptance_judge_forward_shadow"
+   ],
+   "gap": "8-K tone refuted; broader extraction never run",
+   "next": "local 7B-14B model on the GPU machine for bulk labeling"
+  },
+  {
+   "id": "model.meta_labeling_and_filters",
+   "family": "model",
+   "name": "Meta-labeling and trade filters on independent signals",
+   "horizon": "day_month",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "tested_partial",
+   "directions": [
+    "dir:meta_labeling_position_tiers"
+   ],
+   "gap": "only tried on the momentum top-50",
+   "next": "re-run on the stocks-in-play and PEAD signals once they exist"
+  },
+  {
+   "id": "model.automated_research",
+   "family": "model",
+   "name": "LLM-driven factor and model search loops",
+   "horizon": "n/a",
+   "universe": [
+    "large_cap"
+   ],
+   "status": "blocked_hardware",
+   "directions": [
+    "dir:rd_agent_q",
+    "dir:llm_hypothesis_code_backtest_loop",
+    "dir:cogalpha_llm_code_alpha_generation",
+    "dir:alphaeval_backtest_free_prescreening",
+    "dir:llm_formulaic_alpha_mining_price_volume",
+    "dir:llm_factor_mining_unverified_claims",
+    "dir:llm_as_trader_portfolio_manager"
+   ],
+   "gap": "needs GPU/Docker; claims mostly unverified",
+   "next": "after the shared feature table exists"
+  },
+  {
+   "id": "portfolio.combination_and_risk",
+   "family": "portfolio",
+   "name": "Combining strategies, risk budgets, account-level drawdown",
+   "horizon": "n/a",
+   "universe": [
+    "etf",
+    "levered_etf",
+    "large_cap"
+   ],
+   "status": "tested_partial",
+   "directions": [
+    "dir:meta_strategy_trailing_return_rotation",
+    "dir:risk_based_portfolio_construction_pwb",
+    "dir:conformal_kelly_sizing"
+   ],
+   "gap": "no account-level combination study yet",
+   "next": "once a second sleeve passes"
+  },
+  {
+   "id": "public_records.copy_verified_live",
+   "family": "public_records",
+   "name": "Copy or learn from third-party-verified live strategies",
+   "horizon": "n/a",
+   "universe": [
+    "etf",
+    "levered_etf",
+    "large_cap"
+   ],
+   "status": "searched",
+   "directions": [
+    "dir:letf_published_rules_live_tracked",
+    "dir:collective2_etf_timer_17yr_live",
+    "dir:collective2_adaptive_investments_knn_tqqq_sqqq",
+    "dir:tqqq_variable_sizing_trend_verified_live",
+    "dir:momentmal2022_wsot_live_multi_strategy",
+    "dir:personal_taa_live_blogs_undisclosed_rules"
+   ],
+   "gap": "no systematic screen of verified records",
+   "next": "one screen of Collective2/Kinfo leaders (browser path needed)"
+  },
+  {
+   "id": "relative_value.pairs_stat_arb",
+   "family": "relative_value",
+   "name": "Pairs, statistical arbitrage on residuals, ETF-versus-constituent spreads",
+   "horizon": "intraday_week",
+   "universe": [
+    "large_cap",
+    "etf"
+   ],
+   "status": "searched",
+   "directions": [
+    "dir:intraday_cointegration_pairs_pca",
+    "dir:deep_learning_stat_arb_residual"
+   ],
+   "gap": "never tested; the short leg needs an owner permission, the long-only leg (buy the cheap side) was never isolated",
+   "next": "search wave week 2; long-leg-only test before any short-permission request"
+  },
+  {
+   "id": "infra.universe_data",
+   "family": "infra",
+   "name": "Tradable universe, delisted backfill, data hygiene",
+   "horizon": "n/a",
+   "universe": [
+    "large_cap",
+    "small_cap"
+   ],
+   "status": "live",
+   "directions": [
+    "dir:broad_universe_delisted_backfill_infra"
+   ],
+   "gap": "",
+   "next": "PIT fundamentals and 8-K item tables next"
+  },
+  {
+   "id": "out_of_scope.crypto_nonus",
+   "family": "out_of_scope",
+   "name": "Crypto, non-US and other markets we cannot trade",
+   "horizon": "n/a",
+   "universe": [],
+   "status": "out_of_scope",
+   "directions": [
+    "dir:crypto_trend_btc",
+    "dir:crypto_xs_momentum",
+    "dir:prediction_market_crypto_as_equity_signal",
+    "dir:frontier_market_factor_pricing_pwb"
+   ],
+   "gap": "",
+   "next": "none"
+  }
+ ]
+}
