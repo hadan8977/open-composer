@@ -884,19 +884,55 @@ SPEC_DEFAULTS = {
 }
 
 
+def percentile_ranks(x: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """Ranks scaled to (0, 1] across the universe each day; NaN elsewhere."""
+    r = masked_ranks(x, mask)
+    n = np.isfinite(r).sum(axis=1, keepdims=True)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return np.where(n > 0, r / np.maximum(n, 1), np.nan).astype(np.float32)
+
+
+def composite_signal(market: Market, components: list[dict]) -> np.ndarray:
+    """Weighted mean of the components' daily percentile ranks (direction
+    applied), over the stocks where every component is known. A binary
+    component (0/1) ranks with ties, so its ones sit near the top."""
+    member = market.member()
+    total = np.zeros(market.open_.shape, dtype=np.float32)
+    known = member.copy()
+    weight = 0.0
+    for comp in components:
+        raw = load_signal(
+            market,
+            source=comp.get("source"),
+            column=comp.get("column"),
+            where=comp.get("where"),
+            sql=comp.get("sql"),
+            lag=comp.get("lag", 0),
+        )
+        pct = percentile_ranks(raw * comp.get("direction", 1), member)
+        known &= np.isfinite(pct)
+        w = float(comp.get("weight", 1.0))
+        total += np.where(np.isfinite(pct), pct, 0.0).astype(np.float32) * w
+        weight += w
+    return np.where(known, total / weight, np.nan).astype(np.float32)
+
+
 def run_spec(
     market: Market, spec: dict, top_n: int, controls: dict[str, np.ndarray] | None
 ) -> dict:
     """One card from a spec dict (the CLI flags, or one entry of a batch manifest)."""
     spec = {**SPEC_DEFAULTS, **spec}
-    signal = load_signal(
-        market,
-        source=spec["source"],
-        column=spec["column"],
-        where=spec["where"],
-        sql=spec["sql"],
-        lag=spec["lag"],
-    )
+    if spec.get("components"):
+        signal = composite_signal(market, spec["components"])
+    else:
+        signal = load_signal(
+            market,
+            source=spec["source"],
+            column=spec["column"],
+            where=spec["where"],
+            sql=spec["sql"],
+            lag=spec["lag"],
+        )
     if spec["mode"] == "rank":
         card = rank_card(
             market,
@@ -914,7 +950,14 @@ def run_spec(
     meta = {
         "name": spec["name"],
         "mode": spec["mode"],
-        "source": spec["sql"] or f"{spec['source']}:{spec['column']}{where}",
+        "source": (
+            "composite: "
+            + ", ".join(
+                f"{c.get('column') or 'sql'}x{c.get('direction', 1):+d}" for c in spec["components"]
+            )
+            if spec.get("components")
+            else spec["sql"] or f"{spec['source']}:{spec['column']}{where}"
+        ),
         "lag": spec["lag"],
         "direction": spec["direction"],
         "threshold": spec["threshold"],

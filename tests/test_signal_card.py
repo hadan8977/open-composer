@@ -123,3 +123,18 @@ def test_admission_and_summary_follow_the_manifest(tmp_path) -> None:
     text = sc.library_summary(manifest, tmp_path)
     assert "| leak | rank | 5d |" in text and "not run" in text
     assert (tmp_path / "lib-summary.md").exists()
+
+
+def test_composite_averages_directional_percentile_ranks(monkeypatch) -> None:
+    m = _market(T=60, N=40)
+    a = np.tile(np.arange(40, dtype=np.float32), (60, 1))
+    b = -a  # opposite ordering
+
+    def fake_load(market, **kw):
+        return a if kw["column"] == "a" else b
+
+    monkeypatch.setattr(sc, "load_signal", fake_load)
+    same = sc.composite_signal(m, [{"column": "a"}, {"column": "b", "direction": -1}])
+    assert np.allclose(same[0], sc.percentile_ranks(a, m.member())[0])
+    flat = sc.composite_signal(m, [{"column": "a"}, {"column": "b"}])
+    assert np.allclose(flat[0], flat[0][0])  # opposite signals cancel to a constant
