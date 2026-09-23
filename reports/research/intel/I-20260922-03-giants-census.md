@@ -138,4 +138,28 @@ E 组结论：高阶策略里真正能在本机、用免费数据、且有文献
 | TimesFM / Chronos / Moirai 零样本（[arXiv 2511.18578](https://arxiv.org/abs/2511.18578)） | 通用时序基础模型零样本预测个股收益 | **R² 为负**：TimesFM −2.80%/策略 −1.47%，Chronos −1.37% | 论文本身即反面证据 | 是（只需推理） | 不做 |
 | RL 执行（[arXiv 2507.06345](https://arxiv.org/abs/2507.06345)） | RL 学最优限价/市价混合 | 无美股可交易数字 | — | 否（需盘口/tick，我们没有） | 不做 |
 
-**G 组结论**：模型这一侧的证据-投入比排序很清楚——**Conformal Kelly（仓位层）> 跳跃模型 regime 择时 > OSAP 截面 ML > meta-labeling > 其余全部不做**。基础模型（Kronos/TimesFM）和深度 RL 都有明确的负面或缺失证据，不值得占用本机算力。
+**G 组结论（2026-09-22 初版）**：模型这一侧的证据-投入比排序是 Conformal Kelly（仓位层）> 跳跃模型 regime 择时 > OSAP 截面 ML > meta-labeling > 其余全部不做。基础模型（Kronos/TimesFM）和深度 RL 都有明确的负面或缺失证据，不值得占用本机算力。
+
+### G 组更正（2026-09-23，读了 Conformal Kelly 原文摘要之后）
+
+**Conformal Kelly 被作者自己的预注册留出窗否定，下架，不复现。** 采集卡只抄了开发窗的数字。原文摘要（快照 `reports/research/intel/sources/20260923-conformal-kelly/`，sha256 `ac04cde38463…`）写得非常清楚：
+
+> "These numbers came from an autonomous LLM-agent search over **200 configurations**, so we **sealed all data from 2022 onward and pre-registered** configurations, benchmarks, and interpretation rules before one evaluation. Calibration held (0.745 coverage against 0.750, weakest through 2022); **growth did not: the two configurations earned 8.5% and 7.0% per year, below the passive benchmarks**, and a pre-registered hindsight benchmark beat them on raw growth while taking a 46% drawdown."
+
+也就是说 28.5% / 夏普 1.34 是在 2016–2021 开发窗上由一次 200 配置的自动搜索得到的，作者自己把 2022 起封存、预注册、然后**跑输了被动基准**。按 `research-mission.zh.md` 的规则（已被否定的路线只有在新增可指认的信息、数据或机制时才能重开），这条不重开。
+
+论文本身是一篇很诚实的作品，从它身上能拿走的是两条**方法结论**而不是一个策略：
+
+1. **"更快适应市场的区间"全都更差**：作者报每一个加速适应的改动都要付 0.7–5.3 个百分点的年化增长，赢家是最笨的那个——slow, unweighted, per-asset rolling quantiles。"When an interval sizes a position rather than describing one forecast, **width stability beats local sharpness**."
+2. **校准会外推，增长不会**：留出窗上覆盖率 0.745 对 0.750 守住了，收益没守住。所以"我的不确定度估计更准了"不能当成"我的仓位会更赚钱"的证据。
+
+**这条与另一条独立负面证据同向**：G 组已收录的 ScienceDirect S1062940826000276 发现更精细的 RV 预测驱动的 vol-targeting 组合风险调整后夏普**均为负**。两条独立证据指向同一个结论——**把仓位层做得更精巧不会带来增长**。这也解释了为什么我们自己的 S3-vt40（一个最朴素的 21 日已实现波动率目标）能过 G1–G5，而更复杂的版本（回撤刹车）没有增量。**结论：仓位层已经做到位了，不要再往那个方向投入；剩下的杠杆在别处。**
+
+**统计跳跃模型的独立证据（2026-09-23 补，比采集卡准确得多）**：
+
+- 论文（[arXiv 2402.05272](https://arxiv.org/abs/2402.05272)）确实含**成本、交易延迟和样本外**评估，美/德/日股指 1990–2023，但摘要不给具体数字。
+- 公开实现存在且质量不错：[`jumpmodels`](https://github.com/Yizhan-Oliver-Shu/jump-models)，scikit-learn 风格 API，官方例子跑在 Nasdaq-100 上，含 JM / CJM / 稀疏 JM。
+- **独立复现给了重要的负面校正**：[atanasovkaloyan7-ui/statistical-jump-model](https://github.com/atanasovkaloyan7-ui/statistical-jump-model) 明确写"**detector did not replicate 原论文的 1.43 夏普**，按他们诚实的成交约定只得到 0.25–0.52"。他们的整体结果（SPY 2008–2025，含成本）：跳跃模型 + sleeve **9.13% CAGR / −22.5% 回撤 / 夏普 0.922**，对比 SPY 11.55% / −51.5% / 0.649。**收益更低、回撤减半、夏普更高——这是风险叠加层，不是 alpha。** 单看 regime 叠加层把回撤从 −43.8% 压到 −33.8%，并且**赢过暴露匹配的平坦账本 17.5 个百分点**。
+- 他们的对照电池值得直接抄：8 项控制，其中作者自称"decisive"的是**暴露匹配对照**（择时是不是只等于长期持有更低的平均暴露），还有**与真策略换手率相同的随机信号安慰剂**。这与我们在 S2 波动率目标上得到的结论同构（夏普升了但随机挑选安慰剂 23.3%，所以只能算风险叠加）。
+
+**更正后的 G 组排序**：**统计跳跃模型 regime 择时 > OSAP 截面 ML > meta-labeling > 其余不做**。Conformal Kelly 移入"已被作者否定"。但要注意跳跃模型的定位已经被独立证据钉死在**回撤控制**上，不是收益来源；而我们本地已经有一条同类的负面（H-20260922-02 的回撤刹车在 S3 上无增量，70% 的日历平移种子打赢它）。所以它只有在"压低回撤 → 允许把杠杆/波动目标调高"这条路径上才有价值，必须带暴露匹配对照一起测。
