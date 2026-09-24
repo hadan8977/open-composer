@@ -322,15 +322,29 @@ def minute_shard_paths(year: int, month: int) -> list[str]:
     December's own 19.09M-row / 6,120-symbol per-month shard set; that 15x
     over-read is what drove the memory-capped build's OOM-kill (cgroup
     anon-rss hit the 1.8GB MemoryMax after 11+ minutes of CPU with zero
-    checkpoints written). Since the per-month directory exists for every
-    month of 2023 (verified) and duplicates the legacy shards' content, this
-    function now prefers the month directory and only falls back to the
-    (expensive, whole-year) legacy glob when no month directory exists at
-    all for that year -- true fallback semantics, not an unconditional union.
+    checkpoints written). This function therefore prefers the month
+    directory and only falls back to the (expensive, whole-year) legacy glob
+    when no month directory exists at all for that year.
+
+    CORRECTION 2026-09-24: the 2023 month directories do NOT duplicate the
+    legacy shards. They are missing roughly a quarter to 40% of 2023
+    symbol-days; for example, AAPL and AMD have no rows in any September-2023
+    month shard but are in the legacy ``2023/shard-0001.parquet``. This was
+    found by the h20260923_13 ORB engine, which now unions the two layouts
+    per (symbol, session). For builds from 2024-01 on, 2023 is read only
+    for the overnight anchor of the first 2024 session, so the loss is a
+    handful of 2024-01-02 events. Do not build 2023 months with this
+    function until it unions the legacy shards (date- and symbol-filtered,
+    then deduplicated).
     """
     year_dir = SIP_MINUTE_ROOT / str(year)
     month_dir = year_dir / f"{month:02d}"
     if month_dir.is_dir():
+        if year == 2023:
+            log(
+                "WARNING minute_shard_paths: 2023 month shards are incomplete (legacy "
+                f"whole-year shards hold symbols they lack); {year}-{month:02d} may miss symbols"
+            )
         return sorted(str(p) for p in month_dir.glob("shard-*.parquet"))
     if year_dir.is_dir():
         return sorted(str(p) for p in year_dir.glob("shard-*.parquet"))
