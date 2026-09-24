@@ -44,3 +44,26 @@ admitted to the signal library, the next step is combining it with the
 existing library (correlation, incremental Sharpe/drawdown) per
 `docs/plan-research-coverage-2026-09-23.zh.md` section 6.2 -- not a standalone
 strategy promotion, since a single signal is never held to the strategy bar.
+
+## Result (2026-09-24) -- stop
+
+The feature was built for 2024-01..2026-09 (33 monthly checkpoints; `data/features/news_hf_reaction/`). The preregistered cards ran with `signal_card.py --batch reports/research/signal-cards/news-hf-v1-manifest.json` (top-3000 PIT universe, 20 bp). The summary is in `reports/research/signal-cards/news-hf-v1-summary.md`.
+
+| card | mode | primary h | result | verdict |
+|---|---|---|---|---|
+| NHF01 `news_hf_reaction_raw` | rank | 5d | IC -0.005, t -0.9; T1 top-30 book -13.9%/yr excess | reject |
+| NHF02 `news_hf_reaction_5d_sum` | rank | 5d | IC -0.003, t -2.5 (wrong sign vs the preregistered continuation); T1 book -6.3% full / -18.0% 2024+ | reject |
+| NHF03 `news_hf_reaction_event_p90` | event | 5d | CAR -0.29%, t -1.9 over 20,448 events; calendar-time book -34.8%/yr | reject |
+
+**Decision: stop.**
+- The signed intraday news reaction does not predict continuation in the 2024-2026 US top-3000 universe at 1-60 day horizons. At 5 days the weak sign is reversal, not drift.
+- This matches the direction-review risk, which found no 2023-2025 independent replication of the Jiang-Li-Wang mechanism.
+- It does not raise the prior for `dir:ml_ranking_broad_universe_custom`. That row's reopen condition (text features) is still unmet in substance: the features exist but carry no standalone signal.
+
+**Caveats.**
+- The sample covers 2024+ only.
+- The news source is Alpaca/Benzinga headlines.
+- The 2024-01-02 overnight anchors used the incomplete 2023 month shards (see the `minute_shard_paths` docstring); this affects a handful of events.
+- A reversal variant (direction -1) was not preregistered and is not claimed. Running it now would be a new trial after seeing these results.
+
+**Reopen if:** a different news source with earlier timestamps (e.g. a PR-wire feed) or a published 2024+ replication of HF news drift appears.
