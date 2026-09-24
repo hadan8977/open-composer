@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "library": "composites-v2",
+  "preregistered_at": "2026-09-24T10:55:00+00:00",
+  "plan": "docs/plan-research-coverage-2026-09-23.zh.md section 6.2; ROE was admitted by fundamentals-v1 on 2026-09-24 (IC 0.026, t 3.0, 2024+ 0.021)",
+  "inputs": "reports/research/signal-cards/fundamentals-v1-summary.md, library-v1-summary.md, composites-v1-summary.md",
+  "selection_disclosure": "ROE was chosen after fundamentals-v1, whose cards include 2024-2026, so 2024+ numbers are not out of sample; the judge is the forward holdout (every month after 2026-09-18) and paper trading. ROE exists only for CIK-mapped names (a current-snapshot map: survivors), so the early years are survivor-biased; the matched reference below uses the same universe and the pass rule is judged on 2024+.",
+  "reference": "mom_12_1_roe_universe",
+  "admission_rule": {
+    "rank": "the library-v1 rank rule (stable_years AND beats_shuffle AND a T1 or T2 top-30 book positive at 20 bp in the full and 2024+ windows AND max |t| >= 2.5)",
+    "beats_reference": "in the 2024+ window, the T1 top-30 book held 20 sessions at 20 bp has a higher Sharpe AND a shallower max drawdown than mom_12_1_roe_universe's; the full-window comparison is reported, not required, because of survivor bias",
+    "strategy_screen": "report the T1 20-session book's 2024+ CAGR and max drawdown against G1 (>= 50%/yr, max DD >= -35%); a pass here only earns a preregistered strategy iteration with the exact anchor window and costs, not a promotion"
+  },
+  "signals": [
+    {
+      "name": "mom_12_1_roe_universe",
+      "mode": "rank",
+      "direction": 1,
+      "primary_horizon": 20,
+      "sql": "SELECT d.symbol, d.trade_date, d.momentum_252_21 AS value FROM read_parquet('data/features/daily_broad/*.parquet') d JOIN read_parquet('data/features/sec_fundamentals_daily/*.parquet', union_by_name=true) f USING (symbol, trade_date) WHERE f.roe IS NOT NULL",
+      "rationale": "reference: 12-1 momentum restricted to names with a usable ROE, so composites are compared on the same universe"
+    },
+    {
+      "name": "comp_c4_mom_roe",
+      "components": [
+        {
+          "source": "data/features/daily_broad",
+          "column": "momentum_252_21",
+          "direction": 1
+        },
+        {
+          "source": "data/features/sec_fundamentals_daily",
+          "column": "roe",
+          "direction": 1
+        }
+      ],
+      "rationale": "momentum plus ROE (quality momentum), equal weight of directional percentile ranks"
+    },
+    {
+      "name": "comp_c5_mom_roe_insider",
+      "components": [
+        {
+          "source": "data/features/daily_broad",
+          "column": "momentum_252_21",
+          "direction": 1
+        },
+        {
+          "source": "data/features/sec_fundamentals_daily",
+          "column": "roe",
+          "direction": 1
+        },
+        {
+          "sql": "SELECT d.symbol, d.trade_date, CASE WHEN i.buyers_60d >= 2 AND i.open_market_buy_count_60d > 0 THEN 1.0 ELSE 0.0 END AS value FROM read_parquet('data/features/daily_broad/*.parquet') d LEFT JOIN read_parquet('data/features/insider_broad/*.parquet', union_by_name=true) i USING (symbol, trade_date)",
+          "direction": 1,
+          "column": "insider_cluster_60d"
+        }
+      ],
+      "rationale": "C4 plus cluster insider buying in the last 60 sessions (0/1), equal weight"
+    }
+  ]
+}
