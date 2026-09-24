@@ -74,6 +74,11 @@ def discover_units(root: Path, kind: str) -> list[PruneUnit]:
         year = int(year_dir.name)
         month_dirs = [d for d in sorted(year_dir.iterdir()) if d.is_dir() and d.name.isdigit()]
         if month_dirs:
+            # Year-level legacy shards that coexist with month dirs are never units:
+            # the two layouts are NOT duplicates (minute/2023: AAPL, AMD, AMZN, AVGO,
+            # BRK.B, COST exist only in the legacy shards, XOM and WMT only in the month
+            # dirs -- reports/research/control/audit-2023-minute-layout-2026-09-24.md).
+            # Deleting either side loses data; keep this exclusion.
             for month_dir in month_dirs:
                 units.append(
                     PruneUnit(kind, year, int(month_dir.name), month_dir, _dir_bytes(month_dir))

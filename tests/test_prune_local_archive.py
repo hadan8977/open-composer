@@ -90,3 +90,15 @@ def test_missing_remote_backup_blocks_deletion(
 def test_retention_horizons_match_the_agreed_storage_split() -> None:
     assert RETENTION_DAYS["daily"] == 3653
     assert RETENTION_DAYS["minute"] == 1278
+
+
+def test_legacy_year_shards_beside_month_dirs_are_never_units(tmp_path: Path) -> None:
+    # minute/2023 holds both layouts and they are not duplicates; legacy files must stay.
+    _write_shard(tmp_path, "minute", 2023, None)
+    for month in (1, 2):
+        _write_shard(tmp_path, "minute", 2023, month)
+    units = discover_units(tmp_path, "minute")
+    assert [u.label for u in units] == ["minute/2023/01", "minute/2023/02"]
+    assert all(u.path != tmp_path / "minute" / "2023" for u in units)
+    far_future = datetime(2035, 1, 1, tzinfo=UTC)
+    assert all(u.month is not None for u in select_expired(units, now=far_future))
