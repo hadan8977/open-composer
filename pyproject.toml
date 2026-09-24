@@ -58,6 +58,15 @@ packages = ["open_composer"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+# Vendored third-party skill scripts (ui-ux-pro-max, slop-cop, imported
+# 2026-09-24 from hadan8977/codex-design-skills): not written to this repo's
+# style, mirrored verbatim into .claude/skills by scripts/sync-agent-skills.py.
+extend-exclude = [
+    ".agents/skills/ui-ux-pro-max/scripts",
+    ".agents/skills/slop-cop/scripts",
+    ".claude/skills/ui-ux-pro-max/scripts",
+    ".claude/skills/slop-cop/scripts",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

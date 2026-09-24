@@ -208,6 +208,118 @@ skills:
       - user asks for an implementation plan before coding
     skill_path: .agents/skills/ultracode-reviewer/SKILL.md
 
+# ── Design skills (imported 2026-09-24 from hadan8977/codex-design-skills) ────
+# Cover the Cockpit UI (open_composer/cockpit, frontend/cockpit-v2), not the
+# trading/research surface. No risk domain requires these; they are invoked
+# directly by name for design work. impeccable is the coordinating lead; see
+# .agents/skills/impeccable/reference/skill-map.md for routing between them.
+
+  impeccable:
+    description: >
+      Lead interface design from product goals and visual-reference research
+      through concepts, composition, interaction, implementation, and
+      evidence-based critique for the Cockpit UI.
+    triggers:
+      - new Cockpit surface or substantial redesign
+      - UX planning or a design review without implementation
+    primary_outputs: []
+    skill_path: .agents/skills/impeccable/SKILL.md
+
+  ui-ux-pro-max:
+    description: >
+      Searches local design references for a specific palette, type pairing,
+      visual style, UX/accessibility outcome, chart, motion, or stack question.
+      Supplies candidates to impeccable; does not choose a direction alone.
+    triggers:
+      - a Cockpit design decision needs a targeted reference or precedent
+    primary_outputs: []
+    skill_path: .agents/skills/ui-ux-pro-max/SKILL.md
+
+  avoid-ai-design:
+    description: >
+      Diagnoses and, when requested, revises generic frontend UI choices in the
+      Cockpit using the actual brief, rendered evidence, and preserved behavior.
+    triggers:
+      - a focused de-slop audit or rewrite of existing Cockpit UI is requested
+    primary_outputs: []
+    skill_path: .agents/skills/avoid-ai-design/SKILL.md
+
+  antislop:
+    description: >
+      Purpose-and-integrity check on a generic UI or product copy choice in the
+      Cockpit; complements impeccable, does not start its own design process.
+    triggers:
+      - a repeated Cockpit design choice needs examination for actual purpose
+    primary_outputs: []
+    skill_path: .agents/skills/antislop/SKILL.md
+
+  uncodixfy:
+    description: >
+      Simplifies cluttered task-oriented interfaces (workspaces, dashboards,
+      settings, dense controls) while preserving the established Cockpit
+      identity.
+    triggers:
+      - Cockpit chrome, decoration, spacing, or density interferes with the task
+    primary_outputs: []
+    skill_path: .agents/skills/uncodixfy/SKILL.md
+
+  beautiful-ui:
+    description: >
+      Adapts Beautiful UI interaction patterns for compact action menus,
+      truthful async feedback, and attachment composers in React interfaces.
+      Applies to frontend/cockpit-v2, not the server-rendered Cockpit at `/`.
+    triggers:
+      - frontend/cockpit-v2 needs a compact menu, async-feedback, or composer pattern
+    primary_outputs: []
+    skill_path: .agents/skills/beautiful-ui/SKILL.md
+
+  liquid-materials:
+    description: >
+      Designs fluid-color shaders and glass materials (liquid glass, iridescence,
+      aurora, refractive surfaces) within an already-established visual
+      direction. Use only if a glass/shader effect is explicitly wanted --
+      Cockpit's established direction is flat, cool, Linear/Raycast-style.
+    triggers:
+      - a specific glass, shader, or fluid-color material is explicitly requested
+    primary_outputs: []
+    skill_path: .agents/skills/liquid-materials/SKILL.md
+
+  no-ai-slop:
+    description: >
+      Default prose editor: edits a draft for clarity while preserving facts,
+      uncertainty, and voice, or flags formulaic writing without rewriting.
+    triggers:
+      - a prose draft (docs, copy, UX text) needs editing or a formulaic-writing check
+    primary_outputs: []
+    skill_path: .agents/skills/no-ai-slop/SKILL.md
+
+  stop-slop:
+    description: >
+      Quick, minimal cleanup of short prose: removes empty setup, repetition,
+      and inflated wording while preserving meaning and voice.
+    triggers:
+      - a short prose passage needs a light wording pass, not a full edit
+    primary_outputs: []
+    skill_path: .agents/skills/stop-slop/SKILL.md
+
+  avoid-ai-writing:
+    description: >
+      Detailed Avoid AI Writing rulebook for a contextual prose audit, rewrite,
+      voice profile, or protected-content review. Explicit-invocation only.
+    triggers:
+      - user explicitly selects the detailed Avoid AI Writing rulebook by name
+    primary_outputs: []
+    skill_path: .agents/skills/avoid-ai-writing/SKILL.md
+
+  slop-cop:
+    description: >
+      Evidence-backed quality grade or ticket for prose, UI/design, or code
+      when the user requests scoring, a report-card ticket, or Slop Cop by name.
+    triggers:
+      - user requests a quality grade, ticket, or Slop Cop by name
+    primary_outputs: []
+    skill_path: .agents/skills/slop-cop/SKILL.md
+
 # ── Claude Code hook entry points ─────────────────────────────────────────────
 # Hooks run automatically in Claude Code sessions. They are lightweight scripts;
 # they do NOT invoke skills or run backtests. Skills are invoked separately by
