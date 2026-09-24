@@ -402,7 +402,7 @@ def client() -> TestClient:
     return TestClient(create_app())
 
 
-@pytest.mark.parametrize("path", ["/", "/lineage", "/card/H-20260919-01"])
+@pytest.mark.parametrize("path", ["/", "/hypotheses", "/lineage", "/card/H-20260919-01"])
 def test_screens_return_200(client: TestClient, path: str) -> None:
     response = client.get(path)
     assert response.status_code == 200

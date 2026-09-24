@@ -866,6 +866,49 @@ def build_agent_activity(
     return AgentActivity(kind, path, current_file, last_text, last_entry_at, None)
 
 
+#: The Now screen's live card: how many of a running session's latest tool
+#: calls it shows, and how much transcript tail it reads to find them.
+_LIVE_TOOL_COUNT: Final[int] = 4
+_LIVE_TAIL_BYTES: Final[int] = 128 * 1024
+
+
+@dataclass(frozen=True)
+class LiveSession:
+    """A running session for the Now screen: its record, what it is doing
+    (`activity`), and its last few tool calls, oldest first."""
+
+    record: AgentRecord
+    activity: AgentActivity
+    recent_tools: tuple[TimelineEntry, ...]
+
+
+def build_live_session(
+    record: AgentRecord,
+    *,
+    claude_root: Path | None = None,
+    codex_root: Path | None = None,
+    tools: int = _LIVE_TOOL_COUNT,
+    tail_bytes: int = _LIVE_TAIL_BYTES,
+) -> LiveSession:
+    """One bounded tail read, shared by the activity summary and the tool feed."""
+    empty = AgentActivity("none", None, None, None, None, None)
+    try:
+        kind, path = _resolve_transcript(record, claude_root=claude_root, codex_root=codex_root)
+    except OSError as exc:
+        return LiveSession(record, replace(empty, warning=f"transcript lookup failed: {exc}"), ())
+    if path is None:
+        return LiveSession(record, replace(empty, transcript_kind=kind), ())
+    try:
+        entries = _read_transcript_entries(kind, path, max_bytes=tail_bytes)
+    except OSError as exc:
+        activity = AgentActivity(kind, path, None, None, None, f"transcript unreadable: {exc}")
+        return LiveSession(record, activity, ())
+    current_file, last_text, last_entry_at = summarize_activity(entries)
+    activity = AgentActivity(kind, path, current_file, last_text, last_entry_at, None)
+    recent = [entry for entry in entries if entry.kind == "tool"][-tools:] if tools > 0 else []
+    return LiveSession(record, activity, tuple(recent))
+
+
 # --------------------------------------------------------------------------
 # Agents report (the `/agents` list)
 # --------------------------------------------------------------------------
@@ -1543,6 +1586,7 @@ __all__ = [
     "AgentsReport",
     "HeavyJob",
     "HeavyJobsReport",
+    "LiveSession",
     "SubagentTask",
     "TimelineChunk",
     "TimelineEntry",
@@ -1551,6 +1595,7 @@ __all__ = [
     "agent_state_dot",
     "build_agent_activity",
     "build_agent_detail",
+    "build_live_session",
     "find_agent_record",
     "format_elapsed_seconds",
     "format_entry_count",

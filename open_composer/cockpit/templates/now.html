@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% from "_instruments.html" import money_hero, delta, equity_chart, led_meter, led_axis, burn, stages, live_card, meter %}
+{% block title %}Now · Quant{% endblock %}
+{% block content %}
+{% set r = report %}
+{% set eq = r.equity %}
+{% set c = r.agent_counts %}
+{% set usage = r.usage %}
+
+<header class="page-head page-head--hero">
+  <div>
+    <div class="eyebrow num">{{ r.generated_at.strftime("%a %d %b · %H:%M") }} UTC</div>
+    <h1>Now</h1>
+  </div>
+  <nav class="attn" aria-label="Needs attention">
+    {%- for a in r.attention %}<a class="attn-chip attn-chip--{{ a.level }}" href="{{ a.href }}"><i></i>{{ a.text }}</a>{% endfor -%}
+    {%- if r.more_attention %}<a class="attn-chip" href="/health">+{{ r.more_attention }} more</a>{% endif -%}
+  </nav>
+</header>
+
+<div class="bento">
+
+  <section class="tile t-equity">
+    <header class="tile-head">
+      <a class="tile-label" href="/paper">Paper equity</a>
+      <span class="tile-meta"><span class="only-roomy">Alpaca paper · </span>{{ r.authorized }} authorized{% if r.soonest_expiry_days is not none %} · {{ "%.0f"|format(r.soonest_expiry_days) }}d left{% endif %}</span>
+    </header>
+    {% if eq.latest %}
+    <div class="hero">{{ money_hero(eq.latest.equity) }}{{ delta(eq) }}</div>
+    <div class="well well--chart">{{ equity_chart(eq) }}</div>
+    <div class="foot-row num">
+      <span>snapshot <b title="{{ eq.latest.at.isoformat() }}">{{ eq.latest.at|ago }}</b></span>
+      <span>kill switch <b class="{{ 'is-warn' if r.kill_switch.enabled }}">{{ "on" if r.kill_switch.enabled else ("off" if r.kill_switch.enabled is not none else "unknown") }}</b></span>
+      <span>open orders <b>{{ r.open_orders if r.open_orders is not none else "–" }}</b></span>
+      {% if r.account.cash is not none %}<span class="only-roomy">cash <b>{{ r.account.cash|money(0) }}</b></span>{% endif %}
+    </div>
+    {% else %}
+    <div class="well empty">No account snapshot yet</div>
+    {% endif %}
+  </section>
+
+  <section class="tile t-agents">
+    <header class="tile-head">
+      <a class="tile-label" href="/agents">Agents</a>
+      <span class="counts num">
+        <span><span class="dot dot--ok{{ ' dot--live' if c.running }}"></span><b>{{ c.running }}</b> live</span>
+        <span><span class="dot dot--unknown"></span><b>{{ c.idle }}</b> idle</span>
+        {% if c.error %}<span><span class="dot dot--stale"></span><b>{{ c.error }}</b> error</span>{% endif %}
+      </span>
+    </header>
+    {% if r.live %}
+    {{ live_card(r.live[0]) }}
+    {% elif r.last_active %}
+    {{ live_card(r.last_active, live=false) }}
+    {% else %}
+    <div class="well empty">No live session</div>
+    {% endif %}
+    {% if r.live|length > 1 or r.errored or r.heavy.jobs %}
+    <div class="minor">
+      {%- for s in r.live[1:] %}
+      <a class="mrow" href="/agents/{{ s.record.id }}" data-detail><span class="dot dot--ok dot--live"></span><span class="mrow-t">{{ s.record.title or s.record.id[:8] }}</span><span class="mrow-a num">{{ (s.activity.last_entry_at or s.record.last_activity_at)|ago }}</span></a>
+      {%- endfor %}
+      {%- for rec in r.errored[:3] %}
+      <a class="mrow" href="/agents/{{ rec.id }}" data-detail><span class="dot dot--stale"></span><span class="mrow-t">{{ rec.title or rec.id[:8] }}</span><span class="mrow-a num">error · {{ rec.last_activity_at|ago }}</span></a>
+      {%- endfor %}
+      {%- for job in r.heavy.jobs[:3] %}
+      {%- set share = (job.memory_current_bytes / job.memory_max_bytes) if job.memory_current_bytes is not none and job.memory_max_bytes else none %}
+      <div class="mrow mrow--job" title="{{ job.unit }}"><span class="t-cap">capped job</span><span class="num faint">{{ job.elapsed_seconds|elapsed_s if job.elapsed_seconds is not none else "–" }}</span>{% if share is not none %}{{ meter(share * 100, 'stale' if share > 0.92 else ('warn' if share > 0.75 else 'ok')) }}<span class="mrow-a num">{{ "%.0f"|format(job.memory_current_bytes / 1048576) }}/{{ "%.0f"|format(job.memory_max_bytes / 1048576) }} MB</span>{% else %}<span class="mrow-a num">{{ "%.0f"|format((job.memory_current_bytes or 0) / 1048576) }} MB</span>{% endif %}</div>
+      {%- endfor %}
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="tile t-research">
+    <header class="tile-head">
+      <a class="tile-label" href="/hypotheses">Research</a>
+      <span class="tile-meta">{{ r.research.total }} cards</span>
+    </header>
+    {{ stages(r.research) }}
+    {% if r.research.recent %}
+    <div class="recent">
+      {%- for item in r.research.recent %}
+      <a class="mrow" href="/card/{{ item.card.id }}" data-detail><span class="dot dot--{{ item.status }}"></span><span class="mrow-main"><span class="mrow-t">{{ item.card.title }}</span><span class="mrow-s num">{{ item.card.id }} · {{ item.card.lane }} · {{ item.updated_at|ago }}</span></span></a>
+      {%- endfor %}
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="tile t-tokens">
+    <header class="tile-head">
+      <a class="tile-label" href="/quota">Fresh tokens</a>
+      <span class="tile-meta">5h window</span>
+    </header>
+    <div class="mid-num num">{{ usage.fresh_total|k }}</div>
+    <div class="split" role="img" aria-label="main {{ usage.fresh_main|k }}, subagents {{ usage.fresh_subagent|k }}"><i class="split-main" style="flex:{{ usage.fresh_main or 0 }}"></i><i class="split-sub" style="flex:{{ usage.fresh_subagent or 0 }}"></i></div>
+    <div class="split-l num"><span><i class="sw sw--main"></i>main <b>{{ usage.fresh_main|k }}</b></span><span><i class="sw sw--sub"></i>subagents <b>{{ usage.fresh_subagent|k }}</b></span></div>
+    {% if r.activity.available %}{{ burn(r.activity, last=30, lit=30, cls="burn--mini") }}{% endif %}
+    <div class="quota-line">
+      {% if r.claude.available %}
+        {% for bar in r.claude.bars %}<span title="{{ bar.reset_label }}"><span class="dot dot--{{ bar.status }}"></span>{{ bar.label }} <b class="num">{{ bar.percent_display }}</b></span>{% endfor %}
+      {% else %}
+        <span><span class="dot dot--warn"></span>Live quota · {{ (r.claude.unavailable_reason or "unknown").split(" -- ")[0] }}</span>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="tile t-system">
+    <header class="tile-head">
+      <a class="tile-label" href="/health">System</a>
+      <span class="tile-meta">data · cron · capacity</span>
+    </header>
+    <div class="sys">
+      <span class="sys-k">Data</span>
+      <span class="sys-v num">{{ r.stale_sources }}<span> stale of {{ r.freshness|length }}</span></span>
+      <span class="ticks">{% for e in r.freshness %}<i class="tk tk--{{ e.status }}" data-tip="{{ e.name }} · {{ e.status }}"></i>{% endfor %}</span>
+
+      <span class="sys-k">Cron</span>
+      {% if r.cron.available %}
+      <span class="sys-v num">{{ r.failing_cron }}<span> failing of {{ r.cron.jobs|length }}</span></span>
+      <span class="ticks">{% for j in r.cron.jobs %}<i class="tk tk--{{ j.status }}" data-tip="{{ j.name }} · {{ j.status }}"></i>{% endfor %}</span>
+      {% else %}
+      <span class="sys-v">–</span><span class="sys-na faint">crontab unavailable</span>
+      {% endif %}
+
+      <span class="sys-k">Disk</span>
+      {% if r.disk %}<span class="sys-v num">{{ "%.0f"|format(r.disk.available_bytes / 1073741824) }}<span> GB free</span></span>{{ meter(r.disk.used_percent, r.disk.status) }}
+      {% else %}<span class="sys-v">–</span><span class="sys-na faint">unknown</span>{% endif %}
+
+      <span class="sys-k">Memory</span>
+      {% if r.memory %}<span class="sys-v num">{{ "%.1f"|format(r.memory.available_bytes / 1073741824) }}<span> GB free</span></span>{{ meter(r.memory.used_percent, r.memory.status) }}
+      {% else %}<span class="sys-v">–</span><span class="sys-na faint">unknown</span>{% endif %}
+    </div>
+  </section>
+
+  <section class="tile t-activity">
+    <header class="tile-head">
+      <a class="tile-label" href="/agents">Model calls</a>
+      <span class="tile-meta">{% if r.activity.available %}{{ "{:,}".format(r.activity.total_calls) }} in 24h · peak {{ r.activity.peak_calls }} / 10 min · {{ r.activity.files }} transcript{{ "s" if r.activity.files != 1 }}{% if r.activity.partial %} · partial{% endif %}{% else %}no transcripts in 24h{% endif %}</span>
+    </header>
+    {% if r.activity.available %}
+    {{ led_meter(r.activity, rows=7, group=1, cls="led--fine") }}
+    {{ led_meter(r.activity, rows=6, group=3, cls="led--coarse") }}
+    {{ led_axis() }}
+    {% else %}
+    <div class="well empty">No model calls logged in the last 24 hours</div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

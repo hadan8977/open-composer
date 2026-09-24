@@ -16,8 +16,9 @@ Access authenticates at the edge (see ``AGENTS.md``).
 
 Interface for T7-T8
 -------------------
-* ``SCREENS`` is the single source of truth for the five-screen nav (slug, URL
-  path, label). Add a screen's route with the same slug used here and its stub
+* ``SCREENS`` is the single source of truth for the screen nav (slug, URL
+  path, label); ``NAV_GROUPS`` and ``TABS`` arrange it for the rail and the
+  phone tab bar. Add a screen's route with the same slug used here and its stub
   disappears automatically -- there is no separate registry to update.
 * ``_base_context(request, active)`` returns the context dict every screen
   must merge into its own before rendering; it carries the nav list and the
@@ -51,10 +52,12 @@ from starlette.responses import Response
 from starlette.types import Scope
 
 from open_composer.cockpit.api import CARD_ID_PATH_RE, register_api_routes
+from open_composer.cockpit.data.activity import get_default_activity_cache
 from open_composer.cockpit.data.agents import (
     AGENT_ID_RE,
     agent_state_dot,
     build_agent_detail,
+    build_live_session,
     find_agent_record,
     format_elapsed_seconds,
     format_entry_count,
@@ -65,8 +68,8 @@ from open_composer.cockpit.data.agents import (
     stream_agent_timeline,
 )
 from open_composer.cockpit.data.health import (
-    build_data_freshness,
     build_health_report,
+    get_default_data_freshness_cache,
     summarize_statuses,
 )
 from open_composer.cockpit.data.hypotheses import (
@@ -78,8 +81,10 @@ from open_composer.cockpit.data.hypotheses import (
     headline_summary,
     lane_status,
 )
+from open_composer.cockpit.data.now import build_now_report, summarize_research
 from open_composer.cockpit.data.paper import (
     AUTH_STATE_LABELS,
+    build_account_equity_history,
     build_paper_report,
     build_rehearsal_countdown,
     build_strategy_detail,
@@ -103,6 +108,7 @@ from open_composer.cockpit.data.quota import (
 )
 from open_composer.cockpit.markdown import render_markdown
 from open_composer.cockpit.security import PathTraversalError, safe_repo_path
+from open_composer.cockpit.viz import equity_columns, fresh_bars, led_columns
 from open_composer.config import project_root
 
 _PACKAGE_DIR = Path(__file__).resolve().parent
@@ -136,16 +142,35 @@ def _asset_version() -> str:
     return digest.hexdigest()[:12]
 
 
-# Every screen the information architecture in plan section 4 calls for.
-# (slug, url path, nav label). T4-T8 replace the stub route body for their
-# slug; the URL and the nav entry do not need to change when they do.
+# Every screen, in rail order (slug, url path, nav label). `/` is the Now
+# glance screen since the 2026-09-24 redesign; the hypothesis board moved to
+# `/hypotheses`. ⌘1-7 follow this order.
 SCREENS: tuple[tuple[str, str, str], ...] = (
-    ("hypotheses", "/", "Hypotheses"),
+    ("now", "/", "Now"),
+    ("hypotheses", "/hypotheses", "Hypotheses"),
     ("lineage", "/lineage", "Lineage"),
     ("agents", "/agents", "Agents"),
     ("paper", "/paper", "Paper"),
     ("quota", "/quota", "Quota"),
     ("health", "/health", "Health"),
+)
+
+#: The desktop rail's grouping: (heading or None, screen slugs).
+NAV_GROUPS: tuple[tuple[str | None, tuple[str, ...]], ...] = (
+    (None, ("now",)),
+    ("Research", ("hypotheses", "lineage")),
+    ("Operations", ("agents", "paper")),
+    ("System", ("quota", "health")),
+)
+
+#: The phone tab bar holds five: (slug, label). Lineage is reached from the
+#: board, Quota from the Now screen and the status strip.
+TABS: tuple[tuple[str, str], ...] = (
+    ("now", "Now"),
+    ("hypotheses", "Research"),
+    ("agents", "Agents"),
+    ("paper", "Paper"),
+    ("health", "System"),
 )
 
 
@@ -157,7 +182,7 @@ def _topbar_data_freshness(root: Path) -> dict[str, str]:
     (`/health`) is where a real failure should be visible in detail.
     """
     try:
-        entries = build_data_freshness(root)
+        entries = get_default_data_freshness_cache().get(root)
         status = summarize_statuses(tuple(entry.status for entry in entries))
     except Exception:
         return {"status": "unknown", "label": "unknown"}
@@ -309,6 +334,11 @@ def _base_context(request: Request, active: str) -> dict[str, Any]:
     return {
         "request": request,
         "screens": SCREENS,
+        "screen_paths": {slug: path for slug, path, _label in SCREENS},
+        "screen_labels": {slug: label for slug, _path, label in SCREENS},
+        "screen_index": {slug: index for index, (slug, _p, _l) in enumerate(SCREENS, 1)},
+        "nav_groups": NAV_GROUPS,
+        "tabs": TABS,
         "active_screen": active,
         "topbar_data_freshness": status["data_freshness"],
         "topbar_rehearsal": status["rehearsal"],
@@ -401,6 +431,10 @@ def _warm_once(now: datetime | None = None) -> None:
         get_default_claude_cache().get(now=moment)
     except Exception:
         pass
+    try:
+        get_default_activity_cache().get(now=moment)
+    except Exception:
+        pass
 
 
 def _warm_loop() -> None:
@@ -471,6 +505,9 @@ def create_app(*, warm: bool = True) -> FastAPI:
     templates.env.filters["k"] = _format_k
     templates.env.filters["count_sep"] = format_entry_count
     templates.env.globals["asset_v"] = _asset_version()
+    templates.env.globals["equity_columns"] = equity_columns
+    templates.env.globals["led_columns"] = led_columns
+    templates.env.globals["fresh_bars"] = fresh_bars
     if warm:
         _start_warm_thread()
     app.mount("/static", _ImmutableStaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -494,7 +531,37 @@ def create_app(*, warm: bool = True) -> FastAPI:
         return templates.TemplateResponse(request, "health.html", context)
 
     @app.get("/", response_class=HTMLResponse)
-    def index_page(request: Request) -> HTMLResponse:
+    def now_page(request: Request) -> HTMLResponse:
+        """The Now screen: one glance across every other screen.
+
+        Heavy inputs come from the caches the status strip and the warm
+        thread already keep (agent list, usage estimate, live quota, data
+        freshness, activity field); `build_now_report` adds only cheap file
+        reads on top. See `open_composer.cockpit.data.now`.
+        """
+        root = project_root()
+        now = datetime.now(UTC)
+        context = _base_context(request, "now")
+        try:
+            agents = get_default_topbar_agents_cache().get(now=now)
+        except Exception:
+            agents = load_agents(enrich=False)
+        report = build_now_report(
+            root,
+            agents=agents,
+            heavy=load_heavy_jobs(),
+            hypotheses=build_hypotheses_report(root),
+            usage=context["topbar_usage_estimate"],
+            claude=context["topbar_quota_claude"],
+            freshness=get_default_data_freshness_cache().get(root),
+            activity=get_default_activity_cache().get(now=now),
+            now=now,
+        )
+        context["report"] = report
+        return templates.TemplateResponse(request, "now.html", context)
+
+    @app.get("/hypotheses", response_class=HTMLResponse)
+    def hypotheses_page(request: Request) -> HTMLResponse:
         """Screen 1: the hypothesis-card board (plan section 4, "假设卡看板").
 
         Swimlanes come pre-bucketed from `group_cards_by_lane` in lane order;
@@ -513,6 +580,7 @@ def create_app(*, warm: bool = True) -> FastAPI:
         context["report"] = report
         context["headlines"] = headlines
         context["lane_status"] = lane_status
+        context["research"] = summarize_research(report, project_root())
         return templates.TemplateResponse(request, "hypotheses.html", context)
 
     @app.get("/lineage", response_class=HTMLResponse)
@@ -609,10 +677,13 @@ def create_app(*, warm: bool = True) -> FastAPI:
             "error": sum(1 for a in report.agents if a.record.last_status == "error"),
             "closed": sum(1 for a in report.agents if a.record.last_status == "closed"),
         }
+        running = [a.record for a in report.agents if a.record.last_status == "running"]
         context = _base_context(request, "agents")
         context["report"] = report
         context["heavy"] = heavy
         context["counts"] = counts
+        context["live_sessions"] = tuple(build_live_session(record) for record in running[:3])
+        context["activity"] = get_default_activity_cache().get()
         return templates.TemplateResponse(request, "agents.html", context)
 
     @app.get("/agents/{agent_id}", response_class=HTMLResponse)
@@ -663,9 +734,13 @@ def create_app(*, warm: bool = True) -> FastAPI:
         plan calls for. "策略" is the organising dimension: this route never
         groups or filters by symbol.
         """
-        report = build_paper_report(project_root())
+        root = project_root()
+        report = build_paper_report(root)
         context = _base_context(request, "paper")
         context["report"] = report
+        context["equity"] = build_account_equity_history(
+            root, strategy_names=tuple(s.name for s in report.strategies)
+        )
         context["auth_state_labels"] = AUTH_STATE_LABELS
         return templates.TemplateResponse(request, "paper.html", context)
 
@@ -700,14 +775,13 @@ def create_app(*, warm: bool = True) -> FastAPI:
         """Quota detail (T6): all four Claude windows, extra usage, the Codex
         state, the last throttle event from the transcript fallback layer,
         and the cache/breaker state -- the density-over-prose counterpart to
-        the compact topbar slots every other screen shows.
-
-        Not one of the five main screens (`SCREENS`), so no nav entry is
-        highlighted for it; it is reached from the topbar quota slots.
+        the compact topbar slots every other screen shows. Leads with the
+        24-hour fresh-token field (the activity cache), current 5h window lit.
         """
         report = build_quota_report(get_default_claude_cache())
         context = _base_context(request, "quota")
         context["report"] = report
+        context["activity"] = get_default_activity_cache().get()
         return templates.TemplateResponse(request, "quota.html", context)
 
     # T11: read-only JSON mirror of every HTML screen above (`/api/*.json`),

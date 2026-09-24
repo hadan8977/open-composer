@@ -38,9 +38,10 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
+from zoneinfo import ZoneInfo
 
 from open_composer.cockpit.data.health import Status
 from open_composer.cockpit.security import secret_scrub
@@ -705,7 +706,7 @@ def load_fills_summary(root: Path | None = None, strategy_name: str = "") -> Fil
 class EquityPoint:
     at: datetime
     equity: float
-    source: str  # "daily_cycle_observation" | "rehearsal_cycle_snapshot"
+    source: str  # "daily_cycle_observation" | "rehearsal_cycle_snapshot" | "account_snapshot"
 
 
 _EQUITY_NOTE = (
@@ -1027,6 +1028,97 @@ def load_open_order_count(root: Path | None = None) -> tuple[int | None, tuple[s
 
 
 # --------------------------------------------------------------------------
+# Account equity by trading day (the Now and Paper screens' equity columns)
+# --------------------------------------------------------------------------
+
+#: Trading days are US/Eastern dates: a cycle snapshot written at 23:45Z
+#: belongs to that afternoon's session, not to the next UTC day.
+_MARKET_TZ = ZoneInfo("America/New_York")
+
+
+@dataclass(frozen=True)
+class AccountEquityDay:
+    day: date
+    point: EquityPoint | None  # the day's last real observation; None = none that day
+
+
+@dataclass(frozen=True)
+class AccountEquityHistory:
+    """The shared Alpaca Paper account's equity, one column per calendar day.
+
+    Every sleeve's cycle snapshots are readings of the same broker account
+    (see `_EQUITY_NOTE`), so the union of all strategies' real points plus
+    ``account.json`` is the account's observation record. Each day keeps its
+    last observation; a day with none (weekends, a missed cycle) stays an
+    explicit gap -- nothing is carried forward or interpolated.
+    """
+
+    days: tuple[AccountEquityDay, ...]  # first..last observed day, gaps included
+    first: EquityPoint | None
+    latest: EquityPoint | None
+    observations: int
+    warnings: tuple[str, ...]
+
+    @property
+    def observed_days(self) -> int:
+        return sum(1 for day in self.days if day.point is not None)
+
+    @property
+    def has_history(self) -> bool:
+        return self.observed_days >= 2
+
+    @property
+    def change(self) -> float | None:
+        if self.first is None or self.latest is None:
+            return None
+        return self.latest.equity - self.first.equity
+
+    @property
+    def change_pct(self) -> float | None:
+        change = self.change
+        if change is None or self.first is None or not self.first.equity:
+            return None
+        return change / self.first.equity * 100.0
+
+
+def build_account_equity_history(
+    root: Path | None = None, *, strategy_names: tuple[str, ...] | None = None
+) -> AccountEquityHistory:
+    base = root or project_root()
+    names = strategy_names if strategy_names is not None else discover_strategy_names(base)
+    warnings: list[str] = []
+    by_instant: dict[datetime, EquityPoint] = {}
+    for name in names:
+        series = build_equity_series(base, name)
+        warnings.extend(series.warnings)
+        for point in series.points:
+            by_instant.setdefault(point.at, point)
+    account = load_account_snapshot(base)
+    if account.generated_at is not None and account.equity is not None:
+        by_instant.setdefault(
+            account.generated_at,
+            EquityPoint(at=account.generated_at, equity=account.equity, source="account_snapshot"),
+        )
+    ordered = sorted(by_instant.values(), key=lambda point: point.at)
+    last_of_day: dict[date, EquityPoint] = {}
+    for point in ordered:
+        last_of_day[point.at.astimezone(_MARKET_TZ).date()] = point
+    days: list[AccountEquityDay] = []
+    if last_of_day:
+        cursor, last = min(last_of_day), max(last_of_day)
+        while cursor <= last:
+            days.append(AccountEquityDay(day=cursor, point=last_of_day.get(cursor)))
+            cursor += timedelta(days=1)
+    return AccountEquityHistory(
+        days=tuple(days),
+        first=ordered[0] if ordered else None,
+        latest=ordered[-1] if ordered else None,
+        observations=len(ordered),
+        warnings=tuple(warnings),
+    )
+
+
+# --------------------------------------------------------------------------
 # Per-strategy detail and summary
 # --------------------------------------------------------------------------
 
@@ -1232,6 +1324,8 @@ def build_paper_report(
 
 __all__ = [
     "AUTH_STATE_LABELS",
+    "AccountEquityDay",
+    "AccountEquityHistory",
     "AccountSnapshot",
     "AuthorizationInfo",
     "AuthorizationState",
@@ -1249,6 +1343,7 @@ __all__ = [
     "RehearsalCountdown",
     "StrategyDetail",
     "StrategySummary",
+    "build_account_equity_history",
     "build_equity_series",
     "build_paper_report",
     "build_rehearsal_countdown",

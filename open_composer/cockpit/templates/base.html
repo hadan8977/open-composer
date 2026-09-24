@@ -3,10 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#07080b" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f3f4f7" media="(prefers-color-scheme: light)">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Quant">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%234f5eff'/%3E%3Ccircle cx='7.4' cy='7.4' r='3.4' fill='none' stroke='white' stroke-width='1.8'/%3E%3Cpath d='M9.8 9.8L12.2 12.2' stroke='white' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cdefs%3E%3CradialGradient id='g' cx='.35' cy='.3' r='.8'%3E%3Cstop offset='0' stop-color='%23dfe4ff'/%3E%3Cstop offset='.45' stop-color='%238196ff'/%3E%3Cstop offset='1' stop-color='%233546d8'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='16' height='16' rx='4.5' fill='%2307080b'/%3E%3Ccircle cx='8' cy='8' r='4.6' fill='url(%23g)'/%3E%3C/svg%3E" />
   <title>{% block title %}Quant{% endblock %}</title>
   <link rel="stylesheet" href="/static/css/cockpit.css?v={{ asset_v }}">
 </head>
@@ -16,10 +19,15 @@
 
   <nav class="rail glass" aria-label="Screens">
     <a class="rail-brand" href="/"><i></i>Quant</a>
-    {% for slug, path, label in screens %}
-    <a class="nav{{ ' is-active' if active_screen == slug }}" href="{{ path }}" data-screen{% if active_screen == slug %} aria-current="page"{% endif %}>{{ icon(slug) }}<span>{{ label }}</span><kbd>⌘{{ loop.index }}</kbd></a>
+    {% for heading, slugs in nav_groups %}
+    <div class="nav-group">
+      {% if heading %}<div class="nav-head">{{ heading }}</div>{% endif %}
+      {% for slug in slugs %}
+      <a class="nav{{ ' is-active' if active_screen == slug }}" href="{{ screen_paths[slug] }}" data-screen{% if active_screen == slug %} aria-current="page"{% endif %}>{{ icon(slug) }}<span>{{ screen_labels[slug] }}</span><kbd>⌘{{ screen_index[slug] }}</kbd></a>
+      {% endfor %}
+    </div>
     {% endfor %}
-    <div class="rail-foot num" title="{{ generated_at.isoformat() }}">{{ generated_at|hms }}Z · read-only · <a href="/v2/">v2</a></div>
+    <div class="rail-foot num" title="{{ generated_at.isoformat() }}"><span class="dot dot--ok dot--live" aria-hidden="true"></span>{{ generated_at|hms }}Z · read-only · <a href="/v2/">v2</a></div>
   </nav>
 
   <header class="mobile-head glass">
@@ -39,19 +47,19 @@
     {% else %}
       <a class="strip-item" data-slot="quota-claude" href="/quota" title="{{ topbar_quota_claude.unavailable_reason }}">
         <span class="t-cap">Claude</span>
-        <span class="chip chip--unknown"><span class="clip">{{ topbar_quota_claude.unavailable_reason }}</span></span>
+        <span class="dot dot--warn"></span><span class="clip strip-note">{{ (topbar_quota_claude.unavailable_reason or "unknown").split(" -- ")[0] }}</span>
       </a>
     {% endif %}
     <a class="strip-item strip-item--quiet" data-slot="quota-codex" href="/quota" title="Codex quota · {{ topbar_quota_codex.label }}"><span class="t-cap">Codex</span><span class="faint">{{ 'live' if topbar_quota_codex.available else 'none' }}</span></a>
     <a class="strip-item" data-slot="usage-estimate" href="/quota" title="fresh tokens, current 5h window · main {{ topbar_usage_estimate.fresh_main|k }} · subagents {{ topbar_usage_estimate.fresh_subagent|k }}">
       <span class="t-cap">fresh 5h</span><span class="num">{{ topbar_usage_estimate.fresh_total|k }}</span>
     </a>
-    {% set live = namespace(running=0, error=0, idle=0) %}
-    {% for _agent_id, agent_status in topbar_agents %}{% if agent_status == "running" %}{% set live.running = live.running + 1 %}{% elif agent_status == "error" %}{% set live.error = live.error + 1 %}{% else %}{% set live.idle = live.idle + 1 %}{% endif %}{% endfor %}
-    <a class="strip-item" data-slot="agent-dots" href="/agents" title="{{ live.running }} running · {{ live.error }} error · {{ live.idle }} idle">
+    {% set tally = namespace(running=0, error=0, idle=0) %}
+    {% for _agent_id, agent_status in topbar_agents %}{% if agent_status == "running" %}{% set tally.running = tally.running + 1 %}{% elif agent_status == "error" %}{% set tally.error = tally.error + 1 %}{% else %}{% set tally.idle = tally.idle + 1 %}{% endif %}{% endfor %}
+    <a class="strip-item" data-slot="agent-dots" href="/agents" title="{{ tally.running }} running · {{ tally.error }} error · {{ tally.idle }} idle">
       <span class="t-cap">agents</span>
       <span class="agent-dots">{% for _agent_id, agent_status in topbar_agents if agent_status in ("running", "error") %}<span class="dot dot--{{ agent_status|agent_dot }}{% if agent_status == 'running' %} dot--live{% endif %}"></span>{% endfor %}</span>
-      {% if live.running %}<span class="num">{{ live.running }}</span><span>running</span>{% elif live.error %}<span class="num">{{ live.error }}</span><span>error</span>{% else %}<span class="num">{{ live.idle }}</span><span>idle</span>{% endif %}
+      {% if tally.running %}<span class="num">{{ tally.running }}</span><span>running</span>{% elif tally.error %}<span class="num">{{ tally.error }}</span><span>error</span>{% else %}<span class="num">{{ tally.idle }}</span><span>idle</span>{% endif %}
     </a>
     <a class="strip-item" data-slot="data-freshness" href="/health" title="data freshness · {{ topbar_data_freshness.label }}"><span class="t-cap">data</span><span class="dot dot--{{ topbar_data_freshness.status }}"></span><span>{{ topbar_data_freshness.label }}</span></a>
     <a class="strip-item" data-slot="rehearsal-countdown" href="/paper" title="{{ topbar_rehearsal.label }}"><span class="t-cap">auth</span><span class="dot dot--{{ topbar_rehearsal.status }}"></span><span class="num">{{ topbar_rehearsal.label.rsplit(":", 1)[-1]|trim }}</span></a>
@@ -69,8 +77,9 @@
   </aside>
 
   <nav class="tabbar glass" id="tabbar" aria-label="Screens">
-    {% for slug, path, label in screens if slug != "lineage" %}
-    <a class="{{ 'is-active' if active_screen == slug }}" href="{{ path }}">{{ icon(slug) }}<span>{{ label }}</span></a>
+    {% for slug, label in tabs %}
+    {% set also = {"hypotheses": "lineage", "health": "quota"}.get(slug) %}
+    <a class="{{ 'is-active' if active_screen in (slug, also) }}" href="{{ screen_paths[slug] }}" data-paths="{{ screen_paths[slug] }}{% if also %} {{ screen_paths[also] }}{% endif %}">{{ icon(slug) }}<span>{{ label }}</span></a>
     {% endfor %}
   </nav>
 

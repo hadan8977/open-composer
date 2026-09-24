@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_instruments.html" import meter %}
 {% block title %}Health · Quant{% endblock %}
 {% block content %}
 {% set stale = report.data_freshness|selectattr("status", "equalto", "stale")|list|length %}
@@ -14,12 +15,14 @@
   <div class="metric">
     <span class="metric-label">Stale sources</span>
     <span class="metric-value num"><span class="dot dot--{{ 'stale' if stale else ('warn' if warn else 'ok') }}"></span>{{ stale }}</span>
+    <span class="ticks">{% for e in report.data_freshness %}<i class="tk tk--{{ e.status }}" data-tip="{{ e.name }} · {{ e.status }}"></i>{% endfor %}</span>
     <span class="metric-sub">{{ warn }} warn · {{ report.data_freshness|length }} sources</span>
   </div>
   <div class="metric">
     <span class="metric-label">Cron failing</span>
     {% if report.cron.available %}
     <span class="metric-value num"><span class="dot dot--{{ 'stale' if failing else 'ok' }}"></span>{{ failing }}</span>
+    <span class="ticks">{% for j in report.cron.jobs %}<i class="tk tk--{{ j.status }}" data-tip="{{ j.name }} · {{ j.status }}"></i>{% endfor %}</span>
     <span class="metric-sub">of {{ report.cron.jobs|length }} jobs</span>
     {% else %}
     <span class="metric-value is-word"><span class="dot dot--unknown"></span>unknown</span>
@@ -30,6 +33,7 @@
     <span class="metric-label">Disk free</span>
     {% if report.disk %}
     <span class="metric-value num"><span class="dot dot--{{ report.disk.status }}"></span>{{ "%.0f"|format(report.disk.available_bytes / 1073741824) }}<small>GB</small></span>
+    {{ meter(report.disk.used_percent, report.disk.status) }}
     <span class="metric-sub">{{ "%.0f%%"|format(report.disk.used_percent) }} used of {{ "%.0f"|format(report.disk.total_bytes / 1073741824) }} GB · {{ report.disk.mount }}</span>
     {% else %}
     <span class="metric-value is-word"><span class="dot dot--unknown"></span>unknown</span><span class="metric-sub">&nbsp;</span>
@@ -39,6 +43,7 @@
     <span class="metric-label">Memory free</span>
     {% if report.memory %}
     <span class="metric-value num"><span class="dot dot--{{ report.memory.status }}"></span>{{ "%.0f"|format(report.memory.available_bytes / 1048576) }}<small>MB</small></span>
+    {{ meter(report.memory.used_percent, report.memory.status) }}
     <span class="metric-sub">{{ "%.0f%%"|format(report.memory.used_percent) }} used of {{ "%.1f"|format(report.memory.total_bytes / 1073741824) }} GB</span>
     {% else %}
     <span class="metric-value is-word"><span class="dot dot--unknown"></span>unknown</span><span class="metric-sub">&nbsp;</span>

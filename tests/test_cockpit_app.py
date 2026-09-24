@@ -29,7 +29,7 @@ def client() -> TestClient:
 
 
 @pytest.mark.parametrize(
-    "path", ["/", "/health", "/healthz", "/lineage", "/agents", "/paper", "/quota"]
+    "path", ["/", "/hypotheses", "/health", "/healthz", "/lineage", "/agents", "/paper", "/quota"]
 )
 def test_core_routes_return_200(client: TestClient, path: str) -> None:
     response = client.get(path)
@@ -50,7 +50,9 @@ def test_core_routes_return_200(client: TestClient, path: str) -> None:
 _CJK_RE = re.compile(r"[一-鿿]")
 
 
-@pytest.mark.parametrize("path", ["/", "/lineage", "/health", "/agents", "/paper", "/quota"])
+@pytest.mark.parametrize(
+    "path", ["/", "/hypotheses", "/lineage", "/health", "/agents", "/paper", "/quota"]
+)
 def test_no_cjk_outside_card_titles_on_pages_that_do_not_embed_card_bodies(
     client: TestClient, path: str
 ) -> None:
@@ -124,7 +126,7 @@ def test_every_route_is_get_or_head_only() -> None:
 
 @pytest.mark.parametrize(
     "path",
-    ["/", "/health", "/healthz", "/lineage", "/agents", "/paper", "/quota"],
+    ["/", "/hypotheses", "/health", "/healthz", "/lineage", "/agents", "/paper", "/quota"],
 )
 def test_post_is_rejected_with_405(client: TestClient, path: str) -> None:
     response = client.post(path)
@@ -151,7 +153,8 @@ def test_shell_is_named_quant(client: TestClient) -> None:
     page = client.get("/")
     assert "<i></i>Quant</a>" in page.text
     assert "Cockpit</a>" not in page.text
-    assert "<title>Hypotheses · Quant</title>" in page.text
+    assert "<title>Now · Quant</title>" in page.text
+    assert "<title>Hypotheses · Quant</title>" in client.get("/hypotheses").text
 
 
 def test_static_mount_rejects_post(client: TestClient) -> None:

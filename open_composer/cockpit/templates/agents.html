@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_instruments.html" import live_card, led_meter, led_axis %}
 {% block title %}Agents · Quant{% endblock %}
 {% block content %}
 <div class="page-head">
@@ -6,11 +7,36 @@
   <span class="aside num" title="closed before {{ report.closed_stale_cutoff.isoformat() }}">{{ report.closed_collapsed_count }} closed &gt;48h hidden</span>
 </div>
 
-<div class="metrics">
-  <div class="metric"><span class="metric-label">Running</span><span class="metric-value num"><span class="dot dot--ok"></span>{{ counts.running }}</span><span class="metric-sub">{% if heavy.available %}{{ heavy.jobs|length }} heavy job{{ "s" if heavy.jobs|length != 1 }}{% else %}heavy jobs unknown{% endif %}</span></div>
-  <div class="metric"><span class="metric-label">Idle</span><span class="metric-value num"><span class="dot dot--unknown"></span>{{ counts.idle }}</span><span class="metric-sub">&nbsp;</span></div>
-  <div class="metric"><span class="metric-label">Error</span><span class="metric-value num"><span class="dot dot--{{ 'stale' if counts.error else 'unknown' }}"></span>{{ counts.error }}</span><span class="metric-sub">&nbsp;</span></div>
-  <div class="metric"><span class="metric-label">Closed</span><span class="metric-value num"><span class="dot dot--unknown"></span>{{ counts.closed }}</span><span class="metric-sub">last 48h</span></div>
+<div class="bento bento--stack">
+  <section class="tile t-full">
+    <header class="tile-head">
+      <span class="tile-label">Live</span>
+      <span class="counts num">
+        <span><span class="dot dot--ok{{ ' dot--live' if counts.running }}"></span><b>{{ counts.running }}</b> running</span>
+        <span><span class="dot dot--unknown"></span><b>{{ counts.idle }}</b> idle</span>
+        <span><span class="dot dot--{{ 'stale' if counts.error else 'unknown' }}"></span><b>{{ counts.error }}</b> error</span>
+        <span class="only-roomy"><b>{{ counts.closed }}</b> closed 48h</span>
+      </span>
+    </header>
+    {% if live_sessions %}
+    <div class="live-grid">{% for session in live_sessions %}{{ live_card(session) }}{% endfor %}</div>
+    {% else %}
+    <div class="well empty">No live session</div>
+    {% endif %}
+  </section>
+  <section class="tile t-full">
+    <header class="tile-head">
+      <span class="tile-label">Model calls</span>
+      <span class="tile-meta">{% if activity.available %}{{ "{:,}".format(activity.total_calls) }} in 24h · peak {{ activity.peak_calls }} / 10 min · {{ activity.files }} transcript{{ "s" if activity.files != 1 }}{% if activity.partial %} · partial{% endif %}{% else %}none in 24h{% endif %}</span>
+    </header>
+    {% if activity.available %}
+    {{ led_meter(activity, rows=7, group=1, cls="led--fine") }}
+    {{ led_meter(activity, rows=6, group=3, cls="led--coarse") }}
+    {{ led_axis() }}
+    {% else %}
+    <div class="well empty">No model calls logged in the last 24 hours</div>
+    {% endif %}
+  </section>
 </div>
 
 <div class="section">Sessions <span class="num">{{ report.agents|length }}</span></div>

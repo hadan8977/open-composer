@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_instruments.html" import stages %}
 {% block title %}Hypotheses · Quant{% endblock %}
 {% block content %}
 {% set lanes = report.lanes %}
@@ -7,12 +8,13 @@
   <span class="aside num">{{ report.cards|length }} cards · <a href="/lineage">Lineage</a></span>
 </div>
 
-<div class="metrics">
-  <a class="metric" href="#running"><span class="metric-label">Running</span><span class="metric-value num"><span class="dot dot--ok"></span>{{ lanes.get("running", ())|length }}</span><span class="metric-sub">{{ lanes.get("preregistered", ())|length }} preregistered</span></a>
-  <a class="metric" href="#shipped"><span class="metric-label">Shipped</span><span class="metric-value num"><span class="dot dot--ok"></span>{{ lanes.get("shipped", ())|length }}</span><span class="metric-sub">{{ lanes.get("approved", ())|length }} approved</span></a>
-  <a class="metric" href="#refuted"><span class="metric-label">Refuted</span><span class="metric-value num"><span class="dot dot--stale"></span>{{ lanes.get("refuted", ())|length }}</span><span class="metric-sub">{{ lanes.get("on hold", ())|length }} on hold</span></a>
-  <a class="metric" href="#unclassified"><span class="metric-label">Unclassified</span><span class="metric-value num"><span class="dot dot--{{ 'warn' if lanes.get('unclassified') else 'unknown' }}"></span>{{ lanes.get("unclassified", ())|length }}</span><span class="metric-sub">{{ lanes.get("data card", ())|length }} data cards</span></a>
-</div>
+<section class="tile tile--hero">
+  <header class="tile-head">
+    <span class="tile-label">Pipeline</span>
+    <span class="tile-meta">{{ research.total }} cards · {{ report.results.by_card_id|length }} with results</span>
+  </header>
+  {{ stages(research) }}
+</section>
 
 {% for lane, cards in lanes.items() if cards %}
 {% set settled = lane in ("refuted", "on hold", "data card", "unclassified") %}

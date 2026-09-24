@@ -1,10 +1,12 @@
-// The cockpit's only script. Five jobs, nothing else:
+// The cockpit's only script. Six jobs, nothing else:
 //   1. open a row's detail in the inspector (desktop) or a sheet (phone)
 //      by fetching the same route with ?partial=1 -- no page navigation;
-//   2. keyboard: ⌘1-6 screens, ⌘F filter, ↑/↓ select, Space/Enter open, Esc close;
+//   2. keyboard: ⌘1-7 screens, ⌘F filter, ↑/↓ select, Space/Enter open, Esc close;
 //   3. the phone tab bar minimises while scrolling down;
 //   4. the agent timeline tail (EventSource) appends rows with textContent;
-//   5. the six screens are prefetched and switched in place (see "screens").
+//   5. the seven screens are prefetched and switched in place (see "screens");
+//   6. chart marks show their data-tip on hover or tap, and tiles catch a
+//      pointer-following light (desktop pointers only).
 // Every string that reaches the DOM is either server-rendered HTML from our own
 // origin (already escaped and secret-scrubbed) or inserted via textContent.
 (function () {
@@ -319,7 +321,7 @@
   }
 
   // ---- screens: instant switching ----
-  // The six screens are fetched in parallel right after first paint and kept
+  // The seven screens are fetched in parallel right after first paint and kept
   // in memory, so tapping the rail or the tab bar swaps the content block in
   // place instead of reloading the whole page through the tunnel. A copy older
   // than FRESH_MS is refetched before it is shown (a thin progress line says
@@ -403,7 +405,8 @@
   function setActive(path) {
     var links = document.querySelectorAll("[data-screen], #tabbar a");
     for (var i = 0; i < links.length; i++) {
-      var on = links[i].getAttribute("href") === path;
+      var paths = (links[i].getAttribute("data-paths") || links[i].getAttribute("href")).split(" ");
+      var on = paths.indexOf(path) >= 0;
       links[i].classList.toggle("is-active", on);
       if (!links[i].hasAttribute("data-screen")) continue;
       if (on) links[i].setAttribute("aria-current", "page");
@@ -415,6 +418,7 @@
     var doc = page.doc;
     var hash = location.hash;
     close();
+    hideTip();
     document.getElementById("content").innerHTML = doc.getElementById("content").innerHTML;
     document.title = doc.title;
     var brand = document.querySelector(".mobile-head .brand");
@@ -436,7 +440,7 @@
     openDeep(hash);
   }
 
-  function go(path, mode) {
+  function go(path, mode, anchor) {
     if (!isScreen(path)) {
       location.href = path;
       return;
@@ -456,6 +460,9 @@
         else if (mode === "replace") history.replaceState({ screen: path }, "", path);
         var run = function () {
           swap(path, page);
+          if (anchor) setTimeout(function () {
+            reveal(anchor);
+          }, 60);
         };
         if (document.startViewTransition) document.startViewTransition(run);
         else run();
@@ -469,11 +476,32 @@
       });
   }
 
+  // A link to a section of a screen ("/hypotheses#running"): switch in place
+  // if needed, then open that lane and bring it into view.
+  function reveal(anchor) {
+    var target = anchor && document.getElementById(anchor);
+    if (!target) return;
+    if (target.tagName === "DETAILS") target.open = true;
+    target.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+
   document.addEventListener("click", function (e) {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
     var a = e.target.closest("a[href]");
     if (!a || a.hasAttribute("data-detail") || a.getAttribute("target")) return;
     var href = a.getAttribute("href");
+    var cut = href.indexOf("#");
+    if (cut > 0 && isScreen(href.slice(0, cut)) && /^[A-Za-z][\w-]*$/.test(href.slice(cut + 1))) {
+      e.preventDefault();
+      var screen = href.slice(0, cut);
+      var anchor = href.slice(cut + 1);
+      if (screen === location.pathname) {
+        reveal(anchor);
+        return;
+      }
+      go(screen, "push", anchor);
+      return;
+    }
     if (!isScreen(href)) return;
     e.preventDefault();
     if (href === location.pathname) {
@@ -502,6 +530,79 @@
       .catch(function () {});
     prefetchOthers(here);
   });
+
+  // ---- tooltips and tile light ----
+  // One floating card for every [data-tip] mark (equity columns, activity
+  // LEDs, token bars, status ticks). Text goes in with textContent. Tiles get
+  // --mx/--my so the CSS light under the pointer can follow it.
+
+  var tip = null;
+  var tipFor = null;
+  var tipTimer = 0;
+  var lightFrame = 0;
+  var fine = window.matchMedia("(hover: hover) and (pointer: fine)");
+
+  function showTip(el, x, y) {
+    if (!tip) {
+      tip = document.createElement("div");
+      tip.className = "tip";
+      tip.setAttribute("role", "tooltip");
+      document.body.appendChild(tip);
+    }
+    if (tipFor !== el) {
+      tip.textContent = el.getAttribute("data-tip");
+      tipFor = el;
+    }
+    var w = tip.offsetWidth;
+    var h = tip.offsetHeight;
+    var left = Math.min(Math.max(8, x - w / 2), window.innerWidth - w - 8);
+    var top = y - h - 14;
+    if (top < 8) top = y + 20;
+    tip.style.transform = "translate(" + Math.round(left) + "px," + Math.round(top) + "px)";
+    tip.classList.add("is-on");
+  }
+
+  function hideTip() {
+    if (tip) tip.classList.remove("is-on");
+    tipFor = null;
+  }
+
+  document.addEventListener(
+    "pointermove",
+    function (e) {
+      if (e.pointerType === "touch") return;
+      var mark = e.target.closest ? e.target.closest("[data-tip]") : null;
+      if (mark) showTip(mark, e.clientX, e.clientY);
+      else if (tipFor) hideTip();
+      if (!fine.matches || lightFrame) return;
+      var tile = e.target.closest ? e.target.closest(".tile") : null;
+      if (!tile) return;
+      var x = e.clientX;
+      var y = e.clientY;
+      lightFrame = requestAnimationFrame(function () {
+        lightFrame = 0;
+        var r = tile.getBoundingClientRect();
+        tile.style.setProperty("--mx", Math.round(x - r.left) + "px");
+        tile.style.setProperty("--my", Math.round(y - r.top) + "px");
+      });
+    },
+    { passive: true }
+  );
+  document.addEventListener("pointerdown", function (e) {
+    if (e.pointerType !== "touch") return;
+    var mark = e.target.closest ? e.target.closest("[data-tip]") : null;
+    if (!mark) {
+      hideTip();
+      return;
+    }
+    showTip(mark, e.clientX, e.clientY);
+    clearTimeout(tipTimer);
+    tipTimer = setTimeout(hideTip, 2600);
+  });
+  // pointerleave does not fire on document itself, only on its element;
+  // scroll does not bubble, so capture catches any scrolling container too.
+  document.documentElement.addEventListener("pointerleave", hideTip);
+  document.addEventListener("scroll", hideTip, { passive: true, capture: true });
 
   // ---- boot ----
 

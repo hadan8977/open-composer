@@ -26,6 +26,7 @@ import os
 import re
 import resource
 import subprocess
+import threading
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -772,3 +773,39 @@ def build_health_report(root: Path | None = None) -> HealthReport:
         memory=memory,
         process=process,
     )
+
+
+#: How long `DataFreshnessCache` reuses one scan. The sources are daily
+#: archives, while the status strip and the Now screen render the rollup on
+#: every request -- where a fresh parquet-footer scan (~0.5s on this box)
+#: was the largest single cost of switching screens.
+DATA_FRESHNESS_CACHE_TTL_SECONDS = 60.0
+
+
+class DataFreshnessCache:
+    """`build_data_freshness(root)`, reused for `DATA_FRESHNESS_CACHE_TTL_SECONDS`
+    per root. The `/health` screen itself always scans fresh."""
+
+    def __init__(self) -> None:
+        self._entries: tuple[DataFreshnessEntry, ...] | None = None
+        self._root: Path | None = None
+        self._at: datetime | None = None
+        self._lock = threading.Lock()
+
+    def get(self, root: Path, *, now: datetime | None = None) -> tuple[DataFreshnessEntry, ...]:
+        moment = now or datetime.now(UTC)
+        with self._lock:
+            if self._entries is not None and self._root == root and self._at is not None:
+                age = (moment - self._at).total_seconds()
+                if 0 <= age < DATA_FRESHNESS_CACHE_TTL_SECONDS:
+                    return self._entries
+            entries = build_data_freshness(root)
+            self._entries, self._root, self._at = entries, root, moment
+            return entries
+
+
+_DEFAULT_DATA_FRESHNESS_CACHE = DataFreshnessCache()
+
+
+def get_default_data_freshness_cache() -> DataFreshnessCache:
+    return _DEFAULT_DATA_FRESHNESS_CACHE

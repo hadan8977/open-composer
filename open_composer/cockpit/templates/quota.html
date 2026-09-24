@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_instruments.html" import burn, led_axis %}
 {% block title %}Quota · Quant{% endblock %}
 {% block content %}
 {% set claude = report.claude %}
@@ -12,11 +13,41 @@
   <span class="aside num" title="{{ est.window_start }} → {{ est.window_end }}">estimate {{ est.generated_at|ago }}</span>
 </div>
 
+<section class="tile tile--hero">
+  <header class="tile-head">
+    <span class="tile-label">Fresh tokens</span>
+    <span class="tile-meta">last 24h · per 10 min · current 5h window lit</span>
+  </header>
+  <div class="burn-hero">
+    <div class="burn-stats">
+      <div class="mid-num num">{{ est.fresh_total|k }}</div>
+      <div class="t-foot faint">fresh in the current 5h window</div>
+      <div class="split" role="img" aria-label="main {{ est.fresh_main|k }}, subagents {{ est.fresh_subagent|k }}"><i class="split-main" style="flex:{{ est.fresh_main or 0 }}"></i><i class="split-sub" style="flex:{{ est.fresh_subagent or 0 }}"></i></div>
+      <div class="split-l num"><span><i class="sw sw--main"></i>main <b>{{ est.fresh_main|k }}</b></span><span><i class="sw sw--sub"></i>sub <b>{{ est.fresh_subagent|k }}</b></span></div>
+      <div class="quota-line">
+        {% if snap.available and snap.windows %}
+          {% for w in snap.windows[:2] %}<span><span class="dot dot--{{ w.status }}"></span>{{ w.label }} <b class="num">{{ "%.0f%%"|format(w.percent_used) if w.percent_used is not none else "–" }}</b></span>{% endfor %}
+        {% else %}
+          <span><span class="dot dot--warn"></span>Live quota · {{ (snap.unavailable_reason or "unknown").split(" -- ")[0] }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="burn-plot">
+      {% if activity.available %}
+      {{ burn(activity, lit=30) }}
+      {{ led_axis() }}
+      {% else %}
+      <div class="well empty">No transcripts in the last 24 hours</div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
 <div class="metrics">
   <div class="metric">
-    <span class="metric-label">Fresh 5h</span>
-    <span class="metric-value num">{{ est.fresh_total|k }}</span>
-    <span class="metric-sub">main {{ est.fresh_main|k }} · subagents {{ est.fresh_subagent|k }}</span>
+    <span class="metric-label">Fresh 24h</span>
+    <span class="metric-value num">{{ activity.total_fresh|k }}</span>
+    <span class="metric-sub">{{ "{:,}".format(activity.total_calls) }} model calls · peak {{ activity.peak_fresh|k }} / 10 min</span>
   </div>
   <div class="metric">
     <span class="metric-label">At last throttle</span>

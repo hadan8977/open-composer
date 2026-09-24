@@ -1,0 +1,95 @@
+{#- Instruments: the chart and card pieces shared by Now and the detail screens
+    (2026-09-24 redesign). Geometry comes from open_composer.cockpit.viz; every
+    mark here is plain HTML placed by CSS custom properties, so nothing
+    stretches when the inspector narrows the grid. Every mark carries data-tip
+    (the tooltip script in cockpit.js reads it with textContent). -#}
+
+{% macro money_hero(value) -%}
+{%- set cents = ((value * 100)|round|int) % 100 -%}
+<span class="hero-num">${{ "{:,}".format(value|int) }}<small>.{{ "%02d"|format(cents) }}</small></span>
+{%- endmacro %}
+
+{% macro delta(history) -%}
+{%- set change = history.change -%}
+{%- if change is not none -%}
+<span class="delta delta--{{ 'up' if change > 0 else ('down' if change < 0 else 'flat') }} num">{{ "▲" if change > 0 else ("▼" if change < 0 else "·") }} {{ change|money(0)|replace("-", "") }} · {{ "%.1f"|format((history.change_pct or 0)|abs) }}% <span>since {{ history.first.at.strftime("%b") }} {{ history.first.at.day }}</span></span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro equity_chart(history) -%}
+{%- set chart = equity_columns(history) -%}
+{%- if chart and history.has_history -%}
+<div class="eqc" style="--n:{{ chart.columns|length }}" role="img" aria-label="Paper account equity, last snapshot of each day, {{ chart.columns|length }} days">
+  <div class="eqc-plot">
+    {%- for g in chart.grid %}<i class="eqc-gl{{ ' is-base' if g.is_base }}" style="--y:{{ '%.2f'|format(g.pct) }}%"><span class="num">{{ g.label }}</span></i>{% endfor -%}
+    <div class="eqc-cols">
+      {%- for c in chart.columns %}<span class="eqc-col is-{{ c.kind }}{{ ' is-last' if c.is_last }}" style="--b:{{ '%.2f'|format(c.bottom) }}%;--h:{{ '%.2f'|format(c.height) }}%;--i:{{ loop.index0 }}" data-tip="{{ c.title }}"><i></i></span>{% endfor -%}
+    </div>
+  </div>
+  <div class="eqc-x num" aria-hidden="true">{% for c in chart.columns %}<span>{{ c.label or "" }}</span>{% endfor %}</div>
+</div>
+{%- else -%}
+<div class="empty">{{ "One snapshot so far" if history.observations == 1 else "No equity snapshots yet" }}</div>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro led_meter(field, rows=7, group=1, cls="") -%}
+{%- set cols = led_columns(field, rows=rows, group=group) -%}
+<div class="led {{ cls }}" style="--rows:{{ rows }};--cols:{{ cols|length }}" role="img" aria-label="Model calls per {{ field.bucket_minutes * group }} minutes, last 24 hours">
+  {%- for c in cols %}<i style="--lv:{{ c.level }}" data-tip="{{ c.title }}"{% if c.is_now %} class="is-now"{% endif %}></i>{% endfor -%}
+</div>
+{%- endmacro %}
+
+{% macro led_axis() -%}
+<div class="led-x num" aria-hidden="true"><span style="--x:0">24h ago</span><span style="--x:.25">18h</span><span style="--x:.5">12h</span><span style="--x:.75">6h</span><span style="--x:1">now</span></div>
+{%- endmacro %}
+
+{% macro burn(field, last=none, lit=0, cls="") -%}
+{%- set bars = fresh_bars(field, last=last, lit_last=lit) -%}
+<div class="burn {{ cls }}" style="--n:{{ bars|length }}" role="img" aria-label="Fresh tokens per {{ field.bucket_minutes }} minutes">
+  {%- for b in bars %}<i class="{{ 'is-lit' if b.lit }}{{ ' is-zero' if not b.value }}" style="--h:{{ '%.1f'|format(b.pct) }}%" data-tip="{{ b.title }}"></i>{% endfor -%}
+</div>
+{%- endmacro %}
+
+{% macro stages(research) -%}
+<div class="stages" role="img" aria-label="Cards by stage">
+  {%- for st in research.stages if st.count %}<i class="st st--{{ st.key }}" style="flex:{{ st.count }}" data-tip="{{ st.label }} · {{ st.count }}{% for lane, n in st.lanes if n %} · {{ n }} {{ lane }}{% endfor %}"></i>{% endfor -%}
+</div>
+<div class="stage-legend">
+  {%- for st in research.stages %}
+  {%- set first = st.lanes|selectattr("1")|first %}
+  <a class="sl" href="/hypotheses{% if first %}#{{ first[0]|replace(' ', '-') }}{% endif %}" title="{% for lane, n in st.lanes %}{{ n }} {{ lane }}{{ ' · ' if not loop.last }}{% endfor %}"><i class="sw sw--{{ st.key }}"></i><span class="sl-n num">{{ st.count }}</span><span class="sl-l">{{ st.label }}</span></a>
+  {%- endfor %}
+</div>
+{%- endmacro %}
+
+{% macro live_card(session, live=true) -%}
+{%- set r = session.record -%}
+{%- set act = session.activity -%}
+<a class="live-card well{{ '' if live else ' is-resting' }}" href="/agents/{{ r.id }}" data-detail>
+  <span class="lc-top">
+    {% if live %}<span class="dot dot--ok dot--live"></span>{% else %}<span class="dot dot--unknown"></span><span class="lc-state">last active</span>{% endif %}
+    <span class="lc-who">{{ r.provider|capitalize }}</span>
+    {% if r.model %}<span class="pill">{{ r.model|replace("claude-", "") }}</span>{% endif %}
+    {% if r.cwd %}<span class="lc-where clip">{{ r.cwd.rstrip("/").rsplit("/", 1)[-1] }}</span>{% endif %}
+    <span class="lc-age num">{{ (act.last_entry_at or r.last_activity_at)|ago }}</span>
+  </span>
+  <span class="lc-title">{{ r.title or r.id[:8] }}</span>
+  {% if act.last_text %}<span class="lc-say">{{ act.last_text }}</span>{% endif %}
+  {% if session.recent_tools %}
+  <span class="feed">
+    {%- for e in session.recent_tools %}
+    <span class="fl{{ ' is-latest' if loop.last }}{{ ' is-running' if live and loop.last and e.duration_seconds is none }}{{ ' is-error' if e.is_error }}"><span class="tool">{{ e.tool_name or "tool" }}</span><span class="tgt">{{ e.target or "" }}</span><span class="dur num">{{ ("%.1fs"|format(e.duration_seconds)) if e.duration_seconds is not none else "" }}</span></span>
+    {%- endfor %}
+  </span>
+  {% endif %}
+</a>
+{%- endmacro %}
+
+{% macro ticks(items) -%}
+<span class="ticks">{% for name, status in items %}<i class="tk tk--{{ status }}" data-tip="{{ name }} · {{ status }}"></i>{% endfor %}</span>
+{%- endmacro %}
+
+{% macro meter(pct, status) -%}
+<span class="meter meter--{{ status }}"><i style="width:{{ '%.0f'|format(pct) }}%"></i></span>
+{%- endmacro %}

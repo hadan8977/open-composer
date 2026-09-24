@@ -261,6 +261,13 @@ uv run oc cockpit serve --port 8770
 path keeps its old name, the content is the Cockpit's). `cockpit serve` renders
 it server-side (FastAPI + Jinja2) at `http://127.0.0.1:8770`.
 
+It opens on **Now** (`/`): attention chips, account paper equity by trading
+day, the live agent session, the research pipeline, fresh-token burn, system
+health and a 24-hour model-call meter. The other screens are Hypotheses
+(`/hypotheses`), Lineage, Agents, Paper, Quota and Health; `⌘1`–`⌘7` (Ctrl on
+Linux/Windows) switch between them, and on a phone a bottom tab bar groups
+them. Design rationale: `docs/cockpit/design-instrument-2026-09-24.zh.md`.
+
 The Cockpit has **no application-level authentication** by design and refuses
 to bind `0.0.0.0`/`::`/`*`. Remote (e.g. mobile) access goes through a
 Cloudflare Tunnel (`cloudflared tunnel run --token-file`, run as a systemd

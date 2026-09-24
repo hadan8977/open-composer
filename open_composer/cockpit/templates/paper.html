@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_instruments.html" import money_hero, delta, equity_chart %}
 {% block title %}Paper · Quant{% endblock %}
 {% block content %}
 {% set account = report.account %}
@@ -16,11 +17,26 @@
   <span class="aside num" title="{{ account.generated_at.isoformat() if account.generated_at else '' }}">Alpaca Paper · snapshot {{ account.generated_at|ago if account.generated_at else "unknown" }}</span>
 </div>
 
+{% if equity.latest %}
+<section class="tile tile--hero">
+  <header class="tile-head">
+    <span class="tile-label">Account equity</span>
+    <span class="tile-meta">Alpaca paper · shared by all sleeves · {{ equity.observed_days }} days observed</span>
+  </header>
+  <div class="hero">{{ money_hero(equity.latest.equity) }}{{ delta(equity) }}</div>
+  <div class="well well--chart eqc-tall">{{ equity_chart(equity) }}</div>
+  <div class="foot-row num">
+    <span>last snapshot <b title="{{ equity.latest.at.isoformat() }}">{{ equity.latest.at|ago }}</b></span>
+    <span>{{ equity.observations }} real observations · last per trading day · gaps are days without one</span>
+  </div>
+</section>
+{% endif %}
+
 <div class="metrics">
   <div class="metric">
-    <span class="metric-label">Equity</span>
-    <span class="metric-value num"><span class="dot dot--{{ account.status }}"></span>{{ account.equity|money(0) if account.equity is not none else "–" }}</span>
-    <span class="metric-sub">cash {{ account.cash|money }} · buying power {{ account.buying_power|money }}</span>
+    <span class="metric-label">Cash</span>
+    <span class="metric-value num"><span class="dot dot--{{ account.status }}"></span>{{ account.cash|money(0) if account.cash is not none else "–" }}</span>
+    <span class="metric-sub">buying power {{ account.buying_power|money(0) }}</span>
   </div>
   <div class="metric">
     <span class="metric-label">Open orders</span>

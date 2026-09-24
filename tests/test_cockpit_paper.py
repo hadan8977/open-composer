@@ -358,7 +358,7 @@ def test_bad_strategy_names_return_4xx_not_500(client: TestClient, path: str) ->
 
 
 def test_top_bar_rehearsal_countdown_is_populated_on_every_screen(client: TestClient) -> None:
-    for path in ("/", "/health", "/lineage", "/agents", "/paper"):
+    for path in ("/", "/hypotheses", "/health", "/lineage", "/agents", "/paper"):
         response = client.get(path)
         assert response.status_code == 200
         assert 'data-slot="rehearsal-countdown"' in response.text
