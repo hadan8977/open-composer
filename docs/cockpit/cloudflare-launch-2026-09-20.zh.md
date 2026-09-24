@@ -4,11 +4,13 @@
 把只读 cockpit 常驻为 systemd 服务，把远程管理的 Cloudflare Tunnel connector 常驻为 systemd 服务。
 两个单元文件不在仓库里（`/etc/systemd/system/` 下），全文贴在下面，供审阅和以后重建。
 
+> **2026-09-24 改名**：两个单元改为 `quant.service` 与 `cloudflared-quant.service`，与公网主机名的子域 `quant` 一致（内容只改了 Description，以及隧道单元的 `After`/`Wants` 指向 `quant.service`；旧单元已停用并删除）。下文的运维命令和单元全文已换成新名字；2026-09-20 / 09-21 的验证记录保留当时的旧名。
+
 ## 两个单元做什么
 
-- **`oc-cockpit.service`**：以 `.venv` 里的 Python 跑 `open_composer.cockpit`，只绑 `127.0.0.1:8770`。
+- **`quant.service`**：以 `.venv` 里的 Python 跑 `open_composer.cockpit`，只绑 `127.0.0.1:8770`。
   崩溃自动重启（`Restart=on-failure`，5 秒退避）。
-- **`cloudflared-cockpit.service`**：用 `--token-file` 读 `/root/.cloudflared/dsh-vps.json`（远程管理的 connector token，
+- **`cloudflared-quant.service`**：用 `--token-file` 读 `/root/.cloudflared/dsh-vps.json`（远程管理的 connector token，
   本机没有 `cert.pem`/`config.yml`，ingress 规则和 Access 策略只存在于 Cloudflare Zero Trust 控制台，改不了也读不到明文），
   把这台机器注册为该 tunnel 的一个 connector。常驻重启（`Restart=always`）。
 
@@ -16,20 +18,20 @@
 
 | 单元 | MemoryMax | MemoryHigh | 观察到的用量 |
 |---|---|---|---|
-| `oc-cockpit` | 350M | 250M（软限，触发回收而非杀进程） | 启动即空载约 93MB RSS；打完 5 个页面后 cgroup `MemoryCurrent` 升到约 250–260MB（含页缓存记账），进程本身 RSS 约 137MB，仍在 `MemoryMax` 之内，未被杀 |
-| `cloudflared-cockpit` | 200M | — | 约 17–18MB |
+| `quant` | 350M | 250M（软限，触发回收而非杀进程） | 启动即空载约 93MB RSS；打完 5 个页面后 cgroup `MemoryCurrent` 升到约 250–260MB（含页缓存记账），进程本身 RSS 约 137MB，仍在 `MemoryMax` 之内，未被杀 |
+| `cloudflared-quant` | 200M | — | 约 17–18MB |
 
-`oc-cockpit` 另设 `OOMScoreAdjust=-200`：这台机器 earlyoom 在内存紧张时优先杀 agent 会话，
+`quant` 另设 `OOMScoreAdjust=-200`：这台机器 earlyoom 在内存紧张时优先杀 agent 会话，
 这个负分让内核在全局 OOM 时更晚考虑杀掉 cockpit（不能保证绝对不杀，只是降低优先级）。
 
 ## `ProtectSystem=strict` 的保证
 
-`oc-cockpit.service` 设了 `ProtectSystem=strict`（整个文件系统对该服务只读，除了 systemd 自己留的 `/dev`、`/proc`、`/sys` 等虚拟文件系统）
+`quant.service` 设了 `ProtectSystem=strict`（整个文件系统对该服务只读，除了 systemd 自己留的 `/dev`、`/proc`、`/sys` 等虚拟文件系统）
 且**没有加任何 `ReadWritePaths`**。也就是说：即使 cockpit 代码里哪天不小心写了文件（例如缓存、日志），
 内核会直接拒绝这次写入（`EROFS`），而不是"因为我们信任代码不会写"。这是操作系统级别的只读保证，不依赖代码审查。
 上线后逐页验证：`/`、`/lineage`、`/paper`、`/quota`、`/health` 五个路径在这条限制下全部 200，没有因为写入被拒而报错。
 
-`cloudflared-cockpit.service` 额外设 `ProtectHome=read-only`（因为它要读 `~/.cloudflared/dsh-vps.json`，不能用 `strict` 的 `/home` 完全屏蔽，
+`cloudflared-quant.service` 额外设 `ProtectHome=read-only`（因为它要读 `~/.cloudflared/dsh-vps.json`，不能用 `strict` 的 `/home` 完全屏蔽，
 但仍然不可写）。
 
 ## 控制台侧还差什么（机主要做的事）
@@ -50,13 +52,13 @@
 ## 三行运维口诀
 
 ```bash
-systemctl status oc-cockpit cloudflared-cockpit --no-pager
-journalctl -u oc-cockpit -u cloudflared-cockpit -n 80 --no-pager
+systemctl status quant cloudflared-quant --no-pager
+journalctl -u quant -u cloudflared-quant -n 80 --no-pager
 curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://<你配置的主机名>/
 ```
 
 第三行的预期结果：`403`，或者 `302` 跳到 `https://<team>.cloudflareaccess.com/...`。任何其它结果（尤其是 `200`）都说明 Access 没挡住，
-应立即在控制台检查 Policy，必要时 `systemctl disable --now cloudflared-cockpit` 把 connector 停掉直到策略修好。
+应立即在控制台检查 Policy，必要时 `systemctl disable --now cloudflared-quant` 把 connector 停掉直到策略修好。
 
 ## 2026-09-20 上线时的验证结果
 
@@ -77,11 +79,11 @@ curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://<你配置的�
 
 ## 单元文件全文（不含密钥，可直接核对/重建）
 
-`/etc/systemd/system/oc-cockpit.service`：
+`/etc/systemd/system/quant.service`：
 
 ```ini
 [Unit]
-Description=Open Composer read-only cockpit (FastAPI, loopback only)
+Description=Quant -- Open Composer read-only cockpit (FastAPI, loopback only)
 After=network-online.target
 
 [Service]
@@ -103,13 +105,13 @@ ProtectKernelTunables=yes
 WantedBy=multi-user.target
 ```
 
-`/etc/systemd/system/cloudflared-cockpit.service`：
+`/etc/systemd/system/cloudflared-quant.service`：
 
 ```ini
 [Unit]
-Description=Cloudflare Tunnel for Open Composer cockpit (dsh-vps, remote-managed)
-After=network-online.target oc-cockpit.service
-Wants=oc-cockpit.service
+Description=Cloudflare Tunnel for Quant (dsh-vps, remote-managed)
+After=network-online.target quant.service
+Wants=quant.service
 
 [Service]
 Type=simple
@@ -157,3 +159,9 @@ cockpit 只有一个用户、只需浏览器，公网主机名 + Access 更简�
 旧规则 `dsh.hadan.blog → 127.0.0.1:3080` 仍在 ingress 里，公网 502，本机无进程监听 3080；删除它只能在控制台
 （Networks → Tunnels → dsh-vps → Public Hostname → 删除该行；DNS 里对应的 CNAME 一并删）。本机的 `open-composer-dashboard.service`
 （老 dashboard，指向 8000，早已 disabled + failed）与此无关，已 `reset-failed` 清掉失败状态。
+
+## 2026-09-24 改名后的验证
+
+- `quant.service`、`cloudflared-quant.service` 均 `active`，已 `enable`；`oc-cockpit.service`、`cloudflared-cockpit.service` 已 `disable --now` 并删除单元文件。
+- 本机 `curl` 七屏（`/`、`/hypotheses`、`/lineage`、`/agents`、`/paper`、`/quota`、`/health`）全部 `200`，`ProtectSystem=strict` 仍开启，日志无写入被拒。
+- connector 重新注册 4 条连接；公网根路径 `302` 跳到 `https://<team>.cloudflareaccess.com/...`，门禁生效。
