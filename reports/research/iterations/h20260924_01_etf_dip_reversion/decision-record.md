@@ -213,3 +213,24 @@ from the pack on the G3 placebo test, the 2016-2026 cross-symbol
 persistence table, and the T0/T2 research-admission diagnostic above; if
 this direction is ever revisited, D1-SPY is the specific cell to start
 from, not the family as a whole.
+
+## Correction (2026-09-24, main session) -- signal-level claim withdrawn
+
+The preregistered research admission for D1 required the real mean net return per trade to be at least the 95th percentile of the random-entry-timing placebo. That placebo samples entries on days that pass the same trend filter and uses the same holding periods. D1 fails it in every cell, per `d1-research-admission-t0-t2.json`:
+
+| cell | real percentile, T0 | real percentile, T2 |
+|---|---|---|
+| SPY 1x | 92 | 87 |
+| SPY 3x | 90 | 90 |
+| QQQ 1x | 58 | 63 |
+| QQQ 3x | 58 | 65 |
+
+On QQQ in the 2026 holdout, D1 is also negative per trade at T2.
+
+The positive per-trade mean (t near 3 on SPY) and the 2016-2026 "positive in 82-91% of years" table therefore mostly reflect being long in uptrends, not the IBS entry timing. The earlier wording above ("D1 shows a real, trade-level-significant effect") overstates it.
+
+Corrected verdict:
+- sleeve-level: refuted;
+- signal-level: not admitted (fails the preregistered placebo test).
+
+The family is refuted as a whole. The component idea (IBS entries while a sleeve sits in cash) has no evidence behind it beyond "be long in uptrends".
