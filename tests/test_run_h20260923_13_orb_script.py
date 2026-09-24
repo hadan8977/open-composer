@@ -584,6 +584,52 @@ def test_higher_leverage_cap_uncaps_the_same_trade() -> None:
     assert rows_4x[0]["net_pnl"] > rows_1x[0]["net_pnl"]
 
 
+def test_sized_gross_r_reconciles_with_cost_r_and_net_r_when_cap_binds() -> None:
+    # Same capped scenario as test_leverage_cap_binds_the_slot_notional, but
+    # with a nonzero cost so cost_r is nonzero too. sized_gross_r_multiple
+    # (the actual, leverage-capped position's gross R) must reconcile
+    # exactly: sized_gross_r_multiple - cost_r == net_r_multiple. The
+    # uncapped r_multiple/gross_r field is a different, sizing-independent
+    # figure and is NOT expected to reconcile this way once the cap binds --
+    # that gap is the leverage-cap sizing drag, not a bug.
+    trades = pd.DataFrame([_trade_row()])
+    _, rows = sip.simulate_portfolio_equity(
+        trades,
+        [date(2024, 1, 2)],
+        max_positions=20,
+        leverage_cap=1.0,
+        cost_bps=10.0,
+        commission_per_share=0.0035,
+        risk_pct_of_slot=0.01,
+        borrow_annual_rate=0.0,
+    )
+    row = rows[0]
+    assert row["sized_gross_r_multiple"] - row["cost_r"] == pytest.approx(row["net_r_multiple"])
+    # The cap does bind here (see test_leverage_cap_binds_the_slot_notional),
+    # so the uncapped r_multiple is strictly larger in magnitude than the
+    # capped sized_gross_r_multiple for this winning trade.
+    assert row["sized_gross_r_multiple"] < row["r_multiple"]
+
+
+def test_sized_gross_r_equals_uncapped_r_when_cap_does_not_bind() -> None:
+    # A generous leverage cap that never binds: sized_gross_r_multiple
+    # (actual) and r_multiple (theoretical full-risk) should coincide.
+    trades = pd.DataFrame([_trade_row()])
+    _, rows = sip.simulate_portfolio_equity(
+        trades,
+        [date(2024, 1, 2)],
+        max_positions=20,
+        leverage_cap=100.0,
+        cost_bps=0.0,
+        commission_per_share=0.0,
+        risk_pct_of_slot=0.01,
+        borrow_annual_rate=0.0,
+    )
+    row = rows[0]
+    assert row["sized_gross_r_multiple"] == pytest.approx(row["r_multiple"])
+    assert row["sized_gross_r_multiple"] - row["cost_r"] == pytest.approx(row["net_r_multiple"])
+
+
 def test_bps_cost_reduces_net_pnl() -> None:
     trades = pd.DataFrame([_trade_row(exit_price=100.0)])  # flat trade, isolates cost
     _, rows_no_cost = sip.simulate_portfolio_equity(

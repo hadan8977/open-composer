@@ -1118,6 +1118,93 @@ def _read_shards_for_symbols(paths: list[Path], symbols: list[str]) -> list[pd.D
     return parts
 
 
+#: Cache keyed by (shard path, symbol) -> that symbol's rows from that shard
+#: (2026-09-24 fix, third pass -- see module docstring). The first two
+#: attempts at this fix both foundered on the same shape of bug: reading a
+#: legacy whole-year shard's *full* contents (all symbols) to serve
+#: whichever few symbols one day needs is fine once, but Stage 3 asks for
+#: ~150-210 symbols/day across 575 days, and different days need different
+#: symbols from the same shard -- so either every day re-reads the shard
+#: from disk (measured: 25 days took ~1.9h, OOM-killed regardless of cap
+#: because RSS climbed across the run rather than plateauing), or caching
+#: the shard's full content persists a whole-year, all-symbol DataFrame per
+#: touched shard, and enough distinct shards get touched that the cache
+#: itself reproduces the OOM (still died with an empty log at 900M, 1.3G,
+#: 1.8G, and a 5M-row cache bound). Caching at (shard, symbol) grain instead
+#: means every read -- cached or not -- is pushdown-filtered to just the
+#: symbols actually asked for (bounded, small), and the cache only ever
+#: grows to the number of *distinct* (shard, symbol) pairs any day's
+#: selection ever actually needs -- which for a single-alphabetic-range
+#: shard layout is normally one shard per symbol, so its size tracks the
+#: legacy-only symbol count (2,466 for 2023), not the archive's shard count
+#: or a whole year's raw minute-bar volume.
+_LEGACY_SYMBOL_CACHE: dict[tuple[Path, str], pd.DataFrame] = {}
+
+#: Restricts what a fresh legacy read keeps before caching it, to just the
+#: NY session dates each symbol is actually needed for (2026-09-24 fix,
+#: fourth pass -- see module docstring). Caching a legacy-only symbol's
+#: *entire year* the first time it is touched (previous pass) still
+#: OOM-killed a 3000M-capped run after ~2 hours: Stage 3 only ever needs a
+#: handful of specific days per symbol (whichever days it was actually
+#: selected), not all ~250 trading days a legacy shard holds -- a whole
+#: year's rows can be 50-100x more than any run actually asks for.
+#: :func:`_set_legacy_needed_dates` populates this from stage3_simulate's
+#: own ``needed`` frame (which already has every (session_date, symbol)
+#: pair the current screen/window will ever ask for) before its day loop
+#: starts, and clears the cache, since a different screen has a different
+#: selection and therefore a different needed-dates map -- reusing a cached
+#: entry filtered for one screen's dates across a screen with different
+#: dates would silently drop rows the second screen actually needs. ``None``
+#: means "no restriction known" (keep the whole read) rather than risk
+#: silently dropping data a caller outside stage3_simulate (e.g. a test)
+#: needed.
+_LEGACY_SYMBOL_NEEDED_DATES: dict[str, set[date]] | None = None
+
+
+def _set_legacy_needed_dates(needed: pd.DataFrame) -> None:
+    global _LEGACY_SYMBOL_NEEDED_DATES
+    grouped: dict[str, set[date]] = {}
+    for symbol, dates in needed.groupby("symbol", sort=False)["session_date"]:
+        grouped[str(symbol)] = {pd.Timestamp(d).date() for d in dates}
+    _LEGACY_SYMBOL_NEEDED_DATES = grouped
+    _LEGACY_SYMBOL_CACHE.clear()
+
+
+def _read_legacy_shards_for_symbols(paths: list[Path], symbols: list[str]) -> list[pd.DataFrame]:
+    parts: list[pd.DataFrame] = []
+    for path in paths:
+        symbol_range = _shard_symbol_range(path)
+        if symbol_range is not None and not _range_can_contain(symbol_range, symbols):
+            continue
+        uncached = [s for s in symbols if (path, s) not in _LEGACY_SYMBOL_CACHE]
+        if uncached:
+            fresh = _read_shard(path, set(uncached))
+            fresh_by_symbol = (
+                {str(s): g for s, g in fresh.groupby("symbol", sort=False)}
+                if fresh is not None and not fresh.empty
+                else {}
+            )
+            empty = pd.DataFrame(columns=list(BAR_COLUMNS))
+            for s in uncached:
+                sub = fresh_by_symbol.get(s, empty)
+                wanted_dates = (
+                    _LEGACY_SYMBOL_NEEDED_DATES.get(s)
+                    if _LEGACY_SYMBOL_NEEDED_DATES is not None
+                    else None
+                )
+                if wanted_dates is not None and not sub.empty:
+                    ny_date = (
+                        pd.to_datetime(sub["timestamp"], utc=True).dt.tz_convert(NEW_YORK).dt.date
+                    )
+                    sub = sub[ny_date.isin(wanted_dates)]
+                _LEGACY_SYMBOL_CACHE[(path, s)] = sub
+        for s in symbols:
+            cached = _LEGACY_SYMBOL_CACHE.get((path, s))
+            if cached is not None and not cached.empty:
+                parts.append(cached)
+    return parts
+
+
 def _fetch_day_path_bars(
     day: date, symbols: list[str]
 ) -> dict[str, list[tuple[float, float, float, float]]]:
@@ -1143,7 +1230,7 @@ def _fetch_day_path_bars(
         if missing:
             legacy_files = _minute_shard_files_for_year_legacy_only(day.year)
             if legacy_files:
-                parts.extend(_read_shards_for_symbols(legacy_files, missing))
+                parts.extend(_read_legacy_shards_for_symbols(legacy_files, missing))
     except SipParquetError:
         return {}
     frame = (
@@ -1219,6 +1306,7 @@ def stage3_simulate(
             selection["session_date"] = pd.to_datetime(selection["session_date"])
             needed = selection[["session_date", "symbol", "candle_high", "candle_low", "atr14"]]
             needed = needed.drop_duplicates(subset=["session_date", "symbol"])
+            _set_legacy_needed_dates(needed)
             rows: list[dict[str, Any]] = []
             dates = sorted(needed["session_date"].unique())
             t_start = time.time()
@@ -1395,6 +1483,23 @@ def simulate_portfolio_equity(
                 borrow = entry_notional * borrow_annual_rate * (holding_minutes / MINUTES_PER_YEAR)
             net_pnl = gross_pnl - cost - commission - borrow
             day_pnl += net_pnl
+            gross_r = direction * (row.exit_price - row.entry_price) / r_value
+            # net_pnl / risk_dollars is the R-multiple actually realized after
+            # costs, on the same risk-dollar basis as gross_r above (they are
+            # algebraically identical -- gross_pnl / risk_dollars == gross_r --
+            # whenever the leverage cap does not bind; when it does bind this
+            # correctly reports the smaller effective R the cap allowed).
+            # cost_r is the cost drag alone, in the same units, so the two
+            # always reconcile: gross_r - cost_r == net_r.
+            cost_r = (cost + commission + borrow) / risk_dollars if risk_dollars > 0 else None
+            # sized_gross_r_multiple is gross_pnl (from the actual, leverage-
+            # capped share count) / risk_dollars -- unlike r_multiple/gross_r
+            # above (which is the uncapped, full-risk-sized theoretical R and
+            # does NOT shrink when the leverage cap binds), this one always
+            # reconciles exactly with cost_r and net_r_multiple:
+            # sized_gross_r_multiple - cost_r == net_r_multiple, per trade,
+            # because net_pnl == gross_pnl - cost - commission - borrow.
+            sized_gross_r = gross_pnl / risk_dollars if risk_dollars > 0 else None
             day_rows.append(
                 {
                     "date": session_date,
@@ -1405,7 +1510,11 @@ def simulate_portfolio_equity(
                     "exit_reason": row.exit_reason,
                     "net_pnl": net_pnl,
                     "entry_notional": entry_notional,
-                    "r_multiple": direction * (row.exit_price - row.entry_price) / r_value,
+                    "risk_dollars": risk_dollars,
+                    "r_multiple": gross_r,
+                    "sized_gross_r_multiple": sized_gross_r,
+                    "net_r_multiple": net_pnl / risk_dollars if risk_dollars > 0 else None,
+                    "cost_r": cost_r,
                 }
             )
         if not day_rows:
@@ -1434,8 +1543,18 @@ def compute_metrics(
             "annualized_vol": None,
             "sharpe": None,
             "win_rate": None,
+            "gross_win_rate": None,
             "trades": 0,
             "avg_r_multiple": None,
+            "median_r_multiple": None,
+            "avg_sized_gross_r_multiple": None,
+            "median_sized_gross_r_multiple": None,
+            "avg_net_r_multiple": None,
+            "median_net_r_multiple": None,
+            "cost_r_mean": None,
+            "cost_r_median": None,
+            "cost_r_p25": None,
+            "cost_r_p75": None,
             "exposure": None,
             "avg_positions_per_day": None,
             "turnover_annualized": None,
@@ -1443,6 +1562,7 @@ def compute_metrics(
     std = float(returns.std())
     n_trades = len(trade_rows)
     wins = sum(1 for row in trade_rows if row["net_pnl"] > 0)
+    gross_wins = sum(1 for row in trade_rows if row["r_multiple"] > 0)
     wealth = float((1.0 + returns).prod())
     mean_equity = float((1.0 + returns).cumprod().mean()) if len(returns) else 1.0
     years = total_session_days / 252.0
@@ -1452,16 +1572,51 @@ def compute_metrics(
         if (trade_rows and years > 0 and mean_equity > 0)
         else None
     )
+    r_values = [row["r_multiple"] for row in trade_rows]
+    sized_gross_r_values = [
+        row["sized_gross_r_multiple"]
+        for row in trade_rows
+        if row["sized_gross_r_multiple"] is not None
+    ]
+    net_r_values = [
+        row["net_r_multiple"] for row in trade_rows if row["net_r_multiple"] is not None
+    ]
+    cost_r_values = [row["cost_r"] for row in trade_rows if row["cost_r"] is not None]
     return {
         "annualized_return": annualized_cagr(returns),
         "max_drawdown": max_drawdown(returns),
         "annualized_vol": std * math.sqrt(252.0) if std == std else None,
         "sharpe": float(returns.mean() / std * math.sqrt(252.0)) if std > 0 else None,
+        # net_pnl > 0 (dollar, after leverage-capped sizing/costs/commission/
+        # borrow); gross_win_rate below is r_multiple > 0 (pure price
+        # movement, pre-cost) -- the coordinator's "win rate" request is this
+        # net figure, gross_win_rate is shown alongside it for the same
+        # gross-vs-net split as the R figures.
         "win_rate": wins / n_trades if n_trades else None,
+        "gross_win_rate": gross_wins / n_trades if n_trades else None,
         "trades": n_trades,
-        "avg_r_multiple": float(np.mean([row["r_multiple"] for row in trade_rows]))
-        if trade_rows
-        else None,
+        "avg_r_multiple": float(np.mean(r_values)) if r_values else None,
+        "median_r_multiple": float(np.median(r_values)) if r_values else None,
+        # sized_gross_r is gross_pnl (actual, leverage-capped shares) /
+        # risk_dollars -- the figure that actually reconciles with cost_r and
+        # net_r_multiple (see simulate_portfolio_equity). avg_r_multiple
+        # above is the uncapped, full-risk-sized theoretical R and is
+        # systematically larger in magnitude whenever the leverage cap binds.
+        "avg_sized_gross_r_multiple": (
+            float(np.mean(sized_gross_r_values)) if sized_gross_r_values else None
+        ),
+        "median_sized_gross_r_multiple": (
+            float(np.median(sized_gross_r_values)) if sized_gross_r_values else None
+        ),
+        "avg_net_r_multiple": float(np.mean(net_r_values)) if net_r_values else None,
+        "median_net_r_multiple": float(np.median(net_r_values)) if net_r_values else None,
+        # Cost-in-R distribution: (cost + commission + borrow) / risk_dollars
+        # per trade, i.e. gross_r - net_r reconciled per trade, not just at
+        # the portfolio-average level.
+        "cost_r_mean": float(np.mean(cost_r_values)) if cost_r_values else None,
+        "cost_r_median": float(np.median(cost_r_values)) if cost_r_values else None,
+        "cost_r_p25": float(np.percentile(cost_r_values, 25)) if cost_r_values else None,
+        "cost_r_p75": float(np.percentile(cost_r_values, 75)) if cost_r_values else None,
         "exposure": n_trades / (total_session_days * max_positions),
         "avg_positions_per_day": n_trades / total_session_days,
         "turnover_annualized": turnover,
@@ -2036,6 +2191,54 @@ def render_report_markdown(summary: dict[str, Any]) -> str:
             lines.append(f"| {candidate_id} | {_pct(cons)} | {_pct(late)} |")
         lines.append("")
 
+        lines.append(
+            f"### Trade economics ({window_name}, {PRIMARY_COST_VARIANT}, both stop-fill variants)"
+        )
+        lines.append("")
+        lines.append(
+            "Gross R is pure price movement relative to the 10%-of-ATR14 stop distance, sized "
+            "as if the trade received its full 1% risk allocation -- independent of the "
+            "leverage cap and of costs. Capped gross R applies the same price movement to the "
+            "position actually taken, after `leverage_cap x slot_capital` limits the notional "
+            "(1.0x for SIP01/SIP02, 4.0x for SIP03) -- this is smaller in magnitude than gross "
+            "R whenever the cap binds, which for a 1.0x cap against a 10%-of-ATR14 stop is most "
+            "trades. Net R is capped gross R after round-trip cost, commission and (for shorts) "
+            "borrow: `capped gross R - cost-in-R == net R` per trade, exactly (gross R does "
+            "*not* reconcile this way -- it is a sizing-independent trade-quality figure, shown "
+            "for reference). Win rate is net (`net_pnl > 0`); gross win rate (`gross R > 0`) is "
+            "shown alongside it."
+        )
+        lines.append("")
+        lines.append(
+            "| candidate | stop-fill | trades | gross R/trade | median gross R "
+            "| capped gross R/trade | median capped gross R | net R/trade "
+            "| median net R | win rate | gross win rate | cost-in-R mean | cost-in-R median "
+            "| cost-in-R p25 | cost-in-R p75 |"
+        )
+        lines.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+        for candidate_id in summary["grid"]:
+            for stop_variant in STOP_FILL_VARIANTS:
+                metrics = (
+                    summary["grid"][candidate_id]
+                    .get(window_name, {})
+                    .get(stop_variant, {})
+                    .get(PRIMARY_COST_VARIANT)
+                )
+                if metrics is None or not metrics.get("trades"):
+                    continue
+                lines.append(
+                    f"| {candidate_id} | {stop_variant} | {metrics['trades']} "
+                    f"| {_num(metrics['avg_r_multiple'])} | {_num(metrics['median_r_multiple'])} "
+                    f"| {_num(metrics['avg_sized_gross_r_multiple'])} "
+                    f"| {_num(metrics['median_sized_gross_r_multiple'])} "
+                    f"| {_num(metrics['avg_net_r_multiple'])} "
+                    f"| {_num(metrics['median_net_r_multiple'])} "
+                    f"| {_pct(metrics['win_rate'])} | {_pct(metrics['gross_win_rate'])} "
+                    f"| {_num(metrics['cost_r_mean'])} | {_num(metrics['cost_r_median'])} "
+                    f"| {_num(metrics['cost_r_p25'])} | {_num(metrics['cost_r_p75'])} |"
+                )
+        lines.append("")
+
         lines.append(f"### By year ({window_name}, primary cell)")
         lines.append("")
         lines.append("| candidate | year | CAGR | max DD | sessions |")
@@ -2118,6 +2321,49 @@ def render_report_markdown(summary: dict[str, Any]) -> str:
     for key, payload in summary["published_reference"].items():
         numbers = json.dumps({k: v for k, v in payload.items() if k != "note"})
         lines.append(f"- `{key}`: {numbers} -- {payload.get('note', '')}")
+    lines.append("")
+
+    lines.append("### SIP03 fidelity vs. the published paper")
+    lines.append("")
+    paper = summary["published_reference"].get("paper_headline_long_short", {})
+    lines.append(
+        "Paper (2016-2023, long+short, commission-only cost model, zero slippage): "
+        f"total return {_num(paper.get('total_return'), 2)}x, "
+        f"annualized {_pct(paper.get('annualized_return'))}, "
+        f"Sharpe {_num(paper.get('sharpe'))}, max DD {_pct(paper.get('max_drawdown'))}."
+    )
+    lines.append("")
+    lines.append(
+        "SIP03 below is shown at `commission_only` cost (matching the paper's own cost model "
+        f"exactly, isolating period from cost-methodology) and `{PRIMARY_STOP_FILL_VARIANT}`, for "
+        "every window this run has actually completed. **None of the windows below overlap the "
+        "paper's 2016-2023 study period** -- design (2016-2022) is the only window that would "
+        "overlap it, and design has not been run in this pass (see Window status above; "
+        "resumable command included). Until design exists, a poor number here cannot yet "
+        "distinguish 'replication is unfaithful' from 'edge decayed post-publication' -- it can "
+        "only be read as this candidate's performance in a period the paper never claimed to "
+        "cover. The design-window run is the direct fidelity test."
+    )
+    lines.append("")
+    lines.append("| window | total return | annualized | Sharpe | max DD | trades |")
+    lines.append("|---|---:|---:|---:|---:|---:|")
+    for window_name in summary["windows"]:
+        if summary["window_status"].get(window_name) != "complete":
+            continue
+        metrics = (
+            summary["grid"]
+            .get("SIP03", {})
+            .get(window_name, {})
+            .get(PRIMARY_STOP_FILL_VARIANT, {})
+            .get("commission_only")
+        )
+        if metrics is None:
+            continue
+        lines.append(
+            f"| {window_name} | {_num(metrics.get('total_return'), 2)}x "
+            f"| {_pct(metrics.get('annualized_return'))} | {_num(metrics.get('sharpe'))} "
+            f"| {_pct(metrics.get('max_drawdown'))} | {metrics.get('trades', 0)} |"
+        )
     lines.append("")
 
     lines.append("## Data-quality diligence (Stage 0)")
