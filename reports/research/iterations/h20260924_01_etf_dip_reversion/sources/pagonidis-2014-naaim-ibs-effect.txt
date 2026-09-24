@@ -1,0 +1,1114 @@
+             The IBS Effect: Mean Reversion in Equity ETFs
+
+                                  Alexander Soffronow Pagonidis ∗
+                                                Abstract
+
+
+       I investigate mean reversion in equity ETF prices at the daily frequency by employing a
+      simple technical indicator, Internal Bar Strength (IBS). IBS is based on the position of the
+      day’s close in relation to the day’s range: it takes a value of 0 if the closing price is the
+      lowest price of the day, and 1 if the closing price is the highest price of the day. The IBS
+      effect may be related to intraday over-reactions to news or market movements, which are
+      then ”corrected” the next day.
+          I use the IBS indicator to successfully forecast close-to-close returns with statistically
+      and economically significant results for most instruments. By separating daily bars into five
+      buckets depending on the IBS value of that day, I show that low IBS values are associated
+      with high returns, while high IBS values are associated with low returns. Average returns
+      when IBS is below 0.20 are .35% while average returns when IBS is above 0.80 are -0.13%.
+      This effect has been present in equity ETFs since the early 90s and has been highly consistent
+      through time.
+          The relationship between IBS and close-to-close returns is not linear, but instead based
+      on threshold levels (approximately 0.4 and 0.9) below and above which the indicator has
+      predictive power. The IBS effect tends to be stronger at times of high volatility, especially
+      on the short side: it has no predictive ability for shorts in low volatility environments.
+      Similarly, IBS predictive ability is stronger following high-range days. The effect is also
+      slightly stronger in bear markets (defined as periods with negative 200-day returns); short
+      side returns are greater in bear markets, and vice versa for bull markets. Volume also plays
+      a role, but only for U.S. equity ETFs: the IBS effect completely disappears on low volume
+      days for them. Finally, it is also much stronger than average on Mondays (lending credence
+      to the popular concept of ”Turnaround Tuesday”) and weaker on Fridays.
+          The effect only seems to exist in the U.S., as local equity index ETFs in France, Australia,
+      Germany, Spain, Switzerland, Taiwan, and the U.K. either do not exhibit it at all, or do so
+      to a much smaller degree. Currency returns are not the source of this discrepancy, however.
+      The statistical arbitrageurs who trade U.S.-listed ETFs for foreign equities when their local
+      exchanges are closed may be playing a significant role.
+          The IBS effect can be exploited as part of a profitable trading strategy, even after com-
+      missions and other transaction costs. While using IBS alone is difficult due to transaction
+      costs, it is possible to combine the IBS effect with longer-term mean reversion. A simple
+      strategy based on the RSI indicator can be greatly improved by taking into account IBS: for
+      the ETFs in the sample, adding an IBS filter improves total returns by almost 10 percentage
+      points while decreasing time spent in the market by almost 45%.
+
+∗
+    qusmablog@gmail.com
+
+
+                                                     1
+Introduction
+
+Equity indices exhibit mean reversion in daily returns. A simple and powerful way to capture
+this effect is the Internal Bar Strength technical indicator, which simply relates the closing price
+of a security to its daily range. When the closing price is near the bottom of the day’s range,
+close-to-close returns on the following day tend to be higher than average, and vice versa.
+
+   The source of these mean reverting tendencies is difficult, if not impossible, to establish and
+is beyond the scope of this paper. Trading costs are extremely important when it comes to
+short term strategies, but the magnitude of the IBS effect, combined with the fact that it shows
+up in some of the most liquid securities in the world, is more than enough to overcome them.
+The IBS effect can also be combined with other trading strategies to enhance their returns.
+
+Literature Review
+   There has been no treatment of the IBS effect specifically in the academic literature. Related
+issues such as intraday overreaction to news, and negative autocorrelation in daily returns have
+received some coverage, however.
+
+   Klößner et al. (2012) use measures derived from OHLC data, in a Brownian motion context,
+to test for intraday overreaction in the components of the S&P500 and XETRA-DAX indices.
+They find significant evidence for overreaction to bad news. Kudryavtsev (2012a;b) follows a
+similar, cross-sectional, methodology and applies it to close-to-close and overnight returns of
+DJIA constituents, finding evidence of overreaction and reversal. Conrad et al. (1994), expand-
+ing on the work of Lehmann (1990), find evidence of overreaction (and subsequent negative
+autocorrelation, i.e. reversal) in the returns of individual securities with relatively high volume.
+
+
+Data and Methodology
+
+Data
+   The requirement of reliable OHLC values precludes the use of index or mutual fund data.
+As such, the analysis is constrained to ETFs and thus a relatively short period of time. The
+data used covers the period from the inception for each ETF to 5/12/2013.
+
+   Daily ETF data is sourced from CSI. Descriptions of the ETFs used can be found in Table 1,
+while descriptive statistics of their daily returns can be found in Table 2.
+
+
+
+
+                                                 2
+Methodology
+   IBS at time t is calculated as follows:
+
+
+                                              Closet−i − Lowt−i
+                                 IBSt (n) =
+                                              Hight−i − Lowt−i
+
+
+   It takes values from 0 (if the close is the lowest value of the day) to 1 (if the close is the
+highest value of the day). It can be thought of as a 1-period Stochastic Oscillator.
+
+
+Results
+
+Equity Index ETFs
+   The distribution of IBS values is U-shaped: extreme high and low values appear more fre-
+quently than those in the middle of the distribution (see Figure 1). The shape of the distribution
+is an expected property of the random price process. Due to the long-term positive bias of re-
+turns, there is also a slight tendency for the closing price to be above the middle of the range:
+54.5% of IBS values are above 50%.
+
+   In order to examine the predictive power of the IBS indicator, I separate days into 5 ”buck-
+ets”, based on the day’s IBS value (i.e. IBS values between 0%-20% is the bottom bucket, etc.),
+and then average close-to-close returns for each bucket and ETF. The results can be seen in
+Table 3. There is an economically significant difference between low and high IBS values. For
+most ETFs, the returns following top and bottom bucket IBS readings are statistically signifi-
+cantly different from the average day at the 1% confidence level. Bottom-bucket IBS days are
+followed, on average, by a 38 basis point move upwards, while top-bucket IBS days are followed,
+on average, by a 14 basis point move downwards.
+
+   This asymmetry is an expected result of the long-term upward bias of equity prices. It may
+also be related to the so-called leverage effect, which leads to overreactions that are larger on
+the negative side. The top bucket also contains more days, because high IBS readings are the
+most frequent. As such that bucket is less ”selective”.
+
+   Figure 2 shows average close-to-close returns plotted against IBS for all ETFs. It is clear
+that the relationship between IBS and close-to-close returns is not linear (and thus does not
+lend itself to linear regression analysis). Instead there appear to be two ”thresholds”, below
+and above which returns deviate significantly from the average, roughly at the .4 and ,.9 levels.
+
+   Table 4 shows the probability of an up day depending on IBS value: the average difference
+between top and bottom buckets is 11.2%, with statistically significant results at the 1% level
+for most ETFs.
+
+
+                                                3
+   The IBS effect is highly consistent through time. Table 5 contains returns to a simple IBS
+strategy (going long when an ETF has an IBS of 0.2 or less, and going short when an ETF has
+an IBS of 0.8 or more) by ETF and year, showcasing the remarkable consistency of the mean
+reversion effect.
+
+   These ETFs are not hedged against currency fluctuations. As such, it is possible that the IBS
+effect is due to currency returns and not equity returns. Examining ETFs associated with major
+currencies (Eurozone, U.K., Japan, Australia, and Canada) I found no evidence of the ETF IBS
+being related to next-day currency returns, thus rejecting any currency-based explanation for
+the effect.
+
+   Splitting the ETFs by developed/developing economies shows that the IBS effect has similar
+power in both groups. The difference between close-to-close returns after top and bottom bucket
+IBS values is 0.570% for developed countries and 0.452% for developing countries.
+
+   A trading strategy based on the IBS effect would trade frequently, making transaction costs
+important. The assets used in this paper are not a homogeneous group; some are ETFs with
+little volume, where the price impact of large trades would be sizable. On the other hand, the
+IBS effect is prevalent in U.S. equity indices as well, where both equity and futures markets
+provide ample liquidity and low transaction costs. Furthermore, trading at the closing auction
+can be used to avoid the bid-ask spread. As such, transaction costs are not a limiting factor to
+strategies based on the IBS effect.
+
+Local vs U.S.-based ETFs
+   Many countries do not have any usable ETFs, or have inadequate data, making this analysis
+somewhat problematic. The few countries that do have adequate data (France, Austria, Ger-
+many, Spain, Switzerland, Taiwan, and the U.K.) either do not exhibit the IBS effect at all, or
+only to a far smaller degree. In some cases, such as for the German DAX ETF, the effect is even
+inversed, with the top bucket showing the highest returns. The IBS effect can thus be said to
+be a U.S.-centric phenomenon. The difference is illustrated with equity curves for each bucket
+for the U.S.-based and local ETFs in Figures 3 to 9. The reason(s) behind this are unclear, but
+it is a problem in terms of strategy implementation as trading in the local futures markets is
+not viable given the fact that the effect only shows up at the end of the U.S. session.
+
+   After 2008, a large part of the IBS effect for international ETFs depends on the IBS value
+of SPY: if the SPY IBS is low, shorting a high IBS international ETF will not work. The same
+relationship exists on the other side of the spectrum: if SPY IBS is high, going long a low IBS
+international ETF has significantly lower returns than it would otherwise provide. The actual
+mechanism of price discovery for international ETFs whose markets are closed in unclear, but
+it’s fertile ground for statistical arbitrageurs. Levy & Lieberman (2013) suggest that country
+ETFs overreact to S&P 500 price changes during the hours when the foreign exchange is closed.
+
+
+                                               4
+The Role of Range, Volume, Bull/Bear Markets, and Volatility
+   To investigate the relationship between the IBS effect and volatility, I calculate 20-day
+realized volatility for each day, then divide the sample into high volatility (above the median)
+and low volatility (below the median) days. Table 6 shows average volatility-adjusted close-to-
+close returns by IBS bucket, separated by volatility regime. It is clear that high volatility is
+related to increased predictability of returns and a more powerful IBS effect, in particular the
+high IBS-negative return aspect.
+
+   Range tends to be positively correlated with volatility, so I expect similar results. To test
+the importance of range, I construct a purely backwards-looking measure of relative range, by
+comparing the day’s range against the last 500 days’ median range. A value at or above the
+median is considered a large range day, while a value below the median is considered a small
+range day. Table 7 contains average raw close-to-close returns by IBS bucket for high and low
+range days, while Table 8 shows the same returns with a volatility adjustment. As expected,
+the effect is larger after days with high range, both for high and low IBS extremes.
+
+   I also separate the set into bull and bear market environments, based on whether 200-day
+returns are positive or not. Table 9 contains average raw close-to-close returns by IBS bucket for
+high and low range days, while Table 10 shows the same returns with a volatility adjustment.
+The size of the effect is roughly similar in each environment (slightly larger in bear markets),
+but it is greater in the direction of the overall trend: high IBS readings are followed by larger
+negative returns during bear markets, and vice versa.
+
+   Volume also has some relation to volatility, but less so than range. The volume of the U.S.-
+based ETFs and the volume in their respective local markets are not necessarily well-correlated,
+which clearly shows in the results. Table 11 contains average raw close-to-close returns by IBS
+bucket for high and low volume days, while Table 12 shows the same returns with a volatility
+adjustment. close-to-close returns for foreign ETFs are virtually unchanged between the high
+and low volume categories. On the other hand, the difference is extremely important for the
+U.S. index ETFs: the IBS effect only appears to work on high-volume days. This may be a hint
+toward the source of the effect.
+
+Day of the Week
+   Table 13 shows the 1st - 5th IBS bucket difference of average close-to-close returns, sorted by
+day of the week. The IBS effect is strongest on Monday), giving credence to the popular concept
+of ”Turnaround Tuesday”. Tuesday, Wednesday, and Thursday appear to behave similarly, while
+the the effect is by far the weakest on Fridays. The reasons behind this phenomenon are unclear;
+Mondays are not more volatile relative to other days.
+
+
+
+
+                                                5
+Skewness
+    The mean of the returns distribution is not the only aspect that IBS can predict. Skewness
+also varies significantly between buckets, with low IBS readings being followed by highly skewed
+returns, and vice versa. As can be seen in Table 14, close-to-close returns after a bottom-bucket
+IBS day have skewness of 0.65, while top-bucket IBS days are followed by returns with skewness
+of 0.03. This finding has very useful risk management applications for investors concerned with
+tail risk.
+
+IBS as Filter
+    The returns to an IBS-only strategy are both statistically and economically significant.
+Commissions will greatly decrease the returns and increase the maximum drawdowns, however,
+making such an approach problematic in the real world. One alternative is to combine the IBS
+effect with mean reversion on longer timescales and only take trades when they align. A simple
+demonstration using the Cutler’s RSI indicator will show how the IBS effect can be used to
+boost returns of a swing trading strategy while significantly decreasing the number of trades
+needed.
+
+Cutler’s RSI at time t is calculated as follows:
+
+                                 Ut = max(0, closet − closet−1 )
+
+                                Dt = − min(0, closet − closet−1 )
+                                                         n−1
+                                                   1/ P Ut−i
+                                                     n
+                                                         i=0
+                                     RSt (n) =           n−1
+                                                   1/     P
+                                                               Dt−i
+                                                     n
+                                                         i=0
+
+                                                                           n−1
+                                          
+                                                                            P
+                                          100,
+                                                                     if         Dt−i = 0
+                    Cutler’s RSIt (n) =                                    i=0
+                                                     100
+                                          
+                                              100 − 1+RS t (n)
+                                                               , otherwise
+
+
+I test a simple, long-only strategy that uses the Cutler’s RSI(3) indicator:
+
+
+    • Go long at the close if RSI(3) < 10
+
+    • Maintain the position while RSI(3) ≤ 40
+
+
+I then filter these returns by adding an additional rule based on the value of IBS:
+
+
+    • Enter or maintain long position only if IBS ≤ 0.5
+
+
+
+                                                   6
+The results can be seen in Table 15. The IBS filter removes approximately 43% of the days that
+the RSI(3) system spends in market, while increasing total returns by 9.6% on average. Note
+that when the RSI and IBS strategies align, average close-to-close returns are higher than for
+either strategy alone. Figure 10 shows compounded equity curves illustrating the returns to the
+RSI(3) strategy and its filtered version, as applied to the QQQ ETF.
+
+   While such a strategy easily beats commissions, there are other constraints on using it at
+scale: the requirement of executing over a very small amount of time (near the end of the
+market closing) can be problematic in terms of price impact for large traders. There may even
+be behavioral factors constraining traders from exploiting this effect, such as a fear of ”catching
+a falling knife”. Institutional risk limits may also play a role by constraining the ability of
+traders to take directional positions.
+
+   It should be noted that these results indicate that daily mean reversion (as captured by the
+IBS effect) and medium-term mean reversion (as captured by the RSI strategy) are different
+phenomena which only partially overlap. The IBS filter can be used with similar results when
+combined with other mean reversion indicators, on longer timescales, with chart patterns, as
+well as with volatility-, breadth-, or seasonality-based trading strategies.
+
+
+Conclusion
+
+The results show that the IBS technical indicator is a strong and consistent predictor of close-
+to-close returns for equity ETFs trading in the U.S. Equity ETFs tend to mean revert on daily
+timescales; when the closing price is in the top of the day’s range, close-to-close returns are
+lower, and vice versa. These results are generally not present in overseas markets, however.
+
+   The IBS effect is stronger during times of high volatility, after days with a large range, after
+days with high volume (for U.S. ETFs), during bear markets, and on Mondays. Additionally, it
+can not be explained by currency fluctuations. If one were to look for an explanation, the effect
+might be described in terms of intraday over-reaction which then reverts during the next day.
+
+   On average, a simple trading strategy exploiting the IBS effect has delivered an annual
+returns of over 30%, before trading costs, over the last 19 years. The requirement of frequent
+trading would have eroded a large part of those returns, but the IBS effect can be used in
+combination with other trading strategies to enhance returns (and decrease the number of
+trades) beyond the point where commissions and slippage (for small orders) would have a
+significantly deleterious effect.
+
+   Further research into the IBS effect may be focused on the index constituents, or other asset
+classes.
+
+
+
+                                                 7
+References
+
+Conrad, J. S., Hameed, A., & Niden, C. (1994). Volume and autocovariances in short-horizon
+  individual security returns. The Journal of Finance, 49 (4), 1305–1329.
+
+Klößner, S., Becker, M., & Friedmann, R. (2012). Modeling and measuring intraday overreaction
+  of stock prices. Journal of Banking & Finance, 36 (4), 1152–1163.
+
+Kudryavtsev, A. (2012a). Overnight stock price reversals. Journal of Advanced Studies in
+  Finance, III (2), 162–170.
+
+Kudryavtsev, A. (2012b). Short-term stock price reversals may be reversed. International
+  Journal of Economic Sciences and Applied Research (IJESAR), 5 (3), 129–146.
+
+Lehmann, B. N. (1990). Fads, martingales, and market efficiency. The Quarterly Journal of
+  Economics, 105 (1), 1.
+
+Levy, A., & Lieberman, O. (2013). Overreaction of country ETFs to US market returns: Intraday
+  vs. daily horizons and the role of synchronized trading. Journal of Banking & Finance, 37 (5),
+  1412–1421.
+
+
+
+
+                                               8
+Tables
+
+           Table 1: ETF Ticker Symbols, Geographical Area, and Fund Names
+
+  Ticker   Country / Area     Fund Name
+  ECH      Chile              iShares MSCI Chile Investable Market Index Fund
+  EEM      Emerging Markets   iShares MSCI Emerging Markets Index Fund
+  EFA      EAFE               iShares MSCI EAFE Index Fund
+  EPHE     Philippines        iShares MSCI Philippines Investable Market Index Fund
+  EPI      India              WisdomTree India Earnings Fund
+  EPP      Pacific ex-Japan   iShares MSCI Pacific ex-Japan Index Fund
+  EWA      Australia          iShares MSCI Australia Index Fund
+  EWC      Canada             iShares MSCI Canada Index Fund
+  EWD      Sweden             iShares MSCI Sweden Index Fund
+  EWG      Germany            iShares MSCI Germany Index Fund
+  EWH      Hong Kong          iShares MSCI Hong Kong Index Fund
+  EWI      Italy              iShares MSCI Italy Index Fund
+  EWJ      Japan              iShares MSCI Japan Index Fund
+  EWL      Switzerland        iShares MSCI Switzerland Index Fund
+  EWM      Malaysia           iShares MSCI Malaysia Index Fund
+  EWO      Austria            iShares MSCI Austria Index Fund
+  EWP      Spain              iShares MSCI Spain Index Fund
+  EWQ      France             iShares MSCI France Index Fund
+  EWS      Singapore          iShares MSCI Singapore Index Fund
+  EWT      Taiwan             iShares MSCI Taiwan Index Fund
+  EWU      U.K.               iShares MSCI United Kingdom Index Fund
+  EWY      South Korea        iShares MSCI South Korea Index Fund
+  EWZ      Brazil             iShares MSCI Brazil Index Fund
+  EZA      South Africa       iShares MSCI South Africa Index Fund
+  FXI      China              iShares FTSE China 25 Index Fund
+  GXG      Colombia           Global X FTSE Colombia 20 ETF
+  IDX      Indonesia          Market Vectors R Indonesia Index ETF
+  ILF      Latin America      iShares S&P Latin America 40 Index Fund
+  IWM      U.S.               iShares Russell 2000 Index Fund
+  QQQ      U.S.               Powershares QQQ
+  RSX      Russia             Market Vectors R Russia ETF
+  SPY      U.S.               SPDR S&P 500 ETF
+  THD      Thailand           iShares MSCI Thailand Index Fund
+
+
+
+
+                                          9
+                              Table 2: Descriptive Statistics of Daily Returns
+
+Ticker    Mean     St. Dev.   Skewness   Min.        Max.      % Days Up     Obs.    Beginning        End
+ECH       0.020%   1.851%      -0.03     -12.057%    15.704%   51.68%        1521   20/11/2007   5/12/2013
+EEM       0.075%   2.094%       0.68     -16.148%    22.780%   53.36%        2680    15/4/2003   5/12/2013
+EFA       0.034%   1.520%       0.23     -11.157%    15.903%   52.96%        3087    27/8/2001   5/12/2013
+EPHE      0.046%   1.515%      -0.23     -8.029%     7.198%    51.62%        802     29/9/2010   5/12/2013
+EPI       0.002%   2.413%       0.69     -11.199%    23.438%   49.52%        1456    26/2/2008   5/12/2013
+EPP       0.061%   1.688%       0.24     -11.220%    16.582%   52.26%        3048   26/10/2001   5/12/2013
+EWA       0.051%   1.806%       0.13     -12.407%    20.721%   48.87%        4451     1/4/1996   5/12/2013
+EWC       0.047%   1.530%      -0.30     -10.991%    12.412%   49.45%        4451     1/4/1996   5/12/2013
+EWD       0.059%   2.135%       0.03     -13.648%    13.302%   49.34%        4451     1/4/1996   5/12/2013
+EWG       0.041%   1.772%       0.20     -11.251%    19.766%   50.39%        4451     1/4/1996   5/12/2013
+EWH       0.040%   1.999%       0.59     -12.338%    20.216%   48.08%        4451     1/4/1996   5/12/2013
+EWI       0.035%   1.833%       0.02     -10.591%    15.281%   50.10%        4451     1/4/1996   5/12/2013
+EWJ       0.011%   1.614%       0.48     -10.405%    15.846%   47.34%        4451     1/4/1996   5/12/2013
+EWL       0.038%   1.491%      -0.09     -8.255%     11.795%   48.64%        4451     1/4/1996   5/12/2013
+EWM       0.036%   2.077%       0.84     -12.500%    19.031%   45.72%        4451     1/4/1996   5/12/2013
+EWO       0.038%   1.791%      -0.22     -12.644%    16.423%   47.09%        4451     1/4/1996   5/12/2013
+EWP       0.051%   1.842%      0.08      -11.072%    14.540%   49.76%        4451     1/4/1996   5/12/2013
+EWQ       0.040%   1.715%       0.02     -10.909%    13.039%   49.81%        4451     1/4/1996   5/12/2013
+EWS       0.031%   2.014%      0.42      -11.518%    17.886%   47.49%        4451     1/4/1996   5/12/2013
+EWT       0.021%   2.115%       0.14     -11.645%    14.182%   49.10%        3383    23/6/2000   5/12/2013
+EWU       0.034%   1.565%       0.08     -11.976%    17.094%   49.14%        4451     1/4/1996   5/12/2013
+EWY       0.065%   2.413%       0.47     -16.496%    22.429%   52.08%        3412    12/5/2000   5/12/2013
+EWZ       0.068%   2.512%       0.03     -19.626%    25.608%   51.05%        3369    14/7/2000   5/12/2013
+EZA       0.080%   2.279%       0.11     -20.091%    22.950%   53.64%        2651    28/5/2003   5/12/2013
+FXI       0.071%   2.455%      0.58      -14.844%    20.276%   51.95%        2304   12/10/2004   5/12/2013
+GXG       0.089%   1.416%      -0.06     -6.266%     7.404%    50.21%        1215     9/2/2009   5/12/2013
+IDX       0.108%   2.124%      0.23      -10.321%    10.663%   50.69%        1229    20/1/2009   5/12/2013
+ILF       0.079%   2.137%      0.28      -19.454%    26.245%   52.54%        3047   26/10/2001   5/12/2013
+IWM       0.044%   1.611%      -0.13     -11.233%    8.634%    52.94%        3402    26/5/2000   5/12/2013
+QQQ       0.034%   1.948%       0.35     -8.964%     16.843%   53.07%        3710    10/3/1999   5/12/2013
+RSX       0.033%   3.159%       0.10     -22.362%    23.002%   50.87%        1659     7/5/2007   5/12/2013
+SPY       0.041%   1.220%       0.12     -9.848%     14.509%   53.45%        5252    29/1/1993   5/12/2013
+THD       0.057%   2.179%       0.00     -11.640%    15.477%   53.91%        1432     1/4/2008   5/12/2013
+Average   0.048%   1.934%       0.18     -12.518%    16.884%   50.55%        3363            -           -
+
+
+
+
+                                                    10
+               Table 3: Close-to-Close returns by IBS Bucket
+
+Average close-to-close returns by IBS bucket and ETF. Bold values indicate that
+the returns for that bucket are significantly higher (1st and 2nd buckets), or lower
+(4th and 5th buckets) from the average day at the 1% level. Bold values in the final
+column indicate that the difference between the 1st and 5th buckets is statistically
+significantly different from zero at the 1% level.
+                                     Buckets
+Ticker           1st         2nd          3rd          4th          5th     1st-5th
+ECH         0.180%     -0.316%      -0.147%       0.027%       0.182%     -0.002%
+EEM        0.436%        0.102%     -0.013%      -0.139%      -0.018%     0.454%
+EFA        0.276%        0.091%     -0.045%       0.032%     -0.101%      0.377%
+EPHE        0.315%       0.215%     -0.256%       0.047%      -0.038%      0.354%
+EPI         0.394%       0.287%     -0.089%      -0.145%      -0.297%     0.691%
+EPP         0.255%       0.173%      0.089%      -0.043%      -0.071%     0.326%
+EWA        0.515%        0.149%      0.087%       0.029%     -0.290%      0.805%
+EWC        0.203%        0.000%      0.118%      -0.033%      -0.055%     0.258%
+EWD        0.384%       -0.026%      0.086%       0.003%     -0.164%      0.549%
+EWG        0.306%        0.018%      0.067%       0.009%     -0.116%      0.422%
+EWH        0.527%        0.205%      0.009%      -0.078%     -0.341%      0.868%
+EWI        0.347%        0.099%      0.101%      -0.022%     -0.229%      0.576%
+EWJ        0.460%        0.057%      0.101%      -0.082%     -0.300%      0.760%
+EWL        0.492%       0.228%       0.083%     -0.157%      -0.254%      0.746%
+EWM        0.317%       0.237%       0.169%      -0.098%     -0.303%      0.621%
+EWO        0.332%        0.170%      0.235%      -0.150%     -0.181%      0.513%
+EWP        0.347%        0.190%      0.033%      -0.001%     -0.198%      0.546%
+EWQ        0.273%        0.100%      0.037%      -0.064%     -0.110%      0.383%
+EWS        0.528%       0.324%      -0.088%      -0.098%     -0.366%      0.894%
+EWT        0.482%        0.220%     -0.061%       0.014%     -0.354%      0.835%
+EWU        0.349%        0.171%      0.098%      -0.047%     -0.215%      0.563%
+EWY        0.456%        0.111%      0.151%      -0.089%     -0.201%      0.657%
+EWZ         0.148%       0.026%     -0.070%       0.183%       0.049%      0.100%
+EZA        0.498%        0.052%      0.116%      -0.119%      -0.081%     0.580%
+FXI        0.580%        0.179%      0.026%      -0.129%      -0.155%     0.735%
+GXG         0.078%       0.084%      0.055%       0.000%       0.133%     -0.055%
+IDX         0.286%       0.039%      0.022%       0.045%       0.111%      0.175%
+ILF         0.157%      -0.148%     -0.025%       0.093%       0.173%     -0.016%
+IWM        0.253%        0.023%     -0.028%      -0.061%      -0.004%     0.256%
+QQQ        0.254%        0.112%      0.039%      -0.123%      -0.076%     0.330%
+RSX         0.415%      -0.031%     -0.227%       0.271%      -0.176%     0.591%
+SPY        0.177%       -0.003%      0.050%       0.024%      -0.022%     0.199%
+THD        0.526%        0.033%      0.090%      -0.153%      -0.101%     0.627%
+Average     0.350%       0.096%      0.025%      -0.032%      -0.126%      0.476%
+
+
+
+
+                                        11
+   Table 4: Next-Day Probability of an Up Day by IBS bucket
+
+Bold values indicate that the difference between the top and bottom
+buckets is statistically significantly greater than 0 at the 1% confidence
+level.
+                                 Buckets
+Ticker     1st        2nd        3rd        4th        5th         1st-5th
+ECH        49.86%     45.08%     45.34%     52.79%     59.86%     -10.00%
+EEM        60.10%     53.75%     53.67%     49.50%     50.55%      9.55%
+EFA        57.59%     56.00%     50.31%     53.15%     49.73%      7.85%
+EPHE       60.27%     55.81%     43.09%     52.91%     47.41%     12.86%
+EPI        57.14%     52.49%     49.01%     49.25%     42.89%     14.25%
+EPP        56.48%     54.18%     54.48%     52.88%     47.57%      8.90%
+EWA        59.23%     53.76%     53.07%     50.37%     39.39%     19.84%
+EWC        54.05%     53.04%     52.73%     49.09%     46.22%      7.83%
+EWD        54.43%     52.48%     51.11%     51.39%     44.58%      9.85%
+EWG        55.65%     53.28%     50.45%     51.82%     45.59%     10.06%
+EWH        57.38%     54.69%     48.56%     47.29%     37.16%     20.22%
+EWI        56.66%     52.85%     53.63%     49.61%     43.12%     13.54%
+EWJ        59.50%     49.32%     48.37%     47.59%     37.63%     21.87%
+EWL        61.08%     57.20%     49.91%     48.05%     38.84%     22.24%
+EWM        53.23%     52.82%     48.02%     44.04%     35.95%     17.28%
+EWO        55.28%     54.51%     58.12%     49.17%     43.28%     12.00%
+EWP        56.30%     55.73%     51.89%     48.59%     45.23%     11.07%
+EWQ        55.77%     52.19%     51.10%     50.39%     44.19%     11.57%
+EWS        58.59%     54.56%     47.06%     44.29%     37.16%     21.44%
+EWT        57.80%     52.41%     51.24%     47.18%     41.81%     15.99%
+EWU        57.25%     56.25%     50.50%     49.17%     41.44%     15.81%
+EWY        57.36%     52.58%     54.74%     50.70%     47.26%     10.09%
+EWZ        52.45%     50.47%     49.24%     52.12%     52.49%      -0.04%
+EZA        60.52%     51.60%     55.65%     49.04%     51.73%      8.78%
+FXI        58.16%     53.20%     50.51%     50.50%     48.92%      9.23%
+GXG        49.82%     45.60%     53.07%     52.50%     50.75%      -0.93%
+IDX        56.30%     48.92%     50.25%     48.84%     49.04%       7.26%
+ILF        52.38%     48.77%     49.86%     53.71%     56.37%      -3.99%
+IWM        54.62%     54.69%     53.44%     50.42%     52.05%       2.57%
+QQQ        56.62%     54.48%     54.50%     48.55%     51.68%       4.93%
+RSX        58.81%     52.26%     48.41%     52.98%     45.00%     13.81%
+SPY        58.18%     54.17%     53.65%     52.10%     50.47%      7.71%
+THD        64.39%     51.43%     59.21%     47.28%     50.00%     14.39%
+Average    56.76%     52.74%     51.34%     49.92%     46.22%      10.54%
+                                                                        Table 5: Returns to Long/Short IBS Strategy by Year
+     WRITE THIS TEXT
+                                                                                                                       Year
+     Ticker       ’93      ’94       ’95        ’96        ’97        ’98        ’99        ’00       ’01        ’02          ’03        ’04        ’05       ’06       ’07        ’08        ’09       ’10       ’11       ’12       ’13   Average
+     ECH            -         -         -         -          -          -          -          -         -          -           -           -          -         -   -8.27%     38.02%    -11.06%    -11.77%     4.71%    -4.95%   -21.26%   -2.08%
+     EEM            -         -         -         -          -          -          -          -         -          -    -14.88%      11.21%      5.83%    18.87%    24.76%    110.71%     29.20%     28.75%    43.17%    -2.74%    11.52%   24.22%
+     EFA            -         -         -         -          -          -          -          -   -6.77%     19.22%      13.68%      27.84%      5.61%     6.08%     7.05%     47.49%     36.42%     40.10%    44.53%     3.75%     7.28%   19.41%
+     EPHE           -         -         -         -          -          -          -          -         -          -           -           -          -         -         -          -          -    20.29%    50.74%     8.68%   -23.67%   14.01%
+     EPI            -         -         -         -          -          -          -          -         -          -           -           -          -         -         -   110.38%     93.94%     28.72%    36.39%   -31.28%    -9.74%   38.07%
+     EPP            -         -         -         -          -          -          -          -    3.26%     31.11%      14.12%      20.00%     -1.42%     3.17%    31.78%     54.42%     25.29%     21.81%    13.75%    -0.04%    10.86%   17.55%
+     EWA            -         -         -   54.18%     68.29%     98.08%    128.40%    148.03%    73.53%    110.39%      20.58%       2.70%      1.11%     4.56%    37.09%     52.56%     59.12%     31.98%    24.92%     3.84%     8.46%   51.55%
+     EWC            -         -         -   23.14%     40.88%      1.98%     68.61%    -18.28%    63.00%     97.81%      35.57%      17.43%    -20.07%     8.48%    16.97%     -8.15%     -5.45%      8.99%   -14.87%   -16.72%     8.96%   17.13%
+     EWD            -         -         -   23.52%     38.51%     81.96%     59.53%     69.80%    40.63%     72.65%      42.22%      22.12%     21.56%    11.08%    36.70%     72.99%     11.24%     59.61%    55.19%    -3.24%   -14.11%   39.00%
+     EWG            -         -         -   18.11%     51.92%     44.01%     46.70%     -6.13%    26.91%     22.62%      39.51%      33.96%     13.89%     1.35%    18.98%     38.13%     48.57%     35.60%    18.43%   -12.83%     4.08%   24.66%
+     EWH            -         -         -   24.17%     74.42%     15.46%     58.53%     37.70%    86.08%     56.69%      53.05%      34.85%     33.03%    36.99%    51.24%    177.72%     46.71%     26.39%    19.37%   -13.48%    15.61%   46.36%
+     EWI            -         -         -   22.57%      3.32%     -3.02%     40.79%     62.82%    58.93%     78.38%      26.92%      33.71%     10.23%    28.41%    56.40%     79.42%     63.09%     52.15%    55.11%    31.73%    23.68%   40.26%
+     EWJ            -         -         -   26.85%     70.22%     23.30%     44.61%     56.02%    58.43%     82.94%      24.69%      19.09%     23.98%    27.12%    17.90%     98.57%     47.57%     22.55%    51.47%    12.95%    25.84%   40.78%
+     EWL            -         -         -   15.86%     56.89%    107.37%    112.50%     87.70%    60.55%     72.04%      78.00%      35.98%     14.90%    14.26%    31.40%     27.38%     60.84%     56.56%    23.13%     3.34%   -12.41%   47.02%
+     EWM            -         -         -   32.85%     63.80%    130.29%      3.24%     20.77%    65.95%     48.75%      31.74%      29.15%     23.90%    17.60%    44.54%    112.25%     47.73%     -4.10%    34.62%    10.26%     8.29%   40.09%
+13
+
+
+
+
+     EWO            -         -         -    7.75%      5.66%     45.26%     85.64%     57.56%    51.89%     94.58%      56.43%       6.53%      8.84%     1.52%    33.27%      2.87%     15.58%     36.86%    14.09%    21.51%     0.78%   30.37%
+     EWP            -         -         -   20.73%     32.83%     23.80%    124.31%     45.29%    39.33%     83.15%      56.86%       9.42%     12.05%    -7.54%    20.64%     71.17%     26.70%     55.41%    44.69%    31.29%     1.90%   38.45%
+     EWQ            -         -         -   15.46%     34.22%     18.39%     53.68%     -1.28%    47.81%      2.27%       6.08%      34.20%     26.02%    17.26%    23.04%     54.09%     36.16%     41.92%    39.64%    10.68%    -4.26%   25.30%
+     EWS            -         -         -   32.78%    138.76%     91.08%     49.76%     46.79%    75.90%    128.31%      94.46%      37.42%     19.90%    10.28%    33.89%    100.05%     39.95%     -2.08%    12.67%   -10.58%    11.68%   50.61%
+     EWT            -         -         -         -          -          -          -    17.14%    61.13%     63.98%      84.17%      73.98%     14.42%    41.04%    48.16%     81.58%     43.63%      3.16%    31.40%    12.77%    26.74%   43.09%
+     EWU            -         -         -   43.81%     58.91%     67.50%     61.33%     72.60%    38.59%     35.49%      32.85%      27.60%     21.59%    19.42%    24.44%     35.25%     28.27%     25.21%    16.72%     7.28%    -3.06%   34.10%
+     EWY            -         -         -         -          -          -          -    63.90%    91.91%     75.47%      48.85%      25.47%     11.44%    16.38%    28.40%     62.66%     10.58%     21.88%    43.10%    -9.39%    18.51%   36.37%
+     EWZ            -         -         -         -          -          -          -    -6.34%     6.57%     39.96%     -22.67%     -24.52%    -31.71%    -7.90%    17.04%     53.20%     23.51%     -4.48%     5.26%     1.17%    -4.95%    3.15%
+     EZA            -         -         -         -          -          -          -          -         -          -     -7.40%     -24.24%     -4.03%    24.69%    57.40%    144.08%     21.11%     62.79%    48.96%    -0.66%    27.03%   31.79%
+     FXI            -         -         -         -          -          -          -          -         -          -           -      2.63%     -6.54%    -8.89%    45.38%    209.97%     30.73%     35.45%    32.48%    -3.20%    -0.78%   33.72%
+     GXG            -         -         -         -          -          -          -          -         -          -           -           -          -         -         -          -    19.80%     15.39%    -8.67%   -16.06%   -16.02%   -1.11%
+     IDX            -         -         -         -          -          -          -          -         -          -           -           -          -         -         -          -    25.45%     29.63%    10.76%   -20.72%   -13.01%    6.42%
+     ILF            -         -         -         -          -          -          -          -   10.25%    -24.15%     -43.50%     -42.42%    -31.08%    -2.04%    -0.97%     43.06%      4.36%      9.91%     7.68%    -9.56%     0.50%   -6.00%
+     IWM            -         -         -         -          -          -          -    16.97%    -3.64%     42.07%     -10.38%       5.65%    -17.65%     9.15%    28.49%     63.27%     18.26%     17.70%    31.68%   -15.49%     3.62%   13.55%
+     QQQ            -         -         -         -          -          -     6.03%     54.38%    32.77%     31.70%      38.60%      20.37%     -2.21%    -7.00%     7.14%     45.70%     13.30%     23.36%    17.64%    -9.08%     3.15%   18.39%
+     RSX            -         -         -         -          -          -          -          -         -          -           -           -          -         -   24.12%    108.56%     14.66%      8.79%    28.44%     8.47%    26.03%   31.30%
+     SPY       6.45%    -0.46%    -4.46%     2.36%     12.12%     22.69%     -7.78%     16.75%     5.94%     12.83%       9.61%       9.40%      8.96%     2.56%    19.94%     69.86%     19.23%     10.79%     7.50%   -10.35%     6.95%   10.52%
+     THD            -         -         -         -          -          -          -          -         -          -           -           -          -         -         -    55.99%     72.83%     22.19%    44.32%     0.91%    -4.27%   31.99%
+     Average   6.45%    -0.46%    -4.46%    24.28%     50.05%     51.21%     58.49%     42.11%    43.00%     55.58%      28.37%      17.29%      6.25%    11.04%    27.75%     73.77%     31.79%     25.20%    26.94%    -0.66%     3.76%   29.38%
+Table 6: Volatility-Sorted, Volatility-Adjusted Close-to-Close Returns By IBS bucket
+
+         High volatility days are days when the 10-day realized volatility is above
+         the sample median, and vice versa. Returns are adjusted by the 10-day
+         realized volatility. Bold values indicate that the returns of that bucket
+         are statistically significantly greater (bottom bucket), or smaller (top
+         bucket) than the average daily return, at the 1% confidence level. Bold
+         values in the 1st - 5th columns indicate that the returns in the bottom
+         and top buckets have significantly different means at the 1% level.
+                          High Volatility                    Low Volatility
+         Ticker         1st       5th   1st-5th           1st        5th   1st-5th
+         ECH         0.115      0.108      0.007       -0.120      0.131    -0.251
+         EEM        0.214      -0.036     0.250         0.157      0.156     0.001
+         EFA        0.157     -0.077      0.234         0.174     -0.008    0.182
+         EPHE        0.313     -0.095      0.407        0.070      0.041     0.029
+         EPI         0.117    -0.159      0.275         0.076     -0.038     0.114
+         EPP        0.168      -0.053     0.221         0.113      0.021     0.092
+         EWA        0.324     -0.255      0.579        0.228     -0.065     0.292
+         EWC         0.120     -0.042     0.162        0.217       0.008    0.209
+         EWD        0.175     -0.129      0.304         0.169      0.024    0.145
+         EWG        0.174     -0.086      0.260        0.214      -0.020    0.233
+         EWH        0.229     -0.240      0.468        0.300     -0.119     0.419
+         EWI        0.188     -0.169      0.357        0.206     -0.073     0.279
+         EWJ        0.303     -0.274      0.577        0.207      -0.079    0.286
+         EWL        0.347     -0.251      0.598        0.273     -0.064     0.337
+         EWM        0.193     -0.217      0.410        0.201     -0.124     0.325
+         EWO        0.189     -0.159      0.348        0.217       0.019    0.198
+         EWP        0.157     -0.168      0.325        0.257      -0.017    0.274
+         EWQ        0.138     -0.104      0.241        0.228      -0.029    0.257
+         EWS        0.284     -0.236      0.520        0.197     -0.102     0.298
+         EWT        0.220     -0.212      0.433        0.234      -0.077    0.311
+         EWU        0.223     -0.186      0.409        0.249     -0.054     0.303
+         EWY        0.196     -0.149      0.346         0.202      0.044     0.159
+         EWZ         0.078      0.024      0.053        0.029      0.119    -0.090
+         EZA        0.240     -0.111      0.351         0.134      0.187    -0.053
+         FXI        0.215     -0.093      0.308         0.158      0.104     0.054
+         GXG         0.168      0.076      0.092      -0.162       0.205   -0.367
+         IDX         0.113      0.019      0.094        0.122      0.056     0.066
+         ILF         0.020      0.104     -0.084        0.085      0.216    -0.132
+         IWM        0.128      -0.049     0.177         0.035      0.103    -0.068
+         QQQ        0.151      -0.064     0.215         0.080      0.074     0.007
+         RSX         0.088     -0.088      0.176        0.213      0.030     0.183
+         SPY        0.141     -0.055      0.196         0.145      0.099     0.046
+         THD        0.260      -0.106     0.366         0.199      0.146     0.054
+         Average     0.188     -0.088     0.276         0.184      0.006      0.178
+
+
+
+
+                                             14
+         Table 7: Range-Sorted Close-to-Close Returns By IBS bucket
+
+High range days are days whose range was higher than the 500-day median range,
+and vice versa. Bold values indicate that the returns of that bucket are statistically
+significantly greater (bottom bucket), or smaller (top bucket) than the average
+daily return, at the 1% confidence level. Bold values in the 1st - 5th columns
+indicate that the returns in the bottom and top buckets are significantly different
+at the 1% level.
+                        High Range                               Low Range
+Ticker            1st         5th      1st-5th             1st          5th     1st-5th
+ECH        -0.007%         0.080%    -0.087%        0.485%        0.241%       0.244%
+EEM         0.322%        -0.085%    0.407%         0.621%         0.040%     0.581%
+EFA         0.310%        -0.165%    0.475%         0.247%        -0.057%     0.304%
+EPHE        0.279%         0.003%     0.277%         0.427%       -0.104%      0.531%
+EPI         0.596%        -0.363%    0.959%          0.264%       -0.258%      0.523%
+EPP         0.284%        -0.058%    0.342%          0.191%       -0.096%      0.287%
+EWA        0.557%        -0.429%     0.985%         0.452%       -0.138%      0.590%
+EWC         0.182%        -0.076%    0.259%          0.240%       -0.023%     0.263%
+EWD        0.429%        -0.186%     0.615%          0.306%       -0.136%     0.443%
+EWG        0.326%        -0.146%     0.472%         0.275%        -0.077%     0.352%
+EWH        0.694%        -0.432%     1.127%         0.333%       -0.256%      0.589%
+EWI        0.458%        -0.253%     0.712%          0.189%      -0.217%      0.406%
+EWJ        0.485%        -0.454%     0.940%         0.431%       -0.184%      0.615%
+EWL        0.530%        -0.318%     0.848%         0.437%       -0.179%      0.616%
+EWM        0.485%        -0.419%     0.904%          0.195%      -0.219%      0.414%
+EWO        0.354%        -0.268%     0.622%          0.280%       -0.032%      0.312%
+EWP        0.417%        -0.179%     0.596%          0.236%      -0.227%      0.462%
+EWQ        0.351%         -0.107%    0.459%          0.150%      -0.114%      0.264%
+EWS        0.664%        -0.543%     1.208%         0.430%       -0.238%      0.668%
+EWT        0.445%        -0.533%     0.978%         0.519%        -0.166%     0.684%
+EWU        0.482%        -0.319%     0.801%          0.159%      -0.109%      0.268%
+EWY        0.490%        -0.241%     0.730%          0.343%       -0.162%     0.505%
+EWZ         0.149%         0.004%     0.145%         0.141%        0.129%      0.012%
+EZA        0.558%         -0.121%    0.680%          0.367%       -0.020%      0.387%
+FXI        0.599%         -0.098%    0.698%          0.574%       -0.223%     0.796%
+GXG         0.108%         0.149%    -0.040%         0.041%        0.147%     -0.107%
+IDX         0.525%         0.170%     0.355%        -0.052%        0.086%     -0.138%
+ILF         0.149%         0.171%    -0.022%         0.166%        0.169%     -0.003%
+IWM        0.366%         -0.059%    0.425%          0.036%        0.056%     -0.021%
+QQQ        0.337%         -0.120%    0.457%          0.150%       -0.043%      0.192%
+RSX         0.696%        -0.490%    1.186%          0.112%        0.049%      0.064%
+SPY        0.201%         -0.019%    0.220%          0.128%       -0.032%      0.159%
+THD         0.420%        -0.267%    0.687%         0.801%         0.088%      0.713%
+Average      0.401%       -0.187%     0.588%          0.293%      -0.070%      0.363%
+
+
+
+
+                                          15
+Table 8: Range-Sorted, Volatility-Adjusted Close-to-Close Returns By IBS bucket
+
+        High range days are days whose range was higher than the 500-day me-
+        dian range, and vice versa. Returns are adjusted by the 10-day realized
+        volatility. Bold values indicate that the returns of that bucket are sta-
+        tistically significantly greater (bottom bucket), or smaller (top bucket)
+        than the average daily return, at the 1% confidence level. Bold values
+        in the 1st - 5th columns indicate that the returns in the bottom and top
+        buckets are significantly different at the 1% level.
+                            High Range                        Low Range
+        Ticker        1st        5th   1st-5th          1st       5th    1st-5th
+        ECH        -0.095      0.080     -0.175     0.214       0.120      0.094
+        EEM         0.139      0.004     0.135      0.278        0.096    0.182
+        EFA         0.163     -0.077     0.240      0.219       -0.058    0.277
+        EPHE        0.196     -0.032      0.229      0.245      -0.082     0.327
+        EPI         0.256     -0.089     0.344       0.024      -0.109     0.133
+        EPP         0.169     -0.029     0.198       0.105      -0.046     0.151
+        EWA        0.306     -0.268      0.574      0.311      -0.127     0.438
+        EWC         0.139     -0.045     0.184       0.243      -0.047    0.290
+        EWD        0.222     -0.070      0.292       0.162      -0.065    0.227
+        EWG        0.204     -0.094      0.298      0.253       -0.051    0.304
+        EWH        0.344     -0.212      0.556      0.257      -0.202     0.458
+        EWI        0.287     -0.171      0.458       0.143     -0.151     0.294
+        EWJ        0.284     -0.284      0.569      0.324      -0.165     0.489
+        EWL        0.345     -0.233      0.578      0.355      -0.148     0.503
+        EWM        0.282     -0.240      0.522       0.167     -0.147     0.314
+        EWO        0.249     -0.143      0.392       0.205      -0.039     0.244
+        EWP        0.251     -0.081      0.332       0.176     -0.178     0.354
+        EWQ        0.240      -0.072     0.312       0.120     -0.112     0.232
+        EWS        0.317     -0.241      0.558      0.251      -0.139     0.389
+        EWT        0.227     -0.245      0.472      0.289       -0.110    0.398
+        EWU        0.335     -0.219      0.554       0.159     -0.102     0.260
+        EWY        0.219     -0.094      0.313       0.180      -0.073    0.253
+        EWZ         0.051      0.024      0.027      0.051       0.082    -0.032
+        EZA        0.253       0.006     0.247       0.126       0.058     0.067
+        FXI        0.188       0.030     0.158       0.211      -0.056    0.267
+        GXG         0.055      0.089     -0.034      0.009       0.196    -0.188
+        IDX         0.244     -0.008      0.252     -0.020       0.075    -0.095
+        ILF         0.055      0.145     -0.091     -0.013       0.160    -0.173
+        IWM        0.187      -0.009     0.196      -0.002       0.024    -0.026
+        QQQ        0.168      -0.062     0.230       0.125       0.033     0.092
+        RSX         0.242     -0.092     0.334       0.032       0.005     0.027
+        SPY        0.166       0.023     0.143       0.135      -0.007     0.142
+        THD         0.205     -0.084     0.288      0.405        0.084     0.322
+        Average     0.234     -0.088     0.322       0.184     -0.040      0.225
+
+
+
+
+                                           16
+Table 9: Bull-/Bear- Market-Sorted Close-to-Close Returns By IBS bucket
+
+Bull market days are defined as days which, at the close, have positive or zero
+200-day return (including dividends), and vice versa. Bold values indicate that
+the returns of that bucket are statistically significantly greater (bottom bucket), or
+smaller (top bucket) than the average daily return, at the 1% confidence level. Note
+that despite greater means during bear markets, it is more difficult to establish
+statistical significance due to smaller sample sizes and higher variance. Bold values
+in the 1st - 5th columns indicate that the returns in the bottom and top buckets
+are significantly different at the 1% level.
+                          Bear                                      Bull
+Ticker            1st         5th      1st-5th             1st          5th     1st-5th
+ECH         0.304%        0.162%      0.142%         0.021%        0.153%     -0.132%
+EEM        0.841%        -0.340%     1.181%         0.302%         0.065%      0.236%
+EFA        0.428%        -0.174%     0.602%          0.169%       -0.057%     0.227%
+EPHE        0.460%       -0.043%      0.503%         0.250%       -0.053%      0.304%
+EPI         0.502%       -0.326%      0.828%         0.250%       -0.243%      0.494%
+EPP         0.503%       -0.134%      0.637%         0.153%       -0.054%     0.207%
+EWA        0.747%       -0.361%      1.108%         0.319%       -0.262%      0.580%
+EWC         0.306%       -0.093%      0.400%         0.147%       -0.039%     0.187%
+EWD        0.518%       -0.377%      0.894%         0.295%        -0.067%     0.362%
+EWG         0.328%      -0.264%      0.591%         0.292%        -0.056%     0.347%
+EWH        0.640%       -0.475%      1.114%         0.446%       -0.271%      0.717%
+EWI        0.543%       -0.430%      0.972%         0.211%       -0.118%      0.329%
+EWJ        0.531%       -0.426%      0.957%         0.360%       -0.178%      0.538%
+EWL        0.623%       -0.322%      0.945%         0.397%       -0.218%      0.615%
+EWM        0.364%       -0.628%      0.992%         0.283%       -0.169%      0.452%
+EWO        0.356%       -0.319%      0.674%         0.312%       -0.100%      0.412%
+EWP        0.472%       -0.340%      0.812%         0.258%       -0.130%      0.388%
+EWQ        0.354%        -0.203%     0.557%         0.227%       -0.071%      0.297%
+EWS        0.553%       -0.635%      1.188%         0.503%       -0.163%      0.666%
+EWT        0.642%       -0.424%      1.066%         0.346%       -0.295%      0.641%
+EWU        0.369%       -0.308%      0.677%         0.335%       -0.177%      0.511%
+EWY        0.582%        -0.229%     0.811%         0.372%       -0.186%      0.559%
+EWZ         0.140%       -0.147%      0.287%         0.153%        0.176%     -0.023%
+EZA         0.744%       -0.160%      0.904%        0.378%        -0.056%     0.434%
+FXI        0.901%        -0.387%     1.289%         0.418%        -0.059%     0.477%
+GXG         0.017%        0.247%     -0.230%         0.103%        0.117%     -0.015%
+IDX         0.069%        0.295%     -0.227%         0.402%        0.050%      0.353%
+ILF         0.330%        0.055%      0.275%         0.063%        0.213%     -0.150%
+IWM        0.637%         0.022%     0.615%          0.026%       -0.016%      0.042%
+QQQ         0.279%       -0.198%      0.477%        0.241%        -0.034%     0.275%
+RSX         0.502%       -0.307%      0.809%         0.338%       -0.081%      0.419%
+SPY         0.218%       -0.126%      0.344%        0.164%         0.003%     0.162%
+THD         0.709%       -0.391%     1.100%         0.408%         0.018%      0.390%
+Average      0.470%      -0.236%      0.706%          0.271%      -0.071%      0.342%
+
+
+
+                                          17
+Table 10: Bull-/Bear- Market-Sorted, Volatility-Adjusted Close-to-Close Returns By IBS bucket
+
+              Bull market days are defined as days which, at the close, have positive
+              or zero 200-day return (including dividends), and vice versa. Returns
+              are adjusted by the 10-day realized volatility. Bold values indicate that
+              the returns of that bucket are statistically significantly greater (bottom
+              bucket), or smaller (top bucket) than the average daily return, at the 1%
+              confidence level. Note that despite greater means during bear markets, it
+              is more difficult to establish statistical significance due to smaller sample
+              sizes and higher variance. Bold values in the 1st - 5th columns indicate
+              that the returns in the bottom and top buckets are significantly different
+              at the 1% level.
+                                      Bear                                Bull
+              Ticker         1st        5th    1st-5th           1st        5th    1st-5th
+              ECH          0.012      0.124     -0.112         0.003      0.116     -0.113
+              EEM         0.210      -0.008      0.218        0.184       0.085     0.099
+              EFA          0.126     -0.055     0.180         0.193      -0.034     0.227
+              EPHE         0.314     -0.010      0.323         0.154     -0.040      0.195
+              EPI          0.110     -0.062      0.172         0.111     -0.161      0.272
+              EPP          0.117     -0.040     0.157          0.152     -0.008      0.160
+              EWA         0.331     -0.175      0.506         0.246     -0.148      0.393
+              EWC          0.170     -0.044     0.214          0.157     -0.008      0.165
+              EWD         0.133      -0.167     0.300         0.199     -0.002      0.201
+              EWG         0.137      -0.102     0.240          0.226    -0.030      0.257
+              EWH         0.173     -0.178      0.351         0.322     -0.179      0.501
+              EWI         0.205     -0.192      0.397         0.193     -0.080      0.273
+              EWJ         0.257     -0.228      0.485         0.268     -0.128      0.396
+              EWL         0.332     -0.216      0.548         0.304     -0.132      0.436
+              EWM         0.146     -0.255      0.401         0.230     -0.135      0.365
+              EWO         0.175     -0.147      0.323         0.221     -0.028      0.249
+              EWP         0.196     -0.157      0.353         0.205     -0.061      0.266
+              EWQ         0.125     -0.110      0.235         0.211      -0.047     0.258
+              EWS         0.188     -0.254      0.442         0.324     -0.100      0.424
+              EWT         0.229     -0.129      0.357         0.227     -0.159      0.386
+              EWU         0.152     -0.143      0.295         0.282     -0.111      0.393
+              EWY         0.163     -0.077      0.240         0.222      -0.045     0.267
+              EWZ          0.059     -0.031      0.089         0.054      0.133     -0.079
+              EZA         0.166       0.087     0.079          0.212      0.037      0.175
+              FXI         0.181      -0.032     0.213         0.202       0.018     0.184
+              GXG         -0.060      0.193     -0.253         0.050      0.126     -0.076
+              IDX          0.004      0.088     -0.084         0.187      0.019      0.167
+              ILF          0.088      0.096     -0.008         0.029      0.189     -0.159
+              IWM          0.255      0.023      0.232       -0.001       0.030    -0.031
+              QQQ         0.108      -0.057     0.165          0.132      0.029      0.102
+              RSX          0.115     -0.042      0.157         0.170     -0.015      0.185
+              SPY         0.097      -0.055     0.152          0.165      0.044      0.121
+              THD         0.221      -0.120      0.342         0.253      0.083     0.170
+              Average      0.159     -0.075      0.234         0.184     -0.022      0.207
+
+
+                                                   18
+       Table 11: Volume-Sorted Close-to-Close Returns By IBS bucket
+
+The table contains average close-to-close returns separated by IBS bucket, as well as the
+difference between the top and bottom buckets. High volume days are days whose volume
+was higher than the 500-day median volume, and vice versa. Bold values indicate that
+the returns of that bucket are statistically significantly greater (bottom bucket), or smaller
+(top bucket) than zero, and statistically significantly different from zero (1st - 5th buckets)
+at the 1% confidence level. Bold values in the 1st - 5th columns indicate that the returns
+in the bottom and top buckets are significantly different at the 1% level.
+
+                         High Volume                                 Low Volume
+Ticker             1st           5th      1st-5th              1st           5th      1st-5th
+                                       Non-U.S. ETFs
+ECH          0.077%         0.189%      -0.111%           0.305%        0.101%       0.205%
+EEM         0.467%         -0.083%      0.550%            0.319%        0.144%       0.175%
+EFA         0.270%         -0.111%      0.381%           0.308%        -0.068%      0.375%
+EPHE         0.274%         0.027%       0.247%           0.482%       -0.250%       0.733%
+EPI          0.384%        -0.146%      0.530%            0.479%      -0.620%        1.099%
+EPP         0.320%         -0.026%      0.346%            0.112%      -0.158%        0.271%
+EWA         0.455%        -0.302%       0.757%           0.615%       -0.274%       0.888%
+EWC          0.190%        -0.044%      0.234%            0.231%       -0.078%      0.310%
+EWD         0.342%        -0.195%       0.537%           0.454%        -0.112%      0.565%
+EWG         0.378%         -0.095%      0.473%            0.176%      -0.162%        0.337%
+EWH         0.675%        -0.353%       1.028%           0.311%       -0.326%       0.637%
+EWI         0.377%        -0.212%       0.589%           0.290%       -0.249%       0.539%
+EWJ         0.504%        -0.307%       0.811%           0.359%       -0.284%       0.643%
+EWL         0.470%        -0.211%       0.681%           0.530%       -0.322%       0.851%
+EWM         0.316%        -0.306%       0.622%           0.316%       -0.298%       0.614%
+EWO         0.258%        -0.148%       0.407%           0.432%       -0.232%       0.665%
+EWP         0.306%        -0.111%       0.418%           0.401%       -0.347%       0.748%
+EWQ         0.323%         -0.081%      0.404%            0.197%      -0.156%       0.354%
+EWS         0.624%        -0.459%       1.083%           0.423%       -0.255%       0.678%
+EWT         0.548%        -0.355%       0.903%            0.295%      -0.344%       0.638%
+EWU         0.407%        -0.235%       0.642%            0.228%      -0.180%       0.408%
+EWY         0.539%        -0.241%       0.780%            0.261%       -0.133%       0.394%
+EWZ          0.121%         0.010%       0.111%           0.224%        0.157%       0.068%
+EZA         0.555%         -0.092%      0.648%            0.368%       -0.061%       0.429%
+FXI         0.799%         -0.236%      1.035%            0.094%       -0.009%       0.103%
+GXG          0.026%         0.123%      -0.097%           0.211%        0.202%       0.009%
+IDX          0.245%        -0.093%       0.339%           0.349%        0.471%      -0.122%
+ILF          0.285%         0.152%       0.132%           0.051%        0.203%      -0.152%
+RSX          0.456%        -0.249%       0.706%           0.274%        0.049%       0.225%
+THD         0.515%         -0.065%      0.580%            0.572%       -0.161%       0.733%
+Average       0.384%       -0.142%        0.525%          0.322%       -0.125%        0.447%
+                                         U.S. ETFs
+SPY         0.212%         -0.028%      0.240%            0.070%       -0.015%        0.085%
+IWM         0.261%         -0.096%      0.357%            0.183%        0.198%       -0.015%
+QQQ         0.349%         -0.179%      0.528%            0.072%        0.027%        0.045%
+Average       0.274%       -0.101%        0.375%          0.108%        0.070%        0.038%
+                                             19
+Table 12: Volume-Sorted, Volatility-Adjusted Close-to-Close Returns By IBS bucket
+
+    The table contains average volatility-adjusted close-to-close returns separated by IBS
+    bucket, as well as the difference between the top and bottom buckets. High volume days are
+    days whose volume was higher than the 500-day median volume, and vice versa. Returns
+    are adjusted by the 10-day realized volatility. Bold values indicate that the returns of that
+    bucket are statistically significantly greater (bottom bucket), or smaller (top bucket) than
+    zero at the 1% confidence level. Bold values in the 1st - 5th columns indicate that the
+    returns in the bottom and top buckets are significantly different at the 1% level.
+
+                                    High Volume                            Low Volume
+    Ticker                      1st        5th    1st-5th            1st        5th     1st-5th
+                                      Foreign Country ETFs
+    ECH                     -0.018       0.075        -0.093      0.078       0.138      -0.060
+    EEM                     0.197        0.032        0.165       0.198       0.102       0.096
+    EFA                     0.157       -0.043        0.200      0.275       -0.102      0.377
+    EPHE                     0.167      -0.028         0.195      0.366      -0.155       0.521
+    EPI                      0.154      -0.055        0.209       0.093     -0.206        0.298
+    EPP                     0.148       -0.016        0.164       0.154     -0.068        0.222
+    EWA                     0.254      -0.215         0.468      0.407      -0.178       0.585
+    EWC                      0.173      -0.040        0.214       0.182      -0.060      0.242
+    EWD                     0.194      -0.092         0.287      0.209       -0.024      0.233
+    EWG                     0.258       -0.075        0.333       0.157     -0.085        0.242
+    EWH                     0.345      -0.185         0.529      0.242      -0.240       0.482
+    EWI                     0.268      -0.149         0.417      0.163      -0.165       0.328
+    EWJ                     0.303      -0.203         0.506      0.305      -0.242       0.548
+    EWL                     0.330      -0.155         0.485      0.392      -0.257       0.649
+    EWM                     0.273      -0.153         0.425      0.150      -0.234       0.384
+    EWO                     0.202      -0.094         0.297      0.284      -0.118       0.402
+    EWP                     0.223      -0.069         0.291      0.227      -0.212       0.439
+    EWQ                     0.238       -0.076        0.313       0.132     -0.113       0.245
+    EWS                     0.316      -0.218         0.534      0.232      -0.137       0.369
+    EWT                     0.274      -0.158         0.431       0.212     -0.217       0.429
+    EWU                     0.280      -0.167         0.447       0.230     -0.150       0.380
+    EWY                     0.227      -0.134         0.361       0.163       0.004       0.160
+    EWZ                      0.036       0.030         0.006      0.097       0.085       0.012
+    EZA                     0.253        0.014        0.239       0.122       0.043       0.079
+    FXI                     0.242       -0.011        0.253       0.105      -0.009       0.113
+    GXG                      0.007       0.137        -0.130      0.106       0.162      -0.056
+    IDX                      0.042      -0.098         0.139      0.285       0.257       0.028
+    ILF                      0.066       0.159        -0.093      0.004       0.162      -0.158
+    RSX                      0.101      -0.053         0.154      0.254       0.013       0.241
+    THD                     0.293        0.023        0.270       0.233      -0.054       0.286
+    Average                  0.200      -0.067        0.267       0.202      -0.069       0.271
+                                            U.S. ETFs
+    SPY                     0.186        0.004        0.183       0.066      0.021        0.045
+    IWM                     0.144       -0.052        0.196       0.026      0.132       -0.106
+    QQQ                     0.194       -0.066        0.260       0.062      0.049        0.013
+    Average                  0.175      -0.038        0.213       0.051      0.067       -0.016
+                                                 20
+Table 13: Bottom - Top Bucket Difference of Average Close-to-Close Returns by Day of the
+Week
+
+             This table contains the difference in average close-to-close returns be-
+             tween the 1st and 5th IBS buckets, grouped by day of the week.
+                                              Day of the Week
+             Ticker     Monday      Tuesday    Wednesday      Thursday       Friday
+             ECH         0.238%     -0.327%         -0.087%     -0.355%      0.479%
+             EEM         0.971%      0.309%          0.443%      0.336%      0.246%
+             EFA         0.630%      0.518%          0.299%      0.183%      0.240%
+             EPHE        0.326%      0.262%          0.208%      0.796%      0.279%
+             EPI         1.203%      0.641%          0.816%      0.575%      0.159%
+             EPP         0.701%      0.228%         -0.011%      0.441%      0.262%
+             EWA         1.199%      0.697%          0.616%      0.685%      0.817%
+             EWC         0.542%      0.180%          0.174%      0.213%      0.201%
+             EWD         0.824%      0.581%          0.369%      0.678%      0.327%
+             EWG         0.777%      0.502%          0.296%      0.295%      0.276%
+             EWH         1.286%      0.843%          0.832%      0.977%      0.353%
+             EWI         0.818%      0.531%          0.378%      0.485%      0.667%
+             EWJ         1.112%      0.850%          0.516%      0.792%      0.542%
+             EWL         0.976%      0.795%          0.500%      0.823%      0.622%
+             EWM         0.503%      0.529%          0.800%      0.717%      0.508%
+             EWO         0.703%      0.518%          0.374%      0.381%      0.602%
+             EWP         0.981%      0.288%          0.454%      0.547%      0.403%
+             EWQ         0.746%      0.417%          0.094%      0.281%      0.395%
+             EWS         1.206%      0.885%          0.934%      0.912%      0.595%
+             EWT         1.411%      0.709%          0.664%      0.632%      0.817%
+             EWU         0.698%      0.775%          0.438%      0.566%      0.340%
+             EWY         1.344%      0.810%          0.324%      0.728%      0.076%
+             EWZ         0.468%      0.218%         -0.351%      0.046%      0.073%
+             EZA         0.772%      0.632%          0.380%      0.545%      0.521%
+             FXI         1.083%      0.762%          0.522%      1.001%      0.267%
+             GXG         0.080%     -0.605%          0.262%      0.084%     -0.090%
+             IDX         0.023%     -0.037%          0.282%      0.526%      0.031%
+             ILF         0.272%      0.068%         -0.107%     -0.078%     -0.324%
+             IWM         0.493%      0.277%          0.273%      0.370%     -0.127%
+             QQQ         0.607%      0.491%          0.394%      0.291%     -0.103%
+             RSX         0.558%      0.669%          1.665%      0.003%      0.016%
+             SPY         0.452%      0.304%          0.128%      0.105%      0.023%
+             THD         0.908%      0.475%          0.904%      0.627%      0.110%
+             Average     0.755%      0.448%         0.418%       0.461%      0.291%
+
+
+
+
+                                               21
+    Table 14: Close-to-Close Return Skewness by IBS bucket
+
+Skewness of Close-to-Close Returns sorted by IBS bucket. Skewness
+values statistically significantly different from zero at the 1% level are
+highlighted in bold.
+                                 Buckets
+Ticker          1st        2nd        3rd      4th          5th    1st-5th
+ECH          1.302     -1.111     -0.934     -0.307     -0.482        1.784
+EEM          1.954      -0.144    -0.453      1.532     -0.852        2.807
+EFA          1.075     -1.073     -0.560      1.710     -0.923        1.998
+EPHE        -1.014      0.504     -0.669      0.156       0.054      -1.068
+EPI          1.700      0.544       0.042    -0.842      -0.161       1.862
+EPP          1.249     -0.371     -0.400     -1.108      0.333        0.917
+EWA           0.061    -0.229     -0.549      1.144     -0.382        0.443
+EWC         -0.474     -0.939     -0.338      0.309     -0.203       -0.271
+EWD          0.515     -1.018      0.237     -0.700      0.147        0.367
+EWG           0.081     1.278      -0.042     0.257     -0.369        0.450
+EWH          1.890       0.075    -0.285      0.197      -0.108       1.998
+EWI          0.313       0.017     0.596      -0.117    -0.647        0.959
+EWJ          0.695      -0.152     0.919      0.887       0.064       0.631
+EWL          0.262     -0.466      -0.081     -0.140    -0.330        0.593
+EWM          1.111      0.748      0.617      1.735      0.206        0.905
+EWO          0.236     -0.527     -0.776      0.140     -0.794        1.030
+EWP          0.257     -0.484      1.032      -0.016    -0.525        0.782
+EWQ          0.473     -0.490      0.561     -0.342     -0.385        0.859
+EWS          0.627      0.793      -0.093     0.714     -0.157        0.784
+EWT          0.611      0.361      -0.154     0.724     -0.578        1.189
+EWU          0.967     -0.593      -0.032     0.540     -0.719        1.686
+EWY          0.840       0.134     1.161     -0.692      0.428        0.412
+EWZ          -0.156    -0.435      -0.140     1.631     -0.942        0.786
+EZA          1.617     -0.957     -0.265      0.115     -1.202        2.819
+FXI          1.620      0.502     -0.296      0.725     -0.909        2.529
+GXG          -0.238     0.723     -0.537      -0.212      0.029      -0.267
+IDX         -0.382      0.897       0.316     0.390      0.500       -0.882
+ILF          0.817     -1.455     -0.854      2.908     -0.357        1.174
+IWM          0.610     -0.654     -0.944     -0.414      -0.150       0.760
+QQQ          0.740      0.559      0.454      -0.010    -0.393        1.133
+RSX           0.254    -1.513      0.673      0.647      0.622       -0.368
+SPY          0.412     -1.148      1.704     -0.277     -0.696        1.108
+THD           0.219      0.263     0.463     -0.364     -0.650        0.869
+Average       0.613     -0.193      0.011     0.331      -0.319      0.933
+
+
+
+
+                                    22
+                                     Table 15: RSI Strategy Statistics
+
+
+Average daily returns, total returns, daily return win rate, and total days spent in market for the RSI(3) strategy
+and the RSI(3) strategy with the IBS ≤ 0.5 filter.
+                       RSI(3) Only                          RSI(3) w/ IBS Filter                    IBS <0.5
+Ticker        Mean       Sum       WR     Days          Mean        Sum       WR     Days          Mean       WR
+ECH        -0.063%    -25.1%     49.4%      399      -0.071%     -17.7%     47.6%      250      -0.044%     47.1%
+EEM         0.232%    125.2%     55.9%      540       0.394%     129.5%     60.5%      329       0.235%     56.4%
+EFA         0.135%     82.1%     51.6%      607       0.208%      77.5%     52.0%      373       0.153%     55.3%
+EPHE       -0.041%     -7.3%     49.2%      177      -0.010%      -1.0%     47.9%       94       0.170%     55.6%
+EPI         0.009%      3.1%     51.7%      358       0.158%      31.4%     52.8%      199       0.252%     54.3%
+EPP         0.271%    154.2%     57.2%      570       0.386%     127.1%     57.4%      329       0.195%     55.6%
+EWA         0.293%    251.4%     55.9%      859       0.545%     250.7%     59.8%      460       0.349%     57.0%
+EWC         0.065%     61.2%     50.9%      945       0.161%      83.6%     54.3%      519       0.150%     54.1%
+EWD         0.280%    272.8%     53.5%      975       0.426%     207.6%     55.6%      487       0.237%     53.6%
+EWG         0.111%    104.6%     51.2%      943       0.217%     113.5%     52.6%      523       0.180%     54.1%
+EWH         0.132%    134.2%     48.8%     1015       0.407%     244.9%     53.3%      602       0.296%     53.9%
+EWI         0.140%    135.3%     52.2%      964       0.230%     123.9%     53.3%      538       0.230%     55.0%
+EWJ         0.060%     62.8%     50.3%     1041       0.260%     150.6%     55.8%      579       0.255%     53.9%
+EWL         0.139%    129.0%     51.0%      931       0.340%     177.2%     55.7%      522       0.333%     57.4%
+EWM         0.049%     51.8%     44.6%     1055       0.227%     132.0%     48.5%      582       0.281%     52.8%
+EWO         0.061%     61.1%     46.6%     1000       0.232%     106.1%     54.3%      457       0.265%     55.4%
+EWP         0.231%    212.8%     52.9%      921       0.394%     186.8%     55.3%      474       0.262%     55.3%
+EWQ         0.168%    159.0%     51.1%      947       0.248%     137.7%     52.5%      556       0.198%     54.3%
+EWS         0.274%    250.7%     51.8%      914       0.573%     311.6%     57.9%      544       0.359%     55.4%
+EWT         0.170%    131.4%     53.0%      771       0.428%     178.3%     56.6%      417       0.310%     54.7%
+EWU         0.193%    175.9%     52.5%      913       0.324%     160.5%     55.2%      495       0.235%     55.3%
+EWY         0.238%    163.0%     53.3%      685       0.473%     180.1%     57.0%      381       0.259%     54.8%
+EWZ         0.114%     92.2%     49.4%      807       0.154%      73.8%     51.3%      480       0.052%     50.5%
+EZA         0.345%    184.0%     58.5%      533       0.336%     102.2%     57.2%      304       0.264%     56.0%
+FXI         0.232%    120.7%     55.6%      520       0.448%     124.5%     56.5%      278       0.326%     55.3%
+GXG         0.194%     55.3%     55.8%      285      -0.005%      -0.9%     49.4%      180       0.058%     49.1%
+IDX         0.112%     29.9%     50.7%      268       0.185%      29.6%     51.9%      160       0.096%     51.7%
+ILF         0.146%    100.8%     51.7%      690       0.208%      88.5%     53.2%      425       0.068%     51.5%
+IWM         0.132%     95.5%     54.7%      722       0.299%     137.7%     58.6%      461       0.160%     55.5%
+QQQ         0.280%    224.4%     55.4%      801       0.460%     247.8%     60.1%      539       0.159%     55.1%
+RSX         0.311%    117.0%     54.8%      376       0.421%      88.7%     56.4%      211       0.097%     53.6%
+SPY         0.190%    205.1%     59.1%     1081       0.297%     205.5%     62.4%      692       0.093%     55.7%
+THD         0.048%     14.2%     56.5%      299       0.313%      53.5%     59.6%      171       0.286%     59.5%
+Average     0.159%    119.0%     52.6%      725       0.293%     128.6%     54.9%      412       0.207%     54.4%
+
+
+                                                      23
+Figures
+
+
+
+
+                     Figure 1: Histogram of IBS values for SPY.
+
+
+
+
+      Figure 2: IBS plotted against Close-to-Close Returns, average for all ETFs.
+
+
+
+
+                                          24
+ Figure 3: U.S.- and Locally-Listed France ETF Cumulative Performance by IBS Bucket
+
+
+
+
+Figure 4: U.S.- and Locally-Listed Australia ETF Cumulative Performance by IBS Bucket
+
+
+
+
+Figure 5: U.S.- and Locally-Listed Germany ETF Cumulative Performance by IBS Bucket
+
+
+
+
+                                         25
+  Figure 6: U.S.- and Locally-Listed Spain ETF Cumulative Performance by IBS Bucket
+
+
+
+
+Figure 7: U.S.- and Locally-Listed Switzerland ETF Cumulative Performance by IBS Bucket
+
+
+
+
+  Figure 8: U.S.- and Locally-Listed Taiwan ETF Cumulative Performance by IBS Bucket
+
+
+
+
+                                          26
+Figure 9: U.S.- and Locally-Listed U.K. ETF Cumulative Performance by IBS Bucket
+
+
+
+
+            Figure 10: RSI(3) Strategy Applied to QQQ, Equity Curves
+
+
+
+
+                                      27
+

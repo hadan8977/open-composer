@@ -1,0 +1,82 @@
+{
+  "iter_id": "h20260924_01_etf_dip_reversion",
+  "strategy_name": "etf_dip_reversion_h20260924_01",
+  "source_spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+  "spec_hash": "578b31d6c431e393416bd4093fe2ac56432dd38cad0f6200bdb155315875ba69",
+  "schema_version": 3,
+  "created_at": "2026-09-24T01:20:00Z",
+  "objective": "Screen 24 preregistered (6 rule x 2 underlying x 2 execution) short-term index-ETF dip-reversion candidates against the frozen giants-sweep G1-G5 gates and a trade-level research-admission rule at T1 (15:50 ET minute-bar-proxy market-on-close) timing, reporting T0 (same-close) and T2 (next-open) as diagnostics only, plus a 2016-2026 per-calendar-year persistence table as context.",
+  "paths": [
+    {
+      "name": "etf_dip_reversion_screen",
+      "candidate_count": 24,
+      "hypothesis_refs": [
+        "H-20260924-01"
+      ],
+      "parameters": {
+        "rule_id": [
+          "D1",
+          "D2",
+          "D3",
+          "D4",
+          "D5",
+          "D6"
+        ],
+        "signal_underlying": [
+          "QQQ",
+          "SPY"
+        ],
+        "execution": [
+          "1x",
+          "3x"
+        ],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "buy_and_hold_signal_underlying",
+        "buy_and_hold_execution_instrument",
+        "random_entry_timing_placebo_60_seeds",
+        "calendar_shift_placebo_20_seeds"
+      ]
+    }
+  ],
+  "total_candidate_budget": 24,
+  "candidate_manifest_path": "reports/research/iterations/h20260924_01_etf_dip_reversion/candidate-manifest.json",
+  "candidate_manifest_sha256": "22430bb47d9fc07149d292902e563f2c6bf1ee815a3a2287b452d0eb6ecd2052",
+  "data_feasibility_path": "reports/research/iterations/h20260924_01_etf_dip_reversion/data-feasibility.json",
+  "data_feasibility_sha256": "85f6861159cd5ce014b1845c0af233de3bc91766e6d96f0fadbe5efaf8b26bb2",
+  "cost_table_path": "reports/research/iterations/h20260924_01_etf_dip_reversion/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260924_01_etf_dip_reversion/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260924_01_etf_dip_reversion/report.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "warmup": [
+      "2022-06-01",
+      "2023-09-15"
+    ],
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "holdout": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-16"
+    ]
+  },
+  "gates": {
+    "g1_through_g5": "reused unchanged from scripts/run_giants_sweep.py; see candidate-manifest.json contracts.validation for the exact thresholds",
+    "research_admission_1x_t1_only": "mean net return per trade > 0 in select and holdout; trade-level t>=2.0 over select+holdout; real mean-per-trade >= 95th pct of the random-entry placebo over select+holdout; T1 keeps >=60% of T0 gross mean per trade",
+    "deflated_sharpe": "reported for the best of the 24 trials",
+    "multiple_comparisons": "24 candidates; every cell reported regardless of outcome; no cherry-picking",
+    "persistence_table": "2016-2026 per calendar year, daily T0/T2 only, QQQ/SPY/IWM/DIA -- context, not an admission criterion"
+  }
+}

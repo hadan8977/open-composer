@@ -1,0 +1,1069 @@
+{
+  "iter_id": "h20260924_01_etf_dip_reversion",
+  "generated_at": "2026-09-24T01:15:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "etf_dip_reversion_h20260924_01",
+  "objective": "Screen 24 short-term index-ETF dip-reversion candidates (6 published rules -- D1 IBS-Algotradekit, D2 IBS-Pagonidis raw, D3 Connors R3, D4 Connors RSI(2) classic, D5 Connors 3-Day High/Low, D6 IBS-filtered RSI(2) -- x 2 signal underlyings QQQ/SPY x 2 execution instruments 1x/3x) against the frozen giants-sweep protocol's G1-G5 gates and a trade-level research-admission rule at realistic T1 market-on-close timing, reporting T0 (same-close, unexecutable) and T2 (next-open) as diagnostics only.",
+  "candidates": [
+    {
+      "candidate_id": "d1_qqq_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_algotradekit_trend_filtered",
+      "method": "ibs_algotradekit_trend_filtered",
+      "ablation": "qqq_signal_1x_execution_qqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d1_qqq_1x",
+        "rule_id": "D1",
+        "rule_name": "ibs_algotradekit_trend_filtered",
+        "rule_source": "Algotradekit IBS Trading Strategy for SPY and NDQ (fmz.com/strategy/484915)",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "QQQ",
+        "leverage_label": "1x",
+        "entry_condition": "IBS <= 0.09 and close > EMA(220)",
+        "exit_condition": "IBS >= 0.985 or 14 sessions held",
+        "trend_filter": "EMA(220)",
+        "max_hold_sessions": 14,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "ibs_entry_threshold": 0.09,
+        "ibs_exit_threshold": 0.985,
+        "note": "Task brief specifies 14 sessions for both QQQ and SPY; the Pine source's own comment gives SPY max_trade_duration=12, not 14. Implemented per the frozen brief (14 for both); divergence disclosed in decision-record.md, not silently corrected. The Pine source measures IBS from the PRIOR completed bar (high[1]/low[1]/close[1]) with process_orders_on_close=false: taken literally its historical backtest fills a full session later than a same-day-IBS/next-open reading, because the [1]-referenced IBS is already fully known the instant the next bar opens (a live-alert non-repainting idiom). This engine measures IBS from the SAME bar whose close is being decided (Pagonidis's and the other five rules' convention) for T0/T1/T2."
+      }
+    },
+    {
+      "candidate_id": "d1_qqq_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_algotradekit_trend_filtered",
+      "method": "ibs_algotradekit_trend_filtered",
+      "ablation": "qqq_signal_3x_execution_tqqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d1_qqq_3x",
+        "rule_id": "D1",
+        "rule_name": "ibs_algotradekit_trend_filtered",
+        "rule_source": "Algotradekit IBS Trading Strategy for SPY and NDQ (fmz.com/strategy/484915)",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "TQQQ",
+        "leverage_label": "3x",
+        "entry_condition": "IBS <= 0.09 and close > EMA(220)",
+        "exit_condition": "IBS >= 0.985 or 14 sessions held",
+        "trend_filter": "EMA(220)",
+        "max_hold_sessions": 14,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "ibs_entry_threshold": 0.09,
+        "ibs_exit_threshold": 0.985,
+        "note": "Task brief specifies 14 sessions for both QQQ and SPY; the Pine source's own comment gives SPY max_trade_duration=12, not 14. Implemented per the frozen brief (14 for both); divergence disclosed in decision-record.md, not silently corrected. The Pine source measures IBS from the PRIOR completed bar (high[1]/low[1]/close[1]) with process_orders_on_close=false: taken literally its historical backtest fills a full session later than a same-day-IBS/next-open reading, because the [1]-referenced IBS is already fully known the instant the next bar opens (a live-alert non-repainting idiom). This engine measures IBS from the SAME bar whose close is being decided (Pagonidis's and the other five rules' convention) for T0/T1/T2."
+      }
+    },
+    {
+      "candidate_id": "d1_spy_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_algotradekit_trend_filtered",
+      "method": "ibs_algotradekit_trend_filtered",
+      "ablation": "spy_signal_1x_execution_spy",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d1_spy_1x",
+        "rule_id": "D1",
+        "rule_name": "ibs_algotradekit_trend_filtered",
+        "rule_source": "Algotradekit IBS Trading Strategy for SPY and NDQ (fmz.com/strategy/484915)",
+        "signal_underlying": "SPY",
+        "execution_instrument": "SPY",
+        "leverage_label": "1x",
+        "entry_condition": "IBS <= 0.11 and close > EMA(200)",
+        "exit_condition": "IBS >= 0.995 or 14 sessions held",
+        "trend_filter": "EMA(200)",
+        "max_hold_sessions": 14,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "ibs_entry_threshold": 0.11,
+        "ibs_exit_threshold": 0.995,
+        "note": "Task brief specifies 14 sessions for both QQQ and SPY; the Pine source's own comment gives SPY max_trade_duration=12, not 14. Implemented per the frozen brief (14 for both); divergence disclosed in decision-record.md, not silently corrected. The Pine source measures IBS from the PRIOR completed bar (high[1]/low[1]/close[1]) with process_orders_on_close=false: taken literally its historical backtest fills a full session later than a same-day-IBS/next-open reading, because the [1]-referenced IBS is already fully known the instant the next bar opens (a live-alert non-repainting idiom). This engine measures IBS from the SAME bar whose close is being decided (Pagonidis's and the other five rules' convention) for T0/T1/T2."
+      }
+    },
+    {
+      "candidate_id": "d1_spy_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_algotradekit_trend_filtered",
+      "method": "ibs_algotradekit_trend_filtered",
+      "ablation": "spy_signal_3x_execution_upro",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d1_spy_3x",
+        "rule_id": "D1",
+        "rule_name": "ibs_algotradekit_trend_filtered",
+        "rule_source": "Algotradekit IBS Trading Strategy for SPY and NDQ (fmz.com/strategy/484915)",
+        "signal_underlying": "SPY",
+        "execution_instrument": "UPRO",
+        "leverage_label": "3x",
+        "entry_condition": "IBS <= 0.11 and close > EMA(200)",
+        "exit_condition": "IBS >= 0.995 or 14 sessions held",
+        "trend_filter": "EMA(200)",
+        "max_hold_sessions": 14,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "ibs_entry_threshold": 0.11,
+        "ibs_exit_threshold": 0.995,
+        "note": "Task brief specifies 14 sessions for both QQQ and SPY; the Pine source's own comment gives SPY max_trade_duration=12, not 14. Implemented per the frozen brief (14 for both); divergence disclosed in decision-record.md, not silently corrected. The Pine source measures IBS from the PRIOR completed bar (high[1]/low[1]/close[1]) with process_orders_on_close=false: taken literally its historical backtest fills a full session later than a same-day-IBS/next-open reading, because the [1]-referenced IBS is already fully known the instant the next bar opens (a live-alert non-repainting idiom). This engine measures IBS from the SAME bar whose close is being decided (Pagonidis's and the other five rules' convention) for T0/T1/T2."
+      }
+    },
+    {
+      "candidate_id": "d2_qqq_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_pagonidis_raw",
+      "method": "ibs_pagonidis_raw",
+      "ablation": "qqq_signal_1x_execution_qqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d2_qqq_1x",
+        "rule_id": "D2",
+        "rule_name": "ibs_pagonidis_raw",
+        "rule_source": "Pagonidis (2014) NAAIM, IBS<0.20 raw rule",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "QQQ",
+        "leverage_label": "1x",
+        "entry_condition": "IBS < 0.20",
+        "exit_condition": "hold exactly 1 session (close to close)",
+        "trend_filter": "none",
+        "max_hold_sessions": 1,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        }
+      }
+    },
+    {
+      "candidate_id": "d2_qqq_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_pagonidis_raw",
+      "method": "ibs_pagonidis_raw",
+      "ablation": "qqq_signal_3x_execution_tqqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d2_qqq_3x",
+        "rule_id": "D2",
+        "rule_name": "ibs_pagonidis_raw",
+        "rule_source": "Pagonidis (2014) NAAIM, IBS<0.20 raw rule",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "TQQQ",
+        "leverage_label": "3x",
+        "entry_condition": "IBS < 0.20",
+        "exit_condition": "hold exactly 1 session (close to close)",
+        "trend_filter": "none",
+        "max_hold_sessions": 1,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        }
+      }
+    },
+    {
+      "candidate_id": "d2_spy_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_pagonidis_raw",
+      "method": "ibs_pagonidis_raw",
+      "ablation": "spy_signal_1x_execution_spy",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d2_spy_1x",
+        "rule_id": "D2",
+        "rule_name": "ibs_pagonidis_raw",
+        "rule_source": "Pagonidis (2014) NAAIM, IBS<0.20 raw rule",
+        "signal_underlying": "SPY",
+        "execution_instrument": "SPY",
+        "leverage_label": "1x",
+        "entry_condition": "IBS < 0.20",
+        "exit_condition": "hold exactly 1 session (close to close)",
+        "trend_filter": "none",
+        "max_hold_sessions": 1,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        }
+      }
+    },
+    {
+      "candidate_id": "d2_spy_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_pagonidis_raw",
+      "method": "ibs_pagonidis_raw",
+      "ablation": "spy_signal_3x_execution_upro",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d2_spy_3x",
+        "rule_id": "D2",
+        "rule_name": "ibs_pagonidis_raw",
+        "rule_source": "Pagonidis (2014) NAAIM, IBS<0.20 raw rule",
+        "signal_underlying": "SPY",
+        "execution_instrument": "UPRO",
+        "leverage_label": "3x",
+        "entry_condition": "IBS < 0.20",
+        "exit_condition": "hold exactly 1 session (close to close)",
+        "trend_filter": "none",
+        "max_hold_sessions": 1,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        }
+      }
+    },
+    {
+      "candidate_id": "d3_qqq_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_r3_three_day_falling_rsi2",
+      "method": "connors_r3_three_day_falling_rsi2",
+      "ablation": "qqq_signal_1x_execution_qqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d3_qqq_1x",
+        "rule_id": "D3",
+        "rule_name": "connors_r3_three_day_falling_rsi2",
+        "rule_source": "Connors & Alvarez (2009) 'R3' (fmz.com/strategy/439643)",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "QQQ",
+        "leverage_label": "1x",
+        "entry_condition": "close > EMA(200) and RSI(2) fell 3 sessions in a row and RSI(2)[3 sessions ago] < 60 and RSI(2)[today] < 10",
+        "exit_condition": "RSI(2) crosses above 70",
+        "trend_filter": "EMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 10,
+        "rsi_day3_max": 60,
+        "rsi_exit_threshold": 70
+      }
+    },
+    {
+      "candidate_id": "d3_qqq_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_r3_three_day_falling_rsi2",
+      "method": "connors_r3_three_day_falling_rsi2",
+      "ablation": "qqq_signal_3x_execution_tqqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d3_qqq_3x",
+        "rule_id": "D3",
+        "rule_name": "connors_r3_three_day_falling_rsi2",
+        "rule_source": "Connors & Alvarez (2009) 'R3' (fmz.com/strategy/439643)",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "TQQQ",
+        "leverage_label": "3x",
+        "entry_condition": "close > EMA(200) and RSI(2) fell 3 sessions in a row and RSI(2)[3 sessions ago] < 60 and RSI(2)[today] < 10",
+        "exit_condition": "RSI(2) crosses above 70",
+        "trend_filter": "EMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 10,
+        "rsi_day3_max": 60,
+        "rsi_exit_threshold": 70
+      }
+    },
+    {
+      "candidate_id": "d3_spy_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_r3_three_day_falling_rsi2",
+      "method": "connors_r3_three_day_falling_rsi2",
+      "ablation": "spy_signal_1x_execution_spy",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d3_spy_1x",
+        "rule_id": "D3",
+        "rule_name": "connors_r3_three_day_falling_rsi2",
+        "rule_source": "Connors & Alvarez (2009) 'R3' (fmz.com/strategy/439643)",
+        "signal_underlying": "SPY",
+        "execution_instrument": "SPY",
+        "leverage_label": "1x",
+        "entry_condition": "close > EMA(200) and RSI(2) fell 3 sessions in a row and RSI(2)[3 sessions ago] < 60 and RSI(2)[today] < 10",
+        "exit_condition": "RSI(2) crosses above 70",
+        "trend_filter": "EMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 10,
+        "rsi_day3_max": 60,
+        "rsi_exit_threshold": 70
+      }
+    },
+    {
+      "candidate_id": "d3_spy_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_r3_three_day_falling_rsi2",
+      "method": "connors_r3_three_day_falling_rsi2",
+      "ablation": "spy_signal_3x_execution_upro",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d3_spy_3x",
+        "rule_id": "D3",
+        "rule_name": "connors_r3_three_day_falling_rsi2",
+        "rule_source": "Connors & Alvarez (2009) 'R3' (fmz.com/strategy/439643)",
+        "signal_underlying": "SPY",
+        "execution_instrument": "UPRO",
+        "leverage_label": "3x",
+        "entry_condition": "close > EMA(200) and RSI(2) fell 3 sessions in a row and RSI(2)[3 sessions ago] < 60 and RSI(2)[today] < 10",
+        "exit_condition": "RSI(2) crosses above 70",
+        "trend_filter": "EMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 10,
+        "rsi_day3_max": 60,
+        "rsi_exit_threshold": 70
+      }
+    },
+    {
+      "candidate_id": "d4_qqq_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_rsi2_classic_chartschool",
+      "method": "connors_rsi2_classic_chartschool",
+      "ablation": "qqq_signal_1x_execution_qqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d4_qqq_1x",
+        "rule_id": "D4",
+        "rule_name": "connors_rsi2_classic_chartschool",
+        "rule_source": "StockCharts ChartSchool RSI(2) writeup",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "QQQ",
+        "leverage_label": "1x",
+        "entry_condition": "close > SMA(200) and RSI(2) <= 5",
+        "exit_condition": "close > SMA(5)",
+        "trend_filter": "SMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 5,
+        "exit_ma": "SMA(5)"
+      }
+    },
+    {
+      "candidate_id": "d4_qqq_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_rsi2_classic_chartschool",
+      "method": "connors_rsi2_classic_chartschool",
+      "ablation": "qqq_signal_3x_execution_tqqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d4_qqq_3x",
+        "rule_id": "D4",
+        "rule_name": "connors_rsi2_classic_chartschool",
+        "rule_source": "StockCharts ChartSchool RSI(2) writeup",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "TQQQ",
+        "leverage_label": "3x",
+        "entry_condition": "close > SMA(200) and RSI(2) <= 5",
+        "exit_condition": "close > SMA(5)",
+        "trend_filter": "SMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 5,
+        "exit_ma": "SMA(5)"
+      }
+    },
+    {
+      "candidate_id": "d4_spy_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_rsi2_classic_chartschool",
+      "method": "connors_rsi2_classic_chartschool",
+      "ablation": "spy_signal_1x_execution_spy",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d4_spy_1x",
+        "rule_id": "D4",
+        "rule_name": "connors_rsi2_classic_chartschool",
+        "rule_source": "StockCharts ChartSchool RSI(2) writeup",
+        "signal_underlying": "SPY",
+        "execution_instrument": "SPY",
+        "leverage_label": "1x",
+        "entry_condition": "close > SMA(200) and RSI(2) <= 5",
+        "exit_condition": "close > SMA(5)",
+        "trend_filter": "SMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 5,
+        "exit_ma": "SMA(5)"
+      }
+    },
+    {
+      "candidate_id": "d4_spy_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_rsi2_classic_chartschool",
+      "method": "connors_rsi2_classic_chartschool",
+      "ablation": "spy_signal_3x_execution_upro",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d4_spy_3x",
+        "rule_id": "D4",
+        "rule_name": "connors_rsi2_classic_chartschool",
+        "rule_source": "StockCharts ChartSchool RSI(2) writeup",
+        "signal_underlying": "SPY",
+        "execution_instrument": "UPRO",
+        "leverage_label": "3x",
+        "entry_condition": "close > SMA(200) and RSI(2) <= 5",
+        "exit_condition": "close > SMA(5)",
+        "trend_filter": "SMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 5,
+        "exit_ma": "SMA(5)"
+      }
+    },
+    {
+      "candidate_id": "d5_qqq_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_3day_high_low",
+      "method": "connors_3day_high_low",
+      "ablation": "qqq_signal_1x_execution_qqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d5_qqq_1x",
+        "rule_id": "D5",
+        "rule_name": "connors_3day_high_low",
+        "rule_source": "Connors & Alvarez (2009) '3-Day High/Low' (fmz.com/strategy/429146)",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "QQQ",
+        "leverage_label": "1x",
+        "entry_condition": "close > EMA(200) and close < EMA(5) and 3 consecutive lower highs and lower lows",
+        "exit_condition": "close crosses above EMA(5)",
+        "trend_filter": "EMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "pattern_window": "EMA(5)"
+      }
+    },
+    {
+      "candidate_id": "d5_qqq_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_3day_high_low",
+      "method": "connors_3day_high_low",
+      "ablation": "qqq_signal_3x_execution_tqqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d5_qqq_3x",
+        "rule_id": "D5",
+        "rule_name": "connors_3day_high_low",
+        "rule_source": "Connors & Alvarez (2009) '3-Day High/Low' (fmz.com/strategy/429146)",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "TQQQ",
+        "leverage_label": "3x",
+        "entry_condition": "close > EMA(200) and close < EMA(5) and 3 consecutive lower highs and lower lows",
+        "exit_condition": "close crosses above EMA(5)",
+        "trend_filter": "EMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "pattern_window": "EMA(5)"
+      }
+    },
+    {
+      "candidate_id": "d5_spy_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_3day_high_low",
+      "method": "connors_3day_high_low",
+      "ablation": "spy_signal_1x_execution_spy",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d5_spy_1x",
+        "rule_id": "D5",
+        "rule_name": "connors_3day_high_low",
+        "rule_source": "Connors & Alvarez (2009) '3-Day High/Low' (fmz.com/strategy/429146)",
+        "signal_underlying": "SPY",
+        "execution_instrument": "SPY",
+        "leverage_label": "1x",
+        "entry_condition": "close > EMA(200) and close < EMA(5) and 3 consecutive lower highs and lower lows",
+        "exit_condition": "close crosses above EMA(5)",
+        "trend_filter": "EMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "pattern_window": "EMA(5)"
+      }
+    },
+    {
+      "candidate_id": "d5_spy_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "connors_3day_high_low",
+      "method": "connors_3day_high_low",
+      "ablation": "spy_signal_3x_execution_upro",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d5_spy_3x",
+        "rule_id": "D5",
+        "rule_name": "connors_3day_high_low",
+        "rule_source": "Connors & Alvarez (2009) '3-Day High/Low' (fmz.com/strategy/429146)",
+        "signal_underlying": "SPY",
+        "execution_instrument": "UPRO",
+        "leverage_label": "3x",
+        "entry_condition": "close > EMA(200) and close < EMA(5) and 3 consecutive lower highs and lower lows",
+        "exit_condition": "close crosses above EMA(5)",
+        "trend_filter": "EMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "pattern_window": "EMA(5)"
+      }
+    },
+    {
+      "candidate_id": "d6_qqq_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_filtered_rsi2_pagonidis_combination",
+      "method": "ibs_filtered_rsi2_pagonidis_combination",
+      "ablation": "qqq_signal_1x_execution_qqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d6_qqq_1x",
+        "rule_id": "D6",
+        "rule_name": "ibs_filtered_rsi2_pagonidis_combination",
+        "rule_source": "Pagonidis (2014) IBS-filter-on-RSI combination, applied to D4",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "QQQ",
+        "leverage_label": "1x",
+        "entry_condition": "close > SMA(200) and RSI(2) <= 5 and IBS < 0.20 at the entry close",
+        "exit_condition": "close > SMA(5)",
+        "trend_filter": "SMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 5,
+        "exit_ma": "SMA(5)",
+        "ibs_filter_threshold": 0.2
+      }
+    },
+    {
+      "candidate_id": "d6_qqq_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_filtered_rsi2_pagonidis_combination",
+      "method": "ibs_filtered_rsi2_pagonidis_combination",
+      "ablation": "qqq_signal_3x_execution_tqqq",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d6_qqq_3x",
+        "rule_id": "D6",
+        "rule_name": "ibs_filtered_rsi2_pagonidis_combination",
+        "rule_source": "Pagonidis (2014) IBS-filter-on-RSI combination, applied to D4",
+        "signal_underlying": "QQQ",
+        "execution_instrument": "TQQQ",
+        "leverage_label": "3x",
+        "entry_condition": "close > SMA(200) and RSI(2) <= 5 and IBS < 0.20 at the entry close",
+        "exit_condition": "close > SMA(5)",
+        "trend_filter": "SMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 5,
+        "exit_ma": "SMA(5)",
+        "ibs_filter_threshold": 0.2
+      }
+    },
+    {
+      "candidate_id": "d6_spy_1x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_filtered_rsi2_pagonidis_combination",
+      "method": "ibs_filtered_rsi2_pagonidis_combination",
+      "ablation": "spy_signal_1x_execution_spy",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d6_spy_1x",
+        "rule_id": "D6",
+        "rule_name": "ibs_filtered_rsi2_pagonidis_combination",
+        "rule_source": "Pagonidis (2014) IBS-filter-on-RSI combination, applied to D4",
+        "signal_underlying": "SPY",
+        "execution_instrument": "SPY",
+        "leverage_label": "1x",
+        "entry_condition": "close > SMA(200) and RSI(2) <= 5 and IBS < 0.20 at the entry close",
+        "exit_condition": "close > SMA(5)",
+        "trend_filter": "SMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 5,
+        "exit_ma": "SMA(5)",
+        "ibs_filter_threshold": 0.2
+      }
+    },
+    {
+      "candidate_id": "d6_spy_3x",
+      "path": "etf_dip_reversion_screen",
+      "role": "ibs_filtered_rsi2_pagonidis_combination",
+      "method": "ibs_filtered_rsi2_pagonidis_combination",
+      "ablation": "spy_signal_3x_execution_upro",
+      "spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+      "fallback": "cash_when_flat",
+      "data_contract": "data_v1_sip_daily_and_minute_dip_reversion",
+      "feature_contract": "feature_v1_ibs_rsi_ema_sma_dip_reversion",
+      "label_contract": "label_v1_t0_t1_t2_trade_return",
+      "validation_contract": "validation_v1_giants_sweep_windows_g1_g5_dip_reversion",
+      "cost_contract": "cost_v1_10_20bps_moc_and_next_open_dip_reversion",
+      "benchmark_contract": "benchmark_v1_buy_hold_and_placebos_dip_reversion",
+      "parameters": {
+        "candidate_id": "d6_spy_3x",
+        "rule_id": "D6",
+        "rule_name": "ibs_filtered_rsi2_pagonidis_combination",
+        "rule_source": "Pagonidis (2014) IBS-filter-on-RSI combination, applied to D4",
+        "signal_underlying": "SPY",
+        "execution_instrument": "UPRO",
+        "leverage_label": "3x",
+        "entry_condition": "close > SMA(200) and RSI(2) <= 5 and IBS < 0.20 at the entry close",
+        "exit_condition": "close > SMA(5)",
+        "trend_filter": "SMA(200)",
+        "max_hold_sessions": null,
+        "ibs_formula": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t",
+        "timing_variants": {
+          "T0": "official close signal, same-close fill (diagnostic, unexecutable upper bound)",
+          "T1": "15:50 ET minute-bar proxy signal (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators use prior official daily closes plus the proxy), MOC fill at the official close of the same session (primary candidate)",
+          "T2": "official close signal, next-session official-open fill (diagnostic)"
+        },
+        "cost_bps_per_side": {
+          "primary": 10.0,
+          "stress": 20.0
+        },
+        "rsi_window": 2,
+        "rsi_entry_threshold": 5,
+        "exit_ma": "SMA(5)",
+        "ibs_filter_threshold": 0.2
+      }
+    }
+  ],
+  "candidate_count": 24,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_and_minute_dip_reversion": {
+        "daily_glob": "data/sip/daily/*/*.parquet",
+        "minute_globs": [
+          "data/sip-hist/minute (through 2022)",
+          "data/sip/minute (2023+, per-month layout only)"
+        ],
+        "hygiene": "drop bars with zero volume and zero trade_count; for 2023 minute data read only the per-month layout (the legacy whole-year layout overlaps it)",
+        "source": "alpaca SIP daily and minute archive, fully adjusted closes",
+        "symbols_daily": [
+          "QQQ",
+          "SPY",
+          "TQQQ",
+          "UPRO",
+          "IWM",
+          "DIA",
+          "BIL"
+        ],
+        "symbols_minute": [
+          "QQQ",
+          "SPY"
+        ],
+        "timezone_handling": "convert minute timestamps to America/New_York with a proper timezone-aware conversion; never union fixed-offset EDT/EST bands"
+      }
+    },
+    "features": {
+      "feature_v1_ibs_rsi_ema_sma_dip_reversion": {
+        "ibs": "IBS_t = (close_t - low_t) / (high_t - low_t), 0.5 if high_t == low_t; T0/T2 from the official daily bar, T1 from the 15:50 ET proxy bar (prior official closes plus the proxy)",
+        "wilder_rsi": "same recursive definition as scripts/run_giants_sweep.py::_wilder_rsi and scripts/run_h20260922_04_rsi_branch.py::wilder_rsi; T1 proxy applies one extra recursive step from the prior session's official avg-gain/avg-loss state using the proxy close",
+        "ema_sma": "standard EMA/SMA on official daily closes for T0/T2; T1 applies one extra EMA step (or a rolling window with the last slot replaced) from the prior session's official state using the proxy close",
+        "t1_proxy": "today's close = last minute bar close at/before 15:50 ET; today's high/low = max/min of minute bars 09:30-15:50 ET; all indicators otherwise use prior official daily closes"
+      }
+    },
+    "labels": {
+      "label_v1_t0_t1_t2_trade_return": {
+        "definition": "per-trade net return from entry fill to exit fill, and daily portfolio return series for Sharpe/CAGR/drawdown, computed separately for T0 (signal and fill both at the official close), T1 (signal from the 15:50 ET proxy, fill at the official close of the same session), and T2 (signal at the official close, fill at the next session's official open)"
+      }
+    },
+    "validation": {
+      "validation_v1_giants_sweep_windows_g1_g5_dip_reversion": {
+        "windows": {
+          "warmup": [
+            "2022-06-01",
+            "2023-09-15"
+          ],
+          "select": [
+            "2023-09-18",
+            "2025-12-31"
+          ],
+          "holdout": [
+            "2026-01-02",
+            "2026-09-17"
+          ],
+          "anchor": [
+            "2024-01-08",
+            "2026-09-16"
+          ]
+        },
+        "gates": "G1-G5 reused unchanged from scripts/run_giants_sweep.py (G1 anchor CAGR>=50% and max DD>=-35%; G1' anchor Sharpe>=2.0 and CAGR>=30%; G2 holdout Sharpe>=1.0 and holdout CAGR>0; G3 every declared placebo beats the true cell on select Sharpe <=10% of seeds; G4 G1 or G1' still holds at 20bp; G5 long-only spot US ETFs on the existing Alpaca daily cron)",
+        "research_admission_1x_t1_only": "mean net return per trade > 0 in both select and holdout; trade-level t>=2.0 over select+holdout; real mean-per-trade >= 95th percentile of the random-entry placebo over select+holdout; T1 keeps >=60% of T0's gross mean per trade",
+        "persistence_table_context_only": "2016-2026 per calendar year, daily T0/T2 only, QQQ/SPY/IWM/DIA, 10bp -- context, not an admission criterion"
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_moc_and_next_open_dip_reversion": {
+        "contract_path": "reports/research/iterations/h20260924_01_etf_dip_reversion/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_buy_hold_and_placebos_dip_reversion": {
+        "members": [
+          "buy_and_hold_signal_underlying",
+          "buy_and_hold_execution_instrument"
+        ],
+        "placebos": [
+          "random_entry_timing_matched_to_trade_count_and_holding_period_distribution_60_seeds_trend_filter_days_only",
+          "calendar_shift_20_seeds_from_recent_menu"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml": "578b31d6c431e393416bd4093fe2ac56432dd38cad0f6200bdb155315875ba69"
+  },
+  "source_spec_path": "strategy_specs/drafts/etf_dip_reversion_h20260924_01.yaml",
+  "spec_hash": "578b31d6c431e393416bd4093fe2ac56432dd38cad0f6200bdb155315875ba69"
+}

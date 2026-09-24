@@ -1,0 +1,969 @@
+<!DOCTYPE html> 
+<HTML lang="en">
+<HEAD>
+<TITLE>Modeling and measuring intraday overreaction of stock prices</TITLE>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" integrity="sha256-pdY4ejLKO67E0CM2tbPtq1DJ3VGDVVdqAR6j3ZwdiE4=" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/font-awesome.min.css">
+<!--    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awes
+ome.min.css" integrity="sha256-XoaMnoYC5TH6/+ihMEnospgm0J1PM/nioxbOUdnM8HY=" crossorigin="anonymous">-->
+<!--    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.2.0/css/all.css" />-->
+    <link href="/css/normalnew.css" rel="stylesheet" type="text/css"/>
+    <link href="/css/pushy.css" rel="stylesheet" type="text/css"/>
+    <link rel="icon" type="image.jpg" href="/favicon.ico">
+<!--[if lte IE 9]>
+  <script src="/css/html5shiv.min.js"></script>
+  <script src="/css/respond.min.js"></script>
+<![endif]-->
+  <script type='text/javascript'>
+    var captchaContainer = null;
+    var loadCaptcha = function() {
+      captchaContainer = grecaptcha.render('captcha_container', {
+        'sitekey' : '6LdQebIaAAAAACSKxvbloyrkQ_q-MqhOAGgD5PQV',
+        'callback' : function(response) {
+          console.log(response);
+        }
+      });
+    };
+  </script>
+
+<META NAME="handle" CONTENT="RePEc:eee:jbfina:v:36:y:2012:i:4:p:1152-1163"><META NAME="DOI" CONTENT="10.1016/j.jbankfin.2011.11.005"><META NAME="description" CONTENT="Downloadable (with restrictions)! We introduce a model for stock prices consisting of a fundamental price process and a news impact curve, which allows for either overreaction, underreaction, or correct response to changes of the fundamental value. We further develop statistics based on OHLC data, which separately measure upside and downside overreaction. The distribution of these statistics under the hypothesis of correct response and fundamental prices following Brownian motions is used to derive tests for upside and downside overreaction. We show that more realistic and frequently used fundamental price processes with correct response leave the distribution of the test statistics widely unaffected or lead to conservative tests. Empirical application to different stock markets provides strong evidence for intraday overreaction, particularly to bad news. The economic significance of the discrimination induced by the proposed statistics is further illustrated by analyzing the performance of a simple buy on bad news strategy.">
+<META NAME="robots" content="NOARCHIVE"><META NAME="keywords" CONTENT="Intraday overreaction; OHLC data; Lévy processes; Stochastic time changes; Buy on bad news">
+<META NAME="jel_code" CONTENT="C58; G12; G14">
+<META NAME="author" CONTENT="Klößner, Stefan & Becker, Martin & Friedmann, Ralph">
+<META NAME="author_shortid" CONTENT="">
+<META NAME="title" CONTENT="Modeling and measuring intraday overreaction of stock prices">
+<META NAME="download" CONTENT="1">
+<META NAME="freedownload" CONTENT="0">
+<META NAME="date" CONTENT="2012-02-02">
+<META NAME="citation_publication_date" CONTENT="2012">
+<META NAME="citation_authors" content="Klößner, Stefan; Becker, Martin; Friedmann, Ralph">
+<META NAME="citation_title" content="Modeling and measuring intraday overreaction of stock prices">
+<META NAME="citation_abstract" content="We introduce a model for stock prices consisting of a fundamental price process and a news impact curve, which allows for either overreaction, underreaction, or correct response to changes of the fundamental value. We further develop statistics based on OHLC data, which separately measure upside and downside overreaction. The distribution of these statistics under the hypothesis of correct response and fundamental prices following Brownian motions is used to derive tests for upside and downside overreaction. We show that more realistic and frequently used fundamental price processes with correct response leave the distribution of the test statistics widely unaffected or lead to conservative tests. Empirical application to different stock markets provides strong evidence for intraday overreaction, particularly to bad news. The economic significance of the discrimination induced by the proposed statistics is further illustrated by analyzing the performance of a simple buy on bad news strategy.">
+<META NAME="citation_publisher" content="Elsevier">
+<META NAME="citation_journal_title" content="Journal of Banking & Finance">
+<META NAME="citation_keywords" content="Intraday overreaction; OHLC data; Lévy processes; Stochastic time changes; Buy on bad news">
+<META NAME="citation_abstract_html_url" content="https://ideas.repec.org/a/eee/jbfina/v36y2012i4p1152-1163.html">
+<META NAME="citation_abstract_pdf_url" content="https://ideas.repec.org/a/eee/jbfina/v36y2012i4p1152-1163.html">
+<META NAME="redif-type" content="article">
+<META NAME="citation_type" content="redif-article">
+<META NAME="citation_year" content="2012">
+<META NAME="citation_volume" content="36">
+<META NAME="citation_issue" content="4">
+
+<META NAME="citation_firstpage" content="1152">
+<META NAME="citation_lastpage" content="1163">
+<META NAME="twitter:card" content="summary_large_image">
+<META NAME="twitter:site" content="@repec_org">
+<META NAME="twitter:title" content="Modeling and measuring intraday overreaction of stock prices, by Klößn">
+<META NAME="twitter:description" content="We introduce a model for stock prices consisting of a fundamental price process and a news impact curve, which allows for either overreaction, underreaction, or correct response to changes of the fund">
+<META NAME="twitter:image" content="https://ideas.repec.org/cgi-bin/twimage.cgi?a&eee:jbfina:v:36:y:2012:i:4:p:1152-1163">
+<META PROPERTY="og:type" content="article">
+<META PROPERTY="og:title" content="Modeling and measuring intraday overreaction of stock prices">
+<META PROPERTY="og:description" content="We introduce a model for stock prices consisting of a fundamental price process and a news impact curve, which allows for either overreaction, underreaction, or correct response to changes of the fund">
+<META PROPERTY="og:url" content="https://ideas.repec.org//a/eee/jbfina/v36y2012i4p1152-1163.html">
+<META PROPERTY="og:image" content="https://ideas.repec.org/cgi-bin/twimage.cgi?a&eee:jbfina:v:36:y:2012:i:4:p:1152-1163">
+<script type="application/ld+json">
+    {
+	"@context": "http://schema.org",
+	"@graph": [
+	  {
+	    "@id": "#periodical",
+	    "@type": "Periodical",
+	    "name": "Journal of Banking & Finance",
+	    "publisher": "Elsevier",
+	    "url": "https://ideas.repec.org/s/eee/jbfina.html",
+	    "requiresSubscription": "false"
+          },
+	  {
+	    "@id": "#number",
+	    "@type": "PublicationIssue",
+	    "datePublished": "2012",
+	    "issueNumber": "4"
+          },
+	    {		
+	      "@id": "#volume",
+	      "@type": "PublicationVolume",
+	      "volumeNumber": "36"
+            },
+	  {
+	    "@id": "#article",
+	    "@type": "ScholarlyArticle",
+ 	    "name": "Modeling and measuring intraday overreaction of stock prices",
+	    "url": "https://ideas.repec.org//a/eee/jbfina/v36y2012i4p1152-1163.html",
+	    "description": "We introduce a model for stock prices consisting of a fundamental price process and a news impact curve, which allows for either overreaction, underreaction, or correct response to changes of the fundamental value. We further develop statistics based on OHLC data, which separately measure upside and downside overreaction. The distribution of these statistics under the hypothesis of correct response and fundamental prices following Brownian motions is used to derive tests for upside and downside overreaction. We show that more realistic and frequently used fundamental price processes with correct response leave the distribution of the test statistics widely unaffected or lead to conservative tests. Empirical application to different stock markets provides strong evidence for intraday overreaction, particularly to bad news. The economic significance of the discrimination induced by the proposed statistics is further illustrated by analyzing the performance of a simple buy on bad news strategy.",
+	    "keywords": "Intraday overreaction; OHLC data; Lévy processes; Stochastic time changes; Buy on bad news",
+	    "pageEnd": "1163",
+	    "pageStart": "1152",
+	    "pagination": "1152-1163",
+          
+	    "author": "Klößner, Stefan & Becker, Martin & Friedmann, Ralph",
+	    "isPartOf": [
+	      {
+	        "@id": "#volume"
+	      },
+	      {	
+	        "@id": "#periodical"
+	      },
+	      {
+	        "@id": "#number"
+	      }
+	    ]
+	 }
+      ]
+    }
+    </script>
+    </HEAD><BODY>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-G63YGSJVZ7"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-G63YGSJVZ7');
+</script>
+
+<div class="container">
+    <div id="header" class="row">
+      <nav class="navbar navbar-collapse navbar-expand-md" role="navigation">
+          <a class="navbar-brand" href="/">
+            <img width="125" src="/ideas4.jpg" border="0" alt="IDEAS home">
+          </a>
+	<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-toggle="collapse" data-target="#mobilesearch" aria-controls="mobilesearch" aria-expanded="false" aria-label="Toggle navigation">
+	  <span class="navbar-toggler-icon"><i class="bi-search"></i></span>
+	</button>
+	<div class="collapse" id="mobilesearch">
+	  <div class="form-inline">
+	  <form method="POST" action="/cgi-bin/htsearch2" id="mobilesearch" role="search" class="card card-body">
+            <div class="input-group">
+              <input class="form-control" type="text" name="q" value="" placeholder="Search econ literature">
+              <span class="input-group-btn">
+		<button type="submit" class="btn" style="background-color: #2d4e8b; color: white;" aria-label="Search">
+                <i class="bi-search"></i>
+              </button>
+		<!--<input class="btn btn-default btn-lg fa" type="submit" value="&#xf002;" style="color:white;background-color:#2d4e8b;">-->
+              </span>
+            </div>
+            <a href="/search.html" class="advanced-search">Advanced search</a>
+	  </form>
+	  </div>
+	  </div>
+	<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-toggle="collapse" data-target="#mobilemenu" aria-controls="mobilemenu" aria-expanded="false" aria-label="Toggle navigation">
+	  <span class="navbar-toggler-icon"><i class="bi bi-list"></i></span>
+	</button>
+	<div class="collapse" id="mobilemenu">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+	      <a class="nav-link" href="/">Economic literature:</a> <a href="/i/p.html">papers</A>, <a href="/i/a.html">articles</A>, <a href="/i/c.html">software</A>, <a href="/i/h.html">chapters</A>, <a href="/i/b.html">books</A>.
+	    </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/i/e.html">Authors</a>
+	    </li>
+            <li class="nav-item">
+              <a class="nav-link" href="http://edirc.repec.org/">Institutions</a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/top/">Rankings</a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/help.html" target="_blank">Help/FAQ  <i class="bi bi-box-arrow-up-right"></i></a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/cgi-bin/myideas.cgi">MyIDEAS <I class="bi bi-lightbulb"></I></a>
+	    </li>
+	    <li class="nav-item">
+	      <span class="nav-text">More options at page bottom</span>
+	    </li>
+          </ul>
+	</div>
+	<div class="d-none d-md-inline">
+          <ul class="nav nav-fill" id="topnav">
+            <li class="nav-item">
+	      <a class="nav-link" href="/">Economic literature</a>
+	    </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/i/e.html">Authors</a>
+	    </li>
+            <li class="nav-item">
+              <a class="nav-link" href="http://edirc.repec.org/">Institutions</a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/top/">Rankings</a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/help.html" target="_blank">Help/FAQ  <i class="bi bi-box-arrow-up-right"></i></a>
+	    </li>
+            <li class="nav-item">
+	      <a class="nav-link" href="/cgi-bin/myideas.cgi" style="color:blue;">MyIDEAS <I class="bi bi-lightbulb"></I> <small>(now improved)</small></a>
+	    </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+    
+    
+    <div class="row">
+      <div class="col-12" style="margin-top: -10px;">
+	
+	
+	<div id="sidebar" class="sidebar-nav-fixed pull-right d-none d-print-none d-md-inline col-md-3">
+	  <div class="inline-form">
+	  <form method="POST" action="/cgi-bin/htsearch2" id="topsearch" role="search" class="navbar-form navbar-right">
+            <div class="input-group">
+              <input class="form-control" type="text" name="q" value="" placeholder="Search econ literature">
+              <button type="submit" class="btn" style="background-color: #2d4e8b; color: white;" aria-label="Search">
+                <i class="bi-search"></i>
+              </button>
+	      <!--<input class="btn fa" type="submit" value="&#xf002;" style="color:white;background-color:#2d4e8b;">-->
+            </div>
+            <a href="/search.html" class="advanced-search">Advanced search</a>
+	  </form>
+	  </div>
+	  <div id="menu">
+            <h3>Browse Econ Literature</h3>
+            <ul>
+              <li><a href="/i/p.html">Working papers</a></li>
+              <li><a href="/i/a.html">Journals</a></li>
+              <li><a href="/i/c.html">Software components</a></li>
+              <li><a href="/i/b.html">Books</a></li>
+              <li><a href="/i/h.html">Book chapters</a></li>
+              <li><a href="/j/">JEL classification</a></li>
+            </ul>
+	    
+            <h3>More features</h3>
+            <ul>
+	      <li><a href="http://nep.repec.org/">Subscribe to new research</a></li>
+	      <li><a href="https://biblio.repec.org/">RePEc Biblio</a></li>
+	      <li><a href="https://authors.repec.org/">Author registration</a></li>
+	      <li><a href="/v/">Economics Virtual Seminar Calendar</a></li>
+	      <li><a href="https://confwatcher.b2ideas.eu/"><font color="red">ConfWatcher</font></a> NEW!</li>
+            </ul>
+	  </div>
+	</div>
+	<div class="d-none d-print-block">
+	  <img width="145" src="/ideas4.jpg" border="0" alt="IDEAS home"> Printed from https://ideas.repec.org/a/eee/jbfina/v36y2012i4p1152-1163.html 
+	</div>
+	
+	<div id="main" class="col-12 col-md-9">
+	  <div class="site-overlay"></div>
+	  <div class="d-print-none">
+	    
+<div id="messages" class="col-xs-12">
+<span class="share-block">
+            &nbsp;<a href="https://bsky.app/intent/compose?text=Found%20on%20RePEc/IDEAS:%20https://ideas.repec.org//a/eee/jbfina/v36y2012i4p1152-1163.html%20&#128161;" target="_NEW"><i class="bi bi-bluesky"></i></a>&nbsp;
+            <share-to-mastodon message="Found on RePEc/IDEAS:" url='https://ideas.repec.org//a/eee/jbfina/v36y2012i4p1152-1163.html'><font color="#2d4e8b"><i class="bi bi-mastodon"></i></font></share-to-mastodon>
+            <a class="share-twitter bi bi-twitter-x" href="#" title="Share on Twitter"></a>
+            <a class="share-facebook bi bi-facebook" href="#" title="Share on Facebook"></a>
+            <a class="share-reddit bi bi-reddit" href="#" title="Share on Reddit"></a>
+            <a class="share-linkedin bi bi-linkedin" href="#"  title="Share on LinkedIn"></a>
+            <a class="share-email bi bi-envelope" href="#"  title="Share by Email"></a>
+            <a class="share-print bi bi-printer" href="#" title="Print this page"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<span id="myideas">
+
+<a href="/cgi-bin/myideas.cgi" data-bs-toggle="tooltip" data-toggle="tooltip" title="MyIDEAS: not logged in">
+<i class="bi bi-lightbulb"></i>
+<i class="bi bi-lock"></i>&nbsp;</a>
+
+
+ <A HREF="/cgi-bin/myideas.cgi#myibiblio1unassigned"><I class="bi bi-archive-fill"></I>&nbsp;My&nbsp;bibliography</A> 
+ <i class="bi bi-bookmark"></i>&nbsp;<span onclick="loadDoc('https://ideas.repec.org/cgi-bin/myiadd2.cgi',myFunction);return true;">Save this article</span>
+
+
+
+
+</span>
+<script>
+function loadDoc(url,cfunc) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+      cfunc(xhttp);
+    }
+  };
+  xhttp.open("GET", url, true);
+  xhttp.send();
+}
+function myFunction(xhttp) {
+  document.getElementById("response").innerHTML = xhttp.responseText;
+}
+</script><span id="response"></span>
+</div>
+
+
+	  </div>
+	  <div id="content-block">
+	    
+	    
+
+<div id="title">
+<h1>Modeling and measuring intraday overreaction of stock prices</h1></div>
+<div>
+<ul class="nav nav-pills" id="myTab" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link active" id="author-abstract-tab" data-bs-toggle="tab" data-toggle="tab" href="#author-abstract" role="tab" aria-controls="author-abstract" aria-selected="true">Author & abstract</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link download-tab" id="download-tab" data-bs-toggle="tab" data-toggle="tab" href="#download" role="tab" aria-controls="download" aria-selected="false">Download</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="refs-tab" data-bs-toggle="tab" data-toggle="tab" href="#refs" role="tab" aria-controls="refs" aria-selected="false">26 References</a>
+  </li>
+      <li class="nav-item">
+    <a class="nav-link" id="cites-tab" data-bs-toggle="tab" data-toggle="tab" href="#cites" role="tab" aria-controls="cites" aria-selected="false">6 Citations</a>
+  </li>
+          <li class="nav-item">
+    <a class="nav-link" id="mrel-tab" data-bs-toggle="tab" data-toggle="tab" href="#mrel" role="tab" aria-controls="mrel" aria-selected="false">Most related</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="more-tab" data-bs-toggle="tab" data-toggle="tab" href="#more" role="tab" aria-controls="more" aria-selected="false">Related works & more</a>
+  </li>
+  <!-- Placeholder usernotes pill-->
+  <li class="nav-item">
+    <a class="nav-link" id="correct-tab" data-bs-toggle="tab" data-toggle="tab" href="#correct" role="tab" aria-controls="correct" aria-selected="false">Corrections</a>
+  </li>
+</ul>
+    
+
+<div class="tab-content" id="myTabContent">
+  <div class="tab-pane fade show active" id="author-abstract" role="tabpanel" aria-labelledby="author-abstract-tab">
+
+<h2>Author</h2>
+    <div id="author-body">
+      <div id="authortable">
+        <div id="listed-authors">Listed:
+          <ul id="authorlist"><li class="authorname">Klößner, Stefan</li>
+<li class="authorname">Becker, Martin</li>
+<li class="authorname">Friedmann, Ralph</li>
+</ul></div><div id="registered-authors"> <a href="https://authors.repec.org/">Registered:</a> <ul id="authorregistered"></ul>
+</div>
+</div>
+</div>
+
+
+<h2 style="clear:left">Abstract</h2><div id="abstract-body">We introduce a model for stock prices consisting of a fundamental price process and a news impact curve, which allows for either overreaction, underreaction, or correct response to changes of the fundamental value. We further develop statistics based on OHLC data, which separately measure upside and downside overreaction. The distribution of these statistics under the hypothesis of correct response and fundamental prices following Brownian motions is used to derive tests for upside and downside overreaction. We show that more realistic and frequently used fundamental price processes with correct response leave the distribution of the test statistics widely unaffected or lead to conservative tests. Empirical application to different stock markets provides strong evidence for intraday overreaction, particularly to bad news. The economic significance of the discrimination induced by the proposed statistics is further illustrated by analyzing the performance of a simple buy on bad news strategy.</div>
+<h2>Suggested Citation</h2>
+<div id="biblio-body">
+<LI class="list-group-item downgate">  Klößner, Stefan & Becker, Martin & Friedmann, Ralph, 2012.
+"<B><A HREF="/a/eee/jbfina/v36y2012i4p1152-1163.html">Modeling and measuring intraday overreaction of stock prices</A></B>,"
+<A HREF="/s/eee/jbfina.html">Journal of Banking & Finance</A>, Elsevier, vol. 36(4), pages 1152-1163.
+</li>
+Handle: <i style="word-break:break-all">RePEc:eee:jbfina:v:36:y:2012:i:4:p:1152-1163</i>
+<br>DOI: 10.1016/j.jbankfin.2011.11.005
+<form method="post" action="/cgi-bin/refs.cgi" target="refs" class="form-inline" role="form" style="margin-bottom: 10px;">
+<input type="hidden" name="handle" value="RePEc:eee:jbfina:v:36:y:2012:i:4:p:1152-1163">
+<div class="pull-left" style="padding-right: 2px;">
+<span class="input-group-btn">
+<input class="btn btn-default btn-lg fa" type="submit" value="Export reference" style="background-color:lightgrey;"><i class="bi bi-box-arrow-up-right"></i> as
+<select name="output" size="1">
+<option value="0">HTML</option>
+<option value="0.5">HTML with abstract</option>
+<option value="1">plain text</option>
+<option value="1.5">plain text with abstract</option>
+<option value="2">BibTeX</option>
+<option value="3">RIS (EndNote, RefMan, ProCite)</option>
+<option value="4">ReDIF</option>
+<option value="6">JSON</option>
+</select> 
+</span>
+</div>
+</form></div>
+   </div>
+  <div class="tab-pane fade" id="download" role="tabpanel" aria-labelledby="download-tab">
+    <h2>Download full text from publisher</h2><p></p>
+       <FORM METHOD=GET ACTION="/cgi-bin/get_doc.cgi" target="_blank">
+       <INPUT TYPE=HIDDEN NAME="urn" VALUE="RePEc:eee:jbfina:v:36:y:2012:i:4:p:1152-1163"><INPUT TYPE="radio" NAME="url" VALUE="http://www.sciencedirect.com/science/article/pii/S0378426611003165" checked><B>File URL:</B> <span style="word-break:break-all">http://www.sciencedirect.com/science/article/pii/S0378426611003165</span><BR><B>Download Restriction:</B> Full text for ScienceDirect subscribers only<BR>
+<HR><INPUT TYPE="radio" NAME="url" VALUE="https://libkey.io/10.1016/j.jbankfin.2011.11.005?utm_source=ideas">
+		<B>File URL:</B> <span style="word-break:break-all">https://libkey.io/10.1016/j.jbankfin.2011.11.005?utm_source=ideas</span><BR>
+                <B>LibKey link</B>: if access is restricted and if your library uses this service, LibKey will redirect you to where you can use your library subscription to access this item<BR>
+<font size="+2" color="red">---><INPUT TYPE="SUBMIT" class="btn fa" VALUE="Download the selected file &#xf08e;" style="color:white;background-color:#2d4e8b;"><---</font></FORM><P>As the access to this document is restricted, you may want to <form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="Modeling+and+measuring+intraday+overreaction+of+stock+prices"><button type="submit" value="submit" class="link-button">search</button></form> for a different version of it.
+
+</div>
+
+  <div class="tab-pane fade" id="refs" role="tabpanel" aria-labelledby="refs-tab"><h2>References listed on IDEAS</h2><form method="post" action="/cgi-bin/refs.cgi" target="refs" class="form-inline" role="form" style="margin-bottom: 10px;">
+<input type="hidden" name="handle" value="repec:aea:aecrev:v:71:y:1981:i:3:p:421-36#repec:bes:jnlasa:v:100:y:2005:p:1394-1411#repec:bla:jfinan:v:48:y:1993:i:5:p:1779-1801#repec:bla:jfinan:v:53:y:1998:i:6:p:1839-1885#repec:bla:mathfi:v:11:y:2001:i:1:p:79-96#repec:dau:papers:123456789/1388#repec:ecm:emetrp:v:41:y:1973:i:1:p:135-55#repec:eee:econom:v:138:y:2007:i:1:p:125-180#repec:eee:empfin:v:4:y:1997:i:2-3:p:115-158#repec:eee:jbfina:v:26:y:2002:i:7:p:1297-1316#repec:eee:jbfina:v:29:y:2005:i:11:p:2701-2722#repec:eee:jbfina:v:29:y:2005:i:5:p:1311-1327#repec:eee:jbfina:v:30:y:2006:i:9:p:2489-2515#repec:eee:jfinec:v:17:y:1986:i:1:p:5-26#repec:eee:jfinec:v:3:y:1976:i:1-2:p:125-144#repec:eee:jfinin:v:4:y:1995:i:2:p:116-132#repec:eee:jimfin:v:10:y:1991:i:1:p:23-52#repec:eee:monogr:9780122796715#repec:fip:fedmsr:157#repec:hal:journl:halshs-00144296#repec:inm:ormnsc:v:52:y:2006:i:12:p:1930-1944#repec:inm:oropre:v:56:y:2008:i:2:p:304-325#repec:nbr:nberwo:12963#repec:oup:rfinst:v:15:y:2002:i:4:p:1005-1047#repec:oup:rfinst:v:1:y:1988:i:1:p:41-66#repec:oup:rfinst:v:3:y:1990:i:2:p:175-205#repec:spr:alstar:v:91:y:2007:i:1:p:3-21#repec:spr:comgts:v:7:y:2010:i:1:p:1-17">
+<div class="pull-left" style="padding-right: 2px;">
+<span class="input-group-btn">
+<input class="btn btn-default btn-lg fa" type="submit" value="Export references" style="background-color:lightgrey;"><i class="bi bi-box-arrow-up-right"></i> as
+<select name="output" size="1">
+<option value="0">HTML</option>
+<option value="0.5">HTML with abstract</option>
+<option value="1">plain text</option>
+<option value="1.5">plain text with abstract</option>
+<option value="2">BibTeX</option>
+<option value="3">RIS (EndNote, RefMan, ProCite)</option>
+<option value="4">ReDIF</option>
+<option value="6">JSON</option>
+</select> 
+</span>
+</div>
+</form>
+<ol class="list-group"><LI class="list-group-item downgate">  Jegadeesh N. & Titman S., 1995.
+"<B><A HREF="/a/eee/jfinin/v4y1995i2p116-132.html">Short-Horizon Return Reversals and the Bid-Ask Spread</A></B>,"
+<A HREF="/s/eee/jfinin.html">Journal of Financial Intermediation</A>, Elsevier, vol. 4(2), pages 116-132, April.
+<LI class="list-group-item downgate">  Martin Becker & Ralph Friedmann & Stefan Klößner & Walter Sanddorf-Köhle, 2007.
+"<B><A HREF="/a/spr/alstar/v91y2007i1p3-21.html">A Hausman test for Brownian motion</A></B>,"
+<A HREF="/s/spr/alstar.html">AStA Advances in Statistical Analysis</A>, Springer;German Statistical Society, vol. 91(1), pages 3-21, March.
+<LI class="list-group-item downgate">  French, Kenneth R. & Roll, Richard, 1986.
+"<B><A HREF="/a/eee/jfinec/v17y1986i1p5-26.html">Stock return variances : The arrival of information and the reaction of traders</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 17(1), pages 5-26, September.
+<LI class="list-group-item downgate">  Geman, Hélyette, 2005.
+"<B><A HREF="/a/eee/jbfina/v29y2005i11p2701-2722.html">From measure changes to time changes in asset pricing</A></B>,"
+<A HREF="/s/eee/jbfina.html">Journal of Banking & Finance</A>, Elsevier, vol. 29(11), pages 2701-2722, November.
+<LI class="list-group-item downfree">  Athanassios N. Avramidis & Pierre L'Ecuyer, 2006.
+"<B><A HREF="/a/inm/ormnsc/v52y2006i12p1930-1944.html">Efficient Monte Carlo and Quasi-Monte Carlo Option Pricing Under the Variance Gamma Model</A></B>,"
+<A HREF="/s/inm/ormnsc.html">Management Science</A>, INFORMS, vol. 52(12), pages 1930-1944, December.
+<LI class="list-group-item downfree">  Liming Feng & Vadim Linetsky, 2008.
+"<B><A HREF="/a/inm/oropre/v56y2008i2p304-325.html">Pricing Options in Jump-Diffusion Models: An Extrapolation Approach</A></B>,"
+<A HREF="/s/inm/oropre.html">Operations Research</A>, INFORMS, vol. 56(2), pages 304-325, April.
+<LI class="list-group-item downgate">  Lo, Andrew W & MacKinlay, A Craig, 1990.
+"<B><A HREF="/a/oup/rfinst/v3y1990i2p175-205.html">When Are Contrarian Profits Due to Stock Market Overreaction?</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 3(2), pages 175-205.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Andrew W. Lo & A. Craig MacKinlay, 1989.
+ "<B><A HREF="/p/nbr/nberwo/2977.html">When are Contrarian Profits Due to Stock Market Overreaction?</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+2977, National Bureau of Economic Research, Inc.
+
+<LI class="list-group-item downfree"> Lo, Andrew W. (Andrew Wen-Chuan) & MacKinlay, Archie Craig, 1955-., 1989.
+ "<B><A HREF="/p/mit/sloanp/2240.html">When are contrarian profits due to stock market overreaction?</A></B>,"
+<A HREF="/s/mit/sloanp.html">Working papers</A> 
+3008-89., Massachusetts Institute of Technology (MIT), Sloan School of Management.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Merton, Robert C., 1976.
+"<B><A HREF="/a/eee/jfinec/v3y1976i1-2p125-144.html">Option pricing when underlying stock returns are discontinuous</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 3(1-2), pages 125-144.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Merton, Robert C., 1975.
+ "<B><A HREF="/p/mit/sloanp/1899.html">Option pricing when underlying stock returns are discontinuous</A></B>,"
+<A HREF="/s/mit/sloanp.html">Working papers</A> 
+787-75., Massachusetts Institute of Technology (MIT), Sloan School of Management.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">   Glosten, Lawrence R & Jagannathan, Ravi & Runkle, David E, 1993.
+"<B><A HREF="/a/bla/jfinan/v48y1993i5p1779-1801.html">On the Relation between the Expected Value and the Volatility of the Nominal Excess Return on Stocks</A></B>,"
+<A HREF="/s/bla/jfinan.html">Journal of Finance</A>, American Finance Association, vol. 48(5), pages 1779-1801, December.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Lawrence R. Glosten & Ravi Jagannathan & David E. Runkle, 1993.
+ "<B><A HREF="/p/fip/fedmsr/157.html">On the relation between the expected value and the volatility of the nominal excess return on stocks</A></B>,"
+<A HREF="/s/fip/fedmsr.html">Staff Report</A> 
+157, Federal Reserve Bank of Minneapolis.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Grant, James L. & Wolf, Avner & Yu, Susana, 2005.
+"<B><A HREF="/a/eee/jbfina/v29y2005i5p1311-1327.html">Intraday price reversals in the US stock index futures market: A 15-year study</A></B>,"
+<A HREF="/s/eee/jbfina.html">Journal of Banking & Finance</A>, Elsevier, vol. 29(5), pages 1311-1327, May.
+<LI class="list-group-item downgate">  Chuang, Wen-I & Lee, Bong-Soo, 2006.
+"<B><A HREF="/a/eee/jbfina/v30y2006i9p2489-2515.html">An empirical evaluation of the overconfidence hypothesis</A></B>,"
+<A HREF="/s/eee/jbfina.html">Journal of Banking & Finance</A>, Elsevier, vol. 30(9), pages 2489-2515, September.
+<LI class="list-group-item downgate">  Andersen, Torben G. & Bollerslev, Tim & Dobrev, Dobrislav, 2007.
+"<B><A HREF="/a/eee/econom/v138y2007i1p125-180.html">No-arbitrage semi-martingale restrictions for continuous-time volatility models subject to leverage effects, jumps and i.i.d. noise: Theory and testable distributional implications</A></B>,"
+<A HREF="/s/eee/econom.html">Journal of Econometrics</A>, Elsevier, vol. 138(1), pages 125-180, May.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Torben G. Andersen & Tim Bollerslev & Dobrislav Dobrev, 2007.
+ "<B><A HREF="/p/nbr/nberwo/12963.html">No-Arbitrage Semi-Martingale Restrictions for Continuous-Time Volatility Models subject to Leverage Effects, Jumps and i.i.d. Noise: Theory and Testable Distributional Implications</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+12963, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Clark, Peter K, 1973.
+"<B><A HREF="/a/ecm/emetrp/v41y1973i1p135-55.html">A Subordinated Stochastic Process Model with Finite Variance for Speculative Prices</A></B>,"
+<A HREF="/s/ecm/emetrp.html">Econometrica</A>, Econometric Society, vol. 41(1), pages 135-155, January.
+<LI class="list-group-item downgate">  Martin Becker, 2010.
+"<B><A HREF="/a/spr/comgts/v7y2010i1p1-17.html">Exact simulation of final, minimal and maximal values of Brownian motion and jump-diffusions with applications to option pricing</A></B>,"
+<A HREF="/s/spr/comgts.html">Computational Management Science</A>, Springer, vol. 7(1), pages 1-17, January.
+<LI class="list-group-item downgate">  Andersen, Torben G. & Bollerslev, Tim, 1997.
+"<B><A HREF="/a/eee/empfin/v4y1997i2-3p115-158.html">Intraday periodicity and volatility persistence in financial markets</A></B>,"
+<A HREF="/s/eee/empfin.html">Journal of Empirical Finance</A>, Elsevier, vol. 4(2-3), pages 115-158, June.
+<LI class="list-group-item downnone">  Guillermo Llorente & Roni Michaely & Gideon Saar & Jiang Wang, 2002.
+"<B><A HREF="/a/oup/rfinst/v15y2002i4p1005-1047.html">Dynamic Volume-Return Relation of Individual Stocks</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 15(4), pages 1005-1047.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Guillermo Llorente & Roni Michaely & Gideon Saar & Jiang Wang, 2001.
+ "<B><A HREF="/p/nbr/nberwo/8312.html">Dynamic Volume-Return Relation of Individual Stocks</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+8312, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Geman, Helyette, 2002.
+"<B><A HREF="/a/eee/jbfina/v26y2002i7p1297-1316.html">Pure jump Levy processes for asset price modelling</A></B>,"
+<A HREF="/s/eee/jbfina.html">Journal of Banking & Finance</A>, Elsevier, vol. 26(7), pages 1297-1316, July.
+<LI class="list-group-item">repec:bla:jfinan:v:53:y:1998:i:6:p:1839-1885 is not listed on IDEAS
+<LI class="list-group-item downgate">  Shiller, Robert J, 1981.
+"<B><A HREF="/a/aea/aecrev/v71y1981i3p421-36.html">Do Stock Prices Move Too Much to be Justified by Subsequent Changes in Dividends?</A></B>,"
+<A HREF="/s/aea/aecrev.html">American Economic Review</A>, American Economic Association, vol. 71(3), pages 421-436, June.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Robert J. Shiller, 1980.
+ "<B><A HREF="/p/nbr/nberwo/0456.html">Do Stock Prices Move Too Much to be Justified by Subsequent Changes in Dividends?</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+0456, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Andrew W. Lo, A. Craig MacKinlay, 1988.
+"<B><A HREF="/a/oup/rfinst/v1y1988i1p41-66.html">Stock Market Prices do not Follow Random Walks: Evidence from a Simple Specification Test</A></B>,"
+<A HREF="/s/oup/rfinst.html">The Review of Financial Studies</A>, Society for Financial Studies, vol. 1(1), pages 41-66.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Andrew W. Lo & A. Craig MacKinlay, 1987.
+ "<B><A HREF="/p/nbr/nberwo/2168.html">Stock Market Prices Do Not Follow Random Walks: Evidence From a Simple Specification Test</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+2168, National Bureau of Economic Research, Inc.
+
+
+<LI class="list-group-item downfree">  Tom Doan, 2025.
+"<B><A HREF="/c/boc/bocode/rts00231.html">VRATIO: RATS procedure to implement variance ratio unit root test procedure</A></B>,"
+<A HREF="/s/boc/bocode.html">Statistical Software Components</A>
+RTS00231, Boston College Department of Economics.
+
+</UL></div>
+<LI class="list-group-item downnone"> Helyette Geman, 2005.
+ "<B><A HREF="/p/hal/journl/halshs-00144296.html">From Measure Changes to Time Changes in Asset Pricing</A></B>,"
+<A HREF="/s/hal/journl.html">Post-Print</A> 
+halshs-00144296, HAL.
+<LI class="list-group-item downfree">  Hélyette Geman & Dilip B. Madan & Marc Yor, 2001.
+"<B><A HREF="/a/bla/mathfi/v11y2001i1p79-96.html">Time Changes for Lévy Processes</A></B>,"
+<A HREF="/s/bla/mathfi.html">Mathematical Finance</A>, Wiley Blackwell, vol. 11(1), pages 79-96, January.
+<LI class="list-group-item downgate">  Gençay, Ramazan & Dacorogna, Michel & Muller, Ulrich A. & Pictet, Olivier & Olsen, Richard, 2001.
+"<B><A HREF="/b/eee/monogr/9780122796715.html">An Introduction to High-Frequency Finance</A></B>,"
+<A HREF="/s/eee/monogr.html">Elsevier Monographs</A>,
+Elsevier,
+edition 1, number 9780122796715.
+<LI class="list-group-item downgate">  Zhang, Lan & Mykland, Per A. & Ait-Sahalia, Yacine, 2005.
+"<B><A HREF="/a/bes/jnlasa/v100y2005p1394-1411.html">A Tale of Two Time Scales: Determining Integrated Volatility With Noisy High-Frequency Data</A></B>,"
+<A HREF="/s/bes/jnlasa.html">Journal of the American Statistical Association</A>, American Statistical Association, vol. 100, pages 1394-1411, December.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Lan Zhang & Per A. Mykland & Yacine Ait-Sahalia, 2003.
+ "<B><A HREF="/p/nbr/nberwo/10111.html">A Tale of Two Time Scales: Determining Integrated Volatility with Noisy High Frequency Data</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+10111, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item">repec:dau:papers:123456789/1388 is not listed on IDEAS
+<LI class="list-group-item downgate">  Goodhart, C. A. E. & Figliuoli, L., 1991.
+"<B><A HREF="/a/eee/jimfin/v10y1991i1p23-52.html">Every minute counts in financial markets</A></B>,"
+<A HREF="/s/eee/jimfin.html">Journal of International Money and Finance</A>, Elsevier, vol. 10(1), pages 23-52, March.
+</ol>
+<A TARGET="_blank" HREF="http://citec.repec.org/cgi-bin/get_data.pl?h=RePEc:eee:jbfina:v:36:y:2012:i:4:p:1152-1163&o=all"><B>Full references</B> <i class="bi bi-box-arrow-up-right"></i></A> (including those not matched with items on IDEAS)<P>
+</div>
+
+    <div class="tab-pane fade" id="cites" role="tabpanel" aria-labelledby="cites-tab">
+<H2>Citations</H2>
+
+Citations are extracted by the <A HREF="http://citec.repec.org/">CitEc Project</A>, subscribe to its <A HREF="http://citec.repec.org/cgi-bin/rss.pl?h=RePEc:eee:jbfina:v:36:y:2012:i:4:p:1152-1163">RSS feed</A> for this item.
+<form method="post" action="/cgi-bin/refs.cgi" target="refs" class="form-inline" role="form" style="margin-bottom: 10px;">
+<input type="hidden" name="handle" value="repec:eee:ecmode:v:64:y:2017:i:c:p:221-230#repec:tei:journl:v:5:y:2012:i:3:p:129-146#repec:pra:mprapa:95301#repec:kap:rqfnac:v:66:y:2026:i:3:d:10.1007_s11156-025-01429-x#repec:hin:complx:8581793#repec:sae:emffin:v:15:y:2016:i:3:p:333-361">
+<div class="pull-left" style="padding-right: 2px;">
+<span class="input-group-btn">
+<input class="btn btn-default btn-lg fa" type="submit" value="Export citations" style="background-color:lightgrey;"><i class="bi bi-box-arrow-up-right"></i> as
+<select name="output" size="1">
+<option value="0">HTML</option>
+<option value="0.5">HTML with abstract</option>
+<option value="1">plain text</option>
+<option value="1.5">plain text with abstract</option>
+<option value="2">BibTeX</option>
+<option value="3">RIS (EndNote, RefMan, ProCite)</option>
+<option value="4">ReDIF</option>
+<option value="6">JSON</option>
+</select> 
+</span>
+</div>
+</form><P>
+
+<BR><B>Cited by:</B><ol class="list-group"><LI class="list-group-item downfree">  Andrey Kudryavtsev, 2012.
+"<B><A HREF="/a/tei/journl/v5y2012i3p129-146.html">Short-Term Stock Price Reversals May Be Reversed</A></B>,"
+<A HREF="/s/tei/journl.html">International Journal of Business and Economic Sciences Applied Research (IJBESAR)</A>, Democritus University of Thrace (DUTH), Kavala Campus, Greece, vol. 5(3), pages 129-146, December.
+<LI class="list-group-item downfree">  Muneer Shaik & S. Maheswaran, 2016.
+"<B><A HREF="/a/sae/emffin/v15y2016i3p333-361.html">Modelling the Paradox in Stock Markets by Variance Ratio Volatility Estimator that Utilises Extreme Values of Asset Prices</A></B>,"
+<A HREF="/s/sae/emffin.html">Journal of Emerging Market Finance</A>, Institute for Financial Management and Research, vol. 15(3), pages 333-361, December.
+<LI class="list-group-item downfree"> Camilleri, Silvio John, 2015.
+ "<B><A HREF="/p/pra/mprapa/95301.html">Do call auctions curtail price volatility? Evidence from the National Stock Exchange of India</A></B>,"
+<A HREF="/s/pra/mprapa.html">MPRA Paper</A> 
+95301, University Library of Munich, Germany.
+<LI class="list-group-item downgate">  Rita Ziqi Ju & Ming-Hua Liu & Keshab Shrestha, 2026.
+"<B><A HREF="/a/kap/rqfnac/v66y2026i3d10.1007_s11156-025-01429-x.html">The Relationships between Onshore and Offshore US Dollar vs. Chinese Yuan Exchange Rates</A></B>,"
+<A HREF="/s/kap/rqfnac.html">Review of Quantitative Finance and Accounting</A>, Springer, vol. 66(3), pages 1069-1091, April.
+<LI class="list-group-item downfree">  Lijian Wei & Lei Shi, 2020.
+"<B><A HREF="/a/hin/complx/8581793.html">Investor Sentiment in an Artificial Limit Order Market</A></B>,"
+<A HREF="/s/hin/complx.html">Complexity</A>, Hindawi, vol. 2020, pages 1-10, June.
+<LI class="list-group-item downgate">  Todorova, Neda, 2017.
+"<B><A HREF="/a/eee/ecmode/v64y2017icp221-230.html">The intraday directional predictability of large Australian stocks: A cross-quantilogram analysis</A></B>,"
+<A HREF="/s/eee/ecmode.html">Economic Modelling</A>, Elsevier, vol. 64(C), pages 221-230.
+</ol>
+</ol>
+</div>
+
+ <div class="tab-pane fade" id="mrel" role="tabpanel" aria-labelledby="mrel-tab">
+    <h2>Most related items</H2>
+These are the items that most often cite the same works as this one and are cited by the same works as this one.
+<ol class="list-group"><LI class="list-group-item downgate">  Wang, Yuming & Ma, Jinpeng, 2014.
+"<B><A HREF="/a/eee/ecofin/v27y2014icp1-16.html">Excess volatility and the cross-section of stock returns</A></B>,"
+<A HREF="/s/eee/ecofin.html">The North American Journal of Economics and Finance</A>, Elsevier, vol. 27(C), pages 1-16.
+<LI class="list-group-item downgate">  Andersen, Torben G. & Bollerslev, Tim & Dobrev, Dobrislav, 2007.
+"<B><A HREF="/a/eee/econom/v138y2007i1p125-180.html">No-arbitrage semi-martingale restrictions for continuous-time volatility models subject to leverage effects, jumps and i.i.d. noise: Theory and testable distributional implications</A></B>,"
+<A HREF="/s/eee/econom.html">Journal of Econometrics</A>, Elsevier, vol. 138(1), pages 125-180, May.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Torben G. Andersen & Tim Bollerslev & Dobrislav Dobrev, 2007.
+ "<B><A HREF="/p/nbr/nberwo/12963.html">No-Arbitrage Semi-Martingale Restrictions for Continuous-Time Volatility Models subject to Leverage Effects, Jumps and i.i.d. Noise: Theory and Testable Distributional Implications</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+12963, National Bureau of Economic Research, Inc.
+
+
+
+</UL></div>
+<LI class="list-group-item downnone">  Jovanovic, Franck & Schinckus, Christophe, 2017.
+"<B><A HREF="/b/oxp/obooks/9780190205034.html">Econophysics and Financial Economics: An Emerging Dialogue</A></B>,"
+<A HREF="/s/oxp/obooks.html">OUP Catalogue</A>,
+Oxford University Press, number 9780190205034.
+<LI class="list-group-item downfree"> Degiannakis, Stavros & Xekalaki, Evdokia, 2004.
+ "<B><A HREF="/p/pra/mprapa/80487.html">Autoregressive Conditional Heteroskedasticity (ARCH) Models: A Review</A></B>,"
+<A HREF="/s/pra/mprapa.html">MPRA Paper</A> 
+80487, University Library of Munich, Germany.
+<LI class="list-group-item downgate">  Palani-Rajan Kadapakkam & Timothy Krause & Yiuman Tse, 2015.
+"<B><A HREF="/a/kap/rqfnac/v45y2015i1p89-110.html">Exchange traded funds, size-based portfolios, and market efficiency</A></B>,"
+<A HREF="/s/kap/rqfnac.html">Review of Quantitative Finance and Accounting</A>, Springer, vol. 45(1), pages 89-110, July.
+<LI class="list-group-item downgate">  Andersen, Torben G. & Bollerslev, Tim & Christoffersen, Peter F. & Diebold, Francis X., 2006.
+"<B><A HREF="/h/eee/ecofch/1-15.html">Volatility and Correlation Forecasting</A></B>,"
+<A HREF="/s/eee/ecofch.html">Handbook of Economic Forecasting</A>, in:  G. Elliott & C. Granger & A. Timmermann (ed.), <A HREF="/b/eee/ecofor/1.html">Handbook of Economic Forecasting</A>, edition 1, volume 1, chapter 15, pages 777-878,
+Elsevier.
+<LI class="list-group-item">repec:tsa:wpaper:0214fin is not listed on IDEAS
+<LI class="list-group-item downfree"> Andersen, Torben G. & Bollerslev, Tim & Christoffersen, Peter F. & Diebold, Francis X., 2005.
+ "<B><A HREF="/p/zbw/cfswop/200508.html">Volatility forecasting</A></B>,"
+<A HREF="/s/zbw/cfswop.html">CFS Working Paper Series</A> 
+2005/08, Center for Financial Studies (CFS).
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Torben G. Andersen & Tim Bollerslev & Peter F. Christoffersen & Francis X. Diebold, 2005.
+ "<B><A HREF="/p/pen/papers/05-011.html">Volatility Forecasting</A></B>,"
+<A HREF="/s/pen/papers.html">PIER Working Paper Archive</A> 
+05-011, Penn Institute for Economic Research, Department of Economics, University of Pennsylvania.
+<LI class="list-group-item downfree"> Torben G. Andersen & Tim Bollerslev & Peter F. Christoffersen & Francis X. Diebold, 2005.
+ "<B><A HREF="/p/nbr/nberwo/11188.html">Volatility Forecasting</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+11188, National Bureau of Economic Research, Inc.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Geman, Hélyette, 2005.
+"<B><A HREF="/a/eee/jbfina/v29y2005i11p2701-2722.html">From measure changes to time changes in asset pricing</A></B>,"
+<A HREF="/s/eee/jbfina.html">Journal of Banking & Finance</A>, Elsevier, vol. 29(11), pages 2701-2722, November.
+<LI class="list-group-item downfree">  Min Liu & Chien‐Chiang Lee & Wei‐Chong Choo, 2021.
+"<B><A HREF="/a/wly/jforec/v40y2021i5p792-816.html">An empirical study on the role of trading volume and data frequency in volatility forecasting</A></B>,"
+<A HREF="/s/wly/jforec.html">Journal of Forecasting</A>, John Wiley & Sons, Ltd., vol. 40(5), pages 792-816, August.
+<LI class="list-group-item downfree">  Deniz Erdemlioglu & Sébastien Laurent & Christopher J. Neely, 2013.
+"<B><A HREF="/h/elg/eechap/14545_16.html">Econometric modeling of exchange rate volatility and jumps</A></B>,"
+<A HREF="/s/elg/eechap.html">Chapters</A>, in:  Adrian R. Bell & Chris Brooks & Marcel Prokopczuk (ed.), <A HREF="/b/elg/eebook/14545.html">Handbook of Research Methods and Applications in Empirical Finance</A>, chapter 16, pages 373-427,
+Edward Elgar Publishing.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Deniz Erdemlioglu & Sébastien Laurent & Christopher J. Neely, 2012.
+ "<B><A HREF="/p/fip/fedlwp/2012-008.html">Econometric modeling of exchange rate volatility and jumps</A></B>,"
+<A HREF="/s/fip/fedlwp.html">Working Papers</A> 
+2012-008, Federal Reserve Bank of St. Louis.
+
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Andersen, Torben G. & Bollerslev, Tim & Christoffersen, Peter F. & Diebold, Francis X., 2013.
+"<B><A HREF="/h/eee/finchp/2-b-1127-1220.html">Financial Risk Measurement for Financial Risk Management</A></B>,"
+<A HREF="/s/eee/finchp.html">Handbook of the Economics of Finance</A>, in:  G.M. Constantinides & M. Harris & R. M. Stulz (ed.), <A HREF="/b/eee/finhes/2-b.html">Handbook of the Economics of Finance</A>, volume 2, chapter 0, pages 1127-1220,
+Elsevier.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Torben G. Andersen & Tim Bollerslev & Peter F. Christoffersen & Francis X. Diebold, 2011.
+ "<B><A HREF="/p/pen/papers/11-037.html">Financial Risk Measurement for Financial Risk Management</A></B>,"
+<A HREF="/s/pen/papers.html">PIER Working Paper Archive</A> 
+11-037, Penn Institute for Economic Research, Department of Economics, University of Pennsylvania.
+
+<LI class="list-group-item downfree"> Torben G. Andersen & Tim Bollerslev & Peter F. Christoffersen & Francis X. Diebold, 2012.
+ "<B><A HREF="/p/nbr/nberwo/18084.html">Financial Risk Measurement for Financial Risk Management</A></B>,"
+<A HREF="/s/nbr/nberwo.html">NBER Working Papers</A> 
+18084, National Bureau of Economic Research, Inc.
+<LI class="list-group-item downfree"> Torben G. Andersen & Tim Bollerslev & Peter F. Christoffersen & Francis X. Diebold, 2011.
+ "<B><A HREF="/p/aah/create/2011-37.html">Financial Risk Measurement for Financial Risk Management</A></B>,"
+<A HREF="/s/aah/create.html">CREATES Research Papers</A> 
+2011-37, Department of Economics and Business Economics, Aarhus University.
+
+
+</UL></div>
+<LI class="list-group-item downfree"> Torben G. Andersen & Luca Benzoni, 2008.
+ "<B><A HREF="/p/fip/fedhwp/wp-08-14.html">Realized volatility</A></B>,"
+<A HREF="/s/fip/fedhwp.html">Working Paper Series</A> 
+WP-08-14, Federal Reserve Bank of Chicago.
+<LI class="list-group-item">repec:uts:finphd:39 is not listed on IDEAS
+<LI class="list-group-item downgate">  Kao, Lie-Jane & Wu, Po-Cheng & Lee, Cheng-Few, 2012.
+"<B><A HREF="/a/eee/reveco/v21y2012i1p115-129.html">Time-changed GARCH versus the GARJI model for prediction of extreme news events: An empirical study</A></B>,"
+<A HREF="/s/eee/reveco.html">International Review of Economics & Finance</A>, Elsevier, vol. 21(1), pages 115-129.
+<LI class="list-group-item downgate">  Erdemlioglu, Deniz & Laurent, Sébastien & Neely, Christopher J., 2015.
+"<B><A HREF="/a/eee/jbfina/v61y2015is2ps256-s268.html">Which continuous-time model is most appropriate for exchange rates?</A></B>,"
+<A HREF="/s/eee/jbfina.html">Journal of Banking & Finance</A>, Elsevier, vol. 61(S2), pages 256-268.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Deniz Erdemlioglu & Sébastien Laurent & Christopher J. Neely, 2013.
+ "<B><A HREF="/p/fip/fedlwp/2013-024.html">Which continuous-time model is most appropriate for exchange rates?</A></B>,"
+<A HREF="/s/fip/fedlwp.html">Working Papers</A> 
+2013-024, Federal Reserve Bank of St. Louis.
+
+<LI class="list-group-item downnone"> Deniz Erdemlioglu & Sébastien Laurent & Christopher J. Neely, 2015.
+ "<B><A HREF="/p/hal/journl/hal-01457402.html">Which continuous-time model is most appropriate for exchange rates?</A></B>,"
+<A HREF="/s/hal/journl.html">Post-Print</A> 
+hal-01457402, HAL.
+
+
+</UL></div>
+<LI class="list-group-item downgate">  Chen, Carl R. & Su, Yuli & Huang, Ying, 2008.
+"<B><A HREF="/a/eee/empfin/v15y2008i4p789-798.html">Hourly index return autocorrelation and conditional volatility in an EAR-GJR-GARCH model with generalized error distribution</A></B>,"
+<A HREF="/s/eee/empfin.html">Journal of Empirical Finance</A>, Elsevier, vol. 15(4), pages 789-798, September.
+<LI class="list-group-item downgate">  Fleming, Jeff & Paye, Bradley S., 2011.
+"<B><A HREF="/a/eee/econom/v160y2011i1p119-128.html">High-frequency returns, jumps and the mixture of normals hypothesis</A></B>,"
+<A HREF="/s/eee/econom.html">Journal of Econometrics</A>, Elsevier, vol. 160(1), pages 119-128, January.
+<LI class="list-group-item downgate">  Savor, Pavel G., 2012.
+"<B><A HREF="/a/eee/jfinec/v106y2012i3p635-659.html">Stock returns after major price shocks: The impact of information</A></B>,"
+<A HREF="/s/eee/jfinec.html">Journal of Financial Economics</A>, Elsevier, vol. 106(3), pages 635-659.
+<LI class="list-group-item downgate">  Iwatsubo, Kentaro & Watkins, Clinton & Xu, Tao, 2018.
+"<B><A HREF="/a/eee/jocoma/v11y2018icp59-71.html">Intraday seasonality in efficiency, liquidity, volatility and volume: Platinum and gold futures in Tokyo and New York</A></B>,"
+<A HREF="/s/eee/jocoma.html">Journal of Commodity Markets</A>, Elsevier, vol. 11(C), pages 59-71.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Kentaro Iwatsubo & Clinton Watkins & Tao Xu, 2017.
+ "<B><A HREF="/p/koe/wpaper/1722.html">Intraday Seasonality in Efficiency, Liquidity, Volatility and Volume: Platinum and Gold Futures in Tokyo and New York</A></B>,"
+<A HREF="/s/koe/wpaper.html">Discussion Papers</A> 
+1722, Graduate School of Economics, Kobe University.
+
+<LI class="list-group-item downfree"> Kentaro IWATSUBO & Clinton WATKINS & Tao XU, 2017.
+ "<B><A HREF="/p/eti/dpaper/17120.html">Intraday Seasonality in Efficiency, Liquidity, Volatility, and Volume: Platinum and gold futures in Tokyo and New York</A></B>,"
+<A HREF="/s/eti/dpaper.html">Discussion papers</A> 
+17120, Research Institute of Economy, Trade and Industry (RIETI).
+
+
+</UL></div>
+<LI class="list-group-item downfree">  Ashok Chanabasangouda Patil & Shailesh Rastogi, 2019.
+"<B><A HREF="/a/gam/jjrfmx/v12y2019i2p105-d242195.html">Time-Varying Price–Volume Relationship and Adaptive Market Efficiency: A Survey of the Empirical Literature</A></B>,"
+<A HREF="/s/gam/jjrfmx.html">JRFM</A>, MDPI, vol. 12(2), pages 1-18, June.
+<LI class="list-group-item downfree">  Gagnon, Louis & Karolyi, G. Andrew, 2009.
+"<B><A HREF="/a/cup/jfinqa/v44y2009i04p953-986_99.html">Information, Trading Volume, and International Stock Return Comovements: Evidence from Cross-Listed Stocks</A></B>,"
+<A HREF="/s/cup/jfinqa.html">Journal of Financial and Quantitative Analysis</A>, Cambridge University Press, vol. 44(4), pages 953-986, August.
+
+<div class="otherversion"><UL>
+<LI class="list-group-item downfree"> Gagnon, Louis & Karolyi, G. Andrew, 2007.
+ "<B><A HREF="/p/ecl/ohidic/2006-11.html">Information, Trading Volume, and International Stock Return Comovements: Evidence from Cross-Listed Stocks</A></B>,"
+<A HREF="/s/ecl/ohidic.html">Working Paper Series</A> 
+2006-11, Ohio State University, Charles A. Dice Center for Research in Financial Economics.
+
+
+
+</UL></div>
+</ol>
+</div>
+
+  <div class="tab-pane fade" id="more" role="tabpanel" aria-labelledby="more-tab">
+    <H2> More about this item</H2>  <h3>Keywords</h3><form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="Intraday overreaction"><button type="submit" value="submit" class="link-button">Intraday overreaction</button></form>; <form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="OHLC data"><button type="submit" value="submit" class="link-button">OHLC data</button></form>; <form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="Lévy processes"><button type="submit" value="submit" class="link-button">Lévy processes</button></form>; <form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="Stochastic time changes"><button type="submit" value="submit" class="link-button">Stochastic time changes</button></form>; <form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="Buy on bad news"><button type="submit" value="submit" class="link-button">Buy on bad news</button></form>; <form action="/cgi-bin/htsearch2" method="post" class="inline"><input type="hidden" name="q" value="Intraday overreaction OHLC data Lévy processes Stochastic time changes Buy on bad news "><button type="submit" value="submit" class="link-button">All these keywords</button></form><H3><A HREF="/j/">JEL</A> classification:</h3>
+ <UL> <LI><A HREF="/j/C58.html"><B>C58</B></A> - Mathematical and Quantitative Methods - - Econometric Modeling - - - Financial Econometrics</LI>
+ <LI><A HREF="/j/G12.html"><B>G12</B></A> - Financial Economics - - General Financial Markets - - - Asset Pricing; Trading Volume; Bond Interest Rates</LI>
+ <LI><A HREF="/j/G14.html"><B>G14</B></A> - Financial Economics - - General Financial Markets - - - Information and Market Efficiency; Event Studies; Insider Trading</LI>
+ </UL><P>
+<h3>Statistics</h3>
+ <A      HREF="http://logec.repec.org/scripts/paperstat.pl?h=RePEc:eee:jbfina:v:36:y:2012:i:4:p:1152-1163">Access and download statistics</A>
+</div>
+
+<!-- placeholder usernotes tab-->
+ <div class="tab-pane fade" id="correct" role="tabpanel" aria-labelledby="correct-tab">
+    <h2>Corrections</H2>
+    <P>All material on this site has been provided by the respective publishers and authors. You can help correct errors and omissions. When requesting a correction, please mention this item's handle: <I style="word-break:break-all;">RePEc:eee:jbfina:v:36:y:2012:i:4:p:1152-1163</I>. See <A HREF="/corrections.html">general information</A> about how to correct material in RePEc.
+      </P><P>
+      If you have authored this item and are not yet registered with RePEc, we encourage you to do it <A HREF="https://authors.repec.org/new-user">here</A>. This allows to link your profile to this item. It also allows you to accept potential citations to this item that we are uncertain about.
+      </P><p>If <A HREF="http://citec.repec.org/" target ="_blank">CitEc <i class="bi bi-box-arrow-up-right"></i></a> recognized a bibliographic reference but did not link an item in RePEc to it, you can help with <A HREF="http://citec.repec.org/cgi-bin/get_data.pl?h=RePEc:eee:jbfina:v:36:y:2012:i:4:p:1152-1163&o=all" target="_blank">this form <I class="bi bi-box-arrow-up-right"></I></A>.</p><P>
+      If you know of missing items citing this one, you can help us creating those links by adding the relevant references in the same way as above, for each refering item. If you are a registered author of this item, you may also want to check the "citations" tab in your <a href="https://authors.repec.org/">RePEc Author Service</A> profile, as there may be some citations waiting for confirmation.
+      </P><P>
+        For technical questions regarding this item, or to correct its authors, title, abstract, bibliographic or download information, contact: Catherine Liu (email available below). General contact details of provider: <A HREF="http://www.elsevier.com/locate/jbf" target="_blank" style="word-break:break-all;">http://www.elsevier.com/locate/jbf <i class="bi bi-box-arrow-up-right"></i></A>.
+
+<div id="viewemail">
+<form id="emailForm" action="/cgi-bin/getemail.cgi" method="POST">
+<input type="hidden" name="handle" value="repec:eee:jbfina:m">
+<div id="captcha_container"></div>
+          <input type="submit" value="View email address">
+      </form>
+      <script src="https://www.google.com/recaptcha/api.js?onload=loadCaptcha&render=explicit" async defer></script>
+<div id="emailResponse"></div>
+</div>
+</p><p>
+      Please note that corrections may take a couple of weeks to filter through
+      the various RePEc services.</p>
+</div>
+</div>
+</div>
+<div id="footer" class="row d-print-none">
+  <div class="col-sm-6 more-services">
+    <h3 style="border-bottom: 1px solid #111; position: relative; right:0.9em;">More services and features</h3>
+    <div class="row">
+      <div class="list-group col">
+        <a href="/cgi-bin/myideas.cgi" class="list-group-item">
+          <h4 class="list-group-item-heading">MyIDEAS</h4>
+          <p class="list-group-item-text">Follow serials, authors, keywords &amp; more</p>
+        </a>
+        <a href="http://authors.repec.org/" class="list-group-item">
+          <h4 class="list-group-item-heading">Author registration</h4>
+          <p class="list-group-item-text">Public profiles for Economics researchers</p>
+        </a>
+        <a href="http://ideas.repec.org/top/" class="list-group-item">
+          <h4 class="list-group-item-heading">Rankings</h4>
+          <p class="list-group-item-text">Various research rankings in Economics</p>
+        </a>
+        <a href="http://genealogy.repec.org/" class="list-group-item">
+          <h4 class="list-group-item-heading">RePEc Genealogy</h4>
+          <p class="list-group-item-text">Who was a student of whom, using RePEc</p>
+        </a>
+        <a href="http://biblio.repec.org/" class="list-group-item">
+          <h4 class="list-group-item-heading">RePEc Biblio</h4>
+          <p class="list-group-item-text">Curated articles &amp; papers on economics topics</p>
+        </a>
+      </div>
+      <div class="list-group col">
+        <a href="http://mpra.ub.uni-muenchen.de/" class="list-group-item" target="_blank">
+          <h4 class="list-group-item-heading">MPRA  <i class="bi bi-box-arrow-up-right"></i></h4>
+          <p class="list-group-item-text">Upload your paper to be listed on RePEc and IDEAS</p>
+        </a>
+        <a href="http://nep.repec.org/" class="list-group-item" target="_blank">
+          <h4 class="list-group-item-heading">New papers by email <i class="bi bi-box-arrow-up-right"></i></h4>
+          <p class="list-group-item-text">Subscribe to new additions to RePEc</p>
+        </a>
+        <a href="http://www.econacademics.org/" class="list-group-item">
+          <h4 class="list-group-item-heading">EconAcademics</h4>
+          <p class="list-group-item-text">Blog aggregator for economics research</p>
+        </a>
+        <a href="http://plagiarism.repec.org/" class="list-group-item">
+          <h4 class="list-group-item-heading">Plagiarism</h4>
+          <p class="list-group-item-text">Cases of plagiarism in Economics</p>
+        </a>
+      </div>
+      </div>
+    </div>
+    <div class="col-sm more-services">
+      <h3 style="border-bottom: 1px solid #111;">About RePEc</h3>
+      <div class="list-group col">
+        <a href="http://repec.org/" class="list-group-item" target="_blank">
+	  <h4 class="list-group-item-heading">RePEc home <i class="bi bi-box-arrow-up-right"></i></h4>
+	  <p class="list-group-item-text">Initiative for open bibliographies in Economics</p>
+	</a>
+        <a href="http://blog.repec.org/" class="list-group-item" target="_blank">
+          <h4 class="list-group-item-heading">Blog <i class="bi bi-box-arrow-up-right"></i></h4>
+          <p class="list-group-item-text">News about RePEc</p>
+	</a>
+        <a href="/help.html" class="list-group-item" target="_blank">
+          <h4 class="list-group-item-heading">Help/FAQ <i class="bi bi-box-arrow-up-right"></i></h4>
+          <p class="list-group-item-text">Questions about IDEAS and RePEc</p>
+	</a>
+        <a href="/team.html" class="list-group-item">
+          <h4 class="list-group-item-heading">RePEc team</h4>
+          <p class="list-group-item-text">RePEc volunteers</p>
+	</a>
+        <a href="/archives.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Participating archives</h4>
+          <p class="list-group-item-text">Publishers indexing in RePEc</p>
+	</a>
+        <a href="https://ideas.repec.org/privacy.html" class="list-group-item" target="_blank">
+          <h4 class="list-group-item-heading">Privacy statement <i class="bi bi-box-arrow-up-right"></i></h4>
+	</a>
+      </div>
+    </div>
+    <div class="col-sm more-services">
+      <h3 style="border-bottom: 1px solid #111;">Help us</h3>
+      <div class="list-group col">
+        <a href="/corrections.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Corrections</h4>
+          <p class="list-group-item-text">Found an error or omission?</p>
+	</a>
+        <a href="/volunteers.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Volunteers</h4>
+          <p class="list-group-item-text">Opportunities to help RePEc</p>
+	</a>
+        <a href="/participate.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Get papers listed</h4>
+          <p class="list-group-item-text">Have your research listed on RePEc</p>
+	</a>
+        <a href="/stepbystep.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Open a RePEc archive</h4>
+          <p class="list-group-item-text">Have your institution's/publisher's output listed on RePEc</p>
+	</a>
+	<a href="/getdata.html" class="list-group-item">
+          <h4 class="list-group-item-heading">Get RePEc data</h4>
+          <p class="list-group-item-text">Use data assembled by RePEc</p>
+	</a>
+      </div>
+    </div>
+</div>
+<div class="row">
+  <div class="col-12" style="text-align: center; padding-top: 10px;">
+    <div id="sidelogos">
+      <a href="https://ideas.repec.org/">IDEAS</a> is a <a href="http://repec.org/" target="_blank">RePEc <i class="bi bi-box-arrow-up-right"></i></a> service. RePEc uses bibliographic data supplied by the respective publishers.
+    </div>
+  </div>
+  
+  
+</div>
+</div>
+
+</div>
+<!--<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>-->
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@justinribeiro/share-to-mastodon@0.2.0/dist/share-to-mastodon.js"></script>
+<script src="/css/ideas.js"></script>
+<script src="/css/pushy.js"></script>
+<script>
+$(document).ready(function() {
+    // show active tab on reload
+    if (location.hash !== '') $('a[href="' + location.hash + '"]').tab('show');
+
+    // remember the hash in the URL without jumping
+//    $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+//       if(history.pushState) {
+//            history.pushState(null, null, '#'+$(e.target).attr('href').substr(1));
+//       } else {
+//            location.hash = '#'+$(e.target).attr('href').substr(1);
+//       }
+//    });
+});
+</script>
+
+</BODY>
+</HTML>

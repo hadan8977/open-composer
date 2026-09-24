@@ -1,0 +1,252 @@
+name: etf_dip_reversion_h20260924_01
+description: Preregistered H-20260924-01 candidate family. Six short-term ETF
+  dip-reversion rules with a published mechanism and multi-year post-publication
+  record (D1 Algotradekit IBS trend-filtered mean reversion; D2 Pagonidis raw
+  IBS<0.20 one-session hold; D3 Connors & Alvarez 2009 "R3" three-day falling
+  RSI(2); D4 Connors classic RSI(2) mean reversion per StockCharts ChartSchool;
+  D5 Connors & Alvarez 2009 "3-Day High/Low"; D6 Pagonidis's own IBS filter on
+  D4), each run on two signal underlyings (QQQ, SPY) and two execution
+  instruments (the same 1x ETF, and the matching 3x ETF -- TQQQ for QQQ, UPRO
+  for SPY), 6 x 2 x 2 = 24 candidates. The signal always comes from the 1x ETF;
+  the 3x variant takes the identical entry/exit dates and holds the levered
+  ETF instead. Primary timing is T1 (a 15:50 ET minute-bar proxy for the
+  official close, market-on-close fill at that session's official close); T0
+  (same-close fill, unexecutable upper bound) and T2 (next-open fill, this
+  repo's other standard convention) are report-only diagnostics, not
+  candidates. Research only, deterministic, next-session-or-same-close
+  execution per rule; no broker writes are authorized.
+timeframe: daily
+universe:
+- QQQ
+- SPY
+- TQQQ
+- UPRO
+- IWM
+- DIA
+- BIL
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 4
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 4
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260924_01:etf_dip_reversion_screen
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: QQQ
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  trend_ema_220:
+    source: expression
+    expression: ema(close, 220)
+    default: 0.0
+    description: D1's QQQ trend filter (close > EMA(220)), per the Algotradekit
+      Pine source (fmz.com/strategy/484915). Documentation-accurate for the
+      T0/T2 (official-close) case; the T1 proxy variant (close of the last
+      minute bar at or before 15:50 ET America/New_York, one extra EMA step
+      applied to the prior session's official EMA state) is computed by the
+      dedicated runner script, not this per-symbol expression.
+    params:
+      decision_lag_sessions: 0
+  trend_ema_200:
+    source: expression
+    expression: ema(close, 200)
+    default: 0.0
+    description: D1's SPY trend filter (close > EMA(200)) and D3's/D5's shared
+      trend filter (close > EMA(200), per Connors & Alvarez "R3" and "3-Day
+      High/Low", confirmed against the repo's Pine sources fmz.com/strategy/439643
+      and fmz.com/strategy/429146). T1 proxy handling as trend_ema_220 above.
+    params:
+      decision_lag_sessions: 0
+  trend_sma_200:
+    source: expression
+    expression: sma(close, 200)
+    default: 0.0
+    description: D4's and D6's trend filter (close > SMA(200)), per StockCharts
+      ChartSchool's RSI(2) writeup (claim_id
+      stockcharts_connors_rsi2_entry_rule). T1 proxy handling as above.
+    params:
+      decision_lag_sessions: 0
+  exit_ema_5:
+    source: expression
+    expression: ema(close, 5)
+    default: 0.0
+    description: D5's exit trigger (close crosses above EMA(5)), per the
+      repo's 3-Day Reversion Pine source (fmz.com/strategy/429146, exit EMA
+      length default 5).
+    params:
+      decision_lag_sessions: 0
+  exit_sma_5:
+    source: expression
+    expression: sma(close, 5)
+    default: 0.0
+    description: D4's and D6's exit trigger (close > SMA(5)), per StockCharts
+      ChartSchool (claim_id stockcharts_connors_rsi2_exit_rule).
+    params:
+      decision_lag_sessions: 0
+  rsi2_wilder:
+    source: expression
+    expression: wilder_rsi(close, 2)
+    default: 50.0
+    description: 2-period Wilder RSI used by D3 (Connors R3; entry RSI(2)<10
+      and falling three days, exit RSI(2)>70), D4 (classic entry RSI(2)<=5),
+      and D6 (D4 plus the IBS filter). Same Wilder smoothing as
+      scripts/run_giants_sweep.py::_wilder_rsi and
+      scripts/run_h20260922_04_rsi_branch.py::wilder_rsi (this factor is
+      documentation-accurate for the T0/T2 official-close case; the T1 proxy
+      one-step recursive update is computed by the dedicated runner script).
+    params:
+      decision_lag_sessions: 0
+  daily_bar_stand_in:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. Internal Bar Strength (IBS =
+      (close-low)/(high-low), 0.5 if high==low), D5's "three consecutive
+      lower highs and lower lows" multi-day pattern, D1's max-trade-duration
+      counter, D6's IBS-at-entry-close gate, the T1 15:50 ET minute-bar proxy
+      construction (today's high/low/close from minute bars 09:30-15:50
+      America/New_York, combined with prior official daily closes), the MOC
+      fill accounting, and the random-entry-timing and calendar-shift
+      placebos are all cross-bar, cross-source, or path-dependent
+      computations outside the single-symbol per-bar expression grammar, so
+      they are computed entirely by
+      scripts/run_h20260924_01_etf_dip_reversion.py, not the generic factor
+      engine -- the same pattern this repo already uses for cross-symbol and
+      path-dependent logic (see the Defense First rank-and-weight stand-in in
+      strategy_specs/drafts/s3_defense_first_h20260923_12.yaml).
+    params:
+      decision_lag_sessions: 0
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260924_01_etf_dip_reversion
+  candidate_manifest_path: reports/research/iterations/h20260924_01_etf_dip_reversion/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260924_01_etf_dip_reversion/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl
+  source_card_claim_ids:
+  - pagonidis2014_ibs_mechanism_and_threshold
+  - pagonidis2014_ibs_filter_on_rsi_combination
+  - stockcharts_connors_rsi2_entry_rule
+  - stockcharts_connors_rsi2_exit_rule
+  - lehmann1990_short_horizon_reversal_mechanism
+  parameter_space:
+    rule_id:
+    - D1_ibs_algotradekit
+    - D2_ibs_pagonidis_raw
+    - D3_connors_r3
+    - D4_connors_rsi2_classic
+    - D5_connors_3day_high_low
+    - D6_ibs_filtered_rsi2
+    underlying:
+    - QQQ
+    - SPY
+    execution:
+    - 1x
+    - 3x
+  candidate_budget: 24
+  selection_objective: No selection or ranking among the 24 candidates. Each
+    (rule x underlying x execution) cell is judged independently against the
+    frozen G1-G5 gates (reused unchanged from scripts/run_giants_sweep.py)
+    and, for the 1x T1 cells only, the preregistered research-admission rule
+    (mean net return per trade > 0 in both select and holdout; trade-level
+    t>=2.0 over select+holdout; real mean-per-trade >= the 95th percentile of
+    the random-entry placebo over select+holdout; T1 keeps >=60% of T0's
+    gross mean per trade). T0 and T2 are report-only diagnostics for every
+    cell, not separately gated. The deflated Sharpe of the best cell is
+    reported given 24 trials.
+  candidate_budget_note: 6 rules x 2 underlyings x 2 execution instruments =
+    24, exactly the single-mechanism lightweight-path cap; no threshold or
+    window sweep was added beyond the published parameters.
+  anti_overfit_notes:
+  - All 24 candidates and their exact published parameters (IBS thresholds,
+    EMA/SMA windows, RSI thresholds and lookback, exit rules) are frozen in
+    candidate-manifest.json before any backtest, including the daily-bar T0/T2
+    diagnostics.
+  - The frozen giants-sweep protocol (warmup/select/holdout/anchor windows,
+    10/20 bp costs, G1-G5 gate thresholds) is reused unchanged from
+    scripts/run_giants_sweep.py and scripts/run_h20260918_05_recent_menu.py;
+    no window, cost, placebo or gate threshold was relaxed for this family.
+  - T0 (same-close fill) and T2 (next-open fill) are diagnostics only, never
+    counted as admitted candidates, to prevent the unexecutable same-close
+    upper bound from being reported as a tradeable result.
+  - Two placebo families per 1x T1 candidate -- random entry timing matched
+    to the real trade count and holding-period distribution (60 seeds,
+    sampled only from days that pass the rule's own trend filter where it
+    has one), and the frozen calendar-shift placebo (20 seeds) from
+    scripts/run_h20260918_05_recent_menu.py.
+  - The research-admission rule requires the real strategy to beat its own
+    placebo's 95th percentile and to keep at least 60% of the unexecutable
+    T0 gross edge at T1, so a rule that only "works" at an impossible fill
+    price is not reported as admitted.
+  - Deflated Sharpe on the best of 24 trials is reported alongside the raw
+    per-cell Sharpe, per the backtest-forensics multiple-testing requirement.
+  - The supplementary 2016-2026 per-calendar-year persistence table (daily
+    T0/T2 only, QQQ/SPY/IWM/DIA) is explicitly context, not an admission
+    criterion, and is reported separately from the G1-G5/research-admission
+    verdicts.
+  validation_plan:
+  - warmup_2022_06_01_to_2023_09_15_select_2023_09_18_to_2025_12_31_holdout_2026_01_02_to_2026_09_17_anchor_2024_01_08_to_2026_09_16
+  - g1_through_g5_gates_reused_unchanged_from_giants_sweep
+  - research_admission_rule_for_1x_t1_cells_mean_return_t_stat_placebo_percentile_t0_fraction
+  - t0_same_close_and_t2_next_open_report_only_diagnostics_not_candidates
+  - random_entry_timing_placebo_matched_to_trade_count_and_holding_period_60_seeds
+  - calendar_shift_placebo_20_seeds_reused_from_recent_menu
+  - deflated_sharpe_given_24_trials_on_the_best_cell
+  - supplementary_2016_2026_per_calendar_year_persistence_table_context_only
+notes:
+  intent: Evaluate whether short-term index-ETF dip reversion (IBS and
+    Connors/turtle RSI(2) family rules), the only fmzquant/strategies US-equity
+    family with a published mechanism and multi-year post-publication public
+    record, clears this repo's frozen recent-window gates and a stricter,
+    trade-level research-admission bar once realistic T1 market-on-close
+    timing (built from a 15:50 ET minute-bar proxy) replaces the unexecutable
+    same-close backtest convention several of the published sources use.
+  hypothesis_id: H-20260924-01
+  previous_link: null
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

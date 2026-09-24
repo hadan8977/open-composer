@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260924_01_etf_dip_reversion",
+  "reviewed_at": "2026-09-24T01:12:00+00:00",
+  "decision": "proceed",
+  "objective": "The owner asked on 2026-09-24 to evaluate the US-stock strategies in github.com/fmzquant/strategies. Of its 132 US-equity-flavoured entries, the addendum to I-20260923-10 found exactly one family with a published mechanism and a multi-year post-publication public record: short-term index-ETF dip reversion (IBS and Connors/turtle RSI(2)/3-day-pattern rules). This round asks whether 6 such published rules, run on QQQ/SPY signals with 1x/3x execution (24 candidates), clear this repo's frozen recent-window G1-G5 gates and a stricter trade-level research-admission rule once a realistic T1 market-on-close fill (built from a 15:50 ET minute-bar proxy) replaces the same-close fill several of the published sources implicitly assume, reporting T0 (same-close, unexecutable upper bound) and T2 (next-open) only as diagnostics.",
+  "target_regime_and_horizon": "Frozen giants-sweep windows, unchanged: warmup 2022-06-01..2023-09-15 (lookbacks only), select 2023-09-18..2025-12-31 (ranking/research-admission window), holdout 2026-01-02..2026-09-17 (untouched out-of-sample), anchor 2024-01-08..2026-09-16 (G1/G4 return-bar window). Each rule trades only on its own entry signal (IBS extremes, RSI(2) extremes, or the 3-day high/low pattern), so it is active only on the minority of sessions the signal fires, not continuously; holding periods are 1-14 sessions by design (D1 capped at 14, D2 fixed at 1, D3/D4/D5/D6 exit on their own signal with no fixed cap). No multi-year durability claim is made beyond what the post-publication (2014-2026 for Pagonidis; ongoing for the 2009 Connors & Alvarez rules) record and this iteration's own holdout support; the supplementary 2016-2026 per-year persistence table is reported as context, not as an admission criterion, specifically because regimes change and recent-window evidence is what actually governs the verdict here.",
+  "existing_solution_comparison": "The mechanism (published, not invented here): Pagonidis (2014) documents that IBS, the position of a day's close within its own high-low range, forecasts next-day close-to-close equity ETF returns, an effect he attributes to intraday overreactions that are corrected the next day (claim_id pagonidis2014_ibs_mechanism_and_threshold); this is the same short-horizon-reversal family Lehmann (1990) documents at the weekly horizon (claim_id lehmann1990_short_horizon_reversal_mechanism) and Kloßner, Becker & Friedmann (2012) document via a separate OHLC-based intraday-overreaction statistic (companion card in external-brief.json, not in this heavy-verified list). The exact rules are not invented here either: D1 is Algotradekit's published TradingView strategy (fmz.com/strategy/484915, read directly from the local fmzquant/strategies git clone, commit 7853bb2, per I-20260923-10); D3 and D5 are Connors & Alvarez's (2009, 'High Probability ETF Trading') R3 and 3-Day High/Low rules, ported to Pine at fmz.com/strategy/439643 and fmz.com/strategy/429146; D4 is Connors' classic RSI(2) rule per StockCharts ChartSchool (claim_ids stockcharts_connors_rsi2_entry_rule / _exit_rule); D2 and D6 are Pagonidis's own raw-IBS and IBS-filter-on-RSI constructions. The only prior LOCAL test of a related family is dir:giants_sweep_published_etf_rules (refuted): its f1_tqqq_rsi_no_hedge_ablation cell tested a Composer-style RSI(10) trend/hedge branch rule on TQQQ (anchor CAGR 15.9%, max DD -5.2%, anchor Sharpe 1.37, failed G1), a structurally different rule (RSI(10) branch-to-cash/hedge, not IBS or RSI(2) mean reversion) on a different instrument set than this round's IBS/Connors rules on QQQ/SPY/TQQQ/UPRO. What is new here is not the mechanism or the exact rules, both of which are published and independently replicated, but (a) running them through this repo's own frozen protocol, panel, costs and placebos, and (b) testing a realistic T1 market-on-close fill built from a 15:50 ET minute-bar proxy instead of the unexecutable same-close fill several Pine sources here implicitly backtest at (D5's 3-Day High/Low source sets process_orders_on_close=true; D1's IBS-Algotradekit source measures IBS from the prior completed bar with process_orders_on_close=false, which -- taken completely literally -- fills a full session later than a same-day-IBS/next-open reading; see search-space.md for the derivation). This engine measures IBS/RSI/EMA from the SAME bar whose close is being decided for all three timing conventions (T0/T1/T2), matching Pagonidis, StockCharts, and D3's own Pine source, and discloses the D1 divergence rather than silently reproducing an extra bar of backtest-only latency.",
+  "remaining_evidence_gap": "Whether any of these 6 published rules, on QQQ/SPY with 1x/3x execution, actually clears this repo's frozen G1-G5 gates and the trade-level research-admission rule at realistic T1 timing over 2023-2026 has not been tested locally (dir:giants_sweep_published_etf_rules tested a different rule family) or published anywhere found this session -- Pagonidis's own sample ends 2013-05, Connors & Alvarez's 2009 book predates our entire window, and no third-party replication found this session reports T1-style market-on-close timing, trade-level t-statistics, a random-entry-timing placebo, or a 2023-2026 holdout.",
+  "negative_experiments_checked": "dir:giants_sweep_published_etf_rules (refuted): 0/24 published ETF/leveraged-ETF rules cleared the same frozen G1-G5 bar; the closest cell, f1_tqqq_rsi_no_hedge_ablation (a Composer-style RSI(10) trend/hedge branch on TQQQ, no IBS, no RSI(2), no Connors pattern), reached anchor CAGR 15.9% / max DD -5.2% / anchor Sharpe 1.37 and failed G1 (needs CAGR>=50% or the G1' Sharpe>=2.0-and-CAGR>=30% alternate) -- stated here as the closest prior result and the reason this round does not expect all 24 cells to pass G1, not as a refutation of this specific rule family, which that census never tested. The repo's own signal-card library (library v1) rejected generic technical indicators (RSI/MACD/Bollinger) as standalone signals on a broad stock universe -- a different claim (cross-sectional stock ranking) from this round's single-instrument, mean-reversion-timing claim on index ETFs specifically, which is why a fresh, narrowly-scoped test is warranted rather than assumed refuted by analogy, per the owner's own tier framework ranking pure technical indicators low but not zero, and per this round's requirement to justify the family by its published mechanism rather than by pattern-fit.",
+  "cost_and_execution_assumptions": "10 bp per side primary / 20 bp per side stress, applied to entry and exit fills (a full round trip is 2x the per-side rate), identical to every other giants-sweep-family iteration this month. T0: signal and fill both at the official session close (diagnostic, unexecutable -- no real order can be priced off a close that has not happened yet). T1 (primary): signal from a 15:50 ET America/New_York minute-bar proxy (today's close = last minute close at/before 15:50 ET; today's high/low = minute bars 09:30-15:50 ET; indicators otherwise use prior official daily closes), filled via a market-on-close order submitted before the 15:50 cutoff, at the official close of the same session -- this is a real, executable convention. T2: signal at the official close, filled at the next session's official open (this repo's other standard convention, from run_h20260918_05_recent_menu.py). Exits use the same three conventions as entries. Minute data: data/sip-hist/minute (through 2022) and data/sip/minute (2023+, per-month layout only -- the legacy whole-year 2023 layout overlaps it and would double-count bars if unioned), converted to America/New_York with a timezone-aware conversion, never by unioning fixed-offset EDT/EST bands.",
+  "stop_condition": "For each of the 24 candidates independently: G1-G5 as defined in scripts/run_giants_sweep.py (unchanged). Additionally, for the 12 1x T1 cells only, research admission requires all of: mean net return per trade > 0 in both select and holdout; trade-level t>=2.0 over select+holdout; real mean-per-trade >= the 95th percentile of the random-entry-timing placebo over select+holdout; T1 keeps >=60% of T0's gross mean per trade. A candidate that fails is refuted for this parameterization; reopening this direction requires a new published rule, a new disclosed data source, or new evidence of a mechanism/regime shift, not re-tuning the frozen IBS/RSI/EMA/SMA thresholds or windows. Fixed budget: 24 preregistered candidates (the single-mechanism lightweight-path cap), no added cells; T0/T2 are diagnostics on the same 24 candidates, not additional candidates; placebos are 60 random-entry-timing seeds + 20 calendar-shift seeds per relevant cell, matching the frozen recent-menu convention. This is round 1 of this direction.",
+  "queries": [
+    {
+      "query": "Pagonidis 2014 Internal Bar Strength IBS effect mean reversion equity ETFs NAAIM",
+      "opened_urls": [
+        "https://www.naaim.org/wp-content/uploads/2014/04/00V_Alexander_Pagonidis_The-IBS-Effect-Mean-Reversion-in-Equity-ETFs-1.pdf",
+        "https://tradinginvestingstrategies.substack.com/p/ibs-mean-reversion-strategy-backtest",
+        "https://www.wealth-lab.com/blog/build-a-profitable-mean-reversion-strategy-using-the-ibs-indicator",
+        "https://www.quantifiedstrategies.com/ibs-internal-bar-strength-indicator-strategies/",
+        "https://www.quantifiedstrategies.com/sp-500-mean-reversion-using-ibs-and-rsi/"
+      ],
+      "searched_at": "2026-09-24T01:00:00Z"
+    },
+    {
+      "query": "\"Internal Bar Strength\" academic paper arxiv country ETF replication post 2014",
+      "opened_urls": [
+        "https://arxiv.org/abs/2306.12434",
+        "https://arxiv.org/pdf/2306.12434"
+      ],
+      "searched_at": "2026-09-24T01:02:00Z"
+    },
+    {
+      "query": "RSI(2) Connors mean reversion strategy rules StockCharts ChartSchool 200-day SMA",
+      "opened_urls": [
+        "https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models/trading-strategies/rsi-2"
+      ],
+      "searched_at": "2026-09-24T01:03:00Z"
+    },
+    {
+      "query": "Lehmann 1990 Fads Martingales Market Efficiency short horizon return reversal NBER",
+      "opened_urls": [
+        "https://www.nber.org/papers/w2533",
+        "https://academic.oup.com/qje/article-abstract/105/1/1/1928416"
+      ],
+      "searched_at": "2026-09-24T01:04:00Z"
+    },
+    {
+      "query": "Klossner Becker Friedmann 2012 modeling measuring intraday overreaction stock prices Journal of Banking Finance",
+      "opened_urls": [
+        "https://ideas.repec.org/a/eee/jbfina/v36y2012i4p1152-1163.html",
+        "https://www.sciencedirect.com/science/article/abs/pii/S0378426611003165"
+      ],
+      "searched_at": "2026-09-24T01:05:00Z"
+    },
+    {
+      "query": "fmzquant strategies IBS Algotradekit Connors R3 3-day high low ETF Pine source",
+      "opened_urls": [
+        "https://www.fmz.com/strategy/484915",
+        "https://www.fmz.com/strategy/439643",
+        "https://www.fmz.com/strategy/429146"
+      ],
+      "searched_at": "2026-09-24T00:58:00Z"
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "pagonidis2014_ibs_mechanism_and_threshold",
+      "claim": "Pagonidis (2014) finds that Internal Bar Strength (IBS), the position of the day's close within its own high-low range, forecasts next-day close-to-close equity ETF returns: average returns are 0.35% following a day with IBS below 0.20 versus -0.13% following a day with IBS above 0.80, an effect the paper attributes to intraday overreactions that are corrected the next day; the sample runs from each ETF's inception through 2013-05-12.",
+      "source_type": "paper",
+      "url": "https://www.naaim.org/wp-content/uploads/2014/04/00V_Alexander_Pagonidis_The-IBS-Effect-Mean-Reversion-in-Equity-ETFs-1.pdf",
+      "published_or_updated_at": "2014-04-01",
+      "market_and_period": "Daily OHLC equity index ETFs (US and foreign-market), CSI data, from each ETF's inception through 2013-05-12 (5/12/2013 in the paper's M/D/Y notation).",
+      "applicability": "This is the primary source for D2 (raw IBS<0.20, one-session hold, no trend filter) and the IBS formula and thresholds used by D1's and D6's IBS gates; also the source of the 'intraday overreaction, corrected the next day' mechanism this family's justification rests on, per the owner's request to ground pure technical rules in a published mechanism rather than pattern-fit.",
+      "limitations": "Sample ends 2013-05-12, entirely before this iteration's every window; the paper itself is explicit that IBS alone is eroded by transaction costs (see the paired filter claim), and that the effect is US-centric and close-to-close, not intraday-executable without a closing-auction or MOC order.",
+      "independent_replication": "Extended to country ETFs by Pandey & Joshi (arXiv 2306.12434, 2023) and discussed by multiple independent practitioner writeups found this session (QuantifiedStrategies, WealthLab, Substack backtests); no contrary academic finding was found for the US index-ETF case this session.",
+      "fetched_at": "2026-09-24T01:05:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260924_01_etf_dip_reversion/sources/pagonidis-2014-naaim-ibs-effect.txt",
+      "sha256": "7f44154a326764cc36bf2636c9d1b131ab0954ba5d8481b16b3e135ff06eb288",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "pagonidis2014_ibs_filter_on_rsi_combination",
+      "claim": "Pagonidis (2014) reports that using IBS alone as a trading strategy is eroded by transaction costs, but filtering a Cutler's RSI(3) mean-reversion strategy (long at the close if RSI(3)<10, hold while RSI(3)<=40) to require IBS<=0.5 removes about 43% of the days the RSI strategy spends in the market while increasing its total return by 9.6% on average across the ETF sample, and separately states the un-filtered IBS effect alone delivered over 30% annualized before costs over the sample's last 19 years.",
+      "source_type": "paper",
+      "url": "https://www.naaim.org/wp-content/uploads/2014/04/00V_Alexander_Pagonidis_The-IBS-Effect-Mean-Reversion-in-Equity-ETFs-1.pdf",
+      "published_or_updated_at": "2014-04-01",
+      "market_and_period": "Same CSI daily ETF sample as above, QQQ shown explicitly for the filtered-vs-unfiltered equity curve (Figure 10).",
+      "applicability": "This is the direct precedent and exact combination rule for D6 (IBS-filtered RSI(2)): a daily mean-reversion oscillator combined with an IBS filter reduces time in market and raises total return, which is why D6 is preregistered as its own candidate rather than assumed equivalent to D4.",
+      "limitations": "Pagonidis's own filter combination uses Cutler's RSI(3) with an IBS<=0.5 threshold, not this iteration's RSI(2)<=5 with IBS<0.20 (StockCharts' and this iteration's own tighter, disclosed parameter choice for D4/D6); the improvement magnitude for the exact D4/D6 parameterization is not itself published and is what this iteration tests.",
+      "independent_replication": "QuantifiedStrategies' 'S&P 500 Mean Reversion Using IBS and RSI' page (search-only this session, not opened) independently describes combining IBS with RSI on the S&P 500, consistent with the same general combination idea.",
+      "fetched_at": "2026-09-24T01:05:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260924_01_etf_dip_reversion/sources/pagonidis-2014-naaim-ibs-effect.txt",
+      "sha256": "7f44154a326764cc36bf2636c9d1b131ab0954ba5d8481b16b3e135ff06eb288",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "stockcharts_connors_rsi2_entry_rule",
+      "claim": "StockCharts' ChartSchool describes Larry Connors' 2-period RSI mean-reversion strategy: the long-term trend filter is the 200-day SMA (long-term trend is up when price is above it), and buy signals look for 2-period RSI moving below 10 (deeply oversold), noting the strategy is not designed to identify major tops or bottoms and is meant to educate chartists on a possible strategy rather than a standalone system usable out of the box.",
+      "source_type": "industry_standard",
+      "url": "https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models/trading-strategies/rsi-2",
+      "published_or_updated_at": "unknown",
+      "market_and_period": "General technical-analysis reference (S&P 500 used as Connors' own example); no specific backtest sample published on this page.",
+      "applicability": "This is the exact entry rule (close > SMA(200), RSI(2) <= 5 used here, tighter than ChartSchool's illustrative <10) preregistered for D4 (classic) and, with the added IBS filter, D6.",
+      "limitations": "A secondary educational reference, not Connors' own book or a peer-reviewed paper; StockCharts explicitly disclaims this as an out-of-the-box standalone strategy.",
+      "independent_replication": "Consistent with the repo's own local fmz.com/strategy/439643 Pine source ('R3 ETF Strategy'), which implements the same RSI(2)-below-threshold-with-200-day-trend-filter family (Connors & Alvarez 2009's R3 variant, D3 here).",
+      "fetched_at": "2026-09-24T01:05:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260924_01_etf_dip_reversion/sources/stockcharts-chartschool-rsi2.html",
+      "sha256": "8161906f1b45ef7239de6210e21f557c885ec460555777a5a215cca595a5f01b",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "stockcharts_connors_rsi2_exit_rule",
+      "claim": "StockCharts' ChartSchool states that, in Connors' own S&P 500 example, exits are on a move above the 5-day SMA for long positions (and below the 5-day SMA for short positions), producing a short-term trading strategy with quick exits.",
+      "source_type": "industry_standard",
+      "url": "https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models/trading-strategies/rsi-2",
+      "published_or_updated_at": "unknown",
+      "market_and_period": "Same page as above.",
+      "applicability": "This is the exact exit rule (close > SMA(5)) preregistered for D4 and D6.",
+      "limitations": "Same secondary-source caveat as the entry-rule claim above.",
+      "independent_replication": "Consistent with the repo's local fmz.com/strategy/429146 Pine source, whose 3-Day High/Low strategy (D5 here) also exits on a close crossing above a short moving average (EMA(5) there instead of SMA(5)).",
+      "fetched_at": "2026-09-24T01:05:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260924_01_etf_dip_reversion/sources/stockcharts-chartschool-rsi2.html",
+      "sha256": "8161906f1b45ef7239de6210e21f557c885ec460555777a5a215cca595a5f01b",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    },
+    {
+      "claim_id": "lehmann1990_short_horizon_reversal_mechanism",
+      "claim": "Lehmann (1990, Quarterly Journal of Economics, NBER working paper 2533) documents that weekly 'winners' and 'losers' experience sizeable return reversals the following week that persist as apparent arbitrage profits after adjusting for thin trading, bid-ask spreads and plausible transaction costs -- classic academic evidence for the short-horizon mean-reversion mechanism that Pagonidis's daily IBS effect and the Connors/turtle multi-day ETF rules operate on at shorter horizons.",
+      "source_type": "paper",
+      "url": "https://www.nber.org/papers/w2533",
+      "published_or_updated_at": "1990-02-01",
+      "market_and_period": "US equities, weekly return reversal portfolios; NBER working paper dated 1990-02 (published QJE 105(1)).",
+      "applicability": "Independent, pre-Pagonidis academic grounding for the 'intraday/short-horizon overreaction then reversal' mechanism the owner asked this family to be justified by, rather than resting the mechanism claim on Pagonidis alone; Pagonidis's own literature review builds on this same reversal/overreaction line of research.",
+      "limitations": "Weekly horizon, not daily or multi-day; equities, not index ETFs; 1988 working paper / 1990 publication, decades before this iteration's data window, and does not itself test IBS, RSI(2) or any ETF-specific rule.",
+      "independent_replication": "Cited directly by Pagonidis (2014) as foundational literature ('Conrad et al. (1994), expanding on the work of Lehmann (1990), find evidence of overreaction...'); Kloßner, Becker & Friedmann (2012) independently document intraday overreaction using a different OHLC-based methodology (see the companion IDEAS/RePEc source card in external-brief.json).",
+      "fetched_at": "2026-09-24T01:05:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260924_01_etf_dip_reversion/sources/nber-w2533-lehmann-1990-fads-martingales.html",
+      "sha256": "692aaa53eadaacd221ffe93d186ebb370c9e7e5d348df78c810c6e51940cdc16",
+      "source_card_path": "reports/harness/source_cards/h20260924_01_etf_dip_reversion.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Compute T0/T2 diagnostics from daily bars alone for all 24 candidates (Stage A: gates, persistence table, split/dividend check), which needs no minute data and no capped-job slot; then, once a run_capped.sh slot is free, compute T1 from the QQQ/SPY minute archive (Stage B) and apply G1-G5 plus the trade-level research-admission rule.",
+    "pass_condition": "At least one of the 24 candidates' T1 cell passes all of G1-G5 and the research-admission rule over select+holdout, reported alongside the other 23 regardless of outcome.",
+    "falsification_condition": "No T1 cell passes all of G1-G5 and the research-admission rule, or a cell passes T0/T2 but T1 keeps <60% of T0's gross mean per trade (showing the published same-close/next-open backtest convention was carrying the result, not a realistic fill).",
+    "max_compute_minutes": 90
+  }
+}
