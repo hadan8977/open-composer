@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-23",
+ "updated": "2026-09-24",
  "plan": "docs/plan-research-coverage-2026-09-23.zh.md",
  "statuses": [
   "untested",
@@ -43,7 +43,8 @@
     "dir:tqqq_levered_gold_pair_rebalance",
     "dir:letf_multi_signal_regime_vote",
     "dir:volatility_gated_momentum_aegis",
-    "dir:sector_momentum_middle_tier_buy"
+    "dir:sector_momentum_middle_tier_buy",
+    "dir:levered_gold_trend_sleeve"
    ],
    "gap": "S1-S3 live in paper; bear-market risk measured (2016-2023 -48%)",
    "next": "leave: batch 3 refuted 09-23 (keep SHY); reopen only with new information"
@@ -149,7 +150,7 @@
     "large_cap",
     "small_cap"
    ],
-   "status": "untested",
+   "status": "tested_refuted",
    "directions": [
     "dir:pead_xbrl_8k_llm",
     "dir:earnings_8k_tone_next_day",
@@ -158,8 +159,8 @@
     "dir:pead_classic_sue_microcap_decay",
     "dir:pead_xbrl_sue_filing_date"
    ],
-   "gap": "8-K tone refuted at next day; surprise-based PEAD from free XBRL never built Classic SUE PEAD is microcap-only through 2024 (UCLA replication, ex-microcap t=1.43); test on our tiers with free XBRL before anything fancier.",
-   "next": "build XBRL surprise + earnings-day gap event table (week 1)"
+   "gap": "Refuted 2026-09-24: SUE from free SEC XBRL on filing dates (dir:pead_xbrl_sue_filing_date) shows no drift on our tiers, consistent with the microcap-only replication; 8-K tone refuted earlier.",
+   "next": "none; reopen only with a new surprise source (analyst consensus, guidance text) or a new construction"
   },
   {
    "id": "event.8k_item_events",
@@ -250,14 +251,14 @@
     "large_cap",
     "small_cap"
    ],
-   "status": "tested_partial",
+   "status": "tested_refuted",
    "directions": [
     "dir:news_attention_features",
     "dir:retail_sentiment_attention",
     "dir:news_sentiment_trading_pwb"
    ],
-   "gap": "counts refuted; LLM-scored sentiment on 680k items never run as a standalone signal Signal library v1 confirms news-count attention carries nothing (IC -0.003). The signed high-frequency news reaction (H-20260923-14) is a different construction and is being built.",
-   "next": "news_hf_reaction cards after the feature build"
+   "gap": "News-count attention carries nothing (IC -0.003); the signed high-frequency news reaction (H-20260923-14) was refuted 2026-09-24. LLM-scored sentiment as a standalone daily signal remains untested.",
+   "next": "LLM-scored sentiment only after the nightly DeepSeek classification finishes; no new build"
   },
   {
    "id": "alt_data.web_and_other",
@@ -300,8 +301,8 @@
     "dir:iv_informed_dip_mean_reversion_live",
     "dir:alpaca_free_options_iv_signals"
    ],
-   "gap": "no point-in-time options history locally Alpaca's free indicative feed has stored option trades, IV and greeks since 2024-02, plus OCC open interest one day lagged (I-20260923-08); about 31 months, enough to prototype.",
-   "next": "feasibility with Alpaca options data since 2024; purchase is an owner decision"
+   "gap": "Alpaca's free options feed has no historical quotes; trade-based IV spreads have the wrong sign and negative autocorrelation (I-20260924-01, dir:alpaca_free_options_iv_signals not_executable).",
+   "next": "none unless the owner buys historical options quotes"
   },
   {
    "id": "options.options_income",
@@ -330,15 +331,15 @@
     "large_cap",
     "small_cap"
    ],
-   "status": "blocked_data",
+   "status": "tested_partial",
    "directions": [
     "dir:jkp_accounting_change_factors",
     "dir:classic_long_short_anomalies_recent",
     "dir:fundamental_scoring_dcf_lynch_retail_product",
     "dir:sec_xbrl_accounting_signals_v1"
    ],
-   "gap": "no point-in-time fundamentals Free route verified (I-20260923-08): SEC XBRL companyconcept/frames + Financial Statement Data Sets give filed dates and accessions; restatements detectable. First ingest: diluted EPS and revenue, then a surprise-vs-own-history PEAD test.",
-   "next": "SEC XBRL ingest (EPS, revenue) -> PEAD kill test"
+   "gap": "SEC XBRL fundamentals ingested 2026-09-24 (data/features/sec_fundamentals_daily). Signal cards: ROE admitted (small); gross profitability, asset growth, accruals refuted; momentum+ROE composite v2 refuted against same-universe momentum. Survivorship: delisted names lack a CIK map.",
+   "next": "delisted-name CIK map, then ROE only as a ranking-model feature"
   },
   {
    "id": "factor_library.anomaly_replication",
@@ -382,15 +383,15 @@
     "large_cap",
     "small_cap"
    ],
-   "status": "untested",
+   "status": "tested_refuted",
    "directions": [
     "dir:orb_stocks_in_play_relative_volume",
     "dir:overnight_intraday_gap_retail_pwb",
     "dir:intraday_reversal_reit_pwb",
     "dir:closing_auction_imbalance_signal"
    ],
-   "gap": "all intraday tests so far were on ETFs",
-   "next": "stocks-in-play feasibility and test (week 1); news momentum (week 2)"
+   "gap": "Stocks-in-Play ORB refuted 2026-09-24 (H-20260923-13: long-only, 1x, loses in select and 2026 at 10 bp, trails random-liquid controls); high-frequency news reaction refuted 2026-09-24 (H-20260923-14).",
+   "next": "none at 1x long-only; the lenient-stop 2026 variant needs >1x and an owner decision before any fidelity check"
   },
   {
    "id": "intraday_hf.etf_intraday",

@@ -1,6 +1,6 @@
 ---
 card_id: H-20260924-01
-status: partial -- sleeve refuted (0/24 pass G1-G5 at T0/T2, unreachable at T1); D1 signal-level real effect, research admission pending T1 by decision
+status: refuted -- sleeve refuted (0/24 pass G1-G5 at T0/T2, unreachable at T1); D1 fails its preregistered random-entry placebo (main-session correction 2026-09-24, see decision-record.md)
 lane: preregistered
 previous: null
 direction_id: dir:etf_dip_reversion_ibs_connors
@@ -29,6 +29,11 @@ criteria:
 
 # H-20260924-01 Short-term index-ETF dip reversion (IBS and Connors/turtle RSI(2))
 
+- Correction (2026-09-24, main session): **refuted.** D1's preregistered research
+  admission required the real mean net return per trade to reach the 95th
+  percentile of the random-entry placebo; it reaches 58-92 in every cell
+  (`d1-research-admission-t0-t2.json`), so the signal-level claim below is
+  withdrawn and the family is refuted.
 - Status: **Final, partial (round 1), closed 2026-09-24 on Stage A evidence.
   Sleeve-level: refuted (0/24 candidates pass G1-G5 at T0 or T2, and T1
   cannot pass G1/G1'/G4 either, since T0 is an unexecutable upper bound for
