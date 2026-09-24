@@ -40,16 +40,25 @@ def test_insider_strategy_is_observation_only() -> None:
     assert auth.expires_at is None
 
 
+def test_retired_top50_reads_as_observation_only() -> None:
+    # top50 was liquidated and its authorization revoked on 2026-09-23 14:07
+    # UTC (`oc paper revoke-rehearsal`, docs/current-view.zh.md); only the
+    # `-authorization-revoked-*.json` copy remains, so it reads like any
+    # strategy without a live authorization.
+    auth = P.load_authorization(REPO_ROOT, "us_recent_high_return_top50", now=_NOW)
+    assert auth.state == "observation_only"
+    assert auth.expires_at is None
+
+
 @pytest.mark.parametrize(
     "name",
     [
-        "us_recent_high_return_top50",
         "us_etf_sector_rotation_252_top2_weekly",
         "us_etf_growth_rotation_blend_top2_monthly",
         "us_etf_levered_rotation_63_top2_monthly",
     ],
 )
-def test_the_other_four_strategies_are_authorized(name: str) -> None:
+def test_the_three_etf_sleeves_are_authorized(name: str) -> None:
     auth = P.load_authorization(REPO_ROOT, name, now=_NOW)
     assert auth.state == "authorized", (name, auth)
     assert auth.expires_at is not None
@@ -287,11 +296,13 @@ def test_equity_series_never_reads_sync_or_rotation_baselines_jsonl(tmp_path: Pa
 # --------------------------------------------------------------------------
 
 
-def test_top50_has_a_dedicated_ledger_and_matches_the_broker_account() -> None:
+def test_retired_top50_keeps_its_ledger_but_the_broker_holds_none_of_it() -> None:
+    # After the 2026-09-23 liquidation the shared broker account holds none of
+    # top50's names, so the ledger-vs-broker comparison has nothing to match.
     detail = P.build_strategy_detail(REPO_ROOT, "us_recent_high_return_top50", now=_NOW)
     assert detail.has_dedicated_ledger is True
-    assert detail.positions, "expected target/position rows from the latest cycle"
-    assert "match" in detail.positions_agreement
+    assert detail.positions, "expected the ledger rows from the last cycle"
+    assert "no comparable positions" in detail.positions_agreement
 
 
 def test_insider_has_no_dedicated_ledger() -> None:
