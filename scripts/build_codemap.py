@@ -122,7 +122,7 @@ NODES: list[dict[str, Any]] = [
             "`oc research auto` 的论点到草稿 Spec 流程、LLM 评审卡、新闻 PIT 包采集与"
             "LLM 事件抽取、点时特征包。LLM 输出只能经结构化包影响策略。"
         ),
-        "configs": ["prompts/README.md", "knowledge/quant_capability_knowledge_base.yaml"],
+        "configs": ["prompts/README.md"],
     },
     {
         "id": "engines",

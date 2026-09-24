@@ -23,22 +23,24 @@ Manual equivalent:
 cp .env.example .env
 make bootstrap
 make verify
-make dashboard-serve
+uv run oc cockpit index
+uv run oc cockpit serve
 ```
 
-The Dashboard is available at `http://127.0.0.1:8000` by default.
+The read-only Cockpit is available at `http://127.0.0.1:8770` by default (loopback
+only; it has no application-level auth, see [Cockpit](#cockpit) below).
 
 ## Core Strategy Workflow
 
-Validate a draft, inspect capabilities, run research, and build Dashboard
-artifacts:
+Validate a draft, inspect capabilities, run research, and build the Cockpit
+read model:
 
 ```bash
 uv run oc spec validate strategy_specs/drafts/<strategy>.yaml
 uv run oc spec capabilities strategy_specs/drafts/<strategy>.yaml
 uv run oc strategy evidence strategy_specs/drafts/<strategy>.yaml
 uv run oc strategy promotion-report strategy_specs/drafts/<strategy>.yaml
-uv run oc dashboard html
+uv run oc cockpit index
 ```
 
 `strategy evidence` is the preferred first evidence artifact. It brings together
@@ -93,7 +95,7 @@ uv run oc strategy regime-search strategy_specs/drafts/<strategy>.yaml
 Research reports write `research_brief`, `search_space`,
 `hypothesis_ledger`, `research_cost`, candidate counts, estimated backtest passes,
 `runtime_seconds`, `data_profile`, source mode, fallback warnings, and Dashboard research records
-where applicable.
+(the read model Cockpit renders) where applicable.
 
 LLM selection reports must expose `llm_contribution`,
 `llm_contribution_ok`, `llm_contribution_level`,
@@ -244,42 +246,42 @@ uv run oc strategy disable <strategy>
 Sample-data strategies can be activated for local smoke tests, but paper order
 submission blocks them with `blocked_by_readiness`.
 
-## Dashboard
+## Cockpit
+
+> The old React/Vite `dashboard/` app and its `make dashboard-*` targets were
+> removed in Step 18 (2026-09-19) and replaced by a read-only Cockpit. This
+> section describes the current Cockpit, not that removed app.
 
 ```bash
-make dashboard-catalog
-make dashboard-build
-make dashboard-serve
+uv run oc cockpit index
+uv run oc cockpit serve --port 8770
 ```
 
-When launched with `make dashboard-serve`, the UI syncs the runtime catalog
-from `/api/dashboard/catalog`. Local browser API calls can be protected with:
+`cockpit index` builds the read model (`reports/dashboard/catalog.json` — the
+path keeps its old name, the content is the Cockpit's). `cockpit serve` renders
+it server-side (FastAPI + Jinja2) at `http://127.0.0.1:8770`.
+
+The Cockpit has **no application-level authentication** by design and refuses
+to bind `0.0.0.0`/`::`/`*`. Remote (e.g. mobile) access goes through a
+Cloudflare Tunnel (`cloudflared tunnel run --token-file`, run as a systemd
+service) pointed at `http://127.0.0.1:8770`, with Cloudflare Access enforcing
+auth at the edge (team domain, Access application AUD, allowed emails
+configured in the Cloudflare Zero Trust dashboard — there is no
+`deploy-vps.sh` or bundled CLI flag for this). The Cockpit issues no commands
+of its own; remote instructions still go through your existing agent session
+(Paseo), never through the Cockpit UI. Full rationale and acceptance criteria:
+`docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md`.
+
+An optional second front end, "Cockpit v2" (React + Vite, reads the same
+read-only JSON API), builds with:
 
 ```bash
-OPEN_COMPOSER_DASHBOARD_TOKEN=<long-random-token> make dashboard-serve
+make cockpit-v2
 ```
 
-The normal remote deployment is VPS-hosted Dashboard behind Cloudflare Tunnel
-and Cloudflare Access. The Dashboard process still listens on
-`127.0.0.1:8000`; Cloudflare is only the remote access gate.
-
-```bash
-./scripts/deploy-vps.sh --cloudflare-access --dashboard-url https://dashboard.example.com
-```
-
-Set these on the VPS, or pass the matching CLI options:
-
-```bash
-OPEN_COMPOSER_DASHBOARD_AUTH_MODE=cloudflare_access
-OC_DASHBOARD_ALLOWED_ORIGIN=https://dashboard.example.com
-OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN=https://<team>.cloudflareaccess.com
-OC_CLOUDFLARE_ACCESS_AUD=<Access application AUD tag>
-OC_DASHBOARD_ALLOWED_EMAILS=you@example.com
-```
-
-`cloudflare_access_or_token` is available for migration/debug fallback.
-Strategy work remains CLI/file/agent driven. See
-`docs/remote-dashboard-deploy.zh.md`.
+The bundle lands in `open_composer/cockpit/static/v2/`; `cockpit serve` mounts
+it at `/v2/` when that directory exists. The server itself never runs Node —
+skipping this build only disables `/v2/`, not the main `/` UI.
 
 ## Notifications
 
@@ -320,7 +322,7 @@ uv run oc cache clean --data-cache --reports --apply
 Evidence logs are not selected by default. Use `--signal-logs`,
 `--feature-logs`, `--event-logs`, or `--all-runtime --apply` only when you
 intentionally reset local run evidence. Dependency folders such as `.venv` and
-`dashboard/node_modules` are status-only in this command.
+`frontend/cockpit-v2/node_modules` are status-only in this command.
 
 ## Quality Gates
 
@@ -333,5 +335,5 @@ make verify
 ```
 
 `make verify` runs the local closure: format, lint, tests, repo check,
-capability test, agent parity, deployment prepare, Dashboard check, feature
-validation, and readiness.
+capability test, agent parity, deployment prepare, feature validation, and
+readiness.

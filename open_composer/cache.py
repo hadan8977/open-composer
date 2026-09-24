@@ -142,8 +142,8 @@ RUNTIME_TARGETS = (
     ),
     CacheTarget(
         key="node_modules",
-        relpath="dashboard/node_modules",
-        label="Dashboard Node dependencies",
+        relpath="frontend/cockpit-v2/node_modules",
+        label="Cockpit v2 Node dependencies",
         category="dependency",
         cleanable=False,
         selected_by_default=False,

@@ -7,25 +7,24 @@ import pytest
 from typer.testing import CliRunner
 
 from open_composer.cli import app
-from open_composer.repo_check import build_repo_check_report
+from open_composer.repo_check import CURRENT_DOCS, build_repo_check_report
+
+#: Non-doc control-surface files the checks read directly (docs come from
+#: CURRENT_DOCS below, so this list can't drift out of sync with it the way a
+#: second hand-maintained doc list did -- see 2026-09-24 fix).
+_NON_DOC_INPUTS = [
+    "README.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "LICENSE",
+    "Makefile",
+    "scripts/sync-agent-skills.py",
+    "scripts/check-agent-parity.py",
+]
 
 
 def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
-    for relative in [
-        "README.md",
-        "AGENTS.md",
-        "CLAUDE.md",
-        "LICENSE",
-        "Makefile",
-        "scripts/sync-agent-skills.py",
-        "scripts/check-agent-parity.py",
-        "docs/product-golden-path-codex-quant-review-2026-05-13.zh.md",
-        "docs/user-guide.md",
-        "docs/remote-dashboard-deploy.zh.md",
-        "docs/setup-local.zh.md",
-        "docs/longbridge-integration.md",
-        "docs/strategy-research-product-remediation-plan-2026-05-26.zh.md",
-    ]:
+    for relative in [*_NON_DOC_INPUTS, *sorted(CURRENT_DOCS)]:
         source = repo_root / relative
         destination = target / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -33,75 +32,6 @@ def _copy_repo_check_inputs(repo_root: Path, target: Path) -> None:
     copytree(repo_root / ".agents", target / ".agents", dirs_exist_ok=True)
     copytree(repo_root / ".claude", target / ".claude", dirs_exist_ok=True)
     copytree(repo_root / "harness", target / "harness", dirs_exist_ok=True)
-    for new_doc in [
-        "docs/research-mission.zh.md",
-        "docs/research-autonomy.zh.md",
-        "docs/plan-research-autonomy-2026-09-21.zh.md",
-        "docs/alpha158-recovery-2026-09-21.zh.md",
-        "docs/plan-step-1-simplification-2026-05-22.zh.md",
-        "docs/plan-step-2-worksession-llm-factor-2026-05-22.zh.md",
-        "docs/plan-step-3-dashboard-first-2026-05-22.zh.md",
-        "docs/local-product-optimization-plan-2026-05-25.zh.md",
-        "docs/plan-step-6-factor-catalog-and-ai-research-2026-05-26.zh.md",
-        "docs/plan-step-6-5-auto-research-fixes-2026-06-08.zh.md",
-        "docs/plan-step-6-6-pre-step7-research-hardening-2026-06-08.zh.md",
-        "docs/plan-step-6-7-tradeable-signal-generation-2026-06-16.zh.md",
-        "docs/plan-step-6-8-skill-and-research-workflow-hardening-2026-06-17.zh.md",
-        "docs/plan-step-7-conditional-ml-decay-llm-2026-05-26.zh.md",
-        "docs/plan-step-7a-ml-training-backend-2026-06-30.zh.md",
-        "docs/plan-step-7-complete-ultracode-2026-07-02.zh.md",
-        "docs/plan-step-7r-pdr-router-ml-gate-2026-07-03.zh.md",
-        "docs/plan-step-7s-product-consolidation-2026-07-03.zh.md",
-        "docs/plan-step-7t-pdr-gate-round2-2026-07-04.zh.md",
-        "docs/plan-step-8-go-live-readiness-2026-07-06.zh.md",
-        "docs/plan-step-9-autonomous-loop-momentum-2026-07-09.zh.md",
-        "docs/plan-step-9r-momentum-validation-and-loop-hardening-2026-07-11.zh.md",
-        "docs/plan-step-9o-momentum-shadow-observation-2026-07-13.zh.md",
-        "docs/plan-step-9f-final-momentum-product-loop-2026-07-13.zh.md",
-        "docs/plan-step-9m-multiasset-momentum-lab-2026-07-14.zh.md",
-        "docs/plan-step-9n-ai-factor-ml-expansion-2026-07-14.zh.md",
-        "docs/plan-step-9p-multimodal-momentum-memory-2026-07-15.zh.md",
-        "docs/plan-step-9q-evidence-driven-momentum-codesign-2026-07-15.zh.md",
-        "docs/runbook-live-manual-execution.zh.md",
-        "docs/strategy-alpha-paper-execution-plan-2026-08-04.zh.md",
-        "docs/strategy-optimization-progress-log.zh.md",
-        "docs/strategy-optimization-progress-report-template.zh.md",
-        "docs/plan-gate-recalibration-and-research-velocity-2026-08-26.zh.md",
-        "docs/plan-kernel-extraction-and-auto-research-real-data-2026-08-28.zh.md",
-        "docs/plan-sip-migration-and-wide-search-2026-09-01.zh.md",
-        "docs/finding-iex-cache-price-adjustment-defect-2026-09-01.zh.md",
-        "docs/review-kernel-search-2026-09-01.zh.md",
-        "docs/data-layer-pitfalls-and-capabilities.zh.md",
-        "docs/capability-gap-analysis-2026-09-02.zh.md",
-        "docs/plan-goal-first-verification-2026-09-02.zh.md",
-        "docs/conclusion-goal-first-2026-09-03.zh.md",
-        "docs/plan-step-10-mechanism-supplementation-2026-09-03.zh.md",
-        "docs/plan-step-11-ml-first-loop-2026-09-06.zh.md",
-        "docs/plan-step-12-groupb-recent-regime-high-hit-rate-2026-09-09.zh.md",
-        "docs/plan-step-13-recent-high-return-ml-and-llm-tracks-2026-09-09.zh.md",
-        "docs/plan-step-13f-open-factor-library-import-and-screening-2026-09-09.zh.md",
-        "docs/plan-step-13p-reversal-trend-pine-factor-and-strategy-2026-09-09.zh.md",
-        "docs/plan-post-reset-roadmap-2026-09-11.zh.md",
-        "docs/plan-step-14-timeframe-agnostic-bar-cycle-runner-2026-09-11.zh.md",
-        "docs/plan-step-15-gtja17-port-and-insider-transactions-packet-2026-09-11.zh.md",
-        "docs/answers-friday-plan-questions-2026-09-15.zh.md",
-        "docs/answers-iteration-intelligence-llm-quant-2026-09-15.zh.md",
-        "docs/proposal-research-loop-redesign-2026-09-15.zh.md",
-        "docs/plan-step-17-paper-rehearsal-portfolio-canary-2026-09-15.zh.md",
-        "docs/current-view.zh.md",
-        "docs/plan-strategy-factory-2026-09-22.zh.md",
-        "docs/plan-giants-sweep-2026-09-22.zh.md",
-        "docs/plan-earnings-text-forward-test-2026-09-22.zh.md",
-        "docs/handoff-2026-09-23.zh.md",
-        "docs/plan-broad-search-and-direction-registry-2026-09-23.zh.md",
-        "docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md",
-        "docs/design-token-budget-2026-09-20.zh.md",
-    ]:
-        source = repo_root / new_doc
-        destination = target / new_doc
-        if source.exists():
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def test_repo_check_passes_for_repo_control_surface(

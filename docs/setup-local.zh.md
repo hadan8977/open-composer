@@ -2,8 +2,13 @@
 
 **目标读者**: 第一次在本地跑 Open Composer 的人 (你 / Codex / Claude Code)
 **适用模式**: 单机开发 / 试用 / 离线研究
-**VPS 远程模式**: 见 [docs/remote-dashboard-deploy.zh.md](./remote-dashboard-deploy.zh.md)
-**最后验证**: 2026-05-16 (Windows 11 / Python 3.13 / Node 24)
+**远程模式**: 只读 Cockpit + Cloudflare Access + Paseo 会话，见 [docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md](./plan-step-18-readonly-cockpit-2026-09-19.zh.md)
+**最后验证**: 2026-09-24 (Linux，对齐 `scripts/setup-local.sh`/`.ps1` 当前实现)
+
+> 2026-09-24 更正：这份文档原来讲的是 Step 18（2026-09-19）之前的旧前端 `dashboard/`（npm + Vite），
+> 那个目录已经删除，仓库改用只读 Cockpit（`open_composer/cockpit` 服务端渲染 + 可选的
+> `frontend/cockpit-v2` React 前端，用 pnpm 不是 npm）。下面按当前的 `scripts/setup-local.sh`
+> （6 步，非旧版的 10 步）重写。
 
 ---
 
@@ -15,8 +20,7 @@ Linux / macOS 用户可以直接运行：
 make start
 ```
 
-它会调用 `scripts/setup-local.sh`，完成依赖安装、仓库检查、`.env` 初始化、
-Dashboard catalog/build 和本地 Dashboard 启动。
+它会调用 `scripts/setup-local.sh`，完成依赖安装、仓库检查、`.env` 初始化和 Cockpit catalog 构建。
 
 Windows PowerShell 用户使用：
 
@@ -29,12 +33,12 @@ Windows PowerShell 用户使用：
 | 系统 | 命令 |
 |---|---|
 | Windows PowerShell | `.\scripts\setup-local.ps1` |
-| Linux / macOS | `./scripts/setup-local.sh` |
+| Linux / macOS | `./scripts/setup-local.sh` (加 `--dry-run` 只预览不执行) |
 
-脚本会按顺序跑 10 步并显示 `[N/10] ✓/⚠/✗ <result>`,**到第一个真失败处停下并告诉你下一步该做什么**。可以反复重跑——已完成的步骤会跳过。
+脚本按顺序跑 **6 步** 并显示 `[N/6] <title> OK/WARN/FAIL/SKIP`，**到第一个真失败处停下并告诉你下一步该做什么**。可以反复重跑——已完成的步骤会跳过。
 
 跑完后:
-- ✅ Dashboard 在 http://127.0.0.1:8000 可访问
+- ✅ Cockpit catalog 已生成 (`reports/dashboard/catalog.json`，字段名是历史遗留，内容是 Cockpit 的 read model)
 - ⚠️ 显示哪些可选 API key 还没配,按 §3 写入 `.env`
 - ⚠️ 显示哪些 capability 用的 fixture 数据 (没配 key 时正常)
 
@@ -42,17 +46,18 @@ Windows PowerShell 用户使用：
 
 ## 0. 前置工具
 
-| 工具 | 最低版本 | 装法 (Windows) | 装法 (Linux/Mac) |
-|---|---|---|---|
-| **uv** (Python 包管理) | 0.11+ | `winget install astral-sh.uv` 或 PS: `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
-| **Node** | 20+ | https://nodejs.org/ LTS | `nvm install --lts` |
-| **Git** | 2.30+ | 已有 | 已有 |
+| 工具 | 最低版本 | 装法 (Windows) | 装法 (Linux/Mac) | 是否必需 |
+|---|---|---|---|---|
+| **uv** (Python 包管理) | 0.11+ | `winget install astral-sh.uv` 或 PS: `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"` | `curl -LsSf https://astral.sh/uv/install.sh \| sh` | 必需 |
+| **Git** | 2.30+ | 已有 | 已有 | 必需 |
+| **Node + pnpm** | Node 20+ | https://nodejs.org/ LTS，`corepack enable` | `nvm install --lts && corepack enable` | 仅构建可选的 `frontend/cockpit-v2` 前端时需要 |
 
-uv 自带 Python 3.13,**不需要单独装 Python**。
+uv 自带 Python 3.13,**不需要单独装 Python**。默认的只读 Cockpit（`/` 路由）是服务端渲染的
+FastAPI + Jinja2，**不需要 Node**；Node/pnpm 只在你想构建 `/v2/` 的 React 前端时才要装。
 
 ---
 
-## 1. 手动步骤 (10 步)
+## 1. 手动步骤 (对齐 `scripts/setup-local.sh` 的 6 步)
 
 每步给:**命令 / 预期输出 / 失败时怎么办**。
 
@@ -60,37 +65,23 @@ uv 自带 Python 3.13,**不需要单独装 Python**。
 
 ```bash
 uv --version       # 期望: uv 0.11.x 或更高
-node --version     # 期望: v20.x 或更高
-npm --version      # 期望: 10.x 或更高
 ```
 
-❌ 任意一个 not found → 回到 §0 安装。
+❌ not found → 回到 §0 安装。
 
 ### Step 2: 安装 Python 依赖
 
 ```bash
-uv sync
+uv sync --extra workbench
 ```
 
-**预期**: `Resolved 54 packages` + `Installed N packages` (首次约 5-10 分钟,后续秒级)。
-
-`.venv/` 应在仓库根创建。
+**预期**: 首次约 5-10 分钟,后续秒级，`.venv/` 在仓库根创建。
 
 ❌ 失败常见原因:
 - 网络问题 → 设置 `UV_INDEX_URL` 用国内镜像
 - Windows 上 `Failed to hardlink` 警告 → **不影响**,可忽略;或加 `export UV_LINK_MODE=copy`
 
-### Step 3: 安装 Dashboard 前端依赖
-
-```bash
-npm --prefix dashboard install
-```
-
-**预期**: `added N packages` (首次约 1-2 分钟)。
-
-`dashboard/node_modules/` 应被创建。
-
-### Step 4: 检查仓库一致性
+### Step 3: 检查仓库一致性
 
 ```bash
 uv run oc repo check
@@ -98,26 +89,26 @@ uv run oc repo check
 
 **预期**: 末行 `status=ok ready=yes`。
 
-❌ `status=blocked`:
-- `docs_inventory` blocked → 看 `extra_docs` vs `allowed_docs`,要么删多余文档要么把新文档加进 `open_composer/repo_check.py:CURRENT_DOCS`
-- 其他 blocked → 看 `reports/repo/repo-check.md` 的 `Next action` 列
+❌ `status=blocked` → 看 `reports/repo/repo-check.md` 的 `Next action` 列；文档相关的
+blocked 通常是 `docs_inventory`，把新文档加进 `open_composer/repo_check.py:CURRENT_DOCS`
+或删/移走多余文档。
 
-### Step 5: 配置 .env (可选但建议)
+### Step 4: 配置 .env (可选但建议)
 
 ```bash
-# 首次复制 example
 cp .env.example .env       # Linux/Mac
 copy .env.example .env     # Windows
 ```
 
+首次运行 `setup-local.sh` 会在没有 `.env` 时自动从 `.env.example` 复制一份占位文件。
 然后按 §3 表格填 key。**不配也可以跑**,只是部分 capability 走 fixture 数据。
 
 ❌ 安全提示:`.env` 已被 `.gitignore`,**永远不要 commit**。VPS 上 `chmod 600 .env`。
 
-### Step 6: 验证环境配置
+### Step 5: 验证环境配置
 
 ```bash
-uv run oc doctor
+uv run oc doctor --plain
 ```
 
 **预期**: Python/包都 `ok`;API key 显示 `missing` 是正常的 (除非你配了)。
@@ -125,52 +116,36 @@ uv run oc doctor
 特别注意:
 - `ALPACA_PAPER` 应该是 `true` (硬约束,实盘 out of scope)
 
-### Step 7: 评估 capability (可选)
+### Step 6: 构建 Cockpit catalog (read model)
 
 ```bash
-uv run oc capability test
+uv run oc cockpit index
 ```
 
-**预期**: 每个 capability 一行 `score >= min_score` 或 `using fixture`。
+**预期**: 表格列出 strategies / versions / signals / runs 等计数,末行 `Read model` 指到
+`reports/dashboard/catalog.json`（路径名沿用旧称呼，内容已经是 Cockpit 的数据）。
 
-❌ 报错时:多半是某个外部 API 不通,看具体哪个 capability。
+这一步读取 `strategy_specs/`、`signal_logs/`、`reports/` 生成给 Cockpit 用的 JSON。
 
-### Step 8: 构建 Dashboard catalog (read model)
+### （可选）启动本地只读 Cockpit
 
 ```bash
-uv run oc dashboard catalog
+uv run oc cockpit serve --port 8770
 ```
 
-**预期**: 表格列出 strategies / versions / signals / runs 数,末行 `Read model` 指到 `reports/dashboard/catalog.json`。
+**预期**: 服务只监听 `127.0.0.1:8770`（应用内**没有任何鉴权代码**，故意拒绝绑定
+`0.0.0.0`/`::`/`*`；远程访问必须走 Cloudflare Access，见 §3.4）。浏览器打开
+http://127.0.0.1:8770 看到六个只读屏幕。
 
-这一步读取 `strategy_specs/`、`signal_logs/`、`reports/` 生成给前端用的 JSON。
-
-### Step 9: 构建 Dashboard 前端
+### （可选）构建 Cockpit 前端 B（React/Vite，`/v2/`）
 
 ```bash
-uv run oc dashboard html       # 生成 reports/dashboard/index.html (静态版,无需 JS)
-npm --prefix dashboard run build   # 构建 React + Vite 版,产出 dashboard/dist/
+make cockpit-v2
 ```
 
-**预期**:
-- HTML 文件:`reports/dashboard/index.html`
-- Vite bundle:`dashboard/dist/assets/index-*.js` (~300 KB)、`index-*.css` (~30 KB)
-
-### Step 10: 启动本地 Dashboard
-
-```bash
-uv run oc dashboard serve --port 8000
-```
-
-**预期**: `Serving dashboard at http://127.0.0.1:8000` (不退出,Ctrl+C 停)。
-
-浏览器打开 http://127.0.0.1:8000 应看到完整 UI。
-
-验证端点:
-```bash
-curl http://127.0.0.1:8000/api/dashboard/health
-# 期望: {"status":"ok","dashboard_root":"<POSIX path>","auth_required":false}
-```
+等价于 `cd frontend/cockpit-v2 && pnpm install --frozen-lockfile && pnpm exec tsc --noEmit && pnpm exec vite build`。
+产物落到 `open_composer/cockpit/static/v2/`，`oc cockpit serve` 检测到该目录后会在 `/v2/` 挂载它。
+服务端本身从不跑 node；不构建也完全不影响 `/` 主界面。
 
 ---
 
@@ -180,10 +155,10 @@ curl http://127.0.0.1:8000/api/dashboard/health
 |---|---|---|
 | `oc doctor` Python 包 | ✓ | |
 | `oc repo check` | ✓ status=ok | |
-| `oc dashboard catalog` | ✓ 生成成功 | strategies/signals=0 (新仓库) |
-| `oc dashboard serve` | ✓ HTTP 200 | |
+| `oc cockpit index` | ✓ 生成成功 | strategies/signals=0 (新仓库) |
+| `oc cockpit serve` (可选) | ✓ HTTP 200 | |
 | API keys | | 全 missing 也能跑 (用 fixture) |
-| Alpaca paper sync | | 缺 ALPACA_API_KEY_ID 则 dashboard Paper tab 显示 0 |
+| Alpaca paper sync | | 缺 ALPACA_API_KEY_ID 则 Cockpit 的 Paper 屏显示 0 |
 
 ⚠️ 不阻塞本地跑,但限制功能 —— 见 §3 决定要不要加 key。
 
@@ -213,7 +188,7 @@ curl http://127.0.0.1:8000/api/dashboard/health
 | `ALPACA_API_BASE_URL` | 可选 | 默认 `https://paper-api.alpaca.markets` | (无需改) |
 | `ALPACA_DATA_FEED` | 可选 | 默认 `iex` (免费) 或 `sip` (订阅) | (无需改) |
 
-**配了之后才能**:`paper.sync.account / paper.sync.orders` 命令、Paper tab 真实数据。
+**配了之后才能**:`paper.sync.account` / `paper.sync.orders` 命令、Cockpit Paper 屏真实数据。
 
 ### 3.3 News / Macro / 港股
 
@@ -227,26 +202,16 @@ curl http://127.0.0.1:8000/api/dashboard/health
 
 **没配时**:对应 capability 走 fixture/示例数据,可正常跑回测、但数据不是实时的。
 
-### 3.4 Dashboard 远程鉴权 (仅 VPS 模式)
+### 3.4 Cockpit 远程访问 (仅需要手机/远程查看时)
 
-| 变量 | 必需? | 用途 |
-|---|---|---|
-| `OPEN_COMPOSER_DASHBOARD_AUTH_MODE` | VPS 推荐 | `cloudflare_access`、`cloudflare_access_or_token` 或 `token` |
-| `OC_DASHBOARD_ALLOWED_ORIGIN` | VPS 推荐 | CORS allowed origin，例如 `https://dashboard.example.com` |
-| `OC_CLOUDFLARE_ACCESS_TEAM_DOMAIN` | Cloudflare 必需 | Zero Trust team domain，例如 `https://team.cloudflareaccess.com` |
-| `OC_CLOUDFLARE_ACCESS_AUD` | Cloudflare 必需 | Access application AUD tag |
-| `OC_DASHBOARD_ALLOWED_EMAILS` | Cloudflare 必需 | 允许访问 Dashboard 的邮箱，逗号分隔 |
-| `OPEN_COMPOSER_DASHBOARD_TOKEN` | token 模式必需 | Dashboard API token；Cloudflare 模式下只作为可选 fallback |
+Cockpit 应用内**零鉴权代码**，只监听 `127.0.0.1:8770`；远程访问的推荐方式是
+Cloudflare Tunnel（`cloudflared tunnel run --token-file` 起的 systemd 服务）+ Cloudflare
+Access 在边缘做鉴权，公共主机名指向 `http://127.0.0.1:8770`。没有一键部署脚本，
+Tunnel connector 和 Access 策略（team domain、AUD、允许邮箱）在 Cloudflare Zero Trust
+控制台配置。完整背景和验收标准见
+[docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md](./plan-step-18-readonly-cockpit-2026-09-19.zh.md)。
 
-推荐远程方式是 Cloudflare Tunnel + Access：Dashboard 继续只监听
-`127.0.0.1:8000`，公网不开放 Dashboard 端口。
-
-```bash
-./scripts/deploy-vps.sh --cloudflare-access --dashboard-url https://dashboard.example.com
-```
-
-旧的 token/Caddy 模式仍保留兼容，但不作为推荐手机远程入口。见
-[docs/remote-dashboard-deploy.zh.md](./remote-dashboard-deploy.zh.md)。
+Cockpit 本身不提供任何命令入口（只读）；需要远程发指令时走 Paseo 会话，不是 Cockpit。
 
 ### 3.5 通知
 
@@ -268,34 +233,33 @@ curl http://127.0.0.1:8000/api/dashboard/health
 
 ### Q2: `oc repo check` 报 `docs_inventory blocked` 但目录看着没问题
 看 `reports/repo/repo-check.json` 的 `extra_docs` vs `allowed_docs`:
-- 大小写或路径分隔符不一致 → 已修 (commit `<hotfix>` 之后),拉最新即可
 - 真的多了文档 → 把它加到 `open_composer/repo_check.py:CURRENT_DOCS`,或删/移走
 
-### Q3: Dashboard 端口被占
+### Q3: Cockpit 端口被占
 ```bash
-uv run oc dashboard serve --port 8001
+uv run oc cockpit serve --port 8771
 ```
 
-### Q4: 浏览器打开是白屏 / 没渲染
+### Q4: 浏览器打开是白屏 / 没渲染 (`/v2/`)
 按 F12 看 console:
-- "Failed to fetch /api/dashboard/catalog" → daemon 没起或路径错
-- 模块加载 404 → `npm --prefix dashboard run build` 是否跑了
-- 401 → 本地不该有 token,删 `OPEN_COMPOSER_DASHBOARD_TOKEN` 或 localStorage
+- "Failed to fetch /api/..." → cockpit 服务没起或路径错
+- 模块加载 404 → `make cockpit-v2` 是否跑了、`open_composer/cockpit/static/v2/` 是否存在
+- `/` 主界面（服务端渲染）不会有这类问题，排查时先确认走的是 `/` 还是 `/v2/`
 
 ### Q5: `make verify` 不存在
 Windows 没装 GNU Make。两种选项:
 1. 装 `choco install make`
-2. 直接跑等价命令: `uv run ruff check . && uv run pytest && uv run oc repo check && uv run oc dashboard catalog`
+2. 直接跑等价命令: `uv run ruff check . && uv run pytest && uv run oc repo check && uv run oc cockpit index`
 
 ### Q6: pytest 失败
-**与本地 dashboard 部署无关** 的常见情况:
+**与本地部署无关** 的常见情况:
 - NautilusTrader native lib 相关测试
 - Linux-only 的 VPS bootstrap 测试
 - 依赖 Alpaca / Longbridge / OpenAI 凭证的测试
 
 跑核心 smoke:
 ```bash
-uv run pytest tests/test_repo_check.py tests/test_dashboard_server.py tests/test_notifications.py tests/test_dashboard_catalog.py -q
+uv run pytest tests/test_repo_check.py tests/test_cockpit_api.py tests/test_notifications.py tests/test_cockpit_catalog.py -q
 ```
 
 ---
@@ -309,35 +273,31 @@ uv run pytest tests/test_repo_check.py tests/test_dashboard_server.py tests/test
 | 草拟一个策略 | `uv run oc strategy draft --idea "QQQ 15min breakout with volume filter"` |
 | 跑一遍回测 | `uv run oc backtest strategy_specs/drafts/<strategy>.yaml` |
 | 看 paper readiness | `uv run oc paper readiness <strategy>` |
-| 部署到 VPS | 见 [docs/remote-dashboard-deploy.zh.md](./remote-dashboard-deploy.zh.md) |
+| 配置远程 Cockpit | 见 [docs/plan-step-18-readonly-cockpit-2026-09-19.zh.md](./plan-step-18-readonly-cockpit-2026-09-19.zh.md) |
 | 配 Telegram 通知 | `uv run oc notify test --dry-run` |
 
 ---
 
 ## 6. 一切顺利时长什么样
 
-跑完 `setup-local.{ps1,sh}` 期望看到:
+跑完 `setup-local.{ps1,sh}` 期望看到类似输出（6 步，形式为 `[N/6] <title>  <status>`）:
 
 ```
-[1/10] ✓ uv 0.11.14
-[2/10] ✓ node v24.11.0 / npm 11.6.1
-[3/10] ✓ Python deps in sync (54 packages)
-[4/10] ✓ Dashboard node deps installed (1615 modules)
-[5/10] ✓ Repo consistency: ok
-[6/10] ⚠ .env: 0/4 Alpaca keys, 0/2 LLM keys, 0/2 macro/news keys (optional)
-[7/10] ⚠ Capability test: 3 ok / 5 using fixture
-[8/10] ✓ Dashboard catalog built: 3 strategies, 4 versions, 11 signals
-[9/10] ✓ Dashboard frontend built: 303 KB JS / 28 KB CSS
-[10/10] ✓ Dashboard serve: ready at http://127.0.0.1:8000
+[ 1/6] uv toolchain                     OK   uv 0.11.14
+[ 2/6] Python deps (.venv)               OK   .venv synced
+[ 3/6] Repo consistency check            OK   all checks passed
+[ 4/6] .env file                         OK   0 keys configured
+[ 5/6] Doctor (env check)                WARN 3 ok / 5 missing (optional: ...)
+[ 6/6] Cockpit catalog                   OK   0 strategies / 0 versions / 0 signals
 
-──────────────────────────────────────────────────────────────────
-✓ Open Composer is ready locally.
+----------------------------------------------------------------------
+Open Composer is ready locally.
 
-Optional next steps:
-  • Add API keys:   docs/setup-local.zh.md §3
-  • Try a strategy: uv run oc strategy draft --idea "..."
-  • Deploy to VPS:  docs/remote-dashboard-deploy.zh.md
+Warnings (non-blocking):
+  - 5 optional keys missing - capabilities will use fixtures: ...
 
-Server PID: 12345  (kill with: Stop-Process -Id 12345 [PS] / kill 12345 [bash])
-──────────────────────────────────────────────────────────────────
+Next steps:
+  - Configure env keys:  docs/setup-local.zh.md section 3
+  - Try a strategy:      uv run oc strategy draft --idea "..."
+----------------------------------------------------------------------
 ```
