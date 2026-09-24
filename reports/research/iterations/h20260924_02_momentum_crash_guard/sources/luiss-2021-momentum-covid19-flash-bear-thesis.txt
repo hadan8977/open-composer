@@ -1,0 +1,2674 @@
+     Trading performance in a financial crisis:
+   Momentum and the Covid-19 flash bear market
+
+                               by
+                      Alessio El Ghorayeb
+                          ID: 718131
+
+
+
+
+Masters of Sciences in Corporate Finance
+Department of Business and Management
+Desk of Asset Pricing
+Academic year 2020/2021
+
+Supervisor: Dr. Paolo Porchia
+Co-Supervisor: Dr. Marco Pirra
+Dedication
+
+To my parents.
+
+
+
+
+                 2
+Abstract
+
+Momentum strategies have proven to have robust profitability records, yielding substantial re-
+turns across several periods, geographies, and asset classes. Nevertheless, such an investment
+approach is hazardous since it suffers severe losses when the market returns positive after pe-
+riods of bear markets with high volatility. Furthermore, it appears that in this last decade,
+momentum has lost its historical premium in terms of unit of return earned per unit of risk
+assumed. For the period going from January 2010 to December 2020, the momentum fac-
+tor had a meager performance delivering a Sharpe ratio of 0.23, which is more than for times
+lower than the Sharpe ratio provided by the market (0.95). Focusing on the most recent finan-
+cial crisis, results confirm that momentum crashed following the covid-19 bear market. The
+most significant loss occurred in April, the month in which the market rebounded following
+the stock market bottom. Consistently with the existing literature, the crash is caused by the
+large negative beta exhibited by the momentum strategy in declining markets. Thus when the
+market upswings following a financial crisis, momentum behaves like shorting a call option on
+the market. Interestingly, the analysis shows that this same optionality also exists after short
+periods of economic downturn, flash bear markets. Such findings are robust across different
+international equity markets and asset classes.
+
+   Keywords: Asset pricing, Momentum, Bear markets, Covid-19
+
+
+
+
+                                               3
+Contents
+
+1   Introduction                                                                               8
+    1.1 Contribution and Research Questions . . . . . . . . . . . . . . . . . . . . . .        9
+
+2   Literature Review                                                                         11
+    2.1 What is momentum ? . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      11
+         2.1.1 Different types of momentum . . . . . . . . . . . . . . . . . . . . . . .      12
+    2.2 Foundation of empirical evidence on the momentum effect . . . . . . . . . . . .       12
+         2.2.1 Momentum around the globe, across alternative asset classes and time
+                periods . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   14
+    2.3 Explaining momentum . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .       14
+         2.3.1 Behavioural explanation . . . . . . . . . . . . . . . . . . . . . . . . .      15
+         2.3.2 Rational explanation . . . . . . . . . . . . . . . . . . . . . . . . . . .     15
+    2.4 Momentum crashes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      16
+         2.4.1 Time varying beta . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    17
+         2.4.2 Market crash hedged momentum strategies . . . . . . . . . . . . . . .          18
+
+3   Data and Methodology                                                                      21
+    3.1 Data . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    21
+         3.1.1 US Data . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    21
+         3.1.2 International and non-equity data . . . . . . . . . . . . . . . . . . . .      22
+    3.2 Portfolio Construction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .    22
+    3.3 Methodology and Research Design . . . . . . . . . . . . . . . . . . . . . . . .       24
+
+4   Results                                                                                   28
+    4.1 Momentum Characteristics overtime . . . . . . . . . . . . . . . . . . . . . . .       28
+         4.1.1 Momentum in the last 4 decades . . . . . . . . . . . . . . . . . . . . .       30
+         4.1.2 Momentum in 2020 . . . . . . . . . . . . . . . . . . . . . . . . . . . .       35
+    4.2 Option like behaviour . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   38
+         4.2.1 Optionality in Flash Bear Markets . . . . . . . . . . . . . . . . . . . .      39
+    4.3 VIX and momentum returns . . . . . . . . . . . . . . . . . . . . . . . . . . . .      41
+         4.3.1 Flash Bear Markets . . . . . . . . . . . . . . . . . . . . . . . . . . . .     42
+
+
+                                               4
+    4.4   Crash-proof momentum strategies . . . . . . . . . . . . . . . . . . . . . . . . 43
+          4.4.1 Volatility scaling . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 44
+          4.4.2 Dynamic weighting strategy . . . . . . . . . . . . . . . . . . . . . . . 46
+
+5   Robustness Tests                                                                        49
+    5.1 Momentum in 2020 across equities and asset classes . . . . . . . . . . . . . .      49
+    5.2 Momentum’s optionality and market-variance effects outside the US . . . . . .       50
+        5.2.1 Flash bear markets . . . . . . . . . . . . . . . . . . . . . . . . . . . .    53
+
+6   Limitations and Conclusions                                                             56
+    6.1 Limitations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 56
+    6.2 Conclusions and avenues for future research . . . . . . . . . . . . . . . . . . . 56
+
+
+
+
+                                               5
+List of Figures
+
+ 3.1   Portfolio formation procedure . . . . . . . . . . . . . . . . . . . . . . . . . . 23
+
+ 4.1   Cumulative gains from investments 1927-2020 . . . . . . . . . . . . . . . . . .    29
+ 4.2   Cumulative gains from investments 1980-1999 . . . . . . . . . . . . . . . . . .    31
+ 4.3   Cumulative gains from investments 2000-2020 . . . . . . . . . . . . . . . . . .    32
+ 4.4   Cumulative gains from investments 2020 . . . . . . . . . . . . . . . . . . . . .   36
+
+
+
+
+                                            6
+List of Tables
+
+ 3.1   Correlation Matrix of momentum decile portfolios with DM16’s portfolios         . . 23
+
+ 4.1 Momentum Portfolio Characteristics, Full-period 1927:01-2020:12 . . . . . .             29
+ 4.2 Momentum Portfolio Characteristics, 1980:01-1989:12 . . . . . . . . . . . . .           31
+ 4.3 Momentum Portfolio Characteristics, 1990:01-1999:12 . . . . . . . . . . . . .           31
+ 4.4 Momentum Portfolio Characteristics, 2000:01-2009:12 . . . . . . . . . . . . .           33
+ 4.5 Momentum Portfolio Characteristics, 2010:01-2020:12 . . . . . . . . . . . . .           34
+ 4.6 Momentum Portfolio Characteristics, 2020:01-2020:12 . . . . . . . . . . . . .           36
+ 4.7 Percentage Returns of momentum vs Market, 2020 . . . . . . . . . . . . . . . .          37
+ 4.8 Worst momentum monthly returns, 1927:01-2020:12 . . . . . . . . . . . . . .             38
+ 4.9 Market Timing regression results . . . . . . . . . . . . . . . . . . . . . . . . .      39
+ 4.10 Market Timing regression results IBT6M . . . . . . . . . . . . . . . . . . . .         40
+ 4.11 Market Timing regression results IBT4M . . . . . . . . . . . . . . . . . . . .         40
+ 4.12 Momentum return and the VIX Index . . . . . . . . . . . . . . . . . . . . . . .        42
+ 4.13 Market Timing regression results IBT6M . . . . . . . . . . . . . . . . . . . .         43
+ 4.14 Market Timing regression results IBT4M . . . . . . . . . . . . . . . . . . . .         43
+
+ 5.1   2020 momentum annual average excess return across geographies and asset
+       classes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   49
+ 5.2   Time series regressions for other asset classes and for international Equity
+       markets . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .   52
+ 5.3   Time series regressions for other asset classes and for international Equity
+       markets(IBT6M) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .      53
+ 5.4   Time series regressions for other asset classes and for international Equity
+       markets (IBT4M) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .     54
+
+
+
+
+                                             7
+Chapter 1
+
+Introduction
+
+Over the years, momentum strategies have proven to have robust profitability records, yielding
+substantial returns across several time periods, geographies, and asset classes. The idea behind
+such a strategy is to ride the upward and downward trends generated by rising and falling
+securities by betting on the continuation of such movements in the short term. Thanks to its
+persistence and pervasiveness, it is considered one of the oldest and most prominent trading
+strategies.
+    Despite the outstanding positive performance yielded by momentum investing, some au-
+thors have noticed that the strategy ”is not all roses”. Momentum experiences occasional but
+severe crashes that could result in significant losses for an investor. Research published by
+Daniel and Moskowitz (2016) [1] (hereafter DM16) illustrates that momentum strategy crashes
+and goes through persistent negative returns in a situation of high market stress. They showed
+that such crashes are predictable, claiming that such an investment approach performs very
+poorly when there is an upswing in returns after a bear market with high expected volatility.
+The authors demonstrated a dramatic time variation in the winner and loser portfolio’s betas
+around a crisis and identified this phenomenon as the source of such reversal. Such time-
+varying exposure to market risk infers that momentum strategies behave as selling call options
+on the market. Consequently, when the market rises after a financial crisis, momentum strate-
+gies crash because of their large negative beta. In this regard, momentum strategies’ biggest
+crashes occurred when the market rebounded after the lows caused by three of the greatest fi-
+nancial crises ever experienced: the great depression, the dot-com bubble, and the Sub-prime
+crisis. In August 1932, the momentum portfolio lost 77.5% of its value. In January 2001, the
+strategy had a loss of 46.8%. Similarly, in April 2009, the strategy experienced a loss of 45.8%.
+    Times of crisis, economic downturns, and periods of uncertainty are very instructive. How-
+ever, bears have different shapes and sizes, and particularly the 2020 pandemic-driven financial
+crisis has been very unusual. The covid-19 bear market has been the shortest in the SP500
+history. In this regard, the most recent corona crisis offers the opportunity to extend and update
+some of the previously described evidence on momentum investing and its crashes. To begin
+with, despite the significant and positive alpha yielded by the momentum strategy over the mar-
+
+                                                8
+ket in this last decade, it appears that momentum has lost its historical premium in terms of unit
+of return earned per unit of risk assumed. For the period going from January 2010 to Decem-
+ber 2020, the Sharpe ratio of the momentum portfolio is much lower than that of the market.
+Moreover, focusing on 2020, it is noticeable that the momentum strategy crashed following
+the covid-19 driven financial downturn. More precisely, 2020 appears twice among the list of
+the fifteen worst momentum monthly returns. Respectively, in April and November 2020, the
+Winner minus loser portfolio delivered a return of -28.2% and -26.2%.
+    Furthermore, I show that the momentum portfolio beta becomes large and negative when the
+market rebounds following periods of bear market (-1.277). Consistently with the methodol-
+ogy of DM16, the market is considered in a bear state if the past 24-month cumulative market
+return has been negative. Interestingly, the same optionality also exists after shorter periods
+of economic downturn, when the past six-month cumulative market return has been negative.
+Indeed, when the market returns positive after periods of flash bear markets, the momentum
+portfolio beta is -1.247, and thus the strategy suffers severe crashes also in this case. Moreover,
+using the VIX as a proxy measure of the future market variance, I find that in periods of bear
+market and flash bear market with high market volatility, the momentum strategy returns are
+particularly low. Finally, I extend the analysis carried on the US equity market to the United
+Kingdom, Japan, and Continental Europe equity markets and commodity futures and equity
+index futures. Intriguingly, the option-like features of momentum returns are also significant
+in commodities and the European and United Kingdom equity markets. Such findings hold as
+well for short periods of economic downturns, flash bear markets.
+
+
+1.1     Contribution and Research Questions
+The aim of this thesis is two-fold. First, it empirically investigates the cross-sectional momen-
+tum strategy’s profitability and characteristics over the years. Furthermore, to assess whether
+the recent past performance of momentum is in line with its historical performance, a particu-
+lar emphasis is set on the strategy’s returns in the last four decades and throughout 2020, the
+year of the covid-19 financial crisis. Second, this work contributes to the research on momen-
+tum crashes, extending the time period of the analysis performed by DM16 [1] till the end of
+2020. Thus, the main scope of this dissertation is to investigate whether momentum crashed
+throughout the 2020 bear market caused by the global covid-19 pandemic. Furthermore, given
+that the 2020 virus-driven bear market was the shortest ever manifested, I investigate whether
+momentum crashes are evident after short periods of economic downturn, ”flash bear markets”.
+Moreover, to check the robustness of the results obtained, the final part of the analysis investi-
+gates momentum crash patterns across different geographies ( US, UK, Japan, and Continental
+Europe) and asset classes ( equity country index futures and commodity futures).
+    With such premises in mind, the main research question that the present paper aims to
+answer is the following:
+
+                                                9
+How did the Momentum strategy for the US common stock market perform during and just
+after the current covid-19 crisis? Was there a crash, and if so, is it comparable to the ones
+highlighted by Daniel and Moskowitz ?
+
+Additionally, a set of sub-questions addressed through this project are:
+
+    • How did the Momentum strategy behave during the last four decades?
+
+    • What is the WML portfolio’s expected performance in different market environments
+      (bear markets, flash bear markets, and times of high expected volatility)?
+
+    • To what extent does the market Beta of the momentum portfolio vary when the market
+      upswings after periods of bear markets and flash bear markets ?
+
+    • How did the momentum strategy perform in different investment regions and asset classes
+      during the year of the covid-19 crisis?
+
+     The remainder of this dissertation is outlined as follows. Chapter 2 reviews the existing
+literature on momentum investing and momentum crashes. Next, Chapter 3 elaborates on the
+description of the dataset formation process and the methodology used for the empirical anal-
+ysis. After that, Chapter 4 delivers the main results and the corresponding implications. Then,
+Chapter 5 challenges the robustness of the results obtained, investigating Momentum crash
+patterns across different geographies and asset classes. To conclude, Chapter 6 discusses the
+limitations of this work, provides future research suggestions, and presents some concluding
+remarks.
+
+
+
+
+                                              10
+Chapter 2
+
+Literature Review
+
+The following chapter starts with a brief definition and explanation of momentum investing
+and then reviews the most relevant financial literature on the topic. I divided the contents such
+that Section 2.1 explains the strategy and briefly discusses different types of momentum. Next,
+Section 2.2 discusses the first empirical evidence and follows analyzing several other studies
+highlighting the strategy’s persistence across different periods, markets and asset classes. After
+that, Section 2.3 discusses the possible sources and the economic rationale behind the mo-
+mentum effect. Finally, Section 2.4 concludes the literature review with an in-depth focus on
+momentum crashes since it represents this dissertation’s core topic.
+
+
+2.1      What is momentum ?
+Momentum is a trend-following investing approach, a technique in which traders bet that an
+asset price intensely moving in a given direction will continue to follow such trend in the near
+future. In this sense, recent winners will remain winners, while recent losers will continue to
+underperform. The strategy consists of constructing a long-short portfolio that buys assets with
+recent solid performance identified as the winners and sells the losers, which are assets that
+have recently underperformed. Such investing technique is fascinating since it goes against the
+number one, timeless advice for being profitable in the stock market, ”buy low and sell high”.
+While what momentum infers is buying high and selling higher.
+    Since the publication of the first relevant empirical study on momentum investing from Je-
+gadeesh and Titman (1993) [2], the strategy has gained much traction and became a popular
+approach relevant for both industry practitioners and financial researchers. It is attractive for
+traders because its implementation has generated excess returns throughout different periods,
+across multiple geographical markets and asset classes. Moreover, it is an exciting research
+field for academics because the pervasiveness of momentum represents a severe challenge to
+the efficient market hypothesis proposed by Eugene Fama (1970) [3], to the extent that Fama
+refers to momentum as the premier anomaly contradicting its theory. The success of such an
+
+
+                                               11
+investment technique raised many questions. Suggesting that past prices are helpful to predict
+future performances, momentum defies financial markets’ effective efficiency and thus repre-
+sents one of the most researched financial puzzles. Additionally, due to the poor performances
+recorded by the traditional strategy during the subprime crisis (Daniel and Moskowitz 2016
+[1]) researchers started seeking alternative momentum strategies with enhanced performance
+and lower downside risk, especially for periods of high market stress. Thus, in recent years, the
+studies on momentum focus on two perspectives: analyzing the underlying reasons driving the
+momentum effect and improving the classical momentum strategy’s profitability by combining
+different approaches.
+
+
+2.1.1    Different types of momentum
+Research is continuously evolving, and over the years, academicians developed several ver-
+sions of momentum investing based on different stock selection rules. Despite the fact that this
+dissertation focuses on cross-sectional momentum, for the sake of completeness, the following
+section lists and briefly distinguishes alternative momentum investing approaches.
+    The first alternative to cross-sectional momentum was the 52-week high momentum strat-
+egy introduced by George and Hwang (2004) [4]. In this case, stocks were selected based on
+the ratio of their current prices to past 52-week high prices. Even though this new version
+outperforms the basic strategy, both suffer from heavy losses in periods of high volatility. Con-
+sequently, to overcome such drawbacks, Blitz et al.(2011) [5] introduce the residual momen-
+tum. In this case, stocks are selected based on their residual returns, while the cross-sectional
+strategy relies on total relative returns. Residual returns are the proportion of stock returns not
+explained by the Fama and French factors. After that, Moskowitz et al. (2012) [6] developed
+the time-series momentum, also known as absolute momentum. In this approach, instead of
+focusing on relative returns, stocks are selected based on their own past returns. The main dif-
+ference with the pure momentum strategy comes from the different selection processes. Given
+that the time series approach relies on absolute performance, it assigns more stocks to the win-
+ner (loser) portfolio in upwards (downwards) trending markets.
+    To conclude, another strain of literature focused on combining different investment strate-
+gies that ultimately outperform single momentum strategies. The most prominent combinations
+are value and momentum, cross-sectional and time-series momentum. (Serban 2010 [7]; As-
+ness et al. 2013 [8]; Lim et al. 2018 [9]).
+
+
+2.2     Foundation of empirical evidence on the momentum effect
+The first evidence of momentum strategies’ profitability dates back to 1993 when Jegadeesh
+and Titman [2] illustrated a positive relationship between past and future returns, claiming that
+past stock returns can be used to predict and form portfolios with positive alphas. More con-
+
+
+                                                12
+cretely, their study highlighted how from 1965 to 1989, strategies buying the best performing
+US common stocks over the past year 3 to 12 months and selling stocks that have experienced
+the poorest returns over the same period would have generated positive alphas over the next
+3-12 months.
+    They are the earliest contributors and the most prominent authors for momentum invest-
+ing. Their pioneering work set the theoretical and methodological foundations for a plethora
+of subsequent future studies. In fact, the methodology for portfolio construction introduced by
+Jegadeesh and Titman (1993) [2] will be referred to as the cross-sectional or pure momentum
+strategy, and, throughout the years, many researchers will adopt and enhance it. Their approach
+consisted of a J x K strategy in which stocks are selected depending on their formation period (
+J-months) returns, and held for the entire holding period (K-month). The authors ranked stocks
+each month into decile portfolios in ascending order based on their relative performance over
+a ranking period from t – J months up to month t-1 (with J ranging from the previous 3 to 12
+months). The 10% of firms with the highest-ranking period return represent the ”[W]inner”
+decile portfolio, while the lowest 10% goes into portfolio 1, the ”[L]oser” portfolio. The next
+step involves implementing a self-financing long-short momentum portfolio, the ”winner minus
+loser” portfolio (WML), consisting in going long on the winner decile while shorting the loser
+portfolio. Hence, WML symbolizes the spread in return between a portfolio containing past
+winners and a portfolio including past losers. Since the authors wanted to test the strategy’s
+profitability for different time horizons, they followed an overlapping portfolio ranking period
+methodology, such that portfolios are held for the period K ranging from 3,6,9 to 12 months.
+Ultimately they demonstrated that the WML strategy yields an average return of about 1% per
+month for the following year. The most profitable WML portfolio was the one sorted on a 12
+month formation period and held for the following 3 months, which generated a monthly return
+of 1.31%.
+    Interestingly, Jegadeesh and Titman (1993) noted that the momentum effect reverses, and
+the loser decile outperforms the winner portfolio over the long run. In this regard, they show
+that the strategy’s positive excess returns in the first 12 months were outweighed by negative
+returns over the second and third years. Such findings are consistent with De Bondt and Thaler
+(1985) [10], which documented reversal effects for longer periods through a strategy referred to
+as contrarian. The principal difference between the contrarian and the momentum strategies is
+the holding period. The former holds stocks for 3 to 5 years while the latter holds them for 3 to
+12 months. Building on their previous research Jegadeesh and Titman (2001) [11], to confirm
+the robustness of their result and demonstrate that they were not a product of data snooping,
+published a follow-up paper including additional data highlighting the continuing efficacy and
+profitability of momentum.
+
+
+
+
+                                               13
+2.2.1    Momentum around the globe, across alternative asset classes and time
+         periods
+Subsequently, many academicians started investigating the persistence and pervasiveness of
+such investing approach confirming its profitability across different time periods, financial mar-
+kets, and asset classes. Israel and Moskowitz (2013) [12] highlighted how momentum strategies
+were robust from 1927 to 1965 and from 1990 to 2012. Furthermore, the time consistency of
+the strategy is confirmed by Geczy and Samonov (2015) [13], in the so-called ”world’s longest
+back-test”, in which they illustrated momentum’s persistence from 1801 to 2012. Another
+broad strain of literature focused on exploiting the momentum effect for equities in differ-
+ent investment regions and different asset classes. For instance, Rouwenhorst(1998;1999)[14]
+[15] was the first to document momentum in the European equity market and emerging equity
+markets. Asness et al. (1997) [16] detect momentum in country indices, while Okunev and
+White (2003) [17] found momentum in currencies. Erb and Harvey (2006) [18] discovered
+momentum in Commodities, whereas Moskowitz et al. (2012) [6] observed the strategy’s prof-
+itability in exchange-traded futures contracts. Such evidence were integrated by Asness et al.
+(2013) [8], confirming the ubiquitous power of price momentum. They highlighted such ef-
+fect in different stock markets (UK, Japan, and continental Europe) and across country indices,
+exchange-traded futures contracts, currencies, bonds, and commodities.
+
+
+2.3     Explaining momentum
+Since a strategy that generates profitable returns trading on past prices contradicts the Efficient
+Market Hypothesis (EMH), the existence of momentum represents a significant challenge to
+empirical asset pricing models. In short, the EMH introduced by Fama (1970) [3] infers that
+stocks follow a random walk and that current prices fully incorporate all present information.
+More concretely, the theory states past price series cannot predict future prices. Thus, trends in
+prices should not exist, and consequently, trading strategies based on historical prices, such as
+momentum, should be non-viable. Furthermore, since classic empirical asset pricing models
+such as the CAPM and the Fama and French 3-factor model cannot explain the profits gener-
+ated by the WML portfolio, the strategy is considered an anomaly (Fama and French 1996 [19],
+Grundy 2001 [20]). Consequently, Carhartt extended the 3-factor model, adding momentum as
+a fourth risk factor (Carhart 1997 [21]).
+    The momentum phenomenon, among other investment-related anomalies, generated a de-
+bate on whether markets are efficient or not. Supporters of the traditional Market efficiency
+theory argue that such strategies yield higher returns as compensation for facing higher risks,
+concluding that momentum is linked to a yet unobserved risk factor. On the other hand, other
+studies building on the behavioural finance theory believe that markets are inefficient. Accord-
+ing to Kanheman, and Tversky (1979) [22], in contrast with the assumptions underlying the
+
+                                                14
+EMH, investors are not rational. They claim that investors’ decision-making process and inter-
+pretation of information are influenced by psychological and cognitive bias, ultimately leading
+to security mispricing and arbitrage opportunities in the market.
+    Thus, over the years, the literature tried to explain the risk premia associated with the mo-
+mentum effect through two contrasting theories, the behavioural and the risk-based approach;
+however, the question remains unresolved.
+
+
+2.3.1    Behavioural explanation
+From a Behavioural finance perspective, researchers argue that momentum profitability is at-
+tributable to securities mispricing caused by investors’ irrational behaviour. Most of these
+explanations can be related to three particular behavioural biases, initial underreaction, overre-
+action, and the disposition effect.
+    Barberis et al. (1998) [23] argue that people respond slowly to new information, such as
+earning announcements; this tendency leads to an initial underreaction in security prices, the
+subsequent convergence to their intrinsic value generates the momentum effect. Next, Hong
+and Stein (1999) [24] suggest that underreaction is due to the gradual diffusion of information
+among investors. Such findings are consistent with Hong et al. (2000) [25], who demonstrated
+that momentum strategies are more profitable when stocks have a low analyst coverage and that
+momentum profitability decrease when company size increases.
+    Daniel et al. (1998) [26] support the overreaction theory, stating that investors’ overreaction
+leads to a deviation of stock prices from their intrinsic value, ultimately causing momentum.
+More concretely, the author state that market overreaction is a consequence of investors’ over-
+confidence and self-attribution. Overconfidence is defined as the tendency to overweight private
+information with respect to publicly available news. Consistent with these claims, Chui et al.
+(2010) [27] show that overconfidence affects momentum returns since the strategy appears to
+be more profitable in countries with a higher level of individualism.
+    Linked to the underreaction theory, some behavioural models support the idea that the
+disposition effect drives momentum (Grinblatt and Han, 2005 [28]). Such effect reflects in-
+vestors’ behavioural tendency of locking-in gains by selling winning investments before their
+peak while postponing the sale of losing investments driven by the hope of an eventual break-
+even point. Ultimately the disposition effect leads investors to overreact to negative news and
+underreact to positive information. More recently, Hur and Singh(2019) [29] build on such
+findings and claim that along with the disposition effect, the anchoring bias plays a crucial role
+in explaining the momentum puzzle.
+
+
+2.3.2    Rational explanation
+Many other studies attempted to solve the momentum puzzle through a risk-based approach, re-
+lying on the idea that its profitability results from higher risk premiums related to some market-
+
+                                                15
+specific factor or firm-specific characteristics.
+     For instance, Johnson (2002) [30] observed that past winners (losers) are positively (neg-
+atively) related to their expected growth rate. The author highlights a non-linear relationship
+between equity prices and growth rates. Johnson infers that the momentum effect exists because
+high past returns are related to higher growth rate risk, ultimately leading to higher expected
+return. Furthermore, Chordia and Shivakumar (2002) [31] investigated the strategy’s profitabil-
+ity through a macroeconomic model. Their findings highlight that momentum payoffs depend
+on the economic cycle, suggesting that the strategy is profitable in expansionary periods while
+generating negative payoffs during periods of economic decline.
+     Subsequently, Cooper et al. (2004) [32] report similar results, inferring that momentum
+profits only in up-market states. Avramov et al. (2007) [33], claiming that momentum is only
+a compensation for risk, reinforce the rational explanations relating momentum gains to credit
+risk. In this regard, they highlight that the strategy is profitable only among non-investment
+grade firms. Asem and Tian (2010) [34] show that the strategy yields superior returns during
+market continuation times than in periods of trend interruptions and transition to different mar-
+ket states. Finally, DM16 [1] show that momentum experiences abysmal returns in periods of
+market stress. They claim that the momentum strategy’s profitability can be seen as compen-
+sation to high systematic crash risk and volatility risk. Since momentum crashes are the core
+topic of this dissertation, such findings will be discussed in-depth in the following section.
+
+
+2.4     Momentum crashes
+There are no free lunches in finance, investors make a constant trade-off between risk and re-
+ward, and everything comes at a price. In this sense, momentum’s impressive positive returns
+and Sharpe ratios are associated with significant risks; and ultimately, the strategy suffers oc-
+casional severe crashes.
+    Daniel and Moskowitz (DM16) published the most complete and comprehensive work on
+momentum crashes in 2016 [1]. The authors first analyzed momentum in US common stock
+over the 1927-2013 time period, confirming a substantial momentum premium over the last cen-
+tury. The WML portfolio average annual excess return is 17.9%, with a Sharpe ratio of 0.71. In
+contrast, the average excess market return is 7.6%, with a Sharpe ratio of 0.40. Nevertheless,
+DM16 document the presence of long periods over which past loser significantly outperformed
+past winners, and consequently a cross-sectional momentum strategy goes through persistent
+negative returns. More specifically, they argue that the momentum strategy’s returns are neg-
+atively skewed, and the negative returns can be pronounced and persistent. They argue that
+crashes are a robust characteristic of the WML strategy and that a particular market environ-
+ment characterizes such periods; thus, momentum crashes are predictable.
+    In this regard, DM16 document that the most severe crashes occured in periods of high
+market stress. Such periods are also known as ”panic states” and refer to when there is an up-
+
+                                               16
+swing in returns after a bear market period with high ex-ante expected volatility. Momentum’s
+most significant negative performance periods are the one going from June 1932 to December
+1939 and the one going from March 2009 to March 2013. The starting dates coincide with the
+market bottoms reached after a stock market crash, respectively caused by the great depression
+and the subprime crisis. Furthermore, they probed that the main driver of the strong momen-
+tum reversal is the short side of the WML portfolio; therefore, crashes are mainly attributable
+to losers’ performances. Specifically, during periods of panic states, stocks in the winner decile
+go up, but the loser portfolio goes up much higher; thus, the short side outperforms the long
+side, and as a result, the WML strategy experiences huge losses. For instance, over March and
+May 2009, the short side rose by 163%, the long side earned only 8%, while the market was up
+by 26%. Going back in history, DM16 identify the worst two months for a WML strategy, July
+and August of 1932; over such period, the market rose by 82%, the winner portfolio was up by
+32%, while the loser decile increased by 232%.
+    Such findings are consistent with those of Cooper et al. (2004) [32] and Stivers and Sun
+(2010) [35]. The former observed that when the past three-year market return has been negative,
+the momentum premium falls. While the latter noted that the momentum premium is low when
+market volatility is high. Cooper et al. (2004) [32] came up with a behavioural interpretation
+to explain their results and the strategy’s poor performance, stating that market rebounds are
+times when assets experience more mispricing. Nevertheless, DM16 infer that the momentum
+strategy’s large negative returns are driven by large changes in the market beta of the WML
+portfolio. In this regard, they examine conditional risk measures, investigating the time-varying
+betas of the winner and loser momentum deciles.
+
+
+2.4.1    Time varying beta
+The investigation of how the mean return of the momentum portfolio is related to time variation
+in market beta represents a focal part of DM16 analysis. DM16 build on the previously existing
+literature and empirically demonstrate the intuitions of Kothari and Shanken (1992) [36] and of
+Grundy and Marty (2001) [20]. They both infer that the betas of past-return sorted portfolios
+have a great time-varying exposure to systematic factors. In this respect, when the formation
+period coincides with a bull market (bear market), past losers are likely to have lower (higher)
+beta than past winners. More concretely, when the market is going through a crash, low beta
+stocks perform better than high beta ones. Thus, in such a situation, the momentum portfo-
+lio would go long on low beta stocks (past winners) and short high beta stocks (past losers).
+Consequently, when the market rebounds quickly, past losers’ expected returns are very high,
+and the strategy experiences huge losses because the momentum portfolio ends up having a
+conditionally large negative beta.
+     DM16 empirically confirmed the existence of dramatic time variation in the betas of mo-
+mentum portfolios. Their study finds substantial beta variation principally for the loser decile,
+
+
+                                               17
+whose beta rises drastically in periods of high market volatility. More specifically, they show
+that, following a bear market, the beta of the WML portfolio, when the contemporaneous mar-
+ket return is positive, is more than double than when the contemporaneous market return is
+negative ( up-market beta -1.51 vs down-market beta -0.70). This significant asymmetry in
+betas is present only in bear markets and is mainly driven by past losers. Furthermore, they
+conclude that the loser portfolio’s time-varying beta makes the momentum strategy behave
+like a written call option on the market, in bear markets. Which is to say, when the market
+goes down, the strategy benefits a little, but then it yields huge losses once the market rebounds
+sharply. Additionally, in line with the strategy’s option-like behaviour in bear markets, by using
+ex-ante volatility estimates, they show that the WML portfolio expected return is a decreasing
+function of the future market volatility. Thus, the momentum strategy performs very poorly
+during bear markets with high volatility. However, neither time-varying exposure to market
+risk nor time varying-exposure to volatility risk can explain the low returns earned by such
+strategies in panic states.
+    DM16 asserted their findings’ robustness testing the consistency of their results for multiple
+periods, different equity markets, and alternative asset classes. They further find that the WML
+strategy suffers crashes in all markets and asset classes. They conclude that the driver of such
+reversals is the optionality of losers in bear markets, which is a common feature of momentum
+strategies since it is consistently present in different equity markets (Europe, the UK, Japan),
+and different assets (index futures, commodity, fixed income, currency).
+
+
+2.4.2    Market crash hedged momentum strategies
+Crashes are a crucial flaw that severely hinders the profitability of the cross-sectional momen-
+tum strategy. In this regard, some authors tried to develop new alternative models to hedge and
+protect the WML portfolio against the risk of such significant losses.
+    Jegadeesh and Titman (1993)[2] highlighted that the momentum portfolio performed very
+poorly in the pre-WWII period. Grundy and Martin(2001) [20] argued that this underperfor-
+mance is due to the strategy’s time-varying exposure to market and size factors. Subsequently,
+they were the first to suggest that momentum strategy’s performance can be significantly en-
+hanced by dynamically hedging the portfolio’s exposure to market and size risk. In this regard,
+they showed that their hedged momentum portfolio outperforms in terms of average return
+and Sharpe ratio, the unhedged WML portfolio during the pre-WWII period. However, DM16
+reviewed their approach and demonstrated that the strategy is not implementable since its con-
+struction is based on forward-looking betas. Because of the strong correlation between the beta
+of the future momentum portfolio and the future return of the market, the estimated perfor-
+mance of the ex-post hedged momentum portfolio ends up being upwardly biased. Further-
+more, DM16 argue that an implementable version of the hedging strategy proposed by Grundy
+and Martin (2001) [20] based on ex-ante betas would not improve a pure momentum strategy’s
+
+
+                                               18
+performance.
+    Barroso and Santa Clara (2015) [37] contributed to the research elaborating a different ap-
+proach. They stated that investors should follow a risk-adjusted constant volatility strategy to
+mitigate the negative performance experienced by momentum strategies following a market
+crash. More concretely, they suggest scaling the amount invested in the WML portfolio tar-
+geting a precise volatility level based on the realized variance of daily returns in the past six
+months. The authors claim that implementing such a strategy would significantly improve the
+Sharpe ratio compared to a pure momentum strategy, eliminating large momentum crashes.
+In short, their risk-management strategy consisted of holding a momentum portfolio having
+constant volatility over time.
+    Recently Moreira and Muir (2017) [38] proposed volatility-managed portfolios, a volatil-
+ity scaling approach close to the constant volatility introduced by Barroso and Santa Clara
+(2015) [37], that takes less risk when volatility is high and vice versa. They found significant
+and positive alphas for different popular equity strategies, including momentum, enhancing
+their performance relative to the standard unmanaged portfolios. More precisely, the volatility-
+managed portfolio scales monthly factor exposure by the inverse of the realized variance of
+daily portfolio returns in the previous month. They illustrate that future variance increases
+by far more than the expected returns after a variance shock, leading to a weaker risk-return
+trade-off. For this reason, they suggest reducing risk exposure when volatility is high until the
+risk-return trade-off becomes beneficial again.
+    In addition to their contribution to beta time variation of the WML portfolio and the pre-
+dictability of momentum crashes, DM16 has also developed an alternative framework to reduce
+the strategy’s crash risk. In this regard, they proposed a dynamically weighted version of the
+momentum portfolio, where the relative weights of the winner and loser deciles are based on
+their estimates for the forecasted return and variance of the cross-sectional momentum ap-
+proach. Furthermore, they explain that the optimal dynamic strategy would coincide with the
+constant volatility model introduced by Barroso and Santa Clara if the Sharpe ratio of the mo-
+mentum strategy were time-invariant. However, given that the return of a WML portfolio is
+negatively related to the forecasted WML volatility, the Sharpe ratio of the optimal dynamic
+portfolio does vary over time. To conclude their investigation and to assess the profitability of
+their model, DM16 compared the annualized Sharpe ratios of the dynamic strategy (1.19) with
+the baseline WML approach (0.682) and with the constant volatility strategy (1.04). They doc-
+ument that the proposed portfolio outperforms the constant volatility model, which ultimately
+outperforms the classic WML strategy. Furthermore, they show the efficacy of the dynamic
+momentum strategy in different investment regions and asset classes. Nonetheless, there are
+some methodological differences between volatility scaling and the DM16 dynamic portfolio.
+Mainly because in DM16, the optimal portfolio weights depend on the Sharpe ratio since they
+forecast both variance and return, while the former forecasts just the variance. Additionally,
+the methodology used by DM16 to forecast volatility is way more complex since they rely on
+
+                                               19
+the GJR-GARCH model proposed by Glosten et al. (1993) [39]. Also Barroso and Santa Clara
+(2015) [37] and Moreira and Muir (2017) [38] show that the profitability of their strategy is
+robust in several equity markets. However, despite its enhanced performance, DM16 recognize
+that the dynamic strategy takes on more leverage than a constant volatility approach and would
+generate higher transaction costs than the other two strategies.
+    To conclude, volatility-managed portfolios are profitable and convenient to manage volatil-
+ity shocks because they are simple and easily implementable. Nevertheless, the dynamic port-
+folio proposed by DM16, despite its complex methodology, is tailored to reduce the downside
+risk of momentum crashes better and ultimately outperforms Moreira and Muir’s method. Sec-
+tion 4.4 provides a more detailed overview of the methodologies behind market crash-hedged
+momentum strategies.
+
+
+
+
+                                              20
+Chapter 3
+
+Data and Methodology
+
+The following chapter discusses the data retrieval procedure and describes the research design
+adopted for the empirical analysis. The principal scope of this dissertation is to extend the
+analysis done by Daniel and Moskowitz (2016) [1] and test whether the momentum strategy
+crashed during the 2020 Bear market. Consequently, data collection and the dataset construc-
+tion intentionally emulate as precisely as possible the procedures adopted in DM16. However,
+since the crisis undergone by the market in 2020 is quite different from the ones highlighted by
+the authors, some methodological accommodation needs to be done.
+    This chapter is organized as follows. Section 3.1 introduces data sources for both the prin-
+cipal analysis and the robustness tests. Section 3.2 reviews the dataset formation process. To
+conclude, Section 3.3 describes the methodology and the regressions implemented to answer
+the research questions previously stated.
+
+
+3.1      Data
+The first subsection introduces the US equity data employed for the primary analysis. More-
+over, to challenge the robustness of the findings yielded by the analysis, I replicate the results
+relying on international equity and other asset class data. Hence, the second subsection de-
+scribes the dataset utilized to investigate whether the momentum crash patterns found in the
+US equity market are also persistent in other equity markets and asset classes.
+
+
+3.1.1    US Data
+The principal data sources are the Center for Research and Security Prices (CRSP) and Ken
+French’s data library. The former was used to retrieve the Us common stocks’ monthly returns
+for the entire time period (Jan 1927 - Dec 2020). The monthly returns are then used to construct
+the monthly momentum deciles portfolios. In contrast, I gathered the market return and the
+risk-free rate from Ken French’s data library. Such metrics are respectively proxied by the
+value-weighted Index of all listed firms in CRSP and the one-month treasury bill rate.
+
+                                               21
+    DM16 used the realized daily market return variance annualized over the preceding six
+months as an additional explanatory variable to show that the expected return of the momentum
+strategy is a decreasing function of the futures market’s variance. Hence, to investigate the
+relationship between the returns of the momentum portfolio and the expected market volatility,
+I needed to consider a forward-looking indicator of uncertainty. With more recent data, it is
+possible to rely on the daily data of the VIX Index, available on the Chicago Board Options
+Exchange website (CBOE), as a proxy measure of future market variance. Assuming that the
+monthly Index is equal to the daily rate at the beginning of each month and that such a daily
+VIX rate is valid throughout the month, I converted the daily series to a monthly series. The
+data series starts in January 1990 and ends in December 2020.
+
+
+3.1.2     International and non-equity data
+To assess the robustness of the results, I extend the analysis on momentum crashes to four
+different equity markets and two different asset classes. The data can be downloaded from the
+AQR Capital Management website and consist of the same sample used in Asness, Moskowitz,
+and Pederson (2013), which gets updated monthly following the original portfolio construction
+procedure. Note that the portfolio formation process is similar to the one used to construct the
+momentum deciles from US equity data, but the sorting is less extreme. Instead of taking the
+top and bottom deciles, Asness et al.’s momentum portfolio rely on terciles. Consequently, the
+WML portfolio consists of going long on the top third while short-selling the bottom third of
+securities based on their ranking period returns.1
+    More precisely, the international equity data refers to the US, UK, Japan, and Continental
+Europe equity markets. The non-equity data covers twenty-seven different commodity futures
+and Equity index futures across 18 developed equity markets. Furthermore, every single mar-
+ket and asset class has a different market index. Specifically, for international equity data, I
+considered the corresponding MSCI local index (US, UK, EU, JP). For the country index fu-
+tures, I used the MSCI world index. While for commodities, I employed the Goldman Sachs
+Commodity Index (GSCI). All series start in January 1980 and end in December 2020.
+
+
+
+
+3.2      Portfolio Construction
+The dataset used for the analysis is formed in a manner broadly consistent with the deciles
+momentum portfolios formed by DM16. However, before describing the monthly momentum
+portfolio formation procedure, I need to outline some restrictions applied to the data sample.
+In particular, the universe includes only firms listed on the NYSE, AMEX, or NASDAQ as
+
+   1 Please refer to the following link for more details regarding international and non-equity data and portfolio
+
+construction procedures www.aqr.com/library/data-sets/value-and-momentum-everywhere-factors-monthly.
+
+
+                                                      22
+of the formation date (CRSP exchange code of 1, 2, or 3) and considers only the returns of
+common stocks (CRSP share-code 10 or 11). Furthermore, to be considered in the portfolio
+construction process, firms must have a valid price and number of shares as of the formation
+date (t − 1). Observations with less than eight monthly returns over the past eleven months
+are considered missing. Firms that don’t meet all these requirements are not included in any
+portfolio. Consequently, all firms meeting the requirements are ranked and sorted into deciles
+portfolios based on their cumulative returns over the ranking period.
+    Figure 3.1 represents the portfolio formation procedure for momentum returns in April
+2020.
+
+
+
+
+                             Figure 3.1: Portfolio formation procedure
+
+    The ranking period goes from 12 months before to one month before the formation date.
+Thus, the ranking returns for month t is the cumulative t-12 to t-2 month return. Based on
+such metric, firms are then placed into one of ten decile portfolios where portfolio 10 includes
+Winners (firms with the highest-ranking period return), while portfolio 1 represents the Losers.
+The difference between the returns of the Winner and Loser portfolios represents the self-
+financing ”Winner Minus Loser” portfolio (WML).
+    The holding period returns are represented by the value-weighted returns of the firms in-
+cluded in the deciles, computed over the last trading day of the previous month through the last
+trading day of the current month. Hence, the holding period is one month. Portfolios are buy
+and hold within each month and are constantly rebalanced at the end of each month. Therefore
+portfolio membership does not change within a month, except in the case of delistings.
+
+
+
+            Losers    (2)       (3)     (4)     (5)     (6)     (7)       (8)     (9)    Winners
+DM16        0.996    0.997     0.998   0.997   0.997   0.998   0.998     0.999   0.998    0.998
+
+    Table 3.1: Correlation Matrix of momentum decile portfolios with DM16’s portfolios
+
+   To conclude, Table 3.1 presents the matrix of correlations between the self-constructed
+monthly decile portfolios’ returns and those used by DM16 (Jan 1927-Dec 2012). The differ-
+ence between the replicated momentum returns and the outcome from Daniel and Moskowitz
+
+                                                23
+(2016) is not zero because of different ways in data processing and sample selection. Notice
+that the correlation between corresponding portfolios is never lower than 0.996.
+
+
+3.3     Methodology and Research Design
+The empirical investigation starts with an overview of the monthly momentum portfolio excess
+return characteristics over different periods. This initial analysis provides us with an estimate
+of the premium yielded by the strategy over the entire sample period (1927-2020) and compares
+returns over different decades. In this way, I can assess whether the results are consistent with
+the existing literature and the behaviour of such premium over time. Furthermore, to visualize
+better the premium yielded by the momentum strategy over the whole sample and different
+decades, I provide several plots representing the cumulative monthly returns for investments in
+the risk-free asset, the market portfolio, the bottom decile (past losers portfolio), and the top
+decile (past winners decile).
+    In addition to the average returns, I compute other relevant metrics such as the volatility,
+the skewness, and the annualized Sharpe Ratio of each portfolio decile. Moreover, I estimate
+the deciles’ alpha and betas by fitting a full-period unconditional market model regression to
+the WML portfolio and to the other deciles. Hence, Regression 3.1 is simply a monthly time
+series regression, over the entire period, of each decile portfolio’s excess return on the excess
+CRSP value-weighted index:
+
+                                   R̃W ML,t = α0 + β0 R̃m,t + ε̃,t                           (3.1)
+
+     Such specification will be repeated for different decades to estimate and compare the market
+betas and the intercept of the WML portfolio over time.
+     DM16 illustrated that returns earned by the momentum strategy are significantly lower in
+declining markets and that the most severe crashes occurred in periods of high market stress.
+Such periods are also known as ”panic states” and refer to an upswing in returns after a bear
+market period with high ex-ante expected volatility. More precisely, they showed that in such
+market states, there is a negative correlation between the market beta of the WML portfolio and
+the contemporaneous realized market return, demonstrating that the strategy follows the same
+behaviour of a short call option on the market. They investigated such optionality of momentum
+in bear markets through a set of monthly time series regression, in which the dependent variable
+is always the R̃W ML,t , the WML portfolio return in time t. Additionally, they used a combination
+of the following set of independent variables:
+
+   1. R̃em,t : the market return, proxied by the excess CRSP value-weighted index return in
+      month t.
+
+   2. IB,t−1 : an ex-ante Bear market indicator, a dummy variable that assumes the value of 1
+
+
+                                                 24
+      when the past 24 months cumulative CRSP value-weighted index return is negative and
+      zero otherwise.
+
+   3. IU,t−1 : an ex-ante Bull market indicator, a dummy variable that assumes the value of 1
+      when the past 24 months cumulative CRSP value-weighted index return is positive and
+      zero otherwise.
+
+   4. I˜U,t : a contemporaneous Up-market indicator, a dummy variable that assumes the value
+      of 1 if the market return in month t is greater than the risk-free in month t, and zero
+      otherwise.
+        2
+   5. σ̂m,t−1 : an ex-ante estimate of the market volatility over the coming month, the variance
+      of the daily returns of the market over the 126 days before time t.
+
+    However, since I want to extend such investigation to the 2020 virus-driven Bear market, it
+is necessary to consider that crises differ in terms of the severeness, causes, and time length.
+The 2020 Bear market started on February 19th, and the SP500 hit its bottom on March 23rd
+when the index lost approximately 33.9%. After approximately five months, on August 18th,
+the SP500 reached a new record high, fully recovering losses from the pandemic-driven crisis,
+a new bull market was born. To sum up, the covid-19 financial crisis had a length of just 1.1
+months, while the two main bear markets in which DM16 highlighted an intense crash of the
+momentum strategy had a way longer length, 32.8 months for the great depression back in 1929
+and 17 months for the 2007 financial crisis. Consequently, given that the covid-19 bear market
+was the shortest ever manifested, some adjustments to the variables need to be made.
+    In this regard, as an attempt to capture whether momentum crashes are also present after
+short but intense periods of economic downturn, I add two ”Flash-Bear” market indicator as
+a new explanatory variables. Furthermore, as previously reported, with more recent data, it is
+possible to rely on the VIX Index as a proxy measure of future market variance. Consequently,
+I add three more independent variables to the setting:
+
+   1. IFB(6),t−1 : ex-ante Flash bear market indicator, assumes the value of 1 if the cumulative
+      CRSP value-weighted index return in the past 6 months is negative, and zero otherwise.
+
+   2. IFB(4),t−1 : ex-ante Flash bear market indicator, assumes the value of 1 if the cumulative
+      CRSP value-weighted index return in the past 4 months is negative, and zero otherwise.
+
+   3. V IXm,t−1 : the VIX index as an ex-ante estimate of the market volatility over the next
+      month.
+
+    Regression 3.2 consists of a conditional CAPM with the standard Bear market indicator as
+an additional variable. In regression 3.3 and 3.4 respectively, I substitute the former indicator
+with the new 6-months and 4-months Flash-Bear market indicator variable:
+
+
+                                               25
+                       R̃W ML,t = (α0 + αB IB,t−1 ) + (β0 + βB IB,t−1 )R̃m,t + ε̃,t                  (3.2)
+
+
+              R̃W ML,t = (α0 + αFB(6) IFB(6),t−1 ) + (β0 + βFB(6) IFB(6),t−1 )R̃m,t + ε̃,t           (3.3)
+
+
+              R̃W ML,t = (α0 + αFB(4) IFB(4),t−1 ) + (β0 + βFB(4) IFB(4),t−1 )R̃m,t + ε̃,t           (3.4)
+
+   Such model analyzes the relationship and the differences between the expected returns and
+market betas of the WML portfolios for the two different bear market specifications introduced.
+
+    Next, to investigate the strategy’s performance when the market rebounds following a bear
+market and to assess to which extent the market betas of the WML portfolio differ in different
+market states, in Regressions 3.5, 3.6 and 3.7, I added the contemporaneous upmarket indicator
+as an additional regressor:
+
+                R̃W ML,t = [α0 + αB IB,t−1 ] + [β0 + IB,t−1 (βB + I˜U,t βB,U )]R̃m,t + ε̃,t          (3.5)
+
+
+
+   R̃W ML,t = [α0 + αFB(6) IFB(6),t−1 ] + [β0 + IFB(6),t−1 (βFB(6) + I˜U,t βFB(6),U )]R̃m,t + ε̃,t   (3.6)
+
+
+
+
+   R̃W ML,t = [α0 + αFB(4) IFB(4),t−1 ] + [β0 + IFB(4),t−1 (βFB(4) + I˜U,t βFB(4),U )]R̃m,t + ε̃,t   (3.7)
+
+   With this setting, a negative βB,U (βFB,U ) would indicate that in bear markets (Flash-Bear
+markets), the momentum strategy is effectively shorting a call option on the market.
+
+    Since the value of an option increases with the market variance, such optionality further
+suggests that the expected return of the momentum portfolio should be negatively related to
+the future variance of the market. I test this Hypothesis through regressions 3.8, 3.9 and 3.10,
+specifically for Bear and Flash-Bear markets. Such specification is similar to the one used by
+DM16 to investigate market stress and momentum returns, the only difference (aside from the
+additional IFB,t−1 indicator) is the adoption of the VIX as an estimate of the future variance of
+the market:
+
+               R̃W ML,t = γ0 + γB,t−1 IB,t−1 + γV IXmV IXm,t−1 + γint IBV IXm,t−1 + ε̃,t             (3.8)
+
+
+
+
+                                                    26
+      R̃W ML,t = γ0 + γFB(6),t−1 IFB(6),t−1 + γV IXmV IXm,t−1 + γint IFB(6)V IXm,t−1 + ε̃,t    (3.9)
+
+
+
+
+     R̃W ML,t = γ0 + γFB(4),t−1 IFB(4),t−1 + γV IXmV IXm,t−1 + γint IFB(4)V IXm,t−1 + ε̃,t    (3.10)
+
+    As discussed earlier, DM16 found that in periods of high market stress, Bear markets with
+high volatility, momentum returns are particularly poor. The additional IFB,t−1 allows us to
+investigate the relation between the expected return of the momentum strategy and market’s
+variance in short but intense periods of economic downturn, such as the Coronavirus pandemic
+financial crisis.
+
+
+
+
+                                                 27
+Chapter 4
+
+Results
+
+The following chapter discusses the results yielded by the analysis of momentum in US com-
+mon stocks over the 1927-2020 time period. A specific focus is set on the behaviour of the
+strategy throughout the covid-19 bear market and the relation between the WML portfolio and
+different market states.
+    The first Section 4.1 illustrates the characteristics of the momentum decile portfolio over
+time. More specifically, it assesses and compares the premiums yielded by momentum in the
+last four decades and in 2020. Section 4.2 investigates momentum’s option-like behaviour and
+time varying betas in bear markets and ”flash” bear markets. Next, Section 4.3 highlights the
+strategy’s relation with different market states, focusing on panic periods which are bear mar-
+kets with high ex-ante market variance. To conclude Section 4.4 discusses the methodologies
+at the basis of crash-proof momentum strategies.
+
+
+4.1     Momentum Characteristics overtime
+To begin with, Table 4.1 presents characteristics of monthly momentum decile portfolio excess
+returns over the full sample period from 1927:01 through 2020:12. WML is the zero-investment
+winner-minus-loser portfolio which is long the Decile 10 and short the Decile 1 portfolio. The
+average excess return, standard deviation, and alpha are in percent and annualized. SR indicates
+the annualized Sharpe Ratio. The α, t(α), and β are estimated from a full-period regression
+of each decile portfolio’s excess returns on the CRSP value-weighted index. For all portfolios
+except WML, Skm indicates the full-period realized skewness of the monthly log returns to the
+portfolios. For WML, Skm is the realized skewness of log(1 + rW ML + r f ). This is because, the
+self-financing WML portfolio is constructed investing on margin. Thus, returns for WML, in
+addition to the gains resulting from both the long and short side, also consider that the margin
+posted earns interest at the risk-free rate, r f .
+    Furthermore, Figure 4.1 plots the cumulative monthly returns over the entire sample period
+from 1927:01- 2020:12 for investments in the risk-free rate, the CRSP value-weighted index
+
+
+                                              28
+(market portfolio), the self-financing Winner minus Loser portfolio, the bottom decile portfolio
+(Losers), the top decile portfolio (Winners). The x-axis represents the dates, while the y-axis
+presents the cumulative return for each portfolio. Furthermore, assuming no transaction costs,
+the right-hand side of the graph illustrates the closing values for each of the four portfolios,
+given a $1 investment in January 1927.
+
+
+
+
+                            Figure 4.1: Cumulative gains from investments 1927-2020
+
+
+Returns Statistics    (1)      (2)      (3)      (4)      (5)         (6)      (7)     (8)     (9)    (10)    WML     Market
+r −rf                 −1.4     3.2       3.8      6.9      7.8         7.6      9.3    10.6    11.7    15.8    17.2     8.1
+σ                     36.7     30.2     25.7     22.7     21.1        20.0     19.1    18.8    20.0    23.6    30.0    18.5
+α                    −14.7     −8.3     −6.2     −2.1     −0.8        −0.8     1.3      2.8     3.6     7.2    21.9      0
+t(α)                 (−6.9)   (−5.4)   (−5.3)   (−2.3)   (−1.0)      (−1.3)     (2)   (4.3)   (4.3)   (5.2)   (7.5)     (0)
+β                     1.64     1.41     1.24     1.12     1.06        1.02     0.98    0.95    0.98    1.05   −0.59      1
+SR                   −0.03     0.10     0.14     0.30     0.37        0.37     0.48    0.56    0.58    0.66    0.57    0.43
+Sk(m)                 0.07    −0.18    −0.20     0.07    −0.11       −0.26    −0.65   −0.55   −0.76   −0.78   −4.83   −0.55
+
+
+            Table 4.1: Momentum Portfolio Characteristics, Full-period 1927:01-2020:12
+
+    First of all, in line with the existing literature, a substantial momentum premium appears
+over the last century. The winners have significantly outperformed the losers, with a mean
+excess return of 15.8%, against the -1.4% yielded by Decile 1. Consequently, the momen-
+tum WML portfolio had an annual average excess return of 17.2%, largely outperforming the
+market, which has an average excess return of 8.1%. The Beta of the momentum portfolio is
+negative, -0.59, and the unconditional CAPM alpha is 21.9% per year ( t-statistic = 7.5). Con-
+sidering a risk-adjusted perfomance metric, such as the Sharpe ratio, the WML portfolio had a
+higher rate of return per unit of risk with respect to the market. The momentum portfolio had a
+
+                                                                29
+full period SR of 0.57, while that of the market was 0.43. Furthermore, observing the skewness
+an interesting pattern emerges. The winner portfolios are considerably more negatively skewed
+than the loser portfolios. Additionally, it is noticeable that the winners become more negatively
+skewed as we move to more extreme deciles. For the top winner decile portfolio, the monthly
+skewness is -0.78, while for the most extreme losers decile, the skewness is 0.07. Overall, the
+WML portfolio over this full sample period presents a monthly skewness of -4.83. Negative
+skewness indicates that the tail of the left side of the distribution is fatter than the tail on the
+right side; in this specific case, the left side of the distribution refers to negative returns. Such
+pattern supports the evidence that the high returns experienced by the winners deciles and by
+the momentum strategy are partly a compensation for taking on more skewness risk.
+
+
+4.1.1    Momentum in the last 4 decades
+To analyze how the strategy’s premium behaved overtime, the following tables illustrate char-
+acteristics of monthly momentum decile portfolio excess returns for the last four decades indi-
+vidually. Respectively, table 4.2 refers to the time period going from 1980:01 through 1989:12,
+table 4.3 refers to the time period going from 1990:01 through 1999:12, table 4.4 refers to the
+time period going from 2000:01 through 2009:12, and table 4.5 refers to the time period go-
+ing from 2010:01 through 2020:12. WML is the zero-investment winner-minus-loser portfolio
+which is long the Decile 10 and short the Decile 1 portfolio. The average excess return, stan-
+dard deviation, and alpha are in percent and annualized. SR indicates the annualized Sharpe
+Ratio. The α, t(α), and β are estimated from a full-period regression of each decile portfolio’s
+excess returns on the CRSP value-weighted index. For all portfolios except WML, Skm indi-
+cates the full-period realized skewness of the monthly log returns to the portfolios. For WML,
+Skm is the realized skewness of log(1 + rW ML + r f ). This is because, the self-financing WML
+portfolio is constructed investing on margin. Thus, returns for WML, in addition to the gains
+resulting from both the long and short side, also consider that the margin posted earns interest
+at the risk-free rate, r f .
+
+The roaring 80s and 90s
+
+Figure 4.2 plots the cumulative monthly returns over the sample period from 1980:01- 1999:12
+for investments in the risk-free rate, the CRSP value-weighted index (market portfolio), the
+self-financing Winner minus Loser portfolio, the bottom decile portfolio (Losers), the top decile
+portfolio (Winners). The x-axis represents the dates, while the y-axis presents the cumulative
+return for each portfolio. Furthermore, assuming no transaction costs, the right-hand side of
+the graph illustrates the closing values for each of the four portfolios, given a $1 investment in
+January 1980.
+    Having a closer look at the characteristics of the momentum decile portfolios through the
+80s and the 90s, an even stronger premium emerges. From table 4.2 and 4.3, it is noticeable
+
+                                                 30
+                               Figure 4.2: Cumulative gains from investments 1980-1999
+
+
+
+
+Returns Statistics      (1)         (2)      (3)      (4)       (5)          (6)        (7)        (8)       (9)       (10)      WML      Market
+r −rf                 −15.6       −1.8      3.9       7.9        7.7       6.5           8.4       10.1      12.1      10.2       25.8      8.5
+σ                      24.7       20.8      18.4      16.6      16.0      16.6          18.2       18.5      20.8      23.6       21.3     16.9
+α                     −25.18     −10.56    −4.08      0.59      0.11     −1.58         −0.47      1.25       2.49     −0.49      24.68       0
+t(α)                  (−4.9)     (−2.8)    (−1.3)    (0.23)    (0.06)    (−1.2)        (−0.3)     (0.6)     (0.9)     (−0.1)     (3.6)      (0)
+β                      1.12       1.01      0.94      0.86      0.89      0.96          1.04       1.04      1.13      1.25       0.13       1
+SR                    −0.63      −0.09      0.21      0.48      0.47      0.39          0.46       0.54      0.58      0.43       1.21     0.50
+Sk(m)                 −1.17      −0.59     −0.46      0.13     −0.41     −0.88         −0.95      −1.11     −1.41     −1.34      −0.75    −1.38
+
+
+                      Table 4.2: Momentum Portfolio Characteristics, 1980:01-1989:12
+
+
+
+
+Returns Statistics     (1)         (2)       (3)       (4)        (5)          (6)        (7)       (8)       (9)       (10)     WML      Market
+r −rf                 −2.9        −0.08      5.2        8.7       8.7           8.3       11.6      14.2     14.8       25.6      28.5     12.7
+σ                     29.1         22.3      18.4      15.8      14.4          14.3       13.1      13.8     15, 6       23.7     21.3     13.8
+α                     −21.4      −15.41     −8.32     −3.13     −3.02         −3.54       0.64      2.48     1.55       7.47     28.94       0
+t(α)                 (−3.10)     (−3.12)   (−2.26)   (−1.03)   (−1.37)       (−1.67)     (0.35)    (1.38)   (0.792)    (‘1.71)   (3.48)     (0)
+β                     1.45         1.20      1.06      0.93      0.92          0.92       0.86      0.92     1.04       1.42     −0.02       1
+SR                    −0.1       −0.003     0.28       0.55       0.6          0.57       0.88      1.02     0.95       1.08      1.12     0.92
+Sk(m)                 −0.13       −0.40     −0.34     −0.23     −0.62         −0.89      −0.66     −0.51     −0.49     −0.37     −0.86    −0.96
+
+
+                      Table 4.3: Momentum Portfolio Characteristics, 1990:01-1999:12
+
+
+
+
+                                                                        31
+that in such decades the WML portfolio overperformed the market by much more than the
+momentum strategy have outperformed the market over the entire period considered. More
+precisely, the WML portfolio (market) excess returns in the 80s and the 90s are respectively
+25.8% and 28.5% ( 8.5% and 12.7%). Taking into consideration the realized volatility of re-
+turns, the momentum strategy in the period going from 1980:01 to 1989:12 had a Sharpe ratio
+of 1.21 against the value of 1.12 in the 90s. However, both the metrics are almost more than the
+double of the whole sample SR previously estimated which is 0.57. Concerning the skewness,
+the results align with the pattern found earlier. The winners become more negatively skewed as
+we move to more extreme deciles. Overall, the 80s and the 90s were outstanding decades for
+momentum investors. The discussed results are consistent with the full sample characteristics
+and with the existing literature.
+
+The Twenty-first century: is momentum investing dead ?
+
+Figure 4.3 plots the cumulative monthly returns over the sample period from 2000:01- 2020:12
+for investments in the risk-free rate, the CRSP value-weighted index (market portfolio), the
+self-financing Winner minus Loser portfolio, the bottom decile portfolio (Losers), the top decile
+portfolio (Winners). The x-axis represents the dates, while the y-axis presents the cumulative
+return for each portfolio. Furthermore, assuming no transaction costs, the right-hand side of
+the graph illustrates the closing values for each of the four portfolios, given a $1 investment in
+January 2000.
+
+
+
+
+                   Figure 4.3: Cumulative gains from investments 2000-2020
+
+   Some more intriguing findings arise when we consider the first twenty years of the 2000s.
+Regarding the first decade of the twenty-first century, it is critical to notice that, on average, the
+
+                                                 32
+market had a negative excess return of 1.7%.
+
+
+Returns Statistics     (1)       (2)       (3)       (4)      (5)         (6)      (7)       (8)       (9)      (10)     WML      Market
+r −rf                  −7.9      −2.1      −2.9      −0.5     −0.1        0.4       1.1      0.3      −2.3       0.85     8.8      −1.7
+σ                     49.97     36.71      30.05     23.92    20.36      15.86    13.83     15.24     17.02     26.51    47.02     16.65
+α                     −3.67      1.10     −0.34      1.70     1.73        1.98     2.43     1.77      −0.94      2.81     6.49       0
+t(α)                 (−0.389)   (0.17)   (−0.065)   (0.45)   (0.56)      (0.84)   (1.19)   (0.001)   (0.002)   (0.005)   (0.01)     (0)
+β                      2.40      1.82      1.50      1.25     1.07        0.84     0.73     0.80      0.82      1.08     −1.32       1
+SR                    −0.15     −0.05     −0.09     −0.021   −0.008      0.031    0.081     0.023    −0.140     0.033    0.187    −0.106
+Sk(m)                  0.18     −0.36     −0.33     −0.37    −0.57       −0.35    −0.89     −0.72     −1.14     −0.39    −1.79    −0.80
+
+
+                      Table 4.4: Momentum Portfolio Characteristics, 2000:01-2009:12
+
+    The time period considered is very turbulent. More precisely, through these ten years, finan-
+cial markets underwent two of the most severe financial crisis ever experienced, the dot-com
+bubble and the subprime mortgages crisis. The bear market of 2000-2002 lasted from February
+2000 to October 2002; in 31 months, the SP500 declined by approximately 49%. On the other
+hand, the US bear market of 2007-2008 was slightly shorter but more intense. It was a 17-
+month bear market lasting from October 2007, till March 2009; in such period, the SP500 lost
+56% of its value. Interestingly, in this kind of market condition, the WML portfolio returns ex-
+hibit a significantly higher volatility of 47.02% (the full period volatility estimate for the WML
+portfolio is 30.0%). Despite the unfavorable and extreme movements the market underwent in
+the decade, the momentum strategy on average overperformed the market, yielding an annual
+average excess return of 8.8%. However, the small Sharpe ratio (0.187) and the monthly skew-
+ness of -1.79 (which almost doubles the values of the 80s and the 90s) suggest that the strategy
+suffered from severe crashes. Such intuition is confirmed by DM16, which have shown that 7
+out of the 15 worst momentum monthly returns took place in the first decade of the twenty-first
+century and are attributable to the dot-com bubble and 2008 financial crisis.
+
+    The most exciting findings emerge from the analysis of the last decade, which is the period
+going from January 2010 till December 2020. From table 4.5 we can observe that among the
+momentum portfolio deciles, winners ( decile 10 ) on average still overperformed the remaining
+nine portfolios. Furthermore, the WML portfolio had a beta of -0.71, close to its total period
+value of -0.59. However, these last ten years have been quite rough for long/short momentum
+factor investors.
+    The WML had a disappointing performance, yielding an average annual excess return of
+6.8%, while the market excess return has been 14.1%. Taking into account volatilities, the dif-
+ference in terms of performance becomes even more pronounced. The market’s Sharpe ratio
+(0.95) is more than four times momentum’s factor Sharpe ratio (0.23). The short leg of the port-
+folio mainly drives such underperformance. Indeed from the previous tables, it is noticeable
+that historically past losers were characterized by having negative returns and negative alphas.
+While, in this last decade buying losers turned out to be a strategy more profitable than invest-
+ing in the WML portfolio. The decile 1 portfolio had an annual average excess return of 12.6%
+
+                                                                    33
+with a Sharpe ratio of 0.35. Nonetheless, the losers portfolio still yielded a negative alpha of
+14.52% indicating that, compared to the market, investing in the decile 1 portfolio was too risky
+for the return earned (or has earned too little for its systematic risk). On the other hand, the
+WML portfolio had a positive and large alpha (16.93%). Such metric does not directly mean
+higher returns but it indicates that over this last decade momentum had good returns at a lower
+risk, relative to the market. It is important to bear in mind that the alpha is a measure of excess
+return on a market relative risk-adjusted basis, while the Sharpe ratio takes into consideration
+absolute risk relying on standard deviations to measure the volatility of returns. Consequently
+the SR, being a measure of unit of return earned per unit of absolute risk assumed by an invest-
+ments, is a more meaningful performance metric. Noticeably, in this last considered decade,
+none of the ten deciles portfolios examined had a higher SR than the market. Furthemore,
+among all the different periods considered, it is the first time that the SR of the WML portfolio
+is much lower than that of the market. It appears that momentum has lost its historical premium.
+
+
+Returns Statistics     (1)       (2)       (3)       (4)       (5)        (6)      (7)      (8)      (9)      (10)    WML      Market
+r −rf                 12.6        8.4      11.9      14.8       13.9      13.0     13.5     14.8     14.1     19.4      6.8     14.1
+σ                     35.63     26.46     20.44     17.43      15.69     14.85    14.60    14.81    15.16    20.52    28.54    14.77
+α                    −14.52    −13.40     −5.18     −0.56     −0.33      −0.63     0.05     1.33     0.70     2.40    16.93       0
+t(α)                 (−2.13)   (−3.18)   (−1.67)   (−0.27)   (−0.224)   (−0.51)   (0.04)   (0.92)   (0.38)   (0.74)   (2.03)     (0)
+β                     1.91       1.54      1.21      1.08      1.01       0.96     0.95     0.95     0.94     1.20    −0.71       1
+SR                    0.35       0.32      0.58      0.85      0.89       0.88     0.92      1       0.93     0.94     0.23     0.95
+Sk(m)                 0.04      −0.75     −0.64     −0.79      −0.6      −0.76    −0.56    −0.35    −0.56    −0.48    −0.96    −0.28
+
+
+                      Table 4.5: Momentum Portfolio Characteristics, 2010:01-2020:12
+
+    After the poor results achieved by momentum during these last years, many academics and
+institutional investors started questioning the strategy’s viability in modern financial markets.
+They already knew that momentum is painful and that historically such an investment approach
+went through severe crashes. Furthermore, given that such underperformance is dictated by
+sudden and dramatic upswings following a period of bear market and thus are predictable, re-
+searchers and practitioners developed several momentum hedged strategies. Nevertheless, the
+meager performance exhibited by the original cross-sectional momentum raised many concerns
+and has caused many investors to wonder whether momentum-driven investing is dead. A com-
+prehensive research that approaches such question was carried by Zimmerer et al.(2019) [40].
+In light of their study, they stated that, as a risk factor associated with a positive risk premium,
+momentum, if implemented correctly, remains very much alive and profitable. However, they
+concluded that most simplistic traditional momentum investing approaches might never return
+to profitability. They highlighted four critical flaws generally common to most traditional mo-
+mentum strategies: they rely on a single trend, they are uni-dimensional, they consider single
+asset classes and finally they employ a too short investment horizon. Consequently, the au-
+thors introduced an optimal design of a modern trend-following investment approach, named
+momentum 2.0, which relies on four pivotal elements to ensure the strategy’s profitability:
+
+
+                                                                 34
+   1. Multiple lookback periods: it is not just about catching one trend. There are several
+      overlapping trends whose relative attractiveness and predictive power fluctuate over time.
+
+   2. Multi-dimensional approach: combining trend direction with a measure of trend strength
+      to better assesses trend’s duration.
+
+   3. Multi-asset portfolio construction: since momentum returns across asset classes are un-
+      correlated, using a strategy with different assets delivers diversification benefits.
+
+   4. Appropriate investment horizon: momentum is associated with a long-term risk pre-
+      mium, a 10-year window is the most appropriate investment horizon.
+
+   The main point is that the premium yielded by momentum strategies did not disappear but
+became harder to capture.
+
+
+4.1.2    Momentum in 2020
+Figure 4.4 plots the cumulative monthly returns over the sample period from 2020:01 - 2020:12
+for investments in the risk-free rate, the CRSP value-weighted index (market portfolio), the self-
+financing Winner minus Loser portfolio, the bottom decile portfolio (Losers), the top decile
+portfolio (Winners). The x-axis represents the dates, while the y-axis presents the cumulative
+return for each portfolio. Furthermore, assuming no transaction costs, the right-hand side of
+the graph illustrates the closing values for each of the four portfolios, given a $100 investment
+in January 2020. Momentum’s underperformance in 2020 is apparent; among all the portfolios
+considered, the WML is the only one that lost value this last year.
+
+    To conclude this first section, table 4.6 illustrates momentum portfolio characteristics through-
+out 2020. In 2020 the market yielded an annual excess return of 24.84 %, which is more than
+double the return produced by the momentum factor (10.79%). The WML portfolio still ex-
+hibits a positive alpha of 40.9% indicating that momentum in 2020 had a return in excess of the
+reward for the assumed systematic risk. However, in terms of unit per return earned per unit
+of risk assumed, in 2020, momentum has largely underperfomed the market. The difference
+in performances becomes more marked when considering the Sharpe ratios. The market’s SR
+is four-time as high as the WML’s SR ( 0.89 vs 0.20 ). Despite the covid-19 financial crisis,
+the market performed particularly well in this last year, delivering a Sharpe ratio more than
+twice as big as its historical value which is 0.43. The results are consistent with the metrics
+discussed for the second decade of the new century. Also, in this case, the underperformance
+of the momentum factor is mainly attributable to the short leg of the portfolio. In 2020, invest-
+ing in past losers, on a unit of return per unit of risk basis, turned out to be more fruitful than
+investing in the momentum factor. The decile 1 portfolio yielded an annual excess return of
+44.54% with a SR of 0.6. Besides, it is remarkable that decile 10 had a stellar performance,
+
+
+                                                35
+                                   Figure 4.4: Cumulative gains from investments 2020
+
+delivering a Sharpe ratio of 1.70. Such value is significantly larger than the historical Sharpe
+ratios delivered by both the winner decile and the WML portfolio.
+
+
+Returns Statistics     (1)        (2)        (3)        (4)        (5)           (6)      (7)        (8)        (9)       (10)     WML       Market
+r −rf                 44.54       21.36      14.93      20.27      13.88       16.60      14.99      21.67      19.36     55.34     10.79     24.84
+σ                     72.84       58.31      40.31      36.02      29.01       27.45      25.79      26.30      24.85     32.46     53.67     27.69
+α                     −12.36     −26.71     −17.75     −10.22     −11.27      −7.40      −7.69      −1.51      −2.34      28.54     40.90       0
+t(α)                 (−0.318)   (−1.072)   (−0.948)   (−0.790)   (−1.402)    (−1.114)   (−1.409)   (−0.291)   (−0.381)   (2.076)   (0.899)     (0)
+β                      2.29        1.93       1.31       1.22       1.01        0.96       0.91       0.93      0.87       1.07     −1.21       1
+SR                    0.611       0.366      0.370      0.562      0.478       0.604      0.581      0.823      0.77       1.70     0.201     0.896
+Sk(m)                 0.019      −0.656     −0.830     −0.718    −0.527)      −0.721     −0.459     −0.297     −0.793    −0.337    −0.977    −0.524
+
+
+                        Table 4.6: Momentum Portfolio Characteristics, 2020:01-2020:12
+
+    The last year has been a challenging and stormy period in which financial markets experi-
+enced high variance, and went through a ”flash” but painful bear market. In fact, by observing
+the portfolios’ sigmas, it is remarkable that returns’ volatilities in 2020 are substantially larger
+than their respective full-period averages. Furthemore, in 2020 momentum’s market beta as-
+sumed a value of -1.21, suggesting that when the market rebounds quickly momentum will
+crash because it has a conditionally large negative beta. Such numbers are similar to the most
+turbulent period previously investigated, the first ten years of the 2000s. Nevertheless, in 2020,
+the market and the losers decile portfolios experienced much more volatility. Such a situation
+perfectly matches the context that leads to momentum crashes described in DM16, periods of
+high market stress characterized by sudden upswings in the market return after a period of bear
+market. Thus, one would expect a crash of the momentum strategy in 2020. Indeed, we can
+confirm that the WML portfolio underperformed the market during the year of the covid-19
+
+                                                                            36
+financial crisis.
+
+
+
+                                  Month      WML       Market
+                                  Jan        12.4        0.02
+                                  Feb        1.49       -8.01
+                                  Mar        22.5       -13.2
+                                  Apr        -28.2      13.6
+                                  May        7.81        5.59
+                                  Jun        -5.49       2.47
+                                  Jul        15.5        5.79
+                                  Aug        12.2        7.64
+                                  Sep        0.94       -3.62
+                                  Oct        -0.41      -2.09
+                                  Nov        -26.2      12.48
+                                  Dec        -2.08      4.64
+                                  AAR        10.79      24.84
+
+                    Table 4.7: Percentage Returns of momentum vs Market, 2020
+
+    To better understand the returns pattern manifested by the momentum strategy in 2020, Ta-
+ble 4.7 presents the monthly returns (in %) of the market and the WML portfolio throughout
+the entire year. With AAR representing the average annual return. March and April 2020 are
+respectively the worse (-13.2%) and the best (13.6%) months experienced by the market in
+the last year. We can observe a reversed pattern for the monthly returns of the WML portfo-
+lio. The strategy recorded its best performance in March, earning a return of 22.5%, while the
+worst crash took place in April 2020 when momentum yielded a negative 28.2%. Similarly, in
+November, the WML portfolio failed again, recording a return of -26.2%. Interestingly both
+crashes occur in months in which the market rose, after two consecutive months of negative re-
+turns. To put into perspective and have a clearer idea of the entity of such crashes table 4.8 lists
+the 15 worst returns to the winner minus loser momentum portfolio over the 1927:01-2020:12
+time period. Also tabulated are Mkt-2y, Mkt-6m, Mkt-4m, the two years, six, and four-month
+market returns leading up to the portfolio formation date. Mkt represents the contemporaneous
+market return. All numbers in the table are in percent.
+    Table 4.8 confirms that the momentum strategy crashed following the covid-19 crisis. As
+we can see, 2020 appears twice among the list of the 15 worst WML monthly returns. More
+precisely, April’s crash ranked 12th, while November’s ranked 14th. Furthermore, some inter-
+esting patterns emerge. Thirteen of the fifteen worst momentum returns occur when the lagged
+two-year market return is negative. Twelve (eleven) out of 15 occur when the lagged 6-month
+(4-month) market return is negative. All crashes occur in months in which the market experi-
+enced a contemporaneous positive return. To conclude, such a pattern suggests that the WML
+
+                                                37
+              Rank          Month         WML         MKT-2y          Mkt -6       Mkt-4       Mkt
+              1          1932 : 08        −77.5         −67.5         −18.3        −13.1       37.0
+              2          1932 : 07        −58.2         −74.7         −39.8        −42.2       33.8
+              3          2001 : 01        −46.4          10.5         −10.5        −15.1        3.6
+              4          2009 : 04        −45.8         −40.6         −30.0        −8.4        10.1
+              5          1939 : 09        −44.8         −21.5         −8.6          4.0        16.8
+              6          2009 : 03        −42.3         −44.9         −41.6        −22.5        8.9
+              7          1933 : 04        −40.7         −58.9         −24.3        −7.4        38.9
+              8          2002 : 11        −35.4         −36.2         −17.6        −10.2        6.0
+              9          1938 : 06        −32.4         −27.9         −14.5        −11.2       23.8
+              10         2009 : 08        −30.9         −27.3          22.9         25.4        3.3
+              11         1931 : 06        −29.3         −47.5         −20.1        −18.6       13.9
+              12         2020 : 04        −28.2         −0.9          −12.7        −17.8       13.6
+              13         1933 : 05        −26.9         −36.6          21.0         23.1       21.4
+              14         2020 : 11        −26.2          26.9         16.2          7.4        12.4
+              15         2001 : 11        −25.5         −19.8         −14.4        −13.8        7.7
+
+                   Table 4.8: Worst momentum monthly returns, 1927:01-2020:12
+
+portfolio has terrible results when markets rebound following a bear market, whether it is a
+long or a ”flash” period of economic downturn.
+
+
+4.2       Option like behaviour
+The following part of the analysis investigates more formally the beta variation and how the
+mean return of the WML portfolio is related to time variation in market risk. Table 4.9 presents
+the results of estimating three specifications of a monthly time-series regressions run over the
+period 1927:01-2020:12. Specifically column (1), refers to Regression 3.1, column (2) refers to
+Regression 3.2, and column (3) refers to regression 3.4. The equations are specified in Section
+3.3. In every case, the dependent variable is the return on the WML portfolio. While IB,t−1
+is the bear market indicator variable, which in this case equals one if the cumulative past two-
+year return on the market is negative. The coefficients α̂0 α̂B are multiplied by 100 (percent per
+month).2 Using a similar specification, DM16 showed that the market beta of the momentum
+portfolio is strongly negatively correlated with the contemporaneous market return and that the
+return of the momentum portfolio is significantly lower in bear markets.
+
+    Column (1) in table 4.9 fits an unconditional CAPM to the momentum portfolio. The re-
+sults are consistent with the existing literature. The market beta assumes a negative value of
+-0.592 with a t-statistic of -13.2. Additionally, the α̂0 is positive (1.832% per month) and highly
+
+    2 Significance codes:    *** statistically significant at 0.1%; ** statistically significant at 1%; * statistically
+significant at 5%; ‘ statistically significant at 10%.
+
+
+                                                         38
+Coefficient            Variable                             Estimated Coefficients (t-stats)
+                                              (1)                         (2)                      (3)
+α̂0                        1              1.832 ∗ ∗∗                  1.855 ∗ ∗∗                1.73 ∗ ∗
+                                            (7.5)                        (7.4)                   (3.04)
+α̂B                      IB,t−1                                      −1.726 ∗ ∗                 −0.144
+                                                                        (−2.8)                  (−0.1)
+β̂0                       R̃m,t           −0.592 ∗ ∗∗                  −0.106‘                  −0.071
+                                          (−13.232)                     (−1.8)                  (−0.6)
+β̂B                  IB,t−1 ∗ R̃m,t                                  −1.073 ∗ ∗∗               −0.750 ∗ ∗∗
+                                                                       (−12.8)                  (−3.9)
+β̂B,U             IB,t−1 ∗ IU,t ∗ R̃m,t                                                         −0.456∗
+                                                                                                (−1.7)
+R2ad j                                      0.133                        0.257                   0.268
+
+                               Table 4.9: Market Timing regression results
+
+statistically significant (t-statistic = 7.5) , confirming a strong premium over the full period.
+    In column (2), I add the indicator variable IB,t−1 to investigate how the market beta of the
+WML portfolio varies in bear markets. In line with the findings of DM16, the β̂B is negative
+and highly statistically significant (t-statistic = -12.8). It indicates that momentum’s market
+beta is -1.073 lower in bear markets. Furthermore, the coefficient α̂B indicates that the pre-
+mium yielded by the strategy is significantly lower in such periods. The intercept is almost
+zero but remains positive. More specifically the alpha in declining markets is equal to α̂0 + α̂B
+which is 0.129% per month.
+    In column (3), I include an auxiliary variable, the IU,t to capture the extent to which the up-
+and down-market betas of the momentum portfolio differ. When the contemporaneous market
+return is negative, the WML portfolio beta (β̂0 + β̂B ) is equal to -0.821. However when the
+market rebounds during or following periods of declining markets momentum’s beta becomes
+-1.277 (β̂0 + β̂B + β̂B,U ). The coefficient β̂B,U is negative and statistically significant (t-statistic
+= -1.7), meaning that in bear markets, momentum is effectively shorting a call option on the
+market. Which is to say, when the market bounces back after a financial crisis, the WML port-
+folio suffers severe crashes. Overall the results yielded by this first set of regressions are highly
+consistent with the research carried out by Daniel and Moskowitz [1].
+
+
+
+4.2.1     Optionality in Flash Bear Markets
+In this section, to capture whether momentum crashes manifested after short but intense pe-
+riods of economic downturn, we replace the bear-market indicator variable with the two new
+”Flash-Bear” market indicators. Such change allows us to investigate the variation of the WML
+portfolio market beta in short bear markets. Table 4.10 presents the results of estimating three
+monthly time-series regressions run over the period 1927:01-2020:12. Specifically column (1),
+
+                                                       39
+refers to Regression 3.1, column (2a) refers to Regression 3.3 and column (3a) refers to regres-
+sion 3.6. The equations are specified in Section 3.3. In all cases, the dependent variable is the
+return on the WML portfolio, and IFB(6),t−1 is the first ”flash” bear market indicator variable,
+which in this case equals one if the cumulative past six-month return on the market is negative.
+The coefficients α̂0 α̂B are multiplied by 100 (percent per month). Table 4.11, ceteris paribus,
+considers an even shorter period of declining market, IFB(4),t−1 equals one if the cumulative
+past 4-month return on the market is negative. Here, column (1), refers to regression 3.1, col-
+umn (2b) refers to regression 3.4 and column (3b) refers to regression 3.7. The equations are
+specified in Section 3.3. 3
+
+Coefficient               Variable                           Estimated Coefficients (t-stats)
+                                                  (1)                        (2a)                      (3a)
+α̂0                             1             1.832 ∗ ∗∗                  1.800 ∗ ∗∗                  1.365∗
+                                                (7.5)                        (6.5)                     (2.1)
+α̂B                           IB,t−1                                        −0.68                      0.22
+                                                                            (−1.3)                     (0.2)
+β̂0                           R̃m,t           −0.592 ∗ ∗∗                  −0.080                    −0.086
+                                              (−13.232)                     (−1.2)                   (−0.6)
+β̂B                     IB,t−1 ∗ R̃m,t                                   −0.950 ∗ ∗∗                −0.642 ∗ ∗∗
+                                                                           (−11.1)                   (−3.4)
+β̂B,U                IB,t−1 ∗ IU,t ∗ R̃m,t                                                           −0.519∗
+                                                                                                     (−2.0)
+R2ad j                                          0.133                       0.222                      0.244
+
+                           Table 4.10: Market Timing regression results IBT6M
+
+
+Coefficient                Variable                              Estimated Coefficients (t-stats)
+                                                   (1)                        (2b)                        (3b)
+α̂0                              1             1.832 ∗ ∗∗                  1.728 ∗ ∗∗                  1.83 ∗ ∗
+                                                 (7.5)                       (6.0)                      (2.8)
+α̂B                            IB,t−1                                        −0.19                     −0.945
+                                                                            (−0.3)                     (−0.8)
+β̂0                             R̃m,t           −0.592                     −0.21 ∗ ∗                   −0.041
+                                               (−13.232)                    (−3.1)                     (−0.2)
+β̂B                      IB,t−1 ∗ R̃m,t                                   −0.664 ∗ ∗∗                 −0.656 ∗ ∗∗
+                                                                            (−7.5)                     (−3.4)
+β̂B,U                 IB,t−1 ∗ IU,t ∗ R̃m,t                                                            −0.113
+                                                                                                       (−0.4)
+R2ad j                                            0.133                       0.173                     0.211
+
+                           Table 4.11: Market Timing regression results IBT4M
+
+      For both flash bear market indicators (the six and the four-month) bear market indicator,
+      3 Significance codes:  *** statistically significant at 0.1%; ** statistically significant at 1%; * statistically
+significant at 5%; ‘ statistically significant at 10%.
+
+
+                                                            40
+the results in columns (2a) and (2b) are partly consistent with earlier discussed findings. The
+coefficients of the new pair indicators, β̂B , are negative and highly statistically significant, indi-
+cating a consistent time variation in the beta of the momentum portfolio in short bear markets.
+Momentum’s beta is -0.950 (-0.664) lower when the past cumulative six (four) month market
+return is negative. In such periods, the intercept declines but remains well above one. However,
+the coefficients α̂B are not significant anymore.
+     Intriguingly, some differences emerge from the results between column (3a) and (3b). The
+beta of the momentum portfolio, when the contemporaneous market return is negative, is simi-
+lar for the two ”flash” bear markets considered (-0.728 and -0.697). However, outcomes diverge
+when the market return at time t returns to be positive. When the market rebounds, following a
+flash bear market lasting 6 month, momentum’s beta is -1.247 (β̂0 + β̂B + β̂B,U ). In this case the
+coefficient β̂B,U is negative, -0.519, and statistically significant (t-statistic = -2). In contrast, for
+declining markets lasting four months, the coefficient β̂B,U is still negative, -0.113, but it is not
+statistically significant anymore. Consequently, the momentum’s beta in such circumstances is
+closer to zero -0.81.
+     The discussed findings suggest that when the market bounces back after periods in which
+the past cumulative six (or more) months market return is negative, the WML portfolio suffers
+severe crashes. Consistently with the 24-month bear market indicator, momentum investing is
+effectively shorting a call option on the market also for more concise bear markets lasting only
+six months. Interestingly, such optionality did not manifest for the shortest bear market con-
+sidered, the coefficient is of the right sign but is not statistically significant. In other words, I
+cannot confirm that the WML portfolio crashes when there is an upswing in the market’s return
+following bear markets lasting only four months.
+
+
+4.3       VIX and momentum returns
+The findings earlier discussed indicate that the WML portfolio, in bear markets, behaves like
+shorting a call option on the market. Furthermore, given that the value of a call option is posi-
+tively related to the market variance, such optionality suggests that the expected returns of the
+momentum strategy should be a declining function of the future variance of the market. The
+following section investigates this supposition.
+
+   In Table 4.12 we use the VIX, as an estimate of the market variance, combined with the
+bear-market indicator IB,t−1 used in the previous section to forecast future WML returns. Each
+column presents the estimated coefficients and t-statistics for a monthly time-series regression,
+over the entire period 1927:01-2020:12, based on Regression 3.8, specified in section 3.3. The
+coefficients γ̂0 and γ̂B are multiplied by one hundred and are in percent per month. 4
+    4 Significance codes:    *** statistically significant at 0.1%; ** statistically significant at 1%; * statistically
+significant at 5%; ‘ statistically significant at 10%.
+
+
+                                                         41
+                Coefficient
+                                          (1)             (2)             (3)              (4)
+                γ̂0                    1.60 ∗ ∗       4.72 ∗ ∗∗        4.46 ∗ ∗          0.727
+                                        (2.8)           (3.4)           (3.0)            (0.4)
+                γ̂B                    −2.66‘                          −0.829
+                                       (−1.8)                          (−0.4)
+                γ̂V IX                               −0.179 ∗ ∗        −0.16∗
+                                                      (−2.7)           (−2.1)
+                γ̂int                                                                −0.578 ∗ ∗∗
+                                                                                      (−3.7)
+
+                            Table 4.12: Momentum return and the VIX Index
+
+    From columns (1) and (2), it is noticeable that both the bear market indicator and the VIX
+independently forecast future momentum returns. Both coefficients, γ̂B and γ̂V IX are negative
+and statistically significant, suggesting that in periods of high market stress (i.e., bear-markets
+and high market volatility), momentum strategy performs poorly. Column (4) considers the
+interaction between the two variables to capture the performance of the WML portfolio in peri-
+ods of bear-market with high market volatility. The interaction effect coefficient γ̂int , is highly
+statistically significant ( t-statistic= -3.7), and remains negative (-0.578), indicating that mo-
+mentum’s returns are particularly low in periods of bear-markets with high volatility. To con-
+clude even though, I relied on the VIX as a forward-looking indicator of the market’s variance,
+while DM16 used the variance of the daily returns of the market over the 126-days just before
+the start of month t, the results yielded by the analysis are consistent with existing literature.
+
+
+4.3.1      Flash Bear Markets
+In Table 4.13 I use the VIX, as an estimate of the market variance, combined with the bear-
+market indicator IFB(6),t−1 used in the previous section to forecast future WML returns. Each
+column presents the estimated coefficients and t-statistics for a monthly time-series regression,
+over the entire period 1927:01-2020:12, based on Regression 3.9, specified in section 3.3. The
+coefficients γ̂0 and γ̂B are multiplied by one hundred and are in percent per month. While,
+ceteris paribus, Table 4.14 presents the results of Regression 3.10, where the bear-market indi-
+cator IFB(4),t−1 equals one if the cumulative past 4-month return on the market is negative. 5
+
+   In contrast with the previously used bear-market indicator, IB,t−1 , both the new flash bear
+market indicators do not seem to forecast future momentum returns. From column (1) of Table
+4.13 and Table 4.14 The coefficients γ̂B(6) and γ̂B(4) are negative, but not statistically significant.
+
+    5 Significance codes:    *** statistically significant at 0.1%; ** statistically significant at 1%; * statistically
+significant at 5%; ‘ statistically significant at 10%.
+
+
+                                                         42
+However the most interesting results comes from column (4), which considers the interaction
+between the VIX and the flash bear-market indicator variables.
+
+              Coefficient
+                                     (1)           (2)          (3)          (4)
+              γ̂0                  1.68 ∗ ∗     4.72 ∗ ∗∗    4.63 ∗ ∗       0.688
+                                    (2.8)         (3.4)       (3.2)         (0.3)
+              γ̂B(6)                −1.86                    −0.308
+                                   (−1.5)                    (−0.2)
+              γ̂V IX                           −0.179 ∗ ∗    −0.171∗
+                                                (−2.7)       (−2.2)
+              γ̂int(6)                                                    −0.385∗
+                                                                          (−2.5)
+
+                         Table 4.13: Market Timing regression results IBT6M
+
+    This setting is an attempt to capture the performance of the WML portfolio in periods of
+flash bear-market with high market volatility. The interaction effect coefficient γ̂int(6) , is now
+statistically significant (at a 0.05 significance level and of t-statistic= -2.5) and assumes a nega-
+tive value of -0.385. The same reasoning holds also for the coefficient γ̂int(4) which has a value
+of -0.321 (t-statistic = -2.1). The results are consistent with those from Section 4.3. and sug-
+gest that in periods of high market stress, as indicated by flash bear-markets and high market
+variance momentum’s returns are low.
+
+
+
+             Coefficient
+                                    (1)          (2)            (3)           (4)
+             γ̂0                   1.48∗      4.72 ∗ ∗∗     4.88 ∗ ∗∗        1.49
+                                   (2.4)        (3.4)         (3.4)          (0.6)
+             γ̂B(4)               −0.98                       0.65
+                                  (−0.8)                      (0.5)
+             γ̂V IX                           −0.179 ∗ ∗    −0.197 ∗ ∗
+                                               (−2.7)        (−2.6)
+             γ̂int(4)                                                      −0.321∗
+                                                                           (−2.1)
+
+                         Table 4.14: Market Timing regression results IBT4M
+
+
+
+4.4     Crash-proof momentum strategies
+The final part of this chapter builds on the evidence previously mentioned in Section 2.4, con-
+cerning market crash-hedged momentum strategies. More specifically, the following Section
+
+                                                  43
+focuses on explaining the methodology behind the crash-proof momentum portfolios intro-
+duced by Barroso and Santa Clara (2015) [37], DM16 [1], and by Moreira and Muir (2017)
+[38]. Although it would be interesting to investigate the performance of these strategies during
+the most recent covid-19 bear market, such analysis goes beyond the scope of this dissertation.
+Anyway, describing the methods at the basis of the implementation of a crash-proof momentum
+strategy, the following Section is helpful for potential future research addressing this area.
+    As earlier described, the constant-volatility approach presented by Barroso and Santa Clara
+(2015) [37] and the volatility managed portfolios proposed by Moreira and Muir (2017) [38] are
+pretty similar. The former suggests scaling the amount invested in the WML portfolio target-
+ing a precise level of volatility over time. The latter proposes to scale the portfolio’s exposure
+by the inverse of the realized variance to reduce risk-taking during times of high volatility. In
+practice, both strategies manage portfolio’s crash risk by targeting a constant level of volatility
+rather than a constant notional exposure. Thus, the following subsection describes the method-
+ology behind volatility scaling and highlights the differences between the constant volatility
+and the volatility-managed portfolios. To conclude, the last subsection discusses the dynamic
+strategy, which is a more complex strategy specifically designed by DM16 to counter and mit-
+igate momentum crashes [1]. In this case, the additional source of complexity comes from the
+fact that the strategy dynamically adjusts the weight on the momentum portfolio using both the
+forecasted return and variance of the strategy.
+
+    Before diving into the strategies’ methodologies, let us first define the investment environ-
+ment designed. Assuming that an agent, operating in a discrete time setting with T periods
+going from 1 to T, can trade in two assets, a risky asset which is the WML portfolio, and a
+risk-free asset, corresponding to the one-month treasury bill rate. Further assuming that he can
+trade in or out of the risky asset with no cost involved, he can freely assign a fraction wt of the
+amount invested to the momentum portfolio and a fraction 1 − wt to the risk-free asset. Thus,
+the agent can manage the portfolio by determining how to allocate the value of the managed
+portfolio between these two assets at the beginning of each period. In this way, in turbulent
+periods, the agent could decrease its portfolio risk exposure (wt ) by assigning more weight to
+the risk-free asset.
+
+
+4.4.1    Volatility scaling
+Volatility scaling is an asset allocation approach aiming at achieving a stable level of volatility
+in different market states. Such a technique involves leveraging and deleveraging the portfo-
+lio risk exposure according to time-varying expected volatility. By targeting a constant level
+of volatility, investors can maximize expected returns based on a fixed level of volatility over
+time, protecting their portfolios from crash or fat-tail risk.
+
+
+
+                                                44
+    The distribution of returns of the momentum strategy is characterized by a high excess kur-
+tosis and a sizeable negative skewness, implying a very fat left tail. Such a feature suggests
+significant crash risk, indicating relatively long periods over which the momentum strategy
+experiences severe losses or crashes. Barroso and Santa Clara (2015) [37], and Moreira and
+Muir (2017) [38], show that volatility scaling reduces the probability of extreme losses by lim-
+iting the tail risk of extreme returns. In practice, both strategies construct a crash risk-managed
+portfolio by targeting a constant level of volatility rather than a constant notional exposure. Fur-
+thermore, Barroso and Santa Clara highlight that the most crucial benefit from risk managing
+the momentum portfolio comes from the improvements in the higher-order moments, which
+indicates a reduction in crash risk. The authors show that a constant volatility momentum strat-
+egy reduces the excess kurtosis from 18.24 to 2.68, and increases the skewness from -2.47 to
+-0.42.
+    The momentum managed portfolio return is equal to:
+
+                                           σ
+                                          rW ML,t+1 = wt r̃W ML,t+1                                         (4.1)
+
+  Where wt is the weight corresponding to the value of the managed portfolio invested in the
+momentum portfolio. While r̃W ML,t+1 is the buy-and-hold momentum strategy excess return.
+
+   In the constant volatility model proposed by Barroso and Santa Clara [37], the weight is
+equal to:
+
+                                                      σ 2target
+                                               wt =                                                         (4.2)
+                                                       σ̂W2 ML,t
+
+    Here, σ 2target is a constant representing the target level of volatility6 , while σ̂W2 ML,t is
+an estimate of the monthly volatility of the momentum portfolio at time t. In their principal
+analysis Barroso and Santa Clara calculate the variance using the daily returns over the previous
+six months:
+
+                                                ∑125   2
+                                                  j=0 rW ML,dt−1 − j
+                                     σ̂W2 ML,t = 21                                    (4.3)
+                                                       126
+    Where rW ML,d are the daily returns of momentum. Thus the authors use the realized vari-
+ance in the previous six months to scale the exposure to the risky momentum portfolio. Fol-
+lowing this methodology, they showed that for the time period 1927:03–2011:12 on average,
+the weight is 0.90, indicating a slightly less than full exposure to momentum7 .
+
+
+
+
+   6 They chose a target corresponding to an annualized volatility of 12%.
+   7 Their results are robust also using the one-month and three-month realized variances as well as exponentially
+
+weighted moving average (EWMA).
+
+
+                                                      45
+    In the volatility managed portfolio proposed by Moreira and Muir (2017) [38], the weight
+is equal to:
+
+                                                              c
+                                                  wt =                                                         (4.4)
+                                                         σ̂W2 ML,t
+    Here, the term c is a constant that controls the strategy’s average risk exposure. Moreira
+and Muir set c so that the unconditional volatility of the risk-managed portfolio is equal to the
+volatility of the buy and hold momentum portfolio8 . Furthermore, in their main analysis, they
+use the realized variance over the previous month as a proxy for the conditional variance of the
+momentum portfolio over the month t, σ̂W2 ML,t . More specifically, the realized variance is com-
+puted as the square of the monthly standard deviation, where the monthly standard deviation is
+calculated using daily returns:
+
+                                            1              ∑1d=1/22 rW ML,t+d 2
+                            σ̂W2 ML,t =     ∑ (rW ML,t+d −                   )                                 (4.5)
+                                          d=1/22
+                                                                  22
+
+    Following such methodology, Moreira and Muir illustrated that the volatility managed mo-
+mentum portfolio has lower standard deviation during times of recession and crises, which are
+characterized by high volatility. Furthermore, they showed that following a significant market
+crash such as that in October 2008, the strategy initially gets out of the market to avoid an un-
+favorable risk-return trade-off, and then it returns to the market only once the spike in volatility
+decreases 9 .
+
+    The results of Barroso and Santa Clara (2015)[37] and Moreira and Muir (2017) [38] in-
+dicate that volatility scaling momentum returns involves taking substantially less risk during
+recessions and market crises, demonstrating that such a strategy performs exceptionally well
+in avoiding large momentum crashes. Furthermore, a key feature of volatility scaling is its
+simplicity; since it does not rely on any parameter estimation, it can easily be implemented by
+investors in real-time.
+
+
+4.4.2      Dynamic weighting strategy
+In addition to their contribution on momentum crashes, DM16 has also developed an opti-
+mal weighting approach for the momentum portfolio to reduce the strategy’s crash risk. They
+propose an approach that dynamically calibrates the weight placed on the risky asset, the mo-
+mentum portfolio, based on maximizing the strategy’s Sharpe ratio.
+
+
+    8 They denote that the term c has no effect on the strategy’s Sharpe ratio, and thus the fact that they uses the
+
+full sample to compute c did not impact their results.
+     9 Their results are consistent also using the inverse of the expected variance estimated from an AR(1) and the
+
+inverse of the realized volatility rather than the inverse of the realized variance to scale the portfolio’s returns.
+
+
+                                                         46
+    Dynamic weighting requires the estimation of both the conditional mean return r̃W ML,t and
+the conditional variance σ̂W2 ML,t of the momentum strategy over the coming month. More pre-
+cisely, they use their results from the regression of the WML returns on the interaction term
+between the bear market indicator IB,t−1 and the market variance over the preceding six months
+(similar to the specification used in column (4) of table 4.12 in Section 4.3). Furthermore to
+forecast the volatility, they fit the GJR-GARCH model proposed by Glosten et al. (1993) [39]
+to the daily momentum returns10 .
+
+    Thus, in DM16’s framework the agent’s objective function is to maximize the full-period
+in-sample unconditional Sharpe ratio of the managed portfolio, giving an optimal weight on
+the momentum portfolio at time t of:
+
+                                                         1 r̃W ML,t
+                                               wt = (     )                                                    (4.6)
+                                                        2λ σ̂W2 ML,t
+    The formula indicates that the weight assigned to the WML portfolio at time t should be
+proportional to the expected excess return over the next period and inversely proportional to
+the forecasted variance. Where, λ is a constant scalar that controls the unconditional risk and
+return of the dynamic portfolio.11
+
+    To assess the profitability of their model, DM16 compared the annualized Sharpe ratios of
+the dynamic strategy (1.19) with the baseline WML approach (0.682) and with the constant
+volatility strategy (1.04). They document that the proposed portfolio outperforms the constant
+volatility model, which ultimately outperforms the classic WML strategy; it holds across dif-
+ferent periods and asset classes. Furthermore, they explain that the optimal dynamic strategy
+would coincide with the constant volatility model introduced by Barroso and Santa Clara if the
+Sharpe ratios of the momentum strategy were time-invariant. However, given that the return
+of a WML portfolio is negatively related to the forecasted WML volatility, the Sharpe ratio of
+the optimal dynamic portfolio does vary over time. Additionally, while the baseline buy and
+hold WML strategy has a stable weight of 1. The dynamic strategy presents weights varying
+between a maximum of 5.37 and a minimum of -0.604. This is another significant difference
+denoted by DM16: the dynamic weighting strategy has weights that are 3.6 times more volatile
+than the constant volatility strategy. Furthermore, for volatility scaling strategies, the weight
+can not be negative, instead in DM16’s approach the weight goes below zero in 82 out of the
+1,035 months full sample period considered (1927:01-2013:03), which are the months in which
+forecasted return on the WML strategy is negative.
+
+   10 For a more detailed explanation of the design of the dynamic strategy adopted by DM16 see Appendix C.”
+
+Maximum Sharpe ratio strategy” and Appendix D. ”GJR-GARCH forecasts of volatility” in their paper ”Momen-
+tum Crashes” [1].
+   11 In their primary analysis, they pick λ such that the volatility of the dynamic strategy is equal to that of the
+
+CRSP value-weighted index over the entire sample, which is 19%.
+
+
+                                                         47
+    Compared to the volatility scaling approaches, the methodology adopted by DM16 is more
+complicated. While in the former, it is sufficient to pick a target volatility and estimate the
+realized variance over the preceding month. Dynamically weighting needs estimating both the
+expected excess return and the expected variance over the next period. Nevertheless, despite its
+enhanced performance, DM16 recognize that their strategy takes on more leverage and would
+generate higher transaction costs than a volatility scaling approach. To conclude, volatility-
+managed portfolios are profitable and convenient to manage volatility shocks because they are
+simple and easily implementable. However, the dynamic portfolio proposed by DM16, de-
+spite its complex methodology, is specially tailored to reduce the downside risk of momentum
+crashes and ultimately outperforms volatility scaling strategies.
+
+
+
+
+                                              48
+Chapter 5
+
+Robustness Tests
+
+To challenge the robustness of the previously discussed results, the following chapter extends
+the study on the US common stocks to other investment regions and asset classes. Such anal-
+ysis allows us to evaluate momentum’s performance in different international equity and asset
+classes during and after the 2020 covid-19 crisis and to check whether its trend has been con-
+sistent with the strategy’s behavior in the US common stock market. International equity data
+covers the US, UK, Continental Europe, and Japan. While non-equity data covers equity coun-
+try index futures and commodities. Please refer to subsection 3.1.2 for more details regarding
+the data. It should be noted that here, the US equity momentum portfolio is different from the
+WML portfolio analyzed in Chapter 4. The sorting of the momentum portfolios investigated in
+this section is based upon terciles. Thus, the W MLP3−P1 portfolios are long the top tercile, and
+short the bottom tercile of stocks ranked on their returns from month t-12 through month t-2.
+
+
+5.1     Momentum in 2020 across equities and asset classes
+This first section investigates and compares the strategy’s behavior across different investment
+regions and asset classes throughout the 2020 covid-19 crisis. Table 5.1 provides us the annual
+average excess returns (in percentage) yielded by the W MLP3−P1 in 2020 and their respective
+market return for all the equity geographies (US, UK, EU, JP) and asset classes considered
+(CM, FUT).
+
+
+
+                              (US)     (UK)          (EU)   (JP)    (CM)      (FUT)
+          WMLP3−P1           15.39     19.23     11.05       5.23   -32.46      4.25
+          Market             24.84     -10.11    4.84       13.68   -17.66     16.47
+
+Table 5.1: 2020 momentum annual average excess return across geographies and asset classes
+
+   First of all, the US W MLP3−P1 in 2020 had an average annual excess return of 15.39%,
+
+                                                49
+still underperforming the market, which yielded a return of 24.84%. However, the momen-
+tum portfolio based on terciles did better than the previously considered deciles sorted WML
+portfolio, which in 2020 had an excess return of 10.79%. Surprisingly the UK W MLP3−P1 port-
+folio in 2020 had an outstanding performance. In the United Kingdom, the strategy delivered
+an average annual excess return of 19.23%, while the market had a negative return of 10.11%.
+Momentum preserved its premium also in Continental Europe. While the market gained only
+4.84% in 2020, the EU momentum portfolio yielded a return of 11.05%. Concerning Japanese
+equity, the JP W MLP3−P1 delivered a performance of 5.23%, whereas the market index yielded
+a double-digit return of 13.68%. This last result is not surprising since Aness et al. (2013) [8]
+showed that the momentum effect historically failed to generate positive profits in the Japanese
+market.
+     Regarding the other asset classes, commodities W MLP3−P1 had a disastrous performance
+of -32.46%, losing almost more than double the Goldman Sachs Commodity Index (-17.66%).
+Furthermore, in 2020 momentum underperformed its relative market also in the equity country
+index futures market. The MSCI world index delivered a performance of 16.47%, while the
+equity futures W MLP3−P1 had a meager annual return of 4.25%.
+
+   The heterogeneity in return patterns across international equities and asset classes are in line
+with the findings of Zimmerer et al. (2019) [40]. To summarize, in 2020, momentum portfolio
+underperformed the market in four out of the six international asset classes considered. The
+worse crash occurred in the commodity market, followed by the equity country futures market
+and the US and Japanese equity markets. However, the W MLP3−P1 performed very well in the
+UK and Continental Europe. Noticeably, in 2020 momentum had a stellar performance in the
+United Kingdom, delivering an average annual return of 19.23%. Consistently such findings
+suggest that using a strategy that relies on different assets would provide diversification benefits
+and ultimately enhance the performances of the momentum portfolio.
+
+
+5.2     Momentum’s optionality and market-variance effects out-
+        side the US
+In this last section, I investigate whether momentum crash patterns observed in the US common
+equities are also present in the other asset markets. Panel A through C in tables 5.2, 5.3, and 5.4
+present the result of the analysis. The regressions are similar to the one specified in section 3.3
+but for different stock market universes; here, the dependent variable is always the R̃W MLP3−P1 ,t ,
+the terciles WML portfolio return at time t.
+    Respectively Panel A investigates the variation in the alpha and beta of the strategy in bear
+markets and refers to the following specification:
+
+
+
+                                                 50
+                       R̃W MLP3−P1 ,t = (α0 + αB IB,t−1 ) + (β0 + βB IB,t−1 )R̃m,t + ε̃,t                       (5.1)
+
+
+Panel B investigates the strategy’s optionality in bear markets and refers to the following spec-
+ification:
+
+                 R̃W MLP3−P1 ,t = [α0 + αB IB,t−1 ] + [β0 + IB,t−1 βB + I˜U,t βB,U ]R̃m,t + ε̃,t                (5.2)
+
+    Panel C includes an additional explanatory variable, the realized daily market variance,
+annualized, over the preceding six months. Such setting investigates the relation between the
+R̃W MLP3−P1 ,t and the market’s variance:
+
+
+                                             2                            2
+      R̃W MLP3−P1 ,t = [α0 + αB IB,t−1 + αV σm,t−1 ] + [β0 + IB,t−1 βB + σm,t−1 βV ]R̃m,t + ε̃,t                (5.3)
+
+    The only difference between the three tables stands in the bear-market indicator used.
+Please note that specifications in table 5.2 include the standard IB,t−1 as an ex-ante Bear mar-
+ket indicator. While regressions, in table 5.3 rely on the IFB(6),t−1 , 6-month flash bear-market
+indicator. Finally, specifications in table 5.4 consider the IFB(4),t−1 , 4-month flash bear-market
+indicator. 12
+
+    Panel A of table 5.2 shows that, in bull markets, the abnormal returns of the momentum
+strategy are significantly positive for all regions and asset classes except for Japan. Further-
+more, the coefficients IB R̃m,t are negative and highly statistically significant, indicating that the
+beta of the momentum portfolio is notably lower in bear markets. Such results hold across all
+the other stock markets and asset classes considered. More precisely, in the US and JP stock
+markets, the cross-sectional momentum strategy has betas 0.56 lower during bear markets. The
+EU momentum strategy beta drops by 0.47, while in the UK, it falls by 0.4. Also, the mar-
+ket betas of the momentum strategy implemented in the commodities and equity futures asset
+classes are notably more negative in bear markets.
+    Panel B of table 5.2 investigates whether the cross-sectional momentum strategies in all
+equity regions and asset classes exhibit conditional betas and payoffs similar to writing call
+options on the respective index market. The coefficient IB R̃m,t IU,t is of the right sign for all
+of the assets considered except for equity futures. However, for this subsample, the strategy
+exhibits statistically significant optionality only for the European and Japanese equity markets
+and for commodities.
+    In Panel C, σ̂m2 assesses the relation between market variance and the future abnormal return
+
+   12 Significance codes:    *** statistically significant at 0.1%; ** statistically significant at 1%; * statistically
+significant at 5%; ‘ statistically significant at 10%.
+
+
+                                                         51
+of momentum strategies. Such coefficients are not statistically significant but are of the right
+sign (negative) for the UK, EU, JP, and CM markets. Moreover, σ̂m2 R̃m,t indicates that higher ex
+ante market variance is associated with more negative momentum strategy beta. This relation
+is highly statistically significant in the US and EU equity markets. Such outcomes indicate that
+the strategy shows a conditionally large negative beta in periods of market stress, characterized
+by high ex-ante market variance. Such a situation will ultimately cause an underperformance
+of the momentum strategy if the market return at time t is positive.
+    Overall the results are consistent with the findings earlier discussed and with the research
+of DM16 [1].
+
+Coefficient
+                   (US)         (UK)         (EU)          (JP)        (CM)         (FUT)
+α̂0               6.90∗      11.50 ∗ ∗∗     7.45 ∗ ∗       1.08        7.02∗       5.29 ∗ ∗
+                  (2.5)         (3.9)        (2.9)        (0.3)        (1.9)        (2.7)
+IB               −3.74         −3.96          1.12         0.69       −3.69          1.57
+                 (−0.5)        (−0.7)        (0.2)        (0.1)       (−0.6)        (0.3)
+R̃m,t             0.106       −0.009          0.06      0.237 ∗ ∗∗   0.46 ∗ ∗∗      0.15‘
+                  (0.8)       (−0.18)        (1.6)        (5.0)        (8.7)        (1.8)
+IB R̃m,t        −0.56 ∗ ∗∗   −0.40 ∗ ∗∗    −0.47 ∗ ∗∗   −0.56 ∗ ∗∗   −0.76 ∗ ∗∗   −0.31 ∗ ∗∗
+                 (−5.4)        (−4.9)       (−8.0)       (−8.3)       (−9.6)       (−4.7)
+
+Panel B
+α̂0                6.90∗      11.50 ∗ ∗∗   7.45 ∗ ∗        1.08        7.02∗        5.29 ∗ ∗
+                   (2.5)         (3.9)       (2.9)        (0.3)        (1.9)         (2.7)
+IB                −4.03         −3.94         0.5          0.98       −2.95            0.9
+                  (−0.6)        (−0.7)       (0.1)        (1.8)       (−0.5)         (0.1)
+R̃m,t              0.106       −0.009        0.06       0.237 ∗ ∗∗   0.46 ∗ ∗∗       0.15‘
+                   (0.8)       (−0.18)       (1.6)        (5.0)        (8.7)         (1.8)
+IB R̃m,t          −0.404        −0.16       −0.22∗        −0.23       −0.30‘        −0.29∗
+                  (−1.6)        (−0.8)      (−1.9)       (−1.3)       (−1.9)        (−2.0)
+IB R̃m,t IU,t     −0.20         −0.33      −0.57 ∗ ∗     −0.47∗      −1.08 ∗ ∗∗       0.13
+                  (−0.6)        (−1.3)      (−3.1)       (−2.2)       (−4.7)         (0.6)
+
+Panel C
+α̂0               6.80∗      12.07 ∗ ∗     9.04 ∗ ∗∗      1.80         8.32∗         3.23
+                  (2.0)        (3.0)          (3.3)       (0.4)        (2.0)        (1.2)
+IB               −4.36        −3.94          −3.87        0.98        −2.95        −0.51
+                 (−0.6)       (−0.7)          (0.9)       (0.1)       (−0.5)       (−0.1)
+σ̂m2              0.02        −0.01          −0.04       −0.01        −0.04          0.09
+                  (0.2)       (−0.1)         (−1.0)      (−0.3)       (−0.7)        (1.3)
+R̃m,t             0.08         0.03         0.19 ∗ ∗∗   0.24 ∗ ∗∗    0.50 ∗ ∗∗      0.10∗
+                  (1.1)        (0.4)          (4.4)       (4.1)        (8.0)        (2.0)
+IB R̃m,t        −0.51 ∗ ∗∗   −0.41 ∗ ∗∗    −0.34 ∗ ∗∗   −0.56 ∗ ∗∗   −0.73 ∗ ∗∗   −0.27 ∗ ∗∗
+                 (−4.7)       (−4.9)         (−5.9)      (−8.1)       (−9.0)       (−3.8)
+σ̂m2 R̃m,t       −4.31∗       −1.04        −4.59 ∗ ∗∗    −0.09        −1.08        −2.97‘
+                 (−2.1)       (−0.7)         (−6.9)      (−0.1)       (−1.3)       (−1.9)
+
+Table 5.2: Time series regressions for other asset classes and for international Equity markets
+
+
+                                               52
+5.2.1         Flash bear markets
+To conclude, table 5.3 and table 5.4 present the results of time series regression, for interna-
+tional equities and other asset classes, using respectively the new flash bear market indicators,
+IB,6m and IB,4m .
+
+Coefficient
+                      (US)         (UK)          (EU)          (JP)         (CM)          (FUT)
+α̂0                   7.37∗       9.83 ∗ ∗    9.31 ∗ ∗∗        3.45         7.78∗        6.17
+                      (2.4)        (3.2)        (3.6)          (1.0)        (2.1)        (2.9)
+IB,6m                −2.99          1.24       −6.33          −6.12        −11.49∗      −2.80
+                     (−0.5)        (0.2)       (−1.5)         (−1.2)       (−2.0)       (−0.7)
+R̃m,t                 0.15         0.02         0.03         0.23 ∗ ∗∗    0.42 ∗ ∗∗      0.15‘
+                      (1.1)        (0.4)        (0.7)          (4.9)        (7.5)        (1.7)
+IB,6M R̃m,t         −0.43 ∗ ∗∗   −0.33 ∗ ∗∗   −0.37 ∗ ∗∗    −0.52 ∗ ∗∗    −0.65 ∗ ∗∗   −0.22 ∗ ∗∗
+                     (−4.5)       (−4.4)       (−6.2)         (−7.8)       (−8.1)       (−3.4)
+
+Panel B
+α̂0                   7.37∗       9.83 ∗ ∗     9.31 ∗ ∗∗      3.45           7.78∗         6.17
+                      (2.4)        (3.2)         (3.6)        (1.0)          (2.1)         (2.9)
+IB,6M                −0.18          1.24        −8.34        −4.82         −11.49∗         0.82
+                    (−0.01)        (0.2)        (−0.9)       (−0.4)         (−0.2)        (0.09)
+R̃m,t                 0.15         0.02          0.03       0.23 ∗ ∗∗      0.42 ∗ ∗∗       0.15‘
+                      (1.1)        (0.4)         (0.7)        (4.9)          (7.5)         (1.7)
+IB,6M R̃m,t         −0.479∗         0.07       −0.36 ∗ ∗    −0.52 ∗ ∗      −0.38∗         −0.19
+                     (−2.1)        (0.4)        (−2.9)       (−3.0)         (−2.2)        (−1.4)
+IB,6M R̃m,t IU,t      0.28        −0.47∗       −0.51 ∗ ∗     −0.11        −0.95 ∗ ∗∗     −0.014
+                      (0.9)       (−2.0)        (−2.6)       (−0.5)        (−3.98)       (−0.07)
+
+
+Table 5.3: Time series regressions for other asset classes and for international Equity mar-
+kets(IBT6M)
+
+    Panel A in table 5.3 shows that momentum strategy returns are lower when the cumulative
+market return in the past six months is negative. This result holds for each region and asset
+class except for the UK equity market, but only in the commodities market is the coefficient
+significant. Interestingly in panel A of table 5.4, considering an even shorter bear market, the
+coefficient IB,4m is negative for all the assets considered, except for the equity futures asset
+classes (FUT). With this setting, the estimates for the UK and EU equity markets become sig-
+nificant at the 5% level, indicating that in these equity markets, the momentum strategy returns
+are significantly lower when the cumulative market return in the past four months is negative.
+Such results are weakly consistent with the earlier evidence that market-adjusted momentum
+returns are lower in periods of bear and flash bear markets. Nevertheless, in line with results of
+table 5.2, the coefficients IB,6m R̃m,t and IB,4m R̃m,t are both negative and statistically significant
+for all asset classes considered. Thus, the momentum portfolio’s market beta is notably more
+negative for both flash bear markets specifications. Such findings are highly consistent with the
+evidence presented earlier in Section 4.2.
+
+                                                  53
+Coefficient
+                      (US)           (UK)          (EU)           (JP)         (CM)           (FUT)
+α̂0                 8.62 ∗ ∗      14.81 ∗ ∗∗    11.5 ∗ ∗∗        2.21         6.16‘         5.45 ∗ ∗
+                     (2.8)          (4.7)         (4.4)         (0.6)         (1.6)           (2.5)
+IB,4m                −5.57         −11.7∗        −9.38∗        −3.74          −7.25          0.297
+                    (−1.0)         (−2.3)        (−2.3)        (−0.7)        (−1.2)          (0.08)
+R̃m,t                 0.10          −0.08        −0.04         0.13 ∗ ∗      0.40 ∗ ∗        0.19∗
+                     (0.7)         (−0.7)        (−0.9)         (2.8)         (2.9)           (2.2)
+IB,4m R̃m,t        −0.336 ∗ ∗∗     −0.18∗       −0.27 ∗ ∗∗    −0.36 ∗ ∗∗    −0.64 ∗ ∗∗     −0.263 ∗ ∗∗
+                    (−3.5)         (−2.3)        (−4.4)        (−5.2)        (−7.9)         (−4.1)
+
+Panel B
+α̂0                  8.62 ∗ ∗     14.81 ∗ ∗∗     11.5 ∗ ∗∗       2.21         6.16‘         5.45 ∗ ∗
+                      (2.8)         (4.7)          (4.4)         (0.6)        (1.6)           (2.5)
+IB,4m                 −3.16        −11.05∗        −7.49∗        −2.37         −6.67           0.62
+                     (−0.2)        (−2.3)         (−2.0)        (−0.4)       (−1.2)          (0.07)
+R̃m,t                  0.10         −0.08         −0.04        0.13 ∗ ∗      0.40 ∗ ∗        0.19∗
+                      (0.7)        (−0.7)         (−0.9)         (2.8)        (2.9)           (2.2)
+IB,4m R̃m,t           −0.36         0.036         −0.18        −0.56 ∗ ∗     −0.36∗         −0.295∗
+                     (−1.6)         (0.2)         (−1.5)        (−3.1)       (−2.1)         (−2.2)
+IB,4m R̃m,t IU,t       0.17        −0.40‘         −0.47∗         0.09       −1.01 ∗ ∗∗        0.09
+                      (0.5)        (−1.6)          (0.1)         (0.4)       (−4.1)           (0.4)
+
+
+Table 5.4: Time series regressions for other asset classes and for international Equity markets
+(IBT4M)
+
+    Let’s now focus on Panel B of tables 5.3 and 5.4 which investigate whether the option-
+ality present in momentum strategies in bear markets are also present in flash bear markets.
+Interestingly the coefficients IB,6M R̃m,t IU,t and IB,4M R̃m,t IU,t for the US momentum portfolio
+are positive. Despite not being statistically significant, Such outcome is inconsistent with the
+results presented earlier in table 5.2, and the analysis carried out in section 4.2 for the decile
+sorted WML US market portfolio. With this new subsample and methodology, the tercile sorted
+US momentum strategy does not manifest any optionality when the market return upswings fol-
+lowing periods of flash bear markets. However, momentum optionality appears to be present
+in all the other equity regions and asset classes considered for both flash bear market indica-
+tors. Indeed, the estimates of IB,6M R̃m,t IU,t and IB,4M R̃m,t IU,t are all negative, but are statistically
+significant only for commodities and for the UK and EU markets.
+    In summary, there are strong momentum effects in each region and asset classes considered
+except Japan. Similar to the behavior manifested by the US WML portfolio analyzed in Chapter
+4, there is a significant time variation in the betas of the momentum portfolios in bear markets
+and periods of high ex-ante market variance. Thus in panic periods, the momentum strategy ex-
+hibits a conditionally negative beta in all the other equity markets and asset classes considered.
+The option-like features of momentum returns are strong and significant in commodities and
+the European and United Kingdom equity markets. Such findings also hold for short periods of
+
+
+                                                    54
+economic downturns, flash bear markets. They further suggest that cross-sectional momentum
+strategies manifest significantly lower returns when the market returns profitable after panic
+periods of declining markets and high volatility.
+
+
+
+
+                                             55
+Chapter 6
+
+Limitations and Conclusions
+
+6.1     Limitations
+Despite having carried out the analysis with care and attention, this research suffers from cer-
+tain limitations. Firstly, I used monthly returns of US common stocks to construct the WML
+portfolio. Moreover, I assumed that the monthly rate for the VIX index is equal to the daily
+rate at the beginning of each month and that such a daily rate remains valid throughout the
+month. In this way, I converted the daily series of the VIX index into a monthly series. Using
+higher-frequency data would have yielded more timely and precise estimates of returns and
+volatilities. Second, the returns and performance statistics presented in this study should be
+interpreted with caution. They are not representative of a real-life implementable strategy since
+they do not account for transaction costs. Third, this analysis focuses solely on cross-sectional
+momentum. It would be interesting to extend the study to investigate the behavior of different
+types of momentum strategies, such as residual or time-series momentum.
+
+
+6.2     Conclusions and avenues for future research
+DM16 showed that momentum investing is particularly risky and suffers severe crashes follow-
+ing periods of economic recessions. The main objective of such master thesis was to extend
+their sample till the end of 2020 to assess whether the cross-sectional momentum strategy also
+crashed during the year of the covid-19 financial crisis.
+    Firstly, the analysis confirms a substantial premium over the entire sample period consid-
+ered. Consistently with the existing literature, such a result holds for all the equity markets and
+asset classes considered, except for Japan. However, focusing on the last decade, it appears
+that momentum has lost its historical premium in terms of unit of return earned per unit of
+risk assumed. Indeed, for the period going from January 2010 to December 2020, the WML
+portfolio had a meager Sharper ratio of 0.23 while the market delivered a SR of 0.95. Focusing
+on 2020, this dissertation confirms that momentum crashed throughout the year of the covid-
+
+
+                                                56
+19 financial crisis. The most terrible performance occurred in April when the market returned
+to be profitable following the economic decline caused by the global pandemic; in such pe-
+riod, the strategy had a return of -28.2%. April’s 2020 crash ranked 12th among the list of the
+worst fifteen monthly returns experienced by the WML portfolio over the whole sample period
+analyzed.
+    The second part of this dissertation examines momentum’s option-like behavior described
+by DM16. The analysis shows that the strategy exhibits significantly lower abnormal returns
+and more negative betas in bear markets. Furthermore, once the market returns to be positive,
+the WML portfolio ends up having large negative exposure to systematic risk. Such features
+indicate that in bear markets, momentum is effectively shorting a call option on the market.
+This is to say when the market bounces back after a financial crisis, the WML portfolio suffers
+severe crashes. Collectively the results appear consistent with the findings of DM16. However,
+given that the covid-19 crisis was the shortest bear market experienced in the SP500 history,
+I introduced two new indicator variables to capture short periods of economic downturn, flash
+bear markets. The results confirm a notable time variation in the betas of the momentum port-
+folio in flash bear markets. Interestingly, the strategy’s optionality also holds when the market
+bounces back after periods in which the past cumulative six-month market return is negative.
+While when the past cumulative four-month market return is negative, the optionality is of
+the correct sign but is not statistically significant anymore. Moreover, using the VIX index, I
+showed that momentum’s returns are remarkably lower in periods of high ex-ante market vari-
+ance and that the strategy performs very poorly in bear markets and flash bear markets, with
+high market volatility.
+    As a robustness test, I extended the analysis carried out on the US common stocks to other
+investment regions and asset classes. The strategy exhibits significantly more negative betas
+in bear markets, flash bear markets, and periods of high ex-ante market variance in all the
+different markets considered. In terms of excess returns, in 2020, the momentum portfolio un-
+derperformed the market in four out of the six international asset classes considered. However,
+in the UK and EU equity markets, the WML portfolio delivered excess returns that exceed the
+market’s expectations. The present findings suggest that using a strategy relying on different
+equity markets and asset classes would provide diversification benefits and ultimately improve
+the performances of the momentum portfolio.
+
+    Looking forward, there are several ways in which this research can be developed. Future
+works should investigate and compare the different types of momentum strategies’ behavior
+in this last decade. It would be interesting to see whether the crash patterns exhibited by the
+cross-sectional momentum strategy are also present in different types of momentum. Further-
+more, it would be interesting to assess how the hedging strategies built to reduce momentum’s
+crash risk, such as the volatility managed portfolios and the DM16 dynamic hedging strategy,
+behaved throughout the shortest bear market in the SP500 history, the 2020 financial crisis.
+
+                                               57
+Future research should also investigate and compare the performance of various risk factors in
+times of short but intense periods of economic downturn. To conclude, future investigations
+are necessary to examine the performance of a momentum 2.0 approach in different market
+environments and periods of high market stress.
+
+
+
+
+                                             58
+Bibliography
+
+ [1] Kent Daniel and Tobias J Moskowitz. “Momentum crashes”. In: Journal of Financial
+     Economics 122.2 (2016), pp. 221–247.
+ [2] Narasimhan Jegadeesh and Sheridan Titman. “Returns to buying winners and selling
+     losers: Implications for stock market efficiency”. In: The Journal of finance 48.1 (1993),
+     pp. 65–91.
+ [3] Burton G Malkiel and Eugene F Fama. “Efficient capital markets: A review of theory
+     and empirical work”. In: The journal of Finance 25.2 (1970), pp. 383–417.
+ [4] Thomas J George and Chuan-Yang Hwang. “The 52-week high and momentum invest-
+     ing”. In: The Journal of Finance 59.5 (2004), pp. 2145–2176.
+ [5] David Blitz, Joop Huij, and Martin Martens. “Residual momentum”. In: Journal of Em-
+     pirical Finance 18.3 (2011), pp. 506–521.
+ [6] Tobias J Moskowitz, Yao Hua Ooi, and Lasse Heje Pedersen. “Time series momentum”.
+     In: Journal of financial economics 104.2 (2012), pp. 228–250.
+ [7] Alina F Serban. “Combining mean reversion and momentum trading strategies in foreign
+     exchange markets”. In: Journal of Banking & Finance 34.11 (2010), pp. 2720–2727.
+ [8] Clifford S Asness, Tobias J Moskowitz, and Lasse Heje Pedersen. “Value and momentum
+     everywhere”. In: The Journal of Finance 68.3 (2013), pp. 929–985.
+ [9] Bryan Y Lim, Jiaguo George Wang, and Yaqiong Yao. “Time-series momentum in nearly
+     100 years of stock returns”. In: Journal of Banking & Finance 97 (2018), pp. 283–296.
+[10] Werner FM De Bondt and Richard Thaler. “Does the stock market overreact?” In: The
+     Journal of finance 40.3 (1985), pp. 793–805.
+[11] Narasimhan Jegadeesh and Sheridan Titman. “Profitability of momentum strategies: An
+     evaluation of alternative explanations”. In: The Journal of finance 56.2 (2001), pp. 699–
+     720.
+[12] Ronen Israel and Tobias J Moskowitz. “The role of shorting, firm size, and time on
+     market anomalies”. In: Journal of Financial Economics 108.2 (2013), pp. 275–301.
+[13] Christopher C Geczy and Mikhail Samonov. “215 Years of Global Multi-Asset Momen-
+     tum: 1800-2014”. In: URL: http://papers. ssrn. com/sol3/papers. cfm (2015).
+
+                                              59
+[14] K Geert Rouwenhorst. “International momentum strategies”. In: The journal of finance
+     53.1 (1998), pp. 267–284.
+[15] K Geert Rouwenhorst. “Local return factors and turnover in emerging stock markets”.
+     In: The journal of finance 54.4 (1999), pp. 1439–1464.
+[16] Cliff S Asness, John M Liew, and Ross L Stevens. “Parallels between the cross-sectional
+     predictability of stock and country returns”. In: Journal of Portfolio Management 23.3
+     (1997), p. 79.
+[17] John Okunev and Derek White. “Do momentum-based strategies still work in foreign
+     currency markets?” In: Journal of Financial and Quantitative Analysis (2003), pp. 425–
+     447.
+[18] Claude B Erb and Campbell R Harvey. “The strategic and tactical value of commodity
+     futures”. In: Financial Analysts Journal 62.2 (2006), pp. 69–97.
+[19] Eugene F Fama and Kenneth R French. “Multifactor explanations of asset pricing anoma-
+     lies”. In: The journal of finance 51.1 (1996), pp. 55–84.
+[20] Bruce D Grundy and J Spencer Martin Martin. “Understanding the nature of the risks
+     and the source of the rewards to momentum investing”. In: The Review of Financial
+     Studies 14.1 (2001), pp. 29–78.
+[21] Mark M Carhart. “On persistence in mutual fund performance”. In: The Journal of fi-
+     nance 52.1 (1997), pp. 57–82.
+[22] Daniel Kahneman and Amos Tversky. “On the interpretation of intuitive probability: A
+     reply to Jonathan Cohen.” In: (1979).
+[23] Nicholas Barberis, Andrei Shleifer, and Robert Vishny. “A model of investor sentiment”.
+     In: Journal of financial economics 49.3 (1998), pp. 307–343.
+[24] Harrison Hong and Jeremy C Stein. “A unified theory of underreaction, momentum trad-
+     ing, and overreaction in asset markets”. In: The Journal of finance 54.6 (1999), pp. 2143–
+     2184.
+[25] Harrison Hong, Terence Lim, and Jeremy C Stein. “Bad news travels slowly: Size, ana-
+     lyst coverage, and the profitability of momentum strategies”. In: The Journal of Finance
+     55.1 (2000), pp. 265–295.
+[26] Kent Daniel, David Hirshleifer, and Avanidhar Subrahmanyam. “Investor psychology
+     and security market under-and overreactions”. In: the Journal of Finance 53.6 (1998),
+     pp. 1839–1885.
+[27] Andy CW Chui, Sheridan Titman, and KC John Wei. “Individualism and momentum
+     around the world”. In: The Journal of Finance 65.1 (2010), pp. 361–392.
+[28] Mark Grinblatt and Bing Han. “Prospect theory, mental accounting, and momentum”.
+     In: Journal of financial economics 78.2 (2005), pp. 311–339.
+
+                                              60
+[29] Jungshik Hur and Vivek Singh. “How do disposition effect and anchoring bias interact
+     to impact momentum in stock returns?” In: Journal of Empirical Finance 53 (2019),
+     pp. 238–256.
+[30] Timothy C Johnson. “Rational momentum effects”. In: The Journal of Finance 57.2
+     (2002), pp. 585–608.
+[31] Tarun Chordia and Lakshmanan Shivakumar. “Momentum, business cycle, and time-
+     varying expected returns”. In: The Journal of Finance 57.2 (2002), pp. 985–1019.
+[32] Michael J Cooper, Roberto C Gutierrez Jr, and Allaudeen Hameed. “Market states and
+     momentum”. In: The journal of Finance 59.3 (2004), pp. 1345–1365.
+[33] Doron Avramov et al. “Momentum and credit rating”. In: The Journal of Finance 62.5
+     (2007), pp. 2503–2520.
+[34] Ebenezer Asem and Gloria Y Tian. “Market dynamics and momentum profits”. In: Jour-
+     nal of Financial and Quantitative Analysis (2010), pp. 1549–1562.
+[35] Chris Stivers and Licheng Sun. “Cross-sectional return dispersion and time variation in
+     value and momentum premiums”. In: Journal of Financial and Quantitative Analysis
+     (2010), pp. 987–1014.
+[36] Shanker P Kothari and Jay Shanken. “Stock return variation and expected dividends:
+     A time-series and cross-sectional analysis”. In: Journal of Financial Economics 31.2
+     (1992), pp. 177–210.
+[37] Pedro Barroso and Pedro Santa-Clara. “Momentum has its moments”. In: Journal of
+     Financial Economics 116.1 (2015), pp. 111–120.
+[38] Alan Moreira and Tyler Muir. “Volatility-managed portfolios”. In: The Journal of Fi-
+     nance 72.4 (2017), pp. 1611–1644.
+[39] Lawrence R Glosten, Ravi Jagannathan, and David E Runkle. “On the relation between
+     the expected value and the volatility of the nominal excess return on stocks”. In: The
+     journal of finance 48.5 (1993), pp. 1779–1801.
+[40] Stamos Zimmerer and Rohweder. “Is momentum-driven investing dead ?” In: Active is:
+     Allianz Global Investors Update magazine III/2019 ().
+
+
+
+
+                                            61
+Summary
+
+Introduction and Research Questions
+Over the years, momentum strategies have proven to have robust profitability records, yielding
+substantial returns across several time periods, geographies, and asset classes. The idea be-
+hind such a strategy is to ride the upward and downward trends generated by rising and falling
+securities by betting on the continuation of such movements in the short term. Thanks to
+its persistence and pervasiveness, it is considered one of the oldest and most prominent trading
+strategies. Despite the outstanding positive performance yielded by momentum investing, some
+authors have noticed that the strategy ”is not all roses”. Momentum experiences occasional but
+severe crashes that could result in significant losses for an investor. Research published by
+Daniel and Moskowitz (2016) [1] (hereafter DM16) illustrates that momentum strategy crashes
+and goes through persistent negative returns in a situation of high market stress. The authors
+demonstrated a dramatic time variation in the winner and loser portfolio’s betas around a crisis
+and identified this phenomenon as the source of such reversal. Such time-varying exposure
+to market risk infers that momentum strategies behave as selling call options on the market.
+Consequently, such crashes are predictable, momentum strategies, because of their large neg-
+ative beta performs very poorly when there is an upswing in returns after a bear market with
+high expected volatility. In this regard, momentum strategies’ biggest crashes occurred when
+the market rebounded after the lows caused by three of the greatest financial crises ever experi-
+enced: the great depression (August 1932 -77.5%), the dot-com bubble (January 2001 -46.8%),
+and the Sub-prime crisis (April 2009 -45.8%). Times of crisis, economic downturns, and pe-
+riods of uncertainty are very instructive. However, bears have different shapes and sizes, and
+particularly the 2020 pandemic-driven financial crisis has been very unusual. The covid-19
+bear market has been the shortest in the SP500 history. In this regard, the most recent corona
+crisis offers the opportunity to extend and update some of the previously described evidence
+on momentum investing and its crashes. Thus, the aim of this thesis is two-fold. First, it em-
+pirically investigates the cross-sectional momentum strategy’s profitability and characteristics
+over the years. Second, this work contributes to the research on momentum crashes, extending
+the time period of the analysis performed by DM16 [1] till the end of 2020, to include the
+latest covid-19 bear market. Furthermore, given that the 2020 virus-driven bear market was the
+
+
+                                               62
+shortest ever manifested, I investigate whether momentum crashes are evident after short peri-
+ods of economic downturn, ”flash bear markets”. Finally, to check the robustness of the results
+obtained, the final part of the analysis investigates momentum crash patterns across different
+geographies ( US, UK, Japan, and Continental Europe) and asset classes ( equity country index
+futures and commodity futures). With such premises in mind, the main research question that
+the present paper aims to answer is the following:
+
+How did the Momentum strategy for the US common stock market perform during and just
+after the current covid-19 crisis? Was there a crash, and if so, is it comparable to the ones
+highlighted by Daniel and Moskowitz ?
+
+Additionally, a set of sub-questions addressed through this project are:
+
+    • How did the Momentum strategy behave during the last four decades?
+
+    • What is the WML portfolio’s expected performance in different market environments
+      (bear markets, flash bear markets, and times of high expected volatility)?
+
+    • To what extent does the market Beta of the momentum portfolio vary when the market
+      upswings after periods of bear markets and flash bear markets ?
+
+    • How did the momentum strategy perform in different investment regions and asset classes
+      during the year of the covid-19 crisis?
+
+    To begin with, it appears that momentum has lost its historical premium in terms of unit
+of return earned per unit of risk assumed. For the period going from January 2010 to Decem-
+ber 2020, the Sharpe ratio of the momentum portfolio is much lower than that of the market.
+Moreover, focusing on 2020, it is noticeable that the momentum strategy crashed following
+the covid-19 driven financial downturn. More precisely, 2020 appears twice among the list of
+the fifteen worst momentum monthly returns. Respectively, in April and November 2020, the
+Winner minus loser portfolio delivered a return of -28.2% and -26.2%. Furthermore, I show
+that the momentum portfolio beta becomes large and negative when the market rebounds fol-
+lowing periods of bear market (-1.277). Interestingly, the same optionality also exists after
+shorter periods of economic downturn, when the past six-month cumulative market return has
+been negative. Indeed, when the market returns positive after periods of flash bear markets,
+the momentum portfolio beta is -1.247, and thus the strategy suffers severe crashes also in this
+case. Moreover, using the VIX as a proxy measure of the future market variance, I find that
+in periods of bear market and flash bear market with high market volatility, the momentum
+strategy returns are particularly low. Finally, I extend the analysis carried on the US equity
+market to the United Kingdom, Japan, and Continental Europe equity markets and commodity
+futures and equity index futures. Intriguingly, the option-like features of momentum returns are
+also significant in commodities and the European and United Kingdom equity markets. Such
+findings hold as well for short periods of economic downturns, flash bear markets.
+
+                                              63
+Literature Review
+Momentum is a trend-following investing approach, in which traders bet that an asset price
+intensely moving in a given direction will continue to follow such trend in the near future.
+The strategy consists of constructing a long-short portfolio that buys assets with recent solid
+performance identified as the winners and sells the losers, which are assets that have recently
+underperformed. The first evidence of momentum strategies’ profitability dates back to 1993
+when Jegadeesh and Titman [2] illustrated a positive relationship between past and future re-
+turns, claiming that past stock returns can be used to predict and form portfolios with positive
+alphas. Their pioneering work set the theoretical and methodological foundations for a plethora
+of subsequent future studies. In fact, the methodology for portfolio construction introduced by
+Jegadeesh and Titman (1993) [2] will be referred to as the cross-sectional or pure momentum
+strategy. Many academicians started investigating the persistence and pervasiveness of such
+investing approach confirming its profitability across different time periods, financial markets,
+and asset classes.The time consistency of the strategy is confirmed by Geczy and Samonov
+(2015) [13], in the so-called ”world’s longest back-test”, in which they illustrated momentum’s
+persistence from 1801 to 2012. Another broad strain of literature focused on exploiting the
+momentum effect for equities in different investment regions and different asset classes. Such
+evidence were integrated by Asness et al. (2013) [8], confirming the ubiquitous power of price
+momentum. They highlighted such effect in different stock markets (UK, Japan, and continen-
+tal Europe) and across country indices, exchange-traded futures contracts, currencies, bonds,
+and commodities.
+    Since a strategy that generates profitable returns trading on past prices contradicts the Effi-
+cient Market Hypothesis (EMH), the existence of momentum represents a significant challenge
+to empirical asset pricing models. The momentum phenomenon, among other investment-
+related anomalies, generated a debate on whether markets are efficient or not. Supporters of the
+traditional Market efficiency theory argue that such strategies yield higher returns as compensa-
+tion for facing higher risks, concluding that momentum is linked to a yet unobserved risk factor.
+On the other hand, other studies building on the behavioural finance theory believe that mar-
+kets are inefficient. They claim that investors’ decision-making process and interpretation of
+information are influenced by psychological and cognitive bias, ultimately leading to security
+mispricing and arbitrage opportunities in the market. Thus, over the years, the literature tried to
+explain the risk premia associated with the momentum effect through two contrasting theories,
+the behavioural and the risk-based approach; however, the question remains unresolved.
+    There are no free lunches in finance, momentum’s impressive positive returns and Sharpe
+ratios are associated with significant risks; and ultimately, the strategy suffers occasional severe
+crashes. DM16 published the most complete and comprehensive work on momentum crashes in
+2016 [1]. DM16 document the presence of long periods over which past loser significantly out-
+performed past winners, and consequently a cross-sectional momentum strategy goes through
+
+
+                                                64
+persistent negative returns. They argue that crashes are a robust characteristic of the WML
+strategy and that they are predictable. DM16 document that the most severe crashes occured in
+periods of high market stress. Such periods are also known as ”panic states” and refer to when
+there is an upswing in returns after a bear market period with high ex-ante expected volatility.
+Furthermore, they probed that crashes are mainly attributable to losers’ performances. Specif-
+ically, during periods of panic states, stocks in the winner decile go up, but the loser portfolio
+goes up much higher; thus, the short side outperforms the long side, and as a result, the WML
+strategy experiences huge losses. DM16 infer that the momentum strategy’s large negative
+returns are driven by large changes in the market beta of the WML portfolio. In this regard,
+they examine conditional risk measures, investigating the time-varying betas of the winner and
+loser momentum deciles. The betas of past-return sorted portfolios have a great time-varying
+exposure to systematic factors. Thus, in periods of economic downturns, the momentum port-
+folio would go long on low beta stocks (past winners) and short high beta stocks (past losers).
+Consequently, when the market rebounds quickly, past losers’ expected returns are very high,
+and the strategy experiences huge losses because the momentum portfolio ends up having a
+conditionally large negative beta. Furthermore, they conclude that the dramatic time variation
+found in the loser portfolio’s market beta makes the momentum strategy behave like a written
+call option on the market, in bear markets. Which is to say, when the market goes down, the
+strategy benefits a little, but then it yields huge losses once the market rebounds sharply. Ad-
+ditionally, in line with the strategy’s option-like behaviour in bear markets, by using ex-ante
+volatility estimates, they show that the WML portfolio expected return is a decreasing function
+of the future market volatility. Thus, the momentum strategy performs very poorly during bear
+markets with high volatility. DM16 asserted their findings’ robustness testing the consistency
+of their results for multiple periods, different equity markets, and alternative asset classes. They
+further find that the WML strategy suffers crashes in all markets and asset classes. The driver
+of such reversals is the optionality of losers in bear markets, which is a common feature of
+momentum strategies since it is consistently present in different equity markets, and different
+assets.
+    Some authors tried to develop new alternative models to hedge and protect the WML port-
+folio against the risk of such significant losses. Barroso and Santa Clara (2015) [37], and
+Moreira and Muir (2017) [38], show that volatility scaling reduces momentum’s probability of
+extreme losses by limiting the tail risk of extreme returns. In practice, both strategies construct
+a crash risk-managed portfolio by targeting a constant level of volatility rather than a constant
+notional exposure. To conclude DM16 have also developed an alternative framework to reduce
+the strategy’s crash risk. In this regard, they proposed a dynamically weighted version of the
+momentum portfolio, where the relative weights of the winner and loser deciles are based on
+the maximixation of the strategy’s Sharpe ratio using their estimates for the forecasted return
+and variance of the cross-sectional momentum approach. Despite its complex methodology
+DM16 empirically demonstrate that dynamic hedging outperforms volatility scaling.
+
+                                                65
+Data and Methodology
+Data collection and the dataset construction intentionally emulate as precisely as possible the
+procedures adopted in DM16. However, since the crisis undergone by the market in 2020 is
+quite different from the ones highlighted by the authors, some methodological accommodation
+needs to be done. The principal data sources are the Center for Research and Security Prices
+(CRSP) and Ken French’s data library. The former was used to retrieve the Us common stocks’
+monthly returns for the entire time period (Jan 1927 - Dec 2020). The monthly returns are then
+used to construct the monthly momentum deciles portfolios. In contrast, I gathered the market
+return and the risk-free rate from Ken French’s data library. To investigate the relationship
+between the returns of the momentum portfolio and the expected market volatility, as a proxy
+measure of future market variance I considered the daily data of the VIX Index, available on the
+Chicago Board Options Exchange website (CBOE). To conclude and assess the robustness of
+the results, I extend the analysis on momentum crashes to four different equity markets and two
+different asset classes. The data can be downloaded from the AQR Capital Management web-
+site. The international equity data refers to the US, UK, Japan, and Continental Europe equity
+markets. The non-equity data covers twenty-seven different commodity futures and Equity in-
+dex futures across 18 developed equity markets. Concerning the portfolio formation procedure,
+the ranking period goes from 12 months before to one month before the formation date.Then,
+based on such metric, firms are placed into one of ten decile portfolios where portfolio 10
+includes Winners, while portfolio 1 represents the Losers. The holding period is one month.
+Portfolios are buy and hold within each month and are constantly rebalanced at the end of each
+month. The difference between the returns of the Winner and Loser portfolios represents the
+self-financing ”Winner Minus Loser” portfolio (WML).
+    The empirical investigation starts with an overview of the monthly momentum portfolio
+excess return characteristics over different periods. In addition to the average returns, I compute
+other relevant metrics such as the volatility, the skewness, and the annualized Sharpe Ratio
+of each portfolio decile. Moreover, I estimate the deciles’ alpha and betas by fitting a full-
+period unconditional market model regression to the WML portfolio and to the other deciles.
+Furthemore, as an attempt to capture whether momentum crashes are also present after short
+but intense periods of economic downturn, I add two ”Flash-Bear” market indicator as a new
+explanatory variables.
+
+   1. IFB(6),t−1 : ex-ante Flash bear market indicator, assumes the value of 1 if the cumulative
+      CRSP value-weighted index return in the past 6 months is negative, and zero otherwise.
+
+   2. IFB(4),t−1 : ex-ante Flash bear market indicator, assumes the value of 1 if the cumulative
+      CRSP value-weighted index return in the past 4 months is negative, and zero otherwise.
+
+    The second set of regressions consist of a conditional CAPM with a bear market indicator
+as an additional variable. Such model analyzes the relationship and the differences between
+
+                                                66
+the expected returns and market betas of the WML portfolios for the two different bear mar-
+ket specifications introduced. After, to investigate the strategy’s performance when the market
+rebounds following a bear market and to assess to which extent the market betas of the WML
+portfolio differ in different market states, in the next set of regressions I added a contemporane-
+ous upmarket indicator as an additional regressor. Then, since the value of an option increases
+with the market variance, the strategy’s optionality further suggests that the expected return of
+the momentum portfolio should be negatively related to the future variance of the market. To
+conclude and to challenge the robustness of the results, using similar specifications, I extended
+the analysis carried out on the US common stocks to other investment regions and asset classes.
+
+
+Results
+First of all, in line with the existing literature, a substantial momentum premium appears over
+the last century. The winners have significantly outperformed the losers, with a mean excess
+return of 15.8%, against the -1.4% yielded by Decile 1. Consequently, the momentum WML
+portfolio had an annual average excess return of 17.2%, largely outperforming the market,
+which has an average excess return of 8.1%. The Beta of the momentum portfolio is negative,
+-0.59, and the unconditional CAPM alpha is 21.9% per year ( t-statistic = 7.5). Considering
+a risk-adjusted perfomance metric, such as the Sharpe ratio, the WML portfolio had a higher
+rate of return per unit of risk with respect to the market. The momentum portfolio had a full
+period SR of 0.57, while that of the market was 0.43. Furthermore, observing the skewness
+an interesting pattern emerges. The winner portfolios are considerably more negatively skewed
+than the loser portfolios. Winners become more negatively skewed as we move to more extreme
+deciles. Such pattern supports the evidence that the high returns experienced by the winners
+deciles and by the momentum strategy are partly a compensation for taking on more skewness
+risk. Having a closer look at the characteristics of the momentum decile portfolios through
+the 80s and the 90s, an even stronger premium emerges. The WML portfolio (market) excess
+returns in the 80s and the 90s are respectively 25.8% and 28.5% ( 8.5% and 12.7%). Taking
+into consideration the realized volatility of returns, in the 80s the momentum strategy had a
+Sharpe ratio of 1.21 against the value of 1.12 in the 90s. However, both the metrics are almost
+more than the double of the whole sample SR previously estimated which is 0.57. Concerning
+the skewness, the results align with the pattern found earlier.
+    Some more intriguing findings arise when we consider the first twenty years of the 2000s.
+The time period considered is very turbulent. More precisely, through these ten years, financial
+markets underwent two of the most severe financial crisis ever experienced, the dot-com bubble
+and the subprime mortgages crisis. Regarding the first decade of the twenty-first century, it is
+critical to notice that, on average, the market had a negative excess return of 1.7%. Interest-
+ingly, in this kind of market condition, the WML portfolio returns exhibit a significantly higher
+volatility of 47.02% (the full period volatility estimate for the WML portfolio is 30.0%). How-
+
+                                                67
+ever, the momentum strategy on average overperformed the market, yielding an annual average
+excess return of 8.8%. Nevertheless, the small Sharpe ratio (0.187) and the monthly skewness
+of -1.79 (which almost doubles the values of the 80s and the 90s) suggest that the strategy
+suffered from severe crashes. Such intuition is confirmed by DM16, which have shown that 7
+out of the 15 worst momentum monthly returns took place in the first decade of the twenty-first
+century. The most exciting findings emerge from the analysis of the last decade, which is the
+period going from January 2010 till December 2020. The WML had a disappointing perfor-
+mance, yielding an average annual excess return of 6.8%, while the market excess return has
+been 14.1%. Taking into account volatilities, the difference in terms of performance becomes
+even more pronounced. The market’s Sharpe ratio (0.95) is more than four times momentum’s
+factor Sharpe ratio (0.23). The short leg of the portfolio mainly drives such underperformance.
+In this last decade buying losers turned out to be a strategy more profitable than investing in the
+WML portfolio. Noticeably, in this last considered decade, none of the ten deciles portfolios
+examined had a higher SR than the market. I consider the SR over alphas, because since the
+former is a measure of unit of return earned per unit of absolute risk assumed by an investments,
+it is a more meaningful performance metric. Among all the different periods considered, it is
+the first time that the SR of the WML portfolio is much lower than that of the market. Thus, it
+appears that momentum has lost its historical premium.
+     To conclude this first section, I investigated momentum portfolio’s characteristics through-
+out 2020. In 2020 the market yielded an annual excess return of 24.84 %, which is more than
+double the return produced by the momentum factor (10.79%). The WML portfolio still ex-
+hibits a positive alpha of 40.9%. However, in terms of unit per return earned per unit of risk
+assumed, in 2020, momentum has largely underperfomed the market. The market’s SR is four-
+time as high as the WML’s SR ( 0.89 vs 0.20 ). Also, in this case, the underperformance of the
+momentum factor is mainly attributable to the short leg of the portfolio. In 2020, investing in
+past losers, on a unit of return per unit of risk basis, turned out to be more fruitful than investing
+in the momentum factor. This last year has been a challenging and stormy period in which fi-
+nancial markets experienced high variance, and went through a ”flash” but painful bear market.
+Furthemore, in 2020 momentum’s market beta assumed a value of -1.21, suggesting that when
+the market rebounds quickly momentum will crash because it has a conditionally large negative
+beta. Such a situation perfectly matches the context that leads to momentum crashes described
+in DM16, periods of high market stress characterized by sudden upswings in the market return
+after a period of bear market. Thus, one would expect a crash of the momentum strategy in
+2020. Indeed, we can confirm that the WML portfolio crashed during the year of the covid-19
+financial crisis. Analysing the returns pattern manifested by the momentum in 2020, it is no-
+ticeable that the strategy recorded its best performance in March, earning a return of 22.5%,
+while the worst crash took place in April 2020 when it yielded a negative 28.2%. Similarly, in
+November, the WML portfolio failed again, recording a return of -26.2%. Interestingly both
+crashes occur in months in which the market rose, after two consecutive months of negative
+
+                                                 68
+returns. To put into perspective and have a clearer idea of the entity of such crashes I listed the
+15 worst returns to the momentum portfolio, 2020 appears twice in this list. More precisely,
+April’s crash ranked 12th, while November’s ranked 14th.
+
+     The next part of the analysis investigates more formally the beta variation and how the
+mean return of the WML portfolio is related to time variation in market risk. The results are
+consistent with the existing literature. The market beta assumes a negative value of -0.592 with
+a t-statistic of -13.2. Additionally, the α̂0 is positive (1.832% per month) and highly statistically
+significant (t-statistic = 7.5) , confirming a strong premium over the full period. Then, I added
+the indicator variable IB,t−1 to investigate how the market beta of the WML portfolio varies
+in bear markets. In line with the findings of DM16, the β̂B is negative and highly statistically
+significant (t-statistic = -12.8). Indicating that momentum’s market beta is -1.073 lower in bear
+markets. Furthermore, the coefficient α̂B indicates that the premium yielded by the strategy
+is significantly lower in such periods. The intercept is almost zero but remains positive. I
+included an auxiliary variable, the IU,t to capture the extent to which the up-and down-market
+betas of the momentum portfolio differ. When the contemporaneous market return is negative,
+the WML portfolio beta is equal to -0.821. However when the market rebounds during or
+following periods of declining markets momentum’s beta becomes -1.277. The coefficient
+β̂B,U is negative and statistically significant (t-statistic = -1.7), meaning that in bear markets,
+momentum is effectively shorting a call option on the market. Which is to say, when the
+market bounces back after a financial crisis, the WML portfolio suffers severe crashes. Overall
+the results yielded by this first set of regressions are highly consistent with the research carried
+out by DM16 [1].
+     Next, to capture whether momentum crashes manifested after short but intense periods of
+economic downturn, I replaced the bear-market indicator variable with the two new ”Flash-
+Bear” market indicators. The coefficients of the new pair indicators, β̂B , are negative and
+highly statistically significant, indicating a consistent time variation in the beta of the momen-
+tum portfolio in short bear markets. Momentum’s beta is -0.950 (-0.664) lower when the past
+cumulative six (four) month market return is negative. In such periods, the intercept declines
+but remains well above one. When the market rebounds, following a flash bear market lasting
+6 month, momentum’s beta is -1.247. In this case the coefficient β̂B,U is negative, -0.519, and
+statistically significant (t-statistic = -2). In contrast, for declining markets lasting four months,
+the coefficient β̂B,U is still negative, -0.113, but it is not statistically significant anymore. Con-
+sequently, the momentum’s beta in such circumstances is closer to zero -0.81. In short the
+discussed findings suggest that when the market bounces back after periods in which the past
+cumulative six (or more) months market return is negative, the WML portfolio suffers severe
+crashes. Consistently with the 24-month bear market indicator, momentum investing is effec-
+tively shorting a call option on the market also for more concise bear markets lasting only six
+months. Interestingly, such optionality did not manifest for the shortest bear market considered,
+
+                                                 69
+the coefficient is of the right sign but is not statistically significant.
+    The findings earlier discussed indicate that the WML portfolio, in bear markets, behaves
+like shorting a call option on the market. Furthermore, given that the value of a call option
+is positively related to the market variance, such optionality suggests that the expected returns
+of the momentum strategy should be a declining function of the future variance of the market.
+Both the bear market indicator and the VIX independently forecast future momentum returns.
+Both coefficients, γ̂B and γ̂V IX are negative and statistically significant, suggesting that in pe-
+riods of high market stress (i.e., bear-markets and high market volatility), momentum strategy
+performs poorly. The interaction effect coefficient γ̂int , which is designed to capture periods
+of high market stress, is highly statistically significant ( t-statistic= -3.7), and remains negative
+(-0.578), confirming that momentum’s returns are particularly low in periods of bear-markets
+with high volatility. However, both the new flash bear market indicators do not seem to forecast
+future momentum returns. The coefficients γ̂B(6) and γ̂B(4) are negative, but not statistically sig-
+nificant. Nevertheless, considering the interaction between the VIX and the flash bear-market
+indicator variables, I find that the interaction effect coefficient γ̂int(6) , is now statistically sig-
+nificant (at a 0.05 significance level and of t-statistic= -2.5) and assumes a negative value of
+-0.385. The same reasoning holds also for the coefficient γ̂int(4) which has a value of -0.321
+(t-statistic = -2.1). The results suggest that in periods of high market stress, as indicated by
+flash bear-markets and high market variance momentum’s returns are low.
+
+
+Robustness Tests
+To challenge the robustness of the previously discussed results, I extended the study on the
+US common stocks to other investment regions and asset classes. Such analysis allows us to
+evaluate momentum’s performance in different international equity and asset classes during
+and after the 2020 covid-19 crisis and to check whether its trend has been consistent with the
+strategy’s behavior in the US common stock market. International equity data covers the US,
+UK, Continental Europe, and Japan. While non-equity data covers equity country index futures
+and commodities.
+    In 2020, momentum portfolio underperformed the market in four out of the six interna-
+tional asset classes considered. The worse crash occurred in the commodity market, followed
+by the equity country futures market and the US and Japanese equity markets. However, the
+W MLP3−P1 performed very well in the UK and Continental Europe. Noticeably, in 2020 mo-
+mentum had a stellar performance in the United Kingdom, delivering an average annual return
+of 19.23%. Consistently such findings suggest that using a strategy that relies on different
+assets would provide diversification benefits and ultimately enhance the performances of the
+momentum portfolio.
+    The last section of the chapter investigate whether momentum crash patterns observed in
+the US common equities are also present in the other asset markets. Overall the results are
+
+                                                  70
+consistent with the findings earlier discussed and with the research of DM16 [1]. There are
+strong momentum effects in each region and asset classes considered except Japan. Similar to
+the behavior manifested by the US WML portfolio analyzed in Chapter 4, there is a significant
+time variation in the betas of the momentum portfolios in bear markets and periods of high ex-
+ante market variance. Thus in panic periods, the momentum strategy exhibits a conditionally
+negative beta in all the other equity markets and asset classes considered. The option-like
+features of momentum returns are strong and significant in commodities and the European
+and United Kingdom equity markets. Such findings also hold for short periods of economic
+downturns, flash bear markets. They further suggest that cross-sectional momentum strategies
+manifest significantly lower returns when the market returns profitable after panic periods of
+declining markets and high volatility.
+
+
+Conclusions
+The main objective of such master thesis was to extend the sample used in DM16 till the end
+of 2020 to assess whether the cross-sectional momentum strategy also crashed during the year
+of the covid-19 financial crisis.
+    Firstly, the analysis confirms a substantial premium over the entire sample period consid-
+ered. Consistently with the existing literature, such a result holds for all the equity markets and
+asset classes considered, except for Japan. However, focusing on the last decade, it appears
+that momentum has lost its historical premium in terms of unit of return earned per unit of
+risk assumed. Indeed, for the period going from January 2010 to December 2020, the WML
+portfolio had a meager Sharper ratio of 0.23 while the market delivered a SR of 0.95. Focusing
+on 2020, this dissertation confirms that momentum crashed throughout the year of the covid-
+19 financial crisis. The most terrible performance occurred in April when the market returned
+to be profitable following the economic decline caused by the global pandemic; in such pe-
+riod, the strategy had a return of -28.2%. April’s 2020 crash ranked 12th among the list of the
+worst fifteen monthly returns experienced by the WML portfolio over the whole sample period
+analyzed.
+    The second part of this dissertation examines momentum’s option-like behavior described
+by DM16. The analysis shows that the strategy exhibits significantly lower abnormal returns
+and more negative betas in bear markets. Furthermore, once the market returns to be positive,
+the WML portfolio ends up having large negative exposure to systematic risk. Such features
+indicate that in bear markets, momentum is effectively shorting a call option on the market.
+This is to say when the market bounces back after a financial crisis, the WML portfolio suffers
+severe crashes. Collectively the results appear consistent with the findings of DM16. However,
+given that the covid-19 crisis was the shortest bear market experienced in the SP500 history,
+I introduced two new indicator variables to capture short periods of economic downturn, flash
+bear markets. The results confirm a notable time variation in the betas of the momentum port-
+
+                                                71
+folio in flash bear markets. Interestingly, the strategy’s optionality also holds when the market
+bounces back after periods in which the past cumulative six-month market return is negative.
+While when the past cumulative four-month market return is negative, the optionality is of
+the correct sign but is not statistically significant anymore. Moreover, using the VIX index, I
+showed that momentum’s returns are remarkably lower in periods of high ex-ante market vari-
+ance and that the strategy performs very poorly in bear markets and flash bear markets, with
+high market volatility.
+    As a robustness test, I extended the analysis carried out on the US common stocks to other
+investment regions and asset classes. The strategy exhibits significantly more negative betas
+in bear markets, flash bear markets, and periods of high ex-ante market variance in all the
+different markets considered. In terms of excess returns, in 2020, the momentum portfolio un-
+derperformed the market in four out of the six international asset classes considered. However,
+in the UK and EU equity markets, the WML portfolio delivered excess returns that exceed the
+market’s expectations. The present findings suggest that using a strategy relying on different
+equity markets and asset classes would provide diversification benefits and ultimately improve
+the performances of the momentum portfolio.
+    Despite having carried out the analysis with care and attention, this research suffers from
+certain limitations. Firstly, I used monthly returns of US common stocks to construct the WML
+portfolio. Moreover, I assumed that the monthly rate for the VIX index is equal to the daily
+rate at the beginning of each month and that such a daily rate remains valid throughout the
+month. In this way, I converted the daily series of the VIX index into a monthly series. Using
+higher-frequency data would have yielded more timely and precise estimates of returns and
+volatilities. Second, the returns and performance statistics presented in this study should be
+interpreted with caution. They are not representative of a real-life implementable strategy since
+they do not account for transaction costs. Third, this analysis focuses solely on cross-sectional
+momentum.
+    Looking forward, there are several ways in which this research can be developed. It would
+be interesting to assess how the hedging strategies built to reduce momentum’s crash risk,
+such as the volatility managed portfolios and the DM16 dynamic hedging strategy, behaved
+throughout the shortest bear market in the SP500 history, the 2020 financial crisis. Future
+research should also investigate and compare the performance of various risk factors in times
+of short but intense periods of economic downturn.
+
+
+
+
+                                               72
+

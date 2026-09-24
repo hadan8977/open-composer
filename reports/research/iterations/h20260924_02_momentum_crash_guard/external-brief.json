@@ -1,0 +1,225 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260924_02_momentum_crash_guard",
+  "strategy_name": "momentum_crash_guard_h20260924_02",
+  "source_spec_path": "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml",
+  "spec_hash": "72d9392e9da002d0fba5653f849de261727f5f9cc3fac75b9e2ac7b4fc6473c3",
+  "spec_hashes": {
+    "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml": "72d9392e9da002d0fba5653f849de261727f5f9cc3fac75b9e2ac7b4fc6473c3"
+  },
+  "generated_at": "2026-09-24T12:35:00Z",
+  "generated_before_backtest": true,
+  "objective": "Card H-20260924-02 asks whether a DAILY crash guard -- an exposure multiplier in [0,1] applied to the unchanged T1 20-session momentum book (top 30 of the largest 500 names by 12-1 momentum, overlapping cohorts), computed from information through the prior close and effective at the next open, remainder in cash -- can bring the book to anchor-window (2024-01-08..2026-09-16) max drawdown <= 35% while keeping CAGR >= 50%, and beat a calendar-shift placebo, using rules taken from the published momentum-crash literature (Daniel & Moskowitz 2016 bear/panic state; Barroso & Santa-Clara 2015 realized-vol scaling; a market-crash circuit breaker and/or book-level stop) rather than an invented mechanism. Up to 6 candidates, each family required, thresholds either published or computed only on 2016-01-04..2023-09-15.",
+  "decision": "proceed",
+  "existing_solution_comparison": "The two required mechanisms are published, not invented here: Daniel & Moskowitz (2016, JFE, NBER w20439, claim dm2016_panic_states_definition) define momentum 'panic' states as a 24-month trailing bear market combined with high 126-day trailing market variance; Barroso & Santa-Clara (2015, JFE, claim bsc2015_scale_by_forecasted_variance) scale a momentum book by the inverse of a 126-trailing-day realized-variance forecast toward a constant target. The third required family (a market-crash circuit breaker and/or book-level stop) reuses a published, real-world threshold for the market leg -- the SEC's actual 7% Level-1 market-wide circuit breaker (claim secgov_mwcb_levels) -- rather than an invented number, and this iteration's own book-level stop threshold is computed only from development-window (2016-01-04..2023-09-15) book behavior using the same 1.5x(dd)x0.5 clipped-to-[12%,30%] formula docs/plan-strategy-factory-2026-09-22.zh.md section 1 already uses for sleeve kill-switches, substituting the development window for the anchor window that formula normally reads (since the anchor window may not be used to fit any threshold here). The only prior LOCAL test of a related idea is H-20260918-01/L-20260918-01 (refuted): a monthly-cadence trend gate and volatility target on a DIFFERENT book construction (mom252_21/vol63, monthly formation, top-500 universe, top-50 equal weight via the kernel-loop weight-schedule engine) failed to beat SPMO on both CAGR and drawdown, and its trend gate's 'improvement' did not beat a +/-21-session calendar-shift placebo (60-80% of shifted seeds matched or beat it). What is new here: (a) the DIFFERENT, card-specified T1 20-session book from signal_card.py (top-30-of-500, overlapping 20-session cohorts, not the monthly kernel-loop book L-20260918-01 tested); (b) a DAILY guard (L-20260918-01 only tested gates read at the book's own monthly/weekly rebalance cadence, never a guard updated every session); (c) published DM/BSC/circuit-breaker mechanisms, not a home-grown SPY/QQQ 200-day SMA gate; (d) the placebo is a calendar shift of the GUARD's OWN daily multiplier series specifically (1-20 sessions), evaluated on anchor Sharpe, not select Sharpe.",
+  "negative_experiments_checked": "H-20260918-01/L-20260918-01 (refuted, reports/research/hypotheses/H-20260918-01-risk-controlled-momentum-vs-spmo.md and reports/research/lessons/L-20260918-01.md): on a different (monthly, kernel-loop) momentum book, 15 cells of {volatility target x trend gate} never beat SPMO on both CAGR and drawdown simultaneously; volatility targeting only slid along the same risk-return line (best risk-adjusted ratio 1.59 vs SPMO's 1.77), and the trend gate's apparent drawdown improvement (0.6pp) did not beat a +/-21-session calendar-shift placebo (60-80% of 5 seeds matched or exceeded it). This is the direct motivation for testing a DAILY guard here (L-20260918-01's gates were read only at the book's own rebalance cadence) and for requiring every candidate here to clear its own calendar-shift placebo (G3) before any 'it helped' claim is made. It does not by itself refute a daily guard on the T1 book, which was never tested.",
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "dm2016_panic_states_definition",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    },
+    {
+      "claim_id": "dm2016_dynamic_strategy_doubles_sharpe",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    },
+    {
+      "claim_id": "bsc2015_scale_by_forecasted_variance",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    },
+    {
+      "claim_id": "bsc2015_target_12pct",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    },
+    {
+      "claim_id": "alphaarchitect2022_longonly_not_deep_crash",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    },
+    {
+      "claim_id": "alphaarchitect2022_dierkes_krupski_ci_results",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    },
+    {
+      "claim_id": "tommijohnsen2025_75th_percentile_rule",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    },
+    {
+      "claim_id": "josephpach2025_march_crash_scale",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    },
+    {
+      "claim_id": "paretoquant2026_gs_momentum_basket",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    },
+    {
+      "claim_id": "luiss2021_flash_bear_not_significant",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    },
+    {
+      "claim_id": "secgov_mwcb_levels",
+      "source_card_path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "used_for": "momentum_crash_guard_mechanism_and_threshold_grounding"
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "dm2016_panic_states_definition",
+      "url": "https://www.nber.org/system/files/working_papers/w20439/w20439.pdf",
+      "published_or_updated_at": "2014-08-01",
+      "source_type": "paper",
+      "credibility": "nber_working_paper_published_jfe_2016_highly_cited",
+      "core_claim": "Momentum crashes cluster in bear-market + high-volatility 'panic' states; DM define a 24-month bear indicator and 126-day trailing market variance as the two ingredients.",
+      "project_applicability": "Exact, published definition basis for CG-DM's bear+high-vol panic gate.",
+      "reflection": "Long-only book may not exhibit DM's crash mechanism (concentrated in the short leg); disclosed as an open question this candidate tests empirically, not assumed."
+    },
+    {
+      "claim_id": "dm2016_dynamic_strategy_doubles_sharpe",
+      "url": "https://www.nber.org/system/files/working_papers/w20439/w20439.pdf",
+      "published_or_updated_at": "2014-08-01",
+      "source_type": "paper",
+      "credibility": "nber_working_paper_published_jfe_2016_highly_cited",
+      "core_claim": "A fully dynamic (GJR-GARCH mean/variance) weighting scheme roughly doubles WML's Sharpe ratio historically.",
+      "project_applicability": "Sets the honest ceiling for what a much simpler binary panic gate could plausibly achieve; motivates testing rather than assuming CG-DM will match this.",
+      "reflection": "This iteration deliberately does not attempt the full GJR-GARCH machinery (out of scope, calibrated on long-short WML, no direct long-only translation); CG-DM is a disclosed simplification."
+    },
+    {
+      "claim_id": "bsc2015_scale_by_forecasted_variance",
+      "url": "http://www.snifferquant.com/gyantal/Incode/papers/Momentum%20Has%20Its%20Moments(scaling%20Momentum%20by%20vol),2014.pdf",
+      "published_or_updated_at": "2015-04-01",
+      "source_type": "paper",
+      "credibility": "jfe_2015_widely_cited_asset_pricing_paper",
+      "core_claim": "Momentum's own trailing 126-day realized variance (from daily squared returns) forecasts its near-term risk well enough that inverse-variance scaling to a constant target nearly doubles the Sharpe ratio and reduces kurtosis from 18.24 to 2.68.",
+      "project_applicability": "Exact, published formula for CG-BSC-daily; this iteration applies it to the long-only T1 book's own daily net returns, updated every session rather than monthly.",
+      "reflection": "Daily updating (vs. the paper's monthly) raises turnover from more frequent multiplier changes; this iteration prices that turnover through the same cost model as the base book rather than assuming it away."
+    },
+    {
+      "claim_id": "bsc2015_target_12pct",
+      "url": "http://www.snifferquant.com/gyantal/Incode/papers/Momentum%20Has%20Its%20Moments(scaling%20Momentum%20by%20vol),2014.pdf",
+      "published_or_updated_at": "2015-04-01",
+      "source_type": "paper",
+      "credibility": "jfe_2015_widely_cited_asset_pricing_paper",
+      "core_claim": "BSC's own target volatility (12% annualized) is a fixed published constant, not fit to any evaluation window.",
+      "project_applicability": "Confirms the target-setting discipline (fixed, not window-fit) that CG-BSC-daily follows using a development-window-only median instead of reusing 12% verbatim, because the target volatility is book-specific.",
+      "reflection": "Document why 12% itself is not reused: it is a WML-specific constant; using a mismatched fixed target would either always bind (long-only book far more volatile) or never bind (far less volatile), so a book-appropriate, still-out-of-sample target is used instead."
+    },
+    {
+      "claim_id": "alphaarchitect2022_longonly_not_deep_crash",
+      "url": "http://web.archive.org/web/20250317091530/https://alphaarchitect.com/avoiding-momentum-crashes/",
+      "published_or_updated_at": "2022-08-04",
+      "source_type": "industry_standard",
+      "credibility": "ria_research_blog_frequently_cited_factor_investing_commentary",
+      "core_claim": "Long-only momentum is less exposed to the short-leg-driven 'deep crash' mechanism than long-short momentum, per DM's own beta-asymmetry finding.",
+      "project_applicability": "Directly informs how to interpret a null or rare-trigger result for CG-DM on this long-only book: expected, not a bug.",
+      "reflection": "Used to pre-register an honest expectation (CG-DM may add little because the classic crash mechanism is short-leg-driven), not to assume the guard is unnecessary."
+    },
+    {
+      "claim_id": "alphaarchitect2022_dierkes_krupski_ci_results",
+      "url": "http://web.archive.org/web/20250317091530/https://alphaarchitect.com/avoiding-momentum-crashes/",
+      "published_or_updated_at": "2022-08-04",
+      "source_type": "industry_standard",
+      "credibility": "ria_research_blog_frequently_cited_factor_investing_commentary",
+      "core_claim": "Published crash-risk-management schemes reduce but do not eliminate momentum crash magnitude, even when combining multiple signals.",
+      "project_applicability": "Calibrates this iteration's expectations: a DD<=35% gate is a meaningfully high bar even relative to published state-of-the-art crash management, not a trivial target.",
+      "reflection": "Used to avoid over-claiming if a candidate helps only partially; partial improvement without clearing G1 is still reported honestly as a partial/negative result, not reframed as a pass."
+    },
+    {
+      "claim_id": "tommijohnsen2025_75th_percentile_rule",
+      "url": "https://tommijohnsen.substack.com/p/is-managing-momentum-crash-risk-with",
+      "published_or_updated_at": "2025-08-14",
+      "source_type": "industry_standard",
+      "credibility": "independent_finance_phd_substack_summarizing_peer_reviewed_2024_paper",
+      "core_claim": "A full regime switch to reversal in high-volatility months reportedly beats volatility scaling at removing crash losses, but requires shorting -- out of this iteration's long-only, [0,1]-multiplier candidate family.",
+      "project_applicability": "Explains why this iteration's candidate set (constrained to long-only [0,1] multipliers) should not be expected to match a full long-short regime-switch scheme, and bounds the honest ceiling for a 'guard' that only ever de-risks to cash.",
+      "reflection": "Confirms the task's candidate-family scope (exposure multiplier + cash, no short leg) is deliberately narrower than the best-performing published mechanism found this session; noted as a real ceiling, not treated as refuting the narrower approach."
+    },
+    {
+      "claim_id": "josephpach2025_march_crash_scale",
+      "url": "https://josephpach.substack.com/p/march-2025-momentum-crash-driven",
+      "published_or_updated_at": "2025-03-24",
+      "source_type": "industry_standard",
+      "credibility": "independent_investment_advisor_substack_market_commentary",
+      "core_claim": "A real, fast (three-week), deleveraging-driven momentum-factor crash occurred in March 2025, not preceded by a slow bear market.",
+      "project_applicability": "Used as a named, dated stress event to check post-hoc (not to fit thresholds to) whether any candidate's guard was active around March 2025 in the select window, and whether a slow bear indicator like CG-DM could plausibly have helped.",
+      "reflection": "Motivates including a fast-reacting mechanism (CG-STOP's book-level drawdown trigger, CG-MKT-STOP's single-day circuit breaker) alongside the slow CG-DM bear indicator, since this event suggests slow regime indicators may miss fast, leverage-driven crashes."
+    },
+    {
+      "claim_id": "paretoquant2026_gs_momentum_basket",
+      "url": "https://paretoquant.substack.com/p/monthly-close-4-momentum-crash-rotation",
+      "published_or_updated_at": "2026-07-05",
+      "source_type": "industry_standard",
+      "credibility": "independent_quant_newsletter_market_commentary",
+      "core_claim": "A large (>=24% from peak), fast momentum-factor drawdown occurred within calendar-2026, inside this iteration's own holdout window.",
+      "project_applicability": "This iteration's own daily book-return series is checked directly against its own data for a 2026 drawdown episode rather than relying on this source's exact date; used only to confirm such an episode is worth looking for, not as a threshold input.",
+      "reflection": "Because the exact date is ambiguous across secondary sources, no candidate threshold or window boundary is fit to it; it is disclosure-only context for interpreting the holdout-window result."
+    },
+    {
+      "claim_id": "luiss2021_flash_bear_not_significant",
+      "url": "https://tesi.luiss.it/32203/1/718131_EL%20GHORAYEB_ALESSIO.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "paper",
+      "credibility": "university_masters_thesis_non_peer_reviewed",
+      "core_claim": "Shortening DM's 24-month bear-market lookback to 4 or 6 months removes its standalone forecasting power for future momentum returns; only bear-plus-variance interactions remain significant.",
+      "project_applicability": "Justifies keeping CG-DM's bear indicator at the published 24-month window (not shortening it for faster reaction) and keeping the high-variance condition as a required second leg of the panic-state definition.",
+      "reflection": "This is negative evidence against a design shortcut (a faster bear indicator) this iteration does not take, specifically because this source shows it would not be evidence-based."
+    },
+    {
+      "claim_id": "secgov_mwcb_levels",
+      "url": "https://www.investor.gov/introduction-investing/investing-basics/glossary/stock-market-circuit-breakers",
+      "published_or_updated_at": "unknown",
+      "source_type": "regulatory_docs",
+      "credibility": "sec_official_investor_education_regulatory_source",
+      "core_claim": "7% single-day S&P 500 decline is the actual, published Level 1 market-wide circuit breaker threshold.",
+      "project_applicability": "Exact published trigger level for CG-MKT-STOP; re-entry duration (a portfolio-management choice the SEC rule does not address) is separately disclosed as computed from development-window data where possible, else a stated round number.",
+      "reflection": "Using a real regulatory threshold avoids fitting the market-crash trigger to any of this iteration's own windows; the re-entry rule (not covered by the published threshold) is the part that still needs local, disclosed specification."
+    }
+  ],
+  "topic_coverage": [
+    "daniel_moskowitz_2016_bear_panic_state_definition_and_dynamic_strategy_ceiling",
+    "barroso_santaclara_2015_126day_realized_vol_scaling_formula_and_target",
+    "long_only_vs_long_short_crash_mechanism_asymmetry",
+    "published_crash_indicator_combinations_do_not_reach_zero_crash_risk",
+    "full_regime_switch_to_reversal_as_an_out_of_scope_stronger_alternative",
+    "post_2020_dated_momentum_crash_events_march_2025_and_2026",
+    "sec_market_wide_circuit_breaker_published_threshold",
+    "shortened_bear_indicator_lookback_lacks_standalone_forecast_power"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "dm2016_panic_states_definition",
+      "effect": "Confirmed DM's published panic-state definition requires BOTH a 24-month bear indicator AND high 126-day trailing market variance, not the bear indicator alone.",
+      "revision": "cg_dm_implemented_as_bear_and_high_vol_AND_gate_not_bear_indicator_alone"
+    },
+    {
+      "driver": "luiss2021_flash_bear_not_significant",
+      "effect": "Shortened (4- or 6-month) bear-indicator lookbacks lack standalone forecasting power in an independent replication.",
+      "revision": "cg_dm_keeps_dm_published_24_month_lookback_not_shortened_for_speed"
+    },
+    {
+      "driver": "bsc2015_target_12pct",
+      "effect": "BSC's own 12% target is calibrated to long-short WML's own volatility, not transferable unchanged to a concentrated long-only top-30 book.",
+      "revision": "cg_bsc_daily_target_set_to_the_t1_books_own_development_window_median_realized_vol_not_bsc_12pct_literal_reuse"
+    },
+    {
+      "driver": "secgov_mwcb_levels",
+      "effect": "A real, published single-day market-wide circuit breaker level (7%) exists and is usable as a non-fit threshold for a market-crash candidate.",
+      "revision": "cg_mkt_stop_added_as_a_5th_candidate_using_the_published_7pct_level1_single_session_spy_decline_trigger"
+    },
+    {
+      "driver": "josephpach2025_march_crash_scale",
+      "effect": "The March 2025 momentum crash was fast and deleveraging-driven, not preceded by a slow 24-month bear market -- a slow regime indicator may miss it.",
+      "revision": "book_level_and_market_level_fast_stop_candidates_(cg_stop,_cg_mkt_stop)_added_alongside_the_slow_cg_dm_regime_gate_rather_than_relying_on_cg_dm_alone"
+    }
+  ]
+}

@@ -1,0 +1,250 @@
+{
+  "iter_id": "h20260924_02_momentum_crash_guard",
+  "generated_at": "2026-09-24T12:40:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "momentum_crash_guard_h20260924_02",
+  "objective": "Preregister up to 6 (here 5) daily [0,1] exposure-multiplier guards on the unchanged T1 12-1 momentum book, covering all 3 required published families (Daniel-Moskowitz bear/panic state, Barroso-Santa-Clara daily realized-vol scaling, a market-crash circuit breaker and/or book-level stop) plus 2 natural extensions (their product; a market-level counterpart to the book-level stop), judged against G1/G1'/G2/G3/G4/G5 on the frozen select/holdout/anchor windows, with every threshold either published or computed only on the 2016-01-04..2023-09-15 development window.",
+  "candidates": [
+    {
+      "candidate_id": "cg_dm",
+      "path": "momentum_crash_guard_t1_daily",
+      "role": "market_regime_panic_gate",
+      "method": "daniel_moskowitz_2016_bear_panic_state",
+      "ablation": "bear_and_highvol_and_gate_binary_multiplier",
+      "spec_path": "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml",
+      "fallback": "base_t1_book_unguarded_multiplier_1_0",
+      "data_contract": "data_v1_daily_broad_and_sip_momentum_crash_guard",
+      "feature_contract": "feature_v1_t1_book_and_guard_signals",
+      "label_contract": "label_v1_daily_guarded_book_return",
+      "validation_contract": "validation_v1_frozen_windows_g1_g5_momentum_crash_guard",
+      "cost_contract": "cost_v1_10_20bps_momentum_crash_guard",
+      "benchmark_contract": "benchmark_v1_base_book_and_calendar_shift_placebo",
+      "parameters": {
+        "candidate_id": "cg_dm",
+        "family": "CG-DM",
+        "source_claim_ids": [
+          "dm2016_panic_states_definition",
+          "luiss2021_flash_bear_not_significant"
+        ],
+        "bear_indicator": {
+          "definition": "SPY cumulative close-to-close return over the trailing 504 sessions (~24 months) < 0",
+          "window_sessions": 504,
+          "provenance": "published (Daniel & Moskowitz 2016, 24-calendar-month lookback, generalized to trading sessions)"
+        },
+        "high_vol_indicator": {
+          "definition": "SPY trailing 126-session annualized realized vol (sqrt(252 * mean(r^2))) > its own median over the development window",
+          "window_sessions": 126,
+          "threshold": "median of the same rolling series over 2016-01-04..2023-09-15, computed by the runner script (not hand-picked)",
+          "provenance": "window published (DM 2016 Table 5, 126-day trailing market variance); threshold computed on development window only, per this card's rule"
+        },
+        "panic_state": "bear_indicator AND high_vol_indicator",
+        "multiplier_rule": "0.0 while panic_state is true (as of the prior close), else 1.0",
+        "settlement_lag_sessions": 1,
+        "settlement_lag_basis": "SPY close-to-close series; 1-session lag is standard (no book-return settlement quirk)",
+        "expected_behavior": "May trigger rarely or never in 2023-2026 (no 24-month SPY decline in this bull-market window); this is a pre-registered honest expectation per external-brief.md, not treated as a bug if observed."
+      }
+    },
+    {
+      "candidate_id": "cg_bsc_daily",
+      "path": "momentum_crash_guard_t1_daily",
+      "role": "book_vol_targeting",
+      "method": "barroso_santaclara_2015_realized_vol_scaling_daily",
+      "ablation": "126day_trailing_variance_target_vol_ratio_capped_1",
+      "spec_path": "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml",
+      "fallback": "base_t1_book_unguarded_multiplier_1_0",
+      "data_contract": "data_v1_daily_broad_and_sip_momentum_crash_guard",
+      "feature_contract": "feature_v1_t1_book_and_guard_signals",
+      "label_contract": "label_v1_daily_guarded_book_return",
+      "validation_contract": "validation_v1_frozen_windows_g1_g5_momentum_crash_guard",
+      "cost_contract": "cost_v1_10_20bps_momentum_crash_guard",
+      "benchmark_contract": "benchmark_v1_base_book_and_calendar_shift_placebo",
+      "parameters": {
+        "candidate_id": "cg_bsc_daily",
+        "family": "CG-BSC-daily",
+        "source_claim_ids": [
+          "bsc2015_scale_by_forecasted_variance",
+          "bsc2015_target_12pct"
+        ],
+        "variance_forecast": {
+          "formula": "sigma_hat_t^2 = mean(book_10bp_net_return^2 over trailing 126 sessions); annualized sigma_hat_t = sqrt(252 * sigma_hat_t^2)",
+          "input_series": "T1 book's own 10bp-net daily return series (open-to-open convention), not gross and not the guarded series",
+          "window_sessions": 126,
+          "provenance": "published formula (Barroso & Santa-Clara 2015 eq. 5/6), generalized from their monthly update cadence to a daily update per this task's explicit instruction"
+        },
+        "target_vol": "median of the same trailing-126-session annualized vol series over the development window (2016-01-04..2023-09-15, intersected with available book-return history from 2017-01-03), computed by the runner script -- NOT BSC's own 12% (disclosed as not directly transferable to a concentrated long-only book, see bsc2015_target_12pct claim)",
+        "multiplier_rule": "min(1.0, target_vol / sigma_hat_t); cap 1.0 per this card's instruction (no leverage)",
+        "settlement_lag_sessions": 2,
+        "settlement_lag_basis": "book's own open-to-open return series; ret[i] not fully known until open[i+1], so a naive 1-session lag would leak one unsettled observation -- see decision-record.md"
+      }
+    },
+    {
+      "candidate_id": "cg_stop",
+      "path": "momentum_crash_guard_t1_daily",
+      "role": "book_level_drawdown_circuit_breaker",
+      "method": "book_drawdown_stop_fixed_reentry",
+      "ablation": "development_window_threshold_sma50_reentry",
+      "spec_path": "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml",
+      "fallback": "base_t1_book_unguarded_multiplier_1_0",
+      "data_contract": "data_v1_daily_broad_and_sip_momentum_crash_guard",
+      "feature_contract": "feature_v1_t1_book_and_guard_signals",
+      "label_contract": "label_v1_daily_guarded_book_return",
+      "validation_contract": "validation_v1_frozen_windows_g1_g5_momentum_crash_guard",
+      "cost_contract": "cost_v1_10_20bps_momentum_crash_guard",
+      "benchmark_contract": "benchmark_v1_base_book_and_calendar_shift_placebo",
+      "parameters": {
+        "candidate_id": "cg_stop",
+        "family": "CG-STOP",
+        "source_claim_ids": [
+          "alphaarchitect2022_dierkes_krupski_ci_results"
+        ],
+        "trigger": {
+          "definition": "unguarded T1 book's own 10bp-net cumulative equity drawdown from its running peak <= -T_dd",
+          "T_dd_formula": "clip(1.5 * (book's own max drawdown magnitude over the development window, 2016-01-04..2023-09-15 intersected with available history) * 0.5, 0.12, 0.30)",
+          "provenance": "reuses docs/plan-strategy-factory-2026-09-22.zh.md section 1's existing sleeve kill-switch formula (1.5x(dd)x0.5, clipped to [12%,30%]), substituting the development window for the anchor window that formula normally reads, since the anchor window may not be used to fit any threshold in this round"
+        },
+        "reentry_rule": {
+          "definition": "re-enter (multiplier back to 1.0) once the UNDERLYING (unguarded) book's own cumulative equity closes at or above its own trailing 50-session SMA",
+          "provenance": "fixed, mechanical rule computed only from the always-available unguarded book equity curve; avoids circularity of an SMA computed on a guard-flattened (cash) equity curve"
+        },
+        "multiplier_rule": "0.0 while triggered and not yet re-entered, else 1.0",
+        "settlement_lag_sessions": 2,
+        "settlement_lag_basis": "book's own open-to-open equity/drawdown series, same lag reasoning as CG-BSC-daily"
+      }
+    },
+    {
+      "candidate_id": "cg_dm_bsc",
+      "path": "momentum_crash_guard_t1_daily",
+      "role": "combined_regime_and_vol_targeting",
+      "method": "daniel_moskowitz_panic_times_barroso_santaclara_vol_scaling",
+      "ablation": "product_of_cg_dm_and_cg_bsc_daily_multipliers",
+      "spec_path": "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml",
+      "fallback": "base_t1_book_unguarded_multiplier_1_0",
+      "data_contract": "data_v1_daily_broad_and_sip_momentum_crash_guard",
+      "feature_contract": "feature_v1_t1_book_and_guard_signals",
+      "label_contract": "label_v1_daily_guarded_book_return",
+      "validation_contract": "validation_v1_frozen_windows_g1_g5_momentum_crash_guard",
+      "cost_contract": "cost_v1_10_20bps_momentum_crash_guard",
+      "benchmark_contract": "benchmark_v1_base_book_and_calendar_shift_placebo",
+      "parameters": {
+        "candidate_id": "cg_dm_bsc",
+        "family": "CG-DM-BSC",
+        "source_claim_ids": [
+          "dm2016_panic_states_definition",
+          "bsc2015_scale_by_forecasted_variance"
+        ],
+        "multiplier_rule": "cg_dm_multiplier(t) * cg_bsc_daily_multiplier(t), using the identical component definitions and thresholds already fixed for cg_dm and cg_bsc_daily (no re-fitting)",
+        "settlement_lag_sessions": "inherits each component's own lag (1 for the DM leg, 2 for the BSC leg; the product uses each series exactly as computed for its own candidate)",
+        "rationale": "Tests whether combining the two required published families performs better than either alone; belt-and-suspenders, not a new mechanism."
+      }
+    },
+    {
+      "candidate_id": "cg_mkt_stop",
+      "path": "momentum_crash_guard_t1_daily",
+      "role": "market_level_circuit_breaker",
+      "method": "sec_market_wide_circuit_breaker_level1_fixed_reentry",
+      "ablation": "published_7pct_single_session_threshold_fixed_duration_reentry",
+      "spec_path": "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml",
+      "fallback": "base_t1_book_unguarded_multiplier_1_0",
+      "data_contract": "data_v1_daily_broad_and_sip_momentum_crash_guard",
+      "feature_contract": "feature_v1_t1_book_and_guard_signals",
+      "label_contract": "label_v1_daily_guarded_book_return",
+      "validation_contract": "validation_v1_frozen_windows_g1_g5_momentum_crash_guard",
+      "cost_contract": "cost_v1_10_20bps_momentum_crash_guard",
+      "benchmark_contract": "benchmark_v1_base_book_and_calendar_shift_placebo",
+      "parameters": {
+        "candidate_id": "cg_mkt_stop",
+        "family": "CG-MKT-STOP",
+        "source_claim_ids": [
+          "secgov_mwcb_levels",
+          "josephpach2025_march_crash_scale"
+        ],
+        "trigger": {
+          "definition": "SPY single-session close-to-close return <= -0.07",
+          "provenance": "published (SEC/NYSE Market-Wide Circuit Breaker Level 1, a real single-day 7% S&P 500 decline threshold, claim secgov_mwcb_levels) -- not fit to any local window"
+        },
+        "reentry_rule": {
+          "definition": "flat (multiplier 0.0) for a fixed N sessions after the trigger session, then automatically back to 1.0 regardless of market state",
+          "N_sessions_method": "N = round(median number of sessions for SPY to close back above its pre-drop level, across all development-window (2016-01-04..2023-09-15) sessions with a single-day return <= -7%); if fewer than 3 such development-window events exist, N defaults to a disclosed round value of 5 sessions (one trading week), stated in report.md as not data-derived in that case",
+          "provenance": "re-entry duration is a portfolio-management choice the SEC rule does not specify; computed from development-window recovery behavior where feasible, disclosed honestly where it falls back to a round number"
+        },
+        "multiplier_rule": "0.0 for N sessions following a trigger session (re-triggerable if a new -7% session occurs while still flat, extending the flat period), else 1.0",
+        "settlement_lag_sessions": 1,
+        "settlement_lag_basis": "SPY close-to-close series, standard 1-session lag"
+      }
+    }
+  ],
+  "candidate_count": 5,
+  "contracts": {
+    "data": {
+      "data_v1_daily_broad_and_sip_momentum_crash_guard": {
+        "daily_broad_glob": "data/features/daily_broad/*.parquet",
+        "universe_broad_glob": "data/features/universe_broad/*.parquet",
+        "sip_daily_glob": "data/sip/daily/*/*.parquet",
+        "symbols_market": [
+          "SPY",
+          "SHY",
+          "BIL"
+        ],
+        "source": "alpaca SIP daily archive (data/sip/daily) for SPY/SHY/BIL; the repo's own daily_broad/universe_broad feature tables (already hygiene-sanitized via open_composer.research.features.price_hygiene.sanitize_price_matrices) for the T1 book itself",
+        "hygiene": "T1 book prices: existing sanitize_price_matrices pipeline (unchanged, reused). SPY/SHY/BIL: drop zero-volume/zero-trade-count ghost bars."
+      }
+    },
+    "features": {
+      "feature_v1_t1_book_and_guard_signals": {
+        "t1_book": "momentum_252_21 signal, top_n=500 universe (equivalent to top_n=3000 restricted to tier 1, verified identical since adv_rank is precomputed independent of the top_n load filter), top-30 cohorts, 20-session overlapping hold -- open_composer.research.signal_card.{load_market,load_signal,topk_cohorts,hold}, unchanged",
+        "guard_signals": "spy_bear_indicator_504d, spy_realized_vol_126d, book_realized_vol_126d_settled, book_drawdown_settled, spy_single_session_return -- see strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml factors section for definitions; computed by scripts/run_h20260924_02_momentum_crash_guard.py"
+      }
+    },
+    "labels": {
+      "label_v1_daily_guarded_book_return": {
+        "definition": "daily guarded-book net return series: (scaled_held * ret).sum() - turnover(scaled_held)*cost_bps/1e4 + (1-multiplier)*shy_next_open_return, where scaled_held = base T1 held-weight matrix * multiplier[:,None]; reported at 10bp and 20bp per side"
+      }
+    },
+    "validation": {
+      "validation_v1_frozen_windows_g1_g5_momentum_crash_guard": {
+        "windows": {
+          "development": [
+            "2016-01-04",
+            "2023-09-15"
+          ],
+          "select": [
+            "2023-09-18",
+            "2025-12-31"
+          ],
+          "holdout": [
+            "2026-01-02",
+            "2026-09-17"
+          ],
+          "anchor": [
+            "2024-01-08",
+            "2026-09-16"
+          ]
+        },
+        "gates": "G1 anchor CAGR>=50% and max DD<=35%; G1' anchor Sharpe>=2.0 and CAGR>=30%; G2 holdout Sharpe>=1.0 and holdout return>0; G3 <=10% of 20 calendar-shifted (1-20 session) guard-multiplier placebos match or beat the real guard's anchor Sharpe; G4 G1 or G1' still holds at 20bp; G5 long-only, Alpaca-executable.",
+        "stress_disclosure": "each candidate also reported on 2016-01-04..2023-09-15, disclosure only, never a gate",
+        "sharpe_convention": "excess of BIL daily return, ddof=1, sqrt(252) annualization -- reused unchanged from scripts/run_h20260918_05_recent_menu.py::metrics for exact consistency with the frozen protocol's other reported numbers"
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_momentum_crash_guard": {
+        "contract_path": "reports/research/iterations/h20260924_02_momentum_crash_guard/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_base_book_and_calendar_shift_placebo": {
+        "members": [
+          "base_t1_book_unguarded_10bp",
+          "base_t1_book_unguarded_20bp"
+        ],
+        "placebos": [
+          "calendar_shift_of_guard_multiplier_1_to_20_sessions_20_seeds_evaluated_on_anchor_sharpe"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml": "72d9392e9da002d0fba5653f849de261727f5f9cc3fac75b9e2ac7b4fc6473c3"
+  },
+  "source_spec_path": "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml",
+  "spec_hash": "72d9392e9da002d0fba5653f849de261727f5f9cc3fac75b9e2ac7b4fc6473c3"
+}

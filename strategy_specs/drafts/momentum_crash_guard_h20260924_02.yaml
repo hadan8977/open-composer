@@ -1,0 +1,199 @@
+name: momentum_crash_guard_h20260924_02
+description: 'Preregistered H-20260924-02 candidate family. Five daily exposure guards (each
+  a [0,1] multiplier, remainder in SHY) applied to the unchanged T1 12-1 momentum book (top
+  30 of the largest 500 names by 12-1 momentum, overlapping 20-session cohorts, from open_composer/research/signal_card.py):
+  CG-DM (Daniel-Moskowitz 2016 bear/panic state), CG-BSC-daily (Barroso and Santa-Clara 2015
+  realized-vol scaling updated daily), CG-STOP (book-level drawdown circuit breaker with a
+  fixed re-entry rule), CG-DM-BSC (product of CG-DM and CG-BSC-daily), CG-MKT-STOP (market-crash
+  circuit breaker using the SEC''s published 7% Level-1 market-wide circuit breaker). Documentation-accurate
+  -- the guard logic (settlement-lag timing, rolling statistics, placebo shifts) is computed
+  by the dedicated runner script scripts/run_h20260924_02_momentum_crash_guard.py, not by
+  this spec''s entry/exit expressions. Research only, deterministic, next-open execution;
+  no broker writes are authorized.'
+timeframe: daily
+universe:
+- SPY
+- SHY
+- BIL
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 30
+  max_position_weight: 0.05
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 30
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.05
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260924_02:momentum_crash_guard_t1_daily
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/features/daily_broad
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  spy_bear_indicator_504d:
+    source: expression
+    expression: spy_close / lag(spy_close, 504) - 1
+    default: 0.0
+    description: Daniel and Moskowitz's (2016) bear-market indicator I_B, generalized from
+      their 24-calendar-month cumulative-return definition to 504 trading sessions (about
+      24 months). Panic-state ingredient 1 of CG-DM. Documentation-accurate; computed close-to-close,
+      1-session settlement lag (standard, not the book's own 2-session open-to-open lag) by
+      the runner script.
+    params:
+      decision_lag_sessions: 1
+  spy_realized_vol_126d:
+    source: expression
+    expression: rolling_std(spy_close / lag(spy_close, 1) - 1, 126) * sqrt(252)
+    default: 0.0
+    description: Trailing 126-session annualized realized volatility of SPY close-to-close
+      returns, per Daniel and Moskowitz (2016, sigma-hat_m,t-1) and independently per Barroso
+      and Santa-Clara (2015)'s 126-day window convention. Panic-state ingredient 2 of CG-DM
+      (compared to its own development-window median). Documentation-accurate; 1-session settlement
+      lag.
+    params:
+      decision_lag_sessions: 1
+  book_realized_vol_126d_settled:
+    source: expression
+    expression: rolling_mean((book_net_return_10bp) ** 2, 126) * 252
+    default: 0.0
+    description: Barroso and Santa-Clara's (2015) realized-variance forecast (21 times the
+      mean of 126 trailing daily squared returns, i.e. annualized mean squared return) applied
+      to the T1 book's own 10bp-net daily return series instead of long-short WML, updated
+      daily per this task's instruction (BSC update monthly). CG-BSC-daily's input. Documentation-accurate;
+      2-session settlement lag (book returns are open-to-open, not known until the following
+      session's open -- see decision-record.md).
+    params:
+      decision_lag_sessions: 2
+  book_drawdown_settled:
+    source: expression
+    expression: book_equity_10bp / cummax(book_equity_10bp) - 1
+    default: 0.0
+    description: The T1 book's own (10bp-net) cumulative-equity drawdown from its running
+      peak. CG-STOP's trigger input; threshold computed once from 2016-01-04..2023-09-15 development-window
+      behavior (repo kill-switch formula, docs/plan-strategy-factory-2026-09-22.zh.md section
+      1). 2-session settlement lag, as book_realized_vol_126d_settled above.
+    params:
+      decision_lag_sessions: 2
+  spy_single_session_return:
+    source: expression
+    expression: spy_close / lag(spy_close, 1) - 1
+    default: 0.0
+    description: SPY's own single-session close-to-close return. CG-MKT-STOP's trigger input,
+      compared against the SEC's published 7% Level-1 market-wide circuit breaker threshold.
+      1-session settlement lag.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260924_02_momentum_crash_guard
+  candidate_manifest_path: reports/research/iterations/h20260924_02_momentum_crash_guard/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260924_02_momentum_crash_guard/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl
+  source_card_claim_ids:
+  - dm2016_panic_states_definition
+  - dm2016_dynamic_strategy_doubles_sharpe
+  - bsc2015_scale_by_forecasted_variance
+  - bsc2015_target_12pct
+  - alphaarchitect2022_longonly_not_deep_crash
+  - alphaarchitect2022_dierkes_krupski_ci_results
+  - tommijohnsen2025_75th_percentile_rule
+  - josephpach2025_march_crash_scale
+  - paretoquant2026_gs_momentum_basket
+  - luiss2021_flash_bear_not_significant
+  - secgov_mwcb_levels
+  parameter_space:
+    guard_id:
+    - CG-DM
+    - CG-BSC-daily
+    - CG-STOP
+    - CG-DM-BSC
+    - CG-MKT-STOP
+    cost_bps:
+    - 10
+    - 20
+  candidate_budget: 5
+  selection_objective: No selection or ranking among the 5 candidates. Each guard is judged
+    independently against G1 (anchor CAGR>=50% and max DD<=35%), G1' (anchor Sharpe>=2.0 and
+    CAGR>=30%), G2 (holdout Sharpe>=1.0 and positive return), G3 (<=10% of 20 calendar-shifted
+    multiplier placebos match or beat the real guard's anchor Sharpe), G4 (G1 or G1' still
+    holds at 20bp), G5 (long-only, Alpaca-executable). A candidate passes only if G1-or-G1',
+    G2, G3 and G4 all hold. 2016-01-04..2023-09-15 stress-window results are disclosure only,
+    never a gate.
+  candidate_budget_note: 3 required published-literature families (CG-DM, CG-BSC-daily, a
+    market-crash-or-book-level stop) plus 2 natural extensions (CG-DM-BSC combination, CG-MKT-STOP
+    as the market-level counterpart to CG-STOP's book-level stop) = 5, under the card's own
+    up-to-6 cap; no threshold or window sweep was added beyond what each published source
+    specifies or the frozen development window computes.
+  anti_overfit_notes:
+  - All 5 candidates and their exact rules (bear/vol windows, target-vol estimation, stop
+    thresholds, circuit-breaker level) are frozen in candidate-manifest.json before any guarded
+    return is computed.
+  - Every threshold is either a published value (DM's 24-month/126-day windows; BSC's 126-day
+    window; the SEC's 7% Level-1 circuit breaker) or computed only on 2016-01-04..2023-09-15
+    development data, intersected with the book's actual return history (2017-01-03 onward)
+    -- never the select, holdout or anchor windows.
+  - The frozen giants-sweep-family protocol (select/holdout/anchor windows, 10/20bp costs)
+    is reused unchanged from scripts/run_h20260918_05_recent_menu.py; no window or cost was
+    relaxed for this family.
+  - G3's placebo shifts the guard's OWN multiplier series by 1-20 sessions and compares anchor
+    Sharpe, isolating the guard's timing from its average on/off share, the same test that
+    refuted H-20260918-01's trend gate.
+  - The 2016-01-04..2023-09-15 stress window is reported for every candidate as a disclosure,
+    explicitly never used to select or promote a candidate.
+  validation_plan:
+  - select_2023_09_18_to_2025_12_31_holdout_2026_01_02_to_2026_09_17_anchor_2024_01_08_to_2026_09_16
+  - g1_g1alt_g2_g3_g4_g5_gates_per_card_h20260924_02
+  - calendar_shift_placebo_of_guard_multiplier_20_seeds_on_anchor_sharpe
+  - stress_window_2016_01_04_to_2023_09_15_disclosure_only_not_a_gate
+  - base_book_reproduction_check_against_signal_card_and_notes_before_any_guard
+notes:
+  intent: Test whether a DAILY crash guard, built from published momentum-crash-mitigation
+    mechanisms, can bring the T1 12-1 momentum book's anchor max drawdown to <=35% while keeping
+    CAGR>=50%, beating a calendar-shift placebo of its own multiplier series -- the one variant
+    H-20260918-01 (a monthly-cadence gate on a different book) did not test.
+  hypothesis_id: H-20260924-02
+  previous_link: H-20260918-01
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

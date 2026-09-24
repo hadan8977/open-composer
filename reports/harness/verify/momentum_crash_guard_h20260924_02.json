@@ -1,0 +1,191 @@
+{
+  "schema_version": 2,
+  "verification_contract": "harness_verify_v2",
+  "strategy_name": "momentum_crash_guard_h20260924_02",
+  "spec_path": "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml",
+  "spec_file_sha256": "0660f4467927f1c05e3cd5abe0563ca8ad22f4c44e43878ec76280ca00cdccca",
+  "spec_semantic_sha256": "72d9392e9da002d0fba5653f849de261727f5f9cc3fac75b9e2ac7b4fc6473c3",
+  "stage": "research",
+  "risk_domains": [
+    "daily_open_execution",
+    "router_strategy"
+  ],
+  "required_artifacts": [
+    "execution_policy",
+    "execution_reality_report",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "source_cards"
+  ],
+  "artifact_path_overrides": {
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "required_claim_ids": [
+        "dm2016_panic_states_definition",
+        "dm2016_dynamic_strategy_doubles_sharpe",
+        "bsc2015_scale_by_forecasted_variance",
+        "bsc2015_target_12pct",
+        "alphaarchitect2022_longonly_not_deep_crash",
+        "alphaarchitect2022_dierkes_krupski_ci_results",
+        "tommijohnsen2025_75th_percentile_rule",
+        "josephpach2025_march_crash_scale",
+        "paretoquant2026_gs_momentum_basket",
+        "luiss2021_flash_bear_not_significant",
+        "secgov_mwcb_levels"
+      ]
+    }
+  },
+  "plan_binding": null,
+  "config_bindings": {
+    "risk_domains": {
+      "path": "harness/risk_domains.yaml",
+      "sha256": "d0bd4d8e5368de57a8063fd2a973c897063a127b153c739e96787e29cde8f3c9",
+      "size_bytes": 13714
+    },
+    "artifact_contracts": {
+      "path": "harness/artifact_contracts.yaml",
+      "sha256": "97716bc4789e65c586d6d69b382273673baee1b4ded74e539575cafe5eebdf3c",
+      "size_bytes": 14710
+    }
+  },
+  "artifacts": [
+    {
+      "name": "execution_policy",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "order_style",
+        "time_in_force",
+        "price_protection",
+        "gap_filter",
+        "spread_filter",
+        "participation_cap",
+        "fallback_behavior",
+        "tca_plan",
+        "source_card_ids",
+        "alternatives_compared"
+      ],
+      "path": "reports/harness/execution/momentum_crash_guard_h20260924_02-execution-policy.json",
+      "binding": null
+    },
+    {
+      "name": "execution_reality_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "slippage_scenarios",
+        "gap_stress",
+        "capacity_assessment",
+        "tca_reference_prices"
+      ],
+      "path": "reports/harness/execution/momentum_crash_guard_h20260924_02-execution-reality.json",
+      "binding": null
+    },
+    {
+      "name": "router_cost_stress",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "scenarios",
+        "recommendation"
+      ],
+      "path": "reports/research/momentum_crash_guard_h20260924_02-router-cost-stress.json",
+      "binding": null
+    },
+    {
+      "name": "router_data_evidence",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "data_source",
+        "acquisition_tier",
+        "data_profile"
+      ],
+      "path": "reports/research/momentum_crash_guard_h20260924_02-router-data-evidence.json",
+      "binding": null
+    },
+    {
+      "name": "router_execution_observation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "execution_substate",
+        "target_weights_path",
+        "rebalance_intents_path"
+      ],
+      "path": "reports/execution/momentum_crash_guard_h20260924_02-execution-observation.json",
+      "binding": null
+    },
+    {
+      "name": "router_rebalance_intents",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "intents",
+        "summary",
+        "execution_substate"
+      ],
+      "path": "reports/execution/momentum_crash_guard_h20260924_02-rebalance-intents.json",
+      "binding": null
+    },
+    {
+      "name": "router_target_weights",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "target_weights",
+        "summary",
+        "acquisition_tier"
+      ],
+      "path": "reports/execution/momentum_crash_guard_h20260924_02-target-weights.json",
+      "binding": null
+    },
+    {
+      "name": "router_validation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "portfolio_mode",
+        "summary",
+        "blockers"
+      ],
+      "path": "reports/research/momentum_crash_guard_h20260924_02-router-validation.json",
+      "binding": null
+    },
+    {
+      "name": "source_cards",
+      "present": true,
+      "schema_ok": true,
+      "missing_fields": [],
+      "path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+      "binding": {
+        "path": "reports/harness/source_cards/h20260924_02_momentum_crash_guard.jsonl",
+        "sha256": "ea4309aaf96296a2557a12fbd829a06bc8c479f2b1feec97eb9f7abb40f740ae",
+        "size_bytes": 20252
+      }
+    }
+  ],
+  "overall": "blocked"
+}

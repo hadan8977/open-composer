@@ -1,0 +1,119 @@
+{
+  "contract_id": "data_v1_daily_broad_and_sip_momentum_crash_guard",
+  "schema_version": 1,
+  "report_type": "generic_candidate_family_data_feasibility_v1",
+  "iter_id": "h20260924_02_momentum_crash_guard",
+  "generated_before_backtest": true,
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "path_gates": {
+    "momentum_crash_guard_t1_daily": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "cg_dm",
+        "cg_bsc_daily",
+        "cg_stop",
+        "cg_dm_bsc",
+        "cg_mkt_stop"
+      ]
+    }
+  },
+  "candidate_accounting": {
+    "frozen_candidate_count": 5,
+    "evaluation_authorized_count": 5,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "base_book_source": {
+    "prices": "data/features/daily_broad/*.parquet (open, close)",
+    "universe": "data/features/universe_broad/*.parquet (adv_rank, month_end, close>=5)",
+    "signal": "data/features/daily_broad/*.parquet: momentum_252_21 column, lag 0",
+    "coverage_checked": "daily_broad price panel: 2016-01-04..2026-09-17 (2692 sessions). momentum_252_21 first non-null date: 2017-01-03. universe_broad month_end: 2016-01-29..2026-08-31. Checked this session via a direct duckdb query (MIN/MAX/COUNT DISTINCT), not assumed.",
+    "consequence": "The T1 book's own daily return history cannot start before 2017-01-03 (plus a ~20-session ramp for the first full 20-cohort book), which is INSIDE the nominal 2016-01-04..2023-09-15 development window this card specifies for guard-threshold fitting. Every development-window statistic computed from the book's own returns therefore uses the intersection [first available book-return date, 2023-09-15], disclosed in report.md, never silently backfilled or extended."
+  },
+  "guard_signal_sources": {
+    "spy_shy_bil_prices": {
+      "path": "data/sip/daily/*/*.parquet",
+      "columns": [
+        "symbol",
+        "timestamp",
+        "open",
+        "close",
+        "volume",
+        "trade_count"
+      ],
+      "hygiene": "drop bars with zero volume and zero trade_count (vendor ghost bars), matching scripts/run_h20260918_05_recent_menu.py::load_panel.",
+      "coverage_required": "2015-01-04 (for the 504-session/24-month SPY lookback to be valid from 2016-01-04) through 2026-09-17.",
+      "checked": "Checked this session via duckdb MIN/MAX per symbol; SPY/SHY/BIL all cover the full required range with no gaps against market.dates."
+    }
+  },
+  "risk_factors": [
+    "momentum_252_21 has no history before 2017-01-03, shrinking the effective development window for book-return-derived thresholds (CG-BSC-daily target, CG-STOP trigger) -- disclosed, not treated as a blocker since a reduced but still multi-year (2017-2023) development window remains available.",
+    "SPY/SHY/BIL are single-symbol series with no PIT membership risk (unlike the broad stock universe); no delisting/survivorship risk for the guard's market-level inputs."
+  ],
+  "fallback": "If a rolling statistic lacks the minimum trailing window (e.g. the first 126 sessions of book history), the guard multiplier defaults to 1.0 (unguarded, matching the base book) rather than NaN or an arbitrary value; this only affects a short 2017 warmup period, well outside every gated window.",
+  "candidate_authorization": {
+    "candidate_count": 5,
+    "rows": [
+      {
+        "candidate_id": "cg_dm",
+        "path": "momentum_crash_guard_t1_daily",
+        "action": "evaluate",
+        "reason_code": "published_or_development_window_only_threshold_preregistered",
+        "candidate_binding_sha256": "7a1c1146ec33bf785ffd425fc7ea0bd79faa7ec8d1be482a0efd8f2b5386eaab"
+      },
+      {
+        "candidate_id": "cg_bsc_daily",
+        "path": "momentum_crash_guard_t1_daily",
+        "action": "evaluate",
+        "reason_code": "published_or_development_window_only_threshold_preregistered",
+        "candidate_binding_sha256": "ab0ba63c7b6132e262ad9c4baad134ea95d8aff0e8c3a45861ab671a01786dee"
+      },
+      {
+        "candidate_id": "cg_stop",
+        "path": "momentum_crash_guard_t1_daily",
+        "action": "evaluate",
+        "reason_code": "published_or_development_window_only_threshold_preregistered",
+        "candidate_binding_sha256": "ce49b000b3c03991d4fb424d54e68f5749651146889635f15e0ffcf912e6ccfb"
+      },
+      {
+        "candidate_id": "cg_dm_bsc",
+        "path": "momentum_crash_guard_t1_daily",
+        "action": "evaluate",
+        "reason_code": "published_or_development_window_only_threshold_preregistered",
+        "candidate_binding_sha256": "5b649a433bd8d1d75f1a58d126017192d64c07a451c1af7de1ad0181438ac160"
+      },
+      {
+        "candidate_id": "cg_mkt_stop",
+        "path": "momentum_crash_guard_t1_daily",
+        "action": "evaluate",
+        "reason_code": "published_or_development_window_only_threshold_preregistered",
+        "candidate_binding_sha256": "16218123dca659678bf6f1989b16d2eeede0f039aaef9e0cca52f089a51fdb03"
+      }
+    ]
+  },
+  "required_reference_names": [
+    "hypothesis_card",
+    "external_brief_md",
+    "signal_card_mom_12_1"
+  ],
+  "required_references": {
+    "hypothesis_card": {
+      "path": "reports/research/hypotheses/H-20260924-02-momentum-crash-guard.md",
+      "sha256": "42f830bb1d53d9de4fa84a75c636be82510f650ef594fa1dfb049128bb9bf356"
+    },
+    "external_brief_md": {
+      "path": "reports/research/iterations/h20260924_02_momentum_crash_guard/external-brief.md",
+      "sha256": "354736aa4a1a22c4f5486f42fb03bd5682fd1886aad4bbf0153123f266dcf5a8"
+    },
+    "signal_card_mom_12_1": {
+      "path": "reports/research/signal-cards/mom_12_1.md",
+      "sha256": "738625d88cd58416443e618ebbff4b060871c821836e336052ef68a3c4e8957f"
+    }
+  }
+}

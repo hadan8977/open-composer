@@ -1,0 +1,78 @@
+{
+  "iter_id": "h20260924_02_momentum_crash_guard",
+  "strategy_name": "momentum_crash_guard_h20260924_02",
+  "source_spec_path": "strategy_specs/drafts/momentum_crash_guard_h20260924_02.yaml",
+  "spec_hash": "72d9392e9da002d0fba5653f849de261727f5f9cc3fac75b9e2ac7b4fc6473c3",
+  "schema_version": 3,
+  "created_at": "2026-09-24T12:40:00+00:00",
+  "objective": "Test up to 6 (here 5) preregistered daily [0,1] exposure-multiplier guards on the unchanged T1 12-1 momentum book against the frozen select/holdout/anchor windows' G1-G5 gates and a calendar-shift placebo of each guard's own multiplier series, per card H-20260924-02.",
+  "paths": [
+    {
+      "name": "momentum_crash_guard_t1_daily",
+      "candidate_count": 5,
+      "hypothesis_refs": [
+        "H-20260924-02"
+      ],
+      "parameters": {
+        "guard_id": [
+          "CG-DM",
+          "CG-BSC-daily",
+          "CG-STOP",
+          "CG-DM-BSC",
+          "CG-MKT-STOP"
+        ],
+        "cost_bps": [
+          10,
+          20
+        ],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "base_t1_book_unguarded_10bp",
+        "base_t1_book_unguarded_20bp",
+        "calendar_shift_of_guard_multiplier_1_to_20_sessions_20_seeds"
+      ]
+    }
+  ],
+  "total_candidate_budget": 5,
+  "candidate_manifest_path": "reports/research/iterations/h20260924_02_momentum_crash_guard/candidate-manifest.json",
+  "candidate_manifest_sha256": "78a0b7bb65bd0bcde8db37a9ee19df88df35ba6e50529dfb7abce5835b4b794b",
+  "data_feasibility_path": "reports/research/iterations/h20260924_02_momentum_crash_guard/data-feasibility.json",
+  "data_feasibility_sha256": "305fc839e7d7da5d6b2c6b530f01cb13f3343e997cc4256320a000bc46282a12",
+  "cost_table_path": "reports/research/iterations/h20260924_02_momentum_crash_guard/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260924_02_momentum_crash_guard/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260924_02_momentum_crash_guard/report.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "development": [
+      "2016-01-04",
+      "2023-09-15"
+    ],
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "holdout": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-16"
+    ]
+  },
+  "gates": {
+    "g1_anchor": "anchor CAGR>=50% and anchor max drawdown>=-35%",
+    "g1_alt": "anchor Sharpe>=2.0 and anchor CAGR>=30%",
+    "g2_holdout": "holdout Sharpe>=1.0 and holdout return>0",
+    "g3_placebo": "<=10% of 20 calendar-shifted (1-20 session) guard-multiplier placebos match or beat the real guard's anchor Sharpe",
+    "g4_cost_stress": "G1 or G1_alt still holds at 20bp per side",
+    "g5_executable": "long-only, existing Alpaca daily cron, cash overlay only",
+    "stress_disclosure": "2016-01-04..2023-09-15 reported for every candidate, never a gate"
+  }
+}

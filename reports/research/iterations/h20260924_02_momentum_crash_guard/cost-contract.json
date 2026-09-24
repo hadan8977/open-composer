@@ -1,0 +1,12 @@
+{
+  "contract_id": "cost_v1_10_20bps_momentum_crash_guard",
+  "iter_id": "h20260924_02_momentum_crash_guard",
+  "primary_cost_bps_per_side": 10.0,
+  "stress_cost_bps_per_side": 20.0,
+  "cost_application": "sum(abs(diff(scaled_held_weight))) * cost_bps / 1e4, applied to the guard-scaled T1 book held-weight matrix (base book weights times the daily multiplier); the cash leg (SHY) carries no separate transaction cost, consistent with open_composer.research.signal_card.book_returns's own convention on the base book.",
+  "cash_leg": {
+    "symbol": "SHY",
+    "return_definition": "next-open total return (open[t+1]/open[t]-1 on SHY's own adjusted open series), computed the same way as the book's own ret series (Market.next_open_returns) so both legs share one timing convention.",
+    "rationale": "Matches scripts/run_h20260918_05_recent_menu.py's CASH=SHY convention used elsewhere in this repo, rather than 0%; task text explicitly allows either and asks the choice to be stated."
+  }
+}
