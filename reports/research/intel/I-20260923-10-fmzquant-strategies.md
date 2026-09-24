@@ -84,3 +84,34 @@ The repo's modal entry is a TradingView indicator combo tested on 30 days of BTC
   - `发明者量化 策略广场 租用 策略 亏损 OR 过拟合 OR 割韭菜`
   - `Hudson Urquhart 2021 "Technical trading and cryptocurrencies"...`
 - Opened: finestel.com/blog/fmz-quant-review; arXiv 2604.15151 (PDF); arXiv abs 2608.27734; IDEAS pages for Hudson & Urquhart (2021) and Bajgrowicz & Scaillet (2012). ScienceDirect returned 403.
+
+---
+
+## 5. Addendum 2026-09-24: the US-equity subset (owner: "里面的美股策略也可以看看")
+
+Full clone (`git clone --depth 1`, commit 7853bb2, 5,807 files) at `/opt/oc-search/fmz-strategies` (outside the repo).
+
+**Where the corpus is backtested.** All 5,262 backtest configs in the corpus point at crypto exchanges, except one on Chinese futures (CTP). None targets US stocks. The US-equity content is therefore TradingView scripts that were written for stocks and then rerun on BTC by FMZ.
+
+**How the subset was found.** A regex scan for tickers, indices and ETFs, combined with equity context (session times, stock words, earnings/dividends, ETF rotation), found 132 files. They were grouped into mechanism families by title:
+
+| Family | Files | Our prior evidence | Decision |
+|---|---|---|---|
+| Generic indicator combos (MA/MACD/RSI/ATR/Supertrend) naming SPY/QQQ/VIX | 91 | Owner tier view ranks these lowest; library v1 rejected the technical signals it tested | skip |
+| Single-stock indicator scripts (TSLA, AAPL, NVDA) | 10 | none; one-name fits | skip |
+| Relative strength / dual momentum / rotation | 9 | ETF rotation sleeves already on paper; `dir:etf_dual_momentum_rotation_gem_pools` (duplicate); giants sweep | covered |
+| **Dip reversion: IBS, Connors R3, Connors 3-Day High/Low, VIX Fix** | 6 | **not in the registry.** Pagonidis (2014, NAAIM) documents a US-only close-to-close IBS effect through 2013-05. The giants sweep tested only Composer RSI(10) branch rules on TQQQ. | **testing: H-20260924-01, 24 preregistered candidates** |
+| Pairs / ratio (SPY-QQQ Kalman) | 6 | `dir:intraday_cointegration_pairs_pca` evidence_too_weak | skip: no published edge; the SPY/QQQ ratio trends with tech leadership |
+| Opening range / intraday session | 4 | `dir:orb_etf_opening_range_breakout` refuted; Stocks-in-Play ORB running (H-20260923-13) | covered |
+| Leveraged ETF balancing / option selling | 3 | S3 levered sleeve on paper; options cell (Alpaca options data from 2024-02) | covered / data-limited |
+| Seasonality / calendar | 3 | `dir:turn_of_month_equity_seasonality` harvested, untested | queue with the calendar cell |
+
+**What the dip-reversion entries are.**
+- The repo's "ETF 3-Day Reversion" (fmz 429146) and "Reversal RSI ETF" (fmz 439643) are ports of Connors & Alvarez (2009) *High Probability ETF Trading* rules: the 3-Day High/Low method and R3. Both enter on the close (`process_orders_on_close=true`).
+- The IBS entry (fmz 484915) is Algotradekit's TradingView "IBS Trading Strategy for SPY and NDQ": IBS ≤ 0.09 / 0.11 with an EMA(220/200) filter, exit at IBS ≥ 0.985 / 0.995 or 14 days.
+- Quality flag: the repo's MyLanguage "Larry Connors RSI2" script trades against the trend, the opposite of Connors' published rule.
+
+**Test design.** H-20260924-01 tests these rules plus Connors RSI(2) and an IBS-filtered RSI(2) on QQQ and SPY, executed on 1x and 3x ETFs.
+- Protocol: the giants-sweep protocol, unchanged (select, holdout and anchor windows; 10/20 bp; G1-G5).
+- Execution: market-on-close orders from a 15:50 ET proxy signal.
+- Placebos: random-entry-timing and calendar-shift.
