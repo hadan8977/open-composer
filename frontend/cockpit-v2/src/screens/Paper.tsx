@@ -224,7 +224,7 @@ export function PaperInspector({ id }: InspectorProps) {
         {!d.fills.available ? <Empty>No data yet</Empty> : d.fills.sessions.length === 0 ? <Empty>None</Empty> : (
           <div className="tbl-wrap" style={{ margin: 0 }}>
             <table className="tbl">
-              <thead><tr><th>Session</th><th className="r">Orders</th><th className="r">Full</th><th className="r">Partial</th><th className="r">Fill</th><th className="r">Slip bps</th></tr></thead>
+              <thead><tr><th>Session</th><th className="r">Orders</th><th className="r">Full</th><th className="r">Partial</th><th className="r">Fill</th><th className="r">Slip vs open bps</th></tr></thead>
               <tbody>
                 {d.fills.sessions.map(f => (
                   <tr key={f.session}>
@@ -233,7 +233,7 @@ export function PaperInspector({ id }: InspectorProps) {
                     <td className="r">{f.filled_full ?? '–'}</td>
                     <td className="r">{f.filled_partial ?? '–'}</td>
                     <td className="r">{f.fill_rate_by_notional === null ? '–' : fmtPct(f.fill_rate_by_notional * 100)}</td>
-                    <td className="r">{f.median_slippage_vs_reference_bps === null ? '–' : f.median_slippage_vs_reference_bps.toFixed(1)}</td>
+                    <td className="r">{f.median_slippage_vs_open_bps == null ? '–' : f.median_slippage_vs_open_bps.toFixed(1)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -67,6 +67,7 @@ from open_composer.adapters.broker.alpaca_paper import (
     sync_paper_account,
     sync_paper_orders,
 )
+from open_composer.adapters.data.sip_parquet import SipParquetError, load_sip_bars
 from open_composer.config import project_root
 from open_composer.engines.signal_engine import build_signal
 from open_composer.execution_policy import require_orderable_execution_policy
@@ -868,14 +869,55 @@ def cancel_open_rehearsal_orders(
     return cancelled
 
 
+def _session_opens(rows: list[dict[str, Any]], root: Path) -> dict[tuple[str, str], float]:
+    """Official SIP daily opening price for each (symbol, session) in the ledger.
+
+    The reference price is the signal-session close, which can be weeks old when
+    the volatility overlay changes the weights inside a month (S3 on 2026-09-24:
+    reference 08-31, so its "slippage" was three weeks of drift). Market orders
+    queued for the open are measured against the open instead. A session whose
+    daily bar is not archived yet (the nightly update runs after the close) is
+    absent; the next reconcile rebuilds the summary and fills it in."""
+    pairs = {
+        (str(r.get("symbol") or "").upper(), str(r.get("session") or ""))
+        for r in rows
+        if r.get("symbol") and r.get("session")
+    }
+    if not pairs:
+        return {}
+    sessions = sorted(session for _, session in pairs)
+    try:
+        bars = load_sip_bars(
+            sorted({symbol for symbol, _ in pairs}),
+            frequency="daily",
+            start=sessions[0],
+            end=f"{sessions[-1]}T23:59:59",
+            root=root / "data" / "sip",
+            allow_missing=True,
+        )
+    except (SipParquetError, OSError, ValueError):
+        return {}
+    if bars.empty:
+        return {}
+    days = bars["timestamp"].dt.tz_convert("America/New_York").dt.strftime("%Y-%m-%d")
+    opens = {
+        (str(symbol), str(day)): float(price)
+        for symbol, day, price in zip(bars["symbol"], days, bars["open"], strict=True)
+        if price == price and float(price) > 0
+    }
+    return {pair: opens[pair] for pair in pairs if pair in opens}
+
+
 def reconcile_rehearsal_fills(
     spec_path: Path, root: Path | None = None, *, client: Any | None = None
 ) -> dict[str, Any]:
     """Pull broker status for every ledgered rehearsal order and write a fills
-    snapshot plus a per-session summary (fill rate, slippage vs reference)."""
+    snapshot plus a per-session summary (fill rate, slippage vs the open and
+    vs the reference close)."""
     base = root or project_root()
     spec = load_strategy_spec(spec_path)
     rows = _ledger_rows(base, spec.name)
+    opens = _session_opens(rows, base)
     broker = client or _trading_client()
     _require_verified_paper_client(broker)
     by_coid = {
@@ -890,10 +932,16 @@ def reconcile_rehearsal_fills(
         raw_price = getattr(order, "filled_avg_price", None) if order is not None else None
         fill_price = float(raw_price) if raw_price not in (None, "") else None
         ref = float(row.get("reference_price") or 0) or None
+        sign = 1.0 if row.get("side") == "buy" else -1.0
         slippage_bps = None
         if fill_price and ref:
-            sign = 1.0 if row.get("side") == "buy" else -1.0
             slippage_bps = sign * (fill_price / ref - 1.0) * 10_000
+        official_open = opens.get(
+            (str(row.get("symbol") or "").upper(), str(row.get("session") or ""))
+        )
+        slippage_open_bps = None
+        if fill_price and official_open:
+            slippage_open_bps = sign * (fill_price / official_open - 1.0) * 10_000
         qty = float(row.get("qty") or 0)
         fills.append(
             {
@@ -913,6 +961,8 @@ def reconcile_rehearsal_fills(
                 else None,
                 "fill_fraction": (filled_qty / qty) if qty else None,
                 "slippage_vs_reference_bps": slippage_bps,
+                "official_open": official_open,
+                "slippage_vs_open_bps": slippage_open_bps,
             }
         )
     directory = rehearsal_dir(base)
@@ -937,6 +987,9 @@ def reconcile_rehearsal_fills(
             for f in part
             if f["slippage_vs_reference_bps"] is not None
         )
+        open_slips = sorted(
+            f["slippage_vs_open_bps"] for f in part if f.get("slippage_vs_open_bps") is not None
+        )
         summary["sessions"][session] = {
             "orders": len(part),
             "cancelled_before_open": len(cancelled),
@@ -947,6 +1000,7 @@ def reconcile_rehearsal_fills(
             "unfilled": sum(1 for f in part if f["filled_qty"] == 0),
             "fill_rate_by_notional": (filled_notional / notional) if notional else None,
             "median_slippage_vs_reference_bps": slips[len(slips) // 2] if slips else None,
+            "median_slippage_vs_open_bps": open_slips[len(open_slips) // 2] if open_slips else None,
             "order_styles": sorted({str(f.get("order_style")) for f in part}),
         }
     write_json(directory / f"{spec.name}-fills-summary.json", summary)
@@ -954,8 +1008,8 @@ def reconcile_rehearsal_fills(
         f"# 成交对账 {spec.name}",
         "",
         "| 交易日 | 有效下单 | 开盘前撤单 | 全部成交 | 部分成交 | 未成交 | 按金额成交率 "
-        "| 相对参考价滑点中位数(bp) | 单类型 |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---|",
+        "| 相对开盘价滑点中位数(bp) | 相对参考价偏离中位数(bp) | 单类型 |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---|",
     ]
     for session, v in summary["sessions"].items():
         rate = (
@@ -966,11 +1020,22 @@ def reconcile_rehearsal_fills(
             if v["median_slippage_vs_reference_bps"] is not None
             else "-"
         )
+        open_slip = (
+            f"{v['median_slippage_vs_open_bps']:.1f}"
+            if v["median_slippage_vs_open_bps"] is not None
+            else "-"
+        )
         lines.append(
             f"| {session} | {v['orders']} | {v['cancelled_before_open']} | {v['filled_full']} | "
             f"{v['filled_partial']} | "
-            f"{v['unfilled']} | {rate} | {slip} | {', '.join(v['order_styles'])} |"
+            f"{v['unfilled']} | {rate} | {open_slip} | {slip} | {', '.join(v['order_styles'])} |"
         )
+    lines += [
+        "",
+        "正数表示成交比基准差。开盘价取本地 SIP 日线，当日数据夜间入库后的下一次对账才会补上。"
+        "参考价是信号日收盘价；月中波动率叠加层调仓时，信号日可能是几周前，所以这一列是价格漂移，"
+        "不是执行成本。",
+    ]
     (directory / f"{spec.name}-fills-summary.md").write_text(
         "\n".join(lines) + "\n", encoding="utf-8"
     )

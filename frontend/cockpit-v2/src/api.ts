@@ -377,6 +377,7 @@ export interface FillSession {
   cancelled_before_open: number | null
   fill_rate_by_notional: number | null
   median_slippage_vs_reference_bps: number | null
+  median_slippage_vs_open_bps: number | null
   order_styles: string[]
 }
 export interface EquityPoint {

@@ -422,6 +422,46 @@ def test_reconcile_reports_fill_rate_and_slippage(rehearsal_workspace) -> None:
         root / "reports" / "paper" / "rehearsal" / f"{result.strategy_name}-fills.jsonl"
     ).read_text()
     assert '"slippage_vs_reference_bps": 100.0' in fills.replace("99.99999999999", "100.0")
+    # No local SIP archive in this workspace: the open-based slippage stays empty.
+    assert row["median_slippage_vs_open_bps"] is None
+
+
+def test_reconcile_measures_market_orders_against_the_session_open(rehearsal_workspace) -> None:
+    import pandas as pd
+
+    root, spec_path = rehearsal_workspace
+    client = FakeClient()
+    _authorize(root, spec_path, client)
+    result = run_portfolio_paper_rehearsal(
+        spec_path, root, allow_paper_orders=True, client=client, now=SUBMIT_TIME
+    )
+    by_symbol = {o.symbol: o for o in client.orders}
+    by_symbol["AAPL"].status, by_symbol["AAPL"].filled_qty = "filled", 25
+    by_symbol["AAPL"].filled_avg_price = 210.21  # reference 200 is the stale signal close
+    session = result.session
+    shard = root / "data" / "sip" / "daily" / session[:4] / "shard-0000.parquet"
+    shard.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        {
+            "symbol": ["AAPL"],
+            "timestamp": [pd.Timestamp(f"{session}T04:00:00Z")],
+            "open": [210.0],
+            "high": [211.0],
+            "low": [209.0],
+            "close": [210.5],
+            "volume": [1_000_000.0],
+            "trade_count": [1000.0],
+            "vwap": [210.2],
+        }
+    ).to_parquet(shard, index=False)
+    summary = reconcile_rehearsal_fills(spec_path, root, client=client)
+    row = summary["sessions"][session]
+    assert abs(row["median_slippage_vs_open_bps"] - 10.0) < 1e-6  # 210.21 vs open 210.0
+    assert row["median_slippage_vs_reference_bps"] > 500  # drift since the signal close
+    text = (
+        root / "reports" / "paper" / "rehearsal" / f"{result.strategy_name}-fills-summary.md"
+    ).read_text(encoding="utf-8")
+    assert "相对开盘价滑点中位数(bp)" in text and "| 10.0 |" in text
 
 
 def test_planner_skips_whole_share_drift_below_tolerance() -> None:

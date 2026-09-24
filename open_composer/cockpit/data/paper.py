@@ -597,6 +597,7 @@ class FillSessionStats:
     cancelled_before_open: int | None
     fill_rate_by_notional: float | None
     median_slippage_vs_reference_bps: float | None
+    median_slippage_vs_open_bps: float | None
     order_styles: tuple[str, ...]
 
 
@@ -682,6 +683,7 @@ def load_fills_summary(root: Path | None = None, strategy_name: str = "") -> Fil
                 ),
                 fill_rate_by_notional=_num(row.get("fill_rate_by_notional")),
                 median_slippage_vs_reference_bps=_num(row.get("median_slippage_vs_reference_bps")),
+                median_slippage_vs_open_bps=_num(row.get("median_slippage_vs_open_bps")),
                 order_styles=tuple(s for s in styles if isinstance(s, str))
                 if isinstance(styles, list)
                 else (),

@@ -401,7 +401,7 @@ def reconcile_paper_state(root: Path | None = None) -> PaperReconciliationReport
                 message="No positions snapshot found while local paper orders exist.",
             )
         )
-    for symbol in sorted(position_symbols - order_symbols):
+    for symbol in sorted(position_symbols - order_symbols - _rehearsal_ledger_symbols(base)):
         issues.append(
             PaperReconciliationIssue(
                 severity="warning",
@@ -612,6 +612,26 @@ def run_paper_monitor_loop(
 
 def paper_open_order_rows(root: Path | None = None) -> list[dict[str, object]] | None:
     return _broker_open_order_rows(root or project_root())
+
+
+def _rehearsal_ledger_symbols(root: Path) -> set[str]:
+    """Symbols the paper sleeves ordered through their own ledgers
+    (reports/paper/rehearsal/<name>-orders.jsonl). Those positions do have a
+    local order record; the router-era order log and the broker's open-order
+    snapshot never see them, which made every sleeve position a standing
+    reconciliation warning from 2026-09-18 on."""
+    symbols: set[str] = set()
+    for path in sorted((root / "reports" / "paper" / "rehearsal").glob("*-orders.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(raw, dict) and raw.get("symbol"):
+                symbols.add(str(raw["symbol"]).upper())
+    return symbols
 
 
 def _paper_order_rows(root: Path) -> list[dict[str, object]]:

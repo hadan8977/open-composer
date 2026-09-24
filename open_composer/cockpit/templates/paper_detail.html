@@ -77,7 +77,7 @@
   {% else %}
   <div class="table-wrap">
     <table class="t t--stack">
-      <thead><tr><th>Session</th><th class="num">Orders</th><th class="num">Full</th><th class="num">Partial</th><th class="num">Unfilled</th><th class="num">Cancelled</th><th class="num">Fill rate</th><th class="num">Slippage bps</th><th>Decision</th></tr></thead>
+      <thead><tr><th>Session</th><th class="num">Orders</th><th class="num">Full</th><th class="num">Partial</th><th class="num">Unfilled</th><th class="num">Cancelled</th><th class="num">Fill rate</th><th class="num">Slip vs open bps</th><th>Decision</th></tr></thead>
       <tbody>
         {% for row in detail.fills.sessions %}
         <tr>
@@ -88,7 +88,7 @@
           <td class="num" data-l="Unfilled">{{ row.unfilled if row.unfilled is not none else "–" }}</td>
           <td class="num" data-l="Cancelled">{{ row.cancelled_before_open if row.cancelled_before_open is not none else "–" }}</td>
           <td class="num" data-l="Fill rate">{{ "%.0f%%"|format(row.fill_rate_by_notional * 100) if row.fill_rate_by_notional is not none else "–" }}</td>
-          <td class="num" data-l="Slippage bps">{{ "%.1f"|format(row.median_slippage_vs_reference_bps) if row.median_slippage_vs_reference_bps is not none else "–" }}</td>
+          <td class="num" data-l="Slip vs open bps">{{ "%.1f"|format(row.median_slippage_vs_open_bps) if row.median_slippage_vs_open_bps is not none else "–" }}</td>
           <td data-l="Decision">{{ row.decision or "–" }}{% if row.action %} · {{ row.action }}{% endif %}</td>
         </tr>
         {% endfor %}

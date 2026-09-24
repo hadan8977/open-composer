@@ -1527,6 +1527,28 @@ def test_paper_account_sync_feeds_status_and_dashboard(sample_workspace: Path) -
     assert catalog.paper_positions[0].unrealized_pl == 100
 
 
+def test_paper_reconciliation_counts_sleeve_ledgers_as_local_orders(
+    sample_workspace: Path,
+) -> None:
+    paper_dir = sample_workspace / "reports" / "paper"
+    (paper_dir / "rehearsal").mkdir(parents=True, exist_ok=True)
+    (paper_dir / "positions.json").write_text(
+        json.dumps({"positions": [{"symbol": "UPRO", "qty": 79}, {"symbol": "XLE", "qty": 5}]}),
+        encoding="utf-8",
+    )
+    (paper_dir / "rehearsal" / "sleeve-orders.jsonl").write_text(
+        '{"symbol": "UPRO", "side": "buy", "qty": 99, "client_order_id": "reh-1"}\n',
+        encoding="utf-8",
+    )
+
+    report = reconcile_paper_state(sample_workspace)
+
+    flagged = {
+        issue.symbol for issue in report.issues if issue.code == "position_without_local_order"
+    }
+    assert flagged == {"XLE"}
+
+
 def test_paper_reconciliation_flags_order_position_mismatch(sample_workspace: Path) -> None:
     alpaca_paper.sync_paper_account(
         sample_workspace,
