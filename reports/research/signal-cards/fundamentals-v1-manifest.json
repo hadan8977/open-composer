@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "library": "fundamentals-signal-library-v1",
+  "preregistered_at": "2026-09-24T02:43:29+00:00",
+  "plan": "reports/research/intel/I-20260923-08-free-data-substitutes.md sections 4 and 10 (SEC XBRL as-first-reported fundamentals, recommended first ingest); built by scripts/build_sec_xbrl_fundamentals.py",
+  "tool": "open_composer/research/signal_card.py (rank: top 3000 PIT universe, top-30 long-only books; event: calendar-time books); source data/features/sec_fundamentals_daily",
+  "directions_fixed_before_running": true,
+  "trials": {
+    "signals": 7,
+    "horizons_reported": [
+      1,
+      5,
+      20,
+      60
+    ],
+    "note": "screening; admission is not a strategy claim"
+  },
+  "admission_rule": {
+    "rank": "stable_years AND beats_shuffle AND (T1 or T2 top-30 book positive excess at 20 bp in both the full and the 2024+ window at the primary horizon) AND max |t_nonoverlap| over horizons >= 2.5 with the preregistered sign",
+    "event_long": "beats_redated AND t_dates >= 3 at the primary horizon AND calendar-time book positive excess at 20 bp in the full and the 2024+ window",
+    "event_exit": "t_dates <= -3 at the primary horizon AND beats_redated: admitted as an exit or avoid signal only",
+    "reported_not_required": [
+      "timely",
+      "distinct_from_controls"
+    ]
+  },
+  "signals": [
+    {
+      "name": "pead_sue_eps_event",
+      "mode": "event",
+      "source": "data/features/sec_fundamentals_daily",
+      "column": "sue_eps",
+      "threshold": 2.0,
+      "primary_horizon": 20,
+      "rationale": "Post-earnings-announcement drift on standardized unexpected earnings (Foster-Olsen-Shevlin 1984 seasonal random walk; Bernard-Thomas 1989/1990 drift), event = sue_eps >= 2.0 (a fixed, preregistered ~2-sigma positive-surprise cutoff on the seasonal-random-walk statistic, not fitted to this sample) at the report's own usable session. Horizon 20 is primary; 60 is also reported by the tool's standard horizon set. recent evidence, UCLA (Subrahmanyam) replication through Dec 2024: classic SUE-based PEAD is significant across all stocks (t=2.18) but drops to t=1.43 (not significant) ex-microcap -- per reports/research/intel/I-20260923-07-owner-five-directions-wave.md section 1. Treat any admission here as a microcap-tilted, tier-1/tier-2-scrutinized effect, not a rediscovery of a durable large-cap anomaly.",
+      "where": "days_since_report = 0"
+    },
+    {
+      "name": "sue_eps_rank_recent",
+      "source": "data/features/sec_fundamentals_daily",
+      "column": "sue_eps",
+      "where": "days_since_report <= 5",
+      "direction": 1,
+      "rationale": "Cross-sectional rank of standardized unexpected earnings (Foster-Olsen-Shevlin 1984), restricted to stocks within 5 sessions of their own usable report so the ranking is always freshly informed rather than stale across a whole quarter; direction +1 (higher surprise, higher expected return, Bernard-Thomas drift). recent evidence, UCLA (Subrahmanyam) replication through Dec 2024: classic SUE-based PEAD is significant across all stocks (t=2.18) but drops to t=1.43 (not significant) ex-microcap -- per reports/research/intel/I-20260923-07-owner-five-directions-wave.md section 1. Treat any admission here as a microcap-tilted, tier-1/tier-2-scrutinized effect, not a rediscovery of a durable large-cap anomaly."
+    },
+    {
+      "name": "sue_rev_rank_recent",
+      "source": "data/features/sec_fundamentals_daily",
+      "column": "sue_rev",
+      "where": "days_since_report <= 5",
+      "direction": 1,
+      "rationale": "Cross-sectional rank of standardized unexpected revenue, identical construction to sue_eps (Foster-Olsen-Shevlin 1984 seasonal random walk) applied to revenue instead of EPS, same days_since_report <= 5 freshness restriction; direction +1. recent evidence, UCLA (Subrahmanyam) replication through Dec 2024: classic SUE-based PEAD is significant across all stocks (t=2.18) but drops to t=1.43 (not significant) ex-microcap -- per reports/research/intel/I-20260923-07-owner-five-directions-wave.md section 1. Treat any admission here as a microcap-tilted, tier-1/tier-2-scrutinized effect, not a rediscovery of a durable large-cap anomaly."
+    },
+    {
+      "name": "gross_profitability",
+      "source": "data/features/sec_fundamentals_daily",
+      "column": "gross_profitability",
+      "direction": 1,
+      "rationale": "Gross profit / total assets (Novy-Marx 2013, 'the other side of value'); numerator is the latest 10-K trailing-annual gross profit, denominator the latest known total assets; direction +1 (higher profitability, higher expected return). Coverage caveat: many services/financial issuers do not tag GrossProfit at all, so this signal is null for them rather than a derived approximation. recent evidence, UCLA (Subrahmanyam) replication through Dec 2024: classic SUE-based PEAD is significant across all stocks (t=2.18) but drops to t=1.43 (not significant) ex-microcap -- per reports/research/intel/I-20260923-07-owner-five-directions-wave.md section 1. Treat any admission here as a microcap-tilted, tier-1/tier-2-scrutinized effect, not a rediscovery of a durable large-cap anomaly."
+    },
+    {
+      "name": "asset_growth",
+      "source": "data/features/sec_fundamentals_daily",
+      "column": "asset_growth",
+      "direction": -1,
+      "rationale": "Year-over-year growth of fiscal-year-end total assets (Cooper-Gulen-Schill 2008); direction -1 (high asset growth, low subsequent return, the asset-growth anomaly). Updates once a year at the 10-K filing, matched by fy vs fy-1 rather than a rolling window. recent evidence, UCLA (Subrahmanyam) replication through Dec 2024: classic SUE-based PEAD is significant across all stocks (t=2.18) but drops to t=1.43 (not significant) ex-microcap -- per reports/research/intel/I-20260923-07-owner-five-directions-wave.md section 1. Treat any admission here as a microcap-tilted, tier-1/tier-2-scrutinized effect, not a rediscovery of a durable large-cap anomaly."
+    },
+    {
+      "name": "accruals",
+      "source": "data/features/sec_fundamentals_daily",
+      "column": "accruals",
+      "direction": -1,
+      "rationale": "(Net income - operating cash flow) / average total assets (Sloan 1996); direction -1 (high accruals, low subsequent return -- the earnings-quality/accrual anomaly). Average total assets uses the nearest known value ~365 days earlier (60-day tolerance); null before a full year of history exists rather than a degenerate one-point average. The 2026-09-18 intel brief already flagged accrual/F-Score-style effects as decayed in recent samples -- this card is the local test of that, not an assumption it still works. recent evidence, UCLA (Subrahmanyam) replication through Dec 2024: classic SUE-based PEAD is significant across all stocks (t=2.18) but drops to t=1.43 (not significant) ex-microcap -- per reports/research/intel/I-20260923-07-owner-five-directions-wave.md section 1. Treat any admission here as a microcap-tilted, tier-1/tier-2-scrutinized effect, not a rediscovery of a durable large-cap anomaly."
+    },
+    {
+      "name": "roe",
+      "source": "data/features/sec_fundamentals_daily",
+      "column": "roe",
+      "direction": 1,
+      "rationale": "Net income (trailing annual) / latest known stockholders' equity; direction +1 (quality/profitability premium, Novy-Marx and related quality-factor literature). recent evidence, UCLA (Subrahmanyam) replication through Dec 2024: classic SUE-based PEAD is significant across all stocks (t=2.18) but drops to t=1.43 (not significant) ex-microcap -- per reports/research/intel/I-20260923-07-owner-five-directions-wave.md section 1. Treat any admission here as a microcap-tilted, tier-1/tier-2-scrutinized effect, not a rediscovery of a durable large-cap anomaly."
+    }
+  ],
+  "amendments": [
+    {
+      "at": "2026-09-24T05:20:00+00:00",
+      "before_any_card_ran": true,
+      "change": "pead_sue_eps_event: added where days_since_report = 0",
+      "reason": "sue_eps is forward-filled in the daily panel (2024: 515,244 non-null rows, 464,636 with days_since_report > 5); without the filter the event card would count every forward-filled day with sue_eps >= 2 as a new event (32,332 in 2024 vs 545 true report-day events). The preregistered design already said 'at the report usable session'; this aligns the spec with it.",
+      "timing_caveat": "usable session = first NYSE session after the 10-Q/10-K filing date, which usually lags the earnings press release (8-K item 2.02) by days to weeks; the card measures drift after the XBRL filing, the tradeable version with free data"
+    }
+  ]
+}

@@ -186,6 +186,10 @@ ZIP_PATH = RAW_ROOT / "companyfacts.zip"
 
 FACTS_ROOT = ROOT / "data" / "features" / "sec_fundamentals"
 FACTS_PATH = FACTS_ROOT / "facts.parquet"
+#: Per-batch cleaned facts, concatenated into FACTS_PATH by
+#: write_facts_from_batches and removed afterward. data/features/ is
+#: entirely gitignored, same as the final output.
+FACTS_BATCH_ROOT = FACTS_ROOT / "_batches"
 DAILY_ROOT = ROOT / "data" / "features" / "sec_fundamentals_daily"
 DAILY_BROAD_ROOT = ROOT / "data" / "features" / "daily_broad"
 UNIVERSE_BROAD_ROOT = ROOT / "data" / "features" / "universe_broad"
@@ -540,8 +544,18 @@ def rows_to_frame(rows: list[dict]) -> pd.DataFrame:
     corrupt_start = had_start & frame["period_start"].isna()
     frame.loc[corrupt_start, "period_kind"] = "YTD_other"
     # A fact with no valid period_end or filed date is unusable regardless
-    # of concept; drop rather than carry a NaT-keyed row forward.
-    frame = frame.loc[frame["period_end"].notna() & frame["filed"].notna()]
+    # of concept; drop rather than carry a NaT-keyed row forward. A fact
+    # cannot be filed before its own period ends -- observed live in this
+    # build (0.02% of rows, concentrated in the manually-entered cover-page
+    # dei:EntityCommonStockSharesOutstanding date): a bogus far-future
+    # period_end would otherwise get "stuck" as the running-latest value
+    # forever, since _running_latest's period-end guard treats it as the
+    # most recent period no real fact could ever supersede.
+    frame = frame.loc[
+        frame["period_end"].notna()
+        & frame["filed"].notna()
+        & (frame["period_end"] <= frame["filed"])
+    ]
     return frame.reset_index(drop=True)
 
 
@@ -922,16 +936,28 @@ def compute_cik_table(cik: int, frame: pd.DataFrame) -> pd.DataFrame:
 # --------------------------------------------------------------------------
 
 
-def run_facts_stage(
-    *, source: str, limit: int | None, batch_size: int, force: bool
-) -> tuple[pd.DataFrame, dict[int, pd.DataFrame]]:
+def run_facts_stage(*, source: str, limit: int | None, batch_size: int, force: bool) -> int:
     """Extract, clean and derive-signal every mapped CIK, batched so the
     ~1.4 GB zip is never more than one member in memory at a time and the
     cleaning pipeline only ever holds one batch's raw rows.
 
-    Returns the concatenated cleaned ``facts`` long table (written to
-    ``facts.parquet`` by the caller) and ``{cik: compact_state_table}`` for
-    the daily stage.
+    Each cleaned batch is streamed straight to its own file under
+    ``FACTS_BATCH_ROOT`` rather than kept in a growing Python list: holding
+    every batch's frame in memory for one final ``pd.concat`` +
+    ``to_parquet`` (the original design) took 45 minutes on this box's ~1
+    GB of headroom while two other capped jobs competed for RAM -- swap
+    thrashing, not a crash, but bad enough to be worth fixing. The caller
+    concatenates the batch files with DuckDB (:func:`write_facts_from_batches`),
+    which streams through disk rather than holding everything in pandas at
+    once.
+
+    Returns the number of companies seen; the cleaned long-form facts are on
+    disk in ``FACTS_BATCH_ROOT``, not in the return value. The per-issuer
+    compact state table (:func:`compute_cik_table`) is *not* accumulated
+    here even though it is cheap to build -- the daily stage rebuilds it
+    from ``facts.parquet`` on its own, so keeping a second growing
+    ``{cik: DataFrame}`` dict alive for the whole facts stage would only add
+    memory pressure for a value nothing reads.
     """
     from dotenv import load_dotenv
 
@@ -956,23 +982,27 @@ def run_facts_stage(
     else:
         raise ValueError(f"unknown source {source!r}")
 
-    facts_batches: list[pd.DataFrame] = []
-    cik_tables: dict[int, pd.DataFrame] = {}
+    FACTS_BATCH_ROOT.mkdir(parents=True, exist_ok=True)
+    if force:
+        for stale in FACTS_BATCH_ROOT.glob("batch_*.parquet"):
+            stale.unlink()
+
     batch_rows: list[dict] = []
     batch_ciks: list[int] = []
     seen = 0
+    written_batches = 0
+    batch_index = 0
     t0 = time.monotonic()
 
     def _flush() -> None:
+        nonlocal batch_index, written_batches
         if not batch_rows:
             return
         cleaned = build_facts_batch(batch_rows)
-        facts_batches.append(cleaned)
         if not cleaned.empty:
-            for cik, group in cleaned.groupby("cik"):
-                table = compute_cik_table(int(cik), group)
-                if not table.empty:
-                    cik_tables[int(cik)] = table
+            cleaned.to_parquet(FACTS_BATCH_ROOT / f"batch_{batch_index:05d}.parquet", index=False)
+            written_batches += 1
+        batch_index += 1
 
     for cik, payload in source_iter:
         batch_rows.extend(fact_rows_from_payload(cik, payload, source_dataset))
@@ -986,16 +1016,36 @@ def run_facts_stage(
             )
             batch_rows, batch_ciks = [], []
     _flush()
-    log(f"facts stage done: {seen:,} companies, {len(cik_tables):,} with usable state")
-
-    facts = pd.concat(facts_batches, ignore_index=True) if facts_batches else rows_to_frame([])
-    return facts, cik_tables
+    log(f"facts stage done: {seen:,} companies seen, {written_batches:,} non-empty batches written")
+    return seen
 
 
-def write_facts(facts: pd.DataFrame) -> Path:
+def write_facts_from_batches() -> Path:
+    """Concatenate every ``FACTS_BATCH_ROOT/batch_*.parquet`` into the final
+    ``facts.parquet`` via DuckDB (streams through disk) rather than pandas
+    ``pd.concat`` (would hold every batch in memory at once); removes the
+    batch files afterward."""
     FACTS_ROOT.mkdir(parents=True, exist_ok=True)
-    facts.to_parquet(FACTS_PATH, index=False)
-    log(f"wrote {FACTS_PATH.relative_to(ROOT)} ({len(facts):,} rows)")
+    batch_files = sorted(FACTS_BATCH_ROOT.glob("batch_*.parquet"))
+    if not batch_files:
+        empty = rows_to_frame([])
+        empty.to_parquet(FACTS_PATH, index=False)
+        log(f"wrote {FACTS_PATH.relative_to(ROOT)} (0 rows, no batches found)")
+        return FACTS_PATH
+    con = duckdb.connect()
+    try:
+        con.execute("SET memory_limit='700MB'")
+        glob = str(FACTS_BATCH_ROOT / "batch_*.parquet")
+        con.execute(
+            f"COPY (SELECT * FROM read_parquet('{glob}', union_by_name=true)) "
+            f"TO '{FACTS_PATH}' (FORMAT PARQUET)"
+        )
+        (n_rows,) = con.execute(f"SELECT COUNT(*) FROM read_parquet('{FACTS_PATH}')").fetchone()
+    finally:
+        con.close()
+    for batch_file in batch_files:
+        batch_file.unlink()
+    log(f"wrote {FACTS_PATH.relative_to(ROOT)} ({n_rows:,} rows, from {len(batch_files)} batches)")
     return FACTS_PATH
 
 
@@ -1185,10 +1235,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.stage in ("facts", "all"):
         if args.stage == "facts" or not FACTS_PATH.exists() or args.force:
-            facts, cik_tables = run_facts_stage(
+            run_facts_stage(
                 source=args.source, limit=args.limit, batch_size=args.batch_size, force=args.force
             )
-            write_facts(facts)
+            write_facts_from_batches()
         if args.stage == "facts":
             return 0
 

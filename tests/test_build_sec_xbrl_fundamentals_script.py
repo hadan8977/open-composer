@@ -362,6 +362,34 @@ def test_rows_to_frame_drops_a_fact_with_an_unparseable_end_or_filed_date() -> N
     assert frame.empty
 
 
+def test_rows_to_frame_drops_a_period_end_after_its_own_filed_date() -> None:
+    # Observed live in this build: 422 of 2.2M rows (concentrated in the
+    # manually-entered cover-page shares-outstanding date) had a period_end
+    # years after the filing date -- a logical impossibility (you cannot
+    # file a report before the period it covers has ended) that would
+    # otherwise get "stuck" as _running_latest's forever-most-recent value.
+    payload = _payload(
+        11,
+        {
+            "dei": {
+                "EntityCommonStockSharesOutstanding": {
+                    "shares": [
+                        _entry(
+                            "2034-03-05", 999.0, "A", "2020-02-01", fy=2020, fp="FY", form="10-K"
+                        ),
+                        _entry(
+                            "2019-12-31", 500.0, "B", "2020-02-01", fy=2020, fp="FY", form="10-K"
+                        ),
+                    ]
+                }
+            }
+        },
+    )
+    frame = rows_to_frame(fact_rows_from_payload(11, payload, "test"))
+    assert len(frame) == 1
+    assert frame.loc[0, "val"] == 500.0
+
+
 # --------------------------------------------------------------------------
 # usable-session timing
 # --------------------------------------------------------------------------
