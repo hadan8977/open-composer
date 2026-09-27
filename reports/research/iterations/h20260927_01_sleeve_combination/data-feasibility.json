@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260927_01_sleeve_combination_historical_evaluation_authorization",
+  "iter_id": "h20260927_01_sleeve_combination",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 7,
+    "evaluation_authorized_count": 7,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 7,
+    "rows": [
+      {
+        "candidate_id": "M0",
+        "path": "sleeve_combination_vs_delevered_control",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "037028d34c2db9d579ca71c69101165464229d813db0ea4b596d262aa016babf"
+      },
+      {
+        "candidate_id": "M1",
+        "path": "sleeve_combination_vs_delevered_control",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "a8e23105372cf6add21b8a402b491226984daa4422a457cc75c2b36fda60f221"
+      },
+      {
+        "candidate_id": "M2",
+        "path": "sleeve_combination_vs_delevered_control",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "773bce4203a65c045694ebb57cf5a34787aad446db79d93f27c16d9622f42684"
+      },
+      {
+        "candidate_id": "M3",
+        "path": "sleeve_combination_vs_delevered_control",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "8fa5e9a67153a6913539de43ad644a51f23406e7b9bc45eaea61b9eadb1cdbd8"
+      },
+      {
+        "candidate_id": "C1",
+        "path": "sleeve_combination_vs_delevered_control",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "b842dff0f4f24e8a3f18b36525d228f9c064774015a2051c3d66a95e25a561c3"
+      },
+      {
+        "candidate_id": "C2",
+        "path": "sleeve_combination_vs_delevered_control",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "4cf1e8b64a2e06cf1c5e9e97a790861336daaaba2f3a0f42da53f5ba03691cf2"
+      },
+      {
+        "candidate_id": "C3",
+        "path": "sleeve_combination_vs_delevered_control",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "f43c677cf52d20f8de02ff53d55d0acc5dd1b158d0cc4027b4c0177d3bc6ccaf"
+      }
+    ]
+  },
+  "path_gates": {
+    "sleeve_combination_vs_delevered_control": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "M0",
+        "M1",
+        "M2",
+        "M3",
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "All 25 sleeve-menu symbols plus SHY/BIL/QQQ are present in the local SIP daily archive from 2016-01-04 through 2026-09-17 (confirmed via duckdb against data/sip/daily/*/*.parquet), covering the common start (2017-02-01), the stress period, the frozen select and anchor windows, and next-session fills through 2026-09-17. No new capability or vendor is required; the sleeve overlay and cost engine are reused unchanged from scripts/run_h20260922_05_salvage.py and scripts/run_h20260918_05_recent_menu.py."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+      "sha256": "ef6bb3527e3e04ac28f3db3cc7b71dfa374e5bddd719befa6b4e971d8ea9c49c"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260927_01_sleeve_combination/cost-contract.json",
+      "sha256": "77eab265074d2ffbdf5c45c1028a9172b6ed751d256314d131ca70cdfc1aa910"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260927_01_sleeve_combination.jsonl",
+      "sha256": "a2523cc042d8d6efea958d182a65dab1fe197dc86a34c3112904a58ebaf81609"
+    }
+  }
+}

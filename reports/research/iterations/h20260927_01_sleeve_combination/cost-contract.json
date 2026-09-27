@@ -1,0 +1,16 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+  "iter_id": "h20260927_01_sleeve_combination",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only spot ETFs and SHY; LETF financing is inside the fund NAV)",
+  "sleeve_internal_cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session (frozen scripts/run_h20260922_05_salvage.py convention, unchanged)",
+  "sleeve_slippage_bps_per_side_primary": 10.0,
+  "sleeve_slippage_bps_per_side_stress": 20.0,
+  "combo_rebalance_cost_model": "combo_cost_bps * sum(abs(delta sleeve weight)), charged on the session after each month-end rebalance signal",
+  "combo_slippage_bps_per_side_primary": 10.0,
+  "combo_slippage_bps_per_side_stress": 20.0,
+  "control_cost_model": "Ci pays no rebalancing cost (conservative in the control's favor)"
+}

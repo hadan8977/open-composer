@@ -1,0 +1,113 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260927_01_sleeve_combination",
+  "strategy_name": "sleeve_combination_h20260927_01",
+  "source_spec_path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+  "spec_hash": "00d5df27ee20bfab85b6668d9d2f03937827f28a84bbcce5904c39927fa24567",
+  "objective": "Test whether combining S1/S2/S3 at a fixed proportion (or trailing inverse-volatility weight) beats delevering S3 alone to the same realized volatility, using the volatility-matched comparison methodology documented in the risk-parity / portable-beta literature.",
+  "topic_coverage": [
+    "volatility_matched_comparison_methodology",
+    "leverage_vs_concentration_equivalence",
+    "risk_parity_diversification_evidence",
+    "inverse_volatility_weighting_precedent",
+    "tactical_multi_asset_combination_precedent",
+    "volatility_targeting_and_vol_managed_portfolios"
+  ],
+  "sources": [
+    {
+      "url": "https://blog.thinknewfound.com/2017/12/portable-beta-making-returns-youre-already-getting/",
+      "published_or_updated_at": "2017-12-04",
+      "source_type": "industry_standard",
+      "credibility": "established_practitioner_research_shop",
+      "core_claim": "A levered 60/40 portfolio scaled to match equities' own volatility level beat the S&P 500 on return, because matching risk lets the diversified portfolio's higher risk-efficiency show through.",
+      "project_applicability": "Grounds this round's core comparison design: Ci = k*S3+(1-k)*SHY is exactly this volatility-matching move applied to our own sleeves, so Mi's advantage (if any) over Ci is a genuine diversification effect, not a higher-average-risk artifact.",
+      "reflection": "Verified via curl snapshot; quote binding recorded in direction-review.json and reports/harness/source_cards/h20260927_01_sleeve_combination.jsonl."
+    },
+    {
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/White-Papers/Understanding-Risk-Parity.pdf",
+      "published_or_updated_at": "2010-01-01",
+      "source_type": "paper",
+      "credibility": "top_asset_manager_white_paper",
+      "core_claim": "By changing the amount of leverage applied to a diversified portfolio, one can construct portfolios of an arbitrary target volatility, making volatility-matched comparison the correct way to judge whether diversification (not just leverage) adds value.",
+      "project_applicability": "Formal statement of the volatility-matching methodology this round's bisection-solved k implements for each Ci control.",
+      "reflection": "Not fetched as a verified snapshot this round (PDF, used for corroborating context only, not the binding claim); the binding claim comes from the Newfound source instead."
+    },
+    {
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Journal-Article/Leverage-Aversion-and-Risk-Parity.pdf",
+      "published_or_updated_at": "2012-01-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_financial_analysts_journal",
+      "core_claim": "A risk-parity (diversified, leverage-adjusted) portfolio realized a 0.27 higher Sharpe ratio than the market portfolio over 1926-2010, a comparison methodology built entirely on matching risk before comparing return.",
+      "project_applicability": "Independent academic corroboration that the volatility-matched-comparison methodology is standard practice for judging diversification value, not an ad hoc choice for this round.",
+      "reflection": "Long-run cross-asset risk parity, not ETF-sleeve rotation; supports the comparison method, not the specific weight rules."
+    },
+    {
+      "url": "https://www.aqr.com/Insights/Perspectives/Risk-Parity-Why-We-Fight-Lever",
+      "published_or_updated_at": "2014-09-24",
+      "source_type": "practitioner_perspective",
+      "credibility": "top_asset_manager_perspective",
+      "core_claim": "Investors face a choice between levering a diversified portfolio or concentrating in the riskiest asset; the two are the same risk level, so their return should be judged at that matched risk level.",
+      "project_applicability": "Reinforces why S3 alone (the riskiest, highest-conviction single sleeve) is the right delevered baseline for the control, rather than an arbitrary blend.",
+      "reflection": "Framed as leverage-vs-concentration choice, not sleeve combination; used for the comparison-fairness argument only."
+    },
+    {
+      "url": "https://alphaarchitect.com/digging-deeper-into-adaptive-asset-allocation/",
+      "published_or_updated_at": "2015-01-01",
+      "source_type": "industry_standard",
+      "credibility": "established_quant_research_shop",
+      "core_claim": "Inverse-volatility weighting -- weighting assets or strategies by the reciprocal of their trailing realized volatility -- is a standard, simple way to combine multiple return streams when their expected Sharpe ratios and pairwise correlations are similar.",
+      "project_applicability": "Direct precedent for M3's trailing-63-session inverse-volatility weighting rule across S1/S2/S3.",
+      "reflection": "General adaptive-allocation context (assets, not our specific ETF-rotation sleeves); page could not be fetched for a verified snapshot this round (blocked by an anti-bot check), so it is cited for descriptive context only, not a binding claim."
+    },
+    {
+      "url": "https://alphaarchitect.com/the-performance-of-volatility-managed-portfolios/",
+      "published_or_updated_at": "2018-01-01",
+      "source_type": "industry_standard",
+      "credibility": "established_quant_research_shop",
+      "core_claim": "Volatility targeting reduces exposure when realized volatility rises, which is the same direction of adjustment as inverse-volatility weighting across multiple return streams.",
+      "project_applicability": "Corroborates that scaling exposure inversely with volatility (used both by S3's existing vt40 overlay and by M3's inverse-vol combination weight) is an established, not ad hoc, mechanism.",
+      "reflection": "Summarized from search results, not independently fetched this round."
+    },
+    {
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=962461",
+      "published_or_updated_at": "2013-03-01",
+      "source_type": "paper",
+      "credibility": "peer_reviewed_journal_of_wealth_management",
+      "core_claim": "A simple tactical asset allocation model combining multiple asset classes achieved equity-like returns with bond-like volatility and drawdowns, evaluated in real time out of sample.",
+      "project_applicability": "General precedent that combining multiple return streams (there, asset classes; here, sleeves) with simple rules can improve the risk/return trade-off versus a single concentrated stream -- the question this round tests specifically for S1/S2/S3.",
+      "reflection": "Different asset universe (global tactical allocation, not leveraged-ETF sector/growth rotation); descriptive precedent only, previously catalogued in reports/research/iterations/h20260923_11_s3_bear_guard/sources/."
+    },
+    {
+      "url": "https://quantpedia.com/risk-parity-asset-allocation/",
+      "published_or_updated_at": "2020-01-01",
+      "source_type": "industry_standard",
+      "credibility": "quant_strategy_database",
+      "core_claim": "Risk parity allocates capital so each component contributes equal risk, typically via inverse-volatility or inverse-variance weighting, and is widely used to combine uncorrelated or partially correlated return streams.",
+      "project_applicability": "Independent practitioner-database corroboration for M3's inverse-volatility combination rule and for why pairwise sleeve correlation (reported per window in this round) is the deciding factor in whether combination beats a delevered single sleeve.",
+      "reflection": "Summary/database page, not a primary academic source; used as corroborating industry practice only."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260927_01_sleeve_combination.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "newfound2017_portable_beta_vol_matched_leverage_comparison",
+      "source_card_path": "reports/harness/source_cards/h20260927_01_sleeve_combination.jsonl",
+      "used_for": "control_design_volatility_matched_comparison_ci"
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "newfound2017_portable_beta_vol_matched_leverage_comparison",
+      "effect": "Fixed the control design as Ci = k*S3+(1-k)*SHY with k solved per window to match Mi's realized volatility, instead of comparing Mi to S3 at S3's own (higher) risk level, which would make any combination look artificially better just from running at lower average risk."
+    },
+    {
+      "driver": "alphaarchitect_inverse_volatility_and_quantpedia_risk_parity",
+      "effect": "Set M3's weight rule to trailing-63-session inverse volatility with an equal-weight fallback for insufficient history, matching established risk-parity/inverse-vol combination practice rather than inventing a bespoke weighting scheme."
+    }
+  ],
+  "hypothesis_links": [
+    "H-20260927-01"
+  ]
+}

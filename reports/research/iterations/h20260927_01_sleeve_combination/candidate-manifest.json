@@ -1,0 +1,432 @@
+{
+  "iter_id": "h20260927_01_sleeve_combination",
+  "generated_at": "2026-09-27T19:25:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "sleeve_combination_h20260927_01",
+  "objective": "Screen three sleeve-combination weight rules (M1 equal-thirds, M2 half S1 half S3, M3 trailing-63-session inverse-volatility) plus an M0 = S3-alone reference, each combination candidate judged against its own preregistered volatility-matched delevered-S3 control (Ci), for whether fixed-proportion combination of the three live sleeves beats delevering S3 alone to the same realized volatility on Sharpe and stress-period drawdown, without breaking the frozen anchor-window return bar.",
+  "candidates": [
+    {
+      "candidate_id": "M0",
+      "path": "sleeve_combination_vs_delevered_control",
+      "role": "reference_single_sleeve",
+      "method": "s3_alone_vt40_boost",
+      "ablation": "none_frozen_machine",
+      "spec_path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_sleeve_combination_panel",
+      "feature_contract": "feature_v1_sleeve_combination_and_delevered_control",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_common_start_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+      "benchmark_contract": "benchmark_v1_sleeve_combination_diagnostics",
+      "parameters": {
+        "sleeves": {
+          "s1": {
+            "salvage_key": "s1",
+            "target": null
+          },
+          "s2": {
+            "salvage_key": "s2",
+            "target": 0.156
+          },
+          "s3": {
+            "salvage_key": "s3",
+            "target": 0.4,
+            "boost_target": 0.6,
+            "boost_hold": 10,
+            "boost_signal": "salvage.boost_window(salvage.dip_signal(close), 10)"
+          }
+        },
+        "cost_bps_sleeve_primary": 10.0,
+        "cost_bps_sleeve_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "weights_rule": "s3_alone",
+        "target_weights": {
+          "s1": 0.0,
+          "s2": 0.0,
+          "s3": 1.0
+        }
+      }
+    },
+    {
+      "candidate_id": "M1",
+      "path": "sleeve_combination_vs_delevered_control",
+      "role": "combination_candidate",
+      "method": "fixed_proportion_equal_thirds",
+      "ablation": "combo_weight_rule",
+      "spec_path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_sleeve_combination_panel",
+      "feature_contract": "feature_v1_sleeve_combination_and_delevered_control",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_common_start_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+      "benchmark_contract": "benchmark_v1_sleeve_combination_diagnostics",
+      "parameters": {
+        "sleeves": {
+          "s1": {
+            "salvage_key": "s1",
+            "target": null
+          },
+          "s2": {
+            "salvage_key": "s2",
+            "target": 0.156
+          },
+          "s3": {
+            "salvage_key": "s3",
+            "target": 0.4,
+            "boost_target": 0.6,
+            "boost_hold": 10,
+            "boost_signal": "salvage.boost_window(salvage.dip_signal(close), 10)"
+          }
+        },
+        "cost_bps_sleeve_primary": 10.0,
+        "cost_bps_sleeve_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "weights_rule": "equal_thirds",
+        "target_weights": {
+          "s1": 0.3333333333333333,
+          "s2": 0.3333333333333333,
+          "s3": 0.3333333333333333
+        },
+        "rebalance": "month_end_close_next_open",
+        "combo_cost_bps_primary": 10.0,
+        "combo_cost_bps_stress": 20.0,
+        "paired_control": "C1"
+      }
+    },
+    {
+      "candidate_id": "M2",
+      "path": "sleeve_combination_vs_delevered_control",
+      "role": "combination_candidate",
+      "method": "fixed_proportion_half_s1_half_s3",
+      "ablation": "combo_weight_rule",
+      "spec_path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_sleeve_combination_panel",
+      "feature_contract": "feature_v1_sleeve_combination_and_delevered_control",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_common_start_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+      "benchmark_contract": "benchmark_v1_sleeve_combination_diagnostics",
+      "parameters": {
+        "sleeves": {
+          "s1": {
+            "salvage_key": "s1",
+            "target": null
+          },
+          "s2": {
+            "salvage_key": "s2",
+            "target": 0.156
+          },
+          "s3": {
+            "salvage_key": "s3",
+            "target": 0.4,
+            "boost_target": 0.6,
+            "boost_hold": 10,
+            "boost_signal": "salvage.boost_window(salvage.dip_signal(close), 10)"
+          }
+        },
+        "cost_bps_sleeve_primary": 10.0,
+        "cost_bps_sleeve_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "weights_rule": "half_s1_half_s3",
+        "target_weights": {
+          "s1": 0.5,
+          "s2": 0.0,
+          "s3": 0.5
+        },
+        "rebalance": "month_end_close_next_open",
+        "combo_cost_bps_primary": 10.0,
+        "combo_cost_bps_stress": 20.0,
+        "paired_control": "C2"
+      }
+    },
+    {
+      "candidate_id": "M3",
+      "path": "sleeve_combination_vs_delevered_control",
+      "role": "combination_candidate",
+      "method": "inverse_vol_63d_trailing_equal_weight_fallback",
+      "ablation": "combo_weight_rule",
+      "spec_path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_sleeve_combination_panel",
+      "feature_contract": "feature_v1_sleeve_combination_and_delevered_control",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_common_start_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+      "benchmark_contract": "benchmark_v1_sleeve_combination_diagnostics",
+      "parameters": {
+        "sleeves": {
+          "s1": {
+            "salvage_key": "s1",
+            "target": null
+          },
+          "s2": {
+            "salvage_key": "s2",
+            "target": 0.156
+          },
+          "s3": {
+            "salvage_key": "s3",
+            "target": 0.4,
+            "boost_target": 0.6,
+            "boost_hold": 10,
+            "boost_signal": "salvage.boost_window(salvage.dip_signal(close), 10)"
+          }
+        },
+        "cost_bps_sleeve_primary": 10.0,
+        "cost_bps_sleeve_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "weights_rule": "inverse_vol_63d_trailing_daily_return_stdev",
+        "lookback_sessions": 63,
+        "fallback_when_insufficient_history": "equal_weight",
+        "rebalance": "month_end_close_next_open",
+        "combo_cost_bps_primary": 10.0,
+        "combo_cost_bps_stress": 20.0,
+        "paired_control": "C3"
+      }
+    },
+    {
+      "candidate_id": "C1",
+      "path": "sleeve_combination_vs_delevered_control",
+      "role": "vol_matched_delevered_control",
+      "method": "k_s3_plus_1_minus_k_shy",
+      "ablation": "control_no_cost",
+      "spec_path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_sleeve_combination_panel",
+      "feature_contract": "feature_v1_sleeve_combination_and_delevered_control",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_common_start_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+      "benchmark_contract": "benchmark_v1_sleeve_combination_diagnostics",
+      "parameters": {
+        "sleeves": {
+          "s1": {
+            "salvage_key": "s1",
+            "target": null
+          },
+          "s2": {
+            "salvage_key": "s2",
+            "target": 0.156
+          },
+          "s3": {
+            "salvage_key": "s3",
+            "target": 0.4,
+            "boost_target": 0.6,
+            "boost_hold": 10,
+            "boost_signal": "salvage.boost_window(salvage.dip_signal(close), 10)"
+          }
+        },
+        "cost_bps_sleeve_primary": 10.0,
+        "cost_bps_sleeve_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "control_rule": "k*S3 + (1-k)*SHY, k solved by bisection per window to match M1's realized vol",
+        "paired_candidate": "M1",
+        "k_solver": "bisection",
+        "k_cap": 1.0,
+        "rebalance": "daily_fixed_k_per_window",
+        "cost_bps": 0.0
+      }
+    },
+    {
+      "candidate_id": "C2",
+      "path": "sleeve_combination_vs_delevered_control",
+      "role": "vol_matched_delevered_control",
+      "method": "k_s3_plus_1_minus_k_shy",
+      "ablation": "control_no_cost",
+      "spec_path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_sleeve_combination_panel",
+      "feature_contract": "feature_v1_sleeve_combination_and_delevered_control",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_common_start_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+      "benchmark_contract": "benchmark_v1_sleeve_combination_diagnostics",
+      "parameters": {
+        "sleeves": {
+          "s1": {
+            "salvage_key": "s1",
+            "target": null
+          },
+          "s2": {
+            "salvage_key": "s2",
+            "target": 0.156
+          },
+          "s3": {
+            "salvage_key": "s3",
+            "target": 0.4,
+            "boost_target": 0.6,
+            "boost_hold": 10,
+            "boost_signal": "salvage.boost_window(salvage.dip_signal(close), 10)"
+          }
+        },
+        "cost_bps_sleeve_primary": 10.0,
+        "cost_bps_sleeve_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "control_rule": "k*S3 + (1-k)*SHY, k solved by bisection per window to match M2's realized vol",
+        "paired_candidate": "M2",
+        "k_solver": "bisection",
+        "k_cap": 1.0,
+        "rebalance": "daily_fixed_k_per_window",
+        "cost_bps": 0.0
+      }
+    },
+    {
+      "candidate_id": "C3",
+      "path": "sleeve_combination_vs_delevered_control",
+      "role": "vol_matched_delevered_control",
+      "method": "k_s3_plus_1_minus_k_shy",
+      "ablation": "control_no_cost",
+      "spec_path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_sleeve_combination_panel",
+      "feature_contract": "feature_v1_sleeve_combination_and_delevered_control",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_common_start_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open_plus_combo_rebalance",
+      "benchmark_contract": "benchmark_v1_sleeve_combination_diagnostics",
+      "parameters": {
+        "sleeves": {
+          "s1": {
+            "salvage_key": "s1",
+            "target": null
+          },
+          "s2": {
+            "salvage_key": "s2",
+            "target": 0.156
+          },
+          "s3": {
+            "salvage_key": "s3",
+            "target": 0.4,
+            "boost_target": 0.6,
+            "boost_hold": 10,
+            "boost_signal": "salvage.boost_window(salvage.dip_signal(close), 10)"
+          }
+        },
+        "cost_bps_sleeve_primary": 10.0,
+        "cost_bps_sleeve_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "control_rule": "k*S3 + (1-k)*SHY, k solved by bisection per window to match M3's realized vol",
+        "paired_candidate": "M3",
+        "k_solver": "bisection",
+        "k_cap": 1.0,
+        "rebalance": "daily_fixed_k_per_window",
+        "cost_bps": 0.0
+      }
+    }
+  ],
+  "candidate_count": 7,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_sleeve_combination_panel": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": [
+          "BIL",
+          "GLD",
+          "MTUM",
+          "QQQ",
+          "SHY",
+          "SMH",
+          "SOXL",
+          "SPMO",
+          "SPY",
+          "TECL",
+          "TLT",
+          "TQQQ",
+          "UPRO",
+          "USD",
+          "XLB",
+          "XLC",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLRE",
+          "XLU",
+          "XLV",
+          "XLY"
+        ]
+      }
+    },
+    "features": {
+      "feature_v1_sleeve_combination_and_delevered_control": {
+        "decision_lag_sessions": 1,
+        "sleeve_returns": "S1/S2/S3 daily net returns from scripts/run_h20260922_05_salvage.py run_cell(close, leg_open, leg_close, key, target, cost_bps, boost=..., boost_target=...) unchanged: S1 target=None, S2 target=0.156, S3 target=0.40 with boost=salvage.boost_window(salvage.dip_signal(close), 10), boost_target=0.60.",
+        "combo_weights": "M1 equal-thirds; M2 0.5/0/0.5 S1/S3; M3 inverse of each sleeve's trailing 63-session daily-return standard deviation (equal-weight when fewer than 63 sessions of sleeve history exist). Target set at each month-end close, effective at the next session open; weights drift intra-month with each sleeve's cumulative net return.",
+        "combo_cost": "combo_cost_bps * sum(abs(delta_weight)), charged on the effective (next-open) session",
+        "control_k": "Ci = k*S3 + (1-k)*SHY; k in (0,1] solved by bisection separately per evaluation window so std(Ci daily return) == std(Mi daily return) over that window; k capped at 1.0 (Ci=S3) if Mi's volatility >= S3's."
+      }
+    },
+    "labels": {
+      "label_v1_next_session_open_to_open_total_return": {
+        "definition": "weights effective at the next session open; return legs split open and close where applicable"
+      }
+    },
+    "validation": {
+      "validation_v1_common_start_stress_select_anchor_holdout2026": {
+        "common_start": "2017-02-01 (first session all three sleeves hold a non-cash position: S1 2017-01-09, S2 2017-02-01, S3 2016-05-02)",
+        "stress": [
+          "2017-02-01",
+          "2023-09-15"
+        ],
+        "select": [
+          "2023-09-18",
+          "2025-12-31"
+        ],
+        "anchor": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "holdout_2026_contaminated": [
+          "2026-01-02",
+          "2026-09-17",
+          "all three sleeves individually already evaluated on this window; reported for reference only, no fresh out-of-sample claim"
+        ]
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open_plus_combo_rebalance": {
+        "contract_path": "reports/research/iterations/h20260927_01_sleeve_combination/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_sleeve_combination_diagnostics": {
+        "members": [
+          "M0_s3_alone_reference",
+          "paired_Ci_vol_matched_control",
+          "SPY_buy_and_hold",
+          "QQQ_buy_and_hold",
+          "SHY_buy_and_hold"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml": "00d5df27ee20bfab85b6668d9d2f03937827f28a84bbcce5904c39927fa24567"
+  },
+  "source_spec_path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+  "spec_hash": "00d5df27ee20bfab85b6668d9d2f03937827f28a84bbcce5904c39927fa24567",
+  "g3_not_applicable_reason": "G3 (random-menu/random-calendar placebo) does not apply to a fixed-proportion or inverse-volatility portfolio-combination question: there is no discretionary asset pick or gate-timing signal to randomize. The volatility-matched delevered-S3 control (Ci) is the placebo-equivalent check here -- it isolates 'same risk, no diversification' so that any Mi advantage must come from genuine cross-sleeve diversification, not from running at higher average risk.",
+  "adoption_rule": {
+    "per_candidate": [
+      "(a) Mi passes G1 (anchor-window CAGR >= 50% and max drawdown >= -35%) or G1' (Sharpe >= 2.0 and CAGR >= 30%) at 10bp",
+      "(b) Mi still passes G1 or G1' at 20bp",
+      "(c) Sharpe(Mi) - Sharpe(Ci) >= 0.10 in BOTH the anchor window and the stress period",
+      "(d) Mi's stress-period max drawdown is shallower (less negative) than Ci's stress-period max drawdown"
+    ],
+    "pass_requires": "all four conditions (a)-(d) true for that Mi",
+    "multiple_comparisons": "three Mi (M1-M3); report all regardless of outcome",
+    "fallback_if_none_pass": "no combined-account live pilot on this evidence; keep S3 alone as the highest-conviction sleeve"
+  }
+}

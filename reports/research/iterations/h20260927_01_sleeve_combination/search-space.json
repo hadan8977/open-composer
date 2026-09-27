@@ -1,0 +1,103 @@
+{
+  "iter_id": "h20260927_01_sleeve_combination",
+  "strategy_name": "sleeve_combination_h20260927_01",
+  "source_spec_path": "strategy_specs/drafts/sleeve_combination_h20260927_01.yaml",
+  "spec_hash": "00d5df27ee20bfab85b6668d9d2f03937827f28a84bbcce5904c39927fa24567",
+  "schema_version": 3,
+  "created_at": "2026-09-27T19:25:00Z",
+  "objective": "Screen three sleeve-combination weight rules (M1 equal-thirds, M2 half S1 half S3, M3 trailing-63-session inverse-volatility), each against its own preregistered volatility-matched delevered-S3 control (Ci), plus M0 (S3 alone) as a fixed reference, for whether combining the three live paper sleeves at a fixed proportion beats delevering S3 alone to the same realized volatility on Sharpe and stress-period drawdown, without breaking the frozen anchor-window return bar.",
+  "paths": [
+    {
+      "name": "sleeve_combination_vs_delevered_control",
+      "candidate_count": 7,
+      "hypothesis_refs": [
+        "H-20260927-01"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "M0",
+          "M1",
+          "M2",
+          "M3",
+          "C1",
+          "C2",
+          "C3"
+        ],
+        "sleeve_targets": {
+          "s1": null,
+          "s2": 0.156,
+          "s3": 0.4
+        },
+        "s3_boost_target": 0.6,
+        "s3_boost_hold_sessions": 10,
+        "combo_rebalance": "month_end_close_next_open",
+        "control_rebalance": "daily_fixed_k_per_window",
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "M0_s3_alone_reference",
+        "paired_Ci_vol_matched_control",
+        "SPY_buy_and_hold",
+        "QQQ_buy_and_hold",
+        "SHY_buy_and_hold"
+      ]
+    }
+  ],
+  "total_candidate_budget": 7,
+  "candidate_manifest_path": "reports/research/iterations/h20260927_01_sleeve_combination/candidate-manifest.json",
+  "candidate_manifest_sha256": "8d550110cd6ebdf49637e39a0397df5fed5a57b7dcc2ff4120fe5156723a7a8c",
+  "data_feasibility_path": "reports/research/iterations/h20260927_01_sleeve_combination/data-feasibility.json",
+  "data_feasibility_sha256": "3493a06610fe9ebb52ec90997908cfd16f3d32e7cf5961eb1a17cdc6beb1bd4b",
+  "cost_table_path": "reports/research/iterations/h20260927_01_sleeve_combination/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260927_01_sleeve_combination/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260927_01_sleeve_combination/report.md",
+    "reports/research/iterations/h20260927_01_sleeve_combination/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "common_start": [
+      "2017-02-01",
+      "first session all three sleeves hold a non-cash position"
+    ],
+    "stress": [
+      "2017-02-01",
+      "2023-09-15"
+    ],
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "holdout_2026_contaminated": [
+      "2026-01-02",
+      "2026-09-17"
+    ]
+  },
+  "controls": {
+    "vol_matched_delevered_control_ci": {
+      "description": "Ci = k*S3 + (1-k)*SHY for the paired Mi; k in (0,1] solved by bisection separately per evaluation window so std(Ci daily return) == std(Mi daily return) over that window; k capped at 1.0 if Mi's volatility >= S3's. Rebalanced daily at the fixed per-window k, no cost (conservative in the control's favor).",
+      "count": 3
+    }
+  },
+  "adoption_rule": {
+    "per_candidate": [
+      "(a) Mi passes G1 or G1' at 10bp in the anchor window",
+      "(b) Mi still passes G1 or G1' at 20bp in the anchor window",
+      "(c) Sharpe(Mi) - Sharpe(Ci) >= 0.10 in both the anchor window and the stress period",
+      "(d) Mi's stress-period max drawdown is shallower than Ci's stress-period max drawdown"
+    ],
+    "pass_requires": "all four conditions (a)-(d)",
+    "multiple_comparisons": "three Mi (M1-M3); report all regardless of outcome",
+    "fallback_if_none_pass": "no combined-account live pilot on this evidence; keep S3 alone",
+    "g3_placebo": "not applicable; see candidate-manifest.json g3_not_applicable_reason"
+  }
+}

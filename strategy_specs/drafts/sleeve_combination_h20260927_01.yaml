@@ -1,0 +1,194 @@
+name: sleeve_combination_h20260927_01
+description: Preregistered H-20260927-01 candidate family. Tests whether combining
+  the three live paper sleeves (S1 sector rotation, S2 growth rotation, S3 leveraged
+  momentum with vt40 + dip boost 60/10) at a fixed proportion, rebalanced monthly
+  with intra-month weight drift, beats a volatility-matched delevered-S3 control
+  (k*S3 + (1-k)*SHY, k solved per window so realized volatility matches) on Sharpe
+  and stress-period drawdown, without giving up the frozen anchor-window return
+  bar. M0 is S3 alone as reference. M1 is equal-thirds S1/S2/S3. M2 is half S1 half
+  S3 (no S2). M3 is trailing-63-session inverse-volatility weighted S1/S2/S3
+  (equal weight when fewer than 63 sessions of history exist). C1-C3 are each Mi's
+  paired vol-matched control. Research only, deterministic, next-session execution;
+  no broker writes are authorized.
+timeframe: daily
+universe:
+- BIL
+- GLD
+- MTUM
+- QQQ
+- SHY
+- SMH
+- SOXL
+- SPMO
+- SPY
+- TECL
+- TLT
+- TQQQ
+- UPRO
+- USD
+- XLB
+- XLC
+- XLE
+- XLF
+- XLI
+- XLK
+- XLP
+- XLRE
+- XLU
+- XLV
+- XLY
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260927_01:M:sleeve_combination_vs_delevered_control
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  s1_s2_s3_daily_net_return:
+    source: expression
+    expression: close / lag(close, 1) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual per-sleeve daily net return
+      series (S1 sector rotation no overlay, S2 growth rotation vol-targeted at
+      0.156, S3 leveraged momentum vt40 with QQQ oversold dip boost to 0.60 for
+      10 sessions) is produced entirely by scripts/run_h20260922_05_salvage.py's
+      run_cell, unchanged, not by the generic per-symbol factor engine -- a
+      sleeve return is already a blended multi-asset daily return, outside the
+      single-symbol expression grammar.
+    params:
+      decision_lag_sessions: 1
+  combo_target_weight:
+    source: expression
+    expression: close / lag(close, 63) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual per-candidate target
+      weight vector (M1 equal-thirds; M2 0.5/0/0.5 S1/S3; M3 inverse of each
+      sleeve's trailing 63-session daily-return standard deviation, equal-weight
+      when fewer than 63 sessions of sleeve history exist) is computed by the
+      runner from the three sleeve return series at each month-end close and
+      made effective at the next session open; intra-month weights drift with
+      each sleeve's cumulative return. Rebalancing cost is
+      combo_cost_bps * sum(abs(delta_weight)), charged on the effective
+      (next-open) session.
+    params:
+      decision_lag_sessions: 1
+  control_vol_match_k:
+    source: expression
+    expression: stdev(close / lag(close, 1) - 1, 21)
+    default: 0.0
+    description: Documentation-only stand-in. The actual control Ci = k*S3 +
+      (1-k)*SHY, with k in (0, 1] solved by bisection separately in each
+      evaluation window so that Ci's daily-return standard deviation over that
+      window equals Mi's daily-return standard deviation over the same window
+      (k capped at 1.0, i.e. Ci = S3, if Mi's volatility meets or exceeds S3's).
+      The control rebalances daily at the fixed window k with no cost, which is
+      conservative against the combination (favorable to the control).
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260927_01_sleeve_combination
+  candidate_manifest_path: reports/research/iterations/h20260927_01_sleeve_combination/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260927_01_sleeve_combination/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260927_01_sleeve_combination.jsonl
+  source_card_claim_ids:
+  - newfound2017_portable_beta_vol_matched_leverage_comparison
+  parameter_space:
+    candidate_id:
+    - M0
+    - M1
+    - M2
+    - M3
+    - C1
+    - C2
+    - C3
+  candidate_budget: 7
+  selection_objective: No selection or ranking among M1-M3. Each Mi (M1 equal-thirds,
+    M2 half S1 half S3, M3 trailing-63-session inverse-volatility weighted) is
+    judged independently against its own paired volatility-matched control Ci
+    (k*S3 + (1-k)*SHY, k solved per window) and against M0 (S3 alone) as a fixed
+    reference, not a ranking competitor. Pass requires all four preregistered
+    conditions in candidate-manifest.json's adoption_rule.
+  anti_overfit_notes:
+  - Seven candidates (M0 reference, M1-M3, C1-C3) are frozen in the manifest
+    before any combination return is computed; the three underlying sleeve
+    engines (menu, lookback, vol targets, dip boost) are inherited unchanged
+    from the live renewal and are not re-searched.
+  - M2's 0.5/0/0.5 weight and M1's equal-thirds weight are fixed by construction,
+    not fit to any window's return.
+  - M3's inverse-volatility weight uses only trailing (already realized, no
+    lookahead) daily-return standard deviation; no return series enters the
+    weight-choice beyond the risk (not return) statistic itself.
+  - Each Mi has a paired volatility-matched control Ci solved by bisection per
+    window on realized volatility only, not on return; Ci pays no rebalancing
+    cost (conservative in the control's favor, adverse to the combination).
+  - G3 (placebo) does not apply to this portfolio-combination question; the
+    volatility-matched delevered-S3 control is itself the placebo-equivalent
+    check (same-risk, no-diversification alternative), see
+    candidate-manifest.json's g3_not_applicable_reason.
+  validation_plan:
+  - common_start_2017_02_01_to_stress_end_2023_09_15_then_select_anchor_holdout2026
+  - vol_matched_control_per_mi_bisected_per_window
+  - sleeve_pairwise_daily_return_correlation_reported_per_window
+  - multiple_comparisons_three_mi_report_all_regardless_of_outcome
+  - benchmark_family_m0_reference_and_paired_ci_controls
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+notes:
+  intent: Ask whether fixed-proportion combination of S1/S2/S3 beats a same-
+    volatility delevered S3 book on Sharpe and stress-period drawdown, so a
+    combined-account live pilot can be judged against "just delever S3" rather
+    than against S3's own full-risk numbers.
+  hypothesis_id: H-20260927-01
+  previous_link: H-20260922-05
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready
