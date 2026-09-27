@@ -226,25 +226,27 @@ def check_report(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def find_session_by_marker(projects_dir: Path, marker: str, since: datetime) -> Path | None:
-    """The newest top-level transcript written since ``since`` that contains ``marker``."""
-    candidates = []
+    """The most recently started transcript, written since ``since``, containing ``marker``.
+
+    Another session can contain the marker too (someone typed the round's
+    agent id there), but it started earlier than the round itself.
+    """
+    needle = marker.encode("utf-8")
+    matches: list[tuple[datetime, Path]] = []
     for path in projects_dir.glob("*/*.jsonl"):
         try:
             stat = path.stat()
-        except OSError:
-            continue
-        if datetime.fromtimestamp(stat.st_mtime, UTC) >= since:
-            candidates.append((stat.st_mtime, path, stat.st_size))
-    needle = marker.encode("utf-8")
-    for _, path, size in sorted(candidates, reverse=True):
-        try:
+            if datetime.fromtimestamp(stat.st_mtime, UTC) < since:
+                continue
             with path.open("rb") as handle:
-                handle.seek(max(0, size - MARKER_SCAN_BYTES))
-                if needle in handle.read():
-                    return path
+                handle.seek(max(0, stat.st_size - MARKER_SCAN_BYTES))
+                if needle not in handle.read():
+                    continue
         except OSError:
             continue
-    return None
+        started = first_timestamp(path) or datetime.min.replace(tzinfo=UTC)
+        matches.append((started, path))
+    return max(matches)[1] if matches else None
 
 
 def session_usage(session_file: Path, since: datetime) -> dict[str, Any]:

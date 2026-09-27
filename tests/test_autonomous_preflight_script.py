@@ -114,6 +114,13 @@ def test_acquire_release_reports_round_usage_once_per_message(
             )
         ],
     )
+    # an older session (the owner's) that mentions the id must not be picked
+    _transcript(
+        projects / "proj" / "owner-session.jsonl",
+        now - timedelta(hours=3),
+        now,
+        [{"type": "user", "timestamp": now.isoformat(), "note": "what is agent-42 doing?"}],
+    )
     args = ap.build_parser().parse_args(["acquire", "--agent-id", "agent-42"])
 
     taken = ap.acquire(args)

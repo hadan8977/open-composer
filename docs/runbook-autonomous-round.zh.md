@@ -80,7 +80,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
 - **核对**：每个结论都要自己对着原始 JSON 逐条核对预注册的标准，再写进汇报（子代理说"过了"不算数）。
 - **算力**：这台机器 4 GB 内存、没有 GPU，内存紧张时系统先杀 Claude。读行情数据的任务一律 `scripts/run_capped.sh --mem 1.8G -- ...`，同一时间只跑一个重任务。长任务用 `setsid nohup ... > logs/<名字>.log 2>&1 &` 脱离运行、写断点；等待用后台命令（`while kill -0 <PID>; do sleep 30; done`，`run_in_background: true`）然后结束回合，不要反复轮询。
 - **改代码后**：`uv run ruff format <文件>`、`uv run ruff check <文件>`、相关测试。动了共享模块才跑全量 `uv run pytest`（约 40 分钟，放后台）。产品界面改动还要 `uv run oc repo check --strict`。
-- **子代理**：只用 `subagent_type: "sonnet-high"`（Sonnet，high）。一轮最多 2 个，同一时间 1 个。任务说明按第 8 节模板写完整，high 强度下也要能一次做对。
+- **子代理**：只用 `subagent_type: "sonnet-high"`（Sonnet，high）。如果 Agent 工具列表里没有 `sonnet-high`，改用 Paseo 的 `create_agent`：`provider: "claude/claude-sonnet-5"`，`settings: {"thinkingOptionId": "high", "modeId": "bypassPermissions"}`，`notifyOnFinish: true`，任务说明里要把 `~/.claude/agents/sonnet-high.md` 的工作规则和禁止事项写进去。一轮最多 2 个，同一时间 1 个。任务说明按第 8 节模板写完整，high 强度下也要能一次做对。
 
 ## 6. 预算
 
