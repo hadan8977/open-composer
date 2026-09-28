@@ -174,6 +174,16 @@
     脚本 `scripts/run_t20260928_10_ml_killtest.py`；登记簿 `dir:ml_ranking_broad_universe_custom`
     改 `refuted`。不进 Stage 2（$2.85 未花）。
 
+### T-20260928-30 纯量价 LightGBM 小盘排序：只做多组合 + 逐只价差成本
+- status: running
+- priority: 1
+- not_before:
+- goal: T-20260928-10 重跑发现纯量价 LightGBM 在放宽的股票池里有走步样本外排序能力（压力期 RankIC 0.020，t 3.1；流动性最差三分之一 0.031，t 5.75）。回答：扣掉逐只股票的价差成本后，只做多组合还剩多少，能否达到 K1/K2。
+- plan: 模型 = B0 原样，每天出预测；V1 全池前 50、V2 最差流动性三分之一里前 50，等权，持仓缓冲（排名 ≤150 继续持有），月度调仓，21 个偏移取中位数；成本 10 bp + 半个 Abdi-Ranaldo 价差（压力 20 bp + 整个价差），单只 ≤ 21 日成交额中位数的 1%（账户按 $10 万）；20 个随机排名安慰剂；K2 用批量通道的同波动 S3 对比。判定线预先定死（K1：压力期 ≥0.65、对标窗 ≥1.19、压力成本下两窗年化为正；K2：+0.05）。Modal ≤ $1.5。
+- done_when: `reports/research/iterations/t20260928_16_smallcap_ml_book/` 的 results.json 和 report.md；登记簿行更新；提交。
+- notes:
+  - 2026-09-28 14:5x UTC 交互会话派 Sonnet 在做，自动轮不要碰。
+
 ### T-20260928-11 Modal：K 线图像 CNN 否定测试（依赖 08、09，GPU）
 - status: blocked（机主 2026-09-28 暂不做：觉得不靠谱；不是被证据否定，登记簿标 parked）
 - priority: 2
@@ -182,6 +192,7 @@
 - plan: 待 09 定稿；复用 MIT 许可的复现代码（George-hardworking/reimaging-price-trends-replication-and-extension）。测试期最高组对全池的超额 t 值 <2 就停。分两段花钱：否定测试 ≤ $1.5（T4），过了才做对标窗完整评估（≤ $3）。排在 10 之后，10 的否定测试先出结果。
 - done_when: 否定测试结论写进迭代档案和登记簿；过了再开对标窗检验。
 - notes:
+  - 2026-09-28 机主要求照做。第一次完整运行（T4）训练完成（第 29 轮提前停止，最好验证损失 0.6632），但样本外推断逐只逐日画图太慢，撞上 2 小时时限，模型没存，约 $2.45 白花。14:5x UTC 交互会话派 Sonnet 修：训练后先存模型、推断按股票批量多进程画图、分段存预测，再跑。
 
 ### T-20260928-13 找最近（2024–2026）值得训练的新模型和因子
 - status: done
@@ -267,13 +278,14 @@
 - notes:
 
 ### T-20260928-01 S1、S2 的调仓日运气检查
-- status: ready
+- status: running
 - priority: 3
 - not_before:
 - goal: H-20260928-01 发现 S3 的月末调仓日在近期窗口是 21 个日子里最好的，头条数字有一大块是运气。S2（月度）和 S1（周度）也按固定日子调仓，要知道它们的数字里有多少是调仓日运气，才能给每条 sleeve 一个"不挑日子"的预期，供续期和以后实盘定规模用。
 - plan: 复用 `scripts/run_h20260928_01_s3_rebalance_tranching.py` 的做法（新迭代，先过 direction-check 和 pre-backtest 检查）：S2 用续期规格（vt 0.156）做月末后 0–20 个交易日共 21 个偏移；S1 做周末后 0–4 个交易日共 5 个偏移。纯描述：报告每个窗口的最小/中位数/最大值和现行版本的排名，不采用任何偏移。只有描述、没有通过条件；现行版本排名前 3 且中位数低于它 20% 以上时，在决定页和 current-view 写"不挑日子"的数字。窗口和成本按冻结合同，压力期 2016-05→2023-08（S1 因 252 日回看从 2017-01 起）。
 - done_when: 迭代档案 `--stage final` 通过；登记簿行 `dir:s1_s2_rebalance_timing_luck`；current-view 最多 3 行结论。
 - notes:
+  - 2026-09-28 14:5x UTC 交互会话派 Sonnet 执行（迭代 h20260928_23_s1_s2_rebalance_timing）。自动轮不要碰。
 
 ### T-20260928-19 每周一刷新前向跟踪
 - status: ready
