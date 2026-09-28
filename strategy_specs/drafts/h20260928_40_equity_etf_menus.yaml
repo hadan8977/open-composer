@@ -1,0 +1,178 @@
+name: h20260928_40_equity_etf_menus
+description: Preregistered H-20260928-40 batch-screening candidate family. Tests
+  24 candidates -- the same cross-sectional momentum rotation mechanism already
+  live on S1-S3 (scripts/run_h20260918_05_recent_menu.py rotation_cell --
+  momentum_score by lookback, top-N rank, absolute-momentum-vs-SHY filter,
+  monthly/weekly rebalance), applied unedited to two new menus -- for whether
+  each clears K1 (its date-neutral Sharpe, median over rebalance-day offsets,
+  is at least 80% of S3's in both the anchor window 2024-01-08..2026-09-17 and
+  the stress window 2016-05-02..2023-09-15, with positive CAGR at 20bp) or K2
+  (a 63-session trailing-inverse-vol monthly blend with S3 beats a vol-matched
+  k*S3 + (1-k)*SHY control by >=0.05 Sharpe in both windows). FACTOR menu (12
+  candidates) -- MTUM, QUAL, USMV, VLUE, SIZE, lookback in {63,126,252}, top_n
+  in {1,2}, rebalance in {monthly, weekly}. INDUSTRY menu (12 candidates) --
+  SMH, XBI, KRE, ITB, IGV, XOP, XRT, IHI, same grid. Every candidate is a pure
+  function of the already-validated engine's rule and public price history
+  only; no parameter in this file was fit to any window's return -- the grid
+  itself is the full preregistered candidate set. Research only,
+  deterministic, next-session execution; no broker writes are authorized. No
+  backtest is run under this spec by this round -- screening happens in
+  scripts/screen_batches/h20260928_40_equity_etf_menus.py under a separate
+  screening lane; this draft exists only to bind the preregistered candidate
+  manifest to a StrategySpec content hash.
+timeframe: daily
+universe:
+- IGV
+- IHI
+- ITB
+- KRE
+- MTUM
+- QUAL
+- SHY
+- SIZE
+- SMH
+- USMV
+- VLUE
+- XBI
+- XOP
+- XRT
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 8
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_40:equity_etf_menus
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  equity_menu_target_weight:
+    source: expression
+    expression: close / lag(close, 63) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual per-candidate target
+      weight vector is computed by
+      scripts/screen_batches/h20260928_40_equity_etf_menus.py's
+      make_rotation_fn(menu, lookback, top_n) closures, which import and reuse
+      run_h20260918_05_recent_menu.momentum_score unedited, evaluated using
+      only rows with index <= asof, not by this single-symbol expression --
+      the real rule is a cross-sectional top-N rank plus an absolute-momentum
+      filter against SHY, outside the single-symbol expression grammar.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_40_equity_etf_menus
+  candidate_manifest_path: reports/research/iterations/h20260928_40_equity_etf_menus/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_40_equity_etf_menus/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl
+  source_card_claim_ids:
+  - quantpedia_momentum_factor_style_rotation_2026
+  - molchanov_stangl_myth_of_sector_rotation_2026
+  - antonacci_gem_dual_momentum_reuse_2026
+  - ishares_dynamic_factor_rotation_2026
+  - drksci_sector_rotation_momentum_2026
+  - github_momentum_sector_rotation_repo_2026
+  - stockanalysis_mtum_factsheet_2026
+  - stockanalysis_smh_factsheet_2026
+  parameter_space:
+    menu:
+    - FACTOR
+    - INDUSTRY
+    lookback:
+    - 63
+    - 126
+    - 252
+    top_n:
+    - 1
+    - 2
+    rebalance:
+    - MO
+    - WK
+  candidate_budget: 24
+  selection_objective: No ranking among the 24 candidates. Each is judged only
+    against the two fixed preregistered gates K1 (own date-neutral Sharpe vs
+    80% of S3's, both windows, plus positive 20bp CAGR) and K2 (63-session
+    trailing-inverse-vol monthly blend with S3 vs a vol-matched
+    k*S3+(1-k)*SHY control, +0.05 Sharpe in both windows). A candidate is kept
+    if it clears K1 or K2 (or watch_recent if only the anchor window clears
+    K1); DSR is reported with n_trials = 24 (this batch's size).
+  anti_overfit_notes:
+  - Every candidate reuses run_h20260918_05_recent_menu.momentum_score and
+    rotation_cell's absolute-momentum-filter/top-N/equal-weight logic
+    unedited; only the menu (ticker list) and the grid's own lookback/top_n/
+    rebalance values (a pre-published bounded grid, not fit to this batch's
+    own return data) change.
+  - No candidate's rule, universe or cost assumption was chosen by looking at
+    this batch's own return data; the grid was fixed before any backtest ran.
+  - This dossier stage is preregistration only -- no backtest, no Sharpe, no
+    return number for any of the 24 candidates is computed under this round
+    before pre-backtest validation passes.
+  validation_plan:
+  - s3_stress_window_2016_05_02_to_2023_09_15
+  - s3_anchor_window_2024_01_08_to_2026_09_17
+  - holdout_2026_01_02_to_2026_09_17_contaminated_reference_only
+  - date_neutral_median_over_rebalance_offsets_monthly_0_20_weekly_0_4
+  - k1_vs_80pct_of_s3_sharpe_both_windows_plus_20bp_positive_cagr
+  - k2_inverse_vol_blend_with_s3_vs_vol_matched_k_s3_plus_1_minus_k_shy
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+  - dsr_reported_with_n_trials_equal_24
+notes:
+  intent: Hand a batch-screening lane 24 preregistered, long-only,
+    Alpaca-tradable equity-ETF-menu candidates (factor-style and narrow-
+    industry) that reuse S1-S3's already-live rotation mechanism, to
+    resolve reports/research/harvest/directions.jsonl's
+    dir:factor_style_etf_momentum_rotation and
+    dir:narrow_industry_etf_momentum_rotation, without duplicating S1's
+    existing 11-SPDR-sector menu or any other already-tested menu.
+  hypothesis_id: H-20260928-40
+  previous_link: H-20260928-01
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

@@ -51,7 +51,7 @@
     "dir:international_country_etf_momentum_rotation"
    ],
    "gap": "S1-S3 live in paper; bear-market risk measured (2016-2023 -48%)",
-   "next": "leave: batch 3 refuted 09-23 (keep SHY); reopen only with new information | 2026-09-28 gap search (gap-search-2026-09-28-1907): queued 3 new equity-ETF-menu candidates for the same rotation_cell engine (factor-style, narrow-industry, single-country) -- T-20260928-40/41."
+   "next": "leave: batch 3 refuted 09-23 (keep SHY); reopen only with new information | 2026-09-28 gap search (gap-search-2026-09-28-1907): queued 3 new equity-ETF-menu candidates for the same rotation_cell engine (factor-style, narrow-industry, single-country) -- T-20260928-40/41. | 2026-09-28 T-20260928-40 batch screen (reports/research/iterations/h20260928_40_equity_etf_menus/results.json): 24 candidates (FACTOR MTUM/QUAL/USMV/VLUE/SIZE x12, INDUSTRY SMH/XBI/KRE/ITB/IGV/XOP/XRT/IHI x12) on the same rotation_cell engine -- 0 kept, 0 strong_keep, 5 watch_recent (all FACTOR, best FACTOR_L252_N1_WK anchor Sharpe 1.437/DSR 0.643, all fail the K1 stress bar), 19 refuted; K2 fails for all 24 (stress edge -0.08 to -0.31, anchor-window correlation with S3 0.45-0.81 too high to diversify). dir:factor_style_etf_momentum_rotation and dir:narrow_industry_etf_momentum_rotation both refuted for this scope. T-41 (single-country menu) remains blocked pending owner scope confirmation."
   },
   {
    "id": "trend_momentum.stock_momentum",
@@ -208,7 +208,7 @@
     "dir:front_running_sector_seasonality"
    ],
    "gap": "harvested, not tested",
-   "next": "cheap test (batch 3 is done)"
+   "next": "cheap test (batch 3 is done) | 2026-09-28 gap search (gap-search-2026-09-28-22): reviewed, no new candidate queued here -- end-of-month reversal and sector seasonality are already tested/watch_recent (do not repeat); the option-expiration-week effect was assigned to flows_structural.rebalance_and_hedging_flows instead (dealer/rollover-flow mechanism, not a plain calendar-day effect) -- see that cell's T-20260928-42."
   },
   {
    "id": "flows_structural.rebalance_and_hedging_flows",
@@ -223,10 +223,11 @@
    "directions": [
     "dir:index_rebalance_flow_prediction",
     "dir:passive_flow_commodity_etf_price_impact_pwb",
-    "dir:etf_creation_redemption_flow_constituents"
+    "dir:etf_creation_redemption_flow_constituents",
+    "dir:option_expiration_week_calendar_effect"
    ],
-   "gap": "options-expiration and LETF-rebalance effects on constituents never searched",
-   "next": "search wave week 2"
+   "gap": "options-expiration effects queued (T-20260928-42); LETF close-rebalancing flow and index-reconstitution-flow effects still never searched",
+   "next": "search wave week 2 | 2026-09-28 gap search (gap-search-2026-09-28-22): queued dir:option_expiration_week_calendar_effect (Quantpedia opex-week rule + recent Garcia-Ares 2025 mechanism paper) -- T-20260928-42. Russell reconstitution not pursued this pass (LSEG PDF sources were unreadable/binary; the related S&P 500 add/delete inclusion effect is already dir:index_addition_deletion_effect, evidence_too_weak)."
   },
   {
    "id": "alt_data.short_selling",
@@ -633,10 +634,11 @@
     "dir:momentmal2022_wsot_live_multi_strategy",
     "dir:personal_taa_live_blogs_undisclosed_rules",
     "dir:collective2_extreme_os_reversal_live",
-    "dir:kinfo_verified_discretionary_traders"
+    "dir:kinfo_verified_discretionary_traders",
+    "dir:congressional_political_trade_replica_etf_rotation"
    ],
    "gap": "Collective2's Grid/stock-systems scanner (the return-sortable tool) is Cloudflare-blocked (403) from this box; the FAQ pages explaining 'Hypothetical' vs 'C2Star Certified' are also blocked. Only the 'Popular'-sorted Leader Board and two strategy detail pages (ETF Timer, extreme-os) were readable -- 22 other stocks-tagged C2 leaderboard rows have no disclosed mechanism beyond name/manager/return/drawdown. Kinfo's public leaderboard ranks discretionary traders by cumulative profit only (no CAGR/Sharpe/drawdown), so it does not yield a comparable, replicable mechanism either.",
-   "next": "No further browser screening of these two sites planned near-term (diminishing returns behind a bot wall + no rules to replicate from black boxes). If pursued: (a) rerun our existing S1/S2 relative-strength ranking code against ETF Timer's disclosed ~20-name leveraged/inverse ETP universe under the same placebo suite; (b) implement KNN/historical-analog next-day prediction (Adaptive Investments' disclosed method, not its numbers) on QQQ daily bars as a model-role experiment. See reports/research/intel/I-20260924-02-verified-live-leaderboards.md."
+   "next": "No further browser screening of these two sites planned near-term (diminishing returns behind a bot wall + no rules to replicate from black boxes). If pursued: (a) rerun our existing S1/S2 relative-strength ranking code against ETF Timer's disclosed ~20-name leveraged/inverse ETP universe under the same placebo suite; (b) implement KNN/historical-analog next-day prediction (Adaptive Investments' disclosed method, not its numbers) on QQQ daily bars as a model-role experiment. See reports/research/intel/I-20260924-02-verified-live-leaderboards.md. | 2026-09-28 gap search (gap-search-2026-09-28-22): found a new replicable alternative not covered by the C2/Kinfo dead end -- 4 political/congressional-trade-replica ETFs (NANC, GOP, MAGA, DEMZ), disclosed mandates, public performance since 2023-02, present in the local SIP panel from 2024-01. Queued dir:congressional_political_trade_replica_etf_rotation, short sample (~2.7yr, no stress-period coverage), thin-liquidity spread sensitivity required -- T-20260928-43."
   },
   {
    "id": "relative_value.pairs_stat_arb",
@@ -651,10 +653,11 @@
    "directions": [
     "dir:intraday_cointegration_pairs_pca",
     "dir:deep_learning_stat_arb_residual",
-    "dir:sector_residual_reversal_statarb_decay"
+    "dir:sector_residual_reversal_statarb_decay",
+    "dir:etf_pair_relative_strength_switch"
    ],
-   "gap": "never tested; the short leg needs an owner permission, the long-only leg (buy the cheap side) was never isolated",
-   "next": "search wave week 2; long-leg-only test before any short-permission request"
+   "gap": "long-only leg now queued (T-20260928-44, reuses rotation_cell as a 2-ticker/top_n=1 special case); short leg and cointegration/residual modeling still not attempted, still needs owner permission for any short leg",
+   "next": "search wave week 2; long-leg-only test before any short-permission request | 2026-09-28 gap search (gap-search-2026-09-28-22): queued dir:etf_pair_relative_strength_switch, 6 ETF pairs x 2 lookbacks, weak single-author QuantConnect forum evidence (not refuted) as the cheapest zero-engineering test -- T-20260928-44."
   },
   {
    "id": "infra.universe_data",

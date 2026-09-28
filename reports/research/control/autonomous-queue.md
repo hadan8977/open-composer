@@ -323,7 +323,7 @@
   - 2026-09-28 06:4x UTC 交互会话派 Sonnet 执行。自动轮不要碰。
 
 ### T-20260928-40 批量筛选：因子风格 + 细分行业 ETF 动量轮动（复用 S1-S3 的机制，只换菜单）
-- status: ready
+- status: done
 - priority: 2
 - not_before:
 - goal: S1-S3（`dir:recent_window_etf_menu_rotation`，已通过、在跑）用的是同一套跨截面 ETF 动量轮动机制（`scripts/run_h20260918_05_recent_menu.py:rotation_cell`：绝对动量过滤 + 排名前 N，63/126/252 日回看，月度/周度调仓），目前只在全球宏观、11 个 SPDR 板块、成长概念、杠杆指数四个菜单上测过。因子风格 ETF（MTUM/QUAL/USMV/VLUE/SIZE）和更细的行业 ETF（半导体/生物科技/区域银行/建筑/软件/油气开采/零售/医疗器械）离散度更高、和已测菜单的相关性可能更低，是同一台机器最便宜能测的新增量，不是新方向。
@@ -340,6 +340,8 @@
 - done_when: 迭代 `--stage final` 通过；24 个候选每个都有 K1/K2 判定结果和 DSR；`reports/research/screens/h20260928_40_equity_etf_menus/leaderboard.md` 存在；登记簿 `dir:factor_style_etf_momentum_rotation`、`dir:narrow_industry_etf_momentum_rotation` 从 queued 更新为终态（passed/partial/refuted/evidence_too_weak 等）并带 verdict、evidence、reopen_if。
 - notes:
   - 2026-09-28 19:xx UTC 自动轮缺口搜索添加。
+  - 2026-09-28 22:07 UTC 自动轮开始，派 sonnet-high 子代理执行。
+  - 2026-09-28 结果（协调者已对照 results.json 逐条核对 24 条）：0 保留、0 强保留、5 条近期观察（全是 FACTOR 菜单，最好 FACTOR_L252_N1_WK 对标窗偏移中位数夏普 1.44、压力期 0.18，DSR 0.64），19 条否定。K2 全部不过：压力期组合增量 −0.08 到 −0.31，对标窗与 S3 相关 0.45–0.81。INDUSTRY 菜单最好的对标窗只有 0.99。两条方向登记为 refuted。产物：`reports/research/iterations/h20260928_40_equity_etf_menus/`、`reports/research/screens/h20260928_40_equity_etf_menus/`，5 条 watch_recent 已进 kept.jsonl（周一刷新前向跟踪）。
 
 ### T-20260928-41 小批量：单一国家股票指数 ETF 动量轮动（边界任务，机主先确认范围）
 - status: blocked
@@ -352,3 +354,63 @@
 - notes:
   - 2026-09-28 19:xx UTC 自动轮缺口搜索添加。
   - 2026-09-28 20:1x UTC 自动轮：改为 blocked，等机主确认单一国家股票 ETF 是否在"不做跨资产"之外；未确认前不要花算力。
+
+### T-20260928-42 批量筛选：期权到期周日历效应（大盘/指数 ETF，只做多）
+- status: ready
+- priority: 2
+- not_before:
+- goal: 缺口搜索（`gap-search-2026-09-28-22`）覆盖地图里标记"期权到期日/交易商对冲流从未搜索"的格子（`flows_structural.rebalance_and_hedging_flows`，见 `reports/research/harvest/coverage.json` 该格子的 `gap` 字段）。规则纯用日历+收盘价：每月第三个星期五所在的一周只做多大盘/指数 ETF，其余三周持现金。机制是期权到期时的展期再平衡流（做市商吸收看跌/看涨滚仓的库存压力），不需要新数据管线，是这个格子最便宜能测的候选，且能更快判断"近期（2024-2026）扣成本后夏普"是否达标。
+- plan: |
+    新建迭代 `h20260928_42_opex_week`，候选模块 `scripts/screen_batches/h20260928_42_opex_week.py`（纯函数 `weights_fn(close, asof) -> weights`，只读 `close.loc[:asof]`），候选清单 `reports/research/iterations/h20260928_42_opex_week/candidate-manifest.json`，`direction-review.json` 引用 `dir:option_expiration_week_calendar_effect`。
+
+    来源与规则要点（已打开原文，非只读摘要）：
+    - Quantpedia "Option-Expiration Week Effect"（https://quantpedia.com/strategies/option-expiration-week-effect）：只做多，持有 S&P 100 大盘股在含第三个星期五的那一周，其余持现金；1988-2010 年化 9.3%、夏普 0.61、最大回撤 -15.14%——样本老，本地测试就是决定性否定测试。
+    - Garcia-Ares & Muravyev 2025（FMA working paper，https://www.fma.org/assets/docs/Derivatives2025/GarciaAres.pdf）：期权到期相关的收益异象集中在"第三个星期五+次周一"两天窗口，由展期造成的订单失衡驱动，样本较新（研究的是期权收益，不是股票方向收益，只作为机制近期仍在起作用的旁证，不直接确认 Quantpedia 的夏普数字）。
+
+    `freq="D"`，用 `signal_dates_fn` 把评估限制在到期周的交易日（docstring 里日历锚定规则的标准写法，没有调仓日偏移问题）。
+    网格（8 个候选，`OPEX_{TICKER}_{WEEK,WEEKMON}`）：标的 {SPY, QQQ, DIA, IWM}（S&P 100 大盘股的流动性代理，全部 Alpaca 可交易） × 窗口 {仅到期周（周一至周五）, 到期周+次周一}。
+    **必须加安慰剂对照**：同一批候选清单里加入"随机选一个非到期周"的对照版本（例如每月第 1/2/4 周），验证"第三个星期五"不是碰巧选中的日子（这是冻结合同 G3 之外，针对这条规则数据挖掘风险的额外内部否证）。
+    判定：K1 为主路径（偏移中位数——注意 D 频率无偏移可选，按 docstring 只有一个版本——夏普对标窗 ≥1.19、压力期 ≥0.65，20bp 下两窗年化为正）；8 个候选（不含安慰剂对照）算一族，报告 DSR。
+    `uv run oc research direction-check <path>` 和 `uv run oc research iteration validate h20260928_42_opex_week --stage pre-backtest` 通过后跑 `uv run python scripts/screen_batch.py --batch h20260928_42_opex_week --iteration h20260928_42_opex_week`；SPY/QQQ/DIA/IWM 已在本地面板。`--stage final` 通过后更新登记簿和覆盖地图。
+- done_when: 迭代 `--stage final` 通过；8 个候选（含安慰剂对照结果）都有 K1/K2 判定和 DSR；`dir:option_expiration_week_calendar_effect` 从 queued 更新为终态并带 verdict、evidence、reopen_if。
+- notes:
+  - 2026-09-28 22:21 UTC 自动轮缺口搜索添加。
+
+### T-20260928-43 批量筛选：国会/政治交易复制型 ETF 轮动（NANC/GOP/MAGA/DEMZ，公开实盘记录可复制）
+- status: ready
+- priority: 2
+- not_before:
+- goal: 缺口搜索覆盖地图 `public_records.copy_verified_live` 格子（此前搜索发现 Collective2/Kinfo 被封锁或没有可复制规则，见该格子 `gap` 字段）。本次找到一个新的、规则公开、有代码可读的替代：几只跟踪国会议员/政党捐款人公开披露交易的 ETF（NANC、GOP、MAGA、DEMZ）自 2023-02 起已实盘运行，本地 SIP 日线面板已有 2024-01 起的完整数据。用同一套已验证的跨截面轮动引擎测试在这些标的间轮动，能不能扣成本后达到近期夏普标准——比重新爬国会披露原始数据便宜得多。
+- plan: |
+    新建迭代 `h20260928_43_political_etf_rotation`，候选模块 `scripts/screen_batches/h20260928_43_political_etf_rotation.py`，直接复用 `scripts/run_h20260918_05_recent_menu.py:rotation_cell`（和 T-20260928-40 相同引擎，只换 `MENU=[NANC,GOP,MAGA,DEMZ]+现金`），候选清单 `reports/research/iterations/h20260928_43_political_etf_rotation/candidate-manifest.json`，`direction-review.json` 引用 `dir:congressional_political_trade_replica_etf_rotation`。
+
+    来源与规则要点（已打开原文）：
+    - bit.com 知识库"Congressional Trade Tracking"（https://www.bit.com/knowledge-hub/congressional-trade-tracking）：STOCK Act 要求国会议员 30-45 天内披露交易；NANC（Unusual Whales 民主党复制 ETF）等已是"受监管、交易所上市的基金"；同时指出披露延迟可能已让市场部分消化信息优势。
+    - 24/7 Wall St（2026-04-20，https://247wallst.com/investing/2026/04/20/if-you-invested-in-these-congressional-trading-etfs-at-launch-heres-what-youd-have-today/）：自 2023-02-07 发行以来到 2026-04，NANC 总回报 88.49%（跑赢标普 500 的 74.70%），GOP 64.31%（跑输）；文章明确给出反面证据——质疑 NANC 的超额收益"是科技股集中持仓的意外结果，不是真正的信息优势"（NVDA 9.0%、MSFT 7.6%、AMZN 5.2% 等），且有国会禁止交易立法的监管风险。
+
+    网格（12 个候选，`POLITICAL_L{63,126,252}_N{1,2}_{MO,WK}`）：回看 {63,126,252} 日 × 排名前 N {1,2} × 调仓 {月度,周度}，和 S1-S3 相同的绝对动量过滤 + 排名前 N 逻辑。
+    **额外要求**（这批标的成交量薄，2024 年样本日均几千股）：除标准 10bp/20bp 外，加一档更宽价差（30-50bp，按最小可观测量级估算）的敏感性测试；候选清单里加一个"用 NANC 实际持仓集中度（大盘科技股为主）构造的动量安慰剂"，检验收益是不是单纯科技股动量而非"政治复制"框架本身。
+    **样本期短**：本地面板 NANC/GOP/MAGA/DEMZ 只从 2024-01 起（约 2.7 年），完全没有 2016-2023 压力期覆盖。按手册"数据不覆盖压力期用现有部分（至少 2 年）"的规则，只按选择窗+对标窗判 K1/K2，标注"待补压力期"，不得用 2026 年那段当干净留出窗（基金自身 2024-25 的已实现收益就是上面来源数字的来源）。
+    `uv run oc research direction-check <path>` 和 `--stage pre-backtest` 通过后跑 `uv run python scripts/screen_batch.py --batch h20260928_43_political_etf_rotation --iteration h20260928_43_political_etf_rotation`（4 只标的已在本地面板，见 `data/sip/daily/_LAYOUT.json` 的 shard 0201/0128/0182/0077）。`--stage final` 通过后更新登记簿和覆盖地图，报告是否通过流动性/价差敏感性测试。
+- done_when: 迭代 `--stage final` 通过；12 个候选都有 K1/K2（选择窗+对标窗，压力期标注待补）判定和 DSR；宽价差敏感性和科技动量安慰剂结果都报告；`dir:congressional_political_trade_replica_etf_rotation` 更新为终态。
+- notes:
+  - 2026-09-28 22:21 UTC 自动轮缺口搜索添加。
+
+### T-20260928-44 批量筛选：ETF 对相对强弱切换（只做多版本的 pairs/相对价值）
+- status: ready
+- priority: 3
+- not_before:
+- goal: 缺口搜索覆盖地图 `relative_value.pairs_stat_arb` 格子（`gap` 字段明确写"只做多的一腿从未单独测过"）。用同一套已验证的跨截面轮动引擎（菜单大小=2、排名前 1）在若干高相关 ETF 对之间做相对强弱二选一切换，不需要协整/残差建模、不需要做空权限，是这个格子最便宜的决定性测试。
+- plan: |
+    新建迭代 `h20260928_44_etf_pair_switch`，候选模块 `scripts/screen_batches/h20260928_44_etf_pair_switch.py`，复用 `rotation_cell`（MENU=每对 2 只标的，top_n=1），候选清单 `reports/research/iterations/h20260928_44_etf_pair_switch/candidate-manifest.json`，`direction-review.json` 引用 `dir:etf_pair_relative_strength_switch`。
+
+    来源（已打开原文）：QuantConnect 论坛帖子"QQQ/SPY Momentum Rotation System"（https://www.quantconnect.com/forum/discussion/19216/qqq-spy-momentum-rotation-system/，作者 Robert Lemois）：20 日相对动量、QQQ 偏置 +1.0%、切换阈值 0.5%、每 5 个交易日调仓；2010-2024 回测 CAGR 19.02%、夏普约 0.8（作者估计）、最大回撤约 30%（COVID）。证据弱：单一作者、平台工作人员在同帖指出代码有 bug（未终止字符串、计数器提前递增等），没有其他人复现或给出样本外/实盘数字——不算证实，但也没被反面证据否定，用作"机制合理、成本几乎为零"的候选来源，不借用其具体数字。
+
+    网格（12 个候选，`PAIR_{A}{B}_L{63,126}_MO`）：6 对 × 回看 {63,126} 日，月度调仓，沿用 S1-S3 的绝对动量过滤（两腿都跌破现金基准时持现金）：
+    - QQQ/SPY（来源直接测试的这一对）
+    - SMH/QQQ、XLE/XOP、KRE/XLF、IWM/SPY、ARKK/QQQ（同类高相关行业内/风格内配对，覆盖地图未测过的扩展）
+    判定：K1（对标窗+压力期，全部 6 对标的本地面板有完整 2016 年起历史，无短样本问题）为主路径；12 个候选算一族报告 DSR；安慰剂：50/50 固定混合两腿的版本作为对照（检验切换本身是否比静态混合更好）。
+    `uv run oc research direction-check <path>` 和 `--stage pre-backtest` 通过后跑 `uv run python scripts/screen_batch.py --batch h20260928_44_etf_pair_switch --iteration h20260928_44_etf_pair_switch`；全部标的已在本地面板。`--stage final` 通过后更新登记簿和覆盖地图。
+- done_when: 迭代 `--stage final` 通过；12 个候选（含 50/50 混合安慰剂）都有 K1/K2 判定和 DSR；`dir:etf_pair_relative_strength_switch` 更新为终态。
+- notes:
+  - 2026-09-28 22:21 UTC 自动轮缺口搜索添加。

@@ -1,0 +1,143 @@
+{
+  "iter_id": "h20260928_40_equity_etf_menus",
+  "objective": "Bind the FACTOR and INDUSTRY equity-ETF-menu candidate family to verified source cards before handing the 24-candidate batch to the screening lane for K1/K2 testing against S3, resolving reports/research/harvest/directions.jsonl's dir:factor_style_etf_momentum_rotation and dir:narrow_industry_etf_momentum_rotation.",
+  "schema_version": 3,
+  "strategy_name": "h20260928_40_equity_etf_menus",
+  "source_spec_path": "strategy_specs/drafts/h20260928_40_equity_etf_menus.yaml",
+  "spec_hash": "8e712d7f59d7377824988f52410a43dcc68cdcf4b1ba9a3c4432912b138b0e6b",
+  "sources": [
+    {
+      "url": "https://quantpedia.com/strategies/momentum-factor-and-style-rotation-effect",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "paper",
+      "credibility": "medium",
+      "core_claim": "Quantpedia's rule: rank six Russell style ETFs by 12-month price momentum monthly, long the winner/short the loser, one-month hold. Backtest 1972-2005: 9.25%/yr, Sharpe 0.33, vol ~16.0%, MDD -52.5%.",
+      "project_applicability": "Grounds the FACTOR menu's cross-sectional-momentum-across-style-ETFs mechanism; this batch tests the mechanism fresh via rotation_cell, not this source's own 1972-2005 long-short number.",
+      "reflection": "Rule and parameters are rotation_cell's own already-live, unedited mechanism, not fit to this batch's return data; the only new degree of freedom is the menu (ticker list), and the lookback/top_n/rebalance grid is a small preregistered bounded sweep (24 combinations total, within the 24-candidate lightweight-exemption budget), not tuned to any window's outcome.",
+      "claim_id": "quantpedia_momentum_factor_style_rotation_2026"
+    },
+    {
+      "url": "https://acfr.aut.ac.nz/__data/assets/pdf_file/0005/294287/The-Myth-of-Sector-Rotation-non-blind.pdf",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "paper",
+      "credibility": "low",
+      "core_claim": "Attempted negative-evidence check for the INDUSTRY menu (macro-cycle sector-rotation prediction reportedly indistinguishable from noise, per the pre-existing registry entry). Blocked 403/Cloudflare on both WebFetch and curl in this session.",
+      "project_applicability": "Intended counter-evidence for the INDUSTRY menu; not independently re-read, so its characterization is carried forward from the registry only, not relied on as a fresh finding.",
+      "reflection": "Fetch blocked in this session (HTTP 403, Cloudflare challenge); no rule parameter is grounded by this source. The queue plan's own reasoning (macro-indicator sector prediction is a different mechanism from price-trend momentum) is not independently re-verified here and is disclosed as such.",
+      "claim_id": "molchanov_stangl_myth_of_sector_rotation_2026"
+    },
+    {
+      "url": "https://bestfolio.app/strategies/gem",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "paper",
+      "credibility": "medium-high",
+      "core_claim": "Antonacci's dual-momentum rule (absolute momentum vs. BIL, relative momentum between SPY/VEU): the same mechanism family as rotation_cell's absolute-momentum-vs-SHY filter, reused unedited in this batch. Reused from a prior verified round (h20260928_04_s3_alt_div_batch1), not re-fetched this session.",
+      "project_applicability": "Grounds the absolute-momentum-filter mechanism family underlying every candidate in this batch.",
+      "reflection": "Rule and parameters are rotation_cell's own already-live, unedited mechanism, not fit to this batch's return data; the only new degree of freedom is the menu (ticker list), and the lookback/top_n/rebalance grid is a small preregistered bounded sweep (24 combinations total, within the 24-candidate lightweight-exemption budget), not tuned to any window's outcome.",
+      "claim_id": "antonacci_gem_dual_momentum_reuse_2026"
+    },
+    {
+      "url": "https://www.ishares.com/us/insights/dynamic-factor-rotation-investing",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "post",
+      "credibility": "low",
+      "core_claim": "iShares practitioner note arguing for tactical/dynamic factor tilts in fast-moving markets; discloses no backtested Sharpe. Carried forward from the direction registry (prior gap-search round), not independently re-fetched this session.",
+      "project_applicability": "Background context for the FACTOR menu direction; not relied on for any rule parameter.",
+      "reflection": "Marketing piece; registry-carried, not independently re-verified this session.",
+      "claim_id": "ishares_dynamic_factor_rotation_2026"
+    },
+    {
+      "url": "https://drksci.com/algorithmic-trading-ai-sector-rotation-momentum",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "post",
+      "credibility": "low",
+      "core_claim": "d/rksci blog post on algorithmic/AI sector-rotation momentum. Carried forward from the direction registry (prior gap-search round), not independently re-fetched this session.",
+      "project_applicability": "Background context for the INDUSTRY menu direction; not relied on for any rule parameter.",
+      "reflection": "Personal blog, no disclosed OOS numbers; registry-carried, not independently re-verified this session.",
+      "claim_id": "drksci_sector_rotation_momentum_2026"
+    },
+    {
+      "url": "https://github.com/segobooking-finanz/momentum-sector-rotation/blob/main/README.md",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "repo",
+      "credibility": "low",
+      "core_claim": "GitHub replication repo for sector-rotation momentum, no disclosed live/OOS numbers. Carried forward from the direction registry (prior gap-search round), not independently re-fetched this session.",
+      "project_applicability": "Background context for the INDUSTRY menu direction; not relied on for any rule parameter.",
+      "reflection": "Personal repo, no disclosed OOS numbers; registry-carried, not independently re-verified this session.",
+      "claim_id": "github_momentum_sector_rotation_repo_2026"
+    },
+    {
+      "url": "https://stockanalysis.com/etf/mtum/",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "provider_official_docs",
+      "credibility": "high",
+      "core_claim": "iShares MSCI USA Momentum Factor ETF (MTUM) tracks an index of large/mid-cap US equities selected and weighted by 6- and 12-month price appreciation and low 3-year volatility; inception 2013-04-16.",
+      "project_applicability": "Confirms MTUM is a real, liquid, long-only, US-listed single-factor momentum ETF representative of the FACTOR menu.",
+      "reflection": "Third-party aggregator (iShares.com itself returned HTTP 403 in this session); factsheet-level only, no free parameter derived from it.",
+      "claim_id": "stockanalysis_mtum_factsheet_2026"
+    },
+    {
+      "url": "https://stockanalysis.com/etf/smh/",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "provider_official_docs",
+      "credibility": "high",
+      "core_claim": "VanEck Semiconductor ETF (SMH) tracks the MVIS US Listed Semiconductor 25 Index, a market-cap-weighted index of 25 of the largest US-listed semiconductor companies; inception 2011-12-20.",
+      "project_applicability": "Confirms SMH is a real, liquid, long-only, US-listed narrow-industry ETF representative of the INDUSTRY menu.",
+      "reflection": "Third-party aggregator (vaneck.com redirect-looped in this session); factsheet-level only, no free parameter derived from it.",
+      "claim_id": "stockanalysis_smh_factsheet_2026"
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "quantpedia_momentum_factor_style_rotation_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl"
+    },
+    {
+      "claim_id": "molchanov_stangl_myth_of_sector_rotation_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl"
+    },
+    {
+      "claim_id": "antonacci_gem_dual_momentum_reuse_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl"
+    },
+    {
+      "claim_id": "ishares_dynamic_factor_rotation_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl"
+    },
+    {
+      "claim_id": "drksci_sector_rotation_momentum_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl"
+    },
+    {
+      "claim_id": "github_momentum_sector_rotation_repo_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl"
+    },
+    {
+      "claim_id": "stockanalysis_mtum_factsheet_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl"
+    },
+    {
+      "claim_id": "stockanalysis_smh_factsheet_2026",
+      "source_card_path": "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl"
+    }
+  ],
+  "hypothesis_links": [
+    "H-20260928-40"
+  ],
+  "candidate_matrix_revisions": [
+    "Initial preregistration: 24 candidates, FACTOR menu (MTUM/QUAL/USMV/VLUE/SIZE, 12 combinations) and INDUSTRY menu (SMH/XBI/KRE/ITB/IGV/XOP/XRT/IHI, 12 combinations), grid = lookback {63,126,252} x top_n {1,2} x rebalance {monthly,weekly}. No revision yet; this is the first and only candidate list for this batch -- the screening lane must not add, remove or retune any candidate after seeing a result."
+  ],
+  "topic_coverage": [
+    "factor_style_etf_cross_sectional_momentum_mechanism",
+    "narrow_industry_etf_cross_sectional_momentum_mechanism",
+    "absolute_momentum_filter_vs_cash_proxy",
+    "s1_s3_live_rotation_cell_engine_reuse",
+    "macro_cycle_sector_rotation_negative_evidence_attempted",
+    "factor_style_etf_constituent_methodology_mtum",
+    "narrow_industry_etf_constituent_methodology_smh",
+    "keep_rule_k1_k2_watch_recent_thresholds"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_40_equity_etf_menus",
+  "reviewed_at": "2026-09-28T22:15:00+00:00",
+  "decision": "proceed",
+  "objective": "Preregister 24 candidates -- the exact same cross-sectional momentum rotation mechanism already validated live on S1-S3 (scripts/run_h20260918_05_recent_menu.py:rotation_cell: momentum_score by lookback, top-N rank, absolute-momentum-vs-SHY filter, monthly/weekly rebalance) -- applied to two new menus never tested with this engine: factor-style ETFs (MTUM, QUAL, USMV, VLUE, SIZE) and narrow industry ETFs (SMH, XBI, KRE, ITB, IGV, XOP, XRT, IHI), grid = lookback {63,126,252} x top_n {1,2} x rebalance {monthly,weekly}. Resolves reports/research/harvest/directions.jsonl's dir:factor_style_etf_momentum_rotation and dir:narrow_industry_etf_momentum_rotation (both queued) via the owner's 2026-09-28 K1/K2 keep rule, without computing any Sharpe, return or backtest number in this dossier.",
+  "target_regime_and_horizon": "Same frozen windows as S1-S3 and every other batch-screening round in this repo: stress 2016-05-02..2023-09-15 and anchor 2024-01-08..2026-09-17, judged on date-neutral Sharpe (median over monthly offsets 0-20 trading days, or weekly offsets 0-4 trading days). The 2026-01-02..2026-09-17 holdout is reference-only and contaminated (S3's own anchor window already overlaps it). Validity is limited to the local SIP daily archive's own coverage for these 13 tickers (2016-01-04 through 2026-09-28, confirmed present, per the queue task's own precheck) -- no new data fetch is needed.",
+  "existing_solution_comparison": "This batch reuses `rotation_cell`'s already-live mechanism unedited (imported directly from run_h20260918_05_recent_menu.py, not reimplemented, so the lookback-return definition is guaranteed identical) on two new ticker menus; it introduces no new signal, weighting rule or engine code. `grep -ril \"MTUM|factor_style|narrow_industry|XBI|style rotation\" reports/research/control reports/research/iterations reports/research/ledger` found no prior local test of these exact menus (hits were unrelated keyword matches: value-factor data-gap notes, A-share rotation posts, Collective2 vendor-rotation write-ups, and a core-satellite sector-ETF structure -- dir:core_satellite_momentum_sector_etf_r7 -- which uses a different core-satellite allocation structure on different tickers under the old frozen-gate criterion, refuted, not this batch's cross-sectional top-N rotation). `oc research directions check \"style rotation\"` and `... \"industry etf momentum\"` returned only unrelated likely-repeat/not-executable registry entries (value-factor gaps, Collective2 KNN/ETF-Timer/extreme-os vendor strategies, dir:core_satellite_momentum_sector_etf_r7), none of which is this menu/mechanism pair. Both target directions (dir:factor_style_etf_momentum_rotation, dir:narrow_industry_etf_momentum_rotation) were added to the registry by a prior gap-search round on 2026-09-28 with sources already cited; this dossier independently re-opens the FACTOR menu's Quantpedia source via WebFetch (fresh fetch, 2026-09-28T22:05 UTC) and attempts to re-open the INDUSTRY menu's Molchanov & Stangl counter-evidence PDF (blocked 403/Cloudflare on both WebFetch and a direct curl retry -- recorded, not silently dropped -- see source_cards).",
+  "remaining_evidence_gap": "Whether any of the 24 lookback/top_n/rebalance combinations on either menu actually clears K1 or K2 against S3's frozen reference numbers when run through the batch-screening lane -- this is exactly what has not been tested locally and is what this round's screening pass computes, with no further parameter choice available to it once the manifest is frozen.",
+  "negative_experiments_checked": "reports/research/iterations/giants_sweep_20260922/ and other batches already show that many published multi-asset tactical-allocation rules on adjacent (not identical) universes fail K1 under the same frozen windows (e.g. h20260928_04_s3_alt_div_batch1: 19/19 refuted, closest K1 anchor Sharpe 0.96). reports/research/control/step10-w1-cross-asset-trend-2026-09.md: 0/12 cross-sectional TSMOM cells on a global cross-asset ETF menu failed the old sharpe_excess_bil>1.0 gate (best 0.65) -- a different asset menu (global macro, not equity-only style/industry ETFs) and a different (superseded) gate, so not a duplicate, but a reason FACTOR/INDUSTRY's standalone K1 pass is not assumed. dir:core_satellite_momentum_sector_etf_r7 (refuted): a core-satellite sector-ETF momentum structure on 9 SPDR sectors failed workflow_pass/research_pass under the old criterion; different allocation structure (core-satellite vs cross-sectional top-N with absolute-momentum filter) and different (superseded) gate, so not a repeat of this batch's mechanism, but the family's difficulty is noted. Molchanov & Stangl's negative finding on macro-cycle sector rotation (cited by the queue plan for the INDUSTRY menu) was attempted for independent re-verification here and found HTTP 403-blocked in this session (Cloudflare challenge on both WebFetch and curl); its characterization is carried forward only via the pre-existing directions.jsonl registry entry (a prior round's summary), not independently re-read, and in any case addresses a different mechanism (macro-indicator sector prediction) from the price-trend cross-sectional momentum this batch tests, so it is not treated as a refutation of this candidate set.",
+  "cost_and_execution_assumptions": "10bp per side primary, 20bp per side stress, signal at the session close, fill at the next session's open -- identical to the frozen S1/S2/S3 convention and every prior batch-screening round (cost-contract.json). FACTOR candidates rebalance monthly or weekly per the grid; INDUSTRY candidates likewise. No candidate's cost assumption was loosened or tightened relative to precedent to make any result more likely to pass.",
+  "stop_condition": "If none of the 24 candidates clears K1 or K2, both dir:factor_style_etf_momentum_rotation and dir:narrow_industry_etf_momentum_rotation are refuted for this scope (the already-validated rotation_cell mechanism does not transfer to these two menus at the owner's relaxed keep rule), and the registry/coverage map are updated accordingly; the next round should not re-tune this same grid on the same menus without a new, distinct signal (this is the cheapest decisive test for both directions, per the queue task's own framing).",
+  "queries": [
+    {
+      "query": "Quantpedia Momentum Factor and Style Rotation Effect (WebFetch primary source re-verification)",
+      "opened_urls": [
+        "https://quantpedia.com/strategies/momentum-factor-and-style-rotation-effect"
+      ],
+      "searched_at": "2026-09-28T22:05:00+00:00"
+    },
+    {
+      "query": "Molchanov Stangl The Myth of Sector Rotation PDF (WebFetch primary source re-verification, attempted)",
+      "opened_urls": [
+        "https://acfr.aut.ac.nz/__data/assets/pdf_file/0005/294287/The-Myth-of-Sector-Rotation-non-blind.pdf"
+      ],
+      "searched_at": "2026-09-28T22:10:50+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://quantpedia.com/strategies/momentum-factor-and-style-rotation-effect",
+      "claim_id": "quantpedia_momentum_factor_style_rotation_2026",
+      "claim": "Quantpedia's 'Momentum Factor and Style Rotation Effect' strategy (source paper Tibbs, Eakins, DeShurko): rank six Russell equity style ETFs (small/mid/large-cap value and growth) by 12-month price momentum monthly, go long the winner and short the loser, holding one month. Reported backtest 1972-2005: annualized return 9.25%, Sharpe 0.33, volatility ~16.0%, max drawdown -52.5%. The page discloses no update or decay statement past 2005 and no long-only or recent-window figure.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2026-09-28",
+      "market_and_period": "6 Russell style ETFs, monthly, 1972-2005 (old, long-short, pre-modern-single-factor-ETF sample)",
+      "applicability": "Grounds the FACTOR menu's mechanism (cross-sectional momentum across style ETFs); the menu itself (MTUM/QUAL/USMV/VLUE/SIZE) and grid parameters are this batch's own choice, reusing the already-live rotation_cell engine, not copied from this source's exact parameters.",
+      "limitations": "Practitioner summary, not the original paper; sample ends 2005, long-short, weak standalone Sharpe (0.33); no recent-window or long-only figure disclosed.",
+      "independent_replication": "No independent third-party live/forward record of a long-only rotation across the modern single-factor ETF set found in this or a prior gap-search round.",
+      "fetched_at": "2026-09-28T22:05:00+00:00",
+      "sha256": "3c04bd5af6b90b695d12709acb536f04db911d0951ced894d1eaa27eddbc7966",
+      "snapshot_path": "reports/research/iterations/h20260928_40_equity_etf_menus/sources/quantpedia-momentum-factor-style-rotation.md",
+      "source_card_path": "reports/harness/source_cards/h20260928_40_equity_etf_menus.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run all 24 candidates through the batch-screening lane (scripts/screen_batch.py --batch h20260928_40_equity_etf_menus --iteration h20260928_40_equity_etf_menus) against S3's frozen stress/anchor windows and check K1/K2 directly; the engine and cost/fill convention are already frozen and reused unedited, so this is the cheapest possible resolution for both queued directions.",
+    "pass_condition": "At least one of the 24 candidates clears K1 or K2 in candidate-manifest.json's keep_rule.",
+    "falsification_condition": "None of the 24 candidates has a date-neutral Sharpe >=80% of S3's in both windows with positive 20bp CAGR (K1), and none of their 63-session inverse-vol blends with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows (K2), and none reaches the watch_recent bar (anchor-only >=1.19).",
+    "max_compute_minutes": 30
+  }
+}

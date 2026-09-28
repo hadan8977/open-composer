@@ -1,0 +1,68 @@
+{
+  "iter_id": "h20260928_40_equity_etf_menus",
+  "strategy_name": "h20260928_40_equity_etf_menus",
+  "source_spec_path": "strategy_specs/drafts/h20260928_40_equity_etf_menus.yaml",
+  "spec_hash": "8e712d7f59d7377824988f52410a43dcc68cdcf4b1ba9a3c4432912b138b0e6b",
+  "schema_version": 3,
+  "created_at": "2026-09-28T22:30:00+00:00",
+  "objective": "Preregister 24 candidates -- the exact rotation_cell cross-sectional momentum rotation mechanism already live on S1-S3, unedited, applied to a FACTOR-style ETF menu (MTUM/QUAL/USMV/VLUE/SIZE) and a narrow INDUSTRY ETF menu (SMH/XBI/KRE/ITB/IGV/XOP/XRT/IHI), grid = lookback {63,126,252} x top_n {1,2} x rebalance {monthly,weekly} -- for a batch screening lane (built separately) to test against K1 (own date-neutral Sharpe >= 80% of S3's in both the anchor and stress windows, positive CAGR at 20bp) or K2 (a 63-session trailing-inverse-vol monthly blend with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in both windows). No backtest is run in this round.",
+  "paths": [
+    {
+      "name": "equity_etf_menus_screen",
+      "candidate_count": 24,
+      "hypothesis_refs": [
+        "H-20260928-40"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "FACTOR_L63_N1_MO", "FACTOR_L63_N1_WK", "FACTOR_L63_N2_MO", "FACTOR_L63_N2_WK",
+          "FACTOR_L126_N1_MO", "FACTOR_L126_N1_WK", "FACTOR_L126_N2_MO", "FACTOR_L126_N2_WK",
+          "FACTOR_L252_N1_MO", "FACTOR_L252_N1_WK", "FACTOR_L252_N2_MO", "FACTOR_L252_N2_WK",
+          "INDUSTRY_L63_N1_MO", "INDUSTRY_L63_N1_WK", "INDUSTRY_L63_N2_MO", "INDUSTRY_L63_N2_WK",
+          "INDUSTRY_L126_N1_MO", "INDUSTRY_L126_N1_WK", "INDUSTRY_L126_N2_MO", "INDUSTRY_L126_N2_WK",
+          "INDUSTRY_L252_N1_MO", "INDUSTRY_L252_N1_WK", "INDUSTRY_L252_N2_MO", "INDUSTRY_L252_N2_WK"
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "SPY_buy_and_hold",
+        "SHY_buy_and_hold",
+        "BIL_buy_and_hold",
+        "S3_reference_for_K1_K2"
+      ]
+    }
+  ],
+  "total_candidate_budget": 24,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_40_equity_etf_menus/candidate-manifest.json",
+  "candidate_manifest_sha256": "9f1343260f7e90e1a93447095f95a3973b12ca9b8ab36e658a4271a2151c6c41",
+  "data_feasibility_path": "reports/research/iterations/h20260928_40_equity_etf_menus/data-feasibility.json",
+  "data_feasibility_sha256": "bb364074858034338f05b9c453b77af8347da8691cab66f5eccc38837f630769",
+  "cost_table_path": "reports/research/iterations/h20260928_40_equity_etf_menus/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_40_equity_etf_menus/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_40_equity_etf_menus/report.md",
+    "reports/research/iterations/h20260928_40_equity_etf_menus/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "stress": ["2016-05-02", "2023-09-15"],
+    "anchor": ["2024-01-08", "2026-09-17"],
+    "holdout_2026_contaminated": ["2026-01-02", "2026-09-17"]
+  },
+  "keep_rule": {
+    "K1": "date-neutral Sharpe (median over rebalance offsets) >= 0.80 * S3's date-neutral Sharpe in BOTH windows (anchor >=1.19, stress >=0.65), 10bp per side, positive CAGR at 20bp.",
+    "K2": "63-session trailing-inverse-vol monthly blend with S3 beats a vol-matched k*S3+(1-k)*SHY control by >=0.05 Sharpe in BOTH windows.",
+    "watch_recent": "anchor-window date-neutral Sharpe >= 1.19 but stress window does not clear its bar -- forward-tracked only, not a keep.",
+    "strong_keep": "K2 edge >= 0.10 in both windows, or K1's Sharpe in both windows is >= S3's own (1.49 anchor / 0.81 stress).",
+    "pass_requires": "K1 OR K2",
+    "multiple_comparisons": "24 candidates; report all regardless of outcome; DSR with n_trials=24 for any that pass.",
+    "g3_placebo": "not applicable -- no discretionary pick or gate-timing parameter fit locally; the grid is a preregistered bounded sweep of the already-live rotation_cell engine, not a locally-fit rule."
+  }
+}
