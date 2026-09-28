@@ -1,0 +1,126 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260928_15_claude_factor_batch",
+  "strategy_name": "h20260928_15_claude_factor_batch",
+  "source_spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+  "spec_hash": "cab0dadd65a12ddb806625d9fa8f8f5a62ce401749e70734e1381e8e9c1b16e7",
+  "objective": "Open primary sources on LLM-driven formulaic alpha mining with out-of-sample decay evidence (AlphaAgent, R&D-Agent(Q), Alpha-GPT), then verify and cite an economically-grounded, diverse set of academic sources backing each of the 8 preregistered Claude-authored factors, before any IC is computed.",
+  "topic_coverage": [
+    "llm_formulaic_alpha_mining_post_2023_us_equity_decay_evidence",
+    "llm_hypothesis_code_backtest_loop_prior_art_and_adoption_boundary",
+    "opportunistic_vs_routine_insider_trading_informativeness",
+    "informed_short_selling_and_short_interest_predictability",
+    "trading_activity_level_and_variability_return_premia",
+    "post_earnings_insider_trading_informativeness",
+    "accruals_and_cash_flow_earnings_quality",
+    "near_duplicate_mechanism_screening_against_local_refutations"
+  ],
+  "sources": [
+    {
+      "url": "https://arxiv.org/html/2502.16789v2",
+      "published_or_updated_at": "2025-06-09",
+      "source_type": "paper",
+      "credibility": "kdd_2025_peer_reviewed",
+      "core_claim": "AlphaAgent's LLM-driven formulaic-alpha loop achieves S&P 500 test-window IC 0.0056 / ICIR 0.0552 (2021-2025), about a quarter of its own China CSI 500 IC (0.0212) for the identical method and LLM backend.",
+      "project_applicability": "Sets a realistic, not-optimistic U.S.-equity IC expectation band for judging this task's own batch.",
+      "reflection": "Verified via full-text curl snapshot and exact quote binding; the U.S.-market weakness relative to China is the single most important caution this prior-art check surfaced."
+    },
+    {
+      "url": "https://arxiv.org/html/2505.15155v2",
+      "published_or_updated_at": "2025-09-25",
+      "source_type": "paper",
+      "credibility": "neurips_2025_poster_microsoft_research",
+      "core_claim": "R&D-Agent(Q)'s NASDAQ 100 out-of-sample test (2024-01 to 2025-06-30, genuinely post-2023) beats classical factor libraries (Alpha158/360/AutoAlpha) by roughly 3.5-4x on IC (0.0162 vs 0.0040-0.0046).",
+      "project_applicability": "The closest existing precedent to this task's own decision rule (batch vs zoo on TEST IC), used to calibrate expectations, not copied as a target since the loop there is far heavier (multi-agent, bandit-scheduled, many iterations) than this task's single-revision 8+4 batch.",
+      "reflection": "Verified via full-text curl snapshot and exact quote binding on the disclosed train/validation/test date split and the NASDAQ100 results table."
+    },
+    {
+      "url": "https://arxiv.org/abs/2308.00016",
+      "published_or_updated_at": "2025-09-20",
+      "source_type": "paper",
+      "credibility": "emnlp_2025_demo_track",
+      "core_claim": "Alpha-GPT is a human-in-the-loop LLM alpha-mining framework (prompt engineering + genetic-programming refinement); no post-2023 U.S. OOS IC/Sharpe table is disclosed at the abstract level.",
+      "project_applicability": "Completes the brief's named three-method sweep; contributes no usable performance number, only confirms the method's shape differs (human-in-the-loop, not autonomous batch) from this task's design.",
+      "reflection": "Abstract-only snapshot verified via curl; full PDF not opened this pass (no decay-evidence number to extract)."
+    },
+    {
+      "url": "https://www.nber.org/papers/w16454",
+      "published_or_updated_at": "2012-06-01",
+      "source_type": "paper",
+      "credibility": "journal_of_finance_2012_1000plus_citations",
+      "core_claim": "Cohen/Malloy/Pomorski (2012): opportunistic insider trades carry all the predictive power in the insider-trading universe (82bp/month abnormal return); routine trades (over half the universe) carry none.",
+      "project_applicability": "Grounds candidate F02 (opportunistic_insider_signal), directly operationalizing the opportunistic-vs-routine distinction the project's existing insider_cluster_buy card does not isolate.",
+      "reflection": "Verified via curl snapshot and abstract-text quote match."
+    },
+    {
+      "url": "https://econpapers.repec.org/RePEc:bla:jfinan:v:56:y:2001:i:3:p:877-919",
+      "published_or_updated_at": "2001-06-01",
+      "source_type": "paper",
+      "credibility": "journal_of_finance_2001_standard_reference",
+      "core_claim": "Gervais/Kaniel/Mingelgrin (2001): stocks with unusually high (low) trading activity over a day/week tend to appreciate (depreciate) over the following month -- the 'high-volume return premium'.",
+      "project_applicability": "Grounds candidate F03 (trading_activity_surge): recent-vs-baseline trade-count ratio, a construct unused by any existing local card.",
+      "reflection": "Verified via curl snapshot and abstract-text quote match."
+    },
+    {
+      "url": "https://econpapers.repec.org/RePEc:eee:jfinec:v:95:y:2010:i:1:p:85-106",
+      "published_or_updated_at": "2010-01-01",
+      "source_type": "paper",
+      "credibility": "journal_of_financial_economics_2010",
+      "core_claim": "Christophe/Ferri/Hsieh (2010): abnormal short-selling precedes analyst downgrades, consistent with informed short sellers.",
+      "project_applicability": "Supports the informed-short-seller premise used by F01, F04 and F06.",
+      "reflection": "Verified via curl snapshot and abstract-text quote match."
+    },
+    {
+      "url": "https://diether.org/papers/short_strategies.pdf",
+      "published_or_updated_at": "2009-02-01",
+      "source_type": "paper",
+      "credibility": "review_of_financial_studies_2009",
+      "core_claim": "Diether/Lee/Werner (2009): short sellers correctly predict future negative abnormal returns using 2005 SEC-mandated short-sale data.",
+      "project_applicability": "Grounds F04 (SUE + short-volume gate) and F06 (momentum + short-volume gate).",
+      "reflection": "Verified via full-PDF pdftotext snapshot and abstract-text quote match (author's own posted PDF, since the publisher's Oxford Academic page returned a bot-challenge page)."
+    },
+    {
+      "url": "https://econpapers.repec.org/RePEc:eee:jfinec:v:59:y:2001:i:1:p:3-32",
+      "published_or_updated_at": "2001-01-01",
+      "source_type": "paper",
+      "credibility": "journal_of_financial_economics_2001_1000plus_citations",
+      "core_claim": "Chordia/Subrahmanyam/Anshuman (2001): variability (not just level) of trading activity is negatively related to expected returns, controlling for standard factors.",
+      "project_applicability": "Secondary support distinguishing the variability-of-activity mechanism from the level-of-activity premium F03 uses as its primary citation.",
+      "reflection": "RePEc landing page title/venue/year confirmed via curl snapshot; full abstract text not surfaced on that page, bibliographic facts cross-checked via web search of multiple citing sources rather than a second full-text read."
+    },
+    {
+      "url": "https://econpapers.repec.org/RePEc:eee:jaecon:v:35:y:2003:i:3:p:315-346",
+      "published_or_updated_at": "2003-08-01",
+      "source_type": "paper",
+      "credibility": "journal_of_accounting_and_economics_2003",
+      "core_claim": "Ke/Huddart/Petroni (2003): insiders trade on private knowledge of forthcoming earnings disclosures up to two years ahead.",
+      "project_applicability": "Grounds F08 (earnings-recency-gated insider buying); note the paper's own tested direction is insider SELLING ahead of earnings declines, so the buying-after-good-news application here is our own extrapolation, disclosed and reflected in F08's lower (0.50) confidence score.",
+      "reflection": "RePEc landing page title/venue/year confirmed via curl snapshot; full abstract text not surfaced on that page, bibliographic facts cross-checked via web search of multiple citing sources rather than a second full-text read."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_15_claude_factor_batch.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {"candidate_id": "F01_insider_short_confluence", "claim_ids": ["christophe_ferri_hsieh_2010_informed_short_sellers", "cohen_malloy_pomorski_2012_opportunistic_insiders"]},
+    {"candidate_id": "F02_opportunistic_insider_signal", "claim_ids": ["cohen_malloy_pomorski_2012_opportunistic_insiders"]},
+    {"candidate_id": "F03_trading_activity_surge", "claim_ids": ["gervais_kaniel_mingelgrin_2001_high_volume_return_premium", "chordia_subrahmanyam_anshuman_2001_trading_activity_returns"]},
+    {"candidate_id": "F04_sue_short_confirmation", "claim_ids": ["diether_lee_werner_2009_short_sale_return_predictability"]},
+    {"candidate_id": "F06_momentum_short_confirmation", "claim_ids": ["diether_lee_werner_2009_short_sale_return_predictability", "christophe_ferri_hsieh_2010_informed_short_sellers"]},
+    {"candidate_id": "F08_earnings_recency_gated_insider_buying", "claim_ids": ["ke_huddart_petroni_2003_insiders_future_earnings"]}
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "earnings_events_coverage_check",
+      "effect": "A planned Round-1 factor (8-K filing-length/complexity, Loughran-McDonald-style) was dropped before preregistration once querying data/features/earnings_events showed it starts 2024-01-03, giving zero coverage of the SELECT window (2016-06-01..2023-12-29) -- it would have been unselectable by the SELECT-ICIR rule regardless of merit, not a fair test. Replaced with F03 (trading_activity_surge, daily_broad-based, full 2016+ coverage) before any IC was computed."
+    },
+    {
+      "driver": "alphaagent_sp500_csi500_table2_results",
+      "effect": "Sets expectations for this batch's likely IC magnitude to the AlphaAgent S&P500 order (roughly 0.005-0.01), not the higher China-market number, avoiding an inflated bar for judging 'supported vs refuted'."
+    },
+    {
+      "driver": "cohen_malloy_pomorski_2012_opportunistic_insiders",
+      "effect": "F02 uses insider_broad's own opportunistic_buy_60d/routine_buy_60d columns (isolating the informative component) instead of re-running the project's existing buyer-count>=2 event rule, satisfying the brief's 'new element vs refuted mechanism' requirement for insider-cluster signals."
+    }
+  ]
+}

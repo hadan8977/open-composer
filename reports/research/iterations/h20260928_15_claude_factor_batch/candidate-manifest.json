@@ -1,0 +1,408 @@
+{
+  "iter_id": "h20260928_15_claude_factor_batch",
+  "generated_at": "2026-09-28T07:10:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "h20260928_15_claude_factor_batch",
+  "objective": "Round 1 (8) + Round 2 (4, preregistered from SELECT-only feedback before any TEST number exists) Claude-authored formulaic factors, each with an economic hypothesis, cited source, exact formula, inputs, expected sign and confidence score, built from existing PIT stores only. Judged only by whether the batch's SELECT-window-chosen factor beats the symmetric Alpha101/Alpha158/Alpha191/OSAP-price/rank-card zoo's SELECT-chosen factor on TEST rank IC and TEST 20bp top-50 monthly book Sharpe.",
+  "candidate_count": 12,
+  "candidates": [
+    {
+      "candidate_id": "F01_insider_short_confluence",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "insider_buy_and_short_covering_confluence",
+      "ablation": "round1_frozen",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_if_either_input_missing",
+      "data_contract": "data_v1_h20260928_15_insider_short_interest",
+      "feature_contract": "feature_v1_f01_insider_short_confluence",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "Insider net buying confirmed by short covering (falling days-to-cover) is a stronger bullish signal than either alone -- two independently-informed trader groups converging.",
+        "source_claim_ids": ["cohen_malloy_pomorski_2012_opportunistic_insiders", "christophe_ferri_hsieh_2010_informed_short_sellers"],
+        "formula": "0.5*pctrank(net_buy_usd_60d) + 0.5*pctrank(-dtc_change_vs_prior), cross-sectional percentile rank per trade_date",
+        "inputs": ["data/features/insider_broad:net_buy_usd_60d", "data/features/short_interest:dtc_change_vs_prior"],
+        "expected_sign": 1,
+        "confidence": 0.5,
+        "code_function": "build_h20260928_15_claude_factors.f01_insider_short_confluence",
+        "code_sha256": "19ee4572c869b263d717ff11825144ed3db7bb3be03ab753771dbf023130e1e9",
+        "select_coverage_note": "short_interest starts 2018-01-11; SELECT sample is 2018-2023, not the full 2016-2023 window"
+      }
+    },
+    {
+      "candidate_id": "F02_opportunistic_insider_signal",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "opportunistic_minus_routine_insider_buys",
+      "ablation": "round1_frozen",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_if_either_input_missing",
+      "data_contract": "data_v1_h20260928_15_insider_only",
+      "feature_contract": "feature_v1_f02_opportunistic_insider_signal",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "Opportunistic (not routine) insider buying carries the predictive power; isolating it is a new element versus the existing standalone insider-cluster event card.",
+        "source_claim_ids": ["cohen_malloy_pomorski_2012_opportunistic_insiders"],
+        "formula": "pctrank(opportunistic_buy_60d) - pctrank(routine_buy_60d), cross-sectional percentile rank per trade_date",
+        "inputs": ["data/features/insider_broad:opportunistic_buy_60d", "data/features/insider_broad:routine_buy_60d"],
+        "expected_sign": 1,
+        "confidence": 0.6,
+        "code_function": "build_h20260928_15_claude_factors.f02_opportunistic_insider_signal",
+        "code_sha256": "d2f3b74fcf954aedbafb2657bfc90028296d05280c05aea8a4a2365cd2c7aea4",
+        "select_coverage_note": "insider_broad starts 2016-01-29, full SELECT-window coverage"
+      }
+    },
+    {
+      "candidate_id": "F03_trading_activity_surge",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "trade_count_5d_over_21d_ratio",
+      "ablation": "round1_frozen",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_if_either_input_missing",
+      "data_contract": "data_v1_h20260928_15_daily_broad_only",
+      "feature_contract": "feature_v1_f03_trading_activity_surge",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "A recent surge in trade count relative to its own 21d baseline predicts one-month continuation (high-volume return premium via investor recognition).",
+        "source_claim_ids": ["gervais_kaniel_mingelgrin_2001_high_volume_return_premium", "chordia_subrahmanyam_anshuman_2001_trading_activity_returns"],
+        "formula": "trade_count_5d_mean / trade_count_21d_mean",
+        "inputs": ["data/features/daily_broad:trade_count_5d_mean", "data/features/daily_broad:trade_count_21d_mean"],
+        "expected_sign": 1,
+        "confidence": 0.5,
+        "code_function": "build_h20260928_15_claude_factors.f03_trading_activity_surge",
+        "code_sha256": "cc0ed6db1949b72d377ef964a8ffea1fbfeb8b6882720ed739f97c1837d68cee",
+        "select_coverage_note": "daily_broad starts 2016-01-04, full SELECT-window coverage"
+      }
+    },
+    {
+      "candidate_id": "F04_sue_short_confirmation",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "sue_minus_short_volume_pressure",
+      "ablation": "round1_frozen",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_if_either_input_missing",
+      "data_contract": "data_v1_h20260928_15_fundamentals_short_volume",
+      "feature_contract": "feature_v1_f04_sue_short_confirmation",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "Positive SUE not opposed by elevated short-volume pressure is a stronger drift signal than SUE alone (informed shorts confirming, not contradicting, the good news). No 8-K redating (distinct from the refuted T-14 mechanism); SUE stays at its existing sec_fundamentals_daily visibility date.",
+        "source_claim_ids": ["diether_lee_werner_2009_short_sale_return_predictability"],
+        "formula": "pctrank(sue_eps) - pctrank(short_volume_ratio_zscore_21)",
+        "inputs": ["data/features/sec_fundamentals_daily:sue_eps", "data/features/short_volume_broad:short_volume_ratio_zscore_21"],
+        "expected_sign": 1,
+        "confidence": 0.5,
+        "code_function": "build_h20260928_15_claude_factors.f04_sue_short_confirmation",
+        "code_sha256": "20b20a53234bf900f826198da84260c22aa6ead748c03146d7cae980fee05810",
+        "select_coverage_note": "short_volume_broad starts 2018-08-03; SELECT sample is 2018-2023"
+      }
+    },
+    {
+      "candidate_id": "F05_quality_liquidity_trend",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "gross_profitability_plus_improving_intraday_liquidity",
+      "ablation": "round1_frozen",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_if_either_input_missing",
+      "data_contract": "data_v1_h20260928_15_fundamentals_daily_broad",
+      "feature_contract": "feature_v1_f05_quality_liquidity_trend",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "Profitable firms whose intraday illiquidity is recently improving are being discovered by the market (investor-recognition/liquidity-discovery channel); an exploratory interaction of two separately-grounded ingredients.",
+        "source_claim_ids": [],
+        "formula": "0.5*pctrank(gross_profitability) + 0.5*pctrank(-(amihud_intraday_5d_mean/amihud_intraday_21d_mean))",
+        "inputs": ["data/features/sec_fundamentals_daily:gross_profitability", "data/features/daily_broad:amihud_intraday_5d_mean", "data/features/daily_broad:amihud_intraday_21d_mean"],
+        "expected_sign": 1,
+        "confidence": 0.4,
+        "code_function": "build_h20260928_15_claude_factors.f05_quality_liquidity_trend",
+        "code_sha256": "4fc29e24e3639c6c00176ea85ef37ca7f122c88fb88fb8a9e4da622b01721a3e",
+        "select_coverage_note": "both inputs start 2016, full SELECT-window coverage (subject to fundamentals quarterly sparsity)"
+      }
+    },
+    {
+      "candidate_id": "F06_momentum_short_confirmation",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "momentum_minus_short_volume_pressure",
+      "ablation": "round1_frozen",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_if_either_input_missing",
+      "data_contract": "data_v1_h20260928_15_daily_broad_short_volume",
+      "feature_contract": "feature_v1_f06_momentum_short_confirmation",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "12-1 momentum winners with low relative short-volume pressure have more durable momentum than winners with high short pressure.",
+        "source_claim_ids": ["diether_lee_werner_2009_short_sale_return_predictability", "christophe_ferri_hsieh_2010_informed_short_sellers"],
+        "formula": "pctrank(momentum_252_21) - pctrank(short_volume_ratio_zscore_21)",
+        "inputs": ["data/features/daily_broad:momentum_252_21", "data/features/short_volume_broad:short_volume_ratio_zscore_21"],
+        "expected_sign": 1,
+        "confidence": 0.5,
+        "code_function": "build_h20260928_15_claude_factors.f06_momentum_short_confirmation",
+        "code_sha256": "397cd6352ff11228e6bf3aefb71e72328457fbeb604e4dae4cb4025a22a6a534",
+        "select_coverage_note": "short_volume_broad starts 2018-08-03; SELECT sample is 2018-2023",
+        "expected_overlap_note": "momentum_252_21 is an existing control column; this factor is expected to show high max-rank-corr with the mom_12_1 control -- info-only check, not disqualifying by itself"
+      }
+    },
+    {
+      "candidate_id": "F07_accruals_cashflow_confirmation",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "accruals_plus_cash_conversion",
+      "ablation": "round1_frozen",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_if_either_input_missing",
+      "data_contract": "data_v1_h20260928_15_fundamentals_only",
+      "feature_contract": "feature_v1_f07_accruals_cashflow_confirmation",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "Low accruals confirmed by a high cash-conversion ratio (operating cash flow relative to net income) identifies higher-quality earnings than accruals alone.",
+        "source_claim_ids": [],
+        "formula": "0.5*pctrank(-accruals) + 0.5*pctrank(operating_cash_flow / GREATEST(ABS(net_income), 0.01*total_assets))",
+        "inputs": ["data/features/sec_fundamentals_daily:accruals", "data/features/sec_fundamentals_daily:operating_cash_flow", "data/features/sec_fundamentals_daily:net_income", "data/features/sec_fundamentals_daily:total_assets"],
+        "expected_sign": 1,
+        "confidence": 0.55,
+        "code_function": "build_h20260928_15_claude_factors.f07_accruals_cashflow_confirmation",
+        "code_sha256": "bf8354da6086eb98095d42e7016fe8a4d2e6d8ca5752d3574541a460c533c287",
+        "select_coverage_note": "sec_fundamentals_daily starts 2016-01-04, full SELECT-window coverage",
+        "outlier_control_note": "net_income clipped to at least 1% of total_assets in the divisor before ranking, fixed before any IC computed"
+      }
+    },
+    {
+      "candidate_id": "F08_earnings_recency_gated_insider_buying",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "insider_net_buy_gated_to_post_report_window",
+      "ablation": "round1_frozen",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_outside_post_report_window",
+      "data_contract": "data_v1_h20260928_15_insider_fundamentals",
+      "feature_contract": "feature_v1_f08_earnings_recency_gated_insider_buying",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "Insider net buying shortly after a fundamentals report is a stronger signal than unconditional insider buying (freshest information advantage). Disclosed as a one-sided extrapolation from Ke/Huddart/Petroni's own tested direction (pre-decline selling, not post-report buying).",
+        "source_claim_ids": ["ke_huddart_petroni_2003_insiders_future_earnings"],
+        "formula": "net_buy_usd_60d where days_since_report <= 10, else NaN",
+        "inputs": ["data/features/insider_broad:net_buy_usd_60d", "data/features/sec_fundamentals_daily:days_since_report"],
+        "expected_sign": 1,
+        "confidence": 0.5,
+        "code_function": "build_h20260928_15_claude_factors.f08_earnings_recency_gated_insider_buying",
+        "code_sha256": "146a0cfe3fef83697a02f031aee4bd71585c500db8842e2bf6b692534de3740d",
+        "select_coverage_note": "both inputs start 2016, full SELECT-window coverage"
+      }
+    },
+    {
+      "candidate_id": "F09_insider_short_confluence_dollar_weighted",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "insider_buy_and_short_covering_confluence_dollar_weighted",
+      "ablation": "round2_from_select_feedback",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_if_either_input_missing",
+      "data_contract": "data_v1_h20260928_15_insider_short_interest",
+      "feature_contract": "feature_v1_f09_insider_short_confluence_dollar_weighted",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "Round-1 feedback: F01's 0.5/0.5 blend (SELECT ICIR 0.145, sign-flipped) underperformed F08's single dollar-value insider ingredient (0.215, also sign-flipped); up-weighting the dollar-value net_buy_usd_60d component to 0.7 (from 0.3 for the short-covering component) tests whether F01's signal is mostly carried by the dollar-buy ingredient.",
+        "source_claim_ids": ["cohen_malloy_pomorski_2012_opportunistic_insiders", "christophe_ferri_hsieh_2010_informed_short_sellers"],
+        "formula": "0.7*pctrank(net_buy_usd_60d) + 0.3*pctrank(-dtc_change_vs_prior), cross-sectional percentile rank per trade_date",
+        "inputs": ["data/features/insider_broad:net_buy_usd_60d", "data/features/short_interest:dtc_change_vs_prior"],
+        "expected_sign": 1,
+        "confidence": 0.5,
+        "code_function": "build_h20260928_15_claude_factors.f09_insider_short_confluence_dollar_weighted",
+        "code_sha256": "7b79c51bf431e739cc675cbae0f89eebc671428fd29265b778135248c1741ff2",
+        "select_coverage_note": "short_interest starts 2018-01-11; SELECT sample is 2018-2023, not the full 2016-2023 window"
+      }
+    },
+    {
+      "candidate_id": "F10_quality_composite_roe_profitability_accruals",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "roe_plus_gross_profitability_plus_low_accruals_equal_weight",
+      "ablation": "round2_from_select_feedback",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_if_any_input_missing",
+      "data_contract": "data_v1_h20260928_15_fundamentals_only",
+      "feature_contract": "feature_v1_f10_quality_composite_roe_profitability_accruals",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "Round-1 feedback: F05 and F07 (quality diluted by a second, weaker ingredient) scored 0.164 and 0.149 SELECT ICIR, close to this project's own strongest local cards (card_roe 0.233, card_gross_profitability 0.209); this factor tests the plain three-way quality composite (ROE, gross profitability, low accruals) undiluted by a second theme.",
+        "source_claim_ids": [],
+        "formula": "(pctrank(roe) + pctrank(gross_profitability) + pctrank(-accruals)) / 3.0, cross-sectional percentile rank per trade_date",
+        "inputs": ["data/features/sec_fundamentals_daily:roe", "data/features/sec_fundamentals_daily:gross_profitability", "data/features/sec_fundamentals_daily:accruals"],
+        "expected_sign": 1,
+        "confidence": 0.55,
+        "code_function": "build_h20260928_15_claude_factors.f10_quality_composite_roe_profitability_accruals",
+        "code_sha256": "0e9c46c56cbaee6c93015aca42620d7db172a8490b26e84ee73d083178cda434",
+        "select_coverage_note": "sec_fundamentals_daily starts 2016-01-04, full SELECT-window coverage (subject to fundamentals quarterly sparsity)",
+        "expected_overlap_note": "roe/gross_profitability/accruals overlap with existing card_roe and card_gross_profitability controls; high max-rank-corr with those cards is expected -- info-only check, not disqualifying by itself"
+      }
+    },
+    {
+      "candidate_id": "F11_momentum_activity_surge_confirmation",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "momentum_minus_short_volume_pressure_replaced_by_trading_activity_surge",
+      "ablation": "round2_from_select_feedback",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_if_either_input_missing",
+      "data_contract": "data_v1_h20260928_15_daily_broad_only",
+      "feature_contract": "feature_v1_f11_momentum_activity_surge_confirmation",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "Round-1 feedback: F06's short_volume_broad confirmation gate was the batch's weakest (SELECT ICIR 0.019, and restricted to the 2018-08+ sample); replacing it with F03's trading-activity-surge ratio (0.129, built from daily_broad only, full 2016+ coverage) tests whether the confirmation mechanism itself (not specifically short-volume) adds to plain 12-1 momentum, without losing 2016-2018 SELECT coverage.",
+        "source_claim_ids": ["diether_lee_werner_2009_short_sale_return_predictability", "gervais_kaniel_mingelgrin_2001_high_volume_return_premium"],
+        "formula": "0.5*pctrank(momentum_252_21) + 0.5*pctrank(trade_count_5d_mean/trade_count_21d_mean), cross-sectional percentile rank per trade_date",
+        "inputs": ["data/features/daily_broad:momentum_252_21", "data/features/daily_broad:trade_count_5d_mean", "data/features/daily_broad:trade_count_21d_mean"],
+        "expected_sign": 1,
+        "confidence": 0.5,
+        "code_function": "build_h20260928_15_claude_factors.f11_momentum_activity_surge_confirmation",
+        "code_sha256": "c47d9eceed5ce7a2feb26bc693af700cabd90cc21070261216016b2891a11977",
+        "select_coverage_note": "both inputs start 2016-01-04, full SELECT-window coverage (unlike F06's 2018-08+ short_volume_broad restriction)",
+        "expected_overlap_note": "momentum_252_21 is an existing control column, and this factor overlaps with F03/F06; high max-rank-corr with those and with the mom_12_1 control is expected -- info-only check, not disqualifying by itself"
+      }
+    },
+    {
+      "candidate_id": "F12_post_earnings_insider_buying_bad_news_gate",
+      "path": "claude_factor_batch_screen",
+      "role": "cross_sectional_rank_factor",
+      "method": "insider_net_buy_gated_to_post_report_window_and_negative_sue",
+      "ablation": "round2_from_select_feedback",
+      "spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "fallback": "skip_symbol_day_outside_post_report_negative_sue_window",
+      "data_contract": "data_v1_h20260928_15_insider_fundamentals",
+      "feature_contract": "feature_v1_f12_post_earnings_insider_buying_bad_news_gate",
+      "label_contract": "label_v1_h20260928_15_rank_ic_and_book",
+      "validation_contract": "validation_v1_h20260928_15_select_test",
+      "cost_contract": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+      "benchmark_contract": "benchmark_v1_h20260928_15_zoo_select_chosen",
+      "parameters": {
+        "hypothesis": "Round-1 feedback: F08 was the batch's strongest SELECT signal (|ICIR| 0.215) but sign-flipped from its original hypothesis (post-report insider buying predicted LOWER, not higher, future returns). Rather than silently flipping the sign on the same unconditional construction, this factor tests a sharper, directly-motivated re-hypothesis restricted to buying shortly after BAD news (negative SUE) -- a 'catching a falling knife' / 'insiders defending the stock' pattern -- to see whether the negative relationship concentrates there.",
+        "source_claim_ids": ["ke_huddart_petroni_2003_insiders_future_earnings"],
+        "formula": "net_buy_usd_60d where days_since_report <= 10 AND sue_eps < 0, else NaN",
+        "inputs": ["data/features/insider_broad:net_buy_usd_60d", "data/features/sec_fundamentals_daily:days_since_report", "data/features/sec_fundamentals_daily:sue_eps"],
+        "expected_sign": 1,
+        "confidence": 0.45,
+        "code_function": "build_h20260928_15_claude_factors.f12_post_earnings_insider_buying_bad_news_gate",
+        "code_sha256": "25e99178f32c717bd8b771b1f01216aca6c74ca5e7c205cecc871164ec5c2d6b",
+        "select_coverage_note": "both inputs start 2016, full SELECT-window coverage; sample restricted further by the negative-SUE-and-recent-report double gate",
+        "post_hoc_motivation_note": "this factor's negative-SUE subset was chosen after seeing F08's Round-1 SELECT sign, not from an independently pre-existing literature claim about the bad-news subset specifically; confidence (0.45) set below F08's (0.50) to reflect this"
+      }
+    }
+  ],
+  "contracts": {
+    "data": {
+      "data_v1_h20260928_15_insider_short_interest": {
+        "sources": ["data/features/insider_broad", "data/features/short_interest"],
+        "join": "inner on (symbol, trade_date)"
+      },
+      "data_v1_h20260928_15_insider_only": {
+        "sources": ["data/features/insider_broad"]
+      },
+      "data_v1_h20260928_15_daily_broad_only": {
+        "sources": ["data/features/daily_broad"]
+      },
+      "data_v1_h20260928_15_fundamentals_short_volume": {
+        "sources": ["data/features/sec_fundamentals_daily", "data/features/short_volume_broad"],
+        "join": "inner on (symbol, trade_date)"
+      },
+      "data_v1_h20260928_15_fundamentals_daily_broad": {
+        "sources": ["data/features/sec_fundamentals_daily", "data/features/daily_broad"],
+        "join": "inner on (symbol, trade_date)"
+      },
+      "data_v1_h20260928_15_daily_broad_short_volume": {
+        "sources": ["data/features/daily_broad", "data/features/short_volume_broad"],
+        "join": "inner on (symbol, trade_date)"
+      },
+      "data_v1_h20260928_15_fundamentals_only": {
+        "sources": ["data/features/sec_fundamentals_daily"]
+      },
+      "data_v1_h20260928_15_insider_fundamentals": {
+        "sources": ["data/features/insider_broad", "data/features/sec_fundamentals_daily"],
+        "join": "inner on (symbol, trade_date), fundamentals filtered to days_since_report<=10"
+      }
+    },
+    "features": {
+      "feature_v1_f01_insider_short_confluence": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f01_insider_short_confluence"},
+      "feature_v1_f02_opportunistic_insider_signal": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f02_opportunistic_insider_signal"},
+      "feature_v1_f03_trading_activity_surge": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f03_trading_activity_surge"},
+      "feature_v1_f04_sue_short_confirmation": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f04_sue_short_confirmation"},
+      "feature_v1_f05_quality_liquidity_trend": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f05_quality_liquidity_trend"},
+      "feature_v1_f06_momentum_short_confirmation": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f06_momentum_short_confirmation"},
+      "feature_v1_f07_accruals_cashflow_confirmation": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f07_accruals_cashflow_confirmation"},
+      "feature_v1_f08_earnings_recency_gated_insider_buying": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f08_earnings_recency_gated_insider_buying"},
+      "feature_v1_f09_insider_short_confluence_dollar_weighted": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f09_insider_short_confluence_dollar_weighted"},
+      "feature_v1_f10_quality_composite_roe_profitability_accruals": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f10_quality_composite_roe_profitability_accruals"},
+      "feature_v1_f11_momentum_activity_surge_confirmation": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f11_momentum_activity_surge_confirmation"},
+      "feature_v1_f12_post_earnings_insider_buying_bad_news_gate": {"module": "scripts/build_h20260928_15_claude_factors.py", "function": "f12_post_earnings_insider_buying_bad_news_gate"}
+    },
+    "labels": {
+      "label_v1_h20260928_15_rank_ic_and_book": {
+        "definition": "open_composer.research.signal_card.rank_ic(signal, forward_returns, mask) for 21d (primary) and 5d (secondary) horizons over the SELECT/TEST windows; for the SELECT-chosen winner only, signal_card.rank_card(top_k=50, primary=20) for the costed top-50 monthly book"
+      }
+    },
+    "validation": {
+      "validation_v1_h20260928_15_select_test": {
+        "windows": {
+          "select": ["2016-06-01", "2023-12-29"],
+          "test": ["2024-01-02", "2026-09-08"]
+        },
+        "universe": "open_composer.research.signal_card.load_market(top_n=1000, memory_limit='1200MB')",
+        "rule": "TEST run exactly once, after Round 2 is frozen; manifest records the run timestamp"
+      }
+    },
+    "costs": {
+      "cost_v1_h20260928_15_10_20bp_and_ic_no_cost": {
+        "ic_scan": "no cost (pre-cost predictive-power statistic)",
+        "book_primary_bps": 10.0,
+        "book_stress_bps": 20.0,
+        "basis": "signal_card.book_returns: sum(abs(delta held weight)) * cost_bps / 1e4 per session, unmodified"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_h20260928_15_zoo_select_chosen": {
+        "definition": "The symmetric zoo's own SELECT-window-chosen best factor (every numeric column of alpha101_broad/alpha158/alpha191_broad/osap_price_broad plus the 27 existing rank-mode signal cards, identical SELECT-ICIR selection rule); also reports each set's TEST-window oracle-best with DSR deflated by set size, for information only. Alpha158 (154 numeric columns, coverage 2016-01-04 to 2026-09-08) was added to the zoo after a coordinator review found the originally-checked alpha158_broad path incomplete; the TEST window end date (2026-09-08) is aligned to alpha158's coverage ceiling for every candidate, batch and zoo alike."
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml": "cab0dadd65a12ddb806625d9fa8f8f5a62ce401749e70734e1381e8e9c1b16e7"
+  },
+  "source_spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+  "spec_hash": "cab0dadd65a12ddb806625d9fa8f8f5a62ce401749e70734e1381e8e9c1b16e7",
+  "keep_rule": "The batch's SELECT-chosen factor (by |21d rank ICIR|, sign fixed from SELECT) must beat the zoo's SELECT-chosen factor on BOTH TEST rank IC and TEST 20bp top-50 monthly book Sharpe for the method to be judged supported; otherwise refuted for this scope. Round 2 (F09-F12, 4 factors, preregistered from SELECT-only feedback before any TEST number exists) is now frozen alongside Round 1; no further factors are added before the one-time TEST run."
+}

@@ -1,0 +1,288 @@
+{
+  "iter_id": "h20260928_15_claude_factor_batch",
+  "generated_at": "2026-09-28T16:49:06+00:00",
+  "select_window": [
+    "2016-06-01",
+    "2023-12-29"
+  ],
+  "test_window": [
+    "2024-01-02",
+    "2026-09-08"
+  ],
+  "universe_top_n": 1000,
+  "batch_candidate_count": 12,
+  "zoo_candidate_count": 259,
+  "zoo_store_coverage_mean": {
+    "alpha101_broad": 0.9619068121675411,
+    "alpha191_broad": 0.9662549767884283,
+    "osap_price_broad": 0.9139568561626236,
+    "alpha158": 0.8801446213450176
+  },
+  "batch_select_chosen": {
+    "candidate_id": "F10_quality_composite_roe_profitability_accruals",
+    "select_21d_icir": 0.2719792356481224,
+    "sign_from_select": 1
+  },
+  "zoo_select_chosen": {
+    "candidate_id": "zoo_alpha158__CORD60",
+    "select_21d_icir": -0.2583148636964106,
+    "sign_from_select": -1
+  },
+  "head_to_head": {
+    "batch": {
+      "candidate_id": "F10_quality_composite_roe_profitability_accruals",
+      "test_21d_rank_ic_sign_adjusted": 0.02735638646418138,
+      "test_21d_icir_sign_adjusted": 0.19677954582789764,
+      "test_10bp_book_sharpe": 0.6664254069328308,
+      "test_20bp_book_sharpe": 0.6399407386779785
+    },
+    "zoo": {
+      "candidate_id": "zoo_alpha158__CORD60",
+      "test_21d_rank_ic_sign_adjusted": 0.021659934950787937,
+      "test_21d_icir_sign_adjusted": 0.22264593165850866,
+      "test_10bp_book_sharpe": 0.9458690881729126,
+      "test_20bp_book_sharpe": 0.878883421421051,
+      "coverage_share_of_universe_name_days": 0.8668764712984351,
+      "max_abs_corr_vs_batch": [
+        "F10_quality_composite_roe_profitability_accruals",
+        0.0746735558893132
+      ]
+    },
+    "batch_beats_zoo_on_test_rank_ic": true,
+    "batch_beats_zoo_on_test_20bp_book_sharpe": false,
+    "method_supported_per_keep_rule": false
+  },
+  "oracle_best_per_set_test_window_hindsight": {
+    "batch": {
+      "candidate_id": "F04_sue_short_confirmation",
+      "test_21d": {
+        "n": 658,
+        "mean": 0.01598826865103098,
+        "icir": 0.2587371899827955
+      },
+      "book_20bp": {
+        "cagr": 0.1591578722000122,
+        "sharpe": 0.9305166006088257,
+        "excess_ann": -0.01736037802978719
+      },
+      "trial_count": 12,
+      "dsr_probability": 0.009797348775547554
+    },
+    "zoo": {
+      "candidate_id": "zoo_osap_price_broad__coskew_252",
+      "test_21d": {
+        "n": 658,
+        "mean": -0.037770959608013924,
+        "icir": -0.30837520858040535
+      },
+      "book_20bp": {
+        "cagr": 0.45722436904907227,
+        "sharpe": 1.21468186378479,
+        "excess_ann": 0.2630943157916771
+      },
+      "trial_count": 259,
+      "dsr_probability": 0.17778242103593894
+    }
+  },
+  "confidence_vs_test_ic_spearman_info_only": {
+    "n": 12,
+    "rho": 0.4806227828375792,
+    "note": "Spearman rank correlation between each batch factor's preregistered confidence (candidate-manifest.json) and its TEST 21d rank IC (sign fixed from SELECT). Info only, not part of the keep_rule.",
+    "rows": [
+      {
+        "candidate_id": "F01_insider_short_confluence",
+        "confidence": 0.5,
+        "test_21d_rank_ic_sign_adjusted": -0.005499878882275672
+      },
+      {
+        "candidate_id": "F02_opportunistic_insider_signal",
+        "confidence": 0.6,
+        "test_21d_rank_ic_sign_adjusted": 0.00544231686219662
+      },
+      {
+        "candidate_id": "F03_trading_activity_surge",
+        "confidence": 0.5,
+        "test_21d_rank_ic_sign_adjusted": 0.006496896324281742
+      },
+      {
+        "candidate_id": "F04_sue_short_confirmation",
+        "confidence": 0.5,
+        "test_21d_rank_ic_sign_adjusted": 0.01598826865103098
+      },
+      {
+        "candidate_id": "F05_quality_liquidity_trend",
+        "confidence": 0.4,
+        "test_21d_rank_ic_sign_adjusted": 0.00211249079548272
+      },
+      {
+        "candidate_id": "F06_momentum_short_confirmation",
+        "confidence": 0.5,
+        "test_21d_rank_ic_sign_adjusted": 0.010979862786597058
+      },
+      {
+        "candidate_id": "F07_accruals_cashflow_confirmation",
+        "confidence": 0.55,
+        "test_21d_rank_ic_sign_adjusted": 0.018838758400457574
+      },
+      {
+        "candidate_id": "F08_earnings_recency_gated_insider_buying",
+        "confidence": 0.5,
+        "test_21d_rank_ic_sign_adjusted": 0.028724173872419215
+      },
+      {
+        "candidate_id": "F09_insider_short_confluence_dollar_weighted",
+        "confidence": 0.5,
+        "test_21d_rank_ic_sign_adjusted": -0.005714211503742006
+      },
+      {
+        "candidate_id": "F10_quality_composite_roe_profitability_accruals",
+        "confidence": 0.55,
+        "test_21d_rank_ic_sign_adjusted": 0.02735638646418138
+      },
+      {
+        "candidate_id": "F11_momentum_activity_surge_confirmation",
+        "confidence": 0.5,
+        "test_21d_rank_ic_sign_adjusted": 0.017191790065600343
+      },
+      {
+        "candidate_id": "F12_post_earnings_insider_buying_bad_news_gate",
+        "confidence": 0.45,
+        "test_21d_rank_ic_sign_adjusted": -0.017449702776516564
+      }
+    ]
+  },
+  "k1_info_only": {
+    "iter_id": "h20260928_15_claude_factor_batch",
+    "check": "K1_info_only_not_a_decision_gate",
+    "candidate_id": "F10_quality_composite_roe_profitability_accruals",
+    "sign_from_select": 1,
+    "k1_anchor_window": [
+      "2024-01-08",
+      "2026-09-17"
+    ],
+    "k1_stress_window": [
+      "2016-05-02",
+      "2023-09-15"
+    ],
+    "k1_anchor_sharpe_min": 1.19,
+    "k1_stress_sharpe_min": 0.65,
+    "windows": {
+      "anchor": {
+        "10bp": {
+          "n_days": 676,
+          "cagr": 0.12356698513031006,
+          "sharpe": 0.6937734484672546,
+          "excess_ann": -0.04385615809986209
+        },
+        "20bp": {
+          "n_days": 676,
+          "cagr": 0.11772215366363525,
+          "sharpe": 0.6670650243759155,
+          "excess_ann": -0.04907508583735258
+        }
+      },
+      "stress": {
+        "10bp": {
+          "n_days": 1857,
+          "cagr": 0.08056557178497314,
+          "sharpe": 0.5140745043754578,
+          "excess_ann": -0.022193713348292496
+        },
+        "20bp": {
+          "n_days": 1857,
+          "cagr": 0.07430267333984375,
+          "sharpe": 0.4823785126209259,
+          "excess_ann": -0.028006409268477302
+        }
+      }
+    },
+    "k1_anchor_pass": false,
+    "k1_stress_pass": false
+  },
+  "per_batch_factor_select_and_test": {
+    "F01_insider_short_confluence": {
+      "confidence": 0.5,
+      "select_21d_icir": -0.1453668423184013,
+      "sign_from_select": -1,
+      "test_21d_icir_raw": 0.06810735898514975,
+      "test_21d_mean_raw": 0.005499878882275672
+    },
+    "F02_opportunistic_insider_signal": {
+      "confidence": 0.6,
+      "select_21d_icir": 0.015269256484470231,
+      "sign_from_select": 1,
+      "test_21d_icir_raw": 0.118482142991782,
+      "test_21d_mean_raw": 0.00544231686219662
+    },
+    "F03_trading_activity_surge": {
+      "confidence": 0.5,
+      "select_21d_icir": 0.1294668348148306,
+      "sign_from_select": 1,
+      "test_21d_icir_raw": 0.08806299268934371,
+      "test_21d_mean_raw": 0.006496896324281742
+    },
+    "F04_sue_short_confirmation": {
+      "confidence": 0.5,
+      "select_21d_icir": 0.002348547345741979,
+      "sign_from_select": 1,
+      "test_21d_icir_raw": 0.2587371899827955,
+      "test_21d_mean_raw": 0.01598826865103098
+    },
+    "F05_quality_liquidity_trend": {
+      "confidence": 0.4,
+      "select_21d_icir": 0.16396877017089995,
+      "sign_from_select": 1,
+      "test_21d_icir_raw": 0.01864458787597661,
+      "test_21d_mean_raw": 0.00211249079548272
+    },
+    "F06_momentum_short_confirmation": {
+      "confidence": 0.5,
+      "select_21d_icir": 0.019060374212409522,
+      "sign_from_select": 1,
+      "test_21d_icir_raw": 0.09842543161393218,
+      "test_21d_mean_raw": 0.010979862786597058
+    },
+    "F07_accruals_cashflow_confirmation": {
+      "confidence": 0.55,
+      "select_21d_icir": 0.14874841151401832,
+      "sign_from_select": 1,
+      "test_21d_icir_raw": 0.2082365275707255,
+      "test_21d_mean_raw": 0.018838758400457574
+    },
+    "F08_earnings_recency_gated_insider_buying": {
+      "confidence": 0.5,
+      "select_21d_icir": -0.2146089701230561,
+      "sign_from_select": -1,
+      "test_21d_icir_raw": -0.1816772941021185,
+      "test_21d_mean_raw": -0.028724173872419215
+    },
+    "F09_insider_short_confluence_dollar_weighted": {
+      "confidence": 0.5,
+      "select_21d_icir": -0.157642166047216,
+      "sign_from_select": -1,
+      "test_21d_icir_raw": 0.05780255165334937,
+      "test_21d_mean_raw": 0.005714211503742006
+    },
+    "F10_quality_composite_roe_profitability_accruals": {
+      "confidence": 0.55,
+      "select_21d_icir": 0.2719792356481224,
+      "sign_from_select": 1,
+      "test_21d_icir_raw": 0.19677954582789764,
+      "test_21d_mean_raw": 0.02735638646418138
+    },
+    "F11_momentum_activity_surge_confirmation": {
+      "confidence": 0.5,
+      "select_21d_icir": 0.07715506892673485,
+      "sign_from_select": 1,
+      "test_21d_icir_raw": 0.13036518432616548,
+      "test_21d_mean_raw": 0.017191790065600343
+    },
+    "F12_post_earnings_insider_buying_bad_news_gate": {
+      "confidence": 0.45,
+      "select_21d_icir": -0.09550237653252838,
+      "sign_from_select": -1,
+      "test_21d_icir_raw": 0.12050374583439988,
+      "test_21d_mean_raw": 0.017449702776516564
+    }
+  }
+}

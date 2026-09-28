@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_15_claude_factor_batch",
+  "reviewed_at": "2026-09-28T07:02:00Z",
+  "decision": "proceed",
+  "objective": "T-20260928-15 (autonomous-queue.md): does an LLM (Claude) proposing hypotheses, writing formulaic factor code, and revising once from IC feedback beat the existing Alpha101/Alpha191/OSAP-price/rank-card factor zoo on our own U.S. broad-universe data? Method under test is 'Claude writes the factor code' -- no DeepSeek, no text labeling, no new data source.",
+  "target_regime_and_horizon": "Cross-sectional rank IC, 21-trading-day primary horizon (5d secondary), top-1000-by-ADV broad U.S. universe (load_market top_n=1000). SELECT window 2016-06-01..2023-12-29 (factor design and round-2 revision only); TEST window 2024-01-02..2026-09-17, run exactly once after round 2 is frozen. Not held to the G1-G5 strategy gates (this is a signal-level IC/ICIR and top-50 monthly-book comparison, signal_card's own convention for judging a factor, not a full strategy).",
+  "existing_solution_comparison": "Checked `oc research directions check \"LLM formulaic factor\"` and `... check \"alpha mining\"` first (both commands run, output read in full). dir:llm_hypothesis_code_backtest_loop is already triaged/adopted as the primary pattern (2026-09-28), with two near-identical loop variants (CogAlpha's 5-dimension filter, AlphaEval's backtest-free prescreening) already folded into it rather than run separately -- this task is that adoption's first execution, not a new direction. dir:llm_formulaic_alpha_mining_price_volume (AlphaForge/AlphaGen/alpha-gfn/AlphaSAGE/Alpha-R1) is not_executable here (GPU/RL/GFlowNet search, no US validation) and is NOT what this task does -- this task is Claude authoring closed-form factor formulas directly, no RL/GFlowNet training loop, so it stays on the executable side of that boundary. dir:owner_hybrid_llm_formulaic_alpha_harla_2026 (HARLA) and dir:owner_automate_strategy_finding_llm_emnlp_2025 are both already read in full (reports/research/intel/I-20260928-03-owner-six-directions.md, papers 1 and 6) -- both are China-market-only or non-credible-Sharpe papers whose only usable contribution (a confidence/risk gate on top of raw IC screening) is folded into this task's own preregistered confidence-score field rather than opened as a separate direction, per that intel file's own 'ranked what to test next' item 2. Beyond the four named rows, this review additionally opened and read in full three more primary sources not previously in the registry: AlphaAgent (arXiv:2502.16789, KDD'25) and R&D-Agent(Q) (arXiv:2505.15155, NeurIPS'25 poster) both report genuine post-2023 or near-post-2023 U.S.-equity OOS IC evidence for an LLM-driven factor-mining loop (see source cards); Alpha-GPT (arXiv:2308.00016, EMNLP'25 demo) was opened at the abstract level and contributes no usable post-2023 U.S. number, included only for completeness of the brief's named-method sweep. Local prior art also checked: reports/research/signal-cards/index.jsonl (41 existing cards) read in full before designing any factor, to avoid re-proposing a mechanism already tested standalone.",
+  "remaining_evidence_gap": "Whether a small (8+4), single-revision, Claude-authored factor batch -- built only from existing local PIT stores (daily_broad, osap_price_broad, sec_fundamentals_daily, insider_broad, short_interest, short_volume_broad, intraday_daily; earnings_events checked and found to start only 2024-01-03, i.e. zero coverage of the SELECT window, so it is dependency_skipped for this round rather than used with a coverage mismatch) -- clears the symmetric zoo baseline (every numeric column of alpha101_broad, alpha191_broad, osap_price_broad, alpha158 -- the full 154-column store at data/features/alpha158/, added 2026-09-28 per coordinator correction after the incomplete data/features/alpha158_broad/ _scratch build was wrongly treated as the only Alpha158 source -- plus the 27 existing rank-mode signal cards) on SELECT-chosen TEST rank IC and 20bp top-50 monthly book Sharpe. AlphaAgent's own S&P 500 IC (0.0056) sets a realistic, not-optimistic prior for what a comparably-scoped local batch might achieve; the CSI500/NASDAQ100 numbers from the other two papers are not treated as an expectation for this narrower single-revision batch.",
+  "negative_experiments_checked": "Every individual mechanism ingredient this task's 8 preregistered factors draw on was checked against reports/research/signal-cards/index.jsonl and the brief's own refuted-mechanism list before being combined: news attention counts (news_attention card, refuted) -- not used. Overnight/intraday decomposition alone (overnight_mom_21, intraday_rev_21, both refuted standalone) -- not used standalone; this round's F3 uses trade_count_5d/21d activity ratio, a distinct construct (participation-count surge, Gervais-Kaniel-Mingelgrin 2001), not overnight/intraday return decomposition. SUE re-dated to 8-K acceptance time (T-14, refuted on timing/redating grounds) -- this round's F4 uses SUE at its existing sec_fundamentals_daily visibility date (no 8-K redating) combined with a short-volume gate, a different mechanism than the one T-14 refuted. 13D filings (sec_13d_new, refuted) -- not used. Insider clusters as standalone (insider_cluster_buy event card actually passed its own admission rule, but the brief lists 'insider clusters as standalone' as an example not to re-propose without a new element) -- this round's F1/F2/F8 each add a distinct new element (short-interest confluence; the opportunistic-vs-routine decomposition from Cohen/Malloy/Pomorski 2012, which the existing card does not isolate; earnings-recency gating) rather than re-running the same buyer-count->=2 event rule. Max-return (max_ret_21, refuted) and 52-week-high composites (high_52w refuted standalone, comp_c3_mom_52w already tested combined with momentum) -- neither reused in this batch.",
+  "cost_and_execution_assumptions": "Signal-level evaluation only (no strategy-level cost gate applies): rank_ic/ic_summary from open_composer.research.signal_card (unmodified import) for the SELECT/TEST IC and ICIR scan; for the two SELECT-chosen winners (batch and zoo), the full signal_card rank_card machinery (top_k=50, primary_horizon=20 -- the tool's closest built-in horizon to the brief's 21d 'monthly' book, HORIZONS=(1,5,20,60) has no 21) at 10bp and 20bp per side, next-session-open fill, is run for the TEST-window book Sharpe comparison and for the K1 anchor/stress info-only check (screen_lane.WINDOWS['anchor']=2024-01-08..2026-09-17, ['stress']=2016-05-02..2023-09-15, imported unmodified, not recomputed). No broker orders, no paper automation, no new data source.",
+  "stop_condition": "Per the queue task's own done_when: the method is judged supported only if the batch's SELECT-chosen factor beats the zoo's SELECT-chosen factor on BOTH TEST rank IC and TEST 20bp top-50 monthly book Sharpe; otherwise refuted for this scope. Either outcome is recorded in the registry (dir:llm_hypothesis_code_backtest_loop) and the runbook is updated only if supported. Round 2 (up to 4 revised/new factors) is preregistered with the same fields (hypothesis, source, formula, inputs, sign, confidence) before the TEST window is ever computed, using only SELECT-window results to inform the revision -- no factor may be added or changed after any TEST-window number exists.",
+  "queries": [
+    {
+      "query": "AlphaAgent LLM formulaic alpha mining regularized exploration alpha decay arxiv",
+      "opened_urls": ["https://arxiv.org/abs/2502.16789", "https://arxiv.org/html/2502.16789v2"],
+      "searched_at": "2026-09-28T06:50:00Z"
+    },
+    {
+      "query": "RD-Agent(Q) quantitative finance LLM factor model co-optimization Microsoft arxiv 2505.15155",
+      "opened_urls": ["https://arxiv.org/abs/2505.15155", "https://arxiv.org/html/2505.15155v2"],
+      "searched_at": "2026-09-28T06:50:00Z"
+    },
+    {
+      "query": "Alpha-GPT human-AI interactive alpha mining out-of-sample",
+      "opened_urls": ["https://arxiv.org/abs/2308.00016"],
+      "searched_at": "2026-09-28T06:50:00Z"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://arxiv.org/html/2502.16789v2",
+      "claim_id": "alphaagent_sp500_csi500_table2_results",
+      "claim": "AlphaAgent (LLM-driven formulaic alpha mining with complexity/hypothesis-alignment/novelty regularization) is evaluated on Qlib OHLCV-only price-volume factors on both China CSI 500 and U.S. S&P 500, test split spanning 2021-2025 (prose: Jan 2021-Dec 2024). Table 2 results (test window): CSI 500 IC 0.0212, ICIR 0.1938, annualized excess return 11.00%, IR 1.488, MDD -9.36%; S&P 500 IC 0.0056, ICIR 0.0552, annualized excess return 8.74%, IR 1.0545, MDD -9.10%. The S&P 500 IC (0.0056) is roughly a quarter of the CSI 500 IC (0.0212) for the identical method and identical LLM backend, i.e. the same LLM-driven formulaic-alpha loop generalizes far more weakly to U.S. equities than to China A-shares.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-06-09",
+      "market_and_period": "China CSI 500 and U.S. S&P 500, Qlib framework, OHLCV-only inputs, train 2015-01/2019-12, validation 2020, test 2021-01/2025-01 (prose describes the window as Jan 2021-Dec 2024).",
+      "applicability": "Direct primary-source evidence for T-15's prior-art check: the same LLM-hypothesis-to-formula-to-IC-feedback loop this task is testing has already been run on U.S. large/mid-cap equities (S&P 500) with a real, disclosed, non-cherry-picked OOS IC (0.0056) that is an order of magnitude below textbook-anomaly IC and about a quarter of the same method's own China-market IC -- sets a realistic expectation band for what a from-scratch Claude-authored batch should be judged against, not the more impressive CSI 500 number.",
+      "limitations": "KDD 2025 peer-reviewed paper but GPT-3.5-turbo backend (weaker than current-generation models); test window (2021-2025) only partially overlaps our TEST window (2024-2026) and is not broken out separately for 2023+ only; S&P 500 data from Yahoo Finance (not point-in-time survivorship-bias-free); transaction cost model differs from our 10/20bp per-side convention (0.05% one-side only, no buy-side fee disclosed for the U.S. leg).",
+      "independent_replication": "No independent third-party replication found (paper is from 2025); code released at github.com/RndmVariableQ/AlphaAgent per the paper text but not independently re-run by us this pass.",
+      "fetched_at": "2026-09-28T06:56:00Z",
+      "sha256": "c48060a2e009cdd6bf291ee5af8b1fdf4679ab7e71e03ecf9c69209b6a1baa4a",
+      "snapshot_path": "reports/research/iterations/h20260928_15_claude_factor_batch/sources/alphaagent-full.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_15_claude_factor_batch.jsonl"
+    },
+    {
+      "url": "https://arxiv.org/html/2505.15155v2",
+      "claim_id": "rdagentq_nasdaq100_oos_window_and_results",
+      "claim": "R&D-Agent(Q) (Microsoft, NeurIPS 2025) reports an out-of-sample generalizability extension beyond its primary CSI 300 (China) experiment to CSI 500 (China) and NASDAQ 100 (U.S.), with train 2008-01/2021-12, validation 2022-01/2023-12, test 2024-01/2025-06-30 -- a genuine post-2023, LLM-cutoff-safe, U.S.-equity OOS window. NASDAQ 100 test-window results (o4-mini backend): R&D-Agent(Q) IC 0.0162, ICIR 0.1035, IR(Sharpe) 1.7737, MDD -0.0634, versus classical factor libraries on the same universe/window: Alpha158 IC 0.0040, Alpha360 IC 0.0042, AutoAlpha IC 0.0046 -- roughly 3.5-4x the factor-library IC on the identical post-2023 U.S. universe.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-09-25",
+      "market_and_period": "NASDAQ 100 (U.S. large-cap tech-heavy), train 2008-2021, validation 2022-2023, test 2024-01 to 2025-06-30.",
+      "applicability": "The strongest single piece of prior-art evidence found for this task: the same class of method (LLM-driven hypothesis -> factor/model code -> backtest feedback loop, the direction this task adopts as dir:llm_hypothesis_code_backtest_loop) already shows a genuine post-2023 U.S.-equity IC edge over classical factor libraries (Alpha158/Alpha360/AutoAlpha) of roughly 3.5-4x on NASDAQ 100 -- directly on point for the queue task's question (does an LLM-driven factor loop beat an existing factor zoo on IC, on recent US data).",
+      "limitations": "NASDAQ 100 is a narrow, tech-concentrated 100-name large-cap universe, not the broad top-1000 universe this task uses; o4-mini/GPT-4o backends and a full Research+Development+Feedback multi-agent system (bandit-scheduled hypothesis search across many iterations) are a materially heavier loop than this task's single-pass 8+4-factor preregistered batch; no disclosed trading-cost model for the IC numbers (IC is a pre-cost predictive-power statistic, not a costed book Sharpe).",
+      "independent_replication": "No independent third-party replication of the NASDAQ100 extension found (paper is 2025, NeurIPS poster); code released at github.com/microsoft/RD-Agent but the NASDAQ100 experiment's exact config was not independently re-run by us this pass.",
+      "fetched_at": "2026-09-28T06:56:00Z",
+      "sha256": "fd695c767f50ff8c22d1ceda5075b272961975ef2a6a43919ff7efb6b18db484",
+      "snapshot_path": "reports/research/iterations/h20260928_15_claude_factor_batch/sources/rdagent-q-full.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_15_claude_factor_batch.jsonl"
+    },
+    {
+      "url": "https://arxiv.org/abs/2308.00016",
+      "claim_id": "alphagpt_human_ai_interactive_alpha_mining_overview",
+      "claim": "Alpha-GPT (EMNLP 2025 System Demonstration Track) proposes a human-AI interactive alpha-mining paradigm: an LLM-based prompt-engineering framework that converts natural-language research ideas into formulaic alphas, which are then refined/backtested via genetic programming; the system demonstration paper does not disclose a standalone post-2023 U.S.-equity out-of-sample IC/Sharpe table in its abstract-level description.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-09-20",
+      "market_and_period": "Not disclosed at the abstract level; original 2023 version reports experiments on US stock data 2012-2021 per secondary summaries (not independently verified from the abstract snapshot alone).",
+      "applicability": "One of the three named methods (Alpha-GPT, AlphaAgent, RD-Agent-Quant) this task's brief asked to check; included for completeness of the prior-art sweep, but contributes no usable post-2023 U.S. decay-evidence number (unlike AlphaAgent and RD-Agent(Q)) -- the abstract-only snapshot means this source is used only to confirm the method exists and its general shape (human-in-the-loop LLM alpha proposal, not an autonomous batch), not for any performance claim.",
+      "limitations": "Only the abstract page was fetched (full PDF not opened this pass); this is a system-demonstration paper, not a primary results paper with a disclosed OOS test window comparable to the other two sources; no IC/Sharpe numbers extracted.",
+      "independent_replication": "Not assessed this pass (no performance claim was extracted to replicate).",
+      "fetched_at": "2026-09-28T06:56:00Z",
+      "sha256": "eb7cde412af721137132979fd7aefa7f2ea15a11fe09c4c6aaa324282345e55f",
+      "snapshot_path": "reports/research/iterations/h20260928_15_claude_factor_batch/sources/alphagpt-abs.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_15_claude_factor_batch.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Run the existing signal_card rank_ic scan over 8 (then +4 round-2) Claude-authored factors and the full symmetric zoo (alpha101_broad, alpha191_broad, osap_price_broad, alpha158 [154 columns, added 2026-09-28 per coordinator correction], 27 existing rank cards) on the SELECT window only, pick each set's best by |rank ICIR|, freeze, then compute TEST rank IC/ICIR and top-50 20bp monthly book Sharpe once for both winners.",
+    "pass_condition": "Batch's SELECT-chosen factor beats the zoo's SELECT-chosen factor on both TEST rank IC and TEST 20bp top-50 book Sharpe.",
+    "falsification_condition": "Batch's SELECT-chosen factor does not beat the zoo's SELECT-chosen factor on TEST rank IC, or does not beat it on TEST 20bp book Sharpe (either failure refutes the method for this scope).",
+    "max_compute_minutes": 180
+  }
+}

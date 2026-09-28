@@ -1,0 +1,13 @@
+{
+  "contract_id": "cost_v1_h20260928_15_10_20bp_and_ic_no_cost",
+  "iter_id": "h20260928_15_claude_factor_batch",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only rank/book construction; no shorting, no margin)",
+  "ic_scan_cost_model": "none -- rank IC and ICIR are pre-cost predictive-power statistics, computed via open_composer.research.signal_card.rank_ic/ic_summary unmodified",
+  "book_cost_model": "signal_card.book_returns: sum(abs(delta held weight)) * cost_bps / 1e4, charged every session (frozen open_composer.research.signal_card convention, unchanged), applied only to the two SELECT-chosen winners' top-50, primary_horizon=20 book",
+  "book_slippage_bps_per_side_primary": 10.0,
+  "book_slippage_bps_per_side_stress": 20.0
+}

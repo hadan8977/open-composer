@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_15_claude_factor_batch_historical_evaluation_authorization",
+  "iter_id": "h20260928_15_claude_factor_batch",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 12,
+    "evaluation_authorized_count": 12,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 12,
+    "rows": [
+      {
+        "candidate_id": "F01_insider_short_confluence",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_insider_broad_and_short_interest_parquet_available",
+        "candidate_binding_sha256": "d57cef390d40442ce91a4a7050c03991cbf7e3bd3d476d7f2806b2d6ba662039"
+      },
+      {
+        "candidate_id": "F02_opportunistic_insider_signal",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_insider_broad_parquet_available",
+        "candidate_binding_sha256": "1e0d598b1cad15efdfa1a06fe71dbc2afe609d8cf81ab30105e11f7af15d15f7"
+      },
+      {
+        "candidate_id": "F03_trading_activity_surge",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_daily_broad_parquet_available",
+        "candidate_binding_sha256": "4eff97a17eb370665d63cfccb8401295e22e5a5e0273b326f1d60f459ef36986"
+      },
+      {
+        "candidate_id": "F04_sue_short_confirmation",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_sec_fundamentals_daily_and_short_volume_broad_parquet_available",
+        "candidate_binding_sha256": "e1344875ca8fcf31f8ea09f79cfa4ebf3ae99dc4ec6c575f49d2731c72fdf1d3"
+      },
+      {
+        "candidate_id": "F05_quality_liquidity_trend",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_sec_fundamentals_daily_and_daily_broad_parquet_available",
+        "candidate_binding_sha256": "cc7180fe0e3817eb2a8e9c171d7f99f72a1d9623d15c3ad939b8636b766a9c8e"
+      },
+      {
+        "candidate_id": "F06_momentum_short_confirmation",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_daily_broad_and_short_volume_broad_parquet_available",
+        "candidate_binding_sha256": "fcb7509d5de4ebe1c228b70bb23b0dd7f64fc25162b225e24e6f54897505d611"
+      },
+      {
+        "candidate_id": "F07_accruals_cashflow_confirmation",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_sec_fundamentals_daily_parquet_available",
+        "candidate_binding_sha256": "111e4fbcbafd88b76a63044c9c8b0c42f4d7c1382ae7faa449d6ae67e373e18c"
+      },
+      {
+        "candidate_id": "F08_earnings_recency_gated_insider_buying",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_insider_broad_and_sec_fundamentals_daily_parquet_available",
+        "candidate_binding_sha256": "2819b57e7850dbde468aea50102e270e2c132a0564e36154a294129a3847cebf"
+      },
+      {
+        "candidate_id": "F09_insider_short_confluence_dollar_weighted",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_insider_broad_and_short_interest_parquet_available",
+        "candidate_binding_sha256": "f8d4ab86e7bd6d03c566a4912c01201fbbc394eb6e52d5e5b77ce32e18e07fb2"
+      },
+      {
+        "candidate_id": "F10_quality_composite_roe_profitability_accruals",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_sec_fundamentals_daily_parquet_available",
+        "candidate_binding_sha256": "097053d49c1214e9dc95630e5ca678f2add5a50b5362c311910f5a5c7372d409"
+      },
+      {
+        "candidate_id": "F11_momentum_activity_surge_confirmation",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_daily_broad_parquet_available",
+        "candidate_binding_sha256": "37a2c7a72a4235edef1edd893fee1a44d6348d73bcff610766e1ae6dd8d5329c"
+      },
+      {
+        "candidate_id": "F12_post_earnings_insider_buying_bad_news_gate",
+        "path": "claude_factor_batch_screen",
+        "action": "evaluate",
+        "reason_code": "local_insider_broad_and_sec_fundamentals_daily_parquet_available",
+        "candidate_binding_sha256": "c948cd7465c2bb9a565dcd2ddef6344af10a1f5e7ba60486c40ef3a186406722"
+      }
+    ]
+  },
+  "path_gates": {
+    "claude_factor_batch_screen": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "F01_insider_short_confluence",
+        "F02_opportunistic_insider_signal",
+        "F03_trading_activity_surge",
+        "F04_sue_short_confirmation",
+        "F05_quality_liquidity_trend",
+        "F06_momentum_short_confirmation",
+        "F07_accruals_cashflow_confirmation",
+        "F08_earnings_recency_gated_insider_buying",
+        "F09_insider_short_confluence_dollar_weighted",
+        "F10_quality_composite_roe_profitability_accruals",
+        "F11_momentum_activity_surge_confirmation",
+        "F12_post_earnings_insider_buying_bad_news_gate"
+      ],
+      "reason": "All eight Round-1 candidates plus the four Round-2 candidates (F09-F12, preregistered from SELECT-only feedback, no TEST number seen) use data already present locally (data/features/insider_broad, short_interest, short_volume_broad, sec_fundamentals_daily, daily_broad); none needs a panel or minute-bar history beyond this 4GB box's capacity. earnings_events (2024-01-03 onward only, zero SELECT-window coverage) is dependency_skipped, not part of this manifest -- see direction-review.json's remaining_evidence_gap. Correction 2026-09-28 (coordinator): the zoo baseline (defined in the runner, not this candidate manifest) initially omitted data/features/alpha158/ (the full, 154-column store; distinct from the incomplete data/features/alpha158_broad/ _scratch build) and now includes it; the TEST window end date is aligned to alpha158's coverage ceiling (2026-09-08)."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+      "sha256": "f1f7424bd3302db44605aa57fd6f957215ab25bde58d05028d521a763f2f95b8"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_15_claude_factor_batch/cost-contract.json",
+      "sha256": "9f905f0d04e4143d08a3e1dc04c93e91620667e4c22b9873f0616677e004e85d"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_15_claude_factor_batch.jsonl",
+      "sha256": "9a6308630c0df6331f2b03fcd69237f2d8420a0b15a22f15e070a77e334dfd55"
+    }
+  }
+}

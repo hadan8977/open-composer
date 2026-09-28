@@ -1,0 +1,63 @@
+{
+  "iter_id": "h20260928_15_claude_factor_batch",
+  "strategy_name": "h20260928_15_claude_factor_batch",
+  "source_spec_path": "strategy_specs/drafts/h20260928_15_claude_factor_batch.yaml",
+  "spec_hash": "cab0dadd65a12ddb806625d9fa8f8f5a62ce401749e70734e1381e8e9c1b16e7",
+  "schema_version": 3,
+  "created_at": "2026-09-28T07:10:00Z",
+  "objective": "Does an LLM (Claude) that proposes hypotheses, writes formulaic cross-sectional factor code, and revises once from SELECT-window IC feedback beat the existing Alpha101/Alpha158/Alpha191/OSAP-price/rank-card factor zoo on our own broad U.S. equity data (T-20260928-15). Round 1: 8 factors (F01-F08), screened by SELECT-window (2016-06-01..2023-12-29) 21d rank ICIR; Round 2 added 4 more factors (F09-F12) after SELECT-only feedback, before the TEST window (2024-01-02..2026-09-08, aligned to alpha158's coverage ceiling) is ever computed. Round 2 is now frozen at 12 total candidates.",
+  "paths": [
+    {
+      "name": "claude_factor_batch_screen",
+      "candidate_count": 12,
+      "hypothesis_refs": ["H-20260928-15"],
+      "parameters": {
+        "candidate_id": [
+          "F01_insider_short_confluence",
+          "F02_opportunistic_insider_signal",
+          "F03_trading_activity_surge",
+          "F04_sue_short_confirmation",
+          "F05_quality_liquidity_trend",
+          "F06_momentum_short_confirmation",
+          "F07_accruals_cashflow_confirmation",
+          "F08_earnings_recency_gated_insider_buying",
+          "F09_insider_short_confluence_dollar_weighted",
+          "F10_quality_composite_roe_profitability_accruals",
+          "F11_momentum_activity_surge_confirmation",
+          "F12_post_earnings_insider_buying_bad_news_gate"
+        ],
+        "universe_top_n": 1000,
+        "primary_horizon_days": 21,
+        "secondary_horizon_days": 5,
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "zoo_alpha101_broad_every_numeric_column",
+        "zoo_alpha191_broad_every_numeric_column",
+        "zoo_osap_price_broad_every_numeric_column",
+        "zoo_alpha158_every_numeric_column_added_2026_09_28_coordinator_correction",
+        "zoo_existing_27_rank_mode_signal_cards",
+        "select_chosen_vs_select_chosen_test_comparison"
+      ]
+    }
+  ],
+  "total_candidate_budget": 12,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_15_claude_factor_batch/candidate-manifest.json",
+  "candidate_manifest_sha256": "c89e0e3fe1a660018a27a05febb89e381bc5ada024d2e365b69394dead5e33cd",
+  "data_feasibility_path": "reports/research/iterations/h20260928_15_claude_factor_batch/data-feasibility.json",
+  "data_feasibility_sha256": "218ac4b82021a3d0682cb153dc2a67b546c3dd0b171a930327bc6779ecbf5f1d",
+  "cost_table_path": "reports/research/iterations/h20260928_15_claude_factor_batch/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_15_claude_factor_batch/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_15_claude_factor_batch/report.md",
+    "reports/research/iterations/h20260928_15_claude_factor_batch/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "select": ["2016-06-01", "2023-12-29"],
+    "test": ["2024-01-02", "2026-09-08"]
+  }
+}

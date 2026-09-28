@@ -89,7 +89,7 @@
   - 2026-09-28 结果（3a610d2）：不成立。t 1.06 < 3，输给错位安慰剂；20bp 组合超额 −0.14%/年，夏普 0.61，基准 0.71。第二阶段 LLM 不做。注：Modal 会话另有同号的 T-20260928-13/14，引用时带上标题。
 
 ### T-20260928-15 Claude 写因子的小批量（`dir:llm_hypothesis_code_backtest_loop` 的方法）
-- status: running
+- status: done
 - priority: 2
 - not_before:
 - goal: 检验"大模型提假设、写因子代码、按 IC 反馈"这个方法在我们的数据上能不能比现有因子库（Alpha101/158/191/OSAP）更好。只写代码，不做批量标注。
@@ -97,6 +97,7 @@
 - done_when: 结论和数字写进登记簿；超过了才把这个方法写进自动轮手册。
 - notes:
   - 2026-09-28 06:5x UTC 交互会话派 Sonnet 执行（迭代 h20260928_15_claude_factor_batch）。IC 反馈只做一轮，而且只看选择窗；并入机主六篇论文里第 1、6 篇的做法，包括置信度门。自动轮不要碰。
+  - 2026-09-28 结果：不成立。协调员补正后 zoo 加入完整 Alpha158（154 列），TEST 窗口统一到 2026-09-08。批里选出的 F10（ROE+毛利率+低应计的三因子质量复合，SELECT ICIR 0.272）在 TEST rank IC 上赢 zoo 选出的 Alpha158 CORD60（0.0274 对 0.0217），但 TEST 20bp 前 50 组合夏普输（0.640 对 0.879）；两条都要满足才算通过，只满足一条。`--stage final` 通过；登记簿新增一行 `dir:llm_hypothesis_code_backtest_loop`（status refuted）；第二阶段不开。
 
 ### T-20260928-16 DeepSeek 试点：8-K 情绪加速度（一季度 IC）
 - status: running
