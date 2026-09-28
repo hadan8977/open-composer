@@ -25,7 +25,7 @@
   - 2026-09-28 结果（已对照 results.json 逐条核对）：否定，0/4。T4 对 O00：对标窗回撤 −35.2% 对 −32.3%，夏普 1.52 对 1.82，压力期回撤 −52.0% 对 −48.0%，G1/G1' 不过。T4 落在 21 个偏移版本的中位数附近；失败原因是月末版本在选择窗和对标窗都是 21 个里最好的（对标窗中位数 85.8%/1.49/−35.4%，21 个里 10 个过 G1）。产物：`reports/research/iterations/h20260928_01_s3_rebalance_tranching/`，卡片 `H-20260928-01`，登记簿 `dir:s3_rebalance_timing_luck_tranching`，决定页已加结论。
 
 ### T-20260928-02 加一条和 S3 不同向的跨资产趋势 sleeve，能否提高整体夏普
-- status: running
+- status: done
 - priority: 1
 - not_before:
 - goal: 机主的标准是夏普（2026-09-28）。S3 不挑调仓日的夏普：对标窗约 1.5、选择窗约 1.15、2016–2023 约 0.8（H-20260928-01）；它和 S1、S2 高度同向，所以三者合并只等于降仓（H-20260927-01）。提高夏普的正路是加一条熊市里和 S3 不同向、自身夏普也不差的收益来源。先试已发表、规则公开的跨资产趋势：债券、黄金、商品、美元。
@@ -34,9 +34,10 @@
 - notes:
   - 2026-09-28 03:15 UTC 交互会话派 Sonnet 用批量通道执行（迭代 h20260928_02_cross_asset_sleeve；按偏移中位数判定，替代原写的 4 批版本，结果出来前已定）。自动轮不要碰。
   - 2026-09-28 交互会话补充的本地先例（写任务时漏查了，必须先读）：Step 10 W1 F2（约 09-04）已经单独测过跨资产 ETF 时间序列动量，12 个候选 0/12，最好的超额夏普 0.65；危机窗口跌得比 SPY 少但仍然亏（2022 −10.1%，2020 崩盘 −12.5%，2018Q4 −8.1%）。结论 `reports/research/control/step10-w1-cross-asset-trend-2026-09.md`，机制代码 `open_composer/research/kernel/mechanisms/cross_asset_trend_etf`，评估脚本 `scripts/evaluate_cross_asset_trend_sip.py`。能复用的数据和代码直接复用。本任务和它的区别是：不看 D 单独过不过门槛，只看和 S3 组合后的夏普增量。direction-review 里写清楚这个区别；如果 D2 的规则和 Step 10 的某个候选相同，要注明是同一规则重测。
+  - 2026-09-28 结果：D1（Defense First）按 K1 保留（偏移中位数 1.48/0.73），随后机主决定不要、不做跨资产，kept 里标 dropped_by_owner；D2 否定。档案 `reports/research/iterations/h20260928_02_cross_asset_sleeve/`。
 
 ### T-20260928-05 登记簿补录 2026-09-23 以前的实验
-- status: running
+- status: done
 - priority: 1
 - not_before:
 - goal: 方向登记簿是 09-23 建的，没收录更早的实验，所以写新任务时会漏查本地先例（09-28 就漏了 Step 10 的跨资产趋势 0/12）。补齐后，每个新方向查重一次就能看到本地是否测过，省掉重复测试。
@@ -44,9 +45,10 @@
 - done_when: 补录行数和清单写进 `reports/research/control/registry-backfill-2026-09-28.md`（每行：方向 id、原报告路径、结论）；validate ok；提交。
 - notes:
   - 2026-09-28 03:15 UTC 交互会话派 Sonnet 执行，同时判定 11 个文本和方法类方向。自动轮不要碰。
+  - 2026-09-28 完成：补录 21 条（`reports/research/control/registry-backfill-2026-09-28.md`），11 个文本和方法类方向已判定。
 
 ### T-20260928-06 按新标准重判登记簿，生成批量测试清单
-- status: running
+- status: done
 - priority: 1
 - not_before:
 - goal: 登记簿里 71 个方向只收进来没判断过，55 个标"证据不足"，当时的标准是"单独能否高收益"。机主 2026-09-28 把标准改成"夏普和 S3 差不多，或能给 S3 加分"，一部分旧方向在新标准下值得批量测。目标是把能批量测的挑出来，排成下一批、下下批。
@@ -54,15 +56,17 @@
 - done_when: `reports/research/control/retriage-2026-09-28.md`（逐条表格 + 分组）；队列新增批量任务；validate ok；提交。
 - notes:
   - 2026-09-28 交互会话拆给三个代理：ETF 类 24 条（迭代 h20260928_05_registry_etf_batch2）、股票/日内/事件/模型类 25 条（h20260928_06_registry_stock_batch3，当天测）、文本和方法类 11 条（随 T-20260928-05）。自动轮不要碰。
+  - 2026-09-28 完成：第一批 0/19；第二批 0/7，另有 2 条近期观察；第三批股票层面 0/10，其中 3 条需要分钟数据，转 T-20260928-12。登记簿剩下未判定的方向都已有对应任务：T-15、T-16、T-17、T-22，以及 Modal 会话的 T-10 和信任门任务。
 
 ### T-20260928-07 保留候选的前向跟踪（影子）
-- status: ready
+- status: done
 - priority: 2
 - not_before:
 - goal: 前向证据只能按日历时间积累。保留下来的候选越早开始跟踪，越早知道它在没见过的数据上是否还成立。日线 ETF 规则是确定的函数，所以不需要每天下单：把规则连同代码版本在保留当天冻结，之后任何时候都能诚实地复算"保留日之后"的表现。
 - plan: 前置条件：`reports/research/screens/SELF_CHECK_OK` 存在（批量通道已由交互会话核对）。不存在就跳过本任务，选下一个。(1) `reports/research/screens/kept.jsonl`：每个保留候选一行（id、批次、保留日期、提交哈希、候选模块和 id、档位 K1/K2、保留时的关键数字）。(2) `scripts/shadow_forward.py`：读 kept.jsonl，用 `scripts/screen_lane.py` 的同一套引擎，只算保留日之后的日收益，报告累计收益、夏普（样本不足 20 个交易日就只报收益）、同期 S3 和 SPY，并检查代码版本和冻结时的一致（不一致就报警，不算）。(3) 测试用合成数据。(4) 写 `reports/research/screens/forward.md`。以后每周一的第一轮刷新一次（加进本队列作为长期任务）。
 - done_when: 脚本、测试、forward.md 生成；ruff 和相关测试通过；提交。
 - notes:
+  - 2026-09-28 完成（a86c785）：`scripts/shadow_forward.py`，规则按提交冻结，只算保留之后的交易日；每周一刷新见 T-20260928-19。在跟踪：月末反转、板块季节性领跑、两者各半组合 C2（都是 watch_recent）。
 
 ### T-20260928-13 Defense First 与 S3 的组合方式：优化迭代
 - status: done
@@ -75,49 +79,54 @@
   - 2026-09-28 06:3x UTC 机主决定：Defense First 不需要，不做跨资产。本任务取消（执行中的代理已叫停，半成品不入档）。
 
 ### T-20260928-14 盈余意外因子改用 8-K 2.02 公告时间（`dir:pead_xbrl_8k_llm` 的会计部分）
-- status: ready
+- status: done
 - priority: 1
 - not_before:
 - goal: 以前按 10-Q/10-K 申报日测的盈余意外（SUE）已否定，当时写的重开条件就是"改用 8-K 2.02 财报公告的时间"。这一步不用大模型，今天就能测。
 - plan: 按 `reports/research/control/registry-backfill-2026-09-28.md` 的 Job B 计划：复用 fundamentals-v1 信号卡流程和它的"改日期"安慰剂，只把 `visible_at` 换成 8-K 2.02 附件的接收时间；按原来的准入规则判断（逐年稳定、赢安慰剂、10/20 bp 下过 G1），另按 K1/K2 报告。重任务，同一时间只跑一个，跑在第三批（h20260928_06）结束之后。
 - done_when: 迭代 `--stage final` 通过；登记簿新行；只有过了准入规则，才在队列加大模型读语气的第二阶段。
 - notes:
+  - 2026-09-28 结果（3a610d2）：不成立。t 1.06 < 3，输给错位安慰剂；20bp 组合超额 −0.14%/年，夏普 0.61，基准 0.71。第二阶段 LLM 不做。注：Modal 会话另有同号的 T-20260928-13/14，引用时带上标题。
 
 ### T-20260928-15 Claude 写因子的小批量（`dir:llm_hypothesis_code_backtest_loop` 的方法）
-- status: ready
+- status: running
 - priority: 2
 - not_before:
 - goal: 检验"大模型提假设、写因子代码、按 IC 反馈"这个方法在我们的数据上能不能比现有因子库（Alpha101/158/191/OSAP）更好。只写代码，不做批量标注。
 - plan: 预注册 5–10 个有经济逻辑的因子（写出假设和出处），一次写完不再按结果改；用现有的 IC/RankIC 流程在最近的样本外段筛；判断标准只有一条：这批最好的因子是否超过现有库最好的因子（同一样本段、同一成本）。
 - done_when: 结论和数字写进登记簿；超过了才把这个方法写进自动轮手册。
 - notes:
+  - 2026-09-28 06:5x UTC 交互会话派 Sonnet 执行（迭代 h20260928_15_claude_factor_batch）。IC 反馈只做一轮，而且只看选择窗；并入机主六篇论文里第 1、6 篇的做法，包括置信度门。自动轮不要碰。
 
 ### T-20260928-16 DeepSeek 试点：8-K 情绪加速度（一季度 IC）
-- status: ready
+- status: running
 - priority: 2
 - not_before:
 - goal: `dir:llm_8k_gdelt_sentiment_acceleration` 的最便宜否定测试。
 - plan: 按 `reports/research/control/registry-backfill-2026-09-28.md` Job B 的计划。打分只用机主配置的 DeepSeek 接口，不用 Claude。先算最近一个季度的 IC（对未来 5 日收益），同时跑打乱新闻的安慰剂。IC 符号不稳、或安慰剂也能复现，就停，不搭完整的走步验证。
 - done_when: IC 和安慰剂结果写进登记簿；决定继续或停止。
 - notes:
+  - 2026-09-28 交互会话派 Sonnet 执行；DeepSeek 限流后按 next_try_at 自动续跑。自动轮不要碰。
 
 ### T-20260928-17 DeepSeek 试点：10-K/8-K 风险标签特征（400 份）
-- status: ready
+- status: running
 - priority: 2
 - not_before:
 - goal: `dir:text_to_pit_feature_extraction` 的最便宜否定测试。
 - plan: 按同一份报告 Job B 的计划：50 只股票 × 8 个季度，DeepSeek 抽取结构化风险标签，作为一个特征加进现有截面排序；看 IC 增量，并跑错配申报文件的安慰剂。增量为正且符号稳定才扩大。
 - done_when: 结论写进登记簿。
 - notes:
+  - 2026-09-28 交互会话派 Sonnet 执行，正在打分。自动轮不要碰。
 
 ### T-20260928-18 补 VIX 和 PUTW 数据，再测两条 ETF 规则
-- status: ready
+- status: done
 - priority: 2
 - not_before:
 - goal: 第二批里有两条只因缺数据没测：`dir:spy_sso_tlt_vix_regime_rotation`（缺 VIX）、`dir:put_credit_spread_income`（卖 put 的 ETF 代理 PUTW 缺数据）。
 - plan: VIX 用 FRED 公开的 VIXCLS 日数据，PUTW 走仓库现有的日线入库流程；两种数据都要先确认日期对齐、没有未来信息。然后新开一个小批次，走批量通道（先写档案和候选清单）。按日历触发的规则声明成 "D"。
 - done_when: 两条的结论写进登记簿。
 - notes:
+  - 2026-09-28 结果（c8ae648）：PUTW 不在 Alpaca 可交易列表（没有 SIP 日线），卖权代理不可执行；VIX/SPY/SSO/TLT 轮动属于跨资产，机主不做，搁置；FRED VIXCLS 已存在本地，留给股票内的 VIX 择时用。
 
 ### T-20260928-08 Modal 通道：云端运行器和一致性检查
 - status: done
@@ -193,7 +202,7 @@
   - 2026-09-28 03:20 UTC 交互会话（研究）：批量通道已上线（`reports/research/screens/SELF_CHECK_OK`）。股票层面的 25 个方向正由迭代 `h20260928_06_registry_stock_batch3` 在本机测（最大 500 只、20 日重叠持仓，复用 `open_composer.research.signal_card`）；需要更大股票池、本机内存放不下的候选会在它的报告里标 `needs_modal`，本任务只接这些，不重复测本机已测的。
 
 ### T-20260928-03 批量筛选通道
-- status: running
+- status: done
 - priority: 1
 - not_before:
 - goal: 一次用同一套合同评估 10–30 条规则，内置"不挑调仓日"和"同波动 S3 对比"，按本批候选数报告 DSR；上线前必须精确复现 H-20260928-01 和 H-20260927-01 的数字。
@@ -201,9 +210,10 @@
 - done_when: SELF_CHECK_OK 存在；提交。
 - notes:
   - 2026-09-28 02:4x UTC 交互会话开始（自动轮不要碰）。
+  - 2026-09-28 完成（e9882ff）：`scripts/screen_lane.py`、`scripts/screen_batch.py`，自检和既有数字逐位一致（`reports/research/screens/SELF_CHECK_OK`）。按日历锚定的规则必须声明为 D 并提供 signal_dates_fn，声明错了运行器会拒绝。
 
 ### T-20260928-04 第一批：S3 的替代与搭配候选库
-- status: running
+- status: done
 - priority: 1
 - not_before:
 - goal: 用批量通道一次判 15–25 条有实盘记录或独立复现的只做多规则：可能和 S3 差不多的（K1），或能给 S3 加分的（K2）。
@@ -211,6 +221,7 @@
 - done_when: 迭代 `--stage final` 通过；保留的候选写进 `reports/research/screens/kept.jsonl`；登记簿、覆盖地图、current-view 更新。
 - notes:
   - 2026-09-28 交互会话负责（自动轮不要碰）。
+  - 2026-09-28 结果：0/19。管理期货 ETF 和 S3 几乎不相关，但自身夏普低；资产配置规则对标窗最高 0.96（GEM）。
 
 ### T-20260927-03 新规则下第一次月度调仓核对
 - status: ready
@@ -222,7 +233,7 @@
 - notes:
 
 ### T-20260927-04 修看板里的额度百分比读数
-- status: running
+- status: done
 - priority: 3
 - not_before:
 - goal: 2026-09-27 `open_composer.cockpit.data.quota` 读到 5 小时窗口 1000%、7 天窗口 100%、状态 stale，明显解析错了。修好后，看板能显示真实额度，自动轮以后也可以按真实额度决定跑不跑。
@@ -230,6 +241,7 @@
 - done_when: 相关测试通过；实测读数在 0–100 之间且有 `resets_at`；在自动轮日志摘要里写一句。
 - notes:
   - 2026-09-28 交互会话派 Sonnet 在做（自动轮不要碰）：接口的 utilization 已经是百分比、resets_at 是 ISO 字符串；预检输出加 `quota`；随后按额度方案 A 改预检的判断。
+  - 2026-09-28 完成（be11419）：百分比读数已修；预检加了磁盘缓存，额度按方案 A 判断。
 
 ### T-20260927-05 月度覆盖检查（第一次）
 - status: ready
@@ -257,3 +269,23 @@
 - plan: 跑 `scripts/run_capped.sh --mem 1.2G -- uv run python scripts/shadow_forward.py`；读 `reports/research/screens/forward.md`。只有某候选移出（`watch_exit.status == "exit"`）或新跨过阈值（前向夏普首次跌破 0.5、前向最大回撤首次超过对标窗回撤的 1.5 倍）时，才往 `docs/current-view.zh.md` 加不超过 3 行摘要；没有变化就不写。跑完把本任务的 `not_before` 改到下一个周一 01:00 UTC。
 - done_when: `forward.md`/`forward.json` 已刷新；`not_before` 已推到下一个周一；必要时 current-view 已更新。
 - notes:
+
+### T-20260928-20 月末反转、板块季节性领跑：近期状态优化
+- status: done
+- priority: 1
+- not_before:
+- goal: 机主 2026-09-28 点名优化这两条近期观察规则（近两年夏普 1.24、1.40）。
+- plan: 迭代 h20260928_20_recent_regime_opt。预先登记的替换规则：选择窗夏普至少高 0.10，且 2026 年不变差。
+- done_when: 替换或不替换写清楚；新的观察候选进 kept.jsonl。
+- notes:
+  - 2026-09-28 结果（9b15143）：没有变体能替换原版。月末反转 2026 年夏普 −0.57，已失效；板块季节性相反，2026 年 3.01。两者各半组合 C2（对标窗 1.60，回撤 −7%）是描述性组合，只做前向跟踪。
+
+### T-20260928-22 复现第 2 篇：LLM 读新闻过滤动量股（Anic 等，arXiv 2510.26228）
+- status: running
+- priority: 1
+- not_before:
+- goal: 在 DeepSeek 训练截止之后的月份里，检验"LLM 读上个月新闻，给动量前两成的股票打分，再选 50 只"是否比原版动量夏普高至少 0.10，且配错新闻的安慰剂复现不了。
+- plan: 迭代 h20260928_22_llm_news_momentum_filter。DeepSeek 打分，新闻去掉公司名和代码；四个组合：原版 B、LLM 版 L、安慰剂 P、随机 R；成本 10/20bp。
+- done_when: `--stage final` 通过；登记簿 `dir:llm_acceptance_judge_forward_shadow` 和第 2 篇的行已更新；通过了才加月度影子跟踪任务。
+- notes:
+  - 2026-09-28 06:4x UTC 交互会话派 Sonnet 执行。自动轮不要碰。
