@@ -8,7 +8,12 @@ shares the owner's 5-hour quota, so a round only goes ahead when:
 * no other round holds the lock (a crashed round's lock goes stale after
   ``--lock-max-hours``);
 * no usage-limit reset is pending in the local transcripts;
-* the owner has been quiet: no Claude session that started before the grace
+* once the real Claude subscription quota can be read (T-20260927-04 budget
+  plan A, owner-approved 2026-09-28): the 5h window is under 50%, and under
+  30% if the owner is active, and the estimated background share of the
+  rolling 7-day window is under 40%;
+* only when that quota reading is unavailable does this fall back to the
+  older owner-quiet gate: no Claude session that started before the grace
   window wrote a transcript line inside the quiet window.
 
     uv run python scripts/autonomous_preflight.py check
@@ -36,14 +41,28 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
+
+from open_composer.cockpit.data.quota import _bounded_tail_scan_usage, get_default_claude_cache
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK_PATH = ROOT / "logs" / "autonomous" / "round.lock"
 LOG_PATH = ROOT / "reports" / "research" / "control" / "autonomous-log.md"
+QUOTA_CACHE_PATH = ROOT / "logs" / "autonomous" / "quota-cache.json"
 PROJECTS_DIR = Path.home() / ".claude" / "projects"
 CAPPED_SLICE = Path("/sys/fs/cgroup/research.slice/research-capped.slice")
 MARKER_SCAN_BYTES = 2_000_000
+
+# Quota-gating thresholds (T-20260927-04 budget plan A, owner-approved 2026-09-28).
+_FIVE_HOUR_MAX: Final[float] = 50.0
+_FIVE_HOUR_OWNER_ACTIVE_MAX: Final[float] = 30.0
+_BACKGROUND_WEEK_MAX: Final[float] = 40.0
+
+# Shared on-disk quota cache (T-20260927-04 follow-up): the usage endpoint's
+# rate limit is shared across every preflight process, the cockpit, and the
+# owner's own sessions, so most rounds must not call it fresh.
+_QUOTA_CACHE_FRESH_MINUTES: Final[float] = 10.0
+_QUOTA_CACHE_STALE_MAX_MINUTES: Final[float] = 60.0
 
 LOG_HEADER = (
     "# 自动研究轮日志\n\n"
@@ -152,6 +171,229 @@ def usage_state() -> dict[str, Any]:
         return {"error": f"{type(exc).__name__}: {exc}"}
 
 
+_QUOTA_FIELD_KEYS: Final[tuple[str, ...]] = (
+    "five_hour_percent",
+    "seven_day_percent",
+    "five_hour_resets_at",
+    "seven_day_resets_at",
+)
+
+
+class _QuotaUnavailable(RuntimeError):
+    """The live quota reader has nothing usable this round; ``str()`` is the reason."""
+
+
+def _empty_quota_fields() -> dict[str, Any]:
+    return dict.fromkeys(_QUOTA_FIELD_KEYS)
+
+
+def _read_quota_live() -> dict[str, Any]:
+    """Exactly one call through the cockpit's own quota cache/breaker.
+
+    Raises `_QuotaUnavailable` (message = the snapshot's own reason, e.g.
+    ``"http 4xx/5xx"`` for a 429) when the snapshot itself is not available,
+    so every failure -- network, breaker-open, or unavailable snapshot --
+    reaches `quota_state`'s cache-fallback logic the same way.
+    """
+    report = get_default_claude_cache().get(now=_now())
+    if not report.snapshot.available:
+        raise _QuotaUnavailable(report.snapshot.unavailable_reason or "unavailable")
+    by_key = {window.key: window for window in report.snapshot.windows}
+    fields = _empty_quota_fields()
+    for window_key in ("five_hour", "seven_day"):
+        window = by_key.get(window_key)
+        if window is None:
+            continue
+        fields[f"{window_key}_percent"] = window.percent_used
+        fields[f"{window_key}_resets_at"] = (
+            window.resets_at.isoformat() if window.resets_at is not None else None
+        )
+    return fields
+
+
+def _read_quota_cache_file(cache_path: Path) -> dict[str, Any] | None:
+    try:
+        raw = json.loads(cache_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return raw if isinstance(raw, dict) else None
+
+
+def _write_quota_cache_file(cache_path: Path, fields: dict[str, Any], *, now: datetime) -> None:
+    # Only the four numeric/ISO fields plus provenance -- never tokens or a response body.
+    payload = {key: fields.get(key) for key in _QUOTA_FIELD_KEYS}
+    payload["fetched_at"] = now.isoformat()
+    payload["source"] = "live"
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(json.dumps(payload, indent=1) + "\n", encoding="utf-8")
+    except OSError:  # a cache write failure must not block the round
+        pass
+
+
+def quota_state(
+    *, now: datetime | None = None, cache_path: Path = QUOTA_CACHE_PATH
+) -> dict[str, Any]:
+    """Real Claude subscription usage, shared on disk so every process shares one rate limit.
+
+    T-20260927-04 budget plan A: the usage endpoint's rate limit is shared
+    across every preflight process, the cockpit, and the owner's own
+    sessions, so a fresh network call is not made every time this runs:
+
+    * a cached reading younger than `_QUOTA_CACHE_FRESH_MINUTES` is reused
+      with no network call at all;
+    * otherwise `_read_quota_live` is called exactly once. On success the
+      cache file is refreshed. On failure, a last-good cached reading
+      younger than `_QUOTA_CACHE_STALE_MAX_MINUTES` is reused and marked
+      `stale: True` with `age_minutes` -- a stale reading still drives the
+      budget gate in `decide()`. Older than that (or no cache at all),
+      every field is `None` and `quota_error` names the failure.
+
+    Delegates entirely to the cockpit's own `open_composer.cockpit.data.quota`
+    module -- never reads credentials or probes the network itself; the
+    cache file it maintains holds only the four numeric/ISO fields plus
+    `fetched_at`/`source`, never tokens or a response body.
+    """
+    moment = now or _now()
+    cached = _read_quota_cache_file(cache_path)
+    cached_fetched_at = _parse_ts(cached.get("fetched_at")) if cached else None
+    cached_age_minutes = (
+        (moment - cached_fetched_at).total_seconds() / 60.0
+        if cached_fetched_at is not None
+        else None
+    )
+    if (
+        cached is not None
+        and cached_age_minutes is not None
+        and 0 <= cached_age_minutes < _QUOTA_CACHE_FRESH_MINUTES
+    ):
+        return {key: cached.get(key) for key in _QUOTA_FIELD_KEYS}
+
+    try:
+        fields = _read_quota_live()
+    except Exception as exc:  # a broken reader must not block the round
+        if (
+            cached is not None
+            and cached_age_minutes is not None
+            and 0 <= cached_age_minutes < _QUOTA_CACHE_STALE_MAX_MINUTES
+        ):
+            result = {key: cached.get(key) for key in _QUOTA_FIELD_KEYS}
+            result["stale"] = True
+            result["age_minutes"] = round(cached_age_minutes, 1)
+            return result
+        result = _empty_quota_fields()
+        result["quota_error"] = (
+            str(exc) if isinstance(exc, _QuotaUnavailable) else type(exc).__name__
+        )
+        return result
+
+    _write_quota_cache_file(cache_path, fields, now=moment)
+    return fields
+
+
+def _parse_log_fresh_tokens(cell: str) -> int:
+    """The fresh-token half of a round-log cell like ``"123,456 / 7"`` (or ``"n/a"`` -> 0)."""
+    first = cell.split("/", 1)[0].strip().replace(",", "")
+    try:
+        return int(first)
+    except ValueError:
+        return 0
+
+
+def round_tokens_since(log_path: Path, since: datetime) -> int:
+    """Fresh tokens booked by autonomous rounds (any status, `skipped` included) since ``since``.
+
+    Parses the markdown table `scripts/autonomous_preflight.py log` appends
+    to (`reports/research/control/autonomous-log.md`): columns are start,
+    end, status, task, summary, ``"fresh / cache-read tokens"``.
+    """
+    try:
+        text = log_path.read_text(encoding="utf-8")
+    except OSError:
+        return 0
+    total = 0
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|") or stripped.startswith("|---"):
+            continue
+        cells = [c.strip() for c in stripped.strip("|").split("|")]
+        if len(cells) != 6:
+            continue
+        started = _parse_ts(cells[0])
+        if started is None or started < since:
+            continue
+        total += _parse_log_fresh_tokens(cells[5])
+    return total
+
+
+def total_local_fresh_tokens_since(projects_dir: Path, since: datetime) -> int:
+    """Fresh tokens (input + cache-creation + output) across every local transcript since ``since``.
+
+    Covers every main session under ``projects_dir`` plus its subagents,
+    deduped by message id per file (mirrors `session_usage`'s scan). This is
+    the denominator for `background_week_percent_est` -- the numerator,
+    round-attributed tokens, is a subset of this same measure.
+    """
+    if not projects_dir.is_dir():
+        return 0
+    total = 0
+    for main_path in sorted(projects_dir.glob("*/*.jsonl")):
+        files = [main_path, *sorted((main_path.parent / main_path.stem).glob("subagents/*.jsonl"))]
+        for path in files:
+            try:
+                messages, _sessions, _truncated = _bounded_tail_scan_usage(path, since)
+            except OSError:
+                continue
+            for record in messages.values():
+                total += record.input_tokens + record.output_tokens + record.cache_creation_tokens
+    return total
+
+
+def estimate_background_week_percent(
+    quota: dict[str, Any],
+    *,
+    now: datetime,
+    log_path: Path = LOG_PATH,
+    projects_dir: Path = PROJECTS_DIR,
+) -> float:
+    """Autonomous rounds' estimated share of the owner's rolling 7-day Claude budget.
+
+    A fresh-token proxy, not the provider's own cost-weighted usage metric:
+    it assumes the round's tokens cost the same per token as the rest of the
+    owner's week (model mix and cache reuse differ by session, so this is
+    only an estimate, not an audited cost share). Returns 0.0 whenever the
+    inputs cannot support an estimate: no `seven_day_percent`/`resets_at`,
+    `seven_day_percent < 1`, or no local usage recorded in the window.
+    """
+    seven_day_percent = quota.get("seven_day_percent")
+    resets_raw = quota.get("seven_day_resets_at")
+    if seven_day_percent is None or resets_raw is None or seven_day_percent < 1:
+        return 0.0
+    resets_at = _parse_ts(resets_raw)
+    if resets_at is None:
+        return 0.0
+    week_start = resets_at - timedelta(days=7)
+    all_tokens = total_local_fresh_tokens_since(projects_dir, week_start)
+    if all_tokens == 0:
+        return 0.0
+    round_tokens = round_tokens_since(log_path, week_start)
+    return round(round_tokens / (all_tokens / seven_day_percent), 4)
+
+
+def budget_object(quota: dict[str, Any], background_week_est: float) -> dict[str, Any]:
+    """The `budget` object printed by `check` and `acquire` (T-20260927-04 budget plan A)."""
+    return {
+        "five_hour_percent": quota.get("five_hour_percent"),
+        "seven_day_percent": quota.get("seven_day_percent"),
+        "background_week_percent_est": background_week_est,
+        "thresholds": {
+            "five_hour_max": _FIVE_HOUR_MAX,
+            "five_hour_owner_active_max": _FIVE_HOUR_OWNER_ACTIVE_MAX,
+            "background_week_max": _BACKGROUND_WEEK_MAX,
+        },
+    }
+
+
 def decide(
     *,
     now: datetime,
@@ -159,7 +401,20 @@ def decide(
     lock_max_hours: float,
     usage: dict[str, Any],
     activity: list[SessionActivity],
+    quota: dict[str, Any] | None = None,
+    background_week_percent_est: float | None = None,
 ) -> tuple[str, list[str]]:
+    """Go/skip verdict. Precedence (T-20260927-04 budget plan A, owner-approved 2026-09-28):
+
+    1. a fresh lock always wins (`skip_round_running`);
+    2. an active or unrecorded throttle event always wins (`skip_rate_limited`);
+    3. once both quota percents are known: 5h >= 50% skips; owner active and
+       5h >= 30% skips; estimated background weekly share >= 40% skips;
+       otherwise go, even if the owner is active -- the quota gate replaces
+       the plain owner-quiet gate once quota is available;
+    4. quota unavailable: fall back to the pre-budget-plan behaviour (owner
+       active -> `wait_owner_active`, else `go`).
+    """
     if lock is not None and lock_is_fresh(lock, now, lock_max_hours):
         return "skip_round_running", [
             f"lock held since {lock.get('started_at')} by {lock.get('agent_id')}"
@@ -171,6 +426,30 @@ def decide(
         return "skip_rate_limited", [
             "a usage limit was hit in the last 5 hours and no reset time was recorded"
         ]
+
+    quota = quota or {}
+    five_hour = quota.get("five_hour_percent")
+    seven_day = quota.get("seven_day_percent")
+    if five_hour is not None and seven_day is not None:
+        if five_hour >= _FIVE_HOUR_MAX:
+            return "skip_quota", [f"5h window >= {_FIVE_HOUR_MAX:.0f}% ({five_hour:.1f}%)"]
+        if activity and five_hour >= _FIVE_HOUR_OWNER_ACTIVE_MAX:
+            return "skip_quota", [
+                f"owner active and 5h >= {_FIVE_HOUR_OWNER_ACTIVE_MAX:.0f}% ({five_hour:.1f}%)"
+            ]
+        if (
+            background_week_percent_est is not None
+            and background_week_percent_est >= _BACKGROUND_WEEK_MAX
+        ):
+            return "skip_quota", [
+                "background weekly share >= "
+                f"{_BACKGROUND_WEEK_MAX:.0f}% ({background_week_percent_est:.1f}%)"
+            ]
+        reasons = []
+        if lock is not None:
+            reasons.append(f"stale lock from {lock.get('started_at')} ignored")
+        return "go", reasons
+
     if activity:
         return "wait_owner_active", [
             f"{len(activity)} session(s) wrote in the quiet window; "
@@ -209,9 +488,17 @@ def check_report(args: argparse.Namespace) -> dict[str, Any]:
     now = _now()
     lock = read_lock(LOCK_PATH)
     usage = usage_state()
+    quota = quota_state()
+    background_est = estimate_background_week_percent(quota, now=now)
     activity = owner_activity(PROJECTS_DIR, now, args.quiet_minutes, args.grace_minutes)
     decision, reasons = decide(
-        now=now, lock=lock, lock_max_hours=args.lock_max_hours, usage=usage, activity=activity
+        now=now,
+        lock=lock,
+        lock_max_hours=args.lock_max_hours,
+        usage=usage,
+        activity=activity,
+        quota=quota,
+        background_week_percent_est=background_est,
     )
     return {
         "now": now.isoformat(),
@@ -220,6 +507,8 @@ def check_report(args: argparse.Namespace) -> dict[str, Any]:
         "owner_sessions": [asdict(item) for item in activity[:5]],
         "lock": lock,
         "usage": usage,
+        "quota": quota,
+        "budget": budget_object(quota, background_est),
         "heavy_jobs_running": heavy_jobs(),
         "git": git_state(ROOT),
     }
@@ -251,8 +540,6 @@ def find_session_by_marker(projects_dir: Path, marker: str, since: datetime) -> 
 
 def session_usage(session_file: Path, since: datetime) -> dict[str, Any]:
     """Token use of one session and its subagents from ``since`` on."""
-    from open_composer.cockpit.data.quota import _bounded_tail_scan_usage
-
     files = [
         session_file,
         *sorted((session_file.parent / session_file.stem).glob("subagents/*.jsonl")),
@@ -281,8 +568,17 @@ def session_usage(session_file: Path, since: datetime) -> dict[str, Any]:
 def acquire(args: argparse.Namespace) -> dict[str, Any]:
     now = _now()
     lock = read_lock(LOCK_PATH)
+    quota = quota_state()
+    background_est = estimate_background_week_percent(quota, now=now)
+    budget = budget_object(quota, background_est)
     if lock is not None and lock_is_fresh(lock, now, args.lock_max_hours):
-        return {"acquired": False, "reason": "another round holds the lock", "lock": lock}
+        return {
+            "acquired": False,
+            "reason": "another round holds the lock",
+            "lock": lock,
+            "quota": quota,
+            "budget": budget,
+        }
     session = find_session_by_marker(PROJECTS_DIR, args.agent_id, now - timedelta(minutes=10))
     started = first_timestamp(session) if session else None
     new_lock = {
@@ -294,7 +590,7 @@ def acquire(args: argparse.Namespace) -> dict[str, Any]:
     }
     LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
     LOCK_PATH.write_text(json.dumps(new_lock, indent=1) + "\n", encoding="utf-8")
-    return {"acquired": True, "lock": new_lock}
+    return {"acquired": True, "lock": new_lock, "quota": quota, "budget": budget}
 
 
 def release(_args: argparse.Namespace) -> dict[str, Any]:

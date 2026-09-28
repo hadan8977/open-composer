@@ -698,8 +698,16 @@ def _parse_window(raw: Any, key: str, label: str) -> ClaudeWindow:
     utilization = raw.get("utilization")
     percent: float | None = None
     if isinstance(utilization, (int, float)) and not isinstance(utilization, bool):
-        percent = max(0.0, float(utilization) * 100.0)
-    resets_at = _parse_epoch_seconds(raw.get("resets_at"))
+        # Observed 2026-09-28: the live usage endpoint returns `utilization`
+        # already as a percent (0-100), e.g. 14.0 for the 5h window -- do not
+        # multiply by 100 (that produced 1400%/300% before this fix).
+        percent = max(0.0, float(utilization))
+    resets_value = raw.get("resets_at")
+    resets_at = (
+        _parse_iso(resets_value)
+        if isinstance(resets_value, str)
+        else _parse_epoch_seconds(resets_value)
+    )
     return ClaudeWindow(
         key=key,
         label=label,

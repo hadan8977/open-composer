@@ -14,11 +14,16 @@ from fastapi.testclient import TestClient
 from open_composer.cockpit.app import create_app
 from open_composer.cockpit.data import quota as Q
 
+_SAMPLE_RESETS_AT = "2026-09-28T06:00:00.451387+00:00"
+
+# Shape observed 2026-09-28 from the live usage endpoint: `utilization` is
+# already a percent (0-100), and `resets_at` is an ISO-8601 string, not an
+# epoch number.
 _SAMPLE_PAYLOAD = {
-    "five_hour": {"utilization": 0.42, "resets_at": 1_800_000_000},
-    "seven_day": {"utilization": 0.85, "resets_at": 1_800_000_000},
-    "seven_day_opus": {"utilization": 0.95, "resets_at": 1_800_000_000},
-    "seven_day_sonnet": {"utilization": 0.10, "resets_at": 1_800_000_000},
+    "five_hour": {"utilization": 42.0, "resets_at": _SAMPLE_RESETS_AT},
+    "seven_day": {"utilization": 85.0, "resets_at": _SAMPLE_RESETS_AT},
+    "seven_day_opus": {"utilization": 95.0, "resets_at": _SAMPLE_RESETS_AT},
+    "seven_day_sonnet": {"utilization": 10.0, "resets_at": _SAMPLE_RESETS_AT},
     "extra_usage": {"isUsingOverage": False, "overageStatus": "not_enrolled"},
 }
 
@@ -147,6 +152,30 @@ def test_one_malformed_window_degrades_only_that_window(tmp_path: Path) -> None:
     assert by_key["five_hour"].status == "unknown"
     assert by_key["five_hour"].percent_used is None
     assert by_key["seven_day"].percent_used is not None
+
+
+def test_observed_payload_shape_percent_utilization_and_iso_resets_at(tmp_path: Path) -> None:
+    """2026-09-28 observed shape: `utilization` is already 0-100, `resets_at` is ISO-8601.
+
+    Regression guard for the earlier bug where `_parse_window` multiplied an
+    already-percent `utilization` by 100 (showing 1400%) and only knew how to
+    parse a numeric epoch `resets_at` (so an ISO string parsed to `None`).
+    """
+    creds = _write_credentials(tmp_path)
+    payload = dict(_SAMPLE_PAYLOAD)
+    payload["five_hour"] = {"utilization": 14.0, "resets_at": "2026-09-28T06:00:00.451387+00:00"}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=payload)
+
+    cache = Q.ClaudeQuotaCache()
+    report = cache.get(credentials_path=creds, client=_client_for(handler))
+
+    five_hour = next(w for w in report.snapshot.windows if w.key == "five_hour")
+    assert five_hour.percent_used == pytest.approx(14.0)
+    assert five_hour.resets_at is not None
+    assert five_hour.resets_at.tzinfo is not None
+    assert five_hour.resets_at == datetime(2026, 9, 28, 6, 0, 0, 451387, tzinfo=UTC)
 
 
 # --------------------------------------------------------------------------
@@ -596,7 +625,7 @@ def test_cache_projects_only_after_two_rising_samples(tmp_path: Path) -> None:
     def make_handler(percent: float):
         def handler(request: httpx.Request) -> httpx.Response:
             payload = dict(_SAMPLE_PAYLOAD)
-            payload["five_hour"] = {"utilization": percent / 100.0, "resets_at": 1_800_000_000}
+            payload["five_hour"] = {"utilization": percent, "resets_at": _SAMPLE_RESETS_AT}
             return httpx.Response(200, json=payload)
 
         return handler
