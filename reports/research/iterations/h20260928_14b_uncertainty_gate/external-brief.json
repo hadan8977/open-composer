@@ -1,0 +1,115 @@
+{
+  "iter_id": "h20260928_14b_uncertainty_gate",
+  "strategy_name": "uncertainty_gate_h20260928_14b",
+  "source_spec_path": "strategy_specs/drafts/uncertainty_gate_h20260928_14b.yaml",
+  "spec_hash": "331eb8690255ad528be4b005958adb00d3c35b019f04733a7b56b468ec197c84",
+  "schema_version": 3,
+  "created_at": "2026-09-28T19:20:00+00:00",
+  "sources": [
+    {
+      "url": "https://arxiv.org/abs/2603.13252",
+      "published_or_updated_at": "2026-03-01",
+      "source_type": "paper",
+      "credibility": "primary arXiv preprint, abstract independently opened this session (WebFetch + curl snapshot, quotes verified byte-for-byte against the saved snapshot)",
+      "core_claim": "A two-level DEUP-style uncertainty framework (strategy-level regime-trust gate G(t), AUROC ~0.72/0.75 in a 2024 AI-rally holdout; position-level epistemic tail-risk cap using ensemble-disagreement signal ehat, correlation ~0.6 with absolute rank error) improves risk-adjusted performance of a LightGBM cross-sectional ranker whose 20-day signal breaks in the 2024 regime.",
+      "project_applicability": "Primary published mechanism this iteration's U1/U2 (book-level gate) and U3 (individual-name DEUP-style cap) candidates are modeled on; directly names the AUROC bar this iteration's 0.60 stop threshold is set conservatively below.",
+      "reflection": "Abstract-only reading (methods/universe/costs not opened); numbers are the paper's own model/data, not a same-instrument replication. This iteration's own ensemble-standard-deviation proxy for epistemic uncertainty is a standard, disclosed simplification of the paper's own rank-displacement DEUP predictor, and the whole point of stage 1 is to test whether that simplification carries any real signal on our own T1 book before spending stage-2 compute, not to assume it does."
+    },
+    {
+      "url": "https://www.nber.org/system/files/working_papers/w20439/w20439.pdf",
+      "published_or_updated_at": "2014-08-01",
+      "source_type": "paper",
+      "credibility": "NBER working paper, later published JFE 122(2) 2016; opened and quoted directly in the prior h20260924_02 iteration this session's grep/read confirmed, snapshot reused by reference (not re-fetched this session)",
+      "core_claim": "Momentum crashes occur in 'panic' states (a 24-month trailing bear market combined with high 126-day trailing market variance), concentrated in the short (past-loser) leg of long-short WML momentum.",
+      "project_applicability": "Directly relevant negative context: this repo's H-20260924-02 already tested a rule-based version of exactly this bear/panic mechanism on the SAME T1 book and it never triggered in 2024-2026 (no 24-month SPY decline in this bull window) -- motivating why a TRAINED signal (this iteration) is a genuinely different mechanism worth testing, not a re-test of the same rule.",
+      "reflection": "Sample ends 2013-03, long-short factor, not long-only top-30 -- the crash mechanism (short-leg driven) may not transfer to a long-only book, a caveat already carried into H-20260924-02's own writeup and inherited here as background, not re-verified this session."
+    },
+    {
+      "url": "http://www.snifferquant.com/gyantal/Incode/papers/Momentum%20Has%20Its%20Moments(scaling%20Momentum%20by%20vol),2014.pdf",
+      "published_or_updated_at": "2015-04-01",
+      "source_type": "paper",
+      "credibility": "Published JFE paper (Barroso & Santa-Clara 2015); opened and quoted directly in the prior h20260924_02 iteration this session's grep/read confirmed, snapshot reused by reference",
+      "core_claim": "Scaling a momentum portfolio by the inverse of a 126-trailing-day realized-variance forecast toward a constant target volatility improves risk-adjusted momentum returns.",
+      "project_applicability": "H-20260924-02 already tested a daily-updated version of this exact realized-vol-scaling rule on the SAME T1 book: it reproduced the generic 'vol targeting slides along the same risk-return line, doesn't beat a calendar-shift placebo' failure mode. This iteration's placebo design (block/circular-shift for U1/U2) directly re-tests for that same failure mode on the new, TRAINED candidate.",
+      "reflection": "Formula estimated on long-short WML over 1927-2011, not a long-only 30-stock book or a 2016-2026 window; the already-refuted local test (H-20260924-02) is the more directly relevant evidence for THIS iteration's stop conditions than the original paper's own numbers."
+    },
+    {
+      "url": "reports/research/intel/I-20260928-03-recent-trainable-models.md",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_report",
+      "credibility": "This session's own local research artifact; read in full before drafting this iteration's direction-review and candidate manifest",
+      "core_claim": "Of five 2024-2026 trainable-model candidates surveyed, only the regime-trust/uncertainty gate (arXiv 2603.13252) was queued as genuinely feasible on this repo's free data and directly addresses an already-diagnosed local problem (T1 momentum book's 2024+ drawdown); the other four are infeasible on free data or evidence-too-weak.",
+      "project_applicability": "This is the intel note that proposed and registered this iteration's own direction (dir:regime_trust_uncertainty_gate_momentum_ranker); its ranked cost/EV table sets the Stage 1/Stage 2 Modal budget split ($0.19 / $0.62) this task reuses.",
+      "reflection": "A same-session internal synthesis, not independent third-party evidence; its own ranking is only as good as the four searches it ran, which this iteration does not re-run (per the mission rule against re-searching an already-covered direction without new information)."
+    },
+    {
+      "url": "reports/research/control/autonomous-queue.md",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_task",
+      "credibility": "This repo's own frozen queue contract for T-20260928-14, read in full (goal/plan/owner_rule_check) before starting this task",
+      "core_claim": "T-20260928-14 asks whether a trained confidence/regime-trust gate can raise the T1 momentum book's Sharpe (not just cut drawdown) vs. a same-volatility unguarded control, distinct in mechanism from two already-refuted local attempts (rule-based crash guard, position-size meta-labeling).",
+      "project_applicability": "This is the literal task contract this iteration executes; every frozen threshold and window in direction-review.json / candidate-manifest.json traces back to this block.",
+      "reflection": "A task assignment, not evidence of the mechanism's efficacy -- it sets the test's design and stop conditions, not its outcome."
+    },
+    {
+      "url": "reports/research/harvest/directions.jsonl",
+      "published_or_updated_at": "2026-09-28",
+      "source_type": "internal_registry",
+      "credibility": "This repo's own direction registry; the dir:regime_trust_uncertainty_gate_momentum_ranker row (status queued) read directly this session via grep, and `oc research directions check` for 'uncertainty gate' and 'DEUP' both confirmed no prior local test of this mechanism exists (only this same queued row)",
+      "core_claim": "The registry's own stop_condition for this direction requires AUROC>=0.60 on a 2024-2026 drawdown-flag label or a placebo showing >=5pp max-drawdown improvement over a random-day de-risking placebo -- this iteration's stage-1 stop conditions extend that (adding the owner's Sharpe-vs-vol-matched-control rule and a third, U3-specific placebo) rather than relaxing it.",
+      "project_applicability": "Directly the registry entry this iteration's final status update (refuted/partial/passed) must be written back to.",
+      "reflection": "A preregistration record, not outcome evidence; confirms no local precedent exists for this exact mechanism (checked via directions check and a targeted grep of control/iterations/ledger for 'deup|uncertainty gate|ensemble disagreement', both returned only this task's own artifacts)."
+    },
+    {
+      "url": "reports/research/iterations/h20260924_02_momentum_crash_guard/decision-record.md",
+      "published_or_updated_at": "2026-09-24",
+      "source_type": "internal_report",
+      "credibility": "This repo's own completed, gated iteration (0/5 candidates passed); read in full this session as the direct reuse template for this iteration's book construction, timing-lag discipline and file schema",
+      "core_claim": "Five rule-based daily crash guards (Daniel-Moskowitz bear/panic, Barroso-Santa-Clara vol scaling, book/market circuit breakers) on the SAME T1 book all failed G2 (best holdout Sharpe 0.87 of a required 1.0) and G3 (calendar-shift placebo beat-fraction 0.70-1.00 against a required <=0.10 bar) -- every fixed-rule exposure guard tested so far reduces to sliding along the risk-return line or an arbitrary on/off schedule.",
+      "project_applicability": "Direct negative-evidence baseline this iteration's own owner-rule stop condition (Sharpe vs. vol-matched control, not just drawdown) and placebo design are built to distinguish from; also the direct source of load_book/settle_market/calendar_shift/evaluate_series/apply_gates reused (imported) by this iteration's own runner script.",
+      "reflection": "Confirms a fixed-rule guard on this book does not work; does not by itself say whether a TRAINED signal is different, which is exactly this iteration's own falsifiable question."
+    },
+    {
+      "url": "docs/current-view.zh.md",
+      "published_or_updated_at": "2026-09-24",
+      "source_type": "internal_doc",
+      "credibility": "This repo's own maintained current-state log, the 2026-09-24(12:30) dated section, read this session per CLAUDE.md's instruction to read the latest dated section before choosing work",
+      "core_claim": "The T1 top-30 momentum book's corrected anchor-window numbers are CAGR 63.1%, max drawdown -41.5%, Sharpe 1.09 (the queue block's 59.8%/-41.6% figures were a same-day 3.3pp CAGR undercount, corrected in this section) -- CAGR clears the 50% gate, drawdown fails the -35% gate, and even the best rule-based guard only got the 2026 holdout Sharpe to 0.87 against a required 1.0.",
+      "project_applicability": "Confirms this iteration's target problem (T1 book fails G1 on drawdown, and no rule-based fix has cleared G2) is current and real, not stale; the queue task's own 59.8%/-41.6% figures are reproduced verbatim from the block's own text for traceability, with this corrected 63.1%/-41.5%/1.09 figure noted here as the more current reference.",
+      "reflection": "A same-repo running log, not independent evidence; corroborates rather than substitutes for this iteration's own base-book reproduction step (which recomputes these numbers directly from data before any gate is applied)."
+    }
+  ],
+  "topic_coverage": [
+    "regime_trust_gate_definition_and_auroc",
+    "deup_epistemic_uncertainty_ensemble_disagreement",
+    "local_prior_art_check_directions_and_grep",
+    "rule_based_crash_guard_negative_evidence_same_book",
+    "vol_scaling_negative_evidence_same_book",
+    "t1_book_current_drawdown_problem_statement",
+    "modal_budget_and_lightgbm_hyperparameter_reuse"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "revision": "initial",
+      "at": "2026-09-28T19:20:00+00:00",
+      "change": "Preregistered 3 candidates (U1 book-level z>0.80 half-exposure, U2 book-level z>0.90 zero-exposure, U3 individual-name top-20%-uncertainty exclusion) exactly as specified in queue task T-20260928-14; no revision made after seeing any result."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_14b_uncertainty_gate.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "deup2026_regime_trust_gate_definition",
+      "source_card_path": "reports/harness/source_cards/h20260928_14b_uncertainty_gate.jsonl"
+    },
+    {
+      "claim_id": "deup2026_epistemic_uncertainty_definition",
+      "source_card_path": "reports/harness/source_cards/h20260928_14b_uncertainty_gate.jsonl"
+    },
+    {
+      "claim_id": "deup2026_2024_regime_breakdown_motivation",
+      "source_card_path": "reports/harness/source_cards/h20260928_14b_uncertainty_gate.jsonl"
+    }
+  ]
+}

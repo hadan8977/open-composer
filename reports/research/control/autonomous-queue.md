@@ -207,7 +207,7 @@
   - 2026-09-28 结果：四类来源都搜了（arXiv/SSRN 2024–2026、Kaggle Jane Street/Optiver/Numerai、开源仓库、从业者实盘记录），登记簿查重覆盖 T-20260928-09/10（多来源排序模型）和已有的 AlphaForge/MASTER/期权/内部人/空头等条目，不重复。5 个候选只有 1 个够格进队列：训练一个 DEUP 式置信度/机制信任门（`dir:regime_trust_uncertainty_gate_momentum_ranker`，来自 arXiv 2603.13252 "When Alpha Breaks"），套在个股动量账本上，直接对应我们自己已经发现的问题（top-30 动量 2024 年以来 59.8%/年但回撤 −41.6%）；已写成 T-20260928-14。其余 4 个都有 2024–2026 证据但不执行：期权隐含波动率 ML（`dir:option_implied_crash_risk_xgboost_2026`，被本地已证实的免费期权数据无真实历史报价挡住）、电话会文本训练 embedding（`dir:earnings_call_transcript_trained_embeddings_2026`，本地只有 8-K 新闻稿不是电话会记录，被已证实的无免费来源挡住）、GNN 关系图模型（`dir:gnn_relational_stock_models_2024_2025`，证据太弱：30–255 只股票的小样本、只报准确率不报实盘夏普、无独立复现）、公式化因子挖掘 GP/RL 家族（AlphaForge/AlphaGen 等，重新搜了一遍，仍然只有 A 股/加密证据，Modal 解除了硬件限制但没解除证据限制，registry 条目不变）。Jane Street/Optiver/Numerai 本身没有可迁移的具体模型（数据匿名化），只作为方法论笔记登记（`dir:kaggle_jane_street_numerai_competition_methods`）。产物：`reports/research/intel/I-20260928-03-recent-trainable-models.md`；登记簿新增 5 行，`oc research directions validate` 通过。
 
 ### T-20260928-14 训练一个置信度/机制信任门，套在个股动量账本上（When Alpha Breaks 的 DEUP 式否定测试）
-- status: ready
+- status: done
 - priority: 1
 - not_before:
 - goal: 个股动量 top-30 账本 2024 年以来 59.8%/年、但回撤 −41.6%（门槛 −35%，`docs/current-view.zh.md` 2026-09-24 11:30 章节）。机主下一步已排了一个按文献（Daniel-Moskowitz）配方的规则型防崩盘开关；本任务测一个训练出来的替代/补充：arXiv 2603.13252 "When Alpha Breaks" 给排序模型加一个两层不确定性框架——策略层的"机制信任门"（论文里 2024 年这段 AUROC 0.72–0.75）和个股层的认知不确定性上限（DEUP，用集成分歧预测排名误差）。这篇论文自己的发现——排序模型的信号恰好在 2024 年 AI 行情和板块轮动里失效——和我们自己已经发现的问题（动量账本 2024 年以来回撤失控）是同一个现象的独立印证。和已否定的规则型止盈开关（`dir:momentum_risk_control_vs_spmo`，输给日历平移安慰剂）、已否定的仓位分档元标签（`dir:meta_labeling_position_tiers`，等价于直接降仓）机制不同：这是训练出来的置信度信号，不是固定规则或单调仓位分档。
@@ -217,6 +217,8 @@
 - notes:
   - 2026-09-28 13:07 UTC 自动轮开始（Paseo 1ee0d516），派 sonnet-high 执行，迭代 h20260928_14_uncertainty_gate。
   - 2026-09-28 14:5x UTC 交互会话：13:07 那一轮派了两个后台子代理（本任务和缺口搜索）就结束了回合，Paseo 归档时把子代理一起杀了，本任务没有产物。状态改回 ready；手册已改成子代理一律前台运行。
+  - 2026-09-28 19:07 UTC 自动轮开始（Paseo ecec1aba），前台派 sonnet-high 执行，迭代 h20260928_14b_uncertainty_gate（原 id h20260928_14 已被 T-14 旧编号 sue_8k 占用）。
+  - 2026-09-28 20:1x UTC 结果（自动轮已对照 results.json 核对）：否定，0/3，第一段即停，未做第二段。15 个 bootstrap LightGBM 在 Modal 走步训练（2018 起样本外，花费 $0.04）。U1（高不确定时半仓）AUROC 0.522、对标窗夏普 1.136 对同波动对照 1.086（+0.050，线 0.10）、低于安慰剂 90 分位 1.177；U2（极高不确定时空仓）夏普差 −0.219；U3（剔除分歧最大的股票）夏普差 −0.324，低于随机剔除安慰剂。集成分歧不预测账本回撤。产物：`reports/research/iterations/h20260928_14b_uncertainty_gate/`，卡片 `H-20260928-31`，登记簿 `dir:regime_trust_uncertainty_gate_momentum_ranker` refuted。
 
 ### T-20260928-12 Modal：股票层面批量筛选（依赖 08 和批量通道 SELF_CHECK_OK）
 - status: blocked
@@ -318,3 +320,34 @@
 - done_when: `--stage final` 通过；登记簿 `dir:llm_acceptance_judge_forward_shadow` 和第 2 篇的行已更新；通过了才加月度影子跟踪任务。
 - notes:
   - 2026-09-28 06:4x UTC 交互会话派 Sonnet 执行。自动轮不要碰。
+
+### T-20260928-40 批量筛选：因子风格 + 细分行业 ETF 动量轮动（复用 S1-S3 的机制，只换菜单）
+- status: ready
+- priority: 2
+- not_before:
+- goal: S1-S3（`dir:recent_window_etf_menu_rotation`，已通过、在跑）用的是同一套跨截面 ETF 动量轮动机制（`scripts/run_h20260918_05_recent_menu.py:rotation_cell`：绝对动量过滤 + 排名前 N，63/126/252 日回看，月度/周度调仓），目前只在全球宏观、11 个 SPDR 板块、成长概念、杠杆指数四个菜单上测过。因子风格 ETF（MTUM/QUAL/USMV/VLUE/SIZE）和更细的行业 ETF（半导体/生物科技/区域银行/建筑/软件/油气开采/零售/医疗器械）离散度更高、和已测菜单的相关性可能更低，是同一台机器最便宜能测的新增量，不是新方向。
+- plan: |
+    新建迭代 `h20260928_40_equity_etf_menus`，候选清单模块 `scripts/screen_batches/h20260928_40_equity_etf_menus.py`（照抄 `h20260928_04_batch1.py`/`h20260928_05_batch2.py` 的写法：每个候选是纯函数 `fn(close, asof) -> weights`，只读 `close.loc[:asof]`），候选清单 JSON 见 `reports/research/iterations/h20260928_40_equity_etf_menus/candidate-manifest.json`，`direction-review.json` 引用 `dir:factor_style_etf_momentum_rotation` 和 `dir:narrow_industry_etf_momentum_rotation`。
+
+    两个新菜单（都是绝对动量+排名前 N 轮动，和 S1-S3 引擎完全相同，只换 `MENUS` 里的 ticker 列表）：
+    - **FACTOR 菜单**（来源：Quantpedia "Momentum Factor and Style Rotation Effect"，https://quantpedia.com/strategies/momentum-factor-and-style-rotation-effect，1972-2005 六只 Russell 风格 ETF 多空年化 9.25%/夏普 0.33，样本老、多空、非近期——机制复用不是这个数字本身）：MTUM、QUAL、USMV、VLUE、SIZE，5 只，全部 Alpaca 可交易、只做多。
+    - **INDUSTRY 菜单**（来源：现有 S1 11 个 SPDR 板块菜单本身的实盘记录，对标窗中位数夏普 1.33-1.35；否定证据 Molchanov & Stangl "The Myth of Sector Rotation" https://acfr.aut.ac.nz/__data/assets/pdf_file/0005/294287/The-Myth-of-Sector-Rotation-non-blind.pdf 只否定宏观周期预测板块轮动，不否定价格动量机制，机制不同）：SMH、XBI、KRE、ITB、IGV、XOP、XRT、IHI，8 只，全部 Alpaca 可交易、只做多。
+
+    网格：回看 {63, 126, 252} 日 × 排名前 N {1, 2} × 调仓 {月度, 周度}，两个菜单各 12 个组合，共 **24 个候选**（命名 `FACTOR_L{63,126,252}_N{1,2}_{MO,WK}`、`INDUSTRY_L{63,126,252}_N{1,2}_{MO,WK}`）。每个候选独立预注册判定路径：K1（偏移中位数夏普对标窗≥1.19、压力期≥0.65，20bp 下两窗年化为正）为主路径；K2（和 S3 组合增量≥0.05）为备选路径，重点看 INDUSTRY 菜单（和 S1 相关性可能高，K2 大概率过不了）、FACTOR 菜单（和现有菜单相关性未知，两条路径都测）。24 个候选算一个族，报告 DSR（`scripts/screen_batch.py` 内置）。
+
+    `uv run oc research direction-check <path>` 和 `uv run oc research iteration validate h20260928_40_equity_etf_menus --stage pre-backtest` 通过后，跑 `uv run python scripts/screen_batch.py --batch h20260928_40_equity_etf_menus --iteration h20260928_40_equity_etf_menus`（数据已在本地面板里的用本地跑；缺的 13 只新 ticker 先用 `scripts/run_capped.sh --mem 1.8G -- uv run python scripts/fetch_daily_bars.py <新增 ticker 列表>` 或现有取数脚本补面板，同一时间只跑一个重任务）。`--stage final` 通过后，保留的候选写进 `reports/research/screens/kept.jsonl`，登记簿两条方向和覆盖地图更新。
+- done_when: 迭代 `--stage final` 通过；24 个候选每个都有 K1/K2 判定结果和 DSR；`reports/research/screens/h20260928_40_equity_etf_menus/leaderboard.md` 存在；登记簿 `dir:factor_style_etf_momentum_rotation`、`dir:narrow_industry_etf_momentum_rotation` 从 queued 更新为终态（passed/partial/refuted/evidence_too_weak 等）并带 verdict、evidence、reopen_if。
+- notes:
+  - 2026-09-28 19:xx UTC 自动轮缺口搜索添加。
+
+### T-20260928-41 小批量：单一国家股票指数 ETF 动量轮动（边界任务，机主先确认范围）
+- status: blocked
+- priority: 3
+- not_before:
+- goal: 同一套机制（见 T-20260928-40）应用到单一国家股票 ETF（EWJ 日本、EWG 德国、EWU 英国、EWA 澳大利亚、EWC 加拿大、EWZ 巴西、INDA 印度、EWY 韩国、EWT 台湾）。这些都是美股交易所上市的股票类 ETF（不是债券/黄金/商品/美元），严格符合"只用美股股票类 ETF"的范围，但和机主否决的跨资产方向相邻——本任务的第一步就是让机主确认是否在范围内，避免白测。来源：Quantpedia "Momentum Factor Effect in Country Equity Indexes"（https://quantpedia.com/strategies/momentum-factor-effect-in-country-equity-indexes，18 个国家 MSCI 指数 1975-2014 动量+低波动择时的已发表设计，本任务只借用机制，不借用其样本期数字）。
+- plan: |
+    先在汇报里向机主确认范围；机主未否决前不要花算力。确认后：新增 `COUNTRY` 菜单（9 只标的）到 T-20260928-40 同一个引擎/迭代基础设施（`h20260928_41_country_etf_menu`，或直接扩进 T-40 的候选模块——两者选其一，视 T-40 完成时机决定），网格缩小到回看 {63, 252} 日 × 排名前 N {1, 2} × 月度调仓 = **8 个候选**（`COUNTRY_L{63,252}_N{1,2}_MO`），判定路径同 K1/K2，DSR 按 8 候选的族计算。
+- done_when: 机主范围确认记录在 notes；确认后迭代 `--stage final` 通过，登记簿 `dir:international_country_etf_momentum_rotation` 更新为终态。
+- notes:
+  - 2026-09-28 19:xx UTC 自动轮缺口搜索添加。
+  - 2026-09-28 20:1x UTC 自动轮：改为 blocked，等机主确认单一国家股票 ETF 是否在"不做跨资产"之外；未确认前不要花算力。

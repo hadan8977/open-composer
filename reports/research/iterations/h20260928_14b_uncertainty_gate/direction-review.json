@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_14b_uncertainty_gate",
+  "reviewed_at": "2026-09-28T19:13:00+00:00",
+  "decision": "proceed",
+  "objective": "Queue task T-20260928-14 (autonomous-queue.md), registry row dir:regime_trust_uncertainty_gate_momentum_ranker: does a TRAINED ensemble-disagreement (DEUP-style epistemic uncertainty) gate on the T1 top-30-of-500 12-1 momentum book raise Sharpe, not just cut drawdown, versus an equal-realized-vol unguarded control, on the anchor window (2024-01-08..2026-09-16) and, if that first stage passes, the stress window (2016-05..2023-08, from the first walk-forward out-of-sample prediction date)? First-stage stop conditions (AUROC<0.60 on a drawdown-flag label, placebo tests, and the owner's >=0.10 Sharpe-vs-vol-matched-control rule) must ALL be passed by a candidate before any second-stage (stress window, G1-G5, DSR) work is done. Three candidates: U1/U2 (book-level exposure cuts at uncertainty quantile 0.80/0.90) and U3 (individual-name DEUP-style cap: drop the most-uncertain quintile of names at cohort formation).",
+  "target_regime_and_horizon": "T1 book construction and windows frozen exactly as in run_h20260924_02_momentum_crash_guard.py / run_h20260918_05_recent_menu.py: select 2023-09-18..2025-12-31, holdout 2026-01-02..2026-09-17, anchor 2024-01-08..2026-09-16 (G1/G4 window), stress-disclosure 2016-05..2023-08 (this task's walk-forward first out-of-sample prediction year, expected ~2018, truncates the usable portion of that window -- actual start reported, not assumed). 2026-01 through 2026-09-17 is the contaminated holdout referenced by the brief and used only as reference, consistent with the recent-market-only acceptance bar (no multi-decade robustness claim required). The gate only has to help the SAME regime the T1 book already trades (2024-2026 large-cap momentum), matching the paper's own stated 2024 AI-rally/sector-rotation regime-break window.",
+  "existing_solution_comparison": "arXiv 2603.13252 'When Alpha Breaks' (abstract opened directly this session, claims deup2026_regime_trust_gate_definition, deup2026_epistemic_uncertainty_definition, deup2026_2024_regime_breakdown_motivation) is the published source: a LightGBM cross-sectional ranker at a 20-day horizon whose signal breaks in the 2024 AI-rally holdout, addressed by (1) a strategy-level regime-trust gate G(t) (AUROC ~0.72 overall, ~0.75 in the 2024 FINAL holdout) deciding whether to trade, and (2) a position-level epistemic tail-risk cap using a DEUP-style ehat (rank-displacement uncertainty) signal, found to correlate ~0.6 with absolute rank-score error -- explicitly NOT used as a continuous inverse-uncertainty sizing denominator because that de-levers the strongest signals and hurts performance (their own negative finding), hence their design uses ehat only as a tail-risk cap on the most uncertain names, matching this task's own candidate U3 design (drop the most-uncertain quintile, not continuous inverse scaling). No other implementation of this exact two-level DEUP framework was found in the repo's local prior art: `uv run oc research directions check` for 'uncertainty gate' and 'DEUP' both returned only this same registry row (dir:regime_trust_uncertainty_gate_momentum_ranker, status queued, likely_repeat 1.00 confirming it is this task's own queued entry, not a prior local result) and a grep of reports/research/{control,iterations,ledger} for 'deup|uncertainty gate|ensemble disagreement' found no prior local test of this mechanism (only this task's own queue block and the intel note that proposed it, I-20260928-03).",
+  "remaining_evidence_gap": "The paper's abstract does not disclose its asset universe, cost model, training window, or the exact rank-displacement model behind ehat (methods section not independently opened -- abstract page only, paywalled/no separate PDF fetch attempted this session, disclosed as a limitation on every source-card row). No source found this session tests this two-level DEUP framework on a LONG-ONLY top-30 momentum book specifically, nor on this repo's own T1 20-session construction, nor whether a bootstrap-ensemble-standard-deviation proxy (this task's own operationalization of 'epistemic uncertainty', not the paper's own rank-displacement predictor) carries the same signal the paper reports. This is exactly the gap this iteration's own preregistered backtest is designed to close cheaply (AUROC/placebo stop conditions before any full G1-G5 run).",
+  "negative_experiments_checked": "dir:momentum_risk_control_vs_spmo / H-20260924-02 (refuted, 2026-09-24): 5 candidates of a DAILY rule-based crash guard (Daniel-Moskowitz bear/panic, Barroso-Santa-Clara vol scaling, book/market circuit breakers) on the SAME T1 book all failed G2 (holdout Sharpe) and G3 (calendar-shift placebo, beat-fraction 0.70-1.00 against a required <=0.10) -- i.e. every FIXED-RULE exposure guard tested so far reduced to sliding along the same risk-return line or an arbitrary on/off schedule indistinguishable from a random calendar shift. dir:meta_labeling_position_tiers (refuted): a position-size-tiering meta-label reduced to plain de-leveraging under a label-time-shift placebo. This task is explicitly framed (queue block, registry row) as testing whether a TRAINED ensemble-disagreement signal is distinguishable from those two already-refuted mechanisms -- hence the owner's Sharpe-vs-vol-matched-control bar (not just a drawdown cut, which both prior refuted mechanisms could achieve without adding information) and the block-randomized/cohort-randomized placebo requirement in this iteration's own stop conditions, which directly re-tests for the same 'reduces to de-leveraging' and 'reduces to arbitrary timing' failure modes on THIS (trained, not rule-based) candidate family.",
+  "cost_and_execution_assumptions": "10 bp per side primary, 20 bp stress, matching signal_card.py's own COSTS_BPS and the frozen giants-sweep/recent-menu convention. Cash leg while de-risked: SHY next-open return, matching run_h20260924_02's cash convention (imported, not reinvented). T1 is a daily 1/20-overlapping-cohort book (no single rebalance day), so no rebalance-day-offset distribution applies to this iteration's own decisions -- noted, per the task brief, in decision-record.md rather than computed. LightGBM training: k=15 bootstrap regressors, num_threads = requested Modal cores, all other hyperparameters fixed to scripts/run_t20260928_10_ml_killtest.py's LGBM_COMMON values (num_leaves=31, learning_rate=0.05, n_estimators=400, colsample_bytree=0.8, subsample=0.8, subsample_freq=1, min_child_samples=200), not tuned. Modal budget checked via scripts/modal_budget.py before any launch; total cap $1.5 for this task.",
+  "stop_condition": "Stage 1 (per candidate, independently; any one hit stops that candidate at refuted, no stage 2): (a) [U1/U2 only] AUROC<0.60 for z(t) flagging above-median-future-drawdown days on the 2024-01-08.. latest window; (b) placebo: >=200 seeds each, real gate's anchor-window max-drawdown improvement beats the placebo median by <5pp, or real gate's anchor Sharpe is below the placebo distribution's 90th percentile (U1/U2: block/circular-shift placebo of the gate series; U3: random-quintile-drop placebo of the cohort selection); (c) owner rule: anchor-window Sharpe improvement over a same-realized-vol-matched unguarded control (k*book + (1-k)*SHY) is <0.10. Stage 2 (only for a candidate clearing ALL of stage 1): stress-window same >=0.10 Sharpe-vs-matched-control bar, G1-G5, K1/K2 tiering, DSR at 3 trials. No stage-1 threshold, position size (0.5/0/top-20%), or uncertainty quantile (0.80/0.90) may be changed after seeing any result.",
+  "queries": [
+    {
+      "query": "When Alpha Breaks arXiv 2603.13252 regime-trust gate DEUP epistemic uncertainty cross-sectional ranker",
+      "opened_urls": [
+        "https://arxiv.org/abs/2603.13252"
+      ],
+      "searched_at": "2026-09-28T19:05:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "claim_id": "deup2026_regime_trust_gate_definition",
+      "claim": "The paper proposes a two-level deployment policy for a cross-sectional LightGBM ranker: a strategy-level regime-trust gate G(t) that decides whether to trade at all (AUROC around 0.72 overall and 0.75 in the 2024 FINAL holdout period), and a position-level epistemic tail-risk cap that reduces exposure only for the most uncertain individual predictions.",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2603.13252",
+      "published_or_updated_at": "2026-03-01",
+      "market_and_period": "Cross-sectional stock ranking (asset universe not disclosed in abstract), 20-day horizon, walk-forward, 2024 holdout ('FINAL period') coinciding with an AI thematic rally, 1,865 dates.",
+      "applicability": "Primary source and definition for this iteration's regime-trust-gate candidates U1/U2 and the DEUP-style individual-name cap U3; directly names the AUROC bar (0.72-0.75) this iteration's own 0.60 stop-condition threshold is set conservatively below.",
+      "limitations": "Abstract-only (methods section, exact G(t)/ehat model architecture, universe and costs not opened this session); AUROC numbers are the paper's own model/data, not a same-instrument replication.",
+      "independent_replication": "None found this session (2026 paper, too new); the paper's own reported regime break (LightGBM ranker weakens in the 2024 AI-rally holdout) independently corroborates this repo's own already-diagnosed problem (T1 momentum book 2024+ max drawdown -41.6% vs the -35% gate, docs/current-view.zh.md 2026-09-24 11:30 section) -- a different symptom of the same non-stationarity the paper describes, not a direct replication of its numbers.",
+      "fetched_at": "2026-09-28T19:05:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260928_14b_uncertainty_gate/sources/arxiv-2603.13252-when-alpha-breaks-abstract.txt",
+      "sha256": "46dffaac4e86174f16976ce2043dcb7ef84b934903e99895b2437776778863d3",
+      "source_card_path": "reports/harness/source_cards/h20260928_14b_uncertainty_gate.jsonl"
+    },
+    {
+      "claim_id": "deup2026_epistemic_uncertainty_definition",
+      "claim": "The paper adapts Direct Epistemic Uncertainty Prediction (DEUP) to ranking by predicting rank displacement and defining an epistemic uncertainty signal ehat relative to a point-in-time-safe baseline; ehat's median correlation with absolute rank-score error is about 0.6 across 1,865 dates, and ehat is structurally coupled with signal strength, so naive inverse-uncertainty position sizing de-levers the strongest signals and degrades performance.",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2603.13252",
+      "published_or_updated_at": "2026-03-01",
+      "market_and_period": "Cross-sectional stock ranking, 20-day horizon, 1,865 dates.",
+      "applicability": "Direct definition basis for this iteration's u_i(t) epistemic-uncertainty proxy (bootstrap ensemble standard deviation of cross-sectional rank predictions) and for choosing a tail-risk-cap design (U3: drop the most-uncertain quintile) over continuous inverse-uncertainty sizing, matching the paper's own negative finding about naive inverse sizing.",
+      "limitations": "Exact ehat construction (the rank-displacement predictor's own architecture/training) is in the paper's methods section, not opened this session; this iteration's ensemble-standard-deviation proxy is a standard, disclosed simplification, not a literal reimplementation.",
+      "independent_replication": "None found this session (too new); internally consistent with the standard ensemble-disagreement-as-epistemic-uncertainty literature (not separately re-verified this session, out of scope for a same-day abstract read).",
+      "fetched_at": "2026-09-28T19:05:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260928_14b_uncertainty_gate/sources/arxiv-2603.13252-when-alpha-breaks-abstract.txt",
+      "sha256": "46dffaac4e86174f16976ce2043dcb7ef84b934903e99895b2437776778863d3",
+      "source_card_path": "reports/harness/source_cards/h20260928_14b_uncertainty_gate.jsonl"
+    },
+    {
+      "claim_id": "deup2026_2024_regime_breakdown_motivation",
+      "claim": "In the paper's own 'AI Stock Forecaster' setting, a LightGBM cross-sectional ranker performs well overall at a 20-day horizon, but the 2024 holdout period coincides with an AI thematic rally and sector rotation that breaks the signal at longer horizons and weakens the 20-day signal specifically.",
+      "source_type": "paper",
+      "url": "https://arxiv.org/abs/2603.13252",
+      "published_or_updated_at": "2026-03-01",
+      "market_and_period": "Cross-sectional stock ranking, 20-day horizon, 2024 holdout.",
+      "applicability": "Independent corroboration, named in the registry row, for why this repo's own 2024+ momentum-book drawdown might be addressable by a trained confidence signal rather than a fixed rule (which already failed, H-20260924-02).",
+      "limitations": "Universe, exact AI-rotation dates and cost model not disclosed in the abstract; motivational evidence, not a transferable number.",
+      "independent_replication": "Consistent with this repo's own T1 book reproduction (run_h20260924_02_momentum_crash_guard.py), which shows a real 2024+ drawdown in the same calendar period.",
+      "fetched_at": "2026-09-28T19:05:00+00:00",
+      "snapshot_path": "reports/research/iterations/h20260928_14b_uncertainty_gate/sources/arxiv-2603.13252-when-alpha-breaks-abstract.txt",
+      "sha256": "46dffaac4e86174f16976ce2043dcb7ef84b934903e99895b2437776778863d3",
+      "source_card_path": "reports/harness/source_cards/h20260928_14b_uncertainty_gate.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Train k=15 bootstrap LightGBM regressors walk-forward (expanding window, annual retrain, purge>=21 sessions) on rank-normalized kt.BASE_FEATURE_COLUMNS for the top-500 universe; compute u_i(t) ensemble disagreement and book-level U(t)/z(t); apply candidates U1/U2/U3 to the unchanged T1 book; check AUROC and the two placebo/owner-rule stop conditions on the 2024-01-08..latest window before any stress-window or G1-G5 work.",
+    "pass_condition": "At least one candidate clears (a) AUROC>=0.60 where applicable, (b) beats its own placebo distribution on both the drawdown-improvement and Sharpe checks, and (c) anchor-window Sharpe >= vol-matched-control Sharpe + 0.10.",
+    "falsification_condition": "No candidate clears all of (a)/(b)/(c) on the anchor window -- refuted at stage 1, no stress-window or G1-G5 work performed, registry row updated to refuted with the exact numbers.",
+    "max_compute_minutes": 90
+  }
+}

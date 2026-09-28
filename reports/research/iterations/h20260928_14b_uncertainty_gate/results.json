@@ -1,0 +1,326 @@
+{
+  "iter_id": "h20260928_14b_uncertainty_gate",
+  "generated_at": "2026-09-28T19:55:51.471480+00:00",
+  "market": {
+    "sessions": 2692,
+    "symbols": 1321,
+    "date_range": [
+      "2016-01-04",
+      "2026-09-17"
+    ]
+  },
+  "prediction_coverage": {
+    "u_i_finite_days": 2170,
+    "u_i_first_date": "2018-01-03"
+  },
+  "candidates": {
+    "u1": {
+      "metrics_10bp": {
+        "select": {
+          "days": 575,
+          "cagr": 0.5097949507298318,
+          "vol": 0.36786011387708667,
+          "sharpe": 1.1780817243431803,
+          "max_dd": -0.2524589754387323,
+          "turnover_yr": 25.084592707110975
+        },
+        "holdout": {
+          "days": 178,
+          "cagr": 0.5913670478442647,
+          "vol": 0.5978113617443882,
+          "sharpe": 1.0206753449763015,
+          "max_dd": -0.3719995246170368,
+          "turnover_yr": 23.567192250710985
+        },
+        "anchor": {
+          "days": 675,
+          "cagr": 0.5749190797313135,
+          "vol": 0.45335231100809287,
+          "sharpe": 1.1363023531371494,
+          "max_dd": -0.37199952461703656,
+          "turnover_yr": 26.012001428951823
+        },
+        "stress": {
+          "days": 1847,
+          "cagr": 0.14326721736062575,
+          "vol": 0.32565736803058715,
+          "sharpe": 0.5363695633592425,
+          "max_dd": -0.43366030425543,
+          "turnover_yr": 9.490818073940284
+        }
+      },
+      "metrics_20bp": {
+        "select": {
+          "days": 575,
+          "cagr": 0.472465253206547,
+          "vol": 0.367805266885509,
+          "sharpe": 1.1100869358916179,
+          "max_dd": -0.2548395568044852,
+          "turnover_yr": 25.084592707110975
+        },
+        "holdout": {
+          "days": 178,
+          "cagr": 0.5543487158140559,
+          "vol": 0.597808200599628,
+          "sharpe": 0.9812565402962303,
+          "max_dd": -0.373674139496604,
+          "turnover_yr": 23.567192250710985
+        },
+        "anchor": {
+          "days": 675,
+          "cagr": 0.5345639590089015,
+          "vol": 0.45330683095808727,
+          "sharpe": 1.0790454429967478,
+          "max_dd": -0.37367413949660433,
+          "turnover_yr": 26.012001428951823
+        },
+        "stress": {
+          "days": 1847,
+          "cagr": 0.13249565215833403,
+          "vol": 0.32558965747998647,
+          "sharpe": 0.5073386510343707,
+          "max_dd": -0.44057104455310414,
+          "turnover_yr": 9.490818073940284
+        }
+      },
+      "auroc": 0.5223042362002568,
+      "auroc_min": 0.6,
+      "real_dd_improvement_anchor": -0.04337940356747272,
+      "placebo_dd_improvement_median": -1.8066582341269566e-07,
+      "placebo_sharpe_p90": 1.176936047015124,
+      "owner_rule": {
+        "k": 0.8240137556776034,
+        "candidate_sharpe": 1.1363023531371494,
+        "control_sharpe": 1.0861823585039279,
+        "sharpe_gap": 0.05011999463322159,
+        "owner_rule_pass": false
+      },
+      "stop_conditions": {
+        "a_auroc_below_min": true,
+        "b1_dd_improvement_below_placebo_plus_5pp": true,
+        "b2_sharpe_below_placebo_p90": true,
+        "c_owner_rule_fail": true,
+        "stage1_stop": true
+      },
+      "stage1_passed": false,
+      "stage2_run": false
+    },
+    "u2": {
+      "metrics_10bp": {
+        "select": {
+          "days": 575,
+          "cagr": 0.2465187754695779,
+          "vol": 0.383318210778699,
+          "sharpe": 0.64684561588407,
+          "max_dd": -0.31935010078556936,
+          "turnover_yr": 51.79075067975599
+        },
+        "holdout": {
+          "days": 178,
+          "cagr": 0.6596973382014757,
+          "vol": 0.6136074801974583,
+          "sharpe": 1.078816810147658,
+          "max_dd": -0.35223258681938774,
+          "turnover_yr": 18.135506557489045
+        },
+        "anchor": {
+          "days": 675,
+          "cagr": 0.40382861883660004,
+          "vol": 0.47063233842350866,
+          "sharpe": 0.8678947256454426,
+          "max_dd": -0.3522325868193875,
+          "turnover_yr": 43.194669029315314
+        },
+        "stress": {
+          "days": 1847,
+          "cagr": 0.1629414969588412,
+          "vol": 0.3243845245200053,
+          "sharpe": 0.5900932702806224,
+          "max_dd": -0.4282921867114572,
+          "turnover_yr": 11.643574000765334
+        }
+      },
+      "metrics_20bp": {
+        "select": {
+          "days": 575,
+          "cagr": 0.1834650816941541,
+          "vol": 0.3837088140068091,
+          "sharpe": 0.511254797560378,
+          "max_dd": -0.33209468417934274,
+          "turnover_yr": 51.79075067975599
+        },
+        "holdout": {
+          "days": 178,
+          "cagr": 0.6299178264671648,
+          "vol": 0.6136154848773194,
+          "sharpe": 1.049245479423664,
+          "max_dd": -0.3527232879820634,
+          "turnover_yr": 18.135506557489045
+        },
+        "anchor": {
+          "days": 675,
+          "cagr": 0.3444238566191782,
+          "vol": 0.4708341318789232,
+          "sharpe": 0.7757953159734342,
+          "max_dd": -0.3527232879820634,
+          "turnover_yr": 43.194669029315314
+        },
+        "stress": {
+          "days": 1847,
+          "cagr": 0.14951005066877743,
+          "vol": 0.3243165844420476,
+          "sharpe": 0.5543236658789781,
+          "max_dd": -0.4311562181142815,
+          "turnover_yr": 11.643574000765334
+        }
+      },
+      "auroc": 0.5223042362002568,
+      "auroc_min": 0.6,
+      "real_dd_improvement_anchor": -0.06314634136512176,
+      "placebo_dd_improvement_median": -1.8066582341269566e-07,
+      "placebo_sharpe_p90": 1.2636724359617133,
+      "owner_rule": {
+        "k": 0.8552681918354401,
+        "candidate_sharpe": 0.8678947256454426,
+        "control_sharpe": 1.0866371647704607,
+        "sharpe_gap": -0.21874243912501812,
+        "owner_rule_pass": false
+      },
+      "stop_conditions": {
+        "a_auroc_below_min": true,
+        "b1_dd_improvement_below_placebo_plus_5pp": true,
+        "b2_sharpe_below_placebo_p90": true,
+        "c_owner_rule_fail": true,
+        "stage1_stop": true
+      },
+      "stage1_passed": false,
+      "stage2_run": false
+    },
+    "u3": {
+      "metrics_10bp": {
+        "select": {
+          "days": 575,
+          "cagr": 0.2942265272140503,
+          "vol": 0.2556002544501406,
+          "sharpe": 0.9540401280235012,
+          "max_dd": -0.27480316162109375,
+          "turnover_yr": 10.29328727722168
+        },
+        "holdout": {
+          "days": 178,
+          "cagr": 0.14527928829193115,
+          "vol": 0.34877657081110824,
+          "sharpe": 0.4724793583831336,
+          "max_dd": -0.20316052436828613,
+          "turnover_yr": 10.60382080078125
+        },
+        "anchor": {
+          "days": 675,
+          "cagr": 0.24481618404388428,
+          "vol": 0.29044368590560354,
+          "sharpe": 0.7546504675027803,
+          "max_dd": -0.2748035788536072,
+          "turnover_yr": 10.174578666687012
+        },
+        "stress": {
+          "days": 1847,
+          "cagr": 0.08893334865570068,
+          "vol": 0.2602395047420627,
+          "sharpe": 0.41008710269229465,
+          "max_dd": -0.35499006509780884,
+          "turnover_yr": 9.698885917663574
+        }
+      },
+      "metrics_20bp": {
+        "select": {
+          "days": 575,
+          "cagr": 0.28098130226135254,
+          "vol": 0.2556089476112123,
+          "sharpe": 0.9137802395985402,
+          "max_dd": -0.27602601051330566,
+          "turnover_yr": 10.29328727722168
+        },
+        "holdout": {
+          "days": 178,
+          "cagr": 0.13319683074951172,
+          "vol": 0.34878751118388557,
+          "sharpe": 0.44208315246661606,
+          "max_dd": -0.20393282175064087,
+          "turnover_yr": 10.60382080078125
+        },
+        "anchor": {
+          "days": 675,
+          "cagr": 0.23222064971923828,
+          "vol": 0.2904517285580236,
+          "sharpe": 0.7196298844476015,
+          "max_dd": -0.2760259509086609,
+          "turnover_yr": 10.174578666687012
+        },
+        "stress": {
+          "days": 1847,
+          "cagr": 0.07842755317687988,
+          "vol": 0.26022862350643555,
+          "sharpe": 0.37284538814265966,
+          "max_dd": -0.35560911893844604,
+          "turnover_yr": 9.698885917663574
+        }
+      },
+      "auroc": null,
+      "auroc_not_applicable": true,
+      "placebo_sharpe_p90": 1.039413708733593,
+      "owner_rule": {
+        "k": 0.5292626166967186,
+        "candidate_sharpe": 0.7546504675027803,
+        "control_sharpe": 1.0790235217275184,
+        "sharpe_gap": -0.32437305422473806,
+        "owner_rule_pass": false
+      },
+      "stop_conditions": {
+        "a_auroc_below_min": false,
+        "a_not_applicable": true,
+        "b2_sharpe_below_placebo_p90": true,
+        "c_owner_rule_fail": true,
+        "stage1_stop": true
+      },
+      "stage1_passed": false,
+      "stage2_run": false
+    }
+  },
+  "trial_ledger_rows": [
+    {
+      "candidate_id": "u1",
+      "a_auroc_below_min": true,
+      "b1_dd_improvement_below_placebo_plus_5pp": true,
+      "b2_sharpe_below_placebo_p90": true,
+      "c_owner_rule_fail": true,
+      "stage1_stop": true
+    },
+    {
+      "candidate_id": "u2",
+      "a_auroc_below_min": true,
+      "b1_dd_improvement_below_placebo_plus_5pp": true,
+      "b2_sharpe_below_placebo_p90": true,
+      "c_owner_rule_fail": true,
+      "stage1_stop": true
+    },
+    {
+      "candidate_id": "u3",
+      "a_auroc_below_min": false,
+      "a_not_applicable": true,
+      "b2_sharpe_below_placebo_p90": true,
+      "c_owner_rule_fail": true,
+      "stage1_stop": true
+    }
+  ],
+  "base_book": {
+    "anchor_10bp": {
+      "days": 675,
+      "cagr": 0.631310224533081,
+      "vol": 0.5506595949247574,
+      "sharpe": 1.0883554890561002,
+      "max_dd": -0.4153789281845093,
+      "turnover_yr": 5.662222862243652
+    }
+  },
+  "any_stage1_pass": false
+}

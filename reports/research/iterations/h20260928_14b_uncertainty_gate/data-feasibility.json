@@ -1,0 +1,97 @@
+{
+  "contract_id": "data_v1_daily_broad_universe_broad_uncertainty_gate",
+  "schema_version": 1,
+  "report_type": "generic_candidate_family_data_feasibility_v1",
+  "iter_id": "h20260928_14b_uncertainty_gate",
+  "generated_before_backtest": true,
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "path_gates": {
+    "uncertainty_gate_t1_book": {
+      "action": "evaluate",
+      "historical_evaluation_go": true,
+      "candidate_ids": [
+        "u1",
+        "u2",
+        "u3"
+      ]
+    }
+  },
+  "candidate_accounting": {
+    "frozen_candidate_count": 3,
+    "evaluation_authorized_count": 3,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "base_book_source": {
+    "prices": "data/features/daily_broad/*.parquet (open, close)",
+    "universe": "data/features/universe_broad/*.parquet (adv_rank, month_end, close>=5)",
+    "signal": "data/features/daily_broad/*.parquet: momentum_252_21 column, lag 0 (T1 book, unchanged from run_h20260924_02_momentum_crash_guard.py)",
+    "training_features": "data/features/daily_broad/*.parquet: kt.BASE_FEATURE_COLUMNS (price-volume factors, same table as the T1 book's own signal)",
+    "consequence": "T1 book construction and coverage identical to h20260924_02's own checked coverage (daily_broad 2016-01-04..2026-09-17, momentum_252_21 first non-null 2017-01-03); the uncertainty ensemble's own walk-forward training additionally needs several years of feature/label history before its first out-of-sample prediction, so the first out-of-sample model year is expected around 2018 and is reported exactly, not assumed, in report.md."
+  },
+  "side_panel_sources": {
+    "spy_shy_bil_prices": {
+      "path": "data/sip/daily/*/*.parquet",
+      "columns": [
+        "symbol",
+        "timestamp",
+        "open",
+        "close",
+        "volume",
+        "trade_count"
+      ],
+      "hygiene": "drop bars with zero volume and zero trade_count (vendor ghost bars), matching run_h20260924_02_momentum_crash_guard.py::load_side_panel (imported unchanged).",
+      "coverage_required": "2016-01-04 through the latest session, for SHY/BIL cash-leg and Sharpe-convention returns."
+    }
+  },
+  "risk_factors": [
+    "momentum_252_21 has no history before 2017-01-03, matching h20260924_02's own disclosed constraint; the uncertainty ensemble's first out-of-sample year is later still (walk-forward needs several years of training history) -- reported exactly, not assumed.",
+    "LightGBM training at 500 stocks x ~2700 days x k=15 models x ~8 annual retrains is unlikely to fit in this box's 1.8G run_capped budget -- training is run on Modal by default per the brief; evaluation (applying the already-trained multiplier/exclusion series to the T1 book) is a small vectorized computation and runs locally under run_capped.sh --mem 1.8G."
+  ],
+  "fallback": "If a rolling statistic (e.g. the 252-session U(t) quantile) lacks its minimum trailing window, the gate multiplier defaults to 1.0 (unguarded, matching the base book) rather than NaN or an arbitrary value, matching h20260924_02's own fallback convention; this only affects a short warmup period, disclosed and excluded from every gated window's own start date.",
+  "candidate_authorization": {
+    "candidate_count": 3,
+    "rows": [
+      {
+        "candidate_id": "u1",
+        "path": "uncertainty_gate_t1_book",
+        "action": "evaluate",
+        "reason_code": "published_deup_paper_and_local_negative_evidence_preregistered",
+        "candidate_binding_sha256": "920aaefb738a21c8d041b4725e87555d7e51a2223eb58f9a0d801a84177cc4aa"
+      },
+      {
+        "candidate_id": "u2",
+        "path": "uncertainty_gate_t1_book",
+        "action": "evaluate",
+        "reason_code": "published_deup_paper_and_local_negative_evidence_preregistered",
+        "candidate_binding_sha256": "9b0fb7edeeb714e3e32b1f3bc2f1829bbc5eed7100107a1c4615eeaeae60bc1b"
+      },
+      {
+        "candidate_id": "u3",
+        "path": "uncertainty_gate_t1_book",
+        "action": "evaluate",
+        "reason_code": "published_deup_paper_and_local_negative_evidence_preregistered",
+        "candidate_binding_sha256": "76e73c2f1b507c4e34ade7e2f3e72e44f970e4e11a529d216c0f274f63b1281e"
+      }
+    ]
+  },
+  "required_reference_names": [
+    "hypothesis_card",
+    "external_brief_md"
+  ],
+  "required_references": {
+    "hypothesis_card": {
+      "path": "reports/research/hypotheses/H-20260928-31-uncertainty-gate.md",
+      "sha256": "41f7b6524fcaf0b7f99243d1ec1c84a4af394fae4d76f0e18ac6d066ae667256"
+    },
+    "external_brief_md": {
+      "path": "reports/research/iterations/h20260928_14b_uncertainty_gate/external-brief.md",
+      "sha256": "235a4ac046a885b3ba5a8f98656ee0563a03ecd754fa3b11fe820f5beb85680f"
+    }
+  }
+}

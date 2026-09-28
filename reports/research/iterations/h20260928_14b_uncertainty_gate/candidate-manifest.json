@@ -1,0 +1,184 @@
+{
+  "iter_id": "h20260928_14b_uncertainty_gate",
+  "strategy_name": "uncertainty_gate_h20260928_14b",
+  "source_spec_path": "strategy_specs/drafts/uncertainty_gate_h20260928_14b.yaml",
+  "spec_hash": "331eb8690255ad528be4b005958adb00d3c35b019f04733a7b56b468ec197c84",
+  "schema_version": 3,
+  "created_at": "2026-09-28T19:20:00+00:00",
+  "objective": "Test whether a TRAINED ensemble-disagreement (DEUP-style epistemic uncertainty) gate on the unchanged T1 20-session top-30-of-500 momentum book raises Sharpe (not just cuts drawdown) vs. a same-realized-vol unguarded control, per T-20260928-14 / registry row dir:regime_trust_uncertainty_gate_momentum_ranker, arXiv 2603.13252 'When Alpha Breaks'. Three candidates (U1, U2 book-level exposure cuts; U3 individual-name DEUP-style cap), all counted toward trial exposure (DSR n=3).",
+  "candidates": [
+    {
+      "candidate_id": "u1",
+      "path": "uncertainty_gate_t1_book",
+      "role": "strategy_level_regime_trust_gate_moderate",
+      "method": "ensemble_disagreement_quantile_exposure_cut",
+      "ablation": "z_gt_0p80_half_exposure",
+      "spec_path": "strategy_specs/drafts/uncertainty_gate_h20260928_14b.yaml",
+      "fallback": "base_t1_book_unguarded_multiplier_1_0",
+      "data_contract": "data_v1_daily_broad_universe_broad_uncertainty_gate",
+      "feature_contract": "feature_v1_kt_base_feature_columns_rank_normalized",
+      "label_contract": "label_v1_20d_forward_cross_sectional_rank",
+      "validation_contract": "validation_v1_frozen_windows_stage1_stage2_uncertainty_gate",
+      "cost_contract": "cost_v1_10_20bps_uncertainty_gate",
+      "benchmark_contract": "benchmark_v1_vol_matched_control_and_placebo_uncertainty_gate",
+      "parameters": {
+        "candidate_id": "u1",
+        "family": "U1",
+        "source_claim_ids": [
+          "deup2026_regime_trust_gate_definition",
+          "deup2026_epistemic_uncertainty_definition"
+        ],
+        "ensemble": "k=15 bootstrap LightGBM regressors, row-level bootstrap, seeds 0-14, target = 20-session forward cross-sectional rank of return",
+        "u_i_definition": "std across the 15 models' predicted cross-sectional rank for stock i at date t",
+        "book_level_U": "mean of u_i(t) over the T1 book's currently-held names, weighted by each name's held weight at t (t known)",
+        "z_definition": "U(t)'s quantile within its own trailing 252-session U series, using only U(t) and prior sessions",
+        "trigger": "z(s-1) > 0.80",
+        "multiplier_rule": "0.5 while triggered (remainder in SHY), else 1.0",
+        "settlement_lag_sessions": 1,
+        "settlement_lag_basis": "U(t)/z(t) computed from model predictions keyed to trade_date t, itself already point-in-time (features lagged into the label per the walk-forward training contract); applied at the next session's open, i.e. z(s-1) decides the multiplier for session s -- 1-session lag, not the T1 book's own 2-session return-settlement lag, since U/z is not derived from the book's own realized return series."
+      }
+    },
+    {
+      "candidate_id": "u2",
+      "path": "uncertainty_gate_t1_book",
+      "role": "strategy_level_regime_trust_gate_severe",
+      "method": "ensemble_disagreement_quantile_exposure_cut",
+      "ablation": "z_gt_0p90_zero_exposure",
+      "spec_path": "strategy_specs/drafts/uncertainty_gate_h20260928_14b.yaml",
+      "fallback": "base_t1_book_unguarded_multiplier_1_0",
+      "data_contract": "data_v1_daily_broad_universe_broad_uncertainty_gate",
+      "feature_contract": "feature_v1_kt_base_feature_columns_rank_normalized",
+      "label_contract": "label_v1_20d_forward_cross_sectional_rank",
+      "validation_contract": "validation_v1_frozen_windows_stage1_stage2_uncertainty_gate",
+      "cost_contract": "cost_v1_10_20bps_uncertainty_gate",
+      "benchmark_contract": "benchmark_v1_vol_matched_control_and_placebo_uncertainty_gate",
+      "parameters": {
+        "candidate_id": "u2",
+        "family": "U2",
+        "source_claim_ids": [
+          "deup2026_regime_trust_gate_definition",
+          "deup2026_epistemic_uncertainty_definition"
+        ],
+        "ensemble": "identical model/ensemble as u1, no re-fitting",
+        "u_i_definition": "identical to u1",
+        "book_level_U": "identical to u1",
+        "z_definition": "identical to u1",
+        "trigger": "z(s-1) > 0.90",
+        "multiplier_rule": "0.0 while triggered (all SHY), else 1.0",
+        "settlement_lag_sessions": 1,
+        "settlement_lag_basis": "identical reasoning to u1"
+      }
+    },
+    {
+      "candidate_id": "u3",
+      "path": "uncertainty_gate_t1_book",
+      "role": "position_level_deup_style_tail_risk_cap",
+      "method": "cohort_level_high_uncertainty_name_exclusion",
+      "ablation": "drop_top_quintile_u_i_backfill_by_momentum_rank",
+      "spec_path": "strategy_specs/drafts/uncertainty_gate_h20260928_14b.yaml",
+      "fallback": "base_t1_book_unguarded_multiplier_1_0",
+      "data_contract": "data_v1_daily_broad_universe_broad_uncertainty_gate",
+      "feature_contract": "feature_v1_kt_base_feature_columns_rank_normalized",
+      "label_contract": "label_v1_20d_forward_cross_sectional_rank",
+      "validation_contract": "validation_v1_frozen_windows_stage1_stage2_uncertainty_gate",
+      "cost_contract": "cost_v1_10_20bps_uncertainty_gate",
+      "benchmark_contract": "benchmark_v1_vol_matched_control_and_placebo_uncertainty_gate",
+      "parameters": {
+        "candidate_id": "u3",
+        "family": "U3",
+        "source_claim_ids": [
+          "deup2026_epistemic_uncertainty_definition",
+          "deup2026_2024_regime_breakdown_motivation"
+        ],
+        "ensemble": "identical model/ensemble as u1/u2, no re-fitting",
+        "u_i_definition": "identical to u1",
+        "selection_rule": "at each new-cohort formation date, drop candidate names whose u_i(t) is in the top 20% (highest uncertainty) of that day's full top-500-universe u_i distribution, then backfill the cohort to 30 names by momentum rank order among the remaining eligible names",
+        "multiplier_rule": "always 1.0 (this candidate changes cohort MEMBERSHIP, not book-level exposure)",
+        "settlement_lag_sessions": "n/a (selection uses the same point-in-time model prediction available at cohort formation, per the label contract; no additional settlement lag beyond the base T1 book's own formation-date discipline)",
+        "note": "Not applicable to stop condition (a) [AUROC on a drawdown-flag label] per the preregistration -- U3 changes stock selection, not book-level exposure, so it has no book-level z(t) series to score for drawdown-day AUROC; only stop conditions (b) placebo and (c) owner Sharpe rule apply to U3."
+      }
+    }
+  ],
+  "candidate_count": 3,
+  "contracts": {
+    "data": {
+      "data_v1_daily_broad_universe_broad_uncertainty_gate": {
+        "daily_broad_glob": "data/features/daily_broad/*.parquet",
+        "universe_broad_glob": "data/features/universe_broad/*.parquet",
+        "sip_daily_glob": "data/sip/daily/*/*.parquet",
+        "symbols_market": [
+          "SPY",
+          "SHY",
+          "BIL"
+        ],
+        "source": "existing repo feature tables (unchanged) for the T1 book and training features; alpaca SIP daily archive for SPY/SHY/BIL, reused unchanged from run_h20260924_02_momentum_crash_guard.py::load_side_panel",
+        "hygiene": "existing sanitize_price_matrices pipeline (unchanged, imported)"
+      }
+    },
+    "features": {
+      "feature_v1_kt_base_feature_columns_rank_normalized": {
+        "columns": "scripts.run_t20260928_10_ml_killtest.BASE_FEATURE_COLUMNS (== scripts.run_h20260917_02_ml_ranking.DAILY_FEATURE_COLUMNS), price-volume only",
+        "normalization": "daily cross-sectional percentile rank per feature, scripts.run_t20260928_30_smallcap_ml_book.rank_normalize_daily's operation (reimplemented locally on the same definition, not importing that script directly since only import of signal_card/run_h20260924_02 is permitted by the brief -- this task's own copy is unit-tested against the same definition)",
+        "universe": "top-500 by dollar ADV (same PIT universe as the T1 book itself)"
+      }
+    },
+    "labels": {
+      "label_v1_20d_forward_cross_sectional_rank": {
+        "definition": "20-session-forward open-to-open return, cross-sectional percentile rank within the top-500 universe on the formation date; walk-forward expanding-window training, annual retrain each January, training labels purged to end at least 21 sessions before the retrain date"
+      }
+    },
+    "validation": {
+      "validation_v1_frozen_windows_stage1_stage2_uncertainty_gate": {
+        "windows": {
+          "select": [
+            "2023-09-18",
+            "2025-12-31"
+          ],
+          "holdout": [
+            "2026-01-02",
+            "2026-09-17"
+          ],
+          "anchor": [
+            "2024-01-08",
+            "2026-09-16"
+          ],
+          "stress": [
+            "2016-05-01",
+            "2023-08-31"
+          ],
+          "contaminated_reference_only": [
+            "2026-01-01",
+            "2026-09-17"
+          ]
+        },
+        "stage1_stop_conditions": "AUROC<0.60 (U1/U2 only) on a drawdown-flag label over 2024-01-08..latest; placebo (>=200 seeds) beat-fraction/percentile check; owner rule anchor Sharpe vs vol-matched control <0.10 -- ANY one hit stops that candidate at stage 1, refuted, no stage 2",
+        "stage2_gates": "only for a candidate clearing all stage-1 conditions: stress-window >=0.10 Sharpe-vs-matched-control, G1-G5 (G1 anchor CAGR>=50% and max DD<=35%, or G1' anchor Sharpe>=2.0 and CAGR>=30%; G2 holdout Sharpe>=1.0; G3 placebo beat-fraction<=10%; G4 G1-or-G1' holds at 20bp; G5 long-only Alpaca-executable), K1/K2 tiering, DSR at 3 trials",
+        "sharpe_convention": "excess of BIL daily return, ddof=1, sqrt(252) annualization -- reused unchanged from scripts/run_h20260918_05_recent_menu.py::metrics"
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_uncertainty_gate": {
+        "primary_bps": 10.0,
+        "stress_bps": 20.0
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_vol_matched_control_and_placebo_uncertainty_gate": {
+        "members": [
+          "base_t1_book_unguarded_10bp",
+          "vol_matched_control_k_book_plus_1_minus_k_shy"
+        ],
+        "placebos": [
+          "u1_u2_block_circular_shift_gate_series_200_seeds",
+          "u3_random_quintile_drop_cohort_200_seeds"
+        ]
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/uncertainty_gate_h20260928_14b.yaml": "331eb8690255ad528be4b005958adb00d3c35b019f04733a7b56b468ec197c84"
+  },
+  "model_training": true,
+  "single_mechanism_no_campaign_attestation": true,
+  "generated_before_backtest": true
+}

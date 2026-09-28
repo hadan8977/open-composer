@@ -1,0 +1,12 @@
+{
+  "contract_id": "cost_v1_10_20bps_uncertainty_gate",
+  "iter_id": "h20260928_14b_uncertainty_gate",
+  "primary_cost_bps_per_side": 10.0,
+  "stress_cost_bps_per_side": 20.0,
+  "cost_application": "sum(abs(diff(scaled_or_reselected_held_weight))) * cost_bps / 1e4, applied to the gate-scaled (U1/U2) or reselected (U3) T1 book held-weight matrix; the cash leg (SHY) carries no separate transaction cost, consistent with open_composer.research.signal_card.book_returns's own convention on the base book.",
+  "cash_leg": {
+    "symbol": "SHY",
+    "return_definition": "next-open total return (open[t+1]/open[t]-1 on SHY's own adjusted open series), computed the same way as the book's own ret series (Market.next_open_returns), reused unchanged from run_h20260924_02_momentum_crash_guard.py::load_side_panel.",
+    "rationale": "Matches this repo's frozen giants-sweep/recent-menu CASH=SHY convention, reused unchanged for consistency with h20260924_02."
+  }
+}

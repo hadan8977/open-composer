@@ -1,0 +1,81 @@
+{
+  "iter_id": "h20260928_14b_uncertainty_gate",
+  "strategy_name": "uncertainty_gate_h20260928_14b",
+  "source_spec_path": "strategy_specs/drafts/uncertainty_gate_h20260928_14b.yaml",
+  "spec_hash": "331eb8690255ad528be4b005958adb00d3c35b019f04733a7b56b468ec197c84",
+  "schema_version": 3,
+  "created_at": "2026-09-28T19:20:00+00:00",
+  "objective": "Test up to 3 preregistered candidates of a trained ensemble-disagreement (DEUP-style) uncertainty gate on the unchanged T1 momentum book against a same-realized-vol unguarded control and placebo distributions, per T-20260928-14.",
+  "paths": [
+    {
+      "name": "uncertainty_gate_t1_book",
+      "candidate_count": 3,
+      "hypothesis_refs": [
+        "H-20260928-31"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "u1",
+          "u2",
+          "u3"
+        ],
+        "cost_bps": [
+          10,
+          20
+        ],
+        "model_training": true,
+        "mutation": "none",
+        "ensemble_size_k": 15,
+        "uncertainty_quantile": [
+          0.8,
+          0.9,
+          "n/a_selection_rule"
+        ]
+      },
+      "benchmark_family": [
+        "base_t1_book_unguarded_10bp",
+        "vol_matched_control_k_book_plus_1_minus_k_shy",
+        "u1_u2_block_circular_shift_placebo_200_seeds",
+        "u3_random_quintile_drop_placebo_200_seeds"
+      ]
+    }
+  ],
+  "total_candidate_budget": 3,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_14b_uncertainty_gate/candidate-manifest.json",
+  "candidate_manifest_sha256": "4d907603b035a95e5876d39c576f67971c5593f719a3fe2d5ad2a0b4c9098b9b",
+  "data_feasibility_path": "reports/research/iterations/h20260928_14b_uncertainty_gate/data-feasibility.json",
+  "cost_table_path": "reports/research/iterations/h20260928_14b_uncertainty_gate/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_14b_uncertainty_gate/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_14b_uncertainty_gate/report.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "select": [
+      "2023-09-18",
+      "2025-12-31"
+    ],
+    "holdout": [
+      "2026-01-02",
+      "2026-09-17"
+    ],
+    "anchor": [
+      "2024-01-08",
+      "2026-09-16"
+    ],
+    "stress": [
+      "2016-05-01",
+      "2023-08-31"
+    ]
+  },
+  "gates": {
+    "stage1_auroc": "AUROC>=0.60 for z(t) flagging above-median-future-drawdown days (U1/U2 only)",
+    "stage1_placebo": ">=200-seed placebo; drawdown-improvement beats placebo median by >=5pp OR anchor Sharpe beats placebo 90th percentile",
+    "stage1_owner_rule": "anchor Sharpe >= vol-matched-control Sharpe + 0.10",
+    "stage2_stress_owner_rule": "stress-window Sharpe >= vol-matched-control Sharpe + 0.10",
+    "stage2_g1_g5": "G1/G1'/G2/G3/G4/G5 per docs/runbook-autonomous-round.zh.md section 5, K1/K2 tiering, DSR n=3"
+  },
+  "data_feasibility_sha256": "273f6eb8c4250f6ea00739018c56e86372ccaf01f093a11d28d37748ada684f0"
+}
