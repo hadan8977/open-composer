@@ -16,6 +16,7 @@
   6. 替机主做决定：实盘、做空、付费数据、GPU、新的模型消费额度、新账户。遇到就写进汇报的"需要你决定"，把任务标 `blocked`，然后做下一个能做的任务。
   7. 删除不是本轮创建的文件。
 - **机主已否决、不要再提的**（2026-09-27）：大模型联网选股的前向测试（arXiv 2601.11958）、MarketSenseAI 多代理选股。S3 小额实盘"再说"，不要每轮催。
+- **机主的判断标准**（2026-09-28）：看夏普。只改仓位大小（降仓、组合只为降回撤、多放短债）不算改进，不要作为结论或建议汇报。
 
 ## 1. 预检（第一步，必须做）
 
@@ -77,6 +78,8 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
 
 - **研究协议**（和 `CLAUDE.md`、`AGENTS.md` 一致）：先联网读原文 → 登记簿查重 → `uv run oc research iteration init <id>` → 写 `direction-review.json`、候选清单（预注册每个候选）→ `uv run oc research direction-check <path>` 和 `uv run oc research iteration validate <id> --stage pre-backtest` 都通过 → 回测 → `--stage final` 通过 → 假设卡、decision record、登记簿、覆盖地图。
 - **冻结合同**（`docs/plan-strategy-factory-2026-09-22.zh.md` 第 1 节）：选择窗 2023-09-18→2025-12-31；对标窗 2024-01-08→今天；每边 10 bp，收盘出信号、次日开盘成交；安慰剂对照；G1 年化 ≥50% 且最大回撤 ≤35%，或 G1' 夏普 ≥2 且年化 ≥30%；G2 留出窗夏普 ≥1；G3 安慰剂打赢比例 ≤10%；G4 20 bp/边仍成立；G5 Alpaca 只做多可执行。2026-01→09-17 这段已被反复看过，只能当"受污染的留出"；2026-09-18 以后的月份才是新的留出。压力期用 2016-05→2023-08（数据从 2016-01 开始）。
+- **以夏普为准**：新方案必须和"把现有策略调到同样波动"的版本比夏普；回撤变小但夏普不升，不算进展。
+- **不挑调仓日**：月度、周度等定期调仓的策略，必须报告所有调仓日偏移（月度 21 个、周度 5 个）的分布，按中位数判断；只报一个日子会被调仓日运气抬高（H-20260928-01：S3 的月末日是 21 个日子里最好的，中位数夏普 1.49，月末 1.82）。
 - **核对**：每个结论都要自己对着原始 JSON 逐条核对预注册的标准，再写进汇报（子代理说"过了"不算数）。
 - **算力**：这台机器 4 GB 内存、没有 GPU，内存紧张时系统先杀 Claude。读行情数据的任务一律 `scripts/run_capped.sh --mem 1.8G -- ...`，同一时间只跑一个重任务。长任务用 `setsid nohup ... > logs/<名字>.log 2>&1 &` 脱离运行、写断点；等待用后台命令（`while kill -0 <PID>; do sleep 30; done`，`run_in_background: true`）然后结束回合，不要反复轮询。
 - **改代码后**：`uv run ruff format <文件>`、`uv run ruff check <文件>`、相关测试。动了共享模块才跑全量 `uv run pytest`（约 40 分钟，放后台）。产品界面改动还要 `uv run oc repo check --strict`。
@@ -102,6 +105,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
    - **下一轮做什么**
    - **需要你决定的**（没有就写"无"）
    第一次出现的专业词用一句话解释。不要贴日志，不要列文件清单。
+6. **把同一段汇报送到机主的对话里**（定时任务结束后会自动归档本代理，机主看不到这里）：用 ToolSearch 加载 `mcp__paseo__send_agent_prompt`，`agentId` 取 `config/autonomous-report-target.json` 的 `agent_id`，`background: true`，`notifyOnFinish: false`，消息以 `【自动研究轮汇报 MM-DD HH:MM UTC】` 开头。跳过的轮不发（机主在用对话时本来就会跳过）。发送失败就在自动轮日志的摘要里写"汇报未送达"。
 
 ## 8. 子代理任务说明模板
 
