@@ -151,7 +151,7 @@
   - 2026-09-28 完成：简报 `reports/research/intel/I-20260928-02-modal-lane-ml-cnn.md`。机主中途决定：(a) 多来源排序模型 GO——放宽到全体 Alpaca 可交易美股（价格>=$3、21 日美元成交额>=$1M，不再限流动性前 1000），登记簿行 `dir:ml_ranking_broad_universe_custom` 改 `queued`（12 候选、分两段 Modal 预算：kill test $0.95、full eval $2.85）；(b) K 线图像 CNN 机主降级搁置（非否定），新增登记簿行 `dir:chart_image_cnn_jkx_replication`（`parked`，证据保留，否定测试已备好待重开）。`oc research directions validate` 通过。
 
 ### T-20260928-10 Modal：多来源截面排序模型（依赖 08；09 已定稿）
-- status: blocked（只等 08 运行器的一致性检查通过）
+- status: done（Stage 1 否定测试 FAIL，不进 Stage 2）
 - priority: 1
 - not_before:
 - goal: 回答"多种免费数据合进一个模型，能否在流动性好的股票上给出只做多、扣成本后的超额"。按 09 的预注册执行。
@@ -161,6 +161,18 @@
 - features_add_2026-09-28: I-20260928-04（JKP 因子库）2023 年以来唯一显著多于运气的一族是会计变化类（经营现金流/资产变化、季度利润/资产变化、利润/净资产变化、连续 8 季利润增长；2010–2022 年接近 0，2023 年起转强）。能用 `data/features/sec_fundamentals_daily` 算的 `ocf_at_chg1`、`niq_at_chg1`、`niq_be_chg1`、`ni_inc8q` 加进特征；只做多一侧单独夏普 <1，不单独做策略。
 - done_when: 迭代 `--stage final` 通过；登记簿、覆盖地图、current-view 更新。
 - notes:
+  - 2026-09-28 07:00 UTC Stage 1 否定测试 FAIL（Modal 8 核/32GiB/90min 实跑，$0.2105；连
+    3 次 smoke 共 $0.015，任务总花费约 $0.226）。压力期 2016-05-02→2023-08-31 验证集
+    RankIC：候选 5（回归/monthly）-0.0163（t=-0.74，n=45）；候选 6（回归/biweekly）
+    0.0032（t=0.21，n=106）；候选 11（LambdaRank/monthly）-0.0172（t=-0.76，n=45）；
+    B0（纯量价 LightGBM 基线）0.0014（t=0.18，n=75）。判定线 RankIC>=0.02 且
+    >=max(0.0071,B0)+0.01=0.0171，三个候选均未过，5/11 为负。数据层覆盖：`short_interest`/
+    `short_volume` 只覆盖流动性前 1000/500（宽池子上覆盖率 17%/39%），`accruals`/
+    `gross_profitability`/SUE/两个 niq_chg1 覆盖率也 <50%，均按既有 50% 阈值规则自动剔除
+    （33/45 特征入模）；候选 5/6/11 的流动性三档诊断因此只有 T1_liquid 档有样本。产物：
+    `reports/research/iterations/t20260928_10_ml_killtest/{results.json,feature_ic.csv,report.md}`；
+    脚本 `scripts/run_t20260928_10_ml_killtest.py`；登记簿 `dir:ml_ranking_broad_universe_custom`
+    改 `refuted`。不进 Stage 2（$2.85 未花）。
 
 ### T-20260928-11 Modal：K 线图像 CNN 否定测试（依赖 08、09，GPU）
 - status: blocked（机主 2026-09-28 暂不做：觉得不靠谱；不是被证据否定，登记簿标 parked）
@@ -190,6 +202,8 @@
 - done_when: 迭代 `--stage final` 通过（或第一段否定停止，写清原因）；登记簿行 `dir:regime_trust_uncertainty_gate_momentum_ranker` 更新为最终状态；本月 Modal 花费写进汇报（`python3 scripts/modal_budget.py status`）。
 - owner_rule_check: 机主规则（2026-09-28）：减仓本身不算改进。本任务的通过线必须是夏普：门控后的账本（调仓日偏移中位数，10 bp）在对标窗和压力期的夏普都比"不门控、调到同样波动"的账本高 ≥ 0.10；只降回撤、夏普不升就判否定。按机主 09-28 的要求直接训练、看结果，不另写长篇计划。
 - notes:
+  - 2026-09-28 13:07 UTC 自动轮开始（Paseo 1ee0d516），派 sonnet-high 执行，迭代 h20260928_14_uncertainty_gate。
+  - 2026-09-28 14:5x UTC 交互会话：13:07 那一轮派了两个后台子代理（本任务和缺口搜索）就结束了回合，Paseo 归档时把子代理一起杀了，本任务没有产物。状态改回 ready；手册已改成子代理一律前台运行。
 
 ### T-20260928-12 Modal：股票层面批量筛选（依赖 08 和批量通道 SELF_CHECK_OK）
 - status: blocked

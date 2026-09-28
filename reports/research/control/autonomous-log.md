@@ -6,3 +6,4 @@
 |---|---|---|---|---|---|
 | 2026-09-28T01:07 | 2026-09-28T01:19 | done | T-20260927-02 | S3 分批调仓否定 0/4；月末调仓日在选择窗和对标窗都是 21 个日子里最好的，不挑日子的对标窗预期约 86%/夏普 1.5/回撤 -35%（H-20260928-01） | 237,511 / 8,029,988 |
 | 2026-09-28T07:07 | 2026-09-28T07:07 | skipped | - | skip_quota: 5h window 95% >= 50% line (resets 10:59 UTC); owner sessions active | n/a |
+| 2026-09-28T13:07 | 2026-09-28T14:41 | failed | T-20260928-14 (trust gate) + gap search | 13:07 round dispatched two background subagents and ended its turn at 13:10; Paseo archived the round and both subagents were killed with no output. Lock released and the task reset to ready by the interactive session at 14:5x; the runbook now requires foreground subagents and foreground waits. | n/a |

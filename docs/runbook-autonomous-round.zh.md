@@ -31,8 +31,7 @@ uv run python scripts/autonomous_preflight.py check
 看输出 JSON 的 `decision`：
 
 - `go`：继续。输出里的 `quota` 是真实额度读数（5 小时窗口、每周的百分比和重置时间）。
-- `wait_owner_active`：只在额度读数不可用时出现（机主正在用交互会话）。用 Bash 工具的 `run_in_background: true` 运行
-  `uv run python scripts/autonomous_preflight.py wait-quiet --max-minutes 120`，然后**结束本回合**；它完成时你会收到通知，读结果：`go` 就继续，否则按跳过处理。
+- `wait_owner_active`：只在额度读数不可用时出现（机主正在用交互会话）。按跳过处理，下一轮 3 小时后再来。不要在后台等待后结束回合：定时任务的代理在回合结束的那一刻就被 Paseo 归档，后台命令和子代理会一起被杀。
 - `skip_*`（另一轮在跑、额度限制未恢复、额度超过第 6 节的线、等了 2 小时机主仍在用）：运行
   `uv run python scripts/autonomous_preflight.py log --status skipped --summary "<原因>"`，只 `git add reports/research/control/autonomous-log.md` 并提交，用一两句话汇报后结束。
 
@@ -94,10 +93,10 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
   - 保留档只表示"值得继续看"，测得越多假阳性越多，汇报时同时给 DSR。淘汰的写清楚是哪一条没过。
 - **优化迭代**：只对保留的候选做。预注册有界网格（每个候选最多 12 个参数或方法变体，写明范围），全部变体计入试验次数；变体只有在对标窗和压力期的偏移中位数夏普都比原版高 ≥0.10 时才替换原版。
 - **核对**：每个结论都要自己对着原始 JSON 逐条核对预注册的标准，再写进汇报（子代理说"过了"不算数）。
-- **算力**：这台机器 4 GB 内存、没有 GPU，内存紧张时系统先杀 Claude。读行情数据的任务一律 `scripts/run_capped.sh --mem 1.8G -- ...`，同一时间只跑一个重任务。长任务用 `setsid nohup ... > logs/<名字>.log 2>&1 &` 脱离运行、写断点；等待用后台命令（`while kill -0 <PID>; do sleep 30; done`，`run_in_background: true`）然后结束回合，不要反复轮询。
+- **算力**：这台机器 4 GB 内存、没有 GPU，内存紧张时系统先杀 Claude。读行情数据的任务一律 `scripts/run_capped.sh --mem 1.8G -- ...`，同一时间只跑一个重任务。长任务用 `setsid nohup ... > logs/<名字>.log 2>&1 &` 脱离运行、写断点；等待用前台命令分段等：`timeout 540 bash -c 'while kill -0 <PID> 2>/dev/null; do sleep 30; done'`（Bash 工具 timeout 设 600000），没结束就再调一次，直到结束。**本轮在所有任务和子代理结束前不能结束回合**：回合一结束 Paseo 就归档本轮，后台的东西全部被杀。
 - **云端算力（Modal，机主 2026-09-28 批准，只用每月 $30 免费额度）**：本机 4 GB 内存放不下的重任务（大面板因子复现、LightGBM/模型训练、成批回测）交给 Modal。凭证在 `~/.modal.toml`（不进仓库）；网页端已设消费上限，本地再加一道：每次启动前必须跑 `python3 scripts/modal_budget.py check --job <名字> --cpu <核> --memory-gib <GiB> --timeout-min <分钟> [--gpu T4]`，退出码 2 就不启动；函数的 `timeout=` 必须等于检查时的分钟数；本月上限 $25（最坏情况计价，留 $5 余量）。先用 CPU（每核每小时 $0.047，每 GiB 每小时 $0.008），GPU 只在神经网络训练时用。只上传公开行情数据和代码，`.env`、Alpaca/DeepSeek 密钥、Google Drive 凭证一律不上传。容器里 `os.cpu_count()` 显示的是宿主机核数，polars/LightGBM 要显式设线程数（`POLARS_MAX_THREADS`、`num_threads`）等于申请的核数。汇报里写本月 Modal 花费（`python3 scripts/modal_budget.py status`）。
 - **改代码后**：`uv run ruff format <文件>`、`uv run ruff check <文件>`、相关测试。动了共享模块才跑全量 `uv run pytest`（约 40 分钟，放后台）。产品界面改动还要 `uv run oc repo check --strict`。
-- **子代理**：只用 `subagent_type: "sonnet-high"`（Sonnet，high）。如果 Agent 工具列表里没有 `sonnet-high`，改用 Paseo 的 `create_agent`：`provider: "claude/claude-sonnet-5"`，`settings: {"thinkingOptionId": "high", "modeId": "bypassPermissions"}`，`notifyOnFinish: true`，任务说明里要把 `~/.claude/agents/sonnet-high.md` 的工作规则和禁止事项写进去。一轮最多 4 个，同一时间最多 2 个（额度方案 A）。重的回测任务同一时间只跑一个（内存）；两个子代理并行时，一个做回测、另一个做联网调研或登记这类轻活。任务说明按第 8 节模板写完整，high 强度下也要能一次做对。
+- **子代理**：只用 `subagent_type: "sonnet-high"`（Sonnet，high）。如果 Agent 工具列表里没有 `sonnet-high`，改用 Paseo 的 `create_agent`：`provider: "claude/claude-sonnet-5"`，`settings: {"thinkingOptionId": "high", "modeId": "bypassPermissions"}`，`notifyOnFinish: true`，任务说明里要把 `~/.claude/agents/sonnet-high.md` 的工作规则和禁止事项写进去。一轮最多 4 个，同一时间最多 2 个（额度方案 A）。**子代理一律前台运行**：Agent 调用设 `run_in_background: false`，两个并行就在同一条消息里发两个 Agent 调用。2026-09-28 13:07 那一轮派了两个后台子代理就结束了回合，Paseo 归档本轮时把它们一起杀了，两项任务都没做成。备用路径 `create_agent` 同理：本轮内每隔几分钟用 `get_agent_status` 查一次，结束了再收尾。重的回测任务同一时间只跑一个（内存）；两个子代理并行时，一个做回测、另一个做联网调研或登记这类轻活。任务说明按第 8 节模板写完整，high 强度下也要能一次做对。
 
 ## 6. 预算
 
@@ -135,6 +134,7 @@ ls -la --time-style=+%m-%d_%H:%M reports/paper/rehearsal/*-latest.md
 产出：<写到哪些文件>
 汇报：<不超过 12 行：做了什么、结论和数字（注明来自哪个文件）、没做完的>
 上限：<时间、内存（run_capped 的 --mem）>
+等待：长任务在本任务内前台分段等（timeout 540 的 PID 循环），不许结束回合去等后台通知
 ```
 
 ## 9. 队列格式（`reports/research/control/autonomous-queue.md`）

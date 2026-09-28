@@ -783,7 +783,12 @@ def run_training_stage1(
     fold_meta: list[dict[str, Any]] = []
     for fold in folds:
         train_frame = panel.loc[panel["formation_date"].isin(fold.train_dates)]
-        train_frame = train_frame.dropna(subset=[*feature_columns, target_col])
+        # LightGBM handles missing features natively; dropping rows with ANY
+        # missing feature silently cut the universe to the names that carry
+        # the narrowest layer (short interest, ~17% coverage) -- i.e. the
+        # liquid tercile only (first run, 2026-09-28 06:xx). Only rows without
+        # a target are dropped.
+        train_frame = train_frame.dropna(subset=[target_col])
         meta: dict[str, Any] = {
             "fold_id": fold.fold_id,
             "train_start": fold.train_start.date().isoformat(),
@@ -804,7 +809,7 @@ def run_training_stage1(
         model.fit(X_train, y_train, groups_train)
 
         val_frame = panel.loc[panel["formation_date"].isin(fold.validation_dates)]
-        val_frame = val_frame.dropna(subset=feature_columns)
+        val_frame = val_frame.dropna(subset=[target_col])
         if val_frame.empty:
             meta["validation_rankic_mean"] = None
             meta["validation_rankic_n_dates"] = 0
