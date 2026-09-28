@@ -1,0 +1,577 @@
+{
+  "iter_id": "h20260928_23_s1_s2_rebalance_timing",
+  "generated_at": "2026-09-28T14:00:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "s2_rebalance_timing_h20260928_23",
+  "objective": "Measure S2's rebalance timing luck across 21 monthly signal-day offsets, mirroring H-20260928-01's S3 check, so the paper renewal and any future live-pilot sizing use a date-neutral expectation. Purely descriptive: no offset is adopted.",
+  "candidates": [
+    {
+      "candidate_id": "O00",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "live_reference",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 0
+      }
+    },
+    {
+      "candidate_id": "O01",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 1
+      }
+    },
+    {
+      "candidate_id": "O02",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 2
+      }
+    },
+    {
+      "candidate_id": "O03",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 3
+      }
+    },
+    {
+      "candidate_id": "O04",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 4
+      }
+    },
+    {
+      "candidate_id": "O05",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 5
+      }
+    },
+    {
+      "candidate_id": "O06",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 6
+      }
+    },
+    {
+      "candidate_id": "O07",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 7
+      }
+    },
+    {
+      "candidate_id": "O08",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 8
+      }
+    },
+    {
+      "candidate_id": "O09",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 9
+      }
+    },
+    {
+      "candidate_id": "O10",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 10
+      }
+    },
+    {
+      "candidate_id": "O11",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 11
+      }
+    },
+    {
+      "candidate_id": "O12",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 12
+      }
+    },
+    {
+      "candidate_id": "O13",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 13
+      }
+    },
+    {
+      "candidate_id": "O14",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 14
+      }
+    },
+    {
+      "candidate_id": "O15",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 15
+      }
+    },
+    {
+      "candidate_id": "O16",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 16
+      }
+    },
+    {
+      "candidate_id": "O17",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 17
+      }
+    },
+    {
+      "candidate_id": "O18",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 18
+      }
+    },
+    {
+      "candidate_id": "O19",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 19
+      }
+    },
+    {
+      "candidate_id": "O20",
+      "path": "s2_rebalance_timing",
+      "spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_panel",
+      "feature_contract": "feature_v1_s2_rebalance_timing_offset",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_stress_select_anchor_holdout2026",
+      "cost_contract": "cost_v1_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution",
+      "role": "offset_distribution_member",
+      "method": "single_date_monthly",
+      "ablation": "signal_offset",
+      "parameters": {
+        "menu": "A3_growth",
+        "lookback": "blend",
+        "top_n": 2,
+        "vol_target": 0.156,
+        "signal_on": "bar_close",
+        "fill_assumption": "next_bar_open",
+        "signal_offset_sessions_after_month_end": 20
+      }
+    }
+  ],
+  "candidate_count": 21,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_panel": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "source": "alpaca SIP daily archive, adjusted closes",
+        "symbols": "salvage.symbols() (all three sleeves' menus, SHY, BIL, QQQ, benchmarks)",
+        "panel_start_requested": "2015-01-02 (archive starts 2016-01-04)"
+      }
+    },
+    "features": {
+      "feature_v1_s2_rebalance_timing_offset": {
+        "definition": "salvage.sleeve_weights('s2') with the monthly signal session moved o sessions after the last session of the month; down-only vol target 0.156 via salvage.vol_scale (2026-09-23 renewal); O00 asserted equal to salvage.run_cell"
+      }
+    },
+    "labels": {
+      "label_v1_next_session_open_to_open_total_return": {
+        "definition": "weights effective at next open; open and close legs"
+      }
+    },
+    "validation": {
+      "validation_v1_stress_select_anchor_holdout2026": {
+        "stress": [
+          "2016-05-02",
+          "2023-08-31"
+        ],
+        "select": [
+          "2023-09-18",
+          "2025-12-31"
+        ],
+        "anchor": [
+          "2024-01-08",
+          "2026-09-16"
+        ],
+        "holdout_2026_contaminated": [
+          "2026-01-02",
+          "2026-09-17"
+        ]
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open": {
+        "contract_path": "reports/research/iterations/h20260928_23_s1_s2_rebalance_timing/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_s2_rebalance_timing_live_reference_and_offset_distribution": {
+        "reference": "O00",
+        "descriptive": "min/median/max of the offset distribution per window"
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml": "9b8616f3b2c881dd8fcb4c1710969401c4caf14b2cb8194f90d61898a8faedbc"
+  },
+  "source_spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+  "spec_hash": "9b8616f3b2c881dd8fcb4c1710969401c4caf14b2cb8194f90d61898a8faedbc",
+  "g3_not_applicable_reason": "The offset shift changes no pick, lookback or gate; it only moves the signal date. The offset distribution is itself the placebo-like reference, exactly as in H-20260928-01 for S3.",
+  "adoption_rule": {
+    "per_candidate": "none -- purely descriptive; O00 (live) is the reference",
+    "pass_requires": "not_applicable_no_adoption_candidate_this_round",
+    "multiple_comparisons": "21 candidates, all descriptive; none can be adopted from this run",
+    "fallback_if_fail": "not_applicable -- keep the live single-date rule regardless of result"
+  }
+}

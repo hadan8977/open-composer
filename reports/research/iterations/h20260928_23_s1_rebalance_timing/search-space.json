@@ -1,0 +1,59 @@
+{
+  "iter_id": "h20260928_23_s1_rebalance_timing",
+  "strategy_name": "s1_rebalance_timing_h20260928_23",
+  "source_spec_path": "strategy_specs/drafts/s1_rebalance_timing_h20260928_23.yaml",
+  "spec_hash": "76bb40ae7f90f045954e65947a7400d61e99d76d4656d7857b425a7968b5d3a3",
+  "schema_version": 3,
+  "created_at": "2026-09-28T14:00:00+00:00",
+  "objective": "Measure S1's rebalance timing luck across 5 weekly signal-day offsets, mirroring H-20260928-01's S3 check, so the paper renewal and any future live-pilot sizing use a date-neutral expectation. Purely descriptive: no offset is adopted.",
+  "paths": [
+    {
+      "name": "s1_rebalance_timing",
+      "candidate_count": 5,
+      "hypothesis_refs": [
+        "H-20260928-01"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "O00",
+          "O01",
+          "O02",
+          "O03",
+          "O04"
+        ],
+        "signal_offset_sessions_after_week_end": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "O00_live_reference",
+        "offset_distribution_O00_O04",
+        "SPY_buy_and_hold",
+        "QQQ_buy_and_hold",
+        "SHY_buy_and_hold"
+      ]
+    }
+  ],
+  "total_candidate_budget": 5,
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_23_s1_rebalance_timing/candidate-manifest.json",
+  "candidate_manifest_sha256": "eac70c239268b5b0fa5277e8b3fb36789adfeab2e441a09cbaf5efc126d20fe8",
+  "data_feasibility_path": "reports/research/iterations/h20260928_23_s1_rebalance_timing/data-feasibility.json",
+  "data_feasibility_sha256": "1c41142d6e3380506efde32138a8793438ac916d0c814808a2b49feba7824a0c",
+  "cost_table_path": "reports/research/iterations/h20260928_23_s1_rebalance_timing/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_23_s1_rebalance_timing/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_23_s1_rebalance_timing/report.md",
+    "reports/research/iterations/h20260928_23_s1_rebalance_timing/results.json"
+  ]
+}

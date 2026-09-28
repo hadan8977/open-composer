@@ -1,0 +1,137 @@
+{
+  "schema_version": 3,
+  "iter_id": "h20260928_23_s1_rebalance_timing",
+  "strategy_name": "s1_rebalance_timing_h20260928_23",
+  "source_spec_path": "strategy_specs/drafts/s1_rebalance_timing_h20260928_23.yaml",
+  "spec_hash": "76bb40ae7f90f045954e65947a7400d61e99d76d4656d7857b425a7968b5d3a3",
+  "objective": "Measure S1's rebalance timing luck across 5 weekly signal-day offsets, mirroring H-20260928-01's S3 check, so the paper renewal and any future live-pilot sizing use a date-neutral expectation. Purely descriptive: no offset is adopted.",
+  "topic_coverage": [
+    "rebalance_timing_luck_definition_and_magnitude",
+    "tranching_overlapping_portfolios_mechanism",
+    "tranching_effect_on_mean_return_and_sharpe",
+    "concentrated_momentum_portfolio_case_study",
+    "tactical_asset_allocation_practitioner_evidence",
+    "tranching_as_implicit_trend_following_counter_hypothesis"
+  ],
+  "sources": [
+    {
+      "url": "https://concretumgroup.com/wp-content/uploads/2026/02/The-Tranching-Dilemma.pdf",
+      "published_or_updated_at": "2025-11-14",
+      "source_type": "paper",
+      "credibility": "practitioner_research_paper_with_tables",
+      "core_claim": "In a concentrated (20-stock) monthly-rebalanced US momentum portfolio, 1991-2024, the CAGR gap between the best and worst trading day of the month was 348 bp; splitting into 2-20 tranches left the mean CAGR (16.7-16.8%) and Sharpe (0.59-0.60) unchanged while shrinking the dispersion from 3.48% to 0-2%. Single-day max drawdowns ranged -69.3% to -74.9%.",
+      "project_applicability": "Reused for S1's own offset-distribution check (same mechanism as S3); Closest published analogue to S3: concentrated, monthly, momentum. Sets the prior that tranching changes dispersion, not the mean.",
+      "reflection": "Full PDF read (tables 1 and 3). It reports no drawdown for tranched books, so the drawdown question is exactly the local gap."
+    },
+    {
+      "url": "https://www.panoptica.com/rebalance-timing-luck-the-dumb-timing-luck-of-smart-beta-by-hoffstein-faber-and-braun/?from_src=epsilontheory",
+      "published_or_updated_at": "2020-08-17",
+      "source_type": "working_paper",
+      "credibility": "ssrn_working_paper",
+      "core_claim": "Factor indices (value, size, momentum, quality, low vol) show rebalance timing luck often above 100 bp annualized, larger for concentrated and less frequently rebalanced portfolios.",
+      "project_applicability": "Reused for S1's own offset-distribution check (same mechanism as S3); Confirms RTL is large for concentrated monthly books; S3 holds two ETFs, the most concentrated case.",
+      "reflection": "Abstract only; the PDF was blocked."
+    },
+    {
+      "url": "https://www.cxoadvisory.com/calendar-effects/rebalance-timing-noise/",
+      "published_or_updated_at": "2019-05-01",
+      "source_type": "paper",
+      "credibility": "journal_article_via_summary",
+      "core_claim": "Equal-weighting N staggered sub-portfolios suppresses rebalance timing luck roughly by 1/N (Hoffstein, Sibears, Faber, Journal of Beta Investment Strategies 2019), per CXO Advisory's summary.",
+      "project_applicability": "Reused for S1's own offset-distribution check (same mechanism as S3); Gives the mechanism for T4: four staggered tranches should cut the dispersion to about a quarter.",
+      "reflection": "Read through CXO's summary."
+    },
+    {
+      "url": "https://blog.thinknewfound.com/2020/04/tranching-trend-and-mean-reversion/",
+      "published_or_updated_at": "2020-04-20",
+      "source_type": "industry_standard",
+      "credibility": "established_practitioner_research_shop",
+      "core_claim": "Tranched rebalancing behaves like strategic rebalancing plus a slow trend-following component, because each tranche reacts at a different date.",
+      "project_applicability": "Reused for S1's own offset-distribution check (same mechanism as S3); Counter-hypothesis for S3: tranching slows the switch to SHY in a fast crash (only a quarter of the book moves at each date), which could deepen drawdowns.",
+      "reflection": "Conceptual payoff diagrams, no empirical table."
+    },
+    {
+      "url": "https://www.thinknewfound.com/rebalance-timing-luck",
+      "published_or_updated_at": "2020-01-01",
+      "source_type": "industry_standard",
+      "credibility": "established_practitioner_research_shop",
+      "core_claim": "Defines rebalance timing luck as the dispersion between identical portfolios rebalanced on different dates and recommends equal-weight exposure to sub-indexes.",
+      "project_applicability": "Reused for S1's own offset-distribution check (same mechanism as S3); Definition used for the 21-offset distribution.",
+      "reflection": "Landing page for the papers."
+    },
+    {
+      "url": "https://allocatesmartly.com/taming-excessive-timing-luck-in-taa-by-tranching-strategies/",
+      "published_or_updated_at": "2023-01-01",
+      "source_type": "industry_standard",
+      "credibility": "subscription_taa_tracker",
+      "core_claim": "On a timing-luck-sensitive TAA strategy (Bold Asset Allocation), tranched portfolios averaged 14.2% a year against 13.9% for single-day ones, and the spread of possible annual returns fell by almost two thirds.",
+      "project_applicability": "Reused for S1's own offset-distribution check (same mechanism as S3); Practitioner record that the tranched mean return matches single-day books.",
+      "reflection": "No drawdowns reported."
+    },
+    {
+      "url": "https://allocatesmartly.com/timing-luck-portfolio-tranching/",
+      "published_or_updated_at": "2017-08-24",
+      "source_type": "industry_standard",
+      "credibility": "subscription_taa_tracker",
+      "core_claim": "Tranching a timing-luck-sensitive TAA strategy makes performance more predictable.",
+      "project_applicability": "Reused for S1's own offset-distribution check (same mechanism as S3); Earlier practitioner evidence; the site now lets members tranche live models.",
+      "reflection": "Illustrative, one strategy."
+    },
+    {
+      "url": "https://bsic.it/lucky-numbers-the-overlooked-role-of-rebalance-timing-luck/",
+      "published_or_updated_at": "2023-01-01",
+      "source_type": "industry_standard",
+      "credibility": "student_investment_club",
+      "core_claim": "Twenty offset versions of a long-only S&P 500 momentum strategy spread widely; the averaged sub-portfolio result lies between the best and worst.",
+      "project_applicability": "Reused for S1's own offset-distribution check (same mechanism as S3); Independent small replication on long-only momentum.",
+      "reflection": "Low credibility; supporting only."
+    },
+    {
+      "url": "https://thesystematictrader.com/2018/04/timing-luck-with-tactical-asset-allocation/",
+      "published_or_updated_at": "2018-04-01",
+      "source_type": "industry_standard",
+      "credibility": "practitioner_blog",
+      "core_claim": "TAA investors trading only at month end carry timing luck; split the book and trade each part on a different day.",
+      "project_applicability": "Reused for S1's own offset-distribution check (same mechanism as S3); Month-end is exactly S3's live convention.",
+      "reflection": "Opinion piece, no new data."
+    }
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl"
+  ],
+  "source_evidence_bindings": [
+    {
+      "claim_id": "concretum2025_momentum_rtl_348bp_tranching_mean_unchanged",
+      "source_card_path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl",
+      "used_for": "prior_for_S1_offset_distribution_reused_from_H-20260928-01"
+    },
+    {
+      "claim_id": "hoffstein_faber_braun_rtl_factor_indices_gt_100bp",
+      "source_card_path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl",
+      "used_for": "prior_for_S1_offset_distribution_reused_from_H-20260928-01"
+    },
+    {
+      "claim_id": "hoffstein_sibears_faber_staggered_suppress_rtl_1_over_n",
+      "source_card_path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl",
+      "used_for": "prior_for_S1_offset_distribution_reused_from_H-20260928-01"
+    },
+    {
+      "claim_id": "allocatesmartly_taa_tranching_return_unchanged_dispersion_down",
+      "source_card_path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl",
+      "used_for": "prior_for_S1_offset_distribution_reused_from_H-20260928-01"
+    }
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "concretum2025_momentum_rtl_348bp_tranching_mean_unchanged",
+      "effect": "Offsets covering one full S1 rebalance cycle as a descriptive distribution, not a menu to pick from; O00 (live) stays the reference and no offset can be adopted."
+    },
+    {
+      "driver": "hoffstein_faber_braun_rtl_factor_indices_gt_100bp",
+      "effect": "Confirms concentrated (2-of-menu) monthly/weekly books like S1/S2 are exactly the case where rebalance-date dispersion is largest, motivating this check."
+    }
+  ],
+  "hypothesis_links": [
+    "H-20260928-01"
+  ]
+}

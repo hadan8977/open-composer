@@ -1,0 +1,91 @@
+{
+  "iter_id": "h20260928_23_s1_s2_rebalance_timing",
+  "strategy_name": "s2_rebalance_timing_h20260928_23",
+  "source_spec_path": "strategy_specs/drafts/s2_rebalance_timing_h20260928_23.yaml",
+  "spec_hash": "9b8616f3b2c881dd8fcb4c1710969401c4caf14b2cb8194f90d61898a8faedbc",
+  "schema_version": 3,
+  "created_at": "2026-09-28T14:00:00+00:00",
+  "objective": "Measure S2's rebalance timing luck across 21 monthly signal-day offsets, mirroring H-20260928-01's S3 check, so the paper renewal and any future live-pilot sizing use a date-neutral expectation. Purely descriptive: no offset is adopted.",
+  "paths": [
+    {
+      "name": "s2_rebalance_timing",
+      "candidate_count": 21,
+      "hypothesis_refs": [
+        "H-20260928-01"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "O00",
+          "O01",
+          "O02",
+          "O03",
+          "O04",
+          "O05",
+          "O06",
+          "O07",
+          "O08",
+          "O09",
+          "O10",
+          "O11",
+          "O12",
+          "O13",
+          "O14",
+          "O15",
+          "O16",
+          "O17",
+          "O18",
+          "O19",
+          "O20"
+        ],
+        "signal_offset_sessions_after_month_end": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "O00_live_reference",
+        "offset_distribution_O00_O20",
+        "SPY_buy_and_hold",
+        "QQQ_buy_and_hold",
+        "SHY_buy_and_hold"
+      ]
+    }
+  ],
+  "total_candidate_budget": 21,
+  "single_mechanism_no_campaign_attestation": true,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_23_s1_s2_rebalance_timing/candidate-manifest.json",
+  "candidate_manifest_sha256": "f0f5cdbefe9d9b42d2633c737c14866d2a079c2779071b0a7da7139d7e179697",
+  "data_feasibility_path": "reports/research/iterations/h20260928_23_s1_s2_rebalance_timing/data-feasibility.json",
+  "data_feasibility_sha256": "ee1f7f44ddf1c633e74b8470e97e4cdc3f329a65dd63440c23f2f1a01ddbf90f",
+  "cost_table_path": "reports/research/iterations/h20260928_23_s1_s2_rebalance_timing/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_23_s1_s2_rebalance_timing/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_23_s1_s2_rebalance_timing/report.md",
+    "reports/research/iterations/h20260928_23_s1_s2_rebalance_timing/results.json"
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_23_s1_rebalance_timing_historical_evaluation_authorization",
+  "iter_id": "h20260928_23_s1_rebalance_timing",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 5,
+    "evaluation_authorized_count": 5,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 5,
+    "rows": [
+      {
+        "candidate_id": "O00",
+        "path": "s1_rebalance_timing",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "c7a60f7eee355923e328d368cbc76e1ef7168b3e095870783f67e51722598f17"
+      },
+      {
+        "candidate_id": "O01",
+        "path": "s1_rebalance_timing",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "324da5bf84ab785f11652e8bfb6b83e475611540166561fcbbc6a7b0b501021f"
+      },
+      {
+        "candidate_id": "O02",
+        "path": "s1_rebalance_timing",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "a7cf86745d05b9c3dfa01dc300fc0b9c1a42cedc06213777c062028d9016dd37"
+      },
+      {
+        "candidate_id": "O03",
+        "path": "s1_rebalance_timing",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "351a764aab62bef8425f47dd53f0d842c41d473f40148388f4e547454259f2cb"
+      },
+      {
+        "candidate_id": "O04",
+        "path": "s1_rebalance_timing",
+        "action": "evaluate",
+        "reason_code": "local_sip_daily_panel_available",
+        "candidate_binding_sha256": "8df5969b92d225fa445fc2391dcee4f713c10e89fcf79a6a23380a313db13ae5"
+      }
+    ]
+  },
+  "path_gates": {
+    "s1_rebalance_timing": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "O00",
+        "O01",
+        "O02",
+        "O03",
+        "O04"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "Same local SIP daily panel and frozen engine (scripts/run_h20260922_05_salvage.py) H-20260928-01 used for S3; no new capability."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/s1_rebalance_timing_h20260928_23.yaml",
+      "sha256": "646e44ab0ff1e8a44a399f960dc91da9631f68f13dfeaa60341eabc5cb0c9696"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_23_s1_rebalance_timing/cost-contract.json",
+      "sha256": "6207f78a897f639386cc75b85a23bf18ab1575e0c917d0bab23e9551ebcd7bdd"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl",
+      "sha256": "97017e7e356e173d01ac09f420d5ee7b493fe847dc8833e09d145c08f26e90d9"
+    }
+  }
+}

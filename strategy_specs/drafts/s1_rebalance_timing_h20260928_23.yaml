@@ -1,0 +1,125 @@
+name: s1_rebalance_timing_h20260928_23
+description: 'Preregistered T-20260928-01 candidate family. S1 (A2_sector menu, 11 SPDR sector ETFs,
+  252-session momentum, top 2, SHY absolute-momentum filter, no vol target) run with its weekly signal
+  close moved 0..4 sessions after the week''s last session (O00..O04, O00 = live rule, descriptive
+  distribution only). Measures S1''s own rebalance-date luck, the same question H-20260928-01 asked
+  and answered for S3. No offset is adopted; the live rule is unchanged. Research only, deterministic,
+  next-session execution; no broker writes.'
+timeframe: daily
+universe:
+- SHY
+- XLB
+- XLC
+- XLE
+- XLF
+- XLI
+- XLK
+- XLP
+- XLRE
+- XLU
+- XLV
+- XLY
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_23:s1_rebalance_timing
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: XLK
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  s1_offset_momentum_pick:
+    source: expression
+    expression: close / lag(close, 252) - 1
+    default: 0.0
+    description: Documentation-only stand-in. The actual picks are produced by scripts/run_h20260922_05_salvage.py
+      (sleeve s1, no vol target) unchanged, with the weekly signal session moved o sessions after the
+      week's last session by scripts/run_h20260928_23_s1_s2_rebalance_timing.py; O00 is asserted equal
+      to salvage.run_cell.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_23_s1_rebalance_timing
+  candidate_manifest_path: reports/research/iterations/h20260928_23_s1_rebalance_timing/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_23_s1_rebalance_timing/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl
+  source_card_claim_ids:
+  - concretum2025_momentum_rtl_348bp_tranching_mean_unchanged
+  - hoffstein_faber_braun_rtl_factor_indices_gt_100bp
+  parameter_space:
+    candidate_id:
+    - O00
+    - O01
+    - O02
+    - O03
+    - O04
+  candidate_budget: 5
+  selection_objective: No selection among offsets. Purely descriptive timing-luck distribution for S1;
+    no offset can be adopted from this run, and the live weekly rule is unchanged.
+  anti_overfit_notes:
+  - All 5 candidates frozen before any return is computed; S1's live rule inherited unchanged from
+    scripts/run_h20260922_05_salvage.py.
+  - No offset may be adopted from this run, so the best-offset result cannot be cherry-picked.
+  - G3 placebo not applicable (no pick or gate changes); the 5-offset distribution is the luck reference,
+    same method H-20260928-01 used for S3, sized to a week's 5 trading days.
+  validation_plan:
+  - stress_2017_01_02_to_2023_08_31_select_anchor_holdout2026_contaminated
+  - o00_bit_equal_to_live_engine_assertion
+  - offset_distribution_reported_in_full_min_median_max_and_live_rank
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+notes:
+  intent: Measure S1's rebalance-date luck across 5 weekly signal-day offsets, mirroring H-20260928-01's
+    S3 check, so the paper renewal and any future live-pilot sizing use a date-neutral expectation.
+  hypothesis_id: H-20260928-01
+  previous_link: H-20260928-01
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

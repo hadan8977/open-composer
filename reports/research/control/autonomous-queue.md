@@ -278,13 +278,14 @@
 - notes:
 
 ### T-20260928-01 S1、S2 的调仓日运气检查
-- status: running
+- status: done
 - priority: 3
 - not_before:
 - goal: H-20260928-01 发现 S3 的月末调仓日在近期窗口是 21 个日子里最好的，头条数字有一大块是运气。S2（月度）和 S1（周度）也按固定日子调仓，要知道它们的数字里有多少是调仓日运气，才能给每条 sleeve 一个"不挑日子"的预期，供续期和以后实盘定规模用。
 - plan: 复用 `scripts/run_h20260928_01_s3_rebalance_tranching.py` 的做法（新迭代，先过 direction-check 和 pre-backtest 检查）：S2 用续期规格（vt 0.156）做月末后 0–20 个交易日共 21 个偏移；S1 做周末后 0–4 个交易日共 5 个偏移。纯描述：报告每个窗口的最小/中位数/最大值和现行版本的排名，不采用任何偏移。只有描述、没有通过条件；现行版本排名前 3 且中位数低于它 20% 以上时，在决定页和 current-view 写"不挑日子"的数字。窗口和成本按冻结合同，压力期 2016-05→2023-08（S1 因 252 日回看从 2017-01 起）。
 - done_when: 迭代档案 `--stage final` 通过；登记簿行 `dir:s1_s2_rebalance_timing_luck`；current-view 最多 3 行结论。
 - notes:
+  - 2026-09-28 结果已更正：首次跑漏了 `base.WARMUP_START = PANEL_START`（`run_h20260928_01_s3_rebalance_tranching.py` 有这行，本脚本原来没有），面板默默退回 recent-menu 默认起点 2022-06-01，导致"压力期"其实只覆盖 2022-06→2023-08。已修好并加了硬断言 + 回归测试重跑，面板现在正确覆盖 2016-01-04→2026-09-17；select/anchor/holdout 数字与首次一致（lookback 到 2023-09 已经热身完毕，不受影响）。更正后：S1 select/anchor 夏普(O00 1.14/1.35，中位数 0.93/1.33，差 18.3%/1.5%)、S2 select/anchor(O00 1.72/1.80，中位数 1.44/1.55，差 16.5%/14.1%)都低于 20% 高亮线，不挑日子的成分不大，不像 S3；S1 压力期(2017-01→2023-08，全量面板)O00 夏普 0.48 是 5 个偏移里最差的(第5/5，最大回撤 −32.1% 也最深)，S2 压力期(2016-05→2023-08)O00 夏普 0.52 接近中位数 0.50(第7/21)。高亮规则两条 sleeve 全窗口都没触发。两条现行规则都不变。产物：`reports/research/iterations/h20260928_23_s1_rebalance_timing/`、`reports/research/iterations/h20260928_23_s1_s2_rebalance_timing/`，登记簿 `dir:s1_s2_rebalance_timing_luck`（已追加更正行，首次的错误行保留在 jsonl 历史里，说明见两份 decision-record.md 的 "Bug fix" 段）。
   - 2026-09-28 14:5x UTC 交互会话派 Sonnet 执行（迭代 h20260928_23_s1_s2_rebalance_timing）。自动轮不要碰。
 
 ### T-20260928-19 每周一刷新前向跟踪

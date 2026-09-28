@@ -1,0 +1,218 @@
+{
+  "schema_version": 2,
+  "verification_contract": "harness_verify_v2",
+  "strategy_name": "s3_rebalance_tranching_h20260928_01",
+  "spec_path": "strategy_specs/drafts/s3_rebalance_tranching_h20260928_01.yaml",
+  "spec_file_sha256": "903bd4106431fee91ec093c9416c13408b7fc9f6464fc4d4aeba5b3a1d101bd5",
+  "spec_semantic_sha256": "5f24c24bd2cae8cc35882ab1b40c647e9421d26e7b9c51969c3f882389f35506",
+  "stage": "research",
+  "risk_domains": [
+    "daily_open_execution",
+    "leveraged_etf",
+    "router_strategy"
+  ],
+  "required_artifacts": [
+    "execution_policy",
+    "execution_reality_report",
+    "gap_stress_report",
+    "leveraged_etf_risk_note",
+    "router_cost_stress",
+    "router_data_evidence",
+    "router_execution_observation",
+    "router_rebalance_intents",
+    "router_target_weights",
+    "router_validation",
+    "source_cards"
+  ],
+  "artifact_path_overrides": {
+    "source_cards": {
+      "path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl",
+      "required_claim_ids": [
+        "concretum2025_momentum_rtl_348bp_tranching_mean_unchanged",
+        "hoffstein_faber_braun_rtl_factor_indices_gt_100bp",
+        "hoffstein_sibears_faber_staggered_suppress_rtl_1_over_n",
+        "allocatesmartly_taa_tranching_return_unchanged_dispersion_down"
+      ]
+    }
+  },
+  "plan_binding": null,
+  "config_bindings": {
+    "risk_domains": {
+      "path": "harness/risk_domains.yaml",
+      "sha256": "d0bd4d8e5368de57a8063fd2a973c897063a127b153c739e96787e29cde8f3c9",
+      "size_bytes": 13714
+    },
+    "artifact_contracts": {
+      "path": "harness/artifact_contracts.yaml",
+      "sha256": "97716bc4789e65c586d6d69b382273673baee1b4ded74e539575cafe5eebdf3c",
+      "size_bytes": 14710
+    }
+  },
+  "artifacts": [
+    {
+      "name": "execution_policy",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "order_style",
+        "time_in_force",
+        "price_protection",
+        "gap_filter",
+        "spread_filter",
+        "participation_cap",
+        "fallback_behavior",
+        "tca_plan",
+        "source_card_ids",
+        "alternatives_compared"
+      ],
+      "path": "reports/harness/execution/s3_rebalance_tranching_h20260928_01-execution-policy.json",
+      "binding": null
+    },
+    {
+      "name": "execution_reality_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "policy_id",
+        "slippage_scenarios",
+        "gap_stress",
+        "capacity_assessment",
+        "tca_reference_prices"
+      ],
+      "path": "reports/harness/execution/s3_rebalance_tranching_h20260928_01-execution-reality.json",
+      "binding": null
+    },
+    {
+      "name": "gap_stress_report",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "scenarios",
+        "max_adverse_gap_pct",
+        "fill_model_gap_handling",
+        "recommended_gap_filter"
+      ],
+      "path": "reports/harness/execution/s3_rebalance_tranching_h20260928_01-gap-stress.json",
+      "binding": null
+    },
+    {
+      "name": "leveraged_etf_risk_note",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [],
+      "path": "reports/harness/execution/s3_rebalance_tranching_h20260928_01-leveraged-etf-risk.md",
+      "binding": null
+    },
+    {
+      "name": "router_cost_stress",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "scenarios",
+        "recommendation"
+      ],
+      "path": "reports/research/s3_rebalance_tranching_h20260928_01-router-cost-stress.json",
+      "binding": null
+    },
+    {
+      "name": "router_data_evidence",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "data_source",
+        "acquisition_tier",
+        "data_profile"
+      ],
+      "path": "reports/research/s3_rebalance_tranching_h20260928_01-router-data-evidence.json",
+      "binding": null
+    },
+    {
+      "name": "router_execution_observation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "execution_substate",
+        "target_weights_path",
+        "rebalance_intents_path"
+      ],
+      "path": "reports/execution/s3_rebalance_tranching_h20260928_01-execution-observation.json",
+      "binding": null
+    },
+    {
+      "name": "router_rebalance_intents",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "intents",
+        "summary",
+        "execution_substate"
+      ],
+      "path": "reports/execution/s3_rebalance_tranching_h20260928_01-rebalance-intents.json",
+      "binding": null
+    },
+    {
+      "name": "router_target_weights",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "source_spec_path",
+        "portfolio_mode",
+        "target_weights",
+        "summary",
+        "acquisition_tier"
+      ],
+      "path": "reports/execution/s3_rebalance_tranching_h20260928_01-target-weights.json",
+      "binding": null
+    },
+    {
+      "name": "router_validation",
+      "present": false,
+      "schema_ok": false,
+      "missing_fields": [
+        "strategy_name",
+        "status",
+        "portfolio_mode",
+        "summary",
+        "blockers"
+      ],
+      "path": "reports/research/s3_rebalance_tranching_h20260928_01-router-validation.json",
+      "binding": null
+    },
+    {
+      "name": "source_cards",
+      "present": true,
+      "schema_ok": false,
+      "missing_fields": [
+        "claim_id:concretum2025_momentum_rtl_348bp_tranching_mean_unchanged:accessed_at",
+        "claim_id:concretum2025_momentum_rtl_348bp_tranching_mean_unchanged:impact_on_spec",
+        "claim_id:hoffstein_faber_braun_rtl_factor_indices_gt_100bp:accessed_at",
+        "claim_id:hoffstein_faber_braun_rtl_factor_indices_gt_100bp:impact_on_spec",
+        "claim_id:hoffstein_sibears_faber_staggered_suppress_rtl_1_over_n:accessed_at",
+        "claim_id:hoffstein_sibears_faber_staggered_suppress_rtl_1_over_n:impact_on_spec",
+        "claim_id:allocatesmartly_taa_tranching_return_unchanged_dispersion_down:accessed_at",
+        "claim_id:allocatesmartly_taa_tranching_return_unchanged_dispersion_down:impact_on_spec"
+      ],
+      "path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl",
+      "binding": {
+        "path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl",
+        "sha256": "97017e7e356e173d01ac09f420d5ee7b493fe847dc8833e09d145c08f26e90d9",
+        "size_bytes": 4566
+      }
+    }
+  ],
+  "overall": "blocked"
+}

@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_23_s1_s2_rebalance_timing",
+  "reviewed_at": "2026-09-28T14:05:00+00:00",
+  "decision": "proceed",
+  "objective": "Measure S2's rebalance timing luck across 21 monthly signal-day offsets, mirroring H-20260928-01's S3 check, so the paper renewal and any future live-pilot sizing use a date-neutral expectation. Purely descriptive: no offset is adopted.",
+  "target_regime_and_horizon": "Same regime S2 is already paper-traded under: US ETF rotation momentum. Stress/select/anchor/holdout windows identical to H-20260928-01 (S1 stress from 2017-01-03 for its 252-session lookback). The live rule is frozen; this result only sets renewal/sizing expectations.",
+  "existing_solution_comparison": "H-20260928-01 already surveyed rebalance-timing-luck literature (Hoffstein/Faber/Braun, Concretum 2025, CXO Advisory, Allocate Smartly) and ran the identical 21-offset descriptive check on S3 using the frozen salvage engine. `oc research directions check` confirms dir:s3_rebalance_timing_luck_tranching is the only prior local test; nothing existing covers S1 or S2 specifically, so the only missing piece is running the same already-validated method on these two sleeves. No new mechanism to research.",
+  "remaining_evidence_gap": "Whether S2's own headline anchor/select numbers, like S3's, sit near the best of its own offset distribution (a lucky rebalance date) or are closer to the median.",
+  "negative_experiments_checked": "H-20260928-01 (dir:s3_rebalance_timing_luck_tranching, refuted 0/4 for tranching, but established that S3's month-end anchor CAGR/Sharpe was the best of 21 offsets): the descriptive offset-distribution method itself was not refuted, only the T4 tranching adoption rule. This round reuses the descriptive method only, no tranching, on S1/S2.",
+  "cost_and_execution_assumptions": "Frozen engine: scripts/run_h20260922_05_salvage.py sleeve_weights/run_cell, signal at close, fill next open, 10 bp per side primary, 20 bp stress. No new cost assumption.",
+  "stop_condition": "None -- this is a purely descriptive measurement (min/median/max/live-rank), not an adoption test; there is no pass/fail bar and no offset is adopted regardless of the result.",
+  "queries": [
+    {
+      "query": "Newfound Research rebalance timing luck Hoffstein tranching paper",
+      "opened_urls": [
+        "https://concretumgroup.com/wp-content/uploads/2026/02/The-Tranching-Dilemma.pdf",
+        "https://blog.thinknewfound.com/2020/04/tranching-trend-and-mean-reversion/"
+      ],
+      "searched_at": "2026-09-28T01:08:00+00:00"
+    },
+    {
+      "query": "rebalance timing luck tactical trend following momentum strategy tranches empirical study",
+      "opened_urls": [
+        "https://bsic.it/lucky-numbers-the-overlooked-role-of-rebalance-timing-luck/"
+      ],
+      "searched_at": "2026-09-28T01:08:30+00:00"
+    },
+    {
+      "query": "Allocate Smartly tranche rebalancing tactical asset allocation rebalance day luck",
+      "opened_urls": [
+        "https://allocatesmartly.com/taming-excessive-timing-luck-in-taa-by-tranching-strategies/",
+        "https://allocatesmartly.com/timing-luck-portfolio-tranching/",
+        "https://thesystematictrader.com/2018/04/timing-luck-with-tactical-asset-allocation/"
+      ],
+      "searched_at": "2026-09-28T01:09:30+00:00"
+    },
+    {
+      "query": "timing luck portfolio rebalancing paper Hoffstein Sibears Blitz overlapping portfolios",
+      "opened_urls": [
+        "https://www.panoptica.com/rebalance-timing-luck-the-dumb-timing-luck-of-smart-beta-by-hoffstein-faber-and-braun/?from_src=epsilontheory",
+        "https://www.cxoadvisory.com/calendar-effects/rebalance-timing-noise/"
+      ],
+      "searched_at": "2026-09-28T01:11:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://concretumgroup.com/wp-content/uploads/2026/02/The-Tranching-Dilemma.pdf",
+      "claim_id": "concretum2025_momentum_rtl_348bp_tranching_mean_unchanged",
+      "claim": "In a concentrated (20-stock) monthly-rebalanced US momentum portfolio, 1991-2024, the CAGR gap between the best and worst trading day of the month was 348 bp; splitting into 2-20 tranches left the mean CAGR (16.7-16.8%) and Sharpe (0.59-0.60) unchanged while shrinking the dispersion from 3.48% to 0-2%. Single-day max drawdowns ranged -69.3% to -74.9%.",
+      "source_type": "paper",
+      "published_or_updated_at": "2025-11-14",
+      "market_and_period": "see claim",
+      "applicability": "Prior art for the S2 offset-distribution method, reused unchanged from H-20260928-01; see external-brief.json.",
+      "limitations": "Snapshot is pdftotext of the fetched PDF (PDF kept beside it). Stock-level momentum, no costs in the RTL table, not leveraged ETFs, no drawdown figures for the tranched books.",
+      "independent_replication": "Hoffstein, Faber, Braun (SSRN 3673910) report >100 bp annualized RTL for momentum and other factor indices.",
+      "fetched_at": "2026-09-28T01:12:00+00:00",
+      "sha256": "ed017782f5266dfc2650f13be321871979e9d78822149429a226888f2c3cdd8b",
+      "snapshot_path": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/sources/concretum-2025-tranching-dilemma.txt",
+      "source_card_path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl"
+    },
+    {
+      "url": "https://www.panoptica.com/rebalance-timing-luck-the-dumb-timing-luck-of-smart-beta-by-hoffstein-faber-and-braun/?from_src=epsilontheory",
+      "claim_id": "hoffstein_faber_braun_rtl_factor_indices_gt_100bp",
+      "claim": "Factor indices (value, size, momentum, quality, low vol) show rebalance timing luck often above 100 bp annualized, larger for concentrated and less frequently rebalanced portfolios.",
+      "source_type": "paper",
+      "published_or_updated_at": "2020-08-17",
+      "market_and_period": "see claim",
+      "applicability": "Prior art for the S2 offset-distribution method, reused unchanged from H-20260928-01; see external-brief.json.",
+      "limitations": "Abstract page read; SSRN PDF blocked to the fetcher. Stock factor indices, not leveraged ETF rotation.",
+      "independent_replication": "Concretum 2025 (348 bp on a momentum book).",
+      "fetched_at": "2026-09-28T01:12:00+00:00",
+      "sha256": "f48c24e877138c39dd22ad3e42992955ea94a93ccc86160ddcaebf443c854722",
+      "snapshot_path": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/sources/panoptica-hoffstein-faber-braun-dumb-luck-smart-beta.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl"
+    },
+    {
+      "url": "https://www.cxoadvisory.com/calendar-effects/rebalance-timing-noise/",
+      "claim_id": "hoffstein_sibears_faber_staggered_suppress_rtl_1_over_n",
+      "claim": "Equal-weighting N staggered sub-portfolios suppresses rebalance timing luck roughly by 1/N (Hoffstein, Sibears, Faber, Journal of Beta Investment Strategies 2019), per CXO Advisory's summary.",
+      "source_type": "paper",
+      "published_or_updated_at": "2019-05-01",
+      "market_and_period": "see claim",
+      "applicability": "Prior art for the S2 offset-distribution method, reused unchanged from H-20260928-01; see external-brief.json.",
+      "limitations": "Read through CXO's summary; the journal full text was blocked.",
+      "independent_replication": "Allocate Smartly 2017/2023 TAA tranching studies.",
+      "fetched_at": "2026-09-28T01:12:00+00:00",
+      "sha256": "9483eed2be476bbdc46a4d33729512a007ad7c35f8fa75c671278eed659b8e52",
+      "snapshot_path": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/sources/cxo-rebalance-timing-noise.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl"
+    },
+    {
+      "url": "https://allocatesmartly.com/taming-excessive-timing-luck-in-taa-by-tranching-strategies/",
+      "claim_id": "allocatesmartly_taa_tranching_return_unchanged_dispersion_down",
+      "claim": "On a timing-luck-sensitive TAA strategy (Bold Asset Allocation), tranched portfolios averaged 14.2% a year against 13.9% for single-day ones, and the spread of possible annual returns fell by almost two thirds.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2023-01-01",
+      "market_and_period": "see claim",
+      "applicability": "Prior art for the S2 offset-distribution method, reused unchanged from H-20260928-01; see external-brief.json.",
+      "limitations": "No drawdown numbers; different strategy family (TAA).",
+      "independent_replication": "Concretum 2025 table 3 shows the same flat-mean result.",
+      "fetched_at": "2026-09-28T01:12:00+00:00",
+      "sha256": "3291ebdecfaf4eecc662510665bcf2c89c224017fff7ebbfed3bf44d27600e21",
+      "snapshot_path": "reports/research/iterations/h20260928_01_s3_rebalance_tranching/sources/allocatesmartly-taming-timing-luck-tranching.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_01_s3_rebalance_tranching.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "One run of the frozen engine at S2's offsets (daily ETF panel, under a minute of compute), computing CAGR/Sharpe/max DD per window and O00's rank.",
+    "pass_condition": "not_applicable -- descriptive only, no pass condition",
+    "falsification_condition": "not_applicable -- descriptive only, nothing is falsified",
+    "max_compute_minutes": 10
+  }
+}
