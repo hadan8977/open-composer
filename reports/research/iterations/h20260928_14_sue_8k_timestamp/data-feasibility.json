@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "report_type": "h20260928_14_sue_8k_timestamp_historical_evaluation_authorization",
+  "iter_id": "h20260928_14_sue_8k_timestamp",
+  "workflow_pass": true,
+  "research_pass": false,
+  "llm_contribution_pass": false,
+  "paper_ready_pass": false,
+  "historical_evaluation_authorized": true,
+  "candidate_accounting": {
+    "frozen_candidate_count": 1,
+    "evaluation_authorized_count": 1,
+    "dependency_skipped_count": 0,
+    "unresolved_count": 0,
+    "balanced": true
+  },
+  "candidate_authorization": {
+    "candidate_count": 1,
+    "rows": [
+      {
+        "candidate_id": "SUE8K01",
+        "path": "pead_sue_8k_timestamp_signal_screen",
+        "action": "evaluate",
+        "reason_code": "both_input_tables_exist_locally_join_verified_on_a_sample",
+        "candidate_binding_sha256": "b294c8df2cf15916fd7089e7028eb3b1cee031c0b2f352b3bf88bfb856e8d667"
+      }
+    ]
+  },
+  "path_gates": {
+    "pead_sue_8k_timestamp_signal_screen": {
+      "action": "evaluate",
+      "candidate_ids": [
+        "SUE8K01"
+      ],
+      "historical_evaluation_go": true,
+      "reason": "GO, with disclosed caveats. Verified this pass by direct duckdb inspection of both input tables (no full join built yet -- the join itself is this iteration's own implementation step, run after this gate). (1) Left table data/features/sec_fundamentals_daily/{2016..2026}.parquet: sue_eps populated, days_since_report=0 rows are exactly the refuted card's own 4,639 events (1,329 symbols, first 2016-01-29), unchanged. (2) Right table data/features/earnings_events/{2024,2025,2026}.parquet: 16,015 rows with items LIKE '%2.02%', 1,448 distinct tickers, acceptance_utc spans 2024-01-02 to 2026-09-17, 14,923 rows fetch_status='ok' (exhibit text present; acceptance_utc itself is populated even for the ~7% without exhibit text, since it comes from the submissions API listing, not the exhibit fetch). (3) Coverage gap, disclosed not patched: the right table only covers 2024-01-02 to 2026-09-17, so this iteration's join can only produce events for that window -- roughly the last ~11 quarters of the refuted card's 2016-2026 sample, not a like-for-like full-history rerun; this shrinks both the 'full' and '2024+' windows in the admission rule to the same 2024-2026 span, disclosed in direction-review.json's remaining_evidence_gap. (4) CIK join key: both tables carry cik as an integer-compatible field (facts.parquet/sec_fundamentals_daily: BIGINT; earnings_events: zero-padded string, cast to BIGINT for the join) -- verified compatible by direct duckdb DESCRIBE on both tables. (5) Nearest-preceding-8-K match quality is not yet measured (that is what the join build in this iteration itself computes and reports in results.json), but the mechanism (per-CIK 8-K/2.02 filings, one per quarter in the normal case) is structurally sound for a nearest-match join. None of (1)-(4) is a missing capability; the coverage-window shrinkage in (3) is the one caveat that bounds how far any admitted result's claim can reach, and is carried into direction-review.json rather than hidden."
+    }
+  },
+  "required_reference_names": [
+    "cost_contract",
+    "candidate_spec",
+    "source_cards"
+  ],
+  "required_references": {
+    "candidate_spec": {
+      "path": "strategy_specs/drafts/pead_sue_8k_event_h20260928_14.yaml",
+      "sha256": "c32c42e8bba151426fc9af079d085d1ef49ea02bfe0912a7d0ff491e5bedd041"
+    },
+    "cost_contract": {
+      "path": "reports/research/iterations/h20260928_14_sue_8k_timestamp/cost-contract.json",
+      "sha256": "aaf32e01d3383ed6365100901d8c3a92e5a591221d69af70c607e79b0a580365"
+    },
+    "source_cards": {
+      "path": "reports/harness/source_cards/profit_route_challenge_20260921.jsonl",
+      "sha256": "8d91a83140fcf7bc3becd2017e357ac4859f518b41a99b0efee079d26443cae2"
+    }
+  }
+}

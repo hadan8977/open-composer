@@ -1,0 +1,128 @@
+{
+  "schema_version": 2,
+  "iter_id": "h20260928_14_sue_8k_timestamp",
+  "strategy_name": "pead_sue_8k_event_h20260928_14",
+  "source_spec_path": "strategy_specs/drafts/pead_sue_8k_event_h20260928_14.yaml",
+  "spec_hash": "95f3848b0705be94a92e67d4267b8e763f32793a16f03ccd1a77a21fc917b1c9",
+  "generated_at": "2026-09-28T06:35:00Z",
+  "generated_before_backtest": true,
+  "objective": "Re-confirm the SUE/PEAD construction and mechanism, and pin the 8-K Item-2.02 acceptance-timestamp semantics, before rebuilding the refuted pead_sue_eps_event card with visible_at moved to the 8-K announcement time.",
+  "decision": "proceed_to_join_build_and_signal_card_rerun_no_new_mechanism",
+  "existing_solution_comparison": "SUE construction (Foster-Olsen-Shevlin 1984 seasonal random walk) and PEAD (Bernard-Thomas 1989) are unchanged, already implemented in scripts/build_sec_xbrl_fundamentals.py and reused verbatim. The only new work is the visible_at join to 8-K Item-2.02 acceptance timestamps, which are already collected locally (data/features/earnings_events/, built under docs/plan-earnings-text-forward-test-2026-09-22.zh.md T1). No new signal, admission rule, or cost convention is introduced.",
+  "negative_experiments_checked": "dir:pead_xbrl_sue_filing_date (refuted): beats_redated=False and book_positive_20bp=False at the primary horizon under the 10-Q/10-K filing-date visible_at. This iteration changes only that one variable, per the card's own reopen note.",
+  "current_source_card_paths": [
+    "reports/harness/source_cards/profit_route_challenge_20260921.jsonl"
+  ],
+  "source_evidence_bindings": [
+    "profit_route_challenge_20260921:pead_cost_counterpoint"
+  ],
+  "sources": [
+    {
+      "claim_id": "foster_olsen_shevlin_1984_seasonal_random_walk",
+      "url": "https://www.gsb.stanford.edu/faculty-research/working-papers/earnings-releases-anomolies-behavior-security-returns",
+      "published_or_updated_at": "1984-01-01",
+      "source_type": "paper",
+      "credibility": "published_the_accounting_review_1984_vol_59_pp_574-603_foundational_sue_paper",
+      "core_claim": "Systematic post-earnings-announcement drift in security returns is associated with the sign and magnitude of unexpected earnings (measured against a seasonal-random-walk expectation); for expectation models based on the time series of reported quarterly earnings, sign/magnitude of forecast error and firm size jointly explain 85% of the variation in drift; the drift is persistent 1974-1981, not concentrated in a subperiod.",
+      "project_applicability": "This is the exact SUE construction reused unchanged in scripts/build_sec_xbrl_fundamentals.py::sue_series (seasonal random walk on same-quarter-prior-year EPS differences) and in the refuted pead_sue_eps_event card; this iteration does not alter this construction, only the visible_at timestamp of the resulting event.",
+      "reflection": "Read via WebSearch result summary (Stanford GSB working-paper listing plus Semantic Scholar abstract); the original 1984 Accounting Review PDF is paywalled and was not independently opened this pass -- the abstract/summary is treated as reliable given it is corroborated across two independent listings (Stanford GSB, Semantic Scholar)."
+    },
+    {
+      "claim_id": "bernard_thomas_1989_delayed_response_or_risk_premium",
+      "url": "https://ideas.repec.org/a/bla/joares/v27y1989ip1-36.html",
+      "published_or_updated_at": "1989-01-01",
+      "source_type": "paper",
+      "credibility": "published_journal_of_accounting_research_1989_vol_27_pp_1-36_foundational_pead_paper",
+      "core_claim": "Post-earnings-announcement drift (Ball-Brown 1968's finding that cumulative abnormal returns keep drifting after the earnings announcement, up for good-news firms and down for bad-news firms) is examined to discriminate between a delayed price response and a risk-premium explanation.",
+      "project_applicability": "Names the phenomenon (drift AFTER the announcement) this project's pead_sue_eps_event card and this iteration's rebuild both test; directly supports the premise that the announcement event itself, not a later accounting filing, is the economically correct anchor for the drift window.",
+      "reflection": "Read via WebSearch result summary (RePEc/IDEAS listing, corroborated by JSTOR and Semantic Scholar listings); the original JAR 1989 PDF is paywalled and was not independently opened this pass."
+    },
+    {
+      "claim_id": "battalio_mendenhall_2006_timing_and_liquidity_costs",
+      "url": "https://api.crossref.org/works/10.2139/ssrn.920446",
+      "published_or_updated_at": "2006-01-01",
+      "source_type": "paper",
+      "credibility": "ssrn_working_paper_2006_actual_quote_data_1993_2002",
+      "core_claim": "Using actual quote data 1993-2002, an investor trading immediately on the earnings announcement (not waiting until market close) could have earned hedged-portfolio returns of at least 14%/yr after trading costs; the paper's title is literally 'Post-Earnings Announcement Drift: Timing and Liquidity Costs'.",
+      "project_applicability": "Directly on point: this is independent published evidence that WHEN you become able to act on the earnings surprise (announcement time vs. a later, coarser timestamp) is a first-order driver of whether PEAD survives costs -- exactly the single variable (visible_at) this iteration changes.",
+      "reflection": "Already verified in this repo (reports/harness/source_cards/profit_route_challenge_20260921.jsonl, claim_id pead_cost_counterpoint, fetched 2026-09-21) and reconfirmed live today (2026-09-28) via a fresh Crossref fetch of the same DOI record; title/authors/abstract match."
+    },
+    {
+      "claim_id": "pead_cost_counterevidence_2006",
+      "url": "https://api.crossref.org/works/10.2139/ssrn.899902",
+      "published_or_updated_at": "2006-01-01",
+      "source_type": "paper",
+      "credibility": "ssrn_working_paper_2006_already_verified_in_repo",
+      "core_claim": "Transaction costs significantly reduce PEAD trading profits, and high gross excess returns tend to concentrate in high-transaction-cost stocks.",
+      "project_applicability": "The counterweight to battalio_mendenhall_2006: cost sensitivity is real and is exactly why this iteration keeps the project's own fixed 10/20bp cost convention unchanged rather than assuming the announcement-timing fix alone guarantees a profitable book.",
+      "reflection": "Already verified in this repo (reports/harness/source_cards/profit_route_challenge_20260921.jsonl, claim_id pead_cost_counterevidence, fetched 2026-09-21); not re-fetched today, cited for balance against the more favorable battalio_mendenhall_2006 finding."
+    },
+    {
+      "claim_id": "subrahmanyam_2024_2025_pead_microcap_replication",
+      "url": "https://anderson-review.ucla.edu/is-post-earnings-announcement-drift-a-thing-again/",
+      "published_or_updated_at": "2025-01-01",
+      "source_type": "industry_standard",
+      "credibility": "ucla_anderson_review_research_brief_summarizing_subrahmanyam_ssrn_replication",
+      "core_claim": "Replicating classic SUE-based PEAD on US stock data Feb 2001-Dec 2024: all-stocks t-statistic 2.18 (barely significant), but dropping to 1.43 (not significant) once microcaps are excluded; the brief concludes 'the inclusion of the microcaps was the reason PEAD appeared'.",
+      "project_applicability": "Directly matches the caveat already carried in the refuted card's own rationale (reports/research/signal-cards/fundamentals-v1-manifest.json signal pead_sue_eps_event, same t=2.18/t=1.43 figures) -- confirms this iteration should treat any admission as a microcap-tilted, tier-1/2-scrutinized effect, not a durable large-cap anomaly, exactly as the prior card already flagged.",
+      "reflection": "Read via a live WebFetch today (2026-09-28) of the UCLA Anderson Review's own published brief; the brief summarizes Subrahmanyam's SSRN paper (papers.ssrn.com/sol3/papers.cfm?abstract_id=5930255) which was not separately opened this pass -- the brief's direct quotes of the t-statistics are treated as a faithful secondary source, consistent with the number this repo already carried from a prior, independently-sourced reading."
+    },
+    {
+      "claim_id": "sec_form_8k_item_2_02_instructions",
+      "url": "https://www.sec.gov/files/form8-k.pdf",
+      "published_or_updated_at": "unknown",
+      "source_type": "regulatory_docs",
+      "credibility": "sec_official_form_instructions",
+      "core_claim": "Item 2.02 (Results of Operations and Financial Condition) requires disclosure, including the date and text (as an exhibit) of any public announcement or release of material non-public information about a completed quarterly or annual fiscal period's results of operations or financial condition; information furnished under Item 2.02 is 'furnished', not 'filed'. In practice the large majority of Item 2.02 8-Ks are earnings-release press statements furnished as Exhibit 99.",
+      "project_applicability": "Confirms the join target (8-K filings with Item 2.02) is specifically the earnings-release announcement event, the correct anchor for visible_at under the reopen condition; corroborates the existing local build (scripts/build_earnings_events.py REQUIRED_ITEM='2.02', EX-99 exhibit extraction) was built against the right SEC category.",
+      "reflection": "The PDF itself could not be machine-read this pass (binary/compressed stream, confirmed reachable via a live fetch today); the core claim above is taken from a corroborating WebSearch summary (sec-api.io's own description of the same Item 2.02 dataset) cross-checked against this project's own already-built and already-tested earnings_events pipeline, which independently encodes the same 'furnished, Exhibit 99, earnings release' pattern."
+    },
+    {
+      "claim_id": "sec_edgar_submissions_api_overview",
+      "url": "https://www.sec.gov/search-filings/edgar-application-programming-interfaces",
+      "published_or_updated_at": "unknown",
+      "source_type": "provider_official_docs",
+      "credibility": "sec_official_api_documentation_page",
+      "core_claim": "data.sec.gov provides public, no-authentication RESTful JSON APIs for company submissions and extracted XBRL data; the submissions endpoint returns each entity's filing history as a compact columnar data array.",
+      "project_applicability": "Confirms the base API this project's data/features/earnings_events table (and the fundamentals-v1 SEC XBRL build) is built against is the correct, current, official SEC access path -- no separate scraping or unofficial API is used for the 8-K timestamp join.",
+      "reflection": "Fetched live today (2026-09-28); this specific page's rendered text did not enumerate field names (acceptanceDateTime/accessionNumber/form/items) explicitly, so the field-level detail is corroborated instead by this repo's own already-built and spot-checked earnings_events pipeline (scripts/build_earnings_events.py docstring, which records that acceptanceDateTime/accessionNumber/form/items are the exact fields read from filings.recent, and that the Eastern-time-vs-UTC quirk in acceptanceDateTime was verified live during that build) rather than re-derived from this page alone."
+    },
+    {
+      "claim_id": "sec_api_io_item_2_02_dataset_description",
+      "url": "https://sec-api.io/datasets/earnings-results-form-8-k-item-2-02",
+      "published_or_updated_at": "unknown",
+      "source_type": "platform_docs",
+      "credibility": "third_party_commercial_data_vendor_page_corroborating_not_authoritative",
+      "core_claim": "Describes a commercial dataset of Form 8-K Item 2.02 earnings-results filings back to 2004, corroborating that Item 2.02 filings are the standard SEC-tracked category for earnings-release announcements.",
+      "project_applicability": "Independent (non-SEC) corroboration that Item 2.02 is the market-standard proxy for 'earnings announced', used only as a secondary check alongside the primary SEC source above, not as the basis for any construction detail.",
+      "reflection": "Read via WebSearch result snippet; not independently fetched in full, used only for corroboration, not as a load-bearing source."
+    }
+  ],
+  "topic_coverage": [
+    "sue_seasonal_random_walk_construction_foster_olsen_shevlin_1984",
+    "pead_mechanism_bernard_thomas_1989",
+    "pead_tradable_returns_depend_on_announcement_timing_battalio_mendenhall_2006",
+    "pead_cost_sensitivity_counterevidence_2006",
+    "pead_recent_replication_microcap_concentration_subrahmanyam_2024_2025",
+    "sec_form_8k_item_2_02_definition_and_exhibit_convention",
+    "sec_edgar_submissions_api_acceptance_timestamp_access",
+    "local_data_feasibility_earnings_events_8k_2_02_coverage_2024_2026"
+  ],
+  "candidate_matrix_revisions": [
+    {
+      "driver": "battalio_mendenhall_2006_timing_and_liquidity_costs",
+      "effect": "Independent published evidence that trading on the exact announcement timestamp (rather than a later, coarser one) is what recovers positive after-cost PEAD returns in that paper's own sample.",
+      "revision": "Kept the single-variable design (only visible_at changes, everything else identical to the refuted card) rather than also widening the universe or relaxing costs at the same time -- isolates whether the timing fix alone is sufficient, per this paper's own mechanism."
+    },
+    {
+      "driver": "subrahmanyam_2024_2025_pead_microcap_replication",
+      "effect": "Confirms (does not newly discover) that classic SUE-based PEAD ex-microcap is not significant (t=1.43) through Dec 2024 -- the same caveat the refuted card's own rationale already carried.",
+      "revision": "No change to the candidate design; this is disclosed again in direction-review.json's remaining_evidence_gap so any admission is read as a microcap-tilted effect, not re-litigated as new information."
+    },
+    {
+      "driver": "sec_form_8k_item_2_02_instructions",
+      "effect": "Confirms Item 2.02 8-Ks are specifically earnings-release announcements (furnished, Exhibit 99), the correct SEC category to join on.",
+      "revision": "The join in candidate-manifest.json filters earnings_events to items LIKE '%2.02%' only (not all 8-K forms), matching this definition exactly."
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_14_sue_8k_timestamp",
+  "generated_at": "2026-09-28T06:25:00Z",
+  "generated_before_backtest": true,
+  "strategy_name": "pead_sue_8k_event_h20260928_14",
+  "objective": "Preregister exactly ONE candidate before any run: the refuted pead_sue_eps_event signal card (reports/research/signal-cards/pead_sue_eps_event.json), rebuilt with visible_at moved from the first NYSE session after the 10-Q/10-K filing date to the first NYSE session after the 8-K Item-2.02 earnings-release exhibit's EDGAR acceptanceDateTime. Same sue_eps definition, universe, top_n, threshold, primary_horizon, costs, and redated placebo as the refuted card; only the timestamp join changes.",
+  "candidates": [
+    {
+      "candidate_id": "SUE8K01",
+      "path": "pead_sue_8k_timestamp_signal_screen",
+      "role": "primary_and_only_candidate_reopen_of_dir_pead_xbrl_sue_filing_date",
+      "method": "signal_card_event_mode_sue_eps_visible_at_moved_to_8k_2.02_acceptance",
+      "ablation": "single_variable_change_visible_at_only_vs_refuted_filing_date_card",
+      "spec_path": "strategy_specs/drafts/pead_sue_8k_event_h20260928_14.yaml",
+      "fallback": "no_event_row_emitted_when_no_8k_item_2.02_filing_matches_within_the_join_window",
+      "data_contract": "data_v1_sec_fundamentals_daily_sue_eps_plus_earnings_events_8k_2.02",
+      "feature_contract": "feature_v1_sue_8k_visible_at_join",
+      "label_contract": "label_v1_signal_card_next_open_forward_returns",
+      "validation_contract": "validation_v1_signal_card_event_mode_redated_placebo",
+      "cost_contract": "cost_v1_signal_card_10_20bps_next_open",
+      "benchmark_contract": "benchmark_v1_signal_card_library_v1_admission_rule_event_long",
+      "parameters": {
+        "candidate_id": "SUE8K01",
+        "signal_card_mode": "event",
+        "source": "data/features/sue_8k_visible/*.parquet",
+        "column": "value",
+        "threshold": 2.0,
+        "direction": 1,
+        "lag": 0,
+        "top_n": 3000,
+        "primary_horizon": 20,
+        "rationale": "Identical mechanism to the refuted pead_sue_eps_event card (Foster-Olsen-Shevlin 1984 seasonal-random-walk SUE, Bernard-Thomas 1989/1990 drift). The only change: value = sue_eps as already computed by scripts/build_sec_xbrl_fundamentals.py (unchanged), but the row's trade_date (visible_at) is now the first NYSE session after the nearest-preceding 8-K Item-2.02 filing's acceptanceDateTime for the same CIK, instead of the first NYSE session after the 10-Q/10-K filing itself. This is the reopen condition the refuted card's own amendment note named for itself (fundamentals-v1-manifest.json, 2026-09-24T05:20:00Z)."
+      }
+    }
+  ],
+  "candidate_count": 1,
+  "join_specification": {
+    "description": "New feature table data/features/sue_8k_visible/{year}.parquet, columns (symbol, trade_date, value), built once by a new script (scripts/build_sue_8k_visible.py, does not modify any existing lane/batch/signal_card file) and then read unmodified by signal_card.py's existing --source/--column event-mode path.",
+    "input_left": "data/features/sec_fundamentals_daily/{year}.parquet WHERE days_since_report = 0 AND sue_eps IS NOT NULL (i.e. exactly the rows the refuted card's event triggered on; symbol, cik, trade_date=old_visible_at, sue_eps)",
+    "input_right": "data/features/earnings_events/{2024,2025,2026}.parquet WHERE items LIKE '%2.02%' (cik, acceptance_utc)",
+    "match_rule": "For each left row, the right row with the same cik and the largest acceptance_utc such that acceptance_utc's NYSE usable-session date <= old_visible_at, within a 65-calendar-day lookback window (covers the longest routine gap between an earnings 8-K and its follow-on 10-Q/10-K, ~45 days, plus slack). No match within the window -> row dropped (fallback above), not substituted with the old date.",
+    "usable_session_rule": "Convert acceptance_utc to America/New_York local time (zoneinfo, matching build_earnings_events.py's own already-verified Eastern-time handling). If the local calendar date is a US equity trading session (open_composer.market_calendar.us_equity_session_close) and the local time is at or before that session's close (16:00, or 13:00 on an early-close day), the usable session is that same trading date; otherwise (after close, or a non-trading day) the usable session is open_composer.market_calendar.next_us_equity_session(local_date). This mirrors the existing as-first-reported PIT rule in scripts/build_sec_xbrl_fundamentals.py (a same-day filing is conservatively usable only from the next session unless known to be intraday) but adds the actual intraday cutoff the 8-K acceptance timestamp makes possible and the filing-date version could not use.",
+    "unit_test": "tests/test_build_sue_8k_visible.py asserts a synthetic 8-K accepted at 20:00 ET on trading day t maps to usable session t+1 (not t), and one accepted at 10:00 ET on trading day t maps to usable session t."
+  },
+  "contracts": {
+    "data": {
+      "data_v1_sec_fundamentals_daily_sue_eps_plus_earnings_events_8k_2.02": {
+        "left_glob": "data/features/sec_fundamentals_daily/*.parquet",
+        "right_glob": "data/features/earnings_events/*.parquet",
+        "right_coverage_window": ["2024-01-02", "2026-09-17"],
+        "note": "right table built under docs/plan-earnings-text-forward-test-2026-09-22.zh.md T1; this iteration only reads it, does not rebuild or extend it."
+      }
+    },
+    "features": {
+      "feature_v1_sue_8k_visible_at_join": {
+        "definition": "see join_specification above",
+        "builder": "scripts/build_sue_8k_visible.py (new file)",
+        "output": "data/features/sue_8k_visible/{year}.parquet"
+      }
+    },
+    "labels": {
+      "label_v1_signal_card_next_open_forward_returns": {
+        "definition": "signal_card.py's own forward_returns(): formation at the close of trade_date, entry at the next session's open, forward returns at h=1/5/20/60 sessions, unchanged"
+      }
+    },
+    "validation": {
+      "validation_v1_signal_card_event_mode_redated_placebo": {
+        "placebo": "signal_card.py's own built-in event-mode redated placebo (20 seeds, each event moved to a random session of the same stock within half a year), reused unchanged",
+        "windows": ["full (2024-2026, bounded by 8-K data coverage)", "2024+ (identical to full under this data constraint, reported separately as the admission rule requires)"]
+      }
+    },
+    "costs": {
+      "cost_v1_signal_card_10_20bps_next_open": {
+        "bps_per_side": [10.0, 20.0],
+        "basis": "sum|dw| turnover, unchanged from signal_card.py COSTS_BPS"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_signal_card_library_v1_admission_rule_event_long": {
+        "admission_rule_source": "reports/research/signal-cards/fundamentals-v1-manifest.json",
+        "admission_rule_source_sha256": "bda4d2c3f5c8815a294463d01944db57be5f20573eccc472e603887b5cb8e54f",
+        "event_long_rule": "beats_redated AND t_dates >= 3 at the primary horizon AND calendar-time book positive excess at 20bp in the full and 2024+ windows",
+        "reused_unchanged": true,
+        "k1_k2_reported_for_information_only": "docs/runbook-autonomous-round.zh.md section 5 K1/K2 thresholds (offset-median Sharpe vs S3 anchor/stress 1.49/0.81) do not formally apply to a single signal card (not a sleeve/strategy compared to S3); reported in results.json as context only, not as a gate."
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/pead_sue_8k_event_h20260928_14.yaml": "95f3848b0705be94a92e67d4267b8e763f32793a16f03ccd1a77a21fc917b1c9"
+  },
+  "source_spec_path": "strategy_specs/drafts/pead_sue_8k_event_h20260928_14.yaml",
+  "spec_hash": "95f3848b0705be94a92e67d4267b8e763f32793a16f03ccd1a77a21fc917b1c9",
+  "refuted_predecessor": {
+    "direction_id": "dir:pead_xbrl_sue_filing_date",
+    "signal_card_path": "reports/research/signal-cards/pead_sue_eps_event.json",
+    "reopen_condition_quote": "usable session = first NYSE session after the 10-Q/10-K filing date, which usually lags the earnings press release (8-K item 2.02) by days to weeks; the card measures drift after the XBRL filing, the tradeable version with free data",
+    "reopen_condition_source": "reports/research/signal-cards/fundamentals-v1-manifest.json amendments[0], at 2026-09-24T05:20:00Z"
+  }
+}

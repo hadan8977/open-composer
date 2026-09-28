@@ -1,0 +1,81 @@
+{
+  "iter_id": "h20260928_14_sue_8k_timestamp",
+  "strategy_name": "pead_sue_8k_event_h20260928_14",
+  "source_spec_path": "strategy_specs/drafts/pead_sue_8k_event_h20260928_14.yaml",
+  "spec_hash": "95f3848b0705be94a92e67d4267b8e763f32793a16f03ccd1a77a21fc917b1c9",
+  "schema_version": 3,
+  "created_at": "2026-09-28T06:40:00Z",
+  "objective": "Preregister ONE signal-card specification (SUE8K01) that rebuilds the refuted pead_sue_eps_event card with visible_at moved to the 8-K Item-2.02 acceptance timestamp, against the admission rule already fixed in reports/research/signal-cards/fundamentals-v1-manifest.json. No strategy backtest is run in this iteration.",
+  "paths": [
+    {
+      "name": "pead_sue_8k_timestamp_signal_screen",
+      "candidate_count": 1,
+      "hypothesis_refs": [
+        "H-20260928-14-followup"
+      ],
+      "parameters": {
+        "candidate_id": [
+          "SUE8K01"
+        ],
+        "signal_card_mode": [
+          "event"
+        ],
+        "direction": [
+          1
+        ],
+        "primary_horizon": [
+          20
+        ],
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "signal_card_library_v1_admission_rule_event_long",
+        "signal_card_redated_event_placebo",
+        "signal_card_standard_controls_momentum_reversal_size_volatility"
+      ]
+    }
+  ],
+  "total_candidate_budget": 1,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_14_sue_8k_timestamp/candidate-manifest.json",
+  "candidate_manifest_sha256": "be8a787681c1893cde82065626f733b237c876dcda937e7d7b7d9ebbdca06234",
+  "data_feasibility_path": "reports/research/iterations/h20260928_14_sue_8k_timestamp/data-feasibility.json",
+  "data_feasibility_sha256": "7904de07fdb852f7d6d9ccd9dcca05ef21167d3de8da4125764d6237e0b25ccb",
+  "cost_table_path": "reports/research/iterations/h20260928_14_sue_8k_timestamp/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_14_sue_8k_timestamp/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_14_sue_8k_timestamp/report.md",
+    "reports/research/signal-cards/sue_8k_event.md"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "left_feature_coverage": [
+      "2016-01-29",
+      "latest",
+      "data/features/sec_fundamentals_daily sue_eps coverage, unchanged from the refuted card"
+    ],
+    "right_feature_coverage": [
+      "2024-01-02",
+      "2026-09-17",
+      "data/features/earnings_events 8-K/2.02 acceptance_utc coverage -- bounds the joined result to this window regardless of the left table's longer history"
+    ],
+    "signal_card_recent_window": [
+      "2024-01-01",
+      "latest",
+      "signal_card.py's own RECENT_START convention, reused unchanged"
+    ]
+  },
+  "controls": {
+    "event_mode_redated": {
+      "description": "signal_card.py's own redated-event placebo (20 seeds, each event moved to a random session of the same stock within +/-126 sessions) -- reused unchanged, identical to the refuted card's own placebo mechanism.",
+      "seeds": 20
+    }
+  },
+  "adoption_rule": {
+    "event_admission": "reused verbatim from reports/research/signal-cards/fundamentals-v1-manifest.json admission_rule.event_long",
+    "multiple_comparisons": "1 candidate, no ranking; the shared, unmodified admission rule is the only bar",
+    "fallback_if_none_pass": "keep refuted (dir:pead_xbrl_sue_filing_date / dir:pead_xbrl_8k_llm's accounting half stays closed; no DeepSeek second stage queued)"
+  }
+}

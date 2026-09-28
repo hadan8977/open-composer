@@ -1,0 +1,174 @@
+name: pead_sue_8k_event_h20260928_14
+description: >-
+  Preregistered T-20260928-14 candidate. SUE8K01 is a signal-card test
+  (open_composer/research/signal_card.py, event mode) of the SUE/PEAD event
+  already refuted as dir:pead_xbrl_sue_filing_date
+  (reports/research/signal-cards/pead_sue_eps_event.json), rebuilt with
+  exactly one change: visible_at moves from the first NYSE session after the
+  10-Q/10-K filing date to the first NYSE session after the matching 8-K
+  Item-2.02 earnings-release exhibit's EDGAR acceptanceDateTime
+  (data/features/earnings_events/). sue_eps itself (Foster-Olsen-Shevlin 1984
+  seasonal random walk, computed by scripts/build_sec_xbrl_fundamentals.py)
+  is unchanged. No strategy backtest is run in this pass; the signal-card
+  tool against the admission rule already preregistered in
+  reports/research/signal-cards/fundamentals-v1-manifest.json is the decisive
+  test.
+timeframe: daily
+universe:
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - GOOGL
+lifecycle: draft
+position_direction: long_only
+
+entry:
+  all:
+    - close > 0
+  any: []
+
+exit:
+  all: []
+  any:
+    - close <= 0
+
+risk:
+  max_trades_per_day: 30
+  max_position_weight: 0.033
+  stop_loss_pct: null
+  take_profit_pct: null
+
+portfolio:
+  mode: adaptive_intraday_internal_router
+  max_symbols_per_day: 30
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 0.033
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_14:SUE8K01:pead_sue_8k_timestamp_signal_screen
+
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+
+execution:
+  backend: python_reference
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/features/daily_broad
+  feed: sip
+
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+  caveat: >
+    The signal is built from three sources this single `data.path` cannot
+    express: data/features/sec_fundamentals_daily (sue_eps, unchanged),
+    data/features/earnings_events (8-K Item-2.02 acceptanceDateTime, 2024-01-02
+    to 2026-09-17 only), and data/features/universe_broad (PIT top-3000
+    ranks). See candidate-manifest.json's join_specification and
+    data-feasibility.json for the exact join rule and coverage numbers.
+
+factors:
+  sue_eps_8k_visible:
+    source: expression
+    expression: sma(close, 1)
+    default: 0.0
+    description: Documentation-only stand-in. The real sue_eps value and its
+      8-K-timestamped visible_at are computed entirely by
+      scripts/build_sue_8k_visible.py (reads sue_eps from
+      data/features/sec_fundamentals_daily, joins to
+      data/features/earnings_events on cik + nearest-preceding 8-K/2.02
+      acceptance time) and read by signal_card.py from
+      data/features/sue_8k_visible/{year}.parquet, not by this per-symbol
+      expression grammar -- the same documentation-only-stand-in pattern this
+      repo already uses (see
+      strategy_specs/drafts/news_hf_reaction_h20260923_14.yaml).
+    params:
+      decision_lag_sessions: 0
+
+llm_review:
+  enabled: false
+  model: null
+
+required_capabilities:
+  - market.alpaca_bars
+
+research_design:
+  iter_id: h20260928_14_sue_8k_timestamp
+  candidate_manifest_path: reports/research/iterations/h20260928_14_sue_8k_timestamp/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_14_sue_8k_timestamp/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/profit_route_challenge_20260921.jsonl
+  source_card_claim_ids:
+    - profit_route_challenge_20260921:pead_cost_counterpoint
+  parameter_space:
+    candidate_id:
+      - SUE8K01
+  candidate_budget: 1
+  selection_objective: >-
+    One candidate, no ranking. SUE8K01 is judged only against the event_long
+    admission rule already preregistered in
+    reports/research/signal-cards/fundamentals-v1-manifest.json (beats_redated
+    AND t_dates >= 3 at h=20 AND calendar-time book positive excess at 20bp
+    in both the full and 2024+ windows), reused verbatim from the refuted
+    dir:pead_xbrl_sue_filing_date card. K1/K2
+    (docs/runbook-autonomous-round.zh.md section 5) are reported for
+    information only, not as a gate, since this is a single signal card, not
+    a sleeve compared to S3.
+  anti_overfit_notes:
+    - Exactly one candidate (SUE8K01), frozen in the manifest before any run;
+      no second variant to pick the best of.
+    - The admission rule, cost convention (10/20bp), and placebo (20-seed
+      redated event) are all reused verbatim from the already-frozen
+      fundamentals-v1-manifest.json, not invented or retuned for this
+      direction.
+    - The join window (65 calendar days, nearest-preceding 8-K per CIK) is
+      fixed in candidate-manifest.json before the join is built, not chosen
+      after seeing a result.
+    - This project's own most closely related prior card
+      (dir:pead_xbrl_sue_filing_date) was refuted at the same admission bar,
+      disclosed in negative_experiments_checked; the bar is not being
+      relaxed for this direction.
+  validation_plan:
+    - unit_test_after_close_event_visible_next_session_tests_test_build_sue_8k_visible
+    - signal_card_admission_rule_reused_from_fundamentals_v1_manifest_not_invented
+    - redated_placebo_20_seeds_reused_unchanged_from_signal_card_py
+
+notes:
+  intent: Ask whether the SUE/PEAD event, priced from the actual earnings
+    announcement (8-K Item 2.02) instead of the later 10-Q/10-K filing date,
+    clears this project's own signal-library admission bar -- the exact
+    reopen condition the refuted filing-date card named for itself. No
+    strategy-level combination or backtest is run in this pass.
+  hypothesis_id: H-20260928-14-followup
+  previous_link: dir:pead_xbrl_sue_filing_date
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready
+  design_constraints:
+    long_only: true
+    no_backtest_this_pass: true
+    signal_card_is_the_decisive_test: true
+  research_notes: >
+    scripts/build_sue_8k_visible.py and its test are the authoritative
+    reference; this spec exists only to satisfy the project's
+    candidate-manifest/research-design preregistration convention for a
+    signal-card-only (no-backtest) research round.

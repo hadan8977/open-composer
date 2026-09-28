@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_14_sue_8k_timestamp",
+  "candidate_id": "SUE8K01",
+  "generated_at": "2026-09-28T06:32:15+00:00",
+  "signal_card_path": "reports/research/signal-cards/sue_8k_event.json",
+  "signal_card_md_path": "reports/research/signal-cards/sue_8k_event.md",
+  "join_stats": {
+    "left_rows": 77480,
+    "right_rows": 16015,
+    "matched_rows": 11556,
+    "matched_symbols": 1211,
+    "trade_date_range": ["2024-01-03", "2026-09-15"],
+    "note": "left_rows/right_rows are pre-threshold, pre-top_n join inputs (scripts/build_sue_8k_visible.py); the signal card itself further restricts to top_n=3000 PIT universe and sue_eps>=2.0, giving 1032 events."
+  },
+  "coverage": {
+    "events": 1032,
+    "symbols": 570,
+    "event_days": 303,
+    "first": "2024-01-12"
+  },
+  "primary_horizon_20d": {
+    "mean_excess_pct": 0.48,
+    "t_dates": 1.064,
+    "hit_rate": 0.495,
+    "redated_placebo_car_range_pct": [0.44, 1.95],
+    "redated_placebo_excess_ann_range_pct": [3.88, 17.76],
+    "book_20bp_excess_ann_pct": -0.14,
+    "book_20bp_excess_ann_pct_2024_plus": -0.14,
+    "book_20bp_sharpe": 0.611,
+    "bench_20bp_sharpe": 0.712,
+    "book_10bp_excess_ann_pct": 5.52,
+    "book_10bp_sharpe": 0.851
+  },
+  "admission_rule_source": "reports/research/signal-cards/fundamentals-v1-manifest.json admission_rule.event_long",
+  "admission_rule_text": "beats_redated AND t_dates >= 3 at the primary horizon AND calendar-time book positive excess at 20bp in both the full and 2024+ windows",
+  "flags": {
+    "car_t_ge_3": false,
+    "beats_redated": false,
+    "book_positive_20bp": false,
+    "book_positive_20bp_recent": false
+  },
+  "admission_verdict": "refuted",
+  "admission_legs_failed": [
+    "t_dates 1.064 < 3 (h20)",
+    "beats_redated is False: real 20bp book excess_ann -0.14%/yr vs the redated placebo's 20-seed range +3.9% to +17.8%/yr -- the real result is far worse than dates picked at random",
+    "book_positive_20bp is False in both windows (full and 2024+ coincide here, both -0.14%/yr, since the 8-K coverage window bounds both to 2024-2026)"
+  ],
+  "comparison_to_refuted_filing_date_card": {
+    "refuted_card_path": "reports/research/signal-cards/pead_sue_eps_event.json",
+    "refuted_card_t_dates_h20": 3.564,
+    "refuted_card_car_h20_pct": 0.71,
+    "refuted_card_book_20bp_excess_ann_full_pct": -3.9,
+    "refuted_card_book_20bp_excess_ann_2024plus_pct": 1.5,
+    "this_card_t_dates_h20": 1.064,
+    "this_card_car_h20_pct": 0.48,
+    "this_card_book_20bp_excess_ann_pct": -0.14,
+    "note": "The 8-K timestamp version is weaker on the t-statistic leg (1.06 vs 3.56) and worse on the one leg the filing-date version actually passed (2024+ book excess flips from +1.5%/yr to -0.14%/yr). Moving visible_at earlier did not fix the refuted card; it produced a flatter, noisier signal, not a stronger one."
+  },
+  "k1_k2_information_only": {
+    "applicability": "K1/K2 (docs/runbook-autonomous-round.zh.md section 5) compare a full sleeve's rebalance-offset-median Sharpe to S3's anchor/stress medians (1.49/0.81, thresholds 1.19/0.65). This is a single signal card, not a sleeve, and no rebalance-offset-median or stress-period split was computed -- these are the signal card's own headline Sharpes, reported for context only, not a K1/K2 pass/fail.",
+    "book_10bp_sharpe_2024_2026": 0.851,
+    "book_20bp_sharpe_2024_2026": 0.611,
+    "bench_20bp_sharpe_2024_2026": 0.712,
+    "vs_k1_anchor_threshold_1_19": "0.611 (20bp) and 0.851 (10bp) both below 1.19",
+    "vs_k1_stress_threshold_0_65": "0.611 (20bp) below 0.65; 0.851 (10bp) above 0.65",
+    "conclusion": "Even read informally against K1's numeric thresholds, this candidate would not clear K1; not applicable as a formal gate for a single signal card."
+  }
+}
