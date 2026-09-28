@@ -1,0 +1,75 @@
+{
+  "iter_id": "h20260928_20_recent_regime_opt",
+  "strategy_name": "recent_regime_opt_h20260928_20",
+  "source_spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+  "spec_hash": "edf8edd345cbc8a3dc304743796f134a43db2f33114e6b5949cbbf65156c9813",
+  "schema_version": 3,
+  "created_at": "2026-09-28T05:57:00+00:00",
+  "objective": "Preregister 20 candidates (E base+7, S base+9, C 2) optimizing the two batch-2 candidates the owner liked on 2026-09-28, judged via scripts/screen_batch.py against the owner's literal three-part per-family replacement rule. No backtest run yet.",
+  "paths": [
+    {
+      "name": "recent_regime_opt_screen",
+      "candidate_count": 20,
+      "hypothesis_refs": ["H-20260928-20-recent-regime-opt"],
+      "parameters": {
+        "candidate_id": [
+          "E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7",
+          "S0", "S1", "S2", "S_AVG3", "S_AVG5", "S_SHIFT0", "S_SHIFT2",
+          "S_11SECTORS", "S_INVVOL", "S_ABSFILTER", "C1", "C2"
+        ],
+        "freq": "D (calendar-anchored, single version per candidate; no offset sweep)",
+        "cost_bps_primary": 10.0,
+        "cost_bps_stress": 20.0,
+        "model_training": false,
+        "mutation": "none"
+      },
+      "benchmark_family": [
+        "family_base_E0_or_S0",
+        "S3_incumbent_median_offset_reference",
+        "SPY_buy_and_hold",
+        "SHY_buy_and_hold"
+      ]
+    }
+  ],
+  "total_candidate_budget": 20,
+  "candidate_manifest_path": "reports/research/iterations/h20260928_20_recent_regime_opt/candidate-manifest.json",
+  "candidate_manifest_sha256": "b6758fd5c0cc832b52f8e6378131f19e22c167eeabb2fcfd7940ca053f38f1b2",
+  "data_feasibility_path": "reports/research/iterations/h20260928_20_recent_regime_opt/data-feasibility.json",
+  "data_feasibility_sha256": "3d508d7ad6260e8ca49421052d7ef224fcadd55a2084d46c6289d761ab8033f5",
+  "cost_table_path": "reports/research/iterations/h20260928_20_recent_regime_opt/cost-contract.json",
+  "trial_ledger_paths": [
+    "reports/research/iterations/h20260928_20_recent_regime_opt/trial-ledger.jsonl"
+  ],
+  "evaluation_report_paths": [
+    "reports/research/iterations/h20260928_20_recent_regime_opt/report.md",
+    "reports/research/iterations/h20260928_20_recent_regime_opt/results.json"
+  ],
+  "single_mechanism_no_campaign_attestation": true,
+  "windows": {
+    "select": ["2023-09-18", "2025-12-31"],
+    "anchor": ["2024-01-08", "2026-09-17"],
+    "holdout_2026_contaminated": ["2026-01-02", "2026-09-17"],
+    "stress": ["2016-05-02", "2023-09-15"]
+  },
+  "controls": {
+    "family_base": {
+      "description": "E0 (batch-2's EOM_REVERSAL_SPY) and S0 (batch-2's FRONT_RUN_SECTOR_TOP2), each variant judged against its own family's base only.",
+      "count": 2
+    },
+    "s3_incumbent_reference": {
+      "description": "Reported for context (correlation, anchor/stress Sharpe) on every candidate; not used to select.",
+      "count": 1
+    }
+  },
+  "adoption_rule": {
+    "per_family": [
+      "(a) select-window 10bp Sharpe >= family base + 0.10",
+      "(b) 2026 contaminated-window Sharpe not below base by more than 0.10 (guard)",
+      "(c) 20bp select-window Sharpe still >= family base + 0.10"
+    ],
+    "pass_requires": "ALL THREE conditions, for the highest-select-Sharpe qualifying variant",
+    "multiple_comparisons": "20 candidates across 3 families; DSR computed per family with trial_count = that family's variant count including base (E=8, S=10, C=2)",
+    "fallback_if_none_pass": "family base stands unchanged; every variant recorded with its verdict, none silently dropped",
+    "g3_placebo": "see candidate-manifest.json's g3_not_applicable_reason -- the three-part replacement rule plus per-family DSR serves this role for a bounded, source-grounded variant search"
+  }
+}

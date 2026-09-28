@@ -1,0 +1,844 @@
+{
+  "iter_id": "h20260928_20_recent_regime_opt",
+  "generated_at": "2026-09-28T05:56:00+00:00",
+  "generated_before_backtest": true,
+  "strategy_name": "recent_regime_opt_h20260928_20",
+  "objective": "Preregister 20 candidates (E family base E0 + 7 variants; S family base S0 + 9 variants; C family 2 combination variants) extending the two batch-2 candidates the owner liked on 2026-09-28 (EOM_REVERSAL_SPY, FRONT_RUN_SECTOR_TOP2), judged via scripts/screen_batch.py --batch h20260928_20_recent_opt against the owner's literal three-part per-family replacement rule (see adoption_rule). No return is computed by this manifest; that is a separate, later step.",
+  "candidates": [
+    {
+      "candidate_id": "E0",
+      "path": "recent_regime_opt_screen",
+      "role": "family_base",
+      "method": "eom_reversal_4th_friday_sign",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY"
+        ],
+        "symbol": "SPY",
+        "formation": "4th_friday_to_month_end",
+        "threshold": 0.0,
+        "magnitude_scale": false,
+        "holding": "full_next_month",
+        "signal_dates": "month_end_signal_dates (imported from h20260928_05_batch2, unchanged)",
+        "source_card": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+        "source_directly_tested_this_variant": true
+      }
+    },
+    {
+      "candidate_id": "E1",
+      "path": "recent_regime_opt_screen",
+      "role": "eom_variant",
+      "method": "eom_reversal_formation_window_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY"
+        ],
+        "symbol": "SPY",
+        "formation": "last_5_sessions",
+        "threshold": 0.0,
+        "magnitude_scale": false,
+        "holding": "full_next_month",
+        "signal_dates": "month_end_signal_dates",
+        "source_note": "Graziani (2024)'s own A.1.4 robustness appendix tests 1-3-week-earlier formation windows and finds only the last week (~5 sessions) and its own daily returns have predictive power -- this variant is the source's own tested case, not an extension.",
+        "source_card": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+        "source_directly_tested_this_variant": true
+      }
+    },
+    {
+      "candidate_id": "E2",
+      "path": "recent_regime_opt_screen",
+      "role": "eom_variant",
+      "method": "eom_reversal_formation_window_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY"
+        ],
+        "symbol": "SPY",
+        "formation": "last_10_sessions",
+        "threshold": 0.0,
+        "magnitude_scale": false,
+        "holding": "full_next_month",
+        "signal_dates": "month_end_signal_dates",
+        "source_note": "~2 weeks -- closer to the source's own tested rw=2/rw=3 windows, which the source's A.1.4 appendix reports do NOT have predictive power; preregistered per the owner's brief as a headwind case, not an expected win.",
+        "source_card": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+        "source_directly_tested_this_variant": true
+      }
+    },
+    {
+      "candidate_id": "E3",
+      "path": "recent_regime_opt_screen",
+      "role": "eom_variant",
+      "method": "eom_reversal_threshold_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY"
+        ],
+        "symbol": "SPY",
+        "formation": "4th_friday_to_month_end",
+        "threshold": -0.01,
+        "magnitude_scale": false,
+        "holding": "full_next_month",
+        "signal_dates": "month_end_signal_dates",
+        "source_card": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "E4",
+      "path": "recent_regime_opt_screen",
+      "role": "eom_variant",
+      "method": "eom_reversal_symbol_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "QQQ"
+        ],
+        "symbol": "QQQ",
+        "formation": "4th_friday_to_month_end",
+        "threshold": 0.0,
+        "magnitude_scale": false,
+        "holding": "full_next_month",
+        "signal_dates": "month_end_signal_dates",
+        "source_note": "Graziani (2024) replicates on DOW and Russell 2000 (not QQQ/Nasdaq-100); QQQ is an owner/brief-directed extension, not a source-tested index.",
+        "source_card": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "E5",
+      "path": "recent_regime_opt_screen",
+      "role": "eom_variant",
+      "method": "eom_reversal_holding_truncation_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY"
+        ],
+        "symbol": "SPY",
+        "formation": "4th_friday_to_month_end",
+        "threshold": 0.0,
+        "magnitude_scale": false,
+        "holding": "first_10_sessions_of_next_month_then_cash",
+        "signal_dates": "month_end_signal_dates union nth_session(10)_of_holding_month",
+        "source_note": "Not tested by the source; owner/brief-directed extension.",
+        "source_card": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "E6",
+      "path": "recent_regime_opt_screen",
+      "role": "eom_variant",
+      "method": "eom_reversal_holding_truncation_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY"
+        ],
+        "symbol": "SPY",
+        "formation": "4th_friday_to_month_end",
+        "threshold": 0.0,
+        "magnitude_scale": false,
+        "holding": "until_next_month_4th_friday_then_cash",
+        "signal_dates": "month_end_signal_dates union fourth_friday_of_holding_month",
+        "source_note": "Not tested by the source; owner/brief-directed extension.",
+        "source_card": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "E7",
+      "path": "recent_regime_opt_screen",
+      "role": "eom_variant",
+      "method": "eom_reversal_magnitude_scaled_weight_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY"
+        ],
+        "symbol": "SPY",
+        "formation": "4th_friday_to_month_end",
+        "threshold": 0.0,
+        "magnitude_scale": true,
+        "weight_formula": "min(1, abs(r)/0.02)",
+        "holding": "full_next_month",
+        "signal_dates": "month_end_signal_dates",
+        "source_note": "Modeled on Graziani (2024) section 2.4's TSR-TV time-varying strategy (Sharpe 0.588 vs simple TSR's 0.384), the paper's single largest reported improvement; this variant is a deliberately simplified LONG-ONLY, no-leverage analog (the paper's TSR-TV allows leverage up to 2x and shorting to -1x, not replicated here).",
+        "source_card": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+        "source_directly_tested_this_variant": true
+      }
+    },
+    {
+      "candidate_id": "S0",
+      "path": "recent_regime_opt_screen",
+      "role": "family_base",
+      "method": "front_run_sector_seasonality_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "top_n": 2,
+        "shift_months": 1,
+        "avg_years": 1,
+        "inverse_vol": false,
+        "abs_filter": false,
+        "signal_dates": "month_end_signal_dates (imported, unchanged)",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": true
+      }
+    },
+    {
+      "candidate_id": "S1",
+      "path": "recent_regime_opt_screen",
+      "role": "sector_seasonality_variant",
+      "method": "front_run_sector_seasonality_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "top_n": 1,
+        "shift_months": 1,
+        "avg_years": 1,
+        "inverse_vol": false,
+        "abs_filter": false,
+        "signal_dates": "month_end_signal_dates (imported, unchanged)",
+        "source_note": "Quantpedia's own page tests holding 1-7 ETFs and reports the specific per-count ranking; top-1 is one of its own tested cuts.",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": true
+      }
+    },
+    {
+      "candidate_id": "S2",
+      "path": "recent_regime_opt_screen",
+      "role": "sector_seasonality_variant",
+      "method": "front_run_sector_seasonality_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "top_n": 3,
+        "shift_months": 1,
+        "avg_years": 1,
+        "inverse_vol": false,
+        "abs_filter": false,
+        "signal_dates": "month_end_signal_dates (imported, unchanged)",
+        "source_note": "Quantpedia's own page tests holding 1-7 ETFs; top-3 is one of its own tested cuts (top-2 was reported best).",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": true
+      }
+    },
+    {
+      "candidate_id": "S_AVG3",
+      "path": "recent_regime_opt_screen",
+      "role": "sector_seasonality_variant",
+      "method": "front_run_sector_seasonality_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "top_n": 2,
+        "shift_months": 1,
+        "avg_years": 3,
+        "inverse_vol": false,
+        "abs_filter": false,
+        "signal_dates": "month_end_signal_dates (imported, unchanged)",
+        "source_note": "Not tested by the source (which uses a single 1-year lag); owner/brief-directed extension.",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "S_AVG5",
+      "path": "recent_regime_opt_screen",
+      "role": "sector_seasonality_variant",
+      "method": "front_run_sector_seasonality_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "top_n": 2,
+        "shift_months": 1,
+        "avg_years": 5,
+        "inverse_vol": false,
+        "abs_filter": false,
+        "signal_dates": "month_end_signal_dates (imported, unchanged)",
+        "source_note": "Not tested by the source; owner/brief-directed extension.",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "S_SHIFT0",
+      "path": "recent_regime_opt_screen",
+      "role": "sector_seasonality_variant",
+      "method": "front_run_sector_seasonality_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "top_n": 2,
+        "shift_months": 0,
+        "avg_years": 1,
+        "inverse_vol": false,
+        "abs_filter": false,
+        "signal_dates": "month_end_signal_dates (imported, unchanged)",
+        "source_note": "Quantpedia's own page explicitly tests shift-0 ('true seasonality') and reports it 'at best, comparable to those of the benchmark' -- preregistered as the source's own reported-failing baseline, a re-check not an expected win.",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": true
+      }
+    },
+    {
+      "candidate_id": "S_SHIFT2",
+      "path": "recent_regime_opt_screen",
+      "role": "sector_seasonality_variant",
+      "method": "front_run_sector_seasonality_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "top_n": 2,
+        "shift_months": 2,
+        "avg_years": 1,
+        "inverse_vol": false,
+        "abs_filter": false,
+        "signal_dates": "month_end_signal_dates (imported, unchanged)",
+        "source_note": "Not tested by the source (which tests only shift 0 and shift 1); owner/brief-directed extension.",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "S_11SECTORS",
+      "path": "recent_regime_opt_screen",
+      "role": "sector_seasonality_variant",
+      "method": "front_run_sector_seasonality_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY",
+          "XLC",
+          "XLRE"
+        ],
+        "top_n": 2,
+        "shift_months": 1,
+        "avg_years": 1,
+        "inverse_vol": false,
+        "abs_filter": false,
+        "signal_dates": "month_end_signal_dates (imported, unchanged)",
+        "source_note": "Not tested by the source (9-sector universe only, predates XLC/XLRE inclusion in most seasonality studies); owner/brief-directed extension. XLC available in local panel from 2018-06-19 (inception), XLRE from panel start 2016-01-04.",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "S_INVVOL",
+      "path": "recent_regime_opt_screen",
+      "role": "sector_seasonality_variant",
+      "method": "front_run_sector_seasonality_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "top_n": 2,
+        "shift_months": 1,
+        "avg_years": 1,
+        "inverse_vol": true,
+        "abs_filter": false,
+        "vol_lookback_sessions": 63,
+        "signal_dates": "month_end_signal_dates (imported, unchanged)",
+        "source_note": "Not tested by the source (equal-weight only); owner/brief-directed extension, vol_lookback matches scripts/screen_lane.py's own INV_VOL_LOOKBACK convention used elsewhere in this repo.",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "S_ABSFILTER",
+      "path": "recent_regime_opt_screen",
+      "role": "sector_seasonality_variant",
+      "method": "front_run_sector_seasonality_variant",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "top_n": 2,
+        "shift_months": 1,
+        "avg_years": 1,
+        "inverse_vol": false,
+        "abs_filter": true,
+        "filter_lookback_sessions": 252,
+        "signal_dates": "month_end_signal_dates (imported, unchanged)",
+        "source_note": "Not tested by the source; owner/brief-directed extension. A picked sector's weight is dropped (goes to SHY) unless its own trailing-12-month return is positive.",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "C1",
+      "path": "recent_regime_opt_screen",
+      "role": "combination_variant",
+      "method": "eom_gate_sector_top2_combination",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY",
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "eom_leg": "E0 base rule (signal only, SPY never held)",
+        "sector_leg": "S0 base rule (top-2, equal weight)",
+        "logic": "risk_on iff E0 signal < 0 -> hold S0 top-2 sectors; else 100% SHY",
+        "signal_dates": "month_end_signal_dates",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": false
+      }
+    },
+    {
+      "candidate_id": "C2",
+      "path": "recent_regime_opt_screen",
+      "role": "combination_variant",
+      "method": "eom_sector_static_blend_combination",
+      "ablation": "single_dimension_change_from_family_base",
+      "spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+      "fallback": "SHY",
+      "data_contract": "data_v1_sip_daily_recent_opt_panel",
+      "feature_contract": "feature_v1_recent_opt_eom_and_sector_variants",
+      "label_contract": "label_v1_next_session_open_to_open_total_return",
+      "validation_contract": "validation_v1_screen_lane_frozen_windows_2026_09_28",
+      "cost_contract": "cost_v1_10_20bps_next_open_screen_lane",
+      "benchmark_contract": "benchmark_v1_recent_opt_vs_family_base",
+      "parameters": {
+        "freq": "D",
+        "universe": [
+          "SPY",
+          "XLB",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLU",
+          "XLV",
+          "XLY"
+        ],
+        "eom_leg": "E0 base rule, 0.5x capital",
+        "sector_leg": "S0 base rule, 0.5x capital",
+        "logic": "weight = 0.5 * E0_weights + 0.5 * S0_weights, recomputed fresh every month-end",
+        "signal_dates": "month_end_signal_dates",
+        "source_card": "quantpedia_front_running_sector_seasonality_variants",
+        "source_directly_tested_this_variant": false
+      }
+    }
+  ],
+  "candidate_count": 20,
+  "contracts": {
+    "data": {
+      "data_v1_sip_daily_recent_opt_panel": {
+        "glob": "data/sip/daily/*/*.parquet",
+        "hygiene": "drop bars with zero volume and zero trade_count",
+        "source": "alpaca SIP daily archive, fully adjusted closes",
+        "symbols": [
+          "BIL",
+          "QQQ",
+          "SHY",
+          "SPY",
+          "XLB",
+          "XLC",
+          "XLE",
+          "XLF",
+          "XLI",
+          "XLK",
+          "XLP",
+          "XLRE",
+          "XLU",
+          "XLV",
+          "XLY"
+        ]
+      }
+    },
+    "features": {
+      "feature_v1_recent_opt_eom_and_sector_variants": {
+        "decision_lag_sessions": 1,
+        "e_family": "E0-E7 compute a formation-window return (4th Friday, or last 5/10 sessions) on SPY or QQQ and threshold/scale it into a weight, implemented in scripts/screen_batches/h20260928_20_recent_opt.py's make_eom_reversal_fn family; E5/E6 add extra in-month exit signal dates that force cash.",
+        "s_family": "S0-S_ABSFILTER compute a lagged/shifted seasonal score per sector (9 or 11 symbols, 1 or more prior years averaged) and select/weight the top-N, implemented in make_sector_seasonality_fn.",
+        "c_family": "C1/C2 combine the E0 and S0 signals, implemented in make_c1_eom_gate_sector_top2_fn / make_c2_eom_sector_blend_fn.",
+        "no_lookahead": "Every function reads only close.loc[:asof] for price values; calendar-boundary helpers (imported unchanged from h20260928_05_batch2) may read the full close.index for exchange trading-day structure only, verified by tests/test_screen_recent_opt_rules.py's test_no_lookahead for every SPECS entry."
+      }
+    },
+    "labels": {
+      "label_v1_next_session_open_to_open_total_return": {
+        "definition": "weights effective at the next session open; return legs split open and close where applicable, per scripts/run_h20260918_05_recent_menu.py's convention (unchanged from batch-2)."
+      }
+    },
+    "validation": {
+      "validation_v1_screen_lane_frozen_windows_2026_09_28": {
+        "select": [
+          "2023-09-18",
+          "2025-12-31"
+        ],
+        "anchor": [
+          "2024-01-08",
+          "2026-09-17"
+        ],
+        "holdout_2026_contaminated": [
+          "2026-01-02",
+          "2026-09-17",
+          "reference and guard only, per replacement rule condition (b)"
+        ],
+        "stress": [
+          "2016-05-02",
+          "2023-09-15"
+        ],
+        "offsets": "'D' freq: exactly one version per candidate (no offset sweep) -- every E/S/C candidate here is calendar-anchored, per the direction-review's cost_and_execution_assumptions.",
+        "panel_start": "2015-01-02 (warmup, matches scripts/screen_lane.py's PANEL_START)"
+      }
+    },
+    "costs": {
+      "cost_v1_10_20bps_next_open_screen_lane": {
+        "contract_path": "reports/research/iterations/h20260928_20_recent_regime_opt/cost-contract.json"
+      }
+    },
+    "benchmarks": {
+      "benchmark_v1_recent_opt_vs_family_base": {
+        "members": [
+          "family_base_E0_or_S0",
+          "S3_incumbent_median_offset_reference",
+          "SPY_buy_and_hold",
+          "SHY_buy_and_hold"
+        ],
+        "keep_rule": "Owner's 2026-09-28 literal three-part replacement rule (see adoption_rule below); this is a REPLACEMENT test against the family's own batch-2 base, not the K1/K2 keep rule used in batch-2 (that rule judged each candidate against S3; this round judges each variant against its own family's base)."
+      }
+    }
+  },
+  "spec_hashes": {
+    "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml": "edf8edd345cbc8a3dc304743796f134a43db2f33114e6b5949cbbf65156c9813"
+  },
+  "source_spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+  "spec_hash": "edf8edd345cbc8a3dc304743796f134a43db2f33114e6b5949cbbf65156c9813",
+  "single_mechanism_no_campaign_attestation": true,
+  "g3_not_applicable_reason": "This round IS a bounded parameter search over two already-published rules (unlike batch-2's verbatim replications), so a placebo is warranted in spirit; rather than an additional random-calendar-shift placebo run, the owner's own three-part replacement rule serves that role here: (a) requires a real select-window Sharpe improvement of >=0.10 (not noise-sized), (b) requires the improvement not to be concentrated in the still-open, contaminated 2026 window (guarding against a variant that only 'improves' by riding the most recent months harder), and (c) requires the improvement to survive a cost doubling to 20bp. Per-family DSR (trial_count = family variant count including base: E=8, S=10, C=2) is the multiple-comparisons correction for the added search width. No G1-G5 threshold or the batch-2 K1/K2 keep rule is relaxed or reused for this round's own replacement decision -- this is a separate, narrower, owner-specified test.",
+  "adoption_rule": {
+    "per_family": [
+      "(a) select-window (2023-09-18..2025-12-31) 10bp Sharpe >= family base + 0.10",
+      "(b) 2026 contaminated-window (2026-01-02..2026-09-17) Sharpe not below the base's by more than 0.10 (guard only, per the owner's rule)",
+      "(c) 20bp select-window Sharpe still >= family base + 0.10"
+    ],
+    "pass_requires": "ALL THREE of (a), (b), (c) for at least one variant in the family",
+    "tie_break": "Among qualifying variants, the highest select-window (10bp) Sharpe wins and replaces the family's base.",
+    "families": {
+      "E": {
+        "base": "E0",
+        "variant_count_incl_base": 8,
+        "variant_ids": [
+          "E0",
+          "E1",
+          "E2",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7"
+        ]
+      },
+      "S": {
+        "base": "S0",
+        "variant_count_incl_base": 10,
+        "variant_ids": [
+          "S0",
+          "S1",
+          "S2",
+          "S_AVG3",
+          "S_AVG5",
+          "S_SHIFT0",
+          "S_SHIFT2",
+          "S_11SECTORS",
+          "S_INVVOL",
+          "S_ABSFILTER"
+        ]
+      },
+      "C": {
+        "base": null,
+        "variant_count_incl_base": 2,
+        "variant_ids": [
+          "C1",
+          "C2"
+        ],
+        "note": "C1/C2 are reported descriptively against their own component bases (E0, S0); they do not replace E0 or S0 and are not eligible to replace either family's base."
+      }
+    },
+    "reporting": "Anchor, stress, and correlation-with-S3 are reported for every candidate but never used to select (per the owner's brief); DSR is computed per family with trial_count = that family's variant_count_incl_base.",
+    "multiple_comparisons": "20 candidates total across 3 families; each family's replacement decision uses only its own trial_count for DSR, per the owner's explicit instruction.",
+    "fallback_if_none_qualify": "The family's base (E0 or S0) stands unchanged as the batch-2 result; every tested variant is still recorded with its verdict in results.json/report.md, not silently dropped."
+  },
+  "sso_context_note": "Separately and descriptively, after the E-family replacement decision is made, the winning E-family rule (either E0 if unchanged, or the replacing variant) is re-run with SSO substituted for SPY/QQQ, computed post-hoc via scripts/screen_lane.py's evaluate_candidate() directly (not through scripts/screen_batch.py's gated manifest run, since the exact winning variant is only known after the backtest). This SSO number is context for the owner's 50%/yr gate only -- it is NOT part of the optimization, NOT used in the replacement rule, and NOT counted in the E-family's DSR trial_count of 8."
+}

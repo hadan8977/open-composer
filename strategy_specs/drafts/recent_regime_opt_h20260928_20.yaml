@@ -1,0 +1,207 @@
+name: recent_regime_opt_h20260928_20
+description: >-
+  Preregistered optimization round over the two batch-2 candidates
+  the owner explicitly liked on 2026-09-28 (EOM_REVERSAL_SPY select 1.34 /
+  anchor 1.24 / stress 0.58 Sharpe; FRONT_RUN_SECTOR_TOP2 select 0.75 / anchor
+  1.40 / stress 0.45 Sharpe). E family (base E0 plus 7 variants -- formation
+  window last 5/10 sessions, entry threshold < -1%, QQQ instead of SPY, hold
+  only first 10 sessions or until next month's 4th Friday, magnitude-scaled
+  weight) and S family (base S0 plus 9 variants -- top-1/top-3, score
+  averaged over 3/5 years, shift 0/2 months, 11 sectors, inverse-vol
+  weights, absolute trailing-return filter) are each judged through
+  scripts/screen_batches/h20260928_20_recent_opt.py against the owner's
+  literal three-part replacement rule ((a) select-window 10bp Sharpe >=
+  base+0.10, (b) 2026 contaminated-window Sharpe not below base by more than
+  0.10, (c) 20bp select-window Sharpe still >= base+0.10), plus 2
+  cross-family combination variants (C1 -- EOM signal gates risk-on/off with
+  S0's top-2 sectors held when risk-on; C2 -- 50/50 static capital mix of E0
+  and S0). No backtest has been run against these candidates yet; this spec
+  exists only to bind the preregistration. Research only, deterministic,
+  next-session execution; no broker writes are authorized.
+timeframe: daily
+universe:
+- BIL
+- QQQ
+- SHY
+- SPY
+- XLB
+- XLC
+- XLE
+- XLF
+- XLI
+- XLK
+- XLP
+- XLRE
+- XLU
+- XLV
+- XLY
+lifecycle: draft
+position_direction: long_only
+entry:
+  all:
+  - close > 0
+  any: []
+exit:
+  all: []
+  any:
+  - close <= 0
+risk:
+  max_trades_per_day: 3
+  max_position_weight: 1.0
+  stop_loss_pct: null
+  take_profit_pct: null
+portfolio:
+  mode: hybrid_adaptive_router
+  max_symbols_per_day: 3
+  gross_exposure_limit: 1.0
+  max_symbol_weight: 1.0
+  same_day_flatten: false
+  duplicate_signal_policy: stable_signal_id
+  selected_route_label: h20260928_20:screen:recent_regime_opt_screen
+costs:
+  commission_pct: 0.0
+  slippage_bps: 10.0
+  impact_model: linear
+  impact_eta: 0.0
+  impact_gamma: 0.0
+execution:
+  backend: nautilus_trader
+  mode: manual_signal
+  signal_on: bar_close
+  fill_assumption: next_bar_open
+  broker: none
+data:
+  source: alpaca
+  symbol: SPY
+  path: data/sip/daily
+  feed: sip
+data_assumptions:
+  source: alpaca
+  adjusted: true
+  timezone: America/New_York
+  acquisition_tier: research_strict
+  session_scope: regular
+  forward_fill_allowed: false
+  zero_return_substitution_allowed: false
+  nonfinite_action: fail_closed
+  historical_quality_paper_eligible: false
+  historical_quality_is_paper_authorization: false
+factors:
+  eom_reversal_rule:
+    source: expression
+    expression: close / lag(close, 21) - 1
+    default: 0.0
+    description: Documentation-only stand-in. E0-E7 are variants of the
+      end-of-month reversal signal (sign, and for E7 magnitude, of SPY's or
+      QQQ's return from a formation anchor to the month-end close), computed
+      entirely by scripts/screen_batches/h20260928_20_recent_opt.py's
+      make_eom_reversal_fn family, not by the generic per-symbol factor
+      engine.
+    params:
+      decision_lag_sessions: 1
+  sector_seasonality_rule:
+    source: expression
+    expression: close / lag(close, 252) - 1
+    default: 0.0
+    description: Documentation-only stand-in. S0-S_ABSFILTER are variants of
+      the front-running sector seasonality score (a one-or-more-year-lagged,
+      shifted seasonal ranking across 9 or 11 Select Sector SPDRs), computed
+      entirely by scripts/screen_batches/h20260928_20_recent_opt.py's
+      make_sector_seasonality_fn family, not by the generic per-symbol
+      factor engine.
+    params:
+      decision_lag_sessions: 1
+  combination_rule:
+    source: expression
+    expression: close / lag(close, 21) - 1
+    default: 0.0
+    description: Documentation-only stand-in. C1 and C2 combine the
+      eom_reversal_rule and sector_seasonality_rule signals, computed by
+      scripts/screen_batches/h20260928_20_recent_opt.py's
+      make_c1_eom_gate_sector_top2_fn / make_c2_eom_sector_blend_fn, not by
+      the generic per-symbol factor engine.
+    params:
+      decision_lag_sessions: 1
+llm_review:
+  enabled: false
+  model: null
+required_capabilities:
+- market.alpaca_bars
+research_design:
+  iter_id: h20260928_20_recent_regime_opt
+  candidate_manifest_path: reports/research/iterations/h20260928_20_recent_regime_opt/candidate-manifest.json
+  data_feasibility_path: reports/research/iterations/h20260928_20_recent_regime_opt/data-feasibility.json
+  source_cards_path: reports/harness/source_cards/h20260928_20_recent_regime_opt.jsonl
+  source_card_claim_ids:
+  - graziani2024_ssrn_eom_reversal_primary_tsrtv
+  - graziani2024_eom_reversal_harbourfrontquant_summary
+  - quantpedia_front_running_sector_seasonality_variants
+  - allocatesmartly_country_etf_front_running_extended_test
+  parameter_space:
+    candidate_id:
+    - E0
+    - E1
+    - E2
+    - E3
+    - E4
+    - E5
+    - E6
+    - E7
+    - S0
+    - S1
+    - S2
+    - S_AVG3
+    - S_AVG5
+    - S_SHIFT0
+    - S_SHIFT2
+    - S_11SECTORS
+    - S_INVVOL
+    - S_ABSFILTER
+    - C1
+    - C2
+  candidate_budget: 20
+  selection_objective: Per-family replacement only. A family's base (E0 or
+    S0) is replaced by its highest-select-Sharpe qualifying variant iff that
+    variant satisfies all three of (a) select-window 10bp Sharpe >= base +
+    0.10, (b) 2026 contaminated-window Sharpe not below base's by more than
+    0.10, (c) 20bp select-window Sharpe still >= base + 0.10, computed by
+    scripts/screen_batch.py once the batch is actually run (not part of this
+    preregistration round). C1/C2 are reported descriptively against their
+    component bases, not selected into E or S.
+  anti_overfit_notes:
+  - All 20 candidates are frozen in candidate-manifest.json before any return
+    is computed; each variant changes exactly one preregistered dimension
+    (formation window, threshold, symbol, holding truncation, magnitude
+    scaling for E; top-N, score lookback, shift, universe, weighting, filter
+    for S) from its family's base, per the owner's brief.
+  - The replacement rule requires a select-window improvement plus a
+    contaminated-2026-window guard specifically so a variant cannot pass by
+    over-fitting the tail of the select window or the still-open 2026
+    holdout; stress-window and anchor-window performance are reported but
+    explicitly NOT used to select, since both bases already fail stress and
+    selecting on it would make the search vacuous.
+  - DSR is computed per family (trial_count = 8 for E, 10 for S, 2 for C),
+    not pooled across all 20 candidates, per the owner's brief.
+  - E1/E2 (formation window) and S6/S1/S2 (shift-0, top-1, top-3) are the
+    only variants directly grounded in each source's own tested robustness
+    checks; E7 (magnitude scaling) is modeled on the source's own
+    best-reported refinement (TSR-TV); the remaining variants are
+    owner/brief-directed extensions beyond what either source itself tests,
+    disclosed per-candidate in candidate-manifest.json.
+  validation_plan:
+  - screen_lane_frozen_windows_select_anchor_holdout2026_stress
+  - single_version_d_freq_no_offset_sweep_per_calendar_anchored_rule
+  - owner_three_part_replacement_rule_per_family_base
+  - per_family_dsr_e8_s10_c2
+  - next_session_execution_with_ten_and_twenty_bps_cost_views
+notes:
+  intent: Optimize the two batch-2 candidates the owner liked, via a bounded,
+    source-grounded variant search plus 2 combination variants, judged
+    against a literal preregistered replacement rule. Next, separate step is
+    scripts/run_capped.sh --mem 1.5G -- uv run python scripts/screen_batch.py
+    --batch h20260928_20_recent_opt --iteration h20260928_20_recent_regime_opt.
+  hypothesis_id: H-20260928-20-recent-regime-opt
+  previous_link: H-20260928-05-registry-batch2
+  broker_writes: false
+  promotion_eligible: false
+  contract_status: ready

@@ -1,0 +1,119 @@
+{
+  "iter_id": "h20260928_20_recent_regime_opt",
+  "schema_version": 3,
+  "strategy_name": "recent_regime_opt_h20260928_20",
+  "source_spec_path": "strategy_specs/drafts/recent_regime_opt_h20260928_20.yaml",
+  "spec_hash": "edf8edd345cbc8a3dc304743796f134a43db2f33114e6b5949cbbf65156c9813",
+  "objective": "Optimize the two batch-2 candidates (EOM_REVERSAL_SPY, FRONT_RUN_SECTOR_TOP2) the owner explicitly liked on 2026-09-28, via a bounded, source-grounded parameter variant search per family plus 2 combination variants, judged against a literal preregistered per-family replacement rule.",
+  "topic_coverage": [
+    "end_of_month_reversal_optimization",
+    "front_running_sector_seasonality_optimization",
+    "eom_sector_combination_variants",
+    "sso_leveraged_context_only",
+    "eom_reversal_formation_window_robustness",
+    "sector_seasonality_negative_evidence_review"
+  ],
+  "current_source_card_paths": [
+    "reports/harness/source_cards/h20260928_20_recent_regime_opt.jsonl"
+  ],
+  "hypothesis_links": ["H-20260928-20-recent-regime-opt"],
+  "sources": [
+    {
+      "url": "https://csef.it/wp-content/uploads/JMP_GG_02Nov2024.pdf",
+      "published_or_updated_at": "2024-11-02",
+      "source_type": "paper",
+      "credibility": "author's own job-market-paper PDF (Giuliano Graziani, Bocconi), hosted on his university's own site; abstract also listed on SSRN (papers.ssrn.com/sol3/papers.cfm?abstract_id=4349253)",
+      "core_claim": "Defines the end-of-month reversal signal as the S&P 500 return from the 4th Friday's close to month-end close; the simple rule-of-thumb TSR strategy outperforms buy-and-hold over 45 years. Own robustness appendix (A.1.4) finds only the last week's return (not 2-3 weeks earlier) has predictive power. Section 2.4's magnitude/precision-scaled TSR-TV variant reports Sharpe 0.588 vs simple TSR's 0.384. Replicates on DOW (holds) and Russell 2000 (does not); QQQ not tested.",
+      "project_applicability": "Grounds E0 (base) and, per its own robustness appendices, E1/E2 (formation window -- source argues against widening it) and E7 (magnitude scaling, modeled on its own best-reported TSR-TV refinement). E3 (threshold), E4 (QQQ), E5/E6 (holding truncation) are owner/brief-directed extensions beyond what the source itself tests.",
+      "reflection": "Primary source read directly (batch-2 only read a secondary summary). Overfit risk for E1-E7: each changes exactly one dimension from E0, preregistered before any backtest; decay risk untested by this source past its own 2019/2023 sample ends; cost sensitivity: source's own breakeven cost (~16bp/txn) comfortably exceeds this round's 10/20bp convention, so cost alone should not decide most E-family verdicts."
+    },
+    {
+      "url": "https://harbourfrontquant.substack.com/p/do-calendar-anomalies-still-work",
+      "published_or_updated_at": "2024-01-01",
+      "source_type": "industry_standard",
+      "credibility": "secondary newsletter summary of Graziani (2024, SSRN); same source batch-2 cited, re-fetched and freshly snapshotted here since batch-2's own dossier never actually saved a copy",
+      "core_claim": "S&P 500 end-of-month returns (4th Friday to month-end) are negatively correlated with next month's return, in- and out-of-sample; attributed to pension-fund payment-cycle liquidity trading.",
+      "project_applicability": "Corroborates E0's exact rule, independently of the primary PDF read in this round.",
+      "reflection": "Secondary source, no quantified numbers of its own; overfit/decay/cost not separately assessable from this source alone."
+    },
+    {
+      "url": "https://quantpedia.com/front-running-seasonality-in-us-stock-sectors/",
+      "published_or_updated_at": "2024-09-05",
+      "source_type": "industry_standard",
+      "credibility": "Quantpedia's own published strategy page, live-fetched (batch-2 only cited an earlier harvest's summary of an archived snapshot, not a fresh open)",
+      "core_claim": "Tests holding 1-7 of 9 Select Sector SPDRs, front-running (1-month) shift vs true-seasonality (0-month) shift; top-2 front-running reported best, true-seasonality reported 'at best, comparable to' benchmark. No 2-month shift, multi-year averaging, inverse-vol weighting, or 11-sector universe tested.",
+      "project_applicability": "Grounds S0 (base) and S1/S2 (top-1/top-3, both source-tested) and S_SHIFT0 (the source's own reported-failing baseline). S_AVG3/S_AVG5/S_SHIFT2/S_11SECTORS/S_INVVOL/S_ABSFILTER are owner/brief-directed extensions.",
+      "reflection": "Overfit risk for the 9 S-family variants: each changes one dimension from S0, preregistered before any backtest, and the replacement rule's select+2026-guard+20bp conditions are the anti-overfit control since the source's own numeric tables are chart images (not independently re-verifiable from text alone). Decay/cost: see the negative-evidence source below."
+    },
+    {
+      "url": "https://allocatesmartly.com/front-running-seasonality-in-country-etfs-an-extended-test/",
+      "published_or_updated_at": "2023-01-01",
+      "source_type": "industry_standard",
+      "credibility": "independent third-party (Allocate Smartly) extended backtest of the closely-related country-ETF front-running-seasonality mechanism, no financial interest in the sector-SPDR result",
+      "core_claim": "Extending the same front-running-seasonality mechanism (applied to 23 country ETFs, not the 9 sector SPDRs) back to 1971 finds it 'would not have been consistently effective over the long-term'; Allocate Smartly stopped tracking it. The sector-SPDR version itself was only on their to-do list, not completed.",
+      "project_applicability": "Negative-evidence caution motivating this round's conservative replacement rule (select+2026-guard+20bp, not just a raw select-window improvement) for the whole S family.",
+      "reflection": "Different universe/data than S0-S9; not a direct refutation, but the closest independent replication attempt found for this mechanism family, and the reason this round does not treat any S-family select-window win as sufficient on its own."
+    },
+    {
+      "url": "http://www.efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2024-Lisbon/papers/JMP_GG_JAN2024.pdf",
+      "published_or_updated_at": "2024-01-01",
+      "source_type": "paper",
+      "credibility": "same author's (Giuliano Graziani) earlier EFMA 2024 Lisbon conference draft of the same job-market paper, then titled 'Time Series Reversal: A Payment Cycle Friction'; located via web search alongside the csef.it PDF, confirming the paper's provenance and conference circulation rather than re-read line-by-line",
+      "core_claim": "Same end-of-month reversal / payment-cycle-friction mechanism as the csef.it working paper, presented at EFMA's 2024 annual meeting (Lisbon).",
+      "project_applicability": "Corroborates that Graziani (2024)'s end-of-month reversal finding circulated through an academic conference (EFMA), not just SSRN, before this round relied on it for E0/E1/E2/E7.",
+      "reflection": "Not independently re-read in full (same underlying paper as the csef.it PDF already read directly); cited for provenance, not as a separate empirical source."
+    },
+    {
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4349253",
+      "published_or_updated_at": "2024-11-02",
+      "source_type": "paper",
+      "credibility": "the paper's own SSRN abstract/landing page, the venue this round's direction-review.json and the registry's dir:end_of_month_reversal_effect entry both reference as the primary citation",
+      "core_claim": "SSRN listing for Graziani (2024), 'Time Series Reversal: An End-of-the-Month Perspective' -- confirms the paper's SSRN abstract ID and public listing.",
+      "project_applicability": "Confirms the SSRN identity of the paper already read directly via its csef.it-hosted PDF; grounds the registry citation format.",
+      "reflection": "Landing/abstract page only, not re-read for content beyond the abstract; the substantive read was the full PDF (source card graziani2024_ssrn_eom_reversal_primary_tsrtv)."
+    },
+    {
+      "url": "https://allocatesmartly.com/front-running-commodity-seasonality/",
+      "published_or_updated_at": "2022-01-01",
+      "source_type": "industry_standard",
+      "credibility": "independent third-party (Allocate Smartly) extended backtest of the original front-running-seasonality mechanism applied to commodities (Quantpedia's earlier version of the same shift idea, which the sector-SPDR page explicitly says it was modeled on)",
+      "core_claim": "Allocate Smartly's extended-history test of front-running commodity seasonality found the seasonality-based cut failed out-of-sample when extended, while (counterintuitively) a related momentum cut held up -- 'we expected the seasonality strategy to fail... we were proven wrong; the opposite was true' for one sub-test, but a different momentum-flavored variant (their Test #4) 'failed in our out-of-sample test' after 'working over the specific period tested by the author.'",
+      "project_applicability": "Second, independent negative-evidence data point (alongside the country-ETF test) for the front-running-seasonality mechanism family generally, reinforcing this round's conservative S-family replacement rule.",
+      "reflection": "Commodities, not equities/sectors; directional caution only, not a direct test of S0-S9's actual universe."
+    },
+    {
+      "url": "https://harbourfronts.com/end-month-returns-predict-next-months-performance/",
+      "published_or_updated_at": "2024-01-01",
+      "source_type": "industry_standard",
+      "credibility": "Harbourfront Technologies' own site (sister/related publication to the harbourfrontquant.substack.com newsletter already cited), located via web search alongside the SSRN/csef.it results",
+      "core_claim": "Restates the same end-of-month-returns-predict-next-month's-performance finding attributed to Graziani (2024), consistent with the harbourfrontquant.substack.com summary already cited.",
+      "project_applicability": "A second independent citation trail (same publisher family, different specific page) corroborating E0's rule description before this round extended it into E1-E7.",
+      "reflection": "Same publisher as the already-cited harbourfrontquant.substack.com source; not a fully independent third corroboration, disclosed as such rather than double-counted as independent."
+    }
+  ],
+  "current_source_card_paths_note": "candidate_matrix_revisions below records why this round adds 20 new lane candidates (8 E, 10 S, 2 C) that did not exist in batch-2's 7-candidate manifest.",
+  "candidate_matrix_revisions": [
+    {
+      "revision": "added_20_recent_opt_variant_and_combination_candidates",
+      "reason": "The owner explicitly asked (2026-09-28) for an optimization pass on batch-2's EOM_REVERSAL_SPY and FRONT_RUN_SECTOR_TOP2 specifically, since both were strong in 2024-2026 but weak in 2016-2023; this round preregisters a bounded, source-grounded variant search per family (<=10 variants + base) plus 2 combination variants, extending scripts/screen_batches/h20260928_05_batch2.py's functions rather than rewriting them."
+    }
+  ],
+  "source_evidence_bindings": [
+    {
+      "source_url": "https://csef.it/wp-content/uploads/JMP_GG_02Nov2024.pdf",
+      "claim_id": "graziani2024_ssrn_eom_reversal_primary_tsrtv"
+    },
+    {
+      "source_url": "https://harbourfrontquant.substack.com/p/do-calendar-anomalies-still-work",
+      "claim_id": "graziani2024_eom_reversal_harbourfrontquant_summary"
+    },
+    {
+      "source_url": "https://quantpedia.com/front-running-seasonality-in-us-stock-sectors/",
+      "claim_id": "quantpedia_front_running_sector_seasonality_variants"
+    },
+    {
+      "source_url": "https://allocatesmartly.com/front-running-seasonality-in-country-etfs-an-extended-test/",
+      "claim_id": "allocatesmartly_country_etf_front_running_extended_test"
+    }
+  ]
+}

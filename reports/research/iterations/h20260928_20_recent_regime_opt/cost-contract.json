@@ -1,0 +1,14 @@
+{
+  "contract_id": "cost_v1_10_20bps_next_open_screen_lane",
+  "iter_id": "h20260928_20_recent_regime_opt",
+  "schema_version": 1,
+  "signal_on": "bar_close",
+  "fill_assumption": "next_bar_open",
+  "commission_pct": 0.0,
+  "borrow_or_financing": "none (long-only spot ETFs and SHY)",
+  "cost_model": "sum(abs(delta_weight)) * slippage_bps, charged on the execution session -- the frozen scripts/screen_lane.py / scripts/run_h20260918_05_recent_menu.py convention, unchanged from batch-2.",
+  "slippage_bps_per_side_primary": 10.0,
+  "slippage_bps_per_side_stress": 20.0,
+  "replacement_rule_cost_note": "The owner's replacement rule condition (c) re-checks the select-window Sharpe at 20bp specifically so a variant cannot qualify on a 10bp-only cost edge that evaporates once cost doubles.",
+  "e5_e6_extra_signal_dates_note": "E5/E6 add exit-only signal dates inside the holding month (10th session, or the 4th Friday); each such exit is itself a full delta-weight rebalance (risk-on position -> 100% SHY) and is charged the same per-side slippage as any other rebalance -- no cost discount for the extra turnover these two variants introduce."
+}

@@ -1,0 +1,2735 @@
+                               Time Series Reversal:
+                  An End-of-the-Month Perspective∗
+
+                                          Giuliano Graziani†
+
+                                          November 2, 2024
+
+
+                                      (click here for latest version)
+
+                                                 Abstract
+
+       This paper introduces a novel aggregate reversal strategy that exploits monthly calendar
+
+       effects. Specifically, I show that the end-of-the-month return of the S&P500 negatively cor-
+
+       relates with one-month ahead returns. Contrary to the cross-sectional findings, strategies
+
+       based on the novel aggregate pattern are extremely cost-effective, easy to implement, cycli-
+
+       cal, and do not require short-selling. This novel pattern is consistent with pension funds’
+
+       liquidity trading to meet pension payment obligations.
+
+
+       Keywords: pension funds, liquidity, time series, flows, reversal, predictability.
+
+
+
+
+   ∗
+      I am very grateful for the advice and support I have received from Max Croce, Pasquale Della Corte, and
+Riccardo Sabbatucci. I also thank Alireza Aghaee, Yu Bai, Gabriele Confalonieri, Tarun Chordia, Christian
+Skov Jensen, Stefan Nagel, Jose Penalva, Barbara Rindi, Ioanid Rosu, Jakob Ahm Sørensen, Dimitri Vayanos,
+Fernando Zapatero, and Irina Zviadadze for very useful comments and suggestions. I am grateful to seminar
+participants at SFI Lugano PH.D. Brown Bag, Bocconi Finance, 30th Finance Forum, EFMA 2024, 40th AFFI
+Conference, 16th Annual SoFiE Meeting, 2024 FMA, 8th HEC Paris PhD Workshop, 2024 Nova Finance PhD
+Final Countdown, Oxford-MAN Financial Economics Workshop 2024. An earlier version of the paper has been
+circulated under the title "Monthly Return Autocorrelation".
+    †
+      Bocconi University, giuliano.graziani@phd.unibocconi.it
+
+
+                                                     1
+1     Introduction
+
+One of the core questions in asset pricing is whether and how financial markets revert to shocks.
+At the cross-sectional level, ever since Jegadeesh (1990), the literature has extensively docu-
+mented a 1-month reversal. In addition, two stylized facts have emerged. First, cross-sectional
+reversal concentrates on small and illiquid stocks, with its strength increasing during periods
+of economic downturn (Dai, Medhat, Novy-Marx, and Rizova, 2023). Second, cross-sectional
+strategies, even though statistically robust, are not economically meaningful due to their high
+transaction costs and fees (Avramov, Chordia, and Goyal, 2006).
+    At the aggregate market level, conversely, there is little evidence of reversal. As Hartzmark
+and Solomon (2022) notes: "[...] much less is known about the speed and extent one should expect
+entire markets to reverse price pressure." My paper addresses this critical gap by providing a
+novel strategy that times the market using information concentrated in the last week of the
+month. In addition, I document that this strategy (i) exhibits significant profitability; (ii)
+displays novel properties, and (iii) is consistent with pension funds liquidity shocks.
+    In the first part of the paper, I provide evidence of a 1-month aggregate market reversal in
+the S&P 500. Specifically, I show that end-of-the-month returns (i.e., the returns from the fourth
+Friday to the last trading day of the month) are negatively correlated with the one-month ahead
+returns. Figure 1 provides the most straightforward and intuitive evidence of this aggregate
+pattern. A simple rule of thumb trading strategy, of buying if the end-of-the-month return is
+negative and selling if it is positive, outperforms the buy and hold strategy over a 45-year window.
+The reversal strategy outperforms the passive benchmark in terms of raw returns, Sharpe ratio,
+and higher-moment statistics, even considering trading costs and fees. To further support that
+the reversal strategy effectively times the market, rather than increasing risk exposure, CAPM-
+adjusted (Jensen’s) α are positive, sizable, and statistically significant (Table 2).
+    After exploring this intuitive estimation-free rule of thumb, I turn my attention to more con-
+ventional approaches commonly adopted in the literature. First, I focus on a standard predictive
+regression framework (Table 4) and show that the proposed predictor has a negative and statis-
+tically significant coefficient, regardless of the control variables (including past returns, investor
+
+
+                                                  2
+                  Figure 1: Time Series Reversal (TSR) and S&P 500 Gains
+
+
+
+
+This figure compares the cumulative Out-of-Sample returns of the time series reversal (TSR - red line) with
+passive investing on the S&P 500 (black line). The TSR trading strategy buys (sells) the S&P 500 if the end-
+of-the-month return is negative (positive). The grey-shaded areas mark periods of recessions according to the
+NBER. The sample period is from January 1975 to December 2019.
+
+
+attention, previously suggested predictors, factors, and anomalies), time window, or sub-sample
+considered. Second, following Welch and Goyal (2008), I focus on an Out-of-Sample predictive
+exercise (Table 5), and show that the proposed predictor outperforms the historical mean, that
+is, a notoriously challenging benchmark at the monthly frequency. Notably, I find that aggregate
+market predictability is concentrated during periods of economic expansion in both In-sample
+and Out-of-Sample analyses. This feature of the end-of-the-month return significantly enhances
+its Out-of-Sample forecasting performance and robustness and is a novelty to both the reversal
+(Nagel, 2012) and forecasting (Huang, Jiang, Tu, and Zhou, 2014) literature.
+   After establishing a statistical link between the end-of-the-month return and the one-month-
+ahead returns, I assess the implied economic value of this predictor for real-time investors.
+Following Campbell and Thompson (2008), I devise a dynamic trading strategy based on the
+Out-of-Sample forecast (Table 6). The time-varying strategy significantly outperforms both
+passive investing and the simple rule-of-thumb reversal strategy, implying that the predictability
+is statistically significant and, most importantly, economically meaningful. In addition, I show
+that the reversal pattern also extends to the Dow Jones index, which consists of 30 of the most
+highly capitalized and liquid American companies. This result suggests that the pattern is not
+
+
+                                                     3
+unique to the S&P 500 since it generally extends to highly-priced and liquid American stocks
+(Table 7). In the Appendix, I perform several robustness checks in order to show that the reversal
+pattern is robust to (i) the predictor specification, (ii) the choice of the samples and sub-samples,
+and (iii) transaction costs and fees.
+   In the second part of the paper, I explore several potential mechanisms that could explain
+my predictability results. I reject all of them except for one. Specifically, I note that the
+end of the month is a critical period in the U.S. economy, marked by large financial transfers,
+including benefits, salaries, and pensions (payment cycle). I argue that pension payments drive
+the observed empirical evidence, as they are substantial, exclusively paid at the end of the month,
+and funded by defined benefit pension plans. These plans are notoriously underfunded (Merton,
+2008) and hence likely to sell off assets to raise liquidity and pay their obligations (Etula, Rinne,
+Suominen, and Vaittinen, 2020). Leveraging daily institutional trading data from the ANcerno
+dataset, I find evidence that pension plan sponsors are net sellers at the end of the month (Table
+8). Consequently, the payment cycle may create a temporary selling pressure in the market that
+causes a negative end-of-the-month return and is followed by a rebound in the next month.
+   I rationalize these empirical results by introducing a stylized three-period model based on
+Vayanos and Gromb (2012). In the first period, a non-informational liquidity shock affects the
+equilibrium price, reflecting the price pressure caused by end-of-month liquidity trading. The
+second period represents the time the market takes to recover from this shock, corresponding
+to the one-month reversal observed in the data. This model delivers two relevant empirical
+predictions. First, consistent with Grossman and Miller (1988) and Sentana and Wadhwani
+(1992), among others, the reversal pattern intensifies with both the size of the supply shock and
+the stock’s riskiness. Intuitively, a larger shock to a riskier asset leads to a greater price impact.
+This prediction is consistent with my data, as the reversal pattern is more pronounced in months
+with higher end-of-month volume and volatility (Table 9). Second, the reversal pattern should
+increase by the time the market absorbs the shock. By cumulating the returns throughout the
+one month ahead, I show that the reversal pattern peaks a week before the end of the following
+month (Figure 4). Notably, the coefficients are statistically significant starting from the end
+of the second week, coinciding with the inflow period when pension funds can buy back. The
+
+                                                  4
+pattern peaks in the third week, just before a new potential supply shock hits the market, leading
+to a downward pressure on prices.
+       In order to provide additional evidence in favour of the payment cycle channel, I run additional
+tests. I establish that my novel predictability evidence is stronger in months with lower pension
+funds’ inflows and higher end-of-month borrowing costs (Figure 5). Intuitively, the reversal
+pattern is stronger when pension funds face a large cash flow imbalance or a more expensive
+outside borrowing option. The cyclical nature of my reversal pattern is consistent with the
+evidence that pension funds reduce precautionary cash reserves during stable periods. With a
+smaller liquidity buffer to cover end-of-month needs and facing a rising market, pension funds
+have a greater incentive to sell off assets to recoup liquidity.
+       Additionally, the fact that my reversal pattern is concentrated on American indexes with
+high-quality stocks is consistent with the preference of institutional investors for minimizing
+transaction costs and fees while selling for liquidity reasons. It is also consistent with the unique
+characteristics of U.S. pension funds in terms of size, assets under management, and liquidity
+imbalance. In the Appendix, I consider competing explanation channels (compensation for stan-
+dard liquidity factors, behavioral bias, option expiration trading, quarterly activity, information
+release, and pension funds re-balancing) and find no coherent results.
+
+
+Literature review. I establish a reversal pattern on the aggregate market by departing from
+the two approaches typically adopted in the literature. The first approach is based on variance
+ratio tests (Lo and MacKinlay 1988) and it does not reject the null hypothesis of the random
+walk model at the monthly aggregate level. As a result, the literature has focused on a second
+approach based on a cross-sectional sorting strategy (see, among others, Fama and MacBeth
+1973, De Bondt and Thaler 1985, Medhat and Schmeling 2022 and Dai et al. 2023). The
+cross-sectional approach suffers two major drawbacks. First, it captures both return auto- and
+cross-correlation as well as cross-sectional variation in average return. Therefore, the results are
+possibly driven by cross-sectional differences among stocks rather than reversal properties.1
+   1
+    Lo and MacKinlay (1990) show that the positive cross-correlation of the portfolio’s constituents and not nec-
+essarily the negative auto-correlation of each stock could explain the results of the two cross-sectional approaches.
+Conrad and Kaul (1993) show that cumulating short-term returns over long periods can generate an upward bias.
+
+
+
+                                                         5
+   Second, these findings are more pronounced for small and illiquid stocks, raising concerns
+about the predictability is practically meaningful. The gains are generally small and become
+negligible when costs and fees, which are particularly high for these strategies, are taken into
+account (Avramov et al., 2006). Finally, the literature offers two opposite explanations of the
+reversal pattern. The first considers reversal as a consequence of overreaction, market fads, or
+cognitive biases (Poterba and Summers, 1988). The second explanation is market-based since it
+suggests that reversals arise from price pressure due to shifts in the demand and/or supply curve
+(Nagel, 2012).
+   My contribution to the reversal literature is threefold. First and novel to the literature,
+I provide evidence of a monthly reversal pattern at the aggregate level using the end-of-the-
+month return as predictor. Second, contrary to the cross-sectional findings (e.g., Avramov et al.
+2006, Nagel 2012, and Dai et al. 2023), the one-month aggregate market reversal concentrates
+on high-quality stocks forming the most liquid and traded assets (S&P 500) and it spikes in
+periods of economic expansion. Third, this paper corroborates a market-based explanation of
+the reversal pattern. Consistent with the Grossman and Miller (1988) model, the payment cycle
+likely represents a non-informational shock that causes price impact, triggering a return reversal
+dynamic. Importantly, I consider a liquidity shock that affects only a segment of the market,
+that is, the pension funds, as opposed to focusing on market-wide liquidity shocks (Nagel 2012).
+   My work also relates to the forecasting literature which has focused on establishing out-of-
+sample aggregate monthly predictability by considering past returns that capture the trend, i.e.,
+momentum, of the market (see, among others, Moskowitz, Ooi, and Pedersen 2012 and Neely,
+Rapach, Tu, and Zhou 2014). Importantly, momentum predictors suffer two significant limita-
+tions. First, their Out-of-Sample predictability concentrates on recession periods (e.g., Rapach,
+Strauss, and Zhou (2010), Dangl and Halling (2012), Huang et al. (2014), Sabbatucci (2024)),
+making (i) their predictability prone to sample bias (Goyal, Welch, and Zafirov, 2021), and (ii)
+the implied returns net of fees close to zero. Second, the predictors are too persistent and exhibit
+inferior forecasting power (Ren, Tu, and Yi 2019). My contribution to the forecasting literature
+Zarowin (1990) shows that if loser firms are lower priced than winner firms, returns to the contrarian strategy
+will have a spurious upward drift.
+
+
+
+                                                      6
+is twofold. First, I propose a novel predictor that avoids both of the abovementioned limi-
+tations. Second, my statistical Out-of-Sample predictability translates to significant economic
+gains thanks to strategies that are easy to implement and based only on the S&P 500.
+    Finally, this study connects to the broader literature on market flows and their impact on
+aggregate prices (see, among others, Andonov, Bauer, and Cremers (2017), Ben-David, Franzoni,
+and Moussawi (2018), Etula et al. (2020), Sabbatucci, Tamoni, and Xiao (2023), and Hartzmark
+and Solomon (2022)). Consistent with Etula et al. (2020), I provide evidence that the payment
+cycle represents a moment of market liquidity distress. In contrast to prior work, I provide
+evidence that liquidity trading driven by the payment cycle is pervasive enough to generate a
+monthly aggregate market reversal. As in Hartzmark and Solomon (2022), I use price pressure to
+establish aggregate market predictability. Importantly, this study provides empirical insights into
+two key questions raised by Hartzmark and Solomon (2022): first, whether and how aggregate
+markets revert price pressure, and second, what are the economic sources behind market flows.
+    The rest of this paper is organized as follows: Section 2 provides statistical evidence of the
+novel pattern; Section 3 explores the transmission channel; and Section 4 concludes.
+
+
+
+2     Establishing the pattern
+
+2.1    Data
+
+To determine aggregate market reversal, I collect S&P 500 closing prices from the Global Fi-
+nancial Data (GFD) from January 1975 to December 2019. I focus on data from January 1975
+onwards as Vanguard launched its first index fund on the S&P 500 in 1975, marking a key mo-
+ment in the development of index investing. In the paper, I denote nominal values in capital
+letters and the respective natural logarithm values in lowercase. Since I use daily, weekly, and
+monthly time series, I adopt the convention of a composite suffix: I use t to denote a generic
+month and add w (d) to specify the week (day). For example, pt is the log closing price in month
+t, whereas pd=i,t is the ith log closing price in month t.
+    The novel predictor is the end-of-the-month return: the realized return between the 4th Friday
+
+
+                                                  7
+                                    Table 1: Summary Statistics
+
+                 Mean(%)             Std. Dev.(%)             Min(%)             Max(%)             Obs.
+ rt+1             0.326                  4.265                -24.992            11.889             540
+ rw=4,t           0.188                  1.660                 -7.044             9.976             540
+This table reports the mean, standard deviation, minimum, maximum, and number of observations for the excess
+month return (rt+1 ), and the end-of-the-month return (rw=4,t ). The sample period is from January 1975 to
+December 2019.
+
+
+closing price pw=4,t and the monthly closing price pt . The predicted return is the standard excess
+monthly return (rt = pt − pt−1 − rtf ). Table 1 reports the mean, standard deviation, minimum,
+maximum, and number of observations for both variables. The statistics, in line with Welch
+and Goyal (2008) and Neely et al. (2014), among others, show that by considering a longer time
+window, returns tend to display a larger mean and dispersion.
+
+
+2.2       A Simple Rule of Thumb
+
+My starting point is to provide suggestive evidence of a negative relationship between the end-
+of-the-month return (rw=4,t ) and the 1-month ahead excess return (rt+1 ) by considering an
+estimation-free predictability exercise. Specifically, I assess the monetary value of the follow-
+ing long-short trading strategy:
+                                              
+                                                         if rw=4,t < 0
+                                              
+                                              +rt+1
+                                              
+                                    T SRt =                                                             (1)
+                                                         if rw=4,t > 0
+                                              
+                                              −rt+1
+                                              
+
+
+The strategy in equation (1) takes a market exposure by leveraging on the potential negative
+correlation between rw=4,t and rt+1 . Simply put, the strategy defined in equation (1) involves
+buying 1 unit of the S&P 500 if the end-of-the-month return is negative, and selling if the return
+is positive. Notably, the strategy is based only on rw=4,t return and, therefore, depends neither
+on the specific forecasting method nor the chosen training sample. Overall, the exercise can be
+considered an empirical rule of thumb to intuitively test the reversal pattern between rw=4,t and
+rt+1 .
+
+
+
+
+                                                     8
+   I compare the reversal strategy against the S&P 500 itself and the 12-Month Momentum:
+                                                        
+                                                                    if rt−12 > 0
+                                                        
+                                                        +r
+                                                        
+                                                              t+1
+                      S&Pt = +rt+1           M OMt =
+                                                                    if rt−12 < 0
+                                                        
+                                                        −rt+1
+                                                        
+
+
+where rt−12 = pt − pt−12 . The S&P 500 is the natural benchmark as it captures the gains from
+passive investing on the index. Given the generally positive trend in a multi-year time window
+horizon, the index is a challenging benchmark to outperform. While empirical support for time
+series reversal remains limited, the literature has extensively investigated time-series momentum
+(Moskowitz et al., 2012). In contrast to the proposed reversal pattern, which is based on a
+short-term negative correlation, time series momentum captures a positive correlation between
+the past 1-year return and the one-month-ahead return. Therefore, the 12-month momentum
+strategy also serves as a natural benchmark.
+   Table 2 reports the percentage of annual average excess return, Sharpe ratio, standard devia-
+tion, kurtosis, skewness, and market adjusted α for all trading strategies. The time series reversal
+strategy outperforms the two benchmarks in terms of both average realized returns and standard
+deviation over time. Consequently, its Sharpe ratio improves sizably. Regarding higher-order
+statistics, the T SRt is the only strategy with positive skewness, suggesting that the strategy
+consistently delivers positive returns over time. Finally, in line with log-return properties, all the
+trading strategies display a kurtosis close to zero, hinting at a bell-shaped return distribution.
+   The last column in Table 2 reports CAPM-adjusted alphas obtained by the following regres-
+sion:
+                                      T St = α + β S&Pt + ϵt
+
+where T St is either the time series reversal (T SRt ) or the momentum (M OMt ) strategy. The
+coefficient β captures the strategy’s exposure to a passive investing strategy, whereas the α
+measures the trading strategy’s excess returns on top of the index once adjusted for risks. The
+T SRt strategy delivers positive and statistically significant adjusted α. Therefore, considering
+both higher moments statistics and adjusted alphas, the T SR strategy delivers higher returns
+due to its ability to better times the market, suggesting investors have an economic incentive
+
+                                                  9
+                                      Table 2: Simple Rule of Thumb
+
+           Mean Exc. Ret.(%)           Sharpe Ratio         Std. Dev.     Skewness    Kurtosis       α(%)
+TSR              5.702                     0.399               0.143        0.066       0.525        5.537∗∗
+MOM              3.858                     0.261               0.148       −0.124       0.488        2.562
+S&P              3.916                     0.265               0.148       −0.248       0.499
+This table reports annualized mean excess returns, Sharpe Ratio, Standard Deviation, Skewness, Kurtosis, and
+CAPM-adjusted alphas (α) for the time series reversal (T SR), momentum (M OM ) and passive investing (S&P )
+strategies. ∗ ∗ ∗, ∗∗, and ∗ indicate significance at the 1%, 5%, and 10% levels, respectively. The statistical
+significance is based on Newey and West (1987) standard errors. The sample period is from January 1975 to
+December 2019.
+
+
+to switch from a passive stance to the T SR strategy. Conversely, the momentum strategy does
+not deliver statistically significant adjusted alphas. Although it is positively correlated with the
+market, most of its gains occur during periods of economic downturn (Figure 2).
+   To understand why the short-term reversal strategy delivers sizable and statistically signifi-
+cant adjusted alphas, I decompose the strategy into the long (T SRtL ) and short (T SRtS ) leg:
+                                                                       
+                                       if rw=4,t < 0                             if rw=4,t ≤ 0
+                                                                       
+                           +r
+                           
+                                t+1                                     0
+                                                                        
+                T SRtL =                                    T SRtS =
+                                       if rw=4,t ≥ 0                             if rw=4,t > 0
+                                                                       
+                           0
+                                                                       −rt+1
+                                                                        
+
+
+Each strategy buys the risk-free asset in months without a market exposure, hence delivering a
+zero excess return during those periods. Table 3 reports the annual average excess return, Sharpe
+ratio, CAPM-adjusted α, market exposure, and activity percentage. The mean excess returns
+suggest that most of the economic gains of the T SR strategy concentrate on the long leg, whereas
+the short leg delivers small but still positive economic gains. As expected, the positive leg has a
+positive market exposure, while the negative leg has a negative market exposure. Both β are close
+to 0.5 in absolute terms as the T SR strategy almost equally splits between the two sub-strategies
+(specifically, the T SR buys 44% and sells 56% of the times the index). Consequently, the T SR
+strategy has zero market exposure since the two legs cancel each other out in the aggregate.
+   Both sub-strategies deliver positive and significantly adjusted alphas. Intuitively, the positive
+leg achieves higher raw returns than the index, being exposed to the market almost half the
+time. The negative leg, on the other hand, pays off in periods of market downturn (Figure 2),
+defining a natural hedge over the benchmark. Consequently, the T SR strategy benefits from
+
+
+                                                       10
+                                Table 3: Decomposition T SR strategy
+
+              Mean Exc. Ret. (%)            Sharpe Ratio           α(%)             β           Activity (%)
+T SR  L
+                    4.689                       0.453              2.763∗∗        0.492∗∗∗          0.44
+T SRS               1.014                       0.103              2.774∗∗       −0.450∗∗∗          0.56
+TSR                 5.702                       0.399              5.537∗∗        0.042
+This table reports annualized mean excess returns, Sharpe Ratio, CAPM-adjusted alphas (α), market exposure
+(β), and Activity for the long, short, and long-short leg of the time series reversal strategy. ∗ ∗ ∗, ∗∗, and ∗
+indicate significance at the 1%, 5%, and 10% levels, respectively. The statistical significance is based on Newey
+and West (1987) standard errors. The sample period is from January 1975 to December 2019.
+
+
+both sub-components. Notably, the decomposition of the T SR strategy hints that many market
+participants can use the short-run negative market predictability. Retail investors may choose
+to employ only the long leg to avoid the risks and costs associated with short-selling, thereby
+obtaining a remuneration over passive investing. Meanwhile, more sophisticated traders are
+incentivized to employ the full strategy, as the T SR improves performance by reducing market
+exposure, thereby increasing overall portfolio diversification.
+
+
+Robustness. Overall, this intuitive exercise provides suggestive evidence of a negative corre-
+lation between rw=4,t and rt+1 . Appendix A.1 is devoted to the sensitivity analysis. Specifically,
+Appendix A.1.1 reports adjusted alphas considering various benchmarks. Appendix A.1.2 re-
+ports the results by extending the time window from 1950 to 2023. Appendix A.1.3 examines
+the potential impact of trading costs and fees. Appendix A.1.4 shows that the results are robust
+to the end-of-the-month return specification. Appendix A.1.5 reports the annual Sharpe Ratio
+through the years. Finally, Appendix A.1.6 shows the scatter plot T SR returns against the
+benchmarks. In the next section, I conduct standard tests in the literature to corroborate the
+negative short-term predictability channel.
+
+
+
+
+                                                       11
+                         Figure 2: Cumulative Monetary Gains Over Time
+
+
+
+
+This figure presents the cumulative excess return obtained from a trading strategy using time series reversal (TSR
+- solid red line), momentum (MOM - solid yellow line), and S&P 500 (S&P - solid black line). Moreover, the
+plot reports the decomposition of the TSR strategy between the positive (T SRL - blue dash line) and the short
+(T SRS - green dash line) leg. The grey shaded areas mark periods of recessions according to the NBER indicator
+function. The sample period is from January 1975 to December 2019.
+
+
+2.3     Evidence of Negative Market Predictability
+
+2.3.1    In-Sample Evidence
+
+As standard in the literature, I formally assess the predictability channel between rw=4,t and rt+1
+via a benchmark predictive regression:
+
+
+                                     rt+1 = α + γ rw=4,t + β Ct + ϵt+1                                        (2)
+
+
+where γ captures the predictability associated with rw=4,t , after accounting for the potential
+predictability explained by previously proposed control variables in the literature, Ct .
+    Table 4 reports the results for different specifications of equation (2). In the first column,
+I report the results without any control variable. In the second column, I control for previous
+end-of-the-month returns. In the third column, I control for the previous month return and
+time series momentum. In the fourth column, I control for the recent predictors in Chen, Tang,
+Yao, and Zhou (2022). The authors propose three different predictors that aggregate 12 popular
+individual attention indexes (with partial least square AP LS , principal component AP CA and
+
+
+                                                       12
+scaled principal component approach AsP CA , respectively), establishing a negative predictive
+channel.2 In the fifth column, I control for the 3 Fama French augmented with the cross-sectional
+momentum and short-term reversal factors. From the sixth column, I control for the 5 Principal
+Components (PC) obtained from the 100 anomalies in Dong, Li, Rapach, and Zhou (2022).
+       The estimated coefficients attached to the end-of-the-month return are negative, qualitatively
+similar, and statistically significant across all the proposed specifications. The results corroborate
+the predictive relationship between rw=4,t and rt+1 and hint that the aggregate market reversal
+captures a new source of predictability.
+
+
+Robustness. In Appendix A.2, I provide evidence that the results reported in Table 4 are
+robust. Specifically, Appendix A.2.1 shows that the results are qualitatively unchanged, consid-
+ering different sub-samples. Appendix A.2.2 shows that the results are not exclusively driven
+by the ability of the reversal pattern to predict the first week of the month’s return. Appendix
+A.2.3 shows that the results do not depend on a closing price effect. Appendix A.2.4 shows that
+the reversal pattern is lost by considering a placebo test around the second week of the month.
+Finally, Appendix A.2.5 shows that the time series reversal’s predicting power vanishes after the
+first month.
+
+
+
+
+   2
+    The authors argue that the negative correlation between rt+1 and Ait results from a reversal pattern. High
+attention induces investors to buy, resulting in temporary positive price pressure. The price dynamic tends to
+revert after the net buying flow slows down. To not introduce measurement errors, I use the variables from the
+authors’ website and study the statistical relationship between January 1980 and December 2017.
+
+
+                                                     13
+                                                                    Table 4: In Sample Evidence
+
+α           0.004            α     0.004           α     0.004           α     0.005            α         0.004        α     0.004     0.004     0.004     0.004     0.004
+            [2.00]                 [1.94]                [1.42]                [0.56]                     [1.96]             [2.03]    [2.04]    [2.09]    [2.10]    [2.10]
+rw=4,t     -0.353       rw=4,t    -0.391       rw=4,t   -0.367      rw=4,t    -0.310       rw=4,t        -0.361    rw=4,t   -0.355    -0.354    -0.364    -0.364    -0.364
+           [-3.78]                [-2.88]               [-3.67]               [-3.14]                    [-3.75]            [-3.69]   [-3.69]   [-3.71]   [-3.72]   [-3.66]
+                        rw=3,t    -0.005           rt    0.048      AP CA      0.001       MKT            0.000     PC1      0.001     0.001     0.001     0.001     0.001
+                                  [-0.03]                [0.83]               [-2.05]                     [0.64]             [2.56]    [2.59]    [2.50]    [2.44]    [2.44]
+                        rw=2,t     0.069       rt−12    -0.002      AP LS     -0.021          SMB         0.001     PC2                0.000     0.000     0.000     0.000
+                                   [0.47]               [-0.10]               [-0.99]                     [0.91]                      [-0.55]   [-0.55]   [-0.55]   [-0.55]
+                        rw=1,t    -0.012                           AsP CA     -0.465          HML        -0.001     PC3                          0.001     0.001     0.001
+                                  [-0.13]                                      [2.51]                    [-1.31]                                 [1.29]    [1.27]    [1.27]
+                                                                                           MOM            0.000     PC4                                   -0.001    -0.001
+                                                                                                         [-0.95]                                          [-1.43]   [-1.42]
+                                                                                              REV         0.000     PC5                                              0.000
+                                                                                                         [-0.40]                                                     [0.02]
+
+R2 (%)        1.9                    2.03                  2.1                   3.97                      2.79               3.13      3.17      3.85      4.11      4.11
+Obs           539                     539                  539                    455                       539                516       516       516       516       516
+This table reports the estimation result of:
+
+                                                                  rt+1 = α + γ rw=4,t + βi Ci,t + εt+1
+where the control variables Ci,t considered are previous end-of-month returns in the second column, monthly and year returns in the third column, Chen et al. (2022)’s
+investor attention proxies in the fourth column, the three Fama French augmented by Momentum and Short Reversal factors in the fifth column, the ith Principal
+Components (PC) computed from the 100 anomalies portfolio returns in Dong et al. (2022) from the 6th column. In brackets, I report robust Newey and West (1987)
+t-statics. The sample period considered in the first, second, third, and fifth columns is from January 1975 to December 2019. The sample period in the fourth column
+is from January 1980 to December 2017, and in the sixth column onwards from January 1975 to December 2018. To avoid introducing measurement errors, I directly
+download the variables from the respective authors’ websites.
+
+
+
+
+                                                                                         14
+2.3.2      Out-of-Sample Evidence
+
+The previous analysis of the reversal pattern is based on the entire In-Sample estimation. In this
+section, I evaluate the Out-of-Sample (OOS) forecasting power of the end-of-the-month return.
+In line with Goyal et al. (2021), I run predictive regressions recursively
+
+
+                                         rt+1|t = αt + γt rw=4,t + ϵt+1                                      (3)
+
+
+That is, at time t, I use data up to time t − 1 to obtain OLS estimates of α̂t and γ̂t . The
+OOS forecast is then generated according to r̂t+1|t = α̂t + γ̂t rw=4,t . Hence, the forecast uses
+information available up to time t to avoid look-ahead bias and to simulate the perspective of
+a real-time forecaster. The OOS forecast evaluation period goes from April 1986 to December
+2019 (75% of the entire sample for a total of 405 OOS point forecasts). Following Moskowitz
+et al. (2012) among others, I measure the OOS predictability by considering:
+
+                                                    PT
+                                                            (rt+1 − r̂t+1|t )2
+                                    R   2,OS
+                                               = 1 − Pt=w
+                                                      T                     2
+                                                       t=w (rt+1 − r̄t+1|t )
+
+where r̂t+1|t is the forecasted month t + 1 return estimated from the proposed predictor, and
+the benchmark forecast r̄t+1|t is the historical average forecast estimated from the sample mean
+through period t. When R2,OS > 0, the predictive regression forecast outperforms the simple
+historical average in terms of mean squared forecast error (MSFE) loss. The prevailing historical
+average forecast – a predictive regression model with γ = 0 – is a difficult benchmark to outper-
+form at the monthly level, Welch and Goyal (2008). To statistically compare the OOS results, I
+use Clark and West (2007) MSFE-adjusted statistic.3
+       The first column in Table 5 reports R2,OS over the entire evaluation period. The end-of-month
+return rw=4,t generates positive, sizable, and statistically significant OOS gains, with R2,OS of
+1.307%. Conversely, the historical mean outperforms momentum: this finding is consistent with
+Huang, Li, Wang, and Zhou (2020), which shows that past 12-month returns do not have OOS
+   3
+    The null hypothesis is that the benchmark historical average forecast delivers lower MSFE than the pre-
+dictive regression forecast; the alternative hypothesis that the latter delivers gains compared to the benchmark,
+corresponding to H0 : R2,OS < 0 against H1 : R2,OS > 0.
+
+
+
+                                                       15
+                                    Table 5: Out of Sample Evidence
+                                                                       2,OS                          2,OS
+                                         R2,OS (%)                    Rexp  (%)                     Rrec   (%)
+rw=4,t                                     1.307∗∗                        2.142                        -1.958
+rt−12                                     -0.088                         -0.261                          0.592
+This table reports the Out-of-sample forecasting results compared to the historical mean for the time series
+reversal (rw=4,t ) and 12-month return (rt−12 ). The first column reports the OOS R2,OS , the second and third
+                                2,OS        2,OS
+columns report respectively Rexp     and Rrec    . The R2,OS statistical significance is based on the Clark and West
+(2007) test. ∗ ∗ ∗, ∗∗, and ∗ indicate significance at the 1%, 5%, and 10% levels, respectively. The sample period
+is from January 1975 to December 2019, and the out-sample valuation period starts from April 1986.
+
+
+predictability without standardizing for the monthly returns’ variance. Since the literature agrees
+that predictability varies over business cycles, the second and third columns in Table 5 report
+R2,OS separately for expansion and recession periods. I use the National Bureau of Economic
+Research (NBER) dates of peaks and troughs to identify recessions and expansions ex-post, i.e.,
+this information is not used in the estimation:
+
+                                                    PT
+                                                      Itc (rt+1 − r̂t+1|t )2
+                                    Re2,OS = 1 − Pt=w
+                                                  T     c                  2
+                                                  t=w It (rt+1 − r̄t+1|t )
+
+
+where Itexp (Itrec ) is the NBER indicator function that takes a value of 1 when month t is in
+expansion (recession) and 0 otherwise.
+       The momentum performance across the business cycle is consistent with the literature. There
+is significantly stronger evidence of predictability during recessions than during expansions: the
+R2,OS is positive during recessions but negative in expansions. This feature has been empirically
+discussed in Huang et al. (2014) and theoretically supported by Cujean and Hasler (2017).4
+Interestingly enough, the end-of-month return rw=4,t behaves very differently. The predictability
+concentrates during expansion periods, ROS
+                                        2,exp
+                                              = 2.142% , but gets lost during recessions, with a
+large negative ROS
+                2,exp
+                      of −1.958%.
+       Overall, the results in Table 5 strongly corroborate the predictability pattern between rw=4,t
+and rt+1 . From an economic standpoint, the proposed predictor benefits from its cyclical pre-
+   4
+    In Cujean and Hasler (2017), investors use different forecasting models. As economic conditions worsen,
+uncertainty rises, and investors’ opinions polarize. Disagreement among investors thus spikes in bad times,
+causing returns to react to past news. This phenomenon creates time-series momentum, which strengthens in
+bad times. In good times, returns exhibit strong one-month reversal and insignificant momentum thereafter. The
+reason is that, in their model, news generates little disagreement in good times and returns immediately revert.
+
+
+
+                                                         16
+dictability, a feature that is particularly valuable for improving forecasting accuracy and ro-
+bustness. Given that the U.S. economy was in expansion for approximately 92% of the months
+between 1969 and 2019, making predictions during such periods provides a significant hedge over
+the historical mean and other proposed predictors. From a statistical standpoint, the results can
+be explained by the fact that equation (3) is a balanced predictive regression: rw=4,t matches the
+persistency of rt+1 , substantially improving its forecasting precision (Ren et al., 2019).5
+
+
+Robustness. Appendix A.3 is devoted to the sensitivity analysis. Specifically, Appendix A.3.1
+shows the cumulative forecast error over time. Appendix A.3.2 considers a longer Out-of-Sample
+time window. Finally, Appendix A.3.3 provides in-sample evidence that corroborates the cyclical
+nature of the aggregate reversal predictability.
+
+
+2.4        Dynamic Reversal Trading Strategy
+
+The previous sections formally assessed the aggregate market predictability of rw=4,t . It is,
+therefore, worth investigating the economic value of such predictability. In the spirit of the
+optimal asset allocation approach in Campbell and Thompson (2008), I consider the returns of
+the following trading strategy:6
+
+                                                                T SR
+                                                               rt+1|t
+                                             T SR − T Vt :=      2
+                                                                         rt+1                               (4)
+                                                               σt+1|t
+                                                               | {z }
+                                                               wtT SR
+
+
+
+Intuitively, the direction and the amount invested on the risky asset depend on wtT SR . The
+parameter is the ratio between the 1-month ahead OOS forecast (rt+1|t
+                                                                T SR
+                                                                      ) over the return variance
+in the last quarter σt+1|t
+                     2
+                                       i=t ). Unlike the rule-of-thumb strategy discussed in Section
+                           = σ 2 ({ri }t−2
+2.2, the T SR − T V strategy presented here dynamically adjusts both the investment direction
+   5
+       Using Ren et al. (2019)’s notation:
+
+                               yt = µy + βxt−1 + ut ,   xt = µx + νt ,    νt = ανt−1 + ϵt
+
+where yt is stock returns and xt is the main predictor. An unbalanced predictor (|α| close to 1) implies high
+persistence in yt . However, excess stock market returns show low autocorrelation, worsening the predictability.
+   6
+     The exercise here proposed directly follows from the dynamic asset allocation of Campbell and Thompson
+(2008) by setting the risk aversion parameter equal to 1.
+
+
+                                                          17
+and the amount based on the OOS T SR forecast.
+   I impose two restrictions on the trading strategy. First, I allow the weight wtT SR to lie
+between −1 and 2. Hence, the strategy can short-sell at a maximum of 1 index unit but can
+buy on leverage. The assumption is rather conservative as the S&P 500 is among the financial
+instruments with the most available leveraged instruments, ranging from 5× ETFs to futures
+and options with double-digit leverage. Second, I restrict the trading strategy to have a market
+exposure (wtT SR ̸= 0) only if It−1
+                                N BER
+                                      = 0. Intuitively, due to its cyclical predictability, the
+strategy aims to invest in the market only during expansion periods. Since the NBER indicator
+is released with a one-month lag, the strategy uses the previous month’s value as the best proxy
+for the current economic state.
+   Table 6 reports the results for the rule of thumb strategy (T SR), time-varying strategy
+(T SR − T V ), and the passive investing strategy (S&P ). These results highlight the marginal
+benefit for a real-time investor of using OOS predictability over a simple rule-of-thumb approach.
+The T SR preserves its main properties and results discussed in Section 2.2: the simple strategy
+has a market exposure close to zero and delivers positive and statistically significant adjusted
+alpha. Notably, the gains of the T SR − T V increase substantially: the excess returns are statis-
+tically different from the ones delivered by the S&P strategy. The result does not mechanically
+depend on leverage, as the adjusted alphas are also positive and statistically significant, implying
+that increased precision drives the results. The side effect of timing the market rather than fol-
+lowing a predefined rule is that the T SR−T V strategy increases the number of times the strategy
+buys (from 40% to 64%), and henceforth its market exposure (from 0.025 to 0.810). Overall,
+the increased precision of the trading strategy dominates the higher market exposure, suggesting
+that real-time investors have an incentive to employ the short-term aggregate predictability.
+
+
+Robustness. In Appendix A.4, I provide evidence supporting the robustness of the results
+in Table 6. Specifically, Appendix A.4.2 presents a sensitivity analysis of the trading strategy
+restrictions, while Appendix A.4.3 examines the potential effects of trading costs and fees. Ap-
+pendix A.4.4 offers a sub-sample analysis, and Appendix A.4.5 shifts the focus to total returns
+rather than index returns.
+
+
+                                                18
+                            Table 6: Dynamic Reversal Trading Strategy
+
+                   Mean Exc. Ret.            Sharpe Ratio             α(%)                β             % Buy
+TSR-TV                12.355∗∗                   0.588                8.618∗∗∗          0.810∗∗∗         0.64
+TSR                    5.588                     0.384                5.475∗∗           0.025            0.40
+S&P                    4.617                     0.308
+This table reports the annualized mean excess returns, Sharpe Ratio, CAPM-adjusted alphas (α), market exposure
+(β), and number of times the strategy buys for the time series reversal time-varying (T SR − T V ), time series
+reversal (T SR) and passive investing (S&P ) strategies. ∗ ∗ ∗, ∗∗, and ∗ indicate significance at the 1%, 5%, and
+10% levels, respectively. The statistical significance is based on Newey and West (1987) standard errors. The
+sample period is from April 1986 to December 2019.
+
+
+2.5       Evidence from other American Indexes
+
+In this section, I investigate whether the negative correlation between rw=4,t and rt+1 is specific
+to the S&P 500 by extending the analysis to the two other major U.S. indices: the Dow Jones
+Industrial Average (DOW) and the Russell 2000 (RUSS). Table 7 presents the key statistics
+discussed in the previous sections for the two indexes. Specifically, the first column reports the
+adjusted alphas for the T SR strategy. The second and third columns display the estimated
+coefficient from the In-Sample predictive regression and the OOS R2,OS , respectively. The final
+column reports the adjusted alphas for the T SR − T V strategy.
+       The results for the DOW closely align with those for the S&P 500, while no clear pattern is
+observed in the Russell. When the in-sample coefficient is statistically significant, out-of-sample
+predictability is positive and meaningful, and a reversal-based trading strategy yields substantial
+gains. Notably, the aggregate reversal pattern is evident in both the Dow, an index of 30 large-
+cap stocks, and the S&P 500, but not in the Russell, which tracks the performance of small-cap
+American firms.7 Therefore, contrary to cross-sectional studies (e.g., Avramov et al. (2006),
+Nagel (2012) and Dai et al. (2023)), the aggregate reversal pattern concentrates on high-quality
+stocks.
+
+
+Robustness. In Appendix A.5.1, I propose a cross-sectional exercise to corroborate the results
+in Table 7. Sorting stocks from the CRSP dataset according to stock price and liquidity, I show
+   7
+    The Dow criteria are not governed by strict quantitative rules, with the only exception being that companies
+must be based in the U.S., listed on U.S. exchanges, and not belong to the transportation or utilities sectors. The
+methodology is far vaguer than the S&P 500: “A stock is typically added only if the company has an excellent
+reputation, demonstrates sustained growth, and is of interest to a large number of investors.” Since the Dow’s
+components are among the largest and most established companies, they are also part of the S&P 500.
+
+
+                                                        19
+                       Table 7: Reversal Pattern on DOW and Russell 2000
+
+                             TSR α(%)                   γ                 R2,OS (%)             TSR-TV α(%)
+DOW                            5.310∗∗               −0.329∗∗∗              1.027∗∗                 9.433∗∗∗
+RUSS                           0.882                 −0.190               −0.712                    2.026
+This table reports in the first column the annualized CAPM-adjusted alphas (α) for the full sample rule of thumb
+strategy (T SR) against respective index. The second column reports the In Sample predicting coefficient attached
+to rw=4,t . The third column reports the OOS R2,OS . Finally, the fourth column reports the CAPM-adjusted
+alphas (α) for the time-varying reversal strategy (T SR − T V ) against respective index. ∗ ∗ ∗, ∗∗, and ∗ indicate
+significance at the 1%, 5%, and 10% levels, respectively. The statistical significance is based on Newey and West
+(1987) standard errors for In Sample regressions and Clark and West (2007) for OOS R2,OS .
+
+
+that the reversal pattern concentrates on high-quality stocks. Moreover, in Appendix A.5.2, I
+consider the most popular indexes at the international level and find little evidence of aggregate
+market reversal. The results suggest that the pattern characterizes only American listed stocks.
+In the next section, I aim to rationalize the new source of predictability and its novel properties.
+
+
+
+3     Rationalizing the pattern
+
+3.1     What happens at the end of the month?
+
+In the United States, a considerable amount of liquidity is transferred at the end of each month,
+driven largely by salary, contributions, and pension payments. Pensions, in particular, require
+special attention as they are exclusively disbursed at the end of the month and constitute a
+substantial portion of these financial flows. The American pension system is based on two
+approaches: defined benefit pension funds (DB - pension funds) and defined contribution plans
+(DC - 401k plans). On a high level, in defined benefit plans, companies pay retirees a regular
+monthly payout. Conversely, in defined contribution plans, companies do not commit to paying
+a pre-established amount to retirees. Instead, these plans invest a certain amount in workers’
+retirement accounts. Although many companies are transitioning from DB to DC plans to shift
+investment and longevity risks to employees, DB plans still hold more assets ($ 16.5 trillion)
+compared to DC plans ($ 11.3 trillion).
+    DB funds are severely underfunded as famously pointed out in Merton (2008): ”I have no
+magic solution if you are underfunded by 1 billion. [...]. And just to be clear, when I say
+
+
+
+                                                        20
+                     Figure 3: American Pension Funds CashFlows Mismatch
+
+
+
+
+This figure compares the annual pension benefit flows (blue bars - benefits paid from occupational plans and
+IRAs as a percentage of GDP) against the contributions into pension plans (red bars - contributions paid into
+occupational plans and IRAs as a percentage of GDP). The Data Source is OECD Pension Markets in Focus.
+
+
+“underfunded,” I mean that the current marked-to-market value of the pension assets is less
+than the current marked-to-market value of the pension liabilities. ” To cover the imbalance,
+pension funds rely on Liability Driven Investments (LDI) to generate cashflows from their assets
+in place. As the imbalance between active workers’ and retirees’ flows is substantial (Figure
+3), pension funds have tilted their investments over riskier and illiquid assets, such as private
+equity, infrastructure, and real estate.8 The cash flows generated by these strategies are highly
+unpredictable, potentially exposing DB pension funds to short-fall liquidity problems. Therefore,
+given that flows materialize towards the end of the month - with contributions received around
+the 15th business day and benefits paid on the last business day - pension funds are likely to
+realize their potential liquidity needs only at the end of the month.
+       Securing liquidity at month-end is challenging. As market participants rush for cash, financing
+costs rise sharply in both short-term bonds and long-term debt markets (Etula et al., 2020),
+making the usual borrowing channels a more expensive outside option. Furthermore, other
+   8
+    Many industries’ reports corroborate the negative cash flow problem, See for example, Figure 1 of Goldman
+Sachs report Cash Flow Matching: The Next Phase of Pension Plan Management. The pension funds’ negative
+cash flow problem has recently become a concern in the United States, see for example these recent Financial
+Times "Pension funds must take ‘extreme care’ with liquidity risks, says OECD" and "US pension funds worth
+$1.5tn add risk through leverage" articles.
+
+
+
+                                                     21
+market participants typically reduce their trading activity due to their own end-of-month liquidity
+requirements and concerns over monthly reporting. As a result, they generally reduce their overall
+risk exposure during this period (Patton and Ramadorai, 2013).
+       A potential strategy that pension funds use to address end-of-month liquidity shortfalls is
+selling equity positions to raise needed funds.9 To test this hypothesis, I analyze the ANcerno
+dataset (formerly Abel Noser Corp.) from 2000 to 2010, focusing on the trading activity of
+pension plan sponsors in the last week of each month.10 Table 8 reports the daily order imbalance,
+measured as the ratio of signed dollar volume to total dollar volume, for pension plans trading on
+S&P 500 constituents, along with the overall last week order imbalance. The observed negative
+imbalance supports the hypothesis that pension funds sell during the last week to meet liquidity
+needs. The selling activity clusters between t − 4 and t − 2, aligning with the timing necessary
+to secure sufficient cash for pension payouts on the last business day t. Conversely, the positive
+pressure observed at t is consistent with the behavior of DC plans, which likely buy at month-
+end due to positive cash flows as passive investors. However, the selling pressure in the first few
+days of the final week outweighs the buying pressure on the last trading day, as shown in the
+last column of Table 8. The results suggest that the liquidity trading induced by the pension
+payment cycle may create a non-informational positive supply shock in the aggregate market.
+       In the next section, I evaluate the potential impact of a supply shock using a 3-Period model
+à la Vayanos and Gromb (2012). Appendix B.1.3 corroborates the results by considering the
+Commodity Futures Trading Commission (CFTC) dataset. Appendix B.1.2 reports analogous
+statistics discussed in Table 8 for money managers.
+   9
+     Bonds also experience an end-of-month price pressure, driven by institutional investors (Etula et al., 2020) and
+by bond auctions (Lou, Yan, and Zhang, 2013). Consequently, selling bonds—including Treasuries—becomes more
+costly at this stage. The stock market is considerably more liquid, faster, and centralized than the corporate bond
+market, which represents the primary bond instruments in which pension funds invest. Finally, if pension funds
+face liquidity shortfalls at the end of the month, they cannot likely engage in overnight repurchase agreements
+(repo) because their earliest cash inflows, such as worker contributions, arrive only after two weeks. Hence, they
+would likely need to undersign long-term repos, which are far less liquid and common.
+  10
+     ANcerno contains trade-level observations for hundreds of public and private institutional investors. Pension
+plan sponsors include defined benefit (DB) pension funds and contribution (DC) plans. For a more detailed
+description of the ANcerno Dataset and the historical constituents of the S&P 500, see Appendix B.1.1.
+
+
+
+
+                                                         22
+                   Table 8: Last Week Pension Plan Sponsor Trading Activity
+
+         t−4                t−3                t−2                 t−1                  t           Weekly
+        −5.492%            −5.369%            −2.534%            −0.581%            0.453%          −3.522%
+         [-3.299]           [-3.813]           [-1.796]           [-0.350]           [0.247]         [-2.655]
+This table reports in the first five columns the order imbalance for each day in the last trading week (where t is
+the last day of the month). In the last column, I report the overall imbalance in last week’s order. The daily
+order imbalance and last week imbalance are defined respectively:
+                       P                                 P4 P
+                         i∈I $buyi,t−d − $selli,t−d         d=0 ( i∈I $buyi,t−d − $selli,t−d )
+                       P                                 P4 P
+                         i∈I $buyi,t−d + $selli,t−d         d=0 ( i∈I $buyi,t−d + $selli,t−d )
+
+where i ∈ I are the constituents S&P 500 stocks, and the signed position is obtained by multiplying quantity
+by execution price and sign, all reported by the ANcerno dataset. In brackets, I report the associated t-statistic
+against the null hypothesis of a zero order imbalance. The Data is ANcerno, and the sample period goes from
+January 2000 to December 2010.
+
+
+3.2     Effect of a Supply Shock
+
+The proposed 3-Period model aims to capture the explanation channel in a stylized way. At time
+t1 , the market experiences a positive supply shock, reflecting the end-of-month liquidity trading
+driven by the payment cycle. Between t1 and t2 , enough market participants enter the market
+and absorb the shock, representing the trading activity within the one month ahead. The final
+period serves as a terminal condition for assessing final wealth.
+    In the economy, a risky asset that pays its claim at time t3 follows a random walk with
+volatility clustering:
+
+
+                                    dt = dt−1 + ϵt
+                                           q
+                                    ϵt = νt a0 + a1 ϵ2t−1      νt ∼ N (0, 1)
+
+
+The asset dynamics intuitively reflect key characteristics of financial assets: while returns are
+notoriously difficult to predict, volatility tends to fluctuate between high and low periods. In each
+period, two types of traders are active: outside investors and arbitrageurs. Outside investors’
+supply is inelastic, while arbitrageurs, who are competitive and exhibit exponential utility, aim
+to maximize their expected final wealth.
+    As is standard in the literature, I set the asset supply equal to zero. Therefore, the supply
+shock u can be interpreted as net supply. It follows that, absent a supply shock u, the equilibrium
+
+
+
+                                                       23
+price of the risky asset at time t2 is equal to:
+
+
+                                           p2 = d2 = E[d¯3 |t2 ]
+
+
+Intuitively, the asset’s price is not determined by supply and demand, but rather by the underly-
+ing risky asset dynamic. At time t1 , the positive supply shock u, capturing the situation outside
+investors wish to sell the asset, implies that the equilibrium price of the risky asset is equal to:
+
+
+                                        p1 = d1 − u(a0 + a1 ϵ21 )
+
+
+The quantity u(a0 + a1 ϵ21 ) is the discount arbitrageurs require to buy from outside investors, or,
+alternatively, the immediate price impact induced by the supply shock. Intuitively, the larger
+the shock, u, arbitrageurs absorb, and the riskier the asset, (a0 + a1 ϵ21 ), the more significant the
+price impact and hence the potential profit for arbitrageurs. Following Grossman and Miller
+(1988), I study the impact of the supply shock on return correlation by considering:
+
+                                                   cov(r1 , r2 )
+                                         ρ= p
+                                                var(r1 )var(r2 )
+
+where r1 = p1 − E[p1 |t0 ] and r2 = p2 − p1 . Consistent with the empirical evidence discussed in
+the first part of the paper, the correlation between successive price changes is negative:
+
+                                                   2(a1 u)2
+                                  0>ρ=−                           > −1
+                                              1 + a21 (−3 + 2u2 )
+
+   Intuitively, returns exhibit a negative correlation because a positive supply shock lowers the
+price at t1 , while at t2 , the price reverts as enough traders offload the arbitrageurs’ risky positions.
+Furthermore, as shown in Appendix B.2.1, the magnitude of the reversal pattern increases in
+absolute terms with both supply shock u and volatility clustering a1 .
+
+
+3.2.1   Testing the Empirical Predictions
+
+The first empirical prediction directly follows from the reversal specification:
+
+
+                                                     24
+Empirical Prediction 1. Reversal increases in u (supply shock) and a1 (volatility clustering)
+
+To test the first empirical prediction, I proxy a supply shock with
+
+                                            V OLw=4,t − V OLw=3,t
+                                  ∆volt =      P4
+                                                 i=1 V OLw=i,t
+
+
+where V OLi,t is the ith weekly volume from GFD weekly S&P 500 volume data from January 1975
+to December 2019. Intuitively, a supply shock mechanically implies that market participants are
+willing to sell more units. Hence, by acquiring these extra positions, the arbitrageurs cause a
+surge in trading in the last week. I proxy the volatility clustering with
+
+
+                                    ∆vixt = vixw=4,t − vixw=3,t
+
+
+where vixw=4,t is the ith weekly logarithmic VIX price from GFD VIX weekly data from January
+1990 to December 2019. The rationale is that a1 represents how much of the current period’s
+volatility influences the expected period’s conditional volatility. A higher a1 suggests that large
+past shocks result in high expected future volatility. Empirically, positive values of ∆vixt imply
+that market participants expect a period of sustained high volatility. Conversely, negative ∆vixt
+values suggest a return to more stable market conditions.
+   I test Empirical Prediction 1 in a two-step procedure. I first run a Threshold Autoregression
+(TAR) to study the relationship between the reversal pattern and the two proxies:
+                               
+                                α + γ1 rw=4,t + ϵt+1 if − ∞ < ∆vt ≤ τ
+                               
+                      rt+1 =                                                                   (5)
+                                α + γ2 rw=4,t + ϵt+1 if
+                                                            τ < ∆vt < ∞
+
+
+where τ is the threshold parameter estimated within the TAR algorithm on each proxy (∆vt =
+∆volt and ∆vt = ∆vixt ). The coefficients γ1 and γ2 capture, respectively, the reversal pattern
+in periods of smaller and higher values of end-of-the-month volume or volatility. The results, re-
+ported in Table 9, suggest that the negative autocorrelation between rw=4,t and rt+1 is significant
+only when ∆vt > τ .
+   Therefore, the TAR model establishes a change in the regime behavior of return autocorrela-
+
+                                                 25
+tion depending on the end-of-the-month proxies: consistent with the first Empirical Prediction,
+increased market activity and increased volatility at the end of the month are associated with a
+stronger reversal pattern.11
+       In the second step, I control that the two proxies do not directly impact the return dynamic.
+For each proxy, I define the following binary variable based on the estimated threshold τ :
+                                                 
+                                                  1 if ∆vt > τ
+                                                 
+                                       1∆vt >τ =                                                            (6)
+                                                  0 otherwise
+                                                 
+
+
+and consider the following Predictive Regression (PR):
+
+
+                      rt+1 = α + γ rw=4,t + β 1∆vt >τ + ψ (rw=4,t × 1∆vt >τ ) + εt+1                        (7)
+
+
+       The results reported in Table 9 show that rw=4,t has stand-alone predicting power, while each
+1∆vt >τ alone does not predict future return. Therefore, the results do not support the "pure"
+ability of volume and volatility variables to predict stock returns, as discussed, for example, in
+Gervais, Kaniel, and Mingelgrin (2001) and Nagel (2012). Finally, for each proxy, I report in
+the last column of each Panel a predictive regression considering the end-of-the-month return,
+1∆vt >τ and their interaction term rw=4,t × 1∆vt >τ . Consistent with the TAR estimates, the results
+suggest that once included 1∆vt >τ and its interaction term with the last week’s return rw=4,t , the
+negative correlation between rt+1 and rw=4,t is robust and significant only when there is high end
+of the month volume or volatility.12
+
+
+
+
+  11
+      In Appendix B.2.2, I show that the threshold condition ∆volt > τ likely indicates a month with a high
+trading activity in the last week of the month (Panel A Figure 1.B and Table 3.B). The estimated threshold τ
+is negative as volw=3,t is consistently larger than volw=4,t (See Panel C Figure 1.B). I divide by the monthly
+volume to de-trend the series from monthly seasonality. I find consistent results by considering different proxy
+specifications, see Appendix B.2.3.
+   12
+      To address the concern of using an estimated regressor in equation (7), I confirm the significance of the
+interaction term coefficient through a two-step bootstrapping procedure.
+
+
+                                                      26
+                                                                 Table 9: Testing Empirical Prediction 1
+                               Panel A: Proxy Supply Shock                                                       Panel B: Proxy Volatility Clustering
+         TAR regression                          Predictive regression                            TAR regression                         Predictive regression
+
+τ                    -0.042          α                      0.004     0.005      0.005     τ                     0.083       α                      0.005    0.004       0.004
+                                                            [2.00]    [1.10]     [1.17]                                                             [1.89]   [1.90]      [1.83]
+α                     0.004          rw=4,t                -0.353               -0.100     α                     0.005       rw=4,t                -0.282               -0.071
+                      [2.07]                               [-3.78]              [-0.57]                          [2.25]                            [-2.72]              [-0.46]
+rw=4,t if ∆vol ≤ τ   -0.088          1t, ∆vol>τ                      -0.002     -0.002     rw=4,t if ∆vol ≤ τ   -0.072       1t, ∆vol>τ                      -0.001      0.003
+                     [-0.29]                                         [-0.46]    [-0.39]                         [-0.36]                                      [-0.21]     [0.45]
+rw=4,t if ∆vol > τ   -0.463          rw=4,t × 1t, ∆vol>τ                        -0.360     rw=4,t if ∆vol > τ   -0.756       rw=4,t × 1t, ∆vol>τ                        -0.708
+                     [-3.17]                                                    [-1.65]                         [-3.34]                                                 [-2.15]
+
+Obs.                    539                                   539       539        539                             359                                359       359        359
+R2 (%)                 1.98                                  1.90      0.05       2.36                            1.94                               1.38      0.01       3.18
+In Panel A, I report in the first column the results of the following Threshold Autoregressive Regression (TAR):
+                                                                  
+                                                                    α + γ1 rw=4,t + ϵt+1 if − ∞ < ∆volt ≤ τ
+                                                          rt+1 =
+                                                                    α + γ2 rw=4,t + ϵt+1 if     τ < ∆volt < ∞
+                                                                     V OLw=4,t −V OLw=3,t
+where τ is the estimated TAR threshold estimated on ∆volt =             P4                . From the third column, I report the results of the following Predictive regression:
+                                                                         i=1 V OLw=i,t
+
+
+                                                           rt+1 = α + γ rw=4,t + β 1∆volt + ψ (rw=4,t × 1∆volt >τ ) + εt+1
+
+where 1∆volt >τ is an indicator function based on ∆volt > τ . In brackets, I report robust Newey and West (1987) t-statics. In Panel B, I report analogous results obtained
+for ∆vixt = vixw=4,t − vixw=3,t . The sample period goes from January 1975 to December 2019 in Panel A and from January 1990 to December 2019 in Panel B.
+
+
+
+
+                                                                                               27
+   In terms of magnitude, the values reported in Panel B (volatility clustering) are slightly larger
+than the ones in Panel A (supply shock): the coefficient attached to rw=4,t is around −0.7 with
+high volatility, while around −0.4 with high volume. A possible explanation is that the estimated
+threshold in Panel B is relatively large compared to the distribution of ∆vixt . Therefore, to be
+above the threshold, the change in volatility expectations from the 4th to the 3rd week must be
+pronounced, thus commanding a higher impact (Panel B and D Figure 1.B). In economic terms,
+the supply (volatility clustering) effect is more (less) likely to be active but has a lower (higher)
+average impact on the time series reversal.
+   The second empirical implication follows from the fact that between t1 and t2 , enough market
+participants come to market and fully counterbalance the effect of the supply shock. Empirical
+evidence shows the reversal pattern is absorbed after one month. Therefore, within that month,
+the reversal pattern should remain consistent and not decrease over time. Intuitively, as the end
+of the following month approaches, an increasing number of market participants will have traded
+against the arbitrageurs, gradually unwinding their excess positions and thereby offsetting the
+effect of the supply shock on price dynamics.
+
+Empirical Prediction 2. Reversal increases within the one month ahead
+
+   I test the second empirical prediction by considering the predicting power of rw=4,t through
+the next month cumulative excess returns (rd=i,t+1 = pd=i,t+1 − pt − rtf ,      i = 1, · · · , 20) that
+gradually become one month ahead excess return (rt+1 = pt+1 − pt − rtf ). Figure 4 plots the
+predictive regression’ estimated coefficients and 95% confidence intervals on the cumulative excess
+returns throughout the month
+
+
+                              rd=i,t+1 = α + γd=i,t+1 rw=4,t + ϵd=i,t+1                            (8)
+
+
+   Figure 4 establishes a general time-series reversal pattern throughout the next monthly re-
+turns as all the estimated coefficients are negative. Consistent with Empirical Prediction 2, the
+reversal pattern increases in absolute magnitude during the month, suggesting that the aggregate
+market does not immediately recover from the end-of-the-month negative price pressure.
+
+
+                                                 28
+                              Figure 4: Testing Empirical Prediction 2
+
+
+
+
+This figure reports the estimated coefficients and the associated 95% Newey and West (1987) robust confidence
+intervals of the predictive regression on the cumulative returns throughout the month
+
+                                   rd=i,t+1 = α + γd=i,t+1 rw=4,t + ϵd=i,t+1
+
+as well as on the standard monthly predictive equation rt+1 = α + γ rw=4,t + ϵt+1
+where rd=i,t+1 = pd=i,t+1 − pt − rtf , rt+1 = pt+1 − pt − rtf and rw=4,t = pt − pw=4,t . The sample period goes
+from January 1975 to December 2019.
+
+
+   Importantly, the reversal pattern in Figure 4 aligns with the payment cycle explanation
+channel. The estimated coefficients in the first part of the month are generally not statistically
+significant. Intuitively, pension funds do not immediately buy back their equity positions as
+they are cash flow negative, and other market participants need time to absorb the shock from
+one of the largest active players in the market. Conversely, the estimated coefficients in the
+second part of the month are statistically significant, matching the timing at which pension
+funds receive their inflows and, hence, can buy back in the equity market. Moreover, the largest
+estimated coefficient in absolute terms is observed in the third week (rd=14,t+1 ), before a new
+end-of-the-month negative price pressure potentially materializes.
+
+
+3.3     Further Evidence Linking Reversal and Payment Cycle
+
+In this section, I present additional evidence connecting the reversal pattern to end-of-month
+liquidity trading by pension funds. Specifically, I show that the reversal pattern is stronger in
+months with lower pension funds’ inflows and higher end-of-month borrowing costs. Consistent
+
+                                                      29
+ with the end-of-the-month payment cycle explanation, when pension funds face a larger cashflow
+ imbalance or worse financing conditions, they are more likely to resort to the equity market
+ to recoup end-of-month liquidity. I perform a Threshold Autoregressive Regression (TAR) on
+ pension funds’ inflows, inf lowt , last week Fed Fund Rate (FF), f fw=4,t , and last week National
+ Financial Conditions Index (NFCI) nf ciw=4,t :
+
+                                  
+                                   α + γ1 rw=4,t + ϵt+1 if − ∞ < vt ≤ τ
+                                  
+                           rt+1 =                                                                              (9)
+                                   α+γ r
+                                  
+                                             2    +ϵ
+                                                 w=4,t   if
+                                                          t+1 τ <v <∞          t
+
+
+
+        Figure 5 reports estimated coefficients and associated 95% robust confidence intervals for
+ all TAR regressions. Results show that when pension funds receive less cash or face tighter
+ end-of-month financing costs, the reversal pattern spikes.13
+
+
+ 3.4       Reversal Properties and Payment Cycle
+
+ In this last section, I qualitatively discuss how the liquidity trading induced by the payment
+ cycle potentially rationalizes the properties discussed in Section 2.
+
+
+Property 1. Reversal concentrates on expansion periods
+
+
+ During periods of economic stability, pension funds reduce their precautionary cash reserves
+ (Figure 6, Panel A). Intuitively, in stable economic conditions, pension funds tend to decrease
+ their liquidity buffers to allocate more capital to riskier assets. As a result, with less cash on
+ hand to manage potential mismatches, they become more vulnerable to liquidity shortfalls and
+ are more likely to sell at the end of the month to cover potential liquidity gaps. Table 6.B reports
+ pension plans’ order imbalance, distinguishing between expansion and recession periods. The
+ results show that the overall end-of-the-month selling pattern is driven by expansion periods.
+
+
+Property 2. Reversal concentrates on high quality stocks
+   13
+      In Appendix B.3.1, I report the summary statistics of inf lowt , f fw and nf ciw=4,t . Pension funds’ inflows
+ series and weekly fed funds are from FRED, whereas NCFI from the Federal Reserve Bank of Chicago. I find
+ analogous results considering first differences rather than spot values.
+
+
+
+
+                                                         30
+                Figure 5: Payment Cycle and Reversal Pattern: Direct Evidence
+
+
+
+
+ This figure reports the estimated coefficients and the robust 95% confidence intervals for the following TAR
+ regressions:                        
+                                       α + γ1 rw=4,t + ϵt+1 if − ∞ < vt ≤ τ
+                              rt+1 =
+                                       α + γ2 rw=4,t + ϵt+1 if      τ < vt < ∞
+ where τ is the threshold parameter estimated within the TAR algorithm either on monthly employer contributions
+ for employee pension and insurance funds, inf lowt , on the end of month change in Fed Funds rate, f fw=4,t , or on
+ last week National Financial Conditions Index (NFCI). The sample period goes from January 1975 to December
+ 2019.
+
+
+ Consistent with Jansen, Klingler, Ranaldo, and Duijm (2024), among others, when pension
+ funds sell for liquidity reasons, they first sell high-quality positions to minimize price impact
+ and transaction costs. Table 7.B reports pension plans’ order imbalance, distinguishing between
+ S&P 500 constituent and non-constituent stocks. The results show that there is evidence of an
+ end-of-the-month selling pattern exclusively among the constituents of the S&P 500.
+
+
+Property 3. Reversal concentrates on American Indexes
+
+
+ At the international level, there is limited evidence of an aggregate market reversal. This is con-
+ sistent with the proposed economic mechanism: international pension funds manage substantially
+ fewer assets (Figure 6, Panel B), heavily invest abroad (Figure 6, Panel C), and typically do not
+ face negative cash flows (Figure 6, Panel D). As a result, international pension funds do not
+ likely need to sell assets for liquidity reasons at the end of the month. Even if they do need to
+ sell, their smaller market size likely prevents them from triggering a broad market shock, and,
+
+
+                                                         31
+                  Figure 6: Pension Funds Characteristics Around The World
+
+
+
+
+Panel A reports the percentage of Asset Under Management (AUM) on Cash Holding for American Pension Funds.
+Panel B reports the Asset under Management (AUM) in $ Billion for some OECD representative countries in
+2022. Panel C reports the percentage of AUM invested abroad in 2022 for some representative countries. Panel D
+compares the annual pension benefit outflows against the contributions into pension plans for some representative
+countries in 2022. The Data Source is OECD Pension Markets in Focus.
+
+
+in line with Property 2, they may sell U.S. stocks to minimize trading costs and fees.
+    Overall, the evidence presented in this section strongly suggests that the liquidity trading
+driven by the payment cycle is the most likely explanation for the novel aggregate reversal pat-
+tern. While acknowledging the possibility of other contributing factors, Appendix B.4 explores
+alternative explanations of the novel empirical pattern — compensation for standard liquidity
+risk, behavioral biases, option expiration trading, quarterly activity, information releases, and
+pension fund re-balancing — but finds no comprehensive result for each competing channel.
+
+
+
+
+                                                       32
+4    Conclusion
+
+This paper documents a novel 1-month aggregate market reversal pattern. This pattern is driven
+by the previous end-of-the-moth market return. The empirical evidence is statistically significant
+both In- and Out-of-Sample. Importantly, I show that the reversal at the aggregate level has
+characteristics opposite to those established in the cross-sectional literature: it concentrates on
+high-priced and liquid stocks and is cyclical with the economy. Consequently, a simple rule of
+thumb and more sophisticated strategies deliver sizable economic gains.
+    I rationalize the empirical findings via pension funds’ end-of-the-month liquidity trading.
+Leveraging on recent findings and on direct evidence from daily pension funds trading activity, I
+argue that the payment cycle potentially triggers a non-informational trading shock. Consistent
+with a payment cycle explanation, I show that the reversal pattern increases in absolute terms
+within the one month ahead, aligning with the time pension funds receive inflows. Finally, I
+provide qualitative evidence on how a payment cycle channel rationalizes the properties of my
+novel reversal pattern.
+    Overall, my findings show a strong link between pension funds’ market pressure and my
+reversal pattern. This novel empirical evidence suggests that not only momentum (Lou (2012))
+but also reversal can be empirically rationalized through the lens of flow-based asset pricing.
+Importantly and in line with both Grossman and Miller (1988) and Hartzmark and Solomon
+(2022), this paper hints that liquidity supply in financial markets is not fixed and static but
+varies and adapts as typically discussed in market microstructure. Finally, this study suggests
+that pension plans’ liquidity shortfalls and underfunding directly impact the aggregate market.
+Given pension funds’ growing size and importance, further theoretical and empirical research
+could explore whether their liquidity-driven asset allocation potentially influences real economy
+and financial stability.
+
+
+
+
+                                                33
+References
+Andonov, Aleksandar, Rob MMJ Bauer, and KJ Martijn Cremers, 2017, Pension fund asset allocation and
+  liability discount rates, The Review of Financial Studies 30, 2555–2595.
+
+Avramov, Doron, Tarun Chordia, and Amit Goyal, 2006, Liquidity and autocorrelations in individual stock
+  returns, The Journal of finance 61, 2365–2394.
+
+Baker, Malcolm, and Jeffrey Wurgler, 2006, Investor sentiment and the cross-section of stock returns, The journal
+  of Finance 61, 1645–1680.
+
+Baker, Malcolm, and Jeffrey Wurgler, 2007, Investor sentiment in the stock market, Journal of economic perspec-
+  tives 21, 129–151.
+
+Ben-David, Itzhak, Francesco Franzoni, and Rabih Moussawi, 2018, Do ETFs increase volatility?, The Journal
+  of Finance 73, 2471–2535.
+
+Campbell, John Y, and Samuel B Thompson, 2008, Predicting excess stock returns out of sample: Can anything
+  beat the historical average?, The Review of Financial Studies 21, 1509–1531.
+
+Cao, Jie, Tarun Chordia, and Xintong Zhan, 2021, The calendar effects of the idiosyncratic volatility puzzle: A
+  tale of two days?, Management Science 67, 7866–7887.
+
+Chen, Jian, Guohao Tang, Jiaquan Yao, and Guofu Zhou, 2022, Investor attention and stock returns, Journal of
+  Financial and Quantitative Analysis 57, 455–484.
+
+Clark, Todd E, and Kenneth D West, 2007, Approximately normal tests for equal predictive accuracy in nested
+  models, Journal of econometrics 138, 291–311.
+
+Conrad, Jennifer, and Gautam Kaul, 1993, Long-term market overreaction or biases in computed returns?, The
+  Journal of Finance 48, 39–63.
+
+Cujean, Julien, and Michael Hasler, 2017, Why does return predictability concentrate in bad times?, The Journal
+  of Finance 72, 2717–2758.
+
+Dai, Wei, Mamdouh Medhat, Robert Novy-Marx, and Savina Rizova, 2023, Reversals and the returns to liquidity
+  provision, Technical report, National Bureau of Economic Research.
+
+Dangl, Thomas, and Michael Halling, 2012, Predictive regressions with time-varying coefficients, Journal of
+  Financial Economics 106, 157–181.
+
+
+
+
+                                                       34
+De Bondt, Werner FM, and Richard Thaler, 1985, Does the stock market overreact?, The Journal of finance 40,
+  793–805.
+
+Dong, Xi, Yan Li, David E Rapach, and Guofu Zhou, 2022, Anomalies and the expected market return, The
+  Journal of Finance 77, 639–681.
+
+Etula, Erkko, Kalle Rinne, Matti Suominen, and Lauri Vaittinen, 2020, Dash for cash: Monthly market impact
+  of institutional liquidity needs, The Review of Financial Studies 33, 75–111.
+
+Fama, Eugene F, and James D MacBeth, 1973, Risk, return, and equilibrium: Empirical tests, Journal of political
+  economy 81, 607–636.
+
+Gervais, Simon, Ron Kaniel, and Dan H Mingelgrin, 2001, The high-volume return premium, The Journal of
+  Finance 56, 877–919.
+
+Goyal, Amit, Ivo Welch, and Athanasse Zafirov, 2021, A comprehensive look at the empirical performance ofequity
+  premium prediction ii, Available at SSRN 3929119 .
+
+Grossman, Sanford J, and Merton H Miller, 1988, Liquidity and market structure, the Journal of Finance 43,
+  617–633.
+
+Hartzmark, Samuel M, and David H Solomon, 2022, Predictable price pressure, Technical report, National Bureau
+  of Economic Research.
+
+Hu, Gang, Koren M Jo, Yi Alex Wang, and Jing Xie, 2018, Institutional trading and abel noser data, Journal of
+  Corporate Finance 52, 143–167.
+
+Huang, Dashan, Fuwei Jiang, Jun Tu, and Guofu Zhou, 2014, Forecasting stock returns in good and bad times:
+  The role of market states, in 27th Australasian Finance and Banking Conference.
+
+Huang, Dashan, Jiangyuan Li, Liyao Wang, and Guofu Zhou, 2020, Time series momentum: Is it there?, Journal
+  of Financial Economics 135, 774–794.
+
+Jansen, Kristy, Sven Klingler, Angelo Ranaldo, and Patty Duijm, 2024, Pension liquidity risk, Swiss Finance
+  Institute Research Paper .
+
+Jegadeesh, Narasimhan, 1990, Evidence of predictable behavior of security returns, The Journal of finance 45,
+  881–898.
+
+Lo, Andrew W, and A Craig MacKinlay, 1988, Stock market prices do not follow random walks: Evidence from
+  a simple specification test, The review of financial studies 1, 41–66.
+
+
+                                                       35
+Lo, Andrew W, and A Craig MacKinlay, 1990, When are contrarian profits due to stock market overreaction?,
+  The review of financial studies 3, 175–205.
+
+Lou, Dong, 2012, A flow-based explanation for return predictability, The Review of Financial Studies 25, 3457–
+  3489.
+
+Lou, Dong, Hongjun Yan, and Jinfan Zhang, 2013, Anticipated and repeated shocks in liquid markets, The Review
+  of Financial Studies 26, 1891–1912.
+
+Medhat, Mamdouh, and Maik Schmeling, 2022, Short-term momentum, The Review of Financial Studies 35,
+  1480–1526.
+
+Merton, Robert C, 2008, Allocating shareholder capital to pension plans, in Corporate Risk Management, 184–204
+  (Columbia University Press).
+
+Moskowitz, Tobias J, Yao Hua Ooi, and Lasse Heje Pedersen, 2012, Time series momentum, Journal of financial
+  economics 104, 228–250.
+
+Nagel, Stefan, 2012, Evaporating liquidity, The Review of Financial Studies 25, 2005–2039.
+
+Neely, Christopher J, David E Rapach, Jun Tu, and Guofu Zhou, 2014, Forecasting the equity risk premium: the
+  role of technical indicators, Management science 60, 1772–1791.
+
+Newey, Whitney K, and Kenneth D West, 1987, A simple, positive semi-definite, heteroskedasticity and autocor-
+  relation consistent covariance matrix, Econometrica 55, 703–708.
+
+Odean, Terrance, 1998, Volume, volatility, price, and profit when all traders are above average, The journal of
+  finance 53, 1887–1934.
+
+Patton, Andrew J, and Tarun Ramadorai, 2013, On the high-frequency dynamics of hedge fund risk exposures,
+  The Journal of Finance 68, 597–635.
+
+Poterba, James M, and Lawrence H Summers, 1988, Mean reversion in stock prices: Evidence and implications,
+  Journal of financial economics 22, 27–59.
+
+Rapach, David E, Jack K Strauss, and Guofu Zhou, 2010, Out-of-sample equity premium prediction: Combination
+  forecasts and links to the real economy, The Review of Financial Studies 23, 821–862.
+
+Ren, Yu, Yundong Tu, and Yanping Yi, 2019, Balanced predictive regressions, Journal of Empirical Finance 54,
+  118–142.
+
+
+
+
+                                                      36
+Sabbatucci, Riccardo, 2024, Are dividends and stock returns predictable? new evidence using m&a cash flows,
+  New Evidence Using M&A Cash Flows (October 24, 2015) .
+
+Sabbatucci, Riccardo, Andrea Tamoni, and Song Xiao, 2023, Stock demand and price impact of 401 (k) plans .
+
+Sentana, Enrique, and Sushil Wadhwani, 1992, Feedback traders and stock return autocorrelations: evidence
+  from a century of daily data, The Economic Journal 102, 415–425.
+
+Vayanos, Dimitri, and Denis Gromb, 2012, Limits of arbitrage: The state of the theory, Technical report.
+
+Welch, Ivo, and Amit Goyal, 2008, A comprehensive look at the empirical performance of equity premium
+  prediction, The Review of Financial Studies 21, 1455–1508.
+
+Zarowin, Paul, 1990, Size, seasonality, and stock market overreaction, Journal of Financial and Quantitative
+  analysis 25, 113–125.
+
+
+
+
+Appendices
+
+A       Appendix Section 2
+
+A.1      Appendix Section 2.2
+
+A.1.1     Adjusted Alphas Benchmarks
+
+In this section, I show that the T SR strategy delivers sizable and statistically significant adjusted
+alphas considering different market benchmarks. In Table 1.A, I report the results of the following
+regression:
+                                          T SRt = α + β Bi,t + ϵt
+
+    where Bi,t is the i benchmark market strategy. The benchmarks considered are the CRSP
+Market Factor, the 3 Fama-French factors, the short-term cross-sectional factor, the Momentum
+Factor, and the first 10 Principal Components (PCA) formed on the 100 anomalies portfolios.
+    The results do not qualitatively change from the ones reported in the main body of the text,
+hinting that, independently from the benchmark chosen, investors have the incentive to switch
+
+                                                      37
+                           Table 1.A: Robustness Check: Adjusted Alphas
+
+                 MKT               3FF            REV              MOM               100 Anomalies
+                 5.309            5.075           5.702            5.636                     5.842
+α(%)             [2.15]           [2.06]          [2.77]           [2.81]                   [2.83]
+This table reports the estimated intercept and attached robust Newey and West (1987) t-statics in brackets
+from the following equation:
+                                            T SRt = α + β Bi,t + εt
+where the control benchmark returns Bi,t considered are the CRSP market factor, the three Fama French, the
+Momentum, Short Reversal factors, and the first 10 Principal Components from the 100 anomalies portfolio
+returns in Dong et al. (2022) respectively. The time window in the first four columns is from January 1975 to
+December 2019. The time window for the last specification is from January 1975 to December 2018. Each control
+variable considered is directly downloaded from the respective authors’ websites.
+
+
+to a short-term reversal market strategy. All the returns from the cross-sectional strategies
+represent an upper bound as they do not consider fees, re-balancing, and trading costs that
+can be exceptionally severe when trading individual stocks. For example, the CRSP market
+factor (returns buying more than 3,500 constituents across mega, mid, small, and micro-listed
+American stocks) is synthetically traded only since April 2011.
+
+
+A.1.2     Longer Time Window
+
+In this section, I provide evidence that the T SR results and properties do not change by consid-
+ering a long time series. Specifically, Table 2.A reports analogous statistics discussed in Table 3
+for the time period December 1950-December 2023:
+
+                          Table 2.A: Robustness Check: Long Time Window
+
+                Mean Exc. Ret.         Sharpe Ratio          Risk Adj. α(%)            β          Activity(%)
+  T SRL             3.735                  0.372                  2.095∗∗            0.466∗∗∗        0.44
+  T SRS             0.056                  0.006                  1.685∗            −0.463∗∗∗        0.56
+    TSR             3.791                  0.267                  3.780∗∗            0.003
+S&P 500             3.519                  0.239
+This table reports annualized mean excess returns ($̄), Sharpe Ratio, CAPM-adjusted alphas (α), market exposure
+(β), and Activity for the long, short, and long-short leg of the time series reversal and of the passive investing
+strategies, respectively. ∗ ∗ ∗, ∗∗, and ∗ indicate significance at the 1%, 5%, and 10% levels, respectively. The
+statistical significance is based on Newey and West (1987) standard errors. The time window is from December
+1950 to December 2023.
+
+
+
+
+                                                       38
+A.1.3    Trading Costs and Fees
+
+In this section, I show that transaction costs and fees should not significantly impact the results.
+Trading fees have constantly declined in the last twenty years thanks to higher financial market
+competition and decimalization. This is particularly true for the financial instruments considered,
+indexes, for which execution and management fees are the lowest in the market. Moreover, the
+proposed predictor is obtained by observing available public prices at the end of the trading days.
+Therefore, the technology required to implement the trading strategy is minimal and virtually
+free. Finally, the possibility of trading at the close, as the prices here are considered at the end
+of the day, almost eliminates the implicit costs that trading orders might trigger.
+   To support this hypothesis, I provide a simple back-of-the-envelope exercise. I compute
+the necessary trading costs and fees incurred by the short-term reversal strategy to equate to
+the passive market S&P strategy (with no attached trading costs or fees). The T SR strategy
+should trigger around 16.24bps per transaction (while for T SRL around 15.84bps) to guarantee
+the same gross gains of passive investing. The values are extremely above the trading costs
+usually attached to index trading as nowadays the usual cost range between 3 to 9 bps per year
+(SPY, VOO and IVV) and in the early 1980-1990 around 20 bps per year.
+
+
+A.1.4    Friday Effect Robustness Check
+
+In this section, I show that the results are robust on the main predictor specification. First, I
+show that previous end-of-the-month returns as well as weekly returns do not have predictive
+power. Specifically, I consider
+                                       rt+1 = α + γ rw=i,t + ϵt+1
+
+and standard weekly returns:
+                                                       ′′
+                                       rt+1 = α + γ rw=4,t + ϵt+1
+
+                                  ′′
+where rw=i,t = pt − pw=i,t and rw=i,t = pw=i,t − pw=i−1,t . The results reported in Table 3.A show
+that, focusing on weekly returns, only the main predictor (rw=4,t ) has actual predictive power.
+   Importantly, if I focus on daily returns (rd=t−i,t = pt − pd=t−i,t ), only returns within the last
+
+
+
+                                                  39
+                       Table 3.A: Predictability of Previous Weekly Returns
+
+α             0.004             α            0.003            α            0.003             α           0.003
+              [2.00]                         [1.69]                        [1.64]                        [1.57]
+rw=4,t       -0.353             rw=3,t      -0.100            rw=2,t      -0.019             rw=1,t      0.003
+             [-3.78]                        [-1.06]                       [-0.26]                        [0.05]
+R2 (%)          1.90                           0.32                          0.00                          0.00
+Obs.             539                            539                           539                           539
+
+α             0.003             α            0.003            α            0.003             α           0.003
+              [1.76]                         [1.64]                        [1.68]                        [1.51]
+  ′′                             ′′                             ′′                                ′′
+rw=4,t        0.094             rw=3,t       0.078            rw=2,t       0.042             rw=1,t      0.151
+              [0.78]                         [0.74]                        [0.45]                        [1.42]
+R2 (%)          0.20                           0.17                          0.02                          0.44
+Obs.             539                            539                           539                           539
+                                                                                             ′′
+This table reports the results of the following predictive regressions rt+1 = α + γ rw=i,t (rw=i,t ) + ϵt+1 where
+                           ′′
+rw=i,t = pt − pw=i,t and rw=i,t = pw=i,t − pw=i−1,t with 1 ≤ i ≤ 4. In brackets, I report the associated Newey
+and West (1987) t-statistics. The time window is from January 1975 to December 2019.
+
+
+week of the month have predictive power (specifically from rd=t−4,t to rd=t−1,t ). As an example,
+I report in the first Panel of Table 4.A analogous statistics discussed in Table 3 for the t-3
+end-of-month return (rd=t−3,t ). For completeness, the second and third panels report analogous
+statistics discussed in Sections 2.3 and 2.4, respectively. Results and main properties do not
+qualitatively change compared to the rw=4,t return and across the daily returns within the last
+week. Therefore, in the main body of the paper, I focus on rw=4,t to capture a generalized
+negative predictability within the end of the month and to avoid arbitrarily choosing a specific
+daily return between t − 4 and t − 1.
+
+
+A.1.5     Annual Sharpe Ratio
+
+In this section, I report the number of times the rolling annualized Sharpe ratio of the T SR and
+its sub-strategies outperform the passive (S&P ) strategy. The results in Table 5.A suggest that
+the TSR does not cluster its gains in a specific time window, strengthening the results discussed
+in the main body of the text.
+
+
+
+
+                                                       40
+                                Table 4.A: Reversal pattern with rd=t−3,t
+
+                     Mean Exc. Ret.           Sharpe Ratio         Adj. α(%)            β            Activity(%)
+  T SRL                  4.746                    0.458              2.815∗∗∗         0.493∗∗∗          0.43
+  T SRS                  0.830                    0.079              2.815∗∗∗        −0.507∗∗∗          0.57
+  TSR                    5.577                    0.378              5.630∗∗∗        −0.014
+
+                             γ                     R2,OS               2,OS
+                                                                      Rexp             2,OS
+                                                                                      Rrec
+                          −0.398∗∗∗                2.660∗∗∗           3.776          −1.705
+
+                     Mean Exc. Ret.           Sharpe Ratio         Adj. α(%)              β            Buy (%)
+  T SR − T V            12.173∗∗                  0.584              8.521∗∗∗           0.800∗∗∗        0.70
+  T SR                   5.588                    0.384              5.475∗∗∗           0.025           0.40
+The first panel reports annualized mean excess returns, Sharpe Ratio, CAPM-adjusted alphas (α), market expo-
+sure (β), and Activity for the long, short, and long-short leg of the time series reversal strategies, respectively.
+The second panel reports the In-sample estimated coefficient, the R2,OOS , and the R2,OOS in expansion and
+recession, respectively. The third panel reports annualized mean excess returns, Sharpe Ratio, adjusted Jensen
+alphas (α), market exposure (β), and percentage buy for time-varying and simple rule of thumb time series rever-
+sal strategies, respectively. ∗ ∗ ∗, ∗∗, and ∗ indicate significance at the 1%, 5%, and 10% levels, respectively. The
+statistical significance is based on Newey and West (1987) standard errors for In Sample regressions and Clark
+and West (2007) for Out-of-Sample exercises. The time window is from January 1975 to December 2019 for the
+first panel and the In sample coefficient (γ), from April 1986 t to December 2019 for the remaining statistics.
+
+                                     Table 5.A: Annual Sharpe Ratio
+
+# > S&P              1975-1989           1990-1999            2000-2009          2010-2019           Full Sample
+T SR                         7                   3                    7                  3                   20
+T SRL                       10                   5                    7                  5                   27
+T SRS                        7                   2                    6                  3                   18
+This table reports the number of times the rolling annualized Sharpe ratio of the T SR and its sub-strategies
+outperform the passive (S&P) strategy. The time window is from January 1975 to December 2019.
+
+
+
+
+                                                         41
+A.1.6    Scatter Plot
+
+                         Figure 1.A: Scatter Plot - Rule of Thumb TSR
+
+
+
+
+This figure compares the cumulative Out-of-Sample returns of the time series reversal (TSR - red line) with
+passive investing on the S&P 500 (black line). The TSR trading strategy buys (sells) the S&P 500 if the end-
+of-the-month return is negative (positive). The grey-shaded areas mark periods of recessions according to the
+NBER. The time window is from January 1975 to December 2019.
+
+
+
+A.2     Appendix Section 2.3.1
+
+A.2.1     Sub Sample Analysis
+
+In this section, I study the negative correlation between rw=4,t and rt+1 over time. In the first
+column of Table 6.A, I report the coefficient for the period before the launch of the first S&P
+500 index (1950-1975). In the second column, I report the coefficient for the time between the
+first index fund and the first S&P ETF (1975-1993). In the third column, I report the estimated
+coefficient for the time window after the launch of the first S&P ETF (1993-2019). The results
+hint that the negative correlation is statistically robust over time: only immediately after the
+post-war period, the estimated γ is not negative and statistically significant.
+
+
+
+
+                                                     42
+                       Table 6.A: In Sample Predictability Sub Sample Analysis
+                                 1950-1975                         1975-1993                       1993-2019
+         γ                         0.185                           −0.567∗∗∗                       −0.239∗∗
+This table reports the estimated coefficient attached to the end of the month return rw=4,t on the following
+regression:
+                                            rt+1 = α + γ rw=4,t + εt+1
+∗ ∗ ∗, ∗∗, and ∗ indicate significance at the 1%, 5%, and 10% levels, respectively. The statistical significance is
+based on Newey and West (1987) standard errors.
+
+
+A.2.2         Predictability after First Week of the Month
+
+In this section, I investigate whether the time serial reversal pattern exclusively depends on
+the ability of rw=4,t to predict the one ahead week return. Therefore, I consider the following
+predicting equation:
+                                          rw=1,t+1 = α + γ rw=4,t + ϵt+1
+
+where rw=1,t+1 = pt+1 − pw=1,t+1 . The estimated coefficient is −0.272, and the Newey and West
+(1987) t-statistic is −3.16. Therefore, the result suggests that the reversal pattern does not
+depend solely on a turn-of-the-month effect studied in the literature.
+
+
+A.2.3        Controlling for Closing Price Effect
+
+In this section, I consider whether the reversal pattern between last week’s return and the one
+month ahead depends on a closing price effect. As high and low prices are potentially recorded
+during the lit book phase, I consider high (low) last week returns:14
+
+
+                                 H
+                                rw=4,t = pH    H
+                                          t − pw=4,t
+                                                                 L
+                                                               (rw=4,t = pLt − pLw=4,t )
+
+
+as the dependent variables of the following distinct regression
+
+
+                       H
+                      rt+1 = α + γ H rw=4,t
+                                      H
+                                            + ϵt+1               L
+                                                               (rt+1 = α + γ L rw=4,t
+                                                                                L
+                                                                                      + ϵt+1 )
+
+
+where rt+1
+       H
+              t+1 − pt and rt+1 = pt+1 − pt .
+           = pH      H      L      L      L
+
+
+       The estimated coefficient is −0.295 (−0.316), and the associated Newey and West (1987)
+  14
+       For 21 out of 540 observations, I use closing prices as high and low prices were missing.
+
+
+                                                          43
+t-statistic is −2.23 (−2.86). The results show that the pattern survives the closing price effect.
+However, consistent with institutional investors trading more during the market on close, the
+baseline regression is stronger in absolute terms and the t-statistic.
+
+
+A.2.4          Placebo Test around 15th of the Month
+
+In this section, I conduct a Placebo test to verify that the market activity in the last week of the
+month determines the negative serial correlation. I consider the 15th of each month - a second
+common payment date - as the end of the month.15 I consider as the predictor the difference
+between the closing price in the 15th day in month t and the closing price of the second week.
+      The estimated coefficient is 0.205, and the Newey and West (1987) t-statistic is 1.062, sug-
+gesting that the combination of a demand shock and liquidity friction at the end of the month
+drives the reversal pattern documented in the main body of the paper.
+
+
+A.2.5          Multi - Month Predictability
+
+In this section, I study whether the reversal pattern persists after one month ahead. I consider
+a set of predictive regression that gradually becomes a two-month ahead returns:
+
+
+                                         ′
+                                        rw=i,t+2 = α + γ rw=4,t + ϵw=i,t+2
+
+
+and
+                                             rt+2 = α + γ rw=4,t + ϵt+2
+
+           ′
+where rw=i,t+2 = pw=i,t+2 − pt+1 − rt+1
+                                    f
+                                        and rt+2 = pt+2 − pt+1 − rt+1
+                                                                  f
+                                                                      . The results reported in
+Table 7.A show that the predictability window is only one month ahead.
+ 15
+      When in the 15th markets are closed, I sequentially use pd=14,t , pd=16,t or pd=17,t .
+
+
+
+
+                                                           44
+                            Table 7.A: Two Month Ahead Predictability
+   ′                        ′                         ′                        ′
+  rw=1,t+2                 rw=2,t+2                 rw=3,t+2                  rw=4,t+2                  rt+2
+   0.000                    0.059                    0.038                     -0.011                  0.033
+ [−0.02]                    [0.98]                   [0.42]                   [−0.09]                  [0.29]
+                                      ′
+This table reports the estimated γ of rw=i,t+2 = α + γ rw=4,t + ϵw=i,t+2 0 < i ≤ 4 rt+2 = α + γ rw=4,t + ϵt+2
+       ′                             f                             f
+where rw=i,t+2 = pw=i,t+2 − pt+1 − rt+1  and rt+2 = pt+2 − pt+1 − rt+1 . In brackets, I report robust Newey and
+West (1987) t-statics. The sample period goes from January 1975 to December 2019.
+
+
+A.3      Appendix Section 2.3.2
+
+A.3.1     Forecast Errors Over Time
+
+                     Figure 2.A: Out of Sample Cumulative Forecast Error
+
+
+
+
+This figure shows the cumulative OOS squared of the time series reversal (TSR- solid red line), historical mean
+(HM - black dashed line), and momentum (12M-MOM - blue dash-dot line). The grey shaded areas mark periods
+of recessions according to the NBER indicator function. The time window is from January 1975 to December
+2019 and the Out-of-Sample valuation period goes from April 1986 to December 2019.
+
+
+A.3.2     Longer Time Window
+
+In this section, I provide evidence that the Out-of-Sample results do not change by considering
+a longer time series (December 1950-December 2023). Specifically, I consider an Out-of-Sample
+forecast evaluation period from January 1975 to December 2023. The R2,OS (%) is 1.643⋆⋆ with
+its predictability clustered in expansion periods (Rexp
+                                                    2,OS
+                                                         (%) is 2.232, whereas Rrec
+                                                                                2,OS
+                                                                                     (%) is −0.300).
+
+
+
+                                                      45
+A.3.3     Reversal and Business Cycle
+
+In this section, I provide In-Sample evidence corroborating the cyclical nature of the aggregate
+market reversal. Specifically, I consider the following regression:
+
+
+                           rt+1 = α + γ1 Irec                 rec
+                                          t rw=4,t + γ2 (1 − It )rw=4,t + ϵt+1
+
+
+
+
+where Itrec is the NBER indicator function that takes a value of 1 when month t is in recession
+and 0 otherwise. Figure 3.A shows that the negative market serial correlation is statistically
+significant only during expansion periods.
+
+                          Figure 3.A: Reversal Pattern and Business Cycle
+
+
+
+
+This figure reports the estimated coefficients and the 95% robust confidence intervals of the following regression:
+rt+1 = α + γ1 Irec                 rec
+               t rw=4,t + γ2 (1 − It )rw=4,t + ϵt+1 where rt+1 is the t + 1 monthly excess return; rw=4,t is
+
+the end-of-the-month return and Itrec is the NBER indicator function that takes a value of 1 when month t is in
+recession and 0 otherwise. The sample period goes from January 1975 to December 2019.
+
+
+
+A.4      Appendix Section 2.4
+
+A.4.1     Plots Section 2.4
+
+A.4.2     Trading Strategy Sensitivity Analysis
+
+In this section, I provide evidence that the time-varying TSR strategy is robust to the model
+specification. I report the results without the NBER trading restriction in the first row of Table
+
+                                                        46
+                      Figure 4.A: Out of Sample Cumulative Excess Returns
+
+
+
+
+This figure presents the cumulative excess return for the time varying time series reversal (TSR TV- dashed red
+line), time series reversal (TSR- red solid line), and passive investing (S&P - black solid line) strategies. The grey
+shaded areas mark periods of recessions according to the NBER indicator function. The time window is from
+April 1986 to December 2019.
+
+                         Figure 5.A: Scatter Plot - Rule of Thumb TSR TV
+
+
+
+
+This figure presents the excess returns for the time-varying time series reversal (TSR- TV) respectively
+against the returns from the S&P 500 and time series reversal (TSR). The time window is from April
+1986 to December 2019.
+
+
+8.A. The results partially deteriorate, consistent with the cyclicality of the negative market
+predictability. However, the strategy still outperforms the market as alphas and adjusted alphas
+are still positive and statistically significant. In the second row, I report the results without
+
+
+                                                         47
+                  Table 8.A: Sensitivity Analysis Time Varying Trading Strategy
+
+                                  $̄(%)          Sharpe Ratio           Adj. α(%)             β           Buy (%)
+wtT SR ̸= 0|It−1
+             N BER
+                   =1            11.064∗∗           0.475                6.443∗∗           1.000∗∗∗        0.70
+
+−1 ≤ wtT SR ≤ 1                    6.034              0.495               4.338∗∗          0.367∗∗∗          0.64
+0 ≤ wtT SR ≤ 1                     6.040              0.567               3.557∗∗          0.538∗∗∗          0.64
+
+ 2
+σt+1|t             t−5
+       = σ 2 ({ri }i=t )         11.845∗∗             0.565              8.118∗∗∗          0.807∗∗∗          0.64
+ 2         2       t−11
+σt+1|t = σ ({ri }i=t )           12.256∗∗             0.589              8.633∗∗∗          0.785∗∗∗          0.64
+ 2
+σt+1|t             t−59
+       = σ 2 ({ri }i=t  )        11.698∗∗             0.583              8.246∗∗∗          0.748∗∗∗          0.64
+ 2         2       t−119
+σt+1|t = σ ({ri }i=t )           11.582∗∗             0.563              8.012∗∗∗          0.773∗∗∗          0.64
+This table reports annualized mean excess returns ($̄), Sharpe Ratio, CAPM-adjusted alphas (α), market exposure
+(β), and number of times the strategy buys for the time series reversal time-varying (T SR − T V ) without the
+NBER restriction (first row), without leverage (second row), without leverage and short selling (third row), and
+for different variance forecast horizons (from fourth row), respectively. ∗ ∗ ∗, ∗∗, and ∗ indicate significance at the
+1%, 5%, and 10% levels, respectively. The statistical significance is based on Newey and West (1987) standard
+errors. The time window is from April 1986 to December 2019.
+
+
+leverage. The raw returns mechanically decrease. However, the adjusted alphas are positive and
+statistically significant. In the third row, I present the results without leverage and short selling:
+while raw returns improve compared to the previous specification, adjusted alphas (still positive
+and statistically significant) decrease due to the loss of the hedging component from the short
+leg.
+       From the third row, I report the results for different specifications of the variance forecast,
+ranging from a 6-month to a 10-year time window. Independently from the variance forecast
+specification, the strategy delivers sizable and statistically significant alphas.
+
+
+A.4.3       Trading Costs and Fees
+
+In this section, I show that transaction costs and fees do not significantly impact the results.
+Following Appendix A.1.3, I compute the necessary trading costs and fees incurred by the time-
+varying short-term reversal strategy (TSR-TV) to equate to the passive market S&P strategy
+(with no attached trading costs or fees). The TSR-TV strategy should trigger an exorbitant
+70.40bps per transaction to deliver the same gross gains of passive investing.
+
+
+
+
+                                                          48
+A.4.4     Sub-Sample Analysis
+
+In this section, I provide evidence that the T SR − T V strategy outperforms the passive strategy
+on several sub-samples. I here consider three sub-samples: after the introduction of the first
+S&P 500 ETF (January 1993), after financialization (January 2005) and after the great financial
+crisis (August 2009).
+
+                        Table 9.A: Sub Sample Analysis T SR − T V strategy
+
+                    Mean Exc. Ret.            Sharpe Ratio             α(%)               β                % Buy
+1993-2019              11.070∗                    0.515                6.211∗           0.963∗∗∗            0.7
+2005-2019              13.791∗∗                   0.714                9.430∗∗          0.828∗∗∗            0.7
+2009-2019              18.608∗                    0.872                4.864            1.261∗∗∗            0.8
+This table reports annualized mean excess returns ($̄), Sharpe Ratio, CAPM-adjusted alphas (α), market exposure
+(β), and number of times the strategy buys for the time series reversal time-varying (T SR − T V ) for different
+sub-samples. ∗ ∗ ∗, ∗∗, and ∗ indicate significance at the 1%, 5%, and 10% levels, respectively. The statistical
+significance is based on Newey and West (1987) standard errors.
+
+
+
+
+A.4.5     Total Return Analysis
+
+In this section, I show that results do not change by considering total returns (CRSP SP vw)
+instead of index returns (rt+1 = pt+1 − pt − rtf ) as dependent variable. The CRSP SP vw is the
+S&P total returns: the variable assumes that all dividends payed by the constituent stocks are
+immediately reinvested in the index itself. It must be noticed that total returns represent an
+upper-bound as they do not consider transaction, management, re-balancing costs and taxes on
+dividends (CRSP data description). Table 10.A shows that results are qualitatively unaffected.
+
+                           Table 10.A: Reversal Pattern & Total Returns
+
+        γ                  R2,OS          2,OS
+                                        Rexp         2,OS
+                                                   Rrec        TSR Adj α(%)           TV-TSR Adj α(%)
+     −0.350∗∗∗            1.265∗∗       2.022      -1.705         5.419∗∗                 6.691∗∗
+This table reports in the first column the In Sample predicting coefficient of the following regression:
+                                             vw
+                                            rt+1 = α + γ rw=4,t + εt+1
+
+The second column reports the Out-of-Sample R2,OS , whereas the third and fourth columns report the expansion
+and recession Out-of-Sample R2,OS . The fifth column reports the annualized adjusted Jensen alphas (α) for
+the full sample rule of thumb strategy (T SR) against the total return as benchmark. Finally, the sixth column
+reports the annualized adjusted Jensen alphas (α) for the time-varying reversal strategy (T SR − T V ) against the
+total return as benchmark. ∗ ∗ ∗, ∗∗, and ∗ indicate significance at the 1%, 5%, and 10% levels, respectively. The
+statistical significance is based on Newey and West (1987) standard errors for In Sample regressions and Clark
+and West (2007) for Out-of-Sample R2,OS .
+
+
+                                                        49
+       In the main body of the text, I focus on index returns rather than total returns for multiple
+reasons. First, the S&P 500 is an index return so dividends are not included in the calcula-
+tions and most ETFs are tracking the index itself.16 Second, consistently with Moskowitz et al.
+(2012), I focus on index returns to capture only capital gains (and not dividends gains) pre-
+dictability, hence assessing a more precise return reversal driven only by price movements.17
+Finally, CRSP SP vw returns can be quite far from actual returns real market traders realize. It
+is still debated which dividends are measured and how they are re-invested, compounded, and
+taxed.
+
+
+A.5        Appendix Section 2.5
+
+A.5.1       Aggregate Reversal and Stock Characteristics
+
+In this section, I analyze all common stocks traded on NYSE and NASDAQ markets using the
+daily CRSP file from January 1985 to December 2019. For each stock time series, I calculate
+the average Amihud illiquidity ratio and average stock price, and I sort the stocks into quintiles
+based on these measures. I then construct equally-weighted indexes formed on each metric and
+perform standard predicting equations.18
+       The differences in estimated coefficients for top-bottom quintiles are significant at 1% signifi-
+cance level: Figure 6.A shows a clear trend: a negative correlation characterizes high-priced and
+liquid stocks consistent with the results proposed in Table 7. In contrast, a positive correlation
+  16
+     See for example FRED:" Since this is a price index and not a total return index, the S&P 500 index here
+does not contain dividends."
+  17
+     "For the equity indexes, our return series are almost perfectly correlated with the corresponding returns of
+the underlying cash indexes in excess of the Treasury bill rate.", Moskowitz et al. (2012).
+  18
+     From CRSP, I select only traded stocks with exchange variable EXCHG equal to either 11, 12, or 14. Due
+to data availability, of the 1.8 Millions observations, the independent variable is the t − 3 end of month return
+(rd=t−3,t ) 63% of the time; otherwise, I consider rd=t−4,t (16%). Finally, if both returns are not available, the
+independent variable is the difference between the monthly closing price and the average price in the last 5 days.
+The Amihud illiquidity ratio for each stock is calculated at a monthly frequency:
+                                                         D
+                                                     1 X |rd=i,t |
+                                             AHt =
+                                                     D i=1 $V OLd=i,t
+
+where D is the number of daily trading records in month t (for each month, I require at least 12 daily observations),
+|rd=i,d | is the absolute daily return and $V OLd=i,d is the daily dollar volume. Daily returns are measured as the
+difference between two consecutive log prices. I then consider normal returns to construct the portfolios. I sort
+the stocks in quintile each month, results do not change qualitatively by sorting stocks on the entire time series.
+
+
+
+                                                         50
+                      Figure 6.A: Stock Characteristics and Reversal Pattern
+
+
+
+
+This figure reports the estimated γ coefficient of the following prediction equations:
+                                                scq            sc
+                                               rt+1 = α + γr4,tq + ϵt+1
+        scq   scq       PN i∈sc             PN i∈sc          i∈sc
+where rt+1  (rt+1 = N1 i=1 rt+1 q = N1 i=1 pt+1 q − pt q ) is one month ahead return of the equally value-
+weighted return of a portfolio sorted into quintiles q on stock characteristic sc. The stock characteristics considered
+are Amihud illiquidity measure (the fifth being the most illiquid portfolio) and stock price (the fifth being the
+most high-priced portfolio). Stocks are sorted in quintiles each month. The Data is CRSP: the sample includes
+16159 stocks, and the time window goes from January 1985 to December 2019.
+
+                                    Table 11.A: Indices around the World
+
+      Index                         Region/Country                        Initial Date                  End Date
+  EUSTOXX 50                       Europe Union (EU)                      26/02/1999                   31/12/2020
+    S&P/TSX                          Canada (CAN)                         31/01/1977                   31/12/2020
+  S&P/ASX 200                       Australia (AUS)                       30/06/1992                   31/12/2020
+   NIKKEI 225                         Japan (JAP)                         31/01/1975                   31/12/2020
+    FTSI 100                        England (ENG)                         30/05/1986                   31/12/2020
+     DAX 40                         Germany (GER)                         26/02/1999                   31/12/2020
+     CAC 40                          France (FRA)                         26/02/1999                   31/12/2020
+This table reports the list of international indices. For each index, I report the region-country of the index
+constituents and the time window considered. The data provider is Bloomberg.
+
+
+characterizes illiquid and low-priced stocks consistent with stale price theories.
+
+
+A.5.2     Evidence Around the World
+
+In this section, I study whether the negative serial correlation between rw=4,t and the one-month
+ahead return, rt+1 , holds internationally. The international indices considered are reported in
+Table 11.A and the estimation results in Table 12.A
+
+
+                                                          51
+                              Table 12.A: Reversal Pattern Around the World
+
+              EU          CAN            AUS            JAP             ENG            GER            FRA
+  γ̂         -0.125       -0.152          0.043       -0.05184          -0.205         -0.141         -0.136
+            [0.720]      [0.990]        [0.240]         [0.360]        [1.572]        [0.880]        [0.790]
+This table reports in the first row the coefficient attached to rw=4,t of the following predictive regression:
+
+                                            rt+1 = α + γ rw=4,t + ϵt+1
+
+where rt+1 is the t + 1 monthly excess return; rw=4,t is the end-of-the-month return. In brackets, I report robust
+Newey and West (1987) t-statics.
+
+
+B        Appendix Section 3
+
+B.1        Appendix Section 3.1
+
+B.1.1       ANcerno Dataset
+
+Abel Noser is a brokerage firm that provides transaction cost analysis to institutional investors.
+Historically friendly to the academic world, the firm shared a publicly available dataset (AN-
+cerno) until 2017. The dataset samples the trading activity of institutional investors and is
+considered to be highly representative of overall institutional market activity. It covers approx-
+imately 10% of CRSP volume, and the institutions sampled do not differ from SEC 13F filings
+regarding return characteristics, stock holdings, and trades. The main advantage of the ANcerno
+dataset over 13F SEC filings and CRSP Thomson Reuters is its high-frequency granularity com-
+pared to the quarterly frequency of the latter two datasets. I obtained the daily ANcerno dataset
+from 1997 to 2010 included. As the first three years have very few limited observations, I con-
+sider only data from 2000 onwards - a common practice in the literature Hu, Jo, Wang, and Xie
+(2018). The variables in the dataset are:
+
+       • clientcode: Ancerno defined Client identifier. Each client gets a unique code. It is impos-
+         sible to reverse engineering Client names.
+
+       • clienttypecode: ANcerno furnishes a reference file containing an institution type identi-
+         fier for each client, with "1" denoting pension plan sponsors and "2" indicating money
+         managers.
+
+       • tradedate: The trade day execution.
+
+                                                         52
+    • side: Binary variable equal to +1 if the trade is a buy, −1 if the trade is a sell.
+
+    • price: Price per share as reported by the client.
+
+    • volume: Volume traded as reported by the client.
+
+    • ncusip: 8 digit CUSIP identifier.
+
+
+B.1.2     Analysis for Money Managers
+
+In this section, I report analogous statistics reported in Table 8 for Money Managers (mutual
+funds, hedge funds, banks, and insurance companies). Consistent with the rise of passive in-
+vesting, money managers do not necessarily sell at the end of the month. Additionally, trades
+made on behalf of pension plans may be recorded under money managers if only the latter are
+ANcerno clients.
+                     Table 1.B: Last Week Money Manager Trading Activity
+
+          t−4                t−3                 t−2                 t−1                t            Weekly
+         −2.291%            −2.713%            −0.240%             0.539%           2.381%           −0.645%
+          [-3.282]           [-3.345]           [-0.325]            [0.666]          [2.300]          [-1.423]
+This table reports in the first five columns the order imbalance on S&P 500 constituents stocks for each day in
+the last trading week (where t is the last day of the month). In the last column, I report the overall imbalance
+in last week’s order. In brackets, I report the associated t-statistic against the null hypothesis of a zero order
+imbalance. The Data is ANcerno, and the sample period goes from January 2000 to December 2010.
+
+
+
+
+B.1.3     End of Month Institutional Behavior: CFTC data
+
+In this section, I use data from Commodity Futures Trading Commission (CFTC) to corroborate
+the results established with the ANcerno dataset. I use the "Large Trader Net Position Changes"
+data set publicly available on the CFTC website. The data set reports the average weekly net
+buys and sells on futures linked to the S&P 500 for Institutional Investors, dealers and Leveraged
+funds from January 2009 to May 2011. More precisely, the futures are the S&P 500 (ticker: SP)
+and the e-mini S&P 500 futures (ticker: ES). To jointly consider the two different futures, I
+divide the number of ES contracts by 5 as the nominal value of the SP future is 5 times larger
+than the ES.
+
+
+                                                       53
+   Table 2.B: Institutional Investor behavior at the end of the month (CFTC Dataset)
+
+                             Inst. Investors             Dealers             Leveraged Funds                Others
+∆Buy                                -39                   -8937                   -5912                     -1046
+∆Sell                              1517                  -10508                   -6115                      -505
+∆Buy − ∆Sell                      -1555                    1571                    203                       -541
+This table reports the average difference between the last two weeks of the month of net buys and sells on futures
+linked to the S&P 500 for Institutional, Investors, dealers, and Leveraged funds from January 2009 to May 2011.
+
+
+
+       In Table 2.B, I report the delta between the last two weeks of the month for both net buys
+and sells across the different investor classes.19 Consistently with the results in the main body of
+the text, institutional investors decrease their exposure on S&P 500 futures instruments as, on
+average, ∆Buy is negative and ∆Sell is positive and ∆Buy − ∆Sell is negative. Interestingly,
+dealers and leveraged buy as ∆Buy − ∆Sell is positive, whereas others (among which retail
+investors) sell consistently with the positive feedback trader hypothesis.
+
+
+B.2        Appendix Section 3.2
+
+B.2.1       Model Derivation
+
+By the dynamic of the risky asset immediately follows that, given information Ht−h , dt ∼
+         q
+N (dt−h , a0 + a1 ϵ2t−h ). Standard in the literature, let’s assume the price pt on the risky asset
+follows the same dynamic. The solution of the stylized model proceeds by backward induction.
+Without loss of generality, assume that the arbitrageur starts with an initial wealth W0 and
+denote by xt his asset holding position after the trading round {ti }2i=1 . It follows that after the
+second trading round, t2 , the final wealth can be written as:
+
+
+                                            W3 = W2 + (d¯3 − p2 )x2
+
+
+Intuitively, the final wealth is given by the sum of trading gains between t1 and t2 (W2 ) and the
+change in value of the quantity held at maturity. Hence, at time t2 , the expected final wealth
+  19
+    CFTC Methodology website: "A trader’s increase in a net long position or decrease in a net short position
+can be viewed as net “buys.” Similarly, a trader’s decrease in a net long position or increase in a net short position
+can be viewed as net “sells.” For each reporting week, the values reported are the simple average of that week’s
+daily aggregate net “buys” and net “sells” "
+
+
+
+                                                         54
+of the arbitrageur is E[W3 |H2 ] = E[W2 + x2 (d¯3 − p2 )|H2 ]. As p¯3 |H2 ∼ N (d2 ,                    a0 + a1 ϵ22 ). The
+                                                                                                      p
+
+                                              ¯
+arbitrageur maximizes E[−eW2 +x2 (d3 −p2 ) |H2 ]. In virtue of the Normal distribution properties,
+W2 + x2 (p¯3 − p2 ) ∼ N (W2 + x2 (d2 − p2 ), x2 a0 + a1 ϵ22 ) and :
+                                               p
+
+
+                                                                  1 2          2
+                            E[−e−(W2 +x2 (p3 −p2 )) |H2] = e 2 x2 (a0 +a1 ϵ2 )−(W2 +x2 (d2 −p2 ))
+
+
+Therefore the optimal quantity held at t2 is x2 = a(ad02+a
+                                                        −p2
+                                                            2 . At the time t2 , the supply shock has
+                                                          1ϵ )             2
+
+been absorbed. Hence zero supply equals demand, imposing p2 = d2 = E[d¯3 |H2 ].
+      At time t1 the expected wealth of the arbitrageur is E[W0 + (p2 − p1 )x1 |H1 ]. Intuitively, the
+arbitrageur liquidates at time t2 the entire position acquired at time t1 due to the positive supply
+shock; hence, he is out of the game at the end of the second trading round. With the same line
+of reasoning as the previous calculations, the optimal quantity held after the first trading round
+is:
+                                                            d1 − p1
+                                                   x1 =
+                                                          (a0 + a1 ϵ21 )
+
+In this case the equilibrium price is determined by (ad01+a
+                                                          −p1
+                                                              2
+                                                           1ϵ )
+                                                                = u, hence the price at time t1 is
+                                                                               1
+
+p1 = d1 − u(a0 + a1 ϵ21 )
+      Finally, let’s derive the correlation coefficient. Recall that ρ = √ cov(r1 ,r2 )                          where r1 =
+                                                                                              var(r1 )var(r2 )
+
+p1 − E[p1 |H0 ] = (d1 − d0 ) − ua(a0 + a1 ϵ21 ) = ϵ1 − ua(a0 + a1 ϵ21 ) and r2 = p2 − p1 = (d2 − d1 ) +
+ua(a0 + a1 ϵ21 ) = ϵ2 + ua(a0 + a1 ϵ21 ). To ease the derivation, impose a0 = 1 − a1 . First, consider
+the numerator:
+cov(ϵ1 − u(a0 + a1 ϵ21 ), ϵ2 + u(a0 + a1 ϵ21 )) =
+cov(ϵ1 , ϵ2 ) + cov(ϵ1 , +u(a0 + a1 ϵ21 )) − cov(u(a0 + a1 ϵ21 ), ϵ2 ) − var(u(a0 + a1 ϵ21 ))
+      By ARCH(1) properties:
+
+      • cov(ϵ1 , ϵ2 ) = 0
+
+      • cov(ϵ1 , +u(a0 + a1 ϵ21 )) = 0 + E[ua1 ν33 ] × E[( a0 + a1 e20 )3 ] − E[ϵ1 ]E[ua1 ϵ21 ] = 0
+                                                          p
+
+
+      • −cov(u(a0 + a1 ϵ21 ), ϵ2 ) = 0 − E[ν2 ]E[ua1 ν12 (a0 + a1 ϵ20 ) a0 + a1 e21 ] + 0 = 0
+                                                                       p
+
+
+      • −var(u(a0 + a1 ϵ21 )) = −var(ua1 ϵ21 ) = −(ua1 )2 {E[(ϵ21 )2 ] − E[ϵ21 ]2 }.
+
+
+                                                             55
+         The term E[(ϵ21 )2 ] = E[(ν12 (a0 + a1 ϵ20 ))2 ] = E[ν14 ]E[(a20 + a21 ϵ40 + 2a0 a1 ϵ2 ] =
+         3(a20 + a21 E[ϵ40 ] + 2a0 a1 E[ϵ2 ]). The term E[ϵ21 ] = 1 follows from the ARCH(1) property
+                                                                                              3(a20 +2a0 a1 )
+                    a0
+         E[ϵ2t ] = 1−a 1
+                         . Therefore E[ϵ4 ] = 3(a20 + a21 E[ϵ4 ] + 2a0 a1 ) → E[ϵ4 ] =           1−3a21
+                                                                                                              .   To ensure
+         that the fourth moment is positive, it follows that a1 < √13 .20
+                                                 n 2                o
+                                                  3(a0 +2a0 a1 )          2(ua1 )2
+         Hence, −var(u(a0 + a1 ϵ21 )) = −(ua1 )2     1−3a 2      − 1  = −  1−3a2
+                                                                     1                    1
+
+
+
+       The denominator follows the same line of reasoning:
+
+       • var(r1 ) = var(ϵ1 − u(a0 + a1 ϵ21 )) = var(ϵ1 ) + var(u(a0 + a1 ϵ21 )) − 2cov(ϵ1 , (a0 + a1 ϵ21 ))
+                                    2
+         Hence 1 + 2(ua1)
+                    1−3a2           1
+
+
+
+       • var(r2 ) = var(ϵ2 + u(a0 + a1 ϵ21 )) = var(r1 )
+
+Hence the correlation is:
+
+                                                2(ua1 )2
+                                                 1−3a21                  2(a1 u)2
+                                        ρ=−       2(ua1 )2
+                                                           =−
+                                              1 + 1−3a2             1 + a21 (−3 + 2u2 )
+                                                           1
+
+
+
+
+Given 0 < α1 < √13 , the correlation is always negative. Moreover, the first derivative of the
+correlation expression w.r.t. a1 and u are respectively:
+
+                   4u2 a1
+       • −                   2
+             ( (2u2 −3)a2 +1
+                        1   )
+              4a21 (1−3a21 )u
+       • −                      2
+             (a21 (2u2 −3)+1)
+
+Both expressions have quadratic denominators, so it is sufficient to focus on the numerator to
+evaluate whether the correlation is decreasing on the two parameters. Considering the first
+expression, 4u2 a1 is always positive for a1 > 0, hence the correlation is decreasing w.r.t. a1 .
+Similarly for the second expression, as 4a21 (1 − 3a21 ) is always positive for 0 < a1 < √13 , the
+correlation is decreasing w.r.t. u.
+  20
+       This is similar to the condition α1 < 1 imposed to ensure that the unconditional variance is positive: E[ϵ2t ] =
+ a0
+1−a1 .
+
+
+
+
+                                                               56
+                               Table 3.B: Statistical Properties of Volume and Volatility Variables
+
+                                                          Obs                  Mean                    Std.Dev.                  Min                  Max                         Skewness                  Kurtosis
+vol4,t if ∆volt > τ                                       424                  12.363                    1.733                  8.877                15.125                        -0.199                    1.817
+vol4,t if ∆volt ≤ τ                                       116                  12.310                    1.947                  8.732                14.934                        -0.487                    1.737
+vix4,t if ∆vixt > τ                                       71                   3.015                     0.399                  2.331                 4.371                         0.874                    5.198
+vix4,t if ∆vixt ≤ τ                                       289                   2.828                    0.346                  2.249                 4.012                         0.665                    3.008
+This table reports the number of observations, mean, standard deviation, minimum, maximum, Skewness, and
+kurtosis for the subgroups of last week’s volume vol4,t (volatility vix4,t ) defined according to the estimated
+threshold. The sample period for vol4,t goes from January 1975 to December 2019, while for vix4,t goes from
+January 1990 to December 2019.
+
+
+B.2.2               Volume and Volatility Variables
+
+This Appendix reports the statistical properties of the two proxies: ∆volt and ∆vixt . In Panel
+A (B) of Figure 1.B, I show the cumulative distribution function (C.D.F.) of vol4,t (vix4,t ) con-
+ditional on the estimated threshold. For both variables, the estimated threshold likely implies a
+high volume (volatility) value in the last week of the month. The cumulative distribution func-
+tion of vol4,t , conditional on ∆volt > τ , stochastic dominates the opposite case (its cumulative
+distribution is lower) most of the time (Panel A). The cumulative distribution function of vix4,t
+conditional on ∆vixt > τ pointwise stochastically dominates (Panel B). The statistical analysis
+reported in Table 3.B corroborates the visual inspection in Figure 1.B. In Panel C (D), I report
+the estimated density function of ∆volt (∆vixt ).
+
+                                                  Figure 1.B: Statistical Properties of ∆volt and ∆vixt
+                         Panel A: C.D.F. log(vol4,t ) based on I                    vol >
+                                                                                                                                 Panel B: C.D.F. log(vix 4,t ) based on I                   vix >
+             1                                                                                                         1
+            0.8
+   C.D.F.
+
+
+
+
+                                                                                                             C.D.F.
+
+
+
+
+            0.6                                                                                                       0.5
+            0.4
+            0.2
+                                                                                                                       0
+                    9           10           11        12            13        14           15    16                        2       2.5                    3                3.5                 4         4.5
+
+                               log(vol4,t) if I   vol >
+                                                                     log(vol4,t) if I   vol
+                                                                                                                                        log(vix4,t) if I       vix >
+                                                                                                                                                                             log(vix4,t) if I       vix
+
+
+                                            Panel C:        volt Densìty                                                                         Panel D:              vixt Densìty
+            10                                                                                                         4
+
+
+             5                                                                                                         2
+
+
+             0                                                                                                         0
+             -0.3       -0.2         -0.1          0           0.1           0.2            0.3    0.4                 -0.6      -0.4            -0.2                  0          0.2               0.4   0.6
+
+                                               Density                =-0.042                                                                           Density               =0.083
+
+
+Panel A (B) reports the C.D.F. of vol4,t (vix4,t ) conditional on the estimated threshold τ : in solid blue line if
+∆volt > τ (∆vixt > τ ) and in dashed red line if ∆volt ≤ τ (∆vixt ≤ τ ). Panel C (D) reports the estimated
+kernel density function of ∆volt (∆vixt ) and the threshold parameter τ . The sample period for Panel A and C
+goes from January 1975 to December 2019, while for Panel B and D goes from January 1990 to December 2019.
+
+
+Figure 2.B plots ∆volt and ∆vixt over time. The two series are positively correlated and unre-
+
+
+                                                                                                            57
+                              Figure 2.B: ∆volt and ∆vixt over Time
+
+
+
+
+This figure reports ∆volt and ∆vixt over time. The grey shaded areas mark periods of recessions according to
+the NBER indicator function. The sample period for ∆volt goes from January 1975 to December 2019, while for
+∆vixt goes from January 1990 to December 2019.
+
+
+lated to the business cycle. During periods of recession, ∆volt is mostly positive, while ∆vixt is
+mostly negative. Intuitively, the two measures, being at weekly frequency, most likely capture
+market movements instead of business-cycle variations.
+
+
+B.2.3    Different Metrics of Volume and Variance
+
+In this section, I present evidence that the results presented in the main body of the paper are
+robust to different proxies specifications. Here, I consider the following:
+
+
+
+                     ∆volt = volw=4,t − volw=3,t           ∆vixt = vixw=4,t − vixt
+
+
+where volw=i,t and vixw=i,t are the ith weekly volume and VIX values and vixt is the end of the
+month VIX closing price.
+
+
+
+
+                                                    58
+                                                    Table 4.B: Testing Empirical Prediction 1: Different Proxies
+                               Panel A: Proxy Supply Shock                                                      Panel B: Proxy Volatility Clustering
+         TAR regression                          Predictive regression                         TAR regression                           Predictive regression
+
+τ                    -0.186          α                      0.004    0.004      0.005    τ                     0.075      α                      0.005    0.005      0.005
+                                                            [2.00]   [0.84]     [1.17]                                                           [1.89]   [2.40]     [2.46]
+α                     0.004          rw=4,t                -0.353              -0.099    α                     0.006      rw=4,t                -0.282              -0.059
+                      [2.07]                               [-3.78]             [-0.56]                         [2.75]                           [-2.72]             [-0.31]
+rw=4,t if ∆vol ≤ τ   -0.089          1t, ∆vol>τ                      -0.001    -0.001    rw=4,t if ∆vol ≤ τ   -0.056      1t, ∆vol>τ                      -0.010     0.015
+                     [-0.29]                                         [-0.26]   [-0.19]                        [-0.26]                                     [-1.26]    [1.55]
+rw=4,t if ∆vol > τ   -0.459          rw=4,t × 1t, ∆vol>τ                       -0.358    rw=4,t if ∆vol > τ   -0.656      rw=4,t × 1t, ∆vol>τ                       -0.929
+                     [-3.17]                                                   [-1.62]                        [-3.16]                                               [-2.90]
+
+Obs.                    539                                   539       539       539                            359                               359       359       359
+R2 (%)                 1.98                                  1.90      0.02      2.31                           1.94                              1.38      0.55      3.37
+In Panel A, I report in the first column the results of the following Threshold Autoregressive Regression (TAR):
+                                                                  
+                                                                    α + γ1 rw=4,t + ϵt+1 if − ∞ < ∆volt ≤ τ
+                                                          rt+1 =
+                                                                    α + γ2 rw=4,t + ϵt+1 if     τ < ∆volt < ∞
+
+where τ is the estimated TAR threshold estimated on the volume variable ∆volt = volw=4,t − volw=3,t . From the third column, I report the results of the following
+Predictive regression:
+                                                  rt+1 = α + γ rw=4,t + β 1∆volt + ψ (rw=4,t × 1∆volt >τ ) + εt+1
+where 1∆volt >τ is an indicator function based on ∆volt > τ . In brackets, I report robust Newey and West (1987) t-statics. In Panel B, I report analogous results obtained
+for ∆vixt = vixw=4,t − vixt . The sample period goes from January 1975 to December 2019 in Panel A and from January 1990 to December 2019 in Panel B.
+
+
+
+
+                                                                                               59
+B.3     Appendix Economic Mechanism
+
+B.3.1     Direct Evidence between Reversal Pattern and Payment Cycle
+
+Table 5.B reports summary statics conditional on the TAR threshold estimated on pension funds’
+inflows (monthly seasonally adjusted employer contributions for employee pension and insurance
+funds), inf lowt , last week Fed Fund Rate f fw=4,t and last week National Financial Conditions
+Index (NFCI), nf tiw=4,t .
+
+                    Table 5.B: Descriptive Statistics Payment Cycle Variable
+
+                                    τ Obs. Mean Std.Dev. Min Max Skewness Kurtosis
+inf lowt if inf lowt > τ        6.237 309   6.81    0.33 6.24 7.30   -0.41   1.88
+inf lowt if inf lowt ≤ τ               230  5.42    0.54 4.37 6.24   -0.23   1.93
+f fw=4,t if f fw=4,t > τ         5.76 190   9.05    3.11 5.79 19.44   1.52   4.92
+f fw=4,t if f fw=4,t ≤ τ               349  2.66    2.09 0.06 5.76    0.11   1.41
+nf tiw=4,t if nf tiw=4,t > τ    -.409 263   0.50    1.01 -0.41 3.91   1.52   4.92
+nf tiw=4,t if nf tiw=4,t ≤ τ           276 -0.65    0.15 -1.12 -0.41 -0.78   3.53
+This table reports in the first column the estimated TAR threshold considering pension funds’ inflows (monthly
+seasonally adjusted employer contributions for employee pension and insurance funds), inf lowt , last week Fed
+Fund Rate f fw=4,t , and last week National Financial Conditions Index (NFCI), nf tiw=4,t . In the remaining
+columns, I report statistics conditional to the TAR threshold: number of observations, mean, standard deviation,
+min, max, Skewness, and Kurtosis. The sample period goes from January 1975 to December 2019.
+
+
+
+
+B.3.2     Order Imbalance across Business Cycle
+
+Table 6.B reports pension funds’ order imbalance for each trading day in the last week, splitting
+the sample between expansion (106 obs.) and recession (26 obs.) periods. The exercise hints
+that the results presented in the main body of the paper do not depend on outliers during the
+great financial crisis. During recession periods, most of the selling activity clusters on the last
+trading, and no clear pattern emerges between t − 4 and t − 1.
+
+
+B.3.3     Order Imbalance across Stocks
+
+Table 7.B reports the order imbalance for each trading day in the last week for S&P 500 con-
+stituents and remaining stocks. The results are consistent with the fact that institutional in-
+vestors concentrate their selling on liquid stock to minimize trading cost and fees.
+
+
+
+
+                                                      60
+   Table 6.B: Last Week Pension Plan Sponsor Trading Activity Across Business Cycle
+
+                   t−4             t−3               t−2               t−1                  t            Weekly
+                 −5.808%         −5.079%           −4.422%             0.788%            2.663%          −2.352%
+  EXP
+                  [-3.260]        [-3.183]          [-2.940]            [0.496]           [1.410]         [-1.763]
+
+                 −4.204%         −6.547%             5.162%          −6.160%           −8.556%           −8.295%
+  REC
+                  [-0.956]        [-2.176]            [1.538]         [-1.151]          [-1.736]          [-2.125]
+This table reports in the first five columns the order imbalance on S&P 500 constituents stocks for each day
+in the last trading week (where t is the last day of the month), differentiating between expansion and recession
+periods. In the last column, I report the overall imbalance in last week’s order. In brackets, I report the associated
+t-statistic against the null hypothesis of a zero-order imbalance. The Data is ANcerno, and the sample period
+goes from January 2000 to December 2010.
+
+          Table 7.B: Last Week Pension Plan Sponsor Trading Activity Across Stocks
+
+                        t−4             t−3              t−2                t−1               t          Weekly
+                       −3.461%         −3.691%          −1.978%             1.239%        5.139%         −0.706%
+        ALL
+                        [-2.432]        [-3.097]         [-1.709]            [0.873]       [3.587]        [-0.644]
+
+                       −5.492%         −5.369%          −2.534%          −0.581%          0.453%         −3.522%
+       S&P 500
+                        [-3.299]        [-3.813]         [-1.796]         [-0.350]         [0.247]        [-2.655]
+
+                       −2.039%         −2.207%          −1.416%             3.235%        8.870%           1.867%
+NO S&P 500              [-1.318]        [-1.613]         [-1.084]            [2.218]       [5.842]          [1.690]
+This table reports in the first five columns the order imbalance on all the ANcerno dataset, S&P 500 constituents
+and non-constituents stocks for each day in the last trading week (where t is the last day of the month). In the
+last column, I report the overall imbalance in last week’s order. In brackets, I report the associated t-statistic
+against the null hypothesis of a zero-order imbalance. The Data is ANcerno, and the sample period goes from
+January 2000 to December 2010.
+
+
+B.4        Potential Other Explanation of Reversal Pattern
+
+B.4.1      Compensation for Standard Liquidity Risk
+
+The proposed predictor can not be regarded as a standard liquidity factor as, intuitively, the ag-
+gregate reversal predictability is cyclical and tends to cluster around high-quality stocks. There-
+fore, as standard in the literature, gains from liquidity provision should decrease following lower
+risk.
+       To provide further evidence, I here report the adjusted alphas of the rule of thumb TSR
+strategy against four anomalies in Dong et al. (2022) pricing liquidity: IDIOVOL, RETVOL,
+DOLVOL, and ILLIQ.21 Moreover I report a standard predictive regression controlling for the
+  21
+    RET V OL sorts stocks into deciles based on return volatility for the previous month. DOLV OL sorts stocks
+based on dollar trading volume of the last 2 months. IDIOV OL sorts stocks based on idiosyncratic return
+
+
+                                                         61
+                Table 8.B: Time Series Reversal and Standard Liquidity Factor
+                     Panel A: Adjusted Alphas                                 Panel B: Predictive Regression
+    STR CS      RETVOL DOLVOL IDIOVOL                ILLIQ      ALL            Base Econ Var Anom. ALL
+      5.636        6.193       6.108       5.947      5.985    6.521         -0.353      -0.297 -0.356 -0.302
+α     [2.81]       [3.13]      [2.99]      [2.95]     [2.82]   [3.17]    γ   [-3.78]    [-2.78] [-3.31] [-2.68]
+
+Panel A reports the results of the following regression: T SRt = α + βLFt + ϵt where LFt is either the short-
+term cross-sectional factor, RETVOL, DOLVOL, IDIOVOL, ILLIQ or all the liquidity-based anomalies. Panel B
+reports the attached coefficient to the main predictor of the following regression rt+1 = α + γ rw=4,t + βCt + ϵt+1
+where Ct is a set of economic variables (svar, last week fed funds, and NFCI) in the second column, liquidity-based
+anomalies in the third column, and all the previous variables in the fourth column. The baseline time window
+is from January 1975 to December 2019, whereas when I control for anomalies return, the time window is from
+January 1975 to December 2018.
+
+
+four anomalies, stock variance (svar), short-term cross-sectional reversal factor, and fourth week
+NFCI and Fed funds. The results reported in Panel A Table 8.B show that the adjusted alphas are
+positive and statistically significant, Panel B shows that the attached coefficient to the proposed
+predictor is negative and statistically significant. Even though the findings show that standard
+factors do not span the proposed predictor, it is worth exploring in future research whether
+infrequent factors capturing pension funds liquidity problems span the novel predictor.
+
+
+B.4.2     Over-Confidence Channel
+
+A standard explanation of reversal is due to market over-reaction. Among many examples,
+Odean (1998) proposes a model in which overconfident traders increase market volume and
+volatility and, by over-weighting information, cause market reversal. Therefore, I study whether
+the overconfidence of market participants could be the economic source behind the results.
+    To measure overconfidence in the stock market, I consider the standard Baker and Wurgler
+(2006) ’s investor sentiment indexes:          SEN T (based on the first principal component of five
+sentiment proxies), and SEN T ⊥ (based on the first principal component of five sentiment proxies
+where each of the proxies has first been orthogonalized to a set of six macroeconomic indicators).22
+The variables’ objective is to capture "a belief about future cash-flows and investment risks that
+is not justified by the facts at hand", Baker and Wurgler (2007).
+volatility. ILLIQ sorts stocks based on yearly Amihud ratio.
+  22
+     To not introduce measurement errors, I use sentiment indexes directly provided by their authors (monthly
+values). The monthly dimension is a valid frequency as Baker and Wurgler (2006) show that investors still
+react to month-old sentiment measures. I work with sentiment values (SEN Tt ) and not with the first difference
+(∆SEN Tt = SEN Tt − SEN Tt−1 ) as the authors recommend not to consider lag versions of the sentiment
+variables as changes in sentiment.
+
+
+                                                        62
+   I control that Sentiment measures do not impact the reversal pattern by first running a TAR
+regression                   
+                              α + γ1 rw=4,t + ϵt+1 if − ∞ < BF i ≤ τ
+                             
+                                                               t
+                      rt+1 =
+                              α+γ r
+                             
+                                       2     +ϵ
+                                           w=4,t    if
+                                                   t+1   τ < BF i < ∞   t
+
+
+where BF i is either SEN T or SEN T ⊥ . Second, I perform the standard predictive regression
+
+
+                                 rt+1 = α + γ rw=4,t + βBFti + ϵt+1
+
+
+Panel A Table 9.B shows that the negative correlation does not depend on market sentiment as
+the reversal pattern does not change according to the monthly sentiment level. Moreover, by
+considering a higher sentiment as a measure of overconfidence, the behavioral channel proposed in
+Odean (1998) is less likely to explain the findings as the negative serial correlation is statistically
+more robust when the BF i values are below the estimated threshold. Consistently with the
+previous analysis, Panel B shows that rw=4,t predicts the stock market through a channel not
+captured by the control variables, as the coefficient attached to rw=4,t does not change in terms
+of magnitude and significance.
+
+
+B.4.3    Option Expiration Effect
+
+In this section, I provide evidence that the results can not be driven by the S&P 500 option
+expiration on the third Friday of the month. Specifically, Cao, Chordia, and Zhan (2021) argues
+that the expiration triggers a selling pressure due to re-balancing activities, and the magnitude
+increases with volatility. The intuition is that investors are more likely to liquidate the option-
+exercise-created positions in the more risky and volatile stocks.
+   In Table 10.B, I show that the reversal pattern discussed in the main body of the paper does
+not depend on increased volatility in the third week of the month. Specifically, I show both
+with a TAR regression and with a linear predicting equation that an increase in the third-week
+volatility (∆vixw=3,t = vixw=3,t − vixw=2,t ) has no impact on the reversal pattern.
+
+
+
+
+                                                   63
+                                  Table 9.B: Over-Confidence Channel
+                           Panel A: TAR                                         Panel B: Predictive Regression
+τ                       -0.349     τ                       -0.213     α            0.004      0.004     0.004     0.004
+                                                                                   [2.00]     [2.05]    [2.08]    [1.94]
+α                        0.004    α                         0.004     rw=4,t      -0.353     -0.358    -0.355     -0.36
+                         [2.08]                             [2.11]                [-3.78]    [-3.96]   [-3.90]   [-4.00]
+rw=4,t if SEN Tt ≤ τ    -0.557    rw=4,t if SEN Tt⊥ ≤ τ    -0.517     SENT                   -0.003               0-006
+                        [-1.89]                            [-2.49]                           [-1.36]             [-0.76]
+rw=4,t if SEN T > τ     -0.302    rw=4,t if SEN T ⊥ > τ    -0.280     SEN Tt⊥                          -0.003     0.003
+                        [-2.02]                            [-1.71]                                     [-1.19]    [0.37]
+
+Obs.                       539                                  539                 539       539       539       539
+R2 (%)                    1.78                                 1.82                 1.9       2.29      2.23      2.31
+
+Panel A reports the results of the following Threshold Autoregressive Regression (TAR):
+
+                                       α + γ1 rw=4,t + ϵt+1 if − ∞ < SEN Tti ≤ τ
+                                   
+                            rt+1 =
+                                       α + γ2 rw=4,t + ϵt+1 if     τ < BFti < ∞
+
+where τ is the estimated TAR threshold estimated on the Baker and Wurgler (2006)’s sentiment index SEN T
+(first column) SEN T ⊥ (second column). Panel B reports the results of the following Predictive regression:
+
+                                      rt+1 = α + γ rw=4,t + β SEN Tti + ϵt+1
+
+In brackets, I report robust Newey and West (1987) t-statics. The sample period goes from January 1975 to
+December 2019.
+
+                       Table 10.B: Volatility Channel: Option Expiration Effect
+
+ τ                                                     0.099
+ α                                                     0.005                    α                       0.005
+                                                      [ 2.17]                                           [1.87]
+ rw=4,t if ∆vixw=3,t ≤ τ                              -0.500                    rw=4,t                 -0.282
+                                                      [-3.34]                                          [-2.72]
+ rw=4,t if ∆vixw=3,t > τ                               0.525                    ∆vixw=3,t              -0.001
+                                                       [1.17]                                          [-0.05]
+
+ Obs                                                      359                                              359
+This table reports in the first column the results of the following Threshold Autoregressive Regression (TAR):
+                                   
+                                     α + γ1 rw=4,t + ϵt+1 if − ∞ < ∆vixw=3,t ≤ τ
+                          rt+1 =
+                                     α + γ2 rw=4,t + ϵt+1 if        τ < ∆vixw=3,t < ∞
+
+The second column reports the results of the following regression: rt+1 = α + γ rw=4,t + β ∆vixw=3,t + εt+1 . In
+brackets, I report Newey and West (1987) t-statics. The sample period is from January 1990 to December 2019.
+
+
+
+
+                                                          64
+                     Table 11.B: Reversal Pattern and End of Quarter Effect
+
+ α                         0.004                                  0.003                                 0.004
+                           [1.95]                                 [1.75]                                [1.99]
+  N OQ
+ rw=4,t                   -0.266                                                                       -0.268
+                          [-2.43]                                                                      [-2.44]
+  Q
+ rw=4,t                                                         -0.679                                 -0.681
+                                                                [-2.14]                                [-2.15]
+
+ R2 (%)                      0.86                                   1.44                                   2.31
+ Obs.                         539                                    539                                    539
+This table reports the correlation coefficient of rt+1 = α + γ1 (1 − IQ                  Q
+                                                                      t ) × rw=4,t + γ2 It × rw=4,t + εt+1 where I
+                                                                                                                   Q
+
+is an indicator function equal to 1 when month t is an end of quarter month. In brackets, I report robust Newey
+and West (1987) t-statics. The sample period goes from January 1975 to December 2019.
+
+
+B.4.4     Quarterly Robustness Check
+
+In this section, I investigate whether the reversal pattern between rw=4,t and rt+1 is a consequence
+of quarterly rebalancing and reports. Hence, I split the full sample (January 1975 - December
+2019) between end-of- and non-end-of-quarter months. The results presented in Table 11.B
+show that for both subsamples, the serial correlation is negative and statistically significant,
+therefore the pattern documented in the main body of the paper could not be rationalized
+only due to a "quarter effect". However, at the end of quarter months, the reversal pattern is
+stronger. Intuitively, when institutional investors face stronger liquidity constraints due to legal
+requirements, they increase the non-informational selling.
+
+
+B.4.5     Information Release
+
+I examine whether the results can potentially caused by informational trading. I construct a
+time series on the most important U.S. economic announcements (announcements on GDP, CPI,
+WPI, PPI, Fed Interest, and Unemployment) by web-scraping Investing. Figure 3.B shows that
+very few announcements are released in the last week, around 13% of entire series.23 Considering
+  23
+   The announcements in the last week are mostly quarter-on-quarter GDP (72%) and Fed Intest announcments
+(22%).
+
+
+
+                                                        65
+the time series before 2005, the percentage halves.
+
+                   Figure 3.B: Economic Announcements during the Month
+
+
+
+
+This figure reports the percentage frequency of economic announcements in the last week of the month. The
+time series is constructed by web-scraping Investing and focusing on announcements on GDP, CPI, WPI, PPI,
+Fed Interest, and Unemployment). The sample period goes from January 2005 to December 2019.
+
+
+
+
+B.4.6    Pension Funds Rebalancing
+
+Pension funds are unlikely to sell at the end of the month due to legal constraints. U.S. pen-
+sion funds do not typically face specific asset allocation restrictions related to portfolio weights
+(see Survey of Investment regulation of pension funds, OECD Secretariat). The only notable
+limitation applies to self-managed defined benefit (DB) plans, such as Boeing’s pension fund,
+which cannot hold more than 10% of shares in their parent company to reduce idiosyncratic risk.
+However, this restriction is unlikely to be significant for most pension funds, as they generally
+operate as independent trustees managing portfolios for multiple clients. Additionally, many of
+the largest pension funds serve state employees, and this limitation does not apply to them.
+
+
+
+
+                                                   66
+

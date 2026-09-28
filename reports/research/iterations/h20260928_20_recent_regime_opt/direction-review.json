@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "iter_id": "h20260928_20_recent_regime_opt",
+  "reviewed_at": "2026-09-28T05:55:00+00:00",
+  "decision": "proceed",
+  "objective": "Optimize the two batch-2 candidates the owner explicitly liked on 2026-09-28 (EOM_REVERSAL_SPY: select 1.34 / anchor 1.24 / stress 0.58 Sharpe; FRONT_RUN_SECTOR_TOP2: select 0.75 / anchor 1.40 / stress 0.45 Sharpe -- both strong in 2024-2026, weak in 2016-2023) by preregistering <=10 source-grounded parameter variants per family plus <=3 cross-family combination variants, run once through scripts/screen_batch.py, and replace each family's base ONLY if a variant clears the owner's literal three-part rule ((a) select-window 10bp Sharpe >= base+0.10, (b) 2026 contaminated-window Sharpe not below base by more than 0.10, (c) 20bp select-window Sharpe still >= base+0.10), selecting the highest select-Sharpe qualifier. This is Sharpe optimization only (owner's 2026-09-28 rule: position size/leverage is not an improvement); it stays equity/sector-ETF + SHY, no cross-asset additions.",
+  "target_regime_and_horizon": "Same frozen screen_lane windows as batch-2: select 2023-09-18..2025-12-31 (ranking window), anchor 2024-01-08..2026-09-17 (reported, not selected on), holdout/contaminated 2026-01-02..2026-09-17 (guard only, per the owner's rule (b)), stress 2016-05-02..2023-09-15 (reported, not selected on, per the owner's explicit instruction 'don't select on them'). This round makes no claim the E or S mechanisms are durable outside 2023-2026; it only asks whether a preregistered variant improves the SAME recent-regime edge the owner already accepted, without quietly re-fitting to the stress window (which both bases already fail) or the contaminated 2026 window.",
+  "existing_solution_comparison": "`uv run oc research directions check` for both mechanisms (see queries below) confirms both are already registered (dir:end_of_month_reversal_effect, dir:front_running_sector_seasonality, status 'queued', batch-2 verdict recorded) with no local optimization/variant-search performed yet -- batch-2 tested exactly one version per family, verbatim from the source, and explicitly deferred variant search. Opened the primary Graziani (2024) PDF directly (batch-2 never opened it -- only a secondary summary; also confirmed batch-2's own sources/ folder never actually snapshotted the harbourfrontquant page despite citing it, a dossier-hygiene gap corrected in this round's own source cards) and the live Quantpedia page (batch-2 cited only the 2026-09-23 harvest's summary, not a fresh open). The primary source's own robustness appendices (Graziani A.1.4: alternate formation windows; Section 2.4: a magnitude/precision-scaled TSR-TV variant) and Quantpedia's own tested variant grid (1-7 ETFs held, 0-month vs 1-month shift) directly supply several of this round's preregistered variants (E1/E2 formation-window, E7 magnitude-scaling, S1/S2 top-N, S6 shift-0), cited per-variant in candidate-manifest.json. No local prior test of any of the 19 E/S variants or the 2 combination variants exists (searched reports/research/iterations, reports/research/screens, reports/research/harvest for 'end of month reversal variant', 'front running sector top', 'EOM_REVERSAL', 'FRONT_RUN_SECTOR' before writing this dossier).",
+  "negative_experiments_checked": "(1) Allocate Smartly's independent extension of the closely-related country-ETF front-running-seasonality mechanism (same shift idea, different universe) found it 'would not have been consistently effective over the long-term' when extended before the original author's sample and they explicitly stopped tracking it -- cited as a caution for the whole front-running family, not a direct refutation of the sector-SPDR version (which Allocate Smartly's own article says was still on their to-do list, not completed). (2) giants_sweep_20260922 found 0/24 published SMA/trend/volume ETF rules cleared G1-G5 -- the right prior for skepticism about 'optimizing a published rule on a recent window' generally, even though that sweep did not test either of these two specific mechanisms. (3) The two mechanisms' own batch-2 result is itself the direct negative-leaning prior this round must not quietly erase: both already fail the stress window badly (0.58 and 0.45 vs S3's ~0.81), so the owner's replacement rule explicitly forbids selecting on stress/anchor and instead uses a select-window improvement plus a contaminated-window guard -- chosen precisely because a stress-window-based bar would make any variant search here pointless (both bases already fail stress, and no variant preregistered here targets fixing stress-window performance, only select-window Sharpe).",
+  "remaining_evidence_gap": "Whether any of the 7 preregistered E-family variants or 9 S-family variants improve select-window (2023-09-18..2025-12-31) 10bp Sharpe by >=0.10 over their base WITHOUT that improvement (a) coming from the contaminated 2026 window bleeding into the select window's tail, or (b) evaporating at 20bp cost -- exactly what the three-part replacement rule is designed to catch. Also whether the two cross-family combination variants (C1: EOM signal gates sector-seasonality risk-on/off; C2: 50/50 static blend) beat their respective component bases, and whether the DSR (family-scoped trial counts: E=8, S=10, C=2, per the owner's brief) survives the extra multiple-comparison exposure this round adds on top of batch-2's already-run single-version test of each base.",
+  "cost_and_execution_assumptions": "Unchanged from screen_lane/batch-2: signal at bar close, fill at next bar open, sum(|delta weight|)*slippage_bps charged on the execution session, 10bp primary / 20bp stress per side, SHY absorbs any unweighted remainder. All 19 E/S variants and both C variants are calendar-anchored (decide only at month-end, or at month-end plus a small number of additional in-month exit dates for E5/E6), so every one is declared freq='D' with an explicit signal_dates_fn covering every entry AND exit date used -- per the batch-2 interactive-session correction (declaring a calendar rule 'M' silently makes 20/21 offsets fire on non-decision dates and the median collapses to pure SHY), this round's own scripts/screen_batches/h20260928_20_recent_opt.py and its tests re-check this directly rather than relying on scripts/screen_batch.py's calendar_anchor_problems() guard alone.",
+  "stop_condition": "A family's base is replaced only if at least one preregistered variant satisfies all three of: (a) select-window 10bp Sharpe >= base + 0.10, (b) 2026 contaminated-window Sharpe not below the base's by more than 0.10, (c) 20bp select-window Sharpe still >= base + 0.10 -- among qualifiers, the highest select-window Sharpe wins. If no variant in a family qualifies, that family's base (E0 or S0) stands unchanged as the batch-2 result, and every tested variant is recorded (not silently dropped) with its verdict in results.json/report.md and, for any that came directly from a source's own tested robustness check (E1/E2/E7, S1/S2/S6), the registry entry. This round does not lower, relax, or re-derive K1/K2 or G1-G5 from batch-2 or any other frozen contract; it adds a new, separate, owner-specified replacement rule that applies only within this iteration.",
+  "queries": [
+    {
+      "query": "oc research directions check end of month reversal SPY optimization variant",
+      "opened_urls": ["https://harbourfrontquant.substack.com/p/do-calendar-anomalies-still-work"],
+      "searched_at": "2026-09-28T05:10:00+00:00"
+    },
+    {
+      "query": "oc research directions check front running sector seasonality optimization variant",
+      "opened_urls": ["https://quantpedia.com/front-running-seasonality-in-us-stock-sectors/"],
+      "searched_at": "2026-09-28T05:11:00+00:00"
+    },
+    {
+      "query": "Graziani 2024 SSRN Time Series Reversal end of month replication critique",
+      "opened_urls": [
+        "https://csef.it/wp-content/uploads/JMP_GG_02Nov2024.pdf",
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4349253"
+      ],
+      "searched_at": "2026-09-28T05:12:00+00:00"
+    },
+    {
+      "query": "Quantpedia front-running seasonality US stock sectors top 1 top 2 top 3 ETFs shift months",
+      "opened_urls": ["https://quantpedia.com/front-running-seasonality-in-us-stock-sectors/"],
+      "searched_at": "2026-09-28T05:20:00+00:00"
+    },
+    {
+      "query": "Allocate Smartly front-running seasonality sector ETFs critique out of sample",
+      "opened_urls": [
+        "https://allocatesmartly.com/front-running-seasonality-in-country-etfs-an-extended-test/",
+        "https://allocatesmartly.com/front-running-commodity-seasonality/"
+      ],
+      "searched_at": "2026-09-28T05:30:00+00:00"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://csef.it/wp-content/uploads/JMP_GG_02Nov2024.pdf",
+      "claim_id": "graziani2024_ssrn_eom_reversal_primary_tsrtv",
+      "claim": "Graziani (2024, 'Time Series Reversal: An End-of-the-Month Perspective', SSRN/job-market-paper PDF, csef.it) defines the end-of-month reversal signal as the S&P 500 return from the 4th Friday's close to the month-end close (rw=4,t) and the simple rule-of-thumb strategy (TSR: buy next month iff rw=4,t<0) outperforms buy-and-hold over a 45-year window (Jan 1975-Dec 2019 main sample, extended to Dec 1950-Dec 2023 as a robustness check). Its own robustness appendix (A.1.4) tests using the return from 1, 2, or 3 weeks before month-end (rw=1..3) instead of the 4th-Friday week and finds only the last week (rw=4) and daily returns within it (t-4..t-1) have predictive power -- 2-3 week-earlier formation windows do not. Section 2.4 reports a magnitude/precision-scaled variant (TSR-TV, weight = 1-month-ahead forecast / trailing quarterly variance, weight in [-1,2]) with Sharpe 0.588 vs. the simple TSR's 0.384 and S&P's 0.308 (Apr 1986-Dec 2019); trading-cost appendix A.1.3 finds breakeven cost ~16bp/transaction vs. typical index costs of 3-9bp/yr. Section 2.5 replicates on DOW (pattern holds) and Russell 2000 (no clear pattern); QQQ/Nasdaq-100 is not tested in the paper.",
+      "source_type": "paper",
+      "published_or_updated_at": "2024-11-02",
+      "market_and_period": "S&P 500 (also DOW, Russell 2000), primary sample Jan 1975-Dec 2019, extended robustness sample Dec 1950-Dec 2023.",
+      "applicability": "Directly grounds E0 (base) and, via the paper's own robustness appendices, the formation-window variants E1/E2 (source's own A.1.4 test argues against widening the formation window -- documented as a headwind, not support, for E1/E2), the magnitude-scaling variant E7 (directly modeled on the paper's own TSR-TV, Sharpe 0.588 vs simple TSR's 0.384, its single largest reported improvement), and notes QQQ (E4) and partial-month holding (E5/E6) are NOT paper-tested extensions, disclosed as such rather than misattributed to the source.",
+      "limitations": "Job-market-paper PDF (pre-publication), not the final peer-reviewed SSRN version; TSR-TV allows leverage up to 2x and short-selling down to -1x, so its 0.588 Sharpe is not directly comparable to this round's long-only, no-leverage E7 magnitude-scaled variant (min(1, |r|/2%)), a deliberately simplified long-only analog.",
+      "independent_replication": "harbourfrontquant.substack.com's secondary summary independently corroborates the exact rule and the '45-year' outperformance claim from the same paper.",
+      "fetched_at": "2026-09-28T05:13:00+00:00",
+      "sha256": "0d9f24177d8a64ac81b963035db1895d65db6e3a4dcde8c02cd9ffac17496424",
+      "snapshot_path": "reports/research/iterations/h20260928_20_recent_regime_opt/sources/graziani2024-eom-reversal-ssrn-extracted.txt",
+      "source_card_path": "reports/harness/source_cards/h20260928_20_recent_regime_opt.jsonl"
+    },
+    {
+      "url": "https://harbourfrontquant.substack.com/p/do-calendar-anomalies-still-work",
+      "claim_id": "graziani2024_eom_reversal_harbourfrontquant_summary",
+      "claim": "harbourfrontquant.substack.com's newsletter summary of Graziani (2024, SSRN) states S&P 500 end-of-month returns (from the fourth Friday to the last trading day of the month) are negatively correlated with returns in the following month, both in-sample and out-of-sample, and attributes the pattern to pension funds' end-of-month liquidity/payment-cycle trading.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2024-01-01",
+      "market_and_period": "S&P 500, secondary summary of Graziani (2024)'s 45-year sample.",
+      "applicability": "Same claim already used to ground EOM_REVERSAL_SPY in batch-2's candidate-manifest.json; re-verified here with a fresh snapshot and quote binding since batch-2's own sources/ folder never actually snapshotted this page, a gap corrected in this round's own source cards.",
+      "limitations": "Secondary blog summary; no quantified CAGR/Sharpe/drawdown numbers (those come from the primary Graziani PDF and from this round's own screen_batch.py run).",
+      "independent_replication": "Corroborated directly by opening the primary Graziani (2024) PDF itself in this round, which states the identical rule and the same 45-year outperformance claim.",
+      "fetched_at": "2026-09-28T05:14:00+00:00",
+      "sha256": "b4fefe48e89f9179cef1787ed82d3f93d8d5bcf4b6659e2eb30444bf49443f00",
+      "snapshot_path": "reports/research/iterations/h20260928_20_recent_regime_opt/sources/harbourfrontquant-eom-reversal.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_20_recent_regime_opt.jsonl"
+    },
+    {
+      "url": "https://quantpedia.com/front-running-seasonality-in-us-stock-sectors/",
+      "claim_id": "quantpedia_front_running_sector_seasonality_variants",
+      "claim": "Quantpedia's 'Front-Running Seasonality in US Stock Sectors' page (9 Select Sector SPDRs XLB/XLE/XLF/XLI/XLK/XLP/XLU/XLV/XLY, Nov 2000-Nov 2023 backtest with data through Sep 2024) tests holding 1 through 7 ETFs long-only, monthly rebalance, and reports holding TWO ETFs in long positions is the best-performing cut of the 'front-running' variant (score-window shifted forward by one month vs. the naive 'true seasonality' baseline, which is 'at best, comparable to those of the benchmark' and explicitly called inefficient). Short positions were tested but found ineffective and dropped. The page does NOT test: a 2-month shift, inverse-volatility weighting, multi-year score averaging, or adding XLC/XLRE to the 9-sector universe.",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2024-09-05",
+      "market_and_period": "9 Select Sector SPDR ETFs, Nov 2000-Nov 2023 backtest window, data through Sep 5 2024.",
+      "applicability": "Directly grounds S0 (base, top-2, 1-month shift) and S1/S2 (top-1/top-3, both explicitly tested by the source) and S6 (shift-0, the source's own 'true seasonality' baseline, explicitly reported as failing -- preregistered as an owner-directed robustness re-check, not because the source suggests it will pass). S_shift2, S_avg3/S_avg5, S_11sectors, S_invvol, S_absfilter are brief-directed extensions the source itself does not test.",
+      "limitations": "Quantpedia's own numeric tables (CAGR/Sharpe/Calmar) are chart images, not machine-readable text in the fetched page; only qualitative claims are text-extractable.",
+      "independent_replication": "Allocate Smartly independently tested the closely-related country-ETF front-running-seasonality mechanism and found it failed an extended out-of-sample test; Allocate Smartly's own article confirms the US-sector version specifically was only on their to-do list, not completed, so no direct third-party replication of the sector version itself exists yet.",
+      "fetched_at": "2026-09-28T05:21:00+00:00",
+      "sha256": "d85cd4a27278033490e41969911ed085b01451ac444f46db51044761ff12435e",
+      "snapshot_path": "reports/research/iterations/h20260928_20_recent_regime_opt/sources/quantpedia-front-running-sector-seasonality.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_20_recent_regime_opt.jsonl"
+    },
+    {
+      "url": "https://allocatesmartly.com/front-running-seasonality-in-country-etfs-an-extended-test/",
+      "claim_id": "allocatesmartly_country_etf_front_running_extended_test",
+      "claim": "Allocate Smartly independently extended Quantpedia's front-running seasonality mechanism (applied to 23 country ETFs / MSCI country indices, not the 9 US sector SPDRs) back to 1971 using ~30+ additional years of MSCI index data beyond the original author's sample, and found the strategy 'would not have been consistently effective over the long-term' in that extended pre-sample period; they explicitly state they 'will not be tracking this strategy on an ongoing basis' as a result, despite the in-sample cut reporting a Sharpe of 0.46 vs. a 0.38 benchmark (CAGR 13.2% vs 11.2%, max drawdown -59.1%).",
+      "source_type": "industry_standard",
+      "published_or_updated_at": "2023-01-01",
+      "market_and_period": "23 country ETFs / MSCI country indices, extended sample back to 1971.",
+      "applicability": "Negative-evidence caution for the whole front-running-seasonality mechanism family: a closely related implementation (same shift idea, different universe) failed an independent out-of-sample extension. Not a direct refutation of the sector-SPDR version, but the closest independent replication attempt found for this mechanism family.",
+      "limitations": "Different universe (country ETFs vs. sector SPDRs) and different underlying data (MSCI indices vs. Alpaca SIP sector-ETF bars); the -59.1% max drawdown is itself a caution regardless of the extended-sample finding.",
+      "independent_replication": "None found beyond this single Allocate Smartly test.",
+      "fetched_at": "2026-09-28T05:31:00+00:00",
+      "sha256": "def81d34372b00cb4b0a230dd5c337efa9469a6e06b1f125b590ee00aab768a5",
+      "snapshot_path": "reports/research/iterations/h20260928_20_recent_regime_opt/sources/allocatesmartly-front-running-country-etf-extended-test.html",
+      "source_card_path": "reports/harness/source_cards/h20260928_20_recent_regime_opt.jsonl"
+    }
+  ],
+  "cheapest_decisive_test": {
+    "action": "Preregister E0+7 E-variants, S0+9 S-variants, C1/C2 in candidate-manifest.json with the owner's literal three-part replacement rule, run scripts/run_capped.sh --mem 1.5G -- uv run python scripts/screen_batch.py --batch h20260928_20_recent_opt --iteration h20260928_20_recent_regime_opt once, then apply the rule mechanically against reports/research/screens/h20260928_20_recent_opt/leaderboard.json.",
+    "pass_condition": "At least one E-family variant and/or one S-family variant satisfies (a) select Sharpe >= base+0.10, (b) 2026 window Sharpe not below base by more than 0.10, (c) 20bp select Sharpe >= base+0.10 -- that family's base is replaced by the highest-select-Sharpe qualifier.",
+    "falsification_condition": "No variant in a family satisfies all three conditions -- that family's base (E0 or S0) stands unchanged, and the variant search for that family is recorded as not clearing the owner's bar, not silently retried with new parameters inside this same manifest.",
+    "max_compute_minutes": 25
+  }
+}
