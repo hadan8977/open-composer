@@ -1,0 +1,1725 @@
+{
+  "task": "T-20260928-10",
+  "stage": "Stage-1 kill test",
+  "generated_at": "2026-09-28T07:00:16.147182+00:00",
+  "window": {
+    "start": "2016-05-02",
+    "end": "2023-08-31"
+  },
+  "ridge_baseline_rankic": 0.0071,
+  "b0": {
+    "mean_rankic": 0.0013701179582589825,
+    "t_stat": 0.18021241430089108,
+    "n_dates": 75
+  },
+  "baseline_used_for_threshold": 0.0071,
+  "kill_threshold": {
+    "floor": 0.02,
+    "margin_over_baseline": 0.0171
+  },
+  "candidates": {
+    "B0": {
+      "candidate_id": "B0",
+      "label": "B0 price-volume-only baseline (LightGBM regression, monthly)",
+      "model": "lgbm_reg",
+      "feature_set": "base",
+      "n_features": 24,
+      "feature_columns": [
+        "ret_21",
+        "ret_63",
+        "ret_126",
+        "ret_252",
+        "momentum_252_21",
+        "ret_1",
+        "ret_5",
+        "max_ret_1_21",
+        "dist_from_252d_high",
+        "vol_21",
+        "vol_63",
+        "idio_vol_63",
+        "dollar_adv_21_over_63",
+        "amihud_21",
+        "overnight_return_21d_mean",
+        "intraday_return_21d_mean",
+        "intraday_realized_vol_21d_mean",
+        "intraday_amplitude_21d_mean",
+        "open_30min_volume_share_21d_mean",
+        "close_30min_volume_share_21d_mean",
+        "vwap_deviation_21d_mean",
+        "intraday_skew_21d_mean",
+        "trade_count_21d_mean",
+        "amihud_intraday_21d_mean"
+      ],
+      "cadence": "monthly",
+      "horizon": 21,
+      "n_folds": 28,
+      "fold_meta": [
+        {
+          "fold_id": 1,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2016-06-28",
+          "actual_train_years": 0.08,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 2,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2016-09-29",
+          "actual_train_years": 0.33,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 3,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2016-12-28",
+          "actual_train_years": 0.58,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 4,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-03-28",
+          "actual_train_years": 0.82,
+          "train_rows": 3080,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.03783193834524757,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 5,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-06-28",
+          "actual_train_years": 1.08,
+          "train_rows": 7721,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.027721678392512217,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 6,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-09-29",
+          "actual_train_years": 1.33,
+          "train_rows": 14027,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.029955743670402473,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 7,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-12-28",
+          "actual_train_years": 1.58,
+          "train_rows": 17257,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.009993328140700648,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 8,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-03-28",
+          "actual_train_years": 1.82,
+          "train_rows": 22137,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.010212596039123742,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 9,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-06-28",
+          "actual_train_years": 2.08,
+          "train_rows": 27058,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.024230847080703475,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 10,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-10-01",
+          "actual_train_years": 2.34,
+          "train_rows": 33698,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.005592830394882693,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 11,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-12-28",
+          "actual_train_years": 2.58,
+          "train_rows": 37034,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.01400923118616528,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 12,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2019-03-28",
+          "actual_train_years": 2.82,
+          "train_rows": 42068,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.0536231933572529,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 13,
+          "train_start": "2016-06-28",
+          "train_cutoff": "2019-06-28",
+          "actual_train_years": 3.0,
+          "train_rows": 48923,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.0023205723144279905,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 14,
+          "train_start": "2016-10-01",
+          "train_cutoff": "2019-10-01",
+          "actual_train_years": 3.0,
+          "train_rows": 54107,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.009951026486577188,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 15,
+          "train_start": "2016-12-30",
+          "train_cutoff": "2019-12-30",
+          "actual_train_years": 3.0,
+          "train_rows": 57583,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.014358611261842168,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 16,
+          "train_start": "2017-03-30",
+          "train_cutoff": "2020-03-30",
+          "actual_train_years": 3.0,
+          "train_rows": 59819,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.010299747072277377,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 17,
+          "train_start": "2017-06-30",
+          "train_cutoff": "2020-06-30",
+          "actual_train_years": 3.0,
+          "train_rows": 62350,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.012434753344274062,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 18,
+          "train_start": "2017-09-30",
+          "train_cutoff": "2020-09-30",
+          "actual_train_years": 3.0,
+          "train_rows": 61661,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.0025840230622203634,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 19,
+          "train_start": "2017-12-28",
+          "train_cutoff": "2020-12-28",
+          "actual_train_years": 3.0,
+          "train_rows": 62207,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.06809587043916543,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 20,
+          "train_start": "2018-03-30",
+          "train_cutoff": "2021-03-30",
+          "actual_train_years": 3.0,
+          "train_rows": 61640,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.029651152071777376,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 21,
+          "train_start": "2018-06-29",
+          "train_cutoff": "2021-06-29",
+          "actual_train_years": 3.0,
+          "train_rows": 64384,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.04072066951593913,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 22,
+          "train_start": "2018-09-29",
+          "train_cutoff": "2021-09-29",
+          "actual_train_years": 3.0,
+          "train_rows": 63873,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.024763318793664547,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 23,
+          "train_start": "2018-12-29",
+          "train_cutoff": "2021-12-29",
+          "actual_train_years": 3.0,
+          "train_rows": 66797,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.008021337643378729,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 24,
+          "train_start": "2019-03-29",
+          "train_cutoff": "2022-03-29",
+          "actual_train_years": 3.0,
+          "train_rows": 68043,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.0069672008557728525,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 25,
+          "train_start": "2019-06-28",
+          "train_cutoff": "2022-06-28",
+          "actual_train_years": 3.0,
+          "train_rows": 69219,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.01482252425077539,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 26,
+          "train_start": "2019-09-29",
+          "train_cutoff": "2022-09-29",
+          "actual_train_years": 3.0,
+          "train_rows": 70385,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.017306736938902122,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 27,
+          "train_start": "2019-12-28",
+          "train_cutoff": "2022-12-28",
+          "actual_train_years": 3.0,
+          "train_rows": 71488,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.032050734197000434,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 28,
+          "train_start": "2020-03-28",
+          "train_cutoff": "2023-03-28",
+          "actual_train_years": 3.0,
+          "train_rows": 72600,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.02592810802524212,
+          "validation_rankic_n_dates": 3
+        }
+      ],
+      "overall": {
+        "mean_rankic": 0.0013701179582589825,
+        "t_stat": 0.18021241430089108,
+        "n_dates": 75
+      },
+      "by_year": {
+        "2017": {
+          "mean_rankic": 0.011865957689119102,
+          "t_stat": 0.5727676985861156,
+          "n_dates": 9
+        },
+        "2018": {
+          "mean_rankic": 0.00039197687350090116,
+          "t_stat": 0.03289798245904159,
+          "n_dates": 12
+        },
+        "2019": {
+          "mean_rankic": 0.01997600583610584,
+          "t_stat": 1.193091269498711,
+          "n_dates": 12
+        },
+        "2020": {
+          "mean_rankic": -0.001447966523122227,
+          "t_stat": -0.07755082285789233,
+          "n_dates": 12
+        },
+        "2021": {
+          "mean_rankic": -0.025982176669247934,
+          "t_stat": -1.1215256695433555,
+          "n_dates": 12
+        },
+        "2022": {
+          "mean_rankic": -0.007768781100517912,
+          "t_stat": -0.2957050849081626,
+          "n_dates": 12
+        },
+        "2023": {
+          "mean_rankic": 0.028989421111121277,
+          "t_stat": 1.9880221655117878,
+          "n_dates": 6
+        }
+      },
+      "by_tercile": {
+        "T1_liquid": {
+          "mean_rankic": 0.004810038752314454,
+          "t_stat": 0.4305215245004187,
+          "n_dates": 75
+        },
+        "T2_mid": {
+          "mean_rankic": -0.00296303996864513,
+          "t_stat": -0.3617982281933744,
+          "n_dates": 75
+        },
+        "T3_illiquid": {
+          "mean_rankic": 0.0031653834556840312,
+          "t_stat": 0.3298242660961095,
+          "n_dates": 75
+        }
+      }
+    },
+    "5": {
+      "candidate_id": "5",
+      "label": "Candidate 5: LightGBM regression, all layers, monthly, excess_21",
+      "model": "lgbm_reg",
+      "feature_set": "all",
+      "n_features": 45,
+      "feature_columns": [
+        "ret_21",
+        "ret_63",
+        "ret_126",
+        "ret_252",
+        "momentum_252_21",
+        "ret_1",
+        "ret_5",
+        "max_ret_1_21",
+        "dist_from_252d_high",
+        "vol_21",
+        "vol_63",
+        "idio_vol_63",
+        "dollar_adv_21_over_63",
+        "amihud_21",
+        "overnight_return_21d_mean",
+        "intraday_return_21d_mean",
+        "intraday_realized_vol_21d_mean",
+        "intraday_amplitude_21d_mean",
+        "open_30min_volume_share_21d_mean",
+        "close_30min_volume_share_21d_mean",
+        "vwap_deviation_21d_mean",
+        "intraday_skew_21d_mean",
+        "trade_count_21d_mean",
+        "amihud_intraday_21d_mean",
+        "gross_profitability",
+        "asset_growth",
+        "accruals",
+        "roe",
+        "sue_eps",
+        "sue_rev",
+        "days_since_report",
+        "ocf_at_chg1",
+        "niq_at_chg1",
+        "niq_be_chg1",
+        "ni_inc8q",
+        "net_buy_usd_60d",
+        "open_market_buy_count_60d",
+        "buyers_60d",
+        "days_since_last_visible_buy",
+        "days_to_cover",
+        "short_interest_ratio",
+        "dtc_change_vs_prior",
+        "dtc_cross_sectional_pct",
+        "short_volume_ratio",
+        "short_volume_ratio_zscore_21"
+      ],
+      "cadence": "monthly",
+      "horizon": 21,
+      "n_folds": 28,
+      "fold_meta": [
+        {
+          "fold_id": 1,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2016-06-28",
+          "actual_train_years": 0.08,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 2,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2016-09-29",
+          "actual_train_years": 0.33,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 3,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2016-12-28",
+          "actual_train_years": 0.58,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 4,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-03-28",
+          "actual_train_years": 0.82,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 5,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-06-28",
+          "actual_train_years": 1.08,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 6,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-09-29",
+          "actual_train_years": 1.33,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 7,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-12-28",
+          "actual_train_years": 1.58,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 8,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-03-28",
+          "actual_train_years": 1.82,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 9,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-06-28",
+          "actual_train_years": 2.08,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 10,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-10-01",
+          "actual_train_years": 2.34,
+          "train_rows": 66,
+          "validation_dates": 3,
+          "skipped": "train_rows 66 < 200"
+        },
+        {
+          "fold_id": 11,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-12-28",
+          "actual_train_years": 2.58,
+          "train_rows": 134,
+          "validation_dates": 3,
+          "skipped": "train_rows 134 < 200"
+        },
+        {
+          "fold_id": 12,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2019-03-28",
+          "actual_train_years": 2.82,
+          "train_rows": 266,
+          "validation_dates": 3,
+          "validation_rankic_mean": null,
+          "validation_rankic_n_dates": 0
+        },
+        {
+          "fold_id": 13,
+          "train_start": "2016-06-28",
+          "train_cutoff": "2019-06-28",
+          "actual_train_years": 3.0,
+          "train_rows": 440,
+          "validation_dates": 3,
+          "validation_rankic_mean": null,
+          "validation_rankic_n_dates": 0
+        },
+        {
+          "fold_id": 14,
+          "train_start": "2016-10-01",
+          "train_cutoff": "2019-10-01",
+          "actual_train_years": 3.0,
+          "train_rows": 561,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.0653049436776821,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 15,
+          "train_start": "2016-12-30",
+          "train_cutoff": "2019-12-30",
+          "actual_train_years": 3.0,
+          "train_rows": 650,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.029085849462936925,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 16,
+          "train_start": "2017-03-30",
+          "train_cutoff": "2020-03-30",
+          "actual_train_years": 3.0,
+          "train_rows": 780,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.04364269694664418,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 17,
+          "train_start": "2017-06-30",
+          "train_cutoff": "2020-06-30",
+          "actual_train_years": 3.0,
+          "train_rows": 1036,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.016055922844106885,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 18,
+          "train_start": "2017-09-30",
+          "train_cutoff": "2020-09-30",
+          "actual_train_years": 3.0,
+          "train_rows": 1257,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.00918186766392438,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 19,
+          "train_start": "2017-12-28",
+          "train_cutoff": "2020-12-28",
+          "actual_train_years": 3.0,
+          "train_rows": 1394,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.11529551719062313,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 20,
+          "train_start": "2018-03-30",
+          "train_cutoff": "2021-03-30",
+          "actual_train_years": 3.0,
+          "train_rows": 1568,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.05837705066339916,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 21,
+          "train_start": "2018-06-29",
+          "train_cutoff": "2021-06-29",
+          "actual_train_years": 3.0,
+          "train_rows": 1727,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.06577006278198383,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 22,
+          "train_start": "2018-09-29",
+          "train_cutoff": "2021-09-29",
+          "actual_train_years": 3.0,
+          "train_rows": 1807,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.11601142612866068,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 23,
+          "train_start": "2018-12-29",
+          "train_cutoff": "2021-12-29",
+          "actual_train_years": 3.0,
+          "train_rows": 1896,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.06221839219812902,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 24,
+          "train_start": "2019-03-29",
+          "train_cutoff": "2022-03-29",
+          "actual_train_years": 3.0,
+          "train_rows": 1938,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.055956360474993,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 25,
+          "train_start": "2019-06-28",
+          "train_cutoff": "2022-06-28",
+          "actual_train_years": 3.0,
+          "train_rows": 2008,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.044962189551741784,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 26,
+          "train_start": "2019-09-29",
+          "train_cutoff": "2022-09-29",
+          "actual_train_years": 3.0,
+          "train_rows": 2075,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.015738052692434567,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 27,
+          "train_start": "2019-12-28",
+          "train_cutoff": "2022-12-28",
+          "actual_train_years": 3.0,
+          "train_rows": 2121,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.1589739106782827,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 28,
+          "train_start": "2020-03-28",
+          "train_cutoff": "2023-03-28",
+          "actual_train_years": 3.0,
+          "train_rows": 2164,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.03741820204432276,
+          "validation_rankic_n_dates": 3
+        }
+      ],
+      "overall": {
+        "mean_rankic": -0.01629755381398065,
+        "t_stat": -0.7391577672939581,
+        "n_dates": 45
+      },
+      "by_year": {
+        "2019": {
+          "mean_rankic": 0.0653049436776821,
+          "t_stat": 0.560768833778891,
+          "n_dates": 3
+        },
+        "2020": {
+          "mean_rankic": -0.011872688975387458,
+          "t_stat": -0.22196011514692096,
+          "n_dates": 12
+        },
+        "2021": {
+          "mean_rankic": 0.0016692757951367752,
+          "t_stat": 0.03966749939756113,
+          "n_dates": 12
+        },
+        "2022": {
+          "mean_rankic": -0.036849722383107304,
+          "t_stat": -1.2100363280554753,
+          "n_dates": 12
+        },
+        "2023": {
+          "mean_rankic": -0.06077785431697997,
+          "t_stat": -1.0208930776785201,
+          "n_dates": 6
+        }
+      },
+      "by_tercile": {
+        "T1_liquid": {
+          "mean_rankic": -0.015894121126287138,
+          "t_stat": -0.7052155334734665,
+          "n_dates": 45
+        }
+      }
+    },
+    "6": {
+      "candidate_id": "6",
+      "label": "Candidate 6: LightGBM regression, all layers, biweekly, excess_10",
+      "model": "lgbm_reg",
+      "feature_set": "all",
+      "n_features": 45,
+      "feature_columns": [
+        "ret_21",
+        "ret_63",
+        "ret_126",
+        "ret_252",
+        "momentum_252_21",
+        "ret_1",
+        "ret_5",
+        "max_ret_1_21",
+        "dist_from_252d_high",
+        "vol_21",
+        "vol_63",
+        "idio_vol_63",
+        "dollar_adv_21_over_63",
+        "amihud_21",
+        "overnight_return_21d_mean",
+        "intraday_return_21d_mean",
+        "intraday_realized_vol_21d_mean",
+        "intraday_amplitude_21d_mean",
+        "open_30min_volume_share_21d_mean",
+        "close_30min_volume_share_21d_mean",
+        "vwap_deviation_21d_mean",
+        "intraday_skew_21d_mean",
+        "trade_count_21d_mean",
+        "amihud_intraday_21d_mean",
+        "gross_profitability",
+        "asset_growth",
+        "accruals",
+        "roe",
+        "sue_eps",
+        "sue_rev",
+        "days_since_report",
+        "ocf_at_chg1",
+        "niq_at_chg1",
+        "niq_be_chg1",
+        "ni_inc8q",
+        "net_buy_usd_60d",
+        "open_market_buy_count_60d",
+        "buyers_60d",
+        "days_since_last_visible_buy",
+        "days_to_cover",
+        "short_interest_ratio",
+        "dtc_change_vs_prior",
+        "dtc_cross_sectional_pct",
+        "short_volume_ratio",
+        "short_volume_ratio_zscore_21"
+      ],
+      "cadence": "biweekly",
+      "horizon": 10,
+      "n_folds": 28,
+      "fold_meta": [
+        {
+          "fold_id": 1,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2016-06-27",
+          "actual_train_years": 0.15,
+          "train_rows": 0,
+          "validation_dates": 6,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 2,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2016-09-21",
+          "actual_train_years": 0.39,
+          "train_rows": 0,
+          "validation_dates": 6,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 3,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2016-12-15",
+          "actual_train_years": 0.62,
+          "train_rows": 0,
+          "validation_dates": 7,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 4,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2017-03-29",
+          "actual_train_years": 0.91,
+          "train_rows": 0,
+          "validation_dates": 6,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 5,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2017-06-23",
+          "actual_train_years": 1.14,
+          "train_rows": 0,
+          "validation_dates": 6,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 6,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2017-09-19",
+          "actual_train_years": 1.38,
+          "train_rows": 0,
+          "validation_dates": 7,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 7,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2017-12-28",
+          "actual_train_years": 1.66,
+          "train_rows": 0,
+          "validation_dates": 6,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 8,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2018-03-27",
+          "actual_train_years": 1.9,
+          "train_rows": 0,
+          "validation_dates": 6,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 9,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2018-06-21",
+          "actual_train_years": 2.14,
+          "train_rows": 0,
+          "validation_dates": 6,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 10,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2018-09-17",
+          "actual_train_years": 2.38,
+          "train_rows": 97,
+          "validation_dates": 7,
+          "skipped": "train_rows 97 < 200"
+        },
+        {
+          "fold_id": 11,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2018-12-27",
+          "actual_train_years": 2.65,
+          "train_rows": 347,
+          "validation_dates": 6,
+          "validation_rankic_mean": null,
+          "validation_rankic_n_dates": 0
+        },
+        {
+          "fold_id": 12,
+          "train_start": "2016-05-02",
+          "train_cutoff": "2019-03-26",
+          "actual_train_years": 2.9,
+          "train_rows": 614,
+          "validation_dates": 6,
+          "validation_rankic_mean": 0.07557469069064336,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 13,
+          "train_start": "2016-06-20",
+          "train_cutoff": "2019-06-20",
+          "actual_train_years": 3.0,
+          "train_rows": 856,
+          "validation_dates": 6,
+          "validation_rankic_mean": 0.05739425539482262,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 14,
+          "train_start": "2016-09-16",
+          "train_cutoff": "2019-09-16",
+          "actual_train_years": 3.0,
+          "train_rows": 1109,
+          "validation_dates": 7,
+          "validation_rankic_mean": 0.04651306754218606,
+          "validation_rankic_n_dates": 7
+        },
+        {
+          "fold_id": 15,
+          "train_start": "2016-12-24",
+          "train_cutoff": "2019-12-24",
+          "actual_train_years": 3.0,
+          "train_rows": 1411,
+          "validation_dates": 6,
+          "validation_rankic_mean": -0.09303553667729818,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 16,
+          "train_start": "2017-03-23",
+          "train_cutoff": "2020-03-23",
+          "actual_train_years": 3.0,
+          "train_rows": 1682,
+          "validation_dates": 6,
+          "validation_rankic_mean": -0.025512976376756407,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 17,
+          "train_start": "2017-06-17",
+          "train_cutoff": "2020-06-17",
+          "actual_train_years": 3.0,
+          "train_rows": 2038,
+          "validation_dates": 7,
+          "validation_rankic_mean": -0.016757738857818626,
+          "validation_rankic_n_dates": 7
+        },
+        {
+          "fold_id": 18,
+          "train_start": "2017-09-25",
+          "train_cutoff": "2020-09-25",
+          "actual_train_years": 3.0,
+          "train_rows": 2567,
+          "validation_dates": 6,
+          "validation_rankic_mean": -0.029214029778449408,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 19,
+          "train_start": "2017-12-21",
+          "train_cutoff": "2020-12-21",
+          "actual_train_years": 3.0,
+          "train_rows": 2996,
+          "validation_dates": 6,
+          "validation_rankic_mean": 0.07925860022534766,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 20,
+          "train_start": "2018-03-19",
+          "train_cutoff": "2021-03-19",
+          "actual_train_years": 3.0,
+          "train_rows": 3347,
+          "validation_dates": 7,
+          "validation_rankic_mean": -0.05644305411251316,
+          "validation_rankic_n_dates": 7
+        },
+        {
+          "fold_id": 21,
+          "train_start": "2018-06-29",
+          "train_cutoff": "2021-06-29",
+          "actual_train_years": 3.0,
+          "train_rows": 3706,
+          "validation_dates": 6,
+          "validation_rankic_mean": -0.08811612765806943,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 22,
+          "train_start": "2018-09-23",
+          "train_cutoff": "2021-09-23",
+          "actual_train_years": 3.0,
+          "train_rows": 3879,
+          "validation_dates": 6,
+          "validation_rankic_mean": 0.10424843957029901,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 23,
+          "train_start": "2018-12-17",
+          "train_cutoff": "2021-12-17",
+          "actual_train_years": 3.0,
+          "train_rows": 3984,
+          "validation_dates": 7,
+          "validation_rankic_mean": 0.025896729644055285,
+          "validation_rankic_n_dates": 7
+        },
+        {
+          "fold_id": 24,
+          "train_start": "2019-03-30",
+          "train_cutoff": "2022-03-30",
+          "actual_train_years": 3.0,
+          "train_rows": 4088,
+          "validation_dates": 6,
+          "validation_rankic_mean": -0.04347132864584413,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 25,
+          "train_start": "2019-06-27",
+          "train_cutoff": "2022-06-27",
+          "actual_train_years": 3.0,
+          "train_rows": 4230,
+          "validation_dates": 6,
+          "validation_rankic_mean": 0.007419468625568433,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 26,
+          "train_start": "2019-09-21",
+          "train_cutoff": "2022-09-21",
+          "actual_train_years": 3.0,
+          "train_rows": 4364,
+          "validation_dates": 6,
+          "validation_rankic_mean": 0.05748195827580956,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 27,
+          "train_start": "2019-12-15",
+          "train_cutoff": "2022-12-15",
+          "actual_train_years": 3.0,
+          "train_rows": 4465,
+          "validation_dates": 7,
+          "validation_rankic_mean": -0.007808448587695573,
+          "validation_rankic_n_dates": 6
+        },
+        {
+          "fold_id": 28,
+          "train_start": "2020-03-29",
+          "train_cutoff": "2023-03-29",
+          "actual_train_years": 3.0,
+          "train_rows": 4502,
+          "validation_dates": 6,
+          "validation_rankic_mean": -0.03746231860317805,
+          "validation_rankic_n_dates": 6
+        }
+      ],
+      "overall": {
+        "mean_rankic": 0.0031604047947411677,
+        "t_stat": 0.2100888108970832,
+        "n_dates": 106
+      },
+      "by_year": {
+        "2019": {
+          "mean_rankic": 0.059126586805689406,
+          "t_stat": 1.5247122022005317,
+          "n_dates": 19
+        },
+        "2020": {
+          "mean_rankic": -0.040155177159990174,
+          "t_stat": -1.5840924830078384,
+          "n_dates": 25
+        },
+        "2021": {
+          "mean_rankic": 0.007089763761514855,
+          "t_stat": 0.18322390016601214,
+          "n_dates": 25
+        },
+        "2022": {
+          "mean_rankic": 0.012394307881663607,
+          "t_stat": 0.46464076101166585,
+          "n_dates": 25
+        },
+        "2023": {
+          "mean_rankic": -0.02263538359543681,
+          "t_stat": -0.6187856041197787,
+          "n_dates": 12
+        }
+      },
+      "by_tercile": {
+        "T1_liquid": {
+          "mean_rankic": 0.005983372388706722,
+          "t_stat": 0.40201536895027545,
+          "n_dates": 106
+        }
+      }
+    },
+    "11": {
+      "candidate_id": "11",
+      "label": "Candidate 11: LightGBM LambdaRank, all layers, monthly, excess_21 rank",
+      "model": "lgbm_lambdarank",
+      "feature_set": "all",
+      "n_features": 45,
+      "feature_columns": [
+        "ret_21",
+        "ret_63",
+        "ret_126",
+        "ret_252",
+        "momentum_252_21",
+        "ret_1",
+        "ret_5",
+        "max_ret_1_21",
+        "dist_from_252d_high",
+        "vol_21",
+        "vol_63",
+        "idio_vol_63",
+        "dollar_adv_21_over_63",
+        "amihud_21",
+        "overnight_return_21d_mean",
+        "intraday_return_21d_mean",
+        "intraday_realized_vol_21d_mean",
+        "intraday_amplitude_21d_mean",
+        "open_30min_volume_share_21d_mean",
+        "close_30min_volume_share_21d_mean",
+        "vwap_deviation_21d_mean",
+        "intraday_skew_21d_mean",
+        "trade_count_21d_mean",
+        "amihud_intraday_21d_mean",
+        "gross_profitability",
+        "asset_growth",
+        "accruals",
+        "roe",
+        "sue_eps",
+        "sue_rev",
+        "days_since_report",
+        "ocf_at_chg1",
+        "niq_at_chg1",
+        "niq_be_chg1",
+        "ni_inc8q",
+        "net_buy_usd_60d",
+        "open_market_buy_count_60d",
+        "buyers_60d",
+        "days_since_last_visible_buy",
+        "days_to_cover",
+        "short_interest_ratio",
+        "dtc_change_vs_prior",
+        "dtc_cross_sectional_pct",
+        "short_volume_ratio",
+        "short_volume_ratio_zscore_21"
+      ],
+      "cadence": "monthly",
+      "horizon": 21,
+      "n_folds": 28,
+      "fold_meta": [
+        {
+          "fold_id": 1,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2016-06-28",
+          "actual_train_years": 0.08,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 2,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2016-09-29",
+          "actual_train_years": 0.33,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 3,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2016-12-28",
+          "actual_train_years": 0.58,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 4,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-03-28",
+          "actual_train_years": 0.82,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 5,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-06-28",
+          "actual_train_years": 1.08,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 6,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-09-29",
+          "actual_train_years": 1.33,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 7,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2017-12-28",
+          "actual_train_years": 1.58,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 8,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-03-28",
+          "actual_train_years": 1.82,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 9,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-06-28",
+          "actual_train_years": 2.08,
+          "train_rows": 0,
+          "validation_dates": 3,
+          "skipped": "train_rows 0 < 200"
+        },
+        {
+          "fold_id": 10,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-10-01",
+          "actual_train_years": 2.34,
+          "train_rows": 66,
+          "validation_dates": 3,
+          "skipped": "train_rows 66 < 200"
+        },
+        {
+          "fold_id": 11,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2018-12-28",
+          "actual_train_years": 2.58,
+          "train_rows": 134,
+          "validation_dates": 3,
+          "skipped": "train_rows 134 < 200"
+        },
+        {
+          "fold_id": 12,
+          "train_start": "2016-05-31",
+          "train_cutoff": "2019-03-28",
+          "actual_train_years": 2.82,
+          "train_rows": 266,
+          "validation_dates": 3,
+          "validation_rankic_mean": null,
+          "validation_rankic_n_dates": 0
+        },
+        {
+          "fold_id": 13,
+          "train_start": "2016-06-28",
+          "train_cutoff": "2019-06-28",
+          "actual_train_years": 3.0,
+          "train_rows": 440,
+          "validation_dates": 3,
+          "validation_rankic_mean": null,
+          "validation_rankic_n_dates": 0
+        },
+        {
+          "fold_id": 14,
+          "train_start": "2016-10-01",
+          "train_cutoff": "2019-10-01",
+          "actual_train_years": 3.0,
+          "train_rows": 561,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.007255851330028988,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 15,
+          "train_start": "2016-12-30",
+          "train_cutoff": "2019-12-30",
+          "actual_train_years": 3.0,
+          "train_rows": 650,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.0988667074669433,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 16,
+          "train_start": "2017-03-30",
+          "train_cutoff": "2020-03-30",
+          "actual_train_years": 3.0,
+          "train_rows": 780,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.06714888740463532,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 17,
+          "train_start": "2017-06-30",
+          "train_cutoff": "2020-06-30",
+          "actual_train_years": 3.0,
+          "train_rows": 1036,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.013964318555136718,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 18,
+          "train_start": "2017-09-30",
+          "train_cutoff": "2020-09-30",
+          "actual_train_years": 3.0,
+          "train_rows": 1257,
+          "validation_dates": 3,
+          "validation_rankic_mean": -6.445108581901633e-05,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 19,
+          "train_start": "2017-12-28",
+          "train_cutoff": "2020-12-28",
+          "actual_train_years": 3.0,
+          "train_rows": 1394,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.15077073949140438,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 20,
+          "train_start": "2018-03-30",
+          "train_cutoff": "2021-03-30",
+          "actual_train_years": 3.0,
+          "train_rows": 1568,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.056890310330931865,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 21,
+          "train_start": "2018-06-29",
+          "train_cutoff": "2021-06-29",
+          "actual_train_years": 3.0,
+          "train_rows": 1727,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.009803650847231069,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 22,
+          "train_start": "2018-09-29",
+          "train_cutoff": "2021-09-29",
+          "actual_train_years": 3.0,
+          "train_rows": 1807,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.11943900514771717,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 23,
+          "train_start": "2018-12-29",
+          "train_cutoff": "2021-12-29",
+          "actual_train_years": 3.0,
+          "train_rows": 1896,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.015853027929615307,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 24,
+          "train_start": "2019-03-29",
+          "train_cutoff": "2022-03-29",
+          "actual_train_years": 3.0,
+          "train_rows": 1938,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.04942920008985916,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 25,
+          "train_start": "2019-06-28",
+          "train_cutoff": "2022-06-28",
+          "actual_train_years": 3.0,
+          "train_rows": 2008,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.08164029171491857,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 26,
+          "train_start": "2019-09-29",
+          "train_cutoff": "2022-09-29",
+          "actual_train_years": 3.0,
+          "train_rows": 2075,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.035952454857988723,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 27,
+          "train_start": "2019-12-28",
+          "train_cutoff": "2022-12-28",
+          "actual_train_years": 3.0,
+          "train_rows": 2121,
+          "validation_dates": 3,
+          "validation_rankic_mean": -0.21442789096312995,
+          "validation_rankic_n_dates": 3
+        },
+        {
+          "fold_id": 28,
+          "train_start": "2020-03-28",
+          "train_cutoff": "2023-03-28",
+          "actual_train_years": 3.0,
+          "train_rows": 2164,
+          "validation_dates": 3,
+          "validation_rankic_mean": 0.027744872742502008,
+          "validation_rankic_n_dates": 3
+        }
+      ],
+      "overall": {
+        "mean_rankic": -0.01718169517619193,
+        "t_stat": -0.7649123693224764,
+        "n_dates": 45
+      },
+      "by_year": {
+        "2019": {
+          "mean_rankic": 0.007255851330028988,
+          "t_stat": 0.12092282348695527,
+          "n_dates": 3
+        },
+        "2020": {
+          "mean_rankic": -0.011436647425815927,
+          "t_stat": -0.2428539506171893,
+          "n_dates": 12
+        },
+        "2021": {
+          "mean_rankic": 0.019604598456846995,
+          "t_stat": 0.3864272915023838,
+          "n_dates": 12
+        },
+        "2022": {
+          "mean_rankic": -0.027742516219101083,
+          "t_stat": -0.8076861014026121,
+          "n_dates": 12
+        },
+        "2023": {
+          "mean_rankic": -0.09334150911031396,
+          "t_stat": -1.393356046910039,
+          "n_dates": 6
+        }
+      },
+      "by_tercile": {
+        "T1_liquid": {
+          "mean_rankic": -0.01645079881338657,
+          "t_stat": -0.7189278017003389,
+          "n_dates": 45
+        }
+      }
+    }
+  },
+  "verdict": "FAIL",
+  "verdict_detail": {
+    "5": {
+      "pass": false,
+      "mean_rankic": -0.01629755381398065,
+      "t_stat": -0.7391577672939581,
+      "n_dates": 45,
+      "floor": 0.02,
+      "threshold_vs_baseline": 0.0171
+    },
+    "6": {
+      "pass": false,
+      "mean_rankic": 0.0031604047947411677,
+      "t_stat": 0.2100888108970832,
+      "n_dates": 106,
+      "floor": 0.02,
+      "threshold_vs_baseline": 0.0171
+    },
+    "11": {
+      "pass": false,
+      "mean_rankic": -0.01718169517619193,
+      "t_stat": -0.7649123693224764,
+      "n_dates": 45,
+      "floor": 0.02,
+      "threshold_vs_baseline": 0.0171
+    }
+  },
+  "top_univariate_features": [
+    {
+      "feature": "vol_63",
+      "mean_ic": -0.0880341832423576,
+      "t_stat": -4.7774166595298455,
+      "n_dates": 80
+    },
+    {
+      "feature": "idio_vol_63",
+      "mean_ic": -0.0845756619245354,
+      "t_stat": -4.759615342636407,
+      "n_dates": 80
+    },
+    {
+      "feature": "vol_21",
+      "mean_ic": -0.0833537953880567,
+      "t_stat": -4.783417177150172,
+      "n_dates": 80
+    },
+    {
+      "feature": "max_ret_1_21",
+      "mean_ic": -0.0741426009711496,
+      "t_stat": -4.781600988379764,
+      "n_dates": 80
+    },
+    {
+      "feature": "dist_from_252d_high",
+      "mean_ic": 0.0633551154475133,
+      "t_stat": 3.5915468499224708,
+      "n_dates": 80
+    }
+  ],
+  "feature_coverage_by_cadence": {
+    "monthly": {
+      "ret_21": 0.9856431011166109,
+      "ret_63": 0.9732172084395552,
+      "ret_126": 0.9362536495686647,
+      "ret_252": 0.8442299616774624,
+      "momentum_252_21": 0.8442299616774624,
+      "ret_1": 0.9935225322633443,
+      "ret_5": 0.9918395148677558,
+      "max_ret_1_21": 0.9856431011166109,
+      "dist_from_252d_high": 0.8544735528199634,
+      "vol_21": 0.9856431011166109,
+      "vol_63": 0.9732172084395552,
+      "idio_vol_63": 0.9732172084395552,
+      "dollar_adv_21_over_63": 0.9735214080474023,
+      "amihud_21": 0.9856431011166109,
+      "overnight_return_21d_mean": 0.5619724038051404,
+      "intraday_return_21d_mean": 0.5621443427139234,
+      "intraday_realized_vol_21d_mean": 0.5621443427139234,
+      "intraday_amplitude_21d_mean": 0.5621443427139234,
+      "open_30min_volume_share_21d_mean": 0.5618236105186935,
+      "close_30min_volume_share_21d_mean": 0.5618236105186935,
+      "vwap_deviation_21d_mean": 0.5618236105186935,
+      "intraday_skew_21d_mean": 0.5621443427139234,
+      "trade_count_21d_mean": 0.5621443427139234,
+      "amihud_intraday_21d_mean": 0.5618236105186935,
+      "gross_profitability": 0.2809018857069169,
+      "asset_growth": 0.5833159741165812,
+      "accruals": 0.26842970178518877,
+      "roe": 0.6069608805917344,
+      "sue_eps": 0.38965324551222913,
+      "sue_rev": 0.3453723634656271,
+      "days_since_report": 0.599550974926678,
+      "ocf_at_chg1": 0.5457803877222394,
+      "niq_at_chg1": 0.45801880085837193,
+      "niq_be_chg1": 0.45658046575605177,
+      "ni_inc8q": 0.5741040164267788,
+      "net_buy_usd_60d": 0.9778496394242692,
+      "open_market_buy_count_60d": 0.9778496394242692,
+      "buyers_60d": 0.9778496394242692,
+      "days_since_last_visible_buy": 0.5966676916870844,
+      "days_to_cover": 0.1726299709357114,
+      "short_interest_ratio": 0.1715487397208638,
+      "dtc_change_vs_prior": 0.17212407376179187,
+      "dtc_cross_sectional_pct": 0.1726299709357114,
+      "short_volume_ratio": 0.38724940730674234,
+      "short_volume_ratio_zscore_21": 0.3871171466076784
+    },
+    "biweekly": {
+      "ret_21": 0.9864977015856617,
+      "ret_63": 0.9731450087637381,
+      "ret_126": 0.933171969266287,
+      "ret_252": 0.8386905258715314,
+      "momentum_252_21": 0.8386905258715314,
+      "ret_1": 0.9909905937452264,
+      "ret_5": 0.9907417760231054,
+      "max_ret_1_21": 0.9864977015856617,
+      "dist_from_252d_high": 0.8442007360595147,
+      "vol_21": 0.9864977015856617,
+      "vol_63": 0.9731450087637381,
+      "idio_vol_63": 0.9731450087637381,
+      "dollar_adv_21_over_63": 0.9734331963785998,
+      "amihud_21": 0.9863921902731169,
+      "overnight_return_21d_mean": 0.5544698214024185,
+      "intraday_return_21d_mean": 0.5604382971419033,
+      "intraday_realized_vol_21d_mean": 0.560435147550484,
+      "intraday_amplitude_21d_mean": 0.5604382971419033,
+      "open_30min_volume_share_21d_mean": 0.5600619209673026,
+      "close_30min_volume_share_21d_mean": 0.5600619209673026,
+      "vwap_deviation_21d_mean": 0.5600619209673026,
+      "intraday_skew_21d_mean": 0.5604335727547743,
+      "trade_count_21d_mean": 0.5604382971419033,
+      "amihud_intraday_21d_mean": 0.5600619209673026,
+      "gross_profitability": 0.28031993549636774,
+      "asset_growth": 0.5823940989255169,
+      "accruals": 0.2693294362388839,
+      "roe": 0.6058522558161142,
+      "sue_eps": 0.389385561957975,
+      "sue_rev": 0.34455585249203546,
+      "days_since_report": 0.5983814249696459,
+      "ocf_at_chg1": 0.5447045132070242,
+      "niq_at_chg1": 0.45733327244123256,
+      "niq_be_chg1": 0.4559002083454724,
+      "ni_inc8q": 0.573305952885262,
+      "net_buy_usd_60d": 0.9778473487526831,
+      "open_market_buy_count_60d": 0.9778473487526831,
+      "buyers_60d": 0.9778473487526831,
+      "days_since_last_visible_buy": 0.5947467964718277,
+      "days_to_cover": 0.17201178577109086,
+      "short_interest_ratio": 0.17081494103177466,
+      "dtc_change_vs_prior": 0.17024014059776096,
+      "dtc_cross_sectional_pct": 0.17201178577109086,
+      "short_volume_ratio": 0.3859052634397003,
+      "short_volume_ratio_zscore_21": 0.3858658935469596
+    }
+  },
+  "features_kept_by_cadence": {
+    "monthly": [
+      "ret_21",
+      "ret_63",
+      "ret_126",
+      "ret_252",
+      "momentum_252_21",
+      "ret_1",
+      "ret_5",
+      "max_ret_1_21",
+      "dist_from_252d_high",
+      "vol_21",
+      "vol_63",
+      "idio_vol_63",
+      "dollar_adv_21_over_63",
+      "amihud_21",
+      "overnight_return_21d_mean",
+      "intraday_return_21d_mean",
+      "intraday_realized_vol_21d_mean",
+      "intraday_amplitude_21d_mean",
+      "open_30min_volume_share_21d_mean",
+      "close_30min_volume_share_21d_mean",
+      "vwap_deviation_21d_mean",
+      "intraday_skew_21d_mean",
+      "trade_count_21d_mean",
+      "amihud_intraday_21d_mean",
+      "asset_growth",
+      "roe",
+      "days_since_report",
+      "ocf_at_chg1",
+      "ni_inc8q",
+      "net_buy_usd_60d",
+      "open_market_buy_count_60d",
+      "buyers_60d",
+      "days_since_last_visible_buy"
+    ],
+    "biweekly": [
+      "ret_21",
+      "ret_63",
+      "ret_126",
+      "ret_252",
+      "momentum_252_21",
+      "ret_1",
+      "ret_5",
+      "max_ret_1_21",
+      "dist_from_252d_high",
+      "vol_21",
+      "vol_63",
+      "idio_vol_63",
+      "dollar_adv_21_over_63",
+      "amihud_21",
+      "overnight_return_21d_mean",
+      "intraday_return_21d_mean",
+      "intraday_realized_vol_21d_mean",
+      "intraday_amplitude_21d_mean",
+      "open_30min_volume_share_21d_mean",
+      "close_30min_volume_share_21d_mean",
+      "vwap_deviation_21d_mean",
+      "intraday_skew_21d_mean",
+      "trade_count_21d_mean",
+      "amihud_intraday_21d_mean",
+      "asset_growth",
+      "roe",
+      "days_since_report",
+      "ocf_at_chg1",
+      "ni_inc8q",
+      "net_buy_usd_60d",
+      "open_market_buy_count_60d",
+      "buyers_60d",
+      "days_since_last_visible_buy"
+    ]
+  }
+}
